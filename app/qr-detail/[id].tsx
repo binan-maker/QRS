@@ -37,10 +37,34 @@ interface CommentItem {
 }
 
 const REPORT_TYPES = [
-  { key: "safe", label: "Safe", icon: "shield-checkmark", color: Colors.dark.safe, bg: Colors.dark.safeDim },
-  { key: "scam", label: "Scam", icon: "warning", color: Colors.dark.danger, bg: Colors.dark.dangerDim },
-  { key: "fake", label: "Fake", icon: "close-circle", color: Colors.dark.warning, bg: Colors.dark.warningDim },
-  { key: "spam", label: "Spam", icon: "mail-unread", color: Colors.dark.accent, bg: Colors.dark.accentDim },
+  {
+    key: "safe",
+    label: "Safe",
+    icon: "shield-checkmark",
+    color: Colors.dark.safe,
+    bg: Colors.dark.safeDim,
+  },
+  {
+    key: "scam",
+    label: "Scam",
+    icon: "warning",
+    color: Colors.dark.danger,
+    bg: Colors.dark.dangerDim,
+  },
+  {
+    key: "fake",
+    label: "Fake",
+    icon: "close-circle",
+    color: Colors.dark.warning,
+    bg: Colors.dark.warningDim,
+  },
+  {
+    key: "spam",
+    label: "Spam",
+    icon: "mail-unread",
+    color: Colors.dark.accent,
+    bg: Colors.dark.accentDim,
+  },
 ];
 
 export default function QrDetailScreen() {
@@ -102,10 +126,14 @@ export default function QrDetailScreen() {
 
   async function handleReport(type: string) {
     if (!user) {
-      Alert.alert("Sign In Required", "You need to sign in to report QR codes.", [
-        { text: "Cancel", style: "cancel" },
-        { text: "Sign In", onPress: () => router.push("/(auth)/login") },
-      ]);
+      Alert.alert(
+        "Sign In Required",
+        "You need to sign in to report QR codes.",
+        [
+          { text: "Cancel", style: "cancel" },
+          { text: "Sign In", onPress: () => router.push("/(auth)/login") },
+        ],
+      );
       return;
     }
     setReportLoading(type);
@@ -171,12 +199,27 @@ export default function QrDetailScreen() {
       (reportCounts.fake || 0) +
       (reportCounts.spam || 0);
 
-    if (total === 0) return { score: -1, label: "No Reports", color: Colors.dark.textMuted };
+    if (total === 0)
+      return { score: -1, label: "No Reports", color: Colors.dark.textMuted };
 
     const safeRatio = (reportCounts.safe || 0) / total;
-    if (safeRatio >= 0.7) return { score: safeRatio * 100, label: "Trusted", color: Colors.dark.safe };
-    if (safeRatio >= 0.4) return { score: safeRatio * 100, label: "Caution", color: Colors.dark.warning };
-    return { score: safeRatio * 100, label: "Dangerous", color: Colors.dark.danger };
+    if (safeRatio >= 0.7)
+      return {
+        score: safeRatio * 100,
+        label: "Trusted",
+        color: Colors.dark.safe,
+      };
+    if (safeRatio >= 0.4)
+      return {
+        score: safeRatio * 100,
+        label: "Caution",
+        color: Colors.dark.warning,
+      };
+    return {
+      score: safeRatio * 100,
+      label: "Dangerous",
+      color: Colors.dark.danger,
+    };
   }
 
   function handleOpenContent() {
@@ -235,8 +278,17 @@ export default function QrDetailScreen() {
           <Animated.View entering={FadeInDown.duration(400)}>
             <View style={styles.contentCard}>
               <View style={styles.contentHeader}>
-                <View style={[styles.typeIcon, { backgroundColor: Colors.dark.primaryDim }]}>
-                  <MaterialCommunityIcons name="qrcode" size={28} color={Colors.dark.primary} />
+                <View
+                  style={[
+                    styles.typeIcon,
+                    { backgroundColor: Colors.dark.primaryDim },
+                  ]}
+                >
+                  <MaterialCommunityIcons
+                    name="qrcode"
+                    size={28}
+                    color={Colors.dark.primary}
+                  />
                 </View>
                 <View style={styles.typeBadge}>
                   <Text style={styles.typeBadgeText}>
@@ -255,7 +307,11 @@ export default function QrDetailScreen() {
                     { opacity: pressed ? 0.8 : 1 },
                   ]}
                 >
-                  <Ionicons name="open-outline" size={16} color={Colors.dark.primary} />
+                  <Ionicons
+                    name="open-outline"
+                    size={16}
+                    color={Colors.dark.primary}
+                  />
                   <Text style={styles.openBtnText}>Open Link</Text>
                 </Pressable>
               ) : null}
@@ -266,8 +322,15 @@ export default function QrDetailScreen() {
             <View style={styles.trustCard}>
               <View style={styles.trustHeader}>
                 <Text style={styles.sectionTitle}>Trust Score</Text>
-                <View style={[styles.trustBadge, { backgroundColor: trust.color + "22" }]}>
-                  <View style={[styles.trustDot, { backgroundColor: trust.color }]} />
+                <View
+                  style={[
+                    styles.trustBadge,
+                    { backgroundColor: trust.color + "22" },
+                  ]}
+                >
+                  <View
+                    style={[styles.trustDot, { backgroundColor: trust.color }]}
+                  />
                   <Text style={[styles.trustLabel, { color: trust.color }]}>
                     {trust.label}
                   </Text>
@@ -331,8 +394,12 @@ export default function QrDetailScreen() {
                     style={({ pressed }) => [
                       styles.reportCard,
                       {
-                        borderColor: isSelected ? rt.color : Colors.dark.surfaceBorder,
-                        backgroundColor: isSelected ? rt.bg : Colors.dark.surface,
+                        borderColor: isSelected
+                          ? rt.color
+                          : Colors.dark.surfaceBorder,
+                        backgroundColor: isSelected
+                          ? rt.bg
+                          : Colors.dark.surface,
                         opacity: pressed ? 0.8 : 1,
                       },
                     ]}
@@ -340,14 +407,23 @@ export default function QrDetailScreen() {
                     {reportLoading === rt.key ? (
                       <ActivityIndicator size="small" color={rt.color} />
                     ) : (
-                      <Ionicons name={rt.icon as any} size={24} color={rt.color} />
+                      <Ionicons
+                        name={rt.icon as any}
+                        size={24}
+                        color={rt.color}
+                      />
                     )}
                     <Text style={[styles.reportLabel, { color: rt.color }]}>
                       {rt.label}
                     </Text>
                     <Text style={styles.reportCount}>{count}</Text>
                     {isSelected ? (
-                      <View style={[styles.selectedDot, { backgroundColor: rt.color }]} />
+                      <View
+                        style={[
+                          styles.selectedDot,
+                          { backgroundColor: rt.color },
+                        ]}
+                      />
                     ) : null}
                   </Pressable>
                 );
@@ -360,7 +436,11 @@ export default function QrDetailScreen() {
               <Text style={styles.sectionTitle}>Comments</Text>
               {commentsLimited ? (
                 <View style={styles.limitedBadge}>
-                  <Ionicons name="lock-closed" size={12} color={Colors.dark.warning} />
+                  <Ionicons
+                    name="lock-closed"
+                    size={12}
+                    color={Colors.dark.warning}
+                  />
                   <Text style={styles.limitedText}>
                     Showing 6 of {totalComments}
                   </Text>
@@ -373,11 +453,19 @@ export default function QrDetailScreen() {
                 onPress={() => router.push("/(auth)/login")}
                 style={styles.unlockBanner}
               >
-                <Ionicons name="sparkles" size={18} color={Colors.dark.accent} />
+                <Ionicons
+                  name="sparkles"
+                  size={18}
+                  color={Colors.dark.accent}
+                />
                 <Text style={styles.unlockText}>
                   Sign in to see all comments and add yours
                 </Text>
-                <Ionicons name="chevron-forward" size={16} color={Colors.dark.textMuted} />
+                <Ionicons
+                  name="chevron-forward"
+                  size={16}
+                  color={Colors.dark.textMuted}
+                />
               </Pressable>
             ) : null}
 
@@ -398,7 +486,8 @@ export default function QrDetailScreen() {
                   style={({ pressed }) => [
                     styles.sendBtn,
                     {
-                      opacity: pressed || submitting || !newComment.trim() ? 0.5 : 1,
+                      opacity:
+                        pressed || submitting || !newComment.trim() ? 0.5 : 1,
                     },
                   ]}
                 >
@@ -413,7 +502,11 @@ export default function QrDetailScreen() {
 
             {commentsList.length === 0 ? (
               <View style={styles.noComments}>
-                <Ionicons name="chatbubble-outline" size={32} color={Colors.dark.textMuted} />
+                <Ionicons
+                  name="chatbubble-outline"
+                  size={32}
+                  color={Colors.dark.textMuted}
+                />
                 <Text style={styles.noCommentsText}>No comments yet</Text>
               </View>
             ) : (
