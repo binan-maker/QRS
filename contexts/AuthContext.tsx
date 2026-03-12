@@ -3,7 +3,7 @@ import {
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
   signOut as firebaseSignOut,
-  onAuthStateChanged,
+  onIdTokenChanged,
   updateProfile,
   GoogleAuthProvider,
   signInWithCredential,
@@ -47,8 +47,11 @@ async function syncUserToFirestore(fbUser: FirebaseUser, displayName?: string) {
       email: fbUser.email,
       displayName: displayName || fbUser.displayName || fbUser.email?.split("@")[0] || "User",
       photoURL: fbUser.photoURL || null,
+      isDeleted: false,
       createdAt: serverTimestamp(),
     });
+  } else if (snap.data().isDeleted) {
+    throw new Error("This account has been deleted.");
   }
 }
 
@@ -72,12 +75,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     scopes: ["profile", "email"],
   });
 
+  // onIdTokenChanged fires on sign-in, sign-out, and token refresh (every hour)
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(firebaseAuth, async (fbUser) => {
+    const unsubscribe = onIdTokenChanged(firebaseAuth, async (fbUser) => {
       if (fbUser) {
-        const idToken = await fbUser.getIdToken();
-        setUser(toAuthUser(fbUser));
-        setToken(idToken);
+        try {
+          const idToken = await fbUser.getIdToken();
+          setUser(toAuthUser(fbUser));
+          setToken(idToken);
+        } catch {
+          setUser(null);
+          setToken(null);
+        }
       } else {
         setUser(null);
         setToken(null);
@@ -98,6 +107,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   async function signIn(email: string, password: string) {
     const cred = await signInWithEmailAndPassword(firebaseAuth, email, password);
+    await syncUserToFirestore(cred.user);
     const idToken = await cred.user.getIdToken();
     setUser(toAuthUser(cred.user));
     setToken(idToken);

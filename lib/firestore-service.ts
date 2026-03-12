@@ -1,4 +1,4 @@
-import { firestore } from "./firebase";
+import { firestore, realtimeDB } from "./firebase";
 import {
   doc,
   collection,
@@ -14,8 +14,19 @@ import {
   getDocs,
   increment,
   serverTimestamp,
+  onSnapshot,
   DocumentSnapshot,
 } from "firebase/firestore";
+import {
+  ref as dbRef,
+  push as dbPush,
+  set as dbSet,
+  onValue,
+  off,
+  update as dbUpdate,
+  get as dbGet,
+  remove as dbRemove,
+} from "firebase/database";
 import * as Crypto from "expo-crypto";
 
 export interface QrCodeData {
@@ -45,6 +56,15 @@ export interface TrustScore {
   score: number;
   label: string;
   totalReports: number;
+}
+
+export interface Notification {
+  id: string;
+  type: "new_comment" | "new_report";
+  qrCodeId: string;
+  message: string;
+  read: boolean;
+  createdAt: number;
 }
 
 export function detectContentType(content: string): string {
@@ -154,6 +174,94 @@ export async function getQrCodeById(qrId: string): Promise<QrCodeData | null> {
   };
 }
 
+// Real-time subscription to QR code stats (scanCount, commentCount)
+export function subscribeToQrStats(
+  qrId: string,
+  onUpdate: (data: { scanCount: number; commentCount: number }) => void
+): () => void {
+  const qrRef = doc(firestore, "qrCodes", qrId);
+  return onSnapshot(qrRef, (snap) => {
+    if (snap.exists()) {
+      const d = snap.data();
+      onUpdate({
+        scanCount: d.scanCount || 0,
+        commentCount: d.commentCount || 0,
+      });
+    }
+  });
+}
+
+// Real-time subscription to QR report counts
+export function subscribeToQrReports(
+  qrId: string,
+  onUpdate: (counts: Record<string, number>) => void
+): () => void {
+  const reportsRef = collection(firestore, "qrCodes", qrId, "reports");
+  return onSnapshot(reportsRef, (snap) => {
+    const counts: Record<string, number> = {};
+    snap.forEach((d) => {
+      const { reportType } = d.data();
+      counts[reportType] = (counts[reportType] || 0) + 1;
+    });
+    onUpdate(counts);
+  });
+}
+
+// Real-time subscription to comments (first page, live updates)
+export function subscribeToComments(
+  qrId: string,
+  pageLimit: number,
+  onUpdate: (comments: CommentItem[]) => void
+): () => void {
+  const q = query(
+    collection(firestore, "qrCodes", qrId, "comments"),
+    orderBy("createdAt", "desc"),
+    firestoreLimit(pageLimit)
+  );
+  return onSnapshot(q, (snap) => {
+    const comments: CommentItem[] = snap.docs.map((d) => {
+      const data = d.data();
+      return {
+        id: d.id,
+        qrCodeId: qrId,
+        userId: data.userId,
+        text: data.isDeleted ? "[deleted]" : data.text,
+        parentId: data.parentId || null,
+        isDeleted: data.isDeleted || false,
+        likeCount: data.likeCount || 0,
+        dislikeCount: data.dislikeCount || 0,
+        createdAt: tsToString(data.createdAt),
+        userLike: null,
+        user: { displayName: data.isDeleted ? "[deleted]" : (data.userDisplayName || "User") },
+      };
+    });
+    onUpdate(comments);
+  });
+}
+
+// Batch-fetch the current user's like/dislike status for a list of comments
+export async function getCommentUserLikes(
+  qrId: string,
+  commentIds: string[],
+  userId: string
+): Promise<Record<string, "like" | "dislike">> {
+  if (!commentIds.length) return {};
+  const result: Record<string, "like" | "dislike"> = {};
+  await Promise.all(
+    commentIds.map(async (commentId) => {
+      try {
+        const snap = await getDoc(
+          doc(firestore, "qrCodes", qrId, "comments", commentId, "likes", userId)
+        );
+        if (snap.exists()) {
+          result[commentId] = snap.data().isLike ? "like" : "dislike";
+        }
+      } catch {}
+    })
+  );
+  return result;
+}
+
 export async function recordScan(
   qrId: string,
   content: string,
@@ -215,6 +323,8 @@ export async function reportQrCode(
     reportType,
     createdAt: serverTimestamp(),
   });
+  // Notify followers in Realtime Database
+  notifyQrFollowers(qrId, "new_report", `New ${reportType} report on a QR you follow`, userId).catch(() => {});
   return getQrReportCounts(qrId);
 }
 
@@ -376,6 +486,13 @@ export async function addComment(
       createdAt: serverTimestamp(),
     });
   } catch {}
+  // Notify followers that a new comment was added
+  notifyQrFollowers(
+    qrId,
+    "new_comment",
+    `${displayName} commented on a QR you follow`,
+    userId
+  ).catch(() => {});
   return {
     id: docRef.id,
     qrCodeId: qrId,
@@ -445,6 +562,9 @@ export async function softDeleteComment(
   if (snap.exists() && snap.data().userId === userId) {
     await updateDoc(ref, { isDeleted: true, text: "" });
     try {
+      await updateDoc(doc(firestore, "qrCodes", qrId), { commentCount: increment(-1) });
+    } catch {}
+    try {
       await deleteDoc(doc(firestore, "users", userId, "comments", commentId));
     } catch {}
   }
@@ -477,10 +597,15 @@ export async function submitFeedback(
 }
 
 export async function deleteUserAccount(userId: string): Promise<void> {
+  // Soft-delete user document in Firestore
   await updateDoc(doc(firestore, "users", userId), {
     isDeleted: true,
     deletedAt: serverTimestamp(),
   });
+  // Clean up RTDB notifications
+  try {
+    await dbRemove(dbRef(realtimeDB, `notifications/${userId}`));
+  } catch {}
 }
 
 export async function loadQrDetail(qrId: string, userId: string | null) {
@@ -513,4 +638,103 @@ export async function loadQrDetail(qrId: string, userId: string | null) {
     isFavorite,
     isFollowing,
   };
+}
+
+// ─── Firebase Realtime Database: Notifications ───────────────────────────────
+
+// Send a notification to all followers of a QR code via Realtime Database
+export async function notifyQrFollowers(
+  qrId: string,
+  type: "new_comment" | "new_report",
+  message: string,
+  excludeUserId?: string
+): Promise<void> {
+  try {
+    const followersSnap = await getDocs(collection(firestore, "qrCodes", qrId, "followers"));
+    const writes: Promise<any>[] = [];
+    followersSnap.forEach((followerDoc) => {
+      const followerId = followerDoc.data().userId as string;
+      if (!followerId || followerId === excludeUserId) return;
+      const userNotifRef = dbRef(realtimeDB, `notifications/${followerId}/items`);
+      writes.push(
+        dbPush(userNotifRef, {
+          type,
+          qrCodeId: qrId,
+          message,
+          read: false,
+          createdAt: Date.now(),
+        })
+      );
+    });
+    await Promise.all(writes);
+  } catch {}
+}
+
+// Subscribe to unread notification count for a user (Realtime Database)
+export function subscribeToNotificationCount(
+  userId: string,
+  onUpdate: (count: number) => void
+): () => void {
+  const itemsRef = dbRef(realtimeDB, `notifications/${userId}/items`);
+  const handler = (snap: any) => {
+    if (!snap.exists()) {
+      onUpdate(0);
+      return;
+    }
+    let unread = 0;
+    snap.forEach((child: any) => {
+      if (!child.val().read) unread++;
+    });
+    onUpdate(unread);
+  };
+  onValue(itemsRef, handler);
+  return () => off(itemsRef, "value", handler);
+}
+
+// Get all notifications for a user
+export function subscribeToNotifications(
+  userId: string,
+  onUpdate: (notifications: Notification[]) => void
+): () => void {
+  const itemsRef = dbRef(realtimeDB, `notifications/${userId}/items`);
+  const handler = (snap: any) => {
+    if (!snap.exists()) {
+      onUpdate([]);
+      return;
+    }
+    const items: Notification[] = [];
+    snap.forEach((child: any) => {
+      items.push({ id: child.key, ...child.val() });
+    });
+    // Sort newest first
+    items.sort((a, b) => b.createdAt - a.createdAt);
+    onUpdate(items);
+  };
+  onValue(itemsRef, handler);
+  return () => off(itemsRef, "value", handler);
+}
+
+// Mark all notifications as read
+export async function markAllNotificationsRead(userId: string): Promise<void> {
+  try {
+    const itemsRef = dbRef(realtimeDB, `notifications/${userId}/items`);
+    const snap = await dbGet(itemsRef);
+    if (!snap.exists()) return;
+    const updates: Record<string, any> = {};
+    snap.forEach((child: any) => {
+      if (!child.val().read) {
+        updates[`notifications/${userId}/items/${child.key}/read`] = true;
+      }
+    });
+    if (Object.keys(updates).length > 0) {
+      await dbUpdate(dbRef(realtimeDB), updates);
+    }
+  } catch {}
+}
+
+// Clear all notifications for a user
+export async function clearAllNotifications(userId: string): Promise<void> {
+  try {
+    await dbRemove(dbRef(realtimeDB, `notifications/${userId}/items`));
+  } catch {}
 }

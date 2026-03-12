@@ -6,18 +6,30 @@ import {
   ScrollView,
   Platform,
   Alert,
+  Modal,
+  TextInput,
+  ActivityIndicator,
 } from "react-native";
 import { router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useState } from "react";
 import * as Haptics from "expo-haptics";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import Colors from "@/constants/colors";
 import { useAuth } from "@/contexts/AuthContext";
+import { submitFeedback, deleteUserAccount } from "@/lib/firestore-service";
+import { firebaseAuth } from "@/lib/firebase";
+import { deleteUser } from "firebase/auth";
 
 export default function SettingsScreen() {
   const { user, signOut } = useAuth();
   const insets = useSafeAreaInsets();
+
+  const [feedbackModal, setFeedbackModal] = useState(false);
+  const [feedbackMessage, setFeedbackMessage] = useState("");
+  const [feedbackEmail, setFeedbackEmail] = useState("");
+  const [feedbackLoading, setFeedbackLoading] = useState(false);
 
   const topInset = Platform.OS === "web" ? 67 : insets.top;
 
@@ -53,119 +65,272 @@ export default function SettingsScreen() {
     );
   }
 
+  async function handleSubmitFeedback() {
+    if (!feedbackMessage.trim()) return;
+    setFeedbackLoading(true);
+    try {
+      await submitFeedback(
+        user?.id || null,
+        feedbackEmail.trim() || user?.email || null,
+        feedbackMessage.trim()
+      );
+      setFeedbackModal(false);
+      setFeedbackMessage("");
+      setFeedbackEmail("");
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      Alert.alert("Thank You!", "Your feedback has been submitted.");
+    } catch {
+      Alert.alert("Error", "Could not submit feedback. Please try again.");
+    } finally {
+      setFeedbackLoading(false);
+    }
+  }
+
+  async function handleDeleteAccount() {
+    Alert.alert(
+      "Delete Account",
+      "This will permanently delete your account and all your data. This cannot be undone.",
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Delete Account",
+          style: "destructive",
+          onPress: async () => {
+            try {
+              if (!user) return;
+              await deleteUserAccount(user.id);
+              const currentUser = firebaseAuth.currentUser;
+              if (currentUser) {
+                await deleteUser(currentUser);
+              }
+              await signOut();
+              Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+            } catch (e: any) {
+              // If Firebase requires recent authentication, ask user to re-login
+              if (e.code === "auth/requires-recent-login") {
+                Alert.alert(
+                  "Re-authentication Required",
+                  "For security, please sign out and sign back in before deleting your account."
+                );
+              } else {
+                Alert.alert("Error", e.message || "Could not delete account.");
+              }
+            }
+          },
+        },
+      ]
+    );
+  }
+
   return (
-    <View style={[styles.container, { paddingTop: topInset }]}>
-      <ScrollView
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.scrollContent}
-      >
-        <Text style={styles.title}>Settings</Text>
+    <>
+      <View style={[styles.container, { paddingTop: topInset }]}>
+        <ScrollView
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={styles.scrollContent}
+        >
+          <Text style={styles.title}>Settings</Text>
 
-        <View style={styles.section}>
-          <Text style={styles.sectionLabel}>ACCOUNT</Text>
-          {user ? (
-            <View style={styles.accountCard}>
-              <View style={styles.accountAvatar}>
-                <Text style={styles.accountAvatarText}>
-                  {user.displayName.charAt(0).toUpperCase()}
-                </Text>
-              </View>
-              <View style={{ flex: 1 }}>
-                <Text style={styles.accountName}>{user.displayName}</Text>
-                <Text style={styles.accountEmail}>{user.email}</Text>
-              </View>
-              <View style={styles.verifiedBadge}>
-                <Ionicons name="checkmark-circle" size={18} color={Colors.dark.safe} />
-              </View>
-            </View>
-          ) : (
-            <Pressable
-              onPress={() => router.push("/(auth)/login")}
-              style={({ pressed }) => [
-                styles.signInCard,
-                { opacity: pressed ? 0.9 : 1 },
-              ]}
-            >
-              <View style={styles.signInIcon}>
-                <Ionicons name="person-outline" size={24} color={Colors.dark.primary} />
-              </View>
-              <View style={{ flex: 1 }}>
-                <Text style={styles.signInTitle}>Sign in to your account</Text>
-                <Text style={styles.signInSub}>
-                  Access full features - comment, report, sync history
-                </Text>
-              </View>
-              <Ionicons name="chevron-forward" size={20} color={Colors.dark.textMuted} />
-            </Pressable>
-          )}
-        </View>
-
-        <View style={styles.section}>
-          <Text style={styles.sectionLabel}>APP</Text>
-
-          <View style={styles.menuGroup}>
-            <MenuItem
-              icon="shield-checkmark-outline"
-              label="About Trust Scores"
-              sublabel="How QR code safety ratings work"
-              onPress={() => {
-                Alert.alert(
-                  "Trust Scores",
-                  "Trust scores are calculated based on community reports. When users scan a QR code, they can report it as Safe, Scam, Fake, or Spam. The trust score reflects the community consensus on the QR code's safety."
-                );
-              }}
-            />
-            <View style={styles.divider} />
-            <MenuItem
-              icon="help-circle-outline"
-              label="How It Works"
-              sublabel="Learn about QR code scanning"
-              onPress={() => {
-                Alert.alert(
-                  "How It Works",
-                  "1. Scan any QR code using camera or gallery\n2. View the QR content and community trust score\n3. Read comments from other users\n4. Report suspicious QR codes to protect the community\n5. Sign in to comment, report, and sync your history"
-                );
-              }}
-            />
-          </View>
-        </View>
-
-        <View style={styles.section}>
-          <Text style={styles.sectionLabel}>DATA</Text>
-          <View style={styles.menuGroup}>
-            <MenuItem
-              icon="trash-outline"
-              label="Clear Local Data"
-              sublabel="Remove scan history from this device"
-              onPress={handleClearData}
-              danger
-            />
-          </View>
-        </View>
-
-        {user ? (
           <View style={styles.section}>
+            <Text style={styles.sectionLabel}>ACCOUNT</Text>
+            {user ? (
+              <View style={styles.accountCard}>
+                <View style={styles.accountAvatar}>
+                  <Text style={styles.accountAvatarText}>
+                    {user.displayName.charAt(0).toUpperCase()}
+                  </Text>
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.accountName}>{user.displayName}</Text>
+                  <Text style={styles.accountEmail}>{user.email}</Text>
+                </View>
+                <View style={styles.verifiedBadge}>
+                  <Ionicons name="checkmark-circle" size={18} color={Colors.dark.safe} />
+                </View>
+              </View>
+            ) : (
+              <Pressable
+                onPress={() => router.push("/(auth)/login")}
+                style={({ pressed }) => [
+                  styles.signInCard,
+                  { opacity: pressed ? 0.9 : 1 },
+                ]}
+              >
+                <View style={styles.signInIcon}>
+                  <Ionicons name="person-outline" size={24} color={Colors.dark.primary} />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.signInTitle}>Sign in to your account</Text>
+                  <Text style={styles.signInSub}>
+                    Access full features — comment, report, sync history
+                  </Text>
+                </View>
+                <Ionicons name="chevron-forward" size={20} color={Colors.dark.textMuted} />
+              </Pressable>
+            )}
+          </View>
+
+          <View style={styles.section}>
+            <Text style={styles.sectionLabel}>APP</Text>
+            <View style={styles.menuGroup}>
+              <MenuItem
+                icon="shield-checkmark-outline"
+                label="About Trust Scores"
+                sublabel="How QR code safety ratings work"
+                onPress={() => {
+                  Alert.alert(
+                    "Trust Scores",
+                    "Trust scores are calculated based on community reports. When users scan a QR code, they can report it as Safe, Scam, Fake, or Spam. The trust score reflects the community consensus on the QR code's safety."
+                  );
+                }}
+              />
+              <View style={styles.divider} />
+              <MenuItem
+                icon="help-circle-outline"
+                label="How It Works"
+                sublabel="Learn about QR code scanning"
+                onPress={() => {
+                  Alert.alert(
+                    "How It Works",
+                    "1. Scan any QR code using camera or gallery\n2. View the QR content and community trust score\n3. Read comments from other users\n4. Report suspicious QR codes to protect the community\n5. Sign in to comment, report, and sync your history"
+                  );
+                }}
+              />
+              <View style={styles.divider} />
+              <MenuItem
+                icon="chatbox-ellipses-outline"
+                label="Send Feedback"
+                sublabel="Help us improve QR Guard"
+                onPress={() => {
+                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                  setFeedbackModal(true);
+                }}
+              />
+            </View>
+          </View>
+
+          <View style={styles.section}>
+            <Text style={styles.sectionLabel}>DATA</Text>
+            <View style={styles.menuGroup}>
+              <MenuItem
+                icon="trash-outline"
+                label="Clear Local Data"
+                sublabel="Remove scan history from this device"
+                onPress={handleClearData}
+                danger
+              />
+            </View>
+          </View>
+
+          {user ? (
+            <>
+              <View style={styles.section}>
+                <Pressable
+                  onPress={handleSignOut}
+                  style={({ pressed }) => [
+                    styles.signOutBtn,
+                    { opacity: pressed ? 0.8 : 1 },
+                  ]}
+                >
+                  <Ionicons name="log-out-outline" size={20} color={Colors.dark.danger} />
+                  <Text style={styles.signOutText}>Sign Out</Text>
+                </Pressable>
+              </View>
+
+              <View style={styles.section}>
+                <Pressable
+                  onPress={handleDeleteAccount}
+                  style={({ pressed }) => [
+                    styles.deleteAccountBtn,
+                    { opacity: pressed ? 0.8 : 1 },
+                  ]}
+                >
+                  <Ionicons name="person-remove-outline" size={20} color={Colors.dark.textMuted} />
+                  <Text style={styles.deleteAccountText}>Delete Account</Text>
+                </Pressable>
+              </View>
+            </>
+          ) : null}
+
+          <View style={styles.footer}>
+            <Text style={styles.footerText}>QR Guard v1.0.0</Text>
+            <Text style={styles.footerSubtext}>Scan smart. Stay safe.</Text>
+          </View>
+
+          <View style={{ height: 100 }} />
+        </ScrollView>
+      </View>
+
+      {/* Feedback Modal */}
+      <Modal
+        visible={feedbackModal}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setFeedbackModal(false)}
+      >
+        <Pressable style={styles.modalOverlay} onPress={() => setFeedbackModal(false)}>
+          <Pressable style={styles.modalBox} onPress={() => {}}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Send Feedback</Text>
+              <Pressable onPress={() => setFeedbackModal(false)}>
+                <Ionicons name="close" size={24} color={Colors.dark.textMuted} />
+              </Pressable>
+            </View>
+            <Text style={styles.modalSubtitle}>
+              Your feedback helps us improve QR Guard for everyone.
+            </Text>
+
+            {!user ? (
+              <View style={styles.feedbackEmailContainer}>
+                <Text style={styles.inputLabel}>Email (optional)</Text>
+                <TextInput
+                  style={styles.feedbackInput}
+                  placeholder="your@email.com"
+                  placeholderTextColor={Colors.dark.textMuted}
+                  value={feedbackEmail}
+                  onChangeText={setFeedbackEmail}
+                  keyboardType="email-address"
+                  autoCapitalize="none"
+                />
+              </View>
+            ) : null}
+
+            <Text style={styles.inputLabel}>Message</Text>
+            <TextInput
+              style={[styles.feedbackInput, styles.feedbackTextarea]}
+              placeholder="Share your thoughts, bugs, or feature ideas..."
+              placeholderTextColor={Colors.dark.textMuted}
+              value={feedbackMessage}
+              onChangeText={setFeedbackMessage}
+              multiline
+              maxLength={1000}
+              textAlignVertical="top"
+            />
+            <Text style={styles.charCount}>{feedbackMessage.length}/1000</Text>
+
             <Pressable
-              onPress={handleSignOut}
+              onPress={handleSubmitFeedback}
+              disabled={feedbackLoading || !feedbackMessage.trim()}
               style={({ pressed }) => [
-                styles.signOutBtn,
-                { opacity: pressed ? 0.8 : 1 },
+                styles.submitBtn,
+                {
+                  opacity: pressed || feedbackLoading || !feedbackMessage.trim() ? 0.6 : 1,
+                },
               ]}
             >
-              <Ionicons name="log-out-outline" size={20} color={Colors.dark.danger} />
-              <Text style={styles.signOutText}>Sign Out</Text>
+              {feedbackLoading ? (
+                <ActivityIndicator color="#000" />
+              ) : (
+                <>
+                  <Ionicons name="send" size={18} color="#000" />
+                  <Text style={styles.submitBtnText}>Submit Feedback</Text>
+                </>
+              )}
             </Pressable>
-          </View>
-        ) : null}
-
-        <View style={styles.footer}>
-          <Text style={styles.footerText}>QR Guard v1.0.0</Text>
-          <Text style={styles.footerSubtext}>Scan smart. Stay safe.</Text>
-        </View>
-
-        <View style={{ height: 100 }} />
-      </ScrollView>
-    </View>
+          </Pressable>
+        </Pressable>
+      </Modal>
+    </>
   );
 }
 
@@ -199,9 +364,7 @@ function MenuItem({
         color={danger ? Colors.dark.danger : Colors.dark.textSecondary}
       />
       <View style={{ flex: 1 }}>
-        <Text
-          style={[styles.menuLabel, danger && { color: Colors.dark.danger }]}
-        >
+        <Text style={[styles.menuLabel, danger && { color: Colors.dark.danger }]}>
           {label}
         </Text>
         {sublabel ? (
@@ -349,6 +512,22 @@ const styles = StyleSheet.create({
     fontFamily: "Inter_600SemiBold",
     color: Colors.dark.danger,
   },
+  deleteAccountBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+    backgroundColor: Colors.dark.surface,
+    paddingVertical: 16,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: Colors.dark.surfaceBorder,
+  },
+  deleteAccountText: {
+    fontSize: 16,
+    fontFamily: "Inter_600SemiBold",
+    color: Colors.dark.textMuted,
+  },
   footer: {
     alignItems: "center",
     gap: 4,
@@ -364,5 +543,80 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontFamily: "Inter_400Regular",
     color: Colors.dark.textMuted,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.7)",
+    justifyContent: "flex-end",
+  },
+  modalBox: {
+    backgroundColor: Colors.dark.surface,
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    padding: 24,
+    paddingBottom: 40,
+    borderTopWidth: 1,
+    borderColor: Colors.dark.surfaceBorder,
+  },
+  modalHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: 6,
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontFamily: "Inter_700Bold",
+    color: Colors.dark.text,
+  },
+  modalSubtitle: {
+    fontSize: 14,
+    fontFamily: "Inter_400Regular",
+    color: Colors.dark.textMuted,
+    marginBottom: 20,
+  },
+  inputLabel: {
+    fontSize: 13,
+    fontFamily: "Inter_600SemiBold",
+    color: Colors.dark.textSecondary,
+    marginBottom: 6,
+  },
+  feedbackEmailContainer: {
+    marginBottom: 16,
+  },
+  feedbackInput: {
+    backgroundColor: Colors.dark.surfaceLight,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: Colors.dark.surfaceBorder,
+    padding: 14,
+    fontSize: 15,
+    fontFamily: "Inter_400Regular",
+    color: Colors.dark.text,
+  },
+  feedbackTextarea: {
+    minHeight: 120,
+    marginBottom: 6,
+  },
+  charCount: {
+    fontSize: 12,
+    fontFamily: "Inter_400Regular",
+    color: Colors.dark.textMuted,
+    textAlign: "right",
+    marginBottom: 16,
+  },
+  submitBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+    backgroundColor: Colors.dark.primary,
+    paddingVertical: 16,
+    borderRadius: 14,
+  },
+  submitBtnText: {
+    fontSize: 16,
+    fontFamily: "Inter_700Bold",
+    color: "#000",
   },
 });

@@ -4,9 +4,11 @@ import { NativeTabs, Icon, Label } from "expo-router/unstable-native-tabs";
 import { BlurView } from "expo-blur";
 import { Platform, StyleSheet, View, Pressable } from "react-native";
 import { MaterialCommunityIcons, Ionicons } from "@expo/vector-icons";
-import React from "react";
+import React, { useState, useEffect } from "react";
 import Colors from "@/constants/colors";
 import * as Haptics from "expo-haptics";
+import { useAuth } from "@/contexts/AuthContext";
+import { subscribeToNotificationCount } from "@/lib/firestore-service";
 
 function ScanTabButton({ onPress }: { onPress?: () => void }) {
   return (
@@ -24,6 +26,22 @@ function ScanTabButton({ onPress }: { onPress?: () => void }) {
       </View>
     </Pressable>
   );
+}
+
+function useNotificationCount() {
+  const { user } = useAuth();
+  const [count, setCount] = useState(0);
+
+  useEffect(() => {
+    if (!user) {
+      setCount(0);
+      return;
+    }
+    const unsub = subscribeToNotificationCount(user.id, setCount);
+    return unsub;
+  }, [user?.id]);
+
+  return count;
 }
 
 function NativeTabLayout() {
@@ -48,6 +66,7 @@ function NativeTabLayout() {
 function ClassicTabLayout() {
   const isWeb = Platform.OS === "web";
   const isIOS = Platform.OS === "ios";
+  const notifCount = useNotificationCount();
 
   return (
     <Tabs
@@ -90,6 +109,16 @@ function ClassicTabLayout() {
         name="index"
         options={{
           title: "Home",
+          tabBarBadge: notifCount > 0 ? notifCount : undefined,
+          tabBarBadgeStyle: {
+            backgroundColor: Colors.dark.primary,
+            color: "#000",
+            fontSize: 10,
+            fontFamily: "Inter_700Bold",
+            minWidth: 16,
+            height: 16,
+            borderRadius: 8,
+          },
           tabBarIcon: ({ color, focused }) => (
             <Ionicons
               name={focused ? "home" : "home-outline"}

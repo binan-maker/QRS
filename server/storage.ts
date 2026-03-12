@@ -1,3 +1,9 @@
+// ─── PostgreSQL Migration Layer ──────────────────────────────────────────────
+// This file is intentionally NOT imported anywhere right now.
+// The app uses Firebase / Firestore as the primary data store.
+// This file will be activated as a Drizzle/PostgreSQL migration layer
+// when the app reaches ~10k users. Do NOT delete it.
+// ─────────────────────────────────────────────────────────────────────────────
 import { drizzle } from "drizzle-orm/node-postgres";
 import { eq, desc, count, and, sql, asc } from "drizzle-orm";
 import {

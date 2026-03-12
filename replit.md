@@ -5,61 +5,101 @@ A full-stack mobile-first QR code scanning and management app built with Expo (R
 ## Architecture
 
 - **Frontend**: Expo (React Native) with Expo Router for navigation, running on port 8081
-- **Backend**: Express server running on port 5000
-- **Database**: PostgreSQL with Drizzle ORM
-- **Shared**: Common schema definitions in `shared/schema.ts`
+- **Backend**: Express server running on port 5000 (only handles `/api/qr/decode-image`)
+- **Primary Database**: Firebase Firestore (all app data: QR codes, reports, comments, users, favorites, follows, feedback)
+- **Realtime Database**: Firebase Realtime Database (live notifications for followers when QR codes get new comments/reports)
+- **Auth**: Firebase Auth — email/password + Google OAuth (`expo-auth-session`)
+- **PostgreSQL / Drizzle**: Reserved for future migration at ~10k users (`server/storage.ts` — not imported anywhere yet)
 
 ## Project Structure
 
-- `app/` - Expo Router screens (auth, tabs, qr-detail)
-- `server/` - Express backend (routes, storage, templates)
-- `shared/` - Shared Zod/Drizzle schema
-- `components/` - Reusable React Native components
-- `contexts/` - React Context providers (AuthContext)
-- `lib/` - Utility libraries (TanStack Query client)
-- `assets/` - Static assets
-- `patches/` - Package patches via patch-package
+- `app/` — Expo Router screens
+  - `(tabs)/index.tsx` — Home screen with notification bell + RTDB-powered notification panel
+  - `(tabs)/scanner.tsx` — QR scanner (camera + image gallery)
+  - `(tabs)/history.tsx` — Scan history + favorites
+  - `(tabs)/settings.tsx` — Account settings, feedback form, delete account
+  - `(auth)/` — Login + Register screens
+  - `qr-detail/[id].tsx` — QR detail with real-time Firestore listeners + RTDB notifications
+- `server/` — Express backend (`routes.ts` only does image decode via Jimp + jsQR)
+- `shared/` — Drizzle schema (future PostgreSQL)
+- `components/` — Reusable React Native components
+- `contexts/AuthContext.tsx` — Firebase Auth with `onIdTokenChanged` for automatic token refresh
+- `lib/firebase.ts` — Firebase app, Auth, Firestore, Realtime Database
+- `lib/firestore-service.ts` — All Firebase/Firestore/RTDB operations
+- `lib/query-client.ts` — TanStack Query + API request utility
+- `assets/` — Static assets
+
+## Firebase Integration (complete)
+
+### Firestore Collections
+- `qrCodes/{qrId}` — QR code data (content, contentType, scanCount, commentCount)
+- `qrCodes/{qrId}/reports/{userId}` — Reports (safe/scam/fake/spam) per user
+- `qrCodes/{qrId}/followers/{userId}` — Followers per QR code
+- `qrCodes/{qrId}/comments/{commentId}` — Comments (soft-delete supported)
+- `qrCodes/{qrId}/comments/{commentId}/likes/{userId}` — Like/dislike per comment per user
+- `qrCodes/{qrId}/comments/{commentId}/reports/{userId}` — Comment reports
+- `users/{userId}` — User profile (soft-delete support)
+- `users/{userId}/scans/` — Scan history
+- `users/{userId}/favorites/` — Favorited QR codes
+- `users/{userId}/following/` — Followed QR codes
+- `users/{userId}/comments/` — User's comments (for profile)
+- `feedback/` — Submitted feedback
+
+### Real-time Subscriptions (onSnapshot)
+- `subscribeToQrStats` — Live scan count + comment count on QR detail
+- `subscribeToQrReports` — Live report counts → trust score recalculation
+- `subscribeToComments` — Live first-page comments
+- `getCommentUserLikes` — Batch-fetches current user's like status for visible comments
+
+### Firebase Realtime Database
+Path: `notifications/{userId}/items/{notifId}`
+- `subscribeToNotificationCount` — Unread count for tab badge + notification bell
+- `subscribeToNotifications` — Full notification list for panel
+- `markAllNotificationsRead` — Bulk mark-read via atomic update
+- `clearAllNotifications` — Delete all notifications for user
+- `notifyQrFollowers` — Writes notifications to all followers when a comment/report is added
 
 ## Workflows
 
-- **Start Backend**: `npm run server:dev` — runs Express on port 5000 via tsx
-- **Start Frontend**: `npm run expo:dev` — runs Expo Metro bundler on port 8081
+- **Start Backend**: `npm run server:dev` — Express on port 5000 (tsx)
+- **Start Frontend**: `npm run expo:dev` — Expo Metro bundler on port 8081
 
 ## Authentication
 
-- **Email/Password**: Custom Express backend with bcrypt password hashing and UUID session tokens
-- **Google Sign-In**: Uses `expo-auth-session/providers/google` with OAuth2 flow. Access token is sent to backend `/api/auth/google-signin` which verifies it via Google's userinfo endpoint and creates/returns a session
-- Firebase is initialized on client-side via `lib/firebase.ts` (Firebase project: `scan-guard-19a7f`)
+- Firebase Auth via `onIdTokenChanged` (automatic hourly token refresh)
+- Email/password sign-in and registration
+- Google OAuth via `expo-auth-session` + `signInWithCredential`
+- User profiles synced to `users/{userId}` in Firestore on first sign-in
+- Deleted-account guard: throws if `isDeleted: true` in Firestore user doc
 - Google Web Client ID: `971359442211-dppv9u14kun8mo5c0e07pr6f6veh81aa.apps.googleusercontent.com`
 - Google Android Client ID: `971359442211-j2emebstu4e63sd7u56k852ok1sb9rs2.apps.googleusercontent.com`
-- App package name: `com.qrguard.app`
+
+## QR Code IDs
+
+QR code IDs are SHA-256 hashes of the QR content (first 20 characters), not UUIDs.
 
 ## Key Dependencies
 
 - `expo` ~54.0.27, `expo-router` ~6.0.17
-- `express` ^5.0.1
-- `drizzle-orm` with `pg` for PostgreSQL
-- `@tanstack/react-query` for data fetching
-- `tsx` for running TypeScript server directly
-- `bcryptjs` for password hashing
-- `expo-auth-session` for Google OAuth
-- `firebase` for Firebase client SDK
-- `expo-web-browser` for OAuth web flows
+- `firebase` — Firestore + Auth + Realtime Database
+- `expo-auth-session` — Google OAuth
+- `expo-crypto` — SHA-256 hashing for QR IDs
+- `express` ^5.0.1 — Minimal backend (image decode only)
+- `@tanstack/react-query` — Data fetching
+- `drizzle-orm` with `pg` — Future PostgreSQL migration (dead code for now)
 
 ## Environment Variables
 
-- `DATABASE_URL` — PostgreSQL connection string (provisioned by Replit)
 - `PORT` — Server port (defaults to 5000)
-- `REPLIT_DEV_DOMAIN` — Used for CORS and Expo proxy URL configuration
-- `EXPO_PUBLIC_DOMAIN` — Backend API URL (falls back to localhost:5000 in dev)
-- Firebase keys are set in `.replit` userenv and hardcoded as fallbacks in `lib/firebase.ts`
+- `REPLIT_DEV_DOMAIN` — Used for CORS and Expo proxy URL
+- `EXPO_PUBLIC_DOMAIN` — Backend API URL
+- Firebase keys stored in `.replit` `[userenv.shared]` and hardcoded as fallbacks in `lib/firebase.ts`
 
-## Database
+## Important Notes
 
-Schema is defined in `shared/schema.ts`. To push schema changes:
-```
-npm run db:push
-```
+- `server/storage.ts` is **intentionally not imported** anywhere. It is the Drizzle/PostgreSQL migration layer to activate at ~10k users. Do NOT delete it.
+- No backend auth routes — all auth is client-side Firebase. The Express server only decodes QR images from uploaded photos.
+- Firestore security rules should enforce read/write permissions by `request.auth.uid`.
 
 ## Deployment
 
