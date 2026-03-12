@@ -1,22 +1,47 @@
 import { fetch } from "expo/fetch";
 import { QueryClient, QueryFunction } from "@tanstack/react-query";
+import Constants from "expo-constants";
+import { Platform } from "react-native";
 
 /**
  * Gets the base URL for the Express API server (e.g., "http://localhost:3000")
  * @returns {string} The API base URL
  */
-export function getApiUrl(): string {
-  let host = process.env.EXPO_PUBLIC_DOMAIN;
+function isValidHost(host: string | undefined): host is string {
+  return (
+    !!host &&
+    host !== "localhost" &&
+    host !== "127.0.0.1" &&
+    !host.startsWith(":")
+  );
+}
 
-  if (!host) {
-    if (__DEV__) {
-      return "http://localhost:5000/";
-    }
-    return "/";
+export function getApiUrl(): string {
+  const explicitDomain = process.env.EXPO_PUBLIC_DOMAIN;
+  if (explicitDomain && isValidHost(explicitDomain.split(":")[0])) {
+    return new URL(`https://${explicitDomain}`).href;
   }
 
-  let url = new URL(`https://${host}`);
-  return url.href;
+  const packagerHost = process.env.REACT_NATIVE_PACKAGER_HOSTNAME;
+  if (isValidHost(packagerHost)) {
+    return `https://${packagerHost}:5000/`;
+  }
+
+  if (Platform.OS !== "web") {
+    const expoGoConfig = (Constants as any).expoGoConfig;
+    const debuggerHost =
+      expoGoConfig?.debuggerHost ||
+      (Constants as any).manifest?.debuggerHost;
+
+    if (typeof debuggerHost === "string") {
+      const hostname = debuggerHost.split(":")[0];
+      if (isValidHost(hostname)) {
+        return `https://${hostname}:5000/`;
+      }
+    }
+  }
+
+  return "/";
 }
 
 async function throwIfResNotOk(res: Response) {
