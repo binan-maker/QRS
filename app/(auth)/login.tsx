@@ -9,6 +9,7 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
+  Alert,
 } from "react-native";
 import { Link, router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
@@ -131,6 +132,22 @@ export default function LoginScreen() {
           )}
         </Pressable>
 
+        <View style={styles.dividerRow}>
+          <View style={styles.dividerLine} />
+          <Text style={styles.dividerText}>or</Text>
+          <View style={styles.dividerLine} />
+        </View>
+
+        <Pressable
+          onPress={() => Alert.alert("Coming Soon", "Google Sign-In will be available in the next update.")}
+          style={({ pressed }) => [styles.googleButton, { opacity: pressed ? 0.8 : 1 }]}
+        >
+          <View style={styles.googleIconCircle}>
+            <Text style={styles.googleIconText}>G</Text>
+          </View>
+          <Text style={styles.googleButtonText}>Continue with Google</Text>
+        </Pressable>
+
         <View style={styles.footer}>
           <Text style={styles.footerText}>Don't have an account?</Text>
           <Link href="/(auth)/register" asChild>
@@ -239,5 +256,51 @@ const styles = StyleSheet.create({
     color: Colors.dark.primary,
     fontFamily: "Inter_600SemiBold",
     fontSize: 14,
+  },
+  dividerRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+  },
+  dividerLine: {
+    flex: 1,
+    height: 1,
+    backgroundColor: Colors.dark.surfaceBorder,
+  },
+  dividerText: {
+    fontSize: 13,
+    fontFamily: "Inter_400Regular",
+    color: Colors.dark.textMuted,
+  },
+  googleButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    backgroundColor: Colors.dark.surface,
+    borderWidth: 1,
+    borderColor: Colors.dark.surfaceBorder,
+    paddingVertical: 14,
+    paddingHorizontal: 20,
+    borderRadius: 14,
+  },
+  googleIconCircle: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: "#fff",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  googleIconText: {
+    fontSize: 16,
+    fontFamily: "Inter_700Bold",
+    color: "#4285F4",
+  },
+  googleButtonText: {
+    fontSize: 15,
+    fontFamily: "Inter_600SemiBold",
+    color: Colors.dark.text,
+    flex: 1,
+    textAlign: "center",
   },
 });

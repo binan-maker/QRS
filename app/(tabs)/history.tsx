@@ -14,7 +14,6 @@ import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as Haptics from "expo-haptics";
-import Animated, { FadeIn, FadeInDown } from "react-native-reanimated";
 import Colors from "@/constants/colors";
 import { useAuth } from "@/contexts/AuthContext";
 import { getApiUrl } from "@/lib/query-client";
@@ -26,15 +25,18 @@ interface HistoryItem {
   contentType: string;
   scannedAt: string;
   qrCodeId?: string;
-  source: "local" | "cloud";
+  source: "local" | "cloud" | "favorite";
 }
+
+type Filter = "all" | "url" | "text" | "other" | "favorites";
 
 export default function HistoryScreen() {
   const { user, token } = useAuth();
   const insets = useSafeAreaInsets();
   const [history, setHistory] = useState<HistoryItem[]>([]);
+  const [favorites, setFavorites] = useState<HistoryItem[]>([]);
   const [refreshing, setRefreshing] = useState(false);
-  const [filter, setFilter] = useState<"all" | "url" | "text" | "other">("all");
+  const [filter, setFilter] = useState<Filter>("all");
 
   const topInset = Platform.OS === "web" ? 67 : insets.top;
 
@@ -79,15 +81,41 @@ export default function HistoryScreen() {
     setHistory(items);
   }, [user, token]);
 
+  const loadFavorites = useCallback(async () => {
+    if (!user || !token) {
+      setFavorites([]);
+      return;
+    }
+    try {
+      const baseUrl = getApiUrl();
+      const res = await fetch(`${baseUrl}api/user/favorites`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (res.ok) {
+        const data = await res.json();
+        const favItems: HistoryItem[] = (data.favorites || []).map((f: any) => ({
+          id: f.id,
+          content: f.content || f.qrCodeId,
+          contentType: f.contentType || "text",
+          scannedAt: f.createdAt,
+          qrCodeId: f.qrCodeId,
+          source: "favorite" as const,
+        }));
+        setFavorites(favItems);
+      }
+    } catch (e) {}
+  }, [user, token]);
+
   useEffect(() => {
     loadHistory();
-  }, [loadHistory]);
+    loadFavorites();
+  }, [loadHistory, loadFavorites]);
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
-    await loadHistory();
+    await Promise.all([loadHistory(), loadFavorites()]);
     setRefreshing(false);
-  }, [loadHistory]);
+  }, [loadHistory, loadFavorites]);
 
   async function clearLocalHistory() {
     Alert.alert(
@@ -115,16 +143,19 @@ export default function HistoryScreen() {
       case "email": return "mail";
       case "wifi": return "wifi";
       case "location": return "location";
+      case "payment": return "card";
       default: return "document-text";
     }
   }
 
-  const filtered = history.filter((item) => {
-    if (filter === "all") return true;
-    if (filter === "url") return item.contentType === "url";
-    if (filter === "text") return item.contentType === "text";
-    return !["url", "text"].includes(item.contentType);
-  });
+  const displayItems: HistoryItem[] = filter === "favorites"
+    ? favorites
+    : history.filter((item) => {
+        if (filter === "all") return true;
+        if (filter === "url") return item.contentType === "url";
+        if (filter === "text") return item.contentType === "text";
+        return !["url", "text"].includes(item.contentType);
+      });
 
   function formatDate(d: string) {
     const date = new Date(d);
@@ -140,8 +171,16 @@ export default function HistoryScreen() {
     return date.toLocaleDateString();
   }
 
+  const FILTERS: { key: Filter; label: string }[] = [
+    { key: "all", label: "All" },
+    { key: "url", label: "URLs" },
+    { key: "text", label: "Text" },
+    { key: "other", label: "Other" },
+    ...(user ? [{ key: "favorites" as Filter, label: "Favorites" }] : []),
+  ];
+
   const renderItem = useCallback(
-    ({ item, index }: { item: HistoryItem; index: number }) => (
+    ({ item }: { item: HistoryItem }) => (
       <Pressable
         onPress={() => {
           if (item.qrCodeId) {
@@ -152,16 +191,24 @@ export default function HistoryScreen() {
             });
           }
         }}
-        style={({ pressed }) => [
-          styles.historyItem,
-          { opacity: pressed ? 0.8 : 1 },
-        ]}
+        style={({ pressed }) => [styles.historyItem, { opacity: pressed ? 0.8 : 1 }]}
       >
-        <View style={[styles.itemIcon, { backgroundColor: Colors.dark.primaryDim }]}>
+        <View style={[
+          styles.itemIcon,
+          {
+            backgroundColor: item.source === "favorite"
+              ? Colors.dark.dangerDim
+              : Colors.dark.primaryDim,
+          },
+        ]}>
           <Ionicons
-            name={getContentIcon(item.contentType) as any}
+            name={
+              item.source === "favorite"
+                ? "heart"
+                : (getContentIcon(item.contentType) as any)
+            }
             size={20}
-            color={Colors.dark.primary}
+            color={item.source === "favorite" ? Colors.dark.danger : Colors.dark.primary}
           />
         </View>
         <View style={{ flex: 1 }}>
@@ -175,17 +222,27 @@ export default function HistoryScreen() {
                 styles.sourceBadge,
                 {
                   backgroundColor:
-                    item.source === "cloud"
+                    item.source === "favorite"
+                      ? Colors.dark.dangerDim
+                      : item.source === "cloud"
                       ? Colors.dark.accentDim
                       : Colors.dark.surfaceLight,
                 },
               ]}
             >
               <Ionicons
-                name={item.source === "cloud" ? "cloud" : "phone-portrait"}
+                name={
+                  item.source === "favorite"
+                    ? "heart"
+                    : item.source === "cloud"
+                    ? "cloud"
+                    : "phone-portrait"
+                }
                 size={10}
                 color={
-                  item.source === "cloud"
+                  item.source === "favorite"
+                    ? Colors.dark.danger
+                    : item.source === "cloud"
                     ? Colors.dark.accent
                     : Colors.dark.textMuted
                 }
@@ -195,13 +252,19 @@ export default function HistoryScreen() {
                   styles.sourceText,
                   {
                     color:
-                      item.source === "cloud"
+                      item.source === "favorite"
+                        ? Colors.dark.danger
+                        : item.source === "cloud"
                         ? Colors.dark.accent
                         : Colors.dark.textMuted,
                   },
                 ]}
               >
-                {item.source === "cloud" ? "Synced" : "Local"}
+                {item.source === "favorite"
+                  ? "Favorite"
+                  : item.source === "cloud"
+                  ? "Synced"
+                  : "Local"}
               </Text>
             </View>
           </View>
@@ -215,43 +278,70 @@ export default function HistoryScreen() {
   return (
     <View style={[styles.container, { paddingTop: topInset }]}>
       <View style={styles.header}>
-        <Text style={styles.title}>Scan History</Text>
-        {history.length > 0 ? (
-          <Pressable onPress={clearLocalHistory}>
-            <Ionicons name="trash-outline" size={22} color={Colors.dark.textMuted} />
+        <Text style={styles.title}>History</Text>
+        <View style={styles.headerActions}>
+          {history.length > 0 && filter !== "favorites" ? (
+            <Pressable onPress={clearLocalHistory} style={styles.headerBtn}>
+              <Ionicons name="trash-outline" size={20} color={Colors.dark.textMuted} />
+            </Pressable>
+          ) : null}
+          <Pressable
+            onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              router.push("/settings");
+            }}
+            style={styles.headerBtn}
+          >
+            <Ionicons name="settings-outline" size={22} color={Colors.dark.textSecondary} />
           </Pressable>
-        ) : null}
+        </View>
       </View>
 
       <View style={styles.filterRow}>
-        {(["all", "url", "text", "other"] as const).map((f) => (
+        {FILTERS.map((f) => (
           <Pressable
-            key={f}
+            key={f.key}
             onPress={() => {
-              setFilter(f);
+              setFilter(f.key);
               Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
             }}
-            style={[styles.filterChip, filter === f && styles.filterChipActive]}
+            style={[
+              styles.filterChip,
+              filter === f.key && styles.filterChipActive,
+              f.key === "favorites" && styles.filterChipFavorite,
+              f.key === "favorites" && filter === f.key && styles.filterChipFavoriteActive,
+            ]}
           >
+            {f.key === "favorites" ? (
+              <Ionicons
+                name={filter === "favorites" ? "heart" : "heart-outline"}
+                size={13}
+                color={filter === "favorites" ? Colors.dark.danger : Colors.dark.textMuted}
+              />
+            ) : null}
             <Text
               style={[
                 styles.filterText,
-                filter === f && styles.filterTextActive,
+                filter === f.key && styles.filterTextActive,
+                f.key === "favorites" && filter === f.key && { color: Colors.dark.danger },
               ]}
             >
-              {f === "all" ? "All" : f === "url" ? "URLs" : f === "text" ? "Text" : "Other"}
+              {f.label}
             </Text>
           </Pressable>
         ))}
       </View>
 
       <FlatList
-        data={filtered}
+        data={displayItems}
         renderItem={renderItem}
         keyExtractor={(item) => item.id}
-        contentContainerStyle={styles.list}
+        contentContainerStyle={[
+          styles.list,
+          { paddingBottom: Platform.OS === "web" ? 34 + 84 : insets.bottom + 84 },
+        ]}
         showsVerticalScrollIndicator={false}
-        scrollEnabled={!!filtered.length}
+        scrollEnabled={!!displayItems.length}
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
@@ -261,10 +351,18 @@ export default function HistoryScreen() {
         }
         ListEmptyComponent={
           <View style={styles.emptyState}>
-            <Ionicons name="time-outline" size={48} color={Colors.dark.textMuted} />
-            <Text style={styles.emptyTitle}>No history yet</Text>
+            <Ionicons
+              name={filter === "favorites" ? "heart-outline" : "time-outline"}
+              size={48}
+              color={Colors.dark.textMuted}
+            />
+            <Text style={styles.emptyTitle}>
+              {filter === "favorites" ? "No favorites yet" : "No history yet"}
+            </Text>
             <Text style={styles.emptySubtext}>
-              Scanned QR codes will appear here
+              {filter === "favorites"
+                ? "Tap the heart on QR detail to add favorites"
+                : "Scanned QR codes will appear here"}
             </Text>
           </View>
         }
@@ -283,21 +381,38 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     alignItems: "center",
     paddingHorizontal: 20,
-    paddingVertical: 16,
+    paddingVertical: 14,
   },
   title: {
     fontSize: 26,
     fontFamily: "Inter_700Bold",
     color: Colors.dark.text,
   },
+  headerActions: {
+    flexDirection: "row",
+    gap: 6,
+    alignItems: "center",
+  },
+  headerBtn: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    backgroundColor: Colors.dark.surface,
+    alignItems: "center",
+    justifyContent: "center",
+  },
   filterRow: {
     flexDirection: "row",
     paddingHorizontal: 20,
     gap: 8,
     marginBottom: 12,
+    flexWrap: "nowrap",
   },
   filterChip: {
-    paddingHorizontal: 16,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    paddingHorizontal: 14,
     paddingVertical: 8,
     borderRadius: 20,
     backgroundColor: Colors.dark.surface,
@@ -307,6 +422,13 @@ const styles = StyleSheet.create({
   filterChipActive: {
     backgroundColor: Colors.dark.primaryDim,
     borderColor: Colors.dark.primary,
+  },
+  filterChipFavorite: {
+    borderColor: Colors.dark.danger + "50",
+  },
+  filterChipFavoriteActive: {
+    backgroundColor: Colors.dark.dangerDim,
+    borderColor: Colors.dark.danger,
   },
   filterText: {
     fontSize: 13,
@@ -318,7 +440,6 @@ const styles = StyleSheet.create({
   },
   list: {
     paddingHorizontal: 20,
-    paddingBottom: 100,
   },
   historyItem: {
     flexDirection: "row",
@@ -380,5 +501,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontFamily: "Inter_400Regular",
     color: Colors.dark.textMuted,
+    textAlign: "center",
+    maxWidth: 260,
   },
 });

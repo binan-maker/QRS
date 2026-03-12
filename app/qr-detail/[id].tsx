@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import {
   View,
   Text,
@@ -10,6 +10,7 @@ import {
   Platform,
   Linking,
   Alert,
+  Modal,
   KeyboardAvoidingView,
 } from "react-native";
 import { useLocalSearchParams, router } from "expo-router";
@@ -33,39 +34,42 @@ interface CommentItem {
   id: string;
   text: string;
   createdAt: string;
+  likeCount: number;
+  dislikeCount: number;
+  userLike: "like" | "dislike" | null;
   user: { displayName: string };
+  parentId?: string | null;
 }
 
 const REPORT_TYPES = [
-  {
-    key: "safe",
-    label: "Safe",
-    icon: "shield-checkmark",
-    color: Colors.dark.safe,
-    bg: Colors.dark.safeDim,
-  },
-  {
-    key: "scam",
-    label: "Scam",
-    icon: "warning",
-    color: Colors.dark.danger,
-    bg: Colors.dark.dangerDim,
-  },
-  {
-    key: "fake",
-    label: "Fake",
-    icon: "close-circle",
-    color: Colors.dark.warning,
-    bg: Colors.dark.warningDim,
-  },
-  {
-    key: "spam",
-    label: "Spam",
-    icon: "mail-unread",
-    color: Colors.dark.accent,
-    bg: Colors.dark.accentDim,
-  },
+  { key: "safe", label: "Safe", icon: "shield-checkmark", color: Colors.dark.safe, bg: Colors.dark.safeDim },
+  { key: "scam", label: "Scam", icon: "warning", color: Colors.dark.danger, bg: Colors.dark.dangerDim },
+  { key: "fake", label: "Fake", icon: "close-circle", color: Colors.dark.warning, bg: Colors.dark.warningDim },
+  { key: "spam", label: "Spam", icon: "mail-unread", color: Colors.dark.accent, bg: Colors.dark.accentDim },
 ];
+
+const PAYMENT_APPS: { prefix: string; name: string; icon: string; packageAndroid?: string; schemeIOS?: string }[] = [
+  { prefix: "upi://", name: "UPI Payment", icon: "card", packageAndroid: "com.google.android.apps.nbu.paisa.user", schemeIOS: "gpay" },
+  { prefix: "phonepe://", name: "PhonePe", icon: "phone-portrait", packageAndroid: "com.phonepe.app" },
+  { prefix: "paytm://", name: "Paytm", icon: "wallet", packageAndroid: "net.one97.paytm" },
+  { prefix: "gpay://", name: "Google Pay", icon: "card-outline", packageAndroid: "com.google.android.apps.nbu.paisa.user" },
+];
+
+const COMMENT_REPORT_REASONS = [
+  { label: "Inappropriate content", value: "inappropriate" },
+  { label: "Sensitive or disturbing", value: "sensitive" },
+  { label: "Harmful or dangerous", value: "harmful" },
+];
+
+function detectPaymentApp(content: string) {
+  for (const app of PAYMENT_APPS) {
+    if (content.toLowerCase().startsWith(app.prefix)) return app;
+  }
+  if (content.toLowerCase().includes("upi://")) return PAYMENT_APPS[0];
+  return null;
+}
+
+const COMMENTS_PER_PAGE = 20;
 
 export default function QrDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -77,63 +81,89 @@ export default function QrDetailScreen() {
   const [totalScans, setTotalScans] = useState(0);
   const [totalComments, setTotalComments] = useState(0);
   const [userReport, setUserReport] = useState<string | null>(null);
+  const [isFavorite, setIsFavorite] = useState(false);
+  const [isFollowing, setIsFollowing] = useState(false);
+  const [followCount, setFollowCount] = useState(0);
+  const [trustScore, setTrustScore] = useState<any>(null);
   const [commentsList, setCommentsList] = useState<CommentItem[]>([]);
-  const [commentsLimited, setCommentsLimited] = useState(false);
+  const [commentsPage, setCommentsPage] = useState(1);
+  const [commentsTotal, setCommentsTotal] = useState(0);
   const [newComment, setNewComment] = useState("");
+  const [replyTo, setReplyTo] = useState<{ id: string; author: string } | null>(null);
   const [loading, setLoading] = useState(true);
+  const [commentsLoading, setCommentsLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [reportLoading, setReportLoading] = useState<string | null>(null);
+  const [favoriteLoading, setFavoriteLoading] = useState(false);
+  const [followLoading, setFollowLoading] = useState(false);
+  const [commentMenuId, setCommentMenuId] = useState<string | null>(null);
+  const [commentReportModal, setCommentReportModal] = useState<string | null>(null);
 
   const topInset = Platform.OS === "web" ? 67 : insets.top;
 
-  const loadData = useCallback(async () => {
+  const loadQrData = useCallback(async () => {
     try {
       const baseUrl = getApiUrl();
       const headers: Record<string, string> = {};
       if (token) headers["Authorization"] = `Bearer ${token}`;
 
-      const [qrRes, commentsRes] = await Promise.all([
-        fetch(`${baseUrl}api/qr/${id}`, { headers }),
-        fetch(`${baseUrl}api/qr/${id}/comments`, { headers }),
-      ]);
-
-      if (qrRes.ok) {
-        const qrData = await qrRes.json();
-        setQrCode(qrData.qrCode);
-        setReportCounts(qrData.reportCounts || {});
-        setTotalScans(qrData.totalScans || 0);
-        setTotalComments(qrData.totalComments || 0);
-        if (qrData.userReport) {
-          setUserReport(qrData.userReport.reportType);
-        }
-      }
-
-      if (commentsRes.ok) {
-        const commentsData = await commentsRes.json();
-        setCommentsList(commentsData.comments || []);
-        setCommentsLimited(commentsData.limited || false);
+      const res = await fetch(`${baseUrl}api/qr/${id}`, { headers });
+      if (res.ok) {
+        const data = await res.json();
+        setQrCode(data.qrCode);
+        setReportCounts(data.reportCounts || {});
+        setTotalScans(data.totalScans || 0);
+        setTotalComments(data.totalComments || 0);
+        setIsFavorite(data.isFavorite || false);
+        setIsFollowing(data.isFollowing || false);
+        setFollowCount(data.followCount || 0);
+        setTrustScore(data.trustScore || null);
+        if (data.userReport) setUserReport(data.userReport.reportType);
       }
     } catch (e) {
-      console.error("Load error:", e);
+      console.error("Load QR error:", e);
     } finally {
       setLoading(false);
     }
   }, [id, token]);
 
+  const loadComments = useCallback(async (page = 1, append = false) => {
+    setCommentsLoading(true);
+    try {
+      const baseUrl = getApiUrl();
+      const headers: Record<string, string> = {};
+      if (token) headers["Authorization"] = `Bearer ${token}`;
+      const offset = (page - 1) * COMMENTS_PER_PAGE;
+      const res = await fetch(
+        `${baseUrl}api/qr/${id}/comments?offset=${offset}&limit=${COMMENTS_PER_PAGE}`,
+        { headers }
+      );
+      if (res.ok) {
+        const data = await res.json();
+        const newComments = data.comments || [];
+        setCommentsTotal(data.total || newComments.length);
+        if (append) {
+          setCommentsList((prev) => [...prev, ...newComments]);
+        } else {
+          setCommentsList(newComments);
+        }
+        setCommentsPage(page);
+      }
+    } catch (e) {}
+    setCommentsLoading(false);
+  }, [id, token]);
+
   useEffect(() => {
-    loadData();
-  }, [loadData]);
+    loadQrData();
+    loadComments(1, false);
+  }, [loadQrData, loadComments]);
 
   async function handleReport(type: string) {
     if (!user) {
-      Alert.alert(
-        "Sign In Required",
-        "You need to sign in to report QR codes.",
-        [
-          { text: "Cancel", style: "cancel" },
-          { text: "Sign In", onPress: () => router.push("/(auth)/login") },
-        ],
-      );
+      Alert.alert("Sign In Required", "You need to sign in to report QR codes.", [
+        { text: "Cancel", style: "cancel" },
+        { text: "Sign In", onPress: () => router.push("/(auth)/login") },
+      ]);
       return;
     }
     setReportLoading(type);
@@ -141,10 +171,7 @@ export default function QrDetailScreen() {
       const baseUrl = getApiUrl();
       const res = await fetch(`${baseUrl}api/qr/${id}/report`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
         body: JSON.stringify({ reportType: type }),
       });
       if (res.ok) {
@@ -158,6 +185,57 @@ export default function QrDetailScreen() {
     } finally {
       setReportLoading(null);
     }
+  }
+
+  async function handleToggleFavorite() {
+    if (!user) {
+      Alert.alert("Sign In Required", "Sign in to add favorites.", [
+        { text: "Cancel", style: "cancel" },
+        { text: "Sign In", onPress: () => router.push("/(auth)/login") },
+      ]);
+      return;
+    }
+    setFavoriteLoading(true);
+    try {
+      const baseUrl = getApiUrl();
+      const res = await fetch(`${baseUrl}api/qr/${id}/favorite`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setIsFavorite(data.isFavorite);
+        Haptics.impactAsync(
+          data.isFavorite ? Haptics.ImpactFeedbackStyle.Medium : Haptics.ImpactFeedbackStyle.Light
+        );
+      }
+    } catch (e) {}
+    setFavoriteLoading(false);
+  }
+
+  async function handleToggleFollow() {
+    if (!user) {
+      Alert.alert("Sign In Required", "Sign in to follow QR codes.", [
+        { text: "Cancel", style: "cancel" },
+        { text: "Sign In", onPress: () => router.push("/(auth)/login") },
+      ]);
+      return;
+    }
+    setFollowLoading(true);
+    try {
+      const baseUrl = getApiUrl();
+      const res = await fetch(`${baseUrl}api/qr/${id}/follow`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setIsFollowing(data.isFollowing);
+        setFollowCount(data.followCount);
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      }
+    } catch (e) {}
+    setFollowLoading(false);
   }
 
   async function handleSubmitComment() {
@@ -174,16 +252,18 @@ export default function QrDetailScreen() {
       const baseUrl = getApiUrl();
       const res = await fetch(`${baseUrl}api/qr/${id}/comments`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ text: newComment.trim() }),
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({
+          text: newComment.trim(),
+          parentId: replyTo?.id || null,
+        }),
       });
       if (res.ok) {
         setNewComment("");
+        setReplyTo(null);
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-        loadData();
+        await loadComments(1, false);
+        setTotalComments((p) => p + 1);
       }
     } catch (e: any) {
       Alert.alert("Error", e.message);
@@ -192,44 +272,98 @@ export default function QrDetailScreen() {
     }
   }
 
-  function getTrustScore(): { score: number; label: string; color: string } {
-    const total =
-      (reportCounts.safe || 0) +
-      (reportCounts.scam || 0) +
-      (reportCounts.fake || 0) +
-      (reportCounts.spam || 0);
+  async function handleCommentLike(commentId: string, action: "like" | "dislike") {
+    if (!user) {
+      Alert.alert("Sign In Required", "Sign in to like comments.", [
+        { text: "Cancel", style: "cancel" },
+        { text: "Sign In", onPress: () => router.push("/(auth)/login") },
+      ]);
+      return;
+    }
+    try {
+      const baseUrl = getApiUrl();
+      const res = await fetch(`${baseUrl}api/comments/${commentId}/like`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ isLike: action === "like" }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setCommentsList((prev) =>
+          prev.map((c) => {
+            if (c.id !== commentId) return c;
+            const prevUserLike = c.userLike;
+            let newUserLike: "like" | "dislike" | null;
+            if (prevUserLike === action) {
+              newUserLike = null;
+            } else {
+              newUserLike = action;
+            }
+            return {
+              ...c,
+              likeCount: data.likes ?? c.likeCount,
+              dislikeCount: data.dislikes ?? c.dislikeCount,
+              userLike: newUserLike,
+            };
+          })
+        );
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      }
+    } catch (e) {}
+  }
 
-    if (total === 0)
-      return { score: -1, label: "No Reports", color: Colors.dark.textMuted };
-
-    const safeRatio = (reportCounts.safe || 0) / total;
-    if (safeRatio >= 0.7)
-      return {
-        score: safeRatio * 100,
-        label: "Trusted",
-        color: Colors.dark.safe,
-      };
-    if (safeRatio >= 0.4)
-      return {
-        score: safeRatio * 100,
-        label: "Caution",
-        color: Colors.dark.warning,
-      };
-    return {
-      score: safeRatio * 100,
-      label: "Dangerous",
-      color: Colors.dark.danger,
-    };
+  async function handleCommentReport(commentId: string, reason: string) {
+    setCommentReportModal(null);
+    if (!user) return;
+    try {
+      const baseUrl = getApiUrl();
+      await fetch(`${baseUrl}api/comments/${commentId}/report`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ reason }),
+      });
+      Alert.alert("Reported", "This comment has been reported for review.");
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    } catch (e) {}
   }
 
   function handleOpenContent() {
     if (!qrCode) return;
     if (qrCode.contentType === "url") {
-      Linking.openURL(qrCode.content).catch(() => {});
+      Linking.openURL(qrCode.content).catch(() => Alert.alert("Error", "Could not open link"));
+    } else if (qrCode.contentType === "payment") {
+      Linking.openURL(qrCode.content).catch(() =>
+        Alert.alert("Error", "No payment app found for this QR code. Please install a UPI-compatible payment app.")
+      );
     }
   }
 
-  const trust = getTrustScore();
+  function getTrustInfo() {
+    if (trustScore) {
+      return { score: trustScore.score, label: trustScore.label, color: getTrustColor(trustScore.label) };
+    }
+    const total =
+      (reportCounts.safe || 0) + (reportCounts.scam || 0) +
+      (reportCounts.fake || 0) + (reportCounts.spam || 0);
+    if (total === 0) return { score: -1, label: "No Reports", color: Colors.dark.textMuted };
+    const safeRatio = (reportCounts.safe || 0) / total;
+    if (safeRatio >= 0.7) return { score: safeRatio * 100, label: "Trusted", color: Colors.dark.safe };
+    if (safeRatio >= 0.4) return { score: safeRatio * 100, label: "Caution", color: Colors.dark.warning };
+    return { score: safeRatio * 100, label: "Dangerous", color: Colors.dark.danger };
+  }
+
+  function getTrustColor(label: string) {
+    switch (label) {
+      case "Trusted": case "Likely Safe": return Colors.dark.safe;
+      case "Caution": case "Uncertain": return Colors.dark.warning;
+      case "Dangerous": return Colors.dark.danger;
+      default: return Colors.dark.textMuted;
+    }
+  }
+
+  const trust = getTrustInfo();
+  const paymentApp = qrCode ? detectPaymentApp(qrCode.content) : null;
+  const hasMoreComments = commentsList.length < commentsTotal;
 
   if (loading) {
     return (
@@ -256,287 +390,429 @@ export default function QrDetailScreen() {
   }
 
   return (
-    <KeyboardAvoidingView
-      style={{ flex: 1, backgroundColor: Colors.dark.background }}
-      behavior={Platform.OS === "ios" ? "padding" : "height"}
-      keyboardVerticalOffset={0}
-    >
-      <View style={[styles.container, { paddingTop: topInset }]}>
-        <View style={styles.navBar}>
-          <Pressable onPress={() => router.back()} style={styles.navBackBtn}>
-            <Ionicons name="chevron-back" size={24} color={Colors.dark.text} />
-          </Pressable>
-          <Text style={styles.navTitle}>QR Details</Text>
-          <View style={{ width: 40 }} />
-        </View>
-
-        <ScrollView
-          showsVerticalScrollIndicator={false}
-          contentContainerStyle={styles.scrollContent}
-          keyboardShouldPersistTaps="handled"
-        >
-          <Animated.View entering={FadeInDown.duration(400)}>
-            <View style={styles.contentCard}>
-              <View style={styles.contentHeader}>
-                <View
-                  style={[
-                    styles.typeIcon,
-                    { backgroundColor: Colors.dark.primaryDim },
-                  ]}
-                >
-                  <MaterialCommunityIcons
-                    name="qrcode"
-                    size={28}
-                    color={Colors.dark.primary}
-                  />
-                </View>
-                <View style={styles.typeBadge}>
-                  <Text style={styles.typeBadgeText}>
-                    {qrCode.contentType.toUpperCase()}
-                  </Text>
-                </View>
-              </View>
-              <Text style={styles.contentText} selectable numberOfLines={4}>
-                {qrCode.content}
-              </Text>
-              {qrCode.contentType === "url" ? (
-                <Pressable
-                  onPress={handleOpenContent}
-                  style={({ pressed }) => [
-                    styles.openBtn,
-                    { opacity: pressed ? 0.8 : 1 },
-                  ]}
-                >
+    <>
+      <KeyboardAvoidingView
+        style={{ flex: 1, backgroundColor: Colors.dark.background }}
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        keyboardVerticalOffset={0}
+      >
+        <View style={[styles.container, { paddingTop: topInset }]}>
+          <View style={styles.navBar}>
+            <Pressable onPress={() => router.back()} style={styles.navBackBtn}>
+              <Ionicons name="chevron-back" size={24} color={Colors.dark.text} />
+            </Pressable>
+            <Text style={styles.navTitle}>QR Details</Text>
+            <View style={styles.navActions}>
+              <Pressable
+                onPress={handleToggleFavorite}
+                disabled={favoriteLoading}
+                style={styles.navActionBtn}
+              >
+                {favoriteLoading ? (
+                  <ActivityIndicator size="small" color={Colors.dark.danger} />
+                ) : (
                   <Ionicons
-                    name="open-outline"
-                    size={16}
-                    color={Colors.dark.primary}
+                    name={isFavorite ? "heart" : "heart-outline"}
+                    size={22}
+                    color={isFavorite ? Colors.dark.danger : Colors.dark.textSecondary}
                   />
-                  <Text style={styles.openBtnText}>Open Link</Text>
-                </Pressable>
-              ) : null}
+                )}
+              </Pressable>
+              <Pressable
+                onPress={handleToggleFollow}
+                disabled={followLoading}
+                style={[styles.followBtn, isFollowing && styles.followBtnActive]}
+              >
+                {followLoading ? (
+                  <ActivityIndicator size="small" color={Colors.dark.primary} />
+                ) : (
+                  <>
+                    <Ionicons
+                      name={isFollowing ? "notifications" : "notifications-outline"}
+                      size={16}
+                      color={isFollowing ? Colors.dark.primary : Colors.dark.textSecondary}
+                    />
+                    <Text style={[styles.followBtnText, isFollowing && styles.followBtnTextActive]}>
+                      {isFollowing ? "Following" : "Follow"}
+                    </Text>
+                    {followCount > 0 ? (
+                      <Text style={styles.followCount}>{followCount}</Text>
+                    ) : null}
+                  </>
+                )}
+              </Pressable>
             </View>
-          </Animated.View>
+          </View>
 
-          <Animated.View entering={FadeInDown.duration(400).delay(100)}>
-            <View style={styles.trustCard}>
-              <View style={styles.trustHeader}>
-                <Text style={styles.sectionTitle}>Trust Score</Text>
-                <View
-                  style={[
-                    styles.trustBadge,
-                    { backgroundColor: trust.color + "22" },
-                  ]}
-                >
-                  <View
-                    style={[styles.trustDot, { backgroundColor: trust.color }]}
-                  />
-                  <Text style={[styles.trustLabel, { color: trust.color }]}>
-                    {trust.label}
-                  </Text>
+          <ScrollView
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={styles.scrollContent}
+            keyboardShouldPersistTaps="handled"
+          >
+            <Animated.View entering={FadeInDown.duration(400)}>
+              <View style={styles.contentCard}>
+                <View style={styles.contentHeader}>
+                  <View style={[styles.typeIcon, { backgroundColor: Colors.dark.primaryDim }]}>
+                    <MaterialCommunityIcons name="qrcode" size={28} color={Colors.dark.primary} />
+                  </View>
+                  <View style={styles.typeBadge}>
+                    <Text style={styles.typeBadgeText}>
+                      {qrCode.contentType.toUpperCase()}
+                    </Text>
+                  </View>
+                </View>
+                <Text style={styles.contentText} selectable numberOfLines={4}>
+                  {qrCode.content}
+                </Text>
+
+                {qrCode.contentType === "url" ? (
+                  <Pressable
+                    onPress={handleOpenContent}
+                    style={({ pressed }) => [styles.openBtn, { opacity: pressed ? 0.8 : 1 }]}
+                  >
+                    <Ionicons name="open-outline" size={16} color={Colors.dark.primary} />
+                    <Text style={styles.openBtnText}>Open Link</Text>
+                  </Pressable>
+                ) : null}
+
+                {qrCode.contentType === "payment" && paymentApp ? (
+                  <View style={styles.paymentActions}>
+                    <Pressable
+                      onPress={handleOpenContent}
+                      style={({ pressed }) => [styles.paymentBtn, { opacity: pressed ? 0.8 : 1 }]}
+                    >
+                      <Ionicons name={paymentApp.icon as any} size={18} color="#000" />
+                      <Text style={styles.paymentBtnText}>Pay with {paymentApp.name}</Text>
+                    </Pressable>
+                    <Text style={styles.paymentWarning}>
+                      Always verify the recipient before paying
+                    </Text>
+                  </View>
+                ) : null}
+              </View>
+            </Animated.View>
+
+            <Animated.View entering={FadeInDown.duration(400).delay(100)}>
+              <View style={styles.trustCard}>
+                <View style={styles.trustHeader}>
+                  <Text style={styles.sectionTitle}>Trust Score</Text>
+                  <View style={[styles.trustBadge, { backgroundColor: trust.color + "22" }]}>
+                    <View style={[styles.trustDot, { backgroundColor: trust.color }]} />
+                    <Text style={[styles.trustLabel, { color: trust.color }]}>{trust.label}</Text>
+                  </View>
+                </View>
+
+                {trust.score >= 0 ? (
+                  <View style={styles.trustBarContainer}>
+                    <View style={styles.trustBarBg}>
+                      <View
+                        style={[styles.trustBarFill, { width: `${trust.score}%`, backgroundColor: trust.color }]}
+                      />
+                    </View>
+                    <Text style={styles.trustPercent}>{Math.round(trust.score)}% Safe</Text>
+                  </View>
+                ) : null}
+
+                <View style={styles.statsRow}>
+                  <View style={styles.statItem}>
+                    <Text style={styles.statValue}>{totalScans}</Text>
+                    <Text style={styles.statLabel}>Scans</Text>
+                  </View>
+                  <View style={styles.statDivider} />
+                  <View style={styles.statItem}>
+                    <Text style={styles.statValue}>{totalComments}</Text>
+                    <Text style={styles.statLabel}>Comments</Text>
+                  </View>
+                  <View style={styles.statDivider} />
+                  <View style={styles.statItem}>
+                    <Text style={styles.statValue}>
+                      {Object.values(reportCounts).reduce((a, b) => a + b, 0)}
+                    </Text>
+                    <Text style={styles.statLabel}>Reports</Text>
+                  </View>
                 </View>
               </View>
+            </Animated.View>
 
-              {trust.score >= 0 ? (
-                <View style={styles.trustBarContainer}>
-                  <View style={styles.trustBarBg}>
-                    <View
-                      style={[
-                        styles.trustBarFill,
+            <Animated.View entering={FadeInDown.duration(400).delay(200)}>
+              <Text style={styles.sectionTitle}>Report This QR</Text>
+              <Text style={styles.sectionSubtext}>
+                {user ? "Tap to submit your report" : "Sign in to report"}
+              </Text>
+              <View style={styles.reportGrid}>
+                {REPORT_TYPES.map((rt) => {
+                  const count = reportCounts[rt.key] || 0;
+                  const isSelected = userReport === rt.key;
+                  return (
+                    <Pressable
+                      key={rt.key}
+                      onPress={() => handleReport(rt.key)}
+                      disabled={!!reportLoading}
+                      style={({ pressed }) => [
+                        styles.reportCard,
                         {
-                          width: `${trust.score}%`,
-                          backgroundColor: trust.color,
+                          borderColor: isSelected ? rt.color : Colors.dark.surfaceBorder,
+                          backgroundColor: isSelected ? rt.bg : Colors.dark.surface,
+                          opacity: pressed ? 0.8 : 1,
                         },
                       ]}
-                    />
-                  </View>
-                  <Text style={styles.trustPercent}>
-                    {Math.round(trust.score)}% Safe
-                  </Text>
-                </View>
-              ) : null}
+                    >
+                      {reportLoading === rt.key ? (
+                        <ActivityIndicator size="small" color={rt.color} />
+                      ) : (
+                        <Ionicons name={rt.icon as any} size={24} color={rt.color} />
+                      )}
+                      <Text style={[styles.reportLabel, { color: rt.color }]}>{rt.label}</Text>
+                      <Text style={styles.reportCount}>{count}</Text>
+                      {isSelected ? (
+                        <View style={[styles.selectedDot, { backgroundColor: rt.color }]} />
+                      ) : null}
+                    </Pressable>
+                  );
+                })}
+              </View>
+            </Animated.View>
 
-              <View style={styles.statsRow}>
-                <View style={styles.statItem}>
-                  <Text style={styles.statValue}>{totalScans}</Text>
-                  <Text style={styles.statLabel}>Scans</Text>
-                </View>
-                <View style={styles.statDivider} />
-                <View style={styles.statItem}>
-                  <Text style={styles.statValue}>{totalComments}</Text>
-                  <Text style={styles.statLabel}>Comments</Text>
-                </View>
-                <View style={styles.statDivider} />
-                <View style={styles.statItem}>
-                  <Text style={styles.statValue}>
-                    {Object.values(reportCounts).reduce((a, b) => a + b, 0)}
-                  </Text>
-                  <Text style={styles.statLabel}>Reports</Text>
+            <Animated.View entering={FadeInDown.duration(400).delay(300)}>
+              <View style={styles.commentsHeader}>
+                <View style={styles.commentsTitleRow}>
+                  <Text style={styles.sectionTitle}>Comments</Text>
+                  {totalComments > 0 ? (
+                    <View style={styles.commentCountBadge}>
+                      <Text style={styles.commentCountText}>{totalComments}</Text>
+                    </View>
+                  ) : null}
                 </View>
               </View>
-            </View>
-          </Animated.View>
 
-          <Animated.View entering={FadeInDown.duration(400).delay(200)}>
-            <Text style={styles.sectionTitle}>Report This QR</Text>
-            <Text style={styles.sectionSubtext}>
-              {user ? "Tap to submit your report" : "Sign in to report"}
-            </Text>
-            <View style={styles.reportGrid}>
-              {REPORT_TYPES.map((rt) => {
-                const count = reportCounts[rt.key] || 0;
-                const isSelected = userReport === rt.key;
-                return (
-                  <Pressable
-                    key={rt.key}
-                    onPress={() => handleReport(rt.key)}
-                    disabled={!!reportLoading}
-                    style={({ pressed }) => [
-                      styles.reportCard,
-                      {
-                        borderColor: isSelected
-                          ? rt.color
-                          : Colors.dark.surfaceBorder,
-                        backgroundColor: isSelected
-                          ? rt.bg
-                          : Colors.dark.surface,
-                        opacity: pressed ? 0.8 : 1,
-                      },
+              {user ? (
+                <View style={styles.commentInputContainer}>
+                  {replyTo ? (
+                    <View style={styles.replyBanner}>
+                      <Ionicons name="return-down-forward" size={14} color={Colors.dark.primary} />
+                      <Text style={styles.replyBannerText}>
+                        Replying to <Text style={{ color: Colors.dark.text }}>{replyTo.author}</Text>
+                      </Text>
+                      <Pressable onPress={() => setReplyTo(null)} style={{ marginLeft: 4 }}>
+                        <Ionicons name="close" size={16} color={Colors.dark.textMuted} />
+                      </Pressable>
+                    </View>
+                  ) : null}
+                  <View style={styles.commentInput}>
+                    <TextInput
+                      style={styles.commentTextInput}
+                      placeholder={replyTo ? `Reply to ${replyTo.author}...` : "Add a comment..."}
+                      placeholderTextColor={Colors.dark.textMuted}
+                      value={newComment}
+                      onChangeText={setNewComment}
+                      multiline
+                      maxLength={500}
+                    />
+                    <Pressable
+                      onPress={handleSubmitComment}
+                      disabled={submitting || !newComment.trim()}
+                      style={({ pressed }) => [
+                        styles.sendBtn,
+                        { opacity: pressed || submitting || !newComment.trim() ? 0.5 : 1 },
+                      ]}
+                    >
+                      {submitting ? (
+                        <ActivityIndicator size="small" color="#000" />
+                      ) : (
+                        <Ionicons name="send" size={18} color="#000" />
+                      )}
+                    </Pressable>
+                  </View>
+                </View>
+              ) : (
+                <Pressable
+                  onPress={() => router.push("/(auth)/login")}
+                  style={styles.signInToComment}
+                >
+                  <Ionicons name="chatbubble-outline" size={18} color={Colors.dark.primary} />
+                  <Text style={styles.signInToCommentText}>Sign in to comment</Text>
+                  <Ionicons name="chevron-forward" size={16} color={Colors.dark.textMuted} />
+                </Pressable>
+              )}
+
+              {commentsList.length === 0 && !commentsLoading ? (
+                <View style={styles.noComments}>
+                  <Ionicons name="chatbubble-outline" size={32} color={Colors.dark.textMuted} />
+                  <Text style={styles.noCommentsText}>No comments yet</Text>
+                </View>
+              ) : (
+                commentsList.map((comment) => (
+                  <View
+                    key={comment.id}
+                    style={[
+                      styles.commentItem,
+                      comment.parentId ? styles.commentItemReply : null,
                     ]}
                   >
-                    {reportLoading === rt.key ? (
-                      <ActivityIndicator size="small" color={rt.color} />
-                    ) : (
-                      <Ionicons
-                        name={rt.icon as any}
-                        size={24}
-                        color={rt.color}
-                      />
-                    )}
-                    <Text style={[styles.reportLabel, { color: rt.color }]}>
-                      {rt.label}
-                    </Text>
-                    <Text style={styles.reportCount}>{count}</Text>
-                    {isSelected ? (
-                      <View
-                        style={[
-                          styles.selectedDot,
-                          { backgroundColor: rt.color },
-                        ]}
-                      />
-                    ) : null}
-                  </Pressable>
-                );
-              })}
-            </View>
-          </Animated.View>
-
-          <Animated.View entering={FadeInDown.duration(400).delay(300)}>
-            <View style={styles.commentsHeader}>
-              <Text style={styles.sectionTitle}>Comments</Text>
-              {commentsLimited ? (
-                <View style={styles.limitedBadge}>
-                  <Ionicons
-                    name="lock-closed"
-                    size={12}
-                    color={Colors.dark.warning}
-                  />
-                  <Text style={styles.limitedText}>
-                    Showing 6 of {totalComments}
-                  </Text>
-                </View>
-              ) : null}
-            </View>
-
-            {commentsLimited && !user ? (
-              <Pressable
-                onPress={() => router.push("/(auth)/login")}
-                style={styles.unlockBanner}
-              >
-                <Ionicons
-                  name="sparkles"
-                  size={18}
-                  color={Colors.dark.accent}
-                />
-                <Text style={styles.unlockText}>
-                  Sign in to see all comments and add yours
-                </Text>
-                <Ionicons
-                  name="chevron-forward"
-                  size={16}
-                  color={Colors.dark.textMuted}
-                />
-              </Pressable>
-            ) : null}
-
-            {user ? (
-              <View style={styles.commentInput}>
-                <TextInput
-                  style={styles.commentTextInput}
-                  placeholder="Add a comment..."
-                  placeholderTextColor={Colors.dark.textMuted}
-                  value={newComment}
-                  onChangeText={setNewComment}
-                  multiline
-                  maxLength={500}
-                />
-                <Pressable
-                  onPress={handleSubmitComment}
-                  disabled={submitting || !newComment.trim()}
-                  style={({ pressed }) => [
-                    styles.sendBtn,
-                    {
-                      opacity:
-                        pressed || submitting || !newComment.trim() ? 0.5 : 1,
-                    },
-                  ]}
-                >
-                  {submitting ? (
-                    <ActivityIndicator size="small" color="#000" />
-                  ) : (
-                    <Ionicons name="send" size={18} color="#000" />
-                  )}
-                </Pressable>
-              </View>
-            ) : null}
-
-            {commentsList.length === 0 ? (
-              <View style={styles.noComments}>
-                <Ionicons
-                  name="chatbubble-outline"
-                  size={32}
-                  color={Colors.dark.textMuted}
-                />
-                <Text style={styles.noCommentsText}>No comments yet</Text>
-              </View>
-            ) : (
-              commentsList.map((comment, i) => (
-                <View key={comment.id} style={styles.commentItem}>
-                  <View style={styles.commentAvatar}>
-                    <Text style={styles.commentAvatarText}>
-                      {comment.user.displayName.charAt(0).toUpperCase()}
-                    </Text>
-                  </View>
-                  <View style={{ flex: 1 }}>
-                    <View style={styles.commentMeta}>
-                      <Text style={styles.commentAuthor}>
-                        {comment.user.displayName}
-                      </Text>
-                      <Text style={styles.commentDate}>
-                        {formatDate(comment.createdAt)}
+                    <View style={styles.commentAvatar}>
+                      <Text style={styles.commentAvatarText}>
+                        {comment.user.displayName.charAt(0).toUpperCase()}
                       </Text>
                     </View>
-                    <Text style={styles.commentText}>{comment.text}</Text>
-                  </View>
-                </View>
-              ))
-            )}
-          </Animated.View>
+                    <View style={{ flex: 1 }}>
+                      <View style={styles.commentMeta}>
+                        <Text style={styles.commentAuthor}>{comment.user.displayName}</Text>
+                        <Text style={styles.commentDate}>{formatDate(comment.createdAt)}</Text>
+                        <Pressable
+                          onPress={() =>
+                            setCommentMenuId(commentMenuId === comment.id ? null : comment.id)
+                          }
+                          style={styles.commentMenuBtn}
+                        >
+                          <Ionicons
+                            name="ellipsis-horizontal"
+                            size={16}
+                            color={Colors.dark.textMuted}
+                          />
+                        </Pressable>
+                      </View>
+                      <Text style={styles.commentText}>{comment.text}</Text>
+                      <View style={styles.commentActions}>
+                        <Pressable
+                          onPress={() => handleCommentLike(comment.id, "like")}
+                          style={styles.commentActionBtn}
+                        >
+                          <Ionicons
+                            name={comment.userLike === "like" ? "thumbs-up" : "thumbs-up-outline"}
+                            size={16}
+                            color={
+                              comment.userLike === "like"
+                                ? Colors.dark.primary
+                                : Colors.dark.textMuted
+                            }
+                          />
+                          {comment.likeCount > 0 ? (
+                            <Text style={[
+                              styles.commentActionCount,
+                              comment.userLike === "like" && { color: Colors.dark.primary },
+                            ]}>
+                              {comment.likeCount}
+                            </Text>
+                          ) : null}
+                        </Pressable>
+                        <Pressable
+                          onPress={() => handleCommentLike(comment.id, "dislike")}
+                          style={styles.commentActionBtn}
+                        >
+                          <Ionicons
+                            name={
+                              comment.userLike === "dislike"
+                                ? "thumbs-down"
+                                : "thumbs-down-outline"
+                            }
+                            size={16}
+                            color={
+                              comment.userLike === "dislike"
+                                ? Colors.dark.danger
+                                : Colors.dark.textMuted
+                            }
+                          />
+                          {comment.dislikeCount > 0 ? (
+                            <Text style={[
+                              styles.commentActionCount,
+                              comment.userLike === "dislike" && { color: Colors.dark.danger },
+                            ]}>
+                              {comment.dislikeCount}
+                            </Text>
+                          ) : null}
+                        </Pressable>
+                        {user ? (
+                          <Pressable
+                            onPress={() => {
+                              setReplyTo({ id: comment.id, author: comment.user.displayName });
+                              setCommentMenuId(null);
+                            }}
+                            style={styles.commentActionBtn}
+                          >
+                            <Ionicons name="return-down-forward-outline" size={16} color={Colors.dark.textMuted} />
+                            <Text style={styles.commentActionLabel}>Reply</Text>
+                          </Pressable>
+                        ) : null}
 
-          <View style={{ height: 40 }} />
-        </ScrollView>
-      </View>
-    </KeyboardAvoidingView>
+                        {commentMenuId === comment.id ? (
+                          <View style={styles.commentMenu}>
+                            <Pressable
+                              onPress={() => {
+                                setCommentMenuId(null);
+                                setCommentReportModal(comment.id);
+                              }}
+                              style={styles.commentMenuItem}
+                            >
+                              <Ionicons name="flag-outline" size={14} color={Colors.dark.warning} />
+                              <Text style={styles.commentMenuItemText}>Report</Text>
+                            </Pressable>
+                          </View>
+                        ) : null}
+                      </View>
+                    </View>
+                  </View>
+                ))
+              )}
+
+              {hasMoreComments ? (
+                <Pressable
+                  onPress={() => loadComments(commentsPage + 1, true)}
+                  disabled={commentsLoading}
+                  style={({ pressed }) => [
+                    styles.loadMoreBtn,
+                    { opacity: pressed || commentsLoading ? 0.7 : 1 },
+                  ]}
+                >
+                  {commentsLoading ? (
+                    <ActivityIndicator size="small" color={Colors.dark.primary} />
+                  ) : (
+                    <Text style={styles.loadMoreText}>
+                      Load more ({commentsTotal - commentsList.length} remaining)
+                    </Text>
+                  )}
+                </Pressable>
+              ) : null}
+            </Animated.View>
+
+            <View style={{ height: 40 }} />
+          </ScrollView>
+        </View>
+      </KeyboardAvoidingView>
+
+      <Modal
+        visible={!!commentReportModal}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setCommentReportModal(null)}
+      >
+        <Pressable
+          style={styles.modalOverlay}
+          onPress={() => setCommentReportModal(null)}
+        >
+          <View style={[styles.modalSheet, { paddingBottom: insets.bottom + 20 }]}>
+            <View style={styles.modalHandle} />
+            <Text style={styles.modalTitle}>Report Comment</Text>
+            <Text style={styles.modalSubtitle}>Why are you reporting this comment?</Text>
+            {COMMENT_REPORT_REASONS.map((reason) => (
+              <Pressable
+                key={reason.value}
+                onPress={() => handleCommentReport(commentReportModal!, reason.value)}
+                style={({ pressed }) => [styles.modalOption, { opacity: pressed ? 0.7 : 1 }]}
+              >
+                <Ionicons name="flag-outline" size={18} color={Colors.dark.warning} />
+                <Text style={styles.modalOptionText}>{reason.label}</Text>
+              </Pressable>
+            ))}
+            <Pressable
+              onPress={() => setCommentReportModal(null)}
+              style={styles.modalCancel}
+            >
+              <Text style={styles.modalCancelText}>Cancel</Text>
+            </Pressable>
+          </View>
+        </Pressable>
+      </Modal>
+    </>
   );
 }
 
@@ -555,340 +831,202 @@ function formatDate(d: string) {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: Colors.dark.background,
-  },
-  loadingCenter: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    gap: 16,
-  },
-  errorText: {
-    fontSize: 16,
-    fontFamily: "Inter_500Medium",
-    color: Colors.dark.textSecondary,
-  },
-  backLink: {
-    paddingVertical: 8,
-    paddingHorizontal: 20,
-  },
-  backLinkText: {
-    fontSize: 15,
-    fontFamily: "Inter_600SemiBold",
-    color: Colors.dark.primary,
-  },
+  container: { flex: 1, backgroundColor: Colors.dark.background },
+  loadingCenter: { flex: 1, justifyContent: "center", alignItems: "center", gap: 16 },
+  errorText: { fontSize: 16, fontFamily: "Inter_500Medium", color: Colors.dark.textSecondary },
+  backLink: { paddingVertical: 8, paddingHorizontal: 20 },
+  backLinkText: { fontSize: 15, fontFamily: "Inter_600SemiBold", color: Colors.dark.primary },
   navBar: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
     paddingHorizontal: 16,
-    paddingVertical: 12,
+    paddingVertical: 10,
   },
   navBackBtn: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: 40, height: 40, borderRadius: 20,
     backgroundColor: Colors.dark.surface,
-    alignItems: "center",
-    justifyContent: "center",
+    alignItems: "center", justifyContent: "center",
   },
-  navTitle: {
-    fontSize: 17,
-    fontFamily: "Inter_600SemiBold",
-    color: Colors.dark.text,
-  },
-  scrollContent: {
-    padding: 20,
-    paddingTop: 4,
-  },
-  contentCard: {
+  navTitle: { fontSize: 17, fontFamily: "Inter_600SemiBold", color: Colors.dark.text, flex: 1, marginLeft: 8 },
+  navActions: { flexDirection: "row", alignItems: "center", gap: 8 },
+  navActionBtn: {
+    width: 38, height: 38, borderRadius: 19,
     backgroundColor: Colors.dark.surface,
-    borderRadius: 16,
-    padding: 20,
-    marginBottom: 16,
-    borderWidth: 1,
-    borderColor: Colors.dark.surfaceBorder,
+    alignItems: "center", justifyContent: "center",
   },
-  contentHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 14,
-  },
-  typeIcon: {
-    width: 48,
-    height: 48,
-    borderRadius: 14,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  typeBadge: {
-    backgroundColor: Colors.dark.surfaceLight,
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 8,
-  },
-  typeBadgeText: {
-    fontSize: 11,
-    fontFamily: "Inter_700Bold",
-    color: Colors.dark.textSecondary,
-    letterSpacing: 0.5,
-  },
-  contentText: {
-    fontSize: 15,
-    fontFamily: "Inter_500Medium",
-    color: Colors.dark.text,
-    lineHeight: 22,
-  },
-  openBtn: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 6,
-    marginTop: 14,
-    alignSelf: "flex-start",
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    borderRadius: 10,
-    backgroundColor: Colors.dark.primaryDim,
-  },
-  openBtnText: {
-    fontSize: 14,
-    fontFamily: "Inter_600SemiBold",
-    color: Colors.dark.primary,
-  },
-  trustCard: {
-    backgroundColor: Colors.dark.surface,
-    borderRadius: 16,
-    padding: 20,
-    marginBottom: 24,
-    borderWidth: 1,
-    borderColor: Colors.dark.surfaceBorder,
-  },
-  trustHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 16,
-  },
-  trustBadge: {
+  followBtn: {
     flexDirection: "row",
     alignItems: "center",
     gap: 6,
     paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 12,
-  },
-  trustDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-  },
-  trustLabel: {
-    fontSize: 13,
-    fontFamily: "Inter_700Bold",
-  },
-  trustBarContainer: {
-    gap: 6,
-    marginBottom: 18,
-  },
-  trustBarBg: {
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: Colors.dark.surfaceLight,
-    overflow: "hidden",
-  },
-  trustBarFill: {
-    height: 8,
-    borderRadius: 4,
-  },
-  trustPercent: {
-    fontSize: 12,
-    fontFamily: "Inter_500Medium",
-    color: Colors.dark.textSecondary,
-  },
-  statsRow: {
-    flexDirection: "row",
-    alignItems: "center",
-  },
-  statItem: {
-    flex: 1,
-    alignItems: "center",
-    gap: 2,
-  },
-  statValue: {
-    fontSize: 20,
-    fontFamily: "Inter_700Bold",
-    color: Colors.dark.text,
-  },
-  statLabel: {
-    fontSize: 12,
-    fontFamily: "Inter_400Regular",
-    color: Colors.dark.textMuted,
-  },
-  statDivider: {
-    width: 1,
-    height: 30,
-    backgroundColor: Colors.dark.surfaceBorder,
-  },
-  sectionTitle: {
-    fontSize: 18,
-    fontFamily: "Inter_700Bold",
-    color: Colors.dark.text,
-  },
-  sectionSubtext: {
-    fontSize: 13,
-    fontFamily: "Inter_400Regular",
-    color: Colors.dark.textMuted,
-    marginTop: 4,
-    marginBottom: 12,
-  },
-  reportGrid: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: 10,
-    marginBottom: 28,
-  },
-  reportCard: {
-    width: "47%",
-    flexGrow: 1,
-    padding: 16,
-    borderRadius: 14,
-    alignItems: "center",
-    gap: 6,
-    borderWidth: 1.5,
-    position: "relative",
-  },
-  reportLabel: {
-    fontSize: 14,
-    fontFamily: "Inter_600SemiBold",
-  },
-  reportCount: {
-    fontSize: 18,
-    fontFamily: "Inter_700Bold",
-    color: Colors.dark.text,
-  },
-  selectedDot: {
-    position: "absolute",
-    top: 8,
-    right: 8,
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-  },
-  commentsHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 12,
-  },
-  limitedBadge: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 4,
-    backgroundColor: Colors.dark.warningDim,
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 10,
-  },
-  limitedText: {
-    fontSize: 11,
-    fontFamily: "Inter_500Medium",
-    color: Colors.dark.warning,
-  },
-  unlockBanner: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 10,
-    backgroundColor: Colors.dark.accentDim,
-    padding: 14,
-    borderRadius: 12,
-    marginBottom: 14,
-    borderWidth: 1,
-    borderColor: "rgba(124, 58, 237, 0.2)",
-  },
-  unlockText: {
-    flex: 1,
-    fontSize: 13,
-    fontFamily: "Inter_500Medium",
-    color: Colors.dark.text,
-  },
-  commentInput: {
-    flexDirection: "row",
-    alignItems: "flex-end",
-    gap: 10,
-    marginBottom: 16,
-  },
-  commentTextInput: {
-    flex: 1,
-    backgroundColor: Colors.dark.surfaceLight,
-    borderRadius: 14,
-    padding: 14,
-    paddingTop: 14,
-    fontSize: 14,
-    fontFamily: "Inter_400Regular",
-    color: Colors.dark.text,
-    maxHeight: 100,
+    paddingVertical: 8,
+    borderRadius: 20,
+    backgroundColor: Colors.dark.surface,
     borderWidth: 1,
     borderColor: Colors.dark.surfaceBorder,
   },
-  sendBtn: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
+  followBtnActive: {
+    backgroundColor: Colors.dark.primaryDim,
+    borderColor: Colors.dark.primary,
+  },
+  followBtnText: { fontSize: 13, fontFamily: "Inter_600SemiBold", color: Colors.dark.textSecondary },
+  followBtnTextActive: { color: Colors.dark.primary },
+  followCount: { fontSize: 12, fontFamily: "Inter_500Medium", color: Colors.dark.textMuted },
+  scrollContent: { padding: 20, paddingTop: 4 },
+  contentCard: {
+    backgroundColor: Colors.dark.surface,
+    borderRadius: 16, padding: 20, marginBottom: 16,
+    borderWidth: 1, borderColor: Colors.dark.surfaceBorder,
+  },
+  contentHeader: {
+    flexDirection: "row", justifyContent: "space-between",
+    alignItems: "center", marginBottom: 14,
+  },
+  typeIcon: { width: 48, height: 48, borderRadius: 14, alignItems: "center", justifyContent: "center" },
+  typeBadge: { backgroundColor: Colors.dark.surfaceLight, paddingHorizontal: 10, paddingVertical: 4, borderRadius: 8 },
+  typeBadgeText: { fontSize: 11, fontFamily: "Inter_700Bold", color: Colors.dark.textSecondary, letterSpacing: 0.5 },
+  contentText: { fontSize: 15, fontFamily: "Inter_500Medium", color: Colors.dark.text, lineHeight: 22 },
+  openBtn: {
+    flexDirection: "row", alignItems: "center", gap: 6,
+    marginTop: 14, alignSelf: "flex-start",
+    paddingHorizontal: 14, paddingVertical: 8, borderRadius: 10,
+    backgroundColor: Colors.dark.primaryDim,
+  },
+  openBtnText: { fontSize: 14, fontFamily: "Inter_600SemiBold", color: Colors.dark.primary },
+  paymentActions: { marginTop: 14, gap: 8 },
+  paymentBtn: {
+    flexDirection: "row", alignItems: "center", gap: 8,
     backgroundColor: Colors.dark.primary,
-    alignItems: "center",
-    justifyContent: "center",
+    paddingHorizontal: 18, paddingVertical: 12,
+    borderRadius: 12, alignSelf: "flex-start",
   },
-  noComments: {
-    alignItems: "center",
-    gap: 8,
-    paddingVertical: 32,
+  paymentBtnText: { fontSize: 15, fontFamily: "Inter_700Bold", color: "#000" },
+  paymentWarning: { fontSize: 12, fontFamily: "Inter_400Regular", color: Colors.dark.warning },
+  trustCard: {
+    backgroundColor: Colors.dark.surface, borderRadius: 16, padding: 20, marginBottom: 24,
+    borderWidth: 1, borderColor: Colors.dark.surfaceBorder,
   },
-  noCommentsText: {
-    fontSize: 14,
-    fontFamily: "Inter_500Medium",
-    color: Colors.dark.textMuted,
+  trustHeader: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 16 },
+  trustBadge: { flexDirection: "row", alignItems: "center", gap: 6, paddingHorizontal: 12, paddingVertical: 6, borderRadius: 12 },
+  trustDot: { width: 8, height: 8, borderRadius: 4 },
+  trustLabel: { fontSize: 13, fontFamily: "Inter_700Bold" },
+  trustBarContainer: { gap: 6, marginBottom: 18 },
+  trustBarBg: { height: 8, borderRadius: 4, backgroundColor: Colors.dark.surfaceLight, overflow: "hidden" },
+  trustBarFill: { height: 8, borderRadius: 4 },
+  trustPercent: { fontSize: 12, fontFamily: "Inter_500Medium", color: Colors.dark.textSecondary },
+  statsRow: { flexDirection: "row", alignItems: "center" },
+  statItem: { flex: 1, alignItems: "center", gap: 2 },
+  statValue: { fontSize: 20, fontFamily: "Inter_700Bold", color: Colors.dark.text },
+  statLabel: { fontSize: 12, fontFamily: "Inter_400Regular", color: Colors.dark.textMuted },
+  statDivider: { width: 1, height: 32, backgroundColor: Colors.dark.surfaceBorder },
+  sectionTitle: { fontSize: 18, fontFamily: "Inter_700Bold", color: Colors.dark.text, marginBottom: 8 },
+  sectionSubtext: { fontSize: 13, fontFamily: "Inter_400Regular", color: Colors.dark.textMuted, marginBottom: 14 },
+  reportGrid: { flexDirection: "row", flexWrap: "wrap", gap: 12, marginBottom: 28 },
+  reportCard: {
+    flex: 1, minWidth: "42%", alignItems: "center", gap: 6,
+    padding: 16, borderRadius: 14, borderWidth: 1.5,
   },
+  reportLabel: { fontSize: 13, fontFamily: "Inter_600SemiBold" },
+  reportCount: { fontSize: 18, fontFamily: "Inter_700Bold", color: Colors.dark.text },
+  selectedDot: { width: 8, height: 8, borderRadius: 4, position: "absolute", top: 10, right: 10 },
+  commentsHeader: { marginBottom: 14 },
+  commentsTitleRow: { flexDirection: "row", alignItems: "center", gap: 10 },
+  commentCountBadge: {
+    backgroundColor: Colors.dark.primaryDim, paddingHorizontal: 10, paddingVertical: 4,
+    borderRadius: 12, borderWidth: 1, borderColor: Colors.dark.primary + "40",
+  },
+  commentCountText: { fontSize: 12, fontFamily: "Inter_700Bold", color: Colors.dark.primary },
+  commentInputContainer: { marginBottom: 16 },
+  replyBanner: {
+    flexDirection: "row", alignItems: "center", gap: 6,
+    backgroundColor: Colors.dark.primaryDim, paddingHorizontal: 14, paddingVertical: 8,
+    borderRadius: 10, marginBottom: 8,
+  },
+  replyBannerText: { flex: 1, fontSize: 13, fontFamily: "Inter_500Medium", color: Colors.dark.textSecondary },
+  commentInput: {
+    flexDirection: "row", alignItems: "flex-end", gap: 10,
+    backgroundColor: Colors.dark.surface, borderRadius: 14, padding: 14,
+    borderWidth: 1, borderColor: Colors.dark.surfaceBorder,
+  },
+  commentTextInput: {
+    flex: 1, fontSize: 15, fontFamily: "Inter_400Regular",
+    color: Colors.dark.text, maxHeight: 100,
+  },
+  sendBtn: {
+    width: 38, height: 38, borderRadius: 19,
+    backgroundColor: Colors.dark.primary,
+    alignItems: "center", justifyContent: "center",
+  },
+  signInToComment: {
+    flexDirection: "row", alignItems: "center", gap: 10,
+    backgroundColor: Colors.dark.surface, padding: 16, borderRadius: 14,
+    borderWidth: 1, borderColor: Colors.dark.surfaceBorder, marginBottom: 16,
+  },
+  signInToCommentText: { flex: 1, fontSize: 14, fontFamily: "Inter_500Medium", color: Colors.dark.primary },
+  noComments: { alignItems: "center", gap: 10, paddingVertical: 32 },
+  noCommentsText: { fontSize: 15, fontFamily: "Inter_500Medium", color: Colors.dark.textMuted },
   commentItem: {
-    flexDirection: "row",
-    gap: 12,
-    marginBottom: 14,
+    flexDirection: "row", gap: 12, marginBottom: 16,
+  },
+  commentItemReply: {
+    marginLeft: 24, paddingLeft: 16,
+    borderLeftWidth: 2, borderLeftColor: Colors.dark.surfaceBorder,
   },
   commentAvatar: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: Colors.dark.surfaceLight,
-    alignItems: "center",
-    justifyContent: "center",
+    width: 36, height: 36, borderRadius: 18,
+    backgroundColor: Colors.dark.primaryDim,
+    alignItems: "center", justifyContent: "center",
   },
-  commentAvatarText: {
-    fontSize: 14,
-    fontFamily: "Inter_700Bold",
-    color: Colors.dark.primary,
-  },
-  commentMeta: {
+  commentAvatarText: { fontSize: 15, fontFamily: "Inter_700Bold", color: Colors.dark.primary },
+  commentMeta: { flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 6 },
+  commentAuthor: { fontSize: 14, fontFamily: "Inter_600SemiBold", color: Colors.dark.text },
+  commentDate: { fontSize: 12, fontFamily: "Inter_400Regular", color: Colors.dark.textMuted, flex: 1 },
+  commentMenuBtn: { padding: 4 },
+  commentText: { fontSize: 14, fontFamily: "Inter_400Regular", color: Colors.dark.textSecondary, lineHeight: 20 },
+  commentActions: { flexDirection: "row", alignItems: "center", gap: 12, marginTop: 8, flexWrap: "wrap" },
+  commentActionBtn: { flexDirection: "row", alignItems: "center", gap: 4 },
+  commentActionCount: { fontSize: 13, fontFamily: "Inter_500Medium", color: Colors.dark.textMuted },
+  commentActionLabel: { fontSize: 13, fontFamily: "Inter_500Medium", color: Colors.dark.textMuted },
+  commentMenu: {
     flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-    marginBottom: 4,
+    backgroundColor: Colors.dark.surface,
+    borderRadius: 8, padding: 4,
+    borderWidth: 1, borderColor: Colors.dark.surfaceBorder,
   },
-  commentAuthor: {
-    fontSize: 13,
-    fontFamily: "Inter_600SemiBold",
-    color: Colors.dark.text,
+  commentMenuItem: { flexDirection: "row", alignItems: "center", gap: 6, paddingHorizontal: 10, paddingVertical: 6 },
+  commentMenuItemText: { fontSize: 13, fontFamily: "Inter_500Medium", color: Colors.dark.warning },
+  loadMoreBtn: {
+    alignItems: "center", padding: 14,
+    backgroundColor: Colors.dark.surface, borderRadius: 12,
+    borderWidth: 1, borderColor: Colors.dark.surfaceBorder,
+    marginTop: 8,
   },
-  commentDate: {
-    fontSize: 11,
-    fontFamily: "Inter_400Regular",
-    color: Colors.dark.textMuted,
+  loadMoreText: { fontSize: 14, fontFamily: "Inter_600SemiBold", color: Colors.dark.primary },
+  modalOverlay: {
+    flex: 1, backgroundColor: "rgba(0,0,0,0.7)",
+    justifyContent: "flex-end",
   },
-  commentText: {
-    fontSize: 14,
-    fontFamily: "Inter_400Regular",
-    color: Colors.dark.textSecondary,
-    lineHeight: 20,
+  modalSheet: {
+    backgroundColor: Colors.dark.surface,
+    borderTopLeftRadius: 24, borderTopRightRadius: 24,
+    padding: 24, gap: 4,
   },
+  modalHandle: {
+    width: 40, height: 4, borderRadius: 2,
+    backgroundColor: Colors.dark.surfaceBorder,
+    alignSelf: "center", marginBottom: 16,
+  },
+  modalTitle: { fontSize: 18, fontFamily: "Inter_700Bold", color: Colors.dark.text, marginBottom: 4 },
+  modalSubtitle: { fontSize: 14, fontFamily: "Inter_400Regular", color: Colors.dark.textSecondary, marginBottom: 16 },
+  modalOption: {
+    flexDirection: "row", alignItems: "center", gap: 12,
+    paddingVertical: 14, paddingHorizontal: 4,
+    borderBottomWidth: 1, borderBottomColor: Colors.dark.surfaceBorder,
+  },
+  modalOptionText: { fontSize: 15, fontFamily: "Inter_500Medium", color: Colors.dark.text },
+  modalCancel: {
+    alignItems: "center", paddingTop: 16,
+  },
+  modalCancelText: { fontSize: 16, fontFamily: "Inter_600SemiBold", color: Colors.dark.textMuted },
 });
