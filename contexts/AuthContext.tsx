@@ -1,7 +1,16 @@
 import { createContext, useContext, useState, useEffect, useMemo, ReactNode } from "react";
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import { getApiUrl } from "@/lib/query-client";
-import { fetch } from "expo/fetch";
+import {
+  signInWithEmailAndPassword,
+  createUserWithEmailAndPassword,
+  signOut as firebaseSignOut,
+  onAuthStateChanged,
+  updateProfile,
+  GoogleAuthProvider,
+  signInWithCredential,
+  type User as FirebaseUser,
+} from "firebase/auth";
+import { doc, setDoc, getDoc, serverTimestamp } from "firebase/firestore";
+import { firebaseAuth, firestore } from "@/lib/firebase";
 import * as Google from "expo-auth-session/providers/google";
 import * as WebBrowser from "expo-web-browser";
 
@@ -29,6 +38,29 @@ const AuthContext = createContext<AuthContextValue | null>(null);
 
 const GOOGLE_WEB_CLIENT_ID = "971359442211-dppv9u14kun8mo5c0e07pr6f6veh81aa.apps.googleusercontent.com";
 
+async function syncUserToFirestore(fbUser: FirebaseUser, displayName?: string) {
+  const userRef = doc(firestore, "users", fbUser.uid);
+  const snap = await getDoc(userRef);
+  if (!snap.exists()) {
+    await setDoc(userRef, {
+      uid: fbUser.uid,
+      email: fbUser.email,
+      displayName: displayName || fbUser.displayName || fbUser.email?.split("@")[0] || "User",
+      photoURL: fbUser.photoURL || null,
+      createdAt: serverTimestamp(),
+    });
+  }
+}
+
+function toAuthUser(fbUser: FirebaseUser): AuthUser {
+  return {
+    id: fbUser.uid,
+    email: fbUser.email ?? "",
+    displayName: fbUser.displayName ?? fbUser.email?.split("@")[0] ?? "User",
+    photoURL: fbUser.photoURL,
+  };
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [token, setToken] = useState<string | null>(null);
@@ -41,7 +73,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   });
 
   useEffect(() => {
-    loadStoredAuth();
+    const unsubscribe = onAuthStateChanged(firebaseAuth, async (fbUser) => {
+      if (fbUser) {
+        const idToken = await fbUser.getIdToken();
+        setUser(toAuthUser(fbUser));
+        setToken(idToken);
+      } else {
+        setUser(null);
+        setToken(null);
+      }
+      setIsLoading(false);
+    });
+    return unsubscribe;
   }, []);
 
   useEffect(() => {
@@ -53,69 +96,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, [googleResponse]);
 
-  async function loadStoredAuth() {
-    try {
-      const storedToken = await AsyncStorage.getItem("auth_token");
-      if (storedToken) {
-        const baseUrl = getApiUrl();
-        const res = await fetch(`${baseUrl}api/auth/me`, {
-          headers: { Authorization: `Bearer ${storedToken}` },
-        });
-        if (res.ok) {
-          const data = await res.json();
-          setUser(data.user);
-          setToken(storedToken);
-        } else {
-          await AsyncStorage.removeItem("auth_token");
-        }
-      }
-    } catch (e) {
-      console.error("Auth load error:", e);
-    } finally {
-      setIsLoading(false);
-    }
-  }
-
   async function signIn(email: string, password: string) {
-    const baseUrl = getApiUrl();
-    const res = await fetch(`${baseUrl}api/auth/login`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, password }),
-    });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.message || "Sign in failed");
-    await AsyncStorage.setItem("auth_token", data.token);
-    setUser(data.user);
-    setToken(data.token);
+    const cred = await signInWithEmailAndPassword(firebaseAuth, email, password);
+    const idToken = await cred.user.getIdToken();
+    setUser(toAuthUser(cred.user));
+    setToken(idToken);
   }
 
   async function signUp(email: string, displayName: string, password: string) {
-    const baseUrl = getApiUrl();
-    const res = await fetch(`${baseUrl}api/auth/register`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, displayName, password }),
-    });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.message || "Sign up failed");
-    await AsyncStorage.setItem("auth_token", data.token);
-    setUser(data.user);
-    setToken(data.token);
+    const cred = await createUserWithEmailAndPassword(firebaseAuth, email, password);
+    await updateProfile(cred.user, { displayName });
+    await syncUserToFirestore(cred.user, displayName);
+    const idToken = await cred.user.getIdToken();
+    setUser(toAuthUser(cred.user));
+    setToken(idToken);
   }
 
   async function handleGoogleAccessToken(accessToken: string) {
-    const baseUrl = getApiUrl();
-    const res = await fetch(`${baseUrl}api/auth/google-signin`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ accessToken }),
-    });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.message || "Google sign-in failed");
-    await AsyncStorage.setItem("auth_token", data.token);
-    setUser(data.user);
-    setToken(data.token);
+    const credential = GoogleAuthProvider.credential(null, accessToken);
+    const cred = await signInWithCredential(firebaseAuth, credential);
+    await syncUserToFirestore(cred.user);
+    const idToken = await cred.user.getIdToken();
+    setUser(toAuthUser(cred.user));
+    setToken(idToken);
   }
 
   async function signInWithGoogle() {
@@ -123,16 +126,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   async function signOut() {
-    try {
-      if (token) {
-        const baseUrl = getApiUrl();
-        await fetch(`${baseUrl}api/auth/logout`, {
-          method: "POST",
-          headers: { Authorization: `Bearer ${token}` },
-        });
-      }
-    } catch (e) {}
-    await AsyncStorage.removeItem("auth_token");
+    await firebaseSignOut(firebaseAuth);
     setUser(null);
     setToken(null);
   }

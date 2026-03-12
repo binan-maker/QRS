@@ -1,4 +1,6 @@
 import { initializeApp, getApps } from "firebase/app";
+import { getAuth } from "firebase/auth";
+import { getFirestore } from "firebase/firestore";
 
 const firebaseConfig = {
   apiKey: process.env.EXPO_PUBLIC_FIREBASE_API_KEY || "AIzaSyClEPO1EIRG3vxbQgS6l9AdZj0dIt765e0",
@@ -12,3 +14,6 @@ const firebaseConfig = {
 export const firebaseApp = getApps().length === 0
   ? initializeApp(firebaseConfig)
   : getApps()[0];
+
+export const firebaseAuth = getAuth(firebaseApp);
+export const firestore = getFirestore(firebaseApp);

@@ -1,13 +1,7 @@
 import type { Express, Request, Response, NextFunction } from "express";
 import { createServer, type Server } from "node:http";
 import {
-  createUser,
-  getUserByEmail,
-  getUserById,
-  verifyPassword,
-  createAuthToken,
-  getUserByToken,
-  deleteAuthToken,
+  getOrCreateUserByUID,
   getOrCreateQrCode,
   getQrCodeById,
   getQrCodeComments,
@@ -38,12 +32,42 @@ import {
   getUserComments,
   clearUserComments,
   getReportedComments,
-  createOrGetGoogleUser,
 } from "./storage";
-import { registerSchema, loginSchema } from "@shared/schema";
 
 interface AuthRequest extends Request {
   user?: { id: string; email: string; displayName: string };
+}
+
+const FIREBASE_API_KEY = process.env.FIREBASE_API_KEY || "AIzaSyClEPO1EIRG3vxbQgS6l9AdZj0dIt765e0";
+
+async function verifyFirebaseToken(idToken: string): Promise<{
+  uid: string;
+  email: string;
+  displayName: string;
+  photoURL?: string;
+} | null> {
+  try {
+    const res = await fetch(
+      `https://identitytoolkit.googleapis.com/v1/accounts:lookup?key=${FIREBASE_API_KEY}`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ idToken }),
+      }
+    );
+    if (!res.ok) return null;
+    const data = await res.json() as { users?: { localId: string; email: string; displayName?: string; photoUrl?: string }[] };
+    const fbUser = data.users?.[0];
+    if (!fbUser) return null;
+    return {
+      uid: fbUser.localId,
+      email: fbUser.email,
+      displayName: fbUser.displayName || fbUser.email?.split("@")[0] || "User",
+      photoURL: fbUser.photoUrl,
+    };
+  } catch {
+    return null;
+  }
 }
 
 async function authMiddleware(
@@ -53,14 +77,24 @@ async function authMiddleware(
 ) {
   const authHeader = req.headers.authorization;
   if (authHeader?.startsWith("Bearer ")) {
-    const token = authHeader.slice(7);
-    const user = await getUserByToken(token);
-    if (user) {
-      req.user = {
-        id: user.id,
-        email: user.email,
-        displayName: user.displayName,
-      };
+    const idToken = authHeader.slice(7);
+    try {
+      const fbUser = await verifyFirebaseToken(idToken);
+      if (fbUser) {
+        const dbUser = await getOrCreateUserByUID(
+          fbUser.uid,
+          fbUser.email,
+          fbUser.displayName,
+          fbUser.photoURL
+        );
+        req.user = {
+          id: dbUser.id,
+          email: dbUser.email,
+          displayName: dbUser.displayName,
+        };
+      }
+    } catch (e) {
+      console.error("Auth middleware error:", e);
     }
   }
   next();
@@ -132,110 +166,9 @@ function calculateTrustScore(reportCounts: Record<string, number>) {
 export async function registerRoutes(app: Express): Promise<Server> {
   app.use("/api", authMiddleware as any);
 
-  app.post("/api/auth/register", async (req: AuthRequest, res: Response) => {
-    try {
-      const parsed = registerSchema.safeParse(req.body);
-      if (!parsed.success) {
-        return res.status(400).json({ message: parsed.error.errors[0].message });
-      }
-      const { email, displayName, password } = parsed.data;
-      const existing = await getUserByEmail(email);
-      if (existing) {
-        return res.status(409).json({ message: "Email already registered" });
-      }
-      const user = await createUser(email, displayName, password);
-      const token = await createAuthToken(user.id);
-      res.json({
-        user: { id: user.id, email: user.email, displayName: user.displayName },
-        token,
-      });
-    } catch (e: any) {
-      res.status(500).json({ message: e.message });
-    }
-  });
-
-  app.post("/api/auth/login", async (req: AuthRequest, res: Response) => {
-    try {
-      const parsed = loginSchema.safeParse(req.body);
-      if (!parsed.success) {
-        return res.status(400).json({ message: parsed.error.errors[0].message });
-      }
-      const { email, password } = parsed.data;
-      const user = await getUserByEmail(email);
-      if (!user) {
-        return res.status(401).json({ message: "Invalid email or password" });
-      }
-      if (user.isDeleted) {
-        return res.status(401).json({ message: "This account has been deleted" });
-      }
-      const valid = await verifyPassword(user, password);
-      if (!valid) {
-        return res.status(401).json({ message: "Invalid email or password" });
-      }
-      const token = await createAuthToken(user.id);
-      res.json({
-        user: { id: user.id, email: user.email, displayName: user.displayName },
-        token,
-      });
-    } catch (e: any) {
-      res.status(500).json({ message: e.message });
-    }
-  });
-
   app.get("/api/auth/me", async (req: AuthRequest, res: Response) => {
     if (!req.user) return res.status(401).json({ message: "Not authenticated" });
     res.json({ user: req.user });
-  });
-
-  app.post("/api/auth/logout", async (req: AuthRequest, res: Response) => {
-    const authHeader = req.headers.authorization;
-    if (authHeader?.startsWith("Bearer ")) {
-      await deleteAuthToken(authHeader.slice(7));
-    }
-    res.json({ success: true });
-  });
-
-  app.post("/api/auth/google-signin", async (req: AuthRequest, res: Response) => {
-    try {
-      const { accessToken } = req.body;
-      if (!accessToken) {
-        return res.status(400).json({ message: "Access token required" });
-      }
-      const googleRes = await fetch(
-        `https://www.googleapis.com/oauth2/v3/userinfo`,
-        { headers: { Authorization: `Bearer ${accessToken}` } }
-      );
-      if (!googleRes.ok) {
-        return res.status(401).json({ message: "Invalid Google access token" });
-      }
-      const profile = await googleRes.json() as {
-        sub: string;
-        email: string;
-        name: string;
-        picture: string;
-      };
-      if (!profile.sub || !profile.email) {
-        return res.status(401).json({ message: "Could not retrieve Google profile" });
-      }
-      const user = await createOrGetGoogleUser(
-        profile.sub,
-        profile.email,
-        profile.name || profile.email.split("@")[0],
-        profile.picture || null
-      );
-      const token = await createAuthToken(user.id);
-      res.json({
-        user: {
-          id: user.id,
-          email: user.email,
-          displayName: user.displayName,
-          photoURL: user.photoURL,
-        },
-        token,
-      });
-    } catch (e: any) {
-      res.status(500).json({ message: e.message });
-    }
   });
 
   app.post("/api/qr/scan", async (req: AuthRequest, res: Response) => {
@@ -517,10 +450,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     async (req: AuthRequest, res: Response) => {
       try {
         await softDeleteUser(req.user!.id);
-        const authHeader = req.headers.authorization;
-        if (authHeader?.startsWith("Bearer ")) {
-          await deleteAuthToken(authHeader.slice(7));
-        }
         res.json({ success: true });
       } catch (e: any) {
         res.status(500).json({ message: e.message });

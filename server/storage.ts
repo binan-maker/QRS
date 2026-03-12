@@ -83,6 +83,32 @@ export async function getUserById(id: string): Promise<User | undefined> {
   return user;
 }
 
+export async function getOrCreateUserByUID(
+  uid: string,
+  email: string,
+  displayName: string,
+  photoURL?: string | null
+): Promise<User> {
+  const [existing] = await db.select().from(users).where(eq(users.id, uid));
+  if (existing) {
+    if (existing.isDeleted) {
+      throw new Error("This account has been deleted");
+    }
+    return existing;
+  }
+  const [created] = await db
+    .insert(users)
+    .values({
+      id: uid,
+      email,
+      displayName: displayName || email.split("@")[0],
+      photoURL: photoURL || null,
+      passwordHash: null,
+    })
+    .returning();
+  return created;
+}
+
 export async function verifyPassword(
   user: User,
   password: string
