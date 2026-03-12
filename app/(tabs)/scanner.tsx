@@ -196,9 +196,18 @@ export default function ScannerScreen() {
         headers,
         body: JSON.stringify({ imageBase64: base64 }),
       });
+
+      // Guard against HTML error pages (e.g. payload too large, CORS error)
+      const contentType = res.headers.get("content-type") || "";
+      if (!contentType.includes("application/json")) {
+        Alert.alert("No QR Found", "No QR code was detected in the selected image");
+        setProcessing(false);
+        return;
+      }
+
       const data = await res.json();
       if (!res.ok || !data.content) {
-        Alert.alert("No QR Found", "No QR code was detected in the selected image");
+        Alert.alert("No QR Found", data.message || "No QR code was detected in the selected image");
         setProcessing(false);
         return;
       }

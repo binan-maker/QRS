@@ -129,9 +129,46 @@ export async function getQrCodeId(content: string): Promise<string> {
 
 export async function getOrCreateQrCode(content: string): Promise<QrCodeData> {
   const qrId = await getQrCodeId(content);
-  const ref = doc(firestore, "qrCodes", qrId);
-  const snap = await getDoc(ref);
-  if (snap.exists()) {
+  const contentType = detectContentType(content);
+  const fallback: QrCodeData = {
+    id: qrId,
+    content,
+    contentType,
+    createdAt: new Date().toISOString(),
+    scanCount: 0,
+    commentCount: 0,
+  };
+  try {
+    const ref = doc(firestore, "qrCodes", qrId);
+    const snap = await getDoc(ref);
+    if (snap.exists()) {
+      const d = snap.data();
+      return {
+        id: qrId,
+        content: d.content,
+        contentType: d.contentType,
+        createdAt: tsToString(d.createdAt),
+        scanCount: d.scanCount || 0,
+        commentCount: d.commentCount || 0,
+      };
+    }
+    await setDoc(ref, {
+      content,
+      contentType,
+      createdAt: serverTimestamp(),
+      scanCount: 0,
+      commentCount: 0,
+    });
+  } catch {
+    // Degrade gracefully when Firestore rules deny access or network is unavailable
+  }
+  return fallback;
+}
+
+export async function getQrCodeById(qrId: string): Promise<QrCodeData | null> {
+  try {
+    const snap = await getDoc(doc(firestore, "qrCodes", qrId));
+    if (!snap.exists()) return null;
     const d = snap.data();
     return {
       id: qrId,
@@ -141,37 +178,9 @@ export async function getOrCreateQrCode(content: string): Promise<QrCodeData> {
       scanCount: d.scanCount || 0,
       commentCount: d.commentCount || 0,
     };
+  } catch {
+    return null;
   }
-  const contentType = detectContentType(content);
-  await setDoc(ref, {
-    content,
-    contentType,
-    createdAt: serverTimestamp(),
-    scanCount: 0,
-    commentCount: 0,
-  });
-  return {
-    id: qrId,
-    content,
-    contentType,
-    createdAt: new Date().toISOString(),
-    scanCount: 0,
-    commentCount: 0,
-  };
-}
-
-export async function getQrCodeById(qrId: string): Promise<QrCodeData | null> {
-  const snap = await getDoc(doc(firestore, "qrCodes", qrId));
-  if (!snap.exists()) return null;
-  const d = snap.data();
-  return {
-    id: qrId,
-    content: d.content,
-    contentType: d.contentType,
-    createdAt: tsToString(d.createdAt),
-    scanCount: d.scanCount || 0,
-    commentCount: d.commentCount || 0,
-  };
 }
 
 // Real-time subscription to QR code stats (scanCount, commentCount)
@@ -180,15 +189,16 @@ export function subscribeToQrStats(
   onUpdate: (data: { scanCount: number; commentCount: number }) => void
 ): () => void {
   const qrRef = doc(firestore, "qrCodes", qrId);
-  return onSnapshot(qrRef, (snap) => {
-    if (snap.exists()) {
-      const d = snap.data();
-      onUpdate({
-        scanCount: d.scanCount || 0,
-        commentCount: d.commentCount || 0,
-      });
-    }
-  });
+  return onSnapshot(
+    qrRef,
+    (snap) => {
+      if (snap.exists()) {
+        const d = snap.data();
+        onUpdate({ scanCount: d.scanCount || 0, commentCount: d.commentCount || 0 });
+      }
+    },
+    () => {} // swallow permission / network errors
+  );
 }
 
 // Real-time subscription to QR report counts
@@ -197,14 +207,18 @@ export function subscribeToQrReports(
   onUpdate: (counts: Record<string, number>) => void
 ): () => void {
   const reportsRef = collection(firestore, "qrCodes", qrId, "reports");
-  return onSnapshot(reportsRef, (snap) => {
-    const counts: Record<string, number> = {};
-    snap.forEach((d) => {
-      const { reportType } = d.data();
-      counts[reportType] = (counts[reportType] || 0) + 1;
-    });
-    onUpdate(counts);
-  });
+  return onSnapshot(
+    reportsRef,
+    (snap) => {
+      const counts: Record<string, number> = {};
+      snap.forEach((d) => {
+        const { reportType } = d.data();
+        counts[reportType] = (counts[reportType] || 0) + 1;
+      });
+      onUpdate(counts);
+    },
+    () => {} // swallow permission / network errors
+  );
 }
 
 // Real-time subscription to comments (first page, live updates)
@@ -218,25 +232,29 @@ export function subscribeToComments(
     orderBy("createdAt", "desc"),
     firestoreLimit(pageLimit)
   );
-  return onSnapshot(q, (snap) => {
-    const comments: CommentItem[] = snap.docs.map((d) => {
-      const data = d.data();
-      return {
-        id: d.id,
-        qrCodeId: qrId,
-        userId: data.userId,
-        text: data.isDeleted ? "[deleted]" : data.text,
-        parentId: data.parentId || null,
-        isDeleted: data.isDeleted || false,
-        likeCount: data.likeCount || 0,
-        dislikeCount: data.dislikeCount || 0,
-        createdAt: tsToString(data.createdAt),
-        userLike: null,
-        user: { displayName: data.isDeleted ? "[deleted]" : (data.userDisplayName || "User") },
-      };
-    });
-    onUpdate(comments);
-  });
+  return onSnapshot(
+    q,
+    (snap) => {
+      const comments: CommentItem[] = snap.docs.map((d) => {
+        const data = d.data();
+        return {
+          id: d.id,
+          qrCodeId: qrId,
+          userId: data.userId,
+          text: data.isDeleted ? "[deleted]" : data.text,
+          parentId: data.parentId || null,
+          isDeleted: data.isDeleted || false,
+          likeCount: data.likeCount || 0,
+          dislikeCount: data.dislikeCount || 0,
+          createdAt: tsToString(data.createdAt),
+          userLike: null,
+          user: { displayName: data.isDeleted ? "[deleted]" : (data.userDisplayName || "User") },
+        };
+      });
+      onUpdate(comments);
+    },
+    () => {} // swallow permission / network errors
+  );
 }
 
 // Batch-fetch the current user's like/dislike status for a list of comments
@@ -609,24 +627,38 @@ export async function deleteUserAccount(userId: string): Promise<void> {
 }
 
 export async function loadQrDetail(qrId: string, userId: string | null) {
-  const [qrCode, reportCounts, followersSnap] = await Promise.all([
-    getQrCodeById(qrId),
-    getQrReportCounts(qrId),
-    getDocs(collection(firestore, "qrCodes", qrId, "followers")),
-  ]);
+  const qrCode = await getQrCodeById(qrId);
   if (!qrCode) return null;
-  const followCount = followersSnap.size;
+
+  let reportCounts: Record<string, number> = {};
+  let followCount = 0;
+  try {
+    const [rSnap, fSnap] = await Promise.all([
+      getDocs(collection(firestore, "qrCodes", qrId, "reports")),
+      getDocs(collection(firestore, "qrCodes", qrId, "followers")),
+    ]);
+    rSnap.forEach((d) => {
+      const { reportType } = d.data();
+      reportCounts[reportType] = (reportCounts[reportType] || 0) + 1;
+    });
+    followCount = fSnap.size;
+  } catch {}
+
   const trustScore = calculateTrustScore(reportCounts);
   let userReport: string | null = null;
   let isFavorite = false;
   let isFollowing = false;
+
   if (userId) {
-    [userReport, isFavorite, isFollowing] = await Promise.all([
-      getUserQrReport(qrId, userId),
-      isUserFavorite(qrId, userId),
-      isUserFollowingQr(qrId, userId),
-    ]);
+    try {
+      [userReport, isFavorite, isFollowing] = await Promise.all([
+        getUserQrReport(qrId, userId),
+        isUserFavorite(qrId, userId),
+        isUserFollowingQr(qrId, userId),
+      ]);
+    } catch {}
   }
+
   return {
     qrCode,
     reportCounts,

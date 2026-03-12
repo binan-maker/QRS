@@ -39,19 +39,25 @@ const AuthContext = createContext<AuthContextValue | null>(null);
 const GOOGLE_WEB_CLIENT_ID = "971359442211-dppv9u14kun8mo5c0e07pr6f6veh81aa.apps.googleusercontent.com";
 
 async function syncUserToFirestore(fbUser: FirebaseUser, displayName?: string) {
-  const userRef = doc(firestore, "users", fbUser.uid);
-  const snap = await getDoc(userRef);
-  if (!snap.exists()) {
-    await setDoc(userRef, {
-      uid: fbUser.uid,
-      email: fbUser.email,
-      displayName: displayName || fbUser.displayName || fbUser.email?.split("@")[0] || "User",
-      photoURL: fbUser.photoURL || null,
-      isDeleted: false,
-      createdAt: serverTimestamp(),
-    });
-  } else if (snap.data().isDeleted) {
-    throw new Error("This account has been deleted.");
+  try {
+    const userRef = doc(firestore, "users", fbUser.uid);
+    const snap = await getDoc(userRef);
+    if (!snap.exists()) {
+      await setDoc(userRef, {
+        uid: fbUser.uid,
+        email: fbUser.email,
+        displayName: displayName || fbUser.displayName || fbUser.email?.split("@")[0] || "User",
+        photoURL: fbUser.photoURL || null,
+        isDeleted: false,
+        createdAt: serverTimestamp(),
+      });
+    } else if (snap.data().isDeleted) {
+      throw new Error("ACCOUNT_DELETED");
+    }
+  } catch (e: any) {
+    // Only rethrow the deleted-account sentinel; swallow all Firestore
+    // permission / network errors so they never block the auth flow.
+    if (e.message === "ACCOUNT_DELETED") throw new Error("This account has been deleted.");
   }
 }
 

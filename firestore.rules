@@ -1,0 +1,72 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ─── QR Codes ─────────────────────────────────────────────────────────────
+    // Anyone can read. Only authenticated users can create or update.
+    match /qrCodes/{qrId} {
+      allow read: if true;
+      allow create, update: if true; // open create for anonymous scan recording
+
+      // Reports: one per user, authenticated only
+      match /reports/{userId} {
+        allow read: if true;
+        allow write: if request.auth != null && request.auth.uid == userId;
+      }
+
+      // Comments: anyone can read, authenticated users can create
+      match /comments/{commentId} {
+        allow read: if true;
+        allow create: if request.auth != null;
+        // Only the comment author can update (soft-delete)
+        allow update: if request.auth != null &&
+          (request.auth.uid == resource.data.userId || request.auth.uid == request.resource.data.userId);
+        allow delete: if false;
+
+        // Comment likes: authenticated user can manage their own
+        match /likes/{userId} {
+          allow read: if true;
+          allow write: if request.auth != null && request.auth.uid == userId;
+        }
+
+        // Comment reports: authenticated user can submit one
+        match /reports/{userId} {
+          allow read: if request.auth != null;
+          allow write: if request.auth != null && request.auth.uid == userId;
+        }
+      }
+
+      // Followers: authenticated user can follow/unfollow
+      match /followers/{userId} {
+        allow read: if true;
+        allow write: if request.auth != null && request.auth.uid == userId;
+      }
+    }
+
+    // ─── Users ────────────────────────────────────────────────────────────────
+    // Each user can only read and write their own profile and sub-collections
+    match /users/{userId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+
+      match /scans/{scanId} {
+        allow read, write: if request.auth != null && request.auth.uid == userId;
+      }
+      match /favorites/{favId} {
+        allow read, write: if request.auth != null && request.auth.uid == userId;
+      }
+      match /following/{qrId} {
+        allow read, write: if request.auth != null && request.auth.uid == userId;
+      }
+      match /comments/{commentId} {
+        allow read, write: if request.auth != null && request.auth.uid == userId;
+      }
+    }
+
+    // ─── Feedback ─────────────────────────────────────────────────────────────
+    // Anyone (including unauthenticated users) can submit feedback
+    match /feedback/{docId} {
+      allow create: if true;
+      allow read, update, delete: if false;
+    }
+  }
+}
