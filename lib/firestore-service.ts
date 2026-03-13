@@ -1,4 +1,5 @@
 import { firestore, realtimeDB } from "./firebase";
+import { isPaymentQr } from "./qr-analysis";
 import {
   doc,
   collection,
@@ -99,15 +100,8 @@ export interface Notification {
 }
 
 export function detectContentType(content: string): string {
-  const lower = content.toLowerCase();
-  if (lower.startsWith("upi://")) return "payment";
-  if (lower.startsWith("tez://")) return "payment";
-  if (lower.includes("paypal.me") || lower.includes("paypal.com/payables")) return "payment";
-  if (lower.includes("phonepe")) return "payment";
-  if (lower.includes("pay.google.com")) return "payment";
-  if (lower.includes("paytm")) return "payment";
-  if (lower.includes("venmo.com")) return "payment";
-  if (lower.includes("cash.app")) return "payment";
+  if (!content) return "text";
+  if (isPaymentQr(content)) return "payment";
   if (content.startsWith("tel:")) return "phone";
   if (content.startsWith("mailto:")) return "email";
   if (content.startsWith("WIFI:")) return "wifi";

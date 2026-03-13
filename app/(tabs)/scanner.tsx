@@ -27,8 +27,8 @@ import { useAuth } from "@/contexts/AuthContext";
 import { getApiUrl } from "@/lib/query-client";
 import { getOrCreateQrCode, recordScan } from "@/lib/firestore-service";
 import {
-  parseUpiQr,
-  analyzePaymentQr,
+  parseAnyPaymentQr,
+  analyzeAnyPaymentQr,
   analyzeUrlHeuristics,
   loadOfflineBlacklist,
   checkOfflineBlacklist,
@@ -151,11 +151,11 @@ export default function ScannerScreen() {
       riskLevel = "dangerous";
     }
 
-    // Payment QR check
+    // Payment QR check (all 50+ payment apps)
     if (contentType === "payment") {
-      const parsed = parseUpiQr(content);
+      const parsed = parseAnyPaymentQr(content);
       if (parsed) {
-        const result = analyzePaymentQr(parsed);
+        const result = analyzeAnyPaymentQr(parsed);
         warnings.push(...result.warnings);
         if (result.riskLevel === "dangerous") riskLevel = "dangerous";
         else if (result.riskLevel === "caution" && riskLevel === "safe") riskLevel = "caution";

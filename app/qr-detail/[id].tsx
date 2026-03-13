@@ -57,12 +57,12 @@ import {
 } from "@/lib/firestore-service";
 import { DocumentSnapshot } from "firebase/firestore";
 import {
-  parseUpiQr,
-  analyzePaymentQr,
+  parseAnyPaymentQr,
+  analyzeAnyPaymentQr,
   analyzeUrlHeuristics,
   loadOfflineBlacklist,
   checkOfflineBlacklist,
-  type ParsedUpiQr,
+  type ParsedPaymentQr,
   type PaymentSafetyResult,
   type UrlSafetyResult,
 } from "@/lib/qr-analysis";
@@ -103,12 +103,29 @@ const REPORT_TYPES = [
   { key: "spam", label: "Spam", icon: "mail-unread", color: Colors.dark.accent, bg: Colors.dark.accentDim },
 ];
 
-const PAYMENT_APPS: { prefix: string; name: string; icon: string }[] = [
-  { prefix: "upi://", name: "UPI Payment", icon: "card" },
-  { prefix: "phonepe://", name: "PhonePe", icon: "phone-portrait" },
-  { prefix: "paytm://", name: "Paytm", icon: "wallet" },
-  { prefix: "gpay://", name: "Google Pay", icon: "card-outline" },
-];
+function getPaymentAppIcon(appId: string): string {
+  switch (appId) {
+    case "phonepe": return "phone-portrait-outline";
+    case "gpay_india": return "logo-google";
+    case "paytm": return "wallet-outline";
+    case "bhim": return "shield-checkmark-outline";
+    case "amazon_pay": return "cart-outline";
+    case "paypal": return "card-outline";
+    case "venmo": return "people-outline";
+    case "cash_app": return "cash-outline";
+    case "alipay": case "wechat_pay": return "globe-outline";
+    case "bitcoin": case "ethereum": case "litecoin":
+    case "solana": case "dogecoin": case "bnb": return "logo-bitcoin";
+    case "mpesa": case "flutterwave": case "paystack": return "phone-portrait-outline";
+    case "revolut": case "wise": case "swish_se": return "swap-horizontal-outline";
+    case "grabpay": case "gopay": case "ovo": case "dana": return "phone-portrait-outline";
+    case "kakaopay": case "toss": case "naverpay": return "phone-portrait-outline";
+    case "paypay_jp": case "merpay": case "rakuten_pay": return "phone-portrait-outline";
+    case "pix": return "flash-outline";
+    case "mercado_pago": case "picpay": return "wallet-outline";
+    default: return "card-outline";
+  }
+}
 
 const COMMENT_REPORT_REASONS = [
   { label: "Sexual content", value: "sexual_content", icon: "alert-circle-outline" },
@@ -122,14 +139,6 @@ const COMMENT_REPORT_REASONS = [
   { label: "Promotes terrorism", value: "terrorism", icon: "skull-outline" },
   { label: "Spam or misleading", value: "spam", icon: "mail-unread-outline" },
 ];
-
-function detectPaymentApp(content: string) {
-  for (const app of PAYMENT_APPS) {
-    if (content.toLowerCase().startsWith(app.prefix)) return app;
-  }
-  if (content.toLowerCase().includes("upi://")) return PAYMENT_APPS[0];
-  return null;
-}
 
 const COMMENTS_PER_PAGE = 20;
 const REPLIES_PER_PAGE = 10;
@@ -279,7 +288,7 @@ export default function QrDetailScreen() {
   const [unreadMessages, setUnreadMessages] = useState(0);
 
   // QR Safety Analysis
-  const [parsedUpi, setParsedUpi] = useState<ParsedUpiQr | null>(null);
+  const [parsedPayment, setParsedPayment] = useState<ParsedPaymentQr | null>(null);
   const [paymentSafety, setPaymentSafety] = useState<PaymentSafetyResult | null>(null);
   const [urlSafety, setUrlSafety] = useState<UrlSafetyResult | null>(null);
   const [offlineBlacklistMatch, setOfflineBlacklistMatch] = useState<{ matched: boolean; reason: string | null }>({ matched: false, reason: null });
@@ -442,19 +451,18 @@ export default function QrDetailScreen() {
     const contentType = qrCode?.contentType || offlineContentType;
     if (!content) return;
 
-    // Run analysis asynchronously
     (async () => {
       // Offline blacklist check (works offline too)
       const blacklist = await loadOfflineBlacklist();
       const blMatch = checkOfflineBlacklist(content, blacklist);
       setOfflineBlacklistMatch(blMatch);
 
-      // UPI / Payment analysis
+      // Universal payment analysis — covers all 50+ payment apps worldwide
       if (contentType === "payment") {
-        const upi = parseUpiQr(content);
-        if (upi) {
-          setParsedUpi(upi);
-          setPaymentSafety(analyzePaymentQr(upi));
+        const parsed = parseAnyPaymentQr(content);
+        if (parsed) {
+          setParsedPayment(parsed);
+          setPaymentSafety(analyzeAnyPaymentQr(parsed));
         }
       }
 
@@ -616,8 +624,81 @@ export default function QrDetailScreen() {
     const content = qrCode?.content || offlineContent;
     if (!content) return;
     const ct = qrCode?.contentType || offlineContentType;
-    if (ct === "url" || ct === "payment") {
+    if (ct === "url") {
       Linking.openURL(content).catch(() => Alert.alert("Error", "Could not open link"));
+    } else if (ct === "payment") {
+      handleOpenPayment(content);
+    }
+  }
+
+  async function handleOpenPayment(content: string) {
+    if (!content) return;
+
+    // Build a prioritized list of deep-link URLs to try
+    const linksToTry: string[] = [];
+    const lower = content.toLowerCase();
+
+    if (parsedPayment) {
+      const cat = parsedPayment.appCategory;
+
+      if (cat === "upi_india") {
+        // Always normalize to standard upi:// scheme — Android OS opens payment chooser
+        if (lower.startsWith("upi://")) {
+          linksToTry.push(content);
+        } else if (lower.startsWith("tez://upi/") || lower.startsWith("gpay://upi/")) {
+          // Convert GPay scheme to standard UPI
+          const upiLink = "upi://" + content.split("upi/")[1];
+          linksToTry.push(upiLink, content);
+        } else if (lower.startsWith("phonepe://")) {
+          linksToTry.push(content);
+          // Also try standard UPI as fallback
+          if (content.includes("?")) linksToTry.push("upi://pay?" + content.split("?")[1]);
+        } else if (lower.startsWith("paytm://")) {
+          linksToTry.push(content);
+          if (content.includes("?")) linksToTry.push("upi://pay?" + content.split("?")[1]);
+        } else {
+          linksToTry.push(content);
+        }
+      } else if (cat === "crypto") {
+        // Crypto: just open the raw scheme (bitcoin:, ethereum:, etc.)
+        linksToTry.push(content);
+      } else {
+        // For URL-based payments (PayPal, Venmo, GrabPay, etc.): open as URL
+        // Try the raw content (which might be a URL or scheme)
+        linksToTry.push(content);
+        // If it's not already a URL and has a scheme, try adding https:// as fallback
+        if (!lower.startsWith("http://") && !lower.startsWith("https://") && lower.includes("://")) {
+          // Already has a scheme, nothing extra needed
+        } else if (!lower.startsWith("http")) {
+          try { new URL("https://" + content); linksToTry.push("https://" + content); } catch {}
+        }
+      }
+    } else {
+      // No parsed payment — try raw content
+      linksToTry.push(content);
+    }
+
+    // Try each link in order
+    for (const link of linksToTry) {
+      try {
+        const canOpen = await Linking.canOpenURL(link);
+        if (canOpen) {
+          await Linking.openURL(link);
+          return;
+        }
+      } catch {}
+    }
+
+    // Last resort: try opening even if canOpenURL said no (some OS versions return false incorrectly)
+    if (linksToTry.length > 0) {
+      Linking.openURL(linksToTry[0]).catch(() => {
+        const appName = parsedPayment?.appDisplayName ?? "payment app";
+        Alert.alert(
+          "App Not Found",
+          `Could not open ${appName}. Make sure the app is installed on your device.`,
+          [{ text: "OK" }]
+        );
+      });
     }
   }
 
@@ -792,7 +873,6 @@ export default function QrDetailScreen() {
   }
 
   const trust = getTrustInfo();
-  const paymentApp = qrCode ? detectPaymentApp(qrCode.content) : null;
   const currentContent = qrCode?.content || offlineContent;
   const currentContentType = qrCode?.contentType || offlineContentType;
 
@@ -1036,50 +1116,113 @@ export default function QrDetailScreen() {
                   </Pressable>
                 ) : null}
 
-                {/* UPI / Payment details */}
-                {currentContentType === "payment" && parsedUpi ? (
+                {/* Universal Payment Details Card */}
+                {currentContentType === "payment" && parsedPayment ? (
                   <View style={styles.upiDetailsCard}>
-                    <View style={styles.upiRow}>
-                      <Text style={styles.upiLabel}>Payee</Text>
-                      <Text style={styles.upiValue} numberOfLines={1}>
-                        {parsedUpi.payeeName || "Unknown"}
-                      </Text>
+                    {/* App + Region badge */}
+                    <View style={[styles.upiRow, { marginBottom: 8 }]}>
+                      <Text style={styles.upiLabel}>App</Text>
+                      <View style={{ flexDirection: "row", alignItems: "center", gap: 6, flex: 1, justifyContent: "flex-end" }}>
+                        <Text style={[styles.upiValue, { color: Colors.dark.primary }]} numberOfLines={1}>
+                          {parsedPayment.appDisplayName}
+                        </Text>
+                        <View style={{ backgroundColor: Colors.dark.primaryDim, borderRadius: 6, paddingHorizontal: 6, paddingVertical: 2 }}>
+                          <Text style={{ color: Colors.dark.primary, fontSize: 10, fontFamily: "Inter_600SemiBold" }}>
+                            {parsedPayment.region}
+                          </Text>
+                        </View>
+                      </View>
                     </View>
-                    <View style={styles.upiRow}>
-                      <Text style={styles.upiLabel}>UPI ID</Text>
-                      <Text style={styles.upiValue} selectable numberOfLines={1}>
-                        {parsedUpi.vpa}
-                      </Text>
-                    </View>
-                    <View style={styles.upiRow}>
-                      <Text style={styles.upiLabel}>Bank</Text>
-                      <Text style={styles.upiValue}>@{parsedUpi.bankHandle}</Text>
-                    </View>
-                    {parsedUpi.isAmountPreFilled && parsedUpi.amount ? (
+
+                    {/* Recipient / Payee */}
+                    {parsedPayment.recipientName ? (
                       <View style={styles.upiRow}>
-                        <Text style={styles.upiLabel}>Amount</Text>
-                        <Text style={[styles.upiValue, { color: Colors.dark.warning, fontFamily: "Inter_700Bold" }]}>
-                          ₹{parseFloat(parsedUpi.amount).toLocaleString("en-IN")} {parsedUpi.currency}
+                        <Text style={styles.upiLabel}>Payee</Text>
+                        <Text style={styles.upiValue} numberOfLines={1}>{parsedPayment.recipientName}</Text>
+                      </View>
+                    ) : null}
+
+                    {/* UPI-specific: VPA + bank handle */}
+                    {parsedPayment.appCategory === "upi_india" && parsedPayment.vpa ? (
+                      <>
+                        <View style={styles.upiRow}>
+                          <Text style={styles.upiLabel}>UPI ID</Text>
+                          <Text style={styles.upiValue} selectable numberOfLines={1}>{parsedPayment.vpa}</Text>
+                        </View>
+                        {parsedPayment.bankHandle ? (
+                          <View style={styles.upiRow}>
+                            <Text style={styles.upiLabel}>Bank</Text>
+                            <Text style={styles.upiValue}>@{parsedPayment.bankHandle}</Text>
+                          </View>
+                        ) : null}
+                      </>
+                    ) : null}
+
+                    {/* Crypto: wallet address */}
+                    {parsedPayment.appCategory === "crypto" && parsedPayment.recipientId ? (
+                      <View style={styles.upiRow}>
+                        <Text style={styles.upiLabel}>Address</Text>
+                        <Text selectable numberOfLines={2} style={{ flex: 1, textAlign: "right", fontSize: 11, fontFamily: "Inter_400Regular", color: Colors.dark.textSecondary, letterSpacing: 0.3 }}>
+                          {parsedPayment.recipientId}
                         </Text>
                       </View>
                     ) : null}
-                    {parsedUpi.transactionNote ? (
+
+                    {/* Generic recipient ID for non-UPI, non-crypto */}
+                    {parsedPayment.appCategory !== "upi_india" && parsedPayment.appCategory !== "crypto" && parsedPayment.recipientId && !parsedPayment.recipientName ? (
                       <View style={styles.upiRow}>
-                        <Text style={styles.upiLabel}>Note</Text>
-                        <Text style={styles.upiValue} numberOfLines={2}>{parsedUpi.transactionNote}</Text>
+                        <Text style={styles.upiLabel}>To</Text>
+                        <Text style={styles.upiValue} selectable numberOfLines={1}>{parsedPayment.recipientId}</Text>
                       </View>
                     ) : null}
+
+                    {/* Amount */}
+                    {parsedPayment.isAmountPreFilled && parsedPayment.amount ? (
+                      <View style={styles.upiRow}>
+                        <Text style={styles.upiLabel}>Amount</Text>
+                        <Text style={[styles.upiValue, { color: Colors.dark.warning, fontFamily: "Inter_700Bold" }]}>
+                          {parsedPayment.currency === "INR"
+                            ? `₹${parseFloat(parsedPayment.amount).toLocaleString("en-IN")}`
+                            : parsedPayment.currency === "USD"
+                            ? `$${parseFloat(parsedPayment.amount).toLocaleString("en-US")}`
+                            : parsedPayment.currency === "EUR"
+                            ? `€${parseFloat(parsedPayment.amount).toLocaleString("de-DE")}`
+                            : `${parsedPayment.amount} ${parsedPayment.currency || ""}`
+                          }
+                        </Text>
+                      </View>
+                    ) : null}
+
+                    {/* Note / Description */}
+                    {parsedPayment.note ? (
+                      <View style={styles.upiRow}>
+                        <Text style={styles.upiLabel}>Note</Text>
+                        <Text style={styles.upiValue} numberOfLines={2}>{parsedPayment.note}</Text>
+                      </View>
+                    ) : null}
+
+                    {/* Pay button */}
                     <Pressable onPress={handleOpenContent} style={({ pressed }) => [styles.paymentBtn, { opacity: pressed ? 0.8 : 1, marginTop: 12 }]}>
-                      <Ionicons name={paymentApp?.icon as any ?? "card"} size={18} color="#000" />
-                      <Text style={styles.paymentBtnText}>Pay with {paymentApp?.name ?? "UPI"}</Text>
+                      <Ionicons name={getPaymentAppIcon(parsedPayment.app) as any} size={18} color="#000" />
+                      <Text style={styles.paymentBtnText}>
+                        {parsedPayment.appCategory === "crypto"
+                          ? `Open in ${parsedPayment.appDisplayName} Wallet`
+                          : `Pay with ${parsedPayment.appDisplayName}`}
+                      </Text>
                     </Pressable>
-                    <Text style={styles.paymentWarning}>Verify the recipient name and UPI ID before paying</Text>
+                    <Text style={styles.paymentWarning}>
+                      {parsedPayment.appCategory === "crypto"
+                        ? "Crypto payments are irreversible — verify the address character by character"
+                        : parsedPayment.appCategory === "upi_india"
+                        ? "Verify the payee name and UPI ID before paying"
+                        : "Always verify the recipient before sending money"}
+                    </Text>
                   </View>
-                ) : currentContentType === "payment" && paymentApp ? (
+                ) : currentContentType === "payment" ? (
                   <View style={styles.paymentActions}>
                     <Pressable onPress={handleOpenContent} style={({ pressed }) => [styles.paymentBtn, { opacity: pressed ? 0.8 : 1 }]}>
-                      <Ionicons name={paymentApp.icon as any} size={18} color="#000" />
-                      <Text style={styles.paymentBtnText}>Pay with {paymentApp.name}</Text>
+                      <Ionicons name="card-outline" size={18} color="#000" />
+                      <Text style={styles.paymentBtnText}>Open Payment</Text>
                     </Pressable>
                     <Text style={styles.paymentWarning}>Always verify the recipient before paying</Text>
                   </View>

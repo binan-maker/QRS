@@ -18,8 +18,8 @@ import Colors from "@/constants/colors";
 import { useAuth } from "@/contexts/AuthContext";
 import { getUserScans, getUserFavorites } from "@/lib/firestore-service";
 import {
-  parseUpiQr,
-  analyzePaymentQr,
+  parseAnyPaymentQr,
+  analyzeAnyPaymentQr,
   analyzeUrlHeuristics,
 } from "@/lib/qr-analysis";
 
@@ -154,9 +154,9 @@ export default function HistoryScreen() {
         }
       } else if (item.contentType === "payment") {
         try {
-          const parsed = parseUpiQr(item.content);
+          const parsed = parseAnyPaymentQr(item.content);
           if (parsed) {
-            const result = analyzePaymentQr(parsed);
+            const result = analyzeAnyPaymentQr(parsed);
             map.set(item.id, result.riskLevel as RiskLevel);
           } else {
             map.set(item.id, "safe");
