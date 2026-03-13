@@ -13,6 +13,7 @@ import {
   Modal,
   KeyboardAvoidingView,
 } from "react-native";
+import { StatusBar } from "expo-status-bar";
 import { useLocalSearchParams, router } from "expo-router";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -560,10 +561,10 @@ export default function QrDetailScreen() {
               <Pressable
                 onPress={() => {
                   if (!user) { router.push("/(auth)/login"); return; }
-                  setReplyTo({ id: comment.id, author: comment.user.displayName });
-                  if (comment.parentId) {
-                    setExpandedReplies((prev) => ({ ...prev, [comment.parentId!]: true }));
-                  }
+                  const replyParentId = comment.parentId || comment.id;
+                  setReplyTo({ id: replyParentId, author: comment.user.displayName });
+                  const rootId = comment.parentId || comment.id;
+                  setExpandedReplies((prev) => ({ ...prev, [rootId]: true }));
                 }}
                 style={styles.commentActionBtn}
               >
@@ -655,6 +656,7 @@ export default function QrDetailScreen() {
 
   return (
     <>
+      <StatusBar style="light" backgroundColor={Colors.dark.background} />
       <KeyboardAvoidingView
         style={{ flex: 1, backgroundColor: Colors.dark.background }}
         behavior={Platform.OS === "ios" ? "padding" : "height"}

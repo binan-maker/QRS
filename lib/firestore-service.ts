@@ -457,24 +457,25 @@ export async function getComments(
   }
   const snap = await getDocs(q);
   const hasMore = snap.docs.length > pageLimit;
-  const docs = hasMore ? snap.docs.slice(0, pageLimit) : snap.docs;
+  const allDocs = hasMore ? snap.docs.slice(0, pageLimit) : snap.docs;
+  const docs = allDocs.filter((d) => !d.data().isDeleted);
   const comments: CommentItem[] = docs.map((d) => {
     const data = d.data();
     return {
       id: d.id,
       qrCodeId: qrId,
       userId: data.userId,
-      text: data.isDeleted ? "[deleted]" : data.text,
+      text: data.text,
       parentId: data.parentId || null,
-      isDeleted: data.isDeleted || false,
+      isDeleted: false,
       likeCount: data.likeCount || 0,
       dislikeCount: data.dislikeCount || 0,
       createdAt: tsToString(data.createdAt),
       userLike: null,
-      user: { displayName: data.isDeleted ? "[deleted]" : (data.userDisplayName || "User") },
+      user: { displayName: data.userDisplayName || "User" },
     };
   });
-  return { comments, hasMore, lastDoc: docs[docs.length - 1] };
+  return { comments, hasMore, lastDoc: allDocs[allDocs.length - 1] };
 }
 
 export async function addComment(
