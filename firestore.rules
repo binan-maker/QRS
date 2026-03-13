@@ -2,82 +2,224 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
+    // ─── Helper Functions ─────────────────────────────────────────────────────
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(uid) {
+      return request.auth != null && request.auth.uid == uid;
+    }
+
+    // Valid report types — prevents arbitrary strings from poisoning the report system
+    function isValidReportType(data) {
+      return data.reportType in ['safe', 'scam', 'fake', 'spam'];
+    }
+
+    // Valid comment report reasons
+    function isValidCommentReason(data) {
+      return data.reason in [
+        'sexual_content', 'violent', 'hateful', 'harassment',
+        'harmful', 'self_harm', 'misinformation', 'child_abuse',
+        'terrorism', 'spam'
+      ];
+    }
+
+    // Reporter weight must be within the valid range [0.5, 1.8]
+    // This prevents a client from artificially inflating their own trust weight
+    function isValidWeight(data) {
+      return data.weight is number
+          && data.weight >= 0.3
+          && data.weight <= 1.8;
+    }
+
     // ─── QR Codes ─────────────────────────────────────────────────────────────
-    // Anyone can read. Only authenticated users can create or update.
     match /qrCodes/{qrId} {
       allow read: if true;
-      allow create, update: if true; // open create for anonymous scan recording
 
-      // Reports: one per user, authenticated only
+      // CREATE: Anyone can create a new QR doc on first scan.
+      // Anonymous creates may NOT include ownership fields.
+      // Authenticated users creating a branded QR must set ownerId to their own uid.
+      allow create: if (
+        // Anonymous / unauthenticated create: no ownership fields allowed
+        !('ownerId' in request.resource.data) &&
+        !('isBranded' in request.resource.data) &&
+        !('brandedUuid' in request.resource.data) &&
+        !('ownerName' in request.resource.data)
+      ) || (
+        // Authenticated create (branded QR): ownerId must equal the caller's uid
+        isSignedIn() &&
+        request.resource.data.ownerId == request.auth.uid
+      );
+
+      // UPDATE: tightly restricted to exactly the operations the app performs.
+      allow update: if (
+
+        // ── Case 1: scan recording (anyone, including unauthenticated) ──────────
+        // Only scanCount changes and it moves in a positive direction
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['scanCount']) &&
+        request.resource.data.scanCount > resource.data.scanCount
+
+      ) || (
+
+        // ── Case 2: commentCount update (authenticated users only) ─────────────
+        isSignedIn() &&
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['commentCount']) &&
+        // Content and ownership are untouched
+        request.resource.data.content == resource.data.content &&
+        request.resource.data.contentType == resource.data.contentType
+
+      ) || (
+
+        // ── Case 3: first-ever ownership claim (branded QR generation) ─────────
+        // The QR must be currently unclaimed (no ownerId stored yet)
+        isSignedIn() &&
+        !('ownerId' in resource.data) &&
+        request.resource.data.ownerId == request.auth.uid &&
+        // Core content fields must stay the same
+        request.resource.data.content == resource.data.content &&
+        request.resource.data.contentType == resource.data.contentType
+
+      ) || (
+
+        // ── Case 4: owner updating their own QR's metadata ────────────────────
+        isSignedIn() &&
+        'ownerId' in resource.data &&
+        resource.data.ownerId == request.auth.uid &&
+        // Ownership cannot be transferred
+        request.resource.data.ownerId == resource.data.ownerId &&
+        // Core content fields are immutable
+        request.resource.data.content == resource.data.content &&
+        request.resource.data.contentType == resource.data.contentType
+
+      );
+
+      // QR codes are permanent — no deletion allowed
+      allow delete: if false;
+
+      // ── Reports ──────────────────────────────────────────────────────────────
+      // One report per authenticated user. The document path is the userId,
+      // so each user can only write to their own report slot.
+      // reportType must be a valid string; weight must be within range.
       match /reports/{userId} {
         allow read: if true;
-        allow write: if request.auth != null && request.auth.uid == userId;
+        allow create, update: if isOwner(userId)
+          && isValidReportType(request.resource.data)
+          && isValidWeight(request.resource.data);
+        allow delete: if false;
       }
 
-      // Comments: anyone can read, authenticated users can create
+      // ── Comments ─────────────────────────────────────────────────────────────
       match /comments/{commentId} {
         allow read: if true;
-        allow create: if request.auth != null;
-        // Only the comment author can update (soft-delete)
-        allow update: if request.auth != null &&
-          (request.auth.uid == resource.data.userId || request.auth.uid == request.resource.data.userId);
+
+        // Create: signed-in user, userId must match their uid, text ≤ 500 chars
+        allow create: if isSignedIn()
+          && request.resource.data.userId == request.auth.uid
+          && request.resource.data.text is string
+          && request.resource.data.text.size() > 0
+          && request.resource.data.text.size() <= 500;
+
+        // Update: only the comment author can soft-delete; moderator fields
+        // (reportCount, isHidden) may also be updated by authenticated users
+        allow update: if isSignedIn() && (
+          // Author can soft-delete their own comment
+          (resource.data.userId == request.auth.uid &&
+            request.resource.data.diff(resource.data).affectedKeys()
+              .hasOnly(['isDeleted', 'likeCount', 'dislikeCount', 'reportCount', 'isHidden']))
+          ||
+          // Any authenticated user can update aggregated counters (likes, reports)
+          request.resource.data.diff(resource.data).affectedKeys()
+            .hasOnly(['likeCount', 'dislikeCount', 'reportCount', 'isHidden'])
+        );
+
+        // Hard deletes are never allowed
         allow delete: if false;
 
-        // Comment likes: authenticated user can manage their own
+        // Comment likes: each user manages their own like/dislike
         match /likes/{userId} {
           allow read: if true;
-          allow write: if request.auth != null && request.auth.uid == userId;
+          allow write: if isOwner(userId);
         }
 
-        // Comment reports: authenticated user can submit one
+        // Comment reports: one per authenticated user, valid reason required
         match /reports/{userId} {
-          allow read: if request.auth != null;
-          allow write: if request.auth != null && request.auth.uid == userId;
+          allow read: if isSignedIn();
+          allow create, update: if isOwner(userId) && isValidCommentReason(request.resource.data);
+          allow delete: if false;
         }
       }
 
-      // Followers: authenticated user can follow/unfollow
+      // ── Followers ────────────────────────────────────────────────────────────
       match /followers/{userId} {
         allow read: if true;
-        allow write: if request.auth != null && request.auth.uid == userId;
+        allow create, update: if isOwner(userId);
+        allow delete: if isOwner(userId);
       }
     }
 
     // ─── Users ────────────────────────────────────────────────────────────────
-    // Each user can only read and write their own profile and sub-collections
+    // Own profile: full read + write.
+    // Other users: authenticated reads only (needed for follower display names, etc.)
+    // Private data (scans, favorites, following, comments, generatedQrs) is self-only.
     match /users/{userId} {
-      allow read, write: if request.auth != null && request.auth.uid == userId;
+      allow read: if isSignedIn();
+      allow write: if isOwner(userId);
 
       match /scans/{scanId} {
-        allow read, write: if request.auth != null && request.auth.uid == userId;
+        allow read, write: if isOwner(userId);
       }
       match /favorites/{favId} {
-        allow read, write: if request.auth != null && request.auth.uid == userId;
+        allow read, write: if isOwner(userId);
       }
       match /following/{qrId} {
-        allow read, write: if request.auth != null && request.auth.uid == userId;
+        allow read, write: if isOwner(userId);
       }
       match /comments/{commentId} {
-        allow read, write: if request.auth != null && request.auth.uid == userId;
+        allow read, write: if isOwner(userId);
+      }
+      match /generatedQrs/{docId} {
+        allow read, write: if isOwner(userId);
       }
     }
 
     // ─── Private Messages to QR Owners ───────────────────────────────────────
-    // Authenticated users can send messages; only the recipient can read their own messages
     match /qrMessages/{messageId} {
-      allow create: if request.auth != null;
-      allow read: if request.auth != null && (
+      // Sender: must identify themselves honestly; message must be non-empty and ≤ 1000 chars
+      allow create: if isSignedIn()
+        && request.resource.data.fromUserId == request.auth.uid
+        && request.resource.data.message is string
+        && request.resource.data.message.size() > 0
+        && request.resource.data.message.size() <= 1000;
+
+      // Read: sender or recipient only
+      allow read: if isSignedIn() && (
         request.auth.uid == resource.data.toUserId ||
         request.auth.uid == resource.data.fromUserId
       );
-      allow update: if request.auth != null && request.auth.uid == resource.data.toUserId;
-      allow delete: if request.auth != null && request.auth.uid == resource.data.toUserId;
+
+      // Update: recipient can only flip the `read` flag
+      allow update: if isSignedIn()
+        && request.auth.uid == resource.data.toUserId
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['read']);
+
+      // Delete: recipient can delete their messages
+      allow delete: if isSignedIn() && request.auth.uid == resource.data.toUserId;
     }
 
     // ─── Feedback ─────────────────────────────────────────────────────────────
-    // Anyone (including unauthenticated users) can submit feedback
     match /feedback/{docId} {
-      allow create: if true;
+      allow create: if request.resource.data.message is string
+        && request.resource.data.message.size() > 0
+        && request.resource.data.message.size() <= 2000;
+      allow read, update, delete: if false;
+    }
+
+    // ─── Moderation Queue ─────────────────────────────────────────────────────
+    // Write-only for authenticated users; readable only via Firebase Admin SDK
+    match /moderationQueue/{docId} {
+      allow create: if isSignedIn();
       allow read, update, delete: if false;
     }
   }

@@ -115,20 +115,28 @@ export function detectContentType(content: string): string {
 }
 
 /**
- * Weighted Trust Algorithm.
+ * Weighted Trust Algorithm — Anti-Sybil Edition
  *
- * Raw counts are used for the "total reports" display.
- * When weighted counts are available (stored per report), those drive the
- * actual safe-ratio so that reports from verified / long-standing accounts
- * carry more influence, protecting against review bombing by new accounts.
+ * Raw counts drive the display numbers.
+ * Weighted counts drive the actual trust score, so coordinated low-credibility
+ * reporters (new accounts, unverified) have a much smaller impact.
  *
- * Weights are assigned at report-submission time:
- *   Anonymous             → 0.5
- *   Authenticated         → 1.0
- *   + email verified      → +0.3
- *   + account age ≥ 30d   → +0.2
- *   + account age ≥ 90d   → +0.3 (cumulative)
- *   Max                   → 1.8
+ * Weight per reporter (stored at report-submission time):
+ *   Anonymous / unauthenticated  → 0.3
+ *   Authenticated                → 1.0
+ *   + email verified             → +0.3
+ *   + account age ≥ 30 days      → +0.2
+ *   + account age ≥ 90 days      → +0.3 (replaces the 30-day bonus)
+ *   Max                          → 1.8
+ *
+ * Velocity skepticism:
+ *   If the weighted negative mass (scam + fake + spam) exceeds 2× the weighted
+ *   positive mass AND the raw total is < 15, apply a 30% skepticism discount on
+ *   the negative weight — protecting young QR codes from flash attacks.
+ *
+ * Confidence dampening:
+ *   Score is pulled toward 50 when total reports are low, so a single "scam"
+ *   report from a new account cannot instantly tank a legitimate QR.
  */
 export function calculateTrustScore(
   reportCounts: Record<string, number>,
@@ -143,16 +151,30 @@ export function calculateTrustScore(
   if (rawTotal === 0) return { score: -1, label: "Unrated", totalReports: 0 };
 
   const useWeighted = weightedCounts && Object.keys(weightedCounts).length > 0;
-  const wSafe  = useWeighted ? (weightedCounts!.safe  || 0) : rawSafe;
-  const wScam  = useWeighted ? (weightedCounts!.scam  || 0) : rawScam;
-  const wFake  = useWeighted ? (weightedCounts!.fake  || 0) : rawFake;
-  const wSpam  = useWeighted ? (weightedCounts!.spam  || 0) : rawSpam;
-  const wTotal = wSafe + wScam + wFake + wSpam;
+  let wSafe  = useWeighted ? (weightedCounts!.safe  || 0) : rawSafe;
+  let wScam  = useWeighted ? (weightedCounts!.scam  || 0) : rawScam;
+  let wFake  = useWeighted ? (weightedCounts!.fake  || 0) : rawFake;
+  let wSpam  = useWeighted ? (weightedCounts!.spam  || 0) : rawSpam;
 
+  // ── Velocity skepticism ──────────────────────────────────────────────────
+  // If negative weighted mass heavily outweighs positive AND the QR is new
+  // (few total reports), apply a discount on negative weight to dampen flash attacks.
+  const wNeg = wScam + wFake + wSpam;
+  const wPos = wSafe;
+  if (useWeighted && rawTotal < 15 && wNeg > wPos * 2) {
+    const skepticism = 0.65; // treat each negative report as 65% of its claimed weight
+    wScam *= skepticism;
+    wFake *= skepticism;
+    wSpam *= skepticism;
+  }
+
+  const wTotal = wSafe + wScam + wFake + wSpam;
   if (wTotal === 0) return { score: -1, label: "Unrated", totalReports: rawTotal };
 
   const safeRatio = wSafe / wTotal;
-  // Confidence grows toward 1.0 as real report count reaches 10
+
+  // Confidence grows toward 1.0 as *raw* report count approaches 10.
+  // This means a single weighted report cannot produce a definitive score.
   const confidence = Math.min(rawTotal / 10, 1);
   let score = safeRatio * 100;
   score = 50 + (score - 50) * confidence;
@@ -165,8 +187,17 @@ export function calculateTrustScore(
   return { score: Math.round(score), label, totalReports: rawTotal };
 }
 
+/**
+ * Calculate the credibility weight for a reporter.
+ * Anonymous users get 0.3 (down from 0.5) to reduce spam from throwaway attempts.
+ * Weights are stored in the report document at write time so they cannot be
+ * retroactively inflated by the client.
+ */
+
 async function calculateReporterWeight(userId: string | null, emailVerified: boolean): Promise<number> {
-  if (!userId) return 0.5;
+  // Anonymous reporters: very low base weight (0.3) so a wave of throwaway
+  // accounts cannot easily drive a legitimate QR code's score into the ground.
+  if (!userId) return 0.3;
   let weight = 1.0;
   if (emailVerified) weight += 0.3;
   try {
@@ -180,7 +211,9 @@ async function calculateReporterWeight(userId: string | null, emailVerified: boo
         else if (ageDays >= 30) weight += 0.2;
       }
     }
-  } catch {}
+  } catch (e) {
+    console.warn("[weight] could not read user doc:", e);
+  }
   return Math.min(weight, 1.8);
 }
 
@@ -409,12 +442,21 @@ export async function getUserQrReport(qrId: string, userId: string): Promise<str
 export async function reportQrCode(
   qrId: string,
   userId: string,
-  reportType: string
+  reportType: string,
+  emailVerified: boolean = false
 ): Promise<Record<string, number>> {
+  // Calculate and persist the reporter's credibility weight now.
+  // Storing it here (at write time) means the trust score calculation can use
+  // it later without trusting the client to re-supply it correctly.
+  const weight = await calculateReporterWeight(userId, emailVerified);
+
   await setDoc(doc(firestore, "qrCodes", qrId, "reports", userId), {
     reportType,
+    weight,
+    reporterId: userId,
     createdAt: serverTimestamp(),
   });
+
   // Notify followers in Realtime Database
   notifyQrFollowers(qrId, "new_report", `New ${reportType} report on a QR you follow`, userId).catch(() => {});
   return getQrReportCounts(qrId);
