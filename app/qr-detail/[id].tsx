@@ -51,12 +51,21 @@ import {
   sendMessageToQrOwner,
   subscribeToQrMessages,
   markQrMessageRead,
-  deleteQrCommentAsOwner,
   type QrOwnerInfo,
   type FollowerInfo,
   type QrMessage,
 } from "@/lib/firestore-service";
 import { DocumentSnapshot } from "firebase/firestore";
+import {
+  parseUpiQr,
+  analyzePaymentQr,
+  analyzeUrlHeuristics,
+  loadOfflineBlacklist,
+  checkOfflineBlacklist,
+  type ParsedUpiQr,
+  type PaymentSafetyResult,
+  type UrlSafetyResult,
+} from "@/lib/qr-analysis";
 
 function smartName(name: string): string {
   if (!name) return "User";
@@ -269,6 +278,12 @@ export default function QrDetailScreen() {
   const [sendingMessage, setSendingMessage] = useState(false);
   const [unreadMessages, setUnreadMessages] = useState(0);
 
+  // QR Safety Analysis
+  const [parsedUpi, setParsedUpi] = useState<ParsedUpiQr | null>(null);
+  const [paymentSafety, setPaymentSafety] = useState<PaymentSafetyResult | null>(null);
+  const [urlSafety, setUrlSafety] = useState<UrlSafetyResult | null>(null);
+  const [offlineBlacklistMatch, setOfflineBlacklistMatch] = useState<{ matched: boolean; reason: string | null }>({ matched: false, reason: null });
+
   const glowOpacity = useSharedValue(0.6);
   const glowScale = useSharedValue(1);
   useEffect(() => {
@@ -421,6 +436,38 @@ export default function QrDetailScreen() {
     return unsub;
   }, [id, user?.id, offlineMode]);
 
+  // Content safety analysis
+  useEffect(() => {
+    const content = qrCode?.content || offlineContent;
+    const contentType = qrCode?.contentType || offlineContentType;
+    if (!content) return;
+
+    // Run analysis asynchronously
+    (async () => {
+      // Offline blacklist check (works offline too)
+      const blacklist = await loadOfflineBlacklist();
+      const blMatch = checkOfflineBlacklist(content, blacklist);
+      setOfflineBlacklistMatch(blMatch);
+
+      // UPI / Payment analysis
+      if (contentType === "payment") {
+        const upi = parseUpiQr(content);
+        if (upi) {
+          setParsedUpi(upi);
+          setPaymentSafety(analyzePaymentQr(upi));
+        }
+      }
+
+      // URL heuristic analysis
+      if (contentType === "url") {
+        try {
+          const result = analyzeUrlHeuristics(content);
+          setUrlSafety(result);
+        } catch {}
+      }
+    })();
+  }, [qrCode?.content, offlineContent, qrCode?.contentType, offlineContentType]);
+
   const loadMoreComments = useCallback(async () => {
     if (commentsLoading || !hasMoreComments) return;
     setCommentsLoading(true);
@@ -522,11 +569,7 @@ export default function QrDetailScreen() {
     setCommentMenuId(null);
     setDeletingCommentId(commentId);
     try {
-      if (isQrOwner && ownerInfo) {
-        await deleteQrCommentAsOwner(id, commentId, user.id, ownerInfo.ownerId);
-      } else {
-        await softDeleteComment(id, commentId, user.id);
-      }
+      await softDeleteComment(id, commentId, user.id);
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     } catch {
     } finally {
@@ -602,7 +645,7 @@ export default function QrDetailScreen() {
   function renderComment(comment: CommentItem, isReply: boolean = false) {
     const currentUserLike = userLikes[comment.id] ?? null;
     const isCommentOwner = user?.id === comment.userId;
-    const canDelete = isCommentOwner || isQrOwner;
+    const canDelete = isCommentOwner;
     const descendants = !isReply ? getAllDescendants(comment.id) : [];
     const replyCount = descendants.length;
     const isExpanded = expandedReplies[comment.id] ?? false;
@@ -698,9 +741,7 @@ export default function QrDetailScreen() {
                     style={styles.inlineMenuItem}
                   >
                     <Ionicons name="trash-outline" size={14} color={Colors.dark.danger} />
-                    <Text style={[styles.inlineMenuText, { color: Colors.dark.danger }]}>
-                      {isQrOwner && !isCommentOwner ? "Remove (Owner)" : "Delete"}
-                    </Text>
+                    <Text style={[styles.inlineMenuText, { color: Colors.dark.danger }]}>Delete</Text>
                   </Pressable>
                 ) : null}
                 {!isCommentOwner && (
@@ -986,13 +1027,55 @@ export default function QrDetailScreen() {
                   </View>
                 </View>
                 <Text style={styles.contentText} selectable numberOfLines={4}>{currentContent}</Text>
+
+                {/* URL open button */}
                 {(currentContentType === "url") ? (
                   <Pressable onPress={handleOpenContent} style={({ pressed }) => [styles.openBtn, { opacity: pressed ? 0.8 : 1 }]}>
                     <Ionicons name="open-outline" size={16} color={Colors.dark.primary} />
                     <Text style={styles.openBtnText}>Open Link</Text>
                   </Pressable>
                 ) : null}
-                {currentContentType === "payment" && paymentApp ? (
+
+                {/* UPI / Payment details */}
+                {currentContentType === "payment" && parsedUpi ? (
+                  <View style={styles.upiDetailsCard}>
+                    <View style={styles.upiRow}>
+                      <Text style={styles.upiLabel}>Payee</Text>
+                      <Text style={styles.upiValue} numberOfLines={1}>
+                        {parsedUpi.payeeName || "Unknown"}
+                      </Text>
+                    </View>
+                    <View style={styles.upiRow}>
+                      <Text style={styles.upiLabel}>UPI ID</Text>
+                      <Text style={styles.upiValue} selectable numberOfLines={1}>
+                        {parsedUpi.vpa}
+                      </Text>
+                    </View>
+                    <View style={styles.upiRow}>
+                      <Text style={styles.upiLabel}>Bank</Text>
+                      <Text style={styles.upiValue}>@{parsedUpi.bankHandle}</Text>
+                    </View>
+                    {parsedUpi.isAmountPreFilled && parsedUpi.amount ? (
+                      <View style={styles.upiRow}>
+                        <Text style={styles.upiLabel}>Amount</Text>
+                        <Text style={[styles.upiValue, { color: Colors.dark.warning, fontFamily: "Inter_700Bold" }]}>
+                          ₹{parseFloat(parsedUpi.amount).toLocaleString("en-IN")} {parsedUpi.currency}
+                        </Text>
+                      </View>
+                    ) : null}
+                    {parsedUpi.transactionNote ? (
+                      <View style={styles.upiRow}>
+                        <Text style={styles.upiLabel}>Note</Text>
+                        <Text style={styles.upiValue} numberOfLines={2}>{parsedUpi.transactionNote}</Text>
+                      </View>
+                    ) : null}
+                    <Pressable onPress={handleOpenContent} style={({ pressed }) => [styles.paymentBtn, { opacity: pressed ? 0.8 : 1, marginTop: 12 }]}>
+                      <Ionicons name={paymentApp?.icon as any ?? "card"} size={18} color="#000" />
+                      <Text style={styles.paymentBtnText}>Pay with {paymentApp?.name ?? "UPI"}</Text>
+                    </Pressable>
+                    <Text style={styles.paymentWarning}>Verify the recipient name and UPI ID before paying</Text>
+                  </View>
+                ) : currentContentType === "payment" && paymentApp ? (
                   <View style={styles.paymentActions}>
                     <Pressable onPress={handleOpenContent} style={({ pressed }) => [styles.paymentBtn, { opacity: pressed ? 0.8 : 1 }]}>
                       <Ionicons name={paymentApp.icon as any} size={18} color="#000" />
@@ -1003,6 +1086,82 @@ export default function QrDetailScreen() {
                 ) : null}
               </View>
             </Animated.View>
+
+            {/* Payment safety warnings */}
+            {currentContentType === "payment" && paymentSafety && paymentSafety.isSuspicious ? (
+              <Animated.View entering={FadeInDown.duration(400)}>
+                <View style={[styles.safetyWarningCard, {
+                  borderColor: paymentSafety.riskLevel === "dangerous" ? Colors.dark.danger : Colors.dark.warning,
+                }]}>
+                  <View style={styles.safetyWarningHeader}>
+                    <Ionicons
+                      name={paymentSafety.riskLevel === "dangerous" ? "warning" : "alert-circle"}
+                      size={20}
+                      color={paymentSafety.riskLevel === "dangerous" ? Colors.dark.danger : Colors.dark.warning}
+                    />
+                    <Text style={[styles.safetyWarningTitle, {
+                      color: paymentSafety.riskLevel === "dangerous" ? Colors.dark.danger : Colors.dark.warning,
+                    }]}>
+                      {paymentSafety.riskLevel === "dangerous" ? "Payment Risk Detected" : "Payment Caution"}
+                    </Text>
+                  </View>
+                  {paymentSafety.warnings.map((w, i) => (
+                    <View key={i} style={styles.safetyWarningRow}>
+                      <Ionicons name="ellipse" size={6} color={Colors.dark.warning} style={{ marginTop: 5 }} />
+                      <Text style={styles.safetyWarningText}>{w}</Text>
+                    </View>
+                  ))}
+                </View>
+              </Animated.View>
+            ) : null}
+
+            {/* URL heuristic safety warnings */}
+            {currentContentType === "url" && urlSafety && urlSafety.isSuspicious ? (
+              <Animated.View entering={FadeInDown.duration(400)}>
+                <View style={[styles.safetyWarningCard, {
+                  borderColor: urlSafety.riskLevel === "dangerous" ? Colors.dark.danger : Colors.dark.warning,
+                }]}>
+                  <View style={styles.safetyWarningHeader}>
+                    <Ionicons
+                      name={urlSafety.riskLevel === "dangerous" ? "warning" : "alert-circle"}
+                      size={20}
+                      color={urlSafety.riskLevel === "dangerous" ? Colors.dark.danger : Colors.dark.warning}
+                    />
+                    <Text style={[styles.safetyWarningTitle, {
+                      color: urlSafety.riskLevel === "dangerous" ? Colors.dark.danger : Colors.dark.warning,
+                    }]}>
+                      {urlSafety.riskLevel === "dangerous" ? "Suspicious URL Detected" : "URL Caution"}
+                    </Text>
+                  </View>
+                  {urlSafety.warnings.map((w, i) => (
+                    <View key={i} style={styles.safetyWarningRow}>
+                      <Ionicons name="ellipse" size={6} color={Colors.dark.warning} style={{ marginTop: 5 }} />
+                      <Text style={styles.safetyWarningText}>{w}</Text>
+                    </View>
+                  ))}
+                </View>
+              </Animated.View>
+            ) : null}
+
+            {/* Offline blacklist match warning */}
+            {offlineBlacklistMatch.matched ? (
+              <Animated.View entering={FadeInDown.duration(400)}>
+                <View style={[styles.safetyWarningCard, { borderColor: Colors.dark.danger }]}>
+                  <View style={styles.safetyWarningHeader}>
+                    <Ionicons name="shield-outline" size={20} color={Colors.dark.danger} />
+                    <Text style={[styles.safetyWarningTitle, { color: Colors.dark.danger }]}>
+                      Known Scam Pattern
+                    </Text>
+                  </View>
+                  <View style={styles.safetyWarningRow}>
+                    <Ionicons name="ellipse" size={6} color={Colors.dark.danger} style={{ marginTop: 5 }} />
+                    <Text style={styles.safetyWarningText}>
+                      This content matches a known scam pattern: {offlineBlacklistMatch.reason}
+                    </Text>
+                  </View>
+                </View>
+              </Animated.View>
+            ) : null}
 
             {/* Offline: internet required notice for community features */}
             {offlineMode ? (
@@ -1566,6 +1725,67 @@ const styles = StyleSheet.create({
   },
   paymentBtnText: { fontSize: 14, fontFamily: "Inter_700Bold", color: "#000" },
   paymentWarning: { fontSize: 12, fontFamily: "Inter_400Regular", color: Colors.dark.warning },
+
+  upiDetailsCard: {
+    marginTop: 14,
+    backgroundColor: "rgba(0,212,255,0.05)",
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: "rgba(0,212,255,0.15)",
+    padding: 14,
+    gap: 8,
+  },
+  upiRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "flex-start",
+    gap: 8,
+  },
+  upiLabel: {
+    fontSize: 12,
+    fontFamily: "Inter_400Regular",
+    color: Colors.dark.textMuted,
+    minWidth: 60,
+  },
+  upiValue: {
+    fontSize: 13,
+    fontFamily: "Inter_600SemiBold",
+    color: Colors.dark.text,
+    flex: 1,
+    textAlign: "right",
+  },
+
+  safetyWarningCard: {
+    backgroundColor: "rgba(0,0,0,0.3)",
+    borderRadius: 14,
+    borderWidth: 1.5,
+    padding: 14,
+    marginBottom: 16,
+    gap: 8,
+  },
+  safetyWarningHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    marginBottom: 4,
+  },
+  safetyWarningTitle: {
+    fontSize: 14,
+    fontFamily: "Inter_700Bold",
+    flex: 1,
+  },
+  safetyWarningRow: {
+    flexDirection: "row",
+    gap: 8,
+    alignItems: "flex-start",
+  },
+  safetyWarningText: {
+    fontSize: 12,
+    fontFamily: "Inter_400Regular",
+    color: Colors.dark.textSecondary,
+    flex: 1,
+    lineHeight: 18,
+  },
 
   trustCard: {
     backgroundColor: Colors.dark.surface, borderRadius: 16, padding: 18,

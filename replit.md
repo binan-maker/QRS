@@ -39,7 +39,8 @@ A full-stack mobile-first QR code scanning and management app built with Expo (R
 - `qrCodes/{qrId}/followers/{userId}` — Followers per QR code
 - `qrCodes/{qrId}/comments/{commentId}` — Comments (soft-delete supported)
 - `qrCodes/{qrId}/comments/{commentId}/likes/{userId}` — Like/dislike per comment per user
-- `qrCodes/{qrId}/comments/{commentId}/reports/{userId}` — Comment reports
+- `qrCodes/{qrId}/comments/{commentId}/reports/{userId}` — Comment reports (also writes to `moderationQueue`)
+- `moderationQueue/{docId}` — Global moderation queue for internal team review (type, qrCodeId, commentId, reportedByUserId, reason, commentText, commentAuthorId, status)
 - `users/{userId}` — User profile (soft-delete support)
 - `users/{userId}/scans/` — Scan history
 - `users/{userId}/favorites/` — Favorited QR codes
@@ -65,6 +66,22 @@ Path: `notifications/{userId}/items/{notifId}`
 - `markAllNotificationsRead` — Bulk mark-read via atomic update
 - `clearAllNotifications` — Delete all notifications for user
 - `notifyQrFollowers` — Writes notifications to all followers when a comment/report is added
+
+## QR Safety Analysis Engine (`lib/qr-analysis.ts`)
+
+- **`parseUpiQr(content)`** — Parses UPI/PhonePe/GPay/Paytm/BHIM QR URI into structured fields: `vpa`, `payeeName`, `amount`, `bankHandle`, `transactionNote`, `isAmountPreFilled`
+- **`analyzePaymentQr(parsed)`** — Heuristic safety analysis for payment QRs: validates bank handle against all NPCI-registered handles, detects brand impersonation in payee name, flags suspicious pre-filled large amounts, checks for auto-generated VPAs
+- **`analyzeUrlHeuristics(url)`** — Heuristic URL safety analysis: detects HTTP-only, raw IPs, URL shorteners, suspicious TLDs (.tk/.ml/.xyz), brand impersonation in domain, excessive subdomains, sensitive keywords in path
+- **`checkCommentKeywords(text)`** — Blocks spam/scam keywords in comments at submission time (investment fraud, phishing phrases, Telegram/WhatsApp spam, etc.)
+- **`loadOfflineBlacklist()` / `checkOfflineBlacklist()`** — Offline-capable local blacklist with 15 built-in scam patterns (UPI scams, phishing, KYC fraud, etc.), cached in AsyncStorage, refreshes every 24h
+
+## Comment Moderation Rules
+
+- **Users can only delete their own comments** — QR code owners cannot delete other users' comments; this is a user right
+- **Reported comments** → automatically written to `moderationQueue` collection for internal team review
+- **Auto-hide at 3+ reports** — When 3 unique users report a comment, it is automatically hidden (`isHidden: true`) from all views
+- **Keyword blacklist** — Comments containing spam/scam phrases are blocked at submission with a clear error message
+- **Hidden comments** are filtered in both real-time subscriptions and paginated queries
 
 ## Workflows
 

@@ -16,7 +16,9 @@ import {
   serverTimestamp,
   onSnapshot,
   DocumentSnapshot,
+  where,
 } from "firebase/firestore";
+import { checkCommentKeywords } from "./qr-analysis";
 import {
   ref as dbRef,
   push as dbPush,
@@ -312,7 +314,7 @@ export function subscribeToComments(
     q,
     (snap) => {
       const comments: CommentItem[] = snap.docs
-        .filter((d) => !d.data().isDeleted)
+        .filter((d) => !d.data().isDeleted && !d.data().isHidden)
         .map((d) => {
           const data = d.data();
           return {
@@ -534,7 +536,7 @@ export async function getComments(
   const snap = await getDocs(q);
   const hasMore = snap.docs.length > pageLimit;
   const allDocs = hasMore ? snap.docs.slice(0, pageLimit) : snap.docs;
-  const docs = allDocs.filter((d) => !d.data().isDeleted);
+  const docs = allDocs.filter((d) => !d.data().isDeleted && !d.data().isHidden);
   const comments: CommentItem[] = docs.map((d) => {
     const data = d.data();
     return {
@@ -561,6 +563,14 @@ export async function addComment(
   text: string,
   parentId: string | null = null
 ): Promise<CommentItem> {
+  // Keyword blacklist check — block spam/scam comments at submission
+  const kwCheck = checkCommentKeywords(text);
+  if (kwCheck.blocked) {
+    throw new Error(
+      `Your comment was blocked because it contains content that resembles spam or a scam ("${kwCheck.matchedKeyword}"). Please revise your comment.`
+    );
+  }
+
   const ref = collection(firestore, "qrCodes", qrId, "comments");
   const docRef = await addDoc(ref, {
     userId,
@@ -568,6 +578,8 @@ export async function addComment(
     text,
     parentId,
     isDeleted: false,
+    isHidden: false,
+    reportCount: 0,
     likeCount: 0,
     dislikeCount: 0,
     createdAt: serverTimestamp(),
@@ -643,10 +655,41 @@ export async function reportComment(
   userId: string,
   reason: string
 ): Promise<void> {
-  await setDoc(
-    doc(firestore, "qrCodes", qrId, "comments", commentId, "reports", userId),
-    { reason, createdAt: serverTimestamp() }
-  );
+  const reportRef = doc(firestore, "qrCodes", qrId, "comments", commentId, "reports", userId);
+  const commentRef = doc(firestore, "qrCodes", qrId, "comments", commentId);
+
+  // Store the report
+  await setDoc(reportRef, { reason, createdAt: serverTimestamp(), userId });
+
+  // Also write to the global moderation queue for the internal team
+  try {
+    const commentSnap = await getDoc(commentRef);
+    const commentData = commentSnap.exists() ? commentSnap.data() : {};
+    await addDoc(collection(firestore, "moderationQueue"), {
+      type: "comment_report",
+      qrCodeId: qrId,
+      commentId,
+      reportedByUserId: userId,
+      reason,
+      commentText: commentData.text || "",
+      commentAuthorId: commentData.userId || "",
+      commentAuthorName: commentData.userDisplayName || "Unknown",
+      status: "pending",
+      createdAt: serverTimestamp(),
+    });
+  } catch {}
+
+  // Increment report count and auto-hide if 3+ unique reports
+  try {
+    const reportsSnap = await getDocs(
+      collection(firestore, "qrCodes", qrId, "comments", commentId, "reports")
+    );
+    const reportCount = reportsSnap.size;
+    await updateDoc(commentRef, { reportCount });
+    if (reportCount >= 3) {
+      await updateDoc(commentRef, { isHidden: true });
+    }
+  } catch {}
 }
 
 export async function softDeleteComment(
@@ -1057,16 +1100,3 @@ export async function getUnreadMessageCount(ownerUserId: string): Promise<number
   }
 }
 
-export async function deleteQrCommentAsOwner(
-  qrId: string,
-  commentId: string,
-  requestingUserId: string,
-  qrOwnerId: string
-): Promise<void> {
-  if (requestingUserId !== qrOwnerId) throw new Error("Only the QR owner can delete comments");
-  const ref = doc(firestore, "qrCodes", qrId, "comments", commentId);
-  await deleteDoc(ref);
-  try {
-    await updateDoc(doc(firestore, "qrCodes", qrId), { commentCount: increment(-1) });
-  } catch {}
-}
