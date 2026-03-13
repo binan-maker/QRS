@@ -19,6 +19,7 @@ import * as Clipboard from "expo-clipboard";
 import * as Haptics from "expo-haptics";
 import * as ImagePicker from "expo-image-picker";
 import * as Crypto from "expo-crypto";
+import * as FileSystem from "expo-file-system";
 import Animated, { FadeIn, FadeInDown } from "react-native-reanimated";
 import Colors from "@/constants/colors";
 import QRCode from "react-native-qrcode-svg";
@@ -140,13 +141,39 @@ export default function QrGeneratorScreen() {
   }
 
   async function handleShare() {
-    if (!qrValue) return;
+    if (!qrValue || !svgRef.current) return;
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     try {
-      await Share.share({
-        message: isBranded
-          ? `QR Code created with QR Guard\nContent: ${qrValue}\nID: ${generatedUuid || ""}`
-          : qrValue,
-        title: "QR Code — QR Guard",
+      if (Platform.OS === "web") {
+        await Share.share({
+          message: isBranded
+            ? `QR Code created with QR Guard\nContent: ${qrValue}\nID: ${generatedUuid || ""}`
+            : qrValue,
+          title: "QR Code — QR Guard",
+        });
+        return;
+      }
+      svgRef.current.toDataURL(async (base64: string) => {
+        try {
+          const fileUri = FileSystem.cacheDirectory + "qr_guard_code.png";
+          await FileSystem.writeAsStringAsync(fileUri, base64, {
+            encoding: FileSystem.EncodingType.Base64,
+          });
+          await Share.share(
+            {
+              url: fileUri,
+              title: "QR Code — QR Guard",
+              message: isBranded ? `QR Code — QR Guard ID: ${generatedUuid || ""}` : "QR Code — QR Guard",
+            }
+          );
+        } catch {
+          await Share.share({
+            message: isBranded
+              ? `QR Code created with QR Guard\nContent: ${qrValue}\nID: ${generatedUuid || ""}`
+              : qrValue,
+            title: "QR Code — QR Guard",
+          });
+        }
       });
     } catch {}
   }

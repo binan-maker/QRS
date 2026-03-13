@@ -123,13 +123,29 @@ export default function HomeScreen() {
     setRefreshing(false);
   }, [loadRecentScans]);
 
-  function getContentIcon(type: string) {
-    switch (type) {
+  function detectTypeFromContent(content: string): string {
+    if (!content) return "text";
+    const lower = content.toLowerCase().trim();
+    if (lower.startsWith("upi://") || lower.startsWith("paytm://") || lower.startsWith("phonepe://") ||
+        lower.startsWith("bitcoin:") || lower.startsWith("ethereum:") || lower.startsWith("wxp://") ||
+        lower.startsWith("gpay://") || lower.startsWith("tez://") || lower.includes("upi://pay")) return "payment";
+    if (lower.startsWith("tel:")) return "phone";
+    if (lower.startsWith("mailto:")) return "email";
+    if (lower.startsWith("wifi:")) return "wifi";
+    if (lower.startsWith("geo:")) return "location";
+    try { new URL(content); return "url"; } catch {}
+    return "text";
+  }
+
+  function getContentIcon(type: string, content?: string): string {
+    const resolvedType = type || (content ? detectTypeFromContent(content) : "text");
+    switch (resolvedType) {
       case "url": return "link";
       case "phone": return "call";
       case "email": return "mail";
       case "wifi": return "wifi";
       case "location": return "location";
+      case "payment": return "card";
       default: return "document-text";
     }
   }
@@ -359,7 +375,7 @@ export default function HomeScreen() {
                     style={[styles.scanItemIcon, { backgroundColor: Colors.dark.primaryDim }]}
                   >
                     <Ionicons
-                      name={getContentIcon(scan.contentType) as any}
+                      name={getContentIcon(scan.contentType, scan.content) as any}
                       size={20}
                       color={Colors.dark.primary}
                     />

@@ -250,8 +250,8 @@ export async function getOrCreateQrCode(content: string): Promise<QrCodeData> {
       const d = snap.data();
       return {
         id: qrId,
-        content: d.content,
-        contentType: d.contentType,
+        content: d.content || content,
+        contentType: d.contentType || detectContentType(d.content || content),
         createdAt: tsToString(d.createdAt),
         scanCount: d.scanCount || 0,
         commentCount: d.commentCount || 0,

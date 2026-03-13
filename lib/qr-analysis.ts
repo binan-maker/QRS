@@ -991,11 +991,13 @@ export function analyzeUrlHeuristics(url: string): UrlSafetyResult {
   // 8. Brand impersonation in hostname
   let brandFlagged = false;
   for (const brand of BRAND_IMPERSONATION_KEYWORDS) {
+    // Skip very short keywords (≤3 chars) — too many false positives on legitimate domains
+    if (brand.length <= 3) continue;
     if (hostname.includes(brand)) {
       const officialDomains = BRAND_OFFICIAL_DOMAINS[brand] || [];
-      const isOfficial = officialDomains.length > 0
-        ? officialDomains.some((d) => hostname === d || hostname.endsWith("." + d))
-        : false;
+      // Only flag if we have reference official domains to compare against
+      if (officialDomains.length === 0) continue;
+      const isOfficial = officialDomains.some((d) => hostname === d || hostname.endsWith("." + d));
       if (!isOfficial) {
         warnings.push(`Domain contains "${brand}" but is NOT the official site — likely phishing`);
         bump("dangerous");
@@ -1016,6 +1018,7 @@ export function analyzeUrlHeuristics(url: string): UrlSafetyResult {
   if (!brandFlagged) {
     const rootDomain = domainParts.slice(-2).join(".");
     for (const brand of BRAND_IMPERSONATION_KEYWORDS) {
+      if (brand.length <= 3) continue;
       if (hostname.includes(brand)) {
         const officialRoot = (BRAND_OFFICIAL_DOMAINS[brand] || []).map(
           (d) => d.split(".").slice(-2).join(".")

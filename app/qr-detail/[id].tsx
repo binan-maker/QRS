@@ -802,8 +802,7 @@ export default function QrDetailScreen() {
               <Pressable
                 onPress={() => {
                   if (!user) { router.push("/(auth)/login"); return; }
-                  const replyParentId = comment.parentId || comment.id;
-                  setReplyTo({ id: replyParentId, author: comment.user.displayName });
+                  setReplyTo({ id: comment.id, author: comment.user.displayName });
                   const rootId = comment.parentId || comment.id;
                   setExpandedReplies((prev) => ({ ...prev, [rootId]: true }));
                 }}
