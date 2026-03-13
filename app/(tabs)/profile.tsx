@@ -19,6 +19,7 @@ import * as Haptics from "expo-haptics";
 import * as ImagePicker from "expo-image-picker";
 import Animated, { FadeInDown, FadeIn } from "react-native-reanimated";
 import Colors from "@/constants/colors";
+import QRCode from "react-native-qrcode-svg";
 import { useAuth } from "@/contexts/AuthContext";
 import { firebaseAuth } from "@/lib/firebase";
 import { updateProfile } from "firebase/auth";
@@ -26,7 +27,9 @@ import {
   getUserStats,
   updateUserPhotoURL,
   getUserPhotoURL,
+  getUserGeneratedQrs,
   type UserStats,
+  type GeneratedQrItem,
 } from "@/lib/firestore-service";
 
 export default function ProfileScreen() {
@@ -41,6 +44,8 @@ export default function ProfileScreen() {
   const [photoURL, setPhotoURL] = useState<string | null>(user?.photoURL || null);
   const [photoModalOpen, setPhotoModalOpen] = useState(false);
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
+  const [myQrCodes, setMyQrCodes] = useState<GeneratedQrItem[]>([]);
+  const [myQrLoading, setMyQrLoading] = useState(false);
 
   const topInset = Platform.OS === "web" ? 67 : insets.top;
   const tabBarHeight = 60 + insets.bottom;
@@ -48,15 +53,19 @@ export default function ProfileScreen() {
   const loadStats = useCallback(async () => {
     if (!user) return;
     setStatsLoading(true);
+    setMyQrLoading(true);
     try {
-      const [s, photo] = await Promise.all([
+      const [s, photo, qrs] = await Promise.all([
         getUserStats(user.id),
         getUserPhotoURL(user.id),
+        getUserGeneratedQrs(user.id),
       ]);
       setStats(s);
       if (photo) setPhotoURL(photo);
+      setMyQrCodes(qrs.filter((q) => q.branded));
     } catch {}
     setStatsLoading(false);
+    setMyQrLoading(false);
   }, [user?.id]);
 
   useEffect(() => {
@@ -270,6 +279,89 @@ export default function ProfileScreen() {
               <Text style={styles.likesValue}>{stats.totalLikesReceived}</Text>
             )}
           </View>
+        </Animated.View>
+
+        {/* My QR Codes */}
+        <Animated.View entering={FadeInDown.duration(400).delay(160)}>
+          <View style={styles.myQrHeader}>
+            <Text style={styles.sectionTitle}>My QR Codes</Text>
+            <Pressable
+              onPress={() => router.push("/(tabs)/qr-generator")}
+              style={styles.newQrBtn}
+            >
+              <Ionicons name="add" size={15} color={Colors.dark.primary} />
+              <Text style={styles.newQrBtnText}>New</Text>
+            </Pressable>
+          </View>
+
+          {myQrLoading ? (
+            <View style={styles.myQrLoading}>
+              <ActivityIndicator size="small" color={Colors.dark.primary} />
+            </View>
+          ) : myQrCodes.length === 0 ? (
+            <Pressable
+              style={styles.myQrEmpty}
+              onPress={() => router.push("/(tabs)/qr-generator")}
+            >
+              <MaterialCommunityIcons name="qrcode-plus" size={28} color={Colors.dark.textMuted} />
+              <View>
+                <Text style={styles.myQrEmptyTitle}>No branded QR codes yet</Text>
+                <Text style={styles.myQrEmptySub}>Create one to see it here with comments and stats</Text>
+              </View>
+              <Ionicons name="chevron-forward" size={16} color={Colors.dark.textMuted} />
+            </Pressable>
+          ) : (
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              style={{ marginBottom: 4 }}
+              contentContainerStyle={{ gap: 12, paddingRight: 4 }}
+            >
+              {myQrCodes.map((qr) => (
+                <Pressable
+                  key={qr.docId}
+                  onPress={() => {
+                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                    router.push(`/my-qr/${qr.docId}` as any);
+                  }}
+                  style={({ pressed }) => [styles.myQrCard, { opacity: pressed ? 0.85 : 1 }]}
+                >
+                  <View style={[styles.myQrImageWrap, { backgroundColor: qr.bgColor || "#F8FAFC" }]}>
+                    <QRCode
+                      value={qr.content || "https://qrguard.app"}
+                      size={80}
+                      color={qr.fgColor || "#0A0E17"}
+                      backgroundColor={qr.bgColor || "#F8FAFC"}
+                      quietZone={4}
+                      ecl="L"
+                    />
+                  </View>
+                  <View style={styles.myQrCardInfo}>
+                    <View style={styles.myQrCardUuidRow}>
+                      <Ionicons name="shield-checkmark" size={10} color={Colors.dark.safe} />
+                      <Text style={styles.myQrCardUuid} numberOfLines={1}>
+                        {qr.uuid || "Branded"}
+                      </Text>
+                    </View>
+                    <Text style={styles.myQrCardContent} numberOfLines={2}>
+                      {qr.content.length > 36 ? qr.content.slice(0, 36) + "…" : qr.content}
+                    </Text>
+                    <View style={styles.myQrCardStats}>
+                      <View style={styles.myQrStat}>
+                        <Ionicons name="scan-outline" size={10} color={Colors.dark.textMuted} />
+                        <Text style={styles.myQrStatText}>{qr.scanCount}</Text>
+                      </View>
+                      <View style={styles.myQrStat}>
+                        <Ionicons name="chatbubble-outline" size={10} color={Colors.dark.textMuted} />
+                        <Text style={styles.myQrStatText}>{qr.commentCount}</Text>
+                      </View>
+                    </View>
+                  </View>
+                  <Ionicons name="chevron-forward" size={15} color={Colors.dark.textMuted} style={{ alignSelf: "center" }} />
+                </Pressable>
+              ))}
+            </ScrollView>
+          )}
         </Animated.View>
 
         {/* Quick actions */}
@@ -506,6 +598,38 @@ const styles = StyleSheet.create({
     borderWidth: 1, borderColor: Colors.dark.danger + "30",
   },
   signOutText: { fontSize: 16, fontFamily: "Inter_600SemiBold", color: Colors.dark.danger },
+
+  myQrHeader: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 10 },
+  newQrBtn: {
+    flexDirection: "row", alignItems: "center", gap: 4,
+    backgroundColor: Colors.dark.primaryDim, borderRadius: 12,
+    paddingHorizontal: 10, paddingVertical: 5,
+    borderWidth: 1, borderColor: Colors.dark.primary + "40",
+  },
+  newQrBtnText: { fontSize: 12, fontFamily: "Inter_600SemiBold", color: Colors.dark.primary },
+  myQrLoading: { paddingVertical: 28, alignItems: "center" },
+  myQrEmpty: {
+    flexDirection: "row", alignItems: "center", gap: 12,
+    backgroundColor: Colors.dark.surface, borderRadius: 16,
+    borderWidth: 1, borderColor: Colors.dark.surfaceBorder,
+    padding: 16, marginBottom: 20,
+  },
+  myQrEmptyTitle: { fontSize: 14, fontFamily: "Inter_600SemiBold", color: Colors.dark.textSecondary },
+  myQrEmptySub: { fontSize: 11, fontFamily: "Inter_400Regular", color: Colors.dark.textMuted, marginTop: 2, maxWidth: 220 },
+  myQrCard: {
+    flexDirection: "row", alignItems: "center", gap: 12,
+    backgroundColor: Colors.dark.surface, borderRadius: 16,
+    borderWidth: 1, borderColor: Colors.dark.surfaceBorder,
+    padding: 12, width: 280,
+  },
+  myQrImageWrap: { borderRadius: 10, padding: 6, overflow: "hidden" },
+  myQrCardInfo: { flex: 1, minWidth: 0 },
+  myQrCardUuidRow: { flexDirection: "row", alignItems: "center", gap: 4, marginBottom: 3 },
+  myQrCardUuid: { fontSize: 10, fontFamily: "Inter_600SemiBold", color: Colors.dark.safe, letterSpacing: 0.3 },
+  myQrCardContent: { fontSize: 12, fontFamily: "Inter_400Regular", color: Colors.dark.textSecondary, lineHeight: 16, marginBottom: 6 },
+  myQrCardStats: { flexDirection: "row", gap: 10 },
+  myQrStat: { flexDirection: "row", alignItems: "center", gap: 3 },
+  myQrStatText: { fontSize: 11, fontFamily: "Inter_500Medium", color: Colors.dark.textMuted },
 
   modalOverlay: {
     flex: 1, backgroundColor: "rgba(0,0,0,0.6)",

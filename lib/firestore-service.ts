@@ -739,6 +739,15 @@ export async function reportComment(
   } catch {}
 }
 
+export async function ownerHideComment(qrId: string, commentId: string): Promise<void> {
+  try {
+    await updateDoc(doc(firestore, "qrCodes", qrId, "comments", commentId), { isHidden: true });
+  } catch (e) {
+    console.warn("[firestore] ownerHideComment failed:", e);
+    throw e;
+  }
+}
+
 export async function softDeleteComment(
   qrId: string,
   commentId: string,
@@ -1026,6 +1035,84 @@ export async function saveGeneratedQr(
       }
     }
   } catch {}
+}
+
+export interface GeneratedQrItem {
+  docId: string;
+  content: string;
+  contentType: string;
+  uuid: string;
+  branded: boolean;
+  qrCodeId: string;
+  createdAt: string;
+  fgColor: string;
+  bgColor: string;
+  logoPosition: string;
+  logoUri: string | null;
+  scanCount: number;
+  commentCount: number;
+}
+
+export async function getUserGeneratedQrs(userId: string): Promise<GeneratedQrItem[]> {
+  try {
+    const q = query(
+      collection(firestore, "users", userId, "generatedQrs"),
+      orderBy("createdAt", "desc")
+    );
+    const snap = await getDocs(q);
+    const items: GeneratedQrItem[] = [];
+    for (const d of snap.docs) {
+      const data = d.data();
+      let scanCount = 0;
+      let commentCount = 0;
+      if (data.qrCodeId) {
+        try {
+          const qrSnap = await getDoc(doc(firestore, "qrCodes", data.qrCodeId));
+          if (qrSnap.exists()) {
+            const qrData = qrSnap.data();
+            scanCount = qrData.scanCount || 0;
+            commentCount = qrData.commentCount || 0;
+          }
+        } catch {}
+      }
+      items.push({
+        docId: d.id,
+        content: data.content || "",
+        contentType: data.contentType || "text",
+        uuid: data.uuid || "",
+        branded: data.branded || false,
+        qrCodeId: data.qrCodeId || "",
+        createdAt: tsToString(data.createdAt),
+        fgColor: data.fgColor || "#0A0E17",
+        bgColor: data.bgColor || "#F8FAFC",
+        logoPosition: data.logoPosition || "center",
+        logoUri: data.logoUri || null,
+        scanCount,
+        commentCount,
+      });
+    }
+    return items;
+  } catch {
+    return [];
+  }
+}
+
+export async function updateQrDesign(
+  userId: string,
+  docId: string,
+  design: { fgColor: string; bgColor: string; logoPosition: string; logoUri: string | null }
+): Promise<void> {
+  try {
+    await updateDoc(doc(firestore, "users", userId, "generatedQrs", docId), {
+      fgColor: design.fgColor,
+      bgColor: design.bgColor,
+      logoPosition: design.logoPosition,
+      logoUri: design.logoUri || null,
+    });
+  } catch (e) {
+    console.warn("[firestore] updateQrDesign failed:", e);
+    throw e;
+  }
 }
 
 export async function getQrOwnerInfo(qrId: string): Promise<QrOwnerInfo | null> {
