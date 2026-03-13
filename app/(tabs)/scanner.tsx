@@ -130,7 +130,14 @@ export default function ScannerScreen() {
     setProcessing(true);
     try {
       const qr = await getOrCreateQrCode(content);
-      await recordScan(qr.id, content, qr.contentType, user?.id || null, anonymousMode);
+
+      // Always save for offline fallback regardless of anonymous mode
+      await AsyncStorage.setItem(`qr_content_${qr.id}`, JSON.stringify({
+        content: qr.content,
+        contentType: qr.contentType,
+      }));
+
+      await recordScan(qr.id, content, qr.contentType, user?.id || null, anonymousMode).catch(() => {});
 
       if (!anonymousMode) {
         const scanEntry = {
@@ -152,6 +159,19 @@ export default function ScannerScreen() {
       await new Promise((r) => setTimeout(r, 300));
       router.push(`/qr-detail/${qr.id}`);
     } catch (e: any) {
+      // Even if Firebase fails (offline), we can still navigate with local data
+      try {
+        const { detectContentType, getQrCodeId } = await import("@/lib/firestore-service");
+        const contentType = detectContentType(content);
+        const qrId = await getQrCodeId(content);
+        await AsyncStorage.setItem(`qr_content_${qrId}`, JSON.stringify({ content, contentType }));
+        setScanSuccess(true);
+        setProcessing(false);
+        await new Promise((r) => setTimeout(r, 300));
+        router.push(`/qr-detail/${qrId}`);
+        return;
+      } catch {}
+
       Alert.alert("Scan Failed", e.message || "Could not process QR code. Please try again.", [
         { text: "OK", onPress: () => {
           setScanned(false);

@@ -29,6 +29,8 @@ import Animated, {
 } from "react-native-reanimated";
 import Colors from "@/constants/colors";
 import { useAuth } from "@/contexts/AuthContext";
+import { useNetworkStatus } from "@/lib/use-network";
+import { formatCompactNumber, formatIndianNumber } from "@/lib/number-format";
 import {
   loadQrDetail,
   getComments,
@@ -44,6 +46,15 @@ import {
   subscribeToComments,
   getCommentUserLikes,
   calculateTrustScore,
+  getQrOwnerInfo,
+  getQrFollowersList,
+  sendMessageToQrOwner,
+  subscribeToQrMessages,
+  markQrMessageRead,
+  deleteQrCommentAsOwner,
+  type QrOwnerInfo,
+  type FollowerInfo,
+  type QrMessage,
 } from "@/lib/firestore-service";
 import { DocumentSnapshot } from "firebase/firestore";
 
@@ -114,7 +125,6 @@ function detectPaymentApp(content: string) {
 const COMMENTS_PER_PAGE = 20;
 const REPLIES_PER_PAGE = 10;
 
-// Shimmer skeleton box
 function SkeletonBox({ width, height = 12, borderRadius = 8, style }: { width?: any; height?: number; borderRadius?: number; style?: any }) {
   const shimmer = useSharedValue(0);
   useEffect(() => {
@@ -142,14 +152,12 @@ function SkeletonCommentItem() {
 function LoadingSkeleton({ topInset }: { topInset: number }) {
   return (
     <View style={[skeletonStyles.container, { paddingTop: topInset }]}>
-      {/* Nav */}
       <View style={skeletonStyles.navBar}>
         <SkeletonBox width={38} height={38} borderRadius={19} />
         <SkeletonBox width={100} height={16} borderRadius={8} style={{ marginHorizontal: "auto" }} />
         <SkeletonBox width={80} height={32} borderRadius={16} />
       </View>
       <ScrollView contentContainerStyle={{ padding: 16 }} scrollEnabled={false}>
-        {/* Content card */}
         <View style={skeletonStyles.card}>
           <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
             <SkeletonBox width={48} height={48} borderRadius={14} />
@@ -160,7 +168,6 @@ function LoadingSkeleton({ topInset }: { topInset: number }) {
           <SkeletonBox width="50%" height={13} style={{ marginBottom: 16 }} />
           <SkeletonBox width={120} height={36} borderRadius={12} />
         </View>
-        {/* Trust card */}
         <View style={skeletonStyles.card}>
           <View style={{ flexDirection: "row", justifyContent: "space-between", marginBottom: 14 }}>
             <SkeletonBox width={100} height={18} borderRadius={8} />
@@ -176,7 +183,6 @@ function LoadingSkeleton({ topInset }: { topInset: number }) {
             ))}
           </View>
         </View>
-        {/* Report buttons */}
         <SkeletonBox width={120} height={18} borderRadius={8} style={{ marginBottom: 10 }} />
         <SkeletonBox width={180} height={12} borderRadius={6} style={{ marginBottom: 14 }} />
         <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 10, marginBottom: 20 }}>
@@ -184,7 +190,6 @@ function LoadingSkeleton({ topInset }: { topInset: number }) {
             <SkeletonBox key={i} width="47%" height={90} borderRadius={14} />
           ))}
         </View>
-        {/* Comments */}
         <SkeletonBox width={100} height={18} borderRadius={8} style={{ marginBottom: 14 }} />
         <SkeletonBox height={50} borderRadius={14} style={{ marginBottom: 16 }} />
         {[0, 1, 2].map((i) => <SkeletonCommentItem key={i} />)}
@@ -214,6 +219,7 @@ export default function QrDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { user } = useAuth();
   const insets = useSafeAreaInsets();
+  const { isOnline, recheck } = useNetworkStatus();
 
   const [qrCode, setQrCode] = useState<QrDetail | null>(null);
   const [reportCounts, setReportCounts] = useState<Record<string, number>>({});
@@ -232,24 +238,37 @@ export default function QrDetailScreen() {
   const [replyTo, setReplyTo] = useState<{ id: string; author: string } | null>(null);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState(false);
+  const [offlineMode, setOfflineMode] = useState(false);
+  const [offlineContent, setOfflineContent] = useState<string | null>(null);
+  const [offlineContentType, setOfflineContentType] = useState<string>("text");
   const [commentsLoading, setCommentsLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [reportLoading, setReportLoading] = useState<string | null>(null);
   const [favoriteLoading, setFavoriteLoading] = useState(false);
   const [followLoading, setFollowLoading] = useState(false);
 
-  // Inline 3-dot menu (not modal)
   const [commentMenuId, setCommentMenuId] = useState<string | null>(null);
   const [commentMenuOwner, setCommentMenuOwner] = useState(false);
-  // Report modal
   const [commentReportModal, setCommentReportModal] = useState<string | null>(null);
   const [deletingCommentId, setDeletingCommentId] = useState<string | null>(null);
 
-  // Threaded replies
   const [expandedReplies, setExpandedReplies] = useState<Record<string, boolean>>({});
   const [visibleRepliesCount, setVisibleRepliesCount] = useState<Record<string, number>>({});
 
-  // Sign-in banner glow
+  // Owner features
+  const [ownerInfo, setOwnerInfo] = useState<QrOwnerInfo | null>(null);
+  const [isQrOwner, setIsQrOwner] = useState(false);
+  const [followersList, setFollowersList] = useState<FollowerInfo[]>([]);
+  const [followersModalOpen, setFollowersModalOpen] = useState(false);
+  const [followersLoading, setFollowersLoading] = useState(false);
+
+  // Messaging
+  const [messagesModalOpen, setMessagesModalOpen] = useState(false);
+  const [messages, setMessages] = useState<QrMessage[]>([]);
+  const [messageText, setMessageText] = useState("");
+  const [sendingMessage, setSendingMessage] = useState(false);
+  const [unreadMessages, setUnreadMessages] = useState(0);
+
   const glowOpacity = useSharedValue(0.6);
   const glowScale = useSharedValue(1);
   useEffect(() => {
@@ -262,8 +281,6 @@ export default function QrDetailScreen() {
   }));
 
   const topInset = Platform.OS === "web" ? 67 : insets.top;
-
-  // Build threaded structure — BFS to find ALL descendants under each root
   const topLevelComments = commentsList.filter((c) => !c.parentId);
 
   function getAllDescendants(rootId: string): CommentItem[] {
@@ -293,7 +310,6 @@ export default function QrDetailScreen() {
     }));
   }
 
-  // Fetch user like statuses
   useEffect(() => {
     if (!user || !commentsList.length) return;
     const ids = commentsList.map((c) => c.id);
@@ -302,11 +318,35 @@ export default function QrDetailScreen() {
     });
   }, [commentsList, user?.id, id]);
 
+  // Load offline content from AsyncStorage as fallback
+  async function loadOfflineFallback() {
+    try {
+      const AsyncStorage = (await import("@react-native-async-storage/async-storage")).default;
+      const raw = await AsyncStorage.getItem(`qr_content_${id}`);
+      if (raw) {
+        const { content, contentType } = JSON.parse(raw);
+        setOfflineContent(content);
+        setOfflineContentType(contentType || "text");
+      }
+    } catch {}
+  }
+
   useEffect(() => {
     setLoadError(false);
+    setOfflineMode(false);
     loadQrDetail(id, user?.id || null)
-      .then((detail) => {
-        if (!detail) { setLoadError(true); setLoading(false); return; }
+      .then(async (detail) => {
+        if (!detail) {
+          if (!isOnline) {
+            setOfflineMode(true);
+            await loadOfflineFallback();
+            setLoading(false);
+            return;
+          }
+          setLoadError(true);
+          setLoading(false);
+          return;
+        }
         setQrCode(detail.qrCode);
         setReportCounts(detail.reportCounts || {});
         setTotalScans(detail.totalScans || 0);
@@ -316,34 +356,70 @@ export default function QrDetailScreen() {
         setFollowCount(detail.followCount || 0);
         setTrustScore(detail.trustScore || null);
         if (detail.userReport) setUserReport(detail.userReport);
+
+        // Save for offline fallback
+        try {
+          const AsyncStorage = (await import("@react-native-async-storage/async-storage")).default;
+          await AsyncStorage.setItem(`qr_content_${id}`, JSON.stringify({
+            content: detail.qrCode.content,
+            contentType: detail.qrCode.contentType,
+          }));
+        } catch {}
+
+        // Load owner info
+        try {
+          const owner = await getQrOwnerInfo(id);
+          if (owner) {
+            setOwnerInfo(owner);
+            setIsQrOwner(user?.id === owner.ownerId);
+          }
+        } catch {}
+
         setLoading(false);
       })
-      .catch(() => { setLoadError(true); setLoading(false); });
+      .catch(async () => {
+        setOfflineMode(true);
+        await loadOfflineFallback();
+        setLoading(false);
+      });
   }, [id, user?.id]);
 
+  // Subscribe to owner's messages
   useEffect(() => {
+    if (!isQrOwner || !user || !ownerInfo) return;
+    const unsub = subscribeToQrMessages(user.id, id, (msgs) => {
+      setMessages(msgs);
+      setUnreadMessages(msgs.filter((m) => !m.read).length);
+    });
+    return unsub;
+  }, [isQrOwner, user?.id, id, ownerInfo]);
+
+  useEffect(() => {
+    if (offlineMode) return;
     const unsub = subscribeToQrStats(id, ({ scanCount, commentCount }) => {
       setTotalScans(scanCount);
       setTotalComments(commentCount);
     });
     return unsub;
-  }, [id]);
+  }, [id, offlineMode]);
 
   useEffect(() => {
+    if (offlineMode) return;
     const unsub = subscribeToQrReports(id, (counts) => {
       setReportCounts(counts);
       setTrustScore(calculateTrustScore(counts));
     });
     return unsub;
-  }, [id]);
+  }, [id, offlineMode]);
 
   useEffect(() => {
+    if (offlineMode) return;
     const pageLimit = user ? COMMENTS_PER_PAGE : 6;
     const unsub = subscribeToComments(id, pageLimit, (liveComments) => {
       setCommentsList(liveComments);
     });
     return unsub;
-  }, [id, user?.id]);
+  }, [id, user?.id, offlineMode]);
 
   const loadMoreComments = useCallback(async () => {
     if (commentsLoading || !hasMoreComments) return;
@@ -446,19 +522,59 @@ export default function QrDetailScreen() {
     setCommentMenuId(null);
     setDeletingCommentId(commentId);
     try {
-      await softDeleteComment(id, commentId, user.id);
+      if (isQrOwner && ownerInfo) {
+        await deleteQrCommentAsOwner(id, commentId, user.id, ownerInfo.ownerId);
+      } else {
+        await softDeleteComment(id, commentId, user.id);
+      }
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     } catch {
-      // silent
     } finally {
       setDeletingCommentId(null);
     }
   }
 
+  async function handleLoadFollowers() {
+    setFollowersLoading(true);
+    try {
+      const list = await getQrFollowersList(id);
+      setFollowersList(list);
+    } catch {}
+    setFollowersLoading(false);
+  }
+
+  async function handleSendMessage() {
+    if (!user || !ownerInfo || !messageText.trim()) return;
+    if (user.id === ownerInfo.ownerId) {
+      Alert.alert("Notice", "You can't message yourself as the owner.");
+      return;
+    }
+    setSendingMessage(true);
+    try {
+      await sendMessageToQrOwner(
+        user.id,
+        user.displayName,
+        ownerInfo.ownerId,
+        id,
+        ownerInfo.brandedUuid,
+        messageText.trim()
+      );
+      setMessageText("");
+      Alert.alert("Sent!", "Your message was delivered to the QR code owner.");
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    } catch (e: any) {
+      Alert.alert("Error", e.message || "Could not send message.");
+    } finally {
+      setSendingMessage(false);
+    }
+  }
+
   function handleOpenContent() {
-    if (!qrCode) return;
-    if (qrCode.contentType === "url" || qrCode.contentType === "payment") {
-      Linking.openURL(qrCode.content).catch(() => Alert.alert("Error", "Could not open link"));
+    const content = qrCode?.content || offlineContent;
+    if (!content) return;
+    const ct = qrCode?.contentType || offlineContentType;
+    if (ct === "url" || ct === "payment") {
+      Linking.openURL(content).catch(() => Alert.alert("Error", "Could not open link"));
     }
   }
 
@@ -485,7 +601,8 @@ export default function QrDetailScreen() {
 
   function renderComment(comment: CommentItem, isReply: boolean = false) {
     const currentUserLike = userLikes[comment.id] ?? null;
-    const isOwner = user?.id === comment.userId;
+    const isCommentOwner = user?.id === comment.userId;
+    const canDelete = isCommentOwner || isQrOwner;
     const descendants = !isReply ? getAllDescendants(comment.id) : [];
     const replyCount = descendants.length;
     const isExpanded = expandedReplies[comment.id] ?? false;
@@ -518,7 +635,7 @@ export default function QrDetailScreen() {
                     setCommentMenuId(null);
                   } else {
                     setCommentMenuId(comment.id);
-                    setCommentMenuOwner(isOwner);
+                    setCommentMenuOwner(isCommentOwner);
                   }
                 }}
                 style={styles.commentMenuBtn}
@@ -542,7 +659,7 @@ export default function QrDetailScreen() {
                 />
                 {comment.likeCount > 0 ? (
                   <Text style={[styles.commentActionCount, currentUserLike === "like" && { color: Colors.dark.safe }]}>
-                    {comment.likeCount}
+                    {formatCompactNumber(comment.likeCount)}
                   </Text>
                 ) : null}
               </Pressable>
@@ -554,7 +671,7 @@ export default function QrDetailScreen() {
                 />
                 {comment.dislikeCount > 0 ? (
                   <Text style={[styles.commentActionCount, currentUserLike === "dislike" && { color: Colors.dark.danger }]}>
-                    {comment.dislikeCount}
+                    {formatCompactNumber(comment.dislikeCount)}
                   </Text>
                 ) : null}
               </Pressable>
@@ -573,18 +690,20 @@ export default function QrDetailScreen() {
               </Pressable>
             </View>
 
-            {/* Inline dropdown menu — appears right below 3-dots */}
             {isMenuOpen ? (
               <View style={styles.inlineMenu}>
-                {isOwner ? (
+                {canDelete ? (
                   <Pressable
                     onPress={() => handleDeleteComment(comment.id)}
                     style={styles.inlineMenuItem}
                   >
                     <Ionicons name="trash-outline" size={14} color={Colors.dark.danger} />
-                    <Text style={[styles.inlineMenuText, { color: Colors.dark.danger }]}>Delete</Text>
+                    <Text style={[styles.inlineMenuText, { color: Colors.dark.danger }]}>
+                      {isQrOwner && !isCommentOwner ? "Remove (Owner)" : "Delete"}
+                    </Text>
                   </Pressable>
-                ) : (
+                ) : null}
+                {!isCommentOwner && (
                   <Pressable
                     onPress={() => {
                       setCommentMenuId(null);
@@ -601,7 +720,6 @@ export default function QrDetailScreen() {
           </View>
         </Animated.View>
 
-        {/* Show Replies toggle */}
         {!isReply && replyCount > 0 ? (
           <View style={styles.repliesToggleRow}>
             <View style={styles.repliesConnector} />
@@ -612,13 +730,12 @@ export default function QrDetailScreen() {
                 color={Colors.dark.primary}
               />
               <Text style={styles.repliesToggleText}>
-                {isExpanded ? "Hide replies" : "Show replies"}
+                {isExpanded ? "Hide replies" : `Show ${replyCount} ${replyCount === 1 ? "reply" : "replies"}`}
               </Text>
             </Pressable>
           </View>
         ) : null}
 
-        {/* Expanded replies */}
         {!isReply && isExpanded ? (
           <View style={styles.repliesContainer}>
             {visibleReplies.map((reply) => renderComment(reply, true))}
@@ -635,12 +752,42 @@ export default function QrDetailScreen() {
 
   const trust = getTrustInfo();
   const paymentApp = qrCode ? detectPaymentApp(qrCode.content) : null;
+  const currentContent = qrCode?.content || offlineContent;
+  const currentContentType = qrCode?.contentType || offlineContentType;
 
   if (loading) {
     return <LoadingSkeleton topInset={topInset} />;
   }
 
-  if (!qrCode || loadError) {
+  // Full offline mode — no data at all
+  if (offlineMode && !currentContent && !qrCode) {
+    return (
+      <View style={[styles.container, { paddingTop: topInset }]}>
+        <View style={styles.navBar}>
+          <Pressable onPress={() => router.back()} style={styles.navBackBtn}>
+            <Ionicons name="chevron-back" size={24} color={Colors.dark.text} />
+          </Pressable>
+          <Text style={styles.navTitle}>QR Details</Text>
+          <View style={{ width: 38 }} />
+        </View>
+        <View style={styles.loadingCenter}>
+          <View style={styles.offlineIconCircle}>
+            <Ionicons name="wifi-outline" size={48} color={Colors.dark.textMuted} />
+          </View>
+          <Text style={styles.offlineTitle}>You're offline</Text>
+          <Text style={styles.offlineSub}>
+            Enable internet to view QR code details, community reports, and comments.
+          </Text>
+          <Pressable onPress={recheck} style={styles.retryBtn}>
+            <Ionicons name="refresh" size={18} color="#000" />
+            <Text style={styles.retryBtnText}>Try Again</Text>
+          </Pressable>
+        </View>
+      </View>
+    );
+  }
+
+  if (!qrCode && !currentContent && loadError) {
     return (
       <View style={[styles.container, { paddingTop: topInset }]}>
         <View style={styles.loadingCenter}>
@@ -653,6 +800,9 @@ export default function QrDetailScreen() {
       </View>
     );
   }
+
+  const followCountFormatted = formatCompactNumber(followCount);
+  const followCountFull = formatIndianNumber(followCount);
 
   return (
     <>
@@ -670,38 +820,46 @@ export default function QrDetailScreen() {
             </Pressable>
             <Text style={styles.navTitle}>QR Details</Text>
             <View style={styles.navActions}>
-              <Pressable onPress={handleToggleFavorite} disabled={favoriteLoading} style={styles.navActionBtn}>
-                {favoriteLoading ? (
-                  <ActivityIndicator size="small" color={Colors.dark.danger} />
-                ) : (
-                  <Ionicons
-                    name={isFavorite ? "heart" : "heart-outline"}
-                    size={22}
-                    color={isFavorite ? Colors.dark.danger : Colors.dark.textSecondary}
-                  />
-                )}
-              </Pressable>
-              <Pressable
-                onPress={handleToggleFollow}
-                disabled={followLoading}
-                style={[styles.followBtn, isFollowing && styles.followBtnActive]}
-              >
-                {followLoading ? (
-                  <ActivityIndicator size="small" color={Colors.dark.primary} />
-                ) : (
-                  <>
+              {!offlineMode && (
+                <Pressable onPress={handleToggleFavorite} disabled={favoriteLoading} style={styles.navActionBtn}>
+                  {favoriteLoading ? (
+                    <ActivityIndicator size="small" color={Colors.dark.danger} />
+                  ) : (
                     <Ionicons
-                      name={isFollowing ? "notifications" : "notifications-outline"}
-                      size={16}
-                      color={isFollowing ? Colors.dark.primary : Colors.dark.textSecondary}
+                      name={isFavorite ? "heart" : "heart-outline"}
+                      size={22}
+                      color={isFavorite ? Colors.dark.danger : Colors.dark.textSecondary}
                     />
-                    <Text style={[styles.followBtnText, isFollowing && styles.followBtnTextActive]}>
-                      {isFollowing ? "Following" : "Follow"}
-                    </Text>
-                    {followCount > 0 ? <Text style={styles.followCount}>{followCount}</Text> : null}
-                  </>
-                )}
-              </Pressable>
+                  )}
+                </Pressable>
+              )}
+              {!offlineMode && (
+                <Pressable
+                  onPress={handleToggleFollow}
+                  disabled={followLoading}
+                  style={[styles.followBtn, isFollowing && styles.followBtnActive]}
+                >
+                  {followLoading ? (
+                    <ActivityIndicator size="small" color={Colors.dark.primary} />
+                  ) : (
+                    <>
+                      <Ionicons
+                        name={isFollowing ? "notifications" : "notifications-outline"}
+                        size={15}
+                        color={isFollowing ? Colors.dark.primary : Colors.dark.textSecondary}
+                      />
+                      <Text style={[styles.followBtnText, isFollowing && styles.followBtnTextActive]}>
+                        {isFollowing ? "Following" : "Follow"}
+                      </Text>
+                      {followCount > 0 ? (
+                        <View style={styles.followCountPill}>
+                          <Text style={styles.followCountPillText}>{followCountFormatted}</Text>
+                        </View>
+                      ) : null}
+                    </>
+                  )}
+                </Pressable>
+              )}
             </View>
           </View>
 
@@ -711,8 +869,26 @@ export default function QrDetailScreen() {
             keyboardShouldPersistTaps="handled"
             onScrollBeginDrag={() => setCommentMenuId(null)}
           >
+            {/* Offline banner */}
+            {offlineMode && (
+              <Animated.View entering={FadeIn.duration(300)}>
+                <View style={styles.offlineBanner}>
+                  <Ionicons name="wifi-outline" size={20} color={Colors.dark.warning} />
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.offlineBannerTitle}>You're offline</Text>
+                    <Text style={styles.offlineBannerSub}>
+                      Showing cached content. Enable internet to view community data.
+                    </Text>
+                  </View>
+                  <Pressable onPress={recheck} style={styles.offlineRetrySmall}>
+                    <Text style={styles.offlineRetrySmallText}>Retry</Text>
+                  </Pressable>
+                </View>
+              </Animated.View>
+            )}
+
             {/* Sign-in banner */}
-            {!user ? (
+            {!user && !offlineMode ? (
               <Animated.View style={signInGlowStyle}>
                 <Pressable onPress={() => router.push("/(auth)/login")} style={styles.signInBanner}>
                   <View style={styles.signInBannerIcon}>
@@ -727,6 +903,77 @@ export default function QrDetailScreen() {
               </Animated.View>
             ) : null}
 
+            {/* Branded QR Owner Card */}
+            {ownerInfo && !offlineMode && (
+              <Animated.View entering={FadeInDown.duration(400)}>
+                <View style={styles.ownerCard}>
+                  <View style={styles.ownerCardLeft}>
+                    <View style={styles.ownerVerifiedIcon}>
+                      <Ionicons name="shield-checkmark" size={18} color={Colors.dark.primary} />
+                    </View>
+                    <View style={{ flex: 1, minWidth: 0 }}>
+                      <Text style={styles.ownerCardTitle}>Branded QR Code</Text>
+                      <Text style={styles.ownerCardSub} numberOfLines={1}>
+                        Created by <Text style={styles.ownerName}>{ownerInfo.ownerName}</Text>
+                      </Text>
+                      <Text style={styles.ownerUuid} numberOfLines={1}>ID: {ownerInfo.brandedUuid}</Text>
+                    </View>
+                  </View>
+                  <View style={styles.ownerCardRight}>
+                    {isQrOwner ? (
+                      <>
+                        <Pressable
+                          onPress={() => {
+                            handleLoadFollowers();
+                            setFollowersModalOpen(true);
+                          }}
+                          style={styles.ownerActionBtn}
+                        >
+                          <Ionicons name="people-outline" size={16} color={Colors.dark.primary} />
+                          <Text style={styles.ownerActionText}>
+                            {followCountFull}
+                          </Text>
+                        </Pressable>
+                        <Pressable
+                          onPress={() => setMessagesModalOpen(true)}
+                          style={[styles.ownerActionBtn, { position: "relative" }]}
+                        >
+                          <Ionicons name="mail-outline" size={16} color={Colors.dark.accent} />
+                          <Text style={[styles.ownerActionText, { color: Colors.dark.accent }]}>
+                            Inbox
+                          </Text>
+                          {unreadMessages > 0 && (
+                            <View style={styles.unreadDot}>
+                              <Text style={styles.unreadDotText}>{unreadMessages}</Text>
+                            </View>
+                          )}
+                        </Pressable>
+                      </>
+                    ) : (
+                      <View style={styles.verifiedOnlyBadge}>
+                        <Ionicons name="shield-checkmark" size={12} color={Colors.dark.safe} />
+                        <Text style={styles.verifiedOnlyText}>Verified</Text>
+                      </View>
+                    )}
+                  </View>
+                </View>
+              </Animated.View>
+            )}
+
+            {/* Message Owner button (for non-owners viewing a branded QR) */}
+            {ownerInfo && !isQrOwner && user && !offlineMode && (
+              <Animated.View entering={FadeInDown.duration(400)}>
+                <Pressable
+                  onPress={() => setMessagesModalOpen(true)}
+                  style={styles.messageOwnerBtn}
+                >
+                  <Ionicons name="chatbubble-ellipses-outline" size={18} color={Colors.dark.primary} />
+                  <Text style={styles.messageOwnerBtnText}>Message Owner Privately</Text>
+                  <Ionicons name="lock-closed-outline" size={14} color={Colors.dark.textMuted} />
+                </Pressable>
+              </Animated.View>
+            )}
+
             {/* QR Content Card */}
             <Animated.View entering={FadeInDown.duration(400)}>
               <View style={styles.contentCard}>
@@ -735,17 +982,17 @@ export default function QrDetailScreen() {
                     <MaterialCommunityIcons name="qrcode" size={28} color={Colors.dark.primary} />
                   </View>
                   <View style={styles.typeBadge}>
-                    <Text style={styles.typeBadgeText}>{qrCode.contentType.toUpperCase()}</Text>
+                    <Text style={styles.typeBadgeText}>{currentContentType.toUpperCase()}</Text>
                   </View>
                 </View>
-                <Text style={styles.contentText} selectable numberOfLines={4}>{qrCode.content}</Text>
-                {qrCode.contentType === "url" ? (
+                <Text style={styles.contentText} selectable numberOfLines={4}>{currentContent}</Text>
+                {(currentContentType === "url") ? (
                   <Pressable onPress={handleOpenContent} style={({ pressed }) => [styles.openBtn, { opacity: pressed ? 0.8 : 1 }]}>
                     <Ionicons name="open-outline" size={16} color={Colors.dark.primary} />
                     <Text style={styles.openBtnText}>Open Link</Text>
                   </Pressable>
                 ) : null}
-                {qrCode.contentType === "payment" && paymentApp ? (
+                {currentContentType === "payment" && paymentApp ? (
                   <View style={styles.paymentActions}>
                     <Pressable onPress={handleOpenContent} style={({ pressed }) => [styles.paymentBtn, { opacity: pressed ? 0.8 : 1 }]}>
                       <Ionicons name={paymentApp.icon as any} size={18} color="#000" />
@@ -757,161 +1004,189 @@ export default function QrDetailScreen() {
               </View>
             </Animated.View>
 
-            {/* Trust Score */}
-            <Animated.View entering={FadeInDown.duration(400).delay(100)}>
-              <View style={styles.trustCard}>
-                <View style={styles.trustHeader}>
-                  <Text style={styles.sectionTitle}>Trust Score</Text>
-                  <View style={[styles.trustBadge, { backgroundColor: trust.color + "22" }]}>
-                    <View style={[styles.trustDot, { backgroundColor: trust.color }]} />
-                    <Text style={[styles.trustLabel, { color: trust.color }]}>{trust.label}</Text>
-                  </View>
+            {/* Offline: internet required notice for community features */}
+            {offlineMode ? (
+              <Animated.View entering={FadeIn.duration(400)}>
+                <View style={styles.offlineFeatureCard}>
+                  <Ionicons name="cloud-offline-outline" size={40} color={Colors.dark.textMuted} />
+                  <Text style={styles.offlineFeatureTitle}>Community Data Unavailable</Text>
+                  <Text style={styles.offlineFeatureSub}>
+                    Enable internet to view trust score, community reports, comments, and follow this QR code.
+                  </Text>
+                  <Pressable onPress={recheck} style={styles.enableInternetBtn}>
+                    <Ionicons name="wifi" size={16} color="#000" />
+                    <Text style={styles.enableInternetBtnText}>Enable Internet to View Data</Text>
+                  </Pressable>
                 </View>
-                {trust.score >= 0 ? (
-                  <View style={styles.trustBarContainer}>
-                    <View style={styles.trustBarBg}>
-                      <View style={[styles.trustBarFill, { width: `${Math.min(trust.score, 100)}%`, backgroundColor: trust.color }]} />
+              </Animated.View>
+            ) : (
+              <>
+                {/* Trust Score */}
+                <Animated.View entering={FadeInDown.duration(400).delay(100)}>
+                  <View style={styles.trustCard}>
+                    <View style={styles.trustHeader}>
+                      <Text style={styles.sectionTitle}>Trust Score</Text>
+                      <View style={[styles.trustBadge, { backgroundColor: trust.color + "22" }]}>
+                        <View style={[styles.trustDot, { backgroundColor: trust.color }]} />
+                        <Text style={[styles.trustLabel, { color: trust.color }]}>{trust.label}</Text>
+                      </View>
                     </View>
-                    <Text style={styles.trustPercent}>{Math.round(trust.score)}% Safe</Text>
-                  </View>
-                ) : null}
-                <View style={styles.statsRow}>
-                  <View style={styles.statItem}>
-                    <Text style={styles.statValue}>{totalScans}</Text>
-                    <Text style={styles.statLabel}>Scans</Text>
-                  </View>
-                  <View style={styles.statDivider} />
-                  <View style={styles.statItem}>
-                    <Text style={styles.statValue}>{totalComments}</Text>
-                    <Text style={styles.statLabel}>Comments</Text>
-                  </View>
-                  <View style={styles.statDivider} />
-                  <View style={styles.statItem}>
-                    <Text style={styles.statValue}>{Object.values(reportCounts).reduce((a, b) => a + b, 0)}</Text>
-                    <Text style={styles.statLabel}>Reports</Text>
-                  </View>
-                </View>
-              </View>
-            </Animated.View>
-
-            {/* Report This QR */}
-            <Animated.View entering={FadeInDown.duration(400).delay(200)}>
-              <Text style={styles.sectionTitle}>Report This QR</Text>
-              <Text style={styles.sectionSubtext}>
-                {user ? "Tap to submit your report" : "Sign in to report this QR code"}
-              </Text>
-              <View style={styles.reportGrid}>
-                {REPORT_TYPES.map((rt) => {
-                  const count = reportCounts[rt.key] || 0;
-                  const isSelected = userReport === rt.key;
-                  return (
-                    <Pressable
-                      key={rt.key}
-                      onPress={() => handleReport(rt.key)}
-                      disabled={!!reportLoading}
-                      style={({ pressed }) => [
-                        styles.reportCard,
-                        { borderColor: isSelected ? rt.color : Colors.dark.surfaceBorder, backgroundColor: isSelected ? rt.bg : Colors.dark.surface, opacity: pressed ? 0.8 : 1 },
-                      ]}
-                    >
-                      {reportLoading === rt.key ? (
-                        <ActivityIndicator size="small" color={rt.color} />
-                      ) : (
-                        <Ionicons name={rt.icon as any} size={24} color={rt.color} />
-                      )}
-                      <Text style={[styles.reportLabel, { color: rt.color }]}>{rt.label}</Text>
-                      <Text style={styles.reportCount}>{count}</Text>
-                      {isSelected ? <View style={[styles.selectedDot, { backgroundColor: rt.color }]} /> : null}
-                    </Pressable>
-                  );
-                })}
-              </View>
-            </Animated.View>
-
-            {/* Comments */}
-            <Animated.View entering={FadeInDown.duration(400).delay(300)}>
-              <View style={styles.commentsHeader}>
-                <View style={styles.commentsTitleRow}>
-                  <Text style={styles.sectionTitle}>Comments</Text>
-                  {totalComments > 0 ? (
-                    <View style={styles.commentCountBadge}>
-                      <Text style={styles.commentCountText}>{totalComments}</Text>
+                    {trust.score >= 0 ? (
+                      <View style={styles.trustBarContainer}>
+                        <View style={styles.trustBarBg}>
+                          <View style={[styles.trustBarFill, { width: `${Math.min(trust.score, 100)}%`, backgroundColor: trust.color }]} />
+                        </View>
+                        <Text style={styles.trustPercent}>{Math.round(trust.score)}% Safe</Text>
+                      </View>
+                    ) : null}
+                    <View style={styles.statsRow}>
+                      <View style={styles.statItem}>
+                        <Text style={styles.statValue}>{formatCompactNumber(totalScans)}</Text>
+                        <Text style={styles.statLabel}>Scans</Text>
+                        {totalScans >= 1000 && (
+                          <Text style={styles.statFull}>{formatIndianNumber(totalScans)}</Text>
+                        )}
+                      </View>
+                      <View style={styles.statDivider} />
+                      <View style={styles.statItem}>
+                        <Text style={styles.statValue}>{formatCompactNumber(totalComments)}</Text>
+                        <Text style={styles.statLabel}>Comments</Text>
+                        {totalComments >= 1000 && (
+                          <Text style={styles.statFull}>{formatIndianNumber(totalComments)}</Text>
+                        )}
+                      </View>
+                      <View style={styles.statDivider} />
+                      <View style={styles.statItem}>
+                        <Text style={styles.statValue}>{formatCompactNumber(followCount)}</Text>
+                        <Text style={styles.statLabel}>Followers</Text>
+                        {followCount >= 1000 && (
+                          <Text style={styles.statFull}>{formatIndianNumber(followCount)}</Text>
+                        )}
+                      </View>
                     </View>
-                  ) : null}
-                </View>
-                <View style={styles.liveIndicator}>
-                  <View style={styles.liveDot} />
-                  <Text style={styles.liveText}>Live</Text>
-                </View>
-              </View>
-
-              {user ? (
-                <View style={styles.commentInputContainer}>
-                  {replyTo ? (
-                    <View style={styles.replyBanner}>
-                      <Ionicons name="return-down-forward" size={14} color={Colors.dark.primary} />
-                      <Text style={styles.replyBannerText}>
-                        Replying to <Text style={{ color: Colors.dark.text }}>{replyTo.author}</Text>
-                      </Text>
-                      <Pressable onPress={() => setReplyTo(null)} style={{ marginLeft: 4 }}>
-                        <Ionicons name="close" size={16} color={Colors.dark.textMuted} />
-                      </Pressable>
-                    </View>
-                  ) : null}
-                  <View style={styles.commentInput}>
-                    <TextInput
-                      style={styles.commentTextInput}
-                      placeholder={replyTo ? `Reply to ${replyTo.author}...` : "Add a comment..."}
-                      placeholderTextColor={Colors.dark.textMuted}
-                      value={newComment}
-                      onChangeText={setNewComment}
-                      multiline
-                      maxLength={500}
-                    />
-                    <Pressable
-                      onPress={handleSubmitComment}
-                      disabled={submitting || !newComment.trim()}
-                      style={({ pressed }) => [styles.sendBtn, { opacity: pressed || submitting || !newComment.trim() ? 0.5 : 1 }]}
-                    >
-                      {submitting ? <ActivityIndicator size="small" color="#000" /> : <Ionicons name="send" size={18} color="#000" />}
-                    </Pressable>
                   </View>
-                </View>
-              ) : (
-                <Pressable onPress={() => router.push("/(auth)/login")} style={styles.signInToComment}>
-                  <Ionicons name="chatbubble-outline" size={18} color={Colors.dark.primary} />
-                  <Text style={styles.signInToCommentText}>Sign in to comment</Text>
-                  <Ionicons name="arrow-forward" size={16} color={Colors.dark.primary} style={{ marginLeft: "auto" }} />
-                </Pressable>
-              )}
+                </Animated.View>
 
-              {commentsList.length === 0 ? (
-                <View style={styles.noComments}>
-                  <Ionicons name="chatbubbles-outline" size={32} color={Colors.dark.textMuted} />
-                  <Text style={styles.noCommentsText}>No comments yet</Text>
-                  <Text style={styles.noCommentsSubtext}>Be the first to share your thoughts</Text>
-                </View>
-              ) : (
-                topLevelComments.map((comment) => renderComment(comment, false))
-              )}
+                {/* Report This QR */}
+                <Animated.View entering={FadeInDown.duration(400).delay(200)}>
+                  <Text style={styles.sectionTitle}>Report This QR</Text>
+                  <Text style={styles.sectionSubtext}>
+                    {user ? "Tap to submit your report" : "Sign in to report this QR code"}
+                  </Text>
+                  <View style={styles.reportGrid}>
+                    {REPORT_TYPES.map((rt) => {
+                      const count = reportCounts[rt.key] || 0;
+                      const isSelected = userReport === rt.key;
+                      return (
+                        <Pressable
+                          key={rt.key}
+                          onPress={() => handleReport(rt.key)}
+                          disabled={!!reportLoading}
+                          style={({ pressed }) => [
+                            styles.reportCard,
+                            { borderColor: isSelected ? rt.color : Colors.dark.surfaceBorder, backgroundColor: isSelected ? rt.bg : Colors.dark.surface, opacity: pressed ? 0.8 : 1 },
+                          ]}
+                        >
+                          {reportLoading === rt.key ? (
+                            <ActivityIndicator size="small" color={rt.color} />
+                          ) : (
+                            <Ionicons name={rt.icon as any} size={24} color={rt.color} />
+                          )}
+                          <Text style={[styles.reportLabel, { color: rt.color }]}>{rt.label}</Text>
+                          <Text style={styles.reportCount}>{formatCompactNumber(count)}</Text>
+                          {isSelected ? <View style={[styles.selectedDot, { backgroundColor: rt.color }]} /> : null}
+                        </Pressable>
+                      );
+                    })}
+                  </View>
+                </Animated.View>
 
-              {hasMoreComments ? (
-                <Pressable onPress={loadMoreComments} disabled={commentsLoading} style={styles.loadMoreBtn}>
-                  {commentsLoading ? (
-                    <ActivityIndicator size="small" color={Colors.dark.primary} />
+                {/* Comments */}
+                <Animated.View entering={FadeInDown.duration(400).delay(300)}>
+                  <View style={styles.commentsHeader}>
+                    <View style={styles.commentsTitleRow}>
+                      <Text style={styles.sectionTitle}>Comments</Text>
+                      {totalComments > 0 ? (
+                        <View style={styles.commentCountBadge}>
+                          <Text style={styles.commentCountText}>{formatCompactNumber(totalComments)}</Text>
+                        </View>
+                      ) : null}
+                    </View>
+                    <View style={styles.liveIndicator}>
+                      <View style={styles.liveDot} />
+                      <Text style={styles.liveText}>Live</Text>
+                    </View>
+                  </View>
+
+                  {user ? (
+                    <View style={styles.commentInputContainer}>
+                      {replyTo ? (
+                        <View style={styles.replyBanner}>
+                          <Ionicons name="return-down-forward" size={14} color={Colors.dark.primary} />
+                          <Text style={styles.replyBannerText}>
+                            Replying to <Text style={{ color: Colors.dark.text }}>{replyTo.author}</Text>
+                          </Text>
+                          <Pressable onPress={() => setReplyTo(null)} style={{ marginLeft: 4 }}>
+                            <Ionicons name="close" size={16} color={Colors.dark.textMuted} />
+                          </Pressable>
+                        </View>
+                      ) : null}
+                      <View style={styles.commentInput}>
+                        <TextInput
+                          style={styles.commentTextInput}
+                          placeholder={replyTo ? `Reply to ${replyTo.author}...` : "Add a comment..."}
+                          placeholderTextColor={Colors.dark.textMuted}
+                          value={newComment}
+                          onChangeText={setNewComment}
+                          multiline
+                          maxLength={500}
+                        />
+                        <Pressable
+                          onPress={handleSubmitComment}
+                          disabled={submitting || !newComment.trim()}
+                          style={({ pressed }) => [styles.sendBtn, { opacity: pressed || submitting || !newComment.trim() ? 0.5 : 1 }]}
+                        >
+                          {submitting ? <ActivityIndicator size="small" color="#000" /> : <Ionicons name="send" size={18} color="#000" />}
+                        </Pressable>
+                      </View>
+                    </View>
                   ) : (
-                    <Text style={styles.loadMoreText}>Load more comments</Text>
+                    <Pressable onPress={() => router.push("/(auth)/login")} style={styles.signInToComment}>
+                      <Ionicons name="chatbubble-outline" size={18} color={Colors.dark.primary} />
+                      <Text style={styles.signInToCommentText}>Sign in to comment</Text>
+                      <Ionicons name="arrow-forward" size={16} color={Colors.dark.primary} style={{ marginLeft: "auto" }} />
+                    </Pressable>
                   )}
-                </Pressable>
-              ) : null}
-            </Animated.View>
+
+                  {commentsList.length === 0 ? (
+                    <View style={styles.noComments}>
+                      <Ionicons name="chatbubbles-outline" size={32} color={Colors.dark.textMuted} />
+                      <Text style={styles.noCommentsText}>No comments yet</Text>
+                      <Text style={styles.noCommentsSubtext}>Be the first to share your thoughts</Text>
+                    </View>
+                  ) : (
+                    topLevelComments.map((comment) => renderComment(comment, false))
+                  )}
+
+                  {hasMoreComments ? (
+                    <Pressable onPress={loadMoreComments} disabled={commentsLoading} style={styles.loadMoreBtn}>
+                      {commentsLoading ? (
+                        <ActivityIndicator size="small" color={Colors.dark.primary} />
+                      ) : (
+                        <Text style={styles.loadMoreText}>Load more comments</Text>
+                      )}
+                    </Pressable>
+                  ) : null}
+                </Animated.View>
+              </>
+            )}
 
             <View style={{ height: 120 }} />
           </ScrollView>
         </View>
       </KeyboardAvoidingView>
 
-      {/* Comment report — centered card */}
+      {/* Comment report modal */}
       <Modal
         visible={!!commentReportModal}
         transparent
@@ -948,6 +1223,162 @@ export default function QrDetailScreen() {
           </Pressable>
         </Pressable>
       </Modal>
+
+      {/* Followers list modal */}
+      <Modal
+        visible={followersModalOpen}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setFollowersModalOpen(false)}
+      >
+        <Pressable style={styles.bottomSheetOverlay} onPress={() => setFollowersModalOpen(false)}>
+          <Pressable style={styles.bottomSheet} onPress={() => {}}>
+            <View style={styles.sheetHandle} />
+            <View style={styles.sheetHeader}>
+              <Text style={styles.sheetTitle}>Followers</Text>
+              <Text style={styles.sheetSub}>{formatIndianNumber(followCount)} people follow this QR</Text>
+            </View>
+            {followersLoading ? (
+              <View style={{ padding: 40, alignItems: "center" }}>
+                <ActivityIndicator color={Colors.dark.primary} />
+              </View>
+            ) : followersList.length === 0 ? (
+              <View style={{ padding: 40, alignItems: "center", gap: 8 }}>
+                <Ionicons name="people-outline" size={40} color={Colors.dark.textMuted} />
+                <Text style={{ color: Colors.dark.textMuted, fontFamily: "Inter_500Medium", fontSize: 15 }}>No followers yet</Text>
+              </View>
+            ) : (
+              <ScrollView style={{ maxHeight: 400 }}>
+                {followersList.map((f) => (
+                  <View key={f.userId} style={styles.followerRow}>
+                    <View style={styles.followerAvatar}>
+                      <Text style={styles.followerAvatarText}>{f.displayName.charAt(0).toUpperCase()}</Text>
+                    </View>
+                    <View style={{ flex: 1 }}>
+                      <Text style={styles.followerName}>{f.displayName}</Text>
+                      <Text style={styles.followerSince}>Followed {formatRelativeTime(f.followedAt)}</Text>
+                    </View>
+                  </View>
+                ))}
+              </ScrollView>
+            )}
+            <Pressable style={styles.sheetCloseBtn} onPress={() => setFollowersModalOpen(false)}>
+              <Text style={styles.sheetCloseBtnText}>Close</Text>
+            </Pressable>
+          </Pressable>
+        </Pressable>
+      </Modal>
+
+      {/* Messaging modal */}
+      <Modal
+        visible={messagesModalOpen}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setMessagesModalOpen(false)}
+      >
+        <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === "ios" ? "padding" : "height"}>
+          <Pressable style={styles.bottomSheetOverlay} onPress={() => setMessagesModalOpen(false)}>
+            <Pressable style={[styles.bottomSheet, { maxHeight: "80%" }]} onPress={() => {}}>
+              <View style={styles.sheetHandle} />
+              <View style={styles.sheetHeader}>
+                <Text style={styles.sheetTitle}>
+                  {isQrOwner ? "Inbox" : "Message Owner"}
+                </Text>
+                <Text style={styles.sheetSub}>
+                  {isQrOwner
+                    ? "Private messages sent to this QR code"
+                    : ownerInfo
+                    ? `Send a private message to ${ownerInfo.ownerName}`
+                    : "Private messaging — branded QRs only"}
+                </Text>
+              </View>
+
+              {isQrOwner ? (
+                <>
+                  {messages.length === 0 ? (
+                    <View style={{ padding: 40, alignItems: "center", gap: 10 }}>
+                      <Ionicons name="mail-outline" size={40} color={Colors.dark.textMuted} />
+                      <Text style={{ color: Colors.dark.textMuted, fontFamily: "Inter_500Medium", fontSize: 15 }}>No messages yet</Text>
+                      <Text style={{ color: Colors.dark.textMuted, fontFamily: "Inter_400Regular", fontSize: 13, textAlign: "center" }}>
+                        Messages from people scanning this QR will appear here
+                      </Text>
+                    </View>
+                  ) : (
+                    <ScrollView style={{ maxHeight: 350 }}>
+                      {messages.map((msg) => (
+                        <Pressable
+                          key={msg.id}
+                          onPress={() => markQrMessageRead(msg.id)}
+                          style={[styles.messageRow, !msg.read && styles.messageRowUnread]}
+                        >
+                          <View style={styles.messageAvatar}>
+                            <Text style={styles.messageAvatarText}>{msg.fromDisplayName.charAt(0).toUpperCase()}</Text>
+                          </View>
+                          <View style={{ flex: 1 }}>
+                            <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
+                              <Text style={styles.messageSender}>{msg.fromDisplayName}</Text>
+                              {!msg.read && <View style={styles.unreadDotInline} />}
+                            </View>
+                            <Text style={styles.messageText} numberOfLines={2}>{msg.message}</Text>
+                            <Text style={styles.messageTime}>{formatRelativeTime(msg.createdAt)}</Text>
+                          </View>
+                        </Pressable>
+                      ))}
+                    </ScrollView>
+                  )}
+                </>
+              ) : ownerInfo ? (
+                <View style={styles.messageComposeArea}>
+                  <Text style={styles.messagePrivacyNote}>
+                    Your message will be sent privately to {ownerInfo.ownerName}. They will see your name.
+                  </Text>
+                  <View style={styles.messageInputRow}>
+                    <TextInput
+                      style={styles.messageInput}
+                      placeholder="Write your message..."
+                      placeholderTextColor={Colors.dark.textMuted}
+                      value={messageText}
+                      onChangeText={setMessageText}
+                      multiline
+                      maxLength={500}
+                    />
+                  </View>
+                  <Pressable
+                    onPress={handleSendMessage}
+                    disabled={sendingMessage || !messageText.trim() || !user}
+                    style={({ pressed }) => [styles.sendMessageBtn, { opacity: pressed || sendingMessage || !messageText.trim() || !user ? 0.6 : 1 }]}
+                  >
+                    {sendingMessage ? (
+                      <ActivityIndicator size="small" color="#000" />
+                    ) : (
+                      <>
+                        <Ionicons name="send" size={18} color="#000" />
+                        <Text style={styles.sendMessageBtnText}>Send Message</Text>
+                      </>
+                    )}
+                  </Pressable>
+                  {!user && (
+                    <Pressable onPress={() => { setMessagesModalOpen(false); router.push("/(auth)/login"); }} style={styles.signInToMessage}>
+                      <Text style={styles.signInToMessageText}>Sign in to send a message</Text>
+                    </Pressable>
+                  )}
+                </View>
+              ) : (
+                <View style={{ padding: 40, alignItems: "center", gap: 10 }}>
+                  <Ionicons name="lock-closed-outline" size={40} color={Colors.dark.textMuted} />
+                  <Text style={{ color: Colors.dark.textMuted, fontFamily: "Inter_500Medium", fontSize: 15, textAlign: "center" }}>
+                    Private messaging is only available for branded QR codes
+                  </Text>
+                </View>
+              )}
+
+              <Pressable style={styles.sheetCloseBtn} onPress={() => setMessagesModalOpen(false)}>
+                <Text style={styles.sheetCloseBtnText}>Close</Text>
+              </Pressable>
+            </Pressable>
+          </Pressable>
+        </KeyboardAvoidingView>
+      </Modal>
     </>
   );
 }
@@ -968,10 +1399,54 @@ function formatRelativeTime(isoString: string): string {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: Colors.dark.background },
-  loadingCenter: { flex: 1, alignItems: "center", justifyContent: "center", gap: 16 },
+  loadingCenter: { flex: 1, alignItems: "center", justifyContent: "center", gap: 16, padding: 32 },
   errorText: { fontSize: 18, fontFamily: "Inter_600SemiBold", color: Colors.dark.textSecondary },
   backLink: { paddingVertical: 12, paddingHorizontal: 24, backgroundColor: Colors.dark.primaryDim, borderRadius: 12 },
   backLinkText: { color: Colors.dark.primary, fontFamily: "Inter_600SemiBold", fontSize: 15 },
+
+  // Offline full page
+  offlineIconCircle: {
+    width: 96, height: 96, borderRadius: 48,
+    backgroundColor: Colors.dark.surface, alignItems: "center", justifyContent: "center",
+    borderWidth: 1, borderColor: Colors.dark.surfaceBorder, marginBottom: 8,
+  },
+  offlineTitle: { fontSize: 22, fontFamily: "Inter_700Bold", color: Colors.dark.text, textAlign: "center" },
+  offlineSub: { fontSize: 14, fontFamily: "Inter_400Regular", color: Colors.dark.textSecondary, textAlign: "center", lineHeight: 20 },
+  retryBtn: {
+    flexDirection: "row", alignItems: "center", gap: 8,
+    backgroundColor: Colors.dark.primary, paddingVertical: 14, paddingHorizontal: 32,
+    borderRadius: 16, marginTop: 8,
+  },
+  retryBtnText: { fontSize: 16, fontFamily: "Inter_700Bold", color: "#000" },
+
+  // Offline banner (inline)
+  offlineBanner: {
+    flexDirection: "row", alignItems: "center", gap: 12,
+    backgroundColor: Colors.dark.warningDim, borderRadius: 14, padding: 14,
+    borderWidth: 1, borderColor: Colors.dark.warning + "40", marginBottom: 14,
+  },
+  offlineBannerTitle: { fontSize: 14, fontFamily: "Inter_700Bold", color: Colors.dark.warning },
+  offlineBannerSub: { fontSize: 12, fontFamily: "Inter_400Regular", color: Colors.dark.textSecondary, marginTop: 2 },
+  offlineRetrySmall: {
+    paddingHorizontal: 12, paddingVertical: 6, borderRadius: 10,
+    backgroundColor: Colors.dark.warning + "22", borderWidth: 1, borderColor: Colors.dark.warning + "60",
+  },
+  offlineRetrySmallText: { fontSize: 12, fontFamily: "Inter_700Bold", color: Colors.dark.warning },
+
+  // Offline feature card
+  offlineFeatureCard: {
+    backgroundColor: Colors.dark.surface, borderRadius: 16, padding: 24,
+    borderWidth: 1, borderColor: Colors.dark.surfaceBorder,
+    alignItems: "center", gap: 10, marginBottom: 16,
+  },
+  offlineFeatureTitle: { fontSize: 17, fontFamily: "Inter_700Bold", color: Colors.dark.textSecondary, textAlign: "center" },
+  offlineFeatureSub: { fontSize: 13, fontFamily: "Inter_400Regular", color: Colors.dark.textMuted, textAlign: "center", lineHeight: 18 },
+  enableInternetBtn: {
+    flexDirection: "row", alignItems: "center", gap: 8,
+    backgroundColor: Colors.dark.primary, paddingVertical: 12, paddingHorizontal: 20,
+    borderRadius: 14, marginTop: 6,
+  },
+  enableInternetBtnText: { fontSize: 14, fontFamily: "Inter_700Bold", color: "#000" },
 
   navBar: {
     flexDirection: "row", alignItems: "center",
@@ -989,19 +1464,68 @@ const styles = StyleSheet.create({
     width: 38, height: 38, borderRadius: 19,
     backgroundColor: Colors.dark.surface, alignItems: "center", justifyContent: "center",
   },
+
+  // Follow button — fixed to not overflow
   followBtn: {
-    flexDirection: "row", alignItems: "center", gap: 6,
-    paddingHorizontal: 12, paddingVertical: 8, borderRadius: 20,
+    flexDirection: "row", alignItems: "center", gap: 5,
+    paddingHorizontal: 10, paddingVertical: 8, borderRadius: 20,
     backgroundColor: Colors.dark.surface, borderWidth: 1, borderColor: Colors.dark.surfaceBorder,
+    maxWidth: 140,
   },
   followBtnActive: { backgroundColor: Colors.dark.primaryDim, borderColor: Colors.dark.primary },
-  followBtnText: { fontSize: 13, fontFamily: "Inter_600SemiBold", color: Colors.dark.textSecondary },
+  followBtnText: { fontSize: 12, fontFamily: "Inter_600SemiBold", color: Colors.dark.textSecondary, flexShrink: 1 },
   followBtnTextActive: { color: Colors.dark.primary },
-  followCount: {
-    fontSize: 12, fontFamily: "Inter_700Bold", color: Colors.dark.primary,
+  followCountPill: {
     backgroundColor: Colors.dark.primaryDim, paddingHorizontal: 6, paddingVertical: 2,
-    borderRadius: 8, minWidth: 20, textAlign: "center",
+    borderRadius: 8, minWidth: 24, alignItems: "center",
   },
+  followCountPillText: {
+    fontSize: 11, fontFamily: "Inter_700Bold", color: Colors.dark.primary,
+  },
+
+  // Owner card
+  ownerCard: {
+    flexDirection: "row", alignItems: "center", gap: 12,
+    backgroundColor: Colors.dark.primaryDim, borderRadius: 14, padding: 14,
+    borderWidth: 1, borderColor: Colors.dark.primary + "40", marginBottom: 12,
+  },
+  ownerCardLeft: { flex: 1, flexDirection: "row", alignItems: "center", gap: 10, minWidth: 0 },
+  ownerVerifiedIcon: {
+    width: 38, height: 38, borderRadius: 19,
+    backgroundColor: Colors.dark.primaryDim, alignItems: "center", justifyContent: "center",
+    borderWidth: 1, borderColor: Colors.dark.primary + "60", flexShrink: 0,
+  },
+  ownerCardTitle: { fontSize: 13, fontFamily: "Inter_700Bold", color: Colors.dark.text },
+  ownerCardSub: { fontSize: 12, fontFamily: "Inter_400Regular", color: Colors.dark.textSecondary, marginTop: 1 },
+  ownerName: { fontFamily: "Inter_600SemiBold", color: Colors.dark.primary },
+  ownerUuid: { fontSize: 10, fontFamily: "Inter_400Regular", color: Colors.dark.textMuted, marginTop: 2 },
+  ownerCardRight: { flexDirection: "row", gap: 8, alignItems: "center" },
+  ownerActionBtn: {
+    alignItems: "center", gap: 2,
+    backgroundColor: Colors.dark.surface, paddingHorizontal: 10, paddingVertical: 7,
+    borderRadius: 12, borderWidth: 1, borderColor: Colors.dark.surfaceBorder,
+  },
+  ownerActionText: { fontSize: 11, fontFamily: "Inter_700Bold", color: Colors.dark.primary },
+  unreadDot: {
+    position: "absolute", top: -4, right: -4,
+    backgroundColor: Colors.dark.danger, borderRadius: 8,
+    minWidth: 16, height: 16, alignItems: "center", justifyContent: "center",
+    paddingHorizontal: 3,
+  },
+  unreadDotText: { fontSize: 9, fontFamily: "Inter_700Bold", color: "#fff" },
+  verifiedOnlyBadge: {
+    flexDirection: "row", alignItems: "center", gap: 4,
+    backgroundColor: Colors.dark.safeDim, paddingHorizontal: 8, paddingVertical: 4, borderRadius: 10,
+  },
+  verifiedOnlyText: { fontSize: 11, fontFamily: "Inter_700Bold", color: Colors.dark.safe },
+
+  // Message owner button
+  messageOwnerBtn: {
+    flexDirection: "row", alignItems: "center", gap: 10,
+    backgroundColor: Colors.dark.primaryDim, borderRadius: 14, padding: 14,
+    borderWidth: 1, borderColor: Colors.dark.primary + "40", marginBottom: 12,
+  },
+  messageOwnerBtnText: { flex: 1, fontSize: 14, fontFamily: "Inter_600SemiBold", color: Colors.dark.primary },
 
   scrollContent: { padding: 16 },
 
@@ -1059,6 +1583,7 @@ const styles = StyleSheet.create({
   statItem: { flex: 1, alignItems: "center" },
   statValue: { fontSize: 22, fontFamily: "Inter_700Bold", color: Colors.dark.text },
   statLabel: { fontSize: 12, fontFamily: "Inter_400Regular", color: Colors.dark.textMuted, marginTop: 2 },
+  statFull: { fontSize: 10, fontFamily: "Inter_400Regular", color: Colors.dark.textMuted, marginTop: 1 },
   statDivider: { width: 1, height: 32, backgroundColor: Colors.dark.surfaceBorder },
 
   sectionTitle: { fontSize: 18, fontFamily: "Inter_700Bold", color: Colors.dark.text, marginBottom: 6 },
@@ -1150,23 +1675,14 @@ const styles = StyleSheet.create({
   commentActionBtn: { flexDirection: "row", alignItems: "center", gap: 4 },
   commentActionCount: { fontSize: 12, fontFamily: "Inter_500Medium", color: Colors.dark.textMuted },
 
-  // Inline dropdown menu
   inlineMenu: {
     position: "absolute",
-    top: 40,
-    right: 8,
+    top: 40, right: 8,
     backgroundColor: Colors.dark.surfaceLight,
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: Colors.dark.surfaceBorder,
-    overflow: "hidden",
-    zIndex: 100,
-    minWidth: 110,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 8,
+    borderRadius: 10, borderWidth: 1, borderColor: Colors.dark.surfaceBorder,
+    overflow: "hidden", zIndex: 100, minWidth: 130,
+    shadowColor: "#000", shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3, shadowRadius: 8, elevation: 8,
   },
   inlineMenuItem: {
     flexDirection: "row", alignItems: "center", gap: 8,
@@ -1174,7 +1690,6 @@ const styles = StyleSheet.create({
   },
   inlineMenuText: { fontSize: 13, fontFamily: "Inter_600SemiBold" },
 
-  // Replies
   repliesToggleRow: {
     flexDirection: "row", alignItems: "center",
     marginLeft: 18, marginBottom: 4, marginTop: -2,
@@ -1218,4 +1733,78 @@ const styles = StyleSheet.create({
     borderTopWidth: 1, borderTopColor: Colors.dark.surfaceBorder,
   },
   reportCardCancelText: { fontSize: 15, fontFamily: "Inter_600SemiBold", color: Colors.dark.danger },
+
+  // Bottom sheet
+  bottomSheetOverlay: { flex: 1, backgroundColor: "rgba(0,0,0,0.6)", justifyContent: "flex-end" },
+  bottomSheet: {
+    backgroundColor: Colors.dark.surface, borderTopLeftRadius: 24, borderTopRightRadius: 24,
+    paddingBottom: 36, paddingTop: 12,
+    borderTopWidth: 1, borderColor: Colors.dark.surfaceBorder,
+  },
+  sheetHandle: {
+    width: 40, height: 4, borderRadius: 2,
+    backgroundColor: Colors.dark.surfaceLight, alignSelf: "center", marginBottom: 16,
+  },
+  sheetHeader: { paddingHorizontal: 20, marginBottom: 16 },
+  sheetTitle: { fontSize: 20, fontFamily: "Inter_700Bold", color: Colors.dark.text },
+  sheetSub: { fontSize: 13, fontFamily: "Inter_400Regular", color: Colors.dark.textMuted, marginTop: 4 },
+  sheetCloseBtn: {
+    marginHorizontal: 20, marginTop: 16, paddingVertical: 14, borderRadius: 14,
+    backgroundColor: Colors.dark.surfaceLight, alignItems: "center",
+  },
+  sheetCloseBtnText: { fontSize: 16, fontFamily: "Inter_600SemiBold", color: Colors.dark.textSecondary },
+
+  // Followers
+  followerRow: {
+    flexDirection: "row", alignItems: "center", gap: 12,
+    paddingHorizontal: 20, paddingVertical: 12,
+    borderBottomWidth: 1, borderBottomColor: Colors.dark.surfaceBorder,
+  },
+  followerAvatar: {
+    width: 40, height: 40, borderRadius: 20,
+    backgroundColor: Colors.dark.primaryDim, alignItems: "center", justifyContent: "center",
+  },
+  followerAvatarText: { fontSize: 16, fontFamily: "Inter_700Bold", color: Colors.dark.primary },
+  followerName: { fontSize: 15, fontFamily: "Inter_600SemiBold", color: Colors.dark.text },
+  followerSince: { fontSize: 12, fontFamily: "Inter_400Regular", color: Colors.dark.textMuted, marginTop: 2 },
+
+  // Messages
+  messageRow: {
+    flexDirection: "row", alignItems: "flex-start", gap: 12,
+    paddingHorizontal: 20, paddingVertical: 14,
+    borderBottomWidth: 1, borderBottomColor: Colors.dark.surfaceBorder,
+  },
+  messageRowUnread: { backgroundColor: Colors.dark.primaryDim + "30" },
+  messageAvatar: {
+    width: 38, height: 38, borderRadius: 19,
+    backgroundColor: Colors.dark.primaryDim, alignItems: "center", justifyContent: "center",
+    flexShrink: 0,
+  },
+  messageAvatarText: { fontSize: 15, fontFamily: "Inter_700Bold", color: Colors.dark.primary },
+  messageSender: { fontSize: 14, fontFamily: "Inter_700Bold", color: Colors.dark.text },
+  messageText: { fontSize: 13, fontFamily: "Inter_400Regular", color: Colors.dark.textSecondary, marginTop: 2, lineHeight: 18 },
+  messageTime: { fontSize: 11, fontFamily: "Inter_400Regular", color: Colors.dark.textMuted, marginTop: 4 },
+  unreadDotInline: { width: 8, height: 8, borderRadius: 4, backgroundColor: Colors.dark.primary },
+
+  messageComposeArea: { paddingHorizontal: 20, paddingBottom: 8, gap: 12 },
+  messagePrivacyNote: {
+    fontSize: 13, fontFamily: "Inter_400Regular", color: Colors.dark.textMuted,
+    backgroundColor: Colors.dark.surfaceLight, padding: 12, borderRadius: 12, lineHeight: 18,
+  },
+  messageInputRow: {
+    backgroundColor: Colors.dark.surfaceLight, borderRadius: 14,
+    borderWidth: 1, borderColor: Colors.dark.surfaceBorder,
+    paddingHorizontal: 14, paddingVertical: 10,
+  },
+  messageInput: {
+    fontSize: 14, fontFamily: "Inter_400Regular", color: Colors.dark.text,
+    minHeight: 80, maxHeight: 160,
+  },
+  sendMessageBtn: {
+    flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8,
+    backgroundColor: Colors.dark.primary, paddingVertical: 14, borderRadius: 14,
+  },
+  sendMessageBtnText: { fontSize: 16, fontFamily: "Inter_700Bold", color: "#000" },
+  signInToMessage: { alignItems: "center", paddingVertical: 8 },
+  signInToMessageText: { fontSize: 14, fontFamily: "Inter_600SemiBold", color: Colors.dark.primary },
 });

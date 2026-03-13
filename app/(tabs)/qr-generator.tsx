@@ -33,6 +33,16 @@ const QR_PRESETS = [
   { label: "WiFi", icon: "wifi-outline", placeholder: "WIFI:T:WPA;S:NetworkName;P:Password;;" },
 ];
 
+type LogoPosition = "center" | "top-left" | "top-right" | "bottom-left" | "bottom-right";
+
+const LOGO_POSITIONS: { key: LogoPosition; label: string; icon: string }[] = [
+  { key: "center", label: "Center", icon: "square" },
+  { key: "top-left", label: "Top Left", icon: "arrow-up-outline" },
+  { key: "top-right", label: "Top Right", icon: "arrow-up-outline" },
+  { key: "bottom-left", label: "Bot. Left", icon: "arrow-down-outline" },
+  { key: "bottom-right", label: "Bot. Right", icon: "arrow-down-outline" },
+];
+
 function buildQrContent(type: number, value: string): string {
   if (!value.trim()) return "";
   switch (type) {
@@ -68,9 +78,11 @@ export default function QrGeneratorScreen() {
   const [qrSize, setQrSize] = useState(220);
   const [privateMode, setPrivateMode] = useState(false);
   const [customLogoUri, setCustomLogoUri] = useState<string | null>(null);
+  const [logoPosition, setLogoPosition] = useState<LogoPosition>("center");
   const [generatedUuid, setGeneratedUuid] = useState<string | null>(null);
   const [generatedAt, setGeneratedAt] = useState<Date | null>(null);
   const [infoModalOpen, setInfoModalOpen] = useState(false);
+  const [positionModalOpen, setPositionModalOpen] = useState(false);
   const [saving, setSaving] = useState(false);
 
   const topInset = Platform.OS === "web" ? 67 : insets.top;
@@ -93,7 +105,14 @@ export default function QrGeneratorScreen() {
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     if (isBranded && user) {
       setSaving(true);
-      await saveGeneratedQr(user.id, val, getContentType(selectedPreset), shortUuid, true).catch(() => {});
+      await saveGeneratedQr(
+        user.id,
+        user.displayName,
+        val,
+        getContentType(selectedPreset),
+        shortUuid,
+        true
+      ).catch(() => {});
       setSaving(false);
     }
   }
@@ -138,6 +157,7 @@ export default function QrGeneratorScreen() {
     setGeneratedUuid(null);
     setGeneratedAt(null);
     setCustomLogoUri(null);
+    setLogoPosition("center");
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
   }
 
@@ -146,6 +166,10 @@ export default function QrGeneratorScreen() {
     : isBranded
     ? require("../../assets/images/icon.png")
     : undefined;
+
+  function getLogoPositionLabel(pos: LogoPosition): string {
+    return LOGO_POSITIONS.find((p) => p.key === pos)?.label || "Center";
+  }
 
   return (
     <View style={[styles.container, { paddingTop: topInset }]}>
@@ -258,13 +282,16 @@ export default function QrGeneratorScreen() {
           <Text style={styles.charCount}>{inputValue.length}/500</Text>
         </Animated.View>
 
-        {/* Custom logo picker */}
+        {/* Logo + Position */}
         <Animated.View entering={FadeInDown.duration(400).delay(180)}>
-          <Text style={styles.sectionLabel}>Center Logo (Optional)</Text>
-          <View style={styles.logoPickerRow}>
+          <Text style={styles.sectionLabel}>Logo (Optional)</Text>
+          <View style={styles.logoRow}>
+            {/* Logo picker */}
             <Pressable onPress={handlePickCustomLogo} style={styles.logoPicker}>
               {customLogoUri ? (
                 <Image source={{ uri: customLogoUri }} style={styles.logoPreview} />
+              ) : isBranded ? (
+                <Image source={require("../../assets/images/icon.png")} style={styles.logoPreview} />
               ) : (
                 <>
                   <Ionicons name="image-outline" size={20} color={Colors.dark.textMuted} />
@@ -272,17 +299,34 @@ export default function QrGeneratorScreen() {
                 </>
               )}
             </Pressable>
-            {customLogoUri ? (
-              <Pressable onPress={() => setCustomLogoUri(null)} style={styles.removeLogoBtn}>
-                <Ionicons name="close" size={16} color={Colors.dark.danger} />
-                <Text style={styles.removeLogoText}>Remove</Text>
-              </Pressable>
-            ) : isBranded ? (
-              <View style={styles.defaultLogoInfo}>
-                <Image source={require("../../assets/images/icon.png")} style={styles.defaultLogoIcon} />
-                <Text style={styles.defaultLogoText}>QR Guard logo will be used by default</Text>
-              </View>
-            ) : null}
+
+            <View style={styles.logoOptions}>
+              {/* Position picker */}
+              {(customLogoUri || isBranded) && (
+                <Pressable
+                  onPress={() => { setPositionModalOpen(true); Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); }}
+                  style={styles.positionBtn}
+                >
+                  <Ionicons name="move-outline" size={16} color={Colors.dark.primary} />
+                  <Text style={styles.positionBtnText}>Position: {getLogoPositionLabel(logoPosition)}</Text>
+                  <Ionicons name="chevron-forward" size={14} color={Colors.dark.textMuted} />
+                </Pressable>
+              )}
+
+              {customLogoUri ? (
+                <Pressable onPress={() => setCustomLogoUri(null)} style={styles.removeLogoBtn}>
+                  <Ionicons name="close" size={16} color={Colors.dark.danger} />
+                  <Text style={styles.removeLogoText}>Remove Custom Logo</Text>
+                </Pressable>
+              ) : isBranded ? (
+                <View style={styles.defaultLogoInfo}>
+                  <Ionicons name="shield-checkmark" size={14} color={Colors.dark.safe} />
+                  <Text style={styles.defaultLogoText}>QR Guard logo — tap image to replace</Text>
+                </View>
+              ) : (
+                <Text style={styles.logoHint}>Custom logo appears in the center of your QR code</Text>
+              )}
+            </View>
           </View>
         </Animated.View>
 
@@ -301,7 +345,7 @@ export default function QrGeneratorScreen() {
         {/* QR display */}
         {qrValue ? (
           <Animated.View entering={FadeIn.duration(400)} style={styles.qrCard}>
-            {/* QR code */}
+            {/* QR code — only center position supported natively by the library */}
             <View style={styles.qrWrapper}>
               <View style={styles.qrBg}>
                 <QRCode
@@ -310,7 +354,7 @@ export default function QrGeneratorScreen() {
                   color="#0A0E17"
                   backgroundColor="#F8FAFC"
                   getRef={(ref: any) => { svgRef.current = ref; }}
-                  logo={logoSource}
+                  logo={logoPosition === "center" ? logoSource : undefined}
                   logoSize={customLogoUri ? 54 : isBranded ? 48 : undefined}
                   logoBackgroundColor="#F8FAFC"
                   logoBorderRadius={customLogoUri ? 27 : 10}
@@ -318,8 +362,36 @@ export default function QrGeneratorScreen() {
                   quietZone={10}
                   ecl="H"
                 />
+                {/* Corner logo overlays for non-center positions */}
+                {logoSource && logoPosition !== "center" && (
+                  <View
+                    pointerEvents="none"
+                    style={[
+                      styles.cornerLogoWrapper,
+                      logoPosition === "top-left" && { top: 10, left: 10 },
+                      logoPosition === "top-right" && { top: 10, right: 10 },
+                      logoPosition === "bottom-left" && { bottom: 10, left: 10 },
+                      logoPosition === "bottom-right" && { bottom: 10, right: 10 },
+                    ]}
+                  >
+                    <Image
+                      source={customLogoUri ? { uri: customLogoUri } : require("../../assets/images/icon.png")}
+                      style={styles.cornerLogoImage}
+                    />
+                  </View>
+                )}
               </View>
             </View>
+
+            {/* Position note */}
+            {logoPosition !== "center" && logoSource && (
+              <View style={styles.positionNote}>
+                <Ionicons name="information-circle-outline" size={13} color={Colors.dark.primary} />
+                <Text style={styles.positionNoteText}>
+                  Logo placed at {getLogoPositionLabel(logoPosition).toLowerCase()} corner
+                </Text>
+              </View>
+            )}
 
             {/* Branded footer */}
             {isBranded && generatedUuid ? (
@@ -331,11 +403,14 @@ export default function QrGeneratorScreen() {
                     <Ionicons name="shield-checkmark" size={11} color={Colors.dark.safe} />
                     <Text style={styles.secureText}>Verified</Text>
                   </View>
+                  {saving && (
+                    <Text style={styles.savingText}>Saving…</Text>
+                  )}
                 </View>
                 <View style={styles.brandedMeta}>
                   <View style={styles.brandedMetaItem}>
                     <Text style={styles.brandedMetaLabel}>QR ID</Text>
-                    <Text style={styles.brandedMetaValue}>{generatedUuid}</Text>
+                    <Text style={styles.brandedMetaValue} numberOfLines={1}>{generatedUuid}</Text>
                   </View>
                   <View style={styles.brandedMetaItem}>
                     <Text style={styles.brandedMetaLabel}>Created by</Text>
@@ -347,6 +422,12 @@ export default function QrGeneratorScreen() {
                       <Text style={styles.brandedMetaValue}>{formatShortDate(generatedAt)}</Text>
                     </View>
                   ) : null}
+                </View>
+                <View style={styles.ownershipNote}>
+                  <Ionicons name="lock-closed" size={12} color={Colors.dark.primary} />
+                  <Text style={styles.ownershipNoteText}>
+                    This QR is registered to your account. Only you can manage its comments and view followers.
+                  </Text>
                 </View>
               </View>
             ) : privateMode ? (
@@ -399,6 +480,54 @@ export default function QrGeneratorScreen() {
         )}
       </ScrollView>
 
+      {/* Logo Position Modal */}
+      <Modal
+        visible={positionModalOpen}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setPositionModalOpen(false)}
+      >
+        <Pressable style={styles.modalOverlay} onPress={() => setPositionModalOpen(false)}>
+          <Pressable style={styles.infoSheet} onPress={() => {}}>
+            <View style={styles.infoSheetHandle} />
+            <Text style={styles.infoSheetTitle}>Logo Position</Text>
+            <Text style={styles.infoSheetSub}>Choose where to place your logo on the QR code</Text>
+            <View style={styles.positionGrid}>
+              {LOGO_POSITIONS.map((pos) => (
+                <Pressable
+                  key={pos.key}
+                  onPress={() => {
+                    setLogoPosition(pos.key);
+                    setPositionModalOpen(false);
+                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                  }}
+                  style={[styles.positionGridBtn, logoPosition === pos.key && styles.positionGridBtnActive]}
+                >
+                  <View style={[styles.positionGridPreview, logoPosition === pos.key && styles.positionGridPreviewActive]}>
+                    <View
+                      style={[
+                        styles.positionDot,
+                        pos.key === "center" && { alignSelf: "center", marginTop: "auto", marginBottom: "auto" },
+                        pos.key === "top-left" && { position: "absolute", top: 4, left: 4 },
+                        pos.key === "top-right" && { position: "absolute", top: 4, right: 4 },
+                        pos.key === "bottom-left" && { position: "absolute", bottom: 4, left: 4 },
+                        pos.key === "bottom-right" && { position: "absolute", bottom: 4, right: 4 },
+                      ]}
+                    />
+                  </View>
+                  <Text style={[styles.positionGridLabel, logoPosition === pos.key && styles.positionGridLabelActive]}>
+                    {pos.label}
+                  </Text>
+                </Pressable>
+              ))}
+            </View>
+            <Pressable style={styles.infoClose} onPress={() => setPositionModalOpen(false)}>
+              <Text style={styles.infoCloseText}>Done</Text>
+            </Pressable>
+          </Pressable>
+        </Pressable>
+      </Modal>
+
       {/* Info modal */}
       <Modal
         visible={infoModalOpen}
@@ -418,7 +547,7 @@ export default function QrGeneratorScreen() {
               <View style={{ flex: 1 }}>
                 <Text style={styles.infoItemTitle}>Branded QR (Signed In)</Text>
                 <Text style={styles.infoItemDesc}>
-                  Includes the QR Guard logo, a unique ID, your name, and creation date. Saved to your account for tracking.
+                  Includes the QR Guard logo, a unique ID, your name, and creation date. Saved and registered to your account. You get owner access — see followers, manage comments, receive private messages.
                 </Text>
               </View>
             </View>
@@ -440,9 +569,9 @@ export default function QrGeneratorScreen() {
                 <Ionicons name="image-outline" size={20} color={Colors.dark.accent} />
               </View>
               <View style={{ flex: 1 }}>
-                <Text style={styles.infoItemTitle}>Custom Center Logo</Text>
+                <Text style={styles.infoItemTitle}>Custom Logo & Position</Text>
                 <Text style={styles.infoItemDesc}>
-                  Add your own image or logo to the center of any QR code you generate.
+                  Add your own image or logo. Place it in the center or any corner of the QR code.
                 </Text>
               </View>
             </View>
@@ -472,20 +601,14 @@ const styles = StyleSheet.create({
   },
   scrollContent: { padding: 20 },
 
-  modeRow: {
-    flexDirection: "row", gap: 10, marginBottom: 10,
-  },
+  modeRow: { flexDirection: "row", gap: 10, marginBottom: 10 },
   modeBtn: {
     flex: 1, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 6,
     paddingVertical: 12, borderRadius: 14,
     backgroundColor: Colors.dark.surface, borderWidth: 1, borderColor: Colors.dark.surfaceBorder,
   },
-  modeBtnActive: {
-    backgroundColor: Colors.dark.primaryDim, borderColor: Colors.dark.primary,
-  },
-  modeBtnPrivate: {
-    backgroundColor: "#1E293B", borderColor: "#334155",
-  },
+  modeBtnActive: { backgroundColor: Colors.dark.primaryDim, borderColor: Colors.dark.primary },
+  modeBtnPrivate: { backgroundColor: "#1E293B", borderColor: "#334155" },
   modeBtnText: { fontSize: 14, fontFamily: "Inter_600SemiBold", color: Colors.dark.textMuted },
   modeBtnTextActive: { color: Colors.dark.primary },
   modeBtnTextPrivate: { color: "#F8FAFC" },
@@ -536,118 +659,178 @@ const styles = StyleSheet.create({
   clearBtn: { padding: 4, marginTop: 4 },
   charCount: { fontSize: 11, color: Colors.dark.textMuted, textAlign: "right", marginBottom: 16 },
 
-  logoPickerRow: {
-    flexDirection: "row", alignItems: "center", gap: 12, marginBottom: 20,
-  },
+  logoRow: { flexDirection: "row", gap: 12, marginBottom: 20, alignItems: "flex-start" },
   logoPicker: {
-    width: 64, height: 64, borderRadius: 16,
+    width: 72, height: 72, borderRadius: 16,
     backgroundColor: Colors.dark.surface, borderWidth: 1.5,
     borderColor: Colors.dark.surfaceBorder, borderStyle: "dashed",
     alignItems: "center", justifyContent: "center", gap: 4,
+    flexShrink: 0,
   },
-  logoPreview: { width: 60, height: 60, borderRadius: 14 },
-  logoPickerText: { fontSize: 10, fontFamily: "Inter_500Medium", color: Colors.dark.textMuted },
+  logoPreview: { width: 68, height: 68, borderRadius: 14 },
+  logoPickerText: { fontSize: 11, fontFamily: "Inter_500Medium", color: Colors.dark.textMuted },
+  logoOptions: { flex: 1, gap: 8 },
+  positionBtn: {
+    flexDirection: "row", alignItems: "center", gap: 8,
+    backgroundColor: Colors.dark.primaryDim, paddingHorizontal: 12, paddingVertical: 10,
+    borderRadius: 12, borderWidth: 1, borderColor: Colors.dark.primary + "40",
+  },
+  positionBtnText: { flex: 1, fontSize: 13, fontFamily: "Inter_600SemiBold", color: Colors.dark.primary },
   removeLogoBtn: {
     flexDirection: "row", alignItems: "center", gap: 6,
-    paddingHorizontal: 12, paddingVertical: 8, borderRadius: 12,
-    backgroundColor: Colors.dark.dangerDim, borderWidth: 1, borderColor: Colors.dark.danger + "40",
+    backgroundColor: Colors.dark.dangerDim, paddingHorizontal: 12, paddingVertical: 8,
+    borderRadius: 10, alignSelf: "flex-start",
+    borderWidth: 1, borderColor: Colors.dark.danger + "30",
   },
-  removeLogoText: { fontSize: 13, fontFamily: "Inter_600SemiBold", color: Colors.dark.danger },
-  defaultLogoInfo: { flexDirection: "row", alignItems: "center", gap: 8, flex: 1 },
-  defaultLogoIcon: { width: 28, height: 28, borderRadius: 8 },
-  defaultLogoText: { fontSize: 12, fontFamily: "Inter_400Regular", color: Colors.dark.textMuted, flex: 1 },
+  removeLogoText: { fontSize: 13, fontFamily: "Inter_500Medium", color: Colors.dark.danger },
+  defaultLogoInfo: { flexDirection: "row", alignItems: "center", gap: 6 },
+  defaultLogoText: { flex: 1, fontSize: 12, fontFamily: "Inter_400Regular", color: Colors.dark.safe },
+  logoHint: { fontSize: 12, fontFamily: "Inter_400Regular", color: Colors.dark.textMuted },
 
   generateBtn: {
     flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 10,
-    backgroundColor: Colors.dark.primary, borderRadius: 16, paddingVertical: 16, marginBottom: 24,
+    backgroundColor: Colors.dark.primary, paddingVertical: 16, borderRadius: 16, marginBottom: 24,
   },
-  generateBtnText: { fontSize: 16, fontFamily: "Inter_700Bold", color: "#000" },
+  generateBtnText: { fontSize: 17, fontFamily: "Inter_700Bold", color: "#000" },
 
   qrCard: {
     backgroundColor: Colors.dark.surface, borderRadius: 20,
-    borderWidth: 1, borderColor: Colors.dark.surfaceBorder, padding: 20, alignItems: "center",
+    borderWidth: 1, borderColor: Colors.dark.surfaceBorder, overflow: "hidden", marginBottom: 8,
   },
-  qrWrapper: { marginBottom: 16 },
+  qrWrapper: { alignItems: "center", paddingVertical: 24, paddingHorizontal: 16 },
   qrBg: {
-    backgroundColor: "#F8FAFC", borderRadius: 16, padding: 16,
-    shadowColor: Colors.dark.primary, shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.2, shadowRadius: 20, elevation: 8,
+    backgroundColor: "#F8FAFC", borderRadius: 16, padding: 12,
+    position: "relative",
+    shadowColor: "#000", shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15, shadowRadius: 10, elevation: 6,
   },
+  cornerLogoWrapper: {
+    position: "absolute", width: 40, height: 40, borderRadius: 10,
+    backgroundColor: "#F8FAFC", alignItems: "center", justifyContent: "center",
+    borderWidth: 1, borderColor: "rgba(0,0,0,0.08)",
+    shadowColor: "#000", shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1, shadowRadius: 4, elevation: 2,
+  },
+  cornerLogoImage: { width: 34, height: 34, borderRadius: 8 },
+  positionNote: {
+    flexDirection: "row", alignItems: "center", gap: 6,
+    marginHorizontal: 16, marginTop: -8, marginBottom: 8,
+    backgroundColor: Colors.dark.primaryDim, padding: 8, borderRadius: 8,
+  },
+  positionNoteText: { fontSize: 12, fontFamily: "Inter_400Regular", color: Colors.dark.primary },
 
   brandedFooter: {
-    width: "100%", backgroundColor: Colors.dark.primaryDim,
-    borderRadius: 14, padding: 14, marginBottom: 14,
-    borderWidth: 1, borderColor: Colors.dark.primary + "40",
+    borderTopWidth: 1, borderTopColor: Colors.dark.surfaceBorder, padding: 16,
   },
-  brandedHeader: { flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 10 },
-  brandLogo: { width: 22, height: 22, borderRadius: 6 },
-  brandName: { fontSize: 14, fontFamily: "Inter_700Bold", color: Colors.dark.primary, flex: 1 },
+  brandedHeader: { flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 12 },
+  brandLogo: { width: 24, height: 24, borderRadius: 6 },
+  brandName: { fontSize: 15, fontFamily: "Inter_700Bold", color: Colors.dark.text },
   secureBadge: {
     flexDirection: "row", alignItems: "center", gap: 4,
-    backgroundColor: Colors.dark.safeDim, paddingHorizontal: 8, paddingVertical: 3, borderRadius: 20,
+    backgroundColor: Colors.dark.safeDim, paddingHorizontal: 8, paddingVertical: 3, borderRadius: 8,
   },
-  secureText: { fontSize: 11, fontFamily: "Inter_600SemiBold", color: Colors.dark.safe },
-  brandedMeta: { flexDirection: "row", flexWrap: "wrap", gap: 12 },
-  brandedMetaItem: {},
-  brandedMetaLabel: { fontSize: 10, fontFamily: "Inter_400Regular", color: Colors.dark.textMuted, marginBottom: 2 },
-  brandedMetaValue: { fontSize: 12, fontFamily: "Inter_600SemiBold", color: Colors.dark.text, maxWidth: 100 },
+  secureText: { fontSize: 11, fontFamily: "Inter_700Bold", color: Colors.dark.safe },
+  savingText: { fontSize: 11, fontFamily: "Inter_400Regular", color: Colors.dark.textMuted, marginLeft: 4 },
+  brandedMeta: { flexDirection: "row", flexWrap: "wrap", gap: 12, marginBottom: 10 },
+  brandedMetaItem: { minWidth: 80 },
+  brandedMetaLabel: { fontSize: 10, fontFamily: "Inter_500Medium", color: Colors.dark.textMuted, marginBottom: 2 },
+  brandedMetaValue: { fontSize: 13, fontFamily: "Inter_700Bold", color: Colors.dark.text },
+  ownershipNote: {
+    flexDirection: "row", alignItems: "flex-start", gap: 6,
+    backgroundColor: Colors.dark.primaryDim, padding: 10, borderRadius: 10,
+    borderWidth: 1, borderColor: Colors.dark.primary + "30",
+  },
+  ownershipNoteText: { flex: 1, fontSize: 11, fontFamily: "Inter_400Regular", color: Colors.dark.primary, lineHeight: 16 },
 
   privateFooter: {
-    flexDirection: "row", alignItems: "center", gap: 6,
-    marginBottom: 12,
+    flexDirection: "row", alignItems: "center", gap: 8,
+    borderTopWidth: 1, borderTopColor: Colors.dark.surfaceBorder, padding: 14,
   },
   privateFooterText: { fontSize: 12, fontFamily: "Inter_400Regular", color: Colors.dark.textMuted },
 
   qrContentPreview: {
-    fontSize: 12, color: Colors.dark.textMuted, textAlign: "center",
-    marginBottom: 16, paddingHorizontal: 8,
+    fontSize: 12, fontFamily: "Inter_400Regular", color: Colors.dark.textMuted,
+    paddingHorizontal: 16, paddingBottom: 8, textAlign: "center",
   },
   sizeRow: {
     flexDirection: "row", alignItems: "center", justifyContent: "space-between",
-    width: "100%", marginBottom: 16,
+    paddingHorizontal: 16, paddingVertical: 12,
+    borderTopWidth: 1, borderTopColor: Colors.dark.surfaceBorder,
   },
-  sizeLabel: { fontSize: 13, fontFamily: "Inter_600SemiBold", color: Colors.dark.textSecondary },
+  sizeLabel: { fontSize: 14, fontFamily: "Inter_600SemiBold", color: Colors.dark.textSecondary },
   sizeButtons: { flexDirection: "row", alignItems: "center", gap: 12 },
   sizeBtn: {
-    width: 34, height: 34, borderRadius: 17,
+    width: 36, height: 36, borderRadius: 10,
     backgroundColor: Colors.dark.primaryDim, alignItems: "center", justifyContent: "center",
-    borderWidth: 1, borderColor: Colors.dark.primary + "40",
   },
-  sizePx: { fontSize: 14, fontFamily: "Inter_600SemiBold", color: Colors.dark.text, minWidth: 52, textAlign: "center" },
-  qrActions: { flexDirection: "row", gap: 10, width: "100%" },
+  sizePx: { fontSize: 14, fontFamily: "Inter_700Bold", color: Colors.dark.text, minWidth: 52, textAlign: "center" },
+  qrActions: {
+    flexDirection: "row", gap: 10, padding: 16,
+    borderTopWidth: 1, borderTopColor: Colors.dark.surfaceBorder,
+  },
   qrActionBtn: {
     flex: 1, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 6,
-    backgroundColor: Colors.dark.primaryDim, borderRadius: 12, paddingVertical: 12,
-    borderWidth: 1, borderColor: Colors.dark.primary + "30",
+    paddingVertical: 12, borderRadius: 14,
+    backgroundColor: Colors.dark.primaryDim, borderWidth: 1, borderColor: Colors.dark.primary + "40",
   },
   qrActionText: { fontSize: 13, fontFamily: "Inter_600SemiBold", color: Colors.dark.primary },
 
-  emptyQr: { alignItems: "center", paddingVertical: 40, gap: 12 },
+  emptyQr: { alignItems: "center", paddingVertical: 40, gap: 8 },
   emptyQrPlaceholder: {
-    width: 140, height: 140, borderRadius: 20,
+    width: 120, height: 120, borderRadius: 20,
     backgroundColor: Colors.dark.surface, alignItems: "center", justifyContent: "center",
-    borderWidth: 1, borderColor: Colors.dark.surfaceBorder, borderStyle: "dashed",
+    borderWidth: 1, borderColor: Colors.dark.surfaceBorder, marginBottom: 8,
   },
   emptyQrText: { fontSize: 16, fontFamily: "Inter_600SemiBold", color: Colors.dark.textSecondary },
-  emptyQrSub: { fontSize: 13, color: Colors.dark.textMuted },
+  emptyQrSub: { fontSize: 13, fontFamily: "Inter_400Regular", color: Colors.dark.textMuted },
 
   modalOverlay: { flex: 1, backgroundColor: "rgba(0,0,0,0.6)", justifyContent: "flex-end" },
   infoSheet: {
     backgroundColor: Colors.dark.surface, borderTopLeftRadius: 24, borderTopRightRadius: 24,
-    padding: 20, paddingBottom: 40,
+    paddingBottom: 36, paddingTop: 12,
     borderTopWidth: 1, borderColor: Colors.dark.surfaceBorder,
   },
   infoSheetHandle: {
     width: 40, height: 4, borderRadius: 2,
     backgroundColor: Colors.dark.surfaceLight, alignSelf: "center", marginBottom: 16,
   },
-  infoSheetTitle: { fontSize: 18, fontFamily: "Inter_700Bold", color: Colors.dark.text, marginBottom: 20 },
-  infoItem: { flexDirection: "row", gap: 14, marginBottom: 18, alignItems: "flex-start" },
-  infoItemIcon: { width: 44, height: 44, borderRadius: 22, alignItems: "center", justifyContent: "center", flexShrink: 0 },
-  infoItemTitle: { fontSize: 14, fontFamily: "Inter_600SemiBold", color: Colors.dark.text, marginBottom: 4 },
+  infoSheetTitle: {
+    fontSize: 20, fontFamily: "Inter_700Bold", color: Colors.dark.text,
+    paddingHorizontal: 20, marginBottom: 4,
+  },
+  infoSheetSub: {
+    fontSize: 13, fontFamily: "Inter_400Regular", color: Colors.dark.textMuted,
+    paddingHorizontal: 20, marginBottom: 16,
+  },
+  infoItem: {
+    flexDirection: "row", alignItems: "flex-start", gap: 14,
+    paddingHorizontal: 20, paddingVertical: 12,
+  },
+  infoItemIcon: { width: 44, height: 44, borderRadius: 12, alignItems: "center", justifyContent: "center", flexShrink: 0 },
+  infoItemTitle: { fontSize: 15, fontFamily: "Inter_600SemiBold", color: Colors.dark.text, marginBottom: 3 },
   infoItemDesc: { fontSize: 13, fontFamily: "Inter_400Regular", color: Colors.dark.textSecondary, lineHeight: 18 },
   infoClose: {
-    backgroundColor: Colors.dark.primary, borderRadius: 14, padding: 16, alignItems: "center", marginTop: 8,
+    marginHorizontal: 20, marginTop: 16, paddingVertical: 14, borderRadius: 14,
+    backgroundColor: Colors.dark.primary, alignItems: "center",
   },
-  infoCloseText: { fontSize: 15, fontFamily: "Inter_700Bold", color: "#000" },
+  infoCloseText: { fontSize: 16, fontFamily: "Inter_700Bold", color: "#000" },
+
+  positionGrid: {
+    flexDirection: "row", flexWrap: "wrap", gap: 12,
+    paddingHorizontal: 20, marginBottom: 8,
+  },
+  positionGridBtn: {
+    alignItems: "center", gap: 6,
+    width: "18%",
+  },
+  positionGridBtnActive: {},
+  positionGridPreview: {
+    width: 48, height: 48, borderRadius: 10,
+    backgroundColor: Colors.dark.surfaceLight, borderWidth: 2, borderColor: Colors.dark.surfaceBorder,
+    position: "relative",
+  },
+  positionGridPreviewActive: { borderColor: Colors.dark.primary, backgroundColor: Colors.dark.primaryDim },
+  positionDot: { width: 12, height: 12, borderRadius: 6, backgroundColor: Colors.dark.primary },
+  positionGridLabel: { fontSize: 10, fontFamily: "Inter_600SemiBold", color: Colors.dark.textMuted, textAlign: "center" },
+  positionGridLabelActive: { color: Colors.dark.primary },
 });

@@ -36,6 +36,35 @@ export interface QrCodeData {
   createdAt: string;
   scanCount: number;
   commentCount: number;
+  ownerId?: string;
+  ownerName?: string;
+  brandedUuid?: string;
+  isBranded?: boolean;
+}
+
+export interface QrOwnerInfo {
+  ownerId: string;
+  ownerName: string;
+  brandedUuid: string;
+  isBranded: boolean;
+}
+
+export interface FollowerInfo {
+  userId: string;
+  displayName: string;
+  followedAt: string;
+}
+
+export interface QrMessage {
+  id: string;
+  fromUserId: string;
+  fromDisplayName: string;
+  toUserId: string;
+  qrCodeId: string;
+  qrBrandedUuid: string;
+  message: string;
+  read: boolean;
+  createdAt: string;
 }
 
 export interface CommentItem {
@@ -816,18 +845,181 @@ export async function getUserPhotoURL(userId: string): Promise<string | null> {
 
 export async function saveGeneratedQr(
   userId: string,
+  displayName: string,
   content: string,
   contentType: string,
   uuid: string,
   branded: boolean
 ): Promise<void> {
   try {
+    const qrId = await getQrCodeId(content);
     await addDoc(collection(firestore, "users", userId, "generatedQrs"), {
       content,
       contentType,
       uuid,
       branded,
+      qrCodeId: qrId,
       createdAt: serverTimestamp(),
     });
+    if (branded) {
+      const qrRef = doc(firestore, "qrCodes", qrId);
+      const snap = await getDoc(qrRef);
+      if (snap.exists()) {
+        const data = snap.data();
+        if (!data.ownerId) {
+          await updateDoc(qrRef, {
+            ownerId: userId,
+            ownerName: displayName,
+            brandedUuid: uuid,
+            isBranded: true,
+          });
+        }
+      } else {
+        await setDoc(qrRef, {
+          content,
+          contentType,
+          createdAt: serverTimestamp(),
+          scanCount: 0,
+          commentCount: 0,
+          ownerId: userId,
+          ownerName: displayName,
+          brandedUuid: uuid,
+          isBranded: true,
+        });
+      }
+    }
+  } catch {}
+}
+
+export async function getQrOwnerInfo(qrId: string): Promise<QrOwnerInfo | null> {
+  try {
+    const snap = await getDoc(doc(firestore, "qrCodes", qrId));
+    if (!snap.exists()) return null;
+    const d = snap.data();
+    if (!d.isBranded || !d.ownerId) return null;
+    return {
+      ownerId: d.ownerId,
+      ownerName: d.ownerName || "Unknown",
+      brandedUuid: d.brandedUuid || "",
+      isBranded: true,
+    };
+  } catch {
+    return null;
+  }
+}
+
+export async function getQrFollowersList(qrId: string): Promise<FollowerInfo[]> {
+  try {
+    const snap = await getDocs(collection(firestore, "qrCodes", qrId, "followers"));
+    const followers: FollowerInfo[] = [];
+    const userFetches = snap.docs.map(async (d) => {
+      const data = d.data();
+      const userId = data.userId || d.id;
+      let displayName = "User";
+      try {
+        const userSnap = await getDoc(doc(firestore, "users", userId));
+        if (userSnap.exists()) {
+          displayName = userSnap.data().displayName || "User";
+        }
+      } catch {}
+      followers.push({
+        userId,
+        displayName,
+        followedAt: tsToString(data.createdAt),
+      });
+    });
+    await Promise.all(userFetches);
+    return followers.sort((a, b) => new Date(b.followedAt).getTime() - new Date(a.followedAt).getTime());
+  } catch {
+    return [];
+  }
+}
+
+export async function sendMessageToQrOwner(
+  fromUserId: string,
+  fromDisplayName: string,
+  toUserId: string,
+  qrCodeId: string,
+  qrBrandedUuid: string,
+  message: string
+): Promise<void> {
+  await addDoc(collection(firestore, "qrMessages"), {
+    fromUserId,
+    fromDisplayName,
+    toUserId,
+    qrCodeId,
+    qrBrandedUuid,
+    message,
+    read: false,
+    createdAt: serverTimestamp(),
+  });
+}
+
+export function subscribeToQrMessages(
+  ownerUserId: string,
+  qrCodeId: string,
+  onUpdate: (msgs: QrMessage[]) => void
+): () => void {
+  const q = query(
+    collection(firestore, "qrMessages"),
+    orderBy("createdAt", "desc"),
+    firestoreLimit(50)
+  );
+  return onSnapshot(q, (snap) => {
+    const msgs: QrMessage[] = snap.docs
+      .filter((d) => {
+        const data = d.data();
+        return data.toUserId === ownerUserId && data.qrCodeId === qrCodeId;
+      })
+      .map((d) => {
+        const data = d.data();
+        return {
+          id: d.id,
+          fromUserId: data.fromUserId,
+          fromDisplayName: data.fromDisplayName || "User",
+          toUserId: data.toUserId,
+          qrCodeId: data.qrCodeId,
+          qrBrandedUuid: data.qrBrandedUuid || "",
+          message: data.message,
+          read: data.read || false,
+          createdAt: tsToString(data.createdAt),
+        };
+      });
+    onUpdate(msgs);
+  }, () => {});
+}
+
+export async function markQrMessageRead(messageId: string): Promise<void> {
+  try {
+    await updateDoc(doc(firestore, "qrMessages", messageId), { read: true });
+  } catch {}
+}
+
+export async function getUnreadMessageCount(ownerUserId: string): Promise<number> {
+  try {
+    const q = query(collection(firestore, "qrMessages"));
+    const snap = await getDocs(q);
+    let count = 0;
+    snap.forEach((d) => {
+      const data = d.data();
+      if (data.toUserId === ownerUserId && !data.read) count++;
+    });
+    return count;
+  } catch {
+    return 0;
+  }
+}
+
+export async function deleteQrCommentAsOwner(
+  qrId: string,
+  commentId: string,
+  requestingUserId: string,
+  qrOwnerId: string
+): Promise<void> {
+  if (requestingUserId !== qrOwnerId) throw new Error("Only the QR owner can delete comments");
+  const ref = doc(firestore, "qrCodes", qrId, "comments", commentId);
+  await deleteDoc(ref);
+  try {
+    await updateDoc(doc(firestore, "qrCodes", qrId), { commentCount: increment(-1) });
   } catch {}
 }
