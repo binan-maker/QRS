@@ -4,7 +4,10 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1" />
     <title>__REPLIT_ARTIFACT_TITLE__</title>
+<<<<<<< HEAD
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+=======
+>>>>>>> 4910c56ab055c2f57c02da0e1f785176d0762c3a
 
     <meta property="og:title" content="__REPLIT_ARTIFACT_TITLE__" />
     <meta property="og:description" content="An animated video built with Replit." />
