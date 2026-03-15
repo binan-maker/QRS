@@ -1,4 +1,31 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import * as Crypto from "expo-crypto";
+
+const _QRG_SIGNATURE_SALT = "QRG_MINT_VERIFIED_2024_PROPRIETARY";
+
+export interface QrSignatureResult {
+  isVerified: boolean;
+  isBranded: boolean;
+  ownerName?: string;
+  ownerVerified?: boolean;
+}
+
+export async function verifyQrSignature(
+  content: string,
+  ownerId: string,
+  storedSignature: string
+): Promise<boolean> {
+  try {
+    const rawSig = await Crypto.digestStringAsync(
+      Crypto.CryptoDigestAlgorithm.SHA256,
+      content + "|" + ownerId + "|" + _QRG_SIGNATURE_SALT
+    );
+    const expected = rawSig.slice(0, 32);
+    return expected === storedSignature;
+  } catch {
+    return false;
+  }
+}
 
 // ─── Universal Payment QR Detection ─────────────────────────────────────────
 // Covers 50+ payment apps across India, China, US, SE Asia, Korea, Japan,

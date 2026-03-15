@@ -285,13 +285,22 @@ export default function ProfileScreen() {
         <Animated.View entering={FadeInDown.duration(400).delay(160)}>
           <View style={styles.myQrHeader}>
             <Text style={styles.sectionTitle}>My QR Codes</Text>
-            <Pressable
-              onPress={() => router.push("/(tabs)/qr-generator")}
-              style={styles.newQrBtn}
-            >
-              <Ionicons name="add" size={15} color={Colors.dark.primary} />
-              <Text style={styles.newQrBtnText}>New</Text>
-            </Pressable>
+            <View style={{ flexDirection: "row", gap: 8 }}>
+              <Pressable
+                onPress={() => router.push("/generate")}
+                style={[styles.newQrBtn, { backgroundColor: Colors.dark.primaryDim, borderColor: Colors.dark.primary + "40", borderWidth: 1 }]}
+              >
+                <Ionicons name="lock-closed" size={13} color={Colors.dark.primary} />
+                <Text style={styles.newQrBtnText}>Digital Mint</Text>
+              </Pressable>
+              <Pressable
+                onPress={() => router.push("/(tabs)/qr-generator")}
+                style={styles.newQrBtn}
+              >
+                <Ionicons name="add" size={15} color={Colors.dark.primary} />
+                <Text style={styles.newQrBtnText}>New</Text>
+              </Pressable>
+            </View>
           </View>
 
           {myQrLoading ? (

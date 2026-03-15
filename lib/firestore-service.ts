@@ -32,6 +32,8 @@ import {
 } from "firebase/database";
 import * as Crypto from "expo-crypto";
 
+export const SIGNATURE_SALT = "QRG_MINT_VERIFIED_2024_PROPRIETARY";
+
 export interface QrCodeData {
   id: string;
   content: string;
@@ -43,6 +45,8 @@ export interface QrCodeData {
   ownerName?: string;
   brandedUuid?: string;
   isBranded?: boolean;
+  signature?: string;
+  ownerVerified?: boolean;
 }
 
 export interface QrOwnerInfo {
@@ -50,6 +54,20 @@ export interface QrOwnerInfo {
   ownerName: string;
   brandedUuid: string;
   isBranded: boolean;
+  signature?: string;
+  ownerVerified?: boolean;
+}
+
+export interface ScanVelocityBucket {
+  hour: number;
+  label: string;
+  count: number;
+}
+
+export interface VerificationStatus {
+  status: "none" | "pending" | "approved" | "rejected";
+  businessName?: string;
+  submittedAt?: string;
 }
 
 export interface FollowerInfo {
@@ -255,6 +273,12 @@ export async function getOrCreateQrCode(content: string): Promise<QrCodeData> {
         createdAt: tsToString(d.createdAt),
         scanCount: d.scanCount || 0,
         commentCount: d.commentCount || 0,
+        ownerId: d.ownerId,
+        ownerName: d.ownerName,
+        brandedUuid: d.brandedUuid,
+        isBranded: d.isBranded || false,
+        signature: d.signature,
+        ownerVerified: d.ownerVerified || false,
       };
     }
     await setDoc(ref, {
@@ -415,6 +439,11 @@ export async function recordScan(
       console.warn("[firestore] recordScan: failed to save scan history:", e);
     }
   }
+  // Record scan timestamp for velocity tracking in Realtime DB
+  try {
+    const velocityRef = dbRef(realtimeDB, `qrScanVelocity/${qrId}`);
+    await dbPush(velocityRef, { ts: Date.now() });
+  } catch {}
 }
 
 export async function getUserScans(userId: string): Promise<any[]> {
@@ -1115,6 +1144,120 @@ export async function updateQrDesign(
   }
 }
 
+export async function generateBrandedQr(
+  content: string,
+  userId: string,
+  displayName: string
+): Promise<{ qrId: string; signature: string; uuid: string }> {
+  const qrId = await getQrCodeId(content);
+  const contentType = detectContentType(content);
+  const rawSig = await Crypto.digestStringAsync(
+    Crypto.CryptoDigestAlgorithm.SHA256,
+    content + "|" + userId + "|" + SIGNATURE_SALT
+  );
+  const signature = rawSig.slice(0, 32);
+  const uuidRaw = await Crypto.digestStringAsync(
+    Crypto.CryptoDigestAlgorithm.SHA256,
+    content + Date.now().toString()
+  );
+  const uuid = uuidRaw.slice(0, 16).toUpperCase().match(/.{1,4}/g)?.join("-") || uuidRaw.slice(0, 16);
+
+  const qrRef = doc(firestore, "qrCodes", qrId);
+  const snap = await getDoc(qrRef);
+  if (snap.exists()) {
+    const existing = snap.data();
+    if (!existing.ownerId) {
+      await updateDoc(qrRef, {
+        ownerId: userId, ownerName: displayName,
+        brandedUuid: uuid, isBranded: true, signature,
+      });
+    }
+  } else {
+    await setDoc(qrRef, {
+      content, contentType, ownerId: userId, ownerName: displayName,
+      brandedUuid: uuid, isBranded: true, signature,
+      ownerVerified: false, scanCount: 0, commentCount: 0,
+      createdAt: serverTimestamp(),
+    });
+  }
+  await addDoc(collection(firestore, "users", userId, "generatedQrs"), {
+    content, contentType, uuid, branded: true, qrCodeId: qrId,
+    signature, createdAt: serverTimestamp(),
+  });
+  return { qrId, signature, uuid };
+}
+
+export async function getScanVelocity(qrId: string): Promise<ScanVelocityBucket[]> {
+  const now = Date.now();
+  const cutoff = now - 24 * 60 * 60 * 1000;
+  const buckets: ScanVelocityBucket[] = Array.from({ length: 24 }, (_, i) => {
+    const h = new Date(cutoff + i * 60 * 60 * 1000);
+    const hour = h.getHours();
+    const label = hour === 0 ? "12a" : hour < 12 ? `${hour}a` : hour === 12 ? "12p" : `${hour - 12}p`;
+    return { hour: i, label, count: 0 };
+  });
+  try {
+    const snapshot = await dbGet(dbRef(realtimeDB, `qrScanVelocity/${qrId}`));
+    if (snapshot.exists()) {
+      snapshot.forEach((child) => {
+        const { ts } = child.val();
+        if (ts >= cutoff) {
+          const bucketIdx = Math.floor((ts - cutoff) / (60 * 60 * 1000));
+          if (bucketIdx >= 0 && bucketIdx < 24) buckets[bucketIdx].count++;
+        }
+      });
+    }
+  } catch {}
+  return buckets;
+}
+
+export async function submitVerificationRequest(
+  userId: string,
+  qrId: string,
+  businessName: string,
+  businessIdBase64: string
+): Promise<void> {
+  const existing = query(
+    collection(firestore, "verificationRequests"),
+    where("userId", "==", userId),
+    where("qrId", "==", qrId),
+    firestoreLimit(1)
+  );
+  const snap = await getDocs(existing);
+  if (!snap.empty) {
+    const docId = snap.docs[0].id;
+    await updateDoc(doc(firestore, "verificationRequests", docId), {
+      businessName, businessIdBase64, status: "pending", updatedAt: serverTimestamp(),
+    });
+    return;
+  }
+  await addDoc(collection(firestore, "verificationRequests"), {
+    userId, qrId, businessName, businessIdBase64,
+    status: "pending", createdAt: serverTimestamp(),
+  });
+}
+
+export async function getVerificationStatus(userId: string, qrId: string): Promise<VerificationStatus> {
+  try {
+    const q = query(
+      collection(firestore, "verificationRequests"),
+      where("userId", "==", userId),
+      where("qrId", "==", qrId),
+      firestoreLimit(1)
+    );
+    const snap = await getDocs(q);
+    if (snap.empty) return { status: "none" };
+    const d = snap.docs[0].data();
+    return {
+      status: d.status || "pending",
+      businessName: d.businessName,
+      submittedAt: tsToString(d.createdAt),
+    };
+  } catch {
+    return { status: "none" };
+  }
+}
+
 export async function getQrOwnerInfo(qrId: string): Promise<QrOwnerInfo | null> {
   try {
     const snap = await getDoc(doc(firestore, "qrCodes", qrId));
@@ -1126,6 +1269,8 @@ export async function getQrOwnerInfo(qrId: string): Promise<QrOwnerInfo | null> 
       ownerName: d.ownerName || "Unknown",
       brandedUuid: d.brandedUuid || "",
       isBranded: true,
+      signature: d.signature,
+      ownerVerified: d.ownerVerified || false,
     };
   } catch {
     return null;

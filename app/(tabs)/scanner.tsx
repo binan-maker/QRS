@@ -32,6 +32,7 @@ import {
   analyzeUrlHeuristics,
   loadOfflineBlacklist,
   checkOfflineBlacklist,
+  verifyQrSignature,
 } from "@/lib/qr-analysis";
 
 const FINDER_SIZE = 270;
@@ -61,6 +62,15 @@ export default function ScannerScreen() {
   const [pendingQrId, setPendingQrId] = useState<string | null>(null);
   const [safetyWarnings, setSafetyWarnings] = useState<string[]>([]);
   const [safetyRiskLevel, setSafetyRiskLevel] = useState<"caution" | "dangerous">("caution");
+
+  // Verification badge state
+  const [verifiedModal, setVerifiedModal] = useState(false);
+  const [verifiedOwnerName, setVerifiedOwnerName] = useState("");
+  const [verifiedQrId, setVerifiedQrId] = useState<string | null>(null);
+  const [unverifiedModal, setUnverifiedModal] = useState(false);
+  const [unverifiedQrId, setUnverifiedQrId] = useState<string | null>(null);
+  const [unverifiedCountdown, setUnverifiedCountdown] = useState(3);
+  const countdownRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const scanLockRef = useRef(false);
   const canScanRef = useRef(false);
@@ -220,9 +230,33 @@ export default function ScannerScreen() {
             : Haptics.NotificationFeedbackType.Warning
         );
       } else {
-        setScanSuccess(true);
-        await new Promise((r) => setTimeout(r, 300));
-        router.push(`/qr-detail/${qr.id}`);
+        // Check signature verification for branded QRs
+        if (qr.isBranded && qr.signature && qr.ownerId) {
+          const isVerified = await verifyQrSignature(content, qr.ownerId, qr.signature);
+          if (isVerified) {
+            setVerifiedOwnerName(qr.ownerName || "Verified Owner");
+            setVerifiedQrId(qr.id);
+            setVerifiedModal(true);
+            setScanSuccess(true);
+            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+          } else {
+            setPendingQrId(qr.id);
+            setSafetyWarnings(["QR signature mismatch — this QR may have been tampered with or cloned"]);
+            setSafetyRiskLevel("caution");
+            setSafetyModal(true);
+            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+          }
+        } else if (!qr.isBranded) {
+          // Unverified source — 3-second countdown
+          setUnverifiedQrId(qr.id);
+          setUnverifiedCountdown(3);
+          setUnverifiedModal(true);
+          setScanSuccess(true);
+        } else {
+          setScanSuccess(true);
+          await new Promise((r) => setTimeout(r, 300));
+          router.push(`/qr-detail/${qr.id}`);
+        }
       }
     } catch (e: any) {
       // Even if Firebase fails (offline), we can still navigate with local data
@@ -260,6 +294,53 @@ export default function ScannerScreen() {
     } finally {
       setProcessing(false);
     }
+  }
+
+  // Verified modal: auto-navigate after brief display
+  useEffect(() => {
+    if (!verifiedModal) return;
+    const t = setTimeout(() => {
+      setVerifiedModal(false);
+      if (verifiedQrId) router.push(`/qr-detail/${verifiedQrId}`);
+    }, 2200);
+    return () => clearTimeout(t);
+  }, [verifiedModal, verifiedQrId]);
+
+  // Unverified countdown effect
+  useEffect(() => {
+    if (!unverifiedModal) return;
+    setUnverifiedCountdown(3);
+    countdownRef.current = setInterval(() => {
+      setUnverifiedCountdown((c) => {
+        if (c <= 1) {
+          clearInterval(countdownRef.current!);
+          setUnverifiedModal(false);
+          if (unverifiedQrId) router.push(`/qr-detail/${unverifiedQrId}`);
+          return 0;
+        }
+        return c - 1;
+      });
+    }, 1000);
+    return () => {
+      if (countdownRef.current) clearInterval(countdownRef.current);
+    };
+  }, [unverifiedModal, unverifiedQrId]);
+
+  function handleUnverifiedProceed() {
+    if (countdownRef.current) clearInterval(countdownRef.current);
+    setUnverifiedModal(false);
+    if (unverifiedQrId) router.push(`/qr-detail/${unverifiedQrId}`);
+  }
+
+  function handleUnverifiedBack() {
+    if (countdownRef.current) clearInterval(countdownRef.current);
+    setUnverifiedModal(false);
+    setUnverifiedQrId(null);
+    setScanned(false);
+    setProcessing(false);
+    setScanSuccess(false);
+    scanLockRef.current = false;
+    canScanRef.current = true;
   }
 
   function handleSafetyModalProceed() {
@@ -648,6 +729,55 @@ export default function ScannerScreen() {
           </Reanimated.View>
         </View>
       ) : null}
+
+      {/* Verified Origin Badge Overlay */}
+      {verifiedModal ? (
+        <View style={styles.safetyOverlay} pointerEvents="none">
+          <Reanimated.View entering={FadeIn.duration(300)} style={styles.verifiedBadgeSheet}>
+            <View style={styles.verifiedIconRing}>
+              <Ionicons name="shield-checkmark" size={48} color={Colors.dark.safe} />
+            </View>
+            <Text style={styles.verifiedTitle}>Verified Origin</Text>
+            <Text style={styles.verifiedOwner}>{verifiedOwnerName}</Text>
+            <Text style={styles.verifiedSub}>
+              Cryptographic signature confirmed.{"\n"}This QR was created by its registered owner.
+            </Text>
+            <View style={styles.verifiedBadgeRow}>
+              <Ionicons name="lock-closed" size={13} color={Colors.dark.safe} />
+              <Text style={styles.verifiedBadgeLabel}>QR Guard Digital Mint</Text>
+            </View>
+          </Reanimated.View>
+        </View>
+      ) : null}
+
+      {/* Unverified Source Countdown Overlay */}
+      {unverifiedModal ? (
+        <View style={styles.safetyOverlay}>
+          <Reanimated.View entering={FadeInDown.duration(350)} style={styles.safetySheet}>
+            <View style={[styles.safetyBadge, { backgroundColor: "rgba(255,165,0,0.12)" }]}>
+              <Ionicons name="help-circle" size={32} color="#FFA500" />
+            </View>
+            <Text style={[styles.safetyTitle, { color: "#FFA500" }]}>Unverified Source</Text>
+            <Text style={styles.safetySubtitle}>
+              This QR code has no registered owner or cryptographic signature. It may be legitimate but cannot be verified by QR Guard.
+            </Text>
+            <View style={styles.unverifiedCountdownRing}>
+              <Text style={styles.unverifiedCountdownNum}>{unverifiedCountdown}</Text>
+            </View>
+            <Text style={{ color: Colors.dark.textMuted, fontFamily: "Inter_400Regular", fontSize: 13, marginBottom: 16 }}>
+              Proceeding automatically in {unverifiedCountdown} second{unverifiedCountdown !== 1 ? "s" : ""}…
+            </Text>
+            <Pressable onPress={handleUnverifiedProceed} style={styles.safetyProceedBtn}>
+              <Text style={styles.safetyProceedBtnText}>View Now</Text>
+              <Ionicons name="chevron-forward" size={16} color={Colors.dark.textMuted} />
+            </Pressable>
+            <Pressable onPress={handleUnverifiedBack} style={[styles.safetyBackBtn, { marginTop: 8 }]}>
+              <Ionicons name="arrow-back" size={18} color="#000" />
+              <Text style={styles.safetyBackBtnText}>Cancel</Text>
+            </Pressable>
+          </Reanimated.View>
+        </View>
+      ) : null}
     </View>
   );
 }
@@ -1016,6 +1146,74 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontFamily: "Inter_400Regular",
     color: Colors.dark.textMuted,
+  },
+  verifiedBadgeSheet: {
+    width: "85%",
+    backgroundColor: Colors.dark.surface,
+    borderRadius: 28,
+    padding: 32,
+    alignItems: "center",
+    gap: 10,
+    borderWidth: 1.5,
+    borderColor: Colors.dark.safe,
+  },
+  verifiedIconRing: {
+    width: 88,
+    height: 88,
+    borderRadius: 44,
+    backgroundColor: Colors.dark.safeDim,
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 4,
+  },
+  verifiedTitle: {
+    fontSize: 24,
+    fontFamily: "Inter_700Bold",
+    color: Colors.dark.safe,
+    textAlign: "center",
+  },
+  verifiedOwner: {
+    fontSize: 16,
+    fontFamily: "Inter_600SemiBold",
+    color: Colors.dark.text,
+    textAlign: "center",
+  },
+  verifiedSub: {
+    fontSize: 13,
+    fontFamily: "Inter_400Regular",
+    color: Colors.dark.textSecondary,
+    textAlign: "center",
+    lineHeight: 20,
+  },
+  verifiedBadgeRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 5,
+    backgroundColor: Colors.dark.safeDim,
+    paddingHorizontal: 12,
+    paddingVertical: 5,
+    borderRadius: 20,
+    marginTop: 4,
+  },
+  verifiedBadgeLabel: {
+    fontSize: 12,
+    fontFamily: "Inter_600SemiBold",
+    color: Colors.dark.safe,
+  },
+  unverifiedCountdownRing: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    borderWidth: 3,
+    borderColor: "#FFA500",
+    alignItems: "center",
+    justifyContent: "center",
+    marginVertical: 4,
+  },
+  unverifiedCountdownNum: {
+    fontSize: 28,
+    fontFamily: "Inter_700Bold",
+    color: "#FFA500",
   },
   permissionBox: {
     flex: 1,

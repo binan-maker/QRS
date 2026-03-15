@@ -222,5 +222,21 @@ service cloud.firestore {
       allow create: if isSignedIn();
       allow read, update, delete: if false;
     }
+
+    // ─── Verification Requests ────────────────────────────────────────────────
+    // Authenticated users can create and update their own verification requests.
+    // Admin review happens via Firebase Admin SDK (no client delete or list).
+    match /verificationRequests/{docId} {
+      allow create: if isSignedIn()
+        && request.resource.data.userId == request.auth.uid
+        && request.resource.data.businessName is string
+        && request.resource.data.businessName.size() > 0
+        && request.resource.data.businessName.size() <= 200;
+      allow read: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow update: if isSignedIn()
+        && resource.data.userId == request.auth.uid
+        && request.resource.data.userId == request.auth.uid;
+      allow delete: if false;
+    }
   }
 }

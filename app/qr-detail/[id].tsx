@@ -51,10 +51,16 @@ import {
   sendMessageToQrOwner,
   subscribeToQrMessages,
   markQrMessageRead,
+  getScanVelocity,
+  submitVerificationRequest,
+  getVerificationStatus,
   type QrOwnerInfo,
   type FollowerInfo,
   type QrMessage,
+  type ScanVelocityBucket,
+  type VerificationStatus,
 } from "@/lib/firestore-service";
+import * as ImagePicker from "expo-image-picker";
 import { DocumentSnapshot } from "firebase/firestore";
 import {
   parseAnyPaymentQr,
@@ -287,6 +293,16 @@ export default function QrDetailScreen() {
   const [sendingMessage, setSendingMessage] = useState(false);
   const [unreadMessages, setUnreadMessages] = useState(0);
 
+  // Merchant Dashboard (owner only)
+  const [scanVelocity, setScanVelocity] = useState<ScanVelocityBucket[]>([]);
+  const [velocityLoading, setVelocityLoading] = useState(false);
+  const [verificationStatus, setVerificationStatus] = useState<VerificationStatus>({ status: "none" });
+  const [verifyModalOpen, setVerifyModalOpen] = useState(false);
+  const [verifyBizName, setVerifyBizName] = useState("");
+  const [verifyDocBase64, setVerifyDocBase64] = useState<string | null>(null);
+  const [verifyDocName, setVerifyDocName] = useState<string | null>(null);
+  const [verifySubmitting, setVerifySubmitting] = useState(false);
+
   // QR Safety Analysis
   const [parsedPayment, setParsedPayment] = useState<ParsedPaymentQr | null>(null);
   const [paymentSafety, setPaymentSafety] = useState<PaymentSafetyResult | null>(null);
@@ -417,6 +433,16 @@ export default function QrDetailScreen() {
     });
     return unsub;
   }, [isQrOwner, user?.id, id, ownerInfo]);
+
+  // Load Merchant Dashboard data when owner is confirmed
+  useEffect(() => {
+    if (!isQrOwner || !user) return;
+    setVelocityLoading(true);
+    getScanVelocity(id)
+      .then((v) => setScanVelocity(v))
+      .finally(() => setVelocityLoading(false));
+    getVerificationStatus(user.id, id).then(setVerificationStatus);
+  }, [isQrOwner, user?.id, id]);
 
   useEffect(() => {
     if (offlineMode) return;
@@ -617,6 +643,38 @@ export default function QrDetailScreen() {
       Alert.alert("Error", e.message || "Could not send message.");
     } finally {
       setSendingMessage(false);
+    }
+  }
+
+  async function handlePickVerifyDoc() {
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ["images"],
+      quality: 0.7,
+      base64: true,
+    });
+    if (result.canceled || !result.assets[0]) return;
+    const asset = result.assets[0];
+    setVerifyDocBase64(asset.base64 || null);
+    const parts = asset.uri.split("/");
+    setVerifyDocName(parts[parts.length - 1]);
+  }
+
+  async function handleVerifySubmit() {
+    if (!user || !verifyBizName.trim() || !verifyDocBase64) return;
+    setVerifySubmitting(true);
+    try {
+      await submitVerificationRequest(user.id, id, verifyBizName.trim(), verifyDocBase64);
+      setVerificationStatus({ status: "pending", businessName: verifyBizName.trim() });
+      setVerifyModalOpen(false);
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      Alert.alert(
+        "Request Submitted",
+        "Your verification request has been submitted for review. We'll update your badge status within 1-3 business days."
+      );
+    } catch (e: any) {
+      Alert.alert("Error", e.message || "Could not submit verification request.");
+    } finally {
+      setVerifySubmitting(false);
     }
   }
 
@@ -1077,6 +1135,109 @@ export default function QrDetailScreen() {
                     )}
                   </View>
                 </View>
+              </Animated.View>
+            )}
+
+            {/* ── Merchant Dashboard (owner only) ── */}
+            {isQrOwner && !offlineMode && (
+              <Animated.View entering={FadeInDown.duration(450)} style={styles.merchantCard}>
+                <View style={styles.merchantHeader}>
+                  <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+                    <View style={styles.merchantIconBox}>
+                      <Ionicons name="bar-chart" size={18} color={Colors.dark.primary} />
+                    </View>
+                    <Text style={styles.merchantTitle}>Merchant Dashboard</Text>
+                  </View>
+                  <Pressable
+                    onPress={() => {
+                      setVelocityLoading(true);
+                      getScanVelocity(id)
+                        .then((v) => setScanVelocity(v))
+                        .finally(() => setVelocityLoading(false));
+                    }}
+                    style={styles.merchantRefreshBtn}
+                  >
+                    <Ionicons name="refresh-outline" size={16} color={Colors.dark.textMuted} />
+                  </Pressable>
+                </View>
+
+                {/* Scan Velocity Chart */}
+                <Text style={styles.merchantSectionLabel}>Scan Velocity — Last 24 Hours</Text>
+                {velocityLoading ? (
+                  <ActivityIndicator color={Colors.dark.primary} size="small" style={{ marginVertical: 16 }} />
+                ) : (
+                  <View style={styles.velocityChart}>
+                    {(() => {
+                      const maxCount = Math.max(...scanVelocity.map((b) => b.count), 1);
+                      const MAX_BAR_H = 60;
+                      return scanVelocity.map((bucket, i) => (
+                        <View key={i} style={styles.velocityBarWrapper}>
+                          <View style={[
+                            styles.velocityBar,
+                            {
+                              height: Math.max(2, (bucket.count / maxCount) * MAX_BAR_H),
+                              backgroundColor: bucket.count > 0 ? Colors.dark.primary : Colors.dark.surfaceLight,
+                            },
+                          ]} />
+                          {(i % 6 === 0 || i === 23) ? (
+                            <Text style={styles.velocityLabel}>{bucket.label}</Text>
+                          ) : (
+                            <View style={{ height: 12 }} />
+                          )}
+                        </View>
+                      ));
+                    })()}
+                  </View>
+                )}
+                {scanVelocity.length > 0 && (
+                  <Text style={styles.merchantTotalScans}>
+                    {scanVelocity.reduce((s, b) => s + b.count, 0)} scan{scanVelocity.reduce((s, b) => s + b.count, 0) !== 1 ? "s" : ""} in the last 24h
+                  </Text>
+                )}
+
+                {/* Verified Badge Section */}
+                <View style={styles.merchantDivider} />
+                <Text style={styles.merchantSectionLabel}>Merchant Verification</Text>
+                {verificationStatus.status === "none" && (
+                  <Pressable onPress={() => setVerifyModalOpen(true)} style={styles.verifyRequestBtn}>
+                    <Ionicons name="shield-outline" size={18} color={Colors.dark.primary} />
+                    <View style={{ flex: 1 }}>
+                      <Text style={styles.verifyRequestBtnText}>Request Verified Badge</Text>
+                      <Text style={styles.verifyRequestBtnSub}>Submit business ID for manual review</Text>
+                    </View>
+                    <Ionicons name="chevron-forward" size={16} color={Colors.dark.textMuted} />
+                  </Pressable>
+                )}
+                {verificationStatus.status === "pending" && (
+                  <View style={styles.verifyStatusRow}>
+                    <Ionicons name="time-outline" size={18} color={Colors.dark.warning} />
+                    <View style={{ flex: 1 }}>
+                      <Text style={[styles.verifyStatusText, { color: Colors.dark.warning }]}>Verification Pending</Text>
+                      {verificationStatus.businessName && (
+                        <Text style={styles.verifyStatusSub}>{verificationStatus.businessName}</Text>
+                      )}
+                    </View>
+                  </View>
+                )}
+                {verificationStatus.status === "approved" && (
+                  <View style={styles.verifyStatusRow}>
+                    <Ionicons name="shield-checkmark" size={18} color={Colors.dark.safe} />
+                    <Text style={[styles.verifyStatusText, { color: Colors.dark.safe }]}>Merchant Verified</Text>
+                  </View>
+                )}
+                {verificationStatus.status === "rejected" && (
+                  <View style={{ gap: 8 }}>
+                    <View style={styles.verifyStatusRow}>
+                      <Ionicons name="close-circle-outline" size={18} color={Colors.dark.danger} />
+                      <Text style={[styles.verifyStatusText, { color: Colors.dark.danger }]}>Verification Rejected</Text>
+                    </View>
+                    <Pressable onPress={() => setVerifyModalOpen(true)} style={styles.verifyRequestBtn}>
+                      <Ionicons name="reload-outline" size={16} color={Colors.dark.primary} />
+                      <Text style={styles.verifyRequestBtnText}>Resubmit</Text>
+                      <Ionicons name="chevron-forward" size={16} color={Colors.dark.textMuted} />
+                    </Pressable>
+                  </View>
+                )}
               </Animated.View>
             )}
 
@@ -1680,6 +1841,103 @@ export default function QrDetailScreen() {
           </Pressable>
         </KeyboardAvoidingView>
       </Modal>
+
+      {/* Verification Request Modal */}
+      <Modal
+        visible={verifyModalOpen}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setVerifyModalOpen(false)}
+      >
+        <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === "ios" ? "padding" : "height"}>
+          <Pressable style={styles.bottomSheetOverlay} onPress={() => setVerifyModalOpen(false)}>
+            <Pressable style={[styles.bottomSheet, { maxHeight: "80%" }]} onPress={() => {}}>
+              <View style={styles.sheetHandle} />
+              <ScrollView keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
+                <View style={styles.sheetHeader}>
+                  <View style={{ flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 6 }}>
+                    <Ionicons name="shield-checkmark-outline" size={22} color={Colors.dark.primary} />
+                    <Text style={styles.sheetTitle}>Request Verified Badge</Text>
+                  </View>
+                  <Text style={styles.sheetSub}>
+                    Submit your business details for manual review. Approved merchants receive a verified badge on their QR codes.
+                  </Text>
+                </View>
+
+                <View style={{ gap: 14, paddingBottom: 8 }}>
+                  <View>
+                    <Text style={styles.verifyFieldLabel}>Business Name</Text>
+                    <TextInput
+                      style={styles.verifyInput}
+                      placeholder="Your registered business name"
+                      placeholderTextColor={Colors.dark.textMuted}
+                      value={verifyBizName}
+                      onChangeText={setVerifyBizName}
+                      maxLength={100}
+                    />
+                  </View>
+
+                  <View>
+                    <Text style={styles.verifyFieldLabel}>Business Document</Text>
+                    <Text style={[styles.sheetSub, { marginBottom: 8 }]}>
+                      Upload a photo of your business registration, tax certificate, or government-issued business ID.
+                    </Text>
+                    <Pressable onPress={handlePickVerifyDoc} style={styles.verifyDocPicker}>
+                      {verifyDocName ? (
+                        <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
+                          <Ionicons name="document-attach" size={20} color={Colors.dark.primary} />
+                          <Text style={[styles.verifyFieldLabel, { color: Colors.dark.primary, marginBottom: 0 }]} numberOfLines={1}>
+                            {verifyDocName}
+                          </Text>
+                        </View>
+                      ) : (
+                        <View style={{ alignItems: "center", gap: 8 }}>
+                          <Ionicons name="cloud-upload-outline" size={28} color={Colors.dark.textMuted} />
+                          <Text style={{ color: Colors.dark.textMuted, fontFamily: "Inter_500Medium", fontSize: 14 }}>
+                            Tap to upload document
+                          </Text>
+                          <Text style={{ color: Colors.dark.textMuted, fontFamily: "Inter_400Regular", fontSize: 12, textAlign: "center" }}>
+                            JPG, PNG · Max 5MB
+                          </Text>
+                        </View>
+                      )}
+                    </Pressable>
+                  </View>
+
+                  <View style={[styles.merchantDivider, { marginVertical: 0 }]} />
+                  <View style={{ flexDirection: "row", gap: 8, alignItems: "flex-start" }}>
+                    <Ionicons name="lock-closed-outline" size={15} color={Colors.dark.textMuted} style={{ marginTop: 1 }} />
+                    <Text style={{ flex: 1, fontSize: 12, fontFamily: "Inter_400Regular", color: Colors.dark.textMuted, lineHeight: 18 }}>
+                      Your document is stored securely and used only for identity verification. It will not be shared publicly.
+                    </Text>
+                  </View>
+
+                  <Pressable
+                    onPress={handleVerifySubmit}
+                    disabled={verifySubmitting || !verifyBizName.trim() || !verifyDocBase64}
+                    style={({ pressed }) => [
+                      styles.verifySubmitBtn,
+                      { opacity: verifySubmitting || !verifyBizName.trim() || !verifyDocBase64 || pressed ? 0.55 : 1 },
+                    ]}
+                  >
+                    {verifySubmitting ? (
+                      <ActivityIndicator size="small" color="#000" />
+                    ) : (
+                      <>
+                        <Ionicons name="shield-checkmark" size={18} color="#000" />
+                        <Text style={styles.verifySubmitBtnText}>Submit for Verification</Text>
+                      </>
+                    )}
+                  </Pressable>
+                  <Pressable style={styles.sheetCloseBtn} onPress={() => setVerifyModalOpen(false)}>
+                    <Text style={styles.sheetCloseBtnText}>Cancel</Text>
+                  </Pressable>
+                </View>
+              </ScrollView>
+            </Pressable>
+          </Pressable>
+        </KeyboardAvoidingView>
+      </Modal>
     </>
   );
 }
@@ -2074,6 +2332,65 @@ const styles = StyleSheet.create({
     borderWidth: 1, borderColor: Colors.dark.surfaceBorder,
   },
   loadMoreText: { fontSize: 14, fontFamily: "Inter_600SemiBold", color: Colors.dark.primary },
+
+  // ── Merchant Dashboard ──
+  merchantCard: {
+    backgroundColor: Colors.dark.surface, borderRadius: 16, padding: 18,
+    marginBottom: 16, borderWidth: 1, borderColor: Colors.dark.primary + "30",
+  },
+  merchantHeader: {
+    flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 14,
+  },
+  merchantIconBox: {
+    width: 34, height: 34, borderRadius: 10, backgroundColor: Colors.dark.primaryDim,
+    alignItems: "center", justifyContent: "center",
+  },
+  merchantTitle: { fontSize: 16, fontFamily: "Inter_700Bold", color: Colors.dark.text },
+  merchantRefreshBtn: { padding: 8 },
+  merchantSectionLabel: {
+    fontSize: 12, fontFamily: "Inter_600SemiBold", color: Colors.dark.textMuted,
+    textTransform: "uppercase", letterSpacing: 0.6, marginBottom: 10,
+  },
+  velocityChart: {
+    flexDirection: "row", alignItems: "flex-end", height: 80,
+    gap: 2, marginBottom: 8,
+  },
+  velocityBarWrapper: { flex: 1, alignItems: "center", justifyContent: "flex-end", gap: 0 },
+  velocityBar: { width: "100%", borderRadius: 2, minHeight: 2 },
+  velocityLabel: { fontSize: 8, fontFamily: "Inter_400Regular", color: Colors.dark.textMuted, marginTop: 2 },
+  merchantTotalScans: {
+    fontSize: 12, fontFamily: "Inter_500Medium", color: Colors.dark.textMuted,
+    textAlign: "center", marginBottom: 4,
+  },
+  merchantDivider: { height: 1, backgroundColor: Colors.dark.surfaceBorder, marginVertical: 14 },
+  verifyRequestBtn: {
+    flexDirection: "row", alignItems: "center", gap: 12,
+    backgroundColor: Colors.dark.primaryDim, borderRadius: 12,
+    padding: 14, borderWidth: 1, borderColor: Colors.dark.primary + "30",
+  },
+  verifyRequestBtnText: { fontSize: 14, fontFamily: "Inter_600SemiBold", color: Colors.dark.primary },
+  verifyRequestBtnSub: { fontSize: 12, fontFamily: "Inter_400Regular", color: Colors.dark.textMuted, marginTop: 1 },
+  verifyStatusRow: { flexDirection: "row", alignItems: "center", gap: 10 },
+  verifyStatusText: { fontSize: 14, fontFamily: "Inter_600SemiBold" },
+  verifyStatusSub: { fontSize: 12, fontFamily: "Inter_400Regular", color: Colors.dark.textMuted },
+
+  // Verification Modal
+  verifyFieldLabel: { fontSize: 13, fontFamily: "Inter_600SemiBold", color: Colors.dark.textSecondary, marginBottom: 8 },
+  verifyInput: {
+    backgroundColor: Colors.dark.surfaceLight, borderRadius: 12,
+    borderWidth: 1, borderColor: Colors.dark.surfaceBorder,
+    padding: 14, fontSize: 15, fontFamily: "Inter_400Regular", color: Colors.dark.text,
+  },
+  verifyDocPicker: {
+    backgroundColor: Colors.dark.surfaceLight, borderRadius: 14, borderWidth: 1.5,
+    borderColor: Colors.dark.surfaceBorder, borderStyle: "dashed",
+    padding: 24, alignItems: "center", justifyContent: "center", minHeight: 100,
+  },
+  verifySubmitBtn: {
+    flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8,
+    backgroundColor: Colors.dark.primary, borderRadius: 14, paddingVertical: 15,
+  },
+  verifySubmitBtnText: { fontSize: 16, fontFamily: "Inter_700Bold", color: "#000" },
 
   centeredOverlay: {
     flex: 1, backgroundColor: "rgba(0,0,0,0.75)",
