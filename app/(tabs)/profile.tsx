@@ -19,7 +19,6 @@ import * as Haptics from "expo-haptics";
 import * as ImagePicker from "expo-image-picker";
 import Animated, { FadeInDown, FadeIn } from "react-native-reanimated";
 import Colors from "@/constants/colors";
-import QRCode from "react-native-qrcode-svg";
 import { useAuth } from "@/contexts/AuthContext";
 import { firebaseAuth } from "@/lib/firebase";
 import { updateProfile } from "firebase/auth";
@@ -171,8 +170,6 @@ export default function ProfileScreen() {
     ? user.displayName.split(" ").map((n: string) => n[0]).join("").toUpperCase().slice(0, 2)
     : "?";
 
-  const memberSince = "2024";
-
   return (
     <View style={[styles.container, { paddingTop: topInset }]}>
       {/* Nav */}
@@ -238,10 +235,6 @@ export default function ProfileScreen() {
                 </Pressable>
               )}
               <Text style={styles.emailText} numberOfLines={1}>{user.email}</Text>
-              <View style={styles.memberBadge}>
-                <Ionicons name="shield-checkmark" size={12} color={Colors.dark.safe} />
-                <Text style={styles.memberText}>Member since {memberSince}</Text>
-              </View>
             </View>
           </View>
         </Animated.View>
@@ -289,99 +282,26 @@ export default function ProfileScreen() {
 
         {/* My QR Codes */}
         <Animated.View entering={FadeInDown.duration(400).delay(160)}>
-          <View style={styles.myQrHeader}>
-            <Text style={styles.sectionTitle}>My Branded QR Codes</Text>
-            <Pressable
-              onPress={() => router.push("/(tabs)/qr-generator")}
-              style={styles.newQrBtn}
-            >
-              <Ionicons name="add" size={15} color={Colors.dark.primary} />
-              <Text style={styles.newQrBtnText}>Create</Text>
-            </Pressable>
-          </View>
-
-          {myQrLoading ? (
-            <View style={styles.myQrLoading}>
-              <ActivityIndicator size="small" color={Colors.dark.primary} />
-            </View>
-          ) : myQrCodes.length === 0 ? (
-            <Pressable
-              style={styles.myQrEmpty}
-              onPress={() => router.push("/(tabs)/qr-generator")}
-            >
-              <MaterialCommunityIcons name="qrcode-plus" size={28} color={Colors.dark.textMuted} />
-              <View style={{ flex: 1 }}>
-                <Text style={styles.myQrEmptyTitle}>No branded QR codes yet</Text>
-                <Text style={styles.myQrEmptySub}>Go to QR Generator → select Branded mode → tap Generate</Text>
+          <Pressable
+            onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              router.push("/my-qr-codes" as any);
+            }}
+            style={({ pressed }) => [styles.myQrViewAllBtn, { opacity: pressed ? 0.85 : 1 }]}
+          >
+            <View style={styles.myQrViewAllLeft}>
+              <View style={styles.myQrViewAllIcon}>
+                <MaterialCommunityIcons name="qrcode-edit" size={22} color={Colors.dark.primary} />
               </View>
-              <Ionicons name="chevron-forward" size={16} color={Colors.dark.textMuted} />
-            </Pressable>
-          ) : (
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              style={{ marginBottom: 4 }}
-              contentContainerStyle={{ gap: 12, paddingRight: 4 }}
-            >
-              {myQrCodes.map((qr) => (
-                <Pressable
-                  key={qr.docId}
-                  onPress={() => {
-                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                    router.push(`/my-qr/${qr.docId}` as any);
-                  }}
-                  style={({ pressed }) => [styles.myQrCard, { opacity: pressed ? 0.85 : 1 }]}
-                >
-                  <View style={[styles.myQrImageWrap, { backgroundColor: qr.bgColor || "#F8FAFC" }]}>
-                    <QRCode
-                      value={qr.content || "https://qrguard.app"}
-                      size={80}
-                      color={qr.fgColor || "#0A0E17"}
-                      backgroundColor={qr.bgColor || "#F8FAFC"}
-                      quietZone={4}
-                      ecl="L"
-                    />
-                  </View>
-                  <View style={styles.myQrCardInfo}>
-                    <View style={{ flexDirection: "row", alignItems: "center", gap: 5, marginBottom: 2 }}>
-                      {qr.branded ? (
-                        <Ionicons
-                          name={qr.qrType === "business" ? "storefront" : qr.qrType === "government" ? "flag" : "shield-checkmark"}
-                          size={10}
-                          color={qr.qrType === "business" ? "#FBBF24" : qr.qrType === "government" ? "#3B82F6" : Colors.dark.safe}
-                        />
-                      ) : null}
-                      <Text style={styles.myQrCardUuid} numberOfLines={1}>
-                        {qr.branded ? (qr.uuid || "Branded") : "Private"}
-                      </Text>
-                      {qr.branded && !qr.isActive && (
-                        <View style={styles.myQrInactiveBadge}>
-                          <Text style={styles.myQrInactiveBadgeText}>OFF</Text>
-                        </View>
-                      )}
-                    </View>
-                    {qr.businessName ? (
-                      <Text style={styles.myQrBusinessName} numberOfLines={1}>{qr.businessName}</Text>
-                    ) : null}
-                    <Text style={styles.myQrCardContent} numberOfLines={2}>
-                      {qr.content.length > 36 ? qr.content.slice(0, 36) + "…" : qr.content}
-                    </Text>
-                    <View style={styles.myQrCardStats}>
-                      <View style={styles.myQrStat}>
-                        <Ionicons name="scan-outline" size={10} color={Colors.dark.textMuted} />
-                        <Text style={styles.myQrStatText}>{qr.scanCount}</Text>
-                      </View>
-                      <View style={styles.myQrStat}>
-                        <Ionicons name="chatbubble-outline" size={10} color={Colors.dark.textMuted} />
-                        <Text style={styles.myQrStatText}>{qr.commentCount}</Text>
-                      </View>
-                    </View>
-                  </View>
-                  <Ionicons name="chevron-forward" size={15} color={Colors.dark.textMuted} style={{ alignSelf: "center" }} />
-                </Pressable>
-              ))}
-            </ScrollView>
-          )}
+              <View>
+                <Text style={styles.myQrViewAllTitle}>My QR Codes</Text>
+                <Text style={styles.myQrViewAllSub}>
+                  {myQrLoading ? "Loading…" : `${myQrCodes.length} code${myQrCodes.length !== 1 ? "s" : ""} — Individual & Business`}
+                </Text>
+              </View>
+            </View>
+            <Ionicons name="chevron-forward" size={18} color={Colors.dark.textMuted} />
+          </Pressable>
         </Animated.View>
 
         {/* Quick actions */}
@@ -656,6 +576,20 @@ const styles = StyleSheet.create({
   myQrInactiveBadgeText: { fontSize: 8, fontFamily: "Inter_700Bold", color: Colors.dark.danger },
   myQrBusinessName: { fontSize: 11, fontFamily: "Inter_700Bold", color: Colors.dark.text, marginBottom: 2 },
   myQrStatText: { fontSize: 11, fontFamily: "Inter_500Medium", color: Colors.dark.textMuted },
+
+  myQrViewAllBtn: {
+    flexDirection: "row", alignItems: "center", justifyContent: "space-between",
+    backgroundColor: Colors.dark.surface, borderRadius: 16,
+    borderWidth: 1, borderColor: Colors.dark.surfaceBorder,
+    padding: 16, marginBottom: 20,
+  },
+  myQrViewAllLeft: { flexDirection: "row", alignItems: "center", gap: 14, flex: 1 },
+  myQrViewAllIcon: {
+    width: 44, height: 44, borderRadius: 14,
+    backgroundColor: Colors.dark.primaryDim, alignItems: "center", justifyContent: "center",
+  },
+  myQrViewAllTitle: { fontSize: 15, fontFamily: "Inter_600SemiBold", color: Colors.dark.text },
+  myQrViewAllSub: { fontSize: 12, fontFamily: "Inter_400Regular", color: Colors.dark.textMuted, marginTop: 2 },
 
   modalOverlay: {
     flex: 1, backgroundColor: "rgba(0,0,0,0.6)",

@@ -247,11 +247,10 @@ export default function ScannerScreen() {
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
           }
         } else if (!qr.isBranded) {
-          // Unverified source — 3-second countdown
-          setUnverifiedQrId(qr.id);
-          setUnverifiedCountdown(3);
-          setUnverifiedModal(true);
+          // Non-branded QR with no safety concerns — navigate directly
           setScanSuccess(true);
+          await new Promise((r) => setTimeout(r, 300));
+          router.push(`/qr-detail/${qr.id}`);
         } else {
           setScanSuccess(true);
           await new Promise((r) => setTimeout(r, 300));
@@ -637,7 +636,7 @@ export default function ScannerScreen() {
             </View>
 
             <Pressable
-              onPress={() => router.push("/(auth)/login")}
+              onPress={() => router.push(user ? "/(tabs)/profile" : "/(auth)/login")}
               style={({ pressed }) => [styles.sideActionBtn, { opacity: pressed ? 0.7 : 1 }]}
             >
               {user ? (

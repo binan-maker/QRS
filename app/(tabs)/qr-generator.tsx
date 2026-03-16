@@ -80,6 +80,7 @@ export default function QrGeneratorScreen() {
   const [qrMode, setQrMode] = useState<"individual" | "business" | "private">("individual");
   const [businessName, setBusinessName] = useState("");
   const [customLogoUri, setCustomLogoUri] = useState<string | null>(null);
+  const [customLogoBase64, setCustomLogoBase64] = useState<string | null>(null);
   const [logoPosition, setLogoPosition] = useState<LogoPosition>("center");
   const [generatedUuid, setGeneratedUuid] = useState<string | null>(null);
   const [generatedAt, setGeneratedAt] = useState<Date | null>(null);
@@ -112,6 +113,7 @@ export default function QrGeneratorScreen() {
       setSavedToProfile(false);
       try {
         const qt: QrType = qrMode === "business" ? "business" : "individual";
+        const logoToStore = qrMode === "business" && customLogoBase64 ? customLogoBase64 : null;
         await saveGeneratedQr(
           user.id,
           user.displayName,
@@ -120,7 +122,8 @@ export default function QrGeneratorScreen() {
           shortUuid,
           true,
           qt,
-          qrMode === "business" ? (businessName.trim() || null) : null
+          qrMode === "business" ? (businessName.trim() || null) : null,
+          logoToStore
         );
         setSavedToProfile(true);
         setTimeout(() => setSavedToProfile(false), 4000);
@@ -136,10 +139,16 @@ export default function QrGeneratorScreen() {
       mediaTypes: ["images"],
       allowsEditing: true,
       aspect: [1, 1],
-      quality: 0.8,
+      quality: 0.3,
+      base64: true,
     });
     if (!result.canceled && result.assets?.[0]) {
       setCustomLogoUri(result.assets[0].uri);
+      if (result.assets[0].base64) {
+        setCustomLogoBase64(`data:image/jpeg;base64,${result.assets[0].base64}`);
+      } else {
+        setCustomLogoBase64(null);
+      }
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     }
   }
@@ -195,6 +204,7 @@ export default function QrGeneratorScreen() {
     setGeneratedUuid(null);
     setGeneratedAt(null);
     setCustomLogoUri(null);
+    setCustomLogoBase64(null);
     setLogoPosition("center");
     setSavedToProfile(false);
     setBusinessName("");

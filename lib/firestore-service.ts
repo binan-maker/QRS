@@ -66,6 +66,7 @@ export interface QrOwnerInfo {
   isActive?: boolean;
   deactivationMessage?: string | null;
   businessName?: string | null;
+  ownerLogoBase64?: string | null;
 }
 
 export interface ScanVelocityBucket {
@@ -1036,7 +1037,8 @@ export async function saveGeneratedQr(
   uuid: string,
   branded: boolean,
   qrType: QrType = "individual",
-  businessName?: string | null
+  businessName?: string | null,
+  ownerLogoBase64?: string | null
 ): Promise<void> {
   const qrId = await getQrCodeId(content);
   await addDoc(collection(firestore, "users", userId, "generatedQrs"), {
@@ -1063,6 +1065,7 @@ export async function saveGeneratedQr(
           qrType,
           isActive: true,
           businessName: businessName || null,
+          ...(ownerLogoBase64 ? { ownerLogoBase64 } : {}),
         });
       }
     } else {
@@ -1079,6 +1082,7 @@ export async function saveGeneratedQr(
         qrType,
         isActive: true,
         businessName: businessName || null,
+        ...(ownerLogoBase64 ? { ownerLogoBase64 } : {}),
       });
     }
   }
@@ -1303,6 +1307,7 @@ export async function getQrOwnerInfo(qrId: string): Promise<QrOwnerInfo | null> 
       isActive: d.isActive !== false,
       deactivationMessage: d.deactivationMessage || null,
       businessName: d.businessName || null,
+      ownerLogoBase64: d.ownerLogoBase64 || null,
     };
   } catch {
     return null;

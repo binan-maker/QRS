@@ -28,6 +28,7 @@ function RootLayoutNav() {
         options={{ presentation: "modal", headerShown: false }}
       />
       <Stack.Screen name="qr-detail/[id]" options={{ headerShown: false }} />
+      <Stack.Screen name="my-qr-codes" options={{ headerShown: false }} />
       <Stack.Screen name="settings" options={{ headerShown: false }} />
     </Stack>
   );

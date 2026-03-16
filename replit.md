@@ -21,7 +21,8 @@ A full-stack mobile-first QR code scanning and management app built with Expo (R
   - `(tabs)/qr-generator.tsx` — Branded QR (QR Guard logo + UUID + user info) or Private/No-trace mode, custom logo with 5 position options (center, top-left, top-right, bottom-left, bottom-right)
   - `(tabs)/settings.tsx` — Account settings, feedback form, delete account
   - `(auth)/` — Login + Register screens
-  - `qr-detail/[id].tsx` — QR detail with offline mode (cached content + "Enable internet" CTA), real-time Firestore listeners, skeleton loading, threaded comments, QR owner panel (followers list, inbox), messaging modal
+  - `qr-detail/[id].tsx` — QR detail: disclaimer banner at top, business logo display in owner card, offline mode, real-time Firestore listeners, skeleton loading, threaded comments, QR owner panel, share button
+  - `my-qr-codes.tsx` — All generated QR codes (individual + business filter tabs), live QR thumbnail preview, scan/comment counts, navigate to my-qr/[id] for management
 - `server/` — Express backend (`routes.ts` only does image decode via Jimp + jsQR)
 - `shared/` — Drizzle schema (future PostgreSQL)
 - `components/` — Reusable React Native components

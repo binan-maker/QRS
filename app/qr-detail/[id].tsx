@@ -12,6 +12,8 @@ import {
   Alert,
   Modal,
   KeyboardAvoidingView,
+  Share,
+  Image,
 } from "react-native";
 import { StatusBar } from "expo-status-bar";
 import { useLocalSearchParams, router } from "expo-router";
@@ -929,6 +931,18 @@ export default function QrDetailScreen() {
     );
   }
 
+  async function handleShare() {
+    try {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      const deepLink = `scanguard:///qr-detail/${id}`;
+      await Share.share({
+        message: `Check out this QR code on QR Guard\n${deepLink}`,
+        title: "QR Guard — QR Details",
+        url: deepLink,
+      });
+    } catch {}
+  }
+
   const trust = getTrustInfo();
   const currentContent = qrCode?.content || offlineContent;
   const currentContentType = qrCode?.contentType || offlineContentType;
@@ -998,6 +1012,9 @@ export default function QrDetailScreen() {
             </Pressable>
             <Text style={styles.navTitle}>QR Details</Text>
             <View style={styles.navActions}>
+              <Pressable onPress={handleShare} style={styles.navActionBtn}>
+                <Ionicons name="share-outline" size={22} color={Colors.dark.textSecondary} />
+              </Pressable>
               {!offlineMode && (
                 <Pressable onPress={handleToggleFavorite} disabled={favoriteLoading} style={styles.navActionBtn}>
                   {favoriteLoading ? (
@@ -1047,6 +1064,14 @@ export default function QrDetailScreen() {
             keyboardShouldPersistTaps="handled"
             onScrollBeginDrag={() => setCommentMenuId(null)}
           >
+            {/* Safety disclaimer */}
+            <View style={styles.disclaimerBanner}>
+              <Ionicons name="information-circle-outline" size={14} color={Colors.dark.textMuted} />
+              <Text style={styles.disclaimerText}>
+                Check links before you click. QR Guard is not responsible for external content.
+              </Text>
+            </View>
+
             {/* Offline banner */}
             {offlineMode && (
               <Animated.View entering={FadeIn.duration(300)}>
@@ -1096,6 +1121,15 @@ export default function QrDetailScreen() {
                   </View>
                 )}
                 <View style={styles.ownerCard}>
+                  {ownerInfo.ownerLogoBase64 && ownerInfo.qrType === "business" && (
+                    <View style={styles.ownerLogoRow}>
+                      <Image
+                        source={{ uri: ownerInfo.ownerLogoBase64 }}
+                        style={styles.ownerLogoImage}
+                        resizeMode="contain"
+                      />
+                    </View>
+                  )}
                   <View style={styles.ownerCardLeft}>
                     <View style={[
                       styles.ownerVerifiedIcon,
@@ -2540,4 +2574,24 @@ const styles = StyleSheet.create({
   sendMessageBtnText: { fontSize: 16, fontFamily: "Inter_700Bold", color: "#000" },
   signInToMessage: { alignItems: "center", paddingVertical: 8 },
   signInToMessageText: { fontSize: 14, fontFamily: "Inter_600SemiBold", color: Colors.dark.primary },
+
+  disclaimerBanner: {
+    flexDirection: "row", alignItems: "center", gap: 6,
+    backgroundColor: Colors.dark.surface, borderRadius: 10, padding: 10,
+    marginBottom: 12, borderWidth: 1, borderColor: Colors.dark.surfaceBorder,
+  },
+  disclaimerText: {
+    flex: 1, fontSize: 11, fontFamily: "Inter_400Regular",
+    color: Colors.dark.textMuted, lineHeight: 15,
+  },
+
+  ownerLogoRow: {
+    alignItems: "center", justifyContent: "center",
+    paddingBottom: 12, marginBottom: 12,
+    borderBottomWidth: 1, borderBottomColor: Colors.dark.surfaceBorder,
+  },
+  ownerLogoImage: {
+    width: 72, height: 72, borderRadius: 14,
+    backgroundColor: Colors.dark.surfaceLight,
+  },
 });
