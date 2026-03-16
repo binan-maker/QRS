@@ -111,9 +111,9 @@ export default function MyQrCodesScreen() {
   }
 
   const filtered = qrCodes.filter((qr) => {
-    if (filter === "individual") return qr.qrType === "individual" && qr.branded;
+    if (filter === "individual") return qr.qrType === "individual";
     if (filter === "business") return qr.qrType === "business";
-    return qr.branded;
+    return true;
   });
 
   const FILTERS: { key: Filter; label: string; icon: string }[] = [
