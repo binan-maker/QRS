@@ -1400,26 +1400,38 @@ export default function QrDetailScreen() {
                 </View>
                 <Text style={styles.contentText} selectable numberOfLines={4}>{currentContent}</Text>
 
-                {/* Copy content button — available for ALL content types */}
-                <Pressable
-                  onPress={async () => {
-                    if (currentContent) {
-                      await Clipboard.setStringAsync(currentContent);
-                      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-                      Alert.alert("Copied!", "QR content copied to clipboard.");
-                    }
-                  }}
-                  style={({ pressed }) => [styles.copyBtn, { opacity: pressed ? 0.75 : 1 }]}
-                >
-                  <Ionicons name="copy-outline" size={15} color={Colors.dark.textSecondary} />
-                  <Text style={styles.copyBtnText}>Copy Content</Text>
-                </Pressable>
-
-                {/* URL open button — hidden when deactivated */}
-                {(currentContentType === "url") && ownerInfo?.isActive !== false ? (
-                  <Pressable onPress={handleOpenContent} style={({ pressed }) => [styles.openBtn, { opacity: pressed ? 0.8 : 1 }]}>
-                    <Ionicons name="open-outline" size={16} color={Colors.dark.primary} />
-                    <Text style={styles.openBtnText}>Open Link</Text>
+                {/* Action buttons row */}
+                {currentContentType === "url" && ownerInfo?.isActive !== false ? (
+                  <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+                    <Pressable onPress={handleOpenContent} style={({ pressed }) => [styles.openBtn, { opacity: pressed ? 0.8 : 1 }]}>
+                      <Ionicons name="open-outline" size={16} color={Colors.dark.primary} />
+                      <Text style={styles.openBtnText}>Open Link</Text>
+                    </Pressable>
+                    <Pressable
+                      onPress={async () => {
+                        if (currentContent) {
+                          await Clipboard.setStringAsync(currentContent);
+                          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+                          Alert.alert("Copied!", "QR content copied to clipboard.");
+                        }
+                      }}
+                      style={({ pressed }) => [styles.copyIconBtn, { opacity: pressed ? 0.75 : 1 }]}
+                    >
+                      <Ionicons name="copy-outline" size={17} color={Colors.dark.textSecondary} />
+                    </Pressable>
+                  </View>
+                ) : currentContentType !== "payment" ? (
+                  <Pressable
+                    onPress={async () => {
+                      if (currentContent) {
+                        await Clipboard.setStringAsync(currentContent);
+                        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+                        Alert.alert("Copied!", "QR content copied to clipboard.");
+                      }
+                    }}
+                    style={({ pressed }) => [styles.copyIconBtn, { opacity: pressed ? 0.75 : 1 }]}
+                  >
+                    <Ionicons name="copy-outline" size={17} color={Colors.dark.textSecondary} />
                   </Pressable>
                 ) : null}
 
@@ -2286,13 +2298,12 @@ const styles = StyleSheet.create({
   typeBadge: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 8, backgroundColor: Colors.dark.primaryDim },
   typeBadgeText: { fontSize: 11, fontFamily: "Inter_700Bold", color: Colors.dark.primary, letterSpacing: 0.8 },
   contentText: { fontSize: 15, fontFamily: "Inter_400Regular", color: Colors.dark.text, lineHeight: 22, marginBottom: 12 },
-  copyBtn: {
-    flexDirection: "row", alignItems: "center", gap: 6,
+  copyIconBtn: {
+    width: 38, height: 38,
+    alignItems: "center", justifyContent: "center",
     backgroundColor: Colors.dark.surfaceLight, borderRadius: 10,
     borderWidth: 1, borderColor: Colors.dark.surfaceBorder,
-    paddingHorizontal: 12, paddingVertical: 8, alignSelf: "flex-start", marginBottom: 8,
   },
-  copyBtnText: { fontSize: 13, fontFamily: "Inter_500Medium", color: Colors.dark.textSecondary },
   openBtn: {
     flexDirection: "row", alignItems: "center", gap: 8,
     backgroundColor: Colors.dark.primaryDim, paddingVertical: 10, paddingHorizontal: 16,

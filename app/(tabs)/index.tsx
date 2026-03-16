@@ -109,13 +109,17 @@ export default function HomeScreen() {
       if (stored) {
         const all: LocalScan[] = JSON.parse(stored);
         setRecentScans(all.slice(0, 5));
+      } else {
+        setRecentScans([]);
       }
     } catch {}
   }, []);
 
+  // Clear and reload recent scans when user changes (sign-out / switch account)
   useEffect(() => {
+    setRecentScans([]);
     loadRecentScans();
-  }, [loadRecentScans]);
+  }, [user?.id]);
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);

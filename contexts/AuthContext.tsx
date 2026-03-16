@@ -259,6 +259,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   async function signOut() {
+    try {
+      const AsyncStorage = (await import("@react-native-async-storage/async-storage")).default;
+      await AsyncStorage.removeItem("local_scan_history");
+    } catch {}
     await firebaseSignOut(firebaseAuth);
     setUser(null);
     setToken(null);

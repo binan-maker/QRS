@@ -473,6 +473,41 @@ export async function getUserScans(userId: string): Promise<any[]> {
   }));
 }
 
+export async function getUserScansPaginated(
+  userId: string,
+  pageSize: number = 20,
+  afterDoc?: DocumentSnapshot
+): Promise<{ items: any[]; lastDoc: DocumentSnapshot | null; hasMore: boolean }> {
+  let q;
+  if (afterDoc) {
+    q = query(
+      collection(firestore, "users", userId, "scans"),
+      orderBy("scannedAt", "desc"),
+      startAfter(afterDoc),
+      firestoreLimit(pageSize + 1)
+    );
+  } else {
+    q = query(
+      collection(firestore, "users", userId, "scans"),
+      orderBy("scannedAt", "desc"),
+      firestoreLimit(pageSize + 1)
+    );
+  }
+  const snap = await getDocs(q);
+  const hasMore = snap.docs.length > pageSize;
+  const docs = hasMore ? snap.docs.slice(0, pageSize) : snap.docs;
+  const lastDoc = docs.length > 0 ? docs[docs.length - 1] : null;
+  return {
+    items: docs.map((d) => ({
+      id: d.id,
+      ...d.data(),
+      scannedAt: tsToString(d.data().scannedAt),
+    })),
+    lastDoc,
+    hasMore,
+  };
+}
+
 export async function getQrReportCounts(qrId: string): Promise<Record<string, number>> {
   const snap = await getDocs(collection(firestore, "qrCodes", qrId, "reports"));
   const counts: Record<string, number> = {};

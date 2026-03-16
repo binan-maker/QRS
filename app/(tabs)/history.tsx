@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState, useMemo } from "react";
+import { useCallback, useEffect, useState, useMemo, useRef } from "react";
 import {
   View,
   Text,
@@ -8,6 +8,7 @@ import {
   Platform,
   RefreshControl,
   Alert,
+  ActivityIndicator,
 } from "react-native";
 import { router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
@@ -16,12 +17,13 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as Haptics from "expo-haptics";
 import Colors from "@/constants/colors";
 import { useAuth } from "@/contexts/AuthContext";
-import { getUserScans, getUserFavorites } from "@/lib/firestore-service";
+import { getUserScansPaginated, getUserFavorites } from "@/lib/firestore-service";
 import {
   parseAnyPaymentQr,
   analyzeAnyPaymentQr,
   analyzeUrlHeuristics,
 } from "@/lib/qr-analysis";
+import { DocumentSnapshot } from "firebase/firestore";
 
 interface HistoryItem {
   id: string;
@@ -35,63 +37,95 @@ interface HistoryItem {
 type Filter = "all" | "url" | "text" | "payment" | "other" | "favorites";
 type RiskLevel = "safe" | "caution" | "dangerous";
 
+const PAGE_SIZE = 20;
+
 export default function HistoryScreen() {
-  const { user, token } = useAuth();
+  const { user } = useAuth();
   const insets = useSafeAreaInsets();
-  const [history, setHistory] = useState<HistoryItem[]>([]);
+  const [localHistory, setLocalHistory] = useState<HistoryItem[]>([]);
+  const [cloudHistory, setCloudHistory] = useState<HistoryItem[]>([]);
   const [favorites, setFavorites] = useState<HistoryItem[]>([]);
   const [refreshing, setRefreshing] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [cloudHasMore, setCloudHasMore] = useState(false);
   const [filter, setFilter] = useState<Filter>("all");
+  const cloudLastDocRef = useRef<DocumentSnapshot | null>(null);
+  const prevUserIdRef = useRef<string | null | undefined>(undefined);
 
   const topInset = Platform.OS === "web" ? 67 : insets.top;
 
-  const loadHistory = useCallback(async () => {
-    const items: HistoryItem[] = [];
-
-    const stored = await AsyncStorage.getItem("local_scan_history");
-    if (stored) {
-      const local = JSON.parse(stored);
-      local.forEach((s: any) => {
-        items.push({ ...s, source: "local" });
-      });
+  // Merge local + cloud, dedup by qrCodeId, sort by date
+  const history = useMemo<HistoryItem[]>(() => {
+    const merged: HistoryItem[] = [...localHistory];
+    for (const c of cloudHistory) {
+      if (!merged.find((i) => i.qrCodeId && i.qrCodeId === c.qrCodeId)) {
+        merged.push(c);
+      }
     }
-
-    if (user) {
-      try {
-        const CLOUD_CACHE_KEY = `cloud_scans_cache_${user.id}`;
-        const CLOUD_CACHE_TTL = 5 * 60 * 1000;
-        let cloudScans: any[] = [];
-        const cached = await AsyncStorage.getItem(CLOUD_CACHE_KEY);
-        if (cached) {
-          const { ts, data } = JSON.parse(cached);
-          if (Date.now() - ts < CLOUD_CACHE_TTL) {
-            cloudScans = data;
-          }
-        }
-        if (cloudScans.length === 0) {
-          cloudScans = await getUserScans(user.id);
-          await AsyncStorage.setItem(CLOUD_CACHE_KEY, JSON.stringify({ ts: Date.now(), data: cloudScans }));
-        }
-        cloudScans.forEach((s: any) => {
-          if (!items.find((i) => i.qrCodeId === s.qrCodeId)) {
-            items.push({
-              id: s.id,
-              content: s.content,
-              contentType: s.contentType,
-              scannedAt: s.scannedAt,
-              qrCodeId: s.qrCodeId,
-              source: "cloud",
-            });
-          }
-        });
-      } catch (e) {}
-    }
-
-    items.sort(
+    return merged.sort(
       (a, b) => new Date(b.scannedAt).getTime() - new Date(a.scannedAt).getTime()
     );
-    setHistory(items);
-  }, [user]);
+  }, [localHistory, cloudHistory]);
+
+  const loadLocalHistory = useCallback(async () => {
+    try {
+      const stored = await AsyncStorage.getItem("local_scan_history");
+      if (stored) {
+        const local: any[] = JSON.parse(stored);
+        setLocalHistory(local.map((s) => ({ ...s, source: "local" as const })));
+      } else {
+        setLocalHistory([]);
+      }
+    } catch {
+      setLocalHistory([]);
+    }
+  }, []);
+
+  const loadInitialCloudHistory = useCallback(async (userId: string) => {
+    try {
+      const result = await getUserScansPaginated(userId, PAGE_SIZE);
+      cloudLastDocRef.current = result.lastDoc;
+      setCloudHasMore(result.hasMore);
+      setCloudHistory(
+        result.items.map((s) => ({
+          id: s.id,
+          content: s.content,
+          contentType: s.contentType,
+          scannedAt: s.scannedAt,
+          qrCodeId: s.qrCodeId,
+          source: "cloud" as const,
+        }))
+      );
+    } catch {
+      setCloudHistory([]);
+    }
+  }, []);
+
+  const loadMoreCloudHistory = useCallback(async () => {
+    if (!user || loadingMore || !cloudHasMore) return;
+    setLoadingMore(true);
+    try {
+      const result = await getUserScansPaginated(
+        user.id,
+        PAGE_SIZE,
+        cloudLastDocRef.current ?? undefined
+      );
+      cloudLastDocRef.current = result.lastDoc;
+      setCloudHasMore(result.hasMore);
+      setCloudHistory((prev) => [
+        ...prev,
+        ...result.items.map((s) => ({
+          id: s.id,
+          content: s.content,
+          contentType: s.contentType,
+          scannedAt: s.scannedAt,
+          qrCodeId: s.qrCodeId,
+          source: "cloud" as const,
+        })),
+      ]);
+    } catch {}
+    setLoadingMore(false);
+  }, [user, loadingMore, cloudHasMore]);
 
   const loadFavorites = useCallback(async () => {
     if (!user) {
@@ -100,31 +134,52 @@ export default function HistoryScreen() {
     }
     try {
       const favs = await getUserFavorites(user.id);
-      const favItems: HistoryItem[] = favs.map((f: any) => ({
-        id: f.id,
-        content: f.content || f.qrCodeId,
-        contentType: f.contentType || "text",
-        scannedAt: f.createdAt,
-        qrCodeId: f.qrCodeId,
-        source: "favorite" as const,
-      }));
-      setFavorites(favItems);
-    } catch (e) {}
+      setFavorites(
+        favs.map((f: any) => ({
+          id: f.id,
+          content: f.content || f.qrCodeId,
+          contentType: f.contentType || "text",
+          scannedAt: f.createdAt,
+          qrCodeId: f.qrCodeId,
+          source: "favorite" as const,
+        }))
+      );
+    } catch {}
   }, [user]);
 
+  // Reset and reload when user changes (including sign-out / sign-in with new account)
   useEffect(() => {
-    loadHistory();
-    loadFavorites();
-  }, [loadHistory, loadFavorites]);
+    const currentUserId = user?.id ?? null;
+    if (prevUserIdRef.current !== currentUserId) {
+      prevUserIdRef.current = currentUserId;
+      // Clear cloud data immediately when user changes
+      setCloudHistory([]);
+      setFavorites([]);
+      cloudLastDocRef.current = null;
+      setCloudHasMore(false);
+    }
+
+    loadLocalHistory();
+
+    if (user) {
+      loadInitialCloudHistory(user.id);
+      loadFavorites();
+    }
+  }, [user?.id]);
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
+    cloudLastDocRef.current = null;
+    setCloudHasMore(false);
+    setCloudHistory([]);
+
+    await loadLocalHistory();
     if (user) {
-      try { await AsyncStorage.removeItem(`cloud_scans_cache_${user.id}`); } catch {}
+      await loadInitialCloudHistory(user.id);
+      await loadFavorites();
     }
-    await Promise.all([loadHistory(), loadFavorites()]);
     setRefreshing(false);
-  }, [loadHistory, loadFavorites, user]);
+  }, [user, loadLocalHistory, loadInitialCloudHistory, loadFavorites]);
 
   async function clearLocalHistory() {
     Alert.alert(
@@ -137,8 +192,8 @@ export default function HistoryScreen() {
           style: "destructive",
           onPress: async () => {
             await AsyncStorage.removeItem("local_scan_history");
+            setLocalHistory([]);
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-            loadHistory();
           },
         },
       ]
@@ -337,6 +392,24 @@ export default function HistoryScreen() {
     [safetyRiskMap]
   );
 
+  const renderFooter = useCallback(() => {
+    if (!loadingMore) return null;
+    return (
+      <View style={styles.footerLoader}>
+        <ActivityIndicator size="small" color={Colors.dark.primary} />
+      </View>
+    );
+  }, [loadingMore]);
+
+  const handleEndReached = useCallback(() => {
+    if (filter !== "favorites" && filter !== "all" ? false : filter === "favorites" ? false : true) {
+      loadMoreCloudHistory();
+    }
+    if (filter === "all" || filter === "url" || filter === "text" || filter === "payment" || filter === "other") {
+      loadMoreCloudHistory();
+    }
+  }, [filter, loadMoreCloudHistory]);
+
   return (
     <View style={[styles.container, { paddingTop: topInset }]}>
       <View style={styles.header}>
@@ -403,7 +476,6 @@ export default function HistoryScreen() {
           { paddingBottom: Platform.OS === "web" ? 34 + 84 : insets.bottom + 84 },
         ]}
         showsVerticalScrollIndicator={false}
-        scrollEnabled={!!displayItems.length}
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
@@ -411,6 +483,9 @@ export default function HistoryScreen() {
             tintColor={Colors.dark.primary}
           />
         }
+        onEndReached={handleEndReached}
+        onEndReachedThreshold={0.4}
+        ListFooterComponent={renderFooter}
         ListEmptyComponent={
           <View style={styles.emptyState}>
             <Ionicons
@@ -583,5 +658,9 @@ const styles = StyleSheet.create({
     color: Colors.dark.textMuted,
     textAlign: "center",
     maxWidth: 260,
+  },
+  footerLoader: {
+    paddingVertical: 20,
+    alignItems: "center",
   },
 });
