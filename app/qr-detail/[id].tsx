@@ -1029,11 +1029,11 @@ export default function QrDetailScreen() {
   const followCountFull = formatIndianNumber(followCount);
 
   return (
-    <>
+    <View style={{ flex: 1, backgroundColor: Colors.dark.background }}>
       <StatusBar style="light" backgroundColor={Colors.dark.background} />
       <KeyboardAvoidingView
-        style={{ flex: 1, backgroundColor: Colors.dark.background }}
-        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        style={{ flex: 1 }}
+        behavior="padding"
         keyboardVerticalOffset={topInset}
       >
         <View style={[styles.container, { paddingTop: topInset }]}>
@@ -2074,7 +2074,7 @@ export default function QrDetailScreen() {
           </Pressable>
         </KeyboardAvoidingView>
       </Modal>
-    </>
+    </View>
   );
 }
 

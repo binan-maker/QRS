@@ -151,11 +151,15 @@ export default function HomeScreen() {
   }
 
   function getNotifIcon(type: string) {
-    return type === "new_comment" ? "chatbubble" : "warning";
+    if (type === "new_comment") return "chatbubble";
+    if (type === "mention") return "at";
+    return "warning";
   }
 
   function getNotifColor(type: string) {
-    return type === "new_comment" ? Colors.dark.primary : Colors.dark.warning;
+    if (type === "new_comment") return Colors.dark.primary;
+    if (type === "mention") return Colors.dark.accent;
+    return Colors.dark.warning;
   }
 
   function truncate(s: string, max: number) {
@@ -402,88 +406,96 @@ export default function HomeScreen() {
         </ScrollView>
       </View>
 
-      {/* Notifications Panel */}
+      {/* Notifications Full-Screen Page */}
       <Modal
         visible={notifOpen}
-        transparent
+        transparent={false}
         animationType="slide"
         onRequestClose={() => setNotifOpen(false)}
+        statusBarTranslucent
       >
-        <Pressable style={styles.notifOverlay} onPress={() => setNotifOpen(false)}>
-          <Pressable style={styles.notifPanel} onPress={() => {}}>
-            <View style={styles.notifPanelHandle} />
-            <View style={styles.notifPanelHeader}>
-              <Text style={styles.notifPanelTitle}>Notifications</Text>
-              <View style={{ flexDirection: "row", gap: 8 }}>
-                {notifications.length > 0 ? (
-                  <Pressable onPress={handleClearNotifications} style={styles.notifClearBtn}>
-                    <Text style={styles.notifClearText}>Clear All</Text>
-                  </Pressable>
-                ) : null}
-                <Pressable onPress={() => setNotifOpen(false)}>
-                  <Ionicons name="close" size={24} color={Colors.dark.textMuted} />
-                </Pressable>
-              </View>
+        <View style={[styles.notifPage, { paddingTop: insets.top }]}>
+          {/* Header */}
+          <View style={styles.notifPageHeader}>
+            <Pressable onPress={() => setNotifOpen(false)} style={styles.notifBackBtn}>
+              <Ionicons name="chevron-back" size={24} color={Colors.dark.text} />
+            </Pressable>
+            <Text style={styles.notifPageTitle}>Notifications</Text>
+            {notifications.length > 0 ? (
+              <Pressable onPress={handleClearNotifications} style={styles.notifClearBtn}>
+                <Text style={styles.notifClearText}>Clear All</Text>
+              </Pressable>
+            ) : (
+              <View style={{ width: 76 }} />
+            )}
+          </View>
+
+          {markingRead ? (
+            <View style={styles.notifLoadingRow}>
+              <ActivityIndicator size="small" color={Colors.dark.primary} />
+              <Text style={{ fontSize: 12, color: Colors.dark.textMuted, fontFamily: "Inter_400Regular" }}>
+                Marking as read…
+              </Text>
             </View>
+          ) : null}
 
-            {markingRead ? (
-              <View style={styles.notifLoadingRow}>
-                <ActivityIndicator size="small" color={Colors.dark.primary} />
-              </View>
-            ) : null}
-
-            <ScrollView style={styles.notifList} showsVerticalScrollIndicator={false}>
-              {notifications.length === 0 ? (
-                <View style={styles.notifEmpty}>
+          <ScrollView
+            style={styles.notifList}
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={{ flexGrow: 1 }}
+          >
+            {notifications.length === 0 ? (
+              <View style={styles.notifEmpty}>
+                <View style={styles.notifEmptyIcon}>
                   <Ionicons name="notifications-off-outline" size={40} color={Colors.dark.textMuted} />
-                  <Text style={styles.notifEmptyText}>No notifications</Text>
-                  <Text style={styles.notifEmptySubtext}>
-                    Follow QR codes to get notified on new activity
-                  </Text>
                 </View>
-              ) : (
-                notifications.map((notif) => (
-                  <Pressable
-                    key={notif.id}
-                    onPress={() => {
-                      setNotifOpen(false);
-                      router.push({
-                        pathname: "/qr-detail/[id]",
-                        params: { id: notif.qrCodeId },
-                      });
-                    }}
-                    style={({ pressed }) => [
-                      styles.notifItem,
-                      !notif.read && styles.notifItemUnread,
-                      { opacity: pressed ? 0.7 : 1 },
-                    ]}
-                  >
-                    <View style={[
-                      styles.notifItemIcon,
-                      { backgroundColor: getNotifColor(notif.type) + "22" },
-                    ]}>
-                      <Ionicons
-                        name={getNotifIcon(notif.type) as any}
-                        size={18}
-                        color={getNotifColor(notif.type)}
-                      />
-                    </View>
-                    <View style={{ flex: 1 }}>
-                      <Text style={styles.notifItemText}>{notif.message}</Text>
-                      <Text style={styles.notifItemTime}>
-                        {formatRelativeTime(notif.createdAt)}
-                      </Text>
-                    </View>
-                    {!notif.read ? (
-                      <View style={styles.unreadDot} />
-                    ) : null}
-                  </Pressable>
-                ))
-              )}
-              <View style={{ height: 60 }} />
-            </ScrollView>
-          </Pressable>
-        </Pressable>
+                <Text style={styles.notifEmptyText}>All caught up!</Text>
+                <Text style={styles.notifEmptySubtext}>
+                  Follow QR codes to get notified when there's new activity
+                </Text>
+              </View>
+            ) : (
+              notifications.map((notif) => (
+                <Pressable
+                  key={notif.id}
+                  onPress={() => {
+                    setNotifOpen(false);
+                    router.push({
+                      pathname: "/qr-detail/[id]",
+                      params: { id: notif.qrCodeId },
+                    });
+                  }}
+                  style={({ pressed }) => [
+                    styles.notifItem,
+                    !notif.read && styles.notifItemUnread,
+                    { opacity: pressed ? 0.75 : 1 },
+                  ]}
+                >
+                  <View style={[
+                    styles.notifItemIcon,
+                    { backgroundColor: getNotifColor(notif.type) + "22" },
+                  ]}>
+                    <Ionicons
+                      name={getNotifIcon(notif.type) as any}
+                      size={18}
+                      color={getNotifColor(notif.type)}
+                    />
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.notifItemText}>{notif.message}</Text>
+                    <Text style={styles.notifItemTime}>
+                      {formatRelativeTime(notif.createdAt)}
+                    </Text>
+                  </View>
+                  {!notif.read ? (
+                    <View style={styles.unreadDot} />
+                  ) : null}
+                </Pressable>
+              ))
+            )}
+            <View style={{ height: insets.bottom + 32 }} />
+          </ScrollView>
+        </View>
       </Modal>
     </>
   );
@@ -753,39 +765,44 @@ const styles = StyleSheet.create({
     color: Colors.dark.textMuted,
     marginTop: 2,
   },
-  notifOverlay: {
+  notifPage: {
     flex: 1,
-    backgroundColor: "rgba(0,0,0,0.6)",
-    justifyContent: "flex-end",
+    backgroundColor: Colors.dark.background,
   },
-  notifPanel: {
-    backgroundColor: Colors.dark.surface,
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
-    paddingTop: 12,
-    paddingHorizontal: 20,
-    maxHeight: "75%",
-    borderTopWidth: 1,
-    borderColor: Colors.dark.surfaceBorder,
-  },
-  notifPanelHandle: {
-    width: 40,
-    height: 4,
-    borderRadius: 2,
-    backgroundColor: Colors.dark.surfaceBorder,
-    alignSelf: "center",
-    marginBottom: 16,
-  },
-  notifPanelHeader: {
+  notifPageHeader: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    marginBottom: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.dark.surfaceBorder,
   },
-  notifPanelTitle: {
-    fontSize: 20,
+  notifBackBtn: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: Colors.dark.surface,
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 1,
+    borderColor: Colors.dark.surfaceBorder,
+  },
+  notifPageTitle: {
+    fontSize: 18,
     fontFamily: "Inter_700Bold",
     color: Colors.dark.text,
+  },
+  notifEmptyIcon: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: Colors.dark.surface,
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 1,
+    borderColor: Colors.dark.surfaceBorder,
+    marginBottom: 4,
   },
   notifClearBtn: {
     paddingHorizontal: 12,
@@ -799,16 +816,25 @@ const styles = StyleSheet.create({
     color: Colors.dark.danger,
   },
   notifLoadingRow: {
+    flexDirection: "row",
     alignItems: "center",
-    paddingVertical: 4,
+    justifyContent: "center",
+    gap: 8,
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.dark.surfaceBorder,
   },
   notifList: {
     flex: 1,
+    paddingHorizontal: 16,
   },
   notifEmpty: {
+    flex: 1,
     alignItems: "center",
-    gap: 8,
-    paddingVertical: 48,
+    justifyContent: "center",
+    gap: 10,
+    paddingVertical: 60,
   },
   notifEmptyText: {
     fontSize: 16,
