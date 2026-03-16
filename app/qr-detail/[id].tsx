@@ -12,7 +12,6 @@ import {
   Alert,
   Modal,
   KeyboardAvoidingView,
-  Share,
   Image,
 } from "react-native";
 import { StatusBar } from "expo-status-bar";
@@ -261,7 +260,7 @@ export default function QrDetailScreen() {
   const lastCommentRef = useRef<DocumentSnapshot | undefined>(undefined);
   const [hasMoreComments, setHasMoreComments] = useState(false);
   const [newComment, setNewComment] = useState("");
-  const [replyTo, setReplyTo] = useState<{ id: string; author: string } | null>(null);
+  const [replyTo, setReplyTo] = useState<{ id: string; author: string; rootId: string; isNested: boolean } | null>(null);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState(false);
   const [offlineMode, setOfflineMode] = useState(false);
@@ -335,6 +334,12 @@ export default function QrDetailScreen() {
       queue.push(...children.map((c) => c.id));
     }
     return result.sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
+  }
+
+  function getRootCommentId(commentId: string): string {
+    const comment = commentsList.find((c) => c.id === commentId);
+    if (!comment || !comment.parentId) return commentId;
+    return getRootCommentId(comment.parentId);
   }
 
   function toggleReplies(commentId: string) {
@@ -560,7 +565,11 @@ export default function QrDetailScreen() {
     if (!newComment.trim()) return;
     setSubmitting(true);
     try {
-      await addComment(id, user.id, user.displayName, newComment.trim(), replyTo?.id || null);
+      const parentId = replyTo ? replyTo.rootId : null;
+      await addComment(id, user.id, user.displayName, newComment.trim(), parentId);
+      if (parentId) {
+        setExpandedReplies((prev) => ({ ...prev, [parentId]: true }));
+      }
       setNewComment("");
       setReplyTo(null);
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
@@ -864,9 +873,14 @@ export default function QrDetailScreen() {
               <Pressable
                 onPress={() => {
                   if (!user) { router.push("/(auth)/login"); return; }
-                  setReplyTo({ id: comment.id, author: comment.user.displayName });
-                  const rootId = comment.parentId || comment.id;
+                  const rootId = getRootCommentId(comment.id);
+                  const isNested = !!comment.parentId;
+                  const authorLabel = comment.userUsername ? `@${comment.userUsername}` : comment.user.displayName;
+                  setReplyTo({ id: comment.id, author: authorLabel, rootId, isNested });
                   setExpandedReplies((prev) => ({ ...prev, [rootId]: true }));
+                  if (isNested) {
+                    setNewComment(`@${comment.userUsername || comment.user.displayName} `);
+                  }
                 }}
                 style={styles.commentActionBtn}
               >
@@ -931,18 +945,6 @@ export default function QrDetailScreen() {
         ) : null}
       </View>
     );
-  }
-
-  async function handleShare() {
-    try {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-      const deepLink = `scanguard:///qr-detail/${id}`;
-      await Share.share({
-        message: `Check out this QR code on QR Guard\n${deepLink}`,
-        title: "QR Guard — QR Details",
-        url: deepLink,
-      });
-    } catch {}
   }
 
   const trust = getTrustInfo();
@@ -1014,9 +1016,6 @@ export default function QrDetailScreen() {
             </Pressable>
             <Text style={styles.navTitle}>QR Details</Text>
             <View style={styles.navActions}>
-              <Pressable onPress={handleShare} style={styles.navActionBtn}>
-                <Ionicons name="share-outline" size={22} color={Colors.dark.textSecondary} />
-              </Pressable>
               {!offlineMode && (
                 <Pressable onPress={handleToggleFavorite} disabled={favoriteLoading} style={styles.navActionBtn}>
                   {favoriteLoading ? (
@@ -1667,9 +1666,10 @@ export default function QrDetailScreen() {
                         <View style={styles.replyBanner}>
                           <Ionicons name="return-down-forward" size={14} color={Colors.dark.primary} />
                           <Text style={styles.replyBannerText}>
-                            Replying to <Text style={{ color: Colors.dark.text }}>{replyTo.author}</Text>
+                            Replying to{" "}
+                            <Text style={{ color: Colors.dark.primary, fontFamily: "Inter_600SemiBold" }}>{replyTo.author}</Text>
                           </Text>
-                          <Pressable onPress={() => setReplyTo(null)} style={{ marginLeft: 4 }}>
+                          <Pressable onPress={() => { setReplyTo(null); setNewComment(""); }} style={{ marginLeft: 4 }}>
                             <Ionicons name="close" size={16} color={Colors.dark.textMuted} />
                           </Pressable>
                         </View>

@@ -366,6 +366,28 @@ export default function ProfileScreen() {
           </Pressable>
         </Animated.View>
 
+        {/* Favorites */}
+        <Animated.View entering={FadeInDown.duration(400).delay(170)}>
+          <Pressable
+            onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              router.push("/favorites" as any);
+            }}
+            style={({ pressed }) => [styles.myQrViewAllBtn, { opacity: pressed ? 0.85 : 1 }]}
+          >
+            <View style={styles.myQrViewAllLeft}>
+              <View style={[styles.myQrViewAllIcon, { backgroundColor: Colors.dark.dangerDim }]}>
+                <Ionicons name="heart" size={22} color={Colors.dark.danger} />
+              </View>
+              <View>
+                <Text style={styles.myQrViewAllTitle}>Favorite QR Codes</Text>
+                <Text style={styles.myQrViewAllSub}>QR codes you've saved as favorites</Text>
+              </View>
+            </View>
+            <Ionicons name="chevron-forward" size={18} color={Colors.dark.textMuted} />
+          </Pressable>
+        </Animated.View>
+
         {/* Quick actions */}
         <Animated.View entering={FadeInDown.duration(400).delay(180)}>
           <Text style={styles.sectionTitle}>Quick Actions</Text>

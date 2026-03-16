@@ -1,4 +1,4 @@
-import { firestore, realtimeDB } from "./firebase";
+import { firestore, realtimeDB, firebaseAuth } from "./firebase";
 import { isPaymentQr } from "./qr-analysis";
 import {
   doc,
@@ -1140,6 +1140,7 @@ export interface GeneratedQrItem {
 
 export async function getUserGeneratedQrs(userId: string): Promise<GeneratedQrItem[]> {
   try {
+    try { await firebaseAuth.currentUser?.getIdToken(true); } catch {}
     const snap = await getDocs(collection(firestore, "users", userId, "generatedQrs"));
     const items: GeneratedQrItem[] = [];
     for (const d of snap.docs) {
