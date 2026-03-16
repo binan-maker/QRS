@@ -18,9 +18,7 @@ import * as Haptics from "expo-haptics";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import Colors from "@/constants/colors";
 import { useAuth } from "@/contexts/AuthContext";
-import { submitFeedback, deleteUserAccount } from "@/lib/firestore-service";
-import { firebaseAuth } from "@/lib/firebase";
-import { deleteUser } from "firebase/auth";
+import { submitFeedback } from "@/lib/firestore-service";
 
 export default function SettingsScreen() {
   const { user, signOut } = useAuth();
@@ -86,42 +84,6 @@ export default function SettingsScreen() {
     }
   }
 
-  async function handleDeleteAccount() {
-    Alert.alert(
-      "Delete Account",
-      "This will permanently delete your account and all your data. This cannot be undone.",
-      [
-        { text: "Cancel", style: "cancel" },
-        {
-          text: "Delete Account",
-          style: "destructive",
-          onPress: async () => {
-            try {
-              if (!user) return;
-              await deleteUserAccount(user.id);
-              const currentUser = firebaseAuth.currentUser;
-              if (currentUser) {
-                await deleteUser(currentUser);
-              }
-              await signOut();
-              Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-            } catch (e: any) {
-              // If Firebase requires recent authentication, ask user to re-login
-              if (e.code === "auth/requires-recent-login") {
-                Alert.alert(
-                  "Re-authentication Required",
-                  "For security, please sign out and sign back in before deleting your account."
-                );
-              } else {
-                Alert.alert("Error", e.message || "Could not delete account.");
-              }
-            }
-          },
-        },
-      ]
-    );
-  }
-
   return (
     <>
       <View style={[styles.container, { paddingTop: topInset }]}>
@@ -131,6 +93,7 @@ export default function SettingsScreen() {
         >
           <Text style={styles.title}>Settings</Text>
 
+          {/* ACCOUNT SECTION */}
           <View style={styles.section}>
             <Text style={styles.sectionLabel}>ACCOUNT</Text>
             {user ? (
@@ -170,6 +133,22 @@ export default function SettingsScreen() {
             )}
           </View>
 
+          {/* ACCOUNT MANAGEMENT — only when signed in */}
+          {user ? (
+            <View style={styles.section}>
+              <Text style={styles.sectionLabel}>ACCOUNT MANAGEMENT</Text>
+              <View style={styles.menuGroup}>
+                <MenuItem
+                  icon="person-outline"
+                  label="Manage Account"
+                  sublabel="View details and delete your account"
+                  onPress={() => router.push("/account-management" as any)}
+                />
+              </View>
+            </View>
+          ) : null}
+
+          {/* APP SECTION */}
           <View style={styles.section}>
             <Text style={styles.sectionLabel}>APP</Text>
             <View style={styles.menuGroup}>
@@ -177,24 +156,21 @@ export default function SettingsScreen() {
                 icon="shield-checkmark-outline"
                 label="About Trust Scores"
                 sublabel="How QR code safety ratings work"
-                onPress={() => {
-                  Alert.alert(
-                    "Trust Scores",
-                    "Trust scores are calculated based on community reports. When users scan a QR code, they can report it as Safe, Scam, Fake, or Spam. The trust score reflects the community consensus on the QR code's safety."
-                  );
-                }}
+                onPress={() => router.push("/trust-scores" as any)}
               />
               <View style={styles.divider} />
               <MenuItem
                 icon="help-circle-outline"
                 label="How It Works"
-                sublabel="Learn about QR code scanning"
-                onPress={() => {
-                  Alert.alert(
-                    "How It Works",
-                    "1. Scan any QR code using camera or gallery\n2. View the QR content and community trust score\n3. Read comments from other users\n4. Report suspicious QR codes to protect the community\n5. Sign in to comment, report, and sync your history"
-                  );
-                }}
+                sublabel="Complete guide to using QR Guard"
+                onPress={() => router.push("/how-it-works" as any)}
+              />
+              <View style={styles.divider} />
+              <MenuItem
+                icon="document-text-outline"
+                label="Privacy Policy"
+                sublabel="How we handle your data"
+                onPress={() => router.push("/privacy-policy" as any)}
               />
               <View style={styles.divider} />
               <MenuItem
@@ -209,6 +185,7 @@ export default function SettingsScreen() {
             </View>
           </View>
 
+          {/* DATA SECTION */}
           <View style={styles.section}>
             <Text style={styles.sectionLabel}>DATA</Text>
             <View style={styles.menuGroup}>
@@ -222,34 +199,20 @@ export default function SettingsScreen() {
             </View>
           </View>
 
+          {/* SIGN OUT */}
           {user ? (
-            <>
-              <View style={styles.section}>
-                <Pressable
-                  onPress={handleSignOut}
-                  style={({ pressed }) => [
-                    styles.signOutBtn,
-                    { opacity: pressed ? 0.8 : 1 },
-                  ]}
-                >
-                  <Ionicons name="log-out-outline" size={20} color={Colors.dark.danger} />
-                  <Text style={styles.signOutText}>Sign Out</Text>
-                </Pressable>
-              </View>
-
-              <View style={styles.section}>
-                <Pressable
-                  onPress={handleDeleteAccount}
-                  style={({ pressed }) => [
-                    styles.deleteAccountBtn,
-                    { opacity: pressed ? 0.8 : 1 },
-                  ]}
-                >
-                  <Ionicons name="person-remove-outline" size={20} color={Colors.dark.textMuted} />
-                  <Text style={styles.deleteAccountText}>Delete Account</Text>
-                </Pressable>
-              </View>
-            </>
+            <View style={styles.section}>
+              <Pressable
+                onPress={handleSignOut}
+                style={({ pressed }) => [
+                  styles.signOutBtn,
+                  { opacity: pressed ? 0.8 : 1 },
+                ]}
+              >
+                <Ionicons name="log-out-outline" size={20} color={Colors.dark.danger} />
+                <Text style={styles.signOutText}>Sign Out</Text>
+              </Pressable>
+            </View>
           ) : null}
 
           <View style={styles.footer}>
@@ -511,22 +474,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontFamily: "Inter_600SemiBold",
     color: Colors.dark.danger,
-  },
-  deleteAccountBtn: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 8,
-    backgroundColor: Colors.dark.surface,
-    paddingVertical: 16,
-    borderRadius: 14,
-    borderWidth: 1,
-    borderColor: Colors.dark.surfaceBorder,
-  },
-  deleteAccountText: {
-    fontSize: 16,
-    fontFamily: "Inter_600SemiBold",
-    color: Colors.dark.textMuted,
   },
   footer: {
     alignItems: "center",

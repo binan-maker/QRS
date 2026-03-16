@@ -24,6 +24,9 @@ import {
 
 type Filter = "all" | "individual" | "business";
 
+const CACHE_TTL_MS = 5 * 60 * 1000;
+const qrCache: { [userId: string]: { data: GeneratedQrItem[]; ts: number } } = {};
+
 function formatDate(iso: string) {
   if (!iso) return "";
   try {
@@ -48,10 +51,18 @@ export default function MyQrCodesScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [filter, setFilter] = useState<Filter>("all");
 
-  const loadQrCodes = useCallback(async () => {
+  const loadQrCodes = useCallback(async (forceRefresh = false) => {
     if (!user) return;
+    const cached = qrCache[user.id];
+    if (!forceRefresh && cached && Date.now() - cached.ts < CACHE_TTL_MS) {
+      setQrCodes(cached.data);
+      setLoading(false);
+      setRefreshing(false);
+      return;
+    }
     try {
       const data = await getUserGeneratedQrs(user.id);
+      qrCache[user.id] = { data, ts: Date.now() };
       setQrCodes(data);
     } catch {}
     setLoading(false);
@@ -60,14 +71,13 @@ export default function MyQrCodesScreen() {
 
   useFocusEffect(
     useCallback(() => {
-      setLoading(true);
-      loadQrCodes();
+      loadQrCodes(false);
     }, [loadQrCodes])
   );
 
   function handleRefresh() {
     setRefreshing(true);
-    loadQrCodes();
+    loadQrCodes(true);
   }
 
   const filtered = qrCodes.filter((qr) => {
