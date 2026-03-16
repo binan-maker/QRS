@@ -62,6 +62,7 @@ import {
   type VerificationStatus,
 } from "@/lib/firestore-service";
 import * as ImagePicker from "expo-image-picker";
+import * as Clipboard from "expo-clipboard";
 import { DocumentSnapshot } from "firebase/firestore";
 import {
   parseAnyPaymentQr,
@@ -1033,8 +1034,8 @@ export default function QrDetailScreen() {
       <StatusBar style="light" backgroundColor={Colors.dark.background} />
       <KeyboardAvoidingView
         style={{ flex: 1 }}
-        behavior="padding"
-        keyboardVerticalOffset={topInset}
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
+        keyboardVerticalOffset={Platform.OS === "ios" ? topInset : 0}
       >
         <View style={[styles.container, { paddingTop: topInset }]}>
           {/* Nav */}
@@ -1398,6 +1399,21 @@ export default function QrDetailScreen() {
                   </View>
                 </View>
                 <Text style={styles.contentText} selectable numberOfLines={4}>{currentContent}</Text>
+
+                {/* Copy content button — available for ALL content types */}
+                <Pressable
+                  onPress={async () => {
+                    if (currentContent) {
+                      await Clipboard.setStringAsync(currentContent);
+                      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+                      Alert.alert("Copied!", "QR content copied to clipboard.");
+                    }
+                  }}
+                  style={({ pressed }) => [styles.copyBtn, { opacity: pressed ? 0.75 : 1 }]}
+                >
+                  <Ionicons name="copy-outline" size={15} color={Colors.dark.textSecondary} />
+                  <Text style={styles.copyBtnText}>Copy Content</Text>
+                </Pressable>
 
                 {/* URL open button — hidden when deactivated */}
                 {(currentContentType === "url") && ownerInfo?.isActive !== false ? (
@@ -2270,6 +2286,13 @@ const styles = StyleSheet.create({
   typeBadge: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 8, backgroundColor: Colors.dark.primaryDim },
   typeBadgeText: { fontSize: 11, fontFamily: "Inter_700Bold", color: Colors.dark.primary, letterSpacing: 0.8 },
   contentText: { fontSize: 15, fontFamily: "Inter_400Regular", color: Colors.dark.text, lineHeight: 22, marginBottom: 12 },
+  copyBtn: {
+    flexDirection: "row", alignItems: "center", gap: 6,
+    backgroundColor: Colors.dark.surfaceLight, borderRadius: 10,
+    borderWidth: 1, borderColor: Colors.dark.surfaceBorder,
+    paddingHorizontal: 12, paddingVertical: 8, alignSelf: "flex-start", marginBottom: 8,
+  },
+  copyBtnText: { fontSize: 13, fontFamily: "Inter_500Medium", color: Colors.dark.textSecondary },
   openBtn: {
     flexDirection: "row", alignItems: "center", gap: 8,
     backgroundColor: Colors.dark.primaryDim, paddingVertical: 10, paddingHorizontal: 16,

@@ -18,6 +18,7 @@ import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import * as Haptics from "expo-haptics";
 import * as ImagePicker from "expo-image-picker";
+import * as Clipboard from "expo-clipboard";
 import Animated, {
   FadeInDown,
   FadeIn,
@@ -456,6 +457,25 @@ export default function MyQrDetailScreen() {
                     {qrItem.content}
                   </Text>
                 </View>
+                <Pressable
+                  onPress={async () => {
+                    if (qrItem.content) {
+                      await Clipboard.setStringAsync(qrItem.content);
+                      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+                      Alert.alert("Copied!", "QR content copied to clipboard.");
+                    }
+                  }}
+                  style={({ pressed }) => [{
+                    flexDirection: "row" as const, alignItems: "center" as const, gap: 6,
+                    backgroundColor: Colors.dark.surfaceLight, borderRadius: 10,
+                    borderWidth: 1, borderColor: Colors.dark.surfaceBorder,
+                    paddingHorizontal: 10, paddingVertical: 6, alignSelf: "flex-start" as const, marginTop: 8,
+                    opacity: pressed ? 0.75 : 1,
+                  }]}
+                >
+                  <Ionicons name="copy-outline" size={13} color={Colors.dark.textSecondary} />
+                  <Text style={{ fontSize: 12, fontFamily: "Inter_500Medium", color: Colors.dark.textSecondary }}>Copy Content</Text>
+                </Pressable>
               </View>
               <View style={styles.metaContentRow}>
                 <Text style={styles.metaLabel}>Created</Text>
