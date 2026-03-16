@@ -85,6 +85,7 @@ export default function QrGeneratorScreen() {
   const [infoModalOpen, setInfoModalOpen] = useState(false);
   const [positionModalOpen, setPositionModalOpen] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [savedToProfile, setSavedToProfile] = useState(false);
 
   const topInset = Platform.OS === "web" ? 67 : insets.top;
   const tabBarHeight = 60 + insets.bottom;
@@ -106,14 +107,19 @@ export default function QrGeneratorScreen() {
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     if (isBranded && user) {
       setSaving(true);
-      await saveGeneratedQr(
-        user.id,
-        user.displayName,
-        val,
-        getContentType(selectedPreset),
-        shortUuid,
-        true
-      ).catch(() => {});
+      setSavedToProfile(false);
+      try {
+        await saveGeneratedQr(
+          user.id,
+          user.displayName,
+          val,
+          getContentType(selectedPreset),
+          shortUuid,
+          true
+        );
+        setSavedToProfile(true);
+        setTimeout(() => setSavedToProfile(false), 4000);
+      } catch {}
       setSaving(false);
     }
   }
@@ -185,6 +191,7 @@ export default function QrGeneratorScreen() {
     setGeneratedAt(null);
     setCustomLogoUri(null);
     setLogoPosition("center");
+    setSavedToProfile(false);
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
   }
 
@@ -418,6 +425,17 @@ export default function QrGeneratorScreen() {
                   Logo placed at {getLogoPositionLabel(logoPosition).toLowerCase()} corner
                 </Text>
               </View>
+            )}
+
+            {/* Saved to profile banner */}
+            {savedToProfile && (
+              <Pressable
+                onPress={() => router.push("/(tabs)/profile")}
+                style={styles.savedBanner}
+              >
+                <Ionicons name="checkmark-circle" size={16} color={Colors.dark.safe} />
+                <Text style={styles.savedBannerText}>Saved to your profile! Tap to view →</Text>
+              </Pressable>
             )}
 
             {/* Branded footer */}
@@ -774,6 +792,13 @@ const styles = StyleSheet.create({
     borderTopWidth: 1, borderTopColor: Colors.dark.surfaceBorder, padding: 14,
   },
   privateFooterText: { fontSize: 12, fontFamily: "Inter_400Regular", color: Colors.dark.textMuted },
+
+  savedBanner: {
+    flexDirection: "row", alignItems: "center", gap: 8,
+    backgroundColor: Colors.dark.safeDim, borderRadius: 10, padding: 10, marginBottom: 10,
+    borderWidth: 1, borderColor: Colors.dark.safe + "40",
+  },
+  savedBannerText: { fontSize: 13, fontFamily: "Inter_600SemiBold", color: Colors.dark.safe, flex: 1 },
 
   qrContentPreview: {
     fontSize: 12, fontFamily: "Inter_400Regular", color: Colors.dark.textMuted,

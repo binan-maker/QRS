@@ -11,7 +11,7 @@ import {
   Image,
   Modal,
 } from "react-native";
-import { router } from "expo-router";
+import { router, useFocusEffect } from "expo-router";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useState, useEffect, useCallback } from "react";
@@ -71,6 +71,12 @@ export default function ProfileScreen() {
   useEffect(() => {
     loadStats();
   }, [loadStats]);
+
+  useFocusEffect(
+    useCallback(() => {
+      loadStats();
+    }, [loadStats])
+  );
 
   async function handleSaveName() {
     if (!newName.trim() || !firebaseAuth.currentUser) return;
@@ -284,23 +290,14 @@ export default function ProfileScreen() {
         {/* My QR Codes */}
         <Animated.View entering={FadeInDown.duration(400).delay(160)}>
           <View style={styles.myQrHeader}>
-            <Text style={styles.sectionTitle}>My QR Codes</Text>
-            <View style={{ flexDirection: "row", gap: 8 }}>
-              <Pressable
-                onPress={() => router.push("/generate")}
-                style={[styles.newQrBtn, { backgroundColor: Colors.dark.primaryDim, borderColor: Colors.dark.primary + "40", borderWidth: 1 }]}
-              >
-                <Ionicons name="lock-closed" size={13} color={Colors.dark.primary} />
-                <Text style={styles.newQrBtnText}>Digital Mint</Text>
-              </Pressable>
-              <Pressable
-                onPress={() => router.push("/(tabs)/qr-generator")}
-                style={styles.newQrBtn}
-              >
-                <Ionicons name="add" size={15} color={Colors.dark.primary} />
-                <Text style={styles.newQrBtnText}>New</Text>
-              </Pressable>
-            </View>
+            <Text style={styles.sectionTitle}>My Branded QR Codes</Text>
+            <Pressable
+              onPress={() => router.push("/(tabs)/qr-generator")}
+              style={styles.newQrBtn}
+            >
+              <Ionicons name="add" size={15} color={Colors.dark.primary} />
+              <Text style={styles.newQrBtnText}>Create</Text>
+            </Pressable>
           </View>
 
           {myQrLoading ? (
@@ -313,9 +310,9 @@ export default function ProfileScreen() {
               onPress={() => router.push("/(tabs)/qr-generator")}
             >
               <MaterialCommunityIcons name="qrcode-plus" size={28} color={Colors.dark.textMuted} />
-              <View>
+              <View style={{ flex: 1 }}>
                 <Text style={styles.myQrEmptyTitle}>No branded QR codes yet</Text>
-                <Text style={styles.myQrEmptySub}>Create one to see it here with comments and stats</Text>
+                <Text style={styles.myQrEmptySub}>Go to QR Generator → select Branded mode → tap Generate</Text>
               </View>
               <Ionicons name="chevron-forward" size={16} color={Colors.dark.textMuted} />
             </Pressable>
