@@ -198,7 +198,7 @@ export default function ScannerScreen() {
 
       await recordScan(qr.id, content, qr.contentType, user?.id || null, anonymousMode).catch(() => {});
 
-      if (!anonymousMode) {
+      if (!anonymousMode && user) {
         const scanEntry = {
           id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
           content,

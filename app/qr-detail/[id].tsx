@@ -102,6 +102,8 @@ interface CommentItem {
   parentId?: string | null;
   userId?: string;
   isDeleted?: boolean;
+  userUsername?: string;
+  userPhotoURL?: string;
 }
 
 const REPORT_TYPES = [
@@ -307,6 +309,8 @@ export default function QrDetailScreen() {
   const [verifyDocBase64, setVerifyDocBase64] = useState<string | null>(null);
   const [verifyDocName, setVerifyDocName] = useState<string | null>(null);
   const [verifySubmitting, setVerifySubmitting] = useState(false);
+
+  const [copied, setCopied] = useState(false);
 
   // QR Safety Analysis
   const [parsedPayment, setParsedPayment] = useState<ParsedPaymentQr | null>(null);
@@ -564,7 +568,7 @@ export default function QrDetailScreen() {
     if (!qrCode) return;
     setFollowLoading(true);
     try {
-      const result = await toggleFollow(id, user.id, qrCode.content, qrCode.contentType);
+      const result = await toggleFollow(id, user.id, qrCode.content, qrCode.contentType, user.displayName);
       setIsFollowing(result.isFollowing);
       setFollowCount(result.followCount);
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -840,9 +844,16 @@ export default function QrDetailScreen() {
           <View style={[styles.commentItem, isReply && styles.replyItem]}>
             <View style={styles.commentHeader}>
               <View style={[styles.commentAvatar, isReply && styles.replyAvatar]}>
-                <Text style={[styles.commentAvatarText, isReply && { fontSize: 12 }]}>
-                  {(comment.userUsername || comment.user.displayName).charAt(0).toUpperCase()}
-                </Text>
+                {comment.userPhotoURL ? (
+                  <Image
+                    source={{ uri: comment.userPhotoURL }}
+                    style={[styles.commentAvatarImg, isReply && { width: 28, height: 28, borderRadius: 14 }]}
+                  />
+                ) : (
+                  <Text style={[styles.commentAvatarText, isReply && { fontSize: 12 }]}>
+                    {(comment.userUsername || comment.user.displayName).charAt(0).toUpperCase()}
+                  </Text>
+                )}
               </View>
               <View style={styles.commentMeta}>
                 <Text style={styles.commentAuthor} numberOfLines={1}>
@@ -1412,27 +1423,33 @@ export default function QrDetailScreen() {
                         if (currentContent) {
                           await Clipboard.setStringAsync(currentContent);
                           Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-                          Alert.alert("Copied!", "QR content copied to clipboard.");
+                          setCopied(true);
+                          setTimeout(() => setCopied(false), 2000);
                         }
                       }}
                       style={({ pressed }) => [styles.copyIconBtn, { opacity: pressed ? 0.75 : 1 }]}
                     >
                       <Ionicons name="copy-outline" size={17} color={Colors.dark.textSecondary} />
                     </Pressable>
+                    {copied ? <Text style={styles.copiedToast}>Copied!</Text> : null}
                   </View>
                 ) : currentContentType !== "payment" ? (
-                  <Pressable
-                    onPress={async () => {
-                      if (currentContent) {
-                        await Clipboard.setStringAsync(currentContent);
-                        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-                        Alert.alert("Copied!", "QR content copied to clipboard.");
-                      }
-                    }}
-                    style={({ pressed }) => [styles.copyIconBtn, { opacity: pressed ? 0.75 : 1 }]}
-                  >
-                    <Ionicons name="copy-outline" size={17} color={Colors.dark.textSecondary} />
-                  </Pressable>
+                  <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+                    <Pressable
+                      onPress={async () => {
+                        if (currentContent) {
+                          await Clipboard.setStringAsync(currentContent);
+                          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+                          setCopied(true);
+                          setTimeout(() => setCopied(false), 2000);
+                        }
+                      }}
+                      style={({ pressed }) => [styles.copyIconBtn, { opacity: pressed ? 0.75 : 1 }]}
+                    >
+                      <Ionicons name="copy-outline" size={17} color={Colors.dark.textSecondary} />
+                    </Pressable>
+                    {copied ? <Text style={styles.copiedToast}>Copied!</Text> : null}
+                  </View>
                 ) : null}
 
                 {/* Universal Payment Details Card — hidden when deactivated */}
@@ -2304,6 +2321,10 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.dark.surfaceLight, borderRadius: 10,
     borderWidth: 1, borderColor: Colors.dark.surfaceBorder,
   },
+  copiedToast: {
+    fontSize: 12, fontFamily: "Inter_500Medium",
+    color: Colors.dark.safe,
+  },
   openBtn: {
     flexDirection: "row", alignItems: "center", gap: 8,
     backgroundColor: Colors.dark.primaryDim, paddingVertical: 10, paddingHorizontal: 16,
@@ -2477,6 +2498,7 @@ const styles = StyleSheet.create({
     flexShrink: 0,
   },
   commentAvatarText: { fontSize: 14, fontFamily: "Inter_700Bold", color: Colors.dark.primary },
+  commentAvatarImg: { width: 34, height: 34, borderRadius: 17 },
   commentMeta: { flex: 1, minWidth: 0 },
   commentAuthor: {
     fontSize: 13, fontFamily: "Inter_600SemiBold", color: Colors.dark.text,

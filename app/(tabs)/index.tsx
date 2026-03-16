@@ -157,12 +157,14 @@ export default function HomeScreen() {
   function getNotifIcon(type: string) {
     if (type === "new_comment") return "chatbubble";
     if (type === "mention") return "at";
+    if (type === "new_follow") return "person-add";
     return "warning";
   }
 
   function getNotifColor(type: string) {
     if (type === "new_comment") return Colors.dark.primary;
     if (type === "mention") return Colors.dark.accent;
+    if (type === "new_follow") return Colors.dark.safe;
     return Colors.dark.warning;
   }
 

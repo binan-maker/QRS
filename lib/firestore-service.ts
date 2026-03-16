@@ -112,6 +112,7 @@ export interface CommentItem {
   userLike: "like" | "dislike" | null;
   user: { displayName: string };
   userUsername?: string;
+  userPhotoURL?: string;
 }
 
 export interface TrustScore {
@@ -394,6 +395,7 @@ export function subscribeToComments(
             userLike: null,
             user: { displayName: data.userDisplayName || "User" },
             userUsername: data.userUsername || undefined,
+            userPhotoURL: data.userPhotoURL || undefined,
           };
         });
       onUpdate(comments);
@@ -598,7 +600,8 @@ export async function toggleFollow(
   qrId: string,
   userId: string,
   content: string,
-  contentType: string
+  contentType: string,
+  followerDisplayName?: string
 ): Promise<{ isFollowing: boolean; followCount: number }> {
   const following = await isUserFollowingQr(qrId, userId);
   if (following) {
@@ -615,6 +618,22 @@ export async function toggleFollow(
       contentType,
       createdAt: serverTimestamp(),
     });
+    // Notify QR owner when someone new follows their QR
+    try {
+      const qrSnap = await getDoc(doc(firestore, "qrCodes", qrId));
+      if (qrSnap.exists() && qrSnap.data().ownerId && qrSnap.data().ownerId !== userId) {
+        const ownerId = qrSnap.data().ownerId as string;
+        const userNotifRef = dbRef(realtimeDB, `notifications/${ownerId}/items`);
+        const name = followerDisplayName || "Someone";
+        await dbPush(userNotifRef, {
+          type: "new_follow",
+          qrCodeId: qrId,
+          message: `${name} started following your QR code`,
+          read: false,
+          createdAt: Date.now(),
+        });
+      }
+    } catch {}
   }
   const followCount = await getFollowCount(qrId);
   return { isFollowing: !following, followCount };
@@ -672,6 +691,7 @@ export async function getComments(
       userLike: null,
       user: { displayName: data.userDisplayName || "User" },
       userUsername: data.userUsername || undefined,
+      userPhotoURL: data.userPhotoURL || undefined,
     };
   });
   return { comments, hasMore, lastDoc: allDocs[allDocs.length - 1] };
@@ -692,12 +712,14 @@ export async function addComment(
     );
   }
 
-  // Fetch the user's @username to store with the comment
+  // Fetch the user's @username and photoURL to store with the comment
   let userUsername: string | undefined;
+  let userPhotoURL: string | undefined;
   try {
     const userSnap = await getDoc(doc(firestore, "users", userId));
-    if (userSnap.exists() && userSnap.data().username) {
-      userUsername = userSnap.data().username as string;
+    if (userSnap.exists()) {
+      if (userSnap.data().username) userUsername = userSnap.data().username as string;
+      if (userSnap.data().photoURL) userPhotoURL = userSnap.data().photoURL as string;
     }
   } catch {}
 
@@ -706,6 +728,7 @@ export async function addComment(
     userId,
     userDisplayName: displayName,
     ...(userUsername ? { userUsername } : {}),
+    ...(userPhotoURL ? { userPhotoURL } : {}),
     text,
     parentId,
     isDeleted: false,
