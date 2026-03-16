@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -16,7 +16,14 @@ import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import * as Haptics from "expo-haptics";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import Animated, { FadeInDown } from "react-native-reanimated";
+import Animated, {
+  FadeInDown,
+  useSharedValue,
+  useAnimatedStyle,
+  withRepeat,
+  withSequence,
+  withTiming,
+} from "react-native-reanimated";
 import Colors from "@/constants/colors";
 import { useAuth } from "@/contexts/AuthContext";
 import {
@@ -26,6 +33,27 @@ import {
   submitFeedback,
   deleteUserAccount,
 } from "@/lib/firestore-service";
+
+function SkeletonBox({ width, height = 12, borderRadius = 8, style }: { width?: any; height?: number; borderRadius?: number; style?: any }) {
+  const shimmer = useSharedValue(0.3);
+  useEffect(() => {
+    shimmer.value = withRepeat(withSequence(withTiming(1, { duration: 750 }), withTiming(0.3, { duration: 750 })), -1, true);
+  }, []);
+  const anim = useAnimatedStyle(() => ({ opacity: shimmer.value }));
+  return <Animated.View style={[{ width: width || "100%", height, borderRadius, backgroundColor: Colors.dark.surfaceLight }, anim, style]} />;
+}
+
+function SkeletonListRow() {
+  return (
+    <View style={{ flexDirection: "row", alignItems: "center", gap: 12, paddingVertical: 14, paddingHorizontal: 16, borderBottomWidth: 1, borderBottomColor: Colors.dark.surfaceBorder }}>
+      <SkeletonBox width={40} height={40} borderRadius={12} />
+      <View style={{ flex: 1, gap: 8 }}>
+        <SkeletonBox width="70%" height={12} />
+        <SkeletonBox width="40%" height={10} />
+      </View>
+    </View>
+  );
+}
 
 type Section = "main" | "account" | "guide" | "feedback" | "following" | "comments";
 
@@ -520,8 +548,11 @@ function FollowingSection({ loading, list }: { loading: boolean; list: any[] }) 
   const insets = useSafeAreaInsets();
   if (loading) {
     return (
-      <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
-        <ActivityIndicator color={Colors.dark.primary} size="large" />
+      <View style={{ flex: 1 }}>
+        <SkeletonListRow />
+        <SkeletonListRow />
+        <SkeletonListRow />
+        <SkeletonListRow />
       </View>
     );
   }
@@ -566,8 +597,11 @@ function CommentsSection({ loading, comments, onDelete }: { loading: boolean; co
   const insets = useSafeAreaInsets();
   if (loading) {
     return (
-      <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
-        <ActivityIndicator color={Colors.dark.primary} size="large" />
+      <View style={{ flex: 1 }}>
+        <SkeletonListRow />
+        <SkeletonListRow />
+        <SkeletonListRow />
+        <SkeletonListRow />
       </View>
     );
   }

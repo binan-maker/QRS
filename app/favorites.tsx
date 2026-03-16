@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import {
   View,
   Text,
@@ -6,14 +6,20 @@ import {
   FlatList,
   Pressable,
   Platform,
-  ActivityIndicator,
   RefreshControl,
 } from "react-native";
 import { router, useFocusEffect } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import * as Haptics from "expo-haptics";
-import Animated, { FadeInDown } from "react-native-reanimated";
+import Animated, {
+  FadeInDown,
+  useSharedValue,
+  useAnimatedStyle,
+  withRepeat,
+  withSequence,
+  withTiming,
+} from "react-native-reanimated";
 import Colors from "@/constants/colors";
 import { useAuth } from "@/contexts/AuthContext";
 import { getUserFavorites } from "@/lib/firestore-service";
@@ -24,6 +30,28 @@ interface FavoriteItem {
   content: string;
   contentType: string;
   createdAt: string;
+}
+
+function SkeletonBox({ width, height = 12, borderRadius = 8, style }: { width?: any; height?: number; borderRadius?: number; style?: any }) {
+  const shimmer = useSharedValue(0.3);
+  useEffect(() => {
+    shimmer.value = withRepeat(withSequence(withTiming(1, { duration: 750 }), withTiming(0.3, { duration: 750 })), -1, true);
+  }, []);
+  const anim = useAnimatedStyle(() => ({ opacity: shimmer.value }));
+  return <Animated.View style={[{ width: width || "100%", height, borderRadius, backgroundColor: Colors.dark.surfaceLight }, anim, style]} />;
+}
+
+function SkeletonFavoriteCard() {
+  return (
+    <View style={{ flexDirection: "row", alignItems: "center", gap: 12, backgroundColor: Colors.dark.surface, borderRadius: 16, borderWidth: 1, borderColor: Colors.dark.surfaceBorder, padding: 14, marginBottom: 10 }}>
+      <SkeletonBox width={52} height={52} borderRadius={14} />
+      <View style={{ flex: 1, gap: 8 }}>
+        <SkeletonBox width="40%" height={10} />
+        <SkeletonBox width="85%" height={12} />
+        <SkeletonBox width="55%" height={10} />
+      </View>
+    </View>
+  );
 }
 
 function formatDate(iso: string) {
@@ -171,8 +199,11 @@ export default function FavoritesScreen() {
       </View>
 
       {loading ? (
-        <View style={styles.center}>
-          <ActivityIndicator size="large" color={Colors.dark.danger} />
+        <View style={{ padding: 16 }}>
+          <SkeletonFavoriteCard />
+          <SkeletonFavoriteCard />
+          <SkeletonFavoriteCard />
+          <SkeletonFavoriteCard />
         </View>
       ) : favorites.length === 0 ? (
         <View style={styles.center}>

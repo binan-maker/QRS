@@ -18,7 +18,15 @@ import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import * as Haptics from "expo-haptics";
 import * as ImagePicker from "expo-image-picker";
-import Animated, { FadeInDown, FadeIn } from "react-native-reanimated";
+import Animated, {
+  FadeInDown,
+  FadeIn,
+  useSharedValue,
+  useAnimatedStyle,
+  withRepeat,
+  withSequence,
+  withTiming,
+} from "react-native-reanimated";
 import Colors from "@/constants/colors";
 import QRCode from "react-native-qrcode-svg";
 import { useAuth } from "@/contexts/AuthContext";
@@ -33,6 +41,28 @@ import {
   type GeneratedQrItem,
   type CommentItem,
 } from "@/lib/firestore-service";
+
+function SkeletonBox({ width, height = 12, borderRadius = 8, style }: { width?: any; height?: number; borderRadius?: number; style?: any }) {
+  const shimmer = useSharedValue(0.3);
+  useEffect(() => {
+    shimmer.value = withRepeat(withSequence(withTiming(1, { duration: 750 }), withTiming(0.3, { duration: 750 })), -1, true);
+  }, []);
+  const anim = useAnimatedStyle(() => ({ opacity: shimmer.value }));
+  return <Animated.View style={[{ width: width || "100%", height, borderRadius, backgroundColor: Colors.dark.surfaceLight }, anim, style]} />;
+}
+
+function SkeletonCommentItem() {
+  return (
+    <View style={{ flexDirection: "row", gap: 10, padding: 12 }}>
+      <SkeletonBox width={34} height={34} borderRadius={17} />
+      <View style={{ flex: 1, gap: 8, paddingTop: 2 }}>
+        <SkeletonBox width="40%" height={11} />
+        <SkeletonBox width="90%" height={12} />
+        <SkeletonBox width="60%" height={12} />
+      </View>
+    </View>
+  );
+}
 
 type LogoPosition = "center" | "top-left" | "top-right" | "bottom-left" | "bottom-right";
 
@@ -271,8 +301,18 @@ export default function MyQrDetailScreen() {
   }
 
   const topLevelComments = comments.filter((c) => !c.parentId);
-  function getReplies(parentId: string) {
-    return comments.filter((c) => c.parentId === parentId);
+  function getAllDescendants(parentId: string): CommentItem[] {
+    const result: CommentItem[] = [];
+    const queue = [parentId];
+    while (queue.length > 0) {
+      const curr = queue.shift()!;
+      const children = comments.filter((c) => c.parentId === curr);
+      children.forEach((child) => {
+        result.push(child);
+        queue.push(child.id);
+      });
+    }
+    return result;
   }
 
   const logoSource = logoUri ? { uri: logoUri } : require("../../assets/images/icon.png");
@@ -287,9 +327,21 @@ export default function MyQrDetailScreen() {
           <Text style={styles.navTitle}>My QR Code</Text>
           <View style={{ width: 40 }} />
         </View>
-        <View style={styles.centered}>
-          <ActivityIndicator size="large" color={Colors.dark.primary} />
-        </View>
+        <ScrollView contentContainerStyle={{ padding: 16, gap: 14 }} showsVerticalScrollIndicator={false}>
+          <View style={{ backgroundColor: Colors.dark.surface, borderRadius: 20, borderWidth: 1, borderColor: Colors.dark.surfaceBorder, alignItems: "center", paddingVertical: 32, gap: 16 }}>
+            <SkeletonBox width={200} height={200} borderRadius={16} />
+            <SkeletonBox width={160} height={12} />
+          </View>
+          <View style={{ backgroundColor: Colors.dark.surface, borderRadius: 16, borderWidth: 1, borderColor: Colors.dark.surfaceBorder, padding: 16, gap: 12 }}>
+            <SkeletonBox width="30%" height={10} />
+            <SkeletonBox width="100%" height={14} />
+            <SkeletonBox width="70%" height={14} />
+          </View>
+          <View style={{ backgroundColor: Colors.dark.surface, borderRadius: 16, borderWidth: 1, borderColor: Colors.dark.surfaceBorder, padding: 16, gap: 12 }}>
+            <SkeletonBox width="40%" height={10} />
+            <SkeletonBox width="100%" height={40} borderRadius={12} />
+          </View>
+        </ScrollView>
       </View>
     );
   }
@@ -599,8 +651,16 @@ export default function MyQrDetailScreen() {
             </View>
 
             {commentsLoading ? (
-              <View style={styles.commentLoading}>
-                <ActivityIndicator size="small" color={Colors.dark.primary} />
+              <View style={[styles.commentsList, { marginTop: 4 }]}>
+                <View style={[styles.commentBlock, { overflow: "visible" }]}>
+                  <SkeletonCommentItem />
+                </View>
+                <View style={[styles.commentBlock, { overflow: "visible" }]}>
+                  <SkeletonCommentItem />
+                </View>
+                <View style={[styles.commentBlock, { overflow: "visible" }]}>
+                  <SkeletonCommentItem />
+                </View>
               </View>
             ) : topLevelComments.length === 0 ? (
               <View style={styles.emptyComments}>
@@ -611,7 +671,7 @@ export default function MyQrDetailScreen() {
             ) : (
               <View style={styles.commentsList}>
                 {topLevelComments.map((comment) => {
-                  const replies = getReplies(comment.id);
+                  const replies = getAllDescendants(comment.id);
                   const repliesExpanded = expandedReplies[comment.id];
                   return (
                     <View key={comment.id} style={styles.commentBlock}>

@@ -58,7 +58,20 @@ export default function HistoryScreen() {
 
     if (user) {
       try {
-        const cloudScans = await getUserScans(user.id);
+        const CLOUD_CACHE_KEY = `cloud_scans_cache_${user.id}`;
+        const CLOUD_CACHE_TTL = 5 * 60 * 1000;
+        let cloudScans: any[] = [];
+        const cached = await AsyncStorage.getItem(CLOUD_CACHE_KEY);
+        if (cached) {
+          const { ts, data } = JSON.parse(cached);
+          if (Date.now() - ts < CLOUD_CACHE_TTL) {
+            cloudScans = data;
+          }
+        }
+        if (cloudScans.length === 0) {
+          cloudScans = await getUserScans(user.id);
+          await AsyncStorage.setItem(CLOUD_CACHE_KEY, JSON.stringify({ ts: Date.now(), data: cloudScans }));
+        }
         cloudScans.forEach((s: any) => {
           if (!items.find((i) => i.qrCodeId === s.qrCodeId)) {
             items.push({
@@ -106,9 +119,12 @@ export default function HistoryScreen() {
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
+    if (user) {
+      try { await AsyncStorage.removeItem(`cloud_scans_cache_${user.id}`); } catch {}
+    }
     await Promise.all([loadHistory(), loadFavorites()]);
     setRefreshing(false);
-  }, [loadHistory, loadFavorites]);
+  }, [loadHistory, loadFavorites, user]);
 
   async function clearLocalHistory() {
     Alert.alert(

@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import {
   View,
   Text,
@@ -6,14 +6,20 @@ import {
   FlatList,
   Pressable,
   Platform,
-  ActivityIndicator,
   RefreshControl,
 } from "react-native";
 import { router, useFocusEffect } from "expo-router";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import * as Haptics from "expo-haptics";
-import Animated, { FadeInDown } from "react-native-reanimated";
+import Animated, {
+  FadeInDown,
+  useSharedValue,
+  useAnimatedStyle,
+  withRepeat,
+  withSequence,
+  withTiming,
+} from "react-native-reanimated";
 import QRCode from "react-native-qrcode-svg";
 import Colors from "@/constants/colors";
 import { useAuth } from "@/contexts/AuthContext";
@@ -21,6 +27,30 @@ import {
   getUserGeneratedQrs,
   type GeneratedQrItem,
 } from "@/lib/firestore-service";
+
+function SkeletonBox({ width, height = 12, borderRadius = 8, style }: { width?: any; height?: number; borderRadius?: number; style?: any }) {
+  const shimmer = useSharedValue(0.3);
+  useEffect(() => {
+    shimmer.value = withRepeat(withSequence(withTiming(1, { duration: 750 }), withTiming(0.3, { duration: 750 })), -1, true);
+  }, []);
+  const anim = useAnimatedStyle(() => ({ opacity: shimmer.value }));
+  return <Animated.View style={[{ width: width || "100%", height, borderRadius, backgroundColor: Colors.dark.surfaceLight }, anim, style]} />;
+}
+
+function SkeletonQrCard() {
+  return (
+    <View style={{ backgroundColor: Colors.dark.surface, borderRadius: 16, borderWidth: 1, borderColor: Colors.dark.surfaceBorder, padding: 14, marginBottom: 12, gap: 12 }}>
+      <View style={{ flexDirection: "row", alignItems: "center", gap: 12 }}>
+        <SkeletonBox width={64} height={64} borderRadius={12} />
+        <View style={{ flex: 1, gap: 8 }}>
+          <SkeletonBox width="50%" height={10} />
+          <SkeletonBox width="80%" height={13} />
+          <SkeletonBox width="35%" height={10} />
+        </View>
+      </View>
+    </View>
+  );
+}
 
 type Filter = "all" | "individual" | "business";
 
@@ -228,8 +258,10 @@ export default function MyQrCodesScreen() {
       </View>
 
       {loading ? (
-        <View style={styles.center}>
-          <ActivityIndicator size="large" color={Colors.dark.primary} />
+        <View style={{ padding: 16 }}>
+          <SkeletonQrCard />
+          <SkeletonQrCard />
+          <SkeletonQrCard />
         </View>
       ) : filtered.length === 0 ? (
         <View style={styles.center}>

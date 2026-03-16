@@ -17,7 +17,15 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useState, useEffect, useCallback } from "react";
 import * as Haptics from "expo-haptics";
 import * as ImagePicker from "expo-image-picker";
-import Animated, { FadeInDown, FadeIn } from "react-native-reanimated";
+import Animated, {
+  FadeInDown,
+  FadeIn,
+  useSharedValue,
+  useAnimatedStyle,
+  withRepeat,
+  withSequence,
+  withTiming,
+} from "react-native-reanimated";
 import Colors from "@/constants/colors";
 import { useAuth } from "@/contexts/AuthContext";
 import { firebaseAuth } from "@/lib/firebase";
@@ -33,6 +41,15 @@ import {
   type UserStats,
   type GeneratedQrItem,
 } from "@/lib/firestore-service";
+
+function SkeletonBox({ width, height = 12, borderRadius = 8, style }: { width?: any; height?: number; borderRadius?: number; style?: any }) {
+  const shimmer = useSharedValue(0.3);
+  useEffect(() => {
+    shimmer.value = withRepeat(withSequence(withTiming(1, { duration: 750 }), withTiming(0.3, { duration: 750 })), -1, true);
+  }, []);
+  const anim = useAnimatedStyle(() => ({ opacity: shimmer.value }));
+  return <Animated.View style={[{ width: width || "100%", height, borderRadius, backgroundColor: Colors.dark.surfaceLight }, anim, style]} />;
+}
 
 export default function ProfileScreen() {
   const { user, signOut } = useAuth();
@@ -311,7 +328,7 @@ export default function ProfileScreen() {
             ].map((s) => (
               <View key={s.label} style={styles.statCard}>
                 {statsLoading ? (
-                  <ActivityIndicator size="small" color={s.color} />
+                  <SkeletonBox width={36} height={20} borderRadius={6} style={{ alignSelf: "center" }} />
                 ) : (
                   <Text style={[styles.statValue, { color: s.color }]}>{s.value}</Text>
                 )}
@@ -335,7 +352,7 @@ export default function ProfileScreen() {
               </View>
             </View>
             {statsLoading ? (
-              <ActivityIndicator size="small" color={Colors.dark.safe} />
+              <SkeletonBox width={40} height={22} borderRadius={6} />
             ) : (
               <Text style={styles.likesValue}>{stats.totalLikesReceived}</Text>
             )}
