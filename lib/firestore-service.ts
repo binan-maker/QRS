@@ -1283,6 +1283,49 @@ export async function getUserGeneratedQrs(userId: string): Promise<GeneratedQrIt
   }
 }
 
+export function subscribeToUserGeneratedQrs(
+  userId: string,
+  onUpdate: (items: GeneratedQrItem[]) => void,
+  onError?: (err: Error) => void
+): () => void {
+  const q = query(
+    collection(firestore, "users", userId, "generatedQrs"),
+    orderBy("createdAt", "desc")
+  );
+  return onSnapshot(
+    q,
+    (snap) => {
+      const items: GeneratedQrItem[] = snap.docs.map((d) => {
+        const data = d.data();
+        return {
+          docId: d.id,
+          content: data.content || "",
+          contentType: data.contentType || "text",
+          uuid: data.uuid || "",
+          branded: data.branded !== false,
+          qrCodeId: data.qrCodeId || "",
+          createdAt: tsToString(data.createdAt),
+          fgColor: data.fgColor || "#0A0E17",
+          bgColor: data.bgColor || "#F8FAFC",
+          logoPosition: data.logoPosition || "center",
+          logoUri: data.logoUri || null,
+          scanCount: data.scanCount || 0,
+          commentCount: data.commentCount || 0,
+          qrType: (data.qrType as QrType) || "individual",
+          isActive: data.isActive !== false,
+          deactivationMessage: data.deactivationMessage || null,
+          businessName: data.businessName || null,
+        };
+      });
+      onUpdate(items);
+    },
+    (err) => {
+      console.warn("[firestore] subscribeToUserGeneratedQrs error:", err);
+      if (onError) onError(err);
+    }
+  );
+}
+
 export async function updateQrDesign(
   userId: string,
   docId: string,

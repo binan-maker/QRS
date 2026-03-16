@@ -14,7 +14,7 @@ import {
 import { router, useFocusEffect } from "expo-router";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import * as Haptics from "expo-haptics";
 import * as ImagePicker from "expo-image-picker";
 import Animated, {
@@ -34,7 +34,7 @@ import {
   getUserStats,
   updateUserPhotoURL,
   getUserPhotoURL,
-  getUserGeneratedQrs,
+  subscribeToUserGeneratedQrs,
   getUsernameData,
   updateUsername,
   checkUsernameAvailable,
@@ -64,7 +64,8 @@ export default function ProfileScreen() {
   const [photoModalOpen, setPhotoModalOpen] = useState(false);
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
   const [myQrCodes, setMyQrCodes] = useState<GeneratedQrItem[]>([]);
-  const [myQrLoading, setMyQrLoading] = useState(false);
+  const [myQrLoading, setMyQrLoading] = useState(true);
+  const qrUnsubscribeRef = useRef<(() => void) | null>(null);
 
   const [currentUsername, setCurrentUsername] = useState<string | null>(user?.username || null);
   const [usernameLastChangedAt, setUsernameLastChangedAt] = useState<Date | null>(null);
@@ -81,22 +82,18 @@ export default function ProfileScreen() {
   const loadStats = useCallback(async () => {
     if (!user) return;
     setStatsLoading(true);
-    setMyQrLoading(true);
     try {
-      const [s, photo, qrs, unameData] = await Promise.all([
+      const [s, photo, unameData] = await Promise.all([
         getUserStats(user.id),
         getUserPhotoURL(user.id),
-        getUserGeneratedQrs(user.id),
         getUsernameData(user.id),
       ]);
       setStats(s);
       if (photo) setPhotoURL(photo);
-      setMyQrCodes(qrs);
       if (unameData.username) setCurrentUsername(unameData.username);
       setUsernameLastChangedAt(unameData.usernameLastChangedAt);
     } catch {}
     setStatsLoading(false);
-    setMyQrLoading(false);
   }, [user?.id]);
 
   useEffect(() => {
@@ -108,6 +105,30 @@ export default function ProfileScreen() {
       loadStats();
     }, [loadStats])
   );
+
+  useEffect(() => {
+    if (!user) {
+      setMyQrCodes([]);
+      setMyQrLoading(false);
+      return;
+    }
+    setMyQrLoading(true);
+    if (qrUnsubscribeRef.current) {
+      qrUnsubscribeRef.current();
+      qrUnsubscribeRef.current = null;
+    }
+    const unsub = subscribeToUserGeneratedQrs(user.id, (items) => {
+      setMyQrCodes(items);
+      setMyQrLoading(false);
+    });
+    qrUnsubscribeRef.current = unsub;
+    return () => {
+      if (qrUnsubscribeRef.current) {
+        qrUnsubscribeRef.current();
+        qrUnsubscribeRef.current = null;
+      }
+    };
+  }, [user?.id]);
 
   async function handleSaveName() {
     if (!newName.trim() || !firebaseAuth.currentUser) return;

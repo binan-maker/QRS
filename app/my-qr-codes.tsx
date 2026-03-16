@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import {
   View,
   Text,
@@ -24,7 +24,7 @@ import QRCode from "react-native-qrcode-svg";
 import Colors from "@/constants/colors";
 import { useAuth } from "@/contexts/AuthContext";
 import {
-  getUserGeneratedQrs,
+  subscribeToUserGeneratedQrs,
   type GeneratedQrItem,
 } from "@/lib/firestore-service";
 
@@ -54,9 +54,6 @@ function SkeletonQrCard() {
 
 type Filter = "all" | "individual" | "business";
 
-const CACHE_TTL_MS = 5 * 60 * 1000;
-const qrCache: { [userId: string]: { data: GeneratedQrItem[]; ts: number } } = {};
-
 function formatDate(iso: string) {
   if (!iso) return "";
   try {
@@ -80,34 +77,41 @@ export default function MyQrCodesScreen() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [filter, setFilter] = useState<Filter>("all");
+  const unsubscribeRef = useRef<(() => void) | null>(null);
 
-  const loadQrCodes = useCallback(async (forceRefresh = false) => {
+  const subscribeQrCodes = useCallback(() => {
     if (!user) return;
-    const cached = qrCache[user.id];
-    if (!forceRefresh && cached && Date.now() - cached.ts < CACHE_TTL_MS) {
-      setQrCodes(cached.data);
-      setLoading(false);
-      setRefreshing(false);
-      return;
+    setLoading(true);
+    if (unsubscribeRef.current) {
+      unsubscribeRef.current();
+      unsubscribeRef.current = null;
     }
-    try {
-      const data = await getUserGeneratedQrs(user.id);
-      qrCache[user.id] = { data, ts: Date.now() };
-      setQrCodes(data);
-    } catch {}
-    setLoading(false);
-    setRefreshing(false);
+    const unsub = subscribeToUserGeneratedQrs(
+      user.id,
+      (items) => {
+        setQrCodes(items);
+        setLoading(false);
+        setRefreshing(false);
+      },
+    );
+    unsubscribeRef.current = unsub;
   }, [user?.id]);
 
   useFocusEffect(
     useCallback(() => {
-      loadQrCodes(true);
-    }, [loadQrCodes])
+      subscribeQrCodes();
+      return () => {
+        if (unsubscribeRef.current) {
+          unsubscribeRef.current();
+          unsubscribeRef.current = null;
+        }
+      };
+    }, [subscribeQrCodes])
   );
 
   function handleRefresh() {
     setRefreshing(true);
-    loadQrCodes(true);
+    subscribeQrCodes();
   }
 
   const filtered = qrCodes.filter((qr) => {

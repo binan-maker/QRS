@@ -174,14 +174,21 @@ export default function QrGeneratorScreen() {
         await Share.share({ message: caption, title: "QR Code — QR Guard" });
         return;
       }
-      svgRef.current.toDataURL(async (base64: string) => {
+      svgRef.current.toDataURL(async (dataUrl: string) => {
         try {
-          const fileUri = FileSystem.cacheDirectory + "qrguard_code.png";
-          await FileSystem.writeAsStringAsync(fileUri, base64, {
+          // Strip the "data:image/png;base64," prefix — toDataURL returns a full
+          // data URI, but FileSystem.writeAsStringAsync needs raw base64 only.
+          const rawBase64 = dataUrl.includes(",") ? dataUrl.split(",")[1] : dataUrl;
+          // Use a unique filename each time to avoid Android caching stale data
+          const fileName = `qrguard_${Date.now()}.png`;
+          const dir = FileSystem.cacheDirectory ?? FileSystem.documentDirectory ?? "";
+          const fileUri = dir + fileName;
+          await FileSystem.writeAsStringAsync(fileUri, rawBase64, {
             encoding: FileSystem.EncodingType.Base64,
           });
           const canShare = await Sharing.isAvailableAsync();
           if (canShare) {
+            // expo-sharing handles Android FileProvider (Content URI) automatically
             await Sharing.shareAsync(fileUri, {
               mimeType: "image/png",
               dialogTitle: "Share QR Code",
