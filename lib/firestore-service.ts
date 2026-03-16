@@ -111,6 +111,7 @@ export interface CommentItem {
   createdAt: string;
   userLike: "like" | "dislike" | null;
   user: { displayName: string };
+  userUsername?: string;
 }
 
 export interface TrustScore {
@@ -392,6 +393,7 @@ export function subscribeToComments(
             createdAt: tsToString(data.createdAt),
             userLike: null,
             user: { displayName: data.userDisplayName || "User" },
+            userUsername: data.userUsername || undefined,
           };
         });
       onUpdate(comments);
@@ -634,6 +636,7 @@ export async function getComments(
       createdAt: tsToString(data.createdAt),
       userLike: null,
       user: { displayName: data.userDisplayName || "User" },
+      userUsername: data.userUsername || undefined,
     };
   });
   return { comments, hasMore, lastDoc: allDocs[allDocs.length - 1] };
@@ -654,10 +657,20 @@ export async function addComment(
     );
   }
 
+  // Fetch the user's @username to store with the comment
+  let userUsername: string | undefined;
+  try {
+    const userSnap = await getDoc(doc(firestore, "users", userId));
+    if (userSnap.exists() && userSnap.data().username) {
+      userUsername = userSnap.data().username as string;
+    }
+  } catch {}
+
   const ref = collection(firestore, "qrCodes", qrId, "comments");
   const docRef = await addDoc(ref, {
     userId,
     userDisplayName: displayName,
+    ...(userUsername ? { userUsername } : {}),
     text,
     parentId,
     isDeleted: false,
@@ -701,6 +714,7 @@ export async function addComment(
     createdAt: new Date().toISOString(),
     userLike: null,
     user: { displayName },
+    userUsername,
   };
 }
 
@@ -1041,6 +1055,19 @@ export async function saveGeneratedQr(
   ownerLogoBase64?: string | null
 ): Promise<void> {
   const qrId = await getQrCodeId(content);
+
+  // Compute cryptographic signature so the scanner can verify this is a Scan Guard QR
+  let signature: string | undefined;
+  if (branded) {
+    try {
+      const rawSig = await Crypto.digestStringAsync(
+        Crypto.CryptoDigestAlgorithm.SHA256,
+        content + "|" + userId + "|" + SIGNATURE_SALT
+      );
+      signature = rawSig.slice(0, 32);
+    } catch {}
+  }
+
   await addDoc(collection(firestore, "users", userId, "generatedQrs"), {
     content,
     contentType,
@@ -1049,6 +1076,7 @@ export async function saveGeneratedQr(
     qrCodeId: qrId,
     qrType,
     businessName: businessName || null,
+    ...(signature ? { signature } : {}),
     createdAt: serverTimestamp(),
   });
   if (branded) {
@@ -1065,6 +1093,7 @@ export async function saveGeneratedQr(
           qrType,
           isActive: true,
           businessName: businessName || null,
+          ...(signature ? { signature } : {}),
           ...(ownerLogoBase64 ? { ownerLogoBase64 } : {}),
         });
       }
@@ -1082,6 +1111,7 @@ export async function saveGeneratedQr(
         qrType,
         isActive: true,
         businessName: businessName || null,
+        ...(signature ? { signature } : {}),
         ...(ownerLogoBase64 ? { ownerLogoBase64 } : {}),
       });
     }
@@ -1416,6 +1446,135 @@ export function subscribeToQrMessages(
 export async function markQrMessageRead(messageId: string): Promise<void> {
   try {
     await updateDoc(doc(firestore, "qrMessages", messageId), { read: true });
+  } catch {}
+}
+
+// ─── Username System ──────────────────────────────────────────────────────────
+
+export async function checkUsernameAvailable(username: string): Promise<boolean> {
+  try {
+    const snap = await getDoc(doc(firestore, "usernames", username));
+    return !snap.exists();
+  } catch (e: any) {
+    // Treat permission-denied as available — collection may not have rules deployed yet
+    if (e?.code === "permission-denied") return true;
+    return false;
+  }
+}
+
+export async function generateUniqueUsername(displayName: string): Promise<string> {
+  const base =
+    displayName
+      .toLowerCase()
+      .replace(/[^a-z0-9]/g, "")
+      .slice(0, 15) || "user";
+  for (let attempt = 0; attempt < 10; attempt++) {
+    const candidate =
+      attempt === 0
+        ? base.length >= 3
+          ? base
+          : base + Math.floor(100 + Math.random() * 900)
+        : base.slice(0, 12) + Math.floor(1000 + Math.random() * 9000);
+    const available = await checkUsernameAvailable(String(candidate));
+    if (available) return String(candidate);
+  }
+  return "user" + Date.now().toString().slice(-8);
+}
+
+export interface UsernameData {
+  username: string | null;
+  usernameLastChangedAt: Date | null;
+}
+
+export async function getUsernameData(userId: string): Promise<UsernameData> {
+  try {
+    const snap = await getDoc(doc(firestore, "users", userId));
+    if (snap.exists()) {
+      const data = snap.data();
+      const username = data.username || null;
+      let usernameLastChangedAt: Date | null = null;
+      if (data.usernameLastChangedAt) {
+        usernameLastChangedAt = data.usernameLastChangedAt.toDate
+          ? data.usernameLastChangedAt.toDate()
+          : new Date(data.usernameLastChangedAt);
+      }
+      return { username, usernameLastChangedAt };
+    }
+  } catch {}
+  return { username: null, usernameLastChangedAt: null };
+}
+
+export async function updateUsername(userId: string, newUsername: string): Promise<void> {
+  if (!/^[a-z][a-z0-9_]{2,19}$/.test(newUsername)) {
+    throw new Error(
+      "Username must be 3-20 characters, start with a letter, and contain only letters, numbers, and underscores."
+    );
+  }
+
+  const userRef = doc(firestore, "users", userId);
+  const userSnap = await getDoc(userRef);
+  if (!userSnap.exists()) throw new Error("User not found.");
+
+  const data = userSnap.data();
+
+  if (data.usernameLastChangedAt) {
+    const lastChanged = data.usernameLastChangedAt.toDate
+      ? data.usernameLastChangedAt.toDate()
+      : new Date(data.usernameLastChangedAt);
+    const daysSince = (Date.now() - lastChanged.getTime()) / 86400000;
+    if (daysSince < 15) {
+      const daysLeft = Math.ceil(15 - daysSince);
+      throw new Error(
+        `You can change your username every 15 days. Please wait ${daysLeft} more day${daysLeft === 1 ? "" : "s"}.`
+      );
+    }
+  }
+
+  const oldUsername: string | null = data.username || null;
+
+  if (oldUsername === newUsername) return;
+
+  const available = await checkUsernameAvailable(newUsername);
+  if (!available) throw new Error("This username is already taken. Please choose another.");
+
+  await setDoc(doc(firestore, "usernames", newUsername), {
+    userId,
+    reservedAt: serverTimestamp(),
+  });
+
+  if (oldUsername) {
+    try {
+      await deleteDoc(doc(firestore, "usernames", oldUsername));
+    } catch {}
+  }
+
+  await updateDoc(userRef, {
+    username: newUsername,
+    usernameLastChangedAt: serverTimestamp(),
+  });
+
+  // Update @username in the user's most recent comments (max 50) to keep them current
+  try {
+    const commentsSnap = await getDocs(
+      query(
+        collection(firestore, "users", userId, "comments"),
+        orderBy("createdAt", "desc"),
+        firestoreLimit(50)
+      )
+    );
+    await Promise.all(
+      commentsSnap.docs.map(async (d) => {
+        const cData = d.data();
+        if (cData.qrCodeId && d.id) {
+          try {
+            await updateDoc(
+              doc(firestore, "qrCodes", cData.qrCodeId, "comments", d.id),
+              { userUsername: newUsername }
+            );
+          } catch {}
+        }
+      })
+    );
   } catch {}
 }
 

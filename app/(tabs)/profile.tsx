@@ -27,6 +27,9 @@ import {
   updateUserPhotoURL,
   getUserPhotoURL,
   getUserGeneratedQrs,
+  getUsernameData,
+  updateUsername,
+  checkUsernameAvailable,
   type UserStats,
   type GeneratedQrItem,
 } from "@/lib/firestore-service";
@@ -46,6 +49,15 @@ export default function ProfileScreen() {
   const [myQrCodes, setMyQrCodes] = useState<GeneratedQrItem[]>([]);
   const [myQrLoading, setMyQrLoading] = useState(false);
 
+  const [currentUsername, setCurrentUsername] = useState<string | null>(user?.username || null);
+  const [usernameLastChangedAt, setUsernameLastChangedAt] = useState<Date | null>(null);
+  const [editingUsername, setEditingUsername] = useState(false);
+  const [newUsernameInput, setNewUsernameInput] = useState("");
+  const [usernameAvailable, setUsernameAvailable] = useState<boolean | null>(null);
+  const [checkingUsername, setCheckingUsername] = useState(false);
+  const [savingUsername, setSavingUsername] = useState(false);
+  const [usernameError, setUsernameError] = useState("");
+
   const topInset = Platform.OS === "web" ? 67 : insets.top;
   const tabBarHeight = 60 + insets.bottom;
 
@@ -54,14 +66,17 @@ export default function ProfileScreen() {
     setStatsLoading(true);
     setMyQrLoading(true);
     try {
-      const [s, photo, qrs] = await Promise.all([
+      const [s, photo, qrs, unameData] = await Promise.all([
         getUserStats(user.id),
         getUserPhotoURL(user.id),
         getUserGeneratedQrs(user.id),
+        getUsernameData(user.id),
       ]);
       setStats(s);
       if (photo) setPhotoURL(photo);
       setMyQrCodes(qrs);
+      if (unameData.username) setCurrentUsername(unameData.username);
+      setUsernameLastChangedAt(unameData.usernameLastChangedAt);
     } catch {}
     setStatsLoading(false);
     setMyQrLoading(false);
@@ -90,6 +105,50 @@ export default function ProfileScreen() {
       setSavingName(false);
     }
   }
+
+  useEffect(() => {
+    if (!editingUsername || !newUsernameInput) {
+      setUsernameAvailable(null);
+      return;
+    }
+    if (!/^[a-z][a-z0-9_]{2,19}$/.test(newUsernameInput)) {
+      setUsernameAvailable(null);
+      return;
+    }
+    if (newUsernameInput === currentUsername) {
+      setUsernameAvailable(null);
+      return;
+    }
+    setCheckingUsername(true);
+    const timer = setTimeout(async () => {
+      const available = await checkUsernameAvailable(newUsernameInput);
+      setUsernameAvailable(available);
+      setCheckingUsername(false);
+    }, 600);
+    return () => clearTimeout(timer);
+  }, [newUsernameInput, editingUsername, currentUsername]);
+
+  async function handleSaveUsername() {
+    if (!user || !newUsernameInput.trim()) return;
+    setUsernameError("");
+    setSavingUsername(true);
+    try {
+      await updateUsername(user.id, newUsernameInput.trim());
+      setCurrentUsername(newUsernameInput.trim());
+      setUsernameLastChangedAt(new Date());
+      setEditingUsername(false);
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    } catch (e: any) {
+      setUsernameError(e.message || "Could not update username.");
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+    } finally {
+      setSavingUsername(false);
+    }
+  }
+
+  const daysUntilEdit = usernameLastChangedAt
+    ? Math.max(0, Math.ceil(15 - (Date.now() - usernameLastChangedAt.getTime()) / 86400000))
+    : 0;
 
   async function handlePickPhoto(source: "camera" | "gallery") {
     setPhotoModalOpen(false);
@@ -234,6 +293,9 @@ export default function ProfileScreen() {
                   <Ionicons name="pencil-outline" size={15} color={Colors.dark.primary} style={{ marginLeft: 6 }} />
                 </Pressable>
               )}
+              {currentUsername ? (
+                <Text style={styles.usernameHeroText} numberOfLines={1}>@{currentUsername}</Text>
+              ) : null}
               <Text style={styles.emailText} numberOfLines={1}>{user.email}</Text>
             </View>
           </View>
@@ -348,6 +410,98 @@ export default function ProfileScreen() {
                 <Ionicons name="pencil-outline" size={18} color={Colors.dark.textMuted} />
               </Pressable>
             </View>
+            <View style={styles.cardDivider} />
+
+            {/* Username row */}
+            {editingUsername ? (
+              <View style={[styles.infoRow, { flexDirection: "column", alignItems: "stretch", gap: 8 }]}>
+                <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
+                  <View style={[styles.menuIcon, { backgroundColor: Colors.dark.primaryDim }]}>
+                    <Ionicons name="at" size={18} color={Colors.dark.primary} />
+                  </View>
+                  <View style={[styles.usernameInputContainer, { flex: 1 }]}>
+                    <Text style={styles.usernameAtSign}>@</Text>
+                    <TextInput
+                      style={styles.usernameInput}
+                      value={newUsernameInput}
+                      onChangeText={(v) => {
+                        setNewUsernameInput(v.toLowerCase().replace(/[^a-z0-9_]/g, ""));
+                        setUsernameError("");
+                      }}
+                      autoFocus
+                      autoCapitalize="none"
+                      autoCorrect={false}
+                      maxLength={20}
+                      placeholderTextColor={Colors.dark.textMuted}
+                      placeholder="username"
+                    />
+                    {checkingUsername ? (
+                      <ActivityIndicator size="small" color={Colors.dark.textMuted} />
+                    ) : usernameAvailable === true ? (
+                      <Ionicons name="checkmark-circle" size={18} color={Colors.dark.safe} />
+                    ) : usernameAvailable === false ? (
+                      <Ionicons name="close-circle" size={18} color={Colors.dark.danger} />
+                    ) : null}
+                  </View>
+                </View>
+                {usernameError ? (
+                  <Text style={styles.usernameError}>{usernameError}</Text>
+                ) : null}
+                {daysUntilEdit > 0 ? (
+                  <Text style={styles.usernameLockNote}>
+                    <Ionicons name="time-outline" size={12} /> Next change available in {daysUntilEdit} day{daysUntilEdit === 1 ? "" : "s"}
+                  </Text>
+                ) : (
+                  <Text style={styles.usernameHint}>3-20 chars · letters, numbers, underscores · starts with a letter</Text>
+                )}
+                <View style={{ flexDirection: "row", gap: 8 }}>
+                  <Pressable
+                    onPress={handleSaveUsername}
+                    disabled={savingUsername || usernameAvailable === false || daysUntilEdit > 0 || !newUsernameInput}
+                    style={[styles.usernameSaveBtn, (savingUsername || usernameAvailable === false || daysUntilEdit > 0 || !newUsernameInput) && { opacity: 0.5 }]}
+                  >
+                    {savingUsername ? (
+                      <ActivityIndicator size="small" color="#000" />
+                    ) : (
+                      <Text style={styles.usernameSaveBtnText}>Save</Text>
+                    )}
+                  </Pressable>
+                  <Pressable
+                    onPress={() => { setEditingUsername(false); setUsernameError(""); setUsernameAvailable(null); }}
+                    style={styles.usernameCancelBtn}
+                  >
+                    <Text style={styles.usernameCancelBtnText}>Cancel</Text>
+                  </Pressable>
+                </View>
+              </View>
+            ) : (
+              <View style={styles.infoRow}>
+                <View style={[styles.menuIcon, { backgroundColor: Colors.dark.primaryDim }]}>
+                  <Ionicons name="at" size={18} color={Colors.dark.primary} />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.infoLabel}>Username</Text>
+                  <Text style={styles.infoValue}>
+                    {currentUsername ? `@${currentUsername}` : "Not set"}
+                  </Text>
+                  {daysUntilEdit > 0 ? (
+                    <Text style={styles.usernameLockNote}>{daysUntilEdit} day{daysUntilEdit === 1 ? "" : "s"} until next change</Text>
+                  ) : null}
+                </View>
+                <Pressable
+                  onPress={() => {
+                    setNewUsernameInput(currentUsername || "");
+                    setEditingUsername(true);
+                    setUsernameError("");
+                    setUsernameAvailable(null);
+                  }}
+                  disabled={daysUntilEdit > 0}
+                >
+                  <Ionicons name="pencil-outline" size={18} color={daysUntilEdit > 0 ? Colors.dark.textMuted : Colors.dark.textMuted} />
+                </Pressable>
+              </View>
+            )}
+
             <View style={styles.cardDivider} />
             <View style={styles.infoRow}>
               <View style={[styles.menuIcon, { backgroundColor: Colors.dark.accentDim }]}>
@@ -484,9 +638,29 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.dark.surfaceLight, borderRadius: 10, paddingHorizontal: 12, paddingVertical: 8,
     borderWidth: 1, borderColor: Colors.dark.primary,
   },
-  saveNameBtn: { backgroundColor: Colors.dark.primary, paddingHorizontal: 14, paddingVertical: 8, borderRadius: 10 },
+  saveNameBtn: { backgroundColor: Colors.dark.primary, paddingHorizontal: 14, paddingVertical: 8, borderRadius: 10, flexShrink: 0 },
   saveNameBtnText: { fontSize: 13, fontFamily: "Inter_700Bold", color: "#000" },
   cancelNameBtn: { padding: 6 },
+
+  usernameHeroText: { fontSize: 13, fontFamily: "Inter_500Medium", color: Colors.dark.primary, marginBottom: 2 },
+  usernameInputContainer: {
+    flexDirection: "row", alignItems: "center",
+    backgroundColor: Colors.dark.surfaceLight, borderRadius: 10,
+    borderWidth: 1, borderColor: Colors.dark.primary,
+    paddingHorizontal: 10, gap: 4,
+  },
+  usernameAtSign: { fontSize: 15, fontFamily: "Inter_600SemiBold", color: Colors.dark.primary },
+  usernameInput: {
+    flex: 1, paddingVertical: 8, fontSize: 15,
+    fontFamily: "Inter_400Regular", color: Colors.dark.text,
+  },
+  usernameError: { fontSize: 12, fontFamily: "Inter_400Regular", color: Colors.dark.danger, marginLeft: 48 },
+  usernameHint: { fontSize: 11, fontFamily: "Inter_400Regular", color: Colors.dark.textMuted, marginLeft: 48 },
+  usernameLockNote: { fontSize: 11, fontFamily: "Inter_500Medium", color: Colors.dark.warning, marginLeft: 48 },
+  usernameSaveBtn: { backgroundColor: Colors.dark.primary, paddingHorizontal: 18, paddingVertical: 8, borderRadius: 10, alignSelf: "flex-start" },
+  usernameSaveBtnText: { fontSize: 13, fontFamily: "Inter_700Bold", color: "#000" },
+  usernameCancelBtn: { paddingHorizontal: 14, paddingVertical: 8, borderRadius: 10, borderWidth: 1, borderColor: Colors.dark.surfaceBorder, alignSelf: "flex-start" },
+  usernameCancelBtnText: { fontSize: 13, fontFamily: "Inter_600SemiBold", color: Colors.dark.textSecondary },
 
   statsRow: { flexDirection: "row", gap: 10, marginBottom: 12 },
   statCard: {

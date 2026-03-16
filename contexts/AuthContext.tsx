@@ -11,7 +11,7 @@ import {
   sendEmailVerification,
   type User as FirebaseUser,
 } from "firebase/auth";
-import { doc, setDoc, getDoc, serverTimestamp } from "firebase/firestore";
+import { doc, setDoc, getDoc, updateDoc, serverTimestamp } from "firebase/firestore";
 import { firebaseAuth, firestore } from "@/lib/firebase";
 import * as Google from "expo-auth-session/providers/google";
 import * as WebBrowser from "expo-web-browser";
@@ -24,6 +24,7 @@ interface AuthUser {
   displayName: string;
   photoURL?: string | null;
   emailVerified: boolean;
+  username?: string;
 }
 
 interface AuthContextValue {
@@ -85,21 +86,63 @@ function mapFirebaseError(e: any): Error {
   return new Error(getAuthErrorMessage(code));
 }
 
+async function generateUniqueUsernameForUser(displayName: string): Promise<string> {
+  const base = displayName
+    .toLowerCase()
+    .replace(/[^a-z0-9]/g, "")
+    .slice(0, 15) || "user";
+  for (let attempt = 0; attempt < 10; attempt++) {
+    const candidate =
+      attempt === 0
+        ? base.length >= 3
+          ? base
+          : base + Math.floor(100 + Math.random() * 900)
+        : base.slice(0, 12) + Math.floor(1000 + Math.random() * 9000);
+    try {
+      const snap = await getDoc(doc(firestore, "usernames", String(candidate)));
+      if (!snap.exists()) return String(candidate);
+    } catch (e: any) {
+      // If permission-denied, rules not deployed yet — treat as available
+      if (e?.code === "permission-denied") return String(candidate);
+    }
+  }
+  return "user" + Date.now().toString().slice(-8);
+}
+
 async function syncUserToFirestore(fbUser: FirebaseUser, displayName?: string) {
   try {
     const userRef = doc(firestore, "users", fbUser.uid);
     const snap = await getDoc(userRef);
     if (!snap.exists()) {
+      const name = displayName || fbUser.displayName || fbUser.email?.split("@")[0] || "User";
+      const username = await generateUniqueUsernameForUser(name);
       await setDoc(userRef, {
         uid: fbUser.uid,
         email: fbUser.email,
-        displayName: displayName || fbUser.displayName || fbUser.email?.split("@")[0] || "User",
+        displayName: name,
         photoURL: fbUser.photoURL || null,
         isDeleted: false,
         createdAt: serverTimestamp(),
+        username,
       });
+      try {
+        await setDoc(doc(firestore, "usernames", username), {
+          userId: fbUser.uid,
+          reservedAt: serverTimestamp(),
+        });
+      } catch {}
     } else if (snap.data().isDeleted) {
       throw new Error("ACCOUNT_DELETED");
+    } else if (!snap.data().username) {
+      const name = displayName || fbUser.displayName || snap.data().displayName || "User";
+      const username = await generateUniqueUsernameForUser(name);
+      try {
+        await updateDoc(userRef, { username });
+        await setDoc(doc(firestore, "usernames", username), {
+          userId: fbUser.uid,
+          reservedAt: serverTimestamp(),
+        });
+      } catch {}
     }
   } catch (e: any) {
     if (e.message === "ACCOUNT_DELETED") throw new Error("This account has been deleted.");
@@ -132,7 +175,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (fbUser) {
         try {
           const idToken = await fbUser.getIdToken();
-          setUser(toAuthUser(fbUser));
+          const authUser = toAuthUser(fbUser);
+          try {
+            const userSnap = await getDoc(doc(firestore, "users", fbUser.uid));
+            if (userSnap.exists() && userSnap.data().username) {
+              authUser.username = userSnap.data().username as string;
+            }
+          } catch {}
+          setUser(authUser);
           setToken(idToken);
         } catch {
           setUser(null);
@@ -240,16 +290,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       await fbUser.reload();
       const reloaded = firebaseAuth.currentUser;
       if (reloaded) {
-        setUser(toAuthUser(reloaded));
-        // Also sync updated displayName/photoURL to Firestore
+        const authUser = toAuthUser(reloaded);
         try {
-          const { doc, updateDoc } = await import("firebase/firestore");
-          const { firestore } = await import("@/lib/firebase");
           await updateDoc(doc(firestore, "users", reloaded.uid), {
             displayName: reloaded.displayName || "",
             photoURL: reloaded.photoURL || null,
           });
         } catch {}
+        try {
+          const userSnap = await getDoc(doc(firestore, "users", reloaded.uid));
+          if (userSnap.exists() && userSnap.data().username) {
+            authUser.username = userSnap.data().username as string;
+          }
+        } catch {}
+        setUser(authUser);
       }
     } catch {}
   }

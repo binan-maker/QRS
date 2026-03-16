@@ -124,10 +124,10 @@ service cloud.firestore {
         // Update: only the comment author can soft-delete; moderator fields
         // (reportCount, isHidden) may also be updated by authenticated users
         allow update: if isSignedIn() && (
-          // Author can soft-delete their own comment
+          // Author can soft-delete their own comment or update their username
           (resource.data.userId == request.auth.uid &&
             request.resource.data.diff(resource.data).affectedKeys()
-              .hasOnly(['isDeleted', 'likeCount', 'dislikeCount', 'reportCount', 'isHidden']))
+              .hasOnly(['isDeleted', 'likeCount', 'dislikeCount', 'reportCount', 'isHidden', 'userUsername']))
           ||
           // Any authenticated user can update aggregated counters (likes, reports)
           request.resource.data.diff(resource.data).affectedKeys()
@@ -157,6 +157,16 @@ service cloud.firestore {
         allow create, update: if isOwner(userId);
         allow delete: if isOwner(userId);
       }
+    }
+
+    // ─── Usernames ────────────────────────────────────────────────────────────
+    // Public read for availability checks.
+    // Only the owning user can reserve or release a username.
+    match /usernames/{username} {
+      allow read: if true;
+      allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
+      allow delete: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow update: if false;
     }
 
     // ─── Users ────────────────────────────────────────────────────────────────

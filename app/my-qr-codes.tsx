@@ -71,7 +71,7 @@ export default function MyQrCodesScreen() {
 
   useFocusEffect(
     useCallback(() => {
-      loadQrCodes(false);
+      loadQrCodes(true);
     }, [loadQrCodes])
   );
 

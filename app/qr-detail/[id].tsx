@@ -803,12 +803,14 @@ export default function QrDetailScreen() {
             <View style={styles.commentHeader}>
               <View style={[styles.commentAvatar, isReply && styles.replyAvatar]}>
                 <Text style={[styles.commentAvatarText, isReply && { fontSize: 12 }]}>
-                  {comment.user.displayName.charAt(0).toUpperCase()}
+                  {(comment.userUsername || comment.user.displayName).charAt(0).toUpperCase()}
                 </Text>
               </View>
               <View style={styles.commentMeta}>
                 <Text style={styles.commentAuthor} numberOfLines={1}>
-                  {smartName(comment.user.displayName)}
+                  {comment.userUsername ? (
+                    <Text style={styles.commentUsernameText}>@{comment.userUsername}</Text>
+                  ) : smartName(comment.user.displayName)}
                   <Text style={styles.commentTimeDot}>  ·  </Text>
                   <Text style={styles.commentTimeInline}>{formatRelativeTime(comment.createdAt)}</Text>
                 </Text>
@@ -1168,6 +1170,12 @@ export default function QrDetailScreen() {
                         Created by <Text style={styles.ownerName}>{ownerInfo.ownerName}</Text>
                       </Text>
                       <Text style={styles.ownerUuid} numberOfLines={1}>ID: {ownerInfo.brandedUuid}</Text>
+                      {ownerInfo.isBranded && (
+                        <View style={styles.scanGuardBadge}>
+                          <Ionicons name="shield-checkmark" size={12} color={Colors.dark.primary} />
+                          <Text style={styles.scanGuardBadgeText}>QR Guard Generated</Text>
+                        </View>
+                      )}
                     </View>
                   </View>
                   <View style={styles.ownerCardRight}>
@@ -2131,6 +2139,13 @@ const styles = StyleSheet.create({
   ownerCardSub: { fontSize: 12, fontFamily: "Inter_400Regular", color: Colors.dark.textSecondary, marginTop: 1 },
   ownerName: { fontFamily: "Inter_600SemiBold", color: Colors.dark.primary },
   ownerUuid: { fontSize: 10, fontFamily: "Inter_400Regular", color: Colors.dark.textMuted, marginTop: 2 },
+  scanGuardBadge: {
+    flexDirection: "row", alignItems: "center", gap: 4, marginTop: 6,
+    backgroundColor: Colors.dark.primaryDim, borderRadius: 8,
+    paddingHorizontal: 8, paddingVertical: 3, alignSelf: "flex-start",
+    borderWidth: 1, borderColor: Colors.dark.primary + "40",
+  },
+  scanGuardBadgeText: { fontSize: 10, fontFamily: "Inter_600SemiBold", color: Colors.dark.primary },
   ownerCardRight: { flexDirection: "row", gap: 8, alignItems: "center" },
   ownerActionBtn: {
     alignItems: "center", gap: 2,
@@ -2372,6 +2387,7 @@ const styles = StyleSheet.create({
     fontSize: 13, fontFamily: "Inter_600SemiBold", color: Colors.dark.text,
     flexShrink: 1,
   },
+  commentUsernameText: { fontSize: 13, fontFamily: "Inter_600SemiBold", color: Colors.dark.primary },
   commentTimeDot: { fontSize: 12, color: Colors.dark.textMuted, fontFamily: "Inter_400Regular" },
   commentTimeInline: { fontSize: 11, fontFamily: "Inter_400Regular", color: Colors.dark.textMuted },
   commentMenuBtn: { padding: 6, marginLeft: 4 },
