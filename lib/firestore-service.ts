@@ -702,6 +702,8 @@ export async function addComment(
     `${displayName} commented on a QR you follow`,
     userId
   ).catch(() => {});
+  // Notify @mentioned users
+  notifyMentionedUsers(qrId, text, userId, displayName).catch(() => {});
   return {
     id: docRef.id,
     qrCodeId: qrId,
@@ -905,6 +907,40 @@ export async function loadQrDetail(qrId: string, userId: string | null) {
 }
 
 // ─── Firebase Realtime Database: Notifications ───────────────────────────────
+
+// Send a notification to a specifically @mentioned user
+async function notifyMentionedUsers(
+  qrId: string,
+  text: string,
+  fromUserId: string,
+  fromDisplayName: string
+): Promise<void> {
+  const mentions = Array.from(new Set(
+    (text.match(/@([a-zA-Z0-9_.-]+)/g) || []).map((m) => m.slice(1).toLowerCase())
+  ));
+  if (mentions.length === 0) return;
+  try {
+    const usersSnap = await getDocs(collection(firestore, "users"));
+    const writes: Promise<any>[] = [];
+    usersSnap.forEach((userDoc) => {
+      const uname = (userDoc.data().username as string | undefined)?.toLowerCase();
+      if (!uname || !mentions.includes(uname)) return;
+      const targetUserId = userDoc.id;
+      if (targetUserId === fromUserId) return;
+      const notifRef = dbRef(realtimeDB, `notifications/${targetUserId}/items`);
+      writes.push(
+        dbPush(notifRef, {
+          type: "mention",
+          qrCodeId: qrId,
+          message: `${fromDisplayName} mentioned you in a comment`,
+          read: false,
+          createdAt: Date.now(),
+        })
+      );
+    });
+    await Promise.all(writes);
+  } catch {}
+}
 
 // Send a notification to all followers of a QR code via Realtime Database
 export async function notifyQrFollowers(

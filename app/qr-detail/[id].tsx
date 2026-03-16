@@ -258,6 +258,9 @@ export default function QrDetailScreen() {
   const [commentsList, setCommentsList] = useState<CommentItem[]>([]);
   const [userLikes, setUserLikes] = useState<Record<string, "like" | "dislike">>({});
   const lastCommentRef = useRef<DocumentSnapshot | undefined>(undefined);
+  const scrollRef = useRef<ScrollView>(null);
+  const commentInputRef = useRef<TextInput>(null);
+  const [followPressedIn, setFollowPressedIn] = useState(false);
   const [hasMoreComments, setHasMoreComments] = useState(false);
   const [newComment, setNewComment] = useState("");
   const [replyTo, setReplyTo] = useState<{ id: string; author: string; rootId: string; isNested: boolean } | null>(null);
@@ -478,6 +481,14 @@ export default function QrDetailScreen() {
     return unsub;
   }, [id, user?.id, offlineMode]);
 
+  // Auto-focus comment input when replyTo is set
+  useEffect(() => {
+    if (replyTo) {
+      const t = setTimeout(() => commentInputRef.current?.focus(), 100);
+      return () => clearTimeout(t);
+    }
+  }, [replyTo]);
+
   // Content safety analysis
   useEffect(() => {
     const content = qrCode?.content || offlineContent;
@@ -582,20 +593,37 @@ export default function QrDetailScreen() {
 
   async function handleCommentLike(commentId: string, action: "like" | "dislike") {
     if (!user) { router.push("/(auth)/login"); return; }
+    const prevLike = userLikes[commentId] ?? null;
+    const newLike: "like" | "dislike" | null = prevLike === action ? null : action;
+    // Optimistic update — instant UI response
+    setUserLikes((prev) => {
+      const next = { ...prev };
+      if (newLike === null) delete next[commentId];
+      else next[commentId] = newLike;
+      return next;
+    });
+    setCommentsList((prev) =>
+      prev.map((c) => {
+        if (c.id !== commentId) return c;
+        let likes = c.likeCount;
+        let dislikes = c.dislikeCount;
+        if (action === "like") {
+          likes = newLike === "like" ? likes + 1 : likes - 1;
+          if (prevLike === "dislike") dislikes = Math.max(0, dislikes - 1);
+        } else {
+          dislikes = newLike === "dislike" ? dislikes + 1 : dislikes - 1;
+          if (prevLike === "like") likes = Math.max(0, likes - 1);
+        }
+        return { ...c, likeCount: likes, dislikeCount: dislikes };
+      })
+    );
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    // Backend sync (reconcile with real counts)
     try {
       const data = await toggleCommentLike(id, commentId, user.id, action === "like");
-      const prevLike = userLikes[commentId] ?? null;
-      const newLike: "like" | "dislike" | null = prevLike === action ? null : action;
-      setUserLikes((prev) => {
-        const next = { ...prev };
-        if (newLike === null) delete next[commentId];
-        else next[commentId] = newLike;
-        return next;
-      });
       setCommentsList((prev) =>
         prev.map((c) => c.id !== commentId ? c : { ...c, likeCount: data.likes, dislikeCount: data.dislikes })
       );
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     } catch {}
   }
 
@@ -1006,7 +1034,7 @@ export default function QrDetailScreen() {
       <KeyboardAvoidingView
         style={{ flex: 1, backgroundColor: Colors.dark.background }}
         behavior={Platform.OS === "ios" ? "padding" : "height"}
-        keyboardVerticalOffset={0}
+        keyboardVerticalOffset={topInset}
       >
         <View style={[styles.container, { paddingTop: topInset }]}>
           {/* Nav */}
@@ -1032,22 +1060,44 @@ export default function QrDetailScreen() {
               {!offlineMode && (
                 <Pressable
                   onPress={handleToggleFollow}
+                  onPressIn={() => isFollowing && setFollowPressedIn(true)}
+                  onPressOut={() => setFollowPressedIn(false)}
                   disabled={followLoading}
-                  style={[styles.followBtn, isFollowing && styles.followBtnActive]}
+                  style={[
+                    styles.followBtn,
+                    isFollowing && styles.followBtnActive,
+                    followPressedIn && isFollowing && styles.followBtnUnfollowHint,
+                  ]}
                 >
                   {followLoading ? (
                     <ActivityIndicator size="small" color={Colors.dark.primary} />
                   ) : (
                     <>
                       <Ionicons
-                        name={isFollowing ? "notifications" : "notifications-outline"}
+                        name={
+                          followPressedIn && isFollowing
+                            ? "notifications-off-outline"
+                            : isFollowing
+                            ? "notifications"
+                            : "notifications-outline"
+                        }
                         size={15}
-                        color={isFollowing ? Colors.dark.primary : Colors.dark.textSecondary}
+                        color={
+                          followPressedIn && isFollowing
+                            ? Colors.dark.danger
+                            : isFollowing
+                            ? Colors.dark.primary
+                            : Colors.dark.textSecondary
+                        }
                       />
-                      <Text style={[styles.followBtnText, isFollowing && styles.followBtnTextActive]}>
-                        {isFollowing ? "Following" : "Follow"}
+                      <Text style={[
+                        styles.followBtnText,
+                        isFollowing && styles.followBtnTextActive,
+                        followPressedIn && isFollowing && { color: Colors.dark.danger },
+                      ]}>
+                        {followPressedIn && isFollowing ? "Unfollow" : isFollowing ? "Following" : "Follow"}
                       </Text>
-                      {followCount > 0 ? (
+                      {followCount > 0 && !(followPressedIn && isFollowing) ? (
                         <View style={styles.followCountPill}>
                           <Text style={styles.followCountPillText}>{followCountFormatted}</Text>
                         </View>
@@ -1060,6 +1110,7 @@ export default function QrDetailScreen() {
           </View>
 
           <ScrollView
+            ref={scrollRef}
             showsVerticalScrollIndicator={false}
             contentContainerStyle={styles.scrollContent}
             keyboardShouldPersistTaps="handled"
@@ -1660,46 +1711,13 @@ export default function QrDetailScreen() {
                     </View>
                   </View>
 
-                  {user ? (
-                    <View style={styles.commentInputContainer}>
-                      {replyTo ? (
-                        <View style={styles.replyBanner}>
-                          <Ionicons name="return-down-forward" size={14} color={Colors.dark.primary} />
-                          <Text style={styles.replyBannerText}>
-                            Replying to{" "}
-                            <Text style={{ color: Colors.dark.primary, fontFamily: "Inter_600SemiBold" }}>{replyTo.author}</Text>
-                          </Text>
-                          <Pressable onPress={() => { setReplyTo(null); setNewComment(""); }} style={{ marginLeft: 4 }}>
-                            <Ionicons name="close" size={16} color={Colors.dark.textMuted} />
-                          </Pressable>
-                        </View>
-                      ) : null}
-                      <View style={styles.commentInput}>
-                        <TextInput
-                          style={styles.commentTextInput}
-                          placeholder={replyTo ? `Reply to ${replyTo.author}...` : "Add a comment..."}
-                          placeholderTextColor={Colors.dark.textMuted}
-                          value={newComment}
-                          onChangeText={setNewComment}
-                          multiline
-                          maxLength={500}
-                        />
-                        <Pressable
-                          onPress={handleSubmitComment}
-                          disabled={submitting || !newComment.trim()}
-                          style={({ pressed }) => [styles.sendBtn, { opacity: pressed || submitting || !newComment.trim() ? 0.5 : 1 }]}
-                        >
-                          {submitting ? <ActivityIndicator size="small" color="#000" /> : <Ionicons name="send" size={18} color="#000" />}
-                        </Pressable>
-                      </View>
-                    </View>
-                  ) : (
+                  {!user ? (
                     <Pressable onPress={() => router.push("/(auth)/login")} style={styles.signInToComment}>
                       <Ionicons name="chatbubble-outline" size={18} color={Colors.dark.primary} />
                       <Text style={styles.signInToCommentText}>Sign in to comment</Text>
                       <Ionicons name="arrow-forward" size={16} color={Colors.dark.primary} style={{ marginLeft: "auto" }} />
                     </Pressable>
-                  )}
+                  ) : null}
 
                   {commentsList.length === 0 ? (
                     <View style={styles.noComments}>
@@ -1724,8 +1742,45 @@ export default function QrDetailScreen() {
               </>
             )}
 
-            <View style={{ height: 120 }} />
+            <View style={{ height: user ? 100 : 32 }} />
           </ScrollView>
+
+          {/* Fixed bottom comment bar — always visible above keyboard */}
+          {user && !offlineMode ? (
+            <View style={[styles.bottomCommentBar, { paddingBottom: insets.bottom || 12 }]}>
+              {replyTo ? (
+                <View style={styles.replyBanner}>
+                  <Ionicons name="return-down-forward" size={14} color={Colors.dark.primary} />
+                  <Text style={styles.replyBannerText} numberOfLines={1}>
+                    Replying to{" "}
+                    <Text style={{ color: Colors.dark.primary, fontFamily: "Inter_600SemiBold" }}>{replyTo.author}</Text>
+                  </Text>
+                  <Pressable onPress={() => { setReplyTo(null); setNewComment(""); }} style={{ marginLeft: "auto" as any }}>
+                    <Ionicons name="close" size={16} color={Colors.dark.textMuted} />
+                  </Pressable>
+                </View>
+              ) : null}
+              <View style={styles.commentInput}>
+                <TextInput
+                  ref={commentInputRef}
+                  style={styles.commentTextInput}
+                  placeholder={replyTo ? `Reply to ${replyTo.author}...` : "Add a comment..."}
+                  placeholderTextColor={Colors.dark.textMuted}
+                  value={newComment}
+                  onChangeText={setNewComment}
+                  multiline
+                  maxLength={500}
+                />
+                <Pressable
+                  onPress={handleSubmitComment}
+                  disabled={submitting || !newComment.trim()}
+                  style={({ pressed }) => [styles.sendBtn, { opacity: pressed || submitting || !newComment.trim() ? 0.5 : 1 }]}
+                >
+                  {submitting ? <ActivityIndicator size="small" color="#000" /> : <Ionicons name="send" size={18} color="#000" />}
+                </Pressable>
+              </View>
+            </View>
+          ) : null}
         </View>
       </KeyboardAvoidingView>
 
@@ -2113,6 +2168,7 @@ const styles = StyleSheet.create({
     maxWidth: 140,
   },
   followBtnActive: { backgroundColor: Colors.dark.primaryDim, borderColor: Colors.dark.primary },
+  followBtnUnfollowHint: { backgroundColor: Colors.dark.dangerDim, borderColor: Colors.dark.danger + "60" },
   followBtnText: { fontSize: 12, fontFamily: "Inter_600SemiBold", color: Colors.dark.textSecondary, flexShrink: 1 },
   followBtnTextActive: { color: Colors.dark.primary },
   followCountPill: {
@@ -2333,6 +2389,11 @@ const styles = StyleSheet.create({
   liveText: { fontSize: 11, fontFamily: "Inter_600SemiBold", color: Colors.dark.safe },
 
   commentInputContainer: { marginBottom: 16, gap: 8 },
+  bottomCommentBar: {
+    paddingHorizontal: 16, paddingTop: 10, gap: 8,
+    borderTopWidth: 1, borderTopColor: Colors.dark.surfaceBorder,
+    backgroundColor: Colors.dark.background,
+  },
   replyBanner: { flexDirection: "row", alignItems: "center", gap: 6, backgroundColor: Colors.dark.primaryDim, padding: 10, borderRadius: 10 },
   replyBannerText: { flex: 1, fontSize: 13, fontFamily: "Inter_400Regular", color: Colors.dark.textSecondary },
   commentInput: {
