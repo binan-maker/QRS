@@ -25,7 +25,7 @@ import Reanimated, { FadeIn, FadeInDown } from "react-native-reanimated";
 import Colors from "@/constants/colors";
 import { useAuth } from "@/contexts/AuthContext";
 import { getApiUrl } from "@/lib/query-client";
-import { getOrCreateQrCode, recordScan } from "@/lib/firestore-service";
+import { getOrCreateQrCode, recordScan, getGuardLink, type GuardLink } from "@/lib/firestore-service";
 import {
   parseAnyPaymentQr,
   analyzeAnyPaymentQr,
@@ -71,6 +71,11 @@ export default function ScannerScreen() {
   const [unverifiedQrId, setUnverifiedQrId] = useState<string | null>(null);
   const [unverifiedCountdown, setUnverifiedCountdown] = useState(3);
   const countdownRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  // Living Shield identity card state
+  const [livingShieldModal, setLivingShieldModal] = useState(false);
+  const [livingShieldData, setLivingShieldData] = useState<GuardLink | null>(null);
+  const [livingShieldLoading, setLivingShieldLoading] = useState(false);
 
   const scanLockRef = useRef(false);
   const canScanRef = useRef(false);
@@ -185,7 +190,46 @@ export default function ScannerScreen() {
     return { riskLevel, warnings };
   }
 
+  const GUARD_PATTERN = /\/guard\/([A-Za-z0-9]{4}-[A-Za-z0-9]{4}-[A-Za-z0-9]{4}-[A-Za-z0-9]{4})(?:[/?#]|$)/;
+
+  async function handleLivingShieldProceed() {
+    if (!livingShieldData?.currentDestination) return;
+    const dest = livingShieldData.currentDestination;
+    setLivingShieldModal(false);
+    setLivingShieldData(null);
+    scanLockRef.current = false;
+    setScanned(false);
+    await Linking.openURL(dest.startsWith("http") ? dest : `https://${dest}`);
+  }
+
+  function handleLivingShieldCancel() {
+    setLivingShieldModal(false);
+    setLivingShieldData(null);
+    scanLockRef.current = false;
+    setScanned(false);
+    setScanSuccess(false);
+  }
+
   async function processScan(content: string) {
+    // ── Living Shield intercept ──────────────────────────────────────────────
+    const guardMatch = content.match(GUARD_PATTERN);
+    if (guardMatch) {
+      const guardUuid = guardMatch[1].toUpperCase();
+      setProcessing(false);
+      setLivingShieldLoading(true);
+      setLivingShieldModal(true);
+      setScanSuccess(true);
+      try {
+        const link = await getGuardLink(guardUuid);
+        setLivingShieldData(link);
+      } catch {
+        setLivingShieldData(null);
+      } finally {
+        setLivingShieldLoading(false);
+      }
+      return;
+    }
+
     setProcessing(true);
     try {
       const qr = await getOrCreateQrCode(content);
@@ -745,6 +789,93 @@ export default function ScannerScreen() {
               <Ionicons name="lock-closed" size={13} color={Colors.dark.safe} />
               <Text style={styles.verifiedBadgeLabel}>QR Guard Digital Mint</Text>
             </View>
+          </Reanimated.View>
+        </View>
+      ) : null}
+
+      {/* Living Shield Identity Card */}
+      {livingShieldModal ? (
+        <View style={styles.safetyOverlay}>
+          <Reanimated.View entering={FadeInDown.duration(380)} style={styles.safetySheet}>
+            {livingShieldLoading ? (
+              <>
+                <View style={[styles.safetyBadge, { backgroundColor: "rgba(251,191,36,0.12)" }]}>
+                  <ActivityIndicator size={32} color="#FBBF24" />
+                </View>
+                <Text style={[styles.safetyTitle, { color: "#FBBF24" }]}>Living Shield QR</Text>
+                <Text style={styles.safetySubtitle}>Verifying business identity…</Text>
+              </>
+            ) : livingShieldData && livingShieldData.isActive ? (
+              <>
+                <View style={[styles.safetyBadge, { backgroundColor: "rgba(251,191,36,0.12)" }]}>
+                  <Ionicons name="shield" size={36} color="#FBBF24" />
+                </View>
+                <View style={{ flexDirection: "row", alignItems: "center", gap: 6, marginBottom: 6 }}>
+                  <View style={{ backgroundColor: "#FBBF2420", borderRadius: 8, paddingHorizontal: 10, paddingVertical: 4,
+                    flexDirection: "row", alignItems: "center", gap: 4 }}>
+                    <Ionicons name="shield-checkmark" size={12} color="#FBBF24" />
+                    <Text style={{ fontSize: 11, color: "#FBBF24", fontFamily: "Inter_600SemiBold" }}>Living Shield QR</Text>
+                  </View>
+                </View>
+                <Text style={[styles.safetyTitle, { fontSize: 22 }]}>
+                  {livingShieldData.businessName || livingShieldData.ownerName}
+                </Text>
+                {livingShieldData.businessName ? (
+                  <Text style={{ fontSize: 13, color: Colors.dark.textSecondary, fontFamily: "Inter_400Regular", marginBottom: 12 }}>
+                    by {livingShieldData.ownerName}
+                  </Text>
+                ) : null}
+
+                {livingShieldData.destinationChangedAt &&
+                  (Date.now() - new Date(livingShieldData.destinationChangedAt).getTime()) < 86400000 ? (
+                  <View style={{ flexDirection: "row", alignItems: "center", gap: 6, backgroundColor: "#d9770618",
+                    borderRadius: 10, padding: 10, marginBottom: 12, borderWidth: 1, borderColor: "#f9731640" }}>
+                    <Ionicons name="warning-outline" size={16} color="#f97316" />
+                    <Text style={{ fontSize: 12, color: "#f97316", fontFamily: "Inter_500Medium", flex: 1, lineHeight: 17 }}>
+                      Destination changed in the last 24 hours — proceed with caution
+                    </Text>
+                  </View>
+                ) : null}
+
+                <Text style={[styles.safetySubtitle, { marginBottom: 6 }]}>Destination</Text>
+                <View style={{ backgroundColor: Colors.dark.background, borderRadius: 10,
+                  borderWidth: 1, borderColor: Colors.dark.surfaceBorder,
+                  padding: 10, marginBottom: 16, width: "100%" }}>
+                  <Text style={{ fontSize: 12, color: Colors.dark.accent, fontFamily: "Inter_400Regular",
+                    lineHeight: 17 }} numberOfLines={3}>
+                    {livingShieldData.currentDestination}
+                  </Text>
+                </View>
+
+                <Pressable onPress={handleLivingShieldProceed}
+                  style={[styles.safetyBackBtn, { backgroundColor: "#FBBF24", gap: 8 }]}>
+                  <Ionicons name="open-outline" size={16} color="#000" />
+                  <Text style={[styles.safetyBackBtnText]}>Open Destination</Text>
+                </Pressable>
+                <Pressable onPress={handleLivingShieldCancel} style={[styles.safetyProceedBtn, { marginTop: 8 }]}>
+                  <Text style={styles.safetyProceedBtnText}>Cancel</Text>
+                  <Ionicons name="close" size={16} color={Colors.dark.textMuted} />
+                </Pressable>
+              </>
+            ) : (
+              <>
+                <View style={[styles.safetyBadge, { backgroundColor: "rgba(239,68,68,0.12)" }]}>
+                  <Ionicons name="shield-outline" size={32} color={Colors.dark.danger} />
+                </View>
+                <Text style={[styles.safetyTitle, { color: Colors.dark.danger }]}>
+                  {livingShieldData ? "QR Deactivated" : "Not Found"}
+                </Text>
+                <Text style={styles.safetySubtitle}>
+                  {livingShieldData
+                    ? "The owner has deactivated this QR code."
+                    : "This Living Shield QR could not be found. It may have been removed."}
+                </Text>
+                <Pressable onPress={handleLivingShieldCancel} style={[styles.safetyBackBtn, { marginTop: 8 }]}>
+                  <Ionicons name="arrow-back" size={18} color="#000" />
+                  <Text style={styles.safetyBackBtnText}>Go Back</Text>
+                </Pressable>
+              </>
+            )}
           </Reanimated.View>
         </View>
       ) : null}

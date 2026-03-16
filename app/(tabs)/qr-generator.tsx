@@ -25,7 +25,8 @@ import Animated, { FadeIn, FadeInDown } from "react-native-reanimated";
 import Colors from "@/constants/colors";
 import QRCode from "react-native-qrcode-svg";
 import { useAuth } from "@/contexts/AuthContext";
-import { saveGeneratedQr, type QrType } from "@/lib/firestore-service";
+import { saveGeneratedQr, saveGuardLink, type QrType } from "@/lib/firestore-service";
+import { getApiUrl } from "@/lib/query-client";
 
 const QR_PRESETS = [
   { label: "Text", icon: "text-outline", placeholder: "Type any text..." },
@@ -101,35 +102,55 @@ export default function QrGeneratorScreen() {
   async function handleGenerate() {
     const val = displayValue.trim();
     if (!val) { Alert.alert("Empty", "Please enter some content first."); return; }
+
     const uuid = await Crypto.digestStringAsync(
       Crypto.CryptoDigestAlgorithm.SHA256,
       val + Date.now()
     );
     const shortUuid = uuid.slice(0, 16).toUpperCase().match(/.{1,4}/g)?.join("-") || uuid.slice(0, 16);
-    setQrValue(val);
+
+    const isBusinessMode = qrMode === "business" && isBranded && !!user;
+
+    let encodedValue = val;
+    if (isBusinessMode) {
+      const base = getApiUrl().replace(/\/$/, "");
+      encodedValue = `${base}/guard/${shortUuid}`;
+    }
+
+    setQrValue(encodedValue);
     setGeneratedUuid(isBranded ? shortUuid : null);
     setGeneratedAt(new Date());
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+
     if (isBranded && user) {
       setSaving(true);
       setSavedToProfile(false);
       try {
         const qt: QrType = qrMode === "business" ? "business" : "individual";
         const logoToStore = qrMode === "business" && customLogoBase64 ? customLogoBase64 : null;
+        const bName = qrMode === "business" ? (businessName.trim() || null) : null;
+
+        if (isBusinessMode) {
+          await saveGuardLink(shortUuid, val, bName, user.displayName, user.id);
+        }
+
         await saveGeneratedQr(
           user.id,
           user.displayName,
-          val,
-          getContentType(selectedPreset),
+          encodedValue,
+          "url",
           shortUuid,
           true,
           qt,
-          qrMode === "business" ? (businessName.trim() || null) : null,
-          logoToStore
+          bName,
+          logoToStore,
+          isBusinessMode ? shortUuid : null
         );
         setSavedToProfile(true);
         setTimeout(() => setSavedToProfile(false), 4000);
-      } catch {}
+      } catch (err: any) {
+        Alert.alert("Error", err?.message || "Could not save QR code. Please try again.");
+      }
       setSaving(false);
     }
   }
@@ -295,9 +316,9 @@ export default function QrGeneratorScreen() {
             </View>
           ) : qrMode === "business" && user ? (
             <View style={[styles.brandedBanner, { borderColor: "#FBBF2440", backgroundColor: "#FBBF2410" }]}>
-              <Ionicons name="storefront" size={14} color="#FBBF24" />
+              <Ionicons name="shield" size={14} color="#FBBF24" />
               <Text style={[styles.brandedBannerText, { color: "#FBBF24" }]}>
-                Business mode — link your store or organisation to this QR code
+                Living Shield — QR encodes a redirect you can update anytime without reprinting
               </Text>
             </View>
           ) : qrMode === "private" ? (
@@ -353,18 +374,19 @@ export default function QrGeneratorScreen() {
 
         {/* Input */}
         <Animated.View entering={FadeInDown.duration(400).delay(140)}>
-          <Text style={styles.sectionLabel}>Content</Text>
+          <Text style={styles.sectionLabel}>{qrMode === "business" && isBranded ? "Destination URL" : "Content"}</Text>
           <View style={styles.inputCard}>
             <TextInput
               style={styles.textInput}
               value={inputValue}
               onChangeText={setInputValue}
-              placeholder={QR_PRESETS[selectedPreset].placeholder}
+              placeholder={qrMode === "business" && isBranded ? "https://your-website.com" : QR_PRESETS[selectedPreset].placeholder}
               placeholderTextColor={Colors.dark.textMuted}
               multiline={selectedPreset === 0 || selectedPreset === 4}
               maxLength={500}
               autoCapitalize="none"
               autoCorrect={false}
+              keyboardType={qrMode === "business" && isBranded ? "url" : "default"}
             />
             {inputValue.length > 0 ? (
               <Pressable onPress={handleClear} style={styles.clearBtn}>
@@ -527,12 +549,21 @@ export default function QrGeneratorScreen() {
                     </View>
                   ) : null}
                 </View>
-                <View style={styles.ownershipNote}>
-                  <Ionicons name="lock-closed" size={12} color={Colors.dark.primary} />
-                  <Text style={styles.ownershipNoteText}>
-                    This QR is registered to your account. Only you can manage its comments and view followers.
-                  </Text>
-                </View>
+                {qrMode === "business" ? (
+                  <View style={[styles.ownershipNote, { borderColor: "#FBBF2430", backgroundColor: "#FBBF2408" }]}>
+                    <Ionicons name="shield" size={12} color="#FBBF24" />
+                    <Text style={[styles.ownershipNoteText, { color: "#FBBF24" }]}>
+                      Living Shield active — update the destination anytime from My QR Codes without reprinting.
+                    </Text>
+                  </View>
+                ) : (
+                  <View style={styles.ownershipNote}>
+                    <Ionicons name="lock-closed" size={12} color={Colors.dark.primary} />
+                    <Text style={styles.ownershipNoteText}>
+                      This QR is registered to your account. Only you can manage its comments and view followers.
+                    </Text>
+                  </View>
+                )}
               </View>
             ) : privateMode ? (
               <View style={styles.privateFooter}>

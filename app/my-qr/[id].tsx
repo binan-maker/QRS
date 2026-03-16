@@ -39,8 +39,11 @@ import {
   addComment,
   ownerHideComment,
   softDeleteComment,
+  getGuardLink,
+  updateGuardLinkDestination,
   type GeneratedQrItem,
   type CommentItem,
+  type GuardLink,
 } from "@/lib/firestore-service";
 
 function SkeletonBox({ width, height = 12, borderRadius = 8, style }: { width?: any; height?: number; borderRadius?: number; style?: any }) {
@@ -150,6 +153,12 @@ export default function MyQrDetailScreen() {
   const [deactivateModalOpen, setDeactivateModalOpen] = useState(false);
   const [deactivationMsgInput, setDeactivationMsgInput] = useState("");
 
+  // Living Shield state
+  const [guardLink, setGuardLink] = useState<GuardLink | null>(null);
+  const [editingDestination, setEditingDestination] = useState(false);
+  const [newDestination, setNewDestination] = useState("");
+  const [savingDestination, setSavingDestination] = useState(false);
+
   const topInset = Platform.OS === "web" ? 67 : insets.top;
   const bottomInset = insets.bottom;
 
@@ -183,6 +192,33 @@ export default function MyQrDetailScreen() {
     });
     return unsub;
   }, [qrItem?.qrCodeId]);
+
+  useEffect(() => {
+    if (!qrItem?.guardUuid) { setGuardLink(null); return; }
+    getGuardLink(qrItem.guardUuid).then((link) => {
+      setGuardLink(link);
+      if (link) setNewDestination(link.currentDestination);
+    });
+  }, [qrItem?.guardUuid]);
+
+  async function handleUpdateDestination() {
+    if (!user || !qrItem?.guardUuid || !newDestination.trim()) return;
+    const dest = newDestination.trim().startsWith("http") ? newDestination.trim() : `https://${newDestination.trim()}`;
+    setSavingDestination(true);
+    try {
+      await updateGuardLinkDestination(qrItem.guardUuid, dest, user.id);
+      const refreshed = await getGuardLink(qrItem.guardUuid);
+      setGuardLink(refreshed);
+      setNewDestination(refreshed?.currentDestination || dest);
+      setEditingDestination(false);
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      Alert.alert("Updated!", "Destination changed. Scanners will see a 24-hour caution notice while trust rebuilds.");
+    } catch (err: any) {
+      Alert.alert("Error", err?.message || "Could not update destination. Try again.");
+    } finally {
+      setSavingDestination(false);
+    }
+  }
 
   async function handleSaveDesign() {
     if (!user || !qrItem) return;
@@ -483,6 +519,111 @@ export default function MyQrDetailScreen() {
               </View>
             </View>
           </Animated.View>
+
+          {/* Living Shield — only for Business QRs with a guardUuid */}
+          {qrItem.qrType === "business" && qrItem.guardUuid && (
+            <Animated.View entering={FadeInDown.duration(400).delay(70)}>
+              <View style={[styles.metaCard, { marginTop: 0, borderColor: "#FBBF2430" }]}>
+                <View style={{ flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 12 }}>
+                  <View style={{ backgroundColor: "#FBBF2418", borderRadius: 8, padding: 6 }}>
+                    <Ionicons name="shield" size={16} color="#FBBF24" />
+                  </View>
+                  <Text style={[styles.sectionLabel, { color: "#FBBF24", marginBottom: 0 }]}>LIVING SHIELD</Text>
+                  {guardLink?.destinationChangedAt &&
+                    (Date.now() - new Date(guardLink.destinationChangedAt).getTime()) < 86400000 && (
+                    <View style={{ flexDirection: "row", alignItems: "center", gap: 4,
+                      backgroundColor: "#d9770618", borderRadius: 8, paddingHorizontal: 8, paddingVertical: 3 }}>
+                      <Ionicons name="warning-outline" size={11} color="#f97316" />
+                      <Text style={{ fontSize: 10, color: "#f97316", fontFamily: "Inter_600SemiBold" }}>Caution Active</Text>
+                    </View>
+                  )}
+                </View>
+
+                {guardLink ? (
+                  <>
+                    <Text style={[styles.metaLabel, { marginBottom: 4 }]}>Current Destination</Text>
+                    {editingDestination ? (
+                      <View style={{ gap: 8 }}>
+                        <TextInput
+                          value={newDestination}
+                          onChangeText={setNewDestination}
+                          placeholder="https://your-new-destination.com"
+                          placeholderTextColor={Colors.dark.textMuted}
+                          autoCapitalize="none"
+                          autoCorrect={false}
+                          keyboardType="url"
+                          style={{
+                            backgroundColor: Colors.dark.background,
+                            borderRadius: 10, borderWidth: 1, borderColor: "#FBBF2450",
+                            color: Colors.dark.text, fontFamily: "Inter_400Regular",
+                            fontSize: 13, padding: 10,
+                          }}
+                        />
+                        <View style={{ flexDirection: "row", gap: 8 }}>
+                          <Pressable
+                            onPress={handleUpdateDestination}
+                            disabled={savingDestination || !newDestination.trim()}
+                            style={[{ flex: 1, flexDirection: "row", alignItems: "center", justifyContent: "center",
+                              gap: 6, backgroundColor: "#FBBF24", borderRadius: 10, paddingVertical: 10 },
+                              { opacity: savingDestination ? 0.6 : 1 }]}
+                          >
+                            {savingDestination
+                              ? <ActivityIndicator size={14} color="#000" />
+                              : <Ionicons name="checkmark" size={16} color="#000" />}
+                            <Text style={{ fontSize: 13, fontFamily: "Inter_700Bold", color: "#000" }}>Save</Text>
+                          </Pressable>
+                          <Pressable
+                            onPress={() => { setEditingDestination(false); setNewDestination(guardLink.currentDestination); }}
+                            style={{ paddingHorizontal: 16, paddingVertical: 10, backgroundColor: Colors.dark.surfaceLight,
+                              borderRadius: 10, alignItems: "center", justifyContent: "center" }}
+                          >
+                            <Text style={{ fontSize: 13, fontFamily: "Inter_500Medium", color: Colors.dark.textSecondary }}>Cancel</Text>
+                          </Pressable>
+                        </View>
+                        <Text style={{ fontSize: 11, color: Colors.dark.textMuted, fontFamily: "Inter_400Regular", lineHeight: 16 }}>
+                          Changing the destination triggers a 24-hour caution period. Previous positive reviews remain visible but clearly labelled as pre-change.
+                        </Text>
+                      </View>
+                    ) : (
+                      <View style={{ gap: 8 }}>
+                        <View style={{ backgroundColor: Colors.dark.background, borderRadius: 10,
+                          borderWidth: 1, borderColor: Colors.dark.surfaceBorder, padding: 10 }}>
+                          <Text style={{ fontSize: 13, color: Colors.dark.accent, fontFamily: "Inter_400Regular",
+                            lineHeight: 18 }} numberOfLines={3}>
+                            {guardLink.currentDestination}
+                          </Text>
+                        </View>
+                        {guardLink.previousDestination ? (
+                          <Text style={{ fontSize: 11, color: Colors.dark.textMuted, fontFamily: "Inter_400Regular" }}>
+                            Previous: {guardLink.previousDestination.length > 50
+                              ? guardLink.previousDestination.slice(0, 50) + "…"
+                              : guardLink.previousDestination}
+                          </Text>
+                        ) : null}
+                        <Pressable
+                          onPress={() => setEditingDestination(true)}
+                          style={({ pressed }) => [{
+                            flexDirection: "row" as const, alignItems: "center" as const, gap: 6,
+                            backgroundColor: "#FBBF2418", borderRadius: 10,
+                            borderWidth: 1, borderColor: "#FBBF2440",
+                            paddingHorizontal: 12, paddingVertical: 8, alignSelf: "flex-start" as const,
+                            opacity: pressed ? 0.7 : 1,
+                          }]}
+                        >
+                          <Ionicons name="pencil" size={13} color="#FBBF24" />
+                          <Text style={{ fontSize: 12, fontFamily: "Inter_600SemiBold", color: "#FBBF24" }}>Update Destination</Text>
+                        </Pressable>
+                      </View>
+                    )}
+                  </>
+                ) : (
+                  <Text style={{ fontSize: 13, color: Colors.dark.textMuted, fontFamily: "Inter_400Regular" }}>
+                    Loading guard link…
+                  </Text>
+                )}
+              </View>
+            </Animated.View>
+          )}
 
           {/* Activate / Deactivate — only for branded QRs */}
           {qrItem.branded && qrItem.qrType !== "government" && (
