@@ -1084,13 +1084,52 @@ export default function QrDetailScreen() {
             {/* Branded QR Owner Card */}
             {ownerInfo && !offlineMode && (
               <Animated.View entering={FadeInDown.duration(400)}>
+                {ownerInfo.isActive === false && (
+                  <View style={styles.deactivatedBanner}>
+                    <Ionicons name="pause-circle" size={18} color={Colors.dark.danger} />
+                    <View style={{ flex: 1 }}>
+                      <Text style={styles.deactivatedBannerTitle}>QR Code Deactivated</Text>
+                      <Text style={styles.deactivatedBannerMsg} numberOfLines={3}>
+                        {ownerInfo.deactivationMessage || "This QR code has been deactivated by the owner."}
+                      </Text>
+                    </View>
+                  </View>
+                )}
                 <View style={styles.ownerCard}>
                   <View style={styles.ownerCardLeft}>
-                    <View style={styles.ownerVerifiedIcon}>
-                      <Ionicons name="shield-checkmark" size={18} color={Colors.dark.primary} />
+                    <View style={[
+                      styles.ownerVerifiedIcon,
+                      ownerInfo.qrType === "business" && { backgroundColor: "#FBBF2420" },
+                      ownerInfo.qrType === "government" && { backgroundColor: "#3B82F620" },
+                    ]}>
+                      <Ionicons
+                        name={ownerInfo.qrType === "business" ? "storefront" : ownerInfo.qrType === "government" ? "flag" : "shield-checkmark"}
+                        size={18}
+                        color={ownerInfo.qrType === "business" ? "#FBBF24" : ownerInfo.qrType === "government" ? "#3B82F6" : Colors.dark.primary}
+                      />
                     </View>
                     <View style={{ flex: 1, minWidth: 0 }}>
-                      <Text style={styles.ownerCardTitle}>Branded QR Code</Text>
+                      <View style={{ flexDirection: "row", alignItems: "center", gap: 6, marginBottom: 2 }}>
+                        <Text style={styles.ownerCardTitle}>
+                          {ownerInfo.qrType === "business" ? "Business QR" : ownerInfo.qrType === "government" ? "Government QR" : "Branded QR Code"}
+                        </Text>
+                        <View style={[
+                          styles.qrTypeBadge,
+                          ownerInfo.qrType === "business" && { backgroundColor: "#FBBF2420", borderColor: "#FBBF2440" },
+                          ownerInfo.qrType === "government" && { backgroundColor: "#3B82F620", borderColor: "#3B82F640" },
+                        ]}>
+                          <Text style={[
+                            styles.qrTypeBadgeText,
+                            ownerInfo.qrType === "business" && { color: "#FBBF24" },
+                            ownerInfo.qrType === "government" && { color: "#3B82F6" },
+                          ]}>
+                            {ownerInfo.qrType === "business" ? "BUSINESS" : ownerInfo.qrType === "government" ? "GOVERNMENT" : "INDIVIDUAL"}
+                          </Text>
+                        </View>
+                      </View>
+                      {ownerInfo.businessName ? (
+                        <Text style={styles.businessNameText} numberOfLines={1}>{ownerInfo.businessName}</Text>
+                      ) : null}
                       <Text style={styles.ownerCardSub} numberOfLines={1}>
                         Created by <Text style={styles.ownerName}>{ownerInfo.ownerName}</Text>
                       </Text>
@@ -1268,16 +1307,16 @@ export default function QrDetailScreen() {
                 </View>
                 <Text style={styles.contentText} selectable numberOfLines={4}>{currentContent}</Text>
 
-                {/* URL open button */}
-                {(currentContentType === "url") ? (
+                {/* URL open button — hidden when deactivated */}
+                {(currentContentType === "url") && ownerInfo?.isActive !== false ? (
                   <Pressable onPress={handleOpenContent} style={({ pressed }) => [styles.openBtn, { opacity: pressed ? 0.8 : 1 }]}>
                     <Ionicons name="open-outline" size={16} color={Colors.dark.primary} />
                     <Text style={styles.openBtnText}>Open Link</Text>
                   </Pressable>
                 ) : null}
 
-                {/* Universal Payment Details Card */}
-                {currentContentType === "payment" && parsedPayment ? (
+                {/* Universal Payment Details Card — hidden when deactivated */}
+                {currentContentType === "payment" && parsedPayment && ownerInfo?.isActive !== false ? (
                   <View style={styles.upiDetailsCard}>
                     {/* App + Region badge */}
                     <View style={[styles.upiRow, { marginBottom: 8 }]}>
@@ -1378,7 +1417,7 @@ export default function QrDetailScreen() {
                         : "Always verify the recipient before sending money"}
                     </Text>
                   </View>
-                ) : currentContentType === "payment" ? (
+                ) : currentContentType === "payment" && ownerInfo?.isActive !== false ? (
                   <View style={styles.paymentActions}>
                     <Pressable onPress={handleOpenContent} style={({ pressed }) => [styles.paymentBtn, { opacity: pressed ? 0.8 : 1 }]}>
                       <Ionicons name="card-outline" size={18} color="#000" />
@@ -2077,6 +2116,21 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.dark.safeDim, paddingHorizontal: 8, paddingVertical: 4, borderRadius: 10,
   },
   verifiedOnlyText: { fontSize: 11, fontFamily: "Inter_700Bold", color: Colors.dark.safe },
+
+  qrTypeBadge: {
+    paddingHorizontal: 6, paddingVertical: 2, borderRadius: 6,
+    backgroundColor: Colors.dark.primaryDim, borderWidth: 1, borderColor: Colors.dark.primary + "40",
+  },
+  qrTypeBadgeText: { fontSize: 9, fontFamily: "Inter_700Bold", color: Colors.dark.primary, letterSpacing: 0.5 },
+  businessNameText: { fontSize: 13, fontFamily: "Inter_700Bold", color: Colors.dark.text, marginBottom: 2 },
+
+  deactivatedBanner: {
+    flexDirection: "row", alignItems: "flex-start", gap: 10,
+    backgroundColor: Colors.dark.dangerDim, borderRadius: 14, padding: 14,
+    borderWidth: 1, borderColor: Colors.dark.danger + "50", marginBottom: 10,
+  },
+  deactivatedBannerTitle: { fontSize: 14, fontFamily: "Inter_700Bold", color: Colors.dark.danger, marginBottom: 2 },
+  deactivatedBannerMsg: { fontSize: 13, fontFamily: "Inter_400Regular", color: Colors.dark.textSecondary },
 
   // Message owner button
   messageOwnerBtn: {

@@ -34,6 +34,8 @@ import * as Crypto from "expo-crypto";
 
 export const SIGNATURE_SALT = "QRG_MINT_VERIFIED_2024_PROPRIETARY";
 
+export type QrType = "individual" | "business" | "government";
+
 export interface QrCodeData {
   id: string;
   content: string;
@@ -47,6 +49,10 @@ export interface QrCodeData {
   isBranded?: boolean;
   signature?: string;
   ownerVerified?: boolean;
+  qrType?: QrType;
+  isActive?: boolean;
+  deactivationMessage?: string | null;
+  businessName?: string | null;
 }
 
 export interface QrOwnerInfo {
@@ -56,6 +62,10 @@ export interface QrOwnerInfo {
   isBranded: boolean;
   signature?: string;
   ownerVerified?: boolean;
+  qrType?: QrType;
+  isActive?: boolean;
+  deactivationMessage?: string | null;
+  businessName?: string | null;
 }
 
 export interface ScanVelocityBucket {
@@ -1024,46 +1034,54 @@ export async function saveGeneratedQr(
   content: string,
   contentType: string,
   uuid: string,
-  branded: boolean
+  branded: boolean,
+  qrType: QrType = "individual",
+  businessName?: string | null
 ): Promise<void> {
-  try {
-    const qrId = await getQrCodeId(content);
-    await addDoc(collection(firestore, "users", userId, "generatedQrs"), {
-      content,
-      contentType,
-      uuid,
-      branded,
-      qrCodeId: qrId,
-      createdAt: serverTimestamp(),
-    });
-    if (branded) {
-      const qrRef = doc(firestore, "qrCodes", qrId);
-      const snap = await getDoc(qrRef);
-      if (snap.exists()) {
-        const data = snap.data();
-        if (!data.ownerId) {
-          await updateDoc(qrRef, {
-            ownerId: userId,
-            ownerName: displayName,
-            brandedUuid: uuid,
-            isBranded: true,
-          });
-        }
-      } else {
-        await setDoc(qrRef, {
-          content,
-          contentType,
-          createdAt: serverTimestamp(),
-          scanCount: 0,
-          commentCount: 0,
+  const qrId = await getQrCodeId(content);
+  await addDoc(collection(firestore, "users", userId, "generatedQrs"), {
+    content,
+    contentType,
+    uuid,
+    branded,
+    qrCodeId: qrId,
+    qrType,
+    businessName: businessName || null,
+    createdAt: serverTimestamp(),
+  });
+  if (branded) {
+    const qrRef = doc(firestore, "qrCodes", qrId);
+    const snap = await getDoc(qrRef);
+    if (snap.exists()) {
+      const data = snap.data();
+      if (!data.ownerId) {
+        await updateDoc(qrRef, {
           ownerId: userId,
           ownerName: displayName,
           brandedUuid: uuid,
           isBranded: true,
+          qrType,
+          isActive: true,
+          businessName: businessName || null,
         });
       }
+    } else {
+      await setDoc(qrRef, {
+        content,
+        contentType,
+        createdAt: serverTimestamp(),
+        scanCount: 0,
+        commentCount: 0,
+        ownerId: userId,
+        ownerName: displayName,
+        brandedUuid: uuid,
+        isBranded: true,
+        qrType,
+        isActive: true,
+        businessName: businessName || null,
+      });
     }
-  } catch {}
+  }
 }
 
 export interface GeneratedQrItem {
@@ -1080,20 +1098,22 @@ export interface GeneratedQrItem {
   logoUri: string | null;
   scanCount: number;
   commentCount: number;
+  qrType: QrType;
+  isActive: boolean;
+  deactivationMessage: string | null;
+  businessName: string | null;
 }
 
 export async function getUserGeneratedQrs(userId: string): Promise<GeneratedQrItem[]> {
   try {
-    const q = query(
-      collection(firestore, "users", userId, "generatedQrs"),
-      orderBy("createdAt", "desc")
-    );
-    const snap = await getDocs(q);
+    const snap = await getDocs(collection(firestore, "users", userId, "generatedQrs"));
     const items: GeneratedQrItem[] = [];
     for (const d of snap.docs) {
       const data = d.data();
       let scanCount = 0;
       let commentCount = 0;
+      let isActive = true;
+      let deactivationMessage: string | null = null;
       if (data.qrCodeId) {
         try {
           const qrSnap = await getDoc(doc(firestore, "qrCodes", data.qrCodeId));
@@ -1101,6 +1121,8 @@ export async function getUserGeneratedQrs(userId: string): Promise<GeneratedQrIt
             const qrData = qrSnap.data();
             scanCount = qrData.scanCount || 0;
             commentCount = qrData.commentCount || 0;
+            isActive = qrData.isActive !== false;
+            deactivationMessage = qrData.deactivationMessage || null;
           }
         } catch {}
       }
@@ -1109,7 +1131,7 @@ export async function getUserGeneratedQrs(userId: string): Promise<GeneratedQrIt
         content: data.content || "",
         contentType: data.contentType || "text",
         uuid: data.uuid || "",
-        branded: data.branded || false,
+        branded: data.branded !== false,
         qrCodeId: data.qrCodeId || "",
         createdAt: tsToString(data.createdAt),
         fgColor: data.fgColor || "#0A0E17",
@@ -1118,10 +1140,16 @@ export async function getUserGeneratedQrs(userId: string): Promise<GeneratedQrIt
         logoUri: data.logoUri || null,
         scanCount,
         commentCount,
+        qrType: (data.qrType as QrType) || "individual",
+        isActive,
+        deactivationMessage,
+        businessName: data.businessName || null,
       });
     }
+    items.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
     return items;
-  } catch {
+  } catch (e) {
+    console.warn("[firestore] getUserGeneratedQrs failed:", e);
     return [];
   }
 }
@@ -1271,10 +1299,32 @@ export async function getQrOwnerInfo(qrId: string): Promise<QrOwnerInfo | null> 
       isBranded: true,
       signature: d.signature,
       ownerVerified: d.ownerVerified || false,
+      qrType: (d.qrType as QrType) || "individual",
+      isActive: d.isActive !== false,
+      deactivationMessage: d.deactivationMessage || null,
+      businessName: d.businessName || null,
     };
   } catch {
     return null;
   }
+}
+
+export async function setQrActiveState(
+  qrId: string,
+  userId: string,
+  isActive: boolean,
+  deactivationMessage: string | null
+): Promise<void> {
+  const qrRef = doc(firestore, "qrCodes", qrId);
+  const snap = await getDoc(qrRef);
+  if (!snap.exists()) throw new Error("QR code not found");
+  const data = snap.data();
+  if (data.qrType === "government") throw new Error("Government QR codes cannot be modified");
+  if (data.ownerId !== userId) throw new Error("Only the owner can modify this QR code");
+  await updateDoc(qrRef, {
+    isActive,
+    deactivationMessage: isActive ? null : (deactivationMessage?.trim().slice(0, 100) || null),
+  });
 }
 
 export async function getQrFollowersList(qrId: string): Promise<FollowerInfo[]> {

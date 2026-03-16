@@ -62,7 +62,7 @@ export default function ProfileScreen() {
       ]);
       setStats(s);
       if (photo) setPhotoURL(photo);
-      setMyQrCodes(qrs.filter((q) => q.branded));
+      setMyQrCodes(qrs);
     } catch {}
     setStatsLoading(false);
     setMyQrLoading(false);
@@ -343,12 +343,26 @@ export default function ProfileScreen() {
                     />
                   </View>
                   <View style={styles.myQrCardInfo}>
-                    <View style={styles.myQrCardUuidRow}>
-                      <Ionicons name="shield-checkmark" size={10} color={Colors.dark.safe} />
+                    <View style={{ flexDirection: "row", alignItems: "center", gap: 5, marginBottom: 2 }}>
+                      {qr.branded ? (
+                        <Ionicons
+                          name={qr.qrType === "business" ? "storefront" : qr.qrType === "government" ? "flag" : "shield-checkmark"}
+                          size={10}
+                          color={qr.qrType === "business" ? "#FBBF24" : qr.qrType === "government" ? "#3B82F6" : Colors.dark.safe}
+                        />
+                      ) : null}
                       <Text style={styles.myQrCardUuid} numberOfLines={1}>
-                        {qr.uuid || "Branded"}
+                        {qr.branded ? (qr.uuid || "Branded") : "Private"}
                       </Text>
+                      {qr.branded && !qr.isActive && (
+                        <View style={styles.myQrInactiveBadge}>
+                          <Text style={styles.myQrInactiveBadgeText}>OFF</Text>
+                        </View>
+                      )}
                     </View>
+                    {qr.businessName ? (
+                      <Text style={styles.myQrBusinessName} numberOfLines={1}>{qr.businessName}</Text>
+                    ) : null}
                     <Text style={styles.myQrCardContent} numberOfLines={2}>
                       {qr.content.length > 36 ? qr.content.slice(0, 36) + "…" : qr.content}
                     </Text>
@@ -635,6 +649,12 @@ const styles = StyleSheet.create({
   myQrCardContent: { fontSize: 12, fontFamily: "Inter_400Regular", color: Colors.dark.textSecondary, lineHeight: 16, marginBottom: 6 },
   myQrCardStats: { flexDirection: "row", gap: 10 },
   myQrStat: { flexDirection: "row", alignItems: "center", gap: 3 },
+  myQrInactiveBadge: {
+    backgroundColor: Colors.dark.dangerDim, borderRadius: 4, paddingHorizontal: 4, paddingVertical: 1,
+    borderWidth: 1, borderColor: Colors.dark.danger + "40",
+  },
+  myQrInactiveBadgeText: { fontSize: 8, fontFamily: "Inter_700Bold", color: Colors.dark.danger },
+  myQrBusinessName: { fontSize: 11, fontFamily: "Inter_700Bold", color: Colors.dark.text, marginBottom: 2 },
   myQrStatText: { fontSize: 11, fontFamily: "Inter_500Medium", color: Colors.dark.textMuted },
 
   modalOverlay: {

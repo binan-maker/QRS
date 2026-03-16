@@ -10,6 +10,7 @@ import {
   Platform,
   Alert,
   Image,
+  Modal,
   KeyboardAvoidingView,
 } from "react-native";
 import { useLocalSearchParams, router } from "expo-router";
@@ -24,6 +25,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import {
   getUserGeneratedQrs,
   updateQrDesign,
+  setQrActiveState,
   subscribeToComments,
   addComment,
   ownerHideComment,
@@ -112,6 +114,10 @@ export default function MyQrDetailScreen() {
   const [replyTo, setReplyTo] = useState<{ id: string; author: string } | null>(null);
   const [submittingComment, setSubmittingComment] = useState(false);
   const [expandedReplies, setExpandedReplies] = useState<Record<string, boolean>>({});
+
+  const [togglingActive, setTogglingActive] = useState(false);
+  const [deactivateModalOpen, setDeactivateModalOpen] = useState(false);
+  const [deactivationMsgInput, setDeactivationMsgInput] = useState("");
 
   const topInset = Platform.OS === "web" ? 67 : insets.top;
   const bottomInset = insets.bottom;
@@ -224,6 +230,44 @@ export default function MyQrDetailScreen() {
         },
       ]
     );
+  }
+
+  async function handleToggleActive(newState: boolean) {
+    if (!user || !qrItem?.qrCodeId) return;
+    if (qrItem.qrType === "government") {
+      Alert.alert("Permanent QR", "Government QR codes cannot be deactivated.");
+      return;
+    }
+    if (!newState) {
+      setDeactivationMsgInput(qrItem.deactivationMessage || "");
+      setDeactivateModalOpen(true);
+      return;
+    }
+    setTogglingActive(true);
+    try {
+      await setQrActiveState(qrItem.qrCodeId, user.id, true, null);
+      setQrItem({ ...qrItem, isActive: true, deactivationMessage: null });
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    } catch (e: any) {
+      Alert.alert("Error", e?.message || "Could not update QR code.");
+    } finally {
+      setTogglingActive(false);
+    }
+  }
+
+  async function handleConfirmDeactivate() {
+    if (!user || !qrItem?.qrCodeId) return;
+    setDeactivateModalOpen(false);
+    setTogglingActive(true);
+    try {
+      await setQrActiveState(qrItem.qrCodeId, user.id, false, deactivationMsgInput.trim() || null);
+      setQrItem({ ...qrItem, isActive: false, deactivationMessage: deactivationMsgInput.trim() || null });
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+    } catch (e: any) {
+      Alert.alert("Error", e?.message || "Could not update QR code.");
+    } finally {
+      setTogglingActive(false);
+    }
   }
 
   const topLevelComments = comments.filter((c) => !c.parentId);
@@ -367,6 +411,47 @@ export default function MyQrDetailScreen() {
               </View>
             </View>
           </Animated.View>
+
+          {/* Activate / Deactivate — only for branded QRs */}
+          {qrItem.branded && qrItem.qrType !== "government" && (
+            <Animated.View entering={FadeInDown.duration(400).delay(80)}>
+              <View style={[styles.metaCard, { marginTop: 0 }]}>
+                <Text style={styles.sectionLabel}>STATUS CONTROL</Text>
+                {!qrItem.isActive && qrItem.deactivationMessage ? (
+                  <Text style={styles.deactivationMsg} numberOfLines={3}>
+                    "{qrItem.deactivationMessage}"
+                  </Text>
+                ) : null}
+                <View style={styles.activeRow}>
+                  <View style={{ flex: 1 }}>
+                    <Text style={[styles.activeStatusLabel, { color: qrItem.isActive ? Colors.dark.safe : Colors.dark.danger }]}>
+                      {qrItem.isActive ? "Active — people can scan and follow links" : "Deactivated — links are hidden for scanners"}
+                    </Text>
+                  </View>
+                  <Pressable
+                    onPress={() => handleToggleActive(!qrItem.isActive)}
+                    disabled={togglingActive}
+                    style={[styles.toggleActiveBtn, qrItem.isActive ? styles.toggleActiveBtnOn : styles.toggleActiveBtnOff]}
+                  >
+                    {togglingActive ? (
+                      <ActivityIndicator size={14} color="#fff" />
+                    ) : (
+                      <>
+                        <Ionicons
+                          name={qrItem.isActive ? "pause-circle" : "play-circle"}
+                          size={16}
+                          color="#fff"
+                        />
+                        <Text style={styles.toggleActiveBtnText}>
+                          {qrItem.isActive ? "Deactivate" : "Activate"}
+                        </Text>
+                      </>
+                    )}
+                  </Pressable>
+                </View>
+              </View>
+            </Animated.View>
+          )}
 
           {/* Design Editor */}
           <Animated.View entering={FadeInDown.duration(400).delay(100)}>
@@ -629,6 +714,37 @@ export default function MyQrDetailScreen() {
           </View>
         </View>
       </KeyboardAvoidingView>
+
+      {/* Deactivation message modal */}
+      <Modal visible={deactivateModalOpen} transparent animationType="fade" onRequestClose={() => setDeactivateModalOpen(false)}>
+        <View style={styles.modalOverlay}>
+          <View style={styles.deactivateModal}>
+            <Text style={styles.deactivateModalTitle}>Deactivate QR Code</Text>
+            <Text style={styles.deactivateModalSub}>
+              Scanners will not see any links or actions. You can add an optional message (max 100 chars).
+            </Text>
+            <TextInput
+              style={styles.deactivateModalInput}
+              placeholder="Optional message to show scanners…"
+              placeholderTextColor={Colors.dark.textMuted}
+              value={deactivationMsgInput}
+              onChangeText={(t) => setDeactivationMsgInput(t.slice(0, 100))}
+              multiline
+              maxLength={100}
+            />
+            <Text style={styles.charCount}>{deactivationMsgInput.length}/100</Text>
+            <View style={styles.deactivateModalBtns}>
+              <Pressable style={styles.deactivateCancelBtn} onPress={() => setDeactivateModalOpen(false)}>
+                <Text style={styles.deactivateCancelText}>Cancel</Text>
+              </Pressable>
+              <Pressable style={styles.deactivateConfirmBtn} onPress={handleConfirmDeactivate}>
+                <Ionicons name="pause-circle" size={16} color="#fff" />
+                <Text style={styles.deactivateConfirmText}>Deactivate</Text>
+              </Pressable>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -839,4 +955,49 @@ const styles = StyleSheet.create({
     width: 38, height: 38, borderRadius: 19,
     backgroundColor: Colors.dark.primary, alignItems: "center", justifyContent: "center",
   },
+
+  activeRow: { flexDirection: "row", alignItems: "center", gap: 12, marginTop: 8 },
+  activeStatusLabel: { fontSize: 13, fontFamily: "Inter_500Medium" },
+  deactivationMsg: {
+    fontSize: 13, fontFamily: "Inter_400Regular", color: Colors.dark.textMuted,
+    fontStyle: "italic", marginBottom: 10,
+  },
+  toggleActiveBtn: {
+    flexDirection: "row", alignItems: "center", gap: 6,
+    paddingHorizontal: 14, paddingVertical: 9, borderRadius: 12,
+  },
+  toggleActiveBtnOn: { backgroundColor: Colors.dark.danger },
+  toggleActiveBtnOff: { backgroundColor: Colors.dark.safe },
+  toggleActiveBtnText: { fontSize: 13, fontFamily: "Inter_600SemiBold", color: "#fff" },
+  charCount: { fontSize: 11, color: Colors.dark.textMuted, textAlign: "right", marginBottom: 12 },
+
+  modalOverlay: {
+    flex: 1, backgroundColor: "rgba(0,0,0,0.7)",
+    alignItems: "center", justifyContent: "center", padding: 24,
+  },
+  deactivateModal: {
+    backgroundColor: Colors.dark.surface, borderRadius: 20,
+    borderWidth: 1, borderColor: Colors.dark.surfaceBorder, padding: 24, width: "100%",
+  },
+  deactivateModalTitle: { fontSize: 17, fontFamily: "Inter_700Bold", color: Colors.dark.text, marginBottom: 6 },
+  deactivateModalSub: { fontSize: 13, fontFamily: "Inter_400Regular", color: Colors.dark.textMuted, marginBottom: 16 },
+  deactivateModalInput: {
+    backgroundColor: Colors.dark.surfaceLight, borderRadius: 12,
+    borderWidth: 1, borderColor: Colors.dark.surfaceBorder,
+    padding: 12, fontSize: 14, fontFamily: "Inter_400Regular", color: Colors.dark.text,
+    minHeight: 64, textAlignVertical: "top",
+  },
+  deactivateModalBtns: { flexDirection: "row", gap: 10 },
+  deactivateCancelBtn: {
+    flex: 1, paddingVertical: 12, borderRadius: 12,
+    backgroundColor: Colors.dark.surfaceLight, borderWidth: 1, borderColor: Colors.dark.surfaceBorder,
+    alignItems: "center",
+  },
+  deactivateCancelText: { fontSize: 14, fontFamily: "Inter_600SemiBold", color: Colors.dark.textMuted },
+  deactivateConfirmBtn: {
+    flex: 1, paddingVertical: 12, borderRadius: 12,
+    backgroundColor: Colors.dark.danger,
+    flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 6,
+  },
+  deactivateConfirmText: { fontSize: 14, fontFamily: "Inter_600SemiBold", color: "#fff" },
 });

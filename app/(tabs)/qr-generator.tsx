@@ -24,7 +24,7 @@ import Animated, { FadeIn, FadeInDown } from "react-native-reanimated";
 import Colors from "@/constants/colors";
 import QRCode from "react-native-qrcode-svg";
 import { useAuth } from "@/contexts/AuthContext";
-import { saveGeneratedQr } from "@/lib/firestore-service";
+import { saveGeneratedQr, type QrType } from "@/lib/firestore-service";
 
 const QR_PRESETS = [
   { label: "Text", icon: "text-outline", placeholder: "Type any text..." },
@@ -77,7 +77,8 @@ export default function QrGeneratorScreen() {
   const [inputValue, setInputValue] = useState("");
   const [qrValue, setQrValue] = useState("");
   const [qrSize, setQrSize] = useState(220);
-  const [privateMode, setPrivateMode] = useState(false);
+  const [qrMode, setQrMode] = useState<"individual" | "business" | "private">("individual");
+  const [businessName, setBusinessName] = useState("");
   const [customLogoUri, setCustomLogoUri] = useState<string | null>(null);
   const [logoPosition, setLogoPosition] = useState<LogoPosition>("center");
   const [generatedUuid, setGeneratedUuid] = useState<string | null>(null);
@@ -91,6 +92,7 @@ export default function QrGeneratorScreen() {
   const tabBarHeight = 60 + insets.bottom;
 
   const displayValue = buildQrContent(selectedPreset, inputValue);
+  const privateMode = qrMode === "private";
   const isBranded = !!user && !privateMode;
 
   async function handleGenerate() {
@@ -109,13 +111,16 @@ export default function QrGeneratorScreen() {
       setSaving(true);
       setSavedToProfile(false);
       try {
+        const qt: QrType = qrMode === "business" ? "business" : "individual";
         await saveGeneratedQr(
           user.id,
           user.displayName,
           val,
           getContentType(selectedPreset),
           shortUuid,
-          true
+          true,
+          qt,
+          qrMode === "business" ? (businessName.trim() || null) : null
         );
         setSavedToProfile(true);
         setTimeout(() => setSavedToProfile(false), 4000);
@@ -192,6 +197,7 @@ export default function QrGeneratorScreen() {
     setCustomLogoUri(null);
     setLogoPosition("center");
     setSavedToProfile(false);
+    setBusinessName("");
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
   }
 
@@ -221,41 +227,64 @@ export default function QrGeneratorScreen() {
       >
         {/* Mode toggle */}
         <Animated.View entering={FadeInDown.duration(400)}>
-          <View style={styles.modeRow}>
-            <Pressable
-              onPress={() => { setPrivateMode(false); Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); }}
-              style={[styles.modeBtn, !privateMode && styles.modeBtnActive]}
-            >
-              <Ionicons
-                name="shield-checkmark"
-                size={16}
-                color={!privateMode ? Colors.dark.primary : Colors.dark.textMuted}
-              />
-              <Text style={[styles.modeBtnText, !privateMode && styles.modeBtnTextActive]}>
-                {user ? "Branded" : "Standard"}
-              </Text>
-            </Pressable>
-            <Pressable
-              onPress={() => { setPrivateMode(true); Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); }}
-              style={[styles.modeBtn, privateMode && styles.modeBtnPrivate]}
-            >
-              <Ionicons
-                name="eye-off-outline"
-                size={16}
-                color={privateMode ? "#F8FAFC" : Colors.dark.textMuted}
-              />
-              <Text style={[styles.modeBtnText, privateMode && styles.modeBtnTextPrivate]}>Private</Text>
-            </Pressable>
-          </View>
+          {user ? (
+            <View style={styles.modeRow}>
+              <Pressable
+                onPress={() => { setQrMode("individual"); Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); }}
+                style={[styles.modeBtn, qrMode === "individual" && styles.modeBtnActive]}
+              >
+                <Ionicons name="person" size={15} color={qrMode === "individual" ? Colors.dark.primary : Colors.dark.textMuted} />
+                <Text style={[styles.modeBtnText, qrMode === "individual" && styles.modeBtnTextActive]}>Individual</Text>
+              </Pressable>
+              <Pressable
+                onPress={() => { setQrMode("business"); Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); }}
+                style={[styles.modeBtn, qrMode === "business" && styles.modeBtnBusiness]}
+              >
+                <Ionicons name="storefront" size={15} color={qrMode === "business" ? "#FBBF24" : Colors.dark.textMuted} />
+                <Text style={[styles.modeBtnText, qrMode === "business" && styles.modeBtnTextBusiness]}>Business</Text>
+              </Pressable>
+              <Pressable
+                onPress={() => { setQrMode("private"); Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); }}
+                style={[styles.modeBtn, qrMode === "private" && styles.modeBtnPrivate]}
+              >
+                <Ionicons name="eye-off-outline" size={15} color={qrMode === "private" ? "#F8FAFC" : Colors.dark.textMuted} />
+                <Text style={[styles.modeBtnText, qrMode === "private" && styles.modeBtnTextPrivate]}>Private</Text>
+              </Pressable>
+            </View>
+          ) : (
+            <View style={styles.modeRow}>
+              <Pressable
+                onPress={() => { setQrMode("individual"); Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); }}
+                style={[styles.modeBtn, qrMode !== "private" && styles.modeBtnActive]}
+              >
+                <Ionicons name="shield-checkmark" size={15} color={qrMode !== "private" ? Colors.dark.primary : Colors.dark.textMuted} />
+                <Text style={[styles.modeBtnText, qrMode !== "private" && styles.modeBtnTextActive]}>Standard</Text>
+              </Pressable>
+              <Pressable
+                onPress={() => { setQrMode("private"); Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); }}
+                style={[styles.modeBtn, qrMode === "private" && styles.modeBtnPrivate]}
+              >
+                <Ionicons name="eye-off-outline" size={15} color={qrMode === "private" ? "#F8FAFC" : Colors.dark.textMuted} />
+                <Text style={[styles.modeBtnText, qrMode === "private" && styles.modeBtnTextPrivate]}>Private</Text>
+              </Pressable>
+            </View>
+          )}
 
-          {!privateMode && user ? (
+          {qrMode === "individual" && user ? (
             <View style={styles.brandedBanner}>
-              <Ionicons name="shield-checkmark" size={14} color={Colors.dark.safe} />
+              <Ionicons name="person" size={14} color={Colors.dark.safe} />
               <Text style={styles.brandedBannerText}>
-                Your QR will include the QR Guard logo, a unique ID, and be saved to your account
+                Branded with your QR Guard identity — saved to your profile with a unique ID
               </Text>
             </View>
-          ) : privateMode ? (
+          ) : qrMode === "business" && user ? (
+            <View style={[styles.brandedBanner, { borderColor: "#FBBF2440", backgroundColor: "#FBBF2410" }]}>
+              <Ionicons name="storefront" size={14} color="#FBBF24" />
+              <Text style={[styles.brandedBannerText, { color: "#FBBF24" }]}>
+                Business mode — link your store or organisation to this QR code
+              </Text>
+            </View>
+          ) : qrMode === "private" ? (
             <View style={styles.privateBanner}>
               <Ionicons name="eye-off-outline" size={14} color={Colors.dark.textMuted} />
               <Text style={styles.privateBannerText}>
@@ -270,6 +299,20 @@ export default function QrGeneratorScreen() {
               </Text>
               <Ionicons name="chevron-forward" size={14} color={Colors.dark.accent} />
             </Pressable>
+          )}
+
+          {qrMode === "business" && user && (
+            <View style={styles.businessNameRow}>
+              <Ionicons name="business-outline" size={16} color="#FBBF24" style={{ marginRight: 8 }} />
+              <TextInput
+                style={styles.businessNameInput}
+                placeholder="Store or organisation name (optional)"
+                placeholderTextColor={Colors.dark.textMuted}
+                value={businessName}
+                onChangeText={setBusinessName}
+                maxLength={60}
+              />
+            </View>
           )}
         </Animated.View>
 
@@ -654,9 +697,21 @@ const styles = StyleSheet.create({
   },
   modeBtnActive: { backgroundColor: Colors.dark.primaryDim, borderColor: Colors.dark.primary },
   modeBtnPrivate: { backgroundColor: "#1E293B", borderColor: "#334155" },
-  modeBtnText: { fontSize: 14, fontFamily: "Inter_600SemiBold", color: Colors.dark.textMuted },
+  modeBtnText: { fontSize: 13, fontFamily: "Inter_600SemiBold", color: Colors.dark.textMuted },
   modeBtnTextActive: { color: Colors.dark.primary },
   modeBtnTextPrivate: { color: "#F8FAFC" },
+  modeBtnBusiness: { backgroundColor: "#FBBF2420", borderColor: "#FBBF2460" },
+  modeBtnTextBusiness: { color: "#FBBF24" },
+  businessNameRow: {
+    flexDirection: "row", alignItems: "center",
+    backgroundColor: Colors.dark.surface, borderRadius: 14,
+    borderWidth: 1, borderColor: "#FBBF2440",
+    paddingHorizontal: 14, paddingVertical: 10,
+    marginTop: 10, marginBottom: 10,
+  },
+  businessNameInput: {
+    flex: 1, fontSize: 14, fontFamily: "Inter_400Regular", color: Colors.dark.text,
+  },
 
   brandedBanner: {
     flexDirection: "row", alignItems: "center", gap: 8,
