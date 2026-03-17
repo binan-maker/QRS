@@ -60,6 +60,7 @@ Logs for your project will appear below.[2m Press Ctrl+C to exit.[22m
 [80D[1A[0J[32m[1mWeb[22m Bundled [39m[2m1240ms[22m[0m[2m node_modules/expo-router/entry.js (1592 modules)[22m[0m
 [1mWeb[22m [0m[2mnode_modules/expo-router/[22m[0m[1mentry.js[22m [32m[42m▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓[49m[39m[47m[37m░[39m[49m[1m 97.0% [22m[2m(1568/1592)[22m
 [80D[1A[0J[7m[37m[1m LOG [22m[39m[27m [web] Logs will appear in the browser console
+<<<<<<< HEAD
 [31m[7m[1m ERROR [22m[27m[39m SyntaxError: /home/runner/workspace/app/qr-detail/[id].tsx: Expected corresponding JSX closing tag for <View>. (1859:6)
 
 [0m [90m 1857 |[39m           ) [33m:[39m [36mnull[39m}
@@ -355,3 +356,5 @@ Logs for your project will appear below.[2m Press Ctrl+C to exit.[22m
     at TypeScriptParserMixin.parseFunctionBodyAndFinish (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:9172:18)
     at /home/runner/workspace/node_modules/@babel/parser/lib/index.js:13445:12
     at TypeScriptParserMixin.withSmartMixTopicForbiddingContext (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:12403:14)
+=======
+>>>>>>> e53a4eef7fed3c3a8c4e8f257cecce50f0ef62d5
