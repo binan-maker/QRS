@@ -1,0 +1,606 @@
+
+> expo-app@1.0.0 expo:dev
+> EXPO_PACKAGER_PROXY_URL=https://$REPLIT_DEV_DOMAIN REACT_NATIVE_PACKAGER_HOSTNAME=$REPLIT_DEV_DOMAIN EXPO_PUBLIC_DOMAIN=$REPLIT_DEV_DOMAIN:5000 ./node_modules/.bin/expo start --localhost
+
+[1G[0K[90mStarting project at /home/runner/workspace[39m
+[90mReact Compiler enabled[39m
+[2mStarting Metro Bundler[22m
+▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄
+█ ▄▄▄▄▄ █▀▄ ▄█ ▀▀▀█▀▄▀▀▄▄▄█ ▄▄▄▄▄ █
+█ █   █ █▀ ██▀▀▀ █▀ ▀▄▄▄█ █ █   █ █
+█ █▄▄▄█ █▀█▀▄▀▀▄▀▄█▀▄▀▄▄▄▀█ █▄▄▄█ █
+█▄▄▄▄▄▄▄█▄█▄█▄█▄█ █ █▄▀ ▀ █▄▄▄▄▄▄▄█
+█ ▄  ▄▀▄▄  ▄▀▄ ▄█▀  ▀▀██▀▄▄▀▄█ █▄▀█
+█  █▄▀▀▄▀█ ▀▀▄█▀▄ ███   ██▄▀█▀▄▀█▀█
+█▄█ ▀  ▄▄▀▄▀   ▄▄▀▄▄▀▄▀▄  ▀▀ ▄▀█▀ █
+█▀▄█▄▀▄▄▄▄▄▄█▄▄▀▄▄▄ █▀▀▀▀▀▀█▄█ ▀███
+███████▄▄  ▀▀█▄▄▄ ▄▄▀▄█▀▀▄▀▀▄▄█▀▀▀█
+██  ▀█ ▄ █ ▀█▀█   ▄█▀█ ▀█▀▀▀▀█  ▄██
+█▀   ▄▄▄▀▀   ▄▄ ▄ ▄▄▀▄▀▄▀▄▀▀▀▄█▀▀ █
+█ █▀▄██▄███ █▄▄█▄▀█▀█▀ ▀█▄▄▀ ▄█▀ ██
+█▄█▄███▄▄ ▀▀ ▄ █▄▄▄█▀▄▀▀▀ ▄▄▄ ▄▀▄▀█
+█ ▄▄▄▄▄ █▄▀▀█ ▄▄ ▀▄▄██ ▄▄ █▄█   ▄██
+█ █   █ █ ▀█▀█▄ ▄▀ ▀▀▄█▀█ ▄▄  █▀▄▄█
+█ █▄▄▄█ █ ████▄█  █▀█  ▀ ▄▀ █▀█▀▄██
+█▄▄▄▄▄▄▄█▄▄▄█▄▄▄▄▄▄▄█▄███▄▄███▄█▄██
+
+› Metro waiting on
+[4mexp://ab1b7b1d-f136-44ac-ba93-c9a49504245a-00-274sl5d6usgna.riker.replit.dev[24m
+› Scan the QR code above with Expo Go (Android) or the Camera app (iOS)
+
+› Web is waiting on [4mhttp://localhost:8081[24m
+
+› Using [36mExpo Go[39m
+› Press [1ms[22m [2m│[22m switch to development build
+
+› Press [1ma[22m [2m│[22m open Android
+› Press [1mw[22m [2m│[22m open web
+
+› Press [1mj[22m [2m│[22m open debugger
+› Press [1mr[22m [2m│[22m reload app
+› Press [1mm[22m [2m│[22m toggle menu
+› [1mshift+m[22m [2m│[22m more tools
+› Press [1mo[22m [2m│[22m open project code in your editor
+
+› Press [1m?[22m [2m│[22m show all commands
+
+Logs for your project will appear below.[2m Press Ctrl+C to exit.[22m
+[1mWeb[22m [0m[2mnode_modules/expo-router/[22m[0m[1mentry.js[22m [47m[37m░░░░░░░░░░░░░░░░[39m[49m[1m  0.0% [22m[2m(0/1)[22m
+[80D[1A[0J[1mWeb[22m [0m[2mnode_modules/expo-router/[22m[0m[1mentry.js[22m [47m[37m░░░░░░░░░░░░░░░░[39m[49m[1m  1.0% [22m[2m(1/1)[22m
+[80D[1A[0J[1mWeb[22m [0m[2mnode_modules/expo-router/[22m[0m[1mentry.js[22m [32m[42m▓▓▓▓▓▓▓[49m[39m[47m[37m░░░░░░░░░[39m[49m[1m 49.0% [22m[2m( 7/10)[22m
+[80D[1A[0J[1mWeb[22m [0m[2mnode_modules/expo-router/[22m[0m[1mentry.js[22m [32m[42m▓▓▓▓▓▓▓[49m[39m[47m[37m░░░░░░░░░[39m[49m[1m 49.0% [22m[2m( 8/12)[22m
+[80D[1A[0J[1mWeb[22m [0m[2mnode_modules/expo-router/[22m[0m[1mentry.js[22m [32m[42m▓▓▓▓▓▓▓▓▓[49m[39m[47m[37m░░░░░░░[39m[49m[1m 56.3% [22m[2m( 9/12)[22m
+[80D[1A[0J[1mWeb[22m [0m[2mnode_modules/expo-router/[22m[0m[1mentry.js[22m [32m[42m▓▓▓▓▓▓▓▓▓[49m[39m[47m[37m░░░░░░░[39m[49m[1m 56.3% [22m[2m(13/25)[22m
+[80D[1A[0J[1mWeb[22m [0m[2mnode_modules/expo-router/[22m[0m[1mentry.js[22m [32m[42m▓▓▓▓▓▓▓▓▓[49m[39m[47m[37m░░░░░░░[39m[49m[1m 56.3% [22m[2m(20/29)[22m
+[80D[1A[0J[1mWeb[22m [0m[2mnode_modules/expo-router/[22m[0m[1mentry.js[22m [32m[42m▓▓▓▓▓▓▓▓▓[49m[39m[47m[37m░░░░░░░[39m[49m[1m 56.3% [22m[2m(22/33)[22m
+[80D[1A[0J[1mWeb[22m [0m[2mnode_modules/expo-router/[22m[0m[1mentry.js[22m [32m[42m▓▓▓▓▓▓▓▓▓[49m[39m[47m[37m░░░░░░░[39m[49m[1m 56.3% [22m[2m(29/51)[22m
+[80D[1A[0J[1mWeb[22m [0m[2mnode_modules/expo-router/[22m[0m[1mentry.js[22m [32m[42m▓▓▓▓▓▓▓▓▓[49m[39m[47m[37m░░░░░░░[39m[49m[1m 56.3% [22m[2m(35/54)[22m
+[80D[1A[0J[1mWeb[22m [0m[2mnode_modules/expo-router/[22m[0m[1mentry.js[22m [32m[42m▓▓▓▓▓▓▓▓▓[49m[39m[47m[37m░░░░░░░[39m[49m[1m 56.3% [22m[2m(38/76)[22m
+[80D[1A[0J[1mWeb[22m [0m[2mnode_modules/expo-router/[22m[0m[1mentry.js[22m [32m[42m▓▓▓▓▓▓▓▓▓[49m[39m[47m[37m░░░░░░░[39m[49m[1m 56.3% [22m[2m(41/78)[22m
+[80D[1A[0J[1mWeb[22m [0m[2mnode_modules/expo-router/[22m[0m[1mentry.js[22m [32m[42m▓▓▓▓▓▓▓▓▓[49m[39m[47m[37m░░░░░░░[39m[49m[1m 56.3% [22m[2m( 45/149)[22m
+[80D[1A[0J[1mWeb[22m [0m[2mnode_modules/expo-router/[22m[0m[1mentry.js[22m [32m[42m▓▓▓▓▓▓▓▓▓[49m[39m[47m[37m░░░░░░░[39m[49m[1m 56.3% [22m[2m( 48/162)[22m
+[80D[1A[0J[1mWeb[22m [0m[2mnode_modules/expo-router/[22m[0m[1mentry.js[22m [32m[42m▓▓▓▓▓▓▓▓▓[49m[39m[47m[37m░░░░░░░[39m[49m[1m 56.3% [22m[2m( 52/168)[22m
+[80D[1A[0J[1mWeb[22m [0m[2mnode_modules/expo-router/[22m[0m[1mentry.js[22m [32m[42m▓▓▓▓▓▓▓▓▓[49m[39m[47m[37m░░░░░░░[39m[49m[1m 56.3% [22m[2m( 57/198)[22m
+[80D[1A[0J[1mWeb[22m [0m[2mnode_modules/expo-router/[22m[0m[1mentry.js[22m [32m[42m▓▓▓▓▓▓▓▓▓[49m[39m[47m[37m░░░░░░░[39m[49m[1m 56.3% [22m[2m( 66/233)[22m
+[80D[1A[0J[1mWeb[22m [0m[2mnode_modules/expo-router/[22m[0m[1mentry.js[22m [32m[42m▓▓▓▓▓▓▓▓▓[49m[39m[47m[37m░░░░░░░[39m[49m[1m 56.3% [22m[2m( 76/276)[22m
+[80D[1A[0J[1mWeb[22m [0m[2mnode_modules/expo-router/[22m[0m[1mentry.js[22m [32m[42m▓▓▓▓▓▓▓▓▓[49m[39m[47m[37m░░░░░░░[39m[49m[1m 56.3% [22m[2m( 90/282)[22m
+[80D[1A[0J[1mWeb[22m [0m[2mnode_modules/expo-router/[22m[0m[1mentry.js[22m [32m[42m▓▓▓▓▓▓▓▓▓[49m[39m[47m[37m░░░░░░░[39m[49m[1m 56.3% [22m[2m( 97/287)[22m
+[80D[1A[0J[1mWeb[22m [0m[2mnode_modules/expo-router/[22m[0m[1mentry.js[22m [32m[42m▓▓▓▓▓▓▓▓▓[49m[39m[47m[37m░░░░░░░[39m[49m[1m 56.3% [22m[2m(104/289)[22m
+[80D[1A[0J[1mWeb[22m [0m[2mnode_modules/expo-router/[22m[0m[1mentry.js[22m [32m[42m▓▓▓▓▓▓▓▓▓[49m[39m[47m[37m░░░░░░░[39m[49m[1m 56.3% [22m[2m(109/291)[22m
+[80D[1A[0J[1mWeb[22m [0m[2mnode_modules/expo-router/[22m[0m[1mentry.js[22m [32m[42m▓▓▓▓▓▓▓▓▓[49m[39m[47m[37m░░░░░░░[39m[49m[1m 56.3% [22m[2m(118/302)[22m
+[80D[1A[0J[1mWeb[22m [0m[2mnode_modules/expo-router/[22m[0m[1mentry.js[22m [32m[42m▓▓▓▓▓▓▓▓▓[49m[39m[47m[37m░░░░░░░[39m[49m[1m 56.3% [22m[2m(123/304)[22m
+[80D[1A[0J[1mWeb[22m [0m[2mnode_modules/expo-router/[22m[0m[1mentry.js[22m [32m[42m▓▓▓▓▓▓▓▓▓[49m[39m[47m[37m░░░░░░░[39m[49m[1m 56.3% [22m[2m(138/307)[22m
+[80D[1A[0J[1mWeb[22m [0m[2mnode_modules/expo-router/[22m[0m[1mentry.js[22m [32m[42m▓▓▓▓▓▓▓▓▓[49m[39m[47m[37m░░░░░░░[39m[49m[1m 56.3% [22m[2m(147/311)[22m
+[80D[1A[0J[1mWeb[22m [0m[2mnode_modules/expo-router/[22m[0m[1mentry.js[22m [32m[42m▓▓▓▓▓▓▓▓▓[49m[39m[47m[37m░░░░░░░[39m[49m[1m 56.3% [22m[2m(155/322)[22m
+[80D[1A[0J[1mWeb[22m [0m[2mnode_modules/expo-router/[22m[0m[1mentry.js[22m [32m[42m▓▓▓▓▓▓▓▓▓[49m[39m[47m[37m░░░░░░░[39m[49m[1m 56.3% [22m[2m(167/326)[22m
+[80D[1A[0J[1mWeb[22m [0m[2mnode_modules/expo-router/[22m[0m[1mentry.js[22m [32m[42m▓▓▓▓▓▓▓▓▓[49m[39m[47m[37m░░░░░░░[39m[49m[1m 56.3% [22m[2m(179/336)[22m
+[80D[1A[0J[1mWeb[22m [0m[2mnode_modules/expo-router/[22m[0m[1mentry.js[22m [32m[42m▓▓▓▓▓▓▓▓▓[49m[39m[47m[37m░░░░░░░[39m[49m[1m 56.3% [22m[2m(191/373)[22m
+[80D[1A[0J[1mWeb[22m [0m[2mnode_modules/expo-router/[22m[0m[1mentry.js[22m [32m[42m▓▓▓▓▓▓▓▓▓[49m[39m[47m[37m░░░░░░░[39m[49m[1m 56.3% [22m[2m(197/381)[22m
+[80D[1A[0J[1mWeb[22m [0m[2mnode_modules/expo-router/[22m[0m[1mentry.js[22m [32m[42m▓▓▓▓▓▓▓▓▓[49m[39m[47m[37m░░░░░░░[39m[49m[1m 56.3% [22m[2m(198/381)[22m
+[80D[1A[0J[1mWeb[22m [0m[2mnode_modules/expo-router/[22m[0m[1mentry.js[22m [32m[42m▓▓▓▓▓▓▓▓▓[49m[39m[47m[37m░░░░░░░[39m[49m[1m 56.3% [22m[2m(200/388)[22m
+[80D[1A[0J[1mWeb[22m [0m[2mnode_modules/expo-router/[22m[0m[1mentry.js[22m [32m[42m▓▓▓▓▓▓▓▓▓[49m[39m[47m[37m░░░░░░░[39m[49m[1m 56.3% [22m[2m(202/390)[22m
+[80D[1A[0J[1mWeb[22m [0m[2mnode_modules/expo-router/[22m[0m[1mentry.js[22m [32m[42m▓▓▓▓▓▓▓▓▓[49m[39m[47m[37m░░░░░░░[39m[49m[1m 56.3% [22m[2m(203/390)[22m
+[80D[1A[0J[1mWeb[22m [0m[2mnode_modules/expo-router/[22m[0m[1mentry.js[22m [32m[42m▓▓▓▓▓▓▓▓▓[49m[39m[47m[37m░░░░░░░[39m[49m[1m 56.3% [22m[2m(203/394)[22m
+[80D[1A[0J[1mWeb[22m [0m[2mnode_modules/expo-router/[22m[0m[1mentry.js[22m [32m[42m▓▓▓▓▓▓▓▓▓[49m[39m[47m[37m░░░░░░░[39m[49m[1m 56.3% [22m[2m(204/394)[22m
+[80D[1A[0J[1mWeb[22m [0m[2mnode_modules/expo-router/[22m[0m[1mentry.js[22m [32m[42m▓▓▓▓▓▓▓▓▓[49m[39m[47m[37m░░░░░░░[39m[49m[1m 56.3% [22m[2m(204/396)[22m
+[80D[1A[0J[1mWeb[22m [0m[2mnode_modules/expo-router/[22m[0m[1mentry.js[22m [32m[42m▓▓▓▓▓▓▓▓▓[49m[39m[47m[37m░░░░░░░[39m[49m[1m 56.3% [22m[2m(205/396)[22m
+[80D[1A[0J[1mWeb[22m [0m[2mnode_modules/expo-router/[22m[0m[1mentry.js[22m [32m[42m▓▓▓▓▓▓▓▓▓[49m[39m[47m[37m░░░░░░░[39m[49m[1m 56.3% [22m[2m(206/401)[22m
+[80D[1A[0J[1mWeb[22m [0m[2mnode_modules/expo-router/[22m[0m[1mentry.js[22m [32m[42m▓▓▓▓▓▓▓▓▓[49m[39m[47m[37m░░░░░░░[39m[49m[1m 56.3% [22m[2m(207/401)[22m
+[80D[1A[0J[1mWeb[22m [0m[2mnode_modules/expo-router/[22m[0m[1mentry.js[22m [32m[42m▓▓▓▓▓▓▓▓▓[49m[39m[47m[37m░░░░░░░[39m[49m[1m 56.3% [22m[2m(208/401)[22m
+[80D[1A[0J[1mWeb[22m [0m[2mnode_modules/expo-router/[22m[0m[1mentry.js[22m [32m[42m▓▓▓▓▓▓▓▓▓[49m[39m[47m[37m░░░░░░░[39m[49m[1m 56.3% [22m[2m(210/409)[22m
+[80D[1A[0J[1mWeb[22m [0m[2mnode_modules/expo-router/[22m[0m[1mentry.js[22m [32m[42m▓▓▓▓▓▓▓▓▓[49m[39m[47m[37m░░░░░░░[39m[49m[1m 56.3% [22m[2m(210/412)[22m
+[80D[1A[0J[1mWeb[22m [0m[2mnode_modules/expo-router/[22m[0m[1mentry.js[22m [32m[42m▓▓▓▓▓▓▓▓▓[49m[39m[47m[37m░░░░░░░[39m[49m[1m 56.3% [22m[2m(211/412)[22m
+[80D[1A[0J[1mWeb[22m [0m[2mnode_modules/expo-router/[22m[0m[1mentry.js[22m [32m[42m▓▓▓▓▓▓▓▓▓[49m[39m[47m[37m░░░░░░░[39m[49m[1m 56.3% [22m[2m(212/412)[22m
+[80D[1A[0J[1mWeb[22m [0m[2mnode_modules/expo-router/[22m[0m[1mentry.js[22m [32m[42m▓▓▓▓▓▓▓▓▓[49m[39m[47m[37m░░░░░░░[39m[49m[1m 56.3% [22m[2m(213/412)[22m
+[80D[1A[0J[1mWeb[22m [0m[2mnode_modules/expo-router/[22m[0m[1mentry.js[22m [32m[42m▓▓▓▓▓▓▓▓▓[49m[39m[47m[37m░░░░░░░[39m[49m[1m 56.3% [22m[2m(214/412)[22m
+[80D[1A[0J[1mWeb[22m [0m[2mnode_modules/expo-router/[22m[0m[1mentry.js[22m [32m[42m▓▓▓▓▓▓▓▓▓[49m[39m[47m[37m░░░░░░░[39m[49m[1m 56.3% [22m[2m(215/417)[22m
+[80D[1A[0J[1mWeb[22m [0m[2mnode_modules/expo-router/[22m[0m[1mentry.js[22m [32m[42m▓▓▓▓▓▓▓▓▓[49m[39m[47m[37m░░░░░░░[39m[49m[1m 56.3% [22m[2m(216/417)[22m
+[80D[1A[0J[1mWeb[22m [0m[2mnode_modules/expo-router/[22m[0m[1mentry.js[22m [32m[42m▓▓▓▓▓▓▓▓▓[49m[39m[47m[37m░░░░░░░[39m[49m[1m 56.3% [22m[2m(217/417)[22m
+[80D[1A[0J[1mWeb[22m [0m[2mnode_modules/expo-router/[22m[0m[1mentry.js[22m [32m[42m▓▓▓▓▓▓▓▓▓[49m[39m[47m[37m░░░░░░░[39m[49m[1m 56.3% [22m[2m(218/417)[22m
+[80D[1A[0J[1mWeb[22m [0m[2mnode_modules/expo-router/[22m[0m[1mentry.js[22m [32m[42m▓▓▓▓▓▓▓▓▓[49m[39m[47m[37m░░░░░░░[39m[49m[1m 56.3% [22m[2m(219/417)[22m
+[80D[1A[0J[1mWeb[22m [0m[2mnode_modules/expo-router/[22m[0m[1mentry.js[22m [32m[42m▓▓▓▓▓▓▓▓▓[49m[39m[47m[37m░░░░░░░[39m[49m[1m 56.3% [22m[2m(222/420)[22m
+[80D[1A[0J[1mWeb[22m [0m[2mnode_modules/expo-router/[22m[0m[1mentry.js[22m [32m[42m▓▓▓▓▓▓▓▓▓[49m[39m[47m[37m░░░░░░░[39m[49m[1m 56.3% [22m[2m(232/424)[22m
+[80D[1A[0J[1mWeb[22m [0m[2mnode_modules/expo-router/[22m[0m[1mentry.js[22m [32m[42m▓▓▓▓▓▓▓▓▓[49m[39m[47m[37m░░░░░░░[39m[49m[1m 56.3% [22m[2m(252/443)[22m
+[80D[1A[0J[1mWeb[22m [0m[2mnode_modules/expo-router/[22m[0m[1mentry.js[22m [32m[42m▓▓▓▓▓▓▓▓▓[49m[39m[47m[37m░░░░░░░[39m[49m[1m 56.3% [22m[2m(277/455)[22m
+[80D[1A[0J[1mWeb[22m [0m[2mnode_modules/expo-router/[22m[0m[1mentry.js[22m [32m[42m▓▓▓▓▓▓▓▓▓[49m[39m[47m[37m░░░░░░░[39m[49m[1m 56.3% [22m[2m(290/467)[22m
+[80D[1A[0J[1mWeb[22m [0m[2mnode_modules/expo-router/[22m[0m[1mentry.js[22m [32m[42m▓▓▓▓▓▓▓▓▓[49m[39m[47m[37m░░░░░░░[39m[49m[1m 56.3% [22m[2m(306/475)[22m
+[80D[1A[0J[1mWeb[22m [0m[2mnode_modules/expo-router/[22m[0m[1mentry.js[22m [32m[42m▓▓▓▓▓▓▓▓▓[49m[39m[47m[37m░░░░░░░[39m[49m[1m 56.3% [22m[2m(318/482)[22m
+[80D[1A[0J[1mWeb[22m [0m[2mnode_modules/expo-router/[22m[0m[1mentry.js[22m [32m[42m▓▓▓▓▓▓▓▓▓[49m[39m[47m[37m░░░░░░░[39m[49m[1m 56.3% [22m[2m(331/501)[22m
+[80D[1A[0J[1mWeb[22m [0m[2mnode_modules/expo-router/[22m[0m[1mentry.js[22m [32m[42m▓▓▓▓▓▓▓▓▓[49m[39m[47m[37m░░░░░░░[39m[49m[1m 56.3% [22m[2m(362/526)[22m
+[80D[1A[0J[1mWeb[22m [0m[2mnode_modules/expo-router/[22m[0m[1mentry.js[22m [32m[42m▓▓▓▓▓▓▓▓▓[49m[39m[47m[37m░░░░░░░[39m[49m[1m 56.3% [22m[2m(386/574)[22m
+[80D[1A[0J[1mWeb[22m [0m[2mnode_modules/expo-router/[22m[0m[1mentry.js[22m [32m[42m▓▓▓▓▓▓▓▓▓[49m[39m[47m[37m░░░░░░░[39m[49m[1m 56.3% [22m[2m(393/585)[22m
+[80D[1A[0J[1mWeb[22m [0m[2mnode_modules/expo-router/[22m[0m[1mentry.js[22m [32m[42m▓▓▓▓▓▓▓▓▓[49m[39m[47m[37m░░░░░░░[39m[49m[1m 56.3% [22m[2m(401/626)[22m
+[80D[1A[0J[1mWeb[22m [0m[2mnode_modules/expo-router/[22m[0m[1mentry.js[22m [32m[42m▓▓▓▓▓▓▓▓▓[49m[39m[47m[37m░░░░░░░[39m[49m[1m 56.3% [22m[2m(419/721)[22m
+[80D[1A[0J[1mWeb[22m [0m[2mnode_modules/expo-router/[22m[0m[1mentry.js[22m [32m[42m▓▓▓▓▓▓▓▓▓[49m[39m[47m[37m░░░░░░░[39m[49m[1m 56.3% [22m[2m(440/736)[22m
+[80D[1A[0J[1mWeb[22m [0m[2mnode_modules/expo-router/[22m[0m[1mentry.js[22m [32m[42m▓▓▓▓▓▓▓▓▓[49m[39m[47m[37m░░░░░░░[39m[49m[1m 56.3% [22m[2m(468/763)[22m
+[80D[1A[0J[1mWeb[22m [0m[2mnode_modules/expo-router/[22m[0m[1mentry.js[22m [32m[42m▓▓▓▓▓▓▓▓▓[49m[39m[47m[37m░░░░░░░[39m[49m[1m 56.3% [22m[2m(486/778)[22m
+[80D[1A[0J[1mWeb[22m [0m[2mnode_modules/expo-router/[22m[0m[1mentry.js[22m [32m[42m▓▓▓▓▓▓▓▓▓[49m[39m[47m[37m░░░░░░░[39m[49m[1m 56.3% [22m[2m(509/780)[22m
+[80D[1A[0J[1mWeb[22m [0m[2mnode_modules/expo-router/[22m[0m[1mentry.js[22m [32m[42m▓▓▓▓▓▓▓▓▓[49m[39m[47m[37m░░░░░░░[39m[49m[1m 56.3% [22m[2m(537/788)[22m
+[80D[1A[0J[1mWeb[22m [0m[2mnode_modules/expo-router/[22m[0m[1mentry.js[22m [32m[42m▓▓▓▓▓▓▓▓▓[49m[39m[47m[37m░░░░░░░[39m[49m[1m 56.3% [22m[2m(572/834)[22m
+[80D[1A[0J[1mWeb[22m [0m[2mnode_modules/expo-router/[22m[0m[1mentry.js[22m [32m[42m▓▓▓▓▓▓▓▓▓[49m[39m[47m[37m░░░░░░░[39m[49m[1m 56.3% [22m[2m(594/858)[22m
+[80D[1A[0J[1mWeb[22m [0m[2mnode_modules/expo-router/[22m[0m[1mentry.js[22m [32m[42m▓▓▓▓▓▓▓▓▓[49m[39m[47m[37m░░░░░░░[39m[49m[1m 56.3% [22m[2m(601/878)[22m
+[80D[1A[0J[1mWeb[22m [0m[2mnode_modules/expo-router/[22m[0m[1mentry.js[22m [32m[42m▓▓▓▓▓▓▓▓▓[49m[39m[47m[37m░░░░░░░[39m[49m[1m 56.3% [22m[2m(604/893)[22m
+[80D[1A[0J[1mWeb[22m [0m[2mnode_modules/expo-router/[22m[0m[1mentry.js[22m [32m[42m▓▓▓▓▓▓▓▓▓[49m[39m[47m[37m░░░░░░░[39m[49m[1m 56.3% [22m[2m(605/893)[22m
+[80D[1A[0J[1mWeb[22m [0m[2mnode_modules/expo-router/[22m[0m[1mentry.js[22m [32m[42m▓▓▓▓▓▓▓▓▓[49m[39m[47m[37m░░░░░░░[39m[49m[1m 56.3% [22m[2m(610/899)[22m
+[80D[1A[0J[1mWeb[22m [0m[2mnode_modules/expo-router/[22m[0m[1mentry.js[22m [32m[42m▓▓▓▓▓▓▓▓▓[49m[39m[47m[37m░░░░░░░[39m[49m[1m 56.3% [22m[2m(628/912)[22m
+[80D[1A[0J[1mWeb[22m [0m[2mnode_modules/expo-router/[22m[0m[1mentry.js[22m [32m[42m▓▓▓▓▓▓▓▓▓[49m[39m[47m[37m░░░░░░░[39m[49m[1m 56.3% [22m[2m(661/943)[22m
+[80D[1A[0J[1mWeb[22m [0m[2mnode_modules/expo-router/[22m[0m[1mentry.js[22m [32m[42m▓▓▓▓▓▓▓▓▓[49m[39m[47m[37m░░░░░░░[39m[49m[1m 56.3% [22m[2m(678/972)[22m
+[80D[1A[0J[1mWeb[22m [0m[2mnode_modules/expo-router/[22m[0m[1mentry.js[22m [32m[42m▓▓▓▓▓▓▓▓▓[49m[39m[47m[37m░░░░░░░[39m[49m[1m 56.3% [22m[2m(702/986)[22m
+[80D[1A[0J[1mWeb[22m [0m[2mnode_modules/expo-router/[22m[0m[1mentry.js[22m [32m[42m▓▓▓▓▓▓▓▓▓[49m[39m[47m[37m░░░░░░░[39m[49m[1m 56.3% [22m[2m(722/997)[22m
+[80D[1A[0J[1mWeb[22m [0m[2mnode_modules/expo-router/[22m[0m[1mentry.js[22m [32m[42m▓▓▓▓▓▓▓▓▓[49m[39m[47m[37m░░░░░░░[39m[49m[1m 56.3% [22m[2m( 742/1017)[22m
+[80D[1A[0J[1mWeb[22m [0m[2mnode_modules/expo-router/[22m[0m[1mentry.js[22m [32m[42m▓▓▓▓▓▓▓▓▓[49m[39m[47m[37m░░░░░░░[39m[49m[1m 56.3% [22m[2m( 760/1031)[22m
+[80D[1A[0J[1mWeb[22m [0m[2mnode_modules/expo-router/[22m[0m[1mentry.js[22m [32m[42m▓▓▓▓▓▓▓▓▓[49m[39m[47m[37m░░░░░░░[39m[49m[1m 57.9% [22m[2m( 793/1042)[22m
+[80D[1A[0J[1mWeb[22m [0m[2mnode_modules/expo-router/[22m[0m[1mentry.js[22m [32m[42m▓▓▓▓▓▓▓▓▓▓[49m[39m[47m[37m░░░░░░[39m[49m[1m 63.8% [22m[2m( 844/1057)[22m
+[80D[1A[0J[1mWeb[22m [0m[2mnode_modules/expo-router/[22m[0m[1mentry.js[22m [32m[42m▓▓▓▓▓▓▓▓▓▓[49m[39m[47m[37m░░░░░░[39m[49m[1m 63.8% [22m[2m( 857/1084)[22m
+[80D[1A[0J[1mWeb[22m [0m[2mnode_modules/expo-router/[22m[0m[1mentry.js[22m [32m[42m▓▓▓▓▓▓▓▓▓▓[49m[39m[47m[37m░░░░░░[39m[49m[1m 63.8% [22m[2m( 860/1084)[22m
+[80D[1A[0J[1mWeb[22m [0m[2mnode_modules/expo-router/[22m[0m[1mentry.js[22m [32m[42m▓▓▓▓▓▓▓▓▓▓[49m[39m[47m[37m░░░░░░[39m[49m[1m 63.8% [22m[2m( 866/1090)[22m
+[80D[1A[0J[1mWeb[22m [0m[2mnode_modules/expo-router/[22m[0m[1mentry.js[22m [32m[42m▓▓▓▓▓▓▓▓▓▓[49m[39m[47m[37m░░░░░░[39m[49m[1m 63.8% [22m[2m( 876/1103)[22m
+[80D[1A[0J[1mWeb[22m [0m[2mnode_modules/expo-router/[22m[0m[1mentry.js[22m [32m[42m▓▓▓▓▓▓▓▓▓▓[49m[39m[47m[37m░░░░░░[39m[49m[1m 63.8% [22m[2m( 882/1106)[22m
+[80D[1A[0J[1mWeb[22m [0m[2mnode_modules/expo-router/[22m[0m[1mentry.js[22m [32m[42m▓▓▓▓▓▓▓▓▓▓[49m[39m[47m[37m░░░░░░[39m[49m[1m 64.7% [22m[2m( 896/1114)[22m
+[80D[1A[0J[1mWeb[22m [0m[2mnode_modules/expo-router/[22m[0m[1mentry.js[22m [32m[42m▓▓▓▓▓▓▓▓▓▓[49m[39m[47m[37m░░░░░░[39m[49m[1m 64.7% [22m[2m( 907/1134)[22m
+[80D[1A[0J[1mWeb[22m [0m[2mnode_modules/expo-router/[22m[0m[1mentry.js[22m [32m[42m▓▓▓▓▓▓▓▓▓▓[49m[39m[47m[37m░░░░░░[39m[49m[1m 64.7% [22m[2m( 908/1135)[22m
+[80D[1A[0J[1mWeb[22m [0m[2mnode_modules/expo-router/[22m[0m[1mentry.js[22m [32m[42m▓▓▓▓▓▓▓▓▓▓[49m[39m[47m[37m░░░░░░[39m[49m[1m 64.7% [22m[2m( 912/1135)[22m
+[80D[1A[0J[1mWeb[22m [0m[2mnode_modules/expo-router/[22m[0m[1mentry.js[22m [32m[42m▓▓▓▓▓▓▓▓▓▓[49m[39m[47m[37m░░░░░░[39m[49m[1m 64.7% [22m[2m( 913/1135)[22m
+[80D[1A[0J[1mWeb[22m [0m[2mnode_modules/expo-router/[22m[0m[1mentry.js[22m [32m[42m▓▓▓▓▓▓▓▓▓▓[49m[39m[47m[37m░░░░░░[39m[49m[1m 64.8% [22m[2m( 914/1135)[22m
+[80D[1A[0J[1mWeb[22m [0m[2mnode_modules/expo-router/[22m[0m[1mentry.js[22m [32m[42m▓▓▓▓▓▓▓▓▓▓[49m[39m[47m[37m░░░░░░[39m[49m[1m 64.8% [22m[2m( 922/1147)[22m
+[80D[1A[0J[1mWeb[22m [0m[2mnode_modules/expo-router/[22m[0m[1mentry.js[22m [32m[42m▓▓▓▓▓▓▓▓▓▓[49m[39m[47m[37m░░░░░░[39m[49m[1m 64.8% [22m[2m( 925/1149)[22m
+[80D[1A[0J[1mWeb[22m [0m[2mnode_modules/expo-router/[22m[0m[1mentry.js[22m [32m[42m▓▓▓▓▓▓▓▓▓▓[49m[39m[47m[37m░░░░░░[39m[49m[1m 65.7% [22m[2m( 931/1149)[22m
+[80D[1A[0J[1mWeb[22m [0m[2mnode_modules/expo-router/[22m[0m[1mentry.js[22m [32m[42m▓▓▓▓▓▓▓▓▓▓[49m[39m[47m[37m░░░░░░[39m[49m[1m 65.9% [22m[2m( 933/1149)[22m
+[80D[1A[0J[1mWeb[22m [0m[2mnode_modules/expo-router/[22m[0m[1mentry.js[22m [32m[42m▓▓▓▓▓▓▓▓▓▓[49m[39m[47m[37m░░░░░░[39m[49m[1m 66.9% [22m[2m( 947/1158)[22m
+[80D[1A[0J[1mWeb[22m [0m[2mnode_modules/expo-router/[22m[0m[1mentry.js[22m [32m[42m▓▓▓▓▓▓▓▓▓▓▓[49m[39m[47m[37m░░░░░[39m[49m[1m 70.3% [22m[2m( 976/1164)[22m
+[80D[1A[0J[1mWeb[22m [0m[2mnode_modules/expo-router/[22m[0m[1mentry.js[22m [32m[42m▓▓▓▓▓▓▓▓▓▓▓[49m[39m[47m[37m░░░░░[39m[49m[1m 70.3% [22m[2m( 986/1177)[22m
+[80D[1A[0J[1mWeb[22m [0m[2mnode_modules/expo-router/[22m[0m[1mentry.js[22m [32m[42m▓▓▓▓▓▓▓▓▓▓▓[49m[39m[47m[37m░░░░░[39m[49m[1m 71.3% [22m[2m(1005/1190)[22m
+[80D[1A[0J[1mWeb[22m [0m[2mnode_modules/expo-router/[22m[0m[1mentry.js[22m [32m[42m▓▓▓▓▓▓▓▓▓▓▓[49m[39m[47m[37m░░░░░[39m[49m[1m 73.6% [22m[2m(1034/1205)[22m
+[80D[1A[0J[1mWeb[22m [0m[2mnode_modules/expo-router/[22m[0m[1mentry.js[22m [32m[42m▓▓▓▓▓▓▓▓▓▓▓[49m[39m[47m[37m░░░░░[39m[49m[1m 73.7% [22m[2m(1062/1237)[22m
+[80D[1A[0J[1mWeb[22m [0m[2mnode_modules/expo-router/[22m[0m[1mentry.js[22m [32m[42m▓▓▓▓▓▓▓▓▓▓▓[49m[39m[47m[37m░░░░░[39m[49m[1m 73.7% [22m[2m(1071/1250)[22m
+[80D[1A[0J[1mWeb[22m [0m[2mnode_modules/expo-router/[22m[0m[1mentry.js[22m [32m[42m▓▓▓▓▓▓▓▓▓▓▓[49m[39m[47m[37m░░░░░[39m[49m[1m 74.0% [22m[2m(1079/1254)[22m
+[80D[1A[0J[1mWeb[22m [0m[2mnode_modules/expo-router/[22m[0m[1mentry.js[22m [32m[42m▓▓▓▓▓▓▓▓▓▓▓[49m[39m[47m[37m░░░░░[39m[49m[1m 74.0% [22m[2m(1085/1263)[22m
+[80D[1A[0J[1mWeb[22m [0m[2mnode_modules/expo-router/[22m[0m[1mentry.js[22m [32m[42m▓▓▓▓▓▓▓▓▓▓▓[49m[39m[47m[37m░░░░░[39m[49m[1m 74.1% [22m[2m(1087/1263)[22m
+[80D[1A[0J[1mWeb[22m [0m[2mnode_modules/expo-router/[22m[0m[1mentry.js[22m [32m[42m▓▓▓▓▓▓▓▓▓▓▓[49m[39m[47m[37m░░░░░[39m[49m[1m 74.2% [22m[2m(1088/1263)[22m
+[80D[1A[0J[1mWeb[22m [0m[2mnode_modules/expo-router/[22m[0m[1mentry.js[22m [32m[42m▓▓▓▓▓▓▓▓▓▓▓[49m[39m[47m[37m░░░░░[39m[49m[1m 74.6% [22m[2m(1091/1263)[22m
+[80D[1A[0J[1mWeb[22m [0m[2mnode_modules/expo-router/[22m[0m[1mentry.js[22m [32m[42m▓▓▓▓▓▓▓▓▓▓▓▓[49m[39m[47m[37m░░░░[39m[49m[1m 75.9% [22m[2m(1104/1267)[22m
+[80D[1A[0J[1mWeb[22m [0m[2mnode_modules/expo-router/[22m[0m[1mentry.js[22m [32m[42m▓▓▓▓▓▓▓▓▓▓▓▓[49m[39m[47m[37m░░░░[39m[49m[1m 76.4% [22m[2m(1108/1268)[22m
+[80D[1A[0J[1mWeb[22m [0m[2mnode_modules/expo-router/[22m[0m[1mentry.js[22m [32m[42m▓▓▓▓▓▓▓▓▓▓▓▓[49m[39m[47m[37m░░░░[39m[49m[1m 76.8% [22m[2m(1112/1269)[22m
+[80D[1A[0J[1mWeb[22m [0m[2mnode_modules/expo-router/[22m[0m[1mentry.js[22m [32m[42m▓▓▓▓▓▓▓▓▓▓▓▓[49m[39m[47m[37m░░░░[39m[49m[1m 76.9% [22m[2m(1113/1269)[22m
+[80D[1A[0J[1mWeb[22m [0m[2mnode_modules/expo-router/[22m[0m[1mentry.js[22m [32m[42m▓▓▓▓▓▓▓▓▓▓▓▓[49m[39m[47m[37m░░░░[39m[49m[1m 77.1% [22m[2m(1114/1269)[22m
+[80D[1A[0J[1mWeb[22m [0m[2mnode_modules/expo-router/[22m[0m[1mentry.js[22m [32m[42m▓▓▓▓▓▓▓▓▓▓▓▓[49m[39m[47m[37m░░░░[39m[49m[1m 77.5% [22m[2m(1117/1269)[22m
+[80D[1A[0J[1mWeb[22m [0m[2mnode_modules/expo-router/[22m[0m[1mentry.js[22m [32m[42m▓▓▓▓▓▓▓▓▓▓▓▓[49m[39m[47m[37m░░░░[39m[49m[1m 77.9% [22m[2m(1120/1269)[22m
+[80D[1A[0J[1mWeb[22m [0m[2mnode_modules/expo-router/[22m[0m[1mentry.js[22m [32m[42m▓▓▓▓▓▓▓▓▓▓▓▓[49m[39m[47m[37m░░░░[39m[49m[1m 79.0% [22m[2m(1128/1269)[22m
+[80D[1A[0J[1mWeb[22m [0m[2mnode_modules/expo-router/[22m[0m[1mentry.js[22m [32m[42m▓▓▓▓▓▓▓▓▓▓▓▓[49m[39m[47m[37m░░░░[39m[49m[1m 79.0% [22m[2m(1142/1288)[22m
+[80D[1A[0J[1mWeb[22m [0m[2mnode_modules/expo-router/[22m[0m[1mentry.js[22m [32m[42m▓▓▓▓▓▓▓▓▓▓▓▓▓[49m[39m[47m[37m░░░[39m[49m[1m 81.9% [22m[2m(1169/1292)[22m
+[80D[1A[0J[1mWeb[22m [0m[2mnode_modules/expo-router/[22m[0m[1mentry.js[22m [32m[42m▓▓▓▓▓▓▓▓▓▓▓▓▓[49m[39m[47m[37m░░░[39m[49m[1m 83.1% [22m[2m(1182/1297)[22m
+[80D[1A[0J[1mWeb[22m [0m[2mnode_modules/expo-router/[22m[0m[1mentry.js[22m [32m[42m▓▓▓▓▓▓▓▓▓▓▓▓▓[49m[39m[47m[37m░░░[39m[49m[1m 83.1% [22m[2m(1200/1344)[22m
+[80D[1A[0J[1mWeb[22m [0m[2mnode_modules/expo-router/[22m[0m[1mentry.js[22m [32m[42m▓▓▓▓▓▓▓▓▓▓▓▓▓[49m[39m[47m[37m░░░[39m[49m[1m 83.1% [22m[2m(1227/1349)[22m
+[80D[1A[0J[1mWeb[22m [0m[2mnode_modules/expo-router/[22m[0m[1mentry.js[22m [32m[42m▓▓▓▓▓▓▓▓▓▓▓▓▓[49m[39m[47m[37m░░░[39m[49m[1m 83.1% [22m[2m(1232/1355)[22m
+[80D[1A[0J[1mWeb[22m [0m[2mnode_modules/expo-router/[22m[0m[1mentry.js[22m [32m[42m▓▓▓▓▓▓▓▓▓▓▓▓▓[49m[39m[47m[37m░░░[39m[49m[1m 84.4% [22m[2m(1266/1378)[22m
+[80D[1A[0J[1mWeb[22m [0m[2mnode_modules/expo-router/[22m[0m[1mentry.js[22m [32m[42m▓▓▓▓▓▓▓▓▓▓▓▓▓[49m[39m[47m[37m░░░[39m[49m[1m 84.4% [22m[2m(1282/1396)[22m
+[80D[1A[0J[1mWeb[22m [0m[2mnode_modules/expo-router/[22m[0m[1mentry.js[22m [32m[42m▓▓▓▓▓▓▓▓▓▓▓▓▓[49m[39m[47m[37m░░░[39m[49m[1m 86.1% [22m[2m(1316/1418)[22m
+[80D[1A[0J[1mWeb[22m [0m[2mnode_modules/expo-router/[22m[0m[1mentry.js[22m [32m[42m▓▓▓▓▓▓▓▓▓▓▓▓▓[49m[39m[47m[37m░░░[39m[49m[1m 86.7% [22m[2m(1347/1447)[22m
+[80D[1A[0J[1mWeb[22m [0m[2mnode_modules/expo-router/[22m[0m[1mentry.js[22m [32m[42m▓▓▓▓▓▓▓▓▓▓▓▓▓[49m[39m[47m[37m░░░[39m[49m[1m 86.7% [22m[2m(1366/1467)[22m
+[80D[1A[0J[1mWeb[22m [0m[2mnode_modules/expo-router/[22m[0m[1mentry.js[22m [32m[42m▓▓▓▓▓▓▓▓▓▓▓▓▓▓[49m[39m[47m[37m░░[39m[49m[1m 88.3% [22m[2m(1393/1482)[22m
+[80D[1A[0J[1mWeb[22m [0m[2mnode_modules/expo-router/[22m[0m[1mentry.js[22m [32m[42m▓▓▓▓▓▓▓▓▓▓▓▓▓▓[49m[39m[47m[37m░░[39m[49m[1m 90.6% [22m[2m(1419/1491)[22m
+[80D[1A[0J[1mWeb[22m [0m[2mnode_modules/expo-router/[22m[0m[1mentry.js[22m [32m[42m▓▓▓▓▓▓▓▓▓▓▓▓▓▓[49m[39m[47m[37m░░[39m[49m[1m 92.0% [22m[2m(1450/1512)[22m
+[80D[1A[0J[1mWeb[22m [0m[2mnode_modules/expo-router/[22m[0m[1mentry.js[22m [32m[42m▓▓▓▓▓▓▓▓▓▓▓▓▓▓[49m[39m[47m[37m░░[39m[49m[1m 92.0% [22m[2m(1485/1548)[22m
+[80D[1A[0J[1mWeb[22m [0m[2mnode_modules/expo-router/[22m[0m[1mentry.js[22m [32m[42m▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓[49m[39m[47m[37m░[39m[49m[1m 95.2% [22m[2m(1516/1554)[22m
+[80D[1A[0J[1mWeb[22m [0m[2mnode_modules/expo-router/[22m[0m[1mentry.js[22m [32m[42m▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓[49m[39m[47m[37m░[39m[49m[1m 95.4% [22m[2m(1545/1582)[22m
+[80D[1A[0J[1mWeb[22m [0m[2mnode_modules/expo-router/[22m[0m[1mentry.js[22m [32m[42m▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓[49m[39m[47m[37m░[39m[49m[1m 96.6% [22m[2m(1562/1589)[22m
+[80D[1A[0J[1mWeb[22m [0m[2mnode_modules/expo-router/[22m[0m[1mentry.js[22m [32m[42m▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓[49m[39m[47m[37m░[39m[49m[1m 99.0% [22m[2m(1601/1609)[22m
+[80D[1A[0J[32m[1mWeb[22m Bundled [39m[2m15788ms[22m[0m[2m node_modules/expo-router/entry.js (1609 modules)[22m[0m
+[1mWeb[22m [0m[2mnode_modules/expo-router/[22m[0m[1mentry.js[22m [32m[42m▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓[49m[39m[47m[37m░[39m[49m[1m 99.0% [22m[2m(1601/1609)[22m
+[80D[1A[0J[7m[37m[1m LOG [22m[39m[27m [web] Logs will appear in the browser console
+[31m[7m[1m ERROR [22m[27m[39m TypeError: Duplicate declaration "QR_PRESETS"
+[0m [90m 32 |[39m [36mimport[39m { buildQrContent[33m,[39m getRawContent[33m,[39m filterByKeyboardType[33m,[39m validateQrInput } [36mfrom[39m [32m"@/features/generator/data/qr-builder"[39m[33m;[39m
+ [90m 33 |[39m
+[31m[1m>[22m[39m[90m 34 |[39m [36mconst[39m [33mQR_PRESETS[39m[33m:[39m [33mPresetDef[39m[] [33m=[39m [
+ [90m    |[39m       [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+ [90m 35 |[39m   {
+ [90m 36 |[39m     label[33m:[39m [32m"Text"[39m[33m,[39m icon[33m:[39m [32m"text-outline"[39m[33m,[39m placeholder[33m:[39m [32m"Type any text or message..."[39m[33m,[39m
+ [90m 37 |[39m     keyboardType[33m:[39m [32m"default"[39m[33m,[39m multiline[33m:[39m [36mtrue[39m[33m,[39m contentType[33m:[39m [32m"text"[39m[33m,[39m[0m
+    at File.buildCodeFrameError (/home/runner/workspace/node_modules/@babel/core/lib/transformation/file/file.js:189:12)
+    at Scope.checkBlockScopedCollisions (/home/runner/workspace/node_modules/@babel/traverse/lib/scope/index.js:433:27)
+    at Scope.registerBinding (/home/runner/workspace/node_modules/@babel/traverse/lib/scope/index.js:530:16)
+    at Scope.registerDeclaration (/home/runner/workspace/node_modules/@babel/traverse/lib/scope/index.js:482:14)
+    at Object.BlockScoped (/home/runner/workspace/node_modules/@babel/traverse/lib/scope/index.js:276:12)
+    at Object.newFn (/home/runner/workspace/node_modules/@babel/traverse/lib/visitors.js:203:17)
+    at NodePath._call (/home/runner/workspace/node_modules/@babel/traverse/lib/path/context.js:50:20)
+    at NodePath.call (/home/runner/workspace/node_modules/@babel/traverse/lib/path/context.js:40:18)
+    at NodePath.visit (/home/runner/workspace/node_modules/@babel/traverse/lib/path/context.js:87:31)
+    at TraversalContext.visitQueue (/home/runner/workspace/node_modules/@babel/traverse/lib/context.js:96:16)
+    at TraversalContext.visitMultiple (/home/runner/workspace/node_modules/@babel/traverse/lib/context.js:68:17)
+    at TraversalContext.visit (/home/runner/workspace/node_modules/@babel/traverse/lib/context.js:117:19)
+    at traverseNode (/home/runner/workspace/node_modules/@babel/traverse/lib/traverse-node.js:130:17)
+    at traverse (/home/runner/workspace/node_modules/@babel/traverse/lib/index.js:53:34)
+    at NodePath.traverse (/home/runner/workspace/node_modules/@babel/traverse/lib/path/index.js:120:24)
+    at Scope.crawl (/home/runner/workspace/node_modules/@babel/traverse/lib/scope/index.js:695:10)
+    at Scope.init (/home/runner/workspace/node_modules/@babel/traverse/lib/scope/index.js:661:12)
+    at NodePath.setScope (/home/runner/workspace/node_modules/@babel/traverse/lib/path/context.js:139:55)
+    at NodePath.setContext (/home/runner/workspace/node_modules/@babel/traverse/lib/path/context.js:151:12)
+    at new File (/home/runner/workspace/node_modules/@babel/core/lib/transformation/file/file.js:80:8)
+    at normalizeFile (/home/runner/workspace/node_modules/@babel/core/lib/transformation/normalize-file.js:96:10)
+    at normalizeFile.next (<anonymous>)
+    at run (/home/runner/workspace/node_modules/@babel/core/lib/transformation/index.js:22:50)
+    at run.next (<anonymous>)
+    at transform (/home/runner/workspace/node_modules/@babel/core/lib/transform.js:22:33)
+    at transform.next (<anonymous>)
+    at evaluateSync (/home/runner/workspace/node_modules/gensync/index.js:251:28)
+    at sync (/home/runner/workspace/node_modules/gensync/index.js:89:14)
+    at stopHiding - secret - don't use this - v1 (/home/runner/workspace/node_modules/@babel/core/lib/errors/rewrite-stack-trace.js:47:12)
+    at Object.transformSync (/home/runner/workspace/node_modules/@babel/core/lib/transform.js:40:76)
+    at parseWithBabel (/home/runner/workspace/node_modules/@expo/metro-config/build/transformSync.js:75:18)
+    at transformSync (/home/runner/workspace/node_modules/@expo/metro-config/build/transformSync.js:54:16)
+    at Object.transform (/home/runner/workspace/node_modules/@expo/metro-config/build/babel-transformer.js:127:58)
+    at transformJSWithBabel (/home/runner/workspace/node_modules/@expo/metro-config/build/transform-worker/metro-transform-worker.js:468:47)
+    at Object.transform (/home/runner/workspace/node_modules/@expo/metro-config/build/transform-worker/metro-transform-worker.js:583:12)
+    at Object.transform (/home/runner/workspace/node_modules/@expo/metro-config/build/transform-worker/transform-worker.js:178:19)
+    at transformFile (/home/runner/workspace/node_modules/metro/src/DeltaBundler/Worker.flow.js:67:36)
+    at Object.transform (/home/runner/workspace/node_modules/metro/src/DeltaBundler/Worker.flow.js:42:10)
+    at execFunction (/home/runner/workspace/node_modules/jest-worker/build/workers/processChild.js:149:17)
+    at execHelper (/home/runner/workspace/node_modules/jest-worker/build/workers/processChild.js:137:5)
+    at execMethod (/home/runner/workspace/node_modules/jest-worker/build/workers/processChild.js:140:5)
+    at process.messageListener (/home/runner/workspace/node_modules/jest-worker/build/workers/processChild.js:44:7)
+    at process.emit (node:events:524:28)
+    at emit (node:internal/child_process:950:14)
+[31m[7m[1m ERROR [22m[27m[39m TypeError: Duplicate declaration "QR_PRESETS"
+[0m [90m 32 |[39m [36mimport[39m { buildQrContent[33m,[39m getRawContent[33m,[39m filterByKeyboardType[33m,[39m validateQrInput } [36mfrom[39m [32m"@/features/generator/data/qr-builder"[39m[33m;[39m
+ [90m 33 |[39m
+[31m[1m>[22m[39m[90m 34 |[39m [36mconst[39m [33mQR_PRESETS[39m[33m:[39m [33mPresetDef[39m[] [33m=[39m [
+ [90m    |[39m       [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+ [90m 35 |[39m   {
+ [90m 36 |[39m     label[33m:[39m [32m"Text"[39m[33m,[39m icon[33m:[39m [32m"text-outline"[39m[33m,[39m placeholder[33m:[39m [32m"Type any text or message..."[39m[33m,[39m
+ [90m 37 |[39m     keyboardType[33m:[39m [32m"default"[39m[33m,[39m multiline[33m:[39m [36mtrue[39m[33m,[39m contentType[33m:[39m [32m"text"[39m[33m,[39m[0m
+    at File.buildCodeFrameError (/home/runner/workspace/node_modules/@babel/core/lib/transformation/file/file.js:189:12)
+    at Scope.checkBlockScopedCollisions (/home/runner/workspace/node_modules/@babel/traverse/lib/scope/index.js:433:27)
+    at Scope.registerBinding (/home/runner/workspace/node_modules/@babel/traverse/lib/scope/index.js:530:16)
+    at Scope.registerDeclaration (/home/runner/workspace/node_modules/@babel/traverse/lib/scope/index.js:482:14)
+    at Object.BlockScoped (/home/runner/workspace/node_modules/@babel/traverse/lib/scope/index.js:276:12)
+    at Object.newFn (/home/runner/workspace/node_modules/@babel/traverse/lib/visitors.js:203:17)
+    at NodePath._call (/home/runner/workspace/node_modules/@babel/traverse/lib/path/context.js:50:20)
+    at NodePath.call (/home/runner/workspace/node_modules/@babel/traverse/lib/path/context.js:40:18)
+    at NodePath.visit (/home/runner/workspace/node_modules/@babel/traverse/lib/path/context.js:87:31)
+    at TraversalContext.visitQueue (/home/runner/workspace/node_modules/@babel/traverse/lib/context.js:96:16)
+    at TraversalContext.visitMultiple (/home/runner/workspace/node_modules/@babel/traverse/lib/context.js:68:17)
+    at TraversalContext.visit (/home/runner/workspace/node_modules/@babel/traverse/lib/context.js:117:19)
+    at traverseNode (/home/runner/workspace/node_modules/@babel/traverse/lib/traverse-node.js:130:17)
+    at traverse (/home/runner/workspace/node_modules/@babel/traverse/lib/index.js:53:34)
+    at NodePath.traverse (/home/runner/workspace/node_modules/@babel/traverse/lib/path/index.js:120:24)
+    at Scope.crawl (/home/runner/workspace/node_modules/@babel/traverse/lib/scope/index.js:695:10)
+    at Scope.init (/home/runner/workspace/node_modules/@babel/traverse/lib/scope/index.js:661:12)
+    at NodePath.setScope (/home/runner/workspace/node_modules/@babel/traverse/lib/path/context.js:139:55)
+    at NodePath.setContext (/home/runner/workspace/node_modules/@babel/traverse/lib/path/context.js:151:12)
+    at new File (/home/runner/workspace/node_modules/@babel/core/lib/transformation/file/file.js:80:8)
+    at normalizeFile (/home/runner/workspace/node_modules/@babel/core/lib/transformation/normalize-file.js:96:10)
+    at normalizeFile.next (<anonymous>)
+    at run (/home/runner/workspace/node_modules/@babel/core/lib/transformation/index.js:22:50)
+    at run.next (<anonymous>)
+    at transform (/home/runner/workspace/node_modules/@babel/core/lib/transform.js:22:33)
+    at transform.next (<anonymous>)
+    at evaluateSync (/home/runner/workspace/node_modules/gensync/index.js:251:28)
+    at sync (/home/runner/workspace/node_modules/gensync/index.js:89:14)
+    at stopHiding - secret - don't use this - v1 (/home/runner/workspace/node_modules/@babel/core/lib/errors/rewrite-stack-trace.js:47:12)
+    at Object.transformSync (/home/runner/workspace/node_modules/@babel/core/lib/transform.js:40:76)
+    at parseWithBabel (/home/runner/workspace/node_modules/@expo/metro-config/build/transformSync.js:75:18)
+    at transformSync (/home/runner/workspace/node_modules/@expo/metro-config/build/transformSync.js:54:16)
+    at Object.transform (/home/runner/workspace/node_modules/@expo/metro-config/build/babel-transformer.js:127:58)
+    at transformJSWithBabel (/home/runner/workspace/node_modules/@expo/metro-config/build/transform-worker/metro-transform-worker.js:468:47)
+    at Object.transform (/home/runner/workspace/node_modules/@expo/metro-config/build/transform-worker/metro-transform-worker.js:583:12)
+    at Object.transform (/home/runner/workspace/node_modules/@expo/metro-config/build/transform-worker/transform-worker.js:178:19)
+    at transformFile (/home/runner/workspace/node_modules/metro/src/DeltaBundler/Worker.flow.js:67:36)
+    at Object.transform (/home/runner/workspace/node_modules/metro/src/DeltaBundler/Worker.flow.js:42:10)
+    at execFunction (/home/runner/workspace/node_modules/jest-worker/build/workers/processChild.js:149:17)
+    at execHelper (/home/runner/workspace/node_modules/jest-worker/build/workers/processChild.js:137:5)
+    at execMethod (/home/runner/workspace/node_modules/jest-worker/build/workers/processChild.js:140:5)
+    at process.messageListener (/home/runner/workspace/node_modules/jest-worker/build/workers/processChild.js:44:7)
+    at process.emit (node:events:524:28)
+    at emit (node:internal/child_process:950:14)
+[31m[7m[1m ERROR [22m[27m[39m TypeError: Duplicate declaration "QR_PRESETS"
+[0m [90m 32 |[39m [36mimport[39m { buildQrContent[33m,[39m getRawContent[33m,[39m filterByKeyboardType[33m,[39m validateQrInput } [36mfrom[39m [32m"@/features/generator/data/qr-builder"[39m[33m;[39m
+ [90m 33 |[39m
+[31m[1m>[22m[39m[90m 34 |[39m [36mconst[39m [33mQR_PRESETS[39m[33m:[39m [33mPresetDef[39m[] [33m=[39m [
+ [90m    |[39m       [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+ [90m 35 |[39m   {
+ [90m 36 |[39m     label[33m:[39m [32m"Text"[39m[33m,[39m icon[33m:[39m [32m"text-outline"[39m[33m,[39m placeholder[33m:[39m [32m"Type any text or message..."[39m[33m,[39m
+ [90m 37 |[39m     keyboardType[33m:[39m [32m"default"[39m[33m,[39m multiline[33m:[39m [36mtrue[39m[33m,[39m contentType[33m:[39m [32m"text"[39m[33m,[39m[0m
+    at File.buildCodeFrameError (/home/runner/workspace/node_modules/@babel/core/lib/transformation/file/file.js:189:12)
+    at Scope.checkBlockScopedCollisions (/home/runner/workspace/node_modules/@babel/traverse/lib/scope/index.js:433:27)
+    at Scope.registerBinding (/home/runner/workspace/node_modules/@babel/traverse/lib/scope/index.js:530:16)
+    at Scope.registerDeclaration (/home/runner/workspace/node_modules/@babel/traverse/lib/scope/index.js:482:14)
+    at Object.BlockScoped (/home/runner/workspace/node_modules/@babel/traverse/lib/scope/index.js:276:12)
+    at Object.newFn (/home/runner/workspace/node_modules/@babel/traverse/lib/visitors.js:203:17)
+    at NodePath._call (/home/runner/workspace/node_modules/@babel/traverse/lib/path/context.js:50:20)
+    at NodePath.call (/home/runner/workspace/node_modules/@babel/traverse/lib/path/context.js:40:18)
+    at NodePath.visit (/home/runner/workspace/node_modules/@babel/traverse/lib/path/context.js:87:31)
+    at TraversalContext.visitQueue (/home/runner/workspace/node_modules/@babel/traverse/lib/context.js:96:16)
+    at TraversalContext.visitMultiple (/home/runner/workspace/node_modules/@babel/traverse/lib/context.js:68:17)
+    at TraversalContext.visit (/home/runner/workspace/node_modules/@babel/traverse/lib/context.js:117:19)
+    at traverseNode (/home/runner/workspace/node_modules/@babel/traverse/lib/traverse-node.js:130:17)
+    at traverse (/home/runner/workspace/node_modules/@babel/traverse/lib/index.js:53:34)
+    at NodePath.traverse (/home/runner/workspace/node_modules/@babel/traverse/lib/path/index.js:120:24)
+    at Scope.crawl (/home/runner/workspace/node_modules/@babel/traverse/lib/scope/index.js:695:10)
+    at Scope.init (/home/runner/workspace/node_modules/@babel/traverse/lib/scope/index.js:661:12)
+    at NodePath.setScope (/home/runner/workspace/node_modules/@babel/traverse/lib/path/context.js:139:55)
+    at NodePath.setContext (/home/runner/workspace/node_modules/@babel/traverse/lib/path/context.js:151:12)
+    at new File (/home/runner/workspace/node_modules/@babel/core/lib/transformation/file/file.js:80:8)
+    at normalizeFile (/home/runner/workspace/node_modules/@babel/core/lib/transformation/normalize-file.js:96:10)
+    at normalizeFile.next (<anonymous>)
+    at run (/home/runner/workspace/node_modules/@babel/core/lib/transformation/index.js:22:50)
+    at run.next (<anonymous>)
+    at transform (/home/runner/workspace/node_modules/@babel/core/lib/transform.js:22:33)
+    at transform.next (<anonymous>)
+    at evaluateSync (/home/runner/workspace/node_modules/gensync/index.js:251:28)
+    at sync (/home/runner/workspace/node_modules/gensync/index.js:89:14)
+    at stopHiding - secret - don't use this - v1 (/home/runner/workspace/node_modules/@babel/core/lib/errors/rewrite-stack-trace.js:47:12)
+    at Object.transformSync (/home/runner/workspace/node_modules/@babel/core/lib/transform.js:40:76)
+    at parseWithBabel (/home/runner/workspace/node_modules/@expo/metro-config/build/transformSync.js:75:18)
+    at transformSync (/home/runner/workspace/node_modules/@expo/metro-config/build/transformSync.js:54:16)
+    at Object.transform (/home/runner/workspace/node_modules/@expo/metro-config/build/babel-transformer.js:127:58)
+    at transformJSWithBabel (/home/runner/workspace/node_modules/@expo/metro-config/build/transform-worker/metro-transform-worker.js:468:47)
+    at Object.transform (/home/runner/workspace/node_modules/@expo/metro-config/build/transform-worker/metro-transform-worker.js:583:12)
+    at Object.transform (/home/runner/workspace/node_modules/@expo/metro-config/build/transform-worker/transform-worker.js:178:19)
+    at transformFile (/home/runner/workspace/node_modules/metro/src/DeltaBundler/Worker.flow.js:67:36)
+    at Object.transform (/home/runner/workspace/node_modules/metro/src/DeltaBundler/Worker.flow.js:42:10)
+    at execFunction (/home/runner/workspace/node_modules/jest-worker/build/workers/processChild.js:149:17)
+    at execHelper (/home/runner/workspace/node_modules/jest-worker/build/workers/processChild.js:137:5)
+    at execMethod (/home/runner/workspace/node_modules/jest-worker/build/workers/processChild.js:140:5)
+    at process.messageListener (/home/runner/workspace/node_modules/jest-worker/build/workers/processChild.js:44:7)
+    at process.emit (node:events:524:28)
+    at emit (node:internal/child_process:950:14)
+[31m[7m[1m ERROR [22m[27m[39m TypeError: Duplicate declaration "QR_PRESETS"
+[0m [90m 32 |[39m [36mimport[39m { buildQrContent[33m,[39m getRawContent[33m,[39m filterByKeyboardType[33m,[39m validateQrInput } [36mfrom[39m [32m"@/features/generator/data/qr-builder"[39m[33m;[39m
+ [90m 33 |[39m
+[31m[1m>[22m[39m[90m 34 |[39m [36mconst[39m [33mQR_PRESETS[39m[33m:[39m [33mPresetDef[39m[] [33m=[39m [
+ [90m    |[39m       [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+ [90m 35 |[39m   {
+ [90m 36 |[39m     label[33m:[39m [32m"Text"[39m[33m,[39m icon[33m:[39m [32m"text-outline"[39m[33m,[39m placeholder[33m:[39m [32m"Type any text or message..."[39m[33m,[39m
+ [90m 37 |[39m     keyboardType[33m:[39m [32m"default"[39m[33m,[39m multiline[33m:[39m [36mtrue[39m[33m,[39m contentType[33m:[39m [32m"text"[39m[33m,[39m[0m
+    at File.buildCodeFrameError (/home/runner/workspace/node_modules/@babel/core/lib/transformation/file/file.js:189:12)
+    at Scope.checkBlockScopedCollisions (/home/runner/workspace/node_modules/@babel/traverse/lib/scope/index.js:433:27)
+    at Scope.registerBinding (/home/runner/workspace/node_modules/@babel/traverse/lib/scope/index.js:530:16)
+    at Scope.registerDeclaration (/home/runner/workspace/node_modules/@babel/traverse/lib/scope/index.js:482:14)
+    at Object.BlockScoped (/home/runner/workspace/node_modules/@babel/traverse/lib/scope/index.js:276:12)
+    at Object.newFn (/home/runner/workspace/node_modules/@babel/traverse/lib/visitors.js:203:17)
+    at NodePath._call (/home/runner/workspace/node_modules/@babel/traverse/lib/path/context.js:50:20)
+    at NodePath.call (/home/runner/workspace/node_modules/@babel/traverse/lib/path/context.js:40:18)
+    at NodePath.visit (/home/runner/workspace/node_modules/@babel/traverse/lib/path/context.js:87:31)
+    at TraversalContext.visitQueue (/home/runner/workspace/node_modules/@babel/traverse/lib/context.js:96:16)
+    at TraversalContext.visitMultiple (/home/runner/workspace/node_modules/@babel/traverse/lib/context.js:68:17)
+    at TraversalContext.visit (/home/runner/workspace/node_modules/@babel/traverse/lib/context.js:117:19)
+    at traverseNode (/home/runner/workspace/node_modules/@babel/traverse/lib/traverse-node.js:130:17)
+    at traverse (/home/runner/workspace/node_modules/@babel/traverse/lib/index.js:53:34)
+    at NodePath.traverse (/home/runner/workspace/node_modules/@babel/traverse/lib/path/index.js:120:24)
+    at Scope.crawl (/home/runner/workspace/node_modules/@babel/traverse/lib/scope/index.js:695:10)
+    at Scope.init (/home/runner/workspace/node_modules/@babel/traverse/lib/scope/index.js:661:12)
+    at NodePath.setScope (/home/runner/workspace/node_modules/@babel/traverse/lib/path/context.js:139:55)
+    at NodePath.setContext (/home/runner/workspace/node_modules/@babel/traverse/lib/path/context.js:151:12)
+    at new File (/home/runner/workspace/node_modules/@babel/core/lib/transformation/file/file.js:80:8)
+    at normalizeFile (/home/runner/workspace/node_modules/@babel/core/lib/transformation/normalize-file.js:96:10)
+    at normalizeFile.next (<anonymous>)
+    at run (/home/runner/workspace/node_modules/@babel/core/lib/transformation/index.js:22:50)
+    at run.next (<anonymous>)
+    at transform (/home/runner/workspace/node_modules/@babel/core/lib/transform.js:22:33)
+    at transform.next (<anonymous>)
+    at evaluateSync (/home/runner/workspace/node_modules/gensync/index.js:251:28)
+    at sync (/home/runner/workspace/node_modules/gensync/index.js:89:14)
+    at stopHiding - secret - don't use this - v1 (/home/runner/workspace/node_modules/@babel/core/lib/errors/rewrite-stack-trace.js:47:12)
+    at Object.transformSync (/home/runner/workspace/node_modules/@babel/core/lib/transform.js:40:76)
+    at parseWithBabel (/home/runner/workspace/node_modules/@expo/metro-config/build/transformSync.js:75:18)
+    at transformSync (/home/runner/workspace/node_modules/@expo/metro-config/build/transformSync.js:54:16)
+    at Object.transform (/home/runner/workspace/node_modules/@expo/metro-config/build/babel-transformer.js:127:58)
+    at transformJSWithBabel (/home/runner/workspace/node_modules/@expo/metro-config/build/transform-worker/metro-transform-worker.js:468:47)
+    at Object.transform (/home/runner/workspace/node_modules/@expo/metro-config/build/transform-worker/metro-transform-worker.js:583:12)
+    at Object.transform (/home/runner/workspace/node_modules/@expo/metro-config/build/transform-worker/transform-worker.js:178:19)
+    at transformFile (/home/runner/workspace/node_modules/metro/src/DeltaBundler/Worker.flow.js:67:36)
+    at Object.transform (/home/runner/workspace/node_modules/metro/src/DeltaBundler/Worker.flow.js:42:10)
+    at execFunction (/home/runner/workspace/node_modules/jest-worker/build/workers/processChild.js:149:17)
+    at execHelper (/home/runner/workspace/node_modules/jest-worker/build/workers/processChild.js:137:5)
+    at execMethod (/home/runner/workspace/node_modules/jest-worker/build/workers/processChild.js:140:5)
+    at process.messageListener (/home/runner/workspace/node_modules/jest-worker/build/workers/processChild.js:44:7)
+    at process.emit (node:events:524:28)
+    at emit (node:internal/child_process:950:14)
+[31m[7m[1m ERROR [22m[27m[39m TypeError: Duplicate declaration "QR_PRESETS"
+[0m [90m 32 |[39m [36mimport[39m { buildQrContent[33m,[39m getRawContent[33m,[39m filterByKeyboardType[33m,[39m validateQrInput } [36mfrom[39m [32m"@/features/generator/data/qr-builder"[39m[33m;[39m
+ [90m 33 |[39m
+[31m[1m>[22m[39m[90m 34 |[39m [36mconst[39m [33mQR_PRESETS[39m[33m:[39m [33mPresetDef[39m[] [33m=[39m [
+ [90m    |[39m       [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+ [90m 35 |[39m   {
+ [90m 36 |[39m     label[33m:[39m [32m"Text"[39m[33m,[39m icon[33m:[39m [32m"text-outline"[39m[33m,[39m placeholder[33m:[39m [32m"Type any text or message..."[39m[33m,[39m
+ [90m 37 |[39m     keyboardType[33m:[39m [32m"default"[39m[33m,[39m multiline[33m:[39m [36mtrue[39m[33m,[39m contentType[33m:[39m [32m"text"[39m[33m,[39m[0m
+    at File.buildCodeFrameError (/home/runner/workspace/node_modules/@babel/core/lib/transformation/file/file.js:189:12)
+    at Scope.checkBlockScopedCollisions (/home/runner/workspace/node_modules/@babel/traverse/lib/scope/index.js:433:27)
+    at Scope.registerBinding (/home/runner/workspace/node_modules/@babel/traverse/lib/scope/index.js:530:16)
+    at Scope.registerDeclaration (/home/runner/workspace/node_modules/@babel/traverse/lib/scope/index.js:482:14)
+    at Object.BlockScoped (/home/runner/workspace/node_modules/@babel/traverse/lib/scope/index.js:276:12)
+    at Object.newFn (/home/runner/workspace/node_modules/@babel/traverse/lib/visitors.js:203:17)
+    at NodePath._call (/home/runner/workspace/node_modules/@babel/traverse/lib/path/context.js:50:20)
+    at NodePath.call (/home/runner/workspace/node_modules/@babel/traverse/lib/path/context.js:40:18)
+    at NodePath.visit (/home/runner/workspace/node_modules/@babel/traverse/lib/path/context.js:87:31)
+    at TraversalContext.visitQueue (/home/runner/workspace/node_modules/@babel/traverse/lib/context.js:96:16)
+    at TraversalContext.visitMultiple (/home/runner/workspace/node_modules/@babel/traverse/lib/context.js:68:17)
+    at TraversalContext.visit (/home/runner/workspace/node_modules/@babel/traverse/lib/context.js:117:19)
+    at traverseNode (/home/runner/workspace/node_modules/@babel/traverse/lib/traverse-node.js:130:17)
+    at traverse (/home/runner/workspace/node_modules/@babel/traverse/lib/index.js:53:34)
+    at NodePath.traverse (/home/runner/workspace/node_modules/@babel/traverse/lib/path/index.js:120:24)
+    at Scope.crawl (/home/runner/workspace/node_modules/@babel/traverse/lib/scope/index.js:695:10)
+    at Scope.init (/home/runner/workspace/node_modules/@babel/traverse/lib/scope/index.js:661:12)
+    at NodePath.setScope (/home/runner/workspace/node_modules/@babel/traverse/lib/path/context.js:139:55)
+    at NodePath.setContext (/home/runner/workspace/node_modules/@babel/traverse/lib/path/context.js:151:12)
+    at new File (/home/runner/workspace/node_modules/@babel/core/lib/transformation/file/file.js:80:8)
+    at normalizeFile (/home/runner/workspace/node_modules/@babel/core/lib/transformation/normalize-file.js:96:10)
+    at normalizeFile.next (<anonymous>)
+    at run (/home/runner/workspace/node_modules/@babel/core/lib/transformation/index.js:22:50)
+    at run.next (<anonymous>)
+    at transform (/home/runner/workspace/node_modules/@babel/core/lib/transform.js:22:33)
+    at transform.next (<anonymous>)
+    at evaluateSync (/home/runner/workspace/node_modules/gensync/index.js:251:28)
+    at sync (/home/runner/workspace/node_modules/gensync/index.js:89:14)
+    at stopHiding - secret - don't use this - v1 (/home/runner/workspace/node_modules/@babel/core/lib/errors/rewrite-stack-trace.js:47:12)
+    at Object.transformSync (/home/runner/workspace/node_modules/@babel/core/lib/transform.js:40:76)
+    at parseWithBabel (/home/runner/workspace/node_modules/@expo/metro-config/build/transformSync.js:75:18)
+    at transformSync (/home/runner/workspace/node_modules/@expo/metro-config/build/transformSync.js:54:16)
+    at Object.transform (/home/runner/workspace/node_modules/@expo/metro-config/build/babel-transformer.js:127:58)
+    at transformJSWithBabel (/home/runner/workspace/node_modules/@expo/metro-config/build/transform-worker/metro-transform-worker.js:468:47)
+    at Object.transform (/home/runner/workspace/node_modules/@expo/metro-config/build/transform-worker/metro-transform-worker.js:583:12)
+    at Object.transform (/home/runner/workspace/node_modules/@expo/metro-config/build/transform-worker/transform-worker.js:178:19)
+    at transformFile (/home/runner/workspace/node_modules/metro/src/DeltaBundler/Worker.flow.js:67:36)
+    at Object.transform (/home/runner/workspace/node_modules/metro/src/DeltaBundler/Worker.flow.js:42:10)
+    at execFunction (/home/runner/workspace/node_modules/jest-worker/build/workers/processChild.js:149:17)
+    at execHelper (/home/runner/workspace/node_modules/jest-worker/build/workers/processChild.js:137:5)
+    at execMethod (/home/runner/workspace/node_modules/jest-worker/build/workers/processChild.js:140:5)
+    at process.messageListener (/home/runner/workspace/node_modules/jest-worker/build/workers/processChild.js:44:7)
+    at process.emit (node:events:524:28)
+    at emit (node:internal/child_process:950:14)
+[31m[7m[1m ERROR [22m[27m[39m TypeError: Duplicate declaration "QR_PRESETS"
+[0m [90m 32 |[39m [36mimport[39m { buildQrContent[33m,[39m getRawContent[33m,[39m filterByKeyboardType[33m,[39m validateQrInput } [36mfrom[39m [32m"@/features/generator/data/qr-builder"[39m[33m;[39m
+ [90m 33 |[39m
+[31m[1m>[22m[39m[90m 34 |[39m [36mconst[39m [33mQR_PRESETS[39m[33m:[39m [33mPresetDef[39m[] [33m=[39m [
+ [90m    |[39m       [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+ [90m 35 |[39m   {
+ [90m 36 |[39m     label[33m:[39m [32m"Text"[39m[33m,[39m icon[33m:[39m [32m"text-outline"[39m[33m,[39m placeholder[33m:[39m [32m"Type any text or message..."[39m[33m,[39m
+ [90m 37 |[39m     keyboardType[33m:[39m [32m"default"[39m[33m,[39m multiline[33m:[39m [36mtrue[39m[33m,[39m contentType[33m:[39m [32m"text"[39m[33m,[39m[0m
+    at File.buildCodeFrameError (/home/runner/workspace/node_modules/@babel/core/lib/transformation/file/file.js:189:12)
+    at Scope.checkBlockScopedCollisions (/home/runner/workspace/node_modules/@babel/traverse/lib/scope/index.js:433:27)
+    at Scope.registerBinding (/home/runner/workspace/node_modules/@babel/traverse/lib/scope/index.js:530:16)
+    at Scope.registerDeclaration (/home/runner/workspace/node_modules/@babel/traverse/lib/scope/index.js:482:14)
+    at Object.BlockScoped (/home/runner/workspace/node_modules/@babel/traverse/lib/scope/index.js:276:12)
+    at Object.newFn (/home/runner/workspace/node_modules/@babel/traverse/lib/visitors.js:203:17)
+    at NodePath._call (/home/runner/workspace/node_modules/@babel/traverse/lib/path/context.js:50:20)
+    at NodePath.call (/home/runner/workspace/node_modules/@babel/traverse/lib/path/context.js:40:18)
+    at NodePath.visit (/home/runner/workspace/node_modules/@babel/traverse/lib/path/context.js:87:31)
+    at TraversalContext.visitQueue (/home/runner/workspace/node_modules/@babel/traverse/lib/context.js:96:16)
+    at TraversalContext.visitMultiple (/home/runner/workspace/node_modules/@babel/traverse/lib/context.js:68:17)
+    at TraversalContext.visit (/home/runner/workspace/node_modules/@babel/traverse/lib/context.js:117:19)
+    at traverseNode (/home/runner/workspace/node_modules/@babel/traverse/lib/traverse-node.js:130:17)
+    at traverse (/home/runner/workspace/node_modules/@babel/traverse/lib/index.js:53:34)
+    at NodePath.traverse (/home/runner/workspace/node_modules/@babel/traverse/lib/path/index.js:120:24)
+    at Scope.crawl (/home/runner/workspace/node_modules/@babel/traverse/lib/scope/index.js:695:10)
+    at Scope.init (/home/runner/workspace/node_modules/@babel/traverse/lib/scope/index.js:661:12)
+    at NodePath.setScope (/home/runner/workspace/node_modules/@babel/traverse/lib/path/context.js:139:55)
+    at NodePath.setContext (/home/runner/workspace/node_modules/@babel/traverse/lib/path/context.js:151:12)
+    at new File (/home/runner/workspace/node_modules/@babel/core/lib/transformation/file/file.js:80:8)
+    at normalizeFile (/home/runner/workspace/node_modules/@babel/core/lib/transformation/normalize-file.js:96:10)
+    at normalizeFile.next (<anonymous>)
+    at run (/home/runner/workspace/node_modules/@babel/core/lib/transformation/index.js:22:50)
+    at run.next (<anonymous>)
+    at transform (/home/runner/workspace/node_modules/@babel/core/lib/transform.js:22:33)
+    at transform.next (<anonymous>)
+    at evaluateSync (/home/runner/workspace/node_modules/gensync/index.js:251:28)
+    at sync (/home/runner/workspace/node_modules/gensync/index.js:89:14)
+    at stopHiding - secret - don't use this - v1 (/home/runner/workspace/node_modules/@babel/core/lib/errors/rewrite-stack-trace.js:47:12)
+    at Object.transformSync (/home/runner/workspace/node_modules/@babel/core/lib/transform.js:40:76)
+    at parseWithBabel (/home/runner/workspace/node_modules/@expo/metro-config/build/transformSync.js:75:18)
+    at transformSync (/home/runner/workspace/node_modules/@expo/metro-config/build/transformSync.js:54:16)
+    at Object.transform (/home/runner/workspace/node_modules/@expo/metro-config/build/babel-transformer.js:127:58)
+    at transformJSWithBabel (/home/runner/workspace/node_modules/@expo/metro-config/build/transform-worker/metro-transform-worker.js:468:47)
+    at Object.transform (/home/runner/workspace/node_modules/@expo/metro-config/build/transform-worker/metro-transform-worker.js:583:12)
+    at Object.transform (/home/runner/workspace/node_modules/@expo/metro-config/build/transform-worker/transform-worker.js:178:19)
+    at transformFile (/home/runner/workspace/node_modules/metro/src/DeltaBundler/Worker.flow.js:67:36)
+    at Object.transform (/home/runner/workspace/node_modules/metro/src/DeltaBundler/Worker.flow.js:42:10)
+    at execFunction (/home/runner/workspace/node_modules/jest-worker/build/workers/processChild.js:149:17)
+    at execHelper (/home/runner/workspace/node_modules/jest-worker/build/workers/processChild.js:137:5)
+    at execMethod (/home/runner/workspace/node_modules/jest-worker/build/workers/processChild.js:140:5)
+    at process.messageListener (/home/runner/workspace/node_modules/jest-worker/build/workers/processChild.js:44:7)
+    at process.emit (node:events:524:28)
+    at emit (node:internal/child_process:950:14)
+[31m[7m[1m ERROR [22m[27m[39m TypeError: Duplicate declaration "QR_PRESETS"
+[0m [90m 32 |[39m [36mimport[39m { buildQrContent[33m,[39m getRawContent[33m,[39m filterByKeyboardType[33m,[39m validateQrInput } [36mfrom[39m [32m"@/features/generator/data/qr-builder"[39m[33m;[39m
+ [90m 33 |[39m
+[31m[1m>[22m[39m[90m 34 |[39m [36mconst[39m [33mQR_PRESETS[39m[33m:[39m [33mPresetDef[39m[] [33m=[39m [
+ [90m    |[39m       [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+ [90m 35 |[39m   {
+ [90m 36 |[39m     label[33m:[39m [32m"Text"[39m[33m,[39m icon[33m:[39m [32m"text-outline"[39m[33m,[39m placeholder[33m:[39m [32m"Type any text or message..."[39m[33m,[39m
+ [90m 37 |[39m     keyboardType[33m:[39m [32m"default"[39m[33m,[39m multiline[33m:[39m [36mtrue[39m[33m,[39m contentType[33m:[39m [32m"text"[39m[33m,[39m[0m
+    at File.buildCodeFrameError (/home/runner/workspace/node_modules/@babel/core/lib/transformation/file/file.js:189:12)
+    at Scope.checkBlockScopedCollisions (/home/runner/workspace/node_modules/@babel/traverse/lib/scope/index.js:433:27)
+    at Scope.registerBinding (/home/runner/workspace/node_modules/@babel/traverse/lib/scope/index.js:530:16)
+    at Scope.registerDeclaration (/home/runner/workspace/node_modules/@babel/traverse/lib/scope/index.js:482:14)
+    at Object.BlockScoped (/home/runner/workspace/node_modules/@babel/traverse/lib/scope/index.js:276:12)
+    at Object.newFn (/home/runner/workspace/node_modules/@babel/traverse/lib/visitors.js:203:17)
+    at NodePath._call (/home/runner/workspace/node_modules/@babel/traverse/lib/path/context.js:50:20)
+    at NodePath.call (/home/runner/workspace/node_modules/@babel/traverse/lib/path/context.js:40:18)
+    at NodePath.visit (/home/runner/workspace/node_modules/@babel/traverse/lib/path/context.js:87:31)
+    at TraversalContext.visitQueue (/home/runner/workspace/node_modules/@babel/traverse/lib/context.js:96:16)
+    at TraversalContext.visitMultiple (/home/runner/workspace/node_modules/@babel/traverse/lib/context.js:68:17)
+    at TraversalContext.visit (/home/runner/workspace/node_modules/@babel/traverse/lib/context.js:117:19)
+    at traverseNode (/home/runner/workspace/node_modules/@babel/traverse/lib/traverse-node.js:130:17)
+    at traverse (/home/runner/workspace/node_modules/@babel/traverse/lib/index.js:53:34)
+    at NodePath.traverse (/home/runner/workspace/node_modules/@babel/traverse/lib/path/index.js:120:24)
+    at Scope.crawl (/home/runner/workspace/node_modules/@babel/traverse/lib/scope/index.js:695:10)
+    at Scope.init (/home/runner/workspace/node_modules/@babel/traverse/lib/scope/index.js:661:12)
+    at NodePath.setScope (/home/runner/workspace/node_modules/@babel/traverse/lib/path/context.js:139:55)
+    at NodePath.setContext (/home/runner/workspace/node_modules/@babel/traverse/lib/path/context.js:151:12)
+    at new File (/home/runner/workspace/node_modules/@babel/core/lib/transformation/file/file.js:80:8)
+    at normalizeFile (/home/runner/workspace/node_modules/@babel/core/lib/transformation/normalize-file.js:96:10)
+    at normalizeFile.next (<anonymous>)
+    at run (/home/runner/workspace/node_modules/@babel/core/lib/transformation/index.js:22:50)
+    at run.next (<anonymous>)
+    at transform (/home/runner/workspace/node_modules/@babel/core/lib/transform.js:22:33)
+    at transform.next (<anonymous>)
+    at evaluateSync (/home/runner/workspace/node_modules/gensync/index.js:251:28)
+    at sync (/home/runner/workspace/node_modules/gensync/index.js:89:14)
+    at stopHiding - secret - don't use this - v1 (/home/runner/workspace/node_modules/@babel/core/lib/errors/rewrite-stack-trace.js:47:12)
+    at Object.transformSync (/home/runner/workspace/node_modules/@babel/core/lib/transform.js:40:76)
+    at parseWithBabel (/home/runner/workspace/node_modules/@expo/metro-config/build/transformSync.js:75:18)
+    at transformSync (/home/runner/workspace/node_modules/@expo/metro-config/build/transformSync.js:54:16)
+    at Object.transform (/home/runner/workspace/node_modules/@expo/metro-config/build/babel-transformer.js:127:58)
+    at transformJSWithBabel (/home/runner/workspace/node_modules/@expo/metro-config/build/transform-worker/metro-transform-worker.js:468:47)
+    at Object.transform (/home/runner/workspace/node_modules/@expo/metro-config/build/transform-worker/metro-transform-worker.js:583:12)
+    at Object.transform (/home/runner/workspace/node_modules/@expo/metro-config/build/transform-worker/transform-worker.js:178:19)
+    at transformFile (/home/runner/workspace/node_modules/metro/src/DeltaBundler/Worker.flow.js:67:36)
+    at Object.transform (/home/runner/workspace/node_modules/metro/src/DeltaBundler/Worker.flow.js:42:10)
+    at execFunction (/home/runner/workspace/node_modules/jest-worker/build/workers/processChild.js:149:17)
+    at execHelper (/home/runner/workspace/node_modules/jest-worker/build/workers/processChild.js:137:5)
+    at execMethod (/home/runner/workspace/node_modules/jest-worker/build/workers/processChild.js:140:5)
+    at process.messageListener (/home/runner/workspace/node_modules/jest-worker/build/workers/processChild.js:44:7)
+    at process.emit (node:events:524:28)
+    at emit (node:internal/child_process:950:14)
+[31m[7m[1m ERROR [22m[27m[39m TypeError: Duplicate declaration "QR_PRESETS"
+[0m [90m 32 |[39m [36mimport[39m { buildQrContent[33m,[39m getRawContent[33m,[39m filterByKeyboardType[33m,[39m validateQrInput } [36mfrom[39m [32m"@/features/generator/data/qr-builder"[39m[33m;[39m
+ [90m 33 |[39m
+[31m[1m>[22m[39m[90m 34 |[39m [36mconst[39m [33mQR_PRESETS[39m[33m:[39m [33mPresetDef[39m[] [33m=[39m [
+ [90m    |[39m       [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+ [90m 35 |[39m   {
+ [90m 36 |[39m     label[33m:[39m [32m"Text"[39m[33m,[39m icon[33m:[39m [32m"text-outline"[39m[33m,[39m placeholder[33m:[39m [32m"Type any text or message..."[39m[33m,[39m
+ [90m 37 |[39m     keyboardType[33m:[39m [32m"default"[39m[33m,[39m multiline[33m:[39m [36mtrue[39m[33m,[39m contentType[33m:[39m [32m"text"[39m[33m,[39m[0m
+    at File.buildCodeFrameError (/home/runner/workspace/node_modules/@babel/core/lib/transformation/file/file.js:189:12)
+    at Scope.checkBlockScopedCollisions (/home/runner/workspace/node_modules/@babel/traverse/lib/scope/index.js:433:27)
+    at Scope.registerBinding (/home/runner/workspace/node_modules/@babel/traverse/lib/scope/index.js:530:16)
+    at Scope.registerDeclaration (/home/runner/workspace/node_modules/@babel/traverse/lib/scope/index.js:482:14)
+    at Object.BlockScoped (/home/runner/workspace/node_modules/@babel/traverse/lib/scope/index.js:276:12)
+    at Object.newFn (/home/runner/workspace/node_modules/@babel/traverse/lib/visitors.js:203:17)
+    at NodePath._call (/home/runner/workspace/node_modules/@babel/traverse/lib/path/context.js:50:20)
+    at NodePath.call (/home/runner/workspace/node_modules/@babel/traverse/lib/path/context.js:40:18)
+    at NodePath.visit (/home/runner/workspace/node_modules/@babel/traverse/lib/path/context.js:87:31)
+    at TraversalContext.visitQueue (/home/runner/workspace/node_modules/@babel/traverse/lib/context.js:96:16)
+    at TraversalContext.visitMultiple (/home/runner/workspace/node_modules/@babel/traverse/lib/context.js:68:17)
+    at TraversalContext.visit (/home/runner/workspace/node_modules/@babel/traverse/lib/context.js:117:19)
+    at traverseNode (/home/runner/workspace/node_modules/@babel/traverse/lib/traverse-node.js:130:17)
+    at traverse (/home/runner/workspace/node_modules/@babel/traverse/lib/index.js:53:34)
+    at NodePath.traverse (/home/runner/workspace/node_modules/@babel/traverse/lib/path/index.js:120:24)
+    at Scope.crawl (/home/runner/workspace/node_modules/@babel/traverse/lib/scope/index.js:695:10)
+    at Scope.init (/home/runner/workspace/node_modules/@babel/traverse/lib/scope/index.js:661:12)
+    at NodePath.setScope (/home/runner/workspace/node_modules/@babel/traverse/lib/path/context.js:139:55)
+    at NodePath.setContext (/home/runner/workspace/node_modules/@babel/traverse/lib/path/context.js:151:12)
+    at new File (/home/runner/workspace/node_modules/@babel/core/lib/transformation/file/file.js:80:8)
+    at normalizeFile (/home/runner/workspace/node_modules/@babel/core/lib/transformation/normalize-file.js:96:10)
+    at normalizeFile.next (<anonymous>)
+    at run (/home/runner/workspace/node_modules/@babel/core/lib/transformation/index.js:22:50)
+    at run.next (<anonymous>)
+    at transform (/home/runner/workspace/node_modules/@babel/core/lib/transform.js:22:33)
+    at transform.next (<anonymous>)
+    at evaluateSync (/home/runner/workspace/node_modules/gensync/index.js:251:28)
+    at sync (/home/runner/workspace/node_modules/gensync/index.js:89:14)
+    at stopHiding - secret - don't use this - v1 (/home/runner/workspace/node_modules/@babel/core/lib/errors/rewrite-stack-trace.js:47:12)
+    at Object.transformSync (/home/runner/workspace/node_modules/@babel/core/lib/transform.js:40:76)
+    at parseWithBabel (/home/runner/workspace/node_modules/@expo/metro-config/build/transformSync.js:75:18)
+    at transformSync (/home/runner/workspace/node_modules/@expo/metro-config/build/transformSync.js:54:16)
+    at Object.transform (/home/runner/workspace/node_modules/@expo/metro-config/build/babel-transformer.js:127:58)
+    at transformJSWithBabel (/home/runner/workspace/node_modules/@expo/metro-config/build/transform-worker/metro-transform-worker.js:468:47)
+    at Object.transform (/home/runner/workspace/node_modules/@expo/metro-config/build/transform-worker/metro-transform-worker.js:583:12)
+    at Object.transform (/home/runner/workspace/node_modules/@expo/metro-config/build/transform-worker/transform-worker.js:178:19)
+    at transformFile (/home/runner/workspace/node_modules/metro/src/DeltaBundler/Worker.flow.js:67:36)
+    at Object.transform (/home/runner/workspace/node_modules/metro/src/DeltaBundler/Worker.flow.js:42:10)
+    at execFunction (/home/runner/workspace/node_modules/jest-worker/build/workers/processChild.js:149:17)
+    at execHelper (/home/runner/workspace/node_modules/jest-worker/build/workers/processChild.js:137:5)
+    at execMethod (/home/runner/workspace/node_modules/jest-worker/build/workers/processChild.js:140:5)
+    at process.messageListener (/home/runner/workspace/node_modules/jest-worker/build/workers/processChild.js:44:7)
+    at process.emit (node:events:524:28)
+    at emit (node:internal/child_process:950:14)
