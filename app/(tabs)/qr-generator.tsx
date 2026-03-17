@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import {
   View,
   Text,
@@ -7,10 +7,11 @@ import {
   Pressable,
   ScrollView,
   Platform,
-  Share,
   Alert,
   Image,
   Modal,
+  Animated,
+  KeyboardTypeOptions,
 } from "react-native";
 import { router } from "expo-router";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
@@ -21,64 +22,282 @@ import * as ImagePicker from "expo-image-picker";
 import * as Crypto from "expo-crypto";
 import * as FileSystem from "expo-file-system";
 import * as Sharing from "expo-sharing";
-import Animated, { FadeIn, FadeInDown } from "react-native-reanimated";
+import ReanimatedAnimated, { FadeIn, FadeInDown } from "react-native-reanimated";
 import Colors from "@/constants/colors";
 import QRCode from "react-native-qrcode-svg";
 import { useAuth } from "@/contexts/AuthContext";
 import { saveGeneratedQr, saveGuardLink, type QrType } from "@/lib/firestore-service";
 import { getApiUrl } from "@/lib/query-client";
 
-const QR_PRESETS = [
-  { label: "Text", icon: "text-outline", placeholder: "Type any text..." },
-  { label: "URL", icon: "link-outline", placeholder: "https://example.com" },
-  { label: "Email", icon: "mail-outline", placeholder: "email@example.com" },
-  { label: "Phone", icon: "call-outline", placeholder: "+1234567890" },
-  { label: "WiFi", icon: "wifi-outline", placeholder: "WIFI:T:WPA;S:NetworkName;P:Password;;" },
+// ─── Content Type Definitions ──────────────────────────────────────────────
+
+interface ExtraFieldDef {
+  key: string;
+  label: string;
+  placeholder: string;
+  keyboardType?: KeyboardTypeOptions;
+  optional?: boolean;
+  secureText?: boolean;
+}
+
+interface PresetDef {
+  label: string;
+  icon: string;
+  placeholder: string;
+  keyboardType: KeyboardTypeOptions;
+  multiline?: boolean;
+  hint?: string;
+  extraFields?: ExtraFieldDef[];
+  contentType: string;
+}
+
+const QR_PRESETS: PresetDef[] = [
+  {
+    label: "Text", icon: "text-outline", placeholder: "Type any text or message...",
+    keyboardType: "default", multiline: true, contentType: "text",
+  },
+  {
+    label: "URL", icon: "link-outline", placeholder: "https://example.com",
+    keyboardType: "url", contentType: "url",
+    hint: "Enter a full website URL",
+  },
+  {
+    label: "Email", icon: "mail-outline", placeholder: "email@example.com",
+    keyboardType: "email-address", contentType: "email",
+    hint: "Enter a valid email address",
+  },
+  {
+    label: "Phone", icon: "call-outline", placeholder: "+91 9876543210",
+    keyboardType: "phone-pad", contentType: "phone",
+    hint: "Enter phone number with country code",
+  },
+  {
+    label: "SMS", icon: "chatbubble-outline", placeholder: "+91 9876543210",
+    keyboardType: "phone-pad", contentType: "sms",
+    hint: "Scanning will open a pre-filled SMS",
+    extraFields: [
+      { key: "message", label: "Message (optional)", placeholder: "Hello!", keyboardType: "default", optional: true },
+    ],
+  },
+  {
+    label: "WhatsApp", icon: "logo-whatsapp", placeholder: "+91 9876543210",
+    keyboardType: "phone-pad", contentType: "whatsapp",
+    hint: "Include country code (e.g. +91 for India)",
+    extraFields: [
+      { key: "message", label: "Pre-filled message (optional)", placeholder: "Hi there!", keyboardType: "default", optional: true },
+    ],
+  },
+  {
+    label: "WiFi", icon: "wifi-outline", placeholder: "NetworkName",
+    keyboardType: "default", contentType: "wifi",
+    hint: "Scanning will auto-connect to this WiFi",
+    extraFields: [
+      { key: "password", label: "Password", placeholder: "WiFi password", keyboardType: "default", secureText: true },
+      { key: "encryption", label: "Security (WPA / WEP / nopass)", placeholder: "WPA", keyboardType: "default", optional: true },
+      { key: "hidden", label: "Hidden network? (true / false)", placeholder: "false", keyboardType: "default", optional: true },
+    ],
+  },
+  {
+    label: "UPI 🇮🇳", icon: "card-outline", placeholder: "merchant@upi",
+    keyboardType: "email-address", contentType: "upi",
+    hint: "India UPI — works with PhonePe, GPay, Paytm, BHIM",
+    extraFields: [
+      { key: "name", label: "Payee Name", placeholder: "John Doe or Store Name", keyboardType: "default" },
+      { key: "amount", label: "Amount (optional)", placeholder: "100.00", keyboardType: "decimal-pad", optional: true },
+    ],
+  },
+  {
+    label: "Location", icon: "location-outline", placeholder: "12.9716",
+    keyboardType: "decimal-pad", contentType: "location",
+    hint: "Latitude and longitude (Google Maps compatible)",
+    extraFields: [
+      { key: "lon", label: "Longitude", placeholder: "77.5946", keyboardType: "decimal-pad" },
+      { key: "label", label: "Location label (optional)", placeholder: "My Office", keyboardType: "default", optional: true },
+    ],
+  },
+  {
+    label: "Contact", icon: "person-circle-outline", placeholder: "Full Name",
+    keyboardType: "default", contentType: "contact",
+    hint: "Creates a vCard contact — scanners can save to address book",
+    extraFields: [
+      { key: "phone", label: "Phone", placeholder: "+91 9876543210", keyboardType: "phone-pad" },
+      { key: "email", label: "Email (optional)", placeholder: "name@example.com", keyboardType: "email-address", optional: true },
+      { key: "org", label: "Organisation (optional)", placeholder: "Company Name", keyboardType: "default", optional: true },
+      { key: "url", label: "Website (optional)", placeholder: "https://example.com", keyboardType: "url", optional: true },
+    ],
+  },
+  {
+    label: "Bitcoin", icon: "logo-bitcoin", placeholder: "bc1qxy2kgdygjrsqtzq2n0yrf...",
+    keyboardType: "default", contentType: "crypto",
+    hint: "Bitcoin wallet address — supports BTC/ETH/LTC/SOL",
+    extraFields: [
+      { key: "amount", label: "Amount (optional)", placeholder: "0.001", keyboardType: "decimal-pad", optional: true },
+      { key: "coin", label: "Coin (bitcoin / ethereum / litecoin)", placeholder: "bitcoin", keyboardType: "default", optional: true },
+    ],
+  },
 ];
 
-type LogoPosition = "center" | "top-left" | "top-right" | "bottom-left" | "bottom-right";
+// ─── Build QR content from inputs ─────────────────────────────────────────
 
-const LOGO_POSITIONS: { key: LogoPosition; label: string; icon: string }[] = [
-  { key: "center", label: "Center", icon: "square" },
-  { key: "top-left", label: "Top Left", icon: "arrow-up-outline" },
-  { key: "top-right", label: "Top Right", icon: "arrow-up-outline" },
-  { key: "bottom-left", label: "Bot. Left", icon: "arrow-down-outline" },
-  { key: "bottom-right", label: "Bot. Right", icon: "arrow-down-outline" },
-];
-
-function buildQrContent(type: number, value: string): string {
-  if (!value.trim()) return "";
-  switch (type) {
-    case 1: return value.startsWith("http") ? value : `https://${value}`;
-    case 2: return `mailto:${value}`;
-    case 3: return `tel:${value}`;
-    default: return value;
+function buildQrContent(presetIdx: number, value: string, extra: Record<string, string>): string {
+  const v = value.trim();
+  if (!v) return "";
+  switch (presetIdx) {
+    case 0: return v; // text
+    case 1: return v.startsWith("http") ? v : `https://${v}`; // URL
+    case 2: return `mailto:${v}`; // email
+    case 3: return `tel:${v.replace(/\s/g, "")}`; // phone
+    case 4: { // SMS
+      const cleanPhone = v.replace(/\s/g, "");
+      const msg = extra.message?.trim() || "";
+      return msg ? `SMSTO:${cleanPhone}:${msg}` : `SMSTO:${cleanPhone}`;
+    }
+    case 5: { // WhatsApp
+      const cleanPhone = v.replace(/[\s\-()]/g, "");
+      const msg = extra.message?.trim() || "";
+      const base = `https://wa.me/${cleanPhone.replace(/^\+/, "")}`;
+      return msg ? `${base}?text=${encodeURIComponent(msg)}` : base;
+    }
+    case 6: { // WiFi
+      const ssid = v;
+      const password = extra.password?.trim() || "";
+      const enc = (extra.encryption?.trim().toUpperCase() || "WPA");
+      const hidden = extra.hidden?.trim().toLowerCase() === "true" ? "true" : "false";
+      return `WIFI:T:${enc};S:${ssid};P:${password};H:${hidden};;`;
+    }
+    case 7: { // UPI
+      const vpa = v;
+      const name = extra.name?.trim() || "";
+      const amount = extra.amount?.trim() || "";
+      let url = `upi://pay?pa=${encodeURIComponent(vpa)}`;
+      if (name) url += `&pn=${encodeURIComponent(name)}`;
+      if (amount) url += `&am=${amount}&cu=INR`;
+      return url;
+    }
+    case 8: { // Location
+      const lat = v;
+      const lon = extra.lon?.trim() || "";
+      const label = extra.label?.trim() || "";
+      if (!lon) return `geo:${lat}`;
+      return label ? `geo:${lat},${lon}?q=${encodeURIComponent(label)}` : `geo:${lat},${lon}`;
+    }
+    case 9: { // Contact / vCard
+      const name = v;
+      const phone = extra.phone?.trim() || "";
+      const email = extra.email?.trim() || "";
+      const org = extra.org?.trim() || "";
+      const url = extra.url?.trim() || "";
+      let vcard = `BEGIN:VCARD\nVERSION:3.0\nFN:${name}\nN:${name};;;;\n`;
+      if (phone) vcard += `TEL:${phone}\n`;
+      if (email) vcard += `EMAIL:${email}\n`;
+      if (org) vcard += `ORG:${org}\n`;
+      if (url) vcard += `URL:${url}\n`;
+      vcard += `END:VCARD`;
+      return vcard;
+    }
+    case 10: { // Bitcoin/crypto
+      const coin = extra.coin?.trim().toLowerCase() || "bitcoin";
+      const amount = extra.amount?.trim() || "";
+      return amount ? `${coin}:${v}?amount=${amount}` : `${coin}:${v}`;
+    }
+    default: return v;
   }
 }
 
-function looksLikeUrl(value: string): boolean {
-  const withScheme = value.startsWith("http") ? value : `https://${value}`;
-  try {
-    const url = new URL(withScheme);
-    return url.hostname.includes(".") && url.hostname.length > 3;
-  } catch {
-    return false;
+// Raw readable content for clipboard
+function getRawContent(presetIdx: number, value: string, extra: Record<string, string>): string {
+  const v = value.trim();
+  switch (presetIdx) {
+    case 2: return v; // just the email
+    case 3: return v; // just the phone
+    case 4: return v; // phone
+    case 5: return v; // phone
+    default: return buildQrContent(presetIdx, value, extra);
   }
 }
 
-function getContentType(preset: number): string {
-  switch (preset) {
-    case 1: return "url";
-    case 2: return "email";
-    case 3: return "phone";
-    case 4: return "wifi";
-    default: return "text";
+// ─── Validation ────────────────────────────────────────────────────────────
+
+function validate(presetIdx: number, value: string, extra: Record<string, string>): string | null {
+  const v = value.trim();
+  if (!v) return "Please enter some content first.";
+  switch (presetIdx) {
+    case 1: { // URL
+      const withScheme = v.startsWith("http") ? v : `https://${v}`;
+      try {
+        const url = new URL(withScheme);
+        if (!url.hostname.includes(".") || url.hostname.length < 4) return "Please enter a valid URL (e.g. example.com).";
+      } catch {
+        return "Please enter a valid URL (e.g. example.com).";
+      }
+      return null;
+    }
+    case 2: { // Email
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(v)) return "Please enter a valid email address (e.g. name@example.com).";
+      return null;
+    }
+    case 3: { // Phone
+      if (!/^[+\d][\d\s\-().]{5,19}$/.test(v)) return "Please enter a valid phone number (digits, +, spaces, dashes allowed).";
+      return null;
+    }
+    case 4: { // SMS
+      if (!/^[+\d][\d\s\-().]{5,19}$/.test(v)) return "Please enter a valid phone number for the SMS recipient.";
+      return null;
+    }
+    case 5: { // WhatsApp
+      const cleaned = v.replace(/[\s\-()]/g, "");
+      if (!/^\+?\d{7,15}$/.test(cleaned)) return "Please enter a valid WhatsApp number with country code (e.g. +91 9876543210).";
+      return null;
+    }
+    case 6: { // WiFi
+      if (!v) return "Please enter the WiFi network name (SSID).";
+      return null;
+    }
+    case 7: { // UPI
+      if (!/^[\w.\-+]+@[\w]+$/.test(v)) return "Please enter a valid UPI VPA (e.g. merchant@upi, 9876543210@paytm).";
+      if (!extra.name?.trim()) return "Please enter the payee name.";
+      return null;
+    }
+    case 8: { // Location
+      const lat = parseFloat(v);
+      if (isNaN(lat) || lat < -90 || lat > 90) return "Latitude must be a number between -90 and 90.";
+      const lon = parseFloat(extra.lon || "");
+      if (!extra.lon?.trim() || isNaN(lon) || lon < -180 || lon > 180) return "Please enter a valid longitude (-180 to 180).";
+      return null;
+    }
+    case 9: { // Contact
+      if (!extra.phone?.trim()) return "Please enter at least a phone number for the contact.";
+      return null;
+    }
+    case 10: { // Bitcoin
+      if (v.length < 20) return "Please enter a valid cryptocurrency wallet address.";
+      return null;
+    }
+    default: return null; // Text — anything goes
   }
+}
+
+// ─── Helpers ───────────────────────────────────────────────────────────────
+
+function getFirestoreContentType(presetIdx: number): string {
+  return QR_PRESETS[presetIdx]?.contentType ?? "text";
 }
 
 function formatShortDate(date: Date): string {
   return date.toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" });
 }
+
+type LogoPosition = "center" | "top-left" | "top-right" | "bottom-left" | "bottom-right";
+
+const LOGO_POSITIONS: { key: LogoPosition; label: string }[] = [
+  { key: "center", label: "Center" },
+  { key: "top-left", label: "Top Left" },
+  { key: "top-right", label: "Top Right" },
+  { key: "bottom-left", label: "Bot. Left" },
+  { key: "bottom-right", label: "Bot. Right" },
+];
+
+// ─── Component ─────────────────────────────────────────────────────────────
 
 export default function QrGeneratorScreen() {
   const { user } = useAuth();
@@ -87,6 +306,7 @@ export default function QrGeneratorScreen() {
 
   const [selectedPreset, setSelectedPreset] = useState(0);
   const [inputValue, setInputValue] = useState("");
+  const [extraFields, setExtraFields] = useState<Record<string, string>>({});
   const [qrValue, setQrValue] = useState("");
   const [qrSize, setQrSize] = useState(220);
   const [qrMode, setQrMode] = useState<"individual" | "business" | "private">("individual");
@@ -100,46 +320,80 @@ export default function QrGeneratorScreen() {
   const [positionModalOpen, setPositionModalOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const [savedToProfile, setSavedToProfile] = useState(false);
-  const [copied, setCopied] = useState(false);
+
+  // Toast
+  const [toastMsg, setToastMsg] = useState("");
+  const [toastType, setToastType] = useState<"success" | "error">("success");
+  const toastAnim = useRef(new Animated.Value(0)).current;
+  const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const topInset = Platform.OS === "web" ? 67 : insets.top;
   const tabBarHeight = 60 + insets.bottom;
 
-  const displayValue = buildQrContent(selectedPreset, inputValue);
+  const preset = QR_PRESETS[selectedPreset];
   const privateMode = qrMode === "private";
   const isBranded = !!user && !privateMode;
 
-  async function handleGenerate() {
-    const val = displayValue.trim();
-    if (!val) { Alert.alert("Empty", "Please enter some content first."); return; }
+  function showToast(msg: string, type: "success" | "error" = "success") {
+    if (toastTimer.current) clearTimeout(toastTimer.current);
+    setToastMsg(msg);
+    setToastType(type);
+    Animated.sequence([
+      Animated.timing(toastAnim, { toValue: 1, duration: 220, useNativeDriver: true }),
+      Animated.delay(1800),
+      Animated.timing(toastAnim, { toValue: 0, duration: 220, useNativeDriver: true }),
+    ]).start();
+    toastTimer.current = setTimeout(() => setToastMsg(""), 2400);
+  }
 
-    // Warn user if they selected URL type but entered plain text
-    const isUrlPreset = selectedPreset === 1 || (qrMode === "business" && isBranded);
-    if (isUrlPreset && !looksLikeUrl(inputValue.trim())) {
-      let shouldStop = false;
-      await new Promise<void>((resolve) => {
-        Alert.alert(
-          "Not a valid URL",
-          "The content you entered doesn't look like a URL. A URL QR code should point to a website (e.g. example.com).\n\nSwitch to \"Text\" type if you want to encode plain text.",
-          [
-            { text: "Use Text type", style: "default", onPress: () => { setSelectedPreset(0); shouldStop = true; resolve(); } },
-            { text: "Generate anyway", style: "destructive", onPress: () => resolve() },
-            { text: "Cancel", style: "cancel", onPress: () => { shouldStop = true; resolve(); } },
-          ]
-        );
-      });
-      if (shouldStop) return;
+  function setExtraField(key: string, val: string) {
+    setExtraFields((prev) => ({ ...prev, [key]: val }));
+  }
+
+  function switchPreset(idx: number) {
+    setSelectedPreset(idx);
+    setInputValue("");
+    setExtraFields({});
+    setQrValue("");
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+  }
+
+  async function handleGenerate() {
+    // For business mode — always URL based
+    if (qrMode === "business" && isBranded) {
+      const v = inputValue.trim();
+      if (!v) { showToast("Please enter a destination URL.", "error"); return; }
+      const withScheme = v.startsWith("http") ? v : `https://${v}`;
+      try {
+        const url = new URL(withScheme);
+        if (!url.hostname.includes(".") || url.hostname.length < 4) {
+          showToast("Please enter a valid URL for the business QR.", "error"); return;
+        }
+      } catch {
+        showToast("Please enter a valid URL for the business QR.", "error"); return;
+      }
+    } else {
+      const error = validate(selectedPreset, inputValue, extraFields);
+      if (error) {
+        showToast(error, "error");
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+        return;
+      }
     }
+
+    const builtContent = qrMode === "business" && isBranded
+      ? (inputValue.trim().startsWith("http") ? inputValue.trim() : `https://${inputValue.trim()}`)
+      : buildQrContent(selectedPreset, inputValue, extraFields);
 
     const uuid = await Crypto.digestStringAsync(
       Crypto.CryptoDigestAlgorithm.SHA256,
-      val + Date.now()
+      builtContent + Date.now()
     );
     const shortUuid = uuid.slice(0, 16).toUpperCase().match(/.{1,4}/g)?.join("-") || uuid.slice(0, 16);
 
     const isBusinessMode = qrMode === "business" && isBranded && !!user;
 
-    let encodedValue = val;
+    let encodedValue = builtContent;
     if (isBusinessMode) {
       const base = getApiUrl().replace(/\/$/, "");
       encodedValue = `${base}/guard/${shortUuid}`;
@@ -159,14 +413,14 @@ export default function QrGeneratorScreen() {
         const bName = qrMode === "business" ? (businessName.trim() || null) : null;
 
         if (isBusinessMode) {
-          await saveGuardLink(shortUuid, val, bName, user.displayName, user.id);
+          await saveGuardLink(shortUuid, builtContent, bName, user.displayName, user.id);
         }
 
         await saveGeneratedQr(
           user.id,
           user.displayName,
           encodedValue,
-          "url",
+          getFirestoreContentType(selectedPreset),
           shortUuid,
           true,
           qt,
@@ -177,7 +431,7 @@ export default function QrGeneratorScreen() {
         setSavedToProfile(true);
         setTimeout(() => setSavedToProfile(false), 4000);
       } catch (err: any) {
-        Alert.alert("Error", err?.message || "Could not save QR code. Please try again.");
+        showToast(err?.message || "Could not save QR code. Please try again.", "error");
       }
       setSaving(false);
     }
@@ -185,7 +439,7 @@ export default function QrGeneratorScreen() {
 
   async function handlePickCustomLogo() {
     const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (!perm.granted) { Alert.alert("Permission needed", "Gallery access is required."); return; }
+    if (!perm.granted) { showToast("Gallery permission is required.", "error"); return; }
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ["images"],
       allowsEditing: true,
@@ -206,55 +460,54 @@ export default function QrGeneratorScreen() {
 
   async function handleCopy() {
     if (!qrValue) return;
-    await Clipboard.setStringAsync(qrValue);
+    // Copy the readable raw content, not the redirect URL
+    const rawContent = qrMode === "business" && isBranded
+      ? inputValue.trim()
+      : getRawContent(selectedPreset, inputValue, extraFields);
+    await Clipboard.setStringAsync(rawContent || qrValue);
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+    showToast("Copied to clipboard!", "success");
   }
 
   async function handleShare() {
     if (!qrValue || !svgRef.current) return;
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    const caption = isBranded
-      ? `QR Code — QR Guard${generatedUuid ? `\nID: ${generatedUuid}` : ""}\n${qrValue}`
-      : qrValue;
-    try {
-      if (Platform.OS === "web") {
-        await Share.share({ message: caption, title: "QR Code — QR Guard" });
-        return;
-      }
-      svgRef.current.toDataURL(async (dataUrl: string) => {
-        try {
-          // Strip the "data:image/png;base64," prefix — toDataURL returns a full
-          // data URI, but FileSystem.writeAsStringAsync needs raw base64 only.
-          const rawBase64 = dataUrl.includes(",") ? dataUrl.split(",")[1] : dataUrl;
-          // Use a unique filename each time to avoid Android caching stale data
-          const fileName = `qrguard_${Date.now()}.png`;
-          const dir = FileSystem.cacheDirectory ?? FileSystem.documentDirectory ?? "";
-          const fileUri = dir + fileName;
-          await FileSystem.writeAsStringAsync(fileUri, rawBase64, {
-            encoding: FileSystem.EncodingType.Base64,
+
+    // Web fallback
+    if (Platform.OS === "web") {
+      showToast("Download the QR image by long-pressing it.", "success");
+      return;
+    }
+
+    // Native: share only the QR image, no text
+    svgRef.current.toDataURL(async (dataUrl: string) => {
+      try {
+        const rawBase64 = dataUrl.includes(",") ? dataUrl.split(",")[1] : dataUrl;
+        const fileName = `qrguard_${Date.now()}.png`;
+        const dir = FileSystem.cacheDirectory ?? FileSystem.documentDirectory ?? "";
+        const fileUri = dir + fileName;
+        await FileSystem.writeAsStringAsync(fileUri, rawBase64, {
+          encoding: FileSystem.EncodingType.Base64,
+        });
+        const canShare = await Sharing.isAvailableAsync();
+        if (canShare) {
+          await Sharing.shareAsync(fileUri, {
+            mimeType: "image/png",
+            dialogTitle: "Share QR Code Image",
+            UTI: "public.png",
           });
-          const canShare = await Sharing.isAvailableAsync();
-          if (canShare) {
-            // expo-sharing handles Android FileProvider (Content URI) automatically
-            await Sharing.shareAsync(fileUri, {
-              mimeType: "image/png",
-              dialogTitle: "Share QR Code",
-              UTI: "public.png",
-            });
-          } else {
-            await Share.share({ message: caption, title: "QR Code — QR Guard" });
-          }
-        } catch {
-          await Share.share({ message: caption, title: "QR Code — QR Guard" });
+        } else {
+          showToast("Sharing is not available on this device.", "error");
         }
-      });
-    } catch {}
+      } catch {
+        showToast("Could not share the QR code image.", "error");
+      }
+    });
   }
 
   function handleClear() {
     setInputValue("");
+    setExtraFields({});
     setQrValue("");
     setGeneratedUuid(null);
     setGeneratedAt(null);
@@ -291,7 +544,7 @@ export default function QrGeneratorScreen() {
         keyboardShouldPersistTaps="handled"
       >
         {/* Mode toggle */}
-        <Animated.View entering={FadeInDown.duration(400)}>
+        <ReanimatedAnimated.View entering={FadeInDown.duration(400)}>
           {user ? (
             <View style={styles.modeRow}>
               <Pressable
@@ -352,16 +605,12 @@ export default function QrGeneratorScreen() {
           ) : qrMode === "private" ? (
             <View style={styles.privateBanner}>
               <Ionicons name="eye-off-outline" size={14} color={Colors.dark.textMuted} />
-              <Text style={styles.privateBannerText}>
-                No-trace mode — nothing is recorded. Fully local QR code.
-              </Text>
+              <Text style={styles.privateBannerText}>No-trace mode — nothing is recorded. Fully local QR code.</Text>
             </View>
           ) : (
             <Pressable style={styles.signInPrompt} onPress={() => router.push("/(auth)/login")}>
               <Ionicons name="sparkles-outline" size={14} color={Colors.dark.accent} />
-              <Text style={styles.signInPromptText}>
-                Sign in to create branded QR codes with your QR Guard identity
-              </Text>
+              <Text style={styles.signInPromptText}>Sign in to create branded QR codes with your QR Guard identity</Text>
               <Ionicons name="chevron-forward" size={14} color={Colors.dark.accent} />
             </Pressable>
           )}
@@ -379,18 +628,18 @@ export default function QrGeneratorScreen() {
               />
             </View>
           )}
-        </Animated.View>
+        </ReanimatedAnimated.View>
 
-        {/* Content type — hidden in business mode since business QRs always redirect a URL */}
+        {/* Content type — hidden in business mode */}
         {qrMode !== "business" && (
-          <Animated.View entering={FadeInDown.duration(400).delay(80)}>
+          <ReanimatedAnimated.View entering={FadeInDown.duration(400).delay(80)}>
             <Text style={styles.sectionLabel}>Content Type</Text>
             <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 20 }}>
               <View style={styles.presetRow}>
                 {QR_PRESETS.map((p, idx) => (
                   <Pressable
                     key={idx}
-                    onPress={() => { setSelectedPreset(idx); setInputValue(""); setQrValue(""); Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); }}
+                    onPress={() => switchPreset(idx)}
                     style={[styles.presetBtn, selectedPreset === idx && styles.presetBtnActive]}
                   >
                     <Ionicons name={p.icon as any} size={16} color={selectedPreset === idx ? Colors.dark.primary : Colors.dark.textMuted} />
@@ -399,39 +648,83 @@ export default function QrGeneratorScreen() {
                 ))}
               </View>
             </ScrollView>
-          </Animated.View>
+            {preset.hint && (
+              <View style={styles.hintBanner}>
+                <Ionicons name="information-circle-outline" size={14} color={Colors.dark.primary} />
+                <Text style={styles.hintText}>{preset.hint}</Text>
+              </View>
+            )}
+          </ReanimatedAnimated.View>
         )}
 
         {/* Input */}
-        <Animated.View entering={FadeInDown.duration(400).delay(140)}>
-          <Text style={styles.sectionLabel}>{qrMode === "business" && isBranded ? "Destination URL" : "Content"}</Text>
+        <ReanimatedAnimated.View entering={FadeInDown.duration(400).delay(140)}>
+          <Text style={styles.sectionLabel}>
+            {qrMode === "business" && isBranded
+              ? "Destination URL"
+              : preset.extraFields
+              ? preset.extraFields[0]?.optional === false
+                ? preset.label
+                : preset.label
+              : "Content"}
+          </Text>
+
+          {/* Main input */}
           <View style={styles.inputCard}>
             <TextInput
               style={styles.textInput}
               value={inputValue}
               onChangeText={setInputValue}
-              placeholder={qrMode === "business" && isBranded ? "https://your-website.com" : QR_PRESETS[selectedPreset].placeholder}
+              placeholder={
+                qrMode === "business" && isBranded
+                  ? "https://your-website.com"
+                  : selectedPreset === 9
+                  ? "Full Name"
+                  : preset.placeholder
+              }
               placeholderTextColor={Colors.dark.textMuted}
-              multiline={qrMode !== "business" && (selectedPreset === 0 || selectedPreset === 4)}
+              multiline={preset.multiline && !preset.extraFields}
               maxLength={500}
               autoCapitalize="none"
               autoCorrect={false}
-              keyboardType={qrMode === "business" && isBranded ? "url" : "default"}
+              keyboardType={qrMode === "business" && isBranded ? "url" : preset.keyboardType}
             />
             {inputValue.length > 0 ? (
-              <Pressable onPress={handleClear} style={styles.clearBtn}>
+              <Pressable onPress={() => { setInputValue(""); setQrValue(""); }} style={styles.clearBtn}>
                 <Ionicons name="close-circle" size={20} color={Colors.dark.textMuted} />
               </Pressable>
             ) : null}
           </View>
+
+          {/* Extra fields for structured types */}
+          {qrMode !== "business" && preset.extraFields?.map((field) => (
+            <View key={field.key} style={[styles.inputCard, { marginTop: 10 }]}>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.extraFieldLabel}>
+                  {field.label}{field.optional ? "" : " *"}
+                </Text>
+                <TextInput
+                  style={[styles.textInput, { minHeight: 36 }]}
+                  value={extraFields[field.key] ?? ""}
+                  onChangeText={(t) => setExtraField(field.key, t)}
+                  placeholder={field.placeholder}
+                  placeholderTextColor={Colors.dark.textMuted}
+                  autoCapitalize="none"
+                  autoCorrect={false}
+                  keyboardType={field.keyboardType ?? "default"}
+                  secureTextEntry={field.secureText}
+                />
+              </View>
+            </View>
+          ))}
+
           <Text style={styles.charCount}>{inputValue.length}/500</Text>
-        </Animated.View>
+        </ReanimatedAnimated.View>
 
         {/* Logo + Position */}
-        <Animated.View entering={FadeInDown.duration(400).delay(180)}>
+        <ReanimatedAnimated.View entering={FadeInDown.duration(400).delay(180)}>
           <Text style={styles.sectionLabel}>Logo (Optional)</Text>
           <View style={styles.logoRow}>
-            {/* Logo picker */}
             <Pressable onPress={handlePickCustomLogo} style={styles.logoPicker}>
               {customLogoUri ? (
                 <Image source={{ uri: customLogoUri }} style={styles.logoPreview} />
@@ -446,7 +739,6 @@ export default function QrGeneratorScreen() {
             </Pressable>
 
             <View style={styles.logoOptions}>
-              {/* Position picker */}
               {(customLogoUri || isBranded) && (
                 <Pressable
                   onPress={() => { setPositionModalOpen(true); Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); }}
@@ -457,7 +749,6 @@ export default function QrGeneratorScreen() {
                   <Ionicons name="chevron-forward" size={14} color={Colors.dark.textMuted} />
                 </Pressable>
               )}
-
               {customLogoUri ? (
                 <Pressable onPress={() => setCustomLogoUri(null)} style={styles.removeLogoBtn}>
                   <Ionicons name="close" size={16} color={Colors.dark.danger} />
@@ -473,10 +764,10 @@ export default function QrGeneratorScreen() {
               )}
             </View>
           </View>
-        </Animated.View>
+        </ReanimatedAnimated.View>
 
         {/* Generate button */}
-        <Animated.View entering={FadeInDown.duration(400).delay(220)}>
+        <ReanimatedAnimated.View entering={FadeInDown.duration(400).delay(220)}>
           <Pressable
             onPress={handleGenerate}
             disabled={!inputValue.trim()}
@@ -485,12 +776,11 @@ export default function QrGeneratorScreen() {
             <MaterialCommunityIcons name="qrcode-edit" size={22} color="#000" />
             <Text style={styles.generateBtnText}>Generate QR Code</Text>
           </Pressable>
-        </Animated.View>
+        </ReanimatedAnimated.View>
 
         {/* QR display */}
         {qrValue ? (
-          <Animated.View entering={FadeIn.duration(400)} style={styles.qrCard}>
-            {/* QR code — only center position supported natively by the library */}
+          <ReanimatedAnimated.View entering={FadeIn.duration(400)} style={styles.qrCard}>
             <View style={styles.qrWrapper}>
               <View style={styles.qrBg}>
                 <QRCode
@@ -507,7 +797,6 @@ export default function QrGeneratorScreen() {
                   quietZone={10}
                   ecl="H"
                 />
-                {/* Corner logo overlays for non-center positions */}
                 {logoSource && logoPosition !== "center" && (
                   <View
                     pointerEvents="none"
@@ -528,28 +817,20 @@ export default function QrGeneratorScreen() {
               </View>
             </View>
 
-            {/* Position note */}
             {logoPosition !== "center" && logoSource && (
               <View style={styles.positionNote}>
                 <Ionicons name="information-circle-outline" size={13} color={Colors.dark.primary} />
-                <Text style={styles.positionNoteText}>
-                  Logo placed at {getLogoPositionLabel(logoPosition).toLowerCase()} corner
-                </Text>
+                <Text style={styles.positionNoteText}>Logo placed at {getLogoPositionLabel(logoPosition).toLowerCase()} corner</Text>
               </View>
             )}
 
-            {/* Saved to profile banner */}
             {savedToProfile && (
-              <Pressable
-                onPress={() => router.push("/(tabs)/profile")}
-                style={styles.savedBanner}
-              >
+              <Pressable onPress={() => router.push("/(tabs)/profile")} style={styles.savedBanner}>
                 <Ionicons name="checkmark-circle" size={16} color={Colors.dark.safe} />
                 <Text style={styles.savedBannerText}>Saved to your profile! Tap to view →</Text>
               </Pressable>
             )}
 
-            {/* Branded footer */}
             {isBranded && generatedUuid ? (
               <View style={styles.brandedFooter}>
                 <View style={styles.brandedHeader}>
@@ -559,9 +840,7 @@ export default function QrGeneratorScreen() {
                     <Ionicons name="shield-checkmark" size={11} color={Colors.dark.safe} />
                     <Text style={styles.secureText}>Verified</Text>
                   </View>
-                  {saving && (
-                    <Text style={styles.savingText}>Saving…</Text>
-                  )}
+                  {saving && <Text style={styles.savingText}>Saving…</Text>}
                 </View>
                 <View style={styles.brandedMeta}>
                   <View style={styles.brandedMetaItem}>
@@ -635,25 +914,41 @@ export default function QrGeneratorScreen() {
                 <Text style={[styles.qrActionText, { color: Colors.dark.danger }]}>Clear</Text>
               </Pressable>
             </View>
-          </Animated.View>
+          </ReanimatedAnimated.View>
         ) : (
-          <Animated.View entering={FadeIn.duration(400)} style={styles.emptyQr}>
+          <ReanimatedAnimated.View entering={FadeIn.duration(400)} style={styles.emptyQr}>
             <View style={styles.emptyQrPlaceholder}>
               <MaterialCommunityIcons name="qrcode-scan" size={64} color={Colors.dark.textMuted} />
             </View>
             <Text style={styles.emptyQrText}>Your QR code will appear here</Text>
             <Text style={styles.emptyQrSub}>Enter content above and tap Generate</Text>
-          </Animated.View>
+          </ReanimatedAnimated.View>
         )}
       </ScrollView>
 
+      {/* Toast overlay */}
+      {toastMsg ? (
+        <Animated.View
+          style={[
+            styles.toast,
+            toastType === "error" ? styles.toastError : styles.toastSuccess,
+            { opacity: toastAnim, transform: [{ translateY: toastAnim.interpolate({ inputRange: [0, 1], outputRange: [20, 0] }) }] },
+          ]}
+          pointerEvents="none"
+        >
+          <Ionicons
+            name={toastType === "error" ? "alert-circle" : "checkmark-circle"}
+            size={18}
+            color={toastType === "error" ? Colors.dark.danger : Colors.dark.safe}
+          />
+          <Text style={[styles.toastText, toastType === "error" ? { color: Colors.dark.danger } : { color: Colors.dark.safe }]}>
+            {toastMsg}
+          </Text>
+        </Animated.View>
+      ) : null}
+
       {/* Logo Position Modal */}
-      <Modal
-        visible={positionModalOpen}
-        transparent
-        animationType="slide"
-        onRequestClose={() => setPositionModalOpen(false)}
-      >
+      <Modal visible={positionModalOpen} transparent animationType="slide" onRequestClose={() => setPositionModalOpen(false)}>
         <Pressable style={styles.modalOverlay} onPress={() => setPositionModalOpen(false)}>
           <Pressable style={styles.infoSheet} onPress={() => {}}>
             <View style={styles.infoSheetHandle} />
@@ -663,11 +958,7 @@ export default function QrGeneratorScreen() {
               {LOGO_POSITIONS.map((pos) => (
                 <Pressable
                   key={pos.key}
-                  onPress={() => {
-                    setLogoPosition(pos.key);
-                    setPositionModalOpen(false);
-                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                  }}
+                  onPress={() => { setLogoPosition(pos.key); setPositionModalOpen(false); Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); }}
                   style={[styles.positionGridBtn, logoPosition === pos.key && styles.positionGridBtnActive]}
                 >
                   <View style={[styles.positionGridPreview, logoPosition === pos.key && styles.positionGridPreviewActive]}>
@@ -682,9 +973,7 @@ export default function QrGeneratorScreen() {
                       ]}
                     />
                   </View>
-                  <Text style={[styles.positionGridLabel, logoPosition === pos.key && styles.positionGridLabelActive]}>
-                    {pos.label}
-                  </Text>
+                  <Text style={[styles.positionGridLabel, logoPosition === pos.key && styles.positionGridLabelActive]}>{pos.label}</Text>
                 </Pressable>
               ))}
             </View>
@@ -696,53 +985,49 @@ export default function QrGeneratorScreen() {
       </Modal>
 
       {/* Info modal */}
-      <Modal
-        visible={infoModalOpen}
-        transparent
-        animationType="slide"
-        onRequestClose={() => setInfoModalOpen(false)}
-      >
+      <Modal visible={infoModalOpen} transparent animationType="slide" onRequestClose={() => setInfoModalOpen(false)}>
         <Pressable style={styles.modalOverlay} onPress={() => setInfoModalOpen(false)}>
           <Pressable style={styles.infoSheet} onPress={() => {}}>
             <View style={styles.infoSheetHandle} />
             <Text style={styles.infoSheetTitle}>About QR Generation</Text>
-
-            <View style={styles.infoItem}>
-              <View style={[styles.infoItemIcon, { backgroundColor: Colors.dark.primaryDim }]}>
-                <Ionicons name="shield-checkmark" size={20} color={Colors.dark.primary} />
+            <ScrollView style={{ maxHeight: 400 }}>
+              <View style={styles.infoItem}>
+                <View style={[styles.infoItemIcon, { backgroundColor: Colors.dark.primaryDim }]}>
+                  <Ionicons name="shield-checkmark" size={20} color={Colors.dark.primary} />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.infoItemTitle}>Branded QR (Signed In)</Text>
+                  <Text style={styles.infoItemDesc}>Includes the QR Guard logo, a unique ID, your name, and creation date. Saved and registered to your account.</Text>
+                </View>
               </View>
-              <View style={{ flex: 1 }}>
-                <Text style={styles.infoItemTitle}>Branded QR (Signed In)</Text>
-                <Text style={styles.infoItemDesc}>
-                  Includes the QR Guard logo, a unique ID, your name, and creation date. Saved and registered to your account. You get owner access — see followers, manage comments, receive private messages.
-                </Text>
+              <View style={styles.infoItem}>
+                <View style={[styles.infoItemIcon, { backgroundColor: "rgba(100,116,139,0.15)" }]}>
+                  <Ionicons name="eye-off-outline" size={20} color={Colors.dark.textSecondary} />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.infoItemTitle}>Private / No-Trace QR</Text>
+                  <Text style={styles.infoItemDesc}>Completely local. No logo, no ID, no data sent or recorded anywhere. Ideal for personal use.</Text>
+                </View>
               </View>
-            </View>
-
-            <View style={styles.infoItem}>
-              <View style={[styles.infoItemIcon, { backgroundColor: "rgba(100,116,139,0.15)" }]}>
-                <Ionicons name="eye-off-outline" size={20} color={Colors.dark.textSecondary} />
+              <View style={styles.infoItem}>
+                <View style={[styles.infoItemIcon, { backgroundColor: "#FBBF2420" }]}>
+                  <Ionicons name="card-outline" size={20} color="#FBBF24" />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.infoItemTitle}>UPI 🇮🇳 (India)</Text>
+                  <Text style={styles.infoItemDesc}>Generate UPI payment QRs for PhonePe, Google Pay, Paytm, BHIM, and any UPI app.</Text>
+                </View>
               </View>
-              <View style={{ flex: 1 }}>
-                <Text style={styles.infoItemTitle}>Private / No-Trace QR</Text>
-                <Text style={styles.infoItemDesc}>
-                  Completely local. No logo, no ID, no data sent or recorded anywhere. Ideal for personal use.
-                </Text>
+              <View style={styles.infoItem}>
+                <View style={[styles.infoItemIcon, { backgroundColor: Colors.dark.accentDim }]}>
+                  <Ionicons name="image-outline" size={20} color={Colors.dark.accent} />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.infoItemTitle}>Custom Logo & Position</Text>
+                  <Text style={styles.infoItemDesc}>Add your own image or logo. Place it in the center or any corner of the QR code.</Text>
+                </View>
               </View>
-            </View>
-
-            <View style={styles.infoItem}>
-              <View style={[styles.infoItemIcon, { backgroundColor: Colors.dark.accentDim }]}>
-                <Ionicons name="image-outline" size={20} color={Colors.dark.accent} />
-              </View>
-              <View style={{ flex: 1 }}>
-                <Text style={styles.infoItemTitle}>Custom Logo & Position</Text>
-                <Text style={styles.infoItemDesc}>
-                  Add your own image or logo. Place it in the center or any corner of the QR code.
-                </Text>
-              </View>
-            </View>
-
+            </ScrollView>
             <Pressable style={styles.infoClose} onPress={() => setInfoModalOpen(false)}>
               <Text style={styles.infoCloseText}>Got it</Text>
             </Pressable>
@@ -788,9 +1073,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14, paddingVertical: 10,
     marginTop: 10, marginBottom: 10,
   },
-  businessNameInput: {
-    flex: 1, fontSize: 14, fontFamily: "Inter_400Regular", color: Colors.dark.text,
-  },
+  businessNameInput: { flex: 1, fontSize: 14, fontFamily: "Inter_400Regular", color: Colors.dark.text },
 
   brandedBanner: {
     flexDirection: "row", alignItems: "center", gap: 8,
@@ -810,6 +1093,13 @@ const styles = StyleSheet.create({
     borderWidth: 1, borderColor: Colors.dark.accent + "40", marginBottom: 20,
   },
   signInPromptText: { flex: 1, fontSize: 12, fontFamily: "Inter_400Regular", color: Colors.dark.accent },
+
+  hintBanner: {
+    flexDirection: "row", alignItems: "center", gap: 6,
+    backgroundColor: Colors.dark.primaryDim, borderRadius: 10, padding: 10,
+    borderWidth: 1, borderColor: Colors.dark.primary + "30", marginBottom: 12,
+  },
+  hintText: { flex: 1, fontSize: 12, fontFamily: "Inter_400Regular", color: Colors.dark.primary },
 
   sectionLabel: {
     fontSize: 12, fontFamily: "Inter_600SemiBold", color: Colors.dark.textMuted,
@@ -835,6 +1125,10 @@ const styles = StyleSheet.create({
     flex: 1, fontSize: 15, fontFamily: "Inter_400Regular", color: Colors.dark.text,
     minHeight: 48, maxHeight: 120,
   },
+  extraFieldLabel: {
+    fontSize: 11, fontFamily: "Inter_600SemiBold", color: Colors.dark.textMuted,
+    textTransform: "uppercase", letterSpacing: 0.6, marginBottom: 4,
+  },
   clearBtn: { padding: 4, marginTop: 4 },
   charCount: { fontSize: 11, color: Colors.dark.textMuted, textAlign: "right", marginBottom: 16 },
 
@@ -843,8 +1137,7 @@ const styles = StyleSheet.create({
     width: 72, height: 72, borderRadius: 16,
     backgroundColor: Colors.dark.surface, borderWidth: 1.5,
     borderColor: Colors.dark.surfaceBorder, borderStyle: "dashed",
-    alignItems: "center", justifyContent: "center", gap: 4,
-    flexShrink: 0,
+    alignItems: "center", justifyContent: "center", gap: 4, flexShrink: 0,
   },
   logoPreview: { width: 68, height: 68, borderRadius: 14 },
   logoPickerText: { fontSize: 11, fontFamily: "Inter_500Medium", color: Colors.dark.textMuted },
@@ -878,8 +1171,7 @@ const styles = StyleSheet.create({
   },
   qrWrapper: { alignItems: "center", paddingVertical: 24, paddingHorizontal: 16 },
   qrBg: {
-    backgroundColor: "#F8FAFC", borderRadius: 16, padding: 12,
-    position: "relative",
+    backgroundColor: "#F8FAFC", borderRadius: 16, padding: 12, position: "relative",
     shadowColor: "#000", shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.15, shadowRadius: 10, elevation: 6,
   },
@@ -887,8 +1179,6 @@ const styles = StyleSheet.create({
     position: "absolute", width: 40, height: 40, borderRadius: 10,
     backgroundColor: "#F8FAFC", alignItems: "center", justifyContent: "center",
     borderWidth: 1, borderColor: "rgba(0,0,0,0.08)",
-    shadowColor: "#000", shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1, shadowRadius: 4, elevation: 2,
   },
   cornerLogoImage: { width: 34, height: 34, borderRadius: 8 },
   positionNote: {
@@ -897,10 +1187,7 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.dark.primaryDim, padding: 8, borderRadius: 8,
   },
   positionNoteText: { fontSize: 12, fontFamily: "Inter_400Regular", color: Colors.dark.primary },
-
-  brandedFooter: {
-    borderTopWidth: 1, borderTopColor: Colors.dark.surfaceBorder, padding: 16,
-  },
+  brandedFooter: { borderTopWidth: 1, borderTopColor: Colors.dark.surfaceBorder, padding: 16 },
   brandedHeader: { flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 12 },
   brandLogo: { width: 24, height: 24, borderRadius: 6 },
   brandName: { fontSize: 15, fontFamily: "Inter_700Bold", color: Colors.dark.text },
@@ -920,20 +1207,17 @@ const styles = StyleSheet.create({
     borderWidth: 1, borderColor: Colors.dark.primary + "30",
   },
   ownershipNoteText: { flex: 1, fontSize: 11, fontFamily: "Inter_400Regular", color: Colors.dark.primary, lineHeight: 16 },
-
   privateFooter: {
     flexDirection: "row", alignItems: "center", gap: 8,
     borderTopWidth: 1, borderTopColor: Colors.dark.surfaceBorder, padding: 14,
   },
   privateFooterText: { fontSize: 12, fontFamily: "Inter_400Regular", color: Colors.dark.textMuted },
-
   savedBanner: {
     flexDirection: "row", alignItems: "center", gap: 8,
     backgroundColor: Colors.dark.safeDim, borderRadius: 10, padding: 10, marginBottom: 10,
     borderWidth: 1, borderColor: Colors.dark.safe + "40",
   },
   savedBannerText: { fontSize: 13, fontFamily: "Inter_600SemiBold", color: Colors.dark.safe, flex: 1 },
-
   qrContentPreview: {
     fontSize: 12, fontFamily: "Inter_400Regular", color: Colors.dark.textMuted,
     paddingHorizontal: 16, paddingBottom: 8, textAlign: "center",
@@ -970,6 +1254,17 @@ const styles = StyleSheet.create({
   emptyQrText: { fontSize: 16, fontFamily: "Inter_600SemiBold", color: Colors.dark.textSecondary },
   emptyQrSub: { fontSize: 13, fontFamily: "Inter_400Regular", color: Colors.dark.textMuted },
 
+  toast: {
+    position: "absolute", bottom: 100, left: 24, right: 24,
+    flexDirection: "row", alignItems: "center", gap: 10,
+    paddingHorizontal: 16, paddingVertical: 14, borderRadius: 16,
+    shadowColor: "#000", shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3, shadowRadius: 12, elevation: 8,
+  },
+  toastSuccess: { backgroundColor: Colors.dark.safeDim, borderWidth: 1, borderColor: Colors.dark.safe + "50" },
+  toastError: { backgroundColor: Colors.dark.dangerDim, borderWidth: 1, borderColor: Colors.dark.danger + "50" },
+  toastText: { flex: 1, fontSize: 14, fontFamily: "Inter_600SemiBold" },
+
   modalOverlay: { flex: 1, backgroundColor: "rgba(0,0,0,0.6)", justifyContent: "flex-end" },
   infoSheet: {
     backgroundColor: Colors.dark.surface, borderTopLeftRadius: 24, borderTopRightRadius: 24,
@@ -980,18 +1275,9 @@ const styles = StyleSheet.create({
     width: 40, height: 4, borderRadius: 2,
     backgroundColor: Colors.dark.surfaceLight, alignSelf: "center", marginBottom: 16,
   },
-  infoSheetTitle: {
-    fontSize: 20, fontFamily: "Inter_700Bold", color: Colors.dark.text,
-    paddingHorizontal: 20, marginBottom: 4,
-  },
-  infoSheetSub: {
-    fontSize: 13, fontFamily: "Inter_400Regular", color: Colors.dark.textMuted,
-    paddingHorizontal: 20, marginBottom: 16,
-  },
-  infoItem: {
-    flexDirection: "row", alignItems: "flex-start", gap: 14,
-    paddingHorizontal: 20, paddingVertical: 12,
-  },
+  infoSheetTitle: { fontSize: 20, fontFamily: "Inter_700Bold", color: Colors.dark.text, paddingHorizontal: 20, marginBottom: 4 },
+  infoSheetSub: { fontSize: 13, fontFamily: "Inter_400Regular", color: Colors.dark.textMuted, paddingHorizontal: 20, marginBottom: 16 },
+  infoItem: { flexDirection: "row", alignItems: "flex-start", gap: 14, paddingHorizontal: 20, paddingVertical: 12 },
   infoItemIcon: { width: 44, height: 44, borderRadius: 12, alignItems: "center", justifyContent: "center", flexShrink: 0 },
   infoItemTitle: { fontSize: 15, fontFamily: "Inter_600SemiBold", color: Colors.dark.text, marginBottom: 3 },
   infoItemDesc: { fontSize: 13, fontFamily: "Inter_400Regular", color: Colors.dark.textSecondary, lineHeight: 18 },
@@ -1001,19 +1287,12 @@ const styles = StyleSheet.create({
   },
   infoCloseText: { fontSize: 16, fontFamily: "Inter_700Bold", color: "#000" },
 
-  positionGrid: {
-    flexDirection: "row", flexWrap: "wrap", gap: 12,
-    paddingHorizontal: 20, marginBottom: 8,
-  },
-  positionGridBtn: {
-    alignItems: "center", gap: 6,
-    width: "18%",
-  },
+  positionGrid: { flexDirection: "row", flexWrap: "wrap", gap: 12, paddingHorizontal: 20, marginBottom: 8 },
+  positionGridBtn: { alignItems: "center", gap: 6, width: "18%" },
   positionGridBtnActive: {},
   positionGridPreview: {
     width: 48, height: 48, borderRadius: 10,
-    backgroundColor: Colors.dark.surfaceLight, borderWidth: 2, borderColor: Colors.dark.surfaceBorder,
-    position: "relative",
+    backgroundColor: Colors.dark.surfaceLight, borderWidth: 2, borderColor: Colors.dark.surfaceBorder, position: "relative",
   },
   positionGridPreviewActive: { borderColor: Colors.dark.primary, backgroundColor: Colors.dark.primaryDim },
   positionDot: { width: 12, height: 12, borderRadius: 6, backgroundColor: Colors.dark.primary },

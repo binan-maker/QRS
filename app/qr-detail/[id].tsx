@@ -11,9 +11,9 @@ import {
   Linking,
   Alert,
   Modal,
-  KeyboardAvoidingView,
   Image,
 } from "react-native";
+import { KeyboardStickyView } from "react-native-keyboard-controller";
 import { StatusBar } from "expo-status-bar";
 import { useLocalSearchParams, router } from "expo-router";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
@@ -1073,11 +1073,7 @@ export default function QrDetailScreen() {
   return (
     <View style={{ flex: 1, backgroundColor: Colors.dark.background }}>
       <StatusBar style="light" backgroundColor={Colors.dark.background} />
-      <KeyboardAvoidingView
-        style={{ flex: 1 }}
-        behavior={Platform.OS === "web" ? undefined : "padding"}
-        keyboardVerticalOffset={0}
-      >
+      <View style={{ flex: 1 }}>
         <View style={[styles.container, { paddingTop: topInset }]}>
           {/* Nav */}
           <View style={styles.navBar}>
