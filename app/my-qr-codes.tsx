@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect, useRef } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
   View,
   Text,
@@ -8,7 +8,7 @@ import {
   Platform,
   RefreshControl,
 } from "react-native";
-import { router, useFocusEffect } from "expo-router";
+import { router } from "expo-router";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import * as Haptics from "expo-haptics";
@@ -78,40 +78,35 @@ export default function MyQrCodesScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [filter, setFilter] = useState<Filter>("all");
   const unsubscribeRef = useRef<(() => void) | null>(null);
+  const hasLoadedRef = useRef(false);
 
-  const subscribeQrCodes = useCallback(() => {
+  useEffect(() => {
     if (!user) return;
-    setLoading(true);
+    if (!hasLoadedRef.current) {
+      setLoading(true);
+    }
     if (unsubscribeRef.current) {
       unsubscribeRef.current();
       unsubscribeRef.current = null;
     }
-    const unsub = subscribeToUserGeneratedQrs(
-      user.id,
-      (items) => {
-        setQrCodes(items);
-        setLoading(false);
-        setRefreshing(false);
-      },
-    );
+    const unsub = subscribeToUserGeneratedQrs(user.id, (items) => {
+      setQrCodes(items);
+      setLoading(false);
+      setRefreshing(false);
+      hasLoadedRef.current = true;
+    });
     unsubscribeRef.current = unsub;
+    return () => {
+      if (unsubscribeRef.current) {
+        unsubscribeRef.current();
+        unsubscribeRef.current = null;
+      }
+    };
   }, [user?.id]);
-
-  useFocusEffect(
-    useCallback(() => {
-      subscribeQrCodes();
-      return () => {
-        if (unsubscribeRef.current) {
-          unsubscribeRef.current();
-          unsubscribeRef.current = null;
-        }
-      };
-    }, [subscribeQrCodes])
-  );
 
   function handleRefresh() {
     setRefreshing(true);
-    subscribeQrCodes();
+    setTimeout(() => setRefreshing(false), 800);
   }
 
   const filtered = qrCodes.filter((qr) => {

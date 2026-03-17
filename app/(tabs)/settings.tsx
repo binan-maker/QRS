@@ -98,11 +98,6 @@ export default function SettingsScreen() {
             <Text style={styles.sectionLabel}>ACCOUNT</Text>
             {user ? (
               <View style={styles.accountCard}>
-                <View style={styles.accountAvatar}>
-                  <Text style={styles.accountAvatarText}>
-                    {user.displayName.charAt(0).toUpperCase()}
-                  </Text>
-                </View>
                 <View style={{ flex: 1 }}>
                   <Text style={styles.accountName}>{user.displayName}</Text>
                   <Text style={styles.accountEmail}>{user.email}</Text>

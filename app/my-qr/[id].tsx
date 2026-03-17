@@ -468,20 +468,22 @@ export default function MyQrDetailScreen() {
           <Animated.View entering={FadeInDown.duration(400).delay(60)}>
             <View style={styles.metaCard}>
               <Text style={styles.sectionLabel}>QR INFO</Text>
-              <View style={styles.metaRow}>
-                <View style={styles.metaIconWrap}>
-                  <Ionicons name="scan-outline" size={16} color={Colors.dark.primary} />
+              <View style={{ flexDirection: "row", gap: 10, marginBottom: 4 }}>
+                <View style={{ flex: 1, backgroundColor: Colors.dark.primaryDim, borderRadius: 14,
+                  padding: 14, alignItems: "center", gap: 6, borderWidth: 1, borderColor: Colors.dark.primary + "30" }}>
+                  <Ionicons name="scan-outline" size={22} color={Colors.dark.primary} />
+                  <Text style={{ fontSize: 26, fontFamily: "Inter_700Bold", color: Colors.dark.primary, lineHeight: 30 }}>
+                    {qrItem.scanCount}
+                  </Text>
+                  <Text style={[styles.metaLabel, { marginBottom: 0, textAlign: "center" }]}>Total Scans</Text>
                 </View>
-                <View style={{ flex: 1 }}>
-                  <Text style={styles.metaLabel}>Scanned</Text>
-                  <Text style={styles.metaValue}>{qrItem.scanCount} times</Text>
-                </View>
-                <View style={styles.metaIconWrap}>
-                  <Ionicons name="chatbubble-outline" size={16} color={Colors.dark.accent} />
-                </View>
-                <View>
-                  <Text style={styles.metaLabel}>Comments</Text>
-                  <Text style={[styles.metaValue, { color: Colors.dark.accent }]}>{qrItem.commentCount}</Text>
+                <View style={{ flex: 1, backgroundColor: Colors.dark.accentDim, borderRadius: 14,
+                  padding: 14, alignItems: "center", gap: 6, borderWidth: 1, borderColor: Colors.dark.accent + "30" }}>
+                  <Ionicons name="chatbubble-outline" size={22} color={Colors.dark.accent} />
+                  <Text style={{ fontSize: 26, fontFamily: "Inter_700Bold", color: Colors.dark.accent, lineHeight: 30 }}>
+                    {qrItem.commentCount}
+                  </Text>
+                  <Text style={[styles.metaLabel, { marginBottom: 0, textAlign: "center" }]}>Comments</Text>
                 </View>
               </View>
               <View style={styles.divider} />
@@ -628,40 +630,53 @@ export default function MyQrDetailScreen() {
           {/* Activate / Deactivate — only for branded QRs */}
           {qrItem.branded && qrItem.qrType !== "government" && (
             <Animated.View entering={FadeInDown.duration(400).delay(80)}>
-              <View style={[styles.metaCard, { marginTop: 0 }]}>
-                <Text style={styles.sectionLabel}>STATUS CONTROL</Text>
+              <View style={[
+                styles.metaCard,
+                { marginTop: 0, borderLeftWidth: 4, overflow: "hidden",
+                  borderLeftColor: qrItem.isActive ? Colors.dark.safe : Colors.dark.danger,
+                  backgroundColor: qrItem.isActive ? "rgba(16,185,129,0.06)" : "rgba(239,68,68,0.06)" }
+              ]}>
+                <View style={{ flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 10 }}>
+                  <View style={{ width: 9, height: 9, borderRadius: 5,
+                    backgroundColor: qrItem.isActive ? Colors.dark.safe : Colors.dark.danger }} />
+                  <Text style={[styles.sectionLabel, { marginBottom: 0, letterSpacing: 1.4,
+                    color: qrItem.isActive ? Colors.dark.safe : Colors.dark.danger }]}>
+                    {qrItem.isActive ? "ACTIVE" : "DEACTIVATED"}
+                  </Text>
+                </View>
+                <Text style={{ fontSize: 13, fontFamily: "Inter_400Regular",
+                  color: Colors.dark.textSecondary, marginBottom: 14, lineHeight: 20 }}>
+                  {qrItem.isActive
+                    ? "Your QR code is live. Scanners can view and follow its links."
+                    : "Your QR code is off. Links are completely hidden from scanners."}
+                </Text>
                 {!qrItem.isActive && qrItem.deactivationMessage ? (
                   <Text style={styles.deactivationMsg} numberOfLines={3}>
                     "{qrItem.deactivationMessage}"
                   </Text>
                 ) : null}
-                <View style={styles.activeRow}>
-                  <View style={{ flex: 1 }}>
-                    <Text style={[styles.activeStatusLabel, { color: qrItem.isActive ? Colors.dark.safe : Colors.dark.danger }]}>
-                      {qrItem.isActive ? "Active — people can scan and follow links" : "Deactivated — links are hidden for scanners"}
-                    </Text>
-                  </View>
-                  <Pressable
-                    onPress={() => handleToggleActive(!qrItem.isActive)}
-                    disabled={togglingActive}
-                    style={[styles.toggleActiveBtn, qrItem.isActive ? styles.toggleActiveBtnOn : styles.toggleActiveBtnOff]}
-                  >
-                    {togglingActive ? (
-                      <ActivityIndicator size={14} color="#fff" />
-                    ) : (
-                      <>
-                        <Ionicons
-                          name={qrItem.isActive ? "pause-circle" : "play-circle"}
-                          size={16}
-                          color="#fff"
-                        />
-                        <Text style={styles.toggleActiveBtnText}>
-                          {qrItem.isActive ? "Deactivate" : "Activate"}
-                        </Text>
-                      </>
-                    )}
-                  </Pressable>
-                </View>
+                <Pressable
+                  onPress={() => handleToggleActive(!qrItem.isActive)}
+                  disabled={togglingActive}
+                  style={[styles.toggleActiveBtn,
+                    qrItem.isActive ? styles.toggleActiveBtnOn : styles.toggleActiveBtnOff,
+                    { width: "100%", justifyContent: "center", paddingVertical: 13 }
+                  ]}
+                >
+                  {togglingActive ? (
+                    <ActivityIndicator size={14} color="#fff" />
+                  ) : (
+                    <>
+                      <Ionicons
+                        name={qrItem.isActive ? "pause-circle" : "play-circle"}
+                        size={18} color="#fff"
+                      />
+                      <Text style={[styles.toggleActiveBtnText, { fontSize: 14 }]}>
+                        {qrItem.isActive ? "Deactivate QR Code" : "Activate QR Code"}
+                      </Text>
+                    </>
+                  )}
+                </Pressable>
               </View>
             </Animated.View>
           )}
