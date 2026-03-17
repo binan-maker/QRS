@@ -1412,19 +1412,6 @@ export default function QrDetailScreen() {
               </Animated.View>
             )}
 
-            {/* Message Owner button (for non-owners viewing a branded QR) */}
-            {ownerInfo && !isQrOwner && user && !offlineMode && (
-              <Animated.View entering={FadeInDown.duration(400)}>
-                <Pressable
-                  onPress={() => setMessagesModalOpen(true)}
-                  style={styles.messageOwnerBtn}
-                >
-                  <Ionicons name="chatbubble-ellipses-outline" size={18} color={Colors.dark.primary} />
-                  <Text style={styles.messageOwnerBtnText}>Message Owner Privately</Text>
-                  <Ionicons name="lock-closed-outline" size={14} color={Colors.dark.textMuted} />
-                </Pressable>
-              </Animated.View>
-            )}
 
             {/* QR Content Card */}
             <Animated.View entering={FadeInDown.duration(400)}>
@@ -1924,11 +1911,18 @@ export default function QrDetailScreen() {
               <ScrollView style={{ maxHeight: 400 }}>
                 {followersList.map((f) => (
                   <View key={f.userId} style={styles.followerRow}>
-                    <View style={styles.followerAvatar}>
-                      <Text style={styles.followerAvatarText}>{f.displayName.charAt(0).toUpperCase()}</Text>
-                    </View>
+                    {f.photoURL ? (
+                      <Image source={{ uri: f.photoURL }} style={[styles.followerAvatar, { overflow: "hidden" }]} resizeMode="cover" />
+                    ) : (
+                      <View style={styles.followerAvatar}>
+                        <Text style={styles.followerAvatarText}>{f.displayName.charAt(0).toUpperCase()}</Text>
+                      </View>
+                    )}
                     <View style={{ flex: 1 }}>
                       <Text style={styles.followerName}>{f.displayName}</Text>
+                      {f.username ? (
+                        <Text style={{ fontSize: 12, fontFamily: "Inter_400Regular", color: Colors.dark.primary }}>@{f.username}</Text>
+                      ) : null}
                       <Text style={styles.followerSince}>Followed {formatRelativeTime(f.followedAt)}</Text>
                     </View>
                   </View>

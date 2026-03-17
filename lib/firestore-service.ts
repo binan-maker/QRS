@@ -85,6 +85,8 @@ export interface FollowerInfo {
   userId: string;
   displayName: string;
   followedAt: string;
+  username?: string | null;
+  photoURL?: string | null;
 }
 
 export interface QrMessage {
@@ -1511,6 +1513,15 @@ export async function setQrActiveState(
   });
 }
 
+export async function getQrFollowCount(qrId: string): Promise<number> {
+  try {
+    const snap = await getDocs(collection(firestore, "qrCodes", qrId, "followers"));
+    return snap.size;
+  } catch {
+    return 0;
+  }
+}
+
 export async function getQrFollowersList(qrId: string): Promise<FollowerInfo[]> {
   try {
     const snap = await getDocs(collection(firestore, "qrCodes", qrId, "followers"));
@@ -1519,16 +1530,23 @@ export async function getQrFollowersList(qrId: string): Promise<FollowerInfo[]> 
       const data = d.data();
       const userId = data.userId || d.id;
       let displayName = "User";
+      let username: string | null = null;
+      let photoURL: string | null = null;
       try {
         const userSnap = await getDoc(doc(firestore, "users", userId));
         if (userSnap.exists()) {
-          displayName = userSnap.data().displayName || "User";
+          const ud = userSnap.data();
+          displayName = ud.displayName || "User";
+          username = ud.username || null;
+          photoURL = ud.photoURL || null;
         }
       } catch {}
       followers.push({
         userId,
         displayName,
         followedAt: tsToString(data.createdAt),
+        username,
+        photoURL,
       });
     });
     await Promise.all(userFetches);

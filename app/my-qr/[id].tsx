@@ -17,7 +17,6 @@ import { useLocalSearchParams, router } from "expo-router";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import * as Haptics from "expo-haptics";
-import * as ImagePicker from "expo-image-picker";
 import * as Clipboard from "expo-clipboard";
 import Animated, {
   FadeInDown,
@@ -41,9 +40,12 @@ import {
   softDeleteComment,
   getGuardLink,
   updateGuardLinkDestination,
+  getQrFollowersList,
+  getQrFollowCount,
   type GeneratedQrItem,
   type CommentItem,
   type GuardLink,
+  type FollowerInfo,
 } from "@/lib/firestore-service";
 
 function SkeletonBox({ width, height = 12, borderRadius = 8, style }: { width?: any; height?: number; borderRadius?: number; style?: any }) {
@@ -159,6 +161,17 @@ export default function MyQrDetailScreen() {
   const [newDestination, setNewDestination] = useState("");
   const [savingDestination, setSavingDestination] = useState(false);
 
+  // Followers state
+  const [followersList, setFollowersList] = useState<FollowerInfo[]>([]);
+  const [followersModalOpen, setFollowersModalOpen] = useState(false);
+  const [followersLoading, setFollowersLoading] = useState(false);
+  const [followCount, setFollowCount] = useState(0);
+
+  // Custom color picker state
+  const [customColorOpen, setCustomColorOpen] = useState(false);
+  const [customColorTarget, setCustomColorTarget] = useState<"fg" | "bg">("fg");
+  const [customColorInput, setCustomColorInput] = useState("");
+
   const topInset = Platform.OS === "web" ? 67 : insets.top;
   const bottomInset = insets.bottom;
 
@@ -202,6 +215,38 @@ export default function MyQrDetailScreen() {
     });
   }, [qrItem?.guardUuid]);
 
+  useEffect(() => {
+    if (!qrItem?.qrCodeId) return;
+    getQrFollowCount(qrItem.qrCodeId).then(setFollowCount).catch(() => {});
+  }, [qrItem?.qrCodeId]);
+
+  async function handleLoadFollowers() {
+    if (!qrItem?.qrCodeId) return;
+    setFollowersLoading(true);
+    try {
+      const list = await getQrFollowersList(qrItem.qrCodeId);
+      setFollowersList(list);
+    } catch {}
+    setFollowersLoading(false);
+  }
+
+  function applyCustomColor() {
+    let hex = customColorInput.trim();
+    if (!hex.startsWith("#")) hex = "#" + hex;
+    if (!/^#([0-9A-Fa-f]{3}|[0-9A-Fa-f]{6})$/.test(hex)) {
+      Alert.alert("Invalid color", "Please enter a valid hex color (e.g. #FF5500)");
+      return;
+    }
+    if (customColorTarget === "fg") {
+      setFgColor(hex);
+    } else {
+      setBgColor(hex);
+    }
+    setDesignDirty(true);
+    setCustomColorOpen(false);
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+  }
+
   async function handleUpdateDestination() {
     if (!user || !qrItem?.guardUuid || !newDestination.trim()) return;
     const dest = newDestination.trim().startsWith("http") ? newDestination.trim() : `https://${newDestination.trim()}`;
@@ -225,7 +270,7 @@ export default function MyQrDetailScreen() {
     if (!user || !qrItem) return;
     setSaving(true);
     try {
-      await updateQrDesign(user.id, qrItem.docId, { fgColor, bgColor, logoPosition, logoUri });
+      await updateQrDesign(user.id, qrItem.docId, { fgColor, bgColor, logoPosition, logoUri: null });
       setDesignDirty(false);
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       Alert.alert("Saved", "Design updated successfully.");
@@ -233,22 +278,6 @@ export default function MyQrDetailScreen() {
       Alert.alert("Error", "Could not save design. Try again.");
     } finally {
       setSaving(false);
-    }
-  }
-
-  async function handlePickLogo() {
-    const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (!perm.granted) { Alert.alert("Permission needed", "Gallery access is required."); return; }
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ["images"],
-      allowsEditing: true,
-      aspect: [1, 1],
-      quality: 0.8,
-    });
-    if (!result.canceled && result.assets?.[0]) {
-      setLogoUri(result.assets[0].uri);
-      setDesignDirty(true);
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     }
   }
 
@@ -353,7 +382,7 @@ export default function MyQrDetailScreen() {
     return result;
   }
 
-  const logoSource = logoUri ? { uri: logoUri } : require("../../assets/images/icon.png");
+  const logoSource = require("../../assets/images/icon.png");
 
   if (loading) {
     return (
@@ -433,9 +462,9 @@ export default function MyQrDetailScreen() {
                   backgroundColor={bgColor}
                   getRef={(ref: any) => { svgRef.current = ref; }}
                   logo={logoPosition === "center" ? logoSource : undefined}
-                  logoSize={logoUri ? 50 : 44}
+                  logoSize={44}
                   logoBackgroundColor={bgColor}
-                  logoBorderRadius={logoUri ? 25 : 10}
+                  logoBorderRadius={10}
                   logoMargin={4}
                   quietZone={10}
                   ecl="H"
@@ -469,25 +498,41 @@ export default function MyQrDetailScreen() {
           <Animated.View entering={FadeInDown.duration(400).delay(60)}>
             <View style={styles.metaCard}>
               <Text style={styles.sectionLabel}>QR INFO</Text>
-              <View style={{ flexDirection: "row", gap: 10, marginBottom: 4 }}>
+              <View style={{ flexDirection: "row", gap: 8, marginBottom: 4 }}>
                 <View style={{ flex: 1, backgroundColor: Colors.dark.primaryDim, borderRadius: 14,
-                  padding: 14, alignItems: "center", gap: 6, borderWidth: 1, borderColor: Colors.dark.primary + "30" }}>
-                  <Ionicons name="scan-outline" size={22} color={Colors.dark.primary} />
-                  <Text style={{ fontSize: 26, fontFamily: "Inter_700Bold", color: Colors.dark.primary, lineHeight: 30 }}>
+                  padding: 12, alignItems: "center", gap: 4, borderWidth: 1, borderColor: Colors.dark.primary + "30" }}>
+                  <Ionicons name="scan-outline" size={20} color={Colors.dark.primary} />
+                  <Text style={{ fontSize: 22, fontFamily: "Inter_700Bold", color: Colors.dark.primary, lineHeight: 26 }}>
                     {qrItem.scanCount}
                   </Text>
-                  <Text style={[styles.metaLabel, { marginBottom: 0, textAlign: "center" }]}>Total Scans</Text>
+                  <Text style={[styles.metaLabel, { marginBottom: 0, textAlign: "center" }]}>Scans</Text>
                 </View>
                 <View style={{ flex: 1, backgroundColor: Colors.dark.accentDim, borderRadius: 14,
-                  padding: 14, alignItems: "center", gap: 6, borderWidth: 1, borderColor: Colors.dark.accent + "30" }}>
-                  <Ionicons name="chatbubble-outline" size={22} color={Colors.dark.accent} />
-                  <Text style={{ fontSize: 26, fontFamily: "Inter_700Bold", color: Colors.dark.accent, lineHeight: 30 }}>
+                  padding: 12, alignItems: "center", gap: 4, borderWidth: 1, borderColor: Colors.dark.accent + "30" }}>
+                  <Ionicons name="chatbubble-outline" size={20} color={Colors.dark.accent} />
+                  <Text style={{ fontSize: 22, fontFamily: "Inter_700Bold", color: Colors.dark.accent, lineHeight: 26 }}>
                     {qrItem.commentCount}
                   </Text>
                   <Text style={[styles.metaLabel, { marginBottom: 0, textAlign: "center" }]}>Comments</Text>
                 </View>
+                <Pressable
+                  onPress={() => {
+                    handleLoadFollowers();
+                    setFollowersModalOpen(true);
+                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                  }}
+                  style={{ flex: 1, backgroundColor: "#10B98115", borderRadius: 14,
+                    padding: 12, alignItems: "center", gap: 4, borderWidth: 1, borderColor: "#10B98130" }}
+                >
+                  <Ionicons name="people-outline" size={20} color="#10B981" />
+                  <Text style={{ fontSize: 22, fontFamily: "Inter_700Bold", color: "#10B981", lineHeight: 26 }}>
+                    {followCount}
+                  </Text>
+                  <Text style={[styles.metaLabel, { marginBottom: 0, textAlign: "center" }]}>Followers</Text>
+                </Pressable>
               </View>
               <View style={styles.divider} />
+              {!(qrItem.qrType === "business" && qrItem.guardUuid) && (
               <View style={styles.metaContentRow}>
                 <Text style={styles.metaLabel}>Destination (read-only)</Text>
                 <View style={styles.lockedRow}>
@@ -516,6 +561,7 @@ export default function MyQrDetailScreen() {
                   <Text style={{ fontSize: 12, fontFamily: "Inter_500Medium", color: Colors.dark.textSecondary }}>Copy Content</Text>
                 </Pressable>
               </View>
+              )}
               <View style={styles.metaContentRow}>
                 <Text style={styles.metaLabel}>Created</Text>
                 <Text style={styles.metaValue}>{formatDate(qrItem.createdAt)}</Text>
@@ -728,8 +774,32 @@ export default function MyQrDetailScreen() {
                         ) : null}
                       </Pressable>
                     ))}
+                    {/* Custom color swatch */}
+                    <Pressable
+                      onPress={() => {
+                        setCustomColorTarget("fg");
+                        setCustomColorInput(fgColor);
+                        setCustomColorOpen(true);
+                      }}
+                      style={[
+                        styles.swatch,
+                        { backgroundColor: Colors.dark.surfaceLight, borderColor: Colors.dark.primary + "60", borderStyle: "dashed" },
+                        !FG_COLORS.find(c => c.color === fgColor) && { borderColor: Colors.dark.primary, borderWidth: 2 },
+                      ]}
+                    >
+                      {!FG_COLORS.find(c => c.color === fgColor) ? (
+                        <View style={{ width: 24, height: 24, borderRadius: 12, backgroundColor: fgColor }} />
+                      ) : (
+                        <Ionicons name="color-palette-outline" size={16} color={Colors.dark.textMuted} />
+                      )}
+                    </Pressable>
                   </View>
                 </ScrollView>
+                {!FG_COLORS.find(c => c.color === fgColor) && (
+                  <Text style={{ fontSize: 11, color: Colors.dark.primary, fontFamily: "Inter_500Medium", marginTop: -10, marginBottom: 10 }}>
+                    Custom: {fgColor}
+                  </Text>
+                )}
 
                 {/* Background color */}
                 <Text style={styles.designLabel}>Background Color</Text>
@@ -750,31 +820,46 @@ export default function MyQrDetailScreen() {
                         ) : null}
                       </Pressable>
                     ))}
+                    {/* Custom color swatch */}
+                    <Pressable
+                      onPress={() => {
+                        setCustomColorTarget("bg");
+                        setCustomColorInput(bgColor);
+                        setCustomColorOpen(true);
+                      }}
+                      style={[
+                        styles.swatch,
+                        { backgroundColor: Colors.dark.surfaceLight, borderColor: Colors.dark.primary + "60", borderStyle: "dashed" },
+                        !BG_COLORS.find(c => c.color === bgColor) && { borderColor: Colors.dark.primary, borderWidth: 2 },
+                      ]}
+                    >
+                      {!BG_COLORS.find(c => c.color === bgColor) ? (
+                        <View style={{ width: 24, height: 24, borderRadius: 12, backgroundColor: bgColor }} />
+                      ) : (
+                        <Ionicons name="color-palette-outline" size={16} color={Colors.dark.textMuted} />
+                      )}
+                    </Pressable>
                   </View>
                 </ScrollView>
+                {!BG_COLORS.find(c => c.color === bgColor) && (
+                  <Text style={{ fontSize: 11, color: Colors.dark.primary, fontFamily: "Inter_500Medium", marginTop: -10, marginBottom: 10 }}>
+                    Custom: {bgColor}
+                  </Text>
+                )}
 
-                {/* Logo */}
+                {/* Logo — fixed app logo, always shown */}
                 <Text style={styles.designLabel}>Logo</Text>
                 <View style={styles.logoRow}>
-                  <Pressable onPress={handlePickLogo} style={styles.logoPickerBtn}>
-                    {logoUri ? (
-                      <Image source={{ uri: logoUri }} style={styles.logoThumb} />
-                    ) : (
-                      <Image source={require("../../assets/images/icon.png")} style={styles.logoThumb} />
-                    )}
-                    <Text style={styles.logoPickerLabel}>
-                      {logoUri ? "Change Logo" : "Custom Logo"}
-                    </Text>
-                  </Pressable>
-                  {logoUri ? (
-                    <Pressable
-                      onPress={() => { setLogoUri(null); setDesignDirty(true); }}
-                      style={styles.removeLogoBtn}
-                    >
-                      <Ionicons name="close-circle" size={18} color={Colors.dark.danger} />
-                      <Text style={styles.removeLogoText}>Remove</Text>
-                    </Pressable>
-                  ) : null}
+                  <View style={[styles.logoPickerBtn, { opacity: 1 }]}>
+                    <Image source={require("../../assets/images/icon.png")} style={styles.logoThumb} />
+                    <Text style={styles.logoPickerLabel}>QR Guard Logo</Text>
+                  </View>
+                  <View style={{ flexDirection: "row", alignItems: "center", gap: 5,
+                    backgroundColor: Colors.dark.primaryDim, borderRadius: 8,
+                    paddingHorizontal: 10, paddingVertical: 6, borderWidth: 1, borderColor: Colors.dark.primary + "30" }}>
+                    <Ionicons name="shield-checkmark" size={13} color={Colors.dark.primary} />
+                    <Text style={{ fontSize: 11, fontFamily: "Inter_500Medium", color: Colors.dark.primary }}>Mandatory</Text>
+                  </View>
                 </View>
 
                 {/* Logo position */}
@@ -981,6 +1066,134 @@ export default function MyQrDetailScreen() {
             </View>
           </View>
         </View>
+      </Modal>
+
+      {/* Followers Full-Page Modal */}
+      <Modal visible={followersModalOpen} animationType="slide" onRequestClose={() => setFollowersModalOpen(false)}>
+        <View style={{ flex: 1, backgroundColor: Colors.dark.background }}>
+          <View style={[styles.navBar, { paddingTop: Math.max(topInset, 12) + 12 }]}>
+            <Pressable onPress={() => setFollowersModalOpen(false)} style={styles.backBtn}>
+              <Ionicons name="arrow-back" size={22} color={Colors.dark.text} />
+            </Pressable>
+            <View style={{ flex: 1, alignItems: "center" }}>
+              <Text style={styles.navTitle}>Followers</Text>
+              <Text style={{ fontSize: 12, fontFamily: "Inter_400Regular", color: Colors.dark.textMuted, marginTop: 1 }}>
+                {followCount} {followCount === 1 ? "person follows" : "people follow"} this QR
+              </Text>
+            </View>
+            <View style={{ width: 40 }} />
+          </View>
+
+          {followersLoading ? (
+            <View style={{ flex: 1, alignItems: "center", justifyContent: "center", gap: 12 }}>
+              <ActivityIndicator color={Colors.dark.primary} size="large" />
+              <Text style={{ color: Colors.dark.textMuted, fontFamily: "Inter_400Regular", fontSize: 14 }}>Loading followers…</Text>
+            </View>
+          ) : followersList.length === 0 ? (
+            <View style={{ flex: 1, alignItems: "center", justifyContent: "center", gap: 12, padding: 40 }}>
+              <Ionicons name="people-outline" size={60} color={Colors.dark.textMuted} />
+              <Text style={{ fontSize: 18, fontFamily: "Inter_700Bold", color: Colors.dark.text }}>No Followers Yet</Text>
+              <Text style={{ fontSize: 14, fontFamily: "Inter_400Regular", color: Colors.dark.textMuted, textAlign: "center", lineHeight: 20 }}>
+                When people follow this QR code, they'll appear here.
+              </Text>
+            </View>
+          ) : (
+            <ScrollView contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 40 }} showsVerticalScrollIndicator={false}>
+              {followersList.map((f, idx) => (
+                <Animated.View key={f.userId} entering={FadeInDown.duration(300).delay(idx * 30)}>
+                  <View style={{
+                    flexDirection: "row", alignItems: "center", gap: 14,
+                    paddingVertical: 14, borderBottomWidth: 1, borderBottomColor: Colors.dark.surfaceBorder,
+                  }}>
+                    {f.photoURL ? (
+                      <Image
+                        source={{ uri: f.photoURL }}
+                        style={{ width: 50, height: 50, borderRadius: 25, backgroundColor: Colors.dark.surfaceLight }}
+                      />
+                    ) : (
+                      <View style={{
+                        width: 50, height: 50, borderRadius: 25,
+                        backgroundColor: Colors.dark.primaryDim, alignItems: "center", justifyContent: "center",
+                        borderWidth: 1, borderColor: Colors.dark.primary + "40",
+                      }}>
+                        <Text style={{ fontSize: 20, fontFamily: "Inter_700Bold", color: Colors.dark.primary }}>
+                          {(f.displayName || "?")[0].toUpperCase()}
+                        </Text>
+                      </View>
+                    )}
+                    <View style={{ flex: 1 }}>
+                      <Text style={{ fontSize: 15, fontFamily: "Inter_600SemiBold", color: Colors.dark.text }}>
+                        {f.displayName}
+                      </Text>
+                      {f.username ? (
+                        <Text style={{ fontSize: 13, fontFamily: "Inter_400Regular", color: Colors.dark.primary, marginTop: 1 }}>
+                          @{f.username}
+                        </Text>
+                      ) : null}
+                      <Text style={{ fontSize: 11, fontFamily: "Inter_400Regular", color: Colors.dark.textMuted, marginTop: 2 }}>
+                        Followed {timeAgo(f.followedAt)}
+                      </Text>
+                    </View>
+                    <View style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: "#10B98115", alignItems: "center", justifyContent: "center" }}>
+                      <Ionicons name="person" size={18} color="#10B981" />
+                    </View>
+                  </View>
+                </Animated.View>
+              ))}
+            </ScrollView>
+          )}
+        </View>
+      </Modal>
+
+      {/* Custom Color Picker Modal */}
+      <Modal visible={customColorOpen} transparent animationType="slide" onRequestClose={() => setCustomColorOpen(false)}>
+        <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === "ios" ? "padding" : "height"}>
+          <Pressable style={styles.modalOverlay} onPress={() => setCustomColorOpen(false)}>
+            <Pressable style={[styles.deactivateModal, { gap: 16 }]} onPress={() => {}}>
+              <View style={{ flexDirection: "row", alignItems: "center", gap: 10, marginBottom: 4 }}>
+                <Ionicons name="color-palette-outline" size={22} color={Colors.dark.primary} />
+                <Text style={styles.deactivateModalTitle}>
+                  Custom {customColorTarget === "fg" ? "Dot" : "Background"} Color
+                </Text>
+              </View>
+              <Text style={{ fontSize: 13, color: Colors.dark.textMuted, fontFamily: "Inter_400Regular" }}>
+                Enter any hex color code (e.g. #FF5500 or #F50)
+              </Text>
+
+              <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
+                <View style={{
+                  width: 44, height: 44, borderRadius: 10,
+                  backgroundColor: (() => {
+                    let h = customColorInput.trim();
+                    if (!h.startsWith("#")) h = "#" + h;
+                    return /^#([0-9A-Fa-f]{3}|[0-9A-Fa-f]{6})$/.test(h) ? h : Colors.dark.surfaceLight;
+                  })(),
+                  borderWidth: 2, borderColor: Colors.dark.surfaceBorder,
+                }} />
+                <TextInput
+                  style={[styles.deactivateModalInput, { flex: 1, marginBottom: 0, fontFamily: "Inter_500Medium", letterSpacing: 1 }]}
+                  placeholder="#000000"
+                  placeholderTextColor={Colors.dark.textMuted}
+                  value={customColorInput}
+                  onChangeText={setCustomColorInput}
+                  autoCapitalize="characters"
+                  autoCorrect={false}
+                  maxLength={7}
+                />
+              </View>
+
+              <View style={styles.deactivateModalBtns}>
+                <Pressable style={styles.deactivateCancelBtn} onPress={() => setCustomColorOpen(false)}>
+                  <Text style={styles.deactivateCancelText}>Cancel</Text>
+                </Pressable>
+                <Pressable style={styles.deactivateConfirmBtn} onPress={applyCustomColor}>
+                  <Ionicons name="checkmark" size={16} color="#fff" />
+                  <Text style={styles.deactivateConfirmText}>Apply</Text>
+                </Pressable>
+              </View>
+            </Pressable>
+          </Pressable>
+        </KeyboardAvoidingView>
       </Modal>
     </View>
   );
