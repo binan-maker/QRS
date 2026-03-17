@@ -256,7 +256,7 @@ export default function MyQrCodesScreen() {
         ))}
       </View>
 
-      {loading ? (
+      {loading && qrCodes.length === 0 ? (
         <View style={{ padding: 16 }}>
           <SkeletonQrCard />
           <SkeletonQrCard />

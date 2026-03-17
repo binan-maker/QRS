@@ -1130,9 +1130,9 @@ export default function QrDetailScreen() {
           >
             {/* Safety disclaimer */}
             <View style={styles.disclaimerBanner}>
-              <Ionicons name="information-circle-outline" size={14} color={Colors.dark.textMuted} />
+              <Ionicons name="shield-checkmark-outline" size={16} color={Colors.dark.primary} />
               <Text style={styles.disclaimerText}>
-                Check links before you click. QR Guard is not responsible for external content.
+                Always verify links before clicking. QR Guard protects you with real-time safety analysis.
               </Text>
             </View>
 
@@ -1571,23 +1571,24 @@ export default function QrDetailScreen() {
               <Animated.View entering={FadeInDown.duration(400)}>
                 <View style={[styles.safetyWarningCard, {
                   borderColor: paymentSafety.riskLevel === "dangerous" ? Colors.dark.danger : Colors.dark.warning,
+                  backgroundColor: paymentSafety.riskLevel === "dangerous" ? Colors.dark.dangerDim : Colors.dark.warningDim,
                 }]}>
                   <View style={styles.safetyWarningHeader}>
                     <Ionicons
                       name={paymentSafety.riskLevel === "dangerous" ? "warning" : "alert-circle"}
-                      size={20}
+                      size={22}
                       color={paymentSafety.riskLevel === "dangerous" ? Colors.dark.danger : Colors.dark.warning}
                     />
                     <Text style={[styles.safetyWarningTitle, {
                       color: paymentSafety.riskLevel === "dangerous" ? Colors.dark.danger : Colors.dark.warning,
                     }]}>
-                      {paymentSafety.riskLevel === "dangerous" ? "Payment Risk Detected" : "Payment Caution"}
+                      {paymentSafety.riskLevel === "dangerous" ? "⚠ Payment Risk Detected" : "⚠ Payment Caution"}
                     </Text>
                   </View>
                   {paymentSafety.warnings.map((w, i) => (
                     <View key={i} style={styles.safetyWarningRow}>
-                      <Ionicons name="ellipse" size={6} color={Colors.dark.warning} style={{ marginTop: 5 }} />
-                      <Text style={styles.safetyWarningText}>{w}</Text>
+                      <Ionicons name="ellipse" size={6} color={paymentSafety.riskLevel === "dangerous" ? Colors.dark.danger : Colors.dark.warning} style={{ marginTop: 5 }} />
+                      <Text style={[styles.safetyWarningText, { color: Colors.dark.text }]}>{w}</Text>
                     </View>
                   ))}
                 </View>
@@ -1599,23 +1600,24 @@ export default function QrDetailScreen() {
               <Animated.View entering={FadeInDown.duration(400)}>
                 <View style={[styles.safetyWarningCard, {
                   borderColor: urlSafety.riskLevel === "dangerous" ? Colors.dark.danger : Colors.dark.warning,
+                  backgroundColor: urlSafety.riskLevel === "dangerous" ? Colors.dark.dangerDim : Colors.dark.warningDim,
                 }]}>
                   <View style={styles.safetyWarningHeader}>
                     <Ionicons
                       name={urlSafety.riskLevel === "dangerous" ? "warning" : "alert-circle"}
-                      size={20}
+                      size={22}
                       color={urlSafety.riskLevel === "dangerous" ? Colors.dark.danger : Colors.dark.warning}
                     />
                     <Text style={[styles.safetyWarningTitle, {
                       color: urlSafety.riskLevel === "dangerous" ? Colors.dark.danger : Colors.dark.warning,
                     }]}>
-                      {urlSafety.riskLevel === "dangerous" ? "Suspicious URL Detected" : "URL Caution"}
+                      {urlSafety.riskLevel === "dangerous" ? "⚠ Suspicious URL Detected" : "⚠ URL Caution"}
                     </Text>
                   </View>
                   {urlSafety.warnings.map((w, i) => (
                     <View key={i} style={styles.safetyWarningRow}>
-                      <Ionicons name="ellipse" size={6} color={Colors.dark.warning} style={{ marginTop: 5 }} />
-                      <Text style={styles.safetyWarningText}>{w}</Text>
+                      <Ionicons name="ellipse" size={6} color={urlSafety.riskLevel === "dangerous" ? Colors.dark.danger : Colors.dark.warning} style={{ marginTop: 5 }} />
+                      <Text style={[styles.safetyWarningText, { color: Colors.dark.text }]}>{w}</Text>
                     </View>
                   ))}
                 </View>
@@ -1625,16 +1627,16 @@ export default function QrDetailScreen() {
             {/* Offline blacklist match warning */}
             {offlineBlacklistMatch.matched ? (
               <Animated.View entering={FadeInDown.duration(400)}>
-                <View style={[styles.safetyWarningCard, { borderColor: Colors.dark.danger }]}>
+                <View style={[styles.safetyWarningCard, { borderColor: Colors.dark.danger, backgroundColor: Colors.dark.dangerDim }]}>
                   <View style={styles.safetyWarningHeader}>
-                    <Ionicons name="shield-outline" size={20} color={Colors.dark.danger} />
+                    <Ionicons name="shield-outline" size={22} color={Colors.dark.danger} />
                     <Text style={[styles.safetyWarningTitle, { color: Colors.dark.danger }]}>
-                      Known Scam Pattern
+                      ⚠ Known Scam Pattern
                     </Text>
                   </View>
                   <View style={styles.safetyWarningRow}>
                     <Ionicons name="ellipse" size={6} color={Colors.dark.danger} style={{ marginTop: 5 }} />
-                    <Text style={styles.safetyWarningText}>
+                    <Text style={[styles.safetyWarningText, { color: Colors.dark.text }]}>
                       This content matches a known scam pattern: {offlineBlacklistMatch.reason}
                     </Text>
                   </View>
@@ -1661,10 +1663,10 @@ export default function QrDetailScreen() {
               <>
                 {/* Trust Score */}
                 <Animated.View entering={FadeInDown.duration(400).delay(100)}>
-                  <View style={styles.trustCard}>
+                  <View style={[styles.trustCard, { borderColor: trust.color + "50" }]}>
                     <View style={styles.trustHeader}>
                       <Text style={styles.sectionTitle}>Trust Score</Text>
-                      <View style={[styles.trustBadge, { backgroundColor: trust.color + "22" }]}>
+                      <View style={[styles.trustBadge, { backgroundColor: trust.color + "28", borderWidth: 1, borderColor: trust.color + "60" }]}>
                         <View style={[styles.trustDot, { backgroundColor: trust.color }]} />
                         <Text style={[styles.trustLabel, { color: trust.color }]}>{trust.label}</Text>
                       </View>
@@ -1674,7 +1676,7 @@ export default function QrDetailScreen() {
                         <View style={styles.trustBarBg}>
                           <View style={[styles.trustBarFill, { width: `${Math.min(trust.score, 100)}%`, backgroundColor: trust.color }]} />
                         </View>
-                        <Text style={styles.trustPercent}>{Math.round(trust.score)}% Safe</Text>
+                        <Text style={[styles.trustPercent, { color: trust.color }]}>{Math.round(trust.score)}% Safe</Text>
                       </View>
                     ) : null}
                     <View style={styles.statsRow}>
@@ -2242,11 +2244,11 @@ const styles = StyleSheet.create({
   ownerUuid: { fontSize: 10, fontFamily: "Inter_400Regular", color: Colors.dark.textMuted, marginTop: 2 },
   scanGuardBadge: {
     flexDirection: "row", alignItems: "center", gap: 4, marginTop: 6,
-    backgroundColor: Colors.dark.primaryDim, borderRadius: 8,
-    paddingHorizontal: 8, paddingVertical: 3, alignSelf: "flex-start",
-    borderWidth: 1, borderColor: Colors.dark.primary + "40",
+    backgroundColor: "rgba(0, 212, 255, 0.15)", borderRadius: 8,
+    paddingHorizontal: 9, paddingVertical: 4, alignSelf: "flex-start",
+    borderWidth: 1.5, borderColor: Colors.dark.primary + "60",
   },
-  scanGuardBadgeText: { fontSize: 10, fontFamily: "Inter_600SemiBold", color: Colors.dark.primary },
+  scanGuardBadgeText: { fontSize: 10, fontFamily: "Inter_700Bold", color: Colors.dark.primary, letterSpacing: 0.3 },
   ownerCardRight: { flexDirection: "row", gap: 8, alignItems: "center" },
   ownerActionBtn: {
     alignItems: "center", gap: 2,
@@ -2262,10 +2264,11 @@ const styles = StyleSheet.create({
   },
   unreadDotText: { fontSize: 9, fontFamily: "Inter_700Bold", color: "#fff" },
   verifiedOnlyBadge: {
-    flexDirection: "row", alignItems: "center", gap: 4,
-    backgroundColor: Colors.dark.safeDim, paddingHorizontal: 8, paddingVertical: 4, borderRadius: 10,
+    flexDirection: "row", alignItems: "center", gap: 5,
+    backgroundColor: Colors.dark.safeDim, paddingHorizontal: 10, paddingVertical: 5, borderRadius: 12,
+    borderWidth: 1, borderColor: Colors.dark.safe + "50",
   },
-  verifiedOnlyText: { fontSize: 11, fontFamily: "Inter_700Bold", color: Colors.dark.safe },
+  verifiedOnlyText: { fontSize: 12, fontFamily: "Inter_700Bold", color: Colors.dark.safe },
 
   qrTypeBadge: {
     paddingHorizontal: 6, paddingVertical: 2, borderRadius: 6,
@@ -2308,7 +2311,7 @@ const styles = StyleSheet.create({
 
   contentCard: {
     backgroundColor: Colors.dark.surface, borderRadius: 16, padding: 18,
-    marginBottom: 16, borderWidth: 1, borderColor: Colors.dark.surfaceBorder,
+    marginBottom: 16, borderWidth: 1.5, borderColor: Colors.dark.primary + "30",
   },
   contentHeader: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 12 },
   typeIcon: { width: 48, height: 48, borderRadius: 14, alignItems: "center", justifyContent: "center" },
@@ -2370,7 +2373,6 @@ const styles = StyleSheet.create({
   },
 
   safetyWarningCard: {
-    backgroundColor: "rgba(0,0,0,0.3)",
     borderRadius: 14,
     borderWidth: 1.5,
     padding: 14,
@@ -2403,16 +2405,16 @@ const styles = StyleSheet.create({
 
   trustCard: {
     backgroundColor: Colors.dark.surface, borderRadius: 16, padding: 18,
-    marginBottom: 16, borderWidth: 1, borderColor: Colors.dark.surfaceBorder,
+    marginBottom: 16, borderWidth: 1.5, borderColor: Colors.dark.surfaceBorder,
   },
-  trustHeader: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 12 },
-  trustBadge: { flexDirection: "row", alignItems: "center", gap: 6, paddingHorizontal: 10, paddingVertical: 5, borderRadius: 20 },
-  trustDot: { width: 8, height: 8, borderRadius: 4 },
-  trustLabel: { fontSize: 13, fontFamily: "Inter_600SemiBold" },
-  trustBarContainer: { flexDirection: "row", alignItems: "center", gap: 10, marginBottom: 16 },
-  trustBarBg: { flex: 1, height: 6, borderRadius: 3, backgroundColor: Colors.dark.surfaceLight, overflow: "hidden" },
-  trustBarFill: { height: "100%", borderRadius: 3 },
-  trustPercent: { fontSize: 12, fontFamily: "Inter_600SemiBold", color: Colors.dark.textSecondary, minWidth: 60, textAlign: "right" },
+  trustHeader: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 14 },
+  trustBadge: { flexDirection: "row", alignItems: "center", gap: 6, paddingHorizontal: 12, paddingVertical: 6, borderRadius: 20 },
+  trustDot: { width: 9, height: 9, borderRadius: 5 },
+  trustLabel: { fontSize: 14, fontFamily: "Inter_700Bold" },
+  trustBarContainer: { flexDirection: "row", alignItems: "center", gap: 10, marginBottom: 18 },
+  trustBarBg: { flex: 1, height: 10, borderRadius: 5, backgroundColor: Colors.dark.surfaceLight, overflow: "hidden" },
+  trustBarFill: { height: "100%", borderRadius: 5 },
+  trustPercent: { fontSize: 13, fontFamily: "Inter_700Bold", color: Colors.dark.textSecondary, minWidth: 64, textAlign: "right" },
   statsRow: { flexDirection: "row", alignItems: "center" },
   statItem: { flex: 1, alignItems: "center" },
   statValue: { fontSize: 22, fontFamily: "Inter_700Bold", color: Colors.dark.text },
@@ -2426,11 +2428,12 @@ const styles = StyleSheet.create({
   reportGrid: { flexDirection: "row", flexWrap: "wrap", gap: 10, marginBottom: 20 },
   reportCard: {
     flex: 1, minWidth: "45%", alignItems: "center", padding: 16,
-    borderRadius: 14, borderWidth: 1.5, gap: 6, position: "relative",
+    borderRadius: 14, borderWidth: 2, gap: 6, position: "relative",
+    backgroundColor: Colors.dark.surface,
   },
-  reportLabel: { fontSize: 14, fontFamily: "Inter_600SemiBold" },
-  reportCount: { fontSize: 18, fontFamily: "Inter_700Bold", color: Colors.dark.text },
-  selectedDot: { position: "absolute", top: 8, right: 8, width: 8, height: 8, borderRadius: 4 },
+  reportLabel: { fontSize: 14, fontFamily: "Inter_700Bold" },
+  reportCount: { fontSize: 20, fontFamily: "Inter_700Bold", color: Colors.dark.text },
+  selectedDot: { position: "absolute", top: 8, right: 8, width: 10, height: 10, borderRadius: 5 },
 
   commentsHeader: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 12 },
   commentsTitleRow: { flexDirection: "row", alignItems: "center", gap: 8 },
@@ -2709,13 +2712,13 @@ const styles = StyleSheet.create({
   signInToMessageText: { fontSize: 14, fontFamily: "Inter_600SemiBold", color: Colors.dark.primary },
 
   disclaimerBanner: {
-    flexDirection: "row", alignItems: "center", gap: 6,
-    backgroundColor: Colors.dark.surface, borderRadius: 10, padding: 10,
-    marginBottom: 12, borderWidth: 1, borderColor: Colors.dark.surfaceBorder,
+    flexDirection: "row", alignItems: "center", gap: 8,
+    backgroundColor: Colors.dark.primaryDim, borderRadius: 10, padding: 11,
+    marginBottom: 12, borderWidth: 1, borderColor: Colors.dark.primary + "30",
   },
   disclaimerText: {
-    flex: 1, fontSize: 11, fontFamily: "Inter_400Regular",
-    color: Colors.dark.textMuted, lineHeight: 15,
+    flex: 1, fontSize: 11, fontFamily: "Inter_500Medium",
+    color: Colors.dark.textSecondary, lineHeight: 15,
   },
 
   ownerLogoRow: {
