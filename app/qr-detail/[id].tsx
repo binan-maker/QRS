@@ -1075,8 +1075,8 @@ export default function QrDetailScreen() {
       <StatusBar style="light" backgroundColor={Colors.dark.background} />
       <KeyboardAvoidingView
         style={{ flex: 1 }}
-        behavior={Platform.OS === "ios" ? "padding" : Platform.OS === "android" ? "height" : undefined}
-        keyboardVerticalOffset={Platform.OS === "ios" ? topInset : 0}
+        behavior={Platform.OS === "web" ? undefined : "padding"}
+        keyboardVerticalOffset={0}
       >
         <View style={[styles.container, { paddingTop: topInset }]}>
           {/* Nav */}
@@ -1153,6 +1153,7 @@ export default function QrDetailScreen() {
 
           <ScrollView
             ref={scrollRef}
+            style={{ flex: 1 }}
             showsVerticalScrollIndicator={false}
             contentContainerStyle={styles.scrollContent}
             keyboardShouldPersistTaps="handled"

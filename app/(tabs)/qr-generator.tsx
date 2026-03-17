@@ -56,6 +56,16 @@ function buildQrContent(type: number, value: string): string {
   }
 }
 
+function looksLikeUrl(value: string): boolean {
+  const withScheme = value.startsWith("http") ? value : `https://${value}`;
+  try {
+    const url = new URL(withScheme);
+    return url.hostname.includes(".") && url.hostname.length > 3;
+  } catch {
+    return false;
+  }
+}
+
 function getContentType(preset: number): string {
   switch (preset) {
     case 1: return "url";
@@ -102,6 +112,24 @@ export default function QrGeneratorScreen() {
   async function handleGenerate() {
     const val = displayValue.trim();
     if (!val) { Alert.alert("Empty", "Please enter some content first."); return; }
+
+    // Warn user if they selected URL type but entered plain text
+    const isUrlPreset = selectedPreset === 1 || (qrMode === "business" && isBranded);
+    if (isUrlPreset && !looksLikeUrl(inputValue.trim())) {
+      let shouldStop = false;
+      await new Promise<void>((resolve) => {
+        Alert.alert(
+          "Not a valid URL",
+          "The content you entered doesn't look like a URL. A URL QR code should point to a website (e.g. example.com).\n\nSwitch to \"Text\" type if you want to encode plain text.",
+          [
+            { text: "Use Text type", style: "default", onPress: () => { setSelectedPreset(0); shouldStop = true; resolve(); } },
+            { text: "Generate anyway", style: "destructive", onPress: () => resolve() },
+            { text: "Cancel", style: "cancel", onPress: () => { shouldStop = true; resolve(); } },
+          ]
+        );
+      });
+      if (shouldStop) return;
+    }
 
     const uuid = await Crypto.digestStringAsync(
       Crypto.CryptoDigestAlgorithm.SHA256,
