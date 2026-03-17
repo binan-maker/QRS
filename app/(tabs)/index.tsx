@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   View,
   Text,
@@ -48,6 +48,7 @@ export default function HomeScreen() {
   const insets = useSafeAreaInsets();
   const [recentScans, setRecentScans] = useState<LocalScan[]>([]);
   const [refreshing, setRefreshing] = useState(false);
+  const prevUserIdRef = useRef<string | null | undefined>(undefined);
   const [notifCount, setNotifCount] = useState(0);
   const [notifOpen, setNotifOpen] = useState(false);
   const [notifications, setNotifications] = useState<Notification[]>([]);
@@ -121,15 +122,19 @@ export default function HomeScreen() {
 
   // Clear and reload recent scans when user changes (sign-out / switch account)
   useEffect(() => {
-    setRecentScans([]);
-    loadRecentScans(user?.id);
+    const currentUserId = user?.id ?? null;
+    if (prevUserIdRef.current !== currentUserId) {
+      prevUserIdRef.current = currentUserId;
+      setRecentScans([]);
+    }
+    loadRecentScans(currentUserId);
   }, [user?.id]);
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
-    await loadRecentScans();
+    await loadRecentScans(user?.id);
     setRefreshing(false);
-  }, [loadRecentScans]);
+  }, [loadRecentScans, user?.id]);
 
   function detectTypeFromContent(content: string): string {
     if (!content) return "text";

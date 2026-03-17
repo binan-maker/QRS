@@ -102,6 +102,8 @@ interface CommentItem {
   parentId?: string | null;
   userId?: string;
   isDeleted?: boolean;
+  isHidden?: boolean;
+  reportCount?: number;
   userUsername?: string;
   userPhotoURL?: string;
 }
@@ -285,6 +287,7 @@ export default function QrDetailScreen() {
 
   const [expandedReplies, setExpandedReplies] = useState<Record<string, boolean>>({});
   const [visibleRepliesCount, setVisibleRepliesCount] = useState<Record<string, number>>({});
+  const [revealedComments, setRevealedComments] = useState<Set<string>>(new Set());
 
   // Owner features
   const [ownerInfo, setOwnerInfo] = useState<QrOwnerInfo | null>(null);
@@ -837,11 +840,37 @@ export default function QrDetailScreen() {
     const hasMore = replyCount > showCount;
     const isMenuOpen = commentMenuId === comment.id;
     const isDeleting = deletingCommentId === comment.id;
+    const isRevealed = revealedComments.has(comment.id);
 
     return (
       <View key={comment.id}>
         <Animated.View entering={FadeIn.duration(300)}>
+          {comment.isHidden && !isRevealed ? (
+            <Pressable
+              onPress={() => {
+                setRevealedComments((prev) => {
+                  const next = new Set(prev);
+                  next.add(comment.id);
+                  return next;
+                });
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              }}
+              style={[styles.commentItem, isReply && styles.replyItem, styles.sensitiveCommentBanner]}
+            >
+              <Ionicons name="eye-outline" size={16} color={Colors.dark.warning} />
+              <Text style={styles.sensitiveCommentText}>
+                This comment has been reported as sensitive content
+              </Text>
+              <Ionicons name="chevron-forward" size={14} color={Colors.dark.textMuted} />
+            </Pressable>
+          ) : (
           <View style={[styles.commentItem, isReply && styles.replyItem]}>
+            {comment.isHidden && isRevealed ? (
+              <View style={styles.sensitiveRevealedTag}>
+                <Ionicons name="warning-outline" size={11} color={Colors.dark.warning} />
+                <Text style={styles.sensitiveRevealedTagText}>Reported sensitive</Text>
+              </View>
+            ) : null}
             <View style={styles.commentHeader}>
               <View style={[styles.commentAvatar, isReply && styles.replyAvatar]}>
                 {comment.userPhotoURL ? (
@@ -955,6 +984,7 @@ export default function QrDetailScreen() {
               </View>
             ) : null}
           </View>
+          )}
         </Animated.View>
 
         {!isReply && replyCount > 0 ? (
@@ -1045,7 +1075,7 @@ export default function QrDetailScreen() {
       <StatusBar style="light" backgroundColor={Colors.dark.background} />
       <KeyboardAvoidingView
         style={{ flex: 1 }}
-        behavior={Platform.OS === "ios" ? "padding" : undefined}
+        behavior={Platform.OS === "ios" ? "padding" : Platform.OS === "android" ? "height" : undefined}
         keyboardVerticalOffset={Platform.OS === "ios" ? topInset : 0}
       >
         <View style={[styles.container, { paddingTop: topInset }]}>
@@ -2492,6 +2522,23 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.dark.surfaceLight,
     borderLeftWidth: 2, borderLeftColor: Colors.dark.primary + "50",
     borderRadius: 12, marginBottom: 4,
+  },
+  sensitiveCommentBanner: {
+    flexDirection: "row", alignItems: "center", gap: 8,
+    backgroundColor: Colors.dark.surface, borderColor: Colors.dark.warning + "40",
+    paddingVertical: 12,
+  },
+  sensitiveCommentText: {
+    flex: 1, fontSize: 13, fontFamily: "Inter_400Regular",
+    color: Colors.dark.textSecondary, fontStyle: "italic",
+  },
+  sensitiveRevealedTag: {
+    flexDirection: "row", alignItems: "center", gap: 4,
+    marginBottom: 8, backgroundColor: Colors.dark.warning + "20",
+    paddingHorizontal: 8, paddingVertical: 3, borderRadius: 6, alignSelf: "flex-start",
+  },
+  sensitiveRevealedTagText: {
+    fontSize: 11, fontFamily: "Inter_400Regular", color: Colors.dark.warning,
   },
   replyAvatar: { width: 28, height: 28, borderRadius: 14 },
   commentHeader: { flexDirection: "row", alignItems: "center", gap: 10, marginBottom: 8 },

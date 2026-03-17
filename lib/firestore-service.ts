@@ -106,6 +106,8 @@ export interface CommentItem {
   text: string;
   parentId: string | null;
   isDeleted: boolean;
+  isHidden?: boolean;
+  reportCount?: number;
   likeCount: number;
   dislikeCount: number;
   createdAt: string;
@@ -379,7 +381,7 @@ export function subscribeToComments(
     q,
     (snap) => {
       const comments: CommentItem[] = snap.docs
-        .filter((d) => !d.data().isDeleted && !d.data().isHidden)
+        .filter((d) => !d.data().isDeleted)
         .map((d) => {
           const data = d.data();
           return {
@@ -389,6 +391,8 @@ export function subscribeToComments(
             text: data.text,
             parentId: data.parentId || null,
             isDeleted: false,
+            isHidden: data.isHidden || false,
+            reportCount: data.reportCount || 0,
             likeCount: data.likeCount || 0,
             dislikeCount: data.dislikeCount || 0,
             createdAt: tsToString(data.createdAt),
@@ -675,7 +679,7 @@ export async function getComments(
   const snap = await getDocs(q);
   const hasMore = snap.docs.length > pageLimit;
   const allDocs = hasMore ? snap.docs.slice(0, pageLimit) : snap.docs;
-  const docs = allDocs.filter((d) => !d.data().isDeleted && !d.data().isHidden);
+  const docs = allDocs.filter((d) => !d.data().isDeleted);
   const comments: CommentItem[] = docs.map((d) => {
     const data = d.data();
     return {
@@ -685,6 +689,8 @@ export async function getComments(
       text: data.text,
       parentId: data.parentId || null,
       isDeleted: false,
+      isHidden: data.isHidden || false,
+      reportCount: data.reportCount || 0,
       likeCount: data.likeCount || 0,
       dislikeCount: data.dislikeCount || 0,
       createdAt: tsToString(data.createdAt),
