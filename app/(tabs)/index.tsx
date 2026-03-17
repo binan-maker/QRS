@@ -103,9 +103,13 @@ export default function HomeScreen() {
     setNotifications([]);
   }
 
-  const loadRecentScans = useCallback(async () => {
+  const loadRecentScans = useCallback(async (userId?: string | null) => {
+    if (!userId) {
+      setRecentScans([]);
+      return;
+    }
     try {
-      const stored = await AsyncStorage.getItem("local_scan_history");
+      const stored = await AsyncStorage.getItem(`local_scan_history_${userId}`);
       if (stored) {
         const all: LocalScan[] = JSON.parse(stored);
         setRecentScans(all.slice(0, 5));
@@ -118,7 +122,7 @@ export default function HomeScreen() {
   // Clear and reload recent scans when user changes (sign-out / switch account)
   useEffect(() => {
     setRecentScans([]);
-    loadRecentScans();
+    loadRecentScans(user?.id);
   }, [user?.id]);
 
   const onRefresh = useCallback(async () => {
