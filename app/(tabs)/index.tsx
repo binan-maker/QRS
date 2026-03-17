@@ -1,202 +1,28 @@
-import { useCallback, useEffect, useRef, useState } from "react";
-import {
-  View,
-  Text,
-  StyleSheet,
-  Pressable,
-  ScrollView,
-  Platform,
-  RefreshControl,
-  Modal,
-  ActivityIndicator,
-} from "react-native";
+import { View, Text, StyleSheet, Pressable, ScrollView, Platform, RefreshControl } from "react-native";
 import { router } from "expo-router";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as Haptics from "expo-haptics";
-import Animated, {
-  FadeInDown,
-  FadeInUp,
-  useAnimatedStyle,
-  useSharedValue,
-  withRepeat,
-  withTiming,
-  withSequence,
-} from "react-native-reanimated";
+import Animated, { FadeInDown } from "react-native-reanimated";
 import Colors from "@/constants/colors";
-import { useAuth } from "@/contexts/AuthContext";
-import {
-  subscribeToNotifications,
-  subscribeToNotificationCount,
-  markAllNotificationsRead,
-  clearAllNotifications,
-  type Notification,
-} from "@/lib/firestore-service";
-
-interface LocalScan {
-  id: string;
-  content: string;
-  contentType: string;
-  scannedAt: string;
-  qrCodeId?: string;
-}
+import { useHome } from "@/hooks/useHome";
+import { detectContentType, getContentTypeIcon, truncate, formatRelativeTime } from "@/lib/utils/formatters";
+import NotificationsModal from "@/components/home/NotificationsModal";
 
 export default function HomeScreen() {
-  const { user } = useAuth();
   const insets = useSafeAreaInsets();
-  const [recentScans, setRecentScans] = useState<LocalScan[]>([]);
-  const [refreshing, setRefreshing] = useState(false);
-  const prevUserIdRef = useRef<string | null | undefined>(undefined);
-  const [notifCount, setNotifCount] = useState(0);
-  const [notifOpen, setNotifOpen] = useState(false);
-  const [notifications, setNotifications] = useState<Notification[]>([]);
-  const [markingRead, setMarkingRead] = useState(false);
-  const scanPulse = useSharedValue(1);
-
-  useEffect(() => {
-    scanPulse.value = withRepeat(
-      withSequence(
-        withTiming(1.06, { duration: 1200 }),
-        withTiming(1, { duration: 1200 })
-      ),
-      -1,
-      true
-    );
-  }, []);
-
-  const pulseStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: scanPulse.value }],
-  }));
-
-  // Real-time notification count from RTDB
-  useEffect(() => {
-    if (!user) {
-      setNotifCount(0);
-      return;
-    }
-    const unsub = subscribeToNotificationCount(user.id, setNotifCount);
-    return unsub;
-  }, [user?.id]);
-
-  // Real-time notifications list from RTDB (loaded when panel opens)
-  useEffect(() => {
-    if (!user || !notifOpen) return;
-    const unsub = subscribeToNotifications(user.id, setNotifications);
-    return unsub;
-  }, [user?.id, notifOpen]);
-
-  async function handleOpenNotifications() {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    setNotifOpen(true);
-    if (user && notifCount > 0) {
-      setMarkingRead(true);
-      await markAllNotificationsRead(user.id).catch(() => {});
-      setMarkingRead(false);
-    }
-  }
-
-  async function handleClearNotifications() {
-    if (!user) return;
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    await clearAllNotifications(user.id).catch(() => {});
-    setNotifications([]);
-  }
-
-  const loadRecentScans = useCallback(async (userId?: string | null) => {
-    if (!userId) {
-      setRecentScans([]);
-      return;
-    }
-    try {
-      const stored = await AsyncStorage.getItem(`local_scan_history_${userId}`);
-      if (stored) {
-        const all: LocalScan[] = JSON.parse(stored);
-        setRecentScans(all.slice(0, 5));
-      } else {
-        setRecentScans([]);
-      }
-    } catch {}
-  }, []);
-
-  // Clear and reload recent scans when user changes (sign-out / switch account)
-  useEffect(() => {
-    const currentUserId = user?.id ?? null;
-    if (prevUserIdRef.current !== currentUserId) {
-      prevUserIdRef.current = currentUserId;
-      setRecentScans([]);
-    }
-    loadRecentScans(currentUserId);
-  }, [user?.id]);
-
-  const onRefresh = useCallback(async () => {
-    setRefreshing(true);
-    await loadRecentScans(user?.id);
-    setRefreshing(false);
-  }, [loadRecentScans, user?.id]);
-
-  function detectTypeFromContent(content: string): string {
-    if (!content) return "text";
-    const lower = content.toLowerCase().trim();
-    if (lower.startsWith("upi://") || lower.startsWith("paytm://") || lower.startsWith("phonepe://") ||
-        lower.startsWith("bitcoin:") || lower.startsWith("ethereum:") || lower.startsWith("wxp://") ||
-        lower.startsWith("gpay://") || lower.startsWith("tez://") || lower.includes("upi://pay")) return "payment";
-    if (lower.startsWith("tel:")) return "phone";
-    if (lower.startsWith("mailto:")) return "email";
-    if (lower.startsWith("wifi:")) return "wifi";
-    if (lower.startsWith("geo:")) return "location";
-    try { new URL(content); return "url"; } catch {}
-    return "text";
-  }
-
-  function getContentIcon(type: string, content?: string): string {
-    const resolvedType = type || (content ? detectTypeFromContent(content) : "text");
-    switch (resolvedType) {
-      case "url": return "link";
-      case "phone": return "call";
-      case "email": return "mail";
-      case "wifi": return "wifi";
-      case "location": return "location";
-      case "payment": return "card";
-      default: return "document-text";
-    }
-  }
-
-  function getNotifIcon(type: string) {
-    if (type === "new_comment") return "chatbubble";
-    if (type === "mention") return "at";
-    if (type === "new_follow") return "person-add";
-    return "warning";
-  }
-
-  function getNotifColor(type: string) {
-    if (type === "new_comment") return Colors.dark.primary;
-    if (type === "mention") return Colors.dark.accent;
-    if (type === "new_follow") return Colors.dark.safe;
-    return Colors.dark.warning;
-  }
-
-  function truncate(s: string, max: number) {
-    return s.length > max ? s.slice(0, max) + "..." : s;
-  }
-
-  function formatRelativeTime(ts: number): string {
-    const diff = Date.now() - ts;
-    const mins = Math.floor(diff / 60000);
-    if (mins < 1) return "just now";
-    if (mins < 60) return `${mins}m ago`;
-    const hrs = Math.floor(mins / 60);
-    if (hrs < 24) return `${hrs}h ago`;
-    const days = Math.floor(hrs / 24);
-    return `${days}d ago`;
-  }
+  const {
+    user, recentScans, refreshing, onRefresh,
+    notifCount, notifOpen, setNotifOpen,
+    notifications, markingRead, pulseStyle,
+    handleOpenNotifications, handleClearNotifications,
+  } = useHome();
 
   const topInset = Platform.OS === "web" ? 67 : insets.top;
 
-  function getFirstName(name: string): string {
-    if (!name) return "";
-    return name.trim().split(/\s+/)[0];
+  function getFirstName(name: string) {
+    return name ? name.trim().split(/\s+/)[0] : "";
   }
 
   return (
@@ -206,11 +32,7 @@ export default function HomeScreen() {
           showsVerticalScrollIndicator={false}
           contentContainerStyle={styles.scrollContent}
           refreshControl={
-            <RefreshControl
-              refreshing={refreshing}
-              onRefresh={onRefresh}
-              tintColor={Colors.dark.primary}
-            />
+            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={Colors.dark.primary} />
           }
         >
           <Animated.View entering={FadeInDown.duration(600)}>
@@ -223,40 +45,26 @@ export default function HomeScreen() {
               </View>
               <View style={styles.headerRight}>
                 {user ? (
-                  <Pressable
-                    onPress={handleOpenNotifications}
-                    style={styles.notifBtn}
-                    accessibilityLabel="Notifications"
-                  >
+                  <Pressable onPress={handleOpenNotifications} style={styles.notifBtn} accessibilityLabel="Notifications">
                     <Ionicons
                       name={notifCount > 0 ? "notifications" : "notifications-outline"}
                       size={22}
                       color={notifCount > 0 ? Colors.dark.primary : Colors.dark.textSecondary}
                     />
-                    {notifCount > 0 ? (
+                    {notifCount > 0 && (
                       <View style={styles.notifBadge}>
-                        <Text style={styles.notifBadgeText}>
-                          {notifCount > 99 ? "99+" : notifCount}
-                        </Text>
+                        <Text style={styles.notifBadgeText}>{notifCount > 99 ? "99+" : notifCount}</Text>
                       </View>
-                    ) : null}
+                    )}
                   </Pressable>
                 ) : null}
                 {user ? (
-                  <Pressable
-                    onPress={() => router.push("/(tabs)/profile")}
-                    style={styles.avatarCircle}
-                  >
-                    <Text style={styles.avatarText}>
-                      {user.displayName.charAt(0).toUpperCase()}
-                    </Text>
+                  <Pressable onPress={() => router.push("/(tabs)/profile")} style={styles.avatarCircle}>
+                    <Text style={styles.avatarText}>{user.displayName.charAt(0).toUpperCase()}</Text>
                   </Pressable>
                 ) : (
                   <Pressable
-                    onPress={() => {
-                      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                      router.push("/(auth)/login");
-                    }}
+                    onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); router.push("/(auth)/login"); }}
                     style={styles.signInBtn}
                   >
                     <Ionicons name="log-in-outline" size={18} color={Colors.dark.primary} />
@@ -269,28 +77,17 @@ export default function HomeScreen() {
 
           <Animated.View entering={FadeInDown.duration(600).delay(100)}>
             <Pressable
-              onPress={() => {
-                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-                router.push("/(tabs)/scanner");
-              }}
-              style={({ pressed }) => [
-                styles.scanCard,
-                { opacity: pressed ? 0.9 : 1 },
-              ]}
+              onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium); router.push("/(tabs)/scanner"); }}
+              style={({ pressed }) => [styles.scanCard, { opacity: pressed ? 0.9 : 1 }]}
             >
               <LinearGradient
                 colors={["rgba(0, 212, 255, 0.12)", "rgba(124, 58, 237, 0.08)"]}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
+                start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
                 style={styles.scanCardGradient}
               >
                 <Animated.View style={[styles.scanIconOuter, pulseStyle]}>
                   <View style={styles.scanIconInner}>
-                    <MaterialCommunityIcons
-                      name="qrcode-scan"
-                      size={40}
-                      color={Colors.dark.primary}
-                    />
+                    <MaterialCommunityIcons name="qrcode-scan" size={40} color={Colors.dark.primary} />
                   </View>
                 </Animated.View>
                 <Text style={styles.scanCardTitle}>Tap to Scan QR Code</Text>
@@ -328,90 +125,64 @@ export default function HomeScreen() {
             </View>
           </Animated.View>
 
-          {!user ? (
+          {!user && (
             <Animated.View entering={FadeInDown.duration(600).delay(300)}>
-              <Pressable
-                onPress={() => router.push("/(auth)/login")}
-                style={styles.promoCard}
-              >
+              <Pressable onPress={() => router.push("/(auth)/login")} style={styles.promoCard}>
                 <LinearGradient
                   colors={["rgba(124, 58, 237, 0.15)", "rgba(0, 212, 255, 0.1)"]}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 1 }}
+                  start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
                   style={styles.promoGradient}
                 >
                   <View style={styles.promoContent}>
                     <Ionicons name="sparkles" size={24} color={Colors.dark.accent} />
                     <View style={{ flex: 1 }}>
                       <Text style={styles.promoTitle}>Unlock Full Access</Text>
-                      <Text style={styles.promoSub}>
-                        Sign in to comment, report QR codes, and sync history across devices
-                      </Text>
+                      <Text style={styles.promoSub}>Sign in to comment, report QR codes, and sync history across devices</Text>
                     </View>
                     <Ionicons name="chevron-forward" size={20} color={Colors.dark.textMuted} />
                   </View>
                 </LinearGradient>
               </Pressable>
             </Animated.View>
-          ) : null}
+          )}
 
           <Animated.View entering={FadeInDown.duration(600).delay(400)}>
             <View style={styles.sectionHeader}>
               <Text style={styles.sectionTitle}>Recent Scans</Text>
-              {recentScans.length > 0 ? (
+              {recentScans.length > 0 && (
                 <Pressable onPress={() => router.push("/(tabs)/history")}>
                   <Text style={styles.seeAll}>See All</Text>
                 </Pressable>
-              ) : null}
+              )}
             </View>
 
             {recentScans.length === 0 ? (
               <View style={styles.emptyState}>
                 <Ionicons name="scan-outline" size={40} color={Colors.dark.textMuted} />
                 <Text style={styles.emptyText}>No scans yet</Text>
-                <Text style={styles.emptySubtext}>
-                  Scan a QR code to see it here
-                </Text>
+                <Text style={styles.emptySubtext}>Scan a QR code to see it here</Text>
               </View>
             ) : (
               recentScans.map((scan) => (
                 <Pressable
                   key={scan.id}
                   onPress={() => {
-                    if (scan.qrCodeId) {
-                      router.push({
-                        pathname: "/qr-detail/[id]",
-                        params: { id: scan.qrCodeId },
-                      });
-                    }
+                    if (scan.qrCodeId) router.push({ pathname: "/qr-detail/[id]", params: { id: scan.qrCodeId } });
                   }}
-                  style={({ pressed }) => [
-                    styles.scanItem,
-                    { opacity: pressed ? 0.8 : 1 },
-                  ]}
+                  style={({ pressed }) => [styles.scanItem, { opacity: pressed ? 0.8 : 1 }]}
                 >
-                  <View
-                    style={[styles.scanItemIcon, { backgroundColor: Colors.dark.primaryDim }]}
-                  >
+                  <View style={[styles.scanItemIcon, { backgroundColor: Colors.dark.primaryDim }]}>
                     <Ionicons
-                      name={getContentIcon(scan.contentType, scan.content) as any}
+                      name={getContentTypeIcon(detectContentType(scan.content)) as any}
                       size={20}
                       color={Colors.dark.primary}
                     />
                   </View>
                   <View style={{ flex: 1 }}>
-                    <Text style={styles.scanItemContent} numberOfLines={1}>
-                      {truncate(scan.content, 40)}
-                    </Text>
-                    <Text style={styles.scanItemDate}>
-                      {new Date(scan.scannedAt).toLocaleDateString()}
-                    </Text>
+                    <Text style={styles.scanItemContent} numberOfLines={1}>{truncate(scan.content, 40)}</Text>
+                    <Text style={styles.scanItemDate}>{new Date(scan.scannedAt).toLocaleDateString()}</Text>
                   </View>
-                  <Ionicons
-                    name="chevron-forward"
-                    size={18}
-                    color={Colors.dark.textMuted}
-                  />
+                  <Ionicons name="chevron-forward" size={18} color={Colors.dark.textMuted} />
                 </Pressable>
               ))
             )}
@@ -421,484 +192,91 @@ export default function HomeScreen() {
         </ScrollView>
       </View>
 
-      {/* Notifications Full-Screen Page */}
-      <Modal
+      <NotificationsModal
         visible={notifOpen}
-        transparent={false}
-        animationType="slide"
-        onRequestClose={() => setNotifOpen(false)}
-        statusBarTranslucent
-      >
-        <View style={[styles.notifPage, { paddingTop: insets.top }]}>
-          {/* Header */}
-          <View style={styles.notifPageHeader}>
-            <Pressable onPress={() => setNotifOpen(false)} style={styles.notifBackBtn}>
-              <Ionicons name="chevron-back" size={24} color={Colors.dark.text} />
-            </Pressable>
-            <Text style={styles.notifPageTitle}>Notifications</Text>
-            {notifications.length > 0 ? (
-              <Pressable onPress={handleClearNotifications} style={styles.notifClearBtn}>
-                <Text style={styles.notifClearText}>Clear All</Text>
-              </Pressable>
-            ) : (
-              <View style={{ width: 76 }} />
-            )}
-          </View>
-
-          {markingRead ? (
-            <View style={styles.notifLoadingRow}>
-              <ActivityIndicator size="small" color={Colors.dark.primary} />
-              <Text style={{ fontSize: 12, color: Colors.dark.textMuted, fontFamily: "Inter_400Regular" }}>
-                Marking as read…
-              </Text>
-            </View>
-          ) : null}
-
-          <ScrollView
-            style={styles.notifList}
-            showsVerticalScrollIndicator={false}
-            contentContainerStyle={{ flexGrow: 1 }}
-          >
-            {notifications.length === 0 ? (
-              <View style={styles.notifEmpty}>
-                <View style={styles.notifEmptyIcon}>
-                  <Ionicons name="notifications-off-outline" size={40} color={Colors.dark.textMuted} />
-                </View>
-                <Text style={styles.notifEmptyText}>All caught up!</Text>
-                <Text style={styles.notifEmptySubtext}>
-                  Follow QR codes to get notified when there's new activity
-                </Text>
-              </View>
-            ) : (
-              notifications.map((notif) => (
-                <Pressable
-                  key={notif.id}
-                  onPress={() => {
-                    setNotifOpen(false);
-                    router.push({
-                      pathname: "/qr-detail/[id]",
-                      params: { id: notif.qrCodeId },
-                    });
-                  }}
-                  style={({ pressed }) => [
-                    styles.notifItem,
-                    !notif.read && styles.notifItemUnread,
-                    { opacity: pressed ? 0.75 : 1 },
-                  ]}
-                >
-                  <View style={[
-                    styles.notifItemIcon,
-                    { backgroundColor: getNotifColor(notif.type) + "22" },
-                  ]}>
-                    <Ionicons
-                      name={getNotifIcon(notif.type) as any}
-                      size={18}
-                      color={getNotifColor(notif.type)}
-                    />
-                  </View>
-                  <View style={{ flex: 1 }}>
-                    <Text style={styles.notifItemText}>{notif.message}</Text>
-                    <Text style={styles.notifItemTime}>
-                      {formatRelativeTime(notif.createdAt)}
-                    </Text>
-                  </View>
-                  {!notif.read ? (
-                    <View style={styles.unreadDot} />
-                  ) : null}
-                </Pressable>
-              ))
-            )}
-            <View style={{ height: insets.bottom + 32 }} />
-          </ScrollView>
-        </View>
-      </Modal>
+        notifications={notifications}
+        markingRead={markingRead}
+        onClose={() => setNotifOpen(false)}
+        onClearAll={handleClearNotifications}
+      />
     </>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: Colors.dark.background,
-  },
-  scrollContent: {
-    padding: 20,
-  },
-  header: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 24,
-    gap: 8,
-  },
-  headerLeft: {
-    flex: 1,
-    flexShrink: 1,
-    minWidth: 0,
-  },
-  greeting: {
-    fontSize: 26,
-    fontFamily: "Inter_700Bold",
-    color: Colors.dark.text,
-    flexShrink: 1,
-  },
-  tagline: {
-    fontSize: 14,
-    fontFamily: "Inter_400Regular",
-    color: Colors.dark.textSecondary,
-    marginTop: 2,
-  },
-  headerRight: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 10,
-  },
+  container: { flex: 1, backgroundColor: Colors.dark.background },
+  scrollContent: { padding: 20 },
+  header: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 24, gap: 8 },
+  headerLeft: { flex: 1, flexShrink: 1, minWidth: 0 },
+  greeting: { fontSize: 26, fontFamily: "Inter_700Bold", color: Colors.dark.text, flexShrink: 1 },
+  tagline: { fontSize: 14, fontFamily: "Inter_400Regular", color: Colors.dark.textSecondary, marginTop: 2 },
+  headerRight: { flexDirection: "row", alignItems: "center", gap: 10 },
   notifBtn: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: Colors.dark.surface,
-    borderWidth: 1,
-    borderColor: Colors.dark.surfaceBorder,
-    alignItems: "center",
-    justifyContent: "center",
+    width: 40, height: 40, borderRadius: 20,
+    backgroundColor: Colors.dark.surface, borderWidth: 1, borderColor: Colors.dark.surfaceBorder,
+    alignItems: "center", justifyContent: "center",
   },
   notifBadge: {
-    position: "absolute",
-    top: -2,
-    right: -2,
-    backgroundColor: Colors.dark.primary,
-    borderRadius: 8,
-    minWidth: 16,
-    height: 16,
-    alignItems: "center",
-    justifyContent: "center",
-    paddingHorizontal: 3,
-    borderWidth: 1.5,
-    borderColor: Colors.dark.background,
+    position: "absolute", top: -2, right: -2,
+    backgroundColor: Colors.dark.primary, borderRadius: 8,
+    minWidth: 16, height: 16, alignItems: "center", justifyContent: "center",
+    paddingHorizontal: 3, borderWidth: 1.5, borderColor: Colors.dark.background,
   },
-  notifBadgeText: {
-    fontSize: 9,
-    fontFamily: "Inter_700Bold",
-    color: "#000",
-    lineHeight: 14,
-  },
+  notifBadgeText: { fontSize: 9, fontFamily: "Inter_700Bold", color: "#000", lineHeight: 14 },
   avatarCircle: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: Colors.dark.primaryDim,
-    borderWidth: 2,
-    borderColor: Colors.dark.primary,
-    alignItems: "center",
-    justifyContent: "center",
+    width: 44, height: 44, borderRadius: 22,
+    backgroundColor: Colors.dark.primaryDim, borderWidth: 2, borderColor: Colors.dark.primary,
+    alignItems: "center", justifyContent: "center",
   },
-  avatarText: {
-    fontSize: 18,
-    fontFamily: "Inter_700Bold",
-    color: Colors.dark.primary,
-  },
+  avatarText: { fontSize: 18, fontFamily: "Inter_700Bold", color: Colors.dark.primary },
   signInBtn: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 6,
-    backgroundColor: Colors.dark.primaryDim,
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    borderRadius: 20,
+    flexDirection: "row", alignItems: "center", gap: 6,
+    backgroundColor: Colors.dark.primaryDim, paddingHorizontal: 16, paddingVertical: 10, borderRadius: 20,
   },
-  signInText: {
-    color: Colors.dark.primary,
-    fontFamily: "Inter_600SemiBold",
-    fontSize: 14,
-  },
-  scanCard: {
-    borderRadius: 20,
-    overflow: "hidden",
-    marginBottom: 20,
-  },
+  signInText: { color: Colors.dark.primary, fontFamily: "Inter_600SemiBold", fontSize: 14 },
+  scanCard: { borderRadius: 20, overflow: "hidden", marginBottom: 20 },
   scanCardGradient: {
-    padding: 28,
-    alignItems: "center",
-    borderRadius: 20,
-    borderWidth: 1,
-    borderColor: "rgba(0, 212, 255, 0.15)",
+    padding: 28, alignItems: "center", borderRadius: 20,
+    borderWidth: 1, borderColor: "rgba(0, 212, 255, 0.15)",
   },
   scanIconOuter: {
-    width: 88,
-    height: 88,
-    borderRadius: 44,
+    width: 88, height: 88, borderRadius: 44,
     backgroundColor: "rgba(0, 212, 255, 0.1)",
-    alignItems: "center",
-    justifyContent: "center",
-    marginBottom: 16,
+    alignItems: "center", justifyContent: "center", marginBottom: 16,
   },
   scanIconInner: {
-    width: 68,
-    height: 68,
-    borderRadius: 34,
+    width: 68, height: 68, borderRadius: 34,
     backgroundColor: Colors.dark.primaryDim,
-    alignItems: "center",
-    justifyContent: "center",
+    alignItems: "center", justifyContent: "center",
   },
-  scanCardTitle: {
-    fontSize: 18,
-    fontFamily: "Inter_700Bold",
-    color: Colors.dark.text,
-    marginBottom: 4,
-  },
-  scanCardSub: {
-    fontSize: 13,
-    fontFamily: "Inter_400Regular",
-    color: Colors.dark.textSecondary,
-  },
-  scanCardArrow: {
-    position: "absolute",
-    right: 20,
-    top: "50%",
-  },
-  statsRow: {
-    flexDirection: "row",
-    gap: 10,
-    marginBottom: 24,
-  },
+  scanCardTitle: { fontSize: 18, fontFamily: "Inter_700Bold", color: Colors.dark.text, marginBottom: 4 },
+  scanCardSub: { fontSize: 13, fontFamily: "Inter_400Regular", color: Colors.dark.textSecondary },
+  scanCardArrow: { position: "absolute", right: 20, top: "50%" },
+  statsRow: { flexDirection: "row", gap: 10, marginBottom: 24 },
   statCard: {
-    flex: 1,
-    backgroundColor: Colors.dark.surface,
-    borderRadius: 16,
-    padding: 14,
-    alignItems: "center",
-    gap: 6,
-    borderWidth: 1,
-    borderColor: Colors.dark.surfaceBorder,
+    flex: 1, backgroundColor: Colors.dark.surface, borderRadius: 16,
+    padding: 14, alignItems: "center",
+    borderWidth: 1, borderColor: Colors.dark.surfaceBorder,
   },
-  statIcon: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  statLabel: {
-    fontSize: 13,
-    fontFamily: "Inter_600SemiBold",
-    color: Colors.dark.text,
-  },
-  statDesc: {
-    fontSize: 11,
-    fontFamily: "Inter_400Regular",
-    color: Colors.dark.textMuted,
-  },
-  promoCard: {
-    borderRadius: 16,
-    overflow: "hidden",
-    marginBottom: 24,
-  },
-  promoGradient: {
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: "rgba(124, 58, 237, 0.2)",
-  },
-  promoContent: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 14,
-    padding: 18,
-  },
-  promoTitle: {
-    fontSize: 15,
-    fontFamily: "Inter_600SemiBold",
-    color: Colors.dark.text,
-  },
-  promoSub: {
-    fontSize: 12,
-    fontFamily: "Inter_400Regular",
-    color: Colors.dark.textSecondary,
-    marginTop: 2,
-  },
-  sectionHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 14,
-  },
-  sectionTitle: {
-    fontSize: 18,
-    fontFamily: "Inter_700Bold",
-    color: Colors.dark.text,
-  },
-  seeAll: {
-    fontSize: 14,
-    fontFamily: "Inter_600SemiBold",
-    color: Colors.dark.primary,
-  },
-  emptyState: {
-    alignItems: "center",
-    gap: 8,
-    paddingVertical: 40,
-    backgroundColor: Colors.dark.surface,
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: Colors.dark.surfaceBorder,
-  },
-  emptyText: {
-    fontSize: 16,
-    fontFamily: "Inter_600SemiBold",
-    color: Colors.dark.textSecondary,
-  },
-  emptySubtext: {
-    fontSize: 13,
-    fontFamily: "Inter_400Regular",
-    color: Colors.dark.textMuted,
-  },
+  statIcon: { width: 40, height: 40, borderRadius: 20, alignItems: "center", justifyContent: "center", marginBottom: 8 },
+  statLabel: { fontSize: 12, fontFamily: "Inter_600SemiBold", color: Colors.dark.textSecondary, textAlign: "center" },
+  statDesc: { fontSize: 11, fontFamily: "Inter_400Regular", color: Colors.dark.textMuted, textAlign: "center", marginTop: 2 },
+  promoCard: { borderRadius: 16, overflow: "hidden", marginBottom: 24 },
+  promoGradient: { borderRadius: 16, borderWidth: 1, borderColor: "rgba(124, 58, 237, 0.2)" },
+  promoContent: { flexDirection: "row", alignItems: "center", gap: 12, padding: 16 },
+  promoTitle: { fontSize: 15, fontFamily: "Inter_700Bold", color: Colors.dark.text, marginBottom: 2 },
+  promoSub: { fontSize: 12, fontFamily: "Inter_400Regular", color: Colors.dark.textSecondary, lineHeight: 17 },
+  sectionHeader: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 12 },
+  sectionTitle: { fontSize: 16, fontFamily: "Inter_700Bold", color: Colors.dark.text },
+  seeAll: { fontSize: 13, fontFamily: "Inter_600SemiBold", color: Colors.dark.primary },
+  emptyState: { alignItems: "center", paddingVertical: 40, gap: 10 },
+  emptyText: { fontSize: 15, fontFamily: "Inter_600SemiBold", color: Colors.dark.textSecondary },
+  emptySubtext: { fontSize: 13, fontFamily: "Inter_400Regular", color: Colors.dark.textMuted },
   scanItem: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 14,
-    backgroundColor: Colors.dark.surface,
-    padding: 16,
-    borderRadius: 14,
-    marginBottom: 8,
-    borderWidth: 1,
-    borderColor: Colors.dark.surfaceBorder,
+    flexDirection: "row", alignItems: "center", gap: 12, paddingVertical: 12, paddingHorizontal: 4,
+    borderBottomWidth: 1, borderBottomColor: Colors.dark.surfaceBorder,
   },
-  scanItemIcon: {
-    width: 42,
-    height: 42,
-    borderRadius: 12,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  scanItemContent: {
-    fontSize: 14,
-    fontFamily: "Inter_500Medium",
-    color: Colors.dark.text,
-  },
-  scanItemDate: {
-    fontSize: 12,
-    fontFamily: "Inter_400Regular",
-    color: Colors.dark.textMuted,
-    marginTop: 2,
-  },
-  notifPage: {
-    flex: 1,
-    backgroundColor: Colors.dark.background,
-  },
-  notifPageHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: Colors.dark.surfaceBorder,
-  },
-  notifBackBtn: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: Colors.dark.surface,
-    alignItems: "center",
-    justifyContent: "center",
-    borderWidth: 1,
-    borderColor: Colors.dark.surfaceBorder,
-  },
-  notifPageTitle: {
-    fontSize: 18,
-    fontFamily: "Inter_700Bold",
-    color: Colors.dark.text,
-  },
-  notifEmptyIcon: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    backgroundColor: Colors.dark.surface,
-    alignItems: "center",
-    justifyContent: "center",
-    borderWidth: 1,
-    borderColor: Colors.dark.surfaceBorder,
-    marginBottom: 4,
-  },
-  notifClearBtn: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 10,
-    backgroundColor: Colors.dark.dangerDim,
-  },
-  notifClearText: {
-    fontSize: 13,
-    fontFamily: "Inter_600SemiBold",
-    color: Colors.dark.danger,
-  },
-  notifLoadingRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 8,
-    paddingVertical: 8,
-    paddingHorizontal: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: Colors.dark.surfaceBorder,
-  },
-  notifList: {
-    flex: 1,
-    paddingHorizontal: 16,
-  },
-  notifEmpty: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 10,
-    paddingVertical: 60,
-  },
-  notifEmptyText: {
-    fontSize: 16,
-    fontFamily: "Inter_600SemiBold",
-    color: Colors.dark.textSecondary,
-  },
-  notifEmptySubtext: {
-    fontSize: 13,
-    fontFamily: "Inter_400Regular",
-    color: Colors.dark.textMuted,
-    textAlign: "center",
-    paddingHorizontal: 20,
-  },
-  notifItem: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 12,
-    paddingVertical: 14,
-    borderBottomWidth: 1,
-    borderBottomColor: Colors.dark.surfaceBorder,
-  },
-  notifItemUnread: {
-    backgroundColor: Colors.dark.primaryDim + "30",
-    marginHorizontal: -20,
-    paddingHorizontal: 20,
-    borderRadius: 0,
-  },
-  notifItemIcon: {
-    width: 38,
-    height: 38,
-    borderRadius: 19,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  notifItemText: {
-    fontSize: 14,
-    fontFamily: "Inter_500Medium",
-    color: Colors.dark.text,
-  },
-  notifItemTime: {
-    fontSize: 12,
-    fontFamily: "Inter_400Regular",
-    color: Colors.dark.textMuted,
-    marginTop: 2,
-  },
-  unreadDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: Colors.dark.primary,
-  },
+  scanItemIcon: { width: 38, height: 38, borderRadius: 12, alignItems: "center", justifyContent: "center" },
+  scanItemContent: { fontSize: 14, fontFamily: "Inter_500Medium", color: Colors.dark.text, marginBottom: 2 },
+  scanItemDate: { fontSize: 12, fontFamily: "Inter_400Regular", color: Colors.dark.textMuted },
 });
