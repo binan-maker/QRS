@@ -12,6 +12,7 @@ import {
   Alert,
   Modal,
   Image,
+  KeyboardAvoidingView,
 } from "react-native";
 import { KeyboardStickyView } from "react-native-keyboard-controller";
 import { StatusBar } from "expo-status-bar";
@@ -1073,7 +1074,7 @@ export default function QrDetailScreen() {
   return (
     <View style={{ flex: 1, backgroundColor: Colors.dark.background }}>
       <StatusBar style="light" backgroundColor={Colors.dark.background} />
-      <View style={{ flex: 1 }}>
+      <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === "ios" ? "padding" : "height"} keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 0}>
         <View style={[styles.container, { paddingTop: topInset }]}>
           {/* Nav */}
           <View style={styles.navBar}>
