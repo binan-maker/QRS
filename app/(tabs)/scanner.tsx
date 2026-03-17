@@ -250,11 +250,12 @@ export default function ScannerScreen() {
           scannedAt: new Date().toISOString(),
           qrCodeId: qr.id,
         };
-        const stored = await AsyncStorage.getItem("local_scan_history");
+        const historyKey = `local_scan_history_${user.id}`;
+        const stored = await AsyncStorage.getItem(historyKey);
         const history = stored ? JSON.parse(stored) : [];
         history.unshift(scanEntry);
         if (history.length > 100) history.pop();
-        await AsyncStorage.setItem("local_scan_history", JSON.stringify(history));
+        await AsyncStorage.setItem(historyKey, JSON.stringify(history));
       }
 
       setProcessing(false);

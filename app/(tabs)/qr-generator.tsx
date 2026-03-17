@@ -353,24 +353,26 @@ export default function QrGeneratorScreen() {
           )}
         </Animated.View>
 
-        {/* Content type */}
-        <Animated.View entering={FadeInDown.duration(400).delay(80)}>
-          <Text style={styles.sectionLabel}>Content Type</Text>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 20 }}>
-            <View style={styles.presetRow}>
-              {QR_PRESETS.map((p, idx) => (
-                <Pressable
-                  key={idx}
-                  onPress={() => { setSelectedPreset(idx); setInputValue(""); setQrValue(""); Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); }}
-                  style={[styles.presetBtn, selectedPreset === idx && styles.presetBtnActive]}
-                >
-                  <Ionicons name={p.icon as any} size={16} color={selectedPreset === idx ? Colors.dark.primary : Colors.dark.textMuted} />
-                  <Text style={[styles.presetBtnText, selectedPreset === idx && styles.presetBtnTextActive]}>{p.label}</Text>
-                </Pressable>
-              ))}
-            </View>
-          </ScrollView>
-        </Animated.View>
+        {/* Content type — hidden in business mode since business QRs always redirect a URL */}
+        {qrMode !== "business" && (
+          <Animated.View entering={FadeInDown.duration(400).delay(80)}>
+            <Text style={styles.sectionLabel}>Content Type</Text>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 20 }}>
+              <View style={styles.presetRow}>
+                {QR_PRESETS.map((p, idx) => (
+                  <Pressable
+                    key={idx}
+                    onPress={() => { setSelectedPreset(idx); setInputValue(""); setQrValue(""); Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); }}
+                    style={[styles.presetBtn, selectedPreset === idx && styles.presetBtnActive]}
+                  >
+                    <Ionicons name={p.icon as any} size={16} color={selectedPreset === idx ? Colors.dark.primary : Colors.dark.textMuted} />
+                    <Text style={[styles.presetBtnText, selectedPreset === idx && styles.presetBtnTextActive]}>{p.label}</Text>
+                  </Pressable>
+                ))}
+              </View>
+            </ScrollView>
+          </Animated.View>
+        )}
 
         {/* Input */}
         <Animated.View entering={FadeInDown.duration(400).delay(140)}>
@@ -382,7 +384,7 @@ export default function QrGeneratorScreen() {
               onChangeText={setInputValue}
               placeholder={qrMode === "business" && isBranded ? "https://your-website.com" : QR_PRESETS[selectedPreset].placeholder}
               placeholderTextColor={Colors.dark.textMuted}
-              multiline={selectedPreset === 0 || selectedPreset === 4}
+              multiline={qrMode !== "business" && (selectedPreset === 0 || selectedPreset === 4)}
               maxLength={500}
               autoCapitalize="none"
               autoCorrect={false}
@@ -572,7 +574,9 @@ export default function QrGeneratorScreen() {
               </View>
             ) : null}
 
-            <Text style={styles.qrContentPreview} numberOfLines={2}>{qrValue}</Text>
+            {qrMode !== "business" && (
+              <Text style={styles.qrContentPreview} numberOfLines={2}>{qrValue}</Text>
+            )}
 
             {/* Size control */}
             <View style={styles.sizeRow}>

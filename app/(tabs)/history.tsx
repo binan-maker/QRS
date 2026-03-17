@@ -67,9 +67,13 @@ export default function HistoryScreen() {
     );
   }, [localHistory, cloudHistory]);
 
-  const loadLocalHistory = useCallback(async () => {
+  const loadLocalHistory = useCallback(async (userId?: string | null) => {
     try {
-      const stored = await AsyncStorage.getItem("local_scan_history");
+      if (!userId) {
+        setLocalHistory([]);
+        return;
+      }
+      const stored = await AsyncStorage.getItem(`local_scan_history_${userId}`);
       if (stored) {
         const local: any[] = JSON.parse(stored);
         setLocalHistory(local.map((s) => ({ ...s, source: "local" as const })));
@@ -155,11 +159,12 @@ export default function HistoryScreen() {
       // Clear cloud data immediately when user changes
       setCloudHistory([]);
       setFavorites([]);
+      setLocalHistory([]);
       cloudLastDocRef.current = null;
       setCloudHasMore(false);
     }
 
-    loadLocalHistory();
+    loadLocalHistory(currentUserId);
 
     if (user) {
       loadInitialCloudHistory(user.id);
@@ -173,7 +178,7 @@ export default function HistoryScreen() {
     setCloudHasMore(false);
     setCloudHistory([]);
 
-    await loadLocalHistory();
+    await loadLocalHistory(user?.id);
     if (user) {
       await loadInitialCloudHistory(user.id);
       await loadFavorites();
@@ -191,7 +196,9 @@ export default function HistoryScreen() {
           text: "Clear",
           style: "destructive",
           onPress: async () => {
-            await AsyncStorage.removeItem("local_scan_history");
+            if (user?.id) {
+              await AsyncStorage.removeItem(`local_scan_history_${user.id}`);
+            }
             setLocalHistory([]);
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
           },

@@ -163,10 +163,11 @@ export default function MyQrDetailScreen() {
   const bottomInset = insets.bottom;
 
   const loadQr = useCallback(async () => {
-    if (!user) return;
+    const userId = user?.id;
+    if (!userId) return;
     setLoading(true);
     try {
-      const all = await getUserGeneratedQrs(user.id);
+      const all = await getUserGeneratedQrs(userId);
       const found = all.find((q) => q.docId === id);
       if (found) {
         setQrItem(found);
@@ -177,7 +178,7 @@ export default function MyQrDetailScreen() {
       }
     } catch {}
     setLoading(false);
-  }, [user, id]);
+  }, [user?.id, id]);
 
   useEffect(() => {
     loadQr();
