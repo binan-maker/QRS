@@ -74,12 +74,17 @@ export default function HistoryScreen() {
 
   return (
     <View style={[styles.container, { paddingTop: topInset }]}>
+      {/* Header row */}
       <View style={styles.header}>
         <Text style={styles.title}>History</Text>
         <View style={styles.headerActions}>
           {history.length > 0 && filter !== "favorites" ? (
-            <Pressable onPress={clearLocalHistory} style={styles.headerBtn}>
-              <Ionicons name="trash-outline" size={20} color={Colors.dark.textMuted} />
+            <Pressable
+              onPress={clearLocalHistory}
+              style={styles.headerBtn}
+              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+            >
+              <Ionicons name="trash-outline" size={19} color={Colors.dark.textMuted} />
             </Pressable>
           ) : null}
           <Pressable
@@ -88,18 +93,21 @@ export default function HistoryScreen() {
               router.push("/settings");
             }}
             style={styles.headerBtn}
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
           >
-            <Ionicons name="settings-outline" size={22} color={Colors.dark.textSecondary} />
+            <Ionicons name="settings-outline" size={20} color={Colors.dark.textSecondary} />
           </Pressable>
         </View>
       </View>
 
+      {/* Filter chips */}
       <FilterBar
         filters={activeFilters}
         activeFilter={filter}
         onFilterChange={setFilter}
       />
 
+      {/* List */}
       <FlatList
         data={displayItems}
         renderItem={renderItem}
@@ -110,24 +118,31 @@ export default function HistoryScreen() {
         ]}
         showsVerticalScrollIndicator={false}
         refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={Colors.dark.primary} />
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            tintColor={Colors.dark.primary}
+            colors={[Colors.dark.primary]}
+          />
         }
         onEndReached={handleEndReached}
         onEndReachedThreshold={0.4}
         ListFooterComponent={renderFooter}
         ListEmptyComponent={
           <View style={styles.emptyState}>
-            <Ionicons
-              name={filter === "favorites" ? "heart-outline" : "time-outline"}
-              size={48}
-              color={Colors.dark.textMuted}
-            />
+            <View style={styles.emptyIcon}>
+              <Ionicons
+                name={filter === "favorites" ? "heart-outline" : "time-outline"}
+                size={36}
+                color={Colors.dark.textMuted}
+              />
+            </View>
             <Text style={styles.emptyTitle}>
               {filter === "favorites" ? "No favorites yet" : "No history yet"}
             </Text>
             <Text style={styles.emptySubtext}>
               {filter === "favorites"
-                ? "Tap the heart on QR detail to add favorites"
+                ? "Tap the heart on a QR detail to save it here"
                 : "Scanned QR codes will appear here"}
             </Text>
           </View>
@@ -138,23 +153,72 @@ export default function HistoryScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: Colors.dark.background },
+  container: {
+    flex: 1,
+    backgroundColor: Colors.dark.background,
+  },
   header: {
-    flexDirection: "row", justifyContent: "space-between", alignItems: "center",
-    paddingHorizontal: 20, paddingVertical: 14,
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingHorizontal: 20,
+    paddingTop: 10,
+    paddingBottom: 8,
   },
-  title: { fontSize: 26, fontFamily: "Inter_700Bold", color: Colors.dark.text },
-  headerActions: { flexDirection: "row", gap: 6, alignItems: "center" },
+  title: {
+    fontSize: 24,
+    fontFamily: "Inter_700Bold",
+    color: Colors.dark.text,
+  },
+  headerActions: {
+    flexDirection: "row",
+    gap: 8,
+    alignItems: "center",
+  },
   headerBtn: {
-    width: 38, height: 38, borderRadius: 19,
-    backgroundColor: Colors.dark.surface, alignItems: "center", justifyContent: "center",
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: Colors.dark.surface,
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 1,
+    borderColor: Colors.dark.surfaceBorder,
   },
-  list: { paddingHorizontal: 20 },
-  emptyState: { alignItems: "center", gap: 10, paddingVertical: 60 },
-  emptyTitle: { fontSize: 18, fontFamily: "Inter_600SemiBold", color: Colors.dark.textSecondary },
+  list: {
+    paddingHorizontal: 16,
+    paddingTop: 4,
+  },
+  emptyState: {
+    alignItems: "center",
+    gap: 8,
+    paddingVertical: 56,
+    paddingHorizontal: 32,
+  },
+  emptyIcon: {
+    width: 72,
+    height: 72,
+    borderRadius: 36,
+    backgroundColor: Colors.dark.surface,
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 4,
+  },
+  emptyTitle: {
+    fontSize: 17,
+    fontFamily: "Inter_600SemiBold",
+    color: Colors.dark.textSecondary,
+    textAlign: "center",
+  },
   emptySubtext: {
-    fontSize: 14, fontFamily: "Inter_400Regular", color: Colors.dark.textMuted,
-    textAlign: "center", maxWidth: 260,
+    fontSize: 13,
+    fontFamily: "Inter_400Regular",
+    color: Colors.dark.textMuted,
+    textAlign: "center",
+    lineHeight: 19,
   },
-  footerLoader: { paddingVertical: 20, alignItems: "center" },
+  footerLoader: {
+    paddingVertical: 20,
+    alignItems: "center",
+  },
 });

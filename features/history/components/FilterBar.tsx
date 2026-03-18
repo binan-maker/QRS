@@ -1,6 +1,6 @@
-import React from "react";
+import React, { useMemo } from "react";
 import { View, Text, StyleSheet, Pressable, ScrollView } from "react-native";
-import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
+import { Ionicons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import Colors from "@/constants/colors";
 import type { Filter } from "@/hooks/useHistory";
@@ -16,30 +16,25 @@ interface FilterBarProps {
   onFilterChange: (filter: Filter) => void;
 }
 
-const FILTER_ICONS: Record<string, { lib: "ion" | "mci"; name: string }> = {
-  all: { lib: "ion", name: "apps" },
-  url: { lib: "ion", name: "link" },
-  payment: { lib: "mci", name: "cash" },
-  text: { lib: "ion", name: "document-text-outline" },
-  other: { lib: "mci", name: "dots-horizontal" },
-  favorites: { lib: "ion", name: "heart" },
+type IoniconName = React.ComponentProps<typeof Ionicons>["name"];
+
+const FILTER_ICONS: Record<string, IoniconName> = {
+  all: "apps-outline",
+  url: "link-outline",
+  payment: "card-outline",
+  text: "document-text-outline",
+  other: "ellipsis-horizontal-circle-outline",
+  favorites: "heart-outline",
 };
 
-function FilterIcon({ filterKey, isActive, isFavorite }: { filterKey: string; isActive: boolean; isFavorite: boolean }) {
-  const meta = FILTER_ICONS[filterKey];
-  if (!meta) return null;
-
-  const color = isFavorite
-    ? isActive ? Colors.dark.danger : Colors.dark.textMuted
-    : isActive ? Colors.dark.primary : Colors.dark.textMuted;
-
-  const size = 13;
-
-  if (meta.lib === "mci") {
-    return <MaterialCommunityIcons name={meta.name as any} size={size} color={color} />;
-  }
-  return <Ionicons name={meta.name as any} size={size} color={color} />;
-}
+const FILTER_ICONS_ACTIVE: Record<string, IoniconName> = {
+  all: "apps",
+  url: "link",
+  payment: "card",
+  text: "document-text",
+  other: "ellipsis-horizontal-circle",
+  favorites: "heart",
+};
 
 const FilterBar = React.memo(function FilterBar({
   filters,
@@ -52,10 +47,20 @@ const FilterBar = React.memo(function FilterBar({
       showsHorizontalScrollIndicator={false}
       contentContainerStyle={styles.container}
       bounces={false}
+      style={styles.scroll}
     >
       {filters.map((f) => {
         const isFavorite = f.key === "favorites";
         const isActive = activeFilter === f.key;
+
+        const iconColor = isFavorite
+          ? isActive ? Colors.dark.danger : Colors.dark.textMuted
+          : isActive ? Colors.dark.primary : Colors.dark.textMuted;
+
+        const iconName = isActive
+          ? (FILTER_ICONS_ACTIVE[f.key] ?? "apps")
+          : (FILTER_ICONS[f.key] ?? "apps-outline");
+
         return (
           <Pressable
             key={f.key}
@@ -68,10 +73,10 @@ const FilterBar = React.memo(function FilterBar({
               isActive && styles.chipActive,
               isFavorite && styles.chipFavorite,
               isFavorite && isActive && styles.chipFavoriteActive,
-              { opacity: pressed ? 0.75 : 1 },
+              { opacity: pressed ? 0.7 : 1 },
             ]}
           >
-            <FilterIcon filterKey={f.key} isActive={isActive} isFavorite={isFavorite} />
+            <Ionicons name={iconName} size={13} color={iconColor} />
             <Text
               style={[
                 styles.chipText,
@@ -92,19 +97,23 @@ const FilterBar = React.memo(function FilterBar({
 export default FilterBar;
 
 const styles = StyleSheet.create({
+  scroll: {
+    flexGrow: 0,
+    flexShrink: 0,
+  },
   container: {
     paddingHorizontal: 16,
-    gap: 7,
-    paddingBottom: 12,
+    gap: 6,
+    paddingBottom: 2,
     flexDirection: "row",
     alignItems: "center",
   },
   chip: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 5,
-    paddingHorizontal: 11,
-    paddingVertical: 7,
+    gap: 4,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
     borderRadius: 20,
     backgroundColor: Colors.dark.surface,
     borderWidth: 1,

@@ -1,25 +1,26 @@
-import React, { useRef, useEffect } from "react";
+import React, { useRef, useEffect, useMemo } from "react";
 import {
   View,
   Text,
   StyleSheet,
   Pressable,
   Animated,
-  Platform,
   useWindowDimensions,
 } from "react-native";
 import { shadow } from "@/lib/utils/platform";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { router } from "expo-router";
-import * as Haptics from "expo-haptics";
 import Colors from "@/constants/colors";
-import { FINDER_SIZE, CORNER_SIZE, CORNER_WIDTH } from "@/hooks/useScanner";
+import { FINDER_SIZE } from "@/hooks/useScanner";
 import { formatFirstName } from "@/lib/utils/formatters";
 
 const CORNER_LEN = 40;
 const CORNER_W = 5;
 const VIGNETTE = "rgba(4, 8, 20, 0.78)";
 const GLOW = Colors.dark.primary;
+const DOT_SIZE = 7;
+const TICK_LEN = 14;
+const TICK_W = 2;
 
 interface Props {
   topInset: number;
@@ -58,113 +59,119 @@ export default function ScannerOverlay({
 }: Props) {
   const { width: screenWidth, height: screenHeight } = useWindowDimensions();
 
-  const pulse1 = useRef(new Animated.Value(0)).current;
-  const pulse2 = useRef(new Animated.Value(0)).current;
-  const cornerGlow = useRef(new Animated.Value(0)).current;
-  const dotBlink = useRef(new Animated.Value(1)).current;
+  // Create animated values once using refs
+  const pulse1Ref = useRef(new Animated.Value(0));
+  const pulse2Ref = useRef(new Animated.Value(0));
+  const cornerGlowRef = useRef(new Animated.Value(0.4));
+  const dotBlinkRef = useRef(new Animated.Value(1));
+
+  // Memoize all interpolations so they are created once, not on every render
+  const pulse1Scale = useMemo(
+    () => pulse1Ref.current.interpolate({ inputRange: [0, 1], outputRange: [1, 1.35] }),
+    []
+  );
+  const pulse1Opacity = useMemo(
+    () => pulse1Ref.current.interpolate({ inputRange: [0, 0.4, 1], outputRange: [0.55, 0.18, 0] }),
+    []
+  );
+  const pulse2Scale = useMemo(
+    () => pulse2Ref.current.interpolate({ inputRange: [0, 1], outputRange: [1, 1.2] }),
+    []
+  );
+  const pulse2Opacity = useMemo(
+    () => pulse2Ref.current.interpolate({ inputRange: [0, 0.4, 1], outputRange: [0.3, 0.1, 0] }),
+    []
+  );
+  const scanLineY = useMemo(
+    () => scanLineAnim.interpolate({ inputRange: [0, 1], outputRange: [0, FINDER_SIZE - 3] }),
+    [scanLineAnim]
+  );
 
   useEffect(() => {
-    Animated.loop(
+    const p1 = Animated.loop(
       Animated.sequence([
-        Animated.timing(pulse1, { toValue: 1, duration: 2200, useNativeDriver: true }),
-        Animated.timing(pulse1, { toValue: 0, duration: 0, useNativeDriver: true }),
+        Animated.timing(pulse1Ref.current, { toValue: 1, duration: 2200, useNativeDriver: true }),
+        Animated.timing(pulse1Ref.current, { toValue: 0, duration: 0, useNativeDriver: true }),
       ])
-    ).start();
+    );
+    p1.start();
 
-    setTimeout(() => {
+    const t = setTimeout(() => {
       Animated.loop(
         Animated.sequence([
-          Animated.timing(pulse2, { toValue: 1, duration: 2200, useNativeDriver: true }),
-          Animated.timing(pulse2, { toValue: 0, duration: 0, useNativeDriver: true }),
+          Animated.timing(pulse2Ref.current, { toValue: 1, duration: 2200, useNativeDriver: true }),
+          Animated.timing(pulse2Ref.current, { toValue: 0, duration: 0, useNativeDriver: true }),
         ])
       ).start();
     }, 1100);
 
-    Animated.loop(
+    const glow = Animated.loop(
       Animated.sequence([
-        Animated.timing(cornerGlow, { toValue: 1, duration: 1600, useNativeDriver: true }),
-        Animated.timing(cornerGlow, { toValue: 0.4, duration: 1600, useNativeDriver: true }),
+        Animated.timing(cornerGlowRef.current, { toValue: 1, duration: 1600, useNativeDriver: true }),
+        Animated.timing(cornerGlowRef.current, { toValue: 0.4, duration: 1600, useNativeDriver: true }),
       ])
-    ).start();
+    );
+    glow.start();
 
-    Animated.loop(
+    const blink = Animated.loop(
       Animated.sequence([
-        Animated.timing(dotBlink, { toValue: 0.2, duration: 700, useNativeDriver: true }),
-        Animated.timing(dotBlink, { toValue: 1, duration: 700, useNativeDriver: true }),
+        Animated.timing(dotBlinkRef.current, { toValue: 0.2, duration: 700, useNativeDriver: true }),
+        Animated.timing(dotBlinkRef.current, { toValue: 1, duration: 700, useNativeDriver: true }),
       ])
-    ).start();
+    );
+    blink.start();
+
+    return () => {
+      clearTimeout(t);
+      p1.stop();
+      glow.stop();
+      blink.stop();
+    };
   }, []);
 
-  const pulse1Scale = pulse1.interpolate({ inputRange: [0, 1], outputRange: [1, 1.35] });
-  const pulse1Opacity = pulse1.interpolate({ inputRange: [0, 0.4, 1], outputRange: [0.55, 0.2, 0] });
-  const pulse2Scale = pulse2.interpolate({ inputRange: [0, 1], outputRange: [1, 1.22] });
-  const pulse2Opacity = pulse2.interpolate({ inputRange: [0, 0.4, 1], outputRange: [0.35, 0.12, 0] });
-
-  const scanLineY = scanLineAnim.interpolate({
-    inputRange: [0, 1],
-    outputRange: [0, FINDER_SIZE - 3],
-  });
-
+  // Layout calculations
   const TOP_BAR_H = topInset + 8 + 56;
-  const BOTTOM_BAR_H = bottomInset + 16 + 130;
+  const BOTTOM_BAR_H = Math.max(bottomInset, 8) + 16 + 130;
   const availH = screenHeight - TOP_BAR_H - BOTTOM_BAR_H;
   const finderTop = TOP_BAR_H + Math.max(0, (availH - FINDER_SIZE) / 2);
   const finderLeft = (screenWidth - FINDER_SIZE) / 2;
 
   return (
-    <View style={[StyleSheet.absoluteFillObject, { pointerEvents: "box-none" }]}>
+    <View style={[StyleSheet.absoluteFillObject, styles.outerContainer]}>
 
-      {/* ── Vignette overlay – 4 mask panels ── */}
-      <View style={[StyleSheet.absoluteFillObject, { pointerEvents: "none" }]}>
-        {/* top */}
+      {/* ── Vignette + finder frame (non-interactive layer) ── */}
+      <View style={[StyleSheet.absoluteFillObject, styles.nonInteractive]}>
+        {/* 4 mask panels create a "spotlight" around the finder */}
         <View style={[styles.mask, { top: 0, left: 0, right: 0, height: finderTop }]} />
-        {/* left */}
         <View style={[styles.mask, { top: finderTop, left: 0, width: finderLeft, height: FINDER_SIZE }]} />
-        {/* right */}
         <View style={[styles.mask, { top: finderTop, left: finderLeft + FINDER_SIZE, right: 0, height: FINDER_SIZE }]} />
-        {/* bottom */}
         <View style={[styles.mask, { top: finderTop + FINDER_SIZE, left: 0, right: 0, bottom: 0 }]} />
 
-        {/* ── Finder frame decorations ── */}
-        <View
-          style={[
-            styles.finderDecor,
-            { top: finderTop, left: finderLeft, width: FINDER_SIZE, height: FINDER_SIZE },
-          ]}
-        >
+        {/* Finder frame decorations */}
+        <View style={[styles.finderDecor, { top: finderTop, left: finderLeft }]}>
           {/* Pulse rings */}
           <Animated.View
-            style={[
-              styles.pulseRing,
-              { transform: [{ scale: pulse1Scale }], opacity: pulse1Opacity },
-            ]}
+            style={[styles.pulseRing, { transform: [{ scale: pulse1Scale }], opacity: pulse1Opacity }]}
           />
           <Animated.View
-            style={[
-              styles.pulseRing,
-              styles.pulseRing2,
-              { transform: [{ scale: pulse2Scale }], opacity: pulse2Opacity },
-            ]}
+            style={[styles.pulseRing, styles.pulseRing2, { transform: [{ scale: pulse2Scale }], opacity: pulse2Opacity }]}
           />
 
-          {/* Corner brackets – TL */}
-          <Animated.View style={[styles.corner, styles.ctlH, { opacity: cornerGlow }]} />
-          <Animated.View style={[styles.corner, styles.ctlV, { opacity: cornerGlow }]} />
+          {/* Corner brackets */}
+          <Animated.View style={[styles.corner, styles.ctlH, { opacity: cornerGlowRef.current }]} />
+          <Animated.View style={[styles.corner, styles.ctlV, { opacity: cornerGlowRef.current }]} />
           <View style={[styles.cornerDot, styles.ctlDot]} />
 
-          {/* Corner brackets – TR */}
-          <Animated.View style={[styles.corner, styles.ctrH, { opacity: cornerGlow }]} />
-          <Animated.View style={[styles.corner, styles.ctrV, { opacity: cornerGlow }]} />
+          <Animated.View style={[styles.corner, styles.ctrH, { opacity: cornerGlowRef.current }]} />
+          <Animated.View style={[styles.corner, styles.ctrV, { opacity: cornerGlowRef.current }]} />
           <View style={[styles.cornerDot, styles.ctrDot]} />
 
-          {/* Corner brackets – BL */}
-          <Animated.View style={[styles.corner, styles.cblH, { opacity: cornerGlow }]} />
-          <Animated.View style={[styles.corner, styles.cblV, { opacity: cornerGlow }]} />
+          <Animated.View style={[styles.corner, styles.cblH, { opacity: cornerGlowRef.current }]} />
+          <Animated.View style={[styles.corner, styles.cblV, { opacity: cornerGlowRef.current }]} />
           <View style={[styles.cornerDot, styles.cblDot]} />
 
-          {/* Corner brackets – BR */}
-          <Animated.View style={[styles.corner, styles.cbrH, { opacity: cornerGlow }]} />
-          <Animated.View style={[styles.corner, styles.cbrV, { opacity: cornerGlow }]} />
+          <Animated.View style={[styles.corner, styles.cbrH, { opacity: cornerGlowRef.current }]} />
+          <Animated.View style={[styles.corner, styles.cbrV, { opacity: cornerGlowRef.current }]} />
           <View style={[styles.cornerDot, styles.cbrDot]} />
 
           {/* Mid-edge tick marks */}
@@ -173,18 +180,12 @@ export default function ScannerOverlay({
           <View style={[styles.edgeTick, styles.edgeL]} />
           <View style={[styles.edgeTick, styles.edgeR]} />
 
-          {/* Scan beam */}
+          {/* Animated scan beam */}
           {!scanned && (
-            <Animated.View
-              style={[styles.scanBeam, { transform: [{ translateY: scanLineY }] }]}
-            >
-              <View style={styles.scanBeamLeft} />
-              <View style={styles.scanBeamCenter} />
-              <View style={styles.scanBeamRight} />
-            </Animated.View>
+            <Animated.View style={[styles.scanBeam, { transform: [{ translateY: scanLineY }] }]} />
           )}
 
-          {/* Success overlay */}
+          {/* Success state */}
           {scanSuccess && (
             <View style={styles.successOverlay}>
               <View style={styles.successRing}>
@@ -194,23 +195,15 @@ export default function ScannerOverlay({
           )}
         </View>
 
-        {/* Hint text – below finder */}
-        <View
-          style={{
-            position: "absolute",
-            top: finderTop + FINDER_SIZE + 18,
-            left: 0,
-            right: 0,
-            alignItems: "center",
-          }}
-        >
+        {/* Hint label below finder */}
+        <View style={[styles.hintContainer, { top: finderTop + FINDER_SIZE + 14 }]}>
           <Text style={styles.hintText}>
-            {scanned && !scanSuccess ? "Processing..." : "Position QR code inside the frame"}
+            {scanned && !scanSuccess ? "Processing…" : "Position QR code inside the frame"}
           </Text>
         </View>
       </View>
 
-      {/* ── Top bar ── */}
+      {/* ── Top bar (interactive) ── */}
       <View style={[styles.topBar, { paddingTop: topInset + 8 }]}>
         <Pressable onPress={() => router.back()} style={styles.topBarBtn}>
           <Ionicons name="chevron-back" size={22} color="#fff" />
@@ -218,11 +211,11 @@ export default function ScannerOverlay({
 
         <View style={styles.topCenter}>
           <View style={styles.brandRow}>
-            <MaterialCommunityIcons name="shield-check" size={16} color={GLOW} />
+            <MaterialCommunityIcons name="shield-check" size={15} color={GLOW} />
             <Text style={styles.scanTitle}>QR Guard</Text>
           </View>
           <View style={styles.liveRow}>
-            <Animated.View style={[styles.liveDot, { opacity: dotBlink }]} />
+            <Animated.View style={[styles.liveDot, { opacity: dotBlinkRef.current }]} />
             <Text style={styles.liveText}>SCANNING</Text>
           </View>
         </View>
@@ -239,8 +232,8 @@ export default function ScannerOverlay({
         </Pressable>
       </View>
 
-      {/* ── Bottom controls ── */}
-      <View style={[styles.bottomBar, { paddingBottom: Math.max(bottomInset, 24) + 16 }]}>
+      {/* ── Bottom controls (interactive) ── */}
+      <View style={[styles.bottomBar, { paddingBottom: Math.max(bottomInset, 8) + 16 }]}>
         <View style={styles.pillRow}>
           <Pressable onPress={onCycleZoom} style={styles.pill}>
             <MaterialCommunityIcons name="magnify" size={14} color={GLOW} />
@@ -257,7 +250,7 @@ export default function ScannerOverlay({
                 size={14}
                 color={anonymousMode ? Colors.dark.warning : "rgba(255,255,255,0.7)"}
               />
-              <Text style={[styles.pillText, anonymousMode && { color: Colors.dark.warning }]}>
+              <Text style={[styles.pillText, anonymousMode && styles.pillTextAnon]}>
                 {anonymousMode ? "Anonymous" : "Tracked"}
               </Text>
             </Pressable>
@@ -297,7 +290,7 @@ export default function ScannerOverlay({
           >
             {user ? (
               <>
-                <View style={[styles.sideBtnCircle, { borderColor: GLOW + "60" }]}>
+                <View style={[styles.sideBtnCircle, styles.sideBtnCircleActive]}>
                   <Ionicons name="person" size={20} color={GLOW} />
                 </View>
                 <Text style={[styles.sideBtnLabel, { color: GLOW }]}>
@@ -319,6 +312,7 @@ export default function ScannerOverlay({
   );
 }
 
+// Kept for backward compatibility if imported elsewhere
 export function FinderFrame({
   scanned,
   scanSuccess,
@@ -328,13 +322,13 @@ export function FinderFrame({
   scanSuccess: boolean;
   scanLineAnim: Animated.Value;
 }) {
-  const scanLineY = scanLineAnim.interpolate({
-    inputRange: [0, 1],
-    outputRange: [0, FINDER_SIZE - 3],
-  });
+  const scanLineY = useMemo(
+    () => scanLineAnim.interpolate({ inputRange: [0, 1], outputRange: [0, FINDER_SIZE - 3] }),
+    [scanLineAnim]
+  );
 
   return (
-    <View style={styles.finderDecor}>
+    <View style={[styles.finderDecor, { position: "relative", top: 0, left: 0 }]}>
       <View style={[styles.corner, styles.ctlH]} />
       <View style={[styles.corner, styles.ctlV]} />
       <View style={[styles.corner, styles.ctrH]} />
@@ -343,15 +337,9 @@ export function FinderFrame({
       <View style={[styles.corner, styles.cblV]} />
       <View style={[styles.corner, styles.cbrH]} />
       <View style={[styles.corner, styles.cbrV]} />
-
       {!scanned && (
-        <Animated.View style={[styles.scanBeam, { transform: [{ translateY: scanLineY }] }]}>
-          <View style={styles.scanBeamLeft} />
-          <View style={styles.scanBeamCenter} />
-          <View style={styles.scanBeamRight} />
-        </Animated.View>
+        <Animated.View style={[styles.scanBeam, { transform: [{ translateY: scanLineY }] }]} />
       )}
-
       {scanSuccess && (
         <View style={styles.successOverlay}>
           <View style={styles.successRing}>
@@ -363,28 +351,28 @@ export function FinderFrame({
   );
 }
 
-const DOT_SIZE = 7;
-const TICK_LEN = 14;
-const TICK_W = 2;
-
 const styles = StyleSheet.create({
+  outerContainer: {
+    pointerEvents: "box-none",
+  },
+  nonInteractive: {
+    pointerEvents: "none",
+  },
   mask: {
     position: "absolute",
     backgroundColor: VIGNETTE,
   },
-
   finderDecor: {
     position: "absolute",
     width: FINDER_SIZE,
     height: FINDER_SIZE,
     overflow: "hidden",
   },
-
   pulseRing: {
     position: "absolute",
     width: FINDER_SIZE,
     height: FINDER_SIZE,
-    borderRadius: 18,
+    borderRadius: 16,
     borderWidth: 2,
     borderColor: GLOW,
     top: 0,
@@ -392,26 +380,19 @@ const styles = StyleSheet.create({
   },
   pulseRing2: {
     borderColor: GLOW,
-    opacity: 0.4,
   },
-
   corner: {
     position: "absolute",
     backgroundColor: GLOW,
   },
-
   ctlH: { top: 0, left: 0, width: CORNER_LEN, height: CORNER_W, borderTopLeftRadius: 4 },
   ctlV: { top: 0, left: 0, width: CORNER_W, height: CORNER_LEN, borderTopLeftRadius: 4 },
-
   ctrH: { top: 0, right: 0, width: CORNER_LEN, height: CORNER_W, borderTopRightRadius: 4 },
   ctrV: { top: 0, right: 0, width: CORNER_W, height: CORNER_LEN, borderTopRightRadius: 4 },
-
   cblH: { bottom: 0, left: 0, width: CORNER_LEN, height: CORNER_W, borderBottomLeftRadius: 4 },
   cblV: { bottom: 0, left: 0, width: CORNER_W, height: CORNER_LEN, borderBottomLeftRadius: 4 },
-
   cbrH: { bottom: 0, right: 0, width: CORNER_LEN, height: CORNER_W, borderBottomRightRadius: 4 },
   cbrV: { bottom: 0, right: 0, width: CORNER_W, height: CORNER_LEN, borderBottomRightRadius: 4 },
-
   cornerDot: {
     position: "absolute",
     width: DOT_SIZE,
@@ -419,70 +400,30 @@ const styles = StyleSheet.create({
     borderRadius: DOT_SIZE / 2,
     backgroundColor: "#fff",
   },
-  ctlDot: { top: -DOT_SIZE / 2 + CORNER_W / 2, left: CORNER_LEN - DOT_SIZE / 2 },
-  ctrDot: { top: -DOT_SIZE / 2 + CORNER_W / 2, right: CORNER_LEN - DOT_SIZE / 2 },
-  cblDot: { bottom: -DOT_SIZE / 2 + CORNER_W / 2, left: CORNER_LEN - DOT_SIZE / 2 },
-  cbrDot: { bottom: -DOT_SIZE / 2 + CORNER_W / 2, right: CORNER_LEN - DOT_SIZE / 2 },
-
+  ctlDot: { top: CORNER_W / 2 - DOT_SIZE / 2, left: CORNER_LEN },
+  ctrDot: { top: CORNER_W / 2 - DOT_SIZE / 2, right: CORNER_LEN },
+  cblDot: { bottom: CORNER_W / 2 - DOT_SIZE / 2, left: CORNER_LEN },
+  cbrDot: { bottom: CORNER_W / 2 - DOT_SIZE / 2, right: CORNER_LEN },
   edgeTick: {
     position: "absolute",
-    backgroundColor: "rgba(0,212,255,0.45)",
+    backgroundColor: "rgba(0,212,255,0.4)",
   },
-  edgeT: {
-    top: 0,
-    left: FINDER_SIZE / 2 - TICK_LEN / 2,
-    width: TICK_LEN,
-    height: TICK_W,
-  },
-  edgeB: {
-    bottom: 0,
-    left: FINDER_SIZE / 2 - TICK_LEN / 2,
-    width: TICK_LEN,
-    height: TICK_W,
-  },
-  edgeL: {
-    left: 0,
-    top: FINDER_SIZE / 2 - TICK_LEN / 2,
-    width: TICK_W,
-    height: TICK_LEN,
-  },
-  edgeR: {
-    right: 0,
-    top: FINDER_SIZE / 2 - TICK_LEN / 2,
-    width: TICK_W,
-    height: TICK_LEN,
-  },
-
+  edgeT: { top: 0, left: FINDER_SIZE / 2 - TICK_LEN / 2, width: TICK_LEN, height: TICK_W },
+  edgeB: { bottom: 0, left: FINDER_SIZE / 2 - TICK_LEN / 2, width: TICK_LEN, height: TICK_W },
+  edgeL: { left: 0, top: FINDER_SIZE / 2 - TICK_LEN / 2, width: TICK_W, height: TICK_LEN },
+  edgeR: { right: 0, top: FINDER_SIZE / 2 - TICK_LEN / 2, width: TICK_W, height: TICK_LEN },
   scanBeam: {
     position: "absolute",
-    left: 0,
-    right: 0,
+    left: 6,
+    right: 6,
     height: 3,
-    flexDirection: "row",
-    ...shadow(10, GLOW, 0.9, 0, 0, 0),
-  },
-  scanBeamLeft: {
-    flex: 1,
-    height: 3,
-    backgroundColor: "transparent",
-    opacity: 0,
-  },
-  scanBeamCenter: {
-    flex: 2,
-    height: 3,
-    backgroundColor: GLOW,
     borderRadius: 2,
+    backgroundColor: GLOW,
+    ...shadow(10, GLOW, 0.8, 0, 0, 4),
   },
-  scanBeamRight: {
-    flex: 1,
-    height: 3,
-    backgroundColor: "transparent",
-    opacity: 0,
-  },
-
   successOverlay: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: "rgba(0,212,255,0.12)",
+    backgroundColor: "rgba(0,212,255,0.1)",
     alignItems: "center",
     justifyContent: "center",
   },
@@ -493,17 +434,22 @@ const styles = StyleSheet.create({
     backgroundColor: GLOW,
     alignItems: "center",
     justifyContent: "center",
-    ...shadow(20, GLOW, 0.7, 0, 0, 0),
   },
-
+  hintContainer: {
+    position: "absolute",
+    left: 0,
+    right: 0,
+    alignItems: "center",
+  },
   hintText: {
     fontSize: 13,
     fontFamily: "Inter_400Regular",
     color: "rgba(255,255,255,0.6)",
     textAlign: "center",
-    letterSpacing: 0.3,
+    letterSpacing: 0.2,
   },
 
+  // Top bar
   topBar: {
     flexDirection: "row",
     alignItems: "center",
@@ -526,35 +472,13 @@ const styles = StyleSheet.create({
     borderColor: GLOW + "60",
   },
   topCenter: { alignItems: "center", gap: 3 },
-  brandRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 6,
-  },
-  scanTitle: {
-    fontSize: 16,
-    fontFamily: "Inter_700Bold",
-    color: "#fff",
-    letterSpacing: 0.5,
-  },
-  liveRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 5,
-  },
-  liveDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-    backgroundColor: GLOW,
-  },
-  liveText: {
-    fontSize: 10,
-    fontFamily: "Inter_600SemiBold",
-    color: GLOW,
-    letterSpacing: 2,
-  },
+  brandRow: { flexDirection: "row", alignItems: "center", gap: 6 },
+  scanTitle: { fontSize: 16, fontFamily: "Inter_700Bold", color: "#fff", letterSpacing: 0.4 },
+  liveRow: { flexDirection: "row", alignItems: "center", gap: 5 },
+  liveDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: GLOW },
+  liveText: { fontSize: 10, fontFamily: "Inter_600SemiBold", color: GLOW, letterSpacing: 2 },
 
+  // Bottom bar
   bottomBar: {
     position: "absolute",
     bottom: 0,
@@ -562,13 +486,9 @@ const styles = StyleSheet.create({
     right: 0,
     paddingHorizontal: 24,
     alignItems: "center",
-    gap: 18,
+    gap: 16,
   },
-  pillRow: {
-    flexDirection: "row",
-    gap: 10,
-    alignItems: "center",
-  },
+  pillRow: { flexDirection: "row", gap: 10, alignItems: "center" },
   pill: {
     flexDirection: "row",
     alignItems: "center",
@@ -584,20 +504,16 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(245,158,11,0.12)",
     borderColor: Colors.dark.warning + "50",
   },
-  pillText: {
-    fontSize: 12,
-    fontFamily: "Inter_600SemiBold",
-    color: GLOW,
-  },
-
+  pillText: { fontSize: 12, fontFamily: "Inter_600SemiBold", color: GLOW },
+  pillTextAnon: { color: Colors.dark.warning },
   bottomActions: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
     width: "100%",
-    paddingHorizontal: 8,
+    paddingHorizontal: 4,
   },
-  sideBtn: { alignItems: "center", gap: 6, minWidth: 62 },
+  sideBtn: { alignItems: "center", gap: 6, minWidth: 60 },
   sideBtnCircle: {
     width: 52,
     height: 52,
@@ -608,22 +524,20 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "rgba(255,255,255,0.14)",
   },
-  sideBtnLabel: {
-    fontSize: 11,
-    fontFamily: "Inter_400Regular",
-    color: "rgba(255,255,255,0.65)",
+  sideBtnCircleActive: {
+    borderColor: GLOW + "60",
   },
-
+  sideBtnLabel: { fontSize: 11, fontFamily: "Inter_400Regular", color: "rgba(255,255,255,0.65)" },
   centerAction: { alignItems: "center", justifyContent: "center" },
   actionRing: {
     width: 80,
     height: 80,
     borderRadius: 40,
     borderWidth: 2,
-    borderColor: GLOW + "80",
+    borderColor: GLOW + "70",
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "rgba(0,212,255,0.06)",
+    backgroundColor: "rgba(0,212,255,0.05)",
   },
   actionRingInner: {
     width: 62,
@@ -633,7 +547,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     borderWidth: 1,
-    borderColor: "rgba(0,212,255,0.25)",
+    borderColor: "rgba(0,212,255,0.2)",
   },
   actionRingReady: {
     backgroundColor: "rgba(0,212,255,0.08)",
