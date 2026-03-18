@@ -16,8 +16,8 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Animated, { FadeInDown } from "react-native-reanimated";
 import Colors from "@/constants/colors";
 import SkeletonBox from "@/components/ui/SkeletonBox";
-import PhotoModal from "@/components/profile/PhotoModal";
-import UsernameEditor from "@/components/profile/UsernameEditor";
+import PhotoModal from "@/features/profile/components/PhotoModal";
+import UsernameEditor from "@/features/profile/components/UsernameEditor";
 import { useProfile } from "@/hooks/useProfile";
 
 export default function ProfileScreen() {
@@ -69,7 +69,7 @@ export default function ProfileScreen() {
       <View style={styles.navBar}>
         <Text style={styles.navTitle}>Profile</Text>
         <Pressable
-          onPress={() => router.push("/(tabs)/settings")}
+          onPress={() => router.push("/settings")}
           style={styles.settingsBtn}
           accessibilityLabel="Settings"
         >

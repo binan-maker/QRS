@@ -29,16 +29,16 @@ import { useNetworkStatus } from "@/lib/use-network";
 import { formatCompactNumber, formatIndianNumber } from "@/lib/number-format";
 import { smartName } from "@/lib/utils/formatters";
 import { useQrDetail } from "@/hooks/useQrDetail";
-import LoadingSkeleton from "@/components/qr-detail/LoadingSkeleton";
-import ContentCard from "@/components/qr-detail/ContentCard";
-import TrustScoreCard from "@/components/qr-detail/TrustScoreCard";
-import OwnerCard from "@/components/qr-detail/OwnerCard";
-import MerchantDashboard from "@/components/qr-detail/MerchantDashboard";
-import CommentItem from "@/components/qr-detail/CommentItem";
-import FollowersModal from "@/components/qr-detail/modals/FollowersModal";
-import MessagesModal from "@/components/qr-detail/modals/MessagesModal";
-import VerificationModal from "@/components/qr-detail/modals/VerificationModal";
-import CommentReportModal from "@/components/qr-detail/modals/CommentReportModal";
+import LoadingSkeleton from "@/features/qr-detail/components/LoadingSkeleton";
+import ContentCard from "@/features/qr-detail/components/ContentCard";
+import TrustScoreCard from "@/features/qr-detail/components/TrustScoreCard";
+import OwnerCard from "@/features/qr-detail/components/OwnerCard";
+import MerchantDashboard from "@/features/qr-detail/components/MerchantDashboard";
+import CommentItem from "@/features/qr-detail/components/CommentItem";
+import FollowersModal from "@/features/qr-detail/components/modals/FollowersModal";
+import MessagesModal from "@/features/qr-detail/components/modals/MessagesModal";
+import VerificationModal from "@/features/qr-detail/components/modals/VerificationModal";
+import CommentReportModal from "@/features/qr-detail/components/modals/CommentReportModal";
 
 const REPORT_TYPES = [
   { key: "safe", label: "Safe", icon: "shield-checkmark", color: Colors.dark.safe, bg: Colors.dark.safeDim },

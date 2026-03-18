@@ -5,11 +5,11 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Reanimated, { FadeIn, FadeInDown } from "react-native-reanimated";
 import Colors from "@/constants/colors";
 import { useScanner } from "@/hooks/useScanner";
-import ScannerOverlay from "@/components/scanner/ScannerOverlay";
-import SafetyModal from "@/components/scanner/SafetyModal";
-import VerifiedModal from "@/components/scanner/VerifiedModal";
-import LivingShieldModal from "@/components/scanner/LivingShieldModal";
-import PermissionScreen from "@/components/scanner/PermissionScreen";
+import ScannerOverlay from "@/features/scanner/components/ScannerOverlay";
+import SafetyModal from "@/features/scanner/components/SafetyModal";
+import VerifiedModal from "@/features/scanner/components/VerifiedModal";
+import LivingShieldModal from "@/features/scanner/components/LivingShieldModal";
+import PermissionScreen from "@/features/scanner/components/PermissionScreen";
 
 export default function ScannerScreen() {
   const [permission, requestPermission] = useCameraPermissions();

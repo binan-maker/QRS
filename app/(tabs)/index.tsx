@@ -8,7 +8,7 @@ import Animated, { FadeInDown } from "react-native-reanimated";
 import Colors from "@/constants/colors";
 import { useHome } from "@/hooks/useHome";
 import { detectContentType, getContentTypeIcon, truncate, formatRelativeTime } from "@/lib/utils/formatters";
-import NotificationsModal from "@/components/home/NotificationsModal";
+import NotificationsModal from "@/features/home/components/NotificationsModal";
 
 export default function HomeScreen() {
   const insets = useSafeAreaInsets();

@@ -13,24 +13,105 @@ A full-stack mobile-first QR code scanning and management app built with Expo (R
 
 ## Project Structure
 
-- `app/` — Expo Router screens
-  - `(tabs)/index.tsx` — Home screen with notification bell + RTDB-powered notification panel
-  - `(tabs)/scanner.tsx` — QR scanner (camera + image gallery)
-  - `(tabs)/history.tsx` — Scan history + favorites
-  - `(tabs)/profile.tsx` — Full profile: photo upload (camera/gallery), stats (following QRs, scans, comments, total likes), settings shortcut
-  - `(tabs)/qr-generator.tsx` — Branded QR (QR Guard logo + UUID + user info) or Private/No-trace mode, custom logo with 5 position options (center, top-left, top-right, bottom-left, bottom-right)
-  - `(tabs)/settings.tsx` — Account settings, feedback form, delete account
-  - `(auth)/` — Login + Register screens
-  - `qr-detail/[id].tsx` — QR detail: disclaimer banner at top, business logo display in owner card, offline mode, real-time Firestore listeners, skeleton loading, threaded comments, QR owner panel, share button
-  - `my-qr-codes.tsx` — All generated QR codes (individual + business filter tabs), live QR thumbnail preview, scan/comment counts, navigate to my-qr/[id] for management
-- `server/` — Express backend (`routes.ts` only does image decode via Jimp + jsQR)
-- `shared/` — Drizzle schema (future PostgreSQL)
-- `components/` — Reusable React Native components
-- `contexts/AuthContext.tsx` — Firebase Auth with `onIdTokenChanged` for automatic token refresh
-- `lib/firebase.ts` — Firebase app, Auth, Firestore, Realtime Database
-- `lib/firestore-service.ts` — All Firebase/Firestore/RTDB operations
-- `lib/query-client.ts` — TanStack Query + API request utility
-- `assets/` — Static assets
+```
+app/                        ← Expo Router screens (JSX only; all logic in feature hooks)
+  (auth)/                   ← Login + Register
+  (tabs)/
+    index.tsx               ← Home screen
+    scanner.tsx             ← QR camera scanner
+    history.tsx             ← Scan history + favorites
+    profile.tsx             ← User profile
+    qr-generator.tsx        ← QR Generator
+    settings.tsx            ← Shim → redirects to /settings
+  settings.tsx              ← Settings (active screen; uses feature components)
+  qr-detail/[id].tsx        ← QR detail (reports, comments, owner panel, offline mode)
+  my-qr-codes.tsx           ← All generated QR codes
+  my-qr/[id].tsx            ← Individual QR management
+
+features/                   ← Feature-scoped logic; each feature owns its hooks + components
+  qr-detail/
+    hooks/
+      useQrDetail.ts        ← Composer hook: combines all 7 sub-hooks below
+      useQrData.ts          ← QR data loading, offline mode, stats subscription
+      useQrSafety.ts        ← Safety analysis (blacklist, payment, URL heuristics)
+      useQrReports.ts       ← Report counts, live subscription, handleReport
+      useQrFollow.ts        ← Follow state, toggle, followers list
+      useQrFavorite.ts      ← Favorite state and toggle
+      useQrComments.ts      ← Comments state, pagination, submit, like, delete
+      useQrOwner.ts         ← Owner messages, scan velocity, verification flow
+    components/             ← Moved from components/qr-detail/
+  scanner/
+    hooks/useScanner.ts     ← Camera, safety modal, guard QR, zoom, image upload
+    components/             ← Moved from components/scanner/
+  home/
+    hooks/useHome.ts        ← Recent scans, notifications, refresh
+    components/             ← Moved from components/home/
+  history/
+    hooks/useHistory.ts     ← Scan history merge, pagination, filters, safety map
+    components/             ← FilterBar, HistoryItem
+  profile/
+    hooks/useProfile.ts     ← Stats, photo, username, name editing
+    components/             ← Moved from components/profile/
+  generator/
+    hooks/useQrGenerator.ts ← QR generation: mode, content, branded/private, share
+    components/
+    data/                   ← Presets, builder logic, validators
+  settings/
+    hooks/useSettings.ts    ← Feedback, following, comments, account delete sections
+    components/
+    styles.ts
+  auth/components/
+  my-qr/hooks/ + components/
+
+hooks/                      ← Re-export shims only; real code lives in features/*/hooks/
+  useQrDetail.ts            → features/qr-detail/hooks/useQrDetail
+  useHome.ts                → features/home/hooks/useHome
+  useHistory.ts             → features/history/hooks/useHistory
+  useProfile.ts             → features/profile/hooks/useProfile
+  useScanner.ts             → features/scanner/hooks/useScanner
+  useQrGenerator.ts         → features/generator/hooks/useQrGenerator
+  useSettings.ts            → features/settings/hooks/useSettings
+
+lib/
+  services/                 ← Split by responsibility
+    qr-service.ts           ← QR CRUD + scan tracking only
+    report-service.ts       ← Report logic (weights, counts, subscribe)
+    follow-service.ts       ← Follow/unfollow, followers list
+    generator-service.ts    ← Branded QR save, design update, velocity, verification
+    comment-service.ts
+    user-service.ts
+    notification-service.ts
+    guard-service.ts
+    trust-service.ts
+    message-service.ts
+    types.ts
+    utils.ts
+    index.ts                ← Re-exports all service files
+  repositories/             ← Repository pattern skeleton
+    README.md               ← Documents the pattern + usage
+    interfaces/
+      IQrRepository.ts      ← TypeScript interface (getById, getOrCreate, recordScan, getUserScans)
+    firebase/
+      FirebaseQrRepository.ts ← Firebase implementation of IQrRepository
+  firebase.ts
+  firestore-service.ts      ← Re-exports from lib/services/index (backward compat shim)
+  qr-analysis.ts
+  cache/qr-cache.ts
+  use-network.ts
+
+components/                 ← Shared-only components (feature-specific moved to features/)
+  layouts/                  ← ScreenHeader, ListEmptyState
+  ui/                       ← SkeletonBox, etc.
+  ErrorBoundary.tsx
+  ErrorFallback.tsx
+  GoogleIcon.tsx
+  KeyboardAwareScrollViewCompat.tsx
+
+server/                     ← Express backend (image decode only)
+contexts/AuthContext.tsx    ← Firebase Auth with auto token refresh
+constants/                  ← colors.ts, config.ts, routes.ts
+shared/                     ← Drizzle schema (future PostgreSQL)
+```
 
 ## Firebase Integration (complete)
 
@@ -41,93 +122,57 @@ A full-stack mobile-first QR code scanning and management app built with Expo (R
 - `qrCodes/{qrId}/comments/{commentId}` — Comments (soft-delete supported)
 - `qrCodes/{qrId}/comments/{commentId}/likes/{userId}` — Like/dislike per comment per user
 - `qrCodes/{qrId}/comments/{commentId}/reports/{userId}` — Comment reports (also writes to `moderationQueue`)
-- `moderationQueue/{docId}` — Global moderation queue for internal team review (type, qrCodeId, commentId, reportedByUserId, reason, commentText, commentAuthorId, status)
-- `users/{userId}` — User profile (soft-delete support); includes `username` (unique @handle) and `usernameLastChangedAt`
+- `moderationQueue/{docId}` — Global moderation queue for internal team review
+- `users/{userId}` — User profile; includes `username` (unique @handle) and `usernameLastChangedAt`
 - `users/{userId}/scans/` — Scan history
 - `users/{userId}/favorites/` — Favorited QR codes
 - `users/{userId}/following/` — Followed QR codes
-- `users/{userId}/comments/` — User's comments (for profile, used for username propagation)
-- `users/{userId}/generatedQrs/` — Branded QR codes generated by user (content, contentType, uuid, qrCodeId, signature, createdAt)
-- `usernames/{username}` — Username reservation map (userId, reservedAt) for uniqueness enforcement; public read
-- `qrMessages/{messageId}` — Private messages sent to branded QR code owners (fromUserId, fromDisplayName, toUserId, qrCodeId, qrBrandedUuid, message, read, createdAt)
+- `users/{userId}/comments/` — User's comments
+- `users/{userId}/generatedQrs/` — Branded QR codes generated by user
+- `usernames/{username}` — Username reservation map for uniqueness enforcement
+- `qrMessages/{messageId}` — Private messages sent to branded QR code owners
 - `feedback/` — Submitted feedback
-- `users/{userId}.photoURL` — Profile photo stored as base64 data URI
-- QR ownership: when `saveGeneratedQr` is called with `branded=true`, the `qrCodes/{qrId}` document is updated with `ownerId`, `ownerName`, `brandedUuid`, `isBranded` (first creator claims ownership)
-- `users/{userId}.totalLikesReceived` — Incremented when user's comments are liked
 
 ### Real-time Subscriptions (onSnapshot)
 - `subscribeToQrStats` — Live scan count + comment count on QR detail
 - `subscribeToQrReports` — Live report counts → trust score recalculation
 - `subscribeToComments` — Live first-page comments
-- `getCommentUserLikes` — Batch-fetches current user's like status for visible comments
+- `subscribeToQrMessages` — Owner inbox for branded QR codes
+- `subscribeToNotificationCount` — Unread count for tab badge
+- `subscribeToNotifications` — Full notification list for panel
 
 ### Firebase Realtime Database
 Path: `notifications/{userId}/items/{notifId}`
-- `subscribeToNotificationCount` — Unread count for tab badge + notification bell
-- `subscribeToNotifications` — Full notification list for panel
-- `markAllNotificationsRead` — Bulk mark-read via atomic update
-- `clearAllNotifications` — Delete all notifications for user
-- `notifyQrFollowers` — Writes notifications to all followers when a comment/report is added
+- `markAllNotificationsRead` / `clearAllNotifications` / `notifyQrFollowers`
+- `qrScanVelocity/{qrId}` — Per-hour scan buckets for owner dashboard
+
+## Service Layer Design
+
+Each service file owns one responsibility:
+- **qr-service.ts**: `getOrCreateQrCode`, `getQrCodeById`, `recordScan`, `getUserScans`, `loadQrDetail`
+- **report-service.ts**: `reportQrCode`, `getQrReportCounts`, `subscribeToQrReports`
+- **follow-service.ts**: `toggleFollow`, `isUserFollowingQrCode`, `getQrFollowersList`
+- **generator-service.ts**: `saveGeneratedQr`, `getUserGeneratedQrs`, `getScanVelocity`, `setQrActiveState`, `submitVerificationRequest`
 
 ## QR Safety Analysis Engine (`lib/qr-analysis.ts`)
 
-- **`parseUpiQr(content)`** — Parses UPI/PhonePe/GPay/Paytm/BHIM QR URI into structured fields: `vpa`, `payeeName`, `amount`, `bankHandle`, `transactionNote`, `isAmountPreFilled`
-- **`analyzePaymentQr(parsed)`** — Heuristic safety analysis for payment QRs: validates bank handle against all NPCI-registered handles, detects brand impersonation in payee name, flags suspicious pre-filled large amounts, checks for auto-generated VPAs
-- **`analyzeUrlHeuristics(url)`** — Heuristic URL safety analysis: detects HTTP-only, raw IPs, URL shorteners, suspicious TLDs (.tk/.ml/.xyz), brand impersonation in domain, excessive subdomains, sensitive keywords in path
-- **`checkCommentKeywords(text)`** — Blocks spam/scam keywords in comments at submission time (investment fraud, phishing phrases, Telegram/WhatsApp spam, etc.)
-- **`loadOfflineBlacklist()` / `checkOfflineBlacklist()`** — Offline-capable local blacklist with 15 built-in scam patterns (UPI scams, phishing, KYC fraud, etc.), cached in AsyncStorage, refreshes every 24h
+- **`parseAnyPaymentQr`** — Parses UPI/PhonePe/GPay/Paytm/BHIM/crypto QR URI
+- **`analyzeAnyPaymentQr`** — Heuristic safety analysis for payment QRs
+- **`analyzeUrlHeuristics`** — Detects HTTP-only, raw IPs, URL shorteners, suspicious TLDs, brand impersonation
+- **`checkCommentKeywords`** — Blocks spam/scam keywords in comments
+- **`loadOfflineBlacklist` / `checkOfflineBlacklist`** — Offline-capable local blacklist, cached in AsyncStorage
 
 ## Comment Moderation Rules
 
-- **Users can only delete their own comments** — QR code owners cannot delete other users' comments; this is a user right
-- **Reported comments** → automatically written to `moderationQueue` collection for internal team review
-- **Auto-hide at 3+ reports** — When 3 unique users report a comment, it is automatically hidden (`isHidden: true`) from all views
-- **Keyword blacklist** — Comments containing spam/scam phrases are blocked at submission with a clear error message
-- **Hidden comments** are filtered in both real-time subscriptions and paginated queries
+- Users can only delete their own comments
+- Reported comments → written to `moderationQueue` for internal review
+- Auto-hide at 3+ reports (`isHidden: true`)
+- Keyword blacklist blocks submission
 
-## Code Architecture (Refactored)
-
-All screens follow a strict hooks-first pattern — screens are JSX-only, all logic lives in hooks.
-
-### Hooks (`hooks/`)
-- `useProfile.ts` — Profile state: name/username/photo editing, stats loading, sign-out, QR subscription
-- `useHistory.ts` — Scan history: local + cloud merge, pagination, filtering, safety risk map, favorites
-- `useSettings.ts` — Deep settings: following, comments, feedback, account delete sections
-- `useQrDetail.ts` — QR detail: reports, comments, following, likes, trust score computation
-- `useQrGenerator.ts` — QR generation: mode, content, colors, branded/private logic
-- `useScanner.ts` — Camera scanning: permissions, offline blacklist, safety interstitial
-- `useHome.ts` — Home feed: notifications, recent scans
-
-### Features (`features/`)
-- `features/settings/` — Settings components + shared `styles.ts`
-- `features/my-qr/` — My-QR management components + `useMyQrDetail` hook
-- `features/generator/` — QR generator components, presets, builder logic
-- `features/auth/components/AuthFormInput.tsx` — Shared text input for login + register screens
-- `features/history/components/HistoryItem.tsx` — Memoized history list row (extracted from history.tsx)
-- `features/history/components/FilterBar.tsx` — Horizontal filter chip bar (extracted from history.tsx)
-
-### Shared Layout Components (`components/layouts/`)
-- `ScreenHeader` — Shared nav bar (back button + title + optional right element)
-- `ListEmptyState` — Shared empty-state illustration with icon, title, subtitle, optional action
-
-### Profile Components (`components/profile/`)
-- `PhotoModal` — Photo picker bottom sheet (camera / gallery). Used by `profile.tsx`
-- `UsernameEditor` — @username row with live availability check. Used by `profile.tsx`
-
-### Shared Components (`components/ui/`)
-- `SkeletonBox` — Single source of truth for all skeleton loading UI (no inline duplicates)
-
-### Constants
-- `constants/colors.ts` — Design tokens
-- `constants/config.ts` — App-wide constants: PAGE_SIZE, USERNAME_CHANGE_COOLDOWN_DAYS, trust thresholds, limits
-- `constants/routes.ts` — Typed route paths for all screens
-
-### Cache Layer (`lib/cache/qr-cache.ts`)
-- Two-level cache: in-memory Map (fastest) + AsyncStorage persistence (survives app reload)
+## Cache Layer (`lib/cache/qr-cache.ts`)
+- Two-level cache: in-memory Map + AsyncStorage persistence
 - TTLs: QR detail 5min, owner info 10min, trust score 2min, user stats 3min
-- Wired into `useQrDetail.ts`: first screen load checks cache before hitting Firestore (saves 7+ reads per visit)
-- Wired into `useProfile.ts`: stats, photo URL, and username loaded from cache on repeated visits
-- Cache invalidated automatically on report, favorite, follow, and username change actions
+- Invalidated on report, favorite, follow, and username change actions
 
 ## Workflows
 
@@ -139,61 +184,19 @@ All screens follow a strict hooks-first pattern — screens are JSX-only, all lo
 - Firebase Auth via `onIdTokenChanged` (automatic hourly token refresh)
 - Email/password sign-in and registration
 - Google OAuth via `expo-auth-session` + `signInWithCredential`
-- `AuthUser` includes `username` field populated from `users/{userId}.username` at login
 
 ## Username System
 
-- Every user gets a unique `@username` auto-generated from their display name on first sign-in
-- Format: `^[a-z][a-z0-9_]{2,19}$` (3–20 chars, lowercase, must start with a letter)
-- Uniqueness enforced via `usernames/{username}` collection (userId + reservedAt)
-- 15-day edit cooldown tracked by `usernameLastChangedAt` in user doc
-- Profile page shows @username in hero card, editable with live availability check and lock indicator
-- `updateUsername` propagates @username to last 50 comments across all QR codes (cost-capped)
+- Unique `@username` auto-generated from display name on first sign-in
+- Format: `^[a-z][a-z0-9_]{2,19}$`
+- Uniqueness enforced via `usernames/{username}` collection
+- 15-day edit cooldown tracked by `usernameLastChangedAt`
 
 ## Branded QR Detection
 
-- `saveGeneratedQr` computes `SHA256(content|userId|SALT).slice(0,32)` as a signature and stores it in both `generatedQrs` subcollection and `qrCodes` doc
-- QR detail page shows a "QR Guard Generated" shield-checkmark badge when `ownerInfo.isBranded` is true
-- Signature salt: `QRG_MINT_VERIFIED_2024_PROPRIETARY` (defined in both `lib/qr-analysis.ts` and `lib/firestore-service.ts`)
-
-## Comments
-
-- `addComment` fetches and stores `userUsername` from Firestore alongside each comment
-- Comment headers display `@username` (highlighted in primary color) when available, else display name
-- Avatar initial uses `@username`'s first letter when available
-- User profiles synced to `users/{userId}` in Firestore on first sign-in
-- Deleted-account guard: throws if `isDeleted: true` in Firestore user doc
-- Google Web Client ID: `971359442211-dppv9u14kun8mo5c0e07pr6f6veh81aa.apps.googleusercontent.com`
-- Google Android Client ID: `971359442211-j2emebstu4e63sd7u56k852ok1sb9rs2.apps.googleusercontent.com`
-
-## QR Code IDs
-
-QR code IDs are SHA-256 hashes of the QR content (first 20 characters), not UUIDs.
-
-## QR Safety Analysis Engine (`lib/qr-analysis.ts`)
-
-- **UPI/Payment QR parser** (`parseUpiQr`): Parses UPI deep links — extracts payee name, VPA, bank handle, amount, note, scheme
-- **Payment heuristic analyzer** (`analyzePaymentQr`): Validates NPCI bank handles, detects brand impersonation, suspicious payment amounts, missing payee names
-- **URL heuristic analyzer** (`analyzeUrlHeuristics`): Detects HTTP (not HTTPS), IP-based URLs, URL shorteners, suspicious TLDs, brand impersonation, sensitive path keywords (login, password, verify, etc.)
-- **Offline blacklist** (`loadOfflineBlacklist`, `checkOfflineBlacklist`, `BUILT_IN_BLACKLIST`): 15 built-in scam patterns cached in AsyncStorage; pattern matching against QR content
-- **Comment keyword filter** (`checkCommentKeywords`): Blocks spam/scam keywords at submission time
-- All functions return `{ riskLevel: "safe" | "caution" | "dangerous", warnings: string[] }`
-
-## Scanner Safety Interstitial
-
-- After scanning any QR, the app runs instant offline safety analysis (no network needed)
-- If `riskLevel` is "caution" or "dangerous": shows a bottom-sheet overlay with:
-  - Risk level badge (yellow for caution, red for dangerous)
-  - Specific warning bullets explaining what was detected
-  - "Go Back (Recommended)" primary action + "View Details Anyway" escape hatch
-  - Haptic feedback (warning for caution, error for dangerous)
-- If safe: navigates directly to QR detail as before (no extra friction)
-
-## History Screen Safety Badges
-
-- Each URL and payment item shows an inline colored badge ("Caution" / "Dangerous") based on offline heuristics
-- New "Payment" filter tab in the filter bar
-- Badges computed synchronously via `useMemo` over all history + favorites
+- `saveGeneratedQr` computes `SHA256(content|userId|SALT).slice(0,32)` as a signature
+- QR detail shows "QR Guard Generated" shield badge when `ownerInfo.isBranded` is true
+- Signature salt: `QRG_MINT_VERIFIED_2024_PROPRIETARY`
 
 ## Key Dependencies
 
@@ -215,8 +218,10 @@ QR code IDs are SHA-256 hashes of the QR content (first 20 characters), not UUID
 ## Important Notes
 
 - `server/storage.ts` is **intentionally not imported** anywhere. It is the Drizzle/PostgreSQL migration layer to activate at ~10k users. Do NOT delete it.
-- No backend auth routes — all auth is client-side Firebase. The Express server only decodes QR images from uploaded photos.
-- Firestore security rules should enforce read/write permissions by `request.auth.uid`.
+- `lib/firestore-service.ts` is a backward-compat re-export shim to `lib/services/index`. Do NOT delete it.
+- `hooks/*.ts` files are re-export shims only. Real implementations live in `features/*/hooks/`.
+- `components/home/`, `components/scanner/`, `components/qr-detail/`, `components/profile/` are retained for import compatibility but real sources are now in `features/*/components/`.
+- No backend auth routes — all auth is client-side Firebase.
 
 ## Deployment
 
