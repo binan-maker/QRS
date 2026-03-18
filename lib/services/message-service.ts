@@ -1,15 +1,4 @@
-import { firestore } from "../firebase";
-import {
-  collection,
-  addDoc,
-  query,
-  orderBy,
-  limit as firestoreLimit,
-  onSnapshot,
-  getDocs,
-  doc,
-  updateDoc,
-} from "firebase/firestore";
+import { db } from "../db";
 import { tsToString } from "./utils";
 import type { QrMessage } from "./types";
 
@@ -23,7 +12,7 @@ export async function sendMessageToQrOwner(
   qrBrandedUuid: string,
   message: string
 ): Promise<void> {
-  await addDoc(collection(firestore, "qrMessages"), {
+  await db.add(["qrMessages"], {
     fromUserId,
     fromDisplayName,
     toUserId,
@@ -35,55 +24,56 @@ export async function sendMessageToQrOwner(
   });
 }
 
+// ── Cost optimization: filter by toUserId + qrCodeId in the query instead of
+//    reading ALL qrMessages and filtering client-side.
 export function subscribeToQrMessages(
   ownerUserId: string,
   qrCodeId: string,
   onUpdate: (msgs: QrMessage[]) => void
 ): () => void {
-  const q = query(
-    collection(firestore, "qrMessages"),
-    orderBy("createdAt", "desc"),
-    firestoreLimit(50)
+  return db.onQuery(
+    ["qrMessages"],
+    {
+      where: [
+        { field: "toUserId", op: "==", value: ownerUserId },
+        { field: "qrCodeId", op: "==", value: qrCodeId },
+      ],
+      orderBy: { field: "createdAt", direction: "desc" },
+      limit: 50,
+    },
+    (docs) => {
+      const msgs: QrMessage[] = docs.map((d) => ({
+        id: d.id,
+        fromUserId: d.data.fromUserId,
+        fromDisplayName: d.data.fromDisplayName || "User",
+        toUserId: d.data.toUserId,
+        qrCodeId: d.data.qrCodeId,
+        qrBrandedUuid: d.data.qrBrandedUuid || "",
+        message: d.data.message,
+        read: d.data.read || false,
+        createdAt: tsToString(d.data.createdAt),
+      }));
+      onUpdate(msgs);
+    }
   );
-  return onSnapshot(q, (snap) => {
-    const msgs: QrMessage[] = snap.docs
-      .filter((d) => {
-        const data = d.data();
-        return data.toUserId === ownerUserId && data.qrCodeId === qrCodeId;
-      })
-      .map((d) => {
-        const data = d.data();
-        return {
-          id: d.id,
-          fromUserId: data.fromUserId,
-          fromDisplayName: data.fromDisplayName || "User",
-          toUserId: data.toUserId,
-          qrCodeId: data.qrCodeId,
-          qrBrandedUuid: data.qrBrandedUuid || "",
-          message: data.message,
-          read: data.read || false,
-          createdAt: tsToString(data.createdAt),
-        };
-      });
-    onUpdate(msgs);
-  }, () => {});
 }
 
 export async function markQrMessageRead(messageId: string): Promise<void> {
   try {
-    await updateDoc(doc(firestore, "qrMessages", messageId), { read: true });
+    await db.update(["qrMessages", messageId], { read: true });
   } catch {}
 }
 
+// ── Cost optimization: query only unread messages for this owner.
 export async function getUnreadMessageCount(ownerUserId: string): Promise<number> {
   try {
-    const snap = await getDocs(query(collection(firestore, "qrMessages")));
-    let count = 0;
-    snap.forEach((d) => {
-      const data = d.data();
-      if (data.toUserId === ownerUserId && !data.read) count++;
+    const { docs } = await db.query(["qrMessages"], {
+      where: [
+        { field: "toUserId", op: "==", value: ownerUserId },
+        { field: "read", op: "==", value: false },
+      ],
     });
-    return count;
+    return docs.length;
   } catch {
     return 0;
   }

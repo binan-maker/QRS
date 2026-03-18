@@ -1,16 +1,8 @@
-import { firestore, realtimeDB } from "../firebase";
-import { collection, getDocs } from "firebase/firestore";
-import {
-  ref as dbRef,
-  push as dbPush,
-  onValue,
-  off,
-  update as dbUpdate,
-  get as dbGet,
-  remove as dbRemove,
-} from "firebase/database";
+import { db, rtdb } from "../db";
 import type { Notification } from "./types";
 
+// ── Cost optimization: instead of reading ALL users to find mentions,
+//    we query by username field. This is a targeted indexed read.
 export async function notifyMentionedUsers(
   qrId: string,
   text: string,
@@ -22,22 +14,27 @@ export async function notifyMentionedUsers(
   ));
   if (mentions.length === 0) return;
   try {
-    const usersSnap = await getDocs(collection(firestore, "users"));
     const writes: Promise<any>[] = [];
-    usersSnap.forEach((userDoc) => {
-      const uname = (userDoc.data().username as string | undefined)?.toLowerCase();
-      if (!uname || !mentions.includes(uname)) return;
-      const targetUserId = userDoc.id;
-      if (targetUserId === fromUserId) return;
-      const notifRef = dbRef(realtimeDB, `notifications/${targetUserId}/items`);
-      writes.push(dbPush(notifRef, {
-        type: "mention",
-        qrCodeId: qrId,
-        message: `${fromDisplayName} mentioned you in a comment`,
-        read: false,
-        createdAt: Date.now(),
-      }));
-    });
+    for (const username of mentions) {
+      try {
+        const { docs } = await db.query(["users"], {
+          where: [{ field: "username", op: "==", value: username }],
+          limit: 1,
+        });
+        if (docs.length === 0) continue;
+        const targetUserId = docs[0].id;
+        if (targetUserId === fromUserId) continue;
+        writes.push(
+          rtdb.push(`notifications/${targetUserId}/items`, {
+            type: "mention",
+            qrCodeId: qrId,
+            message: `${fromDisplayName} mentioned you in a comment`,
+            read: false,
+            createdAt: Date.now(),
+          })
+        );
+      } catch {}
+    }
     await Promise.all(writes);
   } catch {}
 }
@@ -49,14 +46,15 @@ export async function notifyQrFollowers(
   excludeUserId?: string
 ): Promise<void> {
   try {
-    const followersSnap = await getDocs(collection(firestore, "qrCodes", qrId, "followers"));
+    const { docs } = await db.query(["qrCodes", qrId, "followers"]);
     const writes: Promise<any>[] = [];
-    followersSnap.forEach((followerDoc) => {
-      const followerId = followerDoc.data().userId as string;
-      if (!followerId || followerId === excludeUserId) return;
-      const userNotifRef = dbRef(realtimeDB, `notifications/${followerId}/items`);
-      writes.push(dbPush(userNotifRef, { type, qrCodeId: qrId, message, read: false, createdAt: Date.now() }));
-    });
+    for (const d of docs) {
+      const followerId = d.data.userId as string;
+      if (!followerId || followerId === excludeUserId) continue;
+      writes.push(rtdb.push(`notifications/${followerId}/items`, {
+        type, qrCodeId: qrId, message, read: false, createdAt: Date.now(),
+      }));
+    }
     await Promise.all(writes);
   } catch {}
 }
@@ -65,48 +63,53 @@ export function subscribeToNotificationCount(
   userId: string,
   onUpdate: (count: number) => void
 ): () => void {
-  const itemsRef = dbRef(realtimeDB, `notifications/${userId}/items`);
-  const handler = (snap: any) => {
-    if (!snap.exists()) { onUpdate(0); return; }
+  const path = `notifications/${userId}/items`;
+  const handler = (data: any) => {
+    if (!data) { onUpdate(0); return; }
     let unread = 0;
-    snap.forEach((child: any) => { if (!child.val().read) unread++; });
+    for (const key of Object.keys(data)) {
+      if (!data[key].read) unread++;
+    }
     onUpdate(unread);
   };
-  onValue(itemsRef, handler);
-  return () => off(itemsRef, "value", handler);
+  rtdb.onValue(path, handler);
+  return () => rtdb.offValue(path, handler);
 }
 
 export function subscribeToNotifications(
   userId: string,
   onUpdate: (notifications: Notification[]) => void
 ): () => void {
-  const itemsRef = dbRef(realtimeDB, `notifications/${userId}/items`);
-  const handler = (snap: any) => {
-    if (!snap.exists()) { onUpdate([]); return; }
-    const items: Notification[] = [];
-    snap.forEach((child: any) => { items.push({ id: child.key, ...child.val() }); });
+  const path = `notifications/${userId}/items`;
+  const handler = (data: any) => {
+    if (!data) { onUpdate([]); return; }
+    const items: Notification[] = Object.entries(data).map(([key, val]: [string, any]) => ({
+      id: key,
+      ...val,
+    }));
     items.sort((a, b) => b.createdAt - a.createdAt);
     onUpdate(items);
   };
-  onValue(itemsRef, handler);
-  return () => off(itemsRef, "value", handler);
+  rtdb.onValue(path, handler);
+  return () => rtdb.offValue(path, handler);
 }
 
 export async function markAllNotificationsRead(userId: string): Promise<void> {
   try {
-    const itemsRef = dbRef(realtimeDB, `notifications/${userId}/items`);
-    const snap = await dbGet(itemsRef);
-    if (!snap.exists()) return;
+    const data = await rtdb.get(`notifications/${userId}/items`);
+    if (!data) return;
     const updates: Record<string, any> = {};
-    snap.forEach((child: any) => {
-      if (!child.val().read) updates[`notifications/${userId}/items/${child.key}/read`] = true;
-    });
-    if (Object.keys(updates).length > 0) await dbUpdate(dbRef(realtimeDB), updates);
+    for (const key of Object.keys(data)) {
+      if (!data[key].read) {
+        updates[`notifications/${userId}/items/${key}/read`] = true;
+      }
+    }
+    if (Object.keys(updates).length > 0) await rtdb.update(updates);
   } catch {}
 }
 
 export async function clearAllNotifications(userId: string): Promise<void> {
   try {
-    await dbRemove(dbRef(realtimeDB, `notifications/${userId}/items`));
+    await rtdb.remove(`notifications/${userId}/items`);
   } catch {}
 }

@@ -2,7 +2,6 @@ import { useEffect, useState, useCallback, useRef } from "react";
 import { Alert } from "react-native";
 import { router } from "expo-router";
 import * as Haptics from "expo-haptics";
-import { DocumentSnapshot } from "firebase/firestore";
 import {
   subscribeToComments,
   getComments,
@@ -49,7 +48,7 @@ export function useQrComments(id: string, userId: string | null, offlineMode: bo
   const [visibleRepliesCount, setVisibleRepliesCount] = useState<Record<string, number>>({});
   const [revealedComments, setRevealedComments] = useState<Set<string>>(new Set());
 
-  const lastCommentRef = useRef<DocumentSnapshot | undefined>(undefined);
+  const lastCommentRef = useRef<any>(undefined);
   const commentInputRef = useRef<any>(null);
   const scrollRef = useRef<any>(null);
 
@@ -118,7 +117,7 @@ export function useQrComments(id: string, userId: string | null, offlineMode: bo
     try {
       const result = await getComments(id, COMMENTS_PER_PAGE, lastCommentRef.current);
       setCommentsList((prev) => [...prev, ...result.comments]);
-      if (result.lastDoc) lastCommentRef.current = result.lastDoc;
+      if (result.cursor) lastCommentRef.current = result.cursor;
       setHasMoreComments(result.hasMore);
     } catch {}
     setCommentsLoading(false);

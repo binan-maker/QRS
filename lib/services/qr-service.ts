@@ -1,26 +1,5 @@
-import { firestore, realtimeDB } from "../firebase";
+import { db, rtdb } from "../db";
 import { isPaymentQr } from "../qr-analysis";
-import {
-  doc,
-  collection,
-  getDoc,
-  setDoc,
-  addDoc,
-  updateDoc,
-  query,
-  orderBy,
-  limit as firestoreLimit,
-  startAfter,
-  getDocs,
-  increment,
-  serverTimestamp,
-  onSnapshot,
-  DocumentSnapshot,
-} from "firebase/firestore";
-import {
-  ref as dbRef,
-  push as dbPush,
-} from "firebase/database";
 import * as Crypto from "expo-crypto";
 import { tsToString } from "./utils";
 import { calculateTrustScore } from "./trust-service";
@@ -56,51 +35,48 @@ export async function getOrCreateQrCode(content: string): Promise<QrCodeData> {
     scanCount: 0, commentCount: 0,
   };
   try {
-    const ref = doc(firestore, "qrCodes", qrId);
-    const snap = await getDoc(ref);
-    if (snap.exists()) {
-      const d = snap.data();
+    const data = await db.get(["qrCodes", qrId]);
+    if (data) {
       return {
         id: qrId,
-        content: d.content || content,
-        contentType: d.contentType || detectContentType(d.content || content),
-        createdAt: tsToString(d.createdAt),
-        scanCount: d.scanCount || 0,
-        commentCount: d.commentCount || 0,
-        ownerId: d.ownerId,
-        ownerName: d.ownerName,
-        brandedUuid: d.brandedUuid,
-        isBranded: d.isBranded || false,
-        signature: d.signature,
-        ownerVerified: d.ownerVerified || false,
+        content: data.content || content,
+        contentType: data.contentType || detectContentType(data.content || content),
+        createdAt: tsToString(data.createdAt),
+        scanCount: data.scanCount || 0,
+        commentCount: data.commentCount || 0,
+        ownerId: data.ownerId,
+        ownerName: data.ownerName,
+        brandedUuid: data.brandedUuid,
+        isBranded: data.isBranded || false,
+        signature: data.signature,
+        ownerVerified: data.ownerVerified || false,
       };
     }
-    await setDoc(ref, {
+    await db.set(["qrCodes", qrId], {
       content, contentType,
-      createdAt: serverTimestamp(),
+      createdAt: db.timestamp(),
       scanCount: 0, commentCount: 0,
     });
   } catch (e) {
-    console.warn("[firestore] getOrCreateQrCode failed:", e);
+    console.warn("[db] getOrCreateQrCode failed:", e);
   }
   return fallback;
 }
 
 export async function getQrCodeById(qrId: string): Promise<QrCodeData | null> {
   try {
-    const snap = await getDoc(doc(firestore, "qrCodes", qrId));
-    if (!snap.exists()) return null;
-    const d = snap.data();
+    const data = await db.get(["qrCodes", qrId]);
+    if (!data) return null;
     return {
       id: qrId,
-      content: d.content,
-      contentType: d.contentType,
-      createdAt: tsToString(d.createdAt),
-      scanCount: d.scanCount || 0,
-      commentCount: d.commentCount || 0,
+      content: data.content,
+      contentType: data.contentType,
+      createdAt: tsToString(data.createdAt),
+      scanCount: data.scanCount || 0,
+      commentCount: data.commentCount || 0,
     };
   } catch (e) {
-    console.warn("[firestore] getQrCodeById failed:", e);
+    console.warn("[db] getQrCodeById failed:", e);
     return null;
   }
 }
@@ -109,17 +85,9 @@ export function subscribeToQrStats(
   qrId: string,
   onUpdate: (data: { scanCount: number; commentCount: number }) => void
 ): () => void {
-  const qrRef = doc(firestore, "qrCodes", qrId);
-  return onSnapshot(
-    qrRef,
-    (snap) => {
-      if (snap.exists()) {
-        const d = snap.data();
-        onUpdate({ scanCount: d.scanCount || 0, commentCount: d.commentCount || 0 });
-      }
-    },
-    () => {}
-  );
+  return db.onDoc(["qrCodes", qrId], (data) => {
+    if (data) onUpdate({ scanCount: data.scanCount || 0, commentCount: data.commentCount || 0 });
+  });
 }
 
 export async function recordScan(
@@ -130,69 +98,49 @@ export async function recordScan(
   isAnonymous: boolean
 ): Promise<void> {
   try {
-    await updateDoc(doc(firestore, "qrCodes", qrId), { scanCount: increment(1) });
+    await db.increment(["qrCodes", qrId], "scanCount", 1);
   } catch (e) {
-    console.warn("[firestore] recordScan: failed to increment scanCount:", e);
+    console.warn("[db] recordScan: failed to increment scanCount:", e);
   }
   if (userId && !isAnonymous) {
     try {
-      await addDoc(collection(firestore, "users", userId, "scans"), {
+      await db.add(["users", userId, "scans"], {
         qrCodeId: qrId, content, contentType,
-        isAnonymous: false, scannedAt: serverTimestamp(),
+        isAnonymous: false, scannedAt: db.timestamp(),
       });
     } catch {}
   }
   try {
-    const velocityRef = dbRef(realtimeDB, `qrScanVelocity/${qrId}`);
-    await dbPush(velocityRef, { ts: Date.now() });
+    await rtdb.push(`qrScanVelocity/${qrId}`, { ts: Date.now() });
   } catch {}
 }
 
 export async function getUserScans(userId: string): Promise<any[]> {
-  const q = query(
-    collection(firestore, "users", userId, "scans"),
-    orderBy("scannedAt", "desc"),
-    firestoreLimit(100)
+  const { docs } = await db.query(
+    ["users", userId, "scans"],
+    { orderBy: { field: "scannedAt", direction: "desc" }, limit: 100 }
   );
-  const snap = await getDocs(q);
-  return snap.docs.map((d) => ({
+  return docs.map((d) => ({
     id: d.id,
-    ...d.data(),
-    scannedAt: tsToString(d.data().scannedAt),
+    ...d.data,
+    scannedAt: tsToString(d.data.scannedAt),
   }));
 }
 
 export async function getUserScansPaginated(
   userId: string,
   pageSize: number = 20,
-  afterDoc?: DocumentSnapshot
-): Promise<{ items: any[]; lastDoc: DocumentSnapshot | null; hasMore: boolean }> {
-  let q;
-  if (afterDoc) {
-    q = query(
-      collection(firestore, "users", userId, "scans"),
-      orderBy("scannedAt", "desc"),
-      startAfter(afterDoc),
-      firestoreLimit(pageSize + 1)
-    );
-  } else {
-    q = query(
-      collection(firestore, "users", userId, "scans"),
-      orderBy("scannedAt", "desc"),
-      firestoreLimit(pageSize + 1)
-    );
-  }
-  const snap = await getDocs(q);
-  const hasMore = snap.docs.length > pageSize;
-  const docs = hasMore ? snap.docs.slice(0, pageSize) : snap.docs;
-  const lastDoc = docs.length > 0 ? docs[docs.length - 1] : null;
+  cursor?: any
+): Promise<{ items: any[]; cursor: any; hasMore: boolean }> {
+  const { docs, cursor: newCursor } = await db.query(
+    ["users", userId, "scans"],
+    { orderBy: { field: "scannedAt", direction: "desc" }, limit: pageSize + 1, cursor }
+  );
+  const hasMore = docs.length > pageSize;
+  const items = hasMore ? docs.slice(0, pageSize) : docs;
   return {
-    items: docs.map((d) => ({
-      id: d.id,
-      ...d.data(),
-      scannedAt: tsToString(d.data().scannedAt),
-    })),
-    lastDoc,
+    items: items.map((d) => ({ id: d.id, ...d.data, scannedAt: tsToString(d.data.scannedAt) })),
+    cursor: items.length > 0 ? newCursor : null,
     hasMore,
   };
 }

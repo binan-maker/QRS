@@ -3,7 +3,6 @@ import { Alert } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as Haptics from "expo-haptics";
 import { router } from "expo-router";
-import { DocumentSnapshot } from "firebase/firestore";
 import { useAuth } from "@/contexts/AuthContext";
 import { getUserScansPaginated, getUserFavorites } from "@/lib/firestore-service";
 import { parseAnyPaymentQr, analyzeAnyPaymentQr, analyzeUrlHeuristics } from "@/lib/qr-analysis";
@@ -31,7 +30,7 @@ export function useHistory() {
   const [loadingMore, setLoadingMore] = useState(false);
   const [cloudHasMore, setCloudHasMore] = useState(false);
   const [filter, setFilter] = useState<Filter>("all");
-  const cloudLastDocRef = useRef<DocumentSnapshot | null>(null);
+  const cloudLastDocRef = useRef<any>(null);
   const prevUserIdRef = useRef<string | null | undefined>(undefined);
 
   const history = useMemo<HistoryItem[]>(() => {
@@ -89,7 +88,7 @@ export function useHistory() {
   const loadInitialCloudHistory = useCallback(async (userId: string) => {
     try {
       const result = await getUserScansPaginated(userId, PAGE_SIZE);
-      cloudLastDocRef.current = result.lastDoc;
+      cloudLastDocRef.current = result.cursor;
       setCloudHasMore(result.hasMore);
       setCloudHistory(result.items.map((s) => ({
         id: s.id, content: s.content, contentType: s.contentType,
@@ -103,7 +102,7 @@ export function useHistory() {
     setLoadingMore(true);
     try {
       const result = await getUserScansPaginated(user.id, PAGE_SIZE, cloudLastDocRef.current ?? undefined);
-      cloudLastDocRef.current = result.lastDoc;
+      cloudLastDocRef.current = result.cursor;
       setCloudHasMore(result.hasMore);
       setCloudHistory((prev) => [...prev, ...result.items.map((s) => ({
         id: s.id, content: s.content, contentType: s.contentType,

@@ -1,20 +1,4 @@
-import { firestore, realtimeDB } from "../firebase";
-import {
-  doc,
-  collection,
-  getDoc,
-  setDoc,
-  addDoc,
-  updateDoc,
-  deleteDoc,
-  query,
-  orderBy,
-  limit as firestoreLimit,
-  getDocs,
-  serverTimestamp,
-  where,
-} from "firebase/firestore";
-import { remove as dbRemove, ref as dbRef } from "firebase/database";
+import { db, rtdb } from "../db";
 import { tsToString } from "./utils";
 import type { UserStats, UsernameData } from "./types";
 
@@ -22,17 +6,17 @@ export type { UserStats, UsernameData };
 
 export async function getUserStats(userId: string): Promise<UserStats> {
   try {
-    const [followingSnap, scansSnap, commentsSnap, userDoc] = await Promise.all([
-      getDocs(collection(firestore, "users", userId, "following")),
-      getDocs(collection(firestore, "users", userId, "scans")),
-      getDocs(collection(firestore, "users", userId, "comments")),
-      getDoc(doc(firestore, "users", userId)),
+    const [followingResult, scansResult, commentsResult, userDoc] = await Promise.all([
+      db.query(["users", userId, "following"]),
+      db.query(["users", userId, "scans"]),
+      db.query(["users", userId, "comments"]),
+      db.get(["users", userId]),
     ]);
     return {
-      followingCount: followingSnap.size,
-      scanCount: scansSnap.size,
-      commentCount: commentsSnap.size,
-      totalLikesReceived: userDoc.exists() ? (userDoc.data().totalLikesReceived || 0) : 0,
+      followingCount: followingResult.docs.length,
+      scanCount: scansResult.docs.length,
+      commentCount: commentsResult.docs.length,
+      totalLikesReceived: userDoc?.totalLikesReceived || 0,
     };
   } catch {
     return { followingCount: 0, scanCount: 0, commentCount: 0, totalLikesReceived: 0 };
@@ -41,21 +25,21 @@ export async function getUserStats(userId: string): Promise<UserStats> {
 
 export async function updateUserPhotoURL(userId: string, photoURL: string): Promise<void> {
   try {
-    await updateDoc(doc(firestore, "users", userId), { photoURL });
+    await db.update(["users", userId], { photoURL });
   } catch {}
 }
 
 export async function getUserPhotoURL(userId: string): Promise<string | null> {
   try {
-    const snap = await getDoc(doc(firestore, "users", userId));
-    if (snap.exists()) return snap.data().photoURL || null;
+    const data = await db.get(["users", userId]);
+    return data?.photoURL || null;
   } catch {}
   return null;
 }
 
 export async function isUserFavorite(qrId: string, userId: string): Promise<boolean> {
-  const snap = await getDoc(doc(firestore, "users", userId, "favorites", qrId));
-  return snap.exists();
+  const data = await db.get(["users", userId, "favorites", qrId]);
+  return data !== null;
 }
 
 export async function toggleFavorite(
@@ -66,38 +50,36 @@ export async function toggleFavorite(
 ): Promise<boolean> {
   const isFav = await isUserFavorite(qrId, userId);
   if (isFav) {
-    await deleteDoc(doc(firestore, "users", userId, "favorites", qrId));
+    await db.delete(["users", userId, "favorites", qrId]);
   } else {
-    await setDoc(doc(firestore, "users", userId, "favorites", qrId), {
-      qrCodeId: qrId, content, contentType, createdAt: serverTimestamp(),
+    await db.set(["users", userId, "favorites", qrId], {
+      qrCodeId: qrId, content, contentType, createdAt: db.timestamp(),
     });
   }
   return !isFav;
 }
 
 export async function getUserFavorites(userId: string): Promise<any[]> {
-  const q = query(
-    collection(firestore, "users", userId, "favorites"),
-    orderBy("createdAt", "desc")
+  const { docs } = await db.query(
+    ["users", userId, "favorites"],
+    { orderBy: { field: "createdAt", direction: "desc" } }
   );
-  const snap = await getDocs(q);
-  return snap.docs.map((d) => ({
+  return docs.map((d) => ({
     id: d.id,
-    ...d.data(),
-    createdAt: tsToString(d.data().createdAt),
+    ...d.data,
+    createdAt: tsToString(d.data.createdAt),
   }));
 }
 
 export async function getUserFollowing(userId: string): Promise<any[]> {
-  const q = query(
-    collection(firestore, "users", userId, "following"),
-    orderBy("createdAt", "desc")
+  const { docs } = await db.query(
+    ["users", userId, "following"],
+    { orderBy: { field: "createdAt", direction: "desc" } }
   );
-  const snap = await getDocs(q);
-  return snap.docs.map((d) => ({
+  return docs.map((d) => ({
     id: d.id,
-    ...d.data(),
-    createdAt: tsToString(d.data().createdAt),
+    ...d.data,
+    createdAt: tsToString(d.data.createdAt),
   }));
 }
 
@@ -106,25 +88,23 @@ export async function submitFeedback(
   email: string | null,
   message: string
 ): Promise<void> {
-  await addDoc(collection(firestore, "feedback"), {
-    userId, email, message, createdAt: serverTimestamp(),
-  });
+  await db.add(["feedback"], { userId, email, message, createdAt: db.timestamp() });
 }
 
 export async function deleteUserAccount(userId: string): Promise<void> {
-  await updateDoc(doc(firestore, "users", userId), {
+  await db.update(["users", userId], {
     isDeleted: true,
-    deletedAt: serverTimestamp(),
+    deletedAt: db.timestamp(),
   });
   try {
-    await dbRemove(dbRef(realtimeDB, `notifications/${userId}`));
+    await rtdb.remove(`notifications/${userId}`);
   } catch {}
 }
 
 export async function checkUsernameAvailable(username: string): Promise<boolean> {
   try {
-    const snap = await getDoc(doc(firestore, "usernames", username));
-    return !snap.exists();
+    const data = await db.get(["usernames", username]);
+    return data === null;
   } catch (e: any) {
     if (e?.code === "permission-denied") return true;
     return false;
@@ -147,9 +127,8 @@ export async function generateUniqueUsername(displayName: string): Promise<strin
 
 export async function getUsernameData(userId: string): Promise<UsernameData> {
   try {
-    const snap = await getDoc(doc(firestore, "users", userId));
-    if (snap.exists()) {
-      const data = snap.data();
+    const data = await db.get(["users", userId]);
+    if (data) {
       const username = data.username || null;
       let usernameLastChangedAt: Date | null = null;
       if (data.usernameLastChangedAt) {
@@ -170,15 +149,13 @@ export async function updateUsername(userId: string, newUsername: string): Promi
     );
   }
 
-  const userRef = doc(firestore, "users", userId);
-  const userSnap = await getDoc(userRef);
-  if (!userSnap.exists()) throw new Error("User not found.");
+  const userData = await db.get(["users", userId]);
+  if (!userData) throw new Error("User not found.");
 
-  const data = userSnap.data();
-  if (data.usernameLastChangedAt) {
-    const lastChanged = data.usernameLastChangedAt.toDate
-      ? data.usernameLastChangedAt.toDate()
-      : new Date(data.usernameLastChangedAt);
+  if (userData.usernameLastChangedAt) {
+    const lastChanged = userData.usernameLastChangedAt.toDate
+      ? userData.usernameLastChangedAt.toDate()
+      : new Date(userData.usernameLastChangedAt);
     const daysSince = (Date.now() - lastChanged.getTime()) / 86400000;
     if (daysSince < 15) {
       const daysLeft = Math.ceil(15 - daysSince);
@@ -188,35 +165,29 @@ export async function updateUsername(userId: string, newUsername: string): Promi
     }
   }
 
-  const oldUsername: string | null = data.username || null;
+  const oldUsername: string | null = userData.username || null;
   if (oldUsername === newUsername) return;
 
   const available = await checkUsernameAvailable(newUsername);
   if (!available) throw new Error("This username is already taken. Please choose another.");
 
-  await setDoc(doc(firestore, "usernames", newUsername), { userId, reservedAt: serverTimestamp() });
+  await db.set(["usernames", newUsername], { userId, reservedAt: db.timestamp() });
   if (oldUsername) {
-    try { await deleteDoc(doc(firestore, "usernames", oldUsername)); } catch {}
+    try { await db.delete(["usernames", oldUsername]); } catch {}
   }
-  await updateDoc(userRef, { username: newUsername, usernameLastChangedAt: serverTimestamp() });
+  await db.update(["users", userId], { username: newUsername, usernameLastChangedAt: db.timestamp() });
 
   try {
-    const commentsSnap = await getDocs(
-      query(
-        collection(firestore, "users", userId, "comments"),
-        orderBy("createdAt", "desc"),
-        firestoreLimit(50)
-      )
+    const { docs } = await db.query(
+      ["users", userId, "comments"],
+      { orderBy: { field: "createdAt", direction: "desc" }, limit: 50 }
     );
     await Promise.all(
-      commentsSnap.docs.map(async (d) => {
-        const cData = d.data();
+      docs.map(async (d) => {
+        const cData = d.data;
         if (cData.qrCodeId && d.id) {
           try {
-            await updateDoc(
-              doc(firestore, "qrCodes", cData.qrCodeId, "comments", d.id),
-              { userUsername: newUsername }
-            );
+            await db.update(["qrCodes", cData.qrCodeId, "comments", d.id], { userUsername: newUsername });
           } catch {}
         }
       })

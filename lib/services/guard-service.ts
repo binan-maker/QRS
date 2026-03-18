@@ -1,5 +1,4 @@
-import { firestore } from "../firebase";
-import { doc, getDoc, setDoc, updateDoc, serverTimestamp } from "firebase/firestore";
+import { db } from "../db";
 import { tsToString } from "./utils";
 import type { GuardLink } from "./types";
 
@@ -12,7 +11,7 @@ export async function saveGuardLink(
   ownerName: string,
   ownerId: string
 ): Promise<void> {
-  await setDoc(doc(firestore, "guardLinks", uuid), {
+  await db.set(["guardLinks", uuid], {
     uuid,
     currentDestination: destination,
     previousDestination: null,
@@ -21,7 +20,7 @@ export async function saveGuardLink(
     ownerId,
     isActive: true,
     destinationChangedAt: null,
-    createdAt: serverTimestamp(),
+    createdAt: db.timestamp(),
   });
 }
 
@@ -30,36 +29,33 @@ export async function updateGuardLinkDestination(
   newDestination: string,
   userId: string
 ): Promise<void> {
-  const ref = doc(firestore, "guardLinks", uuid);
-  const snap = await getDoc(ref);
-  if (!snap.exists()) throw new Error("Guard link not found");
-  const data = snap.data();
+  const data = await db.get(["guardLinks", uuid]);
+  if (!data) throw new Error("Guard link not found");
   if (data.ownerId !== userId) throw new Error("Not authorized");
-  await updateDoc(ref, {
+  await db.update(["guardLinks", uuid], {
     previousDestination: data.currentDestination,
     currentDestination: newDestination,
-    destinationChangedAt: serverTimestamp(),
+    destinationChangedAt: db.timestamp(),
   });
 }
 
 export async function getGuardLink(uuid: string): Promise<GuardLink | null> {
   try {
-    const snap = await getDoc(doc(firestore, "guardLinks", uuid));
-    if (!snap.exists()) return null;
-    const d = snap.data();
+    const data = await db.get(["guardLinks", uuid]);
+    if (!data) return null;
     return {
       uuid,
-      currentDestination: d.currentDestination || "",
-      previousDestination: d.previousDestination || null,
-      businessName: d.businessName || null,
-      ownerName: d.ownerName || "",
-      ownerId: d.ownerId || "",
-      isActive: d.isActive !== false,
-      destinationChangedAt: d.destinationChangedAt ? tsToString(d.destinationChangedAt) : null,
-      createdAt: tsToString(d.createdAt),
+      currentDestination: data.currentDestination || "",
+      previousDestination: data.previousDestination || null,
+      businessName: data.businessName || null,
+      ownerName: data.ownerName || "",
+      ownerId: data.ownerId || "",
+      isActive: data.isActive !== false,
+      destinationChangedAt: data.destinationChangedAt ? tsToString(data.destinationChangedAt) : null,
+      createdAt: tsToString(data.createdAt),
     };
   } catch (e) {
-    console.warn("[firestore] getGuardLink failed:", e);
+    console.warn("[db] getGuardLink failed:", e);
     return null;
   }
 }
@@ -69,9 +65,8 @@ export async function setGuardLinkActive(
   userId: string,
   isActive: boolean
 ): Promise<void> {
-  const ref = doc(firestore, "guardLinks", uuid);
-  const snap = await getDoc(ref);
-  if (!snap.exists()) throw new Error("Guard link not found");
-  if (snap.data().ownerId !== userId) throw new Error("Not authorized");
-  await updateDoc(ref, { isActive });
+  const data = await db.get(["guardLinks", uuid]);
+  if (!data) throw new Error("Guard link not found");
+  if (data.ownerId !== userId) throw new Error("Not authorized");
+  await db.update(["guardLinks", uuid], { isActive });
 }

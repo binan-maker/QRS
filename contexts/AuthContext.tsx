@@ -11,8 +11,8 @@ import {
   sendEmailVerification,
   type User as FirebaseUser,
 } from "firebase/auth";
-import { doc, setDoc, getDoc, updateDoc, serverTimestamp } from "firebase/firestore";
-import { firebaseAuth, firestore } from "@/lib/firebase";
+import { firebaseAuth } from "@/lib/firebase";
+import { db } from "@/lib/db";
 import * as Google from "expo-auth-session/providers/google";
 import * as WebBrowser from "expo-web-browser";
 import {
@@ -52,38 +52,37 @@ const GOOGLE_WEB_CLIENT_ID = "971359442211-dppv9u14kun8mo5c0e07pr6f6veh81aa.apps
 
 export { getAuthErrorMessage };
 
-async function syncUserToFirestore(fbUser: FirebaseUser, displayName?: string) {
+async function syncUserToDb(fbUser: FirebaseUser, displayName?: string) {
   try {
-    const userRef = doc(firestore, "users", fbUser.uid);
-    const snap = await getDoc(userRef);
-    if (!snap.exists()) {
+    const userData = await db.get(["users", fbUser.uid]);
+    if (!userData) {
       const name = displayName || fbUser.displayName || fbUser.email?.split("@")[0] || "User";
       const username = await generateUniqueUsername(name);
-      await setDoc(userRef, {
+      await db.set(["users", fbUser.uid], {
         uid: fbUser.uid,
         email: fbUser.email,
         displayName: name,
         photoURL: fbUser.photoURL || null,
         isDeleted: false,
-        createdAt: serverTimestamp(),
+        createdAt: db.timestamp(),
         username,
       });
       try {
-        await setDoc(doc(firestore, "usernames", username), {
+        await db.set(["usernames", username], {
           userId: fbUser.uid,
-          reservedAt: serverTimestamp(),
+          reservedAt: db.timestamp(),
         });
       } catch {}
-    } else if (snap.data().isDeleted) {
+    } else if (userData.isDeleted) {
       throw new Error("ACCOUNT_DELETED");
-    } else if (!snap.data().username) {
-      const name = displayName || fbUser.displayName || snap.data().displayName || "User";
+    } else if (!userData.username) {
+      const name = displayName || fbUser.displayName || userData.displayName || "User";
       const username = await generateUniqueUsername(name);
       try {
-        await updateDoc(userRef, { username });
-        await setDoc(doc(firestore, "usernames", username), {
+        await db.update(["users", fbUser.uid], { username });
+        await db.set(["usernames", username], {
           userId: fbUser.uid,
-          reservedAt: serverTimestamp(),
+          reservedAt: db.timestamp(),
         });
       } catch {}
     }
@@ -120,9 +119,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           const idToken = await fbUser.getIdToken();
           const authUser = toAuthUser(fbUser);
           try {
-            const userSnap = await getDoc(doc(firestore, "users", fbUser.uid));
-            if (userSnap.exists() && userSnap.data().username) {
-              authUser.username = userSnap.data().username as string;
+            const userData = await db.get(["users", fbUser.uid]);
+            if (userData?.username) {
+              authUser.username = userData.username as string;
             }
           } catch {}
           setUser(authUser);
@@ -158,7 +157,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         err.code = "auth/email-not-verified";
         throw err;
       }
-      await syncUserToFirestore(cred.user);
+      await syncUserToDb(cred.user);
       const idToken = await cred.user.getIdToken();
       setUser(toAuthUser(cred.user));
       setToken(idToken);
@@ -173,7 +172,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const cred = await createUserWithEmailAndPassword(firebaseAuth, email, password);
       await updateProfile(cred.user, { displayName });
       await sendEmailVerification(cred.user);
-      await syncUserToFirestore(cred.user, displayName);
+      await syncUserToDb(cred.user, displayName);
       await firebaseSignOut(firebaseAuth);
       const err = new Error("VERIFICATION_SENT") as any;
       err.code = "auth/verification-sent";
@@ -188,7 +187,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       const credential = GoogleAuthProvider.credential(null, accessToken);
       const cred = await signInWithCredential(firebaseAuth, credential);
-      await syncUserToFirestore(cred.user);
+      await syncUserToDb(cred.user);
       const idToken = await cred.user.getIdToken();
       setUser(toAuthUser(cred.user));
       setToken(idToken);
@@ -237,15 +236,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (reloaded) {
         const authUser = toAuthUser(reloaded);
         try {
-          await updateDoc(doc(firestore, "users", reloaded.uid), {
+          await db.update(["users", reloaded.uid], {
             displayName: reloaded.displayName || "",
             photoURL: reloaded.photoURL || null,
           });
         } catch {}
         try {
-          const userSnap = await getDoc(doc(firestore, "users", reloaded.uid));
-          if (userSnap.exists() && userSnap.data().username) {
-            authUser.username = userSnap.data().username as string;
+          const userData = await db.get(["users", reloaded.uid]);
+          if (userData?.username) {
+            authUser.username = userData.username as string;
           }
         } catch {}
         setUser(authUser);

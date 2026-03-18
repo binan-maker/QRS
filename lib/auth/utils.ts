@@ -1,5 +1,4 @@
-import { getDoc, doc } from "firebase/firestore";
-import { firestore } from "@/lib/firebase";
+import { db } from "@/lib/db";
 
 export function getAuthErrorMessage(code: string): string {
   switch (code) {
@@ -55,8 +54,8 @@ export async function generateUniqueUsername(displayName: string): Promise<strin
           : base + Math.floor(100 + Math.random() * 900)
         : base.slice(0, 12) + Math.floor(1000 + Math.random() * 9000);
     try {
-      const snap = await getDoc(doc(firestore, "usernames", String(candidate)));
-      if (!snap.exists()) return String(candidate);
+      const data = await db.get(["usernames", String(candidate)]);
+      if (!data) return String(candidate);
     } catch (e: any) {
       if (e?.code === "permission-denied") return String(candidate);
     }

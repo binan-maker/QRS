@@ -6,10 +6,22 @@ A full-stack mobile-first QR code scanning and management app built with Expo (R
 
 - **Frontend**: Expo (React Native) with Expo Router for navigation, running on port 8081
 - **Backend**: Express server running on port 5000 (only handles `/api/qr/decode-image`)
-- **Primary Database**: Firebase Firestore (all app data: QR codes, reports, comments, users, favorites, follows, feedback)
-- **Realtime Database**: Firebase Realtime Database (live notifications for followers when QR codes get new comments/reports)
+- **Primary Database**: Pluggable via `lib/db/config.ts` — default: Firebase Firestore
+- **Realtime Database**: Pluggable — default: Firebase Realtime Database (notifications, scan velocity)
 - **Auth**: Firebase Auth — email/password + Google OAuth (`expo-auth-session`)
-- **PostgreSQL / Drizzle**: Reserved for future migration at ~10k users (`server/storage.ts` — not imported anywhere yet)
+- **PostgreSQL / Drizzle**: Ready stub at `lib/db/providers/postgres.ts`; schema in `shared/schema.ts`
+
+## Database Provider Abstraction
+
+**To switch backend → edit ONE line** in `lib/db/config.ts`:
+```ts
+export const DB_PROVIDER = "firebase"  // ← change to "supabase" or "postgres"
+```
+- `lib/db/adapter.ts` — TypeScript interface (DbAdapter, RealtimeAdapter)
+- `lib/db/providers/firebase.ts` — Firebase implementation (active)
+- `lib/db/providers/supabase.ts` — Supabase stub (fill in, then flip config)
+- `lib/db/providers/postgres.ts` — PostgreSQL stub (fill in, then flip config)
+- All services import `{ db, rtdb }` from `lib/db` — zero Firebase lock-in in business logic
 
 ## Project Structure
 
