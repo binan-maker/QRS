@@ -1,10 +1,11 @@
 import React from "react";
 import { View, Text, StyleSheet, Pressable, Platform } from "react-native";
-import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
+import { Ionicons } from "@expo/vector-icons";
 import * as Clipboard from "expo-clipboard";
 import * as Haptics from "expo-haptics";
 import type { ParsedPaymentQr } from "@/lib/qr-analysis";
 import Colors from "@/constants/colors";
+import PaymentCard from "./PaymentCard";
 
 function getTypeIcon(contentType: string): keyof typeof Ionicons.glyphMap {
   switch (contentType) {
@@ -126,25 +127,6 @@ function formatEventDate(dt: string): string {
   } catch { return dt; }
 }
 
-function getPaymentAppIcon(appId: string): keyof typeof Ionicons.glyphMap {
-  switch (appId) {
-    case "phonepe": return "phone-portrait-outline";
-    case "gpay_india": return "logo-google";
-    case "paytm": return "wallet-outline";
-    case "bhim": return "shield-checkmark-outline";
-    case "amazon_pay": return "cart-outline";
-    case "paypal": return "card-outline";
-    case "venmo": return "people-outline";
-    case "cash_app": return "cash-outline";
-    case "alipay": case "wechat_pay": return "globe-outline";
-    case "bitcoin": case "ethereum": case "litecoin":
-    case "solana": case "dogecoin": case "bnb": return "logo-bitcoin";
-    case "mpesa": case "flutterwave": case "paystack": return "phone-portrait-outline";
-    case "revolut": case "wise": case "swish_se": return "swap-horizontal-outline";
-    case "pix": return "flash-outline";
-    default: return "card-outline";
-  }
-}
 
 interface Props {
   content: string;
@@ -203,6 +185,53 @@ const ContentCard = React.memo(function ContentCard({
   const eventData = contentType === "event" ? parseEvent(content) : null;
 
   const basicPayment = (contentType === "payment" && !parsedPayment) ? extractBasicPaymentInfo(content) : null;
+
+  if (contentType === "payment") {
+    const paymentData: ParsedPaymentQr = parsedPayment ?? {
+      app: "upi",
+      appDisplayName: "UPI Payment",
+      appCategory: "upi_india",
+      region: "India",
+      recipientId: basicPayment?.vpa || "",
+      recipientName: basicPayment?.name,
+      amount: basicPayment?.amount,
+      currency: basicPayment?.currency || "INR",
+      rawContent: content,
+      isAmountPreFilled: !!basicPayment?.amount,
+      vpa: basicPayment?.vpa,
+    };
+    return (
+      <View>
+        <PaymentCard
+          parsedPayment={paymentData}
+          isDeactivated={isDeactivated}
+          onOpenContent={onOpenContent}
+        />
+        <View style={styles.rawContentRow}>
+          <Ionicons name="code-outline" size={13} color={Colors.dark.textMuted} />
+          <Text
+            style={styles.rawContentText}
+            selectable
+            numberOfLines={contentExpanded ? undefined : 1}
+          >{content}</Text>
+          <Pressable onPress={() => setContentExpanded((v) => !v)}>
+            <Ionicons
+              name={contentExpanded ? "chevron-up" : "chevron-down"}
+              size={14}
+              color={Colors.dark.textMuted}
+            />
+          </Pressable>
+          <Pressable onPress={handleCopy} style={styles.copyIconBtnSmall}>
+            <Ionicons
+              name={copied ? "checkmark" : "copy-outline"}
+              size={13}
+              color={copied ? Colors.dark.safe : Colors.dark.textMuted}
+            />
+          </Pressable>
+        </View>
+      </View>
+    );
+  }
 
   return (
     <View style={styles.contentCard}>
@@ -265,105 +294,19 @@ const ContentCard = React.memo(function ContentCard({
         </View>
       ) : null}
 
-      {/* ── Payment detail card ── */}
-      {contentType === "payment" && parsedPayment && !isDeactivated ? (
-        <View style={styles.infoCard}>
-          <View style={styles.paymentRow}>
-            <Text style={styles.infoLabel}>App</Text>
-            <View style={{ flexDirection: "row", alignItems: "center", gap: 6, flex: 1, justifyContent: "flex-end" }}>
-              <Text style={[styles.infoValue, { color: Colors.dark.primary }]} numberOfLines={1}>
-                {parsedPayment.appDisplayName}
-              </Text>
-              <View style={styles.regionBadge}>
-                <Text style={styles.regionBadgeText}>{parsedPayment.region}</Text>
-              </View>
-            </View>
-          </View>
-          {parsedPayment.recipientName ? <InfoRow label="Payee" value={parsedPayment.recipientName} /> : null}
-          {parsedPayment.appCategory === "upi_india" && parsedPayment.vpa ? (
-            <>
-              <InfoRow label="UPI ID" value={parsedPayment.vpa} selectable />
-              {parsedPayment.bankHandle ? <InfoRow label="Bank" value={`@${parsedPayment.bankHandle}`} /> : null}
-            </>
-          ) : null}
-          {parsedPayment.appCategory === "crypto" && parsedPayment.recipientId ? (
-            <View style={styles.paymentRow}>
-              <Text style={styles.infoLabel}>Address</Text>
-              <Text selectable numberOfLines={2} style={styles.cryptoAddress}>{parsedPayment.recipientId}</Text>
-            </View>
-          ) : null}
-          {parsedPayment.appCategory !== "upi_india" && parsedPayment.appCategory !== "crypto" && parsedPayment.recipientId && !parsedPayment.recipientName ? (
-            <InfoRow label="To" value={parsedPayment.recipientId} selectable />
-          ) : null}
-          {parsedPayment.isAmountPreFilled && parsedPayment.amount ? (
-            <View style={styles.paymentRow}>
-              <Text style={styles.infoLabel}>Amount</Text>
-              <Text style={[styles.infoValue, { color: Colors.dark.warning, fontFamily: "Inter_700Bold" }]}>
-                {parsedPayment.currency === "INR"
-                  ? `₹${parseFloat(parsedPayment.amount).toLocaleString("en-IN")}`
-                  : parsedPayment.currency === "USD"
-                  ? `$${parseFloat(parsedPayment.amount).toLocaleString("en-US")}`
-                  : parsedPayment.currency === "EUR"
-                  ? `€${parseFloat(parsedPayment.amount).toLocaleString("de-DE")}`
-                  : `${parsedPayment.amount} ${parsedPayment.currency || ""}`}
-              </Text>
-            </View>
-          ) : null}
-          {parsedPayment.note ? <InfoRow label="Note" value={parsedPayment.note} /> : null}
-
-          <Pressable onPress={onOpenContent} style={({ pressed }) => [styles.actionBtn, { opacity: pressed ? 0.8 : 1 }]}>
-            <Ionicons name={getPaymentAppIcon(parsedPayment.app) as any} size={18} color="#000" />
-            <Text style={styles.actionBtnText}>
-              {parsedPayment.appCategory === "crypto"
-                ? `Open in ${parsedPayment.appDisplayName} Wallet`
-                : `Pay with ${parsedPayment.appDisplayName}`}
-            </Text>
+      {/* ── Action row ── */}
+      <View style={styles.actionRow}>
+        {hasOpenAction ? (
+          <Pressable onPress={onOpenContent} style={({ pressed }) => [styles.openBtn, { opacity: pressed ? 0.8 : 1 }]}>
+            <Ionicons name="open-outline" size={16} color={Colors.dark.primary} />
+            <Text style={styles.openBtnText}>{openLabel}</Text>
           </Pressable>
-          <Text style={styles.warningText}>
-            {parsedPayment.appCategory === "crypto"
-              ? "Crypto is irreversible — verify the address character by character"
-              : parsedPayment.appCategory === "upi_india"
-              ? "Verify the payee name and UPI ID before paying"
-              : "Always verify the recipient before sending money"}
-          </Text>
-        </View>
-      ) : contentType === "payment" && !parsedPayment && !isDeactivated ? (
-        <View style={styles.infoCard}>
-          {basicPayment?.name ? <InfoRow label="Payee" value={basicPayment.name} /> : null}
-          {basicPayment?.vpa ? <InfoRow label="UPI ID" value={basicPayment.vpa} selectable /> : null}
-          {basicPayment?.amount ? (
-            <View style={styles.paymentRow}>
-              <Text style={styles.infoLabel}>Amount</Text>
-              <Text style={[styles.infoValue, { color: Colors.dark.warning, fontFamily: "Inter_700Bold" }]}>
-                {basicPayment.currency === "INR" || !basicPayment.currency
-                  ? `₹${parseFloat(basicPayment.amount).toLocaleString("en-IN")}`
-                  : `${basicPayment.amount} ${basicPayment.currency}`}
-              </Text>
-            </View>
-          ) : null}
-          <Pressable onPress={onOpenContent} style={({ pressed }) => [styles.actionBtn, { opacity: pressed ? 0.8 : 1 }]}>
-            <Ionicons name="card-outline" size={18} color="#000" />
-            <Text style={styles.actionBtnText}>Open Payment</Text>
-          </Pressable>
-          <Text style={styles.warningText}>Verify the recipient before making any payment</Text>
-        </View>
-      ) : null}
-
-      {/* ── Action row for all non-payment types ── */}
-      {contentType !== "payment" ? (
-        <View style={styles.actionRow}>
-          {hasOpenAction ? (
-            <Pressable onPress={onOpenContent} style={({ pressed }) => [styles.openBtn, { opacity: pressed ? 0.8 : 1 }]}>
-              <Ionicons name="open-outline" size={16} color={Colors.dark.primary} />
-              <Text style={styles.openBtnText}>{openLabel}</Text>
-            </Pressable>
-          ) : null}
-          <Pressable onPress={handleCopy} style={({ pressed }) => [styles.copyIconBtn, { opacity: pressed ? 0.75 : 1 }]}>
-            <Ionicons name="copy-outline" size={17} color={Colors.dark.textSecondary} />
-          </Pressable>
-          {copied ? <Text style={styles.copiedToast}>Copied!</Text> : null}
-        </View>
-      ) : null}
+        ) : null}
+        <Pressable onPress={handleCopy} style={({ pressed }) => [styles.copyIconBtn, { opacity: pressed ? 0.75 : 1 }]}>
+          <Ionicons name="copy-outline" size={17} color={Colors.dark.textSecondary} />
+        </Pressable>
+        {copied ? <Text style={styles.copiedToast}>Copied!</Text> : null}
+      </View>
     </View>
   );
 });
@@ -430,5 +373,19 @@ const styles = StyleSheet.create({
   warningText: {
     fontSize: 12, fontFamily: "Inter_400Regular", color: Colors.dark.textMuted,
     textAlign: "center", lineHeight: 18, marginTop: 4,
+  },
+  rawContentRow: {
+    flexDirection: "row", alignItems: "center", gap: 6,
+    backgroundColor: Colors.dark.surfaceLight, borderRadius: 10,
+    paddingHorizontal: 12, paddingVertical: 8, marginBottom: 16,
+    borderWidth: 1, borderColor: Colors.dark.surfaceBorder,
+  },
+  rawContentText: {
+    flex: 1, fontSize: 11, fontFamily: "Inter_400Regular",
+    color: Colors.dark.textMuted, letterSpacing: 0.2,
+  },
+  copyIconBtnSmall: {
+    width: 26, height: 26, borderRadius: 7, alignItems: "center", justifyContent: "center",
+    backgroundColor: Colors.dark.surfaceBorder,
   },
 });
