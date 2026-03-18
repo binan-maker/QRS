@@ -15,6 +15,11 @@ import { doc, setDoc, getDoc, updateDoc, serverTimestamp } from "firebase/firest
 import { firebaseAuth, firestore } from "@/lib/firebase";
 import * as Google from "expo-auth-session/providers/google";
 import * as WebBrowser from "expo-web-browser";
+import {
+  getAuthErrorMessage,
+  mapFirebaseError,
+  generateUniqueUsername,
+} from "@/lib/auth/utils";
 
 WebBrowser.maybeCompleteAuthSession();
 
@@ -45,69 +50,7 @@ const AuthContext = createContext<AuthContextValue | null>(null);
 
 const GOOGLE_WEB_CLIENT_ID = "971359442211-dppv9u14kun8mo5c0e07pr6f6veh81aa.apps.googleusercontent.com";
 
-export function getAuthErrorMessage(code: string): string {
-  switch (code) {
-    case "auth/invalid-credential":
-    case "auth/wrong-password":
-    case "auth/user-not-found":
-      return "Incorrect email or password. Please try again.";
-    case "auth/invalid-email":
-      return "Please enter a valid email address.";
-    case "auth/email-already-in-use":
-      return "An account with this email already exists. Try signing in instead.";
-    case "auth/weak-password":
-      return "Password must be at least 6 characters.";
-    case "auth/too-many-requests":
-      return "Too many failed attempts. Please wait a moment and try again.";
-    case "auth/network-request-failed":
-      return "Network error. Please check your internet connection and try again.";
-    case "auth/user-disabled":
-      return "This account has been disabled. Please contact support.";
-    case "auth/requires-recent-login":
-      return "For security, please sign out and sign back in before making this change.";
-    case "auth/email-not-verified":
-      return "Please verify your email address before signing in. Check your inbox for a verification link.";
-    case "auth/operation-not-allowed":
-      return "This sign-in method is not enabled. Please contact support.";
-    case "auth/popup-closed-by-user":
-    case "auth/cancelled-popup-request":
-      return "Sign-in was cancelled. Please try again.";
-    case "auth/account-exists-with-different-credential":
-      return "An account already exists with this email using a different sign-in method.";
-    case "ACCOUNT_DELETED":
-      return "This account has been deleted.";
-    default:
-      return "Something went wrong. Please try again.";
-  }
-}
-
-function mapFirebaseError(e: any): Error {
-  const code = e?.code ?? e?.message ?? "";
-  return new Error(getAuthErrorMessage(code));
-}
-
-async function generateUniqueUsernameForUser(displayName: string): Promise<string> {
-  const base = displayName
-    .toLowerCase()
-    .replace(/[^a-z0-9]/g, "")
-    .slice(0, 15) || "user";
-  for (let attempt = 0; attempt < 10; attempt++) {
-    const candidate =
-      attempt === 0
-        ? base.length >= 3
-          ? base
-          : base + Math.floor(100 + Math.random() * 900)
-        : base.slice(0, 12) + Math.floor(1000 + Math.random() * 9000);
-    try {
-      const snap = await getDoc(doc(firestore, "usernames", String(candidate)));
-      if (!snap.exists()) return String(candidate);
-    } catch (e: any) {
-      // If permission-denied, rules not deployed yet — treat as available
-      if (e?.code === "permission-denied") return String(candidate);
-    }
-  }
-  return "user" + Date.now().toString().slice(-8);
-}
+export { getAuthErrorMessage };
 
 async function syncUserToFirestore(fbUser: FirebaseUser, displayName?: string) {
   try {
@@ -115,7 +58,7 @@ async function syncUserToFirestore(fbUser: FirebaseUser, displayName?: string) {
     const snap = await getDoc(userRef);
     if (!snap.exists()) {
       const name = displayName || fbUser.displayName || fbUser.email?.split("@")[0] || "User";
-      const username = await generateUniqueUsernameForUser(name);
+      const username = await generateUniqueUsername(name);
       await setDoc(userRef, {
         uid: fbUser.uid,
         email: fbUser.email,
@@ -135,7 +78,7 @@ async function syncUserToFirestore(fbUser: FirebaseUser, displayName?: string) {
       throw new Error("ACCOUNT_DELETED");
     } else if (!snap.data().username) {
       const name = displayName || fbUser.displayName || snap.data().displayName || "User";
-      const username = await generateUniqueUsernameForUser(name);
+      const username = await generateUniqueUsername(name);
       try {
         await updateDoc(userRef, { username });
         await setDoc(doc(firestore, "usernames", username), {
@@ -279,9 +222,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   async function resendVerification() {
     try {
       const currentUser = firebaseAuth.currentUser;
-      if (currentUser) {
-        await sendEmailVerification(currentUser);
-      }
+      if (currentUser) await sendEmailVerification(currentUser);
     } catch (e: any) {
       throw mapFirebaseError(e);
     }

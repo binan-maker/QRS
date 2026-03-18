@@ -5,10 +5,6 @@ import {
   ScrollView,
   Pressable,
   Platform,
-  Alert,
-  TextInput,
-  ActivityIndicator,
-  Modal,
 } from "react-native";
 import { router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
@@ -17,71 +13,14 @@ import { useState } from "react";
 import * as Haptics from "expo-haptics";
 import Colors from "@/constants/colors";
 import { useAuth } from "@/contexts/AuthContext";
-import { deleteUserAccount } from "@/lib/firestore-service";
-import { firebaseAuth } from "@/lib/firebase";
-import { deleteUser, EmailAuthProvider, reauthenticateWithCredential } from "firebase/auth";
+import DeleteAccountModal from "@/features/account/components/DeleteAccountModal";
 
 export default function AccountManagementScreen() {
-  const { user, signOut } = useAuth();
+  const { user } = useAuth();
   const insets = useSafeAreaInsets();
   const topInset = Platform.OS === "web" ? 67 : insets.top;
 
   const [deleteModal, setDeleteModal] = useState(false);
-  const [confirmText, setConfirmText] = useState("");
-  const [password, setPassword] = useState("");
-  const [showPassword, setShowPassword] = useState(false);
-  const [deleting, setDeleting] = useState(false);
-  const [step, setStep] = useState<1 | 2>(1);
-
-  const CONFIRM_PHRASE = "DELETE MY ACCOUNT";
-  const isConfirmMatch = confirmText.trim().toUpperCase() === CONFIRM_PHRASE;
-
-  function openDeleteModal() {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
-    setDeleteModal(true);
-    setStep(1);
-    setConfirmText("");
-    setPassword("");
-  }
-
-  function closeDeleteModal() {
-    setDeleteModal(false);
-    setConfirmText("");
-    setPassword("");
-    setStep(1);
-  }
-
-  async function handleDeleteAccount() {
-    if (!user || !isConfirmMatch) return;
-    setDeleting(true);
-    try {
-      const currentUser = firebaseAuth.currentUser;
-      if (currentUser) {
-        if (password.trim() && currentUser.email) {
-          try {
-            const credential = EmailAuthProvider.credential(currentUser.email, password);
-            await reauthenticateWithCredential(currentUser, credential);
-          } catch {
-          }
-        }
-        await deleteUserAccount(user.id);
-        await deleteUser(currentUser);
-      }
-      await signOut();
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      closeDeleteModal();
-    } catch (e: any) {
-      if (e.code === "auth/requires-recent-login") {
-        setStep(2);
-      } else if (e.code === "auth/wrong-password" || e.code === "auth/invalid-credential") {
-        Alert.alert("Wrong Password", "The password you entered is incorrect. Please try again.");
-      } else {
-        Alert.alert("Error", e.message || "Could not delete account. Please try again.");
-      }
-    } finally {
-      setDeleting(false);
-    }
-  }
 
   if (!user) {
     return (
@@ -120,6 +59,7 @@ export default function AccountManagementScreen() {
           showsVerticalScrollIndicator={false}
           contentContainerStyle={[styles.scrollContent, { paddingBottom: insets.bottom + 40 }]}
         >
+          {/* Profile card */}
           <View style={styles.profileCard}>
             <View style={styles.avatar}>
               <Text style={styles.avatarText}>
@@ -136,6 +76,7 @@ export default function AccountManagementScreen() {
             </View>
           </View>
 
+          {/* Account details */}
           <View style={styles.infoSection}>
             <Text style={styles.infoLabel}>ACCOUNT DETAILS</Text>
             <View style={styles.infoCard}>
@@ -161,9 +102,9 @@ export default function AccountManagementScreen() {
             </View>
           </View>
 
+          {/* Danger zone */}
           <View style={styles.dangerSection}>
             <Text style={styles.dangerLabel}>DANGER ZONE</Text>
-
             <View style={styles.dangerCard}>
               <View style={styles.dangerHeader}>
                 <View style={styles.dangerIconWrap}>
@@ -193,7 +134,10 @@ export default function AccountManagementScreen() {
               </View>
 
               <Pressable
-                onPress={openDeleteModal}
+                onPress={() => {
+                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
+                  setDeleteModal(true);
+                }}
                 style={({ pressed }) => [styles.deleteBtn, { opacity: pressed ? 0.85 : 1 }]}
               >
                 <Ionicons name="person-remove-outline" size={18} color="#fff" />
@@ -204,116 +148,10 @@ export default function AccountManagementScreen() {
         </ScrollView>
       </View>
 
-      <Modal visible={deleteModal} transparent animationType="slide" onRequestClose={closeDeleteModal}>
-        <Pressable style={styles.modalOverlay} onPress={closeDeleteModal}>
-          <Pressable style={styles.modalBox} onPress={() => {}}>
-            <View style={styles.modalHeader}>
-              <View style={styles.modalTitleRow}>
-                <Ionicons name="warning" size={20} color={Colors.dark.danger} />
-                <Text style={styles.modalTitle}>
-                  {step === 1 ? "Confirm Deletion" : "Re-authentication Required"}
-                </Text>
-              </View>
-              <Pressable onPress={closeDeleteModal} style={styles.modalClose}>
-                <Ionicons name="close" size={22} color={Colors.dark.textMuted} />
-              </Pressable>
-            </View>
-
-            {step === 1 ? (
-              <>
-                <Text style={styles.modalBody}>
-                  You are about to permanently delete the account associated with:
-                </Text>
-                <View style={styles.emailPill}>
-                  <Ionicons name="mail-outline" size={15} color={Colors.dark.danger} />
-                  <Text style={styles.emailPillText}>{user.email}</Text>
-                </View>
-                <Text style={styles.modalBody}>
-                  This will erase all your data from QR Guard's servers. There is no recovery.
-                </Text>
-                <Text style={styles.confirmInstruction}>
-                  To confirm, type exactly: <Text style={styles.confirmPhrase}>{CONFIRM_PHRASE}</Text>
-                </Text>
-                <TextInput
-                  style={[styles.confirmInput, isConfirmMatch && styles.confirmInputValid]}
-                  placeholder={CONFIRM_PHRASE}
-                  placeholderTextColor={Colors.dark.textMuted}
-                  value={confirmText}
-                  onChangeText={setConfirmText}
-                  autoCapitalize="characters"
-                  autoCorrect={false}
-                />
-                <Pressable
-                  onPress={handleDeleteAccount}
-                  disabled={!isConfirmMatch || deleting}
-                  style={({ pressed }) => [
-                    styles.modalDeleteBtn,
-                    { opacity: !isConfirmMatch || deleting ? 0.4 : pressed ? 0.85 : 1 },
-                  ]}
-                >
-                  {deleting ? (
-                    <ActivityIndicator color="#fff" />
-                  ) : (
-                    <>
-                      <Ionicons name="trash-outline" size={18} color="#fff" />
-                      <Text style={styles.modalDeleteBtnText}>Permanently Delete Account</Text>
-                    </>
-                  )}
-                </Pressable>
-                <Pressable onPress={closeDeleteModal} style={styles.cancelBtn}>
-                  <Text style={styles.cancelBtnText}>Cancel — Keep My Account</Text>
-                </Pressable>
-              </>
-            ) : (
-              <>
-                <Text style={styles.modalBody}>
-                  For your security, Firebase requires you to re-enter your password before deleting your account.
-                </Text>
-                <Text style={styles.confirmInstruction}>Password for {user.email}</Text>
-                <View style={styles.passwordRow}>
-                  <TextInput
-                    style={[styles.confirmInput, { flex: 1 }]}
-                    placeholder="Enter your password"
-                    placeholderTextColor={Colors.dark.textMuted}
-                    value={password}
-                    onChangeText={setPassword}
-                    secureTextEntry={!showPassword}
-                    autoCapitalize="none"
-                    autoCorrect={false}
-                  />
-                  <Pressable onPress={() => setShowPassword(!showPassword)} style={styles.eyeBtn}>
-                    <Ionicons
-                      name={showPassword ? "eye-off-outline" : "eye-outline"}
-                      size={20}
-                      color={Colors.dark.textMuted}
-                    />
-                  </Pressable>
-                </View>
-                <Pressable
-                  onPress={handleDeleteAccount}
-                  disabled={!password.trim() || deleting}
-                  style={({ pressed }) => [
-                    styles.modalDeleteBtn,
-                    { opacity: !password.trim() || deleting ? 0.4 : pressed ? 0.85 : 1 },
-                  ]}
-                >
-                  {deleting ? (
-                    <ActivityIndicator color="#fff" />
-                  ) : (
-                    <>
-                      <Ionicons name="trash-outline" size={18} color="#fff" />
-                      <Text style={styles.modalDeleteBtnText}>Confirm & Delete Account</Text>
-                    </>
-                  )}
-                </Pressable>
-                <Pressable onPress={closeDeleteModal} style={styles.cancelBtn}>
-                  <Text style={styles.cancelBtnText}>Cancel — Keep My Account</Text>
-                </Pressable>
-              </>
-            )}
-          </Pressable>
-        </Pressable>
-      </Modal>
+      <DeleteAccountModal
+        visible={deleteModal}
+        onClose={() => setDeleteModal(false)}
+      />
     </>
   );
 }
@@ -339,7 +177,6 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.dark.primary, paddingHorizontal: 32, paddingVertical: 14, borderRadius: 14, marginTop: 8,
   },
   signInBtnText: { fontSize: 15, fontFamily: "Inter_700Bold", color: "#000" },
-
   profileCard: {
     flexDirection: "row", alignItems: "center", gap: 14,
     backgroundColor: Colors.dark.surface, borderRadius: 18, padding: 18,
@@ -355,7 +192,6 @@ const styles = StyleSheet.create({
   profileEmail: { fontSize: 13, fontFamily: "Inter_400Regular", color: Colors.dark.textSecondary, marginTop: 2 },
   verifiedBadge: { alignItems: "center", gap: 3 },
   verifiedText: { fontSize: 10, fontFamily: "Inter_500Medium", color: Colors.dark.safe },
-
   infoSection: { marginBottom: 24 },
   infoLabel: {
     fontSize: 11, fontFamily: "Inter_600SemiBold", color: Colors.dark.textMuted,
@@ -369,7 +205,6 @@ const styles = StyleSheet.create({
   infoKey: { fontSize: 13, fontFamily: "Inter_500Medium", color: Colors.dark.textSecondary, width: 110 },
   infoVal: { flex: 1, fontSize: 13, fontFamily: "Inter_600SemiBold", color: Colors.dark.text, textAlign: "right" },
   infoDivider: { height: 1, backgroundColor: Colors.dark.surfaceBorder, marginLeft: 46 },
-
   dangerSection: { marginBottom: 20 },
   dangerLabel: {
     fontSize: 11, fontFamily: "Inter_600SemiBold", color: Colors.dark.danger,
@@ -400,56 +235,4 @@ const styles = StyleSheet.create({
     paddingVertical: 16, borderRadius: 14,
   },
   deleteBtnText: { fontSize: 16, fontFamily: "Inter_700Bold", color: "#fff" },
-
-  modalOverlay: { flex: 1, backgroundColor: "rgba(0,0,0,0.75)", justifyContent: "flex-end" },
-  modalBox: {
-    backgroundColor: Colors.dark.surface,
-    borderTopLeftRadius: 26, borderTopRightRadius: 26,
-    padding: 24, paddingBottom: 40,
-    borderTopWidth: 1.5, borderColor: Colors.dark.danger + "50",
-  },
-  modalHeader: {
-    flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 14,
-  },
-  modalTitleRow: { flexDirection: "row", alignItems: "center", gap: 8 },
-  modalTitle: { fontSize: 18, fontFamily: "Inter_700Bold", color: Colors.dark.text },
-  modalClose: {
-    width: 34, height: 34, borderRadius: 17,
-    backgroundColor: Colors.dark.surfaceLight, alignItems: "center", justifyContent: "center",
-  },
-  modalBody: {
-    fontSize: 14, fontFamily: "Inter_400Regular", color: Colors.dark.textSecondary,
-    lineHeight: 21, marginBottom: 12,
-  },
-  emailPill: {
-    flexDirection: "row", alignItems: "center", gap: 8,
-    backgroundColor: Colors.dark.dangerDim, borderRadius: 10,
-    padding: 12, marginBottom: 14,
-    borderWidth: 1, borderColor: Colors.dark.danger + "30",
-  },
-  emailPillText: { fontSize: 14, fontFamily: "Inter_600SemiBold", color: Colors.dark.danger },
-  confirmInstruction: {
-    fontSize: 13, fontFamily: "Inter_500Medium", color: Colors.dark.textSecondary, marginBottom: 8,
-  },
-  confirmPhrase: { fontFamily: "Inter_700Bold", color: Colors.dark.danger },
-  confirmInput: {
-    backgroundColor: Colors.dark.surfaceLight, borderRadius: 12,
-    borderWidth: 1.5, borderColor: Colors.dark.surfaceBorder,
-    padding: 14, fontSize: 15, fontFamily: "Inter_600SemiBold",
-    color: Colors.dark.text, marginBottom: 16, letterSpacing: 1,
-  },
-  confirmInputValid: { borderColor: Colors.dark.danger, backgroundColor: Colors.dark.dangerDim },
-  passwordRow: { flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 16 },
-  eyeBtn: {
-    width: 46, height: 50, alignItems: "center", justifyContent: "center",
-    backgroundColor: Colors.dark.surfaceLight, borderRadius: 12,
-    borderWidth: 1.5, borderColor: Colors.dark.surfaceBorder,
-  },
-  modalDeleteBtn: {
-    flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 10,
-    backgroundColor: Colors.dark.danger, paddingVertical: 16, borderRadius: 14, marginBottom: 10,
-  },
-  modalDeleteBtnText: { fontSize: 16, fontFamily: "Inter_700Bold", color: "#fff" },
-  cancelBtn: { alignItems: "center", paddingVertical: 12 },
-  cancelBtnText: { fontSize: 14, fontFamily: "Inter_600SemiBold", color: Colors.dark.primary },
 });

@@ -2,13 +2,12 @@ import { useState } from "react";
 import {
   View,
   Text,
-  StyleSheet,
-  ScrollView,
   Pressable,
   TextInput,
   ActivityIndicator,
   Platform,
   KeyboardAvoidingView,
+  ScrollView,
 } from "react-native";
 import { StatusBar } from "expo-status-bar";
 import { useLocalSearchParams, router } from "expo-router";
@@ -26,26 +25,22 @@ import Animated, {
 import Colors from "@/constants/colors";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNetworkStatus } from "@/lib/use-network";
-import { formatCompactNumber, formatIndianNumber } from "@/lib/number-format";
+import { formatCompactNumber } from "@/lib/number-format";
 import { smartName } from "@/lib/utils/formatters";
 import { useQrDetail } from "@/hooks/useQrDetail";
+import { styles } from "./styles";
 import LoadingSkeleton from "@/features/qr-detail/components/LoadingSkeleton";
 import ContentCard from "@/features/qr-detail/components/ContentCard";
 import TrustScoreCard from "@/features/qr-detail/components/TrustScoreCard";
 import OwnerCard from "@/features/qr-detail/components/OwnerCard";
 import MerchantDashboard from "@/features/qr-detail/components/MerchantDashboard";
 import CommentItem from "@/features/qr-detail/components/CommentItem";
+import SafetyWarningCard from "@/features/qr-detail/components/SafetyWarningCard";
+import ReportGrid from "@/features/qr-detail/components/ReportGrid";
 import FollowersModal from "@/features/qr-detail/components/modals/FollowersModal";
 import MessagesModal from "@/features/qr-detail/components/modals/MessagesModal";
 import VerificationModal from "@/features/qr-detail/components/modals/VerificationModal";
 import CommentReportModal from "@/features/qr-detail/components/modals/CommentReportModal";
-
-const REPORT_TYPES = [
-  { key: "safe", label: "Safe", icon: "shield-checkmark", color: Colors.dark.safe, bg: Colors.dark.safeDim },
-  { key: "scam", label: "Scam", icon: "warning", color: Colors.dark.danger, bg: Colors.dark.dangerDim },
-  { key: "fake", label: "Fake", icon: "close-circle", color: Colors.dark.warning, bg: Colors.dark.warningDim },
-  { key: "spam", label: "Spam", icon: "mail-unread", color: Colors.dark.accent, bg: Colors.dark.accentDim },
-];
 
 export default function QrDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -255,79 +250,29 @@ export default function QrDetailScreen() {
               />
             </Animated.View>
 
-            {/* Payment safety warnings */}
+            {/* Safety Warnings */}
             {currentContentType === "payment" && q.paymentSafety?.isSuspicious && (
               <Animated.View entering={FadeInDown.duration(400)}>
-                <View style={[styles.safetyWarningCard, {
-                  borderColor: q.paymentSafety.riskLevel === "dangerous" ? Colors.dark.danger : Colors.dark.warning,
-                  backgroundColor: q.paymentSafety.riskLevel === "dangerous" ? Colors.dark.dangerDim : Colors.dark.warningDim,
-                }]}>
-                  <View style={styles.safetyWarningHeader}>
-                    <Ionicons
-                      name={q.paymentSafety.riskLevel === "dangerous" ? "warning" : "alert-circle"}
-                      size={22}
-                      color={q.paymentSafety.riskLevel === "dangerous" ? Colors.dark.danger : Colors.dark.warning}
-                    />
-                    <Text style={[styles.safetyWarningTitle, {
-                      color: q.paymentSafety.riskLevel === "dangerous" ? Colors.dark.danger : Colors.dark.warning,
-                    }]}>
-                      {q.paymentSafety.riskLevel === "dangerous" ? "⚠ Payment Risk Detected" : "⚠ Payment Caution"}
-                    </Text>
-                  </View>
-                  {q.paymentSafety.warnings.map((w, i) => (
-                    <View key={i} style={styles.safetyWarningRow}>
-                      <Ionicons name="ellipse" size={6} color={q.paymentSafety!.riskLevel === "dangerous" ? Colors.dark.danger : Colors.dark.warning} style={{ marginTop: 5 }} />
-                      <Text style={styles.safetyWarningText}>{w}</Text>
-                    </View>
-                  ))}
-                </View>
+                <SafetyWarningCard
+                  riskLevel={q.paymentSafety.riskLevel as "caution" | "dangerous"}
+                  warnings={q.paymentSafety.warnings}
+                />
               </Animated.View>
             )}
-
-            {/* URL safety warnings */}
             {currentContentType === "url" && q.urlSafety?.isSuspicious && (
               <Animated.View entering={FadeInDown.duration(400)}>
-                <View style={[styles.safetyWarningCard, {
-                  borderColor: q.urlSafety.riskLevel === "dangerous" ? Colors.dark.danger : Colors.dark.warning,
-                  backgroundColor: q.urlSafety.riskLevel === "dangerous" ? Colors.dark.dangerDim : Colors.dark.warningDim,
-                }]}>
-                  <View style={styles.safetyWarningHeader}>
-                    <Ionicons
-                      name={q.urlSafety.riskLevel === "dangerous" ? "warning" : "alert-circle"}
-                      size={22}
-                      color={q.urlSafety.riskLevel === "dangerous" ? Colors.dark.danger : Colors.dark.warning}
-                    />
-                    <Text style={[styles.safetyWarningTitle, {
-                      color: q.urlSafety.riskLevel === "dangerous" ? Colors.dark.danger : Colors.dark.warning,
-                    }]}>
-                      {q.urlSafety.riskLevel === "dangerous" ? "⚠ Suspicious URL Detected" : "⚠ URL Caution"}
-                    </Text>
-                  </View>
-                  {q.urlSafety.warnings.map((w, i) => (
-                    <View key={i} style={styles.safetyWarningRow}>
-                      <Ionicons name="ellipse" size={6} color={q.urlSafety!.riskLevel === "dangerous" ? Colors.dark.danger : Colors.dark.warning} style={{ marginTop: 5 }} />
-                      <Text style={styles.safetyWarningText}>{w}</Text>
-                    </View>
-                  ))}
-                </View>
+                <SafetyWarningCard
+                  riskLevel={q.urlSafety.riskLevel as "caution" | "dangerous"}
+                  warnings={q.urlSafety.warnings}
+                />
               </Animated.View>
             )}
-
-            {/* Offline blacklist match */}
             {q.offlineBlacklistMatch.matched && (
               <Animated.View entering={FadeInDown.duration(400)}>
-                <View style={[styles.safetyWarningCard, { borderColor: Colors.dark.danger, backgroundColor: Colors.dark.dangerDim }]}>
-                  <View style={styles.safetyWarningHeader}>
-                    <Ionicons name="shield-outline" size={22} color={Colors.dark.danger} />
-                    <Text style={[styles.safetyWarningTitle, { color: Colors.dark.danger }]}>⚠ Known Scam Pattern</Text>
-                  </View>
-                  <View style={styles.safetyWarningRow}>
-                    <Ionicons name="ellipse" size={6} color={Colors.dark.danger} style={{ marginTop: 5 }} />
-                    <Text style={styles.safetyWarningText}>
-                      This content matches a known scam pattern: {q.offlineBlacklistMatch.reason}
-                    </Text>
-                  </View>
-                </View>
+                <SafetyWarningCard
+                  riskLevel="dangerous"
+                  warnings={[`This content matches a known scam pattern: ${q.offlineBlacklistMatch.reason}`]}
+                />
               </Animated.View>
             )}
 
@@ -363,40 +308,13 @@ export default function QrDetailScreen() {
 
                 {/* Report Grid */}
                 <Animated.View entering={FadeInDown.duration(400).delay(200)}>
-                  <Text style={styles.sectionTitle}>Report This QR</Text>
-                  <Text style={styles.sectionSubtext}>
-                    {user ? "Tap to submit your report" : "Sign in to report this QR code"}
-                  </Text>
-                  <View style={styles.reportGrid}>
-                    {REPORT_TYPES.map((rt) => {
-                      const count = q.reportCounts[rt.key] || 0;
-                      const isSelected = q.userReport === rt.key;
-                      return (
-                        <Pressable
-                          key={rt.key}
-                          onPress={() => q.handleReport(rt.key)}
-                          disabled={!!q.reportLoading}
-                          style={({ pressed }) => [
-                            styles.reportCard,
-                            {
-                              borderColor: isSelected ? rt.color : Colors.dark.surfaceBorder,
-                              backgroundColor: isSelected ? rt.bg : Colors.dark.surface,
-                              opacity: pressed ? 0.8 : 1,
-                            },
-                          ]}
-                        >
-                          {q.reportLoading === rt.key ? (
-                            <ActivityIndicator size="small" color={rt.color} />
-                          ) : (
-                            <Ionicons name={rt.icon as any} size={24} color={rt.color} />
-                          )}
-                          <Text style={[styles.reportLabel, { color: rt.color }]}>{rt.label}</Text>
-                          <Text style={styles.reportCount}>{formatCompactNumber(count)}</Text>
-                          {isSelected && <View style={[styles.selectedDot, { backgroundColor: rt.color }]} />}
-                        </Pressable>
-                      );
-                    })}
-                  </View>
+                  <ReportGrid
+                    reportCounts={q.reportCounts}
+                    userReport={q.userReport}
+                    reportLoading={q.reportLoading}
+                    isLoggedIn={!!user}
+                    onReport={q.handleReport}
+                  />
                 </Animated.View>
 
                 {/* Comments */}
@@ -471,28 +389,25 @@ export default function QrDetailScreen() {
                       {q.commentsLoading ? (
                         <ActivityIndicator size="small" color={Colors.dark.primary} />
                       ) : (
-                        <Text style={styles.loadMoreText}>Load more comments</Text>
+                        <Text style={styles.loadMoreText}>Load More Comments</Text>
                       )}
                     </Pressable>
                   )}
                 </Animated.View>
               </>
             )}
-
-            <View style={{ height: user ? 100 : 32 }} />
           </ScrollView>
 
-          {/* Comment input bar */}
+          {/* Comment Input Bar */}
           {user && !q.offlineMode && (
-            <View style={[styles.bottomCommentBar, { paddingBottom: insets.bottom || 12 }]}>
+            <View style={styles.bottomCommentBar}>
               {q.replyTo && (
                 <View style={styles.replyBanner}>
-                  <Ionicons name="return-down-forward" size={14} color={Colors.dark.primary} />
+                  <Ionicons name="return-down-forward-outline" size={14} color={Colors.dark.primary} />
                   <Text style={styles.replyBannerText} numberOfLines={1}>
-                    Replying to{" "}
-                    <Text style={{ color: Colors.dark.primary, fontFamily: "Inter_600SemiBold" }}>{q.replyTo.author}</Text>
+                    Replying to <Text style={{ color: Colors.dark.text }}>{q.replyTo.author}</Text>
                   </Text>
-                  <Pressable onPress={() => { q.setReplyTo(null); q.setNewComment(""); }} style={{ marginLeft: "auto" as any }}>
+                  <Pressable onPress={() => q.setReplyTo(null)} style={{ marginLeft: "auto" as any }}>
                     <Ionicons name="close" size={16} color={Colors.dark.textMuted} />
                   </Pressable>
                 </View>
@@ -560,149 +475,3 @@ export default function QrDetailScreen() {
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: Colors.dark.background },
-  navBar: {
-    flexDirection: "row", alignItems: "center", justifyContent: "space-between",
-    paddingHorizontal: 16, paddingVertical: 12,
-    borderBottomWidth: 1, borderBottomColor: Colors.dark.surfaceBorder,
-  },
-  navBackBtn: {
-    width: 38, height: 38, borderRadius: 19,
-    backgroundColor: Colors.dark.surface, alignItems: "center", justifyContent: "center",
-    borderWidth: 1, borderColor: Colors.dark.surfaceBorder,
-  },
-  navTitle: { fontSize: 17, fontFamily: "Inter_700Bold", color: Colors.dark.text },
-  navActions: { flexDirection: "row", alignItems: "center", gap: 8 },
-  navActionBtn: {
-    width: 38, height: 38, borderRadius: 19,
-    backgroundColor: Colors.dark.surface, alignItems: "center", justifyContent: "center",
-    borderWidth: 1, borderColor: Colors.dark.surfaceBorder,
-  },
-  followBtn: {
-    flexDirection: "row", alignItems: "center", gap: 5,
-    paddingHorizontal: 12, paddingVertical: 8, borderRadius: 20,
-    backgroundColor: Colors.dark.surface, borderWidth: 1, borderColor: Colors.dark.surfaceBorder,
-  },
-  followBtnActive: { backgroundColor: Colors.dark.primaryDim, borderColor: Colors.dark.primary },
-  followBtnUnfollowHint: { backgroundColor: Colors.dark.dangerDim, borderColor: Colors.dark.danger },
-  followBtnText: { fontSize: 13, fontFamily: "Inter_600SemiBold", color: Colors.dark.textSecondary },
-  followBtnTextActive: { color: Colors.dark.primary },
-  followCountPill: {
-    backgroundColor: Colors.dark.primary, borderRadius: 10,
-    paddingHorizontal: 5, paddingVertical: 1,
-  },
-  followCountPillText: { fontSize: 10, fontFamily: "Inter_700Bold", color: "#000" },
-  scrollContent: { padding: 16, paddingBottom: 32 },
-  disclaimerBanner: {
-    flexDirection: "row", alignItems: "center", gap: 8,
-    backgroundColor: Colors.dark.primaryDim, borderRadius: 10, padding: 10, marginBottom: 12,
-    borderWidth: 1, borderColor: Colors.dark.primary + "30",
-  },
-  disclaimerText: { flex: 1, fontSize: 12, fontFamily: "Inter_400Regular", color: Colors.dark.textSecondary, lineHeight: 17 },
-  offlineBanner: {
-    flexDirection: "row", alignItems: "center", gap: 12,
-    backgroundColor: Colors.dark.warningDim, borderRadius: 12, padding: 14, marginBottom: 12,
-    borderWidth: 1, borderColor: Colors.dark.warning + "40",
-  },
-  offlineBannerTitle: { fontSize: 14, fontFamily: "Inter_600SemiBold", color: Colors.dark.warning },
-  offlineBannerSub: { fontSize: 12, fontFamily: "Inter_400Regular", color: Colors.dark.textSecondary, marginTop: 2 },
-  offlineRetrySmall: {
-    backgroundColor: Colors.dark.warning, paddingHorizontal: 10, paddingVertical: 6, borderRadius: 8,
-  },
-  offlineRetrySmallText: { fontSize: 12, fontFamily: "Inter_600SemiBold", color: "#000" },
-  signInBanner: {
-    flexDirection: "row", alignItems: "center", gap: 12,
-    backgroundColor: Colors.dark.primaryDim, borderRadius: 14, padding: 14, marginBottom: 12,
-    borderWidth: 1, borderColor: Colors.dark.primary + "40",
-  },
-  signInBannerIcon: {
-    width: 40, height: 40, borderRadius: 20,
-    backgroundColor: Colors.dark.primary + "20", alignItems: "center", justifyContent: "center",
-  },
-  signInBannerTitle: { fontSize: 14, fontFamily: "Inter_600SemiBold", color: Colors.dark.text },
-  signInBannerSub: { fontSize: 12, fontFamily: "Inter_400Regular", color: Colors.dark.textSecondary, marginTop: 2 },
-  safetyWarningCard: {
-    borderRadius: 14, padding: 14, marginBottom: 12,
-    borderWidth: 1, gap: 8,
-  },
-  safetyWarningHeader: { flexDirection: "row", alignItems: "center", gap: 8 },
-  safetyWarningTitle: { fontSize: 14, fontFamily: "Inter_700Bold", flex: 1 },
-  safetyWarningRow: { flexDirection: "row", gap: 8, alignItems: "flex-start" },
-  safetyWarningText: { flex: 1, fontSize: 13, fontFamily: "Inter_400Regular", color: Colors.dark.text, lineHeight: 18 },
-  offlineFeatureCard: {
-    backgroundColor: Colors.dark.surface, borderRadius: 16, padding: 24,
-    alignItems: "center", gap: 10, borderWidth: 1, borderColor: Colors.dark.surfaceBorder, marginBottom: 16,
-  },
-  offlineFeatureTitle: { fontSize: 16, fontFamily: "Inter_600SemiBold", color: Colors.dark.text },
-  offlineFeatureSub: { fontSize: 13, fontFamily: "Inter_400Regular", color: Colors.dark.textSecondary, textAlign: "center", lineHeight: 19 },
-  enableInternetBtn: {
-    flexDirection: "row", alignItems: "center", gap: 8,
-    backgroundColor: Colors.dark.primary, paddingHorizontal: 20, paddingVertical: 10, borderRadius: 12, marginTop: 4,
-  },
-  enableInternetBtnText: { fontSize: 13, fontFamily: "Inter_600SemiBold", color: "#000" },
-  sectionTitle: { fontSize: 17, fontFamily: "Inter_700Bold", color: Colors.dark.text, marginBottom: 4 },
-  sectionSubtext: { fontSize: 13, fontFamily: "Inter_400Regular", color: Colors.dark.textSecondary, marginBottom: 12 },
-  reportGrid: { flexDirection: "row", flexWrap: "wrap", gap: 10, marginBottom: 16 },
-  reportCard: {
-    width: "47%", borderRadius: 14, padding: 14, alignItems: "center", gap: 6,
-    borderWidth: 1.5, position: "relative",
-  },
-  reportLabel: { fontSize: 13, fontFamily: "Inter_600SemiBold" },
-  reportCount: { fontSize: 12, fontFamily: "Inter_400Regular", color: Colors.dark.textMuted },
-  selectedDot: { position: "absolute", top: 8, right: 8, width: 8, height: 8, borderRadius: 4 },
-  commentsHeader: {
-    flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 12,
-  },
-  commentsTitleRow: { flexDirection: "row", alignItems: "center", gap: 8 },
-  commentCountBadge: {
-    backgroundColor: Colors.dark.primaryDim, borderRadius: 10, paddingHorizontal: 8, paddingVertical: 2,
-  },
-  commentCountText: { fontSize: 12, fontFamily: "Inter_600SemiBold", color: Colors.dark.primary },
-  liveIndicator: { flexDirection: "row", alignItems: "center", gap: 5 },
-  liveDot: { width: 7, height: 7, borderRadius: 3.5, backgroundColor: Colors.dark.safe },
-  liveText: { fontSize: 12, fontFamily: "Inter_500Medium", color: Colors.dark.safe },
-  signInToComment: {
-    flexDirection: "row", alignItems: "center", gap: 10,
-    backgroundColor: Colors.dark.surface, borderRadius: 12, padding: 14, marginBottom: 12,
-    borderWidth: 1, borderColor: Colors.dark.surfaceBorder,
-  },
-  signInToCommentText: { fontSize: 14, fontFamily: "Inter_500Medium", color: Colors.dark.text, flex: 1 },
-  noComments: {
-    backgroundColor: Colors.dark.surface, borderRadius: 14, padding: 28, alignItems: "center",
-    gap: 8, borderWidth: 1, borderColor: Colors.dark.surfaceBorder, marginBottom: 12,
-  },
-  noCommentsText: { fontSize: 15, fontFamily: "Inter_600SemiBold", color: Colors.dark.textSecondary },
-  noCommentsSubtext: { fontSize: 13, fontFamily: "Inter_400Regular", color: Colors.dark.textMuted },
-  loadMoreBtn: {
-    backgroundColor: Colors.dark.surface, borderRadius: 12, padding: 14, alignItems: "center",
-    borderWidth: 1, borderColor: Colors.dark.surfaceBorder, marginTop: 8, marginBottom: 12,
-  },
-  loadMoreText: { fontSize: 14, fontFamily: "Inter_500Medium", color: Colors.dark.primary },
-  bottomCommentBar: {
-    backgroundColor: Colors.dark.surface, borderTopWidth: 1, borderTopColor: Colors.dark.surfaceBorder,
-    paddingTop: 8, paddingHorizontal: 12,
-  },
-  replyBanner: {
-    flexDirection: "row", alignItems: "center", gap: 8,
-    backgroundColor: Colors.dark.primaryDim, borderRadius: 8, padding: 8, marginBottom: 6,
-  },
-  replyBannerText: { flex: 1, fontSize: 13, fontFamily: "Inter_400Regular", color: Colors.dark.textSecondary },
-  commentInput: { flexDirection: "row", alignItems: "flex-end", gap: 8, paddingBottom: 4 },
-  commentTextInput: {
-    flex: 1, fontSize: 14, fontFamily: "Inter_400Regular", color: Colors.dark.text,
-    backgroundColor: Colors.dark.surfaceLight, borderRadius: 20,
-    paddingHorizontal: 14, paddingVertical: 10, maxHeight: 100,
-    borderWidth: 1, borderColor: Colors.dark.surfaceBorder,
-  },
-  sendBtn: {
-    width: 40, height: 40, borderRadius: 20,
-    backgroundColor: Colors.dark.primary, alignItems: "center", justifyContent: "center",
-  },
-  errorCard: { flex: 1, alignItems: "center", justifyContent: "center", padding: 32, gap: 12 },
-  errorTitle: { fontSize: 20, fontFamily: "Inter_700Bold", color: Colors.dark.text },
-  errorSub: { fontSize: 14, fontFamily: "Inter_400Regular", color: Colors.dark.textSecondary, textAlign: "center" },
-  retryBtn: { backgroundColor: Colors.dark.primary, paddingHorizontal: 24, paddingVertical: 12, borderRadius: 12, marginTop: 8 },
-  retryBtnText: { fontSize: 15, fontFamily: "Inter_600SemiBold", color: "#000" },
-});
