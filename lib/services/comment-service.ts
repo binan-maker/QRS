@@ -1,7 +1,12 @@
 import { db } from "../db";
 import { checkCommentKeywords } from "../qr-analysis";
 import { tsToString } from "./utils";
-import { notifyQrFollowers, notifyMentionedUsers } from "./notification-service";
+import {
+  notifyQrFollowers,
+  notifyMentionedUsers,
+  notifyQrOwner,
+  notifyCommentParentAuthor,
+} from "./notification-service";
 import type { CommentItem } from "./types";
 
 export type { CommentItem };
@@ -144,6 +149,10 @@ export async function addComment(
   } catch {}
   notifyQrFollowers(qrId, "new_comment", `${displayName} commented on a QR you follow`, userId).catch(() => {});
   notifyMentionedUsers(qrId, text, userId, displayName).catch(() => {});
+  notifyQrOwner(qrId, userId, displayName).catch(() => {});
+  if (parentId) {
+    notifyCommentParentAuthor(qrId, parentId, userId, displayName).catch(() => {});
+  }
   return {
     id: commentId,
     qrCodeId: qrId,

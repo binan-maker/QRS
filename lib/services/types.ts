@@ -91,9 +91,17 @@ export interface TrustScore {
   totalReports: number;
 }
 
+export type NotificationType =
+  | "new_comment"
+  | "new_report"
+  | "new_follow"
+  | "mention"
+  | "comment_reply"
+  | "owner_comment";
+
 export interface Notification {
   id: string;
-  type: "new_comment" | "new_report";
+  type: NotificationType;
   qrCodeId: string;
   message: string;
   read: boolean;

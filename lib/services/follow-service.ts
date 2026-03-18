@@ -1,4 +1,5 @@
 import { db, rtdb } from "../db";
+import { NOTIFICATIONS_ENABLED } from "../notifications/config";
 import { tsToString } from "./utils";
 import type { FollowerInfo } from "./types";
 
@@ -39,20 +40,22 @@ export async function toggleFollow(
     await db.set(["users", userId, "following", qrId], {
       qrCodeId: qrId, content, contentType, createdAt: db.timestamp(),
     });
-    try {
-      const qrData = await db.get(["qrCodes", qrId]);
-      if (qrData?.ownerId && qrData.ownerId !== userId) {
-        const ownerId = qrData.ownerId as string;
-        const name = followerDisplayName || "Someone";
-        await rtdb.push(`notifications/${ownerId}/items`, {
-          type: "new_follow",
-          qrCodeId: qrId,
-          message: `${name} started following your QR code`,
-          read: false,
-          createdAt: Date.now(),
-        });
-      }
-    } catch {}
+    if (NOTIFICATIONS_ENABLED) {
+      try {
+        const qrData = await db.get(["qrCodes", qrId]);
+        if (qrData?.ownerId && qrData.ownerId !== userId) {
+          const ownerId = qrData.ownerId as string;
+          const name = followerDisplayName || "Someone";
+          await rtdb.push(`notifications/${ownerId}/items`, {
+            type: "new_follow",
+            qrCodeId: qrId,
+            message: `${name} started following your QR code`,
+            read: false,
+            createdAt: Date.now(),
+          });
+        }
+      } catch {}
+    }
   }
   const followCount = await getFollowCount(qrId);
   return { isFollowing: !following, followCount };

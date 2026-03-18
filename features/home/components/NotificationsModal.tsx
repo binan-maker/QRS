@@ -18,6 +18,8 @@ interface Props {
 
 function getNotifIcon(type: string): any {
   if (type === "new_comment") return "chatbubble";
+  if (type === "owner_comment") return "chatbubble-ellipses";
+  if (type === "comment_reply") return "return-down-forward";
   if (type === "mention") return "at";
   if (type === "new_follow") return "person-add";
   return "warning";
@@ -25,6 +27,8 @@ function getNotifIcon(type: string): any {
 
 function getNotifColor(type: string): string {
   if (type === "new_comment") return Colors.dark.primary;
+  if (type === "owner_comment") return Colors.dark.primary;
+  if (type === "comment_reply") return Colors.dark.accent;
   if (type === "mention") return Colors.dark.accent;
   if (type === "new_follow") return Colors.dark.safe;
   return Colors.dark.warning;
