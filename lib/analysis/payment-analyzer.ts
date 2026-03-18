@@ -2,62 +2,110 @@ import type { ParsedPaymentQr, PaymentSafetyResult, ParsedUpiQr } from "./types"
 import { parseAnyPaymentQr } from "./payment-parser";
 
 const VALID_UPI_HANDLES = new Set([
+  // Google Pay official handles
   "okaxis", "okhdfcbank", "okicici", "oksbi",
+  // PhonePe official handles
   "ybl", "ibl", "axl",
+  // Paytm
   "paytm", "paytmbank",
-  "upi", "rbl",
-  "hdfcbank", "icici", "sbi", "axisbank",
-  "kotak", "idbi", "federal", "indus",
-  "boi", "centralbank", "pnb", "bob",
-  "indianbank", "syndicatebank", "allbank",
-  "aubank", "airtel", "juspay",
-  "freecharge", "mobikwik",
-  "yapl", "timecosmos",
+  // HDFC Bank
+  "hdfcbank", "payzapp", "hdfcbankjd",
+  // ICICI Bank / iMobile
+  "icici", "icicibank", "okicici", "tapicici",
+  // SBI / YONO
+  "sbi",
+  // Axis Bank / Axis Pay
+  "axisbank", "axl",
+  // Kotak / Kotak 811
+  "kotak", "kmbl",
+  // IndusInd / IndusPay
+  "indus",
+  // IDBI
+  "idbi",
+  // Federal Bank / Fi
+  "federal", "fbl",
+  // RBL
+  "rbl", "rblbank",
+  // PNB
+  "pnb",
+  // Bank of Baroda / BOB World
+  "bob", "barodampay",
+  // Canara Bank
+  "cnrb",
+  // Indian Bank
+  "indianbank",
+  // Union Bank
+  "uboi", "ucobank", "uco",
+  // Airtel Payments Bank
+  "airtel", "airtelpe",
+  // Jio Payments Bank
+  "jio",
+  // JusPay
+  "juspay",
+  // FreeCharge (Axis)
+  "freecharge",
+  // MobiKwik
+  "mobikwik",
+  // Amazon Pay
+  "yapl", "apl", "amazonpay",
+  // CRED
+  "cred",
+  // Navi
+  "naviaxis", "navi",
+  // Slice
+  "sliceaxis", "abfspay",
+  // Groww
+  "groww",
+  // Jupiter
+  "jupiterpay",
+  // IDFC FIRST Bank
+  "idfcbank", "idfcfirst",
+  // Yes Bank / Yes Pay
+  "yesbank", "yesbankltd",
+  // AU Small Finance Bank
+  "aubank",
+  // Various small bank/NBFC handles
+  "timecosmos", "postbank",
   "rajgovhdfcbank", "dlb", "mahb",
   "kvb", "sib", "cbin",
-  "cnrb", "cub", "dcb",
+  "cub", "dcb",
   "equitas", "esaf", "fino",
-  "idfc", "ikwik", "idfcbank",
-  "uco", "uboi", "ubi",
-  "vijb", "barodampay", "myicici",
-  "naviaxis", "nsdl",
-  "pingpay", "postbank",
-  "qb", "rblbank", "saraswat",
+  "idfc", "ikwik",
+  "ubi", "vijb",
+  "myicici",
+  "pingpay",
+  "qb", "saraswat",
   "scb", "scmb", "shriramhfl",
-  "tjsb", "ucobank", "ujjivan",
+  "tjsb", "ujjivan",
   "utbi", "zoicici", "waaxis",
   "ptaxis", "pthdfc", "ptyes",
-  "abfspay", "apl", "abhy",
+  "abhy",
   "bhanix", "bdbl", "bypl",
   "cmsidfc", "csb", "dnsbank",
-  "fbl", "hsbc", "iob",
+  "hsbc", "iob",
   "jkb", "karb", "kbl",
   "lvb", "mahagrambank", "nkgsb",
-  "yesbankltd", "zinghr",
+  "zinghr", "superyes",
+  "bajajpay", "razorpay",
+  "bhim",
+  "nsdl",
+  "upi",
 ]);
 
-const UPI_SUSPICIOUS_NAME_KEYWORDS = [
-  "google", "paytm", "amazon", "flipkart", "phonepe",
-  "sbi", "hdfc", "icici", "axis", "rbi", "income tax",
-  "pm india", "modi", "support", "helpline", "refund",
-  "lottery", "winner", "prize", "cashback", "free",
-  "bank", "govt", "government", "police", "cbi", "uidai",
-  "customs", "covid", "relief", "subsidy", "benefit",
-  "meesho", "nykaa", "myntra",
+// Only flag genuinely scam-specific keywords — NOT payment brand names
+// (Google, Paytm, Amazon, PhonePe users can legitimately have those names)
+const UPI_SCAM_KEYWORDS = [
+  "income tax", "incometax",
+  "lottery", "winner", "prize", "jackpot",
+  "pm india", "pmkisan", "modi",
+  "helpline", "toll free", "tollfree",
+  "uidai", "aadhar refund",
+  "customs", "customs duty",
+  "covid relief", "covid fund",
+  "cyber crime", "cybercrime",
+  "arrest warrant", "police notice",
+  "cbi notice", "ed notice",
 ];
-
-const UPI_BRANDED_HANDLES: Record<string, string[]> = {
-  google: ["okaxis", "okhdfcbank", "okicici", "oksbi"],
-  paytm: ["paytm", "paytmbank"],
-  phonepe: ["ybl", "ibl", "axl"],
-  amazon: ["yapl"],
-  sbi: ["oksbi", "sbi"],
-  hdfc: ["okhdfcbank", "hdfcbank"],
-  icici: ["okicici", "icici"],
-  axis: ["okaxis", "axisbank"],
-  bank: [],
-  govt: [],
-};
 
 export function analyzeAnyPaymentQr(parsed: ParsedPaymentQr): PaymentSafetyResult {
   const warnings: string[] = [];
@@ -68,14 +116,15 @@ export function analyzeAnyPaymentQr(parsed: ParsedPaymentQr): PaymentSafetyResul
     else if (riskLevel === "safe") riskLevel = "caution";
   }
 
+  // ── Crypto: irreversible, always needs care ───────────────────────────────
   if (parsed.appCategory === "crypto") {
     warnings.push(`Crypto payment: ${parsed.appDisplayName} — transactions are irreversible`);
     warnings.push("Verify the wallet address character by character — one wrong digit means lost funds forever");
     if (parsed.isAmountPreFilled) {
-      warnings.push(`Pre-filled amount detected — only pay if you intended this`);
+      warnings.push("Pre-filled amount detected — only pay if you intended this");
     }
     const addr = parsed.recipientId;
-    if (addr && (addr.length < 20 || addr.length > 100)) {
+    if (addr && (addr.length < 20 || addr.length > 120)) {
       warnings.push("Wallet address length looks unusual — double check before sending");
       bump("dangerous");
     }
@@ -83,50 +132,48 @@ export function analyzeAnyPaymentQr(parsed: ParsedPaymentQr): PaymentSafetyResul
     return { isSuspicious: true, warnings, riskLevel, appInfo: parsed.appDisplayName };
   }
 
-  if (parsed.appCategory === "upi_india") {
-    if (!parsed.bankHandle) {
-      warnings.push("No bank handle found in VPA — verify this is a valid UPI address");
-      bump("caution");
-    } else if (!VALID_UPI_HANDLES.has(parsed.bankHandle)) {
-      warnings.push(`Unknown bank handle "@${parsed.bankHandle}" — verify before paying`);
+  // ── UPI / Indian bank payments ─────────────────────────────────────────────
+  if (parsed.appCategory === "upi_india" || parsed.appCategory === "india_wallet") {
+    const bankHandle = (parsed.bankHandle || "").toLowerCase();
+
+    // Unknown handle — mild caution only, don't call dangerous
+    if (bankHandle && !VALID_UPI_HANDLES.has(bankHandle)) {
+      warnings.push(`Bank handle "@${bankHandle}" is not in our verified list — confirm the UPI ID before paying`);
       bump("caution");
     }
 
-    if (!parsed.recipientName || parsed.recipientName.trim() === "") {
-      warnings.push("No payee name — legitimate merchants always show their name");
-      bump("caution");
-    } else {
+    // Check recipient name only for REAL scam keywords — not brand names
+    if (parsed.recipientName) {
       const lowerName = parsed.recipientName.toLowerCase();
-      for (const kw of UPI_SUSPICIOUS_NAME_KEYWORDS) {
+      for (const kw of UPI_SCAM_KEYWORDS) {
         if (lowerName.includes(kw)) {
-          const official = UPI_BRANDED_HANDLES[kw];
-          if (!official || !official.includes(parsed.bankHandle || "")) {
-            warnings.push(`Payee name contains "${kw}" but VPA doesn't match — possible impersonation`);
-            bump("dangerous");
-            break;
-          }
+          warnings.push(`Payee name contains "${kw}" — this is a common pattern in UPI scams. Do not pay.`);
+          bump("dangerous");
+          break;
         }
       }
     }
 
+    // Large pre-filled amounts still warrant a note
     if (parsed.isAmountPreFilled && parsed.amount) {
       const amt = parseFloat(parsed.amount);
       if (amt > 50000) {
         warnings.push(`Large pre-filled amount: ₹${amt.toLocaleString("en-IN")} — only pay if YOU initiated this`);
-        bump("dangerous");
+        bump("caution");
       } else if (amt > 0) {
         warnings.push(`Amount pre-filled: ₹${amt.toLocaleString("en-IN")} — confirm before paying`);
-        bump("caution");
       }
     }
 
-    const vpaLocal = (parsed.vpa || parsed.recipientId).split("@")[0];
-    if (vpaLocal.length > 20) {
-      warnings.push("VPA identifier is unusually long — could be auto-generated by scammers");
+    // Very long VPA local part (>40 chars is genuinely unusual for merchants)
+    const vpaLocal = (parsed.vpa || parsed.recipientId || "").split("@")[0];
+    if (vpaLocal.length > 40) {
+      warnings.push("VPA identifier is unusually long — auto-generated VPAs are sometimes used in scams");
       bump("caution");
     }
   }
 
+  // ── Global wallets (PayPal, Cash App, Venmo, etc.) ────────────────────────
   if (["global_wallet", "us_payment"].includes(parsed.appCategory)) {
     if (!parsed.recipientId) {
       warnings.push(`No recipient ID found in ${parsed.appDisplayName} QR`);
@@ -138,23 +185,23 @@ export function analyzeAnyPaymentQr(parsed: ParsedPaymentQr): PaymentSafetyResul
     }
   }
 
+  // ── South-East Asia / regional payments ───────────────────────────────────
   if (["southeast_asia", "korea", "japan", "singapore_malaysia", "thailand"].includes(parsed.appCategory)) {
     if (!parsed.recipientId || parsed.recipientId.trim().length < 4) {
       warnings.push(`Recipient ID is missing or very short in ${parsed.appDisplayName} QR`);
       bump("caution");
     }
     if (parsed.isAmountPreFilled) {
-      warnings.push(`Pre-set amount detected — confirm the payee and amount before proceeding`);
+      warnings.push("Pre-set amount detected — confirm the payee and amount before proceeding");
       bump("caution");
     }
   }
 
+  // ── SEPA bank transfer ────────────────────────────────────────────────────
   if (parsed.app === "sepa_transfer") {
-    if (!parsed.recipientId || !parsed.recipientId.startsWith("IBAN")) {
-      if (!parsed.recipientId) {
-        warnings.push("IBAN not found in SEPA QR — invalid format");
-        bump("caution");
-      }
+    if (!parsed.recipientId) {
+      warnings.push("IBAN not found in SEPA QR — invalid format");
+      bump("caution");
     }
     if (parsed.amount && parseFloat(parsed.amount) > 5000) {
       warnings.push(`Large SEPA transfer: €${parseFloat(parsed.amount).toFixed(2)} — verify before authorizing`);
@@ -162,13 +209,15 @@ export function analyzeAnyPaymentQr(parsed: ParsedPaymentQr): PaymentSafetyResul
     }
   }
 
+  // ── Generic EMV QR ────────────────────────────────────────────────────────
   if (parsed.app === "emv_generic") {
-    warnings.push("Generic payment QR detected — confirm the payment network and merchant before paying");
+    warnings.push("Generic payment QR — confirm the payment network and merchant before paying");
     bump("caution");
   }
 
+  // ── Completely unknown payment QR ─────────────────────────────────────────
   if (parsed.app === "unknown_payment" || parsed.appCategory === "other") {
-    warnings.push("Payment QR detected — the app or bank is not in our known registry, so verify the merchant carefully before paying");
+    warnings.push("Payment QR from an app we don't recognize — verify the merchant before paying");
     if (parsed.isAmountPreFilled && parsed.amount) {
       const amt = parseFloat(parsed.amount);
       if (amt > 0) {
@@ -183,11 +232,13 @@ export function analyzeAnyPaymentQr(parsed: ParsedPaymentQr): PaymentSafetyResul
     bump("caution");
   }
 
+  // ── China / Alipay / WeChat Pay ───────────────────────────────────────────
   if (parsed.appCategory === "china") {
-    warnings.push(`${parsed.appDisplayName} QR: verify you are paying the correct merchant`);
+    warnings.push(`${parsed.appDisplayName} QR — verify you are paying the correct merchant`);
     bump("caution");
   }
 
+  // ── Pix (Brazil) ──────────────────────────────────────────────────────────
   if (parsed.app === "pix") {
     if (parsed.isAmountPreFilled && parsed.amount) {
       const amt = parseFloat(parsed.amount);
