@@ -10,7 +10,7 @@ import Animated, { FadeInDown } from "react-native-reanimated";
 import Colors from "@/constants/colors";
 import QRCode from "react-native-qrcode-svg";
 import { useMyQrDetail, FG_COLORS, BG_COLORS, LOGO_POSITIONS } from "@/features/my-qr/hooks/useMyQrDetail";
-import { styles } from "./styles";
+import { styles } from "@/features/my-qr/styles";
 import CommentRow from "@/features/my-qr/components/CommentRow";
 import DeactivateModal from "@/features/my-qr/components/DeactivateModal";
 import FollowersModal from "@/features/my-qr/components/FollowersModal";
@@ -125,9 +125,9 @@ export default function MyQrDetailScreen() {
                 />
                 {h.logoPosition !== "center" && (
                   <View
-                    pointerEvents="none"
                     style={[
                       styles.cornerLogoWrapper,
+                      { pointerEvents: "none" },
                       h.logoPosition === "top-left" && { top: 10, left: 10 },
                       h.logoPosition === "top-right" && { top: 10, right: 10 },
                       h.logoPosition === "bottom-left" && { bottom: 10, left: 10 },

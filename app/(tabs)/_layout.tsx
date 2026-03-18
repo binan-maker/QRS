@@ -10,6 +10,7 @@ import Colors from "@/constants/colors";
 import * as Haptics from "expo-haptics";
 import { useAuth } from "@/contexts/AuthContext";
 import { subscribeToNotificationCount } from "@/lib/firestore-service";
+import { shadow } from "@/lib/utils/platform";
 
 function ScanTabButton({ onPress }: { onPress?: () => void }) {
   return (
@@ -197,12 +198,8 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.dark.primary,
     alignItems: "center",
     justifyContent: "center",
-    shadowColor: Colors.dark.primary,
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.5,
-    shadowRadius: 14,
-    elevation: 12,
     borderWidth: 4,
     borderColor: Colors.dark.background,
+    ...shadow(14, Colors.dark.primary, 0.5, 0, 6, 12),
   },
 });

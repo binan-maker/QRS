@@ -1,4 +1,5 @@
 import { View, Text, StyleSheet, Pressable, Image } from "react-native";
+import { shadow } from "@/lib/utils/platform";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import Animated, { FadeIn } from "react-native-reanimated";
@@ -65,9 +66,9 @@ export default function QrOutputCard({
           />
           {logoSource && logoPosition !== "center" && (
             <View
-              pointerEvents="none"
               style={[
                 styles.cornerLogoWrapper,
+                { pointerEvents: "none" },
                 logoPosition === "top-left" && { top: 10, left: 10 },
                 logoPosition === "top-right" && { top: 10, right: 10 },
                 logoPosition === "bottom-left" && { bottom: 10, left: 10 },
@@ -190,8 +191,7 @@ const styles = StyleSheet.create({
   qrWrapper: { alignItems: "center", paddingVertical: 24, paddingHorizontal: 16 },
   qrBg: {
     backgroundColor: "#F8FAFC", borderRadius: 16, padding: 12, position: "relative",
-    shadowColor: "#000", shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.15, shadowRadius: 10, elevation: 6,
+    ...shadow(10, "#000", 0.15, 0, 4, 6),
   },
   cornerLogoWrapper: {
     position: "absolute", width: 40, height: 40, borderRadius: 10,

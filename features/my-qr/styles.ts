@@ -24,8 +24,6 @@ export const styles = StyleSheet.create({
   },
   qrBg: {
     borderRadius: 16, padding: 12, position: "relative",
-    shadowColor: "#000", shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.25, shadowRadius: 8, elevation: 6,
   },
   cornerLogoWrapper: { position: "absolute", width: 36, height: 36 },
   cornerLogoImg: { width: 36, height: 36, borderRadius: 8 },

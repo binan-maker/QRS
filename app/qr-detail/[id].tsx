@@ -28,7 +28,7 @@ import { useNetworkStatus } from "@/lib/use-network";
 import { formatCompactNumber } from "@/lib/number-format";
 import { smartName } from "@/lib/utils/formatters";
 import { useQrDetail } from "@/hooks/useQrDetail";
-import { styles } from "./styles";
+import { styles } from "@/features/qr-detail/styles";
 import LoadingSkeleton from "@/features/qr-detail/components/LoadingSkeleton";
 import ContentCard from "@/features/qr-detail/components/ContentCard";
 import TrustScoreCard from "@/features/qr-detail/components/TrustScoreCard";

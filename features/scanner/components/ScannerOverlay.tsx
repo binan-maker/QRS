@@ -1,4 +1,5 @@
 import { View, Text, StyleSheet, Pressable, Animated, Platform } from "react-native";
+import { shadow } from "@/lib/utils/platform";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import * as Haptics from "expo-haptics";
@@ -47,7 +48,7 @@ export default function ScannerOverlay({
   });
 
   return (
-    <View style={StyleSheet.absoluteFillObject} pointerEvents="box-none">
+    <View style={[StyleSheet.absoluteFillObject, { pointerEvents: "box-none" }]}>
       {/* Top bar */}
       <View style={[styles.topBar, { paddingTop: topInset + 8 }]}>
         <Pressable onPress={() => router.back()} style={styles.topBarBtn}>
@@ -345,11 +346,8 @@ const styles = StyleSheet.create({
     position: "absolute",
     left: 0, right: 0, height: 2,
     backgroundColor: Colors.dark.primary,
-    shadowColor: Colors.dark.primary,
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 1,
-    shadowRadius: 8,
     opacity: 0.9,
+    ...shadow(8, Colors.dark.primary, 1, 0, 0, 0),
   },
   successOverlay: {
     ...StyleSheet.absoluteFillObject,

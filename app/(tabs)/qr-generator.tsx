@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { View, Text, StyleSheet, Pressable, ScrollView, Platform, Animated } from "react-native";
+import { shadow } from "@/lib/utils/platform";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Reanimated, { FadeIn, FadeInDown } from "react-native-reanimated";
@@ -146,9 +147,9 @@ export default function QrGeneratorScreen() {
             {
               opacity: toastAnim,
               transform: [{ translateY: toastAnim.interpolate({ inputRange: [0, 1], outputRange: [20, 0] }) }],
+              pointerEvents: "none",
             },
           ]}
-          pointerEvents="none"
         >
           <Ionicons
             name={toastType === "error" ? "alert-circle" : "checkmark-circle"}
@@ -209,8 +210,7 @@ const styles = StyleSheet.create({
     flexDirection: "row", alignItems: "center", gap: 10,
     paddingHorizontal: 16, paddingVertical: 14,
     backgroundColor: Colors.dark.surface, borderWidth: 1,
-    shadowColor: "#000", shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2, shadowRadius: 10, elevation: 8,
+    ...shadow(10, "#000", 0.2, 0, 4, 8),
   },
   toastSuccess: { borderColor: Colors.dark.safe + "50" },
   toastError: { borderColor: Colors.dark.danger + "50" },

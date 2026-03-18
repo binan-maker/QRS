@@ -2,6 +2,7 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { Stack } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import React, { useEffect } from "react";
+import { Platform, View } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { KeyboardProvider } from "react-native-keyboard-controller";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
@@ -16,6 +17,7 @@ import {
   Inter_700Bold,
 } from "@expo-google-fonts/inter";
 import Colors from "@/constants/colors";
+import { WEB_MAX_WIDTH } from "@/lib/utils/platform";
 
 SplashScreen.preventAutoHideAsync();
 
@@ -28,6 +30,7 @@ function RootLayoutNav() {
         options={{ presentation: "modal", headerShown: false }}
       />
       <Stack.Screen name="qr-detail/[id]" options={{ headerShown: false }} />
+      <Stack.Screen name="my-qr/[id]" options={{ headerShown: false }} />
       <Stack.Screen name="my-qr-codes" options={{ headerShown: false }} />
       <Stack.Screen name="favorites" options={{ headerShown: false }} />
       <Stack.Screen name="settings" options={{ headerShown: false }} />
@@ -55,15 +58,31 @@ export default function RootLayout() {
 
   if (!fontsLoaded && !fontError) return null;
 
+  const isWeb = Platform.OS === "web";
+
   return (
     <ErrorBoundary>
       <QueryClientProvider client={queryClient}>
         <AuthProvider>
-          <GestureHandlerRootView style={{ flex: 1, backgroundColor: Colors.dark.background }}>
-            <KeyboardProvider>
-              <StatusBar style="light" backgroundColor={Colors.dark.background} />
-              <RootLayoutNav />
-            </KeyboardProvider>
+          <GestureHandlerRootView
+            style={{
+              flex: 1,
+              backgroundColor: isWeb ? "#000" : Colors.dark.background,
+              ...(isWeb ? { alignItems: "center" } : {}),
+            }}
+          >
+            <View
+              style={{
+                flex: 1,
+                width: "100%",
+                ...(isWeb ? { maxWidth: WEB_MAX_WIDTH, backgroundColor: Colors.dark.background } : {}),
+              }}
+            >
+              <KeyboardProvider>
+                <StatusBar style="light" backgroundColor={Colors.dark.background} />
+                <RootLayoutNav />
+              </KeyboardProvider>
+            </View>
           </GestureHandlerRootView>
         </AuthProvider>
       </QueryClientProvider>
