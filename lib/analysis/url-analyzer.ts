@@ -29,29 +29,22 @@ const SUSPICIOUS_TLDS = new Set([
 ]);
 
 const BRAND_IMPERSONATION_KEYWORDS = [
-  "google", "gmail", "youtube", "facebook", "instagram", "twitter", "x",
+  "google", "gmail", "youtube", "facebook", "instagram", "twitter",
   "amazon", "flipkart", "snapdeal", "meesho", "myntra", "nykaa",
   "paytm", "phonepe", "razorpay", "cashfree", "payu",
   "sbi", "hdfc", "icici", "axis", "kotak", "rbl", "pnb", "bob",
-  "rbi", "npci", "neft", "imps", "upi",
+  "rbi", "npci",
   "paypal", "venmo", "cashapp", "zelle", "stripe",
-  "netflix", "hotstar", "primevideo", "spotify", "disneyplus",
-  "apple", "iphone", "icloud", "microsoft", "windows", "outlook",
-  "whatsapp", "telegram", "signal", "truecaller",
-  "zomato", "swiggy", "blinkit", "zepto", "dunzo",
-  "olacabs", "uber", "rapido", "namma",
-  "uidai", "aadhar", "aadhaar", "pan", "kyc",
-  "incometax", "income-tax", "irctc", "railway", "rrb",
-  "police", "cyber", "cbi", "ed",
-  "refund", "cashback", "prize", "winner", "lottery", "free",
-  "wallet", "account", "banking", "netbanking",
-  "loan", "emi", "creditcard", "credit-card", "debitcard",
-  "coinbase", "binance", "bybit", "kucoin", "okx", "wazirx", "coindcx",
-  "zerodha", "groww", "upstox", "angelone", "smallcase",
-  "bookmyshow", "makemytrip", "yatra", "ixigo", "redbus",
-  "healthcare", "covid", "vaccine", "arogya",
-  "paytmbank", "digibank", "niyo", "fi-money",
-  "cred", "slice", "lazypay", "simpl",
+  "netflix", "hotstar", "primevideo", "spotify",
+  "apple", "icloud", "microsoft", "outlook",
+  "whatsapp", "telegram", "truecaller",
+  "zomato", "swiggy", "blinkit",
+  "olacabs", "uber",
+  "uidai", "aadhaar",
+  "incometax", "irctc",
+  "refund", "cashback", "prize", "winner", "lottery",
+  "coinbase", "binance", "bybit", "kucoin", "okx", "wazirx",
+  "zerodha", "groww", "upstox",
 ];
 
 const BRAND_OFFICIAL_DOMAINS: Record<string, string[]> = {
@@ -61,52 +54,78 @@ const BRAND_OFFICIAL_DOMAINS: Record<string, string[]> = {
   facebook: ["facebook.com", "fb.com", "meta.com"],
   instagram: ["instagram.com"],
   twitter: ["twitter.com", "x.com"],
-  amazon: ["amazon.in", "amazon.com", "amazon.co.uk"],
+  amazon: ["amazon.in", "amazon.com", "amazon.co.uk", "amazon.ae", "amazon.com.au"],
   flipkart: ["flipkart.com"],
-  paytm: ["paytm.com", "p.paytm.me"],
+  paytm: ["paytm.com", "p.paytm.me", "paytmbank.com"],
   phonepe: ["phonepe.com"],
   razorpay: ["razorpay.com", "rzp.io"],
   paypal: ["paypal.com", "paypal.me"],
   apple: ["apple.com", "appleid.apple.com", "icloud.com"],
-  microsoft: ["microsoft.com", "live.com", "outlook.com"],
+  icloud: ["icloud.com", "apple.com"],
+  microsoft: ["microsoft.com", "live.com", "outlook.com", "microsoftonline.com"],
+  outlook: ["outlook.com", "outlook.live.com", "microsoft.com"],
   netflix: ["netflix.com"],
   spotify: ["spotify.com"],
   whatsapp: ["whatsapp.com"],
   telegram: ["telegram.org", "t.me"],
-  sbi: ["onlinesbi.com", "sbi.co.in", "sbionline.com"],
-  hdfc: ["hdfcbank.com", "netbanking.hdfc.com"],
-  icici: ["icicibank.com"],
-  axis: ["axisbank.com"],
-  kotak: ["kotak.com", "kotakbank.com"],
-  irctc: ["irctc.co.in"],
+  sbi: [
+    "onlinesbi.com", "sbi.co.in", "sbionline.com", "retail.onlinesbi.sbi",
+    "sbicard.com", "sbicards.com", "sbimf.com", "sbigeneral.in",
+    "yono.sbi.co.in", "sbi.co.in",
+  ],
+  hdfc: [
+    "hdfcbank.com", "netbanking.hdfc.com", "hdfc.com",
+    "hdfclife.com", "hdfcergo.com", "hdfcmf.com", "hdfcsec.com",
+    "hdfcpension.com", "hdfcsky.com",
+  ],
+  icici: [
+    "icicibank.com", "iciciprulife.com", "icicilombard.com",
+    "icicisec.com", "icicibank.in",
+  ],
+  axis: ["axisbank.com", "axismf.com", "axisdirect.in", "axisbank.co.in"],
+  kotak: ["kotak.com", "kotakbank.com", "kotaksec.com", "kotakmf.com", "kotakgeneral.com"],
+  rbl: ["rblbank.com", "rbl.co.in"],
+  pnb: ["pnbindia.in", "netpnb.com", "pnbmetlife.com"],
+  bob: ["bankofbaroda.in", "bobibanking.com"],
+  rbi: ["rbi.org.in"],
+  npci: ["npci.org.in", "upi.npci.org.in"],
+  irctc: ["irctc.co.in", "irctchelp.in"],
   uidai: ["uidai.gov.in"],
-  incometax: ["incometax.gov.in", "efiling.incometax.gov.in"],
+  aadhaar: ["uidai.gov.in"],
+  incometax: ["incometax.gov.in", "efiling.incometax.gov.in", "taxpayerservices.tin.nsdl.com"],
   coinbase: ["coinbase.com"],
   binance: ["binance.com"],
   zerodha: ["zerodha.com", "kite.zerodha.com"],
   groww: ["groww.in"],
+  upstox: ["upstox.com"],
   zomato: ["zomato.com"],
   swiggy: ["swiggy.com"],
   uber: ["uber.com"],
   stripe: ["stripe.com", "buy.stripe.com"],
+  olacabs: ["olacabs.com", "mmt.in"],
+  refund: [],
+  cashback: [],
+  prize: [],
+  winner: [],
+  lottery: [],
+  wazirx: ["wazirx.com"],
+  bybit: ["bybit.com"],
+  kucoin: ["kucoin.com"],
+  okx: ["okx.com"],
 };
 
+// Only flag paths that are genuine phishing indicators — NOT normal e-commerce/banking paths.
 const SENSITIVE_PATH_KEYWORDS = [
-  "login", "signin", "sign-in", "sign_in", "log-in",
-  "verify", "verification", "verify-account",
-  "update", "update-kyc", "kyc-update", "complete-kyc",
-  "wallet", "payment", "pay-now", "checkout",
-  "banking", "netbanking", "online-banking",
-  "otp", "otp-verify", "enter-otp",
-  "kyc", "aadhar", "aadhaar", "pan-card", "pan-verify",
-  "password", "reset-password", "forgot-password",
+  "verify-account", "update-kyc", "kyc-update", "complete-kyc",
+  "otp-verify", "enter-otp",
+  "pan-verify", "pan-card-verify",
   "account-recovery", "recover-account",
-  "claim", "claim-prize", "claim-reward", "claim-cashback",
-  "redeem", "redeem-reward",
-  "withdraw", "withdrawal",
+  "claim-prize", "claim-reward", "claim-cashback",
+  "redeem-reward",
   "income-tax-refund", "tax-refund", "refund-claim",
-  "credit-card-apply", "loan-apply", "emi-apply",
   "free-recharge", "win-prize",
+  "credit-card-apply", "loan-apply", "emi-apply",
+  "kyc-complete", "aadhar-link", "aadhar-verify",
 ];
 
 export function analyzeUrlHeuristics(url: string): UrlSafetyResult {
@@ -146,11 +165,11 @@ export function analyzeUrlHeuristics(url: string): UrlSafetyResult {
     bump("dangerous");
   }
   if (hostname.startsWith("[")) {
-    warnings.push("URL uses IPv6 address — uncommon for legitimate payment links");
+    warnings.push("URL uses IPv6 address — uncommon for legitimate links");
     bump("caution");
   }
   if (URL_SHORTENERS.has(hostname) || [...URL_SHORTENERS].some((s) => hostname.endsWith("." + s))) {
-    warnings.push("Shortened URL — the actual destination is completely hidden from you");
+    warnings.push("Shortened URL — the actual destination is hidden from you");
     bump("caution");
   }
 
@@ -160,19 +179,24 @@ export function analyzeUrlHeuristics(url: string): UrlSafetyResult {
     bump("caution");
   }
 
+  // Brand impersonation: only flag when hostname contains a brand keyword
+  // but is NOT an official domain for that brand.
   let brandFlagged = false;
   for (const brand of BRAND_IMPERSONATION_KEYWORDS) {
     if (brand.length <= 3) continue;
-    if (hostname.includes(brand)) {
-      const officialDomains = BRAND_OFFICIAL_DOMAINS[brand] || [];
-      if (officialDomains.length === 0) continue;
-      const isOfficial = officialDomains.some((d) => hostname === d || hostname.endsWith("." + d));
-      if (!isOfficial) {
-        warnings.push(`Domain contains "${brand}" but is NOT the official site — likely phishing`);
-        bump("dangerous");
-        brandFlagged = true;
-        break;
-      }
+    if (!hostname.includes(brand)) continue;
+    const officialDomains = BRAND_OFFICIAL_DOMAINS[brand] || [];
+    if (officialDomains.length === 0) continue;
+    const isOfficial = officialDomains.some((d) => hostname === d || hostname.endsWith("." + d));
+    if (!isOfficial) {
+      // Extra check: if the root domain (last 2 levels) matches any official root, it's a subsidiary — allow.
+      const rootDomain = hostname.split(".").slice(-2).join(".");
+      const officialRoots = officialDomains.map((d) => d.split(".").slice(-2).join("."));
+      if (officialRoots.includes(rootDomain)) continue;
+      warnings.push(`Domain contains "${brand}" but is NOT the official site — likely phishing`);
+      bump("dangerous");
+      brandFlagged = true;
+      break;
     }
   }
 
@@ -186,19 +210,19 @@ export function analyzeUrlHeuristics(url: string): UrlSafetyResult {
     const rootDomain = domainParts.slice(-2).join(".");
     for (const brand of BRAND_IMPERSONATION_KEYWORDS) {
       if (brand.length <= 3) continue;
-      if (hostname.includes(brand)) {
-        const officialRoot = (BRAND_OFFICIAL_DOMAINS[brand] || []).map(
-          (d) => d.split(".").slice(-2).join(".")
-        );
-        if (officialRoot.length > 0 && !officialRoot.includes(rootDomain)) {
-          warnings.push(`"${brand}" in subdomain but root domain is "${rootDomain}" — suspicious`);
-          bump("dangerous");
-          break;
-        }
+      if (!hostname.includes(brand)) continue;
+      const officialDomains = BRAND_OFFICIAL_DOMAINS[brand] || [];
+      if (officialDomains.length === 0) continue;
+      const officialRoot = officialDomains.map((d) => d.split(".").slice(-2).join("."));
+      if (officialRoot.length > 0 && !officialRoot.includes(rootDomain)) {
+        warnings.push(`"${brand}" in subdomain but root domain is "${rootDomain}" — suspicious`);
+        bump("dangerous");
+        break;
       }
     }
   }
 
+  // Only flag narrow, clearly-phishing path keywords.
   for (const kw of SENSITIVE_PATH_KEYWORDS) {
     if (pathAndQuery.includes(kw)) {
       warnings.push(`URL path contains "${kw}" — be very careful about entering personal details`);
@@ -207,7 +231,7 @@ export function analyzeUrlHeuristics(url: string): UrlSafetyResult {
     }
   }
 
-  const redirectParams = ["redirect", "redirect_uri", "return_url", "returnurl", "callback_url", "next", "url", "target", "to"];
+  const redirectParams = ["redirect_uri", "return_url", "returnurl", "callback_url"];
   for (const p of redirectParams) {
     if (parsed.searchParams.has(p)) {
       const val = parsed.searchParams.get(p) || "";
@@ -219,28 +243,21 @@ export function analyzeUrlHeuristics(url: string): UrlSafetyResult {
     }
   }
 
-  if (url.length > 300) {
-    warnings.push("Extremely long URL — often used to hide the real destination or overwhelm security checks");
+  if (url.length > 400) {
+    warnings.push("Extremely long URL — often used to hide the real destination");
     bump("caution");
   }
   if (hostname.includes("xn--")) {
-    warnings.push("Domain uses international characters (Punycode) — could be impersonating a well-known site visually");
+    warnings.push("Domain uses international characters (Punycode) — could visually impersonate a legitimate site");
     bump("dangerous");
   }
 
-  const queryVals = [...parsed.searchParams.values()];
-  for (const val of queryVals) {
-    if (val.length > 50 && /^[A-Za-z0-9+/=]{50,}$/.test(val)) {
-      warnings.push("URL parameter appears Base64-encoded — destination details are obfuscated");
-      bump("caution");
-      break;
-    }
-  }
-
-  if (url.includes("@") && !url.includes("mailto:")) {
+  // @ in URL only flag if combined with other risk signals and not in a known auth pattern
+  if (url.includes("@") && !url.includes("mailto:") && riskLevel !== "safe") {
     const atCount = (url.match(/@/g) || []).length;
-    if (atCount > 0 && !["gmail.com", "yahoo.com", "hotmail.com"].some(d => hostname.endsWith(d))) {
-      warnings.push("URL contains '@' character — could be hiding the real destination");
+    const isKnownEmail = ["gmail.com", "yahoo.com", "hotmail.com", "outlook.com"].some((d) => hostname.endsWith(d));
+    if (atCount > 0 && !isKnownEmail) {
+      warnings.push("URL contains '@' — could be hiding the real destination");
       bump("dangerous");
     }
   }
