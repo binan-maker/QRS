@@ -102,9 +102,32 @@ All screens follow a strict hooks-first pattern — screens are JSX-only, all lo
 - `features/settings/` — Settings components + shared `styles.ts`
 - `features/my-qr/` — My-QR management components + `useMyQrDetail` hook
 - `features/generator/` — QR generator components, presets, builder logic
+- `features/auth/components/AuthFormInput.tsx` — Shared text input for login + register screens
+- `features/history/components/HistoryItem.tsx` — Memoized history list row (extracted from history.tsx)
+- `features/history/components/FilterBar.tsx` — Horizontal filter chip bar (extracted from history.tsx)
+
+### Shared Layout Components (`components/layouts/`)
+- `ScreenHeader` — Shared nav bar (back button + title + optional right element)
+- `ListEmptyState` — Shared empty-state illustration with icon, title, subtitle, optional action
+
+### Profile Components (`components/profile/`)
+- `PhotoModal` — Photo picker bottom sheet (camera / gallery). Used by `profile.tsx`
+- `UsernameEditor` — @username row with live availability check. Used by `profile.tsx`
 
 ### Shared Components (`components/ui/`)
 - `SkeletonBox` — Single source of truth for all skeleton loading UI (no inline duplicates)
+
+### Constants
+- `constants/colors.ts` — Design tokens
+- `constants/config.ts` — App-wide constants: PAGE_SIZE, USERNAME_CHANGE_COOLDOWN_DAYS, trust thresholds, limits
+- `constants/routes.ts` — Typed route paths for all screens
+
+### Cache Layer (`lib/cache/qr-cache.ts`)
+- Two-level cache: in-memory Map (fastest) + AsyncStorage persistence (survives app reload)
+- TTLs: QR detail 5min, owner info 10min, trust score 2min, user stats 3min
+- Wired into `useQrDetail.ts`: first screen load checks cache before hitting Firestore (saves 7+ reads per visit)
+- Wired into `useProfile.ts`: stats, photo URL, and username loaded from cache on repeated visits
+- Cache invalidated automatically on report, favorite, follow, and username change actions
 
 ## Workflows
 

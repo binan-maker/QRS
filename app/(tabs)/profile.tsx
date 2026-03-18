@@ -1,3 +1,4 @@
+import React from "react";
 import {
   View,
   Text,
@@ -8,7 +9,6 @@ import {
   TextInput,
   ActivityIndicator,
   Image,
-  Modal,
 } from "react-native";
 import { router } from "expo-router";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
@@ -16,6 +16,8 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Animated, { FadeInDown } from "react-native-reanimated";
 import Colors from "@/constants/colors";
 import SkeletonBox from "@/components/ui/SkeletonBox";
+import PhotoModal from "@/components/profile/PhotoModal";
+import UsernameEditor from "@/components/profile/UsernameEditor";
 import { useProfile } from "@/hooks/useProfile";
 
 export default function ProfileScreen() {
@@ -64,7 +66,6 @@ export default function ProfileScreen() {
 
   return (
     <View style={[styles.container, { paddingTop: topInset }]}>
-      {/* Nav */}
       <View style={styles.navBar}>
         <Text style={styles.navTitle}>Profile</Text>
         <Pressable
@@ -80,7 +81,6 @@ export default function ProfileScreen() {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={[styles.scrollContent, { paddingBottom: tabBarHeight + 24 }]}
       >
-        {/* Hero card */}
         <Animated.View entering={FadeInDown.duration(400)}>
           <View style={styles.heroCard}>
             <Pressable onPress={() => setPhotoModalOpen(true)} style={styles.avatarWrapper}>
@@ -114,14 +114,24 @@ export default function ProfileScreen() {
                     onSubmitEditing={handleSaveName}
                   />
                   <Pressable onPress={handleSaveName} disabled={savingName} style={styles.saveNameBtn}>
-                    {savingName ? <ActivityIndicator size="small" color="#000" /> : <Text style={styles.saveNameBtnText}>Save</Text>}
+                    {savingName ? (
+                      <ActivityIndicator size="small" color="#000" />
+                    ) : (
+                      <Text style={styles.saveNameBtnText}>Save</Text>
+                    )}
                   </Pressable>
-                  <Pressable onPress={() => { setEditingName(false); setNewName(user.displayName); }} style={styles.cancelNameBtn}>
+                  <Pressable
+                    onPress={() => { setEditingName(false); setNewName(user.displayName); }}
+                    style={styles.cancelNameBtn}
+                  >
                     <Ionicons name="close" size={18} color={Colors.dark.textMuted} />
                   </Pressable>
                 </View>
               ) : (
-                <Pressable onPress={() => { setEditingName(true); setNewName(user.displayName); }} style={styles.nameRow}>
+                <Pressable
+                  onPress={() => { setEditingName(true); setNewName(user.displayName); }}
+                  style={styles.nameRow}
+                >
                   <Text style={styles.displayName} numberOfLines={1}>{user.displayName}</Text>
                   <Ionicons name="pencil-outline" size={15} color={Colors.dark.primary} style={{ marginLeft: 6 }} />
                 </Pressable>
@@ -134,7 +144,6 @@ export default function ProfileScreen() {
           </View>
         </Animated.View>
 
-        {/* Stats row */}
         <Animated.View entering={FadeInDown.duration(400).delay(80)}>
           <View style={styles.statsRow}>
             {[
@@ -155,7 +164,6 @@ export default function ProfileScreen() {
           </View>
         </Animated.View>
 
-        {/* Total Likes card */}
         <Animated.View entering={FadeInDown.duration(400).delay(140)}>
           <View style={styles.likesCard}>
             <View style={styles.likesLeft}>
@@ -175,7 +183,6 @@ export default function ProfileScreen() {
           </View>
         </Animated.View>
 
-        {/* My QR Codes */}
         <Animated.View entering={FadeInDown.duration(400).delay(160)}>
           <Pressable
             onPress={() => router.push("/my-qr-codes" as any)}
@@ -196,7 +203,6 @@ export default function ProfileScreen() {
           </Pressable>
         </Animated.View>
 
-        {/* Favorites */}
         <Animated.View entering={FadeInDown.duration(400).delay(170)}>
           <Pressable
             onPress={() => router.push("/favorites" as any)}
@@ -215,7 +221,6 @@ export default function ProfileScreen() {
           </Pressable>
         </Animated.View>
 
-        {/* Quick actions */}
         <Animated.View entering={FadeInDown.duration(400).delay(180)}>
           <Text style={styles.sectionTitle}>Quick Actions</Text>
           <View style={styles.card}>
@@ -243,7 +248,6 @@ export default function ProfileScreen() {
           </View>
         </Animated.View>
 
-        {/* Account info */}
         <Animated.View entering={FadeInDown.duration(400).delay(220)}>
           <Text style={styles.sectionTitle}>Account</Text>
           <View style={styles.card}>
@@ -261,91 +265,27 @@ export default function ProfileScreen() {
             </View>
             <View style={styles.cardDivider} />
 
-            {/* Username row */}
-            {editingUsername ? (
-              <View style={[styles.infoRow, { flexDirection: "column", alignItems: "stretch", gap: 8 }]}>
-                <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
-                  <View style={[styles.menuIcon, { backgroundColor: Colors.dark.primaryDim }]}>
-                    <Ionicons name="at" size={18} color={Colors.dark.primary} />
-                  </View>
-                  <View style={[styles.usernameInputContainer, { flex: 1 }]}>
-                    <Text style={styles.usernameAtSign}>@</Text>
-                    <TextInput
-                      style={styles.usernameInput}
-                      value={newUsernameInput}
-                      onChangeText={(v) => {
-                        setNewUsernameInput(v.toLowerCase().replace(/[^a-z0-9_]/g, ""));
-                        setUsernameError("");
-                      }}
-                      autoFocus
-                      autoCapitalize="none"
-                      autoCorrect={false}
-                      maxLength={20}
-                      placeholderTextColor={Colors.dark.textMuted}
-                      placeholder="username"
-                    />
-                    {checkingUsername ? (
-                      <ActivityIndicator size="small" color={Colors.dark.textMuted} />
-                    ) : usernameAvailable === true ? (
-                      <Ionicons name="checkmark-circle" size={18} color={Colors.dark.safe} />
-                    ) : usernameAvailable === false ? (
-                      <Ionicons name="close-circle" size={18} color={Colors.dark.danger} />
-                    ) : null}
-                  </View>
-                </View>
-                {usernameError ? (
-                  <Text style={styles.usernameError}>{usernameError}</Text>
-                ) : null}
-                {daysUntilEdit > 0 ? (
-                  <Text style={styles.usernameLockNote}>
-                    <Ionicons name="time-outline" size={12} /> Next change available in {daysUntilEdit} day{daysUntilEdit === 1 ? "" : "s"}
-                  </Text>
-                ) : (
-                  <Text style={styles.usernameHint}>3-20 chars · letters, numbers, underscores · starts with a letter</Text>
-                )}
-                <View style={{ flexDirection: "row", gap: 8 }}>
-                  <Pressable
-                    onPress={handleSaveUsername}
-                    disabled={savingUsername || usernameAvailable === false || daysUntilEdit > 0 || !newUsernameInput}
-                    style={[styles.usernameSaveBtn, (savingUsername || usernameAvailable === false || daysUntilEdit > 0 || !newUsernameInput) && { opacity: 0.5 }]}
-                  >
-                    {savingUsername ? (
-                      <ActivityIndicator size="small" color="#000" />
-                    ) : (
-                      <Text style={styles.usernameSaveBtnText}>Save</Text>
-                    )}
-                  </Pressable>
-                  <Pressable onPress={handleCancelUsername} style={styles.usernameCancelBtn}>
-                    <Text style={styles.usernameCancelBtnText}>Cancel</Text>
-                  </Pressable>
-                </View>
-              </View>
-            ) : (
-              <View style={styles.infoRow}>
-                <View style={[styles.menuIcon, { backgroundColor: Colors.dark.primaryDim }]}>
-                  <Ionicons name="at" size={18} color={Colors.dark.primary} />
-                </View>
-                <View style={{ flex: 1 }}>
-                  <Text style={styles.infoLabel}>Username</Text>
-                  <Text style={styles.infoValue}>
-                    {currentUsername ? `@${currentUsername}` : "Not set"}
-                  </Text>
-                  {daysUntilEdit > 0 ? (
-                    <Text style={styles.usernameLockNote}>{daysUntilEdit} day{daysUntilEdit === 1 ? "" : "s"} until next change</Text>
-                  ) : null}
-                </View>
-                <Pressable
-                  onPress={() => {
-                    setNewUsernameInput(currentUsername || "");
-                    setEditingUsername(true);
-                    setUsernameError("");
-                  }}
-                  disabled={daysUntilEdit > 0}
-                >
-                  <Ionicons name="pencil-outline" size={18} color={Colors.dark.textMuted} />
-                </Pressable>
-              </View>
-            )}
+            <UsernameEditor
+              currentUsername={currentUsername}
+              daysUntilEdit={daysUntilEdit}
+              editing={editingUsername}
+              input={newUsernameInput}
+              checking={checkingUsername}
+              available={usernameAvailable}
+              error={usernameError}
+              saving={savingUsername}
+              onStartEdit={() => {
+                setNewUsernameInput(currentUsername || "");
+                setEditingUsername(true);
+                setUsernameError("");
+              }}
+              onChangeInput={(v) => {
+                setNewUsernameInput(v);
+                setUsernameError("");
+              }}
+              onSave={handleSaveUsername}
+              onCancel={handleCancelUsername}
+            />
 
             <View style={styles.cardDivider} />
             <View style={styles.infoRow}>
@@ -366,7 +306,6 @@ export default function ProfileScreen() {
           </View>
         </Animated.View>
 
-        {/* Sign out */}
         <Animated.View entering={FadeInDown.duration(400).delay(280)}>
           <Pressable onPress={handleSignOut} style={styles.signOutBtn}>
             <Ionicons name="log-out-outline" size={20} color={Colors.dark.danger} />
@@ -375,49 +314,18 @@ export default function ProfileScreen() {
         </Animated.View>
       </ScrollView>
 
-      {/* Photo picker modal */}
-      <Modal
+      <PhotoModal
         visible={photoModalOpen}
-        transparent
-        animationType="slide"
-        onRequestClose={() => setPhotoModalOpen(false)}
-      >
-        <Pressable style={styles.modalOverlay} onPress={() => setPhotoModalOpen(false)}>
-          <Pressable style={styles.photoSheet} onPress={() => {}}>
-            <View style={styles.photoSheetHandle} />
-            <Text style={styles.photoSheetTitle}>Change Profile Photo</Text>
-            <Pressable style={styles.photoOption} onPress={() => handlePickPhoto("camera")}>
-              <View style={[styles.photoOptionIcon, { backgroundColor: Colors.dark.primaryDim }]}>
-                <Ionicons name="camera-outline" size={22} color={Colors.dark.primary} />
-              </View>
-              <View>
-                <Text style={styles.photoOptionText}>Take Photo</Text>
-                <Text style={styles.photoOptionSub}>Use your camera</Text>
-              </View>
-            </Pressable>
-            <View style={styles.cardDivider} />
-            <Pressable style={styles.photoOption} onPress={() => handlePickPhoto("gallery")}>
-              <View style={[styles.photoOptionIcon, { backgroundColor: Colors.dark.accentDim }]}>
-                <Ionicons name="images-outline" size={22} color={Colors.dark.accent} />
-              </View>
-              <View>
-                <Text style={styles.photoOptionText}>Choose from Gallery</Text>
-                <Text style={styles.photoOptionSub}>Pick an existing photo</Text>
-              </View>
-            </Pressable>
-            <Pressable style={styles.photoCancel} onPress={() => setPhotoModalOpen(false)}>
-              <Text style={styles.photoCancelText}>Cancel</Text>
-            </Pressable>
-          </Pressable>
-        </Pressable>
-      </Modal>
+        onCamera={() => handlePickPhoto("camera")}
+        onGallery={() => handlePickPhoto("gallery")}
+        onClose={() => setPhotoModalOpen(false)}
+      />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: Colors.dark.background },
-
   navBar: {
     flexDirection: "row", alignItems: "center", justifyContent: "space-between",
     paddingHorizontal: 20, paddingVertical: 14,
@@ -429,9 +337,7 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.dark.surface, borderWidth: 1, borderColor: Colors.dark.surfaceBorder,
     alignItems: "center", justifyContent: "center",
   },
-
   scrollContent: { padding: 20 },
-
   centeredBox: { flex: 1, alignItems: "center", justifyContent: "center", padding: 40, gap: 12 },
   guestAvatar: {
     width: 96, height: 96, borderRadius: 48,
@@ -448,7 +354,6 @@ const styles = StyleSheet.create({
   signInBtnText: { fontSize: 16, fontFamily: "Inter_700Bold", color: "#000" },
   registerBtn: { paddingVertical: 12, paddingHorizontal: 24 },
   registerBtnText: { fontSize: 14, fontFamily: "Inter_600SemiBold", color: Colors.dark.primary },
-
   heroCard: {
     backgroundColor: Colors.dark.surface, borderRadius: 20, padding: 20,
     borderWidth: 1, borderColor: Colors.dark.surfaceBorder,
@@ -460,10 +365,7 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.dark.primaryDim, alignItems: "center", justifyContent: "center",
     borderWidth: 2.5, borderColor: Colors.dark.primary,
   },
-  avatarLargeImg: {
-    width: 76, height: 76, borderRadius: 38,
-    borderWidth: 2.5, borderColor: Colors.dark.primary,
-  },
+  avatarLargeImg: { width: 76, height: 76, borderRadius: 38, borderWidth: 2.5, borderColor: Colors.dark.primary },
   avatarLargeText: { fontSize: 28, fontFamily: "Inter_700Bold", color: Colors.dark.primary },
   avatarEditBadge: {
     position: "absolute", bottom: 0, right: 0,
@@ -475,8 +377,6 @@ const styles = StyleSheet.create({
   nameRow: { flexDirection: "row", alignItems: "center", marginBottom: 4 },
   displayName: { fontSize: 20, fontFamily: "Inter_700Bold", color: Colors.dark.text, flexShrink: 1 },
   emailText: { fontSize: 12, fontFamily: "Inter_400Regular", color: Colors.dark.textSecondary, marginBottom: 6 },
-  memberBadge: { flexDirection: "row", alignItems: "center", gap: 4 },
-  memberText: { fontSize: 11, fontFamily: "Inter_500Medium", color: Colors.dark.safe },
   editNameRow: { flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 4 },
   nameInput: {
     flex: 1, fontSize: 15, fontFamily: "Inter_600SemiBold", color: Colors.dark.text,
@@ -486,154 +386,65 @@ const styles = StyleSheet.create({
   saveNameBtn: { backgroundColor: Colors.dark.primary, paddingHorizontal: 14, paddingVertical: 8, borderRadius: 10, flexShrink: 0 },
   saveNameBtnText: { fontSize: 13, fontFamily: "Inter_700Bold", color: "#000" },
   cancelNameBtn: { padding: 6 },
-
   usernameHeroText: { fontSize: 13, fontFamily: "Inter_500Medium", color: Colors.dark.primary, marginBottom: 2 },
-  usernameInputContainer: {
-    flexDirection: "row", alignItems: "center",
-    backgroundColor: Colors.dark.surfaceLight, borderRadius: 10,
-    borderWidth: 1, borderColor: Colors.dark.primary,
-    paddingHorizontal: 10, gap: 4,
+  statsRow: {
+    flexDirection: "row", gap: 10, marginBottom: 12,
   },
-  usernameAtSign: { fontSize: 15, fontFamily: "Inter_600SemiBold", color: Colors.dark.primary },
-  usernameInput: {
-    flex: 1, paddingVertical: 8, fontSize: 15,
-    fontFamily: "Inter_400Regular", color: Colors.dark.text,
-  },
-  usernameError: { fontSize: 12, fontFamily: "Inter_400Regular", color: Colors.dark.danger, marginLeft: 48 },
-  usernameHint: { fontSize: 11, fontFamily: "Inter_400Regular", color: Colors.dark.textMuted, marginLeft: 48 },
-  usernameLockNote: { fontSize: 11, fontFamily: "Inter_500Medium", color: Colors.dark.warning, marginLeft: 48 },
-  usernameSaveBtn: { backgroundColor: Colors.dark.primary, paddingHorizontal: 18, paddingVertical: 8, borderRadius: 10, alignSelf: "flex-start" },
-  usernameSaveBtnText: { fontSize: 13, fontFamily: "Inter_700Bold", color: "#000" },
-  usernameCancelBtn: { paddingHorizontal: 14, paddingVertical: 8, borderRadius: 10, borderWidth: 1, borderColor: Colors.dark.surfaceBorder, alignSelf: "flex-start" },
-  usernameCancelBtnText: { fontSize: 13, fontFamily: "Inter_600SemiBold", color: Colors.dark.textSecondary },
-
-  statsRow: { flexDirection: "row", gap: 10, marginBottom: 12 },
   statCard: {
-    flex: 1, backgroundColor: Colors.dark.surface, borderRadius: 16,
-    borderWidth: 1, borderColor: Colors.dark.surfaceBorder,
-    padding: 14, alignItems: "center", gap: 4,
+    flex: 1, backgroundColor: Colors.dark.surface, borderRadius: 16, padding: 14,
+    alignItems: "center", borderWidth: 1, borderColor: Colors.dark.surfaceBorder, gap: 2,
   },
   statValue: { fontSize: 22, fontFamily: "Inter_700Bold" },
-  statLabel: { fontSize: 10, fontFamily: "Inter_500Medium", color: Colors.dark.textMuted, textAlign: "center" },
-
+  statLabel: { fontSize: 10, fontFamily: "Inter_400Regular", color: Colors.dark.textMuted, textAlign: "center" },
   likesCard: {
-    backgroundColor: Colors.dark.surface, borderRadius: 16,
-    borderWidth: 1, borderColor: Colors.dark.safeDim,
-    padding: 16, flexDirection: "row", alignItems: "center",
-    justifyContent: "space-between", marginBottom: 20,
+    backgroundColor: Colors.dark.surface, borderRadius: 16, padding: 16, marginBottom: 12,
+    borderWidth: 1, borderColor: Colors.dark.surfaceBorder,
+    flexDirection: "row", alignItems: "center", justifyContent: "space-between",
   },
   likesLeft: { flexDirection: "row", alignItems: "center", gap: 12, flex: 1 },
   likesIconWrap: {
-    width: 44, height: 44, borderRadius: 22,
-    backgroundColor: Colors.dark.safeDim, alignItems: "center", justifyContent: "center",
+    width: 44, height: 44, borderRadius: 12, alignItems: "center", justifyContent: "center",
+    backgroundColor: "rgba(16,185,129,0.12)",
   },
   likesTitle: { fontSize: 14, fontFamily: "Inter_600SemiBold", color: Colors.dark.text },
-  likesSub: { fontSize: 11, fontFamily: "Inter_400Regular", color: Colors.dark.textMuted, marginTop: 2 },
-  likesValue: { fontSize: 28, fontFamily: "Inter_700Bold", color: Colors.dark.safe },
-
+  likesSub: { fontSize: 12, fontFamily: "Inter_400Regular", color: Colors.dark.textSecondary },
+  likesValue: { fontSize: 24, fontFamily: "Inter_700Bold", color: Colors.dark.safe },
+  myQrViewAllBtn: {
+    backgroundColor: Colors.dark.surface, borderRadius: 16, padding: 16, marginBottom: 12,
+    borderWidth: 1, borderColor: Colors.dark.surfaceBorder,
+    flexDirection: "row", alignItems: "center", justifyContent: "space-between",
+  },
+  myQrViewAllLeft: { flexDirection: "row", alignItems: "center", gap: 12, flex: 1 },
+  myQrViewAllIcon: {
+    width: 44, height: 44, borderRadius: 12, alignItems: "center", justifyContent: "center",
+    backgroundColor: Colors.dark.primaryDim,
+  },
+  myQrViewAllTitle: { fontSize: 14, fontFamily: "Inter_600SemiBold", color: Colors.dark.text },
+  myQrViewAllSub: { fontSize: 12, fontFamily: "Inter_400Regular", color: Colors.dark.textSecondary },
   sectionTitle: {
-    fontSize: 12, fontFamily: "Inter_600SemiBold", color: Colors.dark.textMuted,
-    textTransform: "uppercase", letterSpacing: 0.8, marginBottom: 8, marginLeft: 2,
+    fontSize: 13, fontFamily: "Inter_600SemiBold", color: Colors.dark.textMuted,
+    textTransform: "uppercase", letterSpacing: 0.8, marginBottom: 10, marginTop: 4,
   },
   card: {
-    backgroundColor: Colors.dark.surface, borderRadius: 16,
-    borderWidth: 1, borderColor: Colors.dark.surfaceBorder, marginBottom: 20, overflow: "hidden",
+    backgroundColor: Colors.dark.surface, borderRadius: 16, marginBottom: 16,
+    borderWidth: 1, borderColor: Colors.dark.surfaceBorder, overflow: "hidden",
   },
-  menuRow: { flexDirection: "row", alignItems: "center", gap: 14, padding: 16 },
-  menuIcon: { width: 38, height: 38, borderRadius: 12, alignItems: "center", justifyContent: "center" },
-  menuRowText: { fontSize: 15, fontFamily: "Inter_500Medium", color: Colors.dark.text },
-  menuRowSub: { fontSize: 11, fontFamily: "Inter_400Regular", color: Colors.dark.textMuted, marginTop: 2 },
-  cardDivider: { height: 1, backgroundColor: Colors.dark.surfaceBorder, marginHorizontal: 16 },
-
-  infoRow: { flexDirection: "row", alignItems: "center", gap: 14, padding: 16 },
-  infoLabel: { fontSize: 11, fontFamily: "Inter_500Medium", color: Colors.dark.textMuted, marginBottom: 2 },
-  infoValue: { fontSize: 14, fontFamily: "Inter_600SemiBold", color: Colors.dark.text },
+  cardDivider: { height: 1, backgroundColor: Colors.dark.surfaceBorder },
+  menuRow: { flexDirection: "row", alignItems: "center", gap: 12, padding: 16 },
+  menuIcon: {
+    width: 38, height: 38, borderRadius: 10, alignItems: "center", justifyContent: "center",
+  },
+  menuRowText: { fontSize: 14, fontFamily: "Inter_600SemiBold", color: Colors.dark.text },
+  menuRowSub: { fontSize: 12, fontFamily: "Inter_400Regular", color: Colors.dark.textSecondary, marginTop: 1 },
+  infoRow: { flexDirection: "row", alignItems: "center", gap: 12, padding: 16 },
+  infoLabel: { fontSize: 11, fontFamily: "Inter_400Regular", color: Colors.dark.textMuted, marginBottom: 2 },
+  infoValue: { fontSize: 15, fontFamily: "Inter_500Medium", color: Colors.dark.text },
   verifiedBadge: { flexDirection: "row", alignItems: "center", gap: 4 },
-  verifiedText: { fontSize: 11, fontFamily: "Inter_600SemiBold", color: Colors.dark.safe },
-
+  verifiedText: { fontSize: 12, fontFamily: "Inter_500Medium", color: Colors.dark.safe },
   signOutBtn: {
-    flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 10,
-    backgroundColor: Colors.dark.dangerDim, borderRadius: 16, padding: 16,
-    borderWidth: 1, borderColor: Colors.dark.danger + "30",
-  },
-  signOutText: { fontSize: 16, fontFamily: "Inter_600SemiBold", color: Colors.dark.danger },
-
-  myQrHeader: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 10 },
-  newQrBtn: {
-    flexDirection: "row", alignItems: "center", gap: 4,
-    backgroundColor: Colors.dark.primaryDim, borderRadius: 12,
-    paddingHorizontal: 10, paddingVertical: 5,
-    borderWidth: 1, borderColor: Colors.dark.primary + "40",
-  },
-  newQrBtnText: { fontSize: 12, fontFamily: "Inter_600SemiBold", color: Colors.dark.primary },
-  myQrLoading: { paddingVertical: 28, alignItems: "center" },
-  myQrEmpty: {
-    flexDirection: "row", alignItems: "center", gap: 12,
-    backgroundColor: Colors.dark.surface, borderRadius: 16,
-    borderWidth: 1, borderColor: Colors.dark.surfaceBorder,
-    padding: 16, marginBottom: 20,
-  },
-  myQrEmptyTitle: { fontSize: 14, fontFamily: "Inter_600SemiBold", color: Colors.dark.textSecondary },
-  myQrEmptySub: { fontSize: 11, fontFamily: "Inter_400Regular", color: Colors.dark.textMuted, marginTop: 2, maxWidth: 220 },
-  myQrCard: {
-    flexDirection: "row", alignItems: "center", gap: 12,
-    backgroundColor: Colors.dark.surface, borderRadius: 16,
-    borderWidth: 1, borderColor: Colors.dark.surfaceBorder,
-    padding: 12, width: 280,
-  },
-  myQrImageWrap: { borderRadius: 10, padding: 6, overflow: "hidden" },
-  myQrCardInfo: { flex: 1, minWidth: 0 },
-  myQrCardUuidRow: { flexDirection: "row", alignItems: "center", gap: 4, marginBottom: 3 },
-  myQrCardUuid: { fontSize: 10, fontFamily: "Inter_600SemiBold", color: Colors.dark.safe, letterSpacing: 0.3 },
-  myQrCardContent: { fontSize: 12, fontFamily: "Inter_400Regular", color: Colors.dark.textSecondary, lineHeight: 16, marginBottom: 6 },
-  myQrCardStats: { flexDirection: "row", gap: 10 },
-  myQrStat: { flexDirection: "row", alignItems: "center", gap: 3 },
-  myQrInactiveBadge: {
-    backgroundColor: Colors.dark.dangerDim, borderRadius: 4, paddingHorizontal: 4, paddingVertical: 1,
+    flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8,
+    backgroundColor: Colors.dark.surface, padding: 16, borderRadius: 16, marginBottom: 8,
     borderWidth: 1, borderColor: Colors.dark.danger + "40",
   },
-  myQrInactiveBadgeText: { fontSize: 8, fontFamily: "Inter_700Bold", color: Colors.dark.danger },
-  myQrBusinessName: { fontSize: 11, fontFamily: "Inter_700Bold", color: Colors.dark.text, marginBottom: 2 },
-  myQrStatText: { fontSize: 11, fontFamily: "Inter_500Medium", color: Colors.dark.textMuted },
-
-  myQrViewAllBtn: {
-    flexDirection: "row", alignItems: "center", justifyContent: "space-between",
-    backgroundColor: Colors.dark.surface, borderRadius: 16,
-    borderWidth: 1, borderColor: Colors.dark.surfaceBorder,
-    padding: 16, marginBottom: 20,
-  },
-  myQrViewAllLeft: { flexDirection: "row", alignItems: "center", gap: 14, flex: 1 },
-  myQrViewAllIcon: {
-    width: 44, height: 44, borderRadius: 14,
-    backgroundColor: Colors.dark.primaryDim, alignItems: "center", justifyContent: "center",
-  },
-  myQrViewAllTitle: { fontSize: 15, fontFamily: "Inter_600SemiBold", color: Colors.dark.text },
-  myQrViewAllSub: { fontSize: 12, fontFamily: "Inter_400Regular", color: Colors.dark.textMuted, marginTop: 2 },
-
-  modalOverlay: {
-    flex: 1, backgroundColor: "rgba(0,0,0,0.6)",
-    justifyContent: "flex-end",
-  },
-  photoSheet: {
-    backgroundColor: Colors.dark.surface, borderTopLeftRadius: 24, borderTopRightRadius: 24,
-    paddingBottom: 36, paddingTop: 12,
-    borderTopWidth: 1, borderColor: Colors.dark.surfaceBorder,
-  },
-  photoSheetHandle: {
-    width: 40, height: 4, borderRadius: 2,
-    backgroundColor: Colors.dark.surfaceLight, alignSelf: "center", marginBottom: 16,
-  },
-  photoSheetTitle: {
-    fontSize: 16, fontFamily: "Inter_700Bold", color: Colors.dark.text,
-    paddingHorizontal: 20, marginBottom: 12,
-  },
-  photoOption: { flexDirection: "row", alignItems: "center", gap: 16, padding: 16 },
-  photoOptionIcon: { width: 48, height: 48, borderRadius: 24, alignItems: "center", justifyContent: "center" },
-  photoOptionText: { fontSize: 15, fontFamily: "Inter_600SemiBold", color: Colors.dark.text },
-  photoOptionSub: { fontSize: 12, fontFamily: "Inter_400Regular", color: Colors.dark.textMuted, marginTop: 2 },
-  photoCancel: {
-    margin: 16, backgroundColor: Colors.dark.surfaceLight,
-    borderRadius: 14, padding: 16, alignItems: "center",
-  },
-  photoCancelText: { fontSize: 15, fontFamily: "Inter_600SemiBold", color: Colors.dark.textSecondary },
+  signOutText: { fontSize: 15, fontFamily: "Inter_600SemiBold", color: Colors.dark.danger },
 });

@@ -62,7 +62,7 @@ export function useSettings() {
     if (!feedbackText.trim()) return;
     setFeedbackSubmitting(true);
     try {
-      await submitFeedback(user?.id || null, feedbackText.trim(), feedbackEmail.trim() || null);
+      await submitFeedback(user?.id || null, feedbackEmail.trim() || null, feedbackText.trim());
       setFeedbackDone(true);
       setFeedbackText("");
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);

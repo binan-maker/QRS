@@ -2,7 +2,6 @@ import { useState, useEffect } from "react";
 import {
   View,
   Text,
-  TextInput,
   Pressable,
   StyleSheet,
   ActivityIndicator,
@@ -17,6 +16,7 @@ import * as Haptics from "expo-haptics";
 import Colors from "@/constants/colors";
 import { useAuth } from "@/contexts/AuthContext";
 import GoogleIcon from "@/components/GoogleIcon";
+import AuthFormInput from "@/features/auth/components/AuthFormInput";
 
 export default function LoginScreen() {
   const { signIn, signInWithGoogle, googleRequest, user } = useAuth();
@@ -108,87 +108,42 @@ export default function LoginScreen() {
         </View>
 
         <Text style={styles.title}>Welcome Back</Text>
-        <Text style={styles.subtitle}>
-          Sign in to unlock full QR scanning features
-        </Text>
+        <Text style={styles.subtitle}>Sign in to unlock full QR scanning features</Text>
 
         {error ? (
-          <View style={[
-            styles.errorContainer,
-            unverifiedEmail && styles.warningContainer,
-          ]}>
+          <View style={[styles.errorContainer, unverifiedEmail && styles.warningContainer]}>
             <Ionicons
               name={unverifiedEmail ? "mail-unread-outline" : "alert-circle"}
               size={16}
               color={unverifiedEmail ? Colors.dark.warning : Colors.dark.danger}
             />
-            <Text style={[
-              styles.errorText,
-              unverifiedEmail && styles.warningText,
-            ]}>
-              {error}
-            </Text>
+            <Text style={[styles.errorText, unverifiedEmail && styles.warningText]}>{error}</Text>
           </View>
         ) : null}
 
-        <View>
-          <View style={[
-            styles.inputContainer,
-            fieldErrors.email ? styles.inputContainerError : null,
-          ]}>
-            <Ionicons
-              name="mail-outline"
-              size={20}
-              color={fieldErrors.email ? Colors.dark.danger : Colors.dark.textMuted}
-              style={styles.inputIcon}
-            />
-            <TextInput
-              style={styles.input}
-              placeholder="Email address"
-              placeholderTextColor={Colors.dark.textMuted}
-              value={email}
-              onChangeText={(v) => { setEmail(v); if (fieldErrors.email) setFieldErrors((p) => ({ ...p, email: "" })); }}
-              keyboardType="email-address"
-              autoCapitalize="none"
-              autoCorrect={false}
-            />
-          </View>
-          {fieldErrors.email ? (
-            <Text style={styles.fieldError}>{fieldErrors.email}</Text>
-          ) : null}
-        </View>
+        <AuthFormInput
+          icon="mail-outline"
+          placeholder="Email address"
+          value={email}
+          onChangeText={(v) => { setEmail(v); if (fieldErrors.email) setFieldErrors((p) => ({ ...p, email: "" })); }}
+          keyboardType="email-address"
+          autoCapitalize="none"
+          autoCorrect={false}
+          error={fieldErrors.email}
+        />
 
         <View>
-          <View style={[
-            styles.inputContainer,
-            fieldErrors.password ? styles.inputContainerError : null,
-          ]}>
-            <Ionicons
-              name="lock-closed-outline"
-              size={20}
-              color={fieldErrors.password ? Colors.dark.danger : Colors.dark.textMuted}
-              style={styles.inputIcon}
-            />
-            <TextInput
-              style={[styles.input, { flex: 1 }]}
-              placeholder="Password"
-              placeholderTextColor={Colors.dark.textMuted}
-              value={password}
-              onChangeText={(v) => { setPassword(v); if (fieldErrors.password) setFieldErrors((p) => ({ ...p, password: "" })); }}
-              secureTextEntry={!showPassword}
-            />
-            <Pressable onPress={() => setShowPassword(!showPassword)} style={styles.eyeBtn}>
-              <Ionicons
-                name={showPassword ? "eye-off-outline" : "eye-outline"}
-                size={20}
-                color={Colors.dark.textMuted}
-              />
-            </Pressable>
-          </View>
-          {fieldErrors.password ? (
-            <Text style={styles.fieldError}>{fieldErrors.password}</Text>
-          ) : null}
-
+          <AuthFormInput
+            icon="lock-closed-outline"
+            placeholder="Password"
+            value={password}
+            onChangeText={(v) => { setPassword(v); if (fieldErrors.password) setFieldErrors((p) => ({ ...p, password: "" })); }}
+            secureTextEntry={!showPassword}
+            showToggle
+            toggleVisible={showPassword}
+            onToggleVisible={() => setShowPassword(!showPassword)}
+            error={fieldErrors.password}
+          />
           <Link href="/(auth)/forgot-password" asChild>
             <Pressable style={styles.forgotPasswordBtn}>
               <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
@@ -199,10 +154,7 @@ export default function LoginScreen() {
         <Pressable
           onPress={handleLogin}
           disabled={loading}
-          style={({ pressed }) => [
-            styles.primaryButton,
-            { opacity: pressed || loading ? 0.8 : 1 },
-          ]}
+          style={({ pressed }) => [styles.primaryButton, { opacity: pressed || loading ? 0.8 : 1 }]}
         >
           {loading ? (
             <ActivityIndicator color="#000" />
@@ -249,158 +201,41 @@ export default function LoginScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flexGrow: 1,
-    padding: 24,
-    justifyContent: "center",
-    gap: 16,
-  },
-  iconContainer: {
-    alignItems: "center",
-    marginBottom: 8,
-  },
+  container: { flexGrow: 1, padding: 24, justifyContent: "center", gap: 16 },
+  iconContainer: { alignItems: "center", marginBottom: 8 },
   iconCircle: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    backgroundColor: Colors.dark.primaryDim,
-    alignItems: "center",
-    justifyContent: "center",
+    width: 80, height: 80, borderRadius: 40,
+    backgroundColor: Colors.dark.primaryDim, alignItems: "center", justifyContent: "center",
   },
-  title: {
-    fontSize: 28,
-    fontFamily: "Inter_700Bold",
-    color: Colors.dark.text,
-    textAlign: "center",
-  },
+  title: { fontSize: 28, fontFamily: "Inter_700Bold", color: Colors.dark.text, textAlign: "center" },
   subtitle: {
-    fontSize: 15,
-    fontFamily: "Inter_400Regular",
-    color: Colors.dark.textSecondary,
-    textAlign: "center",
-    marginBottom: 8,
+    fontSize: 15, fontFamily: "Inter_400Regular", color: Colors.dark.textSecondary,
+    textAlign: "center", marginBottom: 8,
   },
   errorContainer: {
-    flexDirection: "row",
-    alignItems: "flex-start",
-    gap: 8,
-    backgroundColor: Colors.dark.dangerDim,
-    padding: 12,
-    borderRadius: 12,
+    flexDirection: "row", alignItems: "flex-start", gap: 8,
+    backgroundColor: Colors.dark.dangerDim, padding: 12, borderRadius: 12,
   },
-  warningContainer: {
-    backgroundColor: Colors.dark.warningDim,
-  },
-  errorText: {
-    color: Colors.dark.danger,
-    fontFamily: "Inter_500Medium",
-    fontSize: 14,
-    flex: 1,
-  },
-  warningText: {
-    color: Colors.dark.warning,
-  },
-  inputContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: Colors.dark.surfaceLight,
-    borderRadius: 14,
-    borderWidth: 1,
-    borderColor: Colors.dark.surfaceBorder,
-    paddingHorizontal: 16,
-  },
-  inputContainerError: {
-    borderColor: Colors.dark.danger,
-    backgroundColor: Colors.dark.dangerDim,
-  },
-  inputIcon: {
-    marginRight: 12,
-  },
-  input: {
-    flex: 1,
-    paddingVertical: 16,
-    fontSize: 16,
-    fontFamily: "Inter_400Regular",
-    color: Colors.dark.text,
-  },
-  eyeBtn: {
-    padding: 4,
-  },
-  fieldError: {
-    color: Colors.dark.danger,
-    fontFamily: "Inter_400Regular",
-    fontSize: 12,
-    marginTop: 4,
-    marginLeft: 4,
-  },
-  forgotPasswordBtn: {
-    alignSelf: "flex-end",
-    marginTop: 8,
-    paddingVertical: 2,
-  },
-  forgotPasswordText: {
-    color: Colors.dark.primary,
-    fontFamily: "Inter_500Medium",
-    fontSize: 13,
-  },
+  warningContainer: { backgroundColor: Colors.dark.warningDim },
+  errorText: { color: Colors.dark.danger, fontFamily: "Inter_500Medium", fontSize: 14, flex: 1 },
+  warningText: { color: Colors.dark.warning },
+  forgotPasswordBtn: { alignSelf: "flex-end", marginTop: 8, paddingVertical: 2 },
+  forgotPasswordText: { color: Colors.dark.primary, fontFamily: "Inter_500Medium", fontSize: 13 },
   primaryButton: {
-    backgroundColor: Colors.dark.primary,
-    paddingVertical: 16,
-    borderRadius: 14,
-    alignItems: "center",
-    marginTop: 4,
+    backgroundColor: Colors.dark.primary, paddingVertical: 16,
+    borderRadius: 14, alignItems: "center", marginTop: 4,
   },
-  primaryButtonText: {
-    color: "#000",
-    fontSize: 16,
-    fontFamily: "Inter_700Bold",
-  },
-  footer: {
-    flexDirection: "row",
-    justifyContent: "center",
-    gap: 6,
-    marginTop: 4,
-  },
-  footerText: {
-    color: Colors.dark.textSecondary,
-    fontFamily: "Inter_400Regular",
-    fontSize: 14,
-  },
-  linkText: {
-    color: Colors.dark.primary,
-    fontFamily: "Inter_600SemiBold",
-    fontSize: 14,
-  },
-  dividerRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 12,
-  },
-  dividerLine: {
-    flex: 1,
-    height: 1,
-    backgroundColor: Colors.dark.surfaceBorder,
-  },
-  dividerText: {
-    fontSize: 13,
-    fontFamily: "Inter_400Regular",
-    color: Colors.dark.textMuted,
-  },
+  primaryButtonText: { color: "#000", fontSize: 16, fontFamily: "Inter_700Bold" },
+  footer: { flexDirection: "row", justifyContent: "center", gap: 6, marginTop: 4 },
+  footerText: { color: Colors.dark.textSecondary, fontFamily: "Inter_400Regular", fontSize: 14 },
+  linkText: { color: Colors.dark.primary, fontFamily: "Inter_600SemiBold", fontSize: 14 },
+  dividerRow: { flexDirection: "row", alignItems: "center", gap: 12 },
+  dividerLine: { flex: 1, height: 1, backgroundColor: Colors.dark.surfaceBorder },
+  dividerText: { fontSize: 13, fontFamily: "Inter_400Regular", color: Colors.dark.textMuted },
   googleButton: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 12,
-    backgroundColor: Colors.dark.surface,
-    borderWidth: 1,
-    borderColor: Colors.dark.surfaceBorder,
-    paddingVertical: 14,
-    paddingHorizontal: 20,
-    borderRadius: 14,
+    flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 12,
+    backgroundColor: Colors.dark.surface, borderWidth: 1, borderColor: Colors.dark.surfaceBorder,
+    paddingVertical: 14, paddingHorizontal: 20, borderRadius: 14,
   },
-  googleButtonText: {
-    fontSize: 15,
-    fontFamily: "Inter_600SemiBold",
-    color: Colors.dark.text,
-  },
+  googleButtonText: { fontSize: 15, fontFamily: "Inter_600SemiBold", color: Colors.dark.text },
 });

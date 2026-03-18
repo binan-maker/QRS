@@ -17,6 +17,11 @@ import {
   type UserStats,
   type GeneratedQrItem,
 } from "@/lib/firestore-service";
+import {
+  getCachedUserStats,
+  setCachedUserStats,
+  invalidateUserCache,
+} from "@/lib/cache/qr-cache";
 
 export function useProfile() {
   const { user, signOut } = useAuth();
@@ -42,10 +47,26 @@ export function useProfile() {
   const [savingUsername, setSavingUsername] = useState(false);
   const [usernameError, setUsernameError] = useState("");
 
-  const loadStats = useCallback(async () => {
+  const loadStats = useCallback(async (forceRefresh = false) => {
     if (!user) return;
     setStatsLoading(true);
     try {
+      if (!forceRefresh) {
+        const cached = await getCachedUserStats<{
+          stats: UserStats;
+          photoURL: string | null;
+          username: string | null;
+          usernameLastChangedAt: Date | null;
+        }>(user.id);
+        if (cached) {
+          setStats(cached.stats);
+          if (cached.photoURL) setPhotoURL(cached.photoURL);
+          if (cached.username) setCurrentUsername(cached.username);
+          setUsernameLastChangedAt(cached.usernameLastChangedAt);
+          setStatsLoading(false);
+          return;
+        }
+      }
       const [s, photo, unameData] = await Promise.all([
         getUserStats(user.id),
         getUserPhotoURL(user.id),
@@ -55,6 +76,12 @@ export function useProfile() {
       if (photo) setPhotoURL(photo);
       if (unameData.username) setCurrentUsername(unameData.username);
       setUsernameLastChangedAt(unameData.usernameLastChangedAt);
+      await setCachedUserStats(user.id, {
+        stats: s,
+        photoURL: photo,
+        username: unameData.username,
+        usernameLastChangedAt: unameData.usernameLastChangedAt,
+      });
     } catch {}
     setStatsLoading(false);
   }, [user?.id]);
@@ -111,6 +138,7 @@ export function useProfile() {
       setCurrentUsername(newUsernameInput.trim());
       setUsernameLastChangedAt(new Date());
       setEditingUsername(false);
+      invalidateUserCache(user.id);
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     } catch (e: any) {
       setUsernameError(e.message || "Could not update username.");

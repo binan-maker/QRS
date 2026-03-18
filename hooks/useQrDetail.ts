@@ -48,6 +48,11 @@ import {
   type UrlSafetyResult,
 } from "@/lib/qr-analysis";
 import Colors from "@/constants/colors";
+import {
+  getCachedQrDetail,
+  setCachedQrDetail,
+  invalidateQrCache,
+} from "@/lib/cache/qr-cache";
 
 export interface QrDetail {
   id: string;
@@ -221,8 +226,29 @@ export function useQrDetail(id: string) {
   useEffect(() => {
     setLoadError(false);
     setOfflineMode(false);
-    loadQrDetail(id, user?.id || null)
-      .then(async (detail) => {
+
+    async function fetchDetail() {
+      const cached = await getCachedQrDetail<any>(id, user?.id || null);
+      if (cached) {
+        setQrCode(cached.qrCode);
+        setReportCounts(cached.reportCounts || {});
+        setTotalScans(cached.totalScans || 0);
+        setTotalComments(cached.totalComments || 0);
+        setIsFavorite(cached.isFavorite || false);
+        setIsFollowing(cached.isFollowing || false);
+        setFollowCount(cached.followCount || 0);
+        setTrustScore(cached.trustScore || null);
+        if (cached.userReport) setUserReport(cached.userReport);
+        if (cached.ownerInfo) {
+          setOwnerInfo(cached.ownerInfo);
+          setIsQrOwner(user?.id === cached.ownerInfo.ownerId);
+        }
+        setLoading(false);
+        return;
+      }
+
+      try {
+        const detail = await loadQrDetail(id, user?.id || null);
         if (!detail) {
           if (!isOnline) {
             setOfflineMode(true);
@@ -249,20 +275,25 @@ export function useQrDetail(id: string) {
             contentType: detail.qrCode.contentType,
           }));
         } catch {}
+        let ownerData: any = null;
         try {
           const owner = await getQrOwnerInfo(id);
           if (owner) {
             setOwnerInfo(owner);
             setIsQrOwner(user?.id === owner.ownerId);
+            ownerData = owner;
           }
         } catch {}
+        await setCachedQrDetail(id, user?.id || null, { ...detail, ownerInfo: ownerData });
         setLoading(false);
-      })
-      .catch(async () => {
+      } catch {
         setOfflineMode(true);
         await loadOfflineFallback();
         setLoading(false);
-      });
+      }
+    }
+
+    fetchDetail();
   }, [id, user?.id]);
 
   useEffect(() => {
@@ -359,6 +390,7 @@ export function useQrDetail(id: string) {
     try {
       await reportQrCode(id, user.id, type);
       setUserReport(type);
+      invalidateQrCache(id);
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     } catch (e: any) {
       Alert.alert("Error", e.message);
@@ -374,6 +406,7 @@ export function useQrDetail(id: string) {
     try {
       const newFav = await toggleFavorite(id, user.id, qrCode.content, qrCode.contentType);
       setIsFavorite(newFav);
+      invalidateQrCache(id);
       Haptics.impactAsync(newFav ? Haptics.ImpactFeedbackStyle.Medium : Haptics.ImpactFeedbackStyle.Light);
     } catch {}
     setFavoriteLoading(false);
@@ -387,6 +420,7 @@ export function useQrDetail(id: string) {
       const result = await toggleFollow(id, user.id, qrCode.content, qrCode.contentType, user.displayName);
       setIsFollowing(result.isFollowing);
       setFollowCount(result.followCount);
+      invalidateQrCache(id);
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     } catch {}
     setFollowLoading(false);
