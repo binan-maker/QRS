@@ -8,6 +8,7 @@ import {
   subscribeToNotificationCount,
   markAllNotificationsRead,
   clearAllNotifications,
+  getUserPhotoURL,
   type Notification,
 } from "@/lib/firestore-service";
 
@@ -28,6 +29,7 @@ export function useHome() {
   const [notifOpen, setNotifOpen] = useState(false);
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [markingRead, setMarkingRead] = useState(false);
+  const [photoURL, setPhotoURL] = useState<string | null>(user?.photoURL || null);
 
   const scanPulse = useSharedValue(1);
   useEffect(() => {
@@ -37,6 +39,14 @@ export function useHome() {
     );
   }, []);
   const pulseStyle = useAnimatedStyle(() => ({ transform: [{ scale: scanPulse.value }] }));
+
+  useEffect(() => {
+    setPhotoURL(user?.photoURL || null);
+    if (!user) return;
+    getUserPhotoURL(user.id).then((photo) => {
+      if (photo) setPhotoURL(photo);
+    }).catch(() => {});
+  }, [user?.id]);
 
   useEffect(() => {
     if (!user) { setNotifCount(0); return; }
@@ -97,6 +107,7 @@ export function useHome() {
 
   return {
     user,
+    photoURL,
     recentScans,
     refreshing,
     onRefresh,

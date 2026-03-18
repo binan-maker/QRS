@@ -154,6 +154,23 @@ interface Props {
   onOpenContent: () => void;
 }
 
+function extractBasicPaymentInfo(content: string): { vpa?: string; name?: string; amount?: string; currency?: string } {
+  try {
+    const vpa = content.match(/pa=([^&\s]+)/i)?.[1];
+    const name = content.match(/pn=([^&\s]+)/i)?.[1];
+    const amount = content.match(/(?:\bam|amount)=([^&\s]+)/i)?.[1];
+    const cu = content.match(/cu=([^&\s]+)/i)?.[1];
+    return {
+      vpa: vpa ? decodeURIComponent(vpa) : undefined,
+      name: name ? decodeURIComponent(name) : undefined,
+      amount: amount ? decodeURIComponent(amount) : undefined,
+      currency: cu ? decodeURIComponent(cu) : undefined,
+    };
+  } catch { return {}; }
+}
+
+const EXPAND_THRESHOLD = 120;
+
 const ContentCard = React.memo(function ContentCard({
   content,
   contentType,
@@ -162,6 +179,9 @@ const ContentCard = React.memo(function ContentCard({
   onOpenContent,
 }: Props) {
   const [copied, setCopied] = React.useState(false);
+  const [contentExpanded, setContentExpanded] = React.useState(false);
+
+  const isLongContent = content.length > EXPAND_THRESHOLD || content.includes("\n");
 
   async function handleCopy() {
     await Clipboard.setStringAsync(content);
@@ -182,6 +202,8 @@ const ContentCard = React.memo(function ContentCard({
   const smsData = contentType === "sms" ? parseSms(content) : null;
   const eventData = contentType === "event" ? parseEvent(content) : null;
 
+  const basicPayment = (contentType === "payment" && !parsedPayment) ? extractBasicPaymentInfo(content) : null;
+
   return (
     <View style={styles.contentCard}>
       <View style={styles.contentHeader}>
@@ -193,7 +215,16 @@ const ContentCard = React.memo(function ContentCard({
         </View>
       </View>
 
-      <Text style={styles.contentText} selectable numberOfLines={4}>{content}</Text>
+      <Text
+        style={[styles.contentText, !isLongContent && styles.contentTextSpaced]}
+        selectable
+        numberOfLines={contentExpanded ? undefined : 3}
+      >{content}</Text>
+      {isLongContent && (
+        <Pressable onPress={() => setContentExpanded((v) => !v)} style={styles.expandBtn}>
+          <Text style={styles.expandBtnText}>{contentExpanded ? "Show less" : "Show more"}</Text>
+        </Pressable>
+      )}
 
       {/* ── Wi-Fi detail card ── */}
       {wifi ? (
@@ -297,10 +328,25 @@ const ContentCard = React.memo(function ContentCard({
           </Text>
         </View>
       ) : contentType === "payment" && !parsedPayment && !isDeactivated ? (
-        <Pressable onPress={onOpenContent} style={({ pressed }) => [styles.actionBtn, { opacity: pressed ? 0.8 : 1 }]}>
-          <Ionicons name="card-outline" size={18} color="#000" />
-          <Text style={styles.actionBtnText}>Open Payment</Text>
-        </Pressable>
+        <View style={styles.infoCard}>
+          {basicPayment?.name ? <InfoRow label="Payee" value={basicPayment.name} /> : null}
+          {basicPayment?.vpa ? <InfoRow label="UPI ID" value={basicPayment.vpa} selectable /> : null}
+          {basicPayment?.amount ? (
+            <View style={styles.paymentRow}>
+              <Text style={styles.infoLabel}>Amount</Text>
+              <Text style={[styles.infoValue, { color: Colors.dark.warning, fontFamily: "Inter_700Bold" }]}>
+                {basicPayment.currency === "INR" || !basicPayment.currency
+                  ? `₹${parseFloat(basicPayment.amount).toLocaleString("en-IN")}`
+                  : `${basicPayment.amount} ${basicPayment.currency}`}
+              </Text>
+            </View>
+          ) : null}
+          <Pressable onPress={onOpenContent} style={({ pressed }) => [styles.actionBtn, { opacity: pressed ? 0.8 : 1 }]}>
+            <Ionicons name="card-outline" size={18} color="#000" />
+            <Text style={styles.actionBtnText}>Open Payment</Text>
+          </Pressable>
+          <Text style={styles.warningText}>Verify the recipient before making any payment</Text>
+        </View>
       ) : null}
 
       {/* ── Action row for all non-payment types ── */}
@@ -344,7 +390,13 @@ const styles = StyleSheet.create({
   typeBadgeText: { fontSize: 11, fontFamily: "Inter_700Bold", color: Colors.dark.primary, letterSpacing: 0.5 },
   contentText: {
     fontSize: 14, fontFamily: "Inter_400Regular", color: Colors.dark.text,
-    lineHeight: 22, marginBottom: 14, letterSpacing: 0.2,
+    lineHeight: 22, letterSpacing: 0.2,
+  },
+  contentTextSpaced: { marginBottom: 14 },
+  expandBtn: { marginBottom: 14, marginTop: 4 },
+  expandBtnText: {
+    fontSize: 13, fontFamily: "Inter_600SemiBold",
+    color: Colors.dark.primary, textDecorationLine: "underline",
   },
   infoCard: {
     backgroundColor: Colors.dark.surfaceLight, borderRadius: 14, padding: 14, gap: 8, marginBottom: 12,

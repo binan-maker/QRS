@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet, Pressable, ScrollView, Platform, RefreshControl } from "react-native";
+import { View, Text, StyleSheet, Pressable, ScrollView, Platform, RefreshControl, Image } from "react-native";
 import { router } from "expo-router";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -13,7 +13,7 @@ import NotificationsModal from "@/features/home/components/NotificationsModal";
 export default function HomeScreen() {
   const insets = useSafeAreaInsets();
   const {
-    user, recentScans, refreshing, onRefresh,
+    user, photoURL, recentScans, refreshing, onRefresh,
     notifCount, notifOpen, setNotifOpen,
     notifications, markingRead, pulseStyle,
     handleOpenNotifications, handleClearNotifications,
@@ -60,7 +60,11 @@ export default function HomeScreen() {
                 ) : null}
                 {user ? (
                   <Pressable onPress={() => router.push("/(tabs)/profile")} style={styles.avatarCircle}>
-                    <Text style={styles.avatarText}>{user.displayName.charAt(0).toUpperCase()}</Text>
+                    {photoURL ? (
+                      <Image source={{ uri: photoURL }} style={styles.avatarImage} />
+                    ) : (
+                      <Text style={styles.avatarText}>{user.displayName.charAt(0).toUpperCase()}</Text>
+                    )}
                   </Pressable>
                 ) : (
                   <Pressable
@@ -226,8 +230,9 @@ const styles = StyleSheet.create({
   avatarCircle: {
     width: 44, height: 44, borderRadius: 22,
     backgroundColor: Colors.dark.primaryDim, borderWidth: 2, borderColor: Colors.dark.primary,
-    alignItems: "center", justifyContent: "center",
+    alignItems: "center", justifyContent: "center", overflow: "hidden",
   },
+  avatarImage: { width: 44, height: 44, borderRadius: 22 },
   avatarText: { fontSize: 18, fontFamily: "Inter_700Bold", color: Colors.dark.primary },
   signInBtn: {
     flexDirection: "row", alignItems: "center", gap: 6,
