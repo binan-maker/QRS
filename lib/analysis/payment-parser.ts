@@ -282,7 +282,211 @@ export function parseAnyPaymentQr(content: string): ParsedPaymentQr | null {
     );
   }
 
+  return detectUniversalPayment(content, lower);
+}
+
+// ─── Universal Payment Detector ─────────────────────────────────────────────
+// Catches any payment QR not matched by the registry above.
+// Works for: new banks, local payment apps, unknown UPI deep-links,
+// generic /pay URLs — anything that looks like a financial transaction.
+function detectUniversalPayment(content: string, lower: string): ParsedPaymentQr | null {
+
+  // ── 1. UPI signature: pa= (virtual payment address) is the definitive UPI signal.
+  //    Any app that generates a UPI QR embeds pa= — banks, wallets, merchants.
+  if (lower.includes("pa=")) {
+    return parseUnknownUpiQr(content, lower, "UPI Payment");
+  }
+
+  // ── 2. Generic scheme detection: any custom URL scheme that carries payment data.
+  //    Matches: hdfc://pay?..., yesbank://pay, iob://upi?..., mybank://payment?...
+  const schemeMatch = content.match(/^([a-zA-Z][a-zA-Z0-9+\-.]{2,}):\/\//);
+  if (schemeMatch) {
+    const scheme = schemeMatch[1].toLowerCase();
+    const rest = lower.slice(schemeMatch[0].length);
+    const isPaymentScheme =
+      scheme.includes("pay") ||
+      scheme.includes("upi") ||
+      scheme.includes("wallet") ||
+      scheme.includes("money") ||
+      scheme.includes("bank") ||
+      scheme.includes("cash") ||
+      rest.startsWith("pay") ||
+      rest.startsWith("upi") ||
+      rest.startsWith("payment") ||
+      rest.startsWith("transfer");
+    if (isPaymentScheme) {
+      const displayName = formatSchemeName(scheme);
+      return parseSchemePaymentQr(content, lower, scheme, displayName);
+    }
+  }
+
+  // ── 3. URL with /pay, /payment, /transfer, /send, /receive in path.
+  //    Catches: bank.com/pay?amount=..., anyapp.in/payment/qr, etc.
+  const payPathMatch = lower.match(
+    /https?:\/\/[^\s/]+(?:\/[^\s?]*)?\/(pay|payment|transfer|send|receive|qr-pay|payqr|collect|checkout)(?:[/?#]|$)/
+  );
+  if (payPathMatch) {
+    return parseUrlPaymentQr(content, lower);
+  }
+
+  // ── 4. URL domain starts with "pay." or contains "pay" as a subdomain.
+  //    Catches: pay.hdfc.com, pay.axisbank.in, pay.yesbank.in, etc.
+  const payDomainMatch = lower.match(/https?:\/\/(?:pay|payments|payment)\.[a-z0-9.-]+/);
+  if (payDomainMatch) {
+    return parseUrlPaymentQr(content, lower);
+  }
+
+  // ── 5. Content has clear payment field pairs (even without a known scheme).
+  //    Catches: raw key=value QR formats used by some Indian bank ATMs & merchants.
+  //    e.g.  AMOUNT=500|MERCHANT=XYZ|VPA=abc@bank|TXN=REF123
+  const hasAmountField =
+    /\bam(?:ount)?\s*=\s*\d/.test(lower) ||
+    /\bamt\s*=\s*\d/.test(lower) ||
+    /\bprice\s*=\s*\d/.test(lower);
+  const hasPayeeField =
+    /\bpa\s*=/.test(lower) ||
+    /\bvpa\s*=/.test(lower) ||
+    /\bpayee\s*=/.test(lower) ||
+    /\bmerchant\s*=/.test(lower) ||
+    /\bto\s*=.+@/.test(lower);
+  if (hasAmountField && hasPayeeField) {
+    return parseRawFieldPaymentQr(content, lower);
+  }
+
+  // ── 6. Generic "pay" / "payment" keyword in the content body when the QR
+  //    clearly isn't a plain URL or plain text link.
+  //    Guards: must also have digits (amount) or @ (VPA) to avoid false positives
+  //    on URLs that merely mention "display" or "replay".
+  const hasPayWord = /\bpay(?:ment|ments|now|here|online|link)?\b/i.test(content);
+  const hasMoneySignal =
+    /\d+/.test(content) &&
+    (content.includes("@") || content.includes("INR") || content.includes("₹") ||
+     content.includes("amount") || content.includes("Amount"));
+  if (hasPayWord && hasMoneySignal && !content.startsWith("http")) {
+    return parseRawFieldPaymentQr(content, lower);
+  }
+
   return null;
+}
+
+function formatSchemeName(scheme: string): string {
+  const nice = scheme.replace(/[_-]/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+  if (nice.toLowerCase().includes("upi")) return `${nice} (UPI)`;
+  return nice;
+}
+
+function parseUnknownUpiQr(content: string, lower: string, displayName: string): ParsedPaymentQr {
+  let pa = "";
+  let pn = "";
+  let am: string | undefined;
+  let tn: string | undefined;
+  let cu = "INR";
+  try {
+    const urlLike = content.includes("://") ? content : `upi://pay?${content.includes("?") ? content.split("?")[1] : content}`;
+    const params = new URLSearchParams(urlLike.split("?")[1] || "");
+    pa = params.get("pa") || "";
+    pn = params.get("pn") || "";
+    am = params.get("am") || params.get("amount") || undefined;
+    tn = params.get("tn") || params.get("note") || undefined;
+    cu = params.get("cu") || "INR";
+  } catch {}
+  if (!pa) {
+    const paMatch = content.match(/pa=([^&\s]+)/i);
+    if (paMatch) pa = paMatch[1];
+  }
+  const bankHandle = pa.includes("@") ? pa.split("@")[1] : "";
+  const appScheme = content.split("://")[0]?.toLowerCase() || "upi";
+  const appName = appScheme === "upi" ? displayName : formatSchemeName(appScheme);
+  return {
+    app: "upi",
+    appDisplayName: appName,
+    appCategory: "upi_india",
+    region: "India",
+    recipientId: pa,
+    recipientName: pn ? decodeURIComponent(pn) : undefined,
+    amount: am,
+    currency: cu,
+    note: tn ? decodeURIComponent(tn) : undefined,
+    rawContent: content,
+    isAmountPreFilled: !!am && parseFloat(am) > 0,
+    bankHandle,
+    vpa: pa,
+  };
+}
+
+function parseSchemePaymentQr(content: string, lower: string, scheme: string, displayName: string): ParsedPaymentQr {
+  if (lower.includes("pa=") || lower.includes("vpa=")) {
+    return parseUnknownUpiQr(content, lower, displayName);
+  }
+  let amount: string | undefined;
+  let recipientId = "";
+  try {
+    const qIdx = content.indexOf("?");
+    if (qIdx >= 0) {
+      const params = new URLSearchParams(content.slice(qIdx + 1));
+      amount = params.get("amount") || params.get("am") || params.get("amt") || undefined;
+      recipientId = params.get("to") || params.get("id") || params.get("merchant") || "";
+    }
+  } catch {}
+  return {
+    app: "unknown_payment",
+    appDisplayName: displayName,
+    appCategory: "other",
+    region: "Regional",
+    recipientId: recipientId || content.slice(0, 60),
+    amount,
+    rawContent: content,
+    isAmountPreFilled: !!amount && parseFloat(amount) > 0,
+  };
+}
+
+function parseUrlPaymentQr(content: string, lower: string): ParsedPaymentQr {
+  let amount: string | undefined;
+  let recipientId = "";
+  let appName = "Payment";
+  try {
+    const urlObj = new URL(content);
+    appName = urlObj.hostname.replace(/^www\.|^pay\./, "").split(".")[0];
+    appName = appName.charAt(0).toUpperCase() + appName.slice(1) + " Pay";
+    amount = urlObj.searchParams.get("amount") || urlObj.searchParams.get("am") || urlObj.searchParams.get("amt") || undefined;
+    recipientId = urlObj.searchParams.get("pa") || urlObj.searchParams.get("vpa") ||
+      urlObj.searchParams.get("to") || urlObj.searchParams.get("merchant") || urlObj.pathname.split("/").pop() || "";
+  } catch {
+    recipientId = content.slice(0, 60);
+  }
+  return {
+    app: "unknown_payment",
+    appDisplayName: appName,
+    appCategory: "other",
+    region: "Regional",
+    recipientId,
+    amount,
+    rawContent: content,
+    isAmountPreFilled: !!amount && parseFloat(amount) > 0,
+  };
+}
+
+function parseRawFieldPaymentQr(content: string, lower: string): ParsedPaymentQr {
+  let amount: string | undefined;
+  let recipientId = "";
+  const amMatch = content.match(/(?:amount|am|amt|price)\s*[=:]\s*([\d.]+)/i);
+  if (amMatch) amount = amMatch[1];
+  const payeeMatch = content.match(/(?:pa|vpa|payee|merchant|to)\s*[=:]\s*([^\s|&,]+)/i);
+  if (payeeMatch) recipientId = payeeMatch[1];
+  if (!recipientId) {
+    const atMatch = content.match(/[\w.]+@[\w.]+/);
+    if (atMatch) recipientId = atMatch[0];
+  }
+  return {
+    app: "unknown_payment",
+    appDisplayName: "Payment QR",
+    appCategory: "other",
+    region: "Regional",
+    recipientId: recipientId || content.slice(0, 60),
+    amount,
+    rawContent: content,
+    isAmountPreFilled: !!amount && parseFloat(amount) > 0,
+  };
 }
 
 function buildParsedPayment(app: AppDef, content: string, lower: string): ParsedPaymentQr {

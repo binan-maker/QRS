@@ -167,6 +167,22 @@ export function analyzeAnyPaymentQr(parsed: ParsedPaymentQr): PaymentSafetyResul
     bump("caution");
   }
 
+  if (parsed.app === "unknown_payment" || parsed.appCategory === "other") {
+    warnings.push("Payment QR detected — the app or bank is not in our known registry, so verify the merchant carefully before paying");
+    if (parsed.isAmountPreFilled && parsed.amount) {
+      const amt = parseFloat(parsed.amount);
+      if (amt > 0) {
+        warnings.push(`Pre-filled amount: ${parsed.currency || ""} ${amt.toLocaleString()} — only pay if YOU initiated this`);
+        bump(amt > 50000 ? "dangerous" : "caution");
+      }
+    }
+    if (!parsed.recipientId || parsed.recipientId.length < 3) {
+      warnings.push("No recipient ID found — do not pay without verifying who receives the money");
+      bump("caution");
+    }
+    bump("caution");
+  }
+
   if (parsed.appCategory === "china") {
     warnings.push(`${parsed.appDisplayName} QR: verify you are paying the correct merchant`);
     bump("caution");
