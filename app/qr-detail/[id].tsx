@@ -90,7 +90,7 @@ export default function QrDetailScreen() {
   return (
     <View style={{ flex: 1, backgroundColor: Colors.dark.background }}>
       <StatusBar style="light" backgroundColor={Colors.dark.background} />
-      <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === "ios" ? "padding" : "height"}>
+      <KeyboardAvoidingView style={{ flex: 1 }} behavior="padding" keyboardVerticalOffset={Platform.OS === "android" ? 0 : 0}>
         <View style={[styles.container, { paddingTop: topInset }]}>
 
           {/* Nav */}
@@ -400,7 +400,7 @@ export default function QrDetailScreen() {
 
           {/* Comment Input Bar */}
           {user && !q.offlineMode && (
-            <View style={styles.bottomCommentBar}>
+            <View style={[styles.bottomCommentBar, { paddingBottom: Math.max(insets.bottom, 8) }]}>
               {q.replyTo && (
                 <View style={styles.replyBanner}>
                   <Ionicons name="return-down-forward-outline" size={14} color={Colors.dark.primary} />

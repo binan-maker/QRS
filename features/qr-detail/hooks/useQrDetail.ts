@@ -94,10 +94,62 @@ export function useQrDetail(id: string) {
 
   function handleOpenContent() {
     if (!content) return;
-    if (contentType === "url") {
-      Linking.openURL(content).catch(() => Alert.alert("Error", "Could not open link"));
-    } else if (contentType === "payment") {
+    const lower = content.toLowerCase();
+
+    if (contentType === "payment") {
       handleOpenPayment(content);
+    } else if (contentType === "url") {
+      const url = lower.startsWith("http") ? content : `https://${content}`;
+      Linking.openURL(url).catch(() => Alert.alert("Error", "Could not open link"));
+    } else if (contentType === "location") {
+      let mapsUrl = content;
+      if (lower.startsWith("geo:")) {
+        const afterGeo = content.slice(4);
+        const coords = afterGeo.split("?")[0];
+        const qParam = afterGeo.includes("q=") ? afterGeo.split("q=")[1]?.split("&")[0] : "";
+        mapsUrl = qParam
+          ? `https://maps.google.com/?q=${encodeURIComponent(qParam)}`
+          : `https://maps.google.com/?q=${coords}`;
+      } else if (lower.startsWith("comgooglemaps://")) {
+        mapsUrl = content.replace("comgooglemaps://", "https://maps.google.com/");
+      } else if (!lower.startsWith("http")) {
+        mapsUrl = `https://maps.google.com/?q=${encodeURIComponent(content)}`;
+      }
+      Linking.openURL(mapsUrl).catch(() =>
+        Alert.alert("Error", "Could not open Maps. Make sure a maps app is installed.")
+      );
+    } else if (contentType === "phone") {
+      const cleaned = content.replace(/^(tel:|callto:|facetime:)/i, "");
+      Linking.openURL(`tel:${cleaned}`).catch(() => Alert.alert("Error", "Could not make call"));
+    } else if (contentType === "email") {
+      const emailUrl = lower.startsWith("mailto:") ? content : `mailto:${content}`;
+      Linking.openURL(emailUrl).catch(() => Alert.alert("Error", "Could not open email app"));
+    } else if (contentType === "sms") {
+      const smsUrl = lower.startsWith("sms:") || lower.startsWith("smsto:") ? content : `sms:${content}`;
+      Linking.openURL(smsUrl).catch(() => Alert.alert("Error", "Could not open SMS app"));
+    } else if (contentType === "social") {
+      const isHttpUrl = lower.startsWith("http://") || lower.startsWith("https://");
+      const isDeepLink = !isHttpUrl && content.includes("://");
+      if (isDeepLink) {
+        Linking.openURL(content).catch(() => {
+          const httpFallback = `https://${content.split("://").slice(1).join("://")}`;
+          Linking.openURL(httpFallback).catch(() =>
+            Alert.alert("App Not Found", "Could not open this social profile. Make sure the app is installed.")
+          );
+        });
+      } else {
+        const socialUrl = isHttpUrl ? content : `https://${content}`;
+        Linking.openURL(socialUrl).catch(() => Alert.alert("Error", "Could not open social profile"));
+      }
+    } else if (contentType === "app" || contentType === "otp") {
+      Linking.openURL(content).catch(() => Alert.alert("App Not Found", "Could not open the link. Make sure the required app is installed."));
+    } else if (contentType === "media" || contentType === "document") {
+      const mediaUrl = lower.startsWith("http") ? content : `https://${content}`;
+      Linking.openURL(mediaUrl).catch(() => Alert.alert("Error", "Could not open link"));
+    } else {
+      if (lower.startsWith("http://") || lower.startsWith("https://")) {
+        Linking.openURL(content).catch(() => Alert.alert("Error", "Could not open link"));
+      }
     }
   }
 

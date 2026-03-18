@@ -1,5 +1,5 @@
 import React from "react";
-import { View, Text, StyleSheet, Pressable } from "react-native";
+import { View, Text, StyleSheet, Pressable, Platform } from "react-native";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import * as Clipboard from "expo-clipboard";
 import * as Haptics from "expo-haptics";
@@ -166,8 +166,10 @@ const ContentCard = React.memo(function ContentCard({
   async function handleCopy() {
     await Clipboard.setStringAsync(content);
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+    if (Platform.OS !== "android") {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }
   }
 
   const hasOpenAction = !isDeactivated && contentType !== "text" && contentType !== "product";

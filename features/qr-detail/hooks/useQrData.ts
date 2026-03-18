@@ -48,8 +48,16 @@ export function useQrData(id: string, userId: string | null) {
   }
 
   useEffect(() => {
+    setQrCode(null);
+    setOwnerInfo(null);
+    setIsQrOwner(false);
     setLoadError(false);
     setOfflineMode(false);
+    setLoading(true);
+    setTotalScans(0);
+    setTotalComments(0);
+    setOfflineContent(null);
+    setOfflineContentType("text");
 
     async function fetchDetail() {
       const cached = await getCachedQrDetail<any>(id, userId);
