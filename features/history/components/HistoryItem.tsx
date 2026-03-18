@@ -8,13 +8,45 @@ import type { HistoryItem as HistoryItemType } from "@/hooks/useHistory";
 
 function getContentIcon(type: string): keyof typeof Ionicons.glyphMap {
   switch (type) {
-    case "url": return "link";
-    case "phone": return "call";
-    case "email": return "mail";
-    case "wifi": return "wifi";
-    case "location": return "location";
-    case "payment": return "card";
-    default: return "document-text";
+    case "url":       return "link";
+    case "phone":     return "call";
+    case "email":     return "mail";
+    case "wifi":      return "wifi";
+    case "location":  return "location";
+    case "payment":   return "card";
+    case "sms":       return "chatbubble";
+    case "contact":   return "person";
+    case "event":     return "calendar";
+    case "otp":       return "lock-closed";
+    case "app":       return "apps";
+    case "social":    return "people";
+    case "media":     return "play-circle";
+    case "document":  return "document";
+    case "boarding":  return "airplane";
+    case "product":   return "barcode";
+    default:          return "document-text";
+  }
+}
+
+function getContentLabel(type: string): string {
+  switch (type) {
+    case "url":       return "URL";
+    case "phone":     return "Phone";
+    case "email":     return "Email";
+    case "wifi":      return "WiFi";
+    case "location":  return "Location";
+    case "payment":   return "Payment";
+    case "sms":       return "SMS";
+    case "contact":   return "Contact";
+    case "event":     return "Event";
+    case "otp":       return "OTP / 2FA";
+    case "app":       return "App";
+    case "social":    return "Social";
+    case "media":     return "Media";
+    case "document":  return "Document";
+    case "boarding":  return "Boarding Pass";
+    case "product":   return "Product";
+    default:          return "Text";
   }
 }
 
