@@ -66,6 +66,131 @@ const PAYMENT_APP_REGISTRY: AppDef[] = [
   { id: "juspay", displayName: "JusPay", category: "india_wallet", region: "India",
     schemes: ["juspay://"], urlPatterns: ["juspay.in"],
     trustedDomains: ["juspay.in"] },
+
+  // ── Indian bank apps & wallets missing from original registry ──────────────
+
+  // HDFC Bank (highest priority for Indian banking)
+  { id: "hdfc_bank", displayName: "HDFC Bank", category: "upi_india", region: "India",
+    schemes: ["hdfcbank://", "payzapp://", "hdfc://", "hdfcpay://", "smarthubbusiness://"],
+    urlPatterns: ["hdfcbank.com/pay", "payzapp.in", "smartpay.hdfcbank.com",
+      "hdfcbanksmarthub.com", "vyapar.hdfcbank.com"],
+    trustedDomains: ["hdfcbank.com", "payzapp.in"] },
+
+  // BharatPe (major merchant payment network)
+  { id: "bharatpe", displayName: "BharatPe", category: "upi_india", region: "India",
+    schemes: ["bharatpe://", "swipe://"],
+    urlPatterns: ["bharatpe.com", "bharatpe.one", "merchants.bharatpe.com"],
+    trustedDomains: ["bharatpe.com", "bharatpe.one"] },
+
+  // Axis Pay (was in type but missing from registry)
+  { id: "axis_pay", displayName: "Axis Pay", category: "upi_india", region: "India",
+    schemes: ["axispay://", "axisbank://", "axis://"],
+    urlPatterns: ["axisbank.com/pay", "axisbank.com/mobile-banking",
+      "axispay.in", "open.axisbank.com"],
+    trustedDomains: ["axisbank.com", "axispay.in"] },
+
+  // Navi (was in type but missing from registry)
+  { id: "navi", displayName: "Navi", category: "upi_india", region: "India",
+    schemes: ["navi://"],
+    urlPatterns: ["navi.com/pay", "navi.com/upi"],
+    trustedDomains: ["navi.com"] },
+
+  // SuperApp by Fincare (was in type but missing from registry)
+  { id: "superapp", displayName: "SuperApp", category: "upi_india", region: "India",
+    schemes: ["superapp://", "superfin://"],
+    urlPatterns: ["superfin.money", "fincarebank.in"],
+    trustedDomains: ["superfin.money", "fincarebank.in"] },
+
+  // Pockets by ICICI (was in type but missing from registry)
+  { id: "pockets_icici", displayName: "Pockets (ICICI Bank)", category: "upi_india", region: "India",
+    schemes: ["pockets://", "icicipockets://"],
+    urlPatterns: ["pockets.icicibank.com", "icicibank.com/pockets"],
+    trustedDomains: ["icicibank.com"] },
+
+  // Kotak Pay / Kotak 811
+  { id: "kotak_pay", displayName: "Kotak Pay", category: "upi_india", region: "India",
+    schemes: ["kotak://", "kotakpay://", "kotak811://"],
+    urlPatterns: ["kotak.com/pay", "kotak811.com", "m.kotak.com/payment"],
+    trustedDomains: ["kotak.com", "kotak811.com"] },
+
+  // BOB World (Bank of Baroda)
+  { id: "bob_world", displayName: "BOB World Pay", category: "upi_india", region: "India",
+    schemes: ["bobworld://", "bankofbaroda://", "baroda://", "barodampay://"],
+    urlPatterns: ["bankofbaroda.in/pay", "bobworld.in"],
+    trustedDomains: ["bankofbaroda.in"] },
+
+  // IDFC FIRST Bank
+  { id: "idfcfirst", displayName: "IDFC FIRST Bank", category: "upi_india", region: "India",
+    schemes: ["idfcfirst://", "idfcfirstbank://", "idfcbank://"],
+    urlPatterns: ["idfcfirstbank.com/pay", "idfcbank.com/pay"],
+    trustedDomains: ["idfcfirstbank.com", "idfcbank.com"] },
+
+  // Yes Pay (Yes Bank)
+  { id: "yes_pay", displayName: "Yes Pay (Yes Bank)", category: "upi_india", region: "India",
+    schemes: ["yespay://", "yesbank://", "yesbankpay://"],
+    urlPatterns: ["yesbank.in/pay", "yespay.in"],
+    trustedDomains: ["yesbank.in", "yespay.in"] },
+
+  // Fi Money (Federal Bank partnership)
+  { id: "fi_money", displayName: "Fi Money", category: "upi_india", region: "India",
+    schemes: ["fi://", "fimoney://"],
+    urlPatterns: ["fi.money/pay", "epifi.com", "fi.money/upi"],
+    trustedDomains: ["fi.money", "epifi.com"] },
+
+  // Jupiter Money
+  { id: "jupiter_money", displayName: "Jupiter Money", category: "upi_india", region: "India",
+    schemes: ["jupiter://", "jupitermoney://"],
+    urlPatterns: ["jupitermoney.com", "jupiter.money/pay"],
+    trustedDomains: ["jupitermoney.com", "jupiter.money"] },
+
+  // Groww Pay
+  { id: "groww_pay", displayName: "Groww Pay", category: "upi_india", region: "India",
+    schemes: ["groww://"],
+    urlPatterns: ["groww.in/pay", "groww.in/upi"],
+    trustedDomains: ["groww.in"] },
+
+  // IndPay (Indian Bank)
+  { id: "indpay", displayName: "IndPay (Indian Bank)", category: "upi_india", region: "India",
+    schemes: ["indianbank://", "indpay://"],
+    urlPatterns: ["indianbank.in/pay", "indianbank.co.in"],
+    trustedDomains: ["indianbank.in"] },
+
+  // Canara ai1 / CanPay (Canara Bank)
+  { id: "canara_bank", displayName: "Canara ai1", category: "upi_india", region: "India",
+    schemes: ["canara://", "canpay://", "canarabank://"],
+    urlPatterns: ["canarabank.in/pay", "canarabank.com"],
+    trustedDomains: ["canarabank.in", "canarabank.com"] },
+
+  // Vyom (Union Bank of India)
+  { id: "union_bank", displayName: "Vyom (Union Bank)", category: "upi_india", region: "India",
+    schemes: ["unionbank://", "vyom://", "uboi://"],
+    urlPatterns: ["unionbankofindia.co.in/pay", "unionbank.co.in"],
+    trustedDomains: ["unionbankofindia.co.in"] },
+
+  // RBL MoBank
+  { id: "rbl_bank", displayName: "RBL MoBank", category: "upi_india", region: "India",
+    schemes: ["rbl://", "rblmobank://", "rblbank://"],
+    urlPatterns: ["rblbank.com/pay"],
+    trustedDomains: ["rblbank.com"] },
+
+  // PNB ONE (Punjab National Bank)
+  { id: "pnb_one", displayName: "PNB ONE", category: "upi_india", region: "India",
+    schemes: ["pnb://", "pnbone://", "pnbmobilebanking://"],
+    urlPatterns: ["pnbindia.in/pay", "pnbindia.in"],
+    trustedDomains: ["pnbindia.in"] },
+
+  // IndusPay (IndusInd Bank)
+  { id: "indus_pay", displayName: "IndusPay (IndusInd Bank)", category: "upi_india", region: "India",
+    schemes: ["induspay://", "indusmobile://", "indusind://"],
+    urlPatterns: ["indusmobilebanking.com", "indusind.com/pay"],
+    trustedDomains: ["indusind.com", "indusmobilebanking.com"] },
+
+  // BharatQR (NPCI generic merchant QR — used by most Indian banks)
+  { id: "bharatqr", displayName: "BharatQR (NPCI)", category: "upi_india", region: "India",
+    schemes: ["bharatqr://"],
+    urlPatterns: ["bharatqr.com", "npci.org.in/bharatqr"],
+    trustedDomains: ["bharatqr.com", "npci.org.in"] },
+
   { id: "alipay", displayName: "Alipay (支付宝)", category: "china", region: "China",
     schemes: ["alipay://", "alipays://"], urlPatterns: ["qr.alipay.com", "global.alipay.com", "intl.alipay.com"],
     trustedDomains: ["alipay.com", "alipayobjects.com"] },
@@ -375,6 +500,63 @@ function formatSchemeName(scheme: string): string {
   return nice;
 }
 
+const BANK_HANDLE_TO_APP: Record<string, { id: PaymentAppId; name: string }> = {
+  "okhdfcbank": { id: "hdfc_bank", name: "HDFC Bank" },
+  "hdfcbank": { id: "hdfc_bank", name: "HDFC Bank" },
+  "payzapp": { id: "hdfc_bank", name: "HDFC Bank (PayZapp)" },
+  "okaxis": { id: "axis_pay", name: "Axis Pay" },
+  "axisbank": { id: "axis_pay", name: "Axis Pay" },
+  "axl": { id: "axis_pay", name: "Axis Pay" },
+  "oksbi": { id: "yono_sbi", name: "YONO SBI" },
+  "sbi": { id: "yono_sbi", name: "YONO SBI" },
+  "okicici": { id: "imobile_pay", name: "iMobile Pay (ICICI)" },
+  "icici": { id: "imobile_pay", name: "iMobile Pay (ICICI)" },
+  "ibl": { id: "imobile_pay", name: "iMobile Pay (ICICI)" },
+  "ybl": { id: "phonepe", name: "PhonePe (Yes Bank)" },
+  "superyes": { id: "phonepe", name: "PhonePe (Yes Bank)" },
+  "paytm": { id: "paytm", name: "Paytm Payments Bank" },
+  "kotak": { id: "kotak_pay", name: "Kotak Pay" },
+  "kmbl": { id: "kotak_pay", name: "Kotak Pay" },
+  "barodampay": { id: "bob_world", name: "BOB World Pay" },
+  "bob": { id: "bob_world", name: "BOB World Pay" },
+  "federal": { id: "fi_money", name: "Federal Bank / Fi" },
+  "fbl": { id: "fi_money", name: "Fi Money (Federal Bank)" },
+  "indus": { id: "indus_pay", name: "IndusPay (IndusInd)" },
+  "idfcbank": { id: "idfcfirst", name: "IDFC FIRST Bank" },
+  "idfcfirst": { id: "idfcfirst", name: "IDFC FIRST Bank" },
+  "rbl": { id: "rbl_bank", name: "RBL MoBank" },
+  "pnb": { id: "pnb_one", name: "PNB ONE" },
+  "cnrb": { id: "canara_bank", name: "Canara Bank" },
+  "ucobank": { id: "union_bank", name: "UCO Bank" },
+  "mahb": { id: "union_bank", name: "Bank of Maharashtra" },
+  "airtel": { id: "airtel_money", name: "Airtel Payments Bank" },
+  "airtelpe": { id: "airtel_money", name: "Airtel Pay" },
+  "jio": { id: "jiomoney", name: "JioMoney" },
+  "abfspay": { id: "slice", name: "Aditya Birla Finance" },
+  "sliceaxis": { id: "slice", name: "Slice" },
+  "naviaxis": { id: "navi", name: "Navi" },
+  "navi": { id: "navi", name: "Navi" },
+  "amazonpay": { id: "amazon_pay", name: "Amazon Pay" },
+  "apl": { id: "amazon_pay", name: "Amazon Pay" },
+  "cred": { id: "cred", name: "CRED Pay" },
+  "freecharge": { id: "freecharge", name: "FreeCharge" },
+  "mobikwik": { id: "mobikwik", name: "MobiKwik" },
+  "upi": { id: "upi", name: "UPI Payment" },
+  "bhim": { id: "bhim", name: "BHIM" },
+  "icicibank": { id: "imobile_pay", name: "iMobile Pay (ICICI)" },
+  "hdfcbankjd": { id: "hdfc_bank", name: "HDFC Bank" },
+  "postbank": { id: "upi", name: "India Post Payments Bank" },
+  "timecosmos": { id: "upi", name: "Fino Payments Bank" },
+  "jupiterpay": { id: "jupiter_money", name: "Jupiter Money" },
+  "tapicici": { id: "imobile_pay", name: "ICICI Bank" },
+  "yesbank": { id: "yes_pay", name: "Yes Pay (Yes Bank)" },
+  "yesbankltd": { id: "yes_pay", name: "Yes Pay (Yes Bank)" },
+  "groww": { id: "groww_pay", name: "Groww Pay" },
+  "bajajpay": { id: "bajaj_pay", name: "Bajaj Pay" },
+  "razorpay": { id: "razorpay", name: "Razorpay" },
+  "juspay": { id: "juspay", name: "JusPay" },
+};
+
 function parseUnknownUpiQr(content: string, lower: string, displayName: string): ParsedPaymentQr {
   let pa = "";
   let pn = "";
@@ -392,13 +574,22 @@ function parseUnknownUpiQr(content: string, lower: string, displayName: string):
   } catch {}
   if (!pa) {
     const paMatch = content.match(/pa=([^&\s]+)/i);
-    if (paMatch) pa = paMatch[1];
+    if (paMatch) pa = decodeURIComponent(paMatch[1]);
   }
-  const bankHandle = pa.includes("@") ? pa.split("@")[1] : "";
-  const appScheme = content.split("://")[0]?.toLowerCase() || "upi";
-  const appName = appScheme === "upi" ? displayName : formatSchemeName(appScheme);
+  const bankHandle = pa.includes("@") ? pa.split("@")[1].toLowerCase() : "";
+
+  // Detect specific bank/app from the VPA handle or URL scheme
+  const schemeRaw = content.split("://")[0]?.toLowerCase() || "upi";
+  const detectedFromScheme = schemeRaw !== "upi" && schemeRaw !== "http" && schemeRaw !== "https"
+    ? BANK_HANDLE_TO_APP[schemeRaw] : undefined;
+  const detectedFromHandle = bankHandle ? BANK_HANDLE_TO_APP[bankHandle] : undefined;
+  const detected = detectedFromHandle || detectedFromScheme;
+
+  const appId: PaymentAppId = detected?.id ?? "upi";
+  const appName = detected?.name ?? (schemeRaw === "upi" ? displayName : formatSchemeName(schemeRaw));
+
   return {
-    app: "upi",
+    app: appId,
     appDisplayName: appName,
     appCategory: "upi_india",
     region: "India",
@@ -420,72 +611,159 @@ function parseSchemePaymentQr(content: string, lower: string, scheme: string, di
   }
   let amount: string | undefined;
   let recipientId = "";
+  let vpa: string | undefined;
+  let bankHandle: string | undefined;
+  let recipientName: string | undefined;
   try {
     const qIdx = content.indexOf("?");
     if (qIdx >= 0) {
       const params = new URLSearchParams(content.slice(qIdx + 1));
       amount = params.get("amount") || params.get("am") || params.get("amt") || undefined;
-      recipientId = params.get("to") || params.get("id") || params.get("merchant") || "";
+      const pn = params.get("pn") || params.get("name");
+      if (pn) recipientName = decodeURIComponent(pn);
+      recipientId = params.get("to") || params.get("id") || params.get("merchant") || params.get("payee") || "";
+      if (recipientId.includes("@")) {
+        vpa = recipientId;
+        bankHandle = recipientId.split("@")[1];
+      }
+    }
+    if (!vpa) {
+      const atMatch = content.match(/[\w.+-]+@[\w.]+/);
+      if (atMatch) {
+        vpa = atMatch[0];
+        recipientId = recipientId || atMatch[0];
+        bankHandle = atMatch[0].split("@")[1];
+      }
     }
   } catch {}
+
+  const isIndia = !!(vpa || scheme.includes("upi") || scheme.includes("pay") ||
+    lower.includes("inr") || lower.includes("upi"));
+
   return {
-    app: "unknown_payment",
+    app: isIndia ? "upi" : "unknown_payment",
     appDisplayName: displayName,
-    appCategory: "other",
-    region: "Regional",
+    appCategory: isIndia ? "upi_india" : "other",
+    region: isIndia ? "India" : "Regional",
     recipientId: recipientId || content.slice(0, 60),
+    recipientName,
     amount,
     rawContent: content,
     isAmountPreFilled: !!amount && parseFloat(amount) > 0,
+    vpa,
+    bankHandle,
   };
 }
 
 function parseUrlPaymentQr(content: string, lower: string): ParsedPaymentQr {
   let amount: string | undefined;
   let recipientId = "";
+  let recipientName: string | undefined;
+  let vpa: string | undefined;
+  let bankHandle: string | undefined;
+  let note: string | undefined;
   let appName = "Payment";
+  let appId: PaymentAppId = "unknown_payment";
+  let appCategory: ParsedPaymentQr["appCategory"] = "other";
+  let region = "Regional";
   try {
     const urlObj = new URL(content);
-    appName = urlObj.hostname.replace(/^www\.|^pay\./, "").split(".")[0];
+    const hostname = urlObj.hostname.replace(/^www\./, "");
+    appName = hostname.replace(/^pay\./, "").split(".")[0];
     appName = appName.charAt(0).toUpperCase() + appName.slice(1) + " Pay";
-    amount = urlObj.searchParams.get("amount") || urlObj.searchParams.get("am") || urlObj.searchParams.get("amt") || undefined;
-    recipientId = urlObj.searchParams.get("pa") || urlObj.searchParams.get("vpa") ||
-      urlObj.searchParams.get("to") || urlObj.searchParams.get("merchant") || urlObj.pathname.split("/").pop() || "";
+    amount = urlObj.searchParams.get("amount") || urlObj.searchParams.get("am") ||
+      urlObj.searchParams.get("amt") || undefined;
+    const pa = urlObj.searchParams.get("pa") || urlObj.searchParams.get("vpa");
+    const pn = urlObj.searchParams.get("pn") || urlObj.searchParams.get("name");
+    note = urlObj.searchParams.get("tn") || urlObj.searchParams.get("note") || undefined;
+    if (pa) {
+      recipientId = pa;
+      vpa = pa;
+      bankHandle = pa.includes("@") ? pa.split("@")[1] : undefined;
+      appCategory = "upi_india";
+      region = "India";
+      appId = "upi";
+    } else {
+      recipientId = urlObj.searchParams.get("to") || urlObj.searchParams.get("merchant") ||
+        urlObj.pathname.split("/").pop() || "";
+      if (recipientId.includes("@")) {
+        vpa = recipientId;
+        bankHandle = recipientId.split("@")[1];
+        appCategory = "upi_india";
+        region = "India";
+        appId = "upi";
+      }
+    }
+    if (pn) recipientName = decodeURIComponent(pn);
+    if (!recipientId) recipientId = content.slice(0, 60);
   } catch {
     recipientId = content.slice(0, 60);
+    const atMatch = content.match(/[\w.+-]+@[\w.]+/);
+    if (atMatch) {
+      vpa = atMatch[0];
+      recipientId = atMatch[0];
+      bankHandle = atMatch[0].split("@")[1];
+      appCategory = "upi_india";
+      region = "India";
+      appId = "upi";
+    }
   }
   return {
-    app: "unknown_payment",
+    app: appId,
     appDisplayName: appName,
-    appCategory: "other",
-    region: "Regional",
+    appCategory,
+    region,
     recipientId,
+    recipientName,
     amount,
     rawContent: content,
     isAmountPreFilled: !!amount && parseFloat(amount) > 0,
+    vpa,
+    bankHandle,
+    note,
   };
 }
 
 function parseRawFieldPaymentQr(content: string, lower: string): ParsedPaymentQr {
   let amount: string | undefined;
   let recipientId = "";
+  let recipientName: string | undefined;
+  let vpa: string | undefined;
+  let bankHandle: string | undefined;
+
   const amMatch = content.match(/(?:amount|am|amt|price)\s*[=:]\s*([\d.]+)/i);
   if (amMatch) amount = amMatch[1];
-  const payeeMatch = content.match(/(?:pa|vpa|payee|merchant|to)\s*[=:]\s*([^\s|&,]+)/i);
+
+  const payeeMatch = content.match(/(?:pa|vpa|payee|merchant)\s*[=:]\s*([^\s|&,]+)/i);
   if (payeeMatch) recipientId = payeeMatch[1];
+
+  const nameMatch = content.match(/(?:pn|name|payeename|merchantname)\s*[=:]\s*([^|&,\n]+)/i);
+  if (nameMatch) recipientName = decodeURIComponent(nameMatch[1].trim());
+
   if (!recipientId) {
-    const atMatch = content.match(/[\w.]+@[\w.]+/);
+    const atMatch = content.match(/[\w.+-]+@[\w.]+/);
     if (atMatch) recipientId = atMatch[0];
   }
+
+  if (recipientId.includes("@")) {
+    vpa = recipientId;
+    bankHandle = recipientId.split("@")[1];
+  }
+
+  const isIndia = !!(vpa || lower.includes("inr") || lower.includes("₹") || lower.includes("upi"));
+
   return {
-    app: "unknown_payment",
-    appDisplayName: "Payment QR",
-    appCategory: "other",
-    region: "Regional",
+    app: isIndia ? "upi" : "unknown_payment",
+    appDisplayName: isIndia ? "UPI Payment" : "Payment QR",
+    appCategory: isIndia ? "upi_india" : "other",
+    region: isIndia ? "India" : "Regional",
     recipientId: recipientId || content.slice(0, 60),
+    recipientName,
     amount,
     rawContent: content,
     isAmountPreFilled: !!amount && parseFloat(amount) > 0,
+    vpa,
+    bankHandle,
   };
 }
 
@@ -626,6 +904,36 @@ function detectEmvNetwork(content: string): { id: PaymentAppId; name: string; ca
   if (content.includes("A000000677010112") || content.includes("vnpay")) return { id: "vnpay", name: "VNPAY", category: "southeast_asia", region: "Vietnam" };
   if (content.includes("A000000533010101") || content.includes("alipay")) return { id: "alipay", name: "Alipay (支付宝)", category: "china", region: "China" };
   if (content.includes("A000000049")) return { id: "wechat_pay", name: "WeChat Pay (微信支付)", category: "china", region: "China" };
+
+  // ── Indian BharatQR / RuPay ────────────────────────────────────────────────
+  // BharatQR uses AID A000000677010X or in.bharat.qr merchant data
+  if (content.includes("A000000677") || content.includes("in.bharat.qr") ||
+      content.includes("bharatqr") || content.includes("BHARATQR")) {
+    return { id: "bharatqr", name: "BharatQR (NPCI)", category: "upi_india", region: "India" };
+  }
+  // HDFC-specific EMV merchant data
+  if (content.includes("HDFCBANK") || content.includes("hdfcbank") ||
+      content.includes("HDFC BANK") || content.includes("payzapp")) {
+    return { id: "hdfc_bank", name: "HDFC Bank", category: "upi_india", region: "India" };
+  }
+  // BharatPe EMV merchant data
+  if (content.includes("bharatpe") || content.includes("BHARATPE")) {
+    return { id: "bharatpe", name: "BharatPe", category: "upi_india", region: "India" };
+  }
+  // RuPay / NPCI generic
+  if (content.includes("A000000524") || content.includes("RUPAY") ||
+      content.includes("rupay") || content.includes("npci")) {
+    return { id: "bharatqr", name: "RuPay / BharatQR (NPCI)", category: "upi_india", region: "India" };
+  }
+  // PhonePe EMV
+  if (content.includes("phonepe") || content.includes("PHONEPE")) {
+    return { id: "phonepe", name: "PhonePe", category: "upi_india", region: "India" };
+  }
+  // Paytm EMV
+  if (content.includes("paytm") || content.includes("PAYTM")) {
+    return { id: "paytm", name: "Paytm", category: "upi_india", region: "India" };
+  }
+
   return null;
 }
 
