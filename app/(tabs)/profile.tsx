@@ -7,221 +7,36 @@ import {
   Platform,
   TextInput,
   ActivityIndicator,
-  Alert,
   Image,
   Modal,
 } from "react-native";
-import { router, useFocusEffect } from "expo-router";
+import { router } from "expo-router";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { useState, useEffect, useCallback, useRef } from "react";
-import * as Haptics from "expo-haptics";
-import * as ImagePicker from "expo-image-picker";
-import Animated, { FadeInDown, FadeIn } from "react-native-reanimated";
+import Animated, { FadeInDown } from "react-native-reanimated";
 import Colors from "@/constants/colors";
 import SkeletonBox from "@/components/ui/SkeletonBox";
-import { useAuth } from "@/contexts/AuthContext";
-import { firebaseAuth } from "@/lib/firebase";
-import { updateProfile } from "firebase/auth";
-import {
-  getUserStats,
-  updateUserPhotoURL,
-  getUserPhotoURL,
-  subscribeToUserGeneratedQrs,
-  getUsernameData,
-  updateUsername,
-  checkUsernameAvailable,
-  type UserStats,
-  type GeneratedQrItem,
-} from "@/lib/firestore-service";
+import { useProfile } from "@/hooks/useProfile";
 
 export default function ProfileScreen() {
-  const { user, signOut } = useAuth();
   const insets = useSafeAreaInsets();
-
-  const [editingName, setEditingName] = useState(false);
-  const [newName, setNewName] = useState(user?.displayName || "");
-  const [savingName, setSavingName] = useState(false);
-  const [stats, setStats] = useState<UserStats>({ followingCount: 0, scanCount: 0, commentCount: 0, totalLikesReceived: 0 });
-  const [statsLoading, setStatsLoading] = useState(false);
-  const [photoURL, setPhotoURL] = useState<string | null>(user?.photoURL || null);
-  const [photoModalOpen, setPhotoModalOpen] = useState(false);
-  const [uploadingPhoto, setUploadingPhoto] = useState(false);
-  const [myQrCodes, setMyQrCodes] = useState<GeneratedQrItem[]>([]);
-  const [myQrLoading, setMyQrLoading] = useState(true);
-  const qrUnsubscribeRef = useRef<(() => void) | null>(null);
-
-  const [currentUsername, setCurrentUsername] = useState<string | null>(user?.username || null);
-  const [usernameLastChangedAt, setUsernameLastChangedAt] = useState<Date | null>(null);
-  const [editingUsername, setEditingUsername] = useState(false);
-  const [newUsernameInput, setNewUsernameInput] = useState("");
-  const [usernameAvailable, setUsernameAvailable] = useState<boolean | null>(null);
-  const [checkingUsername, setCheckingUsername] = useState(false);
-  const [savingUsername, setSavingUsername] = useState(false);
-  const [usernameError, setUsernameError] = useState("");
+  const {
+    user,
+    editingName, setEditingName, newName, setNewName, savingName,
+    stats, statsLoading,
+    photoURL, photoModalOpen, setPhotoModalOpen, uploadingPhoto,
+    myQrCodes, myQrLoading,
+    currentUsername,
+    editingUsername, setEditingUsername,
+    newUsernameInput, setNewUsernameInput,
+    usernameAvailable, checkingUsername,
+    savingUsername, usernameError, setUsernameError,
+    daysUntilEdit, initials,
+    handleSaveName, handleSaveUsername, handleCancelUsername, handlePickPhoto, handleSignOut,
+  } = useProfile();
 
   const topInset = Platform.OS === "web" ? 67 : insets.top;
   const tabBarHeight = 60 + insets.bottom;
-
-  const loadStats = useCallback(async () => {
-    if (!user) return;
-    setStatsLoading(true);
-    try {
-      const [s, photo, unameData] = await Promise.all([
-        getUserStats(user.id),
-        getUserPhotoURL(user.id),
-        getUsernameData(user.id),
-      ]);
-      setStats(s);
-      if (photo) setPhotoURL(photo);
-      if (unameData.username) setCurrentUsername(unameData.username);
-      setUsernameLastChangedAt(unameData.usernameLastChangedAt);
-    } catch {}
-    setStatsLoading(false);
-  }, [user?.id]);
-
-  useEffect(() => {
-    loadStats();
-  }, [loadStats]);
-
-  useFocusEffect(
-    useCallback(() => {
-      loadStats();
-    }, [loadStats])
-  );
-
-  useEffect(() => {
-    if (!user) {
-      setMyQrCodes([]);
-      setMyQrLoading(false);
-      return;
-    }
-    setMyQrLoading(true);
-    if (qrUnsubscribeRef.current) {
-      qrUnsubscribeRef.current();
-      qrUnsubscribeRef.current = null;
-    }
-    const unsub = subscribeToUserGeneratedQrs(user.id, (items) => {
-      setMyQrCodes(items);
-      setMyQrLoading(false);
-    });
-    qrUnsubscribeRef.current = unsub;
-    return () => {
-      if (qrUnsubscribeRef.current) {
-        qrUnsubscribeRef.current();
-        qrUnsubscribeRef.current = null;
-      }
-    };
-  }, [user?.id]);
-
-  async function handleSaveName() {
-    if (!newName.trim() || !firebaseAuth.currentUser) return;
-    setSavingName(true);
-    try {
-      await updateProfile(firebaseAuth.currentUser, { displayName: newName.trim() });
-      setEditingName(false);
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-    } catch {
-      Alert.alert("Error", "Could not update name. Try again.");
-    } finally {
-      setSavingName(false);
-    }
-  }
-
-  useEffect(() => {
-    if (!editingUsername || !newUsernameInput) {
-      setUsernameAvailable(null);
-      return;
-    }
-    if (!/^[a-z][a-z0-9_]{2,19}$/.test(newUsernameInput)) {
-      setUsernameAvailable(null);
-      return;
-    }
-    if (newUsernameInput === currentUsername) {
-      setUsernameAvailable(null);
-      return;
-    }
-    setCheckingUsername(true);
-    const timer = setTimeout(async () => {
-      const available = await checkUsernameAvailable(newUsernameInput);
-      setUsernameAvailable(available);
-      setCheckingUsername(false);
-    }, 600);
-    return () => clearTimeout(timer);
-  }, [newUsernameInput, editingUsername, currentUsername]);
-
-  async function handleSaveUsername() {
-    if (!user || !newUsernameInput.trim()) return;
-    setUsernameError("");
-    setSavingUsername(true);
-    try {
-      await updateUsername(user.id, newUsernameInput.trim());
-      setCurrentUsername(newUsernameInput.trim());
-      setUsernameLastChangedAt(new Date());
-      setEditingUsername(false);
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-    } catch (e: any) {
-      setUsernameError(e.message || "Could not update username.");
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-    } finally {
-      setSavingUsername(false);
-    }
-  }
-
-  const daysUntilEdit = usernameLastChangedAt
-    ? Math.max(0, Math.ceil(15 - (Date.now() - usernameLastChangedAt.getTime()) / 86400000))
-    : 0;
-
-  async function handlePickPhoto(source: "camera" | "gallery") {
-    setPhotoModalOpen(false);
-    try {
-      let result: ImagePicker.ImagePickerResult;
-      if (source === "camera") {
-        const perm = await ImagePicker.requestCameraPermissionsAsync();
-        if (!perm.granted) { Alert.alert("Permission needed", "Camera access is required."); return; }
-        result = await ImagePicker.launchCameraAsync({
-          mediaTypes: ["images"],
-          allowsEditing: true,
-          aspect: [1, 1],
-          quality: 0.5,
-          base64: true,
-        });
-      } else {
-        const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
-        if (!perm.granted) { Alert.alert("Permission needed", "Gallery access is required."); return; }
-        result = await ImagePicker.launchImageLibraryAsync({
-          mediaTypes: ["images"],
-          allowsEditing: true,
-          aspect: [1, 1],
-          quality: 0.5,
-          base64: true,
-        });
-      }
-      if (result.canceled || !result.assets?.[0]) return;
-      const asset = result.assets[0];
-      setUploadingPhoto(true);
-      const base64Uri = `data:image/jpeg;base64,${asset.base64}`;
-      setPhotoURL(base64Uri);
-      if (user) {
-        await updateUserPhotoURL(user.id, base64Uri);
-      }
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-    } catch {
-      Alert.alert("Error", "Could not update photo.");
-    } finally {
-      setUploadingPhoto(false);
-    }
-  }
-
-  async function handleSignOut() {
-    Alert.alert("Sign Out", "Are you sure?", [
-      { text: "Cancel", style: "cancel" },
-      { text: "Sign Out", style: "destructive", onPress: async () => {
-        await signOut();
-        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      }},
-    ]);
-  }
 
   if (!user) {
     return (
@@ -246,10 +61,6 @@ export default function ProfileScreen() {
       </View>
     );
   }
-
-  const initials = user.displayName
-    ? user.displayName.split(" ").map((n: string) => n[0]).join("").toUpperCase().slice(0, 2)
-    : "?";
 
   return (
     <View style={[styles.container, { paddingTop: topInset }]}>
@@ -367,10 +178,7 @@ export default function ProfileScreen() {
         {/* My QR Codes */}
         <Animated.View entering={FadeInDown.duration(400).delay(160)}>
           <Pressable
-            onPress={() => {
-              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-              router.push("/my-qr-codes" as any);
-            }}
+            onPress={() => router.push("/my-qr-codes" as any)}
             style={({ pressed }) => [styles.myQrViewAllBtn, { opacity: pressed ? 0.85 : 1 }]}
           >
             <View style={styles.myQrViewAllLeft}>
@@ -391,10 +199,7 @@ export default function ProfileScreen() {
         {/* Favorites */}
         <Animated.View entering={FadeInDown.duration(400).delay(170)}>
           <Pressable
-            onPress={() => {
-              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-              router.push("/favorites" as any);
-            }}
+            onPress={() => router.push("/favorites" as any)}
             style={({ pressed }) => [styles.myQrViewAllBtn, { opacity: pressed ? 0.85 : 1 }]}
           >
             <View style={styles.myQrViewAllLeft}>
@@ -510,10 +315,7 @@ export default function ProfileScreen() {
                       <Text style={styles.usernameSaveBtnText}>Save</Text>
                     )}
                   </Pressable>
-                  <Pressable
-                    onPress={() => { setEditingUsername(false); setUsernameError(""); setUsernameAvailable(null); }}
-                    style={styles.usernameCancelBtn}
-                  >
+                  <Pressable onPress={handleCancelUsername} style={styles.usernameCancelBtn}>
                     <Text style={styles.usernameCancelBtnText}>Cancel</Text>
                   </Pressable>
                 </View>
@@ -537,11 +339,10 @@ export default function ProfileScreen() {
                     setNewUsernameInput(currentUsername || "");
                     setEditingUsername(true);
                     setUsernameError("");
-                    setUsernameAvailable(null);
                   }}
                   disabled={daysUntilEdit > 0}
                 >
-                  <Ionicons name="pencil-outline" size={18} color={daysUntilEdit > 0 ? Colors.dark.textMuted : Colors.dark.textMuted} />
+                  <Ionicons name="pencil-outline" size={18} color={Colors.dark.textMuted} />
                 </Pressable>
               </View>
             )}

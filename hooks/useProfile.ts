@@ -147,6 +147,12 @@ export function useProfile() {
     }
   }
 
+  function handleCancelUsername() {
+    setEditingUsername(false);
+    setUsernameError("");
+    setUsernameAvailable(null);
+  }
+
   async function handleSignOut() {
     Alert.alert("Sign Out", "Are you sure?", [
       { text: "Cancel", style: "cancel" },
@@ -196,6 +202,7 @@ export function useProfile() {
     initials,
     handleSaveName,
     handleSaveUsername,
+    handleCancelUsername,
     handlePickPhoto,
     handleSignOut,
   };

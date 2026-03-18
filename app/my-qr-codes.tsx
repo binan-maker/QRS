@@ -12,30 +12,15 @@ import { router } from "expo-router";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import * as Haptics from "expo-haptics";
-import Animated, {
-  FadeInDown,
-  useSharedValue,
-  useAnimatedStyle,
-  withRepeat,
-  withSequence,
-  withTiming,
-} from "react-native-reanimated";
+import Animated, { FadeInDown } from "react-native-reanimated";
 import QRCode from "react-native-qrcode-svg";
+import SkeletonBox from "@/components/ui/SkeletonBox";
 import Colors from "@/constants/colors";
 import { useAuth } from "@/contexts/AuthContext";
 import {
   subscribeToUserGeneratedQrs,
   type GeneratedQrItem,
 } from "@/lib/firestore-service";
-
-function SkeletonBox({ width, height = 12, borderRadius = 8, style }: { width?: any; height?: number; borderRadius?: number; style?: any }) {
-  const shimmer = useSharedValue(0.3);
-  useEffect(() => {
-    shimmer.value = withRepeat(withSequence(withTiming(1, { duration: 750 }), withTiming(0.3, { duration: 750 })), -1, true);
-  }, []);
-  const anim = useAnimatedStyle(() => ({ opacity: shimmer.value }));
-  return <Animated.View style={[{ width: width || "100%", height, borderRadius, backgroundColor: Colors.dark.surfaceLight }, anim, style]} />;
-}
 
 function SkeletonQrCard() {
   return (

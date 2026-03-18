@@ -85,6 +85,27 @@ Path: `notifications/{userId}/items/{notifId}`
 - **Keyword blacklist** — Comments containing spam/scam phrases are blocked at submission with a clear error message
 - **Hidden comments** are filtered in both real-time subscriptions and paginated queries
 
+## Code Architecture (Refactored)
+
+All screens follow a strict hooks-first pattern — screens are JSX-only, all logic lives in hooks.
+
+### Hooks (`hooks/`)
+- `useProfile.ts` — Profile state: name/username/photo editing, stats loading, sign-out, QR subscription
+- `useHistory.ts` — Scan history: local + cloud merge, pagination, filtering, safety risk map, favorites
+- `useSettings.ts` — Deep settings: following, comments, feedback, account delete sections
+- `useQrDetail.ts` — QR detail: reports, comments, following, likes, trust score computation
+- `useQrGenerator.ts` — QR generation: mode, content, colors, branded/private logic
+- `useScanner.ts` — Camera scanning: permissions, offline blacklist, safety interstitial
+- `useHome.ts` — Home feed: notifications, recent scans
+
+### Features (`features/`)
+- `features/settings/` — Settings components + shared `styles.ts`
+- `features/my-qr/` — My-QR management components + `useMyQrDetail` hook
+- `features/generator/` — QR generator components, presets, builder logic
+
+### Shared Components (`components/ui/`)
+- `SkeletonBox` — Single source of truth for all skeleton loading UI (no inline duplicates)
+
 ## Workflows
 
 - **Start Backend**: `npm run server:dev` — Express on port 5000 (tsx)
