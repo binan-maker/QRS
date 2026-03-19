@@ -1,1 +1,5 @@
+<<<<<<< HEAD
 {"runId":"lFMMTZ5G7s96uuwFtOU-c","workflowName":"Start Frontend","mode":"sequential","startTime":1773910622049,"userId":"agent","endTime":1773911703743,"step":"FINISHED"}
+=======
+{"runId":"lFMMTZ5G7s96uuwFtOU-c","workflowName":"Start Frontend","mode":"sequential","startTime":1773910622049,"userId":"agent"}
+>>>>>>> 3cf995580a7abd7d80da7f5145a95090f7b8a854
