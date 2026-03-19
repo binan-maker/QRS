@@ -30,7 +30,6 @@ export default function HistoryScreen() {
   const insets = useSafeAreaInsets();
   const {
     user,
-    history,
     displayItems,
     safetyRiskMap,
     filter,
@@ -39,7 +38,6 @@ export default function HistoryScreen() {
     loadingMore,
     onRefresh,
     handleEndReached,
-    clearLocalHistory,
   } = useHistory();
 
   const topInset = Platform.OS === "web" ? 67 : insets.top;
@@ -78,15 +76,6 @@ export default function HistoryScreen() {
       <View style={styles.header}>
         <Text style={styles.title}>History</Text>
         <View style={styles.headerActions}>
-          {history.length > 0 && filter !== "favorites" ? (
-            <Pressable
-              onPress={clearLocalHistory}
-              style={styles.headerBtn}
-              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-            >
-              <Ionicons name="trash-outline" size={19} color={Colors.dark.textMuted} />
-            </Pressable>
-          ) : null}
           <Pressable
             onPress={() => {
               Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);

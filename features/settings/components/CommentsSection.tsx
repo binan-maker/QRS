@@ -1,4 +1,4 @@
-import { View, Text, FlatList, Pressable } from "react-native";
+import { View, Text, FlatList, Pressable, Platform } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Colors from "@/constants/colors";
@@ -21,10 +21,12 @@ interface Props {
   loading: boolean;
   comments: any[];
   onDelete: (commentId: string, qrCodeId: string) => void;
+  onDeleteAll: () => void;
 }
 
-export default function CommentsSection({ loading, comments, onDelete }: Props) {
+export default function CommentsSection({ loading, comments, onDelete, onDeleteAll }: Props) {
   const insets = useSafeAreaInsets();
+  const bottomPad = Platform.OS === "web" ? 34 + 84 : insets.bottom + 84;
 
   if (loading) {
     return (
@@ -52,7 +54,26 @@ export default function CommentsSection({ loading, comments, onDelete }: Props) 
     <FlatList
       data={comments}
       keyExtractor={(item) => item.id}
-      contentContainerStyle={[styles.scrollContent, { paddingBottom: insets.bottom + 20 }]}
+      contentContainerStyle={[styles.scrollContent, { paddingBottom: bottomPad }]}
+      ListHeaderComponent={
+        <Pressable
+          onPress={onDeleteAll}
+          style={({ pressed }) => ({
+            flexDirection: "row",
+            alignItems: "center",
+            gap: 8,
+            paddingVertical: 10,
+            paddingHorizontal: 4,
+            marginBottom: 8,
+            opacity: pressed ? 0.7 : 1,
+          })}
+        >
+          <Ionicons name="trash" size={16} color={Colors.dark.danger} />
+          <Text style={{ fontSize: 14, fontFamily: "Inter_600SemiBold", color: Colors.dark.danger }}>
+            Delete All Comments
+          </Text>
+        </Pressable>
+      }
       renderItem={({ item }) => (
         <View style={styles.myCommentItem}>
           <Text style={styles.myCommentText}>{item.text}</Text>

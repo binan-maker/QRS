@@ -11,6 +11,7 @@ import GuideSection from "@/features/settings/components/GuideSection";
 import FeedbackSection from "@/features/settings/components/FeedbackSection";
 import FollowingSection from "@/features/settings/components/FollowingSection";
 import CommentsSection from "@/features/settings/components/CommentsSection";
+import HistorySection from "@/features/settings/components/HistorySection";
 
 const SECTION_TITLES: Record<string, string> = {
   account: "Account Management",
@@ -18,6 +19,7 @@ const SECTION_TITLES: Record<string, string> = {
   feedback: "Send Feedback",
   following: "Following",
   comments: "My Comments",
+  history: "My History",
 };
 
 export default function SettingsScreen() {
@@ -31,9 +33,13 @@ export default function SettingsScreen() {
     feedbackSubmitting, feedbackDone,
     followingList, followingLoading,
     myComments, commentsLoading,
+    myHistory, historyLoading,
     deleteConfirmText, setDeleteConfirmText,
     handleSignOut, handleClearData,
-    handleSubmitFeedback, handleDeleteComment, handleDeleteAccount,
+    handleSubmitFeedback,
+    handleDeleteComment, handleDeleteAllComments,
+    handleDeleteHistoryItem, handleDeleteAllHistory,
+    handleDeleteAccount,
   } = useSettings();
 
   if (section !== "main") {
@@ -54,6 +60,7 @@ export default function SettingsScreen() {
             setDeleteConfirmText={setDeleteConfirmText}
             handleDeleteAccount={handleDeleteAccount}
             goToComments={() => setSection("comments")}
+            goToHistory={() => setSection("history")}
           />
         )}
         {section === "guide" && <GuideSection />}
@@ -76,6 +83,15 @@ export default function SettingsScreen() {
             loading={commentsLoading}
             comments={myComments}
             onDelete={handleDeleteComment}
+            onDeleteAll={handleDeleteAllComments}
+          />
+        )}
+        {section === "history" && (
+          <HistorySection
+            loading={historyLoading}
+            history={myHistory}
+            onDelete={handleDeleteHistoryItem}
+            onDeleteAll={handleDeleteAllHistory}
           />
         )}
       </View>
@@ -111,7 +127,7 @@ export default function SettingsScreen() {
               <SettingsMenuItem
                 icon="person-outline"
                 label="Account Management"
-                sublabel="Delete account, manage comments"
+                sublabel="History, comments, delete account"
                 onPress={() => setSection("account")}
               />
               <View style={styles.divider} />

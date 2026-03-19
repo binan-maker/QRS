@@ -264,6 +264,26 @@ export async function getUserScans(userId: string): Promise<any[]> {
   }));
 }
 
+export async function deleteUserScan(userId: string, scanId: string): Promise<void> {
+  try {
+    await db.update(["users", userId, "scans", scanId], { isDeleted: true, deletedAt: db.timestamp() });
+  } catch {}
+}
+
+export async function deleteAllUserScans(userId: string): Promise<void> {
+  try {
+    const { docs } = await db.query(["users", userId, "scans"], {
+      orderBy: { field: "scannedAt", direction: "desc" },
+      limit: 500,
+    });
+    await Promise.all(
+      docs.map((d) =>
+        db.update(["users", userId, "scans", d.id], { isDeleted: true, deletedAt: db.timestamp() }).catch(() => {})
+      )
+    );
+  } catch {}
+}
+
 export async function getUserScansPaginated(
   userId: string,
   pageSize: number = 20,

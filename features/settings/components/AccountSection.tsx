@@ -12,9 +12,10 @@ interface Props {
   setDeleteConfirmText: (v: string) => void;
   handleDeleteAccount: () => void;
   goToComments: () => void;
+  goToHistory: () => void;
 }
 
-export default function AccountSection({ user, deleteConfirmText, setDeleteConfirmText, handleDeleteAccount, goToComments }: Props) {
+export default function AccountSection({ user, deleteConfirmText, setDeleteConfirmText, handleDeleteAccount, goToComments, goToHistory }: Props) {
   const insets = useSafeAreaInsets();
   return (
     <ScrollView
@@ -25,6 +26,13 @@ export default function AccountSection({ user, deleteConfirmText, setDeleteConfi
         <View style={styles.section}>
           <Text style={styles.sectionLabel}>MY CONTENT</Text>
           <View style={styles.menuGroup}>
+            <SettingsMenuItem
+              icon="time-outline"
+              label="My History"
+              sublabel="View and delete your scan history"
+              onPress={goToHistory}
+            />
+            <View style={styles.divider} />
             <SettingsMenuItem
               icon="chatbubble-ellipses-outline"
               label="My Comments"

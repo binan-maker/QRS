@@ -317,6 +317,29 @@ async function purgeOldSoftDeletes(qrId: string): Promise<void> {
   } catch {}
 }
 
+export async function deleteAllUserComments(userId: string): Promise<void> {
+  const { docs } = await db.query(
+    ["users", userId, "comments"],
+    { orderBy: { field: "createdAt", direction: "desc" }, limit: 500 }
+  );
+  await Promise.all(
+    docs.map(async (d) => {
+      const { qrCodeId, commentId } = d.data;
+      if (qrCodeId && commentId) {
+        await db
+          .update(["qrCodes", qrCodeId, "comments", commentId], {
+            isDeleted: true,
+            deletedAt: db.timestamp(),
+            text: "[deleted]",
+          })
+          .catch(() => {});
+        await db.increment(["qrCodes", qrCodeId], "commentCount", -1).catch(() => {});
+      }
+      await db.delete(["users", userId, "comments", d.id]).catch(() => {});
+    })
+  );
+}
+
 export async function getUserComments(userId: string): Promise<any[]> {
   const { docs } = await db.query(
     ["users", userId, "comments"],
