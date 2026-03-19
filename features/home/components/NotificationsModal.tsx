@@ -5,7 +5,7 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import Colors from "@/constants/colors";
+import { useTheme } from "@/contexts/ThemeContext";
 import type { Notification } from "@/lib/firestore-service";
 
 interface Props {
@@ -25,15 +25,6 @@ function getNotifIcon(type: string): any {
   return "warning";
 }
 
-function getNotifColor(type: string): string {
-  if (type === "new_comment") return Colors.dark.primary;
-  if (type === "owner_comment") return Colors.dark.primary;
-  if (type === "comment_reply") return Colors.dark.accent;
-  if (type === "mention") return Colors.dark.accent;
-  if (type === "new_follow") return Colors.dark.safe;
-  return Colors.dark.warning;
-}
-
 function formatRelativeTime(ts: number): string {
   const diff = Date.now() - ts;
   const mins = Math.floor(diff / 60000);
@@ -48,7 +39,17 @@ function formatRelativeTime(ts: number): string {
 const NotificationsModal = React.memo(function NotificationsModal({
   visible, notifications, markingRead, onClose, onClearAll,
 }: Props) {
+  const { colors } = useTheme();
   const insets = useSafeAreaInsets();
+
+  function getNotifColor(type: string): string {
+    if (type === "new_comment") return colors.primary;
+    if (type === "owner_comment") return colors.primary;
+    if (type === "comment_reply") return colors.accent;
+    if (type === "mention") return colors.accent;
+    if (type === "new_follow") return colors.safe;
+    return colors.warning;
+  }
 
   return (
     <Modal
@@ -58,15 +59,15 @@ const NotificationsModal = React.memo(function NotificationsModal({
       onRequestClose={onClose}
       statusBarTranslucent
     >
-      <View style={[styles.page, { paddingTop: insets.top }]}>
-        <View style={styles.header}>
-          <Pressable onPress={onClose} style={styles.backBtn}>
-            <Ionicons name="chevron-back" size={24} color={Colors.dark.text} />
+      <View style={[styles.page, { paddingTop: insets.top, backgroundColor: colors.background }]}>
+        <View style={[styles.header, { borderBottomColor: colors.surfaceBorder }]}>
+          <Pressable onPress={onClose} style={[styles.backBtn, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
+            <Ionicons name="chevron-back" size={24} color={colors.text} />
           </Pressable>
-          <Text style={styles.title}>Notifications</Text>
+          <Text style={[styles.title, { color: colors.text }]}>Notifications</Text>
           {notifications.length > 0 ? (
-            <Pressable onPress={onClearAll} style={styles.clearBtn}>
-              <Text style={styles.clearText}>Clear All</Text>
+            <Pressable onPress={onClearAll} style={[styles.clearBtn, { backgroundColor: colors.dangerDim }]}>
+              <Text style={[styles.clearText, { color: colors.danger }]}>Clear All</Text>
             </Pressable>
           ) : (
             <View style={{ width: 76 }} />
@@ -74,9 +75,9 @@ const NotificationsModal = React.memo(function NotificationsModal({
         </View>
 
         {markingRead && (
-          <View style={styles.markingRow}>
-            <ActivityIndicator size="small" color={Colors.dark.primary} />
-            <Text style={styles.markingText}>Marking as read…</Text>
+          <View style={[styles.markingRow, { borderBottomColor: colors.surfaceBorder }]}>
+            <ActivityIndicator size="small" color={colors.primary} />
+            <Text style={[styles.markingText, { color: colors.textMuted }]}>Marking as read…</Text>
           </View>
         )}
 
@@ -87,11 +88,11 @@ const NotificationsModal = React.memo(function NotificationsModal({
         >
           {notifications.length === 0 ? (
             <View style={styles.empty}>
-              <View style={styles.emptyIcon}>
-                <Ionicons name="notifications-off-outline" size={40} color={Colors.dark.textMuted} />
+              <View style={[styles.emptyIcon, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
+                <Ionicons name="notifications-off-outline" size={40} color={colors.textMuted} />
               </View>
-              <Text style={styles.emptyTitle}>All caught up!</Text>
-              <Text style={styles.emptySub}>
+              <Text style={[styles.emptyTitle, { color: colors.textSecondary }]}>All caught up!</Text>
+              <Text style={[styles.emptySub, { color: colors.textMuted }]}>
                 Follow QR codes to get notified when there's new activity
               </Text>
             </View>
@@ -105,7 +106,8 @@ const NotificationsModal = React.memo(function NotificationsModal({
                 }}
                 style={({ pressed }) => [
                   styles.item,
-                  !notif.read && styles.itemUnread,
+                  { borderBottomColor: colors.surfaceBorder },
+                  !notif.read && { backgroundColor: colors.primaryDim + "20" },
                   { opacity: pressed ? 0.75 : 1 },
                 ]}
               >
@@ -113,10 +115,10 @@ const NotificationsModal = React.memo(function NotificationsModal({
                   <Ionicons name={getNotifIcon(notif.type)} size={18} color={getNotifColor(notif.type)} />
                 </View>
                 <View style={{ flex: 1 }}>
-                  <Text style={styles.itemText}>{notif.message}</Text>
-                  <Text style={styles.itemTime}>{formatRelativeTime(notif.createdAt)}</Text>
+                  <Text style={[styles.itemText, { color: colors.text }]}>{notif.message}</Text>
+                  <Text style={[styles.itemTime, { color: colors.textMuted }]}>{formatRelativeTime(notif.createdAt)}</Text>
                 </View>
-                {!notif.read && <View style={styles.unreadDot} />}
+                {!notif.read && <View style={[styles.unreadDot, { backgroundColor: colors.primary }]} />}
               </Pressable>
             ))
           )}
@@ -130,54 +132,37 @@ const NotificationsModal = React.memo(function NotificationsModal({
 export default NotificationsModal;
 
 const styles = StyleSheet.create({
-  page: { flex: 1, backgroundColor: Colors.dark.background },
+  page: { flex: 1 },
   header: {
     flexDirection: "row", alignItems: "center", justifyContent: "space-between",
-    paddingHorizontal: 16, paddingVertical: 12,
-    borderBottomWidth: 1, borderBottomColor: Colors.dark.surfaceBorder,
+    paddingHorizontal: 16, paddingVertical: 12, borderBottomWidth: 1,
   },
   backBtn: {
     width: 40, height: 40, borderRadius: 20,
-    backgroundColor: Colors.dark.surface, alignItems: "center", justifyContent: "center",
-    borderWidth: 1, borderColor: Colors.dark.surfaceBorder,
+    alignItems: "center", justifyContent: "center", borderWidth: 1,
   },
-  title: { fontSize: 18, fontFamily: "Inter_700Bold", color: Colors.dark.text },
-  clearBtn: {
-    paddingHorizontal: 12, paddingVertical: 6, borderRadius: 10,
-    backgroundColor: Colors.dark.dangerDim,
-  },
-  clearText: { fontSize: 13, fontFamily: "Inter_600SemiBold", color: Colors.dark.danger },
+  title: { fontSize: 18, fontFamily: "Inter_700Bold" },
+  clearBtn: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: 10 },
+  clearText: { fontSize: 13, fontFamily: "Inter_600SemiBold" },
   markingRow: {
     flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8,
-    paddingVertical: 8, paddingHorizontal: 16,
-    borderBottomWidth: 1, borderBottomColor: Colors.dark.surfaceBorder,
+    paddingVertical: 8, paddingHorizontal: 16, borderBottomWidth: 1,
   },
-  markingText: { fontSize: 12, color: Colors.dark.textMuted, fontFamily: "Inter_400Regular" },
+  markingText: { fontSize: 12, fontFamily: "Inter_400Regular" },
   list: { flex: 1, paddingHorizontal: 16 },
-  empty: {
-    flex: 1, alignItems: "center", justifyContent: "center",
-    gap: 10, paddingVertical: 60,
-  },
+  empty: { flex: 1, alignItems: "center", justifyContent: "center", gap: 10, paddingVertical: 60 },
   emptyIcon: {
     width: 80, height: 80, borderRadius: 40,
-    backgroundColor: Colors.dark.surface, alignItems: "center", justifyContent: "center",
-    borderWidth: 1, borderColor: Colors.dark.surfaceBorder, marginBottom: 4,
+    alignItems: "center", justifyContent: "center", borderWidth: 1, marginBottom: 4,
   },
-  emptyTitle: { fontSize: 16, fontFamily: "Inter_600SemiBold", color: Colors.dark.textSecondary },
-  emptySub: {
-    fontSize: 13, fontFamily: "Inter_400Regular", color: Colors.dark.textMuted,
-    textAlign: "center", paddingHorizontal: 20,
-  },
+  emptyTitle: { fontSize: 16, fontFamily: "Inter_600SemiBold" },
+  emptySub: { fontSize: 13, fontFamily: "Inter_400Regular", textAlign: "center", paddingHorizontal: 20 },
   item: {
     flexDirection: "row", alignItems: "center", gap: 12,
-    paddingVertical: 14,
-    borderBottomWidth: 1, borderBottomColor: Colors.dark.surfaceBorder,
+    paddingVertical: 14, borderBottomWidth: 1,
   },
-  itemUnread: { backgroundColor: Colors.dark.primaryDim + "20" },
-  itemIcon: {
-    width: 42, height: 42, borderRadius: 21, alignItems: "center", justifyContent: "center",
-  },
-  itemText: { fontSize: 14, fontFamily: "Inter_400Regular", color: Colors.dark.text, lineHeight: 20 },
-  itemTime: { fontSize: 12, fontFamily: "Inter_400Regular", color: Colors.dark.textMuted, marginTop: 2 },
-  unreadDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: Colors.dark.primary },
+  itemIcon: { width: 42, height: 42, borderRadius: 21, alignItems: "center", justifyContent: "center" },
+  itemText: { fontSize: 14, fontFamily: "Inter_400Regular", lineHeight: 20 },
+  itemTime: { fontSize: 12, fontFamily: "Inter_400Regular", marginTop: 2 },
+  unreadDot: { width: 8, height: 8, borderRadius: 4 },
 });

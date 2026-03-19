@@ -6,7 +6,7 @@ import Animated, {
   withSequence,
   withTiming,
 } from "react-native-reanimated";
-import Colors from "@/constants/colors";
+import { useTheme } from "@/contexts/ThemeContext";
 
 interface Props {
   width?: any;
@@ -16,6 +16,7 @@ interface Props {
 }
 
 export default function SkeletonBox({ width, height = 12, borderRadius = 8, style }: Props) {
+  const { colors } = useTheme();
   const shimmer = useSharedValue(0);
 
   useEffect(() => {
@@ -38,7 +39,7 @@ export default function SkeletonBox({ width, height = 12, borderRadius = 8, styl
           width: width || "100%",
           height,
           borderRadius,
-          backgroundColor: Colors.dark.surfaceLight,
+          backgroundColor: colors.surfaceLight,
         },
         anim,
         style,

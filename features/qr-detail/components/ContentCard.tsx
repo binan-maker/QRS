@@ -4,7 +4,7 @@ import { Ionicons } from "@expo/vector-icons";
 import * as Clipboard from "expo-clipboard";
 import * as Haptics from "expo-haptics";
 import type { ParsedPaymentQr } from "@/lib/qr-analysis";
-import Colors from "@/constants/colors";
+import { useTheme } from "@/contexts/ThemeContext";
 import PaymentCard from "./PaymentCard";
 
 function getTypeIcon(contentType: string): keyof typeof Ionicons.glyphMap {
@@ -127,7 +127,6 @@ function formatEventDate(dt: string): string {
   } catch { return dt; }
 }
 
-
 interface Props {
   content: string;
   contentType: string;
@@ -160,6 +159,7 @@ const ContentCard = React.memo(function ContentCard({
   isDeactivated,
   onOpenContent,
 }: Props) {
+  const { colors } = useTheme();
   const [copied, setCopied] = React.useState(false);
   const [contentExpanded, setContentExpanded] = React.useState(false);
 
@@ -209,29 +209,35 @@ const ContentCard = React.memo(function ContentCard({
         />
         <Pressable
           onPress={() => setContentExpanded((v) => !v)}
-          style={({ pressed }) => [styles.rawContentRow, { opacity: pressed ? 0.8 : 1 }]}
+          style={({ pressed }) => [{
+            flexDirection: "row", alignItems: "center", gap: 6,
+            backgroundColor: colors.surfaceLight, borderRadius: 10,
+            paddingHorizontal: 12, paddingVertical: 8, marginBottom: 16,
+            borderWidth: 1, borderColor: colors.surfaceBorder,
+            opacity: pressed ? 0.8 : 1,
+          }]}
         >
-          <Ionicons name="code-outline" size={13} color={Colors.dark.textMuted} />
+          <Ionicons name="code-outline" size={13} color={colors.textMuted} />
           <View style={{ flex: 1 }}>
             <Text
-              style={styles.rawContentText}
+              style={{ fontSize: 11, fontFamily: "Inter_400Regular", color: colors.textMuted, letterSpacing: 0.2, lineHeight: 16 }}
               selectable
               numberOfLines={contentExpanded ? undefined : 2}
             >{content}</Text>
             {!contentExpanded && (
-              <Text style={styles.rawContentHint}>• • •  tap to expand full QR data</Text>
+              <Text style={{ fontSize: 10, fontFamily: "Inter_400Regular", color: colors.textMuted, marginTop: 3, letterSpacing: 1 }}>• • •  tap to expand full QR data</Text>
             )}
           </View>
           <Ionicons
             name={contentExpanded ? "chevron-up" : "chevron-down"}
             size={14}
-            color={Colors.dark.textMuted}
+            color={colors.textMuted}
           />
-          <Pressable onPress={(e) => { e.stopPropagation?.(); handleCopy(); }} style={styles.copyIconBtnSmall}>
+          <Pressable onPress={(e) => { e.stopPropagation?.(); handleCopy(); }} style={[styles.copyIconBtnSmall, { backgroundColor: colors.surfaceBorder }]}>
             <Ionicons
               name={copied ? "checkmark" : "copy-outline"}
               size={13}
-              color={copied ? Colors.dark.safe : Colors.dark.textMuted}
+              color={copied ? colors.safe : colors.textMuted}
             />
           </Pressable>
         </Pressable>
@@ -240,88 +246,83 @@ const ContentCard = React.memo(function ContentCard({
   }
 
   return (
-    <View style={styles.contentCard}>
+    <View style={[styles.contentCard, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
       <View style={styles.contentHeader}>
-        <View style={[styles.typeIcon, { backgroundColor: Colors.dark.primaryDim }]}>
-          <Ionicons name={typeIcon} size={24} color={Colors.dark.primary} />
+        <View style={[styles.typeIcon, { backgroundColor: colors.primaryDim }]}>
+          <Ionicons name={typeIcon} size={24} color={colors.primary} />
         </View>
-        <View style={styles.typeBadge}>
-          <Text style={styles.typeBadgeText}>{typeLabel.toUpperCase()}</Text>
+        <View style={[styles.typeBadge, { backgroundColor: colors.primaryDim }]}>
+          <Text style={[styles.typeBadgeText, { color: colors.primary }]}>{typeLabel.toUpperCase()}</Text>
         </View>
       </View>
 
       <Text
-        style={[styles.contentText, !isLongContent && styles.contentTextSpaced]}
+        style={[styles.contentText, { color: colors.text }, !isLongContent && styles.contentTextSpaced]}
         selectable
         numberOfLines={contentExpanded ? undefined : 3}
       >{content}</Text>
       {isLongContent && (
         <Pressable onPress={() => setContentExpanded((v) => !v)} style={styles.expandBtn}>
-          <Text style={styles.expandBtnText}>{contentExpanded ? "Show less" : "Show more"}</Text>
+          <Text style={[styles.expandBtnText, { color: colors.primary }]}>{contentExpanded ? "Show less" : "Show more"}</Text>
         </Pressable>
       )}
 
-      {/* ── Wi-Fi detail card ── */}
       {wifi ? (
-        <View style={styles.infoCard}>
-          <InfoRow label="Network" value={wifi.ssid} />
-          <InfoRow label="Security" value={wifi.security} />
-          {wifi.password ? <InfoRow label="Password" value={wifi.password} selectable /> : null}
-          {wifi.hidden ? <InfoRow label="Hidden" value="Yes" /> : null}
+        <View style={[styles.infoCard, { backgroundColor: colors.surfaceLight }]}>
+          <InfoRow label="Network" value={wifi.ssid} colors={colors} />
+          <InfoRow label="Security" value={wifi.security} colors={colors} />
+          {wifi.password ? <InfoRow label="Password" value={wifi.password} selectable colors={colors} /> : null}
+          {wifi.hidden ? <InfoRow label="Hidden" value="Yes" colors={colors} /> : null}
         </View>
       ) : null}
 
-      {/* ── Contact / vCard detail card ── */}
       {contact && (contact.name || contact.phone || contact.email) ? (
-        <View style={styles.infoCard}>
-          {contact.name ? <InfoRow label="Name" value={contact.name} /> : null}
-          {contact.org ? <InfoRow label="Org" value={contact.org} /> : null}
-          {contact.phone ? <InfoRow label="Phone" value={contact.phone} selectable /> : null}
-          {contact.email ? <InfoRow label="Email" value={contact.email} selectable /> : null}
-          {contact.url ? <InfoRow label="Website" value={contact.url} selectable /> : null}
+        <View style={[styles.infoCard, { backgroundColor: colors.surfaceLight }]}>
+          {contact.name ? <InfoRow label="Name" value={contact.name} colors={colors} /> : null}
+          {contact.org ? <InfoRow label="Org" value={contact.org} colors={colors} /> : null}
+          {contact.phone ? <InfoRow label="Phone" value={contact.phone} selectable colors={colors} /> : null}
+          {contact.email ? <InfoRow label="Email" value={contact.email} selectable colors={colors} /> : null}
+          {contact.url ? <InfoRow label="Website" value={contact.url} selectable colors={colors} /> : null}
         </View>
       ) : null}
 
-      {/* ── SMS detail card ── */}
       {smsData && (smsData.to || smsData.body) ? (
-        <View style={styles.infoCard}>
-          {smsData.to ? <InfoRow label="To" value={smsData.to} /> : null}
-          {smsData.body ? <InfoRow label="Message" value={smsData.body} /> : null}
+        <View style={[styles.infoCard, { backgroundColor: colors.surfaceLight }]}>
+          {smsData.to ? <InfoRow label="To" value={smsData.to} colors={colors} /> : null}
+          {smsData.body ? <InfoRow label="Message" value={smsData.body} colors={colors} /> : null}
         </View>
       ) : null}
 
-      {/* ── Calendar Event detail card ── */}
       {eventData && eventData.summary ? (
-        <View style={styles.infoCard}>
-          <InfoRow label="Event" value={eventData.summary} />
-          {eventData.dtstart ? <InfoRow label="When" value={formatEventDate(eventData.dtstart)} /> : null}
-          {eventData.location ? <InfoRow label="Where" value={eventData.location} /> : null}
-          {eventData.description ? <InfoRow label="Details" value={eventData.description} /> : null}
+        <View style={[styles.infoCard, { backgroundColor: colors.surfaceLight }]}>
+          <InfoRow label="Event" value={eventData.summary} colors={colors} />
+          {eventData.dtstart ? <InfoRow label="When" value={formatEventDate(eventData.dtstart)} colors={colors} /> : null}
+          {eventData.location ? <InfoRow label="Where" value={eventData.location} colors={colors} /> : null}
+          {eventData.description ? <InfoRow label="Details" value={eventData.description} colors={colors} /> : null}
         </View>
       ) : null}
 
-      {/* ── Action row ── */}
       <View style={styles.actionRow}>
         {hasOpenAction ? (
-          <Pressable onPress={onOpenContent} style={({ pressed }) => [styles.openBtn, { opacity: pressed ? 0.8 : 1 }]}>
-            <Ionicons name="open-outline" size={16} color={Colors.dark.primary} />
-            <Text style={styles.openBtnText}>{openLabel}</Text>
+          <Pressable onPress={onOpenContent} style={({ pressed }) => [styles.openBtn, { backgroundColor: colors.primaryDim, opacity: pressed ? 0.8 : 1 }]}>
+            <Ionicons name="open-outline" size={16} color={colors.primary} />
+            <Text style={[styles.openBtnText, { color: colors.primary }]}>{openLabel}</Text>
           </Pressable>
         ) : null}
-        <Pressable onPress={handleCopy} style={({ pressed }) => [styles.copyIconBtn, { opacity: pressed ? 0.75 : 1 }]}>
-          <Ionicons name="copy-outline" size={17} color={Colors.dark.textSecondary} />
+        <Pressable onPress={handleCopy} style={({ pressed }) => [styles.copyIconBtn, { backgroundColor: colors.surfaceLight, opacity: pressed ? 0.75 : 1 }]}>
+          <Ionicons name="copy-outline" size={17} color={colors.textSecondary} />
         </Pressable>
-        {copied ? <Text style={styles.copiedToast}>Copied!</Text> : null}
+        {copied ? <Text style={[styles.copiedToast, { color: colors.safe }]}>Copied!</Text> : null}
       </View>
     </View>
   );
 });
 
-function InfoRow({ label, value, selectable }: { label: string; value: string; selectable?: boolean }) {
+function InfoRow({ label, value, selectable, colors }: { label: string; value: string; selectable?: boolean; colors: any }) {
   return (
     <View style={styles.paymentRow}>
-      <Text style={styles.infoLabel}>{label}</Text>
-      <Text style={styles.infoValue} selectable={selectable} numberOfLines={2}>{value}</Text>
+      <Text style={[styles.infoLabel, { color: colors.textMuted }]}>{label}</Text>
+      <Text style={[styles.infoValue, { color: colors.text }]} selectable={selectable} numberOfLines={2}>{value}</Text>
     </View>
   );
 }
@@ -330,72 +331,31 @@ export default ContentCard;
 
 const styles = StyleSheet.create({
   contentCard: {
-    backgroundColor: Colors.dark.surface, borderRadius: 16, padding: 18,
-    marginBottom: 16, borderWidth: 1, borderColor: Colors.dark.surfaceBorder,
+    borderRadius: 16, padding: 18, marginBottom: 16, borderWidth: 1,
   },
   contentHeader: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 14 },
   typeIcon: { width: 48, height: 48, borderRadius: 14, alignItems: "center", justifyContent: "center" },
-  typeBadge: { backgroundColor: Colors.dark.primaryDim, borderRadius: 8, paddingHorizontal: 10, paddingVertical: 4 },
-  typeBadgeText: { fontSize: 11, fontFamily: "Inter_700Bold", color: Colors.dark.primary, letterSpacing: 0.5 },
-  contentText: {
-    fontSize: 14, fontFamily: "Inter_400Regular", color: Colors.dark.text,
-    lineHeight: 22, letterSpacing: 0.2,
-  },
+  typeBadge: { borderRadius: 8, paddingHorizontal: 10, paddingVertical: 4 },
+  typeBadgeText: { fontSize: 11, fontFamily: "Inter_700Bold", letterSpacing: 0.5 },
+  contentText: { fontSize: 14, fontFamily: "Inter_400Regular", lineHeight: 22, letterSpacing: 0.2 },
   contentTextSpaced: { marginBottom: 14 },
   expandBtn: { marginBottom: 14, marginTop: 4 },
-  expandBtnText: {
-    fontSize: 13, fontFamily: "Inter_600SemiBold",
-    color: Colors.dark.primary, textDecorationLine: "underline",
-  },
-  infoCard: {
-    backgroundColor: Colors.dark.surfaceLight, borderRadius: 14, padding: 14, gap: 8, marginBottom: 12,
-  },
+  expandBtnText: { fontSize: 13, fontFamily: "Inter_600SemiBold", textDecorationLine: "underline" },
+  infoCard: { borderRadius: 14, padding: 14, gap: 8, marginBottom: 12 },
   paymentRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 8 },
-  infoLabel: { fontSize: 12, fontFamily: "Inter_400Regular", color: Colors.dark.textMuted, minWidth: 64 },
-  infoValue: { fontSize: 14, fontFamily: "Inter_600SemiBold", color: Colors.dark.text, flex: 1, textAlign: "right" },
-  regionBadge: { backgroundColor: Colors.dark.primaryDim, borderRadius: 6, paddingHorizontal: 6, paddingVertical: 2 },
-  regionBadgeText: { color: Colors.dark.primary, fontSize: 10, fontFamily: "Inter_600SemiBold" },
-  cryptoAddress: {
-    flex: 1, textAlign: "right", fontSize: 11, fontFamily: "Inter_400Regular",
-    color: Colors.dark.textSecondary, letterSpacing: 0.3,
-  },
+  infoLabel: { fontSize: 12, fontFamily: "Inter_400Regular", minWidth: 64 },
+  infoValue: { fontSize: 14, fontFamily: "Inter_600SemiBold", flex: 1, textAlign: "right" },
   actionRow: { flexDirection: "row", alignItems: "center", gap: 8 },
   openBtn: {
     flexDirection: "row", alignItems: "center", gap: 8, flex: 1,
-    backgroundColor: Colors.dark.primaryDim, borderRadius: 10,
-    paddingVertical: 10, paddingHorizontal: 16,
+    borderRadius: 10, paddingVertical: 10, paddingHorizontal: 16,
   },
-  openBtnText: { fontSize: 14, fontFamily: "Inter_600SemiBold", color: Colors.dark.primary },
+  openBtnText: { fontSize: 14, fontFamily: "Inter_600SemiBold" },
   copyIconBtn: {
     width: 38, height: 38, borderRadius: 10, alignItems: "center", justifyContent: "center",
-    backgroundColor: Colors.dark.surfaceLight,
   },
-  copiedToast: { fontSize: 12, fontFamily: "Inter_600SemiBold", color: Colors.dark.safe },
-  actionBtn: {
-    flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 10,
-    backgroundColor: Colors.dark.primary, borderRadius: 12, paddingVertical: 13, paddingHorizontal: 20, marginTop: 4,
-  },
-  actionBtnText: { fontSize: 15, fontFamily: "Inter_700Bold", color: "#000" },
-  warningText: {
-    fontSize: 12, fontFamily: "Inter_400Regular", color: Colors.dark.textMuted,
-    textAlign: "center", lineHeight: 18, marginTop: 4,
-  },
-  rawContentRow: {
-    flexDirection: "row", alignItems: "center", gap: 6,
-    backgroundColor: Colors.dark.surfaceLight, borderRadius: 10,
-    paddingHorizontal: 12, paddingVertical: 8, marginBottom: 16,
-    borderWidth: 1, borderColor: Colors.dark.surfaceBorder,
-  },
-  rawContentText: {
-    fontSize: 11, fontFamily: "Inter_400Regular",
-    color: Colors.dark.textMuted, letterSpacing: 0.2, lineHeight: 16,
-  },
-  rawContentHint: {
-    fontSize: 10, fontFamily: "Inter_400Regular",
-    color: Colors.dark.textMuted, marginTop: 3, letterSpacing: 1,
-  },
+  copiedToast: { fontSize: 12, fontFamily: "Inter_600SemiBold" },
   copyIconBtnSmall: {
     width: 26, height: 26, borderRadius: 7, alignItems: "center", justifyContent: "center",
-    backgroundColor: Colors.dark.surfaceBorder,
   },
 });

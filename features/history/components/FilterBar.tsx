@@ -1,8 +1,8 @@
-import React, { useMemo } from "react";
+import React from "react";
 import { View, Text, StyleSheet, Pressable, ScrollView } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
-import Colors from "@/constants/colors";
+import { useTheme } from "@/contexts/ThemeContext";
 import type { Filter } from "@/hooks/useHistory";
 
 interface FilterOption {
@@ -41,6 +41,8 @@ const FilterBar = React.memo(function FilterBar({
   activeFilter,
   onFilterChange,
 }: FilterBarProps) {
+  const { colors } = useTheme();
+
   return (
     <ScrollView
       horizontal
@@ -54,8 +56,8 @@ const FilterBar = React.memo(function FilterBar({
         const isActive = activeFilter === f.key;
 
         const iconColor = isFavorite
-          ? isActive ? Colors.dark.danger : Colors.dark.textMuted
-          : isActive ? Colors.dark.primary : Colors.dark.textMuted;
+          ? isActive ? colors.danger : colors.textMuted
+          : isActive ? colors.primary : colors.textMuted;
 
         const iconName = isActive
           ? (FILTER_ICONS_ACTIVE[f.key] ?? "apps")
@@ -69,20 +71,33 @@ const FilterBar = React.memo(function FilterBar({
               Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
             }}
             style={({ pressed }) => [
-              styles.chip,
-              isActive && styles.chipActive,
-              isFavorite && styles.chipFavorite,
-              isFavorite && isActive && styles.chipFavoriteActive,
-              { opacity: pressed ? 0.7 : 1 },
+              {
+                flexDirection: "row",
+                alignItems: "center",
+                gap: 4,
+                paddingHorizontal: 10,
+                paddingVertical: 6,
+                borderRadius: 20,
+                backgroundColor: isActive
+                  ? isFavorite ? colors.dangerDim : colors.primaryDim
+                  : colors.surface,
+                borderWidth: 1,
+                borderColor: isActive
+                  ? isFavorite ? colors.danger : colors.primary
+                  : isFavorite ? colors.danger + "40" : colors.surfaceBorder,
+                opacity: pressed ? 0.7 : 1,
+              },
             ]}
           >
             <Ionicons name={iconName} size={13} color={iconColor} />
             <Text
-              style={[
-                styles.chipText,
-                isActive && styles.chipTextActive,
-                isFavorite && isActive && { color: Colors.dark.danger },
-              ]}
+              style={{
+                fontSize: 12,
+                fontFamily: "Inter_500Medium",
+                color: isActive
+                  ? isFavorite ? colors.danger : colors.primary
+                  : colors.textMuted,
+              }}
               numberOfLines={1}
             >
               {f.label}
@@ -107,35 +122,5 @@ const styles = StyleSheet.create({
     paddingBottom: 2,
     flexDirection: "row",
     alignItems: "center",
-  },
-  chip: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 4,
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: 20,
-    backgroundColor: Colors.dark.surface,
-    borderWidth: 1,
-    borderColor: Colors.dark.surfaceBorder,
-  },
-  chipActive: {
-    backgroundColor: Colors.dark.primaryDim,
-    borderColor: Colors.dark.primary,
-  },
-  chipFavorite: {
-    borderColor: Colors.dark.danger + "40",
-  },
-  chipFavoriteActive: {
-    backgroundColor: Colors.dark.dangerDim,
-    borderColor: Colors.dark.danger,
-  },
-  chipText: {
-    fontSize: 12,
-    fontFamily: "Inter_500Medium",
-    color: Colors.dark.textMuted,
-  },
-  chipTextActive: {
-    color: Colors.dark.primary,
   },
 });

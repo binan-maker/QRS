@@ -1,14 +1,7 @@
 import React from "react";
 import { View, Text, StyleSheet, Pressable, ActivityIndicator } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import Colors from "@/constants/colors";
-
-const REPORT_TYPES = [
-  { key: "safe", label: "Safe", icon: "shield-checkmark", color: Colors.dark.safe, bg: Colors.dark.safeDim },
-  { key: "scam", label: "Scam", icon: "warning", color: Colors.dark.danger, bg: Colors.dark.dangerDim },
-  { key: "fake", label: "Fake", icon: "close-circle", color: Colors.dark.warning, bg: Colors.dark.warningDim },
-  { key: "spam", label: "Spam", icon: "mail-unread", color: Colors.dark.accent, bg: Colors.dark.accentDim },
-];
+import { useTheme } from "@/contexts/ThemeContext";
 
 interface Props {
   userReport: string | null;
@@ -17,10 +10,19 @@ interface Props {
 }
 
 const ReportSection = React.memo(function ReportSection({ userReport, reportLoading, onReport }: Props) {
+  const { colors } = useTheme();
+
+  const REPORT_TYPES = [
+    { key: "safe", label: "Safe", icon: "shield-checkmark", color: colors.safe, bg: colors.safeDim },
+    { key: "scam", label: "Scam", icon: "warning", color: colors.danger, bg: colors.dangerDim },
+    { key: "fake", label: "Fake", icon: "close-circle", color: colors.warning, bg: colors.warningDim },
+    { key: "spam", label: "Spam", icon: "mail-unread", color: colors.accent, bg: colors.accentDim },
+  ];
+
   return (
     <View style={styles.section}>
-      <Text style={styles.sectionLabel}>Report This QR Code</Text>
-      <Text style={styles.sectionSub}>Help the community by marking this code</Text>
+      <Text style={[styles.sectionLabel, { color: colors.text }]}>Report This QR Code</Text>
+      <Text style={[styles.sectionSub, { color: colors.textSecondary }]}>Help the community by marking this code</Text>
       <View style={styles.reportGrid}>
         {REPORT_TYPES.map((r) => {
           const isSelected = userReport === r.key;
@@ -53,9 +55,9 @@ const ReportSection = React.memo(function ReportSection({ userReport, reportLoad
         })}
       </View>
       {userReport ? (
-        <View style={styles.reportedBanner}>
-          <Ionicons name="checkmark-circle" size={15} color={Colors.dark.safe} />
-          <Text style={styles.reportedText}>
+        <View style={[styles.reportedBanner, { backgroundColor: colors.safeDim, borderColor: colors.safe + "40" }]}>
+          <Ionicons name="checkmark-circle" size={15} color={colors.safe} />
+          <Text style={[styles.reportedText, { color: colors.textSecondary }]}>
             You reported this as <Text style={{ fontFamily: "Inter_700Bold" }}>{userReport}</Text> — thank you!
           </Text>
         </View>
@@ -68,8 +70,8 @@ export default ReportSection;
 
 const styles = StyleSheet.create({
   section: { marginBottom: 20 },
-  sectionLabel: { fontSize: 16, fontFamily: "Inter_700Bold", color: Colors.dark.text, marginBottom: 4 },
-  sectionSub: { fontSize: 13, fontFamily: "Inter_400Regular", color: Colors.dark.textSecondary, marginBottom: 14 },
+  sectionLabel: { fontSize: 16, fontFamily: "Inter_700Bold", marginBottom: 4 },
+  sectionSub: { fontSize: 13, fontFamily: "Inter_400Regular", marginBottom: 14 },
   reportGrid: { flexDirection: "row", flexWrap: "wrap", gap: 10 },
   reportBtn: {
     width: "47%", paddingVertical: 14, borderRadius: 14, alignItems: "center",
@@ -79,8 +81,7 @@ const styles = StyleSheet.create({
   selectedCheck: { position: "absolute", top: 6, right: 8 },
   reportedBanner: {
     flexDirection: "row", alignItems: "center", gap: 8, marginTop: 12,
-    backgroundColor: Colors.dark.safeDim, borderRadius: 10, padding: 10,
-    borderWidth: 1, borderColor: Colors.dark.safe + "40",
+    borderRadius: 10, padding: 10, borderWidth: 1,
   },
-  reportedText: { fontSize: 13, fontFamily: "Inter_400Regular", color: Colors.dark.textSecondary, flex: 1 },
+  reportedText: { fontSize: 13, fontFamily: "Inter_400Regular", flex: 1 },
 });

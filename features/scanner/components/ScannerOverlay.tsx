@@ -10,7 +10,6 @@ import {
 import { shadow } from "@/lib/utils/platform";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { router } from "expo-router";
-import Colors from "@/constants/colors";
 import { FINDER_SIZE } from "@/hooks/useScanner";
 import { formatFirstName } from "@/lib/utils/formatters";
 
@@ -248,7 +247,7 @@ export default function ScannerOverlay({
               <Ionicons
                 name={anonymousMode ? "eye-off" : "eye"}
                 size={14}
-                color={anonymousMode ? Colors.dark.warning : "rgba(255,255,255,0.7)"}
+                color={anonymousMode ? "#F5A623" : "rgba(255,255,255,0.7)"}
               />
               <Text style={[styles.pillText, anonymousMode && styles.pillTextAnon]}>
                 {anonymousMode ? "Anonymous" : "Tracked"}
@@ -502,10 +501,10 @@ const styles = StyleSheet.create({
   },
   pillAnon: {
     backgroundColor: "rgba(245,158,11,0.12)",
-    borderColor: Colors.dark.warning + "50",
+    borderColor: "rgba(245,166,35,0.5)",
   },
   pillText: { fontSize: 12, fontFamily: "Inter_600SemiBold", color: GLOW },
-  pillTextAnon: { color: Colors.dark.warning },
+  pillTextAnon: { color: "#F5A623" },
   bottomActions: {
     flexDirection: "row",
     alignItems: "center",

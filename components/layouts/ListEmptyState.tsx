@@ -1,7 +1,7 @@
 import React from "react";
 import { View, Text, StyleSheet } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import Colors from "@/constants/colors";
+import { useTheme } from "@/contexts/ThemeContext";
 
 interface ListEmptyStateProps {
   icon: keyof typeof Ionicons.glyphMap;
@@ -16,13 +16,15 @@ const ListEmptyState = React.memo(function ListEmptyState({
   subtitle,
   action,
 }: ListEmptyStateProps) {
+  const { colors } = useTheme();
+
   return (
     <View style={styles.container}>
-      <View style={styles.iconWrap}>
-        <Ionicons name={icon} size={40} color={Colors.dark.textMuted} />
+      <View style={[styles.iconWrap, { backgroundColor: colors.surfaceLight, borderColor: colors.surfaceBorder }]}>
+        <Ionicons name={icon} size={40} color={colors.textMuted} />
       </View>
-      <Text style={styles.title}>{title}</Text>
-      {subtitle ? <Text style={styles.subtitle}>{subtitle}</Text> : null}
+      <Text style={[styles.title, { color: colors.text }]}>{title}</Text>
+      {subtitle ? <Text style={[styles.subtitle, { color: colors.textSecondary }]}>{subtitle}</Text> : null}
       {action ? <View style={styles.action}>{action}</View> : null}
     </View>
   );
@@ -42,24 +44,20 @@ const styles = StyleSheet.create({
     width: 72,
     height: 72,
     borderRadius: 36,
-    backgroundColor: Colors.dark.surfaceLight,
     alignItems: "center",
     justifyContent: "center",
     marginBottom: 16,
     borderWidth: 1,
-    borderColor: Colors.dark.surfaceBorder,
   },
   title: {
     fontSize: 17,
     fontFamily: "Inter_600SemiBold",
-    color: Colors.dark.text,
     textAlign: "center",
     marginBottom: 8,
   },
   subtitle: {
     fontSize: 14,
     fontFamily: "Inter_400Regular",
-    color: Colors.dark.textSecondary,
     textAlign: "center",
     lineHeight: 20,
   },
