@@ -108,7 +108,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const [googleRequest, googleResponse, promptGoogleAsync] = Google.useAuthRequest({
     webClientId: GOOGLE_WEB_CLIENT_ID,
-    androidClientId: "971359442211-j2emebstu4e63sd7u56k852ok1sb9rs2.apps.googleusercontent.com",
+    androidClientId: "971359442211-dppv9u14kun8mo5c0e07pr6f6veh81aa.apps.googleusercontent.com",
     scopes: ["profile", "email"],
   });
 
