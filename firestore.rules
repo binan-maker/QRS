@@ -226,6 +226,14 @@ service cloud.firestore {
       allow read, update, delete: if false;
     }
 
+    // ─── Bug Reports ──────────────────────────────────────────────────────────
+    // Write-only from any client (including unauthenticated, for crash reports)
+    match /bugReports/{docId} {
+      allow create: if request.resource.data.errorMessage is string
+        && request.resource.data.errorMessage.size() <= 500;
+      allow read, update, delete: if false;
+    }
+
     // ─── Moderation Queue ─────────────────────────────────────────────────────
     // Write-only for authenticated users; readable only via Firebase Admin SDK
     match /moderationQueue/{docId} {

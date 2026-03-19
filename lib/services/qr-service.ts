@@ -235,6 +235,11 @@ export async function recordScan(
   isAnonymous: boolean,
   scanSource: "camera" | "gallery" = "camera"
 ): Promise<void> {
+  // Signed-in users in anonymous mode: absolute zero database interaction.
+  // This is a privacy and legal compliance requirement — no data is written
+  // to any server or database when a signed-in user scans anonymously.
+  if (userId && isAnonymous) return;
+
   try {
     await db.increment(["qrCodes", qrId], "scanCount", 1);
   } catch (e) {

@@ -5,14 +5,18 @@ import { useFocusEffect } from "expo-router";
 import * as ImagePicker from "expo-image-picker";
 import * as FileSystem from "expo-file-system";
 import * as Haptics from "expo-haptics";
-import * as Crypto from "expo-crypto";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useAuth } from "@/contexts/AuthContext";
 import { getApiUrl } from "@/lib/query-client";
-import { getOrCreateQrCode, recordScan, getGuardLink, type GuardLink } from "@/lib/firestore-service";
 import {
-  verifyQrSignature,
-} from "@/lib/qr-analysis";
+  getOrCreateQrCode,
+  recordScan,
+  getGuardLink,
+  detectContentType,
+  getQrCodeId,
+  type GuardLink,
+} from "@/lib/firestore-service";
+import { verifyQrSignature } from "@/lib/qr-analysis";
 
 export const FINDER_SIZE = 270;
 export const CORNER_SIZE = 32;
@@ -24,13 +28,18 @@ export const ZOOM_LEVELS = [
   { zoom: 0.6, label: "3×" },
 ];
 
-const GUARD_PATTERN = /\/guard\/([A-Za-z0-9]{4}-[A-Za-z0-9]{4}-[A-Za-z0-9]{4}-[A-Za-z0-9]{4})(?:[/?#]|$)/;
+const GUARD_PATTERN =
+  /\/guard\/([A-Za-z0-9]{4}-[A-Za-z0-9]{4}-[A-Za-z0-9]{4}-[A-Za-z0-9]{4})(?:[/?#]|$)/;
 
 function isInsecureHttpUrl(content: string): boolean {
   return /^http:\/\//i.test(content.trim());
 }
 
-function postJsonXhr(url: string, body: object, headers: Record<string, string>): Promise<{ status: number; data: any }> {
+function postJsonXhr(
+  url: string,
+  body: object,
+  headers: Record<string, string>
+): Promise<{ status: number; data: any }> {
   return new Promise((resolve, reject) => {
     const xhr = new XMLHttpRequest();
     xhr.open("POST", url);
@@ -90,8 +99,18 @@ export function useScanner() {
     scanLineAnim.setValue(0);
     scanLineLoop.current = Animated.loop(
       Animated.sequence([
-        Animated.timing(scanLineAnim, { toValue: 1, duration: 2000, easing: Easing.inOut(Easing.ease), useNativeDriver: true }),
-        Animated.timing(scanLineAnim, { toValue: 0, duration: 2000, easing: Easing.inOut(Easing.ease), useNativeDriver: true }),
+        Animated.timing(scanLineAnim, {
+          toValue: 1,
+          duration: 2000,
+          easing: Easing.inOut(Easing.ease),
+          useNativeDriver: true,
+        }),
+        Animated.timing(scanLineAnim, {
+          toValue: 0,
+          duration: 2000,
+          easing: Easing.inOut(Easing.ease),
+          useNativeDriver: true,
+        }),
       ])
     );
     scanLineLoop.current.start();
@@ -114,7 +133,9 @@ export function useScanner() {
       scanLockRef.current = false;
       canScanRef.current = false;
       startScanLine();
-      focusTimerRef.current = setTimeout(() => { canScanRef.current = true; }, 500);
+      focusTimerRef.current = setTimeout(() => {
+        canScanRef.current = true;
+      }, 500);
       return () => {
         if (focusTimerRef.current) clearTimeout(focusTimerRef.current);
         canScanRef.current = false;
@@ -147,7 +168,77 @@ export function useScanner() {
     router.push(`/qr-detail/${qrId}`);
   }
 
-  async function processScan(content: string, scanSource: "camera" | "gallery" = "camera") {
+  // ─── ANONYMOUS SCAN ───────────────────────────────────────────────────────────
+  // When a signed-in user scans in anonymous mode, we perform ZERO database reads
+  // or writes. Content is stored only in device memory (AsyncStorage) and is
+  // never uploaded to any server. No scan count, no user record, nothing.
+  async function processScanAnonymous(content: string) {
+    setProcessing(true);
+    try {
+      const contentType = detectContentType(content);
+      const qrId = await getQrCodeId(content);
+      // Store locally only — never leaves the device
+      await AsyncStorage.setItem(
+        `qr_content_${qrId}`,
+        JSON.stringify({ content, contentType })
+      );
+      setProcessing(false);
+
+      if (contentType === "url" && isInsecureHttpUrl(content)) {
+        setPendingQrId(qrId);
+        setSafetyRiskLevel("caution");
+        setSafetyModal(true);
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+        return;
+      }
+      await navigateToQrDetail(qrId);
+    } catch (e: any) {
+      setProcessing(false);
+      Alert.alert("Scan Failed", e.message || "Could not process QR code.", [
+        {
+          text: "OK",
+          onPress: () => {
+            setScanned(false);
+            setProcessing(false);
+            setScanSuccess(false);
+            scanLockRef.current = false;
+            canScanRef.current = true;
+          },
+        },
+      ]);
+    }
+  }
+
+  // ─── NORMAL SCAN ─────────────────────────────────────────────────────────────
+  async function processScan(
+    content: string,
+    scanSource: "camera" | "gallery" = "camera"
+  ) {
+    // Signed-in users who chose anonymous mode: absolute zero tracking
+    if (user && anonymousMode) {
+      const guardMatch = content.match(GUARD_PATTERN);
+      if (guardMatch) {
+        // For guard links we still do a read-only fetch (no writes)
+        const guardUuid = guardMatch[1].toUpperCase();
+        setProcessing(false);
+        setLivingShieldLoading(true);
+        setLivingShieldModal(true);
+        setScanSuccess(true);
+        try {
+          const link = await getGuardLink(guardUuid);
+          setLivingShieldData(link);
+        } catch {
+          setLivingShieldData(null);
+        } finally {
+          setLivingShieldLoading(false);
+        }
+        return;
+      }
+      await processScanAnonymous(content);
+      return;
+    }
+
+    // Non-anonymous path (includes non-signed-in users)
     const guardMatch = content.match(GUARD_PATTERN);
     if (guardMatch) {
       const guardUuid = guardMatch[1].toUpperCase();
@@ -169,10 +260,21 @@ export function useScanner() {
     setProcessing(true);
     try {
       const qr = await getOrCreateQrCode(content);
-      await AsyncStorage.setItem(`qr_content_${qr.id}`, JSON.stringify({ content: qr.content, contentType: qr.contentType }));
-      await recordScan(qr.id, content, qr.contentType, user?.id || null, anonymousMode, scanSource).catch(() => {});
+      await AsyncStorage.setItem(
+        `qr_content_${qr.id}`,
+        JSON.stringify({ content: qr.content, contentType: qr.contentType })
+      );
+      // recordScan respects isAnonymous flag as an extra safety net
+      await recordScan(
+        qr.id,
+        content,
+        qr.contentType,
+        user?.id || null,
+        false,
+        scanSource
+      ).catch(() => {});
 
-      if (!anonymousMode && user) {
+      if (user) {
         const scanEntry = {
           id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
           content,
@@ -215,10 +317,12 @@ export function useScanner() {
       }
     } catch (e: any) {
       try {
-        const { detectContentType, getQrCodeId } = await import("@/lib/firestore-service");
         const contentType = detectContentType(content);
         const qrId = await getQrCodeId(content);
-        await AsyncStorage.setItem(`qr_content_${qrId}`, JSON.stringify({ content, contentType }));
+        await AsyncStorage.setItem(
+          `qr_content_${qrId}`,
+          JSON.stringify({ content, contentType })
+        );
         setProcessing(false);
 
         if (contentType === "url" && isInsecureHttpUrl(content)) {
@@ -230,12 +334,22 @@ export function useScanner() {
         }
         return;
       } catch {}
-      Alert.alert("Scan Failed", e.message || "Could not process QR code. Please try again.", [
-        { text: "OK", onPress: () => {
-          setScanned(false); setProcessing(false); setScanSuccess(false);
-          scanLockRef.current = false; canScanRef.current = true;
-        }},
-      ]);
+      Alert.alert(
+        "Scan Failed",
+        e.message || "Could not process QR code. Please try again.",
+        [
+          {
+            text: "OK",
+            onPress: () => {
+              setScanned(false);
+              setProcessing(false);
+              setScanSuccess(false);
+              scanLockRef.current = false;
+              canScanRef.current = true;
+            },
+          },
+        ]
+      );
     } finally {
       setProcessing(false);
     }
@@ -264,7 +378,9 @@ export function useScanner() {
         return c - 1;
       });
     }, 1000);
-    return () => { if (countdownRef.current) clearInterval(countdownRef.current); };
+    return () => {
+      if (countdownRef.current) clearInterval(countdownRef.current);
+    };
   }, [unverifiedModal, unverifiedQrId]);
 
   function handleUnverifiedProceed() {
@@ -312,7 +428,11 @@ export function useScanner() {
 
   async function handlePickImage() {
     if (!token) {
-      Alert.alert("Sign In Required", "Please sign in to scan QR codes from your gallery.");
+      Alert.alert(
+        "Sign In Required",
+        "Please sign in to scan QR codes from your gallery.",
+        [{ text: "OK" }]
+      );
       return;
     }
     try {
@@ -326,7 +446,9 @@ export function useScanner() {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
       let base64 = result.assets[0].base64;
       if (!base64 && result.assets[0].uri) {
-        base64 = await FileSystem.readAsStringAsync(result.assets[0].uri, { encoding: FileSystem.EncodingType.Base64 });
+        base64 = await FileSystem.readAsStringAsync(result.assets[0].uri, {
+          encoding: FileSystem.EncodingType.Base64,
+        });
       }
       if (!base64) {
         showGalleryError("Could not read the selected image");
@@ -334,13 +456,13 @@ export function useScanner() {
         return;
       }
       const baseUrl = getApiUrl();
+      const headers: Record<string, string> = { "Content-Type": "application/json" };
+      if (token) headers["Authorization"] = `Bearer ${token}`;
+
       const { status, data } = await postJsonXhr(
         `${baseUrl}api/qr/decode-image`,
         { imageBase64: base64 },
-        {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${token}`,
-        }
+        headers
       );
       if (status === 404 || !data?.content) {
         showGalleryError(data?.message || "No QR code detected — try a clearer image");
@@ -376,7 +498,7 @@ export function useScanner() {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       await processScan(data, "camera");
     },
-    [scanned, anonymousMode, token]
+    [scanned, anonymousMode, user, token]
   );
 
   function resetScan() {

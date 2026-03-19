@@ -210,6 +210,26 @@ Each service file owns one responsibility:
 - QR detail shows "QR Guard Generated" shield badge when `ownerInfo.isBranded` is true
 - Signature salt: `QRG_MINT_VERIFIED_2024_PROPRIETARY`
 
+## Privacy & Anonymous Mode
+
+- **Signed-in Anonymous Scan**: When a signed-in user scans in anonymous mode, ZERO database interaction occurs — no `getOrCreateQrCode`, no `recordScan`, no scan count increment, no velocity tracking. Content is stored only in device AsyncStorage.
+- **Double safety guard**: `processScan` in `useScanner.ts` detects `user && anonymousMode` and calls `processScanAnonymous` (no DB). Additionally, `recordScan` in `qr-service.ts` has an early-return guard for `userId && isAnonymous`.
+- **Non-signed-in users**: Scans proceed normally — scan count increments, QR codes created/found in DB, velocity tracked. No user-specific data stored.
+
+## Error Handling & Bug Reporting
+
+- **`components/ErrorBoundary.tsx`**: React class error boundary wrapping the entire app, catches all render-time crashes.
+- **`components/ErrorFallback.tsx`**: Production-ready crash screen with:
+  - "Reload App" button (uses `reloadAppAsync`)
+  - "Report Issue" button — opens an in-app form to submit a bug report directly to Firebase `bugReports` collection
+  - "Dismiss and try to continue" option
+  - Works in both development and production builds
+
+## Scan Source Tracking
+
+- Each scan record includes `scanSource: "camera" | "gallery"` stored in both AsyncStorage and Firestore.
+- History page has "Camera" and "Gallery" filter tabs to separate the two scan types.
+
 ## Key Dependencies
 
 - `expo` ~54.0.27, `expo-router` ~6.0.17
