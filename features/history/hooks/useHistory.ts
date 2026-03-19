@@ -14,9 +14,10 @@ export interface HistoryItem {
   scannedAt: string;
   qrCodeId?: string;
   source: "local" | "cloud" | "favorite";
+  scanSource?: "camera" | "gallery";
 }
 
-export type Filter = "all" | "url" | "text" | "payment" | "other" | "favorites";
+export type Filter = "all" | "url" | "text" | "payment" | "other" | "favorites" | "camera" | "gallery";
 export type RiskLevel = "safe" | "caution" | "dangerous";
 
 const PAGE_SIZE = 20;
@@ -69,6 +70,8 @@ export function useHistory() {
         if (filter === "url") return item.contentType === "url";
         if (filter === "text") return item.contentType === "text";
         if (filter === "payment") return item.contentType === "payment";
+        if (filter === "camera") return (item.scanSource ?? "camera") === "camera";
+        if (filter === "gallery") return item.scanSource === "gallery";
         return !["url", "text", "payment"].includes(item.contentType);
       });
 
@@ -78,7 +81,7 @@ export function useHistory() {
       const stored = await AsyncStorage.getItem(`local_scan_history_${userId}`);
       if (stored) {
         const local: any[] = JSON.parse(stored);
-        setLocalHistory(local.map((s) => ({ ...s, source: "local" as const })));
+        setLocalHistory(local.map((s) => ({ ...s, source: "local" as const, scanSource: s.scanSource || "camera" })));
       } else {
         setLocalHistory([]);
       }
@@ -93,6 +96,7 @@ export function useHistory() {
       setCloudHistory(result.items.map((s) => ({
         id: s.id, content: s.content, contentType: s.contentType,
         scannedAt: s.scannedAt, qrCodeId: s.qrCodeId, source: "cloud" as const,
+        scanSource: (s.scanSource as "camera" | "gallery") || "camera",
       })));
     } catch { setCloudHistory([]); }
   }, []);
@@ -107,6 +111,7 @@ export function useHistory() {
       setCloudHistory((prev) => [...prev, ...result.items.map((s) => ({
         id: s.id, content: s.content, contentType: s.contentType,
         scannedAt: s.scannedAt, qrCodeId: s.qrCodeId, source: "cloud" as const,
+        scanSource: (s.scanSource as "camera" | "gallery") || "camera",
       }))]);
     } catch {}
     setLoadingMore(false);
@@ -165,7 +170,7 @@ export function useHistory() {
   }
 
   const handleEndReached = useCallback(() => {
-    if (filter === "all" || filter === "url" || filter === "text" || filter === "payment" || filter === "other") {
+    if (filter !== "favorites") {
       loadMoreCloudHistory();
     }
   }, [filter, loadMoreCloudHistory]);

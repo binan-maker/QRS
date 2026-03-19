@@ -232,7 +232,8 @@ export async function recordScan(
   content: string,
   contentType: string,
   userId: string | null,
-  isAnonymous: boolean
+  isAnonymous: boolean,
+  scanSource: "camera" | "gallery" = "camera"
 ): Promise<void> {
   try {
     await db.increment(["qrCodes", qrId], "scanCount", 1);
@@ -244,6 +245,7 @@ export async function recordScan(
       await db.add(["users", userId, "scans"], {
         qrCodeId: qrId, content, contentType,
         isAnonymous: false, scannedAt: db.timestamp(),
+        scanSource,
       });
     } catch {}
   }

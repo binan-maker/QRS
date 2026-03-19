@@ -7,7 +7,6 @@ import * as FileSystem from "expo-file-system";
 import * as Haptics from "expo-haptics";
 import * as Crypto from "expo-crypto";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { fetch } from "expo/fetch";
 import { useAuth } from "@/contexts/AuthContext";
 import { getApiUrl } from "@/lib/query-client";
 import { getOrCreateQrCode, recordScan, getGuardLink, type GuardLink } from "@/lib/firestore-service";
@@ -29,6 +28,25 @@ const GUARD_PATTERN = /\/guard\/([A-Za-z0-9]{4}-[A-Za-z0-9]{4}-[A-Za-z0-9]{4}-[A
 
 function isInsecureHttpUrl(content: string): boolean {
   return /^http:\/\//i.test(content.trim());
+}
+
+function postJsonXhr(url: string, body: object, headers: Record<string, string>): Promise<{ status: number; data: any }> {
+  return new Promise((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
+    xhr.open("POST", url);
+    Object.entries(headers).forEach(([k, v]) => xhr.setRequestHeader(k, v));
+    xhr.onload = () => {
+      try {
+        resolve({ status: xhr.status, data: JSON.parse(xhr.responseText) });
+      } catch {
+        reject(new Error("Invalid server response"));
+      }
+    };
+    xhr.onerror = () => reject(new Error("Network error — could not reach server"));
+    xhr.ontimeout = () => reject(new Error("Request timed out"));
+    xhr.timeout = 30000;
+    xhr.send(JSON.stringify(body));
+  });
 }
 
 export function useScanner() {
@@ -58,6 +76,8 @@ export function useScanner() {
   const [livingShieldModal, setLivingShieldModal] = useState(false);
   const [livingShieldData, setLivingShieldData] = useState<GuardLink | null>(null);
   const [livingShieldLoading, setLivingShieldLoading] = useState(false);
+
+  const [galleryErrorMsg, setGalleryErrorMsg] = useState<string | null>(null);
 
   const scanLockRef = useRef(false);
   const canScanRef = useRef(false);
@@ -127,7 +147,7 @@ export function useScanner() {
     router.push(`/qr-detail/${qrId}`);
   }
 
-  async function processScan(content: string) {
+  async function processScan(content: string, scanSource: "camera" | "gallery" = "camera") {
     const guardMatch = content.match(GUARD_PATTERN);
     if (guardMatch) {
       const guardUuid = guardMatch[1].toUpperCase();
@@ -150,7 +170,7 @@ export function useScanner() {
     try {
       const qr = await getOrCreateQrCode(content);
       await AsyncStorage.setItem(`qr_content_${qr.id}`, JSON.stringify({ content: qr.content, contentType: qr.contentType }));
-      await recordScan(qr.id, content, qr.contentType, user?.id || null, anonymousMode).catch(() => {});
+      await recordScan(qr.id, content, qr.contentType, user?.id || null, anonymousMode, scanSource).catch(() => {});
 
       if (!anonymousMode && user) {
         const scanEntry = {
@@ -159,6 +179,7 @@ export function useScanner() {
           contentType: qr.contentType,
           scannedAt: new Date().toISOString(),
           qrCodeId: qr.id,
+          scanSource,
         };
         const historyKey = `local_scan_history_${user.id}`;
         const stored = await AsyncStorage.getItem(historyKey);
@@ -170,7 +191,6 @@ export function useScanner() {
 
       setProcessing(false);
 
-      // Only show scanner caution modal for insecure HTTP URLs
       if (qr.contentType === "url" && isInsecureHttpUrl(content)) {
         setPendingQrId(qr.id);
         setSafetyRiskLevel("caution");
@@ -179,7 +199,6 @@ export function useScanner() {
         return;
       }
 
-      // For all other QR types: check verified status then navigate to details
       if (qr.isBranded && qr.signature && qr.ownerId) {
         const isVerified = await verifyQrSignature(content, qr.ownerId, qr.signature);
         if (isVerified) {
@@ -283,13 +302,25 @@ export function useScanner() {
     canScanRef.current = true;
   }
 
+  function showGalleryError(msg: string) {
+    setGalleryErrorMsg(msg);
+  }
+
+  function dismissGalleryError() {
+    setGalleryErrorMsg(null);
+  }
+
   async function handlePickImage() {
     if (!token) {
       Alert.alert("Sign In Required", "Please sign in to scan QR codes from your gallery.");
       return;
     }
     try {
-      const result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ["images"], quality: 0.8, base64: true });
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ["images"],
+        quality: 0.7,
+        base64: true,
+      });
       if (result.canceled || !result.assets[0]) return;
       setProcessing(true);
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -297,30 +328,33 @@ export function useScanner() {
       if (!base64 && result.assets[0].uri) {
         base64 = await FileSystem.readAsStringAsync(result.assets[0].uri, { encoding: FileSystem.EncodingType.Base64 });
       }
-      if (!base64) { Alert.alert("Error", "Could not read image"); setProcessing(false); return; }
+      if (!base64) {
+        showGalleryError("Could not read the selected image");
+        setProcessing(false);
+        return;
+      }
       const baseUrl = getApiUrl();
-      const headers: Record<string, string> = {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${token}`,
-      };
-      const res = await fetch(`${baseUrl}api/qr/decode-image`, {
-        method: "POST", headers, body: JSON.stringify({ imageBase64: base64 }),
-      });
-      const ct = res.headers.get("content-type") || "";
-      if (!ct.includes("application/json")) {
-        Alert.alert("No QR Found", "No QR code was detected in the selected image");
+      const { status, data } = await postJsonXhr(
+        `${baseUrl}api/qr/decode-image`,
+        { imageBase64: base64 },
+        {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`,
+        }
+      );
+      if (status === 404 || !data?.content) {
+        showGalleryError(data?.message || "No QR code detected — try a clearer image");
         setProcessing(false);
         return;
       }
-      const data = await res.json();
-      if (!res.ok || !data.content) {
-        Alert.alert("No QR Found", data.message || "No QR code was detected in the selected image");
+      if (status !== 200) {
+        showGalleryError(data?.message || "Could not process the image");
         setProcessing(false);
         return;
       }
-      await processScan(data.content);
+      await processScan(data.content, "gallery");
     } catch (e: any) {
-      Alert.alert("Error", e.message || "Failed to process image");
+      showGalleryError(e.message || "Failed to process image");
       setProcessing(false);
     }
   }
@@ -340,7 +374,7 @@ export function useScanner() {
       canScanRef.current = false;
       setScanned(true);
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      await processScan(data);
+      await processScan(data, "camera");
     },
     [scanned, anonymousMode, token]
   );
@@ -375,6 +409,8 @@ export function useScanner() {
     livingShieldData,
     livingShieldLoading,
     scanLineAnim,
+    galleryErrorMsg,
+    dismissGalleryError,
     handleBarCodeScanned,
     handlePickImage,
     cycleZoom,

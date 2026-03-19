@@ -20,6 +20,8 @@ import FilterBar from "@/features/history/components/FilterBar";
 
 const FILTERS: { key: Filter; label: string }[] = [
   { key: "all", label: "All" },
+  { key: "camera", label: "Camera" },
+  { key: "gallery", label: "Gallery" },
   { key: "url", label: "URLs" },
   { key: "payment", label: "Payment" },
   { key: "text", label: "Text" },
@@ -127,11 +129,18 @@ export default function HistoryScreen() {
               />
             </View>
             <Text style={styles.emptyTitle}>
-              {filter === "favorites" ? "No favorites yet" : "No history yet"}
+              {filter === "favorites" ? "No favorites yet"
+                : filter === "camera" ? "No camera scans yet"
+                : filter === "gallery" ? "No gallery scans yet"
+                : "No history yet"}
             </Text>
             <Text style={styles.emptySubtext}>
               {filter === "favorites"
                 ? "Tap the heart on a QR detail to save it here"
+                : filter === "camera"
+                ? "QR codes scanned with the camera will appear here"
+                : filter === "gallery"
+                ? "QR codes scanned from your gallery will appear here"
                 : "Scanned QR codes will appear here"}
             </Text>
           </View>

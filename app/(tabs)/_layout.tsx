@@ -171,6 +171,7 @@ function ClassicTabLayout() {
         name="settings"
         options={{
           href: null,
+          tabBarStyle: { display: "none" },
         }}
       />
     </Tabs>

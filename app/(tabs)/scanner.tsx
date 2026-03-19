@@ -1,4 +1,5 @@
-import { Platform, View, Text, StyleSheet, ActivityIndicator } from "react-native";
+import { useRef, useEffect } from "react";
+import { Platform, View, Text, StyleSheet, ActivityIndicator, Animated, Dimensions } from "react-native";
 import { CameraView, useCameraPermissions } from "expo-camera";
 import { StatusBar } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -11,10 +12,43 @@ import VerifiedModal from "@/features/scanner/components/VerifiedModal";
 import LivingShieldModal from "@/features/scanner/components/LivingShieldModal";
 import PermissionScreen from "@/features/scanner/components/PermissionScreen";
 
+const SCREEN_WIDTH = Dimensions.get("window").width;
+const TOAST_DURATION = 3200;
+
+function GalleryScanErrorToast({ message, onDone }: { message: string; onDone: () => void }) {
+  const progress = useRef(new Animated.Value(0)).current;
+  const opacity = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    Animated.sequence([
+      Animated.timing(opacity, { toValue: 1, duration: 220, useNativeDriver: true }),
+      Animated.timing(progress, { toValue: 1, duration: TOAST_DURATION - 400, useNativeDriver: false }),
+      Animated.timing(opacity, { toValue: 0, duration: 280, useNativeDriver: true }),
+    ]).start(() => {
+      onDone();
+    });
+  }, []);
+
+  const barWidth = progress.interpolate({ inputRange: [0, 1], outputRange: [0, SCREEN_WIDTH - 32] });
+
+  return (
+    <Animated.View style={[toastStyles.wrapper, { opacity }]}>
+      <View style={toastStyles.toast}>
+        <Text style={toastStyles.icon}>⚠</Text>
+        <Text style={toastStyles.msg} numberOfLines={2}>{message}</Text>
+      </View>
+      <View style={toastStyles.trackBg}>
+        <Animated.View style={[toastStyles.trackFill, { width: barWidth }]} />
+      </View>
+    </Animated.View>
+  );
+}
+
 export default function ScannerScreen() {
   const [permission, requestPermission] = useCameraPermissions();
   const insets = useSafeAreaInsets();
   const topInset = Platform.OS === "web" ? 67 : insets.top;
+  const bottomInset = Math.max(insets.bottom, 24);
 
   const {
     user,
@@ -38,6 +72,8 @@ export default function ScannerScreen() {
     livingShieldData,
     livingShieldLoading,
     scanLineAnim,
+    galleryErrorMsg,
+    dismissGalleryError,
     handleBarCodeScanned,
     handlePickImage,
     cycleZoom,
@@ -81,7 +117,7 @@ export default function ScannerScreen() {
 
       <ScannerOverlay
         topInset={topInset}
-        bottomInset={Math.max(insets.bottom, 24)}
+        bottomInset={bottomInset}
         flashOn={flashOn}
         onToggleFlash={() => setFlashOn(!flashOn)}
         zoom={zoom}
@@ -153,6 +189,15 @@ export default function ScannerScreen() {
           </Reanimated.View>
         </View>
       )}
+
+      {galleryErrorMsg && (
+        <View style={[toastStyles.container, { bottom: bottomInset + 16 }]}>
+          <GalleryScanErrorToast
+            message={galleryErrorMsg}
+            onDone={dismissGalleryError}
+          />
+        </View>
+      )}
     </View>
   );
 }
@@ -222,4 +267,46 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.dark.warning, paddingVertical: 14, borderRadius: 14,
   },
   backBtnText: { fontSize: 15, fontFamily: "Inter_700Bold", color: "#000" },
+});
+
+const toastStyles = StyleSheet.create({
+  container: {
+    position: "absolute",
+    left: 16,
+    right: 16,
+  },
+  wrapper: {
+    borderRadius: 14,
+    overflow: "hidden",
+    backgroundColor: "#1a0a0a",
+    borderWidth: 1,
+    borderColor: "rgba(239,68,68,0.4)",
+  },
+  toast: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    gap: 10,
+  },
+  icon: {
+    fontSize: 18,
+    color: "#ef4444",
+  },
+  msg: {
+    flex: 1,
+    fontSize: 13,
+    fontFamily: "Inter_500Medium",
+    color: "#fca5a5",
+    lineHeight: 18,
+  },
+  trackBg: {
+    height: 3,
+    backgroundColor: "rgba(239,68,68,0.2)",
+  },
+  trackFill: {
+    height: 3,
+    backgroundColor: "#ef4444",
+    borderRadius: 2,
+  },
 });
