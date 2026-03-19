@@ -195,11 +195,20 @@ export function useQrComments(id: string, userId: string | null, offlineMode: bo
   async function handleDeleteComment(commentId: string) {
     if (!userId) return;
     setCommentMenuId(null);
+    const removedComment = commentsList.find((c) => c.id === commentId);
+    setCommentsList((prev) => prev.filter((c) => c.id !== commentId));
     setDeletingCommentId(commentId);
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     try {
       await softDeleteComment(id, commentId, userId);
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     } catch {
+      if (removedComment) {
+        setCommentsList((prev) => {
+          const already = prev.find((c) => c.id === commentId);
+          if (already) return prev;
+          return [removedComment, ...prev];
+        });
+      }
     } finally {
       setDeletingCommentId(null);
     }

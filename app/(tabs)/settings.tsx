@@ -171,6 +171,25 @@ export default function SettingsScreen() {
         </View>
 
         <View style={styles.section}>
+          <Text style={styles.sectionLabel}>LEGAL</Text>
+          <View style={styles.menuGroup}>
+            <SettingsMenuItem
+              icon="document-text-outline"
+              label="Terms of Service"
+              sublabel="Usage rules, disclaimers and liability"
+              onPress={() => router.push("/terms")}
+            />
+            <View style={styles.divider} />
+            <SettingsMenuItem
+              icon="lock-closed-outline"
+              label="Privacy Policy"
+              sublabel="How we collect and protect your data"
+              onPress={() => router.push("/privacy-policy")}
+            />
+          </View>
+        </View>
+
+        <View style={styles.section}>
           <Text style={styles.sectionLabel}>DATA</Text>
           <View style={styles.menuGroup}>
             <SettingsMenuItem
@@ -198,6 +217,9 @@ export default function SettingsScreen() {
         <View style={styles.footer}>
           <Text style={styles.footerText}>QR Guard v1.0.0</Text>
           <Text style={styles.footerSubtext}>Scan smart. Stay safe.</Text>
+          <Text style={[styles.footerSubtext, { textAlign: "center", marginTop: 8, paddingHorizontal: 16, lineHeight: 18 }]}>
+            QR Guard provides informational analysis only. Trust scores reflect community opinion, not verified fact. You are solely responsible for all decisions made after scanning a QR code. By using this app you agree to our Terms of Service.
+          </Text>
         </View>
 
         <View style={{ height: Platform.OS === "web" ? 34 : insets.bottom + 20 }} />

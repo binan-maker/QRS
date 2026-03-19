@@ -93,16 +93,16 @@ export function useSettings() {
     setCommentsLoading(false);
   }
 
-  async function handleDeleteComment(commentId: string) {
+  async function handleDeleteComment(commentId: string, qrCodeId: string) {
     Alert.alert("Delete Comment", "Are you sure you want to delete this comment?", [
       { text: "Cancel", style: "cancel" },
       {
         text: "Delete",
         style: "destructive",
         onPress: async () => {
+          setMyComments((prev) => prev.filter((c) => c.id !== commentId));
           try {
-            await softDeleteComment(commentId);
-            setMyComments((prev) => prev.filter((c) => c.id !== commentId));
+            if (user) await softDeleteComment(qrCodeId, commentId, user.id);
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
           } catch {
             Alert.alert("Error", "Could not delete comment.");

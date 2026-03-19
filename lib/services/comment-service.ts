@@ -273,6 +273,8 @@ export async function ownerHideComment(qrId: string, commentId: string): Promise
   }
 }
 
+const SOFT_DELETE_TTL_MS = 7 * 24 * 60 * 60 * 1000;
+
 export async function softDeleteComment(
   qrId: string,
   commentId: string,
@@ -281,10 +283,38 @@ export async function softDeleteComment(
   const ref = ["qrCodes", qrId, "comments", commentId];
   const data = await db.get(ref);
   if (data && data.userId === userId) {
-    await db.delete(ref);
+    await db.update(ref, {
+      isDeleted: true,
+      deletedAt: db.timestamp(),
+      text: "[deleted]",
+    });
     try { await db.increment(["qrCodes", qrId], "commentCount", -1); } catch {}
     try { await db.delete(["users", userId, "comments", commentId]); } catch {}
+    purgeOldSoftDeletes(qrId).catch(() => {});
   }
+}
+
+async function purgeOldSoftDeletes(qrId: string): Promise<void> {
+  try {
+    const { docs } = await db.query(["qrCodes", qrId, "comments"], {
+      orderBy: { field: "createdAt", direction: "desc" },
+      limit: 50,
+    });
+    const now = Date.now();
+    for (const d of docs) {
+      if (!d.data.isDeleted) continue;
+      const deletedAt = d.data.deletedAt;
+      let deletedAtMs = 0;
+      if (deletedAt && typeof deletedAt === "object" && "toDate" in deletedAt) {
+        deletedAtMs = (deletedAt as any).toDate().getTime();
+      } else if (deletedAt && typeof deletedAt === "string") {
+        deletedAtMs = new Date(deletedAt).getTime();
+      }
+      if (deletedAtMs > 0 && now - deletedAtMs > SOFT_DELETE_TTL_MS) {
+        db.delete(["qrCodes", qrId, "comments", d.id]).catch(() => {});
+      }
+    }
+  } catch {}
 }
 
 export async function getUserComments(userId: string): Promise<any[]> {
