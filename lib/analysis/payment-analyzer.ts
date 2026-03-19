@@ -1,97 +1,6 @@
 import type { ParsedPaymentQr, PaymentSafetyResult, ParsedUpiQr } from "./types";
 import { parseAnyPaymentQr } from "./payment-parser";
 
-const VALID_UPI_HANDLES = new Set([
-  // Google Pay official handles
-  "okaxis", "okhdfcbank", "okicici", "oksbi",
-  // PhonePe official handles
-  "ybl", "ibl", "axl",
-  // Paytm
-  "paytm", "paytmbank",
-  // HDFC Bank
-  "hdfcbank", "payzapp", "hdfcbankjd",
-  // ICICI Bank / iMobile
-  "icici", "icicibank", "okicici", "tapicici",
-  // SBI / YONO
-  "sbi",
-  // Axis Bank / Axis Pay
-  "axisbank", "axl",
-  // Kotak / Kotak 811
-  "kotak", "kmbl",
-  // IndusInd / IndusPay
-  "indus",
-  // IDBI
-  "idbi",
-  // Federal Bank / Fi
-  "federal", "fbl",
-  // RBL
-  "rbl", "rblbank",
-  // PNB
-  "pnb",
-  // Bank of Baroda / BOB World
-  "bob", "barodampay",
-  // Canara Bank
-  "cnrb",
-  // Indian Bank
-  "indianbank",
-  // Union Bank
-  "uboi", "ucobank", "uco",
-  // Airtel Payments Bank
-  "airtel", "airtelpe",
-  // Jio Payments Bank
-  "jio",
-  // JusPay
-  "juspay",
-  // FreeCharge (Axis)
-  "freecharge",
-  // MobiKwik
-  "mobikwik",
-  // Amazon Pay
-  "yapl", "apl", "amazonpay",
-  // CRED
-  "cred",
-  // Navi
-  "naviaxis", "navi",
-  // Slice
-  "sliceaxis", "abfspay",
-  // Groww
-  "groww",
-  // Jupiter
-  "jupiterpay",
-  // IDFC FIRST Bank
-  "idfcbank", "idfcfirst",
-  // Yes Bank / Yes Pay
-  "yesbank", "yesbankltd",
-  // AU Small Finance Bank
-  "aubank",
-  // Various small bank/NBFC handles
-  "timecosmos", "postbank",
-  "rajgovhdfcbank", "dlb", "mahb",
-  "kvb", "sib", "cbin",
-  "cub", "dcb",
-  "equitas", "esaf", "fino",
-  "idfc", "ikwik",
-  "ubi", "vijb",
-  "myicici",
-  "pingpay",
-  "qb", "saraswat",
-  "scb", "scmb", "shriramhfl",
-  "tjsb", "ujjivan",
-  "utbi", "zoicici", "waaxis",
-  "ptaxis", "pthdfc", "ptyes",
-  "abhy",
-  "bhanix", "bdbl", "bypl",
-  "cmsidfc", "csb", "dnsbank",
-  "hsbc", "iob",
-  "jkb", "karb", "kbl",
-  "lvb", "mahagrambank", "nkgsb",
-  "zinghr", "superyes",
-  "bajajpay", "razorpay",
-  "bhim",
-  "nsdl",
-  "upi",
-]);
-
 // Only flag genuinely scam-specific keywords — NOT payment brand names
 // (Google, Paytm, Amazon, PhonePe users can legitimately have those names)
 const UPI_SCAM_KEYWORDS = [
@@ -134,14 +43,6 @@ export function analyzeAnyPaymentQr(parsed: ParsedPaymentQr): PaymentSafetyResul
 
   // ── UPI / Indian bank payments ─────────────────────────────────────────────
   if (parsed.appCategory === "upi_india" || parsed.appCategory === "india_wallet") {
-    const bankHandle = (parsed.bankHandle || "").toLowerCase();
-
-    // Unknown handle — mild caution only, don't call dangerous
-    if (bankHandle && !VALID_UPI_HANDLES.has(bankHandle)) {
-      warnings.push(`Bank handle "@${bankHandle}" is not in our verified list — confirm the UPI ID before paying`);
-      bump("caution");
-    }
-
     // Check recipient name only for REAL scam keywords — not brand names
     if (parsed.recipientName) {
       const lowerName = parsed.recipientName.toLowerCase();
