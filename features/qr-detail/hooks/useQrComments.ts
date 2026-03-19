@@ -2,6 +2,7 @@ import { useEffect, useState, useCallback, useRef } from "react";
 import { Alert } from "react-native";
 import { router } from "expo-router";
 import * as Haptics from "expo-haptics";
+import { useAuth } from "@/contexts/AuthContext";
 import {
   subscribeToComments,
   getComments,
@@ -33,6 +34,8 @@ const COMMENTS_PER_PAGE = 20;
 const REPLIES_PER_PAGE = 10;
 
 export function useQrComments(id: string, userId: string | null, offlineMode: boolean) {
+  const { user } = useAuth();
+  const emailVerified = user?.emailVerified ?? false;
   const [commentsList, setCommentsList] = useState<CommentItem[]>([]);
   const [userLikes, setUserLikes] = useState<Record<string, "like" | "dislike">>({});
   const [hasMoreComments, setHasMoreComments] = useState(false);
@@ -129,7 +132,7 @@ export function useQrComments(id: string, userId: string | null, offlineMode: bo
     setSubmitting(true);
     try {
       const parentId = replyTo ? replyTo.rootId : null;
-      await addComment(id, userId, displayName, newComment.trim(), parentId);
+      await addComment(id, userId, displayName, newComment.trim(), parentId, emailVerified);
       if (parentId) {
         setExpandedReplies((prev) => ({ ...prev, [parentId]: true }));
       }
@@ -181,10 +184,12 @@ export function useQrComments(id: string, userId: string | null, offlineMode: bo
     setCommentReportModal(null);
     if (!userId) return;
     try {
-      await reportComment(id, commentId, userId, reason);
+      await reportComment(id, commentId, userId, reason, emailVerified);
       Alert.alert("Reported", "Thank you. We'll review this comment.");
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-    } catch {}
+    } catch (e: any) {
+      Alert.alert("Cannot Report", e.message);
+    }
   }
 
   async function handleDeleteComment(commentId: string) {

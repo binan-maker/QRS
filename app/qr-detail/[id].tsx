@@ -306,6 +306,7 @@ export default function QrDetailScreen() {
                     followCount={q.followCount}
                     followersModalOpen={q.followersModalOpen}
                     onOpenFollowers={() => { q.handleLoadFollowers(); q.setFollowersModalOpen(true); }}
+                    manipulationWarning={trust.manipulationWarning}
                   />
                 </Animated.View>
 

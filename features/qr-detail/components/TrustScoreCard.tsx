@@ -19,6 +19,7 @@ interface Props {
   followCount: number;
   followersModalOpen: boolean;
   onOpenFollowers: () => void;
+  manipulationWarning?: boolean;
 }
 
 const REPORT_TYPES = [
@@ -36,6 +37,7 @@ const TrustScoreCard = React.memo(function TrustScoreCard({
   isQrOwner,
   followCount,
   onOpenFollowers,
+  manipulationWarning,
 }: Props) {
   const total = REPORT_TYPES.reduce((sum, r) => sum + (reportCounts[r.key] || 0), 0);
 
@@ -49,6 +51,15 @@ const TrustScoreCard = React.memo(function TrustScoreCard({
           </View>
         ) : null}
       </View>
+
+      {manipulationWarning ? (
+        <View style={styles.manipulationBanner}>
+          <Ionicons name="alert-circle" size={14} color={Colors.dark.warning} />
+          <Text style={styles.manipulationText}>
+            Unusual voting activity detected. Score may not reflect genuine community opinion.
+          </Text>
+        </View>
+      ) : null}
 
       {trustInfo.score >= 0 ? (
         <View style={styles.scoreBarWrap}>
@@ -133,4 +144,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10, paddingVertical: 5, borderRadius: 20,
   },
   reportChipText: { fontSize: 12, fontFamily: "Inter_600SemiBold" },
+  manipulationBanner: {
+    flexDirection: "row", alignItems: "flex-start", gap: 8, marginBottom: 12,
+    backgroundColor: Colors.dark.warningDim, borderRadius: 10, padding: 10,
+    borderWidth: 1, borderColor: Colors.dark.warning + "40",
+  },
+  manipulationText: {
+    fontSize: 12, fontFamily: "Inter_400Regular",
+    color: Colors.dark.warning, flex: 1, lineHeight: 17,
+  },
 });

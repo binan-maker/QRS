@@ -42,14 +42,19 @@ export function useQrDetail(id: string) {
   function getTrustInfo() {
     const { trustScore, reportCounts } = reports;
     if (trustScore && trustScore.score >= 0) {
-      return { score: trustScore.score, label: trustScore.label, color: getTrustColor(trustScore.label) };
+      return {
+        score: trustScore.score,
+        label: trustScore.label,
+        color: getTrustColor(trustScore.label),
+        manipulationWarning: trustScore.manipulationWarning ?? false,
+      };
     }
     const total = (reportCounts.safe || 0) + (reportCounts.scam || 0) + (reportCounts.fake || 0) + (reportCounts.spam || 0);
-    if (total === 0) return { score: -1, label: "No Reports", color: Colors.dark.textMuted };
+    if (total === 0) return { score: -1, label: "No Reports", color: Colors.dark.textMuted, manipulationWarning: false };
     const safeRatio = (reportCounts.safe || 0) / total;
-    if (safeRatio >= 0.7) return { score: safeRatio * 100, label: "Trusted", color: Colors.dark.safe };
-    if (safeRatio >= 0.4) return { score: safeRatio * 100, label: "Caution", color: Colors.dark.warning };
-    return { score: safeRatio * 100, label: "Dangerous", color: Colors.dark.danger };
+    if (safeRatio >= 0.7) return { score: safeRatio * 100, label: "Trusted", color: Colors.dark.safe, manipulationWarning: false };
+    if (safeRatio >= 0.4) return { score: safeRatio * 100, label: "Caution", color: Colors.dark.warning, manipulationWarning: false };
+    return { score: safeRatio * 100, label: "Dangerous", color: Colors.dark.danger, manipulationWarning: false };
   }
 
   async function handleOpenPayment(rawContent: string) {

@@ -2,6 +2,12 @@ import { db } from "../db";
 import { checkCommentKeywords } from "../qr-analysis";
 import { tsToString } from "./utils";
 import {
+  checkCommentEligibility,
+  recordComment,
+  checkCommentReportEligibility,
+  recordCommentReport,
+} from "./integrity-service";
+import {
   notifyQrFollowers,
   notifyMentionedUsers,
   notifyQrOwner,
@@ -101,8 +107,14 @@ export async function addComment(
   userId: string,
   displayName: string,
   text: string,
-  parentId: string | null = null
+  parentId: string | null = null,
+  emailVerified: boolean = false
 ): Promise<CommentItem> {
+
+  // Integrity check — rate limits, cooldowns, duplicate detection, length
+  await checkCommentEligibility(userId, qrId, emailVerified, text);
+
+  // Keyword / spam phrase check
   const kwCheck = checkCommentKeywords(text);
   if (kwCheck.blocked) {
     throw new Error(
@@ -125,7 +137,7 @@ export async function addComment(
     userDisplayName: displayName,
     ...(userUsername ? { userUsername } : {}),
     ...(userPhotoURL ? { userPhotoURL } : {}),
-    text,
+    text: text.trim(),
     parentId,
     isDeleted: false,
     isHidden: false,
@@ -134,30 +146,39 @@ export async function addComment(
     dislikeCount: 0,
     createdAt: db.timestamp(),
   });
+
+  // Update comment count on QR code
   try {
     await db.increment(["qrCodes", qrId], "commentCount", 1);
   } catch (e) {
     console.warn("[db] addComment: failed to increment commentCount:", e);
   }
+
+  // Mirror comment in user history for per-QR limit queries
   try {
     await db.set(["users", userId, "comments", commentId], {
       commentId,
       qrCodeId: qrId,
-      text,
+      text: text.trim(),
       createdAt: db.timestamp(),
     });
   } catch {}
+
+  // Update rate limit counters
+  await recordComment(userId);
+
   notifyQrFollowers(qrId, "new_comment", `${displayName} commented on a QR you follow`, userId).catch(() => {});
   notifyMentionedUsers(qrId, text, userId, displayName).catch(() => {});
   notifyQrOwner(qrId, userId, displayName).catch(() => {});
   if (parentId) {
     notifyCommentParentAuthor(qrId, parentId, userId, displayName).catch(() => {});
   }
+
   return {
     id: commentId,
     qrCodeId: qrId,
     userId,
-    text,
+    text: text.trim(),
     parentId,
     isDeleted: false,
     likeCount: 0,
@@ -203,11 +224,18 @@ export async function reportComment(
   qrId: string,
   commentId: string,
   userId: string,
-  reason: string
+  reason: string,
+  emailVerified: boolean = false
 ): Promise<void> {
+
+  // Integrity check — account tier and daily comment-report rate limit
+  await checkCommentReportEligibility(userId, emailVerified);
+
   const reportPath = ["qrCodes", qrId, "comments", commentId, "reports", userId];
   const commentPath = ["qrCodes", qrId, "comments", commentId];
+
   await db.set(reportPath, { reason, createdAt: db.timestamp(), userId });
+
   try {
     const commentData = await db.get(commentPath);
     await db.add(["moderationQueue"], {
@@ -223,12 +251,17 @@ export async function reportComment(
       createdAt: db.timestamp(),
     });
   } catch {}
+
   try {
     const { docs } = await db.query(["qrCodes", qrId, "comments", commentId, "reports"]);
     const reportCount = docs.length;
     await db.update(commentPath, { reportCount });
+    // Auto-hide threshold: 3 reports for new accounts, 2 for trusted reporters
     if (reportCount >= 3) await db.update(commentPath, { isHidden: true });
   } catch {}
+
+  // Update rate limit counter
+  await recordCommentReport(userId);
 }
 
 export async function ownerHideComment(qrId: string, commentId: string): Promise<void> {

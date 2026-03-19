@@ -1,20 +1,18 @@
 import { db } from "../db";
 import { notifyQrFollowers } from "./notification-service";
+import {
+  checkReportEligibility,
+  recordReport,
+  analyzeReportsForCollusion,
+} from "./integrity-service";
 
-async function calculateReporterWeight(userId: string | null, emailVerified: boolean): Promise<number> {
-  if (!userId) return 0.3;
-  let weight = 1.0;
-  if (emailVerified) weight += 0.3;
+async function getQrOwnerId(qrId: string): Promise<string | undefined> {
   try {
-    const data = await db.get(["users", userId]);
-    if (data?.createdAt) {
-      const d = data.createdAt.toDate ? data.createdAt.toDate() : new Date(data.createdAt);
-      const ageDays = (Date.now() - d.getTime()) / 86400000;
-      if (ageDays >= 90) weight += 0.3;
-      else if (ageDays >= 30) weight += 0.2;
-    }
-  } catch {}
-  return Math.min(weight, 1.8);
+    const data = await db.get(["qrCodes", qrId]);
+    return data?.ownerId || undefined;
+  } catch {
+    return undefined;
+  }
 }
 
 export async function getQrReportCounts(qrId: string): Promise<Record<string, number>> {
@@ -25,6 +23,16 @@ export async function getQrReportCounts(qrId: string): Promise<Record<string, nu
     counts[reportType] = (counts[reportType] || 0) + 1;
   }
   return counts;
+}
+
+export async function getQrWeightedReportCounts(qrId: string): Promise<Record<string, number>> {
+  const { docs } = await db.query(["qrCodes", qrId, "reports"]);
+  const weighted: Record<string, number> = {};
+  for (const d of docs) {
+    const { reportType, weight = 1 } = d.data;
+    weighted[reportType] = (weighted[reportType] || 0) + weight;
+  }
+  return weighted;
 }
 
 export async function getUserQrReport(qrId: string, userId: string): Promise<string | null> {
@@ -38,24 +46,69 @@ export async function reportQrCode(
   reportType: string,
   emailVerified: boolean = false
 ): Promise<Record<string, number>> {
-  const weight = await calculateReporterWeight(userId, emailVerified);
+
+  // Fetch QR owner to block self-reporting
+  const qrOwnerId = await getQrOwnerId(qrId);
+
+  // Check eligibility — throws with descriptive error if not allowed
+  const { weight } = await checkReportEligibility(userId, qrId, emailVerified, qrOwnerId);
+
+  // Fetch account age for collusion analysis storage
+  let accountAgeDays = 0;
+  try {
+    const userData = await db.get(["users", userId]);
+    if (userData?.createdAt) {
+      const createdMs = userData.createdAt.toDate
+        ? userData.createdAt.toDate().getTime()
+        : new Date(userData.createdAt).getTime();
+      accountAgeDays = Math.floor((Date.now() - createdMs) / 86400000);
+    }
+  } catch {}
+
   await db.set(["qrCodes", qrId, "reports", userId], {
-    reportType, weight, reporterId: userId, createdAt: db.timestamp(),
+    reportType,
+    weight,
+    reporterId: userId,
+    accountAgeDays,
+    emailVerified,
+    createdAt: db.timestamp(),
   });
+
+  // Update rate limiting counters
+  await recordReport(userId, qrId);
+
+  // Run collusion detection and update suspicious flag on the QR code doc
+  analyzeReportsForCollusion(qrId).then(async (result) => {
+    try {
+      await db.update(["qrCodes", qrId], {
+        suspiciousVoteFlag: result.suspicious,
+        suspiciousFlagReason: result.reason || null,
+        suspiciousSafeMultiplier: result.safeWeightMultiplier,
+        suspiciousNegMultiplier: result.negativeWeightMultiplier,
+        suspiciousLastChecked: db.timestamp(),
+      });
+    } catch {}
+  }).catch(() => {});
+
   notifyQrFollowers(qrId, "new_report", `New ${reportType} report on a QR you follow`, userId).catch(() => {});
   return getQrReportCounts(qrId);
 }
 
 export function subscribeToQrReports(
   qrId: string,
-  onUpdate: (counts: Record<string, number>) => void
+  onUpdate: (
+    counts: Record<string, number>,
+    weightedCounts: Record<string, number>
+  ) => void
 ): () => void {
   return db.onQuery(["qrCodes", qrId, "reports"], {}, (docs) => {
     const counts: Record<string, number> = {};
+    const weighted: Record<string, number> = {};
     for (const d of docs) {
-      const { reportType } = d.data;
+      const { reportType, weight = 1 } = d.data;
       counts[reportType] = (counts[reportType] || 0) + 1;
+      weighted[reportType] = (weighted[reportType] || 0) + weight;
     }
-    onUpdate(counts);
+    onUpdate(counts, weighted);
   });
 }

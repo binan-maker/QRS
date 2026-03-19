@@ -235,6 +235,53 @@ Each service file owns one responsibility:
 - `components/home/`, `components/scanner/`, `components/qr-detail/`, `components/profile/` are retained for import compatibility but real sources are now in `features/*/components/`.
 - No backend auth routes — all auth is client-side Firebase.
 
+## Anti-Manipulation & Integrity System
+
+`lib/services/integrity-service.ts` — central anti-fraud engine enforced server-side for ALL social actions.
+
+### Account Tiers (vote weight & rate limits)
+| Tier | Criteria | Vote Weight | Comments/day | Reports/day |
+|------|----------|-------------|--------------|-------------|
+| 0 | Any account < 24h old | 0 (blocked) | 0 | 0 |
+| 1 | Unverified 1-7d or Verified <1d | 0.05 | 1 | 1 |
+| 2 | 7-30d (any) | 0.3 | 3 | 3 |
+| 3 | 30-90d verified | 0.7 | 10 | 5 |
+| 4 | 90-180d verified | 1.5 | 20 | 10 |
+| 5 | >180d verified | 2.0 | 30 | 15 |
+
+### Sybil / Multi-Account Attack Prevention
+- QR code **owner cannot report their own QR** (enforced in `report-service.ts`)
+- New accounts (<24h) are fully blocked from all social actions
+- Each vote is stored with its `weight` — low-tier votes carry near-zero influence
+- Trust score uses **weighted vote counts** not raw counts
+
+### Collusion / Vote-Stuffing Detection (`analyzeReportsForCollusion`)
+- Runs automatically after every report
+- Detects: >8 same-direction votes in 1 hour, >70% low-tier voter concentration
+- Sets `suspiciousVoteFlag`, `suspiciousSafeMultiplier`, `suspiciousNegMultiplier` on QR document
+- Trust score applies these multipliers and clamps score toward Uncertain
+- UI shows "Unusual voting activity detected" warning banner on affected QR codes
+
+### Comment Anti-Spam
+- Min cooldown between comments: 15-300 seconds based on tier
+- Daily comment cap per user (1-30 depending on tier)
+- Per-QR comment limit per user per day (1-15 depending on tier)
+- Duplicate comment detection: same text within 60 minutes is blocked
+- Length enforced: 3-500 characters
+
+### Rate Limiting Storage (on user document)
+- `reportRateWindowStart`, `reportRateCount` — rolling 24h report limit
+- `commentRateWindowStart`, `commentRateCount` — rolling 24h comment limit
+- `lastCommentAt` — cooldown enforcement
+- `commentReportRateWindowStart`, `commentReportRateCount` — rolling 24h comment-report limit
+
+### QR Document Flags
+- `suspiciousVoteFlag: boolean` — set by collusion detection
+- `suspiciousFlagReason: string` — human-readable reason
+- `suspiciousSafeMultiplier: number` — applied to safe vote weight
+- `suspiciousNegMultiplier: number` — applied to negative vote weight
+- `voteVelocityWindowStart`, `voteVelocityCount` — global vote rate cap (30/hour)
+
 ## Deployment
 
 - Build: `npm run expo:static:build && npm run server:build`

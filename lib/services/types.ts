@@ -89,6 +89,7 @@ export interface TrustScore {
   score: number;
   label: string;
   totalReports: number;
+  manipulationWarning?: boolean;
 }
 
 export type NotificationType =

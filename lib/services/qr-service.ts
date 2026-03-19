@@ -3,7 +3,7 @@ import { isPaymentQr } from "../qr-analysis";
 import * as Crypto from "expo-crypto";
 import { tsToString } from "./utils";
 import { calculateTrustScore } from "./trust-service";
-import { getQrReportCounts, getUserQrReport } from "./report-service";
+import { getQrReportCounts, getQrWeightedReportCounts, getUserQrReport } from "./report-service";
 import { isUserFollowingQrCode, getFollowCount } from "./follow-service";
 import { isUserFavorite } from "./user-service";
 import type { QrCodeData, TrustScore } from "./types";
@@ -287,17 +287,29 @@ export async function loadQrDetail(qrId: string, userId: string | null) {
   if (!qrCode) return null;
 
   let reportCounts: Record<string, number> = {};
+  let weightedCounts: Record<string, number> = {};
   let followCount = 0;
+  let collusionFlags = { suspicious: false, safeWeightMultiplier: 1, negativeWeightMultiplier: 1 };
   try {
-    const [rc, fc] = await Promise.all([
+    const [rc, wc, fc, qrDoc] = await Promise.all([
       getQrReportCounts(qrId),
+      getQrWeightedReportCounts(qrId),
       getFollowCount(qrId),
+      db.get(["qrCodes", qrId]),
     ]);
     reportCounts = rc;
+    weightedCounts = wc;
     followCount = fc;
+    if (qrDoc?.suspiciousVoteFlag) {
+      collusionFlags = {
+        suspicious: true,
+        safeWeightMultiplier: qrDoc.suspiciousSafeMultiplier ?? 1,
+        negativeWeightMultiplier: qrDoc.suspiciousNegMultiplier ?? 1,
+      };
+    }
   } catch {}
 
-  const trustScore = calculateTrustScore(reportCounts);
+  const trustScore = calculateTrustScore(reportCounts, weightedCounts, collusionFlags);
   let userReport: string | null = null;
   let isFavorite = false;
   let isFollowing = false;

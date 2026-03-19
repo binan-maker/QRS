@@ -185,7 +185,7 @@ export function useMyQrDetail(id: string) {
     if (!user || !qrItem?.qrCodeId || !commentText.trim()) return;
     setSubmittingComment(true);
     try {
-      await addComment(qrItem.qrCodeId, user.id, user.displayName, commentText.trim(), replyTo?.id || null);
+      await addComment(qrItem.qrCodeId, user.id, user.displayName, commentText.trim(), replyTo?.id || null, user.emailVerified ?? false);
       setCommentText("");
       setReplyTo(null);
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
