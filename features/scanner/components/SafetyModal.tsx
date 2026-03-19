@@ -11,48 +11,28 @@ interface Props {
   onBack: () => void;
 }
 
-export default function SafetyModal({ visible, warnings, riskLevel, onProceed, onBack }: Props) {
+export default function SafetyModal({ visible, onProceed, onBack }: Props) {
   if (!visible) return null;
-
-  const isDangerous = riskLevel === "dangerous";
-  const color = isDangerous ? Colors.dark.danger : Colors.dark.warning;
-  const bgColor = isDangerous ? "rgba(239,68,68,0.12)" : "rgba(245,158,11,0.12)";
-  const icon = isDangerous ? "skull-outline" : "warning-outline";
-  const title = isDangerous ? "Dangerous QR Code" : "Proceed with Caution";
-  const subtitle = isDangerous
-    ? "This QR code has been flagged as dangerous. We strongly recommend not proceeding."
-    : "This QR code has raised some safety concerns. Proceed only if you trust the source.";
 
   return (
     <View style={styles.overlay}>
       <Reanimated.View entering={FadeInDown.duration(380)} style={styles.sheet}>
-        <View style={[styles.badge, { backgroundColor: bgColor }]}>
-          <Ionicons name={icon as any} size={36} color={color} />
+        <View style={styles.badge}>
+          <Ionicons name="warning-outline" size={36} color={Colors.dark.warning} />
         </View>
-        <Text style={[styles.title, { color }]}>{title}</Text>
-        <Text style={styles.subtitle}>{subtitle}</Text>
-
-        {warnings.length > 0 ? (
-          <View style={styles.warningsList}>
-            {warnings.map((w, i) => (
-              <View key={i} style={styles.warningRow}>
-                <Ionicons name="alert-circle" size={14} color={color} />
-                <Text style={[styles.warningText, { color }]}>{w}</Text>
-              </View>
-            ))}
-          </View>
-        ) : null}
+        <Text style={styles.title}>Proceed with Caution</Text>
+        <Text style={styles.subtitle}>
+          This link uses HTTP instead of HTTPS — your connection may not be encrypted. Verify the source before proceeding.
+        </Text>
 
         <Pressable onPress={onBack} style={styles.backBtn}>
           <Ionicons name="arrow-back" size={18} color="#000" />
           <Text style={styles.backBtnText}>Go Back to Safety</Text>
         </Pressable>
-        {!isDangerous ? (
-          <Pressable onPress={onProceed} style={styles.proceedBtn}>
-            <Text style={styles.proceedBtnText}>I Understand, Proceed</Text>
-            <Ionicons name="chevron-forward" size={16} color={Colors.dark.textMuted} />
-          </Pressable>
-        ) : null}
+        <Pressable onPress={onProceed} style={styles.proceedBtn}>
+          <Text style={styles.proceedBtnText}>I Understand, Proceed</Text>
+          <Ionicons name="chevron-forward" size={16} color={Colors.dark.textMuted} />
+        </Pressable>
       </Reanimated.View>
     </View>
   );
@@ -83,12 +63,14 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     marginBottom: 16,
+    backgroundColor: "rgba(245,158,11,0.12)",
   },
   title: {
     fontSize: 22,
     fontFamily: "Inter_700Bold",
     marginBottom: 8,
     textAlign: "center",
+    color: Colors.dark.warning,
   },
   subtitle: {
     fontSize: 14,
@@ -96,22 +78,7 @@ const styles = StyleSheet.create({
     color: Colors.dark.textSecondary,
     textAlign: "center",
     lineHeight: 22,
-    marginBottom: 16,
-  },
-  warningsList: {
-    alignSelf: "stretch",
-    backgroundColor: Colors.dark.surfaceLight,
-    borderRadius: 12,
-    padding: 14,
-    gap: 8,
-    marginBottom: 20,
-  },
-  warningRow: { flexDirection: "row", alignItems: "flex-start", gap: 8 },
-  warningText: {
-    flex: 1,
-    fontSize: 13,
-    fontFamily: "Inter_500Medium",
-    lineHeight: 19,
+    marginBottom: 24,
   },
   backBtn: {
     flexDirection: "row",

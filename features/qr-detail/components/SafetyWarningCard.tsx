@@ -5,20 +5,22 @@ import Colors from "@/constants/colors";
 interface SafetyWarningCardProps {
   riskLevel: "caution" | "dangerous";
   warnings: string[];
+  title?: string;
 }
 
-export default function SafetyWarningCard({ riskLevel, warnings }: SafetyWarningCardProps) {
+export default function SafetyWarningCard({ riskLevel, warnings, title }: SafetyWarningCardProps) {
   const isDangerous = riskLevel === "dangerous";
   const color = isDangerous ? Colors.dark.danger : Colors.dark.warning;
   const bg = isDangerous ? Colors.dark.dangerDim : Colors.dark.warningDim;
   const icon = isDangerous ? "warning" : "alert-circle";
-  const title = isDangerous ? "⚠ Suspicious URL Detected" : "⚠ Caution";
+  const defaultTitle = isDangerous ? "⚠ Security Warning" : "⚠ Proceed with Caution";
+  const displayTitle = title ?? defaultTitle;
 
   return (
     <View style={[styles.card, { borderColor: color, backgroundColor: bg }]}>
       <View style={styles.header}>
         <Ionicons name={icon as any} size={22} color={color} />
-        <Text style={[styles.title, { color }]}>{title}</Text>
+        <Text style={[styles.title, { color }]}>{displayTitle}</Text>
       </View>
       {warnings.map((w, i) => (
         <View key={i} style={styles.row}>

@@ -256,6 +256,7 @@ export default function QrDetailScreen() {
                 <SafetyWarningCard
                   riskLevel={q.paymentSafety.riskLevel as "caution" | "dangerous"}
                   warnings={q.paymentSafety.warnings}
+                  title={q.paymentSafety.riskLevel === "dangerous" ? "⚠ Payment Security Warning" : "⚠ Payment Security Notice"}
                 />
               </Animated.View>
             )}
@@ -264,6 +265,7 @@ export default function QrDetailScreen() {
                 <SafetyWarningCard
                   riskLevel={q.urlSafety.riskLevel as "caution" | "dangerous"}
                   warnings={q.urlSafety.warnings}
+                  title={q.urlSafety.riskLevel === "dangerous" ? "⚠ Dangerous URL Detected" : "⚠ Proceed with Caution"}
                 />
               </Animated.View>
             )}
@@ -272,6 +274,7 @@ export default function QrDetailScreen() {
                 <SafetyWarningCard
                   riskLevel="dangerous"
                   warnings={[`This content matches a known scam pattern: ${q.offlineBlacklistMatch.reason}`]}
+                  title="⚠ Known Scam Pattern Detected"
                 />
               </Animated.View>
             )}

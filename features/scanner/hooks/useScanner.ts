@@ -11,11 +11,6 @@ import { useAuth } from "@/contexts/AuthContext";
 import { getApiUrl } from "@/lib/query-client";
 import { getOrCreateQrCode, recordScan, getGuardLink, type GuardLink } from "@/lib/firestore-service";
 import {
-  parseAnyPaymentQr,
-  analyzeAnyPaymentQr,
-  analyzeUrlHeuristics,
-  loadOfflineBlacklist,
-  checkOfflineBlacklist,
   verifyQrSignature,
 } from "@/lib/qr-analysis";
 
@@ -30,6 +25,10 @@ export const ZOOM_LEVELS = [
 ];
 
 const GUARD_PATTERN = /\/guard\/([A-Za-z0-9]{4}-[A-Za-z0-9]{4}-[A-Za-z0-9]{4}-[A-Za-z0-9]{4})(?:[/?#]|$)/;
+
+function isInsecureHttpUrl(content: string): boolean {
+  return /^http:\/\//i.test(content.trim());
+}
 
 export function useScanner() {
   const { user, token } = useAuth();
@@ -103,35 +102,6 @@ export function useScanner() {
     }, [])
   );
 
-  async function runSafetyCheck(content: string, contentType: string): Promise<{ riskLevel: "safe" | "caution" | "dangerous"; warnings: string[] }> {
-    const warnings: string[] = [];
-    let riskLevel: "safe" | "caution" | "dangerous" = "safe";
-    const blacklist = await loadOfflineBlacklist();
-    const blMatch = checkOfflineBlacklist(content, blacklist);
-    if (blMatch.matched) {
-      warnings.push(`Known scam pattern: ${blMatch.reason}`);
-      riskLevel = "dangerous";
-    }
-    if (contentType === "payment") {
-      const parsed = parseAnyPaymentQr(content);
-      if (parsed) {
-        const result = analyzeAnyPaymentQr(parsed);
-        warnings.push(...result.warnings);
-        if (result.riskLevel === "dangerous") riskLevel = "dangerous";
-        else if (result.riskLevel === "caution" && riskLevel === "safe") riskLevel = "caution";
-      }
-    }
-    if (contentType === "url") {
-      try {
-        const result = analyzeUrlHeuristics(content);
-        warnings.push(...result.warnings);
-        if (result.riskLevel === "dangerous") riskLevel = "dangerous";
-        else if (result.riskLevel === "caution" && riskLevel === "safe") riskLevel = "caution";
-      } catch {}
-    }
-    return { riskLevel, warnings };
-  }
-
   async function handleLivingShieldProceed() {
     if (!livingShieldData?.currentDestination) return;
     const dest = livingShieldData.currentDestination;
@@ -148,6 +118,12 @@ export function useScanner() {
     scanLockRef.current = false;
     setScanned(false);
     setScanSuccess(false);
+  }
+
+  async function navigateToQrDetail(qrId: string) {
+    setScanSuccess(true);
+    await new Promise((r) => setTimeout(r, 300));
+    router.push(`/qr-detail/${qrId}`);
   }
 
   async function processScan(content: string) {
@@ -192,37 +168,30 @@ export function useScanner() {
       }
 
       setProcessing(false);
-      const { riskLevel, warnings } = await runSafetyCheck(content, qr.contentType);
 
-      if (riskLevel !== "safe" && warnings.length > 0) {
+      // Only show scanner caution modal for insecure HTTP URLs
+      if (qr.contentType === "url" && isInsecureHttpUrl(content)) {
         setPendingQrId(qr.id);
-        setSafetyWarnings(warnings);
-        setSafetyRiskLevel(riskLevel as "caution" | "dangerous");
+        setSafetyRiskLevel("caution");
         setSafetyModal(true);
-        Haptics.notificationAsync(
-          riskLevel === "dangerous" ? Haptics.NotificationFeedbackType.Error : Haptics.NotificationFeedbackType.Warning
-        );
-      } else {
-        if (qr.isBranded && qr.signature && qr.ownerId) {
-          const isVerified = await verifyQrSignature(content, qr.ownerId, qr.signature);
-          if (isVerified) {
-            setVerifiedOwnerName(qr.ownerName || "Verified Owner");
-            setVerifiedQrId(qr.id);
-            setVerifiedModal(true);
-            setScanSuccess(true);
-            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-          } else {
-            setPendingQrId(qr.id);
-            setSafetyWarnings(["QR signature mismatch — this QR may have been tampered with or cloned"]);
-            setSafetyRiskLevel("caution");
-            setSafetyModal(true);
-            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
-          }
-        } else {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+        return;
+      }
+
+      // For all other QR types: check verified status then navigate to details
+      if (qr.isBranded && qr.signature && qr.ownerId) {
+        const isVerified = await verifyQrSignature(content, qr.ownerId, qr.signature);
+        if (isVerified) {
+          setVerifiedOwnerName(qr.ownerName || "Verified Owner");
+          setVerifiedQrId(qr.id);
+          setVerifiedModal(true);
           setScanSuccess(true);
-          await new Promise((r) => setTimeout(r, 300));
-          router.push(`/qr-detail/${qr.id}`);
+          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        } else {
+          await navigateToQrDetail(qr.id);
         }
+      } else {
+        await navigateToQrDetail(qr.id);
       }
     } catch (e: any) {
       try {
@@ -231,16 +200,13 @@ export function useScanner() {
         const qrId = await getQrCodeId(content);
         await AsyncStorage.setItem(`qr_content_${qrId}`, JSON.stringify({ content, contentType }));
         setProcessing(false);
-        const { riskLevel, warnings } = await runSafetyCheck(content, contentType);
-        if (riskLevel !== "safe" && warnings.length > 0) {
+
+        if (contentType === "url" && isInsecureHttpUrl(content)) {
           setPendingQrId(qrId);
-          setSafetyWarnings(warnings);
-          setSafetyRiskLevel(riskLevel as "caution" | "dangerous");
+          setSafetyRiskLevel("caution");
           setSafetyModal(true);
         } else {
-          setScanSuccess(true);
-          await new Promise((r) => setTimeout(r, 300));
-          router.push(`/qr-detail/${qrId}`);
+          await navigateToQrDetail(qrId);
         }
         return;
       } catch {}
