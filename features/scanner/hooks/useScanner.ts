@@ -7,6 +7,7 @@ import * as FileSystem from "expo-file-system";
 import * as Haptics from "expo-haptics";
 import * as Crypto from "expo-crypto";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { fetch } from "expo/fetch";
 import { useAuth } from "@/contexts/AuthContext";
 import { getApiUrl } from "@/lib/query-client";
 import { getOrCreateQrCode, recordScan, getGuardLink, type GuardLink } from "@/lib/firestore-service";
@@ -283,6 +284,10 @@ export function useScanner() {
   }
 
   async function handlePickImage() {
+    if (!token) {
+      Alert.alert("Sign In Required", "Please sign in to scan QR codes from your gallery.");
+      return;
+    }
     try {
       const result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ["images"], quality: 0.8, base64: true });
       if (result.canceled || !result.assets[0]) return;
@@ -294,9 +299,11 @@ export function useScanner() {
       }
       if (!base64) { Alert.alert("Error", "Could not read image"); setProcessing(false); return; }
       const baseUrl = getApiUrl();
-      const headers: Record<string, string> = { "Content-Type": "application/json" };
-      if (token) headers["Authorization"] = `Bearer ${token}`;
-      const res = await globalThis.fetch(`${baseUrl}api/qr/decode-image`, {
+      const headers: Record<string, string> = {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${token}`,
+      };
+      const res = await fetch(`${baseUrl}api/qr/decode-image`, {
         method: "POST", headers, body: JSON.stringify({ imageBase64: base64 }),
       });
       const ct = res.headers.get("content-type") || "";

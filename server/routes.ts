@@ -202,6 +202,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   app.post("/api/qr/decode-image", async (req: Request, res: Response) => {
+    const authHeader = req.headers["authorization"];
+    if (!authHeader || !authHeader.startsWith("Bearer ") || authHeader.length < 16) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
     const ip = getClientIp(req);
     if (!checkRateLimit(ip)) {
       return res.status(429).json({ message: "Too many requests. Please wait a minute and try again." });
