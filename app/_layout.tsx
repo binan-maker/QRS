@@ -8,6 +8,7 @@ import { KeyboardProvider } from "react-native-keyboard-controller";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { queryClient } from "@/lib/query-client";
 import { AuthProvider } from "@/contexts/AuthContext";
+import { ThemeProvider, useTheme } from "@/contexts/ThemeContext";
 import { StatusBar } from "expo-status-bar";
 import {
   useFonts,
@@ -16,19 +17,16 @@ import {
   Inter_600SemiBold,
   Inter_700Bold,
 } from "@expo-google-fonts/inter";
-import Colors from "@/constants/colors";
 import { WEB_MAX_WIDTH } from "@/lib/utils/platform";
 
 SplashScreen.preventAutoHideAsync();
 
 function RootLayoutNav() {
+  const { colors } = useTheme();
   return (
-    <Stack screenOptions={{ headerShown: false }}>
+    <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.background } }}>
       <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-      <Stack.Screen
-        name="(auth)"
-        options={{ presentation: "modal", headerShown: false }}
-      />
+      <Stack.Screen name="(auth)" options={{ presentation: "modal", headerShown: false }} />
       <Stack.Screen name="qr-detail/[id]" options={{ headerShown: false }} />
       <Stack.Screen name="my-qr/[id]" options={{ headerShown: false }} />
       <Stack.Screen name="my-qr-codes" options={{ headerShown: false }} />
@@ -39,6 +37,33 @@ function RootLayoutNav() {
       <Stack.Screen name="how-it-works" options={{ headerShown: false }} />
       <Stack.Screen name="account-management" options={{ headerShown: false }} />
     </Stack>
+  );
+}
+
+function ThemedApp() {
+  const { colors } = useTheme();
+  const isWeb = Platform.OS === "web";
+  return (
+    <GestureHandlerRootView
+      style={{
+        flex: 1,
+        backgroundColor: isWeb ? colors.background : colors.background,
+        ...(isWeb ? { alignItems: "center" } : {}),
+      }}
+    >
+      <View
+        style={{
+          flex: 1,
+          width: "100%",
+          ...(isWeb ? { maxWidth: WEB_MAX_WIDTH, backgroundColor: colors.background } : {}),
+        }}
+      >
+        <KeyboardProvider>
+          <StatusBar style={colors.statusBar} backgroundColor={colors.background} />
+          <RootLayoutNav />
+        </KeyboardProvider>
+      </View>
+    </GestureHandlerRootView>
   );
 }
 
@@ -58,34 +83,15 @@ export default function RootLayout() {
 
   if (!fontsLoaded && !fontError) return null;
 
-  const isWeb = Platform.OS === "web";
-
   return (
     <ErrorBoundary>
-      <QueryClientProvider client={queryClient}>
-        <AuthProvider>
-          <GestureHandlerRootView
-            style={{
-              flex: 1,
-              backgroundColor: isWeb ? "#000" : Colors.dark.background,
-              ...(isWeb ? { alignItems: "center" } : {}),
-            }}
-          >
-            <View
-              style={{
-                flex: 1,
-                width: "100%",
-                ...(isWeb ? { maxWidth: WEB_MAX_WIDTH, backgroundColor: Colors.dark.background } : {}),
-              }}
-            >
-              <KeyboardProvider>
-                <StatusBar style="light" backgroundColor={Colors.dark.background} />
-                <RootLayoutNav />
-              </KeyboardProvider>
-            </View>
-          </GestureHandlerRootView>
-        </AuthProvider>
-      </QueryClientProvider>
+      <ThemeProvider>
+        <QueryClientProvider client={queryClient}>
+          <AuthProvider>
+            <ThemedApp />
+          </AuthProvider>
+        </QueryClientProvider>
+      </ThemeProvider>
     </ErrorBoundary>
   );
 }

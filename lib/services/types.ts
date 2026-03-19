@@ -1,4 +1,9 @@
-export const SIGNATURE_SALT = "QRG_MINT_VERIFIED_2024_PROPRIETARY";
+export function getSignatureSalt(year?: number): string {
+  const y = year ?? new Date().getFullYear();
+  return `QRG_MINT_VERIFIED_${y}_PROPRIETARY`;
+}
+
+export const SIGNATURE_SALT = getSignatureSalt();
 
 export type QrType = "individual" | "business" | "government";
 
@@ -9,147 +14,80 @@ export interface QrCodeData {
   createdAt: string;
   scanCount: number;
   commentCount: number;
-  ownerId?: string;
-  ownerName?: string;
-  brandedUuid?: string;
   isBranded?: boolean;
   signature?: string;
-  ownerVerified?: boolean;
+  ownerId?: string;
+  ownerName?: string;
   qrType?: QrType;
-  isActive?: boolean;
-  deactivationMessage?: string | null;
-  businessName?: string | null;
-}
-
-export interface QrOwnerInfo {
-  ownerId: string;
-  ownerName: string;
-  brandedUuid: string;
-  isBranded: boolean;
-  signature?: string;
-  ownerVerified?: boolean;
-  qrType?: QrType;
-  isActive?: boolean;
-  deactivationMessage?: string | null;
-  businessName?: string | null;
-  ownerLogoBase64?: string | null;
-}
-
-export interface ScanVelocityBucket {
-  hour: number;
-  label: string;
-  count: number;
-}
-
-export interface VerificationStatus {
-  status: "none" | "pending" | "approved" | "rejected";
+  uuid?: string;
   businessName?: string;
-  submittedAt?: string;
+  privateMode?: boolean;
+  customLogoUri?: string;
+  logoPosition?: string;
 }
 
-export interface FollowerInfo {
-  userId: string;
+export interface UserData {
+  id: string;
   displayName: string;
-  followedAt: string;
-  username?: string | null;
-  photoURL?: string | null;
-}
-
-export interface QrMessage {
-  id: string;
-  fromUserId: string;
-  fromDisplayName: string;
-  toUserId: string;
-  qrCodeId: string;
-  qrBrandedUuid: string;
-  message: string;
-  read: boolean;
+  email: string;
+  emailVerified: boolean;
+  photoURL: string | null;
   createdAt: string;
-}
-
-export interface CommentItem {
-  id: string;
-  qrCodeId: string;
-  userId: string;
-  text: string;
-  parentId: string | null;
-  isDeleted: boolean;
-  isHidden?: boolean;
-  reportCount?: number;
-  likeCount: number;
-  dislikeCount: number;
-  createdAt: string;
-  userLike: "like" | "dislike" | null;
-  user: { displayName: string };
-  userUsername?: string;
-  userPhotoURL?: string;
-}
-
-export interface TrustScore {
-  score: number;
-  label: string;
-  totalReports: number;
-  manipulationWarning?: boolean;
-}
-
-export type NotificationType =
-  | "new_comment"
-  | "new_report"
-  | "new_follow"
-  | "mention"
-  | "comment_reply"
-  | "owner_comment";
-
-export interface Notification {
-  id: string;
-  type: NotificationType;
-  qrCodeId: string;
-  message: string;
-  read: boolean;
-  createdAt: number;
-}
-
-export interface UserStats {
-  followingCount: number;
   scanCount: number;
   commentCount: number;
+  followingCount: number;
   totalLikesReceived: number;
+  username?: string;
+  usernameLastChangedAt?: string;
 }
 
-export interface GeneratedQrItem {
-  docId: string;
+export interface ScanRecord {
+  id: string;
+  qrCodeId: string;
   content: string;
   contentType: string;
-  uuid: string;
-  branded: boolean;
+  scannedAt: string;
+  isAnonymous: boolean;
+  scanSource?: "camera" | "gallery";
+}
+
+export interface CommentData {
+  id: string;
   qrCodeId: string;
+  userId: string;
+  userName: string;
+  text: string;
   createdAt: string;
-  fgColor: string;
-  bgColor: string;
-  logoPosition: string;
-  logoUri: string | null;
-  scanCount: number;
-  commentCount: number;
-  qrType: QrType;
-  isActive: boolean;
-  deactivationMessage: string | null;
-  businessName: string | null;
-  guardUuid: string | null;
+  likes: number;
+  likedBy: string[];
+  isVerifiedOwner?: boolean;
 }
 
-export interface UsernameData {
-  username: string | null;
-  usernameLastChangedAt: Date | null;
+export interface ReportData {
+  id: string;
+  qrCodeId: string;
+  userId: string;
+  reportType: string;
+  description: string;
+  createdAt: string;
+  weight: number;
 }
 
-export interface GuardLink {
-  uuid: string;
-  currentDestination: string;
-  previousDestination: string | null;
-  businessName: string | null;
-  ownerName: string;
-  ownerId: string;
-  isActive: boolean;
-  destinationChangedAt: string | null;
+export interface NotificationData {
+  id: string;
+  userId: string;
+  type: string;
+  message: string;
+  qrCodeId?: string;
+  read: boolean;
   createdAt: string;
+}
+
+export interface FollowData {
+  id: string;
+  userId: string;
+  qrCodeId: string;
+  content: string;
+  contentType: string;
+  followedAt: string;
 }
