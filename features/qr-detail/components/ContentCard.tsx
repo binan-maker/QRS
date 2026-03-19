@@ -207,28 +207,34 @@ const ContentCard = React.memo(function ContentCard({
           isDeactivated={isDeactivated}
           onOpenContent={onOpenContent}
         />
-        <View style={styles.rawContentRow}>
+        <Pressable
+          onPress={() => setContentExpanded((v) => !v)}
+          style={({ pressed }) => [styles.rawContentRow, { opacity: pressed ? 0.8 : 1 }]}
+        >
           <Ionicons name="code-outline" size={13} color={Colors.dark.textMuted} />
-          <Text
-            style={styles.rawContentText}
-            selectable
-            numberOfLines={contentExpanded ? undefined : 1}
-          >{content}</Text>
-          <Pressable onPress={() => setContentExpanded((v) => !v)}>
-            <Ionicons
-              name={contentExpanded ? "chevron-up" : "chevron-down"}
-              size={14}
-              color={Colors.dark.textMuted}
-            />
-          </Pressable>
-          <Pressable onPress={handleCopy} style={styles.copyIconBtnSmall}>
+          <View style={{ flex: 1 }}>
+            <Text
+              style={styles.rawContentText}
+              selectable
+              numberOfLines={contentExpanded ? undefined : 2}
+            >{content}</Text>
+            {!contentExpanded && (
+              <Text style={styles.rawContentHint}>• • •  tap to expand full QR data</Text>
+            )}
+          </View>
+          <Ionicons
+            name={contentExpanded ? "chevron-up" : "chevron-down"}
+            size={14}
+            color={Colors.dark.textMuted}
+          />
+          <Pressable onPress={(e) => { e.stopPropagation?.(); handleCopy(); }} style={styles.copyIconBtnSmall}>
             <Ionicons
               name={copied ? "checkmark" : "copy-outline"}
               size={13}
               color={copied ? Colors.dark.safe : Colors.dark.textMuted}
             />
           </Pressable>
-        </View>
+        </Pressable>
       </View>
     );
   }
@@ -381,8 +387,12 @@ const styles = StyleSheet.create({
     borderWidth: 1, borderColor: Colors.dark.surfaceBorder,
   },
   rawContentText: {
-    flex: 1, fontSize: 11, fontFamily: "Inter_400Regular",
-    color: Colors.dark.textMuted, letterSpacing: 0.2,
+    fontSize: 11, fontFamily: "Inter_400Regular",
+    color: Colors.dark.textMuted, letterSpacing: 0.2, lineHeight: 16,
+  },
+  rawContentHint: {
+    fontSize: 10, fontFamily: "Inter_400Regular",
+    color: Colors.dark.textMuted, marginTop: 3, letterSpacing: 1,
   },
   copyIconBtnSmall: {
     width: 26, height: 26, borderRadius: 7, alignItems: "center", justifyContent: "center",

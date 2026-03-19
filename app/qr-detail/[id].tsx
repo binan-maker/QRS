@@ -171,9 +171,9 @@ export default function QrDetailScreen() {
           >
             {/* Disclaimer */}
             <View style={styles.disclaimerBanner}>
-              <Ionicons name="shield-checkmark-outline" size={16} color={Colors.dark.primary} />
+              <Ionicons name="warning-outline" size={16} color={Colors.dark.warning} />
               <Text style={styles.disclaimerText}>
-                Always verify links before clicking. QR Guard protects you with real-time safety analysis.
+                Warning: Always verify before clicking or paying. QR Guard may make mistakes and is not responsible for any payment or link issues. Rely on community reports for guidance.
               </Text>
             </View>
 
