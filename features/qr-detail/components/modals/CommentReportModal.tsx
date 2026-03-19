@@ -1,7 +1,7 @@
 import React from "react";
 import { View, Text, StyleSheet, Pressable, Modal, ScrollView } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import Colors from "@/constants/colors";
+import { useTheme } from "@/contexts/ThemeContext";
 
 const REASONS = [
   { label: "Sexual content", value: "sexual_content", icon: "alert-circle-outline" },
@@ -23,6 +23,8 @@ interface Props {
 }
 
 const CommentReportModal = React.memo(function CommentReportModal({ commentId, onReport, onClose }: Props) {
+  const { colors } = useTheme();
+  const styles = makeStyles(colors);
   return (
     <Modal visible={!!commentId} transparent animationType="fade" onRequestClose={onClose}>
       <Pressable style={styles.overlay} onPress={onClose}>
@@ -43,9 +45,9 @@ const CommentReportModal = React.memo(function CommentReportModal({ commentId, o
                   { opacity: pressed ? 0.7 : 1 },
                 ]}
               >
-                <Ionicons name={r.icon as any} size={18} color={Colors.dark.textSecondary} style={{ marginRight: 12 }} />
+                <Ionicons name={r.icon as any} size={18} color={colors.textSecondary} style={{ marginRight: 12 }} />
                 <Text style={styles.optionText}>{r.label}</Text>
-                <Ionicons name="chevron-forward" size={16} color={Colors.dark.textMuted} style={{ marginLeft: "auto" as any }} />
+                <Ionicons name="chevron-forward" size={16} color={colors.textMuted} style={{ marginLeft: "auto" as any }} />
               </Pressable>
             ))}
           </ScrollView>
@@ -60,26 +62,26 @@ const CommentReportModal = React.memo(function CommentReportModal({ commentId, o
 
 export default CommentReportModal;
 
-const styles = StyleSheet.create({
-  overlay: {
-    flex: 1, backgroundColor: "rgba(0,0,0,0.75)",
-    justifyContent: "center", alignItems: "center", padding: 24,
-  },
-  card: {
-    backgroundColor: Colors.dark.surface, borderRadius: 20, padding: 20,
-    width: "100%", borderWidth: 1, borderColor: Colors.dark.surfaceBorder,
-  },
-  title: { fontSize: 18, fontFamily: "Inter_700Bold", color: Colors.dark.text, marginBottom: 4 },
-  subtitle: { fontSize: 15, fontFamily: "Inter_600SemiBold", color: Colors.dark.text, marginBottom: 6 },
-  note: { fontSize: 13, fontFamily: "Inter_400Regular", color: Colors.dark.textSecondary, lineHeight: 18, marginBottom: 14 },
-  option: {
-    flexDirection: "row", alignItems: "center", paddingVertical: 14,
-  },
-  optionBorder: { borderBottomWidth: 1, borderBottomColor: Colors.dark.surfaceBorder },
-  optionText: { fontSize: 14, fontFamily: "Inter_500Medium", color: Colors.dark.text, flex: 1 },
-  cancelBtn: {
-    marginTop: 12, backgroundColor: Colors.dark.surfaceLight, borderRadius: 14,
-    paddingVertical: 14, alignItems: "center",
-  },
-  cancelText: { fontSize: 15, fontFamily: "Inter_600SemiBold", color: Colors.dark.textSecondary },
-});
+function makeStyles(c: ReturnType<typeof import("@/contexts/ThemeContext").useTheme>["colors"]) {
+  return StyleSheet.create({
+    overlay: {
+      flex: 1, backgroundColor: "rgba(0,0,0,0.75)",
+      justifyContent: "center", alignItems: "center", padding: 24,
+    },
+    card: {
+      backgroundColor: c.surface, borderRadius: 20, padding: 20,
+      width: "100%", borderWidth: 1, borderColor: c.surfaceBorder,
+    },
+    title: { fontSize: 18, fontFamily: "Inter_700Bold", color: c.text, marginBottom: 4 },
+    subtitle: { fontSize: 15, fontFamily: "Inter_600SemiBold", color: c.text, marginBottom: 6 },
+    note: { fontSize: 13, fontFamily: "Inter_400Regular", color: c.textSecondary, lineHeight: 18, marginBottom: 14 },
+    option: { flexDirection: "row", alignItems: "center", paddingVertical: 14 },
+    optionBorder: { borderBottomWidth: 1, borderBottomColor: c.surfaceBorder },
+    optionText: { fontSize: 14, fontFamily: "Inter_500Medium", color: c.text, flex: 1 },
+    cancelBtn: {
+      marginTop: 12, backgroundColor: c.surfaceLight, borderRadius: 14,
+      paddingVertical: 14, alignItems: "center",
+    },
+    cancelText: { fontSize: 15, fontFamily: "Inter_600SemiBold", color: c.textSecondary },
+  });
+}

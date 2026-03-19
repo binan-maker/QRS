@@ -13,7 +13,7 @@ import { router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import * as Haptics from "expo-haptics";
-import Colors from "@/constants/colors";
+import { useTheme } from "@/contexts/ThemeContext";
 import { useHistory, type HistoryItem, type Filter } from "@/hooks/useHistory";
 import HistoryItemComponent from "@/features/history/components/HistoryItem";
 import FilterBar from "@/features/history/components/FilterBar";
@@ -30,6 +30,7 @@ const FILTERS: { key: Filter; label: string }[] = [
 
 export default function HistoryScreen() {
   const insets = useSafeAreaInsets();
+  const { colors } = useTheme();
   const {
     user,
     displayItems,
@@ -43,6 +44,7 @@ export default function HistoryScreen() {
   } = useHistory();
 
   const topInset = Platform.OS === "web" ? 67 : insets.top;
+  const styles = makeStyles(colors);
 
   const activeFilters: { key: Filter; label: string }[] = user
     ? [...FILTERS, { key: "favorites" as Filter, label: "Favorites" }]
@@ -65,16 +67,15 @@ export default function HistoryScreen() {
     if (!loadingMore) return null;
     return (
       <View style={styles.footerLoader}>
-        <ActivityIndicator size="small" color={Colors.dark.primary} />
+        <ActivityIndicator size="small" color={colors.primary} />
       </View>
     );
-  }, [loadingMore]);
+  }, [loadingMore, colors]);
 
   const keyExtractor = useCallback((item: HistoryItem) => item.id, []);
 
   return (
     <View style={[styles.container, { paddingTop: topInset }]}>
-      {/* Header row */}
       <View style={styles.header}>
         <Text style={styles.title}>History</Text>
         <View style={styles.headerActions}>
@@ -86,19 +87,17 @@ export default function HistoryScreen() {
             style={styles.headerBtn}
             hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
           >
-            <Ionicons name="settings-outline" size={20} color={Colors.dark.textSecondary} />
+            <Ionicons name="settings-outline" size={20} color={colors.textSecondary} />
           </Pressable>
         </View>
       </View>
 
-      {/* Filter chips */}
       <FilterBar
         filters={activeFilters}
         activeFilter={filter}
         onFilterChange={setFilter}
       />
 
-      {/* List */}
       <FlatList
         data={displayItems}
         renderItem={renderItem}
@@ -112,8 +111,8 @@ export default function HistoryScreen() {
           <RefreshControl
             refreshing={refreshing}
             onRefresh={onRefresh}
-            tintColor={Colors.dark.primary}
-            colors={[Colors.dark.primary]}
+            tintColor={colors.primary}
+            colors={[colors.primary]}
           />
         }
         onEndReached={handleEndReached}
@@ -125,7 +124,7 @@ export default function HistoryScreen() {
               <Ionicons
                 name={filter === "favorites" ? "heart-outline" : "time-outline"}
                 size={36}
-                color={Colors.dark.textMuted}
+                color={colors.textMuted}
               />
             </View>
             <Text style={styles.emptyTitle}>
@@ -150,73 +149,32 @@ export default function HistoryScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: Colors.dark.background,
-  },
-  header: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    paddingHorizontal: 20,
-    paddingTop: 10,
-    paddingBottom: 8,
-  },
-  title: {
-    fontSize: 24,
-    fontFamily: "Inter_700Bold",
-    color: Colors.dark.text,
-  },
-  headerActions: {
-    flexDirection: "row",
-    gap: 8,
-    alignItems: "center",
-  },
-  headerBtn: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: Colors.dark.surface,
-    alignItems: "center",
-    justifyContent: "center",
-    borderWidth: 1,
-    borderColor: Colors.dark.surfaceBorder,
-  },
-  list: {
-    paddingHorizontal: 16,
-    paddingTop: 4,
-  },
-  emptyState: {
-    alignItems: "center",
-    gap: 8,
-    paddingVertical: 56,
-    paddingHorizontal: 32,
-  },
-  emptyIcon: {
-    width: 72,
-    height: 72,
-    borderRadius: 36,
-    backgroundColor: Colors.dark.surface,
-    alignItems: "center",
-    justifyContent: "center",
-    marginBottom: 4,
-  },
-  emptyTitle: {
-    fontSize: 17,
-    fontFamily: "Inter_600SemiBold",
-    color: Colors.dark.textSecondary,
-    textAlign: "center",
-  },
-  emptySubtext: {
-    fontSize: 13,
-    fontFamily: "Inter_400Regular",
-    color: Colors.dark.textMuted,
-    textAlign: "center",
-    lineHeight: 19,
-  },
-  footerLoader: {
-    paddingVertical: 20,
-    alignItems: "center",
-  },
-});
+function makeStyles(c: ReturnType<typeof import("@/contexts/ThemeContext").useTheme>["colors"]) {
+  return StyleSheet.create({
+    container: { flex: 1, backgroundColor: c.background },
+    header: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+      alignItems: "center",
+      paddingHorizontal: 20,
+      paddingTop: 10,
+      paddingBottom: 8,
+    },
+    title: { fontSize: 24, fontFamily: "Inter_700Bold", color: c.text },
+    headerActions: { flexDirection: "row", gap: 8, alignItems: "center" },
+    headerBtn: {
+      width: 36, height: 36, borderRadius: 18,
+      backgroundColor: c.surface, alignItems: "center", justifyContent: "center",
+      borderWidth: 1, borderColor: c.surfaceBorder,
+    },
+    list: { paddingHorizontal: 16, paddingTop: 4 },
+    emptyState: { alignItems: "center", gap: 8, paddingVertical: 56, paddingHorizontal: 32 },
+    emptyIcon: {
+      width: 72, height: 72, borderRadius: 36,
+      backgroundColor: c.surface, alignItems: "center", justifyContent: "center", marginBottom: 4,
+    },
+    emptyTitle: { fontSize: 17, fontFamily: "Inter_600SemiBold", color: c.textSecondary, textAlign: "center" },
+    emptySubtext: { fontSize: 13, fontFamily: "Inter_400Regular", color: c.textMuted, textAlign: "center", lineHeight: 19 },
+    footerLoader: { paddingVertical: 20, alignItems: "center" },
+  });
+}

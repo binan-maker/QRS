@@ -22,13 +22,13 @@ import Animated, {
   withSequence,
   withTiming,
 } from "react-native-reanimated";
-import Colors from "@/constants/colors";
+import { useTheme } from "@/contexts/ThemeContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNetworkStatus } from "@/lib/use-network";
 import { formatCompactNumber } from "@/lib/number-format";
 import { smartName } from "@/lib/utils/formatters";
 import { useQrDetail } from "@/hooks/useQrDetail";
-import { styles } from "@/features/qr-detail/styles";
+import { makeStyles } from "@/features/qr-detail/styles";
 import LoadingSkeleton from "@/features/qr-detail/components/LoadingSkeleton";
 import ContentCard from "@/features/qr-detail/components/ContentCard";
 import TrustScoreCard from "@/features/qr-detail/components/TrustScoreCard";
@@ -45,8 +45,10 @@ import CommentReportModal from "@/features/qr-detail/components/modals/CommentRe
 export default function QrDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { user } = useAuth();
+  const { colors } = useTheme();
   const insets = useSafeAreaInsets();
   const { recheck } = useNetworkStatus();
+  const styles = makeStyles(colors);
 
   const glowOpacity = useSharedValue(0.6);
   const glowScale = useSharedValue(1);

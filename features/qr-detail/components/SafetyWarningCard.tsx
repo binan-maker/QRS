@@ -1,6 +1,6 @@
 import { View, Text, StyleSheet } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import Colors from "@/constants/colors";
+import { useTheme } from "@/contexts/ThemeContext";
 
 interface SafetyWarningCardProps {
   riskLevel: "caution" | "dangerous";
@@ -9,9 +9,10 @@ interface SafetyWarningCardProps {
 }
 
 export default function SafetyWarningCard({ riskLevel, warnings, title }: SafetyWarningCardProps) {
+  const { colors } = useTheme();
   const isDangerous = riskLevel === "dangerous";
-  const color = isDangerous ? Colors.dark.danger : Colors.dark.warning;
-  const bg = isDangerous ? Colors.dark.dangerDim : Colors.dark.warningDim;
+  const color = isDangerous ? colors.danger : colors.warning;
+  const bg = isDangerous ? colors.dangerDim : colors.warningDim;
   const icon = isDangerous ? "warning" : "alert-circle";
   const defaultTitle = isDangerous ? "⚠ Security Warning" : "⚠ Proceed with Caution";
   const displayTitle = title ?? defaultTitle;
@@ -25,7 +26,7 @@ export default function SafetyWarningCard({ riskLevel, warnings, title }: Safety
       {warnings.map((w, i) => (
         <View key={i} style={styles.row}>
           <Ionicons name="ellipse" size={6} color={color} style={{ marginTop: 5 }} />
-          <Text style={styles.text}>{w}</Text>
+          <Text style={[styles.text, { color: colors.text }]}>{w}</Text>
         </View>
       ))}
     </View>
@@ -37,5 +38,5 @@ const styles = StyleSheet.create({
   header: { flexDirection: "row", alignItems: "center", gap: 8 },
   title: { fontSize: 14, fontFamily: "Inter_700Bold", flex: 1 },
   row: { flexDirection: "row", gap: 8, alignItems: "flex-start" },
-  text: { flex: 1, fontSize: 13, fontFamily: "Inter_400Regular", color: Colors.dark.text, lineHeight: 18 },
+  text: { flex: 1, fontSize: 13, fontFamily: "Inter_400Regular", lineHeight: 18 },
 });

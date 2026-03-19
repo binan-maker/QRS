@@ -6,6 +6,7 @@ import * as ImagePicker from "expo-image-picker";
 import * as FileSystem from "expo-file-system";
 import * as Haptics from "expo-haptics";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { setAnonymousQrContent } from "@/lib/cache/anonymous-session";
 import { useAuth } from "@/contexts/AuthContext";
 import { getApiUrl } from "@/lib/query-client";
 import {
@@ -170,18 +171,15 @@ export function useScanner() {
 
   // ─── ANONYMOUS SCAN ───────────────────────────────────────────────────────────
   // When a signed-in user scans in anonymous mode, we perform ZERO database reads
-  // or writes. Content is stored only in device memory (AsyncStorage) and is
-  // never uploaded to any server. No scan count, no user record, nothing.
+  // or writes. Content is held in process memory only — nothing written to device
+  // storage, nothing uploaded to any server. Zero tracking.
   async function processScanAnonymous(content: string) {
     setProcessing(true);
     try {
       const contentType = detectContentType(content);
       const qrId = await getQrCodeId(content);
-      // Store locally only — never leaves the device
-      await AsyncStorage.setItem(
-        `qr_content_${qrId}`,
-        JSON.stringify({ content, contentType })
-      );
+      // Store in-memory only — zero device storage, zero tracking
+      setAnonymousQrContent(qrId, content, contentType);
       setProcessing(false);
 
       if (contentType === "url" && isInsecureHttpUrl(content)) {

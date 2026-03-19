@@ -13,13 +13,14 @@ import { Link, router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import * as Haptics from "expo-haptics";
-import Colors from "@/constants/colors";
+import { useTheme } from "@/contexts/ThemeContext";
 import { useAuth } from "@/contexts/AuthContext";
 import GoogleIcon from "@/components/GoogleIcon";
 import AuthFormInput from "@/features/auth/components/AuthFormInput";
 
 export default function RegisterScreen() {
   const { signUp, signInWithGoogle, googleRequest, user } = useAuth();
+  const { colors } = useTheme();
   const insets = useSafeAreaInsets();
   const [displayName, setDisplayName] = useState("");
   const [email, setEmail] = useState("");
@@ -99,10 +100,12 @@ export default function RegisterScreen() {
     }
   }
 
+  const styles = makeStyles(colors);
+
   if (verificationSent) {
     return (
       <KeyboardAvoidingView
-        style={{ flex: 1, backgroundColor: Colors.dark.background }}
+        style={{ flex: 1, backgroundColor: colors.background }}
         behavior={Platform.OS === "ios" ? "padding" : "height"}
       >
         <ScrollView
@@ -110,15 +113,15 @@ export default function RegisterScreen() {
           keyboardShouldPersistTaps="handled"
         >
           <View style={styles.iconContainer}>
-            <View style={[styles.iconCircle, { backgroundColor: "rgba(16,185,129,0.15)" }]}>
-              <Ionicons name="mail-open-outline" size={40} color={Colors.dark.safe} />
+            <View style={[styles.iconCircle, { backgroundColor: colors.safeDim }]}>
+              <Ionicons name="mail-open-outline" size={40} color={colors.safe} />
             </View>
           </View>
 
           <Text style={styles.title}>Verify Your Email</Text>
           <Text style={styles.subtitle}>
             Your account has been created! A verification email has been sent to{"\n"}
-            <Text style={{ color: Colors.dark.primary }}>{registeredEmail}</Text>
+            <Text style={{ color: colors.primary }}>{registeredEmail}</Text>
             {"\n\n"}
             Please click the link in the email to verify your account before signing in. Check your spam folder if you don't see it.
           </Text>
@@ -136,7 +139,7 @@ export default function RegisterScreen() {
 
   return (
     <KeyboardAvoidingView
-      style={{ flex: 1, backgroundColor: Colors.dark.background }}
+      style={{ flex: 1, backgroundColor: colors.background }}
       behavior={Platform.OS === "ios" ? "padding" : "height"}
       keyboardVerticalOffset={90}
     >
@@ -146,7 +149,7 @@ export default function RegisterScreen() {
       >
         <View style={styles.iconContainer}>
           <View style={styles.iconCircle}>
-            <Ionicons name="person-add" size={36} color={Colors.dark.primary} />
+            <Ionicons name="person-add" size={36} color={colors.primary} />
           </View>
         </View>
 
@@ -155,7 +158,7 @@ export default function RegisterScreen() {
 
         {error ? (
           <View style={styles.errorContainer}>
-            <Ionicons name="alert-circle" size={16} color={Colors.dark.danger} />
+            <Ionicons name="alert-circle" size={16} color={colors.danger} />
             <Text style={styles.errorText}>{error}</Text>
           </View>
         ) : null}
@@ -169,7 +172,7 @@ export default function RegisterScreen() {
           ]}
         >
           {googleLoading ? (
-            <ActivityIndicator color={Colors.dark.text} size="small" />
+            <ActivityIndicator color={colors.text} size="small" />
           ) : (
             <>
               <GoogleIcon size={20} />
@@ -222,7 +225,7 @@ export default function RegisterScreen() {
           style={({ pressed }) => [styles.primaryButton, { opacity: pressed || loading ? 0.8 : 1 }]}
         >
           {loading ? (
-            <ActivityIndicator color="#000" />
+            <ActivityIndicator color={colors.primaryText} />
           ) : (
             <Text style={styles.primaryButtonText}>Create Account</Text>
           )}
@@ -241,38 +244,40 @@ export default function RegisterScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flexGrow: 1, padding: 24, justifyContent: "center", gap: 16 },
-  iconContainer: { alignItems: "center", marginBottom: 8 },
-  iconCircle: {
-    width: 80, height: 80, borderRadius: 40,
-    backgroundColor: Colors.dark.primaryDim, alignItems: "center", justifyContent: "center",
-  },
-  title: { fontSize: 28, fontFamily: "Inter_700Bold", color: Colors.dark.text, textAlign: "center" },
-  subtitle: {
-    fontSize: 15, fontFamily: "Inter_400Regular", color: Colors.dark.textSecondary,
-    textAlign: "center", marginBottom: 8, lineHeight: 22,
-  },
-  errorContainer: {
-    flexDirection: "row", alignItems: "flex-start", gap: 8,
-    backgroundColor: Colors.dark.dangerDim, padding: 12, borderRadius: 12,
-  },
-  errorText: { color: Colors.dark.danger, fontFamily: "Inter_500Medium", fontSize: 14, flex: 1 },
-  primaryButton: {
-    backgroundColor: Colors.dark.primary, paddingVertical: 16,
-    borderRadius: 14, alignItems: "center", marginTop: 8,
-  },
-  primaryButtonText: { color: "#000", fontSize: 16, fontFamily: "Inter_700Bold" },
-  footer: { flexDirection: "row", justifyContent: "center", gap: 6, marginTop: 4 },
-  footerText: { color: Colors.dark.textSecondary, fontFamily: "Inter_400Regular", fontSize: 14 },
-  linkText: { color: Colors.dark.primary, fontFamily: "Inter_600SemiBold", fontSize: 14 },
-  dividerRow: { flexDirection: "row", alignItems: "center", gap: 12 },
-  dividerLine: { flex: 1, height: 1, backgroundColor: Colors.dark.surfaceBorder },
-  dividerText: { fontSize: 13, fontFamily: "Inter_400Regular", color: Colors.dark.textMuted },
-  googleButton: {
-    flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 12,
-    backgroundColor: Colors.dark.surface, borderWidth: 1, borderColor: Colors.dark.surfaceBorder,
-    paddingVertical: 14, paddingHorizontal: 20, borderRadius: 14,
-  },
-  googleButtonText: { fontSize: 15, fontFamily: "Inter_600SemiBold", color: Colors.dark.text },
-});
+function makeStyles(c: ReturnType<typeof import("@/contexts/ThemeContext").useTheme>["colors"]) {
+  return StyleSheet.create({
+    container: { flexGrow: 1, padding: 24, justifyContent: "center", gap: 16 },
+    iconContainer: { alignItems: "center", marginBottom: 8 },
+    iconCircle: {
+      width: 80, height: 80, borderRadius: 40,
+      backgroundColor: c.primaryDim, alignItems: "center", justifyContent: "center",
+    },
+    title: { fontSize: 28, fontFamily: "Inter_700Bold", color: c.text, textAlign: "center" },
+    subtitle: {
+      fontSize: 15, fontFamily: "Inter_400Regular", color: c.textSecondary,
+      textAlign: "center", marginBottom: 8, lineHeight: 22,
+    },
+    errorContainer: {
+      flexDirection: "row", alignItems: "flex-start", gap: 8,
+      backgroundColor: c.dangerDim, padding: 12, borderRadius: 12,
+    },
+    errorText: { color: c.danger, fontFamily: "Inter_500Medium", fontSize: 14, flex: 1 },
+    primaryButton: {
+      backgroundColor: c.primary, paddingVertical: 16,
+      borderRadius: 14, alignItems: "center", marginTop: 8,
+    },
+    primaryButtonText: { color: c.primaryText, fontSize: 16, fontFamily: "Inter_700Bold" },
+    footer: { flexDirection: "row", justifyContent: "center", gap: 6, marginTop: 4 },
+    footerText: { color: c.textSecondary, fontFamily: "Inter_400Regular", fontSize: 14 },
+    linkText: { color: c.primary, fontFamily: "Inter_600SemiBold", fontSize: 14 },
+    dividerRow: { flexDirection: "row", alignItems: "center", gap: 12 },
+    dividerLine: { flex: 1, height: 1, backgroundColor: c.surfaceBorder },
+    dividerText: { fontSize: 13, fontFamily: "Inter_400Regular", color: c.textMuted },
+    googleButton: {
+      flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 12,
+      backgroundColor: c.surface, borderWidth: 1, borderColor: c.surfaceBorder,
+      paddingVertical: 14, paddingHorizontal: 20, borderRadius: 14,
+    },
+    googleButtonText: { fontSize: 15, fontFamily: "Inter_600SemiBold", color: c.text },
+  });
+}

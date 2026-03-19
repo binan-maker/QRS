@@ -1,10 +1,11 @@
 import { View, ScrollView, StyleSheet } from "react-native";
 import SkeletonBox from "@/components/ui/SkeletonBox";
-import Colors from "@/constants/colors";
+import { useTheme } from "@/contexts/ThemeContext";
 
-function SkeletonCommentCard() {
+function SkeletonCommentCard({ colors }: { colors: any }) {
+  const s = makeStyles(colors);
   return (
-    <View style={styles.commentCard}>
+    <View style={s.commentCard}>
       <View style={{ flexDirection: "row", alignItems: "center", gap: 10, marginBottom: 12 }}>
         <SkeletonBox width={34} height={34} borderRadius={17} />
         <View style={{ flex: 1, gap: 6 }}>
@@ -17,11 +18,11 @@ function SkeletonCommentCard() {
   );
 }
 
-interface Props {
-  topInset: number;
-}
+interface Props { topInset: number; }
 
 export default function LoadingSkeleton({ topInset }: Props) {
+  const { colors } = useTheme();
+  const styles = makeStyles(colors);
   return (
     <View style={[styles.container, { paddingTop: topInset }]}>
       <View style={styles.navBar}>
@@ -62,25 +63,27 @@ export default function LoadingSkeleton({ topInset }: Props) {
         </View>
         <SkeletonBox width={100} height={18} borderRadius={8} style={{ marginBottom: 14 }} />
         <SkeletonBox height={50} borderRadius={14} style={{ marginBottom: 16 }} />
-        {[0, 1, 2].map((i) => <SkeletonCommentCard key={i} />)}
+        {[0, 1, 2].map((i) => <SkeletonCommentCard key={i} colors={colors} />)}
       </ScrollView>
     </View>
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: Colors.dark.background },
-  navBar: {
-    flexDirection: "row", alignItems: "center", justifyContent: "space-between",
-    paddingHorizontal: 16, paddingVertical: 12,
-    borderBottomWidth: 1, borderBottomColor: Colors.dark.surfaceBorder,
-  },
-  card: {
-    backgroundColor: Colors.dark.surface, borderRadius: 16, padding: 18,
-    marginBottom: 16, borderWidth: 1, borderColor: Colors.dark.surfaceBorder,
-  },
-  commentCard: {
-    backgroundColor: Colors.dark.surface, borderRadius: 14, padding: 14,
-    marginBottom: 8, borderWidth: 1, borderColor: Colors.dark.surfaceBorder,
-  },
-});
+function makeStyles(c: ReturnType<typeof import("@/contexts/ThemeContext").useTheme>["colors"]) {
+  return StyleSheet.create({
+    container: { flex: 1, backgroundColor: c.background },
+    navBar: {
+      flexDirection: "row", alignItems: "center", justifyContent: "space-between",
+      paddingHorizontal: 16, paddingVertical: 12,
+      borderBottomWidth: 1, borderBottomColor: c.surfaceBorder,
+    },
+    card: {
+      backgroundColor: c.surface, borderRadius: 16, padding: 18,
+      marginBottom: 16, borderWidth: 1, borderColor: c.surfaceBorder,
+    },
+    commentCard: {
+      backgroundColor: c.surface, borderRadius: 14, padding: 14,
+      marginBottom: 8, borderWidth: 1, borderColor: c.surfaceBorder,
+    },
+  });
+}

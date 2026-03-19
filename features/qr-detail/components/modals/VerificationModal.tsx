@@ -4,7 +4,7 @@ import {
   ActivityIndicator, TextInput, Platform, KeyboardAvoidingView,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import Colors from "@/constants/colors";
+import { useTheme } from "@/contexts/ThemeContext";
 
 interface Props {
   visible: boolean;
@@ -21,6 +21,8 @@ const VerificationModal = React.memo(function VerificationModal({
   visible, bizName, docName, submitting,
   onChangeBizName, onPickDoc, onSubmit, onClose,
 }: Props) {
+  const { colors } = useTheme();
+  const styles = makeStyles(colors);
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === "ios" ? "padding" : "height"}>
@@ -30,7 +32,7 @@ const VerificationModal = React.memo(function VerificationModal({
             <ScrollView keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
               <View style={styles.header}>
                 <View style={{ flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 6 }}>
-                  <Ionicons name="shield-checkmark-outline" size={22} color={Colors.dark.primary} />
+                  <Ionicons name="shield-checkmark-outline" size={22} color={colors.primary} />
                   <Text style={styles.title}>Request Verified Badge</Text>
                 </View>
                 <Text style={styles.sub}>
@@ -44,7 +46,7 @@ const VerificationModal = React.memo(function VerificationModal({
                   <TextInput
                     style={styles.input}
                     placeholder="Your registered business name"
-                    placeholderTextColor={Colors.dark.textMuted}
+                    placeholderTextColor={colors.textMuted}
                     value={bizName}
                     onChangeText={onChangeBizName}
                     maxLength={100}
@@ -59,14 +61,14 @@ const VerificationModal = React.memo(function VerificationModal({
                   <Pressable onPress={onPickDoc} style={styles.docPicker}>
                     {docName ? (
                       <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
-                        <Ionicons name="document-attach" size={20} color={Colors.dark.primary} />
-                        <Text style={[styles.fieldLabel, { color: Colors.dark.primary, marginBottom: 0 }]} numberOfLines={1}>
+                        <Ionicons name="document-attach" size={20} color={colors.primary} />
+                        <Text style={[styles.fieldLabel, { color: colors.primary, marginBottom: 0 }]} numberOfLines={1}>
                           {docName}
                         </Text>
                       </View>
                     ) : (
                       <View style={{ alignItems: "center", gap: 8 }}>
-                        <Ionicons name="cloud-upload-outline" size={28} color={Colors.dark.textMuted} />
+                        <Ionicons name="cloud-upload-outline" size={28} color={colors.textMuted} />
                         <Text style={styles.uploadText}>Tap to upload document</Text>
                         <Text style={styles.uploadHint}>JPG, PNG · Max 5MB</Text>
                       </View>
@@ -76,7 +78,7 @@ const VerificationModal = React.memo(function VerificationModal({
 
                 <View style={styles.divider} />
                 <View style={{ flexDirection: "row", gap: 8, alignItems: "flex-start" }}>
-                  <Ionicons name="lock-closed-outline" size={15} color={Colors.dark.textMuted} style={{ marginTop: 1 }} />
+                  <Ionicons name="lock-closed-outline" size={15} color={colors.textMuted} style={{ marginTop: 1 }} />
                   <Text style={styles.privacyNote}>
                     Your document is stored securely and used only for identity verification. It will not be shared publicly.
                   </Text>
@@ -91,10 +93,10 @@ const VerificationModal = React.memo(function VerificationModal({
                   ]}
                 >
                   {submitting ? (
-                    <ActivityIndicator size="small" color="#000" />
+                    <ActivityIndicator size="small" color={colors.primaryText} />
                   ) : (
                     <>
-                      <Ionicons name="shield-checkmark" size={18} color="#000" />
+                      <Ionicons name="shield-checkmark" size={18} color={colors.primaryText} />
                       <Text style={styles.submitBtnText}>Submit for Verification</Text>
                     </>
                   )}
@@ -113,38 +115,40 @@ const VerificationModal = React.memo(function VerificationModal({
 
 export default VerificationModal;
 
-const styles = StyleSheet.create({
-  overlay: { flex: 1, backgroundColor: "rgba(0,0,0,0.7)", justifyContent: "flex-end" },
-  sheet: {
-    backgroundColor: Colors.dark.surface, borderTopLeftRadius: 24, borderTopRightRadius: 24,
-    padding: 20, paddingBottom: 32, borderWidth: 1, borderColor: Colors.dark.surfaceBorder,
-  },
-  handle: { width: 40, height: 4, backgroundColor: Colors.dark.surfaceLight, borderRadius: 2, alignSelf: "center", marginBottom: 16 },
-  header: { marginBottom: 16 },
-  title: { fontSize: 18, fontFamily: "Inter_700Bold", color: Colors.dark.text },
-  sub: { fontSize: 13, fontFamily: "Inter_400Regular", color: Colors.dark.textSecondary, lineHeight: 19 },
-  fieldLabel: { fontSize: 13, fontFamily: "Inter_600SemiBold", color: Colors.dark.textSecondary, marginBottom: 8 },
-  input: {
-    backgroundColor: Colors.dark.surfaceLight, borderRadius: 12, paddingHorizontal: 14, paddingVertical: 12,
-    fontSize: 15, fontFamily: "Inter_400Regular", color: Colors.dark.text,
-    borderWidth: 1, borderColor: Colors.dark.surfaceBorder,
-  },
-  docHint: { fontSize: 12, fontFamily: "Inter_400Regular", color: Colors.dark.textSecondary, marginBottom: 8, lineHeight: 17 },
-  docPicker: {
-    backgroundColor: Colors.dark.surfaceLight, borderRadius: 14, paddingVertical: 24, paddingHorizontal: 16,
-    borderWidth: 1.5, borderColor: Colors.dark.surfaceBorder, borderStyle: "dashed", alignItems: "center",
-  },
-  uploadText: { fontSize: 14, fontFamily: "Inter_500Medium", color: Colors.dark.textMuted },
-  uploadHint: { fontSize: 12, fontFamily: "Inter_400Regular", color: Colors.dark.textMuted, textAlign: "center" },
-  divider: { height: 1, backgroundColor: Colors.dark.surfaceBorder },
-  privacyNote: { flex: 1, fontSize: 12, fontFamily: "Inter_400Regular", color: Colors.dark.textMuted, lineHeight: 18 },
-  submitBtn: {
-    flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8,
-    backgroundColor: Colors.dark.primary, borderRadius: 14, paddingVertical: 14,
-  },
-  submitBtnText: { fontSize: 15, fontFamily: "Inter_700Bold", color: "#000" },
-  cancelBtn: {
-    backgroundColor: Colors.dark.surfaceLight, borderRadius: 14, paddingVertical: 14, alignItems: "center",
-  },
-  cancelBtnText: { fontSize: 15, fontFamily: "Inter_600SemiBold", color: Colors.dark.textSecondary },
-});
+function makeStyles(c: ReturnType<typeof import("@/contexts/ThemeContext").useTheme>["colors"]) {
+  return StyleSheet.create({
+    overlay: { flex: 1, backgroundColor: "rgba(0,0,0,0.7)", justifyContent: "flex-end" },
+    sheet: {
+      backgroundColor: c.surface, borderTopLeftRadius: 24, borderTopRightRadius: 24,
+      padding: 20, paddingBottom: 32, borderWidth: 1, borderColor: c.surfaceBorder,
+    },
+    handle: { width: 40, height: 4, backgroundColor: c.surfaceLight, borderRadius: 2, alignSelf: "center", marginBottom: 16 },
+    header: { marginBottom: 16 },
+    title: { fontSize: 18, fontFamily: "Inter_700Bold", color: c.text },
+    sub: { fontSize: 13, fontFamily: "Inter_400Regular", color: c.textSecondary, lineHeight: 19 },
+    fieldLabel: { fontSize: 13, fontFamily: "Inter_600SemiBold", color: c.textSecondary, marginBottom: 8 },
+    input: {
+      backgroundColor: c.surfaceLight, borderRadius: 12, paddingHorizontal: 14, paddingVertical: 12,
+      fontSize: 15, fontFamily: "Inter_400Regular", color: c.text,
+      borderWidth: 1, borderColor: c.surfaceBorder,
+    },
+    docHint: { fontSize: 12, fontFamily: "Inter_400Regular", color: c.textSecondary, marginBottom: 8, lineHeight: 17 },
+    docPicker: {
+      backgroundColor: c.surfaceLight, borderRadius: 14, paddingVertical: 24, paddingHorizontal: 16,
+      borderWidth: 1.5, borderColor: c.surfaceBorder, borderStyle: "dashed", alignItems: "center",
+    },
+    uploadText: { fontSize: 14, fontFamily: "Inter_500Medium", color: c.textMuted },
+    uploadHint: { fontSize: 12, fontFamily: "Inter_400Regular", color: c.textMuted, textAlign: "center" },
+    divider: { height: 1, backgroundColor: c.surfaceBorder },
+    privacyNote: { flex: 1, fontSize: 12, fontFamily: "Inter_400Regular", color: c.textMuted, lineHeight: 18 },
+    submitBtn: {
+      flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8,
+      backgroundColor: c.primary, borderRadius: 14, paddingVertical: 14,
+    },
+    submitBtnText: { fontSize: 15, fontFamily: "Inter_700Bold", color: c.primaryText },
+    cancelBtn: {
+      backgroundColor: c.surfaceLight, borderRadius: 14, paddingVertical: 14, alignItems: "center",
+    },
+    cancelBtnText: { fontSize: 15, fontFamily: "Inter_600SemiBold", color: c.textSecondary },
+  });
+}

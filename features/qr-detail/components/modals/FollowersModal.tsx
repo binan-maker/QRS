@@ -1,7 +1,7 @@
 import React from "react";
 import { View, Text, StyleSheet, Pressable, Modal, ScrollView, ActivityIndicator, Image } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import Colors from "@/constants/colors";
+import { useTheme } from "@/contexts/ThemeContext";
 import { formatCompactNumber } from "@/lib/number-format";
 import type { FollowerInfo } from "@/lib/firestore-service";
 
@@ -26,6 +26,8 @@ function formatRelative(iso: string): string {
 }
 
 const FollowersModal = React.memo(function FollowersModal({ visible, followCount, followers, loading, onClose }: Props) {
+  const { colors } = useTheme();
+  const styles = makeStyles(colors);
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
       <Pressable style={styles.overlay} onPress={onClose}>
@@ -37,11 +39,11 @@ const FollowersModal = React.memo(function FollowersModal({ visible, followCount
           </View>
           {loading ? (
             <View style={styles.center}>
-              <ActivityIndicator color={Colors.dark.primary} />
+              <ActivityIndicator color={colors.primary} />
             </View>
           ) : followers.length === 0 ? (
             <View style={styles.center}>
-              <Ionicons name="people-outline" size={40} color={Colors.dark.textMuted} />
+              <Ionicons name="people-outline" size={40} color={colors.textMuted} />
               <Text style={styles.emptyText}>No followers yet</Text>
             </View>
           ) : (
@@ -77,33 +79,35 @@ const FollowersModal = React.memo(function FollowersModal({ visible, followCount
 
 export default FollowersModal;
 
-const styles = StyleSheet.create({
-  overlay: { flex: 1, backgroundColor: "rgba(0,0,0,0.7)", justifyContent: "flex-end" },
-  sheet: {
-    backgroundColor: Colors.dark.surface, borderTopLeftRadius: 24, borderTopRightRadius: 24,
-    padding: 20, paddingBottom: 32, borderWidth: 1, borderColor: Colors.dark.surfaceBorder,
-  },
-  handle: { width: 40, height: 4, backgroundColor: Colors.dark.surfaceLight, borderRadius: 2, alignSelf: "center", marginBottom: 16 },
-  header: { marginBottom: 16 },
-  title: { fontSize: 18, fontFamily: "Inter_700Bold", color: Colors.dark.text },
-  sub: { fontSize: 13, fontFamily: "Inter_400Regular", color: Colors.dark.textSecondary, marginTop: 3 },
-  center: { padding: 40, alignItems: "center", gap: 8 },
-  emptyText: { color: Colors.dark.textMuted, fontFamily: "Inter_500Medium", fontSize: 15 },
-  row: {
-    flexDirection: "row", alignItems: "center", gap: 12, paddingVertical: 10,
-    borderBottomWidth: 1, borderBottomColor: Colors.dark.surfaceBorder,
-  },
-  avatar: {
-    width: 42, height: 42, borderRadius: 21,
-    backgroundColor: Colors.dark.surfaceLight, alignItems: "center", justifyContent: "center", overflow: "hidden",
-  },
-  avatarText: { fontSize: 16, fontFamily: "Inter_700Bold", color: Colors.dark.text },
-  name: { fontSize: 14, fontFamily: "Inter_600SemiBold", color: Colors.dark.text },
-  username: { fontSize: 12, fontFamily: "Inter_400Regular", color: Colors.dark.primary, marginTop: 1 },
-  since: { fontSize: 11, fontFamily: "Inter_400Regular", color: Colors.dark.textMuted, marginTop: 2 },
-  closeBtn: {
-    marginTop: 16, backgroundColor: Colors.dark.surfaceLight, borderRadius: 14,
-    paddingVertical: 14, alignItems: "center",
-  },
-  closeBtnText: { fontSize: 15, fontFamily: "Inter_600SemiBold", color: Colors.dark.textSecondary },
-});
+function makeStyles(c: ReturnType<typeof import("@/contexts/ThemeContext").useTheme>["colors"]) {
+  return StyleSheet.create({
+    overlay: { flex: 1, backgroundColor: "rgba(0,0,0,0.7)", justifyContent: "flex-end" },
+    sheet: {
+      backgroundColor: c.surface, borderTopLeftRadius: 24, borderTopRightRadius: 24,
+      padding: 20, paddingBottom: 32, borderWidth: 1, borderColor: c.surfaceBorder,
+    },
+    handle: { width: 40, height: 4, backgroundColor: c.surfaceLight, borderRadius: 2, alignSelf: "center", marginBottom: 16 },
+    header: { marginBottom: 16 },
+    title: { fontSize: 18, fontFamily: "Inter_700Bold", color: c.text },
+    sub: { fontSize: 13, fontFamily: "Inter_400Regular", color: c.textSecondary, marginTop: 3 },
+    center: { padding: 40, alignItems: "center", gap: 8 },
+    emptyText: { color: c.textMuted, fontFamily: "Inter_500Medium", fontSize: 15 },
+    row: {
+      flexDirection: "row", alignItems: "center", gap: 12, paddingVertical: 10,
+      borderBottomWidth: 1, borderBottomColor: c.surfaceBorder,
+    },
+    avatar: {
+      width: 42, height: 42, borderRadius: 21,
+      backgroundColor: c.surfaceLight, alignItems: "center", justifyContent: "center", overflow: "hidden",
+    },
+    avatarText: { fontSize: 16, fontFamily: "Inter_700Bold", color: c.text },
+    name: { fontSize: 14, fontFamily: "Inter_600SemiBold", color: c.text },
+    username: { fontSize: 12, fontFamily: "Inter_400Regular", color: c.primary, marginTop: 1 },
+    since: { fontSize: 11, fontFamily: "Inter_400Regular", color: c.textMuted, marginTop: 2 },
+    closeBtn: {
+      marginTop: 16, backgroundColor: c.surfaceLight, borderRadius: 14,
+      paddingVertical: 14, alignItems: "center",
+    },
+    closeBtnText: { fontSize: 15, fontFamily: "Inter_600SemiBold", color: c.textSecondary },
+  });
+}

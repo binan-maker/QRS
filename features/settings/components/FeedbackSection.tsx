@@ -1,8 +1,8 @@
 import { View, Text, TextInput, Pressable, ScrollView, ActivityIndicator } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { settingsStyles as styles } from "@/features/settings/styles";
-import Colors from "@/constants/colors";
+import { useTheme } from "@/contexts/ThemeContext";
+import { makeSettingsStyles } from "@/features/settings/styles";
 
 interface Props {
   feedbackText: string;
@@ -19,17 +19,19 @@ export default function FeedbackSection({
   feedbackSubmitting, feedbackDone, handleSubmitFeedback,
 }: Props) {
   const insets = useSafeAreaInsets();
+  const { colors } = useTheme();
+  const styles = makeSettingsStyles(colors);
 
   if (feedbackDone) {
     return (
       <View style={{ flex: 1, alignItems: "center", justifyContent: "center", gap: 16, padding: 32 }}>
         <View style={[styles.guideStepIcon, { width: 72, height: 72, borderRadius: 36 }]}>
-          <Ionicons name="checkmark-circle" size={40} color={Colors.dark.safe} />
+          <Ionicons name="checkmark-circle" size={40} color={colors.safe} />
         </View>
-        <Text style={{ fontSize: 20, fontFamily: "Inter_700Bold", color: Colors.dark.text, textAlign: "center" }}>
+        <Text style={{ fontSize: 20, fontFamily: "Inter_700Bold", color: colors.text, textAlign: "center" }}>
           Thank you!
         </Text>
-        <Text style={{ fontSize: 15, fontFamily: "Inter_400Regular", color: Colors.dark.textSecondary, textAlign: "center" }}>
+        <Text style={{ fontSize: 15, fontFamily: "Inter_400Regular", color: colors.textSecondary, textAlign: "center" }}>
           Your feedback has been submitted. We appreciate you helping improve QR Guard.
         </Text>
       </View>
@@ -53,7 +55,7 @@ export default function FeedbackSection({
           value={feedbackEmail}
           onChangeText={setFeedbackEmail}
           placeholder="your@email.com"
-          placeholderTextColor={Colors.dark.textMuted}
+          placeholderTextColor={colors.textMuted}
           keyboardType="email-address"
           autoCapitalize="none"
         />
@@ -66,7 +68,7 @@ export default function FeedbackSection({
           value={feedbackText}
           onChangeText={setFeedbackText}
           placeholder="Tell us what's on your mind..."
-          placeholderTextColor={Colors.dark.textMuted}
+          placeholderTextColor={colors.textMuted}
           multiline
           numberOfLines={6}
           textAlignVertical="top"
@@ -84,10 +86,10 @@ export default function FeedbackSection({
         ]}
       >
         {feedbackSubmitting ? (
-          <ActivityIndicator color="#000" />
+          <ActivityIndicator color={colors.primaryText} />
         ) : (
           <>
-            <Ionicons name="send" size={18} color="#000" />
+            <Ionicons name="send" size={18} color={colors.primaryText} />
             <Text style={styles.submitBtnText}>Submit Feedback</Text>
           </>
         )}

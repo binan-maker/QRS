@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { getAnonymousQrContent } from "@/lib/cache/anonymous-session";
 import { useNetworkStatus } from "@/lib/use-network";
 import {
   loadQrDetail,
@@ -37,6 +38,12 @@ export function useQrData(id: string, userId: string | null) {
   const [isQrOwner, setIsQrOwner] = useState(false);
 
   async function loadOfflineFallback() {
+    const inMem = getAnonymousQrContent(id);
+    if (inMem) {
+      setOfflineContent(inMem.content);
+      setOfflineContentType(inMem.contentType || "text");
+      return;
+    }
     try {
       const raw = await AsyncStorage.getItem(`qr_content_${id}`);
       if (raw) {
@@ -69,6 +76,15 @@ export function useQrData(id: string, userId: string | null) {
           setOwnerInfo(cached.ownerInfo);
           setIsQrOwner(userId === cached.ownerInfo.ownerId);
         }
+        setLoading(false);
+        return;
+      }
+
+      const anonContent = getAnonymousQrContent(id);
+      if (anonContent) {
+        setOfflineMode(true);
+        setOfflineContent(anonContent.content);
+        setOfflineContentType(anonContent.contentType || "text");
         setLoading(false);
         return;
       }

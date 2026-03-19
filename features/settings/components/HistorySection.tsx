@@ -1,13 +1,14 @@
 import { View, Text, FlatList, Pressable, Platform, ActionSheetIOS, Alert } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import Colors from "@/constants/colors";
-import { settingsStyles as styles } from "@/features/settings/styles";
+import { useTheme } from "@/contexts/ThemeContext";
+import { makeSettingsStyles } from "@/features/settings/styles";
 import SkeletonBox from "@/components/ui/SkeletonBox";
 
 function SkeletonListRow() {
+  const { colors } = useTheme();
   return (
-    <View style={{ flexDirection: "row", alignItems: "center", gap: 12, paddingVertical: 14, paddingHorizontal: 16, borderBottomWidth: 1, borderBottomColor: Colors.dark.surfaceBorder }}>
+    <View style={{ flexDirection: "row", alignItems: "center", gap: 12, paddingVertical: 14, paddingHorizontal: 16, borderBottomWidth: 1, borderBottomColor: colors.surfaceBorder }}>
       <SkeletonBox width={40} height={40} borderRadius={12} />
       <View style={{ flex: 1, gap: 8 }}>
         <SkeletonBox width="70%" height={12} />
@@ -61,6 +62,8 @@ interface Props {
 }
 
 function HistoryRow({ item, onDelete }: { item: any; onDelete: (item: any) => void }) {
+  const { colors } = useTheme();
+
   function handleThreeDot() {
     if (Platform.OS === "ios") {
       ActionSheetIOS.showActionSheetWithOptions(
@@ -76,27 +79,27 @@ function HistoryRow({ item, onDelete }: { item: any; onDelete: (item: any) => vo
   }
 
   const sourceBadgeColor =
-    item.source === "favorite" ? Colors.dark.dangerDim
-    : item.source === "cloud" ? Colors.dark.accentDim
-    : Colors.dark.surfaceLight;
+    item.source === "favorite" ? colors.dangerDim
+    : item.source === "cloud" ? colors.accentDim
+    : colors.surfaceLight;
   const sourceBadgeText =
     item.source === "favorite" ? "Favorite"
     : item.source === "cloud" ? "Synced"
     : "Local";
   const sourceBadgeIconColor =
-    item.source === "favorite" ? Colors.dark.danger
-    : item.source === "cloud" ? Colors.dark.accent
-    : Colors.dark.textMuted;
+    item.source === "favorite" ? colors.danger
+    : item.source === "cloud" ? colors.accent
+    : colors.textMuted;
 
   return (
     <View style={{
       flexDirection: "row",
       alignItems: "center",
       gap: 12,
-      backgroundColor: Colors.dark.surface,
+      backgroundColor: colors.surface,
       borderRadius: 14,
       borderWidth: 1,
-      borderColor: Colors.dark.surfaceBorder,
+      borderColor: colors.surfaceBorder,
       padding: 14,
       marginBottom: 8,
     }}>
@@ -104,21 +107,21 @@ function HistoryRow({ item, onDelete }: { item: any; onDelete: (item: any) => vo
         width: 40,
         height: 40,
         borderRadius: 12,
-        backgroundColor: Colors.dark.primaryDim,
+        backgroundColor: colors.primaryDim,
         alignItems: "center",
         justifyContent: "center",
       }}>
-        <Ionicons name={getContentIcon(item.contentType)} size={18} color={Colors.dark.primary} />
+        <Ionicons name={getContentIcon(item.contentType)} size={18} color={colors.primary} />
       </View>
       <View style={{ flex: 1 }}>
         <Text
-          style={{ fontSize: 14, fontFamily: "Inter_500Medium", color: Colors.dark.text }}
+          style={{ fontSize: 14, fontFamily: "Inter_500Medium", color: colors.text }}
           numberOfLines={1}
         >
           {item.content}
         </Text>
         <View style={{ flexDirection: "row", alignItems: "center", gap: 8, marginTop: 4 }}>
-          <Text style={{ fontSize: 12, fontFamily: "Inter_400Regular", color: Colors.dark.textMuted }}>
+          <Text style={{ fontSize: 12, fontFamily: "Inter_400Regular", color: colors.textMuted }}>
             {formatDate(item.scannedAt)}
           </Text>
           <View style={{
@@ -141,7 +144,7 @@ function HistoryRow({ item, onDelete }: { item: any; onDelete: (item: any) => vo
         hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
         style={({ pressed }) => ({ opacity: pressed ? 0.6 : 1 })}
       >
-        <Ionicons name="ellipsis-vertical" size={20} color={Colors.dark.textMuted} />
+        <Ionicons name="ellipsis-vertical" size={20} color={colors.textMuted} />
       </Pressable>
     </View>
   );
@@ -149,6 +152,8 @@ function HistoryRow({ item, onDelete }: { item: any; onDelete: (item: any) => vo
 
 export default function HistorySection({ loading, history, onDelete, onDeleteAll }: Props) {
   const insets = useSafeAreaInsets();
+  const { colors } = useTheme();
+  const styles = makeSettingsStyles(colors);
   const bottomPad = Platform.OS === "web" ? 34 + 84 : insets.bottom + 84;
 
   if (loading) {
@@ -165,11 +170,11 @@ export default function HistorySection({ loading, history, onDelete, onDeleteAll
   if (history.length === 0) {
     return (
       <View style={{ flex: 1, alignItems: "center", justifyContent: "center", gap: 12, padding: 32 }}>
-        <Ionicons name="time-outline" size={48} color={Colors.dark.textMuted} />
-        <Text style={{ fontSize: 18, fontFamily: "Inter_600SemiBold", color: Colors.dark.textSecondary }}>
+        <Ionicons name="time-outline" size={48} color={colors.textMuted} />
+        <Text style={{ fontSize: 18, fontFamily: "Inter_600SemiBold", color: colors.textSecondary }}>
           No history yet
         </Text>
-        <Text style={{ fontSize: 13, fontFamily: "Inter_400Regular", color: Colors.dark.textMuted, textAlign: "center" }}>
+        <Text style={{ fontSize: 13, fontFamily: "Inter_400Regular", color: colors.textMuted, textAlign: "center" }}>
           Scanned QR codes will appear here
         </Text>
       </View>
@@ -195,8 +200,8 @@ export default function HistorySection({ loading, history, onDelete, onDeleteAll
             opacity: pressed ? 0.7 : 1,
           })}
         >
-          <Ionicons name="trash" size={16} color={Colors.dark.danger} />
-          <Text style={{ fontSize: 14, fontFamily: "Inter_600SemiBold", color: Colors.dark.danger }}>
+          <Ionicons name="trash" size={16} color={colors.danger} />
+          <Text style={{ fontSize: 14, fontFamily: "Inter_600SemiBold", color: colors.danger }}>
             Delete All History
           </Text>
         </Pressable>

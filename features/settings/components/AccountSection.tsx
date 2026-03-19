@@ -2,8 +2,8 @@ import { View, Text, TextInput, Pressable, ScrollView } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Animated, { FadeInDown } from "react-native-reanimated";
-import Colors from "@/constants/colors";
-import { settingsStyles as styles } from "@/features/settings/styles";
+import { useTheme } from "@/contexts/ThemeContext";
+import { makeSettingsStyles } from "@/features/settings/styles";
 import SettingsMenuItem from "./SettingsMenuItem";
 
 interface Props {
@@ -17,6 +17,8 @@ interface Props {
 
 export default function AccountSection({ user, deleteConfirmText, setDeleteConfirmText, handleDeleteAccount, goToComments, goToHistory }: Props) {
   const insets = useSafeAreaInsets();
+  const { colors } = useTheme();
+  const styles = makeSettingsStyles(colors);
   return (
     <ScrollView
       showsVerticalScrollIndicator={false}
@@ -44,10 +46,10 @@ export default function AccountSection({ user, deleteConfirmText, setDeleteConfi
 
         <View style={styles.section}>
           <Text style={styles.sectionLabel}>DANGER ZONE</Text>
-          <View style={[styles.menuGroup, { borderColor: Colors.dark.danger + "40" }]}>
+          <View style={[styles.menuGroup, { borderColor: colors.danger + "40" }]}>
             <View style={{ padding: 16, gap: 12 }}>
               <View style={styles.warningBanner}>
-                <Ionicons name="warning" size={20} color={Colors.dark.danger} />
+                <Ionicons name="warning" size={20} color={colors.danger} />
                 <View style={{ flex: 1 }}>
                   <Text style={styles.warningTitle}>Delete Account</Text>
                   <Text style={styles.warningDesc}>
@@ -61,7 +63,7 @@ export default function AccountSection({ user, deleteConfirmText, setDeleteConfi
                 value={deleteConfirmText}
                 onChangeText={setDeleteConfirmText}
                 placeholder="delete"
-                placeholderTextColor={Colors.dark.textMuted}
+                placeholderTextColor={colors.textMuted}
                 autoCapitalize="none"
               />
               <Pressable

@@ -4,7 +4,7 @@ import { shadow } from "@/lib/utils/platform";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Reanimated, { FadeIn, FadeInDown } from "react-native-reanimated";
-import Colors from "@/constants/colors";
+import { useTheme } from "@/contexts/ThemeContext";
 import { useQrGenerator, LOGO_POSITIONS } from "@/hooks/useQrGenerator";
 import ModeSelector from "@/features/generator/components/ModeSelector";
 import ContentTypeSelector from "@/features/generator/components/ContentTypeSelector";
@@ -16,6 +16,7 @@ import PositionModal from "@/features/generator/components/PositionModal";
 
 export default function QrGeneratorScreen() {
   const insets = useSafeAreaInsets();
+  const { colors } = useTheme();
   const topInset = Platform.OS === "web" ? 67 : insets.top;
   const tabBarHeight = 60 + insets.bottom;
 
@@ -39,6 +40,8 @@ export default function QrGeneratorScreen() {
     filterByKeyboardType,
   } = useQrGenerator();
 
+  const styles = makeStyles(colors);
+
   function getLogoPositionLabel() {
     return LOGO_POSITIONS.find((p) => p.key === logoPosition)?.label || "Center";
   }
@@ -48,7 +51,7 @@ export default function QrGeneratorScreen() {
       <View style={styles.navBar}>
         <Text style={styles.navTitle}>QR Generator</Text>
         <Pressable onPress={() => setInfoModalOpen(true)} style={styles.infoBtn}>
-          <Ionicons name="information-circle-outline" size={22} color={Colors.dark.textSecondary} />
+          <Ionicons name="information-circle-outline" size={22} color={colors.textSecondary} />
         </Pressable>
       </View>
 
@@ -101,7 +104,7 @@ export default function QrGeneratorScreen() {
             onPress={handleGenerate}
             style={({ pressed }) => [styles.generateBtn, { opacity: pressed ? 0.8 : 1 }]}
           >
-            <MaterialCommunityIcons name="qrcode-edit" size={22} color="#000" />
+            <MaterialCommunityIcons name="qrcode-edit" size={22} color={colors.primaryText} />
             <Text style={styles.generateBtnText}>Generate QR Code</Text>
           </Pressable>
         </Reanimated.View>
@@ -131,7 +134,7 @@ export default function QrGeneratorScreen() {
         ) : (
           <Reanimated.View entering={FadeIn.duration(400)} style={styles.emptyQr}>
             <View style={styles.emptyQrPlaceholder}>
-              <MaterialCommunityIcons name="qrcode-scan" size={64} color={Colors.dark.textMuted} />
+              <MaterialCommunityIcons name="qrcode-scan" size={64} color={colors.textMuted} />
             </View>
             <Text style={styles.emptyQrText}>Your QR code will appear here</Text>
             <Text style={styles.emptyQrSub}>Enter content above and tap Generate</Text>
@@ -154,9 +157,9 @@ export default function QrGeneratorScreen() {
           <Ionicons
             name={toastType === "error" ? "alert-circle" : "checkmark-circle"}
             size={18}
-            color={toastType === "error" ? Colors.dark.danger : Colors.dark.safe}
+            color={toastType === "error" ? colors.danger : colors.safe}
           />
-          <Text style={[styles.toastText, toastType === "error" ? { color: Colors.dark.danger } : { color: Colors.dark.safe }]}>
+          <Text style={[styles.toastText, toastType === "error" ? { color: colors.danger } : { color: colors.safe }]}>
             {toastMsg}
           </Text>
         </Animated.View>
@@ -174,45 +177,47 @@ export default function QrGeneratorScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: Colors.dark.background },
-  navBar: {
-    flexDirection: "row", alignItems: "center", justifyContent: "space-between",
-    paddingHorizontal: 20, paddingVertical: 14,
-    borderBottomWidth: 1, borderBottomColor: Colors.dark.surfaceBorder,
-  },
-  navTitle: { fontSize: 22, fontFamily: "Inter_700Bold", color: Colors.dark.text },
-  infoBtn: {
-    width: 40, height: 40, borderRadius: 20,
-    backgroundColor: Colors.dark.surface, borderWidth: 1, borderColor: Colors.dark.surfaceBorder,
-    alignItems: "center", justifyContent: "center",
-  },
-  scrollContent: { padding: 20 },
-  generateBtn: {
-    flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 10,
-    backgroundColor: Colors.dark.primary, paddingVertical: 16, borderRadius: 16, marginBottom: 24,
-  },
-  generateBtnText: { fontSize: 17, fontFamily: "Inter_700Bold", color: "#000" },
-  emptyQr: {
-    backgroundColor: Colors.dark.surface, borderRadius: 20,
-    borderWidth: 1, borderColor: Colors.dark.surfaceBorder,
-    padding: 40, alignItems: "center", gap: 12,
-  },
-  emptyQrPlaceholder: {
-    width: 100, height: 100, borderRadius: 20,
-    backgroundColor: Colors.dark.surfaceLight,
-    alignItems: "center", justifyContent: "center",
-  },
-  emptyQrText: { fontSize: 15, fontFamily: "Inter_600SemiBold", color: Colors.dark.textSecondary },
-  emptyQrSub: { fontSize: 13, fontFamily: "Inter_400Regular", color: Colors.dark.textMuted },
-  toast: {
-    position: "absolute", bottom: 100, left: 20, right: 20, borderRadius: 14,
-    flexDirection: "row", alignItems: "center", gap: 10,
-    paddingHorizontal: 16, paddingVertical: 14,
-    backgroundColor: Colors.dark.surface, borderWidth: 1,
-    ...shadow(10, "#000", 0.2, 0, 4, 8),
-  },
-  toastSuccess: { borderColor: Colors.dark.safe + "50" },
-  toastError: { borderColor: Colors.dark.danger + "50" },
-  toastText: { fontSize: 14, fontFamily: "Inter_500Medium", flex: 1 },
-});
+function makeStyles(c: ReturnType<typeof import("@/contexts/ThemeContext").useTheme>["colors"]) {
+  return StyleSheet.create({
+    container: { flex: 1, backgroundColor: c.background },
+    navBar: {
+      flexDirection: "row", alignItems: "center", justifyContent: "space-between",
+      paddingHorizontal: 20, paddingVertical: 14,
+      borderBottomWidth: 1, borderBottomColor: c.surfaceBorder,
+    },
+    navTitle: { fontSize: 22, fontFamily: "Inter_700Bold", color: c.text },
+    infoBtn: {
+      width: 40, height: 40, borderRadius: 20,
+      backgroundColor: c.surface, borderWidth: 1, borderColor: c.surfaceBorder,
+      alignItems: "center", justifyContent: "center",
+    },
+    scrollContent: { padding: 20 },
+    generateBtn: {
+      flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 10,
+      backgroundColor: c.primary, paddingVertical: 16, borderRadius: 16, marginBottom: 24,
+    },
+    generateBtnText: { fontSize: 17, fontFamily: "Inter_700Bold", color: c.primaryText },
+    emptyQr: {
+      backgroundColor: c.surface, borderRadius: 20,
+      borderWidth: 1, borderColor: c.surfaceBorder,
+      padding: 40, alignItems: "center", gap: 12,
+    },
+    emptyQrPlaceholder: {
+      width: 100, height: 100, borderRadius: 20,
+      backgroundColor: c.surfaceLight,
+      alignItems: "center", justifyContent: "center",
+    },
+    emptyQrText: { fontSize: 15, fontFamily: "Inter_600SemiBold", color: c.textSecondary },
+    emptyQrSub: { fontSize: 13, fontFamily: "Inter_400Regular", color: c.textMuted },
+    toast: {
+      position: "absolute", bottom: 100, left: 20, right: 20, borderRadius: 14,
+      flexDirection: "row", alignItems: "center", gap: 10,
+      paddingHorizontal: 16, paddingVertical: 14,
+      backgroundColor: c.surface, borderWidth: 1,
+      ...shadow(10, "#000", 0.2, 0, 4, 8),
+    },
+    toastSuccess: { borderColor: c.safe + "50" },
+    toastError: { borderColor: c.danger + "50" },
+    toastText: { fontSize: 14, fontFamily: "Inter_500Medium", flex: 1 },
+  });
+}

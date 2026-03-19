@@ -13,13 +13,14 @@ import { Link, router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import * as Haptics from "expo-haptics";
-import Colors from "@/constants/colors";
+import { useTheme } from "@/contexts/ThemeContext";
 import { useAuth } from "@/contexts/AuthContext";
 import GoogleIcon from "@/components/GoogleIcon";
 import AuthFormInput from "@/features/auth/components/AuthFormInput";
 
 export default function LoginScreen() {
   const { signIn, signInWithGoogle, googleRequest, user } = useAuth();
+  const { colors } = useTheme();
   const insets = useSafeAreaInsets();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -91,9 +92,11 @@ export default function LoginScreen() {
     }
   }
 
+  const styles = makeStyles(colors);
+
   return (
     <KeyboardAvoidingView
-      style={{ flex: 1, backgroundColor: Colors.dark.background }}
+      style={{ flex: 1, backgroundColor: colors.background }}
       behavior={Platform.OS === "ios" ? "padding" : "height"}
       keyboardVerticalOffset={90}
     >
@@ -103,7 +106,7 @@ export default function LoginScreen() {
       >
         <View style={styles.iconContainer}>
           <View style={styles.iconCircle}>
-            <Ionicons name="qr-code" size={40} color={Colors.dark.primary} />
+            <Ionicons name="qr-code" size={40} color={colors.primary} />
           </View>
         </View>
 
@@ -115,7 +118,7 @@ export default function LoginScreen() {
             <Ionicons
               name={unverifiedEmail ? "mail-unread-outline" : "alert-circle"}
               size={16}
-              color={unverifiedEmail ? Colors.dark.warning : Colors.dark.danger}
+              color={unverifiedEmail ? colors.warning : colors.danger}
             />
             <Text style={[styles.errorText, unverifiedEmail && styles.warningText]}>{error}</Text>
           </View>
@@ -157,7 +160,7 @@ export default function LoginScreen() {
           style={({ pressed }) => [styles.primaryButton, { opacity: pressed || loading ? 0.8 : 1 }]}
         >
           {loading ? (
-            <ActivityIndicator color="#000" />
+            <ActivityIndicator color={colors.primaryText} />
           ) : (
             <Text style={styles.primaryButtonText}>Sign In</Text>
           )}
@@ -178,7 +181,7 @@ export default function LoginScreen() {
           ]}
         >
           {googleLoading ? (
-            <ActivityIndicator color={Colors.dark.text} size="small" />
+            <ActivityIndicator color={colors.text} size="small" />
           ) : (
             <>
               <GoogleIcon size={20} />
@@ -200,42 +203,44 @@ export default function LoginScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flexGrow: 1, padding: 24, justifyContent: "center", gap: 16 },
-  iconContainer: { alignItems: "center", marginBottom: 8 },
-  iconCircle: {
-    width: 80, height: 80, borderRadius: 40,
-    backgroundColor: Colors.dark.primaryDim, alignItems: "center", justifyContent: "center",
-  },
-  title: { fontSize: 28, fontFamily: "Inter_700Bold", color: Colors.dark.text, textAlign: "center" },
-  subtitle: {
-    fontSize: 15, fontFamily: "Inter_400Regular", color: Colors.dark.textSecondary,
-    textAlign: "center", marginBottom: 8,
-  },
-  errorContainer: {
-    flexDirection: "row", alignItems: "flex-start", gap: 8,
-    backgroundColor: Colors.dark.dangerDim, padding: 12, borderRadius: 12,
-  },
-  warningContainer: { backgroundColor: Colors.dark.warningDim },
-  errorText: { color: Colors.dark.danger, fontFamily: "Inter_500Medium", fontSize: 14, flex: 1 },
-  warningText: { color: Colors.dark.warning },
-  forgotPasswordBtn: { alignSelf: "flex-end", marginTop: 8, paddingVertical: 2 },
-  forgotPasswordText: { color: Colors.dark.primary, fontFamily: "Inter_500Medium", fontSize: 13 },
-  primaryButton: {
-    backgroundColor: Colors.dark.primary, paddingVertical: 16,
-    borderRadius: 14, alignItems: "center", marginTop: 4,
-  },
-  primaryButtonText: { color: "#000", fontSize: 16, fontFamily: "Inter_700Bold" },
-  footer: { flexDirection: "row", justifyContent: "center", gap: 6, marginTop: 4 },
-  footerText: { color: Colors.dark.textSecondary, fontFamily: "Inter_400Regular", fontSize: 14 },
-  linkText: { color: Colors.dark.primary, fontFamily: "Inter_600SemiBold", fontSize: 14 },
-  dividerRow: { flexDirection: "row", alignItems: "center", gap: 12 },
-  dividerLine: { flex: 1, height: 1, backgroundColor: Colors.dark.surfaceBorder },
-  dividerText: { fontSize: 13, fontFamily: "Inter_400Regular", color: Colors.dark.textMuted },
-  googleButton: {
-    flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 12,
-    backgroundColor: Colors.dark.surface, borderWidth: 1, borderColor: Colors.dark.surfaceBorder,
-    paddingVertical: 14, paddingHorizontal: 20, borderRadius: 14,
-  },
-  googleButtonText: { fontSize: 15, fontFamily: "Inter_600SemiBold", color: Colors.dark.text },
-});
+function makeStyles(c: ReturnType<typeof import("@/contexts/ThemeContext").useTheme>["colors"]) {
+  return StyleSheet.create({
+    container: { flexGrow: 1, padding: 24, justifyContent: "center", gap: 16 },
+    iconContainer: { alignItems: "center", marginBottom: 8 },
+    iconCircle: {
+      width: 80, height: 80, borderRadius: 40,
+      backgroundColor: c.primaryDim, alignItems: "center", justifyContent: "center",
+    },
+    title: { fontSize: 28, fontFamily: "Inter_700Bold", color: c.text, textAlign: "center" },
+    subtitle: {
+      fontSize: 15, fontFamily: "Inter_400Regular", color: c.textSecondary,
+      textAlign: "center", marginBottom: 8,
+    },
+    errorContainer: {
+      flexDirection: "row", alignItems: "flex-start", gap: 8,
+      backgroundColor: c.dangerDim, padding: 12, borderRadius: 12,
+    },
+    warningContainer: { backgroundColor: c.warningDim },
+    errorText: { color: c.danger, fontFamily: "Inter_500Medium", fontSize: 14, flex: 1 },
+    warningText: { color: c.warning },
+    forgotPasswordBtn: { alignSelf: "flex-end", marginTop: 8, paddingVertical: 2 },
+    forgotPasswordText: { color: c.primary, fontFamily: "Inter_500Medium", fontSize: 13 },
+    primaryButton: {
+      backgroundColor: c.primary, paddingVertical: 16,
+      borderRadius: 14, alignItems: "center", marginTop: 4,
+    },
+    primaryButtonText: { color: c.primaryText, fontSize: 16, fontFamily: "Inter_700Bold" },
+    footer: { flexDirection: "row", justifyContent: "center", gap: 6, marginTop: 4 },
+    footerText: { color: c.textSecondary, fontFamily: "Inter_400Regular", fontSize: 14 },
+    linkText: { color: c.primary, fontFamily: "Inter_600SemiBold", fontSize: 14 },
+    dividerRow: { flexDirection: "row", alignItems: "center", gap: 12 },
+    dividerLine: { flex: 1, height: 1, backgroundColor: c.surfaceBorder },
+    dividerText: { fontSize: 13, fontFamily: "Inter_400Regular", color: c.textMuted },
+    googleButton: {
+      flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 12,
+      backgroundColor: c.surface, borderWidth: 1, borderColor: c.surfaceBorder,
+      paddingVertical: 14, paddingHorizontal: 20, borderRadius: 14,
+    },
+    googleButtonText: { fontSize: 15, fontFamily: "Inter_600SemiBold", color: c.text },
+  });
+}

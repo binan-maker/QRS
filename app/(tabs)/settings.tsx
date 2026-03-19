@@ -2,9 +2,9 @@ import { View, Text, Pressable, ScrollView, Platform, Alert } from "react-native
 import { router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import Colors from "@/constants/colors";
+import { useTheme } from "@/contexts/ThemeContext";
 import { useSettings } from "@/hooks/useSettings";
-import { settingsStyles as styles } from "@/features/settings/styles";
+import { makeSettingsStyles } from "@/features/settings/styles";
 import SettingsMenuItem from "@/features/settings/components/SettingsMenuItem";
 import AccountSection from "@/features/settings/components/AccountSection";
 import GuideSection from "@/features/settings/components/GuideSection";
@@ -25,6 +25,8 @@ const SECTION_TITLES: Record<string, string> = {
 export default function SettingsScreen() {
   const insets = useSafeAreaInsets();
   const topInset = Platform.OS === "web" ? 67 : insets.top;
+  const { colors } = useTheme();
+  const styles = makeSettingsStyles(colors);
 
   const {
     user, section, setSection,
@@ -47,7 +49,7 @@ export default function SettingsScreen() {
       <View style={[styles.container, { paddingTop: topInset }]}>
         <View style={styles.navBar}>
           <Pressable onPress={() => setSection("main")} style={styles.navBackBtn}>
-            <Ionicons name="chevron-back" size={24} color={Colors.dark.text} />
+            <Ionicons name="chevron-back" size={24} color={colors.text} />
           </Pressable>
           <Text style={styles.navTitle}>{SECTION_TITLES[section] ?? "Settings"}</Text>
           <View style={{ width: 40 }} />
@@ -102,7 +104,7 @@ export default function SettingsScreen() {
     <View style={[styles.container, { paddingTop: topInset }]}>
       <View style={styles.navBar}>
         <Pressable onPress={() => router.back()} style={styles.navBackBtn}>
-          <Ionicons name="chevron-back" size={24} color={Colors.dark.text} />
+          <Ionicons name="chevron-back" size={24} color={colors.text} />
         </Pressable>
         <Text style={styles.navTitle}>Settings</Text>
         <View style={{ width: 40 }} />
@@ -121,7 +123,7 @@ export default function SettingsScreen() {
                   <Text style={styles.accountName}>{user.displayName}</Text>
                   <Text style={styles.accountEmail}>{user.email}</Text>
                 </View>
-                <Ionicons name="checkmark-circle" size={20} color={Colors.dark.safe} />
+                <Ionicons name="checkmark-circle" size={20} color={colors.safe} />
               </View>
               <View style={styles.divider} />
               <SettingsMenuItem
@@ -144,13 +146,13 @@ export default function SettingsScreen() {
               style={({ pressed }) => [styles.signInCard, { opacity: pressed ? 0.9 : 1 }]}
             >
               <View style={styles.signInIcon}>
-                <Ionicons name="person-outline" size={24} color={Colors.dark.primary} />
+                <Ionicons name="person-outline" size={24} color={colors.primary} />
               </View>
               <View style={{ flex: 1 }}>
                 <Text style={styles.signInTitle}>Sign in to your account</Text>
                 <Text style={styles.signInSub}>Access full features — comment, report, sync history</Text>
               </View>
-              <Ionicons name="chevron-forward" size={20} color={Colors.dark.textMuted} />
+              <Ionicons name="chevron-forward" size={20} color={colors.textMuted} />
             </Pressable>
           )}
         </View>
@@ -224,7 +226,7 @@ export default function SettingsScreen() {
               onPress={handleSignOut}
               style={({ pressed }) => [styles.signOutBtn, { opacity: pressed ? 0.8 : 1 }]}
             >
-              <Ionicons name="log-out-outline" size={20} color={Colors.dark.danger} />
+              <Ionicons name="log-out-outline" size={20} color={colors.danger} />
               <Text style={styles.signOutText}>Sign Out</Text>
             </Pressable>
           </View>

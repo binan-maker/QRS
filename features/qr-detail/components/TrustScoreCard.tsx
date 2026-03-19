@@ -2,7 +2,7 @@ import React from "react";
 import { View, Text, StyleSheet, Pressable } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { formatCompactNumber } from "@/lib/number-format";
-import Colors from "@/constants/colors";
+import { useTheme } from "@/contexts/ThemeContext";
 
 interface TrustInfo {
   score: number;
@@ -22,13 +22,6 @@ interface Props {
   manipulationWarning?: boolean;
 }
 
-const REPORT_TYPES = [
-  { key: "safe", label: "Safe", icon: "shield-checkmark", color: Colors.dark.safe, bg: Colors.dark.safeDim },
-  { key: "scam", label: "Scam", icon: "warning", color: Colors.dark.danger, bg: Colors.dark.dangerDim },
-  { key: "fake", label: "Fake", icon: "close-circle", color: Colors.dark.warning, bg: Colors.dark.warningDim },
-  { key: "spam", label: "Spam", icon: "mail-unread", color: Colors.dark.accent, bg: Colors.dark.accentDim },
-];
-
 const TrustScoreCard = React.memo(function TrustScoreCard({
   trustInfo,
   reportCounts,
@@ -39,7 +32,17 @@ const TrustScoreCard = React.memo(function TrustScoreCard({
   onOpenFollowers,
   manipulationWarning,
 }: Props) {
+  const { colors } = useTheme();
+
+  const REPORT_TYPES = [
+    { key: "safe", label: "Safe", icon: "shield-checkmark", color: colors.safe, bg: colors.safeDim },
+    { key: "scam", label: "Scam", icon: "warning", color: colors.danger, bg: colors.dangerDim },
+    { key: "fake", label: "Fake", icon: "close-circle", color: colors.warning, bg: colors.warningDim },
+    { key: "spam", label: "Spam", icon: "mail-unread", color: colors.accent, bg: colors.accentDim },
+  ];
+
   const total = REPORT_TYPES.reduce((sum, r) => sum + (reportCounts[r.key] || 0), 0);
+  const styles = makeStyles(colors);
 
   return (
     <View style={styles.card}>
@@ -54,7 +57,7 @@ const TrustScoreCard = React.memo(function TrustScoreCard({
 
       {manipulationWarning ? (
         <View style={styles.manipulationBanner}>
-          <Ionicons name="alert-circle" size={14} color={Colors.dark.warning} />
+          <Ionicons name="alert-circle" size={14} color={colors.warning} />
           <Text style={styles.manipulationText}>
             Unusual voting activity detected. Score may not reflect genuine community opinion.
           </Text>
@@ -85,7 +88,7 @@ const TrustScoreCard = React.memo(function TrustScoreCard({
         <View style={styles.statDivider} />
         <Pressable style={styles.statItem} onPress={isQrOwner ? onOpenFollowers : undefined}>
           <Text style={styles.statNum}>{formatCompactNumber(followCount)}</Text>
-          <Text style={[styles.statLabel, isQrOwner && { color: Colors.dark.primary }]}>
+          <Text style={[styles.statLabel, isQrOwner && { color: colors.primary }]}>
             {isQrOwner ? "Followers ›" : "Followers"}
           </Text>
         </Pressable>
@@ -116,41 +119,37 @@ const TrustScoreCard = React.memo(function TrustScoreCard({
 
 export default TrustScoreCard;
 
-const styles = StyleSheet.create({
-  card: {
-    backgroundColor: Colors.dark.surface, borderRadius: 16, padding: 18,
-    marginBottom: 16, borderWidth: 1, borderColor: Colors.dark.surfaceBorder,
-  },
-  cardHeader: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 12 },
-  cardTitle: { fontSize: 16, fontFamily: "Inter_700Bold", color: Colors.dark.text },
-  scoreBadge: {
-    paddingHorizontal: 10, paddingVertical: 4, borderRadius: 10,
-    borderWidth: 1,
-  },
-  scoreBadgeText: { fontSize: 12, fontFamily: "Inter_700Bold" },
-  scoreBarWrap: { flexDirection: "row", alignItems: "center", gap: 10, marginBottom: 16 },
-  scoreBarBg: { flex: 1, height: 6, borderRadius: 3, backgroundColor: Colors.dark.surfaceLight },
-  scoreBarFill: { height: "100%", borderRadius: 3 },
-  scoreNum: { fontSize: 13, fontFamily: "Inter_700Bold", minWidth: 38, textAlign: "right" },
-  noReportsText: { fontSize: 13, fontFamily: "Inter_400Regular", color: Colors.dark.textMuted, marginBottom: 16 },
-  statsRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-around" },
-  statItem: { alignItems: "center", gap: 2, flex: 1 },
-  statNum: { fontSize: 17, fontFamily: "Inter_700Bold", color: Colors.dark.text },
-  statLabel: { fontSize: 11, fontFamily: "Inter_400Regular", color: Colors.dark.textMuted },
-  statDivider: { width: 1, height: 32, backgroundColor: Colors.dark.surfaceBorder },
-  reportBreakdown: { flexDirection: "row", flexWrap: "wrap", gap: 8, marginTop: 14 },
-  reportChip: {
-    flexDirection: "row", alignItems: "center", gap: 5,
-    paddingHorizontal: 10, paddingVertical: 5, borderRadius: 20,
-  },
-  reportChipText: { fontSize: 12, fontFamily: "Inter_600SemiBold" },
-  manipulationBanner: {
-    flexDirection: "row", alignItems: "flex-start", gap: 8, marginBottom: 12,
-    backgroundColor: Colors.dark.warningDim, borderRadius: 10, padding: 10,
-    borderWidth: 1, borderColor: Colors.dark.warning + "40",
-  },
-  manipulationText: {
-    fontSize: 12, fontFamily: "Inter_400Regular",
-    color: Colors.dark.warning, flex: 1, lineHeight: 17,
-  },
-});
+function makeStyles(c: ReturnType<typeof import("@/contexts/ThemeContext").useTheme>["colors"]) {
+  return StyleSheet.create({
+    card: {
+      backgroundColor: c.surface, borderRadius: 16, padding: 18,
+      marginBottom: 16, borderWidth: 1, borderColor: c.surfaceBorder,
+    },
+    cardHeader: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 12 },
+    cardTitle: { fontSize: 16, fontFamily: "Inter_700Bold", color: c.text },
+    scoreBadge: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 10, borderWidth: 1 },
+    scoreBadgeText: { fontSize: 12, fontFamily: "Inter_700Bold" },
+    scoreBarWrap: { flexDirection: "row", alignItems: "center", gap: 10, marginBottom: 16 },
+    scoreBarBg: { flex: 1, height: 6, borderRadius: 3, backgroundColor: c.surfaceLight },
+    scoreBarFill: { height: "100%", borderRadius: 3 },
+    scoreNum: { fontSize: 13, fontFamily: "Inter_700Bold", minWidth: 38, textAlign: "right" },
+    noReportsText: { fontSize: 13, fontFamily: "Inter_400Regular", color: c.textMuted, marginBottom: 16 },
+    statsRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-around" },
+    statItem: { alignItems: "center", gap: 2, flex: 1 },
+    statNum: { fontSize: 17, fontFamily: "Inter_700Bold", color: c.text },
+    statLabel: { fontSize: 11, fontFamily: "Inter_400Regular", color: c.textMuted },
+    statDivider: { width: 1, height: 32, backgroundColor: c.surfaceBorder },
+    reportBreakdown: { flexDirection: "row", flexWrap: "wrap", gap: 8, marginTop: 14 },
+    reportChip: {
+      flexDirection: "row", alignItems: "center", gap: 5,
+      paddingHorizontal: 10, paddingVertical: 5, borderRadius: 20,
+    },
+    reportChipText: { fontSize: 12, fontFamily: "Inter_600SemiBold" },
+    manipulationBanner: {
+      flexDirection: "row", alignItems: "flex-start", gap: 8, marginBottom: 12,
+      backgroundColor: c.warningDim, borderRadius: 10, padding: 10,
+      borderWidth: 1, borderColor: c.warning + "40",
+    },
+    manipulationText: { fontSize: 12, fontFamily: "Inter_400Regular", color: c.warning, flex: 1, lineHeight: 17 },
+  });
+}
