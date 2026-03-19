@@ -3,7 +3,7 @@ import { Alert, Linking } from "react-native";
 import * as Clipboard from "expo-clipboard";
 import * as Haptics from "expo-haptics";
 import { useAuth } from "@/contexts/AuthContext";
-import Colors from "@/constants/colors";
+import { useTheme } from "@/contexts/ThemeContext";
 import { useQrData, type QrDetail } from "./useQrData";
 import { useQrSafety } from "./useQrSafety";
 import { useQrReports } from "./useQrReports";
@@ -16,6 +16,7 @@ export type { QrDetail, CommentItem };
 
 export function useQrDetail(id: string) {
   const { user } = useAuth();
+  const { colors } = useTheme();
   const userId = user?.id ?? null;
   const [copied, setCopied] = useState(false);
 
@@ -32,10 +33,10 @@ export function useQrDetail(id: string) {
 
   function getTrustColor(label: string) {
     switch (label) {
-      case "Trusted": case "Likely Safe": return Colors.dark.safe;
-      case "Caution": case "Uncertain": return Colors.dark.warning;
-      case "Dangerous": case "Suspicious": return Colors.dark.danger;
-      default: return Colors.dark.textMuted;
+      case "Trusted": case "Likely Safe": return colors.safe;
+      case "Caution": case "Uncertain": return colors.warning;
+      case "Dangerous": case "Suspicious": return colors.danger;
+      default: return colors.textMuted;
     }
   }
 
@@ -50,11 +51,11 @@ export function useQrDetail(id: string) {
       };
     }
     const total = (reportCounts.safe || 0) + (reportCounts.scam || 0) + (reportCounts.fake || 0) + (reportCounts.spam || 0);
-    if (total === 0) return { score: -1, label: "No Reports", color: Colors.dark.textMuted, manipulationWarning: false };
+    if (total === 0) return { score: -1, label: "No Reports", color: colors.textMuted, manipulationWarning: false };
     const safeRatio = (reportCounts.safe || 0) / total;
-    if (safeRatio >= 0.7) return { score: safeRatio * 100, label: "Trusted", color: Colors.dark.safe, manipulationWarning: false };
-    if (safeRatio >= 0.4) return { score: safeRatio * 100, label: "Caution", color: Colors.dark.warning, manipulationWarning: false };
-    return { score: safeRatio * 100, label: "Dangerous", color: Colors.dark.danger, manipulationWarning: false };
+    if (safeRatio >= 0.7) return { score: safeRatio * 100, label: "Trusted", color: colors.safe, manipulationWarning: false };
+    if (safeRatio >= 0.4) return { score: safeRatio * 100, label: "Caution", color: colors.warning, manipulationWarning: false };
+    return { score: safeRatio * 100, label: "Dangerous", color: colors.danger, manipulationWarning: false };
   }
 
   async function handleOpenPayment(rawContent: string) {

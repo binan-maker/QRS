@@ -7,10 +7,10 @@ import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import * as Haptics from "expo-haptics";
 import Animated, { FadeInDown } from "react-native-reanimated";
-import Colors from "@/constants/colors";
+import { useTheme } from "@/contexts/ThemeContext";
 import QRCode from "react-native-qrcode-svg";
 import { useMyQrDetail, FG_COLORS, BG_COLORS, LOGO_POSITIONS } from "@/features/my-qr/hooks/useMyQrDetail";
-import { styles } from "@/features/my-qr/styles";
+import { makeStyles } from "@/features/my-qr/styles";
 import CommentRow from "@/features/my-qr/components/CommentRow";
 import DeactivateModal from "@/features/my-qr/components/DeactivateModal";
 import FollowersModal from "@/features/my-qr/components/FollowersModal";
@@ -34,6 +34,8 @@ function SkeletonCommentItem() {
 
 export default function MyQrDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
+  const { colors } = useTheme();
+  const styles = makeStyles(colors);
   const insets = useSafeAreaInsets();
   const topInset = Platform.OS === "web" ? 67 : insets.top;
   const bottomInset = insets.bottom;
@@ -45,17 +47,17 @@ export default function MyQrDetailScreen() {
       <View style={[styles.container, { paddingTop: topInset }]}>
         <View style={styles.navBar}>
           <Pressable onPress={() => router.back()} style={styles.backBtn}>
-            <Ionicons name="arrow-back" size={22} color={Colors.dark.text} />
+            <Ionicons name="arrow-back" size={22} color={colors.text} />
           </Pressable>
           <Text style={styles.navTitle}>My QR Code</Text>
           <View style={{ width: 40 }} />
         </View>
         <ScrollView contentContainerStyle={{ padding: 16, gap: 14 }} showsVerticalScrollIndicator={false}>
-          <View style={{ backgroundColor: Colors.dark.surface, borderRadius: 20, borderWidth: 1, borderColor: Colors.dark.surfaceBorder, alignItems: "center", paddingVertical: 32, gap: 16 }}>
+          <View style={{ backgroundColor: colors.surface, borderRadius: 20, borderWidth: 1, borderColor: colors.surfaceBorder, alignItems: "center", paddingVertical: 32, gap: 16 }}>
             <SkeletonBox width={200} height={200} borderRadius={16} />
             <SkeletonBox width={160} height={12} />
           </View>
-          <View style={{ backgroundColor: Colors.dark.surface, borderRadius: 16, borderWidth: 1, borderColor: Colors.dark.surfaceBorder, padding: 16, gap: 12 }}>
+          <View style={{ backgroundColor: colors.surface, borderRadius: 16, borderWidth: 1, borderColor: colors.surfaceBorder, padding: 16, gap: 12 }}>
             <SkeletonBox width="30%" height={10} />
             <SkeletonBox width="100%" height={14} />
             <SkeletonBox width="70%" height={14} />
@@ -70,7 +72,7 @@ export default function MyQrDetailScreen() {
       <View style={[styles.container, { paddingTop: topInset }]}>
         <View style={styles.navBar}>
           <Pressable onPress={() => router.back()} style={styles.backBtn}>
-            <Ionicons name="arrow-back" size={22} color={Colors.dark.text} />
+            <Ionicons name="arrow-back" size={22} color={colors.text} />
           </Pressable>
           <Text style={styles.navTitle}>My QR Code</Text>
           <View style={{ width: 40 }} />
@@ -88,7 +90,7 @@ export default function MyQrDetailScreen() {
     <View style={[styles.container, { paddingTop: topInset }]}>
       <View style={styles.navBar}>
         <Pressable onPress={() => router.back()} style={styles.backBtn}>
-          <Ionicons name="arrow-back" size={22} color={Colors.dark.text} />
+          <Ionicons name="arrow-back" size={22} color={colors.text} />
         </Pressable>
         <Text style={styles.navTitle} numberOfLines={1}>My QR Code</Text>
         <View style={{ width: 40 }} />
@@ -140,7 +142,7 @@ export default function MyQrDetailScreen() {
               </View>
               {qr.branded && qr.uuid ? (
                 <View style={styles.uuidRow}>
-                  <Ionicons name="shield-checkmark" size={13} color={Colors.dark.safe} />
+                  <Ionicons name="shield-checkmark" size={13} color={colors.safe} />
                   <Text style={styles.uuidText}>{qr.uuid}</Text>
                 </View>
               ) : null}
@@ -152,14 +154,14 @@ export default function MyQrDetailScreen() {
             <View style={styles.metaCard}>
               <Text style={styles.sectionLabel}>QR INFO</Text>
               <View style={{ flexDirection: "row", gap: 8, marginBottom: 4 }}>
-                <View style={{ flex: 1, backgroundColor: Colors.dark.primaryDim, borderRadius: 14, padding: 12, alignItems: "center", gap: 4, borderWidth: 1, borderColor: Colors.dark.primary + "30" }}>
-                  <Ionicons name="scan-outline" size={20} color={Colors.dark.primary} />
-                  <Text style={{ fontSize: 22, fontFamily: "Inter_700Bold", color: Colors.dark.primary, lineHeight: 26 }}>{qr.scanCount}</Text>
+                <View style={{ flex: 1, backgroundColor: colors.primaryDim, borderRadius: 14, padding: 12, alignItems: "center", gap: 4, borderWidth: 1, borderColor: colors.primary + "30" }}>
+                  <Ionicons name="scan-outline" size={20} color={colors.primary} />
+                  <Text style={{ fontSize: 22, fontFamily: "Inter_700Bold", color: colors.primary, lineHeight: 26 }}>{qr.scanCount}</Text>
                   <Text style={[styles.metaLabel, { marginBottom: 0, textAlign: "center" }]}>Scans</Text>
                 </View>
-                <View style={{ flex: 1, backgroundColor: Colors.dark.accentDim, borderRadius: 14, padding: 12, alignItems: "center", gap: 4, borderWidth: 1, borderColor: Colors.dark.accent + "30" }}>
-                  <Ionicons name="chatbubble-outline" size={20} color={Colors.dark.accent} />
-                  <Text style={{ fontSize: 22, fontFamily: "Inter_700Bold", color: Colors.dark.accent, lineHeight: 26 }}>{qr.commentCount}</Text>
+                <View style={{ flex: 1, backgroundColor: colors.accentDim, borderRadius: 14, padding: 12, alignItems: "center", gap: 4, borderWidth: 1, borderColor: colors.accent + "30" }}>
+                  <Ionicons name="chatbubble-outline" size={20} color={colors.accent} />
+                  <Text style={{ fontSize: 22, fontFamily: "Inter_700Bold", color: colors.accent, lineHeight: 26 }}>{qr.commentCount}</Text>
                   <Text style={[styles.metaLabel, { marginBottom: 0, textAlign: "center" }]}>Comments</Text>
                 </View>
                 <Pressable
@@ -176,15 +178,15 @@ export default function MyQrDetailScreen() {
                 <View style={styles.metaContentRow}>
                   <Text style={styles.metaLabel}>Destination (read-only)</Text>
                   <View style={styles.lockedRow}>
-                    <Ionicons name="lock-closed" size={12} color={Colors.dark.textMuted} />
+                    <Ionicons name="lock-closed" size={12} color={colors.textMuted} />
                     <Text style={styles.metaContentValue} numberOfLines={2}>{qr.content}</Text>
                   </View>
                   <Pressable
                     onPress={h.handleCopyContent}
                     style={({ pressed }) => [styles.copyBtn, { opacity: pressed ? 0.75 : 1 }]}
                   >
-                    <Ionicons name="copy-outline" size={13} color={Colors.dark.textSecondary} />
-                    <Text style={{ fontSize: 12, fontFamily: "Inter_500Medium", color: Colors.dark.textSecondary }}>Copy Content</Text>
+                    <Ionicons name="copy-outline" size={13} color={colors.textSecondary} />
+                    <Text style={{ fontSize: 12, fontFamily: "Inter_500Medium", color: colors.textSecondary }}>Copy Content</Text>
                   </Pressable>
                 </View>
               )}
@@ -223,11 +225,11 @@ export default function MyQrDetailScreen() {
                           value={h.newDestination}
                           onChangeText={h.setNewDestination}
                           placeholder="https://your-new-destination.com"
-                          placeholderTextColor={Colors.dark.textMuted}
+                          placeholderTextColor={colors.textMuted}
                           autoCapitalize="none"
                           autoCorrect={false}
                           keyboardType="url"
-                          style={{ backgroundColor: Colors.dark.background, borderRadius: 10, borderWidth: 1, borderColor: "#FBBF2450", color: Colors.dark.text, fontFamily: "Inter_400Regular", fontSize: 13, padding: 10 }}
+                          style={{ backgroundColor: colors.background, borderRadius: 10, borderWidth: 1, borderColor: "#FBBF2450", color: colors.text, fontFamily: "Inter_400Regular", fontSize: 13, padding: 10 }}
                         />
                         <View style={{ flexDirection: "row", gap: 8 }}>
                           <Pressable
@@ -240,22 +242,22 @@ export default function MyQrDetailScreen() {
                           </Pressable>
                           <Pressable
                             onPress={() => { h.setEditingDestination(false); h.setNewDestination(h.guardLink!.currentDestination); }}
-                            style={{ paddingHorizontal: 16, paddingVertical: 10, backgroundColor: Colors.dark.surfaceLight, borderRadius: 10, alignItems: "center", justifyContent: "center" }}
+                            style={{ paddingHorizontal: 16, paddingVertical: 10, backgroundColor: colors.surfaceLight, borderRadius: 10, alignItems: "center", justifyContent: "center" }}
                           >
-                            <Text style={{ fontSize: 13, fontFamily: "Inter_500Medium", color: Colors.dark.textSecondary }}>Cancel</Text>
+                            <Text style={{ fontSize: 13, fontFamily: "Inter_500Medium", color: colors.textSecondary }}>Cancel</Text>
                           </Pressable>
                         </View>
-                        <Text style={{ fontSize: 11, color: Colors.dark.textMuted, fontFamily: "Inter_400Regular", lineHeight: 16 }}>
+                        <Text style={{ fontSize: 11, color: colors.textMuted, fontFamily: "Inter_400Regular", lineHeight: 16 }}>
                           Changing the destination triggers a 24-hour caution period.
                         </Text>
                       </View>
                     ) : (
                       <View style={{ gap: 8 }}>
-                        <View style={{ backgroundColor: Colors.dark.background, borderRadius: 10, borderWidth: 1, borderColor: Colors.dark.surfaceBorder, padding: 10 }}>
-                          <Text style={{ fontSize: 13, color: Colors.dark.accent, fontFamily: "Inter_400Regular", lineHeight: 18 }} numberOfLines={3}>{h.guardLink.currentDestination}</Text>
+                        <View style={{ backgroundColor: colors.background, borderRadius: 10, borderWidth: 1, borderColor: colors.surfaceBorder, padding: 10 }}>
+                          <Text style={{ fontSize: 13, color: colors.accent, fontFamily: "Inter_400Regular", lineHeight: 18 }} numberOfLines={3}>{h.guardLink.currentDestination}</Text>
                         </View>
                         {h.guardLink.previousDestination ? (
-                          <Text style={{ fontSize: 11, color: Colors.dark.textMuted, fontFamily: "Inter_400Regular" }}>
+                          <Text style={{ fontSize: 11, color: colors.textMuted, fontFamily: "Inter_400Regular" }}>
                             Previous: {h.guardLink.previousDestination.length > 50 ? h.guardLink.previousDestination.slice(0, 50) + "…" : h.guardLink.previousDestination}
                           </Text>
                         ) : null}
@@ -270,7 +272,7 @@ export default function MyQrDetailScreen() {
                     )}
                   </>
                 ) : (
-                  <Text style={{ fontSize: 13, color: Colors.dark.textMuted, fontFamily: "Inter_400Regular" }}>Loading guard link…</Text>
+                  <Text style={{ fontSize: 13, color: colors.textMuted, fontFamily: "Inter_400Regular" }}>Loading guard link…</Text>
                 )}
               </View>
             </Animated.View>
@@ -280,15 +282,15 @@ export default function MyQrDetailScreen() {
           {qr.branded && qr.qrType !== "government" && (
             <Animated.View entering={FadeInDown.duration(400).delay(80)}>
               <View style={[styles.metaCard, { marginTop: 0, borderLeftWidth: 4, overflow: "hidden",
-                borderLeftColor: qr.isActive ? Colors.dark.safe : Colors.dark.danger,
+                borderLeftColor: qr.isActive ? colors.safe : colors.danger,
                 backgroundColor: qr.isActive ? "rgba(16,185,129,0.06)" : "rgba(239,68,68,0.06)" }]}>
                 <View style={{ flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 10 }}>
-                  <View style={{ width: 9, height: 9, borderRadius: 5, backgroundColor: qr.isActive ? Colors.dark.safe : Colors.dark.danger }} />
-                  <Text style={[styles.sectionLabel, { marginBottom: 0, letterSpacing: 1.4, color: qr.isActive ? Colors.dark.safe : Colors.dark.danger }]}>
+                  <View style={{ width: 9, height: 9, borderRadius: 5, backgroundColor: qr.isActive ? colors.safe : colors.danger }} />
+                  <Text style={[styles.sectionLabel, { marginBottom: 0, letterSpacing: 1.4, color: qr.isActive ? colors.safe : colors.danger }]}>
                     {qr.isActive ? "ACTIVE" : "DEACTIVATED"}
                   </Text>
                 </View>
-                <Text style={{ fontSize: 13, fontFamily: "Inter_400Regular", color: Colors.dark.textSecondary, marginBottom: 14, lineHeight: 20 }}>
+                <Text style={{ fontSize: 13, fontFamily: "Inter_400Regular", color: colors.textSecondary, marginBottom: 14, lineHeight: 20 }}>
                   {qr.isActive ? "Your QR code is live. Scanners can view and follow its links." : "Your QR code is off. Links are completely hidden from scanners."}
                 </Text>
                 {!qr.isActive && qr.deactivationMessage ? (
@@ -319,13 +321,13 @@ export default function MyQrDetailScreen() {
               onPress={() => { h.setDesignOpen((v: boolean) => !v); Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); }}
             >
               <View style={styles.designHeaderLeft}>
-                <View style={[styles.metaIconWrap, { backgroundColor: Colors.dark.accentDim }]}>
-                  <MaterialCommunityIcons name="palette-outline" size={16} color={Colors.dark.accent} />
+                <View style={[styles.metaIconWrap, { backgroundColor: colors.accentDim }]}>
+                  <MaterialCommunityIcons name="palette-outline" size={16} color={colors.accent} />
                 </View>
                 <Text style={styles.designHeaderText}>Edit Design</Text>
                 {h.designDirty ? <View style={styles.dirtyDot} /> : null}
               </View>
-              <Ionicons name={h.designOpen ? "chevron-up" : "chevron-down"} size={18} color={Colors.dark.textMuted} />
+              <Ionicons name={h.designOpen ? "chevron-up" : "chevron-down"} size={18} color={colors.textMuted} />
             </Pressable>
 
             {h.designOpen && (
@@ -341,17 +343,17 @@ export default function MyQrDetailScreen() {
                     ))}
                     <Pressable
                       onPress={() => { h.setCustomColorTarget("fg"); h.setCustomColorInput(h.fgColor); h.setCustomColorOpen(true); }}
-                      style={[styles.swatch, { backgroundColor: Colors.dark.surfaceLight, borderColor: Colors.dark.primary + "60", borderStyle: "dashed" },
-                        !FG_COLORS.find(c => c.color === h.fgColor) && { borderColor: Colors.dark.primary, borderWidth: 2 }]}
+                      style={[styles.swatch, { backgroundColor: colors.surfaceLight, borderColor: colors.primary + "60", borderStyle: "dashed" },
+                        !FG_COLORS.find(c => c.color === h.fgColor) && { borderColor: colors.primary, borderWidth: 2 }]}
                     >
                       {!FG_COLORS.find(c => c.color === h.fgColor)
                         ? <View style={{ width: 24, height: 24, borderRadius: 12, backgroundColor: h.fgColor }} />
-                        : <Ionicons name="color-palette-outline" size={16} color={Colors.dark.textMuted} />}
+                        : <Ionicons name="color-palette-outline" size={16} color={colors.textMuted} />}
                     </Pressable>
                   </View>
                 </ScrollView>
                 {!FG_COLORS.find(c => c.color === h.fgColor) && (
-                  <Text style={{ fontSize: 11, color: Colors.dark.primary, fontFamily: "Inter_500Medium", marginTop: -10, marginBottom: 10 }}>Custom: {h.fgColor}</Text>
+                  <Text style={{ fontSize: 11, color: colors.primary, fontFamily: "Inter_500Medium", marginTop: -10, marginBottom: 10 }}>Custom: {h.fgColor}</Text>
                 )}
 
                 <Text style={styles.designLabel}>Background Color</Text>
@@ -359,23 +361,23 @@ export default function MyQrDetailScreen() {
                   <View style={styles.swatchRow}>
                     {BG_COLORS.map(({ color }) => (
                       <Pressable key={color} onPress={() => { h.setBgColor(color); h.setDesignDirty(true); Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); }}
-                        style={[styles.swatch, { backgroundColor: color, borderColor: h.bgColor === color ? Colors.dark.primary : Colors.dark.surfaceBorder }, h.bgColor === color && styles.swatchSelected]}>
+                        style={[styles.swatch, { backgroundColor: color, borderColor: h.bgColor === color ? colors.primary : colors.surfaceBorder }, h.bgColor === color && styles.swatchSelected]}>
                         {h.bgColor === color ? <Ionicons name="checkmark" size={14} color="#000" /> : null}
                       </Pressable>
                     ))}
                     <Pressable
                       onPress={() => { h.setCustomColorTarget("bg"); h.setCustomColorInput(h.bgColor); h.setCustomColorOpen(true); }}
-                      style={[styles.swatch, { backgroundColor: Colors.dark.surfaceLight, borderColor: Colors.dark.primary + "60", borderStyle: "dashed" },
-                        !BG_COLORS.find(c => c.color === h.bgColor) && { borderColor: Colors.dark.primary, borderWidth: 2 }]}
+                      style={[styles.swatch, { backgroundColor: colors.surfaceLight, borderColor: colors.primary + "60", borderStyle: "dashed" },
+                        !BG_COLORS.find(c => c.color === h.bgColor) && { borderColor: colors.primary, borderWidth: 2 }]}
                     >
                       {!BG_COLORS.find(c => c.color === h.bgColor)
                         ? <View style={{ width: 24, height: 24, borderRadius: 12, backgroundColor: h.bgColor }} />
-                        : <Ionicons name="color-palette-outline" size={16} color={Colors.dark.textMuted} />}
+                        : <Ionicons name="color-palette-outline" size={16} color={colors.textMuted} />}
                     </Pressable>
                   </View>
                 </ScrollView>
                 {!BG_COLORS.find(c => c.color === h.bgColor) && (
-                  <Text style={{ fontSize: 11, color: Colors.dark.primary, fontFamily: "Inter_500Medium", marginTop: -10, marginBottom: 10 }}>Custom: {h.bgColor}</Text>
+                  <Text style={{ fontSize: 11, color: colors.primary, fontFamily: "Inter_500Medium", marginTop: -10, marginBottom: 10 }}>Custom: {h.bgColor}</Text>
                 )}
 
                 <Text style={styles.designLabel}>Logo</Text>

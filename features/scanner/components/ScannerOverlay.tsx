@@ -12,6 +12,7 @@ import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { FINDER_SIZE } from "@/hooks/useScanner";
 import { formatFirstName } from "@/lib/utils/formatters";
+import Colors from "@/constants/colors";
 
 const CORNER_LEN = 40;
 const CORNER_W = 5;

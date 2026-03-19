@@ -6,13 +6,14 @@ import { Platform, StyleSheet, View, Pressable } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { MaterialCommunityIcons, Ionicons } from "@expo/vector-icons";
 import React, { useState, useEffect } from "react";
-import Colors from "@/constants/colors";
+import { useTheme } from "@/contexts/ThemeContext";
 import * as Haptics from "expo-haptics";
 import { useAuth } from "@/contexts/AuthContext";
 import { subscribeToNotificationCount } from "@/lib/firestore-service";
 import { shadow } from "@/lib/utils/platform";
 
 function ScanTabButton({ onPress }: { onPress?: () => void }) {
+  const { colors } = useTheme();
   return (
     <Pressable
       onPress={() => {
@@ -23,7 +24,11 @@ function ScanTabButton({ onPress }: { onPress?: () => void }) {
       accessibilityLabel="Scan"
       accessibilityRole="button"
     >
-      <View style={styles.scanTabBtnInner}>
+      <View style={[styles.scanTabBtnInner, {
+        backgroundColor: colors.primary,
+        borderColor: colors.background,
+        ...shadow(14, colors.primary, 0.5, 0, 6, 12),
+      }]}>
         <MaterialCommunityIcons name="qrcode-scan" size={28} color="#000" />
       </View>
     </Pressable>
@@ -78,6 +83,7 @@ function ClassicTabLayout() {
   const isIOS = Platform.OS === "ios";
   const insets = useSafeAreaInsets();
   const notifCount = useNotificationCount();
+  const { colors } = useTheme();
 
   const tabBarHeight = isWeb ? 84 : 60 + insets.bottom;
 
@@ -85,13 +91,13 @@ function ClassicTabLayout() {
     <Tabs
       screenOptions={{
         headerShown: false,
-        tabBarActiveTintColor: Colors.dark.primary,
-        tabBarInactiveTintColor: Colors.dark.textMuted,
+        tabBarActiveTintColor: colors.primary,
+        tabBarInactiveTintColor: colors.textMuted,
         tabBarStyle: {
           position: "absolute",
-          backgroundColor: isIOS ? "transparent" : Colors.dark.surface,
+          backgroundColor: isIOS ? "transparent" : colors.surface,
           borderTopWidth: 1,
-          borderTopColor: Colors.dark.surfaceBorder,
+          borderTopColor: colors.surfaceBorder,
           elevation: 0,
           height: tabBarHeight,
           paddingBottom: insets.bottom,
@@ -100,9 +106,9 @@ function ClassicTabLayout() {
         },
         tabBarBackground: () =>
           isIOS ? (
-            <BlurView intensity={100} tint="dark" style={StyleSheet.absoluteFill} />
+            <BlurView intensity={100} tint={colors.isDark ? "dark" : "light"} style={StyleSheet.absoluteFill} />
           ) : (
-            <View style={[StyleSheet.absoluteFill, { backgroundColor: Colors.dark.surface }]} />
+            <View style={[StyleSheet.absoluteFill, { backgroundColor: colors.surface }]} />
           ),
         tabBarLabelStyle: {
           fontFamily: "Inter_500Medium",
@@ -117,7 +123,7 @@ function ClassicTabLayout() {
           title: "Home",
           tabBarBadge: notifCount > 0 ? notifCount : undefined,
           tabBarBadgeStyle: {
-            backgroundColor: Colors.dark.primary,
+            backgroundColor: colors.primary,
             color: "#000",
             fontSize: 10,
             fontFamily: "Inter_700Bold",
@@ -196,11 +202,8 @@ const styles = StyleSheet.create({
     width: 68,
     height: 68,
     borderRadius: 34,
-    backgroundColor: Colors.dark.primary,
     alignItems: "center",
     justifyContent: "center",
     borderWidth: 4,
-    borderColor: Colors.dark.background,
-    ...shadow(14, Colors.dark.primary, 0.5, 0, 6, 12),
   },
 });

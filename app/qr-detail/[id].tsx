@@ -72,13 +72,13 @@ export default function QrDetailScreen() {
       <View style={[styles.container, { paddingTop: topInset }]}>
         <View style={styles.navBar}>
           <Pressable onPress={() => router.back()} style={styles.navBackBtn}>
-            <Ionicons name="chevron-back" size={24} color={Colors.dark.text} />
+            <Ionicons name="chevron-back" size={24} color={colors.text} />
           </Pressable>
           <Text style={styles.navTitle}>QR Details</Text>
           <View style={{ width: 80 }} />
         </View>
         <View style={styles.errorCard}>
-          <Ionicons name="alert-circle-outline" size={48} color={Colors.dark.danger} />
+          <Ionicons name="alert-circle-outline" size={48} color={colors.danger} />
           <Text style={styles.errorTitle}>QR Code Not Found</Text>
           <Text style={styles.errorSub}>This QR code doesn't exist or couldn't be loaded.</Text>
           <Pressable onPress={() => router.back()} style={styles.retryBtn}>
@@ -90,27 +90,27 @@ export default function QrDetailScreen() {
   }
 
   return (
-    <View style={{ flex: 1, backgroundColor: Colors.dark.background }}>
-      <StatusBar style="light" backgroundColor={Colors.dark.background} />
+    <View style={{ flex: 1, backgroundColor: colors.background }}>
+      <StatusBar style={colors.isDark ? "light" : "dark"} backgroundColor={colors.background} />
       <KeyboardAvoidingView style={{ flex: 1 }} behavior="padding" keyboardVerticalOffset={Platform.OS === "android" ? 0 : 0}>
         <View style={[styles.container, { paddingTop: topInset }]}>
 
           {/* Nav */}
           <View style={styles.navBar}>
             <Pressable onPress={() => router.back()} style={styles.navBackBtn}>
-              <Ionicons name="chevron-back" size={24} color={Colors.dark.text} />
+              <Ionicons name="chevron-back" size={24} color={colors.text} />
             </Pressable>
             <Text style={styles.navTitle}>QR Details</Text>
             <View style={styles.navActions}>
               {!q.offlineMode && (
                 <Pressable onPress={q.handleToggleFavorite} disabled={q.favoriteLoading} style={styles.navActionBtn}>
                   {q.favoriteLoading ? (
-                    <ActivityIndicator size="small" color={Colors.dark.danger} />
+                    <ActivityIndicator size="small" color={colors.danger} />
                   ) : (
                     <Ionicons
                       name={q.isFavorite ? "heart" : "heart-outline"}
                       size={22}
-                      color={q.isFavorite ? Colors.dark.danger : Colors.dark.textSecondary}
+                      color={q.isFavorite ? colors.danger : colors.textSecondary}
                     />
                   )}
                 </Pressable>
@@ -128,7 +128,7 @@ export default function QrDetailScreen() {
                   ]}
                 >
                   {q.followLoading ? (
-                    <ActivityIndicator size="small" color={Colors.dark.primary} />
+                    <ActivityIndicator size="small" color={colors.primary} />
                   ) : (
                     <>
                       <Ionicons
@@ -140,14 +140,14 @@ export default function QrDetailScreen() {
                         size={15}
                         color={
                           q.followPressedIn && q.isFollowing
-                            ? Colors.dark.danger
-                            : q.isFollowing ? Colors.dark.primary : Colors.dark.textSecondary
+                            ? colors.danger
+                            : q.isFollowing ? colors.primary : colors.textSecondary
                         }
                       />
                       <Text style={[
                         styles.followBtnText,
                         q.isFollowing && styles.followBtnTextActive,
-                        q.followPressedIn && q.isFollowing && { color: Colors.dark.danger },
+                        q.followPressedIn && q.isFollowing && { color: colors.danger },
                       ]}>
                         {q.followPressedIn && q.isFollowing ? "Unfollow" : q.isFollowing ? "Following" : "Follow"}
                       </Text>
@@ -173,7 +173,7 @@ export default function QrDetailScreen() {
           >
             {/* Disclaimer */}
             <View style={styles.disclaimerBanner}>
-              <Ionicons name="warning-outline" size={16} color={Colors.dark.warning} />
+              <Ionicons name="warning-outline" size={16} color={colors.warning} />
               <Text style={styles.disclaimerText}>
                 Warning: Always verify before clicking or paying. QR Guard may make mistakes and is not responsible for any payment or link issues. Rely on community reports for guidance.
               </Text>
@@ -183,7 +183,7 @@ export default function QrDetailScreen() {
             {q.offlineMode && (
               <Animated.View entering={FadeIn.duration(300)}>
                 <View style={styles.offlineBanner}>
-                  <Ionicons name="wifi-outline" size={20} color={Colors.dark.warning} />
+                  <Ionicons name="wifi-outline" size={20} color={colors.warning} />
                   <View style={{ flex: 1 }}>
                     <Text style={styles.offlineBannerTitle}>You're offline</Text>
                     <Text style={styles.offlineBannerSub}>Showing cached content. Enable internet to view community data.</Text>
@@ -200,13 +200,13 @@ export default function QrDetailScreen() {
               <Animated.View style={signInGlowStyle}>
                 <Pressable onPress={() => router.push("/(auth)/login")} style={styles.signInBanner}>
                   <View style={styles.signInBannerIcon}>
-                    <Ionicons name="person-circle-outline" size={28} color={Colors.dark.primary} />
+                    <Ionicons name="person-circle-outline" size={28} color={colors.primary} />
                   </View>
                   <View style={{ flex: 1 }}>
                     <Text style={styles.signInBannerTitle}>Sign in to continue</Text>
                     <Text style={styles.signInBannerSub}>Report, follow, favorite & comment</Text>
                   </View>
-                  <Ionicons name="arrow-forward" size={18} color={Colors.dark.primary} />
+                  <Ionicons name="arrow-forward" size={18} color={colors.primary} />
                 </Pressable>
               </Animated.View>
             )}
@@ -284,7 +284,7 @@ export default function QrDetailScreen() {
             {q.offlineMode ? (
               <Animated.View entering={FadeIn.duration(400)}>
                 <View style={styles.offlineFeatureCard}>
-                  <Ionicons name="cloud-offline-outline" size={40} color={Colors.dark.textMuted} />
+                  <Ionicons name="cloud-offline-outline" size={40} color={colors.textMuted} />
                   <Text style={styles.offlineFeatureTitle}>Community Data Unavailable</Text>
                   <Text style={styles.offlineFeatureSub}>
                     Enable internet to view trust score, community reports, and comments.
@@ -342,15 +342,15 @@ export default function QrDetailScreen() {
 
                   {!user && (
                     <Pressable onPress={() => router.push("/(auth)/login")} style={styles.signInToComment}>
-                      <Ionicons name="chatbubble-outline" size={18} color={Colors.dark.primary} />
+                      <Ionicons name="chatbubble-outline" size={18} color={colors.primary} />
                       <Text style={styles.signInToCommentText}>Sign in to comment</Text>
-                      <Ionicons name="arrow-forward" size={16} color={Colors.dark.primary} style={{ marginLeft: "auto" as any }} />
+                      <Ionicons name="arrow-forward" size={16} color={colors.primary} style={{ marginLeft: "auto" as any }} />
                     </Pressable>
                   )}
 
                   {q.commentsList.length === 0 ? (
                     <View style={styles.noComments}>
-                      <Ionicons name="chatbubbles-outline" size={32} color={Colors.dark.textMuted} />
+                      <Ionicons name="chatbubbles-outline" size={32} color={colors.textMuted} />
                       <Text style={styles.noCommentsText}>No comments yet</Text>
                       <Text style={styles.noCommentsSubtext}>Be the first to share your thoughts</Text>
                     </View>
@@ -393,7 +393,7 @@ export default function QrDetailScreen() {
                   {q.hasMoreComments && (
                     <Pressable onPress={q.loadMoreComments} disabled={q.commentsLoading} style={styles.loadMoreBtn}>
                       {q.commentsLoading ? (
-                        <ActivityIndicator size="small" color={Colors.dark.primary} />
+                        <ActivityIndicator size="small" color={colors.primary} />
                       ) : (
                         <Text style={styles.loadMoreText}>Load More Comments</Text>
                       )}
@@ -409,12 +409,12 @@ export default function QrDetailScreen() {
             <View style={[styles.bottomCommentBar, { paddingBottom: Math.max(insets.bottom, 8) }]}>
               {q.replyTo && (
                 <View style={styles.replyBanner}>
-                  <Ionicons name="return-down-forward-outline" size={14} color={Colors.dark.primary} />
+                  <Ionicons name="return-down-forward-outline" size={14} color={colors.primary} />
                   <Text style={styles.replyBannerText} numberOfLines={1}>
-                    Replying to <Text style={{ color: Colors.dark.text }}>{q.replyTo.author}</Text>
+                    Replying to <Text style={{ color: colors.text }}>{q.replyTo.author}</Text>
                   </Text>
                   <Pressable onPress={() => q.setReplyTo(null)} style={{ marginLeft: "auto" as any }}>
-                    <Ionicons name="close" size={16} color={Colors.dark.textMuted} />
+                    <Ionicons name="close" size={16} color={colors.textMuted} />
                   </Pressable>
                 </View>
               )}
@@ -423,7 +423,7 @@ export default function QrDetailScreen() {
                   ref={q.commentInputRef}
                   style={styles.commentTextInput}
                   placeholder={q.replyTo ? `Reply to ${q.replyTo.author}...` : "Add a comment..."}
-                  placeholderTextColor={Colors.dark.textMuted}
+                  placeholderTextColor={colors.textMuted}
                   value={q.newComment}
                   onChangeText={q.setNewComment}
                   multiline
