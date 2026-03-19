@@ -51,6 +51,7 @@ export function makeSettingsStyles(c: AppColors) {
     signOutBtn: {
       flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8,
       backgroundColor: c.dangerDim, paddingVertical: 16, borderRadius: 14,
+      borderWidth: 1, borderColor: c.danger + "30",
     },
     signOutText: { fontSize: 16, fontFamily: "Inter_600SemiBold", color: c.danger },
     footer: { alignItems: "center", gap: 4, marginTop: 20, paddingVertical: 20 },
@@ -64,7 +65,7 @@ export function makeSettingsStyles(c: AppColors) {
     warningDesc: { fontSize: 13, fontFamily: "Inter_400Regular", color: c.textSecondary, lineHeight: 20 },
     confirmLabel: { fontSize: 14, fontFamily: "Inter_500Medium", color: c.textSecondary },
     confirmInput: {
-      backgroundColor: c.surfaceLight, borderRadius: 12,
+      backgroundColor: c.inputBackground, borderRadius: 12,
       borderWidth: 1, borderColor: c.surfaceBorder,
       paddingHorizontal: 16, paddingVertical: 12,
       fontSize: 16, fontFamily: "Inter_500Medium", color: c.text,
@@ -94,7 +95,7 @@ export function makeSettingsStyles(c: AppColors) {
     inputGroup: { marginBottom: 18 },
     inputLabel: { fontSize: 13, fontFamily: "Inter_600SemiBold", color: c.textSecondary, marginBottom: 8 },
     textInput: {
-      backgroundColor: c.surfaceLight, borderRadius: 12, borderWidth: 1,
+      backgroundColor: c.inputBackground, borderRadius: 12, borderWidth: 1,
       borderColor: c.surfaceBorder, paddingHorizontal: 16, paddingVertical: 12,
       fontSize: 15, fontFamily: "Inter_400Regular", color: c.text,
     },

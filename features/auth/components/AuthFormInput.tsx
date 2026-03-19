@@ -25,7 +25,7 @@ const AuthFormInput = React.memo(function AuthFormInput({
     <View style={styles.wrapper}>
       <View style={[
         styles.container,
-        { backgroundColor: colors.surfaceLight, borderColor: colors.surfaceBorder },
+        { backgroundColor: colors.inputBackground, borderColor: colors.surfaceBorder },
         error ? { borderColor: colors.danger, backgroundColor: colors.dangerDim } : null,
       ]}>
         <Ionicons

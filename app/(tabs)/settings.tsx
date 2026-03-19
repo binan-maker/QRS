@@ -12,6 +12,7 @@ import FeedbackSection from "@/features/settings/components/FeedbackSection";
 import FollowingSection from "@/features/settings/components/FollowingSection";
 import CommentsSection from "@/features/settings/components/CommentsSection";
 import HistorySection from "@/features/settings/components/HistorySection";
+import { StyleSheet } from "react-native";
 
 const SECTION_TITLES: Record<string, string> = {
   account: "Account Management",
@@ -22,11 +23,20 @@ const SECTION_TITLES: Record<string, string> = {
   history: "My History",
 };
 
+type ThemeMode = "system" | "dark" | "light";
+
+const THEME_OPTIONS: { key: ThemeMode; label: string; icon: keyof typeof Ionicons.glyphMap }[] = [
+  { key: "system", label: "System", icon: "phone-portrait-outline" },
+  { key: "light", label: "Light", icon: "sunny-outline" },
+  { key: "dark", label: "Dark", icon: "moon-outline" },
+];
+
 export default function SettingsScreen() {
   const insets = useSafeAreaInsets();
   const topInset = Platform.OS === "web" ? 67 : insets.top;
-  const { colors } = useTheme();
+  const { colors, mode, setMode } = useTheme();
   const styles = makeSettingsStyles(colors);
+  const localStyles = makeLocalStyles(colors);
 
   const {
     user, section, setSection,
@@ -111,6 +121,7 @@ export default function SettingsScreen() {
       </View>
 
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
+
         <View style={styles.section}>
           <Text style={styles.sectionLabel}>ACCOUNT</Text>
           {user ? (
@@ -155,6 +166,44 @@ export default function SettingsScreen() {
               <Ionicons name="chevron-forward" size={20} color={colors.textMuted} />
             </Pressable>
           )}
+        </View>
+
+        <View style={styles.section}>
+          <Text style={styles.sectionLabel}>APPEARANCE</Text>
+          <View style={[styles.menuGroup, { padding: 16 }]}>
+            <Text style={[localStyles.appearanceLabel, { color: colors.textSecondary }]}>Theme</Text>
+            <View style={localStyles.themeRow}>
+              {THEME_OPTIONS.map((opt) => {
+                const isActive = mode === opt.key;
+                return (
+                  <Pressable
+                    key={opt.key}
+                    onPress={() => setMode(opt.key)}
+                    style={({ pressed }) => [
+                      localStyles.themeBtn,
+                      {
+                        backgroundColor: isActive ? colors.primaryDim : colors.surfaceLight,
+                        borderColor: isActive ? colors.primary : colors.surfaceBorder,
+                        opacity: pressed ? 0.8 : 1,
+                      },
+                    ]}
+                  >
+                    <Ionicons
+                      name={opt.icon}
+                      size={18}
+                      color={isActive ? colors.primary : colors.textMuted}
+                    />
+                    <Text style={[localStyles.themeBtnText, { color: isActive ? colors.primary : colors.textMuted }]}>
+                      {opt.label}
+                    </Text>
+                    {isActive && (
+                      <View style={[localStyles.activeIndicator, { backgroundColor: colors.primary }]} />
+                    )}
+                  </Pressable>
+                );
+              })}
+            </View>
+          </View>
         </View>
 
         <View style={styles.section}>
@@ -236,7 +285,7 @@ export default function SettingsScreen() {
           <Text style={styles.footerText}>QR Guard v1.0.0</Text>
           <Text style={styles.footerSubtext}>Scan smart. Stay safe.</Text>
           <Text style={[styles.footerSubtext, { textAlign: "center", marginTop: 8, paddingHorizontal: 16, lineHeight: 18 }]}>
-            QR Guard provides informational analysis only. Trust scores reflect community opinion, not verified fact. You are solely responsible for all decisions made after scanning a QR code. By using this app you agree to our Terms of Service.
+            QR Guard provides informational analysis only. Trust scores reflect community opinion, not verified fact. You are solely responsible for all decisions made after scanning a QR code.
           </Text>
         </View>
 
@@ -244,4 +293,26 @@ export default function SettingsScreen() {
       </ScrollView>
     </View>
   );
+}
+
+function makeLocalStyles(c: ReturnType<typeof import("@/contexts/ThemeContext").useTheme>["colors"]) {
+  return StyleSheet.create({
+    appearanceLabel: {
+      fontSize: 13, fontFamily: "Inter_600SemiBold", marginBottom: 12,
+    },
+    themeRow: {
+      flexDirection: "row", gap: 10,
+    },
+    themeBtn: {
+      flex: 1, alignItems: "center", justifyContent: "center",
+      gap: 6, paddingVertical: 14, borderRadius: 14, borderWidth: 1.5,
+      position: "relative",
+    },
+    themeBtnText: {
+      fontSize: 12, fontFamily: "Inter_600SemiBold",
+    },
+    activeIndicator: {
+      position: "absolute", bottom: 6, width: 18, height: 3, borderRadius: 2,
+    },
+  });
 }

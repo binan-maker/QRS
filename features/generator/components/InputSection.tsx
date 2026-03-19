@@ -28,7 +28,7 @@ export default function InputSection({
         {isBusinessMode ? "Destination URL" : preset.label}
       </Text>
 
-      <View style={[styles.inputCard, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
+      <View style={[styles.inputCard, { backgroundColor: colors.inputBackground, borderColor: colors.surfaceBorder }]}>
         <TextInput
           style={[styles.textInput, { color: colors.text }]}
           value={inputValue}
@@ -52,7 +52,7 @@ export default function InputSection({
       </View>
 
       {qrMode !== "business" && preset.extraFields?.map((field) => (
-        <View key={field.key} style={[styles.inputCard, { marginTop: 10, backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
+        <View key={field.key} style={[styles.inputCard, { marginTop: 10, backgroundColor: colors.inputBackground, borderColor: colors.surfaceBorder }]}>
           <View style={{ flex: 1 }}>
             <Text style={[styles.extraFieldLabel, { color: colors.textMuted }]}>{field.label}{field.optional ? "" : " *"}</Text>
             <TextInput

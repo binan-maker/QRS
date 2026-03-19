@@ -383,7 +383,7 @@ function makeStyles(c: ReturnType<typeof import("@/contexts/ThemeContext").useTh
     editNameRow: { flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 4 },
     nameInput: {
       flex: 1, fontSize: 15, fontFamily: "Inter_600SemiBold", color: c.text,
-      backgroundColor: c.surfaceLight, borderRadius: 10, paddingHorizontal: 12, paddingVertical: 8,
+      backgroundColor: c.inputBackground, borderRadius: 10, paddingHorizontal: 12, paddingVertical: 8,
       borderWidth: 1, borderColor: c.primary,
     },
     saveNameBtn: { backgroundColor: c.primary, paddingHorizontal: 14, paddingVertical: 8, borderRadius: 10, flexShrink: 0 },

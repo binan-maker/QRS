@@ -25,6 +25,8 @@ const FILTER_ICONS: Record<string, IoniconName> = {
   text: "document-text-outline",
   other: "ellipsis-horizontal-circle-outline",
   favorites: "heart-outline",
+  camera: "camera-outline",
+  gallery: "images-outline",
 };
 
 const FILTER_ICONS_ACTIVE: Record<string, IoniconName> = {
@@ -34,6 +36,8 @@ const FILTER_ICONS_ACTIVE: Record<string, IoniconName> = {
   text: "document-text",
   other: "ellipsis-horizontal-circle",
   favorites: "heart",
+  camera: "camera",
+  gallery: "images",
 };
 
 const FilterBar = React.memo(function FilterBar({
@@ -55,9 +59,9 @@ const FilterBar = React.memo(function FilterBar({
         const isFavorite = f.key === "favorites";
         const isActive = activeFilter === f.key;
 
-        const iconColor = isFavorite
-          ? isActive ? colors.danger : colors.textMuted
-          : isActive ? colors.primary : colors.textMuted;
+        const activeColor = isFavorite ? colors.danger : colors.primary;
+        const activeBg = isFavorite ? colors.dangerDim : colors.primaryDim;
+        const activeBorder = isFavorite ? colors.danger : colors.primary;
 
         const iconName = isActive
           ? (FILTER_ICONS_ACTIVE[f.key] ?? "apps")
@@ -71,33 +75,24 @@ const FilterBar = React.memo(function FilterBar({
               Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
             }}
             style={({ pressed }) => [
+              styles.chip,
               {
-                flexDirection: "row",
-                alignItems: "center",
-                gap: 4,
-                paddingHorizontal: 10,
-                paddingVertical: 6,
-                borderRadius: 20,
-                backgroundColor: isActive
-                  ? isFavorite ? colors.dangerDim : colors.primaryDim
-                  : colors.surface,
-                borderWidth: 1,
-                borderColor: isActive
-                  ? isFavorite ? colors.danger : colors.primary
-                  : isFavorite ? colors.danger + "40" : colors.surfaceBorder,
+                backgroundColor: isActive ? activeBg : colors.surfaceLight,
+                borderColor: isActive ? activeBorder : colors.surfaceBorder,
                 opacity: pressed ? 0.7 : 1,
               },
             ]}
           >
-            <Ionicons name={iconName} size={13} color={iconColor} />
+            <Ionicons
+              name={iconName}
+              size={13}
+              color={isActive ? activeColor : colors.textSecondary}
+            />
             <Text
-              style={{
-                fontSize: 12,
-                fontFamily: "Inter_500Medium",
-                color: isActive
-                  ? isFavorite ? colors.danger : colors.primary
-                  : colors.textMuted,
-              }}
+              style={[
+                styles.chipText,
+                { color: isActive ? activeColor : colors.textSecondary },
+              ]}
               numberOfLines={1}
             >
               {f.label}
@@ -118,9 +113,23 @@ const styles = StyleSheet.create({
   },
   container: {
     paddingHorizontal: 16,
-    gap: 6,
-    paddingBottom: 2,
+    gap: 8,
+    paddingBottom: 4,
+    paddingTop: 2,
     flexDirection: "row",
     alignItems: "center",
+  },
+  chip: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 5,
+    paddingHorizontal: 12,
+    paddingVertical: 7,
+    borderRadius: 20,
+    borderWidth: 1,
+  },
+  chipText: {
+    fontSize: 12,
+    fontFamily: "Inter_600SemiBold",
   },
 });

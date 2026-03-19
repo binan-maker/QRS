@@ -41,7 +41,7 @@ export default function HomeScreen() {
             <View style={styles.header}>
               <View style={styles.headerLeft}>
                 <Text style={styles.greeting} numberOfLines={1} ellipsizeMode="tail">
-                  {user ? `Hey, ${getFirstName(user.displayName)}` : "Welcome"}
+                  {user ? `Hey, ${getFirstName(user.displayName)} 👋` : "Welcome"}
                 </Text>
                 <Text style={styles.tagline}>Scan smart. Stay safe.</Text>
               </View>
@@ -84,24 +84,38 @@ export default function HomeScreen() {
           <Animated.View entering={FadeInDown.duration(600).delay(100)}>
             <Pressable
               onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium); router.push("/(tabs)/scanner"); }}
-              style={({ pressed }) => [styles.scanCard, { opacity: pressed ? 0.9 : 1 }]}
+              style={({ pressed }) => [styles.scanCard, { opacity: pressed ? 0.92 : 1 }]}
             >
               <LinearGradient
                 colors={colors.isDark
-                  ? ["rgba(0,207,255,0.12)", "rgba(139,92,246,0.08)"]
-                  : ["rgba(2,132,199,0.08)", "rgba(124,58,237,0.05)"]}
+                  ? ["#0A2640", "#0A1D35"]
+                  : ["#E8F4FF", "#F0F8FF"]}
                 start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
                 style={styles.scanCardGradient}
               >
-                <Animated.View style={[styles.scanIconOuter, pulseStyle]}>
-                  <View style={styles.scanIconInner}>
-                    <MaterialCommunityIcons name="qrcode-scan" size={40} color={colors.primary} />
+                <View style={styles.scanCardLeft}>
+                  <Animated.View style={[styles.scanIconOuter, pulseStyle]}>
+                    <LinearGradient
+                      colors={colors.isDark
+                        ? [colors.primary + "30", colors.primary + "15"]
+                        : [colors.primary + "20", colors.primary + "08"]}
+                      style={styles.scanIconInner}
+                    >
+                      <MaterialCommunityIcons name="qrcode-scan" size={38} color={colors.primary} />
+                    </LinearGradient>
+                  </Animated.View>
+                  <View style={styles.scanCardTextBlock}>
+                    <Text style={styles.scanCardTitle}>Scan QR Code</Text>
+                    <Text style={styles.scanCardSub}>Camera or gallery · Instant analysis</Text>
                   </View>
-                </Animated.View>
-                <Text style={styles.scanCardTitle}>Tap to Scan QR Code</Text>
-                <Text style={styles.scanCardSub}>Camera or gallery supported</Text>
-                <View style={styles.scanCardArrow}>
-                  <Ionicons name="arrow-forward" size={20} color={colors.primary} />
+                </View>
+                <View style={styles.scanCardArrowWrap}>
+                  <LinearGradient
+                    colors={[colors.primary, colors.primary + "CC"]}
+                    style={styles.scanCardArrow}
+                  >
+                    <Ionicons name="arrow-forward" size={18} color="#000" />
+                  </LinearGradient>
                 </View>
               </LinearGradient>
             </Pressable>
@@ -109,27 +123,19 @@ export default function HomeScreen() {
 
           <Animated.View entering={FadeInDown.duration(600).delay(200)}>
             <View style={styles.statsRow}>
-              <View style={styles.statCard}>
-                <View style={[styles.statIcon, { backgroundColor: colors.safeDim }]}>
-                  <Ionicons name="shield-checkmark" size={22} color={colors.safe} />
+              {[
+                { icon: "shield-checkmark" as const, label: "Safe Scans", desc: "Verified", color: colors.safe, bg: colors.safeDim },
+                { icon: "warning" as const, label: "Stay Alert", desc: "Reports", color: colors.warning, bg: colors.warningDim },
+                { icon: "chatbubbles" as const, label: "Community", desc: "Reviews", color: colors.accent, bg: colors.accentDim },
+              ].map((stat, idx) => (
+                <View key={idx} style={styles.statCard}>
+                  <View style={[styles.statIcon, { backgroundColor: stat.bg }]}>
+                    <Ionicons name={stat.icon} size={20} color={stat.color} />
+                  </View>
+                  <Text style={[styles.statLabel, { color: colors.text }]}>{stat.label}</Text>
+                  <Text style={styles.statDesc}>{stat.desc}</Text>
                 </View>
-                <Text style={styles.statLabel}>Safe Scans</Text>
-                <Text style={styles.statDesc}>Verified codes</Text>
-              </View>
-              <View style={styles.statCard}>
-                <View style={[styles.statIcon, { backgroundColor: colors.dangerDim }]}>
-                  <Ionicons name="warning" size={22} color={colors.danger} />
-                </View>
-                <Text style={styles.statLabel}>Stay Alert</Text>
-                <Text style={styles.statDesc}>Check reports</Text>
-              </View>
-              <View style={styles.statCard}>
-                <View style={[styles.statIcon, { backgroundColor: colors.accentDim }]}>
-                  <Ionicons name="chatbubbles" size={22} color={colors.accent} />
-                </View>
-                <Text style={styles.statLabel}>Community</Text>
-                <Text style={styles.statDesc}>Read reviews</Text>
-              </View>
+              ))}
             </View>
           </Animated.View>
 
@@ -138,18 +144,20 @@ export default function HomeScreen() {
               <Pressable onPress={() => router.push("/(auth)/login")} style={styles.promoCard}>
                 <LinearGradient
                   colors={colors.isDark
-                    ? ["rgba(139,92,246,0.15)", "rgba(0,207,255,0.10)"]
-                    : ["rgba(124,58,237,0.08)", "rgba(2,132,199,0.06)"]}
+                    ? ["rgba(167,139,250,0.12)", "rgba(0,212,255,0.08)"]
+                    : ["rgba(109,40,217,0.06)", "rgba(0,119,204,0.05)"]}
                   start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
                   style={styles.promoGradient}
                 >
                   <View style={styles.promoContent}>
-                    <Ionicons name="sparkles" size={24} color={colors.accent} />
+                    <View style={[styles.promoIconWrap, { backgroundColor: colors.accentDim }]}>
+                      <Ionicons name="sparkles" size={20} color={colors.accent} />
+                    </View>
                     <View style={{ flex: 1 }}>
                       <Text style={styles.promoTitle}>Unlock Full Access</Text>
-                      <Text style={styles.promoSub}>Sign in to comment, report QR codes, and sync history across devices</Text>
+                      <Text style={styles.promoSub}>Sign in to comment, report, and sync history</Text>
                     </View>
-                    <Ionicons name="chevron-forward" size={20} color={colors.textMuted} />
+                    <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
                   </View>
                 </LinearGradient>
               </Pressable>
@@ -158,43 +166,54 @@ export default function HomeScreen() {
 
           <Animated.View entering={FadeInDown.duration(600).delay(400)}>
             <View style={styles.sectionHeader}>
-              <Text style={styles.sectionTitle}>Recent Scans</Text>
+              <View style={styles.sectionTitleRow}>
+                <View style={[styles.sectionDot, { backgroundColor: colors.primary }]} />
+                <Text style={styles.sectionTitle}>Recent Scans</Text>
+              </View>
               {recentScans.length > 0 && (
-                <Pressable onPress={() => router.push("/(tabs)/history")}>
-                  <Text style={styles.seeAll}>See All</Text>
+                <Pressable
+                  onPress={() => router.push("/(tabs)/history")}
+                  style={[styles.seeAllBtn, { backgroundColor: colors.primaryDim }]}
+                >
+                  <Text style={[styles.seeAll, { color: colors.primary }]}>See All</Text>
+                  <Ionicons name="arrow-forward" size={12} color={colors.primary} />
                 </Pressable>
               )}
             </View>
 
             {recentScans.length === 0 ? (
               <View style={styles.emptyState}>
-                <Ionicons name="scan-outline" size={40} color={colors.textMuted} />
+                <View style={[styles.emptyIconWrap, { backgroundColor: colors.surfaceLight }]}>
+                  <Ionicons name="scan-outline" size={36} color={colors.textMuted} />
+                </View>
                 <Text style={styles.emptyText}>No scans yet</Text>
-                <Text style={styles.emptySubtext}>Scan a QR code to see it here</Text>
+                <Text style={styles.emptySubtext}>Scan a QR code to get started</Text>
               </View>
             ) : (
-              recentScans.map((scan) => (
-                <Pressable
-                  key={scan.id}
-                  onPress={() => {
-                    if (scan.qrCodeId) router.push({ pathname: "/qr-detail/[id]", params: { id: scan.qrCodeId } });
-                  }}
-                  style={({ pressed }) => [styles.scanItem, { opacity: pressed ? 0.8 : 1 }]}
-                >
-                  <View style={[styles.scanItemIcon, { backgroundColor: colors.primaryDim }]}>
-                    <Ionicons
-                      name={getContentTypeIcon(detectContentType(scan.content)) as any}
-                      size={20}
-                      color={colors.primary}
-                    />
-                  </View>
-                  <View style={{ flex: 1 }}>
-                    <Text style={styles.scanItemContent} numberOfLines={1}>{truncate(scan.content, 40)}</Text>
-                    <Text style={styles.scanItemDate}>{new Date(scan.scannedAt).toLocaleDateString()}</Text>
-                  </View>
-                  <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
-                </Pressable>
-              ))
+              <View style={styles.recentList}>
+                {recentScans.map((scan) => (
+                  <Pressable
+                    key={scan.id}
+                    onPress={() => {
+                      if (scan.qrCodeId) router.push({ pathname: "/qr-detail/[id]", params: { id: scan.qrCodeId } });
+                    }}
+                    style={({ pressed }) => [styles.scanItem, { opacity: pressed ? 0.8 : 1 }]}
+                  >
+                    <View style={[styles.scanItemIcon, { backgroundColor: colors.primaryDim }]}>
+                      <Ionicons
+                        name={getContentTypeIcon(detectContentType(scan.content)) as any}
+                        size={18}
+                        color={colors.primary}
+                      />
+                    </View>
+                    <View style={{ flex: 1, minWidth: 0 }}>
+                      <Text style={styles.scanItemContent} numberOfLines={1}>{truncate(scan.content, 40)}</Text>
+                      <Text style={styles.scanItemDate}>{new Date(scan.scannedAt).toLocaleDateString()}</Text>
+                    </View>
+                    <Ionicons name="chevron-forward" size={16} color={colors.textMuted} />
+                  </Pressable>
+                ))}
+              </View>
             )}
           </Animated.View>
 
@@ -218,9 +237,9 @@ function makeStyles(c: ReturnType<typeof import("@/contexts/ThemeContext").useTh
     container: { flex: 1, backgroundColor: c.background },
     scrollContent: { padding: 20 },
     header: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 24, gap: 8 },
-    headerLeft: { flex: 1, flexShrink: 1, minWidth: 0 },
-    greeting: { fontSize: 26, fontFamily: "Inter_700Bold", color: c.text, flexShrink: 1 },
-    tagline: { fontSize: 14, fontFamily: "Inter_400Regular", color: c.textSecondary, marginTop: 2 },
+    headerLeft: { flex: 1, shrink: 1, minWidth: 0 } as any,
+    greeting: { fontSize: 24, fontFamily: "Inter_700Bold", color: c.text, flexShrink: 1 },
+    tagline: { fontSize: 13, fontFamily: "Inter_400Regular", color: c.textSecondary, marginTop: 2 },
     headerRight: { flexDirection: "row", alignItems: "center", gap: 10 },
     notifBtn: {
       width: 40, height: 40, borderRadius: 20,
@@ -243,52 +262,71 @@ function makeStyles(c: ReturnType<typeof import("@/contexts/ThemeContext").useTh
     avatarText: { fontSize: 18, fontFamily: "Inter_700Bold", color: c.primary },
     signInBtn: {
       flexDirection: "row", alignItems: "center", gap: 6,
-      backgroundColor: c.primaryDim, paddingHorizontal: 16, paddingVertical: 10, borderRadius: 20,
+      backgroundColor: c.primaryDim, paddingHorizontal: 14, paddingVertical: 9, borderRadius: 20,
+      borderWidth: 1, borderColor: c.primary + "40",
     },
     signInText: { color: c.primary, fontFamily: "Inter_600SemiBold", fontSize: 14 },
-    scanCard: { borderRadius: 20, overflow: "hidden", marginBottom: 20 },
+    scanCard: { borderRadius: 22, overflow: "hidden", marginBottom: 20 },
     scanCardGradient: {
-      padding: 28, alignItems: "center", borderRadius: 20,
-      borderWidth: 1, borderColor: c.primary + "25",
+      padding: 20, flexDirection: "row", alignItems: "center", justifyContent: "space-between",
+      borderRadius: 22, borderWidth: 1, borderColor: c.primary + "30",
     },
+    scanCardLeft: { flexDirection: "row", alignItems: "center", gap: 16, flex: 1 },
     scanIconOuter: {
-      width: 88, height: 88, borderRadius: 44,
-      backgroundColor: c.primaryDim,
-      alignItems: "center", justifyContent: "center", marginBottom: 16,
+      width: 72, height: 72, borderRadius: 20,
+      alignItems: "center", justifyContent: "center",
+      flexShrink: 0,
     },
     scanIconInner: {
-      width: 68, height: 68, borderRadius: 34,
-      backgroundColor: c.primary + "20",
+      width: 72, height: 72, borderRadius: 20,
       alignItems: "center", justifyContent: "center",
     },
-    scanCardTitle: { fontSize: 18, fontFamily: "Inter_700Bold", color: c.text, marginBottom: 4 },
-    scanCardSub: { fontSize: 13, fontFamily: "Inter_400Regular", color: c.textSecondary },
-    scanCardArrow: { position: "absolute", right: 20, top: "50%" },
-    statsRow: { flexDirection: "row", gap: 10, marginBottom: 24 },
+    scanCardTextBlock: { flex: 1, minWidth: 0 },
+    scanCardTitle: { fontSize: 17, fontFamily: "Inter_700Bold", color: c.text, marginBottom: 4 },
+    scanCardSub: { fontSize: 12, fontFamily: "Inter_400Regular", color: c.textSecondary },
+    scanCardArrowWrap: { marginLeft: 8 },
+    scanCardArrow: {
+      width: 38, height: 38, borderRadius: 19,
+      alignItems: "center", justifyContent: "center",
+    },
+    statsRow: { flexDirection: "row", gap: 10, marginBottom: 20 },
     statCard: {
       flex: 1, backgroundColor: c.surface, borderRadius: 16,
       padding: 14, alignItems: "center",
-      borderWidth: 1, borderColor: c.surfaceBorder,
+      borderWidth: 1, borderColor: c.surfaceBorder, gap: 4,
     },
-    statIcon: { width: 40, height: 40, borderRadius: 20, alignItems: "center", justifyContent: "center", marginBottom: 8 },
-    statLabel: { fontSize: 12, fontFamily: "Inter_600SemiBold", color: c.textSecondary, textAlign: "center" },
-    statDesc: { fontSize: 11, fontFamily: "Inter_400Regular", color: c.textMuted, textAlign: "center", marginTop: 2 },
-    promoCard: { borderRadius: 16, overflow: "hidden", marginBottom: 24 },
-    promoGradient: { borderRadius: 16, borderWidth: 1, borderColor: c.accent + "30" },
+    statIcon: { width: 38, height: 38, borderRadius: 12, alignItems: "center", justifyContent: "center" },
+    statLabel: { fontSize: 11, fontFamily: "Inter_700Bold", textAlign: "center" },
+    statDesc: { fontSize: 10, fontFamily: "Inter_400Regular", color: c.textMuted, textAlign: "center" },
+    promoCard: { borderRadius: 18, overflow: "hidden", marginBottom: 24 },
+    promoGradient: { borderRadius: 18, borderWidth: 1, borderColor: c.accent + "25" },
     promoContent: { flexDirection: "row", alignItems: "center", gap: 12, padding: 16 },
-    promoTitle: { fontSize: 15, fontFamily: "Inter_700Bold", color: c.text, marginBottom: 2 },
-    promoSub: { fontSize: 12, fontFamily: "Inter_400Regular", color: c.textSecondary, lineHeight: 17 },
-    sectionHeader: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 12 },
+    promoIconWrap: { width: 40, height: 40, borderRadius: 12, alignItems: "center", justifyContent: "center" },
+    promoTitle: { fontSize: 14, fontFamily: "Inter_700Bold", color: c.text, marginBottom: 2 },
+    promoSub: { fontSize: 12, fontFamily: "Inter_400Regular", color: c.textSecondary, lineHeight: 16 },
+    sectionHeader: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 14 },
+    sectionTitleRow: { flexDirection: "row", alignItems: "center", gap: 8 },
+    sectionDot: { width: 8, height: 8, borderRadius: 4 },
     sectionTitle: { fontSize: 16, fontFamily: "Inter_700Bold", color: c.text },
-    seeAll: { fontSize: 13, fontFamily: "Inter_600SemiBold", color: c.primary },
-    emptyState: { alignItems: "center", paddingVertical: 40, gap: 10 },
+    seeAllBtn: {
+      flexDirection: "row", alignItems: "center", gap: 4,
+      paddingHorizontal: 10, paddingVertical: 5, borderRadius: 12,
+    },
+    seeAll: { fontSize: 12, fontFamily: "Inter_600SemiBold" },
+    emptyState: { alignItems: "center", paddingVertical: 44, gap: 10 },
+    emptyIconWrap: { width: 72, height: 72, borderRadius: 20, alignItems: "center", justifyContent: "center", marginBottom: 4 },
     emptyText: { fontSize: 15, fontFamily: "Inter_600SemiBold", color: c.textSecondary },
     emptySubtext: { fontSize: 13, fontFamily: "Inter_400Regular", color: c.textMuted },
+    recentList: {
+      backgroundColor: c.surface, borderRadius: 18,
+      borderWidth: 1, borderColor: c.surfaceBorder, overflow: "hidden",
+    },
     scanItem: {
-      flexDirection: "row", alignItems: "center", gap: 12, paddingVertical: 12, paddingHorizontal: 4,
+      flexDirection: "row", alignItems: "center", gap: 12,
+      paddingVertical: 13, paddingHorizontal: 16,
       borderBottomWidth: 1, borderBottomColor: c.surfaceBorder,
     },
-    scanItemIcon: { width: 38, height: 38, borderRadius: 12, alignItems: "center", justifyContent: "center" },
+    scanItemIcon: { width: 36, height: 36, borderRadius: 10, alignItems: "center", justifyContent: "center", flexShrink: 0 },
     scanItemContent: { fontSize: 14, fontFamily: "Inter_500Medium", color: c.text, marginBottom: 2 },
     scanItemDate: { fontSize: 12, fontFamily: "Inter_400Regular", color: c.textMuted },
   });
