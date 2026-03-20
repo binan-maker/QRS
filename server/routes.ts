@@ -1,10 +1,53 @@
 import type { Express, Request, Response } from "express";
 import { createServer, type Server } from "node:http";
 import { decodeQrFromImage } from "./image-decode";
+import { readFileSync, writeFileSync } from "node:fs";
+import { join } from "node:path";
 
-const rateLimitMap = new Map<string, { count: number; resetAt: number }>();
+// ─── Rate Limiter (file-persisted — survives server restarts) ─────────────────
 const RATE_LIMIT_MAX = 10;
 const RATE_LIMIT_WINDOW_MS = 60_000;
+const RATE_LIMIT_FILE = join("/tmp", "qrguard_ratelimit.json");
+
+interface RateEntry { count: number; resetAt: number }
+let rateLimitMap = new Map<string, RateEntry>();
+
+function loadRateLimitState(): void {
+  try {
+    const raw = readFileSync(RATE_LIMIT_FILE, "utf8");
+    const obj: Record<string, RateEntry> = JSON.parse(raw);
+    const now = Date.now();
+    for (const [ip, entry] of Object.entries(obj)) {
+      if (entry.resetAt > now) rateLimitMap.set(ip, entry);
+    }
+  } catch {
+    // No saved state — start fresh
+  }
+}
+
+function saveRateLimitState(): void {
+  try {
+    const obj: Record<string, RateEntry> = {};
+    for (const [ip, entry] of rateLimitMap.entries()) obj[ip] = entry;
+    writeFileSync(RATE_LIMIT_FILE, JSON.stringify(obj));
+  } catch {
+    // Non-fatal — will retry on next interval
+  }
+}
+
+loadRateLimitState();
+
+setInterval(() => {
+  const now = Date.now();
+  for (const [ip, entry] of rateLimitMap.entries()) {
+    if (now > entry.resetAt) rateLimitMap.delete(ip);
+  }
+  saveRateLimitState();
+}, RATE_LIMIT_WINDOW_MS);
+
+process.on("SIGTERM", saveRateLimitState);
+process.on("SIGINT", saveRateLimitState);
+process.on("exit", saveRateLimitState);
 
 function getClientIp(req: Request): string {
   const forwarded = req.headers["x-forwarded-for"];
@@ -23,13 +66,6 @@ function checkRateLimit(ip: string): boolean {
   entry.count++;
   return true;
 }
-
-setInterval(() => {
-  const now = Date.now();
-  for (const [ip, entry] of rateLimitMap.entries()) {
-    if (now > entry.resetAt) rateLimitMap.delete(ip);
-  }
-}, RATE_LIMIT_WINDOW_MS);
 
 // ─── Living Shield HTML pages ─────────────────────────────────────────────────
 
@@ -84,7 +120,7 @@ function guardRedirectHtml(businessName: string, ownerName: string, destination:
 <div class="url-box">${escHtml(destination)}</div>
 <p>Redirecting you now…</p>
 <a href="${escAttr(destination)}" class="btn btn-go">Go to Destination →</a>
-<meta http-equiv="refresh" content="1;url=${escAttr(destination)}">
+<meta http-equiv="refresh" content="0;url=${escAttr(destination)}">
 `);
 }
 
@@ -130,6 +166,11 @@ function escAttr(s: string): string {
   return s.replace(/"/g, "&quot;").replace(/'/g, "&#39;");
 }
 
+// ─── Guard link cache (eliminates repeated Firebase round-trips) ──────────────
+const GUARD_CACHE_TTL_MS = 30_000;
+interface CacheEntry { data: GuardLinkFields | null; expiresAt: number }
+const guardLinkCache = new Map<string, CacheEntry>();
+
 const FIREBASE_PROJECT_ID = process.env.FIREBASE_PROJECT_ID || "scan-guard-19a7f";
 const FIREBASE_API_KEY = process.env.FIREBASE_API_KEY || process.env.EXPO_PUBLIC_FIREBASE_API_KEY || "AIzaSyClEPO1EIRG3vxbQgS6l9AdZj0dIt765e0";
 const CAUTION_WINDOW_MS = 24 * 60 * 60 * 1000;
@@ -144,14 +185,24 @@ interface GuardLinkFields {
 }
 
 async function fetchGuardLinkFromFirestore(uuid: string): Promise<GuardLinkFields | null> {
+  const now = Date.now();
+  const cached = guardLinkCache.get(uuid);
+  if (cached && now < cached.expiresAt) return cached.data;
+
   const url = `https://firestore.googleapis.com/v1/projects/${FIREBASE_PROJECT_ID}/databases/(default)/documents/guardLinks/${encodeURIComponent(uuid)}?key=${FIREBASE_API_KEY}`;
   try {
     const res = await fetch(url);
-    if (!res.ok) return null;
+    if (!res.ok) {
+      guardLinkCache.set(uuid, { data: null, expiresAt: now + GUARD_CACHE_TTL_MS });
+      return null;
+    }
     const data = await res.json() as any;
     const f = data?.fields;
-    if (!f) return null;
-    return {
+    if (!f) {
+      guardLinkCache.set(uuid, { data: null, expiresAt: now + GUARD_CACHE_TTL_MS });
+      return null;
+    }
+    const link: GuardLinkFields = {
       currentDestination: f.currentDestination?.stringValue || null,
       previousDestination: f.previousDestination?.stringValue || null,
       businessName: f.businessName?.stringValue || null,
@@ -159,10 +210,19 @@ async function fetchGuardLinkFromFirestore(uuid: string): Promise<GuardLinkField
       isActive: f.isActive?.booleanValue !== false,
       destinationChangedAt: f.destinationChangedAt?.timestampValue || null,
     };
+    guardLinkCache.set(uuid, { data: link, expiresAt: now + GUARD_CACHE_TTL_MS });
+    return link;
   } catch {
     return null;
   }
 }
+
+setInterval(() => {
+  const now = Date.now();
+  for (const [key, entry] of guardLinkCache.entries()) {
+    if (now >= entry.expiresAt) guardLinkCache.delete(key);
+  }
+}, GUARD_CACHE_TTL_MS);
 
 export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/status", (_req, res) => {

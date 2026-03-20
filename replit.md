@@ -20,7 +20,7 @@ export const DB_PROVIDER = "firebase"  // ← change to "supabase" or "postgres"
 - `lib/db/adapter.ts` — TypeScript interface (DbAdapter, RealtimeAdapter)
 - `lib/db/providers/firebase.ts` — Firebase implementation (active)
 - `lib/db/providers/supabase.ts` — Supabase stub (fill in, then flip config)
-- `lib/db/providers/postgres.ts` — PostgreSQL stub (fill in, then flip config)
+- `lib/db/providers/postgres.ts` — **Full** PostgreSQL implementation (generic JSONB document store + polling realtime adapter). Activate by setting `DB_PROVIDER = "postgres"` and providing `DATABASE_URL`.
 - All services import `{ db, rtdb }` from `lib/db` — zero Firebase lock-in in business logic
 
 ## Project Structure
