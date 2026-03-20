@@ -4,8 +4,7 @@ import { useFocusEffect } from "expo-router";
 import * as ImagePicker from "expo-image-picker";
 import * as Haptics from "expo-haptics";
 import { useAuth } from "@/contexts/AuthContext";
-import { firebaseAuth } from "@/lib/firebase";
-import { updateProfile } from "firebase/auth";
+import { authAdapter } from "@/lib/auth";
 import {
   getUserStats,
   updateUserPhotoURL,
@@ -116,10 +115,11 @@ export function useProfile() {
   }, [newUsernameInput, editingUsername, currentUsername]);
 
   async function handleSaveName() {
-    if (!newName.trim() || !firebaseAuth.currentUser) return;
+    const currentUser = authAdapter.getCurrentUser();
+    if (!newName.trim() || !currentUser) return;
     setSavingName(true);
     try {
-      await updateProfile(firebaseAuth.currentUser, { displayName: newName.trim() });
+      await authAdapter.updateDisplayName(currentUser, newName.trim());
       setEditingName(false);
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     } catch {

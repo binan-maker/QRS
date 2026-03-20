@@ -8,8 +8,7 @@ import * as Haptics from "expo-haptics";
 import { useTheme } from "@/contexts/ThemeContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { deleteUserAccount } from "@/lib/firestore-service";
-import { firebaseAuth } from "@/lib/firebase";
-import { deleteUser, EmailAuthProvider, reauthenticateWithCredential } from "firebase/auth";
+import { authAdapter } from "@/lib/auth";
 
 interface DeleteAccountModalProps {
   visible: boolean;
@@ -40,16 +39,15 @@ export default function DeleteAccountModal({ visible, onClose }: DeleteAccountMo
     if (!user || !isConfirmMatch) return;
     setDeleting(true);
     try {
-      const currentUser = firebaseAuth.currentUser;
+      const currentUser = authAdapter.getCurrentUser();
       if (currentUser) {
         if (password.trim() && currentUser.email) {
           try {
-            const credential = EmailAuthProvider.credential(currentUser.email, password);
-            await reauthenticateWithCredential(currentUser, credential);
+            await authAdapter.reauthenticate(currentUser, currentUser.email, password);
           } catch {}
         }
         await deleteUserAccount(user.id);
-        await deleteUser(currentUser);
+        await authAdapter.deleteUser(currentUser);
       }
       await signOut();
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
@@ -137,7 +135,7 @@ export default function DeleteAccountModal({ visible, onClose }: DeleteAccountMo
           ) : (
             <>
               <Text style={[styles.body, { color: colors.textSecondary }]}>
-                For your security, Firebase requires you to re-enter your password before deleting your account.
+                For your security, please re-enter your password before deleting your account.
               </Text>
               <Text style={[styles.instruction, { color: colors.textSecondary }]}>Password for {user.email}</Text>
               <View style={styles.passwordRow}>
