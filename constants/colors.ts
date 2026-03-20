@@ -4,6 +4,7 @@ export type AppColors = {
   surfaceLight: string;
   surfaceBorder: string;
   surfaceOverlay: string;
+  modalOverlay: string;
 
   primary: string;
   primaryDim: string;
@@ -41,41 +42,42 @@ export type AppColors = {
 };
 
 const dark: AppColors = {
-  background: "#080E1B",
-  surface: "#0F1B2D",
-  surfaceLight: "#162232",
-  surfaceBorder: "#1C2E48",
-  surfaceOverlay: "rgba(8,14,27,0.93)",
+  background: "#050B18",
+  surface: "#0C1526",
+  surfaceLight: "#132035",
+  surfaceBorder: "#1A2D4A",
+  surfaceOverlay: "rgba(5,11,24,0.95)",
+  modalOverlay: "rgba(5,11,24,0.82)",
 
-  primary: "#00D4FF",
-  primaryDim: "rgba(0,212,255,0.12)",
-  primaryText: "#000000",
+  primary: "#00E5FF",
+  primaryDim: "rgba(0,229,255,0.10)",
+  primaryText: "#000814",
 
-  accent: "#A78BFA",
-  accentDim: "rgba(167,139,250,0.14)",
+  accent: "#B060FF",
+  accentDim: "rgba(176,96,255,0.12)",
 
-  danger: "#F05252",
-  dangerDim: "rgba(240,82,82,0.14)",
+  danger: "#FF4D6A",
+  dangerDim: "rgba(255,77,106,0.12)",
 
-  warning: "#F59E0B",
-  warningDim: "rgba(245,158,11,0.14)",
+  warning: "#FFB800",
+  warningDim: "rgba(255,184,0,0.12)",
 
-  safe: "#10B981",
-  safeDim: "rgba(16,185,129,0.14)",
+  safe: "#00D68F",
+  safeDim: "rgba(0,214,143,0.12)",
 
-  text: "#EEF4FF",
-  textSecondary: "#8AA4C0",
-  textMuted: "#4E6580",
+  text: "#F0F8FF",
+  textSecondary: "#7BA7CC",
+  textMuted: "#3D6080",
 
-  tabIconDefault: "#4E6580",
-  tabIconSelected: "#00D4FF",
-  tint: "#00D4FF",
-  scanLine: "#00D4FF",
-  cardGlow: "rgba(0,212,255,0.06)",
+  tabIconDefault: "#3D6080",
+  tabIconSelected: "#00E5FF",
+  tint: "#00E5FF",
+  scanLine: "#00E5FF",
+  cardGlow: "rgba(0,229,255,0.07)",
 
-  inputBackground: "#112030",
-  skeletonBase: "#152030",
-  skeletonHighlight: "#1E304A",
+  inputBackground: "#0A1828",
+  skeletonBase: "#0E1F35",
+  skeletonHighlight: "#162840",
   statusBar: "light",
   blurTint: "dark",
 
@@ -83,41 +85,42 @@ const dark: AppColors = {
 };
 
 const light: AppColors = {
-  background: "#EEF4FC",
+  background: "#F4F8FF",
   surface: "#FFFFFF",
-  surfaceLight: "#E5EEF8",
-  surfaceBorder: "#C5D5E8",
-  surfaceOverlay: "rgba(238,244,252,0.96)",
+  surfaceLight: "#EBF2FF",
+  surfaceBorder: "#C8D9F0",
+  surfaceOverlay: "rgba(244,248,255,0.97)",
+  modalOverlay: "rgba(5,11,24,0.55)",
 
-  primary: "#0077CC",
-  primaryDim: "rgba(0,119,204,0.10)",
+  primary: "#006FFF",
+  primaryDim: "rgba(0,111,255,0.08)",
   primaryText: "#FFFFFF",
 
-  accent: "#6D28D9",
-  accentDim: "rgba(109,40,217,0.10)",
+  accent: "#7C3AED",
+  accentDim: "rgba(124,58,237,0.08)",
 
-  danger: "#DC2626",
-  dangerDim: "rgba(220,38,38,0.08)",
+  danger: "#E8002D",
+  dangerDim: "rgba(232,0,45,0.07)",
 
-  warning: "#D97706",
-  warningDim: "rgba(217,119,6,0.08)",
+  warning: "#E68900",
+  warningDim: "rgba(230,137,0,0.07)",
 
-  safe: "#059669",
-  safeDim: "rgba(5,150,105,0.08)",
+  safe: "#00A67E",
+  safeDim: "rgba(0,166,126,0.07)",
 
-  text: "#0A1628",
-  textSecondary: "#334E6B",
-  textMuted: "#6B8CAE",
+  text: "#050B18",
+  textSecondary: "#2D4A6B",
+  textMuted: "#6B8EAE",
 
-  tabIconDefault: "#6B8CAE",
-  tabIconSelected: "#0077CC",
-  tint: "#0077CC",
-  scanLine: "#0077CC",
-  cardGlow: "rgba(0,119,204,0.04)",
+  tabIconDefault: "#6B8EAE",
+  tabIconSelected: "#006FFF",
+  tint: "#006FFF",
+  scanLine: "#006FFF",
+  cardGlow: "rgba(0,111,255,0.04)",
 
-  inputBackground: "#F0F6FF",
-  skeletonBase: "#D8E8F5",
-  skeletonHighlight: "#E8F2FB",
+  inputBackground: "#EEF4FF",
+  skeletonBase: "#DDE8F8",
+  skeletonHighlight: "#EAF2FF",
   statusBar: "dark",
   blurTint: "light",
 

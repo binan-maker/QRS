@@ -52,7 +52,7 @@ export function makeStyles(c: AppColors) {
     offlineRetrySmall: {
       backgroundColor: c.warning, paddingHorizontal: 10, paddingVertical: 6, borderRadius: 8,
     },
-    offlineRetrySmallText: { fontSize: 12, fontFamily: "Inter_600SemiBold", color: "#000" },
+    offlineRetrySmallText: { fontSize: 12, fontFamily: "Inter_600SemiBold", color: c.primaryText },
     signInBanner: {
       flexDirection: "row", alignItems: "center", gap: 12,
       backgroundColor: c.primaryDim, borderRadius: 14, padding: 14, marginBottom: 12,

@@ -132,7 +132,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#FBBF24", borderRadius: 14, paddingVertical: 14, paddingHorizontal: 24,
     marginBottom: 10, width: "100%", justifyContent: "center",
   },
-  openBtnText: { fontSize: 16, fontFamily: "Inter_700Bold", color: "#000" },
+  openBtnText: { fontSize: 16, fontFamily: "Inter_700Bold", color: "#0A0814" },
   cancelBtn: {
     flexDirection: "row", alignItems: "center", gap: 8,
     paddingVertical: 12, justifyContent: "center", width: "100%",

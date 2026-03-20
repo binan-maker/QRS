@@ -188,7 +188,7 @@ export default function DeleteAccountModal({ visible, onClose }: DeleteAccountMo
 }
 
 const styles = StyleSheet.create({
-  overlay: { flex: 1, backgroundColor: "rgba(0,0,0,0.75)", justifyContent: "flex-end" },
+  overlay: { flex: 1, backgroundColor: "rgba(5,11,24,0.82)", justifyContent: "flex-end" },
   box: {
     borderTopLeftRadius: 26, borderTopRightRadius: 26,
     padding: 24, paddingBottom: 40, borderTopWidth: 1.5,
@@ -216,7 +216,7 @@ const styles = StyleSheet.create({
     flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 10,
     paddingVertical: 16, borderRadius: 14, marginBottom: 10,
   },
-  deleteBtnText: { fontSize: 16, fontFamily: "Inter_700Bold", color: "#fff" },
+  deleteBtnText: { fontSize: 16, fontFamily: "Inter_700Bold", color: "#FFFFFF" },
   cancelBtn: { alignItems: "center", paddingVertical: 12 },
   cancelBtnText: { fontSize: 14, fontFamily: "Inter_600SemiBold" },
 });

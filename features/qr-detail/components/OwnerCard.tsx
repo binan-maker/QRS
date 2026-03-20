@@ -133,7 +133,7 @@ function makeStyles(c: ReturnType<typeof import("@/contexts/ThemeContext").useTh
     iconCircle: {
       width: 38, height: 38, borderRadius: 19,
       alignItems: "center", justifyContent: "center",
-      borderWidth: 1, borderColor: "rgba(255,255,255,0.1)", flexShrink: 0,
+      borderWidth: 1, borderColor: c.surfaceBorder, flexShrink: 0,
     },
     title: { fontSize: 13, fontFamily: "Inter_700Bold", color: c.text },
     typeBadge: { paddingHorizontal: 6, paddingVertical: 2, borderRadius: 6, borderWidth: 1 },

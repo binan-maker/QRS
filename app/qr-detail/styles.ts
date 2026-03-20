@@ -51,7 +51,7 @@ export function makeStyles(colors: any) {
     offlineRetrySmall: {
       backgroundColor: colors.warning, paddingHorizontal: 10, paddingVertical: 6, borderRadius: 8,
     },
-    offlineRetrySmallText: { fontSize: 12, fontFamily: "Inter_600SemiBold", color: "#000" },
+    offlineRetrySmallText: { fontSize: 12, fontFamily: "Inter_600SemiBold", color: colors.primaryText },
     signInBanner: {
       flexDirection: "row", alignItems: "center", gap: 12,
       backgroundColor: colors.primaryDim, borderRadius: 14, padding: 14, marginBottom: 12,

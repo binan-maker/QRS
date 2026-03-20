@@ -81,7 +81,7 @@ export default FollowersModal;
 
 function makeStyles(c: ReturnType<typeof import("@/contexts/ThemeContext").useTheme>["colors"]) {
   return StyleSheet.create({
-    overlay: { flex: 1, backgroundColor: "rgba(0,0,0,0.7)", justifyContent: "flex-end" },
+    overlay: { flex: 1, backgroundColor: c.modalOverlay, justifyContent: "flex-end" },
     sheet: {
       backgroundColor: c.surface, borderTopLeftRadius: 24, borderTopRightRadius: 24,
       padding: 20, paddingBottom: 32, borderWidth: 1, borderColor: c.surfaceBorder,

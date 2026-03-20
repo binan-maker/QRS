@@ -29,7 +29,7 @@ function ScanTabButton({ onPress }: { onPress?: () => void }) {
         borderColor: colors.background,
         ...shadow(14, colors.primary, 0.5, 0, 6, 12),
       }]}>
-        <MaterialCommunityIcons name="qrcode-scan" size={28} color="#000" />
+        <MaterialCommunityIcons name="qrcode-scan" size={28} color={colors.primaryText} />
       </View>
     </Pressable>
   );
@@ -124,7 +124,7 @@ function ClassicTabLayout() {
           tabBarBadge: notifCount > 0 ? notifCount : undefined,
           tabBarBadgeStyle: {
             backgroundColor: colors.primary,
-            color: "#000",
+            color: colors.primaryText,
             fontSize: 10,
             fontFamily: "Inter_700Bold",
             minWidth: 16,

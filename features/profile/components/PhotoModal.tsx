@@ -50,7 +50,7 @@ const PhotoModal = React.memo(function PhotoModal({ visible, onCamera, onGallery
 export default PhotoModal;
 
 const styles = StyleSheet.create({
-  overlay: { flex: 1, backgroundColor: "rgba(0,0,0,0.6)", justifyContent: "flex-end" },
+  overlay: { flex: 1, backgroundColor: "rgba(5,11,24,0.82)", justifyContent: "flex-end" },
   sheet: {
     borderTopLeftRadius: 24, borderTopRightRadius: 24,
     padding: 24, paddingBottom: 36, borderWidth: 1,

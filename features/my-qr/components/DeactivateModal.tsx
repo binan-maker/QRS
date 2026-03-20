@@ -35,8 +35,8 @@ export default function DeactivateModal({ visible, msgInput, onChangeMsgInput, o
               <Text style={[styles.cancelText, { color: colors.textMuted }]}>Cancel</Text>
             </Pressable>
             <Pressable style={[styles.confirmBtn, { backgroundColor: colors.danger }]} onPress={onConfirm}>
-              <Ionicons name="pause-circle" size={16} color="#fff" />
-              <Text style={styles.confirmText}>Deactivate</Text>
+              <Ionicons name="pause-circle" size={16} color={colors.primaryText} />
+              <Text style={[styles.confirmText, { color: colors.primaryText }]}>Deactivate</Text>
             </Pressable>
           </View>
         </View>
@@ -46,7 +46,7 @@ export default function DeactivateModal({ visible, msgInput, onChangeMsgInput, o
 }
 
 const styles = StyleSheet.create({
-  overlay: { flex: 1, backgroundColor: "rgba(0,0,0,0.7)", alignItems: "center", justifyContent: "center", padding: 24 },
+  overlay: { flex: 1, backgroundColor: "rgba(5,11,24,0.82)", alignItems: "center", justifyContent: "center", padding: 24 },
   modal: { borderRadius: 20, borderWidth: 1, padding: 24, width: "100%" },
   title: { fontSize: 17, fontFamily: "Inter_700Bold", marginBottom: 6 },
   sub: { fontSize: 13, fontFamily: "Inter_400Regular", marginBottom: 16 },
@@ -56,5 +56,5 @@ const styles = StyleSheet.create({
   cancelBtn: { flex: 1, paddingVertical: 12, borderRadius: 12, borderWidth: 1, alignItems: "center" },
   cancelText: { fontSize: 14, fontFamily: "Inter_600SemiBold" },
   confirmBtn: { flex: 1, paddingVertical: 12, borderRadius: 12, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 6 },
-  confirmText: { fontSize: 14, fontFamily: "Inter_600SemiBold", color: "#fff" },
+  confirmText: { fontSize: 14, fontFamily: "Inter_600SemiBold" },
 });

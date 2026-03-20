@@ -65,7 +65,7 @@ export default CommentReportModal;
 function makeStyles(c: ReturnType<typeof import("@/contexts/ThemeContext").useTheme>["colors"]) {
   return StyleSheet.create({
     overlay: {
-      flex: 1, backgroundColor: "rgba(0,0,0,0.75)",
+      flex: 1, backgroundColor: c.modalOverlay,
       justifyContent: "center", alignItems: "center", padding: 24,
     },
     card: {
