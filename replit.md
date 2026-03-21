@@ -11,6 +11,25 @@ A full-stack mobile-first QR code scanning and management app built with Expo (R
 - **Auth**: Firebase Auth — email/password + Google OAuth (`expo-auth-session`)
 - **PostgreSQL / Drizzle**: Ready stub at `lib/db/providers/postgres.ts`; schema in `shared/schema.ts`
 
+## Environment Variables
+
+All sensitive configuration is managed via environment variables — **no secrets are hardcoded in source files**.
+
+| Variable | Description |
+|---|---|
+| `EXPO_PUBLIC_FIREBASE_API_KEY` | Firebase Web API key |
+| `EXPO_PUBLIC_FIREBASE_PROJECT_ID` | Firebase project ID |
+| `EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET` | Firebase Storage bucket |
+| `EXPO_PUBLIC_FIREBASE_DATABASE_URL` | Firebase Realtime Database URL |
+| `EXPO_PUBLIC_FIREBASE_APP_ID` | Firebase Android App ID |
+| `EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID` | Firebase Messaging Sender ID |
+| `EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID` | Google OAuth Web Client ID |
+| `EXPO_PUBLIC_ANDROID_CLIENT_ID` | Google OAuth Android Client ID |
+
+- In **Replit**: set via the Secrets / Environment Variables panel (values are stored securely, NOT in source code)
+- In **local dev**: copy `.env.example` → `.env` and fill in your values (`.env` is in `.gitignore`)
+- For **GitHub**: only `.env.example` (with placeholder names) is committed — real values are never in the repo
+
 ## Database Provider Abstraction
 
 **To switch backend → edit ONE line** in `lib/db/config.ts`:

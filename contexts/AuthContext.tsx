@@ -36,7 +36,8 @@ interface AuthContextValue {
 
 const AuthContext = createContext<AuthContextValue | null>(null);
 
-const GOOGLE_WEB_CLIENT_ID = "971359442211-dppv9u14kun8mo5c0e07pr6f6veh81aa.apps.googleusercontent.com";
+const GOOGLE_WEB_CLIENT_ID = process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID ?? "";
+const GOOGLE_ANDROID_CLIENT_ID = process.env.EXPO_PUBLIC_ANDROID_CLIENT_ID ?? "";
 
 export { getAuthErrorMessage };
 
@@ -86,7 +87,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const [googleRequest, googleResponse, promptGoogleAsync] = Google.useAuthRequest({
     webClientId: GOOGLE_WEB_CLIENT_ID,
-    androidClientId: "971359442211-dppv9u14kun8mo5c0e07pr6f6veh81aa.apps.googleusercontent.com",
+    androidClientId: GOOGLE_ANDROID_CLIENT_ID,
     scopes: ["profile", "email"],
   });
 

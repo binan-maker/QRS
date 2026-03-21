@@ -171,8 +171,8 @@ const GUARD_CACHE_TTL_MS = 30_000;
 interface CacheEntry { data: GuardLinkFields | null; expiresAt: number }
 const guardLinkCache = new Map<string, CacheEntry>();
 
-const FIREBASE_PROJECT_ID = process.env.FIREBASE_PROJECT_ID || "scan-guard-19a7f";
-const FIREBASE_API_KEY = process.env.FIREBASE_API_KEY || process.env.EXPO_PUBLIC_FIREBASE_API_KEY || "AIzaSyClEPO1EIRG3vxbQgS6l9AdZj0dIt765e0";
+const FIREBASE_PROJECT_ID = process.env.EXPO_PUBLIC_FIREBASE_PROJECT_ID || process.env.FIREBASE_PROJECT_ID || "";
+const FIREBASE_API_KEY = process.env.EXPO_PUBLIC_FIREBASE_API_KEY || process.env.FIREBASE_API_KEY || "";
 const CAUTION_WINDOW_MS = 24 * 60 * 60 * 1000;
 
 interface GuardLinkFields {

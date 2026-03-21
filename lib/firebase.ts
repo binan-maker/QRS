@@ -12,15 +12,16 @@ import { getStorage } from "firebase/storage";
 import { Platform } from "react-native";
 
 // ─── Firebase Configuration ────────────────────────────────────────────────
-// Set these in your .env file as EXPO_PUBLIC_FIREBASE_* variables.
-// The fallbacks below allow development without an .env file.
+// All values are read from environment variables (EXPO_PUBLIC_FIREBASE_*).
+// For local development, copy .env.example to .env and fill in your values.
+// For Replit / CI, set the variables in the Secrets panel.
 const firebaseConfig = {
-  apiKey: process.env.EXPO_PUBLIC_FIREBASE_API_KEY || "AIzaSyClEPO1EIRG3vxbQgS6l9AdZj0dIt765e0",
-  projectId: process.env.EXPO_PUBLIC_FIREBASE_PROJECT_ID || "scan-guard-19a7f",
-  storageBucket: process.env.EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET || "scan-guard-19a7f.firebasestorage.app",
-  databaseURL: process.env.EXPO_PUBLIC_FIREBASE_DATABASE_URL || "https://scan-guard-19a7f-default-rtdb.asia-southeast1.firebasedatabase.app",
-  appId: process.env.EXPO_PUBLIC_FIREBASE_APP_ID || "1:971359442211:android:96d2747d81b499102fa896",
-  messagingSenderId: "971359442211",
+  apiKey: process.env.EXPO_PUBLIC_FIREBASE_API_KEY,
+  projectId: process.env.EXPO_PUBLIC_FIREBASE_PROJECT_ID,
+  storageBucket: process.env.EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET,
+  databaseURL: process.env.EXPO_PUBLIC_FIREBASE_DATABASE_URL,
+  appId: process.env.EXPO_PUBLIC_FIREBASE_APP_ID,
+  messagingSenderId: process.env.EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
 };
 
 // ─── App (singleton — hot-reload safe) ─────────────────────────────────────

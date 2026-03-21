@@ -77,10 +77,11 @@ ensurePreviewReachable = "/status"
 [userenv]
 
 [userenv.shared]
-FIREBASE_API_KEY = "AIzaSyClEPO1EIRG3vxbQgS6l9AdZj0dIt765e0"
-FIREBASE_PROJECT_ID = "scan-guard-19a7f"
-FIREBASE_STORAGE_BUCKET = "scan-guard-19a7f.firebasestorage.app"
-FIREBASE_DATABASE_URL = "https://scan-guard-19a7f-default-rtdb.asia-southeast1.firebasedatabase.app"
-FIREBASE_APP_ID = "1:971359442211:android:96d2747d81b499102fa896"
 EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID = "971359442211-dppv9u14kun8mo5c0e07pr6f6veh81aa.apps.googleusercontent.com"
 EXPO_PUBLIC_ANDROID_CLIENT_ID = "971359442211-j2emebstu4e63sd7u56k852ok1sb9rs2.apps.googleusercontent.com"
+EXPO_PUBLIC_FIREBASE_API_KEY = "AIzaSyClEPO1EIRG3vxbQgS6l9AdZj0dIt765e0"
+EXPO_PUBLIC_FIREBASE_PROJECT_ID = "scan-guard-19a7f"
+EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET = "scan-guard-19a7f.firebasestorage.app"
+EXPO_PUBLIC_FIREBASE_DATABASE_URL = "https://scan-guard-19a7f-default-rtdb.asia-southeast1.firebasedatabase.app"
+EXPO_PUBLIC_FIREBASE_APP_ID = "1:971359442211:android:96d2747d81b499102fa896"
+EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID = "971359442211"
