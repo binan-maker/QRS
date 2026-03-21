@@ -146,6 +146,22 @@ export default function MyQrDetailScreen() {
                   <Text style={styles.uuidText}>{qr.uuid}</Text>
                 </View>
               ) : null}
+              <View style={styles.qrActionRow}>
+                <Pressable
+                  onPress={h.handleShare}
+                  style={[styles.qrActionBtn, { backgroundColor: colors.primaryDim, borderColor: colors.primary + "40" }]}
+                >
+                  <Ionicons name="share-outline" size={18} color={colors.primary} />
+                  <Text style={[styles.qrActionBtnText, { color: colors.primary }]}>Share</Text>
+                </Pressable>
+                <Pressable
+                  onPress={h.handleDownloadPdf}
+                  style={[styles.qrActionBtn, { backgroundColor: colors.primaryDim, borderColor: colors.primary + "40" }]}
+                >
+                  <Ionicons name="download-outline" size={18} color={colors.primary} />
+                  <Text style={[styles.qrActionBtnText, { color: colors.primary }]}>Download PDF</Text>
+                </Pressable>
+              </View>
             </View>
           </Animated.View>
 

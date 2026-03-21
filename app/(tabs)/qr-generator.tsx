@@ -28,7 +28,7 @@ export default function QrGeneratorScreen() {
     extraFields, setExtraField,
     qrValue, qrMode, setQrMode,
     businessName, setBusinessName,
-    customLogoUri, logoPosition, setLogoPosition,
+    customLogoUri, showDefaultLogo, logoPosition, setLogoPosition,
     generatedUuid, generatedAt,
     infoModalOpen, setInfoModalOpen,
     positionModalOpen, setPositionModalOpen,
@@ -36,7 +36,8 @@ export default function QrGeneratorScreen() {
     toastMsg, toastType, toastAnim,
     preset, isBranded, privateMode,
     switchPreset, handleGenerate,
-    handlePickCustomLogo, handleCopy, handleShare, handleClear,
+    handlePickCustomLogo, handleRemoveLogo, handleToggleDefaultLogo,
+    handleCopy, handleShare, handleDownloadPdf, handleClear,
     filterByKeyboardType,
   } = useQrGenerator();
 
@@ -91,10 +92,11 @@ export default function QrGeneratorScreen() {
         <Reanimated.View entering={FadeInDown.duration(400).delay(180)}>
           <LogoSection
             customLogoUri={customLogoUri}
-            isBranded={isBranded}
+            showDefaultLogo={showDefaultLogo}
             logoPositionLabel={getLogoPositionLabel()}
             onPickLogo={handlePickCustomLogo}
-            onRemoveLogo={() => {}}
+            onRemoveLogo={handleRemoveLogo}
+            onToggleDefaultLogo={handleToggleDefaultLogo}
             onOpenPosition={() => setPositionModalOpen(true)}
           />
         </Reanimated.View>
@@ -118,6 +120,7 @@ export default function QrGeneratorScreen() {
             qrMode={qrMode}
             logoPosition={logoPosition}
             customLogoUri={customLogoUri}
+            showDefaultLogo={showDefaultLogo}
             generatedUuid={generatedUuid}
             generatedAt={generatedAt}
             saving={saving}
@@ -129,6 +132,7 @@ export default function QrGeneratorScreen() {
             onSizeDecrease={() => setQrSize((s) => Math.max(160, s - 20))}
             onCopy={handleCopy}
             onShare={handleShare}
+            onDownload={handleDownloadPdf}
             onClear={handleClear}
           />
         ) : (

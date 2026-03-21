@@ -4,7 +4,6 @@ import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import Animated, { FadeIn } from "react-native-reanimated";
 import QRCode from "react-native-qrcode-svg";
-import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { useTheme } from "@/contexts/ThemeContext";
 import type { LogoPosition } from "@/hooks/useQrGenerator";
 
@@ -16,6 +15,7 @@ interface Props {
   qrMode: "individual" | "business" | "private";
   logoPosition: LogoPosition;
   customLogoUri: string | null;
+  showDefaultLogo: boolean;
   generatedUuid: string | null;
   generatedAt: Date | null;
   saving: boolean;
@@ -27,6 +27,7 @@ interface Props {
   onSizeDecrease: () => void;
   onCopy: () => void;
   onShare: () => void;
+  onDownload: () => void;
   onClear: () => void;
 }
 
@@ -36,15 +37,15 @@ function formatShortDate(date: Date): string {
 
 export default function QrOutputCard({
   qrValue, qrSize, isBranded, privateMode, qrMode, logoPosition,
-  customLogoUri, generatedUuid, generatedAt, saving, savedToProfile,
+  customLogoUri, showDefaultLogo, generatedUuid, generatedAt, saving, savedToProfile,
   user, svgRef, logoPositionLabel,
-  onSizeIncrease, onSizeDecrease, onCopy, onShare, onClear,
+  onSizeIncrease, onSizeDecrease, onCopy, onShare, onDownload, onClear,
 }: Props) {
   const { colors } = useTheme();
 
   const logoSource = customLogoUri
     ? { uri: customLogoUri }
-    : isBranded
+    : showDefaultLogo
     ? require("../../../assets/images/icon.png")
     : undefined;
 
@@ -59,7 +60,7 @@ export default function QrOutputCard({
             backgroundColor="#F8FAFC"
             getRef={(ref: any) => { svgRef.current = ref; }}
             logo={logoPosition === "center" ? logoSource : undefined}
-            logoSize={customLogoUri ? 54 : isBranded ? 48 : undefined}
+            logoSize={customLogoUri ? 54 : showDefaultLogo ? 48 : undefined}
             logoBackgroundColor="#F8FAFC"
             logoBorderRadius={customLogoUri ? 27 : 10}
             logoMargin={4}
@@ -176,6 +177,10 @@ export default function QrOutputCard({
           <Ionicons name="share-outline" size={19} color={colors.primary} />
           <Text style={[styles.qrActionText, { color: colors.primary }]}>Share</Text>
         </Pressable>
+        <Pressable onPress={onDownload} style={[styles.qrActionBtn, { backgroundColor: colors.primaryDim, borderColor: colors.primary + "40" }]}>
+          <Ionicons name="download-outline" size={19} color={colors.primary} />
+          <Text style={[styles.qrActionText, { color: colors.primary }]}>PDF</Text>
+        </Pressable>
         <Pressable onPress={onClear} style={[styles.qrActionBtn, { backgroundColor: colors.dangerDim, borderColor: colors.danger + "50" }]}>
           <Ionicons name="trash-outline" size={19} color={colors.danger} />
           <Text style={[styles.qrActionText, { color: colors.danger }]}>Clear</Text>
@@ -245,10 +250,10 @@ const styles = StyleSheet.create({
   sizeButtons: { flexDirection: "row", alignItems: "center", gap: 12 },
   sizeBtn: { width: 36, height: 36, borderRadius: 10, alignItems: "center", justifyContent: "center" },
   sizePx: { fontSize: 14, fontFamily: "Inter_700Bold", minWidth: 52, textAlign: "center" },
-  qrActions: { flexDirection: "row", gap: 10, padding: 16, borderTopWidth: 1 },
+  qrActions: { flexDirection: "row", gap: 8, padding: 16, borderTopWidth: 1 },
   qrActionBtn: {
-    flex: 1, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 6,
+    flex: 1, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 4,
     paddingVertical: 12, borderRadius: 14, borderWidth: 1,
   },
-  qrActionText: { fontSize: 14, fontFamily: "Inter_600SemiBold" },
+  qrActionText: { fontSize: 12, fontFamily: "Inter_600SemiBold" },
 });

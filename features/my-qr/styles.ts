@@ -30,6 +30,12 @@ export function makeStyles(c: AppColors) {
     cornerLogoImg: { width: 36, height: 36, borderRadius: 8 },
     uuidRow: { flexDirection: "row", alignItems: "center", gap: 5, marginTop: 14 },
     uuidText: { fontSize: 12, fontFamily: "Inter_600SemiBold", color: c.safe, letterSpacing: 0.5 },
+    qrActionRow: { flexDirection: "row", gap: 10, marginTop: 16, width: "100%" },
+    qrActionBtn: {
+      flex: 1, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 6,
+      paddingVertical: 11, borderRadius: 14, borderWidth: 1,
+    },
+    qrActionBtnText: { fontSize: 13, fontFamily: "Inter_600SemiBold" },
     metaCard: {
       backgroundColor: c.surface, borderRadius: 16,
       borderWidth: 1, borderColor: c.surfaceBorder, padding: 16,

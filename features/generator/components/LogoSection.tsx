@@ -4,18 +4,20 @@ import { useTheme } from "@/contexts/ThemeContext";
 
 interface Props {
   customLogoUri: string | null;
-  isBranded: boolean;
+  showDefaultLogo: boolean;
   logoPositionLabel: string;
   onPickLogo: () => void;
   onRemoveLogo: () => void;
+  onToggleDefaultLogo: () => void;
   onOpenPosition: () => void;
 }
 
 export default function LogoSection({
-  customLogoUri, isBranded, logoPositionLabel,
-  onPickLogo, onRemoveLogo, onOpenPosition,
+  customLogoUri, showDefaultLogo, logoPositionLabel,
+  onPickLogo, onRemoveLogo, onToggleDefaultLogo, onOpenPosition,
 }: Props) {
   const { colors } = useTheme();
+  const hasLogo = !!(customLogoUri || showDefaultLogo);
 
   return (
     <>
@@ -27,7 +29,7 @@ export default function LogoSection({
         >
           {customLogoUri ? (
             <Image source={{ uri: customLogoUri }} style={styles.logoPreview} />
-          ) : isBranded ? (
+          ) : showDefaultLogo ? (
             <Image source={require("../../../assets/images/icon.png")} style={styles.logoPreview} />
           ) : (
             <>
@@ -38,7 +40,7 @@ export default function LogoSection({
         </Pressable>
 
         <View style={styles.logoOptions}>
-          {(customLogoUri || isBranded) && (
+          {hasLogo && (
             <Pressable
               onPress={onOpenPosition}
               style={[styles.positionBtn, { backgroundColor: colors.primaryDim, borderColor: colors.primary + "40" }]}
@@ -48,21 +50,34 @@ export default function LogoSection({
               <Ionicons name="chevron-forward" size={14} color={colors.textMuted} />
             </Pressable>
           )}
+
           {customLogoUri ? (
             <Pressable
               onPress={onRemoveLogo}
               style={[styles.removeLogoBtn, { backgroundColor: colors.dangerDim, borderColor: colors.danger + "30" }]}
             >
               <Ionicons name="close" size={16} color={colors.danger} />
-              <Text style={[styles.removeLogoText, { color: colors.danger }]}>Remove Custom Logo</Text>
+              <Text style={[styles.removeLogoText, { color: colors.danger }]}>Remove Logo</Text>
             </Pressable>
-          ) : isBranded ? (
-            <View style={styles.defaultLogoInfo}>
-              <Ionicons name="shield-checkmark" size={14} color={colors.safe} />
-              <Text style={[styles.defaultLogoText, { color: colors.safe }]}>QR Guard logo — tap image to replace</Text>
-            </View>
+          ) : showDefaultLogo ? (
+            <Pressable
+              onPress={onToggleDefaultLogo}
+              style={[styles.removeLogoBtn, { backgroundColor: colors.dangerDim, borderColor: colors.danger + "30" }]}
+            >
+              <Ionicons name="close" size={16} color={colors.danger} />
+              <Text style={[styles.removeLogoText, { color: colors.danger }]}>Remove QR Guard Logo</Text>
+            </Pressable>
           ) : (
-            <Text style={[styles.logoHint, { color: colors.textMuted }]}>Custom logo appears in the center of your QR code</Text>
+            <View style={styles.logoActions}>
+              <Text style={[styles.logoHint, { color: colors.textMuted }]}>Tap above to add your own logo</Text>
+              <Pressable
+                onPress={onToggleDefaultLogo}
+                style={[styles.addDefaultBtn, { backgroundColor: colors.primaryDim, borderColor: colors.primary + "40" }]}
+              >
+                <Ionicons name="shield-checkmark-outline" size={14} color={colors.primary} />
+                <Text style={[styles.addDefaultText, { color: colors.primary }]}>Add QR Guard Logo</Text>
+              </Pressable>
+            </View>
           )}
         </View>
       </View>
@@ -96,7 +111,12 @@ const styles = StyleSheet.create({
     borderRadius: 10, alignSelf: "flex-start", borderWidth: 1,
   },
   removeLogoText: { fontSize: 13, fontFamily: "Inter_500Medium" },
-  defaultLogoInfo: { flexDirection: "row", alignItems: "center", gap: 6 },
-  defaultLogoText: { flex: 1, fontSize: 12, fontFamily: "Inter_400Regular" },
+  logoActions: { gap: 8 },
   logoHint: { fontSize: 12, fontFamily: "Inter_400Regular" },
+  addDefaultBtn: {
+    flexDirection: "row", alignItems: "center", gap: 6,
+    paddingHorizontal: 12, paddingVertical: 8,
+    borderRadius: 10, alignSelf: "flex-start", borderWidth: 1,
+  },
+  addDefaultText: { fontSize: 13, fontFamily: "Inter_500Medium" },
 });
