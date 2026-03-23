@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
+import { Platform } from "react-native";
 import * as Network from "expo-network";
 
 export interface NetworkStatus {
@@ -14,10 +15,12 @@ export function useNetworkStatus(): NetworkStatus {
   const check = useCallback(async () => {
     setIsChecking(true);
     try {
-      const state = await Network.getNetworkStateAsync();
-      // isInternetReachable can be null on web/Replit — null means "can't tell", not "offline".
-      // Only treat as offline when explicitly false.
-      setIsOnline(state.isConnected !== false && state.isInternetReachable !== false);
+      if (Platform.OS === "web") {
+        setIsOnline(typeof navigator !== "undefined" ? navigator.onLine : true);
+      } else {
+        const state = await Network.getNetworkStateAsync();
+        setIsOnline(state.isConnected !== false && state.isInternetReachable !== false);
+      }
     } catch {
       setIsOnline(true);
     } finally {
@@ -27,8 +30,20 @@ export function useNetworkStatus(): NetworkStatus {
 
   useEffect(() => {
     check();
-    const interval = setInterval(check, 15000);
-    return () => clearInterval(interval);
+
+    if (Platform.OS === "web" && typeof window !== "undefined") {
+      const handleOnline = () => setIsOnline(true);
+      const handleOffline = () => setIsOnline(false);
+      window.addEventListener("online", handleOnline);
+      window.addEventListener("offline", handleOffline);
+      return () => {
+        window.removeEventListener("online", handleOnline);
+        window.removeEventListener("offline", handleOffline);
+      };
+    } else {
+      const interval = setInterval(check, 15000);
+      return () => clearInterval(interval);
+    }
   }, [check]);
 
   return { isOnline, isChecking, recheck: check };
