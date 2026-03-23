@@ -36,7 +36,11 @@ function buildAuth() {
     return getAuth(firebaseApp);
   }
   try {
-    const AsyncStorage = require("@react-native-async-storage/async-storage").default;
+    // Top-level import path avoids dynamic-require issues on some Metro versions
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    const AsyncStorageModule = require("@react-native-async-storage/async-storage");
+    const AsyncStorage = AsyncStorageModule.default ?? AsyncStorageModule;
+    if (!AsyncStorage) return getAuth(firebaseApp);
     return initializeAuth(firebaseApp, {
       persistence: getReactNativePersistence(AsyncStorage),
     });

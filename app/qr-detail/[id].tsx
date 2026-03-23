@@ -8,6 +8,7 @@ import {
   Platform,
   KeyboardAvoidingView,
   ScrollView,
+  StyleSheet,
 } from "react-native";
 import { StatusBar } from "expo-status-bar";
 import { useLocalSearchParams, router } from "expo-router";
@@ -42,6 +43,13 @@ import MessagesModal from "@/features/qr-detail/components/modals/MessagesModal"
 import VerificationModal from "@/features/qr-detail/components/modals/VerificationModal";
 import CommentReportModal from "@/features/qr-detail/components/modals/CommentReportModal";
 
+function VerdictIcon({ level, size, color }: { level: string; size: number; color: string }) {
+  if (level === "safe") return <Ionicons name="shield-checkmark" size={size} color={color} />;
+  if (level === "dangerous") return <Ionicons name="warning" size={size} color={color} />;
+  if (level === "caution") return <Ionicons name="alert-circle" size={size} color={color} />;
+  return <Ionicons name="help-circle-outline" size={size} color={color} />;
+}
+
 export default function QrDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { user } = useAuth();
@@ -49,6 +57,7 @@ export default function QrDetailScreen() {
   const insets = useSafeAreaInsets();
   const { recheck } = useNetworkStatus();
   const styles = makeStyles(colors);
+  const [detailsExpanded, setDetailsExpanded] = useState(true);
 
   const glowOpacity = useSharedValue(0.6);
   const glowScale = useSharedValue(1);
@@ -62,8 +71,14 @@ export default function QrDetailScreen() {
   const q = useQrDetail(id);
   const topInset = Platform.OS === "web" ? 67 : insets.top;
   const trust = q.getTrustInfo();
+  const verdict = q.getCombinedVerdict();
   const currentContent = q.qrCode?.content || q.offlineContent || "";
   const currentContentType = q.qrCode?.contentType || q.offlineContentType;
+
+  const hasLocalWarnings =
+    (currentContentType === "payment" && q.paymentSafety?.isSuspicious) ||
+    (currentContentType === "url" && q.urlSafety?.isSuspicious) ||
+    q.offlineBlacklistMatch.matched;
 
   if (q.loading) return <LoadingSkeleton topInset={topInset} />;
 
@@ -171,13 +186,21 @@ export default function QrDetailScreen() {
             keyboardShouldPersistTaps="handled"
             onScrollBeginDrag={() => q.setCommentMenuId(null)}
           >
-            {/* Disclaimer */}
-            <View style={styles.disclaimerBanner}>
-              <Ionicons name="warning-outline" size={16} color={colors.warning} />
-              <Text style={styles.disclaimerText}>
-                Warning: Always verify before clicking or paying. QR Guard may make mistakes and is not responsible for any payment or link issues. Rely on community reports for guidance.
-              </Text>
-            </View>
+            {/* ── Safety Verdict Hero ─────────────────────────────────────── */}
+            <Animated.View entering={FadeIn.duration(200)}>
+              <View style={[
+                heroStyles.card,
+                { backgroundColor: verdict.color + "18", borderColor: verdict.color + "50" },
+              ]}>
+                <View style={heroStyles.iconRow}>
+                  <VerdictIcon level={verdict.level} size={48} color={verdict.color} />
+                </View>
+                <Text style={[heroStyles.label, { color: verdict.color }]}>{verdict.label}</Text>
+                {verdict.reason ? (
+                  <Text style={[heroStyles.reason, { color: colors.textSecondary }]}>{verdict.reason}</Text>
+                ) : null}
+              </View>
+            </Animated.View>
 
             {/* Offline banner */}
             {q.offlineMode && (
@@ -211,38 +234,8 @@ export default function QrDetailScreen() {
               </Animated.View>
             )}
 
-            {/* Owner Card */}
-            {q.ownerInfo && !q.offlineMode && (
-              <Animated.View entering={FadeInDown.duration(400)}>
-                <OwnerCard
-                  ownerInfo={q.ownerInfo}
-                  isQrOwner={q.isQrOwner}
-                  followCount={q.followCount}
-                  unreadMessages={q.unreadMessages}
-                  onOpenFollowers={() => { q.handleLoadFollowers(); q.setFollowersModalOpen(true); }}
-                  onOpenMessages={() => q.setMessagesModalOpen(true)}
-                />
-              </Animated.View>
-            )}
-
-            {/* Merchant Dashboard */}
-            {q.isQrOwner && !q.offlineMode && (
-              <Animated.View entering={FadeInDown.duration(450)}>
-                <MerchantDashboard
-                  scanVelocity={q.scanVelocity}
-                  velocityLoading={q.velocityLoading}
-                  verificationStatus={q.verificationStatus}
-                  onRefreshVelocity={async () => {
-                    const { getScanVelocity } = await import("@/lib/firestore-service");
-                    getScanVelocity(id);
-                  }}
-                  onRequestVerify={() => q.setVerifyModalOpen(true)}
-                />
-              </Animated.View>
-            )}
-
-            {/* Content Card */}
-            <Animated.View entering={FadeInDown.duration(400)}>
+            {/* ── Content Card ────────────────────────────────────────────── */}
+            <Animated.View entering={FadeInDown.duration(300)}>
               <ContentCard
                 content={currentContent}
                 contentType={currentContentType}
@@ -252,35 +245,34 @@ export default function QrDetailScreen() {
               />
             </Animated.View>
 
-            {/* Safety Warnings */}
-            {currentContentType === "payment" && q.paymentSafety?.isSuspicious && (
-              <Animated.View entering={FadeInDown.duration(400)}>
-                <SafetyWarningCard
-                  riskLevel={q.paymentSafety.riskLevel as "caution" | "dangerous"}
-                  warnings={q.paymentSafety.warnings}
-                  title={q.paymentSafety.riskLevel === "dangerous" ? "⚠ Payment Security Warning" : "⚠ Payment Security Notice"}
-                />
-              </Animated.View>
-            )}
-            {currentContentType === "url" && q.urlSafety?.isSuspicious && (
-              <Animated.View entering={FadeInDown.duration(400)}>
-                <SafetyWarningCard
-                  riskLevel={q.urlSafety.riskLevel as "caution" | "dangerous"}
-                  warnings={q.urlSafety.warnings}
-                  title={q.urlSafety.riskLevel === "dangerous" ? "⚠ Dangerous URL Detected" : "⚠ Proceed with Caution"}
-                />
-              </Animated.View>
-            )}
-            {q.offlineBlacklistMatch.matched && (
-              <Animated.View entering={FadeInDown.duration(400)}>
-                <SafetyWarningCard
-                  riskLevel="dangerous"
-                  warnings={[`This content matches a known scam pattern: ${q.offlineBlacklistMatch.reason}`]}
-                  title="⚠ Known Scam Pattern Detected"
-                />
+            {/* ── Local Safety Warnings (instant) ─────────────────────────── */}
+            {hasLocalWarnings && (
+              <Animated.View entering={FadeInDown.duration(300)}>
+                {currentContentType === "payment" && q.paymentSafety?.isSuspicious && (
+                  <SafetyWarningCard
+                    riskLevel={q.paymentSafety.riskLevel as "caution" | "dangerous"}
+                    warnings={q.paymentSafety.warnings}
+                    title={q.paymentSafety.riskLevel === "dangerous" ? "⚠ Payment Security Warning" : "⚠ Payment Security Notice"}
+                  />
+                )}
+                {currentContentType === "url" && q.urlSafety?.isSuspicious && (
+                  <SafetyWarningCard
+                    riskLevel={q.urlSafety.riskLevel as "caution" | "dangerous"}
+                    warnings={q.urlSafety.warnings}
+                    title={q.urlSafety.riskLevel === "dangerous" ? "⚠ Dangerous URL Detected" : "⚠ Proceed with Caution"}
+                  />
+                )}
+                {q.offlineBlacklistMatch.matched && (
+                  <SafetyWarningCard
+                    riskLevel="dangerous"
+                    warnings={[`Known scam pattern: ${q.offlineBlacklistMatch.reason}`]}
+                    title="⚠ Known Scam Pattern"
+                  />
+                )}
               </Animated.View>
             )}
 
+            {/* ── Community Details ────────────────────────────────────────── */}
             {q.offlineMode ? (
               <Animated.View entering={FadeIn.duration(400)}>
                 <View style={styles.offlineFeatureCard}>
@@ -296,111 +288,148 @@ export default function QrDetailScreen() {
                 </View>
               </Animated.View>
             ) : (
-              <>
-                {/* Trust Score */}
-                <Animated.View entering={FadeInDown.duration(400).delay(100)}>
-                  <TrustScoreCard
-                    trustInfo={trust}
-                    reportCounts={q.reportCounts}
-                    totalScans={q.totalScans}
-                    totalComments={q.totalComments}
-                    isQrOwner={q.isQrOwner}
-                    followCount={q.followCount}
-                    followersModalOpen={q.followersModalOpen}
-                    onOpenFollowers={() => { q.handleLoadFollowers(); q.setFollowersModalOpen(true); }}
-                    manipulationWarning={trust.manipulationWarning}
+              <Animated.View entering={FadeInDown.duration(400).delay(100)}>
+                {/* Section toggle */}
+                <Pressable
+                  onPress={() => setDetailsExpanded((v) => !v)}
+                  style={[detailsToggleStyles.row, { borderColor: colors.surfaceBorder }]}
+                >
+                  <Text style={[detailsToggleStyles.label, { color: colors.textSecondary }]}>Community Details</Text>
+                  <Ionicons
+                    name={detailsExpanded ? "chevron-up" : "chevron-down"}
+                    size={16}
+                    color={colors.textMuted}
                   />
-                </Animated.View>
+                </Pressable>
 
-                {/* Report Grid */}
-                <Animated.View entering={FadeInDown.duration(400).delay(200)}>
-                  <ReportGrid
-                    reportCounts={q.reportCounts}
-                    userReport={q.userReport}
-                    reportLoading={q.reportLoading}
-                    isLoggedIn={!!user}
-                    onReport={q.handleReport}
-                  />
-                </Animated.View>
-
-                {/* Comments */}
-                <Animated.View entering={FadeInDown.duration(400).delay(300)}>
-                  <View style={styles.commentsHeader}>
-                    <View style={styles.commentsTitleRow}>
-                      <Text style={styles.sectionTitle}>Comments</Text>
-                      {q.totalComments > 0 && (
-                        <View style={styles.commentCountBadge}>
-                          <Text style={styles.commentCountText}>{formatCompactNumber(q.totalComments)}</Text>
-                        </View>
-                      )}
-                    </View>
-                    <View style={styles.liveIndicator}>
-                      <View style={styles.liveDot} />
-                      <Text style={styles.liveText}>Live</Text>
-                    </View>
-                  </View>
-
-                  {!user && (
-                    <Pressable onPress={() => router.push("/(auth)/login")} style={styles.signInToComment}>
-                      <Ionicons name="chatbubble-outline" size={18} color={colors.primary} />
-                      <Text style={styles.signInToCommentText}>Sign in to comment</Text>
-                      <Ionicons name="arrow-forward" size={16} color={colors.primary} style={{ marginLeft: "auto" as any }} />
-                    </Pressable>
-                  )}
-
-                  {q.commentsList.length === 0 ? (
-                    <View style={styles.noComments}>
-                      <Ionicons name="chatbubbles-outline" size={32} color={colors.textMuted} />
-                      <Text style={styles.noCommentsText}>No comments yet</Text>
-                      <Text style={styles.noCommentsSubtext}>Be the first to share your thoughts</Text>
-                    </View>
-                  ) : (
-                    q.topLevelComments.map((comment) => (
-                      <CommentItem
-                        key={comment.id}
-                        comment={comment}
-                        isReply={false}
-                        currentUserLike={q.userLikes[comment.id] ?? null}
-                        isMenuOpen={q.commentMenuId === comment.id}
-                        isDeleting={q.deletingCommentId === comment.id}
-                        isRevealed={q.revealedComments.has(comment.id)}
-                        isCommentOwner={user?.id === comment.userId}
-                        canDelete={user?.id === comment.userId}
-                        descendants={q.getAllDescendants(comment.id)}
-                        expandedReplies={q.expandedReplies}
-                        visibleRepliesCount={q.visibleRepliesCount}
-                        onLike={q.handleCommentLike}
-                        onReply={(c) => {
-                          const rootId = q.getRootCommentId(c.id);
-                          q.setReplyTo({
-                            id: c.id,
-                            author: c.userUsername ? `@${c.userUsername}` : smartName(c.user.displayName),
-                            rootId,
-                            isNested: !!c.parentId,
-                          });
-                        }}
-                        onMenuOpen={(cid, isOwner) => { q.setCommentMenuId(cid); q.setCommentMenuOwner(isOwner); }}
-                        onMenuClose={() => q.setCommentMenuId(null)}
-                        onDelete={q.handleDeleteComment}
-                        onReport={(cid) => q.setCommentReportModal(cid)}
-                        onReveal={(cid) => q.setRevealedComments((prev) => { const next = new Set(prev); next.add(cid); return next; })}
-                        onToggleReplies={q.toggleReplies}
-                        onShowMoreReplies={q.showMoreReplies}
+                {detailsExpanded && (
+                  <>
+                    {/* Owner Card */}
+                    {q.ownerInfo && (
+                      <OwnerCard
+                        ownerInfo={q.ownerInfo}
+                        isQrOwner={q.isQrOwner}
+                        followCount={q.followCount}
+                        unreadMessages={q.unreadMessages}
+                        onOpenFollowers={() => { q.handleLoadFollowers(); q.setFollowersModalOpen(true); }}
+                        onOpenMessages={() => q.setMessagesModalOpen(true)}
                       />
-                    ))
-                  )}
+                    )}
 
-                  {q.hasMoreComments && (
-                    <Pressable onPress={q.loadMoreComments} disabled={q.commentsLoading} style={styles.loadMoreBtn}>
-                      {q.commentsLoading ? (
-                        <ActivityIndicator size="small" color={colors.primary} />
-                      ) : (
-                        <Text style={styles.loadMoreText}>Load More Comments</Text>
-                      )}
-                    </Pressable>
-                  )}
-                </Animated.View>
-              </>
+                    {/* Merchant Dashboard */}
+                    {q.isQrOwner && (
+                      <MerchantDashboard
+                        scanVelocity={q.scanVelocity}
+                        velocityLoading={q.velocityLoading}
+                        verificationStatus={q.verificationStatus}
+                        onRefreshVelocity={async () => {
+                          const { getScanVelocity } = await import("@/lib/firestore-service");
+                          getScanVelocity(id);
+                        }}
+                        onRequestVerify={() => q.setVerifyModalOpen(true)}
+                      />
+                    )}
+
+                    {/* Trust Score */}
+                    <TrustScoreCard
+                      trustInfo={trust}
+                      reportCounts={q.reportCounts}
+                      totalScans={q.totalScans}
+                      totalComments={q.totalComments}
+                      isQrOwner={q.isQrOwner}
+                      followCount={q.followCount}
+                      followersModalOpen={q.followersModalOpen}
+                      onOpenFollowers={() => { q.handleLoadFollowers(); q.setFollowersModalOpen(true); }}
+                      manipulationWarning={trust.manipulationWarning}
+                    />
+
+                    {/* Report Grid */}
+                    <ReportGrid
+                      reportCounts={q.reportCounts}
+                      userReport={q.userReport}
+                      reportLoading={q.reportLoading}
+                      isLoggedIn={!!user}
+                      onReport={q.handleReport}
+                    />
+
+                    {/* Comments */}
+                    <View style={styles.commentsHeader}>
+                      <View style={styles.commentsTitleRow}>
+                        <Text style={styles.sectionTitle}>Comments</Text>
+                        {q.totalComments > 0 && (
+                          <View style={styles.commentCountBadge}>
+                            <Text style={styles.commentCountText}>{formatCompactNumber(q.totalComments)}</Text>
+                          </View>
+                        )}
+                      </View>
+                      <View style={styles.liveIndicator}>
+                        <View style={styles.liveDot} />
+                        <Text style={styles.liveText}>Live</Text>
+                      </View>
+                    </View>
+
+                    {!user && (
+                      <Pressable onPress={() => router.push("/(auth)/login")} style={styles.signInToComment}>
+                        <Ionicons name="chatbubble-outline" size={18} color={colors.primary} />
+                        <Text style={styles.signInToCommentText}>Sign in to comment</Text>
+                        <Ionicons name="arrow-forward" size={16} color={colors.primary} style={{ marginLeft: "auto" as any }} />
+                      </Pressable>
+                    )}
+
+                    {q.commentsList.length === 0 ? (
+                      <View style={styles.noComments}>
+                        <Ionicons name="chatbubbles-outline" size={32} color={colors.textMuted} />
+                        <Text style={styles.noCommentsText}>No comments yet</Text>
+                        <Text style={styles.noCommentsSubtext}>Be the first to share your thoughts</Text>
+                      </View>
+                    ) : (
+                      q.topLevelComments.map((comment) => (
+                        <CommentItem
+                          key={comment.id}
+                          comment={comment}
+                          isReply={false}
+                          currentUserLike={q.userLikes[comment.id] ?? null}
+                          isMenuOpen={q.commentMenuId === comment.id}
+                          isDeleting={q.deletingCommentId === comment.id}
+                          isRevealed={q.revealedComments.has(comment.id)}
+                          isCommentOwner={user?.id === comment.userId}
+                          canDelete={user?.id === comment.userId}
+                          descendants={q.getAllDescendants(comment.id)}
+                          expandedReplies={q.expandedReplies}
+                          visibleRepliesCount={q.visibleRepliesCount}
+                          onLike={q.handleCommentLike}
+                          onReply={(c) => {
+                            const rootId = q.getRootCommentId(c.id);
+                            q.setReplyTo({
+                              id: c.id,
+                              author: c.userUsername ? `@${c.userUsername}` : smartName(c.user.displayName),
+                              rootId,
+                              isNested: !!c.parentId,
+                            });
+                          }}
+                          onMenuOpen={(cid, isOwner) => { q.setCommentMenuId(cid); q.setCommentMenuOwner(isOwner); }}
+                          onMenuClose={() => q.setCommentMenuId(null)}
+                          onDelete={q.handleDeleteComment}
+                          onReport={(cid) => q.setCommentReportModal(cid)}
+                          onReveal={(cid) => q.setRevealedComments((prev) => { const next = new Set(prev); next.add(cid); return next; })}
+                          onToggleReplies={q.toggleReplies}
+                          onShowMoreReplies={q.showMoreReplies}
+                        />
+                      ))
+                    )}
+
+                    {q.hasMoreComments && (
+                      <Pressable onPress={q.loadMoreComments} disabled={q.commentsLoading} style={styles.loadMoreBtn}>
+                        {q.commentsLoading ? (
+                          <ActivityIndicator size="small" color={colors.primary} />
+                        ) : (
+                          <Text style={styles.loadMoreText}>Load More Comments</Text>
+                        )}
+                      </Pressable>
+                    )}
+                  </>
+                )}
+              </Animated.View>
             )}
           </ScrollView>
 
@@ -481,3 +510,49 @@ export default function QrDetailScreen() {
     </View>
   );
 }
+
+const heroStyles = StyleSheet.create({
+  card: {
+    borderRadius: 20,
+    borderWidth: 1.5,
+    paddingVertical: 28,
+    paddingHorizontal: 24,
+    alignItems: "center",
+    marginBottom: 16,
+    gap: 8,
+  },
+  iconRow: {
+    marginBottom: 4,
+  },
+  label: {
+    fontSize: 40,
+    fontFamily: "Inter_700Bold",
+    letterSpacing: 3,
+  },
+  reason: {
+    fontSize: 14,
+    fontFamily: "Inter_400Regular",
+    textAlign: "center",
+    marginTop: 2,
+    lineHeight: 20,
+  },
+});
+
+const detailsToggleStyles = StyleSheet.create({
+  row: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingVertical: 12,
+    paddingHorizontal: 4,
+    marginBottom: 12,
+    borderTopWidth: 1,
+    borderBottomWidth: 1,
+  },
+  label: {
+    fontSize: 13,
+    fontFamily: "Inter_600SemiBold",
+    letterSpacing: 0.5,
+    textTransform: "uppercase",
+  },
+});

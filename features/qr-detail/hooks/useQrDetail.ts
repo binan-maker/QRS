@@ -58,6 +58,44 @@ export function useQrDetail(id: string) {
     return { score: safeRatio * 100, label: "Dangerous", color: colors.danger, manipulationWarning: false };
   }
 
+  function getCombinedVerdict() {
+    const { offlineBlacklistMatch, paymentSafety, urlSafety, instantVerdict } = safety;
+    const trust = getTrustInfo();
+
+    if (offlineBlacklistMatch.matched) {
+      return { level: "dangerous" as const, label: "DANGEROUS", reason: offlineBlacklistMatch.reason ?? "Known scam pattern", color: colors.danger };
+    }
+
+    const isCommunityAvailable = trust.score >= 0;
+
+    if (isCommunityAvailable) {
+      if (trust.label === "Trusted" || trust.label === "Likely Safe") {
+        if (paymentSafety?.isSuspicious || urlSafety?.isSuspicious) {
+          return { level: "caution" as const, label: "CAUTION", reason: "Community trusts it, but local analysis found risks", color: colors.warning };
+        }
+        return { level: "safe" as const, label: "SAFE", reason: `${Math.round(trust.score)}% community trust`, color: colors.safe };
+      }
+      if (trust.label === "Caution" || trust.label === "Uncertain") {
+        return { level: "caution" as const, label: "CAUTION", reason: "Mixed community reports", color: colors.warning };
+      }
+      if (trust.label === "Dangerous" || trust.label === "Suspicious") {
+        return { level: "dangerous" as const, label: "DANGEROUS", reason: "Flagged by the community", color: colors.danger };
+      }
+    }
+
+    if (instantVerdict.level === "dangerous") {
+      return { level: "dangerous" as const, label: "DANGEROUS", reason: instantVerdict.reason ?? "Threat detected", color: colors.danger };
+    }
+    if (instantVerdict.level === "caution") {
+      return { level: "caution" as const, label: "CAUTION", reason: instantVerdict.reason ?? "Proceed carefully", color: colors.warning };
+    }
+    if (instantVerdict.level === "safe") {
+      return { level: "safe" as const, label: "SAFE", reason: "No threats detected", color: colors.safe };
+    }
+
+    return { level: "unknown" as const, label: "UNKNOWN", reason: "Analysis in progress", color: colors.textMuted };
+  }
+
   async function handleOpenPayment(rawContent: string) {
     const linksToTry: string[] = [];
     const lower = rawContent.toLowerCase();
@@ -192,6 +230,7 @@ export function useQrDetail(id: string) {
     ...owner,
     copied,
     getTrustInfo,
+    getCombinedVerdict,
     handleOpenContent,
     handleCopyContent,
     handleToggleFavorite,

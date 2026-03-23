@@ -2,6 +2,22 @@
 
 A full-stack mobile-first QR code scanning and management app built with Expo (React Native) and Express.
 
+## Recent Changes
+
+### Safety-First UX (Jobs Redesign)
+- **Instant local verdict** — `computeInstantVerdict()` in `features/qr-detail/hooks/useQrSafety.ts` runs synchronously using `BUILT_IN_BLACKLIST` + URL/payment heuristics the moment content is known. No network required.
+- **`getCombinedVerdict()`** in `useQrDetail.ts` merges local + community trust into a single verdict, with blacklist hits always winning.
+- **Hero verdict card** in `app/qr-detail/[id].tsx` — large SAFE / CAUTION / DANGEROUS displayed immediately at top. No spinner.
+- **Community Details** section collapses behind a toggle so the verdict is the first thing users feel, not a dashboard.
+
+### Mobile / Native Fixes
+- **Polyfills** (`polyfills.ts`) — added `TextEncoder`/`TextDecoder` via `@stardazed/streams-text-encoding` to prevent crashes in Firebase and analysis code on Hermes/JSC.
+- **Firebase AsyncStorage** (`lib/firebase.ts`) — safer `require` with `.default ?? module` fallback to prevent null `AsyncStorage` on newer Metro versions.
+
+### Play Store (AAB)
+- `eas.json` added with `development` (APK/debug), `preview` (internal APK), and `production` (AAB/store) profiles.
+- Run `eas build --platform android --profile production` to generate an AAB for Google Play.
+
 ## Architecture
 
 - **Frontend**: Expo (React Native) with Expo Router for navigation, running on port 8081
