@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Alert } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as Haptics from "expo-haptics";
+import { router } from "expo-router";
 import { useAuth } from "@/contexts/AuthContext";
 import { authAdapter } from "@/lib/auth";
 import {
@@ -40,8 +41,13 @@ export function useSettings() {
         text: "Sign Out",
         style: "destructive",
         onPress: async () => {
-          await signOut();
-          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+          try {
+            await signOut();
+            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+            router.replace("/(tabs)/scanner" as any);
+          } catch (e: any) {
+            Alert.alert("Sign Out Failed", e?.message || "Could not sign out. Please try again.");
+          }
         },
       },
     ]);
@@ -237,28 +243,25 @@ export function useSettings() {
           style: "destructive",
           onPress: async () => {
             try {
-              console.log("[DeleteAccount] Starting account deletion for user:", user?.id);
               if (user) {
                 await deleteUserAccount(user.id);
-                console.log("[DeleteAccount] Firestore user record deleted");
                 const currentUser = authAdapter.getCurrentUser();
                 if (currentUser) {
                   await authAdapter.deleteUser(currentUser);
-                  console.log("[DeleteAccount] Firebase Auth account deleted");
                 }
               }
               await signOut();
-              console.log("[DeleteAccount] Signed out successfully");
               Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+              router.replace("/(tabs)/scanner" as any);
             } catch (e: any) {
-              console.error("[DeleteAccount] Error deleting account:", e?.message, e);
+              console.error("[DeleteAccount] Error:", e?.message, e?.code);
               if (e?.code === "auth/requires-recent-login") {
                 Alert.alert(
                   "Re-authentication Required",
-                  "For security, please sign out and sign back in before deleting your account."
+                  "For your security, please sign out and sign back in before deleting your account. This is required for sensitive operations."
                 );
               } else {
-                Alert.alert("Error", e.message || "Could not delete account.");
+                Alert.alert("Error", e?.message || "Could not delete account. Please try again.");
               }
             }
           },

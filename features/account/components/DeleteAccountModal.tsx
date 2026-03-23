@@ -3,6 +3,7 @@ import {
   TextInput, ActivityIndicator, Alert,
 } from "react-native";
 import { useState } from "react";
+import { router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import { useTheme } from "@/contexts/ThemeContext";
@@ -52,6 +53,7 @@ export default function DeleteAccountModal({ visible, onClose }: DeleteAccountMo
       await signOut();
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       handleClose();
+      router.replace("/(tabs)/scanner" as any);
     } catch (e: any) {
       if (e.code === "auth/requires-recent-login") {
         setStep(2);

@@ -4,6 +4,21 @@ A full-stack mobile-first QR code scanning and management app built with Expo (R
 
 ## Recent Changes
 
+### Sign-Out & Account Deletion Navigation Fix
+- `features/settings/hooks/useSettings.ts` — after sign-out or account deletion, app now navigates to `/(tabs)/scanner` so users see a clear confirmation that they are logged out. Error handling added for both flows.
+- `features/account/components/DeleteAccountModal.tsx` — same post-deletion navigation added.
+- `features/profile/hooks/useProfile.ts` — same post-sign-out navigation fix (applied in previous session).
+
+### Firestore Security Rules Fixes (`firestore.rules`)
+- `isValidWeight` range corrected to `0.04–2.1` to cover Tier 1's minimum weight of `0.05`.
+- Comment soft-delete rule now allows `deletedAt` and `text` fields in update so `softDeleteComment()` (which sets `text: "[deleted]"` and `deletedAt`) succeeds for users deleting their own comments.
+- **IMPORTANT**: Changes to `firestore.rules` must be deployed via Firebase CLI (`firebase deploy --only firestore:rules`) — saving the file locally is not enough.
+
+### Integrity Service Error Messages
+- All rate-limit errors now show exact time remaining (e.g., "10 hours 23 minutes") instead of generic messages.
+- Tier 0 block message shows exact countdown until the account's first 24 hours are up.
+- Tier rate limits updated to be less restrictive (see tier table below).
+
 ### Firebase-Only Lock + Indian QR Code Support
 - **DB config locked to Firebase** — `lib/db/config.ts` now uses `"firebase" as const`; the type no longer allows "supabase" or "postgres". `lib/db/index.ts` directly imports Firebase providers instead of using a runtime switch — no accidental connections possible.
 - **Full EMV TLV parser** (`lib/analysis/payment-parser.ts`) — `parseEmvTlv()` decodes the EMV QRCPS (ISO 20022) TLV format byte-by-byte; `parseEmvQr()` uses it to extract merchant name (tag 59), merchant city (tag 60), amount (tag 54), currency (tag 53), MCC (tag 52), bill/reference numbers (tag 62), and scans merchant account info tags 26–51 for VPA, bank account number, and IFSC.
@@ -304,14 +319,16 @@ Each service file owns one responsibility:
 `lib/services/integrity-service.ts` — central anti-fraud engine enforced server-side for ALL social actions.
 
 ### Account Tiers (vote weight & rate limits)
-| Tier | Criteria | Vote Weight | Comments/day | Reports/day |
-|------|----------|-------------|--------------|-------------|
-| 0 | Any account < 24h old | 0 (blocked) | 0 | 0 |
-| 1 | Unverified 1-7d or Verified <1d | 0.05 | 1 | 1 |
-| 2 | 7-30d (any) | 0.3 | 3 | 3 |
-| 3 | 30-90d verified | 0.7 | 10 | 5 |
-| 4 | 90-180d verified | 1.5 | 20 | 10 |
-| 5 | >180d verified | 2.0 | 30 | 15 |
+| Tier | Criteria | Vote Weight | Comments/day | Reports/day | Comment Cooldown |
+|------|----------|-------------|--------------|-------------|-----------------|
+| 0 | Unverified + < 24h old | 0 (blocked) | 0 | 0 | — |
+| 1 | Unverified 1-7d OR Verified <1d | 0.05 | 3 | 2 | 3 min |
+| 2 | 7-30d (any) | 0.3 | 8 | 5 | 90 sec |
+| 3 | 30-90d verified | 0.7 | 15 | 8 | 45 sec |
+| 4 | 90-180d verified | 1.5 | 25 | 12 | 20 sec |
+| 5 | >180d verified | 2.0 | 40 | 15 | 10 sec |
+
+**Error message behavior**: All restriction errors now show exact time remaining (e.g., "Your limit resets in 10 hours 23 minutes") so users always know when they can try again. Tier 0 users see exactly how many hours/minutes until their 24-hour lockout lifts.
 
 ### Sybil / Multi-Account Attack Prevention
 - QR code **owner cannot report their own QR** (enforced in `report-service.ts`)

@@ -26,12 +26,14 @@ service cloud.firestore {
       ];
     }
 
-    // Reporter weight must be within the valid range [0.5, 1.8]
-    // This prevents a client from artificially inflating their own trust weight
+    // Reporter weight covers all tier levels:
+    //   Tier 1 = 0.05, Tier 2 = 0.3, Tier 3 = 0.7, Tier 4 = 1.5, Tier 5 = 2.0
+    // Weight is server-calculated by the integrity service before writing.
+    // Tier 0 users are blocked before reaching here so weight 0 is never sent.
     function isValidWeight(data) {
       return data.weight is number
-          && data.weight >= 0.3
-          && data.weight <= 1.8;
+          && data.weight >= 0.04
+          && data.weight <= 2.1;
     }
 
     // ─── QR Codes ─────────────────────────────────────────────────────────────
@@ -65,10 +67,7 @@ service cloud.firestore {
 
         // ── Case 2: commentCount update (authenticated users only) ─────────────
         isSignedIn() &&
-        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['commentCount']) &&
-        // Content and ownership are untouched
-        request.resource.data.content == resource.data.content &&
-        request.resource.data.contentType == resource.data.contentType
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['commentCount'])
 
       ) || (
 
@@ -92,6 +91,17 @@ service cloud.firestore {
         // Core content fields are immutable
         request.resource.data.content == resource.data.content &&
         request.resource.data.contentType == resource.data.contentType
+
+      ) || (
+
+        // ── Case 5: collusion / velocity flag updates (authenticated) ──────────
+        // The integrity service writes suspicious flag fields after collusion analysis
+        isSignedIn() &&
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+          'suspiciousVoteFlag', 'suspiciousFlagReason',
+          'suspiciousSafeMultiplier', 'suspiciousNegMultiplier',
+          'suspiciousLastChecked', 'voteVelocityWindowStart', 'voteVelocityCount'
+        ])
 
       );
 
@@ -121,17 +131,22 @@ service cloud.firestore {
           && request.resource.data.text.size() > 0
           && request.resource.data.text.size() <= 500;
 
-        // Update: only the comment author can soft-delete; moderator fields
-        // (reportCount, isHidden) may also be updated by authenticated users
+        // Update rules — covers multiple legitimate operations:
         allow update: if isSignedIn() && (
-          // Author can soft-delete their own comment or update their username
+
+          // Author soft-deleting their own comment:
+          // isDeleted, deletedAt, text("[deleted]") are all updated together
           (resource.data.userId == request.auth.uid &&
             request.resource.data.diff(resource.data).affectedKeys()
-              .hasOnly(['isDeleted', 'likeCount', 'dislikeCount', 'reportCount', 'isHidden', 'userUsername']))
+              .hasOnly(['isDeleted', 'deletedAt', 'text', 'likeCount', 'dislikeCount',
+                        'reportCount', 'isHidden', 'userUsername']))
+
           ||
-          // Any authenticated user can update aggregated counters (likes, reports)
+
+          // Any authenticated user can update aggregated counters (likes, reports, hide)
           request.resource.data.diff(resource.data).affectedKeys()
             .hasOnly(['likeCount', 'dislikeCount', 'reportCount', 'isHidden'])
+
         );
 
         // Hard deletes are never allowed

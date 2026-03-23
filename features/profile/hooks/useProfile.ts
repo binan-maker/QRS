@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { Alert } from "react-native";
-import { useFocusEffect } from "expo-router";
+import { useFocusEffect, router } from "expo-router";
 import * as ImagePicker from "expo-image-picker";
 import * as Haptics from "expo-haptics";
 import { useAuth } from "@/contexts/AuthContext";
@@ -189,12 +189,21 @@ export function useProfile() {
   }
 
   async function handleSignOut() {
-    Alert.alert("Sign Out", "Are you sure?", [
+    Alert.alert("Sign Out", "Are you sure you want to sign out?", [
       { text: "Cancel", style: "cancel" },
-      { text: "Sign Out", style: "destructive", onPress: async () => {
-        await signOut();
-        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      }},
+      {
+        text: "Sign Out",
+        style: "destructive",
+        onPress: async () => {
+          try {
+            await signOut();
+            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+            router.replace("/(tabs)/scanner" as any);
+          } catch (e: any) {
+            Alert.alert("Sign Out Failed", e?.message || "Could not sign out. Please try again.");
+          }
+        },
+      },
     ]);
   }
 
