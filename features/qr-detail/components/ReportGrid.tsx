@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet, Pressable, ActivityIndicator } from "react-native";
+import { View, Text, StyleSheet, Pressable } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useTheme } from "@/contexts/ThemeContext";
 import { formatCompactNumber } from "@/lib/number-format";
@@ -6,12 +6,11 @@ import { formatCompactNumber } from "@/lib/number-format";
 interface ReportGridProps {
   reportCounts: Record<string, number>;
   userReport: string | null;
-  reportLoading: string | null;
   isLoggedIn: boolean;
   onReport: (type: string) => void;
 }
 
-export default function ReportGrid({ reportCounts, userReport, reportLoading, isLoggedIn, onReport }: ReportGridProps) {
+export default function ReportGrid({ reportCounts, userReport, isLoggedIn, onReport }: ReportGridProps) {
   const { colors } = useTheme();
   const styles = makeStyles(colors);
 
@@ -36,7 +35,6 @@ export default function ReportGrid({ reportCounts, userReport, reportLoading, is
             <Pressable
               key={rt.key}
               onPress={() => onReport(rt.key)}
-              disabled={!!reportLoading}
               style={({ pressed }) => [
                 styles.card,
                 {
@@ -46,11 +44,7 @@ export default function ReportGrid({ reportCounts, userReport, reportLoading, is
                 },
               ]}
             >
-              {reportLoading === rt.key ? (
-                <ActivityIndicator size="small" color={rt.color} />
-              ) : (
-                <Ionicons name={rt.icon as any} size={24} color={rt.color} />
-              )}
+              <Ionicons name={rt.icon as any} size={24} color={rt.color} />
               <Text style={[styles.label, { color: rt.color }]}>{rt.label}</Text>
               <Text style={styles.count}>{formatCompactNumber(count)}</Text>
               {isSelected && <View style={[styles.dot, { backgroundColor: rt.color }]} />}

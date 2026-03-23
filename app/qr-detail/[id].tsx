@@ -10,6 +10,7 @@ import {
   ScrollView,
   StyleSheet,
 } from "react-native";
+
 import { StatusBar } from "expo-status-bar";
 import { useLocalSearchParams, router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
@@ -42,13 +43,6 @@ import MessagesModal from "@/features/qr-detail/components/modals/MessagesModal"
 import VerificationModal from "@/features/qr-detail/components/modals/VerificationModal";
 import CommentReportModal from "@/features/qr-detail/components/modals/CommentReportModal";
 
-function VerdictIcon({ level, size, color }: { level: string; size: number; color: string }) {
-  if (level === "safe") return <Ionicons name="shield-checkmark" size={size} color={color} />;
-  if (level === "dangerous") return <Ionicons name="warning" size={size} color={color} />;
-  if (level === "caution") return <Ionicons name="alert-circle" size={size} color={color} />;
-  return <Ionicons name="help-circle-outline" size={size} color={color} />;
-}
-
 function safeBack() {
   if (router.canGoBack()) {
     router.back();
@@ -77,7 +71,6 @@ export default function QrDetailScreen() {
   const q = useQrDetail(id);
   const topInset = Platform.OS === "web" ? 67 : insets.top;
   const trust = q.getTrustInfo();
-  const verdict = q.getCombinedVerdict();
   const currentContent = q.qrCode?.content || q.offlineContent || "";
   const currentContentType = q.qrCode?.contentType || q.offlineContentType;
 
@@ -123,64 +116,49 @@ export default function QrDetailScreen() {
             </Pressable>
             <Text style={styles.navTitle}>QR Details</Text>
             <View style={styles.navActions}>
-              {(
-                <Pressable onPress={q.handleToggleFavorite} disabled={q.favoriteLoading} style={styles.navActionBtn}>
-                  {q.favoriteLoading ? (
-                    <ActivityIndicator size="small" color={colors.danger} />
-                  ) : (
-                    <Ionicons
-                      name={q.isFavorite ? "heart" : "heart-outline"}
-                      size={22}
-                      color={q.isFavorite ? colors.danger : colors.textSecondary}
-                    />
-                  )}
-                </Pressable>
-              )}
-              {(
-                <Pressable
-                  onPress={q.handleToggleFollow}
-                  onPressIn={() => q.isFollowing && q.setFollowPressedIn(true)}
-                  onPressOut={() => q.setFollowPressedIn(false)}
-                  disabled={q.followLoading}
-                  style={[
-                    styles.followBtn,
-                    q.isFollowing && styles.followBtnActive,
-                    q.followPressedIn && q.isFollowing && styles.followBtnUnfollowHint,
-                  ]}
-                >
-                  {q.followLoading ? (
-                    <ActivityIndicator size="small" color={colors.primary} />
-                  ) : (
-                    <>
-                      <Ionicons
-                        name={
-                          q.followPressedIn && q.isFollowing
-                            ? "notifications-off-outline"
-                            : q.isFollowing ? "notifications" : "notifications-outline"
-                        }
-                        size={15}
-                        color={
-                          q.followPressedIn && q.isFollowing
-                            ? colors.danger
-                            : q.isFollowing ? colors.primary : colors.textSecondary
-                        }
-                      />
-                      <Text style={[
-                        styles.followBtnText,
-                        q.isFollowing && styles.followBtnTextActive,
-                        q.followPressedIn && q.isFollowing && { color: colors.danger },
-                      ]}>
-                        {q.followPressedIn && q.isFollowing ? "Unfollow" : q.isFollowing ? "Following" : "Follow"}
-                      </Text>
-                      {q.followCount > 0 && !(q.followPressedIn && q.isFollowing) && (
-                        <View style={styles.followCountPill}>
-                          <Text style={styles.followCountPillText}>{formatCompactNumber(q.followCount)}</Text>
-                        </View>
-                      )}
-                    </>
-                  )}
-                </Pressable>
-              )}
+              <Pressable onPress={q.handleToggleFavorite} style={styles.navActionBtn}>
+                <Ionicons
+                  name={q.isFavorite ? "heart" : "heart-outline"}
+                  size={22}
+                  color={q.isFavorite ? colors.danger : colors.textSecondary}
+                />
+              </Pressable>
+              <Pressable
+                onPress={q.handleToggleFollow}
+                onPressIn={() => q.isFollowing && q.setFollowPressedIn(true)}
+                onPressOut={() => q.setFollowPressedIn(false)}
+                style={[
+                  styles.followBtn,
+                  q.isFollowing && styles.followBtnActive,
+                  q.followPressedIn && q.isFollowing && styles.followBtnUnfollowHint,
+                ]}
+              >
+                <Ionicons
+                  name={
+                    q.followPressedIn && q.isFollowing
+                      ? "notifications-off-outline"
+                      : q.isFollowing ? "notifications" : "notifications-outline"
+                  }
+                  size={15}
+                  color={
+                    q.followPressedIn && q.isFollowing
+                      ? colors.danger
+                      : q.isFollowing ? colors.primary : colors.textSecondary
+                  }
+                />
+                <Text style={[
+                  styles.followBtnText,
+                  q.isFollowing && styles.followBtnTextActive,
+                  q.followPressedIn && q.isFollowing && { color: colors.danger },
+                ]}>
+                  {q.followPressedIn && q.isFollowing ? "Unfollow" : q.isFollowing ? "Following" : "Follow"}
+                </Text>
+                {q.followCount > 0 && !(q.followPressedIn && q.isFollowing) && (
+                  <View style={styles.followCountPill}>
+                    <Text style={styles.followCountPillText}>{formatCompactNumber(q.followCount)}</Text>
+                  </View>
+                )}
+              </Pressable>
             </View>
           </View>
 
@@ -192,19 +170,13 @@ export default function QrDetailScreen() {
             keyboardShouldPersistTaps="handled"
             onScrollBeginDrag={() => q.setCommentMenuId(null)}
           >
-            {/* ── Safety Verdict Hero ─────────────────────────────────────── */}
+            {/* ── Legal Disclaimer Banner ──────────────────────────────────── */}
             <Animated.View entering={FadeIn.duration(200)}>
-              <View style={[
-                heroStyles.card,
-                { backgroundColor: verdict.color + "18", borderColor: verdict.color + "50" },
-              ]}>
-                <View style={heroStyles.iconRow}>
-                  <VerdictIcon level={verdict.level} size={48} color={verdict.color} />
-                </View>
-                <Text style={[heroStyles.label, { color: verdict.color }]}>{verdict.label}</Text>
-                {verdict.reason ? (
-                  <Text style={[heroStyles.reason, { color: colors.textSecondary }]}>{verdict.reason}</Text>
-                ) : null}
+              <View style={disclaimerStyles.banner}>
+                <Ionicons name="information-circle-outline" size={15} color={colors.textMuted} style={{ marginTop: 1 }} />
+                <Text style={[disclaimerStyles.text, { color: colors.textMuted }]}>
+                  QR Guard may make mistakes. We are not responsible for any links, content, or transactions associated with QR codes scanned in this app.
+                </Text>
               </View>
             </Animated.View>
 
@@ -323,7 +295,6 @@ export default function QrDetailScreen() {
                     <ReportGrid
                       reportCounts={q.reportCounts}
                       userReport={q.userReport}
-                      reportLoading={q.reportLoading}
                       isLoggedIn={!!user}
                       onReport={q.handleReport}
                     />
@@ -437,9 +408,9 @@ export default function QrDetailScreen() {
                 <Pressable
                   onPress={q.handleSubmitComment}
                   disabled={q.submitting || !q.newComment.trim()}
-                  style={({ pressed }) => [styles.sendBtn, { opacity: pressed || q.submitting || !q.newComment.trim() ? 0.5 : 1 }]}
+                  style={({ pressed }) => [styles.sendBtn, { opacity: pressed || !q.newComment.trim() ? 0.5 : 1 }]}
                 >
-                  {q.submitting ? <ActivityIndicator size="small" color="#000" /> : <Ionicons name="send" size={18} color="#000" />}
+                  <Ionicons name="send" size={18} color="#000" />
                 </Pressable>
               </View>
             </View>
@@ -487,30 +458,19 @@ export default function QrDetailScreen() {
   );
 }
 
-const heroStyles = StyleSheet.create({
-  card: {
-    borderRadius: 20,
-    borderWidth: 1.5,
-    paddingVertical: 28,
-    paddingHorizontal: 24,
-    alignItems: "center",
-    marginBottom: 16,
-    gap: 8,
+const disclaimerStyles = StyleSheet.create({
+  banner: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: 6,
+    paddingHorizontal: 4,
+    marginBottom: 14,
   },
-  iconRow: {
-    marginBottom: 4,
-  },
-  label: {
-    fontSize: 40,
-    fontFamily: "Inter_700Bold",
-    letterSpacing: 3,
-  },
-  reason: {
-    fontSize: 14,
+  text: {
+    flex: 1,
+    fontSize: 12,
     fontFamily: "Inter_400Regular",
-    textAlign: "center",
-    marginTop: 2,
-    lineHeight: 20,
+    lineHeight: 17,
   },
 });
 

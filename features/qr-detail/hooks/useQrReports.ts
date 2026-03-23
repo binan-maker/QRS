@@ -69,16 +69,35 @@ export function useQrReports(id: string, userId: string | null, offlineMode: boo
 
   async function handleReport(type: string) {
     if (!userId) { router.push("/(auth)/login"); return; }
-    setReportLoading(type);
+    const prevReport = userReport;
+    setUserReport(type);
+    setReportCounts((prev) => {
+      const next = { ...prev };
+      if (prevReport && prevReport !== type) {
+        next[prevReport] = Math.max(0, (next[prevReport] || 0) - 1);
+      }
+      if (prevReport !== type) {
+        next[type] = (next[type] || 0) + 1;
+      }
+      return next;
+    });
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     try {
       await reportQrCode(id, userId, type, emailVerified);
-      setUserReport(type);
       invalidateQrCache(id);
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     } catch (e: any) {
+      setUserReport(prevReport);
+      setReportCounts((prev) => {
+        const next = { ...prev };
+        if (prevReport && prevReport !== type) {
+          next[prevReport] = (next[prevReport] || 0) + 1;
+        }
+        if (prevReport !== type) {
+          next[type] = Math.max(0, (next[type] || 0) - 1);
+        }
+        return next;
+      });
       Alert.alert("Cannot Submit Report", e.message);
-    } finally {
-      setReportLoading(null);
     }
   }
 

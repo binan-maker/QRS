@@ -10,14 +10,16 @@ export function useQrFavorite(id: string, userId: string | null) {
 
   async function handleToggleFavorite(content: string, contentType: string) {
     if (!userId) { router.push("/(auth)/login"); return; }
-    setFavoriteLoading(true);
+    const newFav = !isFavorite;
+    setIsFavorite(newFav);
+    Haptics.impactAsync(newFav ? Haptics.ImpactFeedbackStyle.Medium : Haptics.ImpactFeedbackStyle.Light);
     try {
-      const newFav = await toggleFavorite(id, userId, content, contentType);
-      setIsFavorite(newFav);
+      const confirmed = await toggleFavorite(id, userId, content, contentType);
+      setIsFavorite(confirmed);
       invalidateQrCache(id);
-      Haptics.impactAsync(newFav ? Haptics.ImpactFeedbackStyle.Medium : Haptics.ImpactFeedbackStyle.Light);
-    } catch {}
-    setFavoriteLoading(false);
+    } catch {
+      setIsFavorite(!newFav);
+    }
   }
 
   return { isFavorite, setIsFavorite, favoriteLoading, handleToggleFavorite };

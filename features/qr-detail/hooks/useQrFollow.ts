@@ -15,15 +15,19 @@ export function useQrFollow(id: string, userId: string | null, userDisplayName: 
 
   async function handleToggleFollow(content: string, contentType: string) {
     if (!userId) { router.push("/(auth)/login"); return; }
-    setFollowLoading(true);
+    const newFollowing = !isFollowing;
+    setIsFollowing(newFollowing);
+    setFollowCount((prev) => newFollowing ? prev + 1 : Math.max(0, prev - 1));
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     try {
       const result = await toggleFollow(id, userId, content, contentType, userDisplayName || undefined);
       setIsFollowing(result.isFollowing);
       setFollowCount(result.followCount);
       invalidateQrCache(id);
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    } catch {}
-    setFollowLoading(false);
+    } catch {
+      setIsFollowing(!newFollowing);
+      setFollowCount((prev) => newFollowing ? Math.max(0, prev - 1) : prev + 1);
+    }
   }
 
   async function handleLoadFollowers() {
