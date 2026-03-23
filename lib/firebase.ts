@@ -13,9 +13,11 @@ import { Platform } from "react-native";
 // All values are read from environment variables (EXPO_PUBLIC_FIREBASE_*).
 // For local development, copy .env.example to .env and fill in your values.
 // For Replit / CI, set the variables in the Secrets panel.
+const projectId = process.env.EXPO_PUBLIC_FIREBASE_PROJECT_ID;
 const firebaseConfig = {
   apiKey: process.env.EXPO_PUBLIC_FIREBASE_API_KEY,
-  projectId: process.env.EXPO_PUBLIC_FIREBASE_PROJECT_ID,
+  authDomain: `${projectId}.firebaseapp.com`,
+  projectId,
   storageBucket: process.env.EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET,
   databaseURL: process.env.EXPO_PUBLIC_FIREBASE_DATABASE_URL,
   appId: process.env.EXPO_PUBLIC_FIREBASE_APP_ID,
