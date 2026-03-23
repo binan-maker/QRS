@@ -40,9 +40,10 @@ function isInsecureHttpUrl(content: string): boolean {
 async function checkIsOffline(): Promise<boolean> {
   try {
     const state = await Network.getNetworkStateAsync();
-    // isInternetReachable can be null on web — null means "can't tell", not "offline".
-    // Only treat as offline when explicitly false.
-    return state.isConnected === false || state.isInternetReachable === false;
+    // Only use isConnected for offline detection. isInternetReachable is
+    // unreliable on Android (returns false on many devices even when internet
+    // works, because it checks a specific Google endpoint that may be blocked).
+    return state.isConnected === false;
   } catch {
     return false;
   }

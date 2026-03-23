@@ -63,7 +63,7 @@ function buildFirestore() {
     }
     return initializeFirestore(firebaseApp, {
       localCache: memoryLocalCache(),
-      experimentalAutoDetectLongPolling: true,
+      experimentalForceLongPolling: true,
     });
   } catch {
     return getFirestore(firebaseApp);

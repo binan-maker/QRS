@@ -93,21 +93,26 @@ export function useHistory() {
   const loadInitialCloudHistory = useCallback(async (userId: string) => {
     setCloudLoading(true);
     setCloudError(false);
-    try {
-      const result = await getUserScansPaginated(userId, PAGE_SIZE);
-      cloudLastDocRef.current = result.cursor;
-      setCloudHasMore(result.hasMore);
-      setCloudHistory(result.items.map((s) => ({
-        id: s.id, content: s.content, contentType: s.contentType,
-        scannedAt: s.scannedAt, qrCodeId: s.qrCodeId, source: "cloud" as const,
-        scanSource: (s.scanSource as "camera" | "gallery") || "camera",
-      })));
-    } catch {
-      setCloudHistory([]);
-      setCloudError(true);
-    } finally {
-      setCloudLoading(false);
+    for (let attempt = 0; attempt < 3; attempt++) {
+      try {
+        if (attempt > 0) await new Promise((r) => setTimeout(r, attempt * 1500));
+        const result = await getUserScansPaginated(userId, PAGE_SIZE);
+        cloudLastDocRef.current = result.cursor;
+        setCloudHasMore(result.hasMore);
+        setCloudHistory(result.items.map((s) => ({
+          id: s.id, content: s.content, contentType: s.contentType,
+          scannedAt: s.scannedAt, qrCodeId: s.qrCodeId, source: "cloud" as const,
+          scanSource: (s.scanSource as "camera" | "gallery") || "camera",
+        })));
+        setCloudLoading(false);
+        return;
+      } catch {
+        // will retry
+      }
     }
+    setCloudHistory([]);
+    setCloudError(true);
+    setCloudLoading(false);
   }, []);
 
   const loadMoreCloudHistory = useCallback(async () => {

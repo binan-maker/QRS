@@ -91,55 +91,68 @@ export function useQrData(id: string, userId: string | null) {
         return;
       }
 
-      try {
-        const detail = await loadQrDetail(id, userId);
-        if (!detail) {
-          // QR not found in Firestore — try any locally cached content before
-          // showing an error (covers offline scans stored in AsyncStorage).
-          const hasFallback = await loadOfflineFallback();
-          if (hasFallback) {
-            setOfflineMode(true);
-          } else {
-            setLoadError(true);
+      // Retry up to 3 times to handle transient Firestore connection issues.
+      let lastErr: any = null;
+      for (let attempt = 0; attempt < 3; attempt++) {
+        try {
+          if (attempt > 0) await new Promise((r) => setTimeout(r, attempt * 1500));
+          const detail = await loadQrDetail(id, userId);
+          if (!detail) {
+            // QR not found in Firestore yet — give it one more short wait then try
+            // the offline fallback (covers recently-scanned QRs still propagating).
+            if (attempt < 2) { lastErr = new Error("not_found"); continue; }
+            const hasFallback = await loadOfflineFallback();
+            if (hasFallback) {
+              setOfflineMode(true);
+            } else {
+              setLoadError(true);
+            }
+            setLoading(false);
+            return;
           }
+          setQrCode(detail.qrCode);
+          setTotalScans(detail.totalScans || 0);
+          setTotalComments(detail.totalComments || 0);
+          try {
+            await AsyncStorage.setItem(`qr_content_${id}`, JSON.stringify({
+              content: detail.qrCode.content,
+              contentType: detail.qrCode.contentType,
+            }));
+          } catch {}
+          let ownerData: any = null;
+          try {
+            const owner = await getQrOwnerInfo(id);
+            if (owner) {
+              setOwnerInfo(owner);
+              setIsQrOwner(userId === owner.ownerId);
+              ownerData = owner;
+            }
+          } catch {}
+          await setCachedQrDetail(id, userId, { ...detail, ownerInfo: ownerData });
           setLoading(false);
           return;
+        } catch (err: any) {
+          lastErr = err;
         }
-        setQrCode(detail.qrCode);
-        setTotalScans(detail.totalScans || 0);
-        setTotalComments(detail.totalComments || 0);
-        try {
-          await AsyncStorage.setItem(`qr_content_${id}`, JSON.stringify({
-            content: detail.qrCode.content,
-            contentType: detail.qrCode.contentType,
-          }));
-        } catch {}
-        let ownerData: any = null;
-        try {
-          const owner = await getQrOwnerInfo(id);
-          if (owner) {
-            setOwnerInfo(owner);
-            setIsQrOwner(userId === owner.ownerId);
-            ownerData = owner;
-          }
-        } catch {}
-        await setCachedQrDetail(id, userId, { ...detail, ownerInfo: ownerData });
-        setLoading(false);
-      } catch (err: any) {
-        // Only enter offline mode for genuine network/connectivity failures.
-        const trulyOffline =
-          err?.code === "unavailable" ||
-          (typeof navigator !== "undefined" && !navigator.onLine) ||
-          /network|offline|failed to fetch/i.test(err?.message || "");
-
-        const hasFallback = await loadOfflineFallback();
-        if (trulyOffline || hasFallback) {
-          setOfflineMode(true);
-        } else {
-          setLoadError(true);
-        }
-        setLoading(false);
       }
+
+      // All retries exhausted — decide between offline mode and load error.
+      const trulyOffline =
+        lastErr?.code === "unavailable" ||
+        (typeof navigator !== "undefined" && !navigator.onLine) ||
+        /network|offline|failed to fetch/i.test(lastErr?.message || "");
+
+      const hasFallback = await loadOfflineFallback();
+      if (trulyOffline && hasFallback) {
+        setOfflineMode(true);
+      } else if (hasFallback) {
+        // Firestore had an error but we have local content — show it without
+        // the "offline" label so the user knows it's a server issue, not network.
+        setOfflineMode(true);
+      } else {
+        setLoadError(true);
+      }
+      setLoading(false);
     }
 
     fetchDetail();
