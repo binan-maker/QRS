@@ -402,9 +402,9 @@ export default function MyQrDetailScreen() {
                     <Image source={logoSource} style={styles.logoThumb} />
                     <Text style={styles.logoPickerLabel}>QR Guard Logo</Text>
                   </View>
-                  <View style={{ flexDirection: "row", alignItems: "center", gap: 5, backgroundColor: Colors.dark.primaryDim, borderRadius: 8, paddingHorizontal: 10, paddingVertical: 6, borderWidth: 1, borderColor: Colors.dark.primary + "30" }}>
-                    <Ionicons name="shield-checkmark" size={13} color={Colors.dark.primary} />
-                    <Text style={{ fontSize: 11, fontFamily: "Inter_500Medium", color: Colors.dark.primary }}>Mandatory</Text>
+                  <View style={{ flexDirection: "row", alignItems: "center", gap: 5, backgroundColor: colors.primaryDim, borderRadius: 8, paddingHorizontal: 10, paddingVertical: 6, borderWidth: 1, borderColor: colors.primary + "30" }}>
+                    <Ionicons name="shield-checkmark" size={13} color={colors.primary} />
+                    <Text style={{ fontSize: 11, fontFamily: "Inter_500Medium", color: colors.primary }}>Mandatory</Text>
                   </View>
                 </View>
 
@@ -455,7 +455,7 @@ export default function MyQrDetailScreen() {
               </View>
             ) : h.topLevelComments.length === 0 ? (
               <View style={styles.emptyComments}>
-                <Ionicons name="chatbubbles-outline" size={32} color={Colors.dark.textMuted} />
+                <Ionicons name="chatbubbles-outline" size={32} color={colors.textMuted} />
                 <Text style={styles.emptyCommentsText}>No comments yet</Text>
                 <Text style={styles.emptyCommentsSub}>Be the first to start the conversation</Text>
               </View>
@@ -477,7 +477,7 @@ export default function MyQrDetailScreen() {
                             onPress={() => h.setExpandedReplies((prev: Record<string, boolean>) => ({ ...prev, [comment.id]: !prev[comment.id] }))}
                             style={styles.toggleRepliesBtn}
                           >
-                            <Ionicons name={repliesExpanded ? "chevron-up" : "chevron-down"} size={13} color={Colors.dark.primary} />
+                            <Ionicons name={repliesExpanded ? "chevron-up" : "chevron-down"} size={13} color={colors.primary} />
                             <Text style={styles.toggleRepliesText}>
                               {repliesExpanded ? "Hide" : "Show"} {replies.length} {replies.length === 1 ? "reply" : "replies"}
                             </Text>
@@ -509,12 +509,12 @@ export default function MyQrDetailScreen() {
         <View style={[styles.inputBar, { paddingBottom: Math.max(bottomInset, 12) }]}>
           {h.replyTo ? (
             <View style={styles.replyBanner}>
-              <Ionicons name="return-down-forward-outline" size={14} color={Colors.dark.primary} />
+              <Ionicons name="return-down-forward-outline" size={14} color={colors.primary} />
               <Text style={styles.replyBannerText} numberOfLines={1}>
-                Replying to <Text style={{ color: Colors.dark.text }}>{h.replyTo.author}</Text>
+                Replying to <Text style={{ color: colors.text }}>{h.replyTo.author}</Text>
               </Text>
               <Pressable onPress={() => h.setReplyTo(null)} style={{ marginLeft: "auto" }}>
-                <Ionicons name="close" size={16} color={Colors.dark.textMuted} />
+                <Ionicons name="close" size={16} color={colors.textMuted} />
               </Pressable>
             </View>
           ) : null}
@@ -526,7 +526,7 @@ export default function MyQrDetailScreen() {
               ref={h.commentInputRef}
               style={styles.commentInput}
               placeholder={h.replyTo ? `Reply to ${h.replyTo.author}…` : "Add a comment…"}
-              placeholderTextColor={Colors.dark.textMuted}
+              placeholderTextColor={colors.textMuted}
               value={h.commentText}
               onChangeText={h.setCommentText}
               maxLength={500}

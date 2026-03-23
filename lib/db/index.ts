@@ -1,16 +1,24 @@
 // ═══════════════════════════════════════════════════════════════════════════════
 // DATABASE ENTRY POINT — Firebase only.
 // ───────────────────────────────────────────────────────────────────────────────
-// This app uses Firebase exclusively. Postgres and Supabase providers exist
-// as code stubs for a future migration but are never loaded at runtime.
+// Uses lazy require() instead of static imports to avoid creating a hard
+// circular-dependency at module-evaluation time.
+// (lib/db/firebase.ts re-exports service functions that import lib/db/index.ts —
+// CommonJS lazy-require handles that cycle gracefully; static ESM imports cannot.)
 // ═══════════════════════════════════════════════════════════════════════════════
 
 import type { DbAdapter, RealtimeAdapter } from "./adapter";
-import { firebaseDb } from "./providers/firebase";
-import { firebaseRtdb } from "./providers/firebase";
 
-export const db: DbAdapter = firebaseDb;
-export const rtdb: RealtimeAdapter = firebaseRtdb;
+function loadFirebaseDb(): DbAdapter {
+  return require("./providers/firebase").firebaseDb;
+}
+
+function loadFirebaseRtdb(): RealtimeAdapter {
+  return require("./providers/firebase").firebaseRtdb;
+}
+
+export const db: DbAdapter = loadFirebaseDb();
+export const rtdb: RealtimeAdapter = loadFirebaseRtdb();
 
 export type { DbAdapter, RealtimeAdapter, DbDocument, QueryOptions, QueryResult, WhereClause } from "./adapter";
 

@@ -191,8 +191,16 @@ export function useProfile() {
     ]);
   }
 
-  const daysUntilEdit = usernameLastChangedAt
-    ? Math.max(0, Math.ceil(15 - (Date.now() - usernameLastChangedAt.getTime()) / 86400000))
+  // Safely coerce usernameLastChangedAt to a Date — it may come back from
+  // the cache as a plain string (JSON-serialized Date loses the prototype).
+  const lastChangedDate: Date | null = usernameLastChangedAt instanceof Date
+    ? usernameLastChangedAt
+    : typeof usernameLastChangedAt === "string" && usernameLastChangedAt
+      ? new Date(usernameLastChangedAt)
+      : null;
+
+  const daysUntilEdit = lastChangedDate
+    ? Math.max(0, Math.ceil(15 - (Date.now() - lastChangedDate.getTime()) / 86400000))
     : 0;
 
   const initials = user?.displayName
