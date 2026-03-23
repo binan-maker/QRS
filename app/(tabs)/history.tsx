@@ -1,4 +1,4 @@
-import React, { useCallback } from "react";
+import React, { useCallback, useMemo } from "react";
 import {
   View,
   Text,
@@ -28,6 +28,34 @@ const FILTERS: { key: Filter; label: string }[] = [
   { key: "other", label: "Other" },
 ];
 
+type ListRow =
+  | { kind: "header"; label: string; id: string }
+  | { kind: "item"; item: HistoryItem };
+
+function getDateLabel(date: Date): string {
+  const now = new Date();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const yesterday = new Date(today.getTime() - 86400000);
+  const d = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+  if (d.getTime() === today.getTime()) return "Today";
+  if (d.getTime() === yesterday.getTime()) return "Yesterday";
+  return date.toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" });
+}
+
+function groupByDate(items: HistoryItem[]): ListRow[] {
+  const rows: ListRow[] = [];
+  let lastLabel = "";
+  for (const item of items) {
+    const label = getDateLabel(new Date(item.scannedAt));
+    if (label !== lastLabel) {
+      rows.push({ kind: "header", label, id: `header-${label}` });
+      lastLabel = label;
+    }
+    rows.push({ kind: "item", item });
+  }
+  return rows;
+}
+
 export default function HistoryScreen() {
   const insets = useSafeAreaInsets();
   const { colors } = useTheme();
@@ -43,6 +71,7 @@ export default function HistoryScreen() {
     cloudError,
     onRefresh,
     handleEndReached,
+    deleteItem,
   } = useHistory();
 
   const topInset = Platform.OS === "web" ? 67 : insets.top;
@@ -52,17 +81,27 @@ export default function HistoryScreen() {
     ? [...FILTERS, { key: "favorites" as Filter, label: "Favorites" }]
     : FILTERS;
 
+  const listRows = useMemo(() => groupByDate(displayItems), [displayItems]);
+
   const renderItem = useCallback(
-    ({ item }: { item: HistoryItem }) => {
-      const risk = safetyRiskMap.get(item.id) ?? "safe";
+    ({ item: row }: { item: ListRow }) => {
+      if (row.kind === "header") {
+        return (
+          <View style={styles.dateHeader}>
+            <Text style={[styles.dateHeaderText, { color: colors.textMuted }]}>{row.label}</Text>
+          </View>
+        );
+      }
+      const risk = safetyRiskMap.get(row.item.id) ?? "safe";
       return (
         <HistoryItemComponent
-          item={item}
+          item={row.item}
           risk={risk as "safe" | "caution" | "dangerous"}
+          onDelete={deleteItem}
         />
       );
     },
-    [safetyRiskMap]
+    [safetyRiskMap, deleteItem, colors]
   );
 
   const renderFooter = useCallback(() => {
@@ -74,7 +113,9 @@ export default function HistoryScreen() {
     );
   }, [loadingMore, colors]);
 
-  const keyExtractor = useCallback((item: HistoryItem) => item.id, []);
+  const keyExtractor = useCallback((row: ListRow) => {
+    return row.kind === "header" ? row.id : row.item.id;
+  }, []);
 
   const emptyComponent = () => {
     if (!user) {
@@ -166,7 +207,7 @@ export default function HistoryScreen() {
       )}
 
       <FlatList
-        data={displayItems}
+        data={listRows}
         renderItem={renderItem}
         keyExtractor={keyExtractor}
         contentContainerStyle={[
@@ -210,6 +251,17 @@ function makeStyles(c: ReturnType<typeof import("@/contexts/ThemeContext").useTh
       borderWidth: 1, borderColor: c.surfaceBorder,
     },
     list: { paddingHorizontal: 16, paddingTop: 4 },
+    dateHeader: {
+      paddingVertical: 8,
+      paddingHorizontal: 2,
+      marginBottom: 2,
+    },
+    dateHeaderText: {
+      fontSize: 12,
+      fontFamily: "Inter_600SemiBold",
+      textTransform: "uppercase",
+      letterSpacing: 0.6,
+    },
     emptyState: { alignItems: "center", gap: 8, paddingVertical: 56, paddingHorizontal: 32 },
     emptyIcon: {
       width: 72, height: 72, borderRadius: 36,

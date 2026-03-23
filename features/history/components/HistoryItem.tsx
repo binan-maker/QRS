@@ -1,5 +1,5 @@
 import React from "react";
-import { View, Text, StyleSheet, Pressable } from "react-native";
+import { View, Text, Pressable, Alert } from "react-native";
 import { router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
@@ -28,26 +28,13 @@ function getContentIcon(type: string): keyof typeof Ionicons.glyphMap {
   }
 }
 
-function formatDate(d: string): string {
-  const date = new Date(d);
-  const now = new Date();
-  const diff = now.getTime() - date.getTime();
-  const mins = Math.floor(diff / 60000);
-  if (mins < 1) return "Just now";
-  if (mins < 60) return `${mins}m ago`;
-  const hrs = Math.floor(mins / 60);
-  if (hrs < 24) return `${hrs}h ago`;
-  const days = Math.floor(hrs / 24);
-  if (days < 7) return `${days}d ago`;
-  return date.toLocaleDateString();
-}
-
 interface HistoryItemProps {
   item: HistoryItemType;
   risk: "safe" | "caution" | "dangerous";
+  onDelete: (item: HistoryItemType) => void;
 }
 
-const HistoryItem = React.memo(function HistoryItem({ item, risk }: HistoryItemProps) {
+const HistoryItem = React.memo(function HistoryItem({ item, risk, onDelete }: HistoryItemProps) {
   const { colors } = useTheme();
   const showRiskBadge = (item.contentType === "url" || item.contentType === "payment") && risk !== "safe";
   const riskColor = risk === "dangerous" ? colors.danger : colors.warning;
@@ -58,6 +45,28 @@ const HistoryItem = React.memo(function HistoryItem({ item, risk }: HistoryItemP
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
       router.push({ pathname: "/qr-detail/[id]", params: { id: item.qrCodeId } });
     }
+  }
+
+  function handleMenuPress() {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    Alert.alert(
+      "Options",
+      item.content.length > 60 ? item.content.slice(0, 60) + "…" : item.content,
+      [
+        { text: "View Details", onPress: handlePress },
+        {
+          text: "Delete",
+          style: "destructive",
+          onPress: () => {
+            Alert.alert("Delete Entry", "Remove this item from your history?", [
+              { text: "Cancel", style: "cancel" },
+              { text: "Delete", style: "destructive", onPress: () => onDelete(item) },
+            ]);
+          },
+        },
+        { text: "Cancel", style: "cancel" },
+      ]
+    );
   }
 
   return (
@@ -79,46 +88,35 @@ const HistoryItem = React.memo(function HistoryItem({ item, risk }: HistoryItemP
           color={item.source === "favorite" ? colors.danger : colors.primary}
         />
       </View>
+
       <View style={{ flex: 1 }}>
         <Text style={{ fontSize: 14, fontFamily: "Inter_500Medium", color: colors.text }} numberOfLines={1}>
           {item.content}
         </Text>
-        <View style={{ flexDirection: "row", alignItems: "center", gap: 8, marginTop: 4, flexWrap: "wrap" }}>
-          <Text style={{ fontSize: 12, fontFamily: "Inter_400Regular", color: colors.textMuted }}>
-            {formatDate(item.scannedAt)}
-          </Text>
-          <View style={{ flexDirection: "row", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
-            {showRiskBadge ? (
-              <View style={{ flexDirection: "row", alignItems: "center", gap: 4, paddingHorizontal: 7, paddingVertical: 2, borderRadius: 8, backgroundColor: riskBgColor }}>
-                <Ionicons name={risk === "dangerous" ? "warning" : "alert-circle"} size={10} color={riskColor} />
-                <Text style={{ fontSize: 10, fontFamily: "Inter_500Medium", color: riskColor }}>
-                  {risk === "dangerous" ? "Dangerous" : "Caution"}
-                </Text>
-              </View>
-            ) : null}
-            <View style={{
-              flexDirection: "row", alignItems: "center", gap: 4,
-              paddingHorizontal: 7, paddingVertical: 2, borderRadius: 8,
-              backgroundColor: item.source === "favorite" ? colors.dangerDim
-                : item.source === "cloud" ? colors.accentDim
-                : colors.surfaceLight,
-            }}>
-              <Ionicons
-                name={item.source === "favorite" ? "heart" : item.source === "cloud" ? "cloud" : "phone-portrait"}
-                size={10}
-                color={item.source === "favorite" ? colors.danger : item.source === "cloud" ? colors.accent : colors.textMuted}
-              />
-              <Text style={{
-                fontSize: 10, fontFamily: "Inter_500Medium",
-                color: item.source === "favorite" ? colors.danger : item.source === "cloud" ? colors.accent : colors.textMuted,
-              }}>
-                {item.source === "favorite" ? "Favorite" : item.source === "cloud" ? "Synced" : "Local"}
+        <View style={{ flexDirection: "row", alignItems: "center", gap: 6, marginTop: 4, flexWrap: "wrap" }}>
+          {showRiskBadge ? (
+            <View style={{ flexDirection: "row", alignItems: "center", gap: 4, paddingHorizontal: 7, paddingVertical: 2, borderRadius: 8, backgroundColor: riskBgColor }}>
+              <Ionicons name={risk === "dangerous" ? "warning" : "alert-circle"} size={10} color={riskColor} />
+              <Text style={{ fontSize: 10, fontFamily: "Inter_500Medium", color: riskColor }}>
+                {risk === "dangerous" ? "Dangerous" : "Caution"}
               </Text>
             </View>
-          </View>
+          ) : null}
+          {item.source === "cloud" ? (
+            <Ionicons name="cloud" size={13} color={colors.accent} />
+          ) : item.source === "favorite" ? (
+            <Ionicons name="heart" size={13} color={colors.danger} />
+          ) : null}
         </View>
       </View>
-      <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
+
+      <Pressable
+        onPress={handleMenuPress}
+        hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+        style={{ padding: 4 }}
+      >
+        <Ionicons name="ellipsis-vertical" size={18} color={colors.textMuted} />
+      </Pressable>
     </Pressable>
   );
 });

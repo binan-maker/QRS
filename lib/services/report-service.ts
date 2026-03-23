@@ -50,8 +50,13 @@ export async function reportQrCode(
   // Fetch QR owner to block self-reporting
   const qrOwnerId = await getQrOwnerId(qrId);
 
+  // Check if user already has a report on this QR (allows changing without hitting daily limit)
+  const existingReport = await getUserQrReport(qrId, userId);
+  const isChangingReport = existingReport !== null;
+
   // Check eligibility — throws with descriptive error if not allowed
-  const { weight } = await checkReportEligibility(userId, qrId, emailVerified, qrOwnerId);
+  // When changing an existing report, we still validate tier but skip the rate limit check
+  const { weight } = await checkReportEligibility(userId, qrId, emailVerified, qrOwnerId, isChangingReport);
 
   // Fetch account age for collusion analysis storage
   let accountAgeDays = 0;

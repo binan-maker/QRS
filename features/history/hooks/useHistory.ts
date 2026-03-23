@@ -4,7 +4,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as Haptics from "expo-haptics";
 import { router } from "expo-router";
 import { useAuth } from "@/contexts/AuthContext";
-import { getUserScansPaginated, getUserFavorites } from "@/lib/firestore-service";
+import { getUserScansPaginated, getUserFavorites, deleteUserScan } from "@/lib/firestore-service";
 import { parseAnyPaymentQr, analyzeAnyPaymentQr, analyzeUrlHeuristics } from "@/lib/qr-analysis";
 
 export interface HistoryItem {
@@ -184,6 +184,34 @@ export function useHistory() {
     ]);
   }
 
+  async function deleteItem(item: HistoryItem) {
+    if (item.source === "local") {
+      setLocalHistory((prev) => prev.filter((i) => i.id !== item.id));
+      try {
+        if (user?.id) {
+          const stored = await AsyncStorage.getItem(`local_scan_history_${user.id}`);
+          if (stored) {
+            const arr = JSON.parse(stored).filter((s: any) => s.id !== item.id);
+            await AsyncStorage.setItem(`local_scan_history_${user.id}`, JSON.stringify(arr));
+          }
+        }
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      } catch {
+        setLocalHistory((prev) => [...prev, item].sort((a, b) => new Date(b.scannedAt).getTime() - new Date(a.scannedAt).getTime()));
+      }
+    } else if (item.source === "cloud" || item.source === "favorite") {
+      setCloudHistory((prev) => prev.filter((i) => i.id !== item.id));
+      setFavorites((prev) => prev.filter((i) => i.id !== item.id));
+      try {
+        if (user?.id) await deleteUserScan(user.id, item.id);
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      } catch {
+        if (item.source === "cloud") setCloudHistory((prev) => [...prev, item].sort((a, b) => new Date(b.scannedAt).getTime() - new Date(a.scannedAt).getTime()));
+        else setFavorites((prev) => [...prev, item]);
+      }
+    }
+  }
+
   const handleEndReached = useCallback(() => {
     if (filter !== "favorites") {
       loadMoreCloudHistory();
@@ -206,5 +234,6 @@ export function useHistory() {
     handleEndReached,
     clearLocalHistory,
     loadMoreCloudHistory,
+    deleteItem,
   };
 }

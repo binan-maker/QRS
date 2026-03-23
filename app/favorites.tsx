@@ -116,10 +116,6 @@ export default function FavoritesScreen() {
             <Text style={[styles.content, { color: colors.textSecondary }]} numberOfLines={2}>
               {item.content.length > 60 ? item.content.slice(0, 60) + "…" : item.content}
             </Text>
-            <View style={styles.meta}>
-              <Ionicons name="time-outline" size={11} color={colors.textMuted} />
-              <Text style={[styles.metaText, { color: colors.textMuted }]}>Saved {formatDate(item.createdAt)}</Text>
-            </View>
           </View>
           <Ionicons name="chevron-forward" size={16} color={colors.textMuted} style={{ alignSelf: "center" }} />
         </Pressable>

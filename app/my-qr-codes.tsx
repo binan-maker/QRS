@@ -128,7 +128,6 @@ export default function MyQrCodesScreen() {
                 <Ionicons name="chatbubble-outline" size={11} color={colors.textMuted} />
                 <Text style={[styles.metaText, { color: colors.textMuted }]}>{item.commentCount}</Text>
               </View>
-              {item.createdAt ? <Text style={[styles.dateText, { color: colors.textMuted }]}>{formatDate(item.createdAt)}</Text> : null}
             </View>
           </View>
 
