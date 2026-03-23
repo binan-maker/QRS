@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { Platform } from "react-native";
-import * as Network from "expo-network";
+import NetInfo from "@react-native-community/netinfo";
 
 export interface NetworkStatus {
   isOnline: boolean;
@@ -18,8 +18,11 @@ export function useNetworkStatus(): NetworkStatus {
       if (Platform.OS === "web") {
         setIsOnline(typeof navigator !== "undefined" ? navigator.onLine : true);
       } else {
-        const state = await Network.getNetworkStateAsync();
-        setIsOnline(state.isConnected !== false && state.isInternetReachable !== false);
+        const state = await NetInfo.fetch();
+        // Only trust isConnected. isInternetReachable is unreliable across
+        // different networks (VPNs, firewalls, cellular) and frequently
+        // returns false/null even when internet is fully working.
+        setIsOnline(state.isConnected !== false);
       }
     } catch {
       setIsOnline(true);
@@ -41,8 +44,12 @@ export function useNetworkStatus(): NetworkStatus {
         window.removeEventListener("offline", handleOffline);
       };
     } else {
-      const interval = setInterval(check, 15000);
-      return () => clearInterval(interval);
+      // NetInfo provides real-time connectivity events on iOS and Android,
+      // no need to poll with setInterval.
+      const unsubscribe = NetInfo.addEventListener((state) => {
+        setIsOnline(state.isConnected !== false);
+      });
+      return () => unsubscribe();
     }
   }, [check]);
 
