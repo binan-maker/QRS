@@ -78,12 +78,8 @@ export async function getAccountTier(userId: string, emailVerified: boolean): Pr
 
     let tier: 0 | 1 | 2 | 3 | 4 | 5;
 
-    if (ageDays < 1) {
+    if (ageDays < 1 && !emailVerified) {
       tier = 0;
-    } else if (!emailVerified && ageDays < 7) {
-      tier = 1;
-    } else if (emailVerified && ageDays < 1) {
-      tier = 1;
     } else if (ageDays < 7) {
       tier = 1;
     } else if (ageDays < 30) {

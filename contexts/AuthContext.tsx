@@ -31,6 +31,7 @@ interface AuthContextValue {
   sendPasswordReset: (email: string) => Promise<void>;
   resendVerification: () => Promise<void>;
   refreshUser: () => Promise<void>;
+  updateLocalDisplayName: (name: string) => void;
   googleRequest: ReturnType<typeof Google.useAuthRequest>[0];
 }
 
@@ -221,6 +222,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }
 
+  function updateLocalDisplayName(name: string) {
+    setUser((prev) => prev ? { ...prev, displayName: name } : prev);
+  }
+
   async function refreshUser() {
     const currentUser = authAdapter.getCurrentUser();
     if (!currentUser) return;
@@ -262,6 +267,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       sendPasswordReset,
       resendVerification,
       refreshUser,
+      updateLocalDisplayName,
       googleRequest,
     }),
     [user, token, isLoading, googleRequest]

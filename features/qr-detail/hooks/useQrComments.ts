@@ -140,7 +140,8 @@ export function useQrComments(id: string, userId: string | null, offlineMode: bo
       setReplyTo(null);
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     } catch (e: any) {
-      Alert.alert("Error", e.message);
+      console.error("[Comment] Error submitting comment:", e?.message, e);
+      Alert.alert("Cannot Post Comment", e.message);
     } finally {
       setSubmitting(false);
     }

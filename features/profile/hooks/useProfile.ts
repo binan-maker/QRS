@@ -5,6 +5,7 @@ import * as ImagePicker from "expo-image-picker";
 import * as Haptics from "expo-haptics";
 import { useAuth } from "@/contexts/AuthContext";
 import { authAdapter } from "@/lib/auth";
+import { db } from "@/lib/db";
 import {
   getUserStats,
   updateUserPhotoURL,
@@ -23,7 +24,7 @@ import {
 } from "@/lib/cache/qr-cache";
 
 export function useProfile() {
-  const { user, signOut } = useAuth();
+  const { user, signOut, updateLocalDisplayName } = useAuth();
 
   const [editingName, setEditingName] = useState(false);
   const [newName, setNewName] = useState(user?.displayName || "");
@@ -118,10 +119,16 @@ export function useProfile() {
     const currentUser = authAdapter.getCurrentUser();
     if (!newName.trim() || !currentUser) return;
     setSavingName(true);
+    const trimmedName = newName.trim();
+    updateLocalDisplayName(trimmedName);
+    setEditingName(false);
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     try {
-      await authAdapter.updateDisplayName(currentUser, newName.trim());
-      setEditingName(false);
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      await authAdapter.updateDisplayName(currentUser, trimmedName);
+      if (user?.id) {
+        db.update(["users", user.id], { displayName: trimmedName }).catch(() => {});
+        invalidateUserCache(user.id);
+      }
     } catch {
       Alert.alert("Error", "Could not update name. Try again.");
     } finally {

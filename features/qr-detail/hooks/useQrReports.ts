@@ -86,6 +86,7 @@ export function useQrReports(id: string, userId: string | null, offlineMode: boo
       await reportQrCode(id, userId, type, emailVerified);
       invalidateQrCache(id);
     } catch (e: any) {
+      console.error("[Report] Error submitting report:", e?.message, e);
       setUserReport(prevReport);
       setReportCounts((prev) => {
         const next = { ...prev };
