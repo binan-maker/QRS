@@ -130,9 +130,11 @@ export function useQrComments(id: string, userId: string | null, offlineMode: bo
     if (!userId) { router.push("/(auth)/login"); return; }
     if (!newComment.trim()) return;
     setSubmitting(true);
+    console.log("[Comment] Submitting comment for user:", userId, "qr:", id, "emailVerified:", emailVerified);
     try {
       const parentId = replyTo ? replyTo.rootId : null;
       await addComment(id, userId, displayName, newComment.trim(), parentId, emailVerified);
+      console.log("[Comment] Comment submitted successfully");
       if (parentId) {
         setExpandedReplies((prev) => ({ ...prev, [parentId]: true }));
       }

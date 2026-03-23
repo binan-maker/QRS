@@ -3,6 +3,7 @@ import { Alert } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as Haptics from "expo-haptics";
 import { useAuth } from "@/contexts/AuthContext";
+import { authAdapter } from "@/lib/auth";
 import {
   getUserFollowing,
   getUserComments,
@@ -236,10 +237,29 @@ export function useSettings() {
           style: "destructive",
           onPress: async () => {
             try {
-              if (user) await deleteUserAccount(user.id, token || "");
+              console.log("[DeleteAccount] Starting account deletion for user:", user?.id);
+              if (user) {
+                await deleteUserAccount(user.id);
+                console.log("[DeleteAccount] Firestore user record deleted");
+                const currentUser = authAdapter.getCurrentUser();
+                if (currentUser) {
+                  await authAdapter.deleteUser(currentUser);
+                  console.log("[DeleteAccount] Firebase Auth account deleted");
+                }
+              }
               await signOut();
+              console.log("[DeleteAccount] Signed out successfully");
+              Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
             } catch (e: any) {
-              Alert.alert("Error", e.message || "Could not delete account.");
+              console.error("[DeleteAccount] Error deleting account:", e?.message, e);
+              if (e?.code === "auth/requires-recent-login") {
+                Alert.alert(
+                  "Re-authentication Required",
+                  "For security, please sign out and sign back in before deleting your account."
+                );
+              } else {
+                Alert.alert("Error", e.message || "Could not delete account.");
+              }
             }
           },
         },

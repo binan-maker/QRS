@@ -111,7 +111,8 @@ export async function checkReportEligibility(
   userId: string,
   qrId: string,
   emailVerified: boolean,
-  qrOwnerId?: string
+  qrOwnerId?: string,
+  isChangingReport?: boolean
 ): Promise<{ allowed: true; weight: number; tier: AccountTier } | never> {
 
   // Block QR owner from voting on their own QR
@@ -128,15 +129,17 @@ export async function checkReportEligibility(
   const userData = await db.get(["users", userId]);
   if (!userData) throw new Error("User not found.");
 
-  // Check daily report rate limit
-  const windowStart = tsToMs(userData.reportRateWindowStart);
-  const count = userData.reportRateCount || 0;
+  // Skip daily rate limit check when user is changing an existing report (not a new one)
+  if (!isChangingReport) {
+    const windowStart = tsToMs(userData.reportRateWindowStart);
+    const count = userData.reportRateCount || 0;
 
-  if (isWithin24h(windowStart)) {
-    if (count >= tier.maxReportsPerDay) {
-      throw new Error(
-        `You have reached your daily report limit (${tier.maxReportsPerDay}). Please try again tomorrow.`
-      );
+    if (isWithin24h(windowStart)) {
+      if (count >= tier.maxReportsPerDay) {
+        throw new Error(
+          `You have reached your daily report limit (${tier.maxReportsPerDay}). Please try again tomorrow.`
+        );
+      }
     }
   }
 

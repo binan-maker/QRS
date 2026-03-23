@@ -196,13 +196,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   async function signOut() {
+    console.log("[SignOut] Starting sign-out");
     try {
       const AsyncStorage = (await import("@react-native-async-storage/async-storage")).default;
       await AsyncStorage.removeItem("local_scan_history");
-    } catch {}
-    await authAdapter.signOut();
+    } catch (e) {
+      console.warn("[SignOut] Could not clear local storage:", e);
+    }
+    try {
+      await authAdapter.signOut();
+      console.log("[SignOut] Firebase sign-out successful");
+    } catch (e: any) {
+      console.error("[SignOut] Firebase sign-out failed:", e?.message, e);
+    }
     setUser(null);
     setToken(null);
+    console.log("[SignOut] Done");
   }
 
   async function sendPasswordReset(email: string) {
