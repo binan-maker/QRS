@@ -29,6 +29,8 @@ export function useHistory() {
   const [favorites, setFavorites] = useState<HistoryItem[]>([]);
   const [refreshing, setRefreshing] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
+  const [cloudLoading, setCloudLoading] = useState(false);
+  const [cloudError, setCloudError] = useState(false);
   const [cloudHasMore, setCloudHasMore] = useState(false);
   const [filter, setFilter] = useState<Filter>("all");
   const cloudLastDocRef = useRef<any>(null);
@@ -89,6 +91,8 @@ export function useHistory() {
   }, []);
 
   const loadInitialCloudHistory = useCallback(async (userId: string) => {
+    setCloudLoading(true);
+    setCloudError(false);
     try {
       const result = await getUserScansPaginated(userId, PAGE_SIZE);
       cloudLastDocRef.current = result.cursor;
@@ -98,7 +102,12 @@ export function useHistory() {
         scannedAt: s.scannedAt, qrCodeId: s.qrCodeId, source: "cloud" as const,
         scanSource: (s.scanSource as "camera" | "gallery") || "camera",
       })));
-    } catch { setCloudHistory([]); }
+    } catch {
+      setCloudHistory([]);
+      setCloudError(true);
+    } finally {
+      setCloudLoading(false);
+    }
   }, []);
 
   const loadMoreCloudHistory = useCallback(async () => {
@@ -147,6 +156,7 @@ export function useHistory() {
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
+    setCloudError(false);
     cloudLastDocRef.current = null;
     setCloudHasMore(false);
     setCloudHistory([]);
@@ -184,6 +194,8 @@ export function useHistory() {
     setFilter,
     refreshing,
     loadingMore,
+    cloudLoading,
+    cloudError,
     cloudHasMore,
     onRefresh,
     handleEndReached,

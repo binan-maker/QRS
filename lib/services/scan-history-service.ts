@@ -60,7 +60,9 @@ export async function getUserScansPaginated(
     { orderBy: { field: "scannedAt", direction: "desc" }, limit: pageSize + 1, cursor }
   );
   const hasMore = docs.length > pageSize;
-  const items = hasMore ? docs.slice(0, pageSize) : docs;
+  const sliced = hasMore ? docs.slice(0, pageSize) : docs;
+  // Filter out soft-deleted records client-side (avoids Firestore composite index requirement)
+  const items = sliced.filter((d) => d.data.isDeleted !== true);
   return {
     items: items.map((d) => ({ id: d.id, ...d.data, scannedAt: tsToString(d.data.scannedAt) })),
     cursor: items.length > 0 ? newCursor : null,
