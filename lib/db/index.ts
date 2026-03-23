@@ -8,26 +8,42 @@
 // ═══════════════════════════════════════════════════════════════════════════════
 
 import { DB_PROVIDER } from "./config";
-import { firebaseDb, firebaseRtdb } from "./providers/firebase";
-import { supabaseDb, supabaseRtdb } from "./providers/supabase";
-import { postgresDb, postgresRtdb } from "./providers/postgres";
 import type { DbAdapter, RealtimeAdapter } from "./adapter";
 
+// Lazy-load only the active provider so that Node-only packages (e.g. "pg")
+// are never bundled into the React Native / Expo app unless they are actually
+// the selected provider.
 function selectDb(): DbAdapter {
   switch (DB_PROVIDER) {
-    case "firebase": return firebaseDb;
-    case "supabase": return supabaseDb;
-    case "postgres": return postgresDb;
-    default:         return firebaseDb;
+    case "supabase": {
+      const { supabaseDb } = require("./providers/supabase");
+      return supabaseDb;
+    }
+    case "postgres": {
+      const { postgresDb } = require("./providers/postgres");
+      return postgresDb;
+    }
+    default: {
+      const { firebaseDb } = require("./providers/firebase");
+      return firebaseDb;
+    }
   }
 }
 
 function selectRtdb(): RealtimeAdapter {
   switch (DB_PROVIDER) {
-    case "firebase": return firebaseRtdb;
-    case "supabase": return supabaseRtdb;
-    case "postgres": return postgresRtdb;
-    default:         return firebaseRtdb;
+    case "supabase": {
+      const { supabaseRtdb } = require("./providers/supabase");
+      return supabaseRtdb;
+    }
+    case "postgres": {
+      const { postgresRtdb } = require("./providers/postgres");
+      return postgresRtdb;
+    }
+    default: {
+      const { firebaseRtdb } = require("./providers/firebase");
+      return firebaseRtdb;
+    }
   }
 }
 

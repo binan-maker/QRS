@@ -89,6 +89,7 @@ function ClassicTabLayout() {
 
   return (
     <Tabs
+      initialRouteName="scanner"
       screenOptions={{
         headerShown: false,
         tabBarActiveTintColor: colors.primary,
