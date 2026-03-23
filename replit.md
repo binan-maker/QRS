@@ -4,6 +4,15 @@ A full-stack mobile-first QR code scanning and management app built with Expo (R
 
 ## Recent Changes
 
+### Firebase-Only Lock + Indian QR Code Support
+- **DB config locked to Firebase** — `lib/db/config.ts` now uses `"firebase" as const`; the type no longer allows "supabase" or "postgres". `lib/db/index.ts` directly imports Firebase providers instead of using a runtime switch — no accidental connections possible.
+- **Full EMV TLV parser** (`lib/analysis/payment-parser.ts`) — `parseEmvTlv()` decodes the EMV QRCPS (ISO 20022) TLV format byte-by-byte; `parseEmvQr()` uses it to extract merchant name (tag 59), merchant city (tag 60), amount (tag 54), currency (tag 53), MCC (tag 52), bill/reference numbers (tag 62), and scans merchant account info tags 26–51 for VPA, bank account number, and IFSC.
+- **BharatQR / NPCI detection** — AID `A000000677` (BharatQR), `A000000524` (RuPay), bank-specific strings (HDFCBANK, oksbi, okaxis, okicici) all correctly identified; network, bank, city displayed on the payment card.
+- **Indian bank account QR parser** (`parseIndianBankAccountQr`) — handles 4 formats: key:value pipes, key=value query strings, JSON, and line-by-line passbook QRs. Resolves bank name from IFSC prefix using a 35-bank lookup table. Account number is masked (shows only last 4 digits).
+- **BBPS (Bharat Bill Payment System) parser** (`parseBbpsQr`) — handles `bbps://` scheme and `bbpsonline.com` URLs; extracts biller ID, category, customer reference, and amount.
+- **PaymentCard UI updated** — new "extra fields" section in the gradient card shows account number (masked), IFSC, bank name, account type for bank account QRs; bill number, reference label, MCC for BharatQR EMV codes; biller ID and category for BBPS codes.
+- **IFSC-to-bank lookup** — 35-entry map resolves IFSC prefixes (SBIN→SBI, HDFC→HDFC Bank, UTIB→Axis Bank, etc.) to both human names and `PaymentAppId` for correct card branding.
+
 ### Safety-First UX (Jobs Redesign)
 - **Instant local verdict** — `computeInstantVerdict()` in `features/qr-detail/hooks/useQrSafety.ts` runs synchronously using `BUILT_IN_BLACKLIST` + URL/payment heuristics the moment content is known. No network required.
 - **`getCombinedVerdict()`** in `useQrDetail.ts` merges local + community trust into a single verdict, with blacklist hits always winning.

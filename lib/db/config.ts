@@ -1,20 +1,16 @@
 // ═══════════════════════════════════════════════════════════════════════════════
 // DATABASE PROVIDER CONFIGURATION
 // ───────────────────────────────────────────────────────────────────────────────
-// Change DB_PROVIDER to switch the entire backend in one line.
+// This app uses Firebase exclusively for all data storage and authentication.
 //
-//   "firebase"  → Firebase Firestore + Realtime Database (current)
-//   "supabase"  → Supabase Postgres + Realtime (fill in lib/db/providers/supabase.ts)
-//   "postgres"  → Direct PostgreSQL via REST API (fill in lib/db/providers/postgres.ts)
+//   Firebase Firestore   → primary document database (QR scans, user data)
+//   Firebase Realtime DB → notifications, velocity tracking
+//   Firebase Auth        → user authentication (email + Google OAuth)
 //
+// Postgres and Supabase providers exist as shims for a future migration
+// (~10k users) but are NOT connected and will never be loaded at runtime.
 // ═══════════════════════════════════════════════════════════════════════════════
 
-export const DB_PROVIDER = "firebase" as "firebase" | "supabase" | "postgres";
+export const DB_PROVIDER = "firebase" as const;
 
-// ─── Auth Provider ────────────────────────────────────────────────────────────
-// Controls which auth system is used. Usually matches DB_PROVIDER, but can differ.
-//   "firebase"  → Firebase Auth (email + Google OAuth, email verification)
-//   "supabase"  → Supabase Auth
-//   "custom"    → Your own JWT/session auth
-// ─────────────────────────────────────────────────────────────────────────────
-export const AUTH_PROVIDER = "firebase" as "firebase" | "supabase" | "custom";
+export const AUTH_PROVIDER = "firebase" as const;

@@ -557,7 +557,6 @@ function getBankFullName(handle?: string): string | null {
     "razorpay": "Razorpay (RBL Bank)",
     "bajajpay": "Bajaj Finance",
     "airtelpe": "Airtel Payments Bank",
-    "indus": "IndusInd Bank",
     "bhim": "BHIM (NPCI)",
     "uboi": "Union Bank of India",
     "ucobank": "UCO Bank",
@@ -686,6 +685,110 @@ const PaymentCard = React.memo(function PaymentCard({
             <Text style={[styles.noteText, { color: brand.subtextOnCard }]} numberOfLines={2}>
               {parsedPayment.note}
             </Text>
+          </View>
+        ) : null}
+
+        {/* Indian bank account fields — account number, IFSC, bank name */}
+        {parsedPayment.extraFields?.accountNumber ? (
+          <View style={styles.extraFieldsBlock}>
+            <View style={styles.extraFieldRow}>
+              <Ionicons name="card-outline" size={12} color={brand.accentColor} />
+              <Text style={[styles.extraFieldLabel, { color: brand.subtextOnCard }]}>Account</Text>
+              <Text style={[styles.extraFieldValue, { color: brand.textOnCard }]} selectable>
+                {`••••${parsedPayment.extraFields.accountNumber.slice(-4)}`}
+              </Text>
+            </View>
+            {parsedPayment.extraFields.ifsc ? (
+              <View style={styles.extraFieldRow}>
+                <Ionicons name="code-outline" size={12} color={brand.accentColor} />
+                <Text style={[styles.extraFieldLabel, { color: brand.subtextOnCard }]}>IFSC</Text>
+                <Text style={[styles.extraFieldValue, { color: brand.textOnCard }]} selectable>
+                  {parsedPayment.extraFields.ifsc}
+                </Text>
+              </View>
+            ) : null}
+            {parsedPayment.extraFields.bankName ? (
+              <View style={styles.extraFieldRow}>
+                <Ionicons name="business-outline" size={12} color={brand.accentColor} />
+                <Text style={[styles.extraFieldLabel, { color: brand.subtextOnCard }]}>Bank</Text>
+                <Text style={[styles.extraFieldValue, { color: brand.textOnCard }]} numberOfLines={1}>
+                  {parsedPayment.extraFields.bankName}
+                </Text>
+              </View>
+            ) : null}
+            {parsedPayment.extraFields.accountType ? (
+              <View style={styles.extraFieldRow}>
+                <Ionicons name="file-tray-outline" size={12} color={brand.accentColor} />
+                <Text style={[styles.extraFieldLabel, { color: brand.subtextOnCard }]}>Type</Text>
+                <Text style={[styles.extraFieldValue, { color: brand.textOnCard }]}>
+                  {parsedPayment.extraFields.accountType}
+                </Text>
+              </View>
+            ) : null}
+          </View>
+        ) : null}
+
+        {/* BharatQR / EMV extra info — merchant city, bill number, reference */}
+        {parsedPayment.isEmv && parsedPayment.extraFields && !parsedPayment.extraFields.accountNumber ? (
+          <View style={styles.extraFieldsBlock}>
+            {parsedPayment.extraFields.ifsc ? (
+              <View style={styles.extraFieldRow}>
+                <Ionicons name="code-outline" size={12} color={brand.accentColor} />
+                <Text style={[styles.extraFieldLabel, { color: brand.subtextOnCard }]}>IFSC</Text>
+                <Text style={[styles.extraFieldValue, { color: brand.textOnCard }]} selectable>
+                  {parsedPayment.extraFields.ifsc}
+                </Text>
+              </View>
+            ) : null}
+            {parsedPayment.extraFields.billNumber ? (
+              <View style={styles.extraFieldRow}>
+                <Ionicons name="receipt-outline" size={12} color={brand.accentColor} />
+                <Text style={[styles.extraFieldLabel, { color: brand.subtextOnCard }]}>Bill No.</Text>
+                <Text style={[styles.extraFieldValue, { color: brand.textOnCard }]} selectable>
+                  {parsedPayment.extraFields.billNumber}
+                </Text>
+              </View>
+            ) : null}
+            {parsedPayment.extraFields.referenceLabel ? (
+              <View style={styles.extraFieldRow}>
+                <Ionicons name="bookmark-outline" size={12} color={brand.accentColor} />
+                <Text style={[styles.extraFieldLabel, { color: brand.subtextOnCard }]}>Ref</Text>
+                <Text style={[styles.extraFieldValue, { color: brand.textOnCard }]} selectable>
+                  {parsedPayment.extraFields.referenceLabel}
+                </Text>
+              </View>
+            ) : null}
+            {parsedPayment.extraFields.mcc ? (
+              <View style={styles.extraFieldRow}>
+                <Ionicons name="pricetag-outline" size={12} color={brand.accentColor} />
+                <Text style={[styles.extraFieldLabel, { color: brand.subtextOnCard }]}>MCC</Text>
+                <Text style={[styles.extraFieldValue, { color: brand.textOnCard }]}>
+                  {parsedPayment.extraFields.mcc}
+                </Text>
+              </View>
+            ) : null}
+          </View>
+        ) : null}
+
+        {/* BBPS bill info */}
+        {parsedPayment.extraFields?.billerId && !parsedPayment.isEmv && !parsedPayment.extraFields?.accountNumber ? (
+          <View style={styles.extraFieldsBlock}>
+            <View style={styles.extraFieldRow}>
+              <Ionicons name="business-outline" size={12} color={brand.accentColor} />
+              <Text style={[styles.extraFieldLabel, { color: brand.subtextOnCard }]}>Biller</Text>
+              <Text style={[styles.extraFieldValue, { color: brand.textOnCard }]} numberOfLines={1} selectable>
+                {parsedPayment.extraFields.billerId}
+              </Text>
+            </View>
+            {parsedPayment.extraFields.category ? (
+              <View style={styles.extraFieldRow}>
+                <Ionicons name="list-outline" size={12} color={brand.accentColor} />
+                <Text style={[styles.extraFieldLabel, { color: brand.subtextOnCard }]}>Category</Text>
+                <Text style={[styles.extraFieldValue, { color: brand.textOnCard }]}>
+                  {parsedPayment.extraFields.category}
+                </Text>
+              </View>
+            ) : null}
           </View>
         ) : null}
 
@@ -999,5 +1102,28 @@ const styles = StyleSheet.create({
     fontFamily: "Inter_500Medium",
     color: "#EF4444",
     flex: 1,
+  },
+
+  extraFieldsBlock: {
+    marginTop: 10,
+    marginBottom: 2,
+    gap: 5,
+  },
+  extraFieldRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+  },
+  extraFieldLabel: {
+    fontSize: 11,
+    fontFamily: "Inter_500Medium",
+    minWidth: 52,
+    letterSpacing: 0.2,
+  },
+  extraFieldValue: {
+    fontSize: 12,
+    fontFamily: "Inter_600SemiBold",
+    flex: 1,
+    letterSpacing: 0.1,
   },
 });

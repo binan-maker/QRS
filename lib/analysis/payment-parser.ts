@@ -380,27 +380,20 @@ export function parseAnyPaymentQr(content: string): ParsedPaymentQr | null {
   }
 
   if (lower.startsWith("000201")) {
-    const network = detectEmvNetwork(content);
-    return {
-      app: network?.id ?? "emv_generic",
-      appDisplayName: network?.name ?? "EMV QR Payment",
-      appCategory: network?.category ?? "emv",
-      region: network?.region ?? "Regional",
-      recipientId: extractEmvMerchantId(content),
-      rawContent: content,
-      isAmountPreFilled: content.includes("5406"),
-      isEmv: true,
-    };
+    return parseEmvQr(content);
   }
+
+  const bbpsParsed = parseBbpsQr(content, lower);
+  if (bbpsParsed) return bbpsParsed;
+
+  const bankAccountParsed = parseIndianBankAccountQr(content, lower);
+  if (bankAccountParsed) return bankAccountParsed;
 
   if (content.startsWith("BCD\n") || content.startsWith("BCD\r\n")) {
     return parseSepaQr(content);
   }
 
-  if (
-    lower.includes("br.gov.bcb.pix") ||
-    (lower.startsWith("000201") && lower.includes("26"))
-  ) {
+  if (lower.includes("br.gov.bcb.pix")) {
     return buildParsedPayment(
       PAYMENT_APP_REGISTRY.find((a) => a.id === "pix")!,
       content, lower
@@ -896,51 +889,419 @@ function parseSepaQr(content: string): ParsedPaymentQr {
   };
 }
 
-function detectEmvNetwork(content: string): { id: PaymentAppId; name: string; category: ParsedPaymentQr["appCategory"]; region: string } | null {
-  if (content.includes("br.gov.bcb.pix")) return { id: "pix", name: "Pix", category: "brazil_latam", region: "Brazil" };
-  if (content.includes("SG.PAYNOW") || content.includes("sg.paynow")) return { id: "nets_sg", name: "PayNow (Singapore)", category: "singapore_malaysia", region: "Singapore" };
-  if (content.includes("MY.MY") || content.includes("DuitNow")) return { id: "duitnow", name: "DuitNow (Malaysia)", category: "singapore_malaysia", region: "Malaysia" };
-  if (content.includes("TH.PROMPTPAY") || content.includes("th.promptpay")) return { id: "promptpay", name: "PromptPay (Thailand)", category: "thailand", region: "Thailand" };
-  if (content.includes("A000000677010112") || content.includes("vnpay")) return { id: "vnpay", name: "VNPAY", category: "southeast_asia", region: "Vietnam" };
-  if (content.includes("A000000533010101") || content.includes("alipay")) return { id: "alipay", name: "Alipay (支付宝)", category: "china", region: "China" };
-  if (content.includes("A000000049")) return { id: "wechat_pay", name: "WeChat Pay (微信支付)", category: "china", region: "China" };
-
-  // ── Indian BharatQR / RuPay ────────────────────────────────────────────────
-  // BharatQR uses AID A000000677010X or in.bharat.qr merchant data
-  if (content.includes("A000000677") || content.includes("in.bharat.qr") ||
-      content.includes("bharatqr") || content.includes("BHARATQR")) {
-    return { id: "bharatqr", name: "BharatQR (NPCI)", category: "upi_india", region: "India" };
+// ─── EMV TLV Parser ──────────────────────────────────────────────────────────
+// Decodes the flat EMV QRCPS (ISO 20022) TLV structure.
+// Each data object: ID(2 chars) | LEN(2 chars, decimal) | VALUE(LEN chars)
+function parseEmvTlv(data: string): Record<string, string> {
+  const result: Record<string, string> = {};
+  let i = 0;
+  while (i + 4 <= data.length) {
+    const id = data.slice(i, i + 2);
+    const lenStr = data.slice(i + 2, i + 4);
+    const len = parseInt(lenStr, 10);
+    if (isNaN(len) || len < 0 || i + 4 + len > data.length) break;
+    result[id] = data.slice(i + 4, i + 4 + len);
+    i += 4 + len;
   }
-  // HDFC-specific EMV merchant data
-  if (content.includes("HDFCBANK") || content.includes("hdfcbank") ||
-      content.includes("HDFC BANK") || content.includes("payzapp")) {
-    return { id: "hdfc_bank", name: "HDFC Bank", category: "upi_india", region: "India" };
-  }
-  // BharatPe EMV merchant data
-  if (content.includes("bharatpe") || content.includes("BHARATPE")) {
-    return { id: "bharatpe", name: "BharatPe", category: "upi_india", region: "India" };
-  }
-  // RuPay / NPCI generic
-  if (content.includes("A000000524") || content.includes("RUPAY") ||
-      content.includes("rupay") || content.includes("npci")) {
-    return { id: "bharatqr", name: "RuPay / BharatQR (NPCI)", category: "upi_india", region: "India" };
-  }
-  // PhonePe EMV
-  if (content.includes("phonepe") || content.includes("PHONEPE")) {
-    return { id: "phonepe", name: "PhonePe", category: "upi_india", region: "India" };
-  }
-  // Paytm EMV
-  if (content.includes("paytm") || content.includes("PAYTM")) {
-    return { id: "paytm", name: "Paytm", category: "upi_india", region: "India" };
-  }
-
-  return null;
+  return result;
 }
 
-function extractEmvMerchantId(content: string): string {
+// Full EMV QR parser — extracts merchant name, city, VPA, account, IFSC, amount.
+function parseEmvQr(content: string): ParsedPaymentQr {
+  const tlv = parseEmvTlv(content);
+
+  const merchantName = tlv["59"] || "";
+  const merchantCity = tlv["60"] || "";
+  const countryCode  = tlv["58"] || "";
+  const currency     = tlv["53"] || "";
+  const amount       = tlv["54"] || undefined;
+  const mcc          = tlv["52"] || "";
+  const postalCode   = tlv["61"] || "";
+
+  // Determine point of initiation: 11 = static, 12 = dynamic
+  const initMethod = tlv["01"] || "";
+
+  // Extract additional data (tag 62) — bill number, reference label, etc.
+  const extraFields: Record<string, string> = {};
+  if (tlv["62"]) {
+    const extra = parseEmvTlv(tlv["62"]);
+    if (extra["01"]) extraFields["billNumber"]    = extra["01"];
+    if (extra["05"]) extraFields["referenceLabel"] = extra["05"];
+    if (extra["07"]) extraFields["terminalId"]    = extra["07"];
+    if (extra["08"]) extraFields["purpose"]       = extra["08"];
+  }
+
+  // Scan merchant account info tags 26–51 for VPA, bank account, IFSC
+  let vpa = "";
+  let bankAccount = "";
+  let ifsc = "";
+  let detectedNetwork: { id: PaymentAppId; name: string; category: ParsedPaymentQr["appCategory"]; region: string } | null = null;
+
+  for (let tag = 26; tag <= 51; tag++) {
+    const tagId = String(tag).padStart(2, "0");
+    const templateValue = tlv[tagId];
+    if (!templateValue) continue;
+
+    const sub = parseEmvTlv(templateValue);
+    const aid  = (sub["00"] || "").toUpperCase();
+    const val01 = sub["01"] || "";
+    const val02 = sub["02"] || "";
+    const val03 = sub["03"] || "";
+    const val04 = sub["04"] || "";
+
+    // Detect network from AID
+    if (aid.startsWith("A000000677") || aid.includes("BHARATQR")) {
+      // BharatQR — subtags: 01=mobile, 02=account, 03=IFSC, 04=VPA
+      if (!vpa && val04 && val04.includes("@")) vpa = val04;
+      if (!vpa && val01 && val01.includes("@")) vpa = val01;
+      if (!bankAccount && val02) bankAccount = val02;
+      if (!ifsc && val03) ifsc = val03;
+      if (!detectedNetwork) {
+        detectedNetwork = { id: "bharatqr", name: "BharatQR (NPCI)", category: "upi_india", region: "India" };
+      }
+    } else if (aid.startsWith("A000000524") || aid.includes("RUPAY")) {
+      if (!detectedNetwork) {
+        detectedNetwork = { id: "bharatqr", name: "RuPay (NPCI)", category: "upi_india", region: "India" };
+      }
+    } else if (aid.startsWith("A000000533") || templateValue.toLowerCase().includes("alipay")) {
+      if (!detectedNetwork) {
+        detectedNetwork = { id: "alipay", name: "Alipay (支付宝)", category: "china", region: "China" };
+      }
+    } else if (aid.startsWith("A000000049") || templateValue.toLowerCase().includes("wechat")) {
+      if (!detectedNetwork) {
+        detectedNetwork = { id: "wechat_pay", name: "WeChat Pay (微信支付)", category: "china", region: "China" };
+      }
+    } else if (templateValue.includes("SG.PAYNOW") || templateValue.toLowerCase().includes("paynow")) {
+      if (!detectedNetwork) {
+        detectedNetwork = { id: "nets_sg", name: "PayNow (Singapore)", category: "singapore_malaysia", region: "Singapore" };
+      }
+    } else if (templateValue.includes("TH.PROMPTPAY") || templateValue.toLowerCase().includes("promptpay")) {
+      if (!detectedNetwork) {
+        detectedNetwork = { id: "promptpay", name: "PromptPay (Thailand)", category: "thailand", region: "Thailand" };
+      }
+    } else if (templateValue.includes("br.gov.bcb.pix") || templateValue.toLowerCase().includes("pix")) {
+      if (!detectedNetwork) {
+        detectedNetwork = { id: "pix", name: "Pix", category: "brazil_latam", region: "Brazil" };
+      }
+    } else if (templateValue.includes("DuitNow") || templateValue.toLowerCase().includes("duitnow")) {
+      if (!detectedNetwork) {
+        detectedNetwork = { id: "duitnow", name: "DuitNow (Malaysia)", category: "singapore_malaysia", region: "Malaysia" };
+      }
+    }
+
+    // Try to pick up a VPA from any sub-tag that looks like one
+    if (!vpa) {
+      for (const sv of Object.values(sub)) {
+        if (sv.includes("@") && sv.length < 80) { vpa = sv; break; }
+      }
+    }
+
+    // Detect well-known Indian apps from merchant account info text
+    const tmv = templateValue.toLowerCase();
+    if (!detectedNetwork) {
+      if (tmv.includes("hdfcbank") || tmv.includes("hdfc")) {
+        detectedNetwork = { id: "hdfc_bank", name: "HDFC Bank", category: "upi_india", region: "India" };
+      } else if (tmv.includes("oksbi") || tmv.includes("sbi")) {
+        detectedNetwork = { id: "yono_sbi", name: "YONO SBI", category: "upi_india", region: "India" };
+      } else if (tmv.includes("okaxis") || tmv.includes("axisbank") || tmv.includes("axis")) {
+        detectedNetwork = { id: "axis_pay", name: "Axis Pay", category: "upi_india", region: "India" };
+      } else if (tmv.includes("okicici") || tmv.includes("icici")) {
+        detectedNetwork = { id: "imobile_pay", name: "iMobile Pay (ICICI)", category: "upi_india", region: "India" };
+      } else if (tmv.includes("phonepe")) {
+        detectedNetwork = { id: "phonepe", name: "PhonePe", category: "upi_india", region: "India" };
+      } else if (tmv.includes("paytm")) {
+        detectedNetwork = { id: "paytm", name: "Paytm", category: "upi_india", region: "India" };
+      } else if (tmv.includes("bharatpe")) {
+        detectedNetwork = { id: "bharatpe", name: "BharatPe", category: "upi_india", region: "India" };
+      }
+    }
+  }
+
+  // Also check the raw content for well-known identifiers if we still don't know the network
+  if (!detectedNetwork) {
+    const lc = content.toLowerCase();
+    if (lc.includes("hdfcbank") || lc.includes("payzapp")) {
+      detectedNetwork = { id: "hdfc_bank", name: "HDFC Bank", category: "upi_india", region: "India" };
+    } else if (lc.includes("oksbi") || lc.includes("yono")) {
+      detectedNetwork = { id: "yono_sbi", name: "YONO SBI", category: "upi_india", region: "India" };
+    } else if (lc.includes("okaxis") || lc.includes("axisbank")) {
+      detectedNetwork = { id: "axis_pay", name: "Axis Pay", category: "upi_india", region: "India" };
+    } else if (lc.includes("okicici") || lc.includes("icicibank")) {
+      detectedNetwork = { id: "imobile_pay", name: "iMobile Pay (ICICI)", category: "upi_india", region: "India" };
+    } else if (lc.includes("bharatqr") || lc.includes("npci")) {
+      detectedNetwork = { id: "bharatqr", name: "BharatQR (NPCI)", category: "upi_india", region: "India" };
+    } else if (lc.includes("rupay")) {
+      detectedNetwork = { id: "bharatqr", name: "RuPay (NPCI)", category: "upi_india", region: "India" };
+    } else if (lc.includes("phonepe")) {
+      detectedNetwork = { id: "phonepe", name: "PhonePe", category: "upi_india", region: "India" };
+    } else if (lc.includes("paytm")) {
+      detectedNetwork = { id: "paytm", name: "Paytm", category: "upi_india", region: "India" };
+    } else if (lc.includes("bharatpe")) {
+      detectedNetwork = { id: "bharatpe", name: "BharatPe", category: "upi_india", region: "India" };
+    } else if (lc.includes("br.gov.bcb.pix")) {
+      detectedNetwork = { id: "pix", name: "Pix", category: "brazil_latam", region: "Brazil" };
+    } else if (lc.includes("sg.paynow")) {
+      detectedNetwork = { id: "nets_sg", name: "PayNow (Singapore)", category: "singapore_malaysia", region: "Singapore" };
+    } else if (lc.includes("th.promptpay")) {
+      detectedNetwork = { id: "promptpay", name: "PromptPay (Thailand)", category: "thailand", region: "Thailand" };
+    }
+  }
+
+  const net = detectedNetwork;
+
+  // Resolve the bank handle from VPA (e.g. "merchant@okhdfcbank" → "okhdfcbank")
+  const bankHandle = vpa?.includes("@") ? vpa.split("@")[1].toLowerCase() : undefined;
+
+  // Build a human-readable recipient ID from whatever we extracted
+  let recipientId = vpa || bankAccount || merchantName || content.slice(0, 40);
+
+  // Annotate account + IFSC into extra fields if available
+  if (bankAccount) extraFields["accountNumber"] = bankAccount;
+  if (ifsc) extraFields["ifsc"] = ifsc;
+  if (mcc) extraFields["mcc"] = mcc;
+  if (postalCode) extraFields["postalCode"] = postalCode;
+  if (initMethod === "12") extraFields["dynamic"] = "true";
+
+  // Currency string
+  const currencyStr = currency === "356" ? "INR" : currency || undefined;
+
+  return {
+    app: net?.id ?? "emv_generic",
+    appDisplayName: net ? `${net.name}${merchantName ? ` — ${merchantName}` : ""}` : (merchantName || "EMV QR Payment"),
+    appCategory: net?.category ?? "emv",
+    region: net?.region ?? (countryCode === "IN" ? "India" : countryCode || "Regional"),
+    recipientId,
+    recipientName: merchantName || undefined,
+    amount: amount && parseFloat(amount) > 0 ? amount : undefined,
+    currency: currencyStr,
+    note: merchantCity || undefined,
+    rawContent: content,
+    isAmountPreFilled: !!(amount && parseFloat(amount) > 0),
+    bankHandle,
+    vpa: vpa || undefined,
+    isEmv: true,
+    extraFields: Object.keys(extraFields).length > 0 ? extraFields : undefined,
+  };
+}
+
+// ─── BBPS (Bharat Bill Payment System) Parser ────────────────────────────────
+// BBPS QR codes are used for utility bills, insurance, loans, etc.
+// Format: bbps://<category>?billerId=...&customerParam=...&amount=...
+function parseBbpsQr(content: string, lower: string): ParsedPaymentQr | null {
+  const isBbps =
+    lower.startsWith("bbps://") ||
+    lower.startsWith("https://bbps.") ||
+    lower.includes("bbpsonline.com") ||
+    lower.includes("billpayment.npci") ||
+    (lower.includes("billerid=") && (lower.includes("bbps") || lower.includes("biller")));
+
+  if (!isBbps) return null;
+
+  let billerId = "";
+  let amount: string | undefined;
+  let customerParam = "";
+  let category = "";
+  let note: string | undefined;
+
   try {
-    const idx = content.indexOf("5910");
-    if (idx >= 0) return content.slice(idx + 4, idx + 14).replace(/[^a-zA-Z0-9]/g, "");
-  } catch {}
-  return content.slice(0, 40);
+    const url = new URL(content.startsWith("bbps://") ? `https://${content.slice(7)}` : content);
+    billerId      = url.searchParams.get("billerId") || url.searchParams.get("biller_id") || "";
+    amount        = url.searchParams.get("amount") || url.searchParams.get("am") || undefined;
+    customerParam = url.searchParams.get("customerParam") || url.searchParams.get("customerId") || "";
+    category      = url.searchParams.get("category") || url.pathname.split("/")[1] || "";
+    note          = url.searchParams.get("remarks") || url.searchParams.get("note") || undefined;
+  } catch {
+    const billerMatch = content.match(/billerid=([^&\s]+)/i);
+    if (billerMatch) billerId = billerMatch[1];
+    const amMatch = content.match(/amount=([^&\s]+)/i);
+    if (amMatch) amount = amMatch[1];
+    const custMatch = content.match(/customerparam=([^&\s]+)/i);
+    if (custMatch) customerParam = custMatch[1];
+  }
+
+  const categoryLabel = category
+    ? category.charAt(0).toUpperCase() + category.slice(1).toLowerCase()
+    : "Bill";
+
+  return {
+    app: "upi",
+    appDisplayName: `BBPS ${categoryLabel} Payment`,
+    appCategory: "upi_india",
+    region: "India",
+    recipientId: billerId || customerParam || "BBPS",
+    recipientName: billerId || undefined,
+    amount,
+    currency: "INR",
+    note: note || (customerParam ? `Customer: ${customerParam}` : undefined),
+    rawContent: content,
+    isAmountPreFilled: !!(amount && parseFloat(amount) > 0),
+    extraFields: {
+      ...(billerId && { billerId }),
+      ...(customerParam && { customerParam }),
+      ...(category && { category }),
+    },
+  };
+}
+
+// ─── Indian Bank Account QR Parser ───────────────────────────────────────────
+// Some Indian banks (SBI, HDFC, Axis, etc.) generate QR codes containing
+// account number, IFSC, and holder name for NEFT/IMPS transfers.
+// Common formats:
+//   1. "IFSC:SBIN0001234|ACNO:123456789|NAME:Ravi Sharma|BANK:SBI"
+//   2. "ACC=12345678&IFSC=SBIN0001234&NAME=Ravi+Sharma"
+//   3. "SBIN0001234\n123456789\nRavi Sharma\nSBI\nSAVINGS"  (passbook QR)
+//   4. JSON: {"accountNo":"12345678","ifsc":"SBIN0001234","name":"Ravi Sharma"}
+function parseIndianBankAccountQr(content: string, lower: string): ParsedPaymentQr | null {
+  // IFSC regex: 4 uppercase letters + 0 + 6 alphanumeric chars
+  const IFSC_RE = /\b([A-Z]{4}0[A-Z0-9]{6})\b/;
+  // Indian bank account numbers: 9–18 digits
+  const ACC_RE = /\b(\d{9,18})\b/;
+
+  let ifsc = "";
+  let accountNo = "";
+  let holderName = "";
+  let bankName = "";
+  let accountType = "";
+
+  // ── Format 1: key:value or key=value separated by |, &, \n ─────────────────
+  const ifscMatch = content.match(/(?:ifsc|IFSC)\s*[:=]\s*([A-Z]{4}0[A-Z0-9]{6})/i);
+  if (ifscMatch) ifsc = ifscMatch[1].toUpperCase();
+
+  const accMatch = content.match(/(?:acno|acc(?:ount)?(?:no)?|a\/c|account_?(?:no|number)?)\s*[:=]\s*(\d{9,18})/i);
+  if (accMatch) accountNo = accMatch[1];
+
+  const nameMatch = content.match(/(?:name|beneficiary|holder|acname)\s*[:=]\s*([^\n|&,;]{2,40})/i);
+  if (nameMatch) holderName = nameMatch[1].trim();
+
+  const bankMatch = content.match(/(?:bank|bankname)\s*[:=]\s*([^\n|&,;]{2,30})/i);
+  if (bankMatch) bankName = bankMatch[1].trim();
+
+  const typeMatch = content.match(/(?:type|actype|account_?type)\s*[:=]\s*(savings|current|salary|nre|nro)/i);
+  if (typeMatch) accountType = typeMatch[1].toUpperCase();
+
+  // ── Format 2: JSON ──────────────────────────────────────────────────────────
+  if (!ifsc && content.trim().startsWith("{")) {
+    try {
+      const json = JSON.parse(content);
+      ifsc      = (json.ifsc || json.IFSC || json.ifscCode || "").toUpperCase();
+      accountNo = json.accountNo || json.account_no || json.accNo || json.accountNumber || "";
+      holderName= json.name || json.holderName || json.beneficiaryName || "";
+      bankName  = json.bank || json.bankName || "";
+      accountType = json.accountType || json.type || "";
+    } catch {}
+  }
+
+  // ── Format 3: Line-by-line passbook QR ──────────────────────────────────────
+  // "SBIN0001234\n123456789\nRavi Sharma\nSBI\nSAVINGS"
+  if (!ifsc) {
+    const lines = content.split(/[\n|]/).map((l) => l.trim()).filter(Boolean);
+    for (const line of lines) {
+      if (!ifsc && IFSC_RE.test(line)) { ifsc = (line.match(IFSC_RE)![1]).toUpperCase(); continue; }
+      if (!accountNo && ACC_RE.test(line) && !/[a-zA-Z@]/.test(line)) { accountNo = line.match(ACC_RE)![1]; continue; }
+      if (!holderName && /^[A-Za-z\s.'-]{3,40}$/.test(line)) holderName = line;
+    }
+  }
+
+  // Must have at least IFSC to be considered an Indian bank account QR
+  if (!ifsc || !IFSC_RE.test(ifsc)) return null;
+
+  // Resolve bank name from IFSC prefix
+  if (!bankName) bankName = resolveIFSCBankName(ifsc);
+
+  const appInfo = detectBankFromIFSC(ifsc);
+
+  const displayName = [bankName || appInfo.name, accountType]
+    .filter(Boolean)
+    .join(" ");
+
+  const recipientId = accountNo
+    ? `${accountNo}${ifsc ? ` / ${ifsc}` : ""}`
+    : ifsc;
+
+  return {
+    app: appInfo.id,
+    appDisplayName: `${displayName} — Account QR`,
+    appCategory: "upi_india",
+    region: "India",
+    recipientId,
+    recipientName: holderName || undefined,
+    rawContent: content,
+    isAmountPreFilled: false,
+    currency: "INR",
+    extraFields: {
+      ifsc,
+      ...(accountNo && { accountNumber: accountNo }),
+      ...(holderName && { holderName }),
+      ...(bankName && { bankName }),
+      ...(accountType && { accountType }),
+    },
+  };
+}
+
+// Resolve a human-readable bank name from IFSC prefix (first 4 letters)
+function resolveIFSCBankName(ifsc: string): string {
+  const prefix = ifsc.slice(0, 4).toUpperCase();
+  const IFSC_BANK_MAP: Record<string, string> = {
+    SBIN: "State Bank of India",
+    HDFC: "HDFC Bank",
+    ICIC: "ICICI Bank",
+    UTIB: "Axis Bank",
+    KKBK: "Kotak Mahindra Bank",
+    PUNB: "Punjab National Bank",
+    BARB: "Bank of Baroda",
+    CNRB: "Canara Bank",
+    UBIN: "Union Bank of India",
+    IOBA: "Indian Overseas Bank",
+    ANDB: "Andhra Bank",
+    CORP: "Corporation Bank",
+    MAHB: "Bank of Maharashtra",
+    IDIB: "Indian Bank",
+    UCBA: "UCO Bank",
+    VIJB: "Vijaya Bank",
+    ALLA: "Allahabad Bank",
+    ORBC: "Oriental Bank of Commerce",
+    BKID: "Bank of India",
+    CBIN: "Central Bank of India",
+    PSIB: "Punjab & Sind Bank",
+    INDB: "IndusInd Bank",
+    IDFB: "IDFC FIRST Bank",
+    RATN: "RBL Bank",
+    YESB: "Yes Bank",
+    FDRL: "Federal Bank",
+    KARB: "Karnataka Bank",
+    KVBL: "Karur Vysya Bank",
+    SIBL: "South Indian Bank",
+    DLXB: "Dhanlaxmi Bank",
+    NKGS: "NKGSB Co-operative Bank",
+    AIRP: "Airtel Payments Bank",
+    FINO: "Fino Payments Bank",
+    IPOS: "India Post Payments Bank",
+    PAYT: "Paytm Payments Bank",
+    JAKA: "Jammu & Kashmir Bank",
+  };
+  return IFSC_BANK_MAP[prefix] || "";
+}
+
+// Detect PaymentAppId from IFSC prefix
+function detectBankFromIFSC(ifsc: string): { id: PaymentAppId; name: string } {
+  const prefix = ifsc.slice(0, 4).toUpperCase();
+  const MAP: Record<string, { id: PaymentAppId; name: string }> = {
+    SBIN: { id: "yono_sbi",    name: "State Bank of India" },
+    HDFC: { id: "hdfc_bank",   name: "HDFC Bank" },
+    ICIC: { id: "imobile_pay", name: "ICICI Bank" },
+    UTIB: { id: "axis_pay",    name: "Axis Bank" },
+    KKBK: { id: "kotak_pay",   name: "Kotak Mahindra Bank" },
+    PUNB: { id: "pnb_one",     name: "Punjab National Bank" },
+    BARB: { id: "bob_world",   name: "Bank of Baroda" },
+    CNRB: { id: "canara_bank", name: "Canara Bank" },
+    UBIN: { id: "union_bank",  name: "Union Bank of India" },
+    YESB: { id: "yes_pay",     name: "Yes Bank" },
+    FDRL: { id: "fi_money",    name: "Federal Bank" },
+    IDFB: { id: "idfcfirst",   name: "IDFC FIRST Bank" },
+    RATN: { id: "rbl_bank",    name: "RBL Bank" },
+    INDB: { id: "indus_pay",   name: "IndusInd Bank" },
+    IDIB: { id: "indpay",      name: "Indian Bank" },
+    AIRP: { id: "airtel_money",name: "Airtel Payments Bank" },
+  };
+  return MAP[prefix] || { id: "upi", name: resolveIFSCBankName(ifsc) || "Indian Bank" };
 }
