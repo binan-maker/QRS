@@ -37,12 +37,12 @@ export function useQrData(id: string, userId: string | null) {
   const [ownerInfo, setOwnerInfo] = useState<QrOwnerInfo | null>(null);
   const [isQrOwner, setIsQrOwner] = useState(false);
 
-  async function loadOfflineFallback() {
+  async function loadOfflineFallback(): Promise<boolean> {
     const inMem = getAnonymousQrContent(id);
     if (inMem) {
       setOfflineContent(inMem.content);
       setOfflineContentType(inMem.contentType || "text");
-      return;
+      return true;
     }
     try {
       const raw = await AsyncStorage.getItem(`qr_content_${id}`);
@@ -50,8 +50,10 @@ export function useQrData(id: string, userId: string | null) {
         const { content, contentType } = JSON.parse(raw);
         setOfflineContent(content);
         setOfflineContentType(contentType || "text");
+        return true;
       }
     } catch {}
+    return false;
   }
 
   useEffect(() => {
@@ -92,13 +94,14 @@ export function useQrData(id: string, userId: string | null) {
       try {
         const detail = await loadQrDetail(id, userId);
         if (!detail) {
-          if (!isOnline) {
+          // QR not found in Firestore — try any locally cached content before
+          // showing an error (covers offline scans stored in AsyncStorage).
+          const hasFallback = await loadOfflineFallback();
+          if (hasFallback) {
             setOfflineMode(true);
-            await loadOfflineFallback();
-            setLoading(false);
-            return;
+          } else {
+            setLoadError(true);
           }
-          setLoadError(true);
           setLoading(false);
           return;
         }
@@ -124,28 +127,16 @@ export function useQrData(id: string, userId: string | null) {
         setLoading(false);
       } catch (err: any) {
         // Only enter offline mode for genuine network/connectivity failures.
-        // Firebase error code "unavailable" means the client can't reach Firestore.
-        // navigator.onLine gives a fast web-native check.
-        // Any other Firebase error (permissions, config, etc.) should show an error,
-        // not a misleading "You're offline" banner.
         const trulyOffline =
           err?.code === "unavailable" ||
           (typeof navigator !== "undefined" && !navigator.onLine) ||
           /network|offline|failed to fetch/i.test(err?.message || "");
 
-        if (trulyOffline) {
+        const hasFallback = await loadOfflineFallback();
+        if (trulyOffline || hasFallback) {
           setOfflineMode(true);
-          await loadOfflineFallback();
         } else {
-          // Firebase failed for a non-network reason — try fallback content
-          // so the user can still see the QR they scanned, but don't claim offline.
-          await loadOfflineFallback();
-          const hasFallbackContent = !!getAnonymousQrContent(id);
-          if (hasFallbackContent) {
-            setOfflineMode(true);
-          } else {
-            setLoadError(true);
-          }
+          setLoadError(true);
         }
         setLoading(false);
       }

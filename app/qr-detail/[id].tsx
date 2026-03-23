@@ -50,6 +50,14 @@ function VerdictIcon({ level, size, color }: { level: string; size: number; colo
   return <Ionicons name="help-circle-outline" size={size} color={color} />;
 }
 
+function safeBack() {
+  if (router.canGoBack()) {
+    router.back();
+  } else {
+    router.replace("/(tabs)");
+  }
+}
+
 export default function QrDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { user } = useAuth();
@@ -86,7 +94,7 @@ export default function QrDetailScreen() {
     return (
       <View style={[styles.container, { paddingTop: topInset }]}>
         <View style={styles.navBar}>
-          <Pressable onPress={() => router.back()} style={styles.navBackBtn}>
+          <Pressable onPress={safeBack} style={styles.navBackBtn}>
             <Ionicons name="chevron-back" size={24} color={colors.text} />
           </Pressable>
           <Text style={styles.navTitle}>QR Details</Text>
@@ -96,7 +104,7 @@ export default function QrDetailScreen() {
           <Ionicons name="alert-circle-outline" size={48} color={colors.danger} />
           <Text style={styles.errorTitle}>QR Code Not Found</Text>
           <Text style={styles.errorSub}>This QR code doesn't exist or couldn't be loaded.</Text>
-          <Pressable onPress={() => router.back()} style={styles.retryBtn}>
+          <Pressable onPress={safeBack} style={styles.retryBtn}>
             <Text style={styles.retryBtnText}>Go Back</Text>
           </Pressable>
         </View>
@@ -112,7 +120,7 @@ export default function QrDetailScreen() {
 
           {/* Nav */}
           <View style={styles.navBar}>
-            <Pressable onPress={() => router.back()} style={styles.navBackBtn}>
+            <Pressable onPress={safeBack} style={styles.navBackBtn}>
               <Ionicons name="chevron-back" size={24} color={colors.text} />
             </Pressable>
             <Text style={styles.navTitle}>QR Details</Text>
