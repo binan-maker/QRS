@@ -62,6 +62,8 @@ export default function ScannerScreen() {
     setFlashOn,
     zoom,
     zoomLabel,
+    facing,
+    flipCamera,
     safetyModal,
     safetyWarnings,
     safetyRiskLevel,
@@ -109,8 +111,8 @@ export default function ScannerScreen() {
 
       <CameraView
         style={StyleSheet.absoluteFillObject}
-        facing="back"
-        enableTorch={flashOn}
+        facing={facing}
+        enableTorch={flashOn && facing === "back"}
         zoom={zoom}
         barcodeScannerSettings={{ barcodeTypes: ["qr"] }}
         onBarcodeScanned={scanned ? undefined : handleBarCodeScanned}
@@ -132,6 +134,8 @@ export default function ScannerScreen() {
         onPickImage={handlePickImage}
         onReset={resetScan}
         user={user}
+        facing={facing}
+        onFlipCamera={flipCamera}
       />
 
       {processing && (

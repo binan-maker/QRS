@@ -5,6 +5,7 @@ import { useFocusEffect } from "expo-router";
 import * as ImagePicker from "expo-image-picker";
 import * as FileSystem from "expo-file-system";
 import * as Haptics from "expo-haptics";
+import * as Network from "expo-network";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { setAnonymousQrContent } from "@/lib/cache/anonymous-session";
 import { useAuth } from "@/contexts/AuthContext";
@@ -34,6 +35,15 @@ const GUARD_PATTERN =
 
 function isInsecureHttpUrl(content: string): boolean {
   return /^http:\/\//i.test(content.trim());
+}
+
+async function checkIsOffline(): Promise<boolean> {
+  try {
+    const state = await Network.getNetworkStateAsync();
+    return !(state.isConnected && state.isInternetReachable);
+  } catch {
+    return false;
+  }
 }
 
 function postJsonXhr(
@@ -69,6 +79,7 @@ export function useScanner() {
   const [flashOn, setFlashOn] = useState(false);
   const [zoom, setZoom] = useState(0);
   const [zoomLabel, setZoomLabel] = useState("1×");
+  const [facing, setFacing] = useState<"back" | "front">("back");
 
   const [safetyModal, setSafetyModal] = useState(false);
   const [pendingQrId, setPendingQrId] = useState<string | null>(null);
@@ -145,6 +156,16 @@ export function useScanner() {
     }, [])
   );
 
+  function flipCamera() {
+    setFacing((prev) => {
+      const next = prev === "back" ? "front" : "back";
+      // Turn off flash when switching to front camera (no torch on front)
+      if (next === "front") setFlashOn(false);
+      return next;
+    });
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+  }
+
   async function handleLivingShieldProceed() {
     if (!livingShieldData?.currentDestination) return;
     const dest = livingShieldData.currentDestination;
@@ -169,16 +190,58 @@ export function useScanner() {
     router.push(`/qr-detail/${qrId}`);
   }
 
+  // ─── LOCAL-ONLY OFFLINE PATH ──────────────────────────────────────────────────
+  // When offline, we skip all network calls. The QR content is analysed locally
+  // (content type, safety heuristics) and stored in AsyncStorage so the detail
+  // screen can render it without any network dependency.
+  async function processOfflineScan(content: string, scanSource: "camera" | "gallery" = "camera") {
+    const contentType = detectContentType(content);
+    const qrId = await getQrCodeId(content);
+
+    await AsyncStorage.setItem(
+      `qr_content_${qrId}`,
+      JSON.stringify({ content, contentType })
+    ).catch(() => {});
+
+    if (user) {
+      const scanEntry = {
+        id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
+        content,
+        contentType,
+        scannedAt: new Date().toISOString(),
+        qrCodeId: qrId,
+        scanSource,
+        offline: true,
+      };
+      const historyKey = `local_scan_history_${user.id}`;
+      try {
+        const stored = await AsyncStorage.getItem(historyKey);
+        const history = stored ? JSON.parse(stored) : [];
+        history.unshift(scanEntry);
+        if (history.length > 100) history.pop();
+        await AsyncStorage.setItem(historyKey, JSON.stringify(history));
+      } catch {}
+    }
+
+    setProcessing(false);
+
+    if (contentType === "url" && isInsecureHttpUrl(content)) {
+      setPendingQrId(qrId);
+      setSafetyRiskLevel("caution");
+      setSafetyModal(true);
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+      return;
+    }
+
+    await navigateToQrDetail(qrId);
+  }
+
   // ─── ANONYMOUS SCAN ───────────────────────────────────────────────────────────
-  // When a signed-in user scans in anonymous mode, we perform ZERO database reads
-  // or writes. Content is held in process memory only — nothing written to device
-  // storage, nothing uploaded to any server. Zero tracking.
   async function processScanAnonymous(content: string) {
     setProcessing(true);
     try {
       const contentType = detectContentType(content);
       const qrId = await getQrCodeId(content);
-      // Store in-memory only — zero device storage, zero tracking
       setAnonymousQrContent(qrId, content, contentType);
       setProcessing(false);
 
@@ -216,7 +279,6 @@ export function useScanner() {
     if (user && anonymousMode) {
       const guardMatch = content.match(GUARD_PATTERN);
       if (guardMatch) {
-        // For guard links we still do a read-only fetch (no writes)
         const guardUuid = guardMatch[1].toUpperCase();
         setProcessing(false);
         setLivingShieldLoading(true);
@@ -236,7 +298,7 @@ export function useScanner() {
       return;
     }
 
-    // Non-anonymous path (includes non-signed-in users)
+    // Guard links always need a network read (read-only)
     const guardMatch = content.match(GUARD_PATTERN);
     if (guardMatch) {
       const guardUuid = guardMatch[1].toUpperCase();
@@ -255,14 +317,21 @@ export function useScanner() {
       return;
     }
 
+    // ── Offline-first check: skip Firestore entirely when there's no network ──
     setProcessing(true);
+    const offline = await checkIsOffline();
+    if (offline) {
+      await processOfflineScan(content, scanSource);
+      return;
+    }
+
+    // ── Online path ──────────────────────────────────────────────────────────
     try {
       const qr = await getOrCreateQrCode(content);
       await AsyncStorage.setItem(
         `qr_content_${qr.id}`,
         JSON.stringify({ content: qr.content, contentType: qr.contentType })
       );
-      // recordScan respects isAnonymous flag as an extra safety net
       await recordScan(
         qr.id,
         content,
@@ -314,42 +383,8 @@ export function useScanner() {
         await navigateToQrDetail(qr.id);
       }
     } catch (e: any) {
-      try {
-        const contentType = detectContentType(content);
-        const qrId = await getQrCodeId(content);
-        await AsyncStorage.setItem(
-          `qr_content_${qrId}`,
-          JSON.stringify({ content, contentType })
-        );
-        setProcessing(false);
-
-        if (contentType === "url" && isInsecureHttpUrl(content)) {
-          setPendingQrId(qrId);
-          setSafetyRiskLevel("caution");
-          setSafetyModal(true);
-        } else {
-          await navigateToQrDetail(qrId);
-        }
-        return;
-      } catch {}
-      Alert.alert(
-        "Scan Failed",
-        e.message || "Could not process QR code. Please try again.",
-        [
-          {
-            text: "OK",
-            onPress: () => {
-              setScanned(false);
-              setProcessing(false);
-              setScanSuccess(false);
-              scanLockRef.current = false;
-              canScanRef.current = true;
-            },
-          },
-        ]
-      );
-    } finally {
-      setProcessing(false);
+      // Network failed mid-scan — fall back to offline path
+      await processOfflineScan(content, scanSource);
     }
   }
 
@@ -518,6 +553,8 @@ export function useScanner() {
     setFlashOn,
     zoom,
     zoomLabel,
+    facing,
+    flipCamera,
     safetyModal,
     safetyWarnings,
     safetyRiskLevel,

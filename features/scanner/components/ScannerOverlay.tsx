@@ -38,6 +38,8 @@ interface Props {
   onPickImage: () => void;
   onReset: () => void;
   user: any;
+  facing: "back" | "front";
+  onFlipCamera: () => void;
 }
 
 export default function ScannerOverlay({
@@ -56,6 +58,8 @@ export default function ScannerOverlay({
   onPickImage,
   onReset,
   user,
+  facing,
+  onFlipCamera,
 }: Props) {
   const { width: screenWidth, height: screenHeight } = useWindowDimensions();
 
@@ -220,16 +224,34 @@ export default function ScannerOverlay({
           </View>
         </View>
 
-        <Pressable
-          onPress={onToggleFlash}
-          style={[styles.topBarBtn, flashOn && styles.topBarBtnActive]}
-        >
-          <Ionicons
-            name={flashOn ? "flash" : "flash-off"}
-            size={20}
-            color={flashOn ? GLOW : "rgba(255,255,255,0.7)"}
-          />
-        </Pressable>
+        <View style={styles.topRightBtns}>
+          <Pressable
+            onPress={onFlipCamera}
+            style={styles.topBarBtn}
+          >
+            <Ionicons
+              name="camera-reverse-outline"
+              size={22}
+              color={facing === "front" ? GLOW : "rgba(255,255,255,0.7)"}
+            />
+          </Pressable>
+          <Pressable
+            onPress={facing === "front" ? undefined : onToggleFlash}
+            style={[styles.topBarBtn, flashOn && facing === "back" && styles.topBarBtnActive]}
+          >
+            <Ionicons
+              name={flashOn && facing === "back" ? "flash" : "flash-off"}
+              size={20}
+              color={
+                facing === "front"
+                  ? "rgba(255,255,255,0.2)"
+                  : flashOn
+                  ? GLOW
+                  : "rgba(255,255,255,0.7)"
+              }
+            />
+          </Pressable>
+        </View>
       </View>
 
       {/* ── Bottom controls (interactive) ── */}
@@ -471,6 +493,7 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(0,212,255,0.18)",
     borderColor: GLOW + "60",
   },
+  topRightBtns: { flexDirection: "row", gap: 8, alignItems: "center" },
   topCenter: { alignItems: "center", gap: 3 },
   brandRow: { flexDirection: "row", alignItems: "center", gap: 6 },
   scanTitle: { fontSize: 16, fontFamily: "Inter_700Bold", color: "#fff", letterSpacing: 0.4 },
