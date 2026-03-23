@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet, Pressable, Image } from "react-native";
+import { View, Text, StyleSheet, Pressable, Image, ActivityIndicator } from "react-native";
 import { shadow } from "@/lib/utils/platform";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
@@ -29,6 +29,8 @@ interface Props {
   onShare: () => void;
   onDownload: () => void;
   onClear: () => void;
+  sharingQr?: boolean;
+  downloadingPdf?: boolean;
 }
 
 function formatShortDate(date: Date): string {
@@ -40,6 +42,7 @@ export default function QrOutputCard({
   customLogoUri, showDefaultLogo, generatedUuid, generatedAt, saving, savedToProfile,
   user, svgRef, logoPositionLabel,
   onSizeIncrease, onSizeDecrease, onCopy, onShare, onDownload, onClear,
+  sharingQr = false, downloadingPdf = false,
 }: Props) {
   const { colors } = useTheme();
 
@@ -173,13 +176,25 @@ export default function QrOutputCard({
           <Ionicons name="copy-outline" size={19} color={colors.primary} />
           <Text style={[styles.qrActionText, { color: colors.primary }]}>Copy</Text>
         </Pressable>
-        <Pressable onPress={onShare} style={[styles.qrActionBtn, { backgroundColor: colors.primaryDim, borderColor: colors.primary + "40" }]}>
-          <Ionicons name="share-outline" size={19} color={colors.primary} />
-          <Text style={[styles.qrActionText, { color: colors.primary }]}>Share</Text>
+        <Pressable
+          onPress={onShare}
+          disabled={sharingQr}
+          style={[styles.qrActionBtn, { backgroundColor: colors.primaryDim, borderColor: colors.primary + "40", opacity: sharingQr ? 0.6 : 1 }]}
+        >
+          {sharingQr
+            ? <ActivityIndicator size={16} color={colors.primary} />
+            : <Ionicons name="share-outline" size={19} color={colors.primary} />}
+          <Text style={[styles.qrActionText, { color: colors.primary }]}>{sharingQr ? "…" : "Share"}</Text>
         </Pressable>
-        <Pressable onPress={onDownload} style={[styles.qrActionBtn, { backgroundColor: colors.primaryDim, borderColor: colors.primary + "40" }]}>
-          <Ionicons name="download-outline" size={19} color={colors.primary} />
-          <Text style={[styles.qrActionText, { color: colors.primary }]}>PDF</Text>
+        <Pressable
+          onPress={onDownload}
+          disabled={downloadingPdf}
+          style={[styles.qrActionBtn, { backgroundColor: colors.primaryDim, borderColor: colors.primary + "40", opacity: downloadingPdf ? 0.6 : 1 }]}
+        >
+          {downloadingPdf
+            ? <ActivityIndicator size={16} color={colors.primary} />
+            : <Ionicons name="download-outline" size={19} color={colors.primary} />}
+          <Text style={[styles.qrActionText, { color: colors.primary }]}>{downloadingPdf ? "…" : "PDF"}</Text>
         </Pressable>
         <Pressable onPress={onClear} style={[styles.qrActionBtn, { backgroundColor: colors.dangerDim, borderColor: colors.danger + "50" }]}>
           <Ionicons name="trash-outline" size={19} color={colors.danger} />

@@ -149,17 +149,23 @@ export default function MyQrDetailScreen() {
               <View style={styles.qrActionRow}>
                 <Pressable
                   onPress={h.handleShare}
-                  style={[styles.qrActionBtn, { backgroundColor: colors.primaryDim, borderColor: colors.primary + "40" }]}
+                  disabled={h.sharingQr}
+                  style={[styles.qrActionBtn, { backgroundColor: colors.primaryDim, borderColor: colors.primary + "40", opacity: h.sharingQr ? 0.6 : 1 }]}
                 >
-                  <Ionicons name="share-outline" size={18} color={colors.primary} />
-                  <Text style={[styles.qrActionBtnText, { color: colors.primary }]}>Share</Text>
+                  {h.sharingQr
+                    ? <ActivityIndicator size={16} color={colors.primary} />
+                    : <Ionicons name="share-outline" size={18} color={colors.primary} />}
+                  <Text style={[styles.qrActionBtnText, { color: colors.primary }]}>{h.sharingQr ? "Sharing…" : "Share"}</Text>
                 </Pressable>
                 <Pressable
                   onPress={h.handleDownloadPdf}
-                  style={[styles.qrActionBtn, { backgroundColor: colors.primaryDim, borderColor: colors.primary + "40" }]}
+                  disabled={h.downloadingPdf}
+                  style={[styles.qrActionBtn, { backgroundColor: colors.primaryDim, borderColor: colors.primary + "40", opacity: h.downloadingPdf ? 0.6 : 1 }]}
                 >
-                  <Ionicons name="download-outline" size={18} color={colors.primary} />
-                  <Text style={[styles.qrActionBtnText, { color: colors.primary }]}>Download PDF</Text>
+                  {h.downloadingPdf
+                    ? <ActivityIndicator size={16} color={colors.primary} />
+                    : <Ionicons name="download-outline" size={18} color={colors.primary} />}
+                  <Text style={[styles.qrActionBtnText, { color: colors.primary }]}>{h.downloadingPdf ? "Generating…" : "Download PDF"}</Text>
                 </Pressable>
               </View>
             </View>

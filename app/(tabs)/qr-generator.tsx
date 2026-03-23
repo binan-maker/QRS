@@ -38,7 +38,7 @@ export default function QrGeneratorScreen() {
     switchPreset, handleGenerate,
     handlePickCustomLogo, handleRemoveLogo, handleToggleDefaultLogo,
     handleCopy, handleShare, handleDownloadPdf, handleClear,
-    filterByKeyboardType,
+    filterByKeyboardType, sharingQr, downloadingPdf,
   } = useQrGenerator();
 
   const styles = makeStyles(colors);
@@ -134,6 +134,8 @@ export default function QrGeneratorScreen() {
             onShare={handleShare}
             onDownload={handleDownloadPdf}
             onClear={handleClear}
+            sharingQr={sharingQr}
+            downloadingPdf={downloadingPdf}
           />
         ) : (
           <Reanimated.View entering={FadeIn.duration(400)} style={styles.emptyQr}>

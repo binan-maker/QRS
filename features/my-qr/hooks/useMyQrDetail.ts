@@ -84,6 +84,9 @@ export function useMyQrDetail(id: string) {
   const [customColorTarget, setCustomColorTarget] = useState<"fg" | "bg">("fg");
   const [customColorInput, setCustomColorInput] = useState("");
 
+  const [sharingQr, setSharingQr] = useState(false);
+  const [downloadingPdf, setDownloadingPdf] = useState(false);
+
   const loadQr = useCallback(async () => {
     if (!user?.id) return;
     setLoading(true);
@@ -270,76 +273,115 @@ export function useMyQrDetail(id: string) {
   }
 
   async function handleShare() {
-    if (!svgRef.current) return;
+    if (!svgRef.current || sharingQr) return;
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     if (Platform.OS === "web") {
-      Alert.alert("Not supported", "Sharing is not available on web.");
+      Alert.alert("Not supported", "Sharing is not available on web. Long-press the QR image to save it.");
       return;
     }
-    svgRef.current.toDataURL(async (dataUrl: string) => {
-      try {
-        const rawBase64 = dataUrl.includes(",") ? dataUrl.split(",")[1] : dataUrl;
-        const fileName = `qrguard_${Date.now()}.png`;
-        const dir = FileSystem.cacheDirectory ?? FileSystem.documentDirectory ?? "";
-        const fileUri = dir + fileName;
-        await FileSystem.writeAsStringAsync(fileUri, rawBase64, { encoding: FileSystem.EncodingType.Base64 });
-        const canShare = await Sharing.isAvailableAsync();
-        if (canShare) {
-          await Sharing.shareAsync(fileUri, { mimeType: "image/png", dialogTitle: "Share QR Code", UTI: "public.png" });
-        } else {
-          Alert.alert("Not available", "Sharing is not available on this device.");
+    setSharingQr(true);
+    try {
+      const dataUrl: string = await new Promise((resolve, reject) => {
+        try {
+          svgRef.current.toDataURL((url: string) => {
+            if (!url) reject(new Error("No image data returned"));
+            else resolve(url);
+          });
+        } catch (e) {
+          reject(e);
         }
-      } catch {
-        Alert.alert("Error", "Could not share the QR code.");
+      });
+      const rawBase64 = dataUrl.includes(",") ? dataUrl.split(",")[1] : dataUrl;
+      if (!rawBase64) throw new Error("Empty image data");
+      const fileName = `qrguard_${Date.now()}.png`;
+      const dir = FileSystem.cacheDirectory ?? FileSystem.documentDirectory ?? "";
+      const fileUri = dir + fileName;
+      await FileSystem.writeAsStringAsync(fileUri, rawBase64, { encoding: FileSystem.EncodingType.Base64 });
+      const canShare = await Sharing.isAvailableAsync();
+      if (!canShare) {
+        Alert.alert("Not available", "Sharing is not supported on this device.");
+        await FileSystem.deleteAsync(fileUri, { idempotent: true });
+        return;
       }
-    });
+      await Sharing.shareAsync(fileUri, { mimeType: "image/png", dialogTitle: "Share QR Code", UTI: "public.png" });
+      await FileSystem.deleteAsync(fileUri, { idempotent: true });
+    } catch (e: any) {
+      Alert.alert("Share Failed", e?.message || "Could not share the QR code. Please try again.");
+    } finally {
+      setSharingQr(false);
+    }
   }
 
   async function handleDownloadPdf() {
-    if (!svgRef.current) return;
+    if (!svgRef.current || downloadingPdf) return;
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     if (Platform.OS === "web") {
-      Alert.alert("Not supported", "PDF download is not available on web.");
+      Alert.alert("Not supported", "PDF download is not available on web. Long-press the QR image to save it.");
       return;
     }
-    svgRef.current.toDataURL(async (dataUrl: string) => {
-      try {
-        const html = `<!DOCTYPE html>
+    setDownloadingPdf(true);
+    let pdfUri: string | null = null;
+    try {
+      const dataUrl: string = await new Promise((resolve, reject) => {
+        try {
+          svgRef.current.toDataURL((url: string) => {
+            if (!url) reject(new Error("No image data returned"));
+            else resolve(url);
+          });
+        } catch (e) {
+          reject(e);
+        }
+      });
+      const imgSrc = dataUrl.startsWith("data:") ? dataUrl : `data:image/png;base64,${dataUrl}`;
+      const label = qrItem?.content ? (qrItem.content.length > 60 ? qrItem.content.slice(0, 57) + "…" : qrItem.content) : "QR Code";
+      const createdStr = qrItem?.createdAt ? new Date(qrItem.createdAt).toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" }) : "";
+      const html = `<!DOCTYPE html>
 <html>
   <head>
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
     <style>
       * { margin: 0; padding: 0; box-sizing: border-box; }
       body { display: flex; justify-content: center; align-items: center; min-height: 100vh; background: #ffffff; font-family: Arial, sans-serif; }
-      .container { text-align: center; padding: 40px; }
-      img { width: 280px; height: 280px; display: block; margin: 0 auto; }
-      .title { margin-top: 20px; font-size: 14px; color: #444; }
-      .footer { margin-top: 8px; font-size: 11px; color: #999; }
+      .container { text-align: center; padding: 48px 40px; max-width: 420px; }
+      .logo-row { display: flex; align-items: center; justify-content: center; gap: 8px; margin-bottom: 28px; }
+      .logo-text { font-size: 15px; font-weight: 700; color: #0A0E17; letter-spacing: 0.5px; }
+      .qr-wrap { background: #f8fafc; border-radius: 20px; padding: 24px; display: inline-block; border: 1px solid #e2e8f0; margin-bottom: 24px; }
+      img { width: 240px; height: 240px; display: block; }
+      .label { font-size: 13px; color: #64748b; word-break: break-all; max-width: 300px; margin: 0 auto 6px; line-height: 1.5; }
+      .date { font-size: 11px; color: #94a3b8; margin-top: 4px; }
+      .footer { margin-top: 28px; font-size: 10px; color: #cbd5e1; }
     </style>
   </head>
   <body>
     <div class="container">
-      <img src="${dataUrl}" />
-      <p class="title">QR Code</p>
-      <p class="footer">Generated by QR Guard</p>
+      <div class="logo-row">
+        <span class="logo-text">QR Guard</span>
+      </div>
+      <div class="qr-wrap">
+        <img src="${imgSrc}" alt="QR Code" />
+      </div>
+      <p class="label">${label}</p>
+      ${createdStr ? `<p class="date">Created ${createdStr}</p>` : ""}
+      <p class="footer">Generated by QR Guard &bull; Scan to verify safety</p>
     </div>
   </body>
 </html>`;
-        const { uri } = await Print.printToFileAsync({ html, base64: false });
-        const canShare = await Sharing.isAvailableAsync();
-        if (canShare) {
-          await Sharing.shareAsync(uri, {
-            mimeType: "application/pdf",
-            dialogTitle: "Download QR Code as PDF",
-            UTI: ".pdf",
-          });
-        } else {
-          Alert.alert("Not available", "Could not save PDF on this device.");
-        }
-      } catch {
-        Alert.alert("Error", "Could not generate PDF.");
+      const result = await Print.printToFileAsync({ html, base64: false });
+      pdfUri = result.uri;
+      const canShare = await Sharing.isAvailableAsync();
+      if (!canShare) {
+        Alert.alert("Not available", "Could not save PDF on this device.");
+        return;
       }
-    });
+      await Sharing.shareAsync(pdfUri, { mimeType: "application/pdf", dialogTitle: "Save QR Code as PDF", UTI: "com.adobe.pdf" });
+    } catch (e: any) {
+      Alert.alert("PDF Failed", e?.message || "Could not generate the PDF. Please try again.");
+    } finally {
+      if (pdfUri) {
+        FileSystem.deleteAsync(pdfUri, { idempotent: true }).catch(() => {});
+      }
+      setDownloadingPdf(false);
+    }
   }
 
   const topLevelComments = comments.filter((c) => !c.parentId);
@@ -386,7 +428,7 @@ export function useMyQrDetail(id: string) {
     handleLoadFollowers, applyCustomColor, handleUpdateDestination,
     handleSaveDesign, handleSubmitComment, handleModerateComment,
     handleToggleActive, handleConfirmDeactivate, handleCopyContent,
-    handleShare, handleDownloadPdf,
+    handleShare, handleDownloadPdf, sharingQr, downloadingPdf,
     openFollowers,
   };
 }
