@@ -25,7 +25,6 @@ import Animated, {
 } from "react-native-reanimated";
 import { useTheme } from "@/contexts/ThemeContext";
 import { useAuth } from "@/contexts/AuthContext";
-import { useNetworkStatus } from "@/lib/use-network";
 import { formatCompactNumber } from "@/lib/number-format";
 import { smartName } from "@/lib/utils/formatters";
 import { useQrDetail } from "@/hooks/useQrDetail";
@@ -63,7 +62,6 @@ export default function QrDetailScreen() {
   const { user } = useAuth();
   const { colors } = useTheme();
   const insets = useSafeAreaInsets();
-  const { recheck } = useNetworkStatus();
   const styles = makeStyles(colors);
   const [detailsExpanded, setDetailsExpanded] = useState(true);
 
@@ -125,7 +123,7 @@ export default function QrDetailScreen() {
             </Pressable>
             <Text style={styles.navTitle}>QR Details</Text>
             <View style={styles.navActions}>
-              {!q.offlineMode && (
+              {(
                 <Pressable onPress={q.handleToggleFavorite} disabled={q.favoriteLoading} style={styles.navActionBtn}>
                   {q.favoriteLoading ? (
                     <ActivityIndicator size="small" color={colors.danger} />
@@ -138,7 +136,7 @@ export default function QrDetailScreen() {
                   )}
                 </Pressable>
               )}
-              {!q.offlineMode && (
+              {(
                 <Pressable
                   onPress={q.handleToggleFollow}
                   onPressIn={() => q.isFollowing && q.setFollowPressedIn(true)}
@@ -210,24 +208,8 @@ export default function QrDetailScreen() {
               </View>
             </Animated.View>
 
-            {/* Offline banner */}
-            {q.offlineMode && (
-              <Animated.View entering={FadeIn.duration(300)}>
-                <View style={styles.offlineBanner}>
-                  <Ionicons name="wifi-outline" size={20} color={colors.warning} />
-                  <View style={{ flex: 1 }}>
-                    <Text style={styles.offlineBannerTitle}>You're offline</Text>
-                    <Text style={styles.offlineBannerSub}>Showing cached content. Enable internet to view community data.</Text>
-                  </View>
-                  <Pressable onPress={recheck} style={styles.offlineRetrySmall}>
-                    <Text style={styles.offlineRetrySmallText}>Retry</Text>
-                  </Pressable>
-                </View>
-              </Animated.View>
-            )}
-
             {/* Sign-in banner */}
-            {!user && !q.offlineMode && (
+            {!user && (
               <Animated.View style={signInGlowStyle}>
                 <Pressable onPress={() => router.push("/(auth)/login")} style={styles.signInBanner}>
                   <View style={styles.signInBannerIcon}>
@@ -281,21 +263,7 @@ export default function QrDetailScreen() {
             )}
 
             {/* ── Community Details ────────────────────────────────────────── */}
-            {q.offlineMode ? (
-              <Animated.View entering={FadeIn.duration(400)}>
-                <View style={styles.offlineFeatureCard}>
-                  <Ionicons name="cloud-offline-outline" size={40} color={colors.textMuted} />
-                  <Text style={styles.offlineFeatureTitle}>Community Data Unavailable</Text>
-                  <Text style={styles.offlineFeatureSub}>
-                    Enable internet to view trust score, community reports, and comments.
-                  </Text>
-                  <Pressable onPress={recheck} style={styles.enableInternetBtn}>
-                    <Ionicons name="wifi" size={16} color="#000" />
-                    <Text style={styles.enableInternetBtnText}>Retry Connection</Text>
-                  </Pressable>
-                </View>
-              </Animated.View>
-            ) : (
+            {(
               <Animated.View entering={FadeInDown.duration(400).delay(100)}>
                 {/* Section toggle */}
                 <Pressable
@@ -442,7 +410,7 @@ export default function QrDetailScreen() {
           </ScrollView>
 
           {/* Comment Input Bar */}
-          {user && !q.offlineMode && (
+          {user && (
             <View style={[styles.bottomCommentBar, { paddingBottom: Math.max(insets.bottom, 8) }]}>
               {q.replyTo && (
                 <View style={styles.replyBanner}>

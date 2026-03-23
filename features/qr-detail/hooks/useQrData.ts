@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { getAnonymousQrContent } from "@/lib/cache/anonymous-session";
-import { useNetworkStatus } from "@/lib/use-network";
 import {
   loadQrDetail,
   subscribeToQrStats,
@@ -25,7 +24,6 @@ export interface QrDetail {
 }
 
 export function useQrData(id: string, userId: string | null) {
-  const { isOnline } = useNetworkStatus();
   const [qrCode, setQrCode] = useState<QrDetail | null>(null);
   const [totalScans, setTotalScans] = useState(0);
   const [totalComments, setTotalComments] = useState(0);

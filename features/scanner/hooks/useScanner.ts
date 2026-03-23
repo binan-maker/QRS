@@ -5,7 +5,6 @@ import { useFocusEffect } from "expo-router";
 import * as ImagePicker from "expo-image-picker";
 import * as FileSystem from "expo-file-system";
 import * as Haptics from "expo-haptics";
-import * as Network from "expo-network";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { setAnonymousQrContent } from "@/lib/cache/anonymous-session";
 import { useAuth } from "@/contexts/AuthContext";
@@ -35,18 +34,6 @@ const GUARD_PATTERN =
 
 function isInsecureHttpUrl(content: string): boolean {
   return /^http:\/\//i.test(content.trim());
-}
-
-async function checkIsOffline(): Promise<boolean> {
-  try {
-    const state = await Network.getNetworkStateAsync();
-    // Only use isConnected for offline detection. isInternetReachable is
-    // unreliable on Android (returns false on many devices even when internet
-    // works, because it checks a specific Google endpoint that may be blocked).
-    return state.isConnected === false;
-  } catch {
-    return false;
-  }
 }
 
 function postJsonXhr(
@@ -320,13 +307,8 @@ export function useScanner() {
       return;
     }
 
-    // ── Offline-first check: skip Firestore entirely when there's no network ──
+    // ── Always try the online path; catch falls back to offline if needed ────
     setProcessing(true);
-    const offline = await checkIsOffline();
-    if (offline) {
-      await processOfflineScan(content, scanSource);
-      return;
-    }
 
     // ── Online path ──────────────────────────────────────────────────────────
     try {
