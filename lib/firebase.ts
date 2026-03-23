@@ -3,8 +3,6 @@ import { initializeAuth, getAuth, getReactNativePersistence } from "firebase/aut
 import {
   initializeFirestore,
   getFirestore,
-  persistentLocalCache,
-  persistentMultipleTabManager,
   memoryLocalCache,
 } from "firebase/firestore";
 import { getDatabase } from "firebase/database";
@@ -50,20 +48,15 @@ function buildAuth() {
 }
 
 // ─── Firestore ──────────────────────────────────────────────────────────────
-// Web: persistent multi-tab cache — reduces reads & works offline.
-// Native: memory cache (IndexedDB not available in React Native).
+// Use memoryLocalCache on all platforms.
+// persistentLocalCache (IndexedDB) is unreliable inside iframes (e.g. Replit
+// preview, web views) and causes Firestore queries to silently fail.
+// experimentalForceLongPolling is removed — it slows connections and is
+// unnecessary now that network detection no longer blocks the app.
 function buildFirestore() {
   try {
-    if (Platform.OS === "web") {
-      return initializeFirestore(firebaseApp, {
-        localCache: persistentLocalCache({
-          tabManager: persistentMultipleTabManager(),
-        }),
-      });
-    }
     return initializeFirestore(firebaseApp, {
       localCache: memoryLocalCache(),
-      experimentalForceLongPolling: true,
     });
   } catch {
     return getFirestore(firebaseApp);
