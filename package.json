@@ -15,7 +15,11 @@
     "lint": "npx expo lint",
     "lint:fix": "npx expo lint --fix",
     "android": "expo run:android",
-    "ios": "expo run:ios"
+    "ios": "expo run:ios",
+    "android:prebuild": "npx expo prebuild --platform android --no-install",
+    "android:bundle": "cd android && ./gradlew bundleRelease",
+    "android:bundle:debug": "cd android && ./gradlew bundleDebug",
+    "android:clean": "cd android && ./gradlew clean"
   },
   "dependencies": {
     "@expo-google-fonts/inter": "^0.4.2",

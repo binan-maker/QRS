@@ -113,7 +113,10 @@ export default function SettingsScreen() {
   return (
     <View style={[styles.container, { paddingTop: topInset }]}>
       <View style={styles.navBar}>
-        <Pressable onPress={() => router.back()} style={styles.navBackBtn}>
+        <Pressable
+          onPress={() => router.canGoBack() ? router.back() : router.replace("/(tabs)/profile" as any)}
+          style={styles.navBackBtn}
+        >
           <Ionicons name="chevron-back" size={24} color={colors.text} />
         </Pressable>
         <Text style={styles.navTitle}>Settings</Text>
