@@ -1,5 +1,5 @@
 import React from "react";
-import { View, Text, Pressable, Alert } from "react-native";
+import { View, Text, Pressable } from "react-native";
 import { router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
@@ -34,39 +34,19 @@ interface HistoryItemProps {
   onDelete: (item: HistoryItemType) => void;
 }
 
-const HistoryItem = React.memo(function HistoryItem({ item, risk, onDelete }: HistoryItemProps) {
+const HistoryItem = React.memo(function HistoryItem({ item, risk, onDelete: _onDelete }: HistoryItemProps) {
   const { colors } = useTheme();
   const showRiskBadge = (item.contentType === "url" || item.contentType === "payment") && risk !== "safe";
   const riskColor = risk === "dangerous" ? colors.danger : colors.warning;
   const riskBgColor = risk === "dangerous" ? colors.dangerDim : colors.warningDim;
+
+  const isSynced = item.source === "cloud";
 
   function handlePress() {
     if (item.qrCodeId) {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
       router.push({ pathname: "/qr-detail/[id]", params: { id: item.qrCodeId } });
     }
-  }
-
-  function handleMenuPress() {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    Alert.alert(
-      "Options",
-      item.content.length > 60 ? item.content.slice(0, 60) + "…" : item.content,
-      [
-        { text: "View Details", onPress: handlePress },
-        {
-          text: "Delete",
-          style: "destructive",
-          onPress: () => {
-            Alert.alert("Delete Entry", "Remove this item from your history?", [
-              { text: "Cancel", style: "cancel" },
-              { text: "Delete", style: "destructive", onPress: () => onDelete(item) },
-            ]);
-          },
-        },
-        { text: "Cancel", style: "cancel" },
-      ]
-    );
   }
 
   return (
@@ -102,21 +82,24 @@ const HistoryItem = React.memo(function HistoryItem({ item, risk, onDelete }: Hi
               </Text>
             </View>
           ) : null}
-          {item.source === "cloud" ? (
-            <Ionicons name="cloud" size={13} color={colors.accent} />
-          ) : item.source === "favorite" ? (
-            <Ionicons name="heart" size={13} color={colors.danger} />
-          ) : null}
+          {item.source === "favorite" ? (
+            <View style={{ flexDirection: "row", alignItems: "center", gap: 3 }}>
+              <Ionicons name="heart" size={12} color={colors.danger} />
+            </View>
+          ) : (
+            <View style={{ flexDirection: "row", alignItems: "center", gap: 3 }}>
+              <Ionicons
+                name={isSynced ? "cloud" : "cloud-offline-outline"}
+                size={13}
+                color={isSynced ? colors.accent : colors.textMuted}
+              />
+              <Text style={{ fontSize: 10, fontFamily: "Inter_400Regular", color: isSynced ? colors.accent : colors.textMuted }}>
+                {isSynced ? "Synced" : "Not Synced"}
+              </Text>
+            </View>
+          )}
         </View>
       </View>
-
-      <Pressable
-        onPress={handleMenuPress}
-        hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-        style={{ padding: 4 }}
-      >
-        <Ionicons name="ellipsis-vertical" size={18} color={colors.textMuted} />
-      </Pressable>
     </Pressable>
   );
 });

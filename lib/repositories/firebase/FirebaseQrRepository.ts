@@ -1,9 +1,11 @@
 import {
   getOrCreateQrCode,
   getQrCodeById,
+} from "@/lib/services/qr-service";
+import {
   recordScan,
   getUserScansPaginated,
-} from "@/lib/services/qr-service";
+} from "@/lib/services/scan-history-service";
 import type { IQrRepository, QrRecord, QrScanRecord } from "../interfaces/IQrRepository";
 
 export class FirebaseQrRepository implements IQrRepository {

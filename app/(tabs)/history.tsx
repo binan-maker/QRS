@@ -39,7 +39,7 @@ function getDateLabel(date: Date): string {
   const d = new Date(date.getFullYear(), date.getMonth(), date.getDate());
   if (d.getTime() === today.getTime()) return "Today";
   if (d.getTime() === yesterday.getTime()) return "Yesterday";
-  return date.toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" });
+  return date.toLocaleDateString("en-US", { day: "numeric", month: "short", year: "numeric" });
 }
 
 function groupByDate(items: HistoryItem[]): ListRow[] {
