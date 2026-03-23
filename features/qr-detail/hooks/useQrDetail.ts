@@ -89,11 +89,9 @@ export function useQrDetail(id: string) {
     if (instantVerdict.level === "caution") {
       return { level: "caution" as const, label: "CAUTION", reason: instantVerdict.reason ?? "Proceed carefully", color: colors.warning };
     }
-    if (instantVerdict.level === "safe") {
-      return { level: "safe" as const, label: "SAFE", reason: "No threats detected", color: colors.safe };
-    }
-
-    return { level: "unknown" as const, label: "UNKNOWN", reason: "Analysis in progress", color: colors.textMuted };
+    // Default: local analysis found no threats — show SAFE immediately.
+    // Community data will silently update this verdict when it arrives.
+    return { level: "safe" as const, label: "SAFE", reason: "No threats detected", color: colors.safe };
   }
 
   async function handleOpenPayment(rawContent: string) {

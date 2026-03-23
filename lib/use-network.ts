@@ -15,7 +15,9 @@ export function useNetworkStatus(): NetworkStatus {
     setIsChecking(true);
     try {
       const state = await Network.getNetworkStateAsync();
-      setIsOnline(!!state.isConnected && !!state.isInternetReachable);
+      // isInternetReachable can be null on web/Replit — null means "can't tell", not "offline".
+      // Only treat as offline when explicitly false.
+      setIsOnline(state.isConnected !== false && state.isInternetReachable !== false);
     } catch {
       setIsOnline(true);
     } finally {
