@@ -106,8 +106,8 @@ export function useHistory() {
         })));
         setCloudLoading(false);
         return;
-      } catch {
-        // will retry
+      } catch (e: any) {
+        console.warn(`[history] cloud fetch attempt ${attempt + 1}/3 failed: code=${e?.code} message=${e?.message} ${String(e)}`);
       }
     }
     setCloudHistory([]);

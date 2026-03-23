@@ -80,14 +80,10 @@ export function useQrData(id: string, userId: string | null) {
         return;
       }
 
-      const anonContent = getAnonymousQrContent(id);
-      if (anonContent) {
-        setOfflineMode(true);
-        setOfflineContent(anonContent.content);
-        setOfflineContentType(anonContent.contentType || "text");
-        setLoading(false);
-        return;
-      }
+      // NOTE: anonymous-session cache (getAnonymousQrContent) is NOT checked
+      // here. Checking it here used to set offlineMode=true immediately after
+      // every scan, blocking all Firestore subscriptions. It is already used
+      // correctly as a fallback inside loadOfflineFallback() below.
 
       // Retry up to 3 times to handle transient Firestore connection issues.
       let lastErr: any = null;
@@ -130,6 +126,7 @@ export function useQrData(id: string, userId: string | null) {
           setLoading(false);
           return;
         } catch (err: any) {
+          console.warn(`[qrData] Firestore fetch attempt ${attempt + 1}/3 failed: code=${err?.code} message=${err?.message} ${String(err)}`);
           lastErr = err;
         }
       }

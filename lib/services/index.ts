@@ -2,6 +2,8 @@ export * from "./types";
 export * from "./utils";
 export * from "./trust-service";
 export * from "./qr-service";
+export * from "./qr-detail-service";
+export * from "./scan-history-service";
 export * from "./report-service";
 export * from "./follow-service";
 export * from "./generator-service";
