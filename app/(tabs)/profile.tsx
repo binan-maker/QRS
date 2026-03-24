@@ -13,7 +13,8 @@ import {
 import { router } from "expo-router";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import Animated, { FadeInDown } from "react-native-reanimated";
+import { LinearGradient } from "expo-linear-gradient";
+import Animated, { FadeInDown, FadeInUp } from "react-native-reanimated";
 import { useTheme } from "@/contexts/ThemeContext";
 import SkeletonBox from "@/components/ui/SkeletonBox";
 import PhotoModal from "@/features/profile/components/PhotoModal";
@@ -22,7 +23,7 @@ import { useProfile } from "@/hooks/useProfile";
 
 export default function ProfileScreen() {
   const insets = useSafeAreaInsets();
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
   const {
     user,
     editingName, setEditingName, newName, setNewName, savingName,
@@ -45,22 +46,36 @@ export default function ProfileScreen() {
   if (!user) {
     return (
       <View style={[styles.container, { paddingTop: topInset }]}>
-        <View style={styles.navBar}>
-          <Text style={styles.navTitle}>Profile</Text>
-        </View>
-        <View style={styles.centeredBox}>
-          <View style={styles.guestAvatar}>
-            <Ionicons name="person-outline" size={52} color={colors.textMuted} />
-          </View>
-          <Text style={styles.guestTitle}>You're not signed in</Text>
-          <Text style={styles.guestSub}>Sign in to view your profile, stats, and activity</Text>
-          <Pressable onPress={() => router.push("/(auth)/login")} style={styles.signInBtn}>
-            <Ionicons name="log-in-outline" size={20} color={colors.primaryText} />
-            <Text style={styles.signInBtnText}>Sign In</Text>
-          </Pressable>
-          <Pressable onPress={() => router.push("/(auth)/register")} style={styles.registerBtn}>
-            <Text style={styles.registerBtnText}>Create Account</Text>
-          </Pressable>
+        <LinearGradient
+          colors={isDark ? ["#050B18", "#061527"] : ["#F4F8FF", "#EAF2FF"]}
+          style={StyleSheet.absoluteFill}
+        />
+        <View style={styles.guestWrap}>
+          <Animated.View entering={FadeInUp.duration(500)} style={styles.guestInner}>
+            <LinearGradient
+              colors={isDark
+                ? ["rgba(0,229,255,0.12)", "rgba(176,96,255,0.08)"]
+                : ["rgba(0,111,255,0.07)", "rgba(124,58,237,0.05)"]}
+              style={styles.guestIconRing}
+              start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
+            >
+              <Ionicons name="person-outline" size={48} color={colors.primary} />
+            </LinearGradient>
+            <Text style={[styles.guestTitle, { color: colors.text }]}>You're not signed in</Text>
+            <Text style={[styles.guestSub, { color: colors.textSecondary }]}>
+              Sign in to view your profile, stats, and activity
+            </Text>
+            <Pressable
+              onPress={() => router.push("/(auth)/login")}
+              style={({ pressed }) => [styles.guestSignInBtn, { backgroundColor: colors.primary, opacity: pressed ? 0.88 : 1 }]}
+            >
+              <Ionicons name="log-in-outline" size={18} color={colors.primaryText} />
+              <Text style={[styles.guestSignInText, { color: colors.primaryText }]}>Sign In</Text>
+            </Pressable>
+            <Pressable onPress={() => router.push("/(auth)/register")} style={styles.guestRegBtn}>
+              <Text style={[styles.guestRegText, { color: colors.primary }]}>Create Account</Text>
+            </Pressable>
+          </Animated.View>
         </View>
       </View>
     );
@@ -68,204 +83,257 @@ export default function ProfileScreen() {
 
   return (
     <View style={[styles.container, { paddingTop: topInset }]}>
-      <View style={styles.navBar}>
-        <Text style={styles.navTitle}>Profile</Text>
-        <Pressable
-          onPress={() => router.push("/settings")}
-          style={styles.settingsBtn}
-          accessibilityLabel="Settings"
-        >
-          <Ionicons name="settings-outline" size={22} color={colors.textSecondary} />
-        </Pressable>
-      </View>
-
       <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={[styles.scrollContent, { paddingBottom: tabBarHeight + 24 }]}
       >
-        <Animated.View entering={FadeInDown.duration(400)}>
-          <View style={styles.heroCard}>
-            <Pressable onPress={() => setPhotoModalOpen(true)} style={styles.avatarWrapper}>
-              {uploadingPhoto ? (
-                <View style={styles.avatarLarge}>
-                  <ActivityIndicator color={colors.primary} />
+        {/* ── HERO BANNER ── */}
+        <Animated.View entering={FadeInDown.duration(450)} style={styles.heroBanner}>
+          <LinearGradient
+            colors={isDark
+              ? ["#061929", "#050F1C", "#04090F"]
+              : ["#E4F0FF", "#EDF5FF", "#F4F8FF"]}
+            style={StyleSheet.absoluteFill}
+            start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
+          />
+          <View style={[styles.heroBannerBorder, { borderColor: colors.primary + "22" }]} />
+
+          {/* Top row: settings button */}
+          <View style={styles.bannerTopRow}>
+            <View style={{ flex: 1 }} />
+            <Pressable
+              onPress={() => router.push("/settings")}
+              style={[styles.settingsBtn, { backgroundColor: colors.primary + "18", borderColor: colors.primary + "35" }]}
+            >
+              <Ionicons name="settings-outline" size={18} color={colors.primary} />
+            </Pressable>
+          </View>
+
+          {/* Avatar */}
+          <View style={styles.avatarArea}>
+            <Pressable onPress={() => setPhotoModalOpen(true)} style={styles.avatarPressable}>
+              <LinearGradient
+                colors={[colors.primary, colors.accent]}
+                style={styles.avatarGradientRing}
+                start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
+              >
+                <View style={[styles.avatarInner, { backgroundColor: colors.surface }]}>
+                  {uploadingPhoto ? (
+                    <ActivityIndicator color={colors.primary} />
+                  ) : photoURL ? (
+                    <Image source={{ uri: photoURL }} style={styles.avatarPhoto} />
+                  ) : (
+                    <Text style={[styles.avatarInitials, { color: colors.primary }]}>{initials}</Text>
+                  )}
                 </View>
-              ) : photoURL ? (
-                <Image source={{ uri: photoURL }} style={styles.avatarLargeImg} />
-              ) : (
-                <View style={styles.avatarLarge}>
-                  <Text style={styles.avatarLargeText}>{initials}</Text>
-                </View>
-              )}
-              <View style={styles.avatarEditBadge}>
-                <Ionicons name="camera" size={13} color={colors.primaryText} />
+              </LinearGradient>
+              <View style={[styles.cameraBtn, { backgroundColor: colors.primary }]}>
+                <Ionicons name="camera" size={12} color={colors.primaryText} />
               </View>
             </Pressable>
 
-            <View style={styles.heroInfo}>
-              {editingName ? (
-                <View style={styles.editNameRow}>
-                  <TextInput
-                    style={styles.nameInput}
-                    value={newName}
-                    onChangeText={setNewName}
-                    autoFocus
-                    maxLength={40}
-                    placeholderTextColor={colors.textMuted}
-                    returnKeyType="done"
-                    onSubmitEditing={handleSaveName}
-                  />
-                  <Pressable onPress={handleSaveName} disabled={savingName} style={styles.saveNameBtn}>
-                    {savingName ? (
-                      <ActivityIndicator size="small" color={colors.primaryText} />
-                    ) : (
-                      <Text style={styles.saveNameBtnText}>Save</Text>
-                    )}
-                  </Pressable>
-                  <Pressable
-                    onPress={() => { setEditingName(false); setNewName(user.displayName); }}
-                    style={styles.cancelNameBtn}
-                  >
-                    <Ionicons name="close" size={18} color={colors.textMuted} />
-                  </Pressable>
-                </View>
-              ) : (
-                <Pressable
-                  onPress={() => { setEditingName(true); setNewName(user.displayName); }}
-                  style={styles.nameRow}
-                >
-                  <Text style={styles.displayName} numberOfLines={1}>{user.displayName}</Text>
-                  <Ionicons name="pencil-outline" size={15} color={colors.primary} style={{ marginLeft: 6 }} />
+            {/* Name */}
+            {editingName ? (
+              <View style={styles.editNameRow}>
+                <TextInput
+                  style={[styles.nameInput, { backgroundColor: colors.inputBackground, borderColor: colors.primary, color: colors.text }]}
+                  value={newName}
+                  onChangeText={setNewName}
+                  autoFocus
+                  maxLength={40}
+                  placeholderTextColor={colors.textMuted}
+                  returnKeyType="done"
+                  onSubmitEditing={handleSaveName}
+                />
+                <Pressable onPress={handleSaveName} disabled={savingName} style={[styles.saveBtn, { backgroundColor: colors.primary }]}>
+                  {savingName
+                    ? <ActivityIndicator size="small" color={colors.primaryText} />
+                    : <Text style={[styles.saveBtnText, { color: colors.primaryText }]}>Save</Text>
+                  }
                 </Pressable>
-              )}
-              {currentUsername ? (
-                <Text style={styles.usernameHeroText} numberOfLines={1}>@{currentUsername}</Text>
-              ) : null}
-              <Text style={styles.emailText} numberOfLines={1}>{user.email}</Text>
-            </View>
+                <Pressable onPress={() => { setEditingName(false); setNewName(user.displayName); }} style={styles.cancelBtn}>
+                  <Ionicons name="close" size={18} color={colors.textMuted} />
+                </Pressable>
+              </View>
+            ) : (
+              <Pressable
+                onPress={() => { setEditingName(true); setNewName(user.displayName); }}
+                style={styles.nameRow}
+              >
+                <Text style={[styles.displayName, { color: colors.text }]} numberOfLines={1}>
+                  {user.displayName}
+                </Text>
+                <View style={[styles.editPencil, { backgroundColor: colors.primaryDim }]}>
+                  <Ionicons name="pencil" size={11} color={colors.primary} />
+                </View>
+              </Pressable>
+            )}
+
+            {currentUsername ? (
+              <Text style={[styles.usernameText, { color: colors.primary }]}>@{currentUsername}</Text>
+            ) : null}
+            <Text style={[styles.emailText, { color: colors.textMuted }]} numberOfLines={1}>
+              {user.email}
+            </Text>
           </View>
         </Animated.View>
 
-        <Animated.View entering={FadeInDown.duration(400).delay(80)}>
+        {/* ── STATS ROW ── */}
+        <Animated.View entering={FadeInDown.duration(450).delay(80)}>
           <View style={styles.statsRow}>
             {[
-              { label: "Following QRs", value: stats.followingCount, icon: "notifications" as const, color: colors.primary },
-              { label: "Total Scans", value: stats.scanCount, icon: "scan-outline" as const, color: colors.accent },
-              { label: "Comments", value: stats.commentCount, icon: "chatbubble-outline" as const, color: colors.safe },
+              { label: "Following", value: stats.followingCount, icon: "notifications" as const, color: colors.primary, bg: colors.primaryDim },
+              { label: "Scans", value: stats.scanCount, icon: "scan-outline" as const, color: colors.accent, bg: colors.accentDim },
+              { label: "Comments", value: stats.commentCount, icon: "chatbubble-outline" as const, color: colors.safe, bg: colors.safeDim },
             ].map((s) => (
-              <View key={s.label} style={styles.statCard}>
-                {statsLoading ? (
-                  <SkeletonBox width={36} height={20} borderRadius={6} style={{ alignSelf: "center" }} />
-                ) : (
-                  <Text style={[styles.statValue, { color: s.color }]}>{s.value}</Text>
-                )}
-                <Ionicons name={s.icon as any} size={14} color={colors.textMuted} style={{ marginTop: 2 }} />
-                <Text style={styles.statLabel}>{s.label}</Text>
+              <View key={s.label} style={[styles.statCard, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
+                <LinearGradient
+                  colors={[s.bg, "transparent"]}
+                  style={styles.statGlow}
+                  start={{ x: 0.5, y: 0 }} end={{ x: 0.5, y: 1 }}
+                />
+                <View style={[styles.statIconWrap, { backgroundColor: s.bg }]}>
+                  <Ionicons name={s.icon as any} size={14} color={s.color} />
+                </View>
+                {statsLoading
+                  ? <SkeletonBox width={36} height={22} borderRadius={6} style={{ alignSelf: "center" }} />
+                  : <Text style={[styles.statValue, { color: s.color }]}>{s.value}</Text>
+                }
+                <Text style={[styles.statLabel, { color: colors.textMuted }]}>{s.label}</Text>
               </View>
             ))}
           </View>
         </Animated.View>
 
-        <Animated.View entering={FadeInDown.duration(400).delay(140)}>
-          <View style={styles.likesCard}>
-            <View style={styles.likesLeft}>
-              <View style={styles.likesIconWrap}>
-                <Ionicons name="thumbs-up" size={22} color={colors.safe} />
-              </View>
-              <View>
-                <Text style={styles.likesTitle}>Total Likes Received</Text>
-                <Text style={styles.likesSub}>From your comments across the app</Text>
-              </View>
+        {/* ── LIKES CARD ── */}
+        <Animated.View entering={FadeInDown.duration(450).delay(140)}>
+          <View style={[styles.likesCard, { backgroundColor: colors.surface, borderColor: colors.safeDim }]}>
+            <LinearGradient
+              colors={isDark ? [colors.safeDim, "transparent"] : [colors.safeDim, "transparent"]}
+              style={styles.likesGlow}
+              start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}
+            />
+            <View style={[styles.likesIconWrap, { backgroundColor: colors.safeDim }]}>
+              <Ionicons name="thumbs-up" size={20} color={colors.safe} />
             </View>
-            {statsLoading ? (
-              <SkeletonBox width={40} height={22} borderRadius={6} />
-            ) : (
-              <Text style={styles.likesValue}>{stats.totalLikesReceived}</Text>
-            )}
+            <View style={{ flex: 1 }}>
+              <Text style={[styles.likesTitle, { color: colors.text }]}>Total Likes Received</Text>
+              <Text style={[styles.likesSub, { color: colors.textSecondary }]}>From your comments</Text>
+            </View>
+            {statsLoading
+              ? <SkeletonBox width={44} height={26} borderRadius={8} />
+              : <Text style={[styles.likesValue, { color: colors.safe }]}>{stats.totalLikesReceived}</Text>
+            }
           </View>
         </Animated.View>
 
-        <Animated.View entering={FadeInDown.duration(400).delay(160)}>
-          <Pressable
-            onPress={() => router.push("/my-qr-codes" as any)}
-            style={({ pressed }) => [styles.myQrViewAllBtn, { opacity: pressed ? 0.85 : 1 }]}
-          >
-            <View style={styles.myQrViewAllLeft}>
-              <View style={styles.myQrViewAllIcon}>
-                <MaterialCommunityIcons name="qrcode-edit" size={22} color={colors.primary} />
-              </View>
-              <View>
-                <Text style={styles.myQrViewAllTitle}>My QR Codes</Text>
-                <Text style={styles.myQrViewAllSub}>
-                  {myQrLoading ? "Loading…" : `${myQrCodes.length} code${myQrCodes.length !== 1 ? "s" : ""} — Individual & Business`}
-                </Text>
-              </View>
-            </View>
-            <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
-          </Pressable>
-        </Animated.View>
-
-        <Animated.View entering={FadeInDown.duration(400).delay(170)}>
-          <Pressable
-            onPress={() => router.push("/favorites" as any)}
-            style={({ pressed }) => [styles.myQrViewAllBtn, { opacity: pressed ? 0.85 : 1 }]}
-          >
-            <View style={styles.myQrViewAllLeft}>
-              <View style={[styles.myQrViewAllIcon, { backgroundColor: colors.dangerDim }]}>
-                <Ionicons name="heart" size={22} color={colors.danger} />
-              </View>
-              <View>
-                <Text style={styles.myQrViewAllTitle}>Favorite QR Codes</Text>
-                <Text style={styles.myQrViewAllSub}>QR codes you've saved as favorites</Text>
-              </View>
-            </View>
-            <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
-          </Pressable>
-        </Animated.View>
-
-        <Animated.View entering={FadeInDown.duration(400).delay(180)}>
-          <Text style={styles.sectionTitle}>Quick Actions</Text>
-          <View style={styles.card}>
-            <Pressable style={styles.menuRow} onPress={() => router.push("/(tabs)/history")}>
-              <View style={[styles.menuIcon, { backgroundColor: colors.primaryDim }]}>
-                <Ionicons name="time-outline" size={18} color={colors.primary} />
-              </View>
-              <View style={{ flex: 1 }}>
-                <Text style={styles.menuRowText}>Scan History</Text>
-                <Text style={styles.menuRowSub}>View all your scanned QR codes</Text>
-              </View>
-              <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
-            </Pressable>
-            <View style={styles.cardDivider} />
-            <Pressable style={styles.menuRow} onPress={() => router.push("/(tabs)/qr-generator")}>
-              <View style={[styles.menuIcon, { backgroundColor: colors.accentDim }]}>
-                <MaterialCommunityIcons name="qrcode-edit" size={18} color={colors.accent} />
-              </View>
-              <View style={{ flex: 1 }}>
-                <Text style={styles.menuRowText}>Create QR Code</Text>
-                <Text style={styles.menuRowSub}>Generate branded or private QR codes</Text>
-              </View>
-              <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
-            </Pressable>
+        {/* ── MY QR CODES + FAVORITES ── */}
+        <Animated.View entering={FadeInDown.duration(450).delay(170)}>
+          <Text style={[styles.sectionLabel, { color: colors.textMuted }]}>Library</Text>
+          <View style={styles.linksGroup}>
+            {[
+              {
+                icon: <MaterialCommunityIcons name="qrcode-edit" size={20} color={colors.primary} />,
+                bg: colors.primaryDim,
+                title: "My QR Codes",
+                sub: myQrLoading ? "Loading…" : `${myQrCodes.length} code${myQrCodes.length !== 1 ? "s" : ""} — Individual & Business`,
+                onPress: () => router.push("/my-qr-codes" as any),
+                accent: colors.primary,
+              },
+              {
+                icon: <Ionicons name="heart" size={20} color={colors.danger} />,
+                bg: colors.dangerDim,
+                title: "Favorites",
+                sub: "QR codes you've saved",
+                onPress: () => router.push("/favorites" as any),
+                accent: colors.danger,
+              },
+            ].map((item, idx) => (
+              <Pressable
+                key={idx}
+                onPress={item.onPress}
+                style={({ pressed }) => [
+                  styles.linkCard,
+                  { backgroundColor: colors.surface, borderColor: colors.surfaceBorder, opacity: pressed ? 0.85 : 1, transform: [{ scale: pressed ? 0.982 : 1 }] },
+                ]}
+              >
+                <View style={[styles.linkIcon, { backgroundColor: item.bg }]}>{item.icon}</View>
+                <View style={{ flex: 1 }}>
+                  <Text style={[styles.linkTitle, { color: colors.text }]}>{item.title}</Text>
+                  <Text style={[styles.linkSub, { color: colors.textSecondary }]}>{item.sub}</Text>
+                </View>
+                <View style={[styles.linkChevron, { backgroundColor: item.accent + "18" }]}>
+                  <Ionicons name="chevron-forward" size={14} color={item.accent} />
+                </View>
+              </Pressable>
+            ))}
           </View>
         </Animated.View>
 
-        <Animated.View entering={FadeInDown.duration(400).delay(220)}>
-          <Text style={styles.sectionTitle}>Account</Text>
-          <View style={styles.card}>
+        {/* ── QUICK ACTIONS ── */}
+        <Animated.View entering={FadeInDown.duration(450).delay(200)}>
+          <Text style={[styles.sectionLabel, { color: colors.textMuted }]}>Quick Actions</Text>
+          <View style={styles.linksGroup}>
+            {[
+              {
+                icon: <Ionicons name="time-outline" size={20} color={colors.primary} />,
+                bg: colors.primaryDim,
+                title: "Scan History",
+                sub: "All your scanned QR codes",
+                onPress: () => router.push("/(tabs)/history"),
+                accent: colors.primary,
+              },
+              {
+                icon: <MaterialCommunityIcons name="qrcode-edit" size={20} color={colors.accent} />,
+                bg: colors.accentDim,
+                title: "Create QR Code",
+                sub: "Generate branded or private codes",
+                onPress: () => router.push("/(tabs)/qr-generator"),
+                accent: colors.accent,
+              },
+            ].map((item, idx) => (
+              <Pressable
+                key={idx}
+                onPress={item.onPress}
+                style={({ pressed }) => [
+                  styles.linkCard,
+                  { backgroundColor: colors.surface, borderColor: colors.surfaceBorder, opacity: pressed ? 0.85 : 1, transform: [{ scale: pressed ? 0.982 : 1 }] },
+                ]}
+              >
+                <View style={[styles.linkIcon, { backgroundColor: item.bg }]}>{item.icon}</View>
+                <View style={{ flex: 1 }}>
+                  <Text style={[styles.linkTitle, { color: colors.text }]}>{item.title}</Text>
+                  <Text style={[styles.linkSub, { color: colors.textSecondary }]}>{item.sub}</Text>
+                </View>
+                <View style={[styles.linkChevron, { backgroundColor: item.accent + "18" }]}>
+                  <Ionicons name="chevron-forward" size={14} color={item.accent} />
+                </View>
+              </Pressable>
+            ))}
+          </View>
+        </Animated.View>
+
+        {/* ── ACCOUNT INFO ── */}
+        <Animated.View entering={FadeInDown.duration(450).delay(230)}>
+          <Text style={[styles.sectionLabel, { color: colors.textMuted }]}>Account</Text>
+          <View style={[styles.infoCard, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
             <View style={styles.infoRow}>
-              <View style={[styles.menuIcon, { backgroundColor: colors.primaryDim }]}>
-                <Ionicons name="person-outline" size={18} color={colors.primary} />
+              <View style={[styles.infoIconWrap, { backgroundColor: colors.primaryDim }]}>
+                <Ionicons name="person-outline" size={16} color={colors.primary} />
               </View>
               <View style={{ flex: 1 }}>
-                <Text style={styles.infoLabel}>Display Name</Text>
-                <Text style={styles.infoValue}>{user.displayName}</Text>
+                <Text style={[styles.infoLabel, { color: colors.textMuted }]}>Display Name</Text>
+                <Text style={[styles.infoValue, { color: colors.text }]}>{user.displayName}</Text>
               </View>
-              <Pressable onPress={() => { setEditingName(true); setNewName(user.displayName); }}>
-                <Ionicons name="pencil-outline" size={18} color={colors.textMuted} />
+              <Pressable
+                onPress={() => { setEditingName(true); setNewName(user.displayName); }}
+                style={[styles.infoEditBtn, { backgroundColor: colors.primaryDim }]}
+              >
+                <Ionicons name="pencil-outline" size={14} color={colors.primary} />
               </Pressable>
             </View>
-            <View style={styles.cardDivider} />
+
+            <View style={[styles.infoDivider, { backgroundColor: colors.surfaceBorder }]} />
 
             <UsernameEditor
               currentUsername={currentUsername}
@@ -289,29 +357,43 @@ export default function ProfileScreen() {
               onCancel={handleCancelUsername}
             />
 
-            <View style={styles.cardDivider} />
+            <View style={[styles.infoDivider, { backgroundColor: colors.surfaceBorder }]} />
+
             <View style={styles.infoRow}>
-              <View style={[styles.menuIcon, { backgroundColor: colors.accentDim }]}>
-                <Ionicons name="mail-outline" size={18} color={colors.accent} />
+              <View style={[styles.infoIconWrap, { backgroundColor: colors.accentDim }]}>
+                <Ionicons name="mail-outline" size={16} color={colors.accent} />
               </View>
               <View style={{ flex: 1 }}>
-                <Text style={styles.infoLabel}>Email</Text>
-                <Text style={styles.infoValue} numberOfLines={1}>{user.email}</Text>
+                <Text style={[styles.infoLabel, { color: colors.textMuted }]}>Email</Text>
+                <Text style={[styles.infoValue, { color: colors.text }]} numberOfLines={1}>{user.email}</Text>
               </View>
-              {user.emailVerified ? (
-                <View style={styles.verifiedBadge}>
-                  <Ionicons name="checkmark-circle" size={16} color={colors.safe} />
-                  <Text style={styles.verifiedText}>Verified</Text>
+              {user.emailVerified && (
+                <View style={[styles.verifiedChip, { backgroundColor: colors.safeDim }]}>
+                  <Ionicons name="checkmark-circle" size={13} color={colors.safe} />
+                  <Text style={[styles.verifiedText, { color: colors.safe }]}>Verified</Text>
                 </View>
-              ) : null}
+              )}
             </View>
           </View>
         </Animated.View>
 
-        <Animated.View entering={FadeInDown.duration(400).delay(280)}>
-          <Pressable onPress={handleSignOut} style={styles.signOutBtn}>
-            <Ionicons name="log-out-outline" size={20} color={colors.danger} />
-            <Text style={styles.signOutText}>Sign Out</Text>
+        {/* ── SIGN OUT ── */}
+        <Animated.View entering={FadeInDown.duration(450).delay(270)}>
+          <Pressable
+            onPress={handleSignOut}
+            style={({ pressed }) => [
+              styles.signOutBtn,
+              { borderColor: colors.danger + "40", opacity: pressed ? 0.85 : 1 },
+            ]}
+          >
+            <LinearGradient
+              colors={[colors.danger + "12", colors.danger + "06"]}
+              style={styles.signOutGradient}
+              start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}
+            >
+              <Ionicons name="log-out-outline" size={18} color={colors.danger} />
+              <Text style={[styles.signOutText, { color: colors.danger }]}>Sign Out</Text>
+            </LinearGradient>
           </Pressable>
         </Animated.View>
       </ScrollView>
@@ -329,122 +411,123 @@ export default function ProfileScreen() {
 function makeStyles(c: ReturnType<typeof import("@/contexts/ThemeContext").useTheme>["colors"]) {
   return StyleSheet.create({
     container: { flex: 1, backgroundColor: c.background },
-    navBar: {
-      flexDirection: "row", alignItems: "center", justifyContent: "space-between",
-      paddingHorizontal: 20, paddingVertical: 14,
-      borderBottomWidth: 1, borderBottomColor: c.surfaceBorder,
+    scrollContent: { paddingHorizontal: 18, paddingTop: 0 },
+
+    guestWrap: { flex: 1, alignItems: "center", justifyContent: "center", padding: 32 },
+    guestInner: { alignItems: "center", gap: 14, width: "100%" },
+    guestIconRing: {
+      width: 100, height: 100, borderRadius: 50,
+      alignItems: "center", justifyContent: "center", marginBottom: 4,
     },
-    navTitle: { fontSize: 22, fontFamily: "Inter_700Bold", color: c.text },
-    settingsBtn: {
-      width: 40, height: 40, borderRadius: 20,
-      backgroundColor: c.surface, borderWidth: 1, borderColor: c.surfaceBorder,
-      alignItems: "center", justifyContent: "center",
-    },
-    scrollContent: { padding: 20 },
-    centeredBox: { flex: 1, alignItems: "center", justifyContent: "center", padding: 40, gap: 12 },
-    guestAvatar: {
-      width: 96, height: 96, borderRadius: 48,
-      backgroundColor: c.surface, alignItems: "center", justifyContent: "center",
-      borderWidth: 1, borderColor: c.surfaceBorder, marginBottom: 8,
-    },
-    guestTitle: { fontSize: 20, fontFamily: "Inter_700Bold", color: c.text, textAlign: "center" },
-    guestSub: { fontSize: 14, fontFamily: "Inter_400Regular", color: c.textSecondary, textAlign: "center" },
-    signInBtn: {
+    guestTitle: { fontSize: 22, fontFamily: "Inter_700Bold", textAlign: "center" },
+    guestSub: { fontSize: 14, fontFamily: "Inter_400Regular", textAlign: "center", lineHeight: 20 },
+    guestSignInBtn: {
       flexDirection: "row", alignItems: "center", gap: 8,
-      backgroundColor: c.primary, paddingVertical: 14, paddingHorizontal: 32,
-      borderRadius: 16, marginTop: 8,
+      paddingVertical: 15, paddingHorizontal: 40, borderRadius: 18, marginTop: 8, width: "100%", justifyContent: "center",
     },
-    signInBtnText: { fontSize: 16, fontFamily: "Inter_700Bold", color: c.primaryText },
-    registerBtn: { paddingVertical: 12, paddingHorizontal: 24 },
-    registerBtnText: { fontSize: 14, fontFamily: "Inter_600SemiBold", color: c.primary },
-    heroCard: {
-      backgroundColor: c.surface, borderRadius: 20, padding: 20,
-      borderWidth: 1, borderColor: c.surfaceBorder,
-      flexDirection: "row", alignItems: "center", gap: 16, marginBottom: 16,
+    guestSignInText: { fontSize: 16, fontFamily: "Inter_700Bold" },
+    guestRegBtn: { paddingVertical: 12, paddingHorizontal: 24 },
+    guestRegText: { fontSize: 14, fontFamily: "Inter_600SemiBold" },
+
+    heroBanner: {
+      borderRadius: 24, overflow: "hidden",
+      marginHorizontal: -18, marginBottom: 20,
+      paddingHorizontal: 18, paddingTop: 14, paddingBottom: 24,
     },
-    avatarWrapper: { position: "relative" },
-    avatarLarge: {
-      width: 76, height: 76, borderRadius: 38,
-      backgroundColor: c.primaryDim, alignItems: "center", justifyContent: "center",
-      borderWidth: 2.5, borderColor: c.primary,
+    heroBannerBorder: {
+      position: "absolute", inset: 0, borderBottomWidth: 1,
+    } as any,
+    bannerTopRow: { flexDirection: "row", alignItems: "center", marginBottom: 20 },
+    settingsBtn: {
+      width: 36, height: 36, borderRadius: 12,
+      alignItems: "center", justifyContent: "center", borderWidth: 1,
     },
-    avatarLargeImg: { width: 76, height: 76, borderRadius: 38, borderWidth: 2.5, borderColor: c.primary },
-    avatarLargeText: { fontSize: 28, fontFamily: "Inter_700Bold", color: c.primary },
-    avatarEditBadge: {
-      position: "absolute", bottom: 0, right: 0,
-      width: 24, height: 24, borderRadius: 12,
-      backgroundColor: c.primary, alignItems: "center", justifyContent: "center",
-      borderWidth: 2, borderColor: c.surface,
+
+    avatarArea: { alignItems: "center", gap: 6 },
+    avatarPressable: { position: "relative", marginBottom: 4 },
+    avatarGradientRing: {
+      width: 90, height: 90, borderRadius: 45,
+      padding: 2.5, alignItems: "center", justifyContent: "center",
     },
-    heroInfo: { flex: 1, minWidth: 0 },
-    nameRow: { flexDirection: "row", alignItems: "center", marginBottom: 4 },
-    displayName: { fontSize: 20, fontFamily: "Inter_700Bold", color: c.text, flexShrink: 1 },
-    emailText: { fontSize: 12, fontFamily: "Inter_400Regular", color: c.textSecondary, marginBottom: 6 },
-    editNameRow: { flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 4 },
+    avatarInner: {
+      width: 85, height: 85, borderRadius: 42.5,
+      alignItems: "center", justifyContent: "center", overflow: "hidden",
+    },
+    avatarPhoto: { width: 85, height: 85, borderRadius: 42.5 },
+    avatarInitials: { fontSize: 32, fontFamily: "Inter_700Bold" },
+    cameraBtn: {
+      position: "absolute", bottom: 2, right: 2,
+      width: 26, height: 26, borderRadius: 13,
+      alignItems: "center", justifyContent: "center",
+      borderWidth: 2, borderColor: c.background,
+    },
+
+    nameRow: { flexDirection: "row", alignItems: "center", gap: 8 },
+    displayName: { fontSize: 22, fontFamily: "Inter_700Bold", flexShrink: 1 },
+    editPencil: { width: 26, height: 26, borderRadius: 8, alignItems: "center", justifyContent: "center" },
+    usernameText: { fontSize: 13, fontFamily: "Inter_500Medium" },
+    emailText: { fontSize: 12, fontFamily: "Inter_400Regular" },
+    editNameRow: { flexDirection: "row", alignItems: "center", gap: 8 },
     nameInput: {
-      flex: 1, fontSize: 15, fontFamily: "Inter_600SemiBold", color: c.text,
-      backgroundColor: c.inputBackground, borderRadius: 10, paddingHorizontal: 12, paddingVertical: 8,
-      borderWidth: 1, borderColor: c.primary,
+      flex: 1, fontSize: 15, fontFamily: "Inter_600SemiBold",
+      borderRadius: 12, paddingHorizontal: 12, paddingVertical: 9,
+      borderWidth: 1,
     },
-    saveNameBtn: { backgroundColor: c.primary, paddingHorizontal: 14, paddingVertical: 8, borderRadius: 10, flexShrink: 0 },
-    saveNameBtnText: { fontSize: 13, fontFamily: "Inter_700Bold", color: c.primaryText },
-    cancelNameBtn: { padding: 6 },
-    usernameHeroText: { fontSize: 13, fontFamily: "Inter_500Medium", color: c.primary, marginBottom: 2 },
-    statsRow: { flexDirection: "row", gap: 10, marginBottom: 12 },
+    saveBtn: { paddingHorizontal: 14, paddingVertical: 9, borderRadius: 12, flexShrink: 0 },
+    saveBtnText: { fontSize: 13, fontFamily: "Inter_700Bold" },
+    cancelBtn: { padding: 6 },
+
+    statsRow: { flexDirection: "row", gap: 10, marginBottom: 14 },
     statCard: {
-      flex: 1, backgroundColor: c.surface, borderRadius: 16, padding: 14,
-      alignItems: "center", borderWidth: 1, borderColor: c.surfaceBorder, gap: 2,
+      flex: 1, borderRadius: 18, padding: 14, alignItems: "center",
+      borderWidth: 1, gap: 4, overflow: "hidden",
     },
+    statGlow: { position: "absolute", top: 0, left: 0, right: 0, height: 38 },
+    statIconWrap: { width: 32, height: 32, borderRadius: 10, alignItems: "center", justifyContent: "center" },
     statValue: { fontSize: 22, fontFamily: "Inter_700Bold" },
-    statLabel: { fontSize: 10, fontFamily: "Inter_400Regular", color: c.textMuted, textAlign: "center" },
+    statLabel: { fontSize: 10, fontFamily: "Inter_400Regular", textAlign: "center" },
+
     likesCard: {
-      backgroundColor: c.surface, borderRadius: 16, padding: 16, marginBottom: 12,
-      borderWidth: 1, borderColor: c.surfaceBorder,
-      flexDirection: "row", alignItems: "center", justifyContent: "space-between",
+      flexDirection: "row", alignItems: "center", gap: 14,
+      borderRadius: 18, padding: 16, marginBottom: 22,
+      borderWidth: 1, overflow: "hidden",
     },
-    likesLeft: { flexDirection: "row", alignItems: "center", gap: 12, flex: 1 },
-    likesIconWrap: {
-      width: 44, height: 44, borderRadius: 12, alignItems: "center", justifyContent: "center",
-      backgroundColor: c.safeDim,
+    likesGlow: { position: "absolute", top: 0, left: 0, bottom: 0, width: 80 },
+    likesIconWrap: { width: 44, height: 44, borderRadius: 14, alignItems: "center", justifyContent: "center" },
+    likesTitle: { fontSize: 14, fontFamily: "Inter_600SemiBold" },
+    likesSub: { fontSize: 12, fontFamily: "Inter_400Regular", marginTop: 1 },
+    likesValue: { fontSize: 28, fontFamily: "Inter_700Bold" },
+
+    sectionLabel: {
+      fontSize: 10, fontFamily: "Inter_700Bold",
+      textTransform: "uppercase", letterSpacing: 1.4,
+      marginBottom: 10, marginTop: 2,
     },
-    likesTitle: { fontSize: 14, fontFamily: "Inter_600SemiBold", color: c.text },
-    likesSub: { fontSize: 12, fontFamily: "Inter_400Regular", color: c.textSecondary },
-    likesValue: { fontSize: 24, fontFamily: "Inter_700Bold", color: c.safe },
-    myQrViewAllBtn: {
-      backgroundColor: c.surface, borderRadius: 16, padding: 16, marginBottom: 12,
-      borderWidth: 1, borderColor: c.surfaceBorder,
-      flexDirection: "row", alignItems: "center", justifyContent: "space-between",
+    linksGroup: { gap: 8, marginBottom: 22 },
+    linkCard: {
+      flexDirection: "row", alignItems: "center", gap: 14,
+      borderRadius: 18, padding: 16, borderWidth: 1,
     },
-    myQrViewAllLeft: { flexDirection: "row", alignItems: "center", gap: 12, flex: 1 },
-    myQrViewAllIcon: {
-      width: 44, height: 44, borderRadius: 12, alignItems: "center", justifyContent: "center",
-      backgroundColor: c.primaryDim,
+    linkIcon: { width: 44, height: 44, borderRadius: 14, alignItems: "center", justifyContent: "center" },
+    linkTitle: { fontSize: 14, fontFamily: "Inter_600SemiBold" },
+    linkSub: { fontSize: 12, fontFamily: "Inter_400Regular", marginTop: 1 },
+    linkChevron: { width: 30, height: 30, borderRadius: 10, alignItems: "center", justifyContent: "center" },
+
+    infoCard: { borderRadius: 18, borderWidth: 1, marginBottom: 22, overflow: "hidden" },
+    infoRow: { flexDirection: "row", alignItems: "center", gap: 14, padding: 16 },
+    infoIconWrap: { width: 38, height: 38, borderRadius: 12, alignItems: "center", justifyContent: "center" },
+    infoLabel: { fontSize: 11, fontFamily: "Inter_400Regular", marginBottom: 2 },
+    infoValue: { fontSize: 14, fontFamily: "Inter_500Medium" },
+    infoEditBtn: { width: 32, height: 32, borderRadius: 10, alignItems: "center", justifyContent: "center" },
+    infoDivider: { height: 1 },
+    verifiedChip: { flexDirection: "row", alignItems: "center", gap: 4, paddingHorizontal: 8, paddingVertical: 4, borderRadius: 100 },
+    verifiedText: { fontSize: 11, fontFamily: "Inter_600SemiBold" },
+
+    signOutBtn: { borderRadius: 18, borderWidth: 1, overflow: "hidden", marginBottom: 8 },
+    signOutGradient: {
+      flexDirection: "row", alignItems: "center", justifyContent: "center",
+      gap: 8, paddingVertical: 16,
     },
-    myQrViewAllTitle: { fontSize: 14, fontFamily: "Inter_600SemiBold", color: c.text },
-    myQrViewAllSub: { fontSize: 12, fontFamily: "Inter_400Regular", color: c.textSecondary },
-    sectionTitle: {
-      fontSize: 13, fontFamily: "Inter_600SemiBold", color: c.textMuted,
-      textTransform: "uppercase", letterSpacing: 0.8, marginBottom: 10, marginTop: 4,
-    },
-    card: {
-      backgroundColor: c.surface, borderRadius: 16, marginBottom: 16,
-      borderWidth: 1, borderColor: c.surfaceBorder, overflow: "hidden",
-    },
-    cardDivider: { height: 1, backgroundColor: c.surfaceBorder },
-    menuRow: { flexDirection: "row", alignItems: "center", gap: 12, padding: 16 },
-    menuIcon: { width: 38, height: 38, borderRadius: 10, alignItems: "center", justifyContent: "center" },
-    menuRowText: { fontSize: 14, fontFamily: "Inter_600SemiBold", color: c.text },
-    menuRowSub: { fontSize: 12, fontFamily: "Inter_400Regular", color: c.textSecondary, marginTop: 1 },
-    infoRow: { flexDirection: "row", alignItems: "center", gap: 12, padding: 16 },
-    infoLabel: { fontSize: 11, fontFamily: "Inter_400Regular", color: c.textMuted, marginBottom: 2 },
-    infoValue: { fontSize: 15, fontFamily: "Inter_500Medium", color: c.text },
-    verifiedBadge: { flexDirection: "row", alignItems: "center", gap: 4 },
-    verifiedText: { fontSize: 12, fontFamily: "Inter_500Medium", color: c.safe },
-    signOutBtn: {
-      flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8,
-      backgroundColor: c.surface, padding: 16, borderRadius: 16, marginBottom: 8,
-      borderWidth: 1, borderColor: c.danger + "40",
-    },
-    signOutText: { fontSize: 15, fontFamily: "Inter_600SemiBold", color: c.danger },
+    signOutText: { fontSize: 15, fontFamily: "Inter_600SemiBold" },
   });
 }
