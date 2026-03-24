@@ -7,6 +7,7 @@ import * as Crypto from "expo-crypto";
 import * as FileSystem from "expo-file-system";
 import * as Sharing from "expo-sharing";
 import * as Print from "expo-print";
+import { captureQrImage } from "@/lib/capture-qr";
 import { useAuth } from "@/contexts/AuthContext";
 import { saveGeneratedQr, saveGuardLink, type QrType } from "@/lib/firestore-service";
 import { getApiUrl } from "@/lib/query-client";
@@ -194,7 +195,7 @@ export function useQrGenerator() {
   }
 
   async function handleShare() {
-    if (!qrValue || !svgRef.current || sharingQr) return;
+    if (!qrValue || sharingQr) return;
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     if (Platform.OS === "web") {
       showToast("Long-press the QR image to save it.", "success");
@@ -202,18 +203,7 @@ export function useQrGenerator() {
     }
     setSharingQr(true);
     try {
-      const dataUrl: string = await new Promise((resolve, reject) => {
-        try {
-          svgRef.current.toDataURL((url: string) => {
-            if (!url) reject(new Error("No image data returned"));
-            else resolve(url);
-          });
-        } catch (e) {
-          reject(e);
-        }
-      });
-      const rawBase64 = dataUrl.includes(",") ? dataUrl.split(",")[1] : dataUrl;
-      if (!rawBase64) throw new Error("Empty image data");
+      const rawBase64 = await captureQrImage(svgRef);
       const fileName = `qrguard_${Date.now()}.png`;
       const dir = FileSystem.cacheDirectory ?? FileSystem.documentDirectory ?? "";
       const fileUri = dir + fileName;
@@ -234,7 +224,7 @@ export function useQrGenerator() {
   }
 
   async function handleDownloadPdf() {
-    if (!qrValue || !svgRef.current || downloadingPdf) return;
+    if (!qrValue || downloadingPdf) return;
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     if (Platform.OS === "web") {
       showToast("PDF download is not supported on web.", "error");
@@ -243,17 +233,8 @@ export function useQrGenerator() {
     setDownloadingPdf(true);
     let pdfUri: string | null = null;
     try {
-      const dataUrl: string = await new Promise((resolve, reject) => {
-        try {
-          svgRef.current.toDataURL((url: string) => {
-            if (!url) reject(new Error("No image data returned"));
-            else resolve(url);
-          });
-        } catch (e) {
-          reject(e);
-        }
-      });
-      const imgSrc = dataUrl.startsWith("data:") ? dataUrl : `data:image/png;base64,${dataUrl}`;
+      const rawBase64 = await captureQrImage(svgRef);
+      const imgSrc = `data:image/png;base64,${rawBase64}`;
       const contentLabel = qrMode === "business" && inputValue.trim()
         ? (inputValue.trim().length > 60 ? inputValue.trim().slice(0, 57) + "…" : inputValue.trim())
         : (qrValue.length > 60 ? qrValue.slice(0, 57) + "…" : qrValue);

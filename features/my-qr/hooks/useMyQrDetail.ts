@@ -5,6 +5,7 @@ import * as Clipboard from "expo-clipboard";
 import * as FileSystem from "expo-file-system";
 import * as Sharing from "expo-sharing";
 import * as Print from "expo-print";
+import { captureQrImage } from "@/lib/capture-qr";
 import { useAuth } from "@/contexts/AuthContext";
 import {
   getUserGeneratedQrs, updateQrDesign, setQrActiveState,
@@ -274,10 +275,6 @@ export function useMyQrDetail(id: string) {
 
   async function handleShare() {
     if (sharingQr) return;
-    if (!svgRef.current || typeof svgRef.current.toDataURL !== "function") {
-      Alert.alert("Not ready", "QR code is still loading. Please wait a moment and try again.");
-      return;
-    }
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     if (Platform.OS === "web") {
       Alert.alert("Not supported", "Sharing is not available on web. Long-press the QR image to save it.");
@@ -285,24 +282,7 @@ export function useMyQrDetail(id: string) {
     }
     setSharingQr(true);
     try {
-      const dataUrl: string = await new Promise((resolve, reject) => {
-        const timer = setTimeout(() => reject(new Error("QR image timed out. Please try again.")), 8000);
-        try {
-          svgRef.current.toDataURL((url: string | null | undefined) => {
-            clearTimeout(timer);
-            if (!url || typeof url !== "string") {
-              reject(new Error("Could not generate QR image. Please try again."));
-            } else {
-              resolve(url);
-            }
-          });
-        } catch (e) {
-          clearTimeout(timer);
-          reject(e);
-        }
-      });
-      const rawBase64 = dataUrl.includes(",") ? dataUrl.split(",")[1] : dataUrl;
-      if (!rawBase64) throw new Error("Could not generate QR image. Please try again.");
+      const rawBase64 = await captureQrImage(svgRef);
       const fileName = `qrguard_${Date.now()}.png`;
       const dir = FileSystem.cacheDirectory ?? FileSystem.documentDirectory ?? "";
       const fileUri = dir + fileName;
@@ -323,7 +303,7 @@ export function useMyQrDetail(id: string) {
   }
 
   async function handleDownloadPdf() {
-    if (!svgRef.current || downloadingPdf) return;
+    if (downloadingPdf) return;
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     if (Platform.OS === "web") {
       Alert.alert("Not supported", "PDF download is not available on web. Long-press the QR image to save it.");
@@ -332,16 +312,8 @@ export function useMyQrDetail(id: string) {
     setDownloadingPdf(true);
     let pdfUri: string | null = null;
     try {
-      const dataUrl: string = await new Promise((resolve, reject) => {
-        try {
-          svgRef.current.toDataURL((url: string) => {
-            if (!url) reject(new Error("No image data returned"));
-            else resolve(url);
-          });
-        } catch (e) {
-          reject(e);
-        }
-      });
+      const rawBase64 = await captureQrImage(svgRef);
+      const dataUrl = rawBase64;
       const imgSrc = dataUrl.startsWith("data:") ? dataUrl : `data:image/png;base64,${dataUrl}`;
       const label = qrItem?.content ? (qrItem.content.length > 60 ? qrItem.content.slice(0, 57) + "…" : qrItem.content) : "QR Code";
       const createdStr = qrItem?.createdAt ? new Date(qrItem.createdAt).toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" }) : "";
