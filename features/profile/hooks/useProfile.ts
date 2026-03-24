@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { Alert } from "react-native";
 import { useFocusEffect, router } from "expo-router";
 import * as ImagePicker from "expo-image-picker";
-import * as Haptics from "expo-haptics";
+import * as Haptics from "@/lib/haptics";
 import { useAuth } from "@/contexts/AuthContext";
 import { authAdapter } from "@/lib/auth";
 import { db } from "@/lib/db";

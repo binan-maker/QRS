@@ -1,7 +1,7 @@
 import { useState, useCallback } from "react";
 import { Alert, Linking } from "react-native";
 import * as Clipboard from "expo-clipboard";
-import * as Haptics from "expo-haptics";
+import * as Haptics from "@/lib/haptics";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTheme } from "@/contexts/ThemeContext";
 import { useQrData, type QrDetail } from "./useQrData";

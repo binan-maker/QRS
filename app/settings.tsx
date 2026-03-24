@@ -1,4 +1,4 @@
-import { View, Text, Pressable, ScrollView, Platform, Alert } from "react-native";
+import { View, Text, Pressable, ScrollView, Platform, Alert, Switch } from "react-native";
 import { router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -34,6 +34,7 @@ export default function SettingsScreen() {
     followingList, followingLoading,
     myComments, commentsLoading,
     deleteConfirmText, setDeleteConfirmText,
+    hapticsEnabled, toggleHaptics,
     handleSignOut, handleClearData,
     handleSubmitFeedback, handleDeleteComment, handleDeleteAccount,
   } = useSettings();
@@ -172,6 +173,27 @@ export default function SettingsScreen() {
               sublabel="Report bugs or suggest features"
               onPress={() => setSection("feedback")}
             />
+          </View>
+        </View>
+
+        <View style={styles.section}>
+          <Text style={styles.sectionLabel}>PREFERENCES</Text>
+          <View style={styles.menuGroup}>
+            <View style={[styles.menuItem, { justifyContent: "space-between" }]}>
+              <View style={{ flexDirection: "row", alignItems: "center", gap: 14, flex: 1 }}>
+                <Ionicons name="phone-portrait-outline" size={22} color={colors.textSecondary} />
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.menuLabel}>Haptic Feedback</Text>
+                  <Text style={styles.menuSublabel}>Vibration on button presses</Text>
+                </View>
+              </View>
+              <Switch
+                value={hapticsEnabled}
+                onValueChange={toggleHaptics}
+                trackColor={{ false: colors.surfaceBorder, true: colors.primary }}
+                thumbColor="#fff"
+              />
+            </View>
           </View>
         </View>
 

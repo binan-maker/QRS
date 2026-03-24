@@ -10,7 +10,7 @@ import { router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useState } from "react";
-import * as Haptics from "expo-haptics";
+import * as Haptics from "@/lib/haptics";
 import { useTheme } from "@/contexts/ThemeContext";
 import { useAuth } from "@/contexts/AuthContext";
 import DeleteAccountModal from "@/features/account/components/DeleteAccountModal";

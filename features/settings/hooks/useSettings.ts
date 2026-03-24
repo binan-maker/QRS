@@ -1,7 +1,8 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Alert } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import * as Haptics from "expo-haptics";
+import * as Haptics from "@/lib/haptics";
+import { setHapticsEnabled } from "@/lib/haptics";
 import { router } from "expo-router";
 import { useAuth } from "@/contexts/AuthContext";
 import { authAdapter } from "@/lib/auth";
@@ -19,6 +20,8 @@ import {
 
 export type Section = "main" | "account" | "guide" | "feedback" | "following" | "comments" | "history";
 
+const HAPTIC_KEY = "haptic_enabled";
+
 export function useSettings() {
   const { user, token, signOut } = useAuth();
   const [section, setSection] = useState<Section>("main");
@@ -33,6 +36,22 @@ export function useSettings() {
   const [myHistory, setMyHistory] = useState<any[]>([]);
   const [historyLoading, setHistoryLoading] = useState(false);
   const [deleteConfirmText, setDeleteConfirmText] = useState("");
+  const [hapticsEnabled, setHapticsEnabledState] = useState(true);
+
+  useEffect(() => {
+    AsyncStorage.getItem(HAPTIC_KEY).then((v) => {
+      const enabled = v !== "false";
+      setHapticsEnabledState(enabled);
+      setHapticsEnabled(enabled);
+    });
+  }, []);
+
+  async function toggleHaptics() {
+    const next = !hapticsEnabled;
+    setHapticsEnabledState(next);
+    setHapticsEnabled(next);
+    await AsyncStorage.setItem(HAPTIC_KEY, String(next));
+  }
 
   async function handleSignOut() {
     Alert.alert("Sign Out", "Are you sure you want to sign out?", [
@@ -296,6 +315,8 @@ export function useSettings() {
     historyLoading,
     deleteConfirmText,
     setDeleteConfirmText,
+    hapticsEnabled,
+    toggleHaptics,
     handleSignOut,
     handleClearData,
     handleSubmitFeedback,

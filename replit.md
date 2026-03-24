@@ -4,6 +4,11 @@ A full-stack mobile-first QR code scanning and management app built with Expo (R
 
 ## Recent Changes
 
+### Comments Reply Bug Fix & Optional Haptic Feedback
+- **Comments reply crash fixed** (`app/qr-detail/[id].tsx`) — `CommentItem` was missing 6 required props (`allComments`, `userLikes`, `commentMenuId`, `deletingCommentId`, `revealedComments`, `userId`) when called from the QR detail screen. Expanding replies caused a crash because child comments tried to access `userLikes[id]` and `revealedComments.has(id)` on `undefined`. All missing props are now passed correctly.
+- **Haptic feedback wrapper** (`lib/haptics.ts`) — new wrapper module that re-exports `expo-haptics` functions but gates them on a module-level `_enabled` flag. All 33+ files that previously imported `expo-haptics` now import from `@/lib/haptics` so the toggle is respected app-wide.
+- **Haptic toggle in Settings** (`app/settings.tsx`, `features/settings/hooks/useSettings.ts`) — new "PREFERENCES" section in Settings page with a "Haptic Feedback" toggle switch. Preference is persisted to AsyncStorage (`haptic_enabled` key) and restored on app startup via `app/_layout.tsx`.
+
 ### Sign-Out & Account Deletion Navigation Fix
 - `features/settings/hooks/useSettings.ts` — after sign-out or account deletion, app now navigates to `/(tabs)/scanner` so users see a clear confirmation that they are logged out. Error handling added for both flows.
 - `features/account/components/DeleteAccountModal.tsx` — same post-deletion navigation added.

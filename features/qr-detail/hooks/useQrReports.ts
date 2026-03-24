@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef } from "react";
 import { router } from "expo-router";
-import * as Haptics from "expo-haptics";
+import * as Haptics from "@/lib/haptics";
 import { useAuth } from "@/contexts/AuthContext";
 import {
   subscribeToQrReports,

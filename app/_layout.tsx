@@ -4,6 +4,8 @@ import { Stack } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import React, { useEffect } from "react";
 import { Platform, View } from "react-native";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { setHapticsEnabled } from "@/lib/haptics";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { KeyboardProvider } from "react-native-keyboard-controller";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
@@ -75,6 +77,12 @@ export default function RootLayout() {
     Inter_600SemiBold,
     Inter_700Bold,
   });
+
+  useEffect(() => {
+    AsyncStorage.getItem("haptic_enabled").then((v) => {
+      if (v !== null) setHapticsEnabled(v !== "false");
+    });
+  }, []);
 
   useEffect(() => {
     if (fontsLoaded || fontError) {

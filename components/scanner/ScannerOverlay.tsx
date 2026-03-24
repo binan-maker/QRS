@@ -1,7 +1,7 @@
 import { View, Text, StyleSheet, Pressable, Animated, Platform } from "react-native";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { router } from "expo-router";
-import * as Haptics from "expo-haptics";
+import * as Haptics from "@/lib/haptics";
 import Colors from "@/constants/colors";
 import { FINDER_SIZE, CORNER_SIZE, CORNER_WIDTH } from "@/hooks/useScanner";
 import { formatFirstName } from "@/lib/utils/formatters";

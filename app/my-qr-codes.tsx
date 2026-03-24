@@ -11,7 +11,7 @@ import {
 import { router } from "expo-router";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import * as Haptics from "expo-haptics";
+import * as Haptics from "@/lib/haptics";
 import Animated, { FadeInDown } from "react-native-reanimated";
 import QRCode from "react-native-qrcode-svg";
 import SkeletonBox from "@/components/ui/SkeletonBox";

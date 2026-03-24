@@ -6,7 +6,7 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { Animated, Easing } from "react-native";
 import { useFocusEffect } from "expo-router";
-import * as Haptics from "expo-haptics";
+import * as Haptics from "@/lib/haptics";
 
 export const FINDER_SIZE = 270;
 export const CORNER_SIZE = 32;

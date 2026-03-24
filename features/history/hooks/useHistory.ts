@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState, useMemo, useRef } from "react";
 import { Alert } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import * as Haptics from "expo-haptics";
+import * as Haptics from "@/lib/haptics";
 import { router } from "expo-router";
 import { useAuth } from "@/contexts/AuthContext";
 import { getUserScansPaginated, getUserFavorites, deleteUserScan } from "@/lib/firestore-service";

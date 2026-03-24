@@ -370,6 +370,12 @@ export default function QrDetailScreen() {
                               descendants={q.getAllDescendants(comment.id)}
                               expandedReplies={q.expandedReplies}
                               visibleRepliesCount={q.visibleRepliesCount}
+                              allComments={q.commentsList}
+                              userLikes={q.userLikes}
+                              commentMenuId={q.commentMenuId}
+                              deletingCommentId={q.deletingCommentId}
+                              revealedComments={q.revealedComments}
+                              userId={user?.id}
                               onLike={q.handleCommentLike}
                               onReply={(c) => {
                                 const rootId = q.getRootCommentId(c.id);

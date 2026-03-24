@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { router } from "expo-router";
-import * as Haptics from "expo-haptics";
+import * as Haptics from "@/lib/haptics";
 import { toggleFavorite } from "@/lib/firestore-service";
 import { invalidateQrCache } from "@/lib/cache/qr-cache";
 

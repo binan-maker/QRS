@@ -3,7 +3,7 @@ import { Animated, Easing, Linking, Platform } from "react-native";
 import { router } from "expo-router";
 import { useFocusEffect } from "expo-router";
 import * as ImagePicker from "expo-image-picker";
-import * as Haptics from "expo-haptics";
+import * as Haptics from "@/lib/haptics";
 import { scanFromURLAsync } from "expo-camera";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { setAnonymousQrContent } from "@/lib/cache/anonymous-session";

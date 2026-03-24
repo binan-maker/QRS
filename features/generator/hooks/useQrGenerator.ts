@@ -1,7 +1,7 @@
 import { useState, useRef } from "react";
 import { Alert, Animated, Platform } from "react-native";
 import * as Clipboard from "expo-clipboard";
-import * as Haptics from "expo-haptics";
+import * as Haptics from "@/lib/haptics";
 import * as ImagePicker from "expo-image-picker";
 import * as Crypto from "expo-crypto";
 import * as FileSystem from "expo-file-system";

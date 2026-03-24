@@ -2,7 +2,7 @@ import React from "react";
 import { View, Text, StyleSheet, Pressable, Platform } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import * as Clipboard from "expo-clipboard";
-import * as Haptics from "expo-haptics";
+import * as Haptics from "@/lib/haptics";
 import type { ParsedPaymentQr } from "@/lib/qr-analysis";
 import { useTheme } from "@/contexts/ThemeContext";
 import PaymentCard from "./PaymentCard";
