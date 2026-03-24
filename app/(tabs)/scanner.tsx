@@ -112,15 +112,32 @@ function ScannerToast({
   );
 }
 
-function CameraUnavailableBanner({ onPickImage }: { onPickImage: () => void }) {
+type CameraErrorType = "unavailable" | "inuse";
+
+function CameraUnavailableBanner({
+  onPickImage,
+  errorType,
+}: {
+  onPickImage: () => void;
+  errorType: CameraErrorType;
+}) {
+  const isInUse = errorType === "inuse";
   return (
     <View style={bannerStyles.container}>
-      <View style={bannerStyles.iconWrap}>
-        <Ionicons name="camera-off-outline" size={40} color="#f59e0b" />
+      <View style={[bannerStyles.iconWrap, isInUse && bannerStyles.iconWrapBlue]}>
+        <Ionicons
+          name={(isInUse ? "camera-outline" : "camera-off-outline") as any}
+          size={40}
+          color={isInUse ? "#00d4ff" : "#f59e0b"}
+        />
       </View>
-      <Text style={bannerStyles.title}>Camera Unavailable</Text>
+      <Text style={[bannerStyles.title, isInUse && bannerStyles.titleBlue]}>
+        {isInUse ? "Camera In Use" : "Camera Unavailable"}
+      </Text>
       <Text style={bannerStyles.subtitle}>
-        The camera hardware could not be accessed. You can still scan QR codes by uploading an image from your gallery.
+        {isInUse
+          ? "Your camera is currently being used by another app. Please close that app and try again, or scan a QR code from your gallery."
+          : "The camera hardware could not be accessed on this device. You can still scan QR codes by uploading an image from your gallery."}
       </Text>
       <Pressable
         onPress={onPickImage}
@@ -136,6 +153,7 @@ function CameraUnavailableBanner({ onPickImage }: { onPickImage: () => void }) {
 export default function ScannerScreen() {
   const [permission, requestPermission] = useCameraPermissions();
   const [cameraAvailable, setCameraAvailable] = useState(true);
+  const [cameraErrorType, setCameraErrorType] = useState<CameraErrorType>("unavailable");
   const insets = useSafeAreaInsets();
   const { colors } = useTheme();
   const topInset = Platform.OS === "web" ? 67 : insets.top;
@@ -204,7 +222,7 @@ export default function ScannerScreen() {
 
       {/* Camera wrapped in error boundary — shows fallback if hardware fails */}
       {cameraAvailable ? (
-        <CameraErrorBoundary onError={() => setCameraAvailable(false)}>
+        <CameraErrorBoundary onError={() => { setCameraErrorType("unavailable"); setCameraAvailable(false); }}>
           <CameraView
             style={StyleSheet.absoluteFillObject}
             facing={facing}
@@ -212,6 +230,18 @@ export default function ScannerScreen() {
             zoom={zoom}
             barcodeScannerSettings={{ barcodeTypes: ["qr"] }}
             onBarcodeScanned={scanned ? undefined : handleBarCodeScanned}
+            onMountError={(error) => {
+              const msg = (error?.message ?? "").toLowerCase();
+              const isInUse =
+                msg.includes("in use") ||
+                msg.includes("busy") ||
+                msg.includes("already") ||
+                msg.includes("another app") ||
+                msg.includes("unavailable") ||
+                msg.includes("restricted");
+              setCameraErrorType(isInUse ? "inuse" : "unavailable");
+              setCameraAvailable(false);
+            }}
           />
         </CameraErrorBoundary>
       ) : (
@@ -225,7 +255,7 @@ export default function ScannerScreen() {
             </Pressable>
           </View>
           <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
-            <CameraUnavailableBanner onPickImage={handlePickImage} />
+            <CameraUnavailableBanner onPickImage={handlePickImage} errorType={cameraErrorType} />
           </View>
         </View>
       )}
@@ -448,11 +478,18 @@ const bannerStyles = StyleSheet.create({
     justifyContent: "center",
     marginBottom: 4,
   },
+  iconWrapBlue: {
+    backgroundColor: "rgba(0,212,255,0.12)",
+    borderColor: "rgba(0,212,255,0.3)",
+  },
   title: {
     fontSize: 20,
     fontFamily: "Inter_700Bold",
     color: "#f59e0b",
     textAlign: "center",
+  },
+  titleBlue: {
+    color: "#00d4ff",
   },
   subtitle: {
     fontSize: 14,
