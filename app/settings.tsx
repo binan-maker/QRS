@@ -2,6 +2,7 @@ import { View, Text, Pressable, ScrollView, Platform, Alert, Switch } from "reac
 import { router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { LinearGradient } from "expo-linear-gradient";
 import { useTheme } from "@/contexts/ThemeContext";
 import { useSettings } from "@/hooks/useSettings";
 import { makeSettingsStyles } from "@/features/settings/styles";
@@ -13,9 +14,9 @@ import FollowingSection from "@/features/settings/components/FollowingSection";
 import CommentsSection from "@/features/settings/components/CommentsSection";
 
 const SECTION_TITLES: Record<string, string> = {
-  account: "Account Management",
+  account: "Account",
   guide: "How It Works",
-  feedback: "Send Feedback",
+  feedback: "Feedback",
   following: "Following",
   comments: "My Comments",
 };
@@ -44,7 +45,7 @@ export default function SettingsScreen() {
       <View style={[styles.container, { paddingTop: topInset }]}>
         <View style={styles.navBar}>
           <Pressable onPress={() => setSection("main")} style={styles.navBackBtn}>
-            <Ionicons name="chevron-back" size={24} color={colors.text} />
+            <Ionicons name="chevron-back" size={22} color={colors.text} />
           </Pressable>
           <Text style={styles.navTitle}>{SECTION_TITLES[section] ?? "Settings"}</Text>
           <View style={{ width: 40 }} />
@@ -92,35 +93,73 @@ export default function SettingsScreen() {
           onPress={() => router.canGoBack() ? router.back() : router.replace("/(tabs)/profile" as any)}
           style={styles.navBackBtn}
         >
-          <Ionicons name="chevron-back" size={24} color={colors.text} />
+          <Ionicons name="chevron-back" size={22} color={colors.text} />
         </Pressable>
         <Text style={styles.navTitle}>Settings</Text>
         <View style={{ width: 40 }} />
       </View>
 
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
-        <View style={styles.section}>
-          <Text style={styles.sectionLabel}>ACCOUNT</Text>
-          {user ? (
-            <View style={styles.menuGroup}>
-              <View style={styles.accountCard}>
-                <View style={styles.accountAvatar}>
-                  <Text style={styles.accountAvatarText}>{user.displayName.charAt(0).toUpperCase()}</Text>
-                </View>
-                <View style={{ flex: 1 }}>
-                  <Text style={styles.accountName}>{user.displayName}</Text>
-                  <Text style={styles.accountEmail}>{user.email}</Text>
-                </View>
-                <Ionicons name="checkmark-circle" size={20} color={colors.safe} />
+
+        {/* User Profile Card */}
+        {user ? (
+          <View style={[styles.profileCard, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
+            <LinearGradient
+              colors={colors.isDark ? ["#00E5FF", "#006FFF", "#B060FF"] : ["#006FFF", "#0047CC", "#7C3AED"]}
+              style={styles.profileAvatarRing}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+            >
+              <View style={[styles.profileAvatarInner, { backgroundColor: colors.surface }]}>
+                <Text style={[styles.profileAvatarText, { color: colors.primary }]}>
+                  {user.displayName.charAt(0).toUpperCase()}
+                </Text>
               </View>
-              <View style={styles.divider} />
+            </LinearGradient>
+            <View style={{ flex: 1 }}>
+              <Text style={[styles.profileName, { color: colors.text }]}>{user.displayName}</Text>
+              <Text style={[styles.profileEmail, { color: colors.textSecondary }]}>{user.email}</Text>
+            </View>
+            <View style={[styles.verifiedBadge, { backgroundColor: colors.safeDim, borderColor: colors.safe + "40" }]}>
+              <Ionicons name="checkmark-circle" size={14} color={colors.safe} />
+              <Text style={[styles.verifiedText, { color: colors.safe }]}>Active</Text>
+            </View>
+          </View>
+        ) : (
+          <Pressable
+            onPress={() => router.push("/(auth)/login")}
+            style={({ pressed }) => [styles.signInCard, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder, opacity: pressed ? 0.9 : 1 }]}
+          >
+            <LinearGradient
+              colors={colors.isDark ? ["#00E5FF", "#006FFF"] : ["#006FFF", "#0047CC"]}
+              style={styles.signInIconWrap}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+            >
+              <Ionicons name="person-outline" size={22} color="#fff" />
+            </LinearGradient>
+            <View style={{ flex: 1 }}>
+              <Text style={[styles.signInTitle, { color: colors.text }]}>Sign in to your account</Text>
+              <Text style={[styles.signInSub, { color: colors.textSecondary }]}>Access full features — report, sync, comment</Text>
+            </View>
+            <View style={[styles.signInChevron, { backgroundColor: colors.primaryDim }]}>
+              <Ionicons name="chevron-forward" size={16} color={colors.primary} />
+            </View>
+          </Pressable>
+        )}
+
+        {/* Account Section */}
+        {user && (
+          <View style={styles.section}>
+            <Text style={[styles.sectionLabel, { color: colors.textMuted }]}>ACCOUNT</Text>
+            <View style={[styles.menuGroup, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
               <SettingsMenuItem
                 icon="person-outline"
                 label="Account Management"
-                sublabel="Delete account, manage comments"
+                sublabel="Delete account, manage data"
                 onPress={() => setSection("account")}
               />
-              <View style={styles.divider} />
+              <View style={[styles.divider, { backgroundColor: colors.surfaceBorder }]} />
               <SettingsMenuItem
                 icon="heart-outline"
                 label="Following"
@@ -128,45 +167,32 @@ export default function SettingsScreen() {
                 onPress={() => setSection("following")}
               />
             </View>
-          ) : (
-            <Pressable
-              onPress={() => router.push("/(auth)/login")}
-              style={({ pressed }) => [styles.signInCard, { opacity: pressed ? 0.9 : 1 }]}
-            >
-              <View style={styles.signInIcon}>
-                <Ionicons name="person-outline" size={24} color={colors.primary} />
-              </View>
-              <View style={{ flex: 1 }}>
-                <Text style={styles.signInTitle}>Sign in to your account</Text>
-                <Text style={styles.signInSub}>Access full features — comment, report, sync history</Text>
-              </View>
-              <Ionicons name="chevron-forward" size={20} color={colors.textMuted} />
-            </Pressable>
-          )}
-        </View>
+          </View>
+        )}
 
+        {/* Help Section */}
         <View style={styles.section}>
-          <Text style={styles.sectionLabel}>HELP & INFORMATION</Text>
-          <View style={styles.menuGroup}>
+          <Text style={[styles.sectionLabel, { color: colors.textMuted }]}>HELP & SUPPORT</Text>
+          <View style={[styles.menuGroup, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
             <SettingsMenuItem
               icon="book-outline"
-              label="Manual Guide"
+              label="User Guide"
               sublabel="Step-by-step usage guide"
               onPress={() => setSection("guide")}
             />
-            <View style={styles.divider} />
+            <View style={[styles.divider, { backgroundColor: colors.surfaceBorder }]} />
             <SettingsMenuItem
               icon="shield-checkmark-outline"
-              label="About Trust Scores"
+              label="Trust Scores Explained"
               sublabel="How safety ratings are calculated"
               onPress={() =>
                 Alert.alert(
                   "Trust Scores",
-                  "Trust scores are calculated using community reports weighted by confidence. A QR code with more reporters gets a more accurate score. Single-reporter codes show 'Likely Safe' or 'Uncertain' rather than 100% scores."
+                  "Trust scores are calculated using community reports weighted by account confidence. More reporters = more accurate score. Single-reporter codes show 'Likely Safe' or 'Uncertain'."
                 )
               }
             />
-            <View style={styles.divider} />
+            <View style={[styles.divider, { backgroundColor: colors.surfaceBorder }]} />
             <SettingsMenuItem
               icon="chatbubble-outline"
               label="Send Feedback"
@@ -176,30 +202,34 @@ export default function SettingsScreen() {
           </View>
         </View>
 
+        {/* Preferences Section */}
         <View style={styles.section}>
-          <Text style={styles.sectionLabel}>PREFERENCES</Text>
-          <View style={styles.menuGroup}>
+          <Text style={[styles.sectionLabel, { color: colors.textMuted }]}>PREFERENCES</Text>
+          <View style={[styles.menuGroup, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
             <View style={[styles.menuItem, { justifyContent: "space-between" }]}>
               <View style={{ flexDirection: "row", alignItems: "center", gap: 14, flex: 1 }}>
-                <Ionicons name="phone-portrait-outline" size={22} color={colors.textSecondary} />
+                <View style={[styles.menuIconWrap, { backgroundColor: colors.surfaceLight }]}>
+                  <Ionicons name="phone-portrait-outline" size={18} color={colors.textSecondary} />
+                </View>
                 <View style={{ flex: 1 }}>
-                  <Text style={styles.menuLabel}>Haptic Feedback</Text>
-                  <Text style={styles.menuSublabel}>Vibration on button presses</Text>
+                  <Text style={[styles.menuLabel, { color: colors.text }]}>Haptic Feedback</Text>
+                  <Text style={[styles.menuSublabel, { color: colors.textMuted }]}>Vibration on interactions</Text>
                 </View>
               </View>
               <Switch
                 value={hapticsEnabled}
                 onValueChange={toggleHaptics}
-                trackColor={{ false: colors.surfaceBorder, true: colors.primary }}
-                thumbColor="#fff"
+                trackColor={{ false: colors.surfaceBorder, true: colors.primary + "90" }}
+                thumbColor={hapticsEnabled ? colors.primary : colors.textMuted}
               />
             </View>
           </View>
         </View>
 
+        {/* Data Section */}
         <View style={styles.section}>
-          <Text style={styles.sectionLabel}>DATA</Text>
-          <View style={styles.menuGroup}>
+          <Text style={[styles.sectionLabel, { color: colors.textMuted }]}>DATA</Text>
+          <View style={[styles.menuGroup, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
             <SettingsMenuItem
               icon="trash-outline"
               label="Clear Local Data"
@@ -210,24 +240,31 @@ export default function SettingsScreen() {
           </View>
         </View>
 
+        {/* Sign Out */}
         {user && (
-          <View style={styles.section}>
-            <Pressable
-              onPress={handleSignOut}
-              style={({ pressed }) => [styles.signOutBtn, { opacity: pressed ? 0.8 : 1 }]}
-            >
-              <Ionicons name="log-out-outline" size={20} color={colors.danger} />
-              <Text style={styles.signOutText}>Sign Out</Text>
-            </Pressable>
-          </View>
+          <Pressable
+            onPress={handleSignOut}
+            style={({ pressed }) => [styles.signOutBtn, { backgroundColor: colors.dangerDim, borderColor: colors.danger + "25", opacity: pressed ? 0.8 : 1 }]}
+          >
+            <Ionicons name="log-out-outline" size={20} color={colors.danger} />
+            <Text style={[styles.signOutText, { color: colors.danger }]}>Sign Out</Text>
+          </Pressable>
         )}
 
+        {/* Footer */}
         <View style={styles.footer}>
-          <Text style={styles.footerText}>QR Guard v1.0.0</Text>
-          <Text style={styles.footerSubtext}>Scan smart. Stay safe.</Text>
+          <LinearGradient
+            colors={colors.isDark ? ["#00E5FF", "#B060FF"] : ["#006FFF", "#7C3AED"]}
+            style={styles.footerBadge}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+          >
+            <Text style={styles.footerBadgeText}>QR Guard</Text>
+          </LinearGradient>
+          <Text style={[styles.footerVersion, { color: colors.textMuted }]}>v1.0.0 · Scan smart. Stay safe.</Text>
         </View>
 
-        <View style={{ height: Platform.OS === "web" ? 34 : insets.bottom + 20 }} />
+        <View style={{ height: Platform.OS === "web" ? 34 : insets.bottom + 24 }} />
       </ScrollView>
     </View>
   );

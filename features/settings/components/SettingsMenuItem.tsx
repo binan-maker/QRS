@@ -21,14 +21,20 @@ export default function SettingsMenuItem({ icon, label, sublabel, onPress, dange
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
         onPress();
       }}
-      style={({ pressed }) => [styles.menuItem, { opacity: pressed ? 0.7 : 1 }]}
+      style={({ pressed }) => [styles.menuItem, { opacity: pressed ? 0.75 : 1 }]}
     >
-      <Ionicons name={icon as any} size={22} color={danger ? colors.danger : colors.textSecondary} />
+      <View style={[styles.menuIconWrap, {
+        backgroundColor: danger ? colors.dangerDim : colors.surfaceLight,
+      }]}>
+        <Ionicons name={icon as any} size={18} color={danger ? colors.danger : colors.textSecondary} />
+      </View>
       <View style={{ flex: 1 }}>
-        <Text style={[styles.menuLabel, danger && { color: colors.danger }]}>{label}</Text>
+        <Text style={[styles.menuLabel, { color: danger ? colors.danger : colors.text }]}>{label}</Text>
         {sublabel ? <Text style={styles.menuSublabel}>{sublabel}</Text> : null}
       </View>
-      <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
+      <View style={[styles.menuIconWrap, { backgroundColor: colors.surfaceLight, width: 28, height: 28, borderRadius: 14 }]}>
+        <Ionicons name="chevron-forward" size={14} color={colors.textMuted} />
+      </View>
     </Pressable>
   );
 }

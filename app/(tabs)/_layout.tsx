@@ -2,7 +2,7 @@ import { isLiquidGlassAvailable } from "expo-glass-effect";
 import { Tabs, router } from "expo-router";
 import { NativeTabs, Icon, Label } from "expo-router/unstable-native-tabs";
 import { BlurView } from "expo-blur";
-import { Platform, StyleSheet, View, Pressable } from "react-native";
+import { Platform, StyleSheet, View, Pressable, Text } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { MaterialCommunityIcons, Ionicons } from "@expo/vector-icons";
 import React, { useState, useEffect } from "react";
@@ -10,7 +10,7 @@ import { useTheme } from "@/contexts/ThemeContext";
 import * as Haptics from "@/lib/haptics";
 import { useAuth } from "@/contexts/AuthContext";
 import { subscribeToNotificationCount } from "@/lib/firestore-service";
-import { shadow } from "@/lib/utils/platform";
+import { LinearGradient } from "expo-linear-gradient";
 
 function ScanTabButton({ onPress }: { onPress?: () => void }) {
   const { colors } = useTheme();
@@ -24,13 +24,16 @@ function ScanTabButton({ onPress }: { onPress?: () => void }) {
       accessibilityLabel="Scan"
       accessibilityRole="button"
     >
-      <View style={[styles.scanTabBtnInner, {
-        backgroundColor: colors.primary,
-        borderColor: colors.background,
-        ...shadow(14, colors.primary, 0.5, 0, 6, 12),
-      }]}>
-        <MaterialCommunityIcons name="qrcode-scan" size={28} color={colors.primaryText} />
-      </View>
+      <LinearGradient
+        colors={colors.isDark ? ["#00E5FF", "#006FFF"] : ["#006FFF", "#0047CC"]}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={[styles.scanTabBtnInner, {
+          borderColor: colors.background,
+        }]}
+      >
+        <MaterialCommunityIcons name="qrcode-scan" size={26} color="#fff" />
+      </LinearGradient>
     </Pressable>
   );
 }
@@ -85,7 +88,7 @@ function ClassicTabLayout() {
   const notifCount = useNotificationCount();
   const { colors } = useTheme();
 
-  const tabBarHeight = isWeb ? 84 : 60 + insets.bottom;
+  const tabBarHeight = isWeb ? 80 : 62 + insets.bottom;
 
   return (
     <Tabs
@@ -93,28 +96,52 @@ function ClassicTabLayout() {
       screenOptions={{
         headerShown: false,
         tabBarActiveTintColor: colors.primary,
-        tabBarInactiveTintColor: colors.textMuted,
+        tabBarInactiveTintColor: colors.isDark ? "#3D5A70" : "#9BB3CC",
         tabBarStyle: {
           position: "absolute",
-          backgroundColor: isIOS ? "transparent" : colors.surface,
-          borderTopWidth: 1,
-          borderTopColor: colors.surfaceBorder,
+          backgroundColor: "transparent",
+          borderTopWidth: 0,
           elevation: 0,
           height: tabBarHeight,
           paddingBottom: insets.bottom,
-          paddingTop: 6,
+          paddingTop: 0,
           overflow: "visible",
+          marginHorizontal: 12,
+          marginBottom: 8,
         },
         tabBarBackground: () =>
           isIOS ? (
-            <BlurView intensity={100} tint={colors.isDark ? "dark" : "light"} style={StyleSheet.absoluteFill} />
+            <BlurView
+              intensity={90}
+              tint={colors.isDark ? "dark" : "light"}
+              style={[StyleSheet.absoluteFill, {
+                borderRadius: 28,
+                overflow: "hidden",
+                borderWidth: 1,
+                borderColor: colors.isDark ? "rgba(255,255,255,0.07)" : "rgba(0,0,0,0.06)",
+              }]}
+            />
           ) : (
-            <View style={[StyleSheet.absoluteFill, { backgroundColor: colors.surface }]} />
+            <View style={[StyleSheet.absoluteFill, {
+              backgroundColor: colors.isDark ? "rgba(12,21,38,0.97)" : "rgba(255,255,255,0.97)",
+              borderRadius: 28,
+              borderWidth: 1,
+              borderColor: colors.isDark ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.06)",
+              shadowColor: "#000",
+              shadowOffset: { width: 0, height: -4 },
+              shadowOpacity: 0.18,
+              shadowRadius: 20,
+              elevation: 20,
+            }]} />
           ),
         tabBarLabelStyle: {
-          fontFamily: "Inter_500Medium",
-          fontSize: 11,
-          marginBottom: 2,
+          fontFamily: "Inter_600SemiBold",
+          fontSize: 10,
+          marginBottom: 4,
+          letterSpacing: 0.2,
+        },
+        tabBarItemStyle: {
+          paddingTop: 8,
         },
       }}
     >
@@ -125,7 +152,7 @@ function ClassicTabLayout() {
           tabBarBadge: notifCount > 0 ? notifCount : undefined,
           tabBarBadgeStyle: {
             backgroundColor: colors.primary,
-            color: colors.primaryText,
+            color: colors.isDark ? "#000" : "#fff",
             fontSize: 10,
             fontFamily: "Inter_700Bold",
             minWidth: 16,
@@ -133,7 +160,9 @@ function ClassicTabLayout() {
             borderRadius: 8,
           },
           tabBarIcon: ({ color, focused }) => (
-            <Ionicons name={focused ? "home" : "home-outline"} size={24} color={color} />
+            <View style={focused ? [styles.activeIconWrap, { backgroundColor: color + "18" }] : styles.iconWrap}>
+              <Ionicons name={focused ? "home" : "home-outline"} size={22} color={color} />
+            </View>
           ),
         }}
       />
@@ -142,7 +171,9 @@ function ClassicTabLayout() {
         options={{
           title: "Generate",
           tabBarIcon: ({ color, focused }) => (
-            <MaterialCommunityIcons name={focused ? "qrcode-edit" : "qrcode"} size={24} color={color} />
+            <View style={focused ? [styles.activeIconWrap, { backgroundColor: color + "18" }] : styles.iconWrap}>
+              <MaterialCommunityIcons name={focused ? "qrcode-edit" : "qrcode"} size={22} color={color} />
+            </View>
           ),
         }}
       />
@@ -161,7 +192,9 @@ function ClassicTabLayout() {
         options={{
           title: "History",
           tabBarIcon: ({ color, focused }) => (
-            <Ionicons name={focused ? "time" : "time-outline"} size={24} color={color} />
+            <View style={focused ? [styles.activeIconWrap, { backgroundColor: color + "18" }] : styles.iconWrap}>
+              <Ionicons name={focused ? "time" : "time-outline"} size={22} color={color} />
+            </View>
           ),
         }}
       />
@@ -170,7 +203,9 @@ function ClassicTabLayout() {
         options={{
           title: "Profile",
           tabBarIcon: ({ color, focused }) => (
-            <Ionicons name={focused ? "person" : "person-outline"} size={24} color={color} />
+            <View style={focused ? [styles.activeIconWrap, { backgroundColor: color + "18" }] : styles.iconWrap}>
+              <Ionicons name={focused ? "person" : "person-outline"} size={22} color={color} />
+            </View>
           ),
         }}
       />
@@ -197,14 +232,33 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: "center",
     justifyContent: "center",
-    marginTop: -28,
+    marginTop: -22,
   },
   scanTabBtnInner: {
-    width: 68,
-    height: 68,
-    borderRadius: 34,
+    width: 60,
+    height: 60,
+    borderRadius: 30,
     alignItems: "center",
     justifyContent: "center",
-    borderWidth: 4,
+    borderWidth: 3,
+    shadowColor: "#00E5FF",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.5,
+    shadowRadius: 12,
+    elevation: 12,
+  },
+  iconWrap: {
+    width: 36,
+    height: 28,
+    alignItems: "center",
+    justifyContent: "center",
+    borderRadius: 10,
+  },
+  activeIconWrap: {
+    width: 40,
+    height: 28,
+    alignItems: "center",
+    justifyContent: "center",
+    borderRadius: 10,
   },
 });
