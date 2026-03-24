@@ -175,9 +175,9 @@ export default function QrDetailScreen() {
             {/* ── Legal Disclaimer Banner ──────────────────────────────────── */}
             <Animated.View entering={FadeIn.duration(200)}>
               <View style={disclaimerStyles.banner}>
-                <Ionicons name="information-circle-outline" size={15} color={colors.textMuted} style={{ marginTop: 1 }} />
+                <Ionicons name="shield-outline" size={13} color={colors.textMuted} />
                 <Text style={[disclaimerStyles.text, { color: colors.textMuted }]}>
-                  QR Guard may make mistakes. We are not responsible for any links, content, or transactions associated with QR codes scanned in this app.
+                  Advisory only · verify before acting
                 </Text>
               </View>
             </Animated.View>
@@ -505,16 +505,19 @@ const offlineBannerStyles = StyleSheet.create({
 const disclaimerStyles = StyleSheet.create({
   banner: {
     flexDirection: "row",
-    alignItems: "flex-start",
-    gap: 6,
-    paddingHorizontal: 4,
+    alignItems: "center",
+    gap: 5,
+    alignSelf: "flex-start",
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 20,
     marginBottom: 14,
+    opacity: 0.7,
   },
   text: {
-    flex: 1,
-    fontSize: 12,
+    fontSize: 11,
     fontFamily: "Inter_400Regular",
-    lineHeight: 17,
+    letterSpacing: 0.2,
   },
 });
 

@@ -113,17 +113,22 @@ export function useQrData(id: string, userId: string | null) {
               contentType: detail.qrCode.contentType,
             }));
           } catch {}
-          let ownerData: any = null;
-          try {
-            const owner = await getQrOwnerInfo(id);
-            if (owner) {
-              setOwnerInfo(owner);
-              setIsQrOwner(userId === owner.ownerId);
-              ownerData = owner;
-            }
-          } catch {}
-          await setCachedQrDetail(id, userId, { ...detail, ownerInfo: ownerData });
           setLoading(false);
+          // Fetch owner info in background — don't block the page render
+          (async () => {
+            let ownerData: any = null;
+            try {
+              const owner = await getQrOwnerInfo(id);
+              if (owner) {
+                setOwnerInfo(owner);
+                setIsQrOwner(userId === owner.ownerId);
+                ownerData = owner;
+              }
+            } catch {}
+            try {
+              await setCachedQrDetail(id, userId, { ...detail, ownerInfo: ownerData });
+            } catch {}
+          })();
           return;
         } catch (err: any) {
           console.warn(`[qrData] Firestore fetch attempt ${attempt + 1}/3 failed: code=${err?.code} message=${err?.message} ${String(err)}`);

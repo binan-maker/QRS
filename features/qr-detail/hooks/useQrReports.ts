@@ -6,6 +6,7 @@ import {
   subscribeToQrReports,
   reportQrCode,
   calculateTrustScore,
+  getUserQrReport,
 } from "@/lib/firestore-service";
 import { invalidateQrCache } from "@/lib/cache/qr-cache";
 import { db } from "@/lib/db";
@@ -33,6 +34,15 @@ export function useQrReports(id: string, userId: string | null, offlineMode: boo
   useEffect(() => {
     latestCollusion.current = collusionFlags;
   }, [collusionFlags]);
+
+  // Load the user's existing report from Firestore on mount so the
+  // selected card is highlighted immediately and toggle works correctly.
+  useEffect(() => {
+    if (!userId || offlineMode) return;
+    getUserQrReport(id, userId)
+      .then((report) => setUserReport(report))
+      .catch(() => {});
+  }, [id, userId, offlineMode]);
 
   useEffect(() => {
     if (offlineMode) return;

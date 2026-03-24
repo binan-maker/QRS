@@ -23,14 +23,26 @@ export default function ReportGrid({ reportCounts, userReport, isLoggedIn, onRep
 
   return (
     <View>
-      <Text style={styles.sectionTitle}>Report This QR</Text>
-      <Text style={styles.sectionSubtext}>
-        {isLoggedIn ? "Tap to submit your report" : "Sign in to report this QR code"}
-      </Text>
+      <View style={styles.headerRow}>
+        <Text style={styles.sectionTitle}>Report This QR</Text>
+        {userReport && (
+          <View style={styles.votedBadge}>
+            <Ionicons name="checkmark-circle" size={13} color={colors.safe} />
+            <Text style={[styles.votedBadgeText, { color: colors.safe }]}>Voted · tap to change or undo</Text>
+          </View>
+        )}
+      </View>
+      {!userReport && (
+        <Text style={styles.sectionSubtext}>
+          {isLoggedIn ? "Tap a card to submit your report" : "Sign in to report this QR code"}
+        </Text>
+      )}
       <View style={styles.grid}>
         {REPORT_TYPES.map((rt) => {
           const count = reportCounts[rt.key] || 0;
           const isSelected = userReport === rt.key;
+          const iconColor = isSelected ? rt.color : colors.textMuted;
+          const labelColor = isSelected ? rt.color : colors.textSecondary;
           return (
             <Pressable
               key={rt.key}
@@ -40,14 +52,20 @@ export default function ReportGrid({ reportCounts, userReport, isLoggedIn, onRep
                 {
                   borderColor: isSelected ? rt.color : colors.surfaceBorder,
                   backgroundColor: isSelected ? rt.bg : colors.surface,
-                  opacity: pressed ? 0.8 : 1,
+                  opacity: pressed ? 0.75 : 1,
                 },
               ]}
             >
-              <Ionicons name={rt.icon as any} size={24} color={rt.color} />
-              <Text style={[styles.label, { color: rt.color }]}>{rt.label}</Text>
-              <Text style={styles.count}>{formatCompactNumber(count)}</Text>
-              {isSelected && <View style={[styles.dot, { backgroundColor: rt.color }]} />}
+              {isSelected && (
+                <View style={[styles.checkBadge, { backgroundColor: rt.color }]}>
+                  <Ionicons name="checkmark" size={10} color="#fff" />
+                </View>
+              )}
+              <Ionicons name={rt.icon as any} size={24} color={iconColor} />
+              <Text style={[styles.label, { color: labelColor }]}>{rt.label}</Text>
+              <Text style={[styles.count, isSelected && { color: rt.color, fontFamily: "Inter_600SemiBold" }]}>
+                {count > 0 ? formatCompactNumber(count) : "0"}
+              </Text>
             </Pressable>
           );
         })}
@@ -58,15 +76,22 @@ export default function ReportGrid({ reportCounts, userReport, isLoggedIn, onRep
 
 function makeStyles(c: ReturnType<typeof import("@/contexts/ThemeContext").useTheme>["colors"]) {
   return StyleSheet.create({
-    sectionTitle: { fontSize: 17, fontFamily: "Inter_700Bold", color: c.text, marginBottom: 4 },
+    headerRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 4 },
+    sectionTitle: { fontSize: 17, fontFamily: "Inter_700Bold", color: c.text },
     sectionSubtext: { fontSize: 13, fontFamily: "Inter_400Regular", color: c.textSecondary, marginBottom: 12 },
-    grid: { flexDirection: "row", flexWrap: "wrap", gap: 10, marginBottom: 16 },
+    votedBadge: { flexDirection: "row", alignItems: "center", gap: 4 },
+    votedBadgeText: { fontSize: 11, fontFamily: "Inter_400Regular" },
+    grid: { flexDirection: "row", flexWrap: "wrap", gap: 10, marginBottom: 16, marginTop: 12 },
     card: {
       width: "47%", borderRadius: 14, padding: 14, alignItems: "center",
       gap: 6, borderWidth: 1.5, position: "relative",
     },
+    checkBadge: {
+      position: "absolute", top: 8, right: 8,
+      width: 18, height: 18, borderRadius: 9,
+      alignItems: "center", justifyContent: "center",
+    },
     label: { fontSize: 13, fontFamily: "Inter_600SemiBold" },
     count: { fontSize: 12, fontFamily: "Inter_400Regular", color: c.textMuted },
-    dot: { position: "absolute", top: 8, right: 8, width: 8, height: 8, borderRadius: 4 },
   });
 }
