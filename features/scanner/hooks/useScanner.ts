@@ -1,5 +1,5 @@
 import { useState, useRef, useCallback, useEffect } from "react";
-import { Alert, Animated, Easing, Linking } from "react-native";
+import { Animated, Easing, Linking } from "react-native";
 import { router } from "expo-router";
 import { useFocusEffect } from "expo-router";
 import * as ImagePicker from "expo-image-picker";
@@ -89,6 +89,8 @@ export function useScanner() {
   const [livingShieldLoading, setLivingShieldLoading] = useState(false);
 
   const [galleryErrorMsg, setGalleryErrorMsg] = useState<string | null>(null);
+  const [scannerMsg, setScannerMsg] = useState<string | null>(null);
+  const [scannerMsgType, setScannerMsgType] = useState<"error" | "warning" | "info">("error");
 
   const scanLockRef = useRef(false);
   const canScanRef = useRef(false);
@@ -245,18 +247,11 @@ export function useScanner() {
       await navigateToQrDetail(qrId);
     } catch (e: any) {
       setProcessing(false);
-      Alert.alert("Scan Failed", e.message || "Could not process QR code.", [
-        {
-          text: "OK",
-          onPress: () => {
-            setScanned(false);
-            setProcessing(false);
-            setScanSuccess(false);
-            scanLockRef.current = false;
-            canScanRef.current = true;
-          },
-        },
-      ]);
+      setScanned(false);
+      setScanSuccess(false);
+      scanLockRef.current = false;
+      canScanRef.current = true;
+      showScannerMsg(e.message || "Could not process QR code. Please try again.", "error");
     }
   }
 
@@ -444,13 +439,18 @@ export function useScanner() {
     setGalleryErrorMsg(null);
   }
 
+  function showScannerMsg(msg: string, type: "error" | "warning" | "info" = "error") {
+    setScannerMsg(msg);
+    setScannerMsgType(type);
+  }
+
+  function dismissScannerMsg() {
+    setScannerMsg(null);
+  }
+
   async function handlePickImage() {
     if (!token) {
-      Alert.alert(
-        "Sign In Required",
-        "Please sign in to scan QR codes from your gallery.",
-        [{ text: "OK" }]
-      );
+      showScannerMsg("Sign in to scan QR codes from your gallery.", "info");
       return;
     }
     try {
@@ -553,6 +553,9 @@ export function useScanner() {
     scanLineAnim,
     galleryErrorMsg,
     dismissGalleryError,
+    scannerMsg,
+    scannerMsgType,
+    dismissScannerMsg,
     handleBarCodeScanned,
     handlePickImage,
     cycleZoom,
