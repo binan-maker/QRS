@@ -1,4 +1,4 @@
-import { View, Text, Pressable, ScrollView, Platform, Alert } from "react-native";
+import { View, Text, Pressable, ScrollView, Platform, Alert, Switch } from "react-native";
 import { router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -47,6 +47,7 @@ export default function SettingsScreen() {
     myComments, commentsLoading,
     myHistory, historyLoading,
     deleteConfirmText, setDeleteConfirmText,
+    hapticsEnabled, toggleHaptics,
     handleSignOut, handleClearData,
     handleSubmitFeedback,
     handleDeleteComment, handleDeleteAllComments,
@@ -206,6 +207,22 @@ export default function SettingsScreen() {
                 );
               })}
             </View>
+            <View style={localStyles.hapticsDivider} />
+            <View style={localStyles.hapticsRow}>
+              <View style={localStyles.hapticsLeft}>
+                <Ionicons name="phone-portrait-outline" size={20} color={colors.textSecondary} />
+                <View style={{ marginLeft: 12 }}>
+                  <Text style={[localStyles.hapticsLabel, { color: colors.text }]}>Haptic Feedback</Text>
+                  <Text style={[localStyles.hapticsSub, { color: colors.textMuted }]}>Vibration on button presses</Text>
+                </View>
+              </View>
+              <Switch
+                value={hapticsEnabled}
+                onValueChange={toggleHaptics}
+                trackColor={{ false: colors.surfaceBorder, true: colors.primaryDim }}
+                thumbColor={hapticsEnabled ? colors.primary : colors.textMuted}
+              />
+            </View>
           </View>
         </View>
 
@@ -316,6 +333,21 @@ function makeLocalStyles(c: ReturnType<typeof import("@/contexts/ThemeContext").
     },
     activeIndicator: {
       position: "absolute", bottom: 6, width: 18, height: 3, borderRadius: 2,
+    },
+    hapticsDivider: {
+      height: 1, backgroundColor: "rgba(128,128,128,0.15)", marginTop: 16, marginBottom: 16,
+    },
+    hapticsRow: {
+      flexDirection: "row", alignItems: "center", justifyContent: "space-between",
+    },
+    hapticsLeft: {
+      flexDirection: "row", alignItems: "center", flex: 1,
+    },
+    hapticsLabel: {
+      fontSize: 14, fontFamily: "Inter_600SemiBold",
+    },
+    hapticsSub: {
+      fontSize: 12, fontFamily: "Inter_400Regular", marginTop: 1,
     },
   });
 }

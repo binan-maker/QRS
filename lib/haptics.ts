@@ -2,7 +2,7 @@ import * as ExpoHaptics from "expo-haptics";
 
 export { ImpactFeedbackStyle, NotificationFeedbackType } from "expo-haptics";
 
-let _enabled = true;
+let _enabled = false;
 
 export function setHapticsEnabled(enabled: boolean) {
   _enabled = enabled;

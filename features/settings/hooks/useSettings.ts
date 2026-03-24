@@ -36,11 +36,11 @@ export function useSettings() {
   const [myHistory, setMyHistory] = useState<any[]>([]);
   const [historyLoading, setHistoryLoading] = useState(false);
   const [deleteConfirmText, setDeleteConfirmText] = useState("");
-  const [hapticsEnabled, setHapticsEnabledState] = useState(true);
+  const [hapticsEnabled, setHapticsEnabledState] = useState(false);
 
   useEffect(() => {
     AsyncStorage.getItem(HAPTIC_KEY).then((v) => {
-      const enabled = v !== "false";
+      const enabled = v === "true";
       setHapticsEnabledState(enabled);
       setHapticsEnabled(enabled);
     });
