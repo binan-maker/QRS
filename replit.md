@@ -318,21 +318,22 @@ Each service file owns one responsibility:
 
 `lib/services/integrity-service.ts` — central anti-fraud engine enforced server-side for ALL social actions.
 
-### Account Tiers (vote weight & rate limits)
-| Tier | Criteria | Vote Weight | Comments/day | Reports/day | Comment Cooldown |
-|------|----------|-------------|--------------|-------------|-----------------|
-| 0 | Unverified + < 24h old | 0 (blocked) | 0 | 0 | — |
-| 1 | Unverified 1-7d OR Verified <1d | 0.05 | 3 | 2 | 3 min |
-| 2 | 7-30d (any) | 0.3 | 8 | 5 | 90 sec |
-| 3 | 30-90d verified | 0.7 | 15 | 8 | 45 sec |
-| 4 | 90-180d verified | 1.5 | 25 | 12 | 20 sec |
-| 5 | >180d verified | 2.0 | 40 | 15 | 10 sec |
+### Account Tiers (vote weight only — rate limits disabled)
+| Tier | Criteria | Vote Weight |
+|------|----------|-------------|
+| 0 | Unverified + < 24h old | 0.01 |
+| 1 | Unverified 1-7d OR Verified <1d | 0.05 |
+| 2 | 7-30d (any) | 0.3 |
+| 3 | 30-90d verified | 0.7 |
+| 4 | 90-180d verified | 1.5 |
+| 5 | >180d verified | 2.0 |
 
-**Error message behavior**: All restriction errors now show exact time remaining (e.g., "Your limit resets in 10 hours 23 minutes") so users always know when they can try again. Tier 0 users see exactly how many hours/minutes until their 24-hour lockout lifts.
+**Rate limits are currently disabled.** No comments/day, reports/day, or comment cooldown restrictions are enforced. Only vote weight differs by tier. Limits can be re-enabled in `lib/services/integrity-service.ts` TIER_CONFIG when needed.
 
 ### Sybil / Multi-Account Attack Prevention
 - QR code **owner cannot report their own QR** (enforced in `report-service.ts`)
-- New accounts (<24h) are fully blocked from all social actions
+- A user **cannot report the same QR code twice** — duplicate reports are blocked
+- New accounts (<24h) get tier 0 weight (0.01) but are NOT blocked from social actions
 - Each vote is stored with its `weight` — low-tier votes carry near-zero influence
 - Trust score uses **weighted vote counts** not raw counts
 

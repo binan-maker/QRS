@@ -273,7 +273,11 @@ export function useMyQrDetail(id: string) {
   }
 
   async function handleShare() {
-    if (!svgRef.current || sharingQr) return;
+    if (sharingQr) return;
+    if (!svgRef.current || typeof svgRef.current.toDataURL !== "function") {
+      Alert.alert("Not ready", "QR code is still loading. Please wait a moment and try again.");
+      return;
+    }
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     if (Platform.OS === "web") {
       Alert.alert("Not supported", "Sharing is not available on web. Long-press the QR image to save it.");
@@ -282,17 +286,23 @@ export function useMyQrDetail(id: string) {
     setSharingQr(true);
     try {
       const dataUrl: string = await new Promise((resolve, reject) => {
+        const timer = setTimeout(() => reject(new Error("QR image timed out. Please try again.")), 8000);
         try {
-          svgRef.current.toDataURL((url: string) => {
-            if (!url) reject(new Error("No image data returned"));
-            else resolve(url);
+          svgRef.current.toDataURL((url: string | null | undefined) => {
+            clearTimeout(timer);
+            if (!url || typeof url !== "string") {
+              reject(new Error("Could not generate QR image. Please try again."));
+            } else {
+              resolve(url);
+            }
           });
         } catch (e) {
+          clearTimeout(timer);
           reject(e);
         }
       });
       const rawBase64 = dataUrl.includes(",") ? dataUrl.split(",")[1] : dataUrl;
-      if (!rawBase64) throw new Error("Empty image data");
+      if (!rawBase64) throw new Error("Could not generate QR image. Please try again.");
       const fileName = `qrguard_${Date.now()}.png`;
       const dir = FileSystem.cacheDirectory ?? FileSystem.documentDirectory ?? "";
       const fileUri = dir + fileName;

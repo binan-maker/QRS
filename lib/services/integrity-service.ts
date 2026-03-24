@@ -4,15 +4,15 @@ import { db } from "../db";
  * INTEGRITY SERVICE — Anti-fraud, anti-bot, anti-manipulation engine.
  *
  * Account Tiers:
- *  TIER 0 — Unverified + < 24 hours old → BLOCKED from all social actions
- *  TIER 1 — (Unverified 1-7d) OR (Verified < 1d) → minimal weight, very limited actions
- *  TIER 2 — 7-30d (any) → reduced weight, limited actions
+ *  TIER 0 — Unverified + < 24 hours old → minimal weight (0.01), no rate limits
+ *  TIER 1 — (Unverified 1-7d) OR (Verified < 1d) → low weight
+ *  TIER 2 — 7-30d (any) → reduced weight
  *  TIER 3 — 30-90d verified → normal weight
  *  TIER 4 — 90-180d verified → elevated weight
  *  TIER 5 — > 180d verified → max weight
  *
- * Rate limits, collusion detection, velocity caps, and duplicate comment detection
- * are all enforced here before any social action is persisted.
+ * Rate limits are currently disabled. Only vote weight is enforced.
+ * Collusion detection still runs to flag suspicious voting patterns.
  */
 
 export interface AccountTier {
@@ -29,34 +29,33 @@ export interface AccountTier {
 
 const TIER_CONFIG: Record<number, AccountTier> = {
   0: {
-    tier: 0, voteWeight: 0, maxCommentsPerDay: 0, maxCommentsPerQr: 0,
-    maxReportsPerDay: 0, maxCommentReportsPerDay: 0, minCommentCooldownSeconds: 0,
-    canAct: false,
-    reason: "TIER_0_BLOCKED",
+    tier: 0, voteWeight: 0.01, maxCommentsPerDay: Infinity, maxCommentsPerQr: Infinity,
+    maxReportsPerDay: Infinity, maxCommentReportsPerDay: Infinity, minCommentCooldownSeconds: 0,
+    canAct: true,
   },
   1: {
-    tier: 1, voteWeight: 0.05, maxCommentsPerDay: 3, maxCommentsPerQr: 1,
-    maxReportsPerDay: 2, maxCommentReportsPerDay: 2, minCommentCooldownSeconds: 180,
+    tier: 1, voteWeight: 0.05, maxCommentsPerDay: Infinity, maxCommentsPerQr: Infinity,
+    maxReportsPerDay: Infinity, maxCommentReportsPerDay: Infinity, minCommentCooldownSeconds: 0,
     canAct: true,
   },
   2: {
-    tier: 2, voteWeight: 0.3, maxCommentsPerDay: 8, maxCommentsPerQr: 3,
-    maxReportsPerDay: 5, maxCommentReportsPerDay: 5, minCommentCooldownSeconds: 90,
+    tier: 2, voteWeight: 0.3, maxCommentsPerDay: Infinity, maxCommentsPerQr: Infinity,
+    maxReportsPerDay: Infinity, maxCommentReportsPerDay: Infinity, minCommentCooldownSeconds: 0,
     canAct: true,
   },
   3: {
-    tier: 3, voteWeight: 0.7, maxCommentsPerDay: 15, maxCommentsPerQr: 5,
-    maxReportsPerDay: 8, maxCommentReportsPerDay: 10, minCommentCooldownSeconds: 45,
+    tier: 3, voteWeight: 0.7, maxCommentsPerDay: Infinity, maxCommentsPerQr: Infinity,
+    maxReportsPerDay: Infinity, maxCommentReportsPerDay: Infinity, minCommentCooldownSeconds: 0,
     canAct: true,
   },
   4: {
-    tier: 4, voteWeight: 1.5, maxCommentsPerDay: 25, maxCommentsPerQr: 10,
-    maxReportsPerDay: 12, maxCommentReportsPerDay: 20, minCommentCooldownSeconds: 20,
+    tier: 4, voteWeight: 1.5, maxCommentsPerDay: Infinity, maxCommentsPerQr: Infinity,
+    maxReportsPerDay: Infinity, maxCommentReportsPerDay: Infinity, minCommentCooldownSeconds: 0,
     canAct: true,
   },
   5: {
-    tier: 5, voteWeight: 2.0, maxCommentsPerDay: 40, maxCommentsPerQr: 15,
-    maxReportsPerDay: 15, maxCommentReportsPerDay: 30, minCommentCooldownSeconds: 10,
+    tier: 5, voteWeight: 2.0, maxCommentsPerDay: Infinity, maxCommentsPerQr: Infinity,
+    maxReportsPerDay: Infinity, maxCommentReportsPerDay: Infinity, minCommentCooldownSeconds: 0,
     canAct: true,
   },
 };
@@ -99,7 +98,7 @@ function isWithinSeconds(tsMs: number, seconds: number): boolean {
 export async function getAccountTier(userId: string, emailVerified: boolean): Promise<AccountTier & { accountCreatedAt?: number }> {
   try {
     const data = await db.get(["users", userId]);
-    if (!data?.createdAt) return TIER_CONFIG[0];
+    if (!data?.createdAt) return { ...TIER_CONFIG[1], accountCreatedAt: Date.now() };
 
     const createdMs = tsToMs(data.createdAt);
     const ageDays = (Date.now() - createdMs) / 86400000;
@@ -122,21 +121,8 @@ export async function getAccountTier(userId: string, emailVerified: boolean): Pr
 
     return { ...TIER_CONFIG[tier], accountCreatedAt: createdMs };
   } catch {
-    return TIER_CONFIG[0];
+    return { ...TIER_CONFIG[1], accountCreatedAt: Date.now() };
   }
-}
-
-/** Build a human-readable Tier 0 block message showing exact time remaining */
-function buildTier0Message(accountCreatedAt: number): string {
-  const unlocksAt = accountCreatedAt + 86400000;
-  const remainingMs = Math.max(0, unlocksAt - Date.now());
-  const remaining = formatTimeRemaining(remainingMs);
-  return (
-    `Your account is less than 24 hours old and cannot participate yet.\n\n` +
-    `You'll be able to comment and report in ${remaining}.\n\n` +
-    `This restriction protects our community from spam and fake reports. ` +
-    `Verify your email to get started faster!`
-  );
 }
 
 /** Check if a user is eligible to submit a QR report. Throws with reason if blocked. */
@@ -153,44 +139,7 @@ export async function checkReportEligibility(
   }
 
   const tierResult = await getAccountTier(userId, emailVerified);
-
-  if (!tierResult.canAct) {
-    const msg = buildTier0Message(tierResult.accountCreatedAt ?? Date.now());
-    throw new Error(msg);
-  }
-
   const tier = tierResult as AccountTier;
-
-  const userData = await db.get(["users", userId]);
-  if (!userData) throw new Error("User not found.");
-
-  if (!isChangingReport) {
-    const windowStart = tsToMs(userData.reportRateWindowStart);
-    const count = userData.reportRateCount || 0;
-
-    if (isWithin24h(windowStart) && count >= tier.maxReportsPerDay) {
-      const remaining = formatTimeRemaining(timeUntilWindowReset(windowStart));
-      throw new Error(
-        `You've used all ${tier.maxReportsPerDay} report${tier.maxReportsPerDay === 1 ? "" : "s"} for today.\n\n` +
-        `Your limit resets in ${remaining}.\n\n` +
-        `This daily limit helps keep our trust system fair and prevents manipulation.`
-      );
-    }
-  }
-
-  const qrData = await db.get(["qrCodes", qrId]);
-  if (qrData) {
-    const velWindowStart = tsToMs(qrData.voteVelocityWindowStart);
-    const velCount = qrData.voteVelocityCount || 0;
-
-    if (Date.now() - velWindowStart < 3600000 && velCount >= 30) {
-      const resetMs = Math.max(0, (velWindowStart + 3600000) - Date.now());
-      throw new Error(
-        `This QR code is receiving too many reports right now.\n\n` +
-        `Please try again in ${formatTimeRemaining(resetMs)}. This prevents coordinated manipulation.`
-      );
-    }
-  }
 
   return { allowed: true, weight: tier.voteWeight, tier };
 }
@@ -244,7 +193,6 @@ export async function analyzeReportsForCollusion(qrId: string): Promise<{
     }
 
     const now = Date.now();
-    const twoHoursAgo = now - 7200000;
     const oneHourAgo = now - 3600000;
 
     const allSafe = docs.filter((d) => d.data.reportType === "safe");
@@ -327,95 +275,12 @@ export async function checkCommentEligibility(
   commentText: string
 ): Promise<void> {
 
-  const tierResult = await getAccountTier(userId, emailVerified);
-
-  if (!tierResult.canAct) {
-    const msg = buildTier0Message(tierResult.accountCreatedAt ?? Date.now());
-    throw new Error(msg);
-  }
-
-  const tier = tierResult as AccountTier;
-
   if (!commentText || commentText.trim().length < 3) {
     throw new Error("Comment is too short. Please write at least 3 characters.");
   }
 
   if (commentText.trim().length > 500) {
     throw new Error("Comment is too long. Maximum 500 characters allowed.");
-  }
-
-  const userData = await db.get(["users", userId]);
-  if (!userData) throw new Error("User not found.");
-
-  // Cooldown check
-  const lastCommentMs = tsToMs(userData.lastCommentAt);
-  if (lastCommentMs > 0 && isWithinSeconds(lastCommentMs, tier.minCommentCooldownSeconds)) {
-    const remainingMs = (lastCommentMs + tier.minCommentCooldownSeconds * 1000) - Date.now();
-    const remaining = formatTimeRemaining(Math.max(0, remainingMs));
-    throw new Error(
-      `Please wait ${remaining} before posting another comment.\n\n` +
-      `This cooldown prevents spam and keeps conversations healthy.`
-    );
-  }
-
-  // Daily comment rate limit
-  const dailyWindowStart = tsToMs(userData.commentRateWindowStart);
-  const dailyCount = userData.commentRateCount || 0;
-
-  if (isWithin24h(dailyWindowStart) && dailyCount >= tier.maxCommentsPerDay) {
-    const remaining = formatTimeRemaining(timeUntilWindowReset(dailyWindowStart));
-    throw new Error(
-      `You've reached your daily comment limit (${tier.maxCommentsPerDay} comment${tier.maxCommentsPerDay === 1 ? "" : "s"}).\n\n` +
-      `Your limit resets in ${remaining}.\n\n` +
-      `Verify your email or use the app longer to unlock higher limits.`
-    );
-  }
-
-  // Per-QR comment limit
-  try {
-    const { docs } = await db.query(["users", userId, "comments"], {
-      where: [{ field: "qrCodeId", op: "==", value: qrId }],
-    });
-    const commentsOnThisQr = docs.filter((d) => {
-      const createdMs = tsToMs(d.data.createdAt);
-      return isWithin24h(createdMs);
-    }).length;
-
-    if (commentsOnThisQr >= tier.maxCommentsPerQr) {
-      const oldest = docs
-        .filter((d) => isWithin24h(tsToMs(d.data.createdAt)))
-        .sort((a, b) => tsToMs(a.data.createdAt) - tsToMs(b.data.createdAt))[0];
-      let remaining = "tomorrow";
-      if (oldest) {
-        const resetMs = timeUntilWindowReset(tsToMs(oldest.data.createdAt));
-        remaining = `in ${formatTimeRemaining(resetMs)}`;
-      }
-      throw new Error(
-        `You've already commented ${tier.maxCommentsPerQr} time${tier.maxCommentsPerQr === 1 ? "" : "s"} on this QR code today.\n\n` +
-        `You can comment again ${remaining}.`
-      );
-    }
-  } catch (e: any) {
-    if (e?.message?.includes("already commented")) throw e;
-  }
-
-  // Duplicate comment detection
-  try {
-    const { docs } = await db.query(["users", userId, "comments"], {
-      orderBy: { field: "createdAt", direction: "desc" },
-      limit: 10,
-    });
-    const oneHourAgo = Date.now() - 3600000;
-    const isDuplicate = docs.some((d) => {
-      const createdMs = tsToMs(d.data.createdAt);
-      return createdMs > oneHourAgo && d.data.text?.trim() === commentText.trim();
-    });
-
-    if (isDuplicate) {
-      throw new Error("You've already posted this exact comment recently. Please write something different.");
-    }
-  } catch (e: any) {
-    if (e?.message?.includes("already posted")) throw e;
   }
 }
 
@@ -446,29 +311,7 @@ export async function checkCommentReportEligibility(
   userId: string,
   emailVerified: boolean
 ): Promise<void> {
-  const tierResult = await getAccountTier(userId, emailVerified);
-
-  if (!tierResult.canAct) {
-    const msg = buildTier0Message(tierResult.accountCreatedAt ?? Date.now());
-    throw new Error(msg);
-  }
-
-  const tier = tierResult as AccountTier;
-
-  const userData = await db.get(["users", userId]);
-  if (!userData) throw new Error("User not found.");
-
-  const windowStart = tsToMs(userData.commentReportRateWindowStart);
-  const count = userData.commentReportRateCount || 0;
-
-  if (isWithin24h(windowStart) && count >= tier.maxCommentReportsPerDay) {
-    const remaining = formatTimeRemaining(timeUntilWindowReset(windowStart));
-    throw new Error(
-      `You've reached your daily comment report limit (${tier.maxCommentReportsPerDay}).\n\n` +
-      `Your limit resets in ${remaining}.\n\n` +
-      `This limit prevents abuse of the reporting system.`
-    );
-  }
+  // Rate limits disabled — no restrictions enforced currently
 }
 
 /** Record a comment report for rate limiting. */
