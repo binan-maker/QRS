@@ -9,5 +9,13 @@ baseUrl http://localhost:5000
 expsUrl localhost:5000
 baseUrl http://localhost:5000
 expsUrl localhost:5000
+<<<<<<< HEAD
 baseUrl http://localhost:5000
 expsUrl localhost:5000
+=======
+<<<<<<< HEAD
+baseUrl http://localhost:5000
+expsUrl localhost:5000
+=======
+>>>>>>> b27b97d940f4be1a57381982534ba670c91534fe
+>>>>>>> e7322cd03a13816263ebbe5b4f5b02dab5731971
