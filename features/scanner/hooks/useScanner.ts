@@ -3,13 +3,11 @@ import { Animated, Easing, Linking, Platform } from "react-native";
 import { router } from "expo-router";
 import { useFocusEffect } from "expo-router";
 import * as ImagePicker from "expo-image-picker";
-import * as FileSystem from "expo-file-system";
 import * as Haptics from "expo-haptics";
-import { fetch as expoFetch } from "expo/fetch";
+import { scanFromURLAsync } from "expo-camera";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { setAnonymousQrContent } from "@/lib/cache/anonymous-session";
 import { useAuth } from "@/contexts/AuthContext";
-import { getApiUrl } from "@/lib/query-client";
 import {
   getOrCreateQrCode,
   recordScan,
@@ -72,35 +70,6 @@ async function decodeQrClientSide(imageUri: string): Promise<string | null> {
     img.onerror = () => resolve(null);
     img.src = imageUri;
   });
-}
-
-async function postJsonExpo(
-  url: string,
-  body: object,
-  headers: Record<string, string>
-): Promise<{ status: number; data: any }> {
-  // On web, use the browser's native fetch (supports relative URLs, no CORS
-  // issues when on the same origin). On native, use expo/fetch which handles
-  // the native networking stack.
-  const fetchFn: typeof globalThis.fetch =
-    Platform.OS === "web" ? globalThis.fetch : expoFetch;
-
-  let response: Response;
-  try {
-    response = await fetchFn(url, {
-      method: "POST",
-      headers: { "Content-Type": "application/json", ...headers },
-      body: JSON.stringify(body),
-    });
-  } catch (e: any) {
-    throw new Error("server-unreachable");
-  }
-  try {
-    const data = await response.json();
-    return { status: response.status, data };
-  } catch {
-    throw new Error("invalid-server-response");
-  }
 }
 
 export function useScanner() {
@@ -503,7 +472,6 @@ export function useScanner() {
       result = await ImagePicker.launchImageLibraryAsync({
         mediaTypes: ["images"],
         quality: 0.7,
-        base64: true,
       });
     } catch {
       showGalleryError("Could not open your gallery. Please try again.");
@@ -515,66 +483,20 @@ export function useScanner() {
     setProcessing(true);
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
 
-    // ── Step 1: get base64 (only needed on native for server-side decoding).
-    //    On web we use the image URI directly with the Canvas API.
-    let base64: string | null = null;
-
-    if (Platform.OS !== "web") {
-      base64 = result.assets[0].base64 ?? null;
-
-      if (!base64) {
-        try {
-          const uri = result.assets[0].uri;
-          if (!uri) throw new Error("no-uri");
-          base64 = await FileSystem.readAsStringAsync(uri, {
-            encoding: FileSystem.EncodingType.Base64,
-          });
-        } catch {
-          showGalleryError("Could not read the selected image. Please try another photo.");
-          setProcessing(false);
-          return;
-        }
-      }
-
-      if (!base64) {
-        showGalleryError("The image appears to be empty. Please choose a different photo.");
-        setProcessing(false);
-        return;
-      }
-    }
-
-    // ── Step 2: decode the QR code
+    // ── Decode the QR code locally on-device (no server upload needed)
     try {
       let content: string | null = null;
+      const uri = result.assets[0].uri;
 
       if (Platform.OS === "web") {
         // On web, decode client-side with jsQR + Canvas API.
-        // Avoids CORS / port-routing issues between Metro (port 8081) and the
-        // Express API (port 5000) in the Replit dev environment.
-        const uri = result.assets[0].uri;
         content = await decodeQrClientSide(uri);
       } else {
-        // On native, send base64 to the Express API for server-side decoding.
-        const headers: Record<string, string> = {};
-        if (token) headers["Authorization"] = `Bearer ${token}`;
-
-        const { status, data } = await postJsonExpo(
-          `${getApiUrl()}api/qr/decode-image`,
-          { imageBase64: base64 },
-          headers
-        );
-
-        if (status === 404 || !data?.content) {
-          showGalleryError("No QR code found in this image — try a clearer or closer photo.");
-          setProcessing(false);
-          return;
-        }
-        if (status !== 200) {
-          showGalleryError(data?.message || "The server could not process this image.");
-          setProcessing(false);
-          return;
-        }
-        content = data.content;
+        // On native (Android/iOS), decode locally using expo-camera's
+        // scanFromURLAsync — reads the QR directly from the file URI without
+        // uploading anything to a server.
+        const results = await scanFromURLAsync(uri, ["qr"]);
+        content = results?.[0]?.data ?? null;
       }
 
       if (!content) {
@@ -586,13 +508,7 @@ export function useScanner() {
       await processScan(content, "gallery");
     } catch (e: any) {
       setProcessing(false);
-      if (e.message === "server-unreachable") {
-        showGalleryError("Cannot reach the server. Check your internet connection and try again.");
-      } else if (e.message === "invalid-server-response") {
-        showGalleryError("The server returned an unexpected response. Please try again.");
-      } else {
-        showGalleryError(e.message || "Something went wrong. Please try again.");
-      }
+      showGalleryError(e.message || "Something went wrong. Please try again.");
     }
   }
 
