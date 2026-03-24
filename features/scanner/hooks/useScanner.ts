@@ -460,6 +460,7 @@ export function useScanner() {
       result = await ImagePicker.launchImageLibraryAsync({
         mediaTypes: ["images"],
         quality: 0.7,
+        base64: true,
       });
     } catch {
       showGalleryError("Could not open your gallery. Please try again.");
@@ -471,18 +472,22 @@ export function useScanner() {
     setProcessing(true);
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
 
-    // ── Step 1: read the image as base64 using FileSystem (reliable on all devices)
-    let base64: string | null = null;
-    try {
-      const uri = result.assets[0].uri;
-      if (!uri) throw new Error("no-uri");
-      base64 = await FileSystem.readAsStringAsync(uri, {
-        encoding: FileSystem.EncodingType.Base64,
-      });
-    } catch {
-      showGalleryError("Could not read the selected image. Please try another photo.");
-      setProcessing(false);
-      return;
+    // ── Step 1: get base64 — use picker's built-in base64 first (works on web + native),
+    //    fall back to FileSystem for native platforms that don't include it.
+    let base64: string | null = result.assets[0].base64 ?? null;
+
+    if (!base64) {
+      try {
+        const uri = result.assets[0].uri;
+        if (!uri) throw new Error("no-uri");
+        base64 = await FileSystem.readAsStringAsync(uri, {
+          encoding: FileSystem.EncodingType.Base64,
+        });
+      } catch {
+        showGalleryError("Could not read the selected image. Please try another photo.");
+        setProcessing(false);
+        return;
+      }
     }
 
     if (!base64) {
