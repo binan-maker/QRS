@@ -1,5 +1,4 @@
 import { useEffect, useState, useRef } from "react";
-import { Alert } from "react-native";
 import { router } from "expo-router";
 import * as Haptics from "expo-haptics";
 import { useAuth } from "@/contexts/AuthContext";
@@ -47,7 +46,6 @@ export function useQrReports(id: string, userId: string | null, offlineMode: boo
         };
         latestCollusion.current = flags;
         setCollusionFlags(flags);
-        // Recalculate trust score immediately with new flags
         if (Object.keys(latestCounts.current).length > 0) {
           setTrustScore(calculateTrustScore(latestCounts.current, latestWeighted.current, flags));
         }
@@ -69,36 +67,54 @@ export function useQrReports(id: string, userId: string | null, offlineMode: boo
 
   async function handleReport(type: string) {
     if (!userId) { router.push("/(auth)/login"); return; }
+    // Prevent double-tap while a report is in flight
+    if (reportLoading !== null) return;
+
     const prevReport = userReport;
-    setUserReport(type);
+    const isToggleOff = prevReport === type;
+
+    // Optimistic update
+    setReportLoading(type);
+    setUserReport(isToggleOff ? null : type);
     setReportCounts((prev) => {
       const next = { ...prev };
-      if (prevReport && prevReport !== type) {
-        next[prevReport] = Math.max(0, (next[prevReport] || 0) - 1);
-      }
-      if (prevReport !== type) {
+      if (isToggleOff) {
+        // User is un-reporting — remove their vote
+        next[type] = Math.max(0, (next[type] || 0) - 1);
+      } else {
+        // Remove old vote if switching types
+        if (prevReport) {
+          next[prevReport] = Math.max(0, (next[prevReport] || 0) - 1);
+        }
+        // Add new vote
         next[type] = (next[type] || 0) + 1;
       }
       return next;
     });
+
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+
     try {
       await reportQrCode(id, userId, type, emailVerified);
       invalidateQrCache(id);
     } catch (e: any) {
       console.error("[Report] Error submitting report:", e?.message, e);
+      // Rollback optimistic update silently
       setUserReport(prevReport);
       setReportCounts((prev) => {
         const next = { ...prev };
-        if (prevReport && prevReport !== type) {
-          next[prevReport] = (next[prevReport] || 0) + 1;
-        }
-        if (prevReport !== type) {
+        if (isToggleOff) {
+          next[type] = (next[type] || 0) + 1;
+        } else {
           next[type] = Math.max(0, (next[type] || 0) - 1);
+          if (prevReport) {
+            next[prevReport] = (next[prevReport] || 0) + 1;
+          }
         }
         return next;
       });
-      Alert.alert("Cannot Submit Report", e.message);
+    } finally {
+      setReportLoading(null);
     }
   }
 

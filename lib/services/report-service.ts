@@ -40,50 +40,7 @@ export async function getUserQrReport(qrId: string, userId: string): Promise<str
   return data ? data.reportType : null;
 }
 
-export async function reportQrCode(
-  qrId: string,
-  userId: string,
-  reportType: string,
-  emailVerified: boolean = false
-): Promise<Record<string, number>> {
-
-  // Fetch QR owner to block self-reporting
-  const qrOwnerId = await getQrOwnerId(qrId);
-
-  // Block users from reporting the same QR code twice
-  const existingReport = await getUserQrReport(qrId, userId);
-  if (existingReport !== null) {
-    throw new Error("You have already reported this QR code.");
-  }
-
-  // Check eligibility — throws with descriptive error if not allowed
-  const { weight } = await checkReportEligibility(userId, qrId, emailVerified, qrOwnerId, false);
-
-  // Fetch account age for collusion analysis storage
-  let accountAgeDays = 0;
-  try {
-    const userData = await db.get(["users", userId]);
-    if (userData?.createdAt) {
-      const createdMs = userData.createdAt.toDate
-        ? userData.createdAt.toDate().getTime()
-        : new Date(userData.createdAt).getTime();
-      accountAgeDays = Math.floor((Date.now() - createdMs) / 86400000);
-    }
-  } catch {}
-
-  await db.set(["qrCodes", qrId, "reports", userId], {
-    reportType,
-    weight,
-    reporterId: userId,
-    accountAgeDays,
-    emailVerified,
-    createdAt: db.timestamp(),
-  });
-
-  // Update rate limiting counters
-  await recordReport(userId, qrId);
-
-  // Run collusion detection and update suspicious flag on the QR code doc
+function runCollusionCheck(qrId: string) {
   analyzeReportsForCollusion(qrId).then(async (result) => {
     try {
       await db.update(["qrCodes", qrId], {
@@ -95,9 +52,62 @@ export async function reportQrCode(
       });
     } catch {}
   }).catch(() => {});
+}
 
-  notifyQrFollowers(qrId, "new_report", `New ${reportType} report on a QR you follow`, userId).catch(() => {});
-  return getQrReportCounts(qrId);
+export async function reportQrCode(
+  qrId: string,
+  userId: string,
+  reportType: string,
+  emailVerified: boolean = false
+): Promise<{ action: "created" | "updated" | "removed" }> {
+
+  const qrOwnerId = await getQrOwnerId(qrId);
+  const existingReport = await getUserQrReport(qrId, userId);
+
+  // Same type tapped again → unreport (toggle off)
+  if (existingReport === reportType) {
+    await db.delete(["qrCodes", qrId, "reports", userId]);
+    runCollusionCheck(qrId);
+    return { action: "removed" };
+  }
+
+  // Check eligibility — throws with descriptive error if not allowed
+  const { weight } = await checkReportEligibility(userId, qrId, emailVerified, qrOwnerId, false);
+
+  let accountAgeDays = 0;
+  try {
+    const userData = await db.get(["users", userId]);
+    if (userData?.createdAt) {
+      const createdMs = userData.createdAt.toDate
+        ? userData.createdAt.toDate().getTime()
+        : new Date(userData.createdAt).getTime();
+      accountAgeDays = Math.floor((Date.now() - createdMs) / 86400000);
+    }
+  } catch {}
+
+  if (existingReport !== null) {
+    // Different type → update the existing report doc
+    await db.update(["qrCodes", qrId, "reports", userId], {
+      reportType,
+      weight,
+      updatedAt: db.timestamp(),
+    });
+  } else {
+    // No prior report → create a new one
+    await db.set(["qrCodes", qrId, "reports", userId], {
+      reportType,
+      weight,
+      reporterId: userId,
+      accountAgeDays,
+      emailVerified,
+      createdAt: db.timestamp(),
+    });
+    await recordReport(userId, qrId);
+    notifyQrFollowers(qrId, "new_report", `New ${reportType} report on a QR you follow`, userId).catch(() => {});
+  }
+
+  runCollusionCheck(qrId);
+  return { action: existingReport !== null ? "updated" : "created" };
 }
 
 export function subscribeToQrReports(
