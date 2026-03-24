@@ -37,6 +37,43 @@ function isInsecureHttpUrl(content: string): boolean {
   return /^http:\/\//i.test(content.trim());
 }
 
+/**
+ * Decode a QR code entirely in the browser using jsQR + Canvas API.
+ * Returns the decoded string, or null if no QR code was found.
+ * Only used on web — avoids the CORS/port-routing issues with the API server.
+ */
+async function decodeQrClientSide(imageUri: string): Promise<string | null> {
+  return new Promise((resolve) => {
+    const img = new (window as any).Image() as HTMLImageElement;
+    img.crossOrigin = "anonymous";
+    img.onload = async () => {
+      try {
+        const canvas = document.createElement("canvas");
+        const maxDim = 1200;
+        const scale =
+          img.naturalWidth > maxDim || img.naturalHeight > maxDim
+            ? maxDim / Math.max(img.naturalWidth, img.naturalHeight)
+            : 1;
+        canvas.width = Math.round(img.naturalWidth * scale);
+        canvas.height = Math.round(img.naturalHeight * scale);
+        const ctx = canvas.getContext("2d");
+        if (!ctx) { resolve(null); return; }
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        const jsQR = (await import("jsqr")).default;
+        const code = jsQR(imageData.data, imageData.width, imageData.height, {
+          inversionAttempts: "attemptBoth",
+        });
+        resolve(code ? code.data : null);
+      } catch {
+        resolve(null);
+      }
+    };
+    img.onerror = () => resolve(null);
+    img.src = imageUri;
+  });
+}
+
 async function postJsonExpo(
   url: string,
   body: object,
@@ -478,67 +515,81 @@ export function useScanner() {
     setProcessing(true);
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
 
-    // ── Step 1: get base64 — use picker's built-in base64 first (works on web + native),
-    //    fall back to FileSystem for native platforms that don't include it.
-    let base64: string | null = result.assets[0].base64 ?? null;
+    // ── Step 1: get base64 (only needed on native for server-side decoding).
+    //    On web we use the image URI directly with the Canvas API.
+    let base64: string | null = null;
 
-    if (!base64) {
-      try {
-        const uri = result.assets[0].uri;
-        if (!uri) throw new Error("no-uri");
-        base64 = await FileSystem.readAsStringAsync(uri, {
-          encoding: FileSystem.EncodingType.Base64,
-        });
-      } catch {
-        showGalleryError("Could not read the selected image. Please try another photo.");
+    if (Platform.OS !== "web") {
+      base64 = result.assets[0].base64 ?? null;
+
+      if (!base64) {
+        try {
+          const uri = result.assets[0].uri;
+          if (!uri) throw new Error("no-uri");
+          base64 = await FileSystem.readAsStringAsync(uri, {
+            encoding: FileSystem.EncodingType.Base64,
+          });
+        } catch {
+          showGalleryError("Could not read the selected image. Please try another photo.");
+          setProcessing(false);
+          return;
+        }
+      }
+
+      if (!base64) {
+        showGalleryError("The image appears to be empty. Please choose a different photo.");
         setProcessing(false);
         return;
       }
     }
 
-    if (!base64) {
-      showGalleryError("The image appears to be empty. Please choose a different photo.");
-      setProcessing(false);
-      return;
-    }
-
-    // ── Step 2: send base64 to server for QR decoding
+    // ── Step 2: decode the QR code
     try {
-      // On web the app is served by the same Express server, so use a relative
-      // URL to avoid CORS/port issues with Replit's proxy. On native, use the
-      // full API URL resolved from the packager hostname.
-      const apiUrl =
-        Platform.OS === "web"
-          ? "/api/qr/decode-image"
-          : `${getApiUrl()}api/qr/decode-image`;
+      let content: string | null = null;
 
-      const headers: Record<string, string> = {};
-      if (token) headers["Authorization"] = `Bearer ${token}`;
+      if (Platform.OS === "web") {
+        // On web, decode client-side with jsQR + Canvas API.
+        // Avoids CORS / port-routing issues between Metro (port 8081) and the
+        // Express API (port 5000) in the Replit dev environment.
+        const uri = result.assets[0].uri;
+        content = await decodeQrClientSide(uri);
+      } else {
+        // On native, send base64 to the Express API for server-side decoding.
+        const headers: Record<string, string> = {};
+        if (token) headers["Authorization"] = `Bearer ${token}`;
 
-      const { status, data } = await postJsonExpo(
-        apiUrl,
-        { imageBase64: base64 },
-        headers
-      );
+        const { status, data } = await postJsonExpo(
+          `${getApiUrl()}api/qr/decode-image`,
+          { imageBase64: base64 },
+          headers
+        );
 
-      if (status === 404 || !data?.content) {
+        if (status === 404 || !data?.content) {
+          showGalleryError("No QR code found in this image — try a clearer or closer photo.");
+          setProcessing(false);
+          return;
+        }
+        if (status !== 200) {
+          showGalleryError(data?.message || "The server could not process this image.");
+          setProcessing(false);
+          return;
+        }
+        content = data.content;
+      }
+
+      if (!content) {
         showGalleryError("No QR code found in this image — try a clearer or closer photo.");
         setProcessing(false);
         return;
       }
-      if (status !== 200) {
-        showGalleryError(data?.message || "The server could not process this image.");
-        setProcessing(false);
-        return;
-      }
 
-      await processScan(data.content, "gallery");
+      await processScan(content, "gallery");
     } catch (e: any) {
       setProcessing(false);
       if (e.message === "server-unreachable") {
         showGalleryError("Cannot reach the server. Check your internet connection and try again.");
       } else if (e.message === "invalid-server-response") {
-        showGalleryError("Received an unexpected response from the server. Please try again.");
+        showGalleryError("The server returned an unexpected response. Please try again.");
       } else {
         showGalleryError(e.message || "Something went wrong. Please try again.");
       }
