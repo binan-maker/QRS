@@ -188,15 +188,15 @@ export async function analyzeReportsForCollusion(qrId: string): Promise<{
 }> {
   try {
     const { docs } = await db.query(["qrCodes", qrId, "reports"]);
-    if (docs.length < 3) {
+    const activeDocs = docs.filter((d) => !d.data.userRemoved);
+    if (activeDocs.length < 3) {
       return { suspicious: false, reason: null, safeWeightMultiplier: 1, negativeWeightMultiplier: 1 };
     }
 
     const now = Date.now();
     const oneHourAgo = now - 3600000;
-
-    const allSafe = docs.filter((d) => d.data.reportType === "safe");
-    const allNeg = docs.filter((d) => d.data.reportType !== "safe");
+    const allSafe = activeDocs.filter((d) => d.data.reportType === "safe");
+    const allNeg = activeDocs.filter((d) => d.data.reportType !== "safe");
 
     const fastSafe = allSafe.filter((d) => tsToMs(d.data.createdAt) > oneHourAgo);
     const fastNeg = allNeg.filter((d) => tsToMs(d.data.createdAt) > oneHourAgo);

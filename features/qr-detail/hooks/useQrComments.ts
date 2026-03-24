@@ -55,6 +55,11 @@ export function useQrComments(id: string, userId: string | null, offlineMode: bo
   const commentInputRef = useRef<any>(null);
   const scrollRef = useRef<any>(null);
 
+  // Optimistic state: comments added locally but not yet confirmed by Firestore
+  const pendingCommentsRef = useRef<CommentItem[]>([]);
+  // IDs of comments being deleted — subscription results are filtered to hide them
+  const deletingIdsRef = useRef<Set<string>>(new Set());
+
   const topLevelComments = commentsList.filter((c) => !c.parentId);
 
   function getAllDescendants(rootId: string): CommentItem[] {
@@ -90,6 +95,26 @@ export function useQrComments(id: string, userId: string | null, offlineMode: bo
     }));
   }
 
+  // Merge live subscription results with optimistic state
+  function mergeWithOptimistic(liveComments: CommentItem[]): CommentItem[] {
+    // Filter out any IDs being deleted
+    const filteredLive = liveComments.filter((c) => !deletingIdsRef.current.has(c.id));
+
+    // Drop pending comments that Firestore has now confirmed (matched by userId + text + parentId)
+    const confirmedPending = pendingCommentsRef.current.filter((pending) =>
+      !filteredLive.some(
+        (live) =>
+          live.userId === pending.userId &&
+          live.text === pending.text &&
+          (live.parentId ?? null) === (pending.parentId ?? null)
+      )
+    );
+    pendingCommentsRef.current = confirmedPending;
+
+    // Pending comments appear first (they're the newest)
+    return [...confirmedPending, ...filteredLive];
+  }
+
   useEffect(() => {
     if (!userId || !commentsList.length) return;
     const ids = commentsList.map((c) => c.id);
@@ -107,9 +132,13 @@ export function useQrComments(id: string, userId: string | null, offlineMode: bo
 
   useEffect(() => {
     if (offlineMode) return;
+    // Reset optimistic state when QR changes
+    pendingCommentsRef.current = [];
+    deletingIdsRef.current = new Set();
+
     const pageLimit = userId ? COMMENTS_PER_PAGE : 6;
     const unsub = subscribeToComments(id, pageLimit, (liveComments) => {
-      setCommentsList(liveComments);
+      setCommentsList(mergeWithOptimistic(liveComments));
     });
     return unsub;
   }, [id, userId, offlineMode]);
@@ -128,21 +157,47 @@ export function useQrComments(id: string, userId: string | null, offlineMode: bo
 
   async function handleSubmitComment(displayName: string) {
     if (!userId) { router.push("/(auth)/login"); return; }
-    if (!newComment.trim()) return;
+    const trimmed = newComment.trim();
+    if (!trimmed) return;
+
+    // Optimistic insert — show the comment immediately
+    const tempId = `pending_${Date.now()}`;
+    const parentId = replyTo ? replyTo.rootId : null;
+    const optimisticComment: CommentItem = {
+      id: tempId,
+      text: trimmed,
+      userId,
+      user: { displayName: user?.displayName || displayName },
+      userUsername: user?.displayName || undefined,
+      createdAt: new Date().toISOString(),
+      likeCount: 0,
+      dislikeCount: 0,
+      userLike: null,
+      parentId,
+      isDeleted: false,
+      isHidden: false,
+      reportCount: 0,
+    };
+    pendingCommentsRef.current = [optimisticComment, ...pendingCommentsRef.current];
+    setCommentsList((prev) => [optimisticComment, ...prev]);
+
+    // Clear input and reply state immediately
+    setNewComment("");
+    setReplyTo(null);
+    if (parentId) {
+      setExpandedReplies((prev) => ({ ...prev, [parentId]: true }));
+    }
+
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     setSubmitting(true);
-    console.log("[Comment] Submitting comment for user:", userId, "qr:", id, "emailVerified:", emailVerified);
+
     try {
-      const parentId = replyTo ? replyTo.rootId : null;
-      await addComment(id, userId, displayName, newComment.trim(), parentId, emailVerified);
-      console.log("[Comment] Comment submitted successfully");
-      if (parentId) {
-        setExpandedReplies((prev) => ({ ...prev, [parentId]: true }));
-      }
-      setNewComment("");
-      setReplyTo(null);
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      await addComment(id, userId, displayName, trimmed, parentId, emailVerified);
+      // Subscription will fire and confirm the real comment — pending gets cleared then
     } catch (e: any) {
-      console.error("[Comment] Error submitting comment:", e?.message, e);
+      // Remove the optimistic comment on failure
+      pendingCommentsRef.current = pendingCommentsRef.current.filter((c) => c.id !== tempId);
+      setCommentsList((prev) => prev.filter((c) => c.id !== tempId));
       Alert.alert("Cannot Post Comment", e.message);
     } finally {
       setSubmitting(false);
@@ -198,13 +253,21 @@ export function useQrComments(id: string, userId: string | null, offlineMode: bo
   async function handleDeleteComment(commentId: string) {
     if (!userId) return;
     setCommentMenuId(null);
+
+    // Optimistic removal — mark ID as deleting so subscription doesn't restore it
+    deletingIdsRef.current.add(commentId);
     const removedComment = commentsList.find((c) => c.id === commentId);
     setCommentsList((prev) => prev.filter((c) => c.id !== commentId));
     setDeletingCommentId(commentId);
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+
     try {
       await softDeleteComment(id, commentId, userId);
+      // Keep in deletingIds — subscription will fire without this doc (isDeleted filtered)
+      // and we can safely remove from set at that point, but it's harmless to keep it.
     } catch {
+      // Rollback: remove from deleting set and restore comment
+      deletingIdsRef.current.delete(commentId);
       if (removedComment) {
         setCommentsList((prev) => {
           const already = prev.find((c) => c.id === commentId);

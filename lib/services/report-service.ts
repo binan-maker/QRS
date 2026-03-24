@@ -19,6 +19,7 @@ export async function getQrReportCounts(qrId: string): Promise<Record<string, nu
   const { docs } = await db.query(["qrCodes", qrId, "reports"]);
   const counts: Record<string, number> = {};
   for (const d of docs) {
+    if (d.data.userRemoved) continue;
     const { reportType } = d.data;
     counts[reportType] = (counts[reportType] || 0) + 1;
   }
@@ -29,6 +30,7 @@ export async function getQrWeightedReportCounts(qrId: string): Promise<Record<st
   const { docs } = await db.query(["qrCodes", qrId, "reports"]);
   const weighted: Record<string, number> = {};
   for (const d of docs) {
+    if (d.data.userRemoved) continue;
     const { reportType, weight = 1 } = d.data;
     weighted[reportType] = (weighted[reportType] || 0) + weight;
   }
@@ -37,7 +39,8 @@ export async function getQrWeightedReportCounts(qrId: string): Promise<Record<st
 
 export async function getUserQrReport(qrId: string, userId: string): Promise<string | null> {
   const data = await db.get(["qrCodes", qrId, "reports", userId]);
-  return data ? data.reportType : null;
+  if (!data || data.userRemoved) return null;
+  return data.reportType ?? null;
 }
 
 function runCollusionCheck(qrId: string) {
@@ -61,12 +64,19 @@ export async function reportQrCode(
   emailVerified: boolean = false
 ): Promise<{ action: "created" | "updated" | "removed" }> {
 
-  const qrOwnerId = await getQrOwnerId(qrId);
-  const existingReport = await getUserQrReport(qrId, userId);
+  const [qrOwnerId, existingReport] = await Promise.all([
+    getQrOwnerId(qrId),
+    getUserQrReport(qrId, userId),
+  ]);
 
-  // Same type tapped again → unreport (toggle off)
+  // Same type tapped again → unreport (toggle off).
+  // Firestore rules block deletion, so we mark the doc as userRemoved instead.
+  // The existing reportType and weight fields stay intact to satisfy security rules.
   if (existingReport === reportType) {
-    await db.delete(["qrCodes", qrId, "reports", userId]);
+    await db.update(["qrCodes", qrId, "reports", userId], {
+      userRemoved: true,
+      removedAt: db.timestamp(),
+    });
     runCollusionCheck(qrId);
     return { action: "removed" };
   }
@@ -86,20 +96,23 @@ export async function reportQrCode(
   } catch {}
 
   if (existingReport !== null) {
-    // Different type → update the existing report doc
+    // Different type → update the existing report doc (also clears userRemoved if set)
     await db.update(["qrCodes", qrId, "reports", userId], {
       reportType,
       weight,
+      userRemoved: false,
       updatedAt: db.timestamp(),
     });
   } else {
-    // No prior report → create a new one
+    // No active report — create or overwrite (handles re-reporting after unreport).
+    // db.set uses setDoc (no merge) so it fully replaces any stale userRemoved doc.
     await db.set(["qrCodes", qrId, "reports", userId], {
       reportType,
       weight,
       reporterId: userId,
       accountAgeDays,
       emailVerified,
+      userRemoved: false,
       createdAt: db.timestamp(),
     });
     await recordReport(userId, qrId);
@@ -121,6 +134,7 @@ export function subscribeToQrReports(
     const counts: Record<string, number> = {};
     const weighted: Record<string, number> = {};
     for (const d of docs) {
+      if (d.data.userRemoved) continue;
       const { reportType, weight = 1 } = d.data;
       counts[reportType] = (counts[reportType] || 0) + 1;
       weighted[reportType] = (weighted[reportType] || 0) + weight;
