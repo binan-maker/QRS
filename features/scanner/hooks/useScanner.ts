@@ -1,5 +1,5 @@
 import { useState, useRef, useCallback, useEffect } from "react";
-import { Animated, Easing, Linking } from "react-native";
+import { Animated, Easing, Linking, Platform } from "react-native";
 import { router } from "expo-router";
 import { useFocusEffect } from "expo-router";
 import * as ImagePicker from "expo-image-picker";
@@ -42,9 +42,15 @@ async function postJsonExpo(
   body: object,
   headers: Record<string, string>
 ): Promise<{ status: number; data: any }> {
+  // On web, use the browser's native fetch (supports relative URLs, no CORS
+  // issues when on the same origin). On native, use expo/fetch which handles
+  // the native networking stack.
+  const fetchFn: typeof globalThis.fetch =
+    Platform.OS === "web" ? globalThis.fetch : expoFetch;
+
   let response: Response;
   try {
-    response = await expoFetch(url, {
+    response = await fetchFn(url, {
       method: "POST",
       headers: { "Content-Type": "application/json", ...headers },
       body: JSON.stringify(body),
@@ -498,12 +504,19 @@ export function useScanner() {
 
     // ── Step 2: send base64 to server for QR decoding
     try {
-      const baseUrl = getApiUrl();
+      // On web the app is served by the same Express server, so use a relative
+      // URL to avoid CORS/port issues with Replit's proxy. On native, use the
+      // full API URL resolved from the packager hostname.
+      const apiUrl =
+        Platform.OS === "web"
+          ? "/api/qr/decode-image"
+          : `${getApiUrl()}api/qr/decode-image`;
+
       const headers: Record<string, string> = {};
       if (token) headers["Authorization"] = `Bearer ${token}`;
 
       const { status, data } = await postJsonExpo(
-        `${baseUrl}api/qr/decode-image`,
+        apiUrl,
         { imageBase64: base64 },
         headers
       );
