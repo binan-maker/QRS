@@ -1,7 +1,8 @@
-import { View, Text, Pressable, ScrollView, Platform, Alert, Switch } from "react-native";
+import { View, Text, Pressable, ScrollView, Platform, Switch } from "react-native";
 import { router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { LinearGradient } from "expo-linear-gradient";
 import { useTheme } from "@/contexts/ThemeContext";
 import { useSettings } from "@/hooks/useSettings";
 import { makeSettingsStyles } from "@/features/settings/styles";
@@ -16,7 +17,7 @@ import { StyleSheet } from "react-native";
 
 const SECTION_TITLES: Record<string, string> = {
   account: "Account Management",
-  guide: "How It Works",
+  guide: "Manual Guide",
   feedback: "Send Feedback",
   following: "Following",
   comments: "My Comments",
@@ -126,19 +127,28 @@ export default function SettingsScreen() {
 
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
 
+        {/* ── ACCOUNT SECTION ── */}
         <View style={styles.section}>
           <Text style={styles.sectionLabel}>ACCOUNT</Text>
           {user ? (
             <View style={styles.menuGroup}>
               <View style={styles.accountCard}>
-                <View style={styles.accountAvatar}>
+                <LinearGradient
+                  colors={[colors.primary + "30", colors.accent + "20"]}
+                  style={styles.accountAvatar}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 1 }}
+                >
                   <Text style={styles.accountAvatarText}>{user.displayName.charAt(0).toUpperCase()}</Text>
-                </View>
+                </LinearGradient>
                 <View style={{ flex: 1 }}>
                   <Text style={styles.accountName}>{user.displayName}</Text>
                   <Text style={styles.accountEmail}>{user.email}</Text>
                 </View>
-                <Ionicons name="checkmark-circle" size={20} color={colors.safe} />
+                <View style={[localStyles.verifiedPill, { backgroundColor: colors.safeDim, borderColor: colors.safe + "40" }]}>
+                  <Ionicons name="checkmark-circle" size={14} color={colors.safe} />
+                  <Text style={[localStyles.verifiedPillText, { color: colors.safe }]}>Verified</Text>
+                </View>
               </View>
               <View style={styles.divider} />
               <SettingsMenuItem
@@ -160,18 +170,19 @@ export default function SettingsScreen() {
               onPress={() => router.push("/(auth)/login")}
               style={({ pressed }) => [styles.signInCard, { opacity: pressed ? 0.9 : 1 }]}
             >
-              <View style={styles.signInIcon}>
+              <View style={[styles.signInIcon, { backgroundColor: colors.primaryDim }]}>
                 <Ionicons name="person-outline" size={24} color={colors.primary} />
               </View>
               <View style={{ flex: 1 }}>
                 <Text style={styles.signInTitle}>Sign in to your account</Text>
-                <Text style={styles.signInSub}>Access full features — comment, report, sync history</Text>
+                <Text style={styles.signInSub}>Comment, report, and sync history</Text>
               </View>
               <Ionicons name="chevron-forward" size={20} color={colors.textMuted} />
             </Pressable>
           )}
         </View>
 
+        {/* ── APPEARANCE ── */}
         <View style={styles.section}>
           <Text style={styles.sectionLabel}>APPEARANCE</Text>
           <View style={[styles.menuGroup, { padding: 16 }]}>
@@ -192,17 +203,11 @@ export default function SettingsScreen() {
                       },
                     ]}
                   >
-                    <Ionicons
-                      name={opt.icon}
-                      size={18}
-                      color={isActive ? colors.primary : colors.textMuted}
-                    />
+                    <Ionicons name={opt.icon} size={18} color={isActive ? colors.primary : colors.textMuted} />
                     <Text style={[localStyles.themeBtnText, { color: isActive ? colors.primary : colors.textMuted }]}>
                       {opt.label}
                     </Text>
-                    {isActive && (
-                      <View style={[localStyles.activeIndicator, { backgroundColor: colors.primary }]} />
-                    )}
+                    {isActive && <View style={[localStyles.activeIndicator, { backgroundColor: colors.primary }]} />}
                   </Pressable>
                 );
               })}
@@ -210,7 +215,9 @@ export default function SettingsScreen() {
             <View style={localStyles.hapticsDivider} />
             <View style={localStyles.hapticsRow}>
               <View style={localStyles.hapticsLeft}>
-                <Ionicons name="phone-portrait-outline" size={20} color={colors.textSecondary} />
+                <View style={[localStyles.hapticsIcon, { backgroundColor: colors.surfaceLight }]}>
+                  <Ionicons name="phone-portrait-outline" size={18} color={colors.textSecondary} />
+                </View>
                 <View style={{ marginLeft: 12 }}>
                   <Text style={[localStyles.hapticsLabel, { color: colors.text }]}>Haptic Feedback</Text>
                   <Text style={[localStyles.hapticsSub, { color: colors.textMuted }]}>Vibration on button presses</Text>
@@ -226,6 +233,7 @@ export default function SettingsScreen() {
           </View>
         </View>
 
+        {/* ── HELP & INFORMATION ── */}
         <View style={styles.section}>
           <Text style={styles.sectionLabel}>HELP & INFORMATION</Text>
           <View style={styles.menuGroup}>
@@ -240,12 +248,7 @@ export default function SettingsScreen() {
               icon="shield-checkmark-outline"
               label="About Trust Scores"
               sublabel="How safety ratings are calculated"
-              onPress={() =>
-                Alert.alert(
-                  "Trust Scores",
-                  "Trust scores are calculated using community reports weighted by confidence. A QR code with more reporters gets a more accurate score. Single-reporter codes show 'Likely Safe' or 'Uncertain' rather than 100% scores."
-                )
-              }
+              onPress={() => router.push("/trust-scores")}
             />
             <View style={styles.divider} />
             <SettingsMenuItem
@@ -257,6 +260,7 @@ export default function SettingsScreen() {
           </View>
         </View>
 
+        {/* ── LEGAL ── */}
         <View style={styles.section}>
           <Text style={styles.sectionLabel}>LEGAL</Text>
           <View style={styles.menuGroup}>
@@ -276,6 +280,7 @@ export default function SettingsScreen() {
           </View>
         </View>
 
+        {/* ── DATA ── */}
         <View style={styles.section}>
           <Text style={styles.sectionLabel}>DATA</Text>
           <View style={styles.menuGroup}>
@@ -289,6 +294,7 @@ export default function SettingsScreen() {
           </View>
         </View>
 
+        {/* ── SIGN OUT ── */}
         {user && (
           <View style={styles.section}>
             <Pressable
@@ -301,11 +307,19 @@ export default function SettingsScreen() {
           </View>
         )}
 
-        <View style={styles.footer}>
-          <Text style={styles.footerText}>QR Guard v1.0.0</Text>
-          <Text style={styles.footerSubtext}>Scan smart. Stay safe.</Text>
-          <Text style={[styles.footerSubtext, { textAlign: "center", marginTop: 8, paddingHorizontal: 16, lineHeight: 18 }]}>
-            QR Guard provides informational analysis only. Trust scores reflect community opinion, not verified fact. You are solely responsible for all decisions made after scanning a QR code.
+        {/* ── FOOTER ── */}
+        <View style={localStyles.footer}>
+          <LinearGradient
+            colors={[colors.primary, colors.accent]}
+            style={localStyles.footerBadge}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+          >
+            <Text style={localStyles.footerBadgeText}>QR Guard v1.0.0</Text>
+          </LinearGradient>
+          <Text style={[localStyles.footerTagline, { color: colors.textMuted }]}>Scan smart. Stay safe.</Text>
+          <Text style={[localStyles.footerDisclaimer, { color: colors.textMuted }]}>
+            Trust scores reflect community opinion, not verified fact. You are solely responsible for all decisions made after scanning a QR code.
           </Text>
         </View>
 
@@ -317,37 +331,30 @@ export default function SettingsScreen() {
 
 function makeLocalStyles(c: ReturnType<typeof import("@/contexts/ThemeContext").useTheme>["colors"]) {
   return StyleSheet.create({
-    appearanceLabel: {
-      fontSize: 13, fontFamily: "Inter_600SemiBold", marginBottom: 12,
+    verifiedPill: {
+      flexDirection: "row", alignItems: "center", gap: 4,
+      paddingHorizontal: 8, paddingVertical: 4, borderRadius: 10, borderWidth: 1,
     },
-    themeRow: {
-      flexDirection: "row", gap: 10,
-    },
+    verifiedPillText: { fontSize: 11, fontFamily: "Inter_600SemiBold" },
+    appearanceLabel: { fontSize: 13, fontFamily: "Inter_600SemiBold", marginBottom: 12 },
+    themeRow: { flexDirection: "row", gap: 10 },
     themeBtn: {
       flex: 1, alignItems: "center", justifyContent: "center",
       gap: 6, paddingVertical: 14, borderRadius: 14, borderWidth: 1.5,
       position: "relative",
     },
-    themeBtnText: {
-      fontSize: 12, fontFamily: "Inter_600SemiBold",
-    },
-    activeIndicator: {
-      position: "absolute", bottom: 6, width: 18, height: 3, borderRadius: 2,
-    },
-    hapticsDivider: {
-      height: 1, backgroundColor: "rgba(128,128,128,0.15)", marginTop: 16, marginBottom: 16,
-    },
-    hapticsRow: {
-      flexDirection: "row", alignItems: "center", justifyContent: "space-between",
-    },
-    hapticsLeft: {
-      flexDirection: "row", alignItems: "center", flex: 1,
-    },
-    hapticsLabel: {
-      fontSize: 14, fontFamily: "Inter_600SemiBold",
-    },
-    hapticsSub: {
-      fontSize: 12, fontFamily: "Inter_400Regular", marginTop: 1,
-    },
+    themeBtnText: { fontSize: 12, fontFamily: "Inter_600SemiBold" },
+    activeIndicator: { position: "absolute", bottom: 6, width: 18, height: 3, borderRadius: 2 },
+    hapticsDivider: { height: 1, backgroundColor: c.surfaceBorder, marginTop: 16, marginBottom: 16 },
+    hapticsRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
+    hapticsLeft: { flexDirection: "row", alignItems: "center", flex: 1 },
+    hapticsIcon: { width: 38, height: 38, borderRadius: 12, alignItems: "center", justifyContent: "center" },
+    hapticsLabel: { fontSize: 14, fontFamily: "Inter_600SemiBold" },
+    hapticsSub: { fontSize: 12, fontFamily: "Inter_400Regular", marginTop: 1 },
+    footer: { alignItems: "center", gap: 8, paddingTop: 8, paddingBottom: 12, paddingHorizontal: 24 },
+    footerBadge: { borderRadius: 12, paddingHorizontal: 14, paddingVertical: 6 },
+    footerBadgeText: { fontSize: 12, fontFamily: "Inter_700Bold", color: "#fff", letterSpacing: 0.5 },
+    footerTagline: { fontSize: 12, fontFamily: "Inter_500Medium" },
+    footerDisclaimer: { fontSize: 11, fontFamily: "Inter_400Regular", textAlign: "center", lineHeight: 16 },
   });
 }

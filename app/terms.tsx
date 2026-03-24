@@ -9,6 +9,7 @@ import {
 import { router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { LinearGradient } from "expo-linear-gradient";
 import { useTheme } from "@/contexts/ThemeContext";
 import type { AppColors } from "@/constants/colors";
 
@@ -16,10 +17,15 @@ const EFFECTIVE_DATE = "March 19, 2026";
 const CONTACT_EMAIL = "legal@qrguard.app";
 const APP_NAME = "QR Guard";
 
-function Section({ title, children, colors }: { title: string; children: React.ReactNode; colors: AppColors }) {
+function SectionCard({ title, num, children, colors }: { title: string; num: string; children: React.ReactNode; colors: AppColors }) {
   return (
-    <View style={[styles.section, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
-      <Text style={[styles.sectionTitle, { color: colors.primary }]}>{title}</Text>
+    <View style={[styles.sectionCard, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
+      <View style={styles.sectionHeader}>
+        <View style={[styles.sectionNum, { backgroundColor: colors.primaryDim }]}>
+          <Text style={[styles.sectionNumText, { color: colors.primary }]}>{num}</Text>
+        </View>
+        <Text style={[styles.sectionTitle, { color: colors.text }]}>{title}</Text>
+      </View>
       {children}
     </View>
   );
@@ -32,7 +38,12 @@ function Para({ children, colors }: { children: React.ReactNode; colors: AppColo
 function Bullet({ text, colors }: { text: string; colors: AppColors }) {
   return (
     <View style={styles.bulletRow}>
-      <View style={[styles.bulletDot, { backgroundColor: colors.primary }]} />
+      <LinearGradient
+        colors={[colors.primary, colors.accent]}
+        style={styles.bulletDot}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+      />
       <Text style={[styles.bulletText, { color: colors.textSecondary }]}>{text}</Text>
     </View>
   );
@@ -46,8 +57,11 @@ export default function TermsScreen() {
   return (
     <View style={[styles.container, { paddingTop: topInset, backgroundColor: colors.background }]}>
       <View style={[styles.navBar, { borderBottomColor: colors.surfaceBorder }]}>
-        <Pressable onPress={() => router.back()} style={[styles.backBtn, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
-          <Ionicons name="chevron-back" size={24} color={colors.text} />
+        <Pressable
+          onPress={() => router.back()}
+          style={[styles.backBtn, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}
+        >
+          <Ionicons name="chevron-back" size={22} color={colors.text} />
         </Pressable>
         <Text style={[styles.navTitle, { color: colors.text }]}>Terms of Service</Text>
         <View style={{ width: 40 }} />
@@ -57,170 +71,120 @@ export default function TermsScreen() {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={[styles.scrollContent, { paddingBottom: insets.bottom + 40 }]}
       >
-        <View style={[styles.heroBanner, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
-          <View style={[styles.heroIcon, { backgroundColor: colors.primaryDim, borderColor: colors.primary + "40" }]}>
-            <Ionicons name="document-text" size={32} color={colors.primary} />
+        {/* Hero */}
+        <LinearGradient
+          colors={colors.isDark
+            ? ["rgba(0,111,255,0.10)", "rgba(0,229,255,0.06)", "rgba(0,111,255,0.02)"]
+            : ["rgba(0,111,255,0.06)", "rgba(0,111,255,0.02)", "transparent"]}
+          style={[styles.heroBanner, { borderColor: colors.primary + "25" }]}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+        >
+          <LinearGradient
+            colors={[colors.primary, colors.primary + "BB"]}
+            style={styles.heroIconWrap}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+          >
+            <Ionicons name="document-text" size={30} color="#fff" />
+          </LinearGradient>
+          <View style={{ flex: 1 }}>
+            <Text style={[styles.heroTitle, { color: colors.text }]}>Terms of Service</Text>
+            <Text style={[styles.heroSub, { color: colors.textSecondary }]}>
+              Please read carefully before using {APP_NAME}. By using the app, you agree to these terms.
+            </Text>
+            <View style={[styles.dateBadge, { backgroundColor: colors.surfaceLight, borderColor: colors.surfaceBorder }]}>
+              <Ionicons name="calendar-outline" size={12} color={colors.textMuted} />
+              <Text style={[styles.dateBadgeText, { color: colors.textMuted }]}>Effective: {EFFECTIVE_DATE}</Text>
+            </View>
           </View>
-          <Text style={[styles.heroTitle, { color: colors.text }]}>Terms of Service</Text>
-          <Text style={[styles.heroSub, { color: colors.textSecondary }]}>
-            Please read these terms carefully before using {APP_NAME}. By using the app, you agree to be bound by these terms.
-          </Text>
-          <Text style={[styles.effectiveDate, { color: colors.textMuted }]}>Effective date: {EFFECTIVE_DATE}</Text>
-        </View>
+        </LinearGradient>
 
-        <Section title="1. Acceptance of Terms" colors={colors}>
+        <SectionCard title="Acceptance of Terms" num="1" colors={colors}>
           <Para colors={colors}>
-            By downloading, installing, or using {APP_NAME} ("the App", "the Service"), you agree to be bound by these Terms of Service ("Terms"). If you do not agree to these Terms, you must not use the App. These Terms constitute a legally binding agreement between you ("User", "you") and the operators of {APP_NAME} ("we", "us", "our").
+            By downloading, installing, or using {APP_NAME} ("the App"), you agree to be bound by these Terms. If you do not agree, you must not use the App. We reserve the right to modify these Terms at any time. Continued use after changes constitutes acceptance.
           </Para>
-          <Para colors={colors}>
-            We reserve the right to modify these Terms at any time. Continued use of the App after changes are posted constitutes your acceptance of the revised Terms.
-          </Para>
-        </Section>
+        </SectionCard>
 
-        <Section title="2. Description of Service" colors={colors}>
-          <Para colors={colors}>
-            {APP_NAME} is a QR code scanning, analysis, and generation tool designed to help users identify potentially malicious, fraudulent, or suspicious QR codes. The App provides:
-          </Para>
+        <SectionCard title="Description of Service" num="2" colors={colors}>
+          <Para colors={colors}>{APP_NAME} provides:</Para>
           <Bullet text="QR code scanning via device camera" colors={colors} />
           <Bullet text="QR code content analysis and safety scoring based on community data" colors={colors} />
           <Bullet text="User-submitted safety reports and community commentary" colors={colors} />
           <Bullet text="Living Shield QR code generation with dynamic destinations" colors={colors} />
           <Bullet text="Community trust scores derived from aggregated user reports" colors={colors} />
-        </Section>
+        </SectionCard>
 
-        <Section title="3. Disclaimer of Warranties — Read Carefully" colors={colors}>
-          <Para colors={colors}>
-            THE APP IS PROVIDED "AS IS" AND "AS AVAILABLE" WITHOUT ANY WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, ACCURACY, OR NON-INFRINGEMENT.
-          </Para>
-          <Para colors={colors}>
-            WE DO NOT GUARANTEE THAT:
-          </Para>
+        <SectionCard title="Disclaimer of Warranties — Read Carefully" num="3" colors={colors}>
+          <View style={[styles.warningBox, { backgroundColor: colors.warningDim, borderColor: colors.warning + "35" }]}>
+            <Ionicons name="warning" size={16} color={colors.warning} />
+            <Text style={[styles.warningText, { color: colors.warning }]}>
+              THE APP IS PROVIDED "AS IS" WITHOUT WARRANTIES OF ANY KIND.
+            </Text>
+          </View>
+          <Para colors={colors}>We do not guarantee that:</Para>
           <Bullet text="Any QR code marked as 'Safe' is actually safe. Trust scores reflect community opinion, not verified fact." colors={colors} />
-          <Bullet text="Any QR code marked as 'Dangerous' or 'Scam' is actually fraudulent. Reports may be incorrect." colors={colors} />
+          <Bullet text="Any QR code marked as 'Dangerous' is actually fraudulent. Reports may be incorrect." colors={colors} />
           <Bullet text="The App will detect all malicious QR codes, phishing URLs, or fraudulent payment requests." colors={colors} />
           <Bullet text="The App will be free from errors, bugs, interruptions, or security vulnerabilities." colors={colors} />
-          <Bullet text="Content in user comments is accurate, truthful, or safe." colors={colors} />
-          <Para colors={colors}>
-            QR GUARD IS AN INFORMATIONAL TOOL ONLY. ALL SCANNING DECISIONS ARE MADE SOLELY BY YOU. WE ACCEPT NO RESPONSIBILITY WHATSOEVER FOR ANY ACTION YOU TAKE — OR FAIL TO TAKE — BASED ON INFORMATION PROVIDED BY THIS APP.
-          </Para>
-        </Section>
+          <Para colors={colors}>QR GUARD IS AN INFORMATIONAL TOOL ONLY. ALL SCANNING DECISIONS ARE MADE SOLELY BY YOU.</Para>
+        </SectionCard>
 
-        <Section title="4. Limitation of Liability" colors={colors}>
-          <Para colors={colors}>
-            TO THE MAXIMUM EXTENT PERMITTED BY APPLICABLE LAW, IN NO EVENT SHALL WE, OUR DIRECTORS, EMPLOYEES, AFFILIATES, PARTNERS, OR SERVICE PROVIDERS BE LIABLE FOR ANY INDIRECT, INCIDENTAL, SPECIAL, CONSEQUENTIAL, PUNITIVE, OR EXEMPLARY DAMAGES, INCLUDING BUT NOT LIMITED TO:
-          </Para>
+        <SectionCard title="Limitation of Liability" num="4" colors={colors}>
+          <Para colors={colors}>To the maximum extent permitted by law, we are not liable for:</Para>
           <Bullet text="Financial loss from following a QR code to a fraudulent payment or phishing site" colors={colors} />
-          <Bullet text="Data breach, identity theft, or device compromise resulting from scanning a QR code" colors={colors} />
+          <Bullet text="Data breach, identity theft, or device compromise from scanning a QR code" colors={colors} />
           <Bullet text="Loss of business, profits, revenue, data, or goodwill" colors={colors} />
-          <Bullet text="Personal injury or property damage arising from use of the App" colors={colors} />
-          <Bullet text="Reliance on any trust score, safety rating, or community report in the App" colors={colors} />
-          <Bullet text="Damages arising from service outages, data loss, or App malfunction" colors={colors} />
+          <Bullet text="Reliance on any trust score, safety rating, or community report" colors={colors} />
           <Para colors={colors}>
-            OUR TOTAL AGGREGATE LIABILITY TO YOU FOR ANY CLAIM ARISING OUT OF OR RELATED TO THESE TERMS OR THE APP SHALL NOT EXCEED THE AMOUNT YOU PAID TO US IN THE TWELVE (12) MONTHS PRECEDING THE CLAIM, OR USD $10.00, WHICHEVER IS LESS.
+            Our total liability shall not exceed the amount you paid in the preceding 12 months, or USD $10.00, whichever is less.
           </Para>
-          <Para colors={colors}>
-            SOME JURISDICTIONS DO NOT ALLOW THE EXCLUSION OR LIMITATION OF CERTAIN WARRANTIES OR LIABILITY. IN SUCH JURISDICTIONS, OUR LIABILITY IS LIMITED TO THE MAXIMUM EXTENT PERMITTED BY LAW.
-          </Para>
-        </Section>
+        </SectionCard>
 
-        <Section title="5. No Professional Advice" colors={colors}>
+        <SectionCard title="No Professional Advice" num="5" colors={colors}>
           <Para colors={colors}>
-            Nothing in this App constitutes financial, legal, cybersecurity, or professional advice of any kind. Trust scores and safety ratings are community-driven opinions and must not be treated as expert assessments. Always exercise independent judgment and consult qualified professionals when in doubt about a QR code's legitimacy — especially before making any financial transaction.
+            Nothing in this App constitutes financial, legal, cybersecurity, or professional advice. Trust scores are community-driven opinions and must not be treated as expert assessments. Always exercise independent judgment before making any financial transaction.
           </Para>
-        </Section>
+        </SectionCard>
 
-        <Section title="6. User Responsibilities" colors={colors}>
-          <Para colors={colors}>
-            You are solely responsible for:
-          </Para>
+        <SectionCard title="User Responsibilities" num="6" colors={colors}>
+          <Para colors={colors}>You are solely responsible for:</Para>
           <Bullet text="All decisions made after scanning a QR code, regardless of what the App displays" colors={colors} />
           <Bullet text="Verifying the legitimacy of any website, payment request, or content reached via a QR code" colors={colors} />
-          <Bullet text="Ensuring you have permission to scan QR codes on private or restricted premises" colors={colors} />
           <Bullet text="The accuracy and legality of any reports, comments, or content you submit" colors={colors} />
           <Bullet text="Keeping your account credentials secure" colors={colors} />
-          <Bullet text="Any harm caused to others by false or misleading reports you submit" colors={colors} />
-        </Section>
+        </SectionCard>
 
-        <Section title="7. Community Content & Reports" colors={colors}>
-          <Para colors={colors}>
-            Users may submit reports, comments, and safety ratings ("User Content"). By submitting User Content, you:
-          </Para>
-          <Bullet text="Represent that it is truthful, accurate, and based on genuine experience" colors={colors} />
-          <Bullet text="Grant us a worldwide, royalty-free licence to display, aggregate, and use it to power trust scores" colors={colors} />
-          <Bullet text="Agree not to submit defamatory, false, harassing, or malicious reports" colors={colors} />
-          <Para colors={colors}>
-            We do not endorse, verify, or guarantee the accuracy of any User Content. We reserve the right to remove any content that violates these Terms or applicable law. You acknowledge that we are not liable for any User Content submitted by other users.
-          </Para>
-        </Section>
+        <SectionCard title="Community Content & Reports" num="7" colors={colors}>
+          <Para colors={colors}>By submitting reports or comments, you represent that they are truthful and based on genuine experience. We reserve the right to remove any content that violates these Terms.</Para>
+        </SectionCard>
 
-        <Section title="8. Prohibited Uses" colors={colors}>
+        <SectionCard title="Prohibited Uses" num="8" colors={colors}>
           <Para colors={colors}>You must not use the App to:</Para>
-          <Bullet text="Submit false, malicious, or defamatory reports about QR codes or businesses" colors={colors} />
-          <Bullet text="Harass, threaten, or harm other users" colors={colors} />
+          <Bullet text="Submit false, malicious, or defamatory reports" colors={colors} />
           <Bullet text="Attempt to manipulate trust scores through coordinated fake reporting" colors={colors} />
-          <Bullet text="Reverse-engineer, decompile, or exploit the App or its infrastructure" colors={colors} />
-          <Bullet text="Use the App for any unlawful purpose or in violation of any applicable law" colors={colors} />
-          <Bullet text="Impersonate any person or entity or misrepresent your affiliation" colors={colors} />
+          <Bullet text="Reverse-engineer or exploit the App or its infrastructure" colors={colors} />
           <Bullet text="Generate QR codes intended to defraud, phish, or harm recipients" colors={colors} />
-        </Section>
+        </SectionCard>
 
-        <Section title="9. Living Shield QR Codes" colors={colors}>
+        <SectionCard title="Living Shield QR Codes" num="9" colors={colors}>
           <Para colors={colors}>
-            Owners of Living Shield QR codes are solely responsible for all content their QR codes redirect to at any point in time, including after destination changes. We provide the redirect infrastructure only. We accept no liability for harm caused by the destination content of any user-generated QR code, including phishing, fraud, malware, or offensive material.
+            Owners are solely responsible for all content their QR codes redirect to, including after destination changes. Misuse to redirect victims to malicious destinations violates these Terms and may be reported to law enforcement.
           </Para>
-          <Para colors={colors}>
-            Misuse of Living Shield QR codes to redirect victims to malicious destinations is a violation of these Terms and may be reported to law enforcement.
-          </Para>
-        </Section>
+        </SectionCard>
 
-        <Section title="10. Third-Party Links and Services" colors={colors}>
-          <Para colors={colors}>
-            QR codes you scan may lead to third-party websites, apps, or services that are entirely outside our control. We have no responsibility for the content, privacy practices, security, or legality of any third-party destination. Accessing third-party content is entirely at your own risk.
-          </Para>
-        </Section>
-
-        <Section title="11. Account Termination" colors={colors}>
-          <Para colors={colors}>
-            We reserve the right to suspend or terminate your account at any time, without notice, if we determine that you have violated these Terms or engaged in conduct harmful to other users, third parties, or the App's integrity. You may delete your account at any time from Settings.
-          </Para>
-        </Section>
-
-        <Section title="12. Indemnification" colors={colors}>
-          <Para colors={colors}>
-            You agree to indemnify, defend, and hold harmless us and our affiliates, officers, directors, employees, and agents from and against any claims, liabilities, damages, losses, costs, or expenses (including reasonable legal fees) arising from: (a) your use of the App; (b) your violation of these Terms; (c) your User Content; or (d) your violation of any third-party rights.
-          </Para>
-        </Section>
-
-        <Section title="13. Governing Law & Dispute Resolution" colors={colors}>
-          <Para colors={colors}>
-            These Terms shall be governed by and construed in accordance with applicable law. Any dispute arising from these Terms or your use of the App shall first be attempted to be resolved through good-faith negotiation. If unresolved within 30 days, disputes shall be submitted to binding arbitration, and you waive any right to participate in a class-action lawsuit.
-          </Para>
-        </Section>
-
-        <Section title="14. Severability" colors={colors}>
-          <Para colors={colors}>
-            If any provision of these Terms is found to be invalid or unenforceable by a court of competent jurisdiction, the remaining provisions shall continue in full force and effect. The invalid provision shall be modified to the minimum extent necessary to make it enforceable.
-          </Para>
-        </Section>
-
-        <Section title="15. Contact" colors={colors}>
-          <Para colors={colors}>
-            For legal matters, questions about these Terms, or to report a violation, contact us at:
-          </Para>
+        <SectionCard title="Contact" num="10" colors={colors}>
+          <Para colors={colors}>For legal matters or to report a violation, contact us at:</Para>
           <View style={[styles.contactCard, { backgroundColor: colors.primaryDim, borderColor: colors.primary + "30" }]}>
             <Ionicons name="mail-outline" size={20} color={colors.primary} />
             <Text style={[styles.contactEmail, { color: colors.primary }]}>{CONTACT_EMAIL}</Text>
           </View>
-          <Para colors={colors}>
-            We aim to respond to all legal enquiries within 5 business days.
-          </Para>
-        </Section>
+          <Para colors={colors}>We aim to respond to all legal enquiries within 5 business days.</Para>
+        </SectionCard>
 
         <View style={styles.footer}>
-          <Ionicons name="shield-checkmark" size={20} color={colors.primary} />
-          <Text style={[styles.footerText, { color: colors.textMuted }]}>
-            {APP_NAME} — Scan smart. Stay safe.
-          </Text>
+          <Ionicons name="shield-checkmark" size={16} color={colors.primary} />
+          <Text style={[styles.footerText, { color: colors.textMuted }]}>{APP_NAME} — Scan smart. Stay safe.</Text>
         </View>
       </ScrollView>
     </View>
@@ -231,62 +195,50 @@ const styles = StyleSheet.create({
   container: { flex: 1 },
   navBar: {
     flexDirection: "row", alignItems: "center", justifyContent: "space-between",
-    paddingHorizontal: 16, paddingVertical: 12,
-    borderBottomWidth: 1,
+    paddingHorizontal: 18, paddingVertical: 14, borderBottomWidth: StyleSheet.hairlineWidth,
   },
   navTitle: { fontSize: 18, fontFamily: "Inter_700Bold", flex: 1, textAlign: "center" },
-  backBtn: {
-    width: 40, height: 40, borderRadius: 20,
-    alignItems: "center", justifyContent: "center",
-    borderWidth: 1,
-  },
-  scrollContent: { padding: 20 },
+  backBtn: { width: 40, height: 40, borderRadius: 20, alignItems: "center", justifyContent: "center", borderWidth: 1 },
+  scrollContent: { padding: 18, gap: 12 },
+
   heroBanner: {
-    alignItems: "center",
-    borderRadius: 20, padding: 24, marginBottom: 24,
-    borderWidth: 1,
+    flexDirection: "row", alignItems: "flex-start", gap: 16,
+    borderRadius: 24, padding: 22, borderWidth: 1,
   },
-  heroIcon: {
-    width: 68, height: 68, borderRadius: 34,
-    alignItems: "center", justifyContent: "center",
-    marginBottom: 14, borderWidth: 2,
+  heroIconWrap: {
+    width: 58, height: 58, borderRadius: 20,
+    alignItems: "center", justifyContent: "center", flexShrink: 0,
   },
-  heroTitle: { fontSize: 22, fontFamily: "Inter_700Bold", marginBottom: 8, textAlign: "center" },
-  heroSub: {
-    fontSize: 14, fontFamily: "Inter_400Regular",
-    textAlign: "center", lineHeight: 20, marginBottom: 12,
+  heroTitle: { fontSize: 20, fontFamily: "Inter_700Bold", marginBottom: 6 },
+  heroSub: { fontSize: 13, fontFamily: "Inter_400Regular", lineHeight: 20, marginBottom: 10 },
+  dateBadge: {
+    flexDirection: "row", alignItems: "center", gap: 5,
+    paddingHorizontal: 10, paddingVertical: 4, borderRadius: 10, borderWidth: 1,
+    alignSelf: "flex-start",
   },
-  effectiveDate: { fontSize: 12, fontFamily: "Inter_500Medium" },
-  section: {
-    borderRadius: 16, padding: 18,
-    marginBottom: 12, borderWidth: 1,
+  dateBadgeText: { fontSize: 11, fontFamily: "Inter_500Medium" },
+
+  sectionCard: {
+    borderRadius: 22, borderWidth: 1, padding: 18,
   },
-  sectionTitle: {
-    fontSize: 15, fontFamily: "Inter_700Bold",
-    marginBottom: 10,
+  sectionHeader: { flexDirection: "row", alignItems: "center", gap: 10, marginBottom: 12 },
+  sectionNum: { width: 28, height: 28, borderRadius: 9, alignItems: "center", justifyContent: "center" },
+  sectionNumText: { fontSize: 13, fontFamily: "Inter_700Bold" },
+  sectionTitle: { fontSize: 16, fontFamily: "Inter_700Bold", flex: 1 },
+  warningBox: {
+    flexDirection: "row", alignItems: "flex-start", gap: 8,
+    padding: 12, borderRadius: 12, borderWidth: 1, marginBottom: 10,
   },
-  para: {
-    fontSize: 14, fontFamily: "Inter_400Regular",
-    lineHeight: 22, marginBottom: 8,
-  },
-  bulletRow: { flexDirection: "row", alignItems: "flex-start", gap: 10, marginBottom: 6 },
-  bulletDot: {
-    width: 5, height: 5, borderRadius: 2.5,
-    marginTop: 8, flexShrink: 0,
-  },
-  bulletText: {
-    flex: 1, fontSize: 14, fontFamily: "Inter_400Regular",
-    lineHeight: 21,
-  },
+  warningText: { fontSize: 13, fontFamily: "Inter_600SemiBold", flex: 1, lineHeight: 18 },
+  para: { fontSize: 14, fontFamily: "Inter_400Regular", lineHeight: 22, marginBottom: 8 },
+  bulletRow: { flexDirection: "row", alignItems: "flex-start", gap: 10, marginBottom: 7 },
+  bulletDot: { width: 6, height: 6, borderRadius: 3, marginTop: 8, flexShrink: 0 },
+  bulletText: { flex: 1, fontSize: 14, fontFamily: "Inter_400Regular", lineHeight: 21 },
   contactCard: {
     flexDirection: "row", alignItems: "center", gap: 10,
-    borderRadius: 12, padding: 14,
-    marginVertical: 10, borderWidth: 1,
+    borderRadius: 14, padding: 14, marginVertical: 10, borderWidth: 1,
   },
   contactEmail: { fontSize: 15, fontFamily: "Inter_600SemiBold" },
-  footer: {
-    flexDirection: "row", alignItems: "center", justifyContent: "center",
-    gap: 8, padding: 20, marginTop: 8,
-  },
+  footer: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, paddingVertical: 16 },
   footerText: { fontSize: 13, fontFamily: "Inter_500Medium" },
 });

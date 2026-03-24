@@ -117,31 +117,31 @@ export default function HomeScreen() {
                 style={styles.heroGradient}
               >
                 <View style={[styles.heroBorderAccent, { borderColor: colors.primary + "30" }]} />
-                <View style={styles.heroLeft}>
+                <View style={styles.heroTop}>
                   <Animated.View style={[styles.heroIconRing, { borderColor: colors.primary + "30" }, pulseStyle]}>
                     <LinearGradient
                       colors={[colors.primary + "25", colors.primary + "08"]}
                       style={styles.heroIconBg}
                     >
-                      <MaterialCommunityIcons name="qrcode-scan" size={42} color={colors.primary} />
+                      <MaterialCommunityIcons name="qrcode-scan" size={38} color={colors.primary} />
                     </LinearGradient>
                   </Animated.View>
-                  <View style={{ flex: 1 }}>
+                  <View style={styles.heroTextBlock}>
                     <Text style={[styles.heroTitle, { color: colors.text }]}>Scan QR Code</Text>
                     <Text style={[styles.heroSub, { color: colors.textSecondary }]}>
                       Camera · Gallery · Instant AI analysis
                     </Text>
-                    <View style={styles.heroPillRow}>
-                      {["Safe check", "Fraud detect", "Trust score"].map((t) => (
-                        <View key={t} style={[styles.heroPill, { backgroundColor: colors.primary + "18", borderColor: colors.primary + "35" }]}>
-                          <Text style={[styles.heroPillText, { color: colors.primary }]}>{t}</Text>
-                        </View>
-                      ))}
-                    </View>
+                  </View>
+                  <View style={[styles.heroArrow, { backgroundColor: colors.primary }]}>
+                    <Ionicons name="arrow-forward" size={18} color={colors.primaryText} />
                   </View>
                 </View>
-                <View style={[styles.heroArrow, { backgroundColor: colors.primary }]}>
-                  <Ionicons name="arrow-forward" size={20} color={colors.primaryText} />
+                <View style={styles.heroPillRow}>
+                  {["Safe check", "Fraud detect", "Trust score"].map((t) => (
+                    <View key={t} style={[styles.heroPill, { backgroundColor: colors.primary + "18", borderColor: colors.primary + "35" }]}>
+                      <Text style={[styles.heroPillText, { color: colors.primary }]}>{t}</Text>
+                    </View>
+                  ))}
                 </View>
               </LinearGradient>
             </Pressable>

@@ -76,183 +76,252 @@ export default function RegisterScreen() {
 
   if (verificationSent) {
     return (
-      <KeyboardAvoidingView style={{ flex: 1, backgroundColor: colors.background }} behavior={Platform.OS === "ios" ? "padding" : "height"}>
-        <ScrollView contentContainerStyle={[styles.verifyContainer, { paddingBottom: insets.bottom + 32, paddingTop: insets.top + 60 }]} showsVerticalScrollIndicator={false}>
-          <View style={[styles.successIconWrap, { backgroundColor: colors.safeDim }]}>
+      <View style={{ flex: 1, backgroundColor: colors.background }}>
+        <LinearGradient
+          colors={colors.isDark ? ["#020913", "#050B18"] : ["#EEF4FF", "#F4F8FF"]}
+          style={StyleSheet.absoluteFill}
+        />
+        <View style={[styles.verifyContainer, { paddingBottom: insets.bottom + 40, paddingTop: insets.top + 60 }]}>
+          <LinearGradient
+            colors={[colors.safe + "20", colors.safe + "08"]}
+            style={styles.successIconWrap}
+          >
             <Ionicons name="mail-open-outline" size={44} color={colors.safe} />
-          </View>
-          <Text style={[styles.title, { color: colors.text }]}>Verify Your Email</Text>
+          </LinearGradient>
+          <Text style={[styles.title, { color: colors.text }]}>Check Your Email</Text>
           <Text style={[styles.verifyText, { color: colors.textSecondary }]}>
-            Your account has been created! A verification email has been sent to{"\n"}
+            Account created! We've sent a verification email to{"\n"}
             <Text style={{ color: colors.primary, fontFamily: "Inter_600SemiBold" }}>{registeredEmail}</Text>
-            {"\n\n"}
-            Click the link in the email to verify your account before signing in. Check your spam folder if you don't see it.
+            {"\n\n"}Click the link to verify your account before signing in.
           </Text>
           <Pressable
             onPress={() => router.replace("/(auth)/login")}
-            style={({ pressed }) => [{ opacity: pressed ? 0.85 : 1, transform: [{ scale: pressed ? 0.98 : 1 }] }]}
+            style={({ pressed }) => [{ opacity: pressed ? 0.85 : 1, transform: [{ scale: pressed ? 0.98 : 1 }], width: "100%" }]}
           >
             <LinearGradient
-              colors={colors.isDark ? ["#10B981", "#059669"] : ["#10B981", "#047857"]}
+              colors={colors.isDark ? ["#00D68F", "#00A67E"] : ["#10B981", "#047857"]}
               style={styles.primaryBtn}
               start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
+              end={{ x: 1, y: 0 }}
             >
               <Text style={styles.primaryBtnText}>Go to Sign In</Text>
+              <Ionicons name="arrow-forward" size={18} color="#fff" />
             </LinearGradient>
           </Pressable>
-        </ScrollView>
-      </KeyboardAvoidingView>
+        </View>
+      </View>
     );
   }
 
   return (
-    <KeyboardAvoidingView
-      style={{ flex: 1, backgroundColor: colors.background }}
-      behavior={Platform.OS === "ios" ? "padding" : "height"}
-      keyboardVerticalOffset={90}
-    >
-      <ScrollView
-        contentContainerStyle={[styles.container, { paddingBottom: insets.bottom + 32 }]}
-        keyboardShouldPersistTaps="handled"
-        showsVerticalScrollIndicator={false}
+    <View style={{ flex: 1, backgroundColor: colors.background }}>
+      <LinearGradient
+        colors={colors.isDark ? ["#020913", "#050B18", "#07111F"] : ["#EEF4FF", "#F4F8FF", "#EAF0FF"]}
+        style={StyleSheet.absoluteFill}
+        start={{ x: 0.5, y: 0 }}
+        end={{ x: 0.5, y: 1 }}
+      />
+      <View style={[styles.glowOrb, {
+        backgroundColor: colors.isDark ? "rgba(176,96,255,0.06)" : "rgba(124,58,237,0.05)",
+        top: -60, left: -80, width: 260, height: 260,
+      }]} />
+      <View style={[styles.glowOrb, {
+        backgroundColor: colors.isDark ? "rgba(0,229,255,0.05)" : "rgba(0,111,255,0.04)",
+        bottom: 60, right: -100, width: 300, height: 300,
+      }]} />
+
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        keyboardVerticalOffset={90}
       >
-        {/* Hero Section */}
-        <View style={styles.heroSection}>
-          <LinearGradient
-            colors={colors.isDark ? ["#00E5FF", "#006FFF", "#B060FF"] : ["#006FFF", "#0047CC", "#7C3AED"]}
-            style={styles.logoCircle}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-          >
-            <Ionicons name="person-add" size={32} color="#fff" />
-          </LinearGradient>
-          <Text style={[styles.appName, { color: colors.primary }]}>QR Guard</Text>
-          <Text style={[styles.title, { color: colors.text }]}>Create account</Text>
-          <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
-            Join to comment, report, and sync your scan history
-          </Text>
-        </View>
-
-        {/* Error Banner */}
-        {error ? (
-          <View style={[styles.errorBanner, { backgroundColor: colors.dangerDim, borderColor: colors.danger + "40" }]}>
-            <Ionicons name="alert-circle" size={16} color={colors.danger} />
-            <Text style={[styles.errorText, { color: colors.danger }]}>{error}</Text>
-          </View>
-        ) : null}
-
-        {/* Google Button */}
-        <Pressable
-          onPress={handleGoogleSignIn}
-          disabled={googleLoading || !googleRequest}
-          style={({ pressed }) => [
-            styles.googleBtn,
-            { backgroundColor: colors.surface, borderColor: colors.surfaceBorder, opacity: pressed || googleLoading || !googleRequest ? 0.7 : 1 },
-          ]}
+        <ScrollView
+          contentContainerStyle={[styles.container, { paddingBottom: insets.bottom + 40, paddingTop: insets.top + 20 }]}
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
         >
-          {googleLoading ? (
-            <ActivityIndicator color={colors.text} size="small" />
-          ) : (
-            <>
-              <GoogleIcon size={20} />
-              <Text style={[styles.googleBtnText, { color: colors.text }]}>Continue with Google</Text>
-            </>
-          )}
-        </Pressable>
-
-        {/* Divider */}
-        <View style={styles.dividerRow}>
-          <View style={[styles.dividerLine, { backgroundColor: colors.surfaceBorder }]} />
-          <Text style={[styles.dividerText, { color: colors.textMuted }]}>or create with email</Text>
-          <View style={[styles.dividerLine, { backgroundColor: colors.surfaceBorder }]} />
-        </View>
-
-        {/* Fields */}
-        <View style={styles.fieldsSection}>
-          <AuthFormInput
-            icon="person-outline"
-            placeholder="Display name"
-            value={displayName}
-            onChangeText={(v) => { setDisplayName(v); if (fieldErrors.name) setFieldErrors((p) => ({ ...p, name: "" })); }}
-            autoCapitalize="words"
-            error={fieldErrors.name}
-          />
-          <AuthFormInput
-            icon="mail-outline"
-            placeholder="Email address"
-            value={email}
-            onChangeText={(v) => { setEmail(v); if (fieldErrors.email) setFieldErrors((p) => ({ ...p, email: "" })); }}
-            keyboardType="email-address"
-            autoCapitalize="none"
-            autoCorrect={false}
-            error={fieldErrors.email}
-          />
-          <AuthFormInput
-            icon="lock-closed-outline"
-            placeholder="Password (min 6 characters)"
-            value={password}
-            onChangeText={(v) => { setPassword(v); if (fieldErrors.password) setFieldErrors((p) => ({ ...p, password: "" })); }}
-            secureTextEntry={!showPassword}
-            showToggle
-            toggleVisible={showPassword}
-            onToggleVisible={() => setShowPassword(!showPassword)}
-            error={fieldErrors.password}
-          />
-
-          {/* Create Account Button */}
           <Pressable
-            onPress={handleRegister}
-            disabled={loading}
-            style={({ pressed }) => [{ opacity: pressed || loading ? 0.85 : 1, transform: [{ scale: pressed ? 0.98 : 1 }] }]}
+            onPress={() => router.canGoBack() ? router.back() : null}
+            style={[styles.backBtn, { backgroundColor: colors.surface + "CC", borderColor: colors.surfaceBorder }]}
           >
-            <LinearGradient
-              colors={colors.isDark ? ["#00E5FF", "#006FFF"] : ["#006FFF", "#0047CC"]}
-              style={styles.primaryBtn}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
-            >
-              {loading ? (
-                <ActivityIndicator color="#fff" />
-              ) : (
-                <Text style={styles.primaryBtnText}>Create Account</Text>
-              )}
-            </LinearGradient>
+            <Ionicons name="chevron-back" size={20} color={colors.text} />
           </Pressable>
-        </View>
 
-        {/* Footer */}
-        <View style={styles.footer}>
-          <Text style={[styles.footerText, { color: colors.textSecondary }]}>Already have an account?</Text>
-          <Link href="/(auth)/login" asChild>
-            <Pressable>
-              <Text style={[styles.footerLink, { color: colors.primary }]}>Sign In</Text>
+          <View style={styles.heroSection}>
+            <View style={styles.logoWrap}>
+              <LinearGradient
+                colors={colors.isDark ? ["#B060FF", "#006FFF", "#00E5FF"] : ["#7C3AED", "#006FFF", "#0047CC"]}
+                style={styles.logoGradient}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+              >
+                <Ionicons name="person-add" size={32} color="#fff" />
+              </LinearGradient>
+              <View style={[styles.logoRing, { borderColor: colors.accent + "30" }]} />
+              <View style={[styles.logoRing2, { borderColor: colors.accent + "15" }]} />
+            </View>
+            <Text style={[styles.appLabel, { color: colors.accent }]}>QR GUARD</Text>
+            <Text style={[styles.title, { color: colors.text }]}>Create account</Text>
+            <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
+              Join to comment, report, and sync your scan history
+            </Text>
+          </View>
+
+          <View style={[styles.card, {
+            backgroundColor: colors.isDark ? "rgba(12,21,38,0.85)" : "rgba(255,255,255,0.92)",
+            borderColor: colors.surfaceBorder,
+          }]}>
+            {error ? (
+              <View style={[styles.errorBanner, { backgroundColor: colors.dangerDim, borderColor: colors.danger + "40" }]}>
+                <Ionicons name="alert-circle" size={16} color={colors.danger} />
+                <Text style={[styles.errorText, { color: colors.danger }]}>{error}</Text>
+              </View>
+            ) : null}
+
+            {/* Google first for register */}
+            <Pressable
+              onPress={handleGoogleSignIn}
+              disabled={googleLoading || !googleRequest}
+              style={({ pressed }) => [
+                styles.googleBtn,
+                {
+                  backgroundColor: colors.surfaceLight,
+                  borderColor: colors.surfaceBorder,
+                  opacity: pressed || googleLoading || !googleRequest ? 0.7 : 1,
+                  transform: [{ scale: pressed ? 0.98 : 1 }],
+                },
+              ]}
+            >
+              {googleLoading ? (
+                <ActivityIndicator color={colors.text} size="small" />
+              ) : (
+                <>
+                  <GoogleIcon size={20} />
+                  <Text style={[styles.googleBtnText, { color: colors.text }]}>Continue with Google</Text>
+                </>
+              )}
             </Pressable>
-          </Link>
-        </View>
-      </ScrollView>
-    </KeyboardAvoidingView>
+
+            <View style={styles.dividerRow}>
+              <View style={[styles.dividerLine, { backgroundColor: colors.surfaceBorder }]} />
+              <Text style={[styles.dividerText, { color: colors.textMuted }]}>or create with email</Text>
+              <View style={[styles.dividerLine, { backgroundColor: colors.surfaceBorder }]} />
+            </View>
+
+            <View style={styles.fieldsSection}>
+              <AuthFormInput
+                icon="person-outline"
+                placeholder="Display name"
+                value={displayName}
+                onChangeText={(v) => { setDisplayName(v); if (fieldErrors.name) setFieldErrors((p) => ({ ...p, name: "" })); }}
+                autoCapitalize="words"
+                error={fieldErrors.name}
+              />
+              <AuthFormInput
+                icon="mail-outline"
+                placeholder="Email address"
+                value={email}
+                onChangeText={(v) => { setEmail(v); if (fieldErrors.email) setFieldErrors((p) => ({ ...p, email: "" })); }}
+                keyboardType="email-address"
+                autoCapitalize="none"
+                autoCorrect={false}
+                error={fieldErrors.email}
+              />
+              <AuthFormInput
+                icon="lock-closed-outline"
+                placeholder="Password (min 6 characters)"
+                value={password}
+                onChangeText={(v) => { setPassword(v); if (fieldErrors.password) setFieldErrors((p) => ({ ...p, password: "" })); }}
+                secureTextEntry={!showPassword}
+                showToggle
+                toggleVisible={showPassword}
+                onToggleVisible={() => setShowPassword(!showPassword)}
+                error={fieldErrors.password}
+              />
+
+              <Pressable
+                onPress={handleRegister}
+                disabled={loading}
+                style={({ pressed }) => [{ opacity: pressed || loading ? 0.88 : 1, transform: [{ scale: pressed ? 0.98 : 1 }] }]}
+              >
+                <LinearGradient
+                  colors={colors.isDark ? ["#B060FF", "#6030CC", "#006FFF"] : ["#7C3AED", "#4F1FCC"]}
+                  style={styles.primaryBtn}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 0 }}
+                >
+                  {loading ? (
+                    <ActivityIndicator color="#fff" />
+                  ) : (
+                    <>
+                      <Text style={styles.primaryBtnText}>Create Account</Text>
+                      <Ionicons name="arrow-forward" size={18} color="#fff" />
+                    </>
+                  )}
+                </LinearGradient>
+              </Pressable>
+            </View>
+          </View>
+
+          <View style={styles.footer}>
+            <Text style={[styles.footerText, { color: colors.textSecondary }]}>Already have an account?</Text>
+            <Link href="/(auth)/login" asChild>
+              <Pressable>
+                <Text style={[styles.footerLink, { color: colors.primary }]}>Sign In</Text>
+              </Pressable>
+            </Link>
+          </View>
+        </ScrollView>
+      </KeyboardAvoidingView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flexGrow: 1, paddingHorizontal: 24 },
-  verifyContainer: { flexGrow: 1, paddingHorizontal: 32, alignItems: "center", gap: 16 },
-  heroSection: { alignItems: "center", paddingTop: 52, paddingBottom: 28, gap: 6 },
-  logoCircle: { width: 84, height: 84, borderRadius: 28, alignItems: "center", justifyContent: "center", marginBottom: 8 },
-  appName: { fontSize: 14, fontFamily: "Inter_700Bold", letterSpacing: 2, textTransform: "uppercase" },
-  title: { fontSize: 30, fontFamily: "Inter_700Bold", textAlign: "center" },
-  subtitle: { fontSize: 15, fontFamily: "Inter_400Regular", textAlign: "center", lineHeight: 21 },
+  container: { flexGrow: 1, paddingHorizontal: 22 },
+  glowOrb: { position: "absolute", borderRadius: 200 },
+  backBtn: {
+    width: 40, height: 40, borderRadius: 20,
+    alignItems: "center", justifyContent: "center",
+    borderWidth: 1, marginBottom: 8, alignSelf: "flex-start",
+  },
+  heroSection: { alignItems: "center", paddingTop: 20, paddingBottom: 28, gap: 8 },
+  logoWrap: { alignItems: "center", justifyContent: "center", marginBottom: 10 },
+  logoGradient: {
+    width: 88, height: 88, borderRadius: 30,
+    alignItems: "center", justifyContent: "center",
+  },
+  logoRing: {
+    position: "absolute", width: 110, height: 110, borderRadius: 36,
+    borderWidth: 1.5,
+  },
+  logoRing2: {
+    position: "absolute", width: 130, height: 130, borderRadius: 42,
+    borderWidth: 1,
+  },
+  appLabel: { fontSize: 12, fontFamily: "Inter_700Bold", letterSpacing: 3, textTransform: "uppercase" },
+  title: { fontSize: 32, fontFamily: "Inter_700Bold", textAlign: "center", letterSpacing: -0.5 },
+  subtitle: { fontSize: 15, fontFamily: "Inter_400Regular", textAlign: "center", lineHeight: 22 },
+  verifyContainer: { flex: 1, paddingHorizontal: 32, alignItems: "center", justifyContent: "center", gap: 16 },
   verifyText: { fontSize: 15, fontFamily: "Inter_400Regular", textAlign: "center", lineHeight: 23 },
-  successIconWrap: { width: 96, height: 96, borderRadius: 32, alignItems: "center", justifyContent: "center", marginBottom: 8 },
+  successIconWrap: {
+    width: 100, height: 100, borderRadius: 34,
+    alignItems: "center", justifyContent: "center", marginBottom: 8,
+    borderWidth: 1, borderColor: "rgba(0,214,143,0.2)",
+  },
+  card: {
+    borderRadius: 28, borderWidth: 1, padding: 24,
+    shadowColor: "#000", shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.12, shadowRadius: 24, elevation: 8,
+  },
   errorBanner: {
     flexDirection: "row", alignItems: "flex-start", gap: 10,
-    padding: 14, borderRadius: 16, marginBottom: 12, borderWidth: 1,
+    padding: 14, borderRadius: 16, marginBottom: 16, borderWidth: 1,
   },
   errorText: { fontFamily: "Inter_500Medium", fontSize: 14, flex: 1 },
   googleBtn: {
     flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 12,
-    borderWidth: 1, paddingVertical: 15, paddingHorizontal: 20, borderRadius: 20,
+    borderWidth: 1, paddingVertical: 15, paddingHorizontal: 20, borderRadius: 18,
     marginBottom: 4,
   },
   googleBtnText: { fontSize: 15, fontFamily: "Inter_600SemiBold" },
@@ -260,7 +329,10 @@ const styles = StyleSheet.create({
   dividerLine: { flex: 1, height: 1 },
   dividerText: { fontSize: 13, fontFamily: "Inter_400Regular" },
   fieldsSection: { gap: 12 },
-  primaryBtn: { paddingVertical: 17, borderRadius: 20, alignItems: "center" },
+  primaryBtn: {
+    paddingVertical: 17, borderRadius: 18, alignItems: "center",
+    flexDirection: "row", justifyContent: "center", gap: 8, marginTop: 4,
+  },
   primaryBtnText: { color: "#fff", fontSize: 16, fontFamily: "Inter_700Bold" },
   footer: { flexDirection: "row", justifyContent: "center", gap: 6, marginTop: 24 },
   footerText: { fontFamily: "Inter_400Regular", fontSize: 14 },

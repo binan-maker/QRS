@@ -9,36 +9,47 @@ import {
 import { router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { LinearGradient } from "expo-linear-gradient";
 import { useTheme } from "@/contexts/ThemeContext";
 
 function ScoreBand({
-  color, bg, border, label, range, description, icon,
-}: { color: string; bg: string; border: string; label: string; range: string; description: string; icon: string }) {
+  color, bgStart, bgEnd, label, range, description, icon,
+}: { color: string; bgStart: string; bgEnd: string; label: string; range: string; description: string; icon: string }) {
   const { colors } = useTheme();
   return (
-    <View style={[styles.scoreBand, { backgroundColor: bg, borderColor: border }]}>
-      <View style={[styles.scoreBandIcon, { backgroundColor: color + "20" }]}>
+    <LinearGradient
+      colors={[bgStart, bgEnd]}
+      style={[styles.scoreBand, { borderColor: color + "35" }]}
+      start={{ x: 0, y: 0 }}
+      end={{ x: 1, y: 0 }}
+    >
+      <View style={[styles.scoreBandIcon, { backgroundColor: color + "25" }]}>
         <Ionicons name={icon as any} size={22} color={color} />
       </View>
-      <View style={{ flex: 1 }}>
-        <View style={{ flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 3 }}>
+      <View style={{ flex: 1, gap: 4 }}>
+        <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
           <Text style={[styles.scoreBandLabel, { color }]}>{label}</Text>
-          <View style={[styles.rangeTag, { backgroundColor: color + "20" }]}>
+          <View style={[styles.rangeTag, { backgroundColor: color + "22", borderColor: color + "40" }]}>
             <Text style={[styles.rangeTagText, { color }]}>{range}</Text>
           </View>
         </View>
         <Text style={[styles.scoreBandDesc, { color: colors.textSecondary }]}>{description}</Text>
       </View>
-    </View>
+    </LinearGradient>
   );
 }
 
-function FactorCard({ icon, title, desc }: { icon: string; title: string; desc: string }) {
+function FactorRow({ icon, title, desc, index }: { icon: string; title: string; desc: string; index: number }) {
   const { colors } = useTheme();
+  const accentColors = [colors.primary, colors.accent, colors.safe, colors.warning, colors.danger];
+  const accent = accentColors[index % accentColors.length];
   return (
-    <View style={[styles.factorCard, { borderBottomColor: colors.surfaceBorder }]}>
-      <View style={[styles.factorIcon, { backgroundColor: colors.primaryDim }]}>
-        <Ionicons name={icon as any} size={20} color={colors.primary} />
+    <View style={[styles.factorRow, { borderColor: colors.surfaceBorder }]}>
+      <View style={[styles.factorNum, { backgroundColor: accent + "18" }]}>
+        <Text style={[styles.factorNumText, { color: accent }]}>{index + 1}</Text>
+      </View>
+      <View style={[styles.factorIcon, { backgroundColor: accent + "15" }]}>
+        <Ionicons name={icon as any} size={19} color={accent} />
       </View>
       <View style={{ flex: 1 }}>
         <Text style={[styles.factorTitle, { color: colors.text }]}>{title}</Text>
@@ -48,11 +59,18 @@ function FactorCard({ icon, title, desc }: { icon: string; title: string; desc: 
   );
 }
 
-function Section({ title, children }: { title: string; children: React.ReactNode }) {
+function SectionCard({ title, icon, children }: { title: string; icon?: string; children: React.ReactNode }) {
   const { colors } = useTheme();
   return (
-    <View style={[styles.section, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
-      <Text style={[styles.sectionTitle, { color: colors.text }]}>{title}</Text>
+    <View style={[styles.sectionCard, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
+      <View style={styles.sectionCardHeader}>
+        {icon && (
+          <View style={[styles.sectionCardIcon, { backgroundColor: colors.primaryDim }]}>
+            <Ionicons name={icon as any} size={16} color={colors.primary} />
+          </View>
+        )}
+        <Text style={[styles.sectionCardTitle, { color: colors.text }]}>{title}</Text>
+      </View>
       {children}
     </View>
   );
@@ -67,7 +85,12 @@ function Bullet({ text }: { text: string }) {
   const { colors } = useTheme();
   return (
     <View style={styles.bulletRow}>
-      <View style={[styles.bulletDot, { backgroundColor: colors.primary }]} />
+      <LinearGradient
+        colors={[colors.primary, colors.accent]}
+        style={styles.bulletDot}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+      />
       <Text style={[styles.bulletText, { color: colors.textSecondary }]}>{text}</Text>
     </View>
   );
@@ -80,81 +103,144 @@ export default function TrustScoresScreen() {
 
   return (
     <View style={[styles.container, { paddingTop: topInset, backgroundColor: colors.background }]}>
+      {/* Background accent */}
+      <View style={[styles.bgAccent, {
+        backgroundColor: colors.isDark ? "rgba(0,229,255,0.04)" : "rgba(0,111,255,0.04)",
+      }]} />
+
+      {/* Nav */}
       <View style={[styles.navBar, { borderBottomColor: colors.surfaceBorder }]}>
-        <Pressable onPress={() => router.back()} style={[styles.backBtn, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
-          <Ionicons name="chevron-back" size={24} color={colors.text} />
+        <Pressable
+          onPress={() => router.back()}
+          style={[styles.backBtn, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}
+        >
+          <Ionicons name="chevron-back" size={22} color={colors.text} />
         </Pressable>
         <Text style={[styles.navTitle, { color: colors.text }]}>Trust Scores</Text>
         <View style={{ width: 40 }} />
       </View>
 
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={[styles.scrollContent, { paddingBottom: insets.bottom + 40 }]}>
-        <View style={[styles.heroBanner, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
-          <View style={[styles.heroIcon, { backgroundColor: colors.primaryDim, borderColor: colors.primary + "40" }]}>
-            <Ionicons name="shield-checkmark" size={32} color={colors.primary} />
-          </View>
-          <Text style={[styles.heroTitle, { color: colors.text }]}>The Power of Community Safety</Text>
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={[styles.scrollContent, { paddingBottom: insets.bottom + 40 }]}
+      >
+        {/* Hero Banner */}
+        <LinearGradient
+          colors={colors.isDark
+            ? ["rgba(0,229,255,0.10)", "rgba(176,96,255,0.06)", "rgba(0,111,255,0.04)"]
+            : ["rgba(0,111,255,0.06)", "rgba(124,58,237,0.04)", "rgba(0,111,255,0.02)"]}
+          style={[styles.heroBanner, { borderColor: colors.primary + "25" }]}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+        >
+          <LinearGradient
+            colors={[colors.primary, colors.accent]}
+            style={styles.heroIcon}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+          >
+            <Ionicons name="shield-checkmark" size={32} color="#fff" />
+          </LinearGradient>
+          <Text style={[styles.heroTitle, { color: colors.text }]}>Community Safety Scores</Text>
           <Text style={[styles.heroSub, { color: colors.textSecondary }]}>
-            Trust scores harness the collective wisdom of real users to tell you whether a QR code is safe before you interact with it.
+            Trust scores harness collective wisdom from real users to tell you if a QR code is safe — before you interact with it.
           </Text>
-        </View>
+          <View style={[styles.heroBadge, { backgroundColor: colors.primaryDim, borderColor: colors.primary + "30" }]}>
+            <Ionicons name="people" size={14} color={colors.primary} />
+            <Text style={[styles.heroBadgeText, { color: colors.primary }]}>Powered by the community</Text>
+          </View>
+        </LinearGradient>
 
-        <Section title="What Is a Trust Score?">
-          <Para>Every QR code scanned through QR Guard can receive a Trust Score — a number from 0 to 100 that reflects how the community rates it. Think of it as a real-time safety reputation, built by people like you who have already encountered that QR code in the real world.</Para>
-          <Para>Rather than relying on a single automated system, trust scores combine community reports, scan patterns, and owner verification into a single, easy-to-read signal. The more people interact with a QR code, the more accurate its score becomes.</Para>
-        </Section>
+        {/* What is a Trust Score */}
+        <SectionCard title="What Is a Trust Score?" icon="help-circle-outline">
+          <Para>Every QR code scanned through QR Guard can receive a Trust Score — a number from 0 to 100 reflecting community safety ratings. Think of it as a real-time safety reputation built by people who have encountered that QR code in the real world.</Para>
+          <Para>Trust scores combine community reports, scan patterns, and owner verification into a single, easy-to-read signal. The more people interact with a QR code, the more accurate its score becomes.</Para>
+        </SectionCard>
 
-        <Section title="Score Bands at a Glance">
-          <ScoreBand color={colors.safe} bg={colors.safeDim} border={colors.safe + "40"} label="Safe" range="70 – 100" description="The community strongly considers this QR code trustworthy. It has received predominantly positive reports or comes from a verified owner." icon="shield-checkmark" />
-          <ScoreBand color={colors.warning} bg={colors.warningDim || "#7C3A0015"} border={colors.warning + "40"} label="Caution" range="35 – 69" description="Mixed signals. Some users reported concerns. Proceed carefully, read the comments, and avoid sharing sensitive information." icon="warning" />
-          <ScoreBand color={colors.danger} bg={colors.dangerDim} border={colors.danger + "40"} label="Dangerous" range="0 – 34" description="Multiple users have flagged this QR code as harmful, fraudulent, or malicious. Do not click any links. Report it if you encounter it in public." icon="skull" />
-        </Section>
+        {/* Score Bands */}
+        <SectionCard title="Score Bands at a Glance" icon="bar-chart-outline">
+          <ScoreBand
+            color={colors.safe}
+            bgStart={colors.safeDim}
+            bgEnd={"transparent"}
+            label="Safe"
+            range="70 – 100"
+            description="The community considers this QR code trustworthy. Predominantly positive reports or a verified owner."
+            icon="shield-checkmark"
+          />
+          <ScoreBand
+            color={colors.warning}
+            bgStart={colors.warningDim}
+            bgEnd={"transparent"}
+            label="Caution"
+            range="35 – 69"
+            description="Mixed signals. Some users reported concerns. Read comments and avoid sharing sensitive data."
+            icon="warning"
+          />
+          <ScoreBand
+            color={colors.danger}
+            bgStart={colors.dangerDim}
+            bgEnd={"transparent"}
+            label="Dangerous"
+            range="0 – 34"
+            description="Multiple users flagged this code as harmful, fraudulent, or malicious. Do not click any links."
+            icon="skull"
+          />
+        </SectionCard>
 
-        <Section title="How the Score Is Calculated">
+        {/* Calculation */}
+        <SectionCard title="How the Score Is Calculated" icon="calculator-outline">
           <Para>Trust scores are computed from several weighted inputs that update in real time as new reports arrive:</Para>
-          <FactorCard icon="people-outline" title="Community Reports" desc="When users report a QR code as Safe, Scam, Fake, or Spam, each report is weighted by the reporter's account standing. Reports from established accounts with clean histories carry more weight than brand-new accounts." />
-          <FactorCard icon="repeat-outline" title="Scan Velocity" desc="A sudden spike in scans — especially combined with a surge of negative reports — is a strong fraud signal. QR Guard monitors scan velocity to detect coordinated phishing attacks early." />
-          <FactorCard icon="business-outline" title="Owner Verification" desc="QR codes created by verified business or individual accounts receive a baseline trust boost. Verified owners have accepted our terms and are accountable for what their codes do." />
-          <FactorCard icon="chatbubbles-outline" title="Comment Sentiment" desc="The community conversation matters. QR codes that attract detailed, concerned comments from multiple users are scored more conservatively until the situation becomes clearer." />
-          <FactorCard icon="time-outline" title="Age & History" desc="Newly created QR codes start as unrated. Codes with long, clean histories are given greater trust. A sudden change in behaviour after a clean record can trigger a score review." />
-        </Section>
+          <FactorRow index={0} icon="people-outline" title="Community Reports" desc="Reports are weighted by account standing. Established accounts with clean histories carry more weight than new ones." />
+          <FactorRow index={1} icon="repeat-outline" title="Scan Velocity" desc="A sudden spike in scans combined with negative reports is a strong fraud signal. QR Guard monitors this to detect phishing attacks early." />
+          <FactorRow index={2} icon="business-outline" title="Owner Verification" desc="QR codes from verified business accounts receive a baseline trust boost. Verified owners are accountable for what their codes do." />
+          <FactorRow index={3} icon="chatbubbles-outline" title="Comment Sentiment" desc="QR codes attracting detailed, concerned comments from multiple users are scored more conservatively until the situation clears." />
+          <FactorRow index={4} icon="time-outline" title="Age & History" desc="Newly created QR codes start unrated. Codes with long, clean histories receive greater trust. Sudden behaviour changes trigger a review." />
+        </SectionCard>
 
-        <Section title="Report Types Explained">
-          <Para>When you report a QR code, you choose from four categories. Each affects the trust score differently:</Para>
-          <Bullet text="Safe — Positive signal. You scanned it, checked the destination, and it was legitimate." />
-          <Bullet text="Scam — Strong negative signal. The QR code leads to fraudulent activity designed to steal money or data." />
-          <Bullet text="Fake — Negative signal. The QR code impersonates a legitimate brand, business, or service." />
-          <Bullet text="Spam — Mild negative signal. Unwanted, unsolicited promotional content with no genuine value." />
-          <Para>Consistently accurate reporters are rewarded with higher reporting credibility over time. Gaming the system with false reports is detected and penalised.</Para>
-        </Section>
+        {/* Report Types */}
+        <SectionCard title="Report Types Explained" icon="flag-outline">
+          <Para>When you report a QR code, choose from four categories — each affects the trust score differently:</Para>
+          <Bullet text="Safe — Positive signal. You checked the destination and it was legitimate." />
+          <Bullet text="Scam — Strong negative. The code leads to fraudulent activity designed to steal money or data." />
+          <Bullet text="Fake — Negative. The code impersonates a legitimate brand, business, or service." />
+          <Bullet text="Spam — Mild negative. Unwanted, unsolicited promotional content with no genuine value." />
+          <Para>Consistently accurate reporters earn higher credibility over time. False reports are detected and penalised.</Para>
+        </SectionCard>
 
-        <Section title="Unrated QR Codes">
-          <Para>When a QR code has never been scanned through QR Guard before, it is labelled Unrated. This is not the same as Safe — it simply means the community has not yet assessed it.</Para>
-          <Para>Treat unrated codes with caution: check the URL before visiting, look for misspellings in domain names, and never enter credentials on a site you reached through an unrated QR code.</Para>
-        </Section>
+        {/* Unrated */}
+        <SectionCard title="Unrated QR Codes" icon="help-outline">
+          <Para>When a QR code has never been scanned through QR Guard before, it is labelled Unrated. This is not the same as Safe — it means the community hasn't assessed it yet.</Para>
+          <Para>Treat unrated codes with caution: check the URL carefully, look for misspellings, and never enter credentials on a site reached through an unrated QR code.</Para>
+        </SectionCard>
 
-        <Section title="Verified & Branded QR Codes">
-          <Para>Businesses and individuals can create branded QR codes through QR Guard's generator. These codes display a verified owner panel with the creator's name, logo, and a unique identifier — making them far harder to counterfeit.</Para>
-          <Para>If you see a branded QR code claiming to be from a company you know, the verification badge means the code was genuinely created through QR Guard by an accountable owner. Counterfeit QR codes cannot replicate this badge.</Para>
-        </Section>
+        {/* Verified */}
+        <SectionCard title="Verified & Branded QR Codes" icon="checkmark-shield-outline">
+          <Para>Businesses can create branded QR codes through QR Guard's generator. These display a verified owner panel with the creator's name, logo, and a unique identifier — making them far harder to counterfeit.</Para>
+          <Para>The verification badge means the code was genuinely created through QR Guard by an accountable owner. Counterfeit QR codes cannot replicate this badge.</Para>
+        </SectionCard>
 
-        <Section title="Why Trust Scores Work">
-          <Para>The psychology behind trust scores is rooted in the principle of collective intelligence — the same reason online reviews, Wikipedia, and open-source software thrive. No single automated system is as nuanced as the combined judgment of thousands of real people who have physically encountered a QR code.</Para>
-          <Para>Fraudsters can trick a single scanner. They cannot trick a community. Every report you submit makes QR Guard smarter and safer for everyone — including people who will scan the same code weeks after you do.</Para>
-        </Section>
-
-        <View style={[styles.ctaBanner, { backgroundColor: colors.primaryDim, borderColor: colors.primary + "30" }]}>
-          <Ionicons name="megaphone-outline" size={22} color={colors.primary} />
+        {/* CTA */}
+        <LinearGradient
+          colors={[colors.primary + "18", colors.accent + "0A"]}
+          style={[styles.ctaBanner, { borderColor: colors.primary + "30" }]}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+        >
+          <View style={[styles.ctaIconWrap, { backgroundColor: colors.primary + "20" }]}>
+            <Ionicons name="megaphone" size={22} color={colors.primary} />
+          </View>
           <View style={{ flex: 1 }}>
             <Text style={[styles.ctaTitle, { color: colors.primary }]}>Your Reports Matter</Text>
             <Text style={[styles.ctaSub, { color: colors.textSecondary }]}>
-              Every report you submit helps protect the next person who scans that code. Even a single "Safe" report helps build confidence in legitimate QR codes.
+              Every report you submit helps protect the next person who scans that code.
             </Text>
           </View>
-        </View>
+        </LinearGradient>
 
+        {/* Footer */}
         <View style={styles.footer}>
-          <Ionicons name="shield-checkmark" size={18} color={colors.primary} />
+          <Ionicons name="shield-checkmark" size={16} color={colors.primary} />
           <Text style={[styles.footerText, { color: colors.textMuted }]}>QR Guard — Safety powered by community</Text>
         </View>
       </ScrollView>
@@ -164,36 +250,70 @@ export default function TrustScoresScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
+  bgAccent: { position: "absolute", top: -100, right: -100, width: 300, height: 300, borderRadius: 150 },
   navBar: {
     flexDirection: "row", alignItems: "center", justifyContent: "space-between",
-    paddingHorizontal: 16, paddingVertical: 12, borderBottomWidth: 1,
+    paddingHorizontal: 18, paddingVertical: 14, borderBottomWidth: StyleSheet.hairlineWidth,
   },
   navTitle: { fontSize: 18, fontFamily: "Inter_700Bold", flex: 1, textAlign: "center" },
-  backBtn: { width: 40, height: 40, borderRadius: 20, alignItems: "center", justifyContent: "center", borderWidth: 1 },
-  scrollContent: { padding: 20 },
-  heroBanner: { alignItems: "center", borderRadius: 20, padding: 24, marginBottom: 16, borderWidth: 1 },
-  heroIcon: { width: 68, height: 68, borderRadius: 34, alignItems: "center", justifyContent: "center", marginBottom: 14, borderWidth: 2 },
-  heroTitle: { fontSize: 20, fontFamily: "Inter_700Bold", marginBottom: 8, textAlign: "center" },
-  heroSub: { fontSize: 14, fontFamily: "Inter_400Regular", textAlign: "center", lineHeight: 21 },
-  section: { borderRadius: 16, padding: 18, marginBottom: 12, borderWidth: 1 },
-  sectionTitle: { fontSize: 16, fontFamily: "Inter_700Bold", marginBottom: 12 },
-  para: { fontSize: 14, fontFamily: "Inter_400Regular", lineHeight: 22, marginBottom: 10 },
-  scoreBand: { flexDirection: "row", alignItems: "flex-start", gap: 12, borderRadius: 14, padding: 14, marginBottom: 10, borderWidth: 1 },
-  scoreBandIcon: { width: 42, height: 42, borderRadius: 12, alignItems: "center", justifyContent: "center", flexShrink: 0 },
+  backBtn: {
+    width: 40, height: 40, borderRadius: 20,
+    alignItems: "center", justifyContent: "center", borderWidth: 1,
+  },
+  scrollContent: { padding: 18, gap: 12 },
+
+  heroBanner: {
+    alignItems: "center", borderRadius: 24, padding: 28,
+    borderWidth: 1, gap: 12,
+  },
+  heroIcon: {
+    width: 76, height: 76, borderRadius: 26,
+    alignItems: "center", justifyContent: "center",
+  },
+  heroTitle: { fontSize: 22, fontFamily: "Inter_700Bold", textAlign: "center", letterSpacing: -0.3 },
+  heroSub: { fontSize: 14, fontFamily: "Inter_400Regular", textAlign: "center", lineHeight: 22 },
+  heroBadge: {
+    flexDirection: "row", alignItems: "center", gap: 6,
+    paddingHorizontal: 12, paddingVertical: 6, borderRadius: 20, borderWidth: 1,
+  },
+  heroBadgeText: { fontSize: 12, fontFamily: "Inter_600SemiBold" },
+
+  sectionCard: {
+    borderRadius: 22, borderWidth: 1, padding: 20, gap: 4,
+  },
+  sectionCardHeader: { flexDirection: "row", alignItems: "center", gap: 10, marginBottom: 12 },
+  sectionCardIcon: { width: 32, height: 32, borderRadius: 10, alignItems: "center", justifyContent: "center" },
+  sectionCardTitle: { fontSize: 17, fontFamily: "Inter_700Bold" },
+
+  para: { fontSize: 14, fontFamily: "Inter_400Regular", lineHeight: 22, marginBottom: 8 },
+  scoreBand: {
+    flexDirection: "row", alignItems: "flex-start", gap: 12,
+    borderRadius: 16, padding: 14, marginBottom: 10, borderWidth: 1,
+  },
+  scoreBandIcon: { width: 44, height: 44, borderRadius: 14, alignItems: "center", justifyContent: "center", flexShrink: 0 },
   scoreBandLabel: { fontSize: 15, fontFamily: "Inter_700Bold" },
-  rangeTag: { borderRadius: 8, paddingHorizontal: 8, paddingVertical: 2 },
-  rangeTagText: { fontSize: 11, fontFamily: "Inter_600SemiBold" },
+  rangeTag: { borderRadius: 8, paddingHorizontal: 8, paddingVertical: 3, borderWidth: 1 },
+  rangeTagText: { fontSize: 11, fontFamily: "Inter_700Bold" },
   scoreBandDesc: { fontSize: 13, fontFamily: "Inter_400Regular", lineHeight: 19 },
-  factorCard: { flexDirection: "row", alignItems: "flex-start", gap: 12, marginBottom: 14, paddingBottom: 14, borderBottomWidth: 1 },
-  factorIcon: { width: 38, height: 38, borderRadius: 10, alignItems: "center", justifyContent: "center", flexShrink: 0 },
+  factorRow: {
+    flexDirection: "row", alignItems: "flex-start", gap: 10,
+    paddingVertical: 12, borderBottomWidth: 1,
+  },
+  factorNum: { width: 24, height: 24, borderRadius: 8, alignItems: "center", justifyContent: "center", flexShrink: 0, marginTop: 1 },
+  factorNumText: { fontSize: 11, fontFamily: "Inter_700Bold" },
+  factorIcon: { width: 38, height: 38, borderRadius: 12, alignItems: "center", justifyContent: "center", flexShrink: 0 },
   factorTitle: { fontSize: 14, fontFamily: "Inter_600SemiBold", marginBottom: 3 },
   factorDesc: { fontSize: 13, fontFamily: "Inter_400Regular", lineHeight: 19 },
   bulletRow: { flexDirection: "row", alignItems: "flex-start", gap: 10, marginBottom: 8 },
-  bulletDot: { width: 5, height: 5, borderRadius: 2.5, marginTop: 8, flexShrink: 0 },
+  bulletDot: { width: 6, height: 6, borderRadius: 3, marginTop: 8, flexShrink: 0 },
   bulletText: { flex: 1, fontSize: 14, fontFamily: "Inter_400Regular", lineHeight: 21 },
-  ctaBanner: { flexDirection: "row", alignItems: "flex-start", gap: 14, borderRadius: 16, padding: 18, marginBottom: 12, borderWidth: 1 },
+  ctaBanner: {
+    flexDirection: "row", alignItems: "center", gap: 14,
+    borderRadius: 20, padding: 18, borderWidth: 1,
+  },
+  ctaIconWrap: { width: 48, height: 48, borderRadius: 16, alignItems: "center", justifyContent: "center", flexShrink: 0 },
   ctaTitle: { fontSize: 15, fontFamily: "Inter_700Bold", marginBottom: 4 },
   ctaSub: { fontSize: 13, fontFamily: "Inter_400Regular", lineHeight: 19 },
-  footer: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, padding: 20, marginTop: 4 },
+  footer: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, paddingVertical: 16 },
   footerText: { fontSize: 13, fontFamily: "Inter_500Medium" },
 });
