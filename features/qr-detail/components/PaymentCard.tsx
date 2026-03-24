@@ -464,6 +464,18 @@ function getAppBrand(appId: string, appCategory: string): AppBrand {
       };
     }
 
+    case "emv_generic":
+      return {
+        name: "Bank Merchant QR",
+        gradientStart: "#1B3A5C",
+        gradientEnd: "#0A1E33",
+        accentColor: "#FF9800",
+        textOnCard: "#FFFFFF",
+        subtextOnCard: "rgba(255,255,255,0.72)",
+        iconName: "business-outline",
+        chipColor: "#152F4A",
+      };
+
     default:
       if (appCategory === "upi_india" || appCategory === "india_wallet") {
         return {
@@ -475,6 +487,18 @@ function getAppBrand(appId: string, appCategory: string): AppBrand {
           subtextOnCard: "rgba(255,255,255,0.7)",
           iconName: "card-outline",
           chipColor: "#1A2E7A",
+        };
+      }
+      if (appCategory === "emv") {
+        return {
+          name: "Bank Merchant QR",
+          gradientStart: "#1B3A5C",
+          gradientEnd: "#0A1E33",
+          accentColor: "#FF9800",
+          textOnCard: "#FFFFFF",
+          subtextOnCard: "rgba(255,255,255,0.72)",
+          iconName: "business-outline",
+          chipColor: "#152F4A",
         };
       }
       return {
@@ -825,7 +849,13 @@ const PaymentCard = React.memo(function PaymentCard({
               <Ionicons name={brand.iconName} size={18} color="#FFF" />
               <Text style={styles.payBtnText}>
                 {parsedPayment.appCategory === "crypto"
-                  ? `Open Wallet`
+                  ? "Open Wallet"
+                  : parsedPayment.isEmv && parsedPayment.vpa
+                  ? "Pay with UPI App"
+                  : parsedPayment.isEmv && parsedPayment.extraFields?.accountNumber
+                  ? "Transfer via Bank App"
+                  : parsedPayment.isEmv
+                  ? "Open in UPI App"
                   : `Pay via ${parsedPayment.appDisplayName}`}
               </Text>
               <Ionicons name="arrow-forward" size={16} color="#FFF" />

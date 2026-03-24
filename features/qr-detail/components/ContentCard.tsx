@@ -185,9 +185,18 @@ const ContentCard = React.memo(function ContentCard({
   const eventData = contentType === "event" ? parseEvent(content) : null;
 
   const basicPayment = (contentType === "payment" && !parsedPayment) ? extractBasicPaymentInfo(content) : null;
+  const isEmvContent = content.startsWith("000201") || content.startsWith("00020");
 
   if (contentType === "payment") {
-    const paymentData: ParsedPaymentQr = parsedPayment ?? {
+    const paymentData: ParsedPaymentQr = parsedPayment ?? (isEmvContent ? {
+      app: "emv_generic",
+      appDisplayName: "Bank Merchant QR",
+      appCategory: "emv",
+      region: "Regional",
+      recipientId: "",
+      rawContent: content,
+      isAmountPreFilled: false,
+    } : {
       app: "upi",
       appDisplayName: "UPI Payment",
       appCategory: "upi_india",
@@ -199,7 +208,7 @@ const ContentCard = React.memo(function ContentCard({
       rawContent: content,
       isAmountPreFilled: !!basicPayment?.amount,
       vpa: basicPayment?.vpa,
-    };
+    });
     return (
       <View>
         <PaymentCard

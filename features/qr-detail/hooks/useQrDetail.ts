@@ -94,13 +94,39 @@ export function useQrDetail(id: string) {
     return { level: "safe" as const, label: "SAFE", reason: "No threats detected", color: colors.safe };
   }
 
+  function buildUpiUrl(parsedPayment: NonNullable<typeof safety.parsedPayment>): string | null {
+    const { vpa, recipientName, amount, currency } = parsedPayment;
+    if (!vpa) return null;
+    let url = `upi://pay?pa=${encodeURIComponent(vpa)}`;
+    if (recipientName) url += `&pn=${encodeURIComponent(recipientName)}`;
+    if (amount && parseFloat(amount) > 0) url += `&am=${amount}&cu=${currency || "INR"}`;
+    return url;
+  }
+
   async function handleOpenPayment(rawContent: string) {
     const linksToTry: string[] = [];
     const lower = rawContent.toLowerCase();
     const { parsedPayment } = safety;
-    if (parsedPayment) {
+
+    if (parsedPayment?.isEmv) {
+      const { vpa, recipientName, extraFields } = parsedPayment;
+      if (vpa) {
+        const upiUrl = buildUpiUrl(parsedPayment);
+        if (upiUrl) linksToTry.push(upiUrl);
+      } else {
+        const acct = extraFields?.accountNumber;
+        const ifsc = extraFields?.ifsc;
+        const bankName = extraFields?.bankName || parsedPayment.appDisplayName || "your bank";
+        const name = recipientName || "this merchant";
+        const msg = acct && ifsc
+          ? `Open your bank app and use these details:\n\nAccount: ${acct}\nIFSC: ${ifsc}\nBeneficiary: ${name}`
+          : `To pay ${name}, open your bank app (${bankName}) and use the scan/transfer feature.`;
+        Alert.alert("Open Your Bank App", msg, [{ text: "OK" }]);
+        return;
+      }
+    } else if (parsedPayment) {
       const cat = parsedPayment.appCategory;
-      if (cat === "upi_india") {
+      if (cat === "upi_india" || cat === "india_wallet") {
         if (lower.startsWith("upi://")) {
           linksToTry.push(rawContent);
         } else if (lower.startsWith("tez://upi/") || lower.startsWith("gpay://upi/")) {
@@ -108,6 +134,8 @@ export function useQrDetail(id: string) {
         } else {
           linksToTry.push(rawContent);
           if (rawContent.includes("?")) linksToTry.push("upi://pay?" + rawContent.split("?")[1]);
+          const upiUrl = buildUpiUrl(parsedPayment);
+          if (upiUrl) linksToTry.push(upiUrl);
         }
       } else if (cat === "crypto") {
         linksToTry.push(rawContent);
@@ -120,6 +148,7 @@ export function useQrDetail(id: string) {
     } else {
       linksToTry.push(rawContent);
     }
+
     for (const link of linksToTry) {
       try {
         const canOpen = await Linking.canOpenURL(link);

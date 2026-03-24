@@ -1067,7 +1067,7 @@ function parseEmvQr(content: string): ParsedPaymentQr {
 
   return {
     app: net?.id ?? "emv_generic",
-    appDisplayName: net ? `${net.name}${merchantName ? ` — ${merchantName}` : ""}` : (merchantName || "EMV QR Payment"),
+    appDisplayName: net?.name ?? (merchantName ? "EMV Bank QR" : "EMV QR Payment"),
     appCategory: net?.category ?? "emv",
     region: net?.region ?? (countryCode === "IN" ? "India" : countryCode || "Regional"),
     recipientId,
