@@ -5,6 +5,7 @@ import { StatusBar } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Reanimated, { FadeIn, FadeInDown } from "react-native-reanimated";
 import { Ionicons } from "@expo/vector-icons";
+import { router } from "expo-router";
 
 class CameraErrorBoundary extends Component<
   { children: React.ReactNode; onError: () => void },
@@ -214,8 +215,18 @@ export default function ScannerScreen() {
           />
         </CameraErrorBoundary>
       ) : (
-        <View style={[StyleSheet.absoluteFillObject, { backgroundColor: "#080c14", justifyContent: "center", alignItems: "center", paddingTop: topInset }]}>
-          <CameraUnavailableBanner onPickImage={handlePickImage} />
+        <View style={[StyleSheet.absoluteFillObject, { backgroundColor: "#080c14" }]}>
+          <View style={{ paddingTop: topInset + 8, paddingHorizontal: 16, paddingBottom: 10 }}>
+            <Pressable
+              onPress={() => router.back()}
+              style={styles.backIconBtn}
+            >
+              <Ionicons name="chevron-back" size={22} color="#fff" />
+            </Pressable>
+          </View>
+          <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+            <CameraUnavailableBanner onPickImage={handlePickImage} />
+          </View>
         </View>
       )}
 
@@ -338,6 +349,12 @@ const styles = StyleSheet.create({
     gap: 14,
     borderWidth: 1,
     maxWidth: 280,
+  },
+  backIconBtn: {
+    width: 40, height: 40, borderRadius: 20,
+    backgroundColor: "rgba(0,0,0,0.45)",
+    alignItems: "center", justifyContent: "center",
+    borderWidth: 1, borderColor: "rgba(255,255,255,0.1)",
   },
   processingTitle: { fontSize: 17, fontFamily: "Inter_700Bold" },
   processingSubtitle: {

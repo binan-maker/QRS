@@ -5,6 +5,7 @@ import { useFocusEffect } from "expo-router";
 import * as ImagePicker from "expo-image-picker";
 import * as FileSystem from "expo-file-system";
 import * as Haptics from "expo-haptics";
+import { fetch as expoFetch } from "expo/fetch";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { setAnonymousQrContent } from "@/lib/cache/anonymous-session";
 import { useAuth } from "@/contexts/AuthContext";
@@ -36,27 +37,27 @@ function isInsecureHttpUrl(content: string): boolean {
   return /^http:\/\//i.test(content.trim());
 }
 
-function postJsonXhr(
+async function postJsonExpo(
   url: string,
   body: object,
   headers: Record<string, string>
 ): Promise<{ status: number; data: any }> {
-  return new Promise((resolve, reject) => {
-    const xhr = new XMLHttpRequest();
-    xhr.open("POST", url);
-    Object.entries(headers).forEach(([k, v]) => xhr.setRequestHeader(k, v));
-    xhr.onload = () => {
-      try {
-        resolve({ status: xhr.status, data: JSON.parse(xhr.responseText) });
-      } catch {
-        reject(new Error("Invalid server response"));
-      }
-    };
-    xhr.onerror = () => reject(new Error("Network error — could not reach server"));
-    xhr.ontimeout = () => reject(new Error("Request timed out"));
-    xhr.timeout = 30000;
-    xhr.send(JSON.stringify(body));
-  });
+  let response: Response;
+  try {
+    response = await expoFetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", ...headers },
+      body: JSON.stringify(body),
+    });
+  } catch (e: any) {
+    throw new Error("server-unreachable");
+  }
+  try {
+    const data = await response.json();
+    return { status: response.status, data };
+  } catch {
+    throw new Error("invalid-server-response");
+  }
 }
 
 export function useScanner() {
@@ -453,49 +454,76 @@ export function useScanner() {
       showScannerMsg("Sign in to scan QR codes from your gallery.", "info");
       return;
     }
+
+    let result: ImagePicker.ImagePickerResult;
     try {
-      const result = await ImagePicker.launchImageLibraryAsync({
+      result = await ImagePicker.launchImageLibraryAsync({
         mediaTypes: ["images"],
         quality: 0.7,
-        base64: true,
       });
-      if (result.canceled || !result.assets[0]) return;
-      setProcessing(true);
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-      let base64 = result.assets[0].base64;
-      if (!base64 && result.assets[0].uri) {
-        base64 = await FileSystem.readAsStringAsync(result.assets[0].uri, {
-          encoding: FileSystem.EncodingType.Base64,
-        });
-      }
-      if (!base64) {
-        showGalleryError("Could not read the selected image");
-        setProcessing(false);
-        return;
-      }
+    } catch {
+      showGalleryError("Could not open your gallery. Please try again.");
+      return;
+    }
+
+    if (result.canceled || !result.assets?.[0]) return;
+
+    setProcessing(true);
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+
+    // ── Step 1: read the image as base64 using FileSystem (reliable on all devices)
+    let base64: string | null = null;
+    try {
+      const uri = result.assets[0].uri;
+      if (!uri) throw new Error("no-uri");
+      base64 = await FileSystem.readAsStringAsync(uri, {
+        encoding: FileSystem.EncodingType.Base64,
+      });
+    } catch {
+      showGalleryError("Could not read the selected image. Please try another photo.");
+      setProcessing(false);
+      return;
+    }
+
+    if (!base64) {
+      showGalleryError("The image appears to be empty. Please choose a different photo.");
+      setProcessing(false);
+      return;
+    }
+
+    // ── Step 2: send base64 to server for QR decoding
+    try {
       const baseUrl = getApiUrl();
-      const headers: Record<string, string> = { "Content-Type": "application/json" };
+      const headers: Record<string, string> = {};
       if (token) headers["Authorization"] = `Bearer ${token}`;
 
-      const { status, data } = await postJsonXhr(
+      const { status, data } = await postJsonExpo(
         `${baseUrl}api/qr/decode-image`,
         { imageBase64: base64 },
         headers
       );
+
       if (status === 404 || !data?.content) {
-        showGalleryError(data?.message || "No QR code detected — try a clearer image");
+        showGalleryError("No QR code found in this image — try a clearer or closer photo.");
         setProcessing(false);
         return;
       }
       if (status !== 200) {
-        showGalleryError(data?.message || "Could not process the image");
+        showGalleryError(data?.message || "The server could not process this image.");
         setProcessing(false);
         return;
       }
+
       await processScan(data.content, "gallery");
     } catch (e: any) {
-      showGalleryError(e.message || "Failed to process image");
       setProcessing(false);
+      if (e.message === "server-unreachable") {
+        showGalleryError("Cannot reach the server. Check your internet connection and try again.");
+      } else if (e.message === "invalid-server-response") {
+        showGalleryError("Received an unexpected response from the server. Please try again.");
+      } else {
+        showGalleryError(e.message || "Something went wrong. Please try again.");
+      }
     }
   }
 
