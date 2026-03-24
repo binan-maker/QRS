@@ -126,7 +126,7 @@ function CameraUnavailableBanner({
     <View style={bannerStyles.container}>
       <View style={[bannerStyles.iconWrap, isInUse && bannerStyles.iconWrapBlue]}>
         <Ionicons
-          name={(isInUse ? "camera-outline" : "camera-off-outline") as any}
+          name="camera-outline"
           size={40}
           color={isInUse ? "#00d4ff" : "#f59e0b"}
         />
@@ -152,14 +152,29 @@ function CameraUnavailableBanner({
 
 export default function ScannerScreen() {
   const [permission, requestPermission] = useCameraPermissions();
+  // null = still checking hardware, true = hardware ok, false = hardware unavailable
+  const [hardwareAvailable, setHardwareAvailable] = useState<boolean | null>(null);
   const [cameraAvailable, setCameraAvailable] = useState(true);
-  const [cameraChecked, setCameraChecked] = useState(false);
   const [cameraErrorType, setCameraErrorType] = useState<CameraErrorType>("unavailable");
   const cameraReadyTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const insets = useSafeAreaInsets();
   const { colors } = useTheme();
   const topInset = Platform.OS === "web" ? 67 : insets.top;
   const bottomInset = Math.max(insets.bottom, 24);
+
+  // Step 1: Check hardware availability BEFORE rendering CameraView.
+  // This prevents native Android CameraUnavailableException crashes.
+  useEffect(() => {
+    let cancelled = false;
+    CameraView.isAvailableAsync()
+      .then((available) => {
+        if (!cancelled) setHardwareAvailable(available);
+      })
+      .catch(() => {
+        if (!cancelled) setHardwareAvailable(false);
+      });
+    return () => { cancelled = true; };
+  }, []);
 
   function markCameraUnavailable(type: CameraErrorType) {
     if (cameraReadyTimerRef.current) {
@@ -168,7 +183,6 @@ export default function ScannerScreen() {
     }
     setCameraErrorType(type);
     setCameraAvailable(false);
-    setCameraChecked(true);
   }
 
   function markCameraReady() {
@@ -176,8 +190,25 @@ export default function ScannerScreen() {
       clearTimeout(cameraReadyTimerRef.current);
       cameraReadyTimerRef.current = null;
     }
-    setCameraChecked(true);
   }
+
+  // Step 2: If hardware is confirmed available, start a 7s fallback timer.
+  // If onCameraReady never fires (silent failure), show the unavailable screen.
+  useEffect(() => {
+    if (!permission?.granted || hardwareAvailable !== true) return;
+    cameraReadyTimerRef.current = setTimeout(() => {
+      setCameraAvailable((prev) => {
+        if (prev) setCameraErrorType("unavailable");
+        return false;
+      });
+    }, 7000);
+    return () => {
+      if (cameraReadyTimerRef.current) {
+        clearTimeout(cameraReadyTimerRef.current);
+        cameraReadyTimerRef.current = null;
+      }
+    };
+  }, [permission?.granted, hardwareAvailable]);
 
   const {
     user,
@@ -220,25 +251,6 @@ export default function ScannerScreen() {
     handleLivingShieldCancel,
   } = useScanner();
 
-  useEffect(() => {
-    if (!permission?.granted) return;
-    cameraReadyTimerRef.current = setTimeout(() => {
-      setCameraChecked((prev) => {
-        if (!prev) {
-          setCameraAvailable(false);
-          setCameraErrorType("unavailable");
-        }
-        return true;
-      });
-    }, 7000);
-    return () => {
-      if (cameraReadyTimerRef.current) {
-        clearTimeout(cameraReadyTimerRef.current);
-        cameraReadyTimerRef.current = null;
-      }
-    };
-  }, [permission?.granted]);
-
   if (!permission) {
     return <View style={{ flex: 1, backgroundColor: "#000" }} />;
   }
@@ -259,8 +271,24 @@ export default function ScannerScreen() {
     <View style={{ flex: 1, backgroundColor: "#000" }}>
       {Platform.OS !== "web" && <StatusBar hidden />}
 
-      {/* Camera wrapped in error boundary — shows fallback if hardware fails */}
-      {cameraAvailable ? (
+      {/* Camera section — CameraView is NEVER rendered if hardware is absent */}
+      {hardwareAvailable === null ? (
+        /* Still running isAvailableAsync — show a plain black screen briefly */
+        <View style={[StyleSheet.absoluteFillObject, { backgroundColor: "#000" }]} />
+      ) : hardwareAvailable === false || !cameraAvailable ? (
+        /* Hardware absent OR silent runtime failure — show banner, never touch CameraView */
+        <View style={[StyleSheet.absoluteFillObject, { backgroundColor: "#080c14" }]}>
+          <View style={{ paddingTop: topInset + 8, paddingHorizontal: 16, paddingBottom: 10 }}>
+            <Pressable onPress={() => router.back()} style={styles.backIconBtn}>
+              <Ionicons name="chevron-back" size={22} color="#fff" />
+            </Pressable>
+          </View>
+          <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+            <CameraUnavailableBanner onPickImage={handlePickImage} errorType={cameraErrorType} />
+          </View>
+        </View>
+      ) : (
+        /* Hardware confirmed — safe to render CameraView */
         <CameraErrorBoundary onError={() => markCameraUnavailable("unavailable")}>
           <CameraView
             style={StyleSheet.absoluteFillObject}
@@ -283,24 +311,10 @@ export default function ScannerScreen() {
             }}
           />
         </CameraErrorBoundary>
-      ) : (
-        <View style={[StyleSheet.absoluteFillObject, { backgroundColor: "#080c14" }]}>
-          <View style={{ paddingTop: topInset + 8, paddingHorizontal: 16, paddingBottom: 10 }}>
-            <Pressable
-              onPress={() => router.back()}
-              style={styles.backIconBtn}
-            >
-              <Ionicons name="chevron-back" size={22} color="#fff" />
-            </Pressable>
-          </View>
-          <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
-            <CameraUnavailableBanner onPickImage={handlePickImage} errorType={cameraErrorType} />
-          </View>
-        </View>
       )}
 
-      {/* Overlay is always visible so gallery button is always accessible */}
-      {cameraAvailable && (
+      {/* Overlay only shown when camera is actually running */}
+      {hardwareAvailable === true && cameraAvailable && (
         <ScannerOverlay
           topInset={topInset}
           bottomInset={bottomInset}
