@@ -153,11 +153,31 @@ function CameraUnavailableBanner({
 export default function ScannerScreen() {
   const [permission, requestPermission] = useCameraPermissions();
   const [cameraAvailable, setCameraAvailable] = useState(true);
+  const [cameraChecked, setCameraChecked] = useState(false);
   const [cameraErrorType, setCameraErrorType] = useState<CameraErrorType>("unavailable");
+  const cameraReadyTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const insets = useSafeAreaInsets();
   const { colors } = useTheme();
   const topInset = Platform.OS === "web" ? 67 : insets.top;
   const bottomInset = Math.max(insets.bottom, 24);
+
+  function markCameraUnavailable(type: CameraErrorType) {
+    if (cameraReadyTimerRef.current) {
+      clearTimeout(cameraReadyTimerRef.current);
+      cameraReadyTimerRef.current = null;
+    }
+    setCameraErrorType(type);
+    setCameraAvailable(false);
+    setCameraChecked(true);
+  }
+
+  function markCameraReady() {
+    if (cameraReadyTimerRef.current) {
+      clearTimeout(cameraReadyTimerRef.current);
+      cameraReadyTimerRef.current = null;
+    }
+    setCameraChecked(true);
+  }
 
   const {
     user,
@@ -200,6 +220,25 @@ export default function ScannerScreen() {
     handleLivingShieldCancel,
   } = useScanner();
 
+  useEffect(() => {
+    if (!permission?.granted) return;
+    cameraReadyTimerRef.current = setTimeout(() => {
+      setCameraChecked((prev) => {
+        if (!prev) {
+          setCameraAvailable(false);
+          setCameraErrorType("unavailable");
+        }
+        return true;
+      });
+    }, 7000);
+    return () => {
+      if (cameraReadyTimerRef.current) {
+        clearTimeout(cameraReadyTimerRef.current);
+        cameraReadyTimerRef.current = null;
+      }
+    };
+  }, [permission?.granted]);
+
   if (!permission) {
     return <View style={{ flex: 1, backgroundColor: "#000" }} />;
   }
@@ -222,7 +261,7 @@ export default function ScannerScreen() {
 
       {/* Camera wrapped in error boundary — shows fallback if hardware fails */}
       {cameraAvailable ? (
-        <CameraErrorBoundary onError={() => { setCameraErrorType("unavailable"); setCameraAvailable(false); }}>
+        <CameraErrorBoundary onError={() => markCameraUnavailable("unavailable")}>
           <CameraView
             style={StyleSheet.absoluteFillObject}
             facing={facing}
@@ -230,6 +269,7 @@ export default function ScannerScreen() {
             zoom={zoom}
             barcodeScannerSettings={{ barcodeTypes: ["qr"] }}
             onBarcodeScanned={scanned ? undefined : handleBarCodeScanned}
+            onCameraReady={markCameraReady}
             onMountError={(error) => {
               const msg = (error?.message ?? "").toLowerCase();
               const isInUse =
@@ -239,8 +279,7 @@ export default function ScannerScreen() {
                 msg.includes("another app") ||
                 msg.includes("unavailable") ||
                 msg.includes("restricted");
-              setCameraErrorType(isInUse ? "inuse" : "unavailable");
-              setCameraAvailable(false);
+              markCameraUnavailable(isInUse ? "inuse" : "unavailable");
             }}
           />
         </CameraErrorBoundary>
