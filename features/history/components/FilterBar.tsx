@@ -19,25 +19,25 @@ interface FilterBarProps {
 type IoniconName = React.ComponentProps<typeof Ionicons>["name"];
 
 const FILTER_ICONS: Record<string, IoniconName> = {
-  all: "apps-outline",
-  url: "link-outline",
-  payment: "card-outline",
-  text: "document-text-outline",
-  other: "ellipsis-horizontal-circle-outline",
+  all:       "apps-outline",
+  url:       "globe-outline",
+  payment:   "card-outline",
+  text:      "document-text-outline",
+  other:     "ellipsis-horizontal-circle-outline",
   favorites: "heart-outline",
-  camera: "camera-outline",
-  gallery: "images-outline",
+  camera:    "camera-outline",
+  gallery:   "images-outline",
 };
 
 const FILTER_ICONS_ACTIVE: Record<string, IoniconName> = {
-  all: "apps",
-  url: "link",
-  payment: "card",
-  text: "document-text",
-  other: "ellipsis-horizontal-circle",
+  all:       "apps",
+  url:       "globe",
+  payment:   "card",
+  text:      "document-text",
+  other:     "ellipsis-horizontal-circle",
   favorites: "heart",
-  camera: "camera",
-  gallery: "images",
+  camera:    "camera",
+  gallery:   "images",
 };
 
 const FilterBar = React.memo(function FilterBar({
@@ -45,7 +45,7 @@ const FilterBar = React.memo(function FilterBar({
   activeFilter,
   onFilterChange,
 }: FilterBarProps) {
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
 
   return (
     <ScrollView
@@ -57,13 +57,11 @@ const FilterBar = React.memo(function FilterBar({
     >
       {filters.map((f) => {
         const isFavorite = f.key === "favorites";
-        const isActive = activeFilter === f.key;
+        const isActive   = activeFilter === f.key;
 
-        const activeColor = isFavorite ? colors.danger : colors.primary;
-        const activeBg = isFavorite ? colors.dangerDim : colors.primaryDim;
-        const activeBorder = isFavorite ? colors.danger : colors.primary;
-
-        const iconName = isActive
+        const activeColor  = isFavorite ? colors.danger  : colors.primary;
+        const activeBg     = isFavorite ? colors.danger  : colors.primary;
+        const iconName     = isActive
           ? (FILTER_ICONS_ACTIVE[f.key] ?? "apps")
           : (FILTER_ICONS[f.key] ?? "apps-outline");
 
@@ -76,22 +74,36 @@ const FilterBar = React.memo(function FilterBar({
             }}
             style={({ pressed }) => [
               styles.chip,
-              {
-                backgroundColor: isActive ? activeBg : colors.surfaceLight,
-                borderColor: isActive ? activeBorder : colors.surfaceBorder,
-                opacity: pressed ? 0.7 : 1,
-              },
+              isActive
+                ? {
+                    backgroundColor: activeBg,
+                    borderColor: "transparent",
+                    shadowColor: activeColor,
+                    shadowOffset: { width: 0, height: 3 },
+                    shadowOpacity: isDark ? 0.5 : 0.25,
+                    shadowRadius: 8,
+                    elevation: 4,
+                  }
+                : {
+                    backgroundColor: isDark ? colors.surfaceLight : colors.surface,
+                    borderColor: colors.surfaceBorder,
+                  },
+              { opacity: pressed ? 0.75 : 1 },
             ]}
           >
             <Ionicons
               name={iconName}
               size={13}
-              color={isActive ? activeColor : colors.textSecondary}
+              color={isActive ? (isFavorite ? "#fff" : colors.primaryText) : colors.textSecondary}
             />
             <Text
               style={[
                 styles.chipText,
-                { color: isActive ? activeColor : colors.textSecondary },
+                {
+                  color: isActive
+                    ? (isFavorite ? "#fff" : colors.primaryText)
+                    : colors.textSecondary,
+                },
               ]}
               numberOfLines={1}
             >
@@ -114,7 +126,7 @@ const styles = StyleSheet.create({
   container: {
     paddingHorizontal: 16,
     gap: 8,
-    paddingBottom: 4,
+    paddingBottom: 6,
     paddingTop: 2,
     flexDirection: "row",
     alignItems: "center",
@@ -123,13 +135,14 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 5,
-    paddingHorizontal: 12,
-    paddingVertical: 7,
-    borderRadius: 20,
+    paddingHorizontal: 13,
+    paddingVertical: 8,
+    borderRadius: 100,
     borderWidth: 1,
   },
   chipText: {
     fontSize: 12,
     fontFamily: "Inter_600SemiBold",
+    letterSpacing: 0.1,
   },
 });

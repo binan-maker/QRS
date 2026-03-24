@@ -88,7 +88,9 @@ export default function HistoryScreen() {
       if (row.kind === "header") {
         return (
           <View style={styles.dateHeader}>
-            <Text style={[styles.dateHeaderText, { color: colors.textMuted }]}>{row.label}</Text>
+            <View style={[styles.dateHeaderLine, { backgroundColor: colors.surfaceBorder }]} />
+            <Text style={[styles.dateHeaderText, { color: colors.textMuted, backgroundColor: colors.background }]}>{row.label}</Text>
+            <View style={[styles.dateHeaderLine, { backgroundColor: colors.surfaceBorder }]} />
           </View>
         );
       }
@@ -252,15 +254,23 @@ function makeStyles(c: ReturnType<typeof import("@/contexts/ThemeContext").useTh
     },
     list: { paddingHorizontal: 16, paddingTop: 4 },
     dateHeader: {
-      paddingVertical: 8,
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 10,
+      paddingVertical: 12,
       paddingHorizontal: 2,
       marginBottom: 2,
     },
+    dateHeaderLine: {
+      flex: 1,
+      height: 1,
+    },
     dateHeaderText: {
-      fontSize: 12,
-      fontFamily: "Inter_600SemiBold",
+      fontSize: 10,
+      fontFamily: "Inter_700Bold",
       textTransform: "uppercase",
-      letterSpacing: 0.6,
+      letterSpacing: 1.2,
+      paddingHorizontal: 6,
     },
     emptyState: { alignItems: "center", gap: 8, paddingVertical: 56, paddingHorizontal: 32 },
     emptyIcon: {

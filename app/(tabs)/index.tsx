@@ -4,7 +4,7 @@ import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
 import * as Haptics from "@/lib/haptics";
-import Animated, { FadeInDown } from "react-native-reanimated";
+import Animated, { FadeInDown, FadeInRight } from "react-native-reanimated";
 import { useTheme } from "@/contexts/ThemeContext";
 import { useHome } from "@/hooks/useHome";
 import { detectContentType, getContentTypeIcon, truncate, formatRelativeTime } from "@/lib/utils/formatters";
@@ -191,28 +191,66 @@ export default function HomeScreen() {
               </View>
             ) : (
               <View style={styles.recentList}>
-                {recentScans.map((scan) => (
-                  <Pressable
-                    key={scan.id}
-                    onPress={() => {
-                      if (scan.qrCodeId) router.push({ pathname: "/qr-detail/[id]", params: { id: scan.qrCodeId } });
-                    }}
-                    style={({ pressed }) => [styles.scanItem, { opacity: pressed ? 0.8 : 1 }]}
-                  >
-                    <View style={[styles.scanItemIcon, { backgroundColor: colors.primaryDim }]}>
-                      <Ionicons
-                        name={getContentTypeIcon(detectContentType(scan.content)) as any}
-                        size={18}
-                        color={colors.primary}
-                      />
-                    </View>
-                    <View style={{ flex: 1, minWidth: 0 }}>
-                      <Text style={styles.scanItemContent} numberOfLines={1}>{truncate(scan.content, 40)}</Text>
-                      <Text style={styles.scanItemDate}>{new Date(scan.scannedAt).toLocaleDateString()}</Text>
-                    </View>
-                    <Ionicons name="chevron-forward" size={16} color={colors.textMuted} />
-                  </Pressable>
-                ))}
+                {recentScans.map((scan, idx) => {
+                  const contentType = detectContentType(scan.content);
+                  const icon = getContentTypeIcon(contentType) as any;
+                  const accentMap: Record<string, string> = {
+                    url: colors.primary, payment: colors.accent,
+                    wifi: colors.safe, phone: colors.safe,
+                    email: colors.warning, location: colors.danger,
+                  };
+                  const accent = accentMap[contentType] ?? colors.primary;
+                  const accentDim = accent + "1A";
+                  return (
+                    <Animated.View
+                      key={scan.id}
+                      entering={FadeInRight.duration(350).delay(idx * 60)}
+                    >
+                      <Pressable
+                        onPress={() => {
+                          if (scan.qrCodeId) {
+                            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                            router.push({ pathname: "/qr-detail/[id]", params: { id: scan.qrCodeId } });
+                          }
+                        }}
+                        style={({ pressed }) => [
+                          styles.scanItem,
+                          {
+                            backgroundColor: colors.surface,
+                            borderColor: colors.surfaceBorder,
+                            opacity: pressed ? 0.85 : 1,
+                            transform: [{ scale: pressed ? 0.985 : 1 }],
+                          },
+                        ]}
+                      >
+                        <View style={[styles.scanItemAccent, { backgroundColor: accent }]} />
+                        <View style={[styles.scanItemIcon, { backgroundColor: accentDim }]}>
+                          <Ionicons name={icon} size={17} color={accent} />
+                        </View>
+                        <View style={styles.scanItemBody}>
+                          <Text style={[styles.scanItemContent, { color: colors.text }]} numberOfLines={1}>
+                            {truncate(scan.content, 38)}
+                          </Text>
+                          <View style={styles.scanItemMeta}>
+                            <View style={[styles.scanItemTypeBadge, { backgroundColor: accentDim, borderColor: accent + "40" }]}>
+                              <Text style={[styles.scanItemTypeText, { color: accent }]}>
+                                {contentType.charAt(0).toUpperCase() + contentType.slice(1)}
+                              </Text>
+                            </View>
+                            <Text style={[styles.scanItemDate, { color: colors.textMuted }]}>
+                              {formatRelativeTime(scan.scannedAt)}
+                            </Text>
+                          </View>
+                        </View>
+                        {scan.qrCodeId ? (
+                          <View style={[styles.scanItemChevron, { backgroundColor: colors.primaryDim }]}>
+                            <Ionicons name="chevron-forward" size={13} color={colors.primary} />
+                          </View>
+                        ) : null}
+                      </Pressable>
+                    </Animated.View>
+                  );
+                })}
               </View>
             )}
           </Animated.View>
@@ -318,16 +356,41 @@ function makeStyles(c: ReturnType<typeof import("@/contexts/ThemeContext").useTh
     emptyText: { fontSize: 15, fontFamily: "Inter_600SemiBold", color: c.textSecondary },
     emptySubtext: { fontSize: 13, fontFamily: "Inter_400Regular", color: c.textMuted },
     recentList: {
-      backgroundColor: c.surface, borderRadius: 18,
-      borderWidth: 1, borderColor: c.surfaceBorder, overflow: "hidden",
+      gap: 8,
     },
     scanItem: {
-      flexDirection: "row", alignItems: "center", gap: 12,
-      paddingVertical: 13, paddingHorizontal: 16,
-      borderBottomWidth: 1, borderBottomColor: c.surfaceBorder,
+      flexDirection: "row",
+      alignItems: "center",
+      borderRadius: 18,
+      borderWidth: 1,
+      overflow: "hidden",
+      paddingRight: 14,
+      paddingVertical: 13,
     },
-    scanItemIcon: { width: 36, height: 36, borderRadius: 10, alignItems: "center", justifyContent: "center", flexShrink: 0 },
-    scanItemContent: { fontSize: 14, fontFamily: "Inter_500Medium", color: c.text, marginBottom: 2 },
-    scanItemDate: { fontSize: 12, fontFamily: "Inter_400Regular", color: c.textMuted },
+    scanItemAccent: {
+      width: 3,
+      alignSelf: "stretch",
+      borderTopRightRadius: 3,
+      borderBottomRightRadius: 3,
+      marginRight: 13,
+    },
+    scanItemIcon: {
+      width: 40, height: 40, borderRadius: 13,
+      alignItems: "center", justifyContent: "center",
+      marginRight: 12, flexShrink: 0,
+    },
+    scanItemBody: { flex: 1, minWidth: 0, gap: 5 },
+    scanItemContent: { fontSize: 13.5, fontFamily: "Inter_500Medium", lineHeight: 18 },
+    scanItemMeta: { flexDirection: "row", alignItems: "center", gap: 7 },
+    scanItemTypeBadge: {
+      paddingHorizontal: 7, paddingVertical: 2,
+      borderRadius: 100, borderWidth: 1,
+    },
+    scanItemTypeText: { fontSize: 10, fontFamily: "Inter_700Bold", letterSpacing: 0.2 },
+    scanItemDate: { fontSize: 10, fontFamily: "Inter_400Regular" },
+    scanItemChevron: {
+      width: 26, height: 26, borderRadius: 8,
+      alignItems: "center", justifyContent: "center", marginLeft: 8,
+    },
   });
 }

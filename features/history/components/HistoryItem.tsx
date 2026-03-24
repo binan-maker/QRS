@@ -1,31 +1,47 @@
 import React from "react";
-import { View, Text, Pressable } from "react-native";
+import { View, Text, Pressable, StyleSheet } from "react-native";
 import { router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
+import { LinearGradient } from "expo-linear-gradient";
 import * as Haptics from "@/lib/haptics";
 import { useTheme } from "@/contexts/ThemeContext";
+import { formatRelativeTime } from "@/lib/utils/formatters";
 import type { HistoryItem as HistoryItemType } from "@/hooks/useHistory";
 
-function getContentIcon(type: string): keyof typeof Ionicons.glyphMap {
-  switch (type) {
-    case "url":       return "link";
-    case "phone":     return "call";
-    case "email":     return "mail";
-    case "wifi":      return "wifi";
-    case "location":  return "location";
-    case "payment":   return "card";
-    case "sms":       return "chatbubble";
-    case "contact":   return "person";
-    case "event":     return "calendar";
-    case "otp":       return "lock-closed";
-    case "app":       return "apps";
-    case "social":    return "people";
-    case "media":     return "play-circle";
-    case "document":  return "document";
-    case "boarding":  return "airplane";
-    case "product":   return "barcode";
-    default:          return "document-text";
-  }
+const TYPE_META: Record<string, { icon: keyof typeof Ionicons.glyphMap; label: string }> = {
+  url:      { icon: "globe-outline",         label: "URL" },
+  phone:    { icon: "call-outline",          label: "Phone" },
+  email:    { icon: "mail-outline",          label: "Email" },
+  wifi:     { icon: "wifi-outline",          label: "Wi-Fi" },
+  location: { icon: "location-outline",      label: "Location" },
+  payment:  { icon: "card-outline",          label: "Payment" },
+  sms:      { icon: "chatbubble-outline",    label: "SMS" },
+  contact:  { icon: "person-outline",        label: "Contact" },
+  event:    { icon: "calendar-outline",      label: "Event" },
+  otp:      { icon: "lock-closed-outline",   label: "OTP" },
+  app:      { icon: "apps-outline",          label: "App" },
+  social:   { icon: "people-outline",        label: "Social" },
+  media:    { icon: "play-circle-outline",   label: "Media" },
+  document: { icon: "document-outline",      label: "Document" },
+  boarding:  { icon: "airplane-outline",     label: "Boarding" },
+  product:  { icon: "barcode-outline",       label: "Product" },
+};
+
+function getTypeMeta(type: string) {
+  return TYPE_META[type] ?? { icon: "document-text-outline" as keyof typeof Ionicons.glyphMap, label: "Text" };
+}
+
+function getAccentColor(
+  type: string,
+  risk: "safe" | "caution" | "dangerous",
+  colors: any
+): string {
+  if (risk === "dangerous") return colors.danger;
+  if (risk === "caution")   return colors.warning;
+  if (type === "payment")   return colors.accent;
+  if (type === "url")       return colors.primary;
+  if (type === "wifi")      return colors.safe;
+  return colors.primary;
 }
 
 interface HistoryItemProps {
@@ -35,12 +51,15 @@ interface HistoryItemProps {
 }
 
 const HistoryItem = React.memo(function HistoryItem({ item, risk, onDelete: _onDelete }: HistoryItemProps) {
-  const { colors } = useTheme();
-  const showRiskBadge = (item.contentType === "url" || item.contentType === "payment") && risk !== "safe";
-  const riskColor = risk === "dangerous" ? colors.danger : colors.warning;
-  const riskBgColor = risk === "dangerous" ? colors.dangerDim : colors.warningDim;
+  const { colors, isDark } = useTheme();
 
-  const isSynced = item.source === "cloud";
+  const isFavorite = item.source === "favorite";
+  const isSynced   = item.source === "cloud";
+  const meta       = getTypeMeta(item.contentType);
+  const accent     = isFavorite ? colors.danger : getAccentColor(item.contentType, risk, colors);
+  const accentDim  = accent + (isDark ? "20" : "12");
+  const showRisk   = (item.contentType === "url" || item.contentType === "payment") && risk !== "safe";
+  const riskColor  = risk === "dangerous" ? colors.danger : colors.warning;
 
   function handlePress() {
     if (item.qrCodeId) {
@@ -52,56 +71,173 @@ const HistoryItem = React.memo(function HistoryItem({ item, risk, onDelete: _onD
   return (
     <Pressable
       onPress={handlePress}
-      style={({ pressed }) => [{
-        flexDirection: "row", alignItems: "center", gap: 14,
-        backgroundColor: colors.surface, padding: 16, borderRadius: 14, marginBottom: 8,
-        borderWidth: 1, borderColor: colors.surfaceBorder, opacity: pressed ? 0.8 : 1,
-      }]}
+      style={({ pressed }) => [
+        styles.card,
+        {
+          backgroundColor: isDark ? colors.surface : colors.surface,
+          borderColor: colors.surfaceBorder,
+          opacity: pressed ? 0.88 : 1,
+          transform: [{ scale: pressed ? 0.985 : 1 }],
+        },
+      ]}
     >
-      <View style={{
-        width: 42, height: 42, borderRadius: 12, alignItems: "center", justifyContent: "center",
-        backgroundColor: item.source === "favorite" ? colors.dangerDim : colors.primaryDim,
-      }}>
+      <View style={[styles.accentBar, { backgroundColor: accent }]} />
+
+      <View style={[styles.iconWrap, { backgroundColor: accentDim }]}>
         <Ionicons
-          name={item.source === "favorite" ? "heart" : getContentIcon(item.contentType)}
-          size={20}
-          color={item.source === "favorite" ? colors.danger : colors.primary}
+          name={isFavorite ? "heart" : meta.icon}
+          size={19}
+          color={accent}
         />
       </View>
 
-      <View style={{ flex: 1 }}>
-        <Text style={{ fontSize: 14, fontFamily: "Inter_500Medium", color: colors.text }} numberOfLines={1}>
+      <View style={styles.body}>
+        <Text
+          style={[styles.content, { color: colors.text }]}
+          numberOfLines={1}
+        >
           {item.content}
         </Text>
-        <View style={{ flexDirection: "row", alignItems: "center", gap: 6, marginTop: 4, flexWrap: "wrap" }}>
-          {showRiskBadge ? (
-            <View style={{ flexDirection: "row", alignItems: "center", gap: 4, paddingHorizontal: 7, paddingVertical: 2, borderRadius: 8, backgroundColor: riskBgColor }}>
-              <Ionicons name={risk === "dangerous" ? "warning" : "alert-circle"} size={10} color={riskColor} />
-              <Text style={{ fontSize: 10, fontFamily: "Inter_500Medium", color: riskColor }}>
-                {risk === "dangerous" ? "Dangerous" : "Caution"}
-              </Text>
-            </View>
-          ) : null}
-          {item.source === "favorite" ? (
-            <View style={{ flexDirection: "row", alignItems: "center", gap: 3 }}>
-              <Ionicons name="heart" size={12} color={colors.danger} />
-            </View>
-          ) : (
-            <View style={{ flexDirection: "row", alignItems: "center", gap: 3 }}>
+
+        <View style={styles.metaRow}>
+          <View style={[styles.typeBadge, { backgroundColor: accentDim, borderColor: accent + "40" }]}>
+            <Text style={[styles.typeBadgeText, { color: accent }]}>
+              {isFavorite ? "Favorite" : meta.label}
+            </Text>
+          </View>
+
+          {showRisk && (
+            <View style={[styles.riskBadge, { backgroundColor: riskColor + "18" }]}>
               <Ionicons
-                name={isSynced ? "cloud" : "cloud-offline-outline"}
-                size={13}
-                color={isSynced ? colors.accent : colors.textMuted}
+                name={risk === "dangerous" ? "warning" : "alert-circle"}
+                size={9}
+                color={riskColor}
               />
-              <Text style={{ fontSize: 10, fontFamily: "Inter_400Regular", color: isSynced ? colors.accent : colors.textMuted }}>
-                {isSynced ? "Synced" : "Not Synced"}
+              <Text style={[styles.riskText, { color: riskColor }]}>
+                {risk === "dangerous" ? "Danger" : "Caution"}
               </Text>
             </View>
           )}
+
+          {!isFavorite && (
+            <View style={styles.syncRow}>
+              <Ionicons
+                name={isSynced ? "cloud-done-outline" : "cloud-offline-outline"}
+                size={11}
+                color={isSynced ? colors.safe : colors.textMuted}
+              />
+            </View>
+          )}
         </View>
+      </View>
+
+      <View style={styles.right}>
+        <Text style={[styles.time, { color: colors.textMuted }]}>
+          {formatRelativeTime(item.scannedAt)}
+        </Text>
+        {item.qrCodeId ? (
+          <View style={[styles.chevronWrap, { backgroundColor: colors.primaryDim }]}>
+            <Ionicons name="chevron-forward" size={13} color={colors.primary} />
+          </View>
+        ) : (
+          <View style={{ width: 26 }} />
+        )}
       </View>
     </Pressable>
   );
 });
 
 export default HistoryItem;
+
+const styles = StyleSheet.create({
+  card: {
+    flexDirection: "row",
+    alignItems: "center",
+    borderRadius: 18,
+    marginBottom: 9,
+    borderWidth: 1,
+    overflow: "hidden",
+    paddingRight: 14,
+    paddingVertical: 13,
+    gap: 0,
+  },
+  accentBar: {
+    width: 3,
+    alignSelf: "stretch",
+    borderTopRightRadius: 3,
+    borderBottomRightRadius: 3,
+    marginRight: 13,
+    marginLeft: 0,
+  },
+  iconWrap: {
+    width: 40,
+    height: 40,
+    borderRadius: 13,
+    alignItems: "center",
+    justifyContent: "center",
+    marginRight: 12,
+    flexShrink: 0,
+  },
+  body: {
+    flex: 1,
+    minWidth: 0,
+    gap: 5,
+  },
+  content: {
+    fontSize: 13.5,
+    fontFamily: "Inter_500Medium",
+    lineHeight: 18,
+  },
+  metaRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    flexWrap: "wrap",
+  },
+  typeBadge: {
+    paddingHorizontal: 7,
+    paddingVertical: 2,
+    borderRadius: 100,
+    borderWidth: 1,
+  },
+  typeBadgeText: {
+    fontSize: 10,
+    fontFamily: "Inter_700Bold",
+    letterSpacing: 0.2,
+  },
+  riskBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 3,
+    paddingHorizontal: 7,
+    paddingVertical: 2,
+    borderRadius: 100,
+  },
+  riskText: {
+    fontSize: 10,
+    fontFamily: "Inter_700Bold",
+    letterSpacing: 0.2,
+  },
+  syncRow: {
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  right: {
+    alignItems: "flex-end",
+    gap: 6,
+    marginLeft: 8,
+    flexShrink: 0,
+  },
+  time: {
+    fontSize: 10,
+    fontFamily: "Inter_400Regular",
+    letterSpacing: 0.1,
+  },
+  chevronWrap: {
+    width: 26,
+    height: 26,
+    borderRadius: 8,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+});
