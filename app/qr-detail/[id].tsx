@@ -262,6 +262,26 @@ export default function QrDetailScreen() {
             keyboardShouldPersistTaps="handled"
             onScrollBeginDrag={() => q.setCommentMenuId(null)}
           >
+            {/* ── Deactivated QR Banner ────────────────────────────────────── */}
+            {q.ownerInfo?.isActive === false && (
+              <Animated.View entering={FadeIn.duration(300)}>
+                <View style={styles.deactivatedBanner}>
+                  <LinearGradient
+                    colors={["rgba(239,68,68,0.18)", "rgba(239,68,68,0.08)"]}
+                    style={StyleSheet.absoluteFill}
+                    start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
+                  />
+                  <View style={styles.deactivatedIconWrap}>
+                    <Ionicons name="ban" size={22} color="#EF4444" />
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.deactivatedTitle}>QR Code Deactivated</Text>
+                    <Text style={styles.deactivatedSub}>The owner has turned off this QR code. Links and actions are disabled.</Text>
+                  </View>
+                </View>
+              </Animated.View>
+            )}
+
             {/* ── Sign-in banner ──────────────────────────────────────────── */}
             {!user && (
               <Animated.View entering={FadeIn.duration(300)} style={signInGlowStyle}>

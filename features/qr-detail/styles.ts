@@ -48,6 +48,20 @@ export function makeStyles(c: AppColors) {
     signInBannerTitle: { fontSize: 14, fontFamily: "Inter_700Bold", color: c.text },
     signInBannerSub: { fontSize: 12, fontFamily: "Inter_400Regular", color: c.textSecondary, marginTop: 2 },
 
+    deactivatedBanner: {
+      flexDirection: "row", alignItems: "center", gap: 12,
+      borderRadius: 18, padding: 16, marginBottom: 14,
+      borderWidth: 1.5, borderColor: "rgba(239,68,68,0.45)",
+      overflow: "hidden",
+    },
+    deactivatedIconWrap: {
+      width: 44, height: 44, borderRadius: 22,
+      backgroundColor: "rgba(239,68,68,0.14)", alignItems: "center", justifyContent: "center",
+      flexShrink: 0,
+    },
+    deactivatedTitle: { fontSize: 14, fontFamily: "Inter_700Bold", color: "#EF4444", marginBottom: 2 },
+    deactivatedSub: { fontSize: 12, fontFamily: "Inter_400Regular", color: "#FCA5A5", lineHeight: 17 },
+
     sectionHeader: {
       flexDirection: "row", alignItems: "center", justifyContent: "space-between",
       marginBottom: 14, marginTop: 6,

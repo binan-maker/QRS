@@ -18,6 +18,13 @@ export const ZOOM_LEVELS = [
   { zoom: 0.6, label: "3×" },
 ];
 
+// Auto-zoom stages: after N ms without a scan, try a different zoom level
+const AUTO_ZOOM_STAGES = [
+  { delay: 4000,  zoom: 0.18, label: "1.5×" },
+  { delay: 8000,  zoom: 0.42, label: "2×"   },
+  { delay: 12000, zoom: 0,    label: "1×"    }, // reset
+];
+
 export function useCameraControls() {
   const [scanned, setScanned]         = useState(false);
   const [processing, setProcessing]   = useState(false);
@@ -29,6 +36,10 @@ export function useCameraControls() {
   const scanLockRef  = useRef(false);
   const canScanRef   = useRef(false);
   const focusTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Auto-zoom state
+  const autoZoomTimers = useRef<ReturnType<typeof setTimeout>[]>([]);
+  const manualZoomRef  = useRef(false); // user manually cycled zoom
 
   const scanLineAnim = useRef(new Animated.Value(0)).current;
   const scanLineLoop = useRef<Animated.CompositeAnimation | null>(null);
@@ -54,9 +65,40 @@ export function useCameraControls() {
     if (scanLineLoop.current) scanLineLoop.current.stop();
   }
 
+  function clearAutoZoomTimers() {
+    autoZoomTimers.current.forEach(clearTimeout);
+    autoZoomTimers.current = [];
+  }
+
+  function startAutoZoom() {
+    clearAutoZoomTimers();
+    manualZoomRef.current = false;
+    AUTO_ZOOM_STAGES.forEach(({ delay, zoom: z, label }) => {
+      const t = setTimeout(() => {
+        // Only auto-zoom if user hasn't manually overridden
+        if (!manualZoomRef.current) {
+          setZoom(z);
+          setZoomLabel(label);
+        }
+      }, delay);
+      autoZoomTimers.current.push(t);
+    });
+  }
+
+  function resetAutoZoom() {
+    clearAutoZoomTimers();
+    setZoom(0);
+    setZoomLabel("1×");
+    manualZoomRef.current = false;
+  }
+
   useEffect(() => {
     startScanLine();
-    return () => stopScanLine();
+    startAutoZoom();
+    return () => {
+      stopScanLine();
+      clearAutoZoomTimers();
+    };
   }, []);
 
   useFocusEffect(
@@ -67,13 +109,15 @@ export function useCameraControls() {
       scanLockRef.current = false;
       canScanRef.current = false;
       startScanLine();
+      startAutoZoom();
       focusTimerRef.current = setTimeout(() => {
         canScanRef.current = true;
-      }, 500);
+      }, 200);
       return () => {
         if (focusTimerRef.current) clearTimeout(focusTimerRef.current);
         canScanRef.current = false;
         stopScanLine();
+        clearAutoZoomTimers();
       };
     }, [])
   );
@@ -84,9 +128,13 @@ export function useCameraControls() {
     setProcessing(false);
     scanLockRef.current = false;
     canScanRef.current = true;
+    resetAutoZoom();
+    startAutoZoom();
   }
 
   function cycleZoom() {
+    manualZoomRef.current = true;
+    clearAutoZoomTimers();
     const currentIdx = ZOOM_LEVELS.findIndex((z) => z.zoom === zoom);
     const next = ZOOM_LEVELS[(currentIdx + 1) % ZOOM_LEVELS.length];
     setZoom(next.zoom);

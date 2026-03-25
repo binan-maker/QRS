@@ -225,6 +225,19 @@ export default function ScannerOverlay({
         </View>
 
         <View style={styles.topRightBtns}>
+          {/* Private mode toggle — subtle, icon-only, no "Tracked" label ever */}
+          {user && (
+            <Pressable
+              onPress={onToggleAnonymous}
+              style={[styles.topBarBtn, anonymousMode && styles.topBarBtnPrivate]}
+            >
+              <Ionicons
+                name={anonymousMode ? "eye-off" : "eye-off-outline"}
+                size={18}
+                color={anonymousMode ? "#F5A623" : "rgba(255,255,255,0.35)"}
+              />
+            </Pressable>
+          )}
           <Pressable
             onPress={onFlipCamera}
             style={styles.topBarBtn}
@@ -262,21 +275,12 @@ export default function ScannerOverlay({
             <Text style={styles.pillText}>{zoomLabel}</Text>
           </Pressable>
 
-          {user ? (
-            <Pressable
-              onPress={onToggleAnonymous}
-              style={[styles.pill, anonymousMode && styles.pillAnon]}
-            >
-              <Ionicons
-                name={anonymousMode ? "eye-off" : "eye"}
-                size={14}
-                color={anonymousMode ? "#F5A623" : "rgba(255,255,255,0.7)"}
-              />
-              <Text style={[styles.pillText, anonymousMode && styles.pillTextAnon]}>
-                {anonymousMode ? "Anonymous" : "Tracked"}
-              </Text>
-            </Pressable>
-          ) : null}
+          {anonymousMode && (
+            <View style={[styles.pill, styles.pillAnon]}>
+              <Ionicons name="eye-off" size={14} color="#F5A623" />
+              <Text style={[styles.pillText, styles.pillTextAnon]}>Private</Text>
+            </View>
+          )}
         </View>
 
         <View style={styles.bottomActions}>
@@ -492,6 +496,10 @@ const styles = StyleSheet.create({
   topBarBtnActive: {
     backgroundColor: "rgba(0,212,255,0.18)",
     borderColor: GLOW + "60",
+  },
+  topBarBtnPrivate: {
+    backgroundColor: "rgba(245,158,11,0.14)",
+    borderColor: "rgba(245,166,35,0.45)",
   },
   topRightBtns: { flexDirection: "row", gap: 8, alignItems: "center" },
   topCenter: { alignItems: "center", gap: 3 },
