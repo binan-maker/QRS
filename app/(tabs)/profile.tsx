@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
   View,
   Text,
@@ -9,7 +9,9 @@ import {
   TextInput,
   ActivityIndicator,
   Image,
+  Switch,
   useWindowDimensions,
+  Alert,
 } from "react-native";
 import { router } from "expo-router";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
@@ -21,6 +23,13 @@ import SkeletonBox from "@/components/ui/SkeletonBox";
 import PhotoModal from "@/features/profile/components/PhotoModal";
 import UsernameEditor from "@/features/profile/components/UsernameEditor";
 import { useProfile } from "@/hooks/useProfile";
+import {
+  updatePrivacySettings,
+  updateBio,
+  getPrivacySettings,
+  getUserBio,
+  type PrivacySettings,
+} from "@/lib/services/user-service";
 
 export default function ProfileScreen() {
   const insets = useSafeAreaInsets();
@@ -40,10 +49,54 @@ export default function ProfileScreen() {
     handleSaveName, handleSaveUsername, handleCancelUsername, handlePickPhoto, handleSignOut,
   } = useProfile();
 
+  const [bio, setBio] = useState("");
+  const [editingBio, setEditingBio] = useState(false);
+  const [newBio, setNewBio] = useState("");
+  const [savingBio, setSavingBio] = useState(false);
+
+  const [privacy, setPrivacy] = useState<PrivacySettings>({ showQrCodes: true, showStats: true, showActivity: true });
+  const [savingPrivacy, setSavingPrivacy] = useState(false);
+
   const topInset = Platform.OS === "web" ? 67 : insets.top;
   const tabBarHeight = 60 + insets.bottom;
   const { width } = useWindowDimensions();
   const styles = makeStyles(colors, width);
+
+  useEffect(() => {
+    if (!user) return;
+    Promise.all([getPrivacySettings(user.id), getUserBio(user.id)])
+      .then(([p, b]) => { setPrivacy(p); setBio(b); })
+      .catch(() => {});
+  }, [user?.id]);
+
+  async function handleSaveBio() {
+    if (!user) return;
+    setSavingBio(true);
+    try {
+      await updateBio(user.id, newBio);
+      setBio(newBio.trim().slice(0, 150));
+      setEditingBio(false);
+    } catch {
+      Alert.alert("Error", "Could not update bio.");
+    } finally {
+      setSavingBio(false);
+    }
+  }
+
+  async function handlePrivacyToggle(key: keyof PrivacySettings, value: boolean) {
+    if (!user) return;
+    const updated = { ...privacy, [key]: value };
+    setPrivacy(updated);
+    setSavingPrivacy(true);
+    try {
+      await updatePrivacySettings(user.id, updated);
+    } catch {
+      setPrivacy(privacy);
+      Alert.alert("Error", "Could not update privacy settings.");
+    } finally {
+      setSavingPrivacy(false);
+    }
+  }
 
   if (!user) {
     return (
@@ -100,7 +153,6 @@ export default function ProfileScreen() {
           />
           <View style={[styles.heroBannerBorder, { borderColor: colors.primary + "22" }]} />
 
-          {/* Top row: settings button */}
           <View style={styles.bannerTopRow}>
             <View style={{ flex: 1 }} />
             <Pressable
@@ -174,10 +226,65 @@ export default function ProfileScreen() {
             {currentUsername ? (
               <Text style={[styles.usernameText, { color: colors.primary }]}>@{currentUsername}</Text>
             ) : null}
+
+            {/* Bio */}
+            {editingBio ? (
+              <View style={styles.bioEditWrap}>
+                <TextInput
+                  style={[styles.bioInput, { backgroundColor: colors.inputBackground, borderColor: colors.primary, color: colors.text }]}
+                  value={newBio}
+                  onChangeText={setNewBio}
+                  placeholder="Tell people about yourself…"
+                  placeholderTextColor={colors.textMuted}
+                  multiline
+                  maxLength={150}
+                  autoFocus
+                />
+                <View style={styles.bioEditActions}>
+                  <Text style={[styles.bioCharCount, { color: colors.textMuted }]}>{newBio.length}/150</Text>
+                  <Pressable onPress={() => { setEditingBio(false); setNewBio(bio); }} style={styles.cancelBtn}>
+                    <Ionicons name="close" size={18} color={colors.textMuted} />
+                  </Pressable>
+                  <Pressable onPress={handleSaveBio} disabled={savingBio} style={[styles.saveBtn, { backgroundColor: colors.primary }]}>
+                    {savingBio
+                      ? <ActivityIndicator size="small" color={colors.primaryText} />
+                      : <Text style={[styles.saveBtnText, { color: colors.primaryText }]}>Save</Text>
+                    }
+                  </Pressable>
+                </View>
+              </View>
+            ) : (
+              <Pressable onPress={() => { setNewBio(bio); setEditingBio(true); }} style={styles.bioRow}>
+                {bio ? (
+                  <Text style={[styles.bioText, { color: colors.textSecondary }]} numberOfLines={2}>{bio}</Text>
+                ) : (
+                  <Text style={[styles.bioPlaceholder, { color: colors.textMuted }]}>Add a bio…</Text>
+                )}
+                <View style={[styles.editPencil, { backgroundColor: colors.primaryDim }]}>
+                  <Ionicons name="pencil" size={11} color={colors.primary} />
+                </View>
+              </Pressable>
+            )}
+
             <Text style={[styles.emailText, { color: colors.textMuted }]} numberOfLines={1}>
               {user.email}
             </Text>
           </View>
+
+          {/* View Public Profile button */}
+          {currentUsername && (
+            <Pressable
+              onPress={() => router.push(`/profile/${currentUsername}` as any)}
+              style={({ pressed }) => [
+                styles.viewPublicBtn,
+                { backgroundColor: colors.primary + "18", borderColor: colors.primary + "35", opacity: pressed ? 0.85 : 1 },
+              ]}
+            >
+              <Ionicons name="eye-outline" size={16} color={colors.primary} />
+              <Text style={[styles.viewPublicText, { color: colors.primary }]}>View My Public Profile</Text>
+              <Ionicons name="arrow-forward" size={14} color={colors.primary} />
+            </Pressable>
+          )}
         </Animated.View>
 
         {/* ── STATS ROW ── */}
@@ -211,7 +318,7 @@ export default function ProfileScreen() {
         <Animated.View entering={FadeInDown.duration(450).delay(140)}>
           <View style={[styles.likesCard, { backgroundColor: colors.surface, borderColor: colors.safeDim }]}>
             <LinearGradient
-              colors={isDark ? [colors.safeDim, "transparent"] : [colors.safeDim, "transparent"]}
+              colors={[colors.safeDim, "transparent"]}
               style={styles.likesGlow}
               start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}
             />
@@ -315,8 +422,51 @@ export default function ProfileScreen() {
           </View>
         </Animated.View>
 
+        {/* ── PRIVACY SETTINGS ── */}
+        <Animated.View entering={FadeInDown.duration(450).delay(220)}>
+          <Text style={[styles.sectionLabel, { color: colors.textMuted }]}>Public Profile Privacy</Text>
+          <View style={[styles.privacyCard, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
+            <View style={[styles.privacyCardHeader, { borderBottomColor: colors.surfaceBorder }]}>
+              <LinearGradient colors={["#8B5CF6", "#EC4899"]} style={styles.privacyCardIcon} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}>
+                <Ionicons name="lock-closed" size={14} color="#fff" />
+              </LinearGradient>
+              <View style={{ flex: 1 }}>
+                <Text style={[styles.privacyCardTitle, { color: colors.text }]}>Control Your Visibility</Text>
+                <Text style={[styles.privacyCardSub, { color: colors.textMuted }]}>Choose what others see on your profile</Text>
+              </View>
+              {savingPrivacy && <ActivityIndicator size="small" color={colors.primary} />}
+            </View>
+
+            {([
+              { key: "showQrCodes" as const, label: "QR Codes", sub: "Show your public QR codes", icon: "qr-code-outline" as const, color: colors.primary },
+              { key: "showStats" as const, label: "Stats", sub: "Show scans, likes & activity counts", icon: "bar-chart-outline" as const, color: colors.accent },
+              { key: "showActivity" as const, label: "Activity", sub: "Show your community contributions", icon: "pulse-outline" as const, color: colors.safe },
+            ]).map((item, idx, arr) => (
+              <React.Fragment key={item.key}>
+                <View style={styles.privacyRow}>
+                  <View style={[styles.privacyRowIcon, { backgroundColor: item.color + "18" }]}>
+                    <Ionicons name={item.icon} size={16} color={item.color} />
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <Text style={[styles.privacyRowLabel, { color: colors.text }]}>{item.label}</Text>
+                    <Text style={[styles.privacyRowSub, { color: colors.textMuted }]}>{item.sub}</Text>
+                  </View>
+                  <Switch
+                    value={privacy[item.key]}
+                    onValueChange={(v) => handlePrivacyToggle(item.key, v)}
+                    trackColor={{ false: colors.surfaceLight, true: colors.primary + "80" }}
+                    thumbColor={privacy[item.key] ? colors.primary : colors.textMuted}
+                    ios_backgroundColor={colors.surfaceLight}
+                  />
+                </View>
+                {idx < arr.length - 1 && <View style={[styles.privacyDivider, { backgroundColor: colors.surfaceBorder }]} />}
+              </React.Fragment>
+            ))}
+          </View>
+        </Animated.View>
+
         {/* ── ACCOUNT INFO ── */}
-        <Animated.View entering={FadeInDown.duration(450).delay(230)}>
+        <Animated.View entering={FadeInDown.duration(450).delay(240)}>
           <Text style={[styles.sectionLabel, { color: colors.textMuted }]}>Account</Text>
           <View style={[styles.infoCard, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
             <View style={styles.infoRow}>
@@ -481,6 +631,25 @@ function makeStyles(c: ReturnType<typeof import("@/contexts/ThemeContext").useTh
     saveBtnText: { fontSize: rf(13), fontFamily: "Inter_700Bold" },
     cancelBtn: { padding: 6 },
 
+    bioRow: { flexDirection: "row", alignItems: "center", gap: 8, paddingHorizontal: 4 },
+    bioText: { flex: 1, fontSize: rf(13), fontFamily: "Inter_400Regular", textAlign: "center", lineHeight: 18 },
+    bioPlaceholder: { flex: 1, fontSize: rf(12), fontFamily: "Inter_400Regular", textAlign: "center", fontStyle: "italic" },
+    bioEditWrap: { width: "100%", gap: 8 },
+    bioInput: {
+      fontSize: rf(13), fontFamily: "Inter_400Regular",
+      borderRadius: 12, paddingHorizontal: 12, paddingVertical: 9,
+      borderWidth: 1, minHeight: 68, textAlignVertical: "top",
+    },
+    bioEditActions: { flexDirection: "row", alignItems: "center", gap: 6 },
+    bioCharCount: { flex: 1, fontSize: rf(11), fontFamily: "Inter_400Regular" },
+
+    viewPublicBtn: {
+      flexDirection: "row", alignItems: "center", gap: 10,
+      marginTop: 16, paddingVertical: 12, paddingHorizontal: 16,
+      borderRadius: 16, borderWidth: 1,
+    },
+    viewPublicText: { flex: 1, fontSize: rf(14), fontFamily: "Inter_600SemiBold" },
+
     statsRow: { flexDirection: "row", gap: 10, marginBottom: 14 },
     statCard: {
       flex: 1, borderRadius: 18, padding: 14, alignItems: "center",
@@ -510,28 +679,47 @@ function makeStyles(c: ReturnType<typeof import("@/contexts/ThemeContext").useTh
     linksGroup: { gap: 8, marginBottom: 22 },
     linkCard: {
       flexDirection: "row", alignItems: "center", gap: 14,
-      borderRadius: 18, padding: 16, borderWidth: 1,
+      borderRadius: 18, padding: 14, borderWidth: 1,
     },
-    linkIcon: { width: 44, height: 44, borderRadius: 14, alignItems: "center", justifyContent: "center" },
-    linkTitle: { fontSize: rf(14), fontFamily: "Inter_600SemiBold" },
-    linkSub: { fontSize: rf(12), fontFamily: "Inter_400Regular", marginTop: 1 },
-    linkChevron: { width: 30, height: 30, borderRadius: 10, alignItems: "center", justifyContent: "center" },
+    linkIcon: { width: 40, height: 40, borderRadius: 13, alignItems: "center", justifyContent: "center" },
+    linkTitle: { fontSize: rf(15), fontFamily: "Inter_600SemiBold" },
+    linkSub: { fontSize: rf(12), fontFamily: "Inter_400Regular", marginTop: 2 },
+    linkChevron: { width: 28, height: 28, borderRadius: 9, alignItems: "center", justifyContent: "center" },
 
-    infoCard: { borderRadius: 18, borderWidth: 1, marginBottom: 22, overflow: "hidden" },
-    infoRow: { flexDirection: "row", alignItems: "center", gap: 14, padding: 16 },
-    infoIconWrap: { width: 38, height: 38, borderRadius: 12, alignItems: "center", justifyContent: "center" },
+    privacyCard: {
+      borderRadius: 20, borderWidth: 1, overflow: "hidden", marginBottom: 22,
+    },
+    privacyCardHeader: {
+      flexDirection: "row", alignItems: "center", gap: 12,
+      padding: 16, borderBottomWidth: 1,
+    },
+    privacyCardIcon: { width: 34, height: 34, borderRadius: 11, alignItems: "center", justifyContent: "center" },
+    privacyCardTitle: { fontSize: rf(14), fontFamily: "Inter_700Bold" },
+    privacyCardSub: { fontSize: rf(11), fontFamily: "Inter_400Regular", marginTop: 1 },
+    privacyRow: {
+      flexDirection: "row", alignItems: "center", gap: 12,
+      paddingHorizontal: 16, paddingVertical: 14,
+    },
+    privacyRowIcon: { width: 34, height: 34, borderRadius: 10, alignItems: "center", justifyContent: "center" },
+    privacyRowLabel: { fontSize: rf(14), fontFamily: "Inter_600SemiBold" },
+    privacyRowSub: { fontSize: rf(11), fontFamily: "Inter_400Regular", marginTop: 1 },
+    privacyDivider: { height: StyleSheet.hairlineWidth, marginHorizontal: 16 },
+
+    infoCard: { borderRadius: 18, borderWidth: 1, overflow: "hidden", marginBottom: 22 },
+    infoRow: { flexDirection: "row", alignItems: "center", gap: 12, padding: 14 },
+    infoIconWrap: { width: 36, height: 36, borderRadius: 11, alignItems: "center", justifyContent: "center" },
     infoLabel: { fontSize: rf(11), fontFamily: "Inter_400Regular", marginBottom: 2 },
-    infoValue: { fontSize: rf(14), fontFamily: "Inter_500Medium" },
-    infoEditBtn: { width: 32, height: 32, borderRadius: 10, alignItems: "center", justifyContent: "center" },
-    infoDivider: { height: 1 },
-    verifiedChip: { flexDirection: "row", alignItems: "center", gap: 4, paddingHorizontal: 8, paddingVertical: 4, borderRadius: 100 },
+    infoValue: { fontSize: rf(14), fontFamily: "Inter_600SemiBold" },
+    infoEditBtn: { width: 30, height: 30, borderRadius: 9, alignItems: "center", justifyContent: "center" },
+    infoDivider: { height: StyleSheet.hairlineWidth, marginHorizontal: 14 },
+    verifiedChip: {
+      flexDirection: "row", alignItems: "center", gap: 4,
+      paddingHorizontal: 9, paddingVertical: 5, borderRadius: 100,
+    },
     verifiedText: { fontSize: rf(11), fontFamily: "Inter_600SemiBold" },
 
-    signOutBtn: { borderRadius: 18, borderWidth: 1, overflow: "hidden", marginBottom: 8 },
-    signOutGradient: {
-      flexDirection: "row", alignItems: "center", justifyContent: "center",
-      gap: 8, paddingVertical: 16,
-    },
-    signOutText: { fontSize: rf(15), fontFamily: "Inter_600SemiBold" },
+    signOutBtn: { borderRadius: 18, overflow: "hidden", borderWidth: 1, marginBottom: 8 },
+    signOutGradient: { flexDirection: "row", alignItems: "center", gap: 10, padding: 16, justifyContent: "center" },
+    signOutText: { fontSize: rf(15), fontFamily: "Inter_700Bold" },
   });
 }

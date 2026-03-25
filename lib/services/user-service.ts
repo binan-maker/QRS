@@ -4,6 +4,35 @@ import type { UserStats, UsernameData } from "./types";
 
 export type { UserStats, UsernameData };
 
+export interface PrivacySettings {
+  showQrCodes: boolean;
+  showStats: boolean;
+  showActivity: boolean;
+}
+
+export interface PublicProfile {
+  userId: string;
+  displayName: string;
+  username: string;
+  bio: string;
+  photoURL: string | null;
+  joinedAt: string | null;
+  privacy: PrivacySettings;
+  stats: {
+    qrCount: number;
+    totalScans: number;
+    commentCount: number;
+    totalLikesReceived: number;
+    safeReportsGiven: number;
+  };
+}
+
+const DEFAULT_PRIVACY: PrivacySettings = {
+  showQrCodes: true,
+  showStats: true,
+  showActivity: true,
+};
+
 export async function getUserStats(userId: string): Promise<UserStats> {
   try {
     const [followingResult, scansResult, commentsResult, userDoc] = await Promise.all([
@@ -89,6 +118,101 @@ export async function submitFeedback(
   message: string
 ): Promise<void> {
   await db.add(["feedback"], { userId, email, message, createdAt: db.timestamp() });
+}
+
+export async function getPublicProfile(username: string): Promise<PublicProfile | null> {
+  try {
+    const unameDoc = await db.get(["usernames", username]);
+    if (!unameDoc) return null;
+    const userId = unameDoc.userId as string;
+    const [userDoc, qrResult, commentsResult] = await Promise.all([
+      db.get(["users", userId]),
+      db.query(["users", userId, "generatedQrs"], { limit: 100 }),
+      db.query(["users", userId, "comments"], { limit: 1 }),
+    ]);
+    if (!userDoc) return null;
+    const privacy: PrivacySettings = {
+      showQrCodes: userDoc.privacyShowQrCodes !== false,
+      showStats: userDoc.privacyShowStats !== false,
+      showActivity: userDoc.privacyShowActivity !== false,
+    };
+    const totalScans = qrResult.docs.reduce((sum: number, d: any) => sum + (d.data.scanCount || 0), 0);
+    let joinedAt: string | null = null;
+    if (userDoc.createdAt) {
+      try {
+        joinedAt = userDoc.createdAt.toDate
+          ? userDoc.createdAt.toDate().toISOString()
+          : new Date(userDoc.createdAt).toISOString();
+      } catch {}
+    }
+    return {
+      userId,
+      displayName: userDoc.displayName || username,
+      username,
+      bio: userDoc.bio || "",
+      photoURL: userDoc.photoURL || null,
+      joinedAt,
+      privacy,
+      stats: {
+        qrCount: qrResult.docs.length,
+        totalScans,
+        commentCount: userDoc.commentCount || 0,
+        totalLikesReceived: userDoc.totalLikesReceived || 0,
+        safeReportsGiven: userDoc.safeReportsGiven || 0,
+      },
+    };
+  } catch {
+    return null;
+  }
+}
+
+export async function getPublicQrCodes(userId: string): Promise<any[]> {
+  try {
+    const { docs } = await db.query(["users", userId, "generatedQrs"], {
+      orderBy: { field: "createdAt", direction: "desc" },
+      limit: 20,
+    });
+    return docs
+      .filter((d: any) => !d.data.privateMode)
+      .map((d: any) => ({ id: d.id, ...d.data, createdAt: tsToString(d.data.createdAt) }));
+  } catch {
+    return [];
+  }
+}
+
+export async function updatePrivacySettings(userId: string, settings: PrivacySettings): Promise<void> {
+  await db.update(["users", userId], {
+    privacyShowQrCodes: settings.showQrCodes,
+    privacyShowStats: settings.showStats,
+    privacyShowActivity: settings.showActivity,
+  });
+}
+
+export async function updateBio(userId: string, bio: string): Promise<void> {
+  await db.update(["users", userId], { bio: bio.trim().slice(0, 150) });
+}
+
+export async function getPrivacySettings(userId: string): Promise<PrivacySettings> {
+  try {
+    const doc = await db.get(["users", userId]);
+    if (!doc) return DEFAULT_PRIVACY;
+    return {
+      showQrCodes: doc.privacyShowQrCodes !== false,
+      showStats: doc.privacyShowStats !== false,
+      showActivity: doc.privacyShowActivity !== false,
+    };
+  } catch {
+    return DEFAULT_PRIVACY;
+  }
+}
+
+export async function getUserBio(userId: string): Promise<string> {
+  try {
+    const doc = await db.get(["users", userId]);
+    return doc?.bio || "";
+  } catch {
+    return "";
+  }
 }
 
 export async function deleteUserAccount(userId: string): Promise<void> {
