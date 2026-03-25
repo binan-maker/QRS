@@ -42,6 +42,12 @@ export default function RegisterScreen() {
   const px = isNarrow ? 16 : Math.round(22 * scale);
 
   useEffect(() => {
+  if (user) {
+    router.replace("/(tabs)");
+  }
+}, [user]);
+
+  useEffect(() => {
     if (user && googleLoading) {
       setGoogleLoading(false);
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
