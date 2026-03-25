@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import {
   View,
   Text,
@@ -52,13 +52,97 @@ function safeBack() {
   }
 }
 
+function SectionHeader({
+  icon,
+  label,
+  gradient,
+  inline,
+}: {
+  icon: keyof typeof Ionicons.glyphMap;
+  label: string;
+  gradient: [string, string];
+  inline?: boolean;
+}) {
+  const { colors } = useTheme();
+  const content = (
+    <View style={sectionHeaderStyles.row}>
+      <LinearGradient colors={gradient} style={sectionHeaderStyles.iconWrap} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}>
+        <Ionicons name={icon} size={14} color="#fff" />
+      </LinearGradient>
+      <Text style={[sectionHeaderStyles.label, { color: colors.text }]}>{label}</Text>
+    </View>
+  );
+  if (inline) return content;
+  return <View style={sectionHeaderStyles.wrapper}>{content}</View>;
+}
+
+const sectionHeaderStyles = StyleSheet.create({
+  wrapper: { marginBottom: 14, marginTop: 6 },
+  row: { flexDirection: "row", alignItems: "center", gap: 10 },
+  iconWrap: { width: 28, height: 28, borderRadius: 9, alignItems: "center", justifyContent: "center" },
+  label: { fontSize: 17, fontFamily: "Inter_700Bold" },
+});
+
+function VerdictBanner({ verdict, offlineMode }: { verdict: ReturnType<ReturnType<typeof useQrDetail>["getCombinedVerdict"]>; offlineMode: boolean }) {
+  const { colors } = useTheme();
+
+  if (offlineMode) {
+    return (
+      <View style={[verdictStyles.banner, { backgroundColor: colors.warningDim, borderColor: colors.warning + "50" }]}>
+        <Ionicons name="cloud-offline-outline" size={20} color={colors.warning} />
+        <View style={{ flex: 1 }}>
+          <Text style={[verdictStyles.label, { color: colors.warning }]}>OFFLINE MODE</Text>
+          <Text style={[verdictStyles.reason, { color: colors.textSecondary }]}>Showing cached data — connect to see live safety info</Text>
+        </View>
+      </View>
+    );
+  }
+
+  const iconName: keyof typeof Ionicons.glyphMap =
+    verdict.level === "safe" ? "shield-checkmark" :
+    verdict.level === "caution" ? "alert-circle" : "warning";
+
+  const gradient: [string, string] =
+    verdict.level === "safe" ? ["#10B981", "#06B6D4"] :
+    verdict.level === "caution" ? ["#F59E0B", "#F97316"] : ["#EF4444", "#DC2626"];
+
+  const bg =
+    verdict.level === "safe" ? colors.safeDim ?? (colors.safe + "15") :
+    verdict.level === "caution" ? colors.warningDim : colors.dangerDim;
+
+  const borderColor =
+    verdict.level === "safe" ? colors.safe :
+    verdict.level === "caution" ? colors.warning : colors.danger;
+
+  return (
+    <View style={[verdictStyles.banner, { backgroundColor: bg, borderColor: borderColor + "50" }]}>
+      <LinearGradient colors={gradient} style={verdictStyles.iconWrap} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}>
+        <Ionicons name={iconName} size={20} color="#fff" />
+      </LinearGradient>
+      <View style={{ flex: 1 }}>
+        <Text style={[verdictStyles.label, { color: borderColor }]}>{verdict.label}</Text>
+        <Text style={[verdictStyles.reason, { color: colors.textSecondary }]} numberOfLines={2}>{verdict.reason}</Text>
+      </View>
+    </View>
+  );
+}
+
+const verdictStyles = StyleSheet.create({
+  banner: {
+    flexDirection: "row", alignItems: "center", gap: 14,
+    borderRadius: 20, padding: 16, marginBottom: 16, borderWidth: 1,
+  },
+  iconWrap: { width: 44, height: 44, borderRadius: 14, alignItems: "center", justifyContent: "center", flexShrink: 0 },
+  label: { fontSize: 13, fontFamily: "Inter_700Bold", letterSpacing: 0.8, marginBottom: 3 },
+  reason: { fontSize: 13, fontFamily: "Inter_400Regular", lineHeight: 18 },
+});
+
 export default function QrDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { user } = useAuth();
   const { colors } = useTheme();
   const insets = useSafeAreaInsets();
   const styles = makeStyles(colors);
-  const [detailsExpanded, setDetailsExpanded] = useState(true);
 
   const glowOpacity = useSharedValue(0.6);
   const glowScale = useSharedValue(1);
@@ -74,6 +158,7 @@ export default function QrDetailScreen() {
   const q = useQrDetail(id);
   const topInset = Platform.OS === "web" ? 67 : insets.top;
   const trust = q.getTrustInfo();
+  const verdict = q.getCombinedVerdict();
   const currentContent = q.qrCode?.content || q.offlineContent || "";
   const currentContentType = q.qrCode?.contentType || q.offlineContentType;
 
@@ -109,7 +194,7 @@ export default function QrDetailScreen() {
   return (
     <View style={{ flex: 1, backgroundColor: colors.background }}>
       <StatusBar style={colors.isDark ? "light" : "dark"} backgroundColor={colors.background} />
-      <KeyboardAvoidingView style={{ flex: 1 }} behavior="padding" keyboardVerticalOffset={Platform.OS === "android" ? 0 : 0}>
+      <KeyboardAvoidingView style={{ flex: 1 }} behavior="padding" keyboardVerticalOffset={0}>
         <View style={[styles.container, { paddingTop: topInset }]}>
 
           {/* Nav */}
@@ -117,7 +202,12 @@ export default function QrDetailScreen() {
             <Pressable onPress={safeBack} style={styles.navBackBtn}>
               <Ionicons name="chevron-back" size={24} color={colors.text} />
             </Pressable>
-            <Text style={styles.navTitle}>QR Details</Text>
+            <View style={{ flex: 1, alignItems: "center" }}>
+              <Text style={styles.navTitle}>QR Details</Text>
+              {q.offlineMode && (
+                <Text style={[navOfflineStyles.badge, { color: colors.warning }]}>● Offline</Text>
+              )}
+            </View>
             <View style={styles.navActions}>
               <Pressable onPress={q.handleToggleFavorite} style={styles.navActionBtn}>
                 <Ionicons
@@ -177,7 +267,7 @@ export default function QrDetailScreen() {
             {!user && (
               <Animated.View entering={FadeIn.duration(300)} style={signInGlowStyle}>
                 <Pressable onPress={() => router.push("/(auth)/login")} style={styles.signInBanner}>
-                  <LinearGradient colors={["#006FFF", "#00CFFF"]} style={signInBannerStyles.icon} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}>
+                  <LinearGradient colors={["#006FFF", "#00CFFF"]} style={signInBannerIconStyle} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}>
                     <Ionicons name="person" size={20} color="#fff" />
                   </LinearGradient>
                   <View style={{ flex: 1 }}>
@@ -189,8 +279,13 @@ export default function QrDetailScreen() {
               </Animated.View>
             )}
 
+            {/* ── Safety Verdict Banner ────────────────────────────────────── */}
+            <Animated.View entering={FadeInDown.duration(250)}>
+              <VerdictBanner verdict={verdict} offlineMode={q.offlineMode} />
+            </Animated.View>
+
             {/* ── Content Card ────────────────────────────────────────────── */}
-            <Animated.View entering={FadeInDown.duration(300)}>
+            <Animated.View entering={FadeInDown.duration(300).delay(50)}>
               <ContentCard
                 content={currentContent}
                 contentType={currentContentType}
@@ -202,7 +297,7 @@ export default function QrDetailScreen() {
 
             {/* ── Safety Warnings ──────────────────────────────────────────── */}
             {hasLocalWarnings && (
-              <Animated.View entering={FadeInDown.duration(300)}>
+              <Animated.View entering={FadeInDown.duration(300).delay(80)}>
                 {currentContentType === "payment" && q.paymentSafety?.isSuspicious && (
                   <SafetyWarningCard
                     riskLevel={q.paymentSafety.riskLevel as "caution" | "dangerous"}
@@ -227,39 +322,25 @@ export default function QrDetailScreen() {
               </Animated.View>
             )}
 
-            {/* ── Owner Info ───────────────────────────────────────────────── */}
-            {q.ownerInfo && (
-              <Animated.View entering={FadeInDown.duration(400).delay(50)}>
-                <SectionHeader icon="storefront-outline" label="Creator" gradient={["#10B981", "#06B6D4"]} />
-                <OwnerCard
-                  ownerInfo={q.ownerInfo}
-                  isQrOwner={q.isQrOwner}
-                  followCount={q.followCount}
-                  unreadMessages={q.unreadMessages}
-                  onOpenFollowers={() => { q.handleLoadFollowers(); q.setFollowersModalOpen(true); }}
-                  onOpenMessages={() => q.setMessagesModalOpen(true)}
+            {/* ── Rate This QR ─────────────────────────────────────────────── */}
+            <Animated.View entering={FadeInDown.duration(400).delay(110)}>
+              {q.offlineMode ? (
+                <View style={offlineSectionStyles.row}>
+                  <Ionicons name="cloud-offline-outline" size={16} color={colors.textMuted} />
+                  <Text style={[offlineSectionStyles.text, { color: colors.textMuted }]}>Connect to the internet to submit your rating</Text>
+                </View>
+              ) : (
+                <ReportGrid
+                  reportCounts={q.reportCounts}
+                  userReport={q.userReport}
+                  isLoggedIn={!!user}
+                  onReport={q.handleReport}
                 />
-              </Animated.View>
-            )}
-
-            {/* ── Merchant Dashboard (owner only) ─────────────────────────── */}
-            {q.isQrOwner && (
-              <Animated.View entering={FadeInDown.duration(400).delay(80)}>
-                <MerchantDashboard
-                  scanVelocity={q.scanVelocity}
-                  velocityLoading={q.velocityLoading}
-                  verificationStatus={q.verificationStatus}
-                  onRefreshVelocity={async () => {
-                    const { getScanVelocity } = await import("@/lib/firestore-service");
-                    getScanVelocity(id);
-                  }}
-                  onRequestVerify={() => q.setVerifyModalOpen(true)}
-                />
-              </Animated.View>
-            )}
+              )}
+            </Animated.View>
 
             {/* ── Community Trust ──────────────────────────────────────────── */}
-            <Animated.View entering={FadeInDown.duration(400).delay(100)}>
+            <Animated.View entering={FadeInDown.duration(400).delay(140)}>
               <SectionHeader icon="shield-checkmark-outline" label="Trust Score" gradient={["#006FFF", "#00CFFF"]} />
               <TrustScoreCard
                 trustInfo={trust}
@@ -274,25 +355,39 @@ export default function QrDetailScreen() {
               />
             </Animated.View>
 
-            {/* ── Rate This QR ─────────────────────────────────────────────── */}
-            <Animated.View entering={FadeInDown.duration(400).delay(150)}>
-              {q.offlineMode ? (
-                <View style={offlineBannerStyles.row}>
-                  <Ionicons name="wifi-outline" size={18} color={colors.textMuted} />
-                  <Text style={[offlineBannerStyles.text, { color: colors.textMuted }]}>Enable internet to view and submit reports</Text>
-                </View>
-              ) : (
-                <ReportGrid
-                  reportCounts={q.reportCounts}
-                  userReport={q.userReport}
-                  isLoggedIn={!!user}
-                  onReport={q.handleReport}
+            {/* ── Owner Info ───────────────────────────────────────────────── */}
+            {q.ownerInfo && (
+              <Animated.View entering={FadeInDown.duration(400).delay(170)}>
+                <SectionHeader icon="storefront-outline" label="Creator" gradient={["#10B981", "#06B6D4"]} />
+                <OwnerCard
+                  ownerInfo={q.ownerInfo}
+                  isQrOwner={q.isQrOwner}
+                  followCount={q.followCount}
+                  unreadMessages={q.unreadMessages}
+                  onOpenFollowers={() => { q.handleLoadFollowers(); q.setFollowersModalOpen(true); }}
+                  onOpenMessages={() => q.setMessagesModalOpen(true)}
                 />
-              )}
-            </Animated.View>
+              </Animated.View>
+            )}
+
+            {/* ── Merchant Dashboard (owner only) ─────────────────────────── */}
+            {q.isQrOwner && (
+              <Animated.View entering={FadeInDown.duration(400).delay(190)}>
+                <MerchantDashboard
+                  scanVelocity={q.scanVelocity}
+                  velocityLoading={q.velocityLoading}
+                  verificationStatus={q.verificationStatus}
+                  onRefreshVelocity={async () => {
+                    const { getScanVelocity } = await import("@/lib/firestore-service");
+                    getScanVelocity(id);
+                  }}
+                  onRequestVerify={() => q.setVerifyModalOpen(true)}
+                />
+              </Animated.View>
+            )}
 
             {/* ── Comments ─────────────────────────────────────────────────── */}
-            <Animated.View entering={FadeInDown.duration(400).delay(200)}>
+            <Animated.View entering={FadeInDown.duration(400).delay(210)}>
               <View style={styles.commentsHeader}>
                 <View style={styles.commentsTitleRow}>
                   <SectionHeader icon="chatbubbles-outline" label="Comments" gradient={["#8B5CF6", "#EC4899"]} inline />
@@ -311,9 +406,9 @@ export default function QrDetailScreen() {
               </View>
 
               {q.offlineMode ? (
-                <View style={offlineBannerStyles.row}>
-                  <Ionicons name="wifi-outline" size={18} color={colors.textMuted} />
-                  <Text style={[offlineBannerStyles.text, { color: colors.textMuted }]}>Enable internet to view comments</Text>
+                <View style={offlineSectionStyles.row}>
+                  <Ionicons name="cloud-offline-outline" size={16} color={colors.textMuted} />
+                  <Text style={[offlineSectionStyles.text, { color: colors.textMuted }]}>Connect to the internet to view and post comments</Text>
                 </View>
               ) : (
                 <>
@@ -463,11 +558,23 @@ export default function QrDetailScreen() {
   );
 }
 
-const offlineBannerStyles = StyleSheet.create({
+const signInBannerIconStyle = {
+  width: 46,
+  height: 46,
+  borderRadius: 23,
+  alignItems: "center" as const,
+  justifyContent: "center" as const,
+};
+
+const navOfflineStyles = StyleSheet.create({
+  badge: { fontSize: 10, fontFamily: "Inter_600SemiBold", marginTop: 1 },
+});
+
+const offlineSectionStyles = StyleSheet.create({
   row: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 8,
+    gap: 10,
     paddingVertical: 14,
     paddingHorizontal: 4,
     marginBottom: 12,
@@ -476,43 +583,5 @@ const offlineBannerStyles = StyleSheet.create({
     fontSize: 13,
     fontFamily: "Inter_400Regular",
     flex: 1,
-  },
-});
-
-const disclaimerStyles = StyleSheet.create({
-  banner: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 5,
-    alignSelf: "flex-start",
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 20,
-    marginBottom: 14,
-    opacity: 0.7,
-  },
-  text: {
-    fontSize: 11,
-    fontFamily: "Inter_400Regular",
-    letterSpacing: 0.2,
-  },
-});
-
-const detailsToggleStyles = StyleSheet.create({
-  row: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    paddingVertical: 12,
-    paddingHorizontal: 4,
-    marginBottom: 12,
-    borderTopWidth: 1,
-    borderBottomWidth: 1,
-  },
-  label: {
-    fontSize: 13,
-    fontFamily: "Inter_600SemiBold",
-    letterSpacing: 0.5,
-    textTransform: "uppercase",
   },
 });
