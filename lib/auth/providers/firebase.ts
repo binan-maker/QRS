@@ -68,6 +68,12 @@ export const firebaseAuthProvider: AuthAdapter = {
     return wrapUser(cred.user);
   },
 
+  async signInWithGoogleIdToken(idToken) {
+    const credential = GoogleAuthProvider.credential(idToken);
+    const cred = await signInWithCredential(firebaseAuth, credential);
+    return wrapUser(cred.user);
+  },
+
   async sendPasswordReset(email) {
     await sendPasswordResetEmail(firebaseAuth, email);
   },

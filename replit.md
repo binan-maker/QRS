@@ -4,6 +4,16 @@ A full-stack mobile-first QR code scanning and management app built with Expo (R
 
 ## Recent Changes
 
+### Native Google Sign-In, Auto-Login, Responsive Auth Pages
+- **Native Google Sign-In** (`contexts/AuthContext.tsx`, `lib/auth/adapter.ts`, `lib/auth/providers/firebase.ts`) — replaced `expo-auth-session` browser-based OAuth (which opened Chrome) with `@react-native-google-signin/google-signin` (v16) on Android/iOS. Native Google account picker appears in-app (like Google Pay). Web preview keeps expo-auth-session as fallback. Configured via `GoogleSignin.configure()` with webClientId and androidClientId.
+- **Auto-login / Silent sign-in** — on app start, `GoogleSignin.signInSilently()` is called (native only). If there is a saved Google session, the user is signed in automatically without any button press. Firebase `onIdTokenChanged` already handles email/password session restore across devices.
+- **Multi-device session sync** — Firebase Auth persistence is maintained across devices via the `onIdTokenChanged` listener; session state is always derived from the Firebase ID token.
+- **Multi-account switching** — added `switchGoogleAccount()` in AuthContext: calls `GoogleSignin.signOut()` first then `signIn()` to show the account picker for switching accounts.
+- **Auth layout headers removed** (`app/(auth)/_layout.tsx`) — set `headerShown: false` for all auth Stack screens (login, register, forgot-password). Each page handles its own navigation with the custom back button.
+- **Responsive auth pages** — all three auth pages (`login.tsx`, `register.tsx`, `forgot-password.tsx`) now use `useWindowDimensions()` to compute a `scale` factor relative to 390px base width (clamped to 0.82–1.15×). All font sizes, icon sizes, paddings, logo sizes, and spacing are dynamically computed. Small screen mode (`height < 680`) hides logo rings to save vertical space.
+- **Firebase ID token support** (`lib/auth/adapter.ts`, `lib/auth/providers/firebase.ts`) — added `signInWithGoogleIdToken(idToken)` method to the auth adapter interface and Firebase provider. Uses `GoogleAuthProvider.credential(idToken)` (id token variant) vs the existing `signInWithGoogleToken(accessToken)` (access token variant for web).
+- **app.json** — added `@react-native-google-signin/google-signin` plugin for Expo config plugin support.
+
 ### Comments Reply Bug Fix & Optional Haptic Feedback
 - **Comments reply crash fixed** (`app/qr-detail/[id].tsx`) — `CommentItem` was missing 6 required props (`allComments`, `userLikes`, `commentMenuId`, `deletingCommentId`, `revealedComments`, `userId`) when called from the QR detail screen. Expanding replies caused a crash because child comments tried to access `userLikes[id]` and `revealedComments.has(id)` on `undefined`. All missing props are now passed correctly.
 - **Haptic feedback wrapper** (`lib/haptics.ts`) — new wrapper module that re-exports `expo-haptics` functions but gates them on a module-level `_enabled` flag. All 33+ files that previously imported `expo-haptics` now import from `@/lib/haptics` so the toggle is respected app-wide.

@@ -22,6 +22,7 @@ export interface AuthAdapter {
   signUp(email: string, password: string): Promise<AuthAdapterUser>;
   signOut(): Promise<void>;
   signInWithGoogleToken(accessToken: string): Promise<AuthAdapterUser>;
+  signInWithGoogleIdToken(idToken: string): Promise<AuthAdapterUser>;
   sendPasswordReset(email: string): Promise<void>;
   sendVerificationEmail(user: AuthAdapterUser): Promise<void>;
   updateDisplayName(user: AuthAdapterUser, displayName: string): Promise<void>;

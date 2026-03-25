@@ -8,6 +8,7 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
+  useWindowDimensions,
 } from "react-native";
 import { Link, router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
@@ -23,6 +24,7 @@ export default function RegisterScreen() {
   const { signUp, signInWithGoogle, googleRequest, user } = useAuth();
   const { colors } = useTheme();
   const insets = useSafeAreaInsets();
+  const { width, height } = useWindowDimensions();
   const [displayName, setDisplayName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -33,6 +35,11 @@ export default function RegisterScreen() {
   const [showPassword, setShowPassword] = useState(false);
   const [verificationSent, setVerificationSent] = useState(false);
   const [registeredEmail, setRegisteredEmail] = useState("");
+
+  const scale = Math.min(Math.max(width / 390, 0.82), 1.15);
+  const isSmallScreen = height < 700;
+  const isNarrow = width < 360;
+  const px = isNarrow ? 16 : Math.round(22 * scale);
 
   useEffect(() => {
     if (user && googleLoading) {
@@ -74,6 +81,16 @@ export default function RegisterScreen() {
     } finally { setGoogleLoading(false); }
   }
 
+  const logoSize = Math.round(Math.min(76 * scale, 88));
+  const logoRadius = Math.round(logoSize * 0.33);
+  const iconSize = Math.round(28 * scale);
+  const titleSize = Math.round(Math.min(28 * scale, 32));
+  const subtitleSize = Math.round(Math.min(13 * scale, 15));
+  const btnTextSize = Math.round(Math.min(15 * scale, 17));
+  const cardPadding = Math.round(Math.min(20 * scale, 26));
+  const heroPadTop = isSmallScreen ? 10 : Math.round(18 * scale);
+  const heroPadBottom = isSmallScreen ? 12 : Math.round(22 * scale);
+
   if (verificationSent) {
     return (
       <View style={{ flex: 1, backgroundColor: colors.background }}>
@@ -81,15 +98,15 @@ export default function RegisterScreen() {
           colors={colors.isDark ? ["#020913", "#050B18"] : ["#EEF4FF", "#F4F8FF"]}
           style={StyleSheet.absoluteFill}
         />
-        <View style={[styles.verifyContainer, { paddingBottom: insets.bottom + 40, paddingTop: insets.top + 60 }]}>
+        <View style={[styles.verifyContainer, { paddingBottom: insets.bottom + 40, paddingTop: insets.top + 60, paddingHorizontal: px }]}>
           <LinearGradient
             colors={[colors.safe + "20", colors.safe + "08"]}
-            style={styles.successIconWrap}
+            style={[styles.successIconWrap, { borderColor: colors.safe + "30" }]}
           >
-            <Ionicons name="mail-open-outline" size={44} color={colors.safe} />
+            <Ionicons name="mail-open-outline" size={Math.round(40 * scale)} color={colors.safe} />
           </LinearGradient>
-          <Text style={[styles.title, { color: colors.text }]}>Check Your Email</Text>
-          <Text style={[styles.verifyText, { color: colors.textSecondary }]}>
+          <Text style={[styles.title, { color: colors.text, fontSize: titleSize }]}>Check Your Email</Text>
+          <Text style={[styles.verifyText, { color: colors.textSecondary, fontSize: subtitleSize, lineHeight: Math.round(subtitleSize * 1.6) }]}>
             Account created! We've sent a verification email to{"\n"}
             <Text style={{ color: colors.primary, fontFamily: "Inter_600SemiBold" }}>{registeredEmail}</Text>
             {"\n\n"}Click the link to verify your account before signing in.
@@ -100,12 +117,12 @@ export default function RegisterScreen() {
           >
             <LinearGradient
               colors={colors.isDark ? ["#00D68F", "#00A67E"] : ["#10B981", "#047857"]}
-              style={styles.primaryBtn}
+              style={[styles.primaryBtn, { paddingVertical: Math.round(15 * scale) }]}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 0 }}
             >
-              <Text style={styles.primaryBtnText}>Go to Sign In</Text>
-              <Ionicons name="arrow-forward" size={18} color="#fff" />
+              <Text style={[styles.primaryBtnText, { fontSize: btnTextSize }]}>Go to Sign In</Text>
+              <Ionicons name="arrow-forward" size={Math.round(16 * scale)} color="#fff" />
             </LinearGradient>
           </Pressable>
         </View>
@@ -123,46 +140,43 @@ export default function RegisterScreen() {
       />
       <View style={[styles.glowOrb, {
         backgroundColor: colors.isDark ? "rgba(176,96,255,0.06)" : "rgba(124,58,237,0.05)",
-        top: -60, left: -80, width: 260, height: 260,
+        top: -60, left: -80, width: 240, height: 240,
       }]} />
       <View style={[styles.glowOrb, {
         backgroundColor: colors.isDark ? "rgba(0,229,255,0.05)" : "rgba(0,111,255,0.04)",
-        bottom: 60, right: -100, width: 300, height: 300,
+        bottom: 60, right: -100, width: 280, height: 280,
       }]} />
 
       <KeyboardAvoidingView
         style={{ flex: 1 }}
         behavior={Platform.OS === "ios" ? "padding" : "height"}
-        keyboardVerticalOffset={90}
+        keyboardVerticalOffset={0}
       >
         <ScrollView
-          contentContainerStyle={[styles.container, { paddingBottom: insets.bottom + 40, paddingTop: insets.top + 20 }]}
+          contentContainerStyle={[styles.container, { paddingBottom: insets.bottom + 32, paddingTop: insets.top + 16, paddingHorizontal: px }]}
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
-          <Pressable
-            onPress={() => router.canGoBack() ? router.back() : null}
-            style={[styles.backBtn, { backgroundColor: colors.surface + "CC", borderColor: colors.surfaceBorder }]}
-          >
-            <Ionicons name="chevron-back" size={20} color={colors.text} />
-          </Pressable>
-
-          <View style={styles.heroSection}>
-            <View style={styles.logoWrap}>
+          <View style={[styles.heroSection, { paddingTop: heroPadTop, paddingBottom: heroPadBottom }]}>
+            <View style={[styles.logoWrap, { marginBottom: isSmallScreen ? 4 : 8 }]}>
               <LinearGradient
                 colors={colors.isDark ? ["#B060FF", "#006FFF", "#00E5FF"] : ["#7C3AED", "#006FFF", "#0047CC"]}
-                style={styles.logoGradient}
+                style={[styles.logoGradient, { width: logoSize, height: logoSize, borderRadius: logoRadius }]}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 1 }}
               >
-                <Ionicons name="person-add" size={32} color="#fff" />
+                <Ionicons name="person-add" size={iconSize} color="#fff" />
               </LinearGradient>
-              <View style={[styles.logoRing, { borderColor: colors.accent + "30" }]} />
-              <View style={[styles.logoRing2, { borderColor: colors.accent + "15" }]} />
+              {!isSmallScreen && (
+                <>
+                  <View style={[styles.logoRing, { borderColor: colors.accent + "30", width: logoSize + 22, height: logoSize + 22, borderRadius: logoRadius + 6 }]} />
+                  <View style={[styles.logoRing2, { borderColor: colors.accent + "15", width: logoSize + 42, height: logoSize + 42, borderRadius: logoRadius + 12 }]} />
+                </>
+              )}
             </View>
-            <Text style={[styles.appLabel, { color: colors.accent }]}>QR GUARD</Text>
-            <Text style={[styles.title, { color: colors.text }]}>Create account</Text>
-            <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
+            <Text style={[styles.appLabel, { color: colors.accent, fontSize: Math.round(11 * scale) }]}>QR GUARD</Text>
+            <Text style={[styles.title, { color: colors.text, fontSize: titleSize }]}>Create account</Text>
+            <Text style={[styles.subtitle, { color: colors.textSecondary, fontSize: subtitleSize }]}>
               Join to comment, report, and sync your scan history
             </Text>
           </View>
@@ -170,25 +184,26 @@ export default function RegisterScreen() {
           <View style={[styles.card, {
             backgroundColor: colors.isDark ? "rgba(12,21,38,0.85)" : "rgba(255,255,255,0.92)",
             borderColor: colors.surfaceBorder,
+            padding: cardPadding,
           }]}>
             {error ? (
-              <View style={[styles.errorBanner, { backgroundColor: colors.dangerDim, borderColor: colors.danger + "40" }]}>
-                <Ionicons name="alert-circle" size={16} color={colors.danger} />
-                <Text style={[styles.errorText, { color: colors.danger }]}>{error}</Text>
+              <View style={[styles.errorBanner, { backgroundColor: colors.dangerDim, borderColor: colors.danger + "40", marginBottom: 12 }]}>
+                <Ionicons name="alert-circle" size={15} color={colors.danger} />
+                <Text style={[styles.errorText, { color: colors.danger, fontSize: Math.round(13 * scale) }]}>{error}</Text>
               </View>
             ) : null}
 
-            {/* Google first for register */}
             <Pressable
               onPress={handleGoogleSignIn}
-              disabled={googleLoading || !googleRequest}
+              disabled={googleLoading || (!googleRequest && Platform.OS === "web")}
               style={({ pressed }) => [
                 styles.googleBtn,
                 {
                   backgroundColor: colors.surfaceLight,
                   borderColor: colors.surfaceBorder,
-                  opacity: pressed || googleLoading || !googleRequest ? 0.7 : 1,
+                  opacity: pressed || googleLoading ? 0.7 : 1,
                   transform: [{ scale: pressed ? 0.98 : 1 }],
+                  paddingVertical: Math.round(13 * scale),
                 },
               ]}
             >
@@ -196,19 +211,19 @@ export default function RegisterScreen() {
                 <ActivityIndicator color={colors.text} size="small" />
               ) : (
                 <>
-                  <GoogleIcon size={20} />
-                  <Text style={[styles.googleBtnText, { color: colors.text }]}>Continue with Google</Text>
+                  <GoogleIcon size={Math.round(19 * scale)} />
+                  <Text style={[styles.googleBtnText, { color: colors.text, fontSize: Math.round(14 * scale) }]}>Continue with Google</Text>
                 </>
               )}
             </Pressable>
 
-            <View style={styles.dividerRow}>
+            <View style={[styles.dividerRow, { marginVertical: Math.round(14 * scale) }]}>
               <View style={[styles.dividerLine, { backgroundColor: colors.surfaceBorder }]} />
-              <Text style={[styles.dividerText, { color: colors.textMuted }]}>or create with email</Text>
+              <Text style={[styles.dividerText, { color: colors.textMuted, fontSize: Math.round(12 * scale) }]}>or create with email</Text>
               <View style={[styles.dividerLine, { backgroundColor: colors.surfaceBorder }]} />
             </View>
 
-            <View style={styles.fieldsSection}>
+            <View style={[styles.fieldsSection, { gap: Math.round(10 * scale) }]}>
               <AuthFormInput
                 icon="person-outline"
                 placeholder="Display name"
@@ -246,7 +261,7 @@ export default function RegisterScreen() {
               >
                 <LinearGradient
                   colors={colors.isDark ? ["#B060FF", "#6030CC", "#006FFF"] : ["#7C3AED", "#4F1FCC"]}
-                  style={styles.primaryBtn}
+                  style={[styles.primaryBtn, { paddingVertical: Math.round(15 * scale) }]}
                   start={{ x: 0, y: 0 }}
                   end={{ x: 1, y: 0 }}
                 >
@@ -254,8 +269,8 @@ export default function RegisterScreen() {
                     <ActivityIndicator color="#fff" />
                   ) : (
                     <>
-                      <Text style={styles.primaryBtnText}>Create Account</Text>
-                      <Ionicons name="arrow-forward" size={18} color="#fff" />
+                      <Text style={[styles.primaryBtnText, { fontSize: btnTextSize }]}>Create Account</Text>
+                      <Ionicons name="arrow-forward" size={Math.round(16 * scale)} color="#fff" />
                     </>
                   )}
                 </LinearGradient>
@@ -263,11 +278,11 @@ export default function RegisterScreen() {
             </View>
           </View>
 
-          <View style={styles.footer}>
-            <Text style={[styles.footerText, { color: colors.textSecondary }]}>Already have an account?</Text>
+          <View style={[styles.footer, { marginTop: Math.round(18 * scale) }]}>
+            <Text style={[styles.footerText, { color: colors.textSecondary, fontSize: Math.round(13 * scale) }]}>Already have an account?</Text>
             <Link href="/(auth)/login" asChild>
               <Pressable>
-                <Text style={[styles.footerLink, { color: colors.primary }]}>Sign In</Text>
+                <Text style={[styles.footerLink, { color: colors.primary, fontSize: Math.round(13 * scale) }]}>Sign In</Text>
               </Pressable>
             </Link>
           </View>
@@ -278,63 +293,48 @@ export default function RegisterScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flexGrow: 1, paddingHorizontal: 22 },
+  container: { flexGrow: 1 },
   glowOrb: { position: "absolute", borderRadius: 200 },
-  backBtn: {
-    width: 40, height: 40, borderRadius: 20,
-    alignItems: "center", justifyContent: "center",
-    borderWidth: 1, marginBottom: 8, alignSelf: "flex-start",
-  },
-  heroSection: { alignItems: "center", paddingTop: 20, paddingBottom: 28, gap: 8 },
-  logoWrap: { alignItems: "center", justifyContent: "center", marginBottom: 10 },
-  logoGradient: {
-    width: 88, height: 88, borderRadius: 30,
-    alignItems: "center", justifyContent: "center",
-  },
-  logoRing: {
-    position: "absolute", width: 110, height: 110, borderRadius: 36,
-    borderWidth: 1.5,
-  },
-  logoRing2: {
-    position: "absolute", width: 130, height: 130, borderRadius: 42,
-    borderWidth: 1,
-  },
-  appLabel: { fontSize: 12, fontFamily: "Inter_700Bold", letterSpacing: 3, textTransform: "uppercase" },
-  title: { fontSize: 32, fontFamily: "Inter_700Bold", textAlign: "center", letterSpacing: -0.5 },
-  subtitle: { fontSize: 15, fontFamily: "Inter_400Regular", textAlign: "center", lineHeight: 22 },
-  verifyContainer: { flex: 1, paddingHorizontal: 32, alignItems: "center", justifyContent: "center", gap: 16 },
-  verifyText: { fontSize: 15, fontFamily: "Inter_400Regular", textAlign: "center", lineHeight: 23 },
+  heroSection: { alignItems: "center", gap: 7 },
+  logoWrap: { alignItems: "center", justifyContent: "center" },
+  logoGradient: { alignItems: "center", justifyContent: "center" },
+  logoRing: { position: "absolute", borderWidth: 1.5 },
+  logoRing2: { position: "absolute", borderWidth: 1 },
+  appLabel: { fontFamily: "Inter_700Bold", letterSpacing: 3, textTransform: "uppercase" },
+  title: { fontFamily: "Inter_700Bold", textAlign: "center", letterSpacing: -0.5 },
+  subtitle: { fontFamily: "Inter_400Regular", textAlign: "center", lineHeight: 20, maxWidth: 300 },
+  verifyContainer: { flex: 1, alignItems: "center", justifyContent: "center", gap: 16 },
+  verifyText: { fontFamily: "Inter_400Regular", textAlign: "center", maxWidth: 300 },
   successIconWrap: {
-    width: 100, height: 100, borderRadius: 34,
-    alignItems: "center", justifyContent: "center", marginBottom: 8,
-    borderWidth: 1, borderColor: "rgba(0,214,143,0.2)",
+    width: 96, height: 96, borderRadius: 32,
+    alignItems: "center", justifyContent: "center",
+    borderWidth: 1, marginBottom: 8,
   },
   card: {
-    borderRadius: 28, borderWidth: 1, padding: 24,
-    shadowColor: "#000", shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.12, shadowRadius: 24, elevation: 8,
+    borderRadius: 24, borderWidth: 1,
+    shadowColor: "#000", shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.1, shadowRadius: 20, elevation: 6,
   },
   errorBanner: {
     flexDirection: "row", alignItems: "flex-start", gap: 10,
-    padding: 14, borderRadius: 16, marginBottom: 16, borderWidth: 1,
+    padding: 12, borderRadius: 14, borderWidth: 1,
   },
-  errorText: { fontFamily: "Inter_500Medium", fontSize: 14, flex: 1 },
+  errorText: { fontFamily: "Inter_500Medium", flex: 1 },
   googleBtn: {
-    flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 12,
-    borderWidth: 1, paddingVertical: 15, paddingHorizontal: 20, borderRadius: 18,
-    marginBottom: 4,
+    flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 10,
+    borderWidth: 1, paddingHorizontal: 20, borderRadius: 16,
   },
-  googleBtnText: { fontSize: 15, fontFamily: "Inter_600SemiBold" },
-  dividerRow: { flexDirection: "row", alignItems: "center", gap: 12, marginVertical: 16 },
+  googleBtnText: { fontFamily: "Inter_600SemiBold" },
+  dividerRow: { flexDirection: "row", alignItems: "center", gap: 10 },
   dividerLine: { flex: 1, height: 1 },
-  dividerText: { fontSize: 13, fontFamily: "Inter_400Regular" },
-  fieldsSection: { gap: 12 },
+  dividerText: { fontFamily: "Inter_400Regular" },
+  fieldsSection: {},
   primaryBtn: {
-    paddingVertical: 17, borderRadius: 18, alignItems: "center",
+    borderRadius: 16, alignItems: "center",
     flexDirection: "row", justifyContent: "center", gap: 8, marginTop: 4,
   },
-  primaryBtnText: { color: "#fff", fontSize: 16, fontFamily: "Inter_700Bold" },
-  footer: { flexDirection: "row", justifyContent: "center", gap: 6, marginTop: 24 },
-  footerText: { fontFamily: "Inter_400Regular", fontSize: 14 },
-  footerLink: { fontFamily: "Inter_700Bold", fontSize: 14 },
+  primaryBtnText: { color: "#fff", fontFamily: "Inter_700Bold" },
+  footer: { flexDirection: "row", justifyContent: "center", gap: 6 },
+  footerText: { fontFamily: "Inter_400Regular" },
+  footerLink: { fontFamily: "Inter_700Bold" },
 });

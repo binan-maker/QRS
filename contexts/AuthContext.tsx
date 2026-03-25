@@ -1,4 +1,5 @@
 import { createContext, useContext, useState, useEffect, useMemo, ReactNode } from "react";
+import { Platform } from "react-native";
 import { db } from "@/lib/db";
 import { authAdapter } from "@/lib/auth";
 import * as Google from "expo-auth-session/providers/google";
@@ -10,6 +11,28 @@ import {
 } from "@/lib/auth/utils";
 
 WebBrowser.maybeCompleteAuthSession();
+
+const GOOGLE_WEB_CLIENT_ID = process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID ?? "";
+const GOOGLE_ANDROID_CLIENT_ID = process.env.EXPO_PUBLIC_ANDROID_CLIENT_ID ?? "";
+
+let GoogleSignin: any = null;
+let statusCodes: any = null;
+
+if (Platform.OS !== "web") {
+  try {
+    const mod = require("@react-native-google-signin/google-signin");
+    GoogleSignin = mod.GoogleSignin;
+    statusCodes = mod.statusCodes;
+    GoogleSignin.configure({
+      webClientId: GOOGLE_WEB_CLIENT_ID,
+      androidClientId: GOOGLE_ANDROID_CLIENT_ID,
+      offlineAccess: false,
+    });
+  } catch {
+    GoogleSignin = null;
+    statusCodes = null;
+  }
+}
 
 interface AuthUser {
   id: string;
@@ -28,6 +51,7 @@ interface AuthContextValue {
   signUp: (email: string, displayName: string, password: string) => Promise<void>;
   signOut: () => Promise<void>;
   signInWithGoogle: () => Promise<void>;
+  switchGoogleAccount: () => Promise<void>;
   sendPasswordReset: (email: string) => Promise<void>;
   resendVerification: () => Promise<void>;
   refreshUser: () => Promise<void>;
@@ -36,9 +60,6 @@ interface AuthContextValue {
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
-
-const GOOGLE_WEB_CLIENT_ID = process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID ?? "";
-const GOOGLE_ANDROID_CLIENT_ID = process.env.EXPO_PUBLIC_ANDROID_CLIENT_ID ?? "";
 
 export { getAuthErrorMessage };
 
@@ -124,7 +145,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   useEffect(() => {
-    if (googleResponse?.type === "success") {
+    if (Platform.OS !== "web" && GoogleSignin) {
+      GoogleSignin.signInSilently()
+        .then(async (result: any) => {
+          if (result?.type === "success" && result?.data?.idToken) {
+            try {
+              const adapterUser = await authAdapter.signInWithGoogleIdToken(result.data.idToken);
+              await syncUserToDb(adapterUser.uid, adapterUser.email, adapterUser.displayName, adapterUser.photoURL);
+            } catch {}
+          }
+        })
+        .catch(() => {});
+    }
+  }, []);
+
+  useEffect(() => {
+    if (Platform.OS === "web" && googleResponse?.type === "success") {
       const { authentication } = googleResponse;
       if (authentication?.accessToken) {
         handleGoogleAccessToken(authentication.accessToken);
@@ -191,27 +227,62 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }
 
+  async function handleGoogleIdToken(idToken: string) {
+    const adapterUser = await authAdapter.signInWithGoogleIdToken(idToken);
+    await syncUserToDb(adapterUser.uid, adapterUser.email, adapterUser.displayName, adapterUser.photoURL);
+    const firebaseToken = await adapterUser.getIdToken();
+    setUser({
+      id: adapterUser.uid,
+      email: adapterUser.email ?? "",
+      displayName: adapterUser.displayName ?? adapterUser.email?.split("@")[0] ?? "User",
+      photoURL: adapterUser.photoURL,
+      emailVerified: adapterUser.emailVerified,
+    });
+    setToken(firebaseToken);
+  }
+
   async function signInWithGoogle() {
-    await promptGoogleAsync();
+    if (Platform.OS !== "web" && GoogleSignin) {
+      const result = await GoogleSignin.signIn();
+      if (result.type === "success" && result.data?.idToken) {
+        try {
+          await handleGoogleIdToken(result.data.idToken);
+        } catch (e: any) {
+          throw mapFirebaseError(e);
+        }
+      } else if (result.type === "cancelled") {
+        const err = new Error(getAuthErrorMessage("auth/popup-closed-by-user"));
+        throw err;
+      }
+    } else {
+      await promptGoogleAsync();
+    }
+  }
+
+  async function switchGoogleAccount() {
+    if (Platform.OS !== "web" && GoogleSignin) {
+      try {
+        await GoogleSignin.signOut();
+      } catch {}
+      await signInWithGoogle();
+    } else {
+      await signInWithGoogle();
+    }
   }
 
   async function signOut() {
-    console.log("[SignOut] Starting sign-out");
     try {
       const AsyncStorage = (await import("@react-native-async-storage/async-storage")).default;
       await AsyncStorage.removeItem("local_scan_history");
-    } catch (e) {
-      console.warn("[SignOut] Could not clear local storage:", e);
-    }
+    } catch {}
     try {
+      if (Platform.OS !== "web" && GoogleSignin) {
+        await GoogleSignin.signOut().catch(() => {});
+      }
       await authAdapter.signOut();
-      console.log("[SignOut] Firebase sign-out successful");
-    } catch (e: any) {
-      console.error("[SignOut] Firebase sign-out failed:", e?.message, e);
-    }
+    } catch {}
     setUser(null);
     setToken(null);
-    console.log("[SignOut] Done");
   }
 
   async function sendPasswordReset(email: string) {
@@ -273,6 +344,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       signUp,
       signOut,
       signInWithGoogle,
+      switchGoogleAccount,
       sendPasswordReset,
       resendVerification,
       refreshUser,
