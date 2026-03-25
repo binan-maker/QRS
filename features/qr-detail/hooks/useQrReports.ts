@@ -11,7 +11,7 @@ import {
 import { invalidateQrCache } from "@/lib/cache/qr-cache";
 import { db } from "@/lib/db";
 
-export function useQrReports(id: string, userId: string | null, offlineMode: boolean) {
+export function useQrReports(id: string, userId: string | null, offlineMode: boolean, isQrOwner: boolean = false) {
   const { user } = useAuth();
   const emailVerified = user?.emailVerified ?? false;
 
@@ -96,6 +96,11 @@ export function useQrReports(id: string, userId: string | null, offlineMode: boo
 
   async function handleReport(type: string) {
     if (!userId) { router.push("/(auth)/login"); return; }
+    if (isQrOwner) {
+      const { Alert } = await import("react-native");
+      Alert.alert("Not Allowed", "You cannot rate your own QR code.");
+      return;
+    }
     // Prevent double-tap while a report is in flight
     if (reportLoading !== null) return;
     // Wait until we know the real server state before acting

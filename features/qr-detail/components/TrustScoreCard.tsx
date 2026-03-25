@@ -119,7 +119,7 @@ const TrustScoreCard = React.memo(function TrustScoreCard({
               <Ionicons name={s.icon} size={14} color="#fff" />
             </LinearGradient>
             <Text style={[styles.statNum, { color: colors.text }]}>{formatCompactNumber(s.value)}</Text>
-            <Text style={[styles.statLabel, { color: s.onPress ? s.gradient[0] : colors.textMuted }]}>{s.label}</Text>
+            <Text style={[styles.statLabel, { color: s.onPress ? s.gradient[0] : colors.textMuted }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>{s.label}</Text>
           </Pressable>
         ))}
       </View>
@@ -185,7 +185,7 @@ const styles = StyleSheet.create({
   },
   statIcon: { width: 28, height: 28, borderRadius: 9, alignItems: "center", justifyContent: "center" },
   statNum: { fontSize: 16, fontFamily: "Inter_700Bold" },
-  statLabel: { fontSize: 9, fontFamily: "Inter_600SemiBold", letterSpacing: 0.3, textAlign: "center" },
+  statLabel: { fontSize: 9, fontFamily: "Inter_600SemiBold", textAlign: "center" },
   breakdown: { gap: 10 },
   breakdownItem: { gap: 5 },
   breakdownRow: { flexDirection: "row", alignItems: "center", gap: 8 },

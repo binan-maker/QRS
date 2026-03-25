@@ -7,9 +7,9 @@ import type { ScanVelocityBucket, VerificationStatus } from "@/lib/firestore-ser
 interface Props {
   scanVelocity: ScanVelocityBucket[];
   velocityLoading: boolean;
-  verificationStatus: VerificationStatus;
+  verificationStatus?: VerificationStatus;
   onRefreshVelocity: () => void;
-  onRequestVerify: () => void;
+  onRequestVerify?: () => void;
 }
 
 const MerchantDashboard = React.memo(function MerchantDashboard({
@@ -65,49 +65,6 @@ const MerchantDashboard = React.memo(function MerchantDashboard({
         </Text>
       )}
 
-      <View style={styles.divider} />
-      <Text style={styles.sectionLabel}>Merchant Verification</Text>
-
-      {verificationStatus.status === "none" && (
-        <Pressable onPress={onRequestVerify} style={styles.verifyBtn}>
-          <Ionicons name="shield-outline" size={18} color={colors.primary} />
-          <View style={{ flex: 1 }}>
-            <Text style={styles.verifyBtnText}>Request Verified Badge</Text>
-            <Text style={styles.verifyBtnSub}>Submit business ID for manual review</Text>
-          </View>
-          <Ionicons name="chevron-forward" size={16} color={colors.textMuted} />
-        </Pressable>
-      )}
-      {verificationStatus.status === "pending" && (
-        <View style={styles.statusRow}>
-          <Ionicons name="time-outline" size={18} color={colors.warning} />
-          <View style={{ flex: 1 }}>
-            <Text style={[styles.statusText, { color: colors.warning }]}>Verification Pending</Text>
-            {verificationStatus.businessName ? (
-              <Text style={styles.statusSub}>{verificationStatus.businessName}</Text>
-            ) : null}
-          </View>
-        </View>
-      )}
-      {verificationStatus.status === "approved" && (
-        <View style={styles.statusRow}>
-          <Ionicons name="shield-checkmark" size={18} color={colors.safe} />
-          <Text style={[styles.statusText, { color: colors.safe }]}>Merchant Verified</Text>
-        </View>
-      )}
-      {verificationStatus.status === "rejected" && (
-        <View style={{ gap: 8 }}>
-          <View style={styles.statusRow}>
-            <Ionicons name="close-circle-outline" size={18} color={colors.danger} />
-            <Text style={[styles.statusText, { color: colors.danger }]}>Verification Rejected</Text>
-          </View>
-          <Pressable onPress={onRequestVerify} style={styles.verifyBtn}>
-            <Ionicons name="reload-outline" size={16} color={colors.primary} />
-            <Text style={styles.verifyBtnText}>Resubmit</Text>
-            <Ionicons name="chevron-forward" size={16} color={colors.textMuted} />
-          </Pressable>
-        </View>
-      )}
     </View>
   );
 });
@@ -136,16 +93,5 @@ function makeStyles(c: ReturnType<typeof import("@/contexts/ThemeContext").useTh
     bar: { width: "100%", borderRadius: 2, minHeight: 2 },
     barLabel: { fontSize: 9, fontFamily: "Inter_400Regular", color: c.textMuted },
     totalScans: { fontSize: 12, fontFamily: "Inter_500Medium", color: c.textSecondary, textAlign: "center", marginBottom: 4 },
-    divider: { height: 1, backgroundColor: c.surfaceBorder, marginVertical: 14 },
-    verifyBtn: {
-      flexDirection: "row", alignItems: "center", gap: 12,
-      backgroundColor: c.primaryDim, borderRadius: 12, padding: 14,
-      borderWidth: 1, borderColor: c.primary + "30",
-    },
-    verifyBtnText: { fontSize: 14, fontFamily: "Inter_600SemiBold", color: c.text },
-    verifyBtnSub: { fontSize: 12, fontFamily: "Inter_400Regular", color: c.textSecondary, marginTop: 2 },
-    statusRow: { flexDirection: "row", alignItems: "center", gap: 10, padding: 4 },
-    statusText: { fontSize: 14, fontFamily: "Inter_600SemiBold" },
-    statusSub: { fontSize: 12, fontFamily: "Inter_400Regular", color: c.textSecondary, marginTop: 2 },
   });
 }

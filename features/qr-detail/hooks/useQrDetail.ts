@@ -25,7 +25,7 @@ export function useQrDetail(id: string) {
   const contentType = data.qrCode?.contentType || data.offlineContentType;
 
   const safety = useQrSafety(content, contentType);
-  const reports = useQrReports(id, userId, data.offlineMode);
+  const reports = useQrReports(id, userId, data.offlineMode, data.isQrOwner);
   const follow = useQrFollow(id, userId, user?.displayName ?? null);
   const favorite = useQrFavorite(id, userId);
   const comments = useQrComments(id, userId, data.offlineMode);

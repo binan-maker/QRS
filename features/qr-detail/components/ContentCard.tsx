@@ -167,17 +167,29 @@ const ContentCard = React.memo(function ContentCard({ content, contentType, pars
         </LinearGradient>
       </View>
 
-      {/* Content text */}
-      <View style={[styles.contentBox, { backgroundColor: isDark ? colors.surfaceLight : colors.background, borderColor: colors.surfaceBorder }]}>
-        <Text style={[styles.contentText, { color: colors.text }]} selectable numberOfLines={contentExpanded ? undefined : 4}>
-          {content}
-        </Text>
-        {isLongContent && (
-          <Pressable onPress={() => setContentExpanded(v => !v)} style={styles.expandBtn}>
-            <Text style={[styles.expandBtnText, { color: cfg.gradient[0] }]}>{contentExpanded ? "Show less" : "Show more"}</Text>
-          </Pressable>
-        )}
-      </View>
+      {/* Content text — hidden for URL type (open button is the action) */}
+      {contentType !== "url" && (
+        <View style={[styles.contentBox, { backgroundColor: isDark ? colors.surfaceLight : colors.background, borderColor: colors.surfaceBorder }]}>
+          <Text style={[styles.contentText, { color: colors.text }]} selectable numberOfLines={contentExpanded ? undefined : 4}>
+            {content}
+          </Text>
+          {isLongContent && (
+            <Pressable onPress={() => setContentExpanded(v => !v)} style={styles.expandBtn}>
+              <Text style={[styles.expandBtnText, { color: cfg.gradient[0] }]}>{contentExpanded ? "Show less" : "Show more"}</Text>
+            </Pressable>
+          )}
+        </View>
+      )}
+
+      {/* URL display — clean domain pill instead of raw text */}
+      {contentType === "url" && (
+        <View style={[styles.urlBox, { backgroundColor: isDark ? colors.surfaceLight : colors.background, borderColor: colors.surfaceBorder }]}>
+          <Ionicons name="link-outline" size={14} color={cfg.gradient[0]} />
+          <Text style={[styles.urlText, { color: colors.textSecondary }]} numberOfLines={1} selectable>
+            {(() => { try { return new URL(content.startsWith("http") ? content : `https://${content}`).hostname.replace(/^www\./, ""); } catch { return content; } })()}
+          </Text>
+        </View>
+      )}
 
       {/* Parsed info rows */}
       {wifi && (
@@ -259,6 +271,11 @@ const styles = StyleSheet.create({
   contentBox: {
     borderRadius: 16, padding: 14, borderWidth: 1, gap: 8,
   },
+  urlBox: {
+    flexDirection: "row", alignItems: "center", gap: 8,
+    borderRadius: 12, paddingHorizontal: 14, paddingVertical: 10, borderWidth: 1,
+  },
+  urlText: { flex: 1, fontSize: 13, fontFamily: "Inter_500Medium" },
   contentText: { fontSize: 14, fontFamily: "Inter_400Regular", lineHeight: 22, letterSpacing: 0.2 },
   expandBtn: { alignSelf: "flex-start" },
   expandBtnText: { fontSize: 13, fontFamily: "Inter_600SemiBold" },

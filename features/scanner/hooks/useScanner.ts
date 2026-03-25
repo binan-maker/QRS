@@ -16,7 +16,6 @@ import {
   getQrCodeId,
   type GuardLink,
 } from "@/lib/firestore-service";
-import { verifyQrSignature } from "@/lib/qr-analysis";
 
 export const FINDER_SIZE = 270;
 export const CORNER_SIZE = 32;
@@ -152,7 +151,7 @@ export function useScanner() {
       startScanLine();
       focusTimerRef.current = setTimeout(() => {
         canScanRef.current = true;
-      }, 500);
+      }, 200);
       return () => {
         if (focusTimerRef.current) clearTimeout(focusTimerRef.current);
         canScanRef.current = false;
@@ -189,9 +188,8 @@ export function useScanner() {
     setScanSuccess(false);
   }
 
-  async function navigateToQrDetail(qrId: string) {
+  function navigateToQrDetail(qrId: string) {
     setScanSuccess(true);
-    await new Promise((r) => setTimeout(r, 300));
     router.push(`/qr-detail/${qrId}`);
   }
 
@@ -315,70 +313,81 @@ export function useScanner() {
       return;
     }
 
-    // ── Always try the online path; catch falls back to offline if needed ────
     setProcessing(true);
 
-    // ── Online path ──────────────────────────────────────────────────────────
+    // ── Speed-first: compute QR ID locally, cache content, navigate immediately ─
+    // Network calls (getOrCreateQrCode, recordScan) run in the background so the
+    // user reaches the detail page with zero server round-trip latency.
     try {
-      const qr = await getOrCreateQrCode(content);
-      await AsyncStorage.setItem(
-        `qr_content_${qr.id}`,
-        JSON.stringify({ content: qr.content, contentType: qr.contentType })
-      );
-      await recordScan(
-        qr.id,
-        content,
-        qr.contentType,
-        user?.id || null,
-        false,
-        scanSource
-      ).catch(() => {});
+      const qrId = await getQrCodeId(content);
+      const contentType = detectContentType(content);
 
-      if (user) {
-        const scanEntry = {
-          id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
-          content,
-          contentType: qr.contentType,
-          scannedAt: new Date().toISOString(),
-          qrCodeId: qr.id,
-          scanSource,
-        };
-        const historyKey = `local_scan_history_${user.id}`;
-        const stored = await AsyncStorage.getItem(historyKey);
-        const history = stored ? JSON.parse(stored) : [];
-        history.unshift(scanEntry);
-        if (history.length > 100) history.pop();
-        await AsyncStorage.setItem(historyKey, JSON.stringify(history));
-      }
+      // Cache locally so the detail page renders offline-first instantly
+      await AsyncStorage.setItem(
+        `qr_content_${qrId}`,
+        JSON.stringify({ content, contentType })
+      ).catch(() => {});
 
       setProcessing(false);
 
-      if (qr.contentType === "url" && isInsecureHttpUrl(content)) {
-        setPendingQrId(qr.id);
+      // Safety warning check (local, no network needed)
+      if (contentType === "url" && isInsecureHttpUrl(content)) {
+        setPendingQrId(qrId);
         setSafetyRiskLevel("caution");
         setSafetyModal(true);
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+        // Still sync in background
+        _backgroundSync(content, qrId, contentType, scanSource);
         return;
       }
 
-      if (qr.isBranded && qr.signature && qr.ownerId) {
-        const isVerified = await verifyQrSignature(content, qr.ownerId, qr.signature);
-        if (isVerified) {
-          setVerifiedOwnerName(qr.ownerName || "Verified Owner");
-          setVerifiedQrId(qr.id);
-          setVerifiedModal(true);
-          setScanSuccess(true);
-          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-        } else {
-          await navigateToQrDetail(qr.id);
-        }
-      } else {
-        await navigateToQrDetail(qr.id);
-      }
+      // Navigate immediately — detail page shows cached content while Firestore loads
+      navigateToQrDetail(qrId);
+
+      // Background: register with Firestore + record scan (non-blocking)
+      _backgroundSync(content, qrId, contentType, scanSource);
     } catch (e: any) {
-      // Network failed mid-scan — fall back to offline path
+      // Fully offline — use offline path
       await processOfflineScan(content, scanSource);
     }
+  }
+
+  // Fire-and-forget background network sync after fast local navigation
+  function _backgroundSync(
+    content: string,
+    localQrId: string,
+    contentType: string,
+    scanSource: "camera" | "gallery"
+  ) {
+    (async () => {
+      try {
+        const qr = await getOrCreateQrCode(content);
+        // Update cache with Firestore's canonical data
+        await AsyncStorage.setItem(
+          `qr_content_${qr.id}`,
+          JSON.stringify({ content: qr.content, contentType: qr.contentType })
+        ).catch(() => {});
+        recordScan(qr.id, content, qr.contentType, user?.id || null, false, scanSource).catch(() => {});
+        if (user) {
+          const scanEntry = {
+            id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
+            content,
+            contentType: qr.contentType,
+            scannedAt: new Date().toISOString(),
+            qrCodeId: qr.id,
+            scanSource,
+          };
+          const historyKey = `local_scan_history_${user.id}`;
+          try {
+            const stored = await AsyncStorage.getItem(historyKey);
+            const history = stored ? JSON.parse(stored) : [];
+            history.unshift(scanEntry);
+            if (history.length > 100) history.pop();
+            await AsyncStorage.setItem(historyKey, JSON.stringify(history));
+          } catch {}
+        }
+      } catch {}
+    })();
   }
 
   useEffect(() => {

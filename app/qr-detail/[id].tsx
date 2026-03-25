@@ -41,7 +41,6 @@ import SafetyWarningCard from "@/features/qr-detail/components/SafetyWarningCard
 import ReportGrid from "@/features/qr-detail/components/ReportGrid";
 import FollowersModal from "@/features/qr-detail/components/modals/FollowersModal";
 import MessagesModal from "@/features/qr-detail/components/modals/MessagesModal";
-import VerificationModal from "@/features/qr-detail/components/modals/VerificationModal";
 import CommentReportModal from "@/features/qr-detail/components/modals/CommentReportModal";
 
 function safeBack() {
@@ -376,12 +375,10 @@ export default function QrDetailScreen() {
                 <MerchantDashboard
                   scanVelocity={q.scanVelocity}
                   velocityLoading={q.velocityLoading}
-                  verificationStatus={q.verificationStatus}
                   onRefreshVelocity={async () => {
                     const { getScanVelocity } = await import("@/lib/firestore-service");
                     getScanVelocity(id);
                   }}
-                  onRequestVerify={() => q.setVerifyModalOpen(true)}
                 />
               </Animated.View>
             )}
@@ -543,16 +540,6 @@ export default function QrDetailScreen() {
         onSend={q.handleSendMessage}
         onMarkRead={() => {}}
         onClose={() => q.setMessagesModalOpen(false)}
-      />
-      <VerificationModal
-        visible={q.verifyModalOpen}
-        bizName={q.verifyBizName}
-        docName={q.verifyDocName}
-        submitting={q.verifySubmitting}
-        onChangeBizName={q.setVerifyBizName}
-        onPickDoc={q.handlePickVerifyDoc}
-        onSubmit={q.handleVerifySubmit}
-        onClose={() => q.setVerifyModalOpen(false)}
       />
     </View>
   );
