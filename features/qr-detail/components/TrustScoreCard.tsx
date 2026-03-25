@@ -1,6 +1,7 @@
 import React from "react";
 import { View, Text, StyleSheet, Pressable } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import { LinearGradient } from "expo-linear-gradient";
 import { formatCompactNumber } from "@/lib/number-format";
 import { useTheme } from "@/contexts/ThemeContext";
 
@@ -22,134 +23,175 @@ interface Props {
   manipulationWarning?: boolean;
 }
 
+function getScoreGradient(score: number, color: string): [string, string] {
+  if (score >= 75) return ["#10B981", "#06B6D4"];
+  if (score >= 50) return ["#F59E0B", "#F97316"];
+  if (score >= 25) return ["#F97316", "#EF4444"];
+  return ["#EF4444", "#DC2626"];
+}
+
 const TrustScoreCard = React.memo(function TrustScoreCard({
-  trustInfo,
-  reportCounts,
-  totalScans,
-  totalComments,
-  isQrOwner,
-  followCount,
-  onOpenFollowers,
-  manipulationWarning,
+  trustInfo, reportCounts, totalScans, totalComments,
+  isQrOwner, followCount, onOpenFollowers, manipulationWarning,
 }: Props) {
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
 
   const REPORT_TYPES = [
-    { key: "safe", label: "Safe", icon: "shield-checkmark", color: colors.safe, bg: colors.safeDim },
-    { key: "scam", label: "Scam", icon: "warning", color: colors.danger, bg: colors.dangerDim },
-    { key: "fake", label: "Fake", icon: "close-circle", color: colors.warning, bg: colors.warningDim },
-    { key: "spam", label: "Spam", icon: "mail-unread", color: colors.accent, bg: colors.accentDim },
+    { key: "safe", label: "Safe",  icon: "shield-checkmark" as const, gradient: ["#10B981", "#06B6D4"] as [string, string] },
+    { key: "scam", label: "Scam",  icon: "warning" as const,          gradient: ["#EF4444", "#DC2626"] as [string, string] },
+    { key: "fake", label: "Fake",  icon: "close-circle" as const,     gradient: ["#F59E0B", "#F97316"] as [string, string] },
+    { key: "spam", label: "Spam",  icon: "mail-unread" as const,      gradient: ["#8B5CF6", "#EC4899"] as [string, string] },
   ];
 
   const total = REPORT_TYPES.reduce((sum, r) => sum + (reportCounts[r.key] || 0), 0);
-  const styles = makeStyles(colors);
+  const hasScore = trustInfo.score >= 0;
+  const scoreGradient = hasScore ? getScoreGradient(trustInfo.score, trustInfo.color) : ["#6B7280", "#9CA3AF"] as [string, string];
+
+  const STATS = [
+    { icon: "scan-outline" as const,    label: "Scans",     value: totalScans,    gradient: ["#006FFF", "#00CFFF"] as [string, string], onPress: undefined },
+    { icon: "chatbubbles-outline" as const, label: "Comments", value: totalComments, gradient: ["#8B5CF6", "#EC4899"] as [string, string], onPress: undefined },
+    { icon: "people-outline" as const,  label: isQrOwner ? "Followers ›" : "Followers", value: followCount, gradient: ["#10B981", "#06B6D4"] as [string, string], onPress: isQrOwner ? onOpenFollowers : undefined },
+    { icon: "flag-outline" as const,    label: "Reports",   value: total,         gradient: ["#F59E0B", "#F97316"] as [string, string], onPress: undefined },
+  ];
 
   return (
-    <View style={styles.card}>
-      <View style={styles.cardHeader}>
-        <Text style={styles.cardTitle}>Community Trust Score</Text>
-        {trustInfo.score >= 0 ? (
-          <View style={[styles.scoreBadge, { backgroundColor: trustInfo.color + "22", borderColor: trustInfo.color + "60" }]}>
-            <Text style={[styles.scoreBadgeText, { color: trustInfo.color }]}>{trustInfo.label}</Text>
+    <View style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
+      {/* Score hero */}
+      <View style={styles.scoreHero}>
+        <LinearGradient colors={scoreGradient} style={styles.scoreRing} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}>
+          <View style={[styles.scoreInner, { backgroundColor: isDark ? colors.surface : "#fff" }]}>
+            {hasScore ? (
+              <>
+                <Text style={[styles.scoreNum, { color: scoreGradient[0] }]}>{Math.round(trustInfo.score)}</Text>
+                <Text style={[styles.scorePct, { color: scoreGradient[0] }]}>%</Text>
+              </>
+            ) : (
+              <Ionicons name="help-outline" size={28} color={colors.textMuted} />
+            )}
           </View>
-        ) : null}
+        </LinearGradient>
+        <View style={styles.scoreMeta}>
+          <Text style={[styles.scoreTitle, { color: colors.text }]}>Community Trust</Text>
+          {hasScore ? (
+            <LinearGradient colors={scoreGradient} style={styles.scoreLabelBadge} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}>
+              <Text style={styles.scoreLabelText}>{trustInfo.label}</Text>
+            </LinearGradient>
+          ) : (
+            <Text style={[styles.noScoreText, { color: colors.textMuted }]}>No votes yet</Text>
+          )}
+          {hasScore && (
+            <View style={[styles.scoreBar, { backgroundColor: colors.surfaceLight }]}>
+              <LinearGradient
+                colors={scoreGradient}
+                style={[styles.scoreBarFill, { width: `${Math.min(100, trustInfo.score)}%` as any }]}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 0 }}
+              />
+            </View>
+          )}
+        </View>
       </View>
 
-      {manipulationWarning ? (
-        <View style={styles.manipulationBanner}>
-          <Ionicons name="alert-circle" size={14} color={colors.warning} />
-          <Text style={styles.manipulationText}>
-            Unusual voting activity detected. Score may not reflect genuine community opinion.
+      {/* Manipulation warning */}
+      {manipulationWarning && (
+        <View style={[styles.manipBanner, { backgroundColor: colors.warningDim, borderColor: colors.warning + "40" }]}>
+          <Ionicons name="alert-circle" size={15} color={colors.warning} />
+          <Text style={[styles.manipText, { color: colors.warning }]}>
+            Unusual voting activity detected — score may not reflect real community opinion.
           </Text>
         </View>
-      ) : null}
-
-      {trustInfo.score >= 0 ? (
-        <View style={styles.scoreBarWrap}>
-          <View style={styles.scoreBarBg}>
-            <View style={[styles.scoreBarFill, { width: `${Math.min(100, trustInfo.score)}%`, backgroundColor: trustInfo.color }]} />
-          </View>
-          <Text style={[styles.scoreNum, { color: trustInfo.color }]}>{Math.round(trustInfo.score)}%</Text>
-        </View>
-      ) : (
-        <Text style={styles.noReportsText}>No community reports yet</Text>
       )}
 
-      <View style={styles.statsRow}>
-        <View style={styles.statItem}>
-          <Text style={styles.statNum}>{formatCompactNumber(totalScans)}</Text>
-          <Text style={styles.statLabel}>Scans</Text>
-        </View>
-        <View style={styles.statDivider} />
-        <View style={styles.statItem}>
-          <Text style={styles.statNum}>{formatCompactNumber(totalComments)}</Text>
-          <Text style={styles.statLabel}>Comments</Text>
-        </View>
-        <View style={styles.statDivider} />
-        <Pressable style={styles.statItem} onPress={isQrOwner ? onOpenFollowers : undefined}>
-          <Text style={styles.statNum}>{formatCompactNumber(followCount)}</Text>
-          <Text style={[styles.statLabel, isQrOwner && { color: colors.primary }]}>
-            {isQrOwner ? "Followers ›" : "Followers"}
-          </Text>
-        </Pressable>
-        <View style={styles.statDivider} />
-        <View style={styles.statItem}>
-          <Text style={styles.statNum}>{formatCompactNumber(total)}</Text>
-          <Text style={styles.statLabel}>Reports</Text>
-        </View>
+      {/* Stats row */}
+      <View style={styles.statsGrid}>
+        {STATS.map((s, i) => (
+          <Pressable
+            key={i}
+            onPress={s.onPress}
+            disabled={!s.onPress}
+            style={({ pressed }) => [
+              styles.statCard,
+              { backgroundColor: isDark ? colors.surfaceLight : colors.background, borderColor: colors.surfaceBorder },
+              pressed && s.onPress && { opacity: 0.75 },
+            ]}
+          >
+            <LinearGradient colors={s.gradient} style={styles.statIcon} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}>
+              <Ionicons name={s.icon} size={14} color="#fff" />
+            </LinearGradient>
+            <Text style={[styles.statNum, { color: colors.text }]}>{formatCompactNumber(s.value)}</Text>
+            <Text style={[styles.statLabel, { color: s.onPress ? s.gradient[0] : colors.textMuted }]}>{s.label}</Text>
+          </Pressable>
+        ))}
       </View>
 
-      {total > 0 ? (
-        <View style={styles.reportBreakdown}>
+      {/* Report breakdown */}
+      {total > 0 && (
+        <View style={styles.breakdown}>
           {REPORT_TYPES.map((r) => {
             const count = reportCounts[r.key] || 0;
             if (count === 0) return null;
+            const pct = Math.round((count / total) * 100);
             return (
-              <View key={r.key} style={[styles.reportChip, { backgroundColor: r.bg }]}>
-                <Ionicons name={r.icon as any} size={12} color={r.color} />
-                <Text style={[styles.reportChipText, { color: r.color }]}>{count} {r.label}</Text>
+              <View key={r.key} style={styles.breakdownItem}>
+                <View style={styles.breakdownRow}>
+                  <LinearGradient colors={r.gradient} style={styles.breakdownIcon} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}>
+                    <Ionicons name={r.icon} size={10} color="#fff" />
+                  </LinearGradient>
+                  <Text style={[styles.breakdownLabel, { color: colors.textSecondary }]}>{r.label}</Text>
+                  <Text style={[styles.breakdownCount, { color: r.gradient[0] }]}>{count}</Text>
+                </View>
+                <View style={[styles.breakdownBar, { backgroundColor: colors.surfaceLight }]}>
+                  <LinearGradient
+                    colors={r.gradient}
+                    style={[styles.breakdownBarFill, { width: `${pct}%` as any }]}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 0 }}
+                  />
+                </View>
               </View>
             );
           })}
         </View>
-      ) : null}
+      )}
     </View>
   );
 });
 
 export default TrustScoreCard;
 
-function makeStyles(c: ReturnType<typeof import("@/contexts/ThemeContext").useTheme>["colors"]) {
-  return StyleSheet.create({
-    card: {
-      backgroundColor: c.surface, borderRadius: 16, padding: 18,
-      marginBottom: 16, borderWidth: 1, borderColor: c.surfaceBorder,
-    },
-    cardHeader: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 12 },
-    cardTitle: { fontSize: 16, fontFamily: "Inter_700Bold", color: c.text },
-    scoreBadge: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 10, borderWidth: 1 },
-    scoreBadgeText: { fontSize: 12, fontFamily: "Inter_700Bold" },
-    scoreBarWrap: { flexDirection: "row", alignItems: "center", gap: 10, marginBottom: 16 },
-    scoreBarBg: { flex: 1, height: 6, borderRadius: 3, backgroundColor: c.surfaceLight },
-    scoreBarFill: { height: "100%", borderRadius: 3 },
-    scoreNum: { fontSize: 13, fontFamily: "Inter_700Bold", minWidth: 38, textAlign: "right" },
-    noReportsText: { fontSize: 13, fontFamily: "Inter_400Regular", color: c.textMuted, marginBottom: 16 },
-    statsRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-around" },
-    statItem: { alignItems: "center", gap: 2, flex: 1 },
-    statNum: { fontSize: 17, fontFamily: "Inter_700Bold", color: c.text },
-    statLabel: { fontSize: 11, fontFamily: "Inter_400Regular", color: c.textMuted },
-    statDivider: { width: 1, height: 32, backgroundColor: c.surfaceBorder },
-    reportBreakdown: { flexDirection: "row", flexWrap: "wrap", gap: 8, marginTop: 14 },
-    reportChip: {
-      flexDirection: "row", alignItems: "center", gap: 5,
-      paddingHorizontal: 10, paddingVertical: 5, borderRadius: 20,
-    },
-    reportChipText: { fontSize: 12, fontFamily: "Inter_600SemiBold" },
-    manipulationBanner: {
-      flexDirection: "row", alignItems: "flex-start", gap: 8, marginBottom: 12,
-      backgroundColor: c.warningDim, borderRadius: 10, padding: 10,
-      borderWidth: 1, borderColor: c.warning + "40",
-    },
-    manipulationText: { fontSize: 12, fontFamily: "Inter_400Regular", color: c.warning, flex: 1, lineHeight: 17 },
-  });
-}
+const styles = StyleSheet.create({
+  card: { borderRadius: 24, padding: 20, marginBottom: 16, borderWidth: 1, gap: 18 },
+  scoreHero: { flexDirection: "row", alignItems: "center", gap: 18 },
+  scoreRing: { width: 88, height: 88, borderRadius: 44, padding: 3, flexShrink: 0, alignItems: "center", justifyContent: "center" },
+  scoreInner: { width: 82, height: 82, borderRadius: 41, alignItems: "center", justifyContent: "center", flexDirection: "row", alignItems: "baseline" as any },
+  scoreNum: { fontSize: 28, fontFamily: "Inter_700Bold", lineHeight: 34 },
+  scorePct: { fontSize: 14, fontFamily: "Inter_700Bold", marginLeft: 1 },
+  scoreMeta: { flex: 1, gap: 8 },
+  scoreTitle: { fontSize: 18, fontFamily: "Inter_700Bold" },
+  scoreLabelBadge: { alignSelf: "flex-start", paddingHorizontal: 10, paddingVertical: 4, borderRadius: 100 },
+  scoreLabelText: { fontSize: 11, fontFamily: "Inter_700Bold", color: "#fff", letterSpacing: 0.5 },
+  noScoreText: { fontSize: 13, fontFamily: "Inter_400Regular" },
+  scoreBar: { height: 6, borderRadius: 3, overflow: "hidden" },
+  scoreBarFill: { height: "100%", borderRadius: 3 },
+  manipBanner: {
+    flexDirection: "row", alignItems: "flex-start", gap: 10,
+    borderRadius: 14, padding: 12, borderWidth: 1,
+  },
+  manipText: { flex: 1, fontSize: 12, fontFamily: "Inter_400Regular", lineHeight: 17 },
+  statsGrid: { flexDirection: "row", gap: 8 },
+  statCard: {
+    flex: 1, borderRadius: 16, padding: 12, alignItems: "center",
+    gap: 5, borderWidth: 1,
+  },
+  statIcon: { width: 28, height: 28, borderRadius: 9, alignItems: "center", justifyContent: "center" },
+  statNum: { fontSize: 16, fontFamily: "Inter_700Bold" },
+  statLabel: { fontSize: 9, fontFamily: "Inter_600SemiBold", letterSpacing: 0.3, textAlign: "center" },
+  breakdown: { gap: 10 },
+  breakdownItem: { gap: 5 },
+  breakdownRow: { flexDirection: "row", alignItems: "center", gap: 8 },
+  breakdownIcon: { width: 20, height: 20, borderRadius: 6, alignItems: "center", justifyContent: "center" },
+  breakdownLabel: { flex: 1, fontSize: 12, fontFamily: "Inter_500Medium" },
+  breakdownCount: { fontSize: 12, fontFamily: "Inter_700Bold" },
+  breakdownBar: { height: 5, borderRadius: 3, overflow: "hidden" },
+  breakdownBarFill: { height: "100%", borderRadius: 3 },
+});

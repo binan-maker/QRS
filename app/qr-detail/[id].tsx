@@ -14,6 +14,7 @@ import {
 import { StatusBar } from "expo-status-bar";
 import { useLocalSearchParams, router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
+import { LinearGradient } from "expo-linear-gradient";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Animated, {
   FadeInDown,
@@ -172,23 +173,13 @@ export default function QrDetailScreen() {
             keyboardShouldPersistTaps="handled"
             onScrollBeginDrag={() => q.setCommentMenuId(null)}
           >
-            {/* ── Legal Disclaimer Banner ──────────────────────────────────── */}
-            <Animated.View entering={FadeIn.duration(200)}>
-              <View style={disclaimerStyles.banner}>
-                <Ionicons name="shield-outline" size={13} color={colors.textMuted} />
-                <Text style={[disclaimerStyles.text, { color: colors.textMuted }]}>
-                  Advisory only · verify before acting
-                </Text>
-              </View>
-            </Animated.View>
-
-            {/* Sign-in banner */}
+            {/* ── Sign-in banner ──────────────────────────────────────────── */}
             {!user && (
-              <Animated.View style={signInGlowStyle}>
+              <Animated.View entering={FadeIn.duration(300)} style={signInGlowStyle}>
                 <Pressable onPress={() => router.push("/(auth)/login")} style={styles.signInBanner}>
-                  <View style={styles.signInBannerIcon}>
-                    <Ionicons name="person-circle-outline" size={28} color={colors.primary} />
-                  </View>
+                  <LinearGradient colors={["#006FFF", "#00CFFF"]} style={signInBannerStyles.icon} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}>
+                    <Ionicons name="person" size={20} color="#fff" />
+                  </LinearGradient>
                   <View style={{ flex: 1 }}>
                     <Text style={styles.signInBannerTitle}>Sign in to continue</Text>
                     <Text style={styles.signInBannerSub}>Report, follow, favorite & comment</Text>
@@ -209,209 +200,189 @@ export default function QrDetailScreen() {
               />
             </Animated.View>
 
-            {/* ── Local Safety Warnings (instant) ─────────────────────────── */}
+            {/* ── Safety Warnings ──────────────────────────────────────────── */}
             {hasLocalWarnings && (
               <Animated.View entering={FadeInDown.duration(300)}>
                 {currentContentType === "payment" && q.paymentSafety?.isSuspicious && (
                   <SafetyWarningCard
                     riskLevel={q.paymentSafety.riskLevel as "caution" | "dangerous"}
                     warnings={q.paymentSafety.warnings}
-                    title={q.paymentSafety.riskLevel === "dangerous" ? "⚠ Payment Security Warning" : "⚠ Payment Security Notice"}
+                    title={q.paymentSafety.riskLevel === "dangerous" ? "Payment Security Warning" : "Payment Security Notice"}
                   />
                 )}
                 {currentContentType === "url" && q.urlSafety?.isSuspicious && (
                   <SafetyWarningCard
                     riskLevel={q.urlSafety.riskLevel as "caution" | "dangerous"}
                     warnings={q.urlSafety.warnings}
-                    title={q.urlSafety.riskLevel === "dangerous" ? "⚠ Dangerous URL Detected" : "⚠ Proceed with Caution"}
+                    title={q.urlSafety.riskLevel === "dangerous" ? "Dangerous URL Detected" : "Proceed with Caution"}
                   />
                 )}
                 {q.offlineBlacklistMatch.matched && (
                   <SafetyWarningCard
                     riskLevel="dangerous"
                     warnings={[`Known scam pattern: ${q.offlineBlacklistMatch.reason}`]}
-                    title="⚠ Known Scam Pattern"
+                    title="Known Scam Pattern"
                   />
                 )}
               </Animated.View>
             )}
 
-            {/* ── Community Details ────────────────────────────────────────── */}
-            {(
-              <Animated.View entering={FadeInDown.duration(400).delay(100)}>
-                {/* Section toggle */}
-                <Pressable
-                  onPress={() => setDetailsExpanded((v) => !v)}
-                  style={[detailsToggleStyles.row, { borderColor: colors.surfaceBorder }]}
-                >
-                  <Text style={[detailsToggleStyles.label, { color: colors.textSecondary }]}>Community Details</Text>
-                  <Ionicons
-                    name={detailsExpanded ? "chevron-up" : "chevron-down"}
-                    size={16}
-                    color={colors.textMuted}
-                  />
-                </Pressable>
+            {/* ── Owner Info ───────────────────────────────────────────────── */}
+            {q.ownerInfo && (
+              <Animated.View entering={FadeInDown.duration(400).delay(50)}>
+                <SectionHeader icon="storefront-outline" label="Creator" gradient={["#10B981", "#06B6D4"]} />
+                <OwnerCard
+                  ownerInfo={q.ownerInfo}
+                  isQrOwner={q.isQrOwner}
+                  followCount={q.followCount}
+                  unreadMessages={q.unreadMessages}
+                  onOpenFollowers={() => { q.handleLoadFollowers(); q.setFollowersModalOpen(true); }}
+                  onOpenMessages={() => q.setMessagesModalOpen(true)}
+                />
+              </Animated.View>
+            )}
 
-                {detailsExpanded && (
-                  <>
-                    {/* Owner Card */}
-                    {q.ownerInfo && (
-                      <OwnerCard
-                        ownerInfo={q.ownerInfo}
-                        isQrOwner={q.isQrOwner}
-                        followCount={q.followCount}
-                        unreadMessages={q.unreadMessages}
-                        onOpenFollowers={() => { q.handleLoadFollowers(); q.setFollowersModalOpen(true); }}
-                        onOpenMessages={() => q.setMessagesModalOpen(true)}
-                      />
-                    )}
+            {/* ── Merchant Dashboard (owner only) ─────────────────────────── */}
+            {q.isQrOwner && (
+              <Animated.View entering={FadeInDown.duration(400).delay(80)}>
+                <MerchantDashboard
+                  scanVelocity={q.scanVelocity}
+                  velocityLoading={q.velocityLoading}
+                  verificationStatus={q.verificationStatus}
+                  onRefreshVelocity={async () => {
+                    const { getScanVelocity } = await import("@/lib/firestore-service");
+                    getScanVelocity(id);
+                  }}
+                  onRequestVerify={() => q.setVerifyModalOpen(true)}
+                />
+              </Animated.View>
+            )}
 
-                    {/* Merchant Dashboard */}
-                    {q.isQrOwner && (
-                      <MerchantDashboard
-                        scanVelocity={q.scanVelocity}
-                        velocityLoading={q.velocityLoading}
-                        verificationStatus={q.verificationStatus}
-                        onRefreshVelocity={async () => {
-                          const { getScanVelocity } = await import("@/lib/firestore-service");
-                          getScanVelocity(id);
-                        }}
-                        onRequestVerify={() => q.setVerifyModalOpen(true)}
-                      />
-                    )}
+            {/* ── Community Trust ──────────────────────────────────────────── */}
+            <Animated.View entering={FadeInDown.duration(400).delay(100)}>
+              <SectionHeader icon="shield-checkmark-outline" label="Trust Score" gradient={["#006FFF", "#00CFFF"]} />
+              <TrustScoreCard
+                trustInfo={trust}
+                reportCounts={q.reportCounts}
+                totalScans={q.totalScans}
+                totalComments={q.totalComments}
+                isQrOwner={q.isQrOwner}
+                followCount={q.followCount}
+                followersModalOpen={q.followersModalOpen}
+                onOpenFollowers={() => { q.handleLoadFollowers(); q.setFollowersModalOpen(true); }}
+                manipulationWarning={trust.manipulationWarning}
+              />
+            </Animated.View>
 
-                    {/* Trust Score */}
-                    <TrustScoreCard
-                      trustInfo={trust}
-                      reportCounts={q.reportCounts}
-                      totalScans={q.totalScans}
-                      totalComments={q.totalComments}
-                      isQrOwner={q.isQrOwner}
-                      followCount={q.followCount}
-                      followersModalOpen={q.followersModalOpen}
-                      onOpenFollowers={() => { q.handleLoadFollowers(); q.setFollowersModalOpen(true); }}
-                      manipulationWarning={trust.manipulationWarning}
-                    />
+            {/* ── Rate This QR ─────────────────────────────────────────────── */}
+            <Animated.View entering={FadeInDown.duration(400).delay(150)}>
+              {q.offlineMode ? (
+                <View style={offlineBannerStyles.row}>
+                  <Ionicons name="wifi-outline" size={18} color={colors.textMuted} />
+                  <Text style={[offlineBannerStyles.text, { color: colors.textMuted }]}>Enable internet to view and submit reports</Text>
+                </View>
+              ) : (
+                <ReportGrid
+                  reportCounts={q.reportCounts}
+                  userReport={q.userReport}
+                  isLoggedIn={!!user}
+                  onReport={q.handleReport}
+                />
+              )}
+            </Animated.View>
 
-                    {/* Report Grid */}
-                    {q.offlineMode ? (
-                      <View style={offlineBannerStyles.row}>
-                        <Ionicons name="wifi-outline" size={18} color={colors.textMuted} />
-                        <Text style={[offlineBannerStyles.text, { color: colors.textMuted }]}>
-                          Enable internet to view and submit reports
-                        </Text>
-                      </View>
-                    ) : (
-                      <ReportGrid
-                        reportCounts={q.reportCounts}
-                        userReport={q.userReport}
-                        isLoggedIn={!!user}
-                        onReport={q.handleReport}
-                      />
-                    )}
-
-                    {/* Comments */}
-                    <View style={styles.commentsHeader}>
-                      <View style={styles.commentsTitleRow}>
-                        <Text style={styles.sectionTitle}>Comments</Text>
-                        {q.totalComments > 0 && (
-                          <View style={styles.commentCountBadge}>
-                            <Text style={styles.commentCountText}>{formatCompactNumber(q.totalComments)}</Text>
-                          </View>
-                        )}
-                      </View>
-                      {!q.offlineMode && (
-                        <View style={styles.liveIndicator}>
-                          <View style={styles.liveDot} />
-                          <Text style={styles.liveText}>Live</Text>
-                        </View>
-                      )}
+            {/* ── Comments ─────────────────────────────────────────────────── */}
+            <Animated.View entering={FadeInDown.duration(400).delay(200)}>
+              <View style={styles.commentsHeader}>
+                <View style={styles.commentsTitleRow}>
+                  <SectionHeader icon="chatbubbles-outline" label="Comments" gradient={["#8B5CF6", "#EC4899"]} inline />
+                  {q.totalComments > 0 && (
+                    <View style={[styles.commentCountBadge, { marginLeft: 6 }]}>
+                      <Text style={styles.commentCountText}>{formatCompactNumber(q.totalComments)}</Text>
                     </View>
-
-                    {q.offlineMode ? (
-                      <View style={offlineBannerStyles.row}>
-                        <Ionicons name="wifi-outline" size={18} color={colors.textMuted} />
-                        <Text style={[offlineBannerStyles.text, { color: colors.textMuted }]}>
-                          Enable internet to view comments
-                        </Text>
-                      </View>
-                    ) : (
-                      <>
-                        {!user && (
-                          <Pressable onPress={() => router.push("/(auth)/login")} style={styles.signInToComment}>
-                            <Ionicons name="chatbubble-outline" size={18} color={colors.primary} />
-                            <Text style={styles.signInToCommentText}>Sign in to comment</Text>
-                            <Ionicons name="arrow-forward" size={16} color={colors.primary} style={{ marginLeft: "auto" as any }} />
-                          </Pressable>
-                        )}
-                      </>
-                    )}
-
-                    {!q.offlineMode && (
-                      <>
-                        {q.commentsList.length === 0 ? (
-                          <View style={styles.noComments}>
-                            <Ionicons name="chatbubbles-outline" size={32} color={colors.textMuted} />
-                            <Text style={styles.noCommentsText}>No comments yet</Text>
-                            <Text style={styles.noCommentsSubtext}>Be the first to share your thoughts</Text>
-                          </View>
-                        ) : (
-                          q.topLevelComments.map((comment) => (
-                            <CommentItem
-                              key={comment.id}
-                              comment={comment}
-                              isReply={false}
-                              currentUserLike={q.userLikes[comment.id] ?? null}
-                              isMenuOpen={q.commentMenuId === comment.id}
-                              isDeleting={q.deletingCommentId === comment.id}
-                              isRevealed={q.revealedComments.has(comment.id)}
-                              isCommentOwner={user?.id === comment.userId}
-                              canDelete={user?.id === comment.userId}
-                              descendants={q.getAllDescendants(comment.id)}
-                              expandedReplies={q.expandedReplies}
-                              visibleRepliesCount={q.visibleRepliesCount}
-                              allComments={q.commentsList}
-                              userLikes={q.userLikes}
-                              commentMenuId={q.commentMenuId}
-                              deletingCommentId={q.deletingCommentId}
-                              revealedComments={q.revealedComments}
-                              userId={user?.id}
-                              onLike={q.handleCommentLike}
-                              onReply={(c) => {
-                                const rootId = q.getRootCommentId(c.id);
-                                q.setReplyTo({
-                                  id: c.id,
-                                  author: c.userUsername ? `@${c.userUsername}` : smartName(c.user.displayName),
-                                  rootId,
-                                  isNested: !!c.parentId,
-                                });
-                              }}
-                              onMenuOpen={(cid, isOwner) => { q.setCommentMenuId(cid); q.setCommentMenuOwner(isOwner); }}
-                              onMenuClose={() => q.setCommentMenuId(null)}
-                              onDelete={q.handleDeleteComment}
-                              onReport={(cid) => q.setCommentReportModal(cid)}
-                              onReveal={(cid) => q.setRevealedComments((prev) => { const next = new Set(prev); next.add(cid); return next; })}
-                              onToggleReplies={q.toggleReplies}
-                              onShowMoreReplies={q.showMoreReplies}
-                            />
-                          ))
-                        )}
-
-                        {q.hasMoreComments && (
-                          <Pressable onPress={q.loadMoreComments} disabled={q.commentsLoading} style={styles.loadMoreBtn}>
-                            {q.commentsLoading ? (
-                              <ActivityIndicator size="small" color={colors.primary} />
-                            ) : (
-                              <Text style={styles.loadMoreText}>Load More Comments</Text>
-                            )}
-                          </Pressable>
-                        )}
-                      </>
-                    )}
-                  </>
+                  )}
+                </View>
+                {!q.offlineMode && (
+                  <View style={styles.liveIndicator}>
+                    <View style={styles.liveDot} />
+                    <Text style={styles.liveText}>Live</Text>
+                  </View>
                 )}
-              </Animated.View>
-            )}
+              </View>
+
+              {q.offlineMode ? (
+                <View style={offlineBannerStyles.row}>
+                  <Ionicons name="wifi-outline" size={18} color={colors.textMuted} />
+                  <Text style={[offlineBannerStyles.text, { color: colors.textMuted }]}>Enable internet to view comments</Text>
+                </View>
+              ) : (
+                <>
+                  {!user && (
+                    <Pressable onPress={() => router.push("/(auth)/login")} style={styles.signInToComment}>
+                      <Ionicons name="chatbubble-outline" size={18} color={colors.primary} />
+                      <Text style={styles.signInToCommentText}>Sign in to comment</Text>
+                      <Ionicons name="arrow-forward" size={16} color={colors.primary} style={{ marginLeft: "auto" as any }} />
+                    </Pressable>
+                  )}
+                  {q.commentsList.length === 0 ? (
+                    <View style={styles.noComments}>
+                      <Ionicons name="chatbubbles-outline" size={36} color={colors.textMuted} />
+                      <Text style={styles.noCommentsText}>No comments yet</Text>
+                      <Text style={styles.noCommentsSubtext}>Be the first to share your thoughts</Text>
+                    </View>
+                  ) : (
+                    q.topLevelComments.map((comment) => (
+                      <CommentItem
+                        key={comment.id}
+                        comment={comment}
+                        isReply={false}
+                        currentUserLike={q.userLikes[comment.id] ?? null}
+                        isMenuOpen={q.commentMenuId === comment.id}
+                        isDeleting={q.deletingCommentId === comment.id}
+                        isRevealed={q.revealedComments.has(comment.id)}
+                        isCommentOwner={user?.id === comment.userId}
+                        canDelete={user?.id === comment.userId}
+                        descendants={q.getAllDescendants(comment.id)}
+                        expandedReplies={q.expandedReplies}
+                        visibleRepliesCount={q.visibleRepliesCount}
+                        allComments={q.commentsList}
+                        userLikes={q.userLikes}
+                        commentMenuId={q.commentMenuId}
+                        deletingCommentId={q.deletingCommentId}
+                        revealedComments={q.revealedComments}
+                        userId={user?.id}
+                        onLike={q.handleCommentLike}
+                        onReply={(c) => {
+                          const rootId = q.getRootCommentId(c.id);
+                          q.setReplyTo({
+                            id: c.id,
+                            author: c.userUsername ? `@${c.userUsername}` : smartName(c.user.displayName),
+                            rootId,
+                            isNested: !!c.parentId,
+                          });
+                        }}
+                        onMenuOpen={(cid, isOwner) => { q.setCommentMenuId(cid); q.setCommentMenuOwner(isOwner); }}
+                        onMenuClose={() => q.setCommentMenuId(null)}
+                        onDelete={q.handleDeleteComment}
+                        onReport={(cid) => q.setCommentReportModal(cid)}
+                        onReveal={(cid) => q.setRevealedComments((prev) => { const next = new Set(prev); next.add(cid); return next; })}
+                        onToggleReplies={q.toggleReplies}
+                        onShowMoreReplies={q.showMoreReplies}
+                      />
+                    ))
+                  )}
+                  {q.hasMoreComments && (
+                    <Pressable onPress={q.loadMoreComments} disabled={q.commentsLoading} style={styles.loadMoreBtn}>
+                      {q.commentsLoading ? (
+                        <ActivityIndicator size="small" color={colors.primary} />
+                      ) : (
+                        <Text style={styles.loadMoreText}>Load More Comments</Text>
+                      )}
+                    </Pressable>
+                  )}
+                </>
+              )}
+            </Animated.View>
           </ScrollView>
 
           {/* Comment Input Bar */}

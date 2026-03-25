@@ -1,5 +1,6 @@
 import { View, Text, StyleSheet, Pressable } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import { LinearGradient } from "expo-linear-gradient";
 import { useTheme } from "@/contexts/ThemeContext";
 import { formatCompactNumber } from "@/lib/number-format";
 
@@ -10,62 +11,74 @@ interface ReportGridProps {
   onReport: (type: string) => void;
 }
 
-export default function ReportGrid({ reportCounts, userReport, isLoggedIn, onReport }: ReportGridProps) {
-  const { colors } = useTheme();
-  const styles = makeStyles(colors);
+const REPORT_TYPES = [
+  { key: "safe", label: "Safe",  icon: "shield-checkmark" as const, gradient: ["#10B981", "#06B6D4"] as [string, string], desc: "Looks legit" },
+  { key: "scam", label: "Scam",  icon: "warning" as const,          gradient: ["#EF4444", "#DC2626"] as [string, string], desc: "Fraud attempt" },
+  { key: "fake", label: "Fake",  icon: "close-circle" as const,     gradient: ["#F59E0B", "#F97316"] as [string, string], desc: "Not genuine" },
+  { key: "spam", label: "Spam",  icon: "mail-unread" as const,      gradient: ["#8B5CF6", "#EC4899"] as [string, string], desc: "Unwanted" },
+];
 
-  const REPORT_TYPES = [
-    { key: "safe", label: "Safe", icon: "shield-checkmark", color: colors.safe, bg: colors.safeDim },
-    { key: "scam", label: "Scam", icon: "warning", color: colors.danger, bg: colors.dangerDim },
-    { key: "fake", label: "Fake", icon: "close-circle", color: colors.warning, bg: colors.warningDim },
-    { key: "spam", label: "Spam", icon: "mail-unread", color: colors.accent, bg: colors.accentDim },
-  ];
+export default function ReportGrid({ reportCounts, userReport, isLoggedIn, onReport }: ReportGridProps) {
+  const { colors, isDark } = useTheme();
 
   return (
-    <View>
-      <View style={styles.headerRow}>
-        <Text style={styles.sectionTitle}>Report This QR</Text>
-        {userReport && (
-          <View style={styles.votedBadge}>
-            <Ionicons name="checkmark-circle" size={13} color={colors.safe} />
-            <Text style={[styles.votedBadgeText, { color: colors.safe }]}>Voted · tap to change or undo</Text>
+    <View style={styles.container}>
+      <View style={styles.header}>
+        <View style={styles.titleRow}>
+          <LinearGradient colors={["#EF4444", "#F97316"]} style={styles.titleIcon} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}>
+            <Ionicons name="flag" size={14} color="#fff" />
+          </LinearGradient>
+          <Text style={[styles.title, { color: colors.text }]}>Rate this QR</Text>
+        </View>
+        {userReport ? (
+          <View style={[styles.votedBadge, { backgroundColor: "#10B98118", borderColor: "#10B98140" }]}>
+            <Ionicons name="checkmark-circle" size={12} color="#10B981" />
+            <Text style={styles.votedText}>Voted</Text>
           </View>
+        ) : (
+          <Text style={[styles.hint, { color: colors.textMuted }]}>
+            {isLoggedIn ? "Tap to vote" : "Sign in to vote"}
+          </Text>
         )}
       </View>
-      {!userReport && (
-        <Text style={styles.sectionSubtext}>
-          {isLoggedIn ? "Tap a card to submit your report" : "Sign in to report this QR code"}
-        </Text>
-      )}
+
       <View style={styles.grid}>
         {REPORT_TYPES.map((rt) => {
           const count = reportCounts[rt.key] || 0;
           const isSelected = userReport === rt.key;
-          const iconColor = isSelected ? rt.color : colors.textMuted;
-          const labelColor = isSelected ? rt.color : colors.textSecondary;
           return (
             <Pressable
               key={rt.key}
               onPress={() => onReport(rt.key)}
-              style={({ pressed }) => [
-                styles.card,
-                {
-                  borderColor: isSelected ? rt.color : colors.surfaceBorder,
-                  backgroundColor: isSelected ? rt.bg : colors.surface,
-                  opacity: pressed ? 0.75 : 1,
-                },
-              ]}
+              style={({ pressed }) => [{ width: "47%", opacity: pressed ? 0.8 : 1 }]}
             >
-              {isSelected && (
-                <View style={[styles.checkBadge, { backgroundColor: rt.color }]}>
-                  <Ionicons name="checkmark" size={10} color="#fff" />
+              {isSelected ? (
+                <LinearGradient colors={rt.gradient} style={styles.card} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}>
+                  <View style={styles.selectedCheck}>
+                    <Ionicons name="checkmark" size={11} color="#fff" />
+                  </View>
+                  <View style={[styles.cardIconBg, { backgroundColor: "rgba(255,255,255,0.25)" }]}>
+                    <Ionicons name={rt.icon} size={26} color="#fff" />
+                  </View>
+                  <Text style={[styles.cardLabel, { color: "#fff" }]}>{rt.label}</Text>
+                  <Text style={[styles.cardDesc, { color: "rgba(255,255,255,0.8)" }]}>{rt.desc}</Text>
+                  <Text style={[styles.cardCount, { color: "rgba(255,255,255,0.9)" }]}>
+                    {count > 0 ? formatCompactNumber(count) : "–"}
+                  </Text>
+                </LinearGradient>
+              ) : (
+                <View style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder, borderWidth: 1 }]}>
+                  <LinearGradient colors={[rt.gradient[0] + (isDark ? "20" : "14"), "transparent"]} style={StyleSheet.absoluteFill} />
+                  <LinearGradient colors={rt.gradient} style={styles.cardIconBg} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}>
+                    <Ionicons name={rt.icon} size={26} color="#fff" />
+                  </LinearGradient>
+                  <Text style={[styles.cardLabel, { color: colors.text }]}>{rt.label}</Text>
+                  <Text style={[styles.cardDesc, { color: colors.textMuted }]}>{rt.desc}</Text>
+                  <Text style={[styles.cardCount, { color: rt.gradient[0] }]}>
+                    {count > 0 ? formatCompactNumber(count) : "–"}
+                  </Text>
                 </View>
               )}
-              <Ionicons name={rt.icon as any} size={24} color={iconColor} />
-              <Text style={[styles.label, { color: labelColor }]}>{rt.label}</Text>
-              <Text style={[styles.count, isSelected && { color: rt.color, fontFamily: "Inter_600SemiBold" }]}>
-                {count > 0 ? formatCompactNumber(count) : "0"}
-              </Text>
             </Pressable>
           );
         })}
@@ -74,24 +87,31 @@ export default function ReportGrid({ reportCounts, userReport, isLoggedIn, onRep
   );
 }
 
-function makeStyles(c: ReturnType<typeof import("@/contexts/ThemeContext").useTheme>["colors"]) {
-  return StyleSheet.create({
-    headerRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 4 },
-    sectionTitle: { fontSize: 17, fontFamily: "Inter_700Bold", color: c.text },
-    sectionSubtext: { fontSize: 13, fontFamily: "Inter_400Regular", color: c.textSecondary, marginBottom: 12 },
-    votedBadge: { flexDirection: "row", alignItems: "center", gap: 4 },
-    votedBadgeText: { fontSize: 11, fontFamily: "Inter_400Regular" },
-    grid: { flexDirection: "row", flexWrap: "wrap", gap: 10, marginBottom: 16, marginTop: 12 },
-    card: {
-      width: "47%", borderRadius: 14, padding: 14, alignItems: "center",
-      gap: 6, borderWidth: 1.5, position: "relative",
-    },
-    checkBadge: {
-      position: "absolute", top: 8, right: 8,
-      width: 18, height: 18, borderRadius: 9,
-      alignItems: "center", justifyContent: "center",
-    },
-    label: { fontSize: 13, fontFamily: "Inter_600SemiBold" },
-    count: { fontSize: 12, fontFamily: "Inter_400Regular", color: c.textMuted },
-  });
-}
+const styles = StyleSheet.create({
+  container: { marginBottom: 8 },
+  header: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 14 },
+  titleRow: { flexDirection: "row", alignItems: "center", gap: 9 },
+  titleIcon: { width: 28, height: 28, borderRadius: 9, alignItems: "center", justifyContent: "center" },
+  title: { fontSize: 17, fontFamily: "Inter_700Bold" },
+  votedBadge: { flexDirection: "row", alignItems: "center", gap: 5, paddingHorizontal: 9, paddingVertical: 4, borderRadius: 100, borderWidth: 1 },
+  votedText: { fontSize: 11, fontFamily: "Inter_700Bold", color: "#10B981" },
+  hint: { fontSize: 12, fontFamily: "Inter_400Regular" },
+  grid: { flexDirection: "row", flexWrap: "wrap", gap: 10 },
+  card: {
+    borderRadius: 20, padding: 16, alignItems: "center", gap: 7,
+    position: "relative", overflow: "hidden",
+  },
+  selectedCheck: {
+    position: "absolute", top: 10, right: 10,
+    width: 20, height: 20, borderRadius: 10,
+    backgroundColor: "rgba(255,255,255,0.3)",
+    alignItems: "center", justifyContent: "center",
+  },
+  cardIconBg: {
+    width: 52, height: 52, borderRadius: 18,
+    alignItems: "center", justifyContent: "center",
+  },
+  cardLabel: { fontSize: 14, fontFamily: "Inter_700Bold" },
+  cardDesc: { fontSize: 11, fontFamily: "Inter_400Regular" },
+  cardCount: { fontSize: 13, fontFamily: "Inter_700Bold" },
+});

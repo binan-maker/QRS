@@ -1,6 +1,7 @@
 import React from "react";
 import { View, Text, StyleSheet, Pressable, Image } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import { LinearGradient } from "expo-linear-gradient";
 import { useTheme } from "@/contexts/ThemeContext";
 import { formatCompactNumber } from "@/lib/number-format";
 import type { QrOwnerInfo } from "@/lib/firestore-service";
@@ -14,94 +15,114 @@ interface Props {
   onOpenMessages: () => void;
 }
 
-const OwnerCard = React.memo(function OwnerCard({
-  ownerInfo, isQrOwner, followCount, unreadMessages,
-  onOpenFollowers, onOpenMessages,
-}: Props) {
-  const { colors } = useTheme();
-  const styles = makeStyles(colors);
+const TYPE_GRADIENTS: Record<string, [string, string]> = {
+  business:   ["#FBBF24", "#F59E0B"],
+  government: ["#3B82F6", "#6366F1"],
+  individual: ["#10B981", "#06B6D4"],
+};
 
-  const typeColor = ownerInfo.qrType === "business" ? "#FBBF24"
-    : ownerInfo.qrType === "government" ? "#3B82F6"
-    : colors.primary;
-  const typeBg = ownerInfo.qrType === "business" ? "#FBBF2420"
-    : ownerInfo.qrType === "government" ? "#3B82F620"
-    : colors.primaryDim;
-  const typeLabel = ownerInfo.qrType === "business" ? "BUSINESS"
-    : ownerInfo.qrType === "government" ? "GOVERNMENT"
-    : "INDIVIDUAL";
-  const typeIcon = ownerInfo.qrType === "business" ? "storefront"
-    : ownerInfo.qrType === "government" ? "flag"
-    : "shield-checkmark";
-  const typeTitle = ownerInfo.qrType === "business" ? "Business QR"
-    : ownerInfo.qrType === "government" ? "Government QR"
-    : "Branded QR Code";
+const TYPE_ICONS: Record<string, keyof typeof Ionicons.glyphMap> = {
+  business:   "storefront",
+  government: "flag",
+  individual: "shield-checkmark",
+};
+
+const OwnerCard = React.memo(function OwnerCard({
+  ownerInfo, isQrOwner, followCount, unreadMessages, onOpenFollowers, onOpenMessages,
+}: Props) {
+  const { colors, isDark } = useTheme();
+  const qrType = ownerInfo.qrType || "individual";
+  const gradient = TYPE_GRADIENTS[qrType] ?? TYPE_GRADIENTS.individual;
+  const icon = TYPE_ICONS[qrType] ?? "shield-checkmark";
+  const typeLabel = qrType.toUpperCase();
 
   return (
     <>
       {ownerInfo.isActive === false && (
-        <View style={styles.deactivatedBanner}>
-          <Ionicons name="pause-circle" size={18} color={colors.danger} />
+        <View style={[styles.deactivatedBanner, { backgroundColor: colors.dangerDim, borderColor: colors.danger + "40" }]}>
+          <LinearGradient colors={["#EF4444", "#DC2626"]} style={styles.deactivatedIcon} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}>
+            <Ionicons name="pause-circle" size={18} color="#fff" />
+          </LinearGradient>
           <View style={{ flex: 1 }}>
-            <Text style={styles.deactivatedTitle}>QR Code Deactivated</Text>
-            <Text style={styles.deactivatedMsg} numberOfLines={3}>
+            <Text style={[styles.deactivatedTitle, { color: colors.danger }]}>QR Code Deactivated</Text>
+            <Text style={[styles.deactivatedMsg, { color: colors.textSecondary }]} numberOfLines={3}>
               {ownerInfo.deactivationMessage || "This QR code has been deactivated by the owner."}
             </Text>
           </View>
         </View>
       )}
-      <View style={styles.card}>
-        {ownerInfo.ownerLogoBase64 && ownerInfo.qrType === "business" && (
+
+      <View style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
+        <LinearGradient
+          colors={[gradient[0] + (isDark ? "14" : "09"), "transparent"]}
+          style={StyleSheet.absoluteFill}
+        />
+
+        {ownerInfo.ownerLogoBase64 && qrType === "business" && (
           <View style={styles.logoRow}>
             <Image source={{ uri: ownerInfo.ownerLogoBase64 }} style={styles.logo} resizeMode="contain" />
           </View>
         )}
-        <View style={styles.cardLeft}>
-          <View style={[styles.iconCircle, { backgroundColor: typeBg }]}>
-            <Ionicons name={typeIcon as any} size={18} color={typeColor} />
-          </View>
-          <View style={{ flex: 1, minWidth: 0 }}>
-            <View style={{ flexDirection: "row", alignItems: "center", gap: 6, marginBottom: 2 }}>
-              <Text style={styles.title}>{typeTitle}</Text>
-              <View style={[styles.typeBadge, { backgroundColor: typeBg, borderColor: typeColor + "40" }]}>
-                <Text style={[styles.typeBadgeText, { color: typeColor }]}>{typeLabel}</Text>
-              </View>
+
+        <View style={styles.mainRow}>
+          <LinearGradient colors={gradient} style={styles.ownerIcon} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}>
+            <Ionicons name={icon} size={22} color="#fff" />
+          </LinearGradient>
+
+          <View style={styles.ownerInfo}>
+            <View style={styles.topRow}>
+              <LinearGradient colors={gradient} style={styles.typeBadge} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}>
+                <Text style={styles.typeBadgeText}>{typeLabel}</Text>
+              </LinearGradient>
+              {ownerInfo.isBranded && (
+                <View style={[styles.guardBadge, { backgroundColor: colors.primaryDim, borderColor: colors.primary + "50" }]}>
+                  <Ionicons name="shield-checkmark" size={10} color={colors.primary} />
+                  <Text style={[styles.guardBadgeText, { color: colors.primary }]}>QR Guard</Text>
+                </View>
+              )}
             </View>
             {ownerInfo.businessName ? (
-              <Text style={styles.bizName} numberOfLines={1}>{ownerInfo.businessName}</Text>
+              <Text style={[styles.bizName, { color: colors.text }]} numberOfLines={1}>{ownerInfo.businessName}</Text>
             ) : null}
-            <Text style={styles.sub} numberOfLines={1}>
-              Created by <Text style={{ color: colors.primary, fontFamily: "Inter_600SemiBold" }}>{ownerInfo.ownerName}</Text>
+            <Text style={[styles.createdBy, { color: colors.textSecondary }]} numberOfLines={1}>
+              by <Text style={[styles.createdByName, { color: gradient[0] }]}>{ownerInfo.ownerName}</Text>
             </Text>
-            <Text style={styles.uuid} numberOfLines={1}>ID: {ownerInfo.brandedUuid}</Text>
-            {ownerInfo.isBranded && (
-              <View style={styles.guardBadge}>
-                <Ionicons name="shield-checkmark" size={12} color={colors.primary} />
-                <Text style={styles.guardBadgeText}>QR Guard Generated</Text>
-              </View>
-            )}
+            {ownerInfo.brandedUuid ? (
+              <Text style={[styles.uuid, { color: colors.textMuted }]} numberOfLines={1}>
+                ID: {ownerInfo.brandedUuid}
+              </Text>
+            ) : null}
           </View>
-        </View>
-        <View style={styles.cardRight}>
+
           {isQrOwner ? (
-            <>
-              <Pressable onPress={onOpenFollowers} style={styles.actionBtn}>
-                <Ionicons name="people-outline" size={16} color={colors.primary} />
-                <Text style={styles.actionText}>{formatCompactNumber(followCount)}</Text>
+            <View style={styles.ownerActions}>
+              <Pressable
+                onPress={onOpenFollowers}
+                style={({ pressed }) => [styles.actionBtn, { backgroundColor: colors.surfaceLight, borderColor: colors.surfaceBorder, opacity: pressed ? 0.75 : 1 }]}
+              >
+                <LinearGradient colors={gradient} style={styles.actionBtnIcon} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}>
+                  <Ionicons name="people" size={12} color="#fff" />
+                </LinearGradient>
+                <Text style={[styles.actionBtnText, { color: gradient[0] }]}>{formatCompactNumber(followCount)}</Text>
               </Pressable>
-              <Pressable onPress={onOpenMessages} style={[styles.actionBtn, { position: "relative" }]}>
-                <Ionicons name="mail-outline" size={16} color={colors.accent} />
-                <Text style={[styles.actionText, { color: colors.accent }]}>Inbox</Text>
+              <Pressable
+                onPress={onOpenMessages}
+                style={({ pressed }) => [styles.actionBtn, { backgroundColor: colors.surfaceLight, borderColor: colors.surfaceBorder, opacity: pressed ? 0.75 : 1, position: "relative" }]}
+              >
+                <LinearGradient colors={["#8B5CF6", "#EC4899"]} style={styles.actionBtnIcon} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}>
+                  <Ionicons name="mail" size={12} color="#fff" />
+                </LinearGradient>
+                <Text style={[styles.actionBtnText, { color: "#8B5CF6" }]}>Inbox</Text>
                 {unreadMessages > 0 && (
-                  <View style={styles.unreadDot}>
-                    <Text style={styles.unreadDotText}>{unreadMessages}</Text>
+                  <View style={styles.unreadBadge}>
+                    <Text style={styles.unreadBadgeText}>{unreadMessages}</Text>
                   </View>
                 )}
               </Pressable>
-            </>
+            </View>
           ) : (
-            <View style={styles.verifiedBadge}>
-              <Ionicons name="shield-checkmark" size={12} color={colors.safe} />
+            <View style={[styles.verifiedBadge, { backgroundColor: "#10B98118", borderColor: "#10B98140" }]}>
+              <Ionicons name="shield-checkmark" size={13} color="#10B981" />
               <Text style={styles.verifiedText}>Verified</Text>
             </View>
           )}
@@ -113,58 +134,51 @@ const OwnerCard = React.memo(function OwnerCard({
 
 export default OwnerCard;
 
-function makeStyles(c: ReturnType<typeof import("@/contexts/ThemeContext").useTheme>["colors"]) {
-  return StyleSheet.create({
-    deactivatedBanner: {
-      flexDirection: "row", alignItems: "flex-start", gap: 10,
-      backgroundColor: c.dangerDim, borderRadius: 12, padding: 14,
-      borderWidth: 1, borderColor: c.danger + "40", marginBottom: 10,
-    },
-    deactivatedTitle: { fontSize: 14, fontFamily: "Inter_700Bold", color: c.danger, marginBottom: 3 },
-    deactivatedMsg: { fontSize: 12, fontFamily: "Inter_400Regular", color: c.textSecondary, lineHeight: 18 },
-    card: {
-      flexDirection: "row", alignItems: "center", gap: 12,
-      backgroundColor: c.primaryDim, borderRadius: 14, padding: 14,
-      borderWidth: 1, borderColor: c.primary + "40", marginBottom: 12,
-    },
-    logoRow: { alignItems: "center", marginBottom: 10 },
-    logo: { width: 48, height: 48, borderRadius: 8 },
-    cardLeft: { flex: 1, flexDirection: "row", alignItems: "center", gap: 10, minWidth: 0 },
-    iconCircle: {
-      width: 38, height: 38, borderRadius: 19,
-      alignItems: "center", justifyContent: "center",
-      borderWidth: 1, borderColor: c.surfaceBorder, flexShrink: 0,
-    },
-    title: { fontSize: 13, fontFamily: "Inter_700Bold", color: c.text },
-    typeBadge: { paddingHorizontal: 6, paddingVertical: 2, borderRadius: 6, borderWidth: 1 },
-    typeBadgeText: { fontSize: 9, fontFamily: "Inter_700Bold", letterSpacing: 0.5 },
-    bizName: { fontSize: 14, fontFamily: "Inter_700Bold", color: c.text, marginBottom: 1 },
-    sub: { fontSize: 12, fontFamily: "Inter_400Regular", color: c.textSecondary, marginTop: 1 },
-    uuid: { fontSize: 10, fontFamily: "Inter_400Regular", color: c.textMuted, marginTop: 2 },
-    guardBadge: {
-      flexDirection: "row", alignItems: "center", gap: 4, marginTop: 6,
-      backgroundColor: c.primaryDim, borderRadius: 8,
-      paddingHorizontal: 9, paddingVertical: 4, alignSelf: "flex-start",
-      borderWidth: 1.5, borderColor: c.primary + "60",
-    },
-    guardBadgeText: { fontSize: 10, fontFamily: "Inter_600SemiBold", color: c.primary },
-    cardRight: { alignItems: "flex-end", gap: 8, flexShrink: 0 },
-    actionBtn: {
-      flexDirection: "row", alignItems: "center", gap: 5,
-      backgroundColor: c.surface, borderRadius: 10, paddingHorizontal: 10, paddingVertical: 6,
-    },
-    actionText: { fontSize: 12, fontFamily: "Inter_600SemiBold", color: c.primary },
-    unreadDot: {
-      position: "absolute", top: -4, right: -4, minWidth: 16, height: 16,
-      borderRadius: 8, backgroundColor: c.danger,
-      alignItems: "center", justifyContent: "center",
-    },
-    unreadDotText: { fontSize: 10, fontFamily: "Inter_700Bold", color: "#fff" },
-    verifiedBadge: {
-      flexDirection: "row", alignItems: "center", gap: 4,
-      backgroundColor: c.safeDim, borderRadius: 10, paddingHorizontal: 8, paddingVertical: 5,
-      borderWidth: 1, borderColor: c.safe + "40",
-    },
-    verifiedText: { fontSize: 11, fontFamily: "Inter_600SemiBold", color: c.safe },
-  });
-}
+const styles = StyleSheet.create({
+  deactivatedBanner: {
+    flexDirection: "row", alignItems: "flex-start", gap: 12,
+    borderRadius: 18, padding: 16, borderWidth: 1, marginBottom: 12,
+  },
+  deactivatedIcon: { width: 42, height: 42, borderRadius: 13, alignItems: "center", justifyContent: "center", flexShrink: 0 },
+  deactivatedTitle: { fontSize: 14, fontFamily: "Inter_700Bold", marginBottom: 3 },
+  deactivatedMsg: { fontSize: 12, fontFamily: "Inter_400Regular", lineHeight: 18 },
+  card: {
+    borderRadius: 22, padding: 16, borderWidth: 1, marginBottom: 14, overflow: "hidden",
+  },
+  logoRow: { alignItems: "center", marginBottom: 12 },
+  logo: { width: 56, height: 56, borderRadius: 12 },
+  mainRow: { flexDirection: "row", alignItems: "center", gap: 14 },
+  ownerIcon: { width: 54, height: 54, borderRadius: 18, alignItems: "center", justifyContent: "center", flexShrink: 0 },
+  ownerInfo: { flex: 1, minWidth: 0, gap: 4 },
+  topRow: { flexDirection: "row", alignItems: "center", gap: 6, flexWrap: "wrap" },
+  typeBadge: { paddingHorizontal: 8, paddingVertical: 3, borderRadius: 100 },
+  typeBadgeText: { fontSize: 9, fontFamily: "Inter_700Bold", color: "#fff", letterSpacing: 0.8 },
+  guardBadge: {
+    flexDirection: "row", alignItems: "center", gap: 4,
+    paddingHorizontal: 7, paddingVertical: 3, borderRadius: 100, borderWidth: 1,
+  },
+  guardBadgeText: { fontSize: 9, fontFamily: "Inter_700Bold", letterSpacing: 0.3 },
+  bizName: { fontSize: 15, fontFamily: "Inter_700Bold" },
+  createdBy: { fontSize: 12, fontFamily: "Inter_400Regular" },
+  createdByName: { fontFamily: "Inter_600SemiBold" },
+  uuid: { fontSize: 10, fontFamily: "Inter_400Regular" },
+  ownerActions: { alignItems: "flex-end", gap: 7, flexShrink: 0 },
+  actionBtn: {
+    flexDirection: "row", alignItems: "center", gap: 6,
+    borderRadius: 12, paddingHorizontal: 10, paddingVertical: 7,
+    borderWidth: 1, position: "relative",
+  },
+  actionBtnIcon: { width: 22, height: 22, borderRadius: 7, alignItems: "center", justifyContent: "center" },
+  actionBtnText: { fontSize: 12, fontFamily: "Inter_700Bold" },
+  unreadBadge: {
+    position: "absolute", top: -5, right: -5, minWidth: 16, height: 16,
+    borderRadius: 8, backgroundColor: "#EF4444",
+    alignItems: "center", justifyContent: "center", paddingHorizontal: 3,
+  },
+  unreadBadgeText: { fontSize: 10, fontFamily: "Inter_700Bold", color: "#fff" },
+  verifiedBadge: {
+    flexDirection: "row", alignItems: "center", gap: 5,
+    borderRadius: 12, paddingHorizontal: 10, paddingVertical: 7, borderWidth: 1,
+  },
+  verifiedText: { fontSize: 12, fontFamily: "Inter_700Bold", color: "#10B981" },
+});
