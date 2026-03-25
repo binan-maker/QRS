@@ -19,10 +19,9 @@ A full-stack mobile-first QR code scanning and management app built with Expo (R
 - **Haptic feedback wrapper** (`lib/haptics.ts`) — new wrapper module that re-exports `expo-haptics` functions but gates them on a module-level `_enabled` flag. All 33+ files that previously imported `expo-haptics` now import from `@/lib/haptics` so the toggle is respected app-wide.
 - **Haptic toggle in Settings** (`app/settings.tsx`, `features/settings/hooks/useSettings.ts`) — new "PREFERENCES" section in Settings page with a "Haptic Feedback" toggle switch. Preference is persisted to AsyncStorage (`haptic_enabled` key) and restored on app startup via `app/_layout.tsx`.
 
-### Sign-Out & Account Deletion Navigation Fix
-- `features/settings/hooks/useSettings.ts` — after sign-out or account deletion, app now navigates to `/(tabs)/scanner` so users see a clear confirmation that they are logged out. Error handling added for both flows.
-- `features/account/components/DeleteAccountModal.tsx` — same post-deletion navigation added.
-- `features/profile/hooks/useProfile.ts` — same post-sign-out navigation fix (applied in previous session).
+### Sign-Out & Account Deletion Navigation Fix + Responsive Tab Pages
+- **Redirect fixed** (4 locations) — After sign-out or account deletion, all four redirect calls now navigate to `/(tabs)/` (the Home tab) instead of the old incorrect `/(tabs)/scanner`. Files changed: `features/settings/hooks/useSettings.ts` (lines 69, 277), `features/account/components/DeleteAccountModal.tsx` (line 59), `features/profile/hooks/useProfile.ts` (line 204).
+- **Responsive Home, History, Profile, QR Generator pages** — All four main tab pages now import `useWindowDimensions`, compute `scale = clamp(width/390, 0.82, 1.15)`, and apply it via an `rf(fontSize)` helper inside their `makeStyles(colors, width)` functions. All font sizes (greeting, section titles, empty states, stat values, labels, badges, etc.) scale proportionally across small and large screens. The QR Generator was converted from a module-level static `const styles` to a dynamic `makeStyles()` function.
 
 ### Firestore Security Rules Fixes (`firestore.rules`)
 - `isValidWeight` range corrected to `0.04–2.1` to cover Tier 1's minimum weight of `0.05`.

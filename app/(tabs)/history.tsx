@@ -8,6 +8,7 @@ import {
   Platform,
   RefreshControl,
   ActivityIndicator,
+  useWindowDimensions,
 } from "react-native";
 import { router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
@@ -75,7 +76,8 @@ export default function HistoryScreen() {
   } = useHistory();
 
   const topInset = Platform.OS === "web" ? 67 : insets.top;
-  const styles = makeStyles(colors);
+  const { width } = useWindowDimensions();
+  const styles = makeStyles(colors, width);
 
   const activeFilters: { key: Filter; label: string }[] = user
     ? [...FILTERS, { key: "favorites" as Filter, label: "Favorites" }]
@@ -234,7 +236,9 @@ export default function HistoryScreen() {
   );
 }
 
-function makeStyles(c: ReturnType<typeof import("@/contexts/ThemeContext").useTheme>["colors"]) {
+function makeStyles(c: ReturnType<typeof import("@/contexts/ThemeContext").useTheme>["colors"], width: number) {
+  const s = Math.min(Math.max(width / 390, 0.82), 1.15);
+  const rf = (size: number) => Math.round(size * s);
   return StyleSheet.create({
     container: { flex: 1, backgroundColor: c.background },
     header: {
@@ -245,7 +249,7 @@ function makeStyles(c: ReturnType<typeof import("@/contexts/ThemeContext").useTh
       paddingTop: 10,
       paddingBottom: 8,
     },
-    title: { fontSize: 24, fontFamily: "Inter_700Bold", color: c.text },
+    title: { fontSize: rf(24), fontFamily: "Inter_700Bold", color: c.text },
     headerActions: { flexDirection: "row", gap: 8, alignItems: "center" },
     headerBtn: {
       width: 36, height: 36, borderRadius: 18,
@@ -266,7 +270,7 @@ function makeStyles(c: ReturnType<typeof import("@/contexts/ThemeContext").useTh
       height: 1,
     },
     dateHeaderText: {
-      fontSize: 10,
+      fontSize: rf(10),
       fontFamily: "Inter_700Bold",
       textTransform: "uppercase",
       letterSpacing: 1.2,
@@ -277,19 +281,19 @@ function makeStyles(c: ReturnType<typeof import("@/contexts/ThemeContext").useTh
       width: 72, height: 72, borderRadius: 36,
       backgroundColor: c.surface, alignItems: "center", justifyContent: "center", marginBottom: 4,
     },
-    emptyTitle: { fontSize: 17, fontFamily: "Inter_600SemiBold", color: c.textSecondary, textAlign: "center" },
-    emptySubtext: { fontSize: 13, fontFamily: "Inter_400Regular", color: c.textMuted, textAlign: "center", lineHeight: 19 },
+    emptyTitle: { fontSize: rf(17), fontFamily: "Inter_600SemiBold", color: c.textSecondary, textAlign: "center" },
+    emptySubtext: { fontSize: rf(13), fontFamily: "Inter_400Regular", color: c.textMuted, textAlign: "center", lineHeight: Math.round(19 * s) },
     footerLoader: { paddingVertical: 20, alignItems: "center" },
     signInBtn: {
       marginTop: 8, paddingHorizontal: 32, paddingVertical: 12,
       borderRadius: 12, alignItems: "center",
     },
-    signInBtnText: { fontSize: 15, fontFamily: "Inter_600SemiBold", color: "#000" },
+    signInBtnText: { fontSize: rf(15), fontFamily: "Inter_600SemiBold", color: "#000" },
     cloudErrorBanner: {
       flexDirection: "row", alignItems: "center", gap: 8,
       marginHorizontal: 16, marginBottom: 8, padding: 10,
       borderRadius: 10, borderWidth: 1,
     },
-    cloudErrorText: { fontSize: 13, fontFamily: "Inter_400Regular", flex: 1 },
+    cloudErrorText: { fontSize: rf(13), fontFamily: "Inter_400Regular", flex: 1 },
   });
 }

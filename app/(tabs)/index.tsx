@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet, Pressable, ScrollView, Platform, RefreshControl, Image } from "react-native";
+import { View, Text, StyleSheet, Pressable, ScrollView, Platform, RefreshControl, Image, useWindowDimensions } from "react-native";
 import { router } from "expo-router";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -21,7 +21,8 @@ export default function HomeScreen() {
   } = useHome();
 
   const topInset = Platform.OS === "web" ? 67 : insets.top;
-  const styles = makeStyles(colors);
+  const { width } = useWindowDimensions();
+  const styles = makeStyles(colors, width);
 
   function getFirstName(name: string) {
     return name ? name.trim().split(/\s+/)[0] : "";
@@ -308,15 +309,17 @@ export default function HomeScreen() {
   );
 }
 
-function makeStyles(c: ReturnType<typeof import("@/contexts/ThemeContext").useTheme>["colors"]) {
+function makeStyles(c: ReturnType<typeof import("@/contexts/ThemeContext").useTheme>["colors"], width: number) {
+  const s = Math.min(Math.max(width / 390, 0.82), 1.15);
+  const rf = (size: number) => Math.round(size * s);
   return StyleSheet.create({
     container: { flex: 1, backgroundColor: c.background },
     scrollContent: { paddingHorizontal: 18, paddingTop: 6 },
 
     header: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 22, gap: 8 },
     headerLeft: { flex: 1, minWidth: 0 },
-    greeting: { fontSize: 28, fontFamily: "Inter_700Bold", color: c.text, flexShrink: 1 },
-    tagline: { fontSize: 12, fontFamily: "Inter_400Regular", color: c.textMuted, marginTop: 2, letterSpacing: 0.3 },
+    greeting: { fontSize: rf(28), fontFamily: "Inter_700Bold", color: c.text, flexShrink: 1 },
+    tagline: { fontSize: rf(12), fontFamily: "Inter_400Regular", color: c.textMuted, marginTop: 2, letterSpacing: 0.3 },
     headerRight: { flexDirection: "row", alignItems: "center", gap: 10 },
 
     iconBtn: {
@@ -330,19 +333,19 @@ function makeStyles(c: ReturnType<typeof import("@/contexts/ThemeContext").useTh
       alignItems: "center", justifyContent: "center",
       paddingHorizontal: 3, borderWidth: 1.5, borderColor: c.background,
     },
-    notifDotText: { fontSize: 9, fontFamily: "Inter_700Bold", lineHeight: 14 },
+    notifDotText: { fontSize: rf(9), fontFamily: "Inter_700Bold", lineHeight: 14 },
 
     avatarRing: { width: 46, height: 46, borderRadius: 23 },
     avatarRingGradient: { width: 46, height: 46, borderRadius: 23, padding: 2, alignItems: "center", justifyContent: "center" },
     avatarInner: { width: 42, height: 42, borderRadius: 21, alignItems: "center", justifyContent: "center", overflow: "hidden" },
     avatarImg: { width: 42, height: 42, borderRadius: 21 },
-    avatarInitial: { fontSize: 17, fontFamily: "Inter_700Bold" },
+    avatarInitial: { fontSize: rf(17), fontFamily: "Inter_700Bold" },
 
     signInPill: {
       flexDirection: "row", alignItems: "center", gap: 5,
       paddingHorizontal: 13, paddingVertical: 9, borderRadius: 22, borderWidth: 1,
     },
-    signInPillText: { fontFamily: "Inter_600SemiBold", fontSize: 13 },
+    signInPillText: { fontFamily: "Inter_600SemiBold", fontSize: rf(13) },
 
     heroCard: { borderRadius: 24, overflow: "hidden", marginBottom: 18 },
     heroGradient: { borderRadius: 24, padding: 20 },
@@ -355,11 +358,11 @@ function makeStyles(c: ReturnType<typeof import("@/contexts/ThemeContext").useTh
       alignItems: "center", justifyContent: "center", flexShrink: 0,
     },
     heroIconBg: { width: 76, height: 76, borderRadius: 22, alignItems: "center", justifyContent: "center" },
-    heroTitle: { fontSize: 20, fontFamily: "Inter_700Bold", marginBottom: 5 },
-    heroSub: { fontSize: 12, fontFamily: "Inter_400Regular", marginBottom: 12, lineHeight: 17 },
+    heroTitle: { fontSize: rf(20), fontFamily: "Inter_700Bold", marginBottom: 5 },
+    heroSub: { fontSize: rf(12), fontFamily: "Inter_400Regular", marginBottom: 12, lineHeight: Math.round(17 * s) },
     heroPillRow: { flexDirection: "row", gap: 6, flexWrap: "wrap" },
     heroPill: { paddingHorizontal: 8, paddingVertical: 3, borderRadius: 100, borderWidth: 1 },
-    heroPillText: { fontSize: 10, fontFamily: "Inter_600SemiBold", letterSpacing: 0.2 },
+    heroPillText: { fontSize: rf(10), fontFamily: "Inter_600SemiBold", letterSpacing: 0.2 },
     heroArrow: {
       position: "absolute", bottom: 18, right: 18,
       width: 40, height: 40, borderRadius: 20,
@@ -375,30 +378,30 @@ function makeStyles(c: ReturnType<typeof import("@/contexts/ThemeContext").useTh
       position: "absolute", top: 0, left: 0, right: 0, height: 40,
     },
     statIconWrap: { width: 40, height: 40, borderRadius: 13, alignItems: "center", justifyContent: "center" },
-    statLabel: { fontSize: 11, fontFamily: "Inter_700Bold", textAlign: "center" },
-    statDesc: { fontSize: 9, fontFamily: "Inter_600SemiBold", textAlign: "center", letterSpacing: 0.2 },
+    statLabel: { fontSize: rf(11), fontFamily: "Inter_700Bold", textAlign: "center" },
+    statDesc: { fontSize: rf(9), fontFamily: "Inter_600SemiBold", textAlign: "center", letterSpacing: 0.2 },
 
     promoBanner: { borderRadius: 20, overflow: "hidden", marginBottom: 22 },
     promoGradient: { borderRadius: 20, borderWidth: 1, flexDirection: "row", alignItems: "center", gap: 12, padding: 16 },
     promoIconWrap: { width: 42, height: 42, borderRadius: 13, alignItems: "center", justifyContent: "center" },
-    promoTitle: { fontSize: 14, fontFamily: "Inter_700Bold", marginBottom: 3 },
-    promoSub: { fontSize: 12, fontFamily: "Inter_400Regular", lineHeight: 16 },
+    promoTitle: { fontSize: rf(14), fontFamily: "Inter_700Bold", marginBottom: 3 },
+    promoSub: { fontSize: rf(12), fontFamily: "Inter_400Regular", lineHeight: Math.round(16 * s) },
     promoArrow: { width: 30, height: 30, borderRadius: 10, alignItems: "center", justifyContent: "center" },
 
     sectionHeader: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 14 },
     sectionTitleRow: { flexDirection: "row", alignItems: "center", gap: 8 },
     sectionDot: { width: 10, height: 10, borderRadius: 5 },
-    sectionTitle: { fontSize: 16, fontFamily: "Inter_700Bold" },
+    sectionTitle: { fontSize: rf(16), fontFamily: "Inter_700Bold" },
     seeAllBtn: { flexDirection: "row", alignItems: "center", gap: 4, paddingHorizontal: 11, paddingVertical: 6, borderRadius: 12 },
-    seeAllText: { fontSize: 12, fontFamily: "Inter_600SemiBold" },
+    seeAllText: { fontSize: rf(12), fontFamily: "Inter_600SemiBold" },
 
     emptyWrap: {
       alignItems: "center", paddingVertical: 40, gap: 10,
       borderRadius: 20, borderWidth: 1,
     },
     emptyIconBox: { width: 70, height: 70, borderRadius: 18, alignItems: "center", justifyContent: "center", marginBottom: 4 },
-    emptyTitle: { fontSize: 15, fontFamily: "Inter_600SemiBold" },
-    emptySub: { fontSize: 13, fontFamily: "Inter_400Regular" },
+    emptyTitle: { fontSize: rf(15), fontFamily: "Inter_600SemiBold" },
+    emptySub: { fontSize: rf(13), fontFamily: "Inter_400Regular" },
 
     recentList: { gap: 8 },
     scanItem: {
@@ -409,11 +412,11 @@ function makeStyles(c: ReturnType<typeof import("@/contexts/ThemeContext").useTh
     scanAccent: { width: 3, alignSelf: "stretch", borderTopRightRadius: 3, borderBottomRightRadius: 3, marginRight: 13 },
     scanIconBox: { width: 40, height: 40, borderRadius: 13, alignItems: "center", justifyContent: "center", marginRight: 12, flexShrink: 0 },
     scanBody: { flex: 1, minWidth: 0, gap: 5 },
-    scanContent: { fontSize: 13.5, fontFamily: "Inter_500Medium", lineHeight: 18 },
+    scanContent: { fontSize: rf(13.5), fontFamily: "Inter_500Medium", lineHeight: Math.round(18 * s) },
     scanMeta: { flexDirection: "row", alignItems: "center", gap: 7 },
     scanBadge: { paddingHorizontal: 7, paddingVertical: 2, borderRadius: 100, borderWidth: 1 },
-    scanBadgeText: { fontSize: 10, fontFamily: "Inter_700Bold", letterSpacing: 0.2 },
-    scanTime: { fontSize: 10, fontFamily: "Inter_400Regular" },
+    scanBadgeText: { fontSize: rf(10), fontFamily: "Inter_700Bold", letterSpacing: 0.2 },
+    scanTime: { fontSize: rf(10), fontFamily: "Inter_400Regular" },
     scanChevron: { width: 26, height: 26, borderRadius: 8, alignItems: "center", justifyContent: "center", marginLeft: 8 },
   });
 }

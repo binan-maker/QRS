@@ -198,7 +198,7 @@ export function useProfile() {
           try {
             await signOut();
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-            router.replace("/(tabs)/scanner" as any);
+            router.replace("/(tabs)/" as any);
           } catch (e: any) {
             Alert.alert("Sign Out Failed", e?.message || "Could not sign out. Please try again.");
           }

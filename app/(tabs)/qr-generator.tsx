@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { View, Text, StyleSheet, Pressable, ScrollView, Platform, Animated } from "react-native";
+import { View, Text, StyleSheet, Pressable, ScrollView, Platform, Animated, useWindowDimensions } from "react-native";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Reanimated, { FadeIn, FadeInDown } from "react-native-reanimated";
@@ -19,6 +19,7 @@ export default function QrGeneratorScreen() {
   const { colors } = useTheme();
   const topInset = Platform.OS === "web" ? 67 : insets.top;
   const tabBarHeight = 62 + insets.bottom + 8;
+  const { width } = useWindowDimensions();
 
   const [qrSize, setQrSize] = useState(220);
 
@@ -40,6 +41,8 @@ export default function QrGeneratorScreen() {
     handleCopy, handleShare, handleDownloadPdf, handleClear,
     filterByKeyboardType, sharingQr, downloadingPdf,
   } = useQrGenerator();
+
+  const styles = makeStyles(colors, width);
 
   function getLogoPositionLabel() {
     return LOGO_POSITIONS.find((p) => p.key === logoPosition)?.label || "Center";
@@ -209,43 +212,47 @@ export default function QrGeneratorScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1 },
-  navBar: {
-    flexDirection: "row", alignItems: "flex-start", justifyContent: "space-between",
-    paddingHorizontal: 22, paddingVertical: 14, paddingBottom: 8,
-  },
-  navTitle: { fontSize: 26, fontFamily: "Inter_700Bold" },
-  navSubtitle: { fontSize: 13, fontFamily: "Inter_400Regular", marginTop: 2 },
-  infoBtn: {
-    width: 42, height: 42, borderRadius: 21,
-    borderWidth: 1, alignItems: "center", justifyContent: "center",
-    marginTop: 4,
-  },
-  scrollContent: { paddingHorizontal: 20, paddingTop: 8 },
-  generateBtnWrap: { marginBottom: 24 },
-  generateBtn: {
-    flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 10,
-    paddingVertical: 17, borderRadius: 20,
-  },
-  generateBtnText: { fontSize: 17, fontFamily: "Inter_700Bold", color: "#fff" },
-  emptyQr: {
-    borderRadius: 24, borderWidth: 1, padding: 44,
-    alignItems: "center", gap: 14, marginBottom: 20,
-  },
-  emptyQrIconWrap: {
-    width: 100, height: 100, borderRadius: 28,
-    alignItems: "center", justifyContent: "center",
-  },
-  emptyQrText: { fontSize: 16, fontFamily: "Inter_700Bold", textAlign: "center" },
-  emptyQrSub: { fontSize: 13, fontFamily: "Inter_400Regular", textAlign: "center" },
-  toast: {
-    position: "absolute", bottom: 110, left: 20, right: 20, borderRadius: 18,
-    flexDirection: "row", alignItems: "center", gap: 10,
-    paddingHorizontal: 16, paddingVertical: 14,
-    borderWidth: 1,
-    shadowColor: "#000", shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.15, shadowRadius: 12, elevation: 10,
-  },
-  toastIconWrap: { width: 32, height: 32, borderRadius: 16, alignItems: "center", justifyContent: "center" },
-  toastText: { fontSize: 14, fontFamily: "Inter_600SemiBold", flex: 1 },
-});
+function makeStyles(_c: unknown, width: number) {
+  const s = Math.min(Math.max(width / 390, 0.82), 1.15);
+  const rf = (size: number) => Math.round(size * s);
+  return StyleSheet.create({
+    container: { flex: 1 },
+    navBar: {
+      flexDirection: "row", alignItems: "flex-start", justifyContent: "space-between",
+      paddingHorizontal: 22, paddingVertical: 14, paddingBottom: 8,
+    },
+    navTitle: { fontSize: rf(26), fontFamily: "Inter_700Bold" },
+    navSubtitle: { fontSize: rf(13), fontFamily: "Inter_400Regular", marginTop: 2 },
+    infoBtn: {
+      width: 42, height: 42, borderRadius: 21,
+      borderWidth: 1, alignItems: "center", justifyContent: "center",
+      marginTop: 4,
+    },
+    scrollContent: { paddingHorizontal: 20, paddingTop: 8 },
+    generateBtnWrap: { marginBottom: 24 },
+    generateBtn: {
+      flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 10,
+      paddingVertical: 17, borderRadius: 20,
+    },
+    generateBtnText: { fontSize: rf(17), fontFamily: "Inter_700Bold", color: "#fff" },
+    emptyQr: {
+      borderRadius: 24, borderWidth: 1, padding: 44,
+      alignItems: "center", gap: 14, marginBottom: 20,
+    },
+    emptyQrIconWrap: {
+      width: 100, height: 100, borderRadius: 28,
+      alignItems: "center", justifyContent: "center",
+    },
+    emptyQrText: { fontSize: rf(16), fontFamily: "Inter_700Bold", textAlign: "center" },
+    emptyQrSub: { fontSize: rf(13), fontFamily: "Inter_400Regular", textAlign: "center" },
+    toast: {
+      position: "absolute", bottom: 110, left: 20, right: 20, borderRadius: 18,
+      flexDirection: "row", alignItems: "center", gap: 10,
+      paddingHorizontal: 16, paddingVertical: 14,
+      borderWidth: 1,
+      shadowColor: "#000", shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.15, shadowRadius: 12, elevation: 10,
+    },
+    toastIconWrap: { width: 32, height: 32, borderRadius: 16, alignItems: "center", justifyContent: "center" },
+    toastText: { fontSize: rf(14), fontFamily: "Inter_600SemiBold", flex: 1 },
+  });
+}

@@ -53,7 +53,7 @@ export default function DeleteAccountModal({ visible, onClose }: DeleteAccountMo
       await signOut();
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       handleClose();
-      router.replace("/(tabs)/scanner" as any);
+      router.replace("/(tabs)/" as any);
     } catch (e: any) {
       if (e.code === "auth/requires-recent-login") {
         setStep(2);

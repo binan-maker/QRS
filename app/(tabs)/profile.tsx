@@ -9,6 +9,7 @@ import {
   TextInput,
   ActivityIndicator,
   Image,
+  useWindowDimensions,
 } from "react-native";
 import { router } from "expo-router";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
@@ -41,7 +42,8 @@ export default function ProfileScreen() {
 
   const topInset = Platform.OS === "web" ? 67 : insets.top;
   const tabBarHeight = 60 + insets.bottom;
-  const styles = makeStyles(colors);
+  const { width } = useWindowDimensions();
+  const styles = makeStyles(colors, width);
 
   if (!user) {
     return (
@@ -408,7 +410,9 @@ export default function ProfileScreen() {
   );
 }
 
-function makeStyles(c: ReturnType<typeof import("@/contexts/ThemeContext").useTheme>["colors"]) {
+function makeStyles(c: ReturnType<typeof import("@/contexts/ThemeContext").useTheme>["colors"], width: number) {
+  const s = Math.min(Math.max(width / 390, 0.82), 1.15);
+  const rf = (size: number) => Math.round(size * s);
   return StyleSheet.create({
     container: { flex: 1, backgroundColor: c.background },
     scrollContent: { paddingHorizontal: 18, paddingTop: 0 },
@@ -419,15 +423,15 @@ function makeStyles(c: ReturnType<typeof import("@/contexts/ThemeContext").useTh
       width: 100, height: 100, borderRadius: 50,
       alignItems: "center", justifyContent: "center", marginBottom: 4,
     },
-    guestTitle: { fontSize: 22, fontFamily: "Inter_700Bold", textAlign: "center" },
-    guestSub: { fontSize: 14, fontFamily: "Inter_400Regular", textAlign: "center", lineHeight: 20 },
+    guestTitle: { fontSize: rf(22), fontFamily: "Inter_700Bold", textAlign: "center" },
+    guestSub: { fontSize: rf(14), fontFamily: "Inter_400Regular", textAlign: "center", lineHeight: Math.round(20 * s) },
     guestSignInBtn: {
       flexDirection: "row", alignItems: "center", gap: 8,
       paddingVertical: 15, paddingHorizontal: 40, borderRadius: 18, marginTop: 8, width: "100%", justifyContent: "center",
     },
-    guestSignInText: { fontSize: 16, fontFamily: "Inter_700Bold" },
+    guestSignInText: { fontSize: rf(16), fontFamily: "Inter_700Bold" },
     guestRegBtn: { paddingVertical: 12, paddingHorizontal: 24 },
-    guestRegText: { fontSize: 14, fontFamily: "Inter_600SemiBold" },
+    guestRegText: { fontSize: rf(14), fontFamily: "Inter_600SemiBold" },
 
     heroBanner: {
       borderRadius: 24, overflow: "hidden",
@@ -454,7 +458,7 @@ function makeStyles(c: ReturnType<typeof import("@/contexts/ThemeContext").useTh
       alignItems: "center", justifyContent: "center", overflow: "hidden",
     },
     avatarPhoto: { width: 85, height: 85, borderRadius: 42.5 },
-    avatarInitials: { fontSize: 32, fontFamily: "Inter_700Bold" },
+    avatarInitials: { fontSize: rf(32), fontFamily: "Inter_700Bold" },
     cameraBtn: {
       position: "absolute", bottom: 2, right: 2,
       width: 26, height: 26, borderRadius: 13,
@@ -463,18 +467,18 @@ function makeStyles(c: ReturnType<typeof import("@/contexts/ThemeContext").useTh
     },
 
     nameRow: { flexDirection: "row", alignItems: "center", gap: 8 },
-    displayName: { fontSize: 22, fontFamily: "Inter_700Bold", flexShrink: 1 },
+    displayName: { fontSize: rf(22), fontFamily: "Inter_700Bold", flexShrink: 1 },
     editPencil: { width: 26, height: 26, borderRadius: 8, alignItems: "center", justifyContent: "center" },
-    usernameText: { fontSize: 13, fontFamily: "Inter_500Medium" },
-    emailText: { fontSize: 12, fontFamily: "Inter_400Regular" },
+    usernameText: { fontSize: rf(13), fontFamily: "Inter_500Medium" },
+    emailText: { fontSize: rf(12), fontFamily: "Inter_400Regular" },
     editNameRow: { flexDirection: "row", alignItems: "center", gap: 8 },
     nameInput: {
-      flex: 1, fontSize: 15, fontFamily: "Inter_600SemiBold",
+      flex: 1, fontSize: rf(15), fontFamily: "Inter_600SemiBold",
       borderRadius: 12, paddingHorizontal: 12, paddingVertical: 9,
       borderWidth: 1,
     },
     saveBtn: { paddingHorizontal: 14, paddingVertical: 9, borderRadius: 12, flexShrink: 0 },
-    saveBtnText: { fontSize: 13, fontFamily: "Inter_700Bold" },
+    saveBtnText: { fontSize: rf(13), fontFamily: "Inter_700Bold" },
     cancelBtn: { padding: 6 },
 
     statsRow: { flexDirection: "row", gap: 10, marginBottom: 14 },
@@ -484,8 +488,8 @@ function makeStyles(c: ReturnType<typeof import("@/contexts/ThemeContext").useTh
     },
     statGlow: { position: "absolute", top: 0, left: 0, right: 0, height: 38 },
     statIconWrap: { width: 32, height: 32, borderRadius: 10, alignItems: "center", justifyContent: "center" },
-    statValue: { fontSize: 22, fontFamily: "Inter_700Bold" },
-    statLabel: { fontSize: 10, fontFamily: "Inter_400Regular", textAlign: "center" },
+    statValue: { fontSize: rf(22), fontFamily: "Inter_700Bold" },
+    statLabel: { fontSize: rf(10), fontFamily: "Inter_400Regular", textAlign: "center" },
 
     likesCard: {
       flexDirection: "row", alignItems: "center", gap: 14,
@@ -494,12 +498,12 @@ function makeStyles(c: ReturnType<typeof import("@/contexts/ThemeContext").useTh
     },
     likesGlow: { position: "absolute", top: 0, left: 0, bottom: 0, width: 80 },
     likesIconWrap: { width: 44, height: 44, borderRadius: 14, alignItems: "center", justifyContent: "center" },
-    likesTitle: { fontSize: 14, fontFamily: "Inter_600SemiBold" },
-    likesSub: { fontSize: 12, fontFamily: "Inter_400Regular", marginTop: 1 },
-    likesValue: { fontSize: 28, fontFamily: "Inter_700Bold" },
+    likesTitle: { fontSize: rf(14), fontFamily: "Inter_600SemiBold" },
+    likesSub: { fontSize: rf(12), fontFamily: "Inter_400Regular", marginTop: 1 },
+    likesValue: { fontSize: rf(28), fontFamily: "Inter_700Bold" },
 
     sectionLabel: {
-      fontSize: 10, fontFamily: "Inter_700Bold",
+      fontSize: rf(10), fontFamily: "Inter_700Bold",
       textTransform: "uppercase", letterSpacing: 1.4,
       marginBottom: 10, marginTop: 2,
     },
@@ -509,25 +513,25 @@ function makeStyles(c: ReturnType<typeof import("@/contexts/ThemeContext").useTh
       borderRadius: 18, padding: 16, borderWidth: 1,
     },
     linkIcon: { width: 44, height: 44, borderRadius: 14, alignItems: "center", justifyContent: "center" },
-    linkTitle: { fontSize: 14, fontFamily: "Inter_600SemiBold" },
-    linkSub: { fontSize: 12, fontFamily: "Inter_400Regular", marginTop: 1 },
+    linkTitle: { fontSize: rf(14), fontFamily: "Inter_600SemiBold" },
+    linkSub: { fontSize: rf(12), fontFamily: "Inter_400Regular", marginTop: 1 },
     linkChevron: { width: 30, height: 30, borderRadius: 10, alignItems: "center", justifyContent: "center" },
 
     infoCard: { borderRadius: 18, borderWidth: 1, marginBottom: 22, overflow: "hidden" },
     infoRow: { flexDirection: "row", alignItems: "center", gap: 14, padding: 16 },
     infoIconWrap: { width: 38, height: 38, borderRadius: 12, alignItems: "center", justifyContent: "center" },
-    infoLabel: { fontSize: 11, fontFamily: "Inter_400Regular", marginBottom: 2 },
-    infoValue: { fontSize: 14, fontFamily: "Inter_500Medium" },
+    infoLabel: { fontSize: rf(11), fontFamily: "Inter_400Regular", marginBottom: 2 },
+    infoValue: { fontSize: rf(14), fontFamily: "Inter_500Medium" },
     infoEditBtn: { width: 32, height: 32, borderRadius: 10, alignItems: "center", justifyContent: "center" },
     infoDivider: { height: 1 },
     verifiedChip: { flexDirection: "row", alignItems: "center", gap: 4, paddingHorizontal: 8, paddingVertical: 4, borderRadius: 100 },
-    verifiedText: { fontSize: 11, fontFamily: "Inter_600SemiBold" },
+    verifiedText: { fontSize: rf(11), fontFamily: "Inter_600SemiBold" },
 
     signOutBtn: { borderRadius: 18, borderWidth: 1, overflow: "hidden", marginBottom: 8 },
     signOutGradient: {
       flexDirection: "row", alignItems: "center", justifyContent: "center",
       gap: 8, paddingVertical: 16,
     },
-    signOutText: { fontSize: 15, fontFamily: "Inter_600SemiBold" },
+    signOutText: { fontSize: rf(15), fontFamily: "Inter_600SemiBold" },
   });
 }

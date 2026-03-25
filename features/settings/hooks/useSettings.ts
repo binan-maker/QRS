@@ -63,7 +63,7 @@ export function useSettings() {
           try {
             await signOut();
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-            router.replace("/(tabs)/scanner" as any);
+            router.replace("/(tabs)/" as any);
           } catch (e: any) {
             Alert.alert("Sign Out Failed", e?.message || "Could not sign out. Please try again.");
           }
@@ -271,7 +271,7 @@ export function useSettings() {
               }
               await signOut();
               Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-              router.replace("/(tabs)/scanner" as any);
+              router.replace("/(tabs)/" as any);
             } catch (e: any) {
               console.error("[DeleteAccount] Error:", e?.message, e?.code);
               if (e?.code === "auth/requires-recent-login") {
