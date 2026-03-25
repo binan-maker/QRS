@@ -5,6 +5,7 @@ import type { UserStats, UsernameData } from "./types";
 export type { UserStats, UsernameData };
 
 export interface PrivacySettings {
+  isPrivate: boolean;
   showQrCodes: boolean;
   showStats: boolean;
   showActivity: boolean;
@@ -28,6 +29,7 @@ export interface PublicProfile {
 }
 
 const DEFAULT_PRIVACY: PrivacySettings = {
+  isPrivate: false,
   showQrCodes: true,
   showStats: true,
   showActivity: true,
@@ -132,6 +134,7 @@ export async function getPublicProfile(username: string): Promise<PublicProfile 
     ]);
     if (!userDoc) return null;
     const privacy: PrivacySettings = {
+      isPrivate: userDoc.privacyIsPrivate === true,
       showQrCodes: userDoc.privacyShowQrCodes !== false,
       showStats: userDoc.privacyShowStats !== false,
       showActivity: userDoc.privacyShowActivity !== false,
@@ -182,6 +185,7 @@ export async function getPublicQrCodes(userId: string): Promise<any[]> {
 
 export async function updatePrivacySettings(userId: string, settings: PrivacySettings): Promise<void> {
   await db.update(["users", userId], {
+    privacyIsPrivate: settings.isPrivate,
     privacyShowQrCodes: settings.showQrCodes,
     privacyShowStats: settings.showStats,
     privacyShowActivity: settings.showActivity,
@@ -197,6 +201,7 @@ export async function getPrivacySettings(userId: string): Promise<PrivacySetting
     const doc = await db.get(["users", userId]);
     if (!doc) return DEFAULT_PRIVACY;
     return {
+      isPrivate: doc.privacyIsPrivate === true,
       showQrCodes: doc.privacyShowQrCodes !== false,
       showStats: doc.privacyShowStats !== false,
       showActivity: doc.privacyShowActivity !== false,

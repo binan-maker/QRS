@@ -54,7 +54,7 @@ export default function ProfileScreen() {
   const [newBio, setNewBio] = useState("");
   const [savingBio, setSavingBio] = useState(false);
 
-  const [privacy, setPrivacy] = useState<PrivacySettings>({ showQrCodes: true, showStats: true, showActivity: true });
+  const [privacy, setPrivacy] = useState<PrivacySettings>({ isPrivate: false, showQrCodes: true, showStats: true, showActivity: true });
   const [savingPrivacy, setSavingPrivacy] = useState(false);
 
   const topInset = Platform.OS === "web" ? 67 : insets.top;
@@ -437,13 +437,35 @@ export default function ProfileScreen() {
               {savingPrivacy && <ActivityIndicator size="small" color={colors.primary} />}
             </View>
 
+            {/* Private Profile toggle — shown at the top, separate */}
+            <View style={[styles.privacyRow, { backgroundColor: privacy.isPrivate ? colors.dangerDim : "transparent", borderRadius: 12 }]}>
+              <View style={[styles.privacyRowIcon, { backgroundColor: (privacy.isPrivate ? colors.danger : colors.textMuted) + "20" }]}>
+                <Ionicons name={privacy.isPrivate ? "lock-closed" : "lock-open-outline"} size={16} color={privacy.isPrivate ? colors.danger : colors.textMuted} />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={[styles.privacyRowLabel, { color: privacy.isPrivate ? colors.danger : colors.text }]}>Private Profile</Text>
+                <Text style={[styles.privacyRowSub, { color: colors.textMuted }]}>
+                  {privacy.isPrivate ? "Your profile is hidden from everyone" : "Your profile is visible to everyone"}
+                </Text>
+              </View>
+              <Switch
+                value={privacy.isPrivate}
+                onValueChange={(v) => handlePrivacyToggle("isPrivate", v)}
+                trackColor={{ false: colors.surfaceLight, true: colors.danger + "80" }}
+                thumbColor={privacy.isPrivate ? colors.danger : colors.textMuted}
+                ios_backgroundColor={colors.surfaceLight}
+              />
+            </View>
+
+            <View style={[styles.privacyDivider, { backgroundColor: colors.surfaceBorder }]} />
+
             {([
               { key: "showQrCodes" as const, label: "QR Codes", sub: "Show your public QR codes", icon: "qr-code-outline" as const, color: colors.primary },
-              { key: "showStats" as const, label: "Stats", sub: "Show scans, likes & activity counts", icon: "bar-chart-outline" as const, color: colors.accent },
+              { key: "showStats" as const, label: "Stats & Scans", sub: "Show scan counts, likes & reports", icon: "bar-chart-outline" as const, color: colors.accent },
               { key: "showActivity" as const, label: "Activity", sub: "Show your community contributions", icon: "pulse-outline" as const, color: colors.safe },
             ]).map((item, idx, arr) => (
               <React.Fragment key={item.key}>
-                <View style={styles.privacyRow}>
+                <View style={[styles.privacyRow, { opacity: privacy.isPrivate ? 0.45 : 1 }]}>
                   <View style={[styles.privacyRowIcon, { backgroundColor: item.color + "18" }]}>
                     <Ionicons name={item.icon} size={16} color={item.color} />
                   </View>
@@ -454,6 +476,7 @@ export default function ProfileScreen() {
                   <Switch
                     value={privacy[item.key]}
                     onValueChange={(v) => handlePrivacyToggle(item.key, v)}
+                    disabled={privacy.isPrivate}
                     trackColor={{ false: colors.surfaceLight, true: colors.primary + "80" }}
                     thumbColor={privacy[item.key] ? colors.primary : colors.textMuted}
                     ios_backgroundColor={colors.surfaceLight}
