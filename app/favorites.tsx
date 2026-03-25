@@ -62,7 +62,7 @@ function getTypeConfig(type: string) {
 }
 
 export default function FavoritesScreen() {
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
   const { user } = useAuth();
   const insets = useSafeAreaInsets();
   const topInset = Platform.OS === "web" ? 67 : insets.top;
@@ -105,20 +105,35 @@ export default function FavoritesScreen() {
           ]}
         >
           <LinearGradient
-            colors={cfg.gradient as [string, string]}
+            colors={[cfg.gradient[0] + (isDark ? "14" : "09"), "transparent"]}
+            start={{ x: 0, y: 0.5 }}
+            end={{ x: 1, y: 0.5 }}
+            style={StyleSheet.absoluteFill}
+          />
+
+          <LinearGradient
+            colors={cfg.gradient}
             style={styles.iconBox}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
           >
-            <Ionicons name={cfg.icon as any} size={22} color="#fff" />
+            <Ionicons name={cfg.icon as any} size={24} color="#fff" />
           </LinearGradient>
 
           <View style={styles.cardInfo}>
             <View style={styles.cardTopRow}>
-              <View style={[styles.typePill, { backgroundColor: cfg.gradient[0] + "18", borderColor: cfg.gradient[0] + "35" }]}>
-                <Text style={[styles.typePillText, { color: cfg.gradient[0] }]}>{cfg.label}</Text>
+              <LinearGradient
+                colors={cfg.gradient}
+                style={styles.typePill}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 0 }}
+              >
+                <Text style={styles.typePillText}>{cfg.label}</Text>
+              </LinearGradient>
+              <View style={styles.heartBadge}>
+                <Ionicons name="heart" size={10} color="#FF4D6A" />
+                <Text style={styles.heartBadgeText}>Saved</Text>
               </View>
-              <Ionicons name="heart" size={12} color={colors.danger} />
             </View>
             <Text style={[styles.contentText, { color: colors.text }]} numberOfLines={2}>
               {item.content.length > 65 ? item.content.slice(0, 65) + "…" : item.content}
@@ -126,9 +141,14 @@ export default function FavoritesScreen() {
             <Text style={[styles.dateText, { color: colors.textMuted }]}>{formatDate(item.createdAt)}</Text>
           </View>
 
-          <View style={[styles.chevronWrap, { backgroundColor: colors.surfaceLight }]}>
-            <Ionicons name="chevron-forward" size={14} color={colors.textMuted} />
-          </View>
+          <LinearGradient
+            colors={cfg.gradient}
+            style={styles.chevronWrap}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+          >
+            <Ionicons name="chevron-forward" size={14} color="#fff" />
+          </LinearGradient>
         </Pressable>
       </Animated.View>
     );
@@ -157,7 +177,7 @@ export default function FavoritesScreen() {
           <Text style={[styles.emptyTitle, { color: colors.text }]}>Sign in required</Text>
           <Text style={[styles.emptySub, { color: colors.textSecondary }]}>Sign in to view your favorited QR codes</Text>
           <Pressable onPress={() => router.push("/(auth)/login")} style={({ pressed }) => [{ opacity: pressed ? 0.85 : 1 }]}>
-            <LinearGradient colors={colors.isDark ? ["#00E5FF", "#006FFF"] : ["#006FFF", "#0047CC"]} style={styles.signInBtn} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}>
+            <LinearGradient colors={isDark ? ["#00E5FF", "#006FFF"] : ["#006FFF", "#0047CC"]} style={styles.signInBtn} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}>
               <Text style={styles.signInBtnText}>Sign In</Text>
             </LinearGradient>
           </Pressable>
@@ -219,18 +239,21 @@ const styles = StyleSheet.create({
   card: {
     flexDirection: "row", alignItems: "center", gap: 14,
     borderRadius: 20, borderWidth: 1, padding: 16, marginBottom: 12,
+    overflow: "hidden",
   },
   iconBox: {
-    width: 52, height: 52, borderRadius: 16,
+    width: 56, height: 56, borderRadius: 18,
     alignItems: "center", justifyContent: "center", flexShrink: 0,
   },
-  cardInfo: { flex: 1, minWidth: 0, gap: 5 },
+  cardInfo: { flex: 1, minWidth: 0, gap: 6 },
   cardTopRow: { flexDirection: "row", alignItems: "center", gap: 7 },
-  typePill: { borderRadius: 8, paddingHorizontal: 7, paddingVertical: 3, borderWidth: 1 },
-  typePillText: { fontSize: 10, fontFamily: "Inter_700Bold", letterSpacing: 0.5 },
-  contentText: { fontSize: 14, fontFamily: "Inter_400Regular", lineHeight: 19 },
+  typePill: { borderRadius: 100, paddingHorizontal: 8, paddingVertical: 3 },
+  typePillText: { fontSize: 10, fontFamily: "Inter_700Bold", letterSpacing: 0.5, color: "#fff" },
+  heartBadge: { flexDirection: "row", alignItems: "center", gap: 3 },
+  heartBadgeText: { fontSize: 10, fontFamily: "Inter_600SemiBold", color: "#FF4D6A" },
+  contentText: { fontSize: 14, fontFamily: "Inter_500Medium", lineHeight: 20 },
   dateText: { fontSize: 11, fontFamily: "Inter_400Regular" },
-  chevronWrap: { width: 28, height: 28, borderRadius: 14, alignItems: "center", justifyContent: "center" },
+  chevronWrap: { width: 30, height: 30, borderRadius: 10, alignItems: "center", justifyContent: "center", flexShrink: 0 },
   center: { flex: 1, alignItems: "center", justifyContent: "center", padding: 40, gap: 16 },
   emptyIconCircle: { width: 88, height: 88, borderRadius: 44, alignItems: "center", justifyContent: "center", marginBottom: 4 },
   emptyTitle: { fontSize: 20, fontFamily: "Inter_700Bold", textAlign: "center" },

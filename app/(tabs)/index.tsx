@@ -235,18 +235,20 @@ export default function HomeScreen() {
                 {recentScans.map((scan, idx) => {
                   const contentType = detectContentType(scan.content);
                   const icon = getContentTypeIcon(contentType) as any;
-                  const paymentName = contentType === "payment"
-                ? extractPaymentName(scan.content)
-                : null;
-                const paymentAmount = contentType === "payment"
-                ? extractPaymentAmount(scan.content)
-                : null;
-                  const accentMap: Record<string, string> = {
-                    url: colors.primary, payment: colors.accent,
-                    wifi: colors.safe, phone: colors.safe,
-                    email: colors.warning, location: colors.danger,
+                  const paymentName = contentType === "payment" ? extractPaymentName(scan.content) : null;
+                  const paymentAmount = contentType === "payment" ? extractPaymentAmount(scan.content) : null;
+                  const gradientMap: Record<string, [string, string]> = {
+                    url:      ["#006FFF", "#00CFFF"],
+                    payment:  ["#F59E0B", "#F97316"],
+                    wifi:     ["#3B82F6", "#6366F1"],
+                    phone:    ["#10B981", "#06B6D4"],
+                    email:    ["#8B5CF6", "#EC4899"],
+                    location: ["#EF4444", "#F97316"],
+                    contact:  ["#10B981", "#3B82F6"],
+                    sms:      ["#06B6D4", "#3B82F6"],
                   };
-                  const accent = accentMap[contentType] ?? colors.primary;
+                  const gradient: [string, string] = gradientMap[contentType] ?? ["#006FFF", "#6366F1"];
+                  const label = contentType.charAt(0).toUpperCase() + contentType.slice(1);
                   return (
                     <Animated.View
                       key={scan.id}
@@ -269,47 +271,62 @@ export default function HomeScreen() {
                           },
                         ]}
                       >
-                        <View style={[styles.scanAccent, { backgroundColor: accent }]} />
-                        <View style={[styles.scanIconBox, { backgroundColor: accent + "1A" }]}>
-                          <Ionicons name={icon} size={17} color={accent} />
-                        </View>
+                        <LinearGradient
+                          colors={[gradient[0] + (isDark ? "14" : "09"), "transparent"]}
+                          start={{ x: 0, y: 0.5 }}
+                          end={{ x: 1, y: 0.5 }}
+                          style={StyleSheet.absoluteFill}
+                        />
+                        <LinearGradient
+                          colors={gradient}
+                          style={styles.scanIconBox}
+                          start={{ x: 0, y: 0 }}
+                          end={{ x: 1, y: 1 }}
+                        >
+                          <Ionicons name={icon} size={18} color="#fff" />
+                        </LinearGradient>
                         <View style={styles.scanBody}>
-  <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
-  <Text 
-    style={[styles.scanContent, { color: colors.text, flex: 1 }]} 
-    numberOfLines={1}
-  >
-    {paymentName ? paymentName : truncate(scan.content, 38)}
-  </Text>
-
-  {paymentAmount && (
-    <Text style={{ color: colors.primary, fontSize: 13, fontWeight: "600" }}>
-      {paymentAmount}
-    </Text>
-  )}
-</View>
-
-  {paymentName && (
-    <Text style={{ color: colors.textMuted, fontSize: 11 }}>
-      {truncate(scan.content, 30)}
-    </Text>
-  )}
-
-                          <View style={styles.scanMeta}>
-                            <View style={[styles.scanBadge, { backgroundColor: accent + "18", borderColor: accent + "40" }]}>
-                              <Text style={[styles.scanBadgeText, { color: accent }]}>
-                                {contentType.charAt(0).toUpperCase() + contentType.slice(1)}
+                          <View style={styles.scanTopRow}>
+                            <Text
+                              style={[styles.scanContent, { color: colors.text }]}
+                              numberOfLines={1}
+                            >
+                              {paymentName ? paymentName : truncate(scan.content, 38)}
+                            </Text>
+                            {paymentAmount && (
+                              <Text style={[styles.scanAmount, { color: gradient[0] }]}>
+                                {paymentAmount}
                               </Text>
-                            </View>
+                            )}
+                          </View>
+                          {paymentName && (
+                            <Text style={[styles.scanSub, { color: colors.textMuted }]} numberOfLines={1}>
+                              {truncate(scan.content, 30)}
+                            </Text>
+                          )}
+                          <View style={styles.scanMeta}>
+                            <LinearGradient
+                              colors={gradient}
+                              style={styles.scanBadge}
+                              start={{ x: 0, y: 0 }}
+                              end={{ x: 1, y: 0 }}
+                            >
+                              <Text style={styles.scanBadgeText}>{label}</Text>
+                            </LinearGradient>
                             <Text style={[styles.scanTime, { color: colors.textMuted }]}>
                               {formatRelativeTime(scan.scannedAt)}
                             </Text>
                           </View>
                         </View>
                         {scan.qrCodeId && (
-                          <View style={[styles.scanChevron, { backgroundColor: colors.primaryDim }]}>
-                            <Ionicons name="chevron-forward" size={13} color={colors.primary} />
-                          </View>
+                          <LinearGradient
+                            colors={gradient}
+                            style={styles.scanChevron}
+                            start={{ x: 0, y: 0 }}
+                            end={{ x: 1, y: 1 }}
+                          >
+                            <Ionicons name="chevron-forward" size={13} color="#fff" />
+                          </LinearGradient>
                         )}
                       </Pressable>
                     </Animated.View>
@@ -428,20 +445,22 @@ function makeStyles(c: ReturnType<typeof import("@/contexts/ThemeContext").useTh
     emptyTitle: { fontSize: rf(15), fontFamily: "Inter_600SemiBold" },
     emptySub: { fontSize: rf(13), fontFamily: "Inter_400Regular" },
 
-    recentList: { gap: 8 },
+    recentList: { gap: 10 },
     scanItem: {
       flexDirection: "row", alignItems: "center",
-      borderRadius: 18, borderWidth: 1, overflow: "hidden",
-      paddingRight: 14, paddingVertical: 13,
+      borderRadius: 20, borderWidth: 1, overflow: "hidden",
+      paddingHorizontal: 14, paddingVertical: 14, gap: 14,
     },
-    scanAccent: { width: 3, alignSelf: "stretch", borderTopRightRadius: 3, borderBottomRightRadius: 3, marginRight: 13 },
-    scanIconBox: { width: 40, height: 40, borderRadius: 13, alignItems: "center", justifyContent: "center", marginRight: 12, flexShrink: 0 },
+    scanIconBox: { width: 48, height: 48, borderRadius: 16, alignItems: "center", justifyContent: "center", flexShrink: 0 },
     scanBody: { flex: 1, minWidth: 0, gap: 5 },
-    scanContent: { fontSize: rf(13.5), fontFamily: "Inter_500Medium", lineHeight: Math.round(18 * s) },
+    scanTopRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 6 },
+    scanContent: { fontSize: rf(14), fontFamily: "Inter_600SemiBold", lineHeight: Math.round(19 * s), flex: 1 },
+    scanAmount: { fontSize: rf(13), fontFamily: "Inter_700Bold", flexShrink: 0 },
+    scanSub: { fontSize: rf(11), fontFamily: "Inter_400Regular" },
     scanMeta: { flexDirection: "row", alignItems: "center", gap: 7 },
-    scanBadge: { paddingHorizontal: 7, paddingVertical: 2, borderRadius: 100, borderWidth: 1 },
-    scanBadgeText: { fontSize: rf(10), fontFamily: "Inter_700Bold", letterSpacing: 0.2 },
+    scanBadge: { paddingHorizontal: 8, paddingVertical: 3, borderRadius: 100 },
+    scanBadgeText: { fontSize: rf(10), fontFamily: "Inter_700Bold", letterSpacing: 0.3, color: "#fff" },
     scanTime: { fontSize: rf(10), fontFamily: "Inter_400Regular" },
-    scanChevron: { width: 26, height: 26, borderRadius: 8, alignItems: "center", justifyContent: "center", marginLeft: 8 },
+    scanChevron: { width: 26, height: 26, borderRadius: 9, alignItems: "center", justifyContent: "center", flexShrink: 0 },
   });
 }
