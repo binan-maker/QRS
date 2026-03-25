@@ -21,9 +21,7 @@
       "package": "com.qrguard.app",
       "adaptiveIcon": {
         "backgroundColor": "#0A0E17",
-        "foregroundImage": "./assets/images/android-icon-foreground.png",
-        "backgroundImage": "./assets/images/android-icon-background.png",
-        "monochromeImage": "./assets/images/android-icon-monochrome.png"
+        "backgroundImage": "./assets/images/splash-icon.png"
       }
     },
     "web": {
