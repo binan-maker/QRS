@@ -7,8 +7,9 @@ import * as Haptics from "@/lib/haptics";
 import Animated, { FadeInDown, FadeInRight } from "react-native-reanimated";
 import { useTheme } from "@/contexts/ThemeContext";
 import { useHome } from "@/hooks/useHome";
-import { detectContentType, getContentTypeIcon, truncate, formatRelativeTime } from "@/lib/utils/formatters";
+import { detectContentType, getContentTypeIcon, truncate, formatRelativeTime, extractPaymentName, extractPaymentAmount } from "@/lib/utils/formatters";
 import NotificationsModal from "@/features/home/components/NotificationsModal";
+import { Linking } from "react-native";
 
 export default function HomeScreen() {
   const insets = useSafeAreaInsets();
@@ -234,6 +235,12 @@ export default function HomeScreen() {
                 {recentScans.map((scan, idx) => {
                   const contentType = detectContentType(scan.content);
                   const icon = getContentTypeIcon(contentType) as any;
+                  const paymentName = contentType === "payment"
+                ? extractPaymentName(scan.content)
+                : null;
+                const paymentAmount = contentType === "payment"
+                ? extractPaymentAmount(scan.content)
+                : null;
                   const accentMap: Record<string, string> = {
                     url: colors.primary, payment: colors.accent,
                     wifi: colors.safe, phone: colors.safe,
@@ -267,9 +274,27 @@ export default function HomeScreen() {
                           <Ionicons name={icon} size={17} color={accent} />
                         </View>
                         <View style={styles.scanBody}>
-                          <Text style={[styles.scanContent, { color: colors.text }]} numberOfLines={1}>
-                            {truncate(scan.content, 38)}
-                          </Text>
+  <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
+  <Text 
+    style={[styles.scanContent, { color: colors.text, flex: 1 }]} 
+    numberOfLines={1}
+  >
+    {paymentName ? paymentName : truncate(scan.content, 38)}
+  </Text>
+
+  {paymentAmount && (
+    <Text style={{ color: colors.primary, fontSize: 13, fontWeight: "600" }}>
+      {paymentAmount}
+    </Text>
+  )}
+</View>
+
+  {paymentName && (
+    <Text style={{ color: colors.textMuted, fontSize: 11 }}>
+      {truncate(scan.content, 30)}
+    </Text>
+  )}
+
                           <View style={styles.scanMeta}>
                             <View style={[styles.scanBadge, { backgroundColor: accent + "18", borderColor: accent + "40" }]}>
                               <Text style={[styles.scanBadgeText, { color: accent }]}>

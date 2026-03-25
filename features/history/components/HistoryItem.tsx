@@ -7,6 +7,7 @@ import * as Haptics from "@/lib/haptics";
 import { useTheme } from "@/contexts/ThemeContext";
 import { formatRelativeTime } from "@/lib/utils/formatters";
 import type { HistoryItem as HistoryItemType } from "@/hooks/useHistory";
+import { parseAnyPaymentQr } from "@/lib/qr-analysis";
 
 const TYPE_META: Record<string, { icon: keyof typeof Ionicons.glyphMap; label: string }> = {
   url:      { icon: "globe-outline",         label: "URL" },
@@ -26,9 +27,92 @@ const TYPE_META: Record<string, { icon: keyof typeof Ionicons.glyphMap; label: s
   boarding:  { icon: "airplane-outline",     label: "Boarding" },
   product:  { icon: "barcode-outline",       label: "Product" },
 };
+function shortenAddress(addr: string): string {
+  if (addr.length <= 12) return addr;
+  return addr.slice(0, 6) + "..." + addr.slice(-4);
+}
+
+function detectCrypto(content: string): { name: string; symbol: string } | null {
+  const lower = content.toLowerCase();
+
+  if (lower.startsWith("bitcoin:") || lower.includes("bc1")) {
+    return { name: "Bitcoin", symbol: "BTC" };
+  }
+
+  if (lower.startsWith("ethereum:") || lower.includes("0x")) {
+    return { name: "Ethereum", symbol: "ETH" };
+  }
+
+  if (lower.startsWith("litecoin:")) {
+    return { name: "Litecoin", symbol: "LTC" };
+  }
+
+  if (lower.startsWith("tron:")) {
+    return { name: "Tron", symbol: "TRX" };
+  }
+
+  return null;
+}
+
+
+function getPaymentData(content: string) {
+  try {
+    const parsed = parseAnyPaymentQr(content);
+
+    return {
+      name: parsed?.recipientName || parsed?.vpa || "Payment",
+      amount: parsed?.amount || null,
+      vpa: parsed?.vpa || null,
+      raw: content,
+    };
+  } catch {
+    return null;
+  }
+}
+
+function getPaymentDisplayText(content: string): string {
+  try {
+    const parsed = parseAnyPaymentQr(content);
+    if (parsed?.recipientName) {
+      return parsed.recipientName; // Show merchant name
+    }
+    if (parsed?.vpa) {
+      return parsed.vpa; // Fallback to UPI ID
+    }
+  } catch {
+    // If parsing fails, show raw content
+  }
+  return content;
+}
 
 function getTypeMeta(type: string) {
   return TYPE_META[type] ?? { icon: "document-text-outline" as keyof typeof Ionicons.glyphMap, label: "Text" };
+}
+
+function getDisplayLabel(contentType: string, content: string): string {
+  if (contentType === "payment") {
+    try {
+      const parsed = parseAnyPaymentQr(content);
+
+      if (parsed?.recipientName) return parsed.recipientName;
+      if (parsed?.vpa) return parsed.vpa;
+
+      // 🔥 Crypto support
+      const crypto = detectCrypto(content);
+      if (crypto) return crypto.name;
+
+      // fallback → address
+      if (parsed?.recipientId) {
+        return shortenAddress(parsed.recipientId);
+      }
+
+      return "Payment QR";
+    } catch {
+      return "Payment QR";
+    }
+  }
+
+  return content;
 }
 
 function getAccentColor(
@@ -55,11 +139,27 @@ const HistoryItem = React.memo(function HistoryItem({ item, risk, onDelete: _onD
 
   const isFavorite = item.source === "favorite";
   const isSynced   = item.source === "cloud";
+  const displayLabel = getDisplayLabel(item.contentType, item.content);
   const meta       = getTypeMeta(item.contentType);
   const accent     = isFavorite ? colors.danger : getAccentColor(item.contentType, risk, colors);
   const accentDim  = accent + (isDark ? "20" : "12");
   const showRisk   = (item.contentType === "url" || item.contentType === "payment") && risk !== "safe";
   const riskColor  = risk === "dangerous" ? colors.danger : colors.warning;
+
+  const paymentData =
+  item.contentType === "payment"
+    ? getPaymentData(item.content)
+    : null;
+
+const formattedAmount = paymentData?.amount
+  ? formatAmount(paymentData.amount)
+  : null;
+
+
+  function formatAmount(amount?: number | string) {
+  if (!amount) return null;
+  return `₹${Number(amount).toLocaleString("en-IN")}`;
+}
 
   function handlePress() {
     if (item.qrCodeId) {
@@ -92,12 +192,27 @@ const HistoryItem = React.memo(function HistoryItem({ item, risk, onDelete: _onD
       </View>
 
       <View style={styles.body}>
-        <Text
-          style={[styles.content, { color: colors.text }]}
-          numberOfLines={1}
-        >
-          {item.content}
-        </Text>
+      <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
+  <Text
+    style={[styles.content, { color: colors.text, flex: 1 }]}
+    numberOfLines={1}
+  >
+    {paymentData ? paymentData.name : displayLabel}
+  </Text>
+
+</View>
+
+{paymentData && (
+  <Text
+    style={{
+      color: colors.textMuted,
+      fontSize: 11,
+    }}
+    numberOfLines={1}
+  >
+    {paymentData.raw}
+  </Text>
+)}
 
         <View style={styles.metaRow}>
           <View style={[styles.typeBadge, { backgroundColor: accentDim, borderColor: accent + "40" }]}>

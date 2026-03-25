@@ -73,3 +73,43 @@ export function getNotifIcon(type: string): string {
 export function formatShortDate(date: Date): string {
   return date.toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" });
 }
+
+export function extractPaymentName(content: string): string | null {
+  if (!content) return null;
+
+  try {
+    const lower = content.toLowerCase();
+
+    // UPI QR
+    if (lower.includes("upi://")) {
+      const url = new URL(content);
+      const name =
+        url.searchParams.get("pn") || // person name
+        url.searchParams.get("tn") || // transaction note
+        url.searchParams.get("pa");   // fallback = UPI ID
+
+      return name ? decodeURIComponent(name) : null;
+    }
+
+    // fallback simple regex (in case URL fails)
+    const match = content.match(/[?&](pn|tn)=([^&]+)/);
+    if (match) return decodeURIComponent(match[2]);
+
+  } catch (e) {}
+
+  return null;
+}
+export function extractPaymentAmount(content: string): string | null {
+  try {
+    if (!content) return null;
+
+    const url = new URL(content);
+    const amount = url.searchParams.get("am");
+
+    if (!amount) return null;
+
+    return `₹${amount}`; // Indian format
+  } catch {
+    return null;
+  }
+}

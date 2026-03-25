@@ -216,40 +216,6 @@ const ContentCard = React.memo(function ContentCard({
           isDeactivated={isDeactivated}
           onOpenContent={onOpenContent}
         />
-        <Pressable
-          onPress={() => setContentExpanded((v) => !v)}
-          style={({ pressed }) => [{
-            flexDirection: "row", alignItems: "center", gap: 6,
-            backgroundColor: colors.surfaceLight, borderRadius: 10,
-            paddingHorizontal: 12, paddingVertical: 8, marginBottom: 16,
-            borderWidth: 1, borderColor: colors.surfaceBorder,
-            opacity: pressed ? 0.8 : 1,
-          }]}
-        >
-          <Ionicons name="code-outline" size={13} color={colors.textMuted} />
-          <View style={{ flex: 1 }}>
-            <Text
-              style={{ fontSize: 11, fontFamily: "Inter_400Regular", color: colors.textMuted, letterSpacing: 0.2, lineHeight: 16 }}
-              selectable
-              numberOfLines={contentExpanded ? undefined : 2}
-            >{content}</Text>
-            {!contentExpanded && (
-              <Text style={{ fontSize: 10, fontFamily: "Inter_400Regular", color: colors.textMuted, marginTop: 3, letterSpacing: 1 }}>• • •  tap to expand full QR data</Text>
-            )}
-          </View>
-          <Ionicons
-            name={contentExpanded ? "chevron-up" : "chevron-down"}
-            size={14}
-            color={colors.textMuted}
-          />
-          <Pressable onPress={(e) => { e.stopPropagation?.(); handleCopy(); }} style={[styles.copyIconBtnSmall, { backgroundColor: colors.surfaceBorder }]}>
-            <Ionicons
-              name={copied ? "checkmark" : "copy-outline"}
-              size={13}
-              color={copied ? colors.safe : colors.textMuted}
-            />
-          </Pressable>
-        </Pressable>
       </View>
     );
   }

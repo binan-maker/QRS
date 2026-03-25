@@ -475,7 +475,7 @@ export default function QrDetailScreen() {
         user={user}
         onChangeText={q.setMessageText}
         onSend={q.handleSendMessage}
-        onMarkRead={(msgId) => q.markQrMessageRead(msgId)}
+        onMarkRead={() => {}}
         onClose={() => q.setMessagesModalOpen(false)}
       />
       <VerificationModal
