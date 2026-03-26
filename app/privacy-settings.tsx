@@ -206,8 +206,10 @@ export default function PrivacySettingsScreen() {
                 icon={privacy.isPrivate ? "lock-closed-outline" : "globe-outline"}
                 iconColor={privacy.isPrivate ? colors.accent : colors.primary}
                 iconBg={privacy.isPrivate ? colors.accentDim : colors.primaryDim}
-                label="Private Account"
-                sublabel={privacy.isPrivate ? "Profile is hidden from non-friends" : "Profile is visible to everyone"}
+                label={privacy.isPrivate ? "Private Account" : "Public Account"}
+                sublabel={privacy.isPrivate
+                  ? "Only friends can see your full profile — everyone else sees your name and avatar only"
+                  : "Your profile is visible to everyone worldwide (default)"}
                 value={privacy.isPrivate}
                 onValueChange={(v) => handleToggle("isPrivate", v)}
               />

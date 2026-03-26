@@ -13,7 +13,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import { useTheme } from "@/contexts/ThemeContext";
 import type { AppColors } from "@/constants/colors";
 
-const EFFECTIVE_DATE = "March 16, 2026";
+const EFFECTIVE_DATE = "March 26, 2026";
 const CONTACT_EMAIL = "privacy@qrguard.app";
 
 function SectionCard({ title, num, icon, children, colors }: { title: string; num: string; icon?: string; children: React.ReactNode; colors: AppColors }) {
@@ -170,13 +170,33 @@ export default function PrivacyPolicyScreen() {
           <Bullet text="Export — contact us to request a copy of your data" colors={colors} />
         </SectionCard>
 
-        <SectionCard title="Security" num="8" icon="lock-closed-outline" colors={colors}>
+        <SectionCard title="Profile Privacy Controls" num="8" icon="shield-half-outline" colors={colors}>
+          <Para colors={colors}>
+            You have full control over who can view your profile and activity on QR Guard:
+          </Para>
+          <SubHead text="Public Account (Default)" colors={colors} />
+          <Bullet text="Your profile, QR codes, stats, and activity are visible to all QR Guard users worldwide" colors={colors} />
+          <Bullet text="This is the default setting — no action is needed to keep your profile public" colors={colors} />
+          <SubHead text="Private Account" colors={colors} />
+          <Bullet text="Only friends you approve can see your full profile, QR codes, stats, and activity" colors={colors} />
+          <Bullet text="Everyone else will only see your name, username, and profile photo" colors={colors} />
+          <Bullet text="You can switch between public and private at any time in Privacy Settings" colors={colors} />
+          <SubHead text="Friends System" colors={colors} />
+          <Bullet text="Friends are added via mutual request — both parties must agree" colors={colors} />
+          <Bullet text="You can remove a friend at any time from their profile page" colors={colors} />
+          <Bullet text="Friends always have full access to your profile, even if your account is private" colors={colors} />
+          <Para colors={colors}>
+            These controls apply only to your QR Guard profile. They do not affect how QR code data (reports, trust scores) is shared with the community, which remains anonymised.
+          </Para>
+        </SectionCard>
+
+        <SectionCard title="Security" num="9" icon="lock-closed-outline" colors={colors}>
           <Para colors={colors}>
             All data transmitted between your device and our servers is encrypted using TLS. Firebase Auth uses industry-standard OAuth 2.0 and secure token management. No system is 100% immune — we encourage strong passwords and signing out of shared devices.
           </Para>
         </SectionCard>
 
-        <SectionCard title="Contact Us" num="9" icon="mail-outline" colors={colors}>
+        <SectionCard title="Contact Us" num="10" icon="mail-outline" colors={colors}>
           <Para colors={colors}>Questions or requests about your privacy? Reach our privacy team at:</Para>
           <View style={[styles.contactCard, { backgroundColor: colors.primaryDim, borderColor: colors.primary + "30" }]}>
             <View style={[styles.contactIconWrap, { backgroundColor: colors.primary + "22" }]}>

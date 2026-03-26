@@ -4,6 +4,14 @@ A full-stack mobile-first QR code scanning and management app built with Expo (R
 
 ## Recent Changes
 
+### Private Account Redesign, Unfriend Button & Privacy Policy Updates
+- **Branded private profile screen** (`app/profile/[username].tsx`) — replaced the plain text private account view with a fully designed layout. Non-friends viewing a private profile now see: a gradient hero cover with the user's avatar and glow ring, display name and @username, and a branded card showing "[FirstName] has made this account private" with the QR Guard shield branding. The card uses the existing cover gradient colours and dark/light theming.
+- **Friends see full profile** — When `friendStatus === "friends"`, the private account gate is skipped entirely and the viewer sees the complete profile, matching the public profile layout.
+- **Unfriend button** (`app/profile/[username].tsx`) — On public and private (friend-visible) profiles, when already friends, the single "Friends" button is replaced with two components: a green "Friends ✓" status badge and a separate "Unfriend" destructive button. Tapping Unfriend shows the existing confirmation Alert before removing the friend.
+- **Privacy setting wording** (`app/privacy-settings.tsx`) — The private/public toggle description now reads "Your profile is visible to everyone worldwide (default)" for public, and "Only friends can see your full profile — everyone else sees your name and avatar only" for private.
+- **Privacy Policy updated** (`app/privacy-policy.tsx`) — Added new section 8 "Profile Privacy Controls" covering public/private modes, what non-friends can see, the friends request system, and the unfriend flow. All subsequent section numbers incremented. Effective date updated to March 26, 2026.
+- **Terms of Service updated** (`app/terms.tsx`) — Added new section 9 "Profile Visibility & Friends" explaining default public visibility, private mode behaviour, and the unfriend feature. Effective date updated to March 26, 2026.
+
 ### Native Google Sign-In, Auto-Login, Responsive Auth Pages
 - **Native Google Sign-In** (`contexts/AuthContext.tsx`, `lib/auth/adapter.ts`, `lib/auth/providers/firebase.ts`) — replaced `expo-auth-session` browser-based OAuth (which opened Chrome) with `@react-native-google-signin/google-signin` (v16) on Android/iOS. Native Google account picker appears in-app (like Google Pay). Web preview keeps expo-auth-session as fallback. Configured via `GoogleSignin.configure()` with webClientId and androidClientId.
 - **Auto-login / Silent sign-in** — on app start, `GoogleSignin.signInSilently()` is called (native only). If there is a saved Google session, the user is signed in automatically without any button press. Firebase `onIdTokenChanged` already handles email/password session restore across devices.

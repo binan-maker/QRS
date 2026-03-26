@@ -13,7 +13,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import { useTheme } from "@/contexts/ThemeContext";
 import type { AppColors } from "@/constants/colors";
 
-const EFFECTIVE_DATE = "March 19, 2026";
+const EFFECTIVE_DATE = "March 26, 2026";
 const CONTACT_EMAIL = "legal@qrguard.app";
 const APP_NAME = "QR Guard";
 
@@ -167,13 +167,25 @@ export default function TermsScreen() {
           <Bullet text="Generate QR codes intended to defraud, phish, or harm recipients" colors={colors} />
         </SectionCard>
 
-        <SectionCard title="Living Shield QR Codes" num="9" colors={colors}>
+        <SectionCard title="Profile Visibility & Friends" num="9" colors={colors}>
+          <Para colors={colors}>
+            By default, your profile is public and visible to all users worldwide. You may switch your account to private at any time in Privacy Settings. When set to private:
+          </Para>
+          <Bullet text="Only approved friends can view your full profile, QR codes, stats, and activity" colors={colors} />
+          <Bullet text="All other users will only see your name, username, and profile photo" colors={colors} />
+          <Bullet text="Friends always see your full profile regardless of privacy setting" colors={colors} />
+          <Para colors={colors}>
+            You may remove a friend at any time using the Unfriend button on their profile. Removing a friend revokes their access to private profile content immediately. You are responsible for managing your own friend list and privacy settings.
+          </Para>
+        </SectionCard>
+
+        <SectionCard title="Living Shield QR Codes" num="10" colors={colors}>
           <Para colors={colors}>
             Owners are solely responsible for all content their QR codes redirect to, including after destination changes. Misuse to redirect victims to malicious destinations violates these Terms and may be reported to law enforcement.
           </Para>
         </SectionCard>
 
-        <SectionCard title="Contact" num="10" colors={colors}>
+        <SectionCard title="Contact" num="11" colors={colors}>
           <Para colors={colors}>For legal matters or to report a violation, contact us at:</Para>
           <View style={[styles.contactCard, { backgroundColor: colors.primaryDim, borderColor: colors.primary + "30" }]}>
             <Ionicons name="mail-outline" size={20} color={colors.primary} />

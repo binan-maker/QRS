@@ -177,59 +177,124 @@ export default function PublicProfileScreen() {
   }
 
   // Private profile screen for non-owners
-  if (profile.privacy.isPrivate && !isOwnProfile) {
+  if (profile.privacy.isPrivate && !isOwnProfile && friendStatus !== "friends") {
     const privInitials = profile.displayName.split(" ").map((n: string) => n[0]).join("").toUpperCase().slice(0, 2);
-    const btnColor = getFriendBtnColor();
+    const firstName = profile.displayName.split(" ")[0];
+    const coverCols = getCoverGradients(username ?? "", colors.primary, colors.accent);
     return (
       <View style={[S.container, { backgroundColor: colors.background }]}>
+        {/* Floating nav */}
         <View style={[S.floatingNav, { top: topInset + 10 }]}>
-          <Pressable onPress={safeBack} style={[S.navBtn, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
-            <Ionicons name="chevron-back" size={22} color={colors.text} />
+          <Pressable onPress={safeBack} style={[S.navBtn, { backgroundColor: "rgba(0,0,0,0.45)", borderColor: "rgba(255,255,255,0.12)" }]}>
+            <Ionicons name="chevron-back" size={22} color="#fff" />
           </Pressable>
-          <Pressable onPress={handleShare} style={[S.navBtn, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
-            <Ionicons name="share-outline" size={20} color={colors.text} />
+          <Pressable onPress={handleShare} style={[S.navBtn, { backgroundColor: "rgba(0,0,0,0.45)", borderColor: "rgba(255,255,255,0.12)" }]}>
+            <Ionicons name="share-outline" size={20} color="#fff" />
           </Pressable>
         </View>
-        <View style={[S.centered, { paddingTop: topInset + 60 }]}>
-          {/* Avatar */}
-          <LinearGradient colors={[colors.primary, colors.accent]} style={S.privateAvatar}>
-            {profile.photoURL ? (
-              <Image source={{ uri: profile.photoURL }} style={S.privateAvatarImg} />
-            ) : (
-              <Text style={S.privateAvatarInitials}>{privInitials}</Text>
-            )}
-          </LinearGradient>
-          <Text style={[S.displayName, { color: colors.text, marginTop: 16 }]}>{profile.displayName}</Text>
-          <Text style={[S.usernameText, { color: colors.primary }]}>@{profile.username}</Text>
 
-          {/* Lock badge */}
-          <View style={[S.privateBadge, { backgroundColor: colors.accentDim, borderColor: colors.accent + "40" }]}>
-            <Ionicons name="lock-closed-outline" size={14} color={colors.accent} />
-            <Text style={[S.privateBadgeText, { color: colors.accent }]}>This account is private</Text>
+        <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: insets.bottom + 40 }}>
+          {/* Hero cover */}
+          <View style={[S.privateHero, { height: topInset + 220 }]}>
+            <LinearGradient colors={coverCols} style={StyleSheet.absoluteFill} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} />
+            <LinearGradient colors={[colors.primary + "18", colors.accent + "0D", "transparent"]} style={StyleSheet.absoluteFill} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} />
+            {/* Decorative dots */}
+            <View style={[StyleSheet.absoluteFill]} pointerEvents="none">
+              {Array.from({ length: 4 }).map((_, row) =>
+                Array.from({ length: 6 }).map((_, col) => (
+                  <View key={`${row}-${col}`} style={[S.heroDot, { top: row * 48 + topInset + 10, left: col * (screenWidth / 5), opacity: 0.05 + (((row + col) % 3) * 0.02) }]} />
+                ))
+              )}
+            </View>
+            <LinearGradient colors={["transparent", colors.background]} style={S.heroFade} start={{ x: 0, y: 0 }} end={{ x: 0, y: 1 }} />
+
+            {/* Avatar centred in hero */}
+            <View style={[S.privateHeroContent, { paddingTop: topInset + 52 }]}>
+              <Animated.View entering={FadeIn.duration(400)} style={S.avatarZone}>
+                <View style={[S.avatarGlowRing, { borderColor: colors.accent + "50" }]} />
+                <LinearGradient colors={[colors.primary, colors.accent]} style={S.avatarRing} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}>
+                  <View style={[S.avatarInner, { backgroundColor: colors.background }]}>
+                    {profile.photoURL
+                      ? <Image source={{ uri: profile.photoURL }} style={S.avatarPhoto} />
+                      : <Text style={[S.avatarInitials, { color: colors.primary }]}>{privInitials}</Text>
+                    }
+                  </View>
+                </LinearGradient>
+              </Animated.View>
+            </View>
           </View>
-          <Text style={[S.privateSub, { color: colors.textMuted }]}>
-            Add {profile.displayName.split(" ")[0]} as a friend to see their full profile
-          </Text>
 
-          {/* Friend button */}
-          {user && (
-            <Pressable
-              onPress={handleFriendAction}
-              disabled={friendLoading}
-              style={({ pressed }) => [S.privateFriendBtn, { backgroundColor: btnColor, opacity: pressed ? 0.85 : 1 }]}
+          {/* Name + username */}
+          <Animated.View entering={FadeInDown.duration(400).delay(80)} style={S.privateNameBlock}>
+            <Text style={[S.displayName, { color: colors.text }]}>{profile.displayName}</Text>
+            <Text style={[S.usernameText, { color: colors.primary }]}>@{profile.username}</Text>
+          </Animated.View>
+
+          {/* Branded private card */}
+          <Animated.View entering={FadeInDown.duration(400).delay(160)} style={{ paddingHorizontal: 18 }}>
+            <LinearGradient
+              colors={isDark ? ["#1A0A2E", "#0D0519"] : ["#F0EAFF", "#E8DFFF"]}
+              style={[S.privateCard, { borderColor: colors.accent + "40" }]}
+              start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
             >
-              {friendLoading
-                ? <ActivityIndicator size="small" color={friendStatus === "sent" ? colors.text : colors.primaryText} />
-                : <>
-                    <Ionicons name={getFriendBtnIcon()} size={16} color={friendStatus === "sent" ? colors.text : colors.primaryText} />
-                    <Text style={[S.privateFriendBtnText, { color: friendStatus === "sent" ? colors.text : colors.primaryText }]}>
-                      {getFriendBtnLabel()}
-                    </Text>
-                  </>
-              }
-            </Pressable>
+              <LinearGradient colors={[colors.accent + "18", "transparent"]} style={StyleSheet.absoluteFill} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} />
+
+              {/* Lock icon row */}
+              <View style={[S.privateCardIconWrap, { backgroundColor: colors.accentDim }]}>
+                <Ionicons name="lock-closed" size={26} color={colors.accent} />
+              </View>
+
+              <Text style={[S.privateCardTitle, { color: colors.text }]}>
+                {firstName} has made this account private
+              </Text>
+              <Text style={[S.privateCardSub, { color: colors.textSecondary }]}>
+                Add {firstName} as a friend to see their full profile, QR codes, stats, and activity.
+              </Text>
+
+              {/* QR Guard branding strip */}
+              <View style={[S.privateCardBrand, { borderTopColor: colors.accent + "25" }]}>
+                <LinearGradient colors={[colors.primary, colors.accent]} style={S.privateCardBrandIcon} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}>
+                  <Ionicons name="shield-checkmark" size={12} color="#fff" />
+                </LinearGradient>
+                <Text style={[S.privateCardBrandText, { color: colors.textMuted }]}>Protected by QR Guard</Text>
+              </View>
+            </LinearGradient>
+          </Animated.View>
+
+          {/* Action buttons */}
+          {user && (
+            <Animated.View entering={FadeInDown.duration(400).delay(240)} style={S.privateActions}>
+              <Pressable
+                onPress={handleFriendAction}
+                disabled={friendLoading}
+                style={({ pressed }) => [
+                  S.privateFriendBtn,
+                  friendStatus === "sent"
+                    ? { backgroundColor: colors.surface, borderColor: colors.surfaceBorder, borderWidth: 1 }
+                    : friendStatus === "received"
+                    ? { backgroundColor: colors.accent }
+                    : { backgroundColor: colors.primary },
+                  { opacity: pressed ? 0.85 : 1 },
+                ]}
+              >
+                {friendLoading
+                  ? <ActivityIndicator size="small" color={friendStatus === "sent" ? colors.text : "#fff"} />
+                  : <>
+                      <Ionicons name={getFriendBtnIcon()} size={18} color={friendStatus === "sent" ? colors.text : "#fff"} />
+                      <Text style={[S.privateFriendBtnText, { color: friendStatus === "sent" ? colors.text : "#fff" }]}>
+                        {getFriendBtnLabel()}
+                      </Text>
+                    </>
+                }
+              </Pressable>
+              {friendStatus === "sent" && (
+                <Text style={[S.privateHintText, { color: colors.textMuted }]}>
+                  Friend request sent — waiting for {firstName} to accept
+                </Text>
+              )}
+            </Animated.View>
           )}
-        </View>
+        </ScrollView>
       </View>
     );
   }
@@ -557,25 +622,47 @@ export default function PublicProfileScreen() {
             </Animated.View>
           ) : user ? (
             <Animated.View entering={FadeInDown.duration(400).delay(280)} style={S.friendRow}>
-              <Pressable
-                onPress={handleFriendAction}
-                disabled={friendLoading}
-                style={({ pressed }) => [
-                  S.friendBtn,
-                  { backgroundColor: getFriendBtnColor() + (friendStatus === "sent" ? "18" : ""), borderColor: getFriendBtnColor() + "50", opacity: pressed ? 0.85 : 1 },
-                  friendStatus !== "sent" && { backgroundColor: getFriendBtnColor() },
-                ]}
-              >
-                {friendLoading
-                  ? <ActivityIndicator size="small" color={friendStatus === "sent" ? getFriendBtnColor() : colors.primaryText} />
-                  : <>
-                      <Ionicons name={getFriendBtnIcon()} size={16} color={friendStatus === "sent" ? getFriendBtnColor() : colors.primaryText} />
-                      <Text style={[S.friendBtnText, { color: friendStatus === "sent" ? getFriendBtnColor() : colors.primaryText }]}>
-                        {getFriendBtnLabel()}
-                      </Text>
-                    </>
-                }
-              </Pressable>
+              {friendStatus === "friends" ? (
+                <View style={S.friendsBtnRow}>
+                  <View style={[S.friendsStatusBadge, { backgroundColor: colors.safeDim, borderColor: colors.safe + "50" }]}>
+                    <Ionicons name="people" size={15} color={colors.safe} />
+                    <Text style={[S.friendsStatusText, { color: colors.safe }]}>Friends</Text>
+                  </View>
+                  <Pressable
+                    onPress={handleFriendAction}
+                    disabled={friendLoading}
+                    style={({ pressed }) => [S.unfriendBtn, { backgroundColor: colors.surface, borderColor: colors.dangerDim ?? colors.textMuted + "40", opacity: pressed ? 0.8 : 1 }]}
+                  >
+                    {friendLoading
+                      ? <ActivityIndicator size="small" color={colors.danger ?? colors.textMuted} />
+                      : <>
+                          <Ionicons name="person-remove-outline" size={14} color={colors.danger ?? colors.textMuted} />
+                          <Text style={[S.unfriendBtnText, { color: colors.danger ?? colors.textMuted }]}>Unfriend</Text>
+                        </>
+                    }
+                  </Pressable>
+                </View>
+              ) : (
+                <Pressable
+                  onPress={handleFriendAction}
+                  disabled={friendLoading}
+                  style={({ pressed }) => [
+                    S.friendBtn,
+                    { backgroundColor: getFriendBtnColor() + (friendStatus === "sent" ? "18" : ""), borderColor: getFriendBtnColor() + "50", opacity: pressed ? 0.85 : 1 },
+                    friendStatus !== "sent" && { backgroundColor: getFriendBtnColor() },
+                  ]}
+                >
+                  {friendLoading
+                    ? <ActivityIndicator size="small" color={friendStatus === "sent" ? getFriendBtnColor() : colors.primaryText} />
+                    : <>
+                        <Ionicons name={getFriendBtnIcon()} size={16} color={friendStatus === "sent" ? getFriendBtnColor() : colors.primaryText} />
+                        <Text style={[S.friendBtnText, { color: friendStatus === "sent" ? getFriendBtnColor() : colors.primaryText }]}>
+                          {getFriendBtnLabel()}
+                        </Text>
+                      </>
+                  }
+                </Pressable>
+              )}
             </Animated.View>
           ) : null}
 
@@ -762,4 +849,58 @@ const S = StyleSheet.create({
     justifyContent: "center", borderWidth: 1,
   },
   friendBtnText: { fontSize: 15, fontFamily: "Inter_700Bold" },
+
+  // Friends status + unfriend row
+  friendsBtnRow: {
+    flexDirection: "row", alignItems: "center", gap: 10,
+  },
+  friendsStatusBadge: {
+    flex: 1, flexDirection: "row", alignItems: "center", justifyContent: "center",
+    gap: 8, borderRadius: 16, paddingVertical: 14, paddingHorizontal: 20, borderWidth: 1,
+  },
+  friendsStatusText: { fontSize: 15, fontFamily: "Inter_700Bold" },
+  unfriendBtn: {
+    flexDirection: "row", alignItems: "center", gap: 6,
+    borderRadius: 16, paddingVertical: 14, paddingHorizontal: 18,
+    borderWidth: 1,
+  },
+  unfriendBtnText: { fontSize: 14, fontFamily: "Inter_600SemiBold" },
+
+  // Private profile redesign
+  privateHero: { overflow: "hidden", position: "relative" },
+  privateHeroContent: { alignItems: "center" },
+  privateNameBlock: { alignItems: "center", gap: 4, paddingTop: 16, paddingBottom: 20 },
+  privateCard: {
+    borderRadius: 24, padding: 24, borderWidth: 1,
+    overflow: "hidden", alignItems: "center", gap: 12, position: "relative",
+  },
+  privateCardIconWrap: {
+    width: 60, height: 60, borderRadius: 20,
+    alignItems: "center", justifyContent: "center", marginBottom: 4,
+  },
+  privateCardTitle: {
+    fontSize: 17, fontFamily: "Inter_700Bold", textAlign: "center", lineHeight: 24,
+  },
+  privateCardSub: {
+    fontSize: 14, fontFamily: "Inter_400Regular", textAlign: "center",
+    lineHeight: 21, maxWidth: 280,
+  },
+  privateCardBrand: {
+    flexDirection: "row", alignItems: "center", gap: 8, paddingTop: 14,
+    borderTopWidth: 1, width: "100%", justifyContent: "center", marginTop: 4,
+  },
+  privateCardBrandIcon: {
+    width: 22, height: 22, borderRadius: 7, alignItems: "center", justifyContent: "center",
+  },
+  privateCardBrandText: { fontSize: 12, fontFamily: "Inter_500Medium" },
+  privateActions: {
+    paddingHorizontal: 18, paddingTop: 20, gap: 12, alignItems: "center",
+  },
+  privateFriendBtn: {
+    flexDirection: "row", alignItems: "center", gap: 10,
+    borderRadius: 16, paddingVertical: 15, paddingHorizontal: 28,
+    justifyContent: "center", width: "100%",
+  },
+  privateFriendBtnText: { fontSize: 16, fontFamily: "Inter_700Bold" },
+  privateHintText: { fontSize: 13, fontFamily: "Inter_400Regular", textAlign: "center" },
 });
