@@ -1,7 +1,7 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import {
   View, Text, ScrollView, Pressable, ActivityIndicator,
-  StyleSheet, Image, Share, Platform, useWindowDimensions,
+  StyleSheet, Image, Share, Platform, useWindowDimensions, Alert,
 } from "react-native";
 import { useLocalSearchParams, router } from "expo-router";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
@@ -12,6 +12,14 @@ import { useTheme } from "@/contexts/ThemeContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { usePublicProfile } from "@/features/profile/hooks/usePublicProfile";
 import { formatCompactNumber } from "@/lib/number-format";
+import {
+  getFriendStatus,
+  sendFriendRequest,
+  cancelFriendRequest,
+  acceptFriendRequest,
+  removeFriend,
+  FriendStatus,
+} from "@/lib/services/friend-service";
 
 function safeBack() {
   if (router.canGoBack()) router.back();
@@ -46,10 +54,72 @@ export default function PublicProfileScreen() {
   const { profile, loading, notFound, getGuardianRank } = usePublicProfile(username ?? "");
   const isOwnProfile = user?.id === profile?.userId;
 
+  const [friendStatus, setFriendStatus] = useState<FriendStatus>("none");
+  const [friendLoading, setFriendLoading] = useState(false);
+
+  useEffect(() => {
+    if (!user || !profile || isOwnProfile) return;
+    getFriendStatus(user.id, profile.userId).then(setFriendStatus).catch(() => {});
+  }, [user?.id, profile?.userId, isOwnProfile]);
+
   async function handleShare() {
     try {
       await Share.share({ message: `Check out @${username}'s profile on QR Guard!` });
     } catch {}
+  }
+
+  async function handleFriendAction() {
+    if (!user) { router.push("/(auth)/login"); return; }
+    if (!profile) return;
+    setFriendLoading(true);
+    try {
+      if (friendStatus === "none") {
+        await sendFriendRequest(
+          user.id, (user as any).username ?? "", user.displayName, null,
+          profile.userId, profile.username, profile.displayName, profile.photoURL,
+        );
+        setFriendStatus("sent");
+      } else if (friendStatus === "sent") {
+        await cancelFriendRequest(user.id, profile.userId);
+        setFriendStatus("none");
+      } else if (friendStatus === "received") {
+        await acceptFriendRequest(user.id, profile.userId);
+        setFriendStatus("friends");
+      } else if (friendStatus === "friends") {
+        Alert.alert("Remove Friend", `Remove @${profile.username} from your friends?`, [
+          { text: "Cancel", style: "cancel" },
+          {
+            text: "Remove", style: "destructive",
+            onPress: async () => {
+              await removeFriend(user.id, profile.userId);
+              setFriendStatus("none");
+            },
+          },
+        ]);
+      }
+    } catch {}
+    setFriendLoading(false);
+  }
+
+  function getFriendBtnLabel() {
+    if (friendStatus === "friends") return "Friends";
+    if (friendStatus === "sent") return "Requested";
+    if (friendStatus === "received") return "Accept Request";
+    return "Add Friend";
+  }
+
+  function getFriendBtnIcon(): keyof typeof Ionicons.glyphMap {
+    if (friendStatus === "friends") return "people";
+    if (friendStatus === "sent") return "hourglass-outline";
+    if (friendStatus === "received") return "checkmark-circle-outline";
+    return "person-add-outline";
+  }
+
+  function getFriendBtnColor() {
+    if (friendStatus === "friends") return colors.safe;
+    if (friendStatus === "sent") return colors.textMuted;
+    if (friendStatus === "received") return colors.accent;
+    return colors.primary;
   }
 
   if (loading) {
@@ -75,6 +145,64 @@ export default function PublicProfileScreen() {
         <Pressable onPress={safeBack} style={[S.notFoundBtn, { backgroundColor: colors.primary }]}>
           <Text style={[S.notFoundBtnText, { color: colors.primaryText }]}>Go Back</Text>
         </Pressable>
+      </View>
+    );
+  }
+
+  // Private profile screen for non-owners
+  if (profile.privacy.isPrivate && !isOwnProfile) {
+    const privInitials = profile.displayName.split(" ").map((n: string) => n[0]).join("").toUpperCase().slice(0, 2);
+    const btnColor = getFriendBtnColor();
+    return (
+      <View style={[S.container, { backgroundColor: colors.background }]}>
+        <View style={[S.floatingNav, { top: topInset + 10 }]}>
+          <Pressable onPress={safeBack} style={[S.navBtn, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
+            <Ionicons name="chevron-back" size={22} color={colors.text} />
+          </Pressable>
+          <Pressable onPress={handleShare} style={[S.navBtn, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
+            <Ionicons name="share-outline" size={20} color={colors.text} />
+          </Pressable>
+        </View>
+        <View style={[S.centered, { paddingTop: topInset + 60 }]}>
+          {/* Avatar */}
+          <LinearGradient colors={[colors.primary, colors.accent]} style={S.privateAvatar}>
+            {profile.photoURL ? (
+              <Image source={{ uri: profile.photoURL }} style={S.privateAvatarImg} />
+            ) : (
+              <Text style={S.privateAvatarInitials}>{privInitials}</Text>
+            )}
+          </LinearGradient>
+          <Text style={[S.displayName, { color: colors.text, marginTop: 16 }]}>{profile.displayName}</Text>
+          <Text style={[S.usernameText, { color: colors.primary }]}>@{profile.username}</Text>
+
+          {/* Lock badge */}
+          <View style={[S.privateBadge, { backgroundColor: colors.accentDim, borderColor: colors.accent + "40" }]}>
+            <Ionicons name="lock-closed-outline" size={14} color={colors.accent} />
+            <Text style={[S.privateBadgeText, { color: colors.accent }]}>This account is private</Text>
+          </View>
+          <Text style={[S.privateSub, { color: colors.textMuted }]}>
+            Add {profile.displayName.split(" ")[0]} as a friend to see their full profile
+          </Text>
+
+          {/* Friend button */}
+          {user && (
+            <Pressable
+              onPress={handleFriendAction}
+              disabled={friendLoading}
+              style={({ pressed }) => [S.privateFriendBtn, { backgroundColor: btnColor, opacity: pressed ? 0.85 : 1 }]}
+            >
+              {friendLoading
+                ? <ActivityIndicator size="small" color={friendStatus === "sent" ? colors.text : colors.primaryText} />
+                : <>
+                    <Ionicons name={getFriendBtnIcon()} size={16} color={friendStatus === "sent" ? colors.text : colors.primaryText} />
+                    <Text style={[S.privateFriendBtnText, { color: friendStatus === "sent" ? colors.text : colors.primaryText }]}>
+                      {getFriendBtnLabel()}
+                    </Text>
+                  </>
+              }
+            </Pressable>
+          )}
+        </View>
       </View>
     );
   }
@@ -294,10 +422,10 @@ export default function PublicProfileScreen() {
           </Animated.View>
 
           {/* ══════════════ OWN PROFILE CTA ══════════════ */}
-          {isOwnProfile && (
+          {isOwnProfile ? (
             <Animated.View entering={FadeInDown.duration(400).delay(280)}>
               <Pressable
-                onPress={() => router.push("/(tabs)/profile")}
+                onPress={() => router.push("/settings" as any)}
                 style={({ pressed }) => [S.ownCta, { backgroundColor: colors.primaryDim, borderColor: colors.primary + "40", opacity: pressed ? 0.85 : 1 }]}
               >
                 <LinearGradient colors={[colors.primary, colors.accent]} style={S.ownCtaIcon} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}>
@@ -307,7 +435,29 @@ export default function PublicProfileScreen() {
                 <Ionicons name="chevron-forward" size={16} color={colors.primary} />
               </Pressable>
             </Animated.View>
-          )}
+          ) : user ? (
+            <Animated.View entering={FadeInDown.duration(400).delay(280)} style={S.friendRow}>
+              <Pressable
+                onPress={handleFriendAction}
+                disabled={friendLoading}
+                style={({ pressed }) => [
+                  S.friendBtn,
+                  { backgroundColor: getFriendBtnColor() + (friendStatus === "sent" ? "18" : ""), borderColor: getFriendBtnColor() + "50", opacity: pressed ? 0.85 : 1 },
+                  friendStatus !== "sent" && { backgroundColor: getFriendBtnColor() },
+                ]}
+              >
+                {friendLoading
+                  ? <ActivityIndicator size="small" color={friendStatus === "sent" ? getFriendBtnColor() : colors.primaryText} />
+                  : <>
+                      <Ionicons name={getFriendBtnIcon()} size={16} color={friendStatus === "sent" ? getFriendBtnColor() : colors.primaryText} />
+                      <Text style={[S.friendBtnText, { color: friendStatus === "sent" ? getFriendBtnColor() : colors.primaryText }]}>
+                        {getFriendBtnLabel()}
+                      </Text>
+                    </>
+                }
+              </Pressable>
+            </Animated.View>
+          ) : null}
 
         </View>
       </ScrollView>

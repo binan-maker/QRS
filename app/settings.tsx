@@ -1,4 +1,4 @@
-import { View, Text, Pressable, ScrollView, Platform, Alert, Switch } from "react-native";
+import { View, Text, Pressable, ScrollView, Platform, Alert, Switch, ActivityIndicator } from "react-native";
 import { router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -12,6 +12,8 @@ import GuideSection from "@/features/settings/components/GuideSection";
 import FeedbackSection from "@/features/settings/components/FeedbackSection";
 import FollowingSection from "@/features/settings/components/FollowingSection";
 import CommentsSection from "@/features/settings/components/CommentsSection";
+import { useState, useEffect } from "react";
+import { getPrivacySettings, updatePrivacySettings, PrivacySettings } from "@/lib/services/user-service";
 
 const SECTION_TITLES: Record<string, string> = {
   account: "Account",
@@ -39,6 +41,30 @@ export default function SettingsScreen() {
     handleSignOut, handleClearData,
     handleSubmitFeedback, handleDeleteComment, handleDeleteAccount,
   } = useSettings();
+
+  const [privacy, setPrivacy] = useState<PrivacySettings>({
+    isPrivate: false,
+    showQrCodes: true,
+    showStats: true,
+    showActivity: true,
+  });
+  const [privacyLoading, setPrivacyLoading] = useState(false);
+
+  useEffect(() => {
+    if (!user) return;
+    getPrivacySettings(user.id).then(setPrivacy).catch(() => {});
+  }, [user?.id]);
+
+  async function handlePrivacyToggle(key: keyof PrivacySettings, val: boolean) {
+    if (!user) return;
+    const updated = { ...privacy, [key]: val };
+    setPrivacy(updated);
+    try {
+      await updatePrivacySettings(user.id, updated);
+    } catch {
+      setPrivacy(privacy);
+    }
+  }
 
   if (section !== "main") {
     return (
@@ -146,6 +172,104 @@ export default function SettingsScreen() {
               <Ionicons name="chevron-forward" size={16} color={colors.primary} />
             </View>
           </Pressable>
+        )}
+
+        {/* Privacy & Profile Section */}
+        {user && (
+          <View style={styles.section}>
+            <Text style={[styles.sectionLabel, { color: colors.textMuted }]}>PROFILE PRIVACY</Text>
+            <View style={[styles.menuGroup, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
+
+              {/* Private account toggle */}
+              <View style={[styles.menuItem, { justifyContent: "space-between" }]}>
+                <View style={{ flexDirection: "row", alignItems: "center", gap: 14, flex: 1 }}>
+                  <View style={[styles.menuIconWrap, { backgroundColor: privacy.isPrivate ? colors.accentDim : colors.surfaceLight }]}>
+                    <Ionicons
+                      name={privacy.isPrivate ? "lock-closed-outline" : "globe-outline"}
+                      size={18}
+                      color={privacy.isPrivate ? colors.accent : colors.textSecondary}
+                    />
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <Text style={[styles.menuLabel, { color: colors.text }]}>Private Account</Text>
+                    <Text style={[styles.menuSublabel, { color: colors.textMuted }]}>
+                      {privacy.isPrivate ? "Only you can see your full profile" : "Anyone can view your public profile"}
+                    </Text>
+                  </View>
+                </View>
+                <Switch
+                  value={privacy.isPrivate}
+                  onValueChange={(v) => handlePrivacyToggle("isPrivate", v)}
+                  trackColor={{ false: colors.surfaceBorder, true: colors.accent + "90" }}
+                  thumbColor={privacy.isPrivate ? colors.accent : colors.textMuted}
+                />
+              </View>
+
+              {!privacy.isPrivate && (
+                <>
+                  <View style={[styles.divider, { backgroundColor: colors.surfaceBorder }]} />
+
+                  {/* Show Stats */}
+                  <View style={[styles.menuItem, { justifyContent: "space-between" }]}>
+                    <View style={{ flexDirection: "row", alignItems: "center", gap: 14, flex: 1 }}>
+                      <View style={[styles.menuIconWrap, { backgroundColor: colors.surfaceLight }]}>
+                        <Ionicons name="bar-chart-outline" size={18} color={colors.textSecondary} />
+                      </View>
+                      <View style={{ flex: 1 }}>
+                        <Text style={[styles.menuLabel, { color: colors.text }]}>Show Stats</Text>
+                        <Text style={[styles.menuSublabel, { color: colors.textMuted }]}>Scans, likes, and report counts</Text>
+                      </View>
+                    </View>
+                    <Switch
+                      value={privacy.showStats}
+                      onValueChange={(v) => handlePrivacyToggle("showStats", v)}
+                      trackColor={{ false: colors.surfaceBorder, true: colors.primary + "90" }}
+                      thumbColor={privacy.showStats ? colors.primary : colors.textMuted}
+                    />
+                  </View>
+
+                  <View style={[styles.divider, { backgroundColor: colors.surfaceBorder }]} />
+
+                  {/* Show Activity */}
+                  <View style={[styles.menuItem, { justifyContent: "space-between" }]}>
+                    <View style={{ flexDirection: "row", alignItems: "center", gap: 14, flex: 1 }}>
+                      <View style={[styles.menuIconWrap, { backgroundColor: colors.surfaceLight }]}>
+                        <Ionicons name="pulse-outline" size={18} color={colors.textSecondary} />
+                      </View>
+                      <View style={{ flex: 1 }}>
+                        <Text style={[styles.menuLabel, { color: colors.text }]}>Show Activity</Text>
+                        <Text style={[styles.menuSublabel, { color: colors.textMuted }]}>Comments and recent interactions</Text>
+                      </View>
+                    </View>
+                    <Switch
+                      value={privacy.showActivity}
+                      onValueChange={(v) => handlePrivacyToggle("showActivity", v)}
+                      trackColor={{ false: colors.surfaceBorder, true: colors.primary + "90" }}
+                      thumbColor={privacy.showActivity ? colors.primary : colors.textMuted}
+                    />
+                  </View>
+                </>
+              )}
+
+            </View>
+
+            {/* Social Links */}
+            <View style={[styles.menuGroup, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder, marginTop: 10 }]}>
+              <SettingsMenuItem
+                icon="people-outline"
+                label="My Friends"
+                sublabel="View and manage your friend list"
+                onPress={() => router.push("/friends" as any)}
+              />
+              <View style={[styles.divider, { backgroundColor: colors.surfaceBorder }]} />
+              <SettingsMenuItem
+                icon="person-add-outline"
+                label="Find People"
+                sublabel="Search for friends by username"
+                onPress={() => router.push("/search" as any)}
+              />
+            </View>
+          </View>
         )}
 
         {/* Account Section */}
