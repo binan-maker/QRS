@@ -9,6 +9,9 @@ export interface PrivacySettings {
   showQrCodes: boolean;
   showStats: boolean;
   showActivity: boolean;
+  showRanking: boolean;
+  showScanActivity: boolean;
+  showFriendsCount: boolean;
 }
 
 export interface PublicProfile {
@@ -25,6 +28,8 @@ export interface PublicProfile {
     commentCount: number;
     totalLikesReceived: number;
     safeReportsGiven: number;
+    personalScanCount: number;
+    friendsCount: number;
   };
 }
 
@@ -33,6 +38,9 @@ const DEFAULT_PRIVACY: PrivacySettings = {
   showQrCodes: true,
   showStats: true,
   showActivity: true,
+  showRanking: true,
+  showScanActivity: true,
+  showFriendsCount: true,
 };
 
 export async function getUserStats(userId: string): Promise<UserStats> {
@@ -140,6 +148,9 @@ export async function getPublicProfile(username: string): Promise<PublicProfile 
       showQrCodes: userDoc.privacyShowQrCodes !== false,
       showStats: userDoc.privacyShowStats !== false,
       showActivity: userDoc.privacyShowActivity !== false,
+      showRanking: userDoc.privacyShowRanking !== false,
+      showScanActivity: userDoc.privacyShowScanActivity !== false,
+      showFriendsCount: userDoc.privacyShowFriendsCount !== false,
     };
     const totalScans = qrResult.docs.reduce((sum: number, d: any) => sum + (d.data.scanCount || 0), 0);
     let joinedAt: string | null = null;
@@ -150,6 +161,13 @@ export async function getPublicProfile(username: string): Promise<PublicProfile 
           : new Date(userDoc.createdAt).toISOString();
       } catch {}
     }
+    const [personalScansResult, friendsResult] = await Promise.all([
+      db.query(["users", userId, "scans"], { limit: 5000 }),
+      db.query(["users", userId, "friends"], {
+        where: [{ field: "status", op: "==", value: "friends" }],
+        limit: 500,
+      }),
+    ]);
     return {
       userId,
       displayName: userDoc.displayName || username,
@@ -164,6 +182,8 @@ export async function getPublicProfile(username: string): Promise<PublicProfile 
         commentCount: userDoc.commentCount || 0,
         totalLikesReceived: userDoc.totalLikesReceived || 0,
         safeReportsGiven: userDoc.safeReportsGiven || 0,
+        personalScanCount: personalScansResult.docs.length,
+        friendsCount: friendsResult.docs.length,
       },
     };
   } catch {
@@ -191,6 +211,9 @@ export async function updatePrivacySettings(userId: string, settings: PrivacySet
     privacyShowQrCodes: settings.showQrCodes,
     privacyShowStats: settings.showStats,
     privacyShowActivity: settings.showActivity,
+    privacyShowRanking: settings.showRanking,
+    privacyShowScanActivity: settings.showScanActivity,
+    privacyShowFriendsCount: settings.showFriendsCount,
   });
 }
 
@@ -207,9 +230,68 @@ export async function getPrivacySettings(userId: string): Promise<PrivacySetting
       showQrCodes: doc.privacyShowQrCodes !== false,
       showStats: doc.privacyShowStats !== false,
       showActivity: doc.privacyShowActivity !== false,
+      showRanking: doc.privacyShowRanking !== false,
+      showScanActivity: doc.privacyShowScanActivity !== false,
+      showFriendsCount: doc.privacyShowFriendsCount !== false,
     };
   } catch {
     return DEFAULT_PRIVACY;
+  }
+}
+
+export interface FriendLeaderboardEntry {
+  userId: string;
+  displayName: string;
+  username: string;
+  photoURL: string | null;
+  scanCount: number;
+  rank: number;
+  isMe: boolean;
+}
+
+export async function getFriendsLeaderboard(myUserId: string): Promise<FriendLeaderboardEntry[]> {
+  try {
+    const friendsRes = await db.query(
+      ["users", myUserId, "friends"],
+      { where: [{ field: "status", op: "==", value: "friends" }], limit: 100 }
+    );
+    const friends = friendsRes.docs.map((d) => ({ userId: d.id, ...d.data } as any));
+
+    const myScansRes = await db.query(["users", myUserId, "scans"], { limit: 5000 });
+    const myUserDoc = await db.get(["users", myUserId]);
+
+    const entries: FriendLeaderboardEntry[] = [
+      {
+        userId: myUserId,
+        displayName: myUserDoc?.displayName || "You",
+        username: myUserDoc?.username || "",
+        photoURL: myUserDoc?.photoURL || null,
+        scanCount: myScansRes.docs.length,
+        rank: 0,
+        isMe: true,
+      },
+    ];
+
+    await Promise.all(
+      friends.map(async (f: any) => {
+        const scansRes = await db.query(["users", f.userId, "scans"], { limit: 5000 });
+        entries.push({
+          userId: f.userId,
+          displayName: f.displayName || f.username || "",
+          username: f.username || "",
+          photoURL: f.photoURL || null,
+          scanCount: scansRes.docs.length,
+          rank: 0,
+          isMe: false,
+        });
+      })
+    );
+
+    entries.sort((a, b) => b.scanCount - a.scanCount);
+    entries.forEach((e, i) => { e.rank = i + 1; });
+    return entries;
+  } catch {
+    return [];
   }
 }
 

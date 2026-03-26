@@ -24,7 +24,9 @@ import { useProfile } from "@/hooks/useProfile";
 import {
   updateBio,
   getUserBio,
+  getFriendsLeaderboard,
 } from "@/lib/services/user-service";
+import { getFriends } from "@/lib/services/friend-service";
 
 export default function ProfileScreen() {
   const insets = useSafeAreaInsets();
@@ -44,6 +46,7 @@ export default function ProfileScreen() {
   const [editingBio, setEditingBio] = useState(false);
   const [newBio, setNewBio] = useState("");
   const [savingBio, setSavingBio] = useState(false);
+  const [friendsCount, setFriendsCount] = useState(0);
 
   const topInset = Platform.OS === "web" ? 67 : insets.top;
   const tabBarHeight = 60 + insets.bottom;
@@ -53,6 +56,7 @@ export default function ProfileScreen() {
   useEffect(() => {
     if (!user) return;
     getUserBio(user.id).then(setBio).catch(() => {});
+    getFriends(user.id).then((f) => setFriendsCount(f.length)).catch(() => {});
   }, [user?.id]);
 
   async function handleSaveBio() {
@@ -127,10 +131,16 @@ export default function ProfileScreen() {
           <View style={styles.bannerTopRow}>
             <View style={{ flex: 1 }} />
             <Pressable
-              onPress={() => router.push("/settings")}
+              onPress={() => router.push("/privacy-settings" as any)}
               style={[styles.settingsBtn, { backgroundColor: colors.primary + "18", borderColor: colors.primary + "35" }]}
             >
-              <Ionicons name="settings-outline" size={18} color={colors.primary} />
+              <Ionicons name="shield-outline" size={18} color={colors.primary} />
+            </Pressable>
+            <Pressable
+              onPress={() => router.push("/settings" as any)}
+              style={[styles.settingsBtn, { backgroundColor: colors.surfaceLight, borderColor: colors.surfaceBorder, marginLeft: 8 }]}
+            >
+              <Ionicons name="settings-outline" size={18} color={colors.textSecondary} />
             </Pressable>
           </View>
 
@@ -262,11 +272,18 @@ export default function ProfileScreen() {
         <Animated.View entering={FadeInDown.duration(450).delay(80)}>
           <View style={styles.statsRow}>
             {[
-              { label: "Following", value: stats.followingCount, icon: "notifications" as const, color: colors.primary, bg: colors.primaryDim },
-              { label: "Scans", value: stats.scanCount, icon: "scan-outline" as const, color: colors.accent, bg: colors.accentDim },
-              { label: "Comments", value: stats.commentCount, icon: "chatbubble-outline" as const, color: colors.safe, bg: colors.safeDim },
+              { label: "Friends", value: friendsCount, icon: "people" as const, color: colors.safe, bg: colors.safeDim, onPress: () => router.push("/friends" as any) },
+              { label: "My Scans", value: stats.scanCount, icon: "scan-outline" as const, color: colors.accent, bg: colors.accentDim, onPress: undefined },
+              { label: "Following", value: stats.followingCount, icon: "notifications" as const, color: colors.primary, bg: colors.primaryDim, onPress: undefined },
             ].map((s) => (
-              <View key={s.label} style={[styles.statCard, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
+              <Pressable
+                key={s.label}
+                onPress={s.onPress}
+                style={({ pressed }) => [
+                  styles.statCard,
+                  { backgroundColor: colors.surface, borderColor: colors.surfaceBorder, opacity: pressed && s.onPress ? 0.8 : 1 },
+                ]}
+              >
                 <LinearGradient
                   colors={[s.bg, "transparent"]}
                   style={styles.statGlow}
@@ -280,7 +297,7 @@ export default function ProfileScreen() {
                   : <Text style={[styles.statValue, { color: s.color }]}>{s.value}</Text>
                 }
                 <Text style={[styles.statLabel, { color: colors.textMuted }]}>{s.label}</Text>
-              </View>
+              </Pressable>
             ))}
           </View>
         </Animated.View>
@@ -327,6 +344,14 @@ export default function ProfileScreen() {
                 sub: "QR codes you've saved",
                 onPress: () => router.push("/favorites" as any),
                 accent: colors.danger,
+              },
+              {
+                icon: <Ionicons name="shield-checkmark" size={20} color={colors.accent} />,
+                bg: colors.accentDim,
+                title: "Privacy & Settings",
+                sub: "Manage who sees your profile",
+                onPress: () => router.push("/privacy-settings" as any),
+                accent: colors.accent,
               },
             ].map((item, idx) => (
               <Pressable

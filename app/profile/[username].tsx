@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
   View, Text, ScrollView, Pressable, ActivityIndicator,
   StyleSheet, Image, Share, Platform, useWindowDimensions, Alert,
@@ -12,6 +12,10 @@ import { useTheme } from "@/contexts/ThemeContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { usePublicProfile } from "@/features/profile/hooks/usePublicProfile";
 import { formatCompactNumber } from "@/lib/number-format";
+import {
+  getFriendsLeaderboard,
+  FriendLeaderboardEntry,
+} from "@/lib/services/user-service";
 import {
   getFriendStatus,
   sendFriendRequest,
@@ -56,11 +60,34 @@ export default function PublicProfileScreen() {
 
   const [friendStatus, setFriendStatus] = useState<FriendStatus>("none");
   const [friendLoading, setFriendLoading] = useState(false);
+  const [leaderboard, setLeaderboard] = useState<FriendLeaderboardEntry[]>([]);
+  const [leaderboardLoading, setLeaderboardLoading] = useState(false);
+  const [leaderboardLoaded, setLeaderboardLoaded] = useState(false);
 
   useEffect(() => {
     if (!user || !profile || isOwnProfile) return;
     getFriendStatus(user.id, profile.userId).then(setFriendStatus).catch(() => {});
   }, [user?.id, profile?.userId, isOwnProfile]);
+
+  const loadLeaderboard = useCallback(async () => {
+    if (!profile || leaderboardLoaded) return;
+    const uid = isOwnProfile ? user?.id : profile.userId;
+    if (!uid) return;
+    setLeaderboardLoading(true);
+    try {
+      const data = await getFriendsLeaderboard(uid);
+      setLeaderboard(data);
+      setLeaderboardLoaded(true);
+    } catch {}
+    finally { setLeaderboardLoading(false); }
+  }, [profile, isOwnProfile, user?.id, leaderboardLoaded]);
+
+  useEffect(() => {
+    if (!profile) return;
+    if (isOwnProfile || friendStatus === "friends") {
+      loadLeaderboard();
+    }
+  }, [profile, isOwnProfile, friendStatus]);
 
   async function handleShare() {
     try {
@@ -213,11 +240,11 @@ export default function PublicProfileScreen() {
   const coverColors = getCoverGradients(username ?? "", colors.primary, colors.accent);
 
   const STAT_ITEMS = [
-    { label: "Codes",   value: profile.stats.qrCount,            gradient: [colors.primary, colors.primary + "AA"] as [string, string], icon: "qr-code-outline" as const },
-    { label: "Scans",   value: profile.stats.totalScans,         gradient: [colors.safe, colors.safe + "AA"] as [string, string], icon: "scan-outline" as const },
-    { label: "Likes",   value: profile.stats.totalLikesReceived, gradient: [colors.accent, colors.accent + "AA"] as [string, string], icon: "heart-outline" as const },
-    { label: "Reports", value: profile.stats.safeReportsGiven,   gradient: [colors.warning, colors.warning + "AA"] as [string, string], icon: "shield-checkmark-outline" as const },
-  ];
+    { label: "Codes",    value: profile.stats.qrCount,            gradient: [colors.primary, colors.primary + "AA"] as [string, string], icon: "qr-code-outline" as const, hidden: false },
+    { label: "My Scans", value: profile.stats.personalScanCount,  gradient: [colors.accent, colors.accent + "AA"] as [string, string], icon: "scan-outline" as const, hidden: !profile.privacy.showScanActivity },
+    { label: "Friends",  value: profile.stats.friendsCount,       gradient: [colors.safe, colors.safe + "AA"] as [string, string], icon: "people-outline" as const, hidden: !profile.privacy.showFriendsCount },
+    { label: "Likes",    value: profile.stats.totalLikesReceived, gradient: [colors.warning, colors.warning + "AA"] as [string, string], icon: "heart-outline" as const, hidden: false },
+  ].filter((s) => !s.hidden);
 
   const HERO_H = topInset + 260;
 
@@ -421,18 +448,111 @@ export default function PublicProfileScreen() {
             </LinearGradient>
           </Animated.View>
 
+          {/* ══════════════ FRIENDS LEADERBOARD ══════════════ */}
+          {(isOwnProfile || friendStatus === "friends") && profile.privacy.showRanking && (
+            <Animated.View entering={FadeInDown.duration(400).delay(240)}>
+              <View style={[S.leaderboardCard, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
+                <LinearGradient
+                  colors={isDark ? ["#0A1628", "transparent"] : ["#EBF4FF", "transparent"]}
+                  style={StyleSheet.absoluteFill}
+                  start={{ x: 0, y: 0 }} end={{ x: 0, y: 1 }}
+                />
+                <View style={S.leaderboardHeader}>
+                  <LinearGradient
+                    colors={["#FFD700", "#FFA500"]}
+                    style={S.leaderboardHeaderIcon}
+                    start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
+                  >
+                    <Ionicons name="trophy" size={16} color="#fff" />
+                  </LinearGradient>
+                  <View style={{ flex: 1 }}>
+                    <Text style={[S.leaderboardTitle, { color: colors.text }]}>Scan Competition</Text>
+                    <Text style={[S.leaderboardSub, { color: colors.textMuted }]}>How you rank among friends</Text>
+                  </View>
+                  {leaderboardLoading && <ActivityIndicator size="small" color={colors.primary} />}
+                </View>
+
+                {leaderboard.slice(0, 5).map((entry, idx) => {
+                  const initials = entry.displayName.split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2);
+                  const rankColors = ["#FFD700", "#C0C0C0", "#CD7F32"];
+                  const rankColor = idx < 3 ? rankColors[idx] : colors.textMuted;
+                  return (
+                    <View key={entry.userId}>
+                      {idx > 0 && <View style={[S.lbDivider, { backgroundColor: colors.surfaceBorder }]} />}
+                      <Pressable
+                        onPress={() => entry.username && !entry.isMe && router.push(`/profile/${entry.username}` as any)}
+                        style={[S.lbRow, entry.isMe && { backgroundColor: colors.primaryDim + "50" }]}
+                      >
+                        <View style={[S.lbRankBadge, { borderColor: rankColor + (idx < 3 ? "60" : "30") }]}>
+                          {idx < 3
+                            ? <Ionicons name="trophy" size={10} color={rankColor} />
+                            : <Text style={[S.lbRankNum, { color: rankColor }]}>{entry.rank}</Text>
+                          }
+                        </View>
+                        <View style={[S.lbAvatar, { borderColor: rankColor + "40" }]}>
+                          {entry.photoURL
+                            ? <Image source={{ uri: entry.photoURL }} style={S.lbAvatarImg} />
+                            : (
+                              <LinearGradient
+                                colors={entry.isMe ? [colors.primary, colors.accent] : [colors.textMuted + "80", colors.textMuted + "40"]}
+                                style={S.lbAvatarGrad}
+                              >
+                                <Text style={S.lbAvatarInitials}>{initials}</Text>
+                              </LinearGradient>
+                            )
+                          }
+                        </View>
+                        <View style={{ flex: 1 }}>
+                          <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
+                            <Text style={[S.lbName, { color: colors.text }]} numberOfLines={1}>{entry.displayName}</Text>
+                            {entry.isMe && (
+                              <View style={[S.lbYouBadge, { backgroundColor: colors.primaryDim, borderColor: colors.primary + "40" }]}>
+                                <Text style={[S.lbYouText, { color: colors.primary }]}>You</Text>
+                              </View>
+                            )}
+                          </View>
+                          <Text style={[S.lbUsername, { color: colors.primary }]}>@{entry.username}</Text>
+                        </View>
+                        <View style={{ alignItems: "center", gap: 1 }}>
+                          <Text style={[S.lbCount, { color: rankColor }]}>{formatCompactNumber(entry.scanCount)}</Text>
+                          <Text style={[S.lbCountLabel, { color: colors.textMuted }]}>scans</Text>
+                        </View>
+                      </Pressable>
+                    </View>
+                  );
+                })}
+
+                {leaderboard.length === 0 && !leaderboardLoading && (
+                  <View style={S.lbEmpty}>
+                    <Text style={[S.lbEmptyText, { color: colors.textMuted }]}>Add friends to see who's scanning the most!</Text>
+                  </View>
+                )}
+              </View>
+            </Animated.View>
+          )}
+
           {/* ══════════════ OWN PROFILE CTA ══════════════ */}
           {isOwnProfile ? (
-            <Animated.View entering={FadeInDown.duration(400).delay(280)}>
+            <Animated.View entering={FadeInDown.duration(400).delay(280)} style={{ gap: 10 }}>
               <Pressable
-                onPress={() => router.push("/settings" as any)}
+                onPress={() => router.push("/privacy-settings" as any)}
                 style={({ pressed }) => [S.ownCta, { backgroundColor: colors.primaryDim, borderColor: colors.primary + "40", opacity: pressed ? 0.85 : 1 }]}
               >
                 <LinearGradient colors={[colors.primary, colors.accent]} style={S.ownCtaIcon} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}>
-                  <Ionicons name="settings-outline" size={16} color={colors.primaryText} />
+                  <Ionicons name="shield-checkmark-outline" size={16} color={colors.primaryText} />
                 </LinearGradient>
                 <Text style={[S.ownCtaText, { color: colors.primary }]}>Manage Privacy & Settings</Text>
                 <Ionicons name="chevron-forward" size={16} color={colors.primary} />
+              </Pressable>
+              <Pressable
+                onPress={() => router.push("/friends" as any)}
+                style={({ pressed }) => [S.ownCta, { backgroundColor: colors.safeDim, borderColor: colors.safe + "40", opacity: pressed ? 0.85 : 1 }]}
+              >
+                <LinearGradient colors={[colors.safe, colors.safe + "CC"]} style={S.ownCtaIcon} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}>
+                  <Ionicons name="people-outline" size={16} color="#fff" />
+                </LinearGradient>
+                <Text style={[S.ownCtaText, { color: colors.safe }]}>My Friends</Text>
+                <Ionicons name="chevron-forward" size={16} color={colors.safe} />
               </Pressable>
             </Animated.View>
           ) : user ? (
@@ -607,4 +727,39 @@ const S = StyleSheet.create({
   },
   ownCtaIcon: { width: 32, height: 32, borderRadius: 10, alignItems: "center", justifyContent: "center" },
   ownCtaText: { flex: 1, fontSize: 14, fontFamily: "Inter_600SemiBold" },
+
+  // Leaderboard
+  leaderboardCard: { borderRadius: 20, borderWidth: 1, marginBottom: 16, overflow: "hidden" },
+  leaderboardHeader: { flexDirection: "row", alignItems: "center", gap: 12, padding: 16 },
+  leaderboardHeaderIcon: { width: 38, height: 38, borderRadius: 12, alignItems: "center", justifyContent: "center" },
+  leaderboardTitle: { fontSize: 15, fontFamily: "Inter_700Bold" },
+  leaderboardSub: { fontSize: 12, fontFamily: "Inter_400Regular", marginTop: 1 },
+  lbDivider: { height: 1, marginHorizontal: 16 },
+  lbRow: { flexDirection: "row", alignItems: "center", gap: 12, paddingHorizontal: 16, paddingVertical: 12 },
+  lbRankBadge: {
+    width: 26, height: 26, borderRadius: 8, borderWidth: 1,
+    alignItems: "center", justifyContent: "center",
+  },
+  lbRankNum: { fontSize: 11, fontFamily: "Inter_700Bold" },
+  lbAvatar: { width: 40, height: 40, borderRadius: 13, overflow: "hidden", borderWidth: 1.5 },
+  lbAvatarImg: { width: 40, height: 40 },
+  lbAvatarGrad: { width: 40, height: 40, alignItems: "center", justifyContent: "center" },
+  lbAvatarInitials: { fontSize: 14, fontFamily: "Inter_700Bold", color: "#fff" },
+  lbName: { fontSize: 13, fontFamily: "Inter_700Bold", flexShrink: 1 },
+  lbUsername: { fontSize: 11, fontFamily: "Inter_500Medium", marginTop: 1 },
+  lbYouBadge: { paddingHorizontal: 6, paddingVertical: 1, borderRadius: 7, borderWidth: 1 },
+  lbYouText: { fontSize: 10, fontFamily: "Inter_700Bold" },
+  lbCount: { fontSize: 15, fontFamily: "Inter_700Bold", textAlign: "center" },
+  lbCountLabel: { fontSize: 9, fontFamily: "Inter_400Regular", textAlign: "center" },
+  lbEmpty: { paddingHorizontal: 20, paddingVertical: 20, alignItems: "center" },
+  lbEmptyText: { fontSize: 13, fontFamily: "Inter_400Regular", textAlign: "center" },
+
+  // Friend row (non-own profile)
+  friendRow: { marginBottom: 20 },
+  friendBtn: {
+    flexDirection: "row", alignItems: "center", gap: 10,
+    borderRadius: 16, paddingVertical: 14, paddingHorizontal: 20,
+    justifyContent: "center", borderWidth: 1,
+  },
+  friendBtnText: { fontSize: 15, fontFamily: "Inter_700Bold" },
 });

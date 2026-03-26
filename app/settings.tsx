@@ -178,6 +178,37 @@ export default function SettingsScreen() {
         {user && (
           <View style={styles.section}>
             <Text style={[styles.sectionLabel, { color: colors.textMuted }]}>PROFILE PRIVACY</Text>
+
+            {/* Link to dedicated privacy page */}
+            <Pressable
+              onPress={() => router.push("/privacy-settings" as any)}
+              style={({ pressed }) => [
+                {
+                  flexDirection: "row" as const,
+                  alignItems: "center" as const,
+                  gap: 14,
+                  borderRadius: 16,
+                  padding: 14,
+                  borderWidth: 1,
+                  marginBottom: 10,
+                  backgroundColor: colors.primaryDim,
+                  borderColor: colors.primary + "40",
+                  opacity: pressed ? 0.85 : 1,
+                }
+              ]}
+            >
+              <View style={{ width: 38, height: 38, borderRadius: 12, backgroundColor: colors.primary + "25", alignItems: "center" as const, justifyContent: "center" as const }}>
+                <Ionicons name="shield-checkmark-outline" size={20} color={colors.primary} />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={{ fontSize: 14, fontFamily: "Inter_700Bold", color: colors.primary }}>Manage Privacy & Settings</Text>
+                <Text style={{ fontSize: 12, fontFamily: "Inter_400Regular", color: colors.textSecondary, marginTop: 1 }}>
+                  Control who sees your profile, stats & ranking
+                </Text>
+              </View>
+              <Ionicons name="arrow-forward" size={16} color={colors.primary} />
+            </Pressable>
+
             <View style={[styles.menuGroup, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
 
               {/* Private account toggle */}
