@@ -42,12 +42,12 @@ const REPLIES_PER_PAGE = 10;
 
 function getInitialColor(name: string): [string, string] {
   const palettes: [string, string][] = [
-    ["#006FFF", "#00CFFF"],
-    ["#8B5CF6", "#EC4899"],
-    ["#10B981", "#06B6D4"],
-    ["#F59E0B", "#F97316"],
-    ["#EF4444", "#F97316"],
-    ["#3B82F6", "#6366F1"],
+    ["#2563EB", "#3B82F6"],
+    ["#0052CC", "#4B8EF5"],
+    ["#1D4ED8", "#60A5FA"],
+    ["#1E40AF", "#93C5FD"],
+    ["#3B82F6", "#60A5FA"],
+    ["#2D6BC4", "#4B8EF5"],
   ];
   const idx = name.charCodeAt(0) % palettes.length;
   return palettes[idx];
@@ -135,7 +135,7 @@ const CommentItem = React.memo(function CommentItem({
 
             <View style={styles.headerMeta}>
               <Pressable onPress={navigateToProfile} disabled={!navigateToProfile}>
-                <Text style={[styles.authorName, { color: comment.userUsername ? avatarGradient[0] : colors.text }]} numberOfLines={1}>
+                <Text style={[styles.authorName, { color: comment.userUsername ? colors.primary : colors.text }]} numberOfLines={1}>
                   {displayName}
                 </Text>
               </Pressable>
@@ -160,10 +160,10 @@ const CommentItem = React.memo(function CommentItem({
           <View style={styles.actionRow}>
             <Pressable onPress={() => onLike(comment.id, "like")} style={styles.actionBtn}>
               {currentUserLike === "like" ? (
-                <LinearGradient colors={["#10B981", "#06B6D4"]} style={styles.activeActionBg} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}>
-                  <Ionicons name="thumbs-up" size={13} color="#fff" />
-                  {comment.likeCount > 0 && <Text style={styles.activeActionCount}>{formatCompactNumber(comment.likeCount)}</Text>}
-                </LinearGradient>
+                <View style={[styles.activeActionBg, { backgroundColor: colors.primaryDim, borderColor: colors.primary + "30", borderWidth: 1 }]}>
+                  <Ionicons name="thumbs-up" size={13} color={colors.primary} />
+                  {comment.likeCount > 0 && <Text style={[styles.activeActionCount, { color: colors.primary }]}>{formatCompactNumber(comment.likeCount)}</Text>}
+                </View>
               ) : (
                 <View style={[styles.inactiveActionBg, { backgroundColor: colors.surfaceLight }]}>
                   <Ionicons name="thumbs-up-outline" size={13} color={colors.textMuted} />
@@ -174,10 +174,10 @@ const CommentItem = React.memo(function CommentItem({
 
             <Pressable onPress={() => onLike(comment.id, "dislike")} style={styles.actionBtn}>
               {currentUserLike === "dislike" ? (
-                <LinearGradient colors={["#EF4444", "#DC2626"]} style={styles.activeActionBg} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}>
-                  <Ionicons name="thumbs-down" size={13} color="#fff" />
-                  {comment.dislikeCount > 0 && <Text style={styles.activeActionCount}>{formatCompactNumber(comment.dislikeCount)}</Text>}
-                </LinearGradient>
+                <View style={[styles.activeActionBg, { backgroundColor: colors.dangerDim, borderColor: colors.danger + "30", borderWidth: 1 }]}>
+                  <Ionicons name="thumbs-down" size={13} color={colors.danger} />
+                  {comment.dislikeCount > 0 && <Text style={[styles.activeActionCount, { color: colors.danger }]}>{formatCompactNumber(comment.dislikeCount)}</Text>}
+                </View>
               ) : (
                 <View style={[styles.inactiveActionBg, { backgroundColor: colors.surfaceLight }]}>
                   <Ionicons name="thumbs-down-outline" size={13} color={colors.textMuted} />
@@ -303,7 +303,7 @@ const styles = StyleSheet.create({
     flexDirection: "row", alignItems: "center", gap: 5,
     paddingHorizontal: 10, paddingVertical: 5, borderRadius: 100,
   },
-  activeActionCount: { fontSize: 11, fontFamily: "Inter_700Bold", color: "#fff" },
+  activeActionCount: { fontSize: 11, fontFamily: "Inter_700Bold" },
   inactiveActionBg: {
     flexDirection: "row", alignItems: "center", gap: 5,
     paddingHorizontal: 10, paddingVertical: 5, borderRadius: 100,

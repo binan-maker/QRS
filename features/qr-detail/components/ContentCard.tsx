@@ -168,7 +168,7 @@ const ContentCard = React.memo(function ContentCard({ content, contentType, pars
       {/* Hero icon */}
       <View style={styles.heroCenter}>
         <LinearGradient colors={cfg.gradient} style={styles.heroIcon} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}>
-          <Ionicons name={cfg.icon} size={36} color="#fff" />
+          <Ionicons name={cfg.icon} size={26} color="#fff" />
         </LinearGradient>
         <LinearGradient colors={cfg.gradient} style={styles.typePill} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}>
           <Text style={styles.typePillText}>{cfg.label.toUpperCase()}</Text>
@@ -269,13 +269,13 @@ const styles = StyleSheet.create({
   card: {
     borderRadius: 24, padding: 20, marginBottom: 16, borderWidth: 1, overflow: "hidden", gap: 16,
   },
-  heroCenter: { alignItems: "center", gap: 12, paddingVertical: 8 },
+  heroCenter: { alignItems: "center", gap: 10, paddingVertical: 4 },
   heroIcon: {
-    width: 80, height: 80, borderRadius: 26,
+    width: 60, height: 60, borderRadius: 18,
     alignItems: "center", justifyContent: "center",
   },
-  typePill: { paddingHorizontal: 14, paddingVertical: 5, borderRadius: 100 },
-  typePillText: { fontSize: 11, fontFamily: "Inter_700Bold", color: "#fff", letterSpacing: 1 },
+  typePill: { paddingHorizontal: 12, paddingVertical: 4, borderRadius: 100 },
+  typePillText: { fontSize: 10, fontFamily: "Inter_700Bold", color: "#fff", letterSpacing: 0.8 },
   contentBox: {
     borderRadius: 16, padding: 14, borderWidth: 1, gap: 8,
   },
@@ -296,12 +296,12 @@ const styles = StyleSheet.create({
   actionRow: { flexDirection: "row", alignItems: "center", gap: 10 },
   openBtn: {
     flexDirection: "row", alignItems: "center", justifyContent: "center",
-    gap: 8, borderRadius: 16, paddingVertical: 14, paddingHorizontal: 18,
+    gap: 7, borderRadius: 13, paddingVertical: 11, paddingHorizontal: 16,
   },
-  openBtnText: { fontSize: 15, fontFamily: "Inter_700Bold", color: "#fff" },
+  openBtnText: { fontSize: 14, fontFamily: "Inter_600SemiBold", color: "#fff" },
   copyBtn: {
     flexDirection: "row", alignItems: "center", gap: 6,
-    height: 50, paddingHorizontal: 14, borderRadius: 16, borderWidth: 1,
+    height: 44, paddingHorizontal: 13, borderRadius: 13, borderWidth: 1,
   },
   copiedText: { fontSize: 12, fontFamily: "Inter_600SemiBold" },
 });

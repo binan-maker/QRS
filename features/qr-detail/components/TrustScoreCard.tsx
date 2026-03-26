@@ -37,10 +37,10 @@ const TrustScoreCard = React.memo(function TrustScoreCard({
   const { colors, isDark } = useTheme();
 
   const REPORT_TYPES = [
-    { key: "safe", label: "Safe",  icon: "shield-checkmark" as const, gradient: [colors.safe, colors.safeShade] as [string, string] },
-    { key: "scam", label: "Scam",  icon: "warning" as const,          gradient: [colors.danger, colors.dangerShade] as [string, string] },
-    { key: "fake", label: "Fake",  icon: "close-circle" as const,     gradient: [colors.warning, colors.warningShade] as [string, string] },
-    { key: "spam", label: "Spam",  icon: "mail-unread" as const,      gradient: [colors.primary, colors.primaryShade] as [string, string] },
+    { key: "safe", label: "Safe",  color: colors.safe    },
+    { key: "scam", label: "Scam",  color: colors.danger  },
+    { key: "fake", label: "Fake",  color: colors.warning },
+    { key: "spam", label: "Spam",  color: colors.primary },
   ];
 
   const total = REPORT_TYPES.reduce((sum, r) => sum + (reportCounts[r.key] || 0), 0);
@@ -48,10 +48,10 @@ const TrustScoreCard = React.memo(function TrustScoreCard({
   const scoreGradient = hasScore ? getScoreGradient(trustInfo.score, colors) : [colors.textMuted, colors.surfaceBorder] as [string, string];
 
   const STATS = [
-    { icon: "scan-outline" as const,    label: "Scans",     value: totalScans,    gradient: [colors.primary, colors.primaryShade] as [string, string], onPress: undefined },
-    { icon: "chatbubbles-outline" as const, label: "Comments", value: totalComments, gradient: [colors.primary, colors.primaryShade] as [string, string], onPress: undefined },
-    { icon: "people-outline" as const,  label: isQrOwner ? "Followers ›" : "Followers", value: followCount, gradient: [colors.primary, colors.primaryShade] as [string, string], onPress: isQrOwner ? onOpenFollowers : undefined },
-    { icon: "flag-outline" as const,    label: "Reports",   value: total,         gradient: [colors.danger, colors.dangerShade] as [string, string], onPress: undefined },
+    { icon: "scan-outline" as const,       label: "Scans",     value: totalScans,    onPress: undefined },
+    { icon: "chatbubbles-outline" as const, label: "Comments",  value: totalComments, onPress: undefined },
+    { icon: "people-outline" as const,     label: isQrOwner ? "Followers ›" : "Followers", value: followCount, onPress: isQrOwner ? onOpenFollowers : undefined },
+    { icon: "flag-outline" as const,       label: "Reports",   value: total,         onPress: undefined },
   ];
 
   return (
@@ -66,16 +66,16 @@ const TrustScoreCard = React.memo(function TrustScoreCard({
                 <Text style={[styles.scorePct, { color: scoreGradient[0] }]}>%</Text>
               </>
             ) : (
-              <Ionicons name="help-outline" size={28} color={colors.textMuted} />
+              <Ionicons name="help-outline" size={26} color={colors.textMuted} />
             )}
           </View>
         </LinearGradient>
         <View style={styles.scoreMeta}>
-          <Text style={[styles.scoreTitle, { color: colors.text }]}>Community Trust</Text>
+          <Text style={[styles.scoreTitle, { color: colors.text }]}>Trust Score</Text>
           {hasScore ? (
-            <LinearGradient colors={scoreGradient} style={styles.scoreLabelBadge} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}>
-              <Text style={styles.scoreLabelText}>{trustInfo.label}</Text>
-            </LinearGradient>
+            <View style={[styles.scoreLabelBadge, { backgroundColor: scoreGradient[0] + (isDark ? "22" : "14"), borderColor: scoreGradient[0] + "30" }]}>
+              <Text style={[styles.scoreLabelText, { color: scoreGradient[0] }]}>{trustInfo.label}</Text>
+            </View>
           ) : (
             <Text style={[styles.noScoreText, { color: colors.textMuted }]}>No votes yet</Text>
           )}
@@ -95,7 +95,7 @@ const TrustScoreCard = React.memo(function TrustScoreCard({
       {/* Manipulation warning */}
       {manipulationWarning && (
         <View style={[styles.manipBanner, { backgroundColor: colors.warningDim, borderColor: colors.warning + "40" }]}>
-          <Ionicons name="alert-circle" size={15} color={colors.warning} />
+          <Ionicons name="alert-circle" size={14} color={colors.warning} />
           <Text style={[styles.manipText, { color: colors.warning }]}>
             Unusual voting activity detected — score may not reflect real community opinion.
           </Text>
@@ -112,19 +112,16 @@ const TrustScoreCard = React.memo(function TrustScoreCard({
             style={({ pressed }) => [
               styles.statCard,
               { backgroundColor: isDark ? colors.surfaceLight : colors.background, borderColor: colors.surfaceBorder },
-              pressed && s.onPress && { opacity: 0.75 },
+              pressed && s.onPress && { opacity: 0.7 },
             ]}
           >
-            <LinearGradient colors={s.gradient} style={styles.statIcon} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}>
-              <Ionicons name={s.icon} size={14} color="#fff" />
-            </LinearGradient>
             <Text style={[styles.statNum, { color: colors.text }]}>{formatCompactNumber(s.value)}</Text>
-            <Text style={[styles.statLabel, { color: s.onPress ? s.gradient[0] : colors.textMuted }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>{s.label}</Text>
+            <Text style={[styles.statLabel, { color: s.onPress ? colors.primary : colors.textMuted }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>{s.label}</Text>
           </Pressable>
         ))}
       </View>
 
-      {/* Report breakdown */}
+      {/* Vote breakdown */}
       {total > 0 && (
         <View style={styles.breakdown}>
           {REPORT_TYPES.map((r) => {
@@ -134,19 +131,11 @@ const TrustScoreCard = React.memo(function TrustScoreCard({
             return (
               <View key={r.key} style={styles.breakdownItem}>
                 <View style={styles.breakdownRow}>
-                  <LinearGradient colors={r.gradient} style={styles.breakdownIcon} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}>
-                    <Ionicons name={r.icon} size={10} color="#fff" />
-                  </LinearGradient>
                   <Text style={[styles.breakdownLabel, { color: colors.textSecondary }]}>{r.label}</Text>
-                  <Text style={[styles.breakdownCount, { color: r.gradient[0] }]}>{count}</Text>
+                  <Text style={[styles.breakdownCount, { color: r.color }]}>{pct}%</Text>
                 </View>
                 <View style={[styles.breakdownBar, { backgroundColor: colors.surfaceLight }]}>
-                  <LinearGradient
-                    colors={r.gradient}
-                    style={[styles.breakdownBarFill, { width: `${pct}%` as any }]}
-                    start={{ x: 0, y: 0 }}
-                    end={{ x: 1, y: 0 }}
-                  />
+                  <View style={[styles.breakdownBarFill, { width: `${pct}%` as any, backgroundColor: r.color + (isDark ? "90" : "70") }]} />
                 </View>
               </View>
             );
@@ -160,38 +149,36 @@ const TrustScoreCard = React.memo(function TrustScoreCard({
 export default TrustScoreCard;
 
 const styles = StyleSheet.create({
-  card: { borderRadius: 24, padding: 20, marginBottom: 16, borderWidth: 1, gap: 18 },
-  scoreHero: { flexDirection: "row", alignItems: "center", gap: 18 },
-  scoreRing: { width: 88, height: 88, borderRadius: 44, padding: 3, flexShrink: 0, alignItems: "center", justifyContent: "center" },
-  scoreInner: { width: 82, height: 82, borderRadius: 41, alignItems: "center", justifyContent: "center", flexDirection: "row", alignItems: "baseline" as any },
-  scoreNum: { fontSize: 28, fontFamily: "Inter_700Bold", lineHeight: 34 },
-  scorePct: { fontSize: 14, fontFamily: "Inter_700Bold", marginLeft: 1 },
-  scoreMeta: { flex: 1, gap: 8 },
-  scoreTitle: { fontSize: 18, fontFamily: "Inter_700Bold" },
-  scoreLabelBadge: { alignSelf: "flex-start", paddingHorizontal: 10, paddingVertical: 4, borderRadius: 100 },
-  scoreLabelText: { fontSize: 11, fontFamily: "Inter_700Bold", color: "#fff", letterSpacing: 0.5 },
+  card: { borderRadius: 20, padding: 18, marginBottom: 16, borderWidth: 1, gap: 16 },
+  scoreHero: { flexDirection: "row", alignItems: "center", gap: 16 },
+  scoreRing: { width: 76, height: 76, borderRadius: 38, padding: 2.5, flexShrink: 0, alignItems: "center", justifyContent: "center" },
+  scoreInner: { width: 71, height: 71, borderRadius: 35.5, alignItems: "center", justifyContent: "center", flexDirection: "row", alignItems: "baseline" as any },
+  scoreNum: { fontSize: 26, fontFamily: "Inter_700Bold", lineHeight: 32 },
+  scorePct: { fontSize: 13, fontFamily: "Inter_700Bold", marginLeft: 1 },
+  scoreMeta: { flex: 1, gap: 7 },
+  scoreTitle: { fontSize: 16, fontFamily: "Inter_700Bold" },
+  scoreLabelBadge: { alignSelf: "flex-start", paddingHorizontal: 9, paddingVertical: 3, borderRadius: 100, borderWidth: 1 },
+  scoreLabelText: { fontSize: 11, fontFamily: "Inter_700Bold", letterSpacing: 0.4 },
   noScoreText: { fontSize: 13, fontFamily: "Inter_400Regular" },
-  scoreBar: { height: 6, borderRadius: 3, overflow: "hidden" },
+  scoreBar: { height: 5, borderRadius: 3, overflow: "hidden" },
   scoreBarFill: { height: "100%", borderRadius: 3 },
   manipBanner: {
-    flexDirection: "row", alignItems: "flex-start", gap: 10,
-    borderRadius: 14, padding: 12, borderWidth: 1,
+    flexDirection: "row", alignItems: "flex-start", gap: 8,
+    borderRadius: 12, padding: 11, borderWidth: 1,
   },
   manipText: { flex: 1, fontSize: 12, fontFamily: "Inter_400Regular", lineHeight: 17 },
   statsGrid: { flexDirection: "row", gap: 8 },
   statCard: {
-    flex: 1, borderRadius: 16, padding: 12, alignItems: "center",
-    gap: 5, borderWidth: 1,
+    flex: 1, borderRadius: 12, padding: 10, alignItems: "center",
+    gap: 3, borderWidth: 1,
   },
-  statIcon: { width: 28, height: 28, borderRadius: 9, alignItems: "center", justifyContent: "center" },
-  statNum: { fontSize: 16, fontFamily: "Inter_700Bold" },
-  statLabel: { fontSize: 9, fontFamily: "Inter_600SemiBold", textAlign: "center" },
-  breakdown: { gap: 10 },
-  breakdownItem: { gap: 5 },
-  breakdownRow: { flexDirection: "row", alignItems: "center", gap: 8 },
-  breakdownIcon: { width: 20, height: 20, borderRadius: 6, alignItems: "center", justifyContent: "center" },
-  breakdownLabel: { flex: 1, fontSize: 12, fontFamily: "Inter_500Medium" },
-  breakdownCount: { fontSize: 12, fontFamily: "Inter_700Bold" },
-  breakdownBar: { height: 5, borderRadius: 3, overflow: "hidden" },
-  breakdownBarFill: { height: "100%", borderRadius: 3 },
+  statNum: { fontSize: 15, fontFamily: "Inter_700Bold" },
+  statLabel: { fontSize: 9, fontFamily: "Inter_500Medium", textAlign: "center" },
+  breakdown: { gap: 8 },
+  breakdownItem: { gap: 4 },
+  breakdownRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
+  breakdownLabel: { fontSize: 12, fontFamily: "Inter_500Medium" },
+  breakdownCount: { fontSize: 11, fontFamily: "Inter_700Bold" },
+  breakdownBar: { height: 4, borderRadius: 2, overflow: "hidden" },
+  breakdownBarFill: { height: "100%", borderRadius: 2 },
 });

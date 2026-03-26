@@ -54,20 +54,17 @@ function safeBack() {
 function SectionHeader({
   icon,
   label,
-  gradient,
   inline,
 }: {
   icon: keyof typeof Ionicons.glyphMap;
   label: string;
-  gradient: [string, string];
+  gradient?: [string, string];
   inline?: boolean;
 }) {
   const { colors } = useTheme();
   const content = (
     <View style={sectionHeaderStyles.row}>
-      <LinearGradient colors={gradient} style={sectionHeaderStyles.iconWrap} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}>
-        <Ionicons name={icon} size={14} color="#fff" />
-      </LinearGradient>
+      <Ionicons name={icon} size={16} color={colors.textSecondary} />
       <Text style={[sectionHeaderStyles.label, { color: colors.text }]}>{label}</Text>
     </View>
   );
@@ -76,10 +73,9 @@ function SectionHeader({
 }
 
 const sectionHeaderStyles = StyleSheet.create({
-  wrapper: { marginBottom: 14, marginTop: 6 },
-  row: { flexDirection: "row", alignItems: "center", gap: 10 },
-  iconWrap: { width: 28, height: 28, borderRadius: 9, alignItems: "center", justifyContent: "center" },
-  label: { fontSize: 17, fontFamily: "Inter_700Bold" },
+  wrapper: { marginBottom: 12, marginTop: 4 },
+  row: { flexDirection: "row", alignItems: "center", gap: 8 },
+  label: { fontSize: 16, fontFamily: "Inter_700Bold" },
 });
 
 function VerdictBanner({ verdict, offlineMode }: { verdict: ReturnType<ReturnType<typeof useQrDetail>["getCombinedVerdict"]>; offlineMode: boolean }) {
@@ -286,7 +282,7 @@ export default function QrDetailScreen() {
             {!user && (
               <Animated.View entering={FadeIn.duration(300)} style={signInGlowStyle}>
                 <Pressable onPress={() => router.push("/(auth)/login")} style={styles.signInBanner}>
-                  <LinearGradient colors={["#006FFF", "#00CFFF"]} style={signInBannerIconStyle} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}>
+                  <LinearGradient colors={[colors.primary, colors.primaryShade]} style={signInBannerIconStyle} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}>
                     <Ionicons name="person" size={20} color="#fff" />
                   </LinearGradient>
                   <View style={{ flex: 1 }}>

@@ -11,29 +11,27 @@ interface ReportGridProps {
   onReport: (type: string) => void;
 }
 
-const REPORT_TYPES = [
-  { key: "safe", label: "Safe",  icon: "shield-checkmark" as const, gradient: ["#10B981", "#06B6D4"] as [string, string], desc: "Looks legit" },
-  { key: "scam", label: "Scam",  icon: "warning" as const,          gradient: ["#EF4444", "#DC2626"] as [string, string], desc: "Fraud attempt" },
-  { key: "fake", label: "Fake",  icon: "close-circle" as const,     gradient: ["#F59E0B", "#F97316"] as [string, string], desc: "Not genuine" },
-  { key: "spam", label: "Spam",  icon: "mail-unread" as const,      gradient: ["#8B5CF6", "#EC4899"] as [string, string], desc: "Unwanted" },
-];
-
 export default function ReportGrid({ reportCounts, userReport, isLoggedIn, onReport }: ReportGridProps) {
   const { colors, isDark } = useTheme();
+
+  const REPORT_TYPES = [
+    { key: "safe", label: "Safe",  icon: "shield-checkmark" as const, color: colors.safe,    desc: "Looks legitimate" },
+    { key: "scam", label: "Scam",  icon: "warning" as const,          color: colors.danger,  desc: "Fraud attempt" },
+    { key: "fake", label: "Fake",  icon: "close-circle" as const,     color: colors.warning, desc: "Not genuine" },
+    { key: "spam", label: "Spam",  icon: "mail-unread" as const,      color: colors.primary, desc: "Unwanted content" },
+  ];
 
   return (
     <View style={styles.container}>
       <View style={styles.header}>
         <View style={styles.titleRow}>
-          <LinearGradient colors={["#EF4444", "#F97316"]} style={styles.titleIcon} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}>
-            <Ionicons name="flag" size={14} color="#fff" />
-          </LinearGradient>
+          <Ionicons name="flag-outline" size={17} color={colors.textSecondary} />
           <Text style={[styles.title, { color: colors.text }]}>Rate this QR</Text>
         </View>
         {userReport ? (
-          <View style={[styles.votedBadge, { backgroundColor: "#10B98118", borderColor: "#10B98140" }]}>
-            <Ionicons name="checkmark-circle" size={12} color="#10B981" />
-            <Text style={styles.votedText}>Voted</Text>
+          <View style={[styles.votedBadge, { backgroundColor: colors.safeDim, borderColor: colors.safe + "40" }]}>
+            <Ionicons name="checkmark-circle" size={12} color={colors.safe} />
+            <Text style={[styles.votedText, { color: colors.safe }]}>Voted</Text>
           </View>
         ) : (
           <Text style={[styles.hint, { color: colors.textMuted }]}>
@@ -46,39 +44,38 @@ export default function ReportGrid({ reportCounts, userReport, isLoggedIn, onRep
         {REPORT_TYPES.map((rt) => {
           const count = reportCounts[rt.key] || 0;
           const isSelected = userReport === rt.key;
+          const dimBg = rt.color + (isDark ? "18" : "10");
+
           return (
             <Pressable
               key={rt.key}
               onPress={() => onReport(rt.key)}
               style={({ pressed }) => [{ width: "47%", opacity: pressed ? 0.8 : 1 }]}
             >
-              {isSelected ? (
-                <LinearGradient colors={rt.gradient} style={styles.card} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}>
-                  <View style={styles.selectedCheck}>
-                    <Ionicons name="checkmark" size={11} color="#fff" />
+              <View
+                style={[
+                  styles.card,
+                  isSelected
+                    ? { backgroundColor: dimBg, borderColor: rt.color + "60", borderWidth: 1.5 }
+                    : { backgroundColor: colors.surface, borderColor: colors.surfaceBorder, borderWidth: 1 },
+                ]}
+              >
+                {isSelected && (
+                  <View style={[styles.selectedCheck, { backgroundColor: rt.color }]}>
+                    <Ionicons name="checkmark" size={9} color="#fff" />
                   </View>
-                  <View style={[styles.cardIconBg, { backgroundColor: "rgba(255,255,255,0.25)" }]}>
-                    <Ionicons name={rt.icon} size={26} color="#fff" />
-                  </View>
-                  <Text style={[styles.cardLabel, { color: "#fff" }]}>{rt.label}</Text>
-                  <Text style={[styles.cardDesc, { color: "rgba(255,255,255,0.8)" }]}>{rt.desc}</Text>
-                  <Text style={[styles.cardCount, { color: "rgba(255,255,255,0.9)" }]}>
-                    {count > 0 ? formatCompactNumber(count) : "–"}
-                  </Text>
-                </LinearGradient>
-              ) : (
-                <View style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder, borderWidth: 1 }]}>
-                  <LinearGradient colors={[rt.gradient[0] + (isDark ? "20" : "14"), "transparent"]} style={StyleSheet.absoluteFill} />
-                  <LinearGradient colors={rt.gradient} style={styles.cardIconBg} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}>
-                    <Ionicons name={rt.icon} size={26} color="#fff" />
-                  </LinearGradient>
-                  <Text style={[styles.cardLabel, { color: colors.text }]}>{rt.label}</Text>
-                  <Text style={[styles.cardDesc, { color: colors.textMuted }]}>{rt.desc}</Text>
-                  <Text style={[styles.cardCount, { color: rt.gradient[0] }]}>
-                    {count > 0 ? formatCompactNumber(count) : "–"}
-                  </Text>
+                )}
+                <View style={[styles.cardIconBg, { backgroundColor: rt.color + (isDark ? "20" : "12") }]}>
+                  <Ionicons name={rt.icon} size={20} color={rt.color} />
                 </View>
-              )}
+                <Text style={[styles.cardLabel, { color: isSelected ? rt.color : colors.text }]}>{rt.label}</Text>
+                <Text style={[styles.cardDesc, { color: colors.textMuted }]}>{rt.desc}</Text>
+                {count > 0 && (
+                  <Text style={[styles.cardCount, { color: isSelected ? rt.color : colors.textSecondary }]}>
+                    {formatCompactNumber(count)}
+                  </Text>
+                )}
+              </View>
             </Pressable>
           );
         })}
@@ -89,29 +86,30 @@ export default function ReportGrid({ reportCounts, userReport, isLoggedIn, onRep
 
 const styles = StyleSheet.create({
   container: { marginBottom: 8 },
-  header: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 14 },
-  titleRow: { flexDirection: "row", alignItems: "center", gap: 9 },
-  titleIcon: { width: 28, height: 28, borderRadius: 9, alignItems: "center", justifyContent: "center" },
-  title: { fontSize: 17, fontFamily: "Inter_700Bold" },
-  votedBadge: { flexDirection: "row", alignItems: "center", gap: 5, paddingHorizontal: 9, paddingVertical: 4, borderRadius: 100, borderWidth: 1 },
-  votedText: { fontSize: 11, fontFamily: "Inter_700Bold", color: "#10B981" },
+  header: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 12 },
+  titleRow: { flexDirection: "row", alignItems: "center", gap: 7 },
+  title: { fontSize: 16, fontFamily: "Inter_700Bold" },
+  votedBadge: {
+    flexDirection: "row", alignItems: "center", gap: 4,
+    paddingHorizontal: 8, paddingVertical: 3, borderRadius: 100, borderWidth: 1,
+  },
+  votedText: { fontSize: 11, fontFamily: "Inter_600SemiBold" },
   hint: { fontSize: 12, fontFamily: "Inter_400Regular" },
   grid: { flexDirection: "row", flexWrap: "wrap", gap: 10 },
   card: {
-    borderRadius: 20, padding: 16, alignItems: "center", gap: 7,
+    borderRadius: 16, padding: 14, alignItems: "center", gap: 5,
     position: "relative", overflow: "hidden",
   },
   selectedCheck: {
-    position: "absolute", top: 10, right: 10,
-    width: 20, height: 20, borderRadius: 10,
-    backgroundColor: "rgba(255,255,255,0.3)",
+    position: "absolute", top: 8, right: 8,
+    width: 16, height: 16, borderRadius: 8,
     alignItems: "center", justifyContent: "center",
   },
   cardIconBg: {
-    width: 52, height: 52, borderRadius: 18,
+    width: 40, height: 40, borderRadius: 12,
     alignItems: "center", justifyContent: "center",
   },
-  cardLabel: { fontSize: 14, fontFamily: "Inter_700Bold" },
-  cardDesc: { fontSize: 11, fontFamily: "Inter_400Regular" },
-  cardCount: { fontSize: 13, fontFamily: "Inter_700Bold" },
+  cardLabel: { fontSize: 13, fontFamily: "Inter_700Bold" },
+  cardDesc: { fontSize: 10, fontFamily: "Inter_400Regular", textAlign: "center" },
+  cardCount: { fontSize: 12, fontFamily: "Inter_600SemiBold" },
 });
