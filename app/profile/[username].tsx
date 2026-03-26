@@ -1,4 +1,4 @@
-import React, { useRef } from "react";
+import React from "react";
 import {
   View, Text, ScrollView, Pressable, ActivityIndicator,
   StyleSheet, Image, Share, Platform, useWindowDimensions,
@@ -18,17 +18,6 @@ function safeBack() {
   else router.replace("/(tabs)");
 }
 
-const CONTENT_TYPE_ICONS: Record<string, { icon: keyof typeof Ionicons.glyphMap; gradient: [string, string] }> = {
-  url:      { icon: "globe-outline",         gradient: ["#006FFF", "#00CFFF"] },
-  payment:  { icon: "card-outline",          gradient: ["#F59E0B", "#F97316"] },
-  wifi:     { icon: "wifi-outline",          gradient: ["#3B82F6", "#6366F1"] },
-  phone:    { icon: "call-outline",          gradient: ["#10B981", "#06B6D4"] },
-  email:    { icon: "mail-outline",          gradient: ["#8B5CF6", "#EC4899"] },
-  location: { icon: "location-outline",      gradient: ["#EF4444", "#F97316"] },
-  text:     { icon: "document-text-outline", gradient: ["#6B7280", "#9CA3AF"] },
-};
-function getQrIcon(ct: string) { return CONTENT_TYPE_ICONS[ct] ?? CONTENT_TYPE_ICONS.text; }
-
 function formatJoinDate(iso: string | null): string {
   if (!iso) return "QR Guard Member";
   try {
@@ -37,17 +26,13 @@ function formatJoinDate(iso: string | null): string {
   } catch { return "QR Guard Member"; }
 }
 
-// Generates a deterministic cover gradient from username
-function getCoverGradients(username: string): [string, string, string] {
+// Generates a deterministic cover gradient from username using brand colors
+function getCoverGradients(username: string, primary: string, accent: string): [string, string, string] {
   const h = username.split("").reduce((acc, c) => acc + c.charCodeAt(0), 0);
-  const palettes: [string, string, string][] = [
-    ["#0A1628", "#0F2040", "#0D2A4A"],
-    ["#0D0A20", "#1A0A30", "#120D28"],
-    ["#0A1A18", "#081E20", "#0A1828"],
-    ["#1A0A10", "#200A14", "#180810"],
-    ["#0A1020", "#0C1830", "#080E1E"],
-  ];
-  return palettes[h % palettes.length];
+  const idx = h % 3;
+  if (idx === 0) return [primary + "22", accent + "15", primary + "08"] as [string, string, string];
+  if (idx === 1) return [accent + "20", primary + "12", accent + "06"] as [string, string, string];
+  return [primary + "18", accent + "18", primary + "06"] as [string, string, string];
 }
 
 export default function PublicProfileScreen() {
@@ -58,7 +43,7 @@ export default function PublicProfileScreen() {
   const { width: screenWidth } = useWindowDimensions();
   const topInset = Platform.OS === "web" ? 67 : insets.top;
 
-  const { profile, qrCodes, loading, notFound, qrLoading, getGuardianRank } = usePublicProfile(username ?? "");
+  const { profile, loading, notFound, getGuardianRank } = usePublicProfile(username ?? "");
   const isOwnProfile = user?.id === profile?.userId;
 
   async function handleShare() {
@@ -97,13 +82,13 @@ export default function PublicProfileScreen() {
   const initials = profile.displayName
     .split(" ").map((n: string) => n[0]).join("").toUpperCase().slice(0, 2);
   const rank = getGuardianRank(profile.stats);
-  const coverColors = isDark ? getCoverGradients(username ?? "") : ["#E8F2FF", "#EEF5FF", "#F4F8FF"] as [string, string, string];
+  const coverColors = getCoverGradients(username ?? "", colors.primary, colors.accent);
 
   const STAT_ITEMS = [
-    { label: "Codes",   value: profile.stats.qrCount,            gradient: ["#006FFF", "#00CFFF"] as [string, string], icon: "qr-code-outline" as const },
-    { label: "Scans",   value: profile.stats.totalScans,         gradient: ["#10B981", "#34D399"] as [string, string], icon: "scan-outline" as const },
-    { label: "Likes",   value: profile.stats.totalLikesReceived, gradient: ["#EC4899", "#F472B6"] as [string, string], icon: "heart-outline" as const },
-    { label: "Reports", value: profile.stats.safeReportsGiven,   gradient: ["#F59E0B", "#FBBF24"] as [string, string], icon: "shield-checkmark-outline" as const },
+    { label: "Codes",   value: profile.stats.qrCount,            gradient: [colors.primary, colors.primary + "AA"] as [string, string], icon: "qr-code-outline" as const },
+    { label: "Scans",   value: profile.stats.totalScans,         gradient: [colors.safe, colors.safe + "AA"] as [string, string], icon: "scan-outline" as const },
+    { label: "Likes",   value: profile.stats.totalLikesReceived, gradient: [colors.accent, colors.accent + "AA"] as [string, string], icon: "heart-outline" as const },
+    { label: "Reports", value: profile.stats.safeReportsGiven,   gradient: [colors.warning, colors.warning + "AA"] as [string, string], icon: "shield-checkmark-outline" as const },
   ];
 
   const HERO_H = topInset + 260;
@@ -130,7 +115,7 @@ export default function PublicProfileScreen() {
 
           {/* Decorative mesh overlay */}
           <LinearGradient
-            colors={["#006FFF1A", "#8B5CF60D", "transparent"]}
+            colors={[colors.primary + "18", colors.accent + "0D", "transparent"]}
             style={StyleSheet.absoluteFill}
             start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
           />
@@ -163,8 +148,8 @@ export default function PublicProfileScreen() {
             <Animated.View entering={FadeInDown.duration(400)} style={S.avatarZone}>
               {/* Outer glow ring */}
               <View style={[S.avatarGlowRing, { borderColor: rank.color + "50" }]} />
-              <LinearGradient colors={["#006FFF", "#8B5CF6", "#EC4899"]} style={S.avatarRing} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}>
-                <View style={[S.avatarInner, { backgroundColor: isDark ? "#0A1628" : "#F0F7FF" }]}>
+              <LinearGradient colors={[colors.primary, colors.accent]} style={S.avatarRing} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}>
+                <View style={[S.avatarInner, { backgroundColor: colors.background }]}>
                   {profile.photoURL ? (
                     <Image source={{ uri: profile.photoURL }} style={S.avatarPhoto} />
                   ) : (
@@ -243,7 +228,7 @@ export default function PublicProfileScreen() {
 
               {/* Header row */}
               <View style={S.passportHeader}>
-                <LinearGradient colors={["#006FFF", "#8B5CF6"]} style={S.passportLogo} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}>
+                <LinearGradient colors={[colors.primary, colors.accent]} style={S.passportLogo} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}>
                   <MaterialCommunityIcons name="shield-check" size={16} color="#fff" />
                 </LinearGradient>
                 <View style={{ flex: 1 }}>
@@ -268,7 +253,7 @@ export default function PublicProfileScreen() {
                   {profile.photoURL ? (
                     <Image source={{ uri: profile.photoURL }} style={S.passportAvatarImg} />
                   ) : (
-                    <LinearGradient colors={["#006FFF", "#8B5CF6"]} style={S.passportAvatarGradient}>
+                    <LinearGradient colors={[colors.primary, colors.accent]} style={S.passportAvatarGradient}>
                       <Text style={S.passportAvatarInitials}>{initials}</Text>
                     </LinearGradient>
                   )}
@@ -286,8 +271,8 @@ export default function PublicProfileScreen() {
               <View style={[S.passportFooter, { borderTopColor: rank.color + "20" }]}>
                 {[
                   { label: "QR CODES", value: formatCompactNumber(profile.stats.qrCount), color: colors.primary },
-                  { label: "TOTAL SCANS", value: formatCompactNumber(profile.stats.totalScans), color: "#10B981" },
-                  { label: "LIKES", value: formatCompactNumber(profile.stats.totalLikesReceived), color: "#EC4899" },
+                  { label: "TOTAL SCANS", value: formatCompactNumber(profile.stats.totalScans), color: colors.safe },
+                  { label: "LIKES", value: formatCompactNumber(profile.stats.totalLikesReceived), color: colors.accent },
                 ].map((item, i, arr) => (
                   <React.Fragment key={item.label}>
                     <View style={S.passportStat}>
@@ -308,72 +293,6 @@ export default function PublicProfileScreen() {
             </LinearGradient>
           </Animated.View>
 
-          {/* ══════════════ QR CODES SECTION ══════════════ */}
-          {profile.privacy.showQrCodes && (
-            <Animated.View entering={FadeInDown.duration(400).delay(220)}>
-              <View style={S.sectionHeader}>
-                <LinearGradient colors={["#006FFF", "#00CFFF"]} style={S.sectionIcon} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}>
-                  <Ionicons name="qr-code-outline" size={13} color="#fff" />
-                </LinearGradient>
-                <Text style={[S.sectionTitle, { color: colors.text }]}>QR Codes</Text>
-                {!qrLoading && qrCodes.length > 0 && (
-                  <View style={[S.sectionCount, { backgroundColor: colors.primaryDim }]}>
-                    <Text style={[S.sectionCountText, { color: colors.primary }]}>{qrCodes.length}</Text>
-                  </View>
-                )}
-              </View>
-
-              {qrLoading ? (
-                <View style={S.loadingRow}>
-                  <ActivityIndicator size="small" color={colors.primary} />
-                  <Text style={[S.loadingText, { color: colors.textMuted }]}>Loading codes…</Text>
-                </View>
-              ) : qrCodes.length === 0 ? (
-                <View style={[S.emptyCard, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
-                  <Ionicons name="qr-code-outline" size={36} color={colors.textMuted} />
-                  <Text style={[S.emptyTitle, { color: colors.textSecondary }]}>No public QR codes yet</Text>
-                </View>
-              ) : (
-                <View style={S.qrGrid}>
-                  {qrCodes.map((qr) => {
-                    const cfg = getQrIcon(qr.contentType);
-                    return (
-                      <Pressable
-                        key={qr.id}
-                        onPress={() => router.push(`/qr-detail/${qr.id}` as any)}
-                        style={({ pressed }) => [
-                          S.qrCard,
-                          { backgroundColor: colors.surface, borderColor: colors.surfaceBorder, opacity: pressed ? 0.85 : 1, transform: [{ scale: pressed ? 0.97 : 1 }] },
-                        ]}
-                      >
-                        <LinearGradient colors={[cfg.gradient[0] + "14", "transparent"]} style={StyleSheet.absoluteFill} />
-                        <LinearGradient colors={cfg.gradient} style={S.qrCardIcon} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}>
-                          <Ionicons name={cfg.icon} size={22} color="#fff" />
-                        </LinearGradient>
-                        {qr.isBranded && (
-                          <View style={[S.brandedBadge, { backgroundColor: colors.primaryDim, borderColor: colors.primary + "40" }]}>
-                            <Ionicons name="shield-checkmark" size={8} color={colors.primary} />
-                            <Text style={[S.brandedText, { color: colors.primary }]}>Guard</Text>
-                          </View>
-                        )}
-                        <Text style={[S.qrCardType, { color: cfg.gradient[0] }]}>{qr.contentType?.toUpperCase()}</Text>
-                        {qr.businessName ? (
-                          <Text style={[S.qrCardName, { color: colors.text }]} numberOfLines={1}>{qr.businessName}</Text>
-                        ) : null}
-                        {qr.scanCount != null && (
-                          <View style={S.qrScanRow}>
-                            <Ionicons name="scan-outline" size={9} color={colors.textMuted} />
-                            <Text style={[S.qrScanCount, { color: colors.textMuted }]}>{formatCompactNumber(qr.scanCount)}</Text>
-                          </View>
-                        )}
-                      </Pressable>
-                    );
-                  })}
-                </View>
-              )}
-            </Animated.View>
-          )}
-
           {/* ══════════════ OWN PROFILE CTA ══════════════ */}
           {isOwnProfile && (
             <Animated.View entering={FadeInDown.duration(400).delay(280)}>
@@ -381,8 +300,8 @@ export default function PublicProfileScreen() {
                 onPress={() => router.push("/(tabs)/profile")}
                 style={({ pressed }) => [S.ownCta, { backgroundColor: colors.primaryDim, borderColor: colors.primary + "40", opacity: pressed ? 0.85 : 1 }]}
               >
-                <LinearGradient colors={["#006FFF", "#8B5CF6"]} style={S.ownCtaIcon} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}>
-                  <Ionicons name="settings-outline" size={16} color="#fff" />
+                <LinearGradient colors={[colors.primary, colors.accent]} style={S.ownCtaIcon} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}>
+                  <Ionicons name="settings-outline" size={16} color={colors.primaryText} />
                 </LinearGradient>
                 <Text style={[S.ownCtaText, { color: colors.primary }]}>Manage Privacy & Settings</Text>
                 <Ionicons name="chevron-forward" size={16} color={colors.primary} />

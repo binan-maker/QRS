@@ -199,20 +199,37 @@ export async function toggleCommentLike(
   const likePath = ["qrCodes", qrId, "comments", commentId, "likes", userId];
   const commentPath = ["qrCodes", qrId, "comments", commentId];
   const existing = await db.get(likePath);
+
+  const commentData = await db.get(commentPath);
+  const authorId: string | null = commentData?.userId || null;
+
+  let likeDelta = 0;
+
   if (existing) {
     const wasLike = existing.isLike;
     if (wasLike === isLike) {
       await db.delete(likePath);
       await db.increment(commentPath, isLike ? "likeCount" : "dislikeCount", -1);
+      if (isLike) likeDelta = -1;
     } else {
       await db.set(likePath, { isLike, createdAt: db.timestamp() });
       await db.increment(commentPath, "likeCount", isLike ? 1 : -1);
       await db.increment(commentPath, "dislikeCount", isLike ? -1 : 1);
+      if (isLike) likeDelta = 1;
+      else likeDelta = -1;
     }
   } else {
     await db.set(likePath, { isLike, createdAt: db.timestamp() });
     await db.increment(commentPath, isLike ? "likeCount" : "dislikeCount", 1);
+    if (isLike) likeDelta = 1;
   }
+
+  if (authorId && authorId !== userId && likeDelta !== 0) {
+    try {
+      await db.increment(["users", authorId], "totalLikesReceived", likeDelta);
+    } catch {}
+  }
+
   const updated = await db.get(commentPath);
   if (updated) {
     return { likes: updated.likeCount || 0, dislikes: updated.dislikeCount || 0 };

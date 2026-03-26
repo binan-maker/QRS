@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -9,7 +9,6 @@ import {
   TextInput,
   ActivityIndicator,
   Image,
-  Switch,
   useWindowDimensions,
   Alert,
 } from "react-native";
@@ -21,14 +20,10 @@ import Animated, { FadeInDown, FadeInUp } from "react-native-reanimated";
 import { useTheme } from "@/contexts/ThemeContext";
 import SkeletonBox from "@/components/ui/SkeletonBox";
 import PhotoModal from "@/features/profile/components/PhotoModal";
-import UsernameEditor from "@/features/profile/components/UsernameEditor";
 import { useProfile } from "@/hooks/useProfile";
 import {
-  updatePrivacySettings,
   updateBio,
-  getPrivacySettings,
   getUserBio,
-  type PrivacySettings,
 } from "@/lib/services/user-service";
 
 export default function ProfileScreen() {
@@ -41,21 +36,14 @@ export default function ProfileScreen() {
     photoURL, photoModalOpen, setPhotoModalOpen, uploadingPhoto,
     myQrCodes, myQrLoading,
     currentUsername,
-    editingUsername, setEditingUsername,
-    newUsernameInput, setNewUsernameInput,
-    usernameAvailable, checkingUsername,
-    savingUsername, usernameError, setUsernameError,
-    daysUntilEdit, initials,
-    handleSaveName, handleSaveUsername, handleCancelUsername, handlePickPhoto, handleSignOut,
+    initials,
+    handleSaveName, handlePickPhoto, handleSignOut,
   } = useProfile();
 
   const [bio, setBio] = useState("");
   const [editingBio, setEditingBio] = useState(false);
   const [newBio, setNewBio] = useState("");
   const [savingBio, setSavingBio] = useState(false);
-
-  const [privacy, setPrivacy] = useState<PrivacySettings>({ isPrivate: false, showQrCodes: true, showStats: true, showActivity: true });
-  const [savingPrivacy, setSavingPrivacy] = useState(false);
 
   const topInset = Platform.OS === "web" ? 67 : insets.top;
   const tabBarHeight = 60 + insets.bottom;
@@ -64,9 +52,7 @@ export default function ProfileScreen() {
 
   useEffect(() => {
     if (!user) return;
-    Promise.all([getPrivacySettings(user.id), getUserBio(user.id)])
-      .then(([p, b]) => { setPrivacy(p); setBio(b); })
-      .catch(() => {});
+    getUserBio(user.id).then(setBio).catch(() => {});
   }, [user?.id]);
 
   async function handleSaveBio() {
@@ -80,21 +66,6 @@ export default function ProfileScreen() {
       Alert.alert("Error", "Could not update bio.");
     } finally {
       setSavingBio(false);
-    }
-  }
-
-  async function handlePrivacyToggle(key: keyof PrivacySettings, value: boolean) {
-    if (!user) return;
-    const updated = { ...privacy, [key]: value };
-    setPrivacy(updated);
-    setSavingPrivacy(true);
-    try {
-      await updatePrivacySettings(user.id, updated);
-    } catch {
-      setPrivacy(privacy);
-      Alert.alert("Error", "Could not update privacy settings.");
-    } finally {
-      setSavingPrivacy(false);
     }
   }
 
@@ -376,179 +347,6 @@ export default function ProfileScreen() {
                 </View>
               </Pressable>
             ))}
-          </View>
-        </Animated.View>
-
-        {/* ── QUICK ACTIONS ── */}
-        <Animated.View entering={FadeInDown.duration(450).delay(200)}>
-          <Text style={[styles.sectionLabel, { color: colors.textMuted }]}>Quick Actions</Text>
-          <View style={styles.linksGroup}>
-            {[
-              {
-                icon: <Ionicons name="time-outline" size={20} color={colors.primary} />,
-                bg: colors.primaryDim,
-                title: "Scan History",
-                sub: "All your scanned QR codes",
-                onPress: () => router.push("/(tabs)/history"),
-                accent: colors.primary,
-              },
-              {
-                icon: <MaterialCommunityIcons name="qrcode-edit" size={20} color={colors.accent} />,
-                bg: colors.accentDim,
-                title: "Create QR Code",
-                sub: "Generate branded or private codes",
-                onPress: () => router.push("/(tabs)/qr-generator"),
-                accent: colors.accent,
-              },
-            ].map((item, idx) => (
-              <Pressable
-                key={idx}
-                onPress={item.onPress}
-                style={({ pressed }) => [
-                  styles.linkCard,
-                  { backgroundColor: colors.surface, borderColor: colors.surfaceBorder, opacity: pressed ? 0.85 : 1, transform: [{ scale: pressed ? 0.982 : 1 }] },
-                ]}
-              >
-                <View style={[styles.linkIcon, { backgroundColor: item.bg }]}>{item.icon}</View>
-                <View style={{ flex: 1 }}>
-                  <Text style={[styles.linkTitle, { color: colors.text }]}>{item.title}</Text>
-                  <Text style={[styles.linkSub, { color: colors.textSecondary }]}>{item.sub}</Text>
-                </View>
-                <View style={[styles.linkChevron, { backgroundColor: item.accent + "18" }]}>
-                  <Ionicons name="chevron-forward" size={14} color={item.accent} />
-                </View>
-              </Pressable>
-            ))}
-          </View>
-        </Animated.View>
-
-        {/* ── PRIVACY SETTINGS ── */}
-        <Animated.View entering={FadeInDown.duration(450).delay(220)}>
-          <Text style={[styles.sectionLabel, { color: colors.textMuted }]}>Public Profile Privacy</Text>
-          <View style={[styles.privacyCard, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
-            <View style={[styles.privacyCardHeader, { borderBottomColor: colors.surfaceBorder }]}>
-              <LinearGradient colors={["#B060FF", "#FF4D6A"]} style={styles.privacyCardIcon} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}>
-                <Ionicons name="lock-closed" size={14} color="#fff" />
-              </LinearGradient>
-              <View style={{ flex: 1 }}>
-                <Text style={[styles.privacyCardTitle, { color: colors.text }]}>Control Your Visibility</Text>
-                <Text style={[styles.privacyCardSub, { color: colors.textMuted }]}>Choose what others see on your profile</Text>
-              </View>
-              {savingPrivacy && <ActivityIndicator size="small" color={colors.primary} />}
-            </View>
-
-            {/* Private Profile toggle — shown at the top, separate */}
-            <View style={[styles.privacyRow, { backgroundColor: privacy.isPrivate ? colors.dangerDim : "transparent", borderRadius: 12 }]}>
-              <View style={[styles.privacyRowIcon, { backgroundColor: (privacy.isPrivate ? colors.danger : colors.textMuted) + "20" }]}>
-                <Ionicons name={privacy.isPrivate ? "lock-closed" : "lock-open-outline"} size={16} color={privacy.isPrivate ? colors.danger : colors.textMuted} />
-              </View>
-              <View style={{ flex: 1 }}>
-                <Text style={[styles.privacyRowLabel, { color: privacy.isPrivate ? colors.danger : colors.text }]}>Private Profile</Text>
-                <Text style={[styles.privacyRowSub, { color: colors.textMuted }]}>
-                  {privacy.isPrivate ? "Your profile is hidden from everyone" : "Your profile is visible to everyone"}
-                </Text>
-              </View>
-              <Switch
-                value={privacy.isPrivate}
-                onValueChange={(v) => handlePrivacyToggle("isPrivate", v)}
-                trackColor={{ false: colors.surfaceLight, true: colors.danger + "80" }}
-                thumbColor={privacy.isPrivate ? colors.danger : colors.textMuted}
-                ios_backgroundColor={colors.surfaceLight}
-              />
-            </View>
-
-            <View style={[styles.privacyDivider, { backgroundColor: colors.surfaceBorder }]} />
-
-            {([
-              { key: "showQrCodes" as const, label: "QR Codes", sub: "Show your public QR codes", icon: "qr-code-outline" as const, color: colors.primary },
-              { key: "showStats" as const, label: "Stats & Scans", sub: "Show scan counts, likes & reports", icon: "bar-chart-outline" as const, color: colors.accent },
-              { key: "showActivity" as const, label: "Activity", sub: "Show your community contributions", icon: "pulse-outline" as const, color: colors.safe },
-            ]).map((item, idx, arr) => (
-              <React.Fragment key={item.key}>
-                <View style={[styles.privacyRow, { opacity: privacy.isPrivate ? 0.45 : 1 }]}>
-                  <View style={[styles.privacyRowIcon, { backgroundColor: item.color + "18" }]}>
-                    <Ionicons name={item.icon} size={16} color={item.color} />
-                  </View>
-                  <View style={{ flex: 1 }}>
-                    <Text style={[styles.privacyRowLabel, { color: colors.text }]}>{item.label}</Text>
-                    <Text style={[styles.privacyRowSub, { color: colors.textMuted }]}>{item.sub}</Text>
-                  </View>
-                  <Switch
-                    value={privacy[item.key]}
-                    onValueChange={(v) => handlePrivacyToggle(item.key, v)}
-                    disabled={privacy.isPrivate}
-                    trackColor={{ false: colors.surfaceLight, true: colors.primary + "80" }}
-                    thumbColor={privacy[item.key] ? colors.primary : colors.textMuted}
-                    ios_backgroundColor={colors.surfaceLight}
-                  />
-                </View>
-                {idx < arr.length - 1 && <View style={[styles.privacyDivider, { backgroundColor: colors.surfaceBorder }]} />}
-              </React.Fragment>
-            ))}
-          </View>
-        </Animated.View>
-
-        {/* ── ACCOUNT INFO ── */}
-        <Animated.View entering={FadeInDown.duration(450).delay(240)}>
-          <Text style={[styles.sectionLabel, { color: colors.textMuted }]}>Account</Text>
-          <View style={[styles.infoCard, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
-            <View style={styles.infoRow}>
-              <View style={[styles.infoIconWrap, { backgroundColor: colors.primaryDim }]}>
-                <Ionicons name="person-outline" size={16} color={colors.primary} />
-              </View>
-              <View style={{ flex: 1 }}>
-                <Text style={[styles.infoLabel, { color: colors.textMuted }]}>Display Name</Text>
-                <Text style={[styles.infoValue, { color: colors.text }]}>{user.displayName}</Text>
-              </View>
-              <Pressable
-                onPress={() => { setEditingName(true); setNewName(user.displayName); }}
-                style={[styles.infoEditBtn, { backgroundColor: colors.primaryDim }]}
-              >
-                <Ionicons name="pencil-outline" size={14} color={colors.primary} />
-              </Pressable>
-            </View>
-
-            <View style={[styles.infoDivider, { backgroundColor: colors.surfaceBorder }]} />
-
-            <UsernameEditor
-              currentUsername={currentUsername}
-              daysUntilEdit={daysUntilEdit}
-              editing={editingUsername}
-              input={newUsernameInput}
-              checking={checkingUsername}
-              available={usernameAvailable}
-              error={usernameError}
-              saving={savingUsername}
-              onStartEdit={() => {
-                setNewUsernameInput(currentUsername || "");
-                setEditingUsername(true);
-                setUsernameError("");
-              }}
-              onChangeInput={(v) => {
-                setNewUsernameInput(v);
-                setUsernameError("");
-              }}
-              onSave={handleSaveUsername}
-              onCancel={handleCancelUsername}
-            />
-
-            <View style={[styles.infoDivider, { backgroundColor: colors.surfaceBorder }]} />
-
-            <View style={styles.infoRow}>
-              <View style={[styles.infoIconWrap, { backgroundColor: colors.accentDim }]}>
-                <Ionicons name="mail-outline" size={16} color={colors.accent} />
-              </View>
-              <View style={{ flex: 1, minWidth: 0 }}>
-                <Text style={[styles.infoLabel, { color: colors.textMuted }]}>Email</Text>
-                <Text style={[styles.infoValue, { color: colors.text }]}>{user.email}</Text>
-                {user.emailVerified && (
-                  <View style={[styles.verifiedChip, { backgroundColor: colors.safeDim, alignSelf: "flex-start", marginTop: 5 }]}>
-                    <Ionicons name="checkmark-circle" size={13} color={colors.safe} />
-                    <Text style={[styles.verifiedText, { color: colors.safe }]}>Verified</Text>
-                  </View>
-                )}
-              </View>
-            </View>
           </View>
         </Animated.View>
 

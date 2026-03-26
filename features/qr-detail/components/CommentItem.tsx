@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, Pressable, Image, ActivityIndicator } from "rea
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import Animated, { FadeIn } from "react-native-reanimated";
+import { router } from "expo-router";
 import { formatCompactNumber } from "@/lib/number-format";
 import { formatRelativeTime, smartName } from "@/lib/utils/formatters";
 import { useTheme } from "@/contexts/ThemeContext";
@@ -67,6 +68,9 @@ const CommentItem = React.memo(function CommentItem({
 
   const displayName = comment.userUsername ? `@${comment.userUsername}` : smartName(comment.user.displayName);
   const avatarGradient = getInitialColor(displayName);
+  const navigateToProfile = comment.userUsername
+    ? () => router.push(`/profile/${comment.userUsername}` as any)
+    : undefined;
 
   if (comment.isHidden && !isRevealed) {
     return (
@@ -109,28 +113,32 @@ const CommentItem = React.memo(function CommentItem({
 
           <View style={styles.commentHeader}>
             {/* Avatar */}
-            {comment.userPhotoURL ? (
-              <Image
-                source={{ uri: comment.userPhotoURL }}
-                style={[styles.avatar, { width: avatarSize, height: avatarSize, borderRadius: avatarSize / 2 }]}
-              />
-            ) : (
-              <LinearGradient
-                colors={avatarGradient}
-                style={[styles.avatarGradient, { width: avatarSize, height: avatarSize, borderRadius: avatarSize / 2 }]}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-              >
-                <Text style={[styles.avatarInitial, { fontSize: isReply ? 12 : 14 }]}>
-                  {displayName.charAt(0).toUpperCase()}
-                </Text>
-              </LinearGradient>
-            )}
+            <Pressable onPress={navigateToProfile} disabled={!navigateToProfile}>
+              {comment.userPhotoURL ? (
+                <Image
+                  source={{ uri: comment.userPhotoURL }}
+                  style={[styles.avatar, { width: avatarSize, height: avatarSize, borderRadius: avatarSize / 2 }]}
+                />
+              ) : (
+                <LinearGradient
+                  colors={avatarGradient}
+                  style={[styles.avatarGradient, { width: avatarSize, height: avatarSize, borderRadius: avatarSize / 2 }]}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 1 }}
+                >
+                  <Text style={[styles.avatarInitial, { fontSize: isReply ? 12 : 14 }]}>
+                    {displayName.charAt(0).toUpperCase()}
+                  </Text>
+                </LinearGradient>
+              )}
+            </Pressable>
 
             <View style={styles.headerMeta}>
-              <Text style={[styles.authorName, { color: comment.userUsername ? avatarGradient[0] : colors.text }]} numberOfLines={1}>
-                {displayName}
-              </Text>
+              <Pressable onPress={navigateToProfile} disabled={!navigateToProfile}>
+                <Text style={[styles.authorName, { color: comment.userUsername ? avatarGradient[0] : colors.text }]} numberOfLines={1}>
+                  {displayName}
+                </Text>
+              </Pressable>
               <Text style={[styles.commentTime, { color: colors.textMuted }]}>{formatRelativeTime(comment.createdAt)}</Text>
             </View>
 

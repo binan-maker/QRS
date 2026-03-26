@@ -127,10 +127,12 @@ export async function getPublicProfile(username: string): Promise<PublicProfile 
     const unameDoc = await db.get(["usernames", username]);
     if (!unameDoc) return null;
     const userId = unameDoc.userId as string;
-    const [userDoc, qrResult, commentsResult] = await Promise.all([
+    const [userDoc, qrResult] = await Promise.all([
       db.get(["users", userId]),
-      db.query(["users", userId, "generatedQrs"], { limit: 100 }),
-      db.query(["users", userId, "comments"], { limit: 1 }),
+      db.query(["qrCodes"], {
+        where: [{ field: "ownerId", op: "==", value: userId }],
+        limit: 200,
+      }),
     ]);
     if (!userDoc) return null;
     const privacy: PrivacySettings = {

@@ -116,6 +116,9 @@ export async function reportQrCode(
       createdAt: db.timestamp(),
     });
     await recordReport(userId, qrId);
+    if (reportType === "safe") {
+      try { await db.increment(["users", userId], "safeReportsGiven", 1); } catch {}
+    }
     notifyQrFollowers(qrId, "new_report", `New ${reportType} report on a QR you follow`, userId).catch(() => {});
   }
 
