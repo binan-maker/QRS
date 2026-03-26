@@ -161,13 +161,21 @@ export async function getPublicProfile(username: string): Promise<PublicProfile 
           : new Date(userDoc.createdAt).toISOString();
       } catch {}
     }
-    const [personalScansResult, friendsResult] = await Promise.all([
+    const [personalScansSettled, friendsSettled] = await Promise.allSettled([
       db.query(["users", userId, "scans"], { limit: 5000 }),
       db.query(["users", userId, "friends"], {
         where: [{ field: "status", op: "==", value: "friends" }],
         limit: 500,
       }),
     ]);
+    const personalScanCount =
+      personalScansSettled.status === "fulfilled"
+        ? personalScansSettled.value.docs.length
+        : (userDoc.personalScanCount as number | undefined) ?? 0;
+    const friendsCount =
+      friendsSettled.status === "fulfilled"
+        ? friendsSettled.value.docs.length
+        : (userDoc.friendsCount as number | undefined) ?? 0;
     return {
       userId,
       displayName: userDoc.displayName || username,
@@ -182,8 +190,8 @@ export async function getPublicProfile(username: string): Promise<PublicProfile 
         commentCount: userDoc.commentCount || 0,
         totalLikesReceived: userDoc.totalLikesReceived || 0,
         safeReportsGiven: userDoc.safeReportsGiven || 0,
-        personalScanCount: personalScansResult.docs.length,
-        friendsCount: friendsResult.docs.length,
+        personalScanCount,
+        friendsCount,
       },
     };
   } catch {

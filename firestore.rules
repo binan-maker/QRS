@@ -186,10 +186,10 @@ service cloud.firestore {
 
     // ─── Users ────────────────────────────────────────────────────────────────
     // Own profile: full read + write.
-    // Other users: authenticated reads only (needed for follower display names, etc.)
+    // Other users: public read (needed for public profile pages, username search, etc.)
     // Private data (scans, favorites, following, comments, generatedQrs) is self-only.
     match /users/{userId} {
-      allow read: if isSignedIn();
+      allow read: if true;
       allow write: if isOwner(userId);
 
       match /scans/{scanId} {
@@ -206,6 +206,19 @@ service cloud.firestore {
       }
       match /generatedQrs/{docId} {
         allow read, write: if isOwner(userId);
+      }
+
+      // ── Friends ────────────────────────────────────────────────────────────
+      // Owner can read and manage all their friend entries.
+      // Any authenticated user can create/update/delete their OWN slot in
+      // another user's friends subcollection — this is how friend requests
+      // work: user A writes to users/B/friends/A to send B a request.
+      match /friends/{friendId} {
+        allow read, write: if isOwner(userId);
+        allow read: if isSignedIn() && friendId == request.auth.uid;
+        allow create: if isSignedIn() && friendId == request.auth.uid;
+        allow update: if isSignedIn() && friendId == request.auth.uid;
+        allow delete: if isSignedIn() && friendId == request.auth.uid;
       }
     }
 
