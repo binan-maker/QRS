@@ -14,28 +14,28 @@ const TYPE_META: Record<string, {
   label: string;
   gradient: [string, string];
 }> = {
-  url:      { icon: "globe-outline",         label: "URL",       gradient: ["#006FFF", "#00CFFF"] },
-  phone:    { icon: "call-outline",          label: "Phone",     gradient: ["#10B981", "#06B6D4"] },
-  email:    { icon: "mail-outline",          label: "Email",     gradient: ["#8B5CF6", "#EC4899"] },
-  wifi:     { icon: "wifi-outline",          label: "Wi-Fi",     gradient: ["#3B82F6", "#6366F1"] },
-  location: { icon: "location-outline",      label: "Location",  gradient: ["#EF4444", "#F97316"] },
-  payment:  { icon: "card-outline",          label: "Payment",   gradient: ["#F59E0B", "#F97316"] },
-  sms:      { icon: "chatbubble-outline",    label: "SMS",       gradient: ["#06B6D4", "#3B82F6"] },
-  contact:  { icon: "person-outline",        label: "Contact",   gradient: ["#10B981", "#3B82F6"] },
-  event:    { icon: "calendar-outline",      label: "Event",     gradient: ["#F59E0B", "#EF4444"] },
-  otp:      { icon: "lock-closed-outline",   label: "OTP",       gradient: ["#6366F1", "#8B5CF6"] },
-  app:      { icon: "apps-outline",          label: "App",       gradient: ["#06B6D4", "#6366F1"] },
-  social:   { icon: "people-outline",        label: "Social",    gradient: ["#EC4899", "#8B5CF6"] },
-  media:    { icon: "play-circle-outline",   label: "Media",     gradient: ["#EF4444", "#EC4899"] },
-  document: { icon: "document-outline",      label: "Document",  gradient: ["#6B7280", "#9CA3AF"] },
-  boarding:  { icon: "airplane-outline",     label: "Boarding",  gradient: ["#006FFF", "#6366F1"] },
-  product:  { icon: "barcode-outline",       label: "Product",   gradient: ["#10B981", "#F59E0B"] },
+  url:      { icon: "globe-outline",         label: "URL",       gradient: ["#006FFF", "#00E5FF"] },
+  phone:    { icon: "call-outline",          label: "Phone",     gradient: ["#00D68F", "#00E5FF"] },
+  email:    { icon: "mail-outline",          label: "Email",     gradient: ["#B060FF", "#FF4D6A"] },
+  wifi:     { icon: "wifi-outline",          label: "Wi-Fi",     gradient: ["#006FFF", "#B060FF"] },
+  location: { icon: "location-outline",      label: "Location",  gradient: ["#FF4D6A", "#FFB800"] },
+  payment:  { icon: "card-outline",          label: "Payment",   gradient: ["#FFB800", "#FF4D6A"] },
+  sms:      { icon: "chatbubble-outline",    label: "SMS",       gradient: ["#00E5FF", "#006FFF"] },
+  contact:  { icon: "person-outline",        label: "Contact",   gradient: ["#00D68F", "#006FFF"] },
+  event:    { icon: "calendar-outline",      label: "Event",     gradient: ["#FFB800", "#B060FF"] },
+  otp:      { icon: "lock-closed-outline",   label: "OTP",       gradient: ["#B060FF", "#00E5FF"] },
+  app:      { icon: "apps-outline",          label: "App",       gradient: ["#00E5FF", "#B060FF"] },
+  social:   { icon: "people-outline",        label: "Social",    gradient: ["#B060FF", "#FF4D6A"] },
+  media:    { icon: "play-circle-outline",   label: "Media",     gradient: ["#FF4D6A", "#B060FF"] },
+  document: { icon: "document-outline",      label: "Document",  gradient: ["#3D6080", "#7BA7CC"] },
+  boarding:  { icon: "airplane-outline",     label: "Boarding",  gradient: ["#006FFF", "#B060FF"] },
+  product:  { icon: "barcode-outline",       label: "Product",   gradient: ["#00D68F", "#FFB800"] },
 };
 
 const RISK_CONFIG = {
-  dangerous: { icon: "warning" as const,      label: "Danger",  gradient: ["#EF4444", "#DC2626"] as [string, string] },
-  caution:   { icon: "alert-circle" as const, label: "Caution", gradient: ["#F59E0B", "#F97316"] as [string, string] },
-  safe:      { icon: "shield-checkmark" as const, label: "Safe", gradient: ["#10B981", "#06B6D4"] as [string, string] },
+  dangerous: { icon: "warning" as const,      label: "Danger",  gradient: ["#FF4D6A", "#FFB800"] as [string, string] },
+  caution:   { icon: "alert-circle" as const, label: "Caution", gradient: ["#FFB800", "#FF4D6A"] as [string, string] },
+  safe:      { icon: "shield-checkmark" as const, label: "Safe", gradient: ["#00D68F", "#00E5FF"] as [string, string] },
 };
 
 function shortenAddress(addr: string): string {
@@ -109,11 +109,11 @@ const HistoryItem = React.memo(function HistoryItem({ item, risk, onDelete: _onD
   const showRisk   = (item.contentType === "url" || item.contentType === "payment") && risk !== "safe";
 
   const iconGradient: [string, string] = isFavorite
-    ? ["#FF4D6A", "#F97316"]
+    ? ["#FF4D6A", "#B060FF"]
     : risk === "dangerous"
-      ? ["#EF4444", "#DC2626"]
+      ? ["#FF4D6A", "#FFB800"]
       : risk === "caution"
-        ? ["#F59E0B", "#F97316"]
+        ? ["#FFB800", "#FF4D6A"]
         : meta.gradient;
 
   const paymentData = item.contentType === "payment" ? getPaymentData(item.content) : null;

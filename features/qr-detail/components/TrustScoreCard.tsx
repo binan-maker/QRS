@@ -24,10 +24,10 @@ interface Props {
 }
 
 function getScoreGradient(score: number, color: string): [string, string] {
-  if (score >= 75) return ["#10B981", "#06B6D4"];
-  if (score >= 50) return ["#F59E0B", "#F97316"];
-  if (score >= 25) return ["#F97316", "#EF4444"];
-  return ["#EF4444", "#DC2626"];
+  if (score >= 75) return ["#00D68F", "#00E5FF"];
+  if (score >= 50) return ["#FFB800", "#00E5FF"];
+  if (score >= 25) return ["#FFB800", "#FF4D6A"];
+  return ["#FF4D6A", "#B060FF"];
 }
 
 const TrustScoreCard = React.memo(function TrustScoreCard({
@@ -37,21 +37,21 @@ const TrustScoreCard = React.memo(function TrustScoreCard({
   const { colors, isDark } = useTheme();
 
   const REPORT_TYPES = [
-    { key: "safe", label: "Safe",  icon: "shield-checkmark" as const, gradient: ["#10B981", "#06B6D4"] as [string, string] },
-    { key: "scam", label: "Scam",  icon: "warning" as const,          gradient: ["#EF4444", "#DC2626"] as [string, string] },
-    { key: "fake", label: "Fake",  icon: "close-circle" as const,     gradient: ["#F59E0B", "#F97316"] as [string, string] },
-    { key: "spam", label: "Spam",  icon: "mail-unread" as const,      gradient: ["#8B5CF6", "#EC4899"] as [string, string] },
+    { key: "safe", label: "Safe",  icon: "shield-checkmark" as const, gradient: ["#00D68F", "#00E5FF"] as [string, string] },
+    { key: "scam", label: "Scam",  icon: "warning" as const,          gradient: ["#FF4D6A", "#FFB800"] as [string, string] },
+    { key: "fake", label: "Fake",  icon: "close-circle" as const,     gradient: ["#FFB800", "#FF4D6A"] as [string, string] },
+    { key: "spam", label: "Spam",  icon: "mail-unread" as const,      gradient: ["#B060FF", "#FF4D6A"] as [string, string] },
   ];
 
   const total = REPORT_TYPES.reduce((sum, r) => sum + (reportCounts[r.key] || 0), 0);
   const hasScore = trustInfo.score >= 0;
-  const scoreGradient = hasScore ? getScoreGradient(trustInfo.score, trustInfo.color) : ["#6B7280", "#9CA3AF"] as [string, string];
+  const scoreGradient = hasScore ? getScoreGradient(trustInfo.score, trustInfo.color) : ["#3D6080", "#7BA7CC"] as [string, string];
 
   const STATS = [
-    { icon: "scan-outline" as const,    label: "Scans",     value: totalScans,    gradient: ["#006FFF", "#00CFFF"] as [string, string], onPress: undefined },
-    { icon: "chatbubbles-outline" as const, label: "Comments", value: totalComments, gradient: ["#8B5CF6", "#EC4899"] as [string, string], onPress: undefined },
-    { icon: "people-outline" as const,  label: isQrOwner ? "Followers ›" : "Followers", value: followCount, gradient: ["#10B981", "#06B6D4"] as [string, string], onPress: isQrOwner ? onOpenFollowers : undefined },
-    { icon: "flag-outline" as const,    label: "Reports",   value: total,         gradient: ["#F59E0B", "#F97316"] as [string, string], onPress: undefined },
+    { icon: "scan-outline" as const,    label: "Scans",     value: totalScans,    gradient: ["#006FFF", "#00E5FF"] as [string, string], onPress: undefined },
+    { icon: "chatbubbles-outline" as const, label: "Comments", value: totalComments, gradient: ["#B060FF", "#FF4D6A"] as [string, string], onPress: undefined },
+    { icon: "people-outline" as const,  label: isQrOwner ? "Followers ›" : "Followers", value: followCount, gradient: ["#00D68F", "#006FFF"] as [string, string], onPress: isQrOwner ? onOpenFollowers : undefined },
+    { icon: "flag-outline" as const,    label: "Reports",   value: total,         gradient: ["#FFB800", "#FF4D6A"] as [string, string], onPress: undefined },
   ];
 
   return (

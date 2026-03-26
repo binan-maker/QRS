@@ -106,32 +106,44 @@ function ClassicTabLayout() {
           paddingBottom: insets.bottom,
           paddingTop: 0,
           overflow: "visible",
-          marginHorizontal: 12,
-          marginBottom: 8,
+          marginHorizontal: 0,
+          marginBottom: 0,
         },
         tabBarBackground: () =>
           isIOS ? (
             <BlurView
-              intensity={90}
+              intensity={95}
               tint={colors.isDark ? "dark" : "light"}
               style={[StyleSheet.absoluteFill, {
-                borderRadius: 28,
+                borderTopLeftRadius: 22,
+                borderTopRightRadius: 22,
+                borderBottomLeftRadius: 0,
+                borderBottomRightRadius: 0,
                 overflow: "hidden",
-                borderWidth: 1,
-                borderColor: colors.isDark ? "rgba(255,255,255,0.07)" : "rgba(0,0,0,0.06)",
+                borderTopWidth: 1,
+                borderLeftWidth: 1,
+                borderRightWidth: 1,
+                borderBottomWidth: 0,
+                borderColor: colors.isDark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.07)",
               }]}
             />
           ) : (
             <View style={[StyleSheet.absoluteFill, {
-              backgroundColor: colors.isDark ? "rgba(12,21,38,0.97)" : "rgba(255,255,255,0.97)",
-              borderRadius: 28,
-              borderWidth: 1,
-              borderColor: colors.isDark ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.06)",
+              backgroundColor: colors.isDark ? "rgba(5,11,24,0.97)" : "rgba(255,255,255,0.98)",
+              borderTopLeftRadius: 22,
+              borderTopRightRadius: 22,
+              borderBottomLeftRadius: 0,
+              borderBottomRightRadius: 0,
+              borderTopWidth: 1,
+              borderLeftWidth: 1,
+              borderRightWidth: 1,
+              borderBottomWidth: 0,
+              borderColor: colors.isDark ? "rgba(0,229,255,0.10)" : "rgba(0,111,255,0.10)",
               shadowColor: "#000",
-              shadowOffset: { width: 0, height: -4 },
-              shadowOpacity: 0.18,
-              shadowRadius: 20,
-              elevation: 20,
+              shadowOffset: { width: 0, height: -6 },
+              shadowOpacity: 0.22,
+              shadowRadius: 24,
+              elevation: 24,
             }]} />
           ),
         tabBarLabelStyle: {

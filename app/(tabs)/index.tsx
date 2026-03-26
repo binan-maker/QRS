@@ -238,16 +238,16 @@ export default function HomeScreen() {
                   const paymentName = contentType === "payment" ? extractPaymentName(scan.content) : null;
                   const paymentAmount = contentType === "payment" ? extractPaymentAmount(scan.content) : null;
                   const gradientMap: Record<string, [string, string]> = {
-                    url:      ["#006FFF", "#00CFFF"],
-                    payment:  ["#F59E0B", "#F97316"],
-                    wifi:     ["#3B82F6", "#6366F1"],
-                    phone:    ["#10B981", "#06B6D4"],
-                    email:    ["#8B5CF6", "#EC4899"],
-                    location: ["#EF4444", "#F97316"],
-                    contact:  ["#10B981", "#3B82F6"],
-                    sms:      ["#06B6D4", "#3B82F6"],
+                    url:      ["#006FFF", "#00E5FF"],
+                    payment:  ["#FFB800", "#FF4D6A"],
+                    wifi:     ["#006FFF", "#B060FF"],
+                    phone:    ["#00D68F", "#00E5FF"],
+                    email:    ["#B060FF", "#FF4D6A"],
+                    location: ["#FF4D6A", "#FFB800"],
+                    contact:  ["#00D68F", "#006FFF"],
+                    sms:      ["#00E5FF", "#006FFF"],
                   };
-                  const gradient: [string, string] = gradientMap[contentType] ?? ["#006FFF", "#6366F1"];
+                  const gradient: [string, string] = gradientMap[contentType] ?? ["#006FFF", "#B060FF"];
                   const label = contentType.charAt(0).toUpperCase() + contentType.slice(1);
                   return (
                     <Animated.View
