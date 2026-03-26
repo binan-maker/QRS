@@ -69,7 +69,7 @@ export default function HomeScreen() {
                   {notifCount > 0 && (
                     <View style={[styles.notifDot, { backgroundColor: colors.primary }]}>
                       <Text style={[styles.notifDotText, { color: colors.primaryText }]}>
-                        {notifCount > 99 ? "99+" : notifCount}
+                        {notifCount > 9 ? "9+" : notifCount}
                       </Text>
                     </View>
                   )}

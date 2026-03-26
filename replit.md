@@ -4,6 +4,17 @@ A full-stack mobile-first QR code scanning and management app built with Expo (R
 
 ## Recent Changes
 
+### Search Fix, Notifications, Friend Notifications, Privacy Settings Cleanup (Round 2)
+- **LinearGradient crash fixed** (`app/search.tsx`) — the action button (Add Friend / Sent / etc.) previously used `LinearGradient` with `rgba()` color strings which crash on Android native. Replaced with a plain `View` using `backgroundColor` with hex + alpha suffix strings. LinearGradient import kept for the hero gradient.
+- **Notification badge capped at 9+** (`app/(tabs)/index.tsx`) — changed `notifCount > 99 ? "99+"` to `notifCount > 9 ? "9+"` so the badge stays compact.
+- **Notifications enabled** (`lib/notifications/config.ts`) — flipped `NOTIFICATIONS_ENABLED` from `false` to `true` to activate the full notification system.
+- **Notification types added** (`lib/services/types.ts`) — defined `NotificationType` union and `Notification` interface (with `fromUsername` field) that were imported but missing. Added `"friend_request"`, `"friend_accepted"`, `"friend_declined"` to the union. Extended `NotificationData` with `fromUsername`.
+- **Notification service refactored** (`lib/services/notification-service.ts`) — changed internal `pushNotification` to accept an `opts` object for `qrCodeId` and `fromUsername` instead of a positional `qrCodeId` arg. Added `notifyFriendRequest` and `notifyFriendAccepted` exports. Updated all existing call sites.
+- **Friend service fires notifications** (`lib/services/friend-service.ts`) — `sendFriendRequest` now calls `notifyFriendRequest` to the recipient. `acceptFriendRequest` looks up the acceptor's stored info from Firestore and calls `notifyFriendAccepted` to the original requester.
+- **NotificationsModal handles friend events** (`features/home/components/NotificationsModal.tsx`) — added icons and colours for `friend_request` (`person-add`, safe green), `friend_accepted` (`people`, primary), `friend_declined` (`person-remove`, danger). Tapping a friend notification navigates to `fromUsername` profile instead of QR detail.
+- **Privacy settings — QR invite section removed** (`app/privacy-settings.tsx`) — removed the "My Friend QR Code" collapsible panel, the `showInviteQR` state, `handleShareProfile`, the `profileUrl` constant, and now-unused imports (`QRCode`, `Share`, `MaterialCommunityIcons`). Cleaned up orphaned styles.
+- **Privacy settings — at-least-one enforcement** (`app/privacy-settings.tsx`) — the five public visibility toggles (`showStats`, `showFriendsCount`, `showScanActivity`, `showRanking`, `showActivity`) now validate before toggling: if the user would turn off the last enabled option, an Alert fires and the toggle is blocked.
+
 ### Private Account Redesign, Unfriend Button & Privacy Policy Updates
 - **Branded private profile screen** (`app/profile/[username].tsx`) — replaced the plain text private account view with a fully designed layout. Non-friends viewing a private profile now see: a gradient hero cover with the user's avatar and glow ring, display name and @username, and a branded card showing "[FirstName] has made this account private" with the QR Guard shield branding. The card uses the existing cover gradient colours and dark/light theming.
 - **Friends see full profile** — When `friendStatus === "friends"`, the private account gate is skipped entirely and the viewer sees the complete profile, matching the public profile layout.

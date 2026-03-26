@@ -214,13 +214,17 @@ export default function SearchScreen() {
                     onPress={() => !isDisabled && handleAddFriend(item)}
                     style={({ pressed }) => [
                       styles.actionBtn,
-                      { borderColor: actionColors[0] + "60", opacity: pressed ? 0.8 : 1 },
+                      {
+                        borderColor: isDisabled ? colors.safe + "60" : actionColors[0] + "60",
+                        backgroundColor: isDisabled
+                          ? colors.safe + "18"
+                          : item.friendStatus === "sent"
+                          ? colors.surfaceBorder + "30"
+                          : actionColors[0] + "18",
+                        opacity: pressed ? 0.8 : 1,
+                      },
                     ]}
                   >
-                    <LinearGradient
-                      colors={isDisabled ? [colors.safeDim, colors.safeDim] : [actionColors[0] + "22", actionColors[1] + "12"]}
-                      style={StyleSheet.absoluteFill}
-                    />
                     <Text style={[styles.actionLabel, { color: isDisabled ? colors.safe : actionColors[0] }]}>
                       {getActionLabel(item.friendStatus)}
                     </Text>

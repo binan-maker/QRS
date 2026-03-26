@@ -1,13 +1,12 @@
 import React, { useState, useEffect, useCallback } from "react";
 import {
   View, Text, Pressable, ScrollView, Switch, Platform,
-  StyleSheet, ActivityIndicator, Share, Alert, Image,
+  StyleSheet, ActivityIndicator, Alert, Image,
 } from "react-native";
 import { router } from "expo-router";
-import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
+import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
-import QRCode from "react-native-qrcode-svg";
 import { useTheme } from "@/contexts/ThemeContext";
 import { useAuth } from "@/contexts/AuthContext";
 import {
@@ -68,14 +67,10 @@ export default function PrivacySettingsScreen() {
   });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [showInviteQR, setShowInviteQR] = useState(false);
   const [leaderboard, setLeaderboard] = useState<FriendLeaderboardEntry[]>([]);
   const [leaderboardLoading, setLeaderboardLoading] = useState(false);
 
   const username = (user as any)?.username ?? "";
-  const profileUrl = username
-    ? `https://qrguard.app/profile/${username}`
-    : `https://qrguard.app`;
 
   useEffect(() => {
     if (!user) return;
@@ -84,9 +79,20 @@ export default function PrivacySettingsScreen() {
       .finally(() => setLoading(false));
   }, [user?.id]);
 
+  const VISIBILITY_KEYS: Array<keyof PrivacySettings> = [
+    "showStats", "showFriendsCount", "showScanActivity", "showRanking", "showActivity",
+  ];
+
   const handleToggle = useCallback(
     async (key: keyof PrivacySettings, val: boolean) => {
       if (!user) return;
+      if (!val && VISIBILITY_KEYS.includes(key)) {
+        const remainingEnabled = VISIBILITY_KEYS.filter((k) => k !== key && privacy[k]);
+        if (remainingEnabled.length === 0) {
+          Alert.alert("At least one visible", "You must keep at least one profile section visible.");
+          return;
+        }
+      }
       const updated = { ...privacy, [key]: val };
       setPrivacy(updated);
       setSaving(true);
@@ -110,15 +116,6 @@ export default function PrivacySettingsScreen() {
       setLeaderboard(data);
     } catch {}
     finally { setLeaderboardLoading(false); }
-  }
-
-  async function handleShareProfile() {
-    try {
-      await Share.share({
-        message: `Check out my profile on QR Guard!\n${profileUrl}`,
-        url: profileUrl,
-      });
-    } catch {}
   }
 
   if (!user) {
@@ -305,53 +302,6 @@ export default function PrivacySettingsScreen() {
             <Ionicons name="chevron-forward" size={16} color={colors.textMuted} />
           </Pressable>
 
-          <View style={[styles.divider, { backgroundColor: colors.surfaceBorder }]} />
-
-          {/* Friend Invite QR */}
-          <Pressable
-            onPress={() => {
-              setShowInviteQR(!showInviteQR);
-              if (!showInviteQR) loadLeaderboard();
-            }}
-            style={({ pressed }) => [styles.menuRow, { opacity: pressed ? 0.75 : 1 }]}
-          >
-            <LinearGradient
-              colors={[colors.primary, colors.accent]}
-              style={[styles.menuIcon]}
-              start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
-            >
-              <MaterialCommunityIcons name="qrcode-plus" size={18} color="#fff" />
-            </LinearGradient>
-            <View style={{ flex: 1 }}>
-              <Text style={[styles.menuLabel, { color: colors.text }]}>My Friend QR Code</Text>
-              <Text style={[styles.menuSub, { color: colors.textMuted }]}>Share your profile QR to get friend requests</Text>
-            </View>
-            <Ionicons name={showInviteQR ? "chevron-up" : "chevron-down"} size={16} color={colors.textMuted} />
-          </Pressable>
-
-          {showInviteQR && username && (
-            <View style={[styles.qrPanel, { borderTopColor: colors.surfaceBorder }]}>
-              <Text style={[styles.qrNote, { color: colors.textMuted }]}>
-                Anyone who scans this QR will be taken to your profile and can send you a friend request.
-              </Text>
-              <View style={[styles.qrWrap, { backgroundColor: "#fff", borderColor: colors.surfaceBorder }]}>
-                <QRCode
-                  value={profileUrl}
-                  size={180}
-                  color="#000"
-                  backgroundColor="#fff"
-                />
-              </View>
-              <Text style={[styles.qrUrl, { color: colors.primary }]}>@{username}</Text>
-              <Pressable
-                onPress={handleShareProfile}
-                style={[styles.shareBtn, { backgroundColor: colors.primary }]}
-              >
-                <Ionicons name="share-outline" size={16} color={colors.primaryText} />
-                <Text style={[styles.shareBtnText, { color: colors.primaryText }]}>Share My Profile</Text>
-              </Pressable>
-            </View>
-          )}
         </View>
 
         {/* ── FRIENDS LEADERBOARD ── */}
@@ -542,16 +492,6 @@ const styles = StyleSheet.create({
   menuIcon: { width: 36, height: 36, borderRadius: 11, alignItems: "center", justifyContent: "center" },
   menuLabel: { fontSize: 14, fontFamily: "Inter_600SemiBold" },
   menuSub: { fontSize: 12, fontFamily: "Inter_400Regular", marginTop: 1 },
-
-  qrPanel: { paddingHorizontal: 16, paddingTop: 16, paddingBottom: 20, alignItems: "center", gap: 12, borderTopWidth: 1 },
-  qrNote: { fontSize: 13, fontFamily: "Inter_400Regular", textAlign: "center", lineHeight: 18 },
-  qrWrap: { borderRadius: 16, padding: 16, borderWidth: 1 },
-  qrUrl: { fontSize: 15, fontFamily: "Inter_700Bold" },
-  shareBtn: {
-    flexDirection: "row", alignItems: "center", gap: 8,
-    paddingHorizontal: 24, paddingVertical: 12, borderRadius: 14,
-  },
-  shareBtnText: { fontSize: 14, fontFamily: "Inter_700Bold" },
 
   leaderboardHeader: { flexDirection: "row", alignItems: "center", gap: 12, padding: 16 },
   leaderboardHeaderIcon: { width: 40, height: 40, borderRadius: 13, alignItems: "center", justifyContent: "center" },

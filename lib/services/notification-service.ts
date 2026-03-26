@@ -8,14 +8,15 @@ import type { Notification, NotificationType } from "./types";
 async function pushNotification(
   userId: string,
   type: NotificationType,
-  qrCodeId: string,
-  message: string
+  message: string,
+  opts?: { qrCodeId?: string; fromUsername?: string }
 ): Promise<void> {
   if (!NOTIFICATIONS_ENABLED) return;
   await rtdb.push(`notifications/${userId}/items`, {
     type,
-    qrCodeId,
     message,
+    qrCodeId: opts?.qrCodeId ?? null,
+    fromUsername: opts?.fromUsername ?? null,
     read: false,
     createdAt: Date.now(),
   });
@@ -48,8 +49,8 @@ export async function notifyMentionedUsers(
           pushNotification(
             targetUserId,
             "mention",
-            qrId,
-            `${fromDisplayName} mentioned you in a comment`
+            `${fromDisplayName} mentioned you in a comment`,
+            { qrCodeId: qrId }
           )
         );
       } catch {}
@@ -72,7 +73,7 @@ export async function notifyQrFollowers(
     for (const d of docs) {
       const followerId = d.data.userId as string;
       if (!followerId || followerId === excludeUserId) continue;
-      writes.push(pushNotification(followerId, type, qrId, message));
+      writes.push(pushNotification(followerId, type, message, { qrCodeId: qrId }));
     }
     await Promise.all(writes);
   } catch {}
@@ -95,8 +96,8 @@ export async function notifyQrOwner(
     await pushNotification(
       ownerId,
       "owner_comment",
-      qrId,
-      `${fromDisplayName} commented on your QR code`
+      `${fromDisplayName} commented on your QR code`,
+      { qrCodeId: qrId }
     );
   } catch {}
 }
@@ -120,8 +121,41 @@ export async function notifyCommentParentAuthor(
     await pushNotification(
       parentAuthorId,
       "comment_reply",
-      qrId,
-      `${fromDisplayName} replied to your comment`
+      `${fromDisplayName} replied to your comment`,
+      { qrCodeId: qrId }
+    );
+  } catch {}
+}
+
+// ─── Friend request notifications ────────────────────────────────────────────
+export async function notifyFriendRequest(
+  toUserId: string,
+  fromDisplayName: string,
+  fromUsername: string
+): Promise<void> {
+  if (!NOTIFICATIONS_ENABLED) return;
+  try {
+    await pushNotification(
+      toUserId,
+      "friend_request",
+      `${fromDisplayName} sent you a friend request`,
+      { fromUsername }
+    );
+  } catch {}
+}
+
+export async function notifyFriendAccepted(
+  toUserId: string,
+  fromDisplayName: string,
+  fromUsername: string
+): Promise<void> {
+  if (!NOTIFICATIONS_ENABLED) return;
+  try {
+    await pushNotification(
+      toUserId,
+      "friend_accepted",
+      `${fromDisplayName} accepted your friend request`,
+      { fromUsername }
     );
   } catch {}
 }

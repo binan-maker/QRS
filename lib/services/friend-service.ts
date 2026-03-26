@@ -1,4 +1,5 @@
 import { db } from "../db";
+import { notifyFriendRequest, notifyFriendAccepted } from "./notification-service";
 
 export type FriendStatus = "none" | "sent" | "received" | "friends";
 
@@ -49,13 +50,20 @@ export async function sendFriendRequest(
       status: "received",
       createdAt: now,
     }),
+    notifyFriendRequest(toUserId, fromDisplayName, fromUsername),
   ]);
 }
 
 export async function acceptFriendRequest(myUserId: string, fromUserId: string): Promise<void> {
+  const myEntry = await db.get(["users", fromUserId, "friends", myUserId]);
   await Promise.all([
     db.update(["users", myUserId, "friends", fromUserId], { status: "friends" }),
     db.update(["users", fromUserId, "friends", myUserId], { status: "friends" }),
+    notifyFriendAccepted(
+      fromUserId,
+      (myEntry?.displayName as string) || "Someone",
+      (myEntry?.username as string) || ""
+    ),
   ]);
 }
 

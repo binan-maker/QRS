@@ -22,6 +22,9 @@ function getNotifIcon(type: string): any {
   if (type === "comment_reply") return "return-down-forward";
   if (type === "mention") return "at";
   if (type === "new_follow") return "person-add";
+  if (type === "friend_request") return "person-add";
+  if (type === "friend_accepted") return "people";
+  if (type === "friend_declined") return "person-remove";
   return "warning";
 }
 
@@ -48,6 +51,9 @@ const NotificationsModal = React.memo(function NotificationsModal({
     if (type === "comment_reply") return colors.accent;
     if (type === "mention") return colors.accent;
     if (type === "new_follow") return colors.safe;
+    if (type === "friend_request") return colors.safe;
+    if (type === "friend_accepted") return colors.primary;
+    if (type === "friend_declined") return colors.danger;
     return colors.warning;
   }
 
@@ -102,7 +108,15 @@ const NotificationsModal = React.memo(function NotificationsModal({
                 key={notif.id}
                 onPress={() => {
                   onClose();
-                  router.push({ pathname: "/qr-detail/[id]", params: { id: notif.qrCodeId } });
+                  const isFriendNotif =
+                    notif.type === "friend_request" ||
+                    notif.type === "friend_accepted" ||
+                    notif.type === "friend_declined";
+                  if (isFriendNotif && notif.fromUsername) {
+                    router.push(`/profile/${notif.fromUsername}` as any);
+                  } else if (notif.qrCodeId) {
+                    router.push({ pathname: "/qr-detail/[id]", params: { id: notif.qrCodeId } });
+                  }
                 }}
                 style={({ pressed }) => [
                   styles.item,
