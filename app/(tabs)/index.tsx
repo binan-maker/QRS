@@ -283,7 +283,7 @@ export default function HomeScreen() {
                           start={{ x: 0, y: 0 }}
                           end={{ x: 1, y: 1 }}
                         >
-                          <Ionicons name={icon} size={18} color="#fff" />
+                          <Ionicons name={icon} size={22} color="#fff" />
                         </LinearGradient>
                         <View style={styles.scanBody}>
                           <View style={styles.scanTopRow}>
@@ -448,19 +448,19 @@ function makeStyles(c: ReturnType<typeof import("@/contexts/ThemeContext").useTh
     recentList: { gap: 10 },
     scanItem: {
       flexDirection: "row", alignItems: "center",
-      borderRadius: 20, borderWidth: 1, overflow: "hidden",
-      paddingHorizontal: 14, paddingVertical: 14, gap: 14,
+      borderRadius: 22, borderWidth: 1, overflow: "hidden",
+      paddingHorizontal: 16, paddingVertical: 16, gap: 14,
     },
-    scanIconBox: { width: 48, height: 48, borderRadius: 16, alignItems: "center", justifyContent: "center", flexShrink: 0 },
+    scanIconBox: { width: 54, height: 54, borderRadius: 18, alignItems: "center", justifyContent: "center", flexShrink: 0 },
     scanBody: { flex: 1, minWidth: 0, gap: 5 },
     scanTopRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 6 },
-    scanContent: { fontSize: rf(14), fontFamily: "Inter_600SemiBold", lineHeight: Math.round(19 * s), flex: 1 },
+    scanContent: { fontSize: rf(14), fontFamily: "Inter_700Bold", lineHeight: Math.round(20 * s), flex: 1 },
     scanAmount: { fontSize: rf(13), fontFamily: "Inter_700Bold", flexShrink: 0 },
     scanSub: { fontSize: rf(11), fontFamily: "Inter_400Regular" },
     scanMeta: { flexDirection: "row", alignItems: "center", gap: 7 },
-    scanBadge: { paddingHorizontal: 8, paddingVertical: 3, borderRadius: 100 },
-    scanBadgeText: { fontSize: rf(10), fontFamily: "Inter_700Bold", letterSpacing: 0.3, color: "#fff" },
-    scanTime: { fontSize: rf(10), fontFamily: "Inter_400Regular" },
-    scanChevron: { width: 26, height: 26, borderRadius: 9, alignItems: "center", justifyContent: "center", flexShrink: 0 },
+    scanBadge: { paddingHorizontal: 9, paddingVertical: 4, borderRadius: 100 },
+    scanBadgeText: { fontSize: rf(10), fontFamily: "Inter_700Bold", letterSpacing: 0.4, color: "#fff" },
+    scanTime: { fontSize: rf(10), fontFamily: "Inter_500Medium" },
+    scanChevron: { width: 28, height: 28, borderRadius: 10, alignItems: "center", justifyContent: "center", flexShrink: 0 },
   });
 }

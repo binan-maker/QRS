@@ -266,7 +266,7 @@ export default function ProfileScreen() {
               </Pressable>
             )}
 
-            <Text style={[styles.emailText, { color: colors.textMuted }]} numberOfLines={1}>
+            <Text style={[styles.emailText, { color: colors.textMuted }]}>
               {user.email}
             </Text>
           </View>
@@ -427,7 +427,7 @@ export default function ProfileScreen() {
           <Text style={[styles.sectionLabel, { color: colors.textMuted }]}>Public Profile Privacy</Text>
           <View style={[styles.privacyCard, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
             <View style={[styles.privacyCardHeader, { borderBottomColor: colors.surfaceBorder }]}>
-              <LinearGradient colors={["#8B5CF6", "#EC4899"]} style={styles.privacyCardIcon} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}>
+              <LinearGradient colors={["#B060FF", "#FF4D6A"]} style={styles.privacyCardIcon} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}>
                 <Ionicons name="lock-closed" size={14} color="#fff" />
               </LinearGradient>
               <View style={{ flex: 1 }}>
@@ -538,16 +538,16 @@ export default function ProfileScreen() {
               <View style={[styles.infoIconWrap, { backgroundColor: colors.accentDim }]}>
                 <Ionicons name="mail-outline" size={16} color={colors.accent} />
               </View>
-              <View style={{ flex: 1 }}>
+              <View style={{ flex: 1, minWidth: 0 }}>
                 <Text style={[styles.infoLabel, { color: colors.textMuted }]}>Email</Text>
-                <Text style={[styles.infoValue, { color: colors.text }]} numberOfLines={1}>{user.email}</Text>
+                <Text style={[styles.infoValue, { color: colors.text }]}>{user.email}</Text>
+                {user.emailVerified && (
+                  <View style={[styles.verifiedChip, { backgroundColor: colors.safeDim, alignSelf: "flex-start", marginTop: 5 }]}>
+                    <Ionicons name="checkmark-circle" size={13} color={colors.safe} />
+                    <Text style={[styles.verifiedText, { color: colors.safe }]}>Verified</Text>
+                  </View>
+                )}
               </View>
-              {user.emailVerified && (
-                <View style={[styles.verifiedChip, { backgroundColor: colors.safeDim }]}>
-                  <Ionicons name="checkmark-circle" size={13} color={colors.safe} />
-                  <Text style={[styles.verifiedText, { color: colors.safe }]}>Verified</Text>
-                </View>
-              )}
             </View>
           </View>
         </Animated.View>

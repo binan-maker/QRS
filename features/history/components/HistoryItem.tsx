@@ -156,7 +156,7 @@ const HistoryItem = React.memo(function HistoryItem({ item, risk, onDelete: _onD
       >
         <Ionicons
           name={isFavorite ? "heart" : meta.icon}
-          size={20}
+          size={22}
           color="#fff"
         />
       </LinearGradient>
@@ -240,18 +240,18 @@ const styles = StyleSheet.create({
   card: {
     flexDirection: "row",
     alignItems: "center",
-    borderRadius: 20,
+    borderRadius: 22,
     marginBottom: 10,
     borderWidth: 1,
     overflow: "hidden",
-    paddingHorizontal: 14,
-    paddingVertical: 14,
+    paddingHorizontal: 16,
+    paddingVertical: 16,
     gap: 14,
   },
   iconBox: {
-    width: 48,
-    height: 48,
-    borderRadius: 16,
+    width: 54,
+    height: 54,
+    borderRadius: 18,
     alignItems: "center",
     justifyContent: "center",
     flexShrink: 0,
@@ -259,7 +259,7 @@ const styles = StyleSheet.create({
   body: {
     flex: 1,
     minWidth: 0,
-    gap: 6,
+    gap: 5,
   },
   topRow: {
     flexDirection: "row",
@@ -269,8 +269,8 @@ const styles = StyleSheet.create({
   },
   content: {
     fontSize: 14,
-    fontFamily: "Inter_600SemiBold",
-    lineHeight: 19,
+    fontFamily: "Inter_700Bold",
+    lineHeight: 20,
     flex: 1,
   },
   amount: {
@@ -290,14 +290,14 @@ const styles = StyleSheet.create({
     flexWrap: "wrap",
   },
   typeBadge: {
-    paddingHorizontal: 8,
-    paddingVertical: 3,
+    paddingHorizontal: 9,
+    paddingVertical: 4,
     borderRadius: 100,
   },
   typeBadgeText: {
     fontSize: 10,
     fontFamily: "Inter_700Bold",
-    letterSpacing: 0.3,
+    letterSpacing: 0.4,
     color: "#fff",
   },
   riskBadge: {
@@ -305,7 +305,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: 3,
     paddingHorizontal: 7,
-    paddingVertical: 3,
+    paddingVertical: 4,
     borderRadius: 100,
     borderWidth: 1,
   },
@@ -316,18 +316,18 @@ const styles = StyleSheet.create({
   },
   right: {
     alignItems: "flex-end",
-    gap: 7,
+    gap: 8,
     flexShrink: 0,
   },
   time: {
     fontSize: 10,
-    fontFamily: "Inter_400Regular",
+    fontFamily: "Inter_500Medium",
     letterSpacing: 0.1,
   },
   chevronWrap: {
-    width: 26,
-    height: 26,
-    borderRadius: 9,
+    width: 28,
+    height: 28,
+    borderRadius: 10,
     alignItems: "center",
     justifyContent: "center",
   },
