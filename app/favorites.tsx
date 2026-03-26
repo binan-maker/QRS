@@ -48,13 +48,13 @@ function formatDate(iso: string) {
 }
 
 const TYPE_CONFIG: Record<string, { icon: string; gradient: [string, string]; label: string }> = {
-  url:      { icon: "link",          gradient: ["#006FFF", "#00CFFF"], label: "URL" },
-  payment:  { icon: "card",          gradient: ["#F59E0B", "#F97316"], label: "Payment" },
-  email:    { icon: "mail",          gradient: ["#8B5CF6", "#EC4899"], label: "Email" },
-  phone:    { icon: "call",          gradient: ["#10B981", "#06B6D4"], label: "Phone" },
-  wifi:     { icon: "wifi",          gradient: ["#3B82F6", "#6366F1"], label: "WiFi" },
-  location: { icon: "location",      gradient: ["#EF4444", "#F97316"], label: "Location" },
-  text:     { icon: "document-text", gradient: ["#6B7280", "#9CA3AF"], label: "Text" },
+  url:      { icon: "link",          gradient: ["#4B8EF5", "#2E6DE0"], label: "URL" },
+  payment:  { icon: "card",          gradient: ["#FBBF24", "#D97706"], label: "Payment" },
+  email:    { icon: "mail",          gradient: ["#4B8EF5", "#2E6DE0"], label: "Email" },
+  phone:    { icon: "call",          gradient: ["#34D399", "#059669"], label: "Phone" },
+  wifi:     { icon: "wifi",          gradient: ["#4B8EF5", "#2E6DE0"], label: "WiFi" },
+  location: { icon: "location",      gradient: ["#F87171", "#DC2626"], label: "Location" },
+  text:     { icon: "document-text", gradient: ["#8BA7C7", "#3D5270"], label: "Text" },
 };
 
 function getTypeConfig(type: string) {
@@ -131,7 +131,7 @@ export default function FavoritesScreen() {
                 <Text style={styles.typePillText}>{cfg.label}</Text>
               </LinearGradient>
               <View style={styles.heartBadge}>
-                <Ionicons name="heart" size={10} color="#FF4D6A" />
+                <Ionicons name="heart" size={10} color="#F87171" />
                 <Text style={styles.heartBadgeText}>Saved</Text>
               </View>
             </View>
@@ -171,13 +171,13 @@ export default function FavoritesScreen() {
       <View style={[styles.container, { backgroundColor: colors.background }]}>
         <NavBar />
         <View style={styles.center}>
-          <LinearGradient colors={["#FF4D6A", "#F97316"]} style={styles.emptyIconCircle} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}>
+          <LinearGradient colors={["#F87171", "#DC2626"]} style={styles.emptyIconCircle} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}>
             <Ionicons name="heart" size={34} color="#fff" />
           </LinearGradient>
           <Text style={[styles.emptyTitle, { color: colors.text }]}>Sign in required</Text>
           <Text style={[styles.emptySub, { color: colors.textSecondary }]}>Sign in to view your favorited QR codes</Text>
           <Pressable onPress={() => router.push("/(auth)/login")} style={({ pressed }) => [{ opacity: pressed ? 0.85 : 1 }]}>
-            <LinearGradient colors={isDark ? ["#00E5FF", "#006FFF"] : ["#006FFF", "#0047CC"]} style={styles.signInBtn} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}>
+            <LinearGradient colors={[colors.primary, colors.primaryShade]} style={styles.signInBtn} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}>
               <Text style={styles.signInBtnText}>Sign In</Text>
             </LinearGradient>
           </Pressable>
@@ -196,7 +196,7 @@ export default function FavoritesScreen() {
         </View>
       ) : favorites.length === 0 ? (
         <Animated.View entering={FadeIn.duration(400)} style={styles.center}>
-          <LinearGradient colors={["#FF4D6A", "#F97316"]} style={styles.emptyIconCircle} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}>
+          <LinearGradient colors={["#F87171", "#DC2626"]} style={styles.emptyIconCircle} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}>
             <Ionicons name="heart" size={34} color="#fff" />
           </LinearGradient>
           <Text style={[styles.emptyTitle, { color: colors.text }]}>No favorites yet</Text>
@@ -250,7 +250,7 @@ const styles = StyleSheet.create({
   typePill: { borderRadius: 100, paddingHorizontal: 8, paddingVertical: 3 },
   typePillText: { fontSize: 10, fontFamily: "Inter_700Bold", letterSpacing: 0.5, color: "#fff" },
   heartBadge: { flexDirection: "row", alignItems: "center", gap: 3 },
-  heartBadgeText: { fontSize: 10, fontFamily: "Inter_600SemiBold", color: "#FF4D6A" },
+  heartBadgeText: { fontSize: 10, fontFamily: "Inter_600SemiBold", color: "#F87171" },
   contentText: { fontSize: 14, fontFamily: "Inter_500Medium", lineHeight: 20 },
   dateText: { fontSize: 11, fontFamily: "Inter_400Regular" },
   chevronWrap: { width: 30, height: 30, borderRadius: 10, alignItems: "center", justifyContent: "center", flexShrink: 0 },

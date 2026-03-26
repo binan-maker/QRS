@@ -7,34 +7,42 @@ import * as Haptics from "@/lib/haptics";
 import type { ParsedPaymentQr } from "@/lib/qr-analysis";
 import { useTheme } from "@/contexts/ThemeContext";
 import PaymentCard from "./PaymentCard";
+import type { AppColors } from "@/constants/colors";
 
-const TYPE_CONFIG: Record<string, {
+type GradientPair = [string, string];
+
+function getTypeCfg(type: string, colors: AppColors): {
   icon: keyof typeof Ionicons.glyphMap;
   label: string;
-  gradient: [string, string];
+  gradient: GradientPair;
   openLabel: string;
-}> = {
-  url:      { icon: "globe-outline",       label: "URL",              gradient: ["#006FFF", "#00E5FF"], openLabel: "Open Link" },
-  phone:    { icon: "call-outline",        label: "Phone Number",     gradient: ["#00D68F", "#00E5FF"], openLabel: "Call Number" },
-  email:    { icon: "mail-outline",        label: "Email",            gradient: ["#B060FF", "#FF4D6A"], openLabel: "Send Email" },
-  wifi:     { icon: "wifi-outline",        label: "Wi-Fi Network",    gradient: ["#006FFF", "#B060FF"], openLabel: "Connect to Wi-Fi" },
-  location: { icon: "location-outline",    label: "Location",         gradient: ["#FF4D6A", "#FFB800"], openLabel: "Open in Maps" },
-  payment:  { icon: "card-outline",        label: "Payment",          gradient: ["#FFB800", "#FF4D6A"], openLabel: "Open Payment" },
-  sms:      { icon: "chatbubble-outline",  label: "SMS Message",      gradient: ["#00E5FF", "#006FFF"], openLabel: "Send SMS" },
-  contact:  { icon: "person-outline",      label: "Contact Card",     gradient: ["#00D68F", "#006FFF"], openLabel: "Save Contact" },
-  event:    { icon: "calendar-outline",    label: "Calendar Event",   gradient: ["#FFB800", "#B060FF"], openLabel: "Add to Calendar" },
-  otp:      { icon: "lock-closed-outline", label: "OTP / 2FA Setup",  gradient: ["#B060FF", "#00E5FF"], openLabel: "Open Authenticator" },
-  app:      { icon: "apps-outline",        label: "App Link",         gradient: ["#00E5FF", "#B060FF"], openLabel: "Open App" },
-  social:   { icon: "people-outline",      label: "Social Profile",   gradient: ["#B060FF", "#FF4D6A"], openLabel: "Open Profile" },
-  media:    { icon: "play-circle-outline", label: "Media",            gradient: ["#FF4D6A", "#B060FF"], openLabel: "Play Media" },
-  document: { icon: "document-outline",    label: "Document",         gradient: ["#3D6080", "#7BA7CC"], openLabel: "Open Document" },
-  boarding: { icon: "airplane-outline",    label: "Boarding Pass",    gradient: ["#006FFF", "#B060FF"], openLabel: "View Boarding Pass" },
-  product:  { icon: "barcode-outline",     label: "Product",          gradient: ["#00D68F", "#FFB800"], openLabel: "View Product" },
-  text:     { icon: "document-text-outline", label: "Text",           gradient: ["#3D6080", "#7BA7CC"], openLabel: "Open" },
-};
+} {
+  const primary: GradientPair = [colors.primary, colors.primaryShade];
+  const safe: GradientPair = [colors.safe, colors.safeShade];
+  const payment: GradientPair = [colors.warning, colors.warningShade];
+  const danger: GradientPair = [colors.danger, colors.dangerShade];
+  const neutral: GradientPair = [colors.textSecondary, colors.textMuted];
 
-function getTypeCfg(type: string) {
-  return TYPE_CONFIG[type] ?? TYPE_CONFIG.text;
+  const map: Record<string, { icon: keyof typeof Ionicons.glyphMap; label: string; gradient: GradientPair; openLabel: string }> = {
+    url:      { icon: "globe-outline",       label: "URL",              gradient: primary,  openLabel: "Open Link" },
+    phone:    { icon: "call-outline",        label: "Phone Number",     gradient: safe,     openLabel: "Call Number" },
+    email:    { icon: "mail-outline",        label: "Email",            gradient: primary,  openLabel: "Send Email" },
+    wifi:     { icon: "wifi-outline",        label: "Wi-Fi Network",    gradient: primary,  openLabel: "Connect to Wi-Fi" },
+    location: { icon: "location-outline",    label: "Location",         gradient: danger,   openLabel: "Open in Maps" },
+    payment:  { icon: "card-outline",        label: "Payment",          gradient: payment,  openLabel: "Open Payment" },
+    sms:      { icon: "chatbubble-outline",  label: "SMS Message",      gradient: primary,  openLabel: "Send SMS" },
+    contact:  { icon: "person-outline",      label: "Contact Card",     gradient: primary,  openLabel: "Save Contact" },
+    event:    { icon: "calendar-outline",    label: "Calendar Event",   gradient: primary,  openLabel: "Add to Calendar" },
+    otp:      { icon: "lock-closed-outline", label: "OTP / 2FA Setup",  gradient: safe,     openLabel: "Open Authenticator" },
+    app:      { icon: "apps-outline",        label: "App Link",         gradient: primary,  openLabel: "Open App" },
+    social:   { icon: "people-outline",      label: "Social Profile",   gradient: primary,  openLabel: "Open Profile" },
+    media:    { icon: "play-circle-outline", label: "Media",            gradient: primary,  openLabel: "Play Media" },
+    document: { icon: "document-outline",    label: "Document",         gradient: neutral,  openLabel: "Open Document" },
+    boarding: { icon: "airplane-outline",    label: "Boarding Pass",    gradient: primary,  openLabel: "View Boarding Pass" },
+    product:  { icon: "barcode-outline",     label: "Product",          gradient: primary,  openLabel: "View Product" },
+    text:     { icon: "document-text-outline", label: "Text",           gradient: neutral,  openLabel: "Open" },
+  };
+  return map[type] ?? map.text;
 }
 
 function parseWifi(content: string) {
@@ -118,7 +126,7 @@ const ContentCard = React.memo(function ContentCard({ content, contentType, pars
   const [contentExpanded, setContentExpanded] = React.useState(false);
 
   const isLongContent = content.length > EXPAND_THRESHOLD || content.includes("\n");
-  const cfg = getTypeCfg(contentType);
+  const cfg = getTypeCfg(contentType, colors);
   const hasOpenAction = !isDeactivated && contentType !== "text" && contentType !== "product";
 
   async function handleCopy() {
@@ -238,15 +246,15 @@ const ContentCard = React.memo(function ContentCard({ content, contentType, pars
           onPress={handleCopy}
           style={({ pressed }) => [styles.copyBtn, { backgroundColor: isDark ? colors.surfaceLight : colors.background, borderColor: colors.surfaceBorder, opacity: pressed ? 0.75 : 1 }]}
         >
-          <Ionicons name={copied ? "checkmark" : "copy-outline"} size={18} color={copied ? "#10B981" : colors.textSecondary} />
-          {copied && <Text style={styles.copiedText}>Copied!</Text>}
+          <Ionicons name={copied ? "checkmark" : "copy-outline"} size={18} color={copied ? colors.safe : colors.textSecondary} />
+          {copied && <Text style={[styles.copiedText, { color: colors.safe }]}>Copied!</Text>}
         </Pressable>
       </View>
     </View>
   );
 });
 
-function InfoRow({ label, value, selectable, gradient, colors }: { label: string; value: string; selectable?: boolean; gradient: [string, string]; colors: any }) {
+function InfoRow({ label, value, selectable, gradient, colors }: { label: string; value: string; selectable?: boolean; gradient: GradientPair; colors: any }) {
   return (
     <View style={styles.infoRow}>
       <Text style={[styles.infoLabel, { color: gradient[0] }]}>{label}</Text>
@@ -295,5 +303,5 @@ const styles = StyleSheet.create({
     flexDirection: "row", alignItems: "center", gap: 6,
     height: 50, paddingHorizontal: 14, borderRadius: 16, borderWidth: 1,
   },
-  copiedText: { fontSize: 12, fontFamily: "Inter_600SemiBold", color: "#10B981" },
+  copiedText: { fontSize: 12, fontFamily: "Inter_600SemiBold" },
 });

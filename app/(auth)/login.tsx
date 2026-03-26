@@ -94,18 +94,18 @@ export default function LoginScreen() {
     <View style={{ flex: 1, backgroundColor: colors.background }}>
       <LinearGradient
         colors={colors.isDark
-          ? ["#020913", "#050B18", "#07111F"]
-          : ["#EEF4FF", "#F4F8FF", "#EAF0FF"]}
+          ? ["#050B18", colors.background, "#070F1E"]
+          : ["#EBF1FF", colors.background, "#E4EDFF"]}
         style={StyleSheet.absoluteFill}
         start={{ x: 0.5, y: 0 }}
         end={{ x: 0.5, y: 1 }}
       />
       <View style={[styles.glowOrb, {
-        backgroundColor: colors.isDark ? "rgba(0,229,255,0.06)" : "rgba(0,111,255,0.06)",
+        backgroundColor: colors.primaryDim,
         top: -80, right: -80, width: 260, height: 260,
       }]} />
       <View style={[styles.glowOrb, {
-        backgroundColor: colors.isDark ? "rgba(176,96,255,0.05)" : "rgba(124,58,237,0.04)",
+        backgroundColor: colors.primaryDim,
         bottom: 40, left: -100, width: 280, height: 280,
       }]} />
 
@@ -122,7 +122,7 @@ export default function LoginScreen() {
           <View style={[styles.heroSection, { paddingTop: heroPadTop, paddingBottom: heroPadBottom }]}>
             <View style={[styles.logoWrap, { marginBottom: isSmallScreen ? 6 : 10 }]}>
               <LinearGradient
-                colors={colors.isDark ? ["#00E5FF", "#006FFF", "#B060FF"] : ["#006FFF", "#0047CC", "#7C3AED"]}
+                colors={[colors.primary, colors.primaryShade]}
                 style={[styles.logoGradient, { width: logoSize, height: logoSize, borderRadius: logoRadius }]}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 1 }}
@@ -144,7 +144,7 @@ export default function LoginScreen() {
           </View>
 
           <View style={[styles.card, {
-            backgroundColor: colors.isDark ? "rgba(12,21,38,0.85)" : "rgba(255,255,255,0.92)",
+            backgroundColor: colors.isDark ? "rgba(16,25,41,0.92)" : "rgba(255,255,255,0.95)",
             borderColor: colors.surfaceBorder,
             padding: cardPadding,
           }]}>
@@ -200,7 +200,7 @@ export default function LoginScreen() {
                 style={({ pressed }) => [{ opacity: pressed || loading ? 0.88 : 1, transform: [{ scale: pressed ? 0.98 : 1 }] }]}
               >
                 <LinearGradient
-                  colors={colors.isDark ? ["#00E5FF", "#0090CC", "#006FFF"] : ["#006FFF", "#0047CC"]}
+                  colors={[colors.primary, colors.primaryShade]}
                   style={[styles.primaryBtn, { paddingVertical: Math.round(15 * scale) }]}
                   start={{ x: 0, y: 0 }}
                   end={{ x: 1, y: 0 }}

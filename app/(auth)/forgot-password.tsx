@@ -84,7 +84,7 @@ export default function ForgotPasswordScreen() {
             style={({ pressed }) => [{ opacity: pressed ? 0.85 : 1, transform: [{ scale: pressed ? 0.98 : 1 }], width: "100%" }]}
           >
             <LinearGradient
-              colors={colors.isDark ? ["#00E5FF", "#0090CC", "#006FFF"] : ["#006FFF", "#0047CC"]}
+              colors={[colors.primary, colors.primaryShade]}
               style={[styles.primaryBtn, { paddingVertical: Math.round(15 * scale) }]}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 0 }}
@@ -128,7 +128,7 @@ export default function ForgotPasswordScreen() {
           <View style={[styles.heroSection, { paddingTop: isSmallScreen ? 12 : Math.round(24 * scale), paddingBottom: isSmallScreen ? 16 : Math.round(28 * scale) }]}>
             <View style={[styles.iconWrap, { marginBottom: isSmallScreen ? 6 : 10 }]}>
               <LinearGradient
-                colors={colors.isDark ? ["#006FFF", "#0047CC"] : ["#006FFF", "#0047CC"]}
+                colors={[colors.primary, colors.primaryShade]}
                 style={[styles.iconGradient, { width: logoSize, height: logoSize, borderRadius: logoRadius }]}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 1 }}
@@ -179,7 +179,7 @@ export default function ForgotPasswordScreen() {
               style={({ pressed }) => [{ opacity: pressed || loading ? 0.88 : 1, transform: [{ scale: pressed ? 0.98 : 1 }] }]}
             >
               <LinearGradient
-                colors={colors.isDark ? ["#00E5FF", "#0090CC", "#006FFF"] : ["#006FFF", "#0047CC"]}
+                colors={[colors.primary, colors.primaryShade]}
                 style={[styles.primaryBtn, { paddingVertical: Math.round(15 * scale) }]}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 0 }}

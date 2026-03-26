@@ -132,9 +132,9 @@ export default function QrOutputCard({
             )}
           </View>
           {qrMode === "business" ? (
-            <View style={[styles.ownershipNote, { borderColor: "#FBBF2430", backgroundColor: "#FBBF2408" }]}>
-              <Ionicons name="shield" size={12} color="#FBBF24" />
-              <Text style={[styles.ownershipNoteText, { color: "#FBBF24" }]}>
+            <View style={[styles.ownershipNote, { borderColor: colors.warning + "30", backgroundColor: colors.warningDim }]}>
+              <Ionicons name="shield" size={12} color={colors.warning} />
+              <Text style={[styles.ownershipNoteText, { color: colors.warning }]}>
                 Living Shield active — update the destination anytime from My QR Codes without reprinting.
               </Text>
             </View>

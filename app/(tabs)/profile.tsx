@@ -77,7 +77,7 @@ export default function ProfileScreen() {
     return (
       <View style={[styles.container, { paddingTop: topInset }]}>
         <LinearGradient
-          colors={isDark ? ["#050B18", "#061527"] : ["#F4F8FF", "#EAF2FF"]}
+          colors={isDark ? [colors.background, colors.surface] : [colors.background, colors.surfaceLight]}
           style={StyleSheet.absoluteFill}
         />
         <View style={styles.guestWrap}>

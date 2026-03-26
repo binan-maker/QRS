@@ -118,12 +118,12 @@ export default function MyQrCodesScreen() {
           <View style={styles.cardInfo}>
             <View style={styles.cardTopRow}>
               {isBusiness ? (
-                <LinearGradient colors={["#F59E0B", "#F97316"]} style={styles.typePill} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}>
+                <LinearGradient colors={[colors.warning, colors.warningShade]} style={styles.typePill} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}>
                   <Ionicons name="storefront" size={9} color="#fff" />
                   <Text style={styles.typePillTextWhite}>Business</Text>
                 </LinearGradient>
               ) : (
-                <LinearGradient colors={colors.isDark ? ["#00E5FF", "#006FFF"] : ["#006FFF", "#0047CC"]} style={styles.typePill} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}>
+                <LinearGradient colors={[colors.primary, colors.primaryShade]} style={styles.typePill} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}>
                   <Ionicons name="person" size={9} color="#fff" />
                   <Text style={styles.typePillTextWhite}>Individual</Text>
                 </LinearGradient>
@@ -179,7 +179,7 @@ export default function MyQrCodesScreen() {
         style={({ pressed }) => [{ opacity: pressed ? 0.8 : 1 }]}
       >
         <LinearGradient
-          colors={colors.isDark ? ["#00E5FF", "#006FFF"] : ["#006FFF", "#0047CC"]}
+          colors={[colors.primary, colors.primaryShade]}
           style={styles.createBtn}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
@@ -196,13 +196,13 @@ export default function MyQrCodesScreen() {
       <View style={[styles.container, { backgroundColor: colors.background }]}>
         <NavBar />
         <View style={styles.center}>
-          <LinearGradient colors={colors.isDark ? ["#00E5FF", "#006FFF"] : ["#006FFF", "#0047CC"]} style={styles.emptyIconWrap} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}>
+          <LinearGradient colors={[colors.primary, colors.primaryShade]} style={styles.emptyIconWrap} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}>
             <MaterialCommunityIcons name="qrcode-plus" size={36} color="#fff" />
           </LinearGradient>
           <Text style={[styles.emptyTitle, { color: colors.text }]}>Sign in required</Text>
           <Text style={[styles.emptySub, { color: colors.textSecondary }]}>Sign in to manage your generated QR codes</Text>
           <Pressable onPress={() => router.push("/(auth)/login")} style={({ pressed }) => [{ opacity: pressed ? 0.85 : 1 }]}>
-            <LinearGradient colors={colors.isDark ? ["#00E5FF", "#006FFF"] : ["#006FFF", "#0047CC"]} style={styles.signInBtn} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}>
+            <LinearGradient colors={[colors.primary, colors.primaryShade]} style={styles.signInBtn} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}>
               <Text style={styles.signInBtnText}>Sign In</Text>
             </LinearGradient>
           </Pressable>
@@ -240,7 +240,7 @@ export default function MyQrCodesScreen() {
         </View>
       ) : filtered.length === 0 ? (
         <Animated.View entering={FadeIn.duration(400)} style={styles.center}>
-          <LinearGradient colors={colors.isDark ? ["#00E5FF", "#006FFF"] : ["#006FFF", "#0047CC"]} style={styles.emptyIconWrap} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}>
+          <LinearGradient colors={[colors.primary, colors.primaryShade]} style={styles.emptyIconWrap} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}>
             <MaterialCommunityIcons name="qrcode-plus" size={36} color="#fff" />
           </LinearGradient>
           <Text style={[styles.emptyTitle, { color: colors.text }]}>
@@ -250,7 +250,7 @@ export default function MyQrCodesScreen() {
             Head to the generator and create your first QR code
           </Text>
           <Pressable onPress={() => router.push("/(tabs)/qr-generator")} style={({ pressed }) => [{ opacity: pressed ? 0.85 : 1 }]}>
-            <LinearGradient colors={colors.isDark ? ["#00E5FF", "#006FFF"] : ["#006FFF", "#0047CC"]} style={styles.signInBtn} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}>
+            <LinearGradient colors={[colors.primary, colors.primaryShade]} style={styles.signInBtn} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}>
               <Ionicons name="add" size={18} color="#fff" />
               <Text style={styles.signInBtnText}>Create QR Code</Text>
             </LinearGradient>

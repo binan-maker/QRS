@@ -32,8 +32,16 @@ export default function HomeScreen() {
   const STAT_ITEMS = [
     { icon: "shield-checkmark" as const, label: "Safe Scans", desc: "Verified clean", color: colors.safe, bg: colors.safeDim },
     { icon: "warning" as const, label: "Stay Alert", desc: "Report risks", color: colors.warning, bg: colors.warningDim },
-    { icon: "chatbubbles" as const, label: "Community", desc: "Trust reviews", color: colors.accent, bg: colors.accentDim },
+    { icon: "chatbubbles" as const, label: "Community", desc: "Trust reviews", color: colors.primary, bg: colors.primaryDim },
   ];
+
+  function getScanGradient(contentType: string): [string, string] {
+    if (contentType === "payment") return [colors.warning, colors.warningShade];
+    if (contentType === "location") return [colors.danger, colors.dangerShade];
+    if (contentType === "phone") return [colors.safe, colors.safeShade];
+    if (contentType === "otp") return [colors.safe, colors.safeShade];
+    return [colors.primary, colors.primaryShade];
+  }
 
   return (
     <>
@@ -78,7 +86,7 @@ export default function HomeScreen() {
               {user ? (
                 <Pressable onPress={() => router.push("/(tabs)/profile")} style={styles.avatarRing}>
                   <LinearGradient
-                    colors={[colors.primary, colors.accent]}
+                    colors={[colors.primary, colors.primaryShade]}
                     style={styles.avatarRingGradient}
                     start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
                   >
@@ -113,12 +121,12 @@ export default function HomeScreen() {
             >
               <LinearGradient
                 colors={isDark
-                  ? ["#061527", "#03101F", "#060E1B"]
-                  : ["#EAF3FF", "#DDEEFF", "#E8F4FF"]}
+                  ? ["#0A1525", "#081020", "#0B1628"]
+                  : ["#EBF1FF", "#DEE9FF", "#E8F0FF"]}
                 start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
                 style={styles.heroGradient}
               >
-                <View style={[styles.heroBorderAccent, { borderColor: colors.primary + "30" }]} />
+                <View style={[styles.heroBorderAccent, { borderColor: colors.primary + "25" }]} />
                 <View style={styles.heroTop}>
                   <Animated.View style={[styles.heroIconRing, { borderColor: colors.primary + "30" }, pulseStyle]}>
                     <LinearGradient
@@ -140,7 +148,7 @@ export default function HomeScreen() {
                 </View>
                 <View style={styles.heroPillRow}>
                   {["Safe check", "Fraud detect", "Trust score"].map((t) => (
-                    <View key={t} style={[styles.heroPill, { backgroundColor: colors.primary + "18", borderColor: colors.primary + "35" }]}>
+                    <View key={t} style={[styles.heroPill, { backgroundColor: colors.primary + "18", borderColor: colors.primary + "30" }]}>
                       <Text style={[styles.heroPillText, { color: colors.primary }]}>{t}</Text>
                     </View>
                   ))}
@@ -177,14 +185,12 @@ export default function HomeScreen() {
                 style={({ pressed }) => [styles.promoBanner, { opacity: pressed ? 0.9 : 1 }]}
               >
                 <LinearGradient
-                  colors={isDark
-                    ? ["rgba(176,96,255,0.14)", "rgba(0,229,255,0.08)"]
-                    : ["rgba(124,58,237,0.07)", "rgba(0,111,255,0.05)"]}
+                  colors={[colors.primaryDim, "transparent"]}
                   start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
-                  style={[styles.promoGradient, { borderColor: colors.accent + "30" }]}
+                  style={[styles.promoGradient, { borderColor: colors.primary + "30" }]}
                 >
-                  <View style={[styles.promoIconWrap, { backgroundColor: colors.accentDim }]}>
-                    <Ionicons name="sparkles" size={20} color={colors.accent} />
+                  <View style={[styles.promoIconWrap, { backgroundColor: colors.primaryDim }]}>
+                    <Ionicons name="sparkles" size={20} color={colors.primary} />
                   </View>
                   <View style={{ flex: 1 }}>
                     <Text style={[styles.promoTitle, { color: colors.text }]}>Unlock Full Access</Text>
@@ -192,8 +198,8 @@ export default function HomeScreen() {
                       Sign in to comment, report, and sync history
                     </Text>
                   </View>
-                  <View style={[styles.promoArrow, { backgroundColor: colors.accentDim }]}>
-                    <Ionicons name="chevron-forward" size={16} color={colors.accent} />
+                  <View style={[styles.promoArrow, { backgroundColor: colors.primaryDim }]}>
+                    <Ionicons name="chevron-forward" size={16} color={colors.primary} />
                   </View>
                 </LinearGradient>
               </Pressable>
@@ -205,7 +211,7 @@ export default function HomeScreen() {
             <View style={styles.sectionHeader}>
               <View style={styles.sectionTitleRow}>
                 <LinearGradient
-                  colors={[colors.primary, colors.accent]}
+                  colors={[colors.primary, colors.primaryShade]}
                   style={styles.sectionDot}
                   start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}
                 />
@@ -237,17 +243,7 @@ export default function HomeScreen() {
                   const icon = getContentTypeIcon(contentType) as any;
                   const paymentName = contentType === "payment" ? extractPaymentName(scan.content) : null;
                   const paymentAmount = contentType === "payment" ? extractPaymentAmount(scan.content) : null;
-                  const gradientMap: Record<string, [string, string]> = {
-                    url:      ["#006FFF", "#00E5FF"],
-                    payment:  ["#FFB800", "#FF4D6A"],
-                    wifi:     ["#006FFF", "#B060FF"],
-                    phone:    ["#00D68F", "#00E5FF"],
-                    email:    ["#B060FF", "#FF4D6A"],
-                    location: ["#FF4D6A", "#FFB800"],
-                    contact:  ["#00D68F", "#006FFF"],
-                    sms:      ["#00E5FF", "#006FFF"],
-                  };
-                  const gradient: [string, string] = gradientMap[contentType] ?? ["#006FFF", "#B060FF"];
+                  const gradient = getScanGradient(contentType);
                   const label = contentType.charAt(0).toUpperCase() + contentType.slice(1);
                   return (
                     <Animated.View
@@ -294,7 +290,7 @@ export default function HomeScreen() {
                               {paymentName ? paymentName : truncate(scan.content, 38)}
                             </Text>
                             {paymentAmount && (
-                              <Text style={[styles.scanAmount, { color: gradient[0] }]}>
+                              <Text style={[styles.scanAmount, { color: colors.warning }]}>
                                 {paymentAmount}
                               </Text>
                             )}
@@ -400,15 +396,16 @@ function makeStyles(c: ReturnType<typeof import("@/contexts/ThemeContext").useTh
       alignItems: "center", justifyContent: "center", flexShrink: 0,
     },
     heroIconBg: { width: 76, height: 76, borderRadius: 22, alignItems: "center", justifyContent: "center" },
+    heroTop: { flexDirection: "row", alignItems: "center", gap: 14, marginBottom: 16 },
+    heroTextBlock: { flex: 1 },
     heroTitle: { fontSize: rf(20), fontFamily: "Inter_700Bold", marginBottom: 5 },
-    heroSub: { fontSize: rf(12), fontFamily: "Inter_400Regular", marginBottom: 12, lineHeight: Math.round(17 * s) },
+    heroSub: { fontSize: rf(12), fontFamily: "Inter_400Regular", lineHeight: Math.round(17 * s) },
     heroPillRow: { flexDirection: "row", gap: 6, flexWrap: "wrap" },
     heroPill: { paddingHorizontal: 8, paddingVertical: 3, borderRadius: 100, borderWidth: 1 },
     heroPillText: { fontSize: rf(10), fontFamily: "Inter_600SemiBold", letterSpacing: 0.2 },
     heroArrow: {
-      position: "absolute", bottom: 18, right: 18,
       width: 40, height: 40, borderRadius: 20,
-      alignItems: "center", justifyContent: "center",
+      alignItems: "center", justifyContent: "center", flexShrink: 0,
     },
 
     statsRow: { flexDirection: "row", gap: 10, marginBottom: 18 },

@@ -115,7 +115,7 @@ export default function QrGeneratorScreen() {
             style={({ pressed }) => [{ opacity: pressed ? 0.85 : 1, transform: [{ scale: pressed ? 0.97 : 1 }] }, styles.generateBtnWrap]}
           >
             <LinearGradient
-              colors={colors.isDark ? ["#00E5FF", "#006FFF"] : ["#006FFF", "#0047CC"]}
+              colors={[colors.primary, colors.primaryShade]}
               style={styles.generateBtn}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 1 }}

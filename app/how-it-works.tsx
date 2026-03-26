@@ -154,10 +154,10 @@ export default function HowItWorksScreen() {
             </View>
             <View style={[styles.genRow, { borderTopWidth: 1, borderTopColor: colors.surfaceBorder, paddingTop: 14, marginTop: 4 }]}>
               <View style={[styles.genIcon, { backgroundColor: "#FBBF2415" }]}>
-                <Ionicons name="storefront-outline" size={18} color="#FBBF24" />
+                <Ionicons name="storefront-outline" size={18} color={colors.warning} />
               </View>
               <View style={{ flex: 1 }}>
-                <Text style={[styles.genLabel, { color: "#FBBF24" }]}>Business QR Code</Text>
+                <Text style={[styles.genLabel, { color: colors.warning }]}>Business QR Code</Text>
                 <Text style={[styles.genDesc, { color: colors.textSecondary }]}>Upload your business logo, enter your business name, and generate a verified business QR code that displays your branding on the detail page.</Text>
               </View>
             </View>

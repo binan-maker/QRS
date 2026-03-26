@@ -75,7 +75,7 @@ export default function FollowersModal({ visible, onClose, followCount, follower
                     <Text style={[styles.followTime, { color: colors.textMuted }]}>Followed {timeAgo(f.followedAt)}</Text>
                   </View>
                   <View style={styles.personIcon}>
-                    <Ionicons name="person" size={18} color="#10B981" />
+                    <Ionicons name="person" size={18} color={colors.safe} />
                   </View>
                 </View>
               </Animated.View>

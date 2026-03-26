@@ -15,12 +15,6 @@ interface Props {
   onOpenMessages: () => void;
 }
 
-const TYPE_GRADIENTS: Record<string, [string, string]> = {
-  business:   ["#FBBF24", "#F59E0B"],
-  government: ["#3B82F6", "#6366F1"],
-  individual: ["#10B981", "#06B6D4"],
-};
-
 const TYPE_ICONS: Record<string, keyof typeof Ionicons.glyphMap> = {
   business:   "storefront",
   government: "flag",
@@ -32,15 +26,20 @@ const OwnerCard = React.memo(function OwnerCard({
 }: Props) {
   const { colors, isDark } = useTheme();
   const qrType = ownerInfo.qrType || "individual";
-  const gradient = TYPE_GRADIENTS[qrType] ?? TYPE_GRADIENTS.individual;
   const icon = TYPE_ICONS[qrType] ?? "shield-checkmark";
   const typeLabel = qrType.toUpperCase();
+
+  const gradient: [string, string] = qrType === "business"
+    ? [colors.warning, colors.warningShade]
+    : qrType === "government"
+    ? [colors.primary, colors.primaryShade]
+    : [colors.safe, colors.safeShade];
 
   return (
     <>
       {ownerInfo.isActive === false && (
         <View style={[styles.deactivatedBanner, { backgroundColor: colors.dangerDim, borderColor: colors.danger + "40" }]}>
-          <LinearGradient colors={["#EF4444", "#DC2626"]} style={styles.deactivatedIcon} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}>
+          <LinearGradient colors={[colors.danger, colors.dangerShade]} style={styles.deactivatedIcon} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}>
             <Ionicons name="pause-circle" size={18} color="#fff" />
           </LinearGradient>
           <View style={{ flex: 1 }}>
@@ -100,30 +99,30 @@ const OwnerCard = React.memo(function OwnerCard({
                 onPress={onOpenFollowers}
                 style={({ pressed }) => [styles.actionBtn, { backgroundColor: colors.surfaceLight, borderColor: colors.surfaceBorder, opacity: pressed ? 0.75 : 1 }]}
               >
-                <LinearGradient colors={gradient} style={styles.actionBtnIcon} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}>
+                <LinearGradient colors={[colors.primary, colors.primaryShade]} style={styles.actionBtnIcon} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}>
                   <Ionicons name="people" size={12} color="#fff" />
                 </LinearGradient>
-                <Text style={[styles.actionBtnText, { color: gradient[0] }]}>{formatCompactNumber(followCount)}</Text>
+                <Text style={[styles.actionBtnText, { color: colors.primary }]}>{formatCompactNumber(followCount)}</Text>
               </Pressable>
               <Pressable
                 onPress={onOpenMessages}
                 style={({ pressed }) => [styles.actionBtn, { backgroundColor: colors.surfaceLight, borderColor: colors.surfaceBorder, opacity: pressed ? 0.75 : 1, position: "relative" }]}
               >
-                <LinearGradient colors={["#8B5CF6", "#EC4899"]} style={styles.actionBtnIcon} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}>
+                <LinearGradient colors={[colors.primary, colors.primaryShade]} style={styles.actionBtnIcon} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}>
                   <Ionicons name="mail" size={12} color="#fff" />
                 </LinearGradient>
-                <Text style={[styles.actionBtnText, { color: "#8B5CF6" }]}>Inbox</Text>
+                <Text style={[styles.actionBtnText, { color: colors.primary }]}>Inbox</Text>
                 {unreadMessages > 0 && (
-                  <View style={styles.unreadBadge}>
+                  <View style={[styles.unreadBadge, { backgroundColor: colors.danger }]}>
                     <Text style={styles.unreadBadgeText}>{unreadMessages}</Text>
                   </View>
                 )}
               </Pressable>
             </View>
           ) : (
-            <View style={[styles.verifiedBadge, { backgroundColor: "#10B98118", borderColor: "#10B98140" }]}>
-              <Ionicons name="shield-checkmark" size={13} color="#10B981" />
-              <Text style={styles.verifiedText}>Verified</Text>
+            <View style={[styles.verifiedBadge, { backgroundColor: colors.safeDim, borderColor: colors.safe + "40" }]}>
+              <Ionicons name="shield-checkmark" size={13} color={colors.safe} />
+              <Text style={[styles.verifiedText, { color: colors.safe }]}>Verified</Text>
             </View>
           )}
         </View>
@@ -172,13 +171,12 @@ const styles = StyleSheet.create({
   actionBtnText: { fontSize: 12, fontFamily: "Inter_700Bold" },
   unreadBadge: {
     position: "absolute", top: -5, right: -5, minWidth: 16, height: 16,
-    borderRadius: 8, backgroundColor: "#EF4444",
-    alignItems: "center", justifyContent: "center", paddingHorizontal: 3,
+    borderRadius: 8, alignItems: "center", justifyContent: "center", paddingHorizontal: 3,
   },
   unreadBadgeText: { fontSize: 10, fontFamily: "Inter_700Bold", color: "#fff" },
   verifiedBadge: {
     flexDirection: "row", alignItems: "center", gap: 5,
     borderRadius: 12, paddingHorizontal: 10, paddingVertical: 7, borderWidth: 1,
   },
-  verifiedText: { fontSize: 12, fontFamily: "Inter_700Bold", color: "#10B981" },
+  verifiedText: { fontSize: 12, fontFamily: "Inter_700Bold" },
 });

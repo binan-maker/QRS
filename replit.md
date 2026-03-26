@@ -4,6 +4,26 @@ A full-stack mobile-first QR code scanning and management app built with Expo (R
 
 ## Recent Changes
 
+### Premium Brand Redesign — One Brand Blue + Navigation Bar Fix
+- **New color system** (`constants/colors.ts`) — Replaced the 6-color rainbow palette with a single "QR Guard Blue" brand color (`#4B8EF5` dark / `#0052CC` light). Added `primaryShade`, `safeShade`, `dangerShade`, `warningShade` for monochromatic gradient pairs. Semantic colors (green/amber/red) reserved for safe/warning/danger states only — never used decoratively. Removed separate cyan/purple accent colors entirely. `accent` is now always equal to `primary`.
+- **Android navigation bar fix** (`contexts/ThemeContext.tsx`) — Added `expo-system-ui` `setBackgroundColorAsync(colors.background)` call in a `useEffect` keyed on `colors.background`. This syncs the Android nav bar color with the current app theme whenever it changes, eliminating the dark/light color mismatch on theme switch.
+- **Tab bar scan button** (`app/(tabs)/_layout.tsx`) — Replaced `["#00E5FF", "#006FFF"]` with `[colors.primary, colors.primaryShade]` monochromatic blue gradient. Shadow color updated to `colors.primary`.
+- **TrustScoreCard** (`features/qr-detail/components/TrustScoreCard.tsx`) — Replaced rainbow REPORT_TYPES and STATS gradients. Safe=green, Scam=red, Fake=amber, Spam=blue. Stat icons all use primary blue, reports icon uses danger red.
+- **HistoryItem** (`features/history/components/HistoryItem.tsx`) — Replaced 15-entry static rainbow TYPE_META with a dynamic function using colors from theme. URL/wifi/email/sms=blue, phone/otp=green, payment=amber, location/danger=red, document=neutral gray.
+- **ContentCard** (`features/qr-detail/components/ContentCard.tsx`) — Same semantic gradient logic as HistoryItem applied to TYPE_CONFIG.
+- **OwnerCard** (`features/qr-detail/components/OwnerCard.tsx`) — Business type=amber, Government=blue, Individual=green. Replaced hardcoded `#EF4444`/`#10B981`/`#8B5CF6`/`#EC4899` with theme colors.
+- **SafetyWarningCard** (`features/qr-detail/components/SafetyWarningCard.tsx`) — Replaced `#EF4444`/`#DC2626`/`#F59E0B`/`#F97316` with `colors.danger`/`colors.dangerShade`/`colors.warning`/`colors.warningShade`.
+- **ModeSelector** (`features/generator/components/ModeSelector.tsx`) — Replaced `#FBBF24` business mode color with `colors.warning`/`colors.warningDim`.
+- **QrOutputCard** (`features/generator/components/QrOutputCard.tsx`) — Replaced `#FBBF24` business note color with `colors.warning`.
+- **LivingShieldModal** (both `components/scanner/` and `features/scanner/`) — Replaced all `#FBBF24` with `colors.warning`, migrated from static `Colors.dark.*` to `useTheme()` for proper light/dark support.
+- **Home screen** (`app/(tabs)/index.tsx`) — Replaced rainbow `gradientMap` with semantic `getScanGradient()` function (payment=amber, location=red, phone/otp=green, else=blue). Hero card gradient uses dark navy/light blue theme-aware colors.
+- **Auth screens** (`app/(auth)/login.tsx`, `register.tsx`, `forgot-password.tsx`) — Replaced `["#00E5FF","#0090CC","#006FFF"]`/`["#B060FF","#006FFF","#00E5FF"]`/`["#00D68F","#00A67E"]` logo and button gradients with `[colors.primary, colors.primaryShade]`.
+- **QR Generator** (`app/(tabs)/qr-generator.tsx`) — Generate button gradient updated from cyan-blue to `[colors.primary, colors.primaryShade]`.
+- **Favorites** (`app/favorites.tsx`) — TYPE_CONFIG gradients updated to use brand blue/semantic values (no more purple/cyan/orange). Sign-in button gradient updated. Heart color changed from `#FF4D6A` to `#F87171` (softer red).
+- **My QR Codes** (`app/my-qr-codes.tsx`) — Business pill updated to `[colors.warning, colors.warningShade]`, Individual pill to `[colors.primary, colors.primaryShade]`.
+- **How It Works** (`app/how-it-works.tsx`) — `#FBBF24` replaced with `colors.warning`.
+- **Profile** (`app/(tabs)/profile.tsx`) — Background gradient updated from hardcoded `#050B18`/`#061527` to theme-aware `colors.background`/`colors.surface`.
+
 ### Search Fix, Notifications, Friend Notifications, Privacy Settings Cleanup (Round 2)
 - **LinearGradient crash fixed** (`app/search.tsx`) — the action button (Add Friend / Sent / etc.) previously used `LinearGradient` with `rgba()` color strings which crash on Android native. Replaced with a plain `View` using `backgroundColor` with hex + alpha suffix strings. LinearGradient import kept for the hero gradient.
 - **Notification badge capped at 9+** (`app/(tabs)/index.tsx`) — changed `notifCount > 99 ? "99+"` to `notifCount > 9 ? "9+"` so the badge stays compact.

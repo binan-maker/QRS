@@ -131,7 +131,7 @@ export default function SettingsScreen() {
         {user ? (
           <View style={[styles.profileCard, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
             <LinearGradient
-              colors={colors.isDark ? ["#00E5FF", "#006FFF", "#B060FF"] : ["#006FFF", "#0047CC", "#7C3AED"]}
+              colors={[colors.primary, colors.primaryShade]}
               style={styles.profileAvatarRing}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 1 }}
@@ -157,7 +157,7 @@ export default function SettingsScreen() {
             style={({ pressed }) => [styles.signInCard, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder, opacity: pressed ? 0.9 : 1 }]}
           >
             <LinearGradient
-              colors={colors.isDark ? ["#00E5FF", "#006FFF"] : ["#006FFF", "#0047CC"]}
+              colors={[colors.primary, colors.primaryShade]}
               style={styles.signInIconWrap}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 1 }}
@@ -409,7 +409,7 @@ export default function SettingsScreen() {
         {/* Footer */}
         <View style={styles.footer}>
           <LinearGradient
-            colors={colors.isDark ? ["#00E5FF", "#B060FF"] : ["#006FFF", "#7C3AED"]}
+            colors={[colors.primary, colors.primaryShade]}
             style={styles.footerBadge}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}

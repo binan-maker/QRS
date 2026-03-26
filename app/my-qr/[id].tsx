@@ -188,10 +188,10 @@ export default function MyQrDetailScreen() {
                 </View>
                 <Pressable
                   onPress={h.openFollowers}
-                  style={{ flex: 1, backgroundColor: "#10B98115", borderRadius: 14, padding: 12, alignItems: "center", gap: 4, borderWidth: 1, borderColor: "#10B98130" }}
+                  style={{ flex: 1, backgroundColor: colors.safeDim, borderRadius: 14, padding: 12, alignItems: "center", gap: 4, borderWidth: 1, borderColor: colors.safe + "30" }}
                 >
-                  <Ionicons name="people-outline" size={20} color="#10B981" />
-                  <Text style={{ fontSize: 22, fontFamily: "Inter_700Bold", color: "#10B981", lineHeight: 26 }}>{h.followCount}</Text>
+                  <Ionicons name="people-outline" size={20} color={colors.safe} />
+                  <Text style={{ fontSize: 22, fontFamily: "Inter_700Bold", color: colors.safe, lineHeight: 26 }}>{h.followCount}</Text>
                   <Text style={[styles.metaLabel, { marginBottom: 0, textAlign: "center" }]}>Followers</Text>
                 </Pressable>
               </View>

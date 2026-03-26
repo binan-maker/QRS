@@ -7,6 +7,7 @@ export type AppColors = {
   modalOverlay: string;
 
   primary: string;
+  primaryShade: string;
   primaryDim: string;
   primaryText: string;
 
@@ -14,12 +15,15 @@ export type AppColors = {
   accentDim: string;
 
   danger: string;
+  dangerShade: string;
   dangerDim: string;
 
   warning: string;
+  warningShade: string;
   warningDim: string;
 
   safe: string;
+  safeShade: string;
   safeDim: string;
 
   text: string;
@@ -42,42 +46,46 @@ export type AppColors = {
 };
 
 const dark: AppColors = {
-  background: "#050B18",
-  surface: "#0C1526",
-  surfaceLight: "#132035",
-  surfaceBorder: "#1A2D4A",
-  surfaceOverlay: "rgba(5,11,24,0.95)",
-  modalOverlay: "rgba(5,11,24,0.82)",
+  background: "#080F1C",
+  surface: "#101929",
+  surfaceLight: "#182234",
+  surfaceBorder: "#1F2E45",
+  surfaceOverlay: "rgba(8,15,28,0.96)",
+  modalOverlay: "rgba(8,15,28,0.82)",
 
-  primary: "#00E5FF",
-  primaryDim: "rgba(0,229,255,0.10)",
-  primaryText: "#000814",
+  primary: "#4B8EF5",
+  primaryShade: "#2E6DE0",
+  primaryDim: "rgba(75,142,245,0.12)",
+  primaryText: "#FFFFFF",
 
-  accent: "#B060FF",
-  accentDim: "rgba(176,96,255,0.12)",
+  accent: "#4B8EF5",
+  accentDim: "rgba(75,142,245,0.12)",
 
-  danger: "#FF4D6A",
-  dangerDim: "rgba(255,77,106,0.12)",
+  danger: "#F87171",
+  dangerShade: "#DC2626",
+  dangerDim: "rgba(248,113,113,0.10)",
 
-  warning: "#FFB800",
-  warningDim: "rgba(255,184,0,0.12)",
+  warning: "#FBBF24",
+  warningShade: "#D97706",
+  warningDim: "rgba(251,191,36,0.10)",
 
-  safe: "#00D68F",
-  safeDim: "rgba(0,214,143,0.12)",
+  safe: "#34D399",
+  safeShade: "#059669",
+  safeDim: "rgba(52,211,153,0.10)",
 
-  text: "#F0F8FF",
-  textSecondary: "#7BA7CC",
-  textMuted: "#3D6080",
+  text: "#EDF2FF",
+  textSecondary: "#8BA7C7",
+  textMuted: "#3D5270",
 
-  tabIconDefault: "#3D6080",
-  tabIconSelected: "#00E5FF",
-  tint: "#00E5FF",
-  scanLine: "#00E5FF",
-  cardGlow: "rgba(0,229,255,0.07)",
+  tabIconDefault: "#3D5270",
+  tabIconSelected: "#4B8EF5",
+  tint: "#4B8EF5",
+  scanLine: "#4B8EF5",
+  cardGlow: "rgba(75,142,245,0.06)",
 
-  inputBackground: "#0A1828",
-  skeletonBase: "#0E1F35",
-  skeletonHighlight: "#162840",
+  inputBackground: "#09132A",
+  skeletonBase: "#121E33",
+  skeletonHighlight: "#1A2B47",
   statusBar: "light",
   blurTint: "dark",
 
@@ -85,42 +93,46 @@ const dark: AppColors = {
 };
 
 const light: AppColors = {
-  background: "#F4F8FF",
+  background: "#F5F8FF",
   surface: "#FFFFFF",
-  surfaceLight: "#EBF2FF",
-  surfaceBorder: "#C8D9F0",
-  surfaceOverlay: "rgba(244,248,255,0.97)",
-  modalOverlay: "rgba(5,11,24,0.55)",
+  surfaceLight: "#EBF1FF",
+  surfaceBorder: "#D4E0F5",
+  surfaceOverlay: "rgba(245,248,255,0.97)",
+  modalOverlay: "rgba(8,15,28,0.55)",
 
-  primary: "#006FFF",
-  primaryDim: "rgba(0,111,255,0.08)",
+  primary: "#0052CC",
+  primaryShade: "#003A99",
+  primaryDim: "rgba(0,82,204,0.07)",
   primaryText: "#FFFFFF",
 
-  accent: "#7C3AED",
-  accentDim: "rgba(124,58,237,0.08)",
+  accent: "#0052CC",
+  accentDim: "rgba(0,82,204,0.07)",
 
-  danger: "#E8002D",
-  dangerDim: "rgba(232,0,45,0.07)",
+  danger: "#DC2626",
+  dangerShade: "#991B1B",
+  dangerDim: "rgba(220,38,38,0.07)",
 
-  warning: "#E68900",
-  warningDim: "rgba(230,137,0,0.07)",
+  warning: "#B45309",
+  warningShade: "#78350F",
+  warningDim: "rgba(180,83,9,0.07)",
 
-  safe: "#00A67E",
-  safeDim: "rgba(0,166,126,0.07)",
+  safe: "#059669",
+  safeShade: "#065F46",
+  safeDim: "rgba(5,150,105,0.07)",
 
-  text: "#050B18",
-  textSecondary: "#2D4A6B",
-  textMuted: "#6B8EAE",
+  text: "#0C1525",
+  textSecondary: "#3A5278",
+  textMuted: "#7A99BC",
 
-  tabIconDefault: "#6B8EAE",
-  tabIconSelected: "#006FFF",
-  tint: "#006FFF",
-  scanLine: "#006FFF",
-  cardGlow: "rgba(0,111,255,0.04)",
+  tabIconDefault: "#7A99BC",
+  tabIconSelected: "#0052CC",
+  tint: "#0052CC",
+  scanLine: "#0052CC",
+  cardGlow: "rgba(0,82,204,0.04)",
 
   inputBackground: "#EEF4FF",
-  skeletonBase: "#DDE8F8",
-  skeletonHighlight: "#EAF2FF",
+  skeletonBase: "#D4E0F5",
+  skeletonHighlight: "#E4EDF8",
   statusBar: "dark",
   blurTint: "light",
 

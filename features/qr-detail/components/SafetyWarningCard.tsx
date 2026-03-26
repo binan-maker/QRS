@@ -12,7 +12,7 @@ interface SafetyWarningCardProps {
 export default function SafetyWarningCard({ riskLevel, warnings, title }: SafetyWarningCardProps) {
   const { colors, isDark } = useTheme();
   const isDangerous = riskLevel === "dangerous";
-  const gradient: [string, string] = isDangerous ? ["#EF4444", "#DC2626"] : ["#F59E0B", "#F97316"];
+  const gradient: [string, string] = isDangerous ? [colors.danger, colors.dangerShade] : [colors.warning, colors.warningShade];
   const bg = isDangerous ? colors.dangerDim : colors.warningDim;
   const borderColor = isDangerous ? colors.danger : colors.warning;
   const icon = isDangerous ? "shield-half-outline" : "alert-circle-outline";

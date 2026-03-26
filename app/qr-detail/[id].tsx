@@ -102,8 +102,8 @@ function VerdictBanner({ verdict, offlineMode }: { verdict: ReturnType<ReturnTyp
     verdict.level === "caution" ? "alert-circle" : "warning";
 
   const gradient: [string, string] =
-    verdict.level === "safe" ? ["#10B981", "#06B6D4"] :
-    verdict.level === "caution" ? ["#F59E0B", "#F97316"] : ["#EF4444", "#DC2626"];
+    verdict.level === "safe" ? [colors.safe, colors.safeShade] :
+    verdict.level === "caution" ? [colors.warning, colors.warningShade] : [colors.danger, colors.dangerShade];
 
   const bg =
     verdict.level === "safe" ? colors.safeDim ?? (colors.safe + "15") :
@@ -377,7 +377,7 @@ export default function QrDetailScreen() {
             {/* ── Owner Info ───────────────────────────────────────────────── */}
             {q.ownerInfo && (
               <Animated.View entering={FadeInDown.duration(400).delay(170)}>
-                <SectionHeader icon="storefront-outline" label="Creator" gradient={["#10B981", "#06B6D4"]} />
+                <SectionHeader icon="storefront-outline" label="Creator" gradient={[colors.primary, colors.primaryShade]} />
                 <OwnerCard
                   ownerInfo={q.ownerInfo}
                   isQrOwner={q.isQrOwner}
@@ -407,7 +407,7 @@ export default function QrDetailScreen() {
             <Animated.View entering={FadeInDown.duration(400).delay(210)}>
               <View style={styles.commentsHeader}>
                 <View style={styles.commentsTitleRow}>
-                  <SectionHeader icon="chatbubbles-outline" label="Comments" gradient={["#8B5CF6", "#EC4899"]} inline />
+                  <SectionHeader icon="chatbubbles-outline" label="Comments" gradient={[colors.primary, colors.primaryShade]} inline />
                   {q.totalComments > 0 && (
                     <View style={[styles.commentCountBadge, { marginLeft: 6 }]}>
                       <Text style={styles.commentCountText}>{formatCompactNumber(q.totalComments)}</Text>

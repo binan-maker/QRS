@@ -43,22 +43,22 @@ export default function ModeSelector({ user, qrMode, businessName, setQrMode, se
               style={[
                 styles.modeBtn,
                 { backgroundColor: colors.surface, borderColor: colors.surfaceBorder },
-                qrMode === "business" && { backgroundColor: "#FBBF2420", borderColor: "#FBBF2460" },
+                qrMode === "business" && { backgroundColor: colors.warningDim, borderColor: colors.warning + "60" },
               ]}
             >
-              <Ionicons name="storefront" size={15} color={qrMode === "business" ? "#FBBF24" : colors.textMuted} />
-              <Text style={[styles.modeBtnText, { color: qrMode === "business" ? "#FBBF24" : colors.textMuted }]}>Business</Text>
+              <Ionicons name="storefront" size={15} color={qrMode === "business" ? colors.warning : colors.textMuted} />
+              <Text style={[styles.modeBtnText, { color: qrMode === "business" ? colors.warning : colors.textMuted }]}>Business</Text>
             </Pressable>
             <Pressable
               onPress={() => handleMode("private")}
               style={[
                 styles.modeBtn,
                 { backgroundColor: colors.surface, borderColor: colors.surfaceBorder },
-                qrMode === "private" && { backgroundColor: colors.isDark ? "#1E293B" : "#E2E8F0", borderColor: colors.isDark ? "#334155" : "#94A3B8" },
+                qrMode === "private" && { backgroundColor: colors.surfaceLight, borderColor: colors.surfaceBorder },
               ]}
             >
-              <Ionicons name="eye-off-outline" size={15} color={qrMode === "private" ? (colors.isDark ? "#F8FAFC" : "#334155") : colors.textMuted} />
-              <Text style={[styles.modeBtnText, { color: qrMode === "private" ? (colors.isDark ? "#F8FAFC" : "#334155") : colors.textMuted }]}>Private</Text>
+              <Ionicons name="eye-off-outline" size={15} color={qrMode === "private" ? colors.textSecondary : colors.textMuted} />
+              <Text style={[styles.modeBtnText, { color: qrMode === "private" ? colors.textSecondary : colors.textMuted }]}>Private</Text>
             </Pressable>
           </>
         ) : (
@@ -79,11 +79,11 @@ export default function ModeSelector({ user, qrMode, businessName, setQrMode, se
               style={[
                 styles.modeBtn,
                 { backgroundColor: colors.surface, borderColor: colors.surfaceBorder },
-                qrMode === "private" && { backgroundColor: colors.isDark ? "#1E293B" : "#E2E8F0", borderColor: colors.isDark ? "#334155" : "#94A3B8" },
+                qrMode === "private" && { backgroundColor: colors.surfaceLight, borderColor: colors.surfaceBorder },
               ]}
             >
-              <Ionicons name="eye-off-outline" size={15} color={qrMode === "private" ? (colors.isDark ? "#F8FAFC" : "#334155") : colors.textMuted} />
-              <Text style={[styles.modeBtnText, { color: qrMode === "private" ? (colors.isDark ? "#F8FAFC" : "#334155") : colors.textMuted }]}>Private</Text>
+              <Ionicons name="eye-off-outline" size={15} color={qrMode === "private" ? colors.textSecondary : colors.textMuted} />
+              <Text style={[styles.modeBtnText, { color: qrMode === "private" ? colors.textSecondary : colors.textMuted }]}>Private</Text>
             </Pressable>
           </>
         )}
@@ -95,9 +95,9 @@ export default function ModeSelector({ user, qrMode, businessName, setQrMode, se
           <Text style={[styles.bannerText, { color: colors.safe }]}>Branded with your QR Guard identity — saved to your profile with a unique ID</Text>
         </View>
       ) : qrMode === "business" && user ? (
-        <View style={[styles.banner, { borderColor: "#FBBF2440", backgroundColor: "#FBBF2410" }]}>
-          <Ionicons name="shield" size={14} color="#FBBF24" />
-          <Text style={[styles.bannerText, { color: "#FBBF24" }]}>Living Shield — QR encodes a redirect you can update anytime without reprinting</Text>
+        <View style={[styles.banner, { borderColor: colors.warning + "40", backgroundColor: colors.warningDim }]}>
+          <Ionicons name="shield" size={14} color={colors.warning} />
+          <Text style={[styles.bannerText, { color: colors.warning }]}>Living Shield — QR encodes a redirect you can update anytime without reprinting</Text>
         </View>
       ) : qrMode === "private" ? (
         <View style={[styles.banner, { backgroundColor: colors.surfaceLight, borderColor: colors.surfaceBorder }]}>
@@ -105,16 +105,16 @@ export default function ModeSelector({ user, qrMode, businessName, setQrMode, se
           <Text style={[styles.bannerText, { color: colors.textMuted }]}>No-trace mode — nothing is recorded. Fully local QR code.</Text>
         </View>
       ) : (
-        <Pressable style={[styles.banner, { backgroundColor: colors.accentDim, borderColor: colors.accent + "40" }]} onPress={() => router.push("/(auth)/login")}>
-          <Ionicons name="sparkles-outline" size={14} color={colors.accent} />
-          <Text style={[styles.bannerText, { color: colors.accent }]}>Sign in to create branded QR codes with your QR Guard identity</Text>
-          <Ionicons name="chevron-forward" size={14} color={colors.accent} />
+        <Pressable style={[styles.banner, { backgroundColor: colors.primaryDim, borderColor: colors.primary + "40" }]} onPress={() => router.push("/(auth)/login")}>
+          <Ionicons name="sparkles-outline" size={14} color={colors.primary} />
+          <Text style={[styles.bannerText, { color: colors.primary }]}>Sign in to create branded QR codes with your QR Guard identity</Text>
+          <Ionicons name="chevron-forward" size={14} color={colors.primary} />
         </Pressable>
       )}
 
       {qrMode === "business" && user && (
-        <View style={[styles.businessNameRow, { backgroundColor: colors.surface, borderColor: "#FBBF2440" }]}>
-          <Ionicons name="business-outline" size={16} color="#FBBF24" style={{ marginRight: 8 }} />
+        <View style={[styles.businessNameRow, { backgroundColor: colors.surface, borderColor: colors.warning + "40" }]}>
+          <Ionicons name="business-outline" size={16} color={colors.warning} style={{ marginRight: 8 }} />
           <TextInput
             style={[styles.businessNameInput, { color: colors.text }]}
             placeholder="Store or organisation name (optional)"

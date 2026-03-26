@@ -122,7 +122,7 @@ export default function RegisterScreen() {
             style={({ pressed }) => [{ opacity: pressed ? 0.85 : 1, transform: [{ scale: pressed ? 0.98 : 1 }], width: "100%" }]}
           >
             <LinearGradient
-              colors={colors.isDark ? ["#00D68F", "#00A67E"] : ["#10B981", "#047857"]}
+              colors={[colors.primary, colors.primaryShade]}
               style={[styles.primaryBtn, { paddingVertical: Math.round(15 * scale) }]}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 0 }}
@@ -166,7 +166,7 @@ export default function RegisterScreen() {
           <View style={[styles.heroSection, { paddingTop: heroPadTop, paddingBottom: heroPadBottom }]}>
             <View style={[styles.logoWrap, { marginBottom: isSmallScreen ? 4 : 8 }]}>
               <LinearGradient
-                colors={colors.isDark ? ["#B060FF", "#006FFF", "#00E5FF"] : ["#7C3AED", "#006FFF", "#0047CC"]}
+                colors={[colors.primary, colors.primaryShade]}
                 style={[styles.logoGradient, { width: logoSize, height: logoSize, borderRadius: logoRadius }]}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 1 }}
@@ -266,7 +266,7 @@ export default function RegisterScreen() {
                 style={({ pressed }) => [{ opacity: pressed || loading ? 0.88 : 1, transform: [{ scale: pressed ? 0.98 : 1 }] }]}
               >
                 <LinearGradient
-                  colors={colors.isDark ? ["#B060FF", "#6030CC", "#006FFF"] : ["#7C3AED", "#4F1FCC"]}
+                  colors={[colors.primary, colors.primaryShade]}
                   style={[styles.primaryBtn, { paddingVertical: Math.round(15 * scale) }]}
                   start={{ x: 0, y: 0 }}
                   end={{ x: 1, y: 0 }}

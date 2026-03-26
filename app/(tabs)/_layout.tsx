@@ -25,11 +25,12 @@ function ScanTabButton({ onPress }: { onPress?: () => void }) {
       accessibilityRole="button"
     >
       <LinearGradient
-        colors={colors.isDark ? ["#00E5FF", "#006FFF"] : ["#006FFF", "#0047CC"]}
+        colors={[colors.primary, colors.primaryShade]}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
         style={[styles.scanTabBtnInner, {
           borderColor: colors.background,
+          shadowColor: colors.primary,
         }]}
       >
         <MaterialCommunityIcons name="qrcode-scan" size={26} color="#fff" />
@@ -96,7 +97,7 @@ function ClassicTabLayout() {
       screenOptions={{
         headerShown: false,
         tabBarActiveTintColor: colors.primary,
-        tabBarInactiveTintColor: colors.isDark ? "#3D5A70" : "#9BB3CC",
+        tabBarInactiveTintColor: colors.tabIconDefault,
         tabBarStyle: {
           position: "absolute",
           backgroundColor: "transparent",
@@ -124,12 +125,12 @@ function ClassicTabLayout() {
                 borderLeftWidth: 1,
                 borderRightWidth: 1,
                 borderBottomWidth: 0,
-                borderColor: colors.isDark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.07)",
+                borderColor: colors.isDark ? "rgba(255,255,255,0.07)" : "rgba(0,0,0,0.06)",
               }]}
             />
           ) : (
             <View style={[StyleSheet.absoluteFill, {
-              backgroundColor: colors.isDark ? "rgba(5,11,24,0.97)" : "rgba(255,255,255,0.98)",
+              backgroundColor: colors.isDark ? "rgba(8,15,28,0.97)" : "rgba(255,255,255,0.98)",
               borderTopLeftRadius: 22,
               borderTopRightRadius: 22,
               borderBottomLeftRadius: 0,
@@ -138,12 +139,12 @@ function ClassicTabLayout() {
               borderLeftWidth: 1,
               borderRightWidth: 1,
               borderBottomWidth: 0,
-              borderColor: colors.isDark ? "rgba(0,229,255,0.10)" : "rgba(0,111,255,0.10)",
+              borderColor: colors.surfaceBorder,
               shadowColor: "#000",
               shadowOffset: { width: 0, height: -6 },
-              shadowOpacity: 0.22,
-              shadowRadius: 24,
-              elevation: 24,
+              shadowOpacity: 0.18,
+              shadowRadius: 20,
+              elevation: 20,
             }]} />
           ),
         tabBarLabelStyle: {
@@ -164,7 +165,7 @@ function ClassicTabLayout() {
           tabBarBadge: notifCount > 0 ? notifCount : undefined,
           tabBarBadgeStyle: {
             backgroundColor: colors.primary,
-            color: colors.isDark ? "#000" : "#fff",
+            color: "#fff",
             fontSize: 10,
             fontFamily: "Inter_700Bold",
             minWidth: 16,
@@ -253,9 +254,8 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     borderWidth: 3,
-    shadowColor: "#00E5FF",
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.5,
+    shadowOpacity: 0.4,
     shadowRadius: 12,
     elevation: 12,
   },
