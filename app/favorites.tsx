@@ -13,7 +13,6 @@ import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import * as Haptics from "@/lib/haptics";
 import Animated, { FadeInDown, FadeIn } from "react-native-reanimated";
-import { LinearGradient } from "expo-linear-gradient";
 import { useTheme } from "@/contexts/ThemeContext";
 import SkeletonBox from "@/components/ui/SkeletonBox";
 import { useAuth } from "@/contexts/AuthContext";
@@ -47,22 +46,21 @@ function formatDate(iso: string) {
   catch { return iso; }
 }
 
-const TYPE_CONFIG: Record<string, { icon: string; gradient: [string, string]; label: string }> = {
-  url:      { icon: "link",          gradient: ["#4B8EF5", "#2E6DE0"], label: "URL" },
-  payment:  { icon: "card",          gradient: ["#FBBF24", "#D97706"], label: "Payment" },
-  email:    { icon: "mail",          gradient: ["#4B8EF5", "#2E6DE0"], label: "Email" },
-  phone:    { icon: "call",          gradient: ["#34D399", "#059669"], label: "Phone" },
-  wifi:     { icon: "wifi",          gradient: ["#4B8EF5", "#2E6DE0"], label: "WiFi" },
-  location: { icon: "location",      gradient: ["#F87171", "#DC2626"], label: "Location" },
-  text:     { icon: "document-text", gradient: ["#8BA7C7", "#3D5270"], label: "Text" },
-};
-
-function getTypeConfig(type: string) {
-  return TYPE_CONFIG[type] || TYPE_CONFIG.text;
+function getTypeConfig(type: string, colors: any): { icon: string; color: string; label: string } {
+  const map: Record<string, { icon: string; color: string; label: string }> = {
+    url:      { icon: "link",          color: colors.primary,        label: "URL" },
+    payment:  { icon: "card",          color: colors.warning,        label: "Payment" },
+    email:    { icon: "mail",          color: colors.primary,        label: "Email" },
+    phone:    { icon: "call",          color: colors.safe,           label: "Phone" },
+    wifi:     { icon: "wifi",          color: colors.primary,        label: "WiFi" },
+    location: { icon: "location",      color: colors.danger,         label: "Location" },
+    text:     { icon: "document-text", color: colors.textSecondary,  label: "Text" },
+  };
+  return map[type] || map.text;
 }
 
 export default function FavoritesScreen() {
-  const { colors, isDark } = useTheme();
+  const { colors } = useTheme();
   const { user } = useAuth();
   const insets = useSafeAreaInsets();
   const topInset = Platform.OS === "web" ? 67 : insets.top;
@@ -85,7 +83,7 @@ export default function FavoritesScreen() {
   function handleRefresh() { setRefreshing(true); loadFavorites(); }
 
   function renderItem({ item, index }: { item: FavoriteItem; index: number }) {
-    const cfg = getTypeConfig(item.contentType);
+    const cfg = getTypeConfig(item.contentType, colors);
 
     return (
       <Animated.View entering={FadeInDown.duration(380).delay(index * 50).springify()}>
@@ -104,35 +102,18 @@ export default function FavoritesScreen() {
             }
           ]}
         >
-          <LinearGradient
-            colors={[cfg.gradient[0] + (isDark ? "14" : "09"), "transparent"]}
-            start={{ x: 0, y: 0.5 }}
-            end={{ x: 1, y: 0.5 }}
-            style={StyleSheet.absoluteFill}
-          />
-
-          <LinearGradient
-            colors={cfg.gradient}
-            style={styles.iconBox}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-          >
-            <Ionicons name={cfg.icon as any} size={24} color="#fff" />
-          </LinearGradient>
+          <View style={[styles.iconBox, { backgroundColor: cfg.color + "18" }]}>
+            <Ionicons name={cfg.icon as any} size={24} color={cfg.color} />
+          </View>
 
           <View style={styles.cardInfo}>
             <View style={styles.cardTopRow}>
-              <LinearGradient
-                colors={cfg.gradient}
-                style={styles.typePill}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 0 }}
-              >
-                <Text style={styles.typePillText}>{cfg.label}</Text>
-              </LinearGradient>
+              <View style={[styles.typePill, { backgroundColor: cfg.color + "18", borderColor: cfg.color + "35" }]}>
+                <Text style={[styles.typePillText, { color: cfg.color }]}>{cfg.label}</Text>
+              </View>
               <View style={styles.heartBadge}>
-                <Ionicons name="heart" size={10} color="#F87171" />
-                <Text style={styles.heartBadgeText}>Saved</Text>
+                <Ionicons name="heart" size={10} color={colors.danger} />
+                <Text style={[styles.heartBadgeText, { color: colors.danger }]}>Saved</Text>
               </View>
             </View>
             <Text style={[styles.contentText, { color: colors.text }]} numberOfLines={2}>
@@ -141,14 +122,9 @@ export default function FavoritesScreen() {
             <Text style={[styles.dateText, { color: colors.textMuted }]}>{formatDate(item.createdAt)}</Text>
           </View>
 
-          <LinearGradient
-            colors={cfg.gradient}
-            style={styles.chevronWrap}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-          >
-            <Ionicons name="chevron-forward" size={14} color="#fff" />
-          </LinearGradient>
+          <View style={[styles.chevronWrap, { backgroundColor: colors.surfaceBorder }]}>
+            <Ionicons name="chevron-forward" size={14} color={colors.textSecondary} />
+          </View>
         </Pressable>
       </Animated.View>
     );
@@ -171,15 +147,15 @@ export default function FavoritesScreen() {
       <View style={[styles.container, { backgroundColor: colors.background }]}>
         <NavBar />
         <View style={styles.center}>
-          <LinearGradient colors={["#F87171", "#DC2626"]} style={styles.emptyIconCircle} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}>
-            <Ionicons name="heart" size={34} color="#fff" />
-          </LinearGradient>
+          <View style={[styles.emptyIconCircle, { backgroundColor: colors.dangerDim }]}>
+            <Ionicons name="heart" size={34} color={colors.danger} />
+          </View>
           <Text style={[styles.emptyTitle, { color: colors.text }]}>Sign in required</Text>
           <Text style={[styles.emptySub, { color: colors.textSecondary }]}>Sign in to view your favorited QR codes</Text>
           <Pressable onPress={() => router.push("/(auth)/login")} style={({ pressed }) => [{ opacity: pressed ? 0.85 : 1 }]}>
-            <LinearGradient colors={[colors.primary, colors.primaryShade]} style={styles.signInBtn} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}>
+            <View style={[styles.signInBtn, { backgroundColor: colors.primary }]}>
               <Text style={styles.signInBtnText}>Sign In</Text>
-            </LinearGradient>
+            </View>
           </Pressable>
         </View>
       </View>
@@ -196,9 +172,9 @@ export default function FavoritesScreen() {
         </View>
       ) : favorites.length === 0 ? (
         <Animated.View entering={FadeIn.duration(400)} style={styles.center}>
-          <LinearGradient colors={["#F87171", "#DC2626"]} style={styles.emptyIconCircle} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}>
-            <Ionicons name="heart" size={34} color="#fff" />
-          </LinearGradient>
+          <View style={[styles.emptyIconCircle, { backgroundColor: colors.dangerDim }]}>
+            <Ionicons name="heart" size={34} color={colors.danger} />
+          </View>
           <Text style={[styles.emptyTitle, { color: colors.text }]}>No favorites yet</Text>
           <Text style={[styles.emptySub, { color: colors.textSecondary }]}>
             Tap the heart on any QR detail page to save it here
@@ -247,10 +223,10 @@ const styles = StyleSheet.create({
   },
   cardInfo: { flex: 1, minWidth: 0, gap: 6 },
   cardTopRow: { flexDirection: "row", alignItems: "center", gap: 7 },
-  typePill: { borderRadius: 100, paddingHorizontal: 8, paddingVertical: 3 },
-  typePillText: { fontSize: 10, fontFamily: "Inter_700Bold", letterSpacing: 0.5, color: "#fff" },
+  typePill: { borderRadius: 100, paddingHorizontal: 8, paddingVertical: 3, borderWidth: 1 },
+  typePillText: { fontSize: 10, fontFamily: "Inter_700Bold", letterSpacing: 0.5 },
   heartBadge: { flexDirection: "row", alignItems: "center", gap: 3 },
-  heartBadgeText: { fontSize: 10, fontFamily: "Inter_600SemiBold", color: "#F87171" },
+  heartBadgeText: { fontSize: 10, fontFamily: "Inter_600SemiBold" },
   contentText: { fontSize: 14, fontFamily: "Inter_500Medium", lineHeight: 20 },
   dateText: { fontSize: 11, fontFamily: "Inter_400Regular" },
   chevronWrap: { width: 30, height: 30, borderRadius: 10, alignItems: "center", justifyContent: "center", flexShrink: 0 },
@@ -258,6 +234,6 @@ const styles = StyleSheet.create({
   emptyIconCircle: { width: 88, height: 88, borderRadius: 44, alignItems: "center", justifyContent: "center", marginBottom: 4 },
   emptyTitle: { fontSize: 20, fontFamily: "Inter_700Bold", textAlign: "center" },
   emptySub: { fontSize: 14, fontFamily: "Inter_400Regular", textAlign: "center", lineHeight: 20 },
-  signInBtn: { paddingHorizontal: 36, paddingVertical: 14, borderRadius: 20, marginTop: 4 },
+  signInBtn: { paddingHorizontal: 36, paddingVertical: 12, borderRadius: 20, marginTop: 4 },
   signInBtnText: { fontSize: 15, fontFamily: "Inter_700Bold", color: "#fff" },
 });

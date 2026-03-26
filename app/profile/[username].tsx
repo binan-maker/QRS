@@ -232,12 +232,7 @@ export default function PublicProfileScreen() {
 
           {/* Branded private card */}
           <Animated.View entering={FadeInDown.duration(400).delay(160)} style={{ paddingHorizontal: 18 }}>
-            <LinearGradient
-              colors={isDark ? ["#1A0A2E", "#0D0519"] : ["#F0EAFF", "#E8DFFF"]}
-              style={[S.privateCard, { borderColor: colors.accent + "40" }]}
-              start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
-            >
-              <LinearGradient colors={[colors.accent + "18", "transparent"]} style={StyleSheet.absoluteFill} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} />
+            <View style={[S.privateCard, { backgroundColor: colors.surface, borderColor: colors.accent + "40" }]}>
 
               {/* Lock icon row */}
               <View style={[S.privateCardIconWrap, { backgroundColor: colors.accentDim }]}>
@@ -258,7 +253,7 @@ export default function PublicProfileScreen() {
                 </LinearGradient>
                 <Text style={[S.privateCardBrandText, { color: colors.textMuted }]}>Protected by QR Guard</Text>
               </View>
-            </LinearGradient>
+            </View>
           </Animated.View>
 
           {/* Action buttons */}
@@ -523,13 +518,9 @@ export default function PublicProfileScreen() {
                   start={{ x: 0, y: 0 }} end={{ x: 0, y: 1 }}
                 />
                 <View style={S.leaderboardHeader}>
-                  <LinearGradient
-                    colors={["#FFD700", "#FFA500"]}
-                    style={S.leaderboardHeaderIcon}
-                    start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
-                  >
-                    <Ionicons name="trophy" size={16} color="#fff" />
-                  </LinearGradient>
+                  <View style={[S.leaderboardHeaderIcon, { backgroundColor: colors.warningDim }]}>
+                    <Ionicons name="trophy" size={16} color={colors.warning} />
+                  </View>
                   <View style={{ flex: 1 }}>
                     <Text style={[S.leaderboardTitle, { color: colors.text }]}>Scan Competition</Text>
                     <Text style={[S.leaderboardSub, { color: colors.textMuted }]}>How you rank among friends</Text>

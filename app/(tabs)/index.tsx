@@ -210,11 +210,7 @@ export default function HomeScreen() {
           <Animated.View entering={FadeInDown.duration(500).delay(320)}>
             <View style={styles.sectionHeader}>
               <View style={styles.sectionTitleRow}>
-                <LinearGradient
-                  colors={[colors.primary, colors.primaryShade]}
-                  style={styles.sectionDot}
-                  start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}
-                />
+                <View style={[styles.sectionDot, { backgroundColor: colors.primary }]} />
                 <Text style={[styles.sectionTitle, { color: colors.text }]}>Recent Scans</Text>
               </View>
               {recentScans.length > 0 && (
@@ -267,20 +263,9 @@ export default function HomeScreen() {
                           },
                         ]}
                       >
-                        <LinearGradient
-                          colors={[gradient[0] + (isDark ? "14" : "09"), "transparent"]}
-                          start={{ x: 0, y: 0.5 }}
-                          end={{ x: 1, y: 0.5 }}
-                          style={StyleSheet.absoluteFill}
-                        />
-                        <LinearGradient
-                          colors={gradient}
-                          style={styles.scanIconBox}
-                          start={{ x: 0, y: 0 }}
-                          end={{ x: 1, y: 1 }}
-                        >
-                          <Ionicons name={icon} size={22} color="#fff" />
-                        </LinearGradient>
+                        <View style={[styles.scanIconBox, { backgroundColor: gradient[0] + "18" }]}>
+                          <Ionicons name={icon} size={22} color={gradient[0]} />
+                        </View>
                         <View style={styles.scanBody}>
                           <View style={styles.scanTopRow}>
                             <Text
@@ -301,28 +286,18 @@ export default function HomeScreen() {
                             </Text>
                           )}
                           <View style={styles.scanMeta}>
-                            <LinearGradient
-                              colors={gradient}
-                              style={styles.scanBadge}
-                              start={{ x: 0, y: 0 }}
-                              end={{ x: 1, y: 0 }}
-                            >
-                              <Text style={styles.scanBadgeText}>{label}</Text>
-                            </LinearGradient>
+                            <View style={[styles.scanBadge, { backgroundColor: gradient[0] + "18", borderWidth: 1, borderColor: gradient[0] + "35" }]}>
+                              <Text style={[styles.scanBadgeText, { color: gradient[0] }]}>{label}</Text>
+                            </View>
                             <Text style={[styles.scanTime, { color: colors.textMuted }]}>
                               {formatRelativeTime(scan.scannedAt)}
                             </Text>
                           </View>
                         </View>
                         {scan.qrCodeId && (
-                          <LinearGradient
-                            colors={gradient}
-                            style={styles.scanChevron}
-                            start={{ x: 0, y: 0 }}
-                            end={{ x: 1, y: 1 }}
-                          >
-                            <Ionicons name="chevron-forward" size={13} color="#fff" />
-                          </LinearGradient>
+                          <View style={[styles.scanChevron, { backgroundColor: colors.surfaceBorder }]}>
+                            <Ionicons name="chevron-forward" size={13} color={colors.textSecondary} />
+                          </View>
                         )}
                       </Pressable>
                     </Animated.View>

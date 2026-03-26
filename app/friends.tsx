@@ -6,7 +6,6 @@ import {
 import { router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { LinearGradient } from "expo-linear-gradient";
 import { useTheme } from "@/contexts/ThemeContext";
 import { useAuth } from "@/contexts/AuthContext";
 import {
@@ -85,9 +84,9 @@ export default function FriendsScreen() {
           {item.photoURL ? (
             <Image source={{ uri: item.photoURL }} style={styles.avatarImg} />
           ) : (
-            <LinearGradient colors={[colors.primary, colors.accent]} style={styles.avatarGrad}>
+            <View style={[styles.avatarGrad, { backgroundColor: colors.primary }]}>
               <Text style={styles.avatarInitials}>{initials}</Text>
-            </LinearGradient>
+            </View>
           )}
         </View>
         <View style={{ flex: 1 }}>
@@ -176,15 +175,12 @@ export default function FriendsScreen() {
         </View>
       ) : listData.length === 0 ? (
         <View style={styles.empty}>
-          <LinearGradient
-            colors={[colors.primaryDim, colors.accentDim]}
-            style={styles.emptyIcon}
-          >
+          <View style={[styles.emptyIcon, { backgroundColor: colors.primaryDim }]}>
             <Ionicons
               name={tab === "friends" ? "people-outline" : "mail-outline"}
               size={28} color={colors.primary}
             />
-          </LinearGradient>
+          </View>
           <Text style={[styles.emptyTitle, { color: colors.text }]}>
             {tab === "friends" ? "No friends yet" : "No requests"}
           </Text>

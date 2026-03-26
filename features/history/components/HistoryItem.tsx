@@ -2,51 +2,42 @@ import React from "react";
 import { View, Text, Pressable, StyleSheet } from "react-native";
 import { router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
-import { LinearGradient } from "expo-linear-gradient";
 import * as Haptics from "@/lib/haptics";
 import { useTheme } from "@/contexts/ThemeContext";
 import { formatRelativeTime } from "@/lib/utils/formatters";
 import type { HistoryItem as HistoryItemType } from "@/hooks/useHistory";
 import { parseAnyPaymentQr } from "@/lib/qr-analysis";
 
-type GradientPair = [string, string];
-
 function getTypeMeta(type: string, colors: any): {
   icon: keyof typeof Ionicons.glyphMap;
   label: string;
-  gradient: GradientPair;
+  color: string;
 } {
-  const primary: GradientPair = [colors.primary, colors.primaryShade];
-  const safe: GradientPair = [colors.safe, colors.safeShade];
-  const payment: GradientPair = [colors.warning, colors.warningShade];
-  const danger: GradientPair = [colors.danger, colors.dangerShade];
-  const neutral: GradientPair = [colors.textSecondary, colors.textMuted];
-
-  const map: Record<string, { icon: keyof typeof Ionicons.glyphMap; label: string; gradient: GradientPair }> = {
-    url:      { icon: "globe-outline",         label: "URL",       gradient: primary },
-    phone:    { icon: "call-outline",          label: "Phone",     gradient: safe },
-    email:    { icon: "mail-outline",          label: "Email",     gradient: primary },
-    wifi:     { icon: "wifi-outline",          label: "Wi-Fi",     gradient: primary },
-    location: { icon: "location-outline",      label: "Location",  gradient: danger },
-    payment:  { icon: "card-outline",          label: "Payment",   gradient: payment },
-    sms:      { icon: "chatbubble-outline",    label: "SMS",       gradient: primary },
-    contact:  { icon: "person-outline",        label: "Contact",   gradient: primary },
-    event:    { icon: "calendar-outline",      label: "Event",     gradient: primary },
-    otp:      { icon: "lock-closed-outline",   label: "OTP",       gradient: safe },
-    app:      { icon: "apps-outline",          label: "App",       gradient: primary },
-    social:   { icon: "people-outline",        label: "Social",    gradient: primary },
-    media:    { icon: "play-circle-outline",   label: "Media",     gradient: primary },
-    document: { icon: "document-outline",      label: "Document",  gradient: neutral },
-    boarding: { icon: "airplane-outline",      label: "Boarding",  gradient: primary },
-    product:  { icon: "barcode-outline",       label: "Product",   gradient: primary },
+  const map: Record<string, { icon: keyof typeof Ionicons.glyphMap; label: string; color: string }> = {
+    url:      { icon: "globe-outline",         label: "URL",       color: colors.primary },
+    phone:    { icon: "call-outline",          label: "Phone",     color: colors.safe },
+    email:    { icon: "mail-outline",          label: "Email",     color: colors.primary },
+    wifi:     { icon: "wifi-outline",          label: "Wi-Fi",     color: colors.primary },
+    location: { icon: "location-outline",      label: "Location",  color: colors.danger },
+    payment:  { icon: "card-outline",          label: "Payment",   color: colors.warning },
+    sms:      { icon: "chatbubble-outline",    label: "SMS",       color: colors.primary },
+    contact:  { icon: "person-outline",        label: "Contact",   color: colors.primary },
+    event:    { icon: "calendar-outline",      label: "Event",     color: colors.primary },
+    otp:      { icon: "lock-closed-outline",   label: "OTP",       color: colors.safe },
+    app:      { icon: "apps-outline",          label: "App",       color: colors.primary },
+    social:   { icon: "people-outline",        label: "Social",    color: colors.primary },
+    media:    { icon: "play-circle-outline",   label: "Media",     color: colors.primary },
+    document: { icon: "document-outline",      label: "Document",  color: colors.textSecondary },
+    boarding: { icon: "airplane-outline",      label: "Boarding",  color: colors.primary },
+    product:  { icon: "barcode-outline",       label: "Product",   color: colors.primary },
   };
-  return map[type] ?? { icon: "document-text-outline", label: "Text", gradient: neutral };
+  return map[type] ?? { icon: "document-text-outline", label: "Text", color: colors.textSecondary };
 }
 
-function getRiskConfig(risk: string, colors: any): { icon: keyof typeof Ionicons.glyphMap; label: string; gradient: GradientPair } {
-  if (risk === "dangerous") return { icon: "warning", label: "Danger", gradient: [colors.danger, colors.dangerShade] };
-  if (risk === "caution") return { icon: "alert-circle", label: "Caution", gradient: [colors.warning, colors.warningShade] };
-  return { icon: "shield-checkmark", label: "Safe", gradient: [colors.safe, colors.safeShade] };
+function getRiskColor(risk: string, colors: any): { icon: keyof typeof Ionicons.glyphMap; label: string; color: string } {
+  if (risk === "dangerous") return { icon: "warning", label: "Danger", color: colors.danger };
+  if (risk === "caution") return { icon: "alert-circle", label: "Caution", color: colors.warning };
+  return { icon: "shield-checkmark", label: "Safe", color: colors.safe };
 }
 
 function shortenAddress(addr: string): string {
@@ -106,22 +97,22 @@ interface HistoryItemProps {
 }
 
 const HistoryItem = React.memo(function HistoryItem({ item, risk, onDelete: _onDelete }: HistoryItemProps) {
-  const { colors, isDark } = useTheme();
+  const { colors } = useTheme();
 
   const isFavorite = item.source === "favorite";
   const isSynced   = item.source === "cloud";
   const displayLabel = getDisplayLabel(item.contentType, item.content);
   const meta       = getTypeMeta(item.contentType, colors);
-  const riskCfg    = getRiskConfig(risk, colors);
+  const riskCfg    = getRiskColor(risk, colors);
   const showRisk   = (item.contentType === "url" || item.contentType === "payment") && risk !== "safe";
 
-  const iconGradient: GradientPair = isFavorite
-    ? [colors.danger, colors.dangerShade]
+  const iconColor: string = isFavorite
+    ? colors.danger
     : risk === "dangerous"
-      ? [colors.danger, colors.dangerShade]
+      ? colors.danger
       : risk === "caution"
-        ? [colors.warning, colors.warningShade]
-        : meta.gradient;
+        ? colors.warning
+        : meta.color;
 
   const paymentData = item.contentType === "payment" ? getPaymentData(item.content) : null;
   const formattedAmount = paymentData?.amount ? formatAmount(paymentData.amount) : null;
@@ -146,27 +137,13 @@ const HistoryItem = React.memo(function HistoryItem({ item, risk, onDelete: _onD
         },
       ]}
     >
-      <LinearGradient
-        colors={isDark
-          ? [iconGradient[0] + "12", "transparent"]
-          : [iconGradient[0] + "08", "transparent"]}
-        start={{ x: 0, y: 0.5 }}
-        end={{ x: 1, y: 0.5 }}
-        style={StyleSheet.absoluteFill}
-      />
-
-      <LinearGradient
-        colors={iconGradient}
-        style={styles.iconBox}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-      >
+      <View style={[styles.iconBox, { backgroundColor: iconColor + "18" }]}>
         <Ionicons
           name={isFavorite ? "heart" : meta.icon}
           size={22}
-          color="#fff"
+          color={iconColor}
         />
-      </LinearGradient>
+      </View>
 
       <View style={styles.body}>
         <View style={styles.topRow}>
@@ -190,21 +167,16 @@ const HistoryItem = React.memo(function HistoryItem({ item, risk, onDelete: _onD
         )}
 
         <View style={styles.metaRow}>
-          <LinearGradient
-            colors={iconGradient}
-            style={styles.typeBadge}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 0 }}
-          >
-            <Text style={styles.typeBadgeText}>
+          <View style={[styles.typeBadge, { backgroundColor: iconColor + "18", borderColor: iconColor + "35" }]}>
+            <Text style={[styles.typeBadgeText, { color: iconColor }]}>
               {isFavorite ? "Favorite" : meta.label}
             </Text>
-          </LinearGradient>
+          </View>
 
           {showRisk && (
-            <View style={[styles.riskBadge, { backgroundColor: riskCfg.gradient[0] + "20", borderColor: riskCfg.gradient[0] + "40" }]}>
-              <Ionicons name={riskCfg.icon} size={9} color={riskCfg.gradient[0]} />
-              <Text style={[styles.riskText, { color: riskCfg.gradient[0] }]}>
+            <View style={[styles.riskBadge, { backgroundColor: riskCfg.color + "20", borderColor: riskCfg.color + "40" }]}>
+              <Ionicons name={riskCfg.icon} size={9} color={riskCfg.color} />
+              <Text style={[styles.riskText, { color: riskCfg.color }]}>
                 {riskCfg.label}
               </Text>
             </View>
@@ -225,14 +197,9 @@ const HistoryItem = React.memo(function HistoryItem({ item, risk, onDelete: _onD
           {formatRelativeTime(item.scannedAt)}
         </Text>
         {item.qrCodeId ? (
-          <LinearGradient
-            colors={iconGradient}
-            style={styles.chevronWrap}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-          >
-            <Ionicons name="chevron-forward" size={13} color="#fff" />
-          </LinearGradient>
+          <View style={[styles.chevronWrap, { backgroundColor: colors.surfaceBorder }]}>
+            <Ionicons name="chevron-forward" size={13} color={colors.textSecondary} />
+          </View>
         ) : (
           <View style={{ width: 26 }} />
         )}
@@ -300,12 +267,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: 9,
     paddingVertical: 4,
     borderRadius: 100,
+    borderWidth: 1,
   },
   typeBadgeText: {
     fontSize: 10,
     fontFamily: "Inter_700Bold",
     letterSpacing: 0.4,
-    color: "#fff",
   },
   riskBadge: {
     flexDirection: "row",
