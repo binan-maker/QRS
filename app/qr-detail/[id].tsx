@@ -8,6 +8,7 @@ import {
   Platform,
   KeyboardAvoidingView,
   ScrollView,
+  RefreshControl,
   StyleSheet,
   Keyboard,
 } from "react-native";
@@ -253,6 +254,14 @@ export default function QrDetailScreen() {
             contentContainerStyle={styles.scrollContent}
             keyboardShouldPersistTaps="handled"
             onScrollBeginDrag={() => q.setCommentMenuId(null)}
+            refreshControl={
+              <RefreshControl
+                refreshing={q.commentsRefreshing ?? false}
+                onRefresh={q.refreshComments}
+                tintColor={colors.primary}
+                colors={[colors.primary]}
+              />
+            }
           >
             {/* ── Deactivated QR Banner ────────────────────────────────────── */}
             {q.ownerInfo?.isActive === false && (
@@ -334,6 +343,7 @@ export default function QrDetailScreen() {
                   reportCounts={q.reportCounts}
                   userReport={q.userReport}
                   isLoggedIn={!!user}
+                  isPayment={currentContentType === "payment"}
                   onReport={q.handleReport}
                 />
               )}
@@ -377,13 +387,7 @@ export default function QrDetailScreen() {
                     </View>
                   )}
                 </View>
-                {!q.offlineMode && (
-                  <View style={styles.liveIndicator}>
-                    <View style={styles.liveDot} />
-                    <Text style={styles.liveText}>Live</Text>
-                  </View>
-                )}
-              </View>
+                </View>
 
               {q.offlineMode ? (
                 <View style={offlineSectionStyles.row}>

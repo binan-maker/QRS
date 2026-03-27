@@ -4,7 +4,6 @@ import { router } from "expo-router";
 import * as Haptics from "@/lib/haptics";
 import { useAuth } from "@/contexts/AuthContext";
 import {
-  subscribeToComments,
   getComments,
   addComment,
   toggleCommentLike,
@@ -130,18 +129,41 @@ export function useQrComments(id: string, userId: string | null, offlineMode: bo
     }
   }, [replyTo]);
 
-  useEffect(() => {
-    if (offlineMode) return;
-    // Reset optimistic state when QR changes
-    pendingCommentsRef.current = [];
-    deletingIdsRef.current = new Set();
+  const [commentsRefreshing, setCommentsRefreshing] = useState(false);
 
+  const loadInitialComments = useCallback(async (resetOptimistic = false) => {
+    if (offlineMode) return;
+    if (resetOptimistic) {
+      pendingCommentsRef.current = [];
+      deletingIdsRef.current = new Set();
+    }
     const pageLimit = userId ? COMMENTS_PER_PAGE : 6;
-    const unsub = subscribeToComments(id, pageLimit, (liveComments) => {
-      setCommentsList(mergeWithOptimistic(liveComments));
-    });
-    return unsub;
+    setCommentsLoading(true);
+    try {
+      const result = await getComments(id, pageLimit, undefined);
+      if (result.cursor) lastCommentRef.current = result.cursor;
+      setHasMoreComments(result.hasMore);
+      setCommentsList(mergeWithOptimistic(result.comments));
+    } catch {}
+    setCommentsLoading(false);
   }, [id, userId, offlineMode]);
+
+  const refreshComments = useCallback(async () => {
+    if (offlineMode) return;
+    setCommentsRefreshing(true);
+    const pageLimit = userId ? COMMENTS_PER_PAGE : 6;
+    try {
+      const result = await getComments(id, pageLimit, undefined);
+      if (result.cursor) lastCommentRef.current = result.cursor;
+      setHasMoreComments(result.hasMore);
+      setCommentsList(mergeWithOptimistic(result.comments));
+    } catch {}
+    setCommentsRefreshing(false);
+  }, [id, userId, offlineMode]);
+
+  useEffect(() => {
+    loadInitialComments(true);
+  }, [loadInitialComments]);
 
   const loadMoreComments = useCallback(async () => {
     if (commentsLoading || !hasMoreComments) return;
@@ -288,6 +310,8 @@ export function useQrComments(id: string, userId: string | null, offlineMode: bo
     newComment, setNewComment,
     replyTo, setReplyTo,
     commentsLoading,
+    commentsRefreshing,
+    refreshComments,
     submitting,
     commentMenuId, setCommentMenuId,
     commentMenuOwner, setCommentMenuOwner,

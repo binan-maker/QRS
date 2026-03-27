@@ -54,9 +54,6 @@ function getInitialColor(name: string): [string, string] {
   return palettes[idx];
 }
 
-const LIKE_RED = "#EF4444";
-const LIKE_RED_DIM = "#EF444418";
-
 const CommentItem = React.memo(function CommentItem({
   comment, isReply = false, currentUserLike, isMenuOpen, isDeleting, isRevealed,
   isCommentOwner, canDelete, descendants, expandedReplies, visibleRepliesCount,
@@ -83,7 +80,7 @@ const CommentItem = React.memo(function CommentItem({
         <Animated.View entering={FadeIn.duration(300)}>
           <Pressable
             onPress={() => onReveal(comment.id)}
-            style={[styles.sensitiveRow, { borderBottomColor: colors.surfaceBorder }]}
+            style={styles.sensitiveRow}
           >
             <Ionicons name="eye-off-outline" size={14} color={colors.textMuted} />
             <Text style={{ flex: 1, fontSize: 12, fontFamily: "Inter_400Regular", color: colors.textMuted, fontStyle: "italic" }}>
@@ -104,7 +101,6 @@ const CommentItem = React.memo(function CommentItem({
         <View style={[
           styles.commentRow,
           isReply && { paddingLeft: 42 },
-          { borderBottomColor: colors.surfaceBorder },
         ]}>
           {/* Avatar */}
           <Pressable onPress={navigateToProfile} disabled={!navigateToProfile} style={{ flexShrink: 0, marginTop: 1 }}>
@@ -185,13 +181,13 @@ const CommentItem = React.memo(function CommentItem({
               {/* Like */}
               <Pressable onPress={() => onLike(comment.id, "like")} style={styles.actionBtn}>
                 {currentUserLike === "like" ? (
-                  <View style={[styles.actionPill, { backgroundColor: LIKE_RED_DIM, borderColor: LIKE_RED + "40", borderWidth: 1 }]}>
-                    <Ionicons name="heart" size={12} color={LIKE_RED} />
-                    {comment.likeCount > 0 && <Text style={[styles.actionCount, { color: LIKE_RED }]}>{formatCompactNumber(comment.likeCount)}</Text>}
+                  <View style={[styles.actionPill, { backgroundColor: colors.primary, borderColor: colors.primary, borderWidth: 1 }]}>
+                    <Ionicons name="thumbs-up" size={12} color="#fff" />
+                    {comment.likeCount > 0 && <Text style={[styles.actionCount, { color: "#fff" }]}>{formatCompactNumber(comment.likeCount)}</Text>}
                   </View>
                 ) : (
                   <View style={[styles.actionPill, { backgroundColor: isDark ? colors.surfaceLight : colors.background }]}>
-                    <Ionicons name="heart-outline" size={12} color={colors.textMuted} />
+                    <Ionicons name="thumbs-up-outline" size={12} color={colors.textMuted} />
                     {comment.likeCount > 0 && <Text style={[styles.actionCount, { color: colors.textMuted }]}>{formatCompactNumber(comment.likeCount)}</Text>}
                   </View>
                 )}
@@ -244,7 +240,7 @@ const CommentItem = React.memo(function CommentItem({
 
       {/* Replies toggle */}
       {!isReply && replyCount > 0 && (
-        <Pressable onPress={() => onToggleReplies(comment.id)} style={[styles.repliesToggle, { borderBottomColor: colors.surfaceBorder }]}>
+        <Pressable onPress={() => onToggleReplies(comment.id)} style={styles.repliesToggle}>
           <View style={[styles.replyLine, { backgroundColor: colors.surfaceBorder }]} />
           <View style={[styles.repliesToggleInner, { backgroundColor: colors.surfaceLight, borderColor: colors.surfaceBorder }]}>
             <Ionicons name={isExpanded ? "chevron-up" : "chevron-down"} size={11} color={colors.primary} />
@@ -308,12 +304,10 @@ const styles = StyleSheet.create({
   sensitiveRow: {
     flexDirection: "row", alignItems: "center", gap: 8,
     paddingVertical: 10, paddingHorizontal: 2,
-    borderBottomWidth: StyleSheet.hairlineWidth,
   },
   commentRow: {
     flexDirection: "row", gap: 10,
     paddingTop: 12, paddingBottom: 10, paddingHorizontal: 2,
-    borderBottomWidth: StyleSheet.hairlineWidth,
   },
   commentBody: { flex: 1, gap: 5 },
   commentHeader: { flexDirection: "row", alignItems: "center", gap: 6 },
@@ -342,7 +336,6 @@ const styles = StyleSheet.create({
   repliesToggle: {
     flexDirection: "row", alignItems: "center", gap: 8,
     paddingLeft: 44, paddingVertical: 6,
-    borderBottomWidth: StyleSheet.hairlineWidth,
   },
   replyLine: { width: 16, height: 1 },
   repliesToggleInner: {

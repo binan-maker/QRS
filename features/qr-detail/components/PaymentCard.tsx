@@ -664,33 +664,37 @@ const PaymentCard = React.memo(function PaymentCard({
           {parsedPayment.recipientName || "Unknown Merchant"}
         </Text>
 
-        {/* UPI ID — small, tap to expand */}
-        {displayVpa ? (
-          <Pressable
-            onPress={() => {
-              if (upiExpanded) {
-                handleCopyUpi();
-              } else {
-                setUpiExpanded(true);
-              }
-            }}
-            style={styles.upiRow}
-          >
-            <Ionicons name="at-circle-outline" size={14} color={brand.accentColor} />
-            <Text style={[styles.upiId, { color: brand.subtextOnCard }]} selectable numberOfLines={upiExpanded ? undefined : 1} ellipsizeMode="tail">
-              {displayVpa}
-            </Text>
-            {upiExpanded ? (
-              <Ionicons
-                name={upiCopied ? "checkmark-circle" : "copy-outline"}
-                size={13}
-                color={upiCopied ? "#4ADE80" : brand.accentColor}
-              />
-            ) : (
-              <Text style={[styles.upiExpandHint, { color: brand.accentColor }]}>tap</Text>
-            )}
-          </Pressable>
-        ) : null}
+        {/* UPI ID — tap to copy; long IDs collapse with a "tap" expand hint */}
+        {displayVpa ? (() => {
+          const isLongVpa = displayVpa.length > 28;
+          const isCollapsed = isLongVpa && !upiExpanded;
+          return (
+            <Pressable
+              onPress={() => {
+                if (isCollapsed) {
+                  setUpiExpanded(true);
+                } else {
+                  handleCopyUpi();
+                }
+              }}
+              style={styles.upiRow}
+            >
+              <Ionicons name="at-circle-outline" size={14} color={brand.accentColor} />
+              <Text style={[styles.upiId, { color: brand.subtextOnCard }]} selectable numberOfLines={isCollapsed ? 1 : undefined} ellipsizeMode="tail">
+                {displayVpa}
+              </Text>
+              {isCollapsed ? (
+                <Text style={[styles.upiExpandHint, { color: brand.accentColor }]}>tap</Text>
+              ) : (
+                <Ionicons
+                  name={upiCopied ? "checkmark-circle" : "copy-outline"}
+                  size={13}
+                  color={upiCopied ? "#4ADE80" : brand.accentColor}
+                />
+              )}
+            </Pressable>
+          );
+        })() : null}
 
         {/* Bank name */}
         {effectiveBankName ? (

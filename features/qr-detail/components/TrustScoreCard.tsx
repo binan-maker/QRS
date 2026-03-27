@@ -80,7 +80,13 @@ const TrustScoreCard = React.memo(function TrustScoreCard({
               </Text>
             </View>
           ) : (
-            <Text style={[styles.noScoreText, { color: colors.textMuted }]}>No votes yet</Text>
+            <Pressable
+              onPress={() => {}}
+              style={[styles.firstVoteBadge, { backgroundColor: colors.primaryDim || colors.surfaceLight, borderColor: colors.primary + "40" }]}
+            >
+              <Ionicons name="thumbs-up-outline" size={13} color={colors.primary} />
+              <Text style={[styles.firstVoteText, { color: colors.primary }]}>Be the first to vote!</Text>
+            </Pressable>
           )}
           {hasScore && (
             <View style={[styles.scoreBar, { backgroundColor: colors.surfaceLight }]}>
@@ -164,6 +170,12 @@ const styles = StyleSheet.create({
   scoreLabelBadge: { alignSelf: "flex-start", paddingHorizontal: 9, paddingVertical: 4, borderRadius: 100, borderWidth: 1 },
   scoreLabelText: { fontSize: 11, fontFamily: "Inter_700Bold", letterSpacing: 0.3 },
   noScoreText: { fontSize: 13, fontFamily: "Inter_400Regular" },
+  firstVoteBadge: {
+    flexDirection: "row", alignItems: "center", gap: 6,
+    alignSelf: "flex-start", paddingHorizontal: 10, paddingVertical: 6,
+    borderRadius: 100, borderWidth: 1,
+  },
+  firstVoteText: { fontSize: 12, fontFamily: "Inter_600SemiBold" },
   scoreBar: { height: 5, borderRadius: 3, overflow: "hidden" },
   scoreBarFill: { height: "100%", borderRadius: 3 },
   manipBanner: {

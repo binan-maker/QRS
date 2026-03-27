@@ -6,10 +6,11 @@ interface ReportGridProps {
   reportCounts: Record<string, number>;
   userReport: string | null;
   isLoggedIn: boolean;
+  isPayment?: boolean;
   onReport: (type: string) => void;
 }
 
-export default function ReportGrid({ reportCounts: _reportCounts, userReport, isLoggedIn, onReport }: ReportGridProps) {
+export default function ReportGrid({ reportCounts: _reportCounts, userReport, isLoggedIn, isPayment, onReport }: ReportGridProps) {
   const { colors, isDark } = useTheme();
 
   const REPORT_TYPES = [
@@ -62,12 +63,14 @@ export default function ReportGrid({ reportCounts: _reportCounts, userReport, is
         })}
       </View>
 
-      <View style={styles.disclaimer}>
-        <Ionicons name="information-circle-outline" size={12} color={colors.textMuted} />
-        <Text style={[styles.disclaimerText, { color: colors.textMuted }]}>
-          Always verify the merchant name and UPI ID before paying
-        </Text>
-      </View>
+      {isPayment && (
+        <View style={styles.disclaimer}>
+          <Ionicons name="information-circle-outline" size={12} color={colors.textMuted} />
+          <Text style={[styles.disclaimerText, { color: colors.textMuted }]}>
+            Always verify the merchant name and UPI ID before paying
+          </Text>
+        </View>
+      )}
     </View>
   );
 }
