@@ -138,7 +138,7 @@ export default function HomeScreen() {
                   </Animated.View>
                   <View style={styles.heroTextBlock}>
                     <Text style={[styles.heroTitle, { color: colors.text }]}>Scan QR Code</Text>
-                    <Text style={[styles.heroSub, { color: colors.textSecondary }]}>
+                    <Text style={[styles.heroSub, { color: colors.textSecondary }]} numberOfLines={1} adjustsFontSizeToFit>
                       Camera · Gallery · Instant AI analysis
                     </Text>
                   </View>
@@ -170,8 +170,8 @@ export default function HomeScreen() {
                   <View style={[styles.statIconWrap, { backgroundColor: s.bg }]}>
                     <Ionicons name={s.icon} size={18} color={s.color} />
                   </View>
-                  <Text style={[styles.statLabel, { color: colors.text }]}>{s.label}</Text>
-                  <Text style={[styles.statDesc, { color: s.color }]}>{s.desc}</Text>
+                  <Text style={[styles.statLabel, { color: colors.text }]} numberOfLines={1} adjustsFontSizeToFit>{s.label}</Text>
+                  <Text style={[styles.statDesc, { color: s.color }]} numberOfLines={1} adjustsFontSizeToFit>{s.desc}</Text>
                 </View>
               ))}
             </View>
@@ -323,7 +323,7 @@ export default function HomeScreen() {
 }
 
 function makeStyles(c: ReturnType<typeof import("@/contexts/ThemeContext").useTheme>["colors"], width: number) {
-  const s = Math.min(Math.max(width / 390, 0.82), 1.15);
+  const s = Math.min(Math.max(width / 390, 0.82), 1.0);
   const rf = (size: number) => Math.round(size * s);
   return StyleSheet.create({
     container: { flex: 1, backgroundColor: c.background },
@@ -392,8 +392,8 @@ function makeStyles(c: ReturnType<typeof import("@/contexts/ThemeContext").useTh
       position: "absolute", top: 0, left: 0, right: 0, height: 40,
     },
     statIconWrap: { width: 40, height: 40, borderRadius: 13, alignItems: "center", justifyContent: "center" },
-    statLabel: { fontSize: rf(12), fontFamily: "Inter_700Bold", textAlign: "center" },
-    statDesc: { fontSize: rf(11), fontFamily: "Inter_600SemiBold", textAlign: "center", letterSpacing: 0.2 },
+    statLabel: { fontSize: rf(11), fontFamily: "Inter_700Bold", textAlign: "center" },
+    statDesc: { fontSize: rf(10), fontFamily: "Inter_600SemiBold", textAlign: "center", letterSpacing: 0.2 },
 
     promoBanner: { borderRadius: 20, overflow: "hidden", marginBottom: 22 },
     promoGradient: { borderRadius: 20, borderWidth: 1, flexDirection: "row", alignItems: "center", gap: 12, padding: 16 },

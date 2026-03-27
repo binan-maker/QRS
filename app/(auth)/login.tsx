@@ -35,7 +35,7 @@ export default function LoginScreen() {
   const [showPassword, setShowPassword] = useState(false);
   const [unverifiedEmail, setUnverifiedEmail] = useState(false);
 
-  const scale = Math.min(Math.max(width / 390, 0.82), 1.15);
+  const scale = Math.min(Math.max(width / 390, 0.82), 1.0);
   const sp = (v: number) => Math.round(v * scale);
   const isSmallScreen = height < 680;
   const isNarrow = width < 360;

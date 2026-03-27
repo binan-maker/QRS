@@ -36,7 +36,7 @@ export default function RegisterScreen() {
   const [verificationSent, setVerificationSent] = useState(false);
   const [registeredEmail, setRegisteredEmail] = useState("");
 
-  const scale = Math.min(Math.max(width / 390, 0.82), 1.15);
+  const scale = Math.min(Math.max(width / 390, 0.82), 1.0);
   const isSmallScreen = height < 700;
   const isNarrow = width < 360;
   const px = isNarrow ? 16 : Math.round(22 * scale);

@@ -330,7 +330,7 @@ export default function SettingsScreen() {
 }
 
 function makeLocalStyles(c: ReturnType<typeof import("@/contexts/ThemeContext").useTheme>["colors"], width = 390) {
-  const s = Math.min(Math.max(width / 390, 0.82), 1.15);
+  const s = Math.min(Math.max(width / 390, 0.82), 1.0);
   const rf = (size: number) => Math.round(size * s);
   const sp = (v: number) => Math.round(v * s);
   return StyleSheet.create({

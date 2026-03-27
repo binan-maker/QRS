@@ -213,7 +213,7 @@ export default function QrGeneratorScreen() {
 }
 
 function makeStyles(_c: unknown, width: number) {
-  const s = Math.min(Math.max(width / 390, 0.82), 1.15);
+  const s = Math.min(Math.max(width / 390, 0.82), 1.0);
   const rf = (size: number) => Math.round(size * s);
   return StyleSheet.create({
     container: { flex: 1 },
