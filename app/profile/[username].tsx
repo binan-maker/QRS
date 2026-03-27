@@ -5,6 +5,7 @@ import {
 } from "react-native";
 import { useLocalSearchParams, router } from "expo-router";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
+import { LinearGradient } from "expo-linear-gradient";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Animated, { FadeIn, FadeInDown, FadeInUp } from "react-native-reanimated";
 import { useTheme } from "@/contexts/ThemeContext";
@@ -48,7 +49,7 @@ function getCoverGradients(username: string, primary: string, accent: string): [
 
 export default function PublicProfileScreen() {
   const { username } = useLocalSearchParams<{ username: string }>();
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
   const { user } = useAuth();
   const insets = useSafeAreaInsets();
   const { width: screenWidth } = useWindowDimensions();
