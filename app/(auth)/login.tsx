@@ -9,6 +9,7 @@ import {
   Platform,
   ScrollView,
   useWindowDimensions,
+  Modal,
 } from "react-native";
 import { Link, router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
@@ -27,6 +28,7 @@ export default function LoginScreen() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const [errorCode, setErrorCode] = useState("");
   const [fieldErrors, setFieldErrors] = useState({ email: "", password: "" });
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
@@ -39,10 +41,10 @@ export default function LoginScreen() {
   const px = isNarrow ? 16 : Math.round(22 * scale);
 
   useEffect(() => {
-  if (user) {
-    router.replace("/(tabs)");
-  }
-}, [user]);
+    if (user) {
+      router.replace("/(tabs)");
+    }
+  }, [user]);
 
   useEffect(() => {
     if (user && googleLoading) {
@@ -57,26 +59,33 @@ export default function LoginScreen() {
     let hasFieldError = false;
     if (!email.trim()) { newFieldErrors.email = "Email address is required."; hasFieldError = true; }
     if (!password.trim()) { newFieldErrors.password = "Password is required."; hasFieldError = true; }
-    if (hasFieldError) { setFieldErrors(newFieldErrors); setError(""); return; }
-    setError(""); setFieldErrors({ email: "", password: "" }); setUnverifiedEmail(false); setLoading(true);
+    if (hasFieldError) { setFieldErrors(newFieldErrors); setError(""); setErrorCode(""); return; }
+    setError(""); setErrorCode(""); setFieldErrors({ email: "", password: "" }); setUnverifiedEmail(false); setLoading(true);
     try {
       await signIn(email.trim(), password);
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       router.dismissAll();
     } catch (e: any) {
-      if (e.code === "auth/email-not-verified") setUnverifiedEmail(true);
+      if (e.code === "auth/email-not-verified") {
+        setUnverifiedEmail(true);
+        setErrorCode("auth/email-not-verified");
+      } else {
+        setErrorCode(e.code ?? "");
+      }
       setError(e.message || "Sign in failed. Please try again.");
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
     } finally { setLoading(false); }
   }
 
   async function handleGoogleSignIn() {
-    setError(""); setUnverifiedEmail(false); setGoogleLoading(true);
+    setError(""); setErrorCode(""); setUnverifiedEmail(false); setGoogleLoading(true);
     try { await signInWithGoogle(); }
     catch (e: any) {
       setError(e.message || "Google sign-in failed. Please try again.");
+      setErrorCode("");
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-    } finally { setGoogleLoading(false); }
+      setGoogleLoading(false);
+    }
   }
 
   const logoSize = Math.round(Math.min(76 * scale, 88));
@@ -89,6 +98,8 @@ export default function LoginScreen() {
   const heroPadTop = isSmallScreen ? 12 : Math.round(20 * scale);
   const heroPadBottom = isSmallScreen ? 16 : Math.round(28 * scale);
 
+  const isUserNotFound = errorCode === "auth/user-not-found";
+
   return (
     <View style={{ flex: 1, backgroundColor: colors.background }}>
       <View style={[styles.glowOrb, {
@@ -99,6 +110,14 @@ export default function LoginScreen() {
         backgroundColor: colors.primaryDim,
         bottom: 40, left: -100, width: 280, height: 280,
       }]} />
+
+      <Pressable
+        onPress={() => router.canDismiss() ? router.dismiss() : router.replace("/(tabs)")}
+        style={[styles.closeBtn, { top: insets.top + 12, backgroundColor: colors.surfaceLight, borderColor: colors.surfaceBorder }]}
+        hitSlop={10}
+      >
+        <Ionicons name="close" size={20} color={colors.textSecondary} />
+      </Pressable>
 
       <KeyboardAvoidingView
         style={{ flex: 1 }}
@@ -136,16 +155,25 @@ export default function LoginScreen() {
           }]}>
             {error ? (
               <View style={[styles.errorBanner, {
-                backgroundColor: unverifiedEmail ? colors.warningDim : colors.dangerDim,
-                borderColor: unverifiedEmail ? colors.warning + "40" : colors.danger + "40",
+                backgroundColor: unverifiedEmail ? colors.warningDim : isUserNotFound ? colors.primaryDim : colors.dangerDim,
+                borderColor: unverifiedEmail ? colors.warning + "40" : isUserNotFound ? colors.primary + "40" : colors.danger + "40",
                 marginBottom: 14,
               }]}>
                 <Ionicons
-                  name={unverifiedEmail ? "mail-unread-outline" : "alert-circle"}
+                  name={unverifiedEmail ? "mail-unread-outline" : isUserNotFound ? "person-add-outline" : "alert-circle"}
                   size={15}
-                  color={unverifiedEmail ? colors.warning : colors.danger}
+                  color={unverifiedEmail ? colors.warning : isUserNotFound ? colors.primary : colors.danger}
                 />
-                <Text style={[styles.errorText, { color: unverifiedEmail ? colors.warning : colors.danger, fontSize: Math.round(13 * scale) }]}>{error}</Text>
+                <View style={{ flex: 1, gap: 4 }}>
+                  <Text style={[styles.errorText, { color: unverifiedEmail ? colors.warning : isUserNotFound ? colors.primary : colors.danger, fontSize: Math.round(13 * scale) }]}>{error}</Text>
+                  {isUserNotFound && (
+                    <Pressable onPress={() => router.replace("/(auth)/register")} hitSlop={6}>
+                      <Text style={[styles.errorLink, { color: colors.primary, fontSize: Math.round(12 * scale) }]}>
+                        Create an account →
+                      </Text>
+                    </Pressable>
+                  )}
+                </View>
               </View>
             ) : null}
 
@@ -240,6 +268,16 @@ export default function LoginScreen() {
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
+
+      <Modal visible={googleLoading} transparent animationType="fade" statusBarTranslucent>
+        <View style={styles.overlayBg}>
+          <View style={[styles.overlayCard, { backgroundColor: colors.isDark ? "rgba(16,25,41,0.97)" : "rgba(255,255,255,0.97)", borderColor: colors.surfaceBorder }]}>
+            <ActivityIndicator color={colors.primary} size="large" />
+            <Text style={[styles.overlayText, { color: colors.text }]}>Signing in with Google…</Text>
+            <Text style={[styles.overlaySubText, { color: colors.textSecondary }]}>Just a moment</Text>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -247,6 +285,12 @@ export default function LoginScreen() {
 const styles = StyleSheet.create({
   container: { flexGrow: 1 },
   glowOrb: { position: "absolute", borderRadius: 200 },
+  closeBtn: {
+    position: "absolute", right: 16, zIndex: 10,
+    width: 36, height: 36, borderRadius: 18,
+    alignItems: "center", justifyContent: "center",
+    borderWidth: 1,
+  },
   heroSection: { alignItems: "center", gap: 8 },
   logoWrap: { alignItems: "center", justifyContent: "center" },
   logoBox: { alignItems: "center", justifyContent: "center" },
@@ -267,7 +311,8 @@ const styles = StyleSheet.create({
     flexDirection: "row", alignItems: "flex-start", gap: 10,
     padding: 12, borderRadius: 14, borderWidth: 1,
   },
-  errorText: { fontFamily: "Inter_500Medium", flex: 1 },
+  errorText: { fontFamily: "Inter_500Medium" },
+  errorLink: { fontFamily: "Inter_600SemiBold" },
   fieldsSection: {},
   forgotBtn: { alignSelf: "flex-end", marginTop: 8, paddingVertical: 2 },
   forgotText: { fontFamily: "Inter_600SemiBold" },
@@ -287,4 +332,16 @@ const styles = StyleSheet.create({
   footer: { flexDirection: "row", justifyContent: "center", gap: 6 },
   footerText: { fontFamily: "Inter_400Regular" },
   footerLink: { fontFamily: "Inter_700Bold" },
+  overlayBg: {
+    flex: 1, backgroundColor: "rgba(0,0,0,0.55)",
+    alignItems: "center", justifyContent: "center",
+  },
+  overlayCard: {
+    alignItems: "center", gap: 14, paddingVertical: 36, paddingHorizontal: 40,
+    borderRadius: 24, borderWidth: 1,
+    shadowColor: "#000", shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.18, shadowRadius: 24, elevation: 12,
+    minWidth: 220,
+  },
+  overlayText: { fontFamily: "Inter_700Bold", fontSize: 16, textAlign: "center" },
+  overlaySubText: { fontFamily: "Inter_400Regular", fontSize: 13, textAlign: "center" },
 });

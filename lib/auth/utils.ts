@@ -2,10 +2,11 @@ import { db } from "@/lib/db";
 
 export function getAuthErrorMessage(code: string): string {
   switch (code) {
-    case "auth/invalid-credential":
     case "auth/wrong-password":
+    case "auth/invalid-credential":
+      return "Incorrect password. Please try again.";
     case "auth/user-not-found":
-      return "Incorrect email or password. Please try again.";
+      return "No account found with this email. Please sign up first.";
     case "auth/invalid-email":
       return "Please enter a valid email address.";
     case "auth/email-already-in-use":

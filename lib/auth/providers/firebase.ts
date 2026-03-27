@@ -18,6 +18,7 @@ import {
   EmailAuthProvider,
   reauthenticateWithCredential,
   deleteUser as fbDeleteUser,
+  fetchSignInMethodsForEmail,
   type User as FirebaseUser,
 } from "firebase/auth";
 import { firebaseAuth } from "@/lib/firebase";
@@ -104,6 +105,15 @@ export const firebaseAuthProvider: AuthAdapter = {
     const fbUser = firebaseAuth.currentUser;
     if (fbUser && fbUser.uid === user.uid) {
       await fbDeleteUser(fbUser);
+    }
+  },
+
+  async checkEmailExists(email: string): Promise<boolean> {
+    try {
+      const methods = await fetchSignInMethodsForEmail(firebaseAuth, email);
+      return methods.length > 0;
+    } catch {
+      return false;
     }
   },
 };

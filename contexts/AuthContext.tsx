@@ -188,6 +188,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setToken(idToken);
     } catch (e: any) {
       if (e.code === "auth/email-not-verified") throw e;
+      const code = e?.code ?? "";
+      if (code === "auth/invalid-credential" || code === "auth/wrong-password") {
+        try {
+          const exists = await authAdapter.checkEmailExists(email);
+          if (!exists) {
+            const err = new Error("No account found with this email. Please sign up first.") as any;
+            err.code = "auth/user-not-found";
+            throw err;
+          }
+        } catch (innerErr: any) {
+          if (innerErr.code === "auth/user-not-found") throw innerErr;
+        }
+      }
       throw mapFirebaseError(e);
     }
   }
@@ -211,7 +224,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   async function handleGoogleAccessToken(accessToken: string) {
     try {
       const adapterUser = await authAdapter.signInWithGoogleToken(accessToken);
-      await syncUserToDb(adapterUser.uid, adapterUser.email, adapterUser.displayName, adapterUser.photoURL);
       const idToken = await adapterUser.getIdToken();
       setUser({
         id: adapterUser.uid,
@@ -221,6 +233,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         emailVerified: adapterUser.emailVerified,
       });
       setToken(idToken);
+      syncUserToDb(adapterUser.uid, adapterUser.email, adapterUser.displayName, adapterUser.photoURL).catch(() => {});
     } catch (e: any) {
       throw mapFirebaseError(e);
     }
@@ -228,7 +241,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   async function handleGoogleIdToken(idToken: string) {
     const adapterUser = await authAdapter.signInWithGoogleIdToken(idToken);
-    await syncUserToDb(adapterUser.uid, adapterUser.email, adapterUser.displayName, adapterUser.photoURL);
     const firebaseToken = await adapterUser.getIdToken();
     setUser({
       id: adapterUser.uid,
@@ -238,10 +250,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       emailVerified: adapterUser.emailVerified,
     });
     setToken(firebaseToken);
+    syncUserToDb(adapterUser.uid, adapterUser.email, adapterUser.displayName, adapterUser.photoURL).catch(() => {});
   }
 
   async function signInWithGoogle() {
     if (Platform.OS !== "web" && GoogleSignin) {
+      try {
+        const silentResult = await GoogleSignin.signInSilently();
+        if (silentResult?.type === "success" && silentResult?.data?.idToken) {
+          try {
+            await handleGoogleIdToken(silentResult.data.idToken);
+            return;
+          } catch {}
+        }
+      } catch {}
       const result = await GoogleSignin.signIn();
       if (result.type === "success" && result.data?.idToken) {
         try {

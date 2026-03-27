@@ -28,4 +28,5 @@ export interface AuthAdapter {
   updateDisplayName(user: AuthAdapterUser, displayName: string): Promise<void>;
   reauthenticate(user: AuthAdapterUser, email: string, password: string): Promise<void>;
   deleteUser(user: AuthAdapterUser): Promise<void>;
+  checkEmailExists(email: string): Promise<boolean>;
 }

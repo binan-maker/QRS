@@ -9,6 +9,7 @@ import {
   Platform,
   ScrollView,
   useWindowDimensions,
+  Modal,
 } from "react-native";
 import { Link, router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
@@ -83,7 +84,8 @@ export default function RegisterScreen() {
     catch (e: any) {
       setError(e.message || "Google sign-in failed. Please try again.");
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-    } finally { setGoogleLoading(false); }
+      setGoogleLoading(false);
+    }
   }
 
   const logoSize = Math.round(Math.min(76 * scale, 88));
@@ -134,6 +136,14 @@ export default function RegisterScreen() {
         backgroundColor: colors.primaryDim,
         bottom: 60, right: -100, width: 280, height: 280,
       }]} />
+
+      <Pressable
+        onPress={() => router.canDismiss() ? router.dismiss() : router.replace("/(tabs)")}
+        style={[styles.closeBtn, { top: insets.top + 12, backgroundColor: colors.surfaceLight, borderColor: colors.surfaceBorder }]}
+        hitSlop={10}
+      >
+        <Ionicons name="close" size={20} color={colors.textSecondary} />
+      </Pressable>
 
       <KeyboardAvoidingView
         style={{ flex: 1 }}
@@ -267,6 +277,16 @@ export default function RegisterScreen() {
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
+
+      <Modal visible={googleLoading} transparent animationType="fade" statusBarTranslucent>
+        <View style={styles.overlayBg}>
+          <View style={[styles.overlayCard, { backgroundColor: colors.isDark ? "rgba(16,25,41,0.97)" : "rgba(255,255,255,0.97)", borderColor: colors.surfaceBorder }]}>
+            <ActivityIndicator color={colors.primary} size="large" />
+            <Text style={[styles.overlayText, { color: colors.text }]}>Signing in with Google…</Text>
+            <Text style={[styles.overlaySubText, { color: colors.textSecondary }]}>Just a moment</Text>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -274,6 +294,12 @@ export default function RegisterScreen() {
 const styles = StyleSheet.create({
   container: { flexGrow: 1 },
   glowOrb: { position: "absolute", borderRadius: 200 },
+  closeBtn: {
+    position: "absolute", right: 16, zIndex: 10,
+    width: 36, height: 36, borderRadius: 18,
+    alignItems: "center", justifyContent: "center",
+    borderWidth: 1,
+  },
   heroSection: { alignItems: "center", gap: 7 },
   logoWrap: { alignItems: "center", justifyContent: "center" },
   logoBox: { alignItems: "center", justifyContent: "center" },
@@ -316,4 +342,16 @@ const styles = StyleSheet.create({
   footer: { flexDirection: "row", justifyContent: "center", gap: 6 },
   footerText: { fontFamily: "Inter_400Regular" },
   footerLink: { fontFamily: "Inter_700Bold" },
+  overlayBg: {
+    flex: 1, backgroundColor: "rgba(0,0,0,0.55)",
+    alignItems: "center", justifyContent: "center",
+  },
+  overlayCard: {
+    alignItems: "center", gap: 14, paddingVertical: 36, paddingHorizontal: 40,
+    borderRadius: 24, borderWidth: 1,
+    shadowColor: "#000", shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.18, shadowRadius: 24, elevation: 12,
+    minWidth: 220,
+  },
+  overlayText: { fontFamily: "Inter_700Bold", fontSize: 16, textAlign: "center" },
+  overlaySubText: { fontFamily: "Inter_400Regular", fontSize: 13, textAlign: "center" },
 });
