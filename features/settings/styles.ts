@@ -2,7 +2,7 @@ import { StyleSheet } from "react-native";
 import { type AppColors } from "@/constants/colors";
 
 export function makeSettingsStyles(c: AppColors, width = 390) {
-  const s = Math.min(Math.max(width / 390, 0.82), 1.15);
+  const s = Math.min(Math.max(width / 390, 0.82), 1.0);
   const rf = (size: number) => Math.round(size * s);
   const sp = (v: number) => Math.round(v * s);
 
