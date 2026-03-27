@@ -36,7 +36,7 @@ export default function ModeSelector({ user, qrMode, businessName, setQrMode, se
               ]}
             >
               <Ionicons name="person" size={15} color={qrMode === "individual" ? colors.primary : colors.textMuted} />
-              <Text style={[styles.modeBtnText, { color: qrMode === "individual" ? colors.primary : colors.textMuted }]}>Individual</Text>
+              <Text style={[styles.modeBtnText, { color: qrMode === "individual" ? colors.primary : colors.textMuted }]} maxFontSizeMultiplier={1}>Individual</Text>
             </Pressable>
             <Pressable
               onPress={() => handleMode("business")}
@@ -47,7 +47,7 @@ export default function ModeSelector({ user, qrMode, businessName, setQrMode, se
               ]}
             >
               <Ionicons name="storefront" size={15} color={qrMode === "business" ? colors.warning : colors.textMuted} />
-              <Text style={[styles.modeBtnText, { color: qrMode === "business" ? colors.warning : colors.textMuted }]}>Business</Text>
+              <Text style={[styles.modeBtnText, { color: qrMode === "business" ? colors.warning : colors.textMuted }]} maxFontSizeMultiplier={1}>Business</Text>
             </Pressable>
             <Pressable
               onPress={() => handleMode("private")}
@@ -58,7 +58,7 @@ export default function ModeSelector({ user, qrMode, businessName, setQrMode, se
               ]}
             >
               <Ionicons name="eye-off-outline" size={15} color={qrMode === "private" ? colors.textSecondary : colors.textMuted} />
-              <Text style={[styles.modeBtnText, { color: qrMode === "private" ? colors.textSecondary : colors.textMuted }]}>Private</Text>
+              <Text style={[styles.modeBtnText, { color: qrMode === "private" ? colors.textSecondary : colors.textMuted }]} maxFontSizeMultiplier={1}>Private</Text>
             </Pressable>
           </>
         ) : (
@@ -72,7 +72,7 @@ export default function ModeSelector({ user, qrMode, businessName, setQrMode, se
               ]}
             >
               <Ionicons name="shield-checkmark" size={15} color={qrMode !== "private" ? colors.primary : colors.textMuted} />
-              <Text style={[styles.modeBtnText, { color: qrMode !== "private" ? colors.primary : colors.textMuted }]}>Standard</Text>
+              <Text style={[styles.modeBtnText, { color: qrMode !== "private" ? colors.primary : colors.textMuted }]} maxFontSizeMultiplier={1}>Standard</Text>
             </Pressable>
             <Pressable
               onPress={() => handleMode("private")}
@@ -83,7 +83,7 @@ export default function ModeSelector({ user, qrMode, businessName, setQrMode, se
               ]}
             >
               <Ionicons name="eye-off-outline" size={15} color={qrMode === "private" ? colors.textSecondary : colors.textMuted} />
-              <Text style={[styles.modeBtnText, { color: qrMode === "private" ? colors.textSecondary : colors.textMuted }]}>Private</Text>
+              <Text style={[styles.modeBtnText, { color: qrMode === "private" ? colors.textSecondary : colors.textMuted }]} maxFontSizeMultiplier={1}>Private</Text>
             </Pressable>
           </>
         )}
@@ -92,22 +92,22 @@ export default function ModeSelector({ user, qrMode, businessName, setQrMode, se
       {qrMode === "individual" && user ? (
         <View style={[styles.banner, { backgroundColor: colors.safeDim, borderColor: colors.safe + "40" }]}>
           <Ionicons name="person" size={14} color={colors.safe} />
-          <Text style={[styles.bannerText, { color: colors.safe }]}>Branded with your QR Guard identity — saved to your profile with a unique ID</Text>
+          <Text style={[styles.bannerText, { color: colors.safe }]} maxFontSizeMultiplier={1}>Branded with your QR Guard identity — saved to your profile with a unique ID</Text>
         </View>
       ) : qrMode === "business" && user ? (
         <View style={[styles.banner, { borderColor: colors.warning + "40", backgroundColor: colors.warningDim }]}>
           <Ionicons name="shield" size={14} color={colors.warning} />
-          <Text style={[styles.bannerText, { color: colors.warning }]}>Living Shield — QR encodes a redirect you can update anytime without reprinting</Text>
+          <Text style={[styles.bannerText, { color: colors.warning }]} maxFontSizeMultiplier={1}>Living Shield — QR encodes a redirect you can update anytime without reprinting</Text>
         </View>
       ) : qrMode === "private" ? (
         <View style={[styles.banner, { backgroundColor: colors.surfaceLight, borderColor: colors.surfaceBorder }]}>
           <Ionicons name="eye-off-outline" size={14} color={colors.textMuted} />
-          <Text style={[styles.bannerText, { color: colors.textMuted }]}>No-trace mode — nothing is recorded. Fully local QR code.</Text>
+          <Text style={[styles.bannerText, { color: colors.textMuted }]} maxFontSizeMultiplier={1}>No-trace mode — nothing is recorded. Fully local QR code.</Text>
         </View>
       ) : (
         <Pressable style={[styles.banner, { backgroundColor: colors.primaryDim, borderColor: colors.primary + "40" }]} onPress={() => router.push("/(auth)/login")}>
           <Ionicons name="sparkles-outline" size={14} color={colors.primary} />
-          <Text style={[styles.bannerText, { color: colors.primary }]}>Sign in to create branded QR codes with your QR Guard identity</Text>
+          <Text style={[styles.bannerText, { color: colors.primary }]} maxFontSizeMultiplier={1}>Sign in to create branded QR codes with your QR Guard identity</Text>
           <Ionicons name="chevron-forward" size={14} color={colors.primary} />
         </Pressable>
       )}
