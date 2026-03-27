@@ -131,7 +131,7 @@ const styles = StyleSheet.create({
   velocityChart: { flexDirection: "row", alignItems: "flex-end", gap: 2, height: 80, marginBottom: 8 },
   barWrapper: { flex: 1, alignItems: "center", justifyContent: "flex-end", gap: 2 },
   bar: { width: "100%", borderRadius: 2, minHeight: 2 },
-  barLabel: { fontSize: 9, fontFamily: "Inter_400Regular", color: Colors.dark.textMuted },
+  barLabel: { fontSize: 12, fontFamily: "Inter_400Regular", color: Colors.dark.textMuted },
   totalScans: { fontSize: 12, fontFamily: "Inter_500Medium", color: Colors.dark.textSecondary, textAlign: "center", marginBottom: 4 },
   divider: { height: 1, backgroundColor: Colors.dark.surfaceBorder, marginVertical: 14 },
   verifyBtn: {

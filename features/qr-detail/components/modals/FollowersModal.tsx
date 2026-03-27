@@ -103,7 +103,7 @@ function makeStyles(c: ReturnType<typeof import("@/contexts/ThemeContext").useTh
     avatarText: { fontSize: 16, fontFamily: "Inter_700Bold", color: c.text },
     name: { fontSize: 14, fontFamily: "Inter_600SemiBold", color: c.text },
     username: { fontSize: 12, fontFamily: "Inter_400Regular", color: c.primary, marginTop: 1 },
-    since: { fontSize: 11, fontFamily: "Inter_400Regular", color: c.textMuted, marginTop: 2 },
+    since: { fontSize: 12, fontFamily: "Inter_400Regular", color: c.textMuted, marginTop: 2 },
     closeBtn: {
       marginTop: 16, backgroundColor: c.surfaceLight, borderRadius: 14,
       paddingVertical: 14, alignItems: "center",

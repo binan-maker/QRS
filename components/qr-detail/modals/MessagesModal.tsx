@@ -166,7 +166,7 @@ const styles = StyleSheet.create({
   msgSender: { fontSize: 14, fontFamily: "Inter_600SemiBold", color: Colors.dark.text },
   unreadDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: Colors.dark.primary },
   msgText: { fontSize: 13, fontFamily: "Inter_400Regular", color: Colors.dark.textSecondary, marginTop: 3, lineHeight: 18 },
-  msgTime: { fontSize: 11, fontFamily: "Inter_400Regular", color: Colors.dark.textMuted, marginTop: 3 },
+  msgTime: { fontSize: 12, fontFamily: "Inter_400Regular", color: Colors.dark.textMuted, marginTop: 3 },
   composeArea: { gap: 12, paddingBottom: 8 },
   privacyNote: { fontSize: 13, fontFamily: "Inter_400Regular", color: Colors.dark.textSecondary, lineHeight: 19 },
   inputRow: {

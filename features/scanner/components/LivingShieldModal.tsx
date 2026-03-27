@@ -114,7 +114,7 @@ const styles = StyleSheet.create({
     borderRadius: 8, paddingHorizontal: 10, paddingVertical: 4,
     flexDirection: "row", alignItems: "center", gap: 4,
   },
-  shieldPillText: { fontSize: 11, fontFamily: "Inter_600SemiBold" },
+  shieldPillText: { fontSize: 12, fontFamily: "Inter_600SemiBold" },
   title: { fontSize: 22, fontFamily: "Inter_700Bold", textAlign: "center", marginBottom: 4 },
   byLine: { fontSize: 13, fontFamily: "Inter_400Regular", marginBottom: 12 },
   subtitle: { fontSize: 14, fontFamily: "Inter_400Regular", textAlign: "center", lineHeight: 22, marginBottom: 20 },

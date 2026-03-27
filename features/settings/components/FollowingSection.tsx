@@ -204,7 +204,7 @@ const localStyles = StyleSheet.create({
     borderRadius: 100,
   },
   typeBadgeText: {
-    fontSize: 10,
+    fontSize: 12,
     fontFamily: "Inter_700Bold",
     letterSpacing: 0.3,
     color: "#fff",

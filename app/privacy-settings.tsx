@@ -473,7 +473,7 @@ const styles = StyleSheet.create({
   statusSub: { fontSize: 13, fontFamily: "Inter_400Regular", lineHeight: 18 },
 
   sectionLabel: {
-    fontSize: 10, fontFamily: "Inter_700Bold",
+    fontSize: 11, fontFamily: "Inter_700Bold",
     textTransform: "uppercase", letterSpacing: 1.4,
     marginBottom: 10, marginLeft: 4,
   },
@@ -520,8 +520,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 7, paddingVertical: 2,
     borderRadius: 8, borderWidth: 1,
   },
-  youBadgeText: { fontSize: 10, fontFamily: "Inter_700Bold" },
+  youBadgeText: { fontSize: 12, fontFamily: "Inter_700Bold" },
   lbScanWrap: { alignItems: "center", gap: 2 },
   lbScanCount: { fontSize: 16, fontFamily: "Inter_700Bold" },
-  lbScanLabel: { fontSize: 10, fontFamily: "Inter_400Regular" },
+  lbScanLabel: { fontSize: 12, fontFamily: "Inter_400Regular" },
 });

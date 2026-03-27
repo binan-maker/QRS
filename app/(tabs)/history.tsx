@@ -275,7 +275,7 @@ function makeStyles(c: ReturnType<typeof import("@/contexts/ThemeContext").useTh
       height: 1,
     },
     dateHeaderText: {
-      fontSize: rf(10),
+      fontSize: rf(12),
       fontFamily: "Inter_700Bold",
       textTransform: "uppercase",
       letterSpacing: 1.2,

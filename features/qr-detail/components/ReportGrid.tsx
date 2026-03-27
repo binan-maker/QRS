@@ -75,8 +75,8 @@ const styles = StyleSheet.create({
     flexDirection: "row", alignItems: "center", gap: 4,
     paddingHorizontal: 8, paddingVertical: 3, borderRadius: 100, borderWidth: 1,
   },
-  votedText: { fontSize: 10, fontFamily: "Inter_600SemiBold" },
-  hint: { fontSize: 11, fontFamily: "Inter_400Regular" },
+  votedText: { fontSize: 12, fontFamily: "Inter_600SemiBold" },
+  hint: { fontSize: 12, fontFamily: "Inter_400Regular" },
   row: { flexDirection: "row", gap: 8 },
   rateBtn: {
     flex: 1, flexDirection: "row", alignItems: "center", justifyContent: "center",

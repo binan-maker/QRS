@@ -346,7 +346,7 @@ function makeStyles(c: ReturnType<typeof import("@/contexts/ThemeContext").useTh
       alignItems: "center", justifyContent: "center",
       paddingHorizontal: 3, borderWidth: 1.5, borderColor: c.background,
     },
-    notifDotText: { fontSize: rf(9), fontFamily: "Inter_700Bold", lineHeight: 14 },
+    notifDotText: { fontSize: rf(11), fontFamily: "Inter_700Bold", lineHeight: 14 },
 
     avatarRing: { width: 46, height: 46, borderRadius: 23 },
     avatarRingGradient: { width: 46, height: 46, borderRadius: 23, padding: 2, alignItems: "center", justifyContent: "center" },
@@ -377,7 +377,7 @@ function makeStyles(c: ReturnType<typeof import("@/contexts/ThemeContext").useTh
     heroSub: { fontSize: rf(12), fontFamily: "Inter_400Regular", lineHeight: Math.round(17 * s) },
     heroPillRow: { flexDirection: "row", gap: 6, flexWrap: "wrap" },
     heroPill: { paddingHorizontal: 8, paddingVertical: 3, borderRadius: 100, borderWidth: 1 },
-    heroPillText: { fontSize: rf(10), fontFamily: "Inter_600SemiBold", letterSpacing: 0.2 },
+    heroPillText: { fontSize: rf(12), fontFamily: "Inter_600SemiBold", letterSpacing: 0.2 },
     heroArrow: {
       width: 40, height: 40, borderRadius: 20,
       alignItems: "center", justifyContent: "center", flexShrink: 0,
@@ -392,8 +392,8 @@ function makeStyles(c: ReturnType<typeof import("@/contexts/ThemeContext").useTh
       position: "absolute", top: 0, left: 0, right: 0, height: 40,
     },
     statIconWrap: { width: 40, height: 40, borderRadius: 13, alignItems: "center", justifyContent: "center" },
-    statLabel: { fontSize: rf(11), fontFamily: "Inter_700Bold", textAlign: "center" },
-    statDesc: { fontSize: rf(9), fontFamily: "Inter_600SemiBold", textAlign: "center", letterSpacing: 0.2 },
+    statLabel: { fontSize: rf(12), fontFamily: "Inter_700Bold", textAlign: "center" },
+    statDesc: { fontSize: rf(11), fontFamily: "Inter_600SemiBold", textAlign: "center", letterSpacing: 0.2 },
 
     promoBanner: { borderRadius: 20, overflow: "hidden", marginBottom: 22 },
     promoGradient: { borderRadius: 20, borderWidth: 1, flexDirection: "row", alignItems: "center", gap: 12, padding: 16 },
@@ -428,11 +428,11 @@ function makeStyles(c: ReturnType<typeof import("@/contexts/ThemeContext").useTh
     scanTopRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 6 },
     scanContent: { fontSize: rf(14), fontFamily: "Inter_700Bold", lineHeight: Math.round(20 * s), flex: 1 },
     scanAmount: { fontSize: rf(13), fontFamily: "Inter_700Bold", flexShrink: 0 },
-    scanSub: { fontSize: rf(11), fontFamily: "Inter_400Regular" },
+    scanSub: { fontSize: rf(12), fontFamily: "Inter_400Regular" },
     scanMeta: { flexDirection: "row", alignItems: "center", gap: 7 },
     scanBadge: { paddingHorizontal: 9, paddingVertical: 4, borderRadius: 100 },
-    scanBadgeText: { fontSize: rf(10), fontFamily: "Inter_700Bold", letterSpacing: 0.4, color: "#fff" },
-    scanTime: { fontSize: rf(10), fontFamily: "Inter_500Medium" },
+    scanBadgeText: { fontSize: rf(12), fontFamily: "Inter_700Bold", letterSpacing: 0.4, color: "#fff" },
+    scanTime: { fontSize: rf(12), fontFamily: "Inter_500Medium" },
     scanChevron: { width: 28, height: 28, borderRadius: 10, alignItems: "center", justifyContent: "center", flexShrink: 0 },
   });
 }

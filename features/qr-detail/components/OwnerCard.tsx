@@ -151,16 +151,16 @@ const styles = StyleSheet.create({
   ownerInfo: { flex: 1, minWidth: 0, gap: 4 },
   topRow: { flexDirection: "row", alignItems: "center", gap: 6, flexWrap: "wrap" },
   typeBadge: { paddingHorizontal: 8, paddingVertical: 3, borderRadius: 100 },
-  typeBadgeText: { fontSize: 9, fontFamily: "Inter_700Bold", color: "#fff", letterSpacing: 0.8 },
+  typeBadgeText: { fontSize: 12, fontFamily: "Inter_700Bold", color: "#fff", letterSpacing: 0.8 },
   guardBadge: {
     flexDirection: "row", alignItems: "center", gap: 4,
     paddingHorizontal: 7, paddingVertical: 3, borderRadius: 100, borderWidth: 1,
   },
-  guardBadgeText: { fontSize: 9, fontFamily: "Inter_700Bold", letterSpacing: 0.3 },
+  guardBadgeText: { fontSize: 12, fontFamily: "Inter_700Bold", letterSpacing: 0.3 },
   bizName: { fontSize: 15, fontFamily: "Inter_700Bold" },
   createdBy: { fontSize: 12, fontFamily: "Inter_400Regular" },
   createdByName: { fontFamily: "Inter_600SemiBold" },
-  uuid: { fontSize: 10, fontFamily: "Inter_400Regular" },
+  uuid: { fontSize: 12, fontFamily: "Inter_400Regular" },
   ownerActions: { alignItems: "flex-end", gap: 7, flexShrink: 0 },
   actionBtn: {
     flexDirection: "row", alignItems: "center", gap: 6,
@@ -173,7 +173,7 @@ const styles = StyleSheet.create({
     position: "absolute", top: -5, right: -5, minWidth: 16, height: 16,
     borderRadius: 8, alignItems: "center", justifyContent: "center", paddingHorizontal: 3,
   },
-  unreadBadgeText: { fontSize: 10, fontFamily: "Inter_700Bold", color: "#fff" },
+  unreadBadgeText: { fontSize: 11, fontFamily: "Inter_700Bold", color: "#fff" },
   verifiedBadge: {
     flexDirection: "row", alignItems: "center", gap: 5,
     borderRadius: 12, paddingHorizontal: 10, paddingVertical: 7, borderWidth: 1,

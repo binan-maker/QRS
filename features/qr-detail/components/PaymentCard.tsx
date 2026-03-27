@@ -970,7 +970,7 @@ const styles = StyleSheet.create({
     paddingVertical: 2,
   },
   indiaBadgeText: {
-    fontSize: 10,
+    fontSize: 12,
     fontFamily: "Inter_600SemiBold",
     color: "#FFF",
   },
@@ -986,7 +986,7 @@ const styles = StyleSheet.create({
     borderColor: "rgba(74, 222, 128, 0.3)",
   },
   shieldText: {
-    fontSize: 11,
+    fontSize: 12,
     fontFamily: "Inter_700Bold",
     color: "#4ADE80",
     letterSpacing: 0.5,
@@ -1013,7 +1013,7 @@ const styles = StyleSheet.create({
     letterSpacing: 0.2,
   },
   upiExpandHint: {
-    fontSize: 10,
+    fontSize: 12,
     fontFamily: "Inter_600SemiBold",
     letterSpacing: 0.3,
     flexShrink: 0,
@@ -1048,7 +1048,7 @@ const styles = StyleSheet.create({
     color: "#FCD34D",
   },
   amountLabel: {
-    fontSize: 11,
+    fontSize: 12,
     fontFamily: "Inter_400Regular",
   },
 
@@ -1088,11 +1088,11 @@ const styles = StyleSheet.create({
     backgroundColor: "#4ADE80",
   },
   verifiedText: {
-    fontSize: 11,
+    fontSize: 12,
     fontFamily: "Inter_400Regular",
   },
   regionText: {
-    fontSize: 11,
+    fontSize: 12,
     fontFamily: "Inter_600SemiBold",
     letterSpacing: 0.5,
   },
@@ -1132,7 +1132,7 @@ const styles = StyleSheet.create({
     borderColor: "rgba(148, 163, 184, 0.10)",
   },
   warningText: {
-    fontSize: 10,
+    fontSize: 12,
     fontFamily: "Inter_400Regular",
     color: "#94A3B8",
     flex: 1,
@@ -1167,7 +1167,7 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   extraFieldLabel: {
-    fontSize: 11,
+    fontSize: 12,
     fontFamily: "Inter_500Medium",
     minWidth: 52,
     letterSpacing: 0.2,

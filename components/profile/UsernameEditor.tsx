@@ -116,8 +116,8 @@ const styles = StyleSheet.create({
   label: { fontSize: 12, fontFamily: "Inter_400Regular", color: Colors.dark.textMuted },
   value: { fontSize: 15, fontFamily: "Inter_500Medium", color: Colors.dark.text },
   error: { fontSize: 12, fontFamily: "Inter_400Regular", color: Colors.dark.danger, paddingLeft: 48 },
-  hint: { fontSize: 11, fontFamily: "Inter_400Regular", color: Colors.dark.textMuted, paddingLeft: 48 },
-  lockNote: { fontSize: 11, fontFamily: "Inter_400Regular", color: Colors.dark.warning, paddingLeft: 48 },
+  hint: { fontSize: 12, fontFamily: "Inter_400Regular", color: Colors.dark.textMuted, paddingLeft: 48 },
+  lockNote: { fontSize: 12, fontFamily: "Inter_400Regular", color: Colors.dark.warning, paddingLeft: 48 },
   saveBtn: {
     flex: 1, backgroundColor: Colors.dark.primary,
     paddingVertical: 10, borderRadius: 10, alignItems: "center",

@@ -125,7 +125,7 @@ const styles = StyleSheet.create({
   statsRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-around" },
   statItem: { alignItems: "center", gap: 2, flex: 1 },
   statNum: { fontSize: 17, fontFamily: "Inter_700Bold", color: Colors.dark.text },
-  statLabel: { fontSize: 11, fontFamily: "Inter_400Regular", color: Colors.dark.textMuted },
+  statLabel: { fontSize: 12, fontFamily: "Inter_400Regular", color: Colors.dark.textMuted },
   statDivider: { width: 1, height: 32, backgroundColor: Colors.dark.surfaceBorder },
   reportBreakdown: { flexDirection: "row", flexWrap: "wrap", gap: 8, marginTop: 14 },
   reportChip: {

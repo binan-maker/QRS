@@ -622,7 +622,7 @@ const signInBannerIconStyle = {
 };
 
 const navOfflineStyles = StyleSheet.create({
-  badge: { fontSize: 10, fontFamily: "Inter_600SemiBold", marginTop: 1 },
+  badge: { fontSize: 12, fontFamily: "Inter_600SemiBold", marginTop: 1 },
 });
 
 const offlineSectionStyles = StyleSheet.create({

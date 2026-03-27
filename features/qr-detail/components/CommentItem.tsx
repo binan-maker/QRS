@@ -134,7 +134,7 @@ const CommentItem = React.memo(function CommentItem({
               <Text style={[styles.commentTime, { color: colors.textMuted }]} numberOfLines={1}>{formatRelativeTime(comment.createdAt)}</Text>
               {comment.isHidden && isRevealed && (
                 <View style={[styles.sensitiveTag, { backgroundColor: colors.warningDim }]}>
-                  <Text style={[{ fontSize: 9, fontFamily: "Inter_600SemiBold", color: colors.warning }]}>Sensitive</Text>
+                  <Text style={[{ fontSize: 12, fontFamily: "Inter_600SemiBold", color: colors.warning }]}>Sensitive</Text>
                 </View>
               )}
               <Pressable
@@ -300,7 +300,7 @@ const styles = StyleSheet.create({
   commentHeader: { flexDirection: "row", alignItems: "center", gap: 6 },
   authorPressable: { flex: 1, minWidth: 0 },
   authorName: { fontSize: 13, fontFamily: "Inter_700Bold" },
-  commentTime: { fontSize: 11, fontFamily: "Inter_400Regular", flexShrink: 0 },
+  commentTime: { fontSize: 12, fontFamily: "Inter_400Regular", flexShrink: 0 },
   readMoreText: { fontSize: 13, fontFamily: "Inter_600SemiBold" },
   sensitiveTag: {
     paddingHorizontal: 5, paddingVertical: 2, borderRadius: 5,
@@ -329,7 +329,7 @@ const styles = StyleSheet.create({
     flexDirection: "row", alignItems: "center", gap: 4,
     paddingHorizontal: 8, paddingVertical: 4, borderRadius: 100, borderWidth: 1,
   },
-  repliesToggleText: { fontSize: 11, fontFamily: "Inter_600SemiBold" },
+  repliesToggleText: { fontSize: 12, fontFamily: "Inter_600SemiBold" },
   repliesContainer: { paddingLeft: 0 },
   showMoreBtn: { alignItems: "center", paddingVertical: 8, paddingLeft: 44 },
   showMoreText: { fontSize: 12, fontFamily: "Inter_600SemiBold" },

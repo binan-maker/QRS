@@ -693,9 +693,9 @@ const S = StyleSheet.create({
     flexDirection: "row", alignItems: "center", gap: 5,
     paddingHorizontal: 11, paddingVertical: 5, borderRadius: 100, borderWidth: 1,
   },
-  rankText: { fontSize: 11, fontFamily: "Inter_700Bold", letterSpacing: 0.3 },
+  rankText: { fontSize: 12, fontFamily: "Inter_700Bold", letterSpacing: 0.3 },
   ownBadge: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 100, borderWidth: 1 },
-  ownBadgeText: { fontSize: 10, fontFamily: "Inter_600SemiBold" },
+  ownBadgeText: { fontSize: 12, fontFamily: "Inter_600SemiBold" },
 
   nameBlock: { alignItems: "center", gap: 3 },
   displayName: { fontSize: 28, fontFamily: "Inter_700Bold", textAlign: "center", letterSpacing: -0.5 },
@@ -714,7 +714,7 @@ const S = StyleSheet.create({
   },
   statIconWrap: { width: 28, height: 28, borderRadius: 9, alignItems: "center", justifyContent: "center" },
   statValue: { fontSize: 17, fontFamily: "Inter_700Bold" },
-  statLabel: { fontSize: 9, fontFamily: "Inter_600SemiBold", textAlign: "center", letterSpacing: 0.3 },
+  statLabel: { fontSize: 12, fontFamily: "Inter_600SemiBold", textAlign: "center", letterSpacing: 0.3 },
 
   // Passport
   passport: {
@@ -724,9 +724,9 @@ const S = StyleSheet.create({
   passportHeader: { flexDirection: "row", alignItems: "center", gap: 12 },
   passportLogo: { width: 36, height: 36, borderRadius: 11, alignItems: "center", justifyContent: "center" },
   passportBrand: { fontSize: 12, fontFamily: "Inter_700Bold", letterSpacing: 1.5 },
-  passportType: { fontSize: 10, fontFamily: "Inter_400Regular" },
+  passportType: { fontSize: 12, fontFamily: "Inter_400Regular" },
   passportRankBadge: { flexDirection: "row", alignItems: "center", gap: 4, paddingHorizontal: 9, paddingVertical: 5, borderRadius: 100, borderWidth: 1 },
-  passportRankText: { fontSize: 9, fontFamily: "Inter_700Bold", letterSpacing: 0.8 },
+  passportRankText: { fontSize: 12, fontFamily: "Inter_700Bold", letterSpacing: 0.8 },
   passportDivider: { height: 1 },
   passportIdentity: { flexDirection: "row", alignItems: "flex-start", gap: 14 },
   passportAvatar: { width: 60, height: 60, borderRadius: 16, overflow: "hidden", flexShrink: 0 },
@@ -739,11 +739,11 @@ const S = StyleSheet.create({
   passportFooter: { flexDirection: "row", alignItems: "center", borderTopWidth: 1, paddingTop: 14 },
   passportStat: { flex: 1, alignItems: "center", gap: 3 },
   passportStatNum: { fontSize: 18, fontFamily: "Inter_700Bold" },
-  passportStatLabel: { fontSize: 9, fontFamily: "Inter_400Regular", letterSpacing: 0.5 },
+  passportStatLabel: { fontSize: 12, fontFamily: "Inter_400Regular", letterSpacing: 0.5 },
   passportStatDivider: { width: 1, height: 32 },
   passportSerial: {
     position: "absolute", bottom: 14, right: 18,
-    fontSize: 9, fontFamily: "Inter_700Bold", letterSpacing: 2,
+    fontSize: 11, fontFamily: "Inter_700Bold", letterSpacing: 2,
   },
 
   // Section header
@@ -770,10 +770,10 @@ const S = StyleSheet.create({
     paddingHorizontal: 6, paddingVertical: 2, borderRadius: 100, borderWidth: 1,
   },
   brandedText: { fontSize: 8, fontFamily: "Inter_700Bold" },
-  qrCardType: { fontSize: 10, fontFamily: "Inter_700Bold", letterSpacing: 0.8 },
+  qrCardType: { fontSize: 12, fontFamily: "Inter_700Bold", letterSpacing: 0.8 },
   qrCardName: { fontSize: 13, fontFamily: "Inter_600SemiBold" },
   qrScanRow: { flexDirection: "row", alignItems: "center", gap: 4 },
-  qrScanCount: { fontSize: 11, fontFamily: "Inter_400Regular" },
+  qrScanCount: { fontSize: 12, fontFamily: "Inter_400Regular" },
 
   // Own CTA
   ownCta: {
@@ -795,17 +795,17 @@ const S = StyleSheet.create({
     width: 26, height: 26, borderRadius: 8, borderWidth: 1,
     alignItems: "center", justifyContent: "center",
   },
-  lbRankNum: { fontSize: 11, fontFamily: "Inter_700Bold" },
+  lbRankNum: { fontSize: 12, fontFamily: "Inter_700Bold" },
   lbAvatar: { width: 40, height: 40, borderRadius: 13, overflow: "hidden", borderWidth: 1.5 },
   lbAvatarImg: { width: 40, height: 40 },
   lbAvatarGrad: { width: 40, height: 40, alignItems: "center", justifyContent: "center" },
   lbAvatarInitials: { fontSize: 14, fontFamily: "Inter_700Bold", color: "#fff" },
   lbName: { fontSize: 13, fontFamily: "Inter_700Bold", flexShrink: 1 },
-  lbUsername: { fontSize: 11, fontFamily: "Inter_500Medium", marginTop: 1 },
+  lbUsername: { fontSize: 12, fontFamily: "Inter_500Medium", marginTop: 1 },
   lbYouBadge: { paddingHorizontal: 6, paddingVertical: 1, borderRadius: 7, borderWidth: 1 },
-  lbYouText: { fontSize: 10, fontFamily: "Inter_700Bold" },
+  lbYouText: { fontSize: 12, fontFamily: "Inter_700Bold" },
   lbCount: { fontSize: 15, fontFamily: "Inter_700Bold", textAlign: "center" },
-  lbCountLabel: { fontSize: 9, fontFamily: "Inter_400Regular", textAlign: "center" },
+  lbCountLabel: { fontSize: 12, fontFamily: "Inter_400Regular", textAlign: "center" },
   lbEmpty: { paddingHorizontal: 20, paddingVertical: 20, alignItems: "center" },
   lbEmptyText: { fontSize: 13, fontFamily: "Inter_400Regular", textAlign: "center" },
 

@@ -85,7 +85,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
   },
   dot: { width: 10, height: 10, borderRadius: 5 },
-  gridLabel: { fontSize: 11, fontFamily: "Inter_500Medium", textAlign: "center" },
+  gridLabel: { fontSize: 12, fontFamily: "Inter_500Medium", textAlign: "center" },
   doneBtn: { paddingVertical: 14, borderRadius: 14, alignItems: "center" },
   doneBtnText: { fontSize: 16, fontFamily: "Inter_700Bold" },
 });

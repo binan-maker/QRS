@@ -218,9 +218,9 @@ const styles = StyleSheet.create({
   paymentLabel: { fontSize: 12, fontFamily: "Inter_400Regular", color: Colors.dark.textMuted, minWidth: 60 },
   paymentValue: { fontSize: 14, fontFamily: "Inter_600SemiBold", color: Colors.dark.text, flex: 1, textAlign: "right" },
   regionBadge: { backgroundColor: Colors.dark.primaryDim, borderRadius: 6, paddingHorizontal: 6, paddingVertical: 2 },
-  regionBadgeText: { color: Colors.dark.primary, fontSize: 10, fontFamily: "Inter_600SemiBold" },
+  regionBadgeText: { color: Colors.dark.primary, fontSize: 12, fontFamily: "Inter_600SemiBold" },
   cryptoAddress: {
-    flex: 1, textAlign: "right", fontSize: 11, fontFamily: "Inter_400Regular",
+    flex: 1, textAlign: "right", fontSize: 12, fontFamily: "Inter_400Regular",
     color: Colors.dark.textSecondary, letterSpacing: 0.3,
   },
   payBtn: {

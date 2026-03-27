@@ -149,7 +149,7 @@ function ClassicTabLayout() {
           ),
         tabBarLabelStyle: {
           fontFamily: "Inter_600SemiBold",
-          fontSize: 10,
+          fontSize: 11,
           marginBottom: 4,
           letterSpacing: 0.2,
         },
@@ -166,7 +166,7 @@ function ClassicTabLayout() {
           tabBarBadgeStyle: {
             backgroundColor: colors.primary,
             color: "#fff",
-            fontSize: 10,
+            fontSize: 11,
             fontFamily: "Inter_700Bold",
             minWidth: 16,
             height: 16,

@@ -7,13 +7,14 @@ const BASE_WIDTH = 375;
 function scale(size: number): number {
   const ratio = SCREEN_WIDTH / BASE_WIDTH;
   const scaled = size * ratio;
-  const clamped = Math.min(Math.max(scaled, size * 0.82), size * 1.18);
+  const minRatio = Platform.OS === "android" ? 0.92 : 0.82;
+  const clamped = Math.min(Math.max(scaled, size * minRatio), size * 1.18);
   return Math.round(PixelRatio.roundToNearestPixel(clamped));
 }
 
 export const fs = {
-  xs: scale(10),
-  sm: scale(12),
+  xs: scale(12),
+  sm: scale(13),
   base: scale(14),
   md: scale(15),
   lg: scale(17),

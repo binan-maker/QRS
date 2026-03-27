@@ -135,17 +135,17 @@ const styles = StyleSheet.create({
   typeBadge: {
     paddingHorizontal: 6, paddingVertical: 2, borderRadius: 6, borderWidth: 1,
   },
-  typeBadgeText: { fontSize: 9, fontFamily: "Inter_700Bold", letterSpacing: 0.5 },
+  typeBadgeText: { fontSize: 12, fontFamily: "Inter_700Bold", letterSpacing: 0.5 },
   bizName: { fontSize: 14, fontFamily: "Inter_700Bold", color: Colors.dark.text, marginBottom: 1 },
   sub: { fontSize: 12, fontFamily: "Inter_400Regular", color: Colors.dark.textSecondary, marginTop: 1 },
-  uuid: { fontSize: 10, fontFamily: "Inter_400Regular", color: Colors.dark.textMuted, marginTop: 2 },
+  uuid: { fontSize: 12, fontFamily: "Inter_400Regular", color: Colors.dark.textMuted, marginTop: 2 },
   guardBadge: {
     flexDirection: "row", alignItems: "center", gap: 4, marginTop: 6,
     backgroundColor: "rgba(0,212,255,0.15)", borderRadius: 8,
     paddingHorizontal: 9, paddingVertical: 4, alignSelf: "flex-start",
     borderWidth: 1.5, borderColor: Colors.dark.primary + "60",
   },
-  guardBadgeText: { fontSize: 10, fontFamily: "Inter_600SemiBold", color: Colors.dark.primary },
+  guardBadgeText: { fontSize: 12, fontFamily: "Inter_600SemiBold", color: Colors.dark.primary },
   cardRight: { alignItems: "flex-end", gap: 8, flexShrink: 0 },
   actionBtn: {
     flexDirection: "row", alignItems: "center", gap: 5,
@@ -157,11 +157,11 @@ const styles = StyleSheet.create({
     borderRadius: 8, backgroundColor: Colors.dark.danger,
     alignItems: "center", justifyContent: "center",
   },
-  unreadDotText: { fontSize: 10, fontFamily: "Inter_700Bold", color: "#fff" },
+  unreadDotText: { fontSize: 11, fontFamily: "Inter_700Bold", color: "#fff" },
   verifiedBadge: {
     flexDirection: "row", alignItems: "center", gap: 4,
     backgroundColor: Colors.dark.safeDim, borderRadius: 10, paddingHorizontal: 8, paddingVertical: 5,
     borderWidth: 1, borderColor: Colors.dark.safe + "40",
   },
-  verifiedText: { fontSize: 11, fontFamily: "Inter_600SemiBold", color: Colors.dark.safe },
+  verifiedText: { fontSize: 12, fontFamily: "Inter_600SemiBold", color: Colors.dark.safe },
 });

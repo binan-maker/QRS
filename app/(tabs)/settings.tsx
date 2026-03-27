@@ -338,7 +338,7 @@ function makeLocalStyles(c: ReturnType<typeof import("@/contexts/ThemeContext").
       flexDirection: "row", alignItems: "center", gap: 4,
       paddingHorizontal: sp(8), paddingVertical: sp(4), borderRadius: sp(10), borderWidth: 1,
     },
-    verifiedPillText: { fontSize: rf(11), fontFamily: "Inter_600SemiBold" },
+    verifiedPillText: { fontSize: rf(12), fontFamily: "Inter_600SemiBold" },
     appearanceLabel: { fontSize: rf(13), fontFamily: "Inter_600SemiBold", marginBottom: sp(12) },
     themeRow: { flexDirection: "row", gap: sp(10) },
     themeBtn: {
@@ -358,6 +358,6 @@ function makeLocalStyles(c: ReturnType<typeof import("@/contexts/ThemeContext").
     footerBadge: { borderRadius: sp(12), paddingHorizontal: sp(14), paddingVertical: sp(6) },
     footerBadgeText: { fontSize: rf(12), fontFamily: "Inter_700Bold", color: "#fff", letterSpacing: 0.5 },
     footerTagline: { fontSize: rf(12), fontFamily: "Inter_500Medium" },
-    footerDisclaimer: { fontSize: rf(11), fontFamily: "Inter_400Regular", textAlign: "center", lineHeight: Math.round(16 * s) },
+    footerDisclaimer: { fontSize: rf(12), fontFamily: "Inter_400Regular", textAlign: "center", lineHeight: Math.round(16 * s) },
   });
 }

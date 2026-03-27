@@ -97,6 +97,6 @@ const styles = StyleSheet.create({
   avatarText: { fontSize: 20, fontFamily: "Inter_700Bold" },
   name: { fontSize: 15, fontFamily: "Inter_600SemiBold" },
   username: { fontSize: 13, fontFamily: "Inter_400Regular", marginTop: 1 },
-  followTime: { fontSize: 11, fontFamily: "Inter_400Regular", marginTop: 2 },
+  followTime: { fontSize: 12, fontFamily: "Inter_400Regular", marginTop: 2 },
   personIcon: { width: 36, height: 36, borderRadius: 18, backgroundColor: "#10B98115", alignItems: "center", justifyContent: "center" },
 });

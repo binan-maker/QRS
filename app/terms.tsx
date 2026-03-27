@@ -228,7 +228,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10, paddingVertical: 4, borderRadius: 10, borderWidth: 1,
     alignSelf: "flex-start",
   },
-  dateBadgeText: { fontSize: 11, fontFamily: "Inter_500Medium" },
+  dateBadgeText: { fontSize: 12, fontFamily: "Inter_500Medium" },
 
   sectionCard: {
     borderRadius: 22, borderWidth: 1, padding: 18,

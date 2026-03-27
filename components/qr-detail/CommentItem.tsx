@@ -229,7 +229,7 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.dark.warningDim, borderRadius: 6, paddingHorizontal: 7, paddingVertical: 3,
     alignSelf: "flex-start", marginBottom: 8,
   },
-  sensitiveRevealedTagText: { fontSize: 10, fontFamily: "Inter_600SemiBold", color: Colors.dark.warning },
+  sensitiveRevealedTagText: { fontSize: 12, fontFamily: "Inter_600SemiBold", color: Colors.dark.warning },
   commentHeader: { flexDirection: "row", alignItems: "center", marginBottom: 8, gap: 10 },
   commentAvatar: {
     width: 34, height: 34, borderRadius: 17,

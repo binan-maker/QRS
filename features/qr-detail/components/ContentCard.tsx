@@ -275,7 +275,7 @@ const styles = StyleSheet.create({
     alignItems: "center", justifyContent: "center",
   },
   typePill: { paddingHorizontal: 12, paddingVertical: 4, borderRadius: 100 },
-  typePillText: { fontSize: 11, fontFamily: "Inter_700Bold", color: "#fff", letterSpacing: 0.8 },
+  typePillText: { fontSize: 12, fontFamily: "Inter_700Bold", color: "#fff", letterSpacing: 0.8 },
   contentBox: {
     borderRadius: 16, padding: 16, borderWidth: 1, gap: 8,
   },

@@ -253,7 +253,7 @@ const styles = StyleSheet.create({
     flexShrink: 0,
   },
   subText: {
-    fontSize: 11,
+    fontSize: 12,
     fontFamily: "Inter_400Regular",
     lineHeight: 15,
   },
@@ -270,7 +270,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
   },
   typeBadgeText: {
-    fontSize: 10,
+    fontSize: 12,
     fontFamily: "Inter_700Bold",
     letterSpacing: 0.4,
   },
@@ -284,7 +284,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
   },
   riskText: {
-    fontSize: 10,
+    fontSize: 12,
     fontFamily: "Inter_700Bold",
     letterSpacing: 0.2,
   },
@@ -294,7 +294,7 @@ const styles = StyleSheet.create({
     flexShrink: 0,
   },
   time: {
-    fontSize: 10,
+    fontSize: 12,
     fontFamily: "Inter_500Medium",
     letterSpacing: 0.1,
   },

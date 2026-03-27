@@ -51,7 +51,7 @@ const styles = StyleSheet.create({
   card: { borderRadius: 20, padding: 18, marginBottom: 14, borderWidth: 1, gap: 14 },
   headerRow: { flexDirection: "row", alignItems: "center", gap: 14 },
   iconCircle: { width: 52, height: 52, borderRadius: 18, alignItems: "center", justifyContent: "center", flexShrink: 0 },
-  eyebrow: { fontSize: 10, fontFamily: "Inter_700Bold", letterSpacing: 1, marginBottom: 2 },
+  eyebrow: { fontSize: 12, fontFamily: "Inter_700Bold", letterSpacing: 1, marginBottom: 2 },
   title: { fontSize: 16, fontFamily: "Inter_700Bold", lineHeight: 21 },
   divider: { height: 1 },
   warningsContainer: { gap: 10 },

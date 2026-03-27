@@ -133,7 +133,7 @@ function HistoryRow({ item, onDelete }: { item: any; onDelete: (item: any) => vo
             paddingVertical: 2,
             borderRadius: 8,
           }}>
-            <Text style={{ fontSize: 10, fontFamily: "Inter_500Medium", color: sourceBadgeIconColor }}>
+            <Text style={{ fontSize: 12, fontFamily: "Inter_500Medium", color: sourceBadgeIconColor }}>
               {sourceBadgeText}
             </Text>
           </View>

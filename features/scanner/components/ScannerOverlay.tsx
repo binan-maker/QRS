@@ -507,7 +507,7 @@ const styles = StyleSheet.create({
   scanTitle: { fontSize: 16, fontFamily: "Inter_700Bold", color: "#fff", letterSpacing: 0.4 },
   liveRow: { flexDirection: "row", alignItems: "center", gap: 5 },
   liveDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: GLOW },
-  liveText: { fontSize: 10, fontFamily: "Inter_600SemiBold", color: GLOW, letterSpacing: 2 },
+  liveText: { fontSize: 12, fontFamily: "Inter_600SemiBold", color: GLOW, letterSpacing: 2 },
 
   // Bottom bar
   bottomBar: {
@@ -558,7 +558,7 @@ const styles = StyleSheet.create({
   sideBtnCircleActive: {
     borderColor: GLOW + "60",
   },
-  sideBtnLabel: { fontSize: 11, fontFamily: "Inter_400Regular", color: "rgba(255,255,255,0.65)" },
+  sideBtnLabel: { fontSize: 12, fontFamily: "Inter_400Regular", color: "rgba(255,255,255,0.65)" },
   centerAction: { alignItems: "center", justifyContent: "center" },
   actionRing: {
     width: 80,

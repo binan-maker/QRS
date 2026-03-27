@@ -29,7 +29,7 @@ export default function CommentRow({ comment, isReply, onReply, onModerate }: Pr
   return (
     <View style={styles.commentItem}>
       <View style={[styles.commentAvatar, { backgroundColor: colors.primaryDim }, isReply && styles.commentAvatarSmall]}>
-        <Text style={[styles.commentAvatarText, { color: colors.primary }, isReply && { fontSize: 11 }]}>{initials}</Text>
+        <Text style={[styles.commentAvatarText, { color: colors.primary }, isReply && { fontSize: 12 }]}>{initials}</Text>
       </View>
       <View style={{ flex: 1 }}>
         <View style={styles.commentMeta}>
@@ -59,7 +59,7 @@ const styles = StyleSheet.create({
   commentAvatarText: { fontSize: 14, fontFamily: "Inter_700Bold" },
   commentMeta: { flexDirection: "row", alignItems: "center", gap: 6, marginBottom: 3 },
   commentAuthor: { fontSize: 13, fontFamily: "Inter_600SemiBold" },
-  commentTime: { fontSize: 11, fontFamily: "Inter_400Regular" },
+  commentTime: { fontSize: 12, fontFamily: "Inter_400Regular" },
   commentText: { fontSize: 13, fontFamily: "Inter_400Regular", lineHeight: 19 },
   commentActions: { flexDirection: "row", gap: 14, marginTop: 8 },
   commentActionBtn: { flexDirection: "row", alignItems: "center", gap: 4 },

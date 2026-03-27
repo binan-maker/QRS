@@ -51,7 +51,7 @@ const styles = StyleSheet.create({
   title: { fontSize: 17, fontFamily: "Inter_700Bold", marginBottom: 6 },
   sub: { fontSize: 13, fontFamily: "Inter_400Regular", marginBottom: 16 },
   input: { borderRadius: 12, borderWidth: 1, padding: 12, fontSize: 14, fontFamily: "Inter_400Regular", minHeight: 64, textAlignVertical: "top" },
-  charCount: { fontSize: 11, textAlign: "right", marginBottom: 12 },
+  charCount: { fontSize: 12, textAlign: "right", marginBottom: 12 },
   btns: { flexDirection: "row", gap: 10 },
   cancelBtn: { flex: 1, paddingVertical: 12, borderRadius: 12, borderWidth: 1, alignItems: "center" },
   cancelText: { fontSize: 14, fontFamily: "Inter_600SemiBold" },

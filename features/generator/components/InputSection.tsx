@@ -90,9 +90,9 @@ const styles = StyleSheet.create({
     minHeight: 48, maxHeight: 120,
   },
   extraFieldLabel: {
-    fontSize: 11, fontFamily: "Inter_600SemiBold",
+    fontSize: 12, fontFamily: "Inter_600SemiBold",
     textTransform: "uppercase", letterSpacing: 0.6, marginBottom: 4,
   },
   clearBtn: { padding: 4, marginTop: 4 },
-  charCount: { fontSize: 11, textAlign: "right", marginBottom: 16 },
+  charCount: { fontSize: 12, textAlign: "right", marginBottom: 16 },
 });

@@ -91,7 +91,7 @@ function makeStyles(c: ReturnType<typeof import("@/contexts/ThemeContext").useTh
     velocityChart: { flexDirection: "row", alignItems: "flex-end", gap: 2, height: 80, marginBottom: 8 },
     barWrapper: { flex: 1, alignItems: "center", justifyContent: "flex-end", gap: 2 },
     bar: { width: "100%", borderRadius: 2, minHeight: 2 },
-    barLabel: { fontSize: 9, fontFamily: "Inter_400Regular", color: c.textMuted },
+    barLabel: { fontSize: 12, fontFamily: "Inter_400Regular", color: c.textMuted },
     totalScans: { fontSize: 12, fontFamily: "Inter_500Medium", color: c.textSecondary, textAlign: "center", marginBottom: 4 },
   });
 }

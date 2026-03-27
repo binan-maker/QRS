@@ -189,7 +189,7 @@ const styles = StyleSheet.create({
     gap: 3, borderWidth: 1,
   },
   statNum: { fontSize: 15, fontFamily: "Inter_700Bold" },
-  statLabel: { fontSize: 10, fontFamily: "Inter_500Medium", textAlign: "center" },
+  statLabel: { fontSize: 12, fontFamily: "Inter_500Medium", textAlign: "center" },
   breakdown: { gap: 8 },
   breakdownItem: { gap: 5 },
   breakdownRow: { flexDirection: "row", alignItems: "center", gap: 6 },

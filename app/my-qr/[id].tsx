@@ -234,7 +234,7 @@ export default function MyQrDetailScreen() {
                     (Date.now() - new Date(h.guardLink.destinationChangedAt).getTime()) < 86400000 && (
                     <View style={{ flexDirection: "row", alignItems: "center", gap: 4, backgroundColor: "#d9770618", borderRadius: 8, paddingHorizontal: 8, paddingVertical: 3 }}>
                       <Ionicons name="warning-outline" size={11} color="#f97316" />
-                      <Text style={{ fontSize: 10, color: "#f97316", fontFamily: "Inter_600SemiBold" }}>Caution Active</Text>
+                      <Text style={{ fontSize: 12, color: "#f97316", fontFamily: "Inter_600SemiBold" }}>Caution Active</Text>
                     </View>
                   )}
                 </View>
@@ -269,7 +269,7 @@ export default function MyQrDetailScreen() {
                             <Text style={{ fontSize: 13, fontFamily: "Inter_500Medium", color: colors.textSecondary }}>Cancel</Text>
                           </Pressable>
                         </View>
-                        <Text style={{ fontSize: 11, color: colors.textMuted, fontFamily: "Inter_400Regular", lineHeight: 16 }}>
+                        <Text style={{ fontSize: 12, color: colors.textMuted, fontFamily: "Inter_400Regular", lineHeight: 16 }}>
                           Changing the destination triggers a 24-hour caution period.
                         </Text>
                       </View>
@@ -279,7 +279,7 @@ export default function MyQrDetailScreen() {
                           <Text style={{ fontSize: 13, color: colors.accent, fontFamily: "Inter_400Regular", lineHeight: 18 }} numberOfLines={3}>{h.guardLink.currentDestination}</Text>
                         </View>
                         {h.guardLink.previousDestination ? (
-                          <Text style={{ fontSize: 11, color: colors.textMuted, fontFamily: "Inter_400Regular" }}>
+                          <Text style={{ fontSize: 12, color: colors.textMuted, fontFamily: "Inter_400Regular" }}>
                             Previous: {h.guardLink.previousDestination.length > 50 ? h.guardLink.previousDestination.slice(0, 50) + "…" : h.guardLink.previousDestination}
                           </Text>
                         ) : null}
@@ -375,7 +375,7 @@ export default function MyQrDetailScreen() {
                   </View>
                 </ScrollView>
                 {!FG_COLORS.find(c => c.color === h.fgColor) && (
-                  <Text style={{ fontSize: 11, color: colors.primary, fontFamily: "Inter_500Medium", marginTop: -10, marginBottom: 10 }}>Custom: {h.fgColor}</Text>
+                  <Text style={{ fontSize: 12, color: colors.primary, fontFamily: "Inter_500Medium", marginTop: -10, marginBottom: 10 }}>Custom: {h.fgColor}</Text>
                 )}
 
                 <Text style={styles.designLabel}>Background Color</Text>
@@ -399,7 +399,7 @@ export default function MyQrDetailScreen() {
                   </View>
                 </ScrollView>
                 {!BG_COLORS.find(c => c.color === h.bgColor) && (
-                  <Text style={{ fontSize: 11, color: colors.primary, fontFamily: "Inter_500Medium", marginTop: -10, marginBottom: 10 }}>Custom: {h.bgColor}</Text>
+                  <Text style={{ fontSize: 12, color: colors.primary, fontFamily: "Inter_500Medium", marginTop: -10, marginBottom: 10 }}>Custom: {h.bgColor}</Text>
                 )}
 
                 <Text style={styles.designLabel}>Logo</Text>
@@ -410,7 +410,7 @@ export default function MyQrDetailScreen() {
                   </View>
                   <View style={{ flexDirection: "row", alignItems: "center", gap: 5, backgroundColor: colors.primaryDim, borderRadius: 8, paddingHorizontal: 10, paddingVertical: 6, borderWidth: 1, borderColor: colors.primary + "30" }}>
                     <Ionicons name="shield-checkmark" size={13} color={colors.primary} />
-                    <Text style={{ fontSize: 11, fontFamily: "Inter_500Medium", color: colors.primary }}>Mandatory</Text>
+                    <Text style={{ fontSize: 12, fontFamily: "Inter_500Medium", color: colors.primary }}>Mandatory</Text>
                   </View>
                 </View>
 

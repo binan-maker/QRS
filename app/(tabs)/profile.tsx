@@ -452,7 +452,7 @@ function makeStyles(c: ReturnType<typeof import("@/contexts/ThemeContext").useTh
       borderWidth: 1, minHeight: 68, textAlignVertical: "top",
     },
     bioEditActions: { flexDirection: "row", alignItems: "center", gap: 6 },
-    bioCharCount: { flex: 1, fontSize: rf(11), fontFamily: "Inter_400Regular" },
+    bioCharCount: { flex: 1, fontSize: rf(12), fontFamily: "Inter_400Regular" },
 
     viewPublicBtn: {
       flexDirection: "row", alignItems: "center", gap: 10,
@@ -468,7 +468,7 @@ function makeStyles(c: ReturnType<typeof import("@/contexts/ThemeContext").useTh
     },
     statIconWrap: { width: 32, height: 32, borderRadius: 10, alignItems: "center", justifyContent: "center" },
     statValue: { fontSize: rf(22), fontFamily: "Inter_700Bold" },
-    statLabel: { fontSize: rf(10), fontFamily: "Inter_400Regular", textAlign: "center" },
+    statLabel: { fontSize: rf(12), fontFamily: "Inter_400Regular", textAlign: "center" },
 
     likesCard: {
       flexDirection: "row", alignItems: "center", gap: 14,
@@ -481,7 +481,7 @@ function makeStyles(c: ReturnType<typeof import("@/contexts/ThemeContext").useTh
     likesValue: { fontSize: rf(28), fontFamily: "Inter_700Bold" },
 
     sectionLabel: {
-      fontSize: rf(10), fontFamily: "Inter_700Bold",
+      fontSize: rf(11), fontFamily: "Inter_700Bold",
       textTransform: "uppercase", letterSpacing: 1.4,
       marginBottom: 10, marginTop: 2,
     },
@@ -504,20 +504,20 @@ function makeStyles(c: ReturnType<typeof import("@/contexts/ThemeContext").useTh
     },
     privacyCardIcon: { width: 34, height: 34, borderRadius: 11, alignItems: "center", justifyContent: "center" },
     privacyCardTitle: { fontSize: rf(14), fontFamily: "Inter_700Bold" },
-    privacyCardSub: { fontSize: rf(11), fontFamily: "Inter_400Regular", marginTop: 1 },
+    privacyCardSub: { fontSize: rf(12), fontFamily: "Inter_400Regular", marginTop: 1 },
     privacyRow: {
       flexDirection: "row", alignItems: "center", gap: 12,
       paddingHorizontal: 16, paddingVertical: 14,
     },
     privacyRowIcon: { width: 34, height: 34, borderRadius: 10, alignItems: "center", justifyContent: "center" },
     privacyRowLabel: { fontSize: rf(14), fontFamily: "Inter_600SemiBold" },
-    privacyRowSub: { fontSize: rf(11), fontFamily: "Inter_400Regular", marginTop: 1 },
+    privacyRowSub: { fontSize: rf(12), fontFamily: "Inter_400Regular", marginTop: 1 },
     privacyDivider: { height: StyleSheet.hairlineWidth, marginHorizontal: 16 },
 
     infoCard: { borderRadius: 18, borderWidth: 1, overflow: "hidden", marginBottom: 22 },
     infoRow: { flexDirection: "row", alignItems: "center", gap: 12, padding: 14 },
     infoIconWrap: { width: 36, height: 36, borderRadius: 11, alignItems: "center", justifyContent: "center" },
-    infoLabel: { fontSize: rf(11), fontFamily: "Inter_400Regular", marginBottom: 2 },
+    infoLabel: { fontSize: rf(12), fontFamily: "Inter_400Regular", marginBottom: 2 },
     infoValue: { fontSize: rf(14), fontFamily: "Inter_600SemiBold" },
     infoEditBtn: { width: 30, height: 30, borderRadius: 9, alignItems: "center", justifyContent: "center" },
     infoDivider: { height: StyleSheet.hairlineWidth, marginHorizontal: 14 },
@@ -525,7 +525,7 @@ function makeStyles(c: ReturnType<typeof import("@/contexts/ThemeContext").useTh
       flexDirection: "row", alignItems: "center", gap: 4,
       paddingHorizontal: 9, paddingVertical: 5, borderRadius: 100,
     },
-    verifiedText: { fontSize: rf(11), fontFamily: "Inter_600SemiBold" },
+    verifiedText: { fontSize: rf(12), fontFamily: "Inter_600SemiBold" },
 
     signOutBtn: { borderRadius: 18, overflow: "hidden", borderWidth: 1, marginBottom: 8 },
     signOutGradient: { flexDirection: "row", alignItems: "center", gap: 10, padding: 16, justifyContent: "center" },

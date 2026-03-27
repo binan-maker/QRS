@@ -90,7 +90,7 @@ export default function AccountManagementScreen() {
               <View style={styles.infoRow}>
                 <Ionicons name="shield-checkmark-outline" size={18} color={colors.textMuted} />
                 <Text style={[styles.infoKey, { color: colors.textSecondary }]}>Account ID</Text>
-                <Text style={[styles.infoVal, { color: colors.text, fontSize: 11, fontFamily: "Inter_400Regular" }]} numberOfLines={1}>{user.id}</Text>
+                <Text style={[styles.infoVal, { color: colors.text, fontSize: 12, fontFamily: "Inter_400Regular" }]} numberOfLines={1}>{user.id}</Text>
               </View>
             </View>
           </View>
@@ -163,16 +163,16 @@ const styles = StyleSheet.create({
   profileName: { fontSize: 16, fontFamily: "Inter_600SemiBold" },
   profileEmail: { fontSize: 13, fontFamily: "Inter_400Regular", marginTop: 2 },
   verifiedBadge: { alignItems: "center", gap: 3 },
-  verifiedText: { fontSize: 10, fontFamily: "Inter_500Medium" },
+  verifiedText: { fontSize: 12, fontFamily: "Inter_500Medium" },
   infoSection: { marginBottom: 24 },
-  infoLabel: { fontSize: 11, fontFamily: "Inter_600SemiBold", letterSpacing: 1, marginBottom: 10, paddingLeft: 4 },
+  infoLabel: { fontSize: 12, fontFamily: "Inter_600SemiBold", letterSpacing: 1, marginBottom: 10, paddingLeft: 4 },
   infoCard: { borderRadius: 16, borderWidth: 1, overflow: "hidden" },
   infoRow: { flexDirection: "row", alignItems: "center", gap: 12, padding: 14 },
   infoKey: { fontSize: 13, fontFamily: "Inter_500Medium", width: 110 },
   infoVal: { flex: 1, fontSize: 13, fontFamily: "Inter_600SemiBold", textAlign: "right" },
   infoDivider: { height: 1, marginLeft: 46 },
   dangerSection: { marginBottom: 20 },
-  dangerLabel: { fontSize: 11, fontFamily: "Inter_600SemiBold", letterSpacing: 1, marginBottom: 10, paddingLeft: 4 },
+  dangerLabel: { fontSize: 12, fontFamily: "Inter_600SemiBold", letterSpacing: 1, marginBottom: 10, paddingLeft: 4 },
   dangerCard: { borderRadius: 16, borderWidth: 1.5, overflow: "hidden" },
   dangerHeader: {
     flexDirection: "row", alignItems: "flex-start", gap: 12,

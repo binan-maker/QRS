@@ -100,7 +100,7 @@ const styles = StyleSheet.create({
   avatarText: { fontSize: 16, fontFamily: "Inter_700Bold", color: Colors.dark.text },
   name: { fontSize: 14, fontFamily: "Inter_600SemiBold", color: Colors.dark.text },
   username: { fontSize: 12, fontFamily: "Inter_400Regular", color: Colors.dark.primary, marginTop: 1 },
-  since: { fontSize: 11, fontFamily: "Inter_400Regular", color: Colors.dark.textMuted, marginTop: 2 },
+  since: { fontSize: 12, fontFamily: "Inter_400Regular", color: Colors.dark.textMuted, marginTop: 2 },
   closeBtn: {
     marginTop: 16, backgroundColor: Colors.dark.surfaceLight, borderRadius: 14,
     paddingVertical: 14, alignItems: "center",

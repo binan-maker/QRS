@@ -97,7 +97,7 @@ const styles = StyleSheet.create({
     alignItems: "center", justifyContent: "center", gap: 4, flexShrink: 0,
   },
   logoPreview: { width: 68, height: 68, borderRadius: 14 },
-  logoPickerText: { fontSize: 11, fontFamily: "Inter_500Medium" },
+  logoPickerText: { fontSize: 12, fontFamily: "Inter_500Medium" },
   logoOptions: { flex: 1, gap: 8 },
   positionBtn: {
     flexDirection: "row", alignItems: "center", gap: 8,
