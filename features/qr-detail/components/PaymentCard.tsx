@@ -1009,7 +1009,7 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   upiId: {
-    fontSize: 14,
+    fontSize: 13,
     fontFamily: "Inter_400Regular",
     flex: 1,
     letterSpacing: 0.2,
@@ -1028,7 +1028,7 @@ const styles = StyleSheet.create({
     marginBottom: 6,
   },
   bankName: {
-    fontSize: 13,
+    fontSize: 12,
     fontFamily: "Inter_400Regular",
   },
 

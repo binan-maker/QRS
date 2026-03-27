@@ -182,6 +182,7 @@ const CommentItem = React.memo(function CommentItem({
               <Pressable onPress={() => onLike(comment.id, "like")} style={styles.actionBtn}>
                 <View style={[styles.actionPill, { backgroundColor: isDark ? colors.surfaceLight : colors.background }]}>
                   <Ionicons
+                    key={`like-${comment.id}-${currentUserLike}`}
                     name={currentUserLike === "like" ? "thumbs-up" : "thumbs-up-outline"}
                     size={13}
                     color={currentUserLike === "like" ? colors.primary : colors.textMuted}
@@ -198,6 +199,7 @@ const CommentItem = React.memo(function CommentItem({
               <Pressable onPress={() => onLike(comment.id, "dislike")} style={styles.actionBtn}>
                 <View style={[styles.actionPill, { backgroundColor: isDark ? colors.surfaceLight : colors.background }]}>
                   <Ionicons
+                    key={`dislike-${comment.id}-${currentUserLike}`}
                     name={currentUserLike === "dislike" ? "thumbs-down" : "thumbs-down-outline"}
                     size={13}
                     color={currentUserLike === "dislike" ? colors.danger : colors.textMuted}
@@ -314,14 +316,14 @@ const styles = StyleSheet.create({
   commentBody: { flex: 1, gap: 5 },
   commentHeader: { flexDirection: "row", alignItems: "center", gap: 6 },
   authorPressable: { flex: 1, minWidth: 0 },
-  authorName: { fontSize: 14, fontFamily: "Inter_700Bold" },
-  commentTime: { fontSize: 12, fontFamily: "Inter_400Regular", flexShrink: 0 },
-  readMoreText: { fontSize: 14, fontFamily: "Inter_600SemiBold" },
+  authorName: { fontSize: 13, fontFamily: "Inter_700Bold" },
+  commentTime: { fontSize: 11, fontFamily: "Inter_400Regular", flexShrink: 0 },
+  readMoreText: { fontSize: 13, fontFamily: "Inter_600SemiBold" },
   sensitiveTag: {
     paddingHorizontal: 5, paddingVertical: 2, borderRadius: 5,
   },
   menuBtn: { padding: 2 },
-  commentText: { fontSize: 15, fontFamily: "Inter_400Regular", lineHeight: 22 },
+  commentText: { fontSize: 14, fontFamily: "Inter_400Regular", lineHeight: 21 },
   actionRow: { flexDirection: "row", alignItems: "center", gap: 6, marginTop: 4 },
   actionBtn: {},
   actionPill: {

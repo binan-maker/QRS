@@ -52,6 +52,10 @@ export function useQrComments(id: string, userId: string | null, offlineMode: bo
 
   const lastCommentRef = useRef<any>(undefined);
   const commentInputRef = useRef<any>(null);
+  // Debounce: track server-committed like state, pending final state, and timers
+  const committedLikesRef = useRef<Record<string, "like" | "dislike" | null>>({});
+  const pendingFinalLikeRef = useRef<Record<string, "like" | "dislike" | null>>({});
+  const likeTimersRef = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
   const scrollRef = useRef<any>(null);
 
   // Optimistic state: comments added locally but not yet confirmed by Firestore
@@ -119,6 +123,12 @@ export function useQrComments(id: string, userId: string | null, offlineMode: bo
     const ids = commentsList.map((c) => c.id);
     getCommentUserLikes(id, ids, userId).then((likes) => {
       setUserLikes((prev) => ({ ...prev, ...likes }));
+      // Seed committedLikesRef with server truth (only for IDs not currently pending)
+      Object.entries(likes).forEach(([cid, val]) => {
+        if (!likeTimersRef.current.has(cid)) {
+          committedLikesRef.current[cid] = val;
+        }
+      });
     });
   }, [commentsList, userId, id]);
 
@@ -246,8 +256,10 @@ export function useQrComments(id: string, userId: string | null, offlineMode: bo
     }
   }
 
-  async function handleCommentLike(commentId: string, action: "like" | "dislike") {
+  function handleCommentLike(commentId: string, action: "like" | "dislike") {
     if (!userId) { router.push("/(auth)/login"); return; }
+
+    // --- Instant optimistic UI update ---
     const prevLike = userLikes[commentId] ?? null;
     const newLike: "like" | "dislike" | null = prevLike === action ? null : action;
     setUserLikes((prev) => {
@@ -272,12 +284,39 @@ export function useQrComments(id: string, userId: string | null, offlineMode: bo
       })
     );
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    try {
-      const data = await toggleCommentLike(id, commentId, userId, action === "like");
-      setCommentsList((prev) =>
-        prev.map((c) => c.id !== commentId ? c : { ...c, likeCount: data.likes, dislikeCount: data.dislikes })
-      );
-    } catch {}
+
+    // --- Debounce: track desired final state and delay API call ---
+    pendingFinalLikeRef.current[commentId] = newLike;
+
+    const existingTimer = likeTimersRef.current.get(commentId);
+    if (existingTimer) clearTimeout(existingTimer);
+
+    const capturedUserId = userId;
+    const timer = setTimeout(async () => {
+      likeTimersRef.current.delete(commentId);
+      const desired = pendingFinalLikeRef.current[commentId] ?? null;
+      delete pendingFinalLikeRef.current[commentId];
+      const committed = committedLikesRef.current[commentId] ?? null;
+
+      // Skip API if server already reflects the desired state
+      if (desired === committed) return;
+
+      // Determine isLike flag:
+      // - desired="like"     → send like
+      // - desired="dislike"  → send dislike
+      // - desired=null       → toggle off whatever server currently has
+      const isLike = desired !== null ? desired === "like" : committed === "like";
+
+      try {
+        const data = await toggleCommentLike(id, commentId, capturedUserId, isLike);
+        committedLikesRef.current[commentId] = desired;
+        setCommentsList((prev) =>
+          prev.map((c) => c.id !== commentId ? c : { ...c, likeCount: data.likes, dislikeCount: data.dislikes })
+        );
+      } catch {}
+    }, 600);
+
+    likeTimersRef.current.set(commentId, timer);
   }
 
   async function handleCommentReport(commentId: string, reason: string) {

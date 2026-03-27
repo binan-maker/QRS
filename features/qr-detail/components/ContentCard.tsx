@@ -284,7 +284,7 @@ const styles = StyleSheet.create({
     borderRadius: 12, paddingHorizontal: 14, paddingVertical: 12, borderWidth: 1,
   },
   urlText: { flex: 1, fontSize: 14, fontFamily: "Inter_500Medium" },
-  contentText: { fontSize: 15, fontFamily: "Inter_400Regular", lineHeight: 23, letterSpacing: 0.2 },
+  contentText: { fontSize: 14, fontFamily: "Inter_400Regular", lineHeight: 22, letterSpacing: 0.2 },
   expandBtn: { alignSelf: "flex-start" },
   expandBtnText: { fontSize: 13, fontFamily: "Inter_600SemiBold" },
   infoGrid: {
@@ -292,7 +292,7 @@ const styles = StyleSheet.create({
   },
   infoRow: { flexDirection: "row", alignItems: "flex-start", justifyContent: "space-between", gap: 8 },
   infoLabel: { fontSize: 13, fontFamily: "Inter_700Bold", minWidth: 72, letterSpacing: 0.3 },
-  infoValue: { fontSize: 15, fontFamily: "Inter_500Medium", flex: 1, textAlign: "right" },
+  infoValue: { fontSize: 14, fontFamily: "Inter_500Medium", flex: 1, textAlign: "right" },
   actionRow: { flexDirection: "row", alignItems: "center", gap: 10 },
   openBtn: {
     flexDirection: "row", alignItems: "center", justifyContent: "center",

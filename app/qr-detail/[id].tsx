@@ -316,15 +316,22 @@ export default function QrDetailScreen() {
             </Animated.View>
 
             {/* ── Payment Safety Warning (above trust score for payments) ──── */}
-            {currentContentType === "payment" && q.paymentSafety?.isSuspicious && (
-              <Animated.View entering={FadeInDown.duration(300).delay(75)}>
-                <SafetyWarningCard
-                  riskLevel={q.paymentSafety.riskLevel as "caution" | "dangerous"}
-                  warnings={q.paymentSafety.warnings}
-                  title={q.paymentSafety.riskLevel === "dangerous" ? "Payment Security Warning" : "Payment Security Notice"}
-                />
-              </Animated.View>
-            )}
+            {currentContentType === "payment" && q.paymentSafety?.isSuspicious && (() => {
+              // Filter out pre-filled amount warnings — the PaymentCard already shows the amount chip inline
+              const filteredWarnings = (q.paymentSafety?.warnings ?? []).filter(
+                (w) => !w.toLowerCase().startsWith("pre-filled amount")
+              );
+              if (filteredWarnings.length === 0) return null;
+              return (
+                <Animated.View entering={FadeInDown.duration(300).delay(75)}>
+                  <SafetyWarningCard
+                    riskLevel={q.paymentSafety!.riskLevel as "caution" | "dangerous"}
+                    warnings={filteredWarnings}
+                    title={q.paymentSafety!.riskLevel === "dangerous" ? "Payment Security Warning" : "Payment Security Notice"}
+                  />
+                </Animated.View>
+              );
+            })()}
 
             {/* ── Community Trust ──────────────────────────────────────────── */}
             <Animated.View entering={FadeInDown.duration(400).delay(80)}>
