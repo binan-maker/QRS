@@ -97,15 +97,21 @@ export default function ForgotPasswordScreen() {
         top: -100, right: -100, width: 280, height: 280,
       }]} />
 
+      {/* Status bar solid cover */}
+      <View style={{ position: "absolute", top: 0, left: 0, right: 0, height: insets.top, backgroundColor: colors.background, zIndex: 10 }} />
+
       <KeyboardAvoidingView
         style={{ flex: 1 }}
         behavior={Platform.OS === "ios" ? "padding" : "height"}
         keyboardVerticalOffset={0}
       >
         <ScrollView
-          contentContainerStyle={[styles.container, { paddingBottom: insets.bottom + 32, paddingTop: insets.top + 16, paddingHorizontal: px }]}
+          contentContainerStyle={[styles.container, { paddingBottom: insets.bottom + 32, paddingTop: insets.top + 14, paddingHorizontal: px }]}
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
+          bounces={false}
+          overScrollMode="never"
+          style={{ backgroundColor: colors.background }}
         >
           <View style={[styles.heroSection, { paddingTop: isSmallScreen ? 12 : Math.round(24 * scale), paddingBottom: isSmallScreen ? 16 : Math.round(28 * scale) }]}>
             <View style={[styles.iconWrap, { marginBottom: isSmallScreen ? 6 : 10 }]}>

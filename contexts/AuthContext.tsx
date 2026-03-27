@@ -188,19 +188,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setToken(idToken);
     } catch (e: any) {
       if (e.code === "auth/email-not-verified") throw e;
-      const code = e?.code ?? "";
-      if (code === "auth/invalid-credential" || code === "auth/wrong-password") {
-        try {
-          const exists = await authAdapter.checkEmailExists(email);
-          if (!exists) {
-            const err = new Error("No account found with this email. Please sign up first.") as any;
-            err.code = "auth/user-not-found";
-            throw err;
-          }
-        } catch (innerErr: any) {
-          if (innerErr.code === "auth/user-not-found") throw innerErr;
-        }
-      }
       throw mapFirebaseError(e);
     }
   }

@@ -137,9 +137,12 @@ export default function RegisterScreen() {
         bottom: 60, right: -100, width: 280, height: 280,
       }]} />
 
+      {/* Status bar solid cover */}
+      <View style={{ position: "absolute", top: 0, left: 0, right: 0, height: insets.top, backgroundColor: colors.background, zIndex: 10 }} />
+
       <Pressable
         onPress={() => router.canDismiss() ? router.dismiss() : router.replace("/(tabs)")}
-        style={[styles.closeBtn, { top: insets.top + 12, backgroundColor: colors.surfaceLight, borderColor: colors.surfaceBorder }]}
+        style={[styles.closeBtn, { top: insets.top + 10, backgroundColor: colors.surfaceLight, borderColor: colors.surfaceBorder }]}
         hitSlop={10}
       >
         <Ionicons name="close" size={20} color={colors.textSecondary} />
@@ -151,9 +154,12 @@ export default function RegisterScreen() {
         keyboardVerticalOffset={0}
       >
         <ScrollView
-          contentContainerStyle={[styles.container, { paddingBottom: insets.bottom + 32, paddingTop: insets.top + 16, paddingHorizontal: px }]}
+          contentContainerStyle={[styles.container, { paddingBottom: insets.bottom + 32, paddingTop: insets.top + 14, paddingHorizontal: px }]}
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
+          bounces={false}
+          overScrollMode="never"
+          style={{ backgroundColor: colors.background }}
         >
           <View style={[styles.heroSection, { paddingTop: heroPadTop, paddingBottom: heroPadBottom }]}>
             <View style={[styles.logoWrap, { marginBottom: isSmallScreen ? 4 : 8 }]}>

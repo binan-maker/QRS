@@ -1,4 +1,4 @@
-import { View, Text, Pressable, ScrollView, Platform, Switch } from "react-native";
+import { View, Text, Pressable, ScrollView, Platform, Switch, useWindowDimensions, StyleSheet } from "react-native";
 import { router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -13,7 +13,6 @@ import FeedbackSection from "@/features/settings/components/FeedbackSection";
 import FollowingSection from "@/features/settings/components/FollowingSection";
 import CommentsSection from "@/features/settings/components/CommentsSection";
 import HistorySection from "@/features/settings/components/HistorySection";
-import { StyleSheet } from "react-native";
 
 const SECTION_TITLES: Record<string, string> = {
   account: "Account Management",
@@ -36,8 +35,9 @@ export default function SettingsScreen() {
   const insets = useSafeAreaInsets();
   const topInset = Platform.OS === "web" ? 67 : insets.top;
   const { colors, mode, setMode } = useTheme();
-  const styles = makeSettingsStyles(colors);
-  const localStyles = makeLocalStyles(colors);
+  const { width } = useWindowDimensions();
+  const styles = makeSettingsStyles(colors, width);
+  const localStyles = makeLocalStyles(colors, width);
 
   const {
     user, section, setSection,
@@ -329,32 +329,35 @@ export default function SettingsScreen() {
   );
 }
 
-function makeLocalStyles(c: ReturnType<typeof import("@/contexts/ThemeContext").useTheme>["colors"]) {
+function makeLocalStyles(c: ReturnType<typeof import("@/contexts/ThemeContext").useTheme>["colors"], width = 390) {
+  const s = Math.min(Math.max(width / 390, 0.82), 1.15);
+  const rf = (size: number) => Math.round(size * s);
+  const sp = (v: number) => Math.round(v * s);
   return StyleSheet.create({
     verifiedPill: {
       flexDirection: "row", alignItems: "center", gap: 4,
-      paddingHorizontal: 8, paddingVertical: 4, borderRadius: 10, borderWidth: 1,
+      paddingHorizontal: sp(8), paddingVertical: sp(4), borderRadius: sp(10), borderWidth: 1,
     },
-    verifiedPillText: { fontSize: 11, fontFamily: "Inter_600SemiBold" },
-    appearanceLabel: { fontSize: 13, fontFamily: "Inter_600SemiBold", marginBottom: 12 },
-    themeRow: { flexDirection: "row", gap: 10 },
+    verifiedPillText: { fontSize: rf(11), fontFamily: "Inter_600SemiBold" },
+    appearanceLabel: { fontSize: rf(13), fontFamily: "Inter_600SemiBold", marginBottom: sp(12) },
+    themeRow: { flexDirection: "row", gap: sp(10) },
     themeBtn: {
       flex: 1, alignItems: "center", justifyContent: "center",
-      gap: 6, paddingVertical: 14, borderRadius: 14, borderWidth: 1.5,
+      gap: sp(6), paddingVertical: sp(14), borderRadius: sp(14), borderWidth: 1.5,
       position: "relative",
     },
-    themeBtnText: { fontSize: 12, fontFamily: "Inter_600SemiBold" },
-    activeIndicator: { position: "absolute", bottom: 6, width: 18, height: 3, borderRadius: 2 },
-    hapticsDivider: { height: 1, backgroundColor: c.surfaceBorder, marginTop: 16, marginBottom: 16 },
+    themeBtnText: { fontSize: rf(12), fontFamily: "Inter_600SemiBold" },
+    activeIndicator: { position: "absolute", bottom: 6, width: sp(18), height: 3, borderRadius: 2 },
+    hapticsDivider: { height: 1, backgroundColor: c.surfaceBorder, marginTop: sp(16), marginBottom: sp(16) },
     hapticsRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
     hapticsLeft: { flexDirection: "row", alignItems: "center", flex: 1 },
-    hapticsIcon: { width: 38, height: 38, borderRadius: 12, alignItems: "center", justifyContent: "center" },
-    hapticsLabel: { fontSize: 14, fontFamily: "Inter_600SemiBold" },
-    hapticsSub: { fontSize: 12, fontFamily: "Inter_400Regular", marginTop: 1 },
-    footer: { alignItems: "center", gap: 8, paddingTop: 8, paddingBottom: 12, paddingHorizontal: 24 },
-    footerBadge: { borderRadius: 12, paddingHorizontal: 14, paddingVertical: 6 },
-    footerBadgeText: { fontSize: 12, fontFamily: "Inter_700Bold", color: "#fff", letterSpacing: 0.5 },
-    footerTagline: { fontSize: 12, fontFamily: "Inter_500Medium" },
-    footerDisclaimer: { fontSize: 11, fontFamily: "Inter_400Regular", textAlign: "center", lineHeight: 16 },
+    hapticsIcon: { width: sp(38), height: sp(38), borderRadius: sp(12), alignItems: "center", justifyContent: "center" },
+    hapticsLabel: { fontSize: rf(14), fontFamily: "Inter_600SemiBold" },
+    hapticsSub: { fontSize: rf(12), fontFamily: "Inter_400Regular", marginTop: 1 },
+    footer: { alignItems: "center", gap: sp(8), paddingTop: sp(8), paddingBottom: sp(12), paddingHorizontal: sp(24) },
+    footerBadge: { borderRadius: sp(12), paddingHorizontal: sp(14), paddingVertical: sp(6) },
+    footerBadgeText: { fontSize: rf(12), fontFamily: "Inter_700Bold", color: "#fff", letterSpacing: 0.5 },
+    footerTagline: { fontSize: rf(12), fontFamily: "Inter_500Medium" },
+    footerDisclaimer: { fontSize: rf(11), fontFamily: "Inter_400Regular", textAlign: "center", lineHeight: Math.round(16 * s) },
   });
 }

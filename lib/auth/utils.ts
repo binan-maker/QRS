@@ -4,7 +4,7 @@ export function getAuthErrorMessage(code: string): string {
   switch (code) {
     case "auth/wrong-password":
     case "auth/invalid-credential":
-      return "Incorrect password. Please try again.";
+      return "Incorrect email or password. Please try again.";
     case "auth/user-not-found":
       return "No account found with this email. Please sign up first.";
     case "auth/invalid-email":

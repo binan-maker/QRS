@@ -36,14 +36,13 @@ export default function LoginScreen() {
   const [unverifiedEmail, setUnverifiedEmail] = useState(false);
 
   const scale = Math.min(Math.max(width / 390, 0.82), 1.15);
+  const sp = (v: number) => Math.round(v * scale);
   const isSmallScreen = height < 680;
   const isNarrow = width < 360;
-  const px = isNarrow ? 16 : Math.round(22 * scale);
+  const px = isNarrow ? 14 : sp(22);
 
   useEffect(() => {
-    if (user) {
-      router.replace("/(tabs)");
-    }
+    if (user) router.replace("/(tabs)");
   }, [user]);
 
   useEffect(() => {
@@ -88,49 +87,49 @@ export default function LoginScreen() {
     }
   }
 
-  const logoSize = Math.round(Math.min(76 * scale, 88));
+  const logoSize = sp(Math.min(76, 88));
   const logoRadius = Math.round(logoSize * 0.33);
-  const iconSize = Math.round(28 * scale);
-  const titleSize = Math.round(Math.min(30 * scale, 34));
-  const subtitleSize = Math.round(Math.min(14 * scale, 16));
-  const btnTextSize = Math.round(Math.min(15 * scale, 17));
-  const cardPadding = Math.round(Math.min(22 * scale, 28));
-  const heroPadTop = isSmallScreen ? 12 : Math.round(20 * scale);
-  const heroPadBottom = isSmallScreen ? 16 : Math.round(28 * scale);
+  const iconSize = sp(28);
+  const titleSize = sp(Math.min(30, 34));
+  const subtitleSize = sp(Math.min(14, 16));
+  const btnTextSize = sp(Math.min(15, 17));
+  const cardPadding = sp(Math.min(22, 28));
+  const heroPadTop = isSmallScreen ? 10 : sp(18);
+  const heroPadBottom = isSmallScreen ? 14 : sp(26);
 
   const isUserNotFound = errorCode === "auth/user-not-found";
+  const bannerBg = unverifiedEmail ? colors.warningDim : isUserNotFound ? colors.primaryDim : colors.dangerDim;
+  const bannerBorder = unverifiedEmail ? colors.warning + "40" : isUserNotFound ? colors.primary + "40" : colors.danger + "40";
+  const bannerColor = unverifiedEmail ? colors.warning : isUserNotFound ? colors.primary : colors.danger;
+  const bannerIcon = unverifiedEmail ? "mail-unread-outline" : isUserNotFound ? "person-add-outline" : "alert-circle";
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.background }}>
-      <View style={[styles.glowOrb, {
-        backgroundColor: colors.primaryDim,
-        top: -80, right: -80, width: 260, height: 260,
-      }]} />
-      <View style={[styles.glowOrb, {
-        backgroundColor: colors.primaryDim,
-        bottom: 40, left: -100, width: 280, height: 280,
-      }]} />
+      <View style={[styles.glowOrb, { backgroundColor: colors.primaryDim, top: -80, right: -80, width: 260, height: 260 }]} />
+      <View style={[styles.glowOrb, { backgroundColor: colors.primaryDim, bottom: 40, left: -100, width: 280, height: 280 }]} />
+
+      {/* Status bar solid cover — prevents transparency on overscroll */}
+      <View style={{ position: "absolute", top: 0, left: 0, right: 0, height: insets.top, backgroundColor: colors.background, zIndex: 10 }} />
 
       <Pressable
         onPress={() => router.canDismiss() ? router.dismiss() : router.replace("/(tabs)")}
-        style={[styles.closeBtn, { top: insets.top + 12, backgroundColor: colors.surfaceLight, borderColor: colors.surfaceBorder }]}
+        style={[styles.closeBtn, { top: insets.top + 10, backgroundColor: colors.surfaceLight, borderColor: colors.surfaceBorder }]}
         hitSlop={10}
       >
         <Ionicons name="close" size={20} color={colors.textSecondary} />
       </Pressable>
 
-      <KeyboardAvoidingView
-        style={{ flex: 1 }}
-        behavior={Platform.OS === "ios" ? "padding" : "height"}
-        keyboardVerticalOffset={0}
-      >
+      <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === "ios" ? "padding" : "height"} keyboardVerticalOffset={0}>
         <ScrollView
-          contentContainerStyle={[styles.container, { paddingBottom: insets.bottom + 32, paddingTop: insets.top + 16, paddingHorizontal: px }]}
+          contentContainerStyle={[styles.container, { paddingBottom: insets.bottom + 32, paddingTop: insets.top + 14, paddingHorizontal: px }]}
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
+          bounces={false}
+          overScrollMode="never"
+          style={{ backgroundColor: colors.background }}
         >
           <View style={[styles.heroSection, { paddingTop: heroPadTop, paddingBottom: heroPadBottom }]}>
-            <View style={[styles.logoWrap, { marginBottom: isSmallScreen ? 6 : 10 }]}>
+            <View style={[styles.logoWrap, { marginBottom: isSmallScreen ? 4 : 8 }]}>
               <View style={[styles.logoBox, { width: logoSize, height: logoSize, borderRadius: logoRadius, backgroundColor: colors.primary }]}>
                 <Ionicons name="shield-checkmark" size={iconSize} color="#fff" />
               </View>
@@ -141,7 +140,7 @@ export default function LoginScreen() {
                 </>
               )}
             </View>
-            <Text style={[styles.appLabel, { color: colors.primary, fontSize: Math.round(11 * scale) }]}>QR GUARD</Text>
+            <Text style={[styles.appLabel, { color: colors.primary, fontSize: sp(11) }]}>QR GUARD</Text>
             <Text style={[styles.title, { color: colors.text, fontSize: titleSize }]}>Welcome back</Text>
             <Text style={[styles.subtitle, { color: colors.textSecondary, fontSize: subtitleSize }]}>
               Sign in to unlock full QR scanning features
@@ -154,30 +153,23 @@ export default function LoginScreen() {
             padding: cardPadding,
           }]}>
             {error ? (
-              <View style={[styles.errorBanner, {
-                backgroundColor: unverifiedEmail ? colors.warningDim : isUserNotFound ? colors.primaryDim : colors.dangerDim,
-                borderColor: unverifiedEmail ? colors.warning + "40" : isUserNotFound ? colors.primary + "40" : colors.danger + "40",
-                marginBottom: 14,
-              }]}>
-                <Ionicons
-                  name={unverifiedEmail ? "mail-unread-outline" : isUserNotFound ? "person-add-outline" : "alert-circle"}
-                  size={15}
-                  color={unverifiedEmail ? colors.warning : isUserNotFound ? colors.primary : colors.danger}
-                />
-                <View style={{ flex: 1, gap: 4 }}>
-                  <Text style={[styles.errorText, { color: unverifiedEmail ? colors.warning : isUserNotFound ? colors.primary : colors.danger, fontSize: Math.round(13 * scale) }]}>{error}</Text>
-                  {isUserNotFound && (
-                    <Pressable onPress={() => router.replace("/(auth)/register")} hitSlop={6}>
-                      <Text style={[styles.errorLink, { color: colors.primary, fontSize: Math.round(12 * scale) }]}>
-                        Create an account →
-                      </Text>
-                    </Pressable>
-                  )}
+              <View style={[styles.errorBanner, { backgroundColor: bannerBg, borderColor: bannerBorder, marginBottom: sp(14) }]}>
+                <View style={styles.errorRow}>
+                  <Ionicons name={bannerIcon} size={16} color={bannerColor} />
+                  <Text style={[styles.errorText, { color: bannerColor, fontSize: sp(13) }]}>{error}</Text>
                 </View>
+                {isUserNotFound && (
+                  <Pressable onPress={() => router.replace("/(auth)/register")} hitSlop={6} style={styles.errorLinkBtn}>
+                    <Ionicons name="arrow-forward-circle-outline" size={14} color={colors.primary} />
+                    <Text style={[styles.errorLink, { color: colors.primary, fontSize: sp(12) }]}>
+                      Create an account
+                    </Text>
+                  </Pressable>
+                )}
               </View>
             ) : null}
 
-            <View style={[styles.fieldsSection, { gap: Math.round(10 * scale) }]}>
+            <View style={[styles.fieldsSection, { gap: sp(10) }]}>
               <AuthFormInput
                 icon="mail-outline"
                 placeholder="Email address"
@@ -188,7 +180,6 @@ export default function LoginScreen() {
                 autoCorrect={false}
                 error={fieldErrors.email}
               />
-
               <View>
                 <AuthFormInput
                   icon="lock-closed-outline"
@@ -203,7 +194,7 @@ export default function LoginScreen() {
                 />
                 <Link href="/(auth)/forgot-password" asChild>
                   <Pressable style={styles.forgotBtn}>
-                    <Text style={[styles.forgotText, { color: colors.primary, fontSize: Math.round(12 * scale) }]}>Forgot Password?</Text>
+                    <Text style={[styles.forgotText, { color: colors.primary, fontSize: sp(12) }]}>Forgot Password?</Text>
                   </Pressable>
                 </Link>
               </View>
@@ -213,23 +204,21 @@ export default function LoginScreen() {
                 disabled={loading}
                 style={({ pressed }) => [
                   styles.primaryBtn,
-                  { backgroundColor: colors.primary, paddingVertical: Math.round(15 * scale), opacity: pressed || loading ? 0.88 : 1, transform: [{ scale: pressed ? 0.98 : 1 }] },
+                  { backgroundColor: colors.primary, paddingVertical: sp(15), opacity: pressed || loading ? 0.88 : 1, transform: [{ scale: pressed ? 0.98 : 1 }] },
                 ]}
               >
-                {loading ? (
-                  <ActivityIndicator color="#fff" />
-                ) : (
+                {loading ? <ActivityIndicator color="#fff" /> : (
                   <>
                     <Text style={[styles.primaryBtnText, { fontSize: btnTextSize }]}>Sign In</Text>
-                    <Ionicons name="arrow-forward" size={Math.round(16 * scale)} color="#fff" />
+                    <Ionicons name="arrow-forward" size={sp(16)} color="#fff" />
                   </>
                 )}
               </Pressable>
             </View>
 
-            <View style={[styles.dividerRow, { marginVertical: Math.round(16 * scale) }]}>
+            <View style={[styles.dividerRow, { marginVertical: sp(16) }]}>
               <View style={[styles.dividerLine, { backgroundColor: colors.surfaceBorder }]} />
-              <Text style={[styles.dividerText, { color: colors.textMuted, fontSize: Math.round(12 * scale) }]}>or</Text>
+              <Text style={[styles.dividerText, { color: colors.textMuted, fontSize: sp(12) }]}>or</Text>
               <View style={[styles.dividerLine, { backgroundColor: colors.surfaceBorder }]} />
             </View>
 
@@ -243,26 +232,24 @@ export default function LoginScreen() {
                   borderColor: colors.surfaceBorder,
                   opacity: pressed || googleLoading ? 0.7 : 1,
                   transform: [{ scale: pressed ? 0.98 : 1 }],
-                  paddingVertical: Math.round(13 * scale),
+                  paddingVertical: sp(13),
                 },
               ]}
             >
-              {googleLoading ? (
-                <ActivityIndicator color={colors.text} size="small" />
-              ) : (
+              {googleLoading ? <ActivityIndicator color={colors.text} size="small" /> : (
                 <>
-                  <GoogleIcon size={Math.round(19 * scale)} />
-                  <Text style={[styles.googleBtnText, { color: colors.text, fontSize: Math.round(14 * scale) }]}>Continue with Google</Text>
+                  <GoogleIcon size={sp(19)} />
+                  <Text style={[styles.googleBtnText, { color: colors.text, fontSize: sp(14) }]}>Continue with Google</Text>
                 </>
               )}
             </Pressable>
           </View>
 
-          <View style={[styles.footer, { marginTop: Math.round(20 * scale) }]}>
-            <Text style={[styles.footerText, { color: colors.textSecondary, fontSize: Math.round(13 * scale) }]}>Don't have an account?</Text>
+          <View style={[styles.footer, { marginTop: sp(20) }]}>
+            <Text style={[styles.footerText, { color: colors.textSecondary, fontSize: sp(13) }]}>Don't have an account?</Text>
             <Link href="/(auth)/register" asChild>
               <Pressable>
-                <Text style={[styles.footerLink, { color: colors.primary, fontSize: Math.round(13 * scale) }]}>Sign Up</Text>
+                <Text style={[styles.footerLink, { color: colors.primary, fontSize: sp(13) }]}>Sign Up</Text>
               </Pressable>
             </Link>
           </View>
@@ -286,12 +273,11 @@ const styles = StyleSheet.create({
   container: { flexGrow: 1 },
   glowOrb: { position: "absolute", borderRadius: 200 },
   closeBtn: {
-    position: "absolute", right: 16, zIndex: 10,
+    position: "absolute", right: 16, zIndex: 20,
     width: 36, height: 36, borderRadius: 18,
-    alignItems: "center", justifyContent: "center",
-    borderWidth: 1,
+    alignItems: "center", justifyContent: "center", borderWidth: 1,
   },
-  heroSection: { alignItems: "center", gap: 8 },
+  heroSection: { alignItems: "center", gap: 7 },
   logoWrap: { alignItems: "center", justifyContent: "center" },
   logoBox: { alignItems: "center", justifyContent: "center" },
   logoRing: { position: "absolute", borderWidth: 1.5 },
@@ -301,17 +287,15 @@ const styles = StyleSheet.create({
   subtitle: { fontFamily: "Inter_400Regular", textAlign: "center", lineHeight: 21, maxWidth: 300 },
   card: {
     borderRadius: 24, borderWidth: 1,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.1,
-    shadowRadius: 20,
-    elevation: 6,
+    shadowColor: "#000", shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.1, shadowRadius: 20, elevation: 6,
   },
   errorBanner: {
-    flexDirection: "row", alignItems: "flex-start", gap: 10,
-    padding: 12, borderRadius: 14, borderWidth: 1,
+    padding: 12, borderRadius: 14, borderWidth: 1, gap: 8,
   },
-  errorText: { fontFamily: "Inter_500Medium" },
+  errorRow: { flexDirection: "row", alignItems: "center", gap: 8 },
+  errorText: { fontFamily: "Inter_500Medium", flex: 1, lineHeight: 19 },
+  errorLinkBtn: { flexDirection: "row", alignItems: "center", gap: 6, paddingLeft: 24 },
   errorLink: { fontFamily: "Inter_600SemiBold" },
   fieldsSection: {},
   forgotBtn: { alignSelf: "flex-end", marginTop: 8, paddingVertical: 2 },
@@ -332,15 +316,11 @@ const styles = StyleSheet.create({
   footer: { flexDirection: "row", justifyContent: "center", gap: 6 },
   footerText: { fontFamily: "Inter_400Regular" },
   footerLink: { fontFamily: "Inter_700Bold" },
-  overlayBg: {
-    flex: 1, backgroundColor: "rgba(0,0,0,0.55)",
-    alignItems: "center", justifyContent: "center",
-  },
+  overlayBg: { flex: 1, backgroundColor: "rgba(0,0,0,0.55)", alignItems: "center", justifyContent: "center" },
   overlayCard: {
     alignItems: "center", gap: 14, paddingVertical: 36, paddingHorizontal: 40,
-    borderRadius: 24, borderWidth: 1,
+    borderRadius: 24, borderWidth: 1, minWidth: 220,
     shadowColor: "#000", shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.18, shadowRadius: 24, elevation: 12,
-    minWidth: 220,
   },
   overlayText: { fontFamily: "Inter_700Bold", fontSize: 16, textAlign: "center" },
   overlaySubText: { fontFamily: "Inter_400Regular", fontSize: 13, textAlign: "center" },
