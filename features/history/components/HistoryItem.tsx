@@ -150,25 +150,26 @@ const HistoryItem = React.memo(function HistoryItem({ item, risk, onDelete: _onD
           <Text
             style={[styles.content, { color: colors.text }]}
             numberOfLines={1}
+            maxFontSizeMultiplier={1}
           >
             {paymentData ? paymentData.name : displayLabel}
           </Text>
           {formattedAmount && (
-            <Text style={[styles.amount, { color: colors.warning }]}>
+            <Text style={[styles.amount, { color: colors.warning }]} maxFontSizeMultiplier={1}>
               {formattedAmount}
             </Text>
           )}
         </View>
 
         {paymentData && !formattedAmount && (
-          <Text style={[styles.subText, { color: colors.textMuted }]} numberOfLines={1}>
+          <Text style={[styles.subText, { color: colors.textMuted }]} numberOfLines={1} maxFontSizeMultiplier={1}>
             {paymentData.raw}
           </Text>
         )}
 
         <View style={styles.metaRow}>
           <View style={[styles.typeBadge, { backgroundColor: iconColor + "18", borderColor: iconColor + "35" }]}>
-            <Text style={[styles.typeBadgeText, { color: iconColor }]}>
+            <Text style={[styles.typeBadgeText, { color: iconColor }]} maxFontSizeMultiplier={1}>
               {isFavorite ? "Favorite" : meta.label}
             </Text>
           </View>
@@ -176,7 +177,7 @@ const HistoryItem = React.memo(function HistoryItem({ item, risk, onDelete: _onD
           {showRisk && (
             <View style={[styles.riskBadge, { backgroundColor: riskCfg.color + "20", borderColor: riskCfg.color + "40" }]}>
               <Ionicons name={riskCfg.icon} size={9} color={riskCfg.color} />
-              <Text style={[styles.riskText, { color: riskCfg.color }]}>
+              <Text style={[styles.riskText, { color: riskCfg.color }]} maxFontSizeMultiplier={1}>
                 {riskCfg.label}
               </Text>
             </View>
@@ -193,7 +194,7 @@ const HistoryItem = React.memo(function HistoryItem({ item, risk, onDelete: _onD
       </View>
 
       <View style={styles.right}>
-        <Text style={[styles.time, { color: colors.textMuted }]}>
+        <Text style={[styles.time, { color: colors.textMuted }]} maxFontSizeMultiplier={1}>
           {formatRelativeTime(item.scannedAt)}
         </Text>
         {item.qrCodeId ? (

@@ -149,7 +149,7 @@ export default function HomeScreen() {
                 <View style={styles.heroPillRow}>
                   {["Safe check", "Fraud detect", "Trust score"].map((t) => (
                     <View key={t} style={[styles.heroPill, { backgroundColor: colors.primary + "18", borderColor: colors.primary + "30" }]}>
-                      <Text style={[styles.heroPillText, { color: colors.primary }]}>{t}</Text>
+                      <Text style={[styles.heroPillText, { color: colors.primary }]} maxFontSizeMultiplier={1} numberOfLines={1}>{t}</Text>
                     </View>
                   ))}
                 </View>
@@ -170,8 +170,8 @@ export default function HomeScreen() {
                   <View style={[styles.statIconWrap, { backgroundColor: s.bg }]}>
                     <Ionicons name={s.icon} size={18} color={s.color} />
                   </View>
-                  <Text style={[styles.statLabel, { color: colors.text }]} numberOfLines={1} adjustsFontSizeToFit>{s.label}</Text>
-                  <Text style={[styles.statDesc, { color: s.color }]} numberOfLines={1} adjustsFontSizeToFit>{s.desc}</Text>
+                  <Text style={[styles.statLabel, { color: colors.text }]} numberOfLines={1} maxFontSizeMultiplier={1}>{s.label}</Text>
+                  <Text style={[styles.statDesc, { color: s.color }]} numberOfLines={1} maxFontSizeMultiplier={1}>{s.desc}</Text>
                 </View>
               ))}
             </View>
@@ -271,25 +271,26 @@ export default function HomeScreen() {
                             <Text
                               style={[styles.scanContent, { color: colors.text }]}
                               numberOfLines={1}
+                              maxFontSizeMultiplier={1}
                             >
                               {paymentName ? paymentName : truncate(scan.content, 38)}
                             </Text>
                             {paymentAmount && (
-                              <Text style={[styles.scanAmount, { color: colors.warning }]}>
+                              <Text style={[styles.scanAmount, { color: colors.warning }]} maxFontSizeMultiplier={1}>
                                 {paymentAmount}
                               </Text>
                             )}
                           </View>
                           {paymentName && (
-                            <Text style={[styles.scanSub, { color: colors.textMuted }]} numberOfLines={1}>
+                            <Text style={[styles.scanSub, { color: colors.textMuted }]} numberOfLines={1} maxFontSizeMultiplier={1}>
                               {truncate(scan.content, 30)}
                             </Text>
                           )}
                           <View style={styles.scanMeta}>
                             <View style={[styles.scanBadge, { backgroundColor: gradient[0] + "18", borderWidth: 1, borderColor: gradient[0] + "35" }]}>
-                              <Text style={[styles.scanBadgeText, { color: gradient[0] }]}>{label}</Text>
+                              <Text style={[styles.scanBadgeText, { color: gradient[0] }]} maxFontSizeMultiplier={1}>{label}</Text>
                             </View>
-                            <Text style={[styles.scanTime, { color: colors.textMuted }]}>
+                            <Text style={[styles.scanTime, { color: colors.textMuted }]} maxFontSizeMultiplier={1}>
                               {formatRelativeTime(scan.scannedAt)}
                             </Text>
                           </View>

@@ -26,10 +26,10 @@ export default function SafetyWarningCard({ riskLevel, warnings, title }: Safety
           <Ionicons name={icon as any} size={24} color="#fff" />
         </LinearGradient>
         <View style={{ flex: 1 }}>
-          <Text style={[styles.eyebrow, { color: borderColor }]}>
+          <Text style={[styles.eyebrow, { color: borderColor }]} maxFontSizeMultiplier={1}>
             {isDangerous ? "DANGER DETECTED" : "CAUTION"}
           </Text>
-          <Text style={[styles.title, { color: isDark ? "#fff" : "#1a1a1a" }]}>{displayTitle}</Text>
+          <Text style={[styles.title, { color: isDark ? "#fff" : "#1a1a1a" }]} maxFontSizeMultiplier={1}>{displayTitle}</Text>
         </View>
       </View>
 
@@ -39,7 +39,7 @@ export default function SafetyWarningCard({ riskLevel, warnings, title }: Safety
         {warnings.map((w, i) => (
           <View key={i} style={styles.warningRow}>
             <View style={[styles.dot, { backgroundColor: gradient[0] }]} />
-            <Text style={[styles.warningText, { color: isDark ? colors.text : "#1f1f1f" }]}>{w}</Text>
+            <Text style={[styles.warningText, { color: isDark ? colors.text : "#1f1f1f" }]} maxFontSizeMultiplier={1}>{w}</Text>
           </View>
         ))}
       </View>

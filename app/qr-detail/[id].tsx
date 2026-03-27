@@ -67,8 +67,8 @@ function SectionHeader({
   const { colors } = useTheme();
   const content = (
     <View style={sectionHeaderStyles.row}>
-      <Ionicons name={icon} size={16} color={colors.textSecondary} />
-      <Text style={[sectionHeaderStyles.label, { color: colors.text }]}>{label}</Text>
+      <Ionicons name={icon} size={15} color={colors.textSecondary} />
+      <Text style={[sectionHeaderStyles.label, { color: colors.text }]} maxFontSizeMultiplier={1}>{label}</Text>
     </View>
   );
   if (inline) return content;
@@ -78,7 +78,7 @@ function SectionHeader({
 const sectionHeaderStyles = StyleSheet.create({
   wrapper: { marginBottom: 12, marginTop: 4 },
   row: { flexDirection: "row", alignItems: "center", gap: 8 },
-  label: { fontSize: 16, fontFamily: "Inter_700Bold" },
+  label: { fontSize: 15, fontFamily: "Inter_700Bold" },
 });
 
 function VerdictBanner({ verdict, offlineMode }: { verdict: ReturnType<ReturnType<typeof useQrDetail>["getCombinedVerdict"]>; offlineMode: boolean }) {
@@ -118,8 +118,8 @@ function VerdictBanner({ verdict, offlineMode }: { verdict: ReturnType<ReturnTyp
         <Ionicons name={iconName} size={20} color="#fff" />
       </LinearGradient>
       <View style={{ flex: 1 }}>
-        <Text style={[verdictStyles.label, { color: borderColor }]}>{verdict.label}</Text>
-        <Text style={[verdictStyles.reason, { color: colors.textSecondary }]} numberOfLines={2}>{verdict.reason}</Text>
+        <Text style={[verdictStyles.label, { color: borderColor }]} maxFontSizeMultiplier={1}>{verdict.label}</Text>
+        <Text style={[verdictStyles.reason, { color: colors.textSecondary }]} numberOfLines={2} maxFontSizeMultiplier={1}>{verdict.reason}</Text>
       </View>
     </View>
   );

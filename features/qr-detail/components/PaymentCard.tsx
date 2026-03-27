@@ -598,7 +598,7 @@ interface Props {
 }
 
 function addSoftHyphens(text: string): string {
-  return text.replace(/@/g, "\u00AD@\u00AD").replace(/\./g, ".\u00AD");
+  return text.replace(/@/g, "\u00AD@\u00AD");
 }
 
 const PaymentCard = React.memo(function PaymentCard({
@@ -647,18 +647,18 @@ const PaymentCard = React.memo(function PaymentCard({
             <View style={[styles.appIconBubble, { backgroundColor: brand.chipColor }]}>
               <Ionicons name={brand.iconName} size={15} color={brand.accentColor} />
             </View>
-            <Text style={[styles.appNameText, { color: brand.subtextOnCard }]}>
+            <Text style={[styles.appNameText, { color: brand.subtextOnCard }]} maxFontSizeMultiplier={1} numberOfLines={1}>
               {parsedPayment.appDisplayName}
             </Text>
             {isIndia && (
               <View style={styles.indiaBadge}>
-                <Text style={styles.indiaBadgeText}>🇮🇳 UPI</Text>
+                <Text style={styles.indiaBadgeText} maxFontSizeMultiplier={1}>🇮🇳 UPI</Text>
               </View>
             )}
           </View>
           <View style={styles.shieldBadge}>
             <Ionicons name="shield-checkmark" size={13} color="#4ADE80" />
-            <Text style={styles.shieldText}>QRS</Text>
+            <Text style={styles.shieldText} maxFontSizeMultiplier={1}>QRS</Text>
           </View>
         </View>
 
@@ -668,6 +668,7 @@ const PaymentCard = React.memo(function PaymentCard({
           numberOfLines={2}
           adjustsFontSizeToFit
           minimumFontScale={0.78}
+          maxFontSizeMultiplier={1}
           // @ts-ignore
           android_hyphenationFrequency="full"
         >
@@ -677,10 +678,11 @@ const PaymentCard = React.memo(function PaymentCard({
         {/* UPI ID — always fully visible, tap to copy */}
         {displayVpa ? (
           <Pressable onPress={handleCopyUpi} style={styles.upiRow}>
-            <Ionicons name="at-circle-outline" size={14} color={brand.accentColor} />
+            <Ionicons name="at-circle-outline" size={14} color={brand.accentColor} style={{ flexShrink: 0 }} />
             <Text
               style={[styles.upiId, { color: brand.subtextOnCard }]}
               selectable
+              maxFontSizeMultiplier={1}
               // @ts-ignore
               android_hyphenationFrequency="full"
             >
@@ -690,6 +692,7 @@ const PaymentCard = React.memo(function PaymentCard({
               name={upiCopied ? "checkmark-circle" : "copy-outline"}
               size={13}
               color={upiCopied ? "#4ADE80" : brand.accentColor}
+              style={{ flexShrink: 0 }}
             />
           </Pressable>
         ) : null}
@@ -698,12 +701,12 @@ const PaymentCard = React.memo(function PaymentCard({
         {effectiveBankName ? (
           <View style={styles.bankRow}>
             <Ionicons name="business-outline" size={12} color={brand.accentColor} />
-            <Text style={[styles.bankName, { color: brand.subtextOnCard }]}>{effectiveBankName}</Text>
+            <Text style={[styles.bankName, { color: brand.subtextOnCard }]} maxFontSizeMultiplier={1} numberOfLines={1}>{effectiveBankName}</Text>
           </View>
         ) : parsedPayment.bankHandle ? (
           <View style={styles.bankRow}>
             <Ionicons name="business-outline" size={12} color={brand.accentColor} />
-            <Text style={[styles.bankName, { color: brand.subtextOnCard }]}>@{parsedPayment.bankHandle}</Text>
+            <Text style={[styles.bankName, { color: brand.subtextOnCard }]} maxFontSizeMultiplier={1} numberOfLines={1}>@{parsedPayment.bankHandle}</Text>
           </View>
         ) : null}
 
@@ -711,10 +714,10 @@ const PaymentCard = React.memo(function PaymentCard({
         {parsedPayment.isAmountPreFilled && parsedPayment.amount ? (
           <View style={[styles.amountChip, { backgroundColor: brand.chipColor, borderColor: brand.accentColor + "50" }]}>
             <Ionicons name="cash-outline" size={14} color="#FCD34D" />
-            <Text style={styles.amountText}>
+            <Text style={styles.amountText} maxFontSizeMultiplier={1}>
               {formatAmount(parsedPayment.amount, parsedPayment.currency)}
             </Text>
-            <Text style={[styles.amountLabel, { color: brand.subtextOnCard }]}>Pre-filled Amount</Text>
+            <Text style={[styles.amountLabel, { color: brand.subtextOnCard }]} maxFontSizeMultiplier={1}>Pre-filled Amount</Text>
           </View>
         ) : null}
 
@@ -839,11 +842,11 @@ const PaymentCard = React.memo(function PaymentCard({
         <View style={styles.cardBottomRow}>
           <View style={styles.verifiedRow}>
             <View style={styles.verifiedDot} />
-            <Text style={[styles.verifiedText, { color: brand.subtextOnCard }]}>
+            <Text style={[styles.verifiedText, { color: brand.subtextOnCard }]} maxFontSizeMultiplier={1}>
               Scanned & Analysed by QR Guard
             </Text>
           </View>
-          <Text style={[styles.regionText, { color: brand.accentColor }]}>
+          <Text style={[styles.regionText, { color: brand.accentColor }]} maxFontSizeMultiplier={1}>
             {parsedPayment.region}
           </Text>
         </View>
@@ -879,8 +882,8 @@ const PaymentCard = React.memo(function PaymentCard({
           </Pressable>
 
           <View style={styles.warningBox}>
-            <Ionicons name="information-circle-outline" size={14} color="#94A3B8" />
-            <Text style={styles.warningText}>
+            <Ionicons name="information-circle-outline" size={14} color="#94A3B8" style={{ flexShrink: 0 }} />
+            <Text style={styles.warningText} maxFontSizeMultiplier={1}>
               {parsedPayment.appCategory === "crypto"
                 ? "Crypto is irreversible — verify address character by character"
                 : isIndia

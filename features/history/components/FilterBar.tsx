@@ -106,6 +106,7 @@ const FilterBar = React.memo(function FilterBar({
                 },
               ]}
               numberOfLines={1}
+              maxFontSizeMultiplier={1}
             >
               {f.label}
             </Text>

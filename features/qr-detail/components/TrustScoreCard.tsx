@@ -61,8 +61,8 @@ const TrustScoreCard = React.memo(function TrustScoreCard({
           <View style={[styles.scoreInner, { backgroundColor: isDark ? colors.surface : "#fff" }]}>
             {hasScore ? (
               <>
-                <Text style={[styles.scoreNum, { color: scoreGradient[0] }]}>{Math.round(trustInfo.score)}</Text>
-                <Text style={[styles.scorePct, { color: scoreGradient[0] }]}>%</Text>
+                <Text style={[styles.scoreNum, { color: scoreGradient[0] }]} maxFontSizeMultiplier={1}>{Math.round(trustInfo.score)}</Text>
+                <Text style={[styles.scorePct, { color: scoreGradient[0] }]} maxFontSizeMultiplier={1}>%</Text>
               </>
             ) : (
               <Ionicons name="help-outline" size={26} color={colors.textMuted} />
@@ -71,10 +71,10 @@ const TrustScoreCard = React.memo(function TrustScoreCard({
         </LinearGradient>
 
         <View style={styles.scoreMeta}>
-          <Text style={[styles.scoreTitle, { color: colors.text }]}>Trust Score</Text>
+          <Text style={[styles.scoreTitle, { color: colors.text }]} maxFontSizeMultiplier={1}>Trust Score</Text>
           {hasScore ? (
             <View style={[styles.scoreLabelBadge, { backgroundColor: scoreGradient[0] + (isDark ? "22" : "14"), borderColor: scoreGradient[0] + "30" }]}>
-              <Text style={[styles.scoreLabelText, { color: scoreGradient[0] }]}>
+              <Text style={[styles.scoreLabelText, { color: scoreGradient[0] }]} maxFontSizeMultiplier={1} numberOfLines={1}>
                 {trustInfo.label}
                 {total > 0 ? `  ·  ${formatCompactNumber(total)} voted` : ""}
               </Text>
@@ -85,7 +85,7 @@ const TrustScoreCard = React.memo(function TrustScoreCard({
               style={[styles.firstVoteBadge, { backgroundColor: colors.primaryDim || colors.surfaceLight, borderColor: colors.primary + "40" }]}
             >
               <Ionicons name="thumbs-up-outline" size={13} color={colors.primary} />
-              <Text style={[styles.firstVoteText, { color: colors.primary }]}>Be the first to vote!</Text>
+              <Text style={[styles.firstVoteText, { color: colors.primary }]} maxFontSizeMultiplier={1}>Be the first to vote!</Text>
             </Pressable>
           )}
           {hasScore && (
@@ -124,8 +124,8 @@ const TrustScoreCard = React.memo(function TrustScoreCard({
               pressed && s.onPress && { opacity: 0.7 },
             ]}
           >
-            <Text style={[styles.statNum, { color: colors.text }]}>{formatCompactNumber(s.value)}</Text>
-            <Text style={[styles.statLabel, { color: s.onPress ? colors.primary : colors.textMuted }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>{s.label}</Text>
+            <Text style={[styles.statNum, { color: colors.text }]} maxFontSizeMultiplier={1}>{formatCompactNumber(s.value)}</Text>
+            <Text style={[styles.statLabel, { color: s.onPress ? colors.primary : colors.textMuted }]} numberOfLines={1} maxFontSizeMultiplier={1}>{s.label}</Text>
           </Pressable>
         ))}
       </View>
@@ -141,8 +141,8 @@ const TrustScoreCard = React.memo(function TrustScoreCard({
               <View key={r.key} style={styles.breakdownItem}>
                 <View style={styles.breakdownRow}>
                   <View style={[styles.breakdownDot, { backgroundColor: r.color }]} />
-                  <Text style={[styles.breakdownLabel, { color: colors.textSecondary }]}>{r.label}</Text>
-                  <Text style={[styles.breakdownCount, { color: r.color }]}>{count} {count === 1 ? "person" : "people"}</Text>
+                  <Text style={[styles.breakdownLabel, { color: colors.textSecondary }]} maxFontSizeMultiplier={1}>{r.label}</Text>
+                  <Text style={[styles.breakdownCount, { color: r.color }]} maxFontSizeMultiplier={1}>{count} {count === 1 ? "person" : "people"}</Text>
                 </View>
                 <View style={[styles.breakdownBar, { backgroundColor: colors.surfaceLight }]}>
                   <View style={[styles.breakdownBarFill, { width: `${pct}%` as any, backgroundColor: r.color + (isDark ? "90" : "70") }]} />
