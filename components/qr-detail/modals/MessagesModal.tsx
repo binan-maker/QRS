@@ -141,7 +141,7 @@ const MessagesModal = React.memo(function MessagesModal({
 export default MessagesModal;
 
 const styles = StyleSheet.create({
-  overlay: { flex: 1, backgroundColor: "rgba(0,0,0,0.7)", justifyContent: "flex-end" },
+  overlay: { flex: 1, backgroundColor: "transparent", justifyContent: "flex-end" },
   sheet: {
     backgroundColor: Colors.dark.surface, borderTopLeftRadius: 24, borderTopRightRadius: 24,
     padding: 20, paddingBottom: 32, borderWidth: 1, borderColor: Colors.dark.surfaceBorder,

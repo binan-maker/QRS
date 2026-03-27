@@ -32,7 +32,7 @@ export default function VerifiedModal({ visible, ownerName }: Props) {
 const styles = StyleSheet.create({
   overlay: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: "rgba(0,0,0,0.85)",
+    backgroundColor: "transparent",
     alignItems: "center",
     justifyContent: "flex-end",
     paddingBottom: 32,

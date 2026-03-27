@@ -46,7 +46,7 @@ export default function DeactivateModal({ visible, msgInput, onChangeMsgInput, o
 }
 
 const styles = StyleSheet.create({
-  overlay: { flex: 1, backgroundColor: "rgba(5,11,24,0.82)", alignItems: "center", justifyContent: "center", padding: 24 },
+  overlay: { flex: 1, backgroundColor: "transparent", alignItems: "center", justifyContent: "center", padding: 24 },
   modal: { borderRadius: 20, borderWidth: 1, padding: 24, width: "100%" },
   title: { fontSize: 17, fontFamily: "Inter_700Bold", marginBottom: 6 },
   sub: { fontSize: 13, fontFamily: "Inter_400Regular", marginBottom: 16 },

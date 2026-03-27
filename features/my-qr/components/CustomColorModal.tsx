@@ -62,7 +62,7 @@ export default function CustomColorModal({ visible, target, colorInput, onChange
 }
 
 const styles = StyleSheet.create({
-  overlay: { flex: 1, backgroundColor: "rgba(5,11,24,0.82)", alignItems: "center", justifyContent: "center", padding: 24 },
+  overlay: { flex: 1, backgroundColor: "transparent", alignItems: "center", justifyContent: "center", padding: 24 },
   modal: { borderRadius: 20, borderWidth: 1, padding: 24, width: "100%" },
   title: { fontSize: 17, fontFamily: "Inter_700Bold" },
   input: { borderRadius: 12, borderWidth: 1, padding: 12, fontSize: 14, fontFamily: "Inter_500Medium", letterSpacing: 1 },

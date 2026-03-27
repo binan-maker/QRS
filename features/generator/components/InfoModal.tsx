@@ -64,7 +64,7 @@ export default function InfoModal({ visible, onClose }: Props) {
 }
 
 const styles = StyleSheet.create({
-  overlay: { flex: 1, backgroundColor: "rgba(5,11,24,0.82)", justifyContent: "flex-end" },
+  overlay: { flex: 1, backgroundColor: "transparent", justifyContent: "flex-end" },
   sheet: { borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 24, paddingTop: 16 },
   handle: { width: 40, height: 4, borderRadius: 2, alignSelf: "center", marginBottom: 16 },
   title: { fontSize: 18, fontFamily: "Inter_700Bold", marginBottom: 16 },

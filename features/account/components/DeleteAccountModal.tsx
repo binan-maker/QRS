@@ -188,7 +188,7 @@ export default function DeleteAccountModal({ visible, onClose }: DeleteAccountMo
 }
 
 const styles = StyleSheet.create({
-  overlay: { flex: 1, backgroundColor: "rgba(5,11,24,0.82)", justifyContent: "flex-end" },
+  overlay: { flex: 1, backgroundColor: "transparent", justifyContent: "flex-end" },
   box: {
     borderTopLeftRadius: 26, borderTopRightRadius: 26,
     padding: 24, paddingBottom: 40, borderTopWidth: 1.5,

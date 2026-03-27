@@ -597,13 +597,16 @@ interface Props {
   onOpenContent: () => void;
 }
 
+function addSoftHyphens(text: string): string {
+  return text.replace(/@/g, "\u00AD@\u00AD").replace(/\./g, ".\u00AD");
+}
+
 const PaymentCard = React.memo(function PaymentCard({
   parsedPayment,
   isDeactivated,
   onOpenContent,
 }: Props) {
   const [upiCopied, setUpiCopied] = React.useState(false);
-  const [upiExpanded, setUpiExpanded] = React.useState(false);
   const brand = getAppBrand(parsedPayment.app, parsedPayment.appCategory);
   const bankFullName = getBankFullName(parsedPayment.bankHandle);
   const isIndia = parsedPayment.appCategory === "upi_india" || parsedPayment.appCategory === "india_wallet";
@@ -660,41 +663,36 @@ const PaymentCard = React.memo(function PaymentCard({
         </View>
 
         {/* Merchant Name — large & bold */}
-        <Text style={[styles.merchantName, { color: brand.textOnCard }]} numberOfLines={2} adjustsFontSizeToFit minimumFontScale={0.78}>
-          {parsedPayment.recipientName || "Unknown Merchant"}
+        <Text
+          style={[styles.merchantName, { color: brand.textOnCard }]}
+          numberOfLines={2}
+          adjustsFontSizeToFit
+          minimumFontScale={0.78}
+          // @ts-ignore
+          android_hyphenationFrequency="full"
+        >
+          {addSoftHyphens(parsedPayment.recipientName || "Unknown Merchant")}
         </Text>
 
-        {/* UPI ID — tap to copy; long IDs collapse with a "tap" expand hint */}
-        {displayVpa ? (() => {
-          const isLongVpa = displayVpa.length > 28;
-          const isCollapsed = isLongVpa && !upiExpanded;
-          return (
-            <Pressable
-              onPress={() => {
-                if (isCollapsed) {
-                  setUpiExpanded(true);
-                } else {
-                  handleCopyUpi();
-                }
-              }}
-              style={styles.upiRow}
+        {/* UPI ID — always fully visible, tap to copy */}
+        {displayVpa ? (
+          <Pressable onPress={handleCopyUpi} style={styles.upiRow}>
+            <Ionicons name="at-circle-outline" size={14} color={brand.accentColor} />
+            <Text
+              style={[styles.upiId, { color: brand.subtextOnCard }]}
+              selectable
+              // @ts-ignore
+              android_hyphenationFrequency="full"
             >
-              <Ionicons name="at-circle-outline" size={14} color={brand.accentColor} />
-              <Text style={[styles.upiId, { color: brand.subtextOnCard }]} selectable numberOfLines={isCollapsed ? 1 : undefined} ellipsizeMode="tail">
-                {displayVpa}
-              </Text>
-              {isCollapsed ? (
-                <Text style={[styles.upiExpandHint, { color: brand.accentColor }]}>tap</Text>
-              ) : (
-                <Ionicons
-                  name={upiCopied ? "checkmark-circle" : "copy-outline"}
-                  size={13}
-                  color={upiCopied ? "#4ADE80" : brand.accentColor}
-                />
-              )}
-            </Pressable>
-          );
-        })() : null}
+              {addSoftHyphens(displayVpa)}
+            </Text>
+            <Ionicons
+              name={upiCopied ? "checkmark-circle" : "copy-outline"}
+              size={13}
+              color={upiCopied ? "#4ADE80" : brand.accentColor}
+            />
+          </Pressable>
+        ) : null}
 
         {/* Bank name */}
         {effectiveBankName ? (

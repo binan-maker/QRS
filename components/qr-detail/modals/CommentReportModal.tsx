@@ -62,7 +62,7 @@ export default CommentReportModal;
 
 const styles = StyleSheet.create({
   overlay: {
-    flex: 1, backgroundColor: "rgba(0,0,0,0.75)",
+    flex: 1, backgroundColor: "transparent",
     justifyContent: "center", alignItems: "center", padding: 24,
   },
   card: {

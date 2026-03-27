@@ -18,6 +18,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Animated, { FadeInDown, FadeInUp } from "react-native-reanimated";
 import { useTheme } from "@/contexts/ThemeContext";
 import SkeletonBox from "@/components/ui/SkeletonBox";
+import { formatCompactNumber } from "@/lib/number-format";
 import PhotoModal from "@/features/profile/components/PhotoModal";
 import { useProfile } from "@/hooks/useProfile";
 import {
@@ -267,7 +268,7 @@ export default function ProfileScreen() {
                 </View>
                 {statsLoading
                   ? <SkeletonBox width={36} height={22} borderRadius={6} style={{ alignSelf: "center" }} />
-                  : <Text style={[styles.statValue, { color: s.color }]}>{s.value}</Text>
+                  : <Text style={[styles.statValue, { color: s.color }]}>{formatCompactNumber(s.value)}</Text>
                 }
                 <Text style={[styles.statLabel, { color: colors.textMuted }]}>{s.label}</Text>
               </Pressable>
@@ -287,7 +288,7 @@ export default function ProfileScreen() {
             </View>
             {statsLoading
               ? <SkeletonBox width={44} height={26} borderRadius={8} />
-              : <Text style={[styles.likesValue, { color: colors.safe }]}>{stats.totalLikesReceived}</Text>
+              : <Text style={[styles.likesValue, { color: colors.safe }]}>{formatCompactNumber(stats.totalLikesReceived)}</Text>
             }
           </View>
         </Animated.View>
