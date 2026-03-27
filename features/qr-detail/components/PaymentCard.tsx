@@ -1004,7 +1004,7 @@ const styles = StyleSheet.create({
 
   upiRow: {
     flexDirection: "row",
-    alignItems: "center",
+    alignItems: "flex-start",
     gap: 6,
     marginBottom: 8,
   },
@@ -1125,20 +1125,20 @@ const styles = StyleSheet.create({
   warningBox: {
     flexDirection: "row",
     alignItems: "flex-start",
-    gap: 7,
-    backgroundColor: "rgba(148, 163, 184, 0.08)",
-    borderRadius: 10,
-    paddingHorizontal: 12,
-    paddingVertical: 9,
+    gap: 6,
+    backgroundColor: "rgba(148, 163, 184, 0.06)",
+    borderRadius: 8,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
     borderWidth: 1,
-    borderColor: "rgba(148, 163, 184, 0.12)",
+    borderColor: "rgba(148, 163, 184, 0.10)",
   },
   warningText: {
-    fontSize: 12,
+    fontSize: 10,
     fontFamily: "Inter_400Regular",
     color: "#94A3B8",
     flex: 1,
-    lineHeight: 18,
+    lineHeight: 15,
   },
 
   deactivatedBanner: {

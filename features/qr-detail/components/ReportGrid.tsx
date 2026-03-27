@@ -62,15 +62,6 @@ export default function ReportGrid({ reportCounts: _reportCounts, userReport, is
           );
         })}
       </View>
-
-      {isPayment && (
-        <View style={styles.disclaimer}>
-          <Ionicons name="information-circle-outline" size={12} color={colors.textMuted} />
-          <Text style={[styles.disclaimerText, { color: colors.textMuted }]}>
-            Always verify the merchant name and UPI ID before paying
-          </Text>
-        </View>
-      )}
     </View>
   );
 }
@@ -93,9 +84,4 @@ const styles = StyleSheet.create({
     borderRadius: 12, position: "relative",
   },
   rateBtnLabel: { fontSize: 12, fontFamily: "Inter_600SemiBold" },
-  disclaimer: {
-    flexDirection: "row", alignItems: "flex-start", gap: 6,
-    marginTop: 8,
-  },
-  disclaimerText: { fontSize: 11, fontFamily: "Inter_400Regular", flex: 1, lineHeight: 15 },
 });

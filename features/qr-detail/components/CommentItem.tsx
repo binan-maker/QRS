@@ -221,23 +221,6 @@ const CommentItem = React.memo(function CommentItem({
               </Pressable>
             </View>
 
-            {/* Inline menu */}
-            {isMenuOpen && (
-              <View style={[styles.inlineMenu, { backgroundColor: colors.surfaceLight, borderColor: colors.surfaceBorder }]}>
-                {canDelete && (
-                  <Pressable onPress={() => onDelete(comment.id)} style={styles.inlineMenuItem}>
-                    <Ionicons name="trash-outline" size={13} color={colors.danger} />
-                    <Text style={[styles.inlineMenuText, { color: colors.danger }]}>Delete</Text>
-                  </Pressable>
-                )}
-                {!isCommentOwner && (
-                  <Pressable onPress={() => onReport(comment.id)} style={styles.inlineMenuItem}>
-                    <Ionicons name="flag-outline" size={13} color={colors.warning} />
-                    <Text style={[styles.inlineMenuText, { color: colors.warning }]}>Report</Text>
-                  </Pressable>
-                )}
-              </View>
-            )}
           </View>
         </View>
       </Animated.View>

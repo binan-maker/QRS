@@ -11,6 +11,7 @@ import {
   RefreshControl,
   StyleSheet,
   Keyboard,
+  Modal,
 } from "react-native";
 
 import { StatusBar } from "expo-status-bar";
@@ -140,15 +141,6 @@ export default function QrDetailScreen() {
   const { colors } = useTheme();
   const insets = useSafeAreaInsets();
   const styles = makeStyles(colors);
-
-  const [keyboardVisible, setKeyboardVisible] = useState(false);
-  useEffect(() => {
-    const showEvent = Platform.OS === "ios" ? "keyboardWillShow" : "keyboardDidShow";
-    const hideEvent = Platform.OS === "ios" ? "keyboardWillHide" : "keyboardDidHide";
-    const showSub = Keyboard.addListener(showEvent, () => setKeyboardVisible(true));
-    const hideSub = Keyboard.addListener(hideEvent, () => setKeyboardVisible(false));
-    return () => { showSub.remove(); hideSub.remove(); };
-  }, []);
 
   const glowOpacity = useSharedValue(0.6);
   const glowScale = useSharedValue(1);
@@ -506,7 +498,7 @@ export default function QrDetailScreen() {
 
           {/* Comment Input Bar */}
           {user && !q.offlineMode && (
-            <View style={[styles.bottomCommentBar, { paddingBottom: keyboardVisible ? 6 : Math.max(insets.bottom, 8) }]}>
+            <View style={[styles.bottomCommentBar, { paddingBottom: Math.max(insets.bottom, 6) }]}>
               {q.replyTo && (
                 <View style={styles.replyBanner}>
                   <Ionicons name="return-down-forward-outline" size={14} color={colors.primary} />
@@ -544,6 +536,52 @@ export default function QrDetailScreen() {
           )}
         </View>
       </KeyboardAvoidingView>
+
+      {/* Comment 3-dot Menu — YouTube-style bottom sheet */}
+      <Modal
+        visible={q.commentMenuId !== null}
+        transparent
+        animationType="slide"
+        onRequestClose={() => q.setCommentMenuId(null)}
+      >
+        <Pressable style={commentMenuStyles.backdrop} onPress={() => q.setCommentMenuId(null)}>
+          <View style={[commentMenuStyles.sheet, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
+            <View style={[commentMenuStyles.handle, { backgroundColor: colors.surfaceBorder }]} />
+            {q.commentMenuOwner ? (
+              <Pressable
+                onPress={() => {
+                  const id = q.commentMenuId!;
+                  q.setCommentMenuId(null);
+                  q.handleDeleteComment(id);
+                }}
+                style={commentMenuStyles.menuItem}
+              >
+                <View style={[commentMenuStyles.menuIconWrap, { backgroundColor: colors.dangerDim ?? (colors.danger + "15") }]}>
+                  <Ionicons name="trash-outline" size={20} color={colors.danger} />
+                </View>
+                <Text style={[commentMenuStyles.menuLabel, { color: colors.danger }]}>Delete comment</Text>
+              </Pressable>
+            ) : (
+              <Pressable
+                onPress={() => {
+                  const id = q.commentMenuId!;
+                  q.setCommentMenuId(null);
+                  q.setCommentReportModal(id);
+                }}
+                style={commentMenuStyles.menuItem}
+              >
+                <View style={[commentMenuStyles.menuIconWrap, { backgroundColor: colors.warningDim ?? (colors.warning + "15") }]}>
+                  <Ionicons name="flag-outline" size={20} color={colors.warning} />
+                </View>
+                <Text style={[commentMenuStyles.menuLabel, { color: colors.text }]}>Report comment</Text>
+              </Pressable>
+            )}
+            <Pressable onPress={() => q.setCommentMenuId(null)} style={commentMenuStyles.cancelBtn}>
+              <Text style={[commentMenuStyles.cancelText, { color: colors.textSecondary }]}>Cancel</Text>
+            </Pressable>
+          </View>
+        </Pressable>
+      </Modal>
 
       {/* Modals */}
       <CommentReportModal
@@ -600,5 +638,56 @@ const offlineSectionStyles = StyleSheet.create({
     fontSize: 13,
     fontFamily: "Inter_400Regular",
     flex: 1,
+  },
+});
+
+const commentMenuStyles = StyleSheet.create({
+  backdrop: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.45)",
+    justifyContent: "flex-end",
+  },
+  sheet: {
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    paddingHorizontal: 20,
+    paddingBottom: 36,
+    paddingTop: 12,
+    borderTopWidth: 1,
+    gap: 4,
+  },
+  handle: {
+    width: 36,
+    height: 4,
+    borderRadius: 2,
+    alignSelf: "center",
+    marginBottom: 16,
+  },
+  menuItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 14,
+    paddingVertical: 14,
+    paddingHorizontal: 4,
+  },
+  menuIconWrap: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  menuLabel: {
+    fontSize: 15,
+    fontFamily: "Inter_500Medium",
+  },
+  cancelBtn: {
+    alignItems: "center",
+    paddingVertical: 14,
+    marginTop: 4,
+  },
+  cancelText: {
+    fontSize: 15,
+    fontFamily: "Inter_600SemiBold",
   },
 });

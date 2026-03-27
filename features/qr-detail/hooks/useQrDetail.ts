@@ -5,6 +5,7 @@ import * as Haptics from "@/lib/haptics";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTheme } from "@/contexts/ThemeContext";
 import { useQrData, type QrDetail } from "./useQrData";
+import { calculateTrustScore } from "@/lib/services/trust-service";
 import { useQrSafety } from "./useQrSafety";
 import { useQrReports } from "./useQrReports";
 import { useQrFollow } from "./useQrFollow";
@@ -50,12 +51,9 @@ export function useQrDetail(id: string) {
         manipulationWarning: trustScore.manipulationWarning ?? false,
       };
     }
-    const total = (reportCounts.safe || 0) + (reportCounts.scam || 0) + (reportCounts.fake || 0) + (reportCounts.spam || 0);
-    if (total === 0) return { score: -1, label: "No Reports", color: colors.textMuted, manipulationWarning: false };
-    const safeRatio = (reportCounts.safe || 0) / total;
-    if (safeRatio >= 0.7) return { score: safeRatio * 100, label: "Trusted", color: colors.safe, manipulationWarning: false };
-    if (safeRatio >= 0.4) return { score: safeRatio * 100, label: "Caution", color: colors.warning, manipulationWarning: false };
-    return { score: safeRatio * 100, label: "Dangerous", color: colors.danger, manipulationWarning: false };
+    const fallback = calculateTrustScore(reportCounts);
+    if (fallback.score < 0) return { score: -1, label: "No Reports", color: colors.textMuted, manipulationWarning: false };
+    return { score: fallback.score, label: fallback.label, color: getTrustColor(fallback.label), manipulationWarning: false };
   }
 
   function getCombinedVerdict() {

@@ -125,6 +125,7 @@ export function useQrReports(id: string, userId: string | null, offlineMode: boo
         }
         next[type] = (next[type] || 0) + 1;
       }
+      setTrustScore(calculateTrustScore(next, latestWeighted.current, latestCollusion.current));
       return next;
     });
 
