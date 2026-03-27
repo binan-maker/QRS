@@ -15,7 +15,6 @@ import {
 import { router } from "expo-router";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { LinearGradient } from "expo-linear-gradient";
 import Animated, { FadeInDown, FadeInUp } from "react-native-reanimated";
 import { useTheme } from "@/contexts/ThemeContext";
 import SkeletonBox from "@/components/ui/SkeletonBox";
@@ -30,7 +29,7 @@ import { getFriends } from "@/lib/services/friend-service";
 
 export default function ProfileScreen() {
   const insets = useSafeAreaInsets();
-  const { colors, isDark } = useTheme();
+  const { colors } = useTheme();
   const {
     user,
     editingName, setEditingName, newName, setNewName, savingName,
@@ -76,21 +75,11 @@ export default function ProfileScreen() {
   if (!user) {
     return (
       <View style={[styles.container, { paddingTop: topInset }]}>
-        <LinearGradient
-          colors={isDark ? [colors.background, colors.surface] : [colors.background, colors.surfaceLight]}
-          style={StyleSheet.absoluteFill}
-        />
         <View style={styles.guestWrap}>
           <Animated.View entering={FadeInUp.duration(500)} style={styles.guestInner}>
-            <LinearGradient
-              colors={isDark
-                ? ["rgba(0,229,255,0.12)", "rgba(176,96,255,0.08)"]
-                : ["rgba(0,111,255,0.07)", "rgba(124,58,237,0.05)"]}
-              style={styles.guestIconRing}
-              start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
-            >
+            <View style={[styles.guestIconRing, { backgroundColor: colors.primaryDim }]}>
               <Ionicons name="person-outline" size={48} color={colors.primary} />
-            </LinearGradient>
+            </View>
             <Text style={[styles.guestTitle, { color: colors.text }]}>You're not signed in</Text>
             <Text style={[styles.guestSub, { color: colors.textSecondary }]}>
               Sign in to view your profile, stats, and activity
@@ -118,14 +107,7 @@ export default function ProfileScreen() {
         contentContainerStyle={[styles.scrollContent, { paddingBottom: tabBarHeight + 24 }]}
       >
         {/* ── HERO BANNER ── */}
-        <Animated.View entering={FadeInDown.duration(450)} style={styles.heroBanner}>
-          <LinearGradient
-            colors={isDark
-              ? ["#061929", "#050F1C", "#04090F"]
-              : ["#E4F0FF", "#EDF5FF", "#F4F8FF"]}
-            style={StyleSheet.absoluteFill}
-            start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
-          />
+        <Animated.View entering={FadeInDown.duration(450)} style={[styles.heroBanner, { backgroundColor: colors.surface }]}>
           <View style={[styles.heroBannerBorder, { borderColor: colors.primary + "22" }]} />
 
           <View style={styles.bannerTopRow}>
@@ -147,11 +129,7 @@ export default function ProfileScreen() {
           {/* Avatar */}
           <View style={styles.avatarArea}>
             <Pressable onPress={() => setPhotoModalOpen(true)} style={styles.avatarPressable}>
-              <LinearGradient
-                colors={[colors.primary, colors.accent]}
-                style={styles.avatarGradientRing}
-                start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
-              >
+              <View style={[styles.avatarGradientRing, { backgroundColor: colors.primary }]}>
                 <View style={[styles.avatarInner, { backgroundColor: colors.surface }]}>
                   {uploadingPhoto ? (
                     <ActivityIndicator color={colors.primary} />
@@ -161,7 +139,7 @@ export default function ProfileScreen() {
                     <Text style={[styles.avatarInitials, { color: colors.primary }]}>{initials}</Text>
                   )}
                 </View>
-              </LinearGradient>
+              </View>
               <View style={[styles.cameraBtn, { backgroundColor: colors.primary }]}>
                 <Ionicons name="camera" size={12} color={colors.primaryText} />
               </View>
@@ -284,11 +262,6 @@ export default function ProfileScreen() {
                   { backgroundColor: colors.surface, borderColor: colors.surfaceBorder, opacity: pressed && s.onPress ? 0.8 : 1 },
                 ]}
               >
-                <LinearGradient
-                  colors={[s.bg, "transparent"]}
-                  style={styles.statGlow}
-                  start={{ x: 0.5, y: 0 }} end={{ x: 0.5, y: 1 }}
-                />
                 <View style={[styles.statIconWrap, { backgroundColor: s.bg }]}>
                   <Ionicons name={s.icon as any} size={14} color={s.color} />
                 </View>
@@ -305,11 +278,6 @@ export default function ProfileScreen() {
         {/* ── LIKES CARD ── */}
         <Animated.View entering={FadeInDown.duration(450).delay(140)}>
           <View style={[styles.likesCard, { backgroundColor: colors.surface, borderColor: colors.safeDim }]}>
-            <LinearGradient
-              colors={[colors.safeDim, "transparent"]}
-              style={styles.likesGlow}
-              start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}
-            />
             <View style={[styles.likesIconWrap, { backgroundColor: colors.safeDim }]}>
               <Ionicons name="thumbs-up" size={20} color={colors.safe} />
             </View>
@@ -381,17 +349,13 @@ export default function ProfileScreen() {
             onPress={handleSignOut}
             style={({ pressed }) => [
               styles.signOutBtn,
-              { borderColor: colors.danger + "40", opacity: pressed ? 0.85 : 1 },
+              { borderColor: colors.danger + "40", backgroundColor: colors.dangerDim, opacity: pressed ? 0.85 : 1 },
             ]}
           >
-            <LinearGradient
-              colors={[colors.danger + "12", colors.danger + "06"]}
-              style={styles.signOutGradient}
-              start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}
-            >
+            <View style={styles.signOutGradient}>
               <Ionicons name="log-out-outline" size={18} color={colors.danger} />
               <Text style={[styles.signOutText, { color: colors.danger }]}>Sign Out</Text>
-            </LinearGradient>
+            </View>
           </Pressable>
         </Animated.View>
       </ScrollView>
@@ -501,7 +465,6 @@ function makeStyles(c: ReturnType<typeof import("@/contexts/ThemeContext").useTh
       flex: 1, borderRadius: 18, padding: 14, alignItems: "center",
       borderWidth: 1, gap: 4, overflow: "hidden",
     },
-    statGlow: { position: "absolute", top: 0, left: 0, right: 0, height: 38 },
     statIconWrap: { width: 32, height: 32, borderRadius: 10, alignItems: "center", justifyContent: "center" },
     statValue: { fontSize: rf(22), fontFamily: "Inter_700Bold" },
     statLabel: { fontSize: rf(10), fontFamily: "Inter_400Regular", textAlign: "center" },
@@ -511,7 +474,6 @@ function makeStyles(c: ReturnType<typeof import("@/contexts/ThemeContext").useTh
       borderRadius: 18, padding: 16, marginBottom: 22,
       borderWidth: 1, overflow: "hidden",
     },
-    likesGlow: { position: "absolute", top: 0, left: 0, bottom: 0, width: 80 },
     likesIconWrap: { width: 44, height: 44, borderRadius: 14, alignItems: "center", justifyContent: "center" },
     likesTitle: { fontSize: rf(14), fontFamily: "Inter_600SemiBold" },
     likesSub: { fontSize: rf(12), fontFamily: "Inter_400Regular", marginTop: 1 },

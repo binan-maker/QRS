@@ -5,7 +5,6 @@ import {
 } from "react-native";
 import { useLocalSearchParams, router } from "expo-router";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
-import { LinearGradient } from "expo-linear-gradient";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Animated, { FadeIn, FadeInDown, FadeInUp } from "react-native-reanimated";
 import { useTheme } from "@/contexts/ThemeContext";
@@ -49,7 +48,7 @@ function getCoverGradients(username: string, primary: string, accent: string): [
 
 export default function PublicProfileScreen() {
   const { username } = useLocalSearchParams<{ username: string }>();
-  const { colors, isDark } = useTheme();
+  const { colors } = useTheme();
   const { user } = useAuth();
   const insets = useSafeAreaInsets();
   const { width: screenWidth } = useWindowDimensions();
@@ -415,10 +414,9 @@ export default function PublicProfileScreen() {
               <View style={S.statsRow}>
                 {STAT_ITEMS.map((s, i) => (
                   <View key={i} style={[S.statCard, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
-                    <LinearGradient colors={[s.gradient[0] + "18", "transparent"]} style={StyleSheet.absoluteFill} />
-                    <LinearGradient colors={s.gradient} style={S.statIconWrap} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}>
-                      <Ionicons name={s.icon} size={12} color="#fff" />
-                    </LinearGradient>
+                    <View style={[S.statIconWrap, { backgroundColor: s.gradient[0] + "18" }]}>
+                      <Ionicons name={s.icon} size={12} color={s.gradient[0]} />
+                    </View>
                     <Text style={[S.statValue, { color: colors.text }]}>{formatCompactNumber(s.value)}</Text>
                     <Text style={[S.statLabel, { color: colors.textMuted }]}>{s.label}</Text>
                   </View>
@@ -429,35 +427,21 @@ export default function PublicProfileScreen() {
 
           {/* ══════════════ GUARDIAN PASSPORT ══════════════ */}
           <Animated.View entering={FadeInDown.duration(400).delay(160)}>
-            <LinearGradient
-              colors={isDark ? ["#06142A", "#0A1E3A"] : ["#EBF3FF", "#F4F8FF"]}
-              style={[S.passport, { borderColor: rank.color + "35" }]}
-              start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
-            >
-              {/* Holographic shimmer */}
-              <LinearGradient
-                colors={[rank.color + "12", "#8B5CF608", "transparent"]}
-                style={StyleSheet.absoluteFill}
-                start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
-              />
+            <View style={[S.passport, { backgroundColor: colors.surface, borderColor: rank.color + "35" }]}>
 
               {/* Header row */}
               <View style={S.passportHeader}>
-                <LinearGradient colors={[colors.primary, colors.accent]} style={S.passportLogo} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}>
+                <View style={[S.passportLogo, { backgroundColor: colors.primary }]}>
                   <MaterialCommunityIcons name="shield-check" size={16} color="#fff" />
-                </LinearGradient>
+                </View>
                 <View style={{ flex: 1 }}>
                   <Text style={[S.passportBrand, { color: colors.primary }]}>QR GUARD</Text>
                   <Text style={[S.passportType, { color: colors.textMuted }]}>Guardian Passport</Text>
                 </View>
-                <LinearGradient
-                  colors={[rank.color + "28", rank.color + "10"]}
-                  style={[S.passportRankBadge, { borderColor: rank.color + "55" }]}
-                  start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}
-                >
+                <View style={[S.passportRankBadge, { backgroundColor: rank.color + "18", borderColor: rank.color + "55" }]}>
                   <Ionicons name={rank.icon as any} size={11} color={rank.color} />
                   <Text style={[S.passportRankText, { color: rank.color }]}>{rank.label.toUpperCase()}</Text>
-                </LinearGradient>
+                </View>
               </View>
 
               <View style={[S.passportDivider, { backgroundColor: rank.color + "22" }]} />
@@ -468,9 +452,9 @@ export default function PublicProfileScreen() {
                   {profile.photoURL ? (
                     <Image source={{ uri: profile.photoURL }} style={S.passportAvatarImg} />
                   ) : (
-                    <LinearGradient colors={[colors.primary, colors.accent]} style={S.passportAvatarGradient}>
+                    <View style={[S.passportAvatarGradient, { backgroundColor: colors.primary }]}>
                       <Text style={S.passportAvatarInitials}>{initials}</Text>
-                    </LinearGradient>
+                    </View>
                   )}
                 </View>
                 <View style={{ flex: 1, gap: 3 }}>
@@ -505,18 +489,13 @@ export default function PublicProfileScreen() {
               <Text style={[S.passportSerial, { color: rank.color + "35" }]}>
                 QRG-{profile.username.slice(0, 4).toUpperCase().padEnd(4, "0")}
               </Text>
-            </LinearGradient>
+            </View>
           </Animated.View>
 
           {/* ══════════════ FRIENDS LEADERBOARD ══════════════ */}
           {(isOwnProfile || friendStatus === "friends") && profile.privacy.showRanking && (
             <Animated.View entering={FadeInDown.duration(400).delay(240)}>
               <View style={[S.leaderboardCard, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
-                <LinearGradient
-                  colors={isDark ? ["#0A1628", "transparent"] : ["#EBF4FF", "transparent"]}
-                  style={StyleSheet.absoluteFill}
-                  start={{ x: 0, y: 0 }} end={{ x: 0, y: 1 }}
-                />
                 <View style={S.leaderboardHeader}>
                   <View style={[S.leaderboardHeaderIcon, { backgroundColor: colors.warningDim }]}>
                     <Ionicons name="trophy" size={16} color={colors.warning} />
@@ -549,12 +528,9 @@ export default function PublicProfileScreen() {
                           {entry.photoURL
                             ? <Image source={{ uri: entry.photoURL }} style={S.lbAvatarImg} />
                             : (
-                              <LinearGradient
-                                colors={entry.isMe ? [colors.primary, colors.accent] : [colors.textMuted + "80", colors.textMuted + "40"]}
-                                style={S.lbAvatarGrad}
-                              >
+                              <View style={[S.lbAvatarGrad, { backgroundColor: entry.isMe ? colors.primary : colors.textMuted + "60" }]}>
                                 <Text style={S.lbAvatarInitials}>{initials}</Text>
-                              </LinearGradient>
+                              </View>
                             )
                           }
                         </View>
@@ -594,9 +570,9 @@ export default function PublicProfileScreen() {
                 onPress={() => router.push("/privacy-settings" as any)}
                 style={({ pressed }) => [S.ownCta, { backgroundColor: colors.primaryDim, borderColor: colors.primary + "40", opacity: pressed ? 0.85 : 1 }]}
               >
-                <LinearGradient colors={[colors.primary, colors.accent]} style={S.ownCtaIcon} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}>
+                <View style={[S.ownCtaIcon, { backgroundColor: colors.primary }]}>
                   <Ionicons name="shield-checkmark-outline" size={16} color={colors.primaryText} />
-                </LinearGradient>
+                </View>
                 <Text style={[S.ownCtaText, { color: colors.primary }]}>Manage Privacy & Settings</Text>
                 <Ionicons name="chevron-forward" size={16} color={colors.primary} />
               </Pressable>
@@ -604,9 +580,9 @@ export default function PublicProfileScreen() {
                 onPress={() => router.push("/friends" as any)}
                 style={({ pressed }) => [S.ownCta, { backgroundColor: colors.safeDim, borderColor: colors.safe + "40", opacity: pressed ? 0.85 : 1 }]}
               >
-                <LinearGradient colors={[colors.safe, colors.safe + "CC"]} style={S.ownCtaIcon} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}>
+                <View style={[S.ownCtaIcon, { backgroundColor: colors.safe }]}>
                   <Ionicons name="people-outline" size={16} color="#fff" />
-                </LinearGradient>
+                </View>
                 <Text style={[S.ownCtaText, { color: colors.safe }]}>My Friends</Text>
                 <Ionicons name="chevron-forward" size={16} color={colors.safe} />
               </Pressable>

@@ -14,7 +14,6 @@ import { Link, router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import * as Haptics from "@/lib/haptics";
-import { LinearGradient } from "expo-linear-gradient";
 import { useTheme } from "@/contexts/ThemeContext";
 import { useAuth } from "@/contexts/AuthContext";
 import GoogleIcon from "@/components/GoogleIcon";
@@ -92,14 +91,6 @@ export default function LoginScreen() {
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.background }}>
-      <LinearGradient
-        colors={colors.isDark
-          ? ["#050B18", colors.background, "#070F1E"]
-          : ["#EBF1FF", colors.background, "#E4EDFF"]}
-        style={StyleSheet.absoluteFill}
-        start={{ x: 0.5, y: 0 }}
-        end={{ x: 0.5, y: 1 }}
-      />
       <View style={[styles.glowOrb, {
         backgroundColor: colors.primaryDim,
         top: -80, right: -80, width: 260, height: 260,
@@ -121,14 +112,9 @@ export default function LoginScreen() {
         >
           <View style={[styles.heroSection, { paddingTop: heroPadTop, paddingBottom: heroPadBottom }]}>
             <View style={[styles.logoWrap, { marginBottom: isSmallScreen ? 6 : 10 }]}>
-              <LinearGradient
-                colors={[colors.primary, colors.primaryShade]}
-                style={[styles.logoGradient, { width: logoSize, height: logoSize, borderRadius: logoRadius }]}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-              >
+              <View style={[styles.logoBox, { width: logoSize, height: logoSize, borderRadius: logoRadius, backgroundColor: colors.primary }]}>
                 <Ionicons name="shield-checkmark" size={iconSize} color="#fff" />
-              </LinearGradient>
+              </View>
               {!isSmallScreen && (
                 <>
                   <View style={[styles.logoRing, { borderColor: colors.primary + "30", width: logoSize + 22, height: logoSize + 22, borderRadius: logoRadius + 6 }]} />
@@ -197,23 +183,19 @@ export default function LoginScreen() {
               <Pressable
                 onPress={handleLogin}
                 disabled={loading}
-                style={({ pressed }) => [{ opacity: pressed || loading ? 0.88 : 1, transform: [{ scale: pressed ? 0.98 : 1 }] }]}
+                style={({ pressed }) => [
+                  styles.primaryBtn,
+                  { backgroundColor: colors.primary, paddingVertical: Math.round(15 * scale), opacity: pressed || loading ? 0.88 : 1, transform: [{ scale: pressed ? 0.98 : 1 }] },
+                ]}
               >
-                <LinearGradient
-                  colors={[colors.primary, colors.primaryShade]}
-                  style={[styles.primaryBtn, { paddingVertical: Math.round(15 * scale) }]}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 0 }}
-                >
-                  {loading ? (
-                    <ActivityIndicator color="#fff" />
-                  ) : (
-                    <>
-                      <Text style={[styles.primaryBtnText, { fontSize: btnTextSize }]}>Sign In</Text>
-                      <Ionicons name="arrow-forward" size={Math.round(16 * scale)} color="#fff" />
-                    </>
-                  )}
-                </LinearGradient>
+                {loading ? (
+                  <ActivityIndicator color="#fff" />
+                ) : (
+                  <>
+                    <Text style={[styles.primaryBtnText, { fontSize: btnTextSize }]}>Sign In</Text>
+                    <Ionicons name="arrow-forward" size={Math.round(16 * scale)} color="#fff" />
+                  </>
+                )}
               </Pressable>
             </View>
 
@@ -267,7 +249,7 @@ const styles = StyleSheet.create({
   glowOrb: { position: "absolute", borderRadius: 200 },
   heroSection: { alignItems: "center", gap: 8 },
   logoWrap: { alignItems: "center", justifyContent: "center" },
-  logoGradient: { alignItems: "center", justifyContent: "center" },
+  logoBox: { alignItems: "center", justifyContent: "center" },
   logoRing: { position: "absolute", borderWidth: 1.5 },
   logoRing2: { position: "absolute", borderWidth: 1 },
   appLabel: { fontFamily: "Inter_700Bold", letterSpacing: 3, textTransform: "uppercase" },

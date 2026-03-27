@@ -14,7 +14,6 @@ import { router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import * as Haptics from "@/lib/haptics";
-import { LinearGradient } from "expo-linear-gradient";
 import { useTheme } from "@/contexts/ThemeContext";
 import { useAuth } from "@/contexts/AuthContext";
 import AuthFormInput from "@/features/auth/components/AuthFormInput";
@@ -60,17 +59,10 @@ export default function ForgotPasswordScreen() {
   if (sent) {
     return (
       <View style={{ flex: 1, backgroundColor: colors.background }}>
-        <LinearGradient
-          colors={colors.isDark ? ["#020913", "#050B18"] : ["#EEF4FF", "#F4F8FF"]}
-          style={StyleSheet.absoluteFill}
-        />
         <View style={[styles.centeredContainer, { paddingBottom: insets.bottom + 40, paddingTop: insets.top + 40, paddingHorizontal: px }]}>
-          <LinearGradient
-            colors={[colors.safe + "25", colors.safe + "0A"]}
-            style={[styles.successOrb, { borderColor: colors.safe + "30" }]}
-          >
+          <View style={[styles.successOrb, { backgroundColor: colors.safeDim, borderColor: colors.safe + "30" }]}>
             <Ionicons name="checkmark-circle" size={Math.round(48 * scale)} color={colors.safe} />
-          </LinearGradient>
+          </View>
 
           <Text style={[styles.title, { color: colors.text, fontSize: titleSize }]}>Email Sent!</Text>
           <Text style={[styles.subtitle, { color: colors.textSecondary, fontSize: subtitleSize, lineHeight: Math.round(subtitleSize * 1.6) }]}>
@@ -81,17 +73,13 @@ export default function ForgotPasswordScreen() {
 
           <Pressable
             onPress={() => router.back()}
-            style={({ pressed }) => [{ opacity: pressed ? 0.85 : 1, transform: [{ scale: pressed ? 0.98 : 1 }], width: "100%" }]}
+            style={({ pressed }) => [
+              styles.primaryBtn,
+              { backgroundColor: colors.primary, paddingVertical: Math.round(15 * scale), width: "100%", opacity: pressed ? 0.85 : 1, transform: [{ scale: pressed ? 0.98 : 1 }] },
+            ]}
           >
-            <LinearGradient
-              colors={[colors.primary, colors.primaryShade]}
-              style={[styles.primaryBtn, { paddingVertical: Math.round(15 * scale) }]}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 0 }}
-            >
-              <Text style={[styles.primaryBtnText, { fontSize: btnTextSize }]}>Back to Sign In</Text>
-              <Ionicons name="arrow-forward" size={Math.round(16 * scale)} color="#fff" />
-            </LinearGradient>
+            <Text style={[styles.primaryBtnText, { fontSize: btnTextSize }]}>Back to Sign In</Text>
+            <Ionicons name="arrow-forward" size={Math.round(16 * scale)} color="#fff" />
           </Pressable>
 
           <Pressable onPress={() => { setSent(false); setEmail(""); }} style={styles.linkBtn}>
@@ -104,14 +92,8 @@ export default function ForgotPasswordScreen() {
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.background }}>
-      <LinearGradient
-        colors={colors.isDark ? ["#020913", "#050B18", "#07111F"] : ["#EEF4FF", "#F4F8FF", "#EAF0FF"]}
-        style={StyleSheet.absoluteFill}
-        start={{ x: 0.5, y: 0 }}
-        end={{ x: 0.5, y: 1 }}
-      />
       <View style={[styles.glowOrb, {
-        backgroundColor: colors.isDark ? "rgba(0,229,255,0.05)" : "rgba(0,111,255,0.05)",
+        backgroundColor: colors.primaryDim,
         top: -100, right: -100, width: 280, height: 280,
       }]} />
 
@@ -127,14 +109,9 @@ export default function ForgotPasswordScreen() {
         >
           <View style={[styles.heroSection, { paddingTop: isSmallScreen ? 12 : Math.round(24 * scale), paddingBottom: isSmallScreen ? 16 : Math.round(28 * scale) }]}>
             <View style={[styles.iconWrap, { marginBottom: isSmallScreen ? 6 : 10 }]}>
-              <LinearGradient
-                colors={[colors.primary, colors.primaryShade]}
-                style={[styles.iconGradient, { width: logoSize, height: logoSize, borderRadius: logoRadius }]}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-              >
+              <View style={[styles.iconBox, { width: logoSize, height: logoSize, borderRadius: logoRadius, backgroundColor: colors.primary }]}>
                 <Ionicons name="key" size={iconSize} color="#fff" />
-              </LinearGradient>
+              </View>
               {!isSmallScreen && (
                 <>
                   <View style={[styles.logoRing, { borderColor: colors.primary + "30", width: logoSize + 22, height: logoSize + 22, borderRadius: logoRadius + 6 }]} />
@@ -176,23 +153,19 @@ export default function ForgotPasswordScreen() {
             <Pressable
               onPress={handleReset}
               disabled={loading}
-              style={({ pressed }) => [{ opacity: pressed || loading ? 0.88 : 1, transform: [{ scale: pressed ? 0.98 : 1 }] }]}
+              style={({ pressed }) => [
+                styles.primaryBtn,
+                { backgroundColor: colors.primary, paddingVertical: Math.round(15 * scale), opacity: pressed || loading ? 0.88 : 1, transform: [{ scale: pressed ? 0.98 : 1 }] },
+              ]}
             >
-              <LinearGradient
-                colors={[colors.primary, colors.primaryShade]}
-                style={[styles.primaryBtn, { paddingVertical: Math.round(15 * scale) }]}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 0 }}
-              >
-                {loading ? (
-                  <ActivityIndicator color="#fff" />
-                ) : (
-                  <>
-                    <Text style={[styles.primaryBtnText, { fontSize: btnTextSize }]}>Send Reset Link</Text>
-                    <Ionicons name="send" size={Math.round(14 * scale)} color="#fff" />
-                  </>
-                )}
-              </LinearGradient>
+              {loading ? (
+                <ActivityIndicator color="#fff" />
+              ) : (
+                <>
+                  <Text style={[styles.primaryBtnText, { fontSize: btnTextSize }]}>Send Reset Link</Text>
+                  <Ionicons name="send" size={Math.round(14 * scale)} color="#fff" />
+                </>
+              )}
             </Pressable>
           </View>
 
@@ -212,7 +185,7 @@ const styles = StyleSheet.create({
   glowOrb: { position: "absolute", borderRadius: 200 },
   heroSection: { alignItems: "center", gap: 10 },
   iconWrap: { alignItems: "center", justifyContent: "center" },
-  iconGradient: { alignItems: "center", justifyContent: "center" },
+  iconBox: { alignItems: "center", justifyContent: "center" },
   logoRing: { position: "absolute", borderWidth: 1.5 },
   logoRing2: { position: "absolute", borderWidth: 1 },
   successOrb: {

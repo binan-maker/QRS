@@ -14,7 +14,6 @@ import { Link, router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import * as Haptics from "@/lib/haptics";
-import { LinearGradient } from "expo-linear-gradient";
 import { useTheme } from "@/contexts/ThemeContext";
 import { useAuth } from "@/contexts/AuthContext";
 import GoogleIcon from "@/components/GoogleIcon";
@@ -100,17 +99,10 @@ export default function RegisterScreen() {
   if (verificationSent) {
     return (
       <View style={{ flex: 1, backgroundColor: colors.background }}>
-        <LinearGradient
-          colors={colors.isDark ? ["#020913", "#050B18"] : ["#EEF4FF", "#F4F8FF"]}
-          style={StyleSheet.absoluteFill}
-        />
         <View style={[styles.verifyContainer, { paddingBottom: insets.bottom + 40, paddingTop: insets.top + 60, paddingHorizontal: px }]}>
-          <LinearGradient
-            colors={[colors.safe + "20", colors.safe + "08"]}
-            style={[styles.successIconWrap, { borderColor: colors.safe + "30" }]}
-          >
+          <View style={[styles.successIconWrap, { backgroundColor: colors.safeDim, borderColor: colors.safe + "30" }]}>
             <Ionicons name="mail-open-outline" size={Math.round(40 * scale)} color={colors.safe} />
-          </LinearGradient>
+          </View>
           <Text style={[styles.title, { color: colors.text, fontSize: titleSize }]}>Check Your Email</Text>
           <Text style={[styles.verifyText, { color: colors.textSecondary, fontSize: subtitleSize, lineHeight: Math.round(subtitleSize * 1.6) }]}>
             Account created! We've sent a verification email to{"\n"}
@@ -119,17 +111,13 @@ export default function RegisterScreen() {
           </Text>
           <Pressable
             onPress={() => router.replace("/(auth)/login")}
-            style={({ pressed }) => [{ opacity: pressed ? 0.85 : 1, transform: [{ scale: pressed ? 0.98 : 1 }], width: "100%" }]}
+            style={({ pressed }) => [
+              styles.primaryBtn,
+              { backgroundColor: colors.primary, paddingVertical: Math.round(15 * scale), width: "100%", opacity: pressed ? 0.85 : 1, transform: [{ scale: pressed ? 0.98 : 1 }] },
+            ]}
           >
-            <LinearGradient
-              colors={[colors.primary, colors.primaryShade]}
-              style={[styles.primaryBtn, { paddingVertical: Math.round(15 * scale) }]}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 0 }}
-            >
-              <Text style={[styles.primaryBtnText, { fontSize: btnTextSize }]}>Go to Sign In</Text>
-              <Ionicons name="arrow-forward" size={Math.round(16 * scale)} color="#fff" />
-            </LinearGradient>
+            <Text style={[styles.primaryBtnText, { fontSize: btnTextSize }]}>Go to Sign In</Text>
+            <Ionicons name="arrow-forward" size={Math.round(16 * scale)} color="#fff" />
           </Pressable>
         </View>
       </View>
@@ -138,18 +126,12 @@ export default function RegisterScreen() {
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.background }}>
-      <LinearGradient
-        colors={colors.isDark ? ["#020913", "#050B18", "#07111F"] : ["#EEF4FF", "#F4F8FF", "#EAF0FF"]}
-        style={StyleSheet.absoluteFill}
-        start={{ x: 0.5, y: 0 }}
-        end={{ x: 0.5, y: 1 }}
-      />
       <View style={[styles.glowOrb, {
-        backgroundColor: colors.isDark ? "rgba(176,96,255,0.06)" : "rgba(124,58,237,0.05)",
+        backgroundColor: colors.primaryDim,
         top: -60, left: -80, width: 240, height: 240,
       }]} />
       <View style={[styles.glowOrb, {
-        backgroundColor: colors.isDark ? "rgba(0,229,255,0.05)" : "rgba(0,111,255,0.04)",
+        backgroundColor: colors.primaryDim,
         bottom: 60, right: -100, width: 280, height: 280,
       }]} />
 
@@ -165,22 +147,17 @@ export default function RegisterScreen() {
         >
           <View style={[styles.heroSection, { paddingTop: heroPadTop, paddingBottom: heroPadBottom }]}>
             <View style={[styles.logoWrap, { marginBottom: isSmallScreen ? 4 : 8 }]}>
-              <LinearGradient
-                colors={[colors.primary, colors.primaryShade]}
-                style={[styles.logoGradient, { width: logoSize, height: logoSize, borderRadius: logoRadius }]}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-              >
+              <View style={[styles.logoBox, { width: logoSize, height: logoSize, borderRadius: logoRadius, backgroundColor: colors.primary }]}>
                 <Ionicons name="person-add" size={iconSize} color="#fff" />
-              </LinearGradient>
+              </View>
               {!isSmallScreen && (
                 <>
-                  <View style={[styles.logoRing, { borderColor: colors.accent + "30", width: logoSize + 22, height: logoSize + 22, borderRadius: logoRadius + 6 }]} />
-                  <View style={[styles.logoRing2, { borderColor: colors.accent + "15", width: logoSize + 42, height: logoSize + 42, borderRadius: logoRadius + 12 }]} />
+                  <View style={[styles.logoRing, { borderColor: colors.primary + "30", width: logoSize + 22, height: logoSize + 22, borderRadius: logoRadius + 6 }]} />
+                  <View style={[styles.logoRing2, { borderColor: colors.primary + "15", width: logoSize + 42, height: logoSize + 42, borderRadius: logoRadius + 12 }]} />
                 </>
               )}
             </View>
-            <Text style={[styles.appLabel, { color: colors.accent, fontSize: Math.round(11 * scale) }]}>QR GUARD</Text>
+            <Text style={[styles.appLabel, { color: colors.primary, fontSize: Math.round(11 * scale) }]}>QR GUARD</Text>
             <Text style={[styles.title, { color: colors.text, fontSize: titleSize }]}>Create account</Text>
             <Text style={[styles.subtitle, { color: colors.textSecondary, fontSize: subtitleSize }]}>
               Join to comment, report, and sync your scan history
@@ -263,23 +240,19 @@ export default function RegisterScreen() {
               <Pressable
                 onPress={handleRegister}
                 disabled={loading}
-                style={({ pressed }) => [{ opacity: pressed || loading ? 0.88 : 1, transform: [{ scale: pressed ? 0.98 : 1 }] }]}
+                style={({ pressed }) => [
+                  styles.primaryBtn,
+                  { backgroundColor: colors.primary, paddingVertical: Math.round(15 * scale), opacity: pressed || loading ? 0.88 : 1, transform: [{ scale: pressed ? 0.98 : 1 }] },
+                ]}
               >
-                <LinearGradient
-                  colors={[colors.primary, colors.primaryShade]}
-                  style={[styles.primaryBtn, { paddingVertical: Math.round(15 * scale) }]}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 0 }}
-                >
-                  {loading ? (
-                    <ActivityIndicator color="#fff" />
-                  ) : (
-                    <>
-                      <Text style={[styles.primaryBtnText, { fontSize: btnTextSize }]}>Create Account</Text>
-                      <Ionicons name="arrow-forward" size={Math.round(16 * scale)} color="#fff" />
-                    </>
-                  )}
-                </LinearGradient>
+                {loading ? (
+                  <ActivityIndicator color="#fff" />
+                ) : (
+                  <>
+                    <Text style={[styles.primaryBtnText, { fontSize: btnTextSize }]}>Create Account</Text>
+                    <Ionicons name="arrow-forward" size={Math.round(16 * scale)} color="#fff" />
+                  </>
+                )}
               </Pressable>
             </View>
           </View>
@@ -303,7 +276,7 @@ const styles = StyleSheet.create({
   glowOrb: { position: "absolute", borderRadius: 200 },
   heroSection: { alignItems: "center", gap: 7 },
   logoWrap: { alignItems: "center", justifyContent: "center" },
-  logoGradient: { alignItems: "center", justifyContent: "center" },
+  logoBox: { alignItems: "center", justifyContent: "center" },
   logoRing: { position: "absolute", borderWidth: 1.5 },
   logoRing2: { position: "absolute", borderWidth: 1 },
   appLabel: { fontFamily: "Inter_700Bold", letterSpacing: 3, textTransform: "uppercase" },
