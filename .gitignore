@@ -18,6 +18,8 @@ android/
 *.p12
 *.key
 *.mobileprovision
+*.keystore
+keystore/
 
 # Metro
 .metro-health-check*

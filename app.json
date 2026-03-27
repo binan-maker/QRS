@@ -21,7 +21,7 @@
       "package": "com.qrguard.app",
       "adaptiveIcon": {
         "backgroundColor": "#0A0E17",
-        "backgroundImage": "./assets/images/splash-icon.png"
+        "backgroundImage": "./assets/images/icon.png"
       }
     },
     "web": {
