@@ -125,7 +125,13 @@ const TrustScoreCard = React.memo(function TrustScoreCard({
             ]}
           >
             <Text style={[styles.statNum, { color: colors.text }]} maxFontSizeMultiplier={1}>{formatCompactNumber(s.value)}</Text>
-            <Text style={[styles.statLabel, { color: s.onPress ? colors.primary : colors.textMuted }]} numberOfLines={1} maxFontSizeMultiplier={1}>{s.label}</Text>
+            <Text
+              style={[styles.statLabel, { color: s.onPress ? colors.primary : colors.textMuted }]}
+              numberOfLines={1}
+              adjustsFontSizeToFit
+              minimumFontScale={0.6}
+              maxFontSizeMultiplier={1}
+            >{s.label}</Text>
           </Pressable>
         ))}
       </View>

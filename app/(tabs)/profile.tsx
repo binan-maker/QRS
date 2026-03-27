@@ -81,8 +81,8 @@ export default function ProfileScreen() {
             <View style={[styles.guestIconRing, { backgroundColor: colors.primaryDim }]}>
               <Ionicons name="person-outline" size={48} color={colors.primary} />
             </View>
-            <Text style={[styles.guestTitle, { color: colors.text }]}>You're not signed in</Text>
-            <Text style={[styles.guestSub, { color: colors.textSecondary }]}>
+            <Text style={[styles.guestTitle, { color: colors.text }]} maxFontSizeMultiplier={1}>You're not signed in</Text>
+            <Text style={[styles.guestSub, { color: colors.textSecondary }]} maxFontSizeMultiplier={1}>
               Sign in to view your profile, stats, and activity
             </Text>
             <Pressable
@@ -90,10 +90,10 @@ export default function ProfileScreen() {
               style={({ pressed }) => [styles.guestSignInBtn, { backgroundColor: colors.primary, opacity: pressed ? 0.88 : 1 }]}
             >
               <Ionicons name="log-in-outline" size={18} color={colors.primaryText} />
-              <Text style={[styles.guestSignInText, { color: colors.primaryText }]}>Sign In</Text>
+              <Text style={[styles.guestSignInText, { color: colors.primaryText }]} maxFontSizeMultiplier={1}>Sign In</Text>
             </Pressable>
             <Pressable onPress={() => router.push("/(auth)/register")} style={styles.guestRegBtn}>
-              <Text style={[styles.guestRegText, { color: colors.primary }]}>Create Account</Text>
+              <Text style={[styles.guestRegText, { color: colors.primary }]} maxFontSizeMultiplier={1}>Create Account</Text>
             </Pressable>
           </Animated.View>
         </View>
@@ -137,7 +137,7 @@ export default function ProfileScreen() {
                   ) : photoURL ? (
                     <Image source={{ uri: photoURL }} style={styles.avatarPhoto} />
                   ) : (
-                    <Text style={[styles.avatarInitials, { color: colors.primary }]}>{initials}</Text>
+                    <Text style={[styles.avatarInitials, { color: colors.primary }]} maxFontSizeMultiplier={1}>{initials}</Text>
                   )}
                 </View>
               </View>
@@ -162,7 +162,7 @@ export default function ProfileScreen() {
                 <Pressable onPress={handleSaveName} disabled={savingName} style={[styles.saveBtn, { backgroundColor: colors.primary }]}>
                   {savingName
                     ? <ActivityIndicator size="small" color={colors.primaryText} />
-                    : <Text style={[styles.saveBtnText, { color: colors.primaryText }]}>Save</Text>
+                    : <Text style={[styles.saveBtnText, { color: colors.primaryText }]} maxFontSizeMultiplier={1}>Save</Text>
                   }
                 </Pressable>
                 <Pressable onPress={() => { setEditingName(false); setNewName(user.displayName); }} style={styles.cancelBtn}>
@@ -174,7 +174,7 @@ export default function ProfileScreen() {
                 onPress={() => { setEditingName(true); setNewName(user.displayName); }}
                 style={styles.nameRow}
               >
-                <Text style={[styles.displayName, { color: colors.text }]} numberOfLines={1}>
+                <Text style={[styles.displayName, { color: colors.text }]} numberOfLines={1} maxFontSizeMultiplier={1}>
                   {user.displayName}
                 </Text>
                 <View style={[styles.editPencil, { backgroundColor: colors.primaryDim }]}>
@@ -184,7 +184,7 @@ export default function ProfileScreen() {
             )}
 
             {currentUsername ? (
-              <Text style={[styles.usernameText, { color: colors.primary }]}>@{currentUsername}</Text>
+              <Text style={[styles.usernameText, { color: colors.primary }]} maxFontSizeMultiplier={1}>@{currentUsername}</Text>
             ) : null}
 
             {/* Bio */}
@@ -201,14 +201,14 @@ export default function ProfileScreen() {
                   autoFocus
                 />
                 <View style={styles.bioEditActions}>
-                  <Text style={[styles.bioCharCount, { color: colors.textMuted }]}>{newBio.length}/150</Text>
+                  <Text style={[styles.bioCharCount, { color: colors.textMuted }]} maxFontSizeMultiplier={1}>{newBio.length}/150</Text>
                   <Pressable onPress={() => { setEditingBio(false); setNewBio(bio); }} style={styles.cancelBtn}>
                     <Ionicons name="close" size={18} color={colors.textMuted} />
                   </Pressable>
                   <Pressable onPress={handleSaveBio} disabled={savingBio} style={[styles.saveBtn, { backgroundColor: colors.primary }]}>
                     {savingBio
                       ? <ActivityIndicator size="small" color={colors.primaryText} />
-                      : <Text style={[styles.saveBtnText, { color: colors.primaryText }]}>Save</Text>
+                      : <Text style={[styles.saveBtnText, { color: colors.primaryText }]} maxFontSizeMultiplier={1}>Save</Text>
                     }
                   </Pressable>
                 </View>
@@ -216,9 +216,9 @@ export default function ProfileScreen() {
             ) : (
               <Pressable onPress={() => { setNewBio(bio); setEditingBio(true); }} style={styles.bioRow}>
                 {bio ? (
-                  <Text style={[styles.bioText, { color: colors.textSecondary }]} numberOfLines={2}>{bio}</Text>
+                  <Text style={[styles.bioText, { color: colors.textSecondary }]} numberOfLines={2} maxFontSizeMultiplier={1}>{bio}</Text>
                 ) : (
-                  <Text style={[styles.bioPlaceholder, { color: colors.textMuted }]}>Add a bio…</Text>
+                  <Text style={[styles.bioPlaceholder, { color: colors.textMuted }]} maxFontSizeMultiplier={1}>Add a bio…</Text>
                 )}
                 <View style={[styles.editPencil, { backgroundColor: colors.primaryDim }]}>
                   <Ionicons name="pencil" size={11} color={colors.primary} />
@@ -226,7 +226,7 @@ export default function ProfileScreen() {
               </Pressable>
             )}
 
-            <Text style={[styles.emailText, { color: colors.textMuted }]}>
+            <Text style={[styles.emailText, { color: colors.textMuted }]} maxFontSizeMultiplier={1}>
               {user.email}
             </Text>
           </View>
@@ -241,7 +241,7 @@ export default function ProfileScreen() {
               ]}
             >
               <Ionicons name="eye-outline" size={16} color={colors.primary} />
-              <Text style={[styles.viewPublicText, { color: colors.primary }]}>View My Public Profile</Text>
+              <Text style={[styles.viewPublicText, { color: colors.primary }]} maxFontSizeMultiplier={1}>View My Public Profile</Text>
               <Ionicons name="arrow-forward" size={14} color={colors.primary} />
             </Pressable>
           )}
@@ -268,9 +268,9 @@ export default function ProfileScreen() {
                 </View>
                 {statsLoading
                   ? <SkeletonBox width={36} height={22} borderRadius={6} style={{ alignSelf: "center" }} />
-                  : <Text style={[styles.statValue, { color: s.color }]}>{formatCompactNumber(s.value)}</Text>
+                  : <Text style={[styles.statValue, { color: s.color }]} maxFontSizeMultiplier={1}>{formatCompactNumber(s.value)}</Text>
                 }
-                <Text style={[styles.statLabel, { color: colors.textMuted }]}>{s.label}</Text>
+                <Text style={[styles.statLabel, { color: colors.textMuted }]} maxFontSizeMultiplier={1}>{s.label}</Text>
               </Pressable>
             ))}
           </View>
@@ -283,19 +283,19 @@ export default function ProfileScreen() {
               <Ionicons name="thumbs-up" size={20} color={colors.safe} />
             </View>
             <View style={{ flex: 1 }}>
-              <Text style={[styles.likesTitle, { color: colors.text }]}>Total Likes Received</Text>
-              <Text style={[styles.likesSub, { color: colors.textSecondary }]}>From your comments</Text>
+              <Text style={[styles.likesTitle, { color: colors.text }]} maxFontSizeMultiplier={1}>Total Likes Received</Text>
+              <Text style={[styles.likesSub, { color: colors.textSecondary }]} maxFontSizeMultiplier={1}>From your comments</Text>
             </View>
             {statsLoading
               ? <SkeletonBox width={44} height={26} borderRadius={8} />
-              : <Text style={[styles.likesValue, { color: colors.safe }]}>{formatCompactNumber(stats.totalLikesReceived)}</Text>
+              : <Text style={[styles.likesValue, { color: colors.safe }]} maxFontSizeMultiplier={1}>{formatCompactNumber(stats.totalLikesReceived)}</Text>
             }
           </View>
         </Animated.View>
 
         {/* ── MY QR CODES + FAVORITES ── */}
         <Animated.View entering={FadeInDown.duration(450).delay(170)}>
-          <Text style={[styles.sectionLabel, { color: colors.textMuted }]}>Library</Text>
+          <Text style={[styles.sectionLabel, { color: colors.textMuted }]} maxFontSizeMultiplier={1}>Library</Text>
           <View style={styles.linksGroup}>
             {[
               {

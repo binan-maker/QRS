@@ -14,7 +14,7 @@ export default function ContentTypeSelector({ selectedPreset, onSelect }: Props)
 
   return (
     <>
-      <Text style={[styles.sectionLabel, { color: colors.textMuted }]}>Content Type</Text>
+      <Text style={[styles.sectionLabel, { color: colors.textMuted }]} maxFontSizeMultiplier={1}>Content Type</Text>
       <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 20 }}>
         <View style={styles.presetRow}>
           {QR_PRESETS.map((p, idx) => (
@@ -28,7 +28,7 @@ export default function ContentTypeSelector({ selectedPreset, onSelect }: Props)
               ]}
             >
               <Ionicons name={p.icon as any} size={16} color={selectedPreset === idx ? colors.primary : colors.textMuted} />
-              <Text style={[styles.presetBtnText, { color: selectedPreset === idx ? colors.primary : colors.textMuted }]}>{p.label}</Text>
+              <Text style={[styles.presetBtnText, { color: selectedPreset === idx ? colors.primary : colors.textMuted }]} maxFontSizeMultiplier={1}>{p.label}</Text>
             </Pressable>
           ))}
         </View>
@@ -36,7 +36,7 @@ export default function ContentTypeSelector({ selectedPreset, onSelect }: Props)
       {preset.hint && (
         <View style={[styles.hintBanner, { backgroundColor: colors.primaryDim, borderColor: colors.primary + "30" }]}>
           <Ionicons name="information-circle-outline" size={14} color={colors.primary} />
-          <Text style={[styles.hintText, { color: colors.primary }]}>{preset.hint}</Text>
+          <Text style={[styles.hintText, { color: colors.primary }]} maxFontSizeMultiplier={1}>{preset.hint}</Text>
         </View>
       )}
     </>
