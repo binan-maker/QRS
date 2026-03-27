@@ -122,6 +122,25 @@ export function useQrComments(id: string, userId: string | null, offlineMode: bo
     });
   }, [commentsList, userId, id]);
 
+  // Sync current user's live profile data into their displayed comments
+  const userUsername = (user as any)?.username;
+  const userPhotoURL = user?.photoURL;
+  const userDisplayName = user?.displayName;
+  useEffect(() => {
+    if (!userId) return;
+    setCommentsList((prev) =>
+      prev.map((c) => {
+        if (c.userId !== userId) return c;
+        return {
+          ...c,
+          userUsername: userUsername || c.userUsername,
+          userPhotoURL: userPhotoURL || c.userPhotoURL,
+          user: { displayName: userDisplayName || c.user.displayName },
+        };
+      })
+    );
+  }, [userUsername, userPhotoURL, userDisplayName, userId]);
+
   useEffect(() => {
     if (replyTo) {
       const t = setTimeout(() => commentInputRef.current?.focus(), 100);
@@ -190,7 +209,8 @@ export function useQrComments(id: string, userId: string | null, offlineMode: bo
       text: trimmed,
       userId,
       user: { displayName: user?.displayName || displayName },
-      userUsername: user?.displayName || undefined,
+      userUsername: (user as any)?.username || undefined,
+      userPhotoURL: user?.photoURL || undefined,
       createdAt: new Date().toISOString(),
       likeCount: 0,
       dislikeCount: 0,

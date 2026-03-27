@@ -79,7 +79,7 @@ const styles = StyleSheet.create({
   container: { marginBottom: 10 },
   header: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 10 },
   titleRow: { flexDirection: "row", alignItems: "center", gap: 6 },
-  title: { fontSize: 15, fontFamily: "Inter_700Bold" },
+  title: { fontSize: 16, fontFamily: "Inter_700Bold" },
   votedBadge: {
     flexDirection: "row", alignItems: "center", gap: 4,
     paddingHorizontal: 8, paddingVertical: 3, borderRadius: 100, borderWidth: 1,

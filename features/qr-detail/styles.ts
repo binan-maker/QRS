@@ -45,8 +45,8 @@ export function makeStyles(c: AppColors) {
       width: 46, height: 46, borderRadius: 23,
       backgroundColor: c.primary + "22", alignItems: "center", justifyContent: "center",
     },
-    signInBannerTitle: { fontSize: 14, fontFamily: "Inter_700Bold", color: c.text },
-    signInBannerSub: { fontSize: 12, fontFamily: "Inter_400Regular", color: c.textSecondary, marginTop: 2 },
+    signInBannerTitle: { fontSize: 15, fontFamily: "Inter_700Bold", color: c.text },
+    signInBannerSub: { fontSize: 13, fontFamily: "Inter_400Regular", color: c.textSecondary, marginTop: 2 },
 
     deactivatedBanner: {
       flexDirection: "row", alignItems: "center", gap: 12,
@@ -92,8 +92,8 @@ export function makeStyles(c: AppColors) {
       backgroundColor: c.surface, borderRadius: 20, padding: 32, alignItems: "center",
       gap: 10, borderWidth: 1, borderColor: c.surfaceBorder, marginBottom: 14,
     },
-    noCommentsText: { fontSize: 16, fontFamily: "Inter_700Bold", color: c.textSecondary },
-    noCommentsSubtext: { fontSize: 13, fontFamily: "Inter_400Regular", color: c.textMuted },
+    noCommentsText: { fontSize: 17, fontFamily: "Inter_700Bold", color: c.textSecondary },
+    noCommentsSubtext: { fontSize: 14, fontFamily: "Inter_400Regular", color: c.textMuted },
     loadMoreBtn: {
       backgroundColor: c.surface, borderRadius: 16, padding: 14, alignItems: "center",
       borderWidth: 1, borderColor: c.surfaceBorder, marginTop: 8, marginBottom: 12,

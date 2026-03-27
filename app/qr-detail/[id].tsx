@@ -129,9 +129,9 @@ const verdictStyles = StyleSheet.create({
     flexDirection: "row", alignItems: "center", gap: 14,
     borderRadius: 20, padding: 16, marginBottom: 16, borderWidth: 1,
   },
-  iconWrap: { width: 44, height: 44, borderRadius: 14, alignItems: "center", justifyContent: "center", flexShrink: 0 },
+  iconWrap: { width: 46, height: 46, borderRadius: 15, alignItems: "center", justifyContent: "center", flexShrink: 0 },
   label: { fontSize: 13, fontFamily: "Inter_700Bold", letterSpacing: 0.8, marginBottom: 3 },
-  reason: { fontSize: 13, fontFamily: "Inter_400Regular", lineHeight: 18 },
+  reason: { fontSize: 14, fontFamily: "Inter_400Regular", lineHeight: 20 },
 });
 
 export default function QrDetailScreen() {
@@ -315,6 +315,17 @@ export default function QrDetailScreen() {
               />
             </Animated.View>
 
+            {/* ── Payment Safety Warning (above trust score for payments) ──── */}
+            {currentContentType === "payment" && q.paymentSafety?.isSuspicious && (
+              <Animated.View entering={FadeInDown.duration(300).delay(75)}>
+                <SafetyWarningCard
+                  riskLevel={q.paymentSafety.riskLevel as "caution" | "dangerous"}
+                  warnings={q.paymentSafety.warnings}
+                  title={q.paymentSafety.riskLevel === "dangerous" ? "Payment Security Warning" : "Payment Security Notice"}
+                />
+              </Animated.View>
+            )}
+
             {/* ── Community Trust ──────────────────────────────────────────── */}
             <Animated.View entering={FadeInDown.duration(400).delay(80)}>
               <SectionHeader icon="shield-checkmark-outline" label="Trust Score" gradient={["#006FFF", "#00CFFF"]} />
@@ -349,16 +360,9 @@ export default function QrDetailScreen() {
               )}
             </Animated.View>
 
-            {/* ── Safety Warnings ──────────────────────────────────────────── */}
-            {hasLocalWarnings && (
+            {/* ── Safety Warnings (URL + blacklist only — payment handled above) */}
+            {(currentContentType === "url" && q.urlSafety?.isSuspicious) || q.offlineBlacklistMatch.matched ? (
               <Animated.View entering={FadeInDown.duration(300).delay(130)}>
-                {currentContentType === "payment" && q.paymentSafety?.isSuspicious && (
-                  <SafetyWarningCard
-                    riskLevel={q.paymentSafety.riskLevel as "caution" | "dangerous"}
-                    warnings={q.paymentSafety.warnings}
-                    title={q.paymentSafety.riskLevel === "dangerous" ? "Payment Security Warning" : "Payment Security Notice"}
-                  />
-                )}
                 {currentContentType === "url" && q.urlSafety?.isSuspicious && (
                   <SafetyWarningCard
                     riskLevel={q.urlSafety.riskLevel as "caution" | "dangerous"}
@@ -374,7 +378,7 @@ export default function QrDetailScreen() {
                   />
                 )}
               </Animated.View>
-            )}
+            ) : null}
 
             {/* ── Comments ─────────────────────────────────────────────────── */}
             <Animated.View entering={FadeInDown.duration(400).delay(210)}>

@@ -180,38 +180,40 @@ const CommentItem = React.memo(function CommentItem({
             <View style={styles.actionRow}>
               {/* Like */}
               <Pressable onPress={() => onLike(comment.id, "like")} style={styles.actionBtn}>
-                {currentUserLike === "like" ? (
-                  <View style={[styles.actionPill, { backgroundColor: colors.primary, borderColor: colors.primary, borderWidth: 1 }]}>
-                    <Ionicons name="thumbs-up" size={12} color="#fff" />
-                    {comment.likeCount > 0 && <Text style={[styles.actionCount, { color: "#fff" }]}>{formatCompactNumber(comment.likeCount)}</Text>}
-                  </View>
-                ) : (
-                  <View style={[styles.actionPill, { backgroundColor: isDark ? colors.surfaceLight : colors.background }]}>
-                    <Ionicons name="thumbs-up-outline" size={12} color={colors.textMuted} />
-                    {comment.likeCount > 0 && <Text style={[styles.actionCount, { color: colors.textMuted }]}>{formatCompactNumber(comment.likeCount)}</Text>}
-                  </View>
-                )}
+                <View style={[styles.actionPill, { backgroundColor: isDark ? colors.surfaceLight : colors.background }]}>
+                  <Ionicons
+                    name={currentUserLike === "like" ? "thumbs-up" : "thumbs-up-outline"}
+                    size={13}
+                    color={currentUserLike === "like" ? colors.primary : colors.textMuted}
+                  />
+                  {comment.likeCount > 0 && (
+                    <Text style={[styles.actionCount, { color: currentUserLike === "like" ? colors.primary : colors.textMuted }]}>
+                      {formatCompactNumber(comment.likeCount)}
+                    </Text>
+                  )}
+                </View>
               </Pressable>
 
               {/* Dislike */}
               <Pressable onPress={() => onLike(comment.id, "dislike")} style={styles.actionBtn}>
-                {currentUserLike === "dislike" ? (
-                  <View style={[styles.actionPill, { backgroundColor: colors.dangerDim, borderColor: colors.danger + "40", borderWidth: 1 }]}>
-                    <Ionicons name="thumbs-down" size={12} color={colors.danger} />
-                    {comment.dislikeCount > 0 && <Text style={[styles.actionCount, { color: colors.danger }]}>{formatCompactNumber(comment.dislikeCount)}</Text>}
-                  </View>
-                ) : (
-                  <View style={[styles.actionPill, { backgroundColor: isDark ? colors.surfaceLight : colors.background }]}>
-                    <Ionicons name="thumbs-down-outline" size={12} color={colors.textMuted} />
-                    {comment.dislikeCount > 0 && <Text style={[styles.actionCount, { color: colors.textMuted }]}>{formatCompactNumber(comment.dislikeCount)}</Text>}
-                  </View>
-                )}
+                <View style={[styles.actionPill, { backgroundColor: isDark ? colors.surfaceLight : colors.background }]}>
+                  <Ionicons
+                    name={currentUserLike === "dislike" ? "thumbs-down" : "thumbs-down-outline"}
+                    size={13}
+                    color={currentUserLike === "dislike" ? colors.danger : colors.textMuted}
+                  />
+                  {comment.dislikeCount > 0 && (
+                    <Text style={[styles.actionCount, { color: currentUserLike === "dislike" ? colors.danger : colors.textMuted }]}>
+                      {formatCompactNumber(comment.dislikeCount)}
+                    </Text>
+                  )}
+                </View>
               </Pressable>
 
               {/* Reply */}
               <Pressable onPress={() => onReply(comment)} style={styles.actionBtn}>
                 <View style={[styles.actionPill, { backgroundColor: isDark ? colors.surfaceLight : colors.background }]}>
-                  <Ionicons name="return-down-forward-outline" size={12} color={colors.textMuted} />
+                  <Ionicons name="return-down-forward-outline" size={13} color={colors.textMuted} />
                   <Text style={[styles.actionCount, { color: colors.textMuted }]}>Reply</Text>
                 </View>
               </Pressable>
@@ -312,21 +314,21 @@ const styles = StyleSheet.create({
   commentBody: { flex: 1, gap: 5 },
   commentHeader: { flexDirection: "row", alignItems: "center", gap: 6 },
   authorPressable: { flex: 1, minWidth: 0 },
-  authorName: { fontSize: 13, fontFamily: "Inter_700Bold" },
-  commentTime: { fontSize: 11, fontFamily: "Inter_400Regular", flexShrink: 0 },
-  readMoreText: { fontSize: 13, fontFamily: "Inter_600SemiBold" },
+  authorName: { fontSize: 14, fontFamily: "Inter_700Bold" },
+  commentTime: { fontSize: 12, fontFamily: "Inter_400Regular", flexShrink: 0 },
+  readMoreText: { fontSize: 14, fontFamily: "Inter_600SemiBold" },
   sensitiveTag: {
     paddingHorizontal: 5, paddingVertical: 2, borderRadius: 5,
   },
   menuBtn: { padding: 2 },
-  commentText: { fontSize: 14, fontFamily: "Inter_400Regular", lineHeight: 20 },
-  actionRow: { flexDirection: "row", alignItems: "center", gap: 6, marginTop: 2 },
+  commentText: { fontSize: 15, fontFamily: "Inter_400Regular", lineHeight: 22 },
+  actionRow: { flexDirection: "row", alignItems: "center", gap: 6, marginTop: 4 },
   actionBtn: {},
   actionPill: {
     flexDirection: "row", alignItems: "center", gap: 4,
-    paddingHorizontal: 8, paddingVertical: 4, borderRadius: 100,
+    paddingHorizontal: 9, paddingVertical: 5, borderRadius: 100,
   },
-  actionCount: { fontSize: 11, fontFamily: "Inter_500Medium" },
+  actionCount: { fontSize: 12, fontFamily: "Inter_500Medium" },
   inlineMenu: {
     flexDirection: "row", gap: 14, borderRadius: 10, padding: 10,
     borderWidth: 1, marginTop: 4,
