@@ -1,0 +1,8 @@
+uploads = []
+generated = []
+
+[[outputs]]
+id = "Vi1uqZEvrmL4gHAWq7SrT"
+uri = "file://QR_GUARD_DOCUMENTATION.md"
+type = "text"
+title = "QR Guard — Complete Business & Product Documentation"
