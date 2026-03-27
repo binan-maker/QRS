@@ -112,9 +112,9 @@ const light: AppColors = {
   dangerShade: "#991B1B",
   dangerDim: "rgba(220,38,38,0.07)",
 
-  warning: "#B45309",
-  warningShade: "#78350F",
-  warningDim: "rgba(180,83,9,0.07)",
+  warning: "#D97706",
+  warningShade: "#B45309",
+  warningDim: "rgba(217,119,6,0.09)",
 
   safe: "#059669",
   safeShade: "#065F46",

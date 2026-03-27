@@ -57,12 +57,16 @@ export default function ReportGrid({ reportCounts: _reportCounts, userReport, is
               <Text style={[styles.rateBtnLabel, { color: isSelected ? rt.color : colors.textSecondary }]}>
                 {rt.label}
               </Text>
-              {isSelected && (
-                <View style={[styles.selectedDot, { backgroundColor: rt.color }]} />
-              )}
             </Pressable>
           );
         })}
+      </View>
+
+      <View style={styles.disclaimer}>
+        <Ionicons name="information-circle-outline" size={12} color={colors.textMuted} />
+        <Text style={[styles.disclaimerText, { color: colors.textMuted }]}>
+          Always verify the merchant name and UPI ID before paying
+        </Text>
       </View>
     </View>
   );
@@ -86,8 +90,9 @@ const styles = StyleSheet.create({
     borderRadius: 12, position: "relative",
   },
   rateBtnLabel: { fontSize: 12, fontFamily: "Inter_600SemiBold" },
-  selectedDot: {
-    position: "absolute", bottom: 4, left: "50%",
-    width: 4, height: 4, borderRadius: 2, marginLeft: -2,
+  disclaimer: {
+    flexDirection: "row", alignItems: "flex-start", gap: 6,
+    marginTop: 8,
   },
+  disclaimerText: { fontSize: 11, fontFamily: "Inter_400Regular", flex: 1, lineHeight: 15 },
 });

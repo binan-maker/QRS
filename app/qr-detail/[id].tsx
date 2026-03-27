@@ -9,6 +9,7 @@ import {
   KeyboardAvoidingView,
   ScrollView,
   StyleSheet,
+  Keyboard,
 } from "react-native";
 
 import { StatusBar } from "expo-status-bar";
@@ -138,6 +139,15 @@ export default function QrDetailScreen() {
   const { colors } = useTheme();
   const insets = useSafeAreaInsets();
   const styles = makeStyles(colors);
+
+  const [keyboardVisible, setKeyboardVisible] = useState(false);
+  useEffect(() => {
+    const showEvent = Platform.OS === "ios" ? "keyboardWillShow" : "keyboardDidShow";
+    const hideEvent = Platform.OS === "ios" ? "keyboardWillHide" : "keyboardDidHide";
+    const showSub = Keyboard.addListener(showEvent, () => setKeyboardVisible(true));
+    const hideSub = Keyboard.addListener(hideEvent, () => setKeyboardVisible(false));
+    return () => { showSub.remove(); hideSub.remove(); };
+  }, []);
 
   const glowOpacity = useSharedValue(0.6);
   const glowScale = useSharedValue(1);
@@ -481,7 +491,7 @@ export default function QrDetailScreen() {
 
           {/* Comment Input Bar */}
           {user && !q.offlineMode && (
-            <View style={[styles.bottomCommentBar, { paddingBottom: Math.max(insets.bottom, 8) }]}>
+            <View style={[styles.bottomCommentBar, { paddingBottom: keyboardVisible ? 6 : Math.max(insets.bottom, 8) }]}>
               {q.replyTo && (
                 <View style={styles.replyBanner}>
                   <Ionicons name="return-down-forward-outline" size={14} color={colors.primary} />
@@ -505,7 +515,10 @@ export default function QrDetailScreen() {
                   maxLength={500}
                 />
                 <Pressable
-                  onPress={q.handleSubmitComment}
+                  onPress={() => {
+                    Keyboard.dismiss();
+                    q.handleSubmitComment();
+                  }}
                   disabled={q.submitting || !q.newComment.trim()}
                   style={({ pressed }) => [styles.sendBtn, { opacity: pressed || !q.newComment.trim() ? 0.5 : 1 }]}
                 >

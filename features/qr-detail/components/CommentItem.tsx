@@ -39,6 +39,7 @@ interface Props {
 }
 
 const REPLIES_PER_PAGE = 10;
+const READ_MORE_THRESHOLD = 200;
 
 function getInitialColor(name: string): [string, string] {
   const palettes: [string, string][] = [
@@ -63,6 +64,7 @@ const CommentItem = React.memo(function CommentItem({
   allComments, userLikes, commentMenuId, deletingCommentId, revealedComments, userId,
 }: Props) {
   const { colors, isDark } = useTheme();
+  const [textExpanded, setTextExpanded] = React.useState(false);
   const replyCount = descendants.length;
   const isExpanded = expandedReplies[comment.id] ?? false;
   const showCount = visibleRepliesCount[comment.id] || REPLIES_PER_PAGE;
@@ -128,12 +130,12 @@ const CommentItem = React.memo(function CommentItem({
           <View style={styles.commentBody}>
             {/* Header row */}
             <View style={styles.commentHeader}>
-              <Pressable onPress={navigateToProfile} disabled={!navigateToProfile}>
-                <Text style={[styles.authorName, { color: comment.userUsername ? colors.primary : colors.text }]} numberOfLines={1}>
+              <Pressable onPress={navigateToProfile} disabled={!navigateToProfile} style={styles.authorPressable}>
+                <Text style={[styles.authorName, { color: comment.userUsername ? colors.primary : colors.text }]} numberOfLines={1} ellipsizeMode="tail">
                   {displayName}
                 </Text>
               </Pressable>
-              <Text style={[styles.commentTime, { color: colors.textMuted }]}>{formatRelativeTime(comment.createdAt)}</Text>
+              <Text style={[styles.commentTime, { color: colors.textMuted }]} numberOfLines={1}>{formatRelativeTime(comment.createdAt)}</Text>
               {comment.isHidden && isRevealed && (
                 <View style={[styles.sensitiveTag, { backgroundColor: colors.warningDim }]}>
                   <Text style={[{ fontSize: 9, fontFamily: "Inter_600SemiBold", color: colors.warning }]}>Sensitive</Text>
@@ -152,7 +154,31 @@ const CommentItem = React.memo(function CommentItem({
             </View>
 
             {/* Text */}
-            <Text style={[styles.commentText, { color: colors.text }]}>{comment.text}</Text>
+            {(() => {
+              const isLong = comment.text.length > READ_MORE_THRESHOLD;
+              const displayText = isLong && !textExpanded
+                ? comment.text.slice(0, READ_MORE_THRESHOLD)
+                : comment.text;
+              return (
+                <View>
+                  <Text style={[styles.commentText, { color: colors.text }]}>
+                    {displayText}
+                    {isLong && !textExpanded && (
+                      <Text
+                        style={[styles.readMoreText, { color: colors.primary }]}
+                        onPress={() => setTextExpanded(true)}
+                      >{" "}... Read more</Text>
+                    )}
+                  </Text>
+                  {isLong && textExpanded && (
+                    <Text
+                      style={[styles.readMoreText, { color: colors.primary, marginTop: 3 }]}
+                      onPress={() => setTextExpanded(false)}
+                    >Show less</Text>
+                  )}
+                </View>
+              );
+            })()}
 
             {/* Actions */}
             <View style={styles.actionRow}>
@@ -291,8 +317,10 @@ const styles = StyleSheet.create({
   },
   commentBody: { flex: 1, gap: 5 },
   commentHeader: { flexDirection: "row", alignItems: "center", gap: 6 },
+  authorPressable: { flex: 1, minWidth: 0 },
   authorName: { fontSize: 13, fontFamily: "Inter_700Bold" },
-  commentTime: { fontSize: 11, fontFamily: "Inter_400Regular" },
+  commentTime: { fontSize: 11, fontFamily: "Inter_400Regular", flexShrink: 0 },
+  readMoreText: { fontSize: 13, fontFamily: "Inter_600SemiBold" },
   sensitiveTag: {
     paddingHorizontal: 5, paddingVertical: 2, borderRadius: 5,
   },

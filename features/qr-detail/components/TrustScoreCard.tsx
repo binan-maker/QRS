@@ -24,9 +24,8 @@ interface Props {
 }
 
 function getScoreGradient(score: number, colors: any): [string, string] {
-  if (score >= 75) return [colors.safe, colors.safeShade];
-  if (score >= 50) return [colors.warning, colors.warningShade];
-  if (score >= 25) return [colors.danger, colors.warning];
+  if (score >= 70) return [colors.safe, colors.safeShade];
+  if (score >= 40) return [colors.warning, colors.warningShade];
   return [colors.danger, colors.dangerShade];
 }
 

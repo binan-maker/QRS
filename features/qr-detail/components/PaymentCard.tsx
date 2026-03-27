@@ -603,6 +603,7 @@ const PaymentCard = React.memo(function PaymentCard({
   onOpenContent,
 }: Props) {
   const [upiCopied, setUpiCopied] = React.useState(false);
+  const [upiExpanded, setUpiExpanded] = React.useState(false);
   const brand = getAppBrand(parsedPayment.app, parsedPayment.appCategory);
   const bankFullName = getBankFullName(parsedPayment.bankHandle);
   const isIndia = parsedPayment.appCategory === "upi_india" || parsedPayment.appCategory === "india_wallet";
@@ -659,22 +660,35 @@ const PaymentCard = React.memo(function PaymentCard({
         </View>
 
         {/* Merchant Name — large & bold */}
-        <Text style={[styles.merchantName, { color: brand.textOnCard }]} numberOfLines={2}>
+        <Text style={[styles.merchantName, { color: brand.textOnCard }]} numberOfLines={2} adjustsFontSizeToFit minimumFontScale={0.78}>
           {parsedPayment.recipientName || "Unknown Merchant"}
         </Text>
 
-        {/* UPI ID — small, selectable */}
+        {/* UPI ID — small, tap to expand */}
         {displayVpa ? (
-          <Pressable onPress={handleCopyUpi} style={styles.upiRow}>
+          <Pressable
+            onPress={() => {
+              if (upiExpanded) {
+                handleCopyUpi();
+              } else {
+                setUpiExpanded(true);
+              }
+            }}
+            style={styles.upiRow}
+          >
             <Ionicons name="at-circle-outline" size={14} color={brand.accentColor} />
-            <Text style={[styles.upiId, { color: brand.subtextOnCard }]} selectable numberOfLines={1}>
+            <Text style={[styles.upiId, { color: brand.subtextOnCard }]} selectable numberOfLines={upiExpanded ? undefined : 1} ellipsizeMode="tail">
               {displayVpa}
             </Text>
-            <Ionicons
-              name={upiCopied ? "checkmark-circle" : "copy-outline"}
-              size={13}
-              color={upiCopied ? "#4ADE80" : brand.accentColor}
-            />
+            {upiExpanded ? (
+              <Ionicons
+                name={upiCopied ? "checkmark-circle" : "copy-outline"}
+                size={13}
+                color={upiCopied ? "#4ADE80" : brand.accentColor}
+              />
+            ) : (
+              <Text style={[styles.upiExpandHint, { color: brand.accentColor }]}>tap</Text>
+            )}
           </Pressable>
         ) : null}
 
@@ -995,6 +1009,12 @@ const styles = StyleSheet.create({
     fontFamily: "Inter_400Regular",
     flex: 1,
     letterSpacing: 0.2,
+  },
+  upiExpandHint: {
+    fontSize: 10,
+    fontFamily: "Inter_600SemiBold",
+    letterSpacing: 0.3,
+    flexShrink: 0,
   },
 
   bankRow: {
