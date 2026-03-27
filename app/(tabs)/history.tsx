@@ -7,7 +7,6 @@ import {
   Pressable,
   Platform,
   RefreshControl,
-  ActivityIndicator,
   useWindowDimensions,
 } from "react-native";
 import { router } from "expo-router";
@@ -17,7 +16,10 @@ import * as Haptics from "@/lib/haptics";
 import { useTheme } from "@/contexts/ThemeContext";
 import { useHistory, type HistoryItem, type Filter } from "@/hooks/useHistory";
 import HistoryItemComponent from "@/features/history/components/HistoryItem";
+import HistoryItemSkeleton from "@/features/history/components/HistoryItemSkeleton";
 import FilterBar from "@/features/history/components/FilterBar";
+
+const SKELETON_COUNT = 10;
 
 const FILTERS: { key: Filter; label: string }[] = [
   { key: "all", label: "All" },
@@ -111,11 +113,13 @@ export default function HistoryScreen() {
   const renderFooter = useCallback(() => {
     if (!loadingMore) return null;
     return (
-      <View style={styles.footerLoader}>
-        <ActivityIndicator size="small" color={colors.primary} />
+      <View style={styles.skeletonList}>
+        {Array.from({ length: 4 }).map((_, i) => (
+          <HistoryItemSkeleton key={i} />
+        ))}
       </View>
     );
-  }, [loadingMore, colors]);
+  }, [loadingMore]);
 
   const keyExtractor = useCallback((row: ListRow) => {
     return row.kind === "header" ? row.id : row.item.id;
@@ -143,9 +147,10 @@ export default function HistoryScreen() {
     }
     if (cloudLoading) {
       return (
-        <View style={styles.emptyState}>
-          <ActivityIndicator size="large" color={colors.primary} />
-          <Text style={[styles.emptySubtext, { marginTop: 12 }]}>Loading your history...</Text>
+        <View style={styles.skeletonList}>
+          {Array.from({ length: SKELETON_COUNT }).map((_, i) => (
+            <HistoryItemSkeleton key={i} />
+          ))}
         </View>
       );
     }
@@ -276,6 +281,7 @@ function makeStyles(c: ReturnType<typeof import("@/contexts/ThemeContext").useTh
       letterSpacing: 1.2,
       paddingHorizontal: 6,
     },
+    skeletonList: { paddingTop: 4 },
     emptyState: { alignItems: "center", gap: 8, paddingVertical: 56, paddingHorizontal: 32 },
     emptyIcon: {
       width: 72, height: 72, borderRadius: 36,
@@ -283,7 +289,6 @@ function makeStyles(c: ReturnType<typeof import("@/contexts/ThemeContext").useTh
     },
     emptyTitle: { fontSize: rf(17), fontFamily: "Inter_600SemiBold", color: c.textSecondary, textAlign: "center" },
     emptySubtext: { fontSize: rf(13), fontFamily: "Inter_400Regular", color: c.textMuted, textAlign: "center", lineHeight: Math.round(19 * s) },
-    footerLoader: { paddingVertical: 20, alignItems: "center" },
     signInBtn: {
       marginTop: 8, paddingHorizontal: 32, paddingVertical: 12,
       borderRadius: 12, alignItems: "center",
