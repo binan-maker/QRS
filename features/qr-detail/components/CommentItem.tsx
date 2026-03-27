@@ -53,6 +53,9 @@ function getInitialColor(name: string): [string, string] {
   return palettes[idx];
 }
 
+const LIKE_RED = "#EF4444";
+const LIKE_RED_DIM = "#EF444418";
+
 const CommentItem = React.memo(function CommentItem({
   comment, isReply = false, currentUserLike, isMenuOpen, isDeleting, isRevealed,
   isCommentOwner, canDelete, descendants, expandedReplies, visibleRepliesCount,
@@ -78,148 +81,147 @@ const CommentItem = React.memo(function CommentItem({
         <Animated.View entering={FadeIn.duration(300)}>
           <Pressable
             onPress={() => onReveal(comment.id)}
-            style={[styles.sensitiveCard, { backgroundColor: colors.warningDim, borderColor: colors.warning + "40" }]}
+            style={[styles.sensitiveRow, { borderBottomColor: colors.surfaceBorder }]}
           >
-            <View style={[styles.sensitiveIcon, { backgroundColor: colors.warning + "20" }]}>
-              <Ionicons name="eye-outline" size={16} color={colors.warning} />
-            </View>
-            <Text style={{ flex: 1, fontSize: 13, fontFamily: "Inter_400Regular", color: colors.warning }}>
+            <Ionicons name="eye-off-outline" size={14} color={colors.textMuted} />
+            <Text style={{ flex: 1, fontSize: 12, fontFamily: "Inter_400Regular", color: colors.textMuted, fontStyle: "italic" }}>
               Sensitive content — tap to reveal
             </Text>
-            <Ionicons name="chevron-forward" size={14} color={colors.textMuted} />
+            <Ionicons name="chevron-forward" size={12} color={colors.textMuted} />
           </Pressable>
         </Animated.View>
       </View>
     );
   }
 
-  const avatarSize = isReply ? 30 : 36;
+  const avatarSize = isReply ? 28 : 34;
 
   return (
     <View key={comment.id}>
       <Animated.View entering={FadeIn.duration(300)}>
         <View style={[
-          styles.commentCard,
-          isReply
-            ? { backgroundColor: isDark ? colors.surfaceLight : colors.background, borderColor: colors.surfaceBorder, marginLeft: 10 }
-            : { backgroundColor: colors.surface, borderColor: colors.surfaceBorder },
+          styles.commentRow,
+          isReply && { paddingLeft: 42 },
+          { borderBottomColor: colors.surfaceBorder },
         ]}>
-          {comment.isHidden && isRevealed && (
-            <View style={[styles.sensitiveTag, { backgroundColor: colors.warningDim }]}>
-              <Ionicons name="warning-outline" size={10} color={colors.warning} />
-              <Text style={[styles.sensitiveTagText, { color: colors.warning }]}>Reported sensitive</Text>
-            </View>
-          )}
+          {/* Avatar */}
+          <Pressable onPress={navigateToProfile} disabled={!navigateToProfile} style={{ flexShrink: 0, marginTop: 1 }}>
+            {comment.userPhotoURL ? (
+              <Image
+                source={{ uri: comment.userPhotoURL }}
+                style={{ width: avatarSize, height: avatarSize, borderRadius: avatarSize / 2 }}
+              />
+            ) : (
+              <LinearGradient
+                colors={avatarGradient}
+                style={{ width: avatarSize, height: avatarSize, borderRadius: avatarSize / 2, alignItems: "center", justifyContent: "center" }}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+              >
+                <Text style={{ fontFamily: "Inter_700Bold", color: "#fff", fontSize: isReply ? 11 : 13 }}>
+                  {displayName.charAt(0).toUpperCase()}
+                </Text>
+              </LinearGradient>
+            )}
+          </Pressable>
 
-          <View style={styles.commentHeader}>
-            {/* Avatar */}
-            <Pressable onPress={navigateToProfile} disabled={!navigateToProfile}>
-              {comment.userPhotoURL ? (
-                <Image
-                  source={{ uri: comment.userPhotoURL }}
-                  style={[styles.avatar, { width: avatarSize, height: avatarSize, borderRadius: avatarSize / 2 }]}
-                />
-              ) : (
-                <LinearGradient
-                  colors={avatarGradient}
-                  style={[styles.avatarGradient, { width: avatarSize, height: avatarSize, borderRadius: avatarSize / 2 }]}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 1 }}
-                >
-                  <Text style={[styles.avatarInitial, { fontSize: isReply ? 12 : 14 }]}>
-                    {displayName.charAt(0).toUpperCase()}
-                  </Text>
-                </LinearGradient>
-              )}
-            </Pressable>
-
-            <View style={styles.headerMeta}>
+          <View style={styles.commentBody}>
+            {/* Header row */}
+            <View style={styles.commentHeader}>
               <Pressable onPress={navigateToProfile} disabled={!navigateToProfile}>
                 <Text style={[styles.authorName, { color: comment.userUsername ? colors.primary : colors.text }]} numberOfLines={1}>
                   {displayName}
                 </Text>
               </Pressable>
               <Text style={[styles.commentTime, { color: colors.textMuted }]}>{formatRelativeTime(comment.createdAt)}</Text>
+              {comment.isHidden && isRevealed && (
+                <View style={[styles.sensitiveTag, { backgroundColor: colors.warningDim }]}>
+                  <Text style={[{ fontSize: 9, fontFamily: "Inter_600SemiBold", color: colors.warning }]}>Sensitive</Text>
+                </View>
+              )}
+              <Pressable
+                onPress={() => isMenuOpen ? onMenuClose() : onMenuOpen(comment.id, isCommentOwner)}
+                style={[styles.menuBtn, { marginLeft: "auto" as any }]}
+              >
+                {isDeleting ? (
+                  <ActivityIndicator size="small" color={colors.danger} />
+                ) : (
+                  <Ionicons name="ellipsis-horizontal" size={16} color={colors.textMuted} />
+                )}
+              </Pressable>
             </View>
 
-            <Pressable
-              onPress={() => isMenuOpen ? onMenuClose() : onMenuOpen(comment.id, isCommentOwner)}
-              style={styles.menuBtn}
-            >
-              {isDeleting ? (
-                <ActivityIndicator size="small" color={colors.danger} />
-              ) : (
-                <Ionicons name="ellipsis-horizontal" size={18} color={colors.textMuted} />
-              )}
-            </Pressable>
-          </View>
+            {/* Text */}
+            <Text style={[styles.commentText, { color: colors.text }]}>{comment.text}</Text>
 
-          <Text style={[styles.commentText, { color: colors.text }]}>{comment.text}</Text>
+            {/* Actions */}
+            <View style={styles.actionRow}>
+              {/* Like */}
+              <Pressable onPress={() => onLike(comment.id, "like")} style={styles.actionBtn}>
+                {currentUserLike === "like" ? (
+                  <View style={[styles.actionPill, { backgroundColor: LIKE_RED_DIM, borderColor: LIKE_RED + "40", borderWidth: 1 }]}>
+                    <Ionicons name="heart" size={12} color={LIKE_RED} />
+                    {comment.likeCount > 0 && <Text style={[styles.actionCount, { color: LIKE_RED }]}>{formatCompactNumber(comment.likeCount)}</Text>}
+                  </View>
+                ) : (
+                  <View style={[styles.actionPill, { backgroundColor: isDark ? colors.surfaceLight : colors.background }]}>
+                    <Ionicons name="heart-outline" size={12} color={colors.textMuted} />
+                    {comment.likeCount > 0 && <Text style={[styles.actionCount, { color: colors.textMuted }]}>{formatCompactNumber(comment.likeCount)}</Text>}
+                  </View>
+                )}
+              </Pressable>
 
-          {/* Actions */}
-          <View style={styles.actionRow}>
-            <Pressable onPress={() => onLike(comment.id, "like")} style={styles.actionBtn}>
-              {currentUserLike === "like" ? (
-                <View style={[styles.activeActionBg, { backgroundColor: colors.primaryDim, borderColor: colors.primary + "30", borderWidth: 1 }]}>
-                  <Ionicons name="thumbs-up" size={13} color={colors.primary} />
-                  {comment.likeCount > 0 && <Text style={[styles.activeActionCount, { color: colors.primary }]}>{formatCompactNumber(comment.likeCount)}</Text>}
-                </View>
-              ) : (
-                <View style={[styles.inactiveActionBg, { backgroundColor: colors.surfaceLight }]}>
-                  <Ionicons name="thumbs-up-outline" size={13} color={colors.textMuted} />
-                  {comment.likeCount > 0 && <Text style={[styles.inactiveActionCount, { color: colors.textMuted }]}>{formatCompactNumber(comment.likeCount)}</Text>}
-                </View>
-              )}
-            </Pressable>
+              {/* Dislike */}
+              <Pressable onPress={() => onLike(comment.id, "dislike")} style={styles.actionBtn}>
+                {currentUserLike === "dislike" ? (
+                  <View style={[styles.actionPill, { backgroundColor: colors.dangerDim, borderColor: colors.danger + "40", borderWidth: 1 }]}>
+                    <Ionicons name="thumbs-down" size={12} color={colors.danger} />
+                    {comment.dislikeCount > 0 && <Text style={[styles.actionCount, { color: colors.danger }]}>{formatCompactNumber(comment.dislikeCount)}</Text>}
+                  </View>
+                ) : (
+                  <View style={[styles.actionPill, { backgroundColor: isDark ? colors.surfaceLight : colors.background }]}>
+                    <Ionicons name="thumbs-down-outline" size={12} color={colors.textMuted} />
+                    {comment.dislikeCount > 0 && <Text style={[styles.actionCount, { color: colors.textMuted }]}>{formatCompactNumber(comment.dislikeCount)}</Text>}
+                  </View>
+                )}
+              </Pressable>
 
-            <Pressable onPress={() => onLike(comment.id, "dislike")} style={styles.actionBtn}>
-              {currentUserLike === "dislike" ? (
-                <View style={[styles.activeActionBg, { backgroundColor: colors.dangerDim, borderColor: colors.danger + "30", borderWidth: 1 }]}>
-                  <Ionicons name="thumbs-down" size={13} color={colors.danger} />
-                  {comment.dislikeCount > 0 && <Text style={[styles.activeActionCount, { color: colors.danger }]}>{formatCompactNumber(comment.dislikeCount)}</Text>}
+              {/* Reply */}
+              <Pressable onPress={() => onReply(comment)} style={styles.actionBtn}>
+                <View style={[styles.actionPill, { backgroundColor: isDark ? colors.surfaceLight : colors.background }]}>
+                  <Ionicons name="return-down-forward-outline" size={12} color={colors.textMuted} />
+                  <Text style={[styles.actionCount, { color: colors.textMuted }]}>Reply</Text>
                 </View>
-              ) : (
-                <View style={[styles.inactiveActionBg, { backgroundColor: colors.surfaceLight }]}>
-                  <Ionicons name="thumbs-down-outline" size={13} color={colors.textMuted} />
-                  {comment.dislikeCount > 0 && <Text style={[styles.inactiveActionCount, { color: colors.textMuted }]}>{formatCompactNumber(comment.dislikeCount)}</Text>}
-                </View>
-              )}
-            </Pressable>
+              </Pressable>
+            </View>
 
-            <Pressable onPress={() => onReply(comment)} style={styles.actionBtn}>
-              <View style={[styles.inactiveActionBg, { backgroundColor: colors.surfaceLight }]}>
-                <Ionicons name="return-down-forward-outline" size={13} color={colors.textMuted} />
-                <Text style={[styles.inactiveActionCount, { color: colors.textMuted }]}>Reply</Text>
+            {/* Inline menu */}
+            {isMenuOpen && (
+              <View style={[styles.inlineMenu, { backgroundColor: colors.surfaceLight, borderColor: colors.surfaceBorder }]}>
+                {canDelete && (
+                  <Pressable onPress={() => onDelete(comment.id)} style={styles.inlineMenuItem}>
+                    <Ionicons name="trash-outline" size={13} color={colors.danger} />
+                    <Text style={[styles.inlineMenuText, { color: colors.danger }]}>Delete</Text>
+                  </Pressable>
+                )}
+                {!isCommentOwner && (
+                  <Pressable onPress={() => onReport(comment.id)} style={styles.inlineMenuItem}>
+                    <Ionicons name="flag-outline" size={13} color={colors.warning} />
+                    <Text style={[styles.inlineMenuText, { color: colors.warning }]}>Report</Text>
+                  </Pressable>
+                )}
               </View>
-            </Pressable>
+            )}
           </View>
-
-          {/* Inline menu */}
-          {isMenuOpen && (
-            <View style={[styles.inlineMenu, { backgroundColor: colors.surfaceLight, borderColor: colors.surfaceBorder }]}>
-              {canDelete && (
-                <Pressable onPress={() => onDelete(comment.id)} style={styles.inlineMenuItem}>
-                  <Ionicons name="trash-outline" size={14} color={colors.danger} />
-                  <Text style={[styles.inlineMenuText, { color: colors.danger }]}>Delete</Text>
-                </Pressable>
-              )}
-              {!isCommentOwner && (
-                <Pressable onPress={() => onReport(comment.id)} style={styles.inlineMenuItem}>
-                  <Ionicons name="flag-outline" size={14} color={colors.warning} />
-                  <Text style={[styles.inlineMenuText, { color: colors.warning }]}>Report</Text>
-                </Pressable>
-              )}
-            </View>
-          )}
         </View>
       </Animated.View>
 
       {/* Replies toggle */}
       {!isReply && replyCount > 0 && (
-        <Pressable onPress={() => onToggleReplies(comment.id)} style={styles.repliesToggle}>
+        <Pressable onPress={() => onToggleReplies(comment.id)} style={[styles.repliesToggle, { borderBottomColor: colors.surfaceBorder }]}>
           <View style={[styles.replyLine, { backgroundColor: colors.surfaceBorder }]} />
           <View style={[styles.repliesToggleInner, { backgroundColor: colors.surfaceLight, borderColor: colors.surfaceBorder }]}>
-            <Ionicons name={isExpanded ? "chevron-up" : "chevron-down"} size={12} color={colors.primary} />
+            <Ionicons name={isExpanded ? "chevron-up" : "chevron-down"} size={11} color={colors.primary} />
             <Text style={[styles.repliesToggleText, { color: colors.primary }]}>
               {isExpanded ? "Hide replies" : `${replyCount} ${replyCount === 1 ? "reply" : "replies"}`}
             </Text>
@@ -277,52 +279,50 @@ const CommentItem = React.memo(function CommentItem({
 export default CommentItem;
 
 const styles = StyleSheet.create({
-  sensitiveCard: {
-    flexDirection: "row", alignItems: "center", gap: 10,
-    borderRadius: 16, padding: 14, marginBottom: 8, borderWidth: 1,
+  sensitiveRow: {
+    flexDirection: "row", alignItems: "center", gap: 8,
+    paddingVertical: 10, paddingHorizontal: 2,
+    borderBottomWidth: StyleSheet.hairlineWidth,
   },
-  sensitiveIcon: { width: 32, height: 32, borderRadius: 10, alignItems: "center", justifyContent: "center" },
-  commentCard: { borderRadius: 18, padding: 14, marginBottom: 8, borderWidth: 1, gap: 10 },
-  sensitiveTag: {
-    flexDirection: "row", alignItems: "center", gap: 5,
-    alignSelf: "flex-start", borderRadius: 8, paddingHorizontal: 8, paddingVertical: 4,
+  commentRow: {
+    flexDirection: "row", gap: 10,
+    paddingTop: 12, paddingBottom: 10, paddingHorizontal: 2,
+    borderBottomWidth: StyleSheet.hairlineWidth,
   },
-  sensitiveTagText: { fontSize: 10, fontFamily: "Inter_600SemiBold" },
-  commentHeader: { flexDirection: "row", alignItems: "center", gap: 10 },
-  avatar: { flexShrink: 0 },
-  avatarGradient: { flexShrink: 0, alignItems: "center", justifyContent: "center" },
-  avatarInitial: { fontFamily: "Inter_700Bold", color: "#fff" },
-  headerMeta: { flex: 1 },
+  commentBody: { flex: 1, gap: 5 },
+  commentHeader: { flexDirection: "row", alignItems: "center", gap: 6 },
   authorName: { fontSize: 13, fontFamily: "Inter_700Bold" },
-  commentTime: { fontSize: 11, fontFamily: "Inter_400Regular", marginTop: 1 },
-  menuBtn: { padding: 4 },
-  commentText: { fontSize: 14, fontFamily: "Inter_400Regular", lineHeight: 21 },
-  actionRow: { flexDirection: "row", alignItems: "center", gap: 8 },
+  commentTime: { fontSize: 11, fontFamily: "Inter_400Regular" },
+  sensitiveTag: {
+    paddingHorizontal: 5, paddingVertical: 2, borderRadius: 5,
+  },
+  menuBtn: { padding: 2 },
+  commentText: { fontSize: 14, fontFamily: "Inter_400Regular", lineHeight: 20 },
+  actionRow: { flexDirection: "row", alignItems: "center", gap: 6, marginTop: 2 },
   actionBtn: {},
-  activeActionBg: {
-    flexDirection: "row", alignItems: "center", gap: 5,
-    paddingHorizontal: 10, paddingVertical: 5, borderRadius: 100,
+  actionPill: {
+    flexDirection: "row", alignItems: "center", gap: 4,
+    paddingHorizontal: 8, paddingVertical: 4, borderRadius: 100,
   },
-  activeActionCount: { fontSize: 11, fontFamily: "Inter_700Bold" },
-  inactiveActionBg: {
-    flexDirection: "row", alignItems: "center", gap: 5,
-    paddingHorizontal: 10, paddingVertical: 5, borderRadius: 100,
-  },
-  inactiveActionCount: { fontSize: 11, fontFamily: "Inter_500Medium" },
+  actionCount: { fontSize: 11, fontFamily: "Inter_500Medium" },
   inlineMenu: {
-    flexDirection: "row", gap: 14, borderRadius: 12, padding: 12,
+    flexDirection: "row", gap: 14, borderRadius: 10, padding: 10,
     borderWidth: 1, marginTop: 4,
   },
-  inlineMenuItem: { flexDirection: "row", alignItems: "center", gap: 6 },
-  inlineMenuText: { fontSize: 13, fontFamily: "Inter_600SemiBold" },
-  repliesToggle: { flexDirection: "row", alignItems: "center", gap: 10, paddingLeft: 20, marginBottom: 4 },
-  replyLine: { width: 20, height: 1 },
-  repliesToggleInner: {
-    flexDirection: "row", alignItems: "center", gap: 5,
-    paddingHorizontal: 10, paddingVertical: 5, borderRadius: 100, borderWidth: 1,
+  inlineMenuItem: { flexDirection: "row", alignItems: "center", gap: 5 },
+  inlineMenuText: { fontSize: 12, fontFamily: "Inter_600SemiBold" },
+  repliesToggle: {
+    flexDirection: "row", alignItems: "center", gap: 8,
+    paddingLeft: 44, paddingVertical: 6,
+    borderBottomWidth: StyleSheet.hairlineWidth,
   },
-  repliesToggleText: { fontSize: 12, fontFamily: "Inter_600SemiBold" },
-  repliesContainer: { paddingLeft: 20, gap: 0 },
-  showMoreBtn: { alignItems: "center", paddingVertical: 10 },
-  showMoreText: { fontSize: 13, fontFamily: "Inter_600SemiBold" },
+  replyLine: { width: 16, height: 1 },
+  repliesToggleInner: {
+    flexDirection: "row", alignItems: "center", gap: 4,
+    paddingHorizontal: 8, paddingVertical: 4, borderRadius: 100, borderWidth: 1,
+  },
+  repliesToggleText: { fontSize: 11, fontFamily: "Inter_600SemiBold" },
+  repliesContainer: { paddingLeft: 0 },
+  showMoreBtn: { alignItems: "center", paddingVertical: 8, paddingLeft: 44 },
+  showMoreText: { fontSize: 12, fontFamily: "Inter_600SemiBold" },
 });

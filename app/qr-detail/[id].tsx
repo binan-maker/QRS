@@ -213,35 +213,21 @@ export default function QrDetailScreen() {
               </Pressable>
               <Pressable
                 onPress={q.handleToggleFollow}
-                onPressIn={() => q.isFollowing && q.setFollowPressedIn(true)}
-                onPressOut={() => q.setFollowPressedIn(false)}
-                style={[
+                style={({ pressed }) => [
                   styles.followBtn,
                   q.isFollowing && styles.followBtnActive,
-                  q.followPressedIn && q.isFollowing && styles.followBtnUnfollowHint,
+                  { opacity: pressed ? 0.8 : 1, transform: [{ scale: pressed ? 0.97 : 1 }] },
                 ]}
               >
                 <Ionicons
-                  name={
-                    q.followPressedIn && q.isFollowing
-                      ? "notifications-off-outline"
-                      : q.isFollowing ? "notifications" : "notifications-outline"
-                  }
+                  name={q.isFollowing ? "notifications" : "notifications-outline"}
                   size={15}
-                  color={
-                    q.followPressedIn && q.isFollowing
-                      ? colors.danger
-                      : q.isFollowing ? colors.primary : colors.textSecondary
-                  }
+                  color={q.isFollowing ? colors.primary : colors.textSecondary}
                 />
-                <Text style={[
-                  styles.followBtnText,
-                  q.isFollowing && styles.followBtnTextActive,
-                  q.followPressedIn && q.isFollowing && { color: colors.danger },
-                ]}>
-                  {q.followPressedIn && q.isFollowing ? "Unfollow" : q.isFollowing ? "Following" : "Follow"}
+                <Text style={[styles.followBtnText, q.isFollowing && styles.followBtnTextActive]}>
+                  {q.isFollowing ? "Following" : "Follow"}
                 </Text>
-                {q.followCount > 0 && !(q.followPressedIn && q.isFollowing) && (
+                {q.followCount > 0 && (
                   <View style={styles.followCountPill}>
                     <Text style={styles.followCountPillText}>{formatCompactNumber(q.followCount)}</Text>
                   </View>
@@ -310,9 +296,42 @@ export default function QrDetailScreen() {
               />
             </Animated.View>
 
+            {/* ── Community Trust ──────────────────────────────────────────── */}
+            <Animated.View entering={FadeInDown.duration(400).delay(80)}>
+              <SectionHeader icon="shield-checkmark-outline" label="Trust Score" gradient={["#006FFF", "#00CFFF"]} />
+              <TrustScoreCard
+                trustInfo={trust}
+                reportCounts={q.reportCounts}
+                totalScans={q.totalScans}
+                totalComments={q.totalComments}
+                isQrOwner={q.isQrOwner}
+                followCount={q.followCount}
+                followersModalOpen={q.followersModalOpen}
+                onOpenFollowers={() => { q.handleLoadFollowers(); q.setFollowersModalOpen(true); }}
+                manipulationWarning={trust.manipulationWarning}
+              />
+            </Animated.View>
+
+            {/* ── Rate This QR ─────────────────────────────────────────────── */}
+            <Animated.View entering={FadeInDown.duration(400).delay(110)}>
+              {q.offlineMode ? (
+                <View style={offlineSectionStyles.row}>
+                  <Ionicons name="cloud-offline-outline" size={16} color={colors.textMuted} />
+                  <Text style={[offlineSectionStyles.text, { color: colors.textMuted }]}>Connect to the internet to submit your rating</Text>
+                </View>
+              ) : (
+                <ReportGrid
+                  reportCounts={q.reportCounts}
+                  userReport={q.userReport}
+                  isLoggedIn={!!user}
+                  onReport={q.handleReport}
+                />
+              )}
+            </Animated.View>
+
             {/* ── Safety Warnings ──────────────────────────────────────────── */}
             {hasLocalWarnings && (
-              <Animated.View entering={FadeInDown.duration(300).delay(80)}>
+              <Animated.View entering={FadeInDown.duration(300).delay(130)}>
                 {currentContentType === "payment" && q.paymentSafety?.isSuspicious && (
                   <SafetyWarningCard
                     riskLevel={q.paymentSafety.riskLevel as "caution" | "dangerous"}
@@ -334,68 +353,6 @@ export default function QrDetailScreen() {
                     title="Known Scam Pattern"
                   />
                 )}
-              </Animated.View>
-            )}
-
-            {/* ── Rate This QR ─────────────────────────────────────────────── */}
-            <Animated.View entering={FadeInDown.duration(400).delay(110)}>
-              {q.offlineMode ? (
-                <View style={offlineSectionStyles.row}>
-                  <Ionicons name="cloud-offline-outline" size={16} color={colors.textMuted} />
-                  <Text style={[offlineSectionStyles.text, { color: colors.textMuted }]}>Connect to the internet to submit your rating</Text>
-                </View>
-              ) : (
-                <ReportGrid
-                  reportCounts={q.reportCounts}
-                  userReport={q.userReport}
-                  isLoggedIn={!!user}
-                  onReport={q.handleReport}
-                />
-              )}
-            </Animated.View>
-
-            {/* ── Community Trust ──────────────────────────────────────────── */}
-            <Animated.View entering={FadeInDown.duration(400).delay(140)}>
-              <SectionHeader icon="shield-checkmark-outline" label="Trust Score" gradient={["#006FFF", "#00CFFF"]} />
-              <TrustScoreCard
-                trustInfo={trust}
-                reportCounts={q.reportCounts}
-                totalScans={q.totalScans}
-                totalComments={q.totalComments}
-                isQrOwner={q.isQrOwner}
-                followCount={q.followCount}
-                followersModalOpen={q.followersModalOpen}
-                onOpenFollowers={() => { q.handleLoadFollowers(); q.setFollowersModalOpen(true); }}
-                manipulationWarning={trust.manipulationWarning}
-              />
-            </Animated.View>
-
-            {/* ── Owner Info ───────────────────────────────────────────────── */}
-            {q.ownerInfo && (
-              <Animated.View entering={FadeInDown.duration(400).delay(170)}>
-                <SectionHeader icon="storefront-outline" label="Creator" gradient={[colors.primary, colors.primaryShade]} />
-                <OwnerCard
-                  ownerInfo={q.ownerInfo}
-                  isQrOwner={q.isQrOwner}
-                  followCount={q.followCount}
-                  unreadMessages={q.unreadMessages}
-                  onOpenFollowers={() => { q.handleLoadFollowers(); q.setFollowersModalOpen(true); }}
-                  onOpenMessages={() => q.setMessagesModalOpen(true)}
-                />
-              </Animated.View>
-            )}
-
-            {/* ── Merchant Dashboard (owner only) ─────────────────────────── */}
-            {q.isQrOwner && (
-              <Animated.View entering={FadeInDown.duration(400).delay(190)}>
-                <MerchantDashboard
-                  scanVelocity={q.scanVelocity}
-                  velocityLoading={q.velocityLoading}
-                  onRefreshVelocity={async () => {
-                    const { getScanVelocity } = await import("@/lib/firestore-service");
-                    getScanVelocity(id);
-                  }}
-                />
               </Animated.View>
             )}
 
@@ -491,6 +448,35 @@ export default function QrDetailScreen() {
                 </>
               )}
             </Animated.View>
+
+            {/* ── Owner Info ───────────────────────────────────────────────── */}
+            {q.ownerInfo && (
+              <Animated.View entering={FadeInDown.duration(400).delay(170)}>
+                <SectionHeader icon="storefront-outline" label="Creator" gradient={[colors.primary, colors.primaryShade]} />
+                <OwnerCard
+                  ownerInfo={q.ownerInfo}
+                  isQrOwner={q.isQrOwner}
+                  followCount={q.followCount}
+                  unreadMessages={q.unreadMessages}
+                  onOpenFollowers={() => { q.handleLoadFollowers(); q.setFollowersModalOpen(true); }}
+                  onOpenMessages={() => q.setMessagesModalOpen(true)}
+                />
+              </Animated.View>
+            )}
+
+            {/* ── Merchant Dashboard (owner only) ─────────────────────────── */}
+            {q.isQrOwner && (
+              <Animated.View entering={FadeInDown.duration(400).delay(190)}>
+                <MerchantDashboard
+                  scanVelocity={q.scanVelocity}
+                  velocityLoading={q.velocityLoading}
+                  onRefreshVelocity={async () => {
+                    const { getScanVelocity } = await import("@/lib/firestore-service");
+                    getScanVelocity(id);
+                  }}
+                />
+              </Animated.View>
+            )}
           </ScrollView>
 
           {/* Comment Input Bar */}

@@ -48,10 +48,10 @@ const TrustScoreCard = React.memo(function TrustScoreCard({
   const scoreGradient = hasScore ? getScoreGradient(trustInfo.score, colors) : [colors.textMuted, colors.surfaceBorder] as [string, string];
 
   const STATS = [
-    { icon: "scan-outline" as const,       label: "Scans",     value: totalScans,    onPress: undefined },
-    { icon: "chatbubbles-outline" as const, label: "Comments",  value: totalComments, onPress: undefined },
+    { icon: "scan-outline" as const,       label: "Scans",     value: totalScans    },
+    { icon: "chatbubbles-outline" as const, label: "Comments",  value: totalComments },
     { icon: "people-outline" as const,     label: isQrOwner ? "Followers ›" : "Followers", value: followCount, onPress: isQrOwner ? onOpenFollowers : undefined },
-    { icon: "flag-outline" as const,       label: "Reports",   value: total,         onPress: undefined },
+    { icon: "flag-outline" as const,       label: "Votes",     value: total         },
   ];
 
   return (
@@ -70,11 +70,15 @@ const TrustScoreCard = React.memo(function TrustScoreCard({
             )}
           </View>
         </LinearGradient>
+
         <View style={styles.scoreMeta}>
           <Text style={[styles.scoreTitle, { color: colors.text }]}>Trust Score</Text>
           {hasScore ? (
             <View style={[styles.scoreLabelBadge, { backgroundColor: scoreGradient[0] + (isDark ? "22" : "14"), borderColor: scoreGradient[0] + "30" }]}>
-              <Text style={[styles.scoreLabelText, { color: scoreGradient[0] }]}>{trustInfo.label}</Text>
+              <Text style={[styles.scoreLabelText, { color: scoreGradient[0] }]}>
+                {trustInfo.label}
+                {total > 0 ? `  ·  ${formatCompactNumber(total)} voted` : ""}
+              </Text>
             </View>
           ) : (
             <Text style={[styles.noScoreText, { color: colors.textMuted }]}>No votes yet</Text>
@@ -121,7 +125,7 @@ const TrustScoreCard = React.memo(function TrustScoreCard({
         ))}
       </View>
 
-      {/* Vote breakdown */}
+      {/* Vote breakdown — shows people count */}
       {total > 0 && (
         <View style={styles.breakdown}>
           {REPORT_TYPES.map((r) => {
@@ -131,8 +135,9 @@ const TrustScoreCard = React.memo(function TrustScoreCard({
             return (
               <View key={r.key} style={styles.breakdownItem}>
                 <View style={styles.breakdownRow}>
+                  <View style={[styles.breakdownDot, { backgroundColor: r.color }]} />
                   <Text style={[styles.breakdownLabel, { color: colors.textSecondary }]}>{r.label}</Text>
-                  <Text style={[styles.breakdownCount, { color: r.color }]}>{pct}%</Text>
+                  <Text style={[styles.breakdownCount, { color: r.color }]}>{count} {count === 1 ? "person" : "people"}</Text>
                 </View>
                 <View style={[styles.breakdownBar, { backgroundColor: colors.surfaceLight }]}>
                   <View style={[styles.breakdownBarFill, { width: `${pct}%` as any, backgroundColor: r.color + (isDark ? "90" : "70") }]} />
@@ -157,8 +162,8 @@ const styles = StyleSheet.create({
   scorePct: { fontSize: 13, fontFamily: "Inter_700Bold", marginLeft: 1 },
   scoreMeta: { flex: 1, gap: 7 },
   scoreTitle: { fontSize: 16, fontFamily: "Inter_700Bold" },
-  scoreLabelBadge: { alignSelf: "flex-start", paddingHorizontal: 9, paddingVertical: 3, borderRadius: 100, borderWidth: 1 },
-  scoreLabelText: { fontSize: 11, fontFamily: "Inter_700Bold", letterSpacing: 0.4 },
+  scoreLabelBadge: { alignSelf: "flex-start", paddingHorizontal: 9, paddingVertical: 4, borderRadius: 100, borderWidth: 1 },
+  scoreLabelText: { fontSize: 11, fontFamily: "Inter_700Bold", letterSpacing: 0.3 },
   noScoreText: { fontSize: 13, fontFamily: "Inter_400Regular" },
   scoreBar: { height: 5, borderRadius: 3, overflow: "hidden" },
   scoreBarFill: { height: "100%", borderRadius: 3 },
@@ -175,9 +180,10 @@ const styles = StyleSheet.create({
   statNum: { fontSize: 15, fontFamily: "Inter_700Bold" },
   statLabel: { fontSize: 9, fontFamily: "Inter_500Medium", textAlign: "center" },
   breakdown: { gap: 8 },
-  breakdownItem: { gap: 4 },
-  breakdownRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
-  breakdownLabel: { fontSize: 12, fontFamily: "Inter_500Medium" },
+  breakdownItem: { gap: 5 },
+  breakdownRow: { flexDirection: "row", alignItems: "center", gap: 6 },
+  breakdownDot: { width: 6, height: 6, borderRadius: 3 },
+  breakdownLabel: { fontSize: 12, fontFamily: "Inter_500Medium", flex: 1 },
   breakdownCount: { fontSize: 11, fontFamily: "Inter_700Bold" },
   breakdownBar: { height: 4, borderRadius: 2, overflow: "hidden" },
   breakdownBarFill: { height: "100%", borderRadius: 2 },

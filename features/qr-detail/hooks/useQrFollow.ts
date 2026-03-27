@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { router } from "expo-router";
 import * as Haptics from "@/lib/haptics";
 import { toggleFollow, getQrFollowersList, type FollowerInfo } from "@/lib/firestore-service";
@@ -12,9 +12,12 @@ export function useQrFollow(id: string, userId: string | null, userDisplayName: 
   const [followersList, setFollowersList] = useState<FollowerInfo[]>([]);
   const [followersModalOpen, setFollowersModalOpen] = useState(false);
   const [followersLoading, setFollowersLoading] = useState(false);
+  const inFlightRef = useRef(false);
 
   async function handleToggleFollow(content: string, contentType: string) {
     if (!userId) { router.push("/(auth)/login"); return; }
+    if (inFlightRef.current) return;
+    inFlightRef.current = true;
     const newFollowing = !isFollowing;
     setIsFollowing(newFollowing);
     setFollowCount((prev) => newFollowing ? prev + 1 : Math.max(0, prev - 1));
@@ -27,6 +30,8 @@ export function useQrFollow(id: string, userId: string | null, userDisplayName: 
     } catch {
       setIsFollowing(!newFollowing);
       setFollowCount((prev) => newFollowing ? Math.max(0, prev - 1) : prev + 1);
+    } finally {
+      inFlightRef.current = false;
     }
   }
 
