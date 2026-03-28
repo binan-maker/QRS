@@ -6,10 +6,8 @@ import {
   Pressable,
   ScrollView,
   Platform,
-  TextInput,
   ActivityIndicator,
   Image,
-  Alert,
 } from "react-native";
 import { router } from "expo-router";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
@@ -20,7 +18,7 @@ import SkeletonBox from "@/components/ui/SkeletonBox";
 import { formatCompactNumber } from "@/lib/number-format";
 import PhotoModal from "@/features/profile/components/PhotoModal";
 import { useProfile } from "@/hooks/useProfile";
-import { updateBio, getUserBio } from "@/lib/services/user-service";
+import { getUserBio } from "@/lib/services/user-service";
 import { getFriends } from "@/lib/services/friend-service";
 import QRCode from "react-native-qrcode-svg";
 
@@ -29,19 +27,15 @@ export default function ProfileScreen() {
   const { colors } = useTheme();
   const {
     user,
-    editingName, setEditingName, newName, setNewName, savingName,
     stats, statsLoading,
     photoURL, photoModalOpen, setPhotoModalOpen, uploadingPhoto,
     myQrCodes, myQrLoading,
     currentUsername,
     initials,
-    handleSaveName, handlePickPhoto, handleSignOut,
+    handlePickPhoto, handleSignOut,
   } = useProfile();
 
   const [bio, setBio] = useState("");
-  const [editingBio, setEditingBio] = useState(false);
-  const [newBio, setNewBio] = useState("");
-  const [savingBio, setSavingBio] = useState(false);
   const [friendsCount, setFriendsCount] = useState(0);
 
   const topInset = Platform.OS === "web" ? 67 : insets.top;
@@ -52,20 +46,6 @@ export default function ProfileScreen() {
     getUserBio(user.id).then(setBio).catch(() => {});
     getFriends(user.id).then((f) => setFriendsCount(f.length)).catch(() => {});
   }, [user?.id]);
-
-  async function handleSaveBio() {
-    if (!user) return;
-    setSavingBio(true);
-    try {
-      await updateBio(user.id, newBio);
-      setBio(newBio.trim().slice(0, 150));
-      setEditingBio(false);
-    } catch {
-      Alert.alert("Error", "Could not update bio.");
-    } finally {
-      setSavingBio(false);
-    }
-  }
 
   if (!user) {
     return (
@@ -132,101 +112,41 @@ export default function ProfileScreen() {
             </View>
           </Pressable>
 
-          {/* Name */}
-          {editingName ? (
-            <View style={styles.editRow}>
-              <TextInput
-                style={[styles.nameInput, { backgroundColor: colors.surface, borderColor: colors.primary, color: colors.text }]}
-                value={newName}
-                onChangeText={setNewName}
-                autoFocus
-                maxLength={40}
-                placeholderTextColor={colors.textMuted}
-                returnKeyType="done"
-                onSubmitEditing={handleSaveName}
-              />
-              <Pressable onPress={handleSaveName} disabled={savingName} style={[styles.saveBtn, { backgroundColor: colors.primary }]}>
-                {savingName
-                  ? <ActivityIndicator size="small" color={colors.primaryText} />
-                  : <Text style={[styles.saveBtnText, { color: colors.primaryText }]}>Save</Text>
-                }
-              </Pressable>
-              <Pressable onPress={() => { setEditingName(false); setNewName(user.displayName); }} style={styles.cancelBtn}>
-                <Ionicons name="close" size={17} color={colors.textMuted} />
-              </Pressable>
-            </View>
-          ) : (
-            <Pressable onPress={() => { setEditingName(true); setNewName(user.displayName); }} style={styles.nameRow}>
-              <Text style={[styles.displayName, { color: colors.text }]} numberOfLines={1}>{user.displayName}</Text>
-              <Ionicons name="pencil" size={13} color={colors.textMuted} style={{ marginLeft: 6 }} />
-            </Pressable>
-          )}
-
+          <Text style={[styles.displayName, { color: colors.text }]} numberOfLines={1}>{user.displayName}</Text>
           {currentUsername ? (
             <Text style={[styles.usernameText, { color: colors.primary }]}>@{currentUsername}</Text>
           ) : null}
+          {bio ? (
+            <Text style={[styles.bioText, { color: colors.textSecondary }]} numberOfLines={2}>{bio}</Text>
+          ) : null}
 
-          {/* Bio */}
-          {editingBio ? (
-            <View style={[styles.bioEditWrap, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
-              <TextInput
-                style={[styles.bioInput, { color: colors.text }]}
-                value={newBio}
-                onChangeText={setNewBio}
-                placeholder="Add a short bio…"
-                placeholderTextColor={colors.textMuted}
-                multiline
-                maxLength={150}
-                autoFocus
-              />
-              <View style={styles.bioEditActions}>
-                <Text style={[styles.bioCharCount, { color: colors.textMuted }]}>{newBio.length}/150</Text>
-                <Pressable onPress={() => { setEditingBio(false); setNewBio(bio); }}>
-                  <Text style={[styles.bioActionText, { color: colors.textMuted }]}>Cancel</Text>
-                </Pressable>
-                <Pressable onPress={handleSaveBio} disabled={savingBio} style={[styles.saveBtn, { backgroundColor: colors.primary }]}>
-                  {savingBio
-                    ? <ActivityIndicator size="small" color={colors.primaryText} />
-                    : <Text style={[styles.saveBtnText, { color: colors.primaryText }]}>Save</Text>
-                  }
-                </Pressable>
-              </View>
-            </View>
-          ) : (
-            <Pressable onPress={() => { setNewBio(bio); setEditingBio(true); }} style={styles.bioRow}>
-              <Text style={[styles.bioText, { color: bio ? colors.textSecondary : colors.textMuted }]}>
-                {bio || "Add a bio"}
-              </Text>
-              <Ionicons name="pencil" size={11} color={colors.textMuted} style={{ marginLeft: 5 }} />
-            </Pressable>
-          )}
+          <Pressable
+            onPress={() => router.push("/settings" as any)}
+            style={({ pressed }) => [styles.editProfileBtn, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder, opacity: pressed ? 0.8 : 1 }]}
+          >
+            <Text style={[styles.editProfileText, { color: colors.text }]}>Edit Profile</Text>
+          </Pressable>
         </Animated.View>
 
         {/* ── STATS ── */}
-        <Animated.View entering={FadeInDown.duration(400).delay(60)} style={styles.statsRow}>
+        <Animated.View entering={FadeInDown.duration(400).delay(60)} style={[styles.statsRow, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
           {[
-            { label: "Friends", value: friendsCount, color: colors.safe, onPress: () => router.push("/friends" as any) },
-            { label: "Scans", value: stats.scanCount, color: colors.accent, onPress: undefined },
-            { label: "Following", value: stats.followingCount, color: colors.primary, onPress: undefined },
-          ].map((s) => (
-            <Pressable
-              key={s.label}
-              onPress={s.onPress}
-              style={({ pressed }) => [styles.statItem, { opacity: pressed && s.onPress ? 0.7 : 1 }]}
-            >
+            { label: "Friends", value: friendsCount, color: colors.safe },
+            { label: "Scans", value: stats.scanCount, color: colors.accent },
+            { label: "Following", value: stats.followingCount, color: colors.primary },
+          ].map((s, i) => (
+            <View key={s.label} style={[styles.statItem, i < 2 && { borderRightWidth: 1, borderRightColor: colors.surfaceBorder }]}>
               {statsLoading
                 ? <SkeletonBox width={32} height={18} borderRadius={5} />
                 : <Text style={[styles.statValue, { color: s.color }]}>{formatCompactNumber(s.value)}</Text>
               }
               <Text style={[styles.statLabel, { color: colors.textMuted }]}>{s.label}</Text>
-            </Pressable>
+            </View>
           ))}
         </Animated.View>
 
-        <View style={[styles.divider, { backgroundColor: colors.surfaceBorder }]} />
-
-        {/* ── MY QR CODES (inline) ── */}
-        <Animated.View entering={FadeInDown.duration(400).delay(80)}>
+        {/* ── MY QR CODES ── */}
+        <Animated.View entering={FadeInDown.duration(400).delay(80)} style={styles.section}>
           <View style={styles.sectionHeader}>
             <Text style={[styles.sectionTitle, { color: colors.text }]}>My QR Codes</Text>
             <Pressable
@@ -297,46 +217,36 @@ export default function ProfileScreen() {
           )}
         </Animated.View>
 
-        <View style={[styles.divider, { backgroundColor: colors.surfaceBorder }]} />
-
-        {/* ── MENU ITEMS ── */}
-        <Animated.View entering={FadeInDown.duration(400).delay(120)} style={styles.menuGroup}>
-          {[
-            {
-              icon: <Ionicons name="shield-checkmark" size={17} color={colors.accent} />,
-              bg: colors.accentDim,
-              title: "Privacy",
-              sub: "Manage your profile visibility",
-              onPress: () => router.push("/privacy-settings" as any),
-            },
-            {
-              icon: <Ionicons name="people-outline" size={17} color={colors.safe} />,
-              bg: colors.safeDim,
-              title: "Friends",
-              sub: `${friendsCount} friend${friendsCount !== 1 ? "s" : ""}`,
-              onPress: () => router.push("/friends" as any),
-            },
-          ].map((item, idx) => (
+        {/* ── PEOPLE ── */}
+        <Animated.View entering={FadeInDown.duration(400).delay(100)} style={styles.section}>
+          <Text style={[styles.sectionTitle, { color: colors.text }]}>People</Text>
+          <View style={styles.peopleRow}>
             <Pressable
-              key={idx}
-              onPress={item.onPress}
-              style={({ pressed }) => [
-                styles.menuItem,
-                { backgroundColor: colors.surface, borderColor: colors.surfaceBorder, opacity: pressed ? 0.82 : 1 },
-              ]}
+              onPress={() => router.push("/friends" as any)}
+              style={({ pressed }) => [styles.peopleCard, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder, opacity: pressed ? 0.82 : 1 }]}
             >
-              <View style={[styles.menuIcon, { backgroundColor: item.bg }]}>{item.icon}</View>
-              <View style={{ flex: 1 }}>
-                <Text style={[styles.menuTitle, { color: colors.text }]}>{item.title}</Text>
-                <Text style={[styles.menuSub, { color: colors.textMuted }]}>{item.sub}</Text>
+              <View style={[styles.peopleIconWrap, { backgroundColor: colors.safeDim }]}>
+                <Ionicons name="people" size={20} color={colors.safe} />
               </View>
-              <Ionicons name="chevron-forward" size={15} color={colors.textMuted} />
+              <Text style={[styles.peopleCardCount, { color: colors.text }]}>{friendsCount}</Text>
+              <Text style={[styles.peopleCardLabel, { color: colors.textMuted }]}>Friends</Text>
             </Pressable>
-          ))}
+
+            <Pressable
+              onPress={() => router.push("/search" as any)}
+              style={({ pressed }) => [styles.peopleCard, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder, opacity: pressed ? 0.82 : 1 }]}
+            >
+              <View style={[styles.peopleIconWrap, { backgroundColor: colors.primaryDim }]}>
+                <Ionicons name="person-add" size={20} color={colors.primary} />
+              </View>
+              <Text style={[styles.peopleCardCount, { color: colors.text }]}>Find</Text>
+              <Text style={[styles.peopleCardLabel, { color: colors.textMuted }]}>People</Text>
+            </Pressable>
+          </View>
         </Animated.View>
 
         {/* ── SIGN OUT ── */}
-        <Animated.View entering={FadeInDown.duration(400).delay(160)}>
+        <Animated.View entering={FadeInDown.duration(400).delay(140)}>
           <Pressable
             onPress={handleSignOut}
             style={({ pressed }) => [
@@ -390,18 +300,18 @@ const styles = StyleSheet.create({
     alignItems: "center", justifyContent: "center", borderWidth: 1,
   },
 
-  avatarSection: { alignItems: "center", gap: 6, marginBottom: 24 },
+  avatarSection: { alignItems: "center", gap: 6, marginBottom: 22 },
   avatarPressable: { position: "relative", marginBottom: 6 },
   avatarRing: {
-    width: 82, height: 82, borderRadius: 41,
+    width: 84, height: 84, borderRadius: 42,
     borderWidth: 2, padding: 3,
     alignItems: "center", justifyContent: "center",
   },
   avatarInner: {
-    width: 74, height: 74, borderRadius: 37,
+    width: 76, height: 76, borderRadius: 38,
     alignItems: "center", justifyContent: "center", overflow: "hidden",
   },
-  avatarPhoto: { width: 74, height: 74, borderRadius: 37 },
+  avatarPhoto: { width: 76, height: 76, borderRadius: 38 },
   avatarInitials: { fontSize: 26, fontFamily: "Inter_700Bold" },
   cameraBtn: {
     position: "absolute", bottom: 0, right: 0,
@@ -409,83 +319,61 @@ const styles = StyleSheet.create({
     alignItems: "center", justifyContent: "center", borderWidth: 2,
   },
 
-  nameRow: { flexDirection: "row", alignItems: "center" },
-  displayName: { fontSize: 19, fontFamily: "Inter_700Bold" },
-  usernameText: { fontSize: 12, fontFamily: "Inter_500Medium" },
+  displayName: { fontSize: 20, fontFamily: "Inter_700Bold" },
+  usernameText: { fontSize: 13, fontFamily: "Inter_500Medium" },
+  bioText: { fontSize: 13, fontFamily: "Inter_400Regular", textAlign: "center", lineHeight: 18, paddingHorizontal: 24 },
 
-  editRow: { flexDirection: "row", alignItems: "center", gap: 8, width: "100%" },
-  nameInput: {
-    flex: 1, fontSize: 14, fontFamily: "Inter_600SemiBold",
-    borderRadius: 10, paddingHorizontal: 11, paddingVertical: 8,
-    borderWidth: 1,
+  editProfileBtn: {
+    marginTop: 6, paddingHorizontal: 22, paddingVertical: 8,
+    borderRadius: 10, borderWidth: 1,
   },
-  saveBtn: { paddingHorizontal: 13, paddingVertical: 8, borderRadius: 10 },
-  saveBtnText: { fontSize: 12, fontFamily: "Inter_700Bold" },
-  cancelBtn: { padding: 6 },
-
-  bioRow: { flexDirection: "row", alignItems: "center", gap: 4 },
-  bioText: { fontSize: 12, fontFamily: "Inter_400Regular", textAlign: "center", lineHeight: 17 },
-  bioEditWrap: {
-    width: "100%", borderRadius: 12, borderWidth: 1,
-    padding: 12, gap: 8,
-  },
-  bioInput: {
-    fontSize: 13, fontFamily: "Inter_400Regular",
-    minHeight: 60, textAlignVertical: "top", lineHeight: 18,
-  },
-  bioEditActions: { flexDirection: "row", alignItems: "center", gap: 8 },
-  bioCharCount: { flex: 1, fontSize: 11, fontFamily: "Inter_400Regular" },
-  bioActionText: { fontSize: 12, fontFamily: "Inter_500Medium", paddingHorizontal: 4 },
+  editProfileText: { fontSize: 13, fontFamily: "Inter_600SemiBold" },
 
   statsRow: {
-    flexDirection: "row", justifyContent: "space-around",
-    marginBottom: 20,
+    flexDirection: "row", borderRadius: 18, borderWidth: 1,
+    marginBottom: 22, overflow: "hidden",
   },
-  statItem: { alignItems: "center", gap: 3, flex: 1 },
+  statItem: { flex: 1, alignItems: "center", paddingVertical: 14, gap: 3 },
   statValue: { fontSize: 18, fontFamily: "Inter_700Bold" },
   statLabel: { fontSize: 11, fontFamily: "Inter_400Regular" },
 
-  divider: { height: 1, marginBottom: 20 },
-
+  section: { marginBottom: 22 },
   sectionHeader: {
     flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 12,
   },
-  sectionTitle: { fontSize: 15, fontFamily: "Inter_700Bold" },
+  sectionTitle: { fontSize: 15, fontFamily: "Inter_700Bold", marginBottom: 12 },
   seeAllBtn: { flexDirection: "row", alignItems: "center", gap: 2 },
   seeAllText: { fontSize: 13, fontFamily: "Inter_500Medium" },
 
-  qrRow: { flexDirection: "row", gap: 10, marginBottom: 20 },
+  qrRow: { flexDirection: "row", gap: 10 },
   qrCard: {
     flex: 1, borderRadius: 14, padding: 12, borderWidth: 1,
     alignItems: "center", gap: 8,
   },
-  qrCardMore: {
-    justifyContent: "center",
-  },
-  qrCodeWrap: {
-    borderRadius: 10, padding: 4, overflow: "hidden",
-  },
-  qrCardLabel: {
-    fontSize: 11, fontFamily: "Inter_500Medium", textAlign: "center",
-  },
+  qrCardMore: { justifyContent: "center" },
+  qrCodeWrap: { borderRadius: 10, padding: 4, overflow: "hidden" },
+  qrCardLabel: { fontSize: 11, fontFamily: "Inter_500Medium", textAlign: "center" },
   qrMoreCount: { fontSize: 18, fontFamily: "Inter_700Bold" },
   qrMoreLabel: { fontSize: 11, fontFamily: "Inter_500Medium" },
 
   emptyQrCard: {
     flexDirection: "row", alignItems: "center", gap: 10,
     borderRadius: 14, padding: 16, borderWidth: 1,
-    borderStyle: "dashed", marginBottom: 20,
+    borderStyle: "dashed",
   },
   emptyQrText: { fontSize: 13, fontFamily: "Inter_400Regular" },
 
-  menuGroup: { gap: 8, marginBottom: 24 },
-  menuItem: {
-    flexDirection: "row", alignItems: "center", gap: 12,
-    borderRadius: 14, padding: 13, borderWidth: 1,
+  peopleRow: { flexDirection: "row", gap: 12 },
+  peopleCard: {
+    flex: 1, borderRadius: 18, borderWidth: 1,
+    paddingVertical: 18, alignItems: "center", gap: 6,
   },
-  menuIcon: { width: 36, height: 36, borderRadius: 11, alignItems: "center", justifyContent: "center" },
-  menuTitle: { fontSize: 14, fontFamily: "Inter_600SemiBold" },
-  menuSub: { fontSize: 11, fontFamily: "Inter_400Regular", marginTop: 1 },
+  peopleIconWrap: {
+    width: 46, height: 46, borderRadius: 15,
+    alignItems: "center", justifyContent: "center", marginBottom: 2,
+  },
+  peopleCardCount: { fontSize: 18, fontFamily: "Inter_700Bold" },
+  peopleCardLabel: { fontSize: 12, fontFamily: "Inter_400Regular" },
 
   signOutBtn: {
     flexDirection: "row", alignItems: "center", justifyContent: "center",

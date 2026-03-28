@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from "react";
 import {
   View, Text, Pressable, ScrollView, Switch, Platform,
-  StyleSheet, ActivityIndicator, Alert, Image,
+  StyleSheet, ActivityIndicator, Alert,
 } from "react-native";
 import { router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
@@ -13,8 +13,6 @@ import {
   getPrivacySettings,
   updatePrivacySettings,
   PrivacySettings,
-  getFriendsLeaderboard,
-  FriendLeaderboardEntry,
 } from "@/lib/services/user-service";
 
 interface ToggleRowProps {
@@ -67,10 +65,6 @@ export default function PrivacySettingsScreen() {
   });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [leaderboard, setLeaderboard] = useState<FriendLeaderboardEntry[]>([]);
-  const [leaderboardLoading, setLeaderboardLoading] = useState(false);
-
-  const username = (user as any)?.username ?? "";
 
   useEffect(() => {
     if (!user) return;
@@ -107,16 +101,6 @@ export default function PrivacySettingsScreen() {
     },
     [user, privacy]
   );
-
-  async function loadLeaderboard() {
-    if (!user || leaderboard.length > 0) return;
-    setLeaderboardLoading(true);
-    try {
-      const data = await getFriendsLeaderboard(user.id);
-      setLeaderboard(data);
-    } catch {}
-    finally { setLeaderboardLoading(false); }
-  }
 
   if (!user) {
     return (
@@ -268,143 +252,6 @@ export default function PrivacySettingsScreen() {
             </>
           )}
         </View>
-
-        {/* ── FRIENDS & SOCIAL ── */}
-        <Text style={[styles.sectionLabel, { color: colors.textMuted }]}>FRIENDS & SOCIAL</Text>
-        <View style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
-          <Pressable
-            onPress={() => router.push("/friends" as any)}
-            style={({ pressed }) => [styles.menuRow, { opacity: pressed ? 0.75 : 1 }]}
-          >
-            <View style={[styles.menuIcon, { backgroundColor: colors.primaryDim }]}>
-              <Ionicons name="people-outline" size={18} color={colors.primary} />
-            </View>
-            <View style={{ flex: 1 }}>
-              <Text style={[styles.menuLabel, { color: colors.text }]}>My Friends</Text>
-              <Text style={[styles.menuSub, { color: colors.textMuted }]}>Manage friends and requests</Text>
-            </View>
-            <Ionicons name="chevron-forward" size={16} color={colors.textMuted} />
-          </Pressable>
-
-          <View style={[styles.divider, { backgroundColor: colors.surfaceBorder }]} />
-
-          <Pressable
-            onPress={() => router.push("/search" as any)}
-            style={({ pressed }) => [styles.menuRow, { opacity: pressed ? 0.75 : 1 }]}
-          >
-            <View style={[styles.menuIcon, { backgroundColor: colors.accentDim }]}>
-              <Ionicons name="person-add-outline" size={18} color={colors.accent} />
-            </View>
-            <View style={{ flex: 1 }}>
-              <Text style={[styles.menuLabel, { color: colors.text }]}>Find People</Text>
-              <Text style={[styles.menuSub, { color: colors.textMuted }]}>Search by username to add friends</Text>
-            </View>
-            <Ionicons name="chevron-forward" size={16} color={colors.textMuted} />
-          </Pressable>
-
-        </View>
-
-        {/* ── FRIENDS LEADERBOARD ── */}
-        <Text style={[styles.sectionLabel, { color: colors.textMuted }]}>SCAN COMPETITION</Text>
-        <Pressable
-          onPress={loadLeaderboard}
-          style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder, overflow: "hidden" }]}
-        >
-          <LinearGradient
-            colors={isDark ? ["#061520", "transparent"] : ["#EBF3FF", "transparent"]}
-            style={StyleSheet.absoluteFill}
-            start={{ x: 0, y: 0 }} end={{ x: 0, y: 1 }}
-          />
-          <View style={styles.leaderboardHeader}>
-            <LinearGradient
-              colors={[colors.warning ?? colors.accent, colors.accent]}
-              style={styles.leaderboardHeaderIcon}
-              start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
-            >
-              <Ionicons name="trophy" size={18} color="#fff" />
-            </LinearGradient>
-            <View style={{ flex: 1 }}>
-              <Text style={[styles.leaderboardTitle, { color: colors.text }]}>Friends Leaderboard</Text>
-              <Text style={[styles.leaderboardSub, { color: colors.textMuted }]}>Who's scanned the most QR codes?</Text>
-            </View>
-            {leaderboardLoading
-              ? <ActivityIndicator size="small" color={colors.primary} />
-              : <Pressable onPress={loadLeaderboard} style={[styles.refreshBtn, { backgroundColor: colors.primaryDim }]}>
-                  <Ionicons name="refresh-outline" size={14} color={colors.primary} />
-                </Pressable>
-            }
-          </View>
-
-          {leaderboard.length === 0 && !leaderboardLoading && (
-            <View style={styles.leaderboardEmpty}>
-              <Ionicons name="people-outline" size={32} color={colors.textMuted} />
-              <Text style={[styles.leaderboardEmptyText, { color: colors.textMuted }]}>
-                Tap refresh to load your leaderboard
-              </Text>
-            </View>
-          )}
-
-          {leaderboard.map((entry, idx) => {
-            const initials = entry.displayName.split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2);
-            const rankColors = ["#FFD700", "#C0C0C0", "#CD7F32"];
-            const rankColor = idx < 3 ? rankColors[idx] : colors.textMuted;
-            const isTop3 = idx < 3;
-
-            return (
-              <View key={entry.userId}>
-                {idx > 0 && <View style={[styles.divider, { backgroundColor: colors.surfaceBorder }]} />}
-                <Pressable
-                  onPress={() => entry.username && router.push(`/profile/${entry.username}` as any)}
-                  style={[
-                    styles.leaderboardRow,
-                    entry.isMe && { backgroundColor: colors.primaryDim + "50" },
-                  ]}
-                >
-                  {/* Rank badge */}
-                  <View style={[styles.rankBadge, { borderColor: rankColor + (isTop3 ? "60" : "30") }]}>
-                    {isTop3
-                      ? <Ionicons name="trophy" size={12} color={rankColor} />
-                      : <Text style={[styles.rankNum, { color: rankColor }]}>{entry.rank}</Text>
-                    }
-                  </View>
-
-                  {/* Avatar */}
-                  <View style={[styles.lbAvatar, { borderColor: rankColor + "40" }]}>
-                    {entry.photoURL
-                      ? <Image source={{ uri: entry.photoURL }} style={styles.lbAvatarImg} />
-                      : (
-                        <LinearGradient
-                          colors={entry.isMe ? [colors.primary, colors.accent] : [colors.textMuted + "80", colors.textMuted + "40"]}
-                          style={styles.lbAvatarGrad}
-                        >
-                          <Text style={styles.lbAvatarInitials}>{initials}</Text>
-                        </LinearGradient>
-                      )
-                    }
-                  </View>
-
-                  <View style={{ flex: 1 }}>
-                    <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
-                      <Text style={[styles.lbName, { color: colors.text }]} numberOfLines={1}>{entry.displayName}</Text>
-                      {entry.isMe && (
-                        <View style={[styles.youBadge, { backgroundColor: colors.primaryDim, borderColor: colors.primary + "40" }]}>
-                          <Text style={[styles.youBadgeText, { color: colors.primary }]}>You</Text>
-                        </View>
-                      )}
-                    </View>
-                    <Text style={[styles.lbUsername, { color: colors.primary }]}>@{entry.username}</Text>
-                  </View>
-
-                  <View style={styles.lbScanWrap}>
-                    <Ionicons name="scan-outline" size={12} color={rankColor} />
-                    <Text style={[styles.lbScanCount, { color: rankColor }]}>{entry.scanCount}</Text>
-                    <Text style={[styles.lbScanLabel, { color: colors.textMuted }]}>scans</Text>
-                  </View>
-                </Pressable>
-              </View>
-            );
-          })}
-        </Pressable>
 
         {/* ── ACCOUNT SETTINGS ── */}
         <Text style={[styles.sectionLabel, { color: colors.textMuted }]}>ACCOUNT</Text>
