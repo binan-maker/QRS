@@ -27,6 +27,10 @@ export function invalidateCache(keyPrefix: string): void {
   }
 }
 
+export function clearAllMemCache(): void {
+  memCache.clear();
+}
+
 const TTL = {
   QR_DETAIL: 5 * 60 * 1000,
   OWNER_INFO: 10 * 60 * 1000,

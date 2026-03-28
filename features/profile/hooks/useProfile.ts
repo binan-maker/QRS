@@ -39,6 +39,17 @@ export function useProfile() {
   const qrUnsubscribeRef = useRef<(() => void) | null>(null);
 
   const [currentUsername, setCurrentUsername] = useState<string | null>(user?.username || null);
+
+  useEffect(() => {
+    setNewName(user?.displayName || "");
+    setPhotoURL(user?.photoURL || null);
+    setCurrentUsername(user?.username || null);
+    setStats({ followingCount: 0, scanCount: 0, commentCount: 0, totalLikesReceived: 0 });
+    setEditingName(false);
+    setEditingUsername(false);
+    setUsernameError("");
+    setUsernameAvailable(null);
+  }, [user?.id]);
   const [usernameLastChangedAt, setUsernameLastChangedAt] = useState<Date | null>(null);
   const [editingUsername, setEditingUsername] = useState(false);
   const [newUsernameInput, setNewUsernameInput] = useState("");

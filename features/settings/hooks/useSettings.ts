@@ -39,6 +39,17 @@ export function useSettings() {
   const [hapticsEnabled, setHapticsEnabledState] = useState(false);
 
   useEffect(() => {
+    setFeedbackEmail(user?.email || "");
+    setFeedbackText("");
+    setFeedbackDone(false);
+    setSection("main");
+    setFollowingList([]);
+    setMyComments([]);
+    setMyHistory([]);
+    setDeleteConfirmText("");
+  }, [user?.id]);
+
+  useEffect(() => {
     AsyncStorage.getItem(HAPTIC_KEY).then((v) => {
       const enabled = v === "true";
       setHapticsEnabledState(enabled);

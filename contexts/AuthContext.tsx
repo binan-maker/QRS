@@ -9,6 +9,9 @@ import {
   mapFirebaseError,
   generateUniqueUsername,
 } from "@/lib/auth/utils";
+import { queryClient } from "@/lib/query-client";
+import { clearAllMemCache } from "@/lib/cache/qr-cache";
+import { clearAllAnonymousSessions } from "@/lib/cache/anonymous-session";
 
 WebBrowser.maybeCompleteAuthSession();
 
@@ -286,7 +289,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       const AsyncStorage = (await import("@react-native-async-storage/async-storage")).default;
       await AsyncStorage.removeItem("local_scan_history");
+      const allKeys = await AsyncStorage.getAllKeys();
+      const cacheKeys = allKeys.filter((k) => k.startsWith("cache_"));
+      if (cacheKeys.length > 0) await AsyncStorage.multiRemove(cacheKeys);
     } catch {}
+    clearAllMemCache();
+    clearAllAnonymousSessions();
+    queryClient.clear();
     try {
       if (Platform.OS !== "web" && GoogleSignin) {
         await GoogleSignin.signOut().catch(() => {});
