@@ -338,10 +338,20 @@ export default function ScannerScreen() {
 
       {processing && (
         <View style={styles.processingOverlay}>
-          <Reanimated.View entering={FadeIn.duration(200)} style={[styles.processingBox, { backgroundColor: colors.surface, borderColor: colors.primary + "25" }]}>
-            <ActivityIndicator color={colors.primary} size="large" />
-            <Text style={[styles.processingTitle, { color: colors.text }]}>Analyzing QR Code</Text>
-            <Text style={[styles.processingSubtitle, { color: colors.textSecondary }]}>Checking trust score & community reports...</Text>
+          <Reanimated.View entering={FadeIn.duration(220)} style={styles.processingBox}>
+            <View style={styles.processingIconRing}>
+              <ActivityIndicator color="#00D4FF" size="large" />
+            </View>
+            <View style={styles.processingTextGroup}>
+              <Text style={styles.processingEyebrow}>SHIELD ANALYZING</Text>
+              <Text style={styles.processingTitle}>Scanning QR Code</Text>
+              <Text style={styles.processingSubtitle}>AI threat detection • Trust score check • Community reports</Text>
+            </View>
+            <View style={styles.processingDots}>
+              {[0, 1, 2].map((i) => (
+                <View key={i} style={[styles.processingDot, { opacity: 0.3 + i * 0.25 }]} />
+              ))}
+            </View>
           </Reanimated.View>
         </View>
       )}
@@ -369,25 +379,43 @@ export default function ScannerScreen() {
 
       {unverifiedModal && (
         <View style={styles.overlay}>
-          <Reanimated.View entering={FadeInDown.duration(350)} style={[styles.sheet, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
-            <View style={[styles.badge, { backgroundColor: "rgba(255,165,0,0.12)" }]}>
-              <Text style={styles.helpIcon}>?</Text>
+          <Reanimated.View entering={FadeInDown.duration(380).springify()} style={[styles.sheet, { backgroundColor: colors.surface }]}>
+            <View style={styles.sheetAccentStripe} />
+            <View style={styles.unverifiedIconGroup}>
+              <View style={styles.unverifiedOuterRing}>
+                <View style={styles.unverifiedInnerRing}>
+                  <Ionicons name="help" size={34} color="#F59E0B" />
+                </View>
+              </View>
             </View>
-            <Text style={[styles.sheetTitle, { color: "#FFA500" }]}>Unverified Source</Text>
-            <Text style={[styles.sheetSubtitle, { color: colors.textSecondary }]}>
-              This QR code has no registered owner or cryptographic signature. It may be legitimate but cannot be verified by QR Guard.
-            </Text>
-            <View style={styles.countdownRing}>
-              <Text style={styles.countdownNum}>{unverifiedCountdown}</Text>
+            <View style={styles.sheetTextGroup}>
+              <Text style={styles.sheetEyebrow}>IDENTITY CHECK</Text>
+              <Text style={[styles.sheetTitle, { color: "#fff" }]}>Unverified Source</Text>
+              <Text style={[styles.sheetSubtitle, { color: colors.textSecondary }]}>
+                This QR code has no registered owner or cryptographic signature. It may be legitimate but we cannot confirm its identity.
+              </Text>
             </View>
-            <Text style={[styles.countdownHint, { color: colors.textMuted }]}>
-              Proceeding automatically in {unverifiedCountdown} second{unverifiedCountdown !== 1 ? "s" : ""}…
-            </Text>
-            <View onTouchEnd={handleUnverifiedProceed} style={[styles.proceedBtn, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
-              <Text style={[styles.proceedBtnText, { color: colors.textSecondary }]}>View Now</Text>
+            <View style={styles.countdownGroup}>
+              <View style={styles.countdownRing}>
+                <Text style={styles.countdownNum}>{unverifiedCountdown}</Text>
+              </View>
+              <Text style={[styles.countdownHint, { color: colors.textMuted }]}>
+                Auto-proceeding in {unverifiedCountdown}s
+              </Text>
             </View>
-            <View onTouchEnd={handleUnverifiedBack} style={[styles.backBtn, { backgroundColor: colors.warning }]}>
-              <Text style={styles.backBtnText}>Cancel</Text>
+            <View style={styles.sheetActions}>
+              <View onTouchEnd={handleUnverifiedProceed} style={[styles.proceedBtn, { backgroundColor: "rgba(255,255,255,0.06)", borderColor: "rgba(255,255,255,0.1)" }]}>
+                <Text style={[styles.proceedBtnText, { color: "rgba(255,255,255,0.6)" }]}>View Details Now</Text>
+                <Ionicons name="arrow-forward" size={16} color="rgba(255,255,255,0.4)" />
+              </View>
+              <View onTouchEnd={handleUnverifiedBack} style={styles.cancelBtn}>
+                <Ionicons name="arrow-back" size={18} color="#000" />
+                <Text style={styles.cancelBtnText}>Stay Safe</Text>
+              </View>
+            </View>
+            <View style={styles.sheetBottomMark}>
+              <Ionicons name="shield-checkmark-outline" size={11} color="rgba(0,212,255,0.35)" />
+              <Text style={styles.sheetBottomMarkText}>Analyzed by QR Guard AI</Text>
             </View>
           </Reanimated.View>
         </View>
@@ -421,28 +449,68 @@ export default function ScannerScreen() {
 const styles = StyleSheet.create({
   processingOverlay: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: "rgba(0,0,0,0.82)",
+    backgroundColor: "rgba(0,0,0,0.88)",
     justifyContent: "center",
     alignItems: "center",
   },
   processingBox: {
-    padding: 36,
-    borderRadius: 24,
+    backgroundColor: "rgba(16,25,41,0.98)",
+    borderRadius: 28,
+    paddingVertical: 32,
+    paddingHorizontal: 32,
     alignItems: "center",
-    gap: 14,
+    gap: 18,
     borderWidth: 1,
-    maxWidth: 280,
+    borderColor: "rgba(0,212,255,0.2)",
+    maxWidth: 300,
+    width: "80%",
+  },
+  processingIconRing: {
+    width: 72,
+    height: 72,
+    borderRadius: 36,
+    backgroundColor: "rgba(0,212,255,0.08)",
+    borderWidth: 1,
+    borderColor: "rgba(0,212,255,0.25)",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  processingTextGroup: { alignItems: "center", gap: 6 },
+  processingEyebrow: {
+    fontSize: 10,
+    fontFamily: "Inter_700Bold",
+    color: "#00D4FF",
+    letterSpacing: 2.5,
+  },
+  processingTitle: {
+    fontSize: 18,
+    fontFamily: "Inter_700Bold",
+    color: "#fff",
+    textAlign: "center",
+  },
+  processingSubtitle: {
+    fontSize: 12,
+    fontFamily: "Inter_400Regular",
+    color: "rgba(255,255,255,0.45)",
+    textAlign: "center",
+    lineHeight: 18,
+  },
+  processingDots: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+  },
+  processingDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: "#00D4FF",
   },
   backIconBtn: {
     width: 40, height: 40, borderRadius: 20,
     backgroundColor: "rgba(0,0,0,0.45)",
     alignItems: "center", justifyContent: "center",
     borderWidth: 1, borderColor: "rgba(255,255,255,0.1)",
-  },
-  processingTitle: { fontSize: 17, fontFamily: "Inter_700Bold" },
-  processingSubtitle: {
-    fontSize: 13, fontFamily: "Inter_400Regular",
-    textAlign: "center", lineHeight: 18,
   },
   overlay: {
     ...StyleSheet.absoluteFillObject,
@@ -452,38 +520,116 @@ const styles = StyleSheet.create({
   },
   sheet: {
     width: "100%",
-    borderTopLeftRadius: 28, borderTopRightRadius: 28,
-    padding: 28, paddingBottom: 48,
-    alignItems: "center", gap: 12,
+    borderTopLeftRadius: 32,
+    borderTopRightRadius: 32,
+    alignItems: "center",
+    gap: 18,
     borderWidth: 1,
+    borderColor: "rgba(245,158,11,0.3)",
+    overflow: "hidden",
+    paddingBottom: 36,
   },
-  badge: {
-    width: 72, height: 72, borderRadius: 36,
-    alignItems: "center", justifyContent: "center", marginBottom: 4,
+  sheetAccentStripe: {
+    width: "100%",
+    height: 3,
+    backgroundColor: "#F59E0B",
   },
-  helpIcon: { fontSize: 32, color: "#FFA500", fontFamily: "Inter_700Bold" },
-  sheetTitle: { fontSize: 22, fontFamily: "Inter_700Bold", textAlign: "center" },
+  unverifiedIconGroup: {
+    alignItems: "center",
+    marginTop: 8,
+  },
+  unverifiedOuterRing: {
+    width: 90,
+    height: 90,
+    borderRadius: 45,
+    borderWidth: 1,
+    borderColor: "rgba(245,158,11,0.2)",
+    backgroundColor: "rgba(245,158,11,0.05)",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  unverifiedInnerRing: {
+    width: 66,
+    height: 66,
+    borderRadius: 33,
+    borderWidth: 1,
+    borderColor: "rgba(245,158,11,0.35)",
+    backgroundColor: "rgba(245,158,11,0.1)",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  sheetTextGroup: {
+    alignItems: "center",
+    gap: 8,
+    paddingHorizontal: 28,
+  },
+  sheetEyebrow: {
+    fontSize: 11,
+    fontFamily: "Inter_700Bold",
+    color: "#F59E0B",
+    letterSpacing: 2.5,
+  },
+  sheetTitle: { fontSize: 24, fontFamily: "Inter_700Bold", textAlign: "center" },
   sheetSubtitle: {
-    fontSize: 14, fontFamily: "Inter_400Regular",
-    textAlign: "center", lineHeight: 21,
+    fontSize: 14,
+    fontFamily: "Inter_400Regular",
+    textAlign: "center",
+    lineHeight: 21,
+  },
+  countdownGroup: {
+    alignItems: "center",
+    gap: 8,
   },
   countdownRing: {
-    width: 64, height: 64, borderRadius: 32,
-    borderWidth: 3, borderColor: "#FFA500",
-    alignItems: "center", justifyContent: "center", marginVertical: 4,
+    width: 68,
+    height: 68,
+    borderRadius: 34,
+    borderWidth: 2,
+    borderColor: "#F59E0B",
+    backgroundColor: "rgba(245,158,11,0.08)",
+    alignItems: "center",
+    justifyContent: "center",
   },
-  countdownNum: { fontSize: 28, fontFamily: "Inter_700Bold", color: "#FFA500" },
-  countdownHint: { fontSize: 13, fontFamily: "Inter_400Regular", marginBottom: 8 },
+  countdownNum: { fontSize: 30, fontFamily: "Inter_700Bold", color: "#F59E0B" },
+  countdownHint: { fontSize: 13, fontFamily: "Inter_400Regular" },
+  sheetActions: {
+    width: "100%",
+    paddingHorizontal: 20,
+    gap: 10,
+  },
   proceedBtn: {
-    width: "100%", flexDirection: "row", alignItems: "center", justifyContent: "center",
-    paddingVertical: 14, borderRadius: 14, borderWidth: 1,
+    width: "100%",
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+    paddingVertical: 14,
+    borderRadius: 14,
+    borderWidth: 1,
   },
   proceedBtnText: { fontSize: 15, fontFamily: "Inter_600SemiBold" },
-  backBtn: {
-    width: "100%", flexDirection: "row", alignItems: "center", justifyContent: "center",
-    paddingVertical: 14, borderRadius: 14,
+  cancelBtn: {
+    width: "100%",
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+    paddingVertical: 15,
+    borderRadius: 16,
+    backgroundColor: "#F59E0B",
   },
-  backBtnText: { fontSize: 15, fontFamily: "Inter_700Bold", color: "#000" },
+  cancelBtnText: { fontSize: 16, fontFamily: "Inter_700Bold", color: "#000" },
+  sheetBottomMark: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 5,
+  },
+  sheetBottomMarkText: {
+    fontSize: 11,
+    fontFamily: "Inter_400Regular",
+    color: "rgba(0,212,255,0.35)",
+    letterSpacing: 0.3,
+  },
 });
 
 const toastStyles = StyleSheet.create({
