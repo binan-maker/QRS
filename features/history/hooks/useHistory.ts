@@ -4,7 +4,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as Haptics from "@/lib/haptics";
 import { router } from "expo-router";
 import { useAuth } from "@/contexts/AuthContext";
-import { getUserScansPaginated, getUserFavorites, deleteUserScan } from "@/lib/firestore-service";
+import { getUserScansPaginated, getUserFavorites, deleteUserScan, getUserScanStats, getUserAllScansForStats, type ScanStatsResult } from "@/lib/firestore-service";
 import { parseAnyPaymentQr, analyzeAnyPaymentQr, analyzeUrlHeuristics } from "@/lib/qr-analysis";
 
 export interface HistoryItem {
@@ -35,6 +35,10 @@ export function useHistory() {
   const [filter, setFilter] = useState<Filter>("all");
   const cloudLastDocRef = useRef<any>(null);
   const prevUserIdRef = useRef<string | null | undefined>(undefined);
+
+  const [scanStats, setScanStats] = useState<ScanStatsResult | null>(null);
+  const [statsLoading, setStatsLoading] = useState(false);
+  const [allStatsItems, setAllStatsItems] = useState<Array<{ id: string; content: string; contentType: string }>>([]);
 
   const history = useMemo<HistoryItem[]>(() => {
     const merged: HistoryItem[] = [...localHistory];
@@ -76,6 +80,23 @@ export function useHistory() {
         if (filter === "gallery") return item.scanSource === "gallery";
         return !["url", "text", "payment"].includes(item.contentType);
       });
+
+  const loadStats = useCallback(async (userId: string) => {
+    setStatsLoading(true);
+    try {
+      const [stats, items] = await Promise.all([
+        getUserScanStats(userId),
+        getUserAllScansForStats(userId),
+      ]);
+      setScanStats(stats);
+      setAllStatsItems(items);
+    } catch {
+      setScanStats(null);
+      setAllStatsItems([]);
+    } finally {
+      setStatsLoading(false);
+    }
+  }, []);
 
   const loadLocalHistory = useCallback(async (userId?: string | null) => {
     try {
@@ -149,6 +170,8 @@ export function useHistory() {
       setCloudHistory([]);
       setFavorites([]);
       setLocalHistory([]);
+      setScanStats(null);
+      setAllStatsItems([]);
       cloudLastDocRef.current = null;
       setCloudHasMore(false);
     }
@@ -156,6 +179,7 @@ export function useHistory() {
     if (user) {
       loadInitialCloudHistory(user.id);
       loadFavorites();
+      loadStats(user.id);
     }
   }, [user?.id]);
 
@@ -167,11 +191,14 @@ export function useHistory() {
     setCloudHistory([]);
     await loadLocalHistory(user?.id);
     if (user) {
-      await loadInitialCloudHistory(user.id);
-      await loadFavorites();
+      await Promise.all([
+        loadInitialCloudHistory(user.id),
+        loadFavorites(),
+        loadStats(user.id),
+      ]);
     }
     setRefreshing(false);
-  }, [user, loadLocalHistory, loadInitialCloudHistory, loadFavorites]);
+  }, [user, loadLocalHistory, loadInitialCloudHistory, loadFavorites, loadStats]);
 
   async function clearLocalHistory() {
     Alert.alert("Clear History", "This will remove all locally stored scan history.", [
@@ -235,5 +262,8 @@ export function useHistory() {
     clearLocalHistory,
     loadMoreCloudHistory,
     deleteItem,
+    scanStats,
+    statsLoading,
+    allStatsItems,
   };
 }

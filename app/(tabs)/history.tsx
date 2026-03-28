@@ -106,6 +106,9 @@ export default function HistoryScreen() {
     onRefresh,
     handleEndReached,
     deleteItem,
+    scanStats,
+    statsLoading,
+    allStatsItems,
   } = useHistory();
 
   const [searchVisible, setSearchVisible] = useState(false);
@@ -129,35 +132,62 @@ export default function HistoryScreen() {
     Keyboard.dismiss();
   }
 
-  // Stats from full history (all loaded items), not just filtered page
-  const allDangerCount = useMemo(() =>
-    history.filter((i) => safetyRiskMap.get(i.id) === "dangerous").length,
-  [history, safetyRiskMap]);
+  // Risk stats from all items (loaded via background fetch)
+  const allDangerCount = useMemo(() => {
+    if (allStatsItems.length === 0) return history.filter((i) => safetyRiskMap.get(i.id) === "dangerous").length;
+    let count = 0;
+    for (const item of allStatsItems) {
+      let risk: string = "safe";
+      if (item.contentType === "url") {
+        try { risk = analyzeUrlHeuristics(item.content).riskLevel; } catch {}
+      } else if (item.contentType === "payment") {
+        try {
+          const parsed = parseAnyPaymentQr(item.content);
+          risk = parsed ? analyzeAnyPaymentQr(parsed).riskLevel : "safe";
+        } catch {}
+      }
+      if (risk === "dangerous") count++;
+    }
+    return count;
+  }, [allStatsItems, history, safetyRiskMap]);
 
-  const allCautionCount = useMemo(() =>
-    history.filter((i) => safetyRiskMap.get(i.id) === "caution").length,
-  [history, safetyRiskMap]);
+  const allCautionCount = useMemo(() => {
+    if (allStatsItems.length === 0) return history.filter((i) => safetyRiskMap.get(i.id) === "caution").length;
+    let count = 0;
+    for (const item of allStatsItems) {
+      let risk: string = "safe";
+      if (item.contentType === "url") {
+        try { risk = analyzeUrlHeuristics(item.content).riskLevel; } catch {}
+      } else if (item.contentType === "payment") {
+        try {
+          const parsed = parseAnyPaymentQr(item.content);
+          risk = parsed ? analyzeAnyPaymentQr(parsed).riskLevel : "safe";
+        } catch {}
+      }
+      if (risk === "caution") count++;
+    }
+    return count;
+  }, [allStatsItems, history, safetyRiskMap]);
 
-  const allSafeCount = useMemo(() =>
-    history.length - allDangerCount - allCautionCount,
-  [history, allDangerCount, allCautionCount]);
+  const totalCount = scanStats?.total ?? history.length;
+  const allSafeCount = Math.max(0, totalCount - allDangerCount - allCautionCount);
 
-  // Filter chips counts from full history
+  // Filter chips counts from true totals (from scanStats) or fallback to loaded history
   const activeFilters: { key: Filter; label: string; count?: number }[] = useMemo(() => {
     const base = FILTERS.map((f) => {
       let count = 0;
-      if (f.key === "all")     count = history.length;
-      else if (f.key === "url")     count = history.filter((i) => i.contentType === "url").length;
-      else if (f.key === "payment") count = history.filter((i) => i.contentType === "payment").length;
-      else if (f.key === "text")    count = history.filter((i) => i.contentType === "text").length;
-      else if (f.key === "camera")  count = history.filter((i) => (i.scanSource ?? "camera") === "camera").length;
-      else if (f.key === "gallery") count = history.filter((i) => i.scanSource === "gallery").length;
-      else count = history.filter((i) => !["url","text","payment"].includes(i.contentType)).length;
+      if (f.key === "all")          count = scanStats?.total ?? history.length;
+      else if (f.key === "url")     count = scanStats?.byUrl ?? history.filter((i) => i.contentType === "url").length;
+      else if (f.key === "payment") count = scanStats?.byPayment ?? history.filter((i) => i.contentType === "payment").length;
+      else if (f.key === "text")    count = scanStats?.byText ?? history.filter((i) => i.contentType === "text").length;
+      else if (f.key === "camera")  count = scanStats?.byCamera ?? history.filter((i) => (i.scanSource ?? "camera") === "camera").length;
+      else if (f.key === "gallery") count = scanStats?.byGallery ?? history.filter((i) => i.scanSource === "gallery").length;
+      else                          count = scanStats?.byOther ?? history.filter((i) => !["url","text","payment"].includes(i.contentType)).length;
       return { ...f, count };
     });
     if (user) base.push({ key: "favorites" as Filter, label: "Favorites" });
     return base;
-  }, [history, user]);
+  }, [scanStats, history, user]);
 
   // Apply inline search on top of the filter-based displayItems
   const searchedItems = useMemo(() => {
@@ -168,7 +198,7 @@ export default function HistoryScreen() {
   const listRows = useMemo(() => groupByDate(searchedItems), [searchedItems]);
 
   const hasThreats = (allDangerCount + allCautionCount) > 0;
-  const showStats = user && !cloudLoading && history.length > 0;
+  const showStats = user && !cloudLoading && (history.length > 0 || (scanStats !== null && scanStats.total > 0));
 
   const renderItem = useCallback(
     ({ item: row }: { item: ListRow }) => {
@@ -353,12 +383,12 @@ export default function HistoryScreen() {
         </View>
       )}
 
-      {/* ── Stats strip — from full history, shows immediately ─────── */}
+      {/* ── Stats strip — true totals from server, not just loaded cards ── */}
       {showStats && !searchVisible && (
         <View style={[styles.statsStrip, { borderColor: colors.surfaceBorder }]}>
           <View style={[styles.statItem, { borderRightColor: colors.surfaceBorder }]}>
             <Text style={[styles.statNumber, { color: colors.text }]} maxFontSizeMultiplier={1}>
-              {history.length}
+              {totalCount}
             </Text>
             <Text style={[styles.statLabel, { color: colors.textMuted }]} maxFontSizeMultiplier={1}>Total</Text>
           </View>
@@ -374,7 +404,7 @@ export default function HistoryScreen() {
             </Text>
             <Text style={[styles.statLabel, { color: colors.textMuted }]} maxFontSizeMultiplier={1}>Caution</Text>
           </View>
-          <View style={styles.statItem}>
+          <View style={[styles.statItem, { borderRightWidth: 0 }]}>
             <Text style={[styles.statNumber, { color: colors.danger }]} maxFontSizeMultiplier={1}>
               {allDangerCount}
             </Text>
