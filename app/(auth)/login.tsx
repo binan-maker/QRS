@@ -9,7 +9,6 @@ import {
   Platform,
   ScrollView,
   useWindowDimensions,
-  Modal,
 } from "react-native";
 import { Link, router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
@@ -19,6 +18,7 @@ import { useTheme } from "@/contexts/ThemeContext";
 import { useAuth } from "@/contexts/AuthContext";
 import GoogleIcon from "@/components/GoogleIcon";
 import AuthFormInput from "@/features/auth/components/AuthFormInput";
+import GoogleAuthLoading from "@/components/GoogleAuthLoading";
 
 export default function LoginScreen() {
   const { signIn, signInWithGoogle, googleRequest, user } = useAuth();
