@@ -5,6 +5,7 @@ import {
   ScrollView,
   Pressable,
   Platform,
+  useWindowDimensions,
 } from "react-native";
 import { router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
@@ -60,7 +61,9 @@ function Bullet({ text, colors }: { text: string; colors: AppColors }) {
 export default function PrivacyPolicyScreen() {
   const { colors } = useTheme();
   const insets = useSafeAreaInsets();
+  const { width } = useWindowDimensions();
   const topInset = Platform.OS === "web" ? 67 : insets.top;
+  const styles = makeStyles(colors, width);
 
   return (
     <View style={[styles.container, { paddingTop: topInset, backgroundColor: colors.background }]}>
@@ -216,50 +219,55 @@ export default function PrivacyPolicyScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1 },
-  navBar: {
-    flexDirection: "row", alignItems: "center", justifyContent: "space-between",
-    paddingHorizontal: 18, paddingVertical: 14, borderBottomWidth: StyleSheet.hairlineWidth,
-  },
-  navTitle: { fontSize: 18, fontFamily: "Inter_700Bold", flex: 1, textAlign: "center" },
-  backBtn: { width: 40, height: 40, borderRadius: 20, alignItems: "center", justifyContent: "center", borderWidth: 1 },
-  scrollContent: { padding: 18, gap: 12 },
+function makeStyles(c: AppColors, width = 390) {
+  const s  = Math.min(Math.max(width / 390, 0.82), 1.0);
+  const rf = (size: number) => Math.round(size * s);
+  const sp = (v: number)    => Math.round(v * s);
+  return StyleSheet.create({
+    container: { flex: 1 },
+    navBar: {
+      flexDirection: "row", alignItems: "center", justifyContent: "space-between",
+      paddingHorizontal: sp(18), paddingVertical: sp(12), borderBottomWidth: StyleSheet.hairlineWidth,
+    },
+    navTitle: { fontSize: rf(17), fontFamily: "Inter_700Bold", flex: 1, textAlign: "center" },
+    backBtn: { width: sp(38), height: sp(38), borderRadius: sp(19), alignItems: "center", justifyContent: "center", borderWidth: 1 },
+    scrollContent: { padding: sp(16), gap: sp(10) },
 
-  heroBanner: {
-    flexDirection: "row", alignItems: "flex-start", gap: 16,
-    borderRadius: 24, padding: 22, borderWidth: 1,
-  },
-  heroIconWrap: {
-    width: 58, height: 58, borderRadius: 20,
-    alignItems: "center", justifyContent: "center", flexShrink: 0,
-  },
-  heroTitle: { fontSize: 20, fontFamily: "Inter_700Bold", marginBottom: 6 },
-  heroSub: { fontSize: 13, fontFamily: "Inter_400Regular", lineHeight: 20, marginBottom: 10 },
-  dateBadge: {
-    flexDirection: "row", alignItems: "center", gap: 5,
-    paddingHorizontal: 10, paddingVertical: 4, borderRadius: 10, borderWidth: 1,
-    alignSelf: "flex-start",
-  },
-  dateBadgeText: { fontSize: 12, fontFamily: "Inter_500Medium" },
+    heroBanner: {
+      flexDirection: "row", alignItems: "flex-start", gap: sp(14),
+      borderRadius: sp(20), padding: sp(18), borderWidth: 1,
+    },
+    heroIconWrap: {
+      width: sp(52), height: sp(52), borderRadius: sp(16),
+      alignItems: "center", justifyContent: "center", flexShrink: 0,
+    },
+    heroTitle: { fontSize: rf(15), fontFamily: "Inter_700Bold", marginBottom: sp(5) },
+    heroSub: { fontSize: rf(12), fontFamily: "Inter_400Regular", lineHeight: Math.round(18 * s), marginBottom: sp(8) },
+    dateBadge: {
+      flexDirection: "row", alignItems: "center", gap: sp(4),
+      paddingHorizontal: sp(8), paddingVertical: sp(3), borderRadius: sp(8), borderWidth: 1,
+      alignSelf: "flex-start",
+    },
+    dateBadgeText: { fontSize: rf(11), fontFamily: "Inter_500Medium" },
 
-  sectionCard: { borderRadius: 22, borderWidth: 1, padding: 18 },
-  sectionHeader: { flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 12 },
-  sectionNum: { width: 28, height: 28, borderRadius: 9, alignItems: "center", justifyContent: "center" },
-  sectionNumText: { fontSize: 13, fontFamily: "Inter_700Bold" },
-  sectionIcon: { width: 26, height: 26, borderRadius: 8, alignItems: "center", justifyContent: "center" },
-  sectionTitle: { fontSize: 16, fontFamily: "Inter_700Bold", flex: 1 },
-  subhead: { fontSize: 13, fontFamily: "Inter_600SemiBold", marginTop: 10, marginBottom: 6 },
-  para: { fontSize: 14, fontFamily: "Inter_400Regular", lineHeight: 22, marginBottom: 8 },
-  bulletRow: { flexDirection: "row", alignItems: "flex-start", gap: 10, marginBottom: 7 },
-  bulletDot: { width: 6, height: 6, borderRadius: 3, marginTop: 8, flexShrink: 0 },
-  bulletText: { flex: 1, fontSize: 14, fontFamily: "Inter_400Regular", lineHeight: 21 },
-  contactCard: {
-    flexDirection: "row", alignItems: "center", gap: 12,
-    borderRadius: 14, padding: 14, marginVertical: 10, borderWidth: 1,
-  },
-  contactIconWrap: { width: 36, height: 36, borderRadius: 11, alignItems: "center", justifyContent: "center" },
-  contactEmail: { fontSize: 15, fontFamily: "Inter_600SemiBold" },
-  footer: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, paddingVertical: 16 },
-  footerText: { fontSize: 13, fontFamily: "Inter_500Medium" },
-});
+    sectionCard: { borderRadius: sp(18), borderWidth: 1, padding: sp(16) },
+    sectionHeader: { flexDirection: "row", alignItems: "center", gap: sp(8), marginBottom: sp(10) },
+    sectionNum: { width: sp(26), height: sp(26), borderRadius: sp(8), alignItems: "center", justifyContent: "center" },
+    sectionNumText: { fontSize: rf(11), fontFamily: "Inter_700Bold" },
+    sectionIcon: { width: sp(24), height: sp(24), borderRadius: sp(7), alignItems: "center", justifyContent: "center" },
+    sectionTitle: { fontSize: rf(13), fontFamily: "Inter_700Bold", flex: 1 },
+    subhead: { fontSize: rf(12), fontFamily: "Inter_600SemiBold", marginTop: sp(8), marginBottom: sp(5) },
+    para: { fontSize: rf(12), fontFamily: "Inter_400Regular", lineHeight: Math.round(18 * s), marginBottom: sp(6) },
+    bulletRow: { flexDirection: "row", alignItems: "flex-start", gap: sp(9), marginBottom: sp(6) },
+    bulletDot: { width: 5, height: 5, borderRadius: 2.5, marginTop: sp(7), flexShrink: 0 },
+    bulletText: { flex: 1, fontSize: rf(12), fontFamily: "Inter_400Regular", lineHeight: Math.round(18 * s) },
+    contactCard: {
+      flexDirection: "row", alignItems: "center", gap: sp(10),
+      borderRadius: sp(12), padding: sp(12), marginVertical: sp(8), borderWidth: 1,
+    },
+    contactIconWrap: { width: sp(32), height: sp(32), borderRadius: sp(10), alignItems: "center", justifyContent: "center" },
+    contactEmail: { fontSize: rf(12), fontFamily: "Inter_600SemiBold" },
+    footer: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: sp(7), paddingVertical: sp(14) },
+    footerText: { fontSize: rf(11), fontFamily: "Inter_500Medium" },
+  });
+}
