@@ -141,13 +141,17 @@ export default function SettingsScreen() {
                 >
                   <Text style={styles.accountAvatarText}>{user.displayName.charAt(0).toUpperCase()}</Text>
                 </LinearGradient>
-                <View style={{ flex: 1 }}>
-                  <Text style={styles.accountName}>{user.displayName}</Text>
-                  <Text style={styles.accountEmail}>{user.email}</Text>
-                </View>
-                <View style={[localStyles.verifiedPill, { backgroundColor: colors.safeDim, borderColor: colors.safe + "40" }]}>
-                  <Ionicons name="checkmark-circle" size={14} color={colors.safe} />
-                  <Text style={[localStyles.verifiedPillText, { color: colors.safe }]}>Verified</Text>
+                <View style={{ flex: 1, minWidth: 0 }}>
+                  <View style={localStyles.nameRow}>
+                    <Text style={[styles.accountName, { flexShrink: 1 }]} numberOfLines={1}>
+                      {user.displayName}
+                    </Text>
+                    <View style={[localStyles.verifiedPill, { backgroundColor: colors.safeDim, borderColor: colors.safe + "40", flexShrink: 0 }]}>
+                      <Ionicons name="checkmark-circle" size={13} color={colors.safe} />
+                      <Text style={[localStyles.verifiedPillText, { color: colors.safe }]}>Verified</Text>
+                    </View>
+                  </View>
+                  <Text style={styles.accountEmail} numberOfLines={1} ellipsizeMode="tail">{user.email}</Text>
                 </View>
               </View>
               <View style={styles.divider} />
@@ -334,11 +338,14 @@ function makeLocalStyles(c: ReturnType<typeof import("@/contexts/ThemeContext").
   const rf = (size: number) => Math.round(size * s);
   const sp = (v: number) => Math.round(v * s);
   return StyleSheet.create({
+    nameRow: {
+      flexDirection: "row", alignItems: "center", gap: sp(6), flexWrap: "nowrap",
+    },
     verifiedPill: {
       flexDirection: "row", alignItems: "center", gap: 4,
-      paddingHorizontal: sp(8), paddingVertical: sp(4), borderRadius: sp(10), borderWidth: 1,
+      paddingHorizontal: sp(7), paddingVertical: sp(3), borderRadius: sp(10), borderWidth: 1,
     },
-    verifiedPillText: { fontSize: rf(12), fontFamily: "Inter_600SemiBold" },
+    verifiedPillText: { fontSize: rf(11), fontFamily: "Inter_600SemiBold" },
     appearanceLabel: { fontSize: rf(13), fontFamily: "Inter_600SemiBold", marginBottom: sp(12) },
     themeRow: { flexDirection: "row", gap: sp(10) },
     themeBtn: {
