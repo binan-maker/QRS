@@ -1,5 +1,6 @@
 import { View, Text, Pressable, ScrollView, Platform, Switch, useWindowDimensions, StyleSheet } from "react-native";
-import { router } from "expo-router";
+import { useEffect } from "react";
+import { router, useLocalSearchParams } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
@@ -13,8 +14,10 @@ import FeedbackSection from "@/features/settings/components/FeedbackSection";
 import FollowingSection from "@/features/settings/components/FollowingSection";
 import CommentsSection from "@/features/settings/components/CommentsSection";
 import HistorySection from "@/features/settings/components/HistorySection";
+import ProfileSettingsSection from "@/features/settings/components/ProfileSettingsSection";
 
 const SECTION_TITLES: Record<string, string> = {
+  profile: "Profile Settings",
   account: "Account Management",
   guide: "Manual Guide",
   feedback: "Send Feedback",
@@ -38,6 +41,7 @@ export default function SettingsScreen() {
   const { width } = useWindowDimensions();
   const styles = makeSettingsStyles(colors, width);
   const localStyles = makeLocalStyles(colors, width);
+  const params = useLocalSearchParams<{ initialSection?: string }>();
 
   const {
     user, section, setSection,
@@ -56,6 +60,12 @@ export default function SettingsScreen() {
     handleDeleteAccount,
   } = useSettings();
 
+  useEffect(() => {
+    if (params.initialSection && params.initialSection !== "main") {
+      setSection(params.initialSection as any);
+    }
+  }, [params.initialSection]);
+
   if (section !== "main") {
     return (
       <View style={[styles.container, { paddingTop: topInset }]}>
@@ -67,6 +77,7 @@ export default function SettingsScreen() {
           <View style={{ width: 40 }} />
         </View>
 
+        {section === "profile" && <ProfileSettingsSection />}
         {section === "account" && (
           <AccountSection
             user={user}
@@ -185,6 +196,21 @@ export default function SettingsScreen() {
             </Pressable>
           )}
         </View>
+
+        {/* ── PROFILE ── */}
+        {user && (
+          <View style={styles.section}>
+            <Text style={styles.sectionLabel}>PROFILE</Text>
+            <View style={styles.menuGroup}>
+              <SettingsMenuItem
+                icon="person-circle-outline"
+                label="Profile Settings"
+                sublabel="Name, username, bio, and privacy"
+                onPress={() => setSection("profile")}
+              />
+            </View>
+          </View>
+        )}
 
         {/* ── APPEARANCE ── */}
         <View style={styles.section}>

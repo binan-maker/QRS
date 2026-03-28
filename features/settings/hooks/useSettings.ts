@@ -18,7 +18,7 @@ import {
   deleteAllUserScans,
 } from "@/lib/firestore-service";
 
-export type Section = "main" | "account" | "guide" | "feedback" | "following" | "comments" | "history";
+export type Section = "main" | "profile" | "account" | "guide" | "feedback" | "following" | "comments" | "history";
 
 const HAPTIC_KEY = "haptic_enabled";
 

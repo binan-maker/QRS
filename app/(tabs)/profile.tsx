@@ -86,7 +86,7 @@ export default function ProfileScreen() {
         <View style={styles.topBar}>
           <Text style={[styles.pageTitle, { color: colors.text }]}>Profile</Text>
           <Pressable
-            onPress={() => router.push("/settings" as any)}
+            onPress={() => router.push("/(tabs)/settings" as any)}
             style={[styles.iconBtn, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}
           >
             <Ionicons name="settings-outline" size={17} color={colors.textSecondary} />
@@ -121,7 +121,7 @@ export default function ProfileScreen() {
           ) : null}
 
           <Pressable
-            onPress={() => router.push("/settings" as any)}
+            onPress={() => router.push({ pathname: "/(tabs)/settings" as any, params: { initialSection: "profile" } })}
             style={({ pressed }) => [styles.editProfileBtn, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder, opacity: pressed ? 0.8 : 1 }]}
           >
             <Text style={[styles.editProfileText, { color: colors.text }]}>Edit Profile</Text>

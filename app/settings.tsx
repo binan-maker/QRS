@@ -12,10 +12,10 @@ import GuideSection from "@/features/settings/components/GuideSection";
 import FeedbackSection from "@/features/settings/components/FeedbackSection";
 import FollowingSection from "@/features/settings/components/FollowingSection";
 import CommentsSection from "@/features/settings/components/CommentsSection";
-import ProfileSettingsSection from "@/features/settings/components/ProfileSettingsSection";
+import { useState, useEffect } from "react";
+import { getPrivacySettings, updatePrivacySettings, PrivacySettings } from "@/lib/services/user-service";
 
 const SECTION_TITLES: Record<string, string> = {
-  profile: "Profile Settings",
   account: "Account",
   guide: "How It Works",
   feedback: "Feedback",
@@ -42,6 +42,30 @@ export default function SettingsScreen() {
     handleSubmitFeedback, handleDeleteComment, handleDeleteAccount,
   } = useSettings();
 
+  const [privacy, setPrivacy] = useState<PrivacySettings>({
+    isPrivate: false,
+    showQrCodes: true,
+    showStats: true,
+    showActivity: true,
+  });
+  const [privacyLoading, setPrivacyLoading] = useState(false);
+
+  useEffect(() => {
+    if (!user) return;
+    getPrivacySettings(user.id).then(setPrivacy).catch(() => {});
+  }, [user?.id]);
+
+  async function handlePrivacyToggle(key: keyof PrivacySettings, val: boolean) {
+    if (!user) return;
+    const updated = { ...privacy, [key]: val };
+    setPrivacy(updated);
+    try {
+      await updatePrivacySettings(user.id, updated);
+    } catch {
+      setPrivacy(privacy);
+    }
+  }
+
   if (section !== "main") {
     return (
       <View style={[styles.container, { paddingTop: topInset }]}>
@@ -53,7 +77,6 @@ export default function SettingsScreen() {
           <View style={{ width: 40 }} />
         </View>
 
-        {section === "profile" && <ProfileSettingsSection />}
         {section === "account" && (
           <AccountSection
             user={user}
@@ -151,31 +174,130 @@ export default function SettingsScreen() {
           </Pressable>
         )}
 
-        {/* Profile Settings Section */}
+        {/* Privacy & Profile Section */}
         {user && (
           <View style={styles.section}>
-            <Text style={[styles.sectionLabel, { color: colors.textMuted }]}>PROFILE</Text>
-            <View style={[styles.menuGroup, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
-              <SettingsMenuItem
-                icon="person-circle-outline"
-                label="Profile Settings"
-                sublabel="Name, username, bio, and privacy"
-                onPress={() => setSection("profile")}
-              />
-            </View>
-          </View>
-        )}
+            <Text style={[styles.sectionLabel, { color: colors.textMuted }]}>PROFILE PRIVACY</Text>
 
-        {/* Library Section */}
-        {user && (
-          <View style={styles.section}>
-            <Text style={[styles.sectionLabel, { color: colors.textMuted }]}>LIBRARY</Text>
+            {/* Link to dedicated privacy page */}
+            <Pressable
+              onPress={() => router.push("/privacy-settings" as any)}
+              style={({ pressed }) => [
+                {
+                  flexDirection: "row" as const,
+                  alignItems: "center" as const,
+                  gap: 14,
+                  borderRadius: 16,
+                  padding: 14,
+                  borderWidth: 1,
+                  marginBottom: 10,
+                  backgroundColor: colors.primaryDim,
+                  borderColor: colors.primary + "40",
+                  opacity: pressed ? 0.85 : 1,
+                }
+              ]}
+            >
+              <View style={{ width: 38, height: 38, borderRadius: 12, backgroundColor: colors.primary + "25", alignItems: "center" as const, justifyContent: "center" as const }}>
+                <Ionicons name="shield-checkmark-outline" size={20} color={colors.primary} />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={{ fontSize: 14, fontFamily: "Inter_700Bold", color: colors.primary }}>Manage Privacy & Settings</Text>
+                <Text style={{ fontSize: 12, fontFamily: "Inter_400Regular", color: colors.textSecondary, marginTop: 1 }}>
+                  Control who sees your profile, stats & ranking
+                </Text>
+              </View>
+              <Ionicons name="arrow-forward" size={16} color={colors.primary} />
+            </Pressable>
+
             <View style={[styles.menuGroup, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
+
+              {/* Private account toggle */}
+              <View style={[styles.menuItem, { justifyContent: "space-between" }]}>
+                <View style={{ flexDirection: "row", alignItems: "center", gap: 14, flex: 1 }}>
+                  <View style={[styles.menuIconWrap, { backgroundColor: privacy.isPrivate ? colors.accentDim : colors.surfaceLight }]}>
+                    <Ionicons
+                      name={privacy.isPrivate ? "lock-closed-outline" : "globe-outline"}
+                      size={18}
+                      color={privacy.isPrivate ? colors.accent : colors.textSecondary}
+                    />
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <Text style={[styles.menuLabel, { color: colors.text }]}>Private Account</Text>
+                    <Text style={[styles.menuSublabel, { color: colors.textMuted }]}>
+                      {privacy.isPrivate ? "Only you can see your full profile" : "Anyone can view your public profile"}
+                    </Text>
+                  </View>
+                </View>
+                <Switch
+                  value={privacy.isPrivate}
+                  onValueChange={(v) => handlePrivacyToggle("isPrivate", v)}
+                  trackColor={{ false: colors.surfaceBorder, true: colors.accent + "90" }}
+                  thumbColor={privacy.isPrivate ? colors.accent : colors.textMuted}
+                />
+              </View>
+
+              {!privacy.isPrivate && (
+                <>
+                  <View style={[styles.divider, { backgroundColor: colors.surfaceBorder }]} />
+
+                  {/* Show Stats */}
+                  <View style={[styles.menuItem, { justifyContent: "space-between" }]}>
+                    <View style={{ flexDirection: "row", alignItems: "center", gap: 14, flex: 1 }}>
+                      <View style={[styles.menuIconWrap, { backgroundColor: colors.surfaceLight }]}>
+                        <Ionicons name="bar-chart-outline" size={18} color={colors.textSecondary} />
+                      </View>
+                      <View style={{ flex: 1 }}>
+                        <Text style={[styles.menuLabel, { color: colors.text }]}>Show Stats</Text>
+                        <Text style={[styles.menuSublabel, { color: colors.textMuted }]}>Scans, likes, and report counts</Text>
+                      </View>
+                    </View>
+                    <Switch
+                      value={privacy.showStats}
+                      onValueChange={(v) => handlePrivacyToggle("showStats", v)}
+                      trackColor={{ false: colors.surfaceBorder, true: colors.primary + "90" }}
+                      thumbColor={privacy.showStats ? colors.primary : colors.textMuted}
+                    />
+                  </View>
+
+                  <View style={[styles.divider, { backgroundColor: colors.surfaceBorder }]} />
+
+                  {/* Show Activity */}
+                  <View style={[styles.menuItem, { justifyContent: "space-between" }]}>
+                    <View style={{ flexDirection: "row", alignItems: "center", gap: 14, flex: 1 }}>
+                      <View style={[styles.menuIconWrap, { backgroundColor: colors.surfaceLight }]}>
+                        <Ionicons name="pulse-outline" size={18} color={colors.textSecondary} />
+                      </View>
+                      <View style={{ flex: 1 }}>
+                        <Text style={[styles.menuLabel, { color: colors.text }]}>Show Activity</Text>
+                        <Text style={[styles.menuSublabel, { color: colors.textMuted }]}>Comments and recent interactions</Text>
+                      </View>
+                    </View>
+                    <Switch
+                      value={privacy.showActivity}
+                      onValueChange={(v) => handlePrivacyToggle("showActivity", v)}
+                      trackColor={{ false: colors.surfaceBorder, true: colors.primary + "90" }}
+                      thumbColor={privacy.showActivity ? colors.primary : colors.textMuted}
+                    />
+                  </View>
+                </>
+              )}
+
+            </View>
+
+            {/* Social Links */}
+            <View style={[styles.menuGroup, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder, marginTop: 10 }]}>
               <SettingsMenuItem
-                icon="heart-outline"
-                label="Favorites"
-                sublabel="QR codes you've saved"
-                onPress={() => router.push("/favorites" as any)}
+                icon="people-outline"
+                label="My Friends"
+                sublabel="View and manage your friend list"
+                onPress={() => router.push("/friends" as any)}
+              />
+              <View style={[styles.divider, { backgroundColor: colors.surfaceBorder }]} />
+              <SettingsMenuItem
+                icon="person-add-outline"
+                label="Find People"
+                sublabel="Search for friends by username"
+                onPress={() => router.push("/search" as any)}
               />
             </View>
           </View>
@@ -194,7 +316,7 @@ export default function SettingsScreen() {
               />
               <View style={[styles.divider, { backgroundColor: colors.surfaceBorder }]} />
               <SettingsMenuItem
-                icon="notifications-outline"
+                icon="heart-outline"
                 label="Following"
                 sublabel="QR codes you're tracking"
                 onPress={() => setSection("following")}
