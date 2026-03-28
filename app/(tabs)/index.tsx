@@ -4,10 +4,11 @@ import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
 import * as Haptics from "@/lib/haptics";
+import { parseAnyPaymentQr } from "@/lib/qr-analysis";
 import Animated, { FadeInDown, FadeInRight } from "react-native-reanimated";
 import { useTheme } from "@/contexts/ThemeContext";
 import { useHome } from "@/hooks/useHome";
-import { detectContentType, getContentTypeIcon, truncate, formatRelativeTime, extractPaymentName, extractPaymentAmount } from "@/lib/utils/formatters";
+import { detectContentType, getContentTypeIcon, truncate, formatRelativeTime } from "@/lib/utils/formatters";
 import NotificationsModal from "@/features/home/components/NotificationsModal";
 import { Linking } from "react-native";
 
@@ -41,6 +42,33 @@ export default function HomeScreen() {
     if (contentType === "phone") return [colors.safe, colors.safeShade];
     if (contentType === "otp") return [colors.safe, colors.safeShade];
     return [colors.primary, colors.primaryShade];
+  }
+
+  function getScanMeta(scan: { content: string; contentType?: string }) {
+    const contentType = detectContentType(scan.content);
+    const gradient = getScanGradient(contentType);
+    const icon = getContentTypeIcon(contentType) as any;
+    const label = contentType.charAt(0).toUpperCase() + contentType.slice(1);
+
+    let displayLabel = scan.content;
+    let subtitle: string | null = null;
+    let amountText: string | null = null;
+
+    if (contentType === "payment") {
+      try {
+        const parsed = parseAnyPaymentQr(scan.content);
+        displayLabel = parsed?.recipientName || parsed?.vpa || "Payment QR";
+        subtitle = parsed?.vpa && parsed?.recipientName ? parsed.vpa : null;
+        if (parsed?.amount) amountText = `₹${Number(parsed.amount).toLocaleString("en-IN")}`;
+      } catch {}
+    } else if (contentType === "url") {
+      try { subtitle = new URL(scan.content).hostname.replace("www.", ""); }
+      catch { subtitle = null; }
+    } else if (scan.content.length > 44) {
+      subtitle = scan.content.slice(0, 44) + "…";
+    }
+
+    return { contentType, gradient, icon, label, displayLabel: truncate(displayLabel, 36), subtitle, amountText };
   }
 
   return (
@@ -235,17 +263,9 @@ export default function HomeScreen() {
             ) : (
               <View style={styles.recentList}>
                 {recentScans.map((scan, idx) => {
-                  const contentType = detectContentType(scan.content);
-                  const icon = getContentTypeIcon(contentType) as any;
-                  const paymentName = contentType === "payment" ? extractPaymentName(scan.content) : null;
-                  const paymentAmount = contentType === "payment" ? extractPaymentAmount(scan.content) : null;
-                  const gradient = getScanGradient(contentType);
-                  const label = contentType.charAt(0).toUpperCase() + contentType.slice(1);
+                  const { gradient, icon, label, displayLabel, subtitle, amountText } = getScanMeta(scan);
                   return (
-                    <Animated.View
-                      key={scan.id}
-                      entering={FadeInRight.duration(350).delay(idx * 55)}
-                    >
+                    <Animated.View key={scan.id} entering={FadeInRight.duration(350).delay(idx * 55)}>
                       <Pressable
                         onPress={() => {
                           if (scan.qrCodeId) {
@@ -258,48 +278,57 @@ export default function HomeScreen() {
                           {
                             backgroundColor: colors.surface,
                             borderColor: colors.surfaceBorder,
-                            opacity: pressed ? 0.85 : 1,
-                            transform: [{ scale: pressed ? 0.982 : 1 }],
+                            opacity: pressed ? 0.9 : 1,
+                            transform: [{ scale: pressed ? 0.984 : 1 }],
                           },
                         ]}
                       >
-                        <View style={[styles.scanIconBox, { backgroundColor: gradient[0] + "18" }]}>
-                          <Ionicons name={icon} size={22} color={gradient[0]} />
-                        </View>
+                        <LinearGradient
+                          colors={gradient}
+                          start={{ x: 0, y: 0 }}
+                          end={{ x: 1, y: 1 }}
+                          style={styles.scanIconBox}
+                        >
+                          <Ionicons name={icon} size={20} color="#fff" />
+                        </LinearGradient>
+
                         <View style={styles.scanBody}>
                           <View style={styles.scanTopRow}>
-                            <Text
-                              style={[styles.scanContent, { color: colors.text }]}
-                              numberOfLines={1}
-                              maxFontSizeMultiplier={1}
-                            >
-                              {paymentName ? paymentName : truncate(scan.content, 38)}
+                            <Text style={[styles.scanContent, { color: colors.text }]} numberOfLines={1} maxFontSizeMultiplier={1}>
+                              {displayLabel}
                             </Text>
-                            {paymentAmount && (
-                              <Text style={[styles.scanAmount, { color: colors.warning }]} maxFontSizeMultiplier={1}>
-                                {paymentAmount}
-                              </Text>
+                            {amountText && (
+                              <View style={[styles.scanAmountPill, { backgroundColor: colors.warning + "1E" }]}>
+                                <Text style={[styles.scanAmount, { color: colors.warning }]} maxFontSizeMultiplier={1}>
+                                  {amountText}
+                                </Text>
+                              </View>
                             )}
                           </View>
-                          {paymentName && (
-                            <Text style={[styles.scanSub, { color: colors.textMuted }]} numberOfLines={1} maxFontSizeMultiplier={1}>
-                              {truncate(scan.content, 30)}
+                          {subtitle && (
+                            <Text style={[styles.scanSub, { color: colors.textSecondary }]} numberOfLines={1} maxFontSizeMultiplier={1}>
+                              {subtitle}
                             </Text>
                           )}
                           <View style={styles.scanMeta}>
-                            <View style={[styles.scanBadge, { backgroundColor: gradient[0] + "18", borderWidth: 1, borderColor: gradient[0] + "35" }]}>
+                            <View style={[styles.scanBadge, { backgroundColor: gradient[0] + "18", borderColor: gradient[0] + "38" }]}>
                               <Text style={[styles.scanBadgeText, { color: gradient[0] }]} maxFontSizeMultiplier={1}>{label}</Text>
                             </View>
-                            <Text style={[styles.scanTime, { color: colors.textMuted }]} maxFontSizeMultiplier={1}>
-                              {formatRelativeTime(scan.scannedAt)}
-                            </Text>
                           </View>
                         </View>
-                        {scan.qrCodeId && (
-                          <View style={[styles.scanChevron, { backgroundColor: colors.surfaceBorder }]}>
-                            <Ionicons name="chevron-forward" size={13} color={colors.textSecondary} />
-                          </View>
-                        )}
+
+                        <View style={styles.scanRight}>
+                          <Text style={[styles.scanTime, { color: colors.textMuted }]} maxFontSizeMultiplier={1}>
+                            {formatRelativeTime(scan.scannedAt)}
+                          </Text>
+                          {scan.qrCodeId ? (
+                            <View style={[styles.scanChevron, { backgroundColor: gradient[0] + "18" }]}>
+                              <Ionicons name="chevron-forward" size={13} color={gradient[0]} />
+                            </View>
+                          ) : (
+                            <View style={{ width: 28 }} />
+                          )}
+                        </View>
                       </Pressable>
                     </Animated.View>
                   );
@@ -374,7 +403,7 @@ function makeStyles(c: ReturnType<typeof import("@/contexts/ThemeContext").useTh
     heroIconBg: { width: 76, height: 76, borderRadius: 22, alignItems: "center", justifyContent: "center" },
     heroTop: { flexDirection: "row", alignItems: "center", gap: 14, marginBottom: 16 },
     heroTextBlock: { flex: 1 },
-    heroTitle: { fontSize: rf(20), fontFamily: "Inter_700Bold", marginBottom: 5 },
+    heroTitle: { fontSize: rf(16), fontFamily: "Inter_700Bold", marginBottom: 4 },
     heroSub: { fontSize: rf(12), fontFamily: "Inter_400Regular", lineHeight: Math.round(17 * s) },
     heroPillRow: { flexDirection: "row", gap: 6, flexWrap: "wrap" },
     heroPill: { paddingHorizontal: 8, paddingVertical: 3, borderRadius: 100, borderWidth: 1 },
@@ -421,19 +450,21 @@ function makeStyles(c: ReturnType<typeof import("@/contexts/ThemeContext").useTh
     recentList: { gap: 10 },
     scanItem: {
       flexDirection: "row", alignItems: "center",
-      borderRadius: 22, borderWidth: 1, overflow: "hidden",
-      paddingHorizontal: 16, paddingVertical: 16, gap: 14,
+      borderRadius: 20, borderWidth: 1,
+      paddingHorizontal: 14, paddingVertical: 13, gap: 13,
     },
-    scanIconBox: { width: 54, height: 54, borderRadius: 18, alignItems: "center", justifyContent: "center", flexShrink: 0 },
-    scanBody: { flex: 1, minWidth: 0, gap: 5 },
-    scanTopRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 6 },
-    scanContent: { fontSize: rf(14), fontFamily: "Inter_700Bold", lineHeight: Math.round(20 * s), flex: 1 },
-    scanAmount: { fontSize: rf(13), fontFamily: "Inter_700Bold", flexShrink: 0 },
-    scanSub: { fontSize: rf(12), fontFamily: "Inter_400Regular" },
-    scanMeta: { flexDirection: "row", alignItems: "center", gap: 7 },
-    scanBadge: { paddingHorizontal: 9, paddingVertical: 4, borderRadius: 100 },
-    scanBadgeText: { fontSize: rf(12), fontFamily: "Inter_700Bold", letterSpacing: 0.4, color: "#fff" },
-    scanTime: { fontSize: rf(12), fontFamily: "Inter_500Medium" },
-    scanChevron: { width: 28, height: 28, borderRadius: 10, alignItems: "center", justifyContent: "center", flexShrink: 0 },
+    scanIconBox: { width: 46, height: 46, borderRadius: 14, alignItems: "center", justifyContent: "center", flexShrink: 0 },
+    scanBody: { flex: 1, minWidth: 0, gap: 4 },
+    scanTopRow: { flexDirection: "row", alignItems: "center", gap: 7 },
+    scanContent: { fontSize: rf(14), fontFamily: "Inter_700Bold", lineHeight: Math.round(20 * s), flex: 1, letterSpacing: -0.1 },
+    scanAmountPill: { paddingHorizontal: 7, paddingVertical: 2, borderRadius: 100, flexShrink: 0 },
+    scanAmount: { fontSize: rf(12), fontFamily: "Inter_700Bold" },
+    scanSub: { fontSize: rf(12), fontFamily: "Inter_400Regular", lineHeight: Math.round(16 * s) },
+    scanMeta: { flexDirection: "row", alignItems: "center", gap: 5, marginTop: 1 },
+    scanBadge: { paddingHorizontal: 7, paddingVertical: 2.5, borderRadius: 100, borderWidth: 1 },
+    scanBadgeText: { fontSize: rf(10), fontFamily: "Inter_700Bold", letterSpacing: 0.2 },
+    scanRight: { alignItems: "flex-end", gap: 8, flexShrink: 0 },
+    scanTime: { fontSize: rf(11), fontFamily: "Inter_500Medium", letterSpacing: 0.1 },
+    scanChevron: { width: 28, height: 28, borderRadius: 9, alignItems: "center", justifyContent: "center" },
   });
 }
