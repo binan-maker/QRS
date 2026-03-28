@@ -48,7 +48,7 @@ export default function ForgotPasswordScreen() {
     } finally { setLoading(false); }
   }
 
-  const titleSize = Math.round(Math.min(27 * scale, 32));
+  const titleSize = Math.round(Math.min(23 * scale, 27));
   const subtitleSize = Math.round(Math.min(14 * scale, 16));
   const btnTextSize = Math.round(Math.min(15 * scale, 17));
   const logoSize = Math.round(Math.min(76 * scale, 88));

@@ -332,7 +332,7 @@ function makeStyles(c: ReturnType<typeof import("@/contexts/ThemeContext").useTh
 
     header: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 22, gap: 8 },
     headerLeft: { flex: 1, minWidth: 0 },
-    greeting: { fontSize: rf(28), fontFamily: "Inter_700Bold", color: c.text, flexShrink: 1 },
+    greeting: { fontSize: rf(22), fontFamily: "Inter_700Bold", color: c.text, flexShrink: 1 },
     tagline: { fontSize: rf(12), fontFamily: "Inter_400Regular", color: c.textMuted, marginTop: 2, letterSpacing: 0.3 },
     headerRight: { flexDirection: "row", alignItems: "center", gap: 10 },
 

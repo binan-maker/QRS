@@ -90,7 +90,7 @@ export default function LoginScreen() {
   const logoSize = sp(Math.min(76, 88));
   const logoRadius = Math.round(logoSize * 0.33);
   const iconSize = sp(28);
-  const titleSize = sp(Math.min(30, 34));
+  const titleSize = sp(Math.min(24, 28));
   const subtitleSize = sp(Math.min(14, 16));
   const btnTextSize = sp(Math.min(15, 17));
   const cardPadding = sp(Math.min(22, 28));

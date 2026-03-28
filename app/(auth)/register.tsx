@@ -91,7 +91,7 @@ export default function RegisterScreen() {
   const logoSize = Math.round(Math.min(76 * scale, 88));
   const logoRadius = Math.round(logoSize * 0.33);
   const iconSize = Math.round(28 * scale);
-  const titleSize = Math.round(Math.min(28 * scale, 32));
+  const titleSize = Math.round(Math.min(24 * scale, 28));
   const subtitleSize = Math.round(Math.min(13 * scale, 15));
   const btnTextSize = Math.round(Math.min(15 * scale, 17));
   const cardPadding = Math.round(Math.min(20 * scale, 26));

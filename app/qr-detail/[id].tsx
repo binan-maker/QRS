@@ -644,7 +644,7 @@ const offlineSectionStyles = StyleSheet.create({
 const commentMenuStyles = StyleSheet.create({
   backdrop: {
     flex: 1,
-    backgroundColor: "rgba(0,0,0,0.45)",
+    backgroundColor: "transparent",
     justifyContent: "flex-end",
   },
   sheet: {

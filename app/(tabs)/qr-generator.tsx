@@ -232,9 +232,9 @@ function makeStyles(_c: unknown, width: number) {
     generateBtnWrap: { marginBottom: 24 },
     generateBtn: {
       flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 10,
-      paddingVertical: 17, borderRadius: 20,
+      paddingVertical: 13, borderRadius: 20,
     },
-    generateBtnText: { fontSize: rf(17), fontFamily: "Inter_700Bold", color: "#fff" },
+    generateBtnText: { fontSize: rf(15), fontFamily: "Inter_700Bold", color: "#fff" },
     emptyQr: {
       borderRadius: 24, borderWidth: 1, padding: 44,
       alignItems: "center", gap: 14, marginBottom: 20,
