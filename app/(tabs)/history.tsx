@@ -21,7 +21,7 @@ import { useHistory, type HistoryItem, type Filter } from "@/hooks/useHistory";
 import HistoryItemComponent from "@/features/history/components/HistoryItem";
 import HistoryItemSkeleton from "@/features/history/components/HistoryItemSkeleton";
 import FilterBar from "@/features/history/components/FilterBar";
-import { parseAnyPaymentQr } from "@/lib/qr-analysis";
+import { parseAnyPaymentQr, analyzeAnyPaymentQr, analyzeUrlHeuristics } from "@/lib/qr-analysis";
 
 const SKELETON_COUNT = 8;
 

@@ -12,11 +12,10 @@ import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { FINDER_SIZE } from "@/hooks/useScanner";
 import { formatFirstName } from "@/lib/utils/formatters";
-import Colors from "@/constants/colors";
 
-const CORNER_LEN = 32;
+const CORNER_LEN = 28;
 const CORNER_W = 3;
-const VIGNETTE = "rgba(4, 8, 20, 0.80)";
+const VIGNETTE = "rgba(4, 8, 20, 0.82)";
 const GLOW = "#00D4FF";
 const DOT_SIZE = 5;
 
@@ -63,34 +62,24 @@ export default function ScannerOverlay({
 
   const pulse1Ref = useRef(new Animated.Value(0));
   const pulse2Ref = useRef(new Animated.Value(0));
-  const pulse3Ref = useRef(new Animated.Value(0));
-  const cornerGlowRef = useRef(new Animated.Value(0.5));
+  const cornerGlowRef = useRef(new Animated.Value(0.6));
   const dotBlinkRef = useRef(new Animated.Value(1));
-  const shieldGlowRef = useRef(new Animated.Value(0.7));
-  const scanReadyRef = useRef(new Animated.Value(0.6));
+  const scanReadyRef = useRef(new Animated.Value(0.7));
 
   const pulse1Scale = useMemo(
-    () => pulse1Ref.current.interpolate({ inputRange: [0, 1], outputRange: [1, 1.55] }),
+    () => pulse1Ref.current.interpolate({ inputRange: [0, 1], outputRange: [1, 1.45] }),
     []
   );
   const pulse1Opacity = useMemo(
-    () => pulse1Ref.current.interpolate({ inputRange: [0, 0.3, 1], outputRange: [0.45, 0.15, 0] }),
+    () => pulse1Ref.current.interpolate({ inputRange: [0, 0.3, 1], outputRange: [0.35, 0.1, 0] }),
     []
   );
   const pulse2Scale = useMemo(
-    () => pulse2Ref.current.interpolate({ inputRange: [0, 1], outputRange: [1, 1.32] }),
+    () => pulse2Ref.current.interpolate({ inputRange: [0, 1], outputRange: [1, 1.25] }),
     []
   );
   const pulse2Opacity = useMemo(
-    () => pulse2Ref.current.interpolate({ inputRange: [0, 0.4, 1], outputRange: [0.3, 0.08, 0] }),
-    []
-  );
-  const pulse3Scale = useMemo(
-    () => pulse3Ref.current.interpolate({ inputRange: [0, 1], outputRange: [1, 1.18] }),
-    []
-  );
-  const pulse3Opacity = useMemo(
-    () => pulse3Ref.current.interpolate({ inputRange: [0, 0.5, 1], outputRange: [0.2, 0.05, 0] }),
+    () => pulse2Ref.current.interpolate({ inputRange: [0, 0.4, 1], outputRange: [0.2, 0.06, 0] }),
     []
   );
   const scanLineY = useMemo(
@@ -101,7 +90,7 @@ export default function ScannerOverlay({
   useEffect(() => {
     const p1 = Animated.loop(
       Animated.sequence([
-        Animated.timing(pulse1Ref.current, { toValue: 1, duration: 2600, useNativeDriver: true }),
+        Animated.timing(pulse1Ref.current, { toValue: 1, duration: 2800, useNativeDriver: true }),
         Animated.timing(pulse1Ref.current, { toValue: 0, duration: 0, useNativeDriver: true }),
       ])
     );
@@ -110,66 +99,47 @@ export default function ScannerOverlay({
     const t1 = setTimeout(() => {
       Animated.loop(
         Animated.sequence([
-          Animated.timing(pulse2Ref.current, { toValue: 1, duration: 2600, useNativeDriver: true }),
+          Animated.timing(pulse2Ref.current, { toValue: 1, duration: 2800, useNativeDriver: true }),
           Animated.timing(pulse2Ref.current, { toValue: 0, duration: 0, useNativeDriver: true }),
         ])
       ).start();
-    }, 867);
-
-    const t2 = setTimeout(() => {
-      Animated.loop(
-        Animated.sequence([
-          Animated.timing(pulse3Ref.current, { toValue: 1, duration: 2600, useNativeDriver: true }),
-          Animated.timing(pulse3Ref.current, { toValue: 0, duration: 0, useNativeDriver: true }),
-        ])
-      ).start();
-    }, 1734);
+    }, 1400);
 
     const glow = Animated.loop(
       Animated.sequence([
-        Animated.timing(cornerGlowRef.current, { toValue: 1, duration: 1800, useNativeDriver: true }),
-        Animated.timing(cornerGlowRef.current, { toValue: 0.5, duration: 1800, useNativeDriver: true }),
+        Animated.timing(cornerGlowRef.current, { toValue: 1, duration: 2000, useNativeDriver: true }),
+        Animated.timing(cornerGlowRef.current, { toValue: 0.6, duration: 2000, useNativeDriver: true }),
       ])
     );
     glow.start();
 
     const blink = Animated.loop(
       Animated.sequence([
-        Animated.timing(dotBlinkRef.current, { toValue: 0.15, duration: 600, useNativeDriver: true }),
-        Animated.timing(dotBlinkRef.current, { toValue: 1, duration: 600, useNativeDriver: true }),
+        Animated.timing(dotBlinkRef.current, { toValue: 0.2, duration: 700, useNativeDriver: true }),
+        Animated.timing(dotBlinkRef.current, { toValue: 1, duration: 700, useNativeDriver: true }),
       ])
     );
     blink.start();
 
-    const shieldGlow = Animated.loop(
-      Animated.sequence([
-        Animated.timing(shieldGlowRef.current, { toValue: 1, duration: 2000, useNativeDriver: true }),
-        Animated.timing(shieldGlowRef.current, { toValue: 0.7, duration: 2000, useNativeDriver: true }),
-      ])
-    );
-    shieldGlow.start();
-
     const ready = Animated.loop(
       Animated.sequence([
-        Animated.timing(scanReadyRef.current, { toValue: 1, duration: 1400, useNativeDriver: true }),
-        Animated.timing(scanReadyRef.current, { toValue: 0.6, duration: 1400, useNativeDriver: true }),
+        Animated.timing(scanReadyRef.current, { toValue: 1, duration: 1600, useNativeDriver: true }),
+        Animated.timing(scanReadyRef.current, { toValue: 0.7, duration: 1600, useNativeDriver: true }),
       ])
     );
     ready.start();
 
     return () => {
       clearTimeout(t1);
-      clearTimeout(t2);
       p1.stop();
       glow.stop();
       blink.stop();
-      shieldGlow.stop();
       ready.stop();
     };
   }, []);
 
-  const TOP_BAR_H = topInset + 8 + 64;
-  const BOTTOM_BAR_H = Math.max(bottomInset, 8) + 16 + 160;
+  const TOP_BAR_H = topInset + 8 + 56;
+  const BOTTOM_BAR_H = Math.max(bottomInset, 8) + 16 + 140;
   const availH = screenHeight - TOP_BAR_H - BOTTOM_BAR_H;
   const finderTop = TOP_BAR_H + Math.max(0, (availH - FINDER_SIZE) / 2);
   const finderLeft = (screenWidth - FINDER_SIZE) / 2;
@@ -186,27 +156,23 @@ export default function ScannerOverlay({
 
         {/* Finder decorations */}
         <View style={[styles.finderDecor, { top: finderTop, left: finderLeft }]}>
-          {/* Triple pulse rings */}
+          {/* Pulse rings */}
           <Animated.View style={[styles.pulseRing, { transform: [{ scale: pulse1Scale }], opacity: pulse1Opacity }]} />
           <Animated.View style={[styles.pulseRing, styles.pulseRing2, { transform: [{ scale: pulse2Scale }], opacity: pulse2Opacity }]} />
-          <Animated.View style={[styles.pulseRing, styles.pulseRing3, { transform: [{ scale: pulse3Scale }], opacity: pulse3Opacity }]} />
 
-          {/* Corner brackets - top left */}
+          {/* Corner brackets */}
           <Animated.View style={[styles.corner, styles.ctlH, { opacity: cornerGlowRef.current }]} />
           <Animated.View style={[styles.corner, styles.ctlV, { opacity: cornerGlowRef.current }]} />
           <View style={[styles.cornerDot, styles.ctlDot]} />
 
-          {/* Corner brackets - top right */}
           <Animated.View style={[styles.corner, styles.ctrH, { opacity: cornerGlowRef.current }]} />
           <Animated.View style={[styles.corner, styles.ctrV, { opacity: cornerGlowRef.current }]} />
           <View style={[styles.cornerDot, styles.ctrDot]} />
 
-          {/* Corner brackets - bottom left */}
           <Animated.View style={[styles.corner, styles.cblH, { opacity: cornerGlowRef.current }]} />
           <Animated.View style={[styles.corner, styles.cblV, { opacity: cornerGlowRef.current }]} />
           <View style={[styles.cornerDot, styles.cblDot]} />
 
-          {/* Corner brackets - bottom right */}
           <Animated.View style={[styles.corner, styles.cbrH, { opacity: cornerGlowRef.current }]} />
           <Animated.View style={[styles.corner, styles.cbrV, { opacity: cornerGlowRef.current }]} />
           <View style={[styles.cornerDot, styles.cbrDot]} />
@@ -220,33 +186,27 @@ export default function ScannerOverlay({
           {scanSuccess && (
             <View style={styles.successOverlay}>
               <View style={styles.successRing}>
-                <Ionicons name="checkmark" size={48} color="#000" />
+                <Ionicons name="checkmark" size={44} color="#000" />
               </View>
             </View>
           )}
         </View>
 
-        {/* Hint area below finder */}
-        <View style={[styles.hintArea, { top: finderTop + FINDER_SIZE + 20 }]}>
+        {/* Hint below finder */}
+        <View style={[styles.hintArea, { top: finderTop + FINDER_SIZE + 18 }]}>
           <Text style={styles.hintMain}>
-            {scanSuccess ? "Code captured successfully" : scanned ? "Processing scan…" : "Align QR code within the frame"}
+            {scanSuccess
+              ? "Code captured"
+              : scanned
+              ? "Processing…"
+              : "Position QR code inside the frame"}
           </Text>
-          <View style={styles.hintFeatureRow}>
-            <View style={styles.hintFeaturePill}>
-              <MaterialCommunityIcons name="shield-check" size={10} color={GLOW} />
-              <Text style={styles.hintFeatureText}>AI Analysis</Text>
+          {!scanned && (
+            <View style={styles.liveRow}>
+              <Animated.View style={[styles.liveDot, { opacity: dotBlinkRef.current }]} />
+              <Text style={styles.liveText}>Shield Active</Text>
             </View>
-            <View style={styles.hintDivider} />
-            <View style={styles.hintFeaturePill}>
-              <Ionicons name="lock-closed" size={10} color={GLOW} />
-              <Text style={styles.hintFeatureText}>Encrypted</Text>
-            </View>
-            <View style={styles.hintDivider} />
-            <View style={styles.hintFeaturePill}>
-              <Ionicons name="flash" size={10} color={GLOW} />
-              <Text style={styles.hintFeatureText}>Instant</Text>
-            </View>
-          </View>
+          )}
         </View>
       </View>
 
@@ -257,16 +217,8 @@ export default function ScannerOverlay({
         </Pressable>
 
         <View style={styles.topCenter}>
-          <View style={styles.brandRow}>
-            <Animated.View style={{ opacity: shieldGlowRef.current }}>
-              <MaterialCommunityIcons name="shield-check" size={16} color={GLOW} />
-            </Animated.View>
-            <Text style={styles.scanTitle}>QR Guard</Text>
-          </View>
-          <View style={styles.statusRow}>
-            <Animated.View style={[styles.liveDot, { opacity: dotBlinkRef.current }]} />
-            <Text style={styles.statusText}>SHIELD ACTIVE</Text>
-          </View>
+          <MaterialCommunityIcons name="shield-check" size={18} color={GLOW} />
+          <Text style={styles.scanTitle}>QR Guard</Text>
         </View>
 
         <View style={styles.topRightBtns}>
@@ -311,8 +263,8 @@ export default function ScannerOverlay({
       {/* ── Bottom controls ── */}
       <View style={[styles.bottomBar, { paddingBottom: Math.max(bottomInset, 8) + 20 }]}>
 
-        {/* Status / zoom strip */}
-        <View style={styles.statusStrip}>
+        {/* Zoom + anonymous pills */}
+        <View style={styles.pillRow}>
           <Pressable onPress={onCycleZoom} style={styles.zoomPill}>
             <MaterialCommunityIcons name="magnify" size={13} color={GLOW} />
             <Text style={styles.zoomText}>{zoomLabel}</Text>
@@ -321,7 +273,7 @@ export default function ScannerOverlay({
           {anonymousMode && (
             <View style={styles.anonPill}>
               <Ionicons name="eye-off" size={12} color="#F5A623" />
-              <Text style={styles.anonText}>Private Mode</Text>
+              <Text style={styles.anonText}>Private</Text>
             </View>
           )}
         </View>
@@ -345,7 +297,7 @@ export default function ScannerOverlay({
               <Pressable onPress={onReset} style={styles.scanButton}>
                 <View style={styles.scanButtonOuter}>
                   <View style={styles.scanButtonInner}>
-                    <Ionicons name="refresh" size={28} color={GLOW} />
+                    <Ionicons name="refresh" size={26} color={GLOW} />
                   </View>
                 </View>
               </Pressable>
@@ -358,7 +310,7 @@ export default function ScannerOverlay({
                 </View>
               </Animated.View>
             )}
-            <Text style={styles.scanButtonLabel}>{scanned ? "Scan Again" : "Ready"}</Text>
+            <Text style={styles.scanButtonLabel}>{scanned ? "Scan Again" : "Scan"}</Text>
           </View>
 
           {/* Profile */}
@@ -384,12 +336,6 @@ export default function ScannerOverlay({
               </>
             )}
           </Pressable>
-        </View>
-
-        {/* Bottom brand mark */}
-        <View style={styles.bottomBrand}>
-          <MaterialCommunityIcons name="shield-check" size={11} color="rgba(0,212,255,0.4)" />
-          <Text style={styles.bottomBrandText}>Protected by QR Guard</Text>
         </View>
       </View>
     </View>
@@ -426,7 +372,7 @@ export function FinderFrame({
       {scanSuccess && (
         <View style={styles.successOverlay}>
           <View style={styles.successRing}>
-            <Ionicons name="checkmark" size={48} color="#000" />
+            <Ionicons name="checkmark" size={44} color="#000" />
           </View>
         </View>
       )}
@@ -457,7 +403,6 @@ const styles = StyleSheet.create({
     left: 0,
   },
   pulseRing2: { borderColor: GLOW },
-  pulseRing3: { borderColor: GLOW },
 
   corner: { position: "absolute", backgroundColor: GLOW },
   ctlH: { top: 0, left: 0, width: CORNER_LEN, height: CORNER_W, borderTopLeftRadius: 3 },
@@ -493,64 +438,58 @@ const styles = StyleSheet.create({
 
   successOverlay: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: "rgba(0,212,255,0.12)",
+    backgroundColor: "rgba(0,212,255,0.1)",
     alignItems: "center",
     justifyContent: "center",
   },
   successRing: {
-    width: 90,
-    height: 90,
-    borderRadius: 45,
+    width: 86,
+    height: 86,
+    borderRadius: 43,
     backgroundColor: GLOW,
     alignItems: "center",
     justifyContent: "center",
-    ...shadow(20, GLOW, 0.7, 0, 0, 10),
+    ...shadow(20, GLOW, 0.6, 0, 0, 10),
   },
 
-  // Hint area
   hintArea: {
     position: "absolute",
     left: 0,
     right: 0,
     alignItems: "center",
-    gap: 10,
+    gap: 8,
   },
   hintMain: {
     fontSize: 14,
     fontFamily: "Inter_500Medium",
-    color: "rgba(255,255,255,0.75)",
+    color: "rgba(255,255,255,0.7)",
     textAlign: "center",
-    letterSpacing: 0.2,
+    letterSpacing: 0.1,
   },
-  hintFeatureRow: {
+  liveRow: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 8,
+    gap: 6,
   },
-  hintFeaturePill: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 4,
+  liveDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: GLOW,
   },
-  hintFeatureText: {
+  liveText: {
     fontSize: 11,
-    fontFamily: "Inter_500Medium",
-    color: "rgba(0,212,255,0.7)",
-    letterSpacing: 0.3,
-  },
-  hintDivider: {
-    width: 1,
-    height: 10,
-    backgroundColor: "rgba(0,212,255,0.2)",
+    fontFamily: "Inter_600SemiBold",
+    color: GLOW,
+    letterSpacing: 0.5,
   },
 
-  // Top bar
   topBar: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
     paddingHorizontal: 16,
-    paddingBottom: 12,
+    paddingBottom: 10,
   },
   topBarBtn: {
     width: 40,
@@ -571,29 +510,18 @@ const styles = StyleSheet.create({
     borderColor: "rgba(245,166,35,0.4)",
   },
   topRightBtns: { flexDirection: "row", gap: 8, alignItems: "center" },
-  topCenter: { alignItems: "center", gap: 4 },
-  brandRow: { flexDirection: "row", alignItems: "center", gap: 7 },
+  topCenter: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 7,
+  },
   scanTitle: {
     fontSize: 17,
     fontFamily: "Inter_700Bold",
     color: "#fff",
-    letterSpacing: 0.5,
-  },
-  statusRow: { flexDirection: "row", alignItems: "center", gap: 6 },
-  liveDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-    backgroundColor: GLOW,
-  },
-  statusText: {
-    fontSize: 10,
-    fontFamily: "Inter_700Bold",
-    color: GLOW,
-    letterSpacing: 2.5,
+    letterSpacing: 0.3,
   },
 
-  // Bottom bar
   bottomBar: {
     position: "absolute",
     bottom: 0,
@@ -601,9 +529,9 @@ const styles = StyleSheet.create({
     right: 0,
     paddingHorizontal: 28,
     alignItems: "center",
-    gap: 18,
+    gap: 16,
   },
-  statusStrip: {
+  pillRow: {
     flexDirection: "row",
     gap: 10,
     alignItems: "center",
@@ -612,12 +540,12 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 5,
-    backgroundColor: "rgba(0,0,0,0.6)",
+    backgroundColor: "rgba(0,0,0,0.55)",
     borderRadius: 20,
     paddingHorizontal: 14,
     paddingVertical: 7,
     borderWidth: 1,
-    borderColor: "rgba(0,212,255,0.2)",
+    borderColor: "rgba(0,212,255,0.18)",
   },
   zoomText: {
     fontSize: 12,
@@ -629,12 +557,12 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 5,
-    backgroundColor: "rgba(245,158,11,0.12)",
+    backgroundColor: "rgba(245,158,11,0.1)",
     borderRadius: 20,
-    paddingHorizontal: 14,
+    paddingHorizontal: 12,
     paddingVertical: 7,
     borderWidth: 1,
-    borderColor: "rgba(245,166,35,0.4)",
+    borderColor: "rgba(245,166,35,0.35)",
   },
   anonText: {
     fontSize: 12,
@@ -647,12 +575,12 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     width: "100%",
   },
-  sideAction: { alignItems: "center", gap: 7, minWidth: 64 },
+  sideAction: { alignItems: "center", gap: 6, minWidth: 64 },
   sideActionCircle: {
     width: 54,
     height: 54,
     borderRadius: 27,
-    backgroundColor: "rgba(0,0,0,0.55)",
+    backgroundColor: "rgba(0,0,0,0.5)",
     alignItems: "center",
     justifyContent: "center",
     borderWidth: 1,
@@ -665,50 +593,38 @@ const styles = StyleSheet.create({
   sideActionLabel: {
     fontSize: 12,
     fontFamily: "Inter_500Medium",
-    color: "rgba(255,255,255,0.65)",
+    color: "rgba(255,255,255,0.6)",
   },
-  centerGroup: { alignItems: "center", gap: 6 },
+  centerGroup: { alignItems: "center", gap: 5 },
   scanButton: { alignItems: "center", justifyContent: "center" },
   scanButtonOuter: {
-    width: 88,
-    height: 88,
-    borderRadius: 44,
+    width: 84,
+    height: 84,
+    borderRadius: 42,
     borderWidth: 1.5,
-    borderColor: GLOW + "60",
+    borderColor: GLOW + "55",
     alignItems: "center",
     justifyContent: "center",
     backgroundColor: "rgba(0,212,255,0.04)",
-    ...shadow(16, GLOW, 0.2, 0, 0, 12),
   },
   scanButtonInner: {
     width: 68,
     height: 68,
     borderRadius: 34,
-    backgroundColor: "rgba(4,8,20,0.8)",
+    backgroundColor: "rgba(0,0,0,0.6)",
     alignItems: "center",
     justifyContent: "center",
     borderWidth: 1,
-    borderColor: "rgba(0,212,255,0.18)",
+    borderColor: "rgba(255,255,255,0.08)",
   },
   scanButtonReady: {
-    backgroundColor: "rgba(0,212,255,0.06)",
+    backgroundColor: "rgba(0,212,255,0.08)",
+    borderColor: GLOW + "30",
   },
   scanButtonLabel: {
-    fontSize: 11,
+    fontSize: 12,
     fontFamily: "Inter_600SemiBold",
-    color: "rgba(255,255,255,0.5)",
-    letterSpacing: 0.8,
-    textTransform: "uppercase",
-  },
-  bottomBrand: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 5,
-  },
-  bottomBrandText: {
-    fontSize: 11,
-    fontFamily: "Inter_400Regular",
-    color: "rgba(0,212,255,0.35)",
-    letterSpacing: 0.4,
+    color: "rgba(255,255,255,0.6)",
+    letterSpacing: 0.2,
   },
 });

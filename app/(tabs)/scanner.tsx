@@ -343,14 +343,7 @@ export default function ScannerScreen() {
               <ActivityIndicator color="#00D4FF" size="large" />
             </View>
             <View style={styles.processingTextGroup}>
-              <Text style={styles.processingEyebrow}>SHIELD ANALYZING</Text>
-              <Text style={styles.processingTitle}>Scanning QR Code</Text>
-              <Text style={styles.processingSubtitle}>AI threat detection • Trust score check • Community reports</Text>
-            </View>
-            <View style={styles.processingDots}>
-              {[0, 1, 2].map((i) => (
-                <View key={i} style={[styles.processingDot, { opacity: 0.3 + i * 0.25 }]} />
-              ))}
+              <Text style={styles.processingTitle}>Analyzing…</Text>
             </View>
           </Reanimated.View>
         </View>
@@ -389,7 +382,6 @@ export default function ScannerScreen() {
               </View>
             </View>
             <View style={styles.sheetTextGroup}>
-              <Text style={styles.sheetEyebrow}>IDENTITY CHECK</Text>
               <Text style={[styles.sheetTitle, { color: "#fff" }]}>Unverified Source</Text>
               <Text style={[styles.sheetSubtitle, { color: colors.textSecondary }]}>
                 This QR code has no registered owner or cryptographic signature. It may be legitimate but we cannot confirm its identity.
@@ -412,10 +404,6 @@ export default function ScannerScreen() {
                 <Ionicons name="arrow-back" size={18} color="#000" />
                 <Text style={styles.cancelBtnText}>Stay Safe</Text>
               </View>
-            </View>
-            <View style={styles.sheetBottomMark}>
-              <Ionicons name="shield-checkmark-outline" size={11} color="rgba(0,212,255,0.35)" />
-              <Text style={styles.sheetBottomMarkText}>Analyzed by QR Guard AI</Text>
             </View>
           </Reanimated.View>
         </View>
@@ -475,36 +463,13 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-  processingTextGroup: { alignItems: "center", gap: 6 },
-  processingEyebrow: {
-    fontSize: 10,
-    fontFamily: "Inter_700Bold",
-    color: "#00D4FF",
-    letterSpacing: 2.5,
-  },
+  processingTextGroup: { alignItems: "center" },
   processingTitle: {
-    fontSize: 18,
-    fontFamily: "Inter_700Bold",
-    color: "#fff",
+    fontSize: 16,
+    fontFamily: "Inter_600SemiBold",
+    color: "rgba(255,255,255,0.8)",
     textAlign: "center",
-  },
-  processingSubtitle: {
-    fontSize: 12,
-    fontFamily: "Inter_400Regular",
-    color: "rgba(255,255,255,0.45)",
-    textAlign: "center",
-    lineHeight: 18,
-  },
-  processingDots: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 6,
-  },
-  processingDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-    backgroundColor: "#00D4FF",
+    marginTop: 4,
   },
   backIconBtn: {
     width: 40, height: 40, borderRadius: 20,
