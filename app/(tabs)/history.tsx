@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo } from "react";
+import React, { useCallback, useMemo, useState, useRef } from "react";
 import {
   View,
   Text,
@@ -8,6 +8,8 @@ import {
   Platform,
   RefreshControl,
   useWindowDimensions,
+  TextInput,
+  Keyboard,
 } from "react-native";
 import { router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
@@ -19,6 +21,7 @@ import { useHistory, type HistoryItem, type Filter } from "@/hooks/useHistory";
 import HistoryItemComponent from "@/features/history/components/HistoryItem";
 import HistoryItemSkeleton from "@/features/history/components/HistoryItemSkeleton";
 import FilterBar from "@/features/history/components/FilterBar";
+import { parseAnyPaymentQr } from "@/lib/qr-analysis";
 
 const SKELETON_COUNT = 8;
 
@@ -49,8 +52,6 @@ function getDateLabel(date: Date): string {
 function groupByDate(items: HistoryItem[]): ListRow[] {
   const rows: ListRow[] = [];
   let lastLabel = "";
-  let groupCount = 0;
-
   for (let i = 0; i < items.length; i++) {
     const item = items[i];
     const label = getDateLabel(new Date(item.scannedAt));
@@ -60,11 +61,32 @@ function groupByDate(items: HistoryItem[]): ListRow[] {
       ).length;
       rows.push({ kind: "header", label, count, id: `header-${label}` });
       lastLabel = label;
-      groupCount = count;
     }
     rows.push({ kind: "item", item });
   }
   return rows;
+}
+
+function matchesSearch(item: HistoryItem, q: string): boolean {
+  const lower = q.toLowerCase().trim();
+  if (!lower) return true;
+  if (item.content.toLowerCase().includes(lower)) return true;
+  if (item.contentType.toLowerCase().includes(lower)) return true;
+  if (item.contentType === "url") {
+    try {
+      const host = new URL(item.content).hostname.replace("www.", "");
+      if (host.toLowerCase().includes(lower)) return true;
+    } catch {}
+  }
+  if (item.contentType === "payment") {
+    try {
+      const parsed = parseAnyPaymentQr(item.content);
+      if (parsed?.recipientName?.toLowerCase().includes(lower)) return true;
+      if (parsed?.vpa?.toLowerCase().includes(lower)) return true;
+      if (parsed?.recipientId?.toLowerCase().includes(lower)) return true;
+    } catch {}
+  }
+  return false;
 }
 
 export default function HistoryScreen() {
@@ -86,19 +108,49 @@ export default function HistoryScreen() {
     deleteItem,
   } = useHistory();
 
+  const [searchVisible, setSearchVisible] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const searchInputRef = useRef<TextInput>(null);
+
   const topInset = Platform.OS === "web" ? 67 : insets.top;
   const { width } = useWindowDimensions();
   const s = Math.min(Math.max(width / 390, 0.82), 1.0);
   const rf = (size: number) => Math.round(size * s);
 
+  function openSearch() {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    setSearchVisible(true);
+    setTimeout(() => searchInputRef.current?.focus(), 80);
+  }
+
+  function closeSearch() {
+    setSearchQuery("");
+    setSearchVisible(false);
+    Keyboard.dismiss();
+  }
+
+  // Stats from full history (all loaded items), not just filtered page
+  const allDangerCount = useMemo(() =>
+    history.filter((i) => safetyRiskMap.get(i.id) === "dangerous").length,
+  [history, safetyRiskMap]);
+
+  const allCautionCount = useMemo(() =>
+    history.filter((i) => safetyRiskMap.get(i.id) === "caution").length,
+  [history, safetyRiskMap]);
+
+  const allSafeCount = useMemo(() =>
+    history.length - allDangerCount - allCautionCount,
+  [history, allDangerCount, allCautionCount]);
+
+  // Filter chips counts from full history
   const activeFilters: { key: Filter; label: string; count?: number }[] = useMemo(() => {
     const base = FILTERS.map((f) => {
       let count = 0;
-      if (f.key === "all") count = history.length;
-      else if (f.key === "url") count = history.filter((i) => i.contentType === "url").length;
+      if (f.key === "all")     count = history.length;
+      else if (f.key === "url")     count = history.filter((i) => i.contentType === "url").length;
       else if (f.key === "payment") count = history.filter((i) => i.contentType === "payment").length;
-      else if (f.key === "text") count = history.filter((i) => i.contentType === "text").length;
-      else if (f.key === "camera") count = history.filter((i) => (i.scanSource ?? "camera") === "camera").length;
+      else if (f.key === "text")    count = history.filter((i) => i.contentType === "text").length;
+      else if (f.key === "camera")  count = history.filter((i) => (i.scanSource ?? "camera") === "camera").length;
       else if (f.key === "gallery") count = history.filter((i) => i.scanSource === "gallery").length;
       else count = history.filter((i) => !["url","text","payment"].includes(i.contentType)).length;
       return { ...f, count };
@@ -107,15 +159,16 @@ export default function HistoryScreen() {
     return base;
   }, [history, user]);
 
-  const listRows = useMemo(() => groupByDate(displayItems), [displayItems]);
+  // Apply inline search on top of the filter-based displayItems
+  const searchedItems = useMemo(() => {
+    if (!searchQuery.trim()) return displayItems;
+    return displayItems.filter((item) => matchesSearch(item, searchQuery));
+  }, [displayItems, searchQuery]);
 
-  const dangerCount = useMemo(() =>
-    displayItems.filter((i) => safetyRiskMap.get(i.id) === "dangerous").length,
-  [displayItems, safetyRiskMap]);
+  const listRows = useMemo(() => groupByDate(searchedItems), [searchedItems]);
 
-  const cautionCount = useMemo(() =>
-    displayItems.filter((i) => safetyRiskMap.get(i.id) === "caution").length,
-  [displayItems, safetyRiskMap]);
+  const hasThreats = (allDangerCount + allCautionCount) > 0;
+  const showStats = user && !cloudLoading && history.length > 0;
 
   const renderItem = useCallback(
     ({ item: row }: { item: ListRow }) => {
@@ -199,19 +252,37 @@ export default function HistoryScreen() {
         </View>
       );
     }
+    if (searchQuery.trim()) {
+      return (
+        <View style={styles.emptyState}>
+          <LinearGradient
+            colors={[colors.surfaceBorder + "80", colors.surfaceBorder + "30"]}
+            style={styles.emptyIconWrap}
+          >
+            <Ionicons name="search-outline" size={32} color={colors.textMuted} />
+          </LinearGradient>
+          <Text style={[styles.emptyTitle, { color: colors.textSecondary, fontSize: rf(17) }]}>
+            No results for "{searchQuery}"
+          </Text>
+          <Text style={[styles.emptySubtext, { color: colors.textMuted, fontSize: rf(13) }]}>
+            Try searching by URL, payment name, or QR content
+          </Text>
+        </View>
+      );
+    }
     const emptyIcon: keyof typeof Ionicons.glyphMap =
       filter === "favorites" ? "heart-outline"
-      : filter === "camera" ? "camera-outline"
-      : filter === "gallery" ? "images-outline"
+      : filter === "camera"   ? "camera-outline"
+      : filter === "gallery"  ? "images-outline"
       : "time-outline";
     const emptyMsg =
       filter === "favorites" ? "No favorites yet"
-      : filter === "camera" ? "No camera scans yet"
+      : filter === "camera"  ? "No camera scans yet"
       : filter === "gallery" ? "No gallery scans yet"
       : "No scans yet";
     const emptySub =
       filter === "favorites" ? "Tap the heart on a QR detail to save it here"
-      : filter === "camera" ? "QR codes scanned with the camera will appear here"
+      : filter === "camera"  ? "QR codes scanned with the camera will appear here"
       : filter === "gallery" ? "QR codes scanned from your gallery will appear here"
       : "Scanned QR codes will appear here";
     return (
@@ -228,73 +299,84 @@ export default function HistoryScreen() {
     );
   };
 
-  const hasThreats = (dangerCount + cautionCount) > 0;
-
   return (
     <View style={[styles.container, { backgroundColor: colors.background, paddingTop: topInset }]}>
 
       {/* ── Header ─────────────────────────────────────────────────── */}
-      <View style={styles.header}>
-        <View>
-          <Text style={[styles.headerEyebrow, { color: colors.primary, fontSize: rf(10) }]}>
-            QR GUARD
-          </Text>
+      {!searchVisible ? (
+        <View style={styles.header}>
           <Text style={[styles.headerTitle, { color: colors.text, fontSize: rf(22) }]}>
             Scan History
           </Text>
-        </View>
-        <View style={styles.headerActions}>
-          {user && (
+          <View style={styles.headerActions}>
             <Pressable
-              onPress={() => {
-                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                router.push("/search");
-              }}
+              onPress={openSearch}
               style={[styles.headerBtn, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}
               hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
             >
               <Ionicons name="search-outline" size={18} color={colors.textSecondary} />
             </Pressable>
-          )}
-          <Pressable
-            onPress={() => {
-              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-              router.push("/settings");
-            }}
-            style={[styles.headerBtn, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}
-            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-          >
-            <Ionicons name="settings-outline" size={18} color={colors.textSecondary} />
+            <Pressable
+              onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                router.push("/settings");
+              }}
+              style={[styles.headerBtn, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}
+              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+            >
+              <Ionicons name="settings-outline" size={18} color={colors.textSecondary} />
+            </Pressable>
+          </View>
+        </View>
+      ) : (
+        /* ── Search bar ───────────────────────────────────────────── */
+        <View style={[styles.searchBar, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
+          <Ionicons name="search-outline" size={17} color={colors.textMuted} />
+          <TextInput
+            ref={searchInputRef}
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+            placeholder="Search URLs, payments, text…"
+            placeholderTextColor={colors.textMuted}
+            style={[styles.searchInput, { color: colors.text }]}
+            autoCapitalize="none"
+            autoCorrect={false}
+            returnKeyType="search"
+            clearButtonMode="while-editing"
+            maxFontSizeMultiplier={1}
+          />
+          <Pressable onPress={closeSearch} hitSlop={8}>
+            <Text style={[styles.searchCancel, { color: colors.primary }]} maxFontSizeMultiplier={1}>
+              Cancel
+            </Text>
           </Pressable>
         </View>
-      </View>
+      )}
 
-      {/* ── Stats strip ────────────────────────────────────────────── */}
-      {user && !cloudLoading && displayItems.length > 0 && (
+      {/* ── Stats strip — from full history, shows immediately ─────── */}
+      {showStats && !searchVisible && (
         <View style={[styles.statsStrip, { borderColor: colors.surfaceBorder }]}>
           <View style={[styles.statItem, { borderRightColor: colors.surfaceBorder }]}>
             <Text style={[styles.statNumber, { color: colors.text }]} maxFontSizeMultiplier={1}>
-              {displayItems.length}
+              {history.length}
             </Text>
-            <Text style={[styles.statLabel, { color: colors.textMuted }]} maxFontSizeMultiplier={1}>
-              {filter === "all" ? "Total" : "Filtered"}
-            </Text>
+            <Text style={[styles.statLabel, { color: colors.textMuted }]} maxFontSizeMultiplier={1}>Total</Text>
           </View>
           <View style={[styles.statItem, { borderRightColor: colors.surfaceBorder }]}>
             <Text style={[styles.statNumber, { color: colors.safe }]} maxFontSizeMultiplier={1}>
-              {displayItems.length - dangerCount - cautionCount}
+              {allSafeCount}
             </Text>
             <Text style={[styles.statLabel, { color: colors.textMuted }]} maxFontSizeMultiplier={1}>Safe</Text>
           </View>
           <View style={[styles.statItem, { borderRightColor: colors.surfaceBorder }]}>
             <Text style={[styles.statNumber, { color: colors.warning }]} maxFontSizeMultiplier={1}>
-              {cautionCount}
+              {allCautionCount}
             </Text>
             <Text style={[styles.statLabel, { color: colors.textMuted }]} maxFontSizeMultiplier={1}>Caution</Text>
           </View>
           <View style={styles.statItem}>
             <Text style={[styles.statNumber, { color: colors.danger }]} maxFontSizeMultiplier={1}>
-              {dangerCount}
+              {allDangerCount}
             </Text>
             <Text style={[styles.statLabel, { color: colors.textMuted }]} maxFontSizeMultiplier={1}>Danger</Text>
           </View>
@@ -302,40 +384,40 @@ export default function HistoryScreen() {
       )}
 
       {/* ── Threat Banner ──────────────────────────────────────────── */}
-      {user && hasThreats && !cloudLoading && (
+      {user && hasThreats && !cloudLoading && !searchVisible && (
         <Pressable
           onPress={onRefresh}
           style={[
             styles.threatBanner,
             {
-              backgroundColor: dangerCount > 0 ? colors.dangerDim : colors.warningDim,
-              borderColor: (dangerCount > 0 ? colors.danger : colors.warning) + "40",
+              backgroundColor: allDangerCount > 0 ? colors.dangerDim : colors.warningDim,
+              borderColor: (allDangerCount > 0 ? colors.danger : colors.warning) + "40",
               marginHorizontal: 16,
               marginBottom: 6,
             },
           ]}
         >
           <LinearGradient
-            colors={dangerCount > 0
+            colors={allDangerCount > 0
               ? [colors.danger, colors.dangerShade ?? colors.danger]
               : [colors.warning, colors.warningShade ?? colors.warning]}
             style={styles.threatBannerIcon}
           >
-            <Ionicons name={dangerCount > 0 ? "warning" : "alert-circle"} size={14} color="#fff" />
+            <Ionicons name={allDangerCount > 0 ? "warning" : "alert-circle"} size={14} color="#fff" />
           </LinearGradient>
           <Text style={[
             styles.threatBannerText,
-            { color: dangerCount > 0 ? colors.danger : colors.warning, fontSize: rf(12) },
+            { color: allDangerCount > 0 ? colors.danger : colors.warning, fontSize: rf(12) },
           ]} maxFontSizeMultiplier={1}>
-            {dangerCount > 0
-              ? `${dangerCount} dangerous QR code${dangerCount > 1 ? "s" : ""} detected`
-              : `${cautionCount} QR code${cautionCount > 1 ? "s" : ""} flagged for caution`}
+            {allDangerCount > 0
+              ? `${allDangerCount} dangerous QR code${allDangerCount > 1 ? "s" : ""} detected`
+              : `${allCautionCount} QR code${allCautionCount > 1 ? "s" : ""} flagged for caution`}
           </Text>
         </Pressable>
       )}
 
       {/* ── Cloud Error Banner ─────────────────────────────────────── */}
-      {user && cloudError && (
+      {user && cloudError && !searchVisible && (
         <Pressable
           onPress={onRefresh}
           style={[
@@ -355,12 +437,23 @@ export default function HistoryScreen() {
         </Pressable>
       )}
 
-      {/* ── Filters ────────────────────────────────────────────────── */}
-      <FilterBar
-        filters={activeFilters}
-        activeFilter={filter}
-        onFilterChange={setFilter}
-      />
+      {/* ── Filters (hidden during search) ─────────────────────────── */}
+      {!searchVisible && (
+        <FilterBar
+          filters={activeFilters}
+          activeFilter={filter}
+          onFilterChange={setFilter}
+        />
+      )}
+
+      {/* ── Search result count ─────────────────────────────────────── */}
+      {searchVisible && searchQuery.trim() && searchedItems.length > 0 && (
+        <View style={[styles.searchResultsRow, { borderBottomColor: colors.surfaceBorder }]}>
+          <Text style={[styles.searchResultsText, { color: colors.textMuted, fontSize: rf(12) }]} maxFontSizeMultiplier={1}>
+            {searchedItems.length} result{searchedItems.length !== 1 ? "s" : ""} for "{searchQuery}"
+          </Text>
+        </View>
+      )}
 
       {/* ── List ───────────────────────────────────────────────────── */}
       <FlatList
@@ -372,13 +465,16 @@ export default function HistoryScreen() {
           { paddingBottom: Platform.OS === "web" ? 34 + 84 : insets.bottom + 84 },
         ]}
         showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
         refreshControl={
-          <RefreshControl
-            refreshing={refreshing}
-            onRefresh={onRefresh}
-            tintColor={colors.primary}
-            colors={[colors.primary]}
-          />
+          !searchVisible ? (
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={onRefresh}
+              tintColor={colors.primary}
+              colors={[colors.primary]}
+            />
+          ) : undefined
         }
         onEndReached={handleEndReached}
         onEndReachedThreshold={0.4}
@@ -401,11 +497,6 @@ const styles = StyleSheet.create({
     paddingTop: 8,
     paddingBottom: 10,
   },
-  headerEyebrow: {
-    fontFamily: "Inter_700Bold",
-    letterSpacing: 2,
-    marginBottom: 2,
-  },
   headerTitle: {
     fontFamily: "Inter_700Bold",
     letterSpacing: -0.5,
@@ -423,6 +514,36 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     borderWidth: 1,
+  },
+  searchBar: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    marginHorizontal: 16,
+    marginTop: 8,
+    marginBottom: 10,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    borderRadius: 14,
+    borderWidth: 1,
+  },
+  searchInput: {
+    flex: 1,
+    fontSize: 14,
+    fontFamily: "Inter_400Regular",
+    paddingVertical: 0,
+  },
+  searchCancel: {
+    fontFamily: "Inter_600SemiBold",
+    fontSize: 14,
+  },
+  searchResultsRow: {
+    paddingHorizontal: 20,
+    paddingBottom: 8,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+  },
+  searchResultsText: {
+    fontFamily: "Inter_400Regular",
   },
   statsStrip: {
     flexDirection: "row",
