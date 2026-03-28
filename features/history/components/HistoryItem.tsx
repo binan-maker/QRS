@@ -2,6 +2,7 @@ import React from "react";
 import { View, Text, Pressable, StyleSheet } from "react-native";
 import { router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
+import { LinearGradient } from "expo-linear-gradient";
 import * as Haptics from "@/lib/haptics";
 import { useTheme } from "@/contexts/ThemeContext";
 import { formatRelativeTime } from "@/lib/utils/formatters";
@@ -11,46 +12,42 @@ import { parseAnyPaymentQr } from "@/lib/qr-analysis";
 function getTypeMeta(type: string, colors: any): {
   icon: keyof typeof Ionicons.glyphMap;
   label: string;
-  color: string;
+  gradient: [string, string];
 } {
-  const map: Record<string, { icon: keyof typeof Ionicons.glyphMap; label: string; color: string }> = {
-    url:      { icon: "globe-outline",         label: "URL",       color: colors.primary },
-    phone:    { icon: "call-outline",          label: "Phone",     color: colors.safe },
-    email:    { icon: "mail-outline",          label: "Email",     color: colors.primary },
-    wifi:     { icon: "wifi-outline",          label: "Wi-Fi",     color: colors.primary },
-    location: { icon: "location-outline",      label: "Location",  color: colors.danger },
-    payment:  { icon: "card-outline",          label: "Payment",   color: colors.warning },
-    sms:      { icon: "chatbubble-outline",    label: "SMS",       color: colors.primary },
-    contact:  { icon: "person-outline",        label: "Contact",   color: colors.primary },
-    event:    { icon: "calendar-outline",      label: "Event",     color: colors.primary },
-    otp:      { icon: "lock-closed-outline",   label: "OTP",       color: colors.safe },
-    app:      { icon: "apps-outline",          label: "App",       color: colors.primary },
-    social:   { icon: "people-outline",        label: "Social",    color: colors.primary },
-    media:    { icon: "play-circle-outline",   label: "Media",     color: colors.primary },
-    document: { icon: "document-outline",      label: "Document",  color: colors.textSecondary },
-    boarding: { icon: "airplane-outline",      label: "Boarding",  color: colors.primary },
-    product:  { icon: "barcode-outline",       label: "Product",   color: colors.primary },
+  const p = colors.primary;
+  const map: Record<string, { icon: keyof typeof Ionicons.glyphMap; label: string; gradient: [string, string] }> = {
+    url:      { icon: "globe",            label: "URL",       gradient: [p, colors.primaryShade ?? p] },
+    phone:    { icon: "call",             label: "Phone",     gradient: [colors.safe, colors.safeShade ?? colors.safe] },
+    email:    { icon: "mail",             label: "Email",     gradient: [p, colors.primaryShade ?? p] },
+    wifi:     { icon: "wifi",             label: "Wi-Fi",     gradient: [p, colors.primaryShade ?? p] },
+    location: { icon: "location",         label: "Location",  gradient: [colors.danger, colors.dangerShade ?? colors.danger] },
+    payment:  { icon: "card",             label: "Payment",   gradient: [colors.warning, colors.warningShade ?? colors.warning] },
+    sms:      { icon: "chatbubble",       label: "SMS",       gradient: [p, colors.primaryShade ?? p] },
+    contact:  { icon: "person",           label: "Contact",   gradient: [p, colors.primaryShade ?? p] },
+    event:    { icon: "calendar",         label: "Event",     gradient: [p, colors.primaryShade ?? p] },
+    otp:      { icon: "lock-closed",      label: "OTP",       gradient: [colors.safe, colors.safeShade ?? colors.safe] },
+    app:      { icon: "apps",             label: "App",       gradient: [p, colors.primaryShade ?? p] },
+    social:   { icon: "people",           label: "Social",    gradient: [p, colors.primaryShade ?? p] },
+    media:    { icon: "play-circle",      label: "Media",     gradient: [p, colors.primaryShade ?? p] },
+    document: { icon: "document-text",    label: "Document",  gradient: [colors.textSecondary, colors.textSecondary] },
+    boarding: { icon: "airplane",         label: "Boarding",  gradient: [p, colors.primaryShade ?? p] },
+    product:  { icon: "barcode",          label: "Product",   gradient: [p, colors.primaryShade ?? p] },
   };
-  return map[type] ?? { icon: "document-text-outline", label: "Text", color: colors.textSecondary };
+  return map[type] ?? { icon: "document-text", label: "Text", gradient: [colors.textSecondary, colors.textSecondary] };
 }
 
-function getRiskColor(risk: string, colors: any): { icon: keyof typeof Ionicons.glyphMap; label: string; color: string } {
-  if (risk === "dangerous") return { icon: "warning", label: "Danger", color: colors.danger };
-  if (risk === "caution") return { icon: "alert-circle", label: "Caution", color: colors.warning };
-  return { icon: "shield-checkmark", label: "Safe", color: colors.safe };
+function getRiskConfig(risk: string, colors: any) {
+  if (risk === "dangerous") return { icon: "warning" as const, label: "Danger",  color: colors.danger,  bg: colors.dangerDim  ?? colors.danger  + "18" };
+  if (risk === "caution")   return { icon: "alert-circle" as const, label: "Caution", color: colors.warning, bg: colors.warningDim ?? colors.warning + "18" };
+  return null;
 }
 
-function shortenAddress(addr: string): string {
-  if (addr.length <= 12) return addr;
-  return addr.slice(0, 6) + "..." + addr.slice(-4);
-}
-
-function detectCrypto(content: string): { name: string; symbol: string } | null {
+function detectCrypto(content: string): { name: string } | null {
   const lower = content.toLowerCase();
-  if (lower.startsWith("bitcoin:") || lower.includes("bc1")) return { name: "Bitcoin", symbol: "BTC" };
-  if (lower.startsWith("ethereum:") || lower.includes("0x")) return { name: "Ethereum", symbol: "ETH" };
-  if (lower.startsWith("litecoin:")) return { name: "Litecoin", symbol: "LTC" };
-  if (lower.startsWith("tron:")) return { name: "Tron", symbol: "TRX" };
+  if (lower.startsWith("bitcoin:") || lower.includes("bc1")) return { name: "Bitcoin" };
+  if (lower.startsWith("ethereum:") || lower.includes("0x")) return { name: "Ethereum" };
+  if (lower.startsWith("litecoin:")) return { name: "Litecoin" };
+  if (lower.startsWith("tron:")) return { name: "Tron" };
   return null;
 }
 
@@ -61,11 +58,8 @@ function getPaymentData(content: string) {
       name: parsed?.recipientName || parsed?.vpa || "Payment",
       amount: parsed?.amount || null,
       vpa: parsed?.vpa || null,
-      raw: content,
     };
-  } catch {
-    return null;
-  }
+  } catch { return null; }
 }
 
 function getDisplayLabel(contentType: string, content: string): string {
@@ -76,13 +70,26 @@ function getDisplayLabel(contentType: string, content: string): string {
       if (parsed?.vpa) return parsed.vpa;
       const crypto = detectCrypto(content);
       if (crypto) return crypto.name;
-      if (parsed?.recipientId) return shortenAddress(parsed.recipientId);
       return "Payment QR";
-    } catch {
-      return "Payment QR";
-    }
+    } catch { return "Payment QR"; }
   }
   return content;
+}
+
+function getSubtitle(contentType: string, content: string): string | null {
+  if (contentType === "url") {
+    try { return new URL(content).hostname.replace("www.", ""); }
+    catch { return content.length > 40 ? content.slice(0, 40) + "…" : content; }
+  }
+  if (contentType === "payment") {
+    try {
+      const parsed = parseAnyPaymentQr(content);
+      if (parsed?.vpa && parsed?.recipientName) return parsed.vpa;
+    } catch {}
+    return null;
+  }
+  if (content.length > 48) return content.slice(0, 48) + "…";
+  return null;
 }
 
 function formatAmount(amount?: number | string) {
@@ -97,22 +104,23 @@ interface HistoryItemProps {
 }
 
 const HistoryItem = React.memo(function HistoryItem({ item, risk, onDelete: _onDelete }: HistoryItemProps) {
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
 
   const isFavorite = item.source === "favorite";
   const isSynced   = item.source === "cloud";
   const displayLabel = getDisplayLabel(item.contentType, item.content);
-  const meta       = getTypeMeta(item.contentType, colors);
-  const riskCfg    = getRiskColor(risk, colors);
-  const showRisk   = (item.contentType === "url" || item.contentType === "payment") && risk !== "safe";
+  const subtitle = getSubtitle(item.contentType, item.content);
+  const meta = getTypeMeta(item.contentType, colors);
+  const riskCfg = getRiskConfig(risk, colors);
+  const showRisk = (item.contentType === "url" || item.contentType === "payment") && risk !== "safe";
 
-  const iconColor: string = isFavorite
-    ? colors.danger
+  const gradient: [string, string] = isFavorite
+    ? [colors.danger, colors.dangerShade ?? colors.danger]
     : risk === "dangerous"
-      ? colors.danger
+      ? [colors.danger, colors.dangerShade ?? colors.danger]
       : risk === "caution"
-        ? colors.warning
-        : meta.color;
+        ? [colors.warning, colors.warningShade ?? colors.warning]
+        : meta.gradient;
 
   const paymentData = item.contentType === "payment" ? getPaymentData(item.content) : null;
   const formattedAmount = paymentData?.amount ? formatAmount(paymentData.amount) : null;
@@ -124,58 +132,78 @@ const HistoryItem = React.memo(function HistoryItem({ item, risk, onDelete: _onD
     }
   }
 
+  const cardBg = isDark ? colors.surface : "#ffffff";
+  const accentBorder = showRisk && riskCfg
+    ? riskCfg.color + "50"
+    : isFavorite
+      ? colors.danger + "35"
+      : colors.surfaceBorder;
+
   return (
     <Pressable
       onPress={handlePress}
       style={({ pressed }) => [
         styles.card,
         {
-          backgroundColor: colors.surface,
-          borderColor: colors.surfaceBorder,
-          opacity: pressed ? 0.88 : 1,
-          transform: [{ scale: pressed ? 0.982 : 1 }],
+          backgroundColor: cardBg,
+          borderColor: accentBorder,
+          opacity: pressed ? 0.9 : 1,
+          transform: [{ scale: pressed ? 0.984 : 1 }],
+          shadowColor: showRisk && riskCfg ? riskCfg.color : (isDark ? "#000" : "#0008FF"),
+          shadowOpacity: isDark ? 0.18 : 0.05,
         },
       ]}
     >
-      <View style={[styles.iconBox, { backgroundColor: iconColor + "18" }]}>
+      <LinearGradient
+        colors={gradient}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={styles.iconBox}
+      >
         <Ionicons
           name={isFavorite ? "heart" : meta.icon}
-          size={22}
-          color={iconColor}
+          size={21}
+          color="#fff"
         />
-      </View>
+      </LinearGradient>
 
       <View style={styles.body}>
-        <View style={styles.topRow}>
+        <View style={styles.titleRow}>
           <Text
-            style={[styles.content, { color: colors.text }]}
+            style={[styles.title, { color: colors.text }]}
             numberOfLines={1}
             maxFontSizeMultiplier={1}
           >
             {paymentData ? paymentData.name : displayLabel}
           </Text>
           {formattedAmount && (
-            <Text style={[styles.amount, { color: colors.warning }]} maxFontSizeMultiplier={1}>
-              {formattedAmount}
-            </Text>
+            <View style={[styles.amountPill, { backgroundColor: colors.warning + "1E" }]}>
+              <Text style={[styles.amountText, { color: colors.warning }]} maxFontSizeMultiplier={1}>
+                {formattedAmount}
+              </Text>
+            </View>
           )}
         </View>
 
-        {paymentData && !formattedAmount && (
-          <Text style={[styles.subText, { color: colors.textMuted }]} numberOfLines={1} maxFontSizeMultiplier={1}>
-            {paymentData.raw}
+        {subtitle && (
+          <Text
+            style={[styles.subtitle, { color: colors.textSecondary }]}
+            numberOfLines={1}
+            maxFontSizeMultiplier={1}
+          >
+            {subtitle}
           </Text>
         )}
 
         <View style={styles.metaRow}>
-          <View style={[styles.typeBadge, { backgroundColor: iconColor + "18", borderColor: iconColor + "35" }]}>
-            <Text style={[styles.typeBadgeText, { color: iconColor }]} maxFontSizeMultiplier={1}>
+          <View style={[styles.typeBadge, { backgroundColor: gradient[0] + "18", borderColor: gradient[0] + "38" }]}>
+            <Text style={[styles.typeBadgeText, { color: gradient[0] }]} maxFontSizeMultiplier={1}>
               {isFavorite ? "Favorite" : meta.label}
             </Text>
           </View>
 
-          {showRisk && (
-            <View style={[styles.riskBadge, { backgroundColor: riskCfg.color + "20", borderColor: riskCfg.color + "40" }]}>
+          {showRisk && riskCfg && (
+            <View style={[styles.riskBadge, { backgroundColor: riskCfg.bg, borderColor: riskCfg.color + "45" }]}>
               <Ionicons name={riskCfg.icon} size={9} color={riskCfg.color} />
               <Text style={[styles.riskText, { color: riskCfg.color }]} maxFontSizeMultiplier={1}>
                 {riskCfg.label}
@@ -183,13 +211,18 @@ const HistoryItem = React.memo(function HistoryItem({ item, risk, onDelete: _onD
             </View>
           )}
 
-          {!isFavorite && (
+          <View style={styles.sourceRow}>
             <Ionicons
-              name={isSynced ? "cloud-done-outline" : "cloud-offline-outline"}
-              size={11}
+              name={isSynced ? "cloud-done-outline" : isFavorite ? "heart-outline" : "phone-portrait-outline"}
+              size={10}
               color={isSynced ? colors.safe : colors.textMuted}
             />
-          )}
+            {item.scanSource && !isFavorite && (
+              <Text style={[styles.sourceText, { color: colors.textMuted }]} maxFontSizeMultiplier={1}>
+                {item.scanSource === "gallery" ? "Gallery" : "Camera"}
+              </Text>
+            )}
+          </View>
         </View>
       </View>
 
@@ -198,11 +231,11 @@ const HistoryItem = React.memo(function HistoryItem({ item, risk, onDelete: _onD
           {formatRelativeTime(item.scannedAt)}
         </Text>
         {item.qrCodeId ? (
-          <View style={[styles.chevronWrap, { backgroundColor: colors.surfaceBorder }]}>
-            <Ionicons name="chevron-forward" size={13} color={colors.textSecondary} />
+          <View style={[styles.chevronWrap, { backgroundColor: gradient[0] + "18" }]}>
+            <Ionicons name="chevron-forward" size={13} color={gradient[0]} />
           </View>
         ) : (
-          <View style={{ width: 26 }} />
+          <View style={{ width: 28 }} />
         )}
       </View>
     </Pressable>
@@ -215,18 +248,21 @@ const styles = StyleSheet.create({
   card: {
     flexDirection: "row",
     alignItems: "center",
-    borderRadius: 18,
-    marginBottom: 8,
+    borderRadius: 20,
+    marginBottom: 10,
     borderWidth: 1,
     overflow: "hidden",
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    gap: 10,
+    paddingHorizontal: 14,
+    paddingVertical: 13,
+    gap: 13,
+    shadowOffset: { width: 0, height: 2 },
+    shadowRadius: 12,
+    elevation: 2,
   },
   iconBox: {
-    width: 44,
-    height: 44,
-    borderRadius: 13,
+    width: 48,
+    height: 48,
+    borderRadius: 15,
     alignItems: "center",
     justifyContent: "center",
     flexShrink: 0,
@@ -234,63 +270,76 @@ const styles = StyleSheet.create({
   body: {
     flex: 1,
     minWidth: 0,
-    gap: 5,
+    gap: 4,
   },
-  topRow: {
+  titleRow: {
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "space-between",
-    gap: 6,
+    gap: 7,
   },
-  content: {
+  title: {
     fontSize: 14,
     fontFamily: "Inter_700Bold",
     lineHeight: 20,
     flex: 1,
+    letterSpacing: -0.1,
   },
-  amount: {
-    fontSize: 13,
-    fontFamily: "Inter_700Bold",
-    flexShrink: 0,
-  },
-  subText: {
+  subtitle: {
     fontSize: 12,
     fontFamily: "Inter_400Regular",
-    lineHeight: 15,
+    lineHeight: 16,
+  },
+  amountPill: {
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 100,
+    flexShrink: 0,
+  },
+  amountText: {
+    fontSize: 12,
+    fontFamily: "Inter_700Bold",
   },
   metaRow: {
     flexDirection: "row",
     alignItems: "center",
     gap: 5,
-    flexWrap: "nowrap",
-    overflow: "hidden",
+    marginTop: 1,
   },
   typeBadge: {
     paddingHorizontal: 7,
-    paddingVertical: 2,
+    paddingVertical: 2.5,
     borderRadius: 100,
     borderWidth: 1,
     flexShrink: 0,
   },
   typeBadgeText: {
-    fontSize: 11,
+    fontSize: 10,
     fontFamily: "Inter_700Bold",
-    letterSpacing: 0,
+    letterSpacing: 0.2,
   },
   riskBadge: {
     flexDirection: "row",
     alignItems: "center",
     gap: 3,
     paddingHorizontal: 6,
-    paddingVertical: 2,
+    paddingVertical: 2.5,
     borderRadius: 100,
     borderWidth: 1,
     flexShrink: 0,
   },
   riskText: {
-    fontSize: 11,
+    fontSize: 10,
     fontFamily: "Inter_700Bold",
-    letterSpacing: 0,
+    letterSpacing: 0.2,
+  },
+  sourceRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 3,
+  },
+  sourceText: {
+    fontSize: 10,
+    fontFamily: "Inter_400Regular",
   },
   right: {
     alignItems: "flex-end",
@@ -298,14 +347,14 @@ const styles = StyleSheet.create({
     flexShrink: 0,
   },
   time: {
-    fontSize: 12,
+    fontSize: 11,
     fontFamily: "Inter_500Medium",
     letterSpacing: 0.1,
   },
   chevronWrap: {
     width: 28,
     height: 28,
-    borderRadius: 10,
+    borderRadius: 9,
     alignItems: "center",
     justifyContent: "center",
   },

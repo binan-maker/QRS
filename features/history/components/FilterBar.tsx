@@ -8,6 +8,7 @@ import type { Filter } from "@/hooks/useHistory";
 interface FilterOption {
   key: Filter;
   label: string;
+  count?: number;
 }
 
 interface FilterBarProps {
@@ -59,9 +60,8 @@ const FilterBar = React.memo(function FilterBar({
         const isFavorite = f.key === "favorites";
         const isActive   = activeFilter === f.key;
 
-        const activeColor  = isFavorite ? colors.danger  : colors.primary;
-        const activeBg     = isFavorite ? colors.danger  : colors.primary;
-        const iconName     = isActive
+        const activeColor = isFavorite ? colors.danger : colors.primary;
+        const iconName    = isActive
           ? (FILTER_ICONS_ACTIVE[f.key] ?? "apps")
           : (FILTER_ICONS[f.key] ?? "apps-outline");
 
@@ -76,40 +76,49 @@ const FilterBar = React.memo(function FilterBar({
               styles.chip,
               isActive
                 ? {
-                    backgroundColor: activeBg,
+                    backgroundColor: activeColor,
                     borderColor: "transparent",
                     shadowColor: activeColor,
-                    shadowOffset: { width: 0, height: 3 },
-                    shadowOpacity: isDark ? 0.5 : 0.25,
-                    shadowRadius: 8,
-                    elevation: 4,
+                    shadowOffset: { width: 0, height: 4 },
+                    shadowOpacity: isDark ? 0.45 : 0.3,
+                    shadowRadius: 10,
+                    elevation: 5,
                   }
                 : {
-                    backgroundColor: isDark ? colors.surfaceLight : colors.surface,
+                    backgroundColor: isDark ? colors.surfaceLight + "CC" : colors.surface,
                     borderColor: colors.surfaceBorder,
                   },
-              { opacity: pressed ? 0.75 : 1 },
+              { opacity: pressed ? 0.78 : 1, transform: [{ scale: pressed ? 0.96 : 1 }] },
             ]}
           >
             <Ionicons
               name={iconName}
               size={13}
-              color={isActive ? (isFavorite ? "#fff" : colors.primaryText) : colors.textSecondary}
+              color={isActive ? "#fff" : colors.textSecondary}
             />
             <Text
               style={[
                 styles.chipText,
-                {
-                  color: isActive
-                    ? (isFavorite ? "#fff" : colors.primaryText)
-                    : colors.textSecondary,
-                },
+                { color: isActive ? "#fff" : colors.textSecondary },
               ]}
               numberOfLines={1}
               maxFontSizeMultiplier={1}
             >
               {f.label}
             </Text>
+            {typeof f.count === "number" && f.count > 0 && (
+              <View style={[
+                styles.countPill,
+                { backgroundColor: isActive ? "rgba(255,255,255,0.22)" : activeColor + "20" },
+              ]}>
+                <Text style={[
+                  styles.countText,
+                  { color: isActive ? "#fff" : activeColor },
+                ]} maxFontSizeMultiplier={1}>
+                  {f.count > 999 ? "999+" : f.count}
+                </Text>
+              </View>
+            )}
           </Pressable>
         );
       })}
@@ -126,8 +135,8 @@ const styles = StyleSheet.create({
   },
   container: {
     paddingHorizontal: 16,
-    gap: 8,
-    paddingBottom: 6,
+    gap: 7,
+    paddingBottom: 8,
     paddingTop: 2,
     flexDirection: "row",
     alignItems: "center",
@@ -145,5 +154,16 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontFamily: "Inter_600SemiBold",
     letterSpacing: 0.1,
+  },
+  countPill: {
+    borderRadius: 100,
+    paddingHorizontal: 5,
+    paddingVertical: 1,
+    minWidth: 18,
+    alignItems: "center",
+  },
+  countText: {
+    fontSize: 10,
+    fontFamily: "Inter_700Bold",
   },
 });
