@@ -266,12 +266,17 @@ export default function RegisterScreen() {
       <Modal visible={googleLoading} transparent animationType="fade" statusBarTranslucent>
         <View style={styles.overlayBg}>
           <View style={[styles.overlayCard, {
-            backgroundColor: colors.isDark ? "rgba(16,25,41,0.97)" : "rgba(255,255,255,0.97)",
-            borderColor: colors.surfaceBorder,
+            backgroundColor: colors.isDark ? "#0f1929" : "#ffffff",
+            borderColor: colors.isDark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.06)",
           }]}>
-            <ActivityIndicator color={colors.primary} size="large" />
-            <Text style={[styles.overlayText, { color: colors.text }]}>Signing in with Google…</Text>
-            <Text style={[styles.overlaySubText, { color: colors.textSecondary }]}>Just a moment</Text>
+            <View style={[styles.overlayIconRing, { borderColor: colors.primary + "28", backgroundColor: colors.primary + "10" }]}>
+              <GoogleIcon size={28} />
+            </View>
+            <View style={styles.overlaySpinnerRow}>
+              <ActivityIndicator color={colors.primary} size="small" />
+              <Text style={[styles.overlayText, { color: colors.text }]}>Connecting with Google</Text>
+            </View>
+            <Text style={[styles.overlaySubText, { color: colors.textMuted }]}>Securely completing sign in…</Text>
           </View>
         </View>
       </Modal>
@@ -370,26 +375,32 @@ const styles = StyleSheet.create({
   footer: { flexDirection: "row", justifyContent: "center", gap: 6 },
   footerText: { fontFamily: "Inter_400Regular" },
   footerLink: { fontFamily: "Inter_700Bold" },
-  overlayBg: {
-    flex: 1,
-    backgroundColor: "rgba(0,0,0,0.55)",
-    alignItems: "center",
-    justifyContent: "center",
-  },
+  overlayBg: { flex: 1, backgroundColor: "rgba(0,0,0,0.35)", alignItems: "center", justifyContent: "center" },
   overlayCard: {
     alignItems: "center",
-    gap: 12,
-    paddingVertical: 32,
-    paddingHorizontal: 40,
-    borderRadius: 24,
+    gap: 14,
+    paddingVertical: 28,
+    paddingHorizontal: 32,
+    borderRadius: 20,
     borderWidth: 1,
-    minWidth: 200,
+    minWidth: 220,
+    maxWidth: 280,
     shadowColor: "#000",
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.15,
-    shadowRadius: 24,
-    elevation: 10,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.12,
+    shadowRadius: 20,
+    elevation: 8,
   },
-  overlayText: { fontFamily: "Inter_700Bold", fontSize: 15, textAlign: "center" },
-  overlaySubText: { fontFamily: "Inter_400Regular", fontSize: 13, textAlign: "center" },
+  overlayIconRing: {
+    width: 60,
+    height: 60,
+    borderRadius: 18,
+    borderWidth: 1.5,
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 2,
+  },
+  overlaySpinnerRow: { flexDirection: "row", alignItems: "center", gap: 9 },
+  overlayText: { fontFamily: "Inter_600SemiBold", fontSize: 14, textAlign: "center" },
+  overlaySubText: { fontFamily: "Inter_400Regular", fontSize: 12, textAlign: "center" },
 });
