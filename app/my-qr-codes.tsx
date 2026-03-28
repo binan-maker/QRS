@@ -7,6 +7,7 @@ import {
   Pressable,
   Platform,
   RefreshControl,
+  useWindowDimensions,
 } from "react-native";
 import { router } from "expo-router";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
@@ -23,47 +24,62 @@ import {
   type GeneratedQrItem,
 } from "@/lib/firestore-service";
 
+type Filter = "all" | "individual" | "business";
+
+const FILTERS: { key: Filter; label: string; icon: keyof typeof Ionicons.glyphMap }[] = [
+  { key: "all",        label: "All",        icon: "layers-outline"    },
+  { key: "individual", label: "Individual", icon: "person-outline"    },
+  { key: "business",   label: "Business",   icon: "storefront-outline" },
+];
+
+function formatDate(iso: string) {
+  if (!iso) return "";
+  try {
+    return new Date(iso).toLocaleDateString("en-US", {
+      month: "short", day: "numeric", year: "numeric",
+    });
+  } catch { return iso; }
+}
+
 function SkeletonQrCard() {
   const { colors } = useTheme();
+  const { width } = useWindowDimensions();
+  const sp = (v: number) => Math.round(v * Math.min(Math.max(width / 390, 0.82), 1.0));
   return (
-    <View style={{ backgroundColor: colors.surface, borderRadius: 20, borderWidth: 1, borderColor: colors.surfaceBorder, padding: 16, marginBottom: 12, flexDirection: "row", alignItems: "center", gap: 14 }}>
-      <SkeletonBox width={72} height={72} borderRadius={14} />
-      <View style={{ flex: 1, gap: 10 }}>
-        <SkeletonBox width="45%" height={10} />
-        <SkeletonBox width="80%" height={14} />
-        <SkeletonBox width="60%" height={10} />
+    <View style={{
+      backgroundColor: colors.surface, borderRadius: sp(18), borderWidth: 1,
+      borderColor: colors.surfaceBorder, padding: sp(14), marginBottom: sp(10),
+      flexDirection: "row", alignItems: "center", gap: sp(14),
+    }}>
+      <SkeletonBox width={64} height={64} borderRadius={12} />
+      <View style={{ flex: 1, gap: 8 }}>
+        <SkeletonBox width="35%" height={9} borderRadius={4} />
+        <SkeletonBox width="70%" height={13} borderRadius={4} />
+        <SkeletonBox width="55%" height={9} borderRadius={4} />
       </View>
     </View>
   );
 }
 
-type Filter = "all" | "individual" | "business";
-
-function formatDate(iso: string) {
-  if (!iso) return "";
-  try { return new Date(iso).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }); }
-  catch { return iso; }
-}
-
-const FILTERS: { key: Filter; label: string; icon: string }[] = [
-  { key: "all", label: "All", icon: "layers-outline" },
-  { key: "individual", label: "Individual", icon: "person-outline" },
-  { key: "business", label: "Business", icon: "storefront-outline" },
-];
-
 export default function MyQrCodesScreen() {
   const { colors } = useTheme();
   const { user } = useAuth();
   const insets = useSafeAreaInsets();
-  const topInset = Platform.OS === "web" ? 67 : insets.top;
+  const { width } = useWindowDimensions();
+
+  const s  = Math.min(Math.max(width / 390, 0.82), 1.0);
+  const rf = (size: number) => Math.round(size * s);
+  const sp = (v: number)    => Math.round(v * s);
+
+  const topInset    = Platform.OS === "web" ? 67 : insets.top;
   const tabBarHeight = 62 + insets.bottom + 8;
 
-  const [qrCodes, setQrCodes] = useState<GeneratedQrItem[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [qrCodes,    setQrCodes]    = useState<GeneratedQrItem[]>([]);
+  const [loading,    setLoading]    = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const [filter, setFilter] = useState<Filter>("all");
-  const unsubscribeRef = useRef<(() => void) | null>(null);
-  const hasLoadedRef = useRef(false);
+  const [filter,     setFilter]     = useState<Filter>("all");
+  const unsubscribeRef  = useRef<(() => void) | null>(null);
+  const hasLoadedRef    = useRef(false);
 
   useEffect(() => {
     if (!user) return;
@@ -79,82 +95,156 @@ export default function MyQrCodesScreen() {
     return () => { if (unsubscribeRef.current) { unsubscribeRef.current(); unsubscribeRef.current = null; } };
   }, [user?.id]);
 
-  function handleRefresh() { setRefreshing(true); setTimeout(() => setRefreshing(false), 800); }
+  function handleRefresh() {
+    setRefreshing(true);
+    setTimeout(() => setRefreshing(false), 800);
+  }
 
   const filtered = qrCodes.filter((qr) => {
     if (filter === "individual") return qr.qrType === "individual";
-    if (filter === "business") return qr.qrType === "business";
+    if (filter === "business")   return qr.qrType === "business";
     return true;
   });
 
   function renderItem({ item, index }: { item: GeneratedQrItem; index: number }) {
-    const isBusiness = item.qrType === "business";
+    const isBusiness  = item.qrType === "business";
+    const displayText = item.businessName || item.content;
+    const subText     = item.businessName ? item.content : null;
 
     return (
-      <Animated.View entering={FadeInDown.duration(380).delay(index * 50).springify()}>
+      <Animated.View entering={FadeInDown.duration(340).delay(index * 40).springify()}>
         <Pressable
-          onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); router.push(`/my-qr/${item.docId}` as any); }}
-          style={({ pressed }) => [
-            styles.card,
-            {
-              backgroundColor: colors.surface,
-              borderColor: colors.surfaceBorder,
-              opacity: pressed ? 0.85 : 1,
-              transform: [{ scale: pressed ? 0.985 : 1 }],
-            }
-          ]}
+          onPress={() => {
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+            router.push(`/my-qr/${item.docId}` as any);
+          }}
+          style={({ pressed }) => [{
+            flexDirection:   "row",
+            alignItems:      "center",
+            gap:             sp(12),
+            borderRadius:    sp(18),
+            borderWidth:     1,
+            borderColor:     colors.surfaceBorder,
+            backgroundColor: colors.surface,
+            padding:         sp(12),
+            marginBottom:    sp(10),
+            opacity:         pressed ? 0.88 : 1,
+            transform:       [{ scale: pressed ? 0.988 : 1 }],
+          }]}
         >
-          <View style={[styles.qrWrap, { backgroundColor: item.bgColor || (colors.isDark ? "#F8FAFC" : "#F0F4FF") }]}>
+          {/* QR preview */}
+          <View style={{
+            width:           sp(64),
+            height:          sp(64),
+            borderRadius:    sp(12),
+            overflow:        "hidden",
+            backgroundColor: item.bgColor || (colors.isDark ? "#F8FAFC" : "#F0F4FF"),
+            alignItems:      "center",
+            justifyContent:  "center",
+            flexShrink:      0,
+          }}>
             <QRCode
               value={item.content || "https://qrguard.app"}
-              size={68}
+              size={sp(52)}
               color={item.fgColor || "#0A0E17"}
-              backgroundColor={item.bgColor || "#F8FAFC"}
-              quietZone={4}
+              backgroundColor={item.bgColor || (colors.isDark ? "#F8FAFC" : "#F0F4FF")}
+              quietZone={2}
               ecl="L"
             />
           </View>
 
-          <View style={styles.cardInfo}>
-            <View style={styles.cardTopRow}>
-              {isBusiness ? (
-                <LinearGradient colors={[colors.warning, colors.warningShade]} style={styles.typePill} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}>
-                  <Ionicons name="storefront" size={9} color="#fff" />
-                  <Text style={styles.typePillTextWhite}>Business</Text>
-                </LinearGradient>
-              ) : (
-                <LinearGradient colors={[colors.primary, colors.primaryShade]} style={styles.typePill} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}>
-                  <Ionicons name="person" size={9} color="#fff" />
-                  <Text style={styles.typePillTextWhite}>Individual</Text>
-                </LinearGradient>
-              )}
+          {/* Content */}
+          <View style={{ flex: 1, minWidth: 0, gap: sp(4) }}>
+            {/* Type badge row */}
+            <View style={{ flexDirection: "row", alignItems: "center", gap: sp(6) }}>
+              <View style={{
+                flexDirection:   "row",
+                alignItems:      "center",
+                gap:             3,
+                borderRadius:    sp(6),
+                paddingHorizontal: sp(7),
+                paddingVertical:   sp(2),
+                backgroundColor: isBusiness ? colors.warningDim : colors.primaryDim,
+              }}>
+                <Ionicons
+                  name={isBusiness ? "storefront" : "person"}
+                  size={rf(9)}
+                  color={isBusiness ? colors.warning : colors.primary}
+                />
+                <Text style={{
+                  fontSize:   rf(10),
+                  fontFamily: "Inter_700Bold",
+                  color:      isBusiness ? colors.warning : colors.primary,
+                  letterSpacing: 0.2,
+                }}>
+                  {isBusiness ? "Business" : "Individual"}
+                </Text>
+              </View>
               {!item.isActive && (
-                <View style={[styles.inactivePill, { backgroundColor: colors.dangerDim, borderColor: colors.danger + "40" }]}>
-                  <Text style={[styles.inactivePillText, { color: colors.danger }]}>Inactive</Text>
+                <View style={{
+                  borderRadius:      sp(6),
+                  paddingHorizontal: sp(6),
+                  paddingVertical:   sp(2),
+                  backgroundColor:   colors.dangerDim,
+                }}>
+                  <Text style={{
+                    fontSize: rf(10), fontFamily: "Inter_600SemiBold", color: colors.danger,
+                  }}>Inactive</Text>
                 </View>
               )}
             </View>
-            {item.businessName ? (
-              <Text style={[styles.businessName, { color: colors.text }]} numberOfLines={1}>{item.businessName}</Text>
-            ) : null}
-            <Text style={[styles.contentText, { color: colors.textSecondary }]} numberOfLines={2}>
-              {item.content.length > 50 ? item.content.slice(0, 50) + "…" : item.content}
+
+            {/* Main label */}
+            <Text
+              style={{ fontSize: rf(13), fontFamily: "Inter_700Bold", color: colors.text }}
+              numberOfLines={1}
+            >
+              {displayText.length > 45 ? displayText.slice(0, 45) + "…" : displayText}
             </Text>
-            <View style={styles.metaRow}>
-              <View style={styles.metaItem}>
-                <Ionicons name="scan-outline" size={11} color={colors.textMuted} />
-                <Text style={[styles.metaText, { color: colors.textMuted }]}>{item.scanCount} scans</Text>
+
+            {/* Sub text / content URL */}
+            {subText && (
+              <Text
+                style={{ fontSize: rf(11), fontFamily: "Inter_400Regular", color: colors.textSecondary }}
+                numberOfLines={1}
+              >
+                {subText.length > 40 ? subText.slice(0, 40) + "…" : subText}
+              </Text>
+            )}
+
+            {/* Meta row */}
+            <View style={{ flexDirection: "row", alignItems: "center", gap: sp(10), marginTop: sp(1) }}>
+              <View style={{ flexDirection: "row", alignItems: "center", gap: sp(3) }}>
+                <Ionicons name="scan-outline" size={rf(10)} color={colors.textMuted} />
+                <Text style={{ fontSize: rf(11), fontFamily: "Inter_400Regular", color: colors.textMuted }}>
+                  {item.scanCount} {item.scanCount === 1 ? "scan" : "scans"}
+                </Text>
               </View>
-              <View style={styles.metaSep} />
-              <View style={styles.metaItem}>
-                <Ionicons name="chatbubble-outline" size={11} color={colors.textMuted} />
-                <Text style={[styles.metaText, { color: colors.textMuted }]}>{item.commentCount}</Text>
+              <View style={{ width: 3, height: 3, borderRadius: 1.5, backgroundColor: colors.surfaceBorder }} />
+              <View style={{ flexDirection: "row", alignItems: "center", gap: sp(3) }}>
+                <Ionicons name="chatbubble-outline" size={rf(10)} color={colors.textMuted} />
+                <Text style={{ fontSize: rf(11), fontFamily: "Inter_400Regular", color: colors.textMuted }}>
+                  {item.commentCount}
+                </Text>
               </View>
+              {item.createdAt && (
+                <>
+                  <View style={{ width: 3, height: 3, borderRadius: 1.5, backgroundColor: colors.surfaceBorder }} />
+                  <Text style={{ fontSize: rf(11), fontFamily: "Inter_400Regular", color: colors.textMuted }}>
+                    {formatDate(item.createdAt)}
+                  </Text>
+                </>
+              )}
             </View>
           </View>
 
-          <View style={[styles.chevronWrap, { backgroundColor: colors.surfaceLight }]}>
-            <Ionicons name="chevron-forward" size={14} color={colors.textMuted} />
+          {/* Chevron */}
+          <View style={{
+            width: sp(28), height: sp(28), borderRadius: sp(14),
+            backgroundColor: colors.surfaceLight,
+            alignItems: "center", justifyContent: "center",
+          }}>
+            <Ionicons name="chevron-forward" size={rf(13)} color={colors.textMuted} />
           </View>
         </Pressable>
       </Animated.View>
@@ -162,48 +252,133 @@ export default function MyQrCodesScreen() {
   }
 
   const NavBar = () => (
-    <View style={[styles.navBar, { paddingTop: topInset + 6 }]}>
-      <Pressable onPress={() => router.back()} style={[styles.backBtn, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
-        <Ionicons name="chevron-back" size={22} color={colors.text} />
+    <View style={{
+      flexDirection: "row", alignItems: "center", justifyContent: "space-between",
+      paddingHorizontal: sp(20), paddingTop: topInset + sp(6), paddingBottom: sp(12),
+    }}>
+      <Pressable
+        onPress={() => router.back()}
+        style={{ width: sp(38), height: sp(38), borderRadius: sp(19), alignItems: "center", justifyContent: "center", backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.surfaceBorder }}
+      >
+        <Ionicons name="chevron-back" size={rf(20)} color={colors.text} />
       </Pressable>
-      <View style={styles.navCenter}>
-        <Text style={[styles.navTitle, { color: colors.text }]}>My QR Codes</Text>
+
+      <View style={{ flexDirection: "row", alignItems: "center", gap: sp(8) }}>
+        <Text style={{ fontSize: rf(17), fontFamily: "Inter_700Bold", color: colors.text }}>
+          My QR Codes
+        </Text>
         {qrCodes.length > 0 && (
-          <View style={[styles.countPill, { backgroundColor: colors.primaryDim, borderColor: colors.primary + "30" }]}>
-            <Text style={[styles.countPillText, { color: colors.primary }]}>{qrCodes.length}</Text>
+          <View style={{
+            borderRadius: sp(10), paddingHorizontal: sp(8), paddingVertical: sp(2),
+            backgroundColor: colors.primaryDim, borderWidth: 1, borderColor: colors.primary + "30",
+          }}>
+            <Text style={{ fontSize: rf(11), fontFamily: "Inter_700Bold", color: colors.primary }}>
+              {qrCodes.length}
+            </Text>
           </View>
         )}
       </View>
+
       <Pressable
-        onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); router.push("/(tabs)/qr-generator"); }}
-        style={({ pressed }) => [{ opacity: pressed ? 0.8 : 1 }]}
+        onPress={() => {
+          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+          router.push("/(tabs)/qr-generator");
+        }}
+        style={({ pressed }) => [{ opacity: pressed ? 0.82 : 1 }]}
       >
         <LinearGradient
           colors={[colors.primary, colors.primaryShade]}
-          style={styles.createBtn}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
+          style={{
+            flexDirection: "row", alignItems: "center", gap: sp(4),
+            borderRadius: sp(12), paddingHorizontal: sp(13), paddingVertical: sp(8),
+          }}
+          start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
         >
-          <Ionicons name="add" size={16} color="#fff" />
-          <Text style={styles.createBtnText}>New</Text>
+          <Ionicons name="add" size={rf(14)} color="#fff" />
+          <Text style={{ fontSize: rf(12), fontFamily: "Inter_700Bold", color: "#fff" }}>New</Text>
         </LinearGradient>
       </Pressable>
     </View>
   );
 
+  const EmptyState = ({ forFilter }: { forFilter: Filter }) => (
+    <Animated.View
+      entering={FadeIn.duration(400)}
+      style={{ flex: 1, alignItems: "center", justifyContent: "center", paddingHorizontal: sp(40), gap: sp(12) }}
+    >
+      <LinearGradient
+        colors={[colors.primary, colors.primaryShade]}
+        style={{
+          width: sp(76), height: sp(76), borderRadius: sp(24),
+          alignItems: "center", justifyContent: "center", marginBottom: sp(4),
+        }}
+        start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
+      >
+        <MaterialCommunityIcons name="qrcode-plus" size={rf(32)} color="#fff" />
+      </LinearGradient>
+      <Text style={{ fontSize: rf(16), fontFamily: "Inter_700Bold", color: colors.text, textAlign: "center" }}>
+        {forFilter === "business"
+          ? "No business codes"
+          : forFilter === "individual"
+          ? "No individual codes"
+          : "No QR codes yet"}
+      </Text>
+      <Text style={{ fontSize: rf(13), fontFamily: "Inter_400Regular", color: colors.textSecondary, textAlign: "center", lineHeight: rf(19) }}>
+        {forFilter === "all"
+          ? "Create your first QR code using the generator"
+          : `No ${forFilter} QR codes found`}
+      </Text>
+      {forFilter === "all" && (
+        <Pressable
+          onPress={() => router.push("/(tabs)/qr-generator")}
+          style={({ pressed }) => [{ opacity: pressed ? 0.85 : 1, marginTop: sp(4) }]}
+        >
+          <LinearGradient
+            colors={[colors.primary, colors.primaryShade]}
+            style={{
+              flexDirection: "row", alignItems: "center", gap: sp(7),
+              paddingHorizontal: sp(24), paddingVertical: sp(12), borderRadius: sp(16),
+            }}
+            start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
+          >
+            <Ionicons name="add" size={rf(16)} color="#fff" />
+            <Text style={{ fontSize: rf(13), fontFamily: "Inter_700Bold", color: "#fff" }}>
+              Create QR Code
+            </Text>
+          </LinearGradient>
+        </Pressable>
+      )}
+    </Animated.View>
+  );
+
   if (!user) {
     return (
-      <View style={[styles.container, { backgroundColor: colors.background }]}>
+      <View style={{ flex: 1, backgroundColor: colors.background }}>
         <NavBar />
-        <View style={styles.center}>
-          <LinearGradient colors={[colors.primary, colors.primaryShade]} style={styles.emptyIconWrap} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}>
-            <MaterialCommunityIcons name="qrcode-plus" size={36} color="#fff" />
+        <View style={{ flex: 1, alignItems: "center", justifyContent: "center", paddingHorizontal: sp(40), gap: sp(12) }}>
+          <LinearGradient
+            colors={[colors.primary, colors.primaryShade]}
+            style={{ width: sp(76), height: sp(76), borderRadius: sp(24), alignItems: "center", justifyContent: "center", marginBottom: sp(4) }}
+            start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
+          >
+            <MaterialCommunityIcons name="qrcode-plus" size={rf(32)} color="#fff" />
           </LinearGradient>
-          <Text style={[styles.emptyTitle, { color: colors.text }]}>Sign in required</Text>
-          <Text style={[styles.emptySub, { color: colors.textSecondary }]}>Sign in to manage your generated QR codes</Text>
-          <Pressable onPress={() => router.push("/(auth)/login")} style={({ pressed }) => [{ opacity: pressed ? 0.85 : 1 }]}>
-            <LinearGradient colors={[colors.primary, colors.primaryShade]} style={styles.signInBtn} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}>
-              <Text style={styles.signInBtnText}>Sign In</Text>
+          <Text style={{ fontSize: rf(16), fontFamily: "Inter_700Bold", color: colors.text, textAlign: "center" }}>
+            Sign in required
+          </Text>
+          <Text style={{ fontSize: rf(13), fontFamily: "Inter_400Regular", color: colors.textSecondary, textAlign: "center", lineHeight: rf(19) }}>
+            Sign in to manage and view your generated QR codes
+          </Text>
+          <Pressable
+            onPress={() => router.push("/(auth)/login")}
+            style={({ pressed }) => [{ opacity: pressed ? 0.85 : 1, marginTop: sp(4) }]}
+          >
+            <LinearGradient
+              colors={[colors.primary, colors.primaryShade]}
+              style={{ paddingHorizontal: sp(28), paddingVertical: sp(12), borderRadius: sp(16) }}
+              start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
+            >
+              <Text style={{ fontSize: rf(13), fontFamily: "Inter_700Bold", color: "#fff" }}>Sign In</Text>
             </LinearGradient>
           </Pressable>
         </View>
@@ -212,60 +387,54 @@ export default function MyQrCodesScreen() {
   }
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.background }]}>
+    <View style={{ flex: 1, backgroundColor: colors.background }}>
       <NavBar />
 
-      <View style={[styles.filterRow]}>
-        {FILTERS.map((f) => (
-          <Pressable
-            key={f.key}
-            onPress={() => { setFilter(f.key); Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); }}
-            style={[
-              styles.filterBtn,
-              { backgroundColor: colors.surface, borderColor: colors.surfaceBorder },
-              filter === f.key && { backgroundColor: colors.primaryDim, borderColor: colors.primary + "50" },
-            ]}
-          >
-            <Ionicons name={f.icon as any} size={13} color={filter === f.key ? colors.primary : colors.textMuted} />
-            <Text style={[styles.filterBtnText, { color: filter === f.key ? colors.primary : colors.textMuted }]}>
-              {f.label}
-            </Text>
-          </Pressable>
-        ))}
+      {/* Filter row */}
+      <View style={{ flexDirection: "row", gap: sp(8), paddingHorizontal: sp(20), paddingBottom: sp(10) }}>
+        {FILTERS.map((f) => {
+          const active = filter === f.key;
+          return (
+            <Pressable
+              key={f.key}
+              onPress={() => { setFilter(f.key); Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); }}
+              style={[{
+                flexDirection: "row", alignItems: "center", gap: sp(5),
+                paddingHorizontal: sp(12), paddingVertical: sp(7),
+                borderRadius: sp(20), borderWidth: 1,
+              }, active
+                ? { backgroundColor: colors.primaryDim, borderColor: colors.primary + "50" }
+                : { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }
+              ]}
+            >
+              <Ionicons name={f.icon} size={rf(12)} color={active ? colors.primary : colors.textMuted} />
+              <Text style={{ fontSize: rf(12), fontFamily: "Inter_600SemiBold", color: active ? colors.primary : colors.textMuted }}>
+                {f.label}
+              </Text>
+            </Pressable>
+          );
+        })}
       </View>
 
+      {/* Content */}
       {loading && qrCodes.length === 0 ? (
-        <View style={{ padding: 20 }}>
-          <SkeletonQrCard /><SkeletonQrCard /><SkeletonQrCard />
+        <View style={{ paddingHorizontal: sp(20), paddingTop: sp(4) }}>
+          <SkeletonQrCard /><SkeletonQrCard /><SkeletonQrCard /><SkeletonQrCard />
         </View>
       ) : filtered.length === 0 ? (
-        <Animated.View entering={FadeIn.duration(400)} style={styles.center}>
-          <LinearGradient colors={[colors.primary, colors.primaryShade]} style={styles.emptyIconWrap} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}>
-            <MaterialCommunityIcons name="qrcode-plus" size={36} color="#fff" />
-          </LinearGradient>
-          <Text style={[styles.emptyTitle, { color: colors.text }]}>
-            {filter === "business" ? "No business codes" : filter === "individual" ? "No individual codes" : "No QR codes yet"}
-          </Text>
-          <Text style={[styles.emptySub, { color: colors.textSecondary }]}>
-            Head to the generator and create your first QR code
-          </Text>
-          <Pressable onPress={() => router.push("/(tabs)/qr-generator")} style={({ pressed }) => [{ opacity: pressed ? 0.85 : 1 }]}>
-            <LinearGradient colors={[colors.primary, colors.primaryShade]} style={styles.signInBtn} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}>
-              <Ionicons name="add" size={18} color="#fff" />
-              <Text style={styles.signInBtnText}>Create QR Code</Text>
-            </LinearGradient>
-          </Pressable>
-        </Animated.View>
+        <EmptyState forFilter={filter} />
       ) : (
         <FlatList
           data={filtered}
           keyExtractor={(item) => item.docId}
           renderItem={renderItem}
-          contentContainerStyle={[styles.list, { paddingBottom: tabBarHeight + 20 }]}
+          contentContainerStyle={{ paddingHorizontal: sp(20), paddingTop: sp(2), paddingBottom: tabBarHeight + 20 }}
           showsVerticalScrollIndicator={false}
-          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={handleRefresh} tintColor={colors.primary} />}
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} tintColor={colors.primary} />
+          }
           ListHeaderComponent={
-            <Text style={[styles.countText, { color: colors.textMuted }]}>
+            <Text style={{ fontSize: rf(12), fontFamily: "Inter_500Medium", color: colors.textMuted, marginBottom: sp(10) }}>
               {filtered.length} {filtered.length === 1 ? "code" : "codes"}
             </Text>
           }
@@ -274,44 +443,3 @@ export default function MyQrCodesScreen() {
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: { flex: 1 },
-  navBar: {
-    flexDirection: "row", alignItems: "center", justifyContent: "space-between",
-    paddingHorizontal: 20, paddingBottom: 12,
-  },
-  navCenter: { flexDirection: "row", alignItems: "center", gap: 8 },
-  navTitle: { fontSize: 22, fontFamily: "Inter_700Bold" },
-  countPill: { borderRadius: 10, paddingHorizontal: 8, paddingVertical: 2, borderWidth: 1 },
-  countPillText: { fontSize: 12, fontFamily: "Inter_700Bold" },
-  backBtn: { width: 40, height: 40, borderRadius: 20, alignItems: "center", justifyContent: "center", borderWidth: 1 },
-  createBtn: { flexDirection: "row", alignItems: "center", gap: 4, borderRadius: 14, paddingHorizontal: 14, paddingVertical: 8 },
-  createBtnText: { fontSize: 13, fontFamily: "Inter_700Bold", color: "#fff" },
-  filterRow: { flexDirection: "row", gap: 8, paddingHorizontal: 20, paddingBottom: 12 },
-  filterBtn: { flexDirection: "row", alignItems: "center", gap: 5, paddingHorizontal: 14, paddingVertical: 8, borderRadius: 20, borderWidth: 1 },
-  filterBtnText: { fontSize: 12, fontFamily: "Inter_600SemiBold" },
-  list: { paddingHorizontal: 20, paddingTop: 4 },
-  countText: { fontSize: 13, fontFamily: "Inter_500Medium", marginBottom: 12 },
-  card: { flexDirection: "row", alignItems: "center", gap: 14, borderRadius: 20, borderWidth: 1, padding: 14, marginBottom: 12 },
-  qrWrap: { borderRadius: 14, padding: 6, overflow: "hidden", flexShrink: 0 },
-  cardInfo: { flex: 1, minWidth: 0, gap: 5 },
-  cardTopRow: { flexDirection: "row", alignItems: "center", gap: 6 },
-  typePill: { flexDirection: "row", alignItems: "center", gap: 4, borderRadius: 8, paddingHorizontal: 8, paddingVertical: 3 },
-  typePillTextWhite: { fontSize: 12, fontFamily: "Inter_700Bold", color: "#fff" },
-  inactivePill: { borderRadius: 6, paddingHorizontal: 6, paddingVertical: 2, borderWidth: 1 },
-  inactivePillText: { fontSize: 12, fontFamily: "Inter_700Bold" },
-  businessName: { fontSize: 14, fontFamily: "Inter_700Bold" },
-  contentText: { fontSize: 12, fontFamily: "Inter_400Regular", lineHeight: 17 },
-  metaRow: { flexDirection: "row", alignItems: "center", gap: 6, flexWrap: "wrap" },
-  metaItem: { flexDirection: "row", alignItems: "center", gap: 3 },
-  metaText: { fontSize: 12, fontFamily: "Inter_400Regular" },
-  metaSep: { width: 3, height: 3, borderRadius: 1.5, backgroundColor: "#6B8EAE" },
-  chevronWrap: { width: 28, height: 28, borderRadius: 14, alignItems: "center", justifyContent: "center" },
-  center: { flex: 1, alignItems: "center", justifyContent: "center", padding: 40, gap: 16 },
-  emptyIconWrap: { width: 88, height: 88, borderRadius: 28, alignItems: "center", justifyContent: "center", marginBottom: 4 },
-  emptyTitle: { fontSize: 20, fontFamily: "Inter_700Bold", textAlign: "center" },
-  emptySub: { fontSize: 14, fontFamily: "Inter_400Regular", textAlign: "center", lineHeight: 20 },
-  signInBtn: { flexDirection: "row", alignItems: "center", gap: 8, paddingHorizontal: 28, paddingVertical: 14, borderRadius: 20, marginTop: 4 },
-  signInBtnText: { fontSize: 15, fontFamily: "Inter_700Bold", color: "#fff" },
-});
