@@ -63,12 +63,28 @@ const AuthContext = createContext<AuthContextValue | null>(null);
 
 export { getAuthErrorMessage };
 
+async function reserveUsername(uid: string, displayName: string): Promise<string> {
+  for (let attempt = 0; attempt < 5; attempt++) {
+    const candidate = await generateUniqueUsername(displayName);
+    try {
+      await db.set(["usernames", candidate], { userId: uid, reservedAt: db.timestamp() });
+      return candidate;
+    } catch {
+      // Race condition: another user claimed this username a moment ago, try again
+    }
+  }
+  // Absolute fallback — UID suffix is guaranteed unique per user
+  const fallback = "user" + uid.slice(-8).toLowerCase().replace(/[^a-z0-9]/g, "x");
+  try { await db.set(["usernames", fallback], { userId: uid, reservedAt: db.timestamp() }); } catch {}
+  return fallback;
+}
+
 async function syncUserToDb(uid: string, email: string | null, displayName: string | null, photoURL: string | null, overrideName?: string) {
   try {
     const userData = await db.get(["users", uid]);
     if (!userData) {
       const name = overrideName || displayName || email?.split("@")[0] || "User";
-      const username = await generateUniqueUsername(name);
+      const username = await reserveUsername(uid, name);
       await db.set(["users", uid], {
         uid,
         email,
@@ -78,24 +94,12 @@ async function syncUserToDb(uid: string, email: string | null, displayName: stri
         createdAt: db.timestamp(),
         username,
       });
-      try {
-        await db.set(["usernames", username], {
-          userId: uid,
-          reservedAt: db.timestamp(),
-        });
-      } catch {}
     } else if (userData.isDeleted) {
       throw new Error("ACCOUNT_DELETED");
     } else if (!userData.username) {
       const name = overrideName || displayName || userData.displayName || "User";
-      const username = await generateUniqueUsername(name);
-      try {
-        await db.update(["users", uid], { username });
-        await db.set(["usernames", username], {
-          userId: uid,
-          reservedAt: db.timestamp(),
-        });
-      } catch {}
+      const username = await reserveUsername(uid, name);
+      await db.update(["users", uid], { username });
     }
   } catch (e: any) {
     if (e.message === "ACCOUNT_DELETED") throw new Error("This account has been deleted.");

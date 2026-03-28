@@ -367,16 +367,20 @@ export async function checkUsernameAvailable(username: string): Promise<boolean>
 
 export async function generateUniqueUsername(displayName: string): Promise<string> {
   const base =
-    displayName.toLowerCase().replace(/[^a-z0-9]/g, "").slice(0, 15) || "user";
-  for (let attempt = 0; attempt < 10; attempt++) {
-    const candidate =
-      attempt === 0
-        ? base.length >= 3 ? base : base + Math.floor(100 + Math.random() * 900)
-        : base.slice(0, 12) + Math.floor(1000 + Math.random() * 9000);
-    const available = await checkUsernameAvailable(String(candidate));
-    if (available) return String(candidate);
+    displayName.toLowerCase().replace(/[^a-z0-9]/g, "").slice(0, 12) || "user";
+  for (let attempt = 0; attempt < 15; attempt++) {
+    let candidate: string;
+    if (attempt === 0 && base.length >= 3) {
+      candidate = base;
+    } else if (attempt < 5) {
+      candidate = base.slice(0, 10) + Math.floor(100 + Math.random() * 900);
+    } else {
+      candidate = base.slice(0, 8) + Math.floor(10000 + Math.random() * 90000);
+    }
+    const available = await checkUsernameAvailable(candidate);
+    if (available) return candidate;
   }
-  return "user" + Date.now().toString().slice(-8);
+  return "user" + Date.now().toString().slice(-6) + Math.floor(10 + Math.random() * 90);
 }
 
 export async function getUsernameData(userId: string): Promise<UsernameData> {
@@ -425,7 +429,11 @@ export async function updateUsername(userId: string, newUsername: string): Promi
   const available = await checkUsernameAvailable(newUsername);
   if (!available) throw new Error("This username is already taken. Please choose another.");
 
-  await db.set(["usernames", newUsername], { userId, reservedAt: db.timestamp() });
+  try {
+    await db.set(["usernames", newUsername], { userId, reservedAt: db.timestamp() });
+  } catch {
+    throw new Error("This username was just taken. Please choose another.");
+  }
   if (oldUsername) {
     try { await db.delete(["usernames", oldUsername]); } catch {}
   }

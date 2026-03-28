@@ -46,20 +46,23 @@ export async function generateUniqueUsername(displayName: string): Promise<strin
   const base = displayName
     .toLowerCase()
     .replace(/[^a-z0-9]/g, "")
-    .slice(0, 15) || "user";
-  for (let attempt = 0; attempt < 10; attempt++) {
-    const candidate =
-      attempt === 0
-        ? base.length >= 3
-          ? base
-          : base + Math.floor(100 + Math.random() * 900)
-        : base.slice(0, 12) + Math.floor(1000 + Math.random() * 9000);
+    .slice(0, 12) || "user";
+  for (let attempt = 0; attempt < 15; attempt++) {
+    let candidate: string;
+    if (attempt === 0 && base.length >= 3) {
+      candidate = base;
+    } else if (attempt < 5) {
+      candidate = base.slice(0, 10) + Math.floor(100 + Math.random() * 900);
+    } else {
+      candidate = base.slice(0, 8) + Math.floor(10000 + Math.random() * 90000);
+    }
     try {
-      const data = await db.get(["usernames", String(candidate)]);
-      if (!data) return String(candidate);
-    } catch (e: any) {
-      if (e?.code === "permission-denied") return String(candidate);
+      const data = await db.get(["usernames", candidate]);
+      if (!data) return candidate;
+    } catch {
+      // If we can't check, skip this candidate and try the next
     }
   }
-  return "user" + Date.now().toString().slice(-8);
+  // Final fallback: timestamp + random suffix — virtually guaranteed unique
+  return "user" + Date.now().toString().slice(-6) + Math.floor(10 + Math.random() * 90);
 }

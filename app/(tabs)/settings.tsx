@@ -73,7 +73,7 @@ export default function SettingsScreen() {
           <Pressable
             onPress={() => {
               if (section === "profile" && params.fromProfile === "1") {
-                router.back();
+                router.navigate("/(tabs)/profile" as any);
               } else {
                 setSection("main");
               }
