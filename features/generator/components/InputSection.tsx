@@ -86,8 +86,8 @@ const styles = StyleSheet.create({
     flexDirection: "row", alignItems: "flex-start", marginBottom: 4,
   },
   textInput: {
-    flex: 1, fontSize: 15, fontFamily: "Inter_400Regular",
-    minHeight: 48, maxHeight: 120,
+    flex: 1, fontSize: 13, fontFamily: "Inter_400Regular",
+    minHeight: 40, maxHeight: 120,
   },
   extraFieldLabel: {
     fontSize: 12, fontFamily: "Inter_600SemiBold",

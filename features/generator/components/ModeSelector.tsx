@@ -91,24 +91,24 @@ export default function ModeSelector({ user, qrMode, businessName, setQrMode, se
 
       {qrMode === "individual" && user ? (
         <View style={[styles.banner, { backgroundColor: colors.safeDim, borderColor: colors.safe + "40" }]}>
-          <Ionicons name="person" size={14} color={colors.safe} />
-          <Text style={[styles.bannerText, { color: colors.safe }]} maxFontSizeMultiplier={1}>Branded with your QR Guard identity — saved to your profile with a unique ID</Text>
+          <Ionicons name="person" size={13} color={colors.safe} />
+          <Text style={[styles.bannerText, { color: colors.safe }]} maxFontSizeMultiplier={1}>Signed QR saved to your profile with a unique ID</Text>
         </View>
       ) : qrMode === "business" && user ? (
         <View style={[styles.banner, { borderColor: colors.warning + "40", backgroundColor: colors.warningDim }]}>
-          <Ionicons name="shield" size={14} color={colors.warning} />
-          <Text style={[styles.bannerText, { color: colors.warning }]} maxFontSizeMultiplier={1}>Living Shield — QR encodes a redirect you can update anytime without reprinting</Text>
+          <Ionicons name="shield" size={13} color={colors.warning} />
+          <Text style={[styles.bannerText, { color: colors.warning }]} maxFontSizeMultiplier={1}>Living Shield — update the destination anytime, no reprint needed</Text>
         </View>
       ) : qrMode === "private" ? (
         <View style={[styles.banner, { backgroundColor: colors.surfaceLight, borderColor: colors.surfaceBorder }]}>
-          <Ionicons name="eye-off-outline" size={14} color={colors.textMuted} />
-          <Text style={[styles.bannerText, { color: colors.textMuted }]} maxFontSizeMultiplier={1}>No-trace mode — nothing is recorded. Fully local QR code.</Text>
+          <Ionicons name="eye-off-outline" size={13} color={colors.textMuted} />
+          <Text style={[styles.bannerText, { color: colors.textMuted }]} maxFontSizeMultiplier={1}>No-trace — fully local, nothing recorded</Text>
         </View>
       ) : (
         <Pressable style={[styles.banner, { backgroundColor: colors.primaryDim, borderColor: colors.primary + "40" }]} onPress={() => router.push("/(auth)/login")}>
-          <Ionicons name="sparkles-outline" size={14} color={colors.primary} />
-          <Text style={[styles.bannerText, { color: colors.primary }]} maxFontSizeMultiplier={1}>Sign in to create branded QR codes with your QR Guard identity</Text>
-          <Ionicons name="chevron-forward" size={14} color={colors.primary} />
+          <Ionicons name="sparkles-outline" size={13} color={colors.primary} />
+          <Text style={[styles.bannerText, { color: colors.primary }]} maxFontSizeMultiplier={1}>Sign in to create branded QR codes</Text>
+          <Ionicons name="chevron-forward" size={13} color={colors.primary} />
         </Pressable>
       )}
 
@@ -137,14 +137,14 @@ const styles = StyleSheet.create({
   },
   modeBtnText: { fontSize: 13, fontFamily: "Inter_600SemiBold" },
   banner: {
-    flexDirection: "row", alignItems: "center", gap: 8,
-    borderRadius: 12, padding: 12, borderWidth: 1, marginBottom: 20,
+    flexDirection: "row", alignItems: "center", gap: 7,
+    borderRadius: 10, paddingHorizontal: 10, paddingVertical: 9, borderWidth: 1, marginBottom: 16,
   },
-  bannerText: { flex: 1, fontSize: 12, fontFamily: "Inter_400Regular" },
+  bannerText: { flex: 1, fontSize: 11, fontFamily: "Inter_400Regular" },
   businessNameRow: {
     flexDirection: "row", alignItems: "center",
     borderRadius: 14, borderWidth: 1,
     paddingHorizontal: 14, paddingVertical: 10, marginTop: 10, marginBottom: 10,
   },
-  businessNameInput: { flex: 1, fontSize: 14, fontFamily: "Inter_400Regular" },
+  businessNameInput: { flex: 1, fontSize: 13, fontFamily: "Inter_400Regular" },
 });
