@@ -30,7 +30,7 @@ const AuthFormInput = React.memo(function AuthFormInput({
       ]}>
         <Ionicons
           name={icon}
-          size={20}
+          size={16}
           color={error ? colors.danger : colors.textMuted}
           style={styles.icon}
         />
@@ -43,7 +43,7 @@ const AuthFormInput = React.memo(function AuthFormInput({
           <Pressable onPress={onToggleVisible} style={styles.eyeBtn} hitSlop={8}>
             <Ionicons
               name={toggleVisible ? "eye-off-outline" : "eye-outline"}
-              size={20}
+              size={16}
               color={colors.textMuted}
             />
           </Pressable>
@@ -57,16 +57,16 @@ const AuthFormInput = React.memo(function AuthFormInput({
 export default AuthFormInput;
 
 const styles = StyleSheet.create({
-  wrapper: { gap: 4 },
+  wrapper: { gap: 3 },
   container: {
     flexDirection: "row", alignItems: "center",
-    borderRadius: 14, borderWidth: 1, paddingHorizontal: 16,
+    borderRadius: 12, borderWidth: 1, paddingHorizontal: 14,
   },
-  icon: { marginRight: 12 },
+  icon: { marginRight: 10 },
   input: {
-    flex: 1, paddingVertical: 16,
-    fontSize: 16, fontFamily: "Inter_400Regular",
+    flex: 1, paddingVertical: 11,
+    fontSize: 13, fontFamily: "Inter_400Regular",
   },
   eyeBtn: { padding: 4 },
-  fieldError: { fontFamily: "Inter_400Regular", fontSize: 12, marginLeft: 4 },
+  fieldError: { fontFamily: "Inter_400Regular", fontSize: 11, marginLeft: 2 },
 });

@@ -1,0 +1,24 @@
+The reason your app works on the Web but fails on Android with a "Cannot reach server" error is due to a fundamental difference in how your code handles the two platforms.
+The Root Cause: Local vs. Remote Processing
+In your code, you have two completely different paths for decoding the QR code:
+On Web (Works): You use decodeQrClientSide. This function uses the browser's Canvas API to decode the image locally on your computer. It never sends the image to a server. This is fast and doesn't depend on your internet speed or server limits.
+On Android (Fails): You use postJsonExpo to send the image to ${getApiUrl()}api/qr/decode-image. This means the Android phone is trying to upload the entire image as a massive Base64 string to your backend server.
+Why Android shows "Cannot reach server"
+There are three main reasons why the Android upload is failing:
+1. The "Payload Too Large" / Network Timeout
+A high-quality photo from a modern Android gallery can be 5MB to 15MB. When converted to a Base64 string, it becomes even larger (about 33% bigger).
+The Problem: Most mobile networks or server proxies (like the ones used in development environments) will drop a connection if you try to upload a 20MB text string in one go.
+The Result: The fetch call fails or times out before the upload finishes. Your code catches this error and displays "Cannot reach server."
+2. Body Size Limits on the Server
+Even if the network is fast, your backend server (Express) usually has a default limit of 1MB for incoming JSON requests.
+The Problem: When you send a 10MB image string, the server immediately closes the connection because it exceeds the limit.
+The Result: From the phone's perspective, the server "disappeared" or refused to talk, leading to the "unreachable" error.
+3. URL Resolution (getApiUrl)
+The Problem: On the Web, relative URLs (like /api/...) work automatically. On Android, you must use a full, public HTTPS URL.
+The Check: If getApiUrl() returns localhost or an internal IP address, the Android phone will never be able to find it. It must be the actual public URL of your hosted app.
+How to fix it (The Strategy)
+To make Android work as "perfectly" as the Web, you should avoid sending the image to the server entirely:
+Implement Local Decoding for Native: Instead of uploading the image, use a library that can read QR codes directly on the phone. For example, expo-barcode-scanner has a function called scanFromURLAsync(uri) that can decode a gallery image locally on the device, just like your Canvas logic does on the Web.
+Resize Before Uploading: If you must use the server, you need to resize the image to a much smaller resolution (e.g., 800px wide) before converting it to Base64. This reduces the data size from megabytes to kilobytes, making the "unreachable" error go away.
+Increase Server Limits: You would need to configure your backend (Express body-parser) to accept much larger JSON payloads (e.g., limit: '50mb').
+Summary: The Web version is "cheating" by doing the work locally. The Android version is failing because it's trying to do a very "heavy" network task that the server or the mobile connection isn't configured to handle.
