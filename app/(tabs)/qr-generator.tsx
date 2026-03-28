@@ -221,8 +221,8 @@ function makeStyles(_c: unknown, width: number) {
       flexDirection: "row", alignItems: "flex-start", justifyContent: "space-between",
       paddingHorizontal: 22, paddingVertical: 14, paddingBottom: 8,
     },
-    navTitle: { fontSize: rf(26), fontFamily: "Inter_700Bold" },
-    navSubtitle: { fontSize: rf(13), fontFamily: "Inter_400Regular", marginTop: 2 },
+    navTitle: { fontSize: rf(20), fontFamily: "Inter_700Bold" },
+    navSubtitle: { fontSize: rf(12), fontFamily: "Inter_400Regular", marginTop: 2 },
     infoBtn: {
       width: 42, height: 42, borderRadius: 21,
       borderWidth: 1, alignItems: "center", justifyContent: "center",

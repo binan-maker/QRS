@@ -254,7 +254,7 @@ function makeStyles(c: ReturnType<typeof import("@/contexts/ThemeContext").useTh
       paddingTop: 10,
       paddingBottom: 8,
     },
-    title: { fontSize: rf(24), fontFamily: "Inter_700Bold", color: c.text },
+    title: { fontSize: rf(20), fontFamily: "Inter_700Bold", color: c.text },
     headerActions: { flexDirection: "row", gap: 8, alignItems: "center" },
     headerBtn: {
       width: 36, height: 36, borderRadius: 18,

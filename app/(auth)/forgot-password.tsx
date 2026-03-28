@@ -30,9 +30,10 @@ export default function ForgotPasswordScreen() {
   const [sent, setSent] = useState(false);
 
   const scale = Math.min(Math.max(width / 390, 0.82), 1.0);
+  const sp = (v: number) => Math.round(v * scale);
   const isSmallScreen = height < 680;
   const isNarrow = width < 360;
-  const px = isNarrow ? 16 : Math.round(22 * scale);
+  const px = isNarrow ? 16 : sp(22);
 
   async function handleReset() {
     setError(""); setEmailError("");
@@ -48,20 +49,20 @@ export default function ForgotPasswordScreen() {
     } finally { setLoading(false); }
   }
 
-  const titleSize = Math.round(Math.min(23 * scale, 27));
-  const subtitleSize = Math.round(Math.min(14 * scale, 16));
-  const btnTextSize = Math.round(Math.min(15 * scale, 17));
-  const logoSize = Math.round(Math.min(76 * scale, 88));
+  const titleSize = sp(Math.min(20, 24));
+  const subtitleSize = sp(Math.min(12, 14));
+  const btnTextSize = sp(Math.min(13, 15));
+  const logoSize = sp(Math.min(60, 68));
   const logoRadius = Math.round(logoSize * 0.33);
-  const iconSize = Math.round(28 * scale);
-  const cardPadding = Math.round(Math.min(22 * scale, 28));
+  const iconSize = sp(24);
+  const cardPadding = sp(Math.min(16, 20));
 
   if (sent) {
     return (
       <View style={{ flex: 1, backgroundColor: colors.background }}>
         <View style={[styles.centeredContainer, { paddingBottom: insets.bottom + 40, paddingTop: insets.top + 40, paddingHorizontal: px }]}>
           <View style={[styles.successOrb, { backgroundColor: colors.safeDim, borderColor: colors.safe + "30" }]}>
-            <Ionicons name="checkmark-circle" size={Math.round(48 * scale)} color={colors.safe} />
+            <Ionicons name="checkmark-circle" size={sp(42)} color={colors.safe} />
           </View>
 
           <Text style={[styles.title, { color: colors.text, fontSize: titleSize }]}>Email Sent!</Text>
@@ -75,15 +76,15 @@ export default function ForgotPasswordScreen() {
             onPress={() => router.back()}
             style={({ pressed }) => [
               styles.primaryBtn,
-              { backgroundColor: colors.primary, paddingVertical: Math.round(15 * scale), width: "100%", opacity: pressed ? 0.85 : 1, transform: [{ scale: pressed ? 0.98 : 1 }] },
+              { backgroundColor: colors.primary, paddingVertical: sp(11), width: "100%", opacity: pressed ? 0.85 : 1, transform: [{ scale: pressed ? 0.98 : 1 }] },
             ]}
           >
             <Text style={[styles.primaryBtnText, { fontSize: btnTextSize }]}>Back to Sign In</Text>
-            <Ionicons name="arrow-forward" size={Math.round(16 * scale)} color="#fff" />
+            <Ionicons name="arrow-forward" size={sp(14)} color="#fff" />
           </Pressable>
 
           <Pressable onPress={() => { setSent(false); setEmail(""); }} style={styles.linkBtn}>
-            <Text style={[styles.linkText, { color: colors.textSecondary, fontSize: Math.round(13 * scale) }]}>Try a different email</Text>
+            <Text style={[styles.linkText, { color: colors.textSecondary, fontSize: sp(11) }]}>Try a different email</Text>
           </Pressable>
         </View>
       </View>
@@ -94,10 +95,9 @@ export default function ForgotPasswordScreen() {
     <View style={{ flex: 1, backgroundColor: colors.background }}>
       <View style={[styles.glowOrb, {
         backgroundColor: colors.primaryDim,
-        top: -100, right: -100, width: 280, height: 280,
+        top: -100, right: -100, width: 220, height: 220,
       }]} />
 
-      {/* Status bar solid cover */}
       <View style={{ position: "absolute", top: 0, left: 0, right: 0, height: insets.top, backgroundColor: colors.background, zIndex: 10 }} />
 
       <KeyboardAvoidingView
@@ -106,22 +106,22 @@ export default function ForgotPasswordScreen() {
         keyboardVerticalOffset={0}
       >
         <ScrollView
-          contentContainerStyle={[styles.container, { paddingBottom: insets.bottom + 32, paddingTop: insets.top + 14, paddingHorizontal: px }]}
+          contentContainerStyle={[styles.container, { paddingBottom: insets.bottom + 24, paddingTop: insets.top + 10, paddingHorizontal: px }]}
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
           bounces={false}
           overScrollMode="never"
           style={{ backgroundColor: colors.background }}
         >
-          <View style={[styles.heroSection, { paddingTop: isSmallScreen ? 12 : Math.round(24 * scale), paddingBottom: isSmallScreen ? 16 : Math.round(28 * scale) }]}>
-            <View style={[styles.iconWrap, { marginBottom: isSmallScreen ? 6 : 10 }]}>
+          <View style={[styles.heroSection, { paddingTop: isSmallScreen ? 8 : sp(16), paddingBottom: isSmallScreen ? 10 : sp(18) }]}>
+            <View style={[styles.iconWrap, { marginBottom: isSmallScreen ? 4 : 8 }]}>
               <View style={[styles.iconBox, { width: logoSize, height: logoSize, borderRadius: logoRadius, backgroundColor: colors.primary }]}>
                 <Ionicons name="key" size={iconSize} color="#fff" />
               </View>
               {!isSmallScreen && (
                 <>
-                  <View style={[styles.logoRing, { borderColor: colors.primary + "30", width: logoSize + 22, height: logoSize + 22, borderRadius: logoRadius + 6 }]} />
-                  <View style={[styles.logoRing2, { borderColor: colors.primary + "12", width: logoSize + 42, height: logoSize + 42, borderRadius: logoRadius + 12 }]} />
+                  <View style={[styles.logoRing, { borderColor: colors.primary + "30", width: logoSize + 18, height: logoSize + 18, borderRadius: logoRadius + 5 }]} />
+                  <View style={[styles.logoRing2, { borderColor: colors.primary + "12", width: logoSize + 34, height: logoSize + 34, borderRadius: logoRadius + 10 }]} />
                 </>
               )}
             </View>
@@ -137,9 +137,9 @@ export default function ForgotPasswordScreen() {
             padding: cardPadding,
           }]}>
             {error ? (
-              <View style={[styles.errorBanner, { backgroundColor: colors.dangerDim, borderColor: colors.danger + "40", marginBottom: 14 }]}>
-                <Ionicons name="alert-circle" size={15} color={colors.danger} />
-                <Text style={[styles.errorText, { color: colors.danger, fontSize: Math.round(13 * scale) }]}>{error}</Text>
+              <View style={[styles.errorBanner, { backgroundColor: colors.dangerDim, borderColor: colors.danger + "40", marginBottom: sp(10) }]}>
+                <Ionicons name="alert-circle" size={13} color={colors.danger} />
+                <Text style={[styles.errorText, { color: colors.danger, fontSize: sp(11) }]}>{error}</Text>
               </View>
             ) : null}
 
@@ -154,14 +154,14 @@ export default function ForgotPasswordScreen() {
               error={emailError}
             />
 
-            <View style={{ height: Math.round(14 * scale) }} />
+            <View style={{ height: sp(10) }} />
 
             <Pressable
               onPress={handleReset}
               disabled={loading}
               style={({ pressed }) => [
                 styles.primaryBtn,
-                { backgroundColor: colors.primary, paddingVertical: Math.round(15 * scale), opacity: pressed || loading ? 0.88 : 1, transform: [{ scale: pressed ? 0.98 : 1 }] },
+                { backgroundColor: colors.primary, paddingVertical: sp(11), opacity: pressed || loading ? 0.88 : 1, transform: [{ scale: pressed ? 0.98 : 1 }] },
               ]}
             >
               {loading ? (
@@ -169,15 +169,15 @@ export default function ForgotPasswordScreen() {
               ) : (
                 <>
                   <Text style={[styles.primaryBtnText, { fontSize: btnTextSize }]}>Send Reset Link</Text>
-                  <Ionicons name="send" size={Math.round(14 * scale)} color="#fff" />
+                  <Ionicons name="send" size={sp(12)} color="#fff" />
                 </>
               )}
             </Pressable>
           </View>
 
-          <Pressable onPress={() => router.back()} style={[styles.linkBtn, { marginTop: Math.round(18 * scale) }]}>
-            <Ionicons name="arrow-back" size={Math.round(14 * scale)} color={colors.textSecondary} />
-            <Text style={[styles.linkText, { color: colors.textSecondary, fontSize: Math.round(13 * scale) }]}>Back to Sign In</Text>
+          <Pressable onPress={() => router.back()} style={[styles.linkBtn, { marginTop: sp(14) }]}>
+            <Ionicons name="arrow-back" size={sp(12)} color={colors.textSecondary} />
+            <Text style={[styles.linkText, { color: colors.textSecondary, fontSize: sp(11) }]}>Back to Sign In</Text>
           </Pressable>
         </ScrollView>
       </KeyboardAvoidingView>
@@ -187,35 +187,35 @@ export default function ForgotPasswordScreen() {
 
 const styles = StyleSheet.create({
   container: { flexGrow: 1 },
-  centeredContainer: { flex: 1, alignItems: "center", justifyContent: "center", gap: 16 },
+  centeredContainer: { flex: 1, alignItems: "center", justifyContent: "center", gap: 14 },
   glowOrb: { position: "absolute", borderRadius: 200 },
-  heroSection: { alignItems: "center", gap: 10 },
+  heroSection: { alignItems: "center", gap: 8 },
   iconWrap: { alignItems: "center", justifyContent: "center" },
   iconBox: { alignItems: "center", justifyContent: "center" },
   logoRing: { position: "absolute", borderWidth: 1.5 },
   logoRing2: { position: "absolute", borderWidth: 1 },
   successOrb: {
-    width: 104, height: 104, borderRadius: 36,
+    width: 90, height: 90, borderRadius: 30,
     alignItems: "center", justifyContent: "center",
-    borderWidth: 1.5, marginBottom: 8,
+    borderWidth: 1.5, marginBottom: 6,
   },
-  title: { fontFamily: "Inter_700Bold", textAlign: "center", letterSpacing: -0.5 },
-  subtitle: { fontFamily: "Inter_400Regular", textAlign: "center", maxWidth: 300 },
+  title: { fontFamily: "Inter_700Bold", textAlign: "center", letterSpacing: -0.3 },
+  subtitle: { fontFamily: "Inter_400Regular", textAlign: "center", maxWidth: 280 },
   card: {
-    borderRadius: 24, borderWidth: 1,
-    shadowColor: "#000", shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.1, shadowRadius: 20, elevation: 6,
+    borderRadius: 20, borderWidth: 1,
+    shadowColor: "#000", shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.08, shadowRadius: 16, elevation: 4,
   },
   errorBanner: {
-    flexDirection: "row", alignItems: "flex-start", gap: 10,
-    padding: 12, borderRadius: 14, borderWidth: 1,
+    flexDirection: "row", alignItems: "flex-start", gap: 8,
+    padding: 10, borderRadius: 12, borderWidth: 1,
   },
   errorText: { fontFamily: "Inter_500Medium", flex: 1 },
   primaryBtn: {
-    borderRadius: 16, alignItems: "center",
-    flexDirection: "row", justifyContent: "center", gap: 8,
+    borderRadius: 14, alignItems: "center",
+    flexDirection: "row", justifyContent: "center", gap: 6,
   },
   primaryBtnText: { color: "#fff", fontFamily: "Inter_700Bold" },
-  linkBtn: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 6, paddingVertical: 8 },
+  linkBtn: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 5, paddingVertical: 8 },
   linkText: { fontFamily: "Inter_500Medium" },
 });

@@ -37,15 +37,16 @@ export default function RegisterScreen() {
   const [registeredEmail, setRegisteredEmail] = useState("");
 
   const scale = Math.min(Math.max(width / 390, 0.82), 1.0);
+  const sp = (v: number) => Math.round(v * scale);
   const isSmallScreen = height < 700;
   const isNarrow = width < 360;
-  const px = isNarrow ? 16 : Math.round(22 * scale);
+  const px = isNarrow ? 16 : sp(22);
 
   useEffect(() => {
-  if (user) {
-    router.replace("/(tabs)");
-  }
-}, [user]);
+    if (user) {
+      router.replace("/(tabs)");
+    }
+  }, [user]);
 
   useEffect(() => {
     if (user && googleLoading) {
@@ -88,22 +89,22 @@ export default function RegisterScreen() {
     }
   }
 
-  const logoSize = Math.round(Math.min(76 * scale, 88));
+  const logoSize = sp(Math.min(60, 68));
   const logoRadius = Math.round(logoSize * 0.33);
-  const iconSize = Math.round(28 * scale);
-  const titleSize = Math.round(Math.min(24 * scale, 28));
-  const subtitleSize = Math.round(Math.min(13 * scale, 15));
-  const btnTextSize = Math.round(Math.min(15 * scale, 17));
-  const cardPadding = Math.round(Math.min(20 * scale, 26));
-  const heroPadTop = isSmallScreen ? 10 : Math.round(18 * scale);
-  const heroPadBottom = isSmallScreen ? 12 : Math.round(22 * scale);
+  const iconSize = sp(24);
+  const titleSize = sp(Math.min(20, 24));
+  const subtitleSize = sp(Math.min(12, 14));
+  const btnTextSize = sp(Math.min(13, 15));
+  const cardPadding = sp(Math.min(16, 20));
+  const heroPadTop = isSmallScreen ? 6 : sp(12);
+  const heroPadBottom = isSmallScreen ? 8 : sp(14);
 
   if (verificationSent) {
     return (
       <View style={{ flex: 1, backgroundColor: colors.background }}>
         <View style={[styles.verifyContainer, { paddingBottom: insets.bottom + 40, paddingTop: insets.top + 60, paddingHorizontal: px }]}>
           <View style={[styles.successIconWrap, { backgroundColor: colors.safeDim, borderColor: colors.safe + "30" }]}>
-            <Ionicons name="mail-open-outline" size={Math.round(40 * scale)} color={colors.safe} />
+            <Ionicons name="mail-open-outline" size={sp(36)} color={colors.safe} />
           </View>
           <Text style={[styles.title, { color: colors.text, fontSize: titleSize }]}>Check Your Email</Text>
           <Text style={[styles.verifyText, { color: colors.textSecondary, fontSize: subtitleSize, lineHeight: Math.round(subtitleSize * 1.6) }]}>
@@ -115,11 +116,11 @@ export default function RegisterScreen() {
             onPress={() => router.replace("/(auth)/login")}
             style={({ pressed }) => [
               styles.primaryBtn,
-              { backgroundColor: colors.primary, paddingVertical: Math.round(15 * scale), width: "100%", opacity: pressed ? 0.85 : 1, transform: [{ scale: pressed ? 0.98 : 1 }] },
+              { backgroundColor: colors.primary, paddingVertical: sp(11), width: "100%", opacity: pressed ? 0.85 : 1, transform: [{ scale: pressed ? 0.98 : 1 }] },
             ]}
           >
             <Text style={[styles.primaryBtnText, { fontSize: btnTextSize }]}>Go to Sign In</Text>
-            <Ionicons name="arrow-forward" size={Math.round(16 * scale)} color="#fff" />
+            <Ionicons name="arrow-forward" size={sp(14)} color="#fff" />
           </Pressable>
         </View>
       </View>
@@ -130,23 +131,14 @@ export default function RegisterScreen() {
     <View style={{ flex: 1, backgroundColor: colors.background }}>
       <View style={[styles.glowOrb, {
         backgroundColor: colors.primaryDim,
-        top: -60, left: -80, width: 240, height: 240,
+        top: -60, left: -80, width: 200, height: 200,
       }]} />
       <View style={[styles.glowOrb, {
         backgroundColor: colors.primaryDim,
-        bottom: 60, right: -100, width: 280, height: 280,
+        bottom: 60, right: -100, width: 220, height: 220,
       }]} />
 
-      {/* Status bar solid cover */}
       <View style={{ position: "absolute", top: 0, left: 0, right: 0, height: insets.top, backgroundColor: colors.background, zIndex: 10 }} />
-
-      <Pressable
-        onPress={() => router.canDismiss() ? router.dismiss() : router.replace("/(tabs)")}
-        style={[styles.closeBtn, { top: insets.top + 10, backgroundColor: colors.surfaceLight, borderColor: colors.surfaceBorder }]}
-        hitSlop={10}
-      >
-        <Ionicons name="close" size={20} color={colors.textSecondary} />
-      </Pressable>
 
       <KeyboardAvoidingView
         style={{ flex: 1 }}
@@ -154,7 +146,7 @@ export default function RegisterScreen() {
         keyboardVerticalOffset={0}
       >
         <ScrollView
-          contentContainerStyle={[styles.container, { paddingBottom: insets.bottom + 32, paddingTop: insets.top + 14, paddingHorizontal: px }]}
+          contentContainerStyle={[styles.container, { paddingBottom: insets.bottom + 24, paddingTop: insets.top + 10, paddingHorizontal: px }]}
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
           bounces={false}
@@ -162,18 +154,18 @@ export default function RegisterScreen() {
           style={{ backgroundColor: colors.background }}
         >
           <View style={[styles.heroSection, { paddingTop: heroPadTop, paddingBottom: heroPadBottom }]}>
-            <View style={[styles.logoWrap, { marginBottom: isSmallScreen ? 4 : 8 }]}>
+            <View style={[styles.logoWrap, { marginBottom: isSmallScreen ? 2 : 6 }]}>
               <View style={[styles.logoBox, { width: logoSize, height: logoSize, borderRadius: logoRadius, backgroundColor: colors.primary }]}>
                 <Ionicons name="person-add" size={iconSize} color="#fff" />
               </View>
               {!isSmallScreen && (
                 <>
-                  <View style={[styles.logoRing, { borderColor: colors.primary + "30", width: logoSize + 22, height: logoSize + 22, borderRadius: logoRadius + 6 }]} />
-                  <View style={[styles.logoRing2, { borderColor: colors.primary + "15", width: logoSize + 42, height: logoSize + 42, borderRadius: logoRadius + 12 }]} />
+                  <View style={[styles.logoRing, { borderColor: colors.primary + "30", width: logoSize + 18, height: logoSize + 18, borderRadius: logoRadius + 5 }]} />
+                  <View style={[styles.logoRing2, { borderColor: colors.primary + "15", width: logoSize + 34, height: logoSize + 34, borderRadius: logoRadius + 10 }]} />
                 </>
               )}
             </View>
-            <Text style={[styles.appLabel, { color: colors.primary, fontSize: Math.round(11 * scale) }]}>QR GUARD</Text>
+            <Text style={[styles.appLabel, { color: colors.primary, fontSize: sp(10) }]}>QR GUARD</Text>
             <Text style={[styles.title, { color: colors.text, fontSize: titleSize }]}>Create account</Text>
             <Text style={[styles.subtitle, { color: colors.textSecondary, fontSize: subtitleSize }]}>
               Join to comment, report, and sync your scan history
@@ -186,9 +178,9 @@ export default function RegisterScreen() {
             padding: cardPadding,
           }]}>
             {error ? (
-              <View style={[styles.errorBanner, { backgroundColor: colors.dangerDim, borderColor: colors.danger + "40", marginBottom: 12 }]}>
-                <Ionicons name="alert-circle" size={15} color={colors.danger} />
-                <Text style={[styles.errorText, { color: colors.danger, fontSize: Math.round(13 * scale) }]}>{error}</Text>
+              <View style={[styles.errorBanner, { backgroundColor: colors.dangerDim, borderColor: colors.danger + "40", marginBottom: sp(8) }]}>
+                <Ionicons name="alert-circle" size={13} color={colors.danger} />
+                <Text style={[styles.errorText, { color: colors.danger, fontSize: sp(11) }]}>{error}</Text>
               </View>
             ) : null}
 
@@ -202,7 +194,7 @@ export default function RegisterScreen() {
                   borderColor: colors.surfaceBorder,
                   opacity: pressed || googleLoading ? 0.7 : 1,
                   transform: [{ scale: pressed ? 0.98 : 1 }],
-                  paddingVertical: Math.round(13 * scale),
+                  paddingVertical: sp(10),
                 },
               ]}
             >
@@ -210,19 +202,19 @@ export default function RegisterScreen() {
                 <ActivityIndicator color={colors.text} size="small" />
               ) : (
                 <>
-                  <GoogleIcon size={Math.round(19 * scale)} />
-                  <Text style={[styles.googleBtnText, { color: colors.text, fontSize: Math.round(14 * scale) }]}>Continue with Google</Text>
+                  <GoogleIcon size={sp(17)} />
+                  <Text style={[styles.googleBtnText, { color: colors.text, fontSize: sp(12) }]}>Continue with Google</Text>
                 </>
               )}
             </Pressable>
 
-            <View style={[styles.dividerRow, { marginVertical: Math.round(14 * scale) }]}>
+            <View style={[styles.dividerRow, { marginVertical: sp(10) }]}>
               <View style={[styles.dividerLine, { backgroundColor: colors.surfaceBorder }]} />
-              <Text style={[styles.dividerText, { color: colors.textMuted, fontSize: Math.round(12 * scale) }]}>or create with email</Text>
+              <Text style={[styles.dividerText, { color: colors.textMuted, fontSize: sp(11) }]}>or create with email</Text>
               <View style={[styles.dividerLine, { backgroundColor: colors.surfaceBorder }]} />
             </View>
 
-            <View style={[styles.fieldsSection, { gap: Math.round(10 * scale) }]}>
+            <View style={[styles.fieldsSection, { gap: sp(8) }]}>
               <AuthFormInput
                 icon="person-outline"
                 placeholder="Display name"
@@ -258,7 +250,7 @@ export default function RegisterScreen() {
                 disabled={loading}
                 style={({ pressed }) => [
                   styles.primaryBtn,
-                  { backgroundColor: colors.primary, paddingVertical: Math.round(15 * scale), opacity: pressed || loading ? 0.88 : 1, transform: [{ scale: pressed ? 0.98 : 1 }] },
+                  { backgroundColor: colors.primary, paddingVertical: sp(11), opacity: pressed || loading ? 0.88 : 1, transform: [{ scale: pressed ? 0.98 : 1 }] },
                 ]}
               >
                 {loading ? (
@@ -266,18 +258,18 @@ export default function RegisterScreen() {
                 ) : (
                   <>
                     <Text style={[styles.primaryBtnText, { fontSize: btnTextSize }]}>Create Account</Text>
-                    <Ionicons name="arrow-forward" size={Math.round(16 * scale)} color="#fff" />
+                    <Ionicons name="arrow-forward" size={sp(14)} color="#fff" />
                   </>
                 )}
               </Pressable>
             </View>
           </View>
 
-          <View style={[styles.footer, { marginTop: Math.round(18 * scale) }]}>
-            <Text style={[styles.footerText, { color: colors.textSecondary, fontSize: Math.round(13 * scale) }]}>Already have an account?</Text>
+          <View style={[styles.footer, { marginTop: sp(14) }]}>
+            <Text style={[styles.footerText, { color: colors.textSecondary, fontSize: sp(11) }]}>Already have an account?</Text>
             <Link href="/(auth)/login" asChild>
               <Pressable>
-                <Text style={[styles.footerLink, { color: colors.primary, fontSize: Math.round(13 * scale) }]}>Sign In</Text>
+                <Text style={[styles.footerLink, { color: colors.primary, fontSize: sp(11) }]}>Sign In</Text>
               </Pressable>
             </Link>
           </View>
@@ -300,52 +292,46 @@ export default function RegisterScreen() {
 const styles = StyleSheet.create({
   container: { flexGrow: 1 },
   glowOrb: { position: "absolute", borderRadius: 200 },
-  closeBtn: {
-    position: "absolute", right: 16, zIndex: 10,
-    width: 36, height: 36, borderRadius: 18,
-    alignItems: "center", justifyContent: "center",
-    borderWidth: 1,
-  },
-  heroSection: { alignItems: "center", gap: 7 },
+  heroSection: { alignItems: "center", gap: 5 },
   logoWrap: { alignItems: "center", justifyContent: "center" },
   logoBox: { alignItems: "center", justifyContent: "center" },
   logoRing: { position: "absolute", borderWidth: 1.5 },
   logoRing2: { position: "absolute", borderWidth: 1 },
   appLabel: { fontFamily: "Inter_700Bold", letterSpacing: 3, textTransform: "uppercase" },
-  title: { fontFamily: "Inter_700Bold", textAlign: "center", letterSpacing: -0.5 },
-  subtitle: { fontFamily: "Inter_400Regular", textAlign: "center", lineHeight: 20, maxWidth: 300 },
-  verifyContainer: { flex: 1, alignItems: "center", justifyContent: "center", gap: 16 },
-  verifyText: { fontFamily: "Inter_400Regular", textAlign: "center", maxWidth: 300 },
+  title: { fontFamily: "Inter_700Bold", textAlign: "center", letterSpacing: -0.3 },
+  subtitle: { fontFamily: "Inter_400Regular", textAlign: "center", lineHeight: 18, maxWidth: 280 },
+  verifyContainer: { flex: 1, alignItems: "center", justifyContent: "center", gap: 14 },
+  verifyText: { fontFamily: "Inter_400Regular", textAlign: "center", maxWidth: 280 },
   successIconWrap: {
-    width: 96, height: 96, borderRadius: 32,
+    width: 84, height: 84, borderRadius: 28,
     alignItems: "center", justifyContent: "center",
-    borderWidth: 1, marginBottom: 8,
+    borderWidth: 1, marginBottom: 6,
   },
   card: {
-    borderRadius: 24, borderWidth: 1,
-    shadowColor: "#000", shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.1, shadowRadius: 20, elevation: 6,
+    borderRadius: 20, borderWidth: 1,
+    shadowColor: "#000", shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.08, shadowRadius: 16, elevation: 4,
   },
   errorBanner: {
-    flexDirection: "row", alignItems: "flex-start", gap: 10,
-    padding: 12, borderRadius: 14, borderWidth: 1,
+    flexDirection: "row", alignItems: "flex-start", gap: 8,
+    padding: 10, borderRadius: 12, borderWidth: 1,
   },
   errorText: { fontFamily: "Inter_500Medium", flex: 1 },
   googleBtn: {
-    flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 10,
-    borderWidth: 1, paddingHorizontal: 20, borderRadius: 16,
+    flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8,
+    borderWidth: 1, paddingHorizontal: 16, borderRadius: 14,
   },
   googleBtnText: { fontFamily: "Inter_600SemiBold" },
-  dividerRow: { flexDirection: "row", alignItems: "center", gap: 10 },
+  dividerRow: { flexDirection: "row", alignItems: "center", gap: 8 },
   dividerLine: { flex: 1, height: 1 },
   dividerText: { fontFamily: "Inter_400Regular" },
   fieldsSection: {},
   primaryBtn: {
-    borderRadius: 16, alignItems: "center",
-    flexDirection: "row", justifyContent: "center", gap: 8, marginTop: 4,
+    borderRadius: 14, alignItems: "center",
+    flexDirection: "row", justifyContent: "center", gap: 6, marginTop: 2,
   },
   primaryBtnText: { color: "#fff", fontFamily: "Inter_700Bold" },
-  footer: { flexDirection: "row", justifyContent: "center", gap: 6 },
+  footer: { flexDirection: "row", justifyContent: "center", gap: 5 },
   footerText: { fontFamily: "Inter_400Regular" },
   footerLink: { fontFamily: "Inter_700Bold" },
   overlayBg: {
@@ -353,11 +339,11 @@ const styles = StyleSheet.create({
     alignItems: "center", justifyContent: "center",
   },
   overlayCard: {
-    alignItems: "center", gap: 14, paddingVertical: 36, paddingHorizontal: 40,
-    borderRadius: 24, borderWidth: 1,
-    shadowColor: "#000", shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.18, shadowRadius: 24, elevation: 12,
-    minWidth: 220,
+    alignItems: "center", gap: 12, paddingVertical: 30, paddingHorizontal: 36,
+    borderRadius: 20, borderWidth: 1,
+    shadowColor: "#000", shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.15, shadowRadius: 20, elevation: 10,
+    minWidth: 200,
   },
-  overlayText: { fontFamily: "Inter_700Bold", fontSize: 16, textAlign: "center" },
-  overlaySubText: { fontFamily: "Inter_400Regular", fontSize: 13, textAlign: "center" },
+  overlayText: { fontFamily: "Inter_700Bold", fontSize: 14, textAlign: "center" },
+  overlaySubText: { fontFamily: "Inter_400Regular", fontSize: 12, textAlign: "center" },
 });
