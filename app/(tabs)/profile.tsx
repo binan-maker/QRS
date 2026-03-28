@@ -22,6 +22,7 @@ import PhotoModal from "@/features/profile/components/PhotoModal";
 import { useProfile } from "@/hooks/useProfile";
 import { updateBio, getUserBio } from "@/lib/services/user-service";
 import { getFriends } from "@/lib/services/friend-service";
+import QRCode from "react-native-qrcode-svg";
 
 export default function ProfileScreen() {
   const insets = useSafeAreaInsets();
@@ -93,6 +94,8 @@ export default function ProfileScreen() {
     );
   }
 
+  const previewQrs = myQrCodes.slice(0, 3);
+
   return (
     <View style={[styles.container, { paddingTop: topInset, backgroundColor: colors.background }]}>
       <ScrollView
@@ -102,17 +105,15 @@ export default function ProfileScreen() {
         {/* ── TOP BAR ── */}
         <View style={styles.topBar}>
           <Text style={[styles.pageTitle, { color: colors.text }]}>Profile</Text>
-          <View style={styles.topBarActions}>
-            <Pressable
-              onPress={() => router.push("/settings" as any)}
-              style={[styles.iconBtn, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}
-            >
-              <Ionicons name="settings-outline" size={17} color={colors.textSecondary} />
-            </Pressable>
-          </View>
+          <Pressable
+            onPress={() => router.push("/settings" as any)}
+            style={[styles.iconBtn, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}
+          >
+            <Ionicons name="settings-outline" size={17} color={colors.textSecondary} />
+          </Pressable>
         </View>
 
-        {/* ── AVATAR + INFO ── */}
+        {/* ── AVATAR + IDENTITY ── */}
         <Animated.View entering={FadeInDown.duration(400)} style={styles.avatarSection}>
           <Pressable onPress={() => setPhotoModalOpen(true)} style={styles.avatarPressable}>
             <View style={[styles.avatarRing, { borderColor: colors.primary + "50" }]}>
@@ -199,17 +200,6 @@ export default function ProfileScreen() {
               <Ionicons name="pencil" size={11} color={colors.textMuted} style={{ marginLeft: 5 }} />
             </Pressable>
           )}
-
-          {/* View public profile */}
-          {currentUsername && (
-            <Pressable
-              onPress={() => router.push(`/profile/${currentUsername}` as any)}
-              style={({ pressed }) => [styles.publicProfileBtn, { borderColor: colors.surfaceBorder, opacity: pressed ? 0.8 : 1 }]}
-            >
-              <Ionicons name="eye-outline" size={13} color={colors.textSecondary} />
-              <Text style={[styles.publicProfileText, { color: colors.textSecondary }]}>View public profile</Text>
-            </Pressable>
-          )}
         </Animated.View>
 
         {/* ── STATS ── */}
@@ -222,10 +212,7 @@ export default function ProfileScreen() {
             <Pressable
               key={s.label}
               onPress={s.onPress}
-              style={({ pressed }) => [
-                styles.statItem,
-                { opacity: pressed && s.onPress ? 0.7 : 1 },
-              ]}
+              style={({ pressed }) => [styles.statItem, { opacity: pressed && s.onPress ? 0.7 : 1 }]}
             >
               {statsLoading
                 ? <SkeletonBox width={32} height={18} borderRadius={5} />
@@ -236,32 +223,98 @@ export default function ProfileScreen() {
           ))}
         </Animated.View>
 
-        {/* ── DIVIDER ── */}
+        <View style={[styles.divider, { backgroundColor: colors.surfaceBorder }]} />
+
+        {/* ── MY QR CODES (inline) ── */}
+        <Animated.View entering={FadeInDown.duration(400).delay(80)}>
+          <View style={styles.sectionHeader}>
+            <Text style={[styles.sectionTitle, { color: colors.text }]}>My QR Codes</Text>
+            <Pressable
+              onPress={() => router.push("/my-qr-codes" as any)}
+              style={({ pressed }) => [styles.seeAllBtn, { opacity: pressed ? 0.7 : 1 }]}
+            >
+              <Text style={[styles.seeAllText, { color: colors.primary }]}>See all</Text>
+              <Ionicons name="chevron-forward" size={13} color={colors.primary} />
+            </Pressable>
+          </View>
+
+          {myQrLoading ? (
+            <View style={styles.qrRow}>
+              {[0, 1, 2].map((i) => (
+                <View key={i} style={[styles.qrCard, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
+                  <SkeletonBox width={52} height={52} borderRadius={10} />
+                  <SkeletonBox width={50} height={10} borderRadius={4} style={{ marginTop: 8 }} />
+                </View>
+              ))}
+            </View>
+          ) : previewQrs.length === 0 ? (
+            <Pressable
+              onPress={() => router.push("/(tabs)/qr-generator")}
+              style={({ pressed }) => [styles.emptyQrCard, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder, opacity: pressed ? 0.8 : 1 }]}
+            >
+              <MaterialCommunityIcons name="qrcode-plus" size={22} color={colors.textMuted} />
+              <Text style={[styles.emptyQrText, { color: colors.textMuted }]}>No QR codes yet — create one</Text>
+            </Pressable>
+          ) : (
+            <View style={styles.qrRow}>
+              {previewQrs.map((qr) => (
+                <Pressable
+                  key={qr.docId}
+                  onPress={() => router.push(`/my-qr/${qr.docId}` as any)}
+                  style={({ pressed }) => [
+                    styles.qrCard,
+                    { backgroundColor: colors.surface, borderColor: colors.surfaceBorder, opacity: pressed ? 0.8 : 1 },
+                  ]}
+                >
+                  <View style={[styles.qrCodeWrap, { backgroundColor: qr.bgColor || "#F8FAFC" }]}>
+                    <QRCode
+                      value={qr.content || "https://qrguard.app"}
+                      size={52}
+                      color={qr.fgColor || "#0A0E17"}
+                      backgroundColor={qr.bgColor || "#F8FAFC"}
+                      quietZone={3}
+                      ecl="L"
+                    />
+                  </View>
+                  <Text style={[styles.qrCardLabel, { color: colors.textSecondary }]} numberOfLines={1}>
+                    {qr.businessName || (qr.content.length > 14 ? qr.content.slice(0, 14) + "…" : qr.content)}
+                  </Text>
+                </Pressable>
+              ))}
+              {myQrCodes.length > 3 && (
+                <Pressable
+                  onPress={() => router.push("/my-qr-codes" as any)}
+                  style={({ pressed }) => [
+                    styles.qrCard, styles.qrCardMore,
+                    { backgroundColor: colors.primaryDim, borderColor: colors.primary + "30", opacity: pressed ? 0.8 : 1 },
+                  ]}
+                >
+                  <Text style={[styles.qrMoreCount, { color: colors.primary }]}>+{myQrCodes.length - 3}</Text>
+                  <Text style={[styles.qrMoreLabel, { color: colors.primary }]}>more</Text>
+                </Pressable>
+              )}
+            </View>
+          )}
+        </Animated.View>
+
         <View style={[styles.divider, { backgroundColor: colors.surfaceBorder }]} />
 
         {/* ── MENU ITEMS ── */}
-        <Animated.View entering={FadeInDown.duration(400).delay(100)} style={styles.menuGroup}>
+        <Animated.View entering={FadeInDown.duration(400).delay(120)} style={styles.menuGroup}>
           {[
             {
-              icon: <MaterialCommunityIcons name="qrcode-edit" size={18} color={colors.primary} />,
-              bg: colors.primaryDim,
-              title: "My QR Codes",
-              sub: myQrLoading ? "Loading…" : `${myQrCodes.length} code${myQrCodes.length !== 1 ? "s" : ""}`,
-              onPress: () => router.push("/my-qr-codes" as any),
-            },
-            {
-              icon: <Ionicons name="heart" size={18} color={colors.danger} />,
-              bg: colors.dangerDim,
-              title: "Favorites",
-              sub: "Saved QR codes",
-              onPress: () => router.push("/favorites" as any),
-            },
-            {
-              icon: <Ionicons name="shield-checkmark" size={18} color={colors.accent} />,
+              icon: <Ionicons name="shield-checkmark" size={17} color={colors.accent} />,
               bg: colors.accentDim,
               title: "Privacy",
               sub: "Manage your profile visibility",
               onPress: () => router.push("/privacy-settings" as any),
+            },
+            {
+              icon: <Ionicons name="people-outline" size={17} color={colors.safe} />,
+              bg: colors.safeDim,
+              title: "Friends",
+              sub: `${friendsCount} friend${friendsCount !== 1 ? "s" : ""}`,
+              onPress: () => router.push("/friends" as any),
             },
           ].map((item, idx) => (
             <Pressable
@@ -283,7 +336,7 @@ export default function ProfileScreen() {
         </Animated.View>
 
         {/* ── SIGN OUT ── */}
-        <Animated.View entering={FadeInDown.duration(400).delay(150)}>
+        <Animated.View entering={FadeInDown.duration(400).delay(160)}>
           <Pressable
             onPress={handleSignOut}
             style={({ pressed }) => [
@@ -332,7 +385,6 @@ const styles = StyleSheet.create({
     justifyContent: "space-between", marginBottom: 24, marginTop: 4,
   },
   pageTitle: { fontSize: 22, fontFamily: "Inter_700Bold" },
-  topBarActions: { flexDirection: "row", gap: 8 },
   iconBtn: {
     width: 34, height: 34, borderRadius: 10,
     alignItems: "center", justifyContent: "center", borderWidth: 1,
@@ -360,7 +412,6 @@ const styles = StyleSheet.create({
   nameRow: { flexDirection: "row", alignItems: "center" },
   displayName: { fontSize: 19, fontFamily: "Inter_700Bold" },
   usernameText: { fontSize: 12, fontFamily: "Inter_500Medium" },
-  emailText: { fontSize: 11, fontFamily: "Inter_400Regular" },
 
   editRow: { flexDirection: "row", alignItems: "center", gap: 8, width: "100%" },
   nameInput: {
@@ -386,13 +437,6 @@ const styles = StyleSheet.create({
   bioCharCount: { flex: 1, fontSize: 11, fontFamily: "Inter_400Regular" },
   bioActionText: { fontSize: 12, fontFamily: "Inter_500Medium", paddingHorizontal: 4 },
 
-  publicProfileBtn: {
-    flexDirection: "row", alignItems: "center", gap: 5,
-    marginTop: 4, paddingVertical: 6, paddingHorizontal: 12,
-    borderRadius: 20, borderWidth: 1,
-  },
-  publicProfileText: { fontSize: 11, fontFamily: "Inter_500Medium" },
-
   statsRow: {
     flexDirection: "row", justifyContent: "space-around",
     marginBottom: 20,
@@ -402,6 +446,37 @@ const styles = StyleSheet.create({
   statLabel: { fontSize: 11, fontFamily: "Inter_400Regular" },
 
   divider: { height: 1, marginBottom: 20 },
+
+  sectionHeader: {
+    flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 12,
+  },
+  sectionTitle: { fontSize: 15, fontFamily: "Inter_700Bold" },
+  seeAllBtn: { flexDirection: "row", alignItems: "center", gap: 2 },
+  seeAllText: { fontSize: 13, fontFamily: "Inter_500Medium" },
+
+  qrRow: { flexDirection: "row", gap: 10, marginBottom: 20 },
+  qrCard: {
+    flex: 1, borderRadius: 14, padding: 12, borderWidth: 1,
+    alignItems: "center", gap: 8,
+  },
+  qrCardMore: {
+    justifyContent: "center",
+  },
+  qrCodeWrap: {
+    borderRadius: 10, padding: 4, overflow: "hidden",
+  },
+  qrCardLabel: {
+    fontSize: 11, fontFamily: "Inter_500Medium", textAlign: "center",
+  },
+  qrMoreCount: { fontSize: 18, fontFamily: "Inter_700Bold" },
+  qrMoreLabel: { fontSize: 11, fontFamily: "Inter_500Medium" },
+
+  emptyQrCard: {
+    flexDirection: "row", alignItems: "center", gap: 10,
+    borderRadius: 14, padding: 16, borderWidth: 1,
+    borderStyle: "dashed", marginBottom: 20,
+  },
+  emptyQrText: { fontSize: 13, fontFamily: "Inter_400Regular" },
 
   menuGroup: { gap: 8, marginBottom: 24 },
   menuItem: {

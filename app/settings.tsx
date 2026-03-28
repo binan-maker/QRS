@@ -303,6 +303,21 @@ export default function SettingsScreen() {
           </View>
         )}
 
+        {/* Library Section */}
+        {user && (
+          <View style={styles.section}>
+            <Text style={[styles.sectionLabel, { color: colors.textMuted }]}>LIBRARY</Text>
+            <View style={[styles.menuGroup, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
+              <SettingsMenuItem
+                icon="heart-outline"
+                label="Favorites"
+                sublabel="QR codes you've saved"
+                onPress={() => router.push("/favorites" as any)}
+              />
+            </View>
+          </View>
+        )}
+
         {/* Account Section */}
         {user && (
           <View style={styles.section}>
@@ -316,7 +331,7 @@ export default function SettingsScreen() {
               />
               <View style={[styles.divider, { backgroundColor: colors.surfaceBorder }]} />
               <SettingsMenuItem
-                icon="heart-outline"
+                icon="notifications-outline"
                 label="Following"
                 sublabel="QR codes you're tracking"
                 onPress={() => setSection("following")}
