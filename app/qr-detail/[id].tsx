@@ -38,7 +38,6 @@ import LoadingSkeleton from "@/features/qr-detail/components/LoadingSkeleton";
 import ContentCard from "@/features/qr-detail/components/ContentCard";
 import TrustScoreCard from "@/features/qr-detail/components/TrustScoreCard";
 import OwnerCard from "@/features/qr-detail/components/OwnerCard";
-import MerchantDashboard from "@/features/qr-detail/components/MerchantDashboard";
 import CommentItem from "@/features/qr-detail/components/CommentItem";
 import SafetyWarningCard from "@/features/qr-detail/components/SafetyWarningCard";
 import ReportGrid from "@/features/qr-detail/components/ReportGrid";
@@ -511,19 +510,6 @@ export default function QrDetailScreen() {
               </Animated.View>
             )}
 
-            {/* ── Merchant Dashboard (owner only) ─────────────────────────── */}
-            {q.isQrOwner && (
-              <Animated.View entering={FadeInDown.duration(400).delay(190)}>
-                <MerchantDashboard
-                  scanVelocity={q.scanVelocity}
-                  velocityLoading={q.velocityLoading}
-                  onRefreshVelocity={async () => {
-                    const { getScanVelocity } = await import("@/lib/firestore-service");
-                    getScanVelocity(id);
-                  }}
-                />
-              </Animated.View>
-            )}
           </ScrollView>
 
           {/* Comment Input Bar */}

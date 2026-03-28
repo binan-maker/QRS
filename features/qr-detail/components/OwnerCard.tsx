@@ -10,9 +10,7 @@ interface Props {
   ownerInfo: QrOwnerInfo;
   isQrOwner: boolean;
   followCount: number;
-  unreadMessages: number;
   onOpenFollowers: () => void;
-  onOpenMessages: () => void;
 }
 
 const TYPE_ICONS: Record<string, keyof typeof Ionicons.glyphMap> = {
@@ -104,21 +102,6 @@ const OwnerCard = React.memo(function OwnerCard({
               >
                 <Ionicons name="people-outline" size={14} color={colors.primary} />
                 <Text style={[styles.actionBtnText, { color: colors.primary }]}>{formatCompactNumber(followCount)}</Text>
-              </Pressable>
-              <Pressable
-                onPress={onOpenMessages}
-                style={({ pressed }) => [
-                  styles.actionBtn,
-                  { backgroundColor: colors.surfaceLight, borderColor: colors.surfaceBorder, opacity: pressed ? 0.75 : 1, position: "relative" },
-                ]}
-              >
-                <Ionicons name="mail-outline" size={14} color={colors.primary} />
-                <Text style={[styles.actionBtnText, { color: colors.primary }]}>Inbox</Text>
-                {unreadMessages > 0 && (
-                  <View style={[styles.unreadBadge, { backgroundColor: colors.danger }]}>
-                    <Text style={styles.unreadBadgeText}>{unreadMessages}</Text>
-                  </View>
-                )}
               </Pressable>
             </View>
           ) : null}
