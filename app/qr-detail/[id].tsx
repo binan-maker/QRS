@@ -55,42 +55,42 @@ function safeBack() {
 }
 
 function SectionHeader({
-  icon,
   label,
   inline,
 }: {
-  icon: keyof typeof Ionicons.glyphMap;
+  icon?: keyof typeof Ionicons.glyphMap;
   label: string;
   gradient?: [string, string];
   inline?: boolean;
 }) {
   const { colors } = useTheme();
   const content = (
-    <View style={sectionHeaderStyles.row}>
-      <Ionicons name={icon} size={15} color={colors.textSecondary} />
-      <Text style={[sectionHeaderStyles.label, { color: colors.text }]} maxFontSizeMultiplier={1}>{label}</Text>
-    </View>
+    <Text style={[sectionHeaderStyles.label, { color: colors.text }]} maxFontSizeMultiplier={1}>
+      {label}
+    </Text>
   );
   if (inline) return content;
   return <View style={sectionHeaderStyles.wrapper}>{content}</View>;
 }
 
 const sectionHeaderStyles = StyleSheet.create({
-  wrapper: { marginBottom: 12, marginTop: 4 },
-  row: { flexDirection: "row", alignItems: "center", gap: 8 },
-  label: { fontSize: 15, fontFamily: "Inter_700Bold" },
+  wrapper: { marginBottom: 10, marginTop: 2 },
+  label: { fontSize: 16, fontFamily: "Inter_700Bold" },
 });
 
 function VerdictBanner({ verdict, offlineMode }: { verdict: ReturnType<ReturnType<typeof useQrDetail>["getCombinedVerdict"]>; offlineMode: boolean }) {
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
 
   if (offlineMode) {
     return (
-      <View style={[verdictStyles.banner, { backgroundColor: colors.warningDim, borderColor: colors.warning + "50" }]}>
-        <Ionicons name="cloud-offline-outline" size={20} color={colors.warning} />
+      <View style={[verdictStyles.banner, { backgroundColor: colors.warningDim, borderColor: colors.warning + "45" }]}>
+        <View style={[verdictStyles.iconWrap, { backgroundColor: colors.warning + "25" }]}>
+          <Ionicons name="cloud-offline-outline" size={22} color={colors.warning} />
+        </View>
         <View style={{ flex: 1 }}>
-          <Text style={[verdictStyles.label, { color: colors.warning }]}>OFFLINE MODE</Text>
-          <Text style={[verdictStyles.reason, { color: colors.textSecondary }]}>Showing cached data — connect to see live safety info</Text>
+          <Text style={[verdictStyles.eyebrow, { color: colors.warning }]} maxFontSizeMultiplier={1}>OFFLINE MODE</Text>
+          <Text style={[verdictStyles.label, { color: isDark ? "#fff" : "#111" }]} maxFontSizeMultiplier={1}>Cached Data Only</Text>
+          <Text style={[verdictStyles.reason, { color: colors.textSecondary }]} maxFontSizeMultiplier={1}>Connect to see live safety info</Text>
         </View>
       </View>
     );
@@ -113,12 +113,15 @@ function VerdictBanner({ verdict, offlineMode }: { verdict: ReturnType<ReturnTyp
     verdict.level === "caution" ? colors.warning : colors.danger;
 
   return (
-    <View style={[verdictStyles.banner, { backgroundColor: bg, borderColor: borderColor + "50" }]}>
+    <View style={[verdictStyles.banner, { backgroundColor: bg, borderColor: borderColor + "45" }]}>
       <LinearGradient colors={gradient} style={verdictStyles.iconWrap} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}>
-        <Ionicons name={iconName} size={20} color="#fff" />
+        <Ionicons name={iconName} size={24} color="#fff" />
       </LinearGradient>
       <View style={{ flex: 1 }}>
-        <Text style={[verdictStyles.label, { color: borderColor }]} maxFontSizeMultiplier={1}>{verdict.label}</Text>
+        <Text style={[verdictStyles.eyebrow, { color: borderColor }]} maxFontSizeMultiplier={1}>
+          {verdict.level === "safe" ? "VERIFIED SAFE" : verdict.level === "caution" ? "USE CAUTION" : "DANGER DETECTED"}
+        </Text>
+        <Text style={[verdictStyles.label, { color: isDark ? "#fff" : "#111" }]} maxFontSizeMultiplier={1}>{verdict.label}</Text>
         <Text style={[verdictStyles.reason, { color: colors.textSecondary }]} numberOfLines={2} maxFontSizeMultiplier={1}>{verdict.reason}</Text>
       </View>
     </View>
@@ -127,12 +130,39 @@ function VerdictBanner({ verdict, offlineMode }: { verdict: ReturnType<ReturnTyp
 
 const verdictStyles = StyleSheet.create({
   banner: {
-    flexDirection: "row", alignItems: "center", gap: 14,
-    borderRadius: 20, padding: 16, marginBottom: 16, borderWidth: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 16,
+    borderRadius: 20,
+    padding: 18,
+    marginBottom: 14,
+    borderWidth: 1,
   },
-  iconWrap: { width: 46, height: 46, borderRadius: 15, alignItems: "center", justifyContent: "center", flexShrink: 0 },
-  label: { fontSize: 13, fontFamily: "Inter_700Bold", letterSpacing: 0.8, marginBottom: 3 },
-  reason: { fontSize: 14, fontFamily: "Inter_400Regular", lineHeight: 20 },
+  iconWrap: {
+    width: 52,
+    height: 52,
+    borderRadius: 18,
+    alignItems: "center",
+    justifyContent: "center",
+    flexShrink: 0,
+  },
+  eyebrow: {
+    fontSize: 11,
+    fontFamily: "Inter_700Bold",
+    letterSpacing: 1.2,
+    marginBottom: 2,
+  },
+  label: {
+    fontSize: 17,
+    fontFamily: "Inter_700Bold",
+    marginBottom: 2,
+    lineHeight: 22,
+  },
+  reason: {
+    fontSize: 13,
+    fontFamily: "Inter_400Regular",
+    lineHeight: 18,
+  },
 });
 
 export default function QrDetailScreen() {

@@ -15,21 +15,23 @@ export default function SafetyWarningCard({ riskLevel, warnings, title }: Safety
   const gradient: [string, string] = isDangerous ? [colors.danger, colors.dangerShade] : [colors.warning, colors.warningShade];
   const bg = isDangerous ? colors.dangerDim : colors.warningDim;
   const borderColor = isDangerous ? colors.danger : colors.warning;
-  const icon = isDangerous ? "shield-half-outline" : "alert-circle-outline";
+  const icon: keyof typeof Ionicons.glyphMap = isDangerous ? "shield-half-outline" : "alert-circle-outline";
   const defaultTitle = isDangerous ? "Security Warning" : "Proceed with Caution";
   const displayTitle = (title ?? defaultTitle).replace(/^⚠\s*/, "");
 
   return (
-    <View style={[styles.card, { backgroundColor: bg, borderColor: borderColor + "50" }]}>
+    <View style={[styles.card, { backgroundColor: bg, borderColor: borderColor + "55" }]}>
       <View style={styles.headerRow}>
-        <LinearGradient colors={gradient} style={styles.iconCircle} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}>
-          <Ionicons name={icon as any} size={24} color="#fff" />
+        <LinearGradient colors={gradient} style={styles.iconBox} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}>
+          <Ionicons name={icon} size={22} color="#fff" />
         </LinearGradient>
         <View style={{ flex: 1 }}>
           <Text style={[styles.eyebrow, { color: borderColor }]} maxFontSizeMultiplier={1}>
             {isDangerous ? "DANGER DETECTED" : "CAUTION"}
           </Text>
-          <Text style={[styles.title, { color: isDark ? "#fff" : "#1a1a1a" }]} maxFontSizeMultiplier={1}>{displayTitle}</Text>
+          <Text style={[styles.title, { color: isDark ? "#fff" : "#111" }]} maxFontSizeMultiplier={1}>
+            {displayTitle}
+          </Text>
         </View>
       </View>
 
@@ -39,7 +41,9 @@ export default function SafetyWarningCard({ riskLevel, warnings, title }: Safety
         {warnings.map((w, i) => (
           <View key={i} style={styles.warningRow}>
             <View style={[styles.dot, { backgroundColor: gradient[0] }]} />
-            <Text style={[styles.warningText, { color: isDark ? colors.text : "#1f1f1f" }]} maxFontSizeMultiplier={1}>{w}</Text>
+            <Text style={[styles.warningText, { color: isDark ? colors.text : "#1f1f1f" }]} maxFontSizeMultiplier={1}>
+              {w}
+            </Text>
           </View>
         ))}
       </View>
@@ -48,14 +52,43 @@ export default function SafetyWarningCard({ riskLevel, warnings, title }: Safety
 }
 
 const styles = StyleSheet.create({
-  card: { borderRadius: 20, padding: 18, marginBottom: 14, borderWidth: 1, gap: 14 },
+  card: {
+    borderRadius: 20,
+    padding: 18,
+    marginBottom: 12,
+    borderWidth: 1,
+    gap: 14,
+  },
   headerRow: { flexDirection: "row", alignItems: "center", gap: 14 },
-  iconCircle: { width: 52, height: 52, borderRadius: 18, alignItems: "center", justifyContent: "center", flexShrink: 0 },
-  eyebrow: { fontSize: 12, fontFamily: "Inter_700Bold", letterSpacing: 1, marginBottom: 2 },
+  iconBox: {
+    width: 50,
+    height: 50,
+    borderRadius: 16,
+    alignItems: "center",
+    justifyContent: "center",
+    flexShrink: 0,
+  },
+  eyebrow: {
+    fontSize: 11,
+    fontFamily: "Inter_700Bold",
+    letterSpacing: 1.2,
+    marginBottom: 2,
+  },
   title: { fontSize: 16, fontFamily: "Inter_700Bold", lineHeight: 21 },
-  divider: { height: 1 },
+  divider: { height: StyleSheet.hairlineWidth },
   warningsContainer: { gap: 10 },
   warningRow: { flexDirection: "row", alignItems: "flex-start", gap: 10 },
-  dot: { width: 7, height: 7, borderRadius: 4, marginTop: 6, flexShrink: 0 },
-  warningText: { flex: 1, fontSize: 13.5, fontFamily: "Inter_400Regular", lineHeight: 20 },
+  dot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    marginTop: 7,
+    flexShrink: 0,
+  },
+  warningText: {
+    flex: 1,
+    fontSize: 13.5,
+    fontFamily: "Inter_400Regular",
+    lineHeight: 20,
+  },
 });

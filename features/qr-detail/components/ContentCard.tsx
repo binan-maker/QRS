@@ -24,23 +24,23 @@ function getTypeCfg(type: string, colors: AppColors): {
   const neutral: GradientPair = [colors.textSecondary, colors.textMuted];
 
   const map: Record<string, { icon: keyof typeof Ionicons.glyphMap; label: string; gradient: GradientPair; openLabel: string }> = {
-    url:      { icon: "globe-outline",       label: "URL",              gradient: primary,  openLabel: "Open Link" },
-    phone:    { icon: "call-outline",        label: "Phone Number",     gradient: safe,     openLabel: "Call Number" },
-    email:    { icon: "mail-outline",        label: "Email",            gradient: primary,  openLabel: "Send Email" },
-    wifi:     { icon: "wifi-outline",        label: "Wi-Fi Network",    gradient: primary,  openLabel: "Connect to Wi-Fi" },
-    location: { icon: "location-outline",    label: "Location",         gradient: danger,   openLabel: "Open in Maps" },
-    payment:  { icon: "card-outline",        label: "Payment",          gradient: payment,  openLabel: "Open Payment" },
-    sms:      { icon: "chatbubble-outline",  label: "SMS Message",      gradient: primary,  openLabel: "Send SMS" },
-    contact:  { icon: "person-outline",      label: "Contact Card",     gradient: primary,  openLabel: "Save Contact" },
-    event:    { icon: "calendar-outline",    label: "Calendar Event",   gradient: primary,  openLabel: "Add to Calendar" },
-    otp:      { icon: "lock-closed-outline", label: "OTP / 2FA Setup",  gradient: safe,     openLabel: "Open Authenticator" },
-    app:      { icon: "apps-outline",        label: "App Link",         gradient: primary,  openLabel: "Open App" },
-    social:   { icon: "people-outline",      label: "Social Profile",   gradient: primary,  openLabel: "Open Profile" },
-    media:    { icon: "play-circle-outline", label: "Media",            gradient: primary,  openLabel: "Play Media" },
-    document: { icon: "document-outline",    label: "Document",         gradient: neutral,  openLabel: "Open Document" },
-    boarding: { icon: "airplane-outline",    label: "Boarding Pass",    gradient: primary,  openLabel: "View Boarding Pass" },
-    product:  { icon: "barcode-outline",     label: "Product",          gradient: primary,  openLabel: "View Product" },
-    text:     { icon: "document-text-outline", label: "Text",           gradient: neutral,  openLabel: "Open" },
+    url:      { icon: "globe-outline",         label: "Website URL",      gradient: primary,  openLabel: "Open Link"          },
+    phone:    { icon: "call-outline",           label: "Phone Number",     gradient: safe,     openLabel: "Call Number"        },
+    email:    { icon: "mail-outline",           label: "Email",            gradient: primary,  openLabel: "Send Email"         },
+    wifi:     { icon: "wifi-outline",           label: "Wi-Fi Network",    gradient: primary,  openLabel: "Connect to Wi-Fi"  },
+    location: { icon: "location-outline",       label: "Location",         gradient: danger,   openLabel: "Open in Maps"      },
+    payment:  { icon: "card-outline",           label: "Payment",          gradient: payment,  openLabel: "Open Payment"      },
+    sms:      { icon: "chatbubble-outline",     label: "SMS Message",      gradient: primary,  openLabel: "Send SMS"          },
+    contact:  { icon: "person-outline",         label: "Contact Card",     gradient: primary,  openLabel: "Save Contact"      },
+    event:    { icon: "calendar-outline",       label: "Calendar Event",   gradient: primary,  openLabel: "Add to Calendar"   },
+    otp:      { icon: "lock-closed-outline",    label: "OTP / 2FA",        gradient: safe,     openLabel: "Open Authenticator"},
+    app:      { icon: "apps-outline",           label: "App Link",         gradient: primary,  openLabel: "Open App"          },
+    social:   { icon: "people-outline",         label: "Social Profile",   gradient: primary,  openLabel: "Open Profile"      },
+    media:    { icon: "play-circle-outline",    label: "Media",            gradient: primary,  openLabel: "Play Media"        },
+    document: { icon: "document-outline",       label: "Document",         gradient: neutral,  openLabel: "Open Document"     },
+    boarding: { icon: "airplane-outline",       label: "Boarding Pass",    gradient: primary,  openLabel: "View Pass"         },
+    product:  { icon: "barcode-outline",        label: "Product",          gradient: primary,  openLabel: "View Product"      },
+    text:     { icon: "document-text-outline",  label: "Text",             gradient: neutral,  openLabel: "Open"              },
   };
   return map[type] ?? map.text;
 }
@@ -161,21 +161,33 @@ const ContentCard = React.memo(function ContentCard({ content, contentType, pars
   return (
     <View style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
       <LinearGradient
-        colors={[cfg.gradient[0] + (isDark ? "18" : "10"), "transparent"]}
+        colors={[cfg.gradient[0] + (isDark ? "14" : "09"), "transparent"]}
         style={StyleSheet.absoluteFill}
       />
 
-      {/* Hero icon */}
-      <View style={styles.heroCenter}>
-        <LinearGradient colors={cfg.gradient} style={styles.heroIcon} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}>
-          <Ionicons name={cfg.icon} size={26} color="#fff" />
+      {/* Type header row */}
+      <View style={styles.typeRow}>
+        <LinearGradient colors={cfg.gradient} style={styles.typeIcon} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}>
+          <Ionicons name={cfg.icon} size={18} color="#fff" />
         </LinearGradient>
-        <LinearGradient colors={cfg.gradient} style={styles.typePill} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}>
-          <Text style={styles.typePillText}>{cfg.label.toUpperCase()}</Text>
-        </LinearGradient>
+        <Text style={[styles.typeLabel, { color: colors.text }]}>{cfg.label}</Text>
+        <Pressable
+          onPress={handleCopy}
+          style={({ pressed }) => [
+            styles.copyBtn,
+            {
+              backgroundColor: isDark ? colors.surfaceLight : colors.background,
+              borderColor: colors.surfaceBorder,
+              opacity: pressed ? 0.7 : 1,
+            },
+          ]}
+        >
+          <Ionicons name={copied ? "checkmark" : "copy-outline"} size={16} color={copied ? colors.safe : colors.textMuted} />
+          {copied && <Text style={[styles.copiedText, { color: colors.safe }]}>Copied</Text>}
+        </Pressable>
       </View>
 
-      {/* Content text — hidden for URL type (open button is the action) */}
+      {/* Content text — hidden for URL type */}
       {contentType !== "url" && (
         <View style={[styles.contentBox, { backgroundColor: isDark ? colors.surfaceLight : colors.background, borderColor: colors.surfaceBorder }]}>
           <Text style={[styles.contentText, { color: colors.text }]} selectable numberOfLines={contentExpanded ? undefined : 4}>
@@ -189,7 +201,7 @@ const ContentCard = React.memo(function ContentCard({ content, contentType, pars
         </View>
       )}
 
-      {/* URL display — clean domain pill instead of raw text */}
+      {/* URL display */}
       {contentType === "url" && (
         <View style={[styles.urlBox, { backgroundColor: isDark ? colors.surfaceLight : colors.background, borderColor: colors.surfaceBorder }]}>
           <Ionicons name="link-outline" size={14} color={cfg.gradient[0]} />
@@ -232,24 +244,15 @@ const ContentCard = React.memo(function ContentCard({ content, contentType, pars
         </View>
       )}
 
-      {/* Actions */}
-      <View style={styles.actionRow}>
-        {hasOpenAction && (
-          <Pressable onPress={onOpenContent} style={({ pressed }) => [{ flex: 1, opacity: pressed ? 0.85 : 1 }]}>
-            <LinearGradient colors={cfg.gradient} style={styles.openBtn} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}>
-              <Ionicons name="open-outline" size={17} color="#fff" />
-              <Text style={styles.openBtnText}>{cfg.openLabel}</Text>
-            </LinearGradient>
-          </Pressable>
-        )}
-        <Pressable
-          onPress={handleCopy}
-          style={({ pressed }) => [styles.copyBtn, { backgroundColor: isDark ? colors.surfaceLight : colors.background, borderColor: colors.surfaceBorder, opacity: pressed ? 0.75 : 1 }]}
-        >
-          <Ionicons name={copied ? "checkmark" : "copy-outline"} size={18} color={copied ? colors.safe : colors.textSecondary} />
-          {copied && <Text style={[styles.copiedText, { color: colors.safe }]}>Copied!</Text>}
+      {/* Open action */}
+      {hasOpenAction && (
+        <Pressable onPress={onOpenContent} style={({ pressed }) => [{ opacity: pressed ? 0.85 : 1 }]}>
+          <LinearGradient colors={cfg.gradient} style={styles.openBtn} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}>
+            <Ionicons name="open-outline" size={17} color="#fff" />
+            <Text style={styles.openBtnText}>{cfg.openLabel}</Text>
+          </LinearGradient>
         </Pressable>
-      </View>
+      )}
     </View>
   );
 });
@@ -267,41 +270,87 @@ export default ContentCard;
 
 const styles = StyleSheet.create({
   card: {
-    borderRadius: 24, padding: 20, marginBottom: 16, borderWidth: 1, overflow: "hidden", gap: 16,
+    borderRadius: 22,
+    padding: 18,
+    marginBottom: 12,
+    borderWidth: 1,
+    overflow: "hidden",
+    gap: 14,
   },
-  heroCenter: { alignItems: "center", gap: 10, paddingVertical: 4 },
-  heroIcon: {
-    width: 60, height: 60, borderRadius: 18,
-    alignItems: "center", justifyContent: "center",
+  typeRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
   },
-  typePill: { paddingHorizontal: 12, paddingVertical: 4, borderRadius: 100 },
-  typePillText: { fontSize: 12, fontFamily: "Inter_700Bold", color: "#fff", letterSpacing: 0.8 },
+  typeIcon: {
+    width: 36,
+    height: 36,
+    borderRadius: 11,
+    alignItems: "center",
+    justifyContent: "center",
+    flexShrink: 0,
+  },
+  typeLabel: {
+    fontSize: 15,
+    fontFamily: "Inter_700Bold",
+    flex: 1,
+  },
+  copyBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 5,
+    height: 34,
+    paddingHorizontal: 11,
+    borderRadius: 10,
+    borderWidth: 1,
+  },
+  copiedText: { fontSize: 12, fontFamily: "Inter_600SemiBold" },
   contentBox: {
-    borderRadius: 16, padding: 16, borderWidth: 1, gap: 8,
+    borderRadius: 14,
+    padding: 14,
+    borderWidth: 1,
+    gap: 8,
   },
   urlBox: {
-    flexDirection: "row", alignItems: "center", gap: 8,
-    borderRadius: 12, paddingHorizontal: 14, paddingVertical: 12, borderWidth: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    borderRadius: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    borderWidth: 1,
   },
   urlText: { flex: 1, fontSize: 14, fontFamily: "Inter_500Medium" },
-  contentText: { fontSize: 14, fontFamily: "Inter_400Regular", lineHeight: 22, letterSpacing: 0.2 },
+  contentText: {
+    fontSize: 14,
+    fontFamily: "Inter_400Regular",
+    lineHeight: 22,
+    letterSpacing: 0.1,
+  },
   expandBtn: { alignSelf: "flex-start" },
   expandBtnText: { fontSize: 13, fontFamily: "Inter_600SemiBold" },
   infoGrid: {
-    borderRadius: 16, padding: 14, gap: 10, borderWidth: 1,
+    borderRadius: 14,
+    padding: 14,
+    gap: 10,
+    borderWidth: 1,
   },
-  infoRow: { flexDirection: "row", alignItems: "flex-start", justifyContent: "space-between", gap: 8 },
-  infoLabel: { fontSize: 13, fontFamily: "Inter_700Bold", minWidth: 72, letterSpacing: 0.3 },
+  infoRow: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    justifyContent: "space-between",
+    gap: 8,
+  },
+  infoLabel: { fontSize: 13, fontFamily: "Inter_700Bold", minWidth: 72, letterSpacing: 0.2 },
   infoValue: { fontSize: 14, fontFamily: "Inter_500Medium", flex: 1, textAlign: "right" },
-  actionRow: { flexDirection: "row", alignItems: "center", gap: 10 },
   openBtn: {
-    flexDirection: "row", alignItems: "center", justifyContent: "center",
-    gap: 7, borderRadius: 13, paddingVertical: 11, paddingHorizontal: 16,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+    borderRadius: 14,
+    paddingVertical: 13,
+    paddingHorizontal: 16,
   },
-  openBtnText: { fontSize: 14, fontFamily: "Inter_600SemiBold", color: "#fff" },
-  copyBtn: {
-    flexDirection: "row", alignItems: "center", gap: 6,
-    height: 44, paddingHorizontal: 13, borderRadius: 13, borderWidth: 1,
-  },
-  copiedText: { fontSize: 12, fontFamily: "Inter_600SemiBold" },
+  openBtnText: { fontSize: 14, fontFamily: "Inter_700Bold", color: "#fff" },
 });

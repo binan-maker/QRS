@@ -18,7 +18,7 @@ interface Props {
 const TYPE_ICONS: Record<string, keyof typeof Ionicons.glyphMap> = {
   business:   "storefront",
   government: "flag",
-  individual: "shield-checkmark",
+  individual: "person",
 };
 
 const OwnerCard = React.memo(function OwnerCard({
@@ -26,8 +26,8 @@ const OwnerCard = React.memo(function OwnerCard({
 }: Props) {
   const { colors, isDark } = useTheme();
   const qrType = ownerInfo.qrType || "individual";
-  const icon = TYPE_ICONS[qrType] ?? "shield-checkmark";
-  const typeLabel = qrType.toUpperCase();
+  const icon = TYPE_ICONS[qrType] ?? "person";
+  const typeLabel = qrType.charAt(0).toUpperCase() + qrType.slice(1);
 
   const gradient: [string, string] = qrType === "business"
     ? [colors.warning, colors.warningShade]
@@ -53,7 +53,7 @@ const OwnerCard = React.memo(function OwnerCard({
 
       <View style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
         <LinearGradient
-          colors={[gradient[0] + (isDark ? "14" : "09"), "transparent"]}
+          colors={[gradient[0] + (isDark ? "12" : "08"), "transparent"]}
           style={StyleSheet.absoluteFill}
         />
 
@@ -70,13 +70,13 @@ const OwnerCard = React.memo(function OwnerCard({
 
           <View style={styles.ownerInfo}>
             <View style={styles.topRow}>
-              <LinearGradient colors={gradient} style={styles.typeBadge} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}>
-                <Text style={styles.typeBadgeText}>{typeLabel}</Text>
-              </LinearGradient>
+              <View style={[styles.typeBadge, { backgroundColor: gradient[0] + (isDark ? "20" : "14"), borderColor: gradient[0] + "40" }]}>
+                <Text style={[styles.typeBadgeText, { color: gradient[0] }]}>{typeLabel}</Text>
+              </View>
               {ownerInfo.isBranded && (
-                <View style={[styles.guardBadge, { backgroundColor: colors.primaryDim, borderColor: colors.primary + "50" }]}>
+                <View style={[styles.verifiedBadgeInline, { backgroundColor: colors.primaryDim, borderColor: colors.primary + "50" }]}>
                   <Ionicons name="shield-checkmark" size={10} color={colors.primary} />
-                  <Text style={[styles.guardBadgeText, { color: colors.primary }]}>QR Guard</Text>
+                  <Text style={[styles.verifiedBadgeText, { color: colors.primary }]}>Verified</Text>
                 </View>
               )}
             </View>
@@ -84,7 +84,7 @@ const OwnerCard = React.memo(function OwnerCard({
               <Text style={[styles.bizName, { color: colors.text }]} numberOfLines={1}>{ownerInfo.businessName}</Text>
             ) : null}
             <Text style={[styles.createdBy, { color: colors.textSecondary }]} numberOfLines={1}>
-              by <Text style={[styles.createdByName, { color: gradient[0] }]}>{ownerInfo.ownerName}</Text>
+              by <Text style={[styles.createdByName, { color: colors.text }]}>{ownerInfo.ownerName}</Text>
             </Text>
             {ownerInfo.brandedUuid ? (
               <Text style={[styles.uuid, { color: colors.textMuted }]} numberOfLines={1}>
@@ -97,20 +97,22 @@ const OwnerCard = React.memo(function OwnerCard({
             <View style={styles.ownerActions}>
               <Pressable
                 onPress={onOpenFollowers}
-                style={({ pressed }) => [styles.actionBtn, { backgroundColor: colors.surfaceLight, borderColor: colors.surfaceBorder, opacity: pressed ? 0.75 : 1 }]}
+                style={({ pressed }) => [
+                  styles.actionBtn,
+                  { backgroundColor: colors.surfaceLight, borderColor: colors.surfaceBorder, opacity: pressed ? 0.75 : 1 },
+                ]}
               >
-                <LinearGradient colors={[colors.primary, colors.primaryShade]} style={styles.actionBtnIcon} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}>
-                  <Ionicons name="people" size={12} color="#fff" />
-                </LinearGradient>
+                <Ionicons name="people-outline" size={14} color={colors.primary} />
                 <Text style={[styles.actionBtnText, { color: colors.primary }]}>{formatCompactNumber(followCount)}</Text>
               </Pressable>
               <Pressable
                 onPress={onOpenMessages}
-                style={({ pressed }) => [styles.actionBtn, { backgroundColor: colors.surfaceLight, borderColor: colors.surfaceBorder, opacity: pressed ? 0.75 : 1, position: "relative" }]}
+                style={({ pressed }) => [
+                  styles.actionBtn,
+                  { backgroundColor: colors.surfaceLight, borderColor: colors.surfaceBorder, opacity: pressed ? 0.75 : 1, position: "relative" },
+                ]}
               >
-                <LinearGradient colors={[colors.primary, colors.primaryShade]} style={styles.actionBtnIcon} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}>
-                  <Ionicons name="mail" size={12} color="#fff" />
-                </LinearGradient>
+                <Ionicons name="mail-outline" size={14} color={colors.primary} />
                 <Text style={[styles.actionBtnText, { color: colors.primary }]}>Inbox</Text>
                 {unreadMessages > 0 && (
                   <View style={[styles.unreadBadge, { backgroundColor: colors.danger }]}>
@@ -119,12 +121,7 @@ const OwnerCard = React.memo(function OwnerCard({
                 )}
               </Pressable>
             </View>
-          ) : (
-            <View style={[styles.verifiedBadge, { backgroundColor: colors.safeDim, borderColor: colors.safe + "40" }]}>
-              <Ionicons name="shield-checkmark" size={13} color={colors.safe} />
-              <Text style={[styles.verifiedText, { color: colors.safe }]}>Verified</Text>
-            </View>
-          )}
+          ) : null}
         </View>
       </View>
     </>
@@ -135,48 +132,87 @@ export default OwnerCard;
 
 const styles = StyleSheet.create({
   deactivatedBanner: {
-    flexDirection: "row", alignItems: "flex-start", gap: 12,
-    borderRadius: 18, padding: 16, borderWidth: 1, marginBottom: 12,
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: 12,
+    borderRadius: 18,
+    padding: 16,
+    borderWidth: 1,
+    marginBottom: 12,
   },
-  deactivatedIcon: { width: 42, height: 42, borderRadius: 13, alignItems: "center", justifyContent: "center", flexShrink: 0 },
+  deactivatedIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 12,
+    alignItems: "center",
+    justifyContent: "center",
+    flexShrink: 0,
+  },
   deactivatedTitle: { fontSize: 14, fontFamily: "Inter_700Bold", marginBottom: 3 },
   deactivatedMsg: { fontSize: 12, fontFamily: "Inter_400Regular", lineHeight: 18 },
   card: {
-    borderRadius: 22, padding: 16, borderWidth: 1, marginBottom: 14, overflow: "hidden",
+    borderRadius: 20,
+    padding: 16,
+    borderWidth: 1,
+    marginBottom: 12,
+    overflow: "hidden",
   },
-  logoRow: { alignItems: "center", marginBottom: 12 },
-  logo: { width: 56, height: 56, borderRadius: 12 },
+  logoRow: { alignItems: "center", marginBottom: 14 },
+  logo: { width: 52, height: 52, borderRadius: 12 },
   mainRow: { flexDirection: "row", alignItems: "center", gap: 14 },
-  ownerIcon: { width: 54, height: 54, borderRadius: 18, alignItems: "center", justifyContent: "center", flexShrink: 0 },
+  ownerIcon: {
+    width: 52,
+    height: 52,
+    borderRadius: 17,
+    alignItems: "center",
+    justifyContent: "center",
+    flexShrink: 0,
+  },
   ownerInfo: { flex: 1, minWidth: 0, gap: 4 },
   topRow: { flexDirection: "row", alignItems: "center", gap: 6, flexWrap: "wrap" },
-  typeBadge: { paddingHorizontal: 8, paddingVertical: 3, borderRadius: 100 },
-  typeBadgeText: { fontSize: 12, fontFamily: "Inter_700Bold", color: "#fff", letterSpacing: 0.8 },
-  guardBadge: {
-    flexDirection: "row", alignItems: "center", gap: 4,
-    paddingHorizontal: 7, paddingVertical: 3, borderRadius: 100, borderWidth: 1,
+  typeBadge: {
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 100,
+    borderWidth: 1,
   },
-  guardBadgeText: { fontSize: 12, fontFamily: "Inter_700Bold", letterSpacing: 0.3 },
+  typeBadgeText: { fontSize: 11, fontFamily: "Inter_700Bold", letterSpacing: 0.5 },
+  verifiedBadgeInline: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 3,
+    paddingHorizontal: 7,
+    paddingVertical: 3,
+    borderRadius: 100,
+    borderWidth: 1,
+  },
+  verifiedBadgeText: { fontSize: 11, fontFamily: "Inter_700Bold" },
   bizName: { fontSize: 15, fontFamily: "Inter_700Bold" },
-  createdBy: { fontSize: 12, fontFamily: "Inter_400Regular" },
+  createdBy: { fontSize: 13, fontFamily: "Inter_400Regular" },
   createdByName: { fontFamily: "Inter_600SemiBold" },
-  uuid: { fontSize: 12, fontFamily: "Inter_400Regular" },
-  ownerActions: { alignItems: "flex-end", gap: 7, flexShrink: 0 },
+  uuid: { fontSize: 11, fontFamily: "Inter_400Regular", marginTop: 1 },
+  ownerActions: { alignItems: "flex-end", gap: 6, flexShrink: 0 },
   actionBtn: {
-    flexDirection: "row", alignItems: "center", gap: 6,
-    borderRadius: 12, paddingHorizontal: 10, paddingVertical: 7,
-    borderWidth: 1, position: "relative",
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 5,
+    borderRadius: 10,
+    paddingHorizontal: 10,
+    paddingVertical: 7,
+    borderWidth: 1,
+    position: "relative",
   },
-  actionBtnIcon: { width: 22, height: 22, borderRadius: 7, alignItems: "center", justifyContent: "center" },
   actionBtnText: { fontSize: 12, fontFamily: "Inter_700Bold" },
   unreadBadge: {
-    position: "absolute", top: -5, right: -5, minWidth: 16, height: 16,
-    borderRadius: 8, alignItems: "center", justifyContent: "center", paddingHorizontal: 3,
+    position: "absolute",
+    top: -5,
+    right: -5,
+    minWidth: 16,
+    height: 16,
+    borderRadius: 8,
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: 3,
   },
   unreadBadgeText: { fontSize: 11, fontFamily: "Inter_700Bold", color: "#fff" },
-  verifiedBadge: {
-    flexDirection: "row", alignItems: "center", gap: 5,
-    borderRadius: 12, paddingHorizontal: 10, paddingVertical: 7, borderWidth: 1,
-  },
-  verifiedText: { fontSize: 12, fontFamily: "Inter_700Bold" },
 });
