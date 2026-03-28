@@ -86,7 +86,7 @@ export default function ProfileScreen() {
         <View style={styles.topBar}>
           <Text style={[styles.pageTitle, { color: colors.text }]}>Profile</Text>
           <Pressable
-            onPress={() => router.push("/(tabs)/settings" as any)}
+            onPress={() => router.push({ pathname: "/(tabs)/settings" as any, params: { from: "profile" } })}
             style={[styles.iconBtn, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}
           >
             <Ionicons name="settings-outline" size={17} color={colors.textSecondary} />

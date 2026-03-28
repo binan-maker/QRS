@@ -41,7 +41,7 @@ export default function SettingsScreen() {
   const { width } = useWindowDimensions();
   const styles = makeSettingsStyles(colors, width);
   const localStyles = makeLocalStyles(colors, width);
-  const params = useLocalSearchParams<{ initialSection?: string; fromProfile?: string }>();
+  const params = useLocalSearchParams<{ initialSection?: string; fromProfile?: string; from?: string }>();
 
   const {
     user, section, setSection,
@@ -136,7 +136,13 @@ export default function SettingsScreen() {
     <View style={[styles.container, { paddingTop: topInset }]}>
       <View style={styles.navBar}>
         <Pressable
-          onPress={() => router.canGoBack() ? router.back() : router.replace("/(tabs)/profile" as any)}
+          onPress={() => {
+            if (params.from === "history") {
+              router.navigate("/(tabs)/history" as any);
+            } else {
+              router.navigate("/(tabs)/profile" as any);
+            }
+          }}
           style={styles.navBackBtn}
         >
           <Ionicons name="chevron-back" size={24} color={colors.text} />
@@ -162,14 +168,12 @@ export default function SettingsScreen() {
                   <Text style={styles.accountAvatarText}>{user.displayName.charAt(0).toUpperCase()}</Text>
                 </LinearGradient>
                 <View style={{ flex: 1, minWidth: 0 }}>
-                  <View style={localStyles.nameRow}>
-                    <Text style={[styles.accountName, { flexShrink: 1 }]} numberOfLines={1}>
-                      {user.displayName}
-                    </Text>
-                    <View style={[localStyles.verifiedPill, { backgroundColor: colors.safeDim, borderColor: colors.safe + "40", flexShrink: 0 }]}>
-                      <Ionicons name="checkmark-circle" size={13} color={colors.safe} />
-                      <Text style={[localStyles.verifiedPillText, { color: colors.safe }]}>Verified</Text>
-                    </View>
+                  <Text style={styles.accountName} numberOfLines={1} ellipsizeMode="tail">
+                    {user.displayName}
+                  </Text>
+                  <View style={[localStyles.verifiedPill, { backgroundColor: colors.safeDim, borderColor: colors.safe + "40", alignSelf: "flex-start", marginTop: 3, marginBottom: 3 }]}>
+                    <Ionicons name="checkmark-circle" size={13} color={colors.safe} />
+                    <Text style={[localStyles.verifiedPillText, { color: colors.safe }]}>Verified</Text>
                   </View>
                   <Text style={styles.accountEmail} numberOfLines={1} ellipsizeMode="tail">{user.email}</Text>
                 </View>
