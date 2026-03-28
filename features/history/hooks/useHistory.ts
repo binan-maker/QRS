@@ -111,8 +111,8 @@ export function useHistory() {
     } catch { setLocalHistory([]); }
   }, []);
 
-  const loadInitialCloudHistory = useCallback(async (userId: string) => {
-    setCloudLoading(true);
+  const loadInitialCloudHistory = useCallback(async (userId: string, isRefreshing = false) => {
+    if (!isRefreshing) setCloudLoading(true);
     setCloudError(false);
     for (let attempt = 0; attempt < 3; attempt++) {
       try {
@@ -125,15 +125,17 @@ export function useHistory() {
           scannedAt: s.scannedAt, qrCodeId: s.qrCodeId, source: "cloud" as const,
           scanSource: (s.scanSource as "camera" | "gallery") || "camera",
         })));
-        setCloudLoading(false);
+        if (!isRefreshing) setCloudLoading(false);
         return;
       } catch (e: any) {
         console.warn(`[history] cloud fetch attempt ${attempt + 1}/3 failed: code=${e?.code} message=${e?.message} ${String(e)}`);
       }
     }
-    setCloudHistory([]);
+    if (!isRefreshing) {
+      setCloudHistory([]);
+      setCloudLoading(false);
+    }
     setCloudError(true);
-    setCloudLoading(false);
   }, []);
 
   const loadMoreCloudHistory = useCallback(async () => {
@@ -188,11 +190,10 @@ export function useHistory() {
     setCloudError(false);
     cloudLastDocRef.current = null;
     setCloudHasMore(false);
-    setCloudHistory([]);
     await loadLocalHistory(user?.id);
     if (user) {
       await Promise.all([
-        loadInitialCloudHistory(user.id),
+        loadInitialCloudHistory(user.id, true),
         loadFavorites(),
         loadStats(user.id),
       ]);
