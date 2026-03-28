@@ -28,10 +28,10 @@ export default function FeedbackSection({
         <View style={[styles.guideStepIcon, { width: 72, height: 72, borderRadius: 36 }]}>
           <Ionicons name="checkmark-circle" size={40} color={colors.safe} />
         </View>
-        <Text style={{ fontSize: 20, fontFamily: "Inter_700Bold", color: colors.text, textAlign: "center" }}>
+        <Text style={{ fontSize: 18, fontFamily: "Inter_700Bold", color: colors.text, textAlign: "center" }}>
           Thank you!
         </Text>
-        <Text style={{ fontSize: 15, fontFamily: "Inter_400Regular", color: colors.textSecondary, textAlign: "center" }}>
+        <Text style={{ fontSize: 13, fontFamily: "Inter_400Regular", color: colors.textSecondary, textAlign: "center" }}>
           Your feedback has been submitted. We appreciate you helping improve QR Guard.
         </Text>
       </View>

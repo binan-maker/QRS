@@ -5,7 +5,6 @@ import {
   ScrollView,
   Pressable,
   Platform,
-  useWindowDimensions,
 } from "react-native";
 import { router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
@@ -210,7 +209,7 @@ const styles = StyleSheet.create({
     flexDirection: "row", alignItems: "center", justifyContent: "space-between",
     paddingHorizontal: 18, paddingVertical: 14, borderBottomWidth: StyleSheet.hairlineWidth,
   },
-  navTitle: { fontSize: 18, fontFamily: "Inter_700Bold", flex: 1, textAlign: "center" },
+  navTitle: { fontSize: 17, fontFamily: "Inter_700Bold", flex: 1, textAlign: "center" },
   backBtn: { width: 40, height: 40, borderRadius: 20, alignItems: "center", justifyContent: "center", borderWidth: 1 },
   scrollContent: { padding: 18, gap: 12 },
 
@@ -222,7 +221,7 @@ const styles = StyleSheet.create({
     width: 58, height: 58, borderRadius: 20,
     alignItems: "center", justifyContent: "center", flexShrink: 0,
   },
-  heroTitle: { fontSize: 20, fontFamily: "Inter_700Bold", marginBottom: 6 },
+  heroTitle: { fontSize: 18, fontFamily: "Inter_700Bold", marginBottom: 6 },
   heroSub: { fontSize: 13, fontFamily: "Inter_400Regular", lineHeight: 20, marginBottom: 10 },
   dateBadge: {
     flexDirection: "row", alignItems: "center", gap: 5,
@@ -236,22 +235,22 @@ const styles = StyleSheet.create({
   },
   sectionHeader: { flexDirection: "row", alignItems: "center", gap: 10, marginBottom: 12 },
   sectionNum: { width: 28, height: 28, borderRadius: 9, alignItems: "center", justifyContent: "center" },
-  sectionNumText: { fontSize: 13, fontFamily: "Inter_700Bold" },
-  sectionTitle: { fontSize: 16, fontFamily: "Inter_700Bold", flex: 1 },
+  sectionNumText: { fontSize: 12, fontFamily: "Inter_700Bold" },
+  sectionTitle: { fontSize: 15, fontFamily: "Inter_700Bold", flex: 1 },
   warningBox: {
     flexDirection: "row", alignItems: "flex-start", gap: 8,
     padding: 12, borderRadius: 12, borderWidth: 1, marginBottom: 10,
   },
   warningText: { fontSize: 13, fontFamily: "Inter_600SemiBold", flex: 1, lineHeight: 18 },
-  para: { fontSize: 14, fontFamily: "Inter_400Regular", lineHeight: 22, marginBottom: 8 },
+  para: { fontSize: 13, fontFamily: "Inter_400Regular", lineHeight: 20, marginBottom: 8 },
   bulletRow: { flexDirection: "row", alignItems: "flex-start", gap: 10, marginBottom: 7 },
-  bulletDot: { width: 6, height: 6, borderRadius: 3, marginTop: 8, flexShrink: 0 },
-  bulletText: { flex: 1, fontSize: 14, fontFamily: "Inter_400Regular", lineHeight: 21 },
+  bulletDot: { width: 6, height: 6, borderRadius: 3, marginTop: 7, flexShrink: 0 },
+  bulletText: { flex: 1, fontSize: 13, fontFamily: "Inter_400Regular", lineHeight: 20 },
   contactCard: {
     flexDirection: "row", alignItems: "center", gap: 10,
     borderRadius: 14, padding: 14, marginVertical: 10, borderWidth: 1,
   },
-  contactEmail: { fontSize: 15, fontFamily: "Inter_600SemiBold" },
+  contactEmail: { fontSize: 13, fontFamily: "Inter_600SemiBold" },
   footer: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, paddingVertical: 16 },
-  footerText: { fontSize: 13, fontFamily: "Inter_500Medium" },
+  footerText: { fontSize: 12, fontFamily: "Inter_500Medium" },
 });
