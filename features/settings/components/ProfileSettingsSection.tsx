@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from "react";
 import {
   View, Text, TextInput, Pressable, Switch, ScrollView,
-  StyleSheet, ActivityIndicator, Alert,
+  StyleSheet, ActivityIndicator, Alert, Keyboard,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useTheme } from "@/contexts/ThemeContext";
@@ -93,6 +93,7 @@ export default function ProfileSettingsSection() {
 
   async function handleSaveName() {
     if (!newName.trim() || !user) return;
+    Keyboard.dismiss();
     setSavingName(true);
     const trimmed = newName.trim();
     updateLocalDisplayName(trimmed);
@@ -112,6 +113,7 @@ export default function ProfileSettingsSection() {
 
   async function handleSaveUsername() {
     if (!user || !newUsername.trim()) return;
+    Keyboard.dismiss();
     setUsernameError("");
     setSavingUsername(true);
     try {
@@ -129,6 +131,7 @@ export default function ProfileSettingsSection() {
 
   async function handleSaveBio() {
     if (!user) return;
+    Keyboard.dismiss();
     setSavingBio(true);
     try {
       await updateBio(user.id, newBio);
@@ -380,36 +383,36 @@ const styles = StyleSheet.create({
   fieldLabel: { fontSize: 11, fontFamily: "Inter_600SemiBold", textTransform: "uppercase", letterSpacing: 0.8 },
 
   valueRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 8 },
-  valueText: { fontSize: 15, fontFamily: "Inter_500Medium", flex: 1 },
-  cooldownText: { fontSize: 12, fontFamily: "Inter_600SemiBold" },
+  valueText: { fontSize: 13, fontFamily: "Inter_500Medium", flex: 1 },
+  cooldownText: { fontSize: 11, fontFamily: "Inter_600SemiBold" },
 
   editRow: { flexDirection: "row", alignItems: "center", gap: 8 },
   editCol: { gap: 8 },
   editRowActions: { flexDirection: "row", alignItems: "center", justifyContent: "flex-end", gap: 8 },
-  atSign: { fontSize: 15, fontFamily: "Inter_500Medium" },
+  atSign: { fontSize: 13, fontFamily: "Inter_500Medium" },
 
   input: {
-    flex: 1, fontSize: 14, fontFamily: "Inter_500Medium",
+    flex: 1, fontSize: 13, fontFamily: "Inter_500Medium",
     borderRadius: 10, paddingHorizontal: 11, paddingVertical: 9,
     borderWidth: 1,
   },
   bioInput: {
-    fontSize: 13, fontFamily: "Inter_400Regular",
+    fontSize: 12, fontFamily: "Inter_400Regular",
     borderRadius: 10, paddingHorizontal: 11, paddingVertical: 9,
-    borderWidth: 1, minHeight: 72, textAlignVertical: "top", lineHeight: 19,
+    borderWidth: 1, minHeight: 72, textAlignVertical: "top", lineHeight: 18,
   },
 
   saveBtn: { paddingHorizontal: 14, paddingVertical: 8, borderRadius: 10 },
   saveBtnText: { fontSize: 12, fontFamily: "Inter_700Bold" },
   cancelBtn: { paddingHorizontal: 4, paddingVertical: 8 },
-  cancelText: { fontSize: 13, fontFamily: "Inter_500Medium" },
+  cancelText: { fontSize: 12, fontFamily: "Inter_500Medium" },
 
   hintText: { fontSize: 11, fontFamily: "Inter_400Regular" },
-  errorText: { fontSize: 12, fontFamily: "Inter_500Medium" },
+  errorText: { fontSize: 11, fontFamily: "Inter_500Medium" },
   charCount: { flex: 1, fontSize: 11, fontFamily: "Inter_400Regular" },
 
   toggleRow: { flexDirection: "row", alignItems: "center", gap: 14, paddingHorizontal: 16, paddingVertical: 14 },
   toggleIcon: { width: 34, height: 34, borderRadius: 10, alignItems: "center", justifyContent: "center" },
-  toggleLabel: { fontSize: 14, fontFamily: "Inter_600SemiBold" },
-  toggleSub: { fontSize: 12, fontFamily: "Inter_400Regular" },
+  toggleLabel: { fontSize: 13, fontFamily: "Inter_600SemiBold" },
+  toggleSub: { fontSize: 11, fontFamily: "Inter_400Regular" },
 });

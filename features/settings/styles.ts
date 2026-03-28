@@ -17,7 +17,7 @@ export function makeSettingsStyles(c: AppColors, width = 390) {
       backgroundColor: c.surface, alignItems: "center", justifyContent: "center",
       borderWidth: 1, borderColor: c.surfaceBorder,
     },
-    navTitle: { fontSize: rf(22), fontFamily: "Inter_700Bold", color: c.text },
+    navTitle: { fontSize: rf(17), fontFamily: "Inter_700Bold", color: c.text },
     scrollContent: { padding: sp(20), paddingBottom: sp(40) },
     section: { marginBottom: sp(24) },
     sectionLabel: {
@@ -36,8 +36,8 @@ export function makeSettingsStyles(c: AppColors, width = 390) {
       width: sp(38), height: sp(38), borderRadius: sp(12),
       alignItems: "center", justifyContent: "center",
     },
-    menuLabel: { fontSize: rf(15), fontFamily: "Inter_600SemiBold", color: c.text },
-    menuSublabel: { fontSize: rf(12), fontFamily: "Inter_400Regular", color: c.textSecondary, marginTop: 1 },
+    menuLabel: { fontSize: rf(14), fontFamily: "Inter_600SemiBold", color: c.text },
+    menuSublabel: { fontSize: rf(11), fontFamily: "Inter_400Regular", color: c.textSecondary, marginTop: 1 },
     divider: { height: StyleSheet.hairlineWidth, backgroundColor: c.surfaceBorder, marginLeft: sp(66) },
 
     accountCard: {
@@ -49,9 +49,9 @@ export function makeSettingsStyles(c: AppColors, width = 390) {
       backgroundColor: c.primaryDim, borderWidth: 2, borderColor: c.primary + "40",
       alignItems: "center", justifyContent: "center",
     },
-    accountAvatarText: { fontSize: rf(20), fontFamily: "Inter_700Bold", color: c.primary },
-    accountName: { fontSize: rf(15), fontFamily: "Inter_700Bold", color: c.text },
-    accountEmail: { fontSize: rf(12), fontFamily: "Inter_400Regular", color: c.textSecondary, marginTop: 2 },
+    accountAvatarText: { fontSize: rf(18), fontFamily: "Inter_700Bold", color: c.primary },
+    accountName: { fontSize: rf(14), fontFamily: "Inter_700Bold", color: c.text },
+    accountEmail: { fontSize: rf(11), fontFamily: "Inter_400Regular", color: c.textSecondary, marginTop: 2 },
 
     profileCard: {
       flexDirection: "row", alignItems: "center", gap: sp(14),
@@ -66,14 +66,14 @@ export function makeSettingsStyles(c: AppColors, width = 390) {
       width: "100%", height: "100%", borderRadius: sp(27),
       alignItems: "center", justifyContent: "center",
     },
-    profileAvatarText: { fontSize: rf(22), fontFamily: "Inter_700Bold", color: c.primary },
-    profileName: { fontSize: rf(16), fontFamily: "Inter_700Bold", color: c.text },
-    profileEmail: { fontSize: rf(13), fontFamily: "Inter_400Regular", color: c.textSecondary, marginTop: 2 },
+    profileAvatarText: { fontSize: rf(18), fontFamily: "Inter_700Bold", color: c.primary },
+    profileName: { fontSize: rf(14), fontFamily: "Inter_700Bold", color: c.text },
+    profileEmail: { fontSize: rf(11), fontFamily: "Inter_400Regular", color: c.textSecondary, marginTop: 2 },
     verifiedBadge: {
       flexDirection: "row", alignItems: "center", gap: 4,
       borderRadius: sp(10), paddingHorizontal: sp(8), paddingVertical: sp(4), borderWidth: 1,
     },
-    verifiedText: { fontSize: rf(11), fontFamily: "Inter_600SemiBold" },
+    verifiedText: { fontSize: rf(10), fontFamily: "Inter_600SemiBold" },
 
     signInCard: {
       flexDirection: "row", alignItems: "center", gap: sp(14),
@@ -85,8 +85,8 @@ export function makeSettingsStyles(c: AppColors, width = 390) {
       backgroundColor: c.primaryDim, alignItems: "center", justifyContent: "center",
     },
     signInIconWrap: { width: sp(48), height: sp(48), borderRadius: sp(16), alignItems: "center", justifyContent: "center" },
-    signInTitle: { fontSize: rf(15), fontFamily: "Inter_700Bold", color: c.text },
-    signInSub: { fontSize: rf(12), fontFamily: "Inter_400Regular", color: c.textSecondary, marginTop: 2 },
+    signInTitle: { fontSize: rf(14), fontFamily: "Inter_700Bold", color: c.text },
+    signInSub: { fontSize: rf(11), fontFamily: "Inter_400Regular", color: c.textSecondary, marginTop: 2 },
     signInChevron: { width: sp(30), height: sp(30), borderRadius: sp(15), alignItems: "center", justifyContent: "center" },
 
     signOutBtn: {
@@ -95,7 +95,7 @@ export function makeSettingsStyles(c: AppColors, width = 390) {
       borderWidth: 1, borderColor: c.danger + "40",
       backgroundColor: c.dangerDim,
     },
-    signOutText: { fontSize: rf(15), fontFamily: "Inter_600SemiBold", color: c.danger },
+    signOutText: { fontSize: rf(14), fontFamily: "Inter_600SemiBold", color: c.danger },
 
     footer: { alignItems: "center", gap: 6, paddingVertical: sp(16) },
     footerBadge: { borderRadius: sp(14), paddingHorizontal: sp(16), paddingVertical: sp(6) },
@@ -109,20 +109,20 @@ export function makeSettingsStyles(c: AppColors, width = 390) {
       backgroundColor: c.dangerDim, padding: sp(16), borderRadius: sp(16),
       borderWidth: 1, borderColor: c.danger + "30",
     },
-    warningTitle: { fontSize: rf(15), fontFamily: "Inter_600SemiBold", color: c.danger, marginBottom: 4 },
-    warningDesc: { fontSize: rf(13), fontFamily: "Inter_400Regular", color: c.textSecondary, lineHeight: Math.round(20 * s) },
-    confirmLabel: { fontSize: rf(14), fontFamily: "Inter_500Medium", color: c.textSecondary },
+    warningTitle: { fontSize: rf(14), fontFamily: "Inter_600SemiBold", color: c.danger, marginBottom: 4 },
+    warningDesc: { fontSize: rf(12), fontFamily: "Inter_400Regular", color: c.textSecondary, lineHeight: Math.round(18 * s) },
+    confirmLabel: { fontSize: rf(13), fontFamily: "Inter_500Medium", color: c.textSecondary },
     confirmInput: {
       backgroundColor: c.inputBackground, borderRadius: sp(14),
       borderWidth: 1, borderColor: c.surfaceBorder,
       paddingHorizontal: sp(16), paddingVertical: sp(13),
-      fontSize: rf(16), fontFamily: "Inter_500Medium", color: c.text,
+      fontSize: rf(14), fontFamily: "Inter_500Medium", color: c.text,
     },
     deleteBtn: {
       flexDirection: "row", alignItems: "center", justifyContent: "center", gap: sp(8),
       backgroundColor: c.danger, paddingVertical: sp(15), borderRadius: sp(16),
     },
-    deleteBtnText: { fontSize: rf(15), fontFamily: "Inter_700Bold", color: "#fff" },
+    deleteBtnText: { fontSize: rf(14), fontFamily: "Inter_700Bold", color: "#fff" },
     guideStep: {
       flexDirection: "row", gap: sp(14), alignItems: "flex-start", marginBottom: sp(14),
       backgroundColor: c.surface, padding: sp(16), borderRadius: sp(18),
@@ -132,20 +132,20 @@ export function makeSettingsStyles(c: AppColors, width = 390) {
       width: sp(28), height: sp(28), borderRadius: sp(14), backgroundColor: c.primaryDim,
       alignItems: "center", justifyContent: "center", marginTop: 2,
     },
-    guideStepNumText: { fontSize: rf(13), fontFamily: "Inter_700Bold", color: c.primary },
+    guideStepNumText: { fontSize: rf(12), fontFamily: "Inter_700Bold", color: c.primary },
     guideStepIcon: {
       width: sp(42), height: sp(42), borderRadius: sp(14), backgroundColor: c.primaryDim,
       alignItems: "center", justifyContent: "center",
     },
-    guideStepTitle: { fontSize: rf(15), fontFamily: "Inter_700Bold", color: c.text, marginBottom: 4 },
-    guideStepDesc: { fontSize: rf(13), fontFamily: "Inter_400Regular", color: c.textSecondary, lineHeight: Math.round(20 * s) },
-    feedbackIntro: { fontSize: rf(15), fontFamily: "Inter_400Regular", color: c.textSecondary, marginBottom: sp(24), lineHeight: Math.round(22 * s) },
+    guideStepTitle: { fontSize: rf(14), fontFamily: "Inter_700Bold", color: c.text, marginBottom: 4 },
+    guideStepDesc: { fontSize: rf(12), fontFamily: "Inter_400Regular", color: c.textSecondary, lineHeight: Math.round(18 * s) },
+    feedbackIntro: { fontSize: rf(13), fontFamily: "Inter_400Regular", color: c.textSecondary, marginBottom: sp(24), lineHeight: Math.round(20 * s) },
     inputGroup: { marginBottom: sp(18) },
-    inputLabel: { fontSize: rf(13), fontFamily: "Inter_700Bold", color: c.textSecondary, marginBottom: sp(8), letterSpacing: 0.3 },
+    inputLabel: { fontSize: rf(12), fontFamily: "Inter_700Bold", color: c.textSecondary, marginBottom: sp(8), letterSpacing: 0.3 },
     textInput: {
       backgroundColor: c.inputBackground, borderRadius: sp(14), borderWidth: 1,
       borderColor: c.surfaceBorder, paddingHorizontal: sp(16), paddingVertical: sp(13),
-      fontSize: rf(15), fontFamily: "Inter_400Regular", color: c.text,
+      fontSize: rf(14), fontFamily: "Inter_400Regular", color: c.text,
     },
     textArea: { height: 140, textAlignVertical: "top" as const },
     charCount: { fontSize: rf(11), fontFamily: "Inter_400Regular", color: c.textMuted, textAlign: "right", marginTop: 4 },
@@ -153,7 +153,7 @@ export function makeSettingsStyles(c: AppColors, width = 390) {
       flexDirection: "row", alignItems: "center", justifyContent: "center", gap: sp(8),
       borderRadius: sp(18), paddingVertical: sp(16), overflow: "hidden",
     },
-    submitBtnText: { fontSize: rf(16), fontFamily: "Inter_700Bold", color: "#fff" },
+    submitBtnText: { fontSize: rf(14), fontFamily: "Inter_700Bold", color: "#fff" },
     followItem: {
       flexDirection: "row", alignItems: "center", gap: sp(14),
       backgroundColor: c.surface, padding: sp(16), borderRadius: sp(18),
@@ -163,15 +163,15 @@ export function makeSettingsStyles(c: AppColors, width = 390) {
       width: sp(42), height: sp(42), borderRadius: sp(14), backgroundColor: c.primaryDim,
       alignItems: "center", justifyContent: "center",
     },
-    followContent: { fontSize: rf(14), fontFamily: "Inter_500Medium", color: c.text },
+    followContent: { fontSize: rf(13), fontFamily: "Inter_500Medium", color: c.text },
     followType: { fontSize: rf(11), fontFamily: "Inter_700Bold", color: c.textMuted, marginTop: 2, letterSpacing: 0.3 },
     myCommentItem: {
       backgroundColor: c.surface, padding: sp(16), borderRadius: sp(18),
       marginBottom: sp(10), borderWidth: 1, borderColor: c.surfaceBorder,
     },
-    myCommentText: { fontSize: rf(14), fontFamily: "Inter_400Regular", color: c.text, lineHeight: Math.round(20 * s), marginBottom: sp(10) },
+    myCommentText: { fontSize: rf(13), fontFamily: "Inter_400Regular", color: c.text, lineHeight: Math.round(18 * s), marginBottom: sp(10) },
     myCommentMeta: { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
-    myCommentDate: { fontSize: rf(12), fontFamily: "Inter_400Regular", color: c.textMuted },
+    myCommentDate: { fontSize: rf(11), fontFamily: "Inter_400Regular", color: c.textMuted },
     deleteCommentBtn: { padding: 4 },
   });
 }

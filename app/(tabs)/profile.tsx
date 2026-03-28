@@ -121,7 +121,7 @@ export default function ProfileScreen() {
           ) : null}
 
           <Pressable
-            onPress={() => router.push({ pathname: "/(tabs)/settings" as any, params: { initialSection: "profile" } })}
+            onPress={() => router.push({ pathname: "/(tabs)/settings" as any, params: { initialSection: "profile", fromProfile: "1" } })}
             style={({ pressed }) => [styles.editProfileBtn, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder, opacity: pressed ? 0.8 : 1 }]}
           >
             <Text style={[styles.editProfileText, { color: colors.text }]}>Edit Profile</Text>

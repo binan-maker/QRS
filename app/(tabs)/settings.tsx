@@ -41,7 +41,7 @@ export default function SettingsScreen() {
   const { width } = useWindowDimensions();
   const styles = makeSettingsStyles(colors, width);
   const localStyles = makeLocalStyles(colors, width);
-  const params = useLocalSearchParams<{ initialSection?: string }>();
+  const params = useLocalSearchParams<{ initialSection?: string; fromProfile?: string }>();
 
   const {
     user, section, setSection,
@@ -70,7 +70,16 @@ export default function SettingsScreen() {
     return (
       <View style={[styles.container, { paddingTop: topInset }]}>
         <View style={styles.navBar}>
-          <Pressable onPress={() => setSection("main")} style={styles.navBackBtn}>
+          <Pressable
+            onPress={() => {
+              if (section === "profile" && params.fromProfile === "1") {
+                router.back();
+              } else {
+                setSection("main");
+              }
+            }}
+            style={styles.navBackBtn}
+          >
             <Ionicons name="chevron-back" size={24} color={colors.text} />
           </Pressable>
           <Text style={styles.navTitle}>{SECTION_TITLES[section] ?? "Settings"}</Text>
@@ -371,26 +380,26 @@ function makeLocalStyles(c: ReturnType<typeof import("@/contexts/ThemeContext").
       flexDirection: "row", alignItems: "center", gap: 4,
       paddingHorizontal: sp(7), paddingVertical: sp(3), borderRadius: sp(10), borderWidth: 1,
     },
-    verifiedPillText: { fontSize: rf(11), fontFamily: "Inter_600SemiBold" },
-    appearanceLabel: { fontSize: rf(13), fontFamily: "Inter_600SemiBold", marginBottom: sp(12) },
+    verifiedPillText: { fontSize: rf(10), fontFamily: "Inter_600SemiBold" },
+    appearanceLabel: { fontSize: rf(12), fontFamily: "Inter_600SemiBold", marginBottom: sp(12) },
     themeRow: { flexDirection: "row", gap: sp(10) },
     themeBtn: {
       flex: 1, alignItems: "center", justifyContent: "center",
       gap: sp(6), paddingVertical: sp(14), borderRadius: sp(14), borderWidth: 1.5,
       position: "relative",
     },
-    themeBtnText: { fontSize: rf(12), fontFamily: "Inter_600SemiBold" },
+    themeBtnText: { fontSize: rf(11), fontFamily: "Inter_600SemiBold" },
     activeIndicator: { position: "absolute", bottom: 6, width: sp(18), height: 3, borderRadius: 2 },
     hapticsDivider: { height: 1, backgroundColor: c.surfaceBorder, marginTop: sp(16), marginBottom: sp(16) },
     hapticsRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
     hapticsLeft: { flexDirection: "row", alignItems: "center", flex: 1 },
     hapticsIcon: { width: sp(38), height: sp(38), borderRadius: sp(12), alignItems: "center", justifyContent: "center" },
-    hapticsLabel: { fontSize: rf(14), fontFamily: "Inter_600SemiBold" },
-    hapticsSub: { fontSize: rf(12), fontFamily: "Inter_400Regular", marginTop: 1 },
+    hapticsLabel: { fontSize: rf(13), fontFamily: "Inter_600SemiBold" },
+    hapticsSub: { fontSize: rf(11), fontFamily: "Inter_400Regular", marginTop: 1 },
     footer: { alignItems: "center", gap: sp(8), paddingTop: sp(8), paddingBottom: sp(12), paddingHorizontal: sp(24) },
     footerBadge: { borderRadius: sp(12), paddingHorizontal: sp(14), paddingVertical: sp(6) },
-    footerBadgeText: { fontSize: rf(12), fontFamily: "Inter_700Bold", color: "#fff", letterSpacing: 0.5 },
-    footerTagline: { fontSize: rf(12), fontFamily: "Inter_500Medium" },
-    footerDisclaimer: { fontSize: rf(12), fontFamily: "Inter_400Regular", textAlign: "center", lineHeight: Math.round(16 * s) },
+    footerBadgeText: { fontSize: rf(11), fontFamily: "Inter_700Bold", color: "#fff", letterSpacing: 0.5 },
+    footerTagline: { fontSize: rf(11), fontFamily: "Inter_500Medium" },
+    footerDisclaimer: { fontSize: rf(11), fontFamily: "Inter_400Regular", textAlign: "center", lineHeight: Math.round(15 * s) },
   });
 }
