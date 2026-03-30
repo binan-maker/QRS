@@ -1,10 +1,11 @@
 import { useState, useCallback, useRef, useEffect } from "react";
-import { Alert, Platform, TextInput } from "react-native";
+import { Alert, Platform, TextInput, ToastAndroid } from "react-native";
 import * as Haptics from "@/lib/haptics";
 import * as Clipboard from "expo-clipboard";
 import * as FileSystem from "expo-file-system";
 import * as Sharing from "expo-sharing";
 import * as Print from "expo-print";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { captureQrImage } from "@/lib/capture-qr";
 import { useAuth } from "@/contexts/AuthContext";
 import {
@@ -286,7 +287,9 @@ export function useMyQrDetail(id: string) {
       const fileName = `qrguard_${Date.now()}.png`;
       const dir = FileSystem.cacheDirectory ?? FileSystem.documentDirectory ?? "";
       const fileUri = dir + fileName;
-      await FileSystem.writeAsStringAsync(fileUri, rawBase64, { encoding: FileSystem.EncodingType.Base64 });
+      // Use string literal 'base64' — FileSystem.EncodingType is a TS-only
+      // type in expo-file-system v19 and evaluates to undefined at runtime.
+      await FileSystem.writeAsStringAsync(fileUri, rawBase64, { encoding: "base64" });
       const canShare = await Sharing.isAvailableAsync();
       if (!canShare) {
         Alert.alert("Not available", "Sharing is not supported on this device.");
@@ -299,6 +302,44 @@ export function useMyQrDetail(id: string) {
       Alert.alert("Share Failed", e?.message || "Could not share the QR code. Please try again.");
     } finally {
       setSharingQr(false);
+    }
+  }
+
+  async function saveAndroidPdf(pdfUri: string, fileName: string) {
+    try {
+      // Try cached Downloads directory URI first (avoids re-showing the picker)
+      let cachedDirUri = await AsyncStorage.getItem("qrguard_downloads_dir_uri");
+      if (cachedDirUri) {
+        try {
+          const base64 = await FileSystem.readAsStringAsync(pdfUri, { encoding: "base64" });
+          const destUri = await FileSystem.StorageAccessFramework.createFileAsync(
+            cachedDirUri, fileName, "application/pdf"
+          );
+          await FileSystem.writeAsStringAsync(destUri, base64, { encoding: "base64" });
+          ToastAndroid.show("PDF saved to Downloads ✓", ToastAndroid.LONG);
+          return;
+        } catch {
+          // Cached permission expired — clear it and fall through to re-ask
+          await AsyncStorage.removeItem("qrguard_downloads_dir_uri");
+        }
+      }
+
+      // Ask the user to grant access to a folder (they should pick Downloads)
+      const permissions = await FileSystem.StorageAccessFramework.requestDirectoryPermissionsAsync();
+      if (!permissions.granted) {
+        Alert.alert("Permission denied", "Could not save PDF. Please select the Downloads folder and try again.");
+        return;
+      }
+
+      await AsyncStorage.setItem("qrguard_downloads_dir_uri", permissions.directoryUri);
+      const base64 = await FileSystem.readAsStringAsync(pdfUri, { encoding: "base64" });
+      const destUri = await FileSystem.StorageAccessFramework.createFileAsync(
+        permissions.directoryUri, fileName, "application/pdf"
+      );
+      await FileSystem.writeAsStringAsync(destUri, base64, { encoding: "base64" });
+      ToastAndroid.show("PDF saved to Downloads ✓", ToastAndroid.LONG);
+    } catch (e: any) {
+      Alert.alert("Save Failed", e?.message || "Could not save PDF to Downloads. Please try again.");
     }
   }
 
@@ -350,12 +391,15 @@ export function useMyQrDetail(id: string) {
 </html>`;
       const result = await Print.printToFileAsync({ html, base64: false });
       pdfUri = result.uri;
-      const canShare = await Sharing.isAvailableAsync();
-      if (!canShare) {
-        Alert.alert("Not available", "Could not save PDF on this device.");
-        return;
+
+      if (Platform.OS === "android") {
+        await saveAndroidPdf(pdfUri, `QRGuard_${Date.now()}.pdf`);
+      } else {
+        // iOS — share sheet is the standard "Save to Files" flow
+        const canShare = await Sharing.isAvailableAsync();
+        if (!canShare) { Alert.alert("Not available", "Could not save PDF on this device."); return; }
+        await Sharing.shareAsync(pdfUri, { mimeType: "application/pdf", dialogTitle: "Save QR Code as PDF", UTI: "com.adobe.pdf" });
       }
-      await Sharing.shareAsync(pdfUri, { mimeType: "application/pdf", dialogTitle: "Save QR Code as PDF", UTI: "com.adobe.pdf" });
     } catch (e: any) {
       Alert.alert("PDF Failed", e?.message || "Could not generate the PDF. Please try again.");
     } finally {
