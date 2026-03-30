@@ -83,6 +83,8 @@ service cloud.firestore {
       ) || (
 
         // ── Case 4: owner updating their own QR's metadata ────────────────────
+        // Only permitted mutable fields: isActive, deactivationMessage, businessName,
+        // ownerName, ownerLogoBase64, qrType, guardUuid — system fields are locked.
         isSignedIn() &&
         'ownerId' in resource.data &&
         resource.data.ownerId == request.auth.uid &&
@@ -90,7 +92,13 @@ service cloud.firestore {
         request.resource.data.ownerId == resource.data.ownerId &&
         // Core content fields are immutable
         request.resource.data.content == resource.data.content &&
-        request.resource.data.contentType == resource.data.contentType
+        request.resource.data.contentType == resource.data.contentType &&
+        // System integrity fields cannot be set by the owner
+        request.resource.data.ownerVerified == resource.data.ownerVerified &&
+        request.resource.data.scanCount == resource.data.scanCount &&
+        request.resource.data.commentCount == resource.data.commentCount &&
+        request.resource.data.isBranded == resource.data.isBranded &&
+        request.resource.data.brandedUuid == resource.data.brandedUuid
 
       ) || (
 

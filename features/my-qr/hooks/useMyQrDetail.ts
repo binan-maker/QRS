@@ -9,7 +9,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { captureQrImage } from "@/lib/capture-qr";
 import { useAuth } from "@/contexts/AuthContext";
 import {
-  getUserGeneratedQrs, updateQrDesign, setQrActiveState,
+  getGeneratedQrById, updateQrDesign, setQrActiveState,
   subscribeToComments, addComment, ownerHideComment, softDeleteComment,
   getGuardLink, updateGuardLinkDestination,
   getQrFollowersList, getQrFollowCount,
@@ -93,8 +93,7 @@ export function useMyQrDetail(id: string) {
     if (!user?.id) return;
     setLoading(true);
     try {
-      const all = await getUserGeneratedQrs(user.id);
-      const found = all.find((q) => q.docId === id);
+      const found = await getGeneratedQrById(user.id, id);
       if (found) {
         setQrItem(found);
         setFgColor(found.fgColor || "#0A0E17");

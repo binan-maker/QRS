@@ -73,6 +73,48 @@ export async function saveGeneratedQr(
   }
 }
 
+export async function getGeneratedQrById(userId: string, docId: string): Promise<GeneratedQrItem | null> {
+  try {
+    const data = await db.get(["users", userId, "generatedQrs", docId]);
+    if (!data) return null;
+    let scanCount = 0;
+    let commentCount = 0;
+    let isActive = true;
+    let deactivationMessage: string | null = null;
+    if (data.qrCodeId) {
+      try {
+        const qrData = await db.get(["qrCodes", data.qrCodeId]);
+        if (qrData) {
+          scanCount = qrData.scanCount || 0;
+          commentCount = qrData.commentCount || 0;
+          isActive = qrData.isActive !== false;
+          deactivationMessage = qrData.deactivationMessage || null;
+        }
+      } catch {}
+    }
+    return {
+      docId,
+      content: data.content || "",
+      contentType: data.contentType || "text",
+      uuid: data.uuid || "",
+      branded: data.branded !== false,
+      qrCodeId: data.qrCodeId || "",
+      createdAt: tsToString(data.createdAt),
+      fgColor: data.fgColor || "#0A0E17",
+      bgColor: data.bgColor || "#F8FAFC",
+      logoPosition: data.logoPosition || "center",
+      logoUri: data.logoUri || null,
+      scanCount, commentCount,
+      qrType: (data.qrType as QrType) || "individual",
+      isActive, deactivationMessage,
+      businessName: data.businessName || null,
+      guardUuid: data.guardUuid || null,
+    };
+  } catch {
+    return null;
+  }
+}
+
 export async function getUserGeneratedQrs(userId: string): Promise<GeneratedQrItem[]> {
   try {
     const { docs } = await db.query(["users", userId, "generatedQrs"]);
@@ -130,7 +172,7 @@ export function subscribeToUserGeneratedQrs(
     ["users", userId, "generatedQrs"],
     { orderBy: { field: "createdAt", direction: "desc" } },
     (docs) => {
-      const items: GeneratedQrItem[] = docs.map((d) => {
+      const base: GeneratedQrItem[] = docs.map((d) => {
         const data = d.data;
         return {
           docId: d.id,
@@ -144,16 +186,33 @@ export function subscribeToUserGeneratedQrs(
           bgColor: data.bgColor || "#F8FAFC",
           logoPosition: data.logoPosition || "center",
           logoUri: data.logoUri || null,
-          scanCount: data.scanCount || 0,
-          commentCount: data.commentCount || 0,
+          scanCount: 0,
+          commentCount: 0,
           qrType: (data.qrType as QrType) || "individual",
-          isActive: data.isActive !== false,
-          deactivationMessage: data.deactivationMessage || null,
+          isActive: true,
+          deactivationMessage: null,
           businessName: data.businessName || null,
           guardUuid: data.guardUuid || null,
         };
       });
-      onUpdate(items);
+      onUpdate(base);
+      const ids = [...new Set(base.map((i) => i.qrCodeId).filter(Boolean))];
+      if (ids.length === 0) return;
+      Promise.all(ids.map((id) => db.get(["qrCodes", id]).catch(() => null))).then((results) => {
+        const map: Record<string, any> = {};
+        ids.forEach((id, i) => { if (results[i]) map[id] = results[i]; });
+        const enriched: GeneratedQrItem[] = base.map((item) => {
+          const qr = item.qrCodeId ? map[item.qrCodeId] : null;
+          return {
+            ...item,
+            scanCount: qr?.scanCount ?? 0,
+            commentCount: qr?.commentCount ?? 0,
+            isActive: qr ? qr.isActive !== false : true,
+            deactivationMessage: qr?.deactivationMessage ?? null,
+          };
+        });
+        onUpdate(enriched);
+      });
     }
   );
 }
