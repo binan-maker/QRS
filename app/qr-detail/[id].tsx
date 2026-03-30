@@ -290,6 +290,33 @@ export default function QrDetailScreen() {
             )}
 
 
+            {/* ── Sign-in Banner ───────────────────────────────────────────── */}
+            {!user && (
+              <Animated.View entering={FadeIn.duration(400)}>
+                <Pressable onPress={() => router.push("/(auth)/login")} style={signInBannerCardStyle}>
+                  <LinearGradient
+                    colors={[colors.primary + "14", colors.primaryShade + "08"]}
+                    start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
+                    style={StyleSheet.absoluteFill}
+                  />
+                  <LinearGradient
+                    colors={[colors.primary, colors.primaryShade]}
+                    start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
+                    style={signInBannerIconCircle}
+                  >
+                    <Ionicons name="person-outline" size={18} color="#fff" />
+                  </LinearGradient>
+                  <View style={{ flex: 1, gap: 3 }}>
+                    <Text style={[signInBannerStyles.title, { color: colors.text }]}>Sign in to continue</Text>
+                    <Text style={[signInBannerStyles.sub, { color: colors.textSecondary }]}>Comment · Report · Follow · Favorites</Text>
+                  </View>
+                  <View style={[signInBannerStyles.cta, { backgroundColor: colors.primary }]}>
+                    <Text style={signInBannerStyles.ctaText}>Sign In</Text>
+                  </View>
+                </Pressable>
+              </Animated.View>
+            )}
+
             {/* ── Safety Verdict Banner ────────────────────────────────────── */}
             <Animated.View entering={FadeInDown.duration(250)}>
               <VerdictBanner verdict={verdict} offlineMode={q.offlineMode} />
@@ -398,6 +425,17 @@ export default function QrDetailScreen() {
                 </View>
               ) : (
                 <>
+                  {!user && (
+                    <Pressable onPress={() => router.push("/(auth)/login")} style={[signInCommentStyle, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
+                      <View style={[signInCommentAvatar, { backgroundColor: colors.primaryDim }]}>
+                        <Ionicons name="person-outline" size={15} color={colors.primary} />
+                      </View>
+                      <Text style={[signInCommentPlaceholder, { color: colors.textMuted }]}>Sign in to add a comment...</Text>
+                      <View style={[signInCommentBtn, { backgroundColor: colors.primaryDim, borderColor: colors.primary + "40" }]}>
+                        <Text style={[signInCommentBtnText, { color: colors.primary }]}>Sign In</Text>
+                      </View>
+                    </Pressable>
+                  )}
                   {q.commentsList.length === 0 ? (
                     <View style={styles.noComments}>
                       <Ionicons name="chatbubbles-outline" size={36} color={colors.textMuted} />
@@ -476,7 +514,7 @@ export default function QrDetailScreen() {
           </ScrollView>
 
           {/* Comment Input Bar */}
-          {!q.offlineMode && (
+          {user && !q.offlineMode && (
             <View style={[styles.bottomCommentBar, { paddingBottom: Math.max(insets.bottom, 6) }]}>
               {q.replyTo && (
                 <View style={styles.replyBanner}>
