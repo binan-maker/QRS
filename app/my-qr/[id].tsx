@@ -104,7 +104,7 @@ export default function MyQrDetailScreen() {
         <ScrollView
           ref={h.scrollRef}
           showsVerticalScrollIndicator={false}
-          contentContainerStyle={[styles.scroll, { paddingBottom: bottomInset + 120 }]}
+          contentContainerStyle={[styles.scroll, { paddingBottom: bottomInset + 40 }]}
           keyboardShouldPersistTaps="handled"
         >
           {/* QR Preview */}
@@ -444,10 +444,48 @@ export default function MyQrDetailScreen() {
 
           {/* Comments */}
           <Animated.View entering={FadeInDown.duration(400).delay(140)}>
-            <View style={styles.commentsHeader}>
+            <View style={[styles.commentsHeader, { marginBottom: 10 }]}>
               <Text style={styles.sectionLabel}>COMMENTS</Text>
               <View style={styles.commentCountBadge}>
                 <Text style={styles.commentCountText}>{qr.commentCount}</Text>
+              </View>
+            </View>
+
+            {/* Inline comment input — above the list */}
+            <View style={[styles.inlineCommentBar, { borderColor: colors.surfaceBorder, backgroundColor: colors.surface }]}>
+              {h.replyTo ? (
+                <View style={[styles.replyBanner, { backgroundColor: colors.primaryDim, borderColor: colors.primary + "20" }]}>
+                  <Ionicons name="return-down-forward-outline" size={13} color={colors.primary} />
+                  <Text style={[styles.replyBannerText, { color: colors.textSecondary }]} numberOfLines={1}>
+                    Replying to <Text style={{ color: colors.text }}>{h.replyTo.author}</Text>
+                  </Text>
+                  <Pressable onPress={() => h.setReplyTo(null)} style={{ marginLeft: "auto" }}>
+                    <Ionicons name="close" size={14} color={colors.textMuted} />
+                  </Pressable>
+                </View>
+              ) : null}
+              <View style={styles.inputRow}>
+                <View style={styles.inputAvatar}>
+                  <Text style={styles.inputAvatarText}>{h.user?.displayName?.[0]?.toUpperCase() || "?"}</Text>
+                </View>
+                <TextInput
+                  ref={h.commentInputRef}
+                  style={[styles.commentInput, { backgroundColor: colors.surfaceLight, borderColor: colors.surfaceBorder, color: colors.text }]}
+                  placeholder={h.replyTo ? `Reply to ${h.replyTo.author}…` : "Add a comment…"}
+                  placeholderTextColor={colors.textMuted}
+                  value={h.commentText}
+                  onChangeText={h.setCommentText}
+                  maxLength={500}
+                  multiline
+                  returnKeyType="default"
+                />
+                <Pressable
+                  onPress={h.handleSubmitComment}
+                  disabled={!h.commentText.trim() || h.submittingComment}
+                  style={({ pressed }) => [styles.sendBtn, (!h.commentText.trim() || h.submittingComment) && { opacity: 0.4 }, pressed && { opacity: 0.7 }]}
+                >
+                  {h.submittingComment ? <ActivityIndicator size="small" color="#000" /> : <Ionicons name="send" size={16} color="#000" />}
+                </Pressable>
               </View>
             </View>
 
@@ -461,7 +499,7 @@ export default function MyQrDetailScreen() {
               </View>
             ) : h.topLevelComments.length === 0 ? (
               <View style={styles.emptyComments}>
-                <Ionicons name="chatbubbles-outline" size={32} color={colors.textMuted} />
+                <Ionicons name="chatbubbles-outline" size={28} color={colors.textMuted} />
                 <Text style={styles.emptyCommentsText}>No comments yet</Text>
                 <Text style={styles.emptyCommentsSub}>Be the first to start the conversation</Text>
               </View>
@@ -510,44 +548,6 @@ export default function MyQrDetailScreen() {
             )}
           </Animated.View>
         </ScrollView>
-
-        {/* Comment Input */}
-        <View style={[styles.inputBar, { paddingBottom: Math.max(bottomInset, 12) }]}>
-          {h.replyTo ? (
-            <View style={styles.replyBanner}>
-              <Ionicons name="return-down-forward-outline" size={14} color={colors.primary} />
-              <Text style={styles.replyBannerText} numberOfLines={1}>
-                Replying to <Text style={{ color: colors.text }}>{h.replyTo.author}</Text>
-              </Text>
-              <Pressable onPress={() => h.setReplyTo(null)} style={{ marginLeft: "auto" }}>
-                <Ionicons name="close" size={16} color={colors.textMuted} />
-              </Pressable>
-            </View>
-          ) : null}
-          <View style={styles.inputRow}>
-            <View style={styles.inputAvatar}>
-              <Text style={styles.inputAvatarText}>{h.user?.displayName?.[0]?.toUpperCase() || "?"}</Text>
-            </View>
-            <TextInput
-              ref={h.commentInputRef}
-              style={styles.commentInput}
-              placeholder={h.replyTo ? `Reply to ${h.replyTo.author}…` : "Add a comment…"}
-              placeholderTextColor={colors.textMuted}
-              value={h.commentText}
-              onChangeText={h.setCommentText}
-              maxLength={500}
-              multiline
-              returnKeyType="default"
-            />
-            <Pressable
-              onPress={h.handleSubmitComment}
-              disabled={!h.commentText.trim() || h.submittingComment}
-              style={({ pressed }) => [styles.sendBtn, (!h.commentText.trim() || h.submittingComment) && { opacity: 0.4 }, pressed && { opacity: 0.7 }]}
-            >
-              {h.submittingComment ? <ActivityIndicator size="small" color="#000" /> : <Ionicons name="send" size={18} color="#000" />}
-            </Pressable>
-          </View>
-        </View>
       </KeyboardAvoidingView>
 
       <DeactivateModal

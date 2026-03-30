@@ -69,7 +69,7 @@ function SectionHeader({
 
 const sectionHeaderStyles = StyleSheet.create({
   wrapper: { marginBottom: 10, marginTop: 2 },
-  label: { fontSize: 16, fontFamily: "Inter_700Bold" },
+  label: { fontSize: 14, fontFamily: "Inter_700Bold" },
 });
 
 function VerdictBanner({ verdict, offlineMode }: { verdict: ReturnType<ReturnType<typeof useQrDetail>["getCombinedVerdict"]>; offlineMode: boolean }) {
@@ -425,7 +425,7 @@ export default function QrDetailScreen() {
                 </View>
               ) : (
                 <>
-                  {!user && (
+                  {!user ? (
                     <Pressable onPress={() => router.push("/(auth)/login")} style={[signInCommentStyle, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
                       <View style={[signInCommentAvatar, { backgroundColor: colors.primaryDim }]}>
                         <Ionicons name="person-outline" size={15} color={colors.primary} />
@@ -435,6 +435,39 @@ export default function QrDetailScreen() {
                         <Text style={[signInCommentBtnText, { color: colors.primary }]}>Sign In</Text>
                       </View>
                     </Pressable>
+                  ) : (
+                    <View style={[styles.inlineCommentBar]}>
+                      {q.replyTo && (
+                        <View style={styles.replyBanner}>
+                          <Ionicons name="return-down-forward-outline" size={13} color={colors.primary} />
+                          <Text style={styles.replyBannerText} numberOfLines={1}>
+                            Replying to <Text style={{ color: colors.text }}>{q.replyTo.author}</Text>
+                          </Text>
+                          <Pressable onPress={() => q.setReplyTo(null)} style={{ marginLeft: "auto" as any }}>
+                            <Ionicons name="close" size={14} color={colors.textMuted} />
+                          </Pressable>
+                        </View>
+                      )}
+                      <View style={styles.commentInput}>
+                        <TextInput
+                          ref={q.commentInputRef}
+                          style={styles.commentTextInput}
+                          placeholder={q.replyTo ? `Reply to ${q.replyTo.author}...` : "Add a comment..."}
+                          placeholderTextColor={colors.textMuted}
+                          value={q.newComment}
+                          onChangeText={q.setNewComment}
+                          multiline
+                          maxLength={500}
+                        />
+                        <Pressable
+                          onPress={() => { Keyboard.dismiss(); q.handleSubmitComment(); }}
+                          disabled={q.submitting || !q.newComment.trim()}
+                          style={({ pressed }) => [styles.sendBtn, { opacity: (pressed || q.submitting || !q.newComment.trim()) ? 0.4 : 1 }]}
+                        >
+                          <Ionicons name="send" size={15} color="#000" />
+                        </Pressable>
+                      </View>
+                    </View>
                   )}
                   {q.commentsList.length === 0 ? (
                     <View style={styles.noComments}>
@@ -512,45 +545,6 @@ export default function QrDetailScreen() {
             )}
 
           </ScrollView>
-
-          {/* Comment Input Bar */}
-          {user && !q.offlineMode && (
-            <View style={[styles.bottomCommentBar, { paddingBottom: Math.max(insets.bottom, 6) }]}>
-              {q.replyTo && (
-                <View style={styles.replyBanner}>
-                  <Ionicons name="return-down-forward-outline" size={14} color={colors.primary} />
-                  <Text style={styles.replyBannerText} numberOfLines={1}>
-                    Replying to <Text style={{ color: colors.text }}>{q.replyTo.author}</Text>
-                  </Text>
-                  <Pressable onPress={() => q.setReplyTo(null)} style={{ marginLeft: "auto" as any }}>
-                    <Ionicons name="close" size={16} color={colors.textMuted} />
-                  </Pressable>
-                </View>
-              )}
-              <View style={styles.commentInput}>
-                <TextInput
-                  ref={q.commentInputRef}
-                  style={styles.commentTextInput}
-                  placeholder={q.replyTo ? `Reply to ${q.replyTo.author}...` : "Add a comment..."}
-                  placeholderTextColor={colors.textMuted}
-                  value={q.newComment}
-                  onChangeText={q.setNewComment}
-                  multiline
-                  maxLength={500}
-                />
-                <Pressable
-                  onPress={() => {
-                    Keyboard.dismiss();
-                    q.handleSubmitComment();
-                  }}
-                  disabled={q.submitting || !q.newComment.trim()}
-                  style={({ pressed }) => [styles.sendBtn, { opacity: pressed || !q.newComment.trim() ? 0.5 : 1 }]}
-                >
-                  <Ionicons name="send" size={18} color="#000" />
-                </Pressable>
-              </View>
-            </View>
-          )}
         </View>
       </KeyboardAvoidingView>
 
