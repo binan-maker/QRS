@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useCallback } from "react";
 import {
   View,
   Text,
@@ -22,11 +22,6 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Animated, {
   FadeInDown,
   FadeIn,
-  useSharedValue,
-  useAnimatedStyle,
-  withRepeat,
-  withSequence,
-  withTiming,
 } from "react-native-reanimated";
 import { useTheme } from "@/contexts/ThemeContext";
 import { useAuth } from "@/contexts/AuthContext";
@@ -171,16 +166,6 @@ export default function QrDetailScreen() {
   const insets = useSafeAreaInsets();
   const styles = makeStyles(colors);
 
-  const glowOpacity = useSharedValue(0.6);
-  const glowScale = useSharedValue(1);
-  useEffect(() => {
-    glowOpacity.value = withRepeat(withSequence(withTiming(1, { duration: 900 }), withTiming(0.6, { duration: 900 })), -1, true);
-    glowScale.value = withRepeat(withSequence(withTiming(1.03, { duration: 900 }), withTiming(1, { duration: 900 })), -1, true);
-  }, []);
-  const signInGlowStyle = useAnimatedStyle(() => ({
-    opacity: glowOpacity.value,
-    transform: [{ scale: glowScale.value }],
-  }));
 
   const q = useQrDetail(id);
   const topInset = Platform.OS === "web" ? 67 : insets.top;
@@ -304,21 +289,6 @@ export default function QrDetailScreen() {
               </Animated.View>
             )}
 
-            {/* ── Sign-in banner ──────────────────────────────────────────── */}
-            {!user && (
-              <Animated.View entering={FadeIn.duration(300)} style={signInGlowStyle}>
-                <Pressable onPress={() => router.push("/(auth)/login")} style={styles.signInBanner}>
-                  <LinearGradient colors={[colors.primary, colors.primaryShade]} style={signInBannerIconStyle} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}>
-                    <Ionicons name="person" size={20} color="#fff" />
-                  </LinearGradient>
-                  <View style={{ flex: 1 }}>
-                    <Text style={styles.signInBannerTitle}>Sign in to continue</Text>
-                    <Text style={styles.signInBannerSub}>Report, follow, favorite & comment</Text>
-                  </View>
-                  <Ionicons name="arrow-forward" size={18} color={colors.primary} />
-                </Pressable>
-              </Animated.View>
-            )}
 
             {/* ── Safety Verdict Banner ────────────────────────────────────── */}
             <Animated.View entering={FadeInDown.duration(250)}>
@@ -428,13 +398,6 @@ export default function QrDetailScreen() {
                 </View>
               ) : (
                 <>
-                  {!user && (
-                    <Pressable onPress={() => router.push("/(auth)/login")} style={styles.signInToComment}>
-                      <Ionicons name="chatbubble-outline" size={18} color={colors.primary} />
-                      <Text style={styles.signInToCommentText}>Sign in to comment</Text>
-                      <Ionicons name="arrow-forward" size={16} color={colors.primary} style={{ marginLeft: "auto" as any }} />
-                    </Pressable>
-                  )}
                   {q.commentsList.length === 0 ? (
                     <View style={styles.noComments}>
                       <Ionicons name="chatbubbles-outline" size={36} color={colors.textMuted} />
@@ -513,7 +476,7 @@ export default function QrDetailScreen() {
           </ScrollView>
 
           {/* Comment Input Bar */}
-          {user && !q.offlineMode && (
+          {!q.offlineMode && (
             <View style={[styles.bottomCommentBar, { paddingBottom: Math.max(insets.bottom, 6) }]}>
               {q.replyTo && (
                 <View style={styles.replyBanner}>
@@ -629,13 +592,6 @@ export default function QrDetailScreen() {
   );
 }
 
-const signInBannerIconStyle = {
-  width: 46,
-  height: 46,
-  borderRadius: 23,
-  alignItems: "center" as const,
-  justifyContent: "center" as const,
-};
 
 const navOfflineStyles = StyleSheet.create({
   badge: { fontSize: 12, fontFamily: "Inter_600SemiBold", marginTop: 1 },

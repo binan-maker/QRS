@@ -31,7 +31,7 @@ export default function ReportGrid({ reportCounts: _reportCounts, userReport, is
           </View>
         ) : (
           <Text style={[styles.hint, { color: colors.textMuted }]}>
-            {isLoggedIn ? "Tap to vote" : "Sign in to vote"}
+            Tap to vote
           </Text>
         )}
       </View>

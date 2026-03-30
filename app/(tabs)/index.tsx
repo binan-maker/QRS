@@ -205,34 +205,6 @@ export default function HomeScreen() {
             </View>
           </Animated.View>
 
-          {/* ── GUEST PROMO ── */}
-          {!user && (
-            <Animated.View entering={FadeInDown.duration(500).delay(240)}>
-              <Pressable
-                onPress={() => router.push("/(auth)/login")}
-                style={({ pressed }) => [styles.promoBanner, { opacity: pressed ? 0.9 : 1 }]}
-              >
-                <LinearGradient
-                  colors={[colors.primaryDim, "transparent"]}
-                  start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
-                  style={[styles.promoGradient, { borderColor: colors.primary + "30" }]}
-                >
-                  <View style={[styles.promoIconWrap, { backgroundColor: colors.primaryDim }]}>
-                    <Ionicons name="sparkles" size={20} color={colors.primary} />
-                  </View>
-                  <View style={{ flex: 1 }}>
-                    <Text style={[styles.promoTitle, { color: colors.text }]}>Unlock Full Access</Text>
-                    <Text style={[styles.promoSub, { color: colors.textSecondary }]}>
-                      Sign in to comment, report, and sync history
-                    </Text>
-                  </View>
-                  <View style={[styles.promoArrow, { backgroundColor: colors.primaryDim }]}>
-                    <Ionicons name="chevron-forward" size={16} color={colors.primary} />
-                  </View>
-                </LinearGradient>
-              </Pressable>
-            </Animated.View>
-          )}
 
           {/* ── RECENT SCANS ── */}
           <Animated.View entering={FadeInDown.duration(500).delay(320)}>
