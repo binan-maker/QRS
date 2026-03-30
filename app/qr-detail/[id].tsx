@@ -293,22 +293,18 @@ export default function QrDetailScreen() {
             {/* ── Sign-in Banner ───────────────────────────────────────────── */}
             {!user && (
               <Animated.View entering={FadeIn.duration(400)}>
-                <Pressable onPress={() => router.push("/(auth)/login")} style={signInBannerCardStyle}>
-                  <LinearGradient
-                    colors={[colors.primary + "14", colors.primaryShade + "08"]}
-                    start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
-                    style={StyleSheet.absoluteFill}
-                  />
-                  <LinearGradient
-                    colors={[colors.primary, colors.primaryShade]}
-                    start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
-                    style={signInBannerIconCircle}
-                  >
-                    <Ionicons name="person-outline" size={18} color="#fff" />
-                  </LinearGradient>
-                  <View style={{ flex: 1, gap: 3 }}>
-                    <Text style={[signInBannerStyles.title, { color: colors.text }]}>Sign in to continue</Text>
-                    <Text style={[signInBannerStyles.sub, { color: colors.textSecondary }]}>Comment · Report · Follow · Favorites</Text>
+                <Pressable
+                  onPress={() => router.push("/(auth)/login")}
+                  style={[signInBannerCardStyle, {
+                    backgroundColor: colors.surface,
+                    borderColor: colors.surfaceBorder,
+                    borderLeftColor: colors.primary,
+                    borderLeftWidth: 3,
+                  }]}
+                >
+                  <View style={{ flex: 1, gap: 2 }}>
+                    <Text style={[signInBannerStyles.title, { color: colors.text }]}>Unlock Features</Text>
+                    <Text style={[signInBannerStyles.sub, { color: colors.textSecondary }]}>Comment, follow & more</Text>
                   </View>
                   <View style={[signInBannerStyles.cta, { backgroundColor: colors.primary }]}>
                     <Text style={signInBannerStyles.ctaText}>Sign In</Text>
@@ -426,13 +422,10 @@ export default function QrDetailScreen() {
               ) : (
                 <>
                   {!user ? (
-                    <Pressable onPress={() => router.push("/(auth)/login")} style={[signInCommentStyle, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
-                      <View style={[signInCommentAvatar, { backgroundColor: colors.primaryDim }]}>
-                        <Ionicons name="person-outline" size={15} color={colors.primary} />
-                      </View>
-                      <Text style={[signInCommentPlaceholder, { color: colors.textMuted }]}>Sign in to add a comment...</Text>
-                      <View style={[signInCommentBtn, { backgroundColor: colors.primaryDim, borderColor: colors.primary + "40" }]}>
-                        <Text style={[signInCommentBtnText, { color: colors.primary }]}>Sign In</Text>
+                    <Pressable onPress={() => router.push("/(auth)/login")} style={[signInCommentStyle, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder, borderLeftColor: colors.primary, borderLeftWidth: 3 }]}>
+                      <Text style={[signInCommentPlaceholder, { color: colors.textMuted, fontSize: 13 }]}>Add a comment…</Text>
+                      <View style={[signInCommentBtn, { backgroundColor: colors.primary, borderWidth: 0, borderRadius: 22 }]}>
+                        <Text style={[signInCommentBtnText, { color: "#fff", fontSize: 12 }]}>Sign In</Text>
                       </View>
                     </Pressable>
                   ) : (
@@ -650,10 +643,10 @@ const _signInStyles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 14,
-    borderRadius: 20,
-    padding: 16,
+    borderRadius: 14,
+    padding: 14,
     marginBottom: 14,
-    overflow: "hidden",
+    borderWidth: 1,
   },
   bannerIconCircle: {
     width: 44,
@@ -666,32 +659,34 @@ const _signInStyles = StyleSheet.create({
   bannerTitle: {
     fontSize: 14,
     fontFamily: "Inter_700Bold",
-    letterSpacing: -0.1,
+    letterSpacing: -0.2,
   },
   bannerSub: {
     fontSize: 12,
     fontFamily: "Inter_400Regular",
-    lineHeight: 17,
+    lineHeight: 16,
+    marginTop: 1,
   },
   bannerCta: {
-    paddingHorizontal: 14,
+    paddingHorizontal: 16,
     paddingVertical: 9,
-    borderRadius: 12,
+    borderRadius: 22,
     flexShrink: 0,
   },
   bannerCtaText: {
     fontSize: 13,
     fontFamily: "Inter_700Bold",
     color: "#fff",
-    letterSpacing: 0.2,
+    letterSpacing: 0.1,
   },
   commentRow: {
     flexDirection: "row",
     alignItems: "center",
     gap: 10,
-    borderRadius: 16,
-    padding: 12,
-    marginBottom: 14,
+    borderRadius: 14,
+    paddingVertical: 11,
+    paddingHorizontal: 13,
+    marginBottom: 12,
     borderWidth: 1,
   },
   commentAvatar: {
@@ -704,20 +699,20 @@ const _signInStyles = StyleSheet.create({
   },
   commentPlaceholder: {
     flex: 1,
-    fontSize: 14,
+    fontSize: 13,
     fontFamily: "Inter_400Regular",
   },
   commentBtn: {
-    paddingHorizontal: 12,
+    paddingHorizontal: 13,
     paddingVertical: 7,
-    borderRadius: 10,
-    borderWidth: 1,
+    borderRadius: 22,
+    borderWidth: 0,
     flexShrink: 0,
   },
   commentBtnText: {
     fontSize: 12,
     fontFamily: "Inter_600SemiBold",
-    letterSpacing: 0.2,
+    letterSpacing: 0.1,
   },
 });
 
