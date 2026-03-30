@@ -651,6 +651,96 @@ const offlineSectionStyles = StyleSheet.create({
   },
 });
 
+const _signInStyles = StyleSheet.create({
+  bannerCard: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 14,
+    borderRadius: 20,
+    padding: 16,
+    marginBottom: 14,
+    overflow: "hidden",
+  },
+  bannerIconCircle: {
+    width: 44,
+    height: 44,
+    borderRadius: 14,
+    alignItems: "center",
+    justifyContent: "center",
+    flexShrink: 0,
+  },
+  bannerTitle: {
+    fontSize: 14,
+    fontFamily: "Inter_700Bold",
+    letterSpacing: -0.1,
+  },
+  bannerSub: {
+    fontSize: 12,
+    fontFamily: "Inter_400Regular",
+    lineHeight: 17,
+  },
+  bannerCta: {
+    paddingHorizontal: 14,
+    paddingVertical: 9,
+    borderRadius: 12,
+    flexShrink: 0,
+  },
+  bannerCtaText: {
+    fontSize: 13,
+    fontFamily: "Inter_700Bold",
+    color: "#fff",
+    letterSpacing: 0.2,
+  },
+  commentRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    borderRadius: 16,
+    padding: 12,
+    marginBottom: 14,
+    borderWidth: 1,
+  },
+  commentAvatar: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    alignItems: "center",
+    justifyContent: "center",
+    flexShrink: 0,
+  },
+  commentPlaceholder: {
+    flex: 1,
+    fontSize: 14,
+    fontFamily: "Inter_400Regular",
+  },
+  commentBtn: {
+    paddingHorizontal: 12,
+    paddingVertical: 7,
+    borderRadius: 10,
+    borderWidth: 1,
+    flexShrink: 0,
+  },
+  commentBtnText: {
+    fontSize: 12,
+    fontFamily: "Inter_600SemiBold",
+    letterSpacing: 0.2,
+  },
+});
+
+const signInBannerCardStyle = _signInStyles.bannerCard;
+const signInBannerIconCircle = _signInStyles.bannerIconCircle;
+const signInBannerStyles = {
+  title: _signInStyles.bannerTitle,
+  sub: _signInStyles.bannerSub,
+  cta: _signInStyles.bannerCta,
+  ctaText: _signInStyles.bannerCtaText,
+};
+const signInCommentStyle = _signInStyles.commentRow;
+const signInCommentAvatar = _signInStyles.commentAvatar;
+const signInCommentPlaceholder = _signInStyles.commentPlaceholder;
+const signInCommentBtn = _signInStyles.commentBtn;
+const signInCommentBtnText = _signInStyles.commentBtnText;
+
 const commentMenuStyles = StyleSheet.create({
   backdrop: {
     flex: 1,

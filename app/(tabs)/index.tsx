@@ -206,6 +206,38 @@ export default function HomeScreen() {
           </Animated.View>
 
 
+          {/* ── SIGN-IN BANNER (guest only) ── */}
+          {!user && (
+            <Animated.View entering={FadeInDown.duration(500).delay(280)}>
+              <Pressable
+                onPress={() => router.push("/(auth)/login")}
+                style={[styles.signInBannerCard, { borderColor: colors.primary + "28" }]}
+              >
+                <LinearGradient
+                  colors={[colors.primary + "12", colors.primaryShade + "06"]}
+                  start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
+                  style={StyleSheet.absoluteFill}
+                />
+                <LinearGradient
+                  colors={[colors.primary, colors.primaryShade]}
+                  start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
+                  style={styles.signInBannerIcon}
+                >
+                  <Ionicons name="shield-checkmark-outline" size={20} color="#fff" />
+                </LinearGradient>
+                <View style={{ flex: 1, gap: 2 }}>
+                  <Text style={[styles.signInBannerTitle, { color: colors.text }]}>Sign in to continue</Text>
+                  <Text style={[styles.signInBannerSub, { color: colors.textSecondary }]}>
+                    Report · Follow · Favorites · Comments
+                  </Text>
+                </View>
+                <View style={[styles.signInBannerCta, { backgroundColor: colors.primary }]}>
+                  <Text style={styles.signInBannerCtaText}>Sign In</Text>
+                </View>
+              </Pressable>
+            </Animated.View>
+          )}
+
           {/* ── RECENT SCANS ── */}
           <Animated.View entering={FadeInDown.duration(500).delay(320)}>
             <View style={styles.sectionHeader}>
@@ -418,6 +450,47 @@ function makeStyles(c: ReturnType<typeof import("@/contexts/ThemeContext").useTh
     emptyIconBox: { width: 70, height: 70, borderRadius: 18, alignItems: "center", justifyContent: "center", marginBottom: 4 },
     emptyTitle: { fontSize: rf(15), fontFamily: "Inter_600SemiBold" },
     emptySub: { fontSize: rf(13), fontFamily: "Inter_400Regular" },
+
+    signInBannerCard: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 14,
+      borderRadius: 20,
+      padding: 16,
+      marginBottom: 18,
+      overflow: "hidden",
+      borderWidth: 1,
+    },
+    signInBannerIcon: {
+      width: 46,
+      height: 46,
+      borderRadius: 14,
+      alignItems: "center",
+      justifyContent: "center",
+      flexShrink: 0,
+    },
+    signInBannerTitle: {
+      fontSize: rf(14),
+      fontFamily: "Inter_700Bold",
+      letterSpacing: -0.1,
+    },
+    signInBannerSub: {
+      fontSize: rf(12),
+      fontFamily: "Inter_400Regular",
+      lineHeight: Math.round(17 * s),
+    },
+    signInBannerCta: {
+      paddingHorizontal: 14,
+      paddingVertical: 9,
+      borderRadius: 12,
+      flexShrink: 0,
+    },
+    signInBannerCtaText: {
+      fontSize: rf(13),
+      fontFamily: "Inter_700Bold",
+      color: "#fff",
+      letterSpacing: 0.2,
+    },
 
     recentList: { gap: 10 },
     scanItem: {
