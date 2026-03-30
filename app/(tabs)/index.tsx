@@ -211,24 +211,17 @@ export default function HomeScreen() {
             <Animated.View entering={FadeInDown.duration(500).delay(280)}>
               <Pressable
                 onPress={() => router.push("/(auth)/login")}
-                style={[styles.signInBannerCard, { borderColor: colors.primary + "28" }]}
+                style={[styles.signInBannerCard, {
+                  backgroundColor: colors.surface,
+                  borderColor: colors.surfaceBorder,
+                  borderLeftColor: colors.primary,
+                  borderLeftWidth: 3,
+                }]}
               >
-                <LinearGradient
-                  colors={[colors.primary + "12", colors.primaryShade + "06"]}
-                  start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
-                  style={StyleSheet.absoluteFill}
-                />
-                <LinearGradient
-                  colors={[colors.primary, colors.primaryShade]}
-                  start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
-                  style={styles.signInBannerIcon}
-                >
-                  <Ionicons name="shield-checkmark-outline" size={20} color="#fff" />
-                </LinearGradient>
                 <View style={{ flex: 1, gap: 2 }}>
-                  <Text style={[styles.signInBannerTitle, { color: colors.text }]}>Sign in to continue</Text>
+                  <Text style={[styles.signInBannerTitle, { color: colors.text }]}>Unlock Features</Text>
                   <Text style={[styles.signInBannerSub, { color: colors.textSecondary }]}>
-                    Report · Follow · Favorites · Comments
+                    Comment, follow & more
                   </Text>
                 </View>
                 <View style={[styles.signInBannerCta, { backgroundColor: colors.primary }]}>
@@ -455,10 +448,9 @@ function makeStyles(c: ReturnType<typeof import("@/contexts/ThemeContext").useTh
       flexDirection: "row",
       alignItems: "center",
       gap: 14,
-      borderRadius: 20,
-      padding: 16,
+      borderRadius: 14,
+      padding: 14,
       marginBottom: 18,
-      overflow: "hidden",
       borderWidth: 1,
     },
     signInBannerIcon: {
@@ -472,24 +464,25 @@ function makeStyles(c: ReturnType<typeof import("@/contexts/ThemeContext").useTh
     signInBannerTitle: {
       fontSize: rf(14),
       fontFamily: "Inter_700Bold",
-      letterSpacing: -0.1,
+      letterSpacing: -0.2,
     },
     signInBannerSub: {
       fontSize: rf(12),
       fontFamily: "Inter_400Regular",
-      lineHeight: Math.round(17 * s),
+      lineHeight: Math.round(16 * s),
+      marginTop: 1,
     },
     signInBannerCta: {
-      paddingHorizontal: 14,
+      paddingHorizontal: 16,
       paddingVertical: 9,
-      borderRadius: 12,
+      borderRadius: 22,
       flexShrink: 0,
     },
     signInBannerCtaText: {
       fontSize: rf(13),
       fontFamily: "Inter_700Bold",
       color: "#fff",
-      letterSpacing: 0.2,
+      letterSpacing: 0.1,
     },
 
     recentList: { gap: 10 },
