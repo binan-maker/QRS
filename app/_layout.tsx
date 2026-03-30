@@ -2,7 +2,7 @@ import "@/polyfills";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Stack } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
-import React, { useEffect } from "react";
+import React, { useEffect, useRef } from "react";
 import { Platform, View } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { setHapticsEnabled } from "@/lib/haptics";
@@ -10,7 +10,7 @@ import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { KeyboardProvider } from "react-native-keyboard-controller";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { queryClient } from "@/lib/query-client";
-import { AuthProvider } from "@/contexts/AuthContext";
+import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import { ThemeProvider, useTheme } from "@/contexts/ThemeContext";
 import { StatusBar } from "expo-status-bar";
 import {
@@ -23,6 +23,40 @@ import {
 import { WEB_MAX_WIDTH } from "@/lib/utils/platform";
 
 SplashScreen.preventAutoHideAsync();
+
+/**
+ * Hides the splash screen only when BOTH fonts are ready AND Firebase auth
+ * has resolved its initial state. This prevents the brief flash of the
+ * unauthenticated UI that occurs when the splash dismisses before
+ * onAuthStateChanged fires.
+ *
+ * A 5-second safety timeout ensures the splash never hangs indefinitely if
+ * auth fails silently (e.g., no network on cold start).
+ */
+function SplashGate({ fontsReady }: { fontsReady: boolean }) {
+  const { isLoading: authLoading } = useAuth();
+  const hiddenRef = useRef(false);
+
+  useEffect(() => {
+    // Safety net: hide splash after 5s no matter what
+    const safety = setTimeout(() => {
+      if (!hiddenRef.current) {
+        hiddenRef.current = true;
+        SplashScreen.hideAsync().catch(() => {});
+      }
+    }, 5000);
+    return () => clearTimeout(safety);
+  }, []);
+
+  useEffect(() => {
+    if (fontsReady && !authLoading && !hiddenRef.current) {
+      hiddenRef.current = true;
+      SplashScreen.hideAsync().catch(() => {});
+    }
+  }, [fontsReady, authLoading]);
+
+  return null;
+}
 
 function RootLayoutNav() {
   const { colors } = useTheme();
@@ -82,25 +116,25 @@ export default function RootLayout() {
     Inter_700Bold,
   });
 
+  const fontsReady = fontsLoaded || !!fontError;
+
   useEffect(() => {
     AsyncStorage.getItem("haptic_enabled").then((v) => {
       if (v !== null) setHapticsEnabled(v !== "false");
     });
   }, []);
 
-  useEffect(() => {
-    if (fontsLoaded || fontError) {
-      SplashScreen.hideAsync();
-    }
-  }, [fontsLoaded, fontError]);
-
-  if (!fontsLoaded && !fontError) return null;
+  // Don't render anything until fonts are at least attempted — prevents a
+  // flash of unstyled text before Inter is available.
+  if (!fontsReady) return null;
 
   return (
     <ErrorBoundary>
       <ThemeProvider>
         <QueryClientProvider client={queryClient}>
           <AuthProvider>
+            {/* SplashGate lives inside AuthProvider so it can read isLoading */}
+            <SplashGate fontsReady={fontsReady} />
             <ThemedApp />
           </AuthProvider>
         </QueryClientProvider>
