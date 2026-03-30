@@ -1,4 +1,4 @@
-import { db, rtdb } from "../db";
+import { db, rtdb } from "../db/client";
 import * as Crypto from "expo-crypto";
 import { tsToString } from "./utils";
 import type {

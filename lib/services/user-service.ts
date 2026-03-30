@@ -1,4 +1,4 @@
-import { db, rtdb } from "../db";
+import { db, rtdb } from "../db/client";
 import { tsToString } from "./utils";
 import type { UserStats, UsernameData } from "./types";
 

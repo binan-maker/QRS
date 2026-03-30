@@ -2,7 +2,7 @@
 // Single responsibility: recording and retrieving user scan history.
 // Privacy guarantee: signed-in users in anonymous mode → zero database writes.
 
-import { db, rtdb } from "../db";
+import { db, rtdb } from "../db/client";
 import { tsToString } from "./utils";
 import {
   collection,

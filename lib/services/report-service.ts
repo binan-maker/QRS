@@ -1,4 +1,4 @@
-import { db } from "../db";
+import { db } from "../db/client";
 import { notifyQrFollowers } from "./notification-service";
 import {
   checkReportEligibility,

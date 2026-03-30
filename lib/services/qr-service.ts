@@ -5,7 +5,7 @@
 //   recordScan / history → lib/services/scan-history-service.ts
 //   loadQrDetail         → lib/services/qr-detail-service.ts
 
-import { db } from "../db";
+import { db } from "../db/client";
 import { tsToString } from "./utils";
 import * as Crypto from "expo-crypto";
 import { detectContentType } from "./qr-content-type";

@@ -1,4 +1,4 @@
-import { db } from "../db";
+import { db } from "../db/client";
 
 /**
  * INTEGRITY SERVICE — Anti-fraud, anti-bot, anti-manipulation engine.

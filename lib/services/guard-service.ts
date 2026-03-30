@@ -1,4 +1,4 @@
-import { db } from "../db";
+import { db } from "../db/client";
 import { tsToString } from "./utils";
 import type { GuardLink } from "./types";
 

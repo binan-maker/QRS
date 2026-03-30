@@ -4,7 +4,7 @@
 // none of that logic itself. Changing the Trust Score algorithm means editing
 // trust-service.ts only; this file stays untouched.
 
-import { db } from "../db";
+import { db } from "../db/client";
 import { getQrCodeById } from "./qr-service";
 import { getQrReportCounts, getQrWeightedReportCounts, getUserQrReport } from "./report-service";
 import { isUserFollowingQrCode, getFollowCount } from "./follow-service";

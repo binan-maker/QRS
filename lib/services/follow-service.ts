@@ -1,4 +1,4 @@
-import { db, rtdb } from "../db";
+import { db, rtdb } from "../db/client";
 import { NOTIFICATIONS_ENABLED } from "../notifications/config";
 import { tsToString } from "./utils";
 import type { FollowerInfo } from "./types";

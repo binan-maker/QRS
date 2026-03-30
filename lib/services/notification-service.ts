@@ -1,4 +1,4 @@
-import { db, rtdb } from "../db";
+import { db, rtdb } from "../db/client";
 import { NOTIFICATIONS_ENABLED } from "../notifications/config";
 import type { Notification, NotificationType } from "./types";
 

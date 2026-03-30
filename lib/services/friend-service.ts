@@ -1,4 +1,4 @@
-import { db } from "../db";
+import { db } from "../db/client";
 import { notifyFriendRequest, notifyFriendAccepted } from "./notification-service";
 
 export type FriendStatus = "none" | "sent" | "received" | "friends";

@@ -1,4 +1,4 @@
-import { db } from "../db";
+import { db } from "../db/client";
 import { checkCommentKeywords } from "../qr-analysis";
 import { tsToString } from "./utils";
 import {
