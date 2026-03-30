@@ -2,7 +2,7 @@ import { useState, useCallback, useRef, useEffect } from "react";
 import { Alert, Platform, TextInput, ToastAndroid } from "react-native";
 import * as Haptics from "@/lib/haptics";
 import * as Clipboard from "expo-clipboard";
-import * as FileSystem from "expo-file-system";
+import * as FileSystem from "expo-file-system/legacy";
 import * as Sharing from "expo-sharing";
 import * as Print from "expo-print";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -306,41 +306,82 @@ export function useMyQrDetail(id: string) {
   }
 
   async function saveAndroidPdf(pdfUri: string, fileName: string) {
-    try {
-      // Try cached Downloads directory URI first (avoids re-showing the picker)
-      let cachedDirUri = await AsyncStorage.getItem("qrguard_downloads_dir_uri");
-      if (cachedDirUri) {
-        try {
-          const base64 = await FileSystem.readAsStringAsync(pdfUri, { encoding: "base64" });
-          const destUri = await FileSystem.StorageAccessFramework.createFileAsync(
-            cachedDirUri, fileName, "application/pdf"
-          );
-          await FileSystem.writeAsStringAsync(destUri, base64, { encoding: "base64" });
-          ToastAndroid.show("PDF saved to Downloads ✓", ToastAndroid.LONG);
-          return;
-        } catch {
-          // Cached permission expired — clear it and fall through to re-ask
-          await AsyncStorage.removeItem("qrguard_downloads_dir_uri");
-        }
-      }
+    const SAF = FileSystem.StorageAccessFramework;
+    console.log("[PDF] saveAndroidPdf called — pdfUri:", pdfUri, "fileName:", fileName);
+    console.log("[PDF] StorageAccessFramework available:", !!SAF);
 
-      // Ask the user to grant access to a folder (they should pick Downloads)
-      const permissions = await FileSystem.StorageAccessFramework.requestDirectoryPermissionsAsync();
-      if (!permissions.granted) {
-        Alert.alert("Permission denied", "Could not save PDF. Please select the Downloads folder and try again.");
-        return;
-      }
+    return new Promise<void>((resolve) => {
+      Alert.alert(
+        "Save PDF to Downloads",
+        "Do you want to save this QR code PDF to your Downloads folder?",
+        [
+          {
+            text: "Cancel",
+            style: "cancel",
+            onPress: () => {
+              console.log("[PDF] User cancelled save dialog");
+              resolve();
+            },
+          },
+          {
+            text: "Save",
+            onPress: async () => {
+              try {
+                // Try cached permission URI first — fully silent for repeat saves
+                const cachedDirUri = await AsyncStorage.getItem("qrguard_downloads_dir_uri");
+                console.log("[PDF] Cached dir URI:", cachedDirUri);
 
-      await AsyncStorage.setItem("qrguard_downloads_dir_uri", permissions.directoryUri);
-      const base64 = await FileSystem.readAsStringAsync(pdfUri, { encoding: "base64" });
-      const destUri = await FileSystem.StorageAccessFramework.createFileAsync(
-        permissions.directoryUri, fileName, "application/pdf"
+                if (cachedDirUri) {
+                  try {
+                    console.log("[PDF] Trying cached URI...");
+                    const base64 = await FileSystem.readAsStringAsync(pdfUri, { encoding: "base64" });
+                    const destUri = await SAF.createFileAsync(cachedDirUri, fileName, "application/pdf");
+                    await FileSystem.writeAsStringAsync(destUri, base64, { encoding: "base64" });
+                    console.log("[PDF] Saved via cached URI successfully");
+                    ToastAndroid.show("PDF saved to Downloads ✓", ToastAndroid.LONG);
+                    resolve();
+                    return;
+                  } catch (cacheErr: any) {
+                    console.warn("[PDF] Cached URI failed, clearing:", cacheErr?.message);
+                    await AsyncStorage.removeItem("qrguard_downloads_dir_uri");
+                  }
+                }
+
+                // No cached permission — open SAF pre-navigated to the Downloads folder.
+                // getUriForDirectoryInRoot("Download") returns the Downloads content URI so
+                // the picker opens directly there; user just taps "Allow" (one tap, once only).
+                const downloadsUri = SAF.getUriForDirectoryInRoot("Download");
+                console.log("[PDF] Requesting SAF permission, initial URI:", downloadsUri);
+                const permissions = await SAF.requestDirectoryPermissionsAsync(downloadsUri);
+                console.log("[PDF] SAF permissions result:", JSON.stringify(permissions));
+
+                if (!permissions.granted) {
+                  console.warn("[PDF] SAF permission denied");
+                  Alert.alert("Permission denied", "PDF was not saved. Please try again and allow access to Downloads.");
+                  resolve();
+                  return;
+                }
+
+                await AsyncStorage.setItem("qrguard_downloads_dir_uri", permissions.directoryUri);
+                console.log("[PDF] Permission granted, dir URI:", permissions.directoryUri);
+
+                const base64 = await FileSystem.readAsStringAsync(pdfUri, { encoding: "base64" });
+                const destUri = await SAF.createFileAsync(permissions.directoryUri, fileName, "application/pdf");
+                await FileSystem.writeAsStringAsync(destUri, base64, { encoding: "base64" });
+                console.log("[PDF] Saved successfully via new SAF permission");
+                ToastAndroid.show("PDF saved to Downloads ✓", ToastAndroid.LONG);
+                resolve();
+              } catch (e: any) {
+                console.error("[PDF] Save failed:", e?.message, e);
+                Alert.alert("Save Failed", e?.message || "Could not save PDF to Downloads. Please try again.");
+                resolve();
+              }
+            },
+          },
+        ],
+        { cancelable: true }
       );
-      await FileSystem.writeAsStringAsync(destUri, base64, { encoding: "base64" });
-      ToastAndroid.show("PDF saved to Downloads ✓", ToastAndroid.LONG);
-    } catch (e: any) {
-      Alert.alert("Save Failed", e?.message || "Could not save PDF to Downloads. Please try again.");
-    }
+    });
   }
 
   async function handleDownloadPdf() {
