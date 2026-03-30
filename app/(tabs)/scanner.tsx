@@ -163,9 +163,18 @@ export default function ScannerScreen() {
   const bottomInset = Math.max(insets.bottom, 24);
 
   // Step 1: Check hardware availability BEFORE rendering CameraView.
-  // This prevents native Android CameraUnavailableException crashes.
+  // On Android, isAvailableAsync() can return false incorrectly on many real
+  // devices in production (driver timing, permission state, OEM restrictions).
+  // Instead, default to available on Android and rely on onMountError + the
+  // ready-timer as the real safety net. Only use isAvailableAsync() on iOS/web
+  // where the result is reliable.
   useEffect(() => {
     let cancelled = false;
+    if (Platform.OS === "android") {
+      // Always assume available on Android; onMountError handles real failures.
+      setHardwareAvailable(true);
+      return () => { cancelled = true; };
+    }
     CameraView.isAvailableAsync()
       .then((available) => {
         if (!cancelled) setHardwareAvailable(available);
@@ -192,16 +201,18 @@ export default function ScannerScreen() {
     }
   }
 
-  // Step 2: If hardware is confirmed available, start a 7s fallback timer.
+  // Step 2: If hardware is confirmed available, start a fallback timer.
   // If onCameraReady never fires (silent failure), show the unavailable screen.
+  // Android camera init can be slow on low-end devices, so use 15s there.
   useEffect(() => {
     if (!permission?.granted || hardwareAvailable !== true) return;
+    const timeoutMs = Platform.OS === "android" ? 15000 : 7000;
     cameraReadyTimerRef.current = setTimeout(() => {
       setCameraAvailable((prev) => {
         if (prev) setCameraErrorType("unavailable");
         return false;
       });
-    }, 7000);
+    }, timeoutMs);
     return () => {
       if (cameraReadyTimerRef.current) {
         clearTimeout(cameraReadyTimerRef.current);
@@ -305,7 +316,6 @@ export default function ScannerScreen() {
                 msg.includes("busy") ||
                 msg.includes("already") ||
                 msg.includes("another app") ||
-                msg.includes("unavailable") ||
                 msg.includes("restricted");
               markCameraUnavailable(isInUse ? "inuse" : "unavailable");
             }}
