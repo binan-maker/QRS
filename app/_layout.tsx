@@ -108,6 +108,34 @@ function ThemedApp() {
   );
 }
 
+/**
+ * Blocks the entire app from rendering its screens until Firebase has resolved
+ * the initial auth state. Without this, every time the app launches or returns
+ * from the background, tab screens momentarily render in "guest" mode (showing
+ * login prompts) before onAuthStateChanged fires — even though the user is signed in.
+ *
+ * Firebase resolves from its local token cache in <100ms, so the blank view is
+ * imperceptible in practice. A 4s safety cap prevents a permanent blank screen
+ * if auth somehow never resolves (e.g. no network and no cached state).
+ */
+function AuthGatedApp() {
+  const { isLoading } = useAuth();
+  const { colors } = useTheme();
+  const [timedOut, setTimedOut] = React.useState(false);
+
+  React.useEffect(() => {
+    const t = setTimeout(() => setTimedOut(true), 4000);
+    return () => clearTimeout(t);
+  }, []);
+
+  if (isLoading && !timedOut) {
+    // Render only the background — no routing, no tab screens, no guest UI.
+    return <View style={{ flex: 1, backgroundColor: colors.background }} />;
+  }
+
+  return <ThemedApp />;
+}
+
 export default function RootLayout() {
   const [fontsLoaded, fontError] = useFonts({
     Inter_400Regular,
