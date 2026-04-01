@@ -1,8 +1,9 @@
-import type { ParsedPaymentQr, PaymentSafetyResult, ParsedUpiQr } from "./types";
+import type { ParsedPaymentQr, PaymentSafetyResult, ParsedUpiQr, Evidence } from "./types";
 import { parseAnyPaymentQr } from "./payment-parser";
 
 export function analyzeAnyPaymentQr(parsed: ParsedPaymentQr): PaymentSafetyResult {
   const warnings: string[] = [];
+  const evidence: Evidence[] = [];
   let riskLevel: "safe" | "caution" | "dangerous" = "safe";
 
   function bump(level: "caution" | "dangerous") {
@@ -10,26 +11,53 @@ export function analyzeAnyPaymentQr(parsed: ParsedPaymentQr): PaymentSafetyResul
     else if (riskLevel === "safe") riskLevel = "caution";
   }
 
-  // ── Crypto: irreversible transactions — factual, always shown ─────────────
+  // ── Payment app info ──────────────────────────────────────────────────────
+  evidence.push({ type: "info", label: "Payment Network", value: parsed.appDisplayName });
+  if (parsed.region) {
+    evidence.push({ type: "info", label: "Region", value: parsed.region });
+  }
+
+  // ── Crypto: irreversible transactions ─────────────────────────────────────
   if (parsed.appCategory === "crypto") {
     warnings.push(`Crypto payment (${parsed.appDisplayName}) — transactions are irreversible once sent`);
     warnings.push("Verify the wallet address character by character before sending any funds");
+    evidence.push({ type: "negative", label: "Transaction Type", value: "Crypto — Irreversible Once Sent" });
+
     if (parsed.isAmountPreFilled && parsed.amount) {
       const amt = parseFloat(parsed.amount);
       if (amt > 0) {
         warnings.push(`Pre-filled amount: ${parsed.currency || ""} ${amt.toLocaleString()} — confirm before sending`);
+        evidence.push({ type: "negative", label: "Pre-Filled Amount", value: `${parsed.currency || ""} ${amt.toLocaleString()} — Verify Before Sending` });
       }
     }
+
     const addr = parsed.recipientId;
     if (addr && (addr.length < 20 || addr.length > 120)) {
       warnings.push("Wallet address length looks unusual — double check before sending");
+      evidence.push({ type: "negative", label: "Wallet Address", value: `${addr.length} chars — Unusual Length` });
       bump("dangerous");
+    } else if (addr) {
+      evidence.push({ type: "neutral", label: "Wallet Address", value: `${addr.slice(0, 8)}…${addr.slice(-6)}` });
     }
+
     bump("caution");
-    return { isSuspicious: true, warnings, riskLevel, appInfo: parsed.appDisplayName };
+    return { isSuspicious: true, warnings, riskLevel, appInfo: parsed.appDisplayName, evidence };
   }
 
-  // ── Pre-filled amount: always shown, even for 1 rupee or 1 cent ───────────
+  // ── Recipient info ────────────────────────────────────────────────────────
+  if (parsed.recipientName) {
+    evidence.push({ type: "info", label: "Recipient Name", value: parsed.recipientName });
+  }
+  if (parsed.vpa) {
+    const handle = parsed.vpa.split("@")[1] || parsed.vpa;
+    evidence.push({ type: "info", label: "VPA Handle", value: `@${handle}` });
+  } else if (parsed.recipientId) {
+    evidence.push({ type: "neutral", label: "Recipient ID", value: parsed.recipientId.length > 24
+      ? `${parsed.recipientId.slice(0, 12)}…${parsed.recipientId.slice(-6)}`
+      : parsed.recipientId });
+  }
+
+  // ── Pre-filled amount ─────────────────────────────────────────────────────
   if (parsed.isAmountPreFilled && parsed.amount) {
     const amt = parseFloat(parsed.amount);
     if (amt > 0) {
@@ -45,8 +73,16 @@ export function analyzeAnyPaymentQr(parsed: ParsedPaymentQr): PaymentSafetyResul
         formattedAmt = `${currency}${amt.toLocaleString()}`;
       }
       warnings.push(`Pre-filled amount: ${formattedAmt} — confirm the amount before paying`);
+      evidence.push({ type: "negative", label: "Pre-Filled Amount", value: `${formattedAmt} — Verify Before Paying` });
       bump("caution");
     }
+  } else {
+    evidence.push({ type: "positive", label: "Amount", value: "Not Pre-Filled — You Control the Amount" });
+  }
+
+  // ── Transaction note ──────────────────────────────────────────────────────
+  if (parsed.note) {
+    evidence.push({ type: "neutral", label: "Transaction Note", value: parsed.note.length > 40 ? `${parsed.note.slice(0, 40)}…` : parsed.note });
   }
 
   return {
@@ -54,6 +90,7 @@ export function analyzeAnyPaymentQr(parsed: ParsedPaymentQr): PaymentSafetyResul
     warnings,
     riskLevel,
     appInfo: parsed.appDisplayName,
+    evidence,
   };
 }
 

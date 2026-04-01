@@ -224,9 +224,43 @@ setInterval(() => {
   }
 }, GUARD_CACHE_TTL_MS);
 
+const SAFE_REDIRECT_PROTOCOLS = new Set(["https:", "http:"]);
+
+function isSafeRedirectDestination(destination: string): boolean {
+  try {
+    const url = new URL(destination.startsWith("http") ? destination : `https://${destination}`);
+    return SAFE_REDIRECT_PROTOCOLS.has(url.protocol);
+  } catch {
+    return false;
+  }
+}
+
+// ─── Dynamic threat definitions (served to clients for live updates) ──────────
+const DYNAMIC_THREAT_PATTERNS: { pattern: string; reason: string }[] = [
+  { pattern: "support-paytm-helpline", reason: "Paytm support impersonation" },
+  { pattern: "sbi-reward-collect", reason: "SBI reward scam" },
+  { pattern: "pm-awas-yojana-apply", reason: "PM housing scheme fraud" },
+  { pattern: "free-data-airtel", reason: "Airtel free data scam" },
+  { pattern: "hdfc-lucky-winner", reason: "HDFC lucky draw fraud" },
+  { pattern: "ncert-scholarship-apply", reason: "Fake scholarship scam" },
+  { pattern: "cbse-result-link", reason: "CBSE phishing page" },
+  { pattern: "army-recruitment-online", reason: "Fake army recruitment" },
+  { pattern: "whatsapp-gold-upgrade", reason: "WhatsApp Gold scam" },
+  { pattern: "trai-sim-block", reason: "TRAI SIM block threat scam" },
+  { pattern: "epfo-pf-withdrawal", reason: "EPFO PF withdrawal scam" },
+  { pattern: "driving-license-online-apply", reason: "Fake DL application portal" },
+];
+
 export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/status", (_req, res) => {
     res.json({ status: "ok" });
+  });
+
+  app.get("/api/threats", (_req: Request, res: Response) => {
+    res.json({
+      version: "2025-04-01",
+      patterns: DYNAMIC_THREAT_PATTERNS,
+    });
   });
 
   // ─── Living Shield redirect ─────────────────────────────────────────────────
@@ -246,6 +280,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
     const destination = link.currentDestination;
     if (!destination) {
       return res.status(404).send(guardNotFoundHtml());
+    }
+
+    if (!isSafeRedirectDestination(destination)) {
+      return res.status(400).send(guardShell("Invalid Destination", `
+<div class="icon">🚫</div>
+<div class="badge badge-dead">Blocked</div>
+<h1>Unsafe Destination</h1>
+<p>This Guard Link's destination uses an unsupported protocol and has been blocked to protect you.</p>
+<button onclick="history.back()" class="btn btn-back">← Go Back</button>
+`));
     }
 
     const businessName = link.businessName || "Business";

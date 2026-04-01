@@ -4,6 +4,35 @@ A full-stack mobile-first QR code scanning and management app built with Expo (R
 
 ## Recent Changes
 
+### Evidence-Based Trust UI, Professional VerdictBanner, Dynamic Threats, Secure Storage & Security Hardening
+
+#### Evidence Logic Cards
+- **`lib/analysis/types.ts`** — Added `Evidence` type `{ type: "positive"|"negative"|"neutral"|"info", label, value }`. Updated `UrlSafetyResult` and `PaymentSafetyResult` to carry an `evidence: Evidence[]` array alongside the existing `warnings[]`.
+- **`lib/analysis/url-analyzer.ts`** — `analyzeUrlHeuristics` now populates `evidence` for every check: protocol (HTTPS positive vs HTTP negative), host type, URL shortener, TLD, brand verification, subdomain depth, path patterns, redirect chains, URL length, and Punycode encoding.
+- **`lib/analysis/payment-analyzer.ts`** — `analyzeAnyPaymentQr` now populates `evidence` items: payment network, region, recipient name/VPA, transaction type (crypto irreversible), wallet address, and pre-filled amount checks.
+- **`features/qr-detail/components/EvidenceCard.tsx`** — New component rendering evidence as a 2-column chip grid ("Logic Cards"). Each chip shows an icon, a small label, and the detail value. Color-coded: green for positive, red for negative, sky-blue for info, muted gray for neutral. Dark, technical card aesthetic matching a "hardware tool" feel.
+- **`app/qr-detail/[id].tsx`** — `EvidenceCard` rendered below `SafetyWarningCard` for URL and payment content types.
+
+#### VerdictBanner — Professional Muted Palette
+- Replaced bright `LinearGradient`-filled icon circles and saturated colored backgrounds with a "Hardware/Specialist Tool" aesthetic.
+- Dark subtle tinted backgrounds per verdict (deep green / amber / red tints), thin border at 16% opacity.
+- Left-side colored accent bar replaces background fill for color signaling.
+- Bordered square icon box (semi-transparent fill, 27% opacity border) instead of gradient-filled circle.
+- Technical status labels: "ANALYSIS COMPLETE", "RISK DETECTED", "THREAT CONFIRMED" with a small status dot.
+- No `LinearGradient` in the banner at all.
+
+#### Dynamic Threat Definitions from Backend
+- **`server/routes.ts`** — Added `GET /api/threats` endpoint returning a versioned JSON object of dynamic threat patterns, allowing the app's threat intelligence to be updated server-side without app store releases.
+- **`lib/analysis/threat-service.ts`** — New service: `fetchThreatDefinitions()` fetches `/api/threats` on demand (with 6h in-memory cache) and persists new dynamic patterns to device storage via `saveOfflineBlacklist`.
+- **`features/qr-detail/hooks/useQrSafety.ts`** — Calls `fetchThreatDefinitions()` on mount (fire-and-forget) to refresh threat definitions from the server whenever the detail screen opens.
+
+#### Living Shield Security — Destination Validation
+- **`server/routes.ts`** — Added `isSafeRedirectDestination()` validation on all Living Shield (`/guard/:uuid`) redirects. Blocks `javascript:`, `data:`, and any non-HTTP(S) protocol. Returns a blocked-page HTML response instead of redirecting to an unsafe URL, closing the redirect-hijacking vector.
+
+#### AsyncStorage → expo-secure-store for Threat Storage
+- Installed `expo-secure-store`.
+- **`lib/analysis/blacklist.ts`** — Replaced `AsyncStorage` (unencrypted, OS-clearable) with `expo-secure-store` (OS keychain/keystore, encrypted at rest). Dynamic threat patterns are now stored encrypted. Implemented chunked storage (15 patterns per SecureStore key) to respect the 2KB per-key limit, with a metadata key tracking chunk count and freshness timestamp.
+
 ### Premium Brand Redesign — One Brand Blue + Navigation Bar Fix
 - **New color system** (`constants/colors.ts`) — Replaced the 6-color rainbow palette with a single "QR Guard Blue" brand color (`#4B8EF5` dark / `#0052CC` light). Added `primaryShade`, `safeShade`, `dangerShade`, `warningShade` for monochromatic gradient pairs. Semantic colors (green/amber/red) reserved for safe/warning/danger states only — never used decoratively. Removed separate cyan/purple accent colors entirely. `accent` is now always equal to `primary`.
 - **Android navigation bar fix** (`contexts/ThemeContext.tsx`) — Added `expo-system-ui` `setBackgroundColorAsync(colors.background)` call in a `useEffect` keyed on `colors.background`. This syncs the Android nav bar color with the current app theme whenever it changes, eliminating the dark/light color mismatch on theme switch.

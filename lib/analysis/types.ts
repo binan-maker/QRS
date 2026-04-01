@@ -55,17 +55,25 @@ export interface ParsedPaymentQr {
   extraFields?: Record<string, string>;
 }
 
+export interface Evidence {
+  type: "positive" | "negative" | "neutral" | "info";
+  label: string;
+  value: string;
+}
+
 export interface PaymentSafetyResult {
   isSuspicious: boolean;
   warnings: string[];
   riskLevel: "safe" | "caution" | "dangerous";
   appInfo?: string;
+  evidence: Evidence[];
 }
 
 export interface UrlSafetyResult {
   isSuspicious: boolean;
   warnings: string[];
   riskLevel: "safe" | "caution" | "dangerous";
+  evidence: Evidence[];
 }
 
 export interface ParsedUpiQr {

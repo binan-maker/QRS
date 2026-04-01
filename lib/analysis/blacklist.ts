@@ -1,8 +1,9 @@
-import AsyncStorage from "@react-native-async-storage/async-storage";
+import * as SecureStore from "expo-secure-store";
 
-const OFFLINE_BLACKLIST_KEY = "qr_offline_blacklist";
-const OFFLINE_BLACKLIST_TS_KEY = "qr_offline_blacklist_ts";
-const OFFLINE_BLACKLIST_TTL = 24 * 60 * 60 * 1000;
+const BLACKLIST_CHUNK_KEY = (n: number) => `qr_bl_chunk_${n}`;
+const BLACKLIST_META_KEY = "qr_bl_meta";
+const BLACKLIST_TTL_MS = 24 * 60 * 60 * 1000;
+const CHUNK_SIZE = 15;
 
 export const BUILT_IN_BLACKLIST: { pattern: string; reason: string }[] = [
   { pattern: "pay-google", reason: "Google Pay impersonation" },
@@ -53,14 +54,23 @@ export const BUILT_IN_BLACKLIST: { pattern: string; reason: string }[] = [
   { pattern: "opensea-claim-nft", reason: "OpenSea phishing" },
 ];
 
+interface BlacklistMeta {
+  chunks: number;
+  savedAt: number;
+}
+
 export async function loadOfflineBlacklist(): Promise<{ pattern: string; reason: string }[]> {
   try {
-    const ts = await AsyncStorage.getItem(OFFLINE_BLACKLIST_TS_KEY);
-    const raw = await AsyncStorage.getItem(OFFLINE_BLACKLIST_KEY);
-    if (!ts || !raw) return BUILT_IN_BLACKLIST;
-    if (Date.now() - parseInt(ts, 10) > OFFLINE_BLACKLIST_TTL) return BUILT_IN_BLACKLIST;
-    const parsed = JSON.parse(raw);
-    return [...BUILT_IN_BLACKLIST, ...parsed];
+    const metaRaw = await SecureStore.getItemAsync(BLACKLIST_META_KEY);
+    if (!metaRaw) return BUILT_IN_BLACKLIST;
+    const meta: BlacklistMeta = JSON.parse(metaRaw);
+    if (Date.now() - meta.savedAt > BLACKLIST_TTL_MS) return BUILT_IN_BLACKLIST;
+    const extra: { pattern: string; reason: string }[] = [];
+    for (let i = 0; i < meta.chunks; i++) {
+      const chunk = await SecureStore.getItemAsync(BLACKLIST_CHUNK_KEY(i));
+      if (chunk) extra.push(...(JSON.parse(chunk) as { pattern: string; reason: string }[]));
+    }
+    return [...BUILT_IN_BLACKLIST, ...extra];
   } catch {
     return BUILT_IN_BLACKLIST;
   }
@@ -70,8 +80,15 @@ export async function saveOfflineBlacklist(
   extra: { pattern: string; reason: string }[]
 ): Promise<void> {
   try {
-    await AsyncStorage.setItem(OFFLINE_BLACKLIST_KEY, JSON.stringify(extra));
-    await AsyncStorage.setItem(OFFLINE_BLACKLIST_TS_KEY, Date.now().toString());
+    const chunks: { pattern: string; reason: string }[][] = [];
+    for (let i = 0; i < extra.length; i += CHUNK_SIZE) {
+      chunks.push(extra.slice(i, i + CHUNK_SIZE));
+    }
+    for (let i = 0; i < chunks.length; i++) {
+      await SecureStore.setItemAsync(BLACKLIST_CHUNK_KEY(i), JSON.stringify(chunks[i]));
+    }
+    const meta: BlacklistMeta = { chunks: chunks.length, savedAt: Date.now() };
+    await SecureStore.setItemAsync(BLACKLIST_META_KEY, JSON.stringify(meta));
   } catch {}
 }
 

@@ -10,6 +10,7 @@ import {
   type PaymentSafetyResult,
   type UrlSafetyResult,
 } from "@/lib/qr-analysis";
+import { fetchThreatDefinitions } from "@/lib/analysis/threat-service";
 
 export type VerdictLevel = "safe" | "caution" | "dangerous" | "unknown";
 
@@ -64,6 +65,10 @@ export function useQrSafety(content: string | null | undefined, contentType: str
   const [offlineBlacklistMatch, setOfflineBlacklistMatch] = useState<{ matched: boolean; reason: string | null }>({ matched: false, reason: null });
 
   const instantVerdict = useMemo(() => computeInstantVerdict(content, contentType), [content, contentType]);
+
+  useEffect(() => {
+    fetchThreatDefinitions().catch(() => {});
+  }, []);
 
   useEffect(() => {
     if (!content) return;

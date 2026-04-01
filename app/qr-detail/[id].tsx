@@ -35,6 +35,7 @@ import TrustScoreCard from "@/features/qr-detail/components/TrustScoreCard";
 import OwnerCard from "@/features/qr-detail/components/OwnerCard";
 import CommentItem from "@/features/qr-detail/components/CommentItem";
 import SafetyWarningCard from "@/features/qr-detail/components/SafetyWarningCard";
+import EvidenceCard from "@/features/qr-detail/components/EvidenceCard";
 import ReportGrid from "@/features/qr-detail/components/ReportGrid";
 import FollowersModal from "@/features/qr-detail/components/modals/FollowersModal";
 import MessagesModal from "@/features/qr-detail/components/modals/MessagesModal";
@@ -76,47 +77,60 @@ function VerdictBanner({ verdict, offlineMode }: { verdict: ReturnType<ReturnTyp
   const { colors, isDark } = useTheme();
 
   if (offlineMode) {
+    const accent = "#f59e0b";
+    const bg = isDark ? "#14100300" : "#fffbeb";
     return (
-      <View style={[verdictStyles.banner, { backgroundColor: colors.warningDim, borderColor: colors.warning + "45" }]}>
-        <View style={[verdictStyles.iconWrap, { backgroundColor: colors.warning + "25" }]}>
-          <Ionicons name="cloud-offline-outline" size={22} color={colors.warning} />
+      <View style={[verdictStyles.banner, { backgroundColor: bg, borderColor: accent + "28" }]}>
+        <View style={[verdictStyles.accentBar, { backgroundColor: accent }]} />
+        <View style={[verdictStyles.iconBox, { borderColor: accent + "40", backgroundColor: accent + "10" }]}>
+          <Ionicons name="cloud-offline-outline" size={20} color={accent} />
         </View>
         <View style={{ flex: 1 }}>
-          <Text style={[verdictStyles.eyebrow, { color: colors.warning }]} maxFontSizeMultiplier={1}>OFFLINE MODE</Text>
-          <Text style={[verdictStyles.label, { color: isDark ? "#fff" : "#111" }]} maxFontSizeMultiplier={1}>Cached Data Only</Text>
+          <View style={verdictStyles.eyebrowRow}>
+            <View style={[verdictStyles.statusDot, { backgroundColor: accent }]} />
+            <Text style={[verdictStyles.eyebrow, { color: accent }]} maxFontSizeMultiplier={1}>OFFLINE MODE</Text>
+          </View>
+          <Text style={[verdictStyles.label, { color: isDark ? "#e2e8f0" : "#1e293b" }]} maxFontSizeMultiplier={1}>Cached Data Only</Text>
           <Text style={[verdictStyles.reason, { color: colors.textSecondary }]} maxFontSizeMultiplier={1}>Connect to see live safety info</Text>
         </View>
       </View>
     );
   }
 
-  const iconName: keyof typeof Ionicons.glyphMap =
-    verdict.level === "safe" ? "shield-checkmark" :
-    verdict.level === "caution" ? "alert-circle" : "warning";
+  const accent =
+    verdict.level === "safe"    ? "#22c55e" :
+    verdict.level === "caution" ? "#f59e0b" : "#ef4444";
 
-  const gradient: [string, string] =
-    verdict.level === "safe" ? [colors.safe, colors.safeShade] :
-    verdict.level === "caution" ? [colors.warning, colors.warningShade] : [colors.danger, colors.dangerShade];
+  const iconName: keyof typeof Ionicons.glyphMap =
+    verdict.level === "safe"    ? "shield-checkmark-outline" :
+    verdict.level === "caution" ? "alert-circle-outline"     : "warning-outline";
+
+  const statusText =
+    verdict.level === "safe"    ? "ANALYSIS COMPLETE" :
+    verdict.level === "caution" ? "RISK DETECTED"     : "THREAT CONFIRMED";
 
   const bg =
-    verdict.level === "safe" ? colors.safeDim ?? (colors.safe + "15") :
-    verdict.level === "caution" ? colors.warningDim : colors.dangerDim;
-
-  const borderColor =
-    verdict.level === "safe" ? colors.safe :
-    verdict.level === "caution" ? colors.warning : colors.danger;
+    verdict.level === "safe"    ? (isDark ? "#0a1a0e" : "#f0fdf4") :
+    verdict.level === "caution" ? (isDark ? "#16120400" : "#fffbeb") :
+                                   (isDark ? "#1a0808"  : "#fff5f5");
 
   return (
-    <View style={[verdictStyles.banner, { backgroundColor: bg, borderColor: borderColor + "45" }]}>
-      <LinearGradient colors={gradient} style={verdictStyles.iconWrap} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}>
-        <Ionicons name={iconName} size={24} color="#fff" />
-      </LinearGradient>
+    <View style={[verdictStyles.banner, { backgroundColor: bg, borderColor: accent + "28" }]}>
+      <View style={[verdictStyles.accentBar, { backgroundColor: accent }]} />
+      <View style={[verdictStyles.iconBox, { borderColor: accent + "45", backgroundColor: accent + "12" }]}>
+        <Ionicons name={iconName} size={22} color={accent} />
+      </View>
       <View style={{ flex: 1 }}>
-        <Text style={[verdictStyles.eyebrow, { color: borderColor }]} maxFontSizeMultiplier={1}>
-          {verdict.level === "safe" ? "VERIFIED SAFE" : verdict.level === "caution" ? "USE CAUTION" : "DANGER DETECTED"}
+        <View style={verdictStyles.eyebrowRow}>
+          <View style={[verdictStyles.statusDot, { backgroundColor: accent }]} />
+          <Text style={[verdictStyles.eyebrow, { color: accent }]} maxFontSizeMultiplier={1}>{statusText}</Text>
+        </View>
+        <Text style={[verdictStyles.label, { color: isDark ? "#e2e8f0" : "#1e293b" }]} maxFontSizeMultiplier={1}>
+          {verdict.label}
         </Text>
-        <Text style={[verdictStyles.label, { color: isDark ? "#fff" : "#111" }]} maxFontSizeMultiplier={1}>{verdict.label}</Text>
-        <Text style={[verdictStyles.reason, { color: colors.textSecondary }]} numberOfLines={2} maxFontSizeMultiplier={1}>{verdict.reason}</Text>
+        <Text style={[verdictStyles.reason, { color: isDark ? "#94a3b8" : "#64748b" }]} numberOfLines={2} maxFontSizeMultiplier={1}>
+          {verdict.reason}
+        </Text>
       </View>
     </View>
   );
@@ -126,25 +140,47 @@ const verdictStyles = StyleSheet.create({
   banner: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 16,
-    borderRadius: 20,
-    padding: 18,
+    gap: 14,
+    borderRadius: 16,
+    paddingVertical: 16,
+    paddingRight: 16,
+    paddingLeft: 0,
     marginBottom: 14,
     borderWidth: 1,
+    overflow: "hidden",
   },
-  iconWrap: {
-    width: 52,
-    height: 52,
-    borderRadius: 18,
+  accentBar: {
+    width: 4,
+    alignSelf: "stretch",
+    borderRadius: 2,
+    marginLeft: 0,
+    flexShrink: 0,
+  },
+  iconBox: {
+    width: 46,
+    height: 46,
+    borderRadius: 12,
+    borderWidth: 1,
     alignItems: "center",
     justifyContent: "center",
     flexShrink: 0,
   },
+  eyebrowRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 5,
+    marginBottom: 3,
+  },
+  statusDot: {
+    width: 5,
+    height: 5,
+    borderRadius: 2.5,
+    flexShrink: 0,
+  },
   eyebrow: {
-    fontSize: 11,
+    fontSize: 10,
     fontFamily: "Inter_700Bold",
-    letterSpacing: 1.2,
-    marginBottom: 2,
+    letterSpacing: 1.4,
   },
   label: {
     fontSize: 17,
@@ -153,7 +189,7 @@ const verdictStyles = StyleSheet.create({
     lineHeight: 22,
   },
   reason: {
-    fontSize: 13,
+    fontSize: 12.5,
     fontFamily: "Inter_400Regular",
     lineHeight: 18,
   },
@@ -331,7 +367,6 @@ export default function QrDetailScreen() {
 
             {/* ── Payment Safety Warning (above trust score for payments) ──── */}
             {currentContentType === "payment" && q.paymentSafety?.isSuspicious && (() => {
-              // Filter out pre-filled amount warnings — the PaymentCard already shows the amount chip inline
               const filteredWarnings = (q.paymentSafety?.warnings ?? []).filter(
                 (w) => !w.toLowerCase().startsWith("pre-filled amount")
               );
@@ -346,6 +381,13 @@ export default function QrDetailScreen() {
                 </Animated.View>
               );
             })()}
+
+            {/* ── Payment Evidence Logic Cards ─────────────────────────────── */}
+            {currentContentType === "payment" && q.paymentSafety?.evidence && q.paymentSafety.evidence.length > 0 && (
+              <Animated.View entering={FadeInDown.duration(300).delay(90)}>
+                <EvidenceCard title="Payment Analysis" evidence={q.paymentSafety.evidence} />
+              </Animated.View>
+            )}
 
             {/* ── Community Trust ──────────────────────────────────────────── */}
             <Animated.View entering={FadeInDown.duration(400).delay(80)}>
@@ -382,7 +424,7 @@ export default function QrDetailScreen() {
             </Animated.View>
 
             {/* ── Safety Warnings (URL + blacklist only — payment handled above) */}
-            {(currentContentType === "url" && q.urlSafety?.isSuspicious) || q.offlineBlacklistMatch.matched ? (
+            {((currentContentType === "url" && q.urlSafety?.isSuspicious) || q.offlineBlacklistMatch.matched) ? (
               <Animated.View entering={FadeInDown.duration(300).delay(130)}>
                 {currentContentType === "url" && q.urlSafety?.isSuspicious && (
                   <SafetyWarningCard
@@ -400,6 +442,13 @@ export default function QrDetailScreen() {
                 )}
               </Animated.View>
             ) : null}
+
+            {/* ── URL Evidence Logic Cards ──────────────────────────────────── */}
+            {currentContentType === "url" && q.urlSafety?.evidence && q.urlSafety.evidence.length > 0 && (
+              <Animated.View entering={FadeInDown.duration(300).delay(145)}>
+                <EvidenceCard title="URL Analysis" evidence={q.urlSafety.evidence} />
+              </Animated.View>
+            )}
 
             {/* ── Comments ─────────────────────────────────────────────────── */}
             <Animated.View entering={FadeInDown.duration(400).delay(210)}>
