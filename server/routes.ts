@@ -3,6 +3,7 @@ import { createServer, type Server } from "node:http";
 import { decodeQrFromImage } from "./image-decode";
 import { readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
+import { signPayload } from "./security/response-signer";
 
 // ─── Rate Limiter (file-persisted — survives server restarts) ─────────────────
 const RATE_LIMIT_MAX = 10;
@@ -256,11 +257,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.json({ status: "ok" });
   });
 
-  app.get("/api/threats", (_req: Request, res: Response) => {
-    res.json({
+  app.get("/api/threats", async (_req: Request, res: Response) => {
+    const payload = JSON.stringify({
       version: "2025-04-01",
       patterns: DYNAMIC_THREAT_PATTERNS,
     });
+    const signature = await signPayload(payload);
+    if (signature) {
+      res.setHeader("X-Content-Signature", signature);
+    }
+    res.setHeader("Content-Type", "application/json");
+    res.send(payload);
   });
 
   // ─── Living Shield redirect ─────────────────────────────────────────────────

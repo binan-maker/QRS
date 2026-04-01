@@ -1,4 +1,5 @@
 import { BUILT_IN_BLACKLIST, saveOfflineBlacklist } from "./blacklist";
+import { verifyThreatSignature } from "../security/signature-verifier";
 
 export interface ThreatDefinitions {
   patterns: { pattern: string; reason: string }[];
@@ -30,7 +31,21 @@ export async function fetchThreatDefinitions(): Promise<ThreatDefinitions | null
       signal: AbortSignal.timeout(8000),
     });
     if (!res.ok) return null;
-    const data = (await res.json()) as { patterns: { pattern: string; reason: string }[]; version: string };
+
+    const rawBody = await res.text();
+    const signature = res.headers.get("x-content-signature");
+
+    if (signature) {
+      const valid = await verifyThreatSignature(rawBody, signature);
+      if (!valid) {
+        console.warn("[ThreatService] Signature verification failed — discarding response");
+        return null;
+      }
+    } else {
+      console.warn("[ThreatService] No signature header — response accepted without verification");
+    }
+
+    const data = JSON.parse(rawBody) as { patterns: { pattern: string; reason: string }[]; version: string };
     const defs: ThreatDefinitions = { ...data, fetchedAt: now };
     _cache = defs;
     const extra = defs.patterns.filter(

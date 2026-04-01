@@ -41,6 +41,7 @@ function setupCors(app: express.Application) {
         "GET, POST, PUT, DELETE, OPTIONS",
       );
       res.header("Access-Control-Allow-Headers", "Content-Type");
+      res.header("Access-Control-Expose-Headers", "X-Content-Signature");
       res.header("Access-Control-Allow-Credentials", "true");
     }
 
