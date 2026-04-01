@@ -3,6 +3,7 @@ import { Ionicons } from "@expo/vector-icons";
 import * as Haptics from "@/lib/haptics";
 import { router } from "expo-router";
 import { useTheme } from "@/contexts/ThemeContext";
+import BusinessTypeSelector, { type BusinessCategory } from "./BusinessTypeSelector";
 
 type QrMode = "individual" | "business" | "private";
 
@@ -10,11 +11,13 @@ interface Props {
   user: any;
   qrMode: QrMode;
   businessName: string;
+  businessCategory: BusinessCategory;
   setQrMode: (mode: QrMode) => void;
   setBusinessName: (name: string) => void;
+  switchBusinessCategory: (cat: BusinessCategory) => void;
 }
 
-export default function ModeSelector({ user, qrMode, businessName, setQrMode, setBusinessName }: Props) {
+export default function ModeSelector({ user, qrMode, businessName, businessCategory, setQrMode, setBusinessName, switchBusinessCategory }: Props) {
   const { colors } = useTheme();
 
   function handleMode(mode: QrMode) {
@@ -113,17 +116,25 @@ export default function ModeSelector({ user, qrMode, businessName, setQrMode, se
       )}
 
       {qrMode === "business" && user && (
-        <View style={[styles.businessNameRow, { backgroundColor: colors.surface, borderColor: colors.warning + "40" }]}>
-          <Ionicons name="business-outline" size={16} color={colors.warning} style={{ marginRight: 8 }} />
-          <TextInput
-            style={[styles.businessNameInput, { color: colors.text }]}
-            placeholder="Store or organisation name (optional)"
-            placeholderTextColor={colors.textMuted}
-            value={businessName}
-            onChangeText={setBusinessName}
-            maxLength={60}
-          />
-        </View>
+        <>
+          <View style={[styles.businessNameRow, { backgroundColor: colors.surface, borderColor: colors.warning + "40" }]}>
+            <Ionicons name="business-outline" size={16} color={colors.warning} style={{ marginRight: 8 }} />
+            <TextInput
+              style={[styles.businessNameInput, { color: colors.text }]}
+              placeholder="Store or organisation name (optional)"
+              placeholderTextColor={colors.textMuted}
+              value={businessName}
+              onChangeText={setBusinessName}
+              maxLength={60}
+            />
+          </View>
+          <View style={{ marginTop: 14 }}>
+            <BusinessTypeSelector
+              businessCategory={businessCategory}
+              onSelect={switchBusinessCategory}
+            />
+          </View>
+        </>
       )}
     </>
   );

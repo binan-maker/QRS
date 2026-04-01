@@ -300,6 +300,40 @@ export default function MyQrDetailScreen() {
             </Animated.View>
           )}
 
+          {/* Safety Shield — business QRs only */}
+          {qr.qrType === "business" && qr.guardUuid && (
+            <Animated.View entering={FadeInDown.duration(400).delay(75)}>
+              <View style={[styles.metaCard, { marginTop: 0, borderColor: colors.safe + "30", backgroundColor: "rgba(16,185,129,0.04)" }]}>
+                <View style={{ flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 10 }}>
+                  <View style={{ backgroundColor: colors.safeDim, borderRadius: 8, padding: 6 }}>
+                    <Ionicons name="shield-checkmark" size={16} color={colors.safe} />
+                  </View>
+                  <Text style={[styles.sectionLabel, { marginBottom: 0, color: colors.safe }]}>SHIELD PROTECTION</Text>
+                </View>
+                <Text style={{ fontSize: 13, fontFamily: "Inter_400Regular", color: colors.textSecondary, lineHeight: 19, marginBottom: 14 }}>
+                  Your customers are protected by QR Guard's heuristic engine. If someone tries to overlay your QR with a fake one, scanners are instantly warned of the destination change.
+                </Text>
+                <View style={{ flexDirection: "row", gap: 8 }}>
+                  <View style={{ flex: 1, backgroundColor: colors.safeDim, borderRadius: 12, padding: 10, alignItems: "center", gap: 3, borderWidth: 1, borderColor: colors.safe + "25" }}>
+                    <Ionicons name="scan-outline" size={18} color={colors.safe} />
+                    <Text style={{ fontSize: 20, fontFamily: "Inter_700Bold", color: colors.safe }}>{qr.scanCount}</Text>
+                    <Text style={{ fontSize: 10, fontFamily: "Inter_500Medium", color: colors.safe, textAlign: "center" }}>Total Scans</Text>
+                  </View>
+                  <View style={{ flex: 1, backgroundColor: colors.primaryDim, borderRadius: 12, padding: 10, alignItems: "center", gap: 3, borderWidth: 1, borderColor: colors.primary + "25" }}>
+                    <Ionicons name="shield" size={18} color={colors.primary} />
+                    <Text style={{ fontSize: 20, fontFamily: "Inter_700Bold", color: colors.primary }}>ON</Text>
+                    <Text style={{ fontSize: 10, fontFamily: "Inter_500Medium", color: colors.primary, textAlign: "center" }}>Guard Active</Text>
+                  </View>
+                  <View style={{ flex: 1, backgroundColor: colors.accentDim, borderRadius: 12, padding: 10, alignItems: "center", gap: 3, borderWidth: 1, borderColor: colors.accent + "25" }}>
+                    <Ionicons name="analytics-outline" size={18} color={colors.accent} />
+                    <Text style={{ fontSize: 20, fontFamily: "Inter_700Bold", color: colors.accent }}>{qr.commentCount}</Text>
+                    <Text style={{ fontSize: 10, fontFamily: "Inter_500Medium", color: colors.accent, textAlign: "center" }}>Interactions</Text>
+                  </View>
+                </View>
+              </View>
+            </Animated.View>
+          )}
+
           {/* Active Status */}
           {qr.branded && qr.qrType !== "government" && (
             <Animated.View entering={FadeInDown.duration(400).delay(80)}>

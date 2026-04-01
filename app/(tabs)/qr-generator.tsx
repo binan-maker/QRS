@@ -29,6 +29,7 @@ export default function QrGeneratorScreen() {
     extraFields, setExtraField,
     qrValue, qrMode, setQrMode,
     businessName, setBusinessName,
+    businessCategory, switchBusinessCategory,
     customLogoUri, showDefaultLogo, logoPosition, setLogoPosition,
     generatedUuid, generatedAt,
     infoModalOpen, setInfoModalOpen,
@@ -74,8 +75,10 @@ export default function QrGeneratorScreen() {
             user={user}
             qrMode={qrMode}
             businessName={businessName}
+            businessCategory={businessCategory}
             setQrMode={setQrMode}
             setBusinessName={setBusinessName}
+            switchBusinessCategory={switchBusinessCategory}
           />
         </Reanimated.View>
 
@@ -92,6 +95,7 @@ export default function QrGeneratorScreen() {
             extraFields={extraFields}
             qrMode={qrMode}
             isBranded={isBranded}
+            businessCategory={businessCategory}
             setInputValue={setInputValue}
             setExtraField={setExtraField}
           />

@@ -14,6 +14,7 @@ import { saveGeneratedQr, saveGuardLink, type QrType } from "@/lib/firestore-ser
 import { getApiUrl } from "@/lib/query-client";
 import { QR_PRESETS } from "@/features/generator/data/presets";
 import { buildQrContent, getRawContent, filterByKeyboardType, validateQrInput } from "@/features/generator/data/qr-builder";
+import { type BusinessCategory } from "@/features/generator/components/BusinessTypeSelector";
 
 export type LogoPosition = "center" | "top-left" | "top-right" | "bottom-left" | "bottom-right";
 
@@ -39,6 +40,7 @@ export function useQrGenerator() {
   const [qrValue, setQrValue] = useState("");
   const [qrMode, setQrMode] = useState<"individual" | "business" | "private">("individual");
   const [businessName, setBusinessName] = useState("");
+  const [businessCategory, setBusinessCategory] = useState<BusinessCategory>("dynamic");
   const [customLogoUri, setCustomLogoUri] = useState<string | null>(null);
   const [customLogoBase64, setCustomLogoBase64] = useState<string | null>(null);
   const [showDefaultLogo, setShowDefaultLogo] = useState(false);
@@ -85,19 +87,63 @@ export function useQrGenerator() {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
   }
 
+  function switchBusinessCategory(cat: BusinessCategory) {
+    setBusinessCategory(cat);
+    setInputValue("");
+    setExtraFields({});
+    setQrValue("");
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+  }
+
+  function buildBusinessDestination(): string | null {
+    const v = inputValue.trim();
+    if (!v) return null;
+    switch (businessCategory) {
+      case "whatsapp": {
+        const phone = v.replace(/[\s\-()]/g, "").replace(/^\+/, "");
+        const msg = extraFields.message?.trim() || "";
+        return msg ? `https://wa.me/${phone}?text=${encodeURIComponent(msg)}` : `https://wa.me/${phone}`;
+      }
+      case "event": {
+        const title = encodeURIComponent(v);
+        const date = extraFields.date?.trim() || "";
+        const location = extraFields.location?.trim() || "";
+        const description = extraFields.description?.trim() || "";
+        let calUrl = `https://calendar.google.com/calendar/r/eventedit?text=${title}`;
+        if (date) calUrl += `&dates=${encodeURIComponent(date)}`;
+        if (location) calUrl += `&location=${encodeURIComponent(location)}`;
+        if (description) calUrl += `&details=${encodeURIComponent(description)}`;
+        return calUrl;
+      }
+      default: {
+        return v.startsWith("http") ? v : `https://${v}`;
+      }
+    }
+  }
+
+  function validateBusinessInput(): string | null {
+    const v = inputValue.trim();
+    if (!v) return "Please fill in the required field above.";
+    if (businessCategory === "whatsapp") {
+      const clean = v.replace(/[\s\-()]/g, "");
+      if (!/^\+?\d{7,15}$/.test(clean)) return "Please enter a valid WhatsApp number with country code (e.g. +91 9876543210).";
+      return null;
+    }
+    if (businessCategory === "event") return null;
+    const withScheme = v.startsWith("http") ? v : `https://${v}`;
+    try {
+      const url = new URL(withScheme);
+      if (!url.hostname.includes(".") || url.hostname.length < 4) return "Please enter a valid URL.";
+    } catch {
+      return "Please enter a valid URL.";
+    }
+    return null;
+  }
+
   async function handleGenerate() {
     if (qrMode === "business" && isBranded) {
-      const v = inputValue.trim();
-      if (!v) { showToast("Please enter a destination URL.", "error"); return; }
-      const withScheme = v.startsWith("http") ? v : `https://${v}`;
-      try {
-        const url = new URL(withScheme);
-        if (!url.hostname.includes(".") || url.hostname.length < 4) {
-          showToast("Please enter a valid URL for the business QR.", "error"); return;
-        }
-      } catch {
-        showToast("Please enter a valid URL for the business QR.", "error"); return;
-      }
+      const err = validateBusinessInput();
+      if (err) { showToast(err, "error"); Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error); return; }
     } else {
       const error = validateQrInput(selectedPreset, inputValue, extraFields);
       if (error) {
@@ -108,7 +154,7 @@ export function useQrGenerator() {
     }
 
     const builtContent = qrMode === "business" && isBranded
-      ? (inputValue.trim().startsWith("http") ? inputValue.trim() : `https://${inputValue.trim()}`)
+      ? (buildBusinessDestination() ?? "")
       : buildQrContent(selectedPreset, inputValue, extraFields);
 
     const uuid = await Crypto.digestStringAsync(Crypto.CryptoDigestAlgorithm.SHA256, builtContent + Date.now());
@@ -382,6 +428,7 @@ export function useQrGenerator() {
     setLogoPosition("center");
     setSavedToProfile(false);
     setBusinessName("");
+    setBusinessCategory("dynamic");
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
   }
 
@@ -398,6 +445,8 @@ export function useQrGenerator() {
     setQrMode,
     businessName,
     setBusinessName,
+    businessCategory,
+    switchBusinessCategory,
     customLogoUri,
     customLogoBase64,
     showDefaultLogo,
