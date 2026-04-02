@@ -173,21 +173,28 @@ export function useProfile() {
       if (source === "camera") {
         const perm = await ImagePicker.requestCameraPermissionsAsync();
         if (!perm.granted) { Alert.alert("Permission needed", "Camera access is required."); return; }
-        result = await ImagePicker.launchCameraAsync({ mediaTypes: ["images"], allowsEditing: true, aspect: [1, 1], quality: 0.5, base64: true });
+        result = await ImagePicker.launchCameraAsync({ mediaTypes: ["images"], allowsEditing: true, aspect: [1, 1], quality: 0.5 });
       } else {
         const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
         if (!perm.granted) { Alert.alert("Permission needed", "Gallery access is required."); return; }
-        result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ["images"], allowsEditing: true, aspect: [1, 1], quality: 0.5, base64: true });
+        result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ["images"], allowsEditing: true, aspect: [1, 1], quality: 0.5 });
       }
       if (result.canceled || !result.assets?.[0]) return;
       const asset = result.assets[0];
       setUploadingPhoto(true);
-      const base64Uri = `data:image/jpeg;base64,${asset.base64}`;
-      setPhotoURL(base64Uri);
-      if (user) await updateUserPhotoURL(user.id, base64Uri);
+      
+      // Get the file URI and convert to blob for upload
+      const response = await fetch(asset.uri);
+      const blob = await response.blob();
+      
+      // Upload to Firebase Storage and get URL
+      const { uploadProfilePhoto } = await import("@/lib/services/storage-service");
+      const newPhotoUrl = await uploadProfilePhoto(blob, user!.id, photoURL);
+      
+      setPhotoURL(newPhotoUrl);
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-    } catch {
-      Alert.alert("Error", "Could not update photo.");
+    } catch (error: any) {
+      Alert.alert("Error", `Could not update photo: ${error.message}`);
     } finally {
       setUploadingPhoto(false);
     }

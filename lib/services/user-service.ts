@@ -1,6 +1,7 @@
 import { db, rtdb } from "../db/client";
 import { tsToString } from "./utils";
 import type { UserStats, UsernameData } from "./types";
+import { uploadBase64Image, deleteImage } from "./storage-service";
 
 export type { UserStats, UsernameData };
 
@@ -66,6 +67,37 @@ export async function updateUserPhotoURL(userId: string, photoURL: string): Prom
   try {
     await db.update(["users", userId], { photoURL });
   } catch {}
+}
+
+/**
+ * Update user profile photo by uploading to Firebase Storage
+ * Stores only the URL in Firestore to reduce costs
+ * @param userId - User ID
+ * @param base64Data - Base64 encoded image data
+ * @param oldPhotoUrl - Optional old photo URL to delete
+ */
+export async function updateUserProfilePhoto(
+  userId: string,
+  base64Data: string,
+  oldPhotoUrl?: string | null
+): Promise<string> {
+  try {
+    // Upload new photo to Firebase Storage
+    const newPhotoUrl = await uploadBase64Image(base64Data, "profile-photos", userId);
+    
+    // Delete old photo if exists
+    if (oldPhotoUrl && oldPhotoUrl.includes("firebasestorage")) {
+      await deleteImage(oldPhotoUrl).catch(() => {}); // Ignore errors
+    }
+    
+    // Update Firestore with new URL
+    await db.update(["users", userId], { photoURL: newPhotoUrl });
+    
+    return newPhotoUrl;
+  } catch (error: any) {
+    console.error("[user-service] updateUserProfilePhoto failed:", error);
+    throw error;
+  }
 }
 
 export async function getUserPhotoURL(userId: string): Promise<string | null> {
