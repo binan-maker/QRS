@@ -4,15 +4,6 @@
 
 import { db, rtdb } from "../db/client";
 import { tsToString } from "./utils";
-import {
-  collection,
-  query,
-  where,
-  getCountFromServer,
-  getDocs,
-  orderBy,
-} from "firebase/firestore";
-import { firestore } from "../firebase";
 
 export async function recordScan(
   qrId: string,
@@ -96,38 +87,36 @@ export interface ScanStatsResult {
 }
 
 export async function getUserScanStats(userId: string): Promise<ScanStatsResult> {
-  const scansCol = collection(firestore, "users", userId, "scans");
-
-  const [totalSnap, urlSnap, textSnap, paySnap, camSnap, galSnap] = await Promise.all([
-    getCountFromServer(query(scansCol)),
-    getCountFromServer(query(scansCol, where("contentType", "==", "url"))),
-    getCountFromServer(query(scansCol, where("contentType", "==", "text"))),
-    getCountFromServer(query(scansCol, where("contentType", "==", "payment"))),
-    getCountFromServer(query(scansCol, where("scanSource", "==", "camera"))),
-    getCountFromServer(query(scansCol, where("scanSource", "==", "gallery"))),
-  ]);
-
-  const total    = totalSnap.data().count;
-  const byUrl    = urlSnap.data().count;
-  const byText   = textSnap.data().count;
-  const byPayment = paySnap.data().count;
-  const byOther  = Math.max(0, total - byUrl - byText - byPayment);
-  const byCamera = camSnap.data().count;
-  const byGallery = galSnap.data().count;
-
-  return { total, byUrl, byText, byPayment, byOther, byCamera, byGallery };
+  // FIX #1: Single query instead of 6 separate queries
+  // Fetch all scans once and count client-side to reduce Firestore reads by 6x
+  const { docs } = await db.query(["users", userId, "scans"], { limit: 5000 });
+  
+  const stats = docs.reduce((acc, d) => {
+    const data = d.data;
+    acc.total++;
+    
+    if (data.contentType === "url") acc.byUrl++;
+    else if (data.contentType === "text") acc.byText++;
+    else if (data.contentType === "payment") acc.byPayment++;
+    else acc.byOther++;
+    
+    if (data.scanSource === "camera") acc.byCamera++;
+    else if (data.scanSource === "gallery") acc.byGallery++;
+    
+    return acc;
+  }, { total: 0, byUrl: 0, byText: 0, byPayment: 0, byOther: 0, byCamera: 0, byGallery: 0 });
+  
+  return stats;
 }
 
 export async function getUserAllScansForStats(userId: string): Promise<Array<{ id: string; content: string; contentType: string }>> {
-  const scansCol = collection(firestore, "users", userId, "scans");
-  const q = query(scansCol, orderBy("scannedAt", "desc"));
-  const snap = await getDocs(q);
-  return snap.docs
-    .filter((d) => d.data().isDeleted !== true)
+  const { docs } = await db.query(["users", userId, "scans"], { orderBy: { field: "scannedAt", direction: "desc" }, limit: 5000 });
+  return docs
+    .filter((d) => d.data.isDeleted !== true)
     .map((d) => ({
       id: d.id,
-      content: d.data().content ?? "",
-      contentType: d.data().contentType ?? "text",
+      content: d.data.content ?? "",
+      contentType: d.data.contentType ?? "text",
     }));
 }
 
@@ -142,5 +131,40 @@ export async function deleteAllUserScans(userId: string): Promise<void> {
         db.update(["users", userId, "scans", d.id], { isDeleted: true, deletedAt: db.timestamp() }).catch(() => {})
       )
     );
+    // FIX #6: Trigger cleanup of old soft-deleted scans
+    purgeOldSoftDeleteScans(userId).catch(() => {});
+  } catch {}
+}
+
+// FIX #6: Cleanup function for soft-deleted scans (call periodically or after bulk deletes)
+const SCAN_SOFT_DELETE_TTL_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
+
+export async function purgeOldSoftDeleteScans(userId: string): Promise<void> {
+  try {
+    const { docs } = await db.query(["users", userId, "scans"], {
+      orderBy: { field: "scannedAt", direction: "desc" },
+      limit: 500,
+    });
+    const now = Date.now();
+    const toDelete: string[] = [];
+    
+    for (const d of docs) {
+      if (!d.data.isDeleted) continue;
+      const deletedAt = d.data.deletedAt;
+      let deletedAtMs = 0;
+      if (deletedAt && typeof deletedAt === "object" && "toDate" in deletedAt) {
+        deletedAtMs = (deletedAt as any).toDate().getTime();
+      } else if (deletedAt && typeof deletedAt === "string") {
+        deletedAtMs = new Date(deletedAt).getTime();
+      }
+      if (deletedAtMs > 0 && now - deletedAtMs > SCAN_SOFT_DELETE_TTL_MS) {
+        toDelete.push(d.id);
+      }
+    }
+    
+    // Batch delete all expired soft-deleted scans
+    if (toDelete.length > 0) {
+      await Promise.all(toDelete.map(id => db.delete(["users", userId, "scans", id]).catch(() => {})));
+    }
   } catch {}
 }

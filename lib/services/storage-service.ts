@@ -53,16 +53,22 @@ export async function uploadImage(
 }
 
 /**
- * Upload a base64 image to Firebase Storage
+ * Upload a base64 image to Firebase Storage with automatic compression
  * @param base64Data - Base64 encoded image data (with or without data:image prefix)
  * @param folder - The folder path in storage
  * @param userId - Optional user ID for organizing files
+ * @param compress - Whether to compress the image (default: true for profile photos)
+ * @param maxWidth - Maximum width for compression (default: 400px for profile photos)
+ * @param quality - JPEG quality 0-1 (default: 0.8)
  * @returns The download URL of the uploaded image
  */
 export async function uploadBase64Image(
   base64Data: string,
   folder: string = "images",
-  userId?: string
+  userId?: string,
+  compress: boolean = false,
+  maxWidth: number = 1920,
+  quality: number = 0.85
 ): Promise<string> {
   try {
     // Extract base64 data and mime type
@@ -77,7 +83,12 @@ export async function uploadBase64Image(
     
     // Convert base64 to Blob
     const response = await fetch(`data:${mimeType};base64,${base64String}`);
-    const blob = await response.blob();
+    let blob = await response.blob();
+    
+    // FIX #7: Compress image before upload if requested (for profile photos)
+    if (compress && mimeType.startsWith("image/")) {
+      blob = await compressImage(blob, maxWidth, quality);
+    }
     
     // Upload the blob
     return await uploadImage(blob, folder, userId);
@@ -85,6 +96,53 @@ export async function uploadBase64Image(
     console.error("[storage] uploadBase64Image failed:", error);
     throw new Error(`Failed to upload base64 image: ${error.message}`);
   }
+}
+
+// FIX #7: Image compression helper to reduce storage and bandwidth costs
+async function compressImage(
+  blob: Blob,
+  maxWidth: number,
+  quality: number
+): Promise<Blob> {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => {
+      const canvas = document.createElement("canvas");
+      let width = img.width;
+      let height = img.height;
+      
+      // Calculate new dimensions while maintaining aspect ratio
+      if (width > maxWidth) {
+        height = Math.round((height * maxWidth) / width);
+        width = maxWidth;
+      }
+      
+      canvas.width = width;
+      canvas.height = height;
+      
+      const ctx = canvas.getContext("2d");
+      if (!ctx) {
+        reject(new Error("Could not get canvas context"));
+        return;
+      }
+      
+      ctx.drawImage(img, 0, 0, width, height);
+      
+      canvas.toBlob(
+        (compressedBlob) => {
+          if (compressedBlob) {
+            resolve(compressedBlob);
+          } else {
+            reject(new Error("Compression failed"));
+          }
+        },
+        "image/jpeg",
+        quality
+      );
+    };
+    img.onerror = () => reject(new Error("Failed to load image"));
+    img.src = URL.createObjectURL(blob);
+  });
 }
 
 /**

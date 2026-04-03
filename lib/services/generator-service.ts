@@ -118,25 +118,25 @@ export async function getGeneratedQrById(userId: string, docId: string): Promise
 export async function getUserGeneratedQrs(userId: string): Promise<GeneratedQrItem[]> {
   try {
     const { docs } = await db.query(["users", userId, "generatedQrs"]);
-    const items: GeneratedQrItem[] = [];
-    for (const d of docs) {
+    
+    // FIX #4: Batch fetch all QR codes in a single query instead of N+1 lookups
+    const qrCodeIds = docs.map(d => d.data.qrCodeId).filter(Boolean) as string[];
+    let qrDataMap: Record<string, any> = {};
+    
+    if (qrCodeIds.length > 0) {
+      // Fetch all QR codes at once using batch get pattern
+      const qrPromises = qrCodeIds.map(id => db.get(["qrCodes", id]).catch(() => null));
+      const qrResults = await Promise.all(qrPromises);
+      qrCodeIds.forEach((id, i) => {
+        if (qrResults[i]) qrDataMap[id] = qrResults[i];
+      });
+    }
+    
+    const items: GeneratedQrItem[] = docs.map((d) => {
       const data = d.data;
-      let scanCount = 0;
-      let commentCount = 0;
-      let isActive = true;
-      let deactivationMessage: string | null = null;
-      if (data.qrCodeId) {
-        try {
-          const qrData = await db.get(["qrCodes", data.qrCodeId]);
-          if (qrData) {
-            scanCount = qrData.scanCount || 0;
-            commentCount = qrData.commentCount || 0;
-            isActive = qrData.isActive !== false;
-            deactivationMessage = qrData.deactivationMessage || null;
-          }
-        } catch {}
-      }
-      items.push({
+      const qrData = data.qrCodeId ? qrDataMap[data.qrCodeId] : null;
+      
+      return {
         docId: d.id,
         content: data.content || "",
         contentType: data.contentType || "text",
@@ -148,13 +148,16 @@ export async function getUserGeneratedQrs(userId: string): Promise<GeneratedQrIt
         bgColor: data.bgColor || "#F8FAFC",
         logoPosition: data.logoPosition || "center",
         logoUri: data.logoUri || null,
-        scanCount, commentCount,
+        scanCount: qrData?.scanCount || 0,
+        commentCount: qrData?.commentCount || 0,
         qrType: (data.qrType as QrType) || "individual",
-        isActive, deactivationMessage,
+        isActive: qrData ? qrData.isActive !== false : true,
+        deactivationMessage: qrData?.deactivationMessage || null,
         businessName: data.businessName || null,
         guardUuid: data.guardUuid || null,
-      });
-    }
+      };
+    });
+    
     items.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
     return items;
   } catch (e) {
