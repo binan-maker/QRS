@@ -316,52 +316,92 @@ export async function ownerHideComment(qrId: string, commentId: string): Promise
 
 const SOFT_DELETE_TTL_MS = 7 * 24 * 60 * 60 * 1000;
 
-// FIX #6: Export function for scheduled cleanup of soft-deleted records
-// This should be called by a Cloud Function on a weekly schedule to hard-delete all old soft-deleted comments
-export async function hardDeleteOldSoftDeletes(): Promise<void> {
+// FIX #6: Optimized cleanup function for scheduled execution via Cloud Functions
+// Uses collection group queries and batched operations to avoid O(N*M) complexity
+// Should be called by a Cloud Function on a weekly schedule with proper pagination
+export async function hardDeleteOldSoftDeletes(
+  options: { batchSize?: number; maxQrCodes?: number; continuationToken?: string } = {}
+): Promise<{ deletedCount: number; continuationToken?: string; hasMore: boolean }> {
   const now = Date.now();
+  const batchSize = options.batchSize || 500;
+  const maxQrCodes = options.maxQrCodes || 100;
   let totalDeleted = 0;
   
   try {
-    // Query all QR codes (in production, use pagination or a separate index)
-    // For now we query recent QR codes that are likely to have comments
-    const { docs: qrDocs } = await db.query(["qrCodes"], {
-      orderBy: { field: "createdAt", direction: "desc" },
-      limit: 1000, // Process up to 1000 QRs per run
+    // OPTIMIZATION: Use collection group query to find ALL soft-deleted comments across all QRs
+    // This is MUCH more efficient than querying each QR individually
+    // Note: Requires a COLLECTION_GROUP index on comments.isDeleted + comments.deletedAt
+    const { docs: deletedComments } = await db.query(["comments"], {
+      where: [{ field: "isDeleted", op: "==", value: true }],
+      orderBy: { field: "deletedAt", direction: "asc" },
+      limit: batchSize,
+      cursor: options.continuationToken ? { startAt: [options.continuationToken] } : undefined,
     });
     
-    for (const qrDoc of qrDocs) {
-      const qrId = qrDoc.id;
-      const { docs: commentDocs } = await db.query(["qrCodes", qrId, "comments"], {
-        orderBy: { field: "createdAt", direction: "desc" },
-        limit: 200, // Check up to 200 comments per QR
-      });
-      
-      const toDelete: string[] = [];
-      for (const d of commentDocs) {
-        if (!d.data.isDeleted) continue;
-        const deletedAt = d.data.deletedAt;
-        let deletedAtMs = 0;
-        if (deletedAt && typeof deletedAt === "object" && "toDate" in deletedAt) {
-          deletedAtMs = (deletedAt as any).toDate().getTime();
-        } else if (deletedAt && typeof deletedAt === "string") {
-          deletedAtMs = new Date(deletedAt).getTime();
-        }
-        if (deletedAtMs > 0 && now - deletedAtMs > SOFT_DELETE_TTL_MS) {
-          toDelete.push(d.id);
-        }
+    const toDeleteByQr: Map<string, string[]> = new Map();
+    let cutoffReached = false;
+    
+    for (const d of deletedComments) {
+      const deletedAt = d.data.deletedAt;
+      let deletedAtMs = 0;
+      if (deletedAt && typeof deletedAt === "object" && "toDate" in deletedAt) {
+        deletedAtMs = (deletedAt as any).toDate().getTime();
+      } else if (deletedAt && typeof deletedAt === "string") {
+        deletedAtMs = new Date(deletedAt).getTime();
       }
       
-      // Batch delete expired soft-deleted comments
-      if (toDelete.length > 0) {
-        await Promise.all(toDelete.map(id => db.delete(["qrCodes", qrId, "comments", id]).catch(() => {})));
-        totalDeleted += toDelete.length;
+      // Stop processing if we hit comments that are too recent (optimization)
+      if (deletedAtMs > 0 && now - deletedAtMs <= SOFT_DELETE_TTL_MS) {
+        cutoffReached = true;
+        break;
+      }
+      
+      if (deletedAtMs > 0 && now - deletedAtMs > SOFT_DELETE_TTL_MS) {
+        // Group deletions by parent QR code for batch deletion
+        const qrId = d.data.qrCodeId || d.data.parentId;
+        if (qrId) {
+          if (!toDeleteByQr.has(qrId)) {
+            toDeleteByQr.set(qrId, []);
+          }
+          toDeleteByQr.get(qrId)!.push(d.id);
+        }
       }
     }
     
-    console.log(`[cleanup] hardDeleteOldSoftDeletes: Deleted ${totalDeleted} old soft-deleted comments`);
+    // Execute batched deletions (Firestore allows 500 operations per batch)
+    const deletePromises: Promise<void>[] = [];
+    for (const [qrId, commentIds] of toDeleteByQr.entries()) {
+      // Split into batches of 500 (Firestore limit)
+      for (let i = 0; i < commentIds.length; i += 500) {
+        const batch = commentIds.slice(i, i + 500);
+        const promise = Promise.all(
+          batch.map(id => db.delete(["qrCodes", qrId, "comments", id]).catch(() => {}))
+        ).then(() => {});
+        deletePromises.push(promise);
+      }
+      totalDeleted += commentIds.length;
+    }
+    
+    await Promise.all(deletePromises);
+    
+    const hasMore = !cutoffReached && deletedComments.length >= batchSize;
+    const nextToken = hasMore && deletedComments.length > 0 
+      ? deletedComments[deletedComments.length - 1].id 
+      : undefined;
+    
+    console.log(`[cleanup] hardDeleteOldSoftDeletes: Deleted ${totalDeleted} old soft-deleted comments${hasMore ? ' (more pending)' : ''}`);
+    
+    return {
+      deletedCount: totalDeleted,
+      continuationToken: nextToken,
+      hasMore,
+    };
   } catch (e) {
     console.error("[cleanup] hardDeleteOldSoftDeletes failed:", e);
+    return {
+      deletedCount: totalDeleted,
+      hasMore: false,
+    };
   }
 }
 

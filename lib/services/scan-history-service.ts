@@ -4,6 +4,7 @@
 
 import { db, rtdb } from "../db/client";
 import { tsToString } from "./utils";
+import { incrementSmartCounter, getDistributedCounter } from "../db/distributed-counter";
 
 export async function recordScan(
   qrId: string,
@@ -17,8 +18,13 @@ export async function recordScan(
   // This is a privacy and legal compliance requirement.
   if (userId && isAnonymous) return;
 
+  // FIX #1: Use smart distributed counter to handle viral QR codes
+  // For low-traffic QRs (< 1000 scans): direct increment (1 write)
+  // For high-traffic QRs (>= 1000 scans): distributed sharding (10x capacity)
   try {
-    await db.increment(["qrCodes", qrId], "scanCount", 1);
+    const qrData = await db.get(["qrCodes", qrId]);
+    const currentScanCount = qrData?.scanCount ?? 0;
+    await incrementSmartCounter(qrId, currentScanCount, 1);
   } catch (e) {
     console.warn("[db] recordScan: failed to increment scanCount:", e);
   }
@@ -92,37 +98,92 @@ export interface ScanStatsResult {
 }
 
 export async function getUserScanStats(userId: string): Promise<ScanStatsResult> {
-  // FIX #1: Single query instead of 6 separate queries
-  // Fetch all scans once and count client-side to reduce Firestore reads by 6x
-  const { docs } = await db.query(["users", userId, "scans"], { limit: 5000 });
+  // OPTIMIZATION: Use embedded stats counters from user document when available
+  // Falls back to query only if stats are missing (legacy users)
+  try {
+    const userDoc = await db.get(["users", userId]);
+    const userData = userDoc?.data || {};
+    
+    // If embedded stats exist (from FIX #5), use them directly - ZERO additional reads
+    if (userData.personalScanCount !== undefined) {
+      return {
+        total: userData.personalScanCount || 0,
+        byUrl: userData.scanCountByUrl || 0,
+        byText: userData.scanCountByText || 0,
+        byPayment: userData.scanCountByPayment || 0,
+        byOther: (userData.personalScanCount || 0) - 
+                 ((userData.scanCountByUrl || 0) + 
+                  (userData.scanCountByText || 0) + 
+                  (userData.scanCountByPayment || 0)),
+        byCamera: userData.scanCountByCamera || 0,
+        byGallery: userData.scanCountByGallery || 0,
+      };
+    }
+  } catch (e) {
+    console.warn("Failed to fetch user stats, falling back to query:", e);
+  }
   
-  const stats = docs.reduce((acc, d) => {
-    const data = d.data;
-    acc.total++;
-    
-    if (data.contentType === "url") acc.byUrl++;
-    else if (data.contentType === "text") acc.byText++;
-    else if (data.contentType === "payment") acc.byPayment++;
-    else acc.byOther++;
-    
-    if (data.scanSource === "camera") acc.byCamera++;
-    else if (data.scanSource === "gallery") acc.byGallery++;
-    
-    return acc;
-  }, { total: 0, byUrl: 0, byText: 0, byPayment: 0, byOther: 0, byCamera: 0, byGallery: 0 });
+  // Fallback for legacy users without embedded stats (will be rare after migration)
+  // Uses pagination to avoid memory limits on users with many scans
+  let total = 0, byUrl = 0, byText = 0, byPayment = 0, byOther = 0, byCamera = 0, byGallery = 0;
+  let cursor: any = undefined;
   
-  return stats;
+  do {
+    const { docs, cursor: nextCursor } = await db.query(["users", userId, "scans"], { 
+      limit: 1000,
+      cursor 
+    });
+    cursor = nextCursor;
+    
+    for (const d of docs) {
+      const data = d.data;
+      total++;
+      
+      if (data.contentType === "url") byUrl++;
+      else if (data.contentType === "text") byText++;
+      else if (data.contentType === "payment") byPayment++;
+      else byOther++;
+      
+      if (data.scanSource === "camera") byCamera++;
+      else if (data.scanSource === "gallery") byGallery++;
+    }
+  } while (cursor);
+  
+  return { total, byUrl, byText, byPayment, byOther, byCamera, byGallery };
 }
 
 export async function getUserAllScansForStats(userId: string): Promise<Array<{ id: string; content: string; contentType: string }>> {
-  const { docs } = await db.query(["users", userId, "scans"], { orderBy: { field: "scannedAt", direction: "desc" }, limit: 5000 });
-  return docs
-    .filter((d) => d.data.isDeleted !== true)
-    .map((d) => ({
-      id: d.id,
-      content: d.data.content ?? "",
-      contentType: d.data.contentType ?? "text",
-    }));
+  // OPTIMIZATION: This function is only used for analysis features.
+  // For users with many scans, use pagination to avoid memory/timeout issues.
+  const allScans: Array<{ id: string; content: string; contentType: string }> = [];
+  let cursor: any = undefined;
+  
+  do {
+    const { docs, cursor: nextCursor } = await db.query(
+      ["users", userId, "scans"], 
+      { 
+        orderBy: { field: "scannedAt", direction: "desc" }, 
+        limit: 500,
+        cursor
+      }
+    );
+    cursor = nextCursor;
+    
+    const filtered = docs
+      .filter((d) => d.data.isDeleted !== true)
+      .map((d) => ({
+        id: d.id,
+        content: d.data.content ?? "",
+        contentType: d.data.contentType ?? "text",
+      }));
+    
+    allScans.push(...filtered);
+    
+    // Stop early if we have enough for analysis (prevent runaway queries)
+    if (allScans.length >= 2000) break;
+  } while (cursor);
+  
+  return allScans;
 }
 
 export async function deleteAllUserScans(userId: string): Promise<void> {

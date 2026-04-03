@@ -10,6 +10,7 @@ import { tsToString } from "./utils";
 import * as Crypto from "expo-crypto";
 import { detectContentType } from "./qr-content-type";
 import type { QrCodeData, TrustScore } from "./types";
+import { getDistributedCounter } from "../db/distributed-counter";
 
 export { detectContentType } from "./qr-content-type";
 export type { QrCodeData, TrustScore };
@@ -61,12 +62,23 @@ export async function getQrCodeById(qrId: string): Promise<QrCodeData | null> {
   try {
     const data = await db.get(["qrCodes", qrId]);
     if (!data) return null;
+    
+    // FIX #1: For high-traffic QRs, get count from distributed counter shards
+    // Check if this QR has distributed counters (shards exist)
+    let scanCount = data.scanCount || 0;
+    const hasShards = data.counters !== undefined && data.counters !== null;
+    
+    if (hasShards) {
+      // Use distributed counter for accurate count
+      scanCount = await getDistributedCounter(qrId);
+    }
+    
     return {
       id: qrId,
       content: data.content,
       contentType: data.contentType,
       createdAt: tsToString(data.createdAt),
-      scanCount: data.scanCount || 0,
+      scanCount,
       commentCount: data.commentCount || 0,
     };
   } catch (e) {
