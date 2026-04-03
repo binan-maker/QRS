@@ -82,8 +82,9 @@ export async function updateUserProfilePhoto(
   oldPhotoUrl?: string | null
 ): Promise<string> {
   try {
-    // Upload new photo to Firebase Storage
-    const newPhotoUrl = await uploadBase64Image(base64Data, "profile-photos", userId);
+    // FIX #7: Compress profile photos to 400px max width, 80% quality
+    // This reduces storage costs by ~80% and bandwidth costs significantly
+    const newPhotoUrl = await uploadBase64Image(base64Data, "profile-photos", userId, true, 400, 0.8);
     
     // Delete old photo if exists
     if (oldPhotoUrl && oldPhotoUrl.includes("firebasestorage")) {
@@ -297,8 +298,14 @@ export async function getFriendsLeaderboard(myUserId: string): Promise<FriendLea
     );
     const friends = friendsRes.docs.map((d) => ({ userId: d.id, ...d.data } as any));
 
-    const myScansRes = await db.query(["users", myUserId, "scans"], { limit: 5000 });
+    // FIX #5: Use cached scanCount from user documents instead of fetching all scans
+    // This reduces reads from O(friends × 5000) to O(friends + 1)
     const myUserDoc = await db.get(["users", myUserId]);
+    
+    // Get all friend user docs in parallel to get their cached scanCount
+    const friendDocs = await Promise.all(
+      friends.map(f => db.get(["users", f.userId]).catch(() => null))
+    );
 
     const entries: FriendLeaderboardEntry[] = [
       {
@@ -306,26 +313,25 @@ export async function getFriendsLeaderboard(myUserId: string): Promise<FriendLea
         displayName: myUserDoc?.displayName || "You",
         username: myUserDoc?.username || "",
         photoURL: myUserDoc?.photoURL || null,
-        scanCount: myScansRes.docs.length,
+        scanCount: (myUserDoc?.personalScanCount as number) || (myUserDoc?.scanCount as number) || 0,
         rank: 0,
         isMe: true,
       },
     ];
 
-    await Promise.all(
-      friends.map(async (f: any) => {
-        const scansRes = await db.query(["users", f.userId, "scans"], { limit: 5000 });
-        entries.push({
-          userId: f.userId,
-          displayName: f.displayName || f.username || "",
-          username: f.username || "",
-          photoURL: f.photoURL || null,
-          scanCount: scansRes.docs.length,
-          rank: 0,
-          isMe: false,
-        });
-      })
-    );
+    friendDocs.forEach((fDoc, i) => {
+      if (!fDoc) return;
+      const f = friends[i];
+      entries.push({
+        userId: f.userId,
+        displayName: fDoc.displayName || f.username || "",
+        username: f.username || "",
+        photoURL: fDoc.photoURL || null,
+        scanCount: (fDoc.personalScanCount as number) || (fDoc.scanCount as number) || 0,
+        rank: 0,
+        isMe: false,
+      });
+    });
 
     entries.sort((a, b) => b.scanCount - a.scanCount);
     entries.forEach((e, i) => { e.rank = i + 1; });

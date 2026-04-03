@@ -1,103 +1,55 @@
-# Project-specific ignores
-QR_GUARD_STRATEGIC_PLAN.md
-
 # Dependencies
 node_modules/
-**/node_modules/
-venv/
-.venv/
-__pycache__/
-*.egg-info/
+
+# Build outputs
 dist/
 build/
 target/
-.gradle/
 
-# Logs and temporary files
+# Logs
 *.log
-*.tmp
-*.swp
-*.swo
-*.bak
-*.cache
 
 # Environment variables
 .env
 .env.local
-.env.*
-!.env.example
+*.env.*
 
-# OS generated files
-.DS_Store
-Thumbs.db
-*.DS_Store
-ehthumbs.db
-Icon?
-.directory
-.Trashes
-.AppleDouble
-.LSOverride
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+*.tmp
 
 # Python specific
+__pycache__/
 *.pyc
 *.pyo
 *.pyd
 .Python
 *.so
 .coverage
-htmlcov/
-.coverage.*
-.python-version
-
-# IDE specific
-.vscode/
-.idea/
-*.sublime-project
-*.sublime-workspace
-nbproject/
-.settings/
-
-# Backup files
-*~
-\#*\#
-/.emacs.desktop
-/.emacs.desktop.lock
-*.elc
-*~
-
-# Testing
-.coverage*
-nosetests.xml
 coverage/
 htmlcov/
-
-# Distribution / packaging
-.Python
-build/
-develop-eggs/
-dist/
-downloads/
-eggs/
+.pytest_cache/
+.mypy_cache/
+.tox/
 .eggs/
-lib/
-lib64/
-parts/
-sdist/
-var/
-wheels/
-*.egg-info/
-.installed.cfg
 *.egg
 
-# Coverage reports
-coverage/
-.coverage
-*.coverage
-.coverage.*
+# Compiled files
+*.class
+*.o
+*.obj
+*.exe
+*.dll
+*.so
+*.a
+*.out
 
-# Debug
-debug.log
-*.log
+# OS generated files
+.DS_Store
+Thumbs.db
 
 # Compressed files
 *.zip
@@ -122,82 +74,3 @@ debug.log
 *.tar.bz2
 *.tar.xz
 *.tar.zst
-
-# Binary files
-*.exe
-*.dll
-*.so
-*.a
-*.o
-*.obj
-*.out
-*.bin
-*.dat
-*.db
-*.sqlite
-*.sqlite3
-*.pdf
-*.doc
-*.docx
-*.xls
-*.xlsx
-*.ppt
-*.pptx
-*.jar
-*.war
-*.ear
-*.class
-*.com
-*.dylib
-*.gem
-*.msi
-*.oex
-*.pyc
-*.pyo
-*.pyd
-*.swf
-*.swc
-*.apk
-*.aab
-*.app
-*.bat
-*.bin
-*.cmd
-*.com
-*.cpl
-*.dll
-*.exe
-*.gadget
-*.inf1
-*.ins
-*.inx
-*.ipa
-*.isu
-*.job
-*.jse
-*.ksh
-*.lnk
-*.msc
-*.msi
-*.msp
-*.mst
-*.osx
-*.out
-*.paf
-*.pif
-*.prg
-*.ps1
-*.reg
-*.rgs
-*.run
-*.scr
-*.sct
-*.shb
-*.sys
-*.vb
-*.vbe
-*.vbs
-*.vbscript
-*.workflow
-*.ws
-*.wsf
