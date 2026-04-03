@@ -30,6 +30,9 @@ export async function recordScan(
         isAnonymous: false, scannedAt: db.timestamp(),
         scanSource,
       });
+      // FIX #5 BONUS: Increment cached personalScanCount on user document
+      // This allows leaderboard and profile stats to avoid fetching all scans
+      await db.increment(["users", userId], "personalScanCount", 1);
     } catch {}
   }
 
@@ -73,6 +76,8 @@ export async function getUserScansPaginated(
 export async function deleteUserScan(userId: string, scanId: string): Promise<void> {
   try {
     await db.update(["users", userId, "scans", scanId], { isDeleted: true, deletedAt: db.timestamp() });
+    // FIX #5 BONUS: Decrement cached personalScanCount when scan is deleted
+    await db.increment(["users", userId], "personalScanCount", -1);
   } catch {}
 }
 
@@ -126,11 +131,16 @@ export async function deleteAllUserScans(userId: string): Promise<void> {
       orderBy: { field: "scannedAt", direction: "desc" },
       limit: 500,
     });
+    const softDeleteCount = docs.length;
     await Promise.all(
       docs.map((d) =>
         db.update(["users", userId, "scans", d.id], { isDeleted: true, deletedAt: db.timestamp() }).catch(() => {})
       )
     );
+    // FIX #5 BONUS: Decrement cached personalScanCount by the number of scans being soft-deleted
+    if (softDeleteCount > 0) {
+      await db.increment(["users", userId], "personalScanCount", -softDeleteCount);
+    }
     // FIX #6: Trigger cleanup of old soft-deleted scans
     purgeOldSoftDeleteScans(userId).catch(() => {});
   } catch {}
@@ -168,3 +178,51 @@ export async function purgeOldSoftDeleteScans(userId: string): Promise<void> {
     }
   } catch {}
 }
+
+// FIX #6 BONUS: Global cleanup function for scheduled Cloud Function (runs across all users)
+export async function hardDeleteOldSoftDeleteScans(): Promise<void> {
+  const now = Date.now();
+  let totalDeleted = 0;
+  
+  try {
+    // Query all users (in production, use pagination)
+    const { docs: userDocs } = await db.query(["users"], {
+      orderBy: { field: "createdAt", direction: "desc" },
+      limit: 500, // Process up to 500 users per run
+    });
+    
+    for (const userDoc of userDocs) {
+      const userId = userDoc.id;
+      const { docs: scanDocs } = await db.query(["users", userId, "scans"], {
+        orderBy: { field: "scannedAt", direction: "desc" },
+        limit: 200, // Check up to 200 scans per user
+      });
+      
+      const toDelete: string[] = [];
+      for (const d of scanDocs) {
+        if (!d.data.isDeleted) continue;
+        const deletedAt = d.data.deletedAt;
+        let deletedAtMs = 0;
+        if (deletedAt && typeof deletedAt === "object" && "toDate" in deletedAt) {
+          deletedAtMs = (deletedAt as any).toDate().getTime();
+        } else if (deletedAt && typeof deletedAt === "string") {
+          deletedAtMs = new Date(deletedAt).getTime();
+        }
+        if (deletedAtMs > 0 && now - deletedAtMs > SCAN_SOFT_DELETE_TTL_MS) {
+          toDelete.push(d.id);
+        }
+      }
+      
+      // Batch delete expired soft-deleted scans
+      if (toDelete.length > 0) {
+        await Promise.all(toDelete.map(id => db.delete(["users", userId, "scans", id]).catch(() => {})));
+        totalDeleted += toDelete.length;
+      }
+    }
+    
+    console.log(`[cleanup] hardDeleteOldSoftDeleteScans: Deleted ${totalDeleted} old soft-deleted scans`);
+  } catch (e) {
+    console.error("[cleanup] hardDeleteOldSoftDeleteScans failed:", e);
+  }
+}
+
