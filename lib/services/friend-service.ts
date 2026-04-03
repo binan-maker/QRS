@@ -59,6 +59,9 @@ export async function acceptFriendRequest(myUserId: string, fromUserId: string):
   await Promise.all([
     db.update(["users", myUserId, "friends", fromUserId], { status: "friends" }),
     db.update(["users", fromUserId, "friends", myUserId], { status: "friends" }),
+    // FIX #5 BONUS: Increment friendsCount cache on both users
+    db.increment(["users", myUserId], "friendsCount", 1),
+    db.increment(["users", fromUserId], "friendsCount", 1),
     notifyFriendAccepted(
       fromUserId,
       (myEntry?.displayName as string) || "Someone",
@@ -78,6 +81,9 @@ export async function removeFriend(myUserId: string, friendUserId: string): Prom
   await Promise.all([
     db.delete(["users", myUserId, "friends", friendUserId]),
     db.delete(["users", friendUserId, "friends", myUserId]),
+    // FIX #5 BONUS: Decrement friendsCount cache on both users
+    db.increment(["users", myUserId], "friendsCount", -1),
+    db.increment(["users", friendUserId], "friendsCount", -1),
   ]);
 }
 

@@ -317,16 +317,52 @@ export async function ownerHideComment(qrId: string, commentId: string): Promise
 const SOFT_DELETE_TTL_MS = 7 * 24 * 60 * 60 * 1000;
 
 // FIX #6: Export function for scheduled cleanup of soft-deleted records
+// This should be called by a Cloud Function on a weekly schedule to hard-delete all old soft-deleted comments
 export async function hardDeleteOldSoftDeletes(): Promise<void> {
-  // This should be called by a Cloud Function on a weekly schedule
   const now = Date.now();
+  let totalDeleted = 0;
   
-  // Process comments with soft deletes older than TTL
   try {
-    // Note: In production, you'd query all QR codes and check their comments
-    // For now, we provide the pattern - implement in Cloud Functions
-    console.log("[cleanup] hardDeleteOldSoftDeletes: Run this in a scheduled Cloud Function");
-  } catch {}
+    // Query all QR codes (in production, use pagination or a separate index)
+    // For now we query recent QR codes that are likely to have comments
+    const { docs: qrDocs } = await db.query(["qrCodes"], {
+      orderBy: { field: "createdAt", direction: "desc" },
+      limit: 1000, // Process up to 1000 QRs per run
+    });
+    
+    for (const qrDoc of qrDocs) {
+      const qrId = qrDoc.id;
+      const { docs: commentDocs } = await db.query(["qrCodes", qrId, "comments"], {
+        orderBy: { field: "createdAt", direction: "desc" },
+        limit: 200, // Check up to 200 comments per QR
+      });
+      
+      const toDelete: string[] = [];
+      for (const d of commentDocs) {
+        if (!d.data.isDeleted) continue;
+        const deletedAt = d.data.deletedAt;
+        let deletedAtMs = 0;
+        if (deletedAt && typeof deletedAt === "object" && "toDate" in deletedAt) {
+          deletedAtMs = (deletedAt as any).toDate().getTime();
+        } else if (deletedAt && typeof deletedAt === "string") {
+          deletedAtMs = new Date(deletedAt).getTime();
+        }
+        if (deletedAtMs > 0 && now - deletedAtMs > SOFT_DELETE_TTL_MS) {
+          toDelete.push(d.id);
+        }
+      }
+      
+      // Batch delete expired soft-deleted comments
+      if (toDelete.length > 0) {
+        await Promise.all(toDelete.map(id => db.delete(["qrCodes", qrId, "comments", id]).catch(() => {})));
+        totalDeleted += toDelete.length;
+      }
+    }
+    
+    console.log(`[cleanup] hardDeleteOldSoftDeletes: Deleted ${totalDeleted} old soft-deleted comments`);
+  } catch (e) {
+    console.error("[cleanup] hardDeleteOldSoftDeletes failed:", e);
+  }
 }
 
 export async function softDeleteComment(

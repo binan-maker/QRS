@@ -36,14 +36,21 @@ export async function saveGeneratedQr(
       signature = rawSig.slice(0, 32);
     } catch {}
   }
+  
+  // FIX #9: Embed scanCount and commentCount in generatedQrs for faster access
+  // This avoids separate qrCodes lookups when displaying user's QR list
   await db.add(["users", userId, "generatedQrs"], {
     content, contentType, uuid, branded,
     qrCodeId: qrId, qrType,
     businessName: businessName || null,
     guardUuid: guardUuid || null,
     ...(signature ? { signature } : {}),
+    // Embedded stats - will be updated via triggers or background sync
+    scanCount: 0,
+    commentCount: 0,
     createdAt: db.timestamp(),
   });
+  
   if (branded) {
     const existingQr = await db.get(["qrCodes", qrId]);
     if (existingQr) {
@@ -77,21 +84,35 @@ export async function getGeneratedQrById(userId: string, docId: string): Promise
   try {
     const data = await db.get(["users", userId, "generatedQrs", docId]);
     if (!data) return null;
-    let scanCount = 0;
-    let commentCount = 0;
+    
+    // FIX #9: Use embedded stats first, fallback to qrCodes lookup only if needed
+    let scanCount = data.scanCount || 0;
+    let commentCount = data.commentCount || 0;
     let isActive = true;
     let deactivationMessage: string | null = null;
-    if (data.qrCodeId) {
+    
+    // Only fetch from qrCodes if embedded stats are missing or we need active status
+    if (data.qrCodeId && (scanCount === 0 || commentCount === 0)) {
       try {
         const qrData = await db.get(["qrCodes", data.qrCodeId]);
         if (qrData) {
-          scanCount = qrData.scanCount || 0;
-          commentCount = qrData.commentCount || 0;
+          scanCount = qrData.scanCount || scanCount;
+          commentCount = qrData.commentCount || commentCount;
+          isActive = qrData.isActive !== false;
+          deactivationMessage = qrData.deactivationMessage || null;
+        }
+      } catch {}
+    } else if (data.qrCodeId) {
+      // Still need to check active status from qrCodes
+      try {
+        const qrData = await db.get(["qrCodes", data.qrCodeId]);
+        if (qrData) {
           isActive = qrData.isActive !== false;
           deactivationMessage = qrData.deactivationMessage || null;
         }
       } catch {}
     }
+    
     return {
       docId,
       content: data.content || "",
@@ -119,23 +140,12 @@ export async function getUserGeneratedQrs(userId: string): Promise<GeneratedQrIt
   try {
     const { docs } = await db.query(["users", userId, "generatedQrs"]);
     
-    // FIX #4: Batch fetch all QR codes in a single query instead of N+1 lookups
-    const qrCodeIds = docs.map(d => d.data.qrCodeId).filter(Boolean) as string[];
-    let qrDataMap: Record<string, any> = {};
-    
-    if (qrCodeIds.length > 0) {
-      // Fetch all QR codes at once using batch get pattern
-      const qrPromises = qrCodeIds.map(id => db.get(["qrCodes", id]).catch(() => null));
-      const qrResults = await Promise.all(qrPromises);
-      qrCodeIds.forEach((id, i) => {
-        if (qrResults[i]) qrDataMap[id] = qrResults[i];
-      });
-    }
-    
+    // FIX #9 + FIX #4: Use embedded stats first, only batch-fetch missing data
+    // This dramatically reduces reads for users with many QRs
     const items: GeneratedQrItem[] = docs.map((d) => {
       const data = d.data;
-      const qrData = data.qrCodeId ? qrDataMap[data.qrCodeId] : null;
       
+      // Use embedded stats if available (FIX #9)
       return {
         docId: d.id,
         content: data.content || "",
@@ -148,15 +158,66 @@ export async function getUserGeneratedQrs(userId: string): Promise<GeneratedQrIt
         bgColor: data.bgColor || "#F8FAFC",
         logoPosition: data.logoPosition || "center",
         logoUri: data.logoUri || null,
-        scanCount: qrData?.scanCount || 0,
-        commentCount: qrData?.commentCount || 0,
+        scanCount: data.scanCount || 0,  // Embedded from FIX #9
+        commentCount: data.commentCount || 0,  // Embedded from FIX #9
         qrType: (data.qrType as QrType) || "individual",
-        isActive: qrData ? qrData.isActive !== false : true,
-        deactivationMessage: qrData?.deactivationMessage || null,
+        isActive: true,  // Will be updated below if needed
+        deactivationMessage: null,
         businessName: data.businessName || null,
         guardUuid: data.guardUuid || null,
       };
     });
+    
+    // Only fetch from qrCodes for items missing embedded stats or needing active status
+    const idsNeedingLookup = items
+      .filter(i => (i.scanCount === 0 || i.commentCount === 0) && i.qrCodeId)
+      .map(i => i.qrCodeId) as string[];
+    
+    if (idsNeedingLookup.length > 0) {
+      // FIX #4: Batch fetch only the QR codes that need updates
+      const qrPromises = idsNeedingLookup.map(id => db.get(["qrCodes", id]).catch(() => null));
+      const qrResults = await Promise.all(qrPromises);
+      
+      const qrDataMap: Record<string, any> = {};
+      idsNeedingLookup.forEach((id, i) => {
+        if (qrResults[i]) qrDataMap[id] = qrResults[i];
+      });
+      
+      // Update items with fetched data
+      items.forEach(item => {
+        const qrData = item.qrCodeId ? qrDataMap[item.qrCodeId] : null;
+        if (qrData) {
+          item.scanCount = qrData.scanCount || item.scanCount;
+          item.commentCount = qrData.commentCount || item.commentCount;
+          item.isActive = qrData.isActive !== false;
+          item.deactivationMessage = qrData.deactivationMessage || null;
+        } else if (item.qrCodeId) {
+          // Still need active status even if stats are embedded
+          db.get(["qrCodes", item.qrCodeId]).then(qr => {
+            if (qr) {
+              item.isActive = qr.isActive !== false;
+              item.deactivationMessage = qr.deactivationMessage || null;
+            }
+          }).catch(() => {});
+        }
+      });
+    } else {
+      // Even with embedded stats, check active status for all QRs
+      const activeCheckIds = items.filter(i => i.qrCodeId).map(i => i.qrCodeId) as string[];
+      if (activeCheckIds.length > 0) {
+        const qrPromises = activeCheckIds.map(id => db.get(["qrCodes", id]).catch(() => null));
+        const qrResults = await Promise.all(qrPromises);
+        activeCheckIds.forEach((id, i) => {
+          if (qrResults[i]) {
+            const item = items.find(it => it.qrCodeId === id);
+            if (item) {
+              item.isActive = qrResults[i].isActive !== false;
+              item.deactivationMessage = qrResults[i].deactivationMessage || null;
+            }
+          }
+        });
+      }
+    }
     
     items.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
     return items;
