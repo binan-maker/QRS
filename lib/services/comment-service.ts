@@ -14,6 +14,8 @@ import {
   notifyCommentParentAuthor,
 } from "./notification-service";
 import type { CommentItem } from "./types";
+// SECURITY FIX P1: Import profanity filter for comment validation
+import { checkProfanity, sanitizeComment } from "./profanity-filter";
 
 // FIX #3: Simple in-memory cache for user profiles to avoid N+1 queries
 const userProfileCache = new Map<string, { username?: string; photoURL?: string; expiresAt: number }>();
@@ -142,6 +144,14 @@ export async function addComment(
   // Integrity check — rate limits, cooldowns, duplicate detection, length
   await checkCommentEligibility(userId, qrId, emailVerified, text);
 
+  // SECURITY FIX P1: Profanity filter check (DPDP Act 2023 compliance)
+  const profanityCheck = checkProfanity(text);
+  if (profanityCheck.isBlocked) {
+    throw new Error(
+      `Your comment contains inappropriate language (${profanityCheck.categories.join(', ')}). Please revise your comment.`
+    );
+  }
+
   // Keyword / spam phrase check
   const kwCheck = checkCommentKeywords(text);
   if (kwCheck.blocked) {
@@ -149,6 +159,9 @@ export async function addComment(
       `Your comment was blocked because it contains content that resembles spam or a scam ("${kwCheck.matchedKeyword}"). Please revise your comment.`
     );
   }
+
+  // Sanitize comment text to prevent XSS
+  const sanitizedText = sanitizeComment(text.trim());
 
   // FIX #3: Get cached user data from a single batch fetch instead of per-comment lookup
   // User profile data should be fetched once at app startup and cached
@@ -161,7 +174,7 @@ export async function addComment(
     userDisplayName: displayName,
     ...(userUsername ? { userUsername } : {}),
     ...(userPhotoURL ? { userPhotoURL } : {}),
-    text: text.trim(),
+    text: sanitizedText,
     parentId,
     isDeleted: false,
     isHidden: false,
