@@ -15,7 +15,11 @@
 // - Silent failure detection with fallback mechanisms
 // ──────────────────────────────────────────────────────────────────────────────
 
+<<<<<<< HEAD
 import { db } from "./client";
+=======
+import { db } from "../client";
+>>>>>>> eff38f306117f13127345622fe0c6caf5f24337d
 
 const NUM_SHARDS = 10; // Adjust based on expected peak load (10 = ~10 writes/sec)
 const MAX_RETRIES = 3;
