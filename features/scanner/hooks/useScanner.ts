@@ -16,6 +16,8 @@ import {
   getQrCodeId,
   type GuardLink,
 } from "@/lib/firestore-service";
+// SECURITY FIX P1: QR Input validation for XSS prevention
+import { validateQrInput } from "@/lib/services/profanity-filter";
 
 export const FINDER_SIZE = 270;
 export const CORNER_SIZE = 32;
@@ -198,6 +200,15 @@ export function useScanner() {
   // (content type, safety heuristics) and stored in AsyncStorage so the detail
   // screen can render it without any network dependency.
   async function processOfflineScan(content: string, scanSource: "camera" | "gallery" = "camera") {
+    // SECURITY FIX P1: Validate QR input for XSS prevention
+    const validation = validateQrInput(content);
+    if (!validation.valid) {
+      setProcessing(false);
+      showScannerMsg(validation.error || "Invalid QR code content", "error");
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+      return;
+    }
+
     const contentType = detectContentType(content);
     const qrId = await getQrCodeId(content);
 
@@ -243,6 +254,15 @@ export function useScanner() {
   async function processScanAnonymous(content: string) {
     setProcessing(true);
     try {
+      // SECURITY FIX P1: Validate QR input for XSS prevention
+      const validation = validateQrInput(content);
+      if (!validation.valid) {
+        setProcessing(false);
+        showScannerMsg(validation.error || "Invalid QR code content", "error");
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+        return;
+      }
+
       const contentType = detectContentType(content);
       const qrId = await getQrCodeId(content);
       setAnonymousQrContent(qrId, content, contentType);
@@ -319,6 +339,15 @@ export function useScanner() {
     // Network calls (getOrCreateQrCode, recordScan) run in the background so the
     // user reaches the detail page with zero server round-trip latency.
     try {
+      // SECURITY FIX P1: Validate QR input for XSS prevention
+      const validation = validateQrInput(content);
+      if (!validation.valid) {
+        setProcessing(false);
+        showScannerMsg(validation.error || "Invalid QR code content", "error");
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+        return;
+      }
+
       const qrId = await getQrCodeId(content);
       const contentType = detectContentType(content);
 

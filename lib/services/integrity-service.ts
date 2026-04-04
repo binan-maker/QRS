@@ -11,8 +11,7 @@ import { db } from "../db/client";
  *  TIER 4 — 90-180d verified → elevated weight
  *  TIER 5 — > 180d verified → max weight
  *
- * Rate limits are currently disabled. Only vote weight is enforced.
- * Collusion detection still runs to flag suspicious voting patterns.
+ * SECURITY FIX P0: Rate limits now ENFORCED to prevent Firestore abuse
  */
 
 export interface AccountTier {
@@ -29,33 +28,33 @@ export interface AccountTier {
 
 const TIER_CONFIG: Record<number, AccountTier> = {
   0: {
-    tier: 0, voteWeight: 0.01, maxCommentsPerDay: Infinity, maxCommentsPerQr: Infinity,
-    maxReportsPerDay: Infinity, maxCommentReportsPerDay: Infinity, minCommentCooldownSeconds: 0,
+    tier: 0, voteWeight: 0.01, maxCommentsPerDay: 50, maxCommentsPerQr: 5,
+    maxReportsPerDay: 20, maxCommentReportsPerDay: 10, minCommentCooldownSeconds: 2,
     canAct: true,
   },
   1: {
-    tier: 1, voteWeight: 0.05, maxCommentsPerDay: Infinity, maxCommentsPerQr: Infinity,
-    maxReportsPerDay: Infinity, maxCommentReportsPerDay: Infinity, minCommentCooldownSeconds: 0,
+    tier: 1, voteWeight: 0.05, maxCommentsPerDay: 100, maxCommentsPerQr: 10,
+    maxReportsPerDay: 50, maxCommentReportsPerDay: 25, minCommentCooldownSeconds: 1,
     canAct: true,
   },
   2: {
-    tier: 2, voteWeight: 0.3, maxCommentsPerDay: Infinity, maxCommentsPerQr: Infinity,
-    maxReportsPerDay: Infinity, maxCommentReportsPerDay: Infinity, minCommentCooldownSeconds: 0,
+    tier: 2, voteWeight: 0.3, maxCommentsPerDay: 200, maxCommentsPerQr: 20,
+    maxReportsPerDay: 100, maxCommentReportsPerDay: 50, minCommentCooldownSeconds: 0,
     canAct: true,
   },
   3: {
-    tier: 3, voteWeight: 0.7, maxCommentsPerDay: Infinity, maxCommentsPerQr: Infinity,
-    maxReportsPerDay: Infinity, maxCommentReportsPerDay: Infinity, minCommentCooldownSeconds: 0,
+    tier: 3, voteWeight: 0.7, maxCommentsPerDay: 500, maxCommentsPerQr: 50,
+    maxReportsPerDay: 200, maxCommentReportsPerDay: 100, minCommentCooldownSeconds: 0,
     canAct: true,
   },
   4: {
-    tier: 4, voteWeight: 1.5, maxCommentsPerDay: Infinity, maxCommentsPerQr: Infinity,
-    maxReportsPerDay: Infinity, maxCommentReportsPerDay: Infinity, minCommentCooldownSeconds: 0,
+    tier: 4, voteWeight: 1.5, maxCommentsPerDay: 1000, maxCommentsPerQr: 100,
+    maxReportsPerDay: 500, maxCommentReportsPerDay: 250, minCommentCooldownSeconds: 0,
     canAct: true,
   },
   5: {
     tier: 5, voteWeight: 2.0, maxCommentsPerDay: Infinity, maxCommentsPerQr: Infinity,
-    maxReportsPerDay: Infinity, maxCommentReportsPerDay: Infinity, minCommentCooldownSeconds: 0,
+    maxReportsPerDay: 1000, maxCommentReportsPerDay: 500, minCommentCooldownSeconds: 0,
     canAct: true,
   },
 };
@@ -140,6 +139,25 @@ export async function checkReportEligibility(
 
   const tierResult = await getAccountTier(userId, emailVerified);
   const tier = tierResult as AccountTier;
+
+  // SECURITY FIX P0: Enforce daily report rate limit
+  if (!isChangingReport && tier.maxReportsPerDay !== Infinity) {
+    try {
+      const userData = await db.get(["users", userId]);
+      const windowStart = tsToMs(userData?.reportRateWindowStart);
+      const count = userData?.reportRateCount || 0;
+      
+      if (isWithin24h(windowStart) && count >= tier.maxReportsPerDay) {
+        const timeRemaining = formatTimeRemaining(timeUntilWindowReset(windowStart));
+        throw new Error(
+          `You've reached your daily report limit (${tier.maxReportsPerDay}). Please try again in ${timeRemaining}.`
+        );
+      }
+    } catch (e: any) {
+      if (e.message.includes("limit")) throw e;
+      // Ignore other errors, continue with eligibility check
+    }
+  }
 
   return { allowed: true, weight: tier.voteWeight, tier };
 }
