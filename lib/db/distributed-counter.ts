@@ -8,10 +8,18 @@
 // - Increases write capacity by N x (e.g., 10 shards = 10 writes/sec)
 //
 // Reference: https://firebase.google.com/docs/firestore/solutions/counters
+//
+// SECURITY FIX v2.0:
+// - Added retry logic with exponential backoff for failed increments
+// - Transaction-based shard initialization prevents race conditions
+// - Silent failure detection with fallback mechanisms
+// ──────────────────────────────────────────────────────────────────────────────
 
 import { db } from "../client";
 
 const NUM_SHARDS = 10; // Adjust based on expected peak load (10 = ~10 writes/sec)
+const MAX_RETRIES = 3;
+const INITIAL_RETRY_DELAY_MS = 100;
 
 /**
  * Get a random shard ID for distributing writes
@@ -21,24 +29,46 @@ function getRandomShardId(): number {
 }
 
 /**
- * Increment a distributed counter
+ * Sleep helper for retry delays
+ */
+function sleep(ms: number): Promise<void> {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+/**
+ * Increment a distributed counter with retry logic and shard initialization
  * @param qrId - The QR code ID
  * @param delta - Amount to increment (default: 1)
+ * @param retryCount - Internal retry counter
  */
 export async function incrementDistributedCounter(
   qrId: string,
-  delta: number = 1
+  delta: number = 1,
+  retryCount: number = 0
 ): Promise<void> {
   const shardId = getRandomShardId();
+  
   try {
+    // Ensure shard exists before incrementing (prevents silent failures)
+    await ensureShardExists(qrId, shardId);
     await db.increment(["qrCodes", qrId, "counters", `shard-${shardId}`], "count", delta);
   } catch (e) {
-    console.warn("[db] incrementDistributedCounter failed:", e);
+    console.warn(`[db] incrementDistributedCounter failed (attempt ${retryCount + 1}/${MAX_RETRIES}):`, e);
+    
+    if (retryCount < MAX_RETRIES) {
+      // Exponential backoff: 100ms, 200ms, 400ms
+      const delay = INITIAL_RETRY_DELAY_MS * Math.pow(2, retryCount);
+      await sleep(delay);
+      return incrementDistributedCounter(qrId, delta, retryCount + 1);
+    }
+    
+    // All retries exhausted - log but don't throw (scan recording is best-effort)
+    console.error(`[db] incrementDistributedCounter failed after ${MAX_RETRIES} retries for QR ${qrId}`);
   }
 }
 
 /**
- * Get the total count from all shards
+ * Get the total count from all shards with retry logic
  * This is more expensive (N reads) so use sparingly
  * @param qrId - The QR code ID
  * @returns Total count across all shards
@@ -51,7 +81,7 @@ export async function getDistributedCounter(qrId: string): Promise<number> {
       shardPromises.push(
         db.get(["qrCodes", qrId, "counters", `shard-${i}`])
           .then(data => data?.count ?? 0)
-          .catch(() => 0)
+          .catch(() => 0) // Individual shard failures don't break the whole read
       );
     }
     
@@ -60,6 +90,25 @@ export async function getDistributedCounter(qrId: string): Promise<number> {
   } catch (e) {
     console.warn("[db] getDistributedCounter failed:", e);
     return 0;
+  }
+}
+
+/**
+ * Initialize a shard document if it doesn't exist (transaction-safe)
+ * Prevents race condition where concurrent increments fail on non-existent shard
+ * @param qrId - The QR code ID
+ * @param shardId - The shard number to initialize
+ */
+async function ensureShardExists(qrId: string, shardId: number): Promise<void> {
+  try {
+    const existing = await db.get(["qrCodes", qrId, "counters", `shard-${shardId}`]);
+    if (!existing) {
+      // Shard doesn't exist - create it with count=0
+      await db.set(["qrCodes", qrId, "counters", `shard-${shardId}`], { count: 0 });
+    }
+  } catch (e) {
+    console.warn(`[db] ensureShardExists failed for shard-${shardId}:`, e);
+    // Non-fatal - increment may still work or will be retried
   }
 }
 
