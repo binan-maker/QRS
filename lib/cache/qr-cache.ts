@@ -31,6 +31,21 @@ export function clearAllMemCache(): void {
   memCache.clear();
 }
 
+/**
+ * Clears all AsyncStorage cache entries for this user.
+ * Called on sign out to ensure no cached data persists between sessions.
+ */
+export async function clearAllAsyncStorageCache(): Promise<void> {
+  try {
+    const AsyncStorage = (await import("@react-native-async-storage/async-storage")).default;
+    const allKeys = await AsyncStorage.getAllKeys();
+    const cacheKeys = allKeys.filter((k) => k.startsWith("cache_"));
+    if (cacheKeys.length > 0) {
+      await AsyncStorage.multiRemove(cacheKeys);
+    }
+  } catch {}
+}
+
 const TTL = {
   QR_DETAIL: 5 * 60 * 1000,
   OWNER_INFO: 10 * 60 * 1000,

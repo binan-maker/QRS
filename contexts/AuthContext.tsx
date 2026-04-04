@@ -10,7 +10,7 @@ import {
   generateUniqueUsername,
 } from "@/lib/auth/utils";
 import { queryClient } from "@/lib/query-client";
-import { clearAllMemCache } from "@/lib/cache/qr-cache";
+import { clearAllMemCache, clearAllAsyncStorageCache } from "@/lib/cache/qr-cache";
 import { clearAllAnonymousSessions } from "@/lib/cache/anonymous-session";
 
 WebBrowser.maybeCompleteAuthSession();
@@ -288,13 +288,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   async function signOut() {
     try {
       const AsyncStorage = (await import("@react-native-async-storage/async-storage")).default;
-      await AsyncStorage.removeItem("local_scan_history");
+      // Clear scan history for current user if signed in
+      if (user?.id) {
+        await AsyncStorage.removeItem(`local_scan_history_${user.id}`);
+      }
+      // Also clear QR content cache and downloads directory URI
       const allKeys = await AsyncStorage.getAllKeys();
-      const cacheKeys = allKeys.filter((k) => k.startsWith("cache_"));
-      if (cacheKeys.length > 0) await AsyncStorage.multiRemove(cacheKeys);
+      const qrContentKeys = allKeys.filter((k) => k.startsWith("qr_content_"));
+      if (qrContentKeys.length > 0) await AsyncStorage.multiRemove(qrContentKeys);
+      await AsyncStorage.removeItem("qrguard_downloads_dir_uri");
     } catch {}
+    // Clear memory caches and AsyncStorage cache entries
     clearAllMemCache();
     clearAllAnonymousSessions();
+    await clearAllAsyncStorageCache();
     queryClient.clear();
     try {
       if (Platform.OS !== "web" && GoogleSignin) {

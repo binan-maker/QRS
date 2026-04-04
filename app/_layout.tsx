@@ -147,6 +147,7 @@ export default function RootLayout() {
   const fontsReady = fontsLoaded || !!fontError;
 
   useEffect(() => {
+    // Load haptics setting from AsyncStorage on app start
     AsyncStorage.getItem("haptic_enabled").then((v) => {
       if (v !== null) setHapticsEnabled(v !== "false");
     });
