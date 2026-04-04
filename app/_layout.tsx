@@ -163,7 +163,7 @@ export default function RootLayout() {
           <AuthProvider>
             {/* SplashGate lives inside AuthProvider so it can read isLoading */}
             <SplashGate fontsReady={fontsReady} />
-            <ThemedApp />
+            <AuthGatedApp />
           </AuthProvider>
         </QueryClientProvider>
       </ThemeProvider>
