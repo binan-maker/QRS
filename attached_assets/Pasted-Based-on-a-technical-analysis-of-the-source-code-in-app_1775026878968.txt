@@ -1,0 +1,21 @@
+Based on a technical analysis of the source code in app/(tabs)/index.tsx and the styling logic used throughout the app, there is a clear reason why the text feels "too small."
+The problem lies in the Responsive Scaling Logic and the Base Font Sizes defined in the styles. Here is the breakdown:
+1. The "Aggressive Scaling" Problem
+In the code for the Home Page (makeStyles function), there is a scaling factor called s and a function called rf (Responsive Font).
+The Logic: const s = Math.min(Math.max(width / 390, 0.82), 1.0);
+The Issue: This logic calculates a multiplier based on the screen width. On smaller phones (like an iPhone SE or older Androids), the multiplier drops down to 0.82.
+The Result: If a font is set to 12px, the app multiplies it by 0.82, resulting in roughly 9.8px (rounded to 10). A font size of 10px is considered "micro-copy"—it is extremely difficult to read for most users and fails basic accessibility standards.
+2. The "Base Size" Problem
+Even without the scaling, the "base" sizes chosen in the code are technically on the lower limit of readability:
+Stats & Badges: The code sets these to rf(10) and rf(11). On a small screen, these become 8px or 9px. This is essentially "fine print" and is almost unreadable at a glance.
+Taglines & Subtitles: These are set to rf(12). On a small screen, this becomes 10px. For a security app where users need to read warnings, 10px is too small to convey authority or clarity.
+Recent Scans (Secondary Text): The scanSub text is also rf(12). This makes the URL or the "subtitle" of a scan feel like an afterthought rather than important data.
+3. Lack of "Line Height" (Vertical Breathing Room)
+In many places, the lineHeight is either missing or calculated using the same aggressive scaling (e.g., lineHeight: Math.round(16 * s)).
+When text is small AND the lines are close together, the words "blur" into each other. This is why the UI feels "cheap"—it lacks the professional "breathing room" found in high-end security tools.
+4. The "Detail Page" Discrepancy
+In the QR Detail page (app/qr-detail/[id].tsx), the font sizes are "hardcoded" (fixed) rather than scaled.
+Verdict Eyebrow: Set to 11px.
+Verdict Reason: Set to 13px.
+Section Labels: Set to 14px.
+While these don't shrink on small phones, they are still fundamentally small. A "Danger" warning at 13px doesn't have the visual "weight" to stop a user from clicking a bad link.

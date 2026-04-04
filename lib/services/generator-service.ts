@@ -1,0 +1,450 @@
+import { db, rtdb } from "../db/client";
+import * as Crypto from "expo-crypto";
+import { tsToString } from "./utils";
+import type {
+  QrOwnerInfo,
+  QrType,
+  ScanVelocityBucket,
+  GeneratedQrItem,
+  VerificationStatus,
+} from "./types";
+import { detectContentType, getQrCodeId } from "./qr-service";
+
+export type { QrOwnerInfo, QrType, ScanVelocityBucket, GeneratedQrItem, VerificationStatus };
+
+export async function saveGeneratedQr(
+  userId: string,
+  displayName: string,
+  content: string,
+  contentType: string,
+  uuid: string,
+  branded: boolean,
+  qrType: QrType = "individual",
+  businessName?: string | null,
+  ownerLogoBase64?: string | null,
+  guardUuid?: string | null
+): Promise<void> {
+  const { SIGNATURE_SALT: SALT } = await import("./types");
+  const qrId = await getQrCodeId(content);
+  let signature: string | undefined;
+  if (branded) {
+    try {
+      const rawSig = await Crypto.digestStringAsync(
+        Crypto.CryptoDigestAlgorithm.SHA256,
+        content + "|" + userId + "|" + SALT
+      );
+      signature = rawSig.slice(0, 32);
+    } catch {}
+  }
+  
+  // FIX #9: Embed scanCount and commentCount in generatedQrs for faster access
+  // This avoids separate qrCodes lookups when displaying user's QR list
+  await db.add(["users", userId, "generatedQrs"], {
+    content, contentType, uuid, branded,
+    qrCodeId: qrId, qrType,
+    businessName: businessName || null,
+    guardUuid: guardUuid || null,
+    ...(signature ? { signature } : {}),
+    // Embedded stats - will be updated via triggers or background sync
+    scanCount: 0,
+    commentCount: 0,
+    createdAt: db.timestamp(),
+  });
+  
+  if (branded) {
+    const existingQr = await db.get(["qrCodes", qrId]);
+    if (existingQr) {
+      if (!existingQr.ownerId) {
+        await db.update(["qrCodes", qrId], {
+          ownerId: userId, ownerName: displayName,
+          brandedUuid: uuid, isBranded: true,
+          qrType, isActive: true,
+          businessName: businessName || null,
+          ...(signature ? { signature } : {}),
+          ...(ownerLogoBase64 ? { ownerLogoBase64 } : {}),
+        });
+      }
+    } else {
+      await db.set(["qrCodes", qrId], {
+        content, contentType,
+        createdAt: db.timestamp(),
+        scanCount: 0, commentCount: 0,
+        ownerId: userId, ownerName: displayName,
+        brandedUuid: uuid, isBranded: true,
+        qrType, isActive: true,
+        businessName: businessName || null,
+        ...(signature ? { signature } : {}),
+        ...(ownerLogoBase64 ? { ownerLogoBase64 } : {}),
+      });
+    }
+  }
+}
+
+export async function getGeneratedQrById(userId: string, docId: string): Promise<GeneratedQrItem | null> {
+  try {
+    const data = await db.get(["users", userId, "generatedQrs", docId]);
+    if (!data) return null;
+    
+    // FIX #9: Use embedded stats first, fallback to qrCodes lookup only if needed
+    let scanCount = data.scanCount || 0;
+    let commentCount = data.commentCount || 0;
+    let isActive = true;
+    let deactivationMessage: string | null = null;
+    
+    // Only fetch from qrCodes if embedded stats are missing or we need active status
+    if (data.qrCodeId && (scanCount === 0 || commentCount === 0)) {
+      try {
+        const qrData = await db.get(["qrCodes", data.qrCodeId]);
+        if (qrData) {
+          scanCount = qrData.scanCount || scanCount;
+          commentCount = qrData.commentCount || commentCount;
+          isActive = qrData.isActive !== false;
+          deactivationMessage = qrData.deactivationMessage || null;
+        }
+      } catch {}
+    } else if (data.qrCodeId) {
+      // Still need to check active status from qrCodes
+      try {
+        const qrData = await db.get(["qrCodes", data.qrCodeId]);
+        if (qrData) {
+          isActive = qrData.isActive !== false;
+          deactivationMessage = qrData.deactivationMessage || null;
+        }
+      } catch {}
+    }
+    
+    return {
+      docId,
+      content: data.content || "",
+      contentType: data.contentType || "text",
+      uuid: data.uuid || "",
+      branded: data.branded !== false,
+      qrCodeId: data.qrCodeId || "",
+      createdAt: tsToString(data.createdAt),
+      fgColor: data.fgColor || "#0A0E17",
+      bgColor: data.bgColor || "#F8FAFC",
+      logoPosition: data.logoPosition || "center",
+      logoUri: data.logoUri || null,
+      scanCount, commentCount,
+      qrType: (data.qrType as QrType) || "individual",
+      isActive, deactivationMessage,
+      businessName: data.businessName || null,
+      guardUuid: data.guardUuid || null,
+    };
+  } catch {
+    return null;
+  }
+}
+
+export async function getUserGeneratedQrs(userId: string): Promise<GeneratedQrItem[]> {
+  try {
+    const { docs } = await db.query(["users", userId, "generatedQrs"]);
+    
+    // FIX #9 + FIX #4: Use embedded stats first, only batch-fetch missing data
+    // This dramatically reduces reads for users with many QRs
+    const items: GeneratedQrItem[] = docs.map((d) => {
+      const data = d.data;
+      
+      // Use embedded stats if available (FIX #9)
+      return {
+        docId: d.id,
+        content: data.content || "",
+        contentType: data.contentType || "text",
+        uuid: data.uuid || "",
+        branded: data.branded !== false,
+        qrCodeId: data.qrCodeId || "",
+        createdAt: tsToString(data.createdAt),
+        fgColor: data.fgColor || "#0A0E17",
+        bgColor: data.bgColor || "#F8FAFC",
+        logoPosition: data.logoPosition || "center",
+        logoUri: data.logoUri || null,
+        scanCount: data.scanCount || 0,  // Embedded from FIX #9
+        commentCount: data.commentCount || 0,  // Embedded from FIX #9
+        qrType: (data.qrType as QrType) || "individual",
+        isActive: true,  // Will be updated below if needed
+        deactivationMessage: null,
+        businessName: data.businessName || null,
+        guardUuid: data.guardUuid || null,
+      };
+    });
+    
+    // Only fetch from qrCodes for items missing embedded stats or needing active status
+    const idsNeedingLookup = items
+      .filter(i => (i.scanCount === 0 || i.commentCount === 0) && i.qrCodeId)
+      .map(i => i.qrCodeId) as string[];
+    
+    if (idsNeedingLookup.length > 0) {
+      // FIX #4: Batch fetch only the QR codes that need updates
+      const qrPromises = idsNeedingLookup.map(id => db.get(["qrCodes", id]).catch(() => null));
+      const qrResults = await Promise.all(qrPromises);
+      
+      const qrDataMap: Record<string, any> = {};
+      idsNeedingLookup.forEach((id, i) => {
+        if (qrResults[i]) qrDataMap[id] = qrResults[i];
+      });
+      
+      // Update items with fetched data
+      items.forEach(item => {
+        const qrData = item.qrCodeId ? qrDataMap[item.qrCodeId] : null;
+        if (qrData) {
+          item.scanCount = qrData.scanCount || item.scanCount;
+          item.commentCount = qrData.commentCount || item.commentCount;
+          item.isActive = qrData.isActive !== false;
+          item.deactivationMessage = qrData.deactivationMessage || null;
+        } else if (item.qrCodeId) {
+          // Still need active status even if stats are embedded
+          db.get(["qrCodes", item.qrCodeId]).then(qr => {
+            if (qr) {
+              item.isActive = qr.isActive !== false;
+              item.deactivationMessage = qr.deactivationMessage || null;
+            }
+          }).catch(() => {});
+        }
+      });
+    } else {
+      // Even with embedded stats, check active status for all QRs
+      const activeCheckIds = items.filter(i => i.qrCodeId).map(i => i.qrCodeId) as string[];
+      if (activeCheckIds.length > 0) {
+        const qrPromises = activeCheckIds.map(id => db.get(["qrCodes", id]).catch(() => null));
+        const qrResults = await Promise.all(qrPromises);
+        activeCheckIds.forEach((id, i) => {
+          if (qrResults[i]) {
+            const item = items.find(it => it.qrCodeId === id);
+            if (item) {
+              item.isActive = qrResults[i].isActive !== false;
+              item.deactivationMessage = qrResults[i].deactivationMessage || null;
+            }
+          }
+        });
+      }
+    }
+    
+    items.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    return items;
+  } catch (e) {
+    console.warn("[db] getUserGeneratedQrs failed:", e);
+    return [];
+  }
+}
+
+export function subscribeToUserGeneratedQrs(
+  userId: string,
+  onUpdate: (items: GeneratedQrItem[]) => void,
+  onError?: (err: Error) => void
+): () => void {
+  return db.onQuery(
+    ["users", userId, "generatedQrs"],
+    { orderBy: { field: "createdAt", direction: "desc" } },
+    (docs) => {
+      const base: GeneratedQrItem[] = docs.map((d) => {
+        const data = d.data;
+        return {
+          docId: d.id,
+          content: data.content || "",
+          contentType: data.contentType || "text",
+          uuid: data.uuid || "",
+          branded: data.branded !== false,
+          qrCodeId: data.qrCodeId || "",
+          createdAt: tsToString(data.createdAt),
+          fgColor: data.fgColor || "#0A0E17",
+          bgColor: data.bgColor || "#F8FAFC",
+          logoPosition: data.logoPosition || "center",
+          logoUri: data.logoUri || null,
+          scanCount: 0,
+          commentCount: 0,
+          qrType: (data.qrType as QrType) || "individual",
+          isActive: true,
+          deactivationMessage: null,
+          businessName: data.businessName || null,
+          guardUuid: data.guardUuid || null,
+        };
+      });
+      onUpdate(base);
+      const ids = [...new Set(base.map((i) => i.qrCodeId).filter(Boolean))];
+      if (ids.length === 0) return;
+      Promise.all(ids.map((id) => db.get(["qrCodes", id]).catch(() => null))).then((results) => {
+        const map: Record<string, any> = {};
+        ids.forEach((id, i) => { if (results[i]) map[id] = results[i]; });
+        const enriched: GeneratedQrItem[] = base.map((item) => {
+          const qr = item.qrCodeId ? map[item.qrCodeId] : null;
+          return {
+            ...item,
+            scanCount: qr?.scanCount ?? 0,
+            commentCount: qr?.commentCount ?? 0,
+            isActive: qr ? qr.isActive !== false : true,
+            deactivationMessage: qr?.deactivationMessage ?? null,
+          };
+        });
+        onUpdate(enriched);
+      });
+    }
+  );
+}
+
+export async function updateQrDesign(
+  userId: string,
+  docId: string,
+  design: { fgColor: string; bgColor: string; logoPosition: string; logoUri: string | null }
+): Promise<void> {
+  try {
+    await db.update(["users", userId, "generatedQrs", docId], {
+      fgColor: design.fgColor,
+      bgColor: design.bgColor,
+      logoPosition: design.logoPosition,
+      logoUri: design.logoUri || null,
+    });
+  } catch (e) {
+    console.warn("[db] updateQrDesign failed:", e);
+    throw e;
+  }
+}
+
+export async function generateBrandedQr(
+  content: string,
+  userId: string,
+  displayName: string
+): Promise<{ qrId: string; signature: string; uuid: string }> {
+  const { SIGNATURE_SALT: SALT } = await import("./types");
+  const qrId = await getQrCodeId(content);
+  const contentType = detectContentType(content);
+  const rawSig = await Crypto.digestStringAsync(
+    Crypto.CryptoDigestAlgorithm.SHA256,
+    content + "|" + userId + "|" + SALT
+  );
+  const signature = rawSig.slice(0, 32);
+  const uuidRaw = await Crypto.digestStringAsync(
+    Crypto.CryptoDigestAlgorithm.SHA256,
+    content + Date.now().toString()
+  );
+  const uuid = uuidRaw.slice(0, 16).toUpperCase().match(/.{1,4}/g)?.join("-") || uuidRaw.slice(0, 16);
+  const existing = await db.get(["qrCodes", qrId]);
+  if (existing) {
+    if (!existing.ownerId) {
+      await db.update(["qrCodes", qrId], {
+        ownerId: userId, ownerName: displayName,
+        brandedUuid: uuid, isBranded: true, signature,
+      });
+    }
+  } else {
+    await db.set(["qrCodes", qrId], {
+      content, contentType, ownerId: userId, ownerName: displayName,
+      brandedUuid: uuid, isBranded: true, signature,
+      ownerVerified: false, scanCount: 0, commentCount: 0,
+      createdAt: db.timestamp(),
+    });
+  }
+  await db.add(["users", userId, "generatedQrs"], {
+    content, contentType, uuid, branded: true, qrCodeId: qrId,
+    signature, createdAt: db.timestamp(),
+  });
+  return { qrId, signature, uuid };
+}
+
+export async function getScanVelocity(qrId: string): Promise<ScanVelocityBucket[]> {
+  const now = Date.now();
+  const cutoff = now - 24 * 60 * 60 * 1000;
+  const buckets: ScanVelocityBucket[] = Array.from({ length: 24 }, (_, i) => {
+    const h = new Date(cutoff + i * 60 * 60 * 1000);
+    const hour = h.getHours();
+    const label = hour === 0 ? "12a" : hour < 12 ? `${hour}a` : hour === 12 ? "12p" : `${hour - 12}p`;
+    return { hour: i, label, count: 0 };
+  });
+  try {
+    const data = await rtdb.get(`qrScanVelocity/${qrId}`);
+    if (data) {
+      for (const key of Object.keys(data)) {
+        const { ts } = data[key];
+        if (ts >= cutoff) {
+          const bucketIdx = Math.floor((ts - cutoff) / (60 * 60 * 1000));
+          if (bucketIdx >= 0 && bucketIdx < 24) buckets[bucketIdx].count++;
+        }
+      }
+    }
+  } catch {}
+  return buckets;
+}
+
+export async function submitVerificationRequest(
+  userId: string,
+  qrId: string,
+  businessName: string,
+  businessIdBase64: string
+): Promise<void> {
+  const { docs } = await db.query(["verificationRequests"], {
+    where: [
+      { field: "userId", op: "==", value: userId },
+      { field: "qrId", op: "==", value: qrId },
+    ],
+    limit: 1,
+  });
+  if (docs.length > 0) {
+    await db.update(["verificationRequests", docs[0].id], {
+      businessName, businessIdBase64, status: "pending", updatedAt: db.timestamp(),
+    });
+    return;
+  }
+  await db.add(["verificationRequests"], {
+    userId, qrId, businessName, businessIdBase64,
+    status: "pending", createdAt: db.timestamp(),
+  });
+}
+
+export async function getVerificationStatus(userId: string, qrId: string): Promise<VerificationStatus> {
+  try {
+    const { docs } = await db.query(["verificationRequests"], {
+      where: [
+        { field: "userId", op: "==", value: userId },
+        { field: "qrId", op: "==", value: qrId },
+      ],
+      limit: 1,
+    });
+    if (docs.length === 0) return { status: "none" };
+    const d = docs[0].data;
+    return {
+      status: d.status || "pending",
+      businessName: d.businessName,
+      submittedAt: tsToString(d.createdAt),
+    };
+  } catch {
+    return { status: "none" };
+  }
+}
+
+export async function getQrOwnerInfo(qrId: string): Promise<QrOwnerInfo | null> {
+  try {
+    const data = await db.get(["qrCodes", qrId]);
+    if (!data) return null;
+    if (!data.isBranded || !data.ownerId) return null;
+    return {
+      ownerId: data.ownerId,
+      ownerName: data.ownerName || "Unknown",
+      brandedUuid: data.brandedUuid || "",
+      isBranded: true,
+      signature: data.signature,
+      ownerVerified: data.ownerVerified || false,
+      qrType: (data.qrType as QrType) || "individual",
+      isActive: data.isActive !== false,
+      deactivationMessage: data.deactivationMessage || null,
+      businessName: data.businessName || null,
+      ownerLogoBase64: data.ownerLogoBase64 || null,
+    };
+  } catch {
+    return null;
+  }
+}
+
+export async function setQrActiveState(
+  qrId: string,
+  userId: string,
+  isActive: boolean,
+  deactivationMessage: string | null
+): Promise<void> {
+  const data = await db.get(["qrCodes", qrId]);
+  if (!data) throw new Error("QR code not found");
+  if (data.qrType === "government") throw new Error("Government QR codes cannot be modified");
+  if (data.ownerId !== userId) throw new Error("Only the owner can modify this QR code");
+  await db.update(["qrCodes", qrId], {
+    isActive,
+    deactivationMessage: isActive ? null : (deactivationMessage?.trim().slice(0, 100) || null),
+  });
+}

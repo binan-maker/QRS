@@ -1,0 +1,28 @@
+Moving the Integrity Logic to the Backend is the most critical security upgrade for your app. Currently, your app's "brain" for deciding who to trust is living on the user's phone, which makes it easy to trick.
+Here is a detailed explanation of what this means and why it matters:
+1. What is "Integrity Logic"?
+In your app, this refers to the complex math and rules that decide if a QR code is safe. Specifically:
+Trust Score Weighting: Deciding how much a "Safe" report from a new user is worth (e.g., 0.1 points) versus a report from a long-time verified user (e.g., 2.0 points).
+Collusion Detection: Looking for "cheating" patterns, such as 50 new accounts suddenly reporting a scam link as "Safe" within 10 minutes to try and trick the system.
+2. The Current Problem: "Client-Side" Logic
+Right now, when a user reports a QR code, your app (on the phone) runs the math, checks for cheating, and then tells the database: "Hey, I've done the math, please update this QR code's trust score to 95%."
+The Vulnerability: Because the phone is allowed to tell the database what the final score is, a hacker doesn't even need to use your app. They can send a fake message directly to your database saying: "I am a super-trusted user, and this scam link is 100% safe." Since your database "trusts" the phone to do the math, it accepts the lie.
+3. The Solution: Moving to the "Backend"
+Moving this to the backend means taking that "brain" out of the phone and putting it on a secure server (like a Firebase Cloud Function or your Express server).
+The New Flow:
+The User Acts: The user taps "Report as Scam."
+The Phone Sends a Request: The phone sends a simple message to the server: "User A reported QR Code B." (It does not send a score).
+The Server Thinks: The server—which no user can touch or hack—looks at its own records. It checks: "How old is User A? Are they verified? Have they been reporting 100 links a minute?"
+The Server Calculates: The server runs the math and the collusion detection.
+The Server Updates: Only the server writes the final Trust Score to the database.
+4. "Locking the Door" (Firestore Rules)
+Once the logic is on the server, you change your Security Rules. You tell the database:
+"Users are allowed to send reports."
+"Users are FORBIDDEN from changing a Trust Score."
+"Only the Admin (the Server) is allowed to change a Trust Score."
+This makes your app "Bulletproof." Even if a hacker creates 1,000 fake accounts, the server will see the pattern, realize it's a "Collusion Attack," and automatically ignore those votes or even ban the accounts.
+5. Why this is "High-End" Engineering
+Consistency: Every user sees the same score because it’s calculated in one central place.
+Intelligence: The server can look at the entire database at once to find patterns. A single phone can only see what that one user is doing.
+Authority: It moves your app from being a "calculator" that anyone can mess with to a "security authority" that protects its own data.
+In short, it stops the app from asking the user what the score should be and starts telling the user what the score actually is based on hard evidence.

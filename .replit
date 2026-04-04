@@ -1,0 +1,88 @@
+entrypoint = "README.md"
+modules = ["nodejs-20", "web", "bash"]
+
+[nix]
+channel = "stable-25_05"
+
+[deployment]
+deploymentTarget = "cloudrun"
+build = ["sh", "-c", "npm run expo:static:build && npm run server:build"]
+run = ["npm", "run", "server:prod"]
+
+[[ports]]
+localPort = 5000
+externalPort = 5000
+
+[[ports]]
+localPort = 8081
+externalPort = 80
+
+[[ports]]
+localPort = 8082
+externalPort = 3000
+
+[env]
+PORT = "5000"
+
+[agent]
+stack = "EXPO"
+expertMode = true
+
+[workflows]
+runButton = "Project"
+
+[[workflows.workflow]]
+name = "Project"
+mode = "parallel"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "Start App"
+
+[[workflows.workflow]]
+name = "Start App"
+author = "agent"
+mode = "parallel"
+
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "Start Backend"
+
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "Start Frontend"
+
+[[workflows.workflow]]
+name = "Start Backend"
+author = "agent"
+mode = "sequential"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "npm run server:dev"
+waitForPort = 5000
+
+[[workflows.workflow]]
+name = "Start Frontend"
+author = "agent"
+mode = "sequential"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "npm run expo:dev"
+waitForPort = 8081
+ensurePreviewReachable = "/status"
+
+[userenv]
+
+[userenv.shared]
+EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID = "971359442211-dppv9u14kun8mo5c0e07pr6f6veh81aa.apps.googleusercontent.com"
+EXPO_PUBLIC_ANDROID_CLIENT_ID = "971359442211-avlllmdh9e30un950315e20km6rbum96.apps.googleusercontent.com"
+EXPO_PUBLIC_FIREBASE_API_KEY = "AIzaSyClEPO1EIRG3vxbQgS6l9AdZj0dIt765e0"
+EXPO_PUBLIC_FIREBASE_PROJECT_ID = "scan-guard-19a7f"
+EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET = "scan-guard-19a7f.firebasestorage.app"
+EXPO_PUBLIC_FIREBASE_DATABASE_URL = "https://scan-guard-19a7f-default-rtdb.asia-southeast1.firebasedatabase.app"
+EXPO_PUBLIC_FIREBASE_APP_ID = "1:971359442211:android:96d2747d81b499102fa896"
+EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID = "971359442211"
+THREATS_SIGNING_KEY = "MIGHAgEAMBMGByqGSM49AgEGCCqGSM49AwEHBG0wawIBAQQgm6oMoUIOfa0eQky5bjOGJ5LrV7Hodo/mqUOmIyrozlKhRANCAAQfTpwUELzIGEB2XDcoETHK0JAtsoYpREB1yv7x/I4EIE4iFKVPzTdN4P/8kAiYafn0mvcQ0UhmUL7dXpUviDWo"
