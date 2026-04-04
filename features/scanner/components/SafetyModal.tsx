@@ -2,16 +2,19 @@ import { View, Text, StyleSheet, Pressable } from "react-native";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import Reanimated, { FadeInDown, FadeIn } from "react-native-reanimated";
 import { useTheme } from "@/contexts/ThemeContext";
+import { getScamTypeLabel, getConfidenceLevel } from "@/lib/security/scam-detector";
 
 interface Props {
   visible: boolean;
   warnings: string[];
   riskLevel: "caution" | "dangerous";
+  riskScore?: number;
+  scamDetails?: any;
   onProceed: () => void;
   onBack: () => void;
 }
 
-export default function SafetyModal({ visible, warnings, riskLevel, onProceed, onBack }: Props) {
+export default function SafetyModal({ visible, warnings, riskLevel, riskScore = 0, scamDetails, onProceed, onBack }: Props) {
   const { colors } = useTheme();
   if (!visible) return null;
 
@@ -28,6 +31,10 @@ export default function SafetyModal({ visible, warnings, riskLevel, onProceed, o
   const displayWarnings = warnings.length > 0
     ? warnings
     : ["This link uses HTTP instead of HTTPS — your connection may not be encrypted."];
+
+  // Get scam type label if available
+  const scamTypeLabel = scamDetails?.scamType ? getScamTypeLabel(scamDetails.scamType) : null;
+  const confidenceLevel = scamDetails?.confidence ? getConfidenceLevel(scamDetails.confidence) : null;
 
   return (
     <View style={styles.overlay}>
