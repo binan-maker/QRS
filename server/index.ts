@@ -1,6 +1,7 @@
 import express from "express";
 import type { Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
+import { registerHealthEndpoints } from "./health-check";
 import * as fs from "fs";
 import * as path from "path";
 
@@ -235,6 +236,9 @@ function setupErrorHandler(app: express.Application) {
   configureExpoAndLanding(app);
 
   const server = await registerRoutes(app);
+  
+  // Register health check and monitoring endpoints
+  registerHealthEndpoints(app);
 
   setupErrorHandler(app);
 

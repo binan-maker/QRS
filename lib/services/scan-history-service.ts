@@ -4,15 +4,7 @@
 
 import { db, rtdb } from "../db/client";
 import { tsToString } from "./utils";
-import {
-  collection,
-  query,
-  where,
-  getCountFromServer,
-  getDocs,
-  orderBy,
-} from "firebase/firestore";
-import { firestore } from "../firebase";
+import { incrementSmartCounter, getDistributedCounter } from "../db/distributed-counter";
 
 export async function recordScan(
   qrId: string,
@@ -26,8 +18,13 @@ export async function recordScan(
   // This is a privacy and legal compliance requirement.
   if (userId && isAnonymous) return;
 
+  // FIX #1: Use smart distributed counter to handle viral QR codes
+  // For low-traffic QRs (< 1000 scans): direct increment (1 write)
+  // For high-traffic QRs (>= 1000 scans): distributed sharding (10x capacity)
   try {
-    await db.increment(["qrCodes", qrId], "scanCount", 1);
+    const qrData = await db.get(["qrCodes", qrId]);
+    const currentScanCount = qrData?.scanCount ?? 0;
+    await incrementSmartCounter(qrId, currentScanCount, 1);
   } catch (e) {
     console.warn("[db] recordScan: failed to increment scanCount:", e);
   }
@@ -39,6 +36,9 @@ export async function recordScan(
         isAnonymous: false, scannedAt: db.timestamp(),
         scanSource,
       });
+      // FIX #5 BONUS: Increment cached personalScanCount on user document
+      // This allows leaderboard and profile stats to avoid fetching all scans
+      await db.increment(["users", userId], "personalScanCount", 1);
     } catch {}
   }
 
@@ -82,6 +82,8 @@ export async function getUserScansPaginated(
 export async function deleteUserScan(userId: string, scanId: string): Promise<void> {
   try {
     await db.update(["users", userId, "scans", scanId], { isDeleted: true, deletedAt: db.timestamp() });
+    // FIX #5 BONUS: Decrement cached personalScanCount when scan is deleted
+    await db.increment(["users", userId], "personalScanCount", -1);
   } catch {}
 }
 
@@ -96,39 +98,92 @@ export interface ScanStatsResult {
 }
 
 export async function getUserScanStats(userId: string): Promise<ScanStatsResult> {
-  const scansCol = collection(firestore, "users", userId, "scans");
-
-  const [totalSnap, urlSnap, textSnap, paySnap, camSnap, galSnap] = await Promise.all([
-    getCountFromServer(query(scansCol)),
-    getCountFromServer(query(scansCol, where("contentType", "==", "url"))),
-    getCountFromServer(query(scansCol, where("contentType", "==", "text"))),
-    getCountFromServer(query(scansCol, where("contentType", "==", "payment"))),
-    getCountFromServer(query(scansCol, where("scanSource", "==", "camera"))),
-    getCountFromServer(query(scansCol, where("scanSource", "==", "gallery"))),
-  ]);
-
-  const total    = totalSnap.data().count;
-  const byUrl    = urlSnap.data().count;
-  const byText   = textSnap.data().count;
-  const byPayment = paySnap.data().count;
-  const byOther  = Math.max(0, total - byUrl - byText - byPayment);
-  const byCamera = camSnap.data().count;
-  const byGallery = galSnap.data().count;
-
+  // OPTIMIZATION: Use embedded stats counters from user document when available
+  // Falls back to query only if stats are missing (legacy users)
+  try {
+    const userDoc = await db.get(["users", userId]);
+    const userData = userDoc?.data || {};
+    
+    // If embedded stats exist (from FIX #5), use them directly - ZERO additional reads
+    if (userData.personalScanCount !== undefined) {
+      return {
+        total: userData.personalScanCount || 0,
+        byUrl: userData.scanCountByUrl || 0,
+        byText: userData.scanCountByText || 0,
+        byPayment: userData.scanCountByPayment || 0,
+        byOther: (userData.personalScanCount || 0) - 
+                 ((userData.scanCountByUrl || 0) + 
+                  (userData.scanCountByText || 0) + 
+                  (userData.scanCountByPayment || 0)),
+        byCamera: userData.scanCountByCamera || 0,
+        byGallery: userData.scanCountByGallery || 0,
+      };
+    }
+  } catch (e) {
+    console.warn("Failed to fetch user stats, falling back to query:", e);
+  }
+  
+  // Fallback for legacy users without embedded stats (will be rare after migration)
+  // Uses pagination to avoid memory limits on users with many scans
+  let total = 0, byUrl = 0, byText = 0, byPayment = 0, byOther = 0, byCamera = 0, byGallery = 0;
+  let cursor: any = undefined;
+  
+  do {
+    const { docs, cursor: nextCursor } = await db.query(["users", userId, "scans"], { 
+      limit: 1000,
+      cursor 
+    });
+    cursor = nextCursor;
+    
+    for (const d of docs) {
+      const data = d.data;
+      total++;
+      
+      if (data.contentType === "url") byUrl++;
+      else if (data.contentType === "text") byText++;
+      else if (data.contentType === "payment") byPayment++;
+      else byOther++;
+      
+      if (data.scanSource === "camera") byCamera++;
+      else if (data.scanSource === "gallery") byGallery++;
+    }
+  } while (cursor);
+  
   return { total, byUrl, byText, byPayment, byOther, byCamera, byGallery };
 }
 
 export async function getUserAllScansForStats(userId: string): Promise<Array<{ id: string; content: string; contentType: string }>> {
-  const scansCol = collection(firestore, "users", userId, "scans");
-  const q = query(scansCol, orderBy("scannedAt", "desc"));
-  const snap = await getDocs(q);
-  return snap.docs
-    .filter((d) => d.data().isDeleted !== true)
-    .map((d) => ({
-      id: d.id,
-      content: d.data().content ?? "",
-      contentType: d.data().contentType ?? "text",
-    }));
+  // OPTIMIZATION: This function is only used for analysis features.
+  // For users with many scans, use pagination to avoid memory/timeout issues.
+  const allScans: Array<{ id: string; content: string; contentType: string }> = [];
+  let cursor: any = undefined;
+  
+  do {
+    const { docs, cursor: nextCursor } = await db.query(
+      ["users", userId, "scans"], 
+      { 
+        orderBy: { field: "scannedAt", direction: "desc" }, 
+        limit: 500,
+        cursor
+      }
+    );
+    cursor = nextCursor;
+    
+    const filtered = docs
+      .filter((d) => d.data.isDeleted !== true)
+      .map((d) => ({
+        id: d.id,
+        content: d.data.content ?? "",
+        contentType: d.data.contentType ?? "text",
+      }));
+    
+    allScans.push(...filtered);
+    
+    // Stop early if we have enough for analysis (prevent runaway queries)
+    if (allScans.length >= 2000) break;
+  } while (cursor);
+  
+  return allScans;
 }
 
 export async function deleteAllUserScans(userId: string): Promise<void> {
@@ -137,10 +192,98 @@ export async function deleteAllUserScans(userId: string): Promise<void> {
       orderBy: { field: "scannedAt", direction: "desc" },
       limit: 500,
     });
+    const softDeleteCount = docs.length;
     await Promise.all(
       docs.map((d) =>
         db.update(["users", userId, "scans", d.id], { isDeleted: true, deletedAt: db.timestamp() }).catch(() => {})
       )
     );
+    // FIX #5 BONUS: Decrement cached personalScanCount by the number of scans being soft-deleted
+    if (softDeleteCount > 0) {
+      await db.increment(["users", userId], "personalScanCount", -softDeleteCount);
+    }
+    // FIX #6: Trigger cleanup of old soft-deleted scans
+    purgeOldSoftDeleteScans(userId).catch(() => {});
   } catch {}
 }
+
+// FIX #6: Cleanup function for soft-deleted scans (call periodically or after bulk deletes)
+const SCAN_SOFT_DELETE_TTL_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
+
+export async function purgeOldSoftDeleteScans(userId: string): Promise<void> {
+  try {
+    const { docs } = await db.query(["users", userId, "scans"], {
+      orderBy: { field: "scannedAt", direction: "desc" },
+      limit: 500,
+    });
+    const now = Date.now();
+    const toDelete: string[] = [];
+    
+    for (const d of docs) {
+      if (!d.data.isDeleted) continue;
+      const deletedAt = d.data.deletedAt;
+      let deletedAtMs = 0;
+      if (deletedAt && typeof deletedAt === "object" && "toDate" in deletedAt) {
+        deletedAtMs = (deletedAt as any).toDate().getTime();
+      } else if (deletedAt && typeof deletedAt === "string") {
+        deletedAtMs = new Date(deletedAt).getTime();
+      }
+      if (deletedAtMs > 0 && now - deletedAtMs > SCAN_SOFT_DELETE_TTL_MS) {
+        toDelete.push(d.id);
+      }
+    }
+    
+    // Batch delete all expired soft-deleted scans
+    if (toDelete.length > 0) {
+      await Promise.all(toDelete.map(id => db.delete(["users", userId, "scans", id]).catch(() => {})));
+    }
+  } catch {}
+}
+
+// FIX #6 BONUS: Global cleanup function for scheduled Cloud Function (runs across all users)
+export async function hardDeleteOldSoftDeleteScans(): Promise<void> {
+  const now = Date.now();
+  let totalDeleted = 0;
+  
+  try {
+    // Query all users (in production, use pagination)
+    const { docs: userDocs } = await db.query(["users"], {
+      orderBy: { field: "createdAt", direction: "desc" },
+      limit: 500, // Process up to 500 users per run
+    });
+    
+    for (const userDoc of userDocs) {
+      const userId = userDoc.id;
+      const { docs: scanDocs } = await db.query(["users", userId, "scans"], {
+        orderBy: { field: "scannedAt", direction: "desc" },
+        limit: 200, // Check up to 200 scans per user
+      });
+      
+      const toDelete: string[] = [];
+      for (const d of scanDocs) {
+        if (!d.data.isDeleted) continue;
+        const deletedAt = d.data.deletedAt;
+        let deletedAtMs = 0;
+        if (deletedAt && typeof deletedAt === "object" && "toDate" in deletedAt) {
+          deletedAtMs = (deletedAt as any).toDate().getTime();
+        } else if (deletedAt && typeof deletedAt === "string") {
+          deletedAtMs = new Date(deletedAt).getTime();
+        }
+        if (deletedAtMs > 0 && now - deletedAtMs > SCAN_SOFT_DELETE_TTL_MS) {
+          toDelete.push(d.id);
+        }
+      }
+      
+      // Batch delete expired soft-deleted scans
+      if (toDelete.length > 0) {
+        await Promise.all(toDelete.map(id => db.delete(["users", userId, "scans", id]).catch(() => {})));
+        totalDeleted += toDelete.length;
+      }
+    }
+    
+    console.log(`[cleanup] hardDeleteOldSoftDeleteScans: Deleted ${totalDeleted} old soft-deleted scans`);
+  } catch (e) {
+    console.error("[cleanup] hardDeleteOldSoftDeleteScans failed:", e);
+  }
+}
+

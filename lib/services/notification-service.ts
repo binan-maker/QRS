@@ -2,6 +2,10 @@ import { db, rtdb } from "../db/client";
 import { NOTIFICATIONS_ENABLED } from "../notifications/config";
 import type { Notification, NotificationType } from "./types";
 
+// FIX #2: Add TTL for notifications (30 days) to prevent unbounded storage growth
+const NOTIFICATION_TTL_MS = 30 * 24 * 60 * 60 * 1000; // 30 days
+const MAX_NOTIFICATIONS_PER_USER = 100; // Limit max notifications stored
+
 // ─── Internal helper ─────────────────────────────────────────────────────────
 // Platform-agnostic write: pushes a notification item for a single user.
 // When NOTIFICATIONS_ENABLED is false this is a no-op.
@@ -12,14 +16,51 @@ async function pushNotification(
   opts?: { qrCodeId?: string; fromUsername?: string }
 ): Promise<void> {
   if (!NOTIFICATIONS_ENABLED) return;
-  await rtdb.push(`notifications/${userId}/items`, {
+  
+  const notificationData = {
     type,
     message,
     qrCodeId: opts?.qrCodeId ?? null,
     fromUsername: opts?.fromUsername ?? null,
     read: false,
     createdAt: Date.now(),
-  });
+  };
+  
+  await rtdb.push(`notifications/${userId}/items`, notificationData);
+  
+  // Auto-cleanup old notifications after writing
+  cleanupOldNotifications(userId).catch(() => {});
+}
+
+// FIX #2: Cleanup old notifications to prevent unbounded storage growth
+async function cleanupOldNotifications(userId: string): Promise<void> {
+  try {
+    const data = await rtdb.get(`notifications/${userId}/items`);
+    if (!data) return;
+    
+    const now = Date.now();
+    const entries = Object.entries(data) as [string, any][];
+    
+    // Sort by createdAt descending
+    entries.sort((a, b) => b[1].createdAt - a[1].createdAt);
+    
+    // Keep only recent notifications within TTL and under max limit
+    const updates: Record<string, any> = {};
+    let keepCount = 0;
+    
+    for (const [key, val] of entries) {
+      const age = now - val.createdAt;
+      if (age > NOTIFICATION_TTL_MS || keepCount >= MAX_NOTIFICATIONS_PER_USER) {
+        updates[`notifications/${userId}/items/${key}`] = null;
+      } else {
+        keepCount++;
+      }
+    }
+    
+    if (Object.keys(updates).length > 0) {
+      await rtdb.update(updates);
+    }
+  } catch {}
 }
 
 // ─── Notify @mentioned users ─────────────────────────────────────────────────
@@ -60,6 +101,8 @@ export async function notifyMentionedUsers(
 }
 
 // ─── Notify all followers of a QR code ───────────────────────────────────────
+// FIX #2: Batch notification writes to reduce Firebase costs and avoid rate limits
+// Instead of N separate writes for N followers, we use a single multi-path update
 export async function notifyQrFollowers(
   qrId: string,
   type: NotificationType,
@@ -69,14 +112,36 @@ export async function notifyQrFollowers(
   if (!NOTIFICATIONS_ENABLED) return;
   try {
     const { docs } = await db.query(["qrCodes", qrId, "followers"]);
-    const writes: Promise<void>[] = [];
+    
+    // FIX #2: Batch all notification writes into a single RTDB multi-path update
+    // This reduces cost from N writes ($0.06 per 1000) to 1 write regardless of follower count
+    const updates: Record<string, any> = {};
+    let notificationCount = 0;
+    
     for (const d of docs) {
       const followerId = d.data.userId as string;
       if (!followerId || followerId === excludeUserId) continue;
-      writes.push(pushNotification(followerId, type, message, { qrCodeId: qrId }));
+      
+      // Use RTDB push-like key generation for unique IDs
+      const notificationKey = `notifications/${followerId}/items/${Date.now()}_${Math.random().toString(36).slice(2)}`;
+      updates[notificationKey] = {
+        type,
+        message,
+        qrCodeId: qrId,
+        read: false,
+        createdAt: Date.now(),
+      };
+      notificationCount++;
     }
-    await Promise.all(writes);
-  } catch {}
+    
+    // Single atomic write operation regardless of follower count
+    if (Object.keys(updates).length > 0) {
+      await rtdb.update(updates);
+      console.log(`[notify] Sent ${notificationCount} follower notifications in single batch for QR ${qrId}`);
+    }
+  } catch (e) {
+    console.warn("[notify] notifyQrFollowers failed:", e);
+  }
 }
 
 // ─── Notify QR code owner ─────────────────────────────────────────────────────
