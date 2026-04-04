@@ -18,6 +18,10 @@ import {
 } from "@/lib/firestore-service";
 // SECURITY FIX P1: QR Input validation for XSS prevention
 import { validateQrInput } from "@/lib/services/profanity-filter";
+// SECURITY FIX P2: Advanced URL security analysis
+import { analyzeUrl, getRiskLevelColor, getRiskLevelLabel } from "@/lib/security/url-security-analyzer";
+// SECURITY FIX P3: Scam detection
+import { detectScam, getScamTypeLabel, getConfidenceLevel } from "@/lib/security/scam-detector";
 
 export const FINDER_SIZE = 270;
 export const CORNER_SIZE = 32;
@@ -89,6 +93,9 @@ export function useScanner() {
   const [pendingQrId, setPendingQrId] = useState<string | null>(null);
   const [safetyWarnings, setSafetyWarnings] = useState<string[]>([]);
   const [safetyRiskLevel, setSafetyRiskLevel] = useState<"caution" | "dangerous">("caution");
+  const [safetyRiskScore, setSafetyRiskScore] = useState<number>(0);
+  const [scamDetected, setScamDetected] = useState(false);
+  const [scamDetails, setScamDetails] = useState<any>(null);
 
   const [verifiedModal, setVerifiedModal] = useState(false);
   const [verifiedOwnerName, setVerifiedOwnerName] = useState("");
@@ -239,12 +246,33 @@ export function useScanner() {
 
     setProcessing(false);
 
-    if (contentType === "url" && isInsecureHttpUrl(content)) {
-      setPendingQrId(qrId);
-      setSafetyRiskLevel("caution");
-      setSafetyModal(true);
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
-      return;
+    // Enhanced security analysis with URL analyzer and scam detector
+    if (contentType === "url") {
+      const urlAnalysis = analyzeUrl(content);
+      const scamAnalysis = detectScam(content);
+      
+      setSafetyRiskScore(urlAnalysis.riskScore);
+      setScamDetected(scamAnalysis.isScamLikely);
+      setScamDetails(scamAnalysis);
+      
+      // Combine warnings from both analyses
+      const combinedWarnings = [...urlAnalysis.warnings, ...scamAnalysis.warnings];
+      
+      if (combinedWarnings.length > 0 || urlAnalysis.riskScore >= 30 || scamAnalysis.isScamLikely) {
+        setPendingQrId(qrId);
+        setSafetyWarnings(combinedWarnings);
+        
+        // Determine risk level based on score
+        if (urlAnalysis.riskScore >= 50 || scamAnalysis.confidence >= 50) {
+          setSafetyRiskLevel("dangerous");
+        } else {
+          setSafetyRiskLevel("caution");
+        }
+        
+        setSafetyModal(true);
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+        return;
+      }
     }
 
     await navigateToQrDetail(qrId);
@@ -268,13 +296,33 @@ export function useScanner() {
       setAnonymousQrContent(qrId, content, contentType);
       setProcessing(false);
 
-      if (contentType === "url" && isInsecureHttpUrl(content)) {
-        setPendingQrId(qrId);
-        setSafetyRiskLevel("caution");
-        setSafetyModal(true);
-        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
-        return;
+      // Enhanced security analysis with URL analyzer and scam detector
+      if (contentType === "url") {
+        const urlAnalysis = analyzeUrl(content);
+        const scamAnalysis = detectScam(content);
+        
+        setSafetyRiskScore(urlAnalysis.riskScore);
+        setScamDetected(scamAnalysis.isScamLikely);
+        setScamDetails(scamAnalysis);
+        
+        const combinedWarnings = [...urlAnalysis.warnings, ...scamAnalysis.warnings];
+        
+        if (combinedWarnings.length > 0 || urlAnalysis.riskScore >= 30 || scamAnalysis.isScamLikely) {
+          setPendingQrId(qrId);
+          setSafetyWarnings(combinedWarnings);
+          
+          if (urlAnalysis.riskScore >= 50 || scamAnalysis.confidence >= 50) {
+            setSafetyRiskLevel("dangerous");
+          } else {
+            setSafetyRiskLevel("caution");
+          }
+          
+          setSafetyModal(true);
+          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+          return;
+        }
       }
+      
       await navigateToQrDetail(qrId);
     } catch (e: any) {
       setProcessing(false);
@@ -359,15 +407,33 @@ export function useScanner() {
 
       setProcessing(false);
 
-      // Safety warning check (local, no network needed)
-      if (contentType === "url" && isInsecureHttpUrl(content)) {
-        setPendingQrId(qrId);
-        setSafetyRiskLevel("caution");
-        setSafetyModal(true);
-        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
-        // Still sync in background
-        _backgroundSync(content, qrId, contentType, scanSource);
-        return;
+      // Enhanced security analysis with URL analyzer and scam detector
+      if (contentType === "url") {
+        const urlAnalysis = analyzeUrl(content);
+        const scamAnalysis = detectScam(content);
+        
+        setSafetyRiskScore(urlAnalysis.riskScore);
+        setScamDetected(scamAnalysis.isScamLikely);
+        setScamDetails(scamAnalysis);
+        
+        const combinedWarnings = [...urlAnalysis.warnings, ...scamAnalysis.warnings];
+        
+        if (combinedWarnings.length > 0 || urlAnalysis.riskScore >= 30 || scamAnalysis.isScamLikely) {
+          setPendingQrId(qrId);
+          setSafetyWarnings(combinedWarnings);
+          
+          if (urlAnalysis.riskScore >= 50 || scamAnalysis.confidence >= 50) {
+            setSafetyRiskLevel("dangerous");
+          } else {
+            setSafetyRiskLevel("caution");
+          }
+          
+          setSafetyModal(true);
+          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+          // Still sync in background
+          _backgroundSync(content, qrId, contentType, scanSource);
+          return;
+        }
       }
 
       // Navigate immediately — detail page shows cached content while Firestore loads
