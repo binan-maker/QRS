@@ -133,10 +133,14 @@ export default function HistoryScreen() {
   }
 
   // Risk stats from all items (loaded via background fetch)
+  // Deduplicate by content so scanning the same dangerous QR multiple times counts as one.
   const allDangerCount = useMemo(() => {
     if (allStatsItems.length === 0) return history.filter((i) => safetyRiskMap.get(i.id) === "dangerous").length;
+    const seen = new Set<string>();
     let count = 0;
     for (const item of allStatsItems) {
+      if (seen.has(item.content)) continue;
+      seen.add(item.content);
       let risk: string = "safe";
       if (item.contentType === "url") {
         try { risk = analyzeUrlHeuristics(item.content).riskLevel; } catch {}
@@ -153,8 +157,11 @@ export default function HistoryScreen() {
 
   const allCautionCount = useMemo(() => {
     if (allStatsItems.length === 0) return history.filter((i) => safetyRiskMap.get(i.id) === "caution").length;
+    const seen = new Set<string>();
     let count = 0;
     for (const item of allStatsItems) {
+      if (seen.has(item.content)) continue;
+      seen.add(item.content);
       let risk: string = "safe";
       if (item.contentType === "url") {
         try { risk = analyzeUrlHeuristics(item.content).riskLevel; } catch {}

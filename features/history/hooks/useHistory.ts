@@ -14,7 +14,7 @@ export interface HistoryItem {
   scannedAt: string;
   qrCodeId?: string;
   source: "local" | "cloud" | "favorite";
-  scanSource?: "camera" | "gallery";
+  scanSource?: "camera" | "gallery" | "viewed";
 }
 
 export type Filter = "all" | "url" | "text" | "payment" | "other" | "favorites" | "camera" | "gallery";
@@ -123,7 +123,7 @@ export function useHistory() {
         setCloudHistory(result.items.map((s) => ({
           id: s.id, content: s.content, contentType: s.contentType,
           scannedAt: s.scannedAt, qrCodeId: s.qrCodeId, source: "cloud" as const,
-          scanSource: (s.scanSource as "camera" | "gallery") || "camera",
+          scanSource: (s.scanSource as "camera" | "gallery" | "viewed") || "camera",
         })));
         if (!isRefreshing) setCloudLoading(false);
         return;
@@ -148,7 +148,7 @@ export function useHistory() {
       setCloudHistory((prev) => [...prev, ...result.items.map((s) => ({
         id: s.id, content: s.content, contentType: s.contentType,
         scannedAt: s.scannedAt, qrCodeId: s.qrCodeId, source: "cloud" as const,
-        scanSource: (s.scanSource as "camera" | "gallery") || "camera",
+        scanSource: (s.scanSource as "camera" | "gallery" | "viewed") || "camera",
       }))]);
     } catch {}
     setLoadingMore(false);

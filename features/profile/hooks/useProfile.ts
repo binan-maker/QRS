@@ -190,7 +190,10 @@ export function useProfile() {
       // Upload to Firebase Storage and get URL
       const { uploadProfilePhoto } = await import("@/lib/services/storage-service");
       const newPhotoUrl = await uploadProfilePhoto(blob, user!.id, photoURL);
-      
+
+      // Persist the new URL to Firestore so comments and other features pick it up
+      await updateUserPhotoURL(user!.id, newPhotoUrl);
+
       setPhotoURL(newPhotoUrl);
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     } catch (error: any) {

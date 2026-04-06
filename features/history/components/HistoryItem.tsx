@@ -219,7 +219,7 @@ const HistoryItem = React.memo(function HistoryItem({ item, risk, onDelete: _onD
             />
             {item.scanSource && !isFavorite && (
               <Text style={[styles.sourceText, { color: colors.textMuted }]} maxFontSizeMultiplier={1}>
-                {item.scanSource === "gallery" ? "Gallery" : "Camera"}
+                {item.scanSource === "gallery" ? "Gallery" : item.scanSource === "viewed" ? "Viewed" : "Camera"}
               </Text>
             )}
           </View>

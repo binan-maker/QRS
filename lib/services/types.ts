@@ -48,7 +48,7 @@ export interface ScanRecord {
   contentType: string;
   scannedAt: string;
   isAnonymous: boolean;
-  scanSource?: "camera" | "gallery";
+  scanSource?: "camera" | "gallery" | "viewed";
 }
 
 export interface CommentData {

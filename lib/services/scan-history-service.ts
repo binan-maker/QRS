@@ -12,7 +12,7 @@ export async function recordScan(
   contentType: string,
   userId: string | null,
   isAnonymous: boolean,
-  scanSource: "camera" | "gallery" = "camera"
+  scanSource: "camera" | "gallery" | "viewed" = "camera"
 ): Promise<void> {
   // Signed-in users in anonymous mode: absolute zero database interaction.
   // This is a privacy and legal compliance requirement.

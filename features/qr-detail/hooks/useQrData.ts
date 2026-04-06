@@ -12,6 +12,31 @@ import {
   setCachedQrDetail,
 } from "@/lib/cache/qr-cache";
 
+async function recordViewedLocally(
+  qrCodeId: string,
+  content: string,
+  contentType: string,
+  userId: string
+): Promise<void> {
+  try {
+    const key = `local_scan_history_${userId}`;
+    const stored = await AsyncStorage.getItem(key);
+    const arr: any[] = stored ? JSON.parse(stored) : [];
+    const alreadyExists = arr.some((e) => e.qrCodeId === qrCodeId);
+    if (alreadyExists) return;
+    const entry = {
+      id: `viewed_${qrCodeId}_${Date.now()}`,
+      qrCodeId,
+      content,
+      contentType,
+      scanSource: "viewed",
+      scannedAt: new Date().toISOString(),
+    };
+    arr.unshift(entry);
+    await AsyncStorage.setItem(key, JSON.stringify(arr));
+  } catch {}
+}
+
 export interface QrDetail {
   id: string;
   content: string;
@@ -113,6 +138,9 @@ export function useQrData(id: string, userId: string | null) {
               contentType: detail.qrCode.contentType,
             }));
           } catch {}
+          if (userId) {
+            recordViewedLocally(id, detail.qrCode.content, detail.qrCode.contentType, userId).catch(() => {});
+          }
           setLoading(false);
           // Fetch owner info in background — don't block the page render
           (async () => {

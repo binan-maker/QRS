@@ -134,6 +134,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           try {
             const userData = await db.get(["users", adapterUser.uid]);
             if (userData?.username) authUser.username = userData.username as string;
+            // Prefer the photo stored in our DB (custom upload) over the auth-provider photo
+            if (userData?.photoURL) authUser.photoURL = userData.photoURL as string;
           } catch {}
           setUser(authUser);
           setToken(idToken);
