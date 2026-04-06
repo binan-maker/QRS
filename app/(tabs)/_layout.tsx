@@ -11,6 +11,7 @@ import * as Haptics from "@/lib/haptics";
 import { useAuth } from "@/contexts/AuthContext";
 import { subscribeToNotificationCount } from "@/lib/firestore-service";
 import { LinearGradient } from "expo-linear-gradient";
+import { useAppTranslation } from "@/lib/i18n/useAppTranslation";
 
 function ScanTabButton({ onPress }: { onPress?: () => void }) {
   const { colors } = useTheme();
@@ -56,27 +57,28 @@ function useNotificationCount() {
 }
 
 function NativeTabLayout() {
+  const { t } = useAppTranslation();
   return (
     <NativeTabs>
       <NativeTabs.Trigger name="index">
         <Icon sf={{ default: "house", selected: "house.fill" }} />
-        <Label>Home</Label>
+        <Label>{t("tabs.home")}</Label>
       </NativeTabs.Trigger>
       <NativeTabs.Trigger name="qr-generator">
         <Icon sf={{ default: "qrcode", selected: "qrcode" }} />
-        <Label>Generate</Label>
+        <Label>{t("tabs.generator")}</Label>
       </NativeTabs.Trigger>
       <NativeTabs.Trigger name="scanner">
         <Icon sf={{ default: "qrcode.viewfinder", selected: "qrcode.viewfinder" }} />
-        <Label>Scan</Label>
+        <Label>{t("tabs.scanner")}</Label>
       </NativeTabs.Trigger>
       <NativeTabs.Trigger name="history">
         <Icon sf={{ default: "clock", selected: "clock.fill" }} />
-        <Label>History</Label>
+        <Label>{t("tabs.history")}</Label>
       </NativeTabs.Trigger>
       <NativeTabs.Trigger name="profile">
         <Icon sf={{ default: "person", selected: "person.fill" }} />
-        <Label>Profile</Label>
+        <Label>{t("tabs.profile")}</Label>
       </NativeTabs.Trigger>
     </NativeTabs>
   );
@@ -88,6 +90,7 @@ function ClassicTabLayout() {
   const insets = useSafeAreaInsets();
   const notifCount = useNotificationCount();
   const { colors } = useTheme();
+  const { t } = useAppTranslation();
 
   const tabBarHeight = isWeb ? 80 : 62 + insets.bottom;
 
@@ -161,7 +164,7 @@ function ClassicTabLayout() {
       <Tabs.Screen
         name="index"
         options={{
-          title: "Home",
+          title: t("tabs.home"),
           tabBarBadge: notifCount > 0 ? notifCount : undefined,
           tabBarBadgeStyle: {
             backgroundColor: colors.primary,
@@ -182,7 +185,7 @@ function ClassicTabLayout() {
       <Tabs.Screen
         name="qr-generator"
         options={{
-          title: "Generate",
+          title: t("tabs.generator"),
           tabBarIcon: ({ color, focused }) => (
             <View style={focused ? [styles.activeIconWrap, { backgroundColor: color + "18" }] : styles.iconWrap}>
               <MaterialCommunityIcons name={focused ? "qrcode-edit" : "qrcode"} size={22} color={color} />
@@ -203,7 +206,7 @@ function ClassicTabLayout() {
       <Tabs.Screen
         name="history"
         options={{
-          title: "History",
+          title: t("tabs.history"),
           tabBarIcon: ({ color, focused }) => (
             <View style={focused ? [styles.activeIconWrap, { backgroundColor: color + "18" }] : styles.iconWrap}>
               <Ionicons name={focused ? "time" : "time-outline"} size={22} color={color} />
@@ -214,7 +217,7 @@ function ClassicTabLayout() {
       <Tabs.Screen
         name="profile"
         options={{
-          title: "Profile",
+          title: t("tabs.profile"),
           tabBarIcon: ({ color, focused }) => (
             <View style={focused ? [styles.activeIconWrap, { backgroundColor: color + "18" }] : styles.iconWrap}>
               <Ionicons name={focused ? "person" : "person-outline"} size={22} color={color} />
