@@ -154,34 +154,6 @@ const TrustScoreCard = React.memo(function TrustScoreCard({
         ))}
       </View>
 
-      {/* Vote breakdown */}
-      {total > 0 && (
-        <View style={[styles.breakdown, { borderTopColor: colors.surfaceBorder }]}>
-          {REPORT_TYPES.map((r) => {
-            const count = reportCounts[r.key] || 0;
-            if (count === 0) return null;
-            const pct = Math.round((count / total) * 100);
-            return (
-              <View key={r.key} style={styles.breakdownItem}>
-                <View style={styles.breakdownRow}>
-                  <View style={[styles.breakdownDot, { backgroundColor: r.color }]} />
-                  <Text style={[styles.breakdownLabel, { color: colors.textSecondary }]} maxFontSizeMultiplier={1}>{r.label}</Text>
-                  <Text style={[styles.breakdownPct, { color: r.color }]} maxFontSizeMultiplier={1}>{pct}%</Text>
-                  <Text style={[styles.breakdownCount, { color: colors.textMuted }]} maxFontSizeMultiplier={1}>· {count}</Text>
-                </View>
-                <View style={[styles.breakdownBar, { backgroundColor: isDark ? colors.surfaceLight : colors.background }]}>
-                  <LinearGradient
-                    colors={[r.color, r.color + "99"]}
-                    style={[styles.breakdownBarFill, { width: `${pct}%` as any }]}
-                    start={{ x: 0, y: 0 }}
-                    end={{ x: 1, y: 0 }}
-                  />
-                </View>
-              </View>
-            );
-          })}
-        </View>
-      )}
     </View>
   );
 });
@@ -276,17 +248,4 @@ const styles = StyleSheet.create({
   },
   statNum: { fontSize: 16, fontFamily: "Inter_700Bold" },
   statLabel: { fontSize: 11, fontFamily: "Inter_600SemiBold", textAlign: "center" },
-  breakdown: {
-    gap: 10,
-    borderTopWidth: StyleSheet.hairlineWidth,
-    paddingTop: 14,
-  },
-  breakdownItem: { gap: 5 },
-  breakdownRow: { flexDirection: "row", alignItems: "center", gap: 6 },
-  breakdownDot: { width: 7, height: 7, borderRadius: 3.5 },
-  breakdownLabel: { fontSize: 12, fontFamily: "Inter_500Medium", flex: 1 },
-  breakdownPct: { fontSize: 12, fontFamily: "Inter_700Bold" },
-  breakdownCount: { fontSize: 12, fontFamily: "Inter_400Regular" },
-  breakdownBar: { height: 4, borderRadius: 2, overflow: "hidden" },
-  breakdownBarFill: { height: "100%", borderRadius: 2 },
 });
