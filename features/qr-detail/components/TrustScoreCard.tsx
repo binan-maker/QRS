@@ -21,6 +21,7 @@ interface Props {
   followersModalOpen: boolean;
   onOpenFollowers: () => void;
   manipulationWarning?: boolean;
+  isExternal?: boolean;
 }
 
 function getScoreGradient(score: number, colors: any): [string, string] {
@@ -31,7 +32,7 @@ function getScoreGradient(score: number, colors: any): [string, string] {
 
 const TrustScoreCard = React.memo(function TrustScoreCard({
   trustInfo, reportCounts, totalScans, totalComments,
-  isQrOwner, followCount, onOpenFollowers, manipulationWarning,
+  isQrOwner, followCount, onOpenFollowers, manipulationWarning, isExternal,
 }: Props) {
   const { colors, isDark } = useTheme();
 
@@ -104,6 +105,16 @@ const TrustScoreCard = React.memo(function TrustScoreCard({
           )}
         </View>
       </View>
+
+      {/* External QR disclaimer */}
+      {isExternal && (
+        <View style={[styles.externalBanner, { backgroundColor: colors.warningDim, borderColor: colors.warning + "40" }]}>
+          <Ionicons name="information-circle" size={13} color={colors.warning} />
+          <Text style={[styles.manipText, { color: colors.warning }]}>
+            Community votes only — QR Guard cannot verify who owns this QR code.
+          </Text>
+        </View>
+      )}
 
       {/* Manipulation warning */}
       {manipulationWarning && (
@@ -230,6 +241,14 @@ const styles = StyleSheet.create({
   voteCount: { fontSize: 12, fontFamily: "Inter_400Regular" },
   scoreBar: { height: 5, borderRadius: 3, overflow: "hidden" },
   scoreBarFill: { height: "100%", borderRadius: 3 },
+  externalBanner: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: 8,
+    borderRadius: 12,
+    padding: 11,
+    borderWidth: 1,
+  },
   manipBanner: {
     flexDirection: "row",
     alignItems: "flex-start",

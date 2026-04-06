@@ -59,6 +59,8 @@ export function useQrDetail(id: string) {
   function getCombinedVerdict() {
     const { offlineBlacklistMatch, paymentSafety, urlSafety, instantVerdict } = safety;
     const trust = getTrustInfo();
+    // Only QR codes generated and cryptographically signed by QR Guard can receive a green SAFE verdict.
+    const isQrGuardVerified = data.ownerInfo?.isBranded === true;
 
     if (offlineBlacklistMatch.matched) {
       return { level: "dangerous" as const, label: "DANGEROUS", reason: offlineBlacklistMatch.reason ?? "Known scam pattern", color: colors.danger };
@@ -71,7 +73,11 @@ export function useQrDetail(id: string) {
         if (paymentSafety?.isSuspicious || urlSafety?.isSuspicious) {
           return { level: "caution" as const, label: "CAUTION", reason: "Community trusts it, but local analysis found risks", color: colors.warning };
         }
-        return { level: "safe" as const, label: "SAFE", reason: `${Math.round(trust.score)}% community trust`, color: colors.safe };
+        if (isQrGuardVerified) {
+          return { level: "safe" as const, label: "SAFE", reason: `${Math.round(trust.score)}% community trust · QR Guard Verified`, color: colors.safe };
+        }
+        // Good community score, but owner is NOT verified by QR Guard — stay cautious.
+        return { level: "caution" as const, label: "UNVERIFIED QR", reason: `${Math.round(trust.score)}% community trust · Owner not verified by QR Guard`, color: colors.warning };
       }
       if (trust.label === "Caution" || trust.label === "Uncertain") {
         return { level: "caution" as const, label: "CAUTION", reason: "Mixed community reports", color: colors.warning };
@@ -87,8 +93,10 @@ export function useQrDetail(id: string) {
     if (instantVerdict.level === "caution") {
       return { level: "caution" as const, label: "CAUTION", reason: instantVerdict.reason ?? "Proceed carefully", color: colors.warning };
     }
-    // Default: local analysis found no threats — show SAFE immediately.
-    // Community data will silently update this verdict when it arrives.
+    // Default fallback: for external/unverified QRs we cannot guarantee safety.
+    if (!isQrGuardVerified) {
+      return { level: "caution" as const, label: "UNVERIFIED QR", reason: "Standard QR · We cannot verify the owner's identity", color: colors.warning };
+    }
     return { level: "safe" as const, label: "SAFE", reason: "No threats detected", color: colors.safe };
   }
 
