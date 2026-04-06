@@ -78,7 +78,7 @@ export default function VerifiedModal({ visible, ownerName }: Props) {
         {/* Bottom mark */}
         <View style={styles.bottomMark}>
           <MaterialCommunityIcons name="shield-check" size={11} color="rgba(0,212,255,0.35)" />
-          <Text style={styles.bottomMarkText}>Verified by QR Guard AI</Text>
+          <Text style={styles.bottomMarkText}>Verified by QR Guard Security</Text>
         </View>
       </Reanimated.View>
     </View>

@@ -311,7 +311,7 @@ export default function MyQrDetailScreen() {
                   <Text style={[styles.sectionLabel, { marginBottom: 0, color: colors.safe }]}>SHIELD PROTECTION</Text>
                 </View>
                 <Text style={{ fontSize: 13, fontFamily: "Inter_400Regular", color: colors.textSecondary, lineHeight: 19, marginBottom: 14 }}>
-                  Your customers are protected by QR Guard's heuristic engine. If someone tries to overlay your QR with a fake one, scanners are instantly warned of the destination change.
+                  Your customers are protected by QR Guard's multi-layer security system. If someone tries to overlay your QR with a fake one, scanners are instantly warned of the destination change.
                 </Text>
                 <View style={{ flexDirection: "row", gap: 8 }}>
                   <View style={{ flex: 1, backgroundColor: colors.safeDim, borderRadius: 12, padding: 10, alignItems: "center", gap: 3, borderWidth: 1, borderColor: colors.safe + "25" }}>

@@ -101,7 +101,7 @@ export default function SafetyModal({ visible, warnings, riskLevel, riskScore = 
         {/* Bottom note */}
         <View style={styles.bottomNote}>
           <MaterialCommunityIcons name="shield-check" size={11} color="rgba(0,212,255,0.35)" />
-          <Text style={styles.bottomNoteText}>Threat analysis by QR Guard AI</Text>
+          <Text style={styles.bottomNoteText}>Security analysis by QR Guard</Text>
         </View>
       </Reanimated.View>
     </View>

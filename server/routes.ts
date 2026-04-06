@@ -3,6 +3,7 @@ import { createServer, type Server } from "node:http";
 import { decodeQrFromImage } from "./image-decode";
 import { signPayload } from "./security/response-signer";
 import { registerDonationRoutes } from "./routes/donation";
+import { registerSafeBrowsingRoute } from "./routes/safe-browsing";
 
 // ─── Rate Limiter (Redis-backed for serverless deployments) ─────────────────
 // CRITICAL SECURITY FIX: File-based rate limiting fails in serverless environments
@@ -326,6 +327,7 @@ const DYNAMIC_THREAT_PATTERNS: { pattern: string; reason: string }[] = [
 
 export async function registerRoutes(app: Express): Promise<Server> {
   registerDonationRoutes(app);
+  registerSafeBrowsingRoute(app);
 
   app.get("/status", (_req, res) => {
     res.json({ status: "ok" });

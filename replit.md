@@ -4,6 +4,40 @@ A full-stack mobile-first QR code scanning and management app built with Expo (R
 
 ## Recent Changes
 
+### Real Threat Intelligence + i18n Multi-Language Support
+
+#### Threat Detection — Honest & Real
+- **Removed false "AI" claims** — All UI references to "QR Guard AI" replaced with accurate labels: "Security analysis by QR Guard" and "Verified by QR Guard Security".
+- **`server/routes/safe-browsing.ts`** — New server endpoint `POST /api/check-url` that calls **Google Safe Browsing API v4** (real threat intelligence, updated in real-time by Google). Detects MALWARE, SOCIAL_ENGINEERING, UNWANTED_SOFTWARE, and POTENTIALLY_HARMFUL_APPLICATION. Falls back gracefully when `GOOGLE_SAFE_BROWSING_API_KEY` is not set.
+- **`lib/security/threat-intelligence.ts`** — New client library that queries the server's Google Safe Browsing proxy. Returns full threat metadata (type, platform, confidence). Falls back to `api-unavailable` when the server is unreachable so local heuristics remain active.
+- **`server/routes.ts`** — Registered `registerSafeBrowsingRoute(app)` in the main route registration.
+- **`.env.example`** — Added `GOOGLE_SAFE_BROWSING_API_KEY` documentation with setup instructions.
+
+#### i18n Framework — 5 Languages
+- **Packages installed**: `i18next@23`, `react-i18next@13`, `expo-localization`
+- **`lib/i18n/index.ts`** — i18next setup with automatic device language detection, fallback to English. Exports `SUPPORTED_LANGUAGES` and `SupportedLanguageCode` types.
+- **`lib/i18n/useAppTranslation.ts`** — Typed `useAppTranslation()` hook for use in components.
+- **`lib/i18n/translations/en.ts`** — English (default): complete translation for all screens, tabs, safety, auth, errors, content types, risk levels.
+- **`lib/i18n/translations/hi.ts`** — Hindi (हिंदी): full translation.
+- **`lib/i18n/translations/ml.ts`** — Malayalam (മലയാളം): full translation.
+- **`lib/i18n/translations/ta.ts`** — Tamil (தமிழ்): full translation.
+- **`lib/i18n/translations/te.ts`** — Telugu (తెలుగు): full translation.
+- **`app/_layout.tsx`** — Imports `@/lib/i18n` at startup to initialize the i18n framework.
+
+#### Usage in Components
+Use `useAppTranslation()` hook in any component:
+```tsx
+import { useAppTranslation } from "@/lib/i18n/useAppTranslation";
+const { t } = useAppTranslation();
+// Then use: t("tabs.home"), t("safety.dangerDetected"), etc.
+```
+
+Change language programmatically:
+```tsx
+import i18n from "@/lib/i18n";
+i18n.changeLanguage("ml"); // Switch to Malayalam
+```
+
 ### Evidence-Based Trust UI, Professional VerdictBanner, Dynamic Threats, Secure Storage & Security Hardening
 
 #### Evidence Logic Cards
