@@ -1,20 +1,19 @@
 // ─── Scan Fraud Guard ──────────────────────────────────────────────────────────
-// YouTube-style scan counting fraud prevention.
+// Strict 1-scan-per-user-per-QR-code deduplication.
 //
 // Multi-layer protection:
-//  1. Device deduplication   — AsyncStorage tracks scans per device per QR.
-//                              Max 4 counted scans per device per 24 hours.
-//                              (Like YouTube's cookie/fingerprint tracking)
+//  1. User deduplication    — Logged-in users: Firestore `users/{uid}/countedScans/{qrId}`
+//                             (permanent, cross-device, 1 count per user ever).
+//                             Guest users: AsyncStorage permanent flag per QR per device.
 //
-//  2. Owner scan separation  — Owner scans are stored in ownerScanCount, never
-//                              inflating the public scanCount.
+//  2. Owner scan separation — Owner scans stored in ownerScanCount, never inflating
+//                             the public scanCount.
 //
-//  3. Velocity detection     — If global scans/min exceeds threshold the scan is
-//                              still recorded but NOT counted (marked bot-suspect).
+//  3. Velocity detection    — If global scans/min exceeds threshold the scan is still
+//                             recorded but NOT counted (marked bot-suspect).
 //
-//  4. Statistical anomaly    — If the scan growth curve is unnatural (e.g. 1 lakh
-//                              scans in 1 hour) the QR is flagged and the trust
-//                              score is frozen until human review.
+//  4. Statistical anomaly   — If scan growth is unnatural (e.g. 1 lakh in 1 hour)
+//                             the QR is flagged and the count is frozen until review.
 //
 // The result:
 //   allowed: true  → count this scan (increment scanCount)
@@ -25,17 +24,15 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { db, rtdb } from "../db/client";
 
 // ── Constants ──────────────────────────────────────────────────────────────────
-const MAX_DEVICE_SCANS_PER_WINDOW   = 4;          // Like YouTube's 4-5/24h rule
-const DEVICE_WINDOW_MS              = 24 * 60 * 60 * 1000; // 24 hours
-const VELOCITY_WINDOW_MS            = 60 * 1000;  // 1 minute window
-const VELOCITY_THRESHOLD_PER_MIN    = 30;          // >30 scans/min = suspicious
-const ANOMALY_HOURLY_THRESHOLD      = 500;         // >500 in 1 hour = freeze score
-const ANOMALY_WINDOW_MS             = 60 * 60 * 1000; // 1 hour
+const VELOCITY_WINDOW_MS        = 60 * 1000;   // 1 minute window
+const VELOCITY_THRESHOLD_PER_MIN = 30;          // >30 scans/min = suspicious
+const ANOMALY_HOURLY_THRESHOLD  = 500;          // >500 in 1 hour = freeze score
+const ANOMALY_WINDOW_MS         = 60 * 60 * 1000; // 1 hour
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 export type ScanDenyReason =
   | "owner_scan"        // QR owner scanning their own code
-  | "too_frequent"      // Same device exceeded 4/24h limit
+  | "too_frequent"      // User/device already counted for this QR (lifetime dedup)
   | "velocity_exceeded" // Global >30 scans/min — bot suspected
   | "anomaly_detected"; // Unnatural growth curve — score frozen
 
@@ -43,38 +40,48 @@ export type ScanGuardResult =
   | { allowed: true;  reason: null;           ownerScan: false }
   | { allowed: false; reason: ScanDenyReason; ownerScan: boolean };
 
-interface DeviceScanRecord {
-  timestamps: number[];
+// ── Device-level deduplication (for guest/anonymous users) ────────────────────
+// Stores a permanent flag — no time window. Once a device has been counted
+// for a given QR code, it never counts again.
+
+function deviceCountedKey(qrId: string): string {
+  return `scan_counted_v2_${qrId}`;
 }
 
-// ── Device deduplication helpers ───────────────────────────────────────────────
-function deviceKey(qrId: string): string {
-  return `scan_guard_v1_${qrId}`;
-}
-
-async function getDeviceRecord(qrId: string): Promise<DeviceScanRecord> {
+async function isDeviceAlreadyCounted(qrId: string): Promise<boolean> {
   try {
-    const raw = await AsyncStorage.getItem(deviceKey(qrId));
-    return raw ? JSON.parse(raw) : { timestamps: [] };
+    const val = await AsyncStorage.getItem(deviceCountedKey(qrId));
+    return val === "1";
   } catch {
-    return { timestamps: [] };
+    return false;
   }
 }
 
-async function recordDeviceTimestamp(qrId: string): Promise<void> {
+async function markDeviceCounted(qrId: string): Promise<void> {
   try {
-    const now = Date.now();
-    const record = await getDeviceRecord(qrId);
-    const pruned = record.timestamps.filter((t) => now - t < DEVICE_WINDOW_MS);
-    pruned.push(now);
-    await AsyncStorage.setItem(deviceKey(qrId), JSON.stringify({ timestamps: pruned }));
+    await AsyncStorage.setItem(deviceCountedKey(qrId), "1");
   } catch {}
 }
 
-async function getDeviceCountInWindow(qrId: string): Promise<number> {
-  const now = Date.now();
-  const record = await getDeviceRecord(qrId);
-  return record.timestamps.filter((t) => now - t < DEVICE_WINDOW_MS).length;
+// ── User-level deduplication (for logged-in users, cross-device) ───────────────
+// Reads/writes `users/{userId}/countedScans/{qrId}` in Firestore.
+// Returns true if the user has already been counted for this QR code.
+
+async function isUserAlreadyCounted(userId: string, qrId: string): Promise<boolean> {
+  try {
+    const doc = await db.get(["users", userId, "countedScans", qrId]);
+    return doc !== null;
+  } catch {
+    return false;
+  }
+}
+
+async function markUserCounted(userId: string, qrId: string): Promise<void> {
+  try {
+    await db.set(["users", userId, "countedScans", qrId], {
+      countedAt: db.timestamp(),
+    });
+  } catch {}
 }
 
 // ── Velocity helpers (uses existing RTDB qrScanVelocity) ──────────────────────
@@ -129,31 +136,46 @@ export async function checkScanAllowed(
     return { allowed: false, reason: "owner_scan", ownerScan: true };
   }
 
-  // 2. Velocity check — run in parallel with device check
-  const [velocityCount, hourlyVolume, deviceCount] = await Promise.all([
+  // 2. Per-user or per-device lifetime deduplication
+  //    Logged-in users: check Firestore (cross-device, permanent)
+  //    Guest users: check AsyncStorage (device-only, permanent)
+  if (userId) {
+    const alreadyCounted = await isUserAlreadyCounted(userId, qrId);
+    if (alreadyCounted) {
+      return { allowed: false, reason: "too_frequent", ownerScan: false };
+    }
+  } else {
+    const alreadyCounted = await isDeviceAlreadyCounted(qrId);
+    if (alreadyCounted) {
+      return { allowed: false, reason: "too_frequent", ownerScan: false };
+    }
+  }
+
+  // 3. Velocity check and anomaly detection
+  const [velocityCount, hourlyVolume] = await Promise.all([
     getRecentVelocity(qrId),
     getRecentHourlyVolume(qrId),
-    getDeviceCountInWindow(qrId),
   ]);
 
-  // 3. Anomaly detection — freeze trust score if growth is unnatural
+  // 4. Anomaly detection — freeze trust score if growth is unnatural
   if (hourlyVolume >= ANOMALY_HOURLY_THRESHOLD) {
     await maybeFreezeScanCount(qrId, hourlyVolume);
     return { allowed: false, reason: "anomaly_detected", ownerScan: false };
   }
 
-  // 4. Velocity gate — global burst protection
+  // 5. Velocity gate — global burst protection
   if (velocityCount >= VELOCITY_THRESHOLD_PER_MIN) {
     return { allowed: false, reason: "velocity_exceeded", ownerScan: false };
   }
 
-  // 5. Device deduplication — same device limit (YouTube 4-5/24h rule)
-  if (deviceCount >= MAX_DEVICE_SCANS_PER_WINDOW) {
-    return { allowed: false, reason: "too_frequent", ownerScan: false };
+  // ✅ Allowed — permanently mark this user/device as counted so future
+  //    attempts are blocked regardless of source (camera, gallery, or viewed).
+  if (userId) {
+    await markUserCounted(userId, qrId);
+  } else {
+    await markDeviceCounted(qrId);
   }
 
-  // ✅ Allowed — record the device timestamp so future checks see it
-  await recordDeviceTimestamp(qrId);
   return { allowed: true, reason: null, ownerScan: false };
 }
 
@@ -187,9 +209,4 @@ export async function recordBlockedScan(
       uid: userId ?? "guest",
     });
   } catch {}
-}
-
-// ── Device scan count inspector (for debug / analytics UI) ───────────────────
-export async function getDeviceScanCountToday(qrId: string): Promise<number> {
-  return getDeviceCountInWindow(qrId);
 }

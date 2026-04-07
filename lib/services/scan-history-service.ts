@@ -31,32 +31,32 @@ export async function recordScan(
     await rtdb.push(`qrScanVelocity/${qrId}`, { ts: Date.now() });
   } catch {}
 
-  // ── Fraud guard — YouTube-style multi-layer check ─────────────────────────
+  // ── Fraud guard — strict 1-per-user lifetime deduplication ───────────────
   let countThisScan = true;
   try {
     const qrData = await db.get(["qrCodes", qrId]);
     const qrOwnerId = qrData?.ownerId ?? null;
 
-    // Skip fraud guard for "viewed" page visits — only guard actual scans
-    if (scanSource !== "viewed") {
-      const guard = await checkScanAllowed(qrId, userId, qrOwnerId);
+    // Guard applies to ALL sources: camera, gallery, and viewed page visits.
+    // A user is only ever counted once per QR code regardless of how many
+    // times or which path they use to reach the detail page.
+    const guard = await checkScanAllowed(qrId, userId, qrOwnerId);
 
-      if (!guard.allowed) {
-        countThisScan = false;
+    if (!guard.allowed) {
+      countThisScan = false;
 
-        if (guard.ownerScan && userId) {
-          // Owner scanning their own code — record separately, don't inflate public count
-          await recordOwnerScan(qrId, userId);
-        } else {
-          // Blocked scan — log for analytics without affecting public counter
-          await recordBlockedScan(qrId, guard.reason, userId);
-        }
+      if (guard.ownerScan && userId) {
+        // Owner scanning their own code — record separately, don't inflate public count
+        await recordOwnerScan(qrId, userId);
+      } else {
+        // Blocked scan — log for analytics without affecting public counter
+        await recordBlockedScan(qrId, guard.reason, userId);
       }
+    }
 
-      // If already frozen by anomaly detection, don't count regardless
-      if (qrData?.scanCountFrozen) {
-        countThisScan = false;
-      }
+    // If already frozen by anomaly detection, don't count regardless
+    if (qrData?.scanCountFrozen) {
+      countThisScan = false;
     }
 
     // ── Increment public scanCount only for legitimate, non-duplicate scans ──
@@ -65,11 +65,9 @@ export async function recordScan(
       await incrementSmartCounter(qrId, currentScanCount, 1);
     }
   } catch (e) {
-    console.warn("[db] recordScan: failed to increment scanCount:", e);
-    // Fallback: count it to avoid under-counting on errors
-    try {
-      await db.increment(["qrCodes", qrId], "scanCount", 1);
-    } catch {}
+    console.warn("[db] recordScan: failed to check/increment scanCount:", e);
+    // Do NOT fall back to unconditional increment — that would bypass
+    // the uniqueness guarantee and inflate the public count on errors.
   }
 
   // ── Personal scan history — always record regardless of fraud guard ────────

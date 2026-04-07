@@ -65,6 +65,17 @@ service cloud.firestore {
 
       ) || (
 
+        // ── Case 1b: ownerScanCount increment (owner scanning their own QR) ────
+        // Only the QR owner can increment their own scan counter, and it must
+        // only move in a positive direction.
+        isSignedIn() &&
+        'ownerId' in resource.data &&
+        resource.data.ownerId == request.auth.uid &&
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['ownerScanCount']) &&
+        request.resource.data.ownerScanCount > resource.data.ownerScanCount
+
+      ) || (
+
         // ── Case 2: commentCount update (authenticated users only) ─────────────
         isSignedIn() &&
         request.resource.data.diff(resource.data).affectedKeys().hasOnly(['commentCount'])
@@ -213,6 +224,23 @@ service cloud.firestore {
         allow read, write: if isOwner(userId);
       }
       match /generatedQrs/{docId} {
+        allow read, write: if isOwner(userId);
+      }
+
+      // ── Counted Scans ──────────────────────────────────────────────────────
+      // Permanent record of which QR codes this user has had their scan counted.
+      // Used to enforce the strict 1-scan-per-user-per-QR-code uniqueness rule.
+      // Immutable once created — no updates or deletes allowed.
+      match /countedScans/{qrId} {
+        allow read: if isOwner(userId);
+        allow create: if isOwner(userId);
+        allow update, delete: if false;
+      }
+
+      // ── Owner Scans ────────────────────────────────────────────────────────
+      // Logs when a user scans their own QR code (stored separately from
+      // the public scan count — only visible in owner analytics).
+      match /ownerScans/{docId} {
         allow read, write: if isOwner(userId);
       }
 
