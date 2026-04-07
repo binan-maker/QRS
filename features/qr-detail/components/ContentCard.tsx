@@ -117,18 +117,19 @@ interface Props {
   parsedPayment: ParsedPaymentQr | null;
   isDeactivated: boolean;
   onOpenContent: () => void;
+  hideOpenAction?: boolean;
 }
 
 const EXPAND_THRESHOLD = 120;
 
-const ContentCard = React.memo(function ContentCard({ content, contentType, parsedPayment, isDeactivated, onOpenContent }: Props) {
+const ContentCard = React.memo(function ContentCard({ content, contentType, parsedPayment, isDeactivated, onOpenContent, hideOpenAction }: Props) {
   const { colors, isDark } = useTheme();
   const [copied, setCopied] = React.useState(false);
   const [contentExpanded, setContentExpanded] = React.useState(false);
 
   const isLongContent = content.length > EXPAND_THRESHOLD || content.includes("\n");
   const cfg = getTypeCfg(contentType, colors);
-  const hasOpenAction = !isDeactivated && contentType !== "text" && contentType !== "product";
+  const hasOpenAction = !isDeactivated && !hideOpenAction && contentType !== "text" && contentType !== "product";
 
   async function handleCopy() {
     await Clipboard.setStringAsync(content);

@@ -21,7 +21,6 @@ interface Props {
   followersModalOpen: boolean;
   onOpenFollowers: () => void;
   manipulationWarning?: boolean;
-  isExternal?: boolean;
 }
 
 function getScoreGradient(score: number, colors: any): [string, string] {
@@ -32,7 +31,7 @@ function getScoreGradient(score: number, colors: any): [string, string] {
 
 const TrustScoreCard = React.memo(function TrustScoreCard({
   trustInfo, reportCounts, totalScans, totalComments,
-  isQrOwner, followCount, onOpenFollowers, manipulationWarning, isExternal,
+  isQrOwner, followCount, onOpenFollowers, manipulationWarning,
 }: Props) {
   const { colors, isDark } = useTheme();
 
@@ -105,16 +104,6 @@ const TrustScoreCard = React.memo(function TrustScoreCard({
           )}
         </View>
       </View>
-
-      {/* External QR disclaimer */}
-      {isExternal && (
-        <View style={[styles.externalBanner, { backgroundColor: colors.warningDim, borderColor: colors.warning + "40" }]}>
-          <Ionicons name="information-circle" size={13} color={colors.warning} />
-          <Text style={[styles.manipText, { color: colors.warning }]}>
-            Community votes only — QR Guard cannot verify who owns this QR code.
-          </Text>
-        </View>
-      )}
 
       {/* Manipulation warning */}
       {manipulationWarning && (
