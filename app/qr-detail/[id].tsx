@@ -105,12 +105,12 @@ function VerdictBanner({ verdict, offlineMode }: { verdict: ReturnType<ReturnTyp
   const iconName: keyof typeof Ionicons.glyphMap =
     verdict.level === "safe"      ? "shield-checkmark-outline" :
     verdict.label === "UNVERIFIED QR" ? "help-circle-outline"   :
-    verdict.level === "caution"   ? "alert-circle-outline"     : "warning-outline";
+    verdict.level === "caution"   ? "information-circle-outline" : "warning-outline";
 
   const statusText =
     verdict.level === "safe"    ? "ANALYSIS COMPLETE" :
     verdict.label === "UNVERIFIED QR" ? "IDENTITY UNVERIFIED" :
-    verdict.level === "caution" ? "RISK DETECTED"     : "THREAT CONFIRMED";
+    verdict.level === "caution" ? "CAUTION ADVISED"   : "HIGH RISK DETECTED";
 
   const bg =
     verdict.level === "safe"    ? (isDark ? "#0a1a0e" : "#f0fdf4") :

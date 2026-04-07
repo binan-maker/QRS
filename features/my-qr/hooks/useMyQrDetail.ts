@@ -192,7 +192,9 @@ export function useMyQrDetail(id: string) {
     if (!user || !qrItem?.qrCodeId || !commentText.trim()) return;
     setSubmittingComment(true);
     try {
-      await addComment(qrItem.qrCodeId, user.id, user.displayName, commentText.trim(), replyTo?.id || null, user.emailVerified ?? false);
+      const clientUsername: string | undefined = (user as any)?.username || undefined;
+      const clientPhotoURL: string | undefined = user?.photoURL || undefined;
+      await addComment(qrItem.qrCodeId, user.id, user.displayName, commentText.trim(), replyTo?.id || null, user.emailVerified ?? false, clientUsername, clientPhotoURL);
       setCommentText("");
       setReplyTo(null);
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);

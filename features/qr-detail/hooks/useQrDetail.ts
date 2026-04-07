@@ -249,7 +249,7 @@ export function useQrDetail(id: string) {
   }
 
   function handleSubmitComment() {
-    return comments.handleSubmitComment(user?.displayName || "User");
+    return comments.handleSubmitComment();
   }
 
   return {

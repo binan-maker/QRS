@@ -206,21 +206,25 @@ export function useQrComments(id: string, userId: string | null, offlineMode: bo
     setCommentsLoading(false);
   }, [id, commentsLoading, hasMoreComments]);
 
-  async function handleSubmitComment(displayName: string) {
+  async function handleSubmitComment() {
     if (!userId) { router.push("/(auth)/login"); return; }
     const trimmed = newComment.trim();
     if (!trimmed) return;
 
-    // Optimistic insert — show the comment immediately
+    const clientUsername: string | undefined = (user as any)?.username || undefined;
+    const clientPhotoURL: string | undefined = user?.photoURL || undefined;
+    const clientDisplayName: string = user?.displayName || "User";
+
+    // Optimistic insert — show the comment immediately with @username (never full name)
     const tempId = `pending_${Date.now()}`;
     const parentId = replyTo ? replyTo.rootId : null;
     const optimisticComment: CommentItem = {
       id: tempId,
       text: trimmed,
       userId,
-      user: { displayName: user?.displayName || displayName },
-      userUsername: (user as any)?.username || undefined,
-      userPhotoURL: user?.photoURL || undefined,
+      user: { displayName: clientDisplayName },
+      userUsername: clientUsername,
+      userPhotoURL: clientPhotoURL,
       createdAt: new Date().toISOString(),
       likeCount: 0,
       dislikeCount: 0,
@@ -244,7 +248,8 @@ export function useQrComments(id: string, userId: string | null, offlineMode: bo
     setSubmitting(true);
 
     try {
-      await addComment(id, userId, displayName, trimmed, parentId, emailVerified);
+      // Pass username and photoURL so the server always stores them on the comment document
+      await addComment(id, userId, clientDisplayName, trimmed, parentId, emailVerified, clientUsername, clientPhotoURL);
       // Subscription will fire and confirm the real comment — pending gets cleared then
     } catch (e: any) {
       // Remove the optimistic comment on failure

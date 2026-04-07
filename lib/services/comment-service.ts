@@ -138,7 +138,9 @@ export async function addComment(
   displayName: string,
   text: string,
   parentId: string | null = null,
-  emailVerified: boolean = false
+  emailVerified: boolean = false,
+  clientUsername?: string,
+  clientPhotoURL?: string,
 ): Promise<CommentItem> {
 
   // Integrity check — rate limits, cooldowns, duplicate detection, length
@@ -163,17 +165,41 @@ export async function addComment(
   // Sanitize comment text to prevent XSS
   const sanitizedText = sanitizeComment(text.trim());
 
-  // FIX #3: Get cached user data from a single batch fetch instead of per-comment lookup
-  // User profile data should be fetched once at app startup and cached
-  const userCache = getUserProfileCache(userId);
-  const userUsername = userCache?.username;
-  const userPhotoURL = userCache?.photoURL;
+  // Resolve username and photoURL: prefer client-supplied values, then cache, then fresh DB fetch.
+  // This ensures comments ALWAYS store username so full names never leak to the UI.
+  let resolvedUsername: string | undefined = clientUsername;
+  let resolvedPhotoURL: string | undefined = clientPhotoURL;
+
+  if (!resolvedUsername || !resolvedPhotoURL) {
+    let userCache = getUserProfileCache(userId);
+    if (!userCache) {
+      await preloadUserProfile(userId);
+      userCache = getUserProfileCache(userId);
+    }
+    if (!resolvedUsername) resolvedUsername = userCache?.username;
+    if (!resolvedPhotoURL) resolvedPhotoURL = userCache?.photoURL;
+  }
+
+  // Final fallback: fresh DB lookup if still missing username
+  if (!resolvedUsername) {
+    try {
+      const userData = await db.get(["users", userId]);
+      if (userData?.username) resolvedUsername = userData.username as string;
+      if (!resolvedPhotoURL && userData?.photoURL) resolvedPhotoURL = userData.photoURL as string;
+      // Update cache with fresh data
+      userProfileCache.set(userId, {
+        username: resolvedUsername,
+        photoURL: resolvedPhotoURL,
+        expiresAt: Date.now() + CACHE_TTL_MS,
+      });
+    } catch {}
+  }
 
   const { id: commentId } = await db.add(["qrCodes", qrId, "comments"], {
     userId,
     userDisplayName: displayName,
-    ...(userUsername ? { userUsername } : {}),
-    ...(userPhotoURL ? { userPhotoURL } : {}),
+    ...(resolvedUsername ? { userUsername: resolvedUsername } : {}),
+    ...(resolvedPhotoURL ? { userPhotoURL: resolvedPhotoURL } : {}),
     text: sanitizedText,
     parentId,
     isDeleted: false,
@@ -223,7 +249,8 @@ export async function addComment(
     createdAt: new Date().toISOString(),
     userLike: null,
     user: { displayName },
-    userUsername,
+    userUsername: resolvedUsername,
+    userPhotoURL: resolvedPhotoURL,
   };
 }
 

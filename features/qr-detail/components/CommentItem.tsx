@@ -5,7 +5,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import Animated, { FadeIn } from "react-native-reanimated";
 import { router } from "expo-router";
 import { formatCompactNumber } from "@/lib/number-format";
-import { formatRelativeTime, smartName } from "@/lib/utils/formatters";
+import { formatRelativeTime } from "@/lib/utils/formatters";
 import { useTheme } from "@/contexts/ThemeContext";
 import type { CommentItem as CommentItemType } from "@/hooks/useQrDetail";
 
@@ -68,7 +68,16 @@ const CommentItem = React.memo(function CommentItem({
   const visibleReplies = descendants.slice(0, showCount);
   const hasMore = replyCount > showCount;
 
-  const displayName = comment.userUsername ? `@${comment.userUsername}` : smartName(comment.user.displayName);
+  // ENFORCE: always show @username. NEVER fall back to the user's full name.
+  // If username is not stored on the comment, derive a stable anonymous handle from the user ID.
+  const displayName = comment.userUsername
+    ? `@${comment.userUsername}`
+    : comment.userId
+      ? `@user_${comment.userId.slice(-5)}`
+      : "@user";
+  const avatarInitial = comment.userUsername
+    ? comment.userUsername.charAt(0).toUpperCase()
+    : "U";
   const avatarGradient = getInitialColor(displayName);
   const navigateToProfile = comment.userUsername
     ? () => router.push(`/profile/${comment.userUsername}` as any)
@@ -117,7 +126,7 @@ const CommentItem = React.memo(function CommentItem({
                 end={{ x: 1, y: 1 }}
               >
                 <Text style={{ fontFamily: "Inter_700Bold", color: "#fff", fontSize: isReply ? 11 : 13 }}>
-                  {displayName.charAt(0).toUpperCase()}
+                  {avatarInitial}
                 </Text>
               </LinearGradient>
             )}
