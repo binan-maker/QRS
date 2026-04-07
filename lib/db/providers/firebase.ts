@@ -119,6 +119,12 @@ export const firebaseDb: DbAdapter = {
   },
 };
 
+// Tracks wrapped listener functions so offValue can correctly remove them.
+// Firebase requires the exact same function reference that was passed to onValue.
+// Without this map, offValue would try to remove the original cb which Firebase
+// never registered — causing listeners to accumulate and never be cleaned up.
+const listenerMap = new Map<string, Map<(data: any) => void, (snap: any) => void>>();
+
 export const firebaseRtdb: RealtimeAdapter = {
   async push(path, data) {
     const ref = await rtPush(rtRef(realtimeDB, path), data);
@@ -140,11 +146,30 @@ export const firebaseRtdb: RealtimeAdapter = {
 
   onValue(path, cb) {
     const ref = rtRef(realtimeDB, path);
-    rtOnValue(ref, (snap) => cb(snap.exists() ? snap.val() : null));
-    return cb;
+    const wrapped = (snap: any) => cb(snap.exists() ? snap.val() : null);
+
+    if (!listenerMap.has(path)) listenerMap.set(path, new Map());
+    listenerMap.get(path)!.set(cb, wrapped);
+
+    rtOnValue(ref, wrapped);
+
+    return () => {
+      rtOff(ref, "value", wrapped);
+      const pathMap = listenerMap.get(path);
+      if (pathMap) {
+        pathMap.delete(cb);
+        if (pathMap.size === 0) listenerMap.delete(path);
+      }
+    };
   },
 
   offValue(path, cb) {
-    rtOff(rtRef(realtimeDB, path), "value", cb as any);
+    const pathMap = listenerMap.get(path);
+    const wrapped = pathMap?.get(cb);
+    if (wrapped) {
+      rtOff(rtRef(realtimeDB, path), "value", wrapped);
+      pathMap!.delete(cb);
+      if (pathMap!.size === 0) listenerMap.delete(path);
+    }
   },
 };
