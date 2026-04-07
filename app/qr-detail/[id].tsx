@@ -341,6 +341,16 @@ export default function QrDetailScreen() {
               <VerdictBanner verdict={verdict} offlineMode={q.offlineMode} />
             </Animated.View>
 
+            {/* ── Advisory Disclaimer ──────────────────────────────────────── */}
+            <Animated.View entering={FadeInDown.duration(250).delay(30)}>
+              <View style={[advisoryStyles.row, { borderColor: colors.surfaceBorder }]}>
+                <Ionicons name="information-circle-outline" size={12} color={colors.textMuted} style={{ flexShrink: 0, marginTop: 1 }} />
+                <Text style={[advisoryStyles.text, { color: colors.textMuted }]} maxFontSizeMultiplier={1}>
+                  QR Guard provides informational analysis only. Results are not guaranteed to be accurate or complete. Always exercise your own judgment before acting on any QR code. QR Guard is not liable for any loss or damage arising from use of this information.
+                </Text>
+              </View>
+            </Animated.View>
+
             {/* ── Content Card ────────────────────────────────────────────── */}
             <Animated.View entering={FadeInDown.duration(300).delay(50)}>
               <ContentCard
@@ -710,6 +720,25 @@ const externalQrBannerStyles = StyleSheet.create({
   body: {
     fontSize: 12,
     fontFamily: "Inter_400Regular",
+  },
+});
+
+const advisoryStyles = StyleSheet.create({
+  row: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: 6,
+    paddingHorizontal: 4,
+    paddingBottom: 6,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    marginBottom: 2,
+  },
+  text: {
+    fontSize: 10.5,
+    fontFamily: "Inter_400Regular",
+    lineHeight: 15,
+    flex: 1,
+    opacity: 0.75,
   },
 });
 

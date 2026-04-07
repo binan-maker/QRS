@@ -47,6 +47,45 @@ export async function preloadUserProfile(userId: string): Promise<void> {
 
 export type { CommentItem };
 
+// Batch-enrich comments that are missing userUsername or userPhotoURL.
+// Looks up the user profile from cache first, then DB if needed.
+async function enrichCommentsWithProfiles(comments: CommentItem[]): Promise<CommentItem[]> {
+  const needsEnrichment = comments.filter((c) => c.userId && (!c.userUsername || !c.userPhotoURL));
+  if (needsEnrichment.length === 0) return comments;
+
+  // Collect unique user IDs that need a lookup
+  const uniqueUserIds = [...new Set(needsEnrichment.map((c) => c.userId!))];
+
+  // Fetch missing profiles in parallel (cache-first)
+  await Promise.all(
+    uniqueUserIds.map(async (uid) => {
+      if (getUserProfileCache(uid)) return;
+      try {
+        const userData = await db.get(["users", uid]);
+        if (userData) {
+          userProfileCache.set(uid, {
+            username: userData.username as string | undefined,
+            photoURL: (userData.photoURL || userData.avatar) as string | undefined,
+            expiresAt: Date.now() + CACHE_TTL_MS,
+          });
+        }
+      } catch {}
+    })
+  );
+
+  // Apply cached data to comments that were missing it
+  return comments.map((c) => {
+    if (!c.userId) return c;
+    const cached = getUserProfileCache(c.userId);
+    if (!cached) return c;
+    return {
+      ...c,
+      userUsername: c.userUsername || cached.username,
+      userPhotoURL: c.userPhotoURL || cached.photoURL,
+    };
+  });
+}
+
 export function subscribeToComments(
   qrId: string,
   pageLimit: number,
@@ -73,9 +112,16 @@ export function subscribeToComments(
           userLike: null,
           user: { displayName: d.data.userDisplayName || "User" },
           userUsername: d.data.userUsername || undefined,
-          userPhotoURL: d.data.userPhotoURL || undefined,
+          userPhotoURL: (d.data.userPhotoURL || d.data.photoURL || d.data.avatar) || undefined,
         }));
+      // Deliver immediately with whatever we have, then re-deliver with enriched profiles
       onUpdate(comments);
+      enrichCommentsWithProfiles(comments).then((enriched) => {
+        const hasChanges = enriched.some(
+          (e, i) => e.userUsername !== comments[i]?.userUsername || e.userPhotoURL !== comments[i]?.userPhotoURL
+        );
+        if (hasChanges) onUpdate(enriched);
+      }).catch(() => {});
     }
   );
 }
@@ -112,7 +158,7 @@ export async function getComments(
   const hasMore = docs.length > pageLimit;
   const allDocs = hasMore ? docs.slice(0, pageLimit) : docs;
   const filtered = allDocs.filter((d) => !d.data.isDeleted);
-  const comments: CommentItem[] = filtered.map((d) => ({
+  const rawComments: CommentItem[] = filtered.map((d) => ({
     id: d.id,
     qrCodeId: qrId,
     userId: d.data.userId,
@@ -127,8 +173,9 @@ export async function getComments(
     userLike: null,
     user: { displayName: d.data.userDisplayName || "User" },
     userUsername: d.data.userUsername || undefined,
-    userPhotoURL: d.data.userPhotoURL || undefined,
+    userPhotoURL: (d.data.userPhotoURL || d.data.photoURL || d.data.avatar) || undefined,
   }));
+  const comments = await enrichCommentsWithProfiles(rawComments);
   return { comments, hasMore, cursor: allDocs.length > 0 ? newCursor : undefined };
 }
 
