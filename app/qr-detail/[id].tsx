@@ -417,6 +417,8 @@ export default function QrDetailScreen() {
                 followersModalOpen={user ? q.followersModalOpen : false}
                 onOpenFollowers={user ? () => { q.handleLoadFollowers(); q.setFollowersModalOpen(true); } : () => {}}
                 manipulationWarning={trust.manipulationWarning}
+                scanCountFrozen={q.qrCode?.scanCountFrozen}
+                ownerScanCount={user && q.isQrOwner ? q.qrCode?.ownerScanCount : undefined}
               />
             </Animated.View>
 

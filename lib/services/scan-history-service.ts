@@ -1,10 +1,18 @@
 // ─── Scan History Service ─────────────────────────────────────────────────────
 // Single responsibility: recording and retrieving user scan history.
 // Privacy guarantee: signed-in users in anonymous mode → zero database writes.
+//
+// Fraud prevention: Integrated with ScanFraudGuard — YouTube-style deduplication,
+// owner-scan separation, velocity detection, and statistical anomaly freezing.
 
 import { db, rtdb } from "../db/client";
 import { tsToString } from "./utils";
 import { incrementSmartCounter, getDistributedCounter } from "../db/distributed-counter";
+import {
+  checkScanAllowed,
+  recordOwnerScan,
+  recordBlockedScan,
+} from "./scan-fraud-guard";
 
 export async function recordScan(
   qrId: string,
@@ -18,33 +26,71 @@ export async function recordScan(
   // This is a privacy and legal compliance requirement.
   if (userId && isAnonymous) return;
 
-  // FIX #1: Use smart distributed counter to handle viral QR codes
-  // For low-traffic QRs (< 1000 scans): direct increment (1 write)
-  // For high-traffic QRs (>= 1000 scans): distributed sharding (10x capacity)
-  try {
-    const qrData = await db.get(["qrCodes", qrId]);
-    const currentScanCount = qrData?.scanCount ?? 0;
-    await incrementSmartCounter(qrId, currentScanCount, 1);
-  } catch (e) {
-    console.warn("[db] recordScan: failed to increment scanCount:", e);
-  }
-
-  if (userId && !isAnonymous) {
-    try {
-      await db.add(["users", userId, "scans"], {
-        qrCodeId: qrId, content, contentType,
-        isAnonymous: false, scannedAt: db.timestamp(),
-        scanSource,
-      });
-      // FIX #5 BONUS: Increment cached personalScanCount on user document
-      // This allows leaderboard and profile stats to avoid fetching all scans
-      await db.increment(["users", userId], "personalScanCount", 1);
-    } catch {}
-  }
-
+  // ── Always push to RTDB velocity tracker first (used by fraud guard below)
   try {
     await rtdb.push(`qrScanVelocity/${qrId}`, { ts: Date.now() });
   } catch {}
+
+  // ── Fraud guard — YouTube-style multi-layer check ─────────────────────────
+  let countThisScan = true;
+  try {
+    const qrData = await db.get(["qrCodes", qrId]);
+    const qrOwnerId = qrData?.ownerId ?? null;
+
+    // Skip fraud guard for "viewed" page visits — only guard actual scans
+    if (scanSource !== "viewed") {
+      const guard = await checkScanAllowed(qrId, userId, qrOwnerId);
+
+      if (!guard.allowed) {
+        countThisScan = false;
+
+        if (guard.ownerScan && userId) {
+          // Owner scanning their own code — record separately, don't inflate public count
+          await recordOwnerScan(qrId, userId);
+        } else {
+          // Blocked scan — log for analytics without affecting public counter
+          await recordBlockedScan(qrId, guard.reason, userId);
+        }
+      }
+
+      // If already frozen by anomaly detection, don't count regardless
+      if (qrData?.scanCountFrozen) {
+        countThisScan = false;
+      }
+    }
+
+    // ── Increment public scanCount only for legitimate, non-duplicate scans ──
+    if (countThisScan) {
+      const currentScanCount = qrData?.scanCount ?? 0;
+      await incrementSmartCounter(qrId, currentScanCount, 1);
+    }
+  } catch (e) {
+    console.warn("[db] recordScan: failed to increment scanCount:", e);
+    // Fallback: count it to avoid under-counting on errors
+    try {
+      await db.increment(["qrCodes", qrId], "scanCount", 1);
+    } catch {}
+  }
+
+  // ── Personal scan history — always record regardless of fraud guard ────────
+  // (The user did scan it — it just doesn't inflate the public count)
+  if (userId && !isAnonymous) {
+    try {
+      await db.add(["users", userId, "scans"], {
+        qrCodeId: qrId,
+        content,
+        contentType,
+        isAnonymous: false,
+        scannedAt: db.timestamp(),
+        scanSource,
+        counted: countThisScan, // audit field — was this scan publicly counted?
+      });
+      // Only increment personal stat counter for counted scans
+      if (countThisScan) {
+        await db.increment(["users", userId], "personalScanCount", 1);
+      }
+    } catch {}
+  }
 }
 
 export async function getUserScans(userId: string): Promise<any[]> {

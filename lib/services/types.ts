@@ -24,6 +24,10 @@ export interface QrCodeData {
   privateMode?: boolean;
   customLogoUri?: string;
   logoPosition?: string;
+  // Fraud-guard fields
+  ownerScanCount?: number;
+  scanCountFrozen?: boolean;
+  scanCountFreezeReason?: string;
 }
 
 export interface UserData {

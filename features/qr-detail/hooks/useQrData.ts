@@ -46,6 +46,10 @@ export interface QrDetail {
   signature?: string;
   ownerId?: string;
   ownerName?: string;
+  // Fraud-guard fields
+  ownerScanCount?: number;     // Owner's own scan attempts (separate from public count)
+  scanCountFrozen?: boolean;   // True when anomaly detection freezes the public count
+  scanCountFreezeReason?: string;
 }
 
 export function useQrData(id: string, userId: string | null) {

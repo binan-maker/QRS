@@ -21,6 +21,8 @@ interface Props {
   followersModalOpen: boolean;
   onOpenFollowers: () => void;
   manipulationWarning?: boolean;
+  scanCountFrozen?: boolean;
+  ownerScanCount?: number;
 }
 
 function getScoreGradient(score: number, colors: any): [string, string] {
@@ -32,6 +34,7 @@ function getScoreGradient(score: number, colors: any): [string, string] {
 const TrustScoreCard = React.memo(function TrustScoreCard({
   trustInfo, reportCounts, totalScans, totalComments,
   isQrOwner, followCount, onOpenFollowers, manipulationWarning,
+  scanCountFrozen, ownerScanCount,
 }: Props) {
   const { colors, isDark } = useTheme();
 
@@ -113,6 +116,27 @@ const TrustScoreCard = React.memo(function TrustScoreCard({
           <Ionicons name="alert-circle" size={13} color={colors.warning} />
           <Text style={[styles.manipText, { color: colors.warning }]}>
             Unusual voting activity detected — score may not reflect real opinion.
+          </Text>
+        </View>
+      )}
+
+      {/* Scan count frozen badge */}
+      {scanCountFrozen && (
+        <View style={[styles.manipBanner, { backgroundColor: colors.dangerDim, borderColor: colors.danger + "40" }]}>
+          <Ionicons name="lock-closed" size={13} color={colors.danger} />
+          <Text style={[styles.manipText, { color: colors.danger }]}>
+            Scan count is temporarily frozen — abnormal activity detected and flagged for review.
+          </Text>
+        </View>
+      )}
+
+      {/* Owner-only analytics panel */}
+      {isQrOwner && ownerScanCount !== undefined && ownerScanCount > 0 && (
+        <View style={[styles.ownerPanel, { backgroundColor: colors.primaryDim, borderColor: colors.primary + "35" }]}>
+          <Ionicons name="eye-outline" size={14} color={colors.primary} />
+          <Text style={[styles.ownerPanelText, { color: colors.primary }]}>
+            Your own scans: <Text style={{ fontFamily: "Inter_700Bold" }}>{formatCompactNumber(ownerScanCount)}</Text>
+            {" "}(tracked separately — not counted in public total)
           </Text>
         </View>
       )}
@@ -248,6 +272,15 @@ const styles = StyleSheet.create({
     borderWidth: 1,
   },
   manipText: { flex: 1, fontSize: 12, fontFamily: "Inter_400Regular", lineHeight: 17 },
+  ownerPanel: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: 8,
+    borderRadius: 12,
+    padding: 11,
+    borderWidth: 1,
+  },
+  ownerPanelText: { flex: 1, fontSize: 12, fontFamily: "Inter_400Regular", lineHeight: 17 },
   statsGrid: {
     flexDirection: "row",
     borderRadius: 14,
