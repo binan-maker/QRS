@@ -10,7 +10,7 @@ interface ReportGridProps {
   onReport: (type: string) => void;
 }
 
-export default function ReportGrid({ reportCounts, userReport, isLoggedIn, isPayment, onReport }: ReportGridProps) {
+export default function ReportGrid({ reportCounts: _reportCounts, userReport, isLoggedIn, isPayment, onReport }: ReportGridProps) {
   const { colors, isDark } = useTheme();
 
   const REPORT_TYPES = [
@@ -19,8 +19,6 @@ export default function ReportGrid({ reportCounts, userReport, isLoggedIn, isPay
     { key: "fake", label: "Fake",  icon: "close-circle" as const,     color: colors.warning },
     { key: "spam", label: "Spam",  icon: "mail-unread" as const,      color: colors.primary },
   ];
-
-  const total = REPORT_TYPES.reduce((sum, rt) => sum + (reportCounts[rt.key] || 0), 0);
 
   return (
     <View style={styles.container}>
@@ -41,10 +39,6 @@ export default function ReportGrid({ reportCounts, userReport, isLoggedIn, isPay
       <View style={styles.row}>
         {REPORT_TYPES.map((rt) => {
           const isSelected = userReport === rt.key;
-          const count = reportCounts[rt.key] || 0;
-          const pct = total > 0 ? Math.round((count / total) * 100) : 0;
-          const showPct = count > 0;
-
           return (
             <Pressable
               key={rt.key}
@@ -65,16 +59,6 @@ export default function ReportGrid({ reportCounts, userReport, isLoggedIn, isPay
               <Text style={[styles.rateBtnLabel, { color: isSelected ? rt.color : colors.textSecondary }]}>
                 {rt.label}
               </Text>
-              {showPct ? (
-                <View style={[
-                  styles.pctBadge,
-                  { backgroundColor: rt.color + (isDark ? "22" : "14"), borderColor: rt.color + "40" }
-                ]}>
-                  <Text style={[styles.pctText, { color: rt.color }]}>{pct}%</Text>
-                </View>
-              ) : (
-                <View style={styles.pctPlaceholder} />
-              )}
             </Pressable>
           );
         })}
@@ -109,18 +93,10 @@ const styles = StyleSheet.create({
     flexDirection: "column",
     alignItems: "center",
     justifyContent: "center",
-    gap: 5,
+    gap: 6,
     paddingVertical: 13,
     paddingHorizontal: 4,
     borderRadius: 14,
   },
   rateBtnLabel: { fontSize: 12, fontFamily: "Inter_700Bold" },
-  pctBadge: {
-    borderRadius: 100,
-    borderWidth: 1,
-    paddingHorizontal: 7,
-    paddingVertical: 2,
-  },
-  pctText: { fontSize: 11, fontFamily: "Inter_700Bold", letterSpacing: 0.2 },
-  pctPlaceholder: { height: 20 },
 });

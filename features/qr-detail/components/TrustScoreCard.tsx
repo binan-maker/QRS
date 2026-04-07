@@ -36,15 +36,17 @@ const TrustScoreCard = React.memo(function TrustScoreCard({
   const { colors, isDark } = useTheme();
 
   const REPORT_TYPES = [
-    { key: "safe", label: "Safe",  color: colors.safe    },
-    { key: "scam", label: "Scam",  color: colors.danger  },
-    { key: "fake", label: "Fake",  color: colors.warning },
-    { key: "spam", label: "Spam",  color: colors.primary },
+    { key: "safe", label: "Safe",  icon: "shield-checkmark-outline" as const, color: colors.safe    },
+    { key: "scam", label: "Scam",  icon: "warning-outline" as const,          color: colors.danger  },
+    { key: "fake", label: "Fake",  icon: "close-circle-outline" as const,     color: colors.warning },
+    { key: "spam", label: "Spam",  icon: "mail-unread-outline" as const,      color: colors.primary },
   ];
 
   const total = REPORT_TYPES.reduce((sum, r) => sum + (reportCounts[r.key] || 0), 0);
   const hasScore = trustInfo.score >= 0;
   const scoreGradient = hasScore ? getScoreGradient(trustInfo.score, colors) : [colors.textMuted, colors.surfaceBorder] as [string, string];
+
+  const votedTypes = REPORT_TYPES.filter((r) => (reportCounts[r.key] || 0) > 0);
 
   const STATS = [
     { icon: "scan-outline" as const,       label: "Scans",     value: totalScans    },
@@ -116,7 +118,7 @@ const TrustScoreCard = React.memo(function TrustScoreCard({
       )}
 
       {/* Stats row */}
-      <View style={styles.statsGrid}>
+      <View style={[styles.statsGrid, { borderColor: colors.surfaceBorder }]}>
         {STATS.map((s, i) => (
           <Pressable
             key={i}
@@ -143,6 +145,41 @@ const TrustScoreCard = React.memo(function TrustScoreCard({
         ))}
       </View>
 
+      {/* Vote breakdown — only shown when there are any votes */}
+      {votedTypes.length > 0 && (
+        <View style={[styles.voteBreakdown, { borderTopColor: colors.surfaceBorder }]}>
+          <Text style={[styles.breakdownTitle, { color: colors.textMuted }]} maxFontSizeMultiplier={1}>
+            COMMUNITY VOTES
+          </Text>
+          <View style={styles.breakdownRows}>
+            {votedTypes.map((rt) => {
+              const count = reportCounts[rt.key] || 0;
+              const pct = Math.round((count / total) * 100);
+              return (
+                <View key={rt.key} style={styles.breakdownRow}>
+                  <View style={styles.breakdownLabelRow}>
+                    <Ionicons name={rt.icon} size={12} color={rt.color} />
+                    <Text style={[styles.breakdownLabel, { color: colors.textSecondary }]} maxFontSizeMultiplier={1}>
+                      {rt.label}
+                    </Text>
+                    <Text style={[styles.breakdownPct, { color: rt.color }]} maxFontSizeMultiplier={1}>
+                      {pct}%
+                    </Text>
+                  </View>
+                  <View style={[styles.barTrack, { backgroundColor: isDark ? colors.surfaceLight : colors.background }]}>
+                    <View
+                      style={[
+                        styles.barFill,
+                        { width: `${pct}%` as any, backgroundColor: rt.color },
+                      ]}
+                    />
+                  </View>
+                </View>
+              );
+            })}
+          </View>
+        </View>
+      )}
     </View>
   );
 });
@@ -202,14 +239,6 @@ const styles = StyleSheet.create({
   voteCount: { fontSize: 12, fontFamily: "Inter_400Regular" },
   scoreBar: { height: 5, borderRadius: 3, overflow: "hidden" },
   scoreBarFill: { height: "100%", borderRadius: 3 },
-  externalBanner: {
-    flexDirection: "row",
-    alignItems: "flex-start",
-    gap: 8,
-    borderRadius: 12,
-    padding: 11,
-    borderWidth: 1,
-  },
   manipBanner: {
     flexDirection: "row",
     alignItems: "flex-start",
@@ -223,7 +252,6 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     borderRadius: 14,
     borderWidth: 1,
-    borderColor: "transparent",
     overflow: "hidden",
   },
   statCell: {
@@ -237,4 +265,41 @@ const styles = StyleSheet.create({
   },
   statNum: { fontSize: 16, fontFamily: "Inter_700Bold" },
   statLabel: { fontSize: 11, fontFamily: "Inter_600SemiBold", textAlign: "center" },
+
+  /* Vote breakdown */
+  voteBreakdown: {
+    borderTopWidth: StyleSheet.hairlineWidth,
+    paddingTop: 14,
+    gap: 10,
+  },
+  breakdownTitle: {
+    fontSize: 10,
+    fontFamily: "Inter_700Bold",
+    letterSpacing: 1.2,
+  },
+  breakdownRows: { gap: 8 },
+  breakdownRow: { gap: 5 },
+  breakdownLabelRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 5,
+  },
+  breakdownLabel: {
+    flex: 1,
+    fontSize: 12,
+    fontFamily: "Inter_600SemiBold",
+  },
+  breakdownPct: {
+    fontSize: 12,
+    fontFamily: "Inter_700Bold",
+  },
+  barTrack: {
+    height: 5,
+    borderRadius: 3,
+    overflow: "hidden",
+  },
+  barFill: {
+    height: "100%",
+    borderRadius: 3,
+  },
 });
