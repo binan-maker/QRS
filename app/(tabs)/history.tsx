@@ -126,7 +126,6 @@ export default function HistoryScreen() {
   function openSearch() {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     setSearchVisible(true);
-    setTimeout(() => searchInputRef.current?.focus(), 80);
   }
 
   function closeSearch() {
@@ -385,6 +384,7 @@ export default function HistoryScreen() {
             returnKeyType="search"
             clearButtonMode="while-editing"
             maxFontSizeMultiplier={1}
+            autoFocus
           />
           <Pressable onPress={closeSearch} hitSlop={8}>
             <Text style={[styles.searchCancel, { color: colors.primary }]} maxFontSizeMultiplier={1}>

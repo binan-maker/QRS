@@ -111,8 +111,12 @@ export function useQrReports(id: string, userId: string | null, offlineMode: boo
 
     const prevCommitted = committedReportRef.current;
 
+    // When desired is null (toggle-off), pass the previously committed type so
+    // the server can match existingReport === reportType and mark it removed.
+    const reportTypeToSend = desired ?? prevCommitted ?? "remove";
+
     try {
-      await reportQrCode(id, userId, desired ?? "remove", emailVerified);
+      await reportQrCode(id, userId, reportTypeToSend, emailVerified);
       committedReportRef.current = desired;
       if (pendingReportRef.current !== desired) {
         // User tapped again while we were in flight — run again
@@ -136,11 +140,8 @@ export function useQrReports(id: string, userId: string | null, offlineMode: boo
           next[desired] = Math.max(0, (next[desired] || 0) - 1);
         }
         // Undo the optimistic remove of prevCommitted
+        // (covers both vote-switch and toggle-off cases)
         if (prevCommitted && prevCommitted !== desired) {
-          next[prevCommitted] = (next[prevCommitted] || 0) + 1;
-        }
-        // Toggle-off rollback
-        if (desired === null && prevCommitted) {
           next[prevCommitted] = (next[prevCommitted] || 0) + 1;
         }
         setTrustScore(calculateTrustScore(next, latestWeighted.current, latestCollusion.current));
