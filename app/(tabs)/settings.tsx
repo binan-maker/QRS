@@ -1,6 +1,6 @@
 import { View, Text, Pressable, ScrollView, Platform, Switch, useWindowDimensions, StyleSheet } from "react-native";
-import { useEffect } from "react";
-import { router, useLocalSearchParams } from "expo-router";
+import { useCallback, useEffect } from "react";
+import { router, useLocalSearchParams, useFocusEffect } from "expo-router";
 import { safePush } from "@/lib/utils/navigation";
 import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -61,11 +61,18 @@ export default function SettingsScreen() {
     handleDeleteAccount,
   } = useSettings();
 
-  useEffect(() => {
-    if (params.initialSection && params.initialSection !== "main") {
-      setSection(params.initialSection as any);
-    }
-  }, [params.initialSection]);
+  // Reset to the correct section every time this screen gains focus.
+  // - If initialSection specifies a sub-section, jump there (e.g. Edit Profile → Profile Settings).
+  // - Otherwise always land on the main settings menu, even if a previous visit left a sub-section open.
+  useFocusEffect(
+    useCallback(() => {
+      if (params.initialSection && params.initialSection !== "main") {
+        setSection(params.initialSection as any);
+      } else {
+        setSection("main");
+      }
+    }, [params.initialSection])
+  );
 
   if (section !== "main") {
     return (
