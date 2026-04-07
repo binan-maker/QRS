@@ -62,9 +62,9 @@ function SplashGate({ fontsReady }: { fontsReady: boolean }) {
 function RootLayoutNav() {
   const { colors } = useTheme();
   return (
-    <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.background } }}>
-      <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-      <Stack.Screen name="(auth)" options={{ presentation: "modal", headerShown: false }} />
+    <Stack screenOptions={{ headerShown: false, animation: "slide_from_right", contentStyle: { backgroundColor: colors.background } }}>
+      <Stack.Screen name="(tabs)" options={{ headerShown: false, animation: "none" }} />
+      <Stack.Screen name="(auth)" options={{ presentation: "modal", animation: "slide_from_bottom", headerShown: false }} />
       <Stack.Screen name="qr-detail/[id]" options={{ headerShown: false }} />
       <Stack.Screen name="my-qr/[id]" options={{ headerShown: false }} />
       <Stack.Screen name="my-qr-codes" options={{ headerShown: false }} />
