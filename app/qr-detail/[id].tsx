@@ -259,39 +259,40 @@ export default function QrDetailScreen() {
                 <Text style={[navOfflineStyles.badge, { color: colors.warning }]}>● Offline</Text>
               )}
             </View>
-            {user && (
-              <View style={styles.navActions}>
-                <Pressable onPress={q.handleToggleFavorite} style={styles.navActionBtn}>
-                  <Ionicons
-                    name={q.isFavorite ? "heart" : "heart-outline"}
-                    size={22}
-                    color={q.isFavorite ? colors.danger : colors.textSecondary}
-                  />
-                </Pressable>
-                <Pressable
-                  onPress={q.handleToggleFollow}
-                  style={({ pressed }) => [
-                    styles.followBtn,
-                    q.isFollowing && styles.followBtnActive,
-                    { opacity: pressed ? 0.8 : 1, transform: [{ scale: pressed ? 0.97 : 1 }] },
-                  ]}
-                >
-                  <Ionicons
-                    name={q.isFollowing ? "notifications" : "notifications-outline"}
-                    size={15}
-                    color={q.isFollowing ? colors.primary : colors.textSecondary}
-                  />
-                  <Text style={[styles.followBtnText, q.isFollowing && styles.followBtnTextActive]}>
-                    {q.isFollowing ? "Following" : "Follow"}
-                  </Text>
-                  {q.followCount > 0 && (
-                    <View style={styles.followCountPill}>
-                      <Text style={styles.followCountPillText}>{formatCompactNumber(q.followCount)}</Text>
-                    </View>
-                  )}
-                </Pressable>
-              </View>
-            )}
+            <View style={styles.navActions}>
+              <Pressable
+                onPress={user ? q.handleToggleFavorite : () => router.push("/(auth)/login")}
+                style={styles.navActionBtn}
+              >
+                <Ionicons
+                  name={q.isFavorite ? "heart" : "heart-outline"}
+                  size={22}
+                  color={q.isFavorite ? colors.danger : colors.textSecondary}
+                />
+              </Pressable>
+              <Pressable
+                onPress={user ? q.handleToggleFollow : () => router.push("/(auth)/login")}
+                style={({ pressed }) => [
+                  styles.followBtn,
+                  q.isFollowing && styles.followBtnActive,
+                  { opacity: pressed ? 0.8 : 1, transform: [{ scale: pressed ? 0.97 : 1 }] },
+                ]}
+              >
+                <Ionicons
+                  name={q.isFollowing ? "notifications" : "notifications-outline"}
+                  size={15}
+                  color={q.isFollowing ? colors.primary : colors.textSecondary}
+                />
+                <Text style={[styles.followBtnText, q.isFollowing && styles.followBtnTextActive]}>
+                  {q.isFollowing ? "Following" : "Follow"}
+                </Text>
+                {q.followCount > 0 && (
+                  <View style={styles.followCountPill}>
+                    <Text style={styles.followCountPillText}>{formatCompactNumber(q.followCount)}</Text>
+                  </View>
+                )}
+              </Pressable>
+            </View>
           </View>
 
           <ScrollView
@@ -331,27 +332,6 @@ export default function QrDetailScreen() {
             )}
 
 
-            {/* ── Guest Mode Banner ────────────────────────────────────────── */}
-            {!user && (
-              <Animated.View entering={FadeIn.duration(400)}>
-                <Pressable
-                  onPress={() => router.push("/(auth)/login")}
-                  style={({ pressed }) => [guestModeBannerStyles.card, { backgroundColor: isDark ? "rgba(99,102,241,0.12)" : "rgba(99,102,241,0.08)", borderColor: "rgba(99,102,241,0.25)", opacity: pressed ? 0.85 : 1 }]}
-                >
-                  <View style={guestModeBannerStyles.lockCircle}>
-                    <Ionicons name="lock-closed" size={14} color="#6366F1" />
-                  </View>
-                  <Text style={[guestModeBannerStyles.text, { color: colors.textSecondary }]} maxFontSizeMultiplier={1}>
-                    <Text style={{ color: "#6366F1", fontFamily: "Inter_700Bold" }}>Guest mode</Text>
-                    {" · Sign in for full analysis"}
-                  </Text>
-                  <View style={guestModeBannerStyles.signInBtn}>
-                    <Text style={guestModeBannerStyles.signInBtnText}>Sign In</Text>
-                  </View>
-                </Pressable>
-              </Animated.View>
-            )}
-
             {/* ── Safety Verdict Banner ────────────────────────────────────── */}
             <Animated.View entering={FadeInDown.duration(250)}>
               <VerdictBanner verdict={verdict} offlineMode={q.offlineMode} />
@@ -388,106 +368,59 @@ export default function QrDetailScreen() {
               />
             </Animated.View>
 
-            {/* ── Sections below are blurred for anonymous users ───────────── */}
-            {!user ? (
-              <View style={{ position: "relative", marginTop: 4 }}>
-                <View style={{ opacity: 0.08 }} pointerEvents="none">
-                  {/* ghost of external QR banner */}
-                  {!q.ownerInfo?.isBranded && !q.offlineMode && (
-                    <View style={[externalQrBannerStyles.card, { backgroundColor: colors.surface, borderColor: colors.warning + "40", borderLeftColor: colors.warning, borderLeftWidth: 3 }]}>
-                      <View style={externalQrBannerStyles.iconRow}>
-                        <Ionicons name="alert-circle-outline" size={15} color={colors.warning} />
-                        <Text style={[externalQrBannerStyles.body, { color: colors.textMuted }]}>Standard QR · Owner identity unverified</Text>
-                      </View>
-                    </View>
-                  )}
-                  <TrustScoreCard
-                    trustInfo={trust}
-                    reportCounts={q.reportCounts}
-                    totalScans={q.totalScans}
-                    totalComments={q.totalComments}
-                    isQrOwner={false}
-                    followCount={q.followCount}
-                    followersModalOpen={false}
-                    onOpenFollowers={() => {}}
-                    manipulationWarning={trust.manipulationWarning}
-                  />
-                  <View style={{ height: 180, borderRadius: 16, backgroundColor: colors.surface, marginBottom: 12 }} />
-                  <View style={{ height: 120, borderRadius: 16, backgroundColor: colors.surface }} />
-                </View>
-                <View style={[StyleSheet.absoluteFill, { alignItems: "center", justifyContent: "center" }]}>
-                  <Pressable
-                    onPress={() => router.push("/(auth)/login")}
-                    style={[guestBlurOverlayStyles.cta, { backgroundColor: colors.surface, borderColor: isDark ? "rgba(255,255,255,0.12)" : "rgba(0,0,0,0.1)", shadowColor: "#000" }]}
-                  >
-                    <View style={[guestBlurOverlayStyles.iconWrap, { backgroundColor: "rgba(99,102,241,0.14)" }]}>
-                      <Ionicons name="lock-closed" size={20} color="#6366F1" />
-                    </View>
-                    <Text style={[guestBlurOverlayStyles.title, { color: colors.text }]} maxFontSizeMultiplier={1}>Sign in to see full details</Text>
-                    <Text style={[guestBlurOverlayStyles.sub, { color: colors.textSecondary }]} maxFontSizeMultiplier={1}>Trust score, votes, comments &amp; more</Text>
-                    <View style={guestBlurOverlayStyles.btn}>
-                      <Text style={guestBlurOverlayStyles.btnText}>Sign In</Text>
-                    </View>
-                  </Pressable>
-                </View>
-              </View>
-            ) : (
-              <>
-                {/* ── Payment Safety Warning ──────────────────────────────── */}
-                {currentContentType === "payment" && q.paymentSafety?.isSuspicious && (() => {
-                  const filteredWarnings = (q.paymentSafety?.warnings ?? []).filter(
-                    (w) => !w.toLowerCase().startsWith("pre-filled amount")
-                  );
-                  if (filteredWarnings.length === 0) return null;
-                  return (
-                    <Animated.View entering={FadeInDown.duration(300).delay(75)}>
-                      <SafetyWarningCard
-                        riskLevel={q.paymentSafety!.riskLevel as "caution" | "dangerous"}
-                        warnings={filteredWarnings}
-                        title={q.paymentSafety!.riskLevel === "dangerous" ? "Payment Security Warning" : "Payment Security Notice"}
-                      />
-                    </Animated.View>
-                  );
-                })()}
-
-                {/* ── Payment Evidence ─────────────────────────────────────── */}
-                {currentContentType === "payment" && q.paymentSafety?.evidence && q.paymentSafety.evidence.length > 0 && (
-                  <Animated.View entering={FadeInDown.duration(300).delay(90)}>
-                    <EvidenceCard title="Payment Analysis" evidence={q.paymentSafety.evidence} />
-                  </Animated.View>
-                )}
-
-                {/* ── External QR Warning ──────────────────────────────────── */}
-                {!q.ownerInfo?.isBranded && !q.offlineMode && (
-                  <Animated.View entering={FadeInDown.duration(300).delay(75)}>
-                    <View style={[externalQrBannerStyles.card, { backgroundColor: colors.surface, borderColor: colors.warning + "40", borderLeftColor: colors.warning, borderLeftWidth: 3 }]}>
-                      <View style={externalQrBannerStyles.iconRow}>
-                        <Ionicons name="alert-circle-outline" size={15} color={colors.warning} />
-                        <Text style={[externalQrBannerStyles.body, { color: colors.textMuted }]} maxFontSizeMultiplier={1}>
-                          <Text style={[externalQrBannerStyles.title, { color: colors.warning }]}>{"Standard QR"}</Text>
-                          {" · Owner identity unverified by QR Guard"}
-                        </Text>
-                      </View>
-                    </View>
-                  </Animated.View>
-                )}
-
-                {/* ── Community Trust ───────────────────────────────────────── */}
-                <Animated.View entering={FadeInDown.duration(400).delay(80)}>
-                  <TrustScoreCard
-                    trustInfo={trust}
-                    reportCounts={q.reportCounts}
-                    totalScans={q.totalScans}
-                    totalComments={q.totalComments}
-                    isQrOwner={q.isQrOwner}
-                    followCount={q.followCount}
-                    followersModalOpen={q.followersModalOpen}
-                    onOpenFollowers={() => { q.handleLoadFollowers(); q.setFollowersModalOpen(true); }}
-                    manipulationWarning={trust.manipulationWarning}
+            {/* ── Payment Safety Warning ──────────────────────────────── */}
+            {currentContentType === "payment" && q.paymentSafety?.isSuspicious && (() => {
+              const filteredWarnings = (q.paymentSafety?.warnings ?? []).filter(
+                (w) => !w.toLowerCase().startsWith("pre-filled amount")
+              );
+              if (filteredWarnings.length === 0) return null;
+              return (
+                <Animated.View entering={FadeInDown.duration(300).delay(75)}>
+                  <SafetyWarningCard
+                    riskLevel={q.paymentSafety!.riskLevel as "caution" | "dangerous"}
+                    warnings={filteredWarnings}
+                    title={q.paymentSafety!.riskLevel === "dangerous" ? "Payment Security Warning" : "Payment Security Notice"}
                   />
                 </Animated.View>
-              </>
+              );
+            })()}
+
+            {/* ── Payment Evidence ─────────────────────────────────────── */}
+            {currentContentType === "payment" && q.paymentSafety?.evidence && q.paymentSafety.evidence.length > 0 && (
+              <Animated.View entering={FadeInDown.duration(300).delay(90)}>
+                <EvidenceCard title="Payment Analysis" evidence={q.paymentSafety.evidence} />
+              </Animated.View>
             )}
+
+            {/* ── External QR Warning ──────────────────────────────────── */}
+            {!q.ownerInfo?.isBranded && !q.offlineMode && (
+              <Animated.View entering={FadeInDown.duration(300).delay(75)}>
+                <View style={[externalQrBannerStyles.card, { backgroundColor: colors.surface, borderColor: colors.warning + "40", borderLeftColor: colors.warning, borderLeftWidth: 3 }]}>
+                  <View style={externalQrBannerStyles.iconRow}>
+                    <Ionicons name="alert-circle-outline" size={15} color={colors.warning} />
+                    <Text style={[externalQrBannerStyles.body, { color: colors.textMuted }]} maxFontSizeMultiplier={1}>
+                      <Text style={[externalQrBannerStyles.title, { color: colors.warning }]}>{"Standard QR"}</Text>
+                      {" · Owner identity unverified by QR Guard"}
+                    </Text>
+                  </View>
+                </View>
+              </Animated.View>
+            )}
+
+            {/* ── Community Trust ───────────────────────────────────────── */}
+            <Animated.View entering={FadeInDown.duration(400).delay(80)}>
+              <TrustScoreCard
+                trustInfo={trust}
+                reportCounts={q.reportCounts}
+                totalScans={q.totalScans}
+                totalComments={q.totalComments}
+                isQrOwner={user ? q.isQrOwner : false}
+                followCount={q.followCount}
+                followersModalOpen={user ? q.followersModalOpen : false}
+                onOpenFollowers={user ? () => { q.handleLoadFollowers(); q.setFollowersModalOpen(true); } : () => {}}
+                manipulationWarning={trust.manipulationWarning}
+              />
+            </Animated.View>
 
             {/* ── Sections below only for signed-in users ───────────────────── */}
             {user && (
@@ -539,8 +472,7 @@ export default function QrDetailScreen() {
               </>
             )}
 
-            {/* ── Comments + Owner (signed-in only) ───────────────────────── */}
-            {user && (
+            {/* ── Comments ─────────────────────────────────────────────────── */}
             <Animated.View entering={FadeInDown.duration(400).delay(210)}>
               <View style={styles.commentsHeader}>
                 <View style={styles.commentsTitleRow}>
@@ -551,7 +483,7 @@ export default function QrDetailScreen() {
                     </View>
                   )}
                 </View>
-                </View>
+              </View>
 
               {q.offlineMode ? (
                 <View style={offlineSectionStyles.row}>
@@ -561,11 +493,8 @@ export default function QrDetailScreen() {
               ) : (
                 <>
                   {!user ? (
-                    <Pressable onPress={() => router.push("/(auth)/login")} style={[signInCommentStyle, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder, borderLeftColor: colors.primary, borderLeftWidth: 3 }]}>
-                      <Text style={[signInCommentPlaceholder, { color: colors.textMuted, fontSize: 13 }]}>Add a comment…</Text>
-                      <View style={[signInCommentBtn, { backgroundColor: colors.primary, borderWidth: 0, borderRadius: 22 }]}>
-                        <Text style={[signInCommentBtnText, { color: "#fff", fontSize: 12 }]}>Sign In</Text>
-                      </View>
+                    <Pressable onPress={() => router.push("/(auth)/login")} style={[styles.commentInput, { marginBottom: 10 }]}>
+                      <Text style={[styles.commentTextInput, { color: colors.textMuted, paddingTop: 4 }]}>Add a comment…</Text>
                     </Pressable>
                   ) : (
                     <View style={[styles.inlineCommentBar]}>
@@ -628,8 +557,8 @@ export default function QrDetailScreen() {
                         deletingCommentId={q.deletingCommentId}
                         revealedComments={q.revealedComments}
                         userId={user?.id}
-                        onLike={q.handleCommentLike}
-                        onReply={(c) => {
+                        onLike={user ? q.handleCommentLike : () => router.push("/(auth)/login")}
+                        onReply={user ? (c) => {
                           const rootId = q.getRootCommentId(c.id);
                           q.setReplyTo({
                             id: c.id,
@@ -637,7 +566,7 @@ export default function QrDetailScreen() {
                             rootId,
                             isNested: !!c.parentId,
                           });
-                        }}
+                        } : () => router.push("/(auth)/login")}
                         onMenuOpen={(cid, isOwner) => { q.setCommentMenuId(cid); q.setCommentMenuOwner(isOwner); }}
                         onMenuClose={() => q.setCommentMenuId(null)}
                         onDelete={q.handleDeleteComment}
@@ -660,7 +589,6 @@ export default function QrDetailScreen() {
                 </>
               )}
             </Animated.View>
-            )}
 
             {/* ── Owner Info (signed-in only) ──────────────────────────────── */}
             {user && q.ownerInfo && (

@@ -11,7 +11,6 @@ import { useHome } from "@/hooks/useHome";
 import { detectContentType, getContentTypeIcon, truncate, formatRelativeTime } from "@/lib/utils/formatters";
 import NotificationsModal from "@/features/home/components/NotificationsModal";
 import { Linking } from "react-native";
-import GuestUnlockBanner from "@/components/ui/GuestUnlockBanner";
 
 export default function HomeScreen() {
   const insets = useSafeAreaInsets();
@@ -206,13 +205,6 @@ export default function HomeScreen() {
             </View>
           </Animated.View>
 
-
-          {/* ── SIGN-IN BANNER (guest only) ── */}
-          {!user && (
-            <Animated.View entering={FadeInDown.duration(500).delay(280)}>
-              <GuestUnlockBanner />
-            </Animated.View>
-          )}
 
           {/* ── RECENT SCANS ── */}
           <Animated.View entering={FadeInDown.duration(500).delay(320)}>
