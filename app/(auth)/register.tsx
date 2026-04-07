@@ -19,6 +19,7 @@ import { useTheme } from "@/contexts/ThemeContext";
 import { useAuth } from "@/contexts/AuthContext";
 import GoogleIcon from "@/components/GoogleIcon";
 import AuthFormInput from "@/features/auth/components/AuthFormInput";
+import { validateEmail } from "@/lib/utils/email-validator";
 
 export default function RegisterScreen() {
   const { signUp, signInWithGoogle, googleRequest, user } = useAuth();
@@ -57,7 +58,15 @@ export default function RegisterScreen() {
     const newFieldErrors = { name: "", email: "", password: "" };
     let hasFieldError = false;
     if (!displayName.trim()) { newFieldErrors.name = "Name is required."; hasFieldError = true; }
-    if (!email.trim()) { newFieldErrors.email = "Email address is required."; hasFieldError = true; }
+    if (!email.trim()) {
+      newFieldErrors.email = "Email address is required."; hasFieldError = true;
+    } else {
+      const emailCheck = validateEmail(email.trim());
+      if (!emailCheck.valid) {
+        newFieldErrors.email = emailCheck.reason || "Please use a real email address.";
+        hasFieldError = true;
+      }
+    }
     if (!password.trim()) { newFieldErrors.password = "Password is required."; hasFieldError = true; }
     else if (password.length < 6) { newFieldErrors.password = "Password must be at least 6 characters."; hasFieldError = true; }
     if (hasFieldError) { setFieldErrors(newFieldErrors); setError(""); return; }

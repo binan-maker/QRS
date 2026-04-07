@@ -4,6 +4,7 @@ import { decodeQrFromImage } from "./image-decode";
 import { signPayload } from "./security/response-signer";
 import { registerDonationRoutes } from "./routes/donation";
 import { registerSafeBrowsingRoute } from "./routes/safe-browsing";
+import { validateEmail } from "../lib/utils/email-validator";
 
 // ─── Rate Limiter (Redis-backed for serverless deployments) ─────────────────
 // CRITICAL SECURITY FIX: File-based rate limiting fails in serverless environments
@@ -411,6 +412,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (e: any) {
       res.status(500).json({ message: e.message });
     }
+  });
+
+  // ── Email validation — disposable/temporary email blocker ─────────────────
+  // Called from AuthContext.signUp before Firebase account creation.
+  // This is the server-side bypass-proof gate: even if the client-side check
+  // is bypassed (e.g. direct SDK calls), this endpoint rejects disposable emails.
+  app.post("/api/validate-email", (req: Request, res: Response) => {
+    const { email } = req.body;
+    if (!email || typeof email !== "string") {
+      return res.status(400).json({ valid: false, reason: "Email is required." });
+    }
+    const result = validateEmail(email.trim());
+    return res.json(result);
   });
 
   const httpServer = createServer(app);

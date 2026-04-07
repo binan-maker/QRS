@@ -12,6 +12,26 @@ import {
 import { queryClient } from "@/lib/query-client";
 import { clearAllMemCache, clearAllAsyncStorageCache } from "@/lib/cache/qr-cache";
 import { clearAllAnonymousSessions } from "@/lib/cache/anonymous-session";
+import { validateEmail } from "@/lib/utils/email-validator";
+
+const SERVER_BASE_URL = process.env.EXPO_PUBLIC_DOMAIN
+  ? `https://${process.env.EXPO_PUBLIC_DOMAIN}`
+  : "http://localhost:5000";
+
+async function serverValidateEmail(email: string): Promise<{ valid: boolean; reason?: string }> {
+  try {
+    const res = await fetch(`${SERVER_BASE_URL}/api/validate-email`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email }),
+    });
+    if (!res.ok) return { valid: false, reason: "Email validation failed. Please try again." };
+    return await res.json();
+  } catch {
+    // Server unreachable — fall back to client-side check only
+    return validateEmail(email);
+  }
+}
 
 WebBrowser.maybeCompleteAuthSession();
 
@@ -203,6 +223,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   async function signUp(email: string, displayName: string, password: string) {
     try {
+      // Server-side disposable email check — runs before Firebase account creation.
+      // This is the bypass-proof gate: even if the client-side check was skipped
+      // (e.g. via direct API calls), the server rejects disposable email domains.
+      const emailValidation = await serverValidateEmail(email);
+      if (!emailValidation.valid) {
+        const err = new Error(emailValidation.reason || "Please use a real email address.") as any;
+        err.code = "auth/invalid-email-domain";
+        throw err;
+      }
+
       const adapterUser = await authAdapter.signUp(email, password);
       await authAdapter.updateDisplayName(adapterUser, displayName);
       await authAdapter.sendVerificationEmail(adapterUser);
@@ -213,6 +243,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       throw err;
     } catch (e: any) {
       if (e.code === "auth/verification-sent") throw e;
+      if (e.code === "auth/invalid-email-domain") throw e;
       throw mapFirebaseError(e);
     }
   }
