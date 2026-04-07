@@ -63,7 +63,7 @@ export function useQrOwner(
     try {
       await sendMessageToQrOwner(
         userId, userDisplayName || "User", ownerInfo.ownerId, id,
-        ownerInfo.brandedUuid, messageText.trim()
+        ownerInfo.brandedUuid ?? "", messageText.trim()
       );
       setMessageText("");
       Alert.alert("Sent!", "Your message was delivered to the QR code owner.");

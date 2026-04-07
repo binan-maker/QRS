@@ -9,7 +9,7 @@ interface SafetyWarningCardProps {
 }
 
 export default function SafetyWarningCard({ riskLevel: _riskLevel, warnings, title }: SafetyWarningCardProps) {
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
   const accent = colors.warning;
   const bg = colors.warningDim;
   const icon: keyof typeof Ionicons.glyphMap = "alert-circle";

@@ -53,7 +53,7 @@ export function useQrDetail(id: string) {
     }
     const fallback = calculateTrustScore(reportCounts);
     if (fallback.score < 0) return { score: -1, label: "No Reports", color: colors.textMuted, manipulationWarning: false };
-    return { score: fallback.score, label: fallback.label, color: getTrustColor(fallback.label), manipulationWarning: false };
+    return { score: fallback.score, label: fallback.label, color: getTrustColor(fallback.label ?? ""), manipulationWarning: false };
   }
 
   function getCombinedVerdict() {

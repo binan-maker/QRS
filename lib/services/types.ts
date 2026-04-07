@@ -118,10 +118,12 @@ export interface FollowData {
 export interface TrustScore {
   score: number;
   level: 'low' | 'medium' | 'high' | 'verified';
+  label?: string;
   factors: TrustFactor[];
   lastUpdated: string;
   isVerified?: boolean;
   verificationMethod?: string;
+  manipulationWarning?: boolean;
 }
 
 export interface TrustFactor {
@@ -169,6 +171,13 @@ export interface QrOwnerInfo {
   badgeType?: 'business' | 'government' | 'creator';
   joinDate?: string;
   totalQrs?: number;
+  qrType?: QrType;
+  isActive?: boolean;
+  isBranded?: boolean;
+  businessName?: string;
+  ownerLogoBase64?: string;
+  brandedUuid?: string;
+  deactivationMessage?: string;
 }
 
 export interface ScanVelocityBucket {
@@ -176,14 +185,17 @@ export interface ScanVelocityBucket {
   count: number;
   windowStart: string;
   windowEnd: string;
+  label?: string;
 }
 
 export interface VerificationStatus {
-  isVerified: boolean;
-  method: 'email' | 'phone' | 'document' | 'manual' | 'none';
+  isVerified?: boolean;
+  method?: 'email' | 'phone' | 'document' | 'manual' | 'none';
   verifiedAt?: string;
   documents?: string[];
   pendingReview?: boolean;
+  status?: 'none' | 'pending' | 'approved' | 'rejected';
+  businessName?: string;
 }
 
 // Comment Service types
@@ -227,6 +239,8 @@ export interface QrMessage {
   createdAt: string;
   read: boolean;
   priority?: 'low' | 'normal' | 'high' | 'urgent';
+  fromDisplayName?: string;
+  message?: string;
 }
 
 // Follow Service types
@@ -237,6 +251,10 @@ export interface FollowerInfo {
   followedAt: string;
   isMutual: boolean;
   isVerified?: boolean;
+  userId?: string;
+  photoURL?: string;
+  displayName?: string;
+  username?: string;
 }
 
 // Additional utility types

@@ -71,11 +71,11 @@ const MessagesModal = React.memo(function MessagesModal({
                       style={[styles.msgRow, !msg.read && styles.msgRowUnread]}
                     >
                       <View style={styles.msgAvatar}>
-                        <Text style={styles.msgAvatarText}>{msg.fromDisplayName.charAt(0).toUpperCase()}</Text>
+                        <Text style={styles.msgAvatarText}>{(msg.fromDisplayName ?? msg.senderName).charAt(0).toUpperCase()}</Text>
                       </View>
                       <View style={{ flex: 1 }}>
                         <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
-                          <Text style={styles.msgSender}>{msg.fromDisplayName}</Text>
+                          <Text style={styles.msgSender}>{msg.fromDisplayName ?? msg.senderName}</Text>
                           {!msg.read && <View style={styles.unreadDot} />}
                         </View>
                         <Text style={styles.msgText} numberOfLines={2}>{msg.message}</Text>

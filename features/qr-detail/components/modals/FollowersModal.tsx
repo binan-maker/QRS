@@ -54,11 +54,11 @@ const FollowersModal = React.memo(function FollowersModal({ visible, followCount
                     <Image source={{ uri: f.photoURL }} style={styles.avatar} resizeMode="cover" />
                   ) : (
                     <View style={styles.avatar}>
-                      <Text style={styles.avatarText}>{f.displayName.charAt(0).toUpperCase()}</Text>
+                      <Text style={styles.avatarText}>{(f.displayName ?? f.followerName).charAt(0).toUpperCase()}</Text>
                     </View>
                   )}
                   <View style={{ flex: 1 }}>
-                    <Text style={styles.name}>{f.displayName}</Text>
+                    <Text style={styles.name}>{f.displayName ?? f.followerName}</Text>
                     {f.username ? (
                       <Text style={styles.username}>@{f.username}</Text>
                     ) : null}

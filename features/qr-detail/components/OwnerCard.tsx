@@ -10,7 +10,9 @@ interface Props {
   ownerInfo: QrOwnerInfo;
   isQrOwner: boolean;
   followCount: number;
+  unreadMessages?: number;
   onOpenFollowers: () => void;
+  onOpenMessages?: () => void;
 }
 
 const TYPE_ICONS: Record<string, keyof typeof Ionicons.glyphMap> = {

@@ -172,7 +172,7 @@ export function useQrComments(id: string, userId: string | null, offlineMode: bo
       const result = await getComments(id, pageLimit, undefined);
       if (result.cursor) lastCommentRef.current = result.cursor;
       setHasMoreComments(result.hasMore);
-      setCommentsList(mergeWithOptimistic(result.comments));
+      setCommentsList(mergeWithOptimistic(result.comments as unknown as CommentItem[]));
     } catch {}
     setCommentsLoading(false);
   }, [id, userId, offlineMode]);
@@ -185,7 +185,7 @@ export function useQrComments(id: string, userId: string | null, offlineMode: bo
       const result = await getComments(id, pageLimit, undefined);
       if (result.cursor) lastCommentRef.current = result.cursor;
       setHasMoreComments(result.hasMore);
-      setCommentsList(mergeWithOptimistic(result.comments));
+      setCommentsList(mergeWithOptimistic(result.comments as unknown as CommentItem[]));
     } catch {}
     setCommentsRefreshing(false);
   }, [id, userId, offlineMode]);
@@ -199,7 +199,7 @@ export function useQrComments(id: string, userId: string | null, offlineMode: bo
     setCommentsLoading(true);
     try {
       const result = await getComments(id, COMMENTS_PER_PAGE, lastCommentRef.current);
-      setCommentsList((prev) => [...prev, ...result.comments]);
+      setCommentsList((prev) => [...prev, ...(result.comments as unknown as CommentItem[])]);
       if (result.cursor) lastCommentRef.current = result.cursor;
       setHasMoreComments(result.hasMore);
     } catch {}
