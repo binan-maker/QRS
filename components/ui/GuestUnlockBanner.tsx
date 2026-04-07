@@ -4,13 +4,6 @@ import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
 import { useTheme } from "@/contexts/ThemeContext";
 
-const FEATURES = [
-  { icon: "chatbubble-outline" as const, label: "Comment" },
-  { icon: "notifications-outline" as const, label: "Follow" },
-  { icon: "heart-outline" as const, label: "Favorite" },
-  { icon: "star-outline" as const, label: "Rate" },
-] as const;
-
 interface Props {
   style?: object;
   compact?: boolean;
@@ -20,15 +13,12 @@ export default function GuestUnlockBanner({ style, compact }: Props) {
   const { colors, isDark } = useTheme();
 
   return (
-    <Pressable
-      onPress={() => router.push("/(auth)/login")}
-      style={({ pressed }) => [
+    <View
+      style={[
         styles.card,
         {
           backgroundColor: colors.surface,
-          borderColor: colors.primary + "30",
-          opacity: pressed ? 0.93 : 1,
-          transform: [{ scale: pressed ? 0.985 : 1 }],
+          borderColor: isDark ? "rgba(255,255,255,0.07)" : "rgba(0,0,0,0.07)",
         },
         style,
       ]}
@@ -36,166 +26,133 @@ export default function GuestUnlockBanner({ style, compact }: Props) {
       <LinearGradient
         colors={
           isDark
-            ? [colors.primary + "18", colors.primary + "06"]
-            : [colors.primary + "10", colors.primary + "03"]
+            ? ["rgba(99,102,241,0.14)", "rgba(139,92,246,0.06)"]
+            : ["rgba(99,102,241,0.09)", "rgba(139,92,246,0.03)"]
         }
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
         style={StyleSheet.absoluteFill}
       />
 
-      <View style={[styles.accentBar, { backgroundColor: colors.primary }]} />
+      <View style={styles.inner}>
+        <View style={[styles.iconWrap, { backgroundColor: "rgba(99,102,241,0.15)" }]}>
+          <Ionicons name="person-circle-outline" size={26} color="#6366F1" />
+        </View>
 
-      <View style={styles.body}>
-        <View style={styles.topRow}>
-          <View style={[styles.lockBadge, { backgroundColor: colors.primary + "18", borderColor: colors.primary + "30" }]}>
-            <Ionicons name="lock-closed" size={13} color={colors.primary} />
-          </View>
-          <Text style={[styles.eyebrow, { color: colors.primary }]} maxFontSizeMultiplier={1}>
-            SIGN IN REQUIRED
+        <View style={styles.textCol}>
+          <Text style={[styles.heading, { color: colors.text }]} maxFontSizeMultiplier={1}>
+            Sign in to unlock features
+          </Text>
+          <Text style={[styles.sub, { color: colors.textSecondary }]} maxFontSizeMultiplier={1}>
+            Comment, follow and rate QR codes.
           </Text>
         </View>
-
-        <Text style={[styles.heading, { color: colors.text }]} maxFontSizeMultiplier={1}>
-          Join the conversation
-        </Text>
-        <Text style={[styles.sub, { color: colors.textSecondary }]} maxFontSizeMultiplier={1}>
-          Create a free account to comment, follow QR codes, rate them, and more.
-        </Text>
-
-        <View style={styles.featureRow}>
-          {FEATURES.map((f) => (
-            <View
-              key={f.label}
-              style={[styles.featureChip, { backgroundColor: colors.primary + "12", borderColor: colors.primary + "22" }]}
-            >
-              <Ionicons name={f.icon} size={12} color={colors.primary} />
-              <Text style={[styles.featureLabel, { color: colors.primary }]} maxFontSizeMultiplier={1}>
-                {f.label}
-              </Text>
-            </View>
-          ))}
-        </View>
-
-        <View style={styles.ctaRow}>
-          <Pressable
-            onPress={() => router.push("/(auth)/login")}
-            style={({ pressed }) => [styles.ctaBtn, { backgroundColor: colors.primary, opacity: pressed ? 0.88 : 1 }]}
-          >
-            <Ionicons name="log-in-outline" size={15} color={colors.primaryText} />
-            <Text style={[styles.ctaBtnText, { color: colors.primaryText }]} maxFontSizeMultiplier={1}>
-              Sign In
-            </Text>
-          </Pressable>
-          <Pressable
-            onPress={() => router.push("/(auth)/register")}
-            style={({ pressed }) => [
-              styles.ctaSecondary,
-              { backgroundColor: colors.primary + "12", borderColor: colors.primary + "28", opacity: pressed ? 0.8 : 1 },
-            ]}
-          >
-            <Text style={[styles.ctaSecondaryText, { color: colors.primary }]} maxFontSizeMultiplier={1}>
-              Create Account
-            </Text>
-          </Pressable>
-        </View>
       </View>
-    </Pressable>
+
+      <View style={styles.btnRow}>
+        <Pressable
+          onPress={() => router.push("/(auth)/login")}
+          style={({ pressed }) => [
+            styles.btnPrimary,
+            { opacity: pressed ? 0.85 : 1 },
+          ]}
+        >
+          <LinearGradient
+            colors={["#6366F1", "#7C3AED"]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 0 }}
+            style={styles.btnPrimaryGradient}
+          >
+            <Ionicons name="log-in-outline" size={14} color="#fff" />
+            <Text style={styles.btnPrimaryText} maxFontSizeMultiplier={1}>Sign In</Text>
+          </LinearGradient>
+        </Pressable>
+
+        <Pressable
+          onPress={() => router.push("/(auth)/register")}
+          style={({ pressed }) => [
+            styles.btnSecondary,
+            {
+              backgroundColor: isDark ? "rgba(99,102,241,0.12)" : "rgba(99,102,241,0.08)",
+              borderColor: "rgba(99,102,241,0.25)",
+              opacity: pressed ? 0.75 : 1,
+            },
+          ]}
+        >
+          <Text style={[styles.btnSecondaryText, { color: "#6366F1" }]} maxFontSizeMultiplier={1}>
+            Create Account
+          </Text>
+        </Pressable>
+      </View>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   card: {
-    borderRadius: 18,
+    borderRadius: 16,
     borderWidth: 1,
     overflow: "hidden",
     marginBottom: 14,
-    flexDirection: "row",
+    padding: 14,
+    gap: 12,
   },
-  accentBar: {
-    width: 4,
-    alignSelf: "stretch",
-    borderRadius: 2,
-    flexShrink: 0,
-  },
-  body: {
-    flex: 1,
-    padding: 16,
-    gap: 10,
-  },
-  topRow: {
+  inner: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 6,
+    gap: 12,
   },
-  lockBadge: {
-    width: 22,
-    height: 22,
-    borderRadius: 7,
+  iconWrap: {
+    width: 46,
+    height: 46,
+    borderRadius: 13,
+    alignItems: "center",
+    justifyContent: "center",
+    flexShrink: 0,
+  },
+  textCol: {
+    flex: 1,
+    gap: 3,
+  },
+  heading: {
+    fontSize: 14,
+    fontFamily: "Inter_700Bold",
+    letterSpacing: -0.2,
+  },
+  sub: {
+    fontSize: 12,
+    fontFamily: "Inter_400Regular",
+    lineHeight: 17,
+  },
+  btnRow: {
+    flexDirection: "row",
+    gap: 8,
+  },
+  btnPrimary: {
+    borderRadius: 10,
+    overflow: "hidden",
+  },
+  btnPrimaryGradient: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 5,
+    paddingHorizontal: 16,
+    paddingVertical: 9,
+  },
+  btnPrimaryText: {
+    fontSize: 13,
+    fontFamily: "Inter_700Bold",
+    color: "#fff",
+  },
+  btnSecondary: {
+    borderRadius: 10,
     borderWidth: 1,
+    paddingHorizontal: 14,
+    paddingVertical: 9,
     alignItems: "center",
     justifyContent: "center",
   },
-  eyebrow: {
-    fontSize: 10,
-    fontFamily: "Inter_700Bold",
-    letterSpacing: 1.2,
-  },
-  heading: {
-    fontSize: 16,
-    fontFamily: "Inter_700Bold",
-    letterSpacing: -0.3,
-    lineHeight: 22,
-  },
-  sub: {
-    fontSize: 12.5,
-    fontFamily: "Inter_400Regular",
-    lineHeight: 18,
-  },
-  featureRow: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: 6,
-  },
-  featureChip: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 4,
-    paddingHorizontal: 9,
-    paddingVertical: 4,
-    borderRadius: 100,
-    borderWidth: 1,
-  },
-  featureLabel: {
-    fontSize: 11,
-    fontFamily: "Inter_600SemiBold",
-  },
-  ctaRow: {
-    flexDirection: "row",
-    gap: 8,
-    marginTop: 2,
-  },
-  ctaBtn: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 6,
-    paddingHorizontal: 18,
-    paddingVertical: 10,
-    borderRadius: 12,
-  },
-  ctaBtnText: {
-    fontSize: 13,
-    fontFamily: "Inter_700Bold",
-  },
-  ctaSecondary: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    borderRadius: 12,
-    borderWidth: 1,
-  },
-  ctaSecondaryText: {
+  btnSecondaryText: {
     fontSize: 13,
     fontFamily: "Inter_600SemiBold",
   },

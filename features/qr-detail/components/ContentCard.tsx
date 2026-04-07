@@ -40,7 +40,8 @@ function getTypeCfg(type: string, colors: AppColors): {
     document: { icon: "document-outline",       label: "Document",         gradient: neutral,  openLabel: "Open Document"     },
     boarding: { icon: "airplane-outline",       label: "Boarding Pass",    gradient: primary,  openLabel: "View Pass"         },
     product:  { icon: "barcode-outline",        label: "Product",          gradient: primary,  openLabel: "View Product"      },
-    text:     { icon: "document-text-outline",  label: "Text",             gradient: neutral,  openLabel: "Open"              },
+    text:      { icon: "document-text-outline",  label: "Text",             gradient: neutral,   openLabel: "Open"              },
+    encrypted: { icon: "key-outline",            label: "Encrypted Data",   gradient: [colors.warning, colors.warningShade], openLabel: "Open" },
   };
   return map[type] ?? map.text;
 }
@@ -144,6 +145,52 @@ const ContentCard = React.memo(function ContentCard({ content, contentType, pars
   const eventData = contentType === "event" ? parseEvent(content) : null;
   const basicPayment = (contentType === "payment" && !parsedPayment) ? extractBasicPaymentInfo(content) : null;
   const isEmvContent = content.startsWith("000201") || content.startsWith("00020");
+
+  if (contentType === "encrypted") {
+    const preview = content.length > 40 ? content.slice(0, 40) + "…" : content;
+    const isBase64 = /^[A-Za-z0-9+/]{20,}={0,2}$/.test(content.trim());
+    const isHex = /^[0-9a-fA-F]{40,}$/.test(content.trim());
+    const dataHint = isBase64 ? "Base64-encoded" : isHex ? "Hex-encoded" : "Proprietary";
+    return (
+      <View style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.warning + "40" }]}>
+        <LinearGradient
+          colors={[colors.warning + (isDark ? "18" : "0D"), "transparent"]}
+          style={StyleSheet.absoluteFill}
+        />
+        <View style={styles.typeRow}>
+          <LinearGradient colors={[colors.warning, colors.warningShade]} style={styles.typeIcon} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}>
+            <Ionicons name="key-outline" size={18} color="#fff" />
+          </LinearGradient>
+          <Text style={[styles.typeLabel, { color: colors.text }]}>Encrypted Data</Text>
+          <Pressable
+            onPress={handleCopy}
+            style={({ pressed }) => [styles.copyBtn, { backgroundColor: isDark ? colors.surfaceLight : colors.background, borderColor: colors.surfaceBorder, opacity: pressed ? 0.7 : 1 }]}
+          >
+            <Ionicons name={copied ? "checkmark" : "copy-outline"} size={16} color={copied ? colors.safe : colors.textMuted} />
+            {copied && <Text style={[styles.copiedText, { color: colors.safe }]}>Copied</Text>}
+          </Pressable>
+        </View>
+        <View style={[styles.encryptedInfoBox, { backgroundColor: colors.warning + "10", borderColor: colors.warning + "30" }]}>
+          <View style={styles.encryptedBadgeRow}>
+            <View style={[styles.encryptedBadge, { backgroundColor: colors.warning + "20" }]}>
+              <Text style={[styles.encryptedBadgeText, { color: colors.warning }]}>{dataHint}</Text>
+            </View>
+            <Text style={[styles.encryptedByteHint, { color: colors.textMuted }]}>{content.length} chars</Text>
+          </View>
+          <Text style={[styles.encryptedDesc, { color: colors.textSecondary }]}>
+            This QR code contains encrypted or proprietary data — likely from a government agency, bank, or private system (e.g. voter ID, ID card, access token). The content is intentionally unreadable without the issuer's private key.
+          </Text>
+        </View>
+        <View style={[styles.contentBox, { backgroundColor: isDark ? colors.surfaceLight : colors.background, borderColor: colors.surfaceBorder }]}>
+          <Text style={[styles.encryptedRaw, { color: colors.textMuted }]} selectable numberOfLines={2}>{preview}</Text>
+        </View>
+        <View style={[styles.encryptedTipRow, { borderColor: colors.surfaceBorder }]}>
+          <Ionicons name="shield-checkmark-outline" size={14} color={colors.textMuted} />
+          <Text style={[styles.encryptedTip, { color: colors.textMuted }]}>Only trust this QR if you received it from a verified official source.</Text>
+        </View>
+      </View>
+    );
+  }
 
   if (contentType === "payment") {
     const paymentData: ParsedPaymentQr = parsedPayment ?? (isEmvContent ? {
@@ -353,4 +400,54 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
   },
   openBtnText: { fontSize: 14, fontFamily: "Inter_700Bold", color: "#fff" },
+  encryptedInfoBox: {
+    borderRadius: 14,
+    padding: 14,
+    borderWidth: 1,
+    gap: 10,
+  },
+  encryptedBadgeRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
+  encryptedBadge: {
+    borderRadius: 6,
+    paddingHorizontal: 9,
+    paddingVertical: 3,
+  },
+  encryptedBadgeText: {
+    fontSize: 11,
+    fontFamily: "Inter_700Bold",
+    letterSpacing: 0.4,
+  },
+  encryptedByteHint: {
+    fontSize: 11,
+    fontFamily: "Inter_400Regular",
+  },
+  encryptedDesc: {
+    fontSize: 13,
+    fontFamily: "Inter_400Regular",
+    lineHeight: 19,
+  },
+  encryptedRaw: {
+    fontSize: 12,
+    fontFamily: "Inter_400Regular",
+    lineHeight: 18,
+    letterSpacing: 0.2,
+    fontVariant: ["tabular-nums"],
+  },
+  encryptedTipRow: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: 7,
+    paddingTop: 10,
+    borderTopWidth: 1,
+  },
+  encryptedTip: {
+    fontSize: 12,
+    fontFamily: "Inter_400Regular",
+    lineHeight: 17,
+    flex: 1,
+  },
 });

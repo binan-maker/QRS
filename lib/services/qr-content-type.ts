@@ -134,6 +134,17 @@ export function detectContentType(content: string): string {
     return "url";
   }
 
-  // ── 6. NON-URL PLAIN TEXT FALLBACK ──
+  // ── 6. ENCRYPTED / PROPRIETARY DATA DETECTION ──
+  // Base64-encoded data (e.g. election QR codes, government tokens, bank tokens)
+  const isBase64Like = /^[A-Za-z0-9+/]{20,}={0,2}$/.test(t) && !t.includes(" ");
+  // Pure hex blob (e.g. cryptographic hashes, hardware tokens)
+  const isHexBlob = /^[0-9a-fA-F]{40,}$/.test(t);
+  // High-entropy short token (URL-safe Base64 or JWT-like, no spaces, high char diversity)
+  const charDiversity = new Set(t.replace(/[=.]/g, "").split("")).size;
+  const isHighEntropy = t.length >= 24 && !t.includes(" ") && charDiversity >= 18 &&
+    /^[A-Za-z0-9+/=_\-]+$/.test(t) && !/^[A-Za-z]+$/.test(t);
+  if (isBase64Like || isHexBlob || isHighEntropy) return "encrypted";
+
+  // ── 7. NON-URL PLAIN TEXT FALLBACK ──
   return "text";
 }
