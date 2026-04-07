@@ -4,6 +4,7 @@ import {
   StyleSheet, Image, Platform, KeyboardAvoidingView,
 } from "react-native";
 import { router } from "expo-router";
+import { safePush } from "@/lib/utils/navigation";
 import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
@@ -183,7 +184,7 @@ export default function SearchScreen() {
             const isDisabled = item.friendStatus === "friends";
             return (
               <Pressable
-                onPress={() => router.push(`/profile/${item.username}` as any)}
+                onPress={() => safePush(`/profile/${item.username}`)}
                 style={[styles.resultCard, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}
               >
                 {/* Avatar */}

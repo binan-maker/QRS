@@ -11,6 +11,8 @@ import {
 import { invalidateQrCache } from "@/lib/cache/qr-cache";
 import { db } from "@/lib/db";
 
+const DEBOUNCE_MS = 600;
+
 export function useQrReports(id: string, userId: string | null, offlineMode: boolean, isQrOwner: boolean = false) {
   const { user } = useAuth();
   const emailVerified = user?.emailVerified ?? false;
@@ -26,25 +28,27 @@ export function useQrReports(id: string, userId: string | null, offlineMode: boo
     negativeWeightMultiplier?: number;
   }>({ suspicious: false });
 
-  // Refs to hold latest values for use inside subscription callbacks
   const latestCounts = useRef<Record<string, number>>({});
   const latestWeighted = useRef<Record<string, number>>({});
   const latestCollusion = useRef(collusionFlags);
 
-  // Authoritative ref for the user's report — always in sync with Firestore.
-  // Used in handleReport so a stale closure never reads the wrong value.
-  const userReportRef = useRef<string | null>(null);
-  // True once the initial getUserQrReport fetch has resolved.
+  // Authoritative server-confirmed report
+  const committedReportRef = useRef<string | null>(null);
+  // The last desired state from the user (pending debounce)
+  const pendingReportRef = useRef<string | null>(null);
+  // True once initial fetch has resolved
   const userReportLoadedRef = useRef(false);
+
+  const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const isCommittingRef = useRef(false);
 
   useEffect(() => {
     latestCollusion.current = collusionFlags;
   }, [collusionFlags]);
 
-  // Load the user's existing report from Firestore on mount so the
-  // selected card is highlighted and toggle-off works correctly.
   useEffect(() => {
-    userReportRef.current = null;
+    committedReportRef.current = null;
+    pendingReportRef.current = null;
     userReportLoadedRef.current = false;
     setUserReport(null);
 
@@ -54,7 +58,8 @@ export function useQrReports(id: string, userId: string | null, offlineMode: boo
     }
     getUserQrReport(id, userId)
       .then((report) => {
-        userReportRef.current = report;
+        committedReportRef.current = report;
+        pendingReportRef.current = report;
         userReportLoadedRef.current = true;
         setUserReport(report);
       })
@@ -94,34 +99,85 @@ export function useQrReports(id: string, userId: string | null, offlineMode: boo
     };
   }, [id, offlineMode]);
 
-  async function handleReport(type: string) {
+  async function commitReport() {
+    if (!userId) return;
+    if (isCommittingRef.current) return;
+
+    const desired = pendingReportRef.current;
+    if (desired === committedReportRef.current) return;
+
+    isCommittingRef.current = true;
+    setReportLoading(desired);
+
+    const prevCommitted = committedReportRef.current;
+
+    try {
+      await reportQrCode(id, userId, desired ?? "remove", emailVerified);
+      committedReportRef.current = desired;
+      if (pendingReportRef.current !== desired) {
+        // User tapped again while we were in flight — run again
+        isCommittingRef.current = false;
+        setReportLoading(null);
+        if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
+        debounceTimerRef.current = setTimeout(commitReport, DEBOUNCE_MS);
+        return;
+      }
+      invalidateQrCache(id);
+    } catch (e: any) {
+      console.error("[Report] Error submitting report:", e?.message, e);
+      // Rollback: restore counts and UI to committed state
+      committedReportRef.current = prevCommitted;
+      pendingReportRef.current = prevCommitted;
+      setUserReport(prevCommitted);
+      setReportCounts((prev) => {
+        const next = { ...prev };
+        // Undo the optimistic add of desired
+        if (desired && desired !== prevCommitted) {
+          next[desired] = Math.max(0, (next[desired] || 0) - 1);
+        }
+        // Undo the optimistic remove of prevCommitted
+        if (prevCommitted && prevCommitted !== desired) {
+          next[prevCommitted] = (next[prevCommitted] || 0) + 1;
+        }
+        // Toggle-off rollback
+        if (desired === null && prevCommitted) {
+          next[prevCommitted] = (next[prevCommitted] || 0) + 1;
+        }
+        setTrustScore(calculateTrustScore(next, latestWeighted.current, latestCollusion.current));
+        return next;
+      });
+    } finally {
+      isCommittingRef.current = false;
+      setReportLoading(null);
+    }
+  }
+
+  function handleReport(type: string) {
     if (!userId) { router.push("/(auth)/login"); return; }
     if (isQrOwner) {
-      const { Alert } = await import("react-native");
-      Alert.alert("Not Allowed", "You cannot rate your own QR code.");
+      import("react-native").then(({ Alert }) => {
+        Alert.alert("Not Allowed", "You cannot rate your own QR code.");
+      });
       return;
     }
-    // Prevent double-tap while a report is in flight
-    if (reportLoading !== null) return;
-    // Wait until we know the real server state before acting
     if (!userReportLoadedRef.current) return;
 
-    // Always read from the authoritative ref so we never use stale state
-    const prevReport = userReportRef.current;
-    const isToggleOff = prevReport === type;
-
-    // Optimistic update — update both state and ref together
+    // Determine next desired state
+    const isToggleOff = pendingReportRef.current === type;
     const nextReport = isToggleOff ? null : type;
-    userReportRef.current = nextReport;
-    setReportLoading(type);
+    const prevPending = pendingReportRef.current;
+
+    pendingReportRef.current = nextReport;
+
+    // Update UI immediately — no waiting
     setUserReport(nextReport);
     setReportCounts((prev) => {
       const next = { ...prev };
       if (isToggleOff) {
         next[type] = Math.max(0, (next[type] || 0) - 1);
       } else {
-        if (prevReport) {
-          next[prevReport] = Math.max(0, (next[prevReport] || 0) - 1);
+        if (prevPending) {
+          next[prevPending] = Math.max(0, (next[prevPending] || 0) - 1);
         }
         next[type] = (next[type] || 0) + 1;
       }
@@ -131,31 +187,9 @@ export function useQrReports(id: string, userId: string | null, offlineMode: boo
 
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
 
-    try {
-      await reportQrCode(id, userId, type, emailVerified);
-      // Confirm the ref matches what we optimistically set
-      userReportRef.current = nextReport;
-      invalidateQrCache(id);
-    } catch (e: any) {
-      console.error("[Report] Error submitting report:", e?.message, e);
-      // Rollback optimistic update
-      userReportRef.current = prevReport;
-      setUserReport(prevReport);
-      setReportCounts((prev) => {
-        const next = { ...prev };
-        if (isToggleOff) {
-          next[type] = (next[type] || 0) + 1;
-        } else {
-          next[type] = Math.max(0, (next[type] || 0) - 1);
-          if (prevReport) {
-            next[prevReport] = (next[prevReport] || 0) + 1;
-          }
-        }
-        return next;
-      });
-    } finally {
-      setReportLoading(null);
-    }
+    // Debounce the actual API call so rapid taps only fire once
+    if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
+    debounceTimerRef.current = setTimeout(commitReport, DEBOUNCE_MS);
   }
 
   return { reportCounts, trustScore, userReport, setUserReport, setTrustScore, reportLoading, handleReport };

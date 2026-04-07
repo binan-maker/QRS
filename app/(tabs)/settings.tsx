@@ -1,6 +1,7 @@
 import { View, Text, Pressable, ScrollView, Platform, Switch, useWindowDimensions, StyleSheet } from "react-native";
 import { useEffect } from "react";
 import { router, useLocalSearchParams } from "expo-router";
+import { safePush } from "@/lib/utils/navigation";
 import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
@@ -73,7 +74,7 @@ export default function SettingsScreen() {
           <Pressable
             onPress={() => {
               if (section === "profile" && params.fromProfile === "1") {
-                router.navigate("/(tabs)/profile" as any);
+                safePush("/(tabs)/profile");
               } else {
                 setSection("main");
               }
@@ -138,9 +139,9 @@ export default function SettingsScreen() {
         <Pressable
           onPress={() => {
             if (params.from === "history") {
-              router.navigate("/(tabs)/history" as any);
+              safePush("/(tabs)/history");
             } else {
-              router.navigate("/(tabs)/profile" as any);
+              safePush("/(tabs)/profile");
             }
           }}
           style={styles.navBackBtn}
@@ -195,7 +196,7 @@ export default function SettingsScreen() {
             </View>
           ) : (
             <Pressable
-              onPress={() => router.push("/(auth)/login")}
+              onPress={() => safePush("/(auth)/login")}
               style={({ pressed }) => [styles.signInCard, { opacity: pressed ? 0.9 : 1 }]}
             >
               <View style={[styles.signInIcon, { backgroundColor: colors.primaryDim }]}>
@@ -291,7 +292,7 @@ export default function SettingsScreen() {
               icon="shield-checkmark-outline"
               label="About Trust Scores"
               sublabel="How safety ratings are calculated"
-              onPress={() => router.push("/trust-scores")}
+              onPress={() => safePush("/trust-scores")}
             />
             <View style={styles.divider} />
             <SettingsMenuItem
@@ -311,14 +312,14 @@ export default function SettingsScreen() {
               icon="document-text-outline"
               label="Terms of Service"
               sublabel="Usage rules, disclaimers and liability"
-              onPress={() => router.push("/terms")}
+              onPress={() => safePush("/terms")}
             />
             <View style={styles.divider} />
             <SettingsMenuItem
               icon="lock-closed-outline"
               label="Privacy Policy"
               sublabel="How we collect and protect your data"
-              onPress={() => router.push("/privacy-policy")}
+              onPress={() => safePush("/privacy-policy")}
             />
           </View>
         </View>

@@ -1,5 +1,6 @@
 import { View, Text, Pressable, ScrollView, Platform, Alert, Switch, ActivityIndicator } from "react-native";
 import { router } from "expo-router";
+import { safePush } from "@/lib/utils/navigation";
 import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
@@ -153,7 +154,7 @@ export default function SettingsScreen() {
           </View>
         ) : (
           <Pressable
-            onPress={() => router.push("/(auth)/login")}
+            onPress={() => safePush("/(auth)/login")}
             style={({ pressed }) => [styles.signInCard, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder, opacity: pressed ? 0.9 : 1 }]}
           >
             <LinearGradient
@@ -181,7 +182,7 @@ export default function SettingsScreen() {
 
             {/* Link to dedicated privacy page */}
             <Pressable
-              onPress={() => router.push("/privacy-settings" as any)}
+              onPress={() => safePush("/privacy-settings")}
               style={({ pressed }) => [
                 {
                   flexDirection: "row" as const,
@@ -290,14 +291,14 @@ export default function SettingsScreen() {
                 icon="people-outline"
                 label="My Friends"
                 sublabel="View and manage your friend list"
-                onPress={() => router.push("/friends" as any)}
+                onPress={() => safePush("/friends")}
               />
               <View style={[styles.divider, { backgroundColor: colors.surfaceBorder }]} />
               <SettingsMenuItem
                 icon="person-add-outline"
                 label="Find People"
                 sublabel="Search for friends by username"
-                onPress={() => router.push("/search" as any)}
+                onPress={() => safePush("/search")}
               />
             </View>
           </View>

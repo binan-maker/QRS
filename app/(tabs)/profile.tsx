@@ -10,6 +10,7 @@ import {
   Image,
 } from "react-native";
 import { router } from "expo-router";
+import { safePush } from "@/lib/utils/navigation";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Animated, { FadeInDown } from "react-native-reanimated";
@@ -60,12 +61,12 @@ export default function ProfileScreen() {
               Sign in to view your profile and activity
             </Text>
             <Pressable
-              onPress={() => router.push("/(auth)/login")}
+              onPress={() => safePush("/(auth)/login")}
               style={({ pressed }) => [styles.guestSignInBtn, { backgroundColor: colors.primary, opacity: pressed ? 0.88 : 1 }]}
             >
               <Text style={[styles.guestSignInText, { color: colors.primaryText }]}>Sign In</Text>
             </Pressable>
-            <Pressable onPress={() => router.push("/(auth)/register")} style={styles.guestRegBtn}>
+            <Pressable onPress={() => safePush("/(auth)/register")} style={styles.guestRegBtn}>
               <Text style={[styles.guestRegText, { color: colors.primary }]}>Create Account</Text>
             </Pressable>
           </Animated.View>
@@ -86,7 +87,7 @@ export default function ProfileScreen() {
         <View style={styles.topBar}>
           <Text style={[styles.pageTitle, { color: colors.text }]}>Profile</Text>
           <Pressable
-            onPress={() => router.push({ pathname: "/(tabs)/settings" as any, params: { from: "profile" } })}
+            onPress={() => safePush({ pathname: "/(tabs)/settings" as any, params: { from: "profile" } })}
             style={[styles.iconBtn, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}
           >
             <Ionicons name="settings-outline" size={17} color={colors.textSecondary} />
@@ -121,7 +122,7 @@ export default function ProfileScreen() {
           ) : null}
 
           <Pressable
-            onPress={() => router.push({ pathname: "/(tabs)/settings" as any, params: { initialSection: "profile", fromProfile: "1" } })}
+            onPress={() => safePush({ pathname: "/(tabs)/settings" as any, params: { initialSection: "profile", fromProfile: "1" } })}
             style={({ pressed }) => [styles.editProfileBtn, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder, opacity: pressed ? 0.8 : 1 }]}
           >
             <Text style={[styles.editProfileText, { color: colors.text }]}>Edit Profile</Text>
@@ -150,7 +151,7 @@ export default function ProfileScreen() {
           <View style={styles.sectionHeader}>
             <Text style={[styles.sectionTitle, { color: colors.text }]}>My QR Codes</Text>
             <Pressable
-              onPress={() => router.push("/my-qr-codes" as any)}
+              onPress={() => safePush("/my-qr-codes")}
               style={({ pressed }) => [styles.seeAllBtn, { opacity: pressed ? 0.7 : 1 }]}
             >
               <Text style={[styles.seeAllText, { color: colors.primary }]}>See all</Text>
@@ -169,7 +170,7 @@ export default function ProfileScreen() {
             </View>
           ) : previewQrs.length === 0 ? (
             <Pressable
-              onPress={() => router.push("/(tabs)/qr-generator")}
+              onPress={() => safePush("/(tabs)/qr-generator")}
               style={({ pressed }) => [styles.emptyQrCard, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder, opacity: pressed ? 0.8 : 1 }]}
             >
               <MaterialCommunityIcons name="qrcode-plus" size={22} color={colors.textMuted} />
@@ -180,7 +181,7 @@ export default function ProfileScreen() {
               {previewQrs.map((qr) => (
                 <Pressable
                   key={qr.docId}
-                  onPress={() => router.push(`/my-qr/${qr.docId}` as any)}
+                  onPress={() => safePush(`/my-qr/${qr.docId}`)}
                   style={({ pressed }) => [
                     styles.qrCard,
                     { backgroundColor: colors.surface, borderColor: colors.surfaceBorder, opacity: pressed ? 0.8 : 1 },
@@ -203,7 +204,7 @@ export default function ProfileScreen() {
               ))}
               {myQrCodes.length > 3 && (
                 <Pressable
-                  onPress={() => router.push("/my-qr-codes" as any)}
+                  onPress={() => safePush("/my-qr-codes")}
                   style={({ pressed }) => [
                     styles.qrCard, styles.qrCardMore,
                     { backgroundColor: colors.primaryDim, borderColor: colors.primary + "30", opacity: pressed ? 0.8 : 1 },
@@ -222,7 +223,7 @@ export default function ProfileScreen() {
           <Text style={[styles.sectionTitle, { color: colors.text }]}>People</Text>
           <View style={styles.peopleRow}>
             <Pressable
-              onPress={() => router.push("/friends" as any)}
+              onPress={() => safePush("/friends")}
               style={({ pressed }) => [styles.peopleCard, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder, opacity: pressed ? 0.82 : 1 }]}
             >
               <View style={[styles.peopleIconWrap, { backgroundColor: colors.safeDim }]}>
@@ -233,7 +234,7 @@ export default function ProfileScreen() {
             </Pressable>
 
             <Pressable
-              onPress={() => router.push("/search" as any)}
+              onPress={() => safePush("/search")}
               style={({ pressed }) => [styles.peopleCard, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder, opacity: pressed ? 0.82 : 1 }]}
             >
               <View style={[styles.peopleIconWrap, { backgroundColor: colors.primaryDim }]}>

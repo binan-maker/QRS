@@ -4,6 +4,7 @@ import {
   StyleSheet, Image, Platform, RefreshControl,
 } from "react-native";
 import { router } from "expo-router";
+import { safePush } from "@/lib/utils/navigation";
 import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTheme } from "@/contexts/ThemeContext";
@@ -77,7 +78,7 @@ export default function FriendsScreen() {
     const initials = item.displayName.split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2);
     return (
       <Pressable
-        onPress={() => router.push(`/profile/${item.username}` as any)}
+        onPress={() => safePush(`/profile/${item.username}`)}
         style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}
       >
         <View style={[styles.avatarWrap, { borderColor: colors.primary + "40" }]}>
@@ -136,7 +137,7 @@ export default function FriendsScreen() {
         </Pressable>
         <Text style={[styles.navTitle, { color: colors.text }]}>Friends</Text>
         <Pressable
-          onPress={() => router.push("/search" as any)}
+          onPress={() => safePush("/search")}
           style={[styles.navAdd, { backgroundColor: colors.primaryDim, borderColor: colors.primary + "40" }]}
         >
           <Ionicons name="person-add-outline" size={18} color={colors.primary} />
@@ -191,7 +192,7 @@ export default function FriendsScreen() {
           </Text>
           {tab === "friends" && (
             <Pressable
-              onPress={() => router.push("/search" as any)}
+              onPress={() => safePush("/search")}
               style={[styles.findBtn, { backgroundColor: colors.primary }]}
             >
               <Ionicons name="search-outline" size={16} color={colors.primaryText} />

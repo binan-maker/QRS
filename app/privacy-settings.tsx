@@ -4,6 +4,7 @@ import {
   StyleSheet, ActivityIndicator, Alert,
 } from "react-native";
 import { router } from "expo-router";
+import { safePush } from "@/lib/utils/navigation";
 import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
@@ -116,7 +117,7 @@ export default function PrivacySettingsScreen() {
         <View style={styles.center}>
           <Ionicons name="lock-closed-outline" size={48} color={colors.textMuted} />
           <Text style={[styles.emptyTitle, { color: colors.text }]}>Sign in required</Text>
-          <Pressable onPress={() => router.push("/(auth)/login")}
+          <Pressable onPress={() => safePush("/(auth)/login")}
             style={[styles.signInBtn, { backgroundColor: colors.primary }]}>
             <Text style={[styles.signInBtnText, { color: colors.primaryText }]}>Sign In</Text>
           </Pressable>
@@ -257,7 +258,7 @@ export default function PrivacySettingsScreen() {
         <Text style={[styles.sectionLabel, { color: colors.textMuted }]}>ACCOUNT</Text>
         <View style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
           <Pressable
-            onPress={() => router.push("/account-management" as any)}
+            onPress={() => safePush("/account-management")}
             style={({ pressed }) => [styles.menuRow, { opacity: pressed ? 0.75 : 1 }]}
           >
             <View style={[styles.menuIcon, { backgroundColor: colors.surfaceLight }]}>
@@ -273,7 +274,7 @@ export default function PrivacySettingsScreen() {
           <View style={[styles.divider, { backgroundColor: colors.surfaceBorder }]} />
 
           <Pressable
-            onPress={() => router.push("/settings" as any)}
+            onPress={() => safePush("/settings")}
             style={({ pressed }) => [styles.menuRow, { opacity: pressed ? 0.75 : 1 }]}
           >
             <View style={[styles.menuIcon, { backgroundColor: colors.surfaceLight }]}>
