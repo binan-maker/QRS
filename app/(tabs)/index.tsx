@@ -11,6 +11,7 @@ import { useHome } from "@/hooks/useHome";
 import { detectContentType, getContentTypeIcon, truncate, formatRelativeTime } from "@/lib/utils/formatters";
 import NotificationsModal from "@/features/home/components/NotificationsModal";
 import { Linking } from "react-native";
+import GuestUnlockBanner from "@/components/ui/GuestUnlockBanner";
 
 export default function HomeScreen() {
   const insets = useSafeAreaInsets();
@@ -209,25 +210,7 @@ export default function HomeScreen() {
           {/* ── SIGN-IN BANNER (guest only) ── */}
           {!user && (
             <Animated.View entering={FadeInDown.duration(500).delay(280)}>
-              <Pressable
-                onPress={() => router.push("/(auth)/login")}
-                style={[styles.signInBannerCard, {
-                  backgroundColor: colors.surface,
-                  borderColor: colors.surfaceBorder,
-                  borderLeftColor: colors.primary,
-                  borderLeftWidth: 3,
-                }]}
-              >
-                <View style={{ flex: 1, gap: 2 }}>
-                  <Text style={[styles.signInBannerTitle, { color: colors.text }]}>Unlock Features</Text>
-                  <Text style={[styles.signInBannerSub, { color: colors.textSecondary }]}>
-                    Comment, follow & more
-                  </Text>
-                </View>
-                <View style={[styles.signInBannerCta, { backgroundColor: colors.primary }]}>
-                  <Text style={styles.signInBannerCtaText}>Sign In</Text>
-                </View>
-              </Pressable>
+              <GuestUnlockBanner />
             </Animated.View>
           )}
 

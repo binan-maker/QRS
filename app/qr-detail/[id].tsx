@@ -13,6 +13,7 @@ import {
   Keyboard,
   Modal,
 } from "react-native";
+import GuestUnlockBanner from "@/components/ui/GuestUnlockBanner";
 
 import { StatusBar } from "expo-status-bar";
 import { useLocalSearchParams, router } from "expo-router";
@@ -331,23 +332,7 @@ export default function QrDetailScreen() {
             {/* ── Sign-in Banner ───────────────────────────────────────────── */}
             {!user && (
               <Animated.View entering={FadeIn.duration(400)}>
-                <Pressable
-                  onPress={() => router.push("/(auth)/login")}
-                  style={[signInBannerCardStyle, {
-                    backgroundColor: colors.surface,
-                    borderColor: colors.surfaceBorder,
-                    borderLeftColor: colors.primary,
-                    borderLeftWidth: 3,
-                  }]}
-                >
-                  <View style={{ flex: 1, gap: 2 }}>
-                    <Text style={[signInBannerStyles.title, { color: colors.text }]}>Unlock Features</Text>
-                    <Text style={[signInBannerStyles.sub, { color: colors.textSecondary }]}>Comment, follow & more</Text>
-                  </View>
-                  <View style={[signInBannerStyles.cta, { backgroundColor: colors.primary }]}>
-                    <Text style={signInBannerStyles.ctaText}>Sign In</Text>
-                  </View>
-                </Pressable>
+                <GuestUnlockBanner />
               </Animated.View>
             )}
 
