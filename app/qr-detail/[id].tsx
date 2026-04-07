@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useRef, useEffect } from "react";
 import {
   View,
   Text,
@@ -12,6 +12,7 @@ import {
   StyleSheet,
   Keyboard,
   Modal,
+  Animated as RNAnimated,
 } from "react-native";
 
 import { StatusBar } from "expo-status-bar";
@@ -28,6 +29,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { formatCompactNumber } from "@/lib/number-format";
 import { smartName } from "@/lib/utils/formatters";
 import { useQrDetail } from "@/hooks/useQrDetail";
+import { useNetworkStatus } from "@/lib/use-network";
 import { makeStyles } from "@/features/qr-detail/styles";
 import LoadingSkeleton from "@/features/qr-detail/components/LoadingSkeleton";
 import ContentCard from "@/features/qr-detail/components/ContentCard";
@@ -71,6 +73,58 @@ function SectionHeader({
 const sectionHeaderStyles = StyleSheet.create({
   wrapper: { marginBottom: 10, marginTop: 2 },
   label: { fontSize: 14, fontFamily: "Inter_700Bold" },
+});
+
+function OfflineToast({ visible }: { visible: boolean }) {
+  const opacity = useRef(new RNAnimated.Value(0)).current;
+
+  useEffect(() => {
+    if (visible) {
+      RNAnimated.sequence([
+        RNAnimated.timing(opacity, { toValue: 1, duration: 200, useNativeDriver: true }),
+        RNAnimated.delay(2000),
+        RNAnimated.timing(opacity, { toValue: 0, duration: 300, useNativeDriver: true }),
+      ]).start();
+    }
+  }, [visible]);
+
+  return (
+    <RNAnimated.View
+      style={[offlineToastStyles.pill, { opacity }]}
+      pointerEvents="none"
+    >
+      <Ionicons name="wifi-outline" size={13} color="#fff" />
+      <Text style={offlineToastStyles.text} maxFontSizeMultiplier={1}>
+        You're Offline
+      </Text>
+    </RNAnimated.View>
+  );
+}
+
+const offlineToastStyles = StyleSheet.create({
+  pill: {
+    position: "absolute",
+    alignSelf: "center",
+    top: 64,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    backgroundColor: "#3b82f6",
+    paddingHorizontal: 16,
+    paddingVertical: 9,
+    borderRadius: 100,
+    zIndex: 999,
+    shadowColor: "#3b82f6",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 6,
+  },
+  text: {
+    fontFamily: "Inter_600SemiBold",
+    fontSize: 13,
+    color: "#fff",
+  },
 });
 
 function VerdictBanner({ verdict, offlineMode }: { verdict: ReturnType<ReturnType<typeof useQrDetail>["getCombinedVerdict"]>; offlineMode: boolean }) {
@@ -205,11 +259,22 @@ export default function QrDetailScreen() {
 
 
   const q = useQrDetail(id);
+  const { isOnline } = useNetworkStatus();
+  const [offlineToastKey, setOfflineToastKey] = useState(0);
   const topInset = Platform.OS === "web" ? 67 : insets.top;
   const trust = q.getTrustInfo();
   const verdict = q.getCombinedVerdict();
   const currentContent = q.qrCode?.content || q.offlineContent || "";
   const currentContentType = q.qrCode?.contentType || q.offlineContentType;
+
+  function handleFollowPress() {
+    if (!user) { router.push("/(auth)/login"); return; }
+    if (!isOnline) {
+      setOfflineToastKey((k) => k + 1);
+      return;
+    }
+    q.handleToggleFollow();
+  }
 
   const hasLocalWarnings =
     (currentContentType === "payment" && q.paymentSafety?.isSuspicious) ||
@@ -242,6 +307,7 @@ export default function QrDetailScreen() {
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.background }}>
+      <OfflineToast key={offlineToastKey} visible={offlineToastKey > 0} />
       <StatusBar style={colors.isDark ? "light" : "dark"} backgroundColor={colors.background} />
       <KeyboardAvoidingView style={{ flex: 1 }} behavior="padding" keyboardVerticalOffset={0}>
         <View style={[styles.container, { paddingTop: topInset }]}>
@@ -269,7 +335,7 @@ export default function QrDetailScreen() {
                 />
               </Pressable>
               <Pressable
-                onPress={user ? q.handleToggleFollow : () => router.push("/(auth)/login")}
+                onPress={handleFollowPress}
                 style={({ pressed }) => [
                   styles.followBtn,
                   q.isFollowing && styles.followBtnActive,
@@ -406,21 +472,23 @@ export default function QrDetailScreen() {
             )}
 
             {/* ── Community Trust ───────────────────────────────────────── */}
-            <Animated.View entering={FadeInDown.duration(400).delay(80)}>
-              <TrustScoreCard
-                trustInfo={trust}
-                reportCounts={q.reportCounts}
-                totalScans={q.totalScans}
-                totalComments={q.totalComments}
-                isQrOwner={user ? q.isQrOwner : false}
-                followCount={q.followCount}
-                followersModalOpen={user ? q.followersModalOpen : false}
-                onOpenFollowers={user ? () => { q.handleLoadFollowers(); q.setFollowersModalOpen(true); } : () => {}}
-                manipulationWarning={trust.manipulationWarning}
-                scanCountFrozen={q.qrCode?.scanCountFrozen}
-                ownerScanCount={user && q.isQrOwner ? q.qrCode?.ownerScanCount : undefined}
-              />
-            </Animated.View>
+            {!q.offlineMode && (
+              <Animated.View entering={FadeInDown.duration(400).delay(80)}>
+                <TrustScoreCard
+                  trustInfo={trust}
+                  reportCounts={q.reportCounts}
+                  totalScans={q.totalScans}
+                  totalComments={q.totalComments}
+                  isQrOwner={user ? q.isQrOwner : false}
+                  followCount={q.followCount}
+                  followersModalOpen={user ? q.followersModalOpen : false}
+                  onOpenFollowers={user ? () => { q.handleLoadFollowers(); q.setFollowersModalOpen(true); } : () => {}}
+                  manipulationWarning={trust.manipulationWarning}
+                  scanCountFrozen={q.qrCode?.scanCountFrozen}
+                  ownerScanCount={user && q.isQrOwner ? q.qrCode?.ownerScanCount : undefined}
+                />
+              </Animated.View>
+            )}
 
             {/* ── Sections below only for signed-in users ───────────────────── */}
             {user && (
@@ -473,6 +541,7 @@ export default function QrDetailScreen() {
             )}
 
             {/* ── Comments ─────────────────────────────────────────────────── */}
+            {!q.offlineMode && (
             <Animated.View entering={FadeInDown.duration(400).delay(210)}>
               <View style={styles.commentsHeader}>
                 <View style={styles.commentsTitleRow}>
@@ -485,12 +554,7 @@ export default function QrDetailScreen() {
                 </View>
               </View>
 
-              {q.offlineMode ? (
-                <View style={offlineSectionStyles.row}>
-                  <Ionicons name="cloud-offline-outline" size={16} color={colors.textMuted} />
-                  <Text style={[offlineSectionStyles.text, { color: colors.textMuted }]}>Connect to the internet to view and post comments</Text>
-                </View>
-              ) : (
+              {(
                 <>
                   {!user ? (
                     <Pressable onPress={() => router.push("/(auth)/login")} style={[styles.commentInput, { marginBottom: 10 }]}>
@@ -589,6 +653,7 @@ export default function QrDetailScreen() {
                 </>
               )}
             </Animated.View>
+            )}
 
             {/* ── Owner Info (signed-in only) ──────────────────────────────── */}
             {user && q.ownerInfo && (

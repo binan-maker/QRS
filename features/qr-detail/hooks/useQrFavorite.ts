@@ -1,8 +1,10 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { router } from "expo-router";
+import NetInfo from "@react-native-community/netinfo";
 import * as Haptics from "@/lib/haptics";
 import { toggleFavorite } from "@/lib/firestore-service";
 import { invalidateQrCache } from "@/lib/cache/qr-cache";
+import { queueOfflineFavorite, syncOfflineFavorites } from "@/lib/services/offline-sync";
 
 const DEBOUNCE_MS = 700;
 
@@ -15,14 +17,44 @@ export function useQrFavorite(id: string, userId: string | null) {
   const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const contentRef = useRef<{ content: string; contentType: string } | null>(null);
 
+  useEffect(() => {
+    const unsub = NetInfo.addEventListener((state) => {
+      if (state.isConnected) {
+        syncOfflineFavorites().catch(() => {});
+      }
+    });
+    return () => unsub();
+  }, []);
+
   async function commitFavorite() {
     if (!userId) return;
     const desiredState = pendingFavoriteRef.current;
     if (desiredState === committedFavoriteRef.current) return;
 
+    const netState = await NetInfo.fetch();
+    const isOnline = netState.isConnected !== false;
+
+    if (!isOnline) {
+      if (contentRef.current) {
+        await queueOfflineFavorite(
+          id,
+          userId,
+          contentRef.current.content,
+          contentRef.current.contentType
+        );
+      }
+      committedFavoriteRef.current = desiredState;
+      return;
+    }
+
     setFavoriteLoading(true);
     try {
-      const confirmed = await toggleFavorite(id, userId, contentRef.current?.content ?? "", contentRef.current?.contentType ?? "");
+      const confirmed = await toggleFavorite(
+        id,
+        userId,
+        contentRef.current?.content ?? "",
+        contentRef.current?.contentType ?? ""
+      );
       committedFavoriteRef.current = confirmed;
       setIsFavorite(confirmed);
       invalidateQrCache(id);
@@ -53,7 +85,11 @@ export function useQrFavorite(id: string, userId: string | null) {
 
   return {
     isFavorite,
-    setIsFavorite: (v: boolean) => { committedFavoriteRef.current = v; pendingFavoriteRef.current = v; setIsFavorite(v); },
+    setIsFavorite: (v: boolean) => {
+      committedFavoriteRef.current = v;
+      pendingFavoriteRef.current = v;
+      setIsFavorite(v);
+    },
     favoriteLoading,
     handleToggleFavorite,
   };

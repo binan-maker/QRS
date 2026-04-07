@@ -22,6 +22,7 @@ import HistoryItemComponent from "@/features/history/components/HistoryItem";
 import HistoryItemSkeleton from "@/features/history/components/HistoryItemSkeleton";
 import FilterBar from "@/features/history/components/FilterBar";
 import { parseAnyPaymentQr, analyzeAnyPaymentQr, analyzeUrlHeuristics } from "@/lib/qr-analysis";
+import { useNetworkStatus } from "@/lib/use-network";
 
 const SKELETON_COUNT = 8;
 
@@ -111,6 +112,8 @@ export default function HistoryScreen() {
     allStatsItems,
   } = useHistory();
 
+  const { isOnline } = useNetworkStatus();
+
   const [searchVisible, setSearchVisible] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const searchInputRef = useRef<TextInput>(null);
@@ -178,6 +181,7 @@ export default function HistoryScreen() {
 
   const totalCount = scanStats?.total ?? history.length;
   const allSafeCount = Math.max(0, totalCount - allDangerCount - allCautionCount);
+  const showNAStats = !isOnline && scanStats === null;
 
   // Filter chips counts from true totals (from scanStats) or fallback to loaded history
   const activeFilters: { key: Filter; label: string; count?: number }[] = useMemo(() => {
@@ -394,26 +398,26 @@ export default function HistoryScreen() {
       {showStats && !searchVisible && (
         <View style={[styles.statsStrip, { borderColor: colors.surfaceBorder }]}>
           <View style={[styles.statItem, { borderRightColor: colors.surfaceBorder }]}>
-            <Text style={[styles.statNumber, { color: colors.text }]} maxFontSizeMultiplier={1}>
-              {totalCount}
+            <Text style={[styles.statNumber, { color: showNAStats ? colors.textMuted : colors.text }]} maxFontSizeMultiplier={1}>
+              {showNAStats ? "N/A" : totalCount}
             </Text>
             <Text style={[styles.statLabel, { color: colors.textMuted }]} maxFontSizeMultiplier={1}>Total</Text>
           </View>
           <View style={[styles.statItem, { borderRightColor: colors.surfaceBorder }]}>
-            <Text style={[styles.statNumber, { color: colors.safe }]} maxFontSizeMultiplier={1}>
-              {allSafeCount}
+            <Text style={[styles.statNumber, { color: showNAStats ? colors.textMuted : colors.safe }]} maxFontSizeMultiplier={1}>
+              {showNAStats ? "N/A" : allSafeCount}
             </Text>
             <Text style={[styles.statLabel, { color: colors.textMuted }]} maxFontSizeMultiplier={1}>Safe</Text>
           </View>
           <View style={[styles.statItem, { borderRightColor: colors.surfaceBorder }]}>
-            <Text style={[styles.statNumber, { color: colors.warning }]} maxFontSizeMultiplier={1}>
-              {allCautionCount}
+            <Text style={[styles.statNumber, { color: showNAStats ? colors.textMuted : colors.warning }]} maxFontSizeMultiplier={1}>
+              {showNAStats ? "N/A" : allCautionCount}
             </Text>
             <Text style={[styles.statLabel, { color: colors.textMuted }]} maxFontSizeMultiplier={1}>Caution</Text>
           </View>
           <View style={[styles.statItem, { borderRightWidth: 0 }]}>
-            <Text style={[styles.statNumber, { color: colors.danger }]} maxFontSizeMultiplier={1}>
-              {allDangerCount}
+            <Text style={[styles.statNumber, { color: showNAStats ? colors.textMuted : colors.danger }]} maxFontSizeMultiplier={1}>
+              {showNAStats ? "N/A" : allDangerCount}
             </Text>
             <Text style={[styles.statLabel, { color: colors.textMuted }]} maxFontSizeMultiplier={1}>Danger</Text>
           </View>
@@ -481,6 +485,18 @@ export default function HistoryScreen() {
           activeFilter={filter}
           onFilterChange={setFilter}
         />
+      )}
+
+      {/* ── Offline Banner (below filters) ──────────────────────────── */}
+      {!isOnline && user && !searchVisible && (
+        <View style={[styles.offlineBanner, { backgroundColor: colors.surface, borderColor: "#3b82f6" + "30" }]}>
+          <View style={[styles.offlineBannerDot, { backgroundColor: "#3b82f6" + "20" }]}>
+            <Ionicons name="wifi-outline" size={12} color="#3b82f6" />
+          </View>
+          <Text style={[styles.offlineBannerText, { color: "#3b82f6" }]} maxFontSizeMultiplier={1}>
+            You're Offline · Showing cached data
+          </Text>
+        </View>
       )}
 
       {/* ── Search result count ─────────────────────────────────────── */}
@@ -711,5 +727,29 @@ const styles = StyleSheet.create({
     fontFamily: "Inter_700Bold",
     color: "#fff",
     letterSpacing: 0.2,
+  },
+  offlineBanner: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    marginHorizontal: 16,
+    marginBottom: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 12,
+    borderWidth: 1,
+  },
+  offlineBannerDot: {
+    width: 22,
+    height: 22,
+    borderRadius: 7,
+    alignItems: "center",
+    justifyContent: "center",
+    flexShrink: 0,
+  },
+  offlineBannerText: {
+    fontFamily: "Inter_500Medium",
+    fontSize: 12,
+    flex: 1,
   },
 });
