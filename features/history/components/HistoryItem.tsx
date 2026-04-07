@@ -37,7 +37,7 @@ function getTypeMeta(type: string, colors: any): {
 }
 
 function getRiskConfig(risk: string, colors: any) {
-  if (risk === "dangerous") return { icon: "warning" as const, label: "Danger",  color: colors.danger,  bg: colors.dangerDim  ?? colors.danger  + "18" };
+  if (risk === "dangerous") return { icon: "alert-circle" as const, label: "Caution", color: colors.warning, bg: colors.warningDim ?? colors.warning + "18" };
   if (risk === "caution")   return { icon: "alert-circle" as const, label: "Caution", color: colors.warning, bg: colors.warningDim ?? colors.warning + "18" };
   return null;
 }
@@ -116,11 +116,9 @@ const HistoryItem = React.memo(function HistoryItem({ item, risk, onDelete: _onD
 
   const gradient: [string, string] = isFavorite
     ? [colors.danger, colors.dangerShade ?? colors.danger]
-    : risk === "dangerous"
-      ? [colors.danger, colors.dangerShade ?? colors.danger]
-      : risk === "caution"
-        ? [colors.warning, colors.warningShade ?? colors.warning]
-        : meta.gradient;
+    : (risk === "dangerous" || risk === "caution")
+      ? [colors.warning, colors.warningShade ?? colors.warning]
+      : meta.gradient;
 
   const paymentData = item.contentType === "payment" ? getPaymentData(item.content) : null;
   const formattedAmount = paymentData?.amount ? formatAmount(paymentData.amount) : null;

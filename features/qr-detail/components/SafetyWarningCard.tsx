@@ -8,13 +8,12 @@ interface SafetyWarningCardProps {
   title?: string;
 }
 
-export default function SafetyWarningCard({ riskLevel, warnings, title }: SafetyWarningCardProps) {
-  const { colors, isDark } = useTheme();
-  const isDangerous = riskLevel === "dangerous";
-  const accent = isDangerous ? colors.danger : colors.warning;
-  const bg = isDangerous ? colors.dangerDim : colors.warningDim;
-  const icon: keyof typeof Ionicons.glyphMap = isDangerous ? "warning" : "alert-circle";
-  const defaultTitle = isDangerous ? "Security Warning" : "Proceed with Caution";
+export default function SafetyWarningCard({ riskLevel: _riskLevel, warnings, title }: SafetyWarningCardProps) {
+  const { colors } = useTheme();
+  const accent = colors.warning;
+  const bg = colors.warningDim;
+  const icon: keyof typeof Ionicons.glyphMap = "alert-circle";
+  const defaultTitle = "Safety Notice";
   const displayTitle = (title ?? defaultTitle).replace(/^⚠\s*/, "");
 
   return (

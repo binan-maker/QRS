@@ -18,15 +18,12 @@ export default function SafetyModal({ visible, warnings, riskLevel, riskScore = 
   const { colors } = useTheme();
   if (!visible) return null;
 
-  const isDangerous = riskLevel === "dangerous";
-  const accentColor = isDangerous ? "#EF4444" : "#F59E0B";
-  const accentDim = isDangerous ? "rgba(239,68,68,0.1)" : "rgba(245,158,11,0.1)";
-  const accentBorder = isDangerous ? "rgba(239,68,68,0.3)" : "rgba(245,158,11,0.3)";
+  const accentColor = "#F59E0B";
+  const accentDim = "rgba(245,158,11,0.1)";
+  const accentBorder = "rgba(245,158,11,0.3)";
 
-  const headlineText = isDangerous ? "Danger Detected" : "Proceed with Caution";
-  const subtitleText = isDangerous
-    ? "This QR code has been flagged as potentially dangerous. We strongly recommend not proceeding."
-    : "This link may not be secure. Verify the source before you proceed.";
+  const headlineText = "Verify Before Proceeding";
+  const subtitleText = "This QR code has raised safety concerns. Please verify the source and proceed only if you trust it.";
 
   const displayWarnings = warnings.length > 0
     ? warnings
@@ -50,7 +47,7 @@ export default function SafetyModal({ visible, warnings, riskLevel, riskScore = 
           <View style={[styles.iconOuterRing, { borderColor: accentBorder, backgroundColor: accentDim }]}>
             <View style={[styles.iconInnerRing, { borderColor: accentColor + "40", backgroundColor: accentDim }]}>
               <Ionicons
-                name={isDangerous ? "warning" : "alert-circle"}
+                name="alert-circle"
                 size={36}
                 color={accentColor}
               />
@@ -61,7 +58,7 @@ export default function SafetyModal({ visible, warnings, riskLevel, riskScore = 
         {/* Text */}
         <View style={styles.textGroup}>
           <Text style={[styles.eyebrow, { color: accentColor }]}>
-            {isDangerous ? "SECURITY ALERT" : "SECURITY WARNING"}
+            SECURITY NOTICE
           </Text>
           <Text style={styles.title}>{headlineText}</Text>
           <Text style={[styles.subtitle, { color: colors.textSecondary }]}>{subtitleText}</Text>
@@ -92,7 +89,7 @@ export default function SafetyModal({ visible, warnings, riskLevel, riskScore = 
             style={({ pressed }) => [styles.proceedBtn, { opacity: pressed ? 0.7 : 1 }]}
           >
             <Text style={[styles.proceedBtnText, { color: colors.textMuted }]}>
-              {isDangerous ? "Ignore Warning & Proceed" : "I Understand, Proceed"}
+              I Understand, Proceed
             </Text>
             <Ionicons name="chevron-forward" size={14} color={colors.textMuted} />
           </Pressable>

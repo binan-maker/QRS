@@ -63,7 +63,7 @@ export function useQrDetail(id: string) {
     const isQrGuardVerified = data.ownerInfo?.isBranded === true;
 
     if (offlineBlacklistMatch.matched) {
-      return { level: "dangerous" as const, label: "DANGEROUS", reason: offlineBlacklistMatch.reason ?? "Known scam pattern", color: colors.danger };
+      return { level: "caution" as const, label: "CAUTION ADVISED", reason: offlineBlacklistMatch.reason ?? "Potential scam pattern detected", color: colors.warning };
     }
 
     const isCommunityAvailable = trust.score >= 0;
@@ -83,12 +83,12 @@ export function useQrDetail(id: string) {
         return { level: "caution" as const, label: "CAUTION", reason: "Mixed community reports", color: colors.warning };
       }
       if (trust.label === "Dangerous" || trust.label === "Suspicious") {
-        return { level: "dangerous" as const, label: "DANGEROUS", reason: "Flagged by the community", color: colors.danger };
+        return { level: "caution" as const, label: "CAUTION ADVISED", reason: "Low community trust score", color: colors.warning };
       }
     }
 
     if (instantVerdict.level === "dangerous") {
-      return { level: "dangerous" as const, label: "DANGEROUS", reason: instantVerdict.reason ?? "Threat detected", color: colors.danger };
+      return { level: "caution" as const, label: "CAUTION ADVISED", reason: instantVerdict.reason ?? "Review recommended", color: colors.warning };
     }
     if (instantVerdict.level === "caution") {
       return { level: "caution" as const, label: "CAUTION", reason: instantVerdict.reason ?? "Proceed carefully", color: colors.warning };

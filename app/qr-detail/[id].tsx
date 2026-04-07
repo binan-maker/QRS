@@ -98,23 +98,21 @@ function VerdictBanner({ verdict, offlineMode }: { verdict: ReturnType<ReturnTyp
   }
 
   const accent =
-    verdict.level === "safe"    ? "#22c55e" :
-    verdict.level === "caution" ? "#f59e0b" : "#ef4444";
+    verdict.level === "safe" ? "#22c55e" : "#f59e0b";
 
   const iconName: keyof typeof Ionicons.glyphMap =
-    verdict.level === "safe"      ? "shield-checkmark-outline" :
-    verdict.label === "UNVERIFIED QR" ? "help-circle-outline"   :
-    verdict.level === "caution"   ? "information-circle-outline" : "warning-outline";
+    verdict.level === "safe"          ? "shield-checkmark-outline" :
+    verdict.label === "UNVERIFIED QR" ? "help-circle-outline"      :
+                                        "information-circle-outline";
 
   const statusText =
-    verdict.level === "safe"    ? "ANALYSIS COMPLETE" :
+    verdict.level === "safe"          ? "ANALYSIS COMPLETE"  :
     verdict.label === "UNVERIFIED QR" ? "IDENTITY UNVERIFIED" :
-    verdict.level === "caution" ? "CAUTION ADVISED"   : "HIGH RISK DETECTED";
+                                        "REVIEW ADVISED";
 
   const bg =
-    verdict.level === "safe"    ? (isDark ? "#0a1a0e" : "#f0fdf4") :
-    verdict.level === "caution" ? (isDark ? "#16120400" : "#fffbeb") :
-                                   (isDark ? "#1a0808"  : "#fff5f5");
+    verdict.level === "safe" ? (isDark ? "#0a1a0e" : "#f0fdf4") :
+                                (isDark ? "#16120400" : "#fffbeb");
 
   return (
     <View style={[verdictStyles.banner, { backgroundColor: bg, borderColor: accent + "28" }]}>

@@ -14,14 +14,11 @@ interface Props {
 export default function SafetyModal({ visible, warnings, riskLevel, onProceed, onBack }: Props) {
   if (!visible) return null;
 
-  const isDangerous = riskLevel === "dangerous";
-  const color = isDangerous ? Colors.dark.danger : Colors.dark.warning;
-  const bgColor = isDangerous ? "rgba(239,68,68,0.12)" : "rgba(245,158,11,0.12)";
-  const icon = isDangerous ? "skull-outline" : "warning-outline";
-  const title = isDangerous ? "Dangerous QR Code" : "Proceed with Caution";
-  const subtitle = isDangerous
-    ? "This QR code has been flagged as dangerous. We strongly recommend not proceeding."
-    : "This QR code has raised some safety concerns. Proceed only if you trust the source.";
+  const color = Colors.dark.warning;
+  const bgColor = "rgba(245,158,11,0.12)";
+  const icon = "warning-outline";
+  const title = "Proceed with Caution";
+  const subtitle = "This QR code has raised some safety concerns. Please verify the source before proceeding.";
 
   return (
     <View style={styles.overlay}>
@@ -47,12 +44,10 @@ export default function SafetyModal({ visible, warnings, riskLevel, onProceed, o
           <Ionicons name="arrow-back" size={18} color="#000" />
           <Text style={styles.backBtnText}>Go Back to Safety</Text>
         </Pressable>
-        {!isDangerous ? (
-          <Pressable onPress={onProceed} style={styles.proceedBtn}>
-            <Text style={styles.proceedBtnText}>I Understand, Proceed</Text>
-            <Ionicons name="chevron-forward" size={16} color={Colors.dark.textMuted} />
-          </Pressable>
-        ) : null}
+        <Pressable onPress={onProceed} style={styles.proceedBtn}>
+          <Text style={styles.proceedBtnText}>I Understand, Proceed</Text>
+          <Ionicons name="chevron-forward" size={16} color={Colors.dark.textMuted} />
+        </Pressable>
       </Reanimated.View>
     </View>
   );
