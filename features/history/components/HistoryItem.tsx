@@ -73,13 +73,16 @@ function getDisplayLabel(contentType: string, content: string): string {
       return "Payment QR";
     } catch { return "Payment QR"; }
   }
+  if (contentType === "url") {
+    try { return new URL(content).hostname.replace("www.", ""); }
+    catch { return content; }
+  }
   return content;
 }
 
 function getSubtitle(contentType: string, content: string): string | null {
   if (contentType === "url") {
-    try { return new URL(content).hostname.replace("www.", ""); }
-    catch { return content.length > 40 ? content.slice(0, 40) + "…" : content; }
+    return content;
   }
   if (contentType === "payment") {
     try {

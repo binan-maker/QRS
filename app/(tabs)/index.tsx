@@ -62,8 +62,10 @@ export default function HomeScreen() {
         if (parsed?.amount) amountText = `₹${Number(parsed.amount).toLocaleString("en-IN")}`;
       } catch {}
     } else if (contentType === "url") {
-      try { subtitle = new URL(scan.content).hostname.replace("www.", ""); }
-      catch { subtitle = null; }
+      try {
+        displayLabel = new URL(scan.content).hostname.replace("www.", "");
+        subtitle = scan.content;
+      } catch {}
     } else if (scan.content.length > 44) {
       subtitle = scan.content.slice(0, 44) + "…";
     }
