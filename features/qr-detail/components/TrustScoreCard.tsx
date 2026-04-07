@@ -163,7 +163,7 @@ const TrustScoreCard = React.memo(function TrustScoreCard({
                       {rt.label}
                     </Text>
                     <Text style={[styles.breakdownPct, { color: rt.color }]} maxFontSizeMultiplier={1}>
-                      {pct}%
+                      {count} {count === 1 ? "person" : "people"}
                     </Text>
                   </View>
                   <View style={[styles.barTrack, { backgroundColor: isDark ? colors.surfaceLight : colors.background }]}>
