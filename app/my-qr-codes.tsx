@@ -24,6 +24,7 @@ import {
   type GeneratedQrItem,
 } from "@/lib/firestore-service";
 import GroupPickerModal from "@/components/groups/GroupPickerModal";
+import GroupsRow from "@/components/groups/GroupsRow";
 
 type Filter = "all" | "individual" | "business";
 type SortKey = "newest" | "oldest" | "mostScanned";
@@ -628,6 +629,7 @@ export default function MyQrCodesScreen() {
     <View style={{ flex: 1, backgroundColor: colors.background }}>
       <NavBar />
       <StatsHeader />
+      <GroupsRow />
       <FilterAndSort />
 
       {loading && qrCodes.length === 0 ? (

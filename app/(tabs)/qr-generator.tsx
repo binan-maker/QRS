@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect, useRef } from "react";
 import { View, Text, StyleSheet, Pressable, ScrollView, Platform, Animated, useWindowDimensions, Keyboard } from "react-native";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -15,6 +15,8 @@ import InfoModal from "@/features/generator/components/InfoModal";
 import PositionModal from "@/features/generator/components/PositionModal";
 import CustomizeDrawer from "@/features/generator/components/CustomizeDrawer";
 import GroupPickerModal from "@/components/groups/GroupPickerModal";
+import GroupSelector from "@/components/groups/GroupSelector";
+import { addQrToGroup } from "@/lib/firestore-service";
 
 export default function QrGeneratorScreen() {
   const insets = useSafeAreaInsets();
@@ -26,6 +28,15 @@ export default function QrGeneratorScreen() {
   const [qrSize, setQrSize] = useState(220);
   const [templateModalOpen, setTemplateModalOpen] = useState(false);
   const [groupPickerOpen, setGroupPickerOpen] = useState(false);
+  const [selectedGroupId, setSelectedGroupId] = useState<string | null>(null);
+  const autoAssignedRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    if (!savedDocId || !selectedGroupId || !user) return;
+    if (autoAssignedRef.current === savedDocId) return;
+    autoAssignedRef.current = savedDocId;
+    addQrToGroup(user.id, selectedGroupId, savedDocId).catch(() => {});
+  }, [savedDocId, selectedGroupId, user?.id]);
 
   const {
     user, svgRef,
@@ -148,6 +159,18 @@ export default function QrGeneratorScreen() {
           />
         </Reanimated.View>
 
+        {user && (
+          <Reanimated.View entering={FadeInDown.duration(400).delay(195)}>
+            <GroupSelector
+              selectedGroupId={selectedGroupId}
+              onSelect={(gid) => {
+                setSelectedGroupId(gid);
+                autoAssignedRef.current = null;
+              }}
+            />
+          </Reanimated.View>
+        )}
+
         <Reanimated.View entering={FadeInDown.duration(400).delay(200)}>
           {(() => {
             const hasLiveQr = !!qrValue;
@@ -199,16 +222,16 @@ export default function QrGeneratorScreen() {
               onPress={() => setGroupPickerOpen(true)}
               style={({ pressed }) => [{
                 flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8,
-                borderRadius: 16, borderWidth: 1.5, borderStyle: "dashed",
-                borderColor: "#6366F1" + "70",
-                paddingVertical: 12, marginBottom: 16,
-                backgroundColor: "#6366F1" + "12",
+                borderRadius: 16, borderWidth: 1,
+                borderColor: "#6366F1" + "40",
+                paddingVertical: 11, marginBottom: 16,
+                backgroundColor: "#6366F1" + "10",
                 opacity: pressed ? 0.8 : 1,
               }]}
             >
-              <Ionicons name="folder-open-outline" size={18} color="#6366F1" />
-              <Text style={{ fontSize: 14, fontFamily: "Inter_700Bold", color: "#6366F1" }}>
-                Add to Group
+              <Ionicons name="folder-outline" size={16} color="#6366F1" />
+              <Text style={{ fontSize: 13, fontFamily: "Inter_600SemiBold", color: "#6366F1" }}>
+                Manage Groups
               </Text>
             </Pressable>
           </Reanimated.View>
@@ -239,7 +262,7 @@ export default function QrGeneratorScreen() {
             onCopy={handleCopy}
             onShare={handleShare}
             onDownload={handleDownloadPdf}
-            onClear={handleClear}
+            onClear={() => { handleClear(); autoAssignedRef.current = null; }}
             sharingQr={sharingQr}
             downloadingPdf={downloadingPdf}
           />
