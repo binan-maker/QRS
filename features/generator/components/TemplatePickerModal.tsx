@@ -76,6 +76,7 @@ export default function TemplatePickerModal({ visible, selectedPreset, onSelect,
             placeholderTextColor={colors.textMuted}
             autoCapitalize="none"
             autoCorrect={false}
+            autoFocus={false}
           />
           {search.length > 0 && (
             <Pressable onPress={() => setSearch("")} hitSlop={8}>

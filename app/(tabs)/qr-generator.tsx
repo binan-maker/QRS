@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from "react";
-import { View, Text, StyleSheet, Pressable, ScrollView, Platform, Animated, useWindowDimensions } from "react-native";
+import { View, Text, StyleSheet, Pressable, ScrollView, Platform, Animated, useWindowDimensions, Keyboard } from "react-native";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Reanimated, { FadeIn, FadeInDown } from "react-native-reanimated";
@@ -34,6 +34,7 @@ export default function QrGeneratorScreen() {
     businessCategory, switchBusinessCategory,
     customLogoUri, showDefaultLogo, logoPosition, setLogoPosition,
     selectedThemeIdx, setSelectedThemeIdx,
+    isCustomTheme, customFgColor, customBgColor, setCustomFgColor, setCustomBgColor,
     advancedSettings, setAdvancedSettings,
     qrFgColor, qrBgColor,
     generatedUuid, generatedAt,
@@ -101,7 +102,10 @@ export default function QrGeneratorScreen() {
             <SmartTemplateBar
               selectedPreset={selectedPreset}
               detectedType={detectedType}
-              onOpenTemplates={() => setTemplateModalOpen(true)}
+              onOpenTemplates={() => {
+                Keyboard.dismiss();
+                setTimeout(() => setTemplateModalOpen(true), 80);
+              }}
               onClearTemplate={() => switchPreset(0)}
             />
           </Reanimated.View>
@@ -125,6 +129,11 @@ export default function QrGeneratorScreen() {
             qrReady={!!qrValue}
             selectedThemeIdx={selectedThemeIdx}
             onSelectTheme={setSelectedThemeIdx}
+            isCustomTheme={isCustomTheme}
+            customFgColor={customFgColor}
+            customBgColor={customBgColor}
+            onSetCustomFg={setCustomFgColor}
+            onSetCustomBg={setCustomBgColor}
             settings={advancedSettings}
             onChangeSettings={setAdvancedSettings}
             customLogoUri={customLogoUri}

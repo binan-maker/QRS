@@ -25,6 +25,11 @@ const BUSINESS_EXTRA_FIELDS: Record<BusinessCategory, BusinessExtraField[]> = {
   whatsapp: [
     { key: "message", label: "Pre-filled message (optional)", placeholder: "Hi, I need help with my order from [Store Name].", keyboard: "default", optional: true },
   ],
+  upi: [
+    { key: "name", label: "Payee Name (optional)", placeholder: "Your Shop Name", keyboard: "default", optional: true },
+    { key: "amount", label: "Fixed Amount ₹ (optional)", placeholder: "0.00", keyboard: "decimal-pad", optional: true },
+    { key: "note", label: "Payment Note (optional)", placeholder: "Order payment", keyboard: "default", optional: true },
+  ],
   event: [
     { key: "date", label: "Date & Time (YYYYMMDDTHHMMSS/YYYYMMDDTHHMMSS)", placeholder: "20260601T180000/20260601T210000", keyboard: "default" },
     { key: "location", label: "Location / Google Maps link (optional)", placeholder: "https://maps.google.com/?q=...", keyboard: "url", optional: true },

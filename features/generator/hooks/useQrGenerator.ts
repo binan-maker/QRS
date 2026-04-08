@@ -68,12 +68,16 @@ export function useQrGenerator() {
   const toastAnim = useRef(new Animated.Value(0)).current;
   const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  const [customFgColor, setCustomFgColor] = useState("#0A0E17");
+  const [customBgColor, setCustomBgColor] = useState("#FFFFFF");
+
   const preset = QR_PRESETS[selectedPreset];
   const privateMode = qrMode === "private";
   const isBranded = !!user && !privateMode;
-  const activeTheme = QR_COLOR_THEMES[selectedThemeIdx] ?? QR_COLOR_THEMES[0];
-  const qrFgColor = activeTheme.fg;
-  const qrBgColor = activeTheme.bg;
+  const isCustomTheme = selectedThemeIdx === QR_COLOR_THEMES.length;
+  const activeTheme = isCustomTheme ? null : (QR_COLOR_THEMES[selectedThemeIdx] ?? QR_COLOR_THEMES[0]);
+  const qrFgColor = isCustomTheme ? customFgColor : (activeTheme?.fg ?? "#0A0E17");
+  const qrBgColor = isCustomTheme ? customBgColor : (activeTheme?.bg ?? "#F8FAFC");
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -93,6 +97,17 @@ export function useQrGenerator() {
             const phone = v.replace(/[\s\-()]/g, "").replace(/^\+/, "");
             const msg = extraFields.message?.trim() || "";
             dest = msg ? `https://wa.me/${phone}?text=${encodeURIComponent(msg)}` : `https://wa.me/${phone}`;
+            break;
+          }
+          case "upi": {
+            const params = new URLSearchParams({ pa: v, cu: "INR" });
+            const name = extraFields.name?.trim();
+            const amount = extraFields.amount?.trim();
+            const note = extraFields.note?.trim();
+            if (name) params.set("pn", name);
+            if (amount) params.set("am", amount);
+            if (note) params.set("tn", note);
+            dest = `upi://pay?${params.toString()}`;
             break;
           }
           case "event": {
@@ -172,6 +187,16 @@ export function useQrGenerator() {
         const msg = extraFields.message?.trim() || "";
         return msg ? `https://wa.me/${phone}?text=${encodeURIComponent(msg)}` : `https://wa.me/${phone}`;
       }
+      case "upi": {
+        const params = new URLSearchParams({ pa: v, cu: "INR" });
+        const name = extraFields.name?.trim();
+        const amount = extraFields.amount?.trim();
+        const note = extraFields.note?.trim();
+        if (name) params.set("pn", name);
+        if (amount) params.set("am", amount);
+        if (note) params.set("tn", note);
+        return `upi://pay?${params.toString()}`;
+      }
       case "event": {
         const title = encodeURIComponent(v);
         const date = extraFields.date?.trim() || "";
@@ -195,6 +220,12 @@ export function useQrGenerator() {
     if (businessCategory === "whatsapp") {
       const clean = v.replace(/[\s\-()]/g, "");
       if (!/^\+?\d{7,15}$/.test(clean)) return "Please enter a valid WhatsApp number with country code (e.g. +91 9876543210).";
+      return null;
+    }
+    if (businessCategory === "upi") {
+      if (!v.includes("@") && !/^\d{10}@/.test(v) && !/^[\w.-]+@[\w]+$/.test(v)) {
+        return "Please enter a valid UPI ID (e.g. name@upi or 9876543210@paytm).";
+      }
       return null;
     }
     if (businessCategory === "event") return null;
@@ -506,6 +537,8 @@ export function useQrGenerator() {
     setBusinessName("");
     setBusinessCategory("dynamic");
     setSelectedThemeIdx(0);
+    setCustomFgColor("#0A0E17");
+    setCustomBgColor("#FFFFFF");
     setAdvancedSettings({ scanLimit: null, expiryPreset: "never", expiryCustomDate: "", label: "" });
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
   }
@@ -532,6 +565,11 @@ export function useQrGenerator() {
     setLogoPosition,
     selectedThemeIdx,
     setSelectedThemeIdx,
+    isCustomTheme,
+    customFgColor,
+    customBgColor,
+    setCustomFgColor,
+    setCustomBgColor,
     advancedSettings,
     setAdvancedSettings,
     qrFgColor,
