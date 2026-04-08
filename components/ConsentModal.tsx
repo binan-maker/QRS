@@ -6,14 +6,14 @@ import {
   ScrollView,
   Pressable,
   StyleSheet,
-  StatusBar,
   Platform,
+  StatusBar,
   NativeScrollEvent,
   NativeSyntheticEvent,
   useWindowDimensions,
 } from "react-native";
 import { router } from "expo-router";
-import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
+import { Ionicons } from "@expo/vector-icons";
 import { useTheme } from "@/contexts/ThemeContext";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
@@ -47,6 +47,9 @@ export default function ConsentModal({ visible, onAccept }: ConsentModalProps) {
   const [scrolledToBottom, setScrolledToBottom] = useState(false);
   const scrollRef = useRef<ScrollView>(null);
 
+  const statusBarHeight =
+    Platform.OS === "android" ? (StatusBar.currentHeight ?? 24) : 44;
+
   const handleScroll = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
     const { layoutMeasurement, contentOffset, contentSize } = e.nativeEvent;
     const isAtBottom =
@@ -59,547 +62,376 @@ export default function ConsentModal({ visible, onAccept }: ConsentModalProps) {
     onAccept();
   };
 
-  const openPrivacyPolicy = () => {
-    router.push("/privacy-policy" as never);
-  };
+  const openPrivacyPolicy = () => router.push("/privacy-policy" as never);
+  const openTerms = () => router.push("/terms" as never);
 
-  const openTerms = () => {
-    router.push("/terms" as never);
-  };
+  const cardMaxHeight = height - statusBarHeight - 48;
 
-  const s = makeStyles(colors, isDark);
+  const cardBg = isDark ? "#1C2B3A" : "#FFFFFF";
+  const overlayBg = isDark ? "rgba(0,0,0,0.72)" : "rgba(0,0,0,0.54)";
+  const dividerColor = isDark ? "rgba(255,255,255,0.10)" : "rgba(0,0,0,0.08)";
+  const bodyText = isDark ? "#CBD5E1" : "#374151";
+  const boldText = isDark ? "#F1F5F9" : "#111827";
+  const sectionLabel = isDark ? "#64748B" : "#9CA3AF";
+  const accentWarning = isDark ? "#F59E0B" : "#D97706";
+  const hintText = isDark ? "#64748B" : "#9CA3AF";
+  const checkboxBorder = isDark ? "#475569" : "#D1D5DB";
+  const checkboxLabel = isDark ? "#CBD5E1" : "#374151";
+  const linkColor = colors.primary;
+  const btnDisabledBg = isDark ? "#1E3A5F" : "#EFF6FF";
+  const btnDisabledText = isDark ? "#3B82F6" : "#93C5FD";
 
   return (
     <Modal
       visible={visible}
-      transparent={false}
+      transparent
       animationType="fade"
       statusBarTranslucent
       onRequestClose={() => {}}
     >
-      <StatusBar
-        barStyle={isDark ? "light-content" : "dark-content"}
-        backgroundColor={colors.background}
-        translucent={false}
-      />
-      <View style={s.container}>
-        <View style={s.header}>
-          <View style={s.shieldWrap}>
-            <MaterialCommunityIcons
-              name="shield-check"
-              size={30}
-              color={colors.primary}
-            />
+      <View
+        style={[
+          styles.overlay,
+          { backgroundColor: overlayBg, paddingTop: statusBarHeight + 8 },
+        ]}
+      >
+        <View
+          style={[
+            styles.card,
+            {
+              backgroundColor: cardBg,
+              maxHeight: cardMaxHeight,
+              shadowColor: isDark ? "#000" : "#000",
+            },
+          ]}
+        >
+          {/* Header */}
+          <View style={[styles.header, { borderBottomColor: dividerColor }]}>
+            <Text style={[styles.title, { color: boldText }]}>
+              Before You Continue
+            </Text>
+            <Text style={[styles.subtitle, { color: hintText }]}>
+              Please read and accept our terms to use QR Guard
+            </Text>
           </View>
-          <Text style={s.title}>Before You Continue</Text>
-          <Text style={s.subtitle}>
-            Please read and accept our terms to use QR Guard
-          </Text>
-        </View>
 
-        <View style={s.scrollContainer}>
-          <ScrollView
-            ref={scrollRef}
-            style={s.scroll}
-            contentContainerStyle={s.scrollContent}
-            onScroll={handleScroll}
-            scrollEventThrottle={16}
-            showsVerticalScrollIndicator={true}
-            bounces={true}
-            alwaysBounceVertical={true}
-          >
-            <Section
-              title="⚠️ BETA SOFTWARE — IMPORTANT NOTICE"
-              accent={colors.warning}
-              colors={colors}
-              isDark={isDark}
+          {/* Scrollable Terms Body */}
+          <View style={styles.scrollWrapper}>
+            <ScrollView
+              ref={scrollRef}
+              style={styles.scroll}
+              contentContainerStyle={styles.scrollContent}
+              onScroll={handleScroll}
+              scrollEventThrottle={16}
+              showsVerticalScrollIndicator={true}
+              bounces={Platform.OS === "ios"}
             >
-              <Para colors={colors}>
-                QR Guard is currently a{" "}
-                <Bold colors={colors}>beta-stage application</Bold>. It is
-                under active development. Features may be incomplete, unstable,
-                or change without prior notice. You use this application at
-                your own risk.
-              </Para>
-            </Section>
+              <TermSection label="⚠ BETA NOTICE" accent={accentWarning}>
+                <BodyText color={bodyText} bold={boldText}>
+                  QR Guard is a{" "}
+                  <B color={boldText}>beta-stage application</B> under active
+                  development. Features may be incomplete or change without
+                  notice. You use this app at your own risk.
+                </BodyText>
+              </TermSection>
 
-            <Section title="1. Nature of the Service" colors={colors} isDark={isDark}>
-              <Para colors={colors}>
-                QR Guard provides QR code scanning, analysis, and generation
-                services. Our security analysis is{" "}
-                <Bold colors={colors}>advisory and informational only</Bold>.
-                It is not a substitute for professional cybersecurity advice.
-              </Para>
-              <Para colors={colors}>
-                <Bold colors={colors}>
-                  We cannot and do not guarantee that any QR code is 100% safe
-                  or 100% dangerous.
-                </Bold>{" "}
-                Our analysis uses heuristics, community reports, third-party
-                threat intelligence APIs, and pattern matching — all of which
-                are subject to error.
-              </Para>
-              <Para colors={colors}>
-                <Bold colors={colors}>False positives may occur:</Bold> A
-                legitimate QR code may be flagged as dangerous.{" "}
-                <Bold colors={colors}>False negatives may occur:</Bold> A
-                malicious QR code may be reported as safe. Always exercise your
-                own judgment before scanning any QR code.
-              </Para>
-            </Section>
+              <TermSection label="1. Nature of the Service">
+                <BodyText color={bodyText} bold={boldText}>
+                  Our security analysis is{" "}
+                  <B color={boldText}>advisory and informational only</B> — not
+                  a substitute for professional cybersecurity advice.
+                </BodyText>
+                <BodyText color={bodyText} bold={boldText}>
+                  <B color={boldText}>
+                    We do not guarantee any QR code is 100% safe or 100%
+                    dangerous.
+                  </B>{" "}
+                  False positives and false negatives may occur. Always exercise
+                  your own judgment.
+                </BodyText>
+              </TermSection>
 
-            <Section title={'2. No Warranty — "As Is" Disclaimer'} colors={colors} isDark={isDark}>
-              <Para colors={colors}>
-                THIS APPLICATION IS PROVIDED{" "}
-                <Bold colors={colors}>"AS IS" AND "AS AVAILABLE"</Bold> WITHOUT
-                ANY WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT
-                LIMITED TO: WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
-                PARTICULAR PURPOSE, ACCURACY, OR UNINTERRUPTED OPERATION.
-              </Para>
-              <Para colors={colors}>
-                QR Guard, its developers, officers, employees, and affiliates
-                make{" "}
-                <Bold colors={colors}>
-                  no representations or guarantees regarding the accuracy,
-                  reliability, completeness, or timeliness
-                </Bold>{" "}
-                of any analysis, verdict, or information provided by the app.
-              </Para>
-            </Section>
+              <TermSection label='2. No Warranty ("As Is")'>
+                <BodyText color={bodyText} bold={boldText}>
+                  This app is provided{" "}
+                  <B color={boldText}>"as is" and "as available"</B> without
+                  any warranty — express or implied — including warranties of
+                  merchantability, fitness, accuracy, or uninterrupted
+                  operation.
+                </BodyText>
+              </TermSection>
 
-            <Section title="3. Limitation of Liability" colors={colors} isDark={isDark}>
-              <Para colors={colors}>
-                TO THE MAXIMUM EXTENT PERMITTED BY APPLICABLE LAW (INCLUDING
-                THE INFORMATION TECHNOLOGY ACT, 2000 AND ITS 2008 AMENDMENT):
-              </Para>
-              <Para colors={colors}>
-                QR Guard and its developers shall{" "}
-                <Bold colors={colors}>not be liable</Bold> for any direct,
-                indirect, incidental, special, consequential, punitive, or
-                exemplary damages, including financial loss, identity theft,
-                data loss, business interruption, or any other harm arising
-                from your use of or reliance on this application.
-              </Para>
-              <Para colors={colors}>
-                The maximum aggregate liability of QR Guard for any claim shall
-                not exceed{" "}
-                <Bold colors={colors}>
-                  the amount you paid for the app in the preceding 12 months
-                  (if any), or ₹0 (zero rupees), whichever is greater
-                </Bold>
-                .
-              </Para>
-            </Section>
+              <TermSection label="3. Limitation of Liability">
+                <BodyText color={bodyText} bold={boldText}>
+                  QR Guard and its developers shall{" "}
+                  <B color={boldText}>not be liable</B> for any direct,
+                  indirect, financial, or consequential damages arising from
+                  your use of this app. Maximum liability is limited to{" "}
+                  <B color={boldText}>₹0 or the amount you paid</B>, whichever
+                  is greater.
+                </BodyText>
+              </TermSection>
 
-            <Section title="4. Data We Collect" colors={colors} isDark={isDark}>
-              <Para colors={colors}>
-                By using this app, you acknowledge and consent to our collection
-                of the following data:
-              </Para>
-              <BulletList
-                items={[
-                  "Account information: Email address, display name, profile picture, and authentication identifiers.",
-                  "Device information: Device type, OS, app version, and unique device identifiers.",
-                  "Usage data: Scan history, QR code content you scan or generate, and feature usage patterns.",
-                  "QR code content: URLs, payment data, text, contact info, and other embedded data.",
-                  "Network data: IP address, approximate location (derived from IP), and network type.",
-                  "Camera data: Images processed locally for QR detection — not uploaded unless you share them.",
-                  "Community contributions: Reports, comments, and trust votes you submit.",
-                ]}
-                colors={colors}
-              />
-            </Section>
-
-            <Section title="5. How We Use Your Data" colors={colors} isDark={isDark}>
-              <BulletList
-                items={[
-                  "To provide, operate, and improve the QR Guard service.",
-                  "To perform security analysis on QR codes you scan.",
-                  "To maintain your account and scan history.",
-                  "To send you relevant notifications (with your permission).",
-                  "To detect and prevent abuse, fraud, and security threats.",
-                  "To comply with applicable laws and regulations.",
-                ]}
-                colors={colors}
-              />
-            </Section>
-
-            <Section
-              title="6. AI Training & Data Pattern Analysis — IMPORTANT"
-              accent={colors.warning}
-              colors={colors}
-              isDark={isDark}
-            >
-              <Para colors={colors}>
-                <Bold colors={colors}>
-                  BY USING QR GUARD, YOU EXPLICITLY CONSENT TO THE FOLLOWING:
-                </Bold>
-              </Para>
-              <Para colors={colors}>
-                Your anonymised scan data, QR code content patterns, and usage
-                behaviour may be used to{" "}
-                <Bold colors={colors}>
-                  train, improve, and refine our AI threat detection models
-                </Bold>
-                . This includes machine learning models for URL analysis,
-                payment fraud detection, and QR code pattern recognition.
-              </Para>
-              <BulletList
-                items={[
-                  "Anonymised scan patterns are used to detect new phishing campaigns.",
-                  "Community report patterns train our automated classification systems.",
-                  "Aggregated, anonymised threat intelligence data may be shared with security research partners.",
-                  "Your personal identity is never included in AI training datasets.",
-                  "You cannot opt out of this data use while using the scanning feature, as it is core to how the service works.",
-                ]}
-                colors={colors}
-              />
-            </Section>
-
-            <Section
-              title="7. Advertising & Monetisation"
-              accent={colors.warning}
-              colors={colors}
-              isDark={isDark}
-            >
-              <Para colors={colors}>
-                QR Guard may display in-app advertisements. Aggregated,
-                non-personally-identifiable usage data may be used to serve{" "}
-                <Bold colors={colors}>contextually relevant advertisements</Bold>{" "}
-                within the app.
-              </Para>
-              <BulletList
-                items={[
-                  "Device type, approximate location (city/region), and general usage category data may be shared with advertising partners.",
-                  "We do NOT share your name, email, specific QR scan content, or payment data with advertisers.",
-                  "We do not sell your personally identifiable information to third parties.",
-                ]}
-                colors={colors}
-              />
-            </Section>
-
-            <Section title="8. Data Breach & Security Disclaimer" colors={colors} isDark={isDark}>
-              <Para colors={colors}>
-                <Bold colors={colors}>
-                  In the event of a data breach, we cannot guarantee that your
-                  data will remain uncompromised.
-                </Bold>{" "}
-                We will notify affected users and relevant authorities as
-                required by applicable law.
-              </Para>
-              <Para colors={colors}>
-                <Bold colors={colors}>
-                  QR Guard shall not be held liable for data breaches caused by
-                  third-party actors, cyberattacks, or events beyond our
-                  reasonable control.
-                </Bold>{" "}
-                By using this app, you accept this risk.
-              </Para>
-            </Section>
-
-            <Section title="9. Third-Party Services" colors={colors} isDark={isDark}>
-              <Para colors={colors}>
-                QR Guard integrates with third-party services including Firebase
-                (Google), Google Safe Browsing API, Razorpay, and others. These
-                services have their own privacy policies. We are{" "}
-                <Bold colors={colors}>not responsible</Bold> for the practices
-                of these third parties.
-              </Para>
-            </Section>
-
-            <Section title="10. User Responsibility & Assumption of Risk" colors={colors} isDark={isDark}>
-              <BulletList
-                items={[
-                  "You use QR Guard voluntarily and at your own risk.",
-                  "You are solely responsible for any actions you take based on the app's analysis results.",
-                  "You will exercise your own independent judgment when scanning QR codes, especially for financial transactions.",
-                  "QR Guard's verdicts (SAFE, CAUTION, DANGEROUS) are risk indicators — not absolute determinations of safety.",
-                ]}
-                colors={colors}
-              />
-            </Section>
-
-            <Section title="11. Dispute Resolution & Governing Law" colors={colors} isDark={isDark}>
-              <Para colors={colors}>
-                These terms are governed by the laws of{" "}
-                <Bold colors={colors}>the Republic of India</Bold>. Disputes
-                shall first be resolved through good-faith negotiation. If
-                unresolved, disputes shall be subject to{" "}
-                <Bold colors={colors}>
-                  binding arbitration under the Arbitration and Conciliation
-                  Act, 1996 of India
-                </Bold>
-                , with the seat of arbitration in Kerala, India.
-              </Para>
-              <Para colors={colors}>
-                <Bold colors={colors}>
-                  You waive any right to participate in a class action lawsuit
-                  or class-wide arbitration
-                </Bold>{" "}
-                against QR Guard. Any claim must be brought on an individual
-                basis only.
-              </Para>
-            </Section>
-
-            <Section title="12. Changes to Terms" colors={colors} isDark={isDark}>
-              <Para colors={colors}>
-                We may update these terms from time to time. When we do, we
-                will update the consent version and require you to re-accept
-                before continuing to use the app.
-              </Para>
-            </Section>
-
-            <Section title="13. Contact Us" colors={colors} isDark={isDark}>
-              <Para colors={colors}>
-                For privacy concerns, data requests, or legal inquiries:{"\n"}
-                <Bold colors={colors}>legal@qrguard.app</Bold>
-                {"\n"}
-                <Bold colors={colors}>privacy@qrguard.app</Bold>
-              </Para>
-            </Section>
-
-            <View style={s.policyLinks}>
-              <Text style={[s.policyText, { color: colors.textSecondary }]}>
-                Read our full policies for complete details:
-              </Text>
-              <View style={s.policyButtonRow}>
-                <Pressable
-                  style={[
-                    s.policyBtn,
-                    {
-                      borderColor: colors.primary + "60",
-                      backgroundColor: colors.primary + "18",
-                    },
+              <TermSection label="4. Data We Collect">
+                <BulletList
+                  color={bodyText}
+                  bullet={colors.primary}
+                  items={[
+                    "Account info: email, display name, profile picture.",
+                    "Device info: OS, app version, device identifiers.",
+                    "Usage data: scan history, feature usage patterns.",
+                    "QR content: URLs, payment data, text in scanned codes.",
+                    "Network data: IP address, approximate location.",
+                    "Camera: images processed locally, not uploaded.",
+                    "Community: reports and votes you submit.",
                   ]}
-                  onPress={openPrivacyPolicy}
-                >
-                  <Ionicons
-                    name="shield-outline"
-                    size={14}
-                    color={colors.primary}
-                  />
-                  <Text style={[s.policyBtnText, { color: colors.primary }]}>
+                />
+              </TermSection>
+
+              <TermSection label="5. How We Use Your Data">
+                <BulletList
+                  color={bodyText}
+                  bullet={colors.primary}
+                  items={[
+                    "To provide and improve the QR Guard service.",
+                    "To perform security analysis on QR codes.",
+                    "To maintain your account and scan history.",
+                    "To detect and prevent abuse and security threats.",
+                    "To comply with applicable laws.",
+                  ]}
+                />
+              </TermSection>
+
+              <TermSection label="6. AI Training — IMPORTANT" accent={accentWarning}>
+                <BodyText color={bodyText} bold={boldText}>
+                  <B color={boldText}>
+                    BY USING QR GUARD, YOU CONSENT TO:
+                  </B>{" "}
+                  Your anonymised scan data may be used to{" "}
+                  <B color={boldText}>
+                    train and improve our AI threat detection models
+                  </B>
+                  . You cannot opt out while using the scanning feature.
+                </BodyText>
+              </TermSection>
+
+              <TermSection label="7. Advertising">
+                <BodyText color={bodyText} bold={boldText}>
+                  QR Guard may display ads. Aggregated non-personal usage data
+                  may be shared with advertising partners for ad relevance. We
+                  do <B color={boldText}>not</B> sell personally identifiable
+                  information.
+                </BodyText>
+              </TermSection>
+
+              <TermSection label="8. Data Security">
+                <BodyText color={bodyText} bold={boldText}>
+                  We implement industry-standard security measures.{" "}
+                  <B color={boldText}>
+                    QR Guard is not liable for breaches caused by third-party
+                    actors or cyberattacks beyond our control.
+                  </B>
+                </BodyText>
+              </TermSection>
+
+              <TermSection label="9. Third-Party Services">
+                <BodyText color={bodyText} bold={boldText}>
+                  The app integrates Firebase, Google Safe Browsing, Razorpay,
+                  and others. We are{" "}
+                  <B color={boldText}>not responsible</B> for those third
+                  parties' practices.
+                </BodyText>
+              </TermSection>
+
+              <TermSection label="10. Your Responsibility">
+                <BulletList
+                  color={bodyText}
+                  bullet={colors.primary}
+                  items={[
+                    "You use QR Guard voluntarily and at your own risk.",
+                    "You are solely responsible for actions taken based on verdicts.",
+                    "SAFE / CAUTION / DANGEROUS are indicators, not guarantees.",
+                  ]}
+                />
+              </TermSection>
+
+              <TermSection label="11. Governing Law">
+                <BodyText color={bodyText} bold={boldText}>
+                  Governed by the laws of{" "}
+                  <B color={boldText}>the Republic of India</B>. Disputes are
+                  resolved by arbitration in Kerala, India (Arbitration Act,
+                  1996). Class-action claims are waived.
+                </BodyText>
+              </TermSection>
+
+              <TermSection label="12. Contact">
+                <BodyText color={bodyText} bold={boldText}>
+                  <B color={boldText}>legal@qrguard.app</B>
+                  {" · "}
+                  <B color={boldText}>privacy@qrguard.app</B>
+                </BodyText>
+              </TermSection>
+
+              <View style={[styles.policyRow, { borderTopColor: dividerColor }]}>
+                <Pressable onPress={openPrivacyPolicy}>
+                  <Text style={[styles.policyLink, { color: linkColor }]}>
                     Privacy Policy
                   </Text>
                 </Pressable>
-                <Pressable
-                  style={[
-                    s.policyBtn,
-                    {
-                      borderColor: colors.primary + "60",
-                      backgroundColor: colors.primary + "18",
-                    },
-                  ]}
-                  onPress={openTerms}
-                >
-                  <Ionicons
-                    name="document-text-outline"
-                    size={14}
-                    color={colors.primary}
-                  />
-                  <Text style={[s.policyBtnText, { color: colors.primary }]}>
+                <Text style={[styles.policyDot, { color: hintText }]}>·</Text>
+                <Pressable onPress={openTerms}>
+                  <Text style={[styles.policyLink, { color: linkColor }]}>
                     Terms of Service
                   </Text>
                 </Pressable>
               </View>
-            </View>
-          </ScrollView>
+            </ScrollView>
 
-          {!scrolledToBottom && (
-            <View
-              style={[
-                s.scrollHint,
-                { backgroundColor: isDark ? "#0E1829" : colors.surface },
-              ]}
+            {!scrolledToBottom && (
+              <View
+                style={[styles.scrollHint, { backgroundColor: cardBg }]}
+                pointerEvents="none"
+              >
+                <Text style={[styles.scrollHintText, { color: hintText }]}>
+                  Scroll to read all terms ↓
+                </Text>
+              </View>
+            )}
+          </View>
+
+          {/* Footer */}
+          <View style={[styles.footer, { borderTopColor: dividerColor }]}>
+            <Pressable
+              style={styles.checkRow}
+              onPress={() => setChecked((c) => !c)}
+              accessibilityRole="checkbox"
+              accessibilityState={{ checked }}
             >
-              <Ionicons
-                name="chevron-down-circle"
-                size={18}
-                color={colors.primary}
-              />
-              <Text style={[s.scrollHintText, { color: colors.textSecondary }]}>
-                Scroll to read all terms
+              <View
+                style={[
+                  styles.checkbox,
+                  {
+                    borderColor: checked ? colors.primary : checkboxBorder,
+                    backgroundColor: checked ? colors.primary : "transparent",
+                  },
+                ]}
+              >
+                {checked && (
+                  <Ionicons name="checkmark" size={12} color="#fff" />
+                )}
+              </View>
+              <Text style={[styles.checkLabel, { color: checkboxLabel }]}>
+                I have read and agree to QR Guard's{" "}
+                <Text style={{ color: linkColor }} onPress={openPrivacyPolicy}>
+                  Privacy Policy
+                </Text>{" "}
+                and{" "}
+                <Text style={{ color: linkColor }} onPress={openTerms}>
+                  Terms of Service
+                </Text>
+                .
               </Text>
-            </View>
-          )}
-        </View>
+            </Pressable>
 
-        <View
-          style={[
-            s.footer,
-            {
-              borderTopColor: colors.surfaceBorder,
-              backgroundColor: isDark ? "#0A1120" : colors.surface,
-            },
-          ]}
-        >
-          <Pressable
-            style={s.checkboxRow}
-            onPress={() => setChecked((c) => !c)}
-            accessibilityRole="checkbox"
-            accessibilityState={{ checked }}
-          >
-            <View
+            <Pressable
               style={[
-                s.checkbox,
+                styles.acceptBtn,
                 {
-                  borderColor: checked ? colors.primary : colors.surfaceBorder,
-                  backgroundColor: checked ? colors.primary : "transparent",
+                  backgroundColor: checked ? colors.primary : btnDisabledBg,
                 },
               ]}
+              onPress={checked ? handleAccept : undefined}
+              disabled={!checked}
+              accessibilityLabel="Accept and continue"
             >
-              {checked && (
-                <Ionicons name="checkmark" size={13} color="#fff" />
-              )}
-            </View>
-            <Text style={[s.checkboxLabel, { color: colors.text }]}>
-              I have read, understood, and agree to the above terms,
-              disclaimers, and QR Guard's{" "}
               <Text
-                style={{ color: colors.primary }}
-                onPress={openPrivacyPolicy}
+                style={[
+                  styles.acceptBtnText,
+                  { color: checked ? "#fff" : btnDisabledText },
+                ]}
               >
-                Privacy Policy
-              </Text>{" "}
-              and{" "}
-              <Text style={{ color: colors.primary }} onPress={openTerms}>
-                Terms of Service
+                I Accept — Continue
               </Text>
-              .
-            </Text>
-          </Pressable>
+            </Pressable>
 
-          <Pressable
-            style={[
-              s.acceptBtn,
-              {
-                backgroundColor: checked
-                  ? colors.primary
-                  : isDark
-                  ? "#1A2840"
-                  : colors.surfaceLight,
-                opacity: checked ? 1 : 0.6,
-              },
-            ]}
-            onPress={checked ? handleAccept : undefined}
-            disabled={!checked}
-            accessibilityLabel="Accept and continue"
-          >
-            <Ionicons
-              name="shield-checkmark"
-              size={18}
-              color={checked ? "#fff" : colors.textMuted}
-            />
-            <Text
-              style={[
-                s.acceptBtnText,
-                { color: checked ? "#fff" : colors.textMuted },
-              ]}
-            >
-              I Accept — Continue to App
+            <Text style={[styles.version, { color: hintText }]}>
+              Consent v{CONSENT_VERSION} · QR Guard Beta
             </Text>
-          </Pressable>
-
-          <Text style={[s.versionNote, { color: colors.textMuted }]}>
-            Consent record v{CONSENT_VERSION} · QR Guard Beta
-          </Text>
+          </View>
         </View>
       </View>
     </Modal>
   );
 }
 
-function Section({
-  title,
+function TermSection({
+  label,
   accent,
   children,
-  colors,
-  isDark,
 }: {
-  title: string;
+  label: string;
   accent?: string;
   children: React.ReactNode;
-  colors: any;
-  isDark: boolean;
 }) {
-  const titleColor = accent ?? (isDark ? "#7A90B8" : colors.textSecondary);
   return (
-    <View style={{ marginBottom: 20 }}>
+    <View style={{ marginBottom: 16 }}>
       <Text
         style={{
-          fontSize: 13,
+          fontSize: 10,
           fontWeight: "700",
-          color: titleColor,
-          marginBottom: 8,
-          letterSpacing: 0.2,
+          letterSpacing: 0.8,
+          textTransform: "uppercase",
+          color: accent ?? "#9CA3AF",
+          marginBottom: 6,
         }}
       >
-        {title}
+        {label}
       </Text>
       {children}
     </View>
   );
 }
 
-function Para({
+function BodyText({
   children,
-  colors,
+  color,
+  bold,
 }: {
   children: React.ReactNode;
-  colors: any;
+  color: string;
+  bold: string;
 }) {
   return (
-    <Text
-      style={{
-        fontSize: 13,
-        color: colors.textSecondary,
-        lineHeight: 20,
-        marginBottom: 8,
-      }}
-    >
+    <Text style={{ fontSize: 13, color, lineHeight: 20, marginBottom: 6 }}>
       {children}
     </Text>
   );
 }
 
-function Bold({
-  children,
-  colors,
-}: {
-  children: React.ReactNode;
-  colors: any;
-}) {
-  return (
-    <Text style={{ fontWeight: "700", color: colors.text }}>{children}</Text>
-  );
+function B({ children, color }: { children: React.ReactNode; color: string }) {
+  return <Text style={{ fontWeight: "700", color }}>{children}</Text>;
 }
 
-function BulletList({ items, colors }: { items: string[]; colors: any }) {
+function BulletList({
+  items,
+  color,
+  bullet,
+}: {
+  items: string[];
+  color: string;
+  bullet: string;
+}) {
   return (
     <View>
       {items.map((item, i) => (
         <View
           key={i}
-          style={{ flexDirection: "row", marginBottom: 6, alignItems: "flex-start" }}
+          style={{ flexDirection: "row", marginBottom: 4, alignItems: "flex-start" }}
         >
-          <Text
-            style={{
-              fontSize: 14,
-              lineHeight: 20,
-              marginRight: 8,
-              color: colors.primary,
-            }}
-          >
+          <Text style={{ color: bullet, fontSize: 13, lineHeight: 20, marginRight: 6 }}>
             •
           </Text>
-          <Text
-            style={{
-              flex: 1,
-              fontSize: 13,
-              color: colors.textSecondary,
-              lineHeight: 20,
-            }}
-          >
+          <Text style={{ flex: 1, fontSize: 13, color, lineHeight: 20 }}>
             {item}
           </Text>
         </View>
@@ -608,146 +440,121 @@ function BulletList({ items, colors }: { items: string[]; colors: any }) {
   );
 }
 
-function makeStyles(colors: any, isDark: boolean) {
-  const bg = isDark ? "#081018" : colors.background;
-  const headerBg = isDark ? "#0A1120" : (colors.surface ?? "#F5F7FA");
-  const borderColor = isDark
-    ? "rgba(75,142,245,0.18)"
-    : colors.surfaceBorder ?? "#E0E7EF";
-
-  return StyleSheet.create({
-    container: {
-      flex: 1,
-      backgroundColor: bg,
-    },
-    header: {
-      alignItems: "center",
-      paddingHorizontal: 20,
-      paddingTop: Platform.OS === "android" ? 20 : 48,
-      paddingBottom: 16,
-      borderBottomWidth: 1,
-      borderBottomColor: borderColor,
-      backgroundColor: headerBg,
-    },
-    shieldWrap: {
-      width: 52,
-      height: 52,
-      borderRadius: 14,
-      backgroundColor: colors.primary + "1A",
-      borderWidth: 1,
-      borderColor: colors.primary + "40",
-      alignItems: "center",
-      justifyContent: "center",
-      marginBottom: 10,
-    },
-    title: {
-      fontSize: 20,
-      fontWeight: "700",
-      color: colors.text,
-      textAlign: "center",
-    },
-    subtitle: {
-      fontSize: 13,
-      color: colors.textSecondary,
-      textAlign: "center",
-      marginTop: 4,
-    },
-    scrollContainer: {
-      flex: 1,
-      position: "relative",
-    },
-    scroll: {
-      flex: 1,
-    },
-    scrollContent: {
-      padding: 20,
-      paddingBottom: 24,
-    },
-    scrollHint: {
-      position: "absolute",
-      bottom: 0,
-      left: 0,
-      right: 0,
-      flexDirection: "row",
-      alignItems: "center",
-      justifyContent: "center",
-      paddingVertical: 8,
-      gap: 6,
-      borderTopWidth: 1,
-      borderTopColor: borderColor,
-    },
-    scrollHintText: {
-      fontSize: 12,
-      fontWeight: "500",
-    },
-    policyLinks: {
-      marginTop: 8,
-      marginBottom: 8,
-      alignItems: "center",
-    },
-    policyText: {
-      fontSize: 12,
-      marginBottom: 10,
-    },
-    policyButtonRow: {
-      flexDirection: "row",
-      gap: 10,
-    },
-    policyBtn: {
-      flexDirection: "row",
-      alignItems: "center",
-      gap: 5,
-      paddingHorizontal: 14,
-      paddingVertical: 8,
-      borderRadius: 8,
-      borderWidth: 1,
-    },
-    policyBtnText: {
-      fontSize: 13,
-      fontWeight: "600",
-    },
-    footer: {
-      paddingHorizontal: 16,
-      paddingTop: 14,
-      paddingBottom: Platform.OS === "android" ? 20 : 32,
-      borderTopWidth: 1,
-      gap: 12,
-    },
-    checkboxRow: {
-      flexDirection: "row",
-      alignItems: "flex-start",
-      gap: 10,
-    },
-    checkbox: {
-      width: 22,
-      height: 22,
-      borderRadius: 6,
-      borderWidth: 2,
-      alignItems: "center",
-      justifyContent: "center",
-      marginTop: 1,
-      flexShrink: 0,
-    },
-    checkboxLabel: {
-      flex: 1,
-      fontSize: 13,
-      lineHeight: 20,
-    },
-    acceptBtn: {
-      flexDirection: "row",
-      alignItems: "center",
-      justifyContent: "center",
-      gap: 8,
-      paddingVertical: 15,
-      borderRadius: 12,
-    },
-    acceptBtnText: {
-      fontSize: 15,
-      fontWeight: "700",
-    },
-    versionNote: {
-      fontSize: 10,
-      textAlign: "center",
-    },
-  });
-}
+const styles = StyleSheet.create({
+  overlay: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    paddingHorizontal: 20,
+    paddingBottom: 20,
+  },
+  card: {
+    width: "100%",
+    maxWidth: 480,
+    borderRadius: 16,
+    overflow: "hidden",
+    elevation: 24,
+    shadowOpacity: 0.24,
+    shadowRadius: 20,
+    shadowOffset: { width: 0, height: 8 },
+  },
+  header: {
+    paddingHorizontal: 20,
+    paddingTop: 22,
+    paddingBottom: 14,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+  },
+  title: {
+    fontSize: 18,
+    fontWeight: "700",
+    letterSpacing: -0.3,
+    marginBottom: 3,
+  },
+  subtitle: {
+    fontSize: 13,
+    lineHeight: 18,
+  },
+  scrollWrapper: {
+    flex: 1,
+    position: "relative",
+    minHeight: 0,
+  },
+  scroll: {
+    flex: 1,
+  },
+  scrollContent: {
+    paddingHorizontal: 20,
+    paddingTop: 16,
+    paddingBottom: 12,
+  },
+  scrollHint: {
+    position: "absolute",
+    bottom: 0,
+    left: 0,
+    right: 0,
+    alignItems: "center",
+    paddingVertical: 8,
+  },
+  scrollHintText: {
+    fontSize: 11,
+    fontWeight: "500",
+  },
+  policyRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+    paddingTop: 12,
+    marginTop: 4,
+    borderTopWidth: StyleSheet.hairlineWidth,
+  },
+  policyLink: {
+    fontSize: 12,
+    fontWeight: "600",
+  },
+  policyDot: {
+    fontSize: 12,
+  },
+  footer: {
+    paddingHorizontal: 20,
+    paddingTop: 14,
+    paddingBottom: Platform.OS === "ios" ? 22 : 16,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    gap: 12,
+  },
+  checkRow: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: 10,
+  },
+  checkbox: {
+    width: 20,
+    height: 20,
+    borderRadius: 4,
+    borderWidth: 1.5,
+    alignItems: "center",
+    justifyContent: "center",
+    marginTop: 1,
+    flexShrink: 0,
+  },
+  checkLabel: {
+    flex: 1,
+    fontSize: 13,
+    lineHeight: 19,
+  },
+  acceptBtn: {
+    paddingVertical: 13,
+    borderRadius: 10,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  acceptBtnText: {
+    fontSize: 14,
+    fontWeight: "700",
+    letterSpacing: 0.1,
+  },
+  version: {
+    fontSize: 10,
+    textAlign: "center",
+  },
+});

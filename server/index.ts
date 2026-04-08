@@ -1,5 +1,6 @@
 import express from "express";
 import type { Request, Response, NextFunction } from "express";
+import { createProxyMiddleware } from "http-proxy-middleware";
 import { registerRoutes } from "./routes";
 import { registerHealthEndpoints } from "./health-check";
 import * as fs from "fs";
@@ -213,19 +214,24 @@ function configureExpoAndLanding(app: express.Application) {
       res.sendFile(webIndexHtml);
     });
   } else {
+    const metroProxy = createProxyMiddleware({
+      target: "http://localhost:8081",
+      changeOrigin: true,
+      ws: true,
+      on: {
+        error: (_err: unknown, _req: unknown, res: unknown) => {
+          (res as Response).status(502).send("Metro bundler not available");
+        },
+      },
+    });
     app.use((req: Request, res: Response, next: NextFunction) => {
       if (req.path.startsWith("/api")) {
         return next();
       }
-      if (req.path === "/") {
-        return serveLandingPage({
-          req,
-          res,
-          landingPageTemplate,
-          appName,
-        });
+      if (req.header("expo-platform")) {
+        return next();
       }
-      next();
+      return metroProxy(req, res, next);
     });
   }
 
