@@ -228,6 +228,7 @@ export default function QrGeneratorScreen() {
             generatedAt={generatedAt}
             saving={saving}
             savedToProfile={savedToProfile}
+            savedDocId={savedDocId}
             user={user}
             svgRef={svgRef}
             logoPositionLabel={getLogoPositionLabel()}

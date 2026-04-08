@@ -1,5 +1,5 @@
 import { useState, useRef, useCallback, useEffect } from "react";
-import { Animated, Easing, Linking, Platform } from "react-native";
+import { Animated, Easing, Platform } from "react-native";
 import { router } from "expo-router";
 import { useFocusEffect } from "expo-router";
 import * as ImagePicker from "expo-image-picker";
@@ -11,17 +11,15 @@ import { useAuth } from "@/contexts/AuthContext";
 import {
   getOrCreateQrCode,
   recordScan,
-  getGuardLink,
   detectContentType,
   getQrCodeId,
-  type GuardLink,
 } from "@/lib/firestore-service";
 // SECURITY FIX P1: QR Input validation for XSS prevention
 import { validateQrInput } from "@/lib/services/profanity-filter";
 // SECURITY FIX P2: Advanced URL security analysis
-import { analyzeUrl, getRiskLevelColor, getRiskLevelLabel } from "@/lib/security/url-security-analyzer";
+import { analyzeUrl } from "@/lib/security/url-security-analyzer";
 // SECURITY FIX P3: Scam detection
-import { detectScam, getScamTypeLabel, getConfidenceLevel } from "@/lib/security/scam-detector";
+import { detectScam } from "@/lib/security/scam-detector";
 
 export const FINDER_SIZE = 270;
 export const CORNER_SIZE = 32;
@@ -105,10 +103,6 @@ export function useScanner() {
   const [unverifiedCountdown, setUnverifiedCountdown] = useState(3);
   const countdownRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  const [livingShieldModal, setLivingShieldModal] = useState(false);
-  const [livingShieldData, setLivingShieldData] = useState<GuardLink | null>(null);
-  const [livingShieldLoading, setLivingShieldLoading] = useState(false);
-
   const [galleryErrorMsg, setGalleryErrorMsg] = useState<string | null>(null);
   const [scannerMsg, setScannerMsg] = useState<string | null>(null);
   const [scannerMsgType, setScannerMsgType] = useState<"error" | "warning" | "info">("error");
@@ -177,24 +171,6 @@ export function useScanner() {
       return next;
     });
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-  }
-
-  async function handleLivingShieldProceed() {
-    if (!livingShieldData?.currentDestination) return;
-    const dest = livingShieldData.currentDestination;
-    setLivingShieldModal(false);
-    setLivingShieldData(null);
-    scanLockRef.current = false;
-    setScanned(false);
-    await Linking.openURL(dest.startsWith("http") ? dest : `https://${dest}`);
-  }
-
-  function handleLivingShieldCancel() {
-    setLivingShieldModal(false);
-    setLivingShieldData(null);
-    scanLockRef.current = false;
-    setScanned(false);
-    setScanSuccess(false);
   }
 
   function navigateToQrDetail(qrId: string) {
@@ -648,9 +624,6 @@ export function useScanner() {
     verifiedOwnerName,
     unverifiedModal,
     unverifiedCountdown,
-    livingShieldModal,
-    livingShieldData,
-    livingShieldLoading,
     scanLineAnim,
     galleryErrorMsg,
     dismissGalleryError,
@@ -665,7 +638,5 @@ export function useScanner() {
     handleSafetyModalBack,
     handleUnverifiedProceed,
     handleUnverifiedBack,
-    handleLivingShieldProceed,
-    handleLivingShieldCancel,
   };
 }

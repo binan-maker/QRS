@@ -31,7 +31,6 @@ import { useScanner } from "@/hooks/useScanner";
 import ScannerOverlay from "@/features/scanner/components/ScannerOverlay";
 import SafetyModal from "@/features/scanner/components/SafetyModal";
 import VerifiedModal from "@/features/scanner/components/VerifiedModal";
-import LivingShieldModal from "@/features/scanner/components/LivingShieldModal";
 import PermissionScreen from "@/features/scanner/components/PermissionScreen";
 
 const SCREEN_WIDTH = Dimensions.get("window").width;
@@ -241,9 +240,6 @@ export default function ScannerScreen() {
     verifiedOwnerName,
     unverifiedModal,
     unverifiedCountdown,
-    livingShieldModal,
-    livingShieldData,
-    livingShieldLoading,
     scanLineAnim,
     galleryErrorMsg,
     dismissGalleryError,
@@ -258,8 +254,6 @@ export default function ScannerScreen() {
     handleSafetyModalBack,
     handleUnverifiedProceed,
     handleUnverifiedBack,
-    handleLivingShieldProceed,
-    handleLivingShieldCancel,
   } = useScanner();
 
   if (!permission) {
@@ -370,14 +364,6 @@ export default function ScannerScreen() {
       <VerifiedModal
         visible={verifiedModal}
         ownerName={verifiedOwnerName}
-      />
-
-      <LivingShieldModal
-        visible={livingShieldModal}
-        loading={livingShieldLoading}
-        data={livingShieldData}
-        onProceed={handleLivingShieldProceed}
-        onCancel={handleLivingShieldCancel}
       />
 
       {unverifiedModal && (

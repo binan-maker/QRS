@@ -20,6 +20,7 @@ interface Props {
   generatedAt: Date | null;
   saving: boolean;
   savedToProfile: boolean;
+  savedDocId?: string | null;
   user: any;
   svgRef: React.MutableRefObject<any>;
   logoPositionLabel: string;
@@ -42,6 +43,7 @@ function formatShortDate(date: Date): string {
 export default function QrOutputCard({
   qrValue, qrSize, isBranded, privateMode, qrMode, logoPosition,
   customLogoUri, showDefaultLogo, generatedUuid, generatedAt, saving, savedToProfile,
+  savedDocId,
   user, svgRef, logoPositionLabel,
   qrFgColor = "#0A0E17", qrBgColor = "#F8FAFC",
   onSizeIncrease, onSizeDecrease, onCopy, onShare, onDownload, onClear,
@@ -142,12 +144,24 @@ export default function QrOutputCard({
             )}
           </View>
           {qrMode === "business" ? (
-            <View style={[styles.ownershipNote, { borderColor: colors.warning + "30", backgroundColor: colors.warningDim }]}>
-              <Ionicons name="shield" size={12} color={colors.warning} />
-              <Text style={[styles.ownershipNoteText, { color: colors.warning }]}>
-                Living Shield active — update the destination anytime from My QR Codes without reprinting.
-              </Text>
-            </View>
+            <>
+              <View style={[styles.ownershipNote, { borderColor: colors.warning + "30", backgroundColor: colors.warningDim }]}>
+                <Ionicons name="shield" size={12} color={colors.warning} />
+                <Text style={[styles.ownershipNoteText, { color: colors.warning }]}>
+                  Living Shield active — update the destination anytime from My QR Codes without reprinting.
+                </Text>
+              </View>
+              {savedDocId && generatedUuid && (
+                <Pressable
+                  onPress={() => router.push(`/qr-detail/${savedDocId}?guardUuid=${generatedUuid}`)}
+                  style={[styles.viewDetailsBtn, { backgroundColor: colors.primaryDim, borderColor: colors.primary + "40" }]}
+                >
+                  <Ionicons name="document-text-outline" size={15} color={colors.primary} />
+                  <Text style={[styles.viewDetailsBtnText, { color: colors.primary }]}>View QR Details</Text>
+                  <Ionicons name="chevron-forward" size={14} color={colors.primary} />
+                </Pressable>
+              )}
+            </>
           ) : (
             <View style={[styles.ownershipNote, { backgroundColor: colors.primaryDim, borderColor: colors.primary + "30" }]}>
               <Ionicons name="lock-closed" size={12} color={colors.primary} />
@@ -263,6 +277,12 @@ const styles = StyleSheet.create({
     padding: 10, borderRadius: 10, borderWidth: 1,
   },
   ownershipNoteText: { flex: 1, fontSize: 12, fontFamily: "Inter_400Regular", lineHeight: 16 },
+  viewDetailsBtn: {
+    flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 6,
+    borderRadius: 12, paddingVertical: 11, paddingHorizontal: 16,
+    borderWidth: 1, marginTop: 4,
+  },
+  viewDetailsBtnText: { fontSize: 13, fontFamily: "Inter_600SemiBold", flex: 1, textAlign: "center" },
   privateFooter: {
     flexDirection: "row", alignItems: "center", gap: 8,
     borderTopWidth: 1, padding: 14,
