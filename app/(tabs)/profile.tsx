@@ -20,7 +20,7 @@ import { formatCompactNumber } from "@/lib/number-format";
 import PhotoModal from "@/features/profile/components/PhotoModal";
 import { useProfile } from "@/hooks/useProfile";
 import { getUserBio } from "@/lib/services/user-service";
-import { getFriends } from "@/lib/services/friend-service";
+import { db } from "@/lib/db";
 import QRCode from "react-native-qrcode-svg";
 
 export default function ProfileScreen() {
@@ -45,7 +45,7 @@ export default function ProfileScreen() {
   useEffect(() => {
     if (!user) return;
     getUserBio(user.id).then(setBio).catch(() => {});
-    getFriends(user.id).then((f) => setFriendsCount(f.length)).catch(() => {});
+    db.get(["users", user.id]).then((doc) => setFriendsCount(doc?.friendsCount ?? 0)).catch(() => {});
   }, [user?.id]);
 
   if (!user) {

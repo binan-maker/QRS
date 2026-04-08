@@ -4,7 +4,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as Haptics from "@/lib/haptics";
 import { router } from "expo-router";
 import { useAuth } from "@/contexts/AuthContext";
-import { getUserScansPaginated, getUserFavorites, deleteUserScan, getUserScanStats, getUserAllScansForStats, type ScanStatsResult } from "@/lib/firestore-service";
+import { getUserScansPaginated, getUserFavorites, deleteUserScan, getUserScanStats, type ScanStatsResult } from "@/lib/firestore-service";
 import { parseAnyPaymentQr, analyzeAnyPaymentQr, analyzeUrlHeuristics } from "@/lib/qr-analysis";
 
 export interface HistoryItem {
@@ -38,7 +38,7 @@ export function useHistory() {
 
   const [scanStats, setScanStats] = useState<ScanStatsResult | null>(null);
   const [statsLoading, setStatsLoading] = useState(false);
-  const [allStatsItems, setAllStatsItems] = useState<Array<{ id: string; content: string; contentType: string }>>([]);
+  const allStatsItems: Array<{ id: string; content: string; contentType: string }> = [];
 
   const history = useMemo<HistoryItem[]>(() => {
     const merged: HistoryItem[] = [...localHistory];
@@ -84,15 +84,10 @@ export function useHistory() {
   const loadStats = useCallback(async (userId: string) => {
     setStatsLoading(true);
     try {
-      const [stats, items] = await Promise.all([
-        getUserScanStats(userId),
-        getUserAllScansForStats(userId),
-      ]);
+      const stats = await getUserScanStats(userId);
       setScanStats(stats);
-      setAllStatsItems(items);
     } catch {
       setScanStats(null);
-      setAllStatsItems([]);
     } finally {
       setStatsLoading(false);
     }
@@ -173,7 +168,6 @@ export function useHistory() {
       setFavorites([]);
       setLocalHistory([]);
       setScanStats(null);
-      setAllStatsItems([]);
       cloudLastDocRef.current = null;
       setCloudHasMore(false);
     }

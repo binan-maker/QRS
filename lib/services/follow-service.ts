@@ -33,6 +33,7 @@ export async function toggleFollow(
   if (following) {
     await db.delete(["qrCodes", qrId, "followers", userId]);
     await db.delete(["users", userId, "following", qrId]);
+    await db.increment(["users", userId], "followingCount", -1);
   } else {
     await db.set(["qrCodes", qrId, "followers", userId], {
       userId, createdAt: db.timestamp(),
@@ -40,6 +41,7 @@ export async function toggleFollow(
     await db.set(["users", userId, "following", qrId], {
       qrCodeId: qrId, content, contentType, createdAt: db.timestamp(),
     });
+    await db.increment(["users", userId], "followingCount", 1);
     if (NOTIFICATIONS_ENABLED) {
       try {
         const qrData = await db.get(["qrCodes", qrId]);

@@ -67,25 +67,37 @@ function setCachedUserProfile(userId: string, data: any): void {
 
 export async function getUserStats(userId: string): Promise<UserStats> {
   try {
-    // FIX #8: Use cached user profile to avoid redundant reads
     let userDoc = getCachedUserProfile(userId);
-    
-    const [followingResult, scansResult, commentsResult] = await Promise.all([
-      db.query(["users", userId, "following"]),
-      db.query(["users", userId, "scans"]),
-      db.query(["users", userId, "comments"]),
-    ]);
-    
-    // Only fetch user doc if not in cache
     if (!userDoc) {
       userDoc = await db.get(["users", userId]);
       if (userDoc) setCachedUserProfile(userId, userDoc);
     }
-    
+
+    // Fast path: read stored counters from user doc (1 doc read, no subcollection queries)
+    const hasPersonalScanCount = typeof userDoc?.personalScanCount === "number";
+    const hasFollowingCount = typeof userDoc?.followingCount === "number";
+    const hasCommentCount = typeof userDoc?.commentCount === "number";
+
+    if (hasPersonalScanCount && hasFollowingCount && hasCommentCount) {
+      return {
+        followingCount: userDoc.followingCount,
+        scanCount: userDoc.personalScanCount,
+        commentCount: userDoc.commentCount,
+        totalLikesReceived: userDoc?.totalLikesReceived || 0,
+      };
+    }
+
+    // Slow path: query only the subcollections that still lack stored counters
+    const [followingResult, scansResult, commentsResult] = await Promise.all([
+      hasFollowingCount ? Promise.resolve(null) : db.query(["users", userId, "following"]),
+      hasPersonalScanCount ? Promise.resolve(null) : db.query(["users", userId, "scans"]),
+      hasCommentCount ? Promise.resolve(null) : db.query(["users", userId, "comments"]),
+    ]);
+
     return {
-      followingCount: followingResult.docs.length,
-      scanCount: scansResult.docs.length,
-      commentCount: commentsResult.docs.length,
+      followingCount: hasFollowingCount ? userDoc.followingCount : (followingResult?.docs.length ?? 0),
+      scanCount: hasPersonalScanCount ? userDoc.personalScanCount : (scansResult?.docs.length ?? 0),
+      commentCount: hasCommentCount ? userDoc.commentCount : (commentsResult?.docs.length ?? 0),
       totalLikesReceived: userDoc?.totalLikesReceived || 0,
     };
   } catch {
