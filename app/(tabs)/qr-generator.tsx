@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { View, Text, StyleSheet, Pressable, ScrollView, Platform, Animated, useWindowDimensions } from "react-native";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -7,7 +7,8 @@ import { LinearGradient } from "expo-linear-gradient";
 import { useTheme } from "@/contexts/ThemeContext";
 import { useQrGenerator, LOGO_POSITIONS } from "@/hooks/useQrGenerator";
 import ModeSelector from "@/features/generator/components/ModeSelector";
-import ContentTypeSelector from "@/features/generator/components/ContentTypeSelector";
+import SmartTemplateBar from "@/features/generator/components/SmartTemplateBar";
+import TemplatePickerModal from "@/features/generator/components/TemplatePickerModal";
 import InputSection from "@/features/generator/components/InputSection";
 import LogoSection from "@/features/generator/components/LogoSection";
 import QrOutputCard from "@/features/generator/components/QrOutputCard";
@@ -22,6 +23,7 @@ export default function QrGeneratorScreen() {
   const { width } = useWindowDimensions();
 
   const [qrSize, setQrSize] = useState(220);
+  const [templateModalOpen, setTemplateModalOpen] = useState(false);
 
   const {
     user, svgRef,
@@ -44,6 +46,15 @@ export default function QrGeneratorScreen() {
   } = useQrGenerator();
 
   const styles = makeStyles(colors, width);
+
+  const detectedType = useMemo(() => {
+    const v = inputValue.trim();
+    if (!v || selectedPreset > 0) return null;
+    if (/^https?:\/\//i.test(v) || /^www\./i.test(v)) return "URL";
+    if (/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v)) return "Email";
+    if (/^\+?[\d\s\-().]{7,}$/.test(v)) return "Phone";
+    return null;
+  }, [inputValue, selectedPreset]);
 
   function getLogoPositionLabel() {
     return LOGO_POSITIONS.find((p) => p.key === logoPosition)?.label || "Center";
@@ -84,7 +95,12 @@ export default function QrGeneratorScreen() {
 
         {qrMode !== "business" && (
           <Reanimated.View entering={FadeInDown.duration(400).delay(80)}>
-            <ContentTypeSelector selectedPreset={selectedPreset} onSelect={switchPreset} />
+            <SmartTemplateBar
+              selectedPreset={selectedPreset}
+              detectedType={detectedType}
+              onOpenTemplates={() => setTemplateModalOpen(true)}
+              onClearTemplate={() => switchPreset(0)}
+            />
           </Reanimated.View>
         )}
 
@@ -231,6 +247,13 @@ export default function QrGeneratorScreen() {
           </Text>
         </Animated.View>
       ) : null}
+
+      <TemplatePickerModal
+        visible={templateModalOpen}
+        selectedPreset={selectedPreset}
+        onSelect={switchPreset}
+        onClose={() => setTemplateModalOpen(false)}
+      />
 
       <PositionModal
         visible={positionModalOpen}

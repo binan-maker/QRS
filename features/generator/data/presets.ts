@@ -20,6 +20,14 @@ export interface PresetDef {
   contentType: string;
 }
 
+export const PRESET_CATEGORIES: { label: string; icon: string; presets: number[] }[] = [
+  { label: "Basic",                  icon: "document-text-outline",  presets: [0, 1] },
+  { label: "Contact & Messaging",    icon: "chatbubbles-outline",     presets: [2, 3, 4, 5, 9, 15] },
+  { label: "Social Media",           icon: "heart-outline",           presets: [11, 12, 13, 14, 16, 17] },
+  { label: "Payments",               icon: "card-outline",            presets: [7, 18, 19, 20, 10] },
+  { label: "Utility",                icon: "construct-outline",       presets: [6, 8, 21, 22, 23] },
+];
+
 export const QR_PRESETS: PresetDef[] = [
   {
     label: "Text", icon: "text-outline", placeholder: "Type any text or message...",
