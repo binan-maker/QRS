@@ -86,18 +86,40 @@ function parseEvent(content: string) {
   return {
     summary: content.match(/SUMMARY:([^\r\n]+)/)?.[1] ?? "",
     dtstart: content.match(/DTSTART[^:]*:([^\r\n]+)/)?.[1] ?? "",
+    dtend: content.match(/DTEND[^:]*:([^\r\n]+)/)?.[1] ?? "",
     location: content.match(/LOCATION:([^\r\n]+)/)?.[1] ?? "",
     description: content.match(/DESCRIPTION:([^\r\n]+)/)?.[1] ?? "",
   };
 }
 
-function formatEventDate(dt: string): string {
-  if (!dt) return "";
+function icalToDate(dt: string): Date | null {
+  if (!dt) return null;
   try {
     const y = dt.slice(0, 4), mo = dt.slice(4, 6), d = dt.slice(6, 8);
-    const h = dt.slice(9, 11), mi = dt.slice(11, 13);
-    return new Date(`${y}-${mo}-${d}T${h || "00"}:${mi || "00"}`).toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" });
-  } catch { return dt; }
+    const h = dt.slice(9, 11) || "00", mi = dt.slice(11, 13) || "00";
+    return new Date(`${y}-${mo}-${d}T${h}:${mi}:00`);
+  } catch { return null; }
+}
+
+function formatEventDate(dt: string): string {
+  if (!dt) return "";
+  const date = icalToDate(dt);
+  if (!date) return dt;
+  return date.toLocaleDateString(undefined, { weekday: "long", year: "numeric", month: "long", day: "numeric" });
+}
+
+function formatEventTime(dt: string): string {
+  if (!dt) return "";
+  const date = icalToDate(dt);
+  if (!date) return "";
+  return date.toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" });
+}
+
+function isEventPast(dtend: string, dtstart: string): boolean {
+  const ref = dtend || dtstart;
+  if (!ref) return false;
+  const date = icalToDate(ref);
+  return date ? date < new Date() : false;
 }
 
 function extractBasicPaymentInfo(content: string) {
@@ -144,6 +166,7 @@ const ContentCard = React.memo(function ContentCard({ content, contentType, pars
   const contact = contentType === "contact" ? parseContact(content) : null;
   const smsData = contentType === "sms" ? parseSms(content) : null;
   const eventData = contentType === "event" ? parseEvent(content) : null;
+  const eventOver = eventData ? isEventPast(eventData.dtend, eventData.dtstart) : false;
   const basicPayment = (contentType === "payment" && !parsedPayment) ? extractBasicPaymentInfo(content) : null;
   const isEmvContent = content.startsWith("000201") || content.startsWith("00020");
 
@@ -235,8 +258,8 @@ const ContentCard = React.memo(function ContentCard({ content, contentType, pars
         </Pressable>
       </View>
 
-      {/* Content text — hidden for URL type */}
-      {contentType !== "url" && (
+      {/* Content text — hidden for URL and event types */}
+      {contentType !== "url" && contentType !== "event" && (
         <View style={[styles.contentBox, { backgroundColor: isDark ? colors.surfaceLight : colors.background, borderColor: colors.surfaceBorder }]}>
           <Text style={[styles.contentText, { color: colors.text }]} selectable numberOfLines={contentExpanded ? undefined : 4}>
             {content}
@@ -283,12 +306,62 @@ const ContentCard = React.memo(function ContentCard({ content, contentType, pars
           {smsData.body ? <InfoRow label="Message" value={smsData.body} gradient={cfg.gradient} colors={colors} /> : null}
         </View>
       )}
-      {eventData && eventData.summary && (
-        <View style={[styles.infoGrid, { backgroundColor: isDark ? colors.surfaceLight : colors.background, borderColor: colors.surfaceBorder }]}>
-          <InfoRow label="Event" value={eventData.summary} gradient={cfg.gradient} colors={colors} />
-          {eventData.dtstart ? <InfoRow label="When" value={formatEventDate(eventData.dtstart)} gradient={cfg.gradient} colors={colors} /> : null}
-          {eventData.location ? <InfoRow label="Where" value={eventData.location} gradient={cfg.gradient} colors={colors} /> : null}
-          {eventData.description ? <InfoRow label="Details" value={eventData.description} gradient={cfg.gradient} colors={colors} /> : null}
+      {eventData && (
+        <View style={{ gap: 10 }}>
+          {eventOver && (
+            <View style={[styles.eventOverBanner, { backgroundColor: colors.danger + "15", borderColor: colors.danger + "40" }]}>
+              <Ionicons name="time-outline" size={15} color={colors.danger} />
+              <Text style={[styles.eventOverText, { color: colors.danger }]}>This event has already ended</Text>
+            </View>
+          )}
+          <View style={[styles.eventCard, { backgroundColor: isDark ? colors.surfaceLight : colors.background, borderColor: colors.surfaceBorder }]}>
+            {eventData.summary ? (
+              <Text style={[styles.eventTitle, { color: colors.text }]}>{eventData.summary}</Text>
+            ) : null}
+            {eventData.dtstart ? (
+              <View style={styles.eventDetailRow}>
+                <View style={[styles.eventDetailIcon, { backgroundColor: cfg.gradient[0] + "18" }]}>
+                  <Ionicons name="calendar-outline" size={14} color={cfg.gradient[0]} />
+                </View>
+                <Text style={[styles.eventDetailText, { color: colors.textSecondary }]}>
+                  {formatEventDate(eventData.dtstart)}
+                </Text>
+              </View>
+            ) : null}
+            {(eventData.dtstart || eventData.dtend) ? (
+              <View style={styles.eventDetailRow}>
+                <View style={[styles.eventDetailIcon, { backgroundColor: cfg.gradient[0] + "18" }]}>
+                  <Ionicons name="time-outline" size={14} color={cfg.gradient[0]} />
+                </View>
+                <Text style={[styles.eventDetailText, { color: colors.textSecondary }]}>
+                  {eventData.dtstart ? formatEventTime(eventData.dtstart) : ""}
+                  {eventData.dtend && eventData.dtstart !== eventData.dtend
+                    ? ` – ${formatEventTime(eventData.dtend)}`
+                    : ""}
+                </Text>
+              </View>
+            ) : null}
+            {eventData.location ? (
+              <View style={styles.eventDetailRow}>
+                <View style={[styles.eventDetailIcon, { backgroundColor: cfg.gradient[0] + "18" }]}>
+                  <Ionicons name="location-outline" size={14} color={cfg.gradient[0]} />
+                </View>
+                <Text style={[styles.eventDetailText, { color: colors.textSecondary }]} numberOfLines={2}>
+                  {eventData.location}
+                </Text>
+              </View>
+            ) : null}
+            {eventData.description ? (
+              <View style={styles.eventDetailRow}>
+                <View style={[styles.eventDetailIcon, { backgroundColor: cfg.gradient[0] + "18" }]}>
+                  <Ionicons name="information-circle-outline" size={14} color={cfg.gradient[0]} />
+                </View>
+                <Text style={[styles.eventDetailText, { color: colors.textSecondary }]} numberOfLines={3}>
+                  {eventData.description}
+                </Text>
+              </View>
+            ) : null}
+          </View>
         </View>
       )}
 
@@ -450,5 +523,49 @@ const styles = StyleSheet.create({
     fontFamily: "Inter_400Regular",
     lineHeight: 17,
     flex: 1,
+  },
+  eventOverBanner: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    borderRadius: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    borderWidth: 1,
+  },
+  eventOverText: {
+    fontSize: 13,
+    fontFamily: "Inter_700Bold",
+  },
+  eventCard: {
+    borderRadius: 16,
+    padding: 16,
+    borderWidth: 1,
+    gap: 12,
+  },
+  eventTitle: {
+    fontSize: 17,
+    fontFamily: "Inter_700Bold",
+    lineHeight: 24,
+  },
+  eventDetailRow: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: 10,
+  },
+  eventDetailIcon: {
+    width: 28,
+    height: 28,
+    borderRadius: 8,
+    alignItems: "center",
+    justifyContent: "center",
+    flexShrink: 0,
+    marginTop: 1,
+  },
+  eventDetailText: {
+    fontSize: 14,
+    fontFamily: "Inter_500Medium",
+    flex: 1,
+    lineHeight: 20,
   },
 });
