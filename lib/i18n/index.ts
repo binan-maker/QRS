@@ -27,13 +27,17 @@ const resources = {
 };
 
 function detectDeviceLanguage(): SupportedLanguageCode {
-  const locales = Localization.getLocales();
-  if (locales.length === 0) return "en";
-  const tag = locales[0].languageCode ?? "en";
-  const supported = SUPPORTED_LANGUAGES.map((l) => l.code);
-  return (supported.includes(tag as SupportedLanguageCode)
-    ? tag
-    : "en") as SupportedLanguageCode;
+  try {
+    const locales = Localization.getLocales();
+    if (!locales || locales.length === 0) return "en";
+    const tag = locales[0].languageCode ?? "en";
+    const supported = SUPPORTED_LANGUAGES.map((l) => l.code);
+    return (supported.includes(tag as SupportedLanguageCode)
+      ? tag
+      : "en") as SupportedLanguageCode;
+  } catch {
+    return "en";
+  }
 }
 
 if (!i18n.isInitialized) {
@@ -42,7 +46,8 @@ if (!i18n.isInitialized) {
     lng: detectDeviceLanguage(),
     fallbackLng: "en",
     interpolation: { escapeValue: false },
-    compatibilityJSON: "v4",
+    compatibilityJSON: "v3",
+    initImmediate: false,
   });
 }
 
