@@ -13,7 +13,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import { useTheme } from "@/contexts/ThemeContext";
 import type { AppColors } from "@/constants/colors";
 
-const EFFECTIVE_DATE = "March 26, 2026";
+const EFFECTIVE_DATE = "April 8, 2026";
 const CONTACT_EMAIL = "legal@qrguard.app";
 const APP_NAME = "QR Guard";
 
@@ -49,6 +49,15 @@ function Bullet({ text, colors }: { text: string; colors: AppColors }) {
   );
 }
 
+function WarnBox({ text, colors }: { text: string; colors: AppColors }) {
+  return (
+    <View style={[styles.warningBox, { backgroundColor: colors.warningDim, borderColor: colors.warning + "35" }]}>
+      <Ionicons name="warning" size={15} color={colors.warning} />
+      <Text style={[styles.warningText, { color: colors.warning }]}>{text}</Text>
+    </View>
+  );
+}
+
 export default function TermsScreen() {
   const { colors } = useTheme();
   const insets = useSafeAreaInsets();
@@ -71,7 +80,6 @@ export default function TermsScreen() {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={[styles.scrollContent, { paddingBottom: insets.bottom + 40 }]}
       >
-        {/* Hero */}
         <LinearGradient
           colors={colors.isDark
             ? ["rgba(0,111,255,0.10)", "rgba(0,229,255,0.06)", "rgba(0,111,255,0.02)"]
@@ -91,7 +99,7 @@ export default function TermsScreen() {
           <View style={{ flex: 1 }}>
             <Text style={[styles.heroTitle, { color: colors.text }]}>Terms of Service</Text>
             <Text style={[styles.heroSub, { color: colors.textSecondary }]}>
-              Please read carefully before using {APP_NAME}. By using the app, you agree to these terms.
+              These terms govern your use of {APP_NAME} (Beta). By using the app, you agree to be bound by these terms in full.
             </Text>
             <View style={[styles.dateBadge, { backgroundColor: colors.surfaceLight, borderColor: colors.surfaceBorder }]}>
               <Ionicons name="calendar-outline" size={12} color={colors.textMuted} />
@@ -102,91 +110,184 @@ export default function TermsScreen() {
 
         <SectionCard title="Acceptance of Terms" num="1" colors={colors}>
           <Para colors={colors}>
-            By downloading, installing, or using {APP_NAME} ("the App"), you agree to be bound by these Terms. If you do not agree, you must not use the App. We reserve the right to modify these Terms at any time. Continued use after changes constitutes acceptance.
+            By downloading, installing, accessing, or using {APP_NAME} ("the App", "the Service"), you ("User", "you") unconditionally agree to be bound by these Terms of Service ("Terms"), our Privacy Policy, and any other policies referenced herein.
           </Para>
+          <Para colors={colors}>
+            If you do not agree to any part of these Terms, you must immediately stop using the App. We reserve the right to modify these Terms at any time without prior notice. Changes become effective when the consent version is updated in-app. Continued use after accepting updated Terms constitutes full agreement.
+          </Para>
+          <WarnBox text="THIS IS A BETA APPLICATION. All features are provided on a best-effort basis with no guarantee of continuous availability, accuracy, or reliability." colors={colors} />
         </SectionCard>
 
         <SectionCard title="Description of Service" num="2" colors={colors}>
-          <Para colors={colors}>{APP_NAME} provides:</Para>
-          <Bullet text="QR code scanning via device camera" colors={colors} />
-          <Bullet text="QR code content analysis and safety scoring based on community data" colors={colors} />
-          <Bullet text="User-submitted safety reports and community commentary" colors={colors} />
-          <Bullet text="Living Shield QR code generation with dynamic destinations" colors={colors} />
-          <Bullet text="Community trust scores derived from aggregated user reports" colors={colors} />
+          <Para colors={colors}>{APP_NAME} provides a beta-stage platform for:</Para>
+          <Bullet text="QR code scanning via device camera and gallery image upload" colors={colors} />
+          <Bullet text="AI-assisted and community-powered QR code safety analysis and scoring" colors={colors} />
+          <Bullet text="User-submitted safety reports, community commentary, and trust voting" colors={colors} />
+          <Bullet text="Living Shield QR code generation with dynamic, updatable destinations" colors={colors} />
+          <Bullet text="Branded individual and business QR code generation" colors={colors} />
+          <Bullet text="Threat intelligence database powered by aggregated community scan data" colors={colors} />
+          <Para colors={colors}>
+            The Service is provided for informational and protective purposes only. Nothing in the App constitutes professional cybersecurity, financial, legal, or expert advice.
+          </Para>
         </SectionCard>
 
-        <SectionCard title="Disclaimer of Warranties — Read Carefully" num="3" colors={colors}>
+        <SectionCard title="Beta Status & No Warranty" num="3" colors={colors}>
           <View style={[styles.warningBox, { backgroundColor: colors.warningDim, borderColor: colors.warning + "35" }]}>
             <Ionicons name="warning" size={16} color={colors.warning} />
             <Text style={[styles.warningText, { color: colors.warning }]}>
-              THE APP IS PROVIDED "AS IS" WITHOUT WARRANTIES OF ANY KIND.
+              THE APP IS PROVIDED "AS IS" AND "AS AVAILABLE" WITHOUT WARRANTIES OF ANY KIND, EXPRESS OR IMPLIED.
             </Text>
           </View>
-          <Para colors={colors}>We do not guarantee that:</Para>
-          <Bullet text="Any QR code marked as 'Safe' is actually safe. Trust scores reflect community opinion, not verified fact." colors={colors} />
-          <Bullet text="Any QR code marked as 'Dangerous' is actually fraudulent. Reports may be incorrect." colors={colors} />
-          <Bullet text="The App will detect all malicious QR codes, phishing URLs, or fraudulent payment requests." colors={colors} />
-          <Bullet text="The App will be free from errors, bugs, interruptions, or security vulnerabilities." colors={colors} />
-          <Para colors={colors}>QR GUARD IS AN INFORMATIONAL TOOL ONLY. ALL SCANNING DECISIONS ARE MADE SOLELY BY YOU.</Para>
+          <Para colors={colors}>We expressly disclaim all warranties, including:</Para>
+          <Bullet text="Merchantability, fitness for a particular purpose, and non-infringement" colors={colors} />
+          <Bullet text="Accuracy, completeness, or reliability of any QR code analysis or safety verdict" colors={colors} />
+          <Bullet text="Uninterrupted, error-free, or secure operation of the App" colors={colors} />
+          <Bullet text="That the App will detect all malicious QR codes, phishing URLs, or fraudulent content" colors={colors} />
+          <Bullet text="That any QR code rated 'Safe' is actually safe, or any rated 'Dangerous' is actually malicious" colors={colors} />
+          <Para colors={colors}>
+            QR GUARD IS AN INFORMATIONAL TOOL ONLY. ALL DECISIONS MADE IN RESPONSE TO APP OUTPUTS ARE MADE SOLELY BY YOU AT YOUR OWN RISK.
+          </Para>
         </SectionCard>
 
         <SectionCard title="Limitation of Liability" num="4" colors={colors}>
-          <Para colors={colors}>To the maximum extent permitted by law, we are not liable for:</Para>
-          <Bullet text="Financial loss from following a QR code to a fraudulent payment or phishing site" colors={colors} />
-          <Bullet text="Data breach, identity theft, or device compromise from scanning a QR code" colors={colors} />
-          <Bullet text="Loss of business, profits, revenue, data, or goodwill" colors={colors} />
-          <Bullet text="Reliance on any trust score, safety rating, or community report" colors={colors} />
           <Para colors={colors}>
-            Our total liability shall not exceed the amount you paid in the preceding 12 months, or USD $10.00, whichever is less.
+            TO THE MAXIMUM EXTENT PERMITTED BY THE LAWS OF INDIA (INCLUDING THE INFORMATION TECHNOLOGY ACT, 2000 AND AMENDMENTS, AND THE DIGITAL PERSONAL DATA PROTECTION ACT, 2023), QR GUARD AND ITS DEVELOPERS, OFFICERS, EMPLOYEES, AND AFFILIATES SHALL NOT BE LIABLE FOR:
+          </Para>
+          <Bullet text="Financial loss, theft, or fraud resulting from scanning, following, or acting on any QR code, regardless of the App's stated safety verdict" colors={colors} />
+          <Bullet text="Identity theft, data compromise, or device infection from any QR code or linked destination" colors={colors} />
+          <Bullet text="Loss of business, revenue, profits, data, goodwill, or opportunity" colors={colors} />
+          <Bullet text="Reliance on any trust score, safety rating, community report, or AI-generated analysis" colors={colors} />
+          <Bullet text="Any government fine, regulatory penalty, or civil claim brought against you arising from your use of the App" colors={colors} />
+          <Bullet text="Any indirect, consequential, special, incidental, punitive, or exemplary damages" colors={colors} />
+          <Para colors={colors}>
+            OUR MAXIMUM AGGREGATE LIABILITY TO YOU FOR ANY CLAIM ARISING FROM YOUR USE OF THE APP SHALL NOT EXCEED THE AMOUNT YOU PAID US IN THE PRECEDING 12 MONTHS, OR ₹100 (ONE HUNDRED INDIAN RUPEES), WHICHEVER IS GREATER.
           </Para>
         </SectionCard>
 
-        <SectionCard title="No Professional Advice" num="5" colors={colors}>
+        <SectionCard title="Indemnification" num="5" colors={colors}>
           <Para colors={colors}>
-            Nothing in this App constitutes financial, legal, cybersecurity, or professional advice. Trust scores are community-driven opinions and must not be treated as expert assessments. Always exercise independent judgment before making any financial transaction.
+            You agree to indemnify, defend, and hold harmless QR Guard, its developers, officers, employees, and affiliates from and against any and all claims, damages, liabilities, costs, and expenses (including reasonable legal fees) arising out of or related to:
+          </Para>
+          <Bullet text="Your use of or reliance on the App or its outputs" colors={colors} />
+          <Bullet text="Your violation of these Terms" colors={colors} />
+          <Bullet text="Any content, reports, or comments you submit through the App" colors={colors} />
+          <Bullet text="Your violation of any applicable law, regulation, or third-party right" colors={colors} />
+          <Bullet text="Any dispute between you and any third party in connection with the App" colors={colors} />
+        </SectionCard>
+
+        <SectionCard title="Data Use for AI & Advertising" num="6" colors={colors}>
+          <WarnBox text="By using QR Guard, you explicitly consent to your data being used for AI training and advertising as described below." colors={colors} />
+          <Para colors={colors}>
+            Your usage data, QR scan patterns, and community contributions may be used to:
+          </Para>
+          <Bullet text="Train and improve QR Guard's AI threat detection models and pattern recognition systems" colors={colors} />
+          <Bullet text="Build and maintain an anonymised threat intelligence database that may be shared with or licensed to security partners" colors={colors} />
+          <Bullet text="Analyse aggregate behavioural patterns for product improvement and feature development" colors={colors} />
+          <Bullet text="Serve contextually relevant in-app advertisements based on aggregated, non-personally-identifiable usage data" colors={colors} />
+          <Bullet text="Share anonymised, aggregated data patterns with advertising partners for ad relevance scoring" colors={colors} />
+          <Para colors={colors}>
+            We will never share your name, email, specific QR code content, or payment data with advertisers. AI training uses only anonymised, aggregated data patterns. You may opt out of personalised advertising by contacting {CONTACT_EMAIL}.
           </Para>
         </SectionCard>
 
-        <SectionCard title="User Responsibilities" num="6" colors={colors}>
-          <Para colors={colors}>You are solely responsible for:</Para>
-          <Bullet text="All decisions made after scanning a QR code, regardless of what the App displays" colors={colors} />
-          <Bullet text="Verifying the legitimacy of any website, payment request, or content reached via a QR code" colors={colors} />
-          <Bullet text="The accuracy and legality of any reports, comments, or content you submit" colors={colors} />
-          <Bullet text="Keeping your account credentials secure" colors={colors} />
-        </SectionCard>
-
-        <SectionCard title="Community Content & Reports" num="7" colors={colors}>
-          <Para colors={colors}>By submitting reports or comments, you represent that they are truthful and based on genuine experience. We reserve the right to remove any content that violates these Terms.</Para>
+        <SectionCard title="User Responsibilities" num="7" colors={colors}>
+          <Para colors={colors}>You are solely and exclusively responsible for:</Para>
+          <Bullet text="All decisions made after scanning a QR code, regardless of the App's verdict" colors={colors} />
+          <Bullet text="Verifying the legitimacy of any website, payment request, file download, or content reached via a QR code" colors={colors} />
+          <Bullet text="The accuracy, truthfulness, and legality of all reports, comments, and votes you submit" colors={colors} />
+          <Bullet text="Maintaining the security of your account credentials" colors={colors} />
+          <Bullet text="Any financial transactions you initiate after scanning a QR code" colors={colors} />
+          <Bullet text="Any harm caused to yourself or others through your use of or reliance on the App" colors={colors} />
         </SectionCard>
 
         <SectionCard title="Prohibited Uses" num="8" colors={colors}>
           <Para colors={colors}>You must not use the App to:</Para>
-          <Bullet text="Submit false, malicious, or defamatory reports" colors={colors} />
-          <Bullet text="Attempt to manipulate trust scores through coordinated fake reporting" colors={colors} />
-          <Bullet text="Reverse-engineer or exploit the App or its infrastructure" colors={colors} />
-          <Bullet text="Generate QR codes intended to defraud, phish, or harm recipients" colors={colors} />
-        </SectionCard>
-
-        <SectionCard title="Profile Visibility & Friends" num="9" colors={colors}>
+          <Bullet text="Submit false, malicious, defamatory, or fraudulent reports or comments" colors={colors} />
+          <Bullet text="Attempt to manipulate trust scores through coordinated, fake, or automated reporting" colors={colors} />
+          <Bullet text="Reverse-engineer, decompile, or exploit the App or its backend infrastructure" colors={colors} />
+          <Bullet text="Generate QR codes intended to defraud, phish, harm, or deceive recipients" colors={colors} />
+          <Bullet text="Harvest, scrape, or collect data from other users" colors={colors} />
+          <Bullet text="Interfere with the normal operation of the App or its servers" colors={colors} />
+          <Bullet text="Use the App in violation of any applicable law or regulation" colors={colors} />
           <Para colors={colors}>
-            By default, your profile is public and visible to all users worldwide. You may switch your account to private at any time in Privacy Settings. When set to private:
-          </Para>
-          <Bullet text="Only approved friends can view your full profile, QR codes, stats, and activity" colors={colors} />
-          <Bullet text="All other users will only see your name, username, and profile photo" colors={colors} />
-          <Bullet text="Friends always see your full profile regardless of privacy setting" colors={colors} />
-          <Para colors={colors}>
-            You may remove a friend at any time using the Unfriend button on their profile. Removing a friend revokes their access to private profile content immediately. You are responsible for managing your own friend list and privacy settings.
+            Violations may result in immediate account suspension, permanent ban, and/or referral to law enforcement.
           </Para>
         </SectionCard>
 
-        <SectionCard title="Living Shield QR Codes" num="10" colors={colors}>
+        <SectionCard title="Community Content & Reports" num="9" colors={colors}>
           <Para colors={colors}>
-            Owners are solely responsible for all content their QR codes redirect to, including after destination changes. Misuse to redirect victims to malicious destinations violates these Terms and may be reported to law enforcement.
+            By submitting any report, comment, vote, or other content ("User Content"), you represent and warrant that:
+          </Para>
+          <Bullet text="Your User Content is truthful and based on your genuine personal experience" colors={colors} />
+          <Bullet text="You own or have the right to submit the User Content" colors={colors} />
+          <Bullet text="Your User Content does not violate any law or third-party right" colors={colors} />
+          <Para colors={colors}>
+            You grant QR Guard a worldwide, non-exclusive, royalty-free, perpetual licence to use, reproduce, modify, and display your User Content (in anonymised form) for the purposes of operating and improving the Service, including AI training and threat intelligence.
+          </Para>
+          <Para colors={colors}>
+            We reserve the right to remove any User Content that violates these Terms without notice or liability.
           </Para>
         </SectionCard>
 
-        <SectionCard title="Contact" num="11" colors={colors}>
-          <Para colors={colors}>For legal matters or to report a violation, contact us at:</Para>
+        <SectionCard title="Profile Visibility & Friends" num="10" colors={colors}>
+          <Para colors={colors}>
+            By default, your profile is public and visible to all users worldwide. You may switch to a private account in Privacy Settings at any time.
+          </Para>
+          <Bullet text="Private accounts: only approved friends see your full profile, QR codes, stats, and activity" colors={colors} />
+          <Bullet text="Public data (name, username, profile photo) remains visible regardless of privacy setting" colors={colors} />
+          <Bullet text="Anonymous QR report data (trust scores, scan counts) is always public and cannot be made private" colors={colors} />
+          <Para colors={colors}>
+            You are responsible for managing your own friend list and privacy settings. QR Guard is not liable for data exposure resulting from your privacy settings choices.
+          </Para>
+        </SectionCard>
+
+        <SectionCard title="Living Shield QR Codes" num="11" colors={colors}>
+          <Para colors={colors}>
+            Owners of Living Shield (business) QR codes are solely and exclusively responsible for all content their QR codes redirect to, including any changes made after initial creation.
+          </Para>
+          <Para colors={colors}>
+            Misuse of Living Shield QR codes to redirect victims to malicious, fraudulent, or harmful destinations constitutes a material breach of these Terms and may be reported to law enforcement. QR Guard reserves the right to deactivate any QR code at any time if it is found to be used maliciously.
+          </Para>
+        </SectionCard>
+
+        <SectionCard title="Governing Law & Dispute Resolution" num="12" colors={colors}>
+          <Para colors={colors}>
+            These Terms are governed exclusively by the laws of the Republic of India, without regard to conflict of law principles.
+          </Para>
+          <Para colors={colors}>
+            Before initiating any legal proceedings, you agree to first contact us at {CONTACT_EMAIL} and attempt to resolve any dispute in good faith for a period of 30 days.
+          </Para>
+          <Para colors={colors}>
+            If good-faith negotiation fails, disputes shall be resolved by binding arbitration under the Arbitration and Conciliation Act, 1996 of India. The seat and venue of arbitration shall be Kerala, India. The arbitration shall be conducted in English by a sole arbitrator appointed by mutual agreement.
+          </Para>
+          <Para colors={colors}>
+            YOU WAIVE ANY RIGHT TO PARTICIPATE IN A CLASS ACTION LAWSUIT OR CLASS-WIDE ARBITRATION AGAINST QR GUARD. All claims must be brought on an individual basis only.
+          </Para>
+          <Para colors={colors}>
+            If arbitration is not permissible under applicable law, you agree that courts of competent jurisdiction in Kerala, India, shall have exclusive jurisdiction over any dispute.
+          </Para>
+        </SectionCard>
+
+        <SectionCard title="Termination" num="13" colors={colors}>
+          <Para colors={colors}>
+            We reserve the right to suspend or terminate your account and access to the App at any time, with or without notice, for any violation of these Terms or for any other reason at our sole discretion.
+          </Para>
+          <Para colors={colors}>
+            Upon termination, your licence to use the App ceases immediately. Provisions of these Terms that by their nature should survive termination (including Sections 4, 5, 6, 12) shall survive.
+          </Para>
+        </SectionCard>
+
+        <SectionCard title="Severability & Entire Agreement" num="14" colors={colors}>
+          <Para colors={colors}>
+            If any provision of these Terms is found to be invalid or unenforceable under applicable law, that provision shall be modified to the minimum extent necessary, and the remaining provisions shall remain in full force and effect.
+          </Para>
+          <Para colors={colors}>
+            These Terms, together with our Privacy Policy and the in-app Consent Agreement, constitute the entire agreement between you and QR Guard regarding the Service and supersede all prior agreements.
+          </Para>
+        </SectionCard>
+
+        <SectionCard title="Contact" num="15" colors={colors}>
+          <Para colors={colors}>For legal matters, policy questions, or to report a violation, contact us at:</Para>
           <View style={[styles.contactCard, { backgroundColor: colors.primaryDim, borderColor: colors.primary + "30" }]}>
             <Ionicons name="mail-outline" size={20} color={colors.primary} />
             <Text style={[styles.contactEmail, { color: colors.primary }]}>{CONTACT_EMAIL}</Text>
@@ -196,7 +297,7 @@ export default function TermsScreen() {
 
         <View style={styles.footer}>
           <Ionicons name="shield-checkmark" size={16} color={colors.primary} />
-          <Text style={[styles.footerText, { color: colors.textMuted }]}>{APP_NAME} — Scan smart. Stay safe.</Text>
+          <Text style={[styles.footerText, { color: colors.textMuted }]}>{APP_NAME} — Scan smart. Stay safe. v2.0</Text>
         </View>
       </ScrollView>
     </View>
@@ -212,7 +313,6 @@ const styles = StyleSheet.create({
   navTitle: { fontSize: 16, fontFamily: "Inter_700Bold", flex: 1, textAlign: "center" },
   backBtn: { width: 38, height: 38, borderRadius: 19, alignItems: "center", justifyContent: "center", borderWidth: 1 },
   scrollContent: { padding: 16, gap: 10 },
-
   heroBanner: {
     flexDirection: "row", alignItems: "flex-start", gap: 14,
     borderRadius: 20, padding: 16, borderWidth: 1,
@@ -229,10 +329,7 @@ const styles = StyleSheet.create({
     alignSelf: "flex-start",
   },
   dateBadgeText: { fontSize: 11, fontFamily: "Inter_500Medium" },
-
-  sectionCard: {
-    borderRadius: 16, borderWidth: 1, padding: 14,
-  },
+  sectionCard: { borderRadius: 16, borderWidth: 1, padding: 14 },
   sectionHeader: { flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 9 },
   sectionNum: { width: 24, height: 24, borderRadius: 7, alignItems: "center", justifyContent: "center" },
   sectionNumText: { fontSize: 11, fontFamily: "Inter_700Bold" },

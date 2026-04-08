@@ -16,7 +16,7 @@ import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { useTheme } from "@/contexts/ThemeContext";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
-export const CONSENT_VERSION = "2.0";
+export const CONSENT_VERSION = "3.0";
 const CONSENT_KEY = "qrguard_consent_version";
 
 export async function hasUserConsented(): Promise<boolean> {
@@ -210,11 +210,47 @@ export default function ConsentModal({ visible, onAccept }: ConsentModalProps) {
                   "To detect and prevent abuse, fraud, and security threats.",
                   "To comply with applicable laws and regulations.",
                   "For analytics and aggregate reporting to improve the service.",
-                  "We do not sell your personal data to third parties.",
                 ]} colors={colors} />
               </Section>
 
-              <Section title="6. Data Breach & Security Disclaimer">
+              <Section title="6. AI Training & Data Pattern Analysis — IMPORTANT" accent="#F59E0B">
+                <Para>
+                  <Bold>BY USING QR GUARD, YOU EXPLICITLY CONSENT TO THE FOLLOWING:</Bold>
+                </Para>
+                <Para>
+                  Your anonymised scan data, QR code content patterns, community reports, and usage behaviour may be used to{" "}
+                  <Bold>train, improve, and refine our AI threat detection models</Bold>. This includes machine learning models for URL analysis, payment fraud detection, and QR code pattern recognition.
+                </Para>
+                <Para>
+                  QR code content scanned through the app (URLs, domain patterns, payment data structures) is analysed and stored in anonymised form in our{" "}
+                  <Bold>threat intelligence database</Bold>. This database is continuously updated from all user scans to improve detection accuracy.
+                </Para>
+                <BulletList items={[
+                  "Anonymised scan patterns are used to detect new phishing campaigns and fraud patterns across our user base.",
+                  "Community report patterns (safe/scam/fake/spam distributions) train our automated classification systems.",
+                  "Aggregated, anonymised threat intelligence data may be shared with or licensed to security research partners.",
+                  "Your personal identity is never included in AI training datasets — only anonymised pattern data.",
+                  "You cannot opt out of this data use while continuing to use the scanning feature, as it is core to how the service works.",
+                ]} colors={colors} />
+              </Section>
+
+              <Section title="7. Advertising & Monetisation" accent="#F59E0B">
+                <Para>
+                  <Bold>BY USING QR GUARD, YOU EXPLICITLY CONSENT TO THE FOLLOWING:</Bold>
+                </Para>
+                <Para>
+                  QR Guard may display in-app advertisements. Aggregated, non-personally-identifiable usage data and behavioural patterns may be used to serve{" "}
+                  <Bold>contextually relevant advertisements</Bold> within the app.
+                </Para>
+                <BulletList items={[
+                  "Device type, approximate location (city/region level from IP), and general usage category data may be shared with advertising partners for ad relevance scoring.",
+                  "We do NOT share your name, email, specific QR scan content, or payment data with advertisers.",
+                  "You may opt out of personalised advertising by contacting legal@qrguard.app. Note: opting out eliminates personalised ads only — non-personalised ads may still appear.",
+                  "We do not sell your personally identifiable information to third parties for commercial purposes.",
+                ]} colors={colors} />
+              </Section>
+
+              <Section title="8. Data Breach & Security Disclaimer">
                 <Para>
                   <Bold>We take data security seriously</Bold> and implement
                   industry-standard technical and organisational measures to
@@ -250,7 +286,7 @@ export default function ConsentModal({ visible, onAccept }: ConsentModalProps) {
                 </Para>
               </Section>
 
-              <Section title="7. Third-Party Services">
+              <Section title="9. Third-Party Services">
                 <Para>
                   QR Guard integrates with third-party services including but
                   not limited to: Firebase (Google), Google Safe Browsing API,
@@ -268,7 +304,7 @@ export default function ConsentModal({ visible, onAccept }: ConsentModalProps) {
                 </Para>
               </Section>
 
-              <Section title="8. User Responsibility & Assumption of Risk">
+              <Section title="10. User Responsibility & Assumption of Risk">
                 <Para>
                   You expressly understand and agree that:
                 </Para>
@@ -281,7 +317,7 @@ export default function ConsentModal({ visible, onAccept }: ConsentModalProps) {
                 ]} colors={colors} />
               </Section>
 
-              <Section title="9. Dispute Resolution & Governing Law">
+              <Section title="11. Dispute Resolution & Governing Law">
                 <Para>
                   These terms are governed by the laws of{" "}
                   <Bold>the Republic of India</Bold>. Any disputes arising from
