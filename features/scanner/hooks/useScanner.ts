@@ -345,39 +345,23 @@ export function useScanner() {
       if (guardMatch) {
         const guardUuid = guardMatch[1].toUpperCase();
         setProcessing(false);
-        setLivingShieldLoading(true);
-        setLivingShieldModal(true);
         setScanSuccess(true);
-        try {
-          const link = await getGuardLink(guardUuid);
-          setLivingShieldData(link);
-        } catch {
-          setLivingShieldData(null);
-        } finally {
-          setLivingShieldLoading(false);
-        }
+        const qrId = await getQrCodeId(content);
+        router.push(`/qr-detail/${qrId}?guardUuid=${guardUuid}`);
         return;
       }
       await processScanAnonymous(content);
       return;
     }
 
-    // Guard links always need a network read (read-only)
+    // Guard links: navigate to detail page with guardUuid param
     const guardMatch = content.match(GUARD_PATTERN);
     if (guardMatch) {
       const guardUuid = guardMatch[1].toUpperCase();
       setProcessing(false);
-      setLivingShieldLoading(true);
-      setLivingShieldModal(true);
       setScanSuccess(true);
-      try {
-        const link = await getGuardLink(guardUuid);
-        setLivingShieldData(link);
-      } catch {
-        setLivingShieldData(null);
-      } finally {
-        setLivingShieldLoading(false);
-      }
+      const qrId = await getQrCodeId(content);
+      router.push(`/qr-detail/${qrId}?guardUuid=${guardUuid}`);
       return;
     }
 
