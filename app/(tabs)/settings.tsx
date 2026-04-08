@@ -165,8 +165,8 @@ export default function SettingsScreen() {
         <View style={styles.section}>
           <Text style={styles.sectionLabel}>ACCOUNT</Text>
           {user ? (
-            <>
-              <View style={[styles.accountCard, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder, borderWidth: 1, borderRadius: 20, marginBottom: 10 }]}>
+            <View style={styles.menuGroup}>
+              <View style={styles.accountCard}>
                 <LinearGradient
                   colors={[colors.primary + "30", colors.accent + "20"]}
                   style={styles.accountAvatar}
@@ -186,20 +186,21 @@ export default function SettingsScreen() {
                   <Text style={styles.accountEmail} numberOfLines={1} ellipsizeMode="tail">{user.email}</Text>
                 </View>
               </View>
+              <View style={styles.divider} />
               <SettingsMenuItem
                 icon="person-outline"
                 label="Account Management"
                 sublabel="History, comments, delete account"
                 onPress={() => setSection("account")}
               />
+              <View style={styles.divider} />
               <SettingsMenuItem
                 icon="heart-outline"
                 label="Following"
                 sublabel="QR codes you're tracking"
                 onPress={() => setSection("following")}
-                iconGradient={[colors.danger, (colors as any).dangerShade ?? colors.danger]}
               />
-            </>
+            </View>
           ) : (
             <Pressable
               onPress={() => safePush("/(auth)/login")}
@@ -221,12 +222,14 @@ export default function SettingsScreen() {
         {user && (
           <View style={styles.section}>
             <Text style={styles.sectionLabel}>PROFILE</Text>
-            <SettingsMenuItem
-              icon="person-circle-outline"
-              label="Profile Settings"
-              sublabel="Name, username, bio, and privacy"
-              onPress={() => setSection("profile")}
-            />
+            <View style={styles.menuGroup}>
+              <SettingsMenuItem
+                icon="person-circle-outline"
+                label="Profile Settings"
+                sublabel="Name, username, bio, and privacy"
+                onPress={() => setSection("profile")}
+              />
+            </View>
           </View>
         )}
 
@@ -284,55 +287,62 @@ export default function SettingsScreen() {
         {/* ── HELP & INFORMATION ── */}
         <View style={styles.section}>
           <Text style={styles.sectionLabel}>HELP & INFORMATION</Text>
-          <SettingsMenuItem
-            icon="book-outline"
-            label="Manual Guide"
-            sublabel="Step-by-step usage guide"
-            onPress={() => setSection("guide")}
-            iconGradient={[colors.safe, (colors as any).safeShade ?? colors.safe]}
-          />
-          <SettingsMenuItem
-            icon="shield-checkmark-outline"
-            label="About Trust Scores"
-            sublabel="How safety ratings are calculated"
-            onPress={() => safePush("/trust-scores")}
-          />
-          <SettingsMenuItem
-            icon="chatbubble-outline"
-            label="Send Feedback"
-            sublabel="Report bugs or suggest features"
-            onPress={() => setSection("feedback")}
-            iconGradient={[colors.warning, (colors as any).warningShade ?? colors.warning]}
-          />
+          <View style={styles.menuGroup}>
+            <SettingsMenuItem
+              icon="book-outline"
+              label="Manual Guide"
+              sublabel="Step-by-step usage guide"
+              onPress={() => setSection("guide")}
+            />
+            <View style={styles.divider} />
+            <SettingsMenuItem
+              icon="shield-checkmark-outline"
+              label="About Trust Scores"
+              sublabel="How safety ratings are calculated"
+              onPress={() => safePush("/trust-scores")}
+            />
+            <View style={styles.divider} />
+            <SettingsMenuItem
+              icon="chatbubble-outline"
+              label="Send Feedback"
+              sublabel="Report bugs or suggest features"
+              onPress={() => setSection("feedback")}
+            />
+          </View>
         </View>
 
         {/* ── LEGAL ── */}
         <View style={styles.section}>
           <Text style={styles.sectionLabel}>LEGAL</Text>
-          <SettingsMenuItem
-            icon="document-text-outline"
-            label="Terms of Service"
-            sublabel="Usage rules, disclaimers and liability"
-            onPress={() => safePush("/terms")}
-          />
-          <SettingsMenuItem
-            icon="lock-closed-outline"
-            label="Privacy Policy"
-            sublabel="How we collect and protect your data"
-            onPress={() => safePush("/privacy-policy")}
-          />
+          <View style={styles.menuGroup}>
+            <SettingsMenuItem
+              icon="document-text-outline"
+              label="Terms of Service"
+              sublabel="Usage rules, disclaimers and liability"
+              onPress={() => safePush("/terms")}
+            />
+            <View style={styles.divider} />
+            <SettingsMenuItem
+              icon="lock-closed-outline"
+              label="Privacy Policy"
+              sublabel="How we collect and protect your data"
+              onPress={() => safePush("/privacy-policy")}
+            />
+          </View>
         </View>
 
         {/* ── DATA ── */}
         <View style={styles.section}>
           <Text style={styles.sectionLabel}>DATA</Text>
-          <SettingsMenuItem
-            icon="trash-outline"
-            label="Clear Local Data"
-            sublabel="Remove scan history from this device"
-            onPress={handleClearData}
-            danger
-          />
+          <View style={styles.menuGroup}>
+            <SettingsMenuItem
+              icon="trash-outline"
+              label="Clear Local Data"
+              sublabel="Remove scan history from this device"
+              onPress={handleClearData}
+              danger
+            />
+          </View>
         </View>
 
         {/* ── SIGN OUT ── */}
