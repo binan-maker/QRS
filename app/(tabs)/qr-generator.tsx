@@ -14,6 +14,8 @@ import LogoSection from "@/features/generator/components/LogoSection";
 import QrOutputCard from "@/features/generator/components/QrOutputCard";
 import InfoModal from "@/features/generator/components/InfoModal";
 import PositionModal from "@/features/generator/components/PositionModal";
+import QrThemeSection from "@/features/generator/components/QrThemeSection";
+import AdvancedSettingsPanel from "@/features/generator/components/AdvancedSettingsPanel";
 
 export default function QrGeneratorScreen() {
   const insets = useSafeAreaInsets();
@@ -33,6 +35,9 @@ export default function QrGeneratorScreen() {
     businessName, setBusinessName,
     businessCategory, switchBusinessCategory,
     customLogoUri, showDefaultLogo, logoPosition, setLogoPosition,
+    selectedThemeIdx, setSelectedThemeIdx,
+    advancedSettings, setAdvancedSettings,
+    qrFgColor, qrBgColor,
     generatedUuid, generatedAt,
     infoModalOpen, setInfoModalOpen,
     positionModalOpen, setPositionModalOpen,
@@ -129,6 +134,20 @@ export default function QrGeneratorScreen() {
           />
         </Reanimated.View>
 
+        <Reanimated.View entering={FadeInDown.duration(400).delay(200)}>
+          <QrThemeSection
+            selectedThemeIdx={selectedThemeIdx}
+            onSelectTheme={setSelectedThemeIdx}
+          />
+        </Reanimated.View>
+
+        <Reanimated.View entering={FadeInDown.duration(400).delay(210)}>
+          <AdvancedSettingsPanel
+            settings={advancedSettings}
+            onChange={setAdvancedSettings}
+          />
+        </Reanimated.View>
+
         <Reanimated.View entering={FadeInDown.duration(400).delay(220)}>
           {(() => {
             const hasLiveQr = !!qrValue;
@@ -191,6 +210,8 @@ export default function QrGeneratorScreen() {
             user={user}
             svgRef={svgRef}
             logoPositionLabel={getLogoPositionLabel()}
+            qrFgColor={qrFgColor}
+            qrBgColor={qrBgColor}
             onSizeIncrease={() => setQrSize((s) => Math.min(320, s + 20))}
             onSizeDecrease={() => setQrSize((s) => Math.max(160, s - 20))}
             onCopy={handleCopy}

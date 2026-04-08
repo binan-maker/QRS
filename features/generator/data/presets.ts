@@ -24,8 +24,9 @@ export const PRESET_CATEGORIES: { label: string; icon: string; presets: number[]
   { label: "Basic",                  icon: "document-text-outline",  presets: [0, 1] },
   { label: "Contact & Messaging",    icon: "chatbubbles-outline",     presets: [2, 3, 4, 5, 9, 15] },
   { label: "Social Media",           icon: "heart-outline",           presets: [11, 12, 13, 14, 16, 17] },
-  { label: "Payments",               icon: "card-outline",            presets: [7, 18, 19, 20, 10] },
+  { label: "Payments",               icon: "card-outline",            presets: [7, 18, 19, 20, 10, 24] },
   { label: "Utility",                icon: "construct-outline",       presets: [6, 8, 21, 22, 23] },
+  { label: "Business & Growth",      icon: "trending-up-outline",     presets: [25, 26, 27] },
 ];
 
 export const QR_PRESETS: PresetDef[] = [
@@ -192,5 +193,41 @@ export const QR_PRESETS: PresetDef[] = [
     label: "App Download", icon: "download-outline", placeholder: "https://apps.apple.com/... or https://play.google.com/...",
     keyboardType: "url", contentType: "appdownload",
     hint: "Paste your App Store or Play Store link",
+  },
+  {
+    label: "BharatQR 🇮🇳", icon: "card-outline", placeholder: "merchant@upi",
+    keyboardType: "email-address", contentType: "bharatqr",
+    hint: "India BharatQR — accepted at all banks, ATMs & PoS. Works with GPay, PhonePe, BHIM, Paytm, NEFT & IMPS.",
+    extraFields: [
+      { key: "name", label: "Payee Name", placeholder: "Shop Name or Full Name", keyboardType: "default" },
+      { key: "amount", label: "Amount ₹ (optional)", placeholder: "0.00", keyboardType: "decimal-pad", optional: true },
+      { key: "ifsc", label: "IFSC Code (optional)", placeholder: "SBIN0001234", keyboardType: "default", optional: true },
+      { key: "account", label: "Account No. (optional)", placeholder: "1234567890", keyboardType: "number-pad", optional: true },
+      { key: "mobile", label: "Mobile (optional)", placeholder: "+91 9876543210", keyboardType: "phone-pad", optional: true },
+    ],
+  },
+  {
+    label: "Google Review", icon: "star-outline", placeholder: "https://g.page/r/...",
+    keyboardType: "url", contentType: "googlereview",
+    hint: "Paste your Google Maps review link — customers scan and leave a review instantly. Best for restaurants, hotels, clinics.",
+    extraFields: [
+      { key: "businessName", label: "Business Name (optional)", placeholder: "e.g. Raj Bakery", keyboardType: "default", optional: true },
+    ],
+  },
+  {
+    label: "Restaurant Menu", icon: "restaurant-outline", placeholder: "https://yourmenu.com",
+    keyboardType: "url", contentType: "restaurantmenu",
+    hint: "Link to your digital menu — works with Zomato, Swiggy, PDF menus, or any website.",
+    extraFields: [
+      { key: "table", label: "Table / Section (optional)", placeholder: "Table 7 or Outdoor", keyboardType: "default", optional: true },
+    ],
+  },
+  {
+    label: "Donation / Tip", icon: "heart-outline", placeholder: "https://...",
+    keyboardType: "url", contentType: "donation",
+    hint: "Create a QR for donations — paste a link to Razorpay, GPay, PayPal, UPI or any payment page.",
+    extraFields: [
+      { key: "cause", label: "Cause / Message (optional)", placeholder: "e.g. Support our NGO", keyboardType: "default", optional: true },
+    ],
   },
 ];

@@ -23,6 +23,8 @@ interface Props {
   user: any;
   svgRef: React.MutableRefObject<any>;
   logoPositionLabel: string;
+  qrFgColor?: string;
+  qrBgColor?: string;
   onSizeIncrease: () => void;
   onSizeDecrease: () => void;
   onCopy: () => void;
@@ -41,6 +43,7 @@ export default function QrOutputCard({
   qrValue, qrSize, isBranded, privateMode, qrMode, logoPosition,
   customLogoUri, showDefaultLogo, generatedUuid, generatedAt, saving, savedToProfile,
   user, svgRef, logoPositionLabel,
+  qrFgColor = "#0A0E17", qrBgColor = "#F8FAFC",
   onSizeIncrease, onSizeDecrease, onCopy, onShare, onDownload, onClear,
   sharingQr = false, downloadingPdf = false,
 }: Props) {
@@ -59,12 +62,12 @@ export default function QrOutputCard({
           <QRCode
             value={qrValue}
             size={qrSize}
-            color="#0A0E17"
-            backgroundColor="#F8FAFC"
+            color={qrFgColor}
+            backgroundColor={qrBgColor}
             getRef={(ref: any) => { svgRef.current = ref; }}
             logo={logoPosition === "center" ? logoSource : undefined}
             logoSize={customLogoUri ? 54 : showDefaultLogo ? 48 : undefined}
-            logoBackgroundColor="#F8FAFC"
+            logoBackgroundColor={qrBgColor}
             logoBorderRadius={customLogoUri ? 27 : 10}
             logoMargin={4}
             quietZone={10}

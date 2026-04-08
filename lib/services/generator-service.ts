@@ -22,7 +22,14 @@ export async function saveGeneratedQr(
   qrType: QrType = "individual",
   businessName?: string | null,
   ownerLogoBase64?: string | null,
-  guardUuid?: string | null
+  guardUuid?: string | null,
+  design?: {
+    fgColor?: string;
+    bgColor?: string;
+    scanLimit?: number | null;
+    expiryDate?: string | null;
+    label?: string | null;
+  } | null
 ): Promise<void> {
   const { SIGNATURE_SALT: SALT } = await import("./types");
   const qrId = await getQrCodeId(content);
@@ -45,6 +52,12 @@ export async function saveGeneratedQr(
     businessName: businessName || null,
     guardUuid: guardUuid || null,
     ...(signature ? { signature } : {}),
+    // Design / advanced settings
+    fgColor: design?.fgColor || "#0A0E17",
+    bgColor: design?.bgColor || "#F8FAFC",
+    ...(design?.scanLimit ? { scanLimit: design.scanLimit } : {}),
+    ...(design?.expiryDate ? { expiryDate: design.expiryDate } : {}),
+    ...(design?.label ? { label: design.label } : {}),
     // Embedded stats - will be updated via triggers or background sync
     scanCount: 0,
     commentCount: 0,

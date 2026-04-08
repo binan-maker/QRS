@@ -15,6 +15,8 @@ import { getApiUrl } from "@/lib/query-client";
 import { QR_PRESETS } from "@/features/generator/data/presets";
 import { buildQrContent, getRawContent, filterByKeyboardType, validateQrInput } from "@/features/generator/data/qr-builder";
 import { type BusinessCategory } from "@/features/generator/components/BusinessTypeSelector";
+import { QR_COLOR_THEMES } from "@/features/generator/components/QrThemeSection";
+import { type AdvancedSettings, resolveExpiryDate } from "@/features/generator/components/AdvancedSettingsPanel";
 
 export type LogoPosition = "center" | "top-left" | "top-right" | "bottom-left" | "bottom-right";
 
@@ -45,6 +47,13 @@ export function useQrGenerator() {
   const [customLogoBase64, setCustomLogoBase64] = useState<string | null>(null);
   const [showDefaultLogo, setShowDefaultLogo] = useState(false);
   const [logoPosition, setLogoPosition] = useState<LogoPosition>("center");
+  const [selectedThemeIdx, setSelectedThemeIdx] = useState(0);
+  const [advancedSettings, setAdvancedSettings] = useState<AdvancedSettings>({
+    scanLimit: null,
+    expiryPreset: "never",
+    expiryCustomDate: "",
+    label: "",
+  });
   const [generatedUuid, setGeneratedUuid] = useState<string | null>(null);
   const [generatedAt, setGeneratedAt] = useState<Date | null>(null);
   const [infoModalOpen, setInfoModalOpen] = useState(false);
@@ -62,6 +71,9 @@ export function useQrGenerator() {
   const preset = QR_PRESETS[selectedPreset];
   const privateMode = qrMode === "private";
   const isBranded = !!user && !privateMode;
+  const activeTheme = QR_COLOR_THEMES[selectedThemeIdx] ?? QR_COLOR_THEMES[0];
+  const qrFgColor = activeTheme.fg;
+  const qrBgColor = activeTheme.bg;
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -238,11 +250,19 @@ export function useQrGenerator() {
         if (isBusinessMode) {
           await saveGuardLink(shortUuid, builtContent, bName, user.displayName, user.id);
         }
+        const expiryDate = resolveExpiryDate(advancedSettings.expiryPreset, advancedSettings.expiryCustomDate);
         await saveGeneratedQr(
           user.id, user.displayName, encodedValue,
           getFirestoreContentType(selectedPreset),
           shortUuid, true, qt, bName, logoToStore,
-          isBusinessMode ? shortUuid : null
+          isBusinessMode ? shortUuid : null,
+          {
+            fgColor: qrFgColor,
+            bgColor: qrBgColor,
+            scanLimit: advancedSettings.scanLimit,
+            expiryDate,
+            label: advancedSettings.label.trim() || null,
+          }
         );
         setSavedToProfile(true);
         setTimeout(() => setSavedToProfile(false), 4000);
@@ -485,6 +505,8 @@ export function useQrGenerator() {
     setSavedToProfile(false);
     setBusinessName("");
     setBusinessCategory("dynamic");
+    setSelectedThemeIdx(0);
+    setAdvancedSettings({ scanLimit: null, expiryPreset: "never", expiryCustomDate: "", label: "" });
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
   }
 
@@ -508,6 +530,12 @@ export function useQrGenerator() {
     showDefaultLogo,
     logoPosition,
     setLogoPosition,
+    selectedThemeIdx,
+    setSelectedThemeIdx,
+    advancedSettings,
+    setAdvancedSettings,
+    qrFgColor,
+    qrBgColor,
     generatedUuid,
     generatedAt,
     infoModalOpen,

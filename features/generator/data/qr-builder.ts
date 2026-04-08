@@ -115,6 +115,34 @@ export function buildQrContent(presetIdx: number, value: string, extra: Record<s
       return cal;
     }
     case 23: return v.startsWith("http") ? v : `https://${v}`;
+    case 24: {
+      const name = extra.name?.trim() || "";
+      const amount = extra.amount?.trim() || "";
+      const ifsc = extra.ifsc?.trim() || "";
+      const account = extra.account?.trim() || "";
+      const mobile = extra.mobile?.trim() || "";
+      let url = `upi://pay?pa=${encodeURIComponent(v)}`;
+      if (name) url += `&pn=${encodeURIComponent(name)}`;
+      if (amount) url += `&am=${amount}&cu=INR`;
+      if (ifsc) url += `&bn=${encodeURIComponent(ifsc)}`;
+      if (account) url += `&ac=${encodeURIComponent(account)}`;
+      if (mobile) url += `&mc=${encodeURIComponent(mobile.replace(/[\s\-()]/g, ""))}`;
+      url += `&mode=02&purpose=00`;
+      return url;
+    }
+    case 25: {
+      const base = v.startsWith("http") ? v : `https://${v}`;
+      return base;
+    }
+    case 26: {
+      const base = v.startsWith("http") ? v : `https://${v}`;
+      const table = extra.table?.trim() || "";
+      return table ? `${base}?table=${encodeURIComponent(table)}` : base;
+    }
+    case 27: {
+      const base = v.startsWith("http") ? v : `https://${v}`;
+      return base;
+    }
     default: return v;
   }
 }
@@ -178,6 +206,10 @@ export function validateQrInput(presetIdx: number, value: string, extra: Record<
       21: "Please enter the Zoom meeting ID.",
       22: "Please enter the event title.",
       23: "Please enter the app download URL.",
+      24: "Please enter the BharatQR UPI VPA (e.g. merchant@upi).",
+      25: "Please paste your Google Review link.",
+      26: "Please enter your menu URL.",
+      27: "Please enter the donation/payment link.",
     };
     return labels[presetIdx] ?? "Please enter some content first.";
   }
