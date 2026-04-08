@@ -22,24 +22,15 @@ import {
   Inter_700Bold,
 } from "@expo-google-fonts/inter";
 import { WEB_MAX_WIDTH } from "@/lib/utils/platform";
+import ConsentModal, { hasUserConsented } from "@/components/ConsentModal";
 
 SplashScreen.preventAutoHideAsync();
 
-/**
- * Hides the splash screen only when BOTH fonts are ready AND Firebase auth
- * has resolved its initial state. This prevents the brief flash of the
- * unauthenticated UI that occurs when the splash dismisses before
- * onAuthStateChanged fires.
- *
- * A 5-second safety timeout ensures the splash never hangs indefinitely if
- * auth fails silently (e.g., no network on cold start).
- */
 function SplashGate({ fontsReady }: { fontsReady: boolean }) {
   const { isLoading: authLoading } = useAuth();
   const hiddenRef = useRef(false);
 
   useEffect(() => {
-    // Safety net: hide splash after 5s no matter what
     const safety = setTimeout(() => {
       if (!hiddenRef.current) {
         hiddenRef.current = true;
@@ -71,6 +62,7 @@ function RootLayoutNav() {
       <Stack.Screen name="favorites" options={{ headerShown: false }} />
       <Stack.Screen name="settings" options={{ headerShown: false }} />
       <Stack.Screen name="privacy-policy" options={{ headerShown: false }} />
+      <Stack.Screen name="terms" options={{ headerShown: false }} />
       <Stack.Screen name="trust-scores" options={{ headerShown: false }} />
       <Stack.Screen name="how-it-works" options={{ headerShown: false }} />
       <Stack.Screen name="account-management" options={{ headerShown: false }} />
@@ -89,7 +81,7 @@ function ThemedApp() {
     <GestureHandlerRootView
       style={{
         flex: 1,
-        backgroundColor: isWeb ? colors.background : colors.background,
+        backgroundColor: colors.background,
         ...(isWeb ? { alignItems: "center" } : {}),
       }}
     >
@@ -109,16 +101,6 @@ function ThemedApp() {
   );
 }
 
-/**
- * Blocks the entire app from rendering its screens until Firebase has resolved
- * the initial auth state. Without this, every time the app launches or returns
- * from the background, tab screens momentarily render in "guest" mode (showing
- * login prompts) before onAuthStateChanged fires — even though the user is signed in.
- *
- * Firebase resolves from its local token cache in <100ms, so the blank view is
- * imperceptible in practice. A 4s safety cap prevents a permanent blank screen
- * if auth somehow never resolves (e.g. no network and no cached state).
- */
 function AuthGatedApp() {
   const { isLoading } = useAuth();
   const { colors } = useTheme();
@@ -130,11 +112,40 @@ function AuthGatedApp() {
   }, []);
 
   if (isLoading && !timedOut) {
-    // Render only the background — no routing, no tab screens, no guest UI.
     return <View style={{ flex: 1, backgroundColor: colors.background }} />;
   }
 
   return <ThemedApp />;
+}
+
+function ConsentGatedApp() {
+  const [consentChecked, setConsentChecked] = React.useState(false);
+  const [consentGiven, setConsentGiven] = React.useState(false);
+
+  React.useEffect(() => {
+    hasUserConsented().then((given) => {
+      setConsentGiven(given);
+      setConsentChecked(true);
+    });
+  }, []);
+
+  const handleAccept = () => {
+    setConsentGiven(true);
+  };
+
+  if (!consentChecked) {
+    return null;
+  }
+
+  return (
+    <>
+      <AuthGatedApp />
+      <ConsentModal
+        visible={!consentGiven}
+        onAccept={handleAccept}
+      />
+    </>
+  );
 }
 
 export default function RootLayout() {
@@ -148,14 +159,11 @@ export default function RootLayout() {
   const fontsReady = fontsLoaded || !!fontError;
 
   useEffect(() => {
-    // Load haptics setting from AsyncStorage on app start
     AsyncStorage.getItem("haptic_enabled").then((v) => {
       if (v !== null) setHapticsEnabled(v !== "false");
     });
   }, []);
 
-  // Don't render anything until fonts are at least attempted — prevents a
-  // flash of unstyled text before Inter is available.
   if (!fontsReady) return null;
 
   return (
@@ -163,9 +171,8 @@ export default function RootLayout() {
       <ThemeProvider>
         <QueryClientProvider client={queryClient}>
           <AuthProvider>
-            {/* SplashGate lives inside AuthProvider so it can read isLoading */}
             <SplashGate fontsReady={fontsReady} />
-            <AuthGatedApp />
+            <ConsentGatedApp />
           </AuthProvider>
         </QueryClientProvider>
       </ThemeProvider>

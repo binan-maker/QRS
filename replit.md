@@ -4,6 +4,13 @@ A full-stack mobile-first QR code scanning and management app built with Expo (R
 
 ## Recent Changes
 
+### Consent & Legal Disclaimer Modal
+- **`components/ConsentModal.tsx`** — Full-screen consent gate shown before any user can interact with the app (both new and existing users, whenever the consent version bumps). Contains 11 legal sections covering: Beta disclaimer, no-warranty clause, limitation of liability, data collection disclosure, data usage, data breach disclaimer, third-party disclaimer, assumption of risk, dispute resolution (Indian law, arbitration-first, class-action waiver), terms update policy, and contact info. A checkbox must be ticked before the "I Accept — Continue to App" button activates.
+- **Consent versioning** — Consent stored in AsyncStorage under key `qrguard_consent_version`. Changing `CONSENT_VERSION` constant in `ConsentModal.tsx` forces all users (new and existing) to re-accept.
+- **`app/_layout.tsx`** — `ConsentGatedApp` component wraps the entire app and shows `ConsentModal` until the user accepts. Expo Router navigation renders behind the modal, fully blocked.
+- **Terms route registered** — `terms` added to the Stack navigator so the modal's Terms of Service link works.
+- **To bump consent**: increment `CONSENT_VERSION` in `components/ConsentModal.tsx`, rebuild web (`npm run web:build`), restart backend.
+
 ### Web Support Added
 - **Web build** (`web-build/`) — generated via `npm run web:build` (runs `expo export --platform web`). The backend serves this as a full SPA to any browser that visits the site.
 - **Backend updated** (`server/index.ts`) — `configureExpoAndLanding` now detects the `web-build/` directory and serves `index.html` with SPA fallback for all non-API, non-Expo routes. Mobile Expo clients (with `expo-platform` header) still receive the native manifest as before.
