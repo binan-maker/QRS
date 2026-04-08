@@ -8,7 +8,6 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
-  Modal,
   useWindowDimensions,
 } from "react-native";
 import { Link, router } from "expo-router";
@@ -213,18 +212,14 @@ export default function LoginScreen() {
                   {
                     backgroundColor: colors.isDark ? "rgba(255,255,255,0.05)" : colors.surfaceLight,
                     borderColor: colors.surfaceBorder,
-                    opacity: pressed || googleLoading ? 0.7 : 1,
+                    opacity: pressed ? 0.8 : 1,
                     transform: [{ scale: pressed ? 0.98 : 1 }],
                     paddingVertical: sp(12),
                   },
                 ]}
               >
-                {googleLoading ? <ActivityIndicator color={colors.text} size="small" /> : (
-                  <>
-                    <GoogleIcon size={sp(18)} />
-                    <Text style={[styles.googleBtnText, { color: colors.text, fontSize: sp(13) }]}>Continue with Google</Text>
-                  </>
-                )}
+                <GoogleIcon size={sp(18)} />
+                <Text style={[styles.googleBtnText, { color: colors.text, fontSize: sp(13) }]}>Continue with Google</Text>
               </Pressable>
             </View>
 
@@ -240,23 +235,7 @@ export default function LoginScreen() {
         </ScrollView>
       </KeyboardAvoidingView>
 
-      <Modal visible={googleLoading} transparent animationType="fade" statusBarTranslucent>
-        <View style={styles.overlayBg}>
-          <View style={[styles.overlayCard, {
-            backgroundColor: colors.isDark ? "#0f1929" : "#ffffff",
-            borderColor: colors.isDark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.06)",
-          }]}>
-            <View style={[styles.overlayIconRing, { borderColor: colors.primary + "28", backgroundColor: colors.primary + "10" }]}>
-              <GoogleIcon size={28} />
-            </View>
-            <View style={styles.overlaySpinnerRow}>
-              <ActivityIndicator color={colors.primary} size="small" />
-              <Text style={[styles.overlayText, { color: colors.text }]}>Connecting with Google</Text>
-            </View>
-            <Text style={[styles.overlaySubText, { color: colors.textMuted }]}>Securely completing sign in…</Text>
-          </View>
-        </View>
-      </Modal>
+      <GoogleAuthLoading visible={googleLoading} />
     </View>
   );
 }
@@ -335,32 +314,4 @@ const styles = StyleSheet.create({
   footer: { flexDirection: "row", justifyContent: "center", gap: 6 },
   footerText: { fontFamily: "Inter_400Regular" },
   footerLink: { fontFamily: "Inter_700Bold" },
-  overlayBg: { flex: 1, backgroundColor: "rgba(0,0,0,0.35)", alignItems: "center", justifyContent: "center" },
-  overlayCard: {
-    alignItems: "center",
-    gap: 14,
-    paddingVertical: 28,
-    paddingHorizontal: 32,
-    borderRadius: 20,
-    borderWidth: 1,
-    minWidth: 220,
-    maxWidth: 280,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.12,
-    shadowRadius: 20,
-    elevation: 8,
-  },
-  overlayIconRing: {
-    width: 60,
-    height: 60,
-    borderRadius: 18,
-    borderWidth: 1.5,
-    alignItems: "center",
-    justifyContent: "center",
-    marginBottom: 2,
-  },
-  overlaySpinnerRow: { flexDirection: "row", alignItems: "center", gap: 9 },
-  overlayText: { fontFamily: "Inter_600SemiBold", fontSize: 14, textAlign: "center" },
-  overlaySubText: { fontFamily: "Inter_400Regular", fontSize: 12, textAlign: "center" },
 });
