@@ -30,7 +30,7 @@ export async function saveGeneratedQr(
     expiryDate?: string | null;
     label?: string | null;
   } | null
-): Promise<void> {
+): Promise<string> {
   const { SIGNATURE_SALT: SALT } = await import("./types");
   const qrId = await getQrCodeId(content);
   let signature: string | undefined;
@@ -46,7 +46,7 @@ export async function saveGeneratedQr(
   
   // FIX #9: Embed scanCount and commentCount in generatedQrs for faster access
   // This avoids separate qrCodes lookups when displaying user's QR list
-  await db.add(["users", userId, "generatedQrs"], {
+  const docRef = await db.add(["users", userId, "generatedQrs"], {
     content, contentType, uuid, branded,
     qrCodeId: qrId, qrType,
     businessName: businessName || null,
@@ -91,6 +91,7 @@ export async function saveGeneratedQr(
       });
     }
   }
+  return docRef.id;
 }
 
 export async function getGeneratedQrById(userId: string, docId: string): Promise<GeneratedQrItem | null> {

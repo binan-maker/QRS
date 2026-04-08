@@ -4,6 +4,24 @@ A full-stack mobile-first QR code scanning and management app built with Expo (R
 
 ## Recent Changes
 
+### QR Code Groups
+Users can now organise their generated QR codes into named groups (e.g., per organisation, project, or personal use).
+
+**New files:**
+- **`lib/services/group-service.ts`** — Full CRUD service for QR groups stored in Firestore at `users/{userId}/qrGroups/{groupId}`. Supports real-time subscriptions, create/update/delete groups, add/remove individual QR codes from groups.
+- **`app/qr-groups.tsx`** — Groups list screen with stats strip, search, inline group creation (name, description, colour picker, icon picker) and swipe-to-delete.
+- **`app/qr-group/[id].tsx`** — Group detail screen showing all QR codes in the group with coloured header, inline edit, and per-card remove/share actions.
+- **`components/groups/GroupPickerModal.tsx`** — Bottom sheet modal for adding/removing a QR from any group, with search and inline "Create New Group" flow.
+
+**Updated files:**
+- **`app/my-qr-codes.tsx`** — Added "Groups" button in the nav bar and a folder icon on every QR card that opens the GroupPickerModal.
+- **`app/(tabs)/qr-generator.tsx`** — After a QR is saved to profile, an "Add to Group" button appears that opens the GroupPickerModal for the just-created QR.
+- **`features/generator/hooks/useQrGenerator.ts`** — Now tracks `savedDocId` (the Firestore docId of the last saved QR) and exposes it.
+- **`lib/services/generator-service.ts`** — `saveGeneratedQr` now returns the newly created document ID (`string`) instead of `void`.
+- **`lib/services/index.ts`** — Exports `group-service`.
+
+
+
 ### Consent & Legal Disclaimer Modal
 - **`components/ConsentModal.tsx`** — Full-screen consent gate shown before any user can interact with the app (both new and existing users, whenever the consent version bumps). Contains 11 legal sections covering: Beta disclaimer, no-warranty clause, limitation of liability, data collection disclosure, data usage, data breach disclaimer, third-party disclaimer, assumption of risk, dispute resolution (Indian law, arbitration-first, class-action waiver), terms update policy, and contact info. A checkbox must be ticked before the "I Accept — Continue to App" button activates.
 - **Consent versioning** — Consent stored in AsyncStorage under key `qrguard_consent_version`. Changing `CONSENT_VERSION` constant in `ConsentModal.tsx` forces all users (new and existing) to re-accept.

@@ -23,6 +23,7 @@ import {
   subscribeToUserGeneratedQrs,
   type GeneratedQrItem,
 } from "@/lib/firestore-service";
+import GroupPickerModal from "@/components/groups/GroupPickerModal";
 
 type Filter = "all" | "individual" | "business";
 type SortKey = "newest" | "oldest" | "mostScanned";
@@ -116,6 +117,7 @@ export default function MyQrCodesScreen() {
   const [filter,     setFilter]     = useState<Filter>("all");
   const [sortKey,    setSortKey]    = useState<SortKey>("newest");
   const [sortOpen,   setSortOpen]   = useState(false);
+  const [groupPickerQr, setGroupPickerQr] = useState<GeneratedQrItem | null>(null);
   const unsubscribeRef  = useRef<(() => void) | null>(null);
   const hasLoadedRef    = useRef(false);
 
@@ -312,6 +314,21 @@ export default function MyQrCodesScreen() {
             >
               <Ionicons name="share-outline" size={rf(14)} color={colors.primary} />
             </Pressable>
+            <Pressable
+              onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                setGroupPickerQr(item);
+              }}
+              hitSlop={8}
+              style={({ pressed }) => [{
+                width: sp(32), height: sp(32), borderRadius: sp(16),
+                backgroundColor: "#6366F1" + "20",
+                alignItems: "center", justifyContent: "center",
+                opacity: pressed ? 0.7 : 1,
+              }]}
+            >
+              <Ionicons name="folder-outline" size={rf(14)} color="#6366F1" />
+            </Pressable>
             <View style={{
               width: sp(28), height: sp(28), borderRadius: sp(14),
               backgroundColor: colors.surfaceLight,
@@ -351,25 +368,43 @@ export default function MyQrCodesScreen() {
         )}
       </View>
 
-      <Pressable
-        onPress={() => {
-          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-          router.push("/(tabs)/qr-generator");
-        }}
-        style={({ pressed }) => [{ opacity: pressed ? 0.82 : 1 }]}
-      >
-        <LinearGradient
-          colors={[colors.primary, colors.primaryShade]}
-          style={{
-            flexDirection: "row", alignItems: "center", gap: sp(4),
-            borderRadius: sp(12), paddingHorizontal: sp(13), paddingVertical: sp(8),
+      <View style={{ flexDirection: "row", alignItems: "center", gap: sp(8) }}>
+        <Pressable
+          onPress={() => {
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+            router.push("/qr-groups" as any);
           }}
-          start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
+          style={({ pressed }) => [{
+            flexDirection: "row", alignItems: "center", gap: sp(4),
+            borderRadius: sp(12), paddingHorizontal: sp(11), paddingVertical: sp(8),
+            backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.surfaceBorder,
+            opacity: pressed ? 0.8 : 1,
+          }]}
         >
-          <Ionicons name="add" size={rf(14)} color="#fff" />
-          <Text style={{ fontSize: rf(12), fontFamily: "Inter_700Bold", color: "#fff" }}>New</Text>
-        </LinearGradient>
-      </Pressable>
+          <Ionicons name="folder-outline" size={rf(14)} color={colors.textSecondary} />
+          <Text style={{ fontSize: rf(12), fontFamily: "Inter_700Bold", color: colors.textSecondary }}>Groups</Text>
+        </Pressable>
+
+        <Pressable
+          onPress={() => {
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+            router.push("/(tabs)/qr-generator");
+          }}
+          style={({ pressed }) => [{ opacity: pressed ? 0.82 : 1 }]}
+        >
+          <LinearGradient
+            colors={[colors.primary, colors.primaryShade]}
+            style={{
+              flexDirection: "row", alignItems: "center", gap: sp(4),
+              borderRadius: sp(12), paddingHorizontal: sp(13), paddingVertical: sp(8),
+            }}
+            start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
+          >
+            <Ionicons name="add" size={rf(14)} color="#fff" />
+            <Text style={{ fontSize: rf(12), fontFamily: "Inter_700Bold", color: "#fff" }}>New</Text>
+          </LinearGradient>
+        </Pressable>
+      </View>
     </View>
   );
 
@@ -610,6 +645,13 @@ export default function MyQrCodesScreen() {
           }
         />
       )}
+
+      <GroupPickerModal
+        visible={groupPickerQr !== null}
+        onClose={() => setGroupPickerQr(null)}
+        qrDocId={groupPickerQr?.docId ?? ""}
+        qrLabel={(groupPickerQr as any)?.businessName || groupPickerQr?.content || "QR Code"}
+      />
     </View>
   );
 }

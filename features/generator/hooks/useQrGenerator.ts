@@ -60,6 +60,7 @@ export function useQrGenerator() {
   const [positionModalOpen, setPositionModalOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const [savedToProfile, setSavedToProfile] = useState(false);
+  const [savedDocId, setSavedDocId] = useState<string | null>(null);
   const [sharingQr, setSharingQr] = useState(false);
   const [downloadingPdf, setDownloadingPdf] = useState(false);
 
@@ -336,6 +337,7 @@ export function useQrGenerator() {
     if (isBranded && user) {
       setSaving(true);
       setSavedToProfile(false);
+      setSavedDocId(null);
       try {
         const qt: QrType = qrMode === "business" ? "business" : "individual";
         const logoToStore = qrMode === "business" && customLogoBase64 ? customLogoBase64 : null;
@@ -344,7 +346,7 @@ export function useQrGenerator() {
           await saveGuardLink(shortUuid, builtContent, bName, user.displayName, user.id);
         }
         const expiryDate = resolveExpiryDate(advancedSettings.expiryPreset, advancedSettings.expiryCustomDate);
-        await saveGeneratedQr(
+        const docId = await saveGeneratedQr(
           user.id, user.displayName, encodedValue,
           getFirestoreContentType(selectedPreset),
           shortUuid, true, qt, bName, logoToStore,
@@ -357,6 +359,7 @@ export function useQrGenerator() {
             label: advancedSettings.label.trim() || null,
           }
         );
+        setSavedDocId(docId);
         setSavedToProfile(true);
         setTimeout(() => setSavedToProfile(false), 4000);
       } catch (err: any) {
@@ -596,6 +599,7 @@ export function useQrGenerator() {
     setShowDefaultLogo(false);
     setLogoPosition("center");
     setSavedToProfile(false);
+    setSavedDocId(null);
     setBusinessName("");
     setBusinessCategory("website");
     setSelectedThemeIdx(0);
@@ -644,6 +648,7 @@ export function useQrGenerator() {
     setPositionModalOpen,
     saving,
     savedToProfile,
+    savedDocId,
     toastMsg,
     toastType,
     toastAnim,

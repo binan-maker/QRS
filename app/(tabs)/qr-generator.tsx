@@ -14,6 +14,7 @@ import QrOutputCard from "@/features/generator/components/QrOutputCard";
 import InfoModal from "@/features/generator/components/InfoModal";
 import PositionModal from "@/features/generator/components/PositionModal";
 import CustomizeDrawer from "@/features/generator/components/CustomizeDrawer";
+import GroupPickerModal from "@/components/groups/GroupPickerModal";
 
 export default function QrGeneratorScreen() {
   const insets = useSafeAreaInsets();
@@ -24,6 +25,7 @@ export default function QrGeneratorScreen() {
 
   const [qrSize, setQrSize] = useState(220);
   const [templateModalOpen, setTemplateModalOpen] = useState(false);
+  const [groupPickerOpen, setGroupPickerOpen] = useState(false);
 
   const {
     user, svgRef,
@@ -40,7 +42,7 @@ export default function QrGeneratorScreen() {
     generatedUuid, generatedAt,
     infoModalOpen, setInfoModalOpen,
     positionModalOpen, setPositionModalOpen,
-    saving, savedToProfile,
+    saving, savedToProfile, savedDocId,
     toastMsg, toastType, toastAnim,
     preset, isBranded, privateMode,
     switchPreset, handleGenerate,
@@ -191,6 +193,27 @@ export default function QrGeneratorScreen() {
           })()}
         </Reanimated.View>
 
+        {savedDocId && (
+          <Reanimated.View entering={FadeInDown.duration(350).springify()}>
+            <Pressable
+              onPress={() => setGroupPickerOpen(true)}
+              style={({ pressed }) => [{
+                flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8,
+                borderRadius: 16, borderWidth: 1.5, borderStyle: "dashed",
+                borderColor: "#6366F1" + "70",
+                paddingVertical: 12, marginBottom: 16,
+                backgroundColor: "#6366F1" + "12",
+                opacity: pressed ? 0.8 : 1,
+              }]}
+            >
+              <Ionicons name="folder-open-outline" size={18} color="#6366F1" />
+              <Text style={{ fontSize: 14, fontFamily: "Inter_700Bold", color: "#6366F1" }}>
+                Add to Group
+              </Text>
+            </Pressable>
+          </Reanimated.View>
+        )}
+
         {qrValue ? (
           <QrOutputCard
             qrValue={qrValue}
@@ -282,6 +305,13 @@ export default function QrGeneratorScreen() {
       />
 
       <InfoModal visible={infoModalOpen} onClose={() => setInfoModalOpen(false)} />
+
+      <GroupPickerModal
+        visible={groupPickerOpen}
+        onClose={() => setGroupPickerOpen(false)}
+        qrDocId={savedDocId ?? ""}
+        qrLabel={qrValue}
+      />
     </View>
   );
 }
