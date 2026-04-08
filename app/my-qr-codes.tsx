@@ -175,14 +175,23 @@ export default function MyQrCodesScreen() {
     const subText     = item.businessName ? item.content : null;
     const ctMeta      = getContentTypeMeta(item.contentType || "text");
     const labelText   = (item as any).label as string | undefined;
+    const guardUuid   = (item as any).guardUuid as string | null | undefined;
+    const qrCodeId    = (item as any).qrCodeId as string | undefined;
+
+    function handleCardPress() {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      if (qrCodeId) {
+        const route = guardUuid
+          ? `/qr-detail/${qrCodeId}?guardUuid=${guardUuid}`
+          : `/qr-detail/${qrCodeId}`;
+        router.push(route as any);
+      }
+    }
 
     return (
       <Animated.View entering={FadeInDown.duration(340).delay(index * 40).springify()}>
         <Pressable
-          onPress={() => {
-            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-            router.push(`/my-qr/${item.docId}` as any);
-          }}
+          onPress={handleCardPress}
           style={({ pressed }) => [{
             flexDirection:   "row",
             alignItems:      "center",
