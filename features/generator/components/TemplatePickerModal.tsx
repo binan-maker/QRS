@@ -1,4 +1,4 @@
-import { View, Text, Modal, Pressable, ScrollView, TextInput, StyleSheet, Platform } from "react-native";
+import { View, Text, Modal, Pressable, ScrollView, TextInput, StyleSheet, Platform, useWindowDimensions } from "react-native";
 import { useState, useMemo } from "react";
 import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -15,7 +15,10 @@ interface Props {
 export default function TemplatePickerModal({ visible, selectedPreset, onSelect, onClose }: Props) {
   const { colors } = useTheme();
   const insets = useSafeAreaInsets();
+  const { height: screenHeight } = useWindowDimensions();
   const [search, setSearch] = useState("");
+
+  const sheetHeight = screenHeight * 0.84;
 
   const searchResults = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -37,106 +40,119 @@ export default function TemplatePickerModal({ visible, selectedPreset, onSelect,
   }
 
   return (
-    <Modal visible={visible} transparent animationType="slide" onRequestClose={handleClose}>
-      <Pressable style={styles.backdrop} onPress={handleClose} />
-      <View
-        style={[
-          styles.sheet,
-          {
-            backgroundColor: colors.background,
-            borderColor: colors.surfaceBorder,
-            paddingBottom: Platform.OS === "web" ? 24 : insets.bottom + 16,
-          },
-        ]}
-      >
-        <View style={[styles.handle, { backgroundColor: colors.surfaceBorder }]} />
+    <Modal
+      visible={visible}
+      transparent
+      animationType="slide"
+      onRequestClose={handleClose}
+      statusBarTranslucent
+    >
+      <View style={styles.overlay}>
+        <Pressable style={styles.backdrop} onPress={handleClose} />
+        <View
+          style={[
+            styles.sheet,
+            {
+              backgroundColor: colors.background,
+              borderColor: colors.surfaceBorder,
+              height: sheetHeight,
+              paddingBottom: insets.bottom + 16,
+            },
+          ]}
+        >
+          <View style={[styles.handle, { backgroundColor: colors.surfaceBorder }]} />
 
-        <View style={styles.header}>
-          <View>
-            <Text style={[styles.title, { color: colors.text }]}>QR Templates</Text>
-            <Text style={[styles.subtitle, { color: colors.textMuted }]}>
-              {QR_PRESETS.length} types — pick one to get structured fields
-            </Text>
-          </View>
-          <Pressable
-            onPress={handleClose}
-            style={[styles.closeBtn, { backgroundColor: colors.surfaceLight }]}
-          >
-            <Ionicons name="close" size={18} color={colors.textSecondary} />
-          </Pressable>
-        </View>
-
-        <View style={[styles.searchWrap, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
-          <Ionicons name="search-outline" size={16} color={colors.textMuted} />
-          <TextInput
-            style={[styles.searchInput, { color: colors.text }]}
-            value={search}
-            onChangeText={setSearch}
-            placeholder="Search templates…"
-            placeholderTextColor={colors.textMuted}
-            autoCapitalize="none"
-            autoCorrect={false}
-            autoFocus={false}
-          />
-          {search.length > 0 && (
-            <Pressable onPress={() => setSearch("")} hitSlop={8}>
-              <Ionicons name="close-circle" size={16} color={colors.textMuted} />
-            </Pressable>
-          )}
-        </View>
-
-        <ScrollView showsVerticalScrollIndicator={false} style={{ flex: 1 }}>
-          {searchResults ? (
-            <View style={styles.resultsList}>
-              {searchResults.length === 0 ? (
-                <Text style={[styles.emptyText, { color: colors.textMuted }]}>No templates match "{search}"</Text>
-              ) : (
-                searchResults.map((p) => (
-                  <PresetRow
-                    key={p.idx}
-                    icon={p.icon}
-                    label={p.label}
-                    hint={p.hint}
-                    isSelected={selectedPreset === p.idx}
-                    onPress={() => handleSelect(p.idx)}
-                    colors={colors}
-                  />
-                ))
-              )}
+          <View style={styles.header}>
+            <View style={{ flex: 1 }}>
+              <Text style={[styles.title, { color: colors.text }]}>QR Templates</Text>
+              <Text style={[styles.subtitle, { color: colors.textMuted }]}>
+                {QR_PRESETS.length} types — tap one to get structured fields
+              </Text>
             </View>
-          ) : (
-            PRESET_CATEGORIES.map((cat) => (
-              <View key={cat.label}>
-                <View style={[styles.catHeader, { borderBottomColor: colors.surfaceBorder }]}>
-                  <View style={[styles.catIconBox, { backgroundColor: colors.primaryDim }]}>
-                    <Ionicons name={cat.icon as any} size={13} color={colors.primary} />
-                  </View>
-                  <Text style={[styles.catLabel, { color: colors.primary }]}>
-                    {cat.label.toUpperCase()}
-                  </Text>
-                </View>
-                <View style={styles.catItems}>
-                  {cat.presets.map((idx) => {
-                    const p = QR_PRESETS[idx];
-                    if (!p) return null;
-                    return (
-                      <PresetRow
-                        key={idx}
-                        icon={p.icon}
-                        label={p.label}
-                        hint={p.hint}
-                        isSelected={selectedPreset === idx}
-                        onPress={() => handleSelect(idx)}
-                        colors={colors}
-                      />
-                    );
-                  })}
-                </View>
+            <Pressable
+              onPress={handleClose}
+              style={[styles.closeBtn, { backgroundColor: colors.surfaceLight }]}
+            >
+              <Ionicons name="close" size={18} color={colors.textSecondary} />
+            </Pressable>
+          </View>
+
+          <View style={[styles.searchWrap, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
+            <Ionicons name="search-outline" size={16} color={colors.textMuted} />
+            <TextInput
+              style={[styles.searchInput, { color: colors.text }]}
+              value={search}
+              onChangeText={setSearch}
+              placeholder="Search templates…"
+              placeholderTextColor={colors.textMuted}
+              autoCapitalize="none"
+              autoCorrect={false}
+              autoFocus={false}
+            />
+            {search.length > 0 && (
+              <Pressable onPress={() => setSearch("")} hitSlop={8}>
+                <Ionicons name="close-circle" size={16} color={colors.textMuted} />
+              </Pressable>
+            )}
+          </View>
+
+          <ScrollView
+            showsVerticalScrollIndicator={false}
+            style={{ flex: 1 }}
+            keyboardShouldPersistTaps="handled"
+          >
+            {searchResults ? (
+              <View style={styles.resultsList}>
+                {searchResults.length === 0 ? (
+                  <Text style={[styles.emptyText, { color: colors.textMuted }]}>No templates match "{search}"</Text>
+                ) : (
+                  searchResults.map((p) => (
+                    <PresetRow
+                      key={p.idx}
+                      icon={p.icon}
+                      label={p.label}
+                      hint={p.hint}
+                      isSelected={selectedPreset === p.idx}
+                      onPress={() => handleSelect(p.idx)}
+                      colors={colors}
+                    />
+                  ))
+                )}
               </View>
-            ))
-          )}
-          <View style={{ height: 16 }} />
-        </ScrollView>
+            ) : (
+              PRESET_CATEGORIES.map((cat) => (
+                <View key={cat.label}>
+                  <View style={[styles.catHeader, { borderBottomColor: colors.surfaceBorder }]}>
+                    <View style={[styles.catIconBox, { backgroundColor: colors.primaryDim }]}>
+                      <Ionicons name={cat.icon as any} size={13} color={colors.primary} />
+                    </View>
+                    <Text style={[styles.catLabel, { color: colors.primary }]}>
+                      {cat.label.toUpperCase()}
+                    </Text>
+                  </View>
+                  <View style={styles.catItems}>
+                    {cat.presets.map((idx) => {
+                      const p = QR_PRESETS[idx];
+                      if (!p) return null;
+                      return (
+                        <PresetRow
+                          key={idx}
+                          icon={p.icon}
+                          label={p.label}
+                          hint={p.hint}
+                          isSelected={selectedPreset === idx}
+                          onPress={() => handleSelect(idx)}
+                          colors={colors}
+                        />
+                      );
+                    })}
+                  </View>
+                </View>
+              ))
+            )}
+            <View style={{ height: 20 }} />
+          </ScrollView>
+        </View>
       </View>
     </Modal>
   );
@@ -183,14 +199,20 @@ function PresetRow({
 }
 
 const styles = StyleSheet.create({
-  backdrop: { flex: 1, backgroundColor: "rgba(0,0,0,0.5)" },
+  overlay: {
+    flex: 1,
+    justifyContent: "flex-end",
+  },
+  backdrop: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: "rgba(0,0,0,0.5)",
+  },
   sheet: {
     borderTopLeftRadius: 28,
     borderTopRightRadius: 28,
     borderTopWidth: 1,
     borderLeftWidth: 1,
     borderRightWidth: 1,
-    maxHeight: "84%",
     paddingTop: 12,
     overflow: "hidden",
   },
@@ -208,6 +230,7 @@ const styles = StyleSheet.create({
   closeBtn: {
     width: 34, height: 34, borderRadius: 17,
     alignItems: "center", justifyContent: "center",
+    marginLeft: 12,
   },
   searchWrap: {
     flexDirection: "row", alignItems: "center", gap: 8,

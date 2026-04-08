@@ -1,9 +1,9 @@
-import { View, Text, StyleSheet, Pressable } from "react-native";
+import { View, Text, StyleSheet, Pressable, ScrollView } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import * as Haptics from "@/lib/haptics";
 import { useTheme } from "@/contexts/ThemeContext";
 
-export type BusinessCategory = "dynamic" | "smartmenu" | "review" | "whatsapp" | "event" | "upi";
+export type BusinessCategory = "website" | "whatsapp" | "upi" | "wifi" | "event" | "phone";
 
 export interface BusinessCategoryDef {
   key: BusinessCategory;
@@ -11,71 +11,50 @@ export interface BusinessCategoryDef {
   tagline: string;
   icon: keyof typeof Ionicons.glyphMap;
   accentColor: string;
-  inputLabel: string;
-  inputPlaceholder: string;
-  inputKeyboard: "default" | "url" | "phone-pad";
 }
 
 export const BUSINESS_CATEGORIES: BusinessCategoryDef[] = [
   {
-    key: "dynamic",
-    label: "Dynamic URL",
-    tagline: "Change destination anytime",
-    icon: "refresh-circle-outline",
+    key: "website",
+    label: "Website",
+    tagline: "Link to any page",
+    icon: "globe-outline",
     accentColor: "#3B82F6",
-    inputLabel: "Destination URL",
-    inputPlaceholder: "https://your-website.com",
-    inputKeyboard: "url",
-  },
-  {
-    key: "smartmenu",
-    label: "Smart Menu",
-    tagline: "Digital menu, always fresh",
-    icon: "restaurant-outline",
-    accentColor: "#F59E0B",
-    inputLabel: "Menu / Catalog URL",
-    inputPlaceholder: "https://menu.example.com",
-    inputKeyboard: "url",
-  },
-  {
-    key: "review",
-    label: "Review Boost",
-    tagline: "More 5-star reviews, effortlessly",
-    icon: "star-outline",
-    accentColor: "#EF4444",
-    inputLabel: "Review Page URL",
-    inputPlaceholder: "https://g.page/your-business/review",
-    inputKeyboard: "url",
   },
   {
     key: "whatsapp",
-    label: "WhatsApp Direct",
-    tagline: "Chat-first customer support",
+    label: "WhatsApp",
+    tagline: "Chat instantly",
     icon: "logo-whatsapp",
     accentColor: "#22C55E",
-    inputLabel: "WhatsApp Number",
-    inputPlaceholder: "+91 9876543210",
-    inputKeyboard: "phone-pad",
   },
   {
     key: "upi",
-    label: "UPI Payment",
-    tagline: "Tap-to-pay for your shop",
+    label: "UPI Pay",
+    tagline: "Accept payments",
     icon: "card-outline",
     accentColor: "#8B5CF6",
-    inputLabel: "UPI ID",
-    inputPlaceholder: "yourname@upi or 9876543210@paytm",
-    inputKeyboard: "default",
+  },
+  {
+    key: "wifi",
+    label: "WiFi",
+    tagline: "Share network access",
+    icon: "wifi-outline",
+    accentColor: "#0EA5E9",
   },
   {
     key: "event",
-    label: "Event & RSVP",
-    tagline: "Instant calendar sync",
+    label: "Event",
+    tagline: "Calendar invite",
     icon: "calendar-outline",
     accentColor: "#EC4899",
-    inputLabel: "Event Name",
-    inputPlaceholder: "Grand Opening Night",
-    inputKeyboard: "default",
+  },
+  {
+    key: "phone",
+    label: "Phone Call",
+    tagline: "Tap to call",
+    icon: "call-outline",
+    accentColor: "#F59E0B",
   },
 ];
 
@@ -88,99 +67,70 @@ export default function BusinessTypeSelector({ businessCategory, onSelect }: Pro
   const { colors } = useTheme();
 
   return (
-    <View style={{ marginBottom: 16 }}>
-      <Text style={[styles.sectionLabel, { color: colors.textMuted }]}>Business Type</Text>
-      <View style={styles.grid}>
-        {BUSINESS_CATEGORIES.map((cat) => {
-          const active = businessCategory === cat.key;
-          const accent = cat.accentColor;
-          return (
-            <Pressable
-              key={cat.key}
-              onPress={() => {
-                onSelect(cat.key);
-                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-              }}
-              style={({ pressed }) => [
-                styles.card,
-                {
-                  backgroundColor: active ? accent + "18" : colors.surface,
-                  borderColor: active ? accent + "70" : colors.surfaceBorder,
-                  opacity: pressed ? 0.78 : 1,
-                },
-              ]}
-            >
-              <View style={[styles.iconBox, { backgroundColor: active ? accent + "25" : colors.surfaceLight }]}>
-                <Ionicons name={cat.icon} size={20} color={active ? accent : colors.textMuted} />
-              </View>
-              <Text
-                style={[styles.cardLabel, { color: active ? accent : colors.text }]}
-                numberOfLines={1}
+    <View style={{ marginBottom: 14 }}>
+      <Text style={[styles.sectionLabel, { color: colors.textMuted }]}>QR Type</Text>
+      <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+        <View style={styles.row}>
+          {BUSINESS_CATEGORIES.map((cat) => {
+            const active = businessCategory === cat.key;
+            const accent = cat.accentColor;
+            return (
+              <Pressable
+                key={cat.key}
+                onPress={() => {
+                  onSelect(cat.key);
+                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                }}
+                style={({ pressed }) => [
+                  styles.chip,
+                  {
+                    backgroundColor: active ? accent + "18" : colors.surface,
+                    borderColor: active ? accent + "80" : colors.surfaceBorder,
+                    opacity: pressed ? 0.75 : 1,
+                  },
+                ]}
               >
-                {cat.label}
-              </Text>
-              <Text
-                style={[styles.cardTagline, { color: active ? accent + "CC" : colors.textMuted }]}
-                numberOfLines={2}
-              >
-                {cat.tagline}
-              </Text>
-              {active && (
-                <View style={[styles.activeDot, { backgroundColor: accent }]} />
-              )}
-            </Pressable>
-          );
-        })}
-      </View>
+                <View style={[styles.chipIcon, { backgroundColor: active ? accent + "25" : colors.surfaceLight }]}>
+                  <Ionicons name={cat.icon} size={16} color={active ? accent : colors.textMuted} />
+                </View>
+                <View>
+                  <Text style={[styles.chipLabel, { color: active ? accent : colors.text }]}>
+                    {cat.label}
+                  </Text>
+                  <Text style={[styles.chipTagline, { color: active ? accent + "BB" : colors.textMuted }]}>
+                    {cat.tagline}
+                  </Text>
+                </View>
+                {active && <View style={[styles.activeDot, { backgroundColor: accent }]} />}
+              </Pressable>
+            );
+          })}
+        </View>
+      </ScrollView>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   sectionLabel: {
-    fontSize: 12,
-    fontFamily: "Inter_600SemiBold",
-    textTransform: "uppercase",
-    letterSpacing: 0.8,
-    marginBottom: 10,
+    fontSize: 12, fontFamily: "Inter_600SemiBold",
+    textTransform: "uppercase", letterSpacing: 0.8, marginBottom: 10,
   },
-  grid: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: 9,
+  row: { flexDirection: "row", gap: 8, paddingBottom: 4 },
+  chip: {
+    flexDirection: "row", alignItems: "center", gap: 10,
+    paddingHorizontal: 12, paddingVertical: 10,
+    borderRadius: 16, borderWidth: 1.5,
+    position: "relative", minWidth: 120,
   },
-  card: {
-    width: "48%",
-    borderRadius: 16,
-    borderWidth: 1.5,
-    padding: 13,
-    gap: 6,
-    position: "relative",
-    overflow: "hidden",
+  chipIcon: {
+    width: 34, height: 34, borderRadius: 10,
+    alignItems: "center", justifyContent: "center",
   },
-  iconBox: {
-    width: 38,
-    height: 38,
-    borderRadius: 11,
-    alignItems: "center",
-    justifyContent: "center",
-    marginBottom: 2,
-  },
-  cardLabel: {
-    fontSize: 13,
-    fontFamily: "Inter_700Bold",
-  },
-  cardTagline: {
-    fontSize: 11,
-    fontFamily: "Inter_400Regular",
-    lineHeight: 15,
-  },
+  chipLabel: { fontSize: 13, fontFamily: "Inter_700Bold" },
+  chipTagline: { fontSize: 10, fontFamily: "Inter_400Regular", marginTop: 1 },
   activeDot: {
-    position: "absolute",
-    top: 10,
-    right: 10,
-    width: 7,
-    height: 7,
-    borderRadius: 4,
+    position: "absolute", top: 8, right: 8,
+    width: 6, height: 6, borderRadius: 3,
   },
 });

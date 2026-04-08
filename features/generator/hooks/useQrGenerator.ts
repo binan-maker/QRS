@@ -42,7 +42,7 @@ export function useQrGenerator() {
   const [qrValue, setQrValue] = useState("");
   const [qrMode, setQrMode] = useState<"individual" | "business" | "private">("individual");
   const [businessName, setBusinessName] = useState("");
-  const [businessCategory, setBusinessCategory] = useState<BusinessCategory>("dynamic");
+  const [businessCategory, setBusinessCategory] = useState<BusinessCategory>("website");
   const [customLogoUri, setCustomLogoUri] = useState<string | null>(null);
   const [customLogoBase64, setCustomLogoBase64] = useState<string | null>(null);
   const [showDefaultLogo, setShowDefaultLogo] = useState(false);
@@ -90,44 +90,83 @@ export function useQrGenerator() {
 
       if (qrMode === "business" && isBranded) {
         const v = inputValue.trim();
-        if (!v) return;
         let dest: string | null = null;
         switch (businessCategory) {
+          case "website": {
+            if (!v) break;
+            dest = v.startsWith("http") ? v : `https://${v}`;
+            break;
+          }
           case "whatsapp": {
+            if (!v) break;
             const phone = v.replace(/[\s\-()]/g, "").replace(/^\+/, "");
             const msg = extraFields.message?.trim() || "";
             dest = msg ? `https://wa.me/${phone}?text=${encodeURIComponent(msg)}` : `https://wa.me/${phone}`;
             break;
           }
           case "upi": {
+            if (!v) break;
             const params = new URLSearchParams({ pa: v, cu: "INR" });
-            const name = extraFields.name?.trim();
-            const amount = extraFields.amount?.trim();
-            const note = extraFields.note?.trim();
-            if (name) params.set("pn", name);
-            if (amount) params.set("am", amount);
-            if (note) params.set("tn", note);
+            const upiName = extraFields.name?.trim();
+            const upiAmount = extraFields.amount?.trim();
+            const upiNote = extraFields.note?.trim();
+            if (upiName) params.set("pn", upiName);
+            if (upiAmount) params.set("am", upiAmount);
+            if (upiNote) params.set("tn", upiNote);
             dest = `upi://pay?${params.toString()}`;
             break;
           }
+          case "wifi": {
+            if (!v) break;
+            const security = extraFields.security?.trim() || "WPA";
+            const password = extraFields.password?.trim() || "";
+            const secType = security === "Open" ? "nopass" : security;
+            dest = `WIFI:T:${secType};S:${v};P:${password};;`;
+            break;
+          }
           case "event": {
-            const title = encodeURIComponent(v);
-            let calUrl = `https://calendar.google.com/calendar/r/eventedit?text=${title}`;
-            const date = extraFields.date?.trim() || "";
+            if (!v) break;
+            const dateStr = extraFields.date?.trim() || "";
+            const startH = String(extraFields.startHour ?? "9").padStart(2, "0");
+            const startM = String(extraFields.startMin ?? "0").padStart(2, "0");
+            const endH = String(extraFields.endHour ?? "10").padStart(2, "0");
+            const endM = String(extraFields.endMin ?? "0").padStart(2, "0");
             const location = extraFields.location?.trim() || "";
-            const description = extraFields.description?.trim() || "";
-            if (date) calUrl += `&dates=${encodeURIComponent(date)}`;
-            if (location) calUrl += `&location=${encodeURIComponent(location)}`;
-            if (description) calUrl += `&details=${encodeURIComponent(description)}`;
-            dest = calUrl;
+            if (dateStr) {
+              const d = dateStr.replace(/-/g, "");
+              const dtStart = `${d}T${startH}${startM}00`;
+              const dtEnd = `${d}T${endH}${endM}00`;
+              const lines = [
+                "BEGIN:VCALENDAR",
+                "VERSION:2.0",
+                "BEGIN:VEVENT",
+                `SUMMARY:${v}`,
+                `DTSTART:${dtStart}`,
+                `DTEND:${dtEnd}`,
+                location ? `LOCATION:${location}` : "",
+                "END:VEVENT",
+                "END:VCALENDAR",
+              ].filter(Boolean);
+              dest = lines.join("\r\n");
+            } else {
+              dest = `https://calendar.google.com/calendar/r/eventedit?text=${encodeURIComponent(v)}`;
+            }
+            break;
+          }
+          case "phone": {
+            if (!v) break;
+            const cleaned = v.replace(/[\s\-()]/g, "");
+            dest = `tel:${cleaned}`;
             break;
           }
           default:
-            dest = v.startsWith("http") ? v : `https://${v}`;
+            if (v) dest = v.startsWith("http") ? v : `https://${v}`;
         }
         if (dest) {
           setQrValue(dest);
           setGeneratedAt(new Date());
+        } else {
+          setQrValue("");
         }
         return;
       }
@@ -182,6 +221,8 @@ export function useQrGenerator() {
     const v = inputValue.trim();
     if (!v) return null;
     switch (businessCategory) {
+      case "website":
+        return v.startsWith("http") ? v : `https://${v}`;
       case "whatsapp": {
         const phone = v.replace(/[\s\-()]/g, "").replace(/^\+/, "");
         const msg = extraFields.message?.trim() || "";
@@ -197,38 +238,59 @@ export function useQrGenerator() {
         if (note) params.set("tn", note);
         return `upi://pay?${params.toString()}`;
       }
+      case "wifi": {
+        const security = extraFields.security?.trim() || "WPA";
+        const password = extraFields.password?.trim() || "";
+        const secType = security === "Open" ? "nopass" : security;
+        return `WIFI:T:${secType};S:${v};P:${password};;`;
+      }
       case "event": {
-        const title = encodeURIComponent(v);
-        const date = extraFields.date?.trim() || "";
+        const dateStr = extraFields.date?.trim() || "";
+        const startH = String(extraFields.startHour ?? "9").padStart(2, "0");
+        const startM = String(extraFields.startMin ?? "0").padStart(2, "0");
+        const endH = String(extraFields.endHour ?? "10").padStart(2, "0");
+        const endM = String(extraFields.endMin ?? "0").padStart(2, "0");
         const location = extraFields.location?.trim() || "";
-        const description = extraFields.description?.trim() || "";
-        let calUrl = `https://calendar.google.com/calendar/r/eventedit?text=${title}`;
-        if (date) calUrl += `&dates=${encodeURIComponent(date)}`;
-        if (location) calUrl += `&location=${encodeURIComponent(location)}`;
-        if (description) calUrl += `&details=${encodeURIComponent(description)}`;
-        return calUrl;
+        if (dateStr) {
+          const d = dateStr.replace(/-/g, "");
+          const lines = [
+            "BEGIN:VCALENDAR", "VERSION:2.0", "BEGIN:VEVENT",
+            `SUMMARY:${v}`,
+            `DTSTART:${d}T${startH}${startM}00`,
+            `DTEND:${d}T${endH}${endM}00`,
+            location ? `LOCATION:${location}` : "",
+            "END:VEVENT", "END:VCALENDAR",
+          ].filter(Boolean);
+          return lines.join("\r\n");
+        }
+        return `https://calendar.google.com/calendar/r/eventedit?text=${encodeURIComponent(v)}`;
       }
-      default: {
+      case "phone": {
+        const cleaned = v.replace(/[\s\-()]/g, "");
+        return `tel:${cleaned}`;
+      }
+      default:
         return v.startsWith("http") ? v : `https://${v}`;
-      }
     }
   }
 
   function validateBusinessInput(): string | null {
     const v = inputValue.trim();
-    if (!v) return "Please fill in the required field above.";
-    if (businessCategory === "whatsapp") {
+    if (!v) return "Please fill in the required field.";
+    if (businessCategory === "whatsapp" || businessCategory === "phone") {
       const clean = v.replace(/[\s\-()]/g, "");
-      if (!/^\+?\d{7,15}$/.test(clean)) return "Please enter a valid WhatsApp number with country code (e.g. +91 9876543210).";
+      if (!/^\+?\d{7,15}$/.test(clean)) return "Please enter a valid phone number with country code (e.g. +91 9876543210).";
       return null;
     }
     if (businessCategory === "upi") {
-      if (!v.includes("@") && !/^\d{10}@/.test(v) && !/^[\w.-]+@[\w]+$/.test(v)) {
+      if (!/^[\w.\-+]+@[\w]+$/.test(v) && !/^\d{10,12}@/.test(v)) {
         return "Please enter a valid UPI ID (e.g. name@upi or 9876543210@paytm).";
       }
       return null;
     }
+    if (businessCategory === "wifi") return null;
     if (businessCategory === "event") return null;
+    if (businessCategory === "phone") return null;
     const withScheme = v.startsWith("http") ? v : `https://${v}`;
     try {
       const url = new URL(withScheme);
@@ -535,7 +597,7 @@ export function useQrGenerator() {
     setLogoPosition("center");
     setSavedToProfile(false);
     setBusinessName("");
-    setBusinessCategory("dynamic");
+    setBusinessCategory("website");
     setSelectedThemeIdx(0);
     setCustomFgColor("#0A0E17");
     setCustomBgColor("#FFFFFF");
