@@ -10,12 +10,10 @@ import ModeSelector from "@/features/generator/components/ModeSelector";
 import SmartTemplateBar from "@/features/generator/components/SmartTemplateBar";
 import TemplatePickerModal from "@/features/generator/components/TemplatePickerModal";
 import InputSection from "@/features/generator/components/InputSection";
-import LogoSection from "@/features/generator/components/LogoSection";
 import QrOutputCard from "@/features/generator/components/QrOutputCard";
 import InfoModal from "@/features/generator/components/InfoModal";
 import PositionModal from "@/features/generator/components/PositionModal";
-import QrThemeSection from "@/features/generator/components/QrThemeSection";
-import AdvancedSettingsPanel from "@/features/generator/components/AdvancedSettingsPanel";
+import CustomizeDrawer from "@/features/generator/components/CustomizeDrawer";
 
 export default function QrGeneratorScreen() {
   const insets = useSafeAreaInsets();
@@ -123,7 +121,12 @@ export default function QrGeneratorScreen() {
         </Reanimated.View>
 
         <Reanimated.View entering={FadeInDown.duration(400).delay(180)}>
-          <LogoSection
+          <CustomizeDrawer
+            qrReady={!!qrValue}
+            selectedThemeIdx={selectedThemeIdx}
+            onSelectTheme={setSelectedThemeIdx}
+            settings={advancedSettings}
+            onChangeSettings={setAdvancedSettings}
             customLogoUri={customLogoUri}
             showDefaultLogo={showDefaultLogo}
             logoPositionLabel={getLogoPositionLabel()}
@@ -135,20 +138,6 @@ export default function QrGeneratorScreen() {
         </Reanimated.View>
 
         <Reanimated.View entering={FadeInDown.duration(400).delay(200)}>
-          <QrThemeSection
-            selectedThemeIdx={selectedThemeIdx}
-            onSelectTheme={setSelectedThemeIdx}
-          />
-        </Reanimated.View>
-
-        <Reanimated.View entering={FadeInDown.duration(400).delay(210)}>
-          <AdvancedSettingsPanel
-            settings={advancedSettings}
-            onChange={setAdvancedSettings}
-          />
-        </Reanimated.View>
-
-        <Reanimated.View entering={FadeInDown.duration(400).delay(220)}>
           {(() => {
             const hasLiveQr = !!qrValue;
             const isRegistered = !!generatedUuid;
