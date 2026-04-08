@@ -104,6 +104,13 @@ export default function QrOutputCard({
         </Pressable>
       )}
 
+      {isBranded && !generatedUuid && (
+        <View style={[styles.livePreviewBanner, { backgroundColor: colors.primaryDim, borderTopColor: colors.primary + "25" }]}>
+          <Ionicons name="flash-outline" size={13} color={colors.primary} />
+          <Text style={[styles.livePreviewText, { color: colors.primary }]}>Live preview — tap Save to Profile to register this QR</Text>
+        </View>
+      )}
+
       {isBranded && generatedUuid ? (
         <View style={[styles.brandedFooter, { borderTopColor: colors.surfaceBorder }]}>
           <View style={styles.brandedHeader}>
@@ -229,6 +236,11 @@ const styles = StyleSheet.create({
     borderWidth: 1,
   },
   savedBannerText: { fontSize: 13, fontFamily: "Inter_600SemiBold", flex: 1 },
+  livePreviewBanner: {
+    flexDirection: "row", alignItems: "center", gap: 7,
+    borderTopWidth: 1, paddingHorizontal: 16, paddingVertical: 10,
+  },
+  livePreviewText: { fontSize: 12, fontFamily: "Inter_400Regular", flex: 1 },
   brandedFooter: { borderTopWidth: 1, padding: 16 },
   brandedHeader: { flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 12 },
   brandLogo: { width: 24, height: 24, borderRadius: 6 },

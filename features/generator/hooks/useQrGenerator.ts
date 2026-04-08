@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Alert, Animated, Platform, ToastAndroid } from "react-native";
 import * as Clipboard from "expo-clipboard";
 import * as Haptics from "@/lib/haptics";
@@ -62,6 +62,62 @@ export function useQrGenerator() {
   const preset = QR_PRESETS[selectedPreset];
   const privateMode = qrMode === "private";
   const isBranded = !!user && !privateMode;
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (!inputValue.trim()) {
+        setQrValue("");
+        setGeneratedUuid(null);
+        setGeneratedAt(null);
+        return;
+      }
+
+      if (qrMode === "business" && isBranded) {
+        const v = inputValue.trim();
+        if (!v) return;
+        let dest: string | null = null;
+        switch (businessCategory) {
+          case "whatsapp": {
+            const phone = v.replace(/[\s\-()]/g, "").replace(/^\+/, "");
+            const msg = extraFields.message?.trim() || "";
+            dest = msg ? `https://wa.me/${phone}?text=${encodeURIComponent(msg)}` : `https://wa.me/${phone}`;
+            break;
+          }
+          case "event": {
+            const title = encodeURIComponent(v);
+            let calUrl = `https://calendar.google.com/calendar/r/eventedit?text=${title}`;
+            const date = extraFields.date?.trim() || "";
+            const location = extraFields.location?.trim() || "";
+            const description = extraFields.description?.trim() || "";
+            if (date) calUrl += `&dates=${encodeURIComponent(date)}`;
+            if (location) calUrl += `&location=${encodeURIComponent(location)}`;
+            if (description) calUrl += `&details=${encodeURIComponent(description)}`;
+            dest = calUrl;
+            break;
+          }
+          default:
+            dest = v.startsWith("http") ? v : `https://${v}`;
+        }
+        if (dest) {
+          setQrValue(dest);
+          setGeneratedAt(new Date());
+        }
+        return;
+      }
+
+      const error = validateQrInput(selectedPreset, inputValue, extraFields);
+      if (error) return;
+
+      const builtContent = buildQrContent(selectedPreset, inputValue, extraFields);
+      if (builtContent) {
+        setQrValue(builtContent);
+        setGeneratedUuid(null);
+        setGeneratedAt(new Date());
+      }
+    }, 350);
+
+    return () => clearTimeout(timer);
+  }, [inputValue, extraFields, selectedPreset, qrMode, businessCategory, isBranded]);
 
   function showToast(msg: string, type: "success" | "error" = "success") {
     if (toastTimer.current) clearTimeout(toastTimer.current);

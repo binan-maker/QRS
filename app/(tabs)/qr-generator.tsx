@@ -1,4 +1,4 @@
-import { useState } from "react";
+import React, { useState } from "react";
 import { View, Text, StyleSheet, Pressable, ScrollView, Platform, Animated, useWindowDimensions } from "react-native";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -114,20 +114,48 @@ export default function QrGeneratorScreen() {
         </Reanimated.View>
 
         <Reanimated.View entering={FadeInDown.duration(400).delay(220)}>
-          <Pressable
-            onPress={handleGenerate}
-            style={({ pressed }) => [{ opacity: pressed ? 0.85 : 1, transform: [{ scale: pressed ? 0.97 : 1 }] }, styles.generateBtnWrap]}
-          >
-            <LinearGradient
-              colors={[colors.primary, colors.primaryShade]}
-              style={styles.generateBtn}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
-            >
-              <MaterialCommunityIcons name="qrcode-edit" size={22} color="#fff" />
-              <Text style={styles.generateBtnText}>Generate QR Code</Text>
-            </LinearGradient>
-          </Pressable>
+          {(() => {
+            const hasLiveQr = !!qrValue;
+            const isRegistered = !!generatedUuid;
+            const canSave = user && !privateMode;
+
+            let btnLabel = "Generate QR Code";
+            let btnIcon: React.ComponentProps<typeof MaterialCommunityIcons>["name"] = "qrcode-edit";
+            let btnColors: [string, string] = [colors.primary, colors.primaryShade];
+
+            if (hasLiveQr && canSave && !isRegistered) {
+              btnLabel = qrMode === "business" ? "Activate Living Shield" : "Save to Profile";
+              btnIcon = qrMode === "business" ? "shield-check" : "content-save-outline";
+              btnColors = qrMode === "business"
+                ? [colors.warning, (colors as any).warningShade ?? colors.warning]
+                : [colors.safe, (colors as any).safeShade ?? colors.safe];
+            } else if (hasLiveQr && isRegistered) {
+              btnLabel = "Registered ✓";
+              btnIcon = "check-circle-outline";
+              btnColors = [colors.safe, (colors as any).safeShade ?? colors.safe];
+            } else if (hasLiveQr && privateMode) {
+              btnLabel = "Private QR Generated ✓";
+              btnIcon = "eye-off-outline";
+              btnColors = [colors.textSecondary, colors.textMuted];
+            }
+
+            return (
+              <Pressable
+                onPress={handleGenerate}
+                style={({ pressed }) => [{ opacity: pressed ? 0.85 : 1, transform: [{ scale: pressed ? 0.97 : 1 }] }, styles.generateBtnWrap]}
+              >
+                <LinearGradient
+                  colors={btnColors}
+                  style={styles.generateBtn}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 1 }}
+                >
+                  <MaterialCommunityIcons name={btnIcon} size={22} color="#fff" />
+                  <Text style={styles.generateBtnText}>{btnLabel}</Text>
+                </LinearGradient>
+              </Pressable>
+            );
+          })()}
         </Reanimated.View>
 
         {qrValue ? (
@@ -168,7 +196,7 @@ export default function QrGeneratorScreen() {
                 <MaterialCommunityIcons name="qrcode-scan" size={52} color={colors.primary} />
               </LinearGradient>
               <Text style={[styles.emptyQrText, { color: colors.text }]}>Your QR code will appear here</Text>
-              <Text style={[styles.emptyQrSub, { color: colors.textMuted }]}>Fill in the details above and tap Generate</Text>
+              <Text style={[styles.emptyQrSub, { color: colors.textMuted }]}>Just start typing — your QR generates automatically</Text>
             </View>
           </Reanimated.View>
         )}
