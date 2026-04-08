@@ -53,7 +53,7 @@ export default function ConsentModal({ visible, onAccept }: ConsentModalProps) {
   const handleScroll = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
     const { layoutMeasurement, contentOffset, contentSize } = e.nativeEvent;
     const isAtBottom =
-      layoutMeasurement.height + contentOffset.y >= contentSize.height - 60;
+      layoutMeasurement.height + contentOffset.y >= contentSize.height - 40;
     if (isAtBottom && !scrolledToBottom) setScrolledToBottom(true);
   };
 
@@ -65,21 +65,20 @@ export default function ConsentModal({ visible, onAccept }: ConsentModalProps) {
   const openPrivacyPolicy = () => router.push("/privacy-policy" as never);
   const openTerms = () => router.push("/terms" as never);
 
-  const cardMaxHeight = height - statusBarHeight - 48;
+  const cardHeight = Math.min(height * 0.72, 620);
 
-  const cardBg = isDark ? "#1C2B3A" : "#FFFFFF";
-  const overlayBg = isDark ? "rgba(0,0,0,0.72)" : "rgba(0,0,0,0.54)";
-  const dividerColor = isDark ? "rgba(255,255,255,0.10)" : "rgba(0,0,0,0.08)";
-  const bodyText = isDark ? "#CBD5E1" : "#374151";
+  const cardBg = isDark ? "#141E2B" : "#FFFFFF";
+  const overlayBg = "rgba(0,0,0,0.6)";
+  const divider = isDark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.07)";
+  const bodyText = isDark ? "#94A3B8" : "#4B5563";
   const boldText = isDark ? "#F1F5F9" : "#111827";
-  const sectionLabel = isDark ? "#64748B" : "#9CA3AF";
-  const accentWarning = isDark ? "#F59E0B" : "#D97706";
-  const hintText = isDark ? "#64748B" : "#9CA3AF";
-  const checkboxBorder = isDark ? "#475569" : "#D1D5DB";
+  const sectionLabel = isDark ? "#3B82F6" : "#2563EB";
+  const accentWarning = "#F59E0B";
+  const hintText = isDark ? "#475569" : "#9CA3AF";
+  const checkboxBorder = isDark ? "#334155" : "#D1D5DB";
   const checkboxLabel = isDark ? "#CBD5E1" : "#374151";
   const linkColor = colors.primary;
-  const btnDisabledBg = isDark ? "#1E3A5F" : "#EFF6FF";
-  const btnDisabledText = isDark ? "#3B82F6" : "#93C5FD";
+  const tagBg = isDark ? "rgba(59,130,246,0.12)" : "rgba(37,99,235,0.08)";
 
   return (
     <Modal
@@ -89,33 +88,36 @@ export default function ConsentModal({ visible, onAccept }: ConsentModalProps) {
       statusBarTranslucent
       onRequestClose={() => {}}
     >
-      <View
-        style={[
-          styles.overlay,
-          { backgroundColor: overlayBg, paddingTop: statusBarHeight + 8 },
-        ]}
-      >
+      <View style={[styles.overlay, { backgroundColor: overlayBg }]}>
         <View
           style={[
             styles.card,
             {
               backgroundColor: cardBg,
-              maxHeight: cardMaxHeight,
-              shadowColor: isDark ? "#000" : "#000",
+              height: cardHeight,
+              shadowColor: "#000",
             },
           ]}
         >
           {/* Header */}
-          <View style={[styles.header, { borderBottomColor: dividerColor }]}>
-            <Text style={[styles.title, { color: boldText }]}>
-              Before You Continue
-            </Text>
-            <Text style={[styles.subtitle, { color: hintText }]}>
-              Please read and accept our terms to use QR Guard
-            </Text>
+          <View style={[styles.header, { borderBottomColor: divider }]}>
+            <View style={[styles.iconWrap, { backgroundColor: tagBg }]}>
+              <Ionicons name="shield-checkmark" size={22} color={colors.primary} />
+            </View>
+            <View style={styles.headerText}>
+              <Text style={[styles.title, { color: boldText }]}>
+                QR Guard Terms &amp; Privacy
+              </Text>
+              <Text style={[styles.subtitle, { color: hintText }]}>
+                Review before continuing
+              </Text>
+            </View>
+            <View style={[styles.betaBadge, { backgroundColor: accentWarning + "22" }]}>
+              <Text style={[styles.betaText, { color: accentWarning }]}>BETA</Text>
+            </View>
           </View>
 
-          {/* Scrollable Terms Body */}
+          {/* Scrollable Terms */}
           <View style={styles.scrollWrapper}>
             <ScrollView
               ref={scrollRef}
@@ -126,181 +128,150 @@ export default function ConsentModal({ visible, onAccept }: ConsentModalProps) {
               showsVerticalScrollIndicator={true}
               bounces={Platform.OS === "ios"}
             >
-              <TermSection label="⚠ BETA NOTICE" accent={accentWarning}>
-                <BodyText color={bodyText} bold={boldText}>
+              <Section label="Beta Notice" accent={accentWarning} icon="warning-outline">
+                <Body color={bodyText}>
                   QR Guard is a{" "}
-                  <B color={boldText}>beta-stage application</B> under active
-                  development. Features may be incomplete or change without
-                  notice. You use this app at your own risk.
-                </BodyText>
-              </TermSection>
+                  <Bold color={boldText}>beta-stage application</Bold> under active development.
+                  Features may change without notice. Use at your own risk.
+                </Body>
+              </Section>
 
-              <TermSection label="1. Nature of the Service">
-                <BodyText color={bodyText} bold={boldText}>
+              <Section label="Nature of Service" color={sectionLabel}>
+                <Body color={bodyText}>
                   Our security analysis is{" "}
-                  <B color={boldText}>advisory and informational only</B> — not
-                  a substitute for professional cybersecurity advice.
-                </BodyText>
-                <BodyText color={bodyText} bold={boldText}>
-                  <B color={boldText}>
-                    We do not guarantee any QR code is 100% safe or 100%
-                    dangerous.
-                  </B>{" "}
-                  False positives and false negatives may occur. Always exercise
-                  your own judgment.
-                </BodyText>
-              </TermSection>
+                  <Bold color={boldText}>advisory only</Bold> — not a substitute for
+                  professional cybersecurity advice. False positives and negatives may occur.
+                </Body>
+              </Section>
 
-              <TermSection label='2. No Warranty ("As Is")'>
-                <BodyText color={bodyText} bold={boldText}>
+              <Section label="No Warranty" color={sectionLabel}>
+                <Body color={bodyText}>
                   This app is provided{" "}
-                  <B color={boldText}>"as is" and "as available"</B> without
-                  any warranty — express or implied — including warranties of
-                  merchantability, fitness, accuracy, or uninterrupted
-                  operation.
-                </BodyText>
-              </TermSection>
+                  <Bold color={boldText}>"as is"</Bold> without any warranty of
+                  merchantability, fitness, accuracy, or uninterrupted operation.
+                </Body>
+              </Section>
 
-              <TermSection label="3. Limitation of Liability">
-                <BodyText color={bodyText} bold={boldText}>
-                  QR Guard and its developers shall{" "}
-                  <B color={boldText}>not be liable</B> for any direct,
-                  indirect, financial, or consequential damages arising from
-                  your use of this app. Maximum liability is limited to{" "}
-                  <B color={boldText}>₹0 or the amount you paid</B>, whichever
-                  is greater.
-                </BodyText>
-              </TermSection>
+              <Section label="Limitation of Liability" color={sectionLabel}>
+                <Body color={bodyText}>
+                  QR Guard is{" "}
+                  <Bold color={boldText}>not liable</Bold> for any direct, indirect, or
+                  financial damages. Maximum liability is{" "}
+                  <Bold color={boldText}>₹0 or amount paid</Bold>, whichever is greater.
+                </Body>
+              </Section>
 
-              <TermSection label="4. Data We Collect">
-                <BulletList
+              <Section label="Data We Collect" color={sectionLabel}>
+                <Bullets
                   color={bodyText}
                   bullet={colors.primary}
                   items={[
-                    "Account info: email, display name, profile picture.",
-                    "Device info: OS, app version, device identifiers.",
-                    "Usage data: scan history, feature usage patterns.",
-                    "QR content: URLs, payment data, text in scanned codes.",
-                    "Network data: IP address, approximate location.",
-                    "Camera: images processed locally, not uploaded.",
+                    "Account info: email, name, profile picture.",
+                    "Device info: OS, app version, identifiers.",
+                    "Usage data: scan history, feature patterns.",
+                    "QR content: URLs, payment data, scanned text.",
+                    "Network: IP address, approximate location.",
+                    "Camera: processed locally, never uploaded.",
                     "Community: reports and votes you submit.",
                   ]}
                 />
-              </TermSection>
+              </Section>
 
-              <TermSection label="5. How We Use Your Data">
-                <BulletList
+              <Section label="How We Use Your Data" color={sectionLabel}>
+                <Bullets
                   color={bodyText}
                   bullet={colors.primary}
                   items={[
-                    "To provide and improve the QR Guard service.",
+                    "To provide and improve QR Guard.",
                     "To perform security analysis on QR codes.",
                     "To maintain your account and scan history.",
-                    "To detect and prevent abuse and security threats.",
+                    "To detect and prevent abuse.",
                     "To comply with applicable laws.",
                   ]}
                 />
-              </TermSection>
+              </Section>
 
-              <TermSection label="6. AI Training — IMPORTANT" accent={accentWarning}>
-                <BodyText color={bodyText} bold={boldText}>
-                  <B color={boldText}>
-                    BY USING QR GUARD, YOU CONSENT TO:
-                  </B>{" "}
-                  Your anonymised scan data may be used to{" "}
-                  <B color={boldText}>
-                    train and improve our AI threat detection models
-                  </B>
-                  . You cannot opt out while using the scanning feature.
-                </BodyText>
-              </TermSection>
+              <Section label="AI Training" accent={accentWarning} icon="alert-circle-outline">
+                <Body color={bodyText}>
+                  <Bold color={boldText}>By using QR Guard</Bold>, your anonymised scan
+                  data may be used to{" "}
+                  <Bold color={boldText}>train AI threat detection models</Bold>.
+                  Opt-out is not available while using the scanning feature.
+                </Body>
+              </Section>
 
-              <TermSection label="7. Advertising">
-                <BodyText color={bodyText} bold={boldText}>
-                  QR Guard may display ads. Aggregated non-personal usage data
-                  may be shared with advertising partners for ad relevance. We
-                  do <B color={boldText}>not</B> sell personally identifiable
+              <Section label="Advertising" color={sectionLabel}>
+                <Body color={bodyText}>
+                  QR Guard may display ads. Aggregated, non-personal usage data may be
+                  shared with ad partners. We do{" "}
+                  <Bold color={boldText}>not</Bold> sell personally identifiable
                   information.
-                </BodyText>
-              </TermSection>
+                </Body>
+              </Section>
 
-              <TermSection label="8. Data Security">
-                <BodyText color={bodyText} bold={boldText}>
-                  We implement industry-standard security measures.{" "}
-                  <B color={boldText}>
-                    QR Guard is not liable for breaches caused by third-party
-                    actors or cyberattacks beyond our control.
-                  </B>
-                </BodyText>
-              </TermSection>
+              <Section label="Third-Party Services" color={sectionLabel}>
+                <Body color={bodyText}>
+                  Integrates Firebase, Google Safe Browsing, and Razorpay. We are{" "}
+                  <Bold color={boldText}>not responsible</Bold> for those parties'
+                  practices.
+                </Body>
+              </Section>
 
-              <TermSection label="9. Third-Party Services">
-                <BodyText color={bodyText} bold={boldText}>
-                  The app integrates Firebase, Google Safe Browsing, Razorpay,
-                  and others. We are{" "}
-                  <B color={boldText}>not responsible</B> for those third
-                  parties' practices.
-                </BodyText>
-              </TermSection>
-
-              <TermSection label="10. Your Responsibility">
-                <BulletList
+              <Section label="Your Responsibility" color={sectionLabel}>
+                <Bullets
                   color={bodyText}
                   bullet={colors.primary}
                   items={[
                     "You use QR Guard voluntarily and at your own risk.",
-                    "You are solely responsible for actions taken based on verdicts.",
+                    "You are solely responsible for actions based on verdicts.",
                     "SAFE / CAUTION / DANGEROUS are indicators, not guarantees.",
                   ]}
                 />
-              </TermSection>
+              </Section>
 
-              <TermSection label="11. Governing Law">
-                <BodyText color={bodyText} bold={boldText}>
+              <Section label="Governing Law" color={sectionLabel}>
+                <Body color={bodyText}>
                   Governed by the laws of{" "}
-                  <B color={boldText}>the Republic of India</B>. Disputes are
-                  resolved by arbitration in Kerala, India (Arbitration Act,
-                  1996). Class-action claims are waived.
-                </BodyText>
-              </TermSection>
+                  <Bold color={boldText}>the Republic of India</Bold>. Disputes are
+                  resolved by arbitration in Kerala, India. Class-action claims are
+                  waived.
+                </Body>
+              </Section>
 
-              <TermSection label="12. Contact">
-                <BodyText color={bodyText} bold={boldText}>
-                  <B color={boldText}>legal@qrguard.app</B>
-                  {" · "}
-                  <B color={boldText}>privacy@qrguard.app</B>
-                </BodyText>
-              </TermSection>
+              <Section label="Contact" color={sectionLabel}>
+                <Body color={bodyText}>
+                  <Bold color={boldText}>legal@qrguard.app</Bold>
+                  {"  ·  "}
+                  <Bold color={boldText}>privacy@qrguard.app</Bold>
+                </Body>
+              </Section>
 
-              <View style={[styles.policyRow, { borderTopColor: dividerColor }]}>
-                <Pressable onPress={openPrivacyPolicy}>
-                  <Text style={[styles.policyLink, { color: linkColor }]}>
-                    Privacy Policy
-                  </Text>
+              <View style={[styles.policyRow, { borderTopColor: divider }]}>
+                <Pressable onPress={openPrivacyPolicy} style={styles.policyBtn}>
+                  <Ionicons name="document-text-outline" size={12} color={linkColor} />
+                  <Text style={[styles.policyLink, { color: linkColor }]}>Privacy Policy</Text>
                 </Pressable>
-                <Text style={[styles.policyDot, { color: hintText }]}>·</Text>
-                <Pressable onPress={openTerms}>
-                  <Text style={[styles.policyLink, { color: linkColor }]}>
-                    Terms of Service
-                  </Text>
+                <View style={[styles.policyDivider, { backgroundColor: divider }]} />
+                <Pressable onPress={openTerms} style={styles.policyBtn}>
+                  <Ionicons name="reader-outline" size={12} color={linkColor} />
+                  <Text style={[styles.policyLink, { color: linkColor }]}>Terms of Service</Text>
                 </Pressable>
               </View>
             </ScrollView>
 
             {!scrolledToBottom && (
               <View
-                style={[styles.scrollHint, { backgroundColor: cardBg }]}
+                style={[styles.fadeHint, { backgroundColor: cardBg }]}
                 pointerEvents="none"
               >
-                <Text style={[styles.scrollHintText, { color: hintText }]}>
-                  Scroll to read all terms ↓
-                </Text>
+                <Ionicons name="chevron-down" size={14} color={hintText} />
+                <Text style={[styles.fadeHintText, { color: hintText }]}>Scroll to read all</Text>
               </View>
             )}
           </View>
 
           {/* Footer */}
-          <View style={[styles.footer, { borderTopColor: dividerColor }]}>
+          <View style={[styles.footer, { borderTopColor: divider }]}>
             <Pressable
               style={styles.checkRow}
               onPress={() => setChecked((c) => !c)}
@@ -316,12 +287,10 @@ export default function ConsentModal({ visible, onAccept }: ConsentModalProps) {
                   },
                 ]}
               >
-                {checked && (
-                  <Ionicons name="checkmark" size={12} color="#fff" />
-                )}
+                {checked && <Ionicons name="checkmark" size={11} color="#fff" />}
               </View>
               <Text style={[styles.checkLabel, { color: checkboxLabel }]}>
-                I have read and agree to QR Guard's{" "}
+                I agree to QR Guard's{" "}
                 <Text style={{ color: linkColor }} onPress={openPrivacyPolicy}>
                   Privacy Policy
                 </Text>{" "}
@@ -329,7 +298,6 @@ export default function ConsentModal({ visible, onAccept }: ConsentModalProps) {
                 <Text style={{ color: linkColor }} onPress={openTerms}>
                   Terms of Service
                 </Text>
-                .
               </Text>
             </Pressable>
 
@@ -337,7 +305,8 @@ export default function ConsentModal({ visible, onAccept }: ConsentModalProps) {
               style={[
                 styles.acceptBtn,
                 {
-                  backgroundColor: checked ? colors.primary : btnDisabledBg,
+                  backgroundColor: checked ? colors.primary : (isDark ? "#1E3A5F" : "#EFF6FF"),
+                  opacity: checked ? 1 : 0.7,
                 },
               ]}
               onPress={checked ? handleAccept : undefined}
@@ -347,16 +316,15 @@ export default function ConsentModal({ visible, onAccept }: ConsentModalProps) {
               <Text
                 style={[
                   styles.acceptBtnText,
-                  { color: checked ? "#fff" : btnDisabledText },
+                  { color: checked ? "#fff" : (isDark ? "#3B82F6" : "#93C5FD") },
                 ]}
               >
-                I Accept — Continue
+                Continue
               </Text>
+              {checked && (
+                <Ionicons name="arrow-forward" size={16} color="#fff" style={{ marginLeft: 6 }} />
+              )}
             </Pressable>
-
-            <Text style={[styles.version, { color: hintText }]}>
-              Consent v{CONSENT_VERSION} · QR Guard Beta
-            </Text>
           </View>
         </View>
       </View>
@@ -364,55 +332,54 @@ export default function ConsentModal({ visible, onAccept }: ConsentModalProps) {
   );
 }
 
-function TermSection({
+function Section({
   label,
   accent,
+  color,
+  icon,
   children,
 }: {
   label: string;
   accent?: string;
+  color?: string;
+  icon?: string;
   children: React.ReactNode;
 }) {
+  const labelColor = accent ?? color ?? "#9CA3AF";
   return (
-    <View style={{ marginBottom: 16 }}>
-      <Text
-        style={{
-          fontSize: 10,
-          fontWeight: "700",
-          letterSpacing: 0.8,
-          textTransform: "uppercase",
-          color: accent ?? "#9CA3AF",
-          marginBottom: 6,
-        }}
-      >
-        {label}
-      </Text>
+    <View style={{ marginBottom: 14 }}>
+      <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 5, gap: 4 }}>
+        {icon && <Ionicons name={icon as any} size={11} color={labelColor} />}
+        <Text
+          style={{
+            fontSize: 10,
+            fontWeight: "700",
+            letterSpacing: 0.7,
+            textTransform: "uppercase",
+            color: labelColor,
+          }}
+        >
+          {label}
+        </Text>
+      </View>
       {children}
     </View>
   );
 }
 
-function BodyText({
-  children,
-  color,
-  bold,
-}: {
-  children: React.ReactNode;
-  color: string;
-  bold: string;
-}) {
+function Body({ children, color }: { children: React.ReactNode; color: string }) {
   return (
-    <Text style={{ fontSize: 13, color, lineHeight: 20, marginBottom: 6 }}>
+    <Text style={{ fontSize: 12.5, color, lineHeight: 19, marginBottom: 2 }}>
       {children}
     </Text>
   );
 }
 
-function B({ children, color }: { children: React.ReactNode; color: string }) {
+function Bold({ children, color }: { children: React.ReactNode; color: string }) {
   return <Text style={{ fontWeight: "700", color }}>{children}</Text>;
 }
 
-function BulletList({
+function Bullets({
   items,
   color,
   bullet,
@@ -424,16 +391,9 @@ function BulletList({
   return (
     <View>
       {items.map((item, i) => (
-        <View
-          key={i}
-          style={{ flexDirection: "row", marginBottom: 4, alignItems: "flex-start" }}
-        >
-          <Text style={{ color: bullet, fontSize: 13, lineHeight: 20, marginRight: 6 }}>
-            •
-          </Text>
-          <Text style={{ flex: 1, fontSize: 13, color, lineHeight: 20 }}>
-            {item}
-          </Text>
+        <View key={i} style={{ flexDirection: "row", marginBottom: 3, alignItems: "flex-start" }}>
+          <Text style={{ color: bullet, fontSize: 12, lineHeight: 19, marginRight: 7 }}>•</Text>
+          <Text style={{ flex: 1, fontSize: 12.5, color, lineHeight: 19 }}>{item}</Text>
         </View>
       ))}
     </View>
@@ -445,34 +405,55 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    paddingHorizontal: 20,
-    paddingBottom: 20,
+    paddingHorizontal: 16,
   },
   card: {
     width: "100%",
-    maxWidth: 480,
-    borderRadius: 16,
+    maxWidth: 460,
+    borderRadius: 20,
     overflow: "hidden",
-    elevation: 24,
-    shadowOpacity: 0.24,
-    shadowRadius: 20,
-    shadowOffset: { width: 0, height: 8 },
+    elevation: 30,
+    shadowOpacity: 0.3,
+    shadowRadius: 24,
+    shadowOffset: { width: 0, height: 10 },
   },
   header: {
-    paddingHorizontal: 20,
-    paddingTop: 22,
-    paddingBottom: 14,
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 18,
+    paddingVertical: 14,
     borderBottomWidth: StyleSheet.hairlineWidth,
+    gap: 12,
+  },
+  iconWrap: {
+    width: 40,
+    height: 40,
+    borderRadius: 12,
+    alignItems: "center",
+    justifyContent: "center",
+    flexShrink: 0,
+  },
+  headerText: {
+    flex: 1,
   },
   title: {
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: "700",
-    letterSpacing: -0.3,
-    marginBottom: 3,
+    letterSpacing: -0.2,
+    marginBottom: 1,
   },
   subtitle: {
-    fontSize: 13,
-    lineHeight: 18,
+    fontSize: 12,
+  },
+  betaBadge: {
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 6,
+  },
+  betaText: {
+    fontSize: 10,
+    fontWeight: "800",
+    letterSpacing: 0.5,
   },
   scrollWrapper: {
     flex: 1,
@@ -483,19 +464,22 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   scrollContent: {
-    paddingHorizontal: 20,
-    paddingTop: 16,
-    paddingBottom: 12,
+    paddingHorizontal: 18,
+    paddingTop: 14,
+    paddingBottom: 10,
   },
-  scrollHint: {
+  fadeHint: {
     position: "absolute",
     bottom: 0,
     left: 0,
     right: 0,
+    flexDirection: "row",
     alignItems: "center",
+    justifyContent: "center",
+    gap: 4,
     paddingVertical: 8,
   },
-  scrollHintText: {
+  fadeHintText: {
     fontSize: 11,
     fontWeight: "500",
   },
@@ -503,24 +487,30 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    gap: 8,
     paddingTop: 12,
-    marginTop: 4,
-    borderTopWidth: StyleSheet.hairlineWidth,
-  },
-  policyLink: {
-    fontSize: 12,
-    fontWeight: "600",
-  },
-  policyDot: {
-    fontSize: 12,
-  },
-  footer: {
-    paddingHorizontal: 20,
-    paddingTop: 14,
-    paddingBottom: Platform.OS === "ios" ? 22 : 16,
+    marginTop: 6,
     borderTopWidth: StyleSheet.hairlineWidth,
     gap: 12,
+  },
+  policyBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+  },
+  policyLink: {
+    fontSize: 11.5,
+    fontWeight: "600",
+  },
+  policyDivider: {
+    width: 1,
+    height: 12,
+  },
+  footer: {
+    paddingHorizontal: 18,
+    paddingTop: 12,
+    paddingBottom: Platform.OS === "ios" ? 20 : 14,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    gap: 10,
   },
   checkRow: {
     flexDirection: "row",
@@ -528,33 +518,30 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   checkbox: {
-    width: 20,
-    height: 20,
-    borderRadius: 4,
+    width: 18,
+    height: 18,
+    borderRadius: 5,
     borderWidth: 1.5,
     alignItems: "center",
     justifyContent: "center",
-    marginTop: 1,
+    marginTop: 1.5,
     flexShrink: 0,
   },
   checkLabel: {
     flex: 1,
-    fontSize: 13,
-    lineHeight: 19,
+    fontSize: 12.5,
+    lineHeight: 18,
   },
   acceptBtn: {
     paddingVertical: 13,
-    borderRadius: 10,
+    borderRadius: 12,
     alignItems: "center",
     justifyContent: "center",
+    flexDirection: "row",
   },
   acceptBtnText: {
-    fontSize: 14,
+    fontSize: 15,
     fontWeight: "700",
     letterSpacing: 0.1,
-  },
-  version: {
-    fontSize: 10,
-    textAlign: "center",
   },
 });
