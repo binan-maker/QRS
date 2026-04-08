@@ -1,8 +1,13 @@
 # QR Guard
 
-A full-stack mobile-first QR code scanning and management app built with Expo (React Native) and Express.
+A full-stack mobile-first QR code scanning and management app built with Expo (React Native) and Express. Supports Android (Play Store), and web browsers.
 
 ## Recent Changes
+
+### Web Support Added
+- **Web build** (`web-build/`) — generated via `npm run web:build` (runs `expo export --platform web`). The backend serves this as a full SPA to any browser that visits the site.
+- **Backend updated** (`server/index.ts`) — `configureExpoAndLanding` now detects the `web-build/` directory and serves `index.html` with SPA fallback for all non-API, non-Expo routes. Mobile Expo clients (with `expo-platform` header) still receive the native manifest as before.
+- **Rebuild web**: run `npm run web:build` whenever you make UI changes to regenerate the web bundle.
 
 ### Real Threat Intelligence + i18n Multi-Language Support
 
