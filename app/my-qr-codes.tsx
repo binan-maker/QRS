@@ -181,12 +181,7 @@ export default function MyQrCodesScreen() {
 
     function handleCardPress() {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-      if (qrCodeId) {
-        const route = guardUuid
-          ? `/qr-detail/${qrCodeId}?guardUuid=${guardUuid}`
-          : `/qr-detail/${qrCodeId}`;
-        router.push(route as any);
-      }
+      router.push(`/my-qr/${item.docId}` as any);
     }
 
     return (
@@ -364,57 +359,27 @@ export default function MyQrCodesScreen() {
         <Ionicons name="chevron-back" size={rf(20)} color={colors.text} />
       </Pressable>
 
-      <View style={{ flexDirection: "row", alignItems: "center", gap: sp(8) }}>
-        <Text style={{ fontSize: rf(17), fontFamily: "Inter_700Bold", color: colors.text }}>My QR Codes</Text>
-        {qrCodes.length > 0 && (
-          <View style={{
-            borderRadius: sp(10), paddingHorizontal: sp(8), paddingVertical: sp(2),
-            backgroundColor: colors.primaryDim, borderWidth: 1, borderColor: colors.primary + "30",
-          }}>
-            <Text style={{ fontSize: rf(11), fontFamily: "Inter_700Bold", color: colors.primary }}>
-              {qrCodes.length}
-            </Text>
-          </View>
-        )}
-      </View>
+      <Text style={{ fontSize: rf(17), fontFamily: "Inter_700Bold", color: colors.text }}>My QR Codes</Text>
 
-      <View style={{ flexDirection: "row", alignItems: "center", gap: sp(8) }}>
-        <Pressable
-          onPress={() => {
-            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-            router.push("/qr-groups" as any);
+      <Pressable
+        onPress={() => {
+          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+          router.push("/(tabs)/qr-generator");
+        }}
+        style={({ pressed }) => [{ opacity: pressed ? 0.82 : 1 }]}
+      >
+        <LinearGradient
+          colors={[colors.primary, colors.primaryShade]}
+          style={{
+            flexDirection: "row", alignItems: "center", gap: sp(5),
+            borderRadius: sp(14), paddingHorizontal: sp(14), paddingVertical: sp(9),
           }}
-          style={({ pressed }) => [{
-            flexDirection: "row", alignItems: "center", gap: sp(4),
-            borderRadius: sp(12), paddingHorizontal: sp(11), paddingVertical: sp(8),
-            backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.surfaceBorder,
-            opacity: pressed ? 0.8 : 1,
-          }]}
+          start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
         >
-          <Ionicons name="folder-outline" size={rf(14)} color={colors.textSecondary} />
-          <Text style={{ fontSize: rf(12), fontFamily: "Inter_700Bold", color: colors.textSecondary }}>Groups</Text>
-        </Pressable>
-
-        <Pressable
-          onPress={() => {
-            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-            router.push("/(tabs)/qr-generator");
-          }}
-          style={({ pressed }) => [{ opacity: pressed ? 0.82 : 1 }]}
-        >
-          <LinearGradient
-            colors={[colors.primary, colors.primaryShade]}
-            style={{
-              flexDirection: "row", alignItems: "center", gap: sp(4),
-              borderRadius: sp(12), paddingHorizontal: sp(13), paddingVertical: sp(8),
-            }}
-            start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
-          >
-            <Ionicons name="add" size={rf(14)} color="#fff" />
-            <Text style={{ fontSize: rf(12), fontFamily: "Inter_700Bold", color: "#fff" }}>New</Text>
-          </LinearGradient>
-        </Pressable>
-      </View>
+          <Ionicons name="add" size={rf(15)} color="#fff" />
+          <Text style={{ fontSize: rf(13), fontFamily: "Inter_700Bold", color: "#fff" }}>New QR</Text>
+        </LinearGradient>
+      </Pressable>
     </View>
   );
 

@@ -76,6 +76,7 @@ export default function ProfileScreen() {
   }
 
   const previewQrs = myQrCodes.slice(0, 3);
+  const totalQrScans = myQrCodes.reduce((sum, qr) => sum + (qr.scanCount || 0), 0);
 
   return (
     <View style={[styles.container, { paddingTop: topInset, backgroundColor: colors.background }]}>
@@ -133,11 +134,11 @@ export default function ProfileScreen() {
         <Animated.View entering={FadeInDown.duration(400).delay(60)} style={[styles.statsRow, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
           {[
             { label: "Friends", value: friendsCount, color: colors.safe },
-            { label: "Scans", value: stats.scanCount, color: colors.accent },
+            { label: "QR Scans", value: totalQrScans, color: colors.accent },
             { label: "Following", value: stats.followingCount, color: colors.primary },
           ].map((s, i) => (
             <View key={s.label} style={[styles.statItem, i < 2 && { borderRightWidth: 1, borderRightColor: colors.surfaceBorder }]}>
-              {statsLoading
+              {statsLoading || (s.label === "QR Scans" && myQrLoading)
                 ? <SkeletonBox width={32} height={18} borderRadius={5} />
                 : <Text style={[styles.statValue, { color: s.color }]}>{formatCompactNumber(s.value)}</Text>
               }
