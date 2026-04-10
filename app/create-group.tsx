@@ -16,7 +16,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import {
   subscribeToUserGeneratedQrs,
   createGroup,
-  addQrToGroup,
+  addMultipleQrsToGroup,
   type GeneratedQrItem,
 } from "@/lib/firestore-service";
 
@@ -73,7 +73,7 @@ export default function CreateGroupScreen() {
     setSaving(true);
     try {
       const groupId = await createGroup(user.id, groupName.trim(), "", groupColor, groupIcon);
-      await Promise.all([...selected].map((docId) => addQrToGroup(user.id, groupId, docId)));
+      await addMultipleQrsToGroup(user.id, groupId, [...selected]);
       router.replace(`/qr-group/${groupId}` as any);
     } finally {
       setSaving(false);

@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect, useRef } from "react";
+import React, { useState, useMemo } from "react";
 import { View, Text, StyleSheet, Pressable, ScrollView, Platform, Animated, useWindowDimensions, Keyboard } from "react-native";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -15,8 +15,6 @@ import InfoModal from "@/features/generator/components/InfoModal";
 import PositionModal from "@/features/generator/components/PositionModal";
 import CustomizeDrawer from "@/features/generator/components/CustomizeDrawer";
 import GroupPickerModal from "@/components/groups/GroupPickerModal";
-import GroupSelector from "@/components/groups/GroupSelector";
-import { addQrToGroup } from "@/lib/firestore-service";
 
 export default function QrGeneratorScreen() {
   const insets = useSafeAreaInsets();
@@ -28,15 +26,6 @@ export default function QrGeneratorScreen() {
   const [qrSize, setQrSize] = useState(220);
   const [templateModalOpen, setTemplateModalOpen] = useState(false);
   const [groupPickerOpen, setGroupPickerOpen] = useState(false);
-  const [selectedGroupId, setSelectedGroupId] = useState<string | null>(null);
-  const autoAssignedRef = useRef<string | null>(null);
-
-  useEffect(() => {
-    if (!savedDocId || !selectedGroupId || !user) return;
-    if (autoAssignedRef.current === savedDocId) return;
-    autoAssignedRef.current = savedDocId;
-    addQrToGroup(user.id, selectedGroupId, savedDocId).catch(() => {});
-  }, [savedDocId, selectedGroupId, user?.id]);
 
   const {
     user, svgRef,
@@ -157,18 +146,6 @@ export default function QrGeneratorScreen() {
           />
         </Reanimated.View>
 
-        {user && !!qrValue && (
-          <Reanimated.View entering={FadeInDown.duration(400).delay(195)}>
-            <GroupSelector
-              selectedGroupId={selectedGroupId}
-              onSelect={(gid) => {
-                setSelectedGroupId(gid);
-                autoAssignedRef.current = null;
-              }}
-            />
-          </Reanimated.View>
-        )}
-
         <Reanimated.View entering={FadeInDown.duration(400).delay(200)}>
           {(() => {
             const hasLiveQr = !!qrValue;
@@ -260,7 +237,7 @@ export default function QrGeneratorScreen() {
             onCopy={handleCopy}
             onShare={handleShare}
             onDownload={handleDownloadPdf}
-            onClear={() => { handleClear(); autoAssignedRef.current = null; }}
+            onClear={handleClear}
             sharingQr={sharingQr}
             downloadingPdf={downloadingPdf}
           />

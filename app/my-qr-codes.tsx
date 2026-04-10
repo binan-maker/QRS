@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useMemo } from "react";
 import {
   View, Text, FlatList, Pressable, Platform,
-  RefreshControl, useWindowDimensions,
+  RefreshControl, useWindowDimensions, ScrollView,
 } from "react-native";
 import { router } from "expo-router";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
@@ -165,7 +165,7 @@ export default function MyQrCodesScreen() {
           onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); router.push(`/my-qr/${item.docId}` as any); }}
           style={({ pressed }) => [{
             flexDirection: "row", alignItems: "center", gap: sp(12),
-            borderRadius: sp(18), borderWidth: 1,
+            borderRadius: sp(16), borderWidth: 1,
             borderColor: colors.surfaceBorder, backgroundColor: colors.surface,
             padding: sp(12), marginBottom: sp(10),
             opacity: pressed ? 0.88 : 1,
@@ -174,13 +174,13 @@ export default function MyQrCodesScreen() {
         >
           {/* QR preview */}
           <View style={{
-            width: sp(60), height: sp(60), borderRadius: sp(12), overflow: "hidden",
+            width: sp(56), height: sp(56), borderRadius: sp(12), overflow: "hidden",
             backgroundColor: (item as any).bgColor || "#F8FAFC",
             alignItems: "center", justifyContent: "center", flexShrink: 0,
           }}>
             <QRCode
               value={item.content || "https://qrguard.app"}
-              size={sp(48)}
+              size={sp(44)}
               color={(item as any).fgColor || "#0A0E17"}
               backgroundColor={(item as any).bgColor || "#F8FAFC"}
               quietZone={2}
@@ -190,7 +190,7 @@ export default function MyQrCodesScreen() {
 
           {/* Content */}
           <View style={{ flex: 1, minWidth: 0, gap: sp(3) }}>
-            <View style={{ flexDirection: "row", alignItems: "center", gap: sp(5), flexWrap: "wrap" }}>
+            <View style={{ flexDirection: "row", alignItems: "center", gap: sp(4), flexWrap: "wrap" }}>
               <View style={{
                 flexDirection: "row", alignItems: "center", gap: 3,
                 borderRadius: sp(6), paddingHorizontal: sp(7), paddingVertical: sp(2),
@@ -250,8 +250,7 @@ export default function MyQrCodesScreen() {
             </View>
           </View>
 
-          {/* Chevron only */}
-          <Ionicons name="chevron-forward" size={rf(16)} color={colors.textMuted} style={{ flexShrink: 0 }} />
+          <Ionicons name="chevron-forward" size={rf(15)} color={colors.textMuted} style={{ flexShrink: 0 }} />
         </Pressable>
       </Animated.View>
     );
@@ -263,30 +262,35 @@ export default function MyQrCodesScreen() {
         <Pressable
           onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); router.push(`/qr-group/${g.id}` as any); }}
           style={({ pressed }) => [{
-            flexDirection: "row", alignItems: "center", gap: sp(14),
-            borderRadius: sp(18), borderWidth: 1,
+            flexDirection: "row", alignItems: "center", gap: sp(12),
+            borderRadius: sp(16), borderWidth: 1,
             borderColor: colors.surfaceBorder, backgroundColor: colors.surface,
-            padding: sp(14), marginBottom: sp(10),
+            padding: sp(12), marginBottom: sp(10),
             opacity: pressed ? 0.88 : 1,
             transform: [{ scale: pressed ? 0.988 : 1 }],
           }]}
         >
           <View style={{
             width: sp(52), height: sp(52), borderRadius: sp(14),
-            backgroundColor: g.color + "18", alignItems: "center", justifyContent: "center",
+            backgroundColor: colors.surfaceLight,
+            alignItems: "center", justifyContent: "center",
+            borderWidth: 1, borderColor: colors.surfaceBorder,
           }}>
-            <Ionicons name={g.icon as any} size={rf(24)} color={g.color} />
+            <Ionicons name="folder-outline" size={rf(22)} color={colors.textSecondary} />
           </View>
-          <View style={{ flex: 1, gap: sp(3) }}>
+          <View style={{ flex: 1, gap: sp(2) }}>
             <Text style={{ fontSize: rf(14), fontFamily: "Inter_700Bold", color: colors.text }} numberOfLines={1}>
               {g.name}
             </Text>
-            <Text style={{ fontSize: rf(12), fontFamily: "Inter_400Regular", color: colors.textMuted }}>
-              {g.qrDocIds.length} {g.qrDocIds.length === 1 ? "code" : "codes"}
-            </Text>
+            <View style={{ flexDirection: "row", alignItems: "center", gap: sp(4) }}>
+              <Ionicons name="qr-code-outline" size={rf(11)} color={colors.textMuted} />
+              <Text style={{ fontSize: rf(12), fontFamily: "Inter_400Regular", color: colors.textMuted }}>
+                {g.qrDocIds.length} {g.qrDocIds.length === 1 ? "QR code" : "QR codes"}
+              </Text>
+            </View>
           </View>
           <View style={{ width: sp(8), height: sp(8), borderRadius: sp(4), backgroundColor: g.color, marginRight: sp(4) }} />
-          <Ionicons name="chevron-forward" size={rf(16)} color={colors.textMuted} />
+          <Ionicons name="chevron-forward" size={rf(15)} color={colors.textMuted} />
         </Pressable>
       </Animated.View>
     );
@@ -343,15 +347,20 @@ export default function MyQrCodesScreen() {
             start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
           >
             <Ionicons name="add" size={rf(15)} color="#fff" />
-            <Text style={{ fontSize: rf(13), fontFamily: "Inter_700Bold", color: "#fff" }}>New QR</Text>
+            <Text style={{ fontSize: rf(12), fontFamily: "Inter_700Bold", color: "#fff" }}>New QR</Text>
           </LinearGradient>
         </Pressable>
       </View>
 
       {/* Filters + Sort */}
-      <View style={{ paddingHorizontal: sp(20), marginBottom: sp(10) }}>
-        <View style={{ flexDirection: "row", gap: sp(6), marginBottom: sp(8), flexWrap: "nowrap" }}>
-          <View style={{ flexDirection: "row", gap: sp(6), flex: 1, flexWrap: "nowrap" }}>
+      <View style={{ paddingBottom: sp(10) }}>
+        <View style={{ flexDirection: "row", alignItems: "center", paddingHorizontal: sp(20), marginBottom: sp(8) }}>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={{ flexDirection: "row", gap: sp(6), paddingRight: sp(8) }}
+            style={{ flex: 1 }}
+          >
             {FILTERS.map((f) => {
               const active = filter === f.key;
               return (
@@ -360,7 +369,7 @@ export default function MyQrCodesScreen() {
                   onPress={() => { setFilter(f.key); setSortOpen(false); Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); }}
                   style={[{
                     flexDirection: "row", alignItems: "center", gap: sp(4),
-                    paddingHorizontal: sp(10), paddingVertical: sp(7),
+                    paddingHorizontal: sp(11), paddingVertical: sp(7),
                     borderRadius: sp(20), borderWidth: 1,
                   }, active
                     ? { backgroundColor: colors.primaryDim, borderColor: colors.primary + "50" }
@@ -374,7 +383,7 @@ export default function MyQrCodesScreen() {
                 </Pressable>
               );
             })}
-          </View>
+          </ScrollView>
 
           {!isGroupsView && (
             <Pressable
@@ -382,7 +391,7 @@ export default function MyQrCodesScreen() {
               style={({ pressed }) => [{
                 flexDirection: "row", alignItems: "center", gap: sp(4),
                 paddingHorizontal: sp(10), paddingVertical: sp(7),
-                borderRadius: sp(20), borderWidth: 1,
+                borderRadius: sp(20), borderWidth: 1, marginLeft: sp(6),
                 backgroundColor: sortOpen ? colors.primaryDim : colors.surface,
                 borderColor: sortOpen ? colors.primary + "50" : colors.surfaceBorder,
                 opacity: pressed ? 0.8 : 1,
@@ -398,6 +407,7 @@ export default function MyQrCodesScreen() {
           <Animated.View entering={FadeIn.duration(200)}>
             <View style={{
               flexDirection: "row", gap: sp(6), flexWrap: "wrap",
+              marginHorizontal: sp(20),
               borderRadius: sp(14), borderWidth: 1, borderColor: colors.surfaceBorder,
               backgroundColor: colors.surface, padding: sp(10),
             }}>
@@ -432,7 +442,7 @@ export default function MyQrCodesScreen() {
             <Ionicons name="folder-open-outline" size={rf(48)} color={colors.textMuted} />
             <Text style={{ fontSize: rf(16), fontFamily: "Inter_700Bold", color: colors.text, textAlign: "center" }}>No groups yet</Text>
             <Text style={{ fontSize: rf(13), fontFamily: "Inter_400Regular", color: colors.textSecondary, textAlign: "center", lineHeight: rf(19) }}>
-              Tap the + button below to create your first group
+              Tap + below to create your first group
             </Text>
           </Animated.View>
         ) : (
@@ -495,7 +505,7 @@ export default function MyQrCodesScreen() {
           position: "absolute",
           bottom: bottomInset + sp(20) + 62,
           right: sp(20),
-          width: sp(56), height: sp(56), borderRadius: sp(28),
+          width: sp(54), height: sp(54), borderRadius: sp(27),
           alignItems: "center", justifyContent: "center",
           opacity: pressed ? 0.85 : 1,
           transform: [{ scale: pressed ? 0.93 : 1 }],
@@ -508,10 +518,10 @@ export default function MyQrCodesScreen() {
       >
         <LinearGradient
           colors={["#6366F1", "#4F46E5"]}
-          style={{ width: sp(56), height: sp(56), borderRadius: sp(28), alignItems: "center", justifyContent: "center" }}
+          style={{ width: sp(54), height: sp(54), borderRadius: sp(27), alignItems: "center", justifyContent: "center" }}
           start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
         >
-          <Ionicons name="folder-open-outline" size={rf(22)} color="#fff" />
+          <Ionicons name="add" size={rf(26)} color="#fff" />
         </LinearGradient>
       </Pressable>
     </View>

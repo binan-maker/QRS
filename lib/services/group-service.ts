@@ -116,6 +116,25 @@ export async function addQrToMultipleGroups(
   await Promise.all(groupIds.map((gid) => addQrToGroup(userId, gid, qrDocId)));
 }
 
+export async function addMultipleQrsToGroup(
+  userId: string,
+  groupId: string,
+  qrDocIds: string[]
+): Promise<void> {
+  if (qrDocIds.length === 0) return;
+  const existing = await db.get(["users", userId, "qrGroups", groupId]);
+  if (!existing) return;
+  const ids: string[] = existing.qrDocIds ?? [];
+  const newIds = [...ids];
+  for (const id of qrDocIds) {
+    if (!newIds.includes(id)) newIds.push(id);
+  }
+  await db.update(["users", userId, "qrGroups", groupId], {
+    qrDocIds: newIds,
+    updatedAt: db.timestamp(),
+  });
+}
+
 export async function getGroupsForQr(
   userId: string,
   qrDocId: string
