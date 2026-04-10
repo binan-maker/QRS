@@ -20,8 +20,6 @@ import {
   type GeneratedQrItem,
 } from "@/lib/firestore-service";
 
-const DEFAULT_GROUP_COLOR = "#6366F1";
-
 type Step = "select" | "name";
 
 export default function CreateGroupScreen() {
@@ -83,8 +81,8 @@ export default function CreateGroupScreen() {
           style={({ pressed }) => [{
             flexDirection: "row", alignItems: "center", gap: sp(12),
             borderRadius: sp(16), borderWidth: 1.5,
-            borderColor: isSelected ? groupColor : colors.surfaceBorder,
-            backgroundColor: isSelected ? groupColor + "10" : colors.surface,
+            borderColor: isSelected ? colors.primary : colors.surfaceBorder,
+            backgroundColor: isSelected ? colors.primaryDim : colors.surface,
             padding: sp(12), marginBottom: sp(10),
             opacity: pressed ? 0.85 : 1,
             transform: [{ scale: pressed ? 0.98 : 1 }],
@@ -130,8 +128,8 @@ export default function CreateGroupScreen() {
           <View style={{
             width: sp(26), height: sp(26), borderRadius: sp(13),
             borderWidth: 2,
-            borderColor: isSelected ? groupColor : colors.surfaceBorder,
-            backgroundColor: isSelected ? groupColor : "transparent",
+            borderColor: isSelected ? colors.primary : colors.surfaceBorder,
+            backgroundColor: isSelected ? colors.primary : "transparent",
             alignItems: "center", justifyContent: "center",
           }}>
             {isSelected && <Ionicons name="checkmark" size={rf(14)} color="#fff" />}
@@ -226,10 +224,10 @@ export default function CreateGroupScreen() {
               }}>
                 <View style={{
                   width: sp(44), height: sp(44), borderRadius: sp(12),
-                  backgroundColor: DEFAULT_GROUP_COLOR + "18",
+                  backgroundColor: colors.primaryDim,
                   alignItems: "center", justifyContent: "center",
                 }}>
-                  <Text style={{ fontSize: rf(20), fontFamily: "Inter_700Bold", color: DEFAULT_GROUP_COLOR }}>G</Text>
+                  <Text style={{ fontSize: rf(20), fontFamily: "Inter_700Bold", color: colors.primary }}>G</Text>
                 </View>
                 <View style={{ flex: 1 }}>
                   <Text style={{ fontSize: rf(13), fontFamily: "Inter_700Bold", color: colors.text }}>
@@ -258,7 +256,7 @@ export default function CreateGroupScreen() {
                   autoFocus
                   style={{
                     backgroundColor: colors.surface, borderRadius: sp(14), borderWidth: 1,
-                    borderColor: groupName.trim() ? DEFAULT_GROUP_COLOR + "60" : colors.surfaceBorder,
+                    borderColor: groupName.trim() ? colors.primary + "60" : colors.surfaceBorder,
                     paddingHorizontal: sp(16), paddingVertical: sp(14),
                     fontSize: rf(14), fontFamily: "Inter_500Medium", color: colors.text,
                   }}
@@ -276,7 +274,7 @@ export default function CreateGroupScreen() {
                 }]}
               >
                 <LinearGradient
-                  colors={groupName.trim() ? [DEFAULT_GROUP_COLOR, "#4F46E5"] : [colors.surfaceLight, colors.surfaceLight]}
+                  colors={groupName.trim() ? [colors.primary, colors.primaryShade] : [colors.surfaceLight, colors.surfaceLight]}
                   style={{ flexDirection: "row", alignItems: "center", justifyContent: "center", gap: sp(10), paddingVertical: sp(15) }}
                   start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
                 >

@@ -19,16 +19,6 @@ import {
   type GeneratedQrItem,
 } from "@/lib/firestore-service";
 
-const GROUP_COLORS = [
-  "#6366F1", "#0EA5E9", "#10B981", "#F59E0B",
-  "#EF4444", "#8B5CF6", "#EC4899", "#F97316",
-];
-const GROUP_ICONS = [
-  "folder-outline", "business-outline", "home-outline", "heart-outline",
-  "star-outline", "briefcase-outline", "planet-outline", "leaf-outline",
-  "flash-outline", "rocket-outline", "diamond-outline", "shield-outline",
-];
-
 const CONTENT_TYPE_META: Record<string, { label: string; icon: string; color: string; bg: string }> = {
   url:     { label: "URL",     icon: "link-outline",     color: "#1D4ED8", bg: "#EFF6FF" },
   text:    { label: "Text",    icon: "text-outline",     color: "#6B7280", bg: "#F9FAFB" },

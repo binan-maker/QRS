@@ -15,16 +15,6 @@ import {
   subscribeToUserGroups, createGroup, deleteGroup, type QrGroup,
 } from "@/lib/firestore-service";
 
-const GROUP_COLORS = [
-  "#6366F1", "#0EA5E9", "#10B981", "#F59E0B",
-  "#EF4444", "#8B5CF6", "#EC4899", "#F97316",
-];
-const GROUP_ICONS = [
-  "folder-outline", "business-outline", "home-outline", "heart-outline",
-  "star-outline", "briefcase-outline", "planet-outline", "leaf-outline",
-  "flash-outline", "rocket-outline", "diamond-outline", "shield-outline",
-];
-
 export default function QrGroupsScreen() {
   const { colors } = useTheme();
   const { user } = useAuth();
@@ -41,8 +31,6 @@ export default function QrGroupsScreen() {
   const [creating, setCreating] = useState(false);
   const [newName, setNewName] = useState("");
   const [newDesc, setNewDesc] = useState("");
-  const [newColor, setNewColor] = useState(GROUP_COLORS[0]);
-  const [newIcon, setNewIcon] = useState(GROUP_ICONS[0]);
   const [saving, setSaving] = useState(false);
   const unsubRef = useRef<(() => void) | null>(null);
 
@@ -68,12 +56,10 @@ export default function QrGroupsScreen() {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     setSaving(true);
     try {
-      await createGroup(user.id, newName, newDesc, newColor, newIcon);
+      await createGroup(user.id, newName, newDesc, "#6366F1", "folder-outline");
       setCreating(false);
       setNewName("");
       setNewDesc("");
-      setNewColor(GROUP_COLORS[0]);
-      setNewIcon(GROUP_ICONS[0]);
     } finally {
       setSaving(false);
     }
@@ -346,47 +332,7 @@ export default function QrGroupsScreen() {
               }}
             />
 
-            {/* Color */}
-            <Text style={{ fontSize: rf(12), fontFamily: "Inter_600SemiBold", color: colors.textSecondary, marginBottom: sp(8) }}>Color</Text>
-            <View style={{ flexDirection: "row", flexWrap: "wrap", gap: sp(10), marginBottom: sp(14) }}>
-              {GROUP_COLORS.map((c) => (
-                <Pressable
-                  key={c}
-                  onPress={() => { setNewColor(c); Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); }}
-                  style={{
-                    width: sp(34), height: sp(34), borderRadius: sp(17),
-                    backgroundColor: c,
-                    borderWidth: newColor === c ? 3 : 0,
-                    borderColor: colors.text,
-                    alignItems: "center", justifyContent: "center",
-                  }}
-                >
-                  {newColor === c && <Ionicons name="checkmark" size={rf(16)} color="#fff" />}
-                </Pressable>
-              ))}
-            </View>
-
-            {/* Icon */}
-            <Text style={{ fontSize: rf(12), fontFamily: "Inter_600SemiBold", color: colors.textSecondary, marginBottom: sp(8) }}>Icon</Text>
-            <View style={{ flexDirection: "row", flexWrap: "wrap", gap: sp(8), marginBottom: sp(22) }}>
-              {GROUP_ICONS.map((ic) => (
-                <Pressable
-                  key={ic}
-                  onPress={() => { setNewIcon(ic); Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); }}
-                  style={{
-                    width: sp(44), height: sp(44), borderRadius: sp(12),
-                    backgroundColor: newIcon === ic ? newColor + "30" : colors.surface,
-                    borderWidth: 1,
-                    borderColor: newIcon === ic ? newColor : colors.surfaceBorder,
-                    alignItems: "center", justifyContent: "center",
-                  }}
-                >
-                  <Ionicons name={ic as any} size={rf(20)} color={newIcon === ic ? newColor : colors.textMuted} />
-                </Pressable>
-              ))}
-            </View>
-
-            <View style={{ flexDirection: "row", gap: sp(10) }}>
+            <View style={{ flexDirection: "row", gap: sp(10), marginTop: sp(4) }}>
               <Pressable
                 onPress={() => setCreating(false)}
                 style={{
@@ -401,7 +347,7 @@ export default function QrGroupsScreen() {
                 disabled={!newName.trim() || saving}
                 style={({ pressed }) => [{
                   flex: 2, borderRadius: sp(14), padding: sp(13), alignItems: "center",
-                  backgroundColor: !newName.trim() ? colors.surfaceLight : newColor,
+                  backgroundColor: !newName.trim() ? colors.surfaceLight : colors.primary,
                   opacity: pressed || saving ? 0.8 : 1,
                 }]}
               >
