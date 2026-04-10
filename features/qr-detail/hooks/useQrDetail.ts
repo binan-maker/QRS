@@ -95,7 +95,7 @@ export function useQrDetail(id: string) {
     }
     // Default fallback: for external/unverified QRs we cannot guarantee safety.
     if (!isQrGuardVerified) {
-      return { level: "caution" as const, label: "UNVERIFIED QR", reason: "Standard QR · We cannot verify the owner's identity", color: colors.warning };
+      return { level: "caution" as const, label: "UNVERIFIED QR", reason: "Unverified source · Proceed with caution", color: colors.warning };
     }
     return { level: "safe" as const, label: "SAFE", reason: "No threats detected", color: colors.safe };
   }
