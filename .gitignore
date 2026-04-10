@@ -17,6 +17,7 @@ env/
 venv/
 .venv/
 .ENV
+android/
 .python-version
 
 # Logs
@@ -33,6 +34,7 @@ venv/
 *.swp
 *.swo
 *~
+keystore/
 
 # OS
 .DS_Store

@@ -30,6 +30,12 @@ export default function HomeScreen() {
     return name ? name.trim().split(/\s+/)[0] : "";
   }
 
+  const STAT_ITEMS = [
+    { icon: "shield-checkmark" as const, label: "Safe Scans", desc: "Verified clean", color: colors.safe, bg: colors.safeDim },
+    { icon: "warning" as const, label: "Stay Alert", desc: "Report risks", color: colors.warning, bg: colors.warningDim },
+    { icon: "chatbubbles" as const, label: "Community", desc: "Trust reviews", color: colors.primary, bg: colors.primaryDim },
+  ];
+
   function getScanGradient(contentType: string): [string, string] {
     if (contentType === "payment") return [colors.warning, colors.warningShade];
     if (contentType === "location") return [colors.danger, colors.dangerShade];
@@ -88,6 +94,7 @@ export default function HomeScreen() {
               ) : (
                 <Text style={styles.greeting}>Welcome</Text>
               )}
+              <Text style={styles.tagline}>Scan smart. Stay safe.</Text>
             </View>
             <View style={styles.headerRight}>
               {user && (
@@ -161,26 +168,45 @@ export default function HomeScreen() {
                   </Animated.View>
                   <View style={styles.heroTextBlock}>
                     <Text style={[styles.heroTitle, { color: colors.text }]}>Scan QR Code</Text>
-                    <View style={styles.heroFeatureRow}>
-                      {([
-                        { icon: "camera-outline" as const, label: "Camera" },
-                        { icon: "image-outline" as const, label: "Gallery" },
-                        { icon: "flash-outline" as const, label: "AI Check" },
-                      ] as const).map((f) => (
-                        <View key={f.label} style={styles.heroFeatureItem}>
-                          <Ionicons name={f.icon} size={12} color={colors.primary} />
-                          <Text style={[styles.heroFeatureText, { color: colors.textSecondary }]}>{f.label}</Text>
-                        </View>
-                      ))}
-                    </View>
+                    <Text style={[styles.heroSub, { color: colors.textSecondary }]} numberOfLines={1} adjustsFontSizeToFit>
+                      Securely scan any QR code instantly
+                    </Text>
                   </View>
                   <View style={[styles.heroArrow, { backgroundColor: colors.primary }]}>
                     <Ionicons name="arrow-forward" size={18} color={colors.primaryText} />
                   </View>
                 </View>
+                <View style={styles.heroPillRow}>
+                  {["Safe check", "Fraud detect", "Trust score"].map((t) => (
+                    <View key={t} style={[styles.heroPill, { backgroundColor: colors.primary + "18", borderColor: colors.primary + "30" }]}>
+                      <Text style={[styles.heroPillText, { color: colors.primary }]} maxFontSizeMultiplier={1} numberOfLines={1}>{t}</Text>
+                    </View>
+                  ))}
+                </View>
               </LinearGradient>
             </Pressable>
           </Animated.View>
+
+          {/* ── STATS ROW ── */}
+          <Animated.View entering={FadeInDown.duration(500).delay(160)}>
+            <View style={styles.statsRow}>
+              {STAT_ITEMS.map((s, idx) => (
+                <View key={idx} style={[styles.statCard, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
+                  <LinearGradient
+                    colors={[s.bg, "transparent"]}
+                    style={styles.statCardGlow}
+                    start={{ x: 0.5, y: 0 }} end={{ x: 0.5, y: 1 }}
+                  />
+                  <View style={[styles.statIconWrap, { backgroundColor: s.bg }]}>
+                    <Ionicons name={s.icon} size={18} color={s.color} />
+                  </View>
+                  <Text style={[styles.statLabel, { color: colors.text }]} numberOfLines={1} maxFontSizeMultiplier={1}>{s.label}</Text>
+                  <Text style={[styles.statDesc, { color: s.color }]} numberOfLines={1} maxFontSizeMultiplier={1}>{s.desc}</Text>
+                </View>
+              ))}
+            </View>
+          </Animated.View>
+
 
           {/* ── RECENT SCANS ── */}
           <Animated.View entering={FadeInDown.duration(500).delay(320)}>
@@ -201,28 +227,13 @@ export default function HomeScreen() {
             </View>
 
             {recentScans.length === 0 ? (
-              <Pressable
-                onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium); router.push("/(tabs)/scanner"); }}
-                style={({ pressed }) => [
-                  styles.emptyWrap,
-                  { backgroundColor: colors.surface, borderColor: colors.primary + "40", opacity: pressed ? 0.9 : 1, transform: [{ scale: pressed ? 0.985 : 1 }] },
-                ]}
-              >
-                <LinearGradient
-                  colors={[colors.primary + "12", "transparent"]}
-                  style={StyleSheet.absoluteFill}
-                  start={{ x: 0.5, y: 0 }} end={{ x: 0.5, y: 1 }}
-                />
-                <View style={[styles.emptyIconBox, { backgroundColor: colors.primary + "18", borderWidth: 1.5, borderColor: colors.primary + "35", borderStyle: "dashed" }]}>
-                  <MaterialCommunityIcons name="qrcode-scan" size={34} color={colors.primary} />
+              <View style={[styles.emptyWrap, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
+                <View style={[styles.emptyIconBox, { backgroundColor: colors.surfaceLight }]}>
+                  <Ionicons name="scan-outline" size={32} color={colors.textMuted} />
                 </View>
-                <Text style={[styles.emptyTitle, { color: colors.text }]}>No scans yet</Text>
-                <Text style={[styles.emptySub, { color: colors.textSecondary }]}>Verify any QR in seconds — payments, links &amp; more</Text>
-                <View style={[styles.emptyCtaBtn, { backgroundColor: colors.primary }]}>
-                  <Ionicons name="scan-outline" size={15} color={colors.primaryText} />
-                  <Text style={[styles.emptyCtaText, { color: colors.primaryText }]}>Start Scanning</Text>
-                </View>
-              </Pressable>
+                <Text style={[styles.emptyTitle, { color: colors.textSecondary }]}>No scans yet</Text>
+                <Text style={[styles.emptySub, { color: colors.textMuted }]}>Scan a QR code to get started</Text>
+              </View>
             ) : (
               <View style={styles.recentList}>
                 {recentScans.map((scan, idx) => {
@@ -364,12 +375,10 @@ function makeStyles(c: ReturnType<typeof import("@/contexts/ThemeContext").useTh
       alignItems: "center", justifyContent: "center", flexShrink: 0,
     },
     heroIconBg: { width: 76, height: 76, borderRadius: 22, alignItems: "center", justifyContent: "center" },
-    heroTop: { flexDirection: "row", alignItems: "center", gap: 14, marginBottom: 0 },
+    heroTop: { flexDirection: "row", alignItems: "center", gap: 14, marginBottom: 16 },
     heroTextBlock: { flex: 1 },
-    heroTitle: { fontSize: rf(17), fontFamily: "Inter_700Bold", marginBottom: 6 },
-    heroFeatureRow: { flexDirection: "row", alignItems: "center", gap: 10, flexWrap: "wrap" },
-    heroFeatureItem: { flexDirection: "row", alignItems: "center", gap: 4 },
-    heroFeatureText: { fontSize: rf(12.5), fontFamily: "Inter_600SemiBold" },
+    heroTitle: { fontSize: rf(16), fontFamily: "Inter_700Bold", marginBottom: 4 },
+    heroSub: { fontSize: rf(12), fontFamily: "Inter_400Regular", lineHeight: Math.round(17 * s) },
     heroPillRow: { flexDirection: "row", gap: 6, flexWrap: "wrap" },
     heroPill: { paddingHorizontal: 8, paddingVertical: 3, borderRadius: 100, borderWidth: 1 },
     heroPillText: { fontSize: rf(12), fontFamily: "Inter_600SemiBold", letterSpacing: 0.2 },
@@ -405,14 +414,12 @@ function makeStyles(c: ReturnType<typeof import("@/contexts/ThemeContext").useTh
     seeAllText: { fontSize: rf(12), fontFamily: "Inter_600SemiBold" },
 
     emptyWrap: {
-      alignItems: "center", paddingVertical: 36, paddingHorizontal: 20, gap: 10,
-      borderRadius: 20, borderWidth: 1, overflow: "hidden",
+      alignItems: "center", paddingVertical: 40, gap: 10,
+      borderRadius: 20, borderWidth: 1,
     },
     emptyIconBox: { width: 70, height: 70, borderRadius: 18, alignItems: "center", justifyContent: "center", marginBottom: 4 },
-    emptyTitle: { fontSize: rf(16), fontFamily: "Inter_700Bold" },
-    emptySub: { fontSize: rf(13), fontFamily: "Inter_400Regular", textAlign: "center", lineHeight: Math.round(19 * s), maxWidth: 260 },
-    emptyCtaBtn: { flexDirection: "row", alignItems: "center", gap: 6, paddingHorizontal: 20, paddingVertical: 11, borderRadius: 22, marginTop: 6 },
-    emptyCtaText: { fontSize: rf(14), fontFamily: "Inter_700Bold" },
+    emptyTitle: { fontSize: rf(15), fontFamily: "Inter_600SemiBold" },
+    emptySub: { fontSize: rf(13), fontFamily: "Inter_400Regular" },
 
     signInBannerCard: {
       flexDirection: "row",
