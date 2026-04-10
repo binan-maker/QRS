@@ -169,7 +169,7 @@ export default function HomeScreen() {
                   <View style={styles.heroTextBlock}>
                     <Text style={[styles.heroTitle, { color: colors.text }]}>Scan QR Code</Text>
                     <Text style={[styles.heroSub, { color: colors.textSecondary }]} numberOfLines={1} adjustsFontSizeToFit>
-                      Securely scan any QR code instantly.
+                      Securely scan any QR code instantly
                     </Text>
                   </View>
                   <View style={[styles.heroArrow, { backgroundColor: colors.primary }]}>
