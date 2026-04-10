@@ -188,10 +188,17 @@ const ContentCard = React.memo(function ContentCard({ content, contentType, pars
           <Text style={[styles.typeLabel, { color: colors.text }]}>Encrypted Data</Text>
           <Pressable
             onPress={handleCopy}
-            style={({ pressed }) => [styles.copyBtn, { backgroundColor: isDark ? colors.surfaceLight : colors.background, borderColor: colors.surfaceBorder, opacity: pressed ? 0.7 : 1 }]}
+            style={({ pressed }) => [
+              styles.copyBtn,
+              {
+                backgroundColor: copied ? colors.safe + "18" : isDark ? colors.surfaceLight : colors.background,
+                borderColor: copied ? colors.safe : colors.surfaceBorder,
+                opacity: pressed ? 0.75 : 1,
+              },
+            ]}
           >
-            <Ionicons name={copied ? "checkmark" : "copy-outline"} size={16} color={copied ? colors.safe : colors.textMuted} />
-            {copied && <Text style={[styles.copiedText, { color: colors.safe }]}>Copied</Text>}
+            <Ionicons name={copied ? "checkmark-circle" : "copy-outline"} size={15} color={copied ? colors.safe : colors.textMuted} />
+            <Text style={[styles.copiedText, { color: copied ? colors.safe : colors.textMuted }]}>{copied ? "Copied!" : "Copy"}</Text>
           </Pressable>
         </View>
         <View style={[styles.encryptedInfoBox, { backgroundColor: colors.warning + "10", borderColor: colors.warning + "30" }]}>
@@ -247,14 +254,14 @@ const ContentCard = React.memo(function ContentCard({ content, contentType, pars
           style={({ pressed }) => [
             styles.copyBtn,
             {
-              backgroundColor: isDark ? colors.surfaceLight : colors.background,
-              borderColor: colors.surfaceBorder,
-              opacity: pressed ? 0.7 : 1,
+              backgroundColor: copied ? colors.safe + "18" : isDark ? colors.surfaceLight : colors.background,
+              borderColor: copied ? colors.safe : colors.surfaceBorder,
+              opacity: pressed ? 0.75 : 1,
             },
           ]}
         >
-          <Ionicons name={copied ? "checkmark" : "copy-outline"} size={16} color={copied ? colors.safe : colors.textMuted} />
-          {copied && <Text style={[styles.copiedText, { color: colors.safe }]}>Copied</Text>}
+          <Ionicons name={copied ? "checkmark-circle" : "copy-outline"} size={15} color={copied ? colors.safe : colors.textMuted} />
+          <Text style={[styles.copiedText, { color: copied ? colors.safe : colors.textMuted }]}>{copied ? "Copied!" : "Copy"}</Text>
         </Pressable>
       </View>
 

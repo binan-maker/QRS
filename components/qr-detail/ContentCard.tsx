@@ -68,17 +68,31 @@ const ContentCard = React.memo(function ContentCard({
             <Ionicons name="open-outline" size={16} color={Colors.dark.primary} />
             <Text style={styles.openBtnText}>Open Link</Text>
           </Pressable>
-          <Pressable onPress={handleCopy} style={({ pressed }) => [styles.copyIconBtn, { opacity: pressed ? 0.75 : 1 }]}>
-            <Ionicons name="copy-outline" size={17} color={Colors.dark.textSecondary} />
+          <Pressable
+            onPress={handleCopy}
+            style={({ pressed }) => [
+              styles.copyIconBtn,
+              copied ? styles.copyIconBtnCopied : {},
+              { opacity: pressed ? 0.75 : 1 },
+            ]}
+          >
+            <Ionicons name={copied ? "checkmark-circle" : "copy-outline"} size={16} color={copied ? Colors.dark.safe : Colors.dark.textSecondary} />
+            <Text style={[styles.copiedToast, { color: copied ? Colors.dark.safe : Colors.dark.textSecondary }]}>{copied ? "Copied!" : "Copy"}</Text>
           </Pressable>
-          {copied ? <Text style={styles.copiedToast}>Copied!</Text> : null}
         </View>
       ) : contentType !== "payment" ? (
         <View style={styles.actionRow}>
-          <Pressable onPress={handleCopy} style={({ pressed }) => [styles.copyIconBtn, { opacity: pressed ? 0.75 : 1 }]}>
-            <Ionicons name="copy-outline" size={17} color={Colors.dark.textSecondary} />
+          <Pressable
+            onPress={handleCopy}
+            style={({ pressed }) => [
+              styles.copyIconBtn,
+              copied ? styles.copyIconBtnCopied : {},
+              { opacity: pressed ? 0.75 : 1 },
+            ]}
+          >
+            <Ionicons name={copied ? "checkmark-circle" : "copy-outline"} size={16} color={copied ? Colors.dark.safe : Colors.dark.textSecondary} />
+            <Text style={[styles.copiedToast, { color: copied ? Colors.dark.safe : Colors.dark.textSecondary }]}>{copied ? "Copied!" : "Copy"}</Text>
           </Pressable>
-          {copied ? <Text style={styles.copiedToast}>Copied!</Text> : null}
         </View>
       ) : null}
 
@@ -207,10 +221,15 @@ const styles = StyleSheet.create({
   },
   openBtnText: { fontSize: 14, fontFamily: "Inter_600SemiBold", color: Colors.dark.primary },
   copyIconBtn: {
-    width: 38, height: 38, borderRadius: 10, alignItems: "center", justifyContent: "center",
-    backgroundColor: Colors.dark.surfaceLight,
+    flexDirection: "row", alignItems: "center", justifyContent: "center",
+    gap: 4, height: 28, paddingHorizontal: 9, borderRadius: 8, borderWidth: 1,
+    backgroundColor: Colors.dark.surfaceLight, borderColor: Colors.dark.surfaceBorder,
   },
-  copiedToast: { fontSize: 12, fontFamily: "Inter_600SemiBold", color: Colors.dark.safe },
+  copyIconBtnCopied: {
+    backgroundColor: Colors.dark.safe + "18",
+    borderColor: Colors.dark.safe,
+  },
+  copiedToast: { fontSize: 11, fontFamily: "Inter_600SemiBold" },
   paymentCard: {
     backgroundColor: Colors.dark.surfaceLight, borderRadius: 14, padding: 14, gap: 8, marginTop: 4,
   },
