@@ -14,7 +14,6 @@ interface Props {
   trustInfo: TrustInfo;
   reportCounts: Record<string, number>;
   totalScans: number;
-  totalComments: number;
   isQrOwner: boolean;
   followCount: number;
   followersModalOpen: boolean;
@@ -32,7 +31,6 @@ const TrustScoreCard = React.memo(function TrustScoreCard({
   trustInfo,
   reportCounts,
   totalScans,
-  totalComments,
   isQrOwner,
   followCount,
   onOpenFollowers,
@@ -67,11 +65,6 @@ const TrustScoreCard = React.memo(function TrustScoreCard({
           <Text style={styles.statLabel}>Scans</Text>
         </View>
         <View style={styles.statDivider} />
-        <View style={styles.statItem}>
-          <Text style={styles.statNum}>{formatCompactNumber(totalComments)}</Text>
-          <Text style={styles.statLabel}>Comments</Text>
-        </View>
-        <View style={styles.statDivider} />
         <Pressable style={styles.statItem} onPress={isQrOwner ? onOpenFollowers : undefined}>
           <Text style={styles.statNum}>{formatCompactNumber(followCount)}</Text>
           <Text style={[styles.statLabel, isQrOwner && { color: Colors.dark.primary }]}>
@@ -81,7 +74,7 @@ const TrustScoreCard = React.memo(function TrustScoreCard({
         <View style={styles.statDivider} />
         <View style={styles.statItem}>
           <Text style={styles.statNum}>{formatCompactNumber(total)}</Text>
-          <Text style={styles.statLabel}>Reports</Text>
+          <Text style={styles.statLabel}>Votes</Text>
         </View>
       </View>
 

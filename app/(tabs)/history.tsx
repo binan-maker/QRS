@@ -134,52 +134,7 @@ export default function HistoryScreen() {
     Keyboard.dismiss();
   }
 
-  // Risk stats from all items (loaded via background fetch)
-  // Deduplicate by content so scanning the same dangerous QR multiple times counts as one.
-  const allDangerCount = useMemo(() => {
-    if (allStatsItems.length === 0) return history.filter((i) => safetyRiskMap.get(i.id) === "dangerous").length;
-    const seen = new Set<string>();
-    let count = 0;
-    for (const item of allStatsItems) {
-      if (seen.has(item.content)) continue;
-      seen.add(item.content);
-      let risk: string = "safe";
-      if (item.contentType === "url") {
-        try { risk = analyzeUrlHeuristics(item.content).riskLevel; } catch {}
-      } else if (item.contentType === "payment") {
-        try {
-          const parsed = parseAnyPaymentQr(item.content);
-          risk = parsed ? analyzeAnyPaymentQr(parsed).riskLevel : "safe";
-        } catch {}
-      }
-      if (risk === "dangerous") count++;
-    }
-    return count;
-  }, [allStatsItems, history, safetyRiskMap]);
-
-  const allCautionCount = useMemo(() => {
-    if (allStatsItems.length === 0) return history.filter((i) => safetyRiskMap.get(i.id) === "caution").length;
-    const seen = new Set<string>();
-    let count = 0;
-    for (const item of allStatsItems) {
-      if (seen.has(item.content)) continue;
-      seen.add(item.content);
-      let risk: string = "safe";
-      if (item.contentType === "url") {
-        try { risk = analyzeUrlHeuristics(item.content).riskLevel; } catch {}
-      } else if (item.contentType === "payment") {
-        try {
-          const parsed = parseAnyPaymentQr(item.content);
-          risk = parsed ? analyzeAnyPaymentQr(parsed).riskLevel : "safe";
-        } catch {}
-      }
-      if (risk === "caution") count++;
-    }
-    return count;
-  }, [allStatsItems, history, safetyRiskMap]);
-
   const totalCount = scanStats?.total ?? history.length;
-  const allSafeCount = Math.max(0, totalCount - allDangerCount - allCautionCount);
   const showNAStats = !isOnline && scanStats === null;
 
   // Filter chips counts from true totals (from scanStats) or fallback to loaded history
@@ -207,7 +162,6 @@ export default function HistoryScreen() {
 
   const listRows = useMemo(() => groupByDate(searchedItems), [searchedItems]);
 
-  const hasThreats = (allDangerCount + allCautionCount) > 0;
   const showStats = user && !cloudLoading && (history.length > 0 || (scanStats !== null && scanStats.total > 0));
 
   const renderItem = useCallback(
@@ -394,38 +348,6 @@ export default function HistoryScreen() {
         </View>
       )}
 
-      {/* ── Threat Banner ──────────────────────────────────────────── */}
-      {user && hasThreats && !cloudLoading && !searchVisible && (
-        <Pressable
-          onPress={onRefresh}
-          style={[
-            styles.threatBanner,
-            {
-              backgroundColor: allDangerCount > 0 ? colors.dangerDim : colors.warningDim,
-              borderColor: (allDangerCount > 0 ? colors.danger : colors.warning) + "40",
-              marginHorizontal: 16,
-              marginBottom: 6,
-            },
-          ]}
-        >
-          <LinearGradient
-            colors={allDangerCount > 0
-              ? [colors.danger, colors.dangerShade ?? colors.danger]
-              : [colors.warning, colors.warningShade ?? colors.warning]}
-            style={styles.threatBannerIcon}
-          >
-            <Ionicons name={allDangerCount > 0 ? "warning" : "alert-circle"} size={14} color="#fff" />
-          </LinearGradient>
-          <Text style={[
-            styles.threatBannerText,
-            { color: allDangerCount > 0 ? colors.danger : colors.warning, fontSize: rf(12) },
-          ]} maxFontSizeMultiplier={1}>
-            {allDangerCount > 0
-              ? `${allDangerCount} dangerous QR code${allDangerCount > 1 ? "s" : ""} detected`
-              : `${allCautionCount} QR code${allCautionCount > 1 ? "s" : ""} flagged for caution`}
-          </Text>
-        </Pressable>
-      )}
 
       {/* ── Cloud Error Banner ─────────────────────────────────────── */}
       {user && cloudError && !searchVisible && (
@@ -492,29 +414,11 @@ export default function HistoryScreen() {
         ListHeaderComponent={
           showStats && !searchVisible ? (
             <View style={[styles.statsCard, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
-              <View style={[styles.statItem, { borderRightColor: colors.surfaceBorder }]}>
+              <View style={[styles.statItem, { borderRightWidth: 0 }]}>
                 <Text style={[styles.statNumber, { color: showNAStats ? colors.textMuted : colors.text }]} maxFontSizeMultiplier={1}>
                   {showNAStats ? "N/A" : totalCount}
                 </Text>
-                <Text style={[styles.statLabel, { color: colors.textMuted }]} maxFontSizeMultiplier={1}>Total</Text>
-              </View>
-              <View style={[styles.statItem, { borderRightColor: colors.surfaceBorder }]}>
-                <Text style={[styles.statNumber, { color: showNAStats ? colors.textMuted : colors.safe }]} maxFontSizeMultiplier={1}>
-                  {showNAStats ? "N/A" : allSafeCount}
-                </Text>
-                <Text style={[styles.statLabel, { color: colors.textMuted }]} maxFontSizeMultiplier={1}>Safe</Text>
-              </View>
-              <View style={[styles.statItem, { borderRightColor: colors.surfaceBorder }]}>
-                <Text style={[styles.statNumber, { color: showNAStats ? colors.textMuted : colors.warning }]} maxFontSizeMultiplier={1}>
-                  {showNAStats ? "N/A" : allCautionCount}
-                </Text>
-                <Text style={[styles.statLabel, { color: colors.textMuted }]} maxFontSizeMultiplier={1}>Caution</Text>
-              </View>
-              <View style={[styles.statItem, { borderRightWidth: 0 }]}>
-                <Text style={[styles.statNumber, { color: showNAStats ? colors.textMuted : colors.danger }]} maxFontSizeMultiplier={1}>
-                  {showNAStats ? "N/A" : allDangerCount}
-                </Text>
-                <Text style={[styles.statLabel, { color: colors.textMuted }]} maxFontSizeMultiplier={1}>Danger</Text>
+                <Text style={[styles.statLabel, { color: colors.textMuted }]} maxFontSizeMultiplier={1}>Total Scans</Text>
               </View>
             </View>
           ) : null

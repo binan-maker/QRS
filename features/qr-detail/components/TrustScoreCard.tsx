@@ -15,7 +15,6 @@ interface Props {
   trustInfo: TrustInfo;
   reportCounts: Record<string, number>;
   totalScans: number;
-  totalComments: number;
   isQrOwner: boolean;
   followCount: number;
   followersModalOpen: boolean;
@@ -32,7 +31,7 @@ function getScoreGradient(score: number, colors: any): [string, string] {
 }
 
 const TrustScoreCard = React.memo(function TrustScoreCard({
-  trustInfo, reportCounts, totalScans, totalComments,
+  trustInfo, reportCounts, totalScans,
   isQrOwner, followCount, onOpenFollowers, manipulationWarning,
   scanCountFrozen, ownerScanCount,
 }: Props) {
@@ -52,10 +51,9 @@ const TrustScoreCard = React.memo(function TrustScoreCard({
   const votedTypes = REPORT_TYPES.filter((r) => (reportCounts[r.key] || 0) > 0);
 
   const STATS = [
-    { icon: "scan-outline" as const,       label: "Scans",     value: totalScans    },
-    { icon: "chatbubbles-outline" as const, label: "Comments",  value: totalComments },
-    { icon: "people-outline" as const,     label: "Followers", value: followCount, onPress: isQrOwner ? onOpenFollowers : undefined },
-    { icon: "flag-outline" as const,       label: "Votes",     value: total         },
+    { icon: "scan-outline" as const,   label: "Scans",     value: totalScans },
+    { icon: "people-outline" as const, label: "Followers", value: followCount, onPress: isQrOwner ? onOpenFollowers : undefined },
+    { icon: "flag-outline" as const,   label: "Votes",     value: total },
   ];
 
   return (

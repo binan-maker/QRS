@@ -697,7 +697,6 @@ export default function QrDetailScreen() {
                   trustInfo={trust}
                   reportCounts={q.reportCounts}
                   totalScans={q.totalScans}
-                  totalComments={q.totalComments}
                   isQrOwner={user ? q.isQrOwner : false}
                   followCount={q.followCount}
                   followersModalOpen={user ? q.followersModalOpen : false}
