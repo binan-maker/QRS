@@ -25,9 +25,9 @@ type SortKey = "newest" | "oldest" | "mostScanned";
 
 const FILTERS: { key: Filter; label: string; icon: keyof typeof Ionicons.glyphMap }[] = [
   { key: "all",        label: "All",        icon: "layers-outline"     },
+  { key: "groups",     label: "Groups",     icon: "folder-outline"     },
   { key: "individual", label: "Individual", icon: "person-outline"     },
   { key: "business",   label: "Business",   icon: "storefront-outline" },
-  { key: "groups",     label: "Groups",     icon: "folder-outline"     },
 ];
 
 const SORT_OPTIONS: { key: SortKey; label: string }[] = [
@@ -42,18 +42,23 @@ const CONTENT_TYPE_META: Record<string, { label: string; icon: string; color: st
   wifi:           { label: "WiFi",       icon: "wifi-outline",          color: "#059669", bg: "#ECFDF5" },
   upi:            { label: "UPI",        icon: "card-outline",          color: "#F59E0B", bg: "#FFFBEB" },
   bharatqr:       { label: "BharatQR",   icon: "card-outline",          color: "#F59E0B", bg: "#FFFBEB" },
+  payment:        { label: "Payment",    icon: "card-outline",          color: "#F59E0B", bg: "#FFFBEB" },
   contact:        { label: "Contact",    icon: "person-circle-outline", color: "#8B5CF6", bg: "#F5F3FF" },
   email:          { label: "Email",      icon: "mail-outline",          color: "#3B82F6", bg: "#EFF6FF" },
   phone:          { label: "Phone",      icon: "call-outline",          color: "#10B981", bg: "#ECFDF5" },
+  social:         { label: "Social",     icon: "share-social-outline",  color: "#EC4899", bg: "#FDF2F8" },
   whatsapp:       { label: "WhatsApp",   icon: "logo-whatsapp",         color: "#22C55E", bg: "#F0FDF4" },
   instagram:      { label: "Instagram",  icon: "logo-instagram",        color: "#E1306C", bg: "#FFF1F2" },
   twitter:        { label: "Twitter",    icon: "logo-twitter",          color: "#1DA1F2", bg: "#EFF6FF" },
   youtube:        { label: "YouTube",    icon: "logo-youtube",          color: "#FF0000", bg: "#FFF1F2" },
   linkedin:       { label: "LinkedIn",   icon: "logo-linkedin",         color: "#0A66C2", bg: "#EFF6FF" },
+  media:          { label: "Media",      icon: "play-circle-outline",   color: "#8B5CF6", bg: "#F5F3FF" },
   crypto:         { label: "Crypto",     icon: "logo-bitcoin",          color: "#F7931A", bg: "#FFFBEB" },
   location:       { label: "Location",   icon: "location-outline",      color: "#EF4444", bg: "#FFF1F2" },
   calendar:       { label: "Event",      icon: "calendar-outline",      color: "#8B5CF6", bg: "#F5F3FF" },
+  event:          { label: "Event",      icon: "calendar-outline",      color: "#8B5CF6", bg: "#F5F3FF" },
   zoom:           { label: "Zoom",       icon: "videocam-outline",      color: "#2D8CFF", bg: "#EFF6FF" },
+  app:            { label: "App",        icon: "download-outline",      color: "#10B981", bg: "#ECFDF5" },
   appdownload:    { label: "App",        icon: "download-outline",      color: "#10B981", bg: "#ECFDF5" },
   googlereview:   { label: "Review",     icon: "star-outline",          color: "#F59E0B", bg: "#FFFBEB" },
   restaurantmenu: { label: "Menu",       icon: "restaurant-outline",    color: "#EF4444", bg: "#FFF1F2" },
@@ -61,10 +66,33 @@ const CONTENT_TYPE_META: Record<string, { label: string; icon: string; color: st
   paypal:         { label: "PayPal",     icon: "wallet-outline",        color: "#003087", bg: "#EFF6FF" },
   venmo:          { label: "Venmo",      icon: "people-outline",        color: "#008CFF", bg: "#EFF6FF" },
   sms:            { label: "SMS",        icon: "chatbubble-outline",    color: "#6B7280", bg: "#F9FAFB" },
+  document:       { label: "Document",   icon: "document-outline",      color: "#3B82F6", bg: "#EFF6FF" },
 };
 
 function getContentTypeMeta(contentType: string) {
-  return CONTENT_TYPE_META[contentType] ?? { label: contentType || "QR", icon: "qr-code-outline", color: "#6B7280", bg: "#F9FAFB" };
+  return CONTENT_TYPE_META[contentType] ?? { label: "QR Code", icon: "qr-code-outline", color: "#6B7280", bg: "#F9FAFB" };
+}
+
+function getDisplayText(item: GeneratedQrItem): string {
+  const bName = (item as any).businessName as string | null;
+  if (bName) return bName;
+  const lbl = (item as any).label as string | null;
+  if (lbl) return lbl;
+  const content = item.content || "";
+  try {
+    const url = new URL(content);
+    const host = url.hostname.replace(/^www\./, "");
+    if (host === "wa.me" || host === "api.whatsapp.com") {
+      const phone = url.pathname.replace(/^\//, "");
+      if (phone) return phone;
+    }
+    const isLocal = /^(192\.168\.|10\.|127\.|localhost)/.test(host);
+    if (isLocal) return item.contentType ? item.contentType.charAt(0).toUpperCase() + item.contentType.slice(1) + " QR" : "QR Code";
+    return host;
+  } catch {}
+  if (content.startsWith("/guard/") || content.includes("/guard/")) return "QR Code";
+  if (content.length > 50) return content.slice(0, 50) + "…";
+  return content || "QR Code";
 }
 
 function formatDate(iso: string) {
@@ -159,8 +187,7 @@ export default function MyQrCodesScreen() {
 
   function renderQrItem({ item, index }: { item: GeneratedQrItem; index: number }) {
     const isBusiness  = item.qrType === "business";
-    const displayText = item.businessName || item.content || item.label || "QR Code";
-    const subText     = item.businessName ? item.content : null;
+    const displayText = getDisplayText(item);
     const ctMeta      = getContentTypeMeta(item.contentType || "text");
     const labelText   = (item as any).label as string | undefined;
 
@@ -231,12 +258,6 @@ export default function MyQrCodesScreen() {
               {displayText.length > 45 ? displayText.slice(0, 45) + "…" : displayText}
             </Text>
 
-            {subText && (
-              <Text style={{ fontSize: rf(11), fontFamily: "Inter_400Regular", color: colors.textSecondary }} numberOfLines={1}>
-                {subText.length > 40 ? subText.slice(0, 40) + "…" : subText}
-              </Text>
-            )}
-
             <View style={{ flexDirection: "row", alignItems: "center", gap: sp(8), marginTop: sp(1) }}>
               <View style={{ flexDirection: "row", alignItems: "center", gap: sp(3) }}>
                 <Ionicons name="scan-outline" size={rf(10)} color={colors.textMuted} />
@@ -244,14 +265,6 @@ export default function MyQrCodesScreen() {
                   {item.scanCount} {item.scanCount === 1 ? "scan" : "scans"}
                 </Text>
               </View>
-              {item.createdAt && (
-                <>
-                  <View style={{ width: 3, height: 3, borderRadius: 1.5, backgroundColor: colors.surfaceBorder }} />
-                  <Text style={{ fontSize: rf(11), fontFamily: "Inter_400Regular", color: colors.textMuted }}>
-                    {formatDate(item.createdAt)}
-                  </Text>
-                </>
-              )}
             </View>
           </View>
 

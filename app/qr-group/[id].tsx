@@ -19,18 +19,59 @@ import {
   type GeneratedQrItem,
 } from "@/lib/firestore-service";
 
+const GROUP_COLORS = [
+  "#6366F1", "#0EA5E9", "#10B981", "#F59E0B",
+  "#EF4444", "#8B5CF6", "#EC4899", "#F97316",
+];
+const GROUP_ICONS = [
+  "folder-outline", "business-outline", "home-outline", "heart-outline",
+  "star-outline", "briefcase-outline", "planet-outline", "leaf-outline",
+  "flash-outline", "rocket-outline", "diamond-outline", "shield-outline",
+];
+
 const CONTENT_TYPE_META: Record<string, { label: string; icon: string; color: string; bg: string }> = {
-  url:     { label: "URL",     icon: "link-outline",     color: "#1D4ED8", bg: "#EFF6FF" },
-  text:    { label: "Text",    icon: "text-outline",     color: "#6B7280", bg: "#F9FAFB" },
-  wifi:    { label: "WiFi",    icon: "wifi-outline",     color: "#059669", bg: "#ECFDF5" },
-  upi:     { label: "UPI",     icon: "card-outline",     color: "#F59E0B", bg: "#FFFBEB" },
-  contact: { label: "Contact", icon: "person-circle-outline", color: "#8B5CF6", bg: "#F5F3FF" },
-  email:   { label: "Email",   icon: "mail-outline",     color: "#3B82F6", bg: "#EFF6FF" },
-  phone:   { label: "Phone",   icon: "call-outline",     color: "#10B981", bg: "#ECFDF5" },
+  url:      { label: "URL",      icon: "link-outline",          color: "#1D4ED8", bg: "#EFF6FF" },
+  text:     { label: "Text",     icon: "text-outline",          color: "#6B7280", bg: "#F9FAFB" },
+  wifi:     { label: "WiFi",     icon: "wifi-outline",          color: "#059669", bg: "#ECFDF5" },
+  upi:      { label: "UPI",      icon: "card-outline",          color: "#F59E0B", bg: "#FFFBEB" },
+  payment:  { label: "Payment",  icon: "card-outline",          color: "#F59E0B", bg: "#FFFBEB" },
+  contact:  { label: "Contact",  icon: "person-circle-outline", color: "#8B5CF6", bg: "#F5F3FF" },
+  email:    { label: "Email",    icon: "mail-outline",          color: "#3B82F6", bg: "#EFF6FF" },
+  phone:    { label: "Phone",    icon: "call-outline",          color: "#10B981", bg: "#ECFDF5" },
+  social:   { label: "Social",   icon: "share-social-outline",  color: "#EC4899", bg: "#FDF2F8" },
+  location: { label: "Location", icon: "location-outline",      color: "#EF4444", bg: "#FFF1F2" },
+  media:    { label: "Media",    icon: "play-circle-outline",   color: "#8B5CF6", bg: "#F5F3FF" },
+  event:    { label: "Event",    icon: "calendar-outline",      color: "#8B5CF6", bg: "#F5F3FF" },
+  document: { label: "Document", icon: "document-outline",      color: "#3B82F6", bg: "#EFF6FF" },
+  sms:      { label: "SMS",      icon: "chatbubble-outline",    color: "#6B7280", bg: "#F9FAFB" },
+  app:      { label: "App",      icon: "download-outline",      color: "#10B981", bg: "#ECFDF5" },
+  whatsapp: { label: "WhatsApp", icon: "logo-whatsapp",         color: "#22C55E", bg: "#F0FDF4" },
 };
 
 function getCtMeta(ct: string) {
-  return CONTENT_TYPE_META[ct] ?? { label: ct || "QR", icon: "qr-code-outline", color: "#6B7280", bg: "#F9FAFB" };
+  return CONTENT_TYPE_META[ct] ?? { label: "QR Code", icon: "qr-code-outline", color: "#6B7280", bg: "#F9FAFB" };
+}
+
+function getDisplayText(item: GeneratedQrItem): string {
+  const bName = (item as any).businessName as string | null;
+  if (bName) return bName;
+  const lbl = (item as any).label as string | null;
+  if (lbl) return lbl;
+  const content = item.content || "";
+  try {
+    const url = new URL(content);
+    const host = url.hostname.replace(/^www\./, "");
+    if (host === "wa.me" || host === "api.whatsapp.com") {
+      const phone = url.pathname.replace(/^\//, "");
+      if (phone) return phone;
+    }
+    const isLocal = /^(192\.168\.|10\.|127\.|localhost)/.test(host);
+    if (isLocal) return item.contentType ? item.contentType.charAt(0).toUpperCase() + item.contentType.slice(1) + " QR" : "QR Code";
+    return host;
+  } catch {}
+  if (content.startsWith("/guard/") || content.includes("/guard/")) return "QR Code";
+  if (content.length > 50) return content.slice(0, 50) + "…";
+  return content || "QR Code";
 }
 
 function formatCount(n: number): string {
@@ -325,7 +366,7 @@ export default function QrGroupDetailScreen() {
         }
         renderItem={({ item: qr, index }) => {
           const isBusiness = qr.qrType === "business";
-          const displayText = (qr as any).businessName || qr.content || (qr as any).label || "QR Code";
+          const displayText = getDisplayText(qr);
           const ctMeta = getCtMeta(qr.contentType || "text");
           return (
             <Animated.View entering={FadeInDown.duration(300).delay(index * 40).springify()}>
