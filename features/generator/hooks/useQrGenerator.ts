@@ -127,16 +127,18 @@ export function useQrGenerator() {
           }
           case "event": {
             if (!v) break;
-            const dateStr = extraFields.date?.trim() || "";
+            const startDateStr = (extraFields.startDate ?? extraFields.date ?? "").trim();
+            const endDateStr = (extraFields.endDate ?? extraFields.date ?? startDateStr).trim();
             const startH = String(extraFields.startHour ?? "9").padStart(2, "0");
             const startM = String(extraFields.startMin ?? "0").padStart(2, "0");
             const endH = String(extraFields.endHour ?? "10").padStart(2, "0");
             const endM = String(extraFields.endMin ?? "0").padStart(2, "0");
             const location = extraFields.location?.trim() || "";
-            if (dateStr) {
-              const d = dateStr.replace(/-/g, "");
-              const dtStart = `${d}T${startH}${startM}00`;
-              const dtEnd = `${d}T${endH}${endM}00`;
+            if (startDateStr) {
+              const ds = startDateStr.replace(/-/g, "");
+              const de = endDateStr ? endDateStr.replace(/-/g, "") : ds;
+              const dtStart = `${ds}T${startH}${startM}00`;
+              const dtEnd = `${de}T${endH}${endM}00`;
               const lines = [
                 "BEGIN:VCALENDAR",
                 "VERSION:2.0",
@@ -246,19 +248,21 @@ export function useQrGenerator() {
         return `WIFI:T:${secType};S:${v};P:${password};;`;
       }
       case "event": {
-        const dateStr = extraFields.date?.trim() || "";
+        const startDateStr2 = (extraFields.startDate ?? extraFields.date ?? "").trim();
+        const endDateStr2 = (extraFields.endDate ?? extraFields.date ?? startDateStr2).trim();
         const startH = String(extraFields.startHour ?? "9").padStart(2, "0");
         const startM = String(extraFields.startMin ?? "0").padStart(2, "0");
         const endH = String(extraFields.endHour ?? "10").padStart(2, "0");
         const endM = String(extraFields.endMin ?? "0").padStart(2, "0");
         const location = extraFields.location?.trim() || "";
-        if (dateStr) {
-          const d = dateStr.replace(/-/g, "");
+        if (startDateStr2) {
+          const ds = startDateStr2.replace(/-/g, "");
+          const de = endDateStr2 ? endDateStr2.replace(/-/g, "") : ds;
           const lines = [
             "BEGIN:VCALENDAR", "VERSION:2.0", "BEGIN:VEVENT",
             `SUMMARY:${v}`,
-            `DTSTART:${d}T${startH}${startM}00`,
-            `DTEND:${d}T${endH}${endM}00`,
+            `DTSTART:${ds}T${startH}${startM}00`,
+            `DTEND:${de}T${endH}${endM}00`,
             location ? `LOCATION:${location}` : "",
             "END:VEVENT", "END:VCALENDAR",
           ].filter(Boolean);

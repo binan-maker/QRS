@@ -110,19 +110,17 @@ export default function QrGeneratorScreen() {
           />
         </Reanimated.View>
 
-        {qrMode !== "business" && (
-          <Reanimated.View entering={FadeInDown.duration(400).delay(80)}>
-            <SmartTemplateBar
-              selectedPreset={selectedPreset}
-              detectedType={detectedType}
-              onOpenTemplates={() => {
-                Keyboard.dismiss();
-                setTimeout(() => setTemplateModalOpen(true), 80);
-              }}
-              onClearTemplate={() => switchPreset(0)}
-            />
-          </Reanimated.View>
-        )}
+        <Reanimated.View entering={FadeInDown.duration(400).delay(80)}>
+          <SmartTemplateBar
+            selectedPreset={selectedPreset}
+            detectedType={detectedType}
+            onOpenTemplates={() => {
+              Keyboard.dismiss();
+              setTimeout(() => setTemplateModalOpen(true), 80);
+            }}
+            onClearTemplate={() => switchPreset(0)}
+          />
+        </Reanimated.View>
 
         <Reanimated.View entering={FadeInDown.duration(400).delay(140)}>
           <InputSection
@@ -159,7 +157,7 @@ export default function QrGeneratorScreen() {
           />
         </Reanimated.View>
 
-        {user && (
+        {user && !!qrValue && (
           <Reanimated.View entering={FadeInDown.duration(400).delay(195)}>
             <GroupSelector
               selectedGroupId={selectedGroupId}

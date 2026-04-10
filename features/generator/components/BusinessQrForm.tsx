@@ -235,11 +235,24 @@ function EventForm({ inputValue, extraFields, setInputValue, setExtraField, colo
         placeholder="Grand Opening Night"
         colors={colors}
       />
-      <FieldLabel label="Date" colors={colors} />
-      <CalendarPicker
-        value={extraFields.date ?? ""}
-        onChange={v => setExtraField("date", v)}
-      />
+
+      <View style={styles.twoCol}>
+        <View style={{ flex: 1 }}>
+          <CalendarPicker
+            label="Start Date"
+            value={extraFields.startDate ?? ""}
+            onChange={v => setExtraField("startDate", v)}
+          />
+        </View>
+        <View style={{ flex: 1 }}>
+          <CalendarPicker
+            label="End Date"
+            value={extraFields.endDate ?? ""}
+            onChange={v => setExtraField("endDate", v)}
+          />
+        </View>
+      </View>
+
       <View style={styles.twoCol}>
         <TimePicker
           label="Start Time"

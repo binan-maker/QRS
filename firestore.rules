@@ -227,6 +227,10 @@ service cloud.firestore {
         allow read, write: if isOwner(userId);
       }
 
+      match /qrGroups/{groupId} {
+        allow read, write: if isOwner(userId);
+      }
+
       // ── Counted Scans ──────────────────────────────────────────────────────
       // Permanent record of which QR codes this user has had their scan counted.
       // Used to enforce the strict 1-scan-per-user-per-QR-code uniqueness rule.

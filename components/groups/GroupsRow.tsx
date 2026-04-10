@@ -120,27 +120,24 @@ export default function GroupsRow({ onGroupCreated }: Props) {
                 onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); router.push(`/qr-group/${g.id}` as any); }}
                 style={({ pressed }) => [{
                   flexDirection: "row", alignItems: "center", gap: sp(7),
-                  borderRadius: sp(14), borderWidth: 1,
+                  borderRadius: sp(20), borderWidth: 1,
                   borderColor: g.color + "40",
-                  backgroundColor: g.color + "12",
-                  paddingHorizontal: sp(12), paddingVertical: sp(8),
+                  backgroundColor: g.color + "10",
+                  paddingHorizontal: sp(12), paddingVertical: sp(9),
                   opacity: pressed ? 0.75 : 1,
                   transform: [{ scale: pressed ? 0.96 : 1 }],
                 }]}
               >
+                <View style={{ width: sp(8), height: sp(8), borderRadius: sp(4), backgroundColor: g.color }} />
+                <Text style={{ fontSize: rf(12), fontFamily: "Inter_600SemiBold", color: colors.text }} numberOfLines={1}>
+                  {g.name.length > 12 ? g.name.slice(0, 12) + "…" : g.name}
+                </Text>
                 <View style={{
-                  width: sp(28), height: sp(28), borderRadius: sp(8),
-                  backgroundColor: g.color + "28",
-                  alignItems: "center", justifyContent: "center",
+                  borderRadius: sp(10), paddingHorizontal: sp(6), paddingVertical: sp(2),
+                  backgroundColor: g.color + "28", minWidth: sp(18), alignItems: "center",
                 }}>
-                  <Ionicons name={g.icon as any} size={rf(13)} color={g.color} />
-                </View>
-                <View style={{ gap: sp(1) }}>
-                  <Text style={{ fontSize: rf(12), fontFamily: "Inter_700Bold", color: colors.text }} numberOfLines={1}>
-                    {g.name.length > 14 ? g.name.slice(0, 14) + "…" : g.name}
-                  </Text>
-                  <Text style={{ fontSize: rf(10), fontFamily: "Inter_400Regular", color: colors.textMuted }}>
-                    {g.qrDocIds.length} {g.qrDocIds.length === 1 ? "code" : "codes"}
+                  <Text style={{ fontSize: rf(10), fontFamily: "Inter_700Bold", color: g.color }}>
+                    {g.qrDocIds.length}
                   </Text>
                 </View>
               </Pressable>
@@ -174,21 +171,25 @@ export default function GroupsRow({ onGroupCreated }: Props) {
       </View>
 
       {/* Quick Create Modal */}
-      <Modal visible={createOpen} animationType="slide" transparent onRequestClose={() => setCreateOpen(false)}>
-        <Pressable style={{ flex: 1, backgroundColor: "rgba(0,0,0,0.52)" }} onPress={() => setCreateOpen(false)} />
+      <Modal visible={createOpen} animationType="slide" transparent statusBarTranslucent onRequestClose={() => setCreateOpen(false)}>
         <KeyboardAvoidingView
           behavior={Platform.OS === "ios" ? "padding" : "height"}
-          style={{ position: "absolute", bottom: 0, left: 0, right: 0 }}
+          style={{ flex: 1, justifyContent: "flex-end" }}
         >
+          <Pressable
+            style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0, backgroundColor: "rgba(0,0,0,0.52)" }}
+            onPress={() => setCreateOpen(false)}
+          />
           <Animated.View
             entering={FadeInDown.duration(300).springify()}
             style={{
               backgroundColor: colors.background,
               borderTopLeftRadius: sp(28),
               borderTopRightRadius: sp(28),
-              paddingBottom: Platform.OS === "ios" ? 34 : 24,
+              paddingBottom: Platform.OS === "ios" ? 44 : 32,
               paddingHorizontal: sp(20),
               paddingTop: sp(8),
+              zIndex: 10,
             }}
           >
             {/* Handle */}

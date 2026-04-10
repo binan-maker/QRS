@@ -112,20 +112,24 @@ export default function GroupPickerModal({ visible, onClose, qrDocId, qrLabel, o
   );
 
   return (
-    <Modal visible={visible} animationType="slide" transparent onRequestClose={onClose}>
-      <Pressable style={{ flex: 1, backgroundColor: "rgba(0,0,0,0.52)" }} onPress={onClose} />
+    <Modal visible={visible} animationType="slide" transparent statusBarTranslucent onRequestClose={onClose}>
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : "height"}
-        style={{ position: "absolute", bottom: 0, left: 0, right: 0 }}
+        style={{ flex: 1, justifyContent: "flex-end" }}
       >
+        <Pressable
+          style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0, backgroundColor: "rgba(0,0,0,0.52)" }}
+          onPress={onClose}
+        />
         <Animated.View
           entering={FadeInDown.duration(300).springify()}
           style={{
             backgroundColor: colors.background,
             borderTopLeftRadius: sp(28),
             borderTopRightRadius: sp(28),
-            paddingBottom: Platform.OS === "ios" ? 34 : 20,
+            paddingBottom: Platform.OS === "ios" ? 44 : 28,
             maxHeight: "90%",
+            zIndex: 10,
           }}
         >
           {/* Handle */}
