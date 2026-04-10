@@ -17,14 +17,18 @@ export function useQrFollow(id: string, userId: string | null, userDisplayName: 
 
   const committedFollowingRef = useRef(false);
   const pendingFollowingRef = useRef(false);
+  const isCommittingRef = useRef(false);
   const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const contentRef = useRef<{ content: string; contentType: string } | null>(null);
 
   async function commitFollow() {
     if (!userId) return;
+    if (isCommittingRef.current) return;
+
     const desiredState = pendingFollowingRef.current;
     if (desiredState === committedFollowingRef.current) return;
 
+    isCommittingRef.current = true;
     setFollowLoading(true);
     try {
       const result = await toggleFollow(id, userId, contentRef.current?.content ?? "", contentRef.current?.contentType ?? "", userDisplayName || undefined);
@@ -32,14 +36,23 @@ export function useQrFollow(id: string, userId: string | null, userDisplayName: 
       setIsFollowing(result.isFollowing);
       setFollowCount(result.followCount);
       invalidateQrCache(id);
-      if (result.isFollowing !== desiredState) {
-        pendingFollowingRef.current = result.isFollowing;
+
+      // If user changed their mind while request was in-flight, schedule a sync
+      if (pendingFollowingRef.current !== result.isFollowing) {
+        isCommittingRef.current = false;
+        setFollowLoading(false);
+        if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
+        debounceTimerRef.current = setTimeout(commitFollow, DEBOUNCE_MS);
+        return;
       }
     } catch {
-      setIsFollowing(committedFollowingRef.current);
-      setFollowCount((prev) => committedFollowingRef.current ? prev + 1 : Math.max(0, prev - 1));
-      pendingFollowingRef.current = committedFollowingRef.current;
+      // Roll back to the last confirmed server state
+      const confirmed = committedFollowingRef.current;
+      setIsFollowing(confirmed);
+      setFollowCount((prev) => confirmed ? prev + 1 : Math.max(0, prev - 1));
+      pendingFollowingRef.current = confirmed;
     } finally {
+      isCommittingRef.current = false;
       setFollowLoading(false);
     }
   }
@@ -69,6 +82,8 @@ export function useQrFollow(id: string, userId: string | null, userDisplayName: 
   }
 
   function syncCommittedState(following: boolean, count: number) {
+    // Only sync from server if no local action is pending or in-flight
+    if (pendingFollowingRef.current !== committedFollowingRef.current || isCommittingRef.current) return;
     committedFollowingRef.current = following;
     pendingFollowingRef.current = following;
     setIsFollowing(following);

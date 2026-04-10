@@ -89,8 +89,15 @@ export function useQrReports(id: string, userId: string | null, offlineMode: boo
     const unsubReports = subscribeToQrReports(id, (counts, weightedCounts) => {
       latestCounts.current = counts;
       latestWeighted.current = weightedCounts;
-      setReportCounts(counts);
-      setTrustScore(calculateTrustScore(counts, weightedCounts, latestCollusion.current));
+      // Only apply Firestore snapshot to UI if there's no pending local action.
+      // While the user has an optimistic update in-flight we must not overwrite
+      // the local state — doing so causes duplicate/disappearing votes.
+      const hasPendingAction =
+        pendingReportRef.current !== committedReportRef.current || isCommittingRef.current;
+      if (!hasPendingAction) {
+        setReportCounts(counts);
+        setTrustScore(calculateTrustScore(counts, weightedCounts, latestCollusion.current));
+      }
     });
 
     return () => {
@@ -126,27 +133,31 @@ export function useQrReports(id: string, userId: string | null, offlineMode: boo
         debounceTimerRef.current = setTimeout(commitReport, DEBOUNCE_MS);
         return;
       }
+      // Commit settled — apply the latest server snapshot so UI matches Firestore
+      setReportCounts(latestCounts.current);
+      setTrustScore(calculateTrustScore(latestCounts.current, latestWeighted.current, latestCollusion.current));
       invalidateQrCache(id);
     } catch (e: any) {
       console.error("[Report] Error submitting report:", e?.message, e);
-      // Rollback: restore counts and UI to committed state
+      // Rollback to last confirmed server state
       committedReportRef.current = prevCommitted;
       pendingReportRef.current = prevCommitted;
       setUserReport(prevCommitted);
-      setReportCounts((prev) => {
-        const next = { ...prev };
-        // Undo the optimistic add of desired
-        if (desired && desired !== prevCommitted) {
-          next[desired] = Math.max(0, (next[desired] || 0) - 1);
-        }
-        // Undo the optimistic remove of prevCommitted
-        // (covers both vote-switch and toggle-off cases)
-        if (prevCommitted && prevCommitted !== desired) {
-          next[prevCommitted] = (next[prevCommitted] || 0) + 1;
-        }
-        setTrustScore(calculateTrustScore(next, latestWeighted.current, latestCollusion.current));
-        return next;
-      });
+      // Use the latest Firestore snapshot as the ground truth (avoids stale count math)
+      const fallbackCounts = Object.keys(latestCounts.current).length > 0
+        ? latestCounts.current
+        : (() => {
+            const next = { ...latestCounts.current };
+            if (desired && desired !== prevCommitted) {
+              next[desired] = Math.max(0, (next[desired] || 0) - 1);
+            }
+            if (prevCommitted && prevCommitted !== desired) {
+              next[prevCommitted] = (next[prevCommitted] || 0) + 1;
+            }
+            return next;
+          })();
+      setReportCounts(fallbackCounts);
+      setTrustScore(calculateTrustScore(fallbackCounts, latestWeighted.current, latestCollusion.current));
     } finally {
       isCommittingRef.current = false;
       setReportLoading(null);
