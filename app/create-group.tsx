@@ -22,6 +22,8 @@ import {
 
 type Step = "select" | "name";
 
+const DEFAULT_GROUP_COLOR = "#6366F1";
+
 export default function CreateGroupScreen() {
   const { colors } = useTheme();
   const { user } = useAuth();
@@ -158,11 +160,6 @@ export default function CreateGroupScreen() {
           <Text style={{ fontSize: rf(16), fontFamily: "Inter_700Bold", color: colors.text }}>
             {step === "select" ? "Select QR Codes" : "Name Your Group"}
           </Text>
-          {step === "select" && selected.size > 0 && (
-            <Text style={{ fontSize: rf(11), fontFamily: "Inter_400Regular", color: colors.primary }}>
-              {selected.size} selected
-            </Text>
-          )}
         </View>
 
         {step === "select" ? (
@@ -250,15 +247,15 @@ export default function CreateGroupScreen() {
                 <TextInput
                   value={groupName}
                   onChangeText={setGroupName}
-                  placeholder="e.g. Marketing, Events, Personal…"
+                  placeholder="e.g. Marketing, Events…"
                   placeholderTextColor={colors.textMuted}
                   maxLength={40}
                   autoFocus
                   style={{
                     backgroundColor: colors.surface, borderRadius: sp(14), borderWidth: 1,
                     borderColor: groupName.trim() ? colors.primary + "60" : colors.surfaceBorder,
-                    paddingHorizontal: sp(16), paddingVertical: sp(14),
-                    fontSize: rf(14), fontFamily: "Inter_500Medium", color: colors.text,
+                    paddingHorizontal: sp(14), paddingVertical: sp(11),
+                    fontSize: rf(13), fontFamily: "Inter_500Medium", color: colors.text,
                   }}
                 />
               </View>
@@ -275,7 +272,7 @@ export default function CreateGroupScreen() {
               >
                 <LinearGradient
                   colors={groupName.trim() ? [colors.primary, colors.primaryShade] : [colors.surfaceLight, colors.surfaceLight]}
-                  style={{ flexDirection: "row", alignItems: "center", justifyContent: "center", gap: sp(10), paddingVertical: sp(15) }}
+                  style={{ flexDirection: "row", alignItems: "center", justifyContent: "center", gap: sp(8), paddingVertical: sp(12) }}
                   start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
                 >
                   {saving ? (
@@ -284,7 +281,7 @@ export default function CreateGroupScreen() {
                     <Ionicons name="checkmark-circle-outline" size={rf(18)} color={groupName.trim() ? "#fff" : colors.textMuted} />
                   )}
                   <Text style={{ fontSize: rf(15), fontFamily: "Inter_700Bold", color: groupName.trim() ? "#fff" : colors.textMuted }}>
-                    {saving ? "Creating…" : `Create Group · ${selected.size} ${selected.size === 1 ? "code" : "codes"}`}
+                    {saving ? "Creating…" : "Create Group"}
                   </Text>
                 </LinearGradient>
               </Pressable>

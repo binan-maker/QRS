@@ -5,6 +5,7 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import Animated, { FadeIn, FadeInDown } from "react-native-reanimated";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import * as Haptics from "@/lib/haptics";
 import { useTheme } from "@/contexts/ThemeContext";
 import { useAuth } from "@/contexts/AuthContext";
@@ -35,9 +36,11 @@ export default function GroupPickerModal({ visible, onClose, qrDocId, qrLabel, o
   const { colors } = useTheme();
   const { user } = useAuth();
   const { width } = useWindowDimensions();
+  const insets = useSafeAreaInsets();
   const s = Math.min(Math.max(width / 390, 0.82), 1.0);
   const rf = (n: number) => Math.round(n * s);
   const sp = (n: number) => Math.round(n * s);
+  const bottomPad = Platform.OS === "ios" ? Math.max(insets.bottom, 16) : Platform.OS === "web" ? 16 : Math.max(insets.bottom, 16);
 
   const [groups, setGroups] = useState<QrGroup[]>([]);
   const [memberOf, setMemberOf] = useState<Set<string>>(new Set());
@@ -141,7 +144,7 @@ export default function GroupPickerModal({ visible, onClose, qrDocId, qrLabel, o
             backgroundColor: colors.background,
             borderTopLeftRadius: sp(28),
             borderTopRightRadius: sp(28),
-            paddingBottom: Platform.OS === "ios" ? 44 : 28,
+            paddingBottom: bottomPad,
             maxHeight: "90%",
             zIndex: 10,
           }}
