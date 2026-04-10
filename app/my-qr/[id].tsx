@@ -171,9 +171,9 @@ export default function MyQrDetailScreen() {
             {/* Action buttons */}
             <View style={{ flexDirection: "row", gap: sp(10), marginTop: sp(18) }}>
               {([
-                { icon: "share-outline", label: "Share", onPress: handleShare, busy: sharingQr, color: colors.primary },
-                { icon: "download-outline", label: "Download", onPress: handleDownloadPdf, busy: downloadingPdf, color: colors.safe },
-                { icon: "copy-outline", label: "Copy", onPress: handleCopyContent, busy: false, color: "#8B5CF6" },
+                { icon: "share-outline", label: "Share", onPress: handleShare, busy: sharingQr },
+                { icon: "download-outline", label: "Save", onPress: handleDownloadPdf, busy: downloadingPdf },
+                { icon: "copy-outline", label: "Copy", onPress: handleCopyContent, busy: false },
               ] as const).map((btn) => (
                 <Pressable
                   key={btn.label}
@@ -181,16 +181,16 @@ export default function MyQrDetailScreen() {
                   disabled={btn.busy}
                   style={({ pressed }) => [{
                     flex: 1, alignItems: "center", gap: sp(5),
-                    borderRadius: sp(14), borderWidth: 1, borderColor: btn.color + "35",
-                    backgroundColor: btn.color + "10", paddingVertical: sp(11),
-                    opacity: pressed || btn.busy ? 0.7 : 1,
+                    borderRadius: sp(14), borderWidth: 1, borderColor: colors.surfaceBorder,
+                    backgroundColor: colors.surfaceLight, paddingVertical: sp(11),
+                    opacity: pressed || btn.busy ? 0.65 : 1,
                   }]}
                 >
                   {btn.busy
-                    ? <ActivityIndicator size="small" color={btn.color} />
-                    : <Ionicons name={btn.icon as any} size={rf(20)} color={btn.color} />
+                    ? <ActivityIndicator size="small" color={colors.textSecondary} />
+                    : <Ionicons name={btn.icon as any} size={rf(20)} color={colors.textSecondary} />
                   }
-                  <Text style={{ fontSize: rf(10), fontFamily: "Inter_600SemiBold", color: btn.color }}>{btn.label}</Text>
+                  <Text style={{ fontSize: rf(10), fontFamily: "Inter_600SemiBold", color: colors.textSecondary }}>{btn.label}</Text>
                 </Pressable>
               ))}
             </View>
@@ -201,16 +201,16 @@ export default function MyQrDetailScreen() {
         <Animated.View entering={FadeInDown.duration(350).delay(50)}>
           <View style={{ flexDirection: "row", gap: sp(10), marginBottom: sp(14) }}>
             {([
-              { icon: "scan-outline", label: "Scans", value: String(qrItem.scanCount ?? 0), color: colors.primary },
-              { icon: "chatbubble-outline", label: "Comments", value: String(qrItem.commentCount ?? 0), color: colors.safe },
-              { icon: "calendar-outline", label: "Created", value: formatDate(qrItem.createdAt), color: "#8B5CF6" },
+              { icon: "scan-outline", label: "Scans", value: String(qrItem.scanCount ?? 0) },
+              { icon: "chatbubble-outline", label: "Comments", value: String(qrItem.commentCount ?? 0) },
+              { icon: "calendar-outline", label: "Created", value: formatDate(qrItem.createdAt) },
             ] as const).map((stat) => (
               <View key={stat.label} style={{
                 flex: 1, borderRadius: sp(14), borderWidth: 1, borderColor: colors.surfaceBorder,
                 backgroundColor: colors.surface, padding: sp(12), alignItems: "center", gap: sp(4),
               }}>
-                <View style={{ width: sp(28), height: sp(28), borderRadius: sp(8), backgroundColor: stat.color + "18", alignItems: "center", justifyContent: "center" }}>
-                  <Ionicons name={stat.icon as any} size={rf(13)} color={stat.color} />
+                <View style={{ width: sp(28), height: sp(28), borderRadius: sp(8), backgroundColor: colors.surfaceLight, alignItems: "center", justifyContent: "center" }}>
+                  <Ionicons name={stat.icon as any} size={rf(13)} color={colors.textSecondary} />
                 </View>
                 <Text style={{ fontSize: rf(13), fontFamily: "Inter_700Bold", color: colors.text }} numberOfLines={1} adjustsFontSizeToFit>
                   {stat.value}

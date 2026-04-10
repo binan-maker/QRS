@@ -196,33 +196,39 @@ export default function QrOutputCard({
       </View>
 
       <View style={[styles.qrActions, { borderTopColor: colors.surfaceBorder }]}>
-        <Pressable onPress={onCopy} style={[styles.qrActionBtn, { backgroundColor: colors.primaryDim, borderColor: colors.primary + "40" }]}>
-          <Ionicons name="copy-outline" size={19} color={colors.primary} />
-          <Text style={[styles.qrActionText, { color: colors.primary }]}>Copy</Text>
+        <Pressable
+          onPress={onCopy}
+          style={({ pressed }) => [styles.qrActionBtn, { backgroundColor: colors.surfaceLight, borderColor: colors.surfaceBorder, opacity: pressed ? 0.7 : 1 }]}
+        >
+          <Ionicons name="copy-outline" size={18} color={colors.textSecondary} />
+          <Text style={[styles.qrActionText, { color: colors.textSecondary }]}>Copy</Text>
         </Pressable>
         <Pressable
           onPress={onShare}
           disabled={sharingQr}
-          style={[styles.qrActionBtn, { backgroundColor: colors.primaryDim, borderColor: colors.primary + "40", opacity: sharingQr ? 0.6 : 1 }]}
+          style={({ pressed }) => [styles.qrActionBtn, { backgroundColor: colors.surfaceLight, borderColor: colors.surfaceBorder, opacity: pressed || sharingQr ? 0.7 : 1 }]}
         >
           {sharingQr
-            ? <ActivityIndicator size={16} color={colors.primary} />
-            : <Ionicons name="share-outline" size={19} color={colors.primary} />}
-          <Text style={[styles.qrActionText, { color: colors.primary }]}>{sharingQr ? "…" : "Share"}</Text>
+            ? <ActivityIndicator size={16} color={colors.textSecondary} />
+            : <Ionicons name="share-outline" size={18} color={colors.textSecondary} />}
+          <Text style={[styles.qrActionText, { color: colors.textSecondary }]}>{sharingQr ? "…" : "Share"}</Text>
         </Pressable>
         <Pressable
           onPress={onDownload}
           disabled={downloadingPdf}
-          style={[styles.qrActionBtn, { backgroundColor: colors.primaryDim, borderColor: colors.primary + "40", opacity: downloadingPdf ? 0.6 : 1 }]}
+          style={({ pressed }) => [styles.qrActionBtn, { backgroundColor: colors.surfaceLight, borderColor: colors.surfaceBorder, opacity: pressed || downloadingPdf ? 0.7 : 1 }]}
         >
           {downloadingPdf
-            ? <ActivityIndicator size={16} color={colors.primary} />
-            : <Ionicons name="download-outline" size={19} color={colors.primary} />}
-          <Text style={[styles.qrActionText, { color: colors.primary }]}>{downloadingPdf ? "…" : "PDF"}</Text>
+            ? <ActivityIndicator size={16} color={colors.textSecondary} />
+            : <Ionicons name="download-outline" size={18} color={colors.textSecondary} />}
+          <Text style={[styles.qrActionText, { color: colors.textSecondary }]}>{downloadingPdf ? "…" : "PDF"}</Text>
         </Pressable>
-        <Pressable onPress={onClear} style={[styles.qrActionBtn, { backgroundColor: colors.dangerDim, borderColor: colors.danger + "50" }]}>
-          <Ionicons name="trash-outline" size={19} color={colors.danger} />
-          <Text style={[styles.qrActionText, { color: colors.danger }]}>Clear</Text>
+        <Pressable
+          onPress={onClear}
+          style={({ pressed }) => [styles.qrActionBtn, { backgroundColor: colors.surfaceLight, borderColor: colors.surfaceBorder, opacity: pressed ? 0.7 : 1 }]}
+        >
+          <Ionicons name="trash-outline" size={18} color={colors.textMuted} />
+          <Text style={[styles.qrActionText, { color: colors.textMuted }]}>Clear</Text>
         </Pressable>
       </View>
     </Animated.View>
