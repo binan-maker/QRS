@@ -157,7 +157,7 @@ export default function QrGeneratorScreen() {
             let btnColors: [string, string] = [colors.primary, colors.primaryShade];
 
             if (hasLiveQr && canSave && !isRegistered) {
-              btnLabel = qrMode === "business" ? "Activate Living Shield" : "Save to Profile";
+              btnLabel = qrMode === "business" ? "Activate Smart Redirect" : "Save to Profile";
               btnIcon = qrMode === "business" ? "shield-check" : "content-save-outline";
               btnColors = qrMode === "business"
                 ? [colors.warning, (colors as any).warningShade ?? colors.warning]

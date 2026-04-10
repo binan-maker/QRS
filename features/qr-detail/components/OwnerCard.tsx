@@ -93,8 +93,8 @@ const OwnerCard = React.memo(function OwnerCard({
             ) : null}
           </View>
 
-          {isQrOwner ? (
-            <View style={styles.ownerActions}>
+          <View style={styles.ownerActions}>
+            {isQrOwner ? (
               <Pressable
                 onPress={onOpenFollowers}
                 style={({ pressed }) => [
@@ -104,9 +104,16 @@ const OwnerCard = React.memo(function OwnerCard({
               >
                 <Ionicons name="people-outline" size={14} color={colors.primary} />
                 <Text style={[styles.actionBtnText, { color: colors.primary }]}>{formatCompactNumber(followCount)}</Text>
+                <Text style={[styles.actionBtnLabel, { color: colors.textMuted }]}>followers</Text>
               </Pressable>
-            </View>
-          ) : null}
+            ) : (
+              <View style={[styles.actionBtn, { backgroundColor: colors.surfaceLight, borderColor: colors.surfaceBorder }]}>
+                <Ionicons name="people-outline" size={14} color={colors.textSecondary} />
+                <Text style={[styles.actionBtnText, { color: colors.text }]}>{formatCompactNumber(followCount)}</Text>
+                <Text style={[styles.actionBtnLabel, { color: colors.textMuted }]}>followers</Text>
+              </View>
+            )}
+          </View>
         </View>
       </View>
     </>
@@ -188,6 +195,7 @@ const styles = StyleSheet.create({
     position: "relative",
   },
   actionBtnText: { fontSize: 12, fontFamily: "Inter_700Bold" },
+  actionBtnLabel: { fontSize: 10, fontFamily: "Inter_400Regular" },
   unreadBadge: {
     position: "absolute",
     top: -5,

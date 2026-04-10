@@ -162,10 +162,19 @@ export default function MyQrDetailScreen() {
             <Text style={{ fontSize: rf(15), fontFamily: "Inter_700Bold", color: colors.text, marginTop: sp(14), textAlign: "center" }} numberOfLines={2}>
               {displayTitle.length > 50 ? displayTitle.slice(0, 50) + "…" : displayTitle}
             </Text>
-            {qrItem.businessName && qrItem.content !== qrItem.businessName && (
-              <Text style={{ fontSize: rf(11), fontFamily: "Inter_400Regular", color: colors.textMuted, marginTop: sp(3), textAlign: "center" }} numberOfLines={1}>
-                {qrItem.content.length > 44 ? qrItem.content.slice(0, 44) + "…" : qrItem.content}
-              </Text>
+            {qrItem.businessName && (
+              (() => {
+                const dest = guardLink?.currentDestination || null;
+                const raw = qrItem.content || "";
+                const isGuardUrl = raw.includes("/guard/");
+                const subtitle = dest ?? (isGuardUrl ? null : (raw !== qrItem.businessName ? raw : null));
+                if (!subtitle) return null;
+                return (
+                  <Text style={{ fontSize: rf(11), fontFamily: "Inter_400Regular", color: colors.textMuted, marginTop: sp(3), textAlign: "center" }} numberOfLines={1}>
+                    {subtitle.length > 44 ? subtitle.slice(0, 44) + "…" : subtitle}
+                  </Text>
+                );
+              })()
             )}
 
             {/* Action buttons */}
@@ -223,16 +232,19 @@ export default function MyQrDetailScreen() {
           </View>
         </Animated.View>
 
-        {/* Living Shield — business only */}
+        {/* Smart Redirect — business only */}
         {isBusiness && guardLink && (
           <Animated.View entering={FadeInDown.duration(350).delay(80)}>
             <View style={{
-              borderRadius: sp(18), borderWidth: 1, borderColor: colors.warning + "40",
-              backgroundColor: colors.warningDim, padding: sp(16), marginBottom: sp(14),
+              borderRadius: sp(18), borderWidth: 1, borderColor: "#6366F1" + "40",
+              backgroundColor: "#6366F1" + "0D", padding: sp(16), marginBottom: sp(14),
             }}>
               <View style={{ flexDirection: "row", alignItems: "center", gap: sp(8), marginBottom: sp(8) }}>
-                <Ionicons name="shield-checkmark" size={rf(15)} color={colors.warning} />
-                <Text style={{ fontSize: rf(13), fontFamily: "Inter_700Bold", color: colors.warning }}>Living Shield</Text>
+                <Ionicons name="git-branch-outline" size={rf(15)} color="#6366F1" />
+                <Text style={{ fontSize: rf(13), fontFamily: "Inter_700Bold", color: "#6366F1" }}>Smart Redirect</Text>
+                <View style={{ borderRadius: sp(6), paddingHorizontal: sp(7), paddingVertical: sp(2), backgroundColor: "#6366F1" + "20" }}>
+                  <Text style={{ fontSize: rf(9), fontFamily: "Inter_700Bold", color: "#6366F1" }}>DYNAMIC</Text>
+                </View>
               </View>
               <Text style={{ fontSize: rf(11), fontFamily: "Inter_400Regular", color: colors.textSecondary, marginBottom: sp(10) }} numberOfLines={2}>
                 {guardLink.currentDestination}
@@ -256,7 +268,7 @@ export default function MyQrDetailScreen() {
                     <Pressable onPress={() => setEditingDestination(false)} style={{ flex: 1, borderRadius: sp(10), borderWidth: 1, borderColor: colors.surfaceBorder, padding: sp(9), alignItems: "center" }}>
                       <Text style={{ fontSize: rf(13), fontFamily: "Inter_600SemiBold", color: colors.textSecondary }}>Cancel</Text>
                     </Pressable>
-                    <Pressable onPress={handleUpdateDestination} disabled={savingDestination} style={{ flex: 2, borderRadius: sp(10), backgroundColor: colors.warning, padding: sp(9), alignItems: "center" }}>
+                    <Pressable onPress={handleUpdateDestination} disabled={savingDestination} style={{ flex: 2, borderRadius: sp(10), backgroundColor: "#6366F1", padding: sp(9), alignItems: "center" }}>
                       <Text style={{ fontSize: rf(13), fontFamily: "Inter_700Bold", color: "#fff" }}>{savingDestination ? "Saving…" : "Update URL"}</Text>
                     </Pressable>
                   </View>
@@ -266,13 +278,13 @@ export default function MyQrDetailScreen() {
                   onPress={() => setEditingDestination(true)}
                   style={({ pressed }) => [{
                     flexDirection: "row", alignItems: "center", gap: sp(6),
-                    borderRadius: sp(10), backgroundColor: colors.warning + "20",
+                    borderRadius: sp(10), backgroundColor: "#6366F1" + "20",
                     paddingHorizontal: sp(12), paddingVertical: sp(8), alignSelf: "flex-start",
                     opacity: pressed ? 0.8 : 1,
                   }]}
                 >
-                  <Ionicons name="pencil-outline" size={rf(13)} color={colors.warning} />
-                  <Text style={{ fontSize: rf(12), fontFamily: "Inter_600SemiBold", color: colors.warning }}>Change Destination</Text>
+                  <Ionicons name="pencil-outline" size={rf(13)} color="#6366F1" />
+                  <Text style={{ fontSize: rf(12), fontFamily: "Inter_600SemiBold", color: "#6366F1" }}>Change Destination</Text>
                 </Pressable>
               )}
             </View>
@@ -369,23 +381,25 @@ export default function MyQrDetailScreen() {
                 : qrCodeId ? `/qr-detail/${qrCodeId}` : null;
               if (route) router.push(route as any);
             }}
-            style={({ pressed }) => [{
-              flexDirection: "row", alignItems: "center", justifyContent: "space-between",
-              borderRadius: sp(18), borderWidth: 1, borderColor: colors.surfaceBorder,
-              backgroundColor: colors.surface, padding: sp(16), marginBottom: sp(8),
-              opacity: pressed ? 0.82 : 1,
-            }]}
+            disabled={!((qrItem as any).qrCodeId)}
+            style={({ pressed }) => [{ opacity: pressed ? 0.88 : 1, marginBottom: sp(8), transform: [{ scale: pressed ? 0.98 : 1 }] }]}
           >
-            <View style={{ flexDirection: "row", alignItems: "center", gap: sp(10) }}>
-              <View style={{ width: sp(34), height: sp(34), borderRadius: sp(10), backgroundColor: colors.primaryDim, alignItems: "center", justifyContent: "center" }}>
-                <Ionicons name="eye-outline" size={rf(16)} color={colors.primary} />
+            <LinearGradient
+              colors={[colors.primary, colors.primaryShade]}
+              start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}
+              style={{ borderRadius: sp(18), padding: sp(16), flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}
+            >
+              <View style={{ flexDirection: "row", alignItems: "center", gap: sp(12) }}>
+                <View style={{ width: sp(36), height: sp(36), borderRadius: sp(10), backgroundColor: "rgba(255,255,255,0.18)", alignItems: "center", justifyContent: "center" }}>
+                  <Ionicons name="globe-outline" size={rf(18)} color="#fff" />
+                </View>
+                <View>
+                  <Text style={{ fontSize: rf(14), fontFamily: "Inter_700Bold", color: "#fff" }}>View Public Page</Text>
+                  <Text style={{ fontSize: rf(11), fontFamily: "Inter_400Regular", color: "rgba(255,255,255,0.75)" }}>See exactly what people see when they scan</Text>
+                </View>
               </View>
-              <View>
-                <Text style={{ fontSize: rf(14), fontFamily: "Inter_700Bold", color: colors.text }}>View Public Page</Text>
-                <Text style={{ fontSize: rf(11), fontFamily: "Inter_400Regular", color: colors.textMuted }}>See what scanners see</Text>
-              </View>
-            </View>
-            <Ionicons name="chevron-forward" size={rf(16)} color={colors.textMuted} />
+              <Ionicons name="arrow-forward" size={rf(18)} color="rgba(255,255,255,0.8)" />
+            </LinearGradient>
           </Pressable>
         </Animated.View>
       </ScrollView>

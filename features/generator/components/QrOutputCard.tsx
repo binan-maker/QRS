@@ -148,7 +148,7 @@ export default function QrOutputCard({
               <View style={[styles.ownershipNote, { borderColor: colors.warning + "30", backgroundColor: colors.warningDim }]}>
                 <Ionicons name="shield" size={12} color={colors.warning} />
                 <Text style={[styles.ownershipNoteText, { color: colors.warning }]}>
-                  Living Shield active — update the destination anytime from My QR Codes without reprinting.
+                  Smart Redirect active — update the destination anytime from My QR Codes without reprinting.
                 </Text>
               </View>
               {savedDocId && generatedUuid && (

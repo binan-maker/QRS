@@ -31,7 +31,7 @@ export default function LivingShieldModal({ visible, loading, data, onProceed, o
             <View style={[styles.badge, { backgroundColor: colors.warningDim }]}>
               <ActivityIndicator size={32} color={colors.warning} />
             </View>
-            <Text style={[styles.title, { color: colors.warning }]}>Living Shield QR</Text>
+            <Text style={[styles.title, { color: colors.warning }]}>Smart Redirect QR</Text>
             <Text style={[styles.subtitle, { color: colors.textSecondary }]}>Verifying business identity…</Text>
           </>
         ) : data && data.isActive ? (
@@ -42,7 +42,7 @@ export default function LivingShieldModal({ visible, loading, data, onProceed, o
             <View style={styles.badgeRow}>
               <View style={[styles.shieldPill, { backgroundColor: colors.warningDim }]}>
                 <Ionicons name="shield-checkmark" size={12} color={colors.warning} />
-                <Text style={[styles.shieldPillText, { color: colors.warning }]}>Living Shield QR</Text>
+                <Text style={[styles.shieldPillText, { color: colors.warning }]}>Smart Redirect QR</Text>
               </View>
             </View>
             <Text style={[styles.title, { color: colors.text, fontSize: 22 }]}>
@@ -88,7 +88,7 @@ export default function LivingShieldModal({ visible, loading, data, onProceed, o
             <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
               {data
                 ? "The owner has deactivated this QR code."
-                : "This Living Shield QR could not be found. It may have been removed."}
+                : "This Smart Redirect QR could not be found. It may have been removed."}
             </Text>
             <Pressable onPress={onCancel} style={[styles.openBtn, { backgroundColor: colors.primary }]}>
               <Ionicons name="arrow-back" size={18} color="#fff" />

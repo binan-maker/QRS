@@ -100,7 +100,7 @@ export default function ModeSelector({ user, qrMode, businessName, businessCateg
       ) : qrMode === "business" && user ? (
         <View style={[styles.banner, { borderColor: colors.warning + "40", backgroundColor: colors.warningDim }]}>
           <Ionicons name="shield" size={13} color={colors.warning} />
-          <Text style={[styles.bannerText, { color: colors.warning }]} maxFontSizeMultiplier={1}>Living Shield — update the destination anytime, no reprint needed</Text>
+          <Text style={[styles.bannerText, { color: colors.warning }]} maxFontSizeMultiplier={1}>Smart Redirect — update the destination anytime, no reprint needed</Text>
         </View>
       ) : qrMode === "private" ? (
         <View style={[styles.banner, { backgroundColor: colors.surfaceLight, borderColor: colors.surfaceBorder }]}>

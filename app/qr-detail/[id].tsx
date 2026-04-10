@@ -275,11 +275,11 @@ function LivingShieldBanner({ guardLink, loading }: { guardLink: GuardLink | nul
         />
         <View style={lsBannerStyles.header}>
           <View style={[lsBannerStyles.iconWrap, { backgroundColor: accent + "20", borderColor: accent + "40" }]}>
-            <Ionicons name="shield-checkmark" size={22} color={accent} />
+            <Ionicons name="git-branch-outline" size={22} color={accent} />
           </View>
           <View style={{ flex: 1 }}>
-            <Text style={[lsBannerStyles.title, { color: accent }]}>Living Shield QR</Text>
-            <Text style={[lsBannerStyles.sub, { color: colors.textSecondary }]}>Dynamic guard link — destination is verified</Text>
+            <Text style={[lsBannerStyles.title, { color: accent }]}>Smart Redirect QR</Text>
+            <Text style={[lsBannerStyles.sub, { color: colors.textSecondary }]}>Dynamic QR — destination is owner-controlled &amp; verified</Text>
           </View>
         </View>
 

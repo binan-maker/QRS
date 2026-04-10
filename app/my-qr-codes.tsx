@@ -88,6 +88,7 @@ function getDisplayText(item: GeneratedQrItem): string {
     }
     const isLocal = /^(192\.168\.|10\.|127\.|localhost)/.test(host);
     if (isLocal) return item.contentType ? item.contentType.charAt(0).toUpperCase() + item.contentType.slice(1) + " QR" : "QR Code";
+    if (url.pathname.startsWith("/guard/")) return item.contentType ? item.contentType.charAt(0).toUpperCase() + item.contentType.slice(1) + " QR" : "QR Code";
     return host;
   } catch {}
   if (content.startsWith("/guard/") || content.includes("/guard/")) return "QR Code";
