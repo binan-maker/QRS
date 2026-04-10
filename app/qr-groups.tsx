@@ -118,28 +118,22 @@ export default function QrGroupsScreen() {
         >
           <View style={{
             width: sp(52), height: sp(52), borderRadius: sp(15),
-            backgroundColor: g.color + "22",
+            backgroundColor: colors.primaryDim,
             alignItems: "center", justifyContent: "center",
             flexShrink: 0,
           }}>
-            <Ionicons name={g.icon as any} size={rf(24)} color={g.color} />
+            <Text style={{ fontSize: rf(22), fontFamily: "Inter_700Bold", color: colors.primary }}>G</Text>
           </View>
 
           <View style={{ flex: 1, gap: sp(3) }}>
             <Text style={{ fontSize: rf(15), fontFamily: "Inter_700Bold", color: colors.text }} numberOfLines={1}>
               {g.name}
             </Text>
-            {g.description ? (
-              <Text style={{ fontSize: rf(12), fontFamily: "Inter_400Regular", color: colors.textSecondary }} numberOfLines={1}>
-                {g.description}
+            <View style={{ flexDirection: "row", alignItems: "center", gap: sp(4) }}>
+              <Ionicons name="qr-code-outline" size={rf(11)} color={colors.textMuted} />
+              <Text style={{ fontSize: rf(12), fontFamily: "Inter_400Regular", color: colors.textMuted }}>
+                {g.qrDocIds.length} {g.qrDocIds.length === 1 ? "QR code" : "QR codes"}
               </Text>
-            ) : null}
-            <View style={{ flexDirection: "row", alignItems: "center", gap: sp(4), marginTop: sp(2) }}>
-              <View style={{ borderRadius: sp(8), paddingHorizontal: sp(8), paddingVertical: sp(2), backgroundColor: g.color + "20" }}>
-                <Text style={{ fontSize: rf(11), fontFamily: "Inter_700Bold", color: g.color }}>
-                  {g.qrDocIds.length} QR code{g.qrDocIds.length !== 1 ? "s" : ""}
-                </Text>
-              </View>
             </View>
           </View>
 

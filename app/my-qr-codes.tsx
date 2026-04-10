@@ -107,10 +107,11 @@ export default function MyQrCodesScreen() {
   const bottomInset  = insets.bottom;
   const tabBarHeight = 62 + bottomInset + 8;
 
-  const [qrCodes,    setQrCodes]    = useState<GeneratedQrItem[]>([]);
-  const [groups,     setGroups]     = useState<QrGroup[]>([]);
-  const [loading,    setLoading]    = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
+  const [qrCodes,       setQrCodes]       = useState<GeneratedQrItem[]>([]);
+  const [groups,        setGroups]        = useState<QrGroup[]>([]);
+  const [loading,       setLoading]       = useState(true);
+  const [groupsLoading, setGroupsLoading] = useState(true);
+  const [refreshing,    setRefreshing]    = useState(false);
   const [filter,     setFilter]     = useState<Filter>("all");
   const [sortKey,    setSortKey]    = useState<SortKey>("newest");
   const [sortOpen,   setSortOpen]   = useState(false);
@@ -129,7 +130,11 @@ export default function MyQrCodesScreen() {
       hasLoadedRef.current = true;
     });
     if (unsubGroupsRef.current) { unsubGroupsRef.current(); unsubGroupsRef.current = null; }
-    unsubGroupsRef.current = subscribeToUserGroups(user.id, setGroups);
+    setGroupsLoading(true);
+    unsubGroupsRef.current = subscribeToUserGroups(user.id, (gs) => {
+      setGroups(gs);
+      setGroupsLoading(false);
+    });
     return () => {
       unsubQrsRef.current?.();
       unsubGroupsRef.current?.();
@@ -288,7 +293,6 @@ export default function MyQrCodesScreen() {
               </Text>
             </View>
           </View>
-          <View style={{ width: sp(8), height: sp(8), borderRadius: sp(4), backgroundColor: g.color, marginRight: sp(4) }} />
           <Ionicons name="chevron-forward" size={rf(15)} color={colors.textMuted} />
         </Pressable>
       </Animated.View>
@@ -436,7 +440,11 @@ export default function MyQrCodesScreen() {
 
       {/* Content */}
       {isGroupsView ? (
-        groups.length === 0 ? (
+        groupsLoading ? (
+          <View style={{ paddingHorizontal: sp(20), paddingTop: sp(4) }}>
+            <SkeletonQrCard /><SkeletonQrCard /><SkeletonQrCard />
+          </View>
+        ) : groups.length === 0 ? (
           <Animated.View entering={FadeIn.duration(400)} style={{ flex: 1, alignItems: "center", justifyContent: "center", paddingHorizontal: sp(40), gap: sp(12) }}>
             <Ionicons name="folder-open-outline" size={rf(48)} color={colors.textMuted} />
             <Text style={{ fontSize: rf(16), fontFamily: "Inter_700Bold", color: colors.text, textAlign: "center" }}>No groups yet</Text>
@@ -453,7 +461,7 @@ export default function MyQrCodesScreen() {
             showsVerticalScrollIndicator={false}
             ListHeaderComponent={
               <Text style={{ fontSize: rf(12), fontFamily: "Inter_500Medium", color: colors.textMuted, marginBottom: sp(10) }}>
-                {groups.length} {groups.length === 1 ? "group" : "groups"}
+                {groups.length} {groups.length === 1 ? "group" : "groups"} · sorted by newest
               </Text>
             }
           />
@@ -502,7 +510,7 @@ export default function MyQrCodesScreen() {
         onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium); router.push("/create-group" as any); }}
         style={({ pressed }) => [{
           position: "absolute",
-          bottom: bottomInset + sp(20) + 62,
+          bottom: bottomInset + sp(8) + 62,
           right: sp(20),
           width: sp(54), height: sp(54), borderRadius: sp(27),
           alignItems: "center", justifyContent: "center",

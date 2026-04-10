@@ -135,6 +135,13 @@ export async function addMultipleQrsToGroup(
   });
 }
 
+export async function clearGroupQrs(userId: string, groupId: string): Promise<void> {
+  await db.update(["users", userId, "qrGroups", groupId], {
+    qrDocIds: [],
+    updatedAt: db.timestamp(),
+  });
+}
+
 export async function getGroupsForQr(
   userId: string,
   qrDocId: string

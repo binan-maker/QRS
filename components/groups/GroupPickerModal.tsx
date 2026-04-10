@@ -50,18 +50,32 @@ export default function GroupPickerModal({ visible, onClose, qrDocId, qrLabel, o
   const [saving, setSaving] = useState(false);
   const [toggling, setToggling] = useState<string | null>(null);
   const unsubRef = useRef<(() => void) | null>(null);
+  const cachedGroupsRef = useRef<QrGroup[]>([]);
 
   useEffect(() => {
-    if (!visible || !user) return;
+    if (!user) return;
     if (unsubRef.current) unsubRef.current();
     unsubRef.current = subscribeToUserGroups(user.id, (gs) => {
+      cachedGroupsRef.current = gs;
       setGroups(gs);
       const set = new Set<string>();
       gs.forEach((g) => { if (g.qrDocIds.includes(qrDocId)) set.add(g.id); });
       setMemberOf(set);
     });
     return () => { if (unsubRef.current) { unsubRef.current(); unsubRef.current = null; } };
-  }, [visible, user?.id, qrDocId]);
+  }, [user?.id, qrDocId]);
+
+  useEffect(() => {
+    if (visible && cachedGroupsRef.current.length > 0) {
+      const set = new Set<string>();
+      cachedGroupsRef.current.forEach((g) => { if (g.qrDocIds.includes(qrDocId)) set.add(g.id); });
+      setMemberOf(set);
+    }
+    if (!visible) {
+      setSearch("");
+      setCreating(false);
+    }
+  }, [visible, qrDocId]);
 
   const filtered = groups.filter((g) =>
     g.name.toLowerCase().includes(search.toLowerCase())
