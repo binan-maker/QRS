@@ -161,9 +161,18 @@ export default function HomeScreen() {
                   </Animated.View>
                   <View style={styles.heroTextBlock}>
                     <Text style={[styles.heroTitle, { color: colors.text }]}>Scan QR Code</Text>
-                    <Text style={[styles.heroSub, { color: colors.textSecondary }]} numberOfLines={1} adjustsFontSizeToFit>
-                      Camera · Gallery · Instant AI analysis
-                    </Text>
+                    <View style={styles.heroFeatureRow}>
+                      {([
+                        { icon: "camera-outline" as const, label: "Camera" },
+                        { icon: "image-outline" as const, label: "Gallery" },
+                        { icon: "flash-outline" as const, label: "AI Check" },
+                      ] as const).map((f) => (
+                        <View key={f.label} style={styles.heroFeatureItem}>
+                          <Ionicons name={f.icon} size={12} color={colors.primary} />
+                          <Text style={[styles.heroFeatureText, { color: colors.textSecondary }]}>{f.label}</Text>
+                        </View>
+                      ))}
+                    </View>
                   </View>
                   <View style={[styles.heroArrow, { backgroundColor: colors.primary }]}>
                     <Ionicons name="arrow-forward" size={18} color={colors.primaryText} />
@@ -204,14 +213,14 @@ export default function HomeScreen() {
                   style={StyleSheet.absoluteFill}
                   start={{ x: 0.5, y: 0 }} end={{ x: 0.5, y: 1 }}
                 />
-                <View style={[styles.emptyIconBox, { backgroundColor: colors.primary + "18" }]}>
-                  <MaterialCommunityIcons name="qrcode-scan" size={32} color={colors.primary} />
+                <View style={[styles.emptyIconBox, { backgroundColor: colors.primary + "18", borderWidth: 1.5, borderColor: colors.primary + "35", borderStyle: "dashed" }]}>
+                  <MaterialCommunityIcons name="qrcode-scan" size={34} color={colors.primary} />
                 </View>
-                <Text style={[styles.emptyTitle, { color: colors.text }]}>Scan your first QR</Text>
-                <Text style={[styles.emptySub, { color: colors.textSecondary }]}>Tap to open the scanner and check if a QR code is safe</Text>
+                <Text style={[styles.emptyTitle, { color: colors.text }]}>No scans yet</Text>
+                <Text style={[styles.emptySub, { color: colors.textSecondary }]}>Verify any QR in seconds — payments, links &amp; more</Text>
                 <View style={[styles.emptyCtaBtn, { backgroundColor: colors.primary }]}>
-                  <Ionicons name="camera-outline" size={15} color={colors.primaryText} />
-                  <Text style={[styles.emptyCtaText, { color: colors.primaryText }]}>Open Scanner</Text>
+                  <Ionicons name="scan-outline" size={15} color={colors.primaryText} />
+                  <Text style={[styles.emptyCtaText, { color: colors.primaryText }]}>Start Scanning</Text>
                 </View>
               </Pressable>
             ) : (
@@ -357,8 +366,10 @@ function makeStyles(c: ReturnType<typeof import("@/contexts/ThemeContext").useTh
     heroIconBg: { width: 76, height: 76, borderRadius: 22, alignItems: "center", justifyContent: "center" },
     heroTop: { flexDirection: "row", alignItems: "center", gap: 14, marginBottom: 0 },
     heroTextBlock: { flex: 1 },
-    heroTitle: { fontSize: rf(16), fontFamily: "Inter_700Bold", marginBottom: 4 },
-    heroSub: { fontSize: rf(12), fontFamily: "Inter_400Regular", lineHeight: Math.round(17 * s) },
+    heroTitle: { fontSize: rf(17), fontFamily: "Inter_700Bold", marginBottom: 6 },
+    heroFeatureRow: { flexDirection: "row", alignItems: "center", gap: 10, flexWrap: "wrap" },
+    heroFeatureItem: { flexDirection: "row", alignItems: "center", gap: 4 },
+    heroFeatureText: { fontSize: rf(12.5), fontFamily: "Inter_600SemiBold" },
     heroPillRow: { flexDirection: "row", gap: 6, flexWrap: "wrap" },
     heroPill: { paddingHorizontal: 8, paddingVertical: 3, borderRadius: 100, borderWidth: 1 },
     heroPillText: { fontSize: rf(12), fontFamily: "Inter_600SemiBold", letterSpacing: 0.2 },
@@ -399,7 +410,7 @@ function makeStyles(c: ReturnType<typeof import("@/contexts/ThemeContext").useTh
     },
     emptyIconBox: { width: 70, height: 70, borderRadius: 18, alignItems: "center", justifyContent: "center", marginBottom: 4 },
     emptyTitle: { fontSize: rf(16), fontFamily: "Inter_700Bold" },
-    emptySub: { fontSize: rf(13), fontFamily: "Inter_400Regular", textAlign: "center", lineHeight: Math.round(19 * s) },
+    emptySub: { fontSize: rf(13), fontFamily: "Inter_400Regular", textAlign: "center", lineHeight: Math.round(19 * s), maxWidth: 260 },
     emptyCtaBtn: { flexDirection: "row", alignItems: "center", gap: 6, paddingHorizontal: 20, paddingVertical: 11, borderRadius: 22, marginTop: 6 },
     emptyCtaText: { fontSize: rf(14), fontFamily: "Inter_700Bold" },
 
