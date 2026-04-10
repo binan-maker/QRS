@@ -16,7 +16,6 @@ export default function ReportGrid({ reportCounts: _reportCounts, userReport, is
   const REPORT_TYPES = [
     { key: "safe", label: "Safe",  icon: "shield-checkmark" as const, color: colors.safe    },
     { key: "scam", label: "Scam",  icon: "warning" as const,          color: colors.danger  },
-    { key: "fake", label: "Fake",  icon: "close-circle" as const,     color: colors.warning },
     { key: "spam", label: "Spam",  icon: "mail-unread" as const,      color: colors.primary },
   ];
 

@@ -13,16 +13,14 @@ export function calculateTrustScore(
 ): TrustScore {
   const rawSafe  = reportCounts.safe  || 0;
   const rawScam  = reportCounts.scam  || 0;
-  const rawFake  = reportCounts.fake  || 0;
   const rawSpam  = reportCounts.spam  || 0;
-  const rawTotal = rawSafe + rawScam + rawFake + rawSpam;
+  const rawTotal = rawSafe + rawScam + rawSpam;
 
   if (rawTotal === 0) return { score: -1, label: "Unrated", totalReports: 0 };
 
   const useWeighted = weightedCounts && Object.keys(weightedCounts).length > 0;
   let wSafe  = useWeighted ? (weightedCounts!.safe  || 0) : rawSafe;
   let wScam  = useWeighted ? (weightedCounts!.scam  || 0) : rawScam;
-  let wFake  = useWeighted ? (weightedCounts!.fake  || 0) : rawFake;
   let wSpam  = useWeighted ? (weightedCounts!.spam  || 0) : rawSpam;
 
   // Apply collusion multipliers if suspicious patterns were detected
@@ -31,21 +29,19 @@ export function calculateTrustScore(
     const negMult  = collusionFlags.negativeWeightMultiplier ?? 1;
     wSafe *= safeMult;
     wScam *= negMult;
-    wFake *= negMult;
     wSpam *= negMult;
   } else {
     // Standard skepticism for new QRs with few reports dominated by negative votes
-    const wNeg = wScam + wFake + wSpam;
+    const wNeg = wScam + wSpam;
     const wPos = wSafe;
     if (useWeighted && rawTotal < 15 && wNeg > wPos * 2) {
       const skepticism = 0.65;
       wScam *= skepticism;
-      wFake *= skepticism;
       wSpam *= skepticism;
     }
   }
 
-  const wTotal = wSafe + wScam + wFake + wSpam;
+  const wTotal = wSafe + wScam + wSpam;
   if (wTotal === 0) return { score: -1, label: "Unrated", totalReports: rawTotal };
 
   const safeRatio = wSafe / wTotal;
