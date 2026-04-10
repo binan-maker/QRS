@@ -20,14 +20,7 @@ import {
   type GeneratedQrItem,
 } from "@/lib/firestore-service";
 
-const GROUP_COLORS = [
-  "#6366F1", "#0EA5E9", "#10B981", "#F59E0B",
-  "#EF4444", "#8B5CF6", "#EC4899", "#F97316",
-];
-const GROUP_ICONS = [
-  "folder-outline", "business-outline", "home-outline", "heart-outline",
-  "star-outline", "briefcase-outline", "planet-outline", "leaf-outline",
-];
+const DEFAULT_GROUP_COLOR = "#6366F1";
 
 type Step = "select" | "name";
 
@@ -47,8 +40,6 @@ export default function CreateGroupScreen() {
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [step, setStep] = useState<Step>("select");
   const [groupName, setGroupName] = useState("");
-  const [groupColor, setGroupColor] = useState(GROUP_COLORS[0]);
-  const [groupIcon, setGroupIcon] = useState(GROUP_ICONS[0]);
   const [saving, setSaving] = useState(false);
   const unsubRef = useRef<(() => void) | null>(null);
 
@@ -72,7 +63,7 @@ export default function CreateGroupScreen() {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     setSaving(true);
     try {
-      const groupId = await createGroup(user.id, groupName.trim(), "", groupColor, groupIcon);
+      const groupId = await createGroup(user.id, groupName.trim(), "", DEFAULT_GROUP_COLOR, "folder-outline");
       await addMultipleQrsToGroup(user.id, groupId, [...selected]);
       router.replace(`/qr-group/${groupId}` as any);
     } finally {
@@ -222,92 +213,56 @@ export default function CreateGroupScreen() {
           )}
         </>
       ) : (
-        /* ── Step 2: Name and design the group ── */
+        /* ── Step 2: Name the group ── */
         <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} style={{ flex: 1 }}>
-          <ScrollView contentContainerStyle={{ padding: sp(20), paddingBottom: sp(40) }} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
-            <Animated.View entering={FadeInDown.duration(300).springify()}>
+          <ScrollView contentContainerStyle={{ padding: sp(20), paddingBottom: sp(60) }} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
+            <Animated.View entering={FadeInDown.duration(300).springify()} style={{ gap: sp(20) }}>
 
               {/* Selected codes summary */}
               <View style={{
-                flexDirection: "row", alignItems: "center", gap: sp(10),
+                flexDirection: "row", alignItems: "center", gap: sp(12),
                 borderRadius: sp(14), borderWidth: 1, borderColor: colors.surfaceBorder,
-                backgroundColor: colors.surface, padding: sp(14), marginBottom: sp(20),
+                backgroundColor: colors.surface, padding: sp(14),
               }}>
-                <View style={{ width: sp(36), height: sp(36), borderRadius: sp(10), backgroundColor: groupColor + "20", alignItems: "center", justifyContent: "center" }}>
-                  <Ionicons name="layers-outline" size={rf(18)} color={groupColor} />
+                <View style={{
+                  width: sp(44), height: sp(44), borderRadius: sp(12),
+                  backgroundColor: DEFAULT_GROUP_COLOR + "18",
+                  alignItems: "center", justifyContent: "center",
+                }}>
+                  <Text style={{ fontSize: rf(20), fontFamily: "Inter_700Bold", color: DEFAULT_GROUP_COLOR }}>G</Text>
                 </View>
-                <View>
+                <View style={{ flex: 1 }}>
                   <Text style={{ fontSize: rf(13), fontFamily: "Inter_700Bold", color: colors.text }}>
-                    {selected.size} {selected.size === 1 ? "code" : "codes"} selected
+                    {selected.size} {selected.size === 1 ? "QR code" : "QR codes"} selected
                   </Text>
-                  <Text style={{ fontSize: rf(11), fontFamily: "Inter_400Regular", color: colors.textMuted }}>
-                    These will be added to the new group
+                  <Text style={{ fontSize: rf(11), fontFamily: "Inter_400Regular", color: colors.textMuted, marginTop: sp(2) }}>
+                    All will be added to this group
                   </Text>
                 </View>
+                <Pressable onPress={() => setStep("select")} style={{ paddingHorizontal: sp(10), paddingVertical: sp(6), borderRadius: sp(10), backgroundColor: colors.surfaceLight }}>
+                  <Text style={{ fontSize: rf(11), fontFamily: "Inter_600SemiBold", color: colors.textSecondary }}>Change</Text>
+                </Pressable>
               </View>
 
               {/* Group name */}
-              <Text style={{ fontSize: rf(12), fontFamily: "Inter_600SemiBold", color: colors.textSecondary, marginBottom: sp(8), textTransform: "uppercase", letterSpacing: 0.6 }}>
-                Group Name
-              </Text>
-              <TextInput
-                value={groupName}
-                onChangeText={setGroupName}
-                placeholder="e.g. Marketing, Events, Personal…"
-                placeholderTextColor={colors.textMuted}
-                maxLength={40}
-                autoFocus
-                style={{
-                  backgroundColor: colors.surface, borderRadius: sp(14), borderWidth: 1,
-                  borderColor: groupName ? groupColor + "60" : colors.surfaceBorder,
-                  paddingHorizontal: sp(16), paddingVertical: sp(13),
-                  fontSize: rf(15), fontFamily: "Inter_500Medium", color: colors.text,
-                  marginBottom: sp(22),
-                }}
-              />
-
-              {/* Color picker */}
-              <Text style={{ fontSize: rf(12), fontFamily: "Inter_600SemiBold", color: colors.textSecondary, marginBottom: sp(10), textTransform: "uppercase", letterSpacing: 0.6 }}>
-                Color
-              </Text>
-              <View style={{ flexDirection: "row", gap: sp(10), marginBottom: sp(22) }}>
-                {GROUP_COLORS.map((c) => (
-                  <Pressable
-                    key={c}
-                    onPress={() => { setGroupColor(c); Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); }}
-                    style={{
-                      width: sp(36), height: sp(36), borderRadius: sp(18),
-                      backgroundColor: c,
-                      borderWidth: groupColor === c ? 3 : 0,
-                      borderColor: colors.text,
-                      alignItems: "center", justifyContent: "center",
-                    }}
-                  >
-                    {groupColor === c && <Ionicons name="checkmark" size={rf(16)} color="#fff" />}
-                  </Pressable>
-                ))}
-              </View>
-
-              {/* Icon picker */}
-              <Text style={{ fontSize: rf(12), fontFamily: "Inter_600SemiBold", color: colors.textSecondary, marginBottom: sp(10), textTransform: "uppercase", letterSpacing: 0.6 }}>
-                Icon
-              </Text>
-              <View style={{ flexDirection: "row", flexWrap: "wrap", gap: sp(10), marginBottom: sp(32) }}>
-                {GROUP_ICONS.map((ic) => (
-                  <Pressable
-                    key={ic}
-                    onPress={() => { setGroupIcon(ic); Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); }}
-                    style={{
-                      width: sp(48), height: sp(48), borderRadius: sp(13),
-                      backgroundColor: groupIcon === ic ? groupColor + "25" : colors.surface,
-                      borderWidth: 1.5,
-                      borderColor: groupIcon === ic ? groupColor : colors.surfaceBorder,
-                      alignItems: "center", justifyContent: "center",
-                    }}
-                  >
-                    <Ionicons name={ic as any} size={rf(22)} color={groupIcon === ic ? groupColor : colors.textMuted} />
-                  </Pressable>
-                ))}
+              <View style={{ gap: sp(8) }}>
+                <Text style={{ fontSize: rf(12), fontFamily: "Inter_600SemiBold", color: colors.textSecondary, textTransform: "uppercase", letterSpacing: 0.5 }}>
+                  Group Name
+                </Text>
+                <TextInput
+                  value={groupName}
+                  onChangeText={setGroupName}
+                  placeholder="e.g. Marketing, Events, Personal…"
+                  placeholderTextColor={colors.textMuted}
+                  maxLength={40}
+                  autoFocus
+                  style={{
+                    backgroundColor: colors.surface, borderRadius: sp(14), borderWidth: 1,
+                    borderColor: groupName.trim() ? DEFAULT_GROUP_COLOR + "60" : colors.surfaceBorder,
+                    paddingHorizontal: sp(16), paddingVertical: sp(14),
+                    fontSize: rf(14), fontFamily: "Inter_500Medium", color: colors.text,
+                  }}
+                />
               </View>
 
               {/* Create button */}
@@ -316,21 +271,22 @@ export default function CreateGroupScreen() {
                 disabled={!groupName.trim() || saving}
                 style={({ pressed }) => [{
                   borderRadius: sp(16), overflow: "hidden",
-                  opacity: pressed || saving || !groupName.trim() ? 0.75 : 1,
+                  opacity: pressed || saving || !groupName.trim() ? 0.55 : 1,
+                  marginTop: sp(8),
                 }]}
               >
                 <LinearGradient
-                  colors={groupName.trim() ? [groupColor, groupColor + "CC"] : [colors.surfaceLight, colors.surfaceLight]}
+                  colors={groupName.trim() ? [DEFAULT_GROUP_COLOR, "#4F46E5"] : [colors.surfaceLight, colors.surfaceLight]}
                   style={{ flexDirection: "row", alignItems: "center", justifyContent: "center", gap: sp(10), paddingVertical: sp(15) }}
                   start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
                 >
                   {saving ? (
                     <ActivityIndicator color="#fff" size="small" />
                   ) : (
-                    <Ionicons name="folder-open-outline" size={rf(18)} color="#fff" />
+                    <Ionicons name="checkmark-circle-outline" size={rf(18)} color={groupName.trim() ? "#fff" : colors.textMuted} />
                   )}
-                  <Text style={{ fontSize: rf(15), fontFamily: "Inter_700Bold", color: "#fff" }}>
-                    {saving ? "Creating…" : `Create Group${selected.size > 0 ? ` · ${selected.size} code${selected.size !== 1 ? "s" : ""}` : ""}`}
+                  <Text style={{ fontSize: rf(15), fontFamily: "Inter_700Bold", color: groupName.trim() ? "#fff" : colors.textMuted }}>
+                    {saving ? "Creating…" : `Create Group · ${selected.size} ${selected.size === 1 ? "code" : "codes"}`}
                   </Text>
                 </LinearGradient>
               </Pressable>

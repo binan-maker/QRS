@@ -272,11 +272,10 @@ export default function MyQrCodesScreen() {
         >
           <View style={{
             width: sp(52), height: sp(52), borderRadius: sp(14),
-            backgroundColor: colors.surfaceLight,
+            backgroundColor: "#6366F1" + "18",
             alignItems: "center", justifyContent: "center",
-            borderWidth: 1, borderColor: colors.surfaceBorder,
           }}>
-            <Ionicons name="folder-outline" size={rf(22)} color={colors.textSecondary} />
+            <Text style={{ fontSize: rf(22), fontFamily: "Inter_700Bold", color: "#6366F1" }}>G</Text>
           </View>
           <View style={{ flex: 1, gap: sp(2) }}>
             <Text style={{ fontSize: rf(14), fontFamily: "Inter_700Bold", color: colors.text }} numberOfLines={1}>
