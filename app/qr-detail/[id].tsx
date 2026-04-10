@@ -177,10 +177,12 @@ function VerdictBanner({ verdict, offlineMode }: { verdict: ReturnType<ReturnTyp
         <Ionicons name={iconName} size={22} color={accent} />
       </View>
       <View style={{ flex: 1 }}>
-        <View style={verdictStyles.eyebrowRow}>
-          <View style={[verdictStyles.statusDot, { backgroundColor: accent }]} />
-          <Text style={[verdictStyles.eyebrow, { color: accent }]} maxFontSizeMultiplier={1}>{statusText}</Text>
-        </View>
+        {statusText !== "ANALYSIS COMPLETE" && (
+          <View style={verdictStyles.eyebrowRow}>
+            <View style={[verdictStyles.statusDot, { backgroundColor: accent }]} />
+            <Text style={[verdictStyles.eyebrow, { color: accent }]} maxFontSizeMultiplier={1}>{statusText}</Text>
+          </View>
+        )}
         <Text style={[verdictStyles.label, { color: isDark ? "#e2e8f0" : "#1e293b" }]} maxFontSizeMultiplier={1}>
           {verdict.label}
         </Text>

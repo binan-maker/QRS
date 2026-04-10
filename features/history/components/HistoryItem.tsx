@@ -15,25 +15,26 @@ function getTypeMeta(type: string, colors: any): {
   gradient: [string, string];
 } {
   const p = colors.primary;
+  const pg: [string, string] = [p, colors.primaryShade ?? p];
   const map: Record<string, { icon: keyof typeof Ionicons.glyphMap; label: string; gradient: [string, string] }> = {
-    url:      { icon: "globe",            label: "URL",       gradient: [p, colors.primaryShade ?? p] },
-    phone:    { icon: "call",             label: "Phone",     gradient: [colors.safe, colors.safeShade ?? colors.safe] },
-    email:    { icon: "mail",             label: "Email",     gradient: [p, colors.primaryShade ?? p] },
-    wifi:     { icon: "wifi",             label: "Wi-Fi",     gradient: [p, colors.primaryShade ?? p] },
-    location: { icon: "location",         label: "Location",  gradient: [colors.danger, colors.dangerShade ?? colors.danger] },
-    payment:  { icon: "card",             label: "Payment",   gradient: [colors.warning, colors.warningShade ?? colors.warning] },
-    sms:      { icon: "chatbubble",       label: "SMS",       gradient: [p, colors.primaryShade ?? p] },
-    contact:  { icon: "person",           label: "Contact",   gradient: [p, colors.primaryShade ?? p] },
-    event:    { icon: "calendar",         label: "Event",     gradient: [p, colors.primaryShade ?? p] },
-    otp:      { icon: "lock-closed",      label: "OTP",       gradient: [colors.safe, colors.safeShade ?? colors.safe] },
-    app:      { icon: "apps",             label: "App",       gradient: [p, colors.primaryShade ?? p] },
-    social:   { icon: "people",           label: "Social",    gradient: [p, colors.primaryShade ?? p] },
-    media:    { icon: "play-circle",      label: "Media",     gradient: [p, colors.primaryShade ?? p] },
-    document: { icon: "document-text",    label: "Document",  gradient: [colors.textSecondary, colors.textSecondary] },
-    boarding: { icon: "airplane",         label: "Boarding",  gradient: [p, colors.primaryShade ?? p] },
-    product:  { icon: "barcode",          label: "Product",   gradient: [p, colors.primaryShade ?? p] },
+    url:      { icon: "globe",            label: "URL",       gradient: pg },
+    phone:    { icon: "call",             label: "Phone",     gradient: pg },
+    email:    { icon: "mail",             label: "Email",     gradient: pg },
+    wifi:     { icon: "wifi",             label: "Wi-Fi",     gradient: pg },
+    location: { icon: "location",         label: "Location",  gradient: pg },
+    payment:  { icon: "card",             label: "Payment",   gradient: pg },
+    sms:      { icon: "chatbubble",       label: "SMS",       gradient: pg },
+    contact:  { icon: "person",           label: "Contact",   gradient: pg },
+    event:    { icon: "calendar",         label: "Event",     gradient: pg },
+    otp:      { icon: "lock-closed",      label: "OTP",       gradient: pg },
+    app:      { icon: "apps",             label: "App",       gradient: pg },
+    social:   { icon: "people",           label: "Social",    gradient: pg },
+    media:    { icon: "play-circle",      label: "Media",     gradient: pg },
+    document: { icon: "document-text",    label: "Document",  gradient: pg },
+    boarding: { icon: "airplane",         label: "Boarding",  gradient: pg },
+    product:  { icon: "barcode",          label: "Product",   gradient: pg },
   };
-  return map[type] ?? { icon: "document-text", label: "Text", gradient: [colors.textSecondary, colors.textSecondary] };
+  return map[type] ?? { icon: "document-text", label: "Text", gradient: pg };
 }
 
 function getRiskConfig(risk: string, colors: any) {

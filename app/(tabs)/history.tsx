@@ -394,36 +394,6 @@ export default function HistoryScreen() {
         </View>
       )}
 
-      {/* ── Stats strip — true totals from server, not just loaded cards ── */}
-      {showStats && !searchVisible && (
-        <View style={[styles.statsStrip, { borderColor: colors.surfaceBorder }]}>
-          <View style={[styles.statItem, { borderRightColor: colors.surfaceBorder }]}>
-            <Text style={[styles.statNumber, { color: showNAStats ? colors.textMuted : colors.text }]} maxFontSizeMultiplier={1}>
-              {showNAStats ? "N/A" : totalCount}
-            </Text>
-            <Text style={[styles.statLabel, { color: colors.textMuted }]} maxFontSizeMultiplier={1}>Total</Text>
-          </View>
-          <View style={[styles.statItem, { borderRightColor: colors.surfaceBorder }]}>
-            <Text style={[styles.statNumber, { color: showNAStats ? colors.textMuted : colors.safe }]} maxFontSizeMultiplier={1}>
-              {showNAStats ? "N/A" : allSafeCount}
-            </Text>
-            <Text style={[styles.statLabel, { color: colors.textMuted }]} maxFontSizeMultiplier={1}>Safe</Text>
-          </View>
-          <View style={[styles.statItem, { borderRightColor: colors.surfaceBorder }]}>
-            <Text style={[styles.statNumber, { color: showNAStats ? colors.textMuted : colors.warning }]} maxFontSizeMultiplier={1}>
-              {showNAStats ? "N/A" : allCautionCount}
-            </Text>
-            <Text style={[styles.statLabel, { color: colors.textMuted }]} maxFontSizeMultiplier={1}>Caution</Text>
-          </View>
-          <View style={[styles.statItem, { borderRightWidth: 0 }]}>
-            <Text style={[styles.statNumber, { color: showNAStats ? colors.textMuted : colors.danger }]} maxFontSizeMultiplier={1}>
-              {showNAStats ? "N/A" : allDangerCount}
-            </Text>
-            <Text style={[styles.statLabel, { color: colors.textMuted }]} maxFontSizeMultiplier={1}>Danger</Text>
-          </View>
-        </View>
-      )}
-
       {/* ── Threat Banner ──────────────────────────────────────────── */}
       {user && hasThreats && !cloudLoading && !searchVisible && (
         <Pressable
@@ -519,6 +489,36 @@ export default function HistoryScreen() {
         ]}
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
+        ListHeaderComponent={
+          showStats && !searchVisible ? (
+            <View style={[styles.statsCard, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
+              <View style={[styles.statItem, { borderRightColor: colors.surfaceBorder }]}>
+                <Text style={[styles.statNumber, { color: showNAStats ? colors.textMuted : colors.text }]} maxFontSizeMultiplier={1}>
+                  {showNAStats ? "N/A" : totalCount}
+                </Text>
+                <Text style={[styles.statLabel, { color: colors.textMuted }]} maxFontSizeMultiplier={1}>Total</Text>
+              </View>
+              <View style={[styles.statItem, { borderRightColor: colors.surfaceBorder }]}>
+                <Text style={[styles.statNumber, { color: showNAStats ? colors.textMuted : colors.safe }]} maxFontSizeMultiplier={1}>
+                  {showNAStats ? "N/A" : allSafeCount}
+                </Text>
+                <Text style={[styles.statLabel, { color: colors.textMuted }]} maxFontSizeMultiplier={1}>Safe</Text>
+              </View>
+              <View style={[styles.statItem, { borderRightColor: colors.surfaceBorder }]}>
+                <Text style={[styles.statNumber, { color: showNAStats ? colors.textMuted : colors.warning }]} maxFontSizeMultiplier={1}>
+                  {showNAStats ? "N/A" : allCautionCount}
+                </Text>
+                <Text style={[styles.statLabel, { color: colors.textMuted }]} maxFontSizeMultiplier={1}>Caution</Text>
+              </View>
+              <View style={[styles.statItem, { borderRightWidth: 0 }]}>
+                <Text style={[styles.statNumber, { color: showNAStats ? colors.textMuted : colors.danger }]} maxFontSizeMultiplier={1}>
+                  {showNAStats ? "N/A" : allDangerCount}
+                </Text>
+                <Text style={[styles.statLabel, { color: colors.textMuted }]} maxFontSizeMultiplier={1}>Danger</Text>
+              </View>
+            </View>
+          ) : null
+        }
         refreshControl={
           !searchVisible ? (
             <RefreshControl
@@ -598,10 +598,9 @@ const styles = StyleSheet.create({
   searchResultsText: {
     fontFamily: "Inter_400Regular",
   },
-  statsStrip: {
+  statsCard: {
     flexDirection: "row",
-    marginHorizontal: 16,
-    marginBottom: 10,
+    marginBottom: 12,
     borderWidth: 1,
     borderRadius: 16,
     overflow: "hidden",
