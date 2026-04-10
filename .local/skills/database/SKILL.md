@@ -14,7 +14,11 @@ Use this skill when:
 - Creating a new PostgreSQL database for your project
 - Checking if a database is provisioned and accessible
 - Running SQL queries against the development or production database
+<<<<<<< HEAD
 - Querying data warehouses (BigQuery, Databricks, Snowflake). For Databricks, use the `databricks-m2m` connector (not the plain `databricks` connector).
+=======
+- Querying data warehouses (BigQuery, Databricks, Snowflake)
+>>>>>>> 4d26dcba2a2ec0b55fb6bbea05783b57cec68ae9
 
 ## When NOT to Use
 
