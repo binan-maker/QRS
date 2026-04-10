@@ -129,6 +129,61 @@ const offlineToastStyles = StyleSheet.create({
   },
 });
 
+function QrToast({ message, icon, toastKey }: { message: string; icon: keyof typeof Ionicons.glyphMap; toastKey: number }) {
+  const opacity = useRef(new RNAnimated.Value(0)).current;
+  const translateY = useRef(new RNAnimated.Value(16)).current;
+
+  useEffect(() => {
+    if (toastKey === 0) return;
+    opacity.setValue(0);
+    translateY.setValue(16);
+    RNAnimated.parallel([
+      RNAnimated.sequence([
+        RNAnimated.timing(opacity, { toValue: 1, duration: 180, useNativeDriver: true }),
+        RNAnimated.delay(2000),
+        RNAnimated.timing(opacity, { toValue: 0, duration: 280, useNativeDriver: true }),
+      ]),
+      RNAnimated.timing(translateY, { toValue: 0, duration: 200, useNativeDriver: true }),
+    ]).start();
+  }, [toastKey]);
+
+  return (
+    <RNAnimated.View
+      style={[qrToastStyles.pill, { opacity, transform: [{ translateY }] }]}
+      pointerEvents="none"
+    >
+      <Ionicons name={icon} size={14} color="#fff" />
+      <Text style={qrToastStyles.text} maxFontSizeMultiplier={1}>{message}</Text>
+    </RNAnimated.View>
+  );
+}
+
+const qrToastStyles = StyleSheet.create({
+  pill: {
+    position: "absolute",
+    alignSelf: "center",
+    bottom: 96,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 7,
+    backgroundColor: "#1e293b",
+    paddingHorizontal: 18,
+    paddingVertical: 11,
+    borderRadius: 100,
+    zIndex: 999,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.25,
+    shadowRadius: 10,
+    elevation: 8,
+  },
+  text: {
+    fontFamily: "Inter_600SemiBold",
+    fontSize: 13,
+    color: "#fff",
+  },
+});
+
 function VerdictBanner({ verdict, offlineMode }: { verdict: ReturnType<ReturnType<typeof useQrDetail>["getCombinedVerdict"]>; offlineMode: boolean }) {
   const { colors, isDark } = useTheme();
 
@@ -454,6 +509,15 @@ export default function QrDetailScreen() {
   const [disclaimerExpanded, setDisclaimerExpanded] = useState(false);
   const [guardLink, setGuardLink] = useState<GuardLink | null>(null);
   const [guardLinkLoading, setGuardLinkLoading] = useState(!!guardUuid);
+  const [toastState, setToastState] = useState<{ message: string; icon: keyof typeof Ionicons.glyphMap; key: number }>({ message: "", icon: "checkmark-circle", key: 0 });
+  const lastToastTime = useRef(0);
+
+  function showToast(message: string, icon: keyof typeof Ionicons.glyphMap = "checkmark-circle") {
+    const now = Date.now();
+    if (now - lastToastTime.current < 2200) return;
+    lastToastTime.current = now;
+    setToastState(prev => ({ message, icon, key: prev.key + 1 }));
+  }
 
   useEffect(() => {
     if (!guardUuid) return;
@@ -482,7 +546,9 @@ export default function QrDetailScreen() {
       setOfflineToastKey((k) => k + 1);
       return;
     }
+    const willFollow = !q.isFollowing;
     q.handleToggleFollow();
+    showToast(willFollow ? "Now following this QR" : "Unfollowed", willFollow ? "notifications" : "notifications-off-outline");
   }
 
   const hasLocalWarnings =
@@ -517,6 +583,7 @@ export default function QrDetailScreen() {
   return (
     <View style={{ flex: 1, backgroundColor: colors.background }}>
       <OfflineToast key={offlineToastKey} visible={offlineToastKey > 0} />
+      <QrToast message={toastState.message} icon={toastState.icon} toastKey={toastState.key} />
       <StatusBar style={colors.isDark ? "light" : "dark"} backgroundColor={colors.background} />
       <KeyboardAvoidingView style={{ flex: 1 }} behavior="padding" keyboardVerticalOffset={0}>
         <View style={[styles.container, { paddingTop: topInset }]}>
@@ -534,7 +601,12 @@ export default function QrDetailScreen() {
             </View>
             <View style={styles.navActions}>
               <Pressable
-                onPress={user ? q.handleToggleFavorite : () => router.push("/(auth)/login")}
+                onPress={() => {
+                  if (!user) { router.push("/(auth)/login"); return; }
+                  const willFav = !q.isFavorite;
+                  q.handleToggleFavorite();
+                  showToast(willFav ? "Added to favorites" : "Removed from favorites", willFav ? "heart" : "heart-outline");
+                }}
                 style={styles.navActionBtn}
               >
                 <Ionicons
@@ -724,7 +796,17 @@ export default function QrDetailScreen() {
                       userReport={q.userReport}
                       isLoggedIn={true}
                       isPayment={currentContentType === "payment"}
-                      onReport={q.handleReport}
+                      onReport={(type) => {
+                        q.handleReport(type);
+                        const labels: Record<string, string> = { safe: "Safe", scam: "Scam", fake: "Fake", spam: "Spam" };
+                        const icons: Record<string, keyof typeof Ionicons.glyphMap> = {
+                          safe: "shield-checkmark",
+                          scam: "warning",
+                          fake: "close-circle",
+                          spam: "mail-unread",
+                        };
+                        showToast(`Voted ${labels[type] ?? type}`, icons[type] ?? "flag");
+                      }}
                     />
                   )}
                 </Animated.View>

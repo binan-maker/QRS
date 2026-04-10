@@ -239,7 +239,7 @@ const ContentCard = React.memo(function ContentCard({ content, contentType, pars
       {/* Type header row */}
       <View style={styles.typeRow}>
         <LinearGradient colors={cfg.gradient} style={styles.typeIcon} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}>
-          <Ionicons name={cfg.icon} size={18} color="#fff" />
+          <Ionicons name={cfg.icon} size={15} color="#fff" />
         </LinearGradient>
         <Text style={[styles.typeLabel, { color: colors.text }]}>{cfg.label}</Text>
         <Pressable
@@ -369,7 +369,7 @@ const ContentCard = React.memo(function ContentCard({ content, contentType, pars
       {hasOpenAction && (
         <Pressable onPress={onOpenContent} style={({ pressed }) => [{ opacity: pressed ? 0.85 : 1 }]}>
           <LinearGradient colors={cfg.gradient} style={styles.openBtn} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}>
-            <Ionicons name="open-outline" size={17} color="#fff" />
+            <Ionicons name="open-outline" size={14} color="#fff" />
             <Text style={styles.openBtnText}>{cfg.openLabel}</Text>
           </LinearGradient>
         </Pressable>
@@ -391,65 +391,65 @@ export default ContentCard;
 
 const styles = StyleSheet.create({
   card: {
-    borderRadius: 22,
-    padding: 18,
+    borderRadius: 16,
+    padding: 14,
     marginBottom: 12,
     borderWidth: 1,
     overflow: "hidden",
-    gap: 14,
+    gap: 10,
   },
   typeRow: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 10,
+    gap: 9,
   },
   typeIcon: {
-    width: 36,
-    height: 36,
-    borderRadius: 11,
+    width: 30,
+    height: 30,
+    borderRadius: 9,
     alignItems: "center",
     justifyContent: "center",
     flexShrink: 0,
   },
   typeLabel: {
-    fontSize: 15,
+    fontSize: 13,
     fontFamily: "Inter_700Bold",
     flex: 1,
   },
   copyBtn: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 5,
-    height: 34,
-    paddingHorizontal: 11,
-    borderRadius: 10,
+    gap: 4,
+    height: 28,
+    paddingHorizontal: 9,
+    borderRadius: 8,
     borderWidth: 1,
   },
-  copiedText: { fontSize: 12, fontFamily: "Inter_600SemiBold" },
+  copiedText: { fontSize: 11, fontFamily: "Inter_600SemiBold" },
   contentBox: {
-    borderRadius: 14,
-    padding: 14,
+    borderRadius: 12,
+    padding: 12,
     borderWidth: 1,
-    gap: 8,
+    gap: 6,
   },
   urlBox: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 8,
-    borderRadius: 12,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
+    gap: 7,
+    borderRadius: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 9,
     borderWidth: 1,
   },
-  urlText: { flex: 1, fontSize: 14, fontFamily: "Inter_500Medium" },
+  urlText: { flex: 1, fontSize: 12, fontFamily: "Inter_500Medium" },
   contentText: {
-    fontSize: 14,
+    fontSize: 13,
     fontFamily: "Inter_400Regular",
-    lineHeight: 22,
+    lineHeight: 20,
     letterSpacing: 0.1,
   },
   expandBtn: { alignSelf: "flex-start" },
-  expandBtnText: { fontSize: 13, fontFamily: "Inter_600SemiBold" },
+  expandBtnText: { fontSize: 12, fontFamily: "Inter_600SemiBold" },
   infoGrid: {
     borderRadius: 14,
     padding: 14,
@@ -468,12 +468,12 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    gap: 8,
-    borderRadius: 14,
-    paddingVertical: 13,
-    paddingHorizontal: 16,
+    gap: 7,
+    borderRadius: 11,
+    paddingVertical: 10,
+    paddingHorizontal: 14,
   },
-  openBtnText: { fontSize: 14, fontFamily: "Inter_700Bold", color: "#fff" },
+  openBtnText: { fontSize: 13, fontFamily: "Inter_700Bold", color: "#fff" },
   encryptedInfoBox: {
     borderRadius: 14,
     padding: 14,
