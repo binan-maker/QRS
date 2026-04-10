@@ -678,10 +678,7 @@ export default function QrDetailScreen() {
                 <View style={[externalQrBannerStyles.card, { backgroundColor: colors.surface, borderColor: colors.warning + "40", borderLeftColor: colors.warning, borderLeftWidth: 3 }]}>
                   <View style={externalQrBannerStyles.iconRow}>
                     <Ionicons name="alert-circle-outline" size={15} color={colors.warning} />
-                    <Text style={[externalQrBannerStyles.body, { color: colors.textMuted }]} maxFontSizeMultiplier={1}>
-                      <Text style={[externalQrBannerStyles.title, { color: colors.warning }]}>{"Standard QR"}</Text>
-                      {" · Owner identity unverified by QR Guard"}
-                    </Text>
+                    <Text style={[externalQrBannerStyles.title, { color: colors.warning }]} maxFontSizeMultiplier={1}>{"Standard QR"}</Text>
                   </View>
                 </View>
               </Animated.View>
