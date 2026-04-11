@@ -3,6 +3,7 @@ import { router } from "expo-router";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
+import { Swipeable } from "react-native-gesture-handler";
 import * as Haptics from "@/lib/haptics";
 import { parseAnyPaymentQr } from "@/lib/qr-analysis";
 import Animated, { FadeInDown, FadeInRight } from "react-native-reanimated";
@@ -15,7 +16,7 @@ export default function HomeScreen() {
   const insets = useSafeAreaInsets();
   const { colors, isDark } = useTheme();
   const {
-    user, photoURL, recentScans, refreshing, onRefresh, pulseStyle,
+    user, photoURL, recentScans, refreshing, onRefresh, deleteScan, pulseStyle,
   } = useHome();
 
   const topInset = Platform.OS === "web" ? 67 : insets.top;
@@ -217,68 +218,82 @@ export default function HomeScreen() {
             ) : (
               <View style={styles.recentList}>
                 {recentScans.map((scan, idx) => {
-                  const { gradient, icon, label, displayLabel, subtitle, amountText } = getScanMeta(scan);
+                  const { gradient, icon, displayLabel, subtitle, amountText } = getScanMeta(scan);
+                  const renderRightActions = () => (
+                    <Pressable
+                      onPress={() => {
+                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                        deleteScan(scan.id);
+                      }}
+                      style={styles.swipeDeleteBtn}
+                    >
+                      <Ionicons name="trash-outline" size={20} color="#fff" />
+                      <Text style={styles.swipeDeleteText}>Delete</Text>
+                    </Pressable>
+                  );
                   return (
                     <Animated.View key={scan.id} entering={FadeInRight.duration(350).delay(idx * 55)}>
-                      <Pressable
-                        onPress={() => {
-                          if (scan.qrCodeId) {
-                            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                            router.push({ pathname: "/qr-detail/[id]", params: { id: scan.qrCodeId } });
-                          }
-                        }}
-                        style={({ pressed }) => [
-                          styles.scanItem,
-                          {
-                            backgroundColor: colors.surface,
-                            borderColor: colors.surfaceBorder,
-                            opacity: pressed ? 0.9 : 1,
-                            transform: [{ scale: pressed ? 0.984 : 1 }],
-                          },
-                        ]}
+                      <Swipeable
+                        renderRightActions={renderRightActions}
+                        overshootRight={false}
+                        friction={2}
                       >
-                        <LinearGradient
-                          colors={gradient}
-                          start={{ x: 0, y: 0 }}
-                          end={{ x: 1, y: 1 }}
-                          style={styles.scanIconBox}
+                        <Pressable
+                          onPress={() => {
+                            if (scan.qrCodeId) {
+                              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                              router.push({ pathname: "/qr-detail/[id]", params: { id: scan.qrCodeId } });
+                            }
+                          }}
+                          style={({ pressed }) => [
+                            styles.scanItem,
+                            {
+                              backgroundColor: colors.surface,
+                              borderColor: colors.surfaceBorder,
+                              opacity: pressed ? 0.9 : 1,
+                              transform: [{ scale: pressed ? 0.984 : 1 }],
+                            },
+                          ]}
                         >
-                          <Ionicons name={icon} size={20} color="#fff" />
-                        </LinearGradient>
+                          <LinearGradient
+                            colors={gradient}
+                            start={{ x: 0, y: 0 }}
+                            end={{ x: 1, y: 1 }}
+                            style={styles.scanIconBox}
+                          >
+                            <Ionicons name={icon} size={20} color="#fff" />
+                          </LinearGradient>
 
-                        <View style={styles.scanBody}>
-                          <View style={styles.scanTopRow}>
-                            <Text style={[styles.scanContent, { color: colors.text }]} numberOfLines={1} maxFontSizeMultiplier={1}>
-                              {displayLabel}
-                            </Text>
-                            {amountText && (
-                              <View style={[styles.scanAmountPill, { backgroundColor: colors.warning + "1E" }]}>
-                                <Text style={[styles.scanAmount, { color: colors.warning }]} maxFontSizeMultiplier={1}>
-                                  {amountText}
-                                </Text>
-                              </View>
+                          <View style={styles.scanBody}>
+                            <View style={styles.scanTopRow}>
+                              <Text style={[styles.scanContent, { color: colors.text }]} numberOfLines={1} maxFontSizeMultiplier={1}>
+                                {displayLabel}
+                              </Text>
+                              {amountText && (
+                                <View style={[styles.scanAmountPill, { backgroundColor: colors.warning + "1E" }]}>
+                                  <Text style={[styles.scanAmount, { color: colors.warning }]} maxFontSizeMultiplier={1}>
+                                    {amountText}
+                                  </Text>
+                                </View>
+                              )}
+                            </View>
+                            {subtitle && (
+                              <Text style={[styles.scanSub, { color: colors.textSecondary }]} numberOfLines={1} maxFontSizeMultiplier={1}>
+                                {subtitle}
+                              </Text>
                             )}
                           </View>
-                          {subtitle && (
-                            <Text style={[styles.scanSub, { color: colors.textSecondary }]} numberOfLines={1} maxFontSizeMultiplier={1}>
-                              {subtitle}
-                            </Text>
-                          )}
-                        </View>
 
-                        <View style={styles.scanRight}>
-                          <Text style={[styles.scanTime, { color: colors.textMuted }]} maxFontSizeMultiplier={1}>
-                            {formatRelativeTime(scan.scannedAt)}
-                          </Text>
-                          {scan.qrCodeId ? (
-                            <View style={[styles.scanChevron, { backgroundColor: gradient[0] + "18" }]}>
-                              <Ionicons name="chevron-forward" size={13} color={gradient[0]} />
+                          <View style={styles.scanRight}>
+                            <Text style={[styles.scanTime, { color: colors.textMuted }]} maxFontSizeMultiplier={1}>
+                              {formatRelativeTime(scan.scannedAt)}
+                            </Text>
+                            <View style={[styles.safeIndicator, { backgroundColor: colors.safe + "18" }]}>
+                              <Ionicons name="shield-checkmark" size={13} color={colors.safe} />
                             </View>
-                          ) : (
-                            <View style={{ width: 28 }} />
-                          )}
-                        </View>
-                      </Pressable>
+                          </View>
+                        </Pressable>
+                      </Swipeable>
                     </Animated.View>
                   );
                 })}
@@ -445,6 +460,16 @@ function makeStyles(c: ReturnType<typeof import("@/contexts/ThemeContext").useTh
     scanSub: { fontSize: rf(12), fontFamily: "Inter_400Regular", lineHeight: Math.round(16 * s) },
     scanRight: { alignItems: "flex-end", gap: 8, flexShrink: 0 },
     scanTime: { fontSize: rf(11), fontFamily: "Inter_500Medium", letterSpacing: 0.1 },
-    scanChevron: { width: 28, height: 28, borderRadius: 9, alignItems: "center", justifyContent: "center" },
+    safeIndicator: { width: 28, height: 28, borderRadius: 9, alignItems: "center", justifyContent: "center" },
+    swipeDeleteBtn: {
+      backgroundColor: c.danger,
+      justifyContent: "center",
+      alignItems: "center",
+      width: 72,
+      borderRadius: 20,
+      marginLeft: 8,
+      gap: 3,
+    },
+    swipeDeleteText: { fontSize: rf(10), fontFamily: "Inter_600SemiBold", color: "#fff" },
   });
 }

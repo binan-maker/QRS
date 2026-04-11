@@ -105,12 +105,25 @@ export function useHome() {
     setRefreshing(false);
   }, [loadRecentScans, user?.id]);
 
+  const deleteScan = useCallback(async (scanId: string) => {
+    if (!user?.id) return;
+    try {
+      const stored = await AsyncStorage.getItem(`local_scan_history_${user.id}`);
+      if (!stored) return;
+      const all: LocalScan[] = JSON.parse(stored);
+      const updated = all.filter((s) => s.id !== scanId);
+      await AsyncStorage.setItem(`local_scan_history_${user.id}`, JSON.stringify(updated));
+      setRecentScans(updated.slice(0, 5));
+    } catch {}
+  }, [user?.id]);
+
   return {
     user,
     photoURL,
     recentScans,
     refreshing,
     onRefresh,
+    deleteScan,
     notifCount,
     notifOpen,
     setNotifOpen,
