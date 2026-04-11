@@ -88,7 +88,6 @@ function ClassicTabLayout() {
   const isWeb = Platform.OS === "web";
   const isIOS = Platform.OS === "ios";
   const insets = useSafeAreaInsets();
-  const notifCount = useNotificationCount();
   const { colors } = useTheme();
   const { t } = useAppTranslation();
 
@@ -150,12 +149,7 @@ function ClassicTabLayout() {
               elevation: 20,
             }]} />
           ),
-        tabBarLabelStyle: {
-          fontFamily: "Inter_600SemiBold",
-          fontSize: 11,
-          marginBottom: 4,
-          letterSpacing: 0.2,
-        },
+        tabBarShowLabel: false,
         tabBarItemStyle: {
           paddingTop: 8,
         },
@@ -165,16 +159,6 @@ function ClassicTabLayout() {
         name="index"
         options={{
           title: t("tabs.home"),
-          tabBarBadge: notifCount > 0 ? notifCount : undefined,
-          tabBarBadgeStyle: {
-            backgroundColor: colors.primary,
-            color: "#fff",
-            fontSize: 11,
-            fontFamily: "Inter_700Bold",
-            minWidth: 16,
-            height: 16,
-            borderRadius: 8,
-          },
           tabBarIcon: ({ color, focused }) => (
             <View style={focused ? [styles.activeIconWrap, { backgroundColor: color + "18" }] : styles.iconWrap}>
               <Ionicons name={focused ? "home" : "home-outline"} size={22} color={color} />

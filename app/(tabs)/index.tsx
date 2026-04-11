@@ -9,17 +9,13 @@ import Animated, { FadeInDown, FadeInRight } from "react-native-reanimated";
 import { useTheme } from "@/contexts/ThemeContext";
 import { useHome } from "@/hooks/useHome";
 import { detectContentType, getContentTypeIcon, truncate, formatRelativeTime } from "@/lib/utils/formatters";
-import NotificationsModal from "@/features/home/components/NotificationsModal";
 import { Linking } from "react-native";
 
 export default function HomeScreen() {
   const insets = useSafeAreaInsets();
   const { colors, isDark } = useTheme();
   const {
-    user, photoURL, recentScans, refreshing, onRefresh,
-    notifCount, notifOpen, setNotifOpen,
-    notifications, markingRead, pulseStyle,
-    handleOpenNotifications, handleClearNotifications,
+    user, photoURL, recentScans, refreshing, onRefresh, pulseStyle,
   } = useHome();
 
   const topInset = Platform.OS === "web" ? 67 : insets.top;
@@ -97,26 +93,6 @@ export default function HomeScreen() {
               <Text style={styles.tagline}>Scan smart. Stay safe.</Text>
             </View>
             <View style={styles.headerRight}>
-              {user && (
-                <Pressable
-                  onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); router.push("/(tabs)/profile"); }}
-                  style={styles.iconBtn}
-                  accessibilityLabel="Notifications"
-                >
-                  <Ionicons
-                    name={notifCount > 0 ? "notifications" : "notifications-outline"}
-                    size={21}
-                    color={notifCount > 0 ? colors.primary : colors.textSecondary}
-                  />
-                  {notifCount > 0 && (
-                    <View style={[styles.notifDot, { backgroundColor: colors.primary }]}>
-                      <Text style={[styles.notifDotText, { color: colors.primaryText }]}>
-                        {notifCount > 9 ? "9+" : notifCount}
-                      </Text>
-                    </View>
-                  )}
-                </Pressable>
-              )}
               {user ? (
                 <Pressable onPress={() => router.push("/(tabs)/profile")} style={styles.avatarRing}>
                   <LinearGradient
@@ -319,13 +295,6 @@ export default function HomeScreen() {
         </ScrollView>
       </View>
 
-      <NotificationsModal
-        visible={notifOpen}
-        notifications={notifications}
-        markingRead={markingRead}
-        onClose={() => setNotifOpen(false)}
-        onClearAll={handleClearNotifications}
-      />
     </>
   );
 }

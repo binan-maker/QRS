@@ -18,7 +18,9 @@ import { useTheme } from "@/contexts/ThemeContext";
 import SkeletonBox from "@/components/ui/SkeletonBox";
 import { formatCompactNumber } from "@/lib/number-format";
 import PhotoModal from "@/features/profile/components/PhotoModal";
+import NotificationsModal from "@/features/home/components/NotificationsModal";
 import { useProfile } from "@/hooks/useProfile";
+import { useHome } from "@/hooks/useHome";
 import { getUserBio } from "@/lib/services/user-service";
 import { db } from "@/lib/db";
 import QRCode from "react-native-qrcode-svg";
@@ -35,6 +37,11 @@ export default function ProfileScreen() {
     initials,
     handlePickPhoto, handleSignOut,
   } = useProfile();
+  const {
+    notifCount, notifOpen, setNotifOpen,
+    notifications, markingRead,
+    handleOpenNotifications, handleClearNotifications,
+  } = useHome();
 
   const [bio, setBio] = useState("");
   const [friendsCount, setFriendsCount] = useState(0);
@@ -87,12 +94,32 @@ export default function ProfileScreen() {
         {/* ── TOP BAR ── */}
         <View style={styles.topBar}>
           <Text style={[styles.pageTitle, { color: colors.text }]}>Profile</Text>
-          <Pressable
-            onPress={() => safePush({ pathname: "/(tabs)/settings" as any, params: { from: "profile" } })}
-            style={[styles.iconBtn, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}
-          >
-            <Ionicons name="settings-outline" size={17} color={colors.textSecondary} />
-          </Pressable>
+          <View style={styles.topBarActions}>
+            <Pressable
+              onPress={handleOpenNotifications}
+              style={[styles.iconBtn, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}
+              accessibilityLabel="Notifications"
+            >
+              <Ionicons
+                name={notifCount > 0 ? "notifications" : "notifications-outline"}
+                size={17}
+                color={notifCount > 0 ? colors.primary : colors.textSecondary}
+              />
+              {notifCount > 0 && (
+                <View style={[styles.notifDot, { backgroundColor: colors.primary, borderColor: colors.background }]}>
+                  <Text style={[styles.notifDotText, { color: "#fff" }]}>
+                    {notifCount > 9 ? "9+" : notifCount}
+                  </Text>
+                </View>
+              )}
+            </Pressable>
+            <Pressable
+              onPress={() => safePush({ pathname: "/(tabs)/settings" as any, params: { from: "profile" } })}
+              style={[styles.iconBtn, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}
+            >
+              <Ionicons name="settings-outline" size={17} color={colors.textSecondary} />
+            </Pressable>
+          </View>
         </View>
 
         {/* ── AVATAR + IDENTITY ── */}
@@ -268,6 +295,13 @@ export default function ProfileScreen() {
         onGallery={() => handlePickPhoto("gallery")}
         onClose={() => setPhotoModalOpen(false)}
       />
+      <NotificationsModal
+        visible={notifOpen}
+        notifications={notifications}
+        markingRead={markingRead}
+        onClose={() => setNotifOpen(false)}
+        onClearAll={handleClearNotifications}
+      />
     </View>
   );
 }
@@ -297,10 +331,18 @@ const styles = StyleSheet.create({
     justifyContent: "space-between", marginBottom: 24, marginTop: 4,
   },
   pageTitle: { fontSize: 22, fontFamily: "Inter_700Bold" },
+  topBarActions: { flexDirection: "row", alignItems: "center", gap: 8 },
   iconBtn: {
     width: 34, height: 34, borderRadius: 10,
     alignItems: "center", justifyContent: "center", borderWidth: 1,
   },
+  notifDot: {
+    position: "absolute", top: -4, right: -4,
+    minWidth: 15, height: 15, borderRadius: 8,
+    alignItems: "center", justifyContent: "center",
+    paddingHorizontal: 2, borderWidth: 1.5,
+  },
+  notifDotText: { fontSize: 9, fontFamily: "Inter_700Bold", lineHeight: 12 },
 
   avatarSection: { alignItems: "center", gap: 6, marginBottom: 22 },
   avatarPressable: { position: "relative", marginBottom: 6 },
