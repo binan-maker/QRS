@@ -34,7 +34,7 @@ function ScanTabButton({ onPress }: { onPress?: () => void }) {
           shadowColor: colors.primary,
         }]}
       >
-        <MaterialCommunityIcons name="qrcode-scan" size={26} color="#fff" />
+        <MaterialCommunityIcons name="qrcode-scan" size={30} color="#fff" />
       </LinearGradient>
     </Pressable>
   );
@@ -235,19 +235,19 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: "center",
     justifyContent: "center",
-    marginTop: -22,
+    marginTop: -28,
   },
   scanTabBtnInner: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
+    width: 66,
+    height: 66,
+    borderRadius: 33,
     alignItems: "center",
     justifyContent: "center",
-    borderWidth: 3,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.4,
-    shadowRadius: 12,
-    elevation: 12,
+    borderWidth: 3.5,
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.5,
+    shadowRadius: 16,
+    elevation: 16,
   },
   iconWrap: {
     width: 44,

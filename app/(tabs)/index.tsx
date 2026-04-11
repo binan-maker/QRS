@@ -91,7 +91,6 @@ export default function HomeScreen() {
               ) : (
                 <Text style={styles.greeting}>Welcome</Text>
               )}
-              <Text style={styles.tagline}>Scan smart. Stay safe.</Text>
             </View>
             <View style={styles.headerRight}>
               {user ? (
@@ -149,9 +148,6 @@ export default function HomeScreen() {
                   </Animated.View>
                   <View style={styles.heroTextBlock}>
                     <Text style={[styles.heroTitle, { color: colors.text }]}>Scan QR Code</Text>
-                    <Text style={[styles.heroSub, { color: colors.textSecondary }]} numberOfLines={1} adjustsFontSizeToFit>
-                      Securely scan any QR code instantly
-                    </Text>
                   </View>
                   <View style={[styles.heroArrow, { backgroundColor: colors.primary }]}>
                     <Ionicons name="arrow-forward" size={18} color={colors.primaryText} />

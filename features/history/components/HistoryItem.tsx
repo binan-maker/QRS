@@ -39,15 +39,7 @@ function getTypeMeta(type: string, colors: any): {
 }
 
 function getRiskConfig(risk: string, colors: any) {
-  if (risk === "dangerous") return {
-    icon: "skull-outline" as const,
-    label: "Dangerous",
-    color: colors.danger,
-    bg: colors.dangerDim ?? colors.danger + "18",
-    cardTint: colors.danger + "12",
-    borderColor: colors.danger + "55",
-  };
-  if (risk === "caution") return {
+  if (risk === "dangerous" || risk === "caution") return {
     icon: "alert-circle" as const,
     label: "Caution",
     color: colors.warning,
@@ -135,9 +127,7 @@ const HistoryItem = React.memo(function HistoryItem({ item, risk, onDelete }: Hi
 
   const gradient: [string, string] = isFavorite
     ? [colors.danger, colors.dangerShade ?? colors.danger]
-    : risk === "dangerous"
-      ? [colors.danger, colors.dangerShade ?? colors.danger]
-      : risk === "caution"
+    : (risk === "dangerous" || risk === "caution")
         ? [colors.warning, colors.warningShade ?? colors.warning]
         : meta.gradient;
 
@@ -151,10 +141,8 @@ const HistoryItem = React.memo(function HistoryItem({ item, risk, onDelete }: Hi
     }
   }
 
-  const isDangerous = risk === "dangerous";
-  const cardBg = isDangerous
-    ? (isDark ? colors.danger + "18" : colors.danger + "0E")
-    : (isDark ? colors.surface : "#ffffff");
+  const isDangerous = false;
+  const cardBg = isDark ? colors.surface : "#ffffff";
 
   const accentBorder = showRisk && riskCfg
     ? riskCfg.borderColor
@@ -195,10 +183,6 @@ const HistoryItem = React.memo(function HistoryItem({ item, risk, onDelete }: Hi
           },
         ]}
       >
-        {isDangerous && (
-          <View style={[styles.dangerStripe, { backgroundColor: colors.danger }]} />
-        )}
-
         <LinearGradient
           colors={gradient}
           start={{ x: 0, y: 0 }}
@@ -206,7 +190,7 @@ const HistoryItem = React.memo(function HistoryItem({ item, risk, onDelete }: Hi
           style={styles.iconBox}
         >
           <Ionicons
-            name={isFavorite ? "heart" : isDangerous ? "skull-outline" : meta.icon}
+            name={isFavorite ? "heart" : meta.icon}
             size={21}
             color="#fff"
           />
