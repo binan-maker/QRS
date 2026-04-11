@@ -10,6 +10,7 @@ import {
 } from "react-native";
 import { router, useFocusEffect } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
+import { LinearGradient } from "expo-linear-gradient";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import * as Haptics from "@/lib/haptics";
 import Animated, { FadeInDown, FadeIn } from "react-native-reanimated";
@@ -29,13 +30,14 @@ interface FavoriteItem {
 function SkeletonFavoriteCard() {
   const { colors } = useTheme();
   return (
-    <View style={{ flexDirection: "row", alignItems: "center", gap: 14, backgroundColor: colors.surface, borderRadius: 20, borderWidth: 1, borderColor: colors.surfaceBorder, padding: 16, marginBottom: 12 }}>
-      <SkeletonBox width={56} height={56} borderRadius={16} />
-      <View style={{ flex: 1, gap: 10 }}>
-        <SkeletonBox width="35%" height={9} />
-        <SkeletonBox width="88%" height={13} />
-        <SkeletonBox width="50%" height={9} />
+    <View style={{ flexDirection: "row", alignItems: "center", gap: 13, backgroundColor: colors.surface, borderRadius: 20, borderWidth: 1, borderColor: colors.surfaceBorder, paddingHorizontal: 14, paddingVertical: 13, marginBottom: 10 }}>
+      <SkeletonBox width={48} height={48} borderRadius={15} />
+      <View style={{ flex: 1, gap: 8 }}>
+        <SkeletonBox width="55%" height={13} borderRadius={4} />
+        <SkeletonBox width="80%" height={10} borderRadius={4} />
+        <SkeletonBox width="35%" height={9} borderRadius={4} />
       </View>
+      <SkeletonBox width={28} height={28} borderRadius={9} />
     </View>
   );
 }
@@ -46,17 +48,37 @@ function formatDate(iso: string) {
   catch { return iso; }
 }
 
-function getTypeConfig(type: string, colors: any): { icon: string; color: string; label: string } {
-  const map: Record<string, { icon: string; color: string; label: string }> = {
-    url:      { icon: "link",          color: colors.primary,        label: "URL" },
-    payment:  { icon: "card",          color: colors.warning,        label: "Payment" },
-    email:    { icon: "mail",          color: colors.primary,        label: "Email" },
-    phone:    { icon: "call",          color: colors.safe,           label: "Phone" },
-    wifi:     { icon: "wifi",          color: colors.primary,        label: "WiFi" },
-    location: { icon: "location",      color: colors.danger,         label: "Location" },
-    text:     { icon: "document-text", color: colors.textSecondary,  label: "Text" },
+function getTypeConfig(type: string, colors: any): {
+  icon: keyof typeof Ionicons.glyphMap;
+  gradient: [string, string];
+  label: string;
+} {
+  const map: Record<string, { icon: keyof typeof Ionicons.glyphMap; gradient: [string, string]; label: string }> = {
+    url:      { icon: "globe",         gradient: [colors.primary, colors.primaryShade],     label: "URL" },
+    payment:  { icon: "card",          gradient: [colors.warning, colors.warningShade],      label: "Payment" },
+    email:    { icon: "mail",          gradient: [colors.primary, colors.primaryShade],      label: "Email" },
+    phone:    { icon: "call",          gradient: [colors.safe, colors.safeShade],            label: "Phone" },
+    wifi:     { icon: "wifi",          gradient: [colors.primary, colors.primaryShade],      label: "Wi-Fi" },
+    location: { icon: "location",      gradient: [colors.danger, colors.dangerShade],        label: "Location" },
+    text:     { icon: "document-text", gradient: [colors.textSecondary, colors.textMuted],   label: "Text" },
+    sms:      { icon: "chatbubble",    gradient: [colors.primary, colors.primaryShade],      label: "SMS" },
+    contact:  { icon: "person",        gradient: [colors.safe, colors.safeShade],            label: "Contact" },
   };
-  return map[type] || map.text;
+  return map[type] || { icon: "document-text", gradient: [colors.textSecondary, colors.textMuted], label: "Text" };
+}
+
+function getDisplayLabel(type: string, content: string): string {
+  if (type === "url") {
+    try { return new URL(content).hostname.replace("www.", ""); } catch {}
+  }
+  if (content.length > 40) return content.slice(0, 40) + "…";
+  return content;
+}
+
+function getSubtitle(type: string, content: string): string | null {
+  if (type === "url") return content.length > 52 ? content.slice(0, 52) + "…" : content;
+  if (content.length > 48) return content.slice(0, 48) + "…";
+  return null;
 }
 
 export default function FavoritesScreen() {
@@ -84,6 +106,8 @@ export default function FavoritesScreen() {
 
   function renderItem({ item, index }: { item: FavoriteItem; index: number }) {
     const cfg = getTypeConfig(item.contentType, colors);
+    const displayLabel = getDisplayLabel(item.contentType, item.content);
+    const subtitle = getSubtitle(item.contentType, item.content);
 
     return (
       <Animated.View entering={FadeInDown.duration(380).delay(index * 50).springify()}>
@@ -96,34 +120,47 @@ export default function FavoritesScreen() {
             styles.card,
             {
               backgroundColor: colors.surface,
-              borderColor: colors.surfaceBorder,
-              opacity: pressed ? 0.85 : 1,
-              transform: [{ scale: pressed ? 0.985 : 1 }],
+              borderColor: colors.danger + "35",
+              opacity: pressed ? 0.88 : 1,
+              transform: [{ scale: pressed ? 0.984 : 1 }],
             }
           ]}
         >
-          <View style={[styles.iconBox, { backgroundColor: cfg.color + "18" }]}>
-            <Ionicons name={cfg.icon as any} size={24} color={cfg.color} />
-          </View>
+          <LinearGradient
+            colors={cfg.gradient}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={styles.iconBox}
+          >
+            <Ionicons name={cfg.icon} size={21} color="#fff" />
+          </LinearGradient>
 
-          <View style={styles.cardInfo}>
-            <View style={styles.cardTopRow}>
-              <View style={[styles.typePill, { backgroundColor: cfg.color + "18", borderColor: cfg.color + "35" }]}>
-                <Text style={[styles.typePillText, { color: cfg.color }]}>{cfg.label}</Text>
-              </View>
-              <View style={styles.heartBadge}>
-                <Ionicons name="heart" size={10} color={colors.danger} />
-                <Text style={[styles.heartBadgeText, { color: colors.danger }]}>Saved</Text>
+          <View style={styles.body}>
+            <Text style={[styles.title, { color: colors.text }]} numberOfLines={1} maxFontSizeMultiplier={1}>
+              {displayLabel}
+            </Text>
+            {subtitle && (
+              <Text style={[styles.subtitle, { color: colors.textSecondary }]} numberOfLines={1} maxFontSizeMultiplier={1}>
+                {subtitle}
+              </Text>
+            )}
+            <View style={styles.metaRow}>
+              <View style={[styles.heartBadge, { backgroundColor: colors.dangerDim, borderColor: colors.danger + "40" }]}>
+                <Ionicons name="heart" size={9} color={colors.danger} />
+                <Text style={[styles.heartBadgeText, { color: colors.danger }]} maxFontSizeMultiplier={1}>
+                  Saved
+                </Text>
               </View>
             </View>
-            <Text style={[styles.contentText, { color: colors.text }]} numberOfLines={2}>
-              {item.content.length > 65 ? item.content.slice(0, 65) + "…" : item.content}
-            </Text>
-            <Text style={[styles.dateText, { color: colors.textMuted }]}>{formatDate(item.createdAt)}</Text>
           </View>
 
-          <View style={[styles.chevronWrap, { backgroundColor: colors.surfaceBorder }]}>
-            <Ionicons name="chevron-forward" size={14} color={colors.textSecondary} />
+          <View style={styles.right}>
+            <Text style={[styles.dateText, { color: colors.textMuted }]} maxFontSizeMultiplier={1}>
+              {formatDate(item.createdAt)}
+            </Text>
+            <View style={[styles.chevronWrap, { backgroundColor: cfg.gradient[0] + "18" }]}>
+              <Ionicons name="chevron-forward" size={13} color={cfg.gradient[0]} />
+            </View>
           </View>
         </Pressable>
       </Animated.View>
@@ -135,9 +172,7 @@ export default function FavoritesScreen() {
       <Pressable onPress={() => router.back()} style={[styles.backBtn, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
         <Ionicons name="chevron-back" size={22} color={colors.text} />
       </Pressable>
-      <View>
-        <Text style={[styles.navTitle, { color: colors.text }]}>Favorites</Text>
-      </View>
+      <Text style={[styles.navTitle, { color: colors.text }]}>Favorites</Text>
       <View style={{ width: 40 }} />
     </View>
   );
@@ -189,11 +224,9 @@ export default function FavoritesScreen() {
           showsVerticalScrollIndicator={false}
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={handleRefresh} tintColor={colors.danger} />}
           ListHeaderComponent={
-            <View style={styles.listHeader}>
-              <Text style={[styles.countBadgeText, { color: colors.textMuted }]}>
-                {favorites.length} {favorites.length === 1 ? "saved code" : "saved codes"}
-              </Text>
-            </View>
+            <Text style={[styles.countText, { color: colors.textMuted }]}>
+              {favorites.length} {favorites.length === 1 ? "saved code" : "saved codes"}
+            </Text>
           }
         />
       )}
@@ -207,29 +240,51 @@ const styles = StyleSheet.create({
     flexDirection: "row", alignItems: "center", justifyContent: "space-between",
     paddingHorizontal: 20, paddingBottom: 14,
   },
-  navTitle: { fontSize: 24, fontFamily: "Inter_700Bold", textAlign: "center" },
+  navTitle: { fontSize: 22, fontFamily: "Inter_700Bold", textAlign: "center", letterSpacing: -0.4 },
   backBtn: { width: 40, height: 40, borderRadius: 20, alignItems: "center", justifyContent: "center", borderWidth: 1 },
-  list: { paddingHorizontal: 20, paddingTop: 4 },
-  listHeader: { marginBottom: 14 },
-  countBadgeText: { fontSize: 13, fontFamily: "Inter_500Medium" },
+  list: { paddingHorizontal: 16, paddingTop: 2 },
+  countText: { fontSize: 13, fontFamily: "Inter_500Medium", marginBottom: 12 },
   card: {
-    flexDirection: "row", alignItems: "center", gap: 14,
-    borderRadius: 20, borderWidth: 1, padding: 16, marginBottom: 12,
+    flexDirection: "row",
+    alignItems: "center",
+    borderRadius: 20,
+    marginBottom: 10,
+    borderWidth: 1,
     overflow: "hidden",
+    paddingHorizontal: 14,
+    paddingVertical: 13,
+    gap: 13,
   },
   iconBox: {
-    width: 56, height: 56, borderRadius: 18,
-    alignItems: "center", justifyContent: "center", flexShrink: 0,
+    width: 48,
+    height: 48,
+    borderRadius: 15,
+    alignItems: "center",
+    justifyContent: "center",
+    flexShrink: 0,
   },
-  cardInfo: { flex: 1, minWidth: 0, gap: 6 },
-  cardTopRow: { flexDirection: "row", alignItems: "center", gap: 7 },
-  typePill: { borderRadius: 100, paddingHorizontal: 8, paddingVertical: 3, borderWidth: 1 },
-  typePillText: { fontSize: 12, fontFamily: "Inter_700Bold", letterSpacing: 0.5 },
-  heartBadge: { flexDirection: "row", alignItems: "center", gap: 3 },
-  heartBadgeText: { fontSize: 12, fontFamily: "Inter_600SemiBold" },
-  contentText: { fontSize: 14, fontFamily: "Inter_500Medium", lineHeight: 20 },
-  dateText: { fontSize: 12, fontFamily: "Inter_400Regular" },
-  chevronWrap: { width: 30, height: 30, borderRadius: 10, alignItems: "center", justifyContent: "center", flexShrink: 0 },
+  body: { flex: 1, minWidth: 0, gap: 4 },
+  title: {
+    fontSize: 14,
+    fontFamily: "Inter_700Bold",
+    lineHeight: 20,
+    letterSpacing: -0.1,
+  },
+  subtitle: {
+    fontSize: 12,
+    fontFamily: "Inter_400Regular",
+    lineHeight: 16,
+  },
+  metaRow: { flexDirection: "row", alignItems: "center", gap: 5, marginTop: 1 },
+  heartBadge: {
+    flexDirection: "row", alignItems: "center", gap: 3,
+    paddingHorizontal: 6, paddingVertical: 2.5,
+    borderRadius: 100, borderWidth: 1,
+  },
+  heartBadgeText: { fontSize: 10, fontFamily: "Inter_700Bold", letterSpacing: 0.2 },
+  right: { alignItems: "flex-end", gap: 8, flexShrink: 0 },
+  dateText: { fontSize: 11, fontFamily: "Inter_500Medium", letterSpacing: 0.1 },
+  chevronWrap: { width: 28, height: 28, borderRadius: 9, alignItems: "center", justifyContent: "center" },
   center: { flex: 1, alignItems: "center", justifyContent: "center", padding: 40, gap: 16 },
   emptyIconCircle: { width: 88, height: 88, borderRadius: 44, alignItems: "center", justifyContent: "center", marginBottom: 4 },
   emptyTitle: { fontSize: 20, fontFamily: "Inter_700Bold", textAlign: "center" },

@@ -106,19 +106,6 @@ const FilterBar = React.memo(function FilterBar({
             >
               {f.label}
             </Text>
-            {typeof f.count === "number" && f.count > 0 && (
-              <View style={[
-                styles.countPill,
-                { backgroundColor: isActive ? "rgba(255,255,255,0.22)" : activeColor + "20" },
-              ]}>
-                <Text style={[
-                  styles.countText,
-                  { color: isActive ? "#fff" : activeColor },
-                ]} maxFontSizeMultiplier={1}>
-                  {f.count > 999 ? "999+" : f.count}
-                </Text>
-              </View>
-            )}
           </Pressable>
         );
       })}
@@ -154,16 +141,5 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontFamily: "Inter_600SemiBold",
     letterSpacing: 0.1,
-  },
-  countPill: {
-    borderRadius: 100,
-    paddingHorizontal: 5,
-    paddingVertical: 1,
-    minWidth: 18,
-    alignItems: "center",
-  },
-  countText: {
-    fontSize: 10,
-    fontFamily: "Inter_700Bold",
   },
 });

@@ -151,7 +151,10 @@ function ClassicTabLayout() {
           ),
         tabBarShowLabel: false,
         tabBarItemStyle: {
-          paddingTop: 8,
+          paddingTop: 4,
+          paddingBottom: 0,
+          alignItems: "center",
+          justifyContent: "center",
         },
       }}
     >
@@ -161,7 +164,7 @@ function ClassicTabLayout() {
           title: t("tabs.home"),
           tabBarIcon: ({ color, focused }) => (
             <View style={focused ? [styles.activeIconWrap, { backgroundColor: color + "18" }] : styles.iconWrap}>
-              <Ionicons name={focused ? "home" : "home-outline"} size={22} color={color} />
+              <Ionicons name={focused ? "home" : "home-outline"} size={24} color={color} />
             </View>
           ),
         }}
@@ -172,7 +175,7 @@ function ClassicTabLayout() {
           title: t("tabs.generator"),
           tabBarIcon: ({ color, focused }) => (
             <View style={focused ? [styles.activeIconWrap, { backgroundColor: color + "18" }] : styles.iconWrap}>
-              <MaterialCommunityIcons name={focused ? "qrcode-edit" : "qrcode"} size={22} color={color} />
+              <MaterialCommunityIcons name={focused ? "qrcode-edit" : "qrcode"} size={24} color={color} />
             </View>
           ),
         }}
@@ -193,7 +196,7 @@ function ClassicTabLayout() {
           title: t("tabs.history"),
           tabBarIcon: ({ color, focused }) => (
             <View style={focused ? [styles.activeIconWrap, { backgroundColor: color + "18" }] : styles.iconWrap}>
-              <Ionicons name={focused ? "time" : "time-outline"} size={22} color={color} />
+              <Ionicons name={focused ? "time" : "time-outline"} size={24} color={color} />
             </View>
           ),
         }}
@@ -204,7 +207,7 @@ function ClassicTabLayout() {
           title: t("tabs.profile"),
           tabBarIcon: ({ color, focused }) => (
             <View style={focused ? [styles.activeIconWrap, { backgroundColor: color + "18" }] : styles.iconWrap}>
-              <Ionicons name={focused ? "person" : "person-outline"} size={22} color={color} />
+              <Ionicons name={focused ? "person" : "person-outline"} size={24} color={color} />
             </View>
           ),
         }}
@@ -247,17 +250,17 @@ const styles = StyleSheet.create({
     elevation: 12,
   },
   iconWrap: {
-    width: 36,
-    height: 28,
+    width: 44,
+    height: 32,
     alignItems: "center",
     justifyContent: "center",
-    borderRadius: 10,
+    borderRadius: 12,
   },
   activeIconWrap: {
-    width: 40,
-    height: 28,
+    width: 54,
+    height: 32,
     alignItems: "center",
     justifyContent: "center",
-    borderRadius: 10,
+    borderRadius: 16,
   },
 });

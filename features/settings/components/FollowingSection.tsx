@@ -9,21 +9,19 @@ import { useTheme } from "@/contexts/ThemeContext";
 import SkeletonBox from "@/components/ui/SkeletonBox";
 import { db } from "@/lib/db/client";
 
-const TYPE_META: Record<string, { gradient: [string, string]; icon: keyof typeof Ionicons.glyphMap; label: string }> = {
-  url:      { gradient: ["#006FFF", "#00CFFF"], icon: "globe-outline",      label: "Website" },
-  payment:  { gradient: ["#F59E0B", "#F97316"], icon: "card-outline",       label: "Payment" },
-  email:    { gradient: ["#8B5CF6", "#EC4899"], icon: "mail-outline",        label: "Email" },
-  phone:    { gradient: ["#10B981", "#06B6D4"], icon: "call-outline",        label: "Phone" },
-  wifi:     { gradient: ["#3B82F6", "#6366F1"], icon: "wifi-outline",        label: "WiFi" },
-  location: { gradient: ["#EF4444", "#F97316"], icon: "location-outline",    label: "Location" },
-  contact:  { gradient: ["#10B981", "#3B82F6"], icon: "person-outline",      label: "Contact" },
-  sms:      { gradient: ["#06B6D4", "#3B82F6"], icon: "chatbubble-outline",  label: "SMS" },
-  social:   { gradient: ["#EC4899", "#8B5CF6"], icon: "people-outline",      label: "Social" },
-};
-const DEFAULT_META = { gradient: ["#006FFF", "#6366F1"] as [string, string], icon: "qr-code-outline" as keyof typeof Ionicons.glyphMap, label: "QR Code" };
-
-function getMeta(type: string) {
-  return TYPE_META[type?.toLowerCase()] ?? DEFAULT_META;
+function getMeta(type: string, colors: any): { gradient: [string, string]; icon: keyof typeof Ionicons.glyphMap; label: string } {
+  const map: Record<string, { gradient: [string, string]; icon: keyof typeof Ionicons.glyphMap; label: string }> = {
+    url:      { gradient: [colors.primary, colors.primaryShade],   icon: "globe-outline",         label: "Website" },
+    payment:  { gradient: [colors.warning, colors.warningShade],   icon: "card-outline",          label: "Payment" },
+    email:    { gradient: [colors.primary, colors.primaryShade],   icon: "mail-outline",          label: "Email" },
+    phone:    { gradient: [colors.safe, colors.safeShade],         icon: "call-outline",          label: "Phone" },
+    wifi:     { gradient: [colors.primary, colors.primaryShade],   icon: "wifi-outline",          label: "WiFi" },
+    location: { gradient: [colors.danger, colors.dangerShade],     icon: "location-outline",      label: "Location" },
+    contact:  { gradient: [colors.safe, colors.safeShade],         icon: "person-outline",        label: "Contact" },
+    sms:      { gradient: [colors.primary, colors.primaryShade],   icon: "chatbubble-outline",    label: "SMS" },
+    social:   { gradient: [colors.primary, colors.primaryShade],   icon: "people-outline",        label: "Social" },
+  };
+  return map[type?.toLowerCase()] ?? { gradient: [colors.primary, colors.primaryShade] as [string, string], icon: "qr-code-outline" as keyof typeof Ionicons.glyphMap, label: "QR Code" };
 }
 
 function formatDate(iso: string) {
@@ -139,7 +137,7 @@ export default function FollowingSection({ loading, list }: Props) {
         </Text>
       }
       renderItem={({ item, index }) => {
-        const meta = getMeta(item.contentType);
+        const meta = getMeta(item.contentType, colors);
         const displayContent = item.content.length > 46 ? item.content.slice(0, 43) + "…" : item.content;
 
         return (
