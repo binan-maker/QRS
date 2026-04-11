@@ -264,11 +264,6 @@ export default function HomeScreen() {
                               {subtitle}
                             </Text>
                           )}
-                          <View style={styles.scanMeta}>
-                            <View style={[styles.scanBadge, { backgroundColor: gradient[0] + "18", borderColor: gradient[0] + "38" }]}>
-                              <Text style={[styles.scanBadgeText, { color: gradient[0] }]} maxFontSizeMultiplier={1}>{label}</Text>
-                            </View>
-                          </View>
                         </View>
 
                         <View style={styles.scanRight}>
@@ -448,9 +443,6 @@ function makeStyles(c: ReturnType<typeof import("@/contexts/ThemeContext").useTh
     scanAmountPill: { paddingHorizontal: 7, paddingVertical: 2, borderRadius: 100, flexShrink: 0 },
     scanAmount: { fontSize: rf(12), fontFamily: "Inter_700Bold" },
     scanSub: { fontSize: rf(12), fontFamily: "Inter_400Regular", lineHeight: Math.round(16 * s) },
-    scanMeta: { flexDirection: "row", alignItems: "center", gap: 5, marginTop: 1 },
-    scanBadge: { paddingHorizontal: 7, paddingVertical: 2.5, borderRadius: 100, borderWidth: 1 },
-    scanBadgeText: { fontSize: rf(10), fontFamily: "Inter_700Bold", letterSpacing: 0.2 },
     scanRight: { alignItems: "flex-end", gap: 8, flexShrink: 0 },
     scanTime: { fontSize: rf(11), fontFamily: "Inter_500Medium", letterSpacing: 0.1 },
     scanChevron: { width: 28, height: 28, borderRadius: 9, alignItems: "center", justifyContent: "center" },

@@ -147,7 +147,13 @@ export default function ProfileScreen() {
           ) : null}
           {bio ? (
             <Text style={[styles.bioText, { color: colors.textSecondary }]} numberOfLines={2}>{bio}</Text>
-          ) : null}
+          ) : (
+            <Pressable
+              onPress={() => safePush({ pathname: "/(tabs)/settings" as any, params: { initialSection: "profile", fromProfile: "1" } })}
+            >
+              <Text style={[styles.bioHint, { color: colors.textMuted }]}>+ Add a bio</Text>
+            </Pressable>
+          )}
 
           <Pressable
             onPress={() => safePush({ pathname: "/(tabs)/settings" as any, params: { initialSection: "profile", fromProfile: "1" } })}
@@ -160,12 +166,11 @@ export default function ProfileScreen() {
         {/* ── STATS ── */}
         <Animated.View entering={FadeInDown.duration(400).delay(60)} style={[styles.statsRow, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
           {[
-            { label: "Friends", value: friendsCount, color: colors.safe },
-            { label: "QR Scans", value: totalQrScans, color: colors.accent },
-            { label: "Following", value: stats.followingCount, color: colors.primary },
+            { label: "QR Hits", value: totalQrScans, color: colors.accent, loading: myQrLoading },
+            { label: "Following", value: stats.followingCount, color: colors.primary, loading: statsLoading },
           ].map((s, i) => (
-            <View key={s.label} style={[styles.statItem, i < 2 && { borderRightWidth: 1, borderRightColor: colors.surfaceBorder }]}>
-              {statsLoading || (s.label === "QR Scans" && myQrLoading)
+            <View key={s.label} style={[styles.statItem, i < 1 && { borderRightWidth: 1, borderRightColor: colors.surfaceBorder }]}>
+              {s.loading
                 ? <SkeletonBox width={32} height={18} borderRadius={5} />
                 : <Text style={[styles.statValue, { color: s.color }]}>{formatCompactNumber(s.value)}</Text>
               }
@@ -366,6 +371,7 @@ const styles = StyleSheet.create({
   displayName: { fontSize: 20, fontFamily: "Inter_700Bold" },
   usernameText: { fontSize: 13, fontFamily: "Inter_500Medium" },
   bioText: { fontSize: 13, fontFamily: "Inter_400Regular", textAlign: "center", lineHeight: 18, paddingHorizontal: 24 },
+  bioHint: { fontSize: 13, fontFamily: "Inter_500Medium", textDecorationLine: "underline" },
 
   editProfileBtn: {
     marginTop: 6, paddingHorizontal: 22, paddingVertical: 8,
