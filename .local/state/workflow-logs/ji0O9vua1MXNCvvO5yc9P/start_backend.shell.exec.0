@@ -1,0 +1,27 @@
+
+> expo-app@1.0.0 server:dev
+> NODE_ENV=development ./node_modules/.bin/tsx server/index.ts
+
+Serving static Expo files with dynamic manifest routing
+Expo routing: Checking expo-platform header on / and /manifest
+express server serving on port 5000
+baseUrl http://localhost:5000
+expsUrl localhost:5000
+baseUrl http://localhost:5000
+expsUrl localhost:5000
+[HEALTH] {
+  status: [32m'unhealthy'[39m,
+  uptime: [32m'5m 1s'[39m,
+  db_latency: [32m'1700ms'[39m,
+  api_latency: [32m'13ms'[39m,
+  memory: [32m'88.59%'[39m,
+  rpm: [33m0[39m
+}
+[HEALTH] {
+  status: [32m'unhealthy'[39m,
+  uptime: [32m'10m 1s'[39m,
+  db_latency: [32m'1637ms'[39m,
+  api_latency: [32m'4ms'[39m,
+  memory: [32m'92.64%'[39m,
+  rpm: [33m0[39m
+}
