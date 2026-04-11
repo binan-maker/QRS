@@ -198,12 +198,6 @@ const HistoryItem = React.memo(function HistoryItem({ item, risk, onDelete: _onD
         )}
 
         <View style={styles.metaRow}>
-          <View style={[styles.typeBadge, { backgroundColor: gradient[0] + "18", borderColor: gradient[0] + "38" }]}>
-            <Text style={[styles.typeBadgeText, { color: gradient[0] }]} maxFontSizeMultiplier={1}>
-              {isFavorite ? "Favorite" : meta.label}
-            </Text>
-          </View>
-
           {showRisk && riskCfg && (
             <View style={[styles.riskBadge, { backgroundColor: riskCfg.bg, borderColor: riskCfg.color + "45" }]}>
               <Ionicons name={riskCfg.icon} size={9} color={riskCfg.color} />
@@ -213,18 +207,9 @@ const HistoryItem = React.memo(function HistoryItem({ item, risk, onDelete: _onD
             </View>
           )}
 
-          <View style={styles.sourceRow}>
-            <Ionicons
-              name={isSynced ? "cloud-done-outline" : isFavorite ? "heart-outline" : "phone-portrait-outline"}
-              size={10}
-              color={isSynced ? colors.safe : colors.textMuted}
-            />
-            {item.scanSource && !isFavorite && (
-              <Text style={[styles.sourceText, { color: colors.textMuted }]} maxFontSizeMultiplier={1}>
-                {item.scanSource === "gallery" ? "Gallery" : item.scanSource === "viewed" ? "Viewed" : "Camera"}
-              </Text>
-            )}
-          </View>
+          {isSynced && (
+            <Ionicons name="cloud-done-outline" size={12} color={colors.safe} />
+          )}
         </View>
       </View>
 
@@ -307,18 +292,6 @@ const styles = StyleSheet.create({
     gap: 5,
     marginTop: 1,
   },
-  typeBadge: {
-    paddingHorizontal: 7,
-    paddingVertical: 2.5,
-    borderRadius: 100,
-    borderWidth: 1,
-    flexShrink: 0,
-  },
-  typeBadgeText: {
-    fontSize: 10,
-    fontFamily: "Inter_700Bold",
-    letterSpacing: 0.2,
-  },
   riskBadge: {
     flexDirection: "row",
     alignItems: "center",
@@ -333,15 +306,6 @@ const styles = StyleSheet.create({
     fontSize: 10,
     fontFamily: "Inter_700Bold",
     letterSpacing: 0.2,
-  },
-  sourceRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 3,
-  },
-  sourceText: {
-    fontSize: 10,
-    fontFamily: "Inter_400Regular",
   },
   right: {
     alignItems: "flex-end",

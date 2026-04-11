@@ -28,8 +28,6 @@ const SKELETON_COUNT = 8;
 
 const FILTERS: { key: Filter; label: string }[] = [
   { key: "all",     label: "All"     },
-  { key: "camera",  label: "Camera"  },
-  { key: "gallery", label: "Gallery" },
   { key: "url",     label: "URLs"    },
   { key: "payment", label: "Payment" },
   { key: "text",    label: "Text"    },
@@ -145,8 +143,6 @@ export default function HistoryScreen() {
       else if (f.key === "url")     count = scanStats?.byUrl ?? history.filter((i) => i.contentType === "url").length;
       else if (f.key === "payment") count = scanStats?.byPayment ?? history.filter((i) => i.contentType === "payment").length;
       else if (f.key === "text")    count = scanStats?.byText ?? history.filter((i) => i.contentType === "text").length;
-      else if (f.key === "camera")  count = scanStats?.byCamera ?? history.filter((i) => (i.scanSource ?? "camera") === "camera").length;
-      else if (f.key === "gallery") count = scanStats?.byGallery ?? history.filter((i) => i.scanSource === "gallery").length;
       else                          count = scanStats?.byOther ?? history.filter((i) => !["url","text","payment"].includes(i.contentType)).length;
       return { ...f, count };
     });
@@ -265,20 +261,13 @@ export default function HistoryScreen() {
       );
     }
     const emptyIcon: keyof typeof Ionicons.glyphMap =
-      filter === "favorites" ? "heart-outline"
-      : filter === "camera"   ? "camera-outline"
-      : filter === "gallery"  ? "images-outline"
-      : "time-outline";
+      filter === "favorites" ? "heart-outline" : "time-outline";
     const emptyMsg =
-      filter === "favorites" ? "No favorites yet"
-      : filter === "camera"  ? "No camera scans yet"
-      : filter === "gallery" ? "No gallery scans yet"
-      : "No scans yet";
+      filter === "favorites" ? "No favorites yet" : "No scans yet";
     const emptySub =
-      filter === "favorites" ? "Tap the heart on a QR detail to save it here"
-      : filter === "camera"  ? "QR codes scanned with the camera will appear here"
-      : filter === "gallery" ? "QR codes scanned from your gallery will appear here"
-      : "Scanned QR codes will appear here";
+      filter === "favorites"
+        ? "Tap the heart on a QR detail to save it here"
+        : "Scanned QR codes will appear here";
     return (
       <View style={styles.emptyState}>
         <LinearGradient

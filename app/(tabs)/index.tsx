@@ -98,7 +98,11 @@ export default function HomeScreen() {
             </View>
             <View style={styles.headerRight}>
               {user && (
-                <Pressable onPress={handleOpenNotifications} style={styles.iconBtn} accessibilityLabel="Notifications">
+                <Pressable
+                  onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); router.push("/(tabs)/profile"); }}
+                  style={styles.iconBtn}
+                  accessibilityLabel="Notifications"
+                >
                   <Ionicons
                     name={notifCount > 0 ? "notifications" : "notifications-outline"}
                     size={21}
