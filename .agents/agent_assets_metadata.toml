@@ -42,6 +42,36 @@ uri = "file://assets/logo-elite-3.png"
 type = "image"
 title = "elite circle chevron abstract mark"
 
+[[generated]]
+id = "wU1_iz06co4UKGORsi51I"
+uri = "file://assets/logo-color-1-navy.png"
+type = "image"
+title = "G shield navy white variation"
+
+[[generated]]
+id = "LOBOxRsZVOOrqMll6UrzQ"
+uri = "file://assets/logo-color-2-blue.png"
+type = "image"
+title = "G shield electric blue variation"
+
+[[generated]]
+id = "ITAtqkixvbWbxkcmhCXsa"
+uri = "file://assets/logo-color-3-green.png"
+type = "image"
+title = "G shield emerald green variation"
+
+[[generated]]
+id = "JoWkY05ukU5XKkKWsCHD2"
+uri = "file://assets/logo-color-4-saffron.png"
+type = "image"
+title = "G shield saffron orange variation"
+
+[[generated]]
+id = "A7ZUIjW4fblHdrMN3cQwW"
+uri = "file://assets/logo-color-5-purple.png"
+type = "image"
+title = "G shield royal purple variation"
+
 [[outputs]]
 id = "Vi1uqZEvrmL4gHAWq7SrT"
 uri = "file://QR_GUARD_DOCUMENTATION.md"
