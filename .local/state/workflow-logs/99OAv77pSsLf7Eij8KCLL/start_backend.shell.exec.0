@@ -6,6 +6,7 @@ Serving static Expo files with dynamic manifest routing
 Web build found — serving web app to browsers
 Expo routing: Checking expo-platform header on / and /manifest
 express server serving on port 5000
+<<<<<<< HEAD
 [HEALTH] {
   status: [32m'unhealthy'[39m,
   uptime: [32m'5m 1s'[39m,
@@ -342,3 +343,5 @@ express server serving on port 5000
   memory: [32m'89.12%'[39m,
   rpm: [33m0[39m
 }
+=======
+>>>>>>> 14d4371596ac26c7ffaf1190f4be1fea3882d114
