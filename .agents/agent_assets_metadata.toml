@@ -6,6 +6,24 @@ uri = "file://assets/images/icon-new.png"
 type = "image"
 title = "qr guard premium flat icon"
 
+[[generated]]
+id = "PDHAH0vn-ephGhsTpiZU9"
+uri = "file://assets/logo-concept-1.png"
+type = "image"
+title = "scan viewfinder shield concept"
+
+[[generated]]
+id = "JBOFw2h1tXfri-jzMhzA4"
+uri = "file://assets/logo-concept-2.png"
+type = "image"
+title = "abstract G shield lettermark concept"
+
+[[generated]]
+id = "AUj1L1C-UuGCaE8iNrJRr"
+uri = "file://assets/logo-concept-3.png"
+type = "image"
+title = "shield checkmark minimal concept"
+
 [[outputs]]
 id = "Vi1uqZEvrmL4gHAWq7SrT"
 uri = "file://QR_GUARD_DOCUMENTATION.md"
