@@ -24,6 +24,24 @@ uri = "file://assets/logo-concept-3.png"
 type = "image"
 title = "shield checkmark minimal concept"
 
+[[generated]]
+id = "lX0fkG-U6-kT49k3GT3Gj"
+uri = "file://assets/logo-elite-1.png"
+type = "image"
+title = "elite G shield monochrome mark"
+
+[[generated]]
+id = "GIv6KNV-tnIYhcuVdLETZ"
+uri = "file://assets/logo-elite-2.png"
+type = "image"
+title = "elite eye scanner monochrome mark"
+
+[[generated]]
+id = "dXObUjl5b4auvA9S2Bmee"
+uri = "file://assets/logo-elite-3.png"
+type = "image"
+title = "elite circle chevron abstract mark"
+
 [[outputs]]
 id = "Vi1uqZEvrmL4gHAWq7SrT"
 uri = "file://QR_GUARD_DOCUMENTATION.md"
