@@ -1,5 +1,10 @@
 uploads = []
-generated = []
+
+[[generated]]
+id = "Bi7FwAPYdNL_h64LPaE95"
+uri = "file://assets/images/icon-new.png"
+type = "image"
+title = "qr guard premium flat icon"
 
 [[outputs]]
 id = "Vi1uqZEvrmL4gHAWq7SrT"
