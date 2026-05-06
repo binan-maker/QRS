@@ -7,7 +7,7 @@ import {
   ActivityIndicator,
   useWindowDimensions,
 } from "react-native";
-import { router } from "expo-router";
+import { router, useLocalSearchParams } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import * as Haptics from "@/lib/haptics";
@@ -19,6 +19,8 @@ export default function VerifyEmailScreen() {
   const { colors } = useTheme();
   const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
+  const { fromLogin } = useLocalSearchParams<{ fromLogin?: string }>();
+  const cameFromLogin = fromLogin === "true";
 
   const scale = Math.min(Math.max(width / 390, 0.85), 1.0);
   const sp = (v: number) => Math.round(v * scale);
@@ -104,12 +106,17 @@ export default function VerifyEmailScreen() {
         </Text>
 
         <Text style={[styles.subtitle, { color: colors.textSecondary, fontSize: sp(14), lineHeight: sp(22) }]}>
-          We sent a verification link to{"\n"}
+          {cameFromLogin
+            ? "Your account isn't verified yet. Tap \"Resend email\" below to get a fresh link sent to"
+            : "We sent a verification link to"}
+          {"\n"}
           <Text style={{ color: colors.primary, fontFamily: "Inter_600SemiBold" }}>
             {user?.email ?? "your email address"}
           </Text>
           {"\n\n"}
-          Tap the link in that email to activate your account, then come back and tap the button below.
+          {cameFromLogin
+            ? "Click the link in that email, then tap \"I've verified my email\" to sign in."
+            : "Tap the link in that email to activate your account, then come back and tap the button below."}
         </Text>
 
         {(resendSuccess || resendError) ? (

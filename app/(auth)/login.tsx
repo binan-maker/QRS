@@ -33,7 +33,6 @@ export default function LoginScreen() {
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  const [unverifiedEmail, setUnverifiedEmail] = useState(false);
 
   const scale = Math.min(Math.max(width / 390, 0.85), 1.0);
   const sp = (v: number) => Math.round(v * scale);
@@ -58,25 +57,26 @@ export default function LoginScreen() {
     if (!email.trim()) { newFieldErrors.email = "Email address is required."; hasFieldError = true; }
     if (!password.trim()) { newFieldErrors.password = "Password is required."; hasFieldError = true; }
     if (hasFieldError) { setFieldErrors(newFieldErrors); setError(""); setErrorCode(""); return; }
-    setError(""); setErrorCode(""); setFieldErrors({ email: "", password: "" }); setUnverifiedEmail(false); setLoading(true);
+    setError(""); setErrorCode(""); setFieldErrors({ email: "", password: "" }); setLoading(true);
     try {
       await signIn(email.trim(), password);
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       router.dismissAll();
     } catch (e: any) {
       if (e.code === "auth/email-not-verified") {
-        setUnverifiedEmail(true);
-        setErrorCode("auth/email-not-verified");
-      } else {
-        setErrorCode(e.code ?? "");
+        // The session is kept alive so verify-email can resend immediately.
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+        router.replace({ pathname: "/(auth)/verify-email", params: { fromLogin: "true" } });
+        return;
       }
+      setErrorCode(e.code ?? "");
       setError(e.message || "Sign in failed. Please try again.");
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
     } finally { setLoading(false); }
   }
 
   async function handleGoogleSignIn() {
-    setError(""); setErrorCode(""); setUnverifiedEmail(false); setGoogleLoading(true);
+    setError(""); setErrorCode(""); setGoogleLoading(true);
     try { await signInWithGoogle(); }
     catch (e: any) {
       setError(e.message || "Google sign-in failed. Please try again.");
@@ -87,10 +87,10 @@ export default function LoginScreen() {
   }
 
   const isUserNotFound = errorCode === "auth/user-not-found";
-  const bannerBg = unverifiedEmail ? colors.warningDim : isUserNotFound ? colors.primaryDim : colors.dangerDim;
-  const bannerBorder = unverifiedEmail ? colors.warning + "40" : isUserNotFound ? colors.primary + "40" : colors.danger + "40";
-  const bannerColor = unverifiedEmail ? colors.warning : isUserNotFound ? colors.primary : colors.danger;
-  const bannerIcon = unverifiedEmail ? "mail-unread-outline" : isUserNotFound ? "person-add-outline" : "alert-circle";
+  const bannerBg = isUserNotFound ? colors.primaryDim : colors.dangerDim;
+  const bannerBorder = isUserNotFound ? colors.primary + "40" : colors.danger + "40";
+  const bannerColor = isUserNotFound ? colors.primary : colors.danger;
+  const bannerIcon = isUserNotFound ? "person-add-outline" : "alert-circle";
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.background }}>

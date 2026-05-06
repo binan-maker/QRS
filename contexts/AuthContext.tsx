@@ -217,7 +217,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       const adapterUser = await authAdapter.signIn(email, password);
       if (!adapterUser.emailVerified) {
-        await authAdapter.signOut();
+        // Do NOT sign out here — keep the session alive so the verify screen
+        // can call sendEmailVerification on auth.currentUser straight away.
         const err = new Error(getAuthErrorMessage("auth/email-not-verified")) as any;
         err.code = "auth/email-not-verified";
         throw err;
