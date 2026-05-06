@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import { Alert } from "react-native";
 import { useFocusEffect, router } from "expo-router";
 import * as ImagePicker from "expo-image-picker";
@@ -73,6 +73,7 @@ export function useProfile() {
     lastStatsFetchRef.current = 0;
     lastExtrasFetchRef.current = 0;
   }, [user?.id]);
+
   const [usernameLastChangedAt, setUsernameLastChangedAt] = useState<Date | null>(null);
   const [editingUsername, setEditingUsername] = useState(false);
   const [newUsernameInput, setNewUsernameInput] = useState("");
@@ -215,7 +216,7 @@ export function useProfile() {
     return () => clearTimeout(timer);
   }, [newUsernameInput, editingUsername, currentUsername]);
 
-  async function handleSaveName() {
+  const handleSaveName = useCallback(async () => {
     const currentUser = authAdapter.getCurrentUser();
     if (!newName.trim() || !currentUser) return;
     setSavingName(true);
@@ -234,9 +235,9 @@ export function useProfile() {
     } finally {
       setSavingName(false);
     }
-  }
+  }, [newName, user?.id, updateLocalDisplayName]);
 
-  async function handleSaveUsername() {
+  const handleSaveUsername = useCallback(async () => {
     if (!user || !newUsernameInput.trim()) return;
     setUsernameError("");
     setSavingUsername(true);
@@ -253,9 +254,9 @@ export function useProfile() {
     } finally {
       setSavingUsername(false);
     }
-  }
+  }, [user?.id, newUsernameInput]);
 
-  async function handlePickPhoto(source: "camera" | "gallery") {
+  const handlePickPhoto = useCallback(async (source: "camera" | "gallery") => {
     setPhotoModalOpen(false);
     try {
       let result: ImagePicker.ImagePickerResult;
@@ -271,16 +272,13 @@ export function useProfile() {
       if (result.canceled || !result.assets?.[0]) return;
       const asset = result.assets[0];
       setUploadingPhoto(true);
-      
-      // Get the file URI and convert to blob for upload
+
       const response = await fetch(asset.uri);
       const blob = await response.blob();
-      
-      // Upload to Firebase Storage and get URL
+
       const { uploadProfilePhoto } = await import("@/lib/services/storage-service");
       const newPhotoUrl = await uploadProfilePhoto(blob, user!.id, photoURL);
 
-      // Persist the new URL to Firestore so comments and other features pick it up
       await updateUserPhotoURL(user!.id, newPhotoUrl);
 
       setPhotoURL(newPhotoUrl);
@@ -290,15 +288,15 @@ export function useProfile() {
     } finally {
       setUploadingPhoto(false);
     }
-  }
+  }, [user?.id, photoURL]);
 
-  function handleCancelUsername() {
+  const handleCancelUsername = useCallback(() => {
     setEditingUsername(false);
     setUsernameError("");
     setUsernameAvailable(null);
-  }
+  }, []);
 
-  async function handleSignOut() {
+  const handleSignOut = useCallback(async () => {
     Alert.alert("Sign Out", "Are you sure you want to sign out?", [
       { text: "Cancel", style: "cancel" },
       {
@@ -315,23 +313,26 @@ export function useProfile() {
         },
       },
     ]);
-  }
+  }, [signOut]);
 
-  // Safely coerce usernameLastChangedAt to a Date — it may come back from
-  // the cache as a plain string (JSON-serialized Date loses the prototype).
-  const lastChangedDate: Date | null = usernameLastChangedAt instanceof Date
-    ? usernameLastChangedAt
-    : typeof usernameLastChangedAt === "string" && usernameLastChangedAt
-      ? new Date(usernameLastChangedAt)
-      : null;
+  // Memoize derived values so they don't recompute on every render.
+  const lastChangedDate = useMemo<Date | null>(() => {
+    if (usernameLastChangedAt instanceof Date) return usernameLastChangedAt;
+    if (typeof usernameLastChangedAt === "string" && usernameLastChangedAt) return new Date(usernameLastChangedAt);
+    return null;
+  }, [usernameLastChangedAt]);
 
-  const daysUntilEdit = lastChangedDate
-    ? Math.max(0, Math.ceil(15 - (Date.now() - lastChangedDate.getTime()) / 86400000))
-    : 0;
+  const daysUntilEdit = useMemo(
+    () => lastChangedDate ? Math.max(0, Math.ceil(15 - (Date.now() - lastChangedDate.getTime()) / 86400000)) : 0,
+    [lastChangedDate]
+  );
 
-  const initials = user?.displayName
-    ? user.displayName.split(" ").map((n: string) => n[0]).join("").toUpperCase().slice(0, 2)
-    : "?";
+  const initials = useMemo(
+    () => user?.displayName
+      ? user.displayName.split(" ").map((n: string) => n[0]).join("").toUpperCase().slice(0, 2)
+      : "?",
+    [user?.displayName]
+  );
 
   return {
     user,

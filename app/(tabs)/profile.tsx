@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useCallback, useMemo } from "react";
 import {
   View,
   Text,
@@ -7,8 +7,8 @@ import {
   ScrollView,
   Platform,
   ActivityIndicator,
-  Image,
 } from "react-native";
+import { Image } from "expo-image";
 import { safePush } from "@/lib/utils/navigation";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -44,6 +44,44 @@ function ProfileScreen() {
   const topInset = Platform.OS === "web" ? 67 : insets.top;
   const tabBarHeight = 60 + insets.bottom;
 
+  const previewQrs = useMemo(() => myQrCodes.slice(0, 3), [myQrCodes]);
+  const totalQrScans = useMemo(
+    () => myQrCodes.reduce((sum, qr) => sum + (qr.scanCount || 0), 0),
+    [myQrCodes]
+  );
+
+  const statsItems = useMemo(() => [
+    { label: "QR Hits", value: totalQrScans, color: colors.accent, loading: myQrLoading },
+    { label: "Following", value: stats.followingCount, color: colors.primary, loading: statsLoading },
+  ], [totalQrScans, myQrLoading, stats.followingCount, statsLoading, colors.accent, colors.primary]);
+
+  const formattedStats = useMemo(
+    () => statsItems.map((s) => ({ ...s, formatted: formatCompactNumber(s.value) })),
+    [statsItems]
+  );
+
+  const openPhotoModal = useCallback(() => setPhotoModalOpen(true), [setPhotoModalOpen]);
+  const closePhotoModal = useCallback(() => setPhotoModalOpen(false), [setPhotoModalOpen]);
+  const closeNotifModal = useCallback(() => setNotifOpen(false), [setNotifOpen]);
+
+  const onCamera = useCallback(() => handlePickPhoto("camera"), [handlePickPhoto]);
+  const onGallery = useCallback(() => handlePickPhoto("gallery"), [handlePickPhoto]);
+
+  const goToSettings = useCallback(
+    () => safePush({ pathname: "/(tabs)/settings" as any, params: { from: "profile" } }),
+    []
+  );
+  const goToEditProfile = useCallback(
+    () => safePush({ pathname: "/(tabs)/settings" as any, params: { initialSection: "profile", fromProfile: "1" } }),
+    []
+  );
+  const goToLogin = useCallback(() => safePush("/(auth)/login"), []);
+  const goToRegister = useCallback(() => safePush("/(auth)/register"), []);
+  const goToMyQrCodes = useCallback(() => safePush("/my-qr-codes"), []);
+  const goToGenerator = useCallback(() => safePush("/(tabs)/qr-generator"), []);
+  const goToFriends = useCallback(() => safePush("/friends"), []);
+  const goToSearch = useCallback(() => safePush("/search"), []);
+
   if (!user) {
     return (
       <View style={[styles.container, { paddingTop: topInset, backgroundColor: colors.background }]}>
@@ -57,12 +95,12 @@ function ProfileScreen() {
               Sign in to view your profile and activity
             </Text>
             <Pressable
-              onPress={() => safePush("/(auth)/login")}
+              onPress={goToLogin}
               style={({ pressed }) => [styles.guestSignInBtn, { backgroundColor: colors.primary, opacity: pressed ? 0.88 : 1 }]}
             >
               <Text style={[styles.guestSignInText, { color: colors.primaryText }]}>Sign In</Text>
             </Pressable>
-            <Pressable onPress={() => safePush("/(auth)/register")} style={styles.guestRegBtn}>
+            <Pressable onPress={goToRegister} style={styles.guestRegBtn}>
               <Text style={[styles.guestRegText, { color: colors.primary }]}>Create Account</Text>
             </Pressable>
           </Animated.View>
@@ -70,9 +108,6 @@ function ProfileScreen() {
       </View>
     );
   }
-
-  const previewQrs = myQrCodes.slice(0, 3);
-  const totalQrScans = myQrCodes.reduce((sum, qr) => sum + (qr.scanCount || 0), 0);
 
   return (
     <View style={[styles.container, { paddingTop: topInset, backgroundColor: colors.background }]}>
@@ -88,6 +123,7 @@ function ProfileScreen() {
               onPress={handleOpenNotifications}
               style={[styles.iconBtn, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}
               accessibilityLabel="Notifications"
+              hitSlop={8}
             >
               <Ionicons
                 name={notifCount > 0 ? "notifications" : "notifications-outline"}
@@ -103,8 +139,9 @@ function ProfileScreen() {
               )}
             </Pressable>
             <Pressable
-              onPress={() => safePush({ pathname: "/(tabs)/settings" as any, params: { from: "profile" } })}
+              onPress={goToSettings}
               style={[styles.iconBtn, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}
+              hitSlop={8}
             >
               <Ionicons name="settings-outline" size={17} color={colors.textSecondary} />
             </Pressable>
@@ -113,13 +150,19 @@ function ProfileScreen() {
 
         {/* ── AVATAR + IDENTITY ── */}
         <Animated.View entering={FadeInDown.duration(400)} style={styles.avatarSection}>
-          <Pressable onPress={() => setPhotoModalOpen(true)} style={styles.avatarPressable}>
+          <Pressable onPress={openPhotoModal} style={styles.avatarPressable}>
             <View style={[styles.avatarRing, { borderColor: colors.primary + "50" }]}>
               <View style={[styles.avatarInner, { backgroundColor: colors.surfaceLight }]}>
                 {uploadingPhoto ? (
                   <ActivityIndicator color={colors.primary} />
                 ) : photoURL ? (
-                  <Image source={{ uri: photoURL }} style={styles.avatarPhoto} />
+                  <Image
+                    source={{ uri: photoURL }}
+                    style={styles.avatarPhoto}
+                    cachePolicy="memory-disk"
+                    placeholder={styles.avatarPlaceholder}
+                    contentFit="cover"
+                  />
                 ) : (
                   <Text style={[styles.avatarInitials, { color: colors.primary }]}>{initials}</Text>
                 )}
@@ -137,15 +180,13 @@ function ProfileScreen() {
           {bio ? (
             <Text style={[styles.bioText, { color: colors.textSecondary }]} numberOfLines={2}>{bio}</Text>
           ) : (
-            <Pressable
-              onPress={() => safePush({ pathname: "/(tabs)/settings" as any, params: { initialSection: "profile", fromProfile: "1" } })}
-            >
+            <Pressable onPress={goToEditProfile} hitSlop={8}>
               <Text style={[styles.bioHint, { color: colors.textMuted }]}>+ Add a bio</Text>
             </Pressable>
           )}
 
           <Pressable
-            onPress={() => safePush({ pathname: "/(tabs)/settings" as any, params: { initialSection: "profile", fromProfile: "1" } })}
+            onPress={goToEditProfile}
             style={({ pressed }) => [styles.editProfileBtn, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder, opacity: pressed ? 0.8 : 1 }]}
           >
             <Text style={[styles.editProfileText, { color: colors.text }]}>Edit Profile</Text>
@@ -154,14 +195,11 @@ function ProfileScreen() {
 
         {/* ── STATS ── */}
         <Animated.View entering={FadeInDown.duration(400).delay(60)} style={[styles.statsRow, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
-          {[
-            { label: "QR Hits", value: totalQrScans, color: colors.accent, loading: myQrLoading },
-            { label: "Following", value: stats.followingCount, color: colors.primary, loading: statsLoading },
-          ].map((s, i) => (
+          {formattedStats.map((s, i) => (
             <View key={s.label} style={[styles.statItem, i < 1 && { borderRightWidth: 1, borderRightColor: colors.surfaceBorder }]}>
               {s.loading
                 ? <SkeletonBox width={32} height={18} borderRadius={5} />
-                : <Text style={[styles.statValue, { color: s.color }]}>{formatCompactNumber(s.value)}</Text>
+                : <Text style={[styles.statValue, { color: s.color }]}>{s.formatted}</Text>
               }
               <Text style={[styles.statLabel, { color: colors.textMuted }]}>{s.label}</Text>
             </View>
@@ -173,8 +211,9 @@ function ProfileScreen() {
           <View style={styles.sectionHeader}>
             <Text style={[styles.sectionTitle, { color: colors.text }]}>My QR Codes</Text>
             <Pressable
-              onPress={() => safePush("/my-qr-codes")}
+              onPress={goToMyQrCodes}
               style={({ pressed }) => [styles.seeAllBtn, { opacity: pressed ? 0.7 : 1 }]}
+              hitSlop={8}
             >
               <Text style={[styles.seeAllText, { color: colors.primary }]}>See all</Text>
               <Ionicons name="chevron-forward" size={13} color={colors.primary} />
@@ -192,7 +231,7 @@ function ProfileScreen() {
             </View>
           ) : previewQrs.length === 0 ? (
             <Pressable
-              onPress={() => safePush("/(tabs)/qr-generator")}
+              onPress={goToGenerator}
               style={({ pressed }) => [styles.emptyQrCard, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder, opacity: pressed ? 0.8 : 1 }]}
             >
               <MaterialCommunityIcons name="qrcode-plus" size={22} color={colors.textMuted} />
@@ -201,32 +240,15 @@ function ProfileScreen() {
           ) : (
             <View style={styles.qrRow}>
               {previewQrs.map((qr) => (
-                <Pressable
+                <QrPreviewCard
                   key={qr.docId}
-                  onPress={() => safePush(`/my-qr/${qr.docId}`)}
-                  style={({ pressed }) => [
-                    styles.qrCard,
-                    { backgroundColor: colors.surface, borderColor: colors.surfaceBorder, opacity: pressed ? 0.8 : 1 },
-                  ]}
-                >
-                  <View style={[styles.qrCodeWrap, { backgroundColor: qr.bgColor || "#F8FAFC" }]}>
-                    <QRCode
-                      value={qr.content || "https://qrguard.app"}
-                      size={52}
-                      color={qr.fgColor || "#0A0E17"}
-                      backgroundColor={qr.bgColor || "#F8FAFC"}
-                      quietZone={3}
-                      ecl="L"
-                    />
-                  </View>
-                  <Text style={[styles.qrCardLabel, { color: colors.textSecondary }]} numberOfLines={1}>
-                    {qr.businessName || (qr.content.length > 14 ? qr.content.slice(0, 14) + "…" : qr.content)}
-                  </Text>
-                </Pressable>
+                  qr={qr}
+                  colors={colors}
+                />
               ))}
               {myQrCodes.length > 3 && (
                 <Pressable
-                  onPress={() => safePush("/my-qr-codes")}
+                  onPress={goToMyQrCodes}
                   style={({ pressed }) => [
                     styles.qrCard, styles.qrCardMore,
                     { backgroundColor: colors.primaryDim, borderColor: colors.primary + "30", opacity: pressed ? 0.8 : 1 },
@@ -245,7 +267,7 @@ function ProfileScreen() {
           <Text style={[styles.sectionTitle, { color: colors.text }]}>People</Text>
           <View style={styles.peopleRow}>
             <Pressable
-              onPress={() => safePush("/friends")}
+              onPress={goToFriends}
               style={({ pressed }) => [styles.peopleCard, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder, opacity: pressed ? 0.82 : 1 }]}
             >
               <View style={[styles.peopleIconWrap, { backgroundColor: colors.safeDim }]}>
@@ -256,7 +278,7 @@ function ProfileScreen() {
             </Pressable>
 
             <Pressable
-              onPress={() => safePush("/search")}
+              onPress={goToSearch}
               style={({ pressed }) => [styles.peopleCard, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder, opacity: pressed ? 0.82 : 1 }]}
             >
               <View style={[styles.peopleIconWrap, { backgroundColor: colors.primaryDim }]}>
@@ -276,6 +298,7 @@ function ProfileScreen() {
               styles.signOutBtn,
               { borderColor: colors.danger + "30", backgroundColor: colors.dangerDim, opacity: pressed ? 0.8 : 1 },
             ]}
+            hitSlop={4}
           >
             <Ionicons name="log-out-outline" size={16} color={colors.danger} />
             <Text style={[styles.signOutText, { color: colors.danger }]}>Sign Out</Text>
@@ -285,20 +308,67 @@ function ProfileScreen() {
 
       <PhotoModal
         visible={photoModalOpen}
-        onCamera={() => handlePickPhoto("camera")}
-        onGallery={() => handlePickPhoto("gallery")}
-        onClose={() => setPhotoModalOpen(false)}
+        onCamera={onCamera}
+        onGallery={onGallery}
+        onClose={closePhotoModal}
       />
       <NotificationsModal
         visible={notifOpen}
         notifications={notifications}
         markingRead={markingRead}
-        onClose={() => setNotifOpen(false)}
+        onClose={closeNotifModal}
         onClearAll={handleClearNotifications}
       />
     </View>
   );
 }
+
+type QrItem = {
+  docId: string;
+  content: string;
+  scanCount?: number;
+  bgColor?: string;
+  fgColor?: string;
+  businessName?: string;
+};
+
+const QrPreviewCard = React.memo(function QrPreviewCard({
+  qr,
+  colors,
+}: {
+  qr: QrItem;
+  colors: any;
+}) {
+  const label = useMemo(
+    () => qr.businessName || (qr.content.length > 14 ? qr.content.slice(0, 14) + "…" : qr.content),
+    [qr.businessName, qr.content]
+  );
+  const onPress = useCallback(() => safePush(`/my-qr/${qr.docId}`), [qr.docId]);
+
+  return (
+    <Pressable
+      onPress={onPress}
+      style={({ pressed }) => [
+        styles.qrCard,
+        { backgroundColor: colors.surface, borderColor: colors.surfaceBorder, opacity: pressed ? 0.8 : 1 },
+      ]}
+    >
+      <View style={[styles.qrCodeWrap, { backgroundColor: qr.bgColor || "#F8FAFC" }]}>
+        <QRCode
+          value={qr.content || "https://qrguard.app"}
+          size={52}
+          color={qr.fgColor || "#0A0E17"}
+          backgroundColor={qr.bgColor || "#F8FAFC"}
+          quietZone={3}
+          ecl="L"
+        />
+      </View>
+      <Text style={[styles.qrCardLabel, { color: colors.textSecondary }]} numberOfLines={1}>
+        {label}
+      </Text>
+    </Pressable>
+  );
+});
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
@@ -350,6 +420,7 @@ const styles = StyleSheet.create({
     alignItems: "center", justifyContent: "center", overflow: "hidden",
   },
   avatarPhoto: { width: 76, height: 76, borderRadius: 38 },
+  avatarPlaceholder: { backgroundColor: "#e2e8f0" },
   avatarInitials: { fontSize: 26, fontFamily: "Inter_700Bold" },
   cameraBtn: {
     position: "absolute", bottom: 0, right: 0,
