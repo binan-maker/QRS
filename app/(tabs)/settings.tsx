@@ -1,5 +1,5 @@
 import { View, Text, Pressable, ScrollView, Platform, Switch, useWindowDimensions, StyleSheet } from "react-native";
-import { useCallback, useEffect } from "react";
+import { useCallback, useEffect, useMemo } from "react";
 import { router, useLocalSearchParams, useFocusEffect } from "expo-router";
 import { safePush } from "@/lib/utils/navigation";
 import { Ionicons } from "@expo/vector-icons";
@@ -40,8 +40,10 @@ export default function SettingsScreen() {
   const topInset = Platform.OS === "web" ? 67 : insets.top;
   const { colors, mode, setMode } = useTheme();
   const { width } = useWindowDimensions();
-  const styles = makeSettingsStyles(colors, width);
-  const localStyles = makeLocalStyles(colors, width);
+
+  const styles = useMemo(() => makeSettingsStyles(colors, width), [colors, width]);
+  const localStyles = useMemo(() => makeLocalStyles(colors, width), [colors, width]);
+
   const params = useLocalSearchParams<{ initialSection?: string; fromProfile?: string; from?: string }>();
 
   const {
@@ -61,9 +63,6 @@ export default function SettingsScreen() {
     handleDeleteAccount,
   } = useSettings();
 
-  // Reset to the correct section every time this screen gains focus.
-  // - If initialSection specifies a sub-section, jump there (e.g. Edit Profile → Profile Settings).
-  // - Otherwise always land on the main settings menu, even if a previous visit left a sub-section open.
   useFocusEffect(
     useCallback(() => {
       if (params.initialSection && params.initialSection !== "main") {
@@ -74,20 +73,48 @@ export default function SettingsScreen() {
     }, [params.initialSection])
   );
 
+  const goToAccount  = useCallback(() => setSection("account"),   [setSection]);
+  const goToFollowing = useCallback(() => setSection("following"), [setSection]);
+  const goToProfile  = useCallback(() => setSection("profile"),   [setSection]);
+  const goToGuide    = useCallback(() => setSection("guide"),     [setSection]);
+  const goToFeedback = useCallback(() => setSection("feedback"),  [setSection]);
+  const goToComments = useCallback(() => setSection("comments"),  [setSection]);
+  const goToHistory  = useCallback(() => setSection("history"),   [setSection]);
+  const goToTrustScores = useCallback(() => safePush("/trust-scores"), []);
+  const goToTerms    = useCallback(() => safePush("/terms"),      []);
+  const goToPrivacy  = useCallback(() => safePush("/privacy-policy"), []);
+  const goToLogin    = useCallback(() => safePush("/(auth)/login"), []);
+
+  const handleSubSectionBack = useCallback(() => {
+    if (section === "profile" && params.fromProfile === "1") {
+      safePush("/(tabs)/profile");
+    } else {
+      setSection("main");
+    }
+  }, [section, params.fromProfile, setSection]);
+
+  const handleMainBack = useCallback(() => {
+    if (params.from === "history") {
+      safePush("/(tabs)/history");
+    } else {
+      safePush("/(tabs)/profile");
+    }
+  }, [params.from]);
+
+  const handleSetSystemMode = useCallback(() => setMode("system"), [setMode]);
+  const handleSetLightMode  = useCallback(() => setMode("light"),  [setMode]);
+  const handleSetDarkMode   = useCallback(() => setMode("dark"),   [setMode]);
+  const themeModeHandlers: Record<ThemeMode, () => void> = useMemo(() => ({
+    system: handleSetSystemMode,
+    light:  handleSetLightMode,
+    dark:   handleSetDarkMode,
+  }), [handleSetSystemMode, handleSetLightMode, handleSetDarkMode]);
+
   if (section !== "main") {
     return (
       <View style={[styles.container, { paddingTop: topInset }]}>
         <View style={styles.navBar}>
-          <Pressable
-            onPress={() => {
-              if (section === "profile" && params.fromProfile === "1") {
-                safePush("/(tabs)/profile");
-              } else {
-                setSection("main");
-              }
-            }}
-            style={styles.navBackBtn}
-          >
+          <Pressable onPress={handleSubSectionBack} style={styles.navBackBtn}>
             <Ionicons name="chevron-back" size={24} color={colors.text} />
           </Pressable>
           <Text style={styles.navTitle}>{SECTION_TITLES[section] ?? "Settings"}</Text>
@@ -101,8 +128,8 @@ export default function SettingsScreen() {
             deleteConfirmText={deleteConfirmText}
             setDeleteConfirmText={setDeleteConfirmText}
             handleDeleteAccount={handleDeleteAccount}
-            goToComments={() => setSection("comments")}
-            goToHistory={() => setSection("history")}
+            goToComments={goToComments}
+            goToHistory={goToHistory}
           />
         )}
         {section === "guide" && <GuideSection />}
@@ -143,16 +170,7 @@ export default function SettingsScreen() {
   return (
     <View style={[styles.container, { paddingTop: topInset }]}>
       <View style={styles.navBar}>
-        <Pressable
-          onPress={() => {
-            if (params.from === "history") {
-              safePush("/(tabs)/history");
-            } else {
-              safePush("/(tabs)/profile");
-            }
-          }}
-          style={styles.navBackBtn}
-        >
+        <Pressable onPress={handleMainBack} style={styles.navBackBtn}>
           <Ionicons name="chevron-back" size={24} color={colors.text} />
         </Pressable>
         <Text style={styles.navTitle}>Settings</Text>
@@ -191,19 +209,19 @@ export default function SettingsScreen() {
                 icon="person-outline"
                 label="Account Management"
                 sublabel="History, comments, delete account"
-                onPress={() => setSection("account")}
+                onPress={goToAccount}
               />
               <View style={styles.divider} />
               <SettingsMenuItem
                 icon="heart-outline"
                 label="Following"
                 sublabel="QR codes you're tracking"
-                onPress={() => setSection("following")}
+                onPress={goToFollowing}
               />
             </View>
           ) : (
             <Pressable
-              onPress={() => safePush("/(auth)/login")}
+              onPress={goToLogin}
               style={({ pressed }) => [styles.signInCard, { opacity: pressed ? 0.9 : 1 }]}
             >
               <View style={[styles.signInIcon, { backgroundColor: colors.primaryDim }]}>
@@ -227,7 +245,7 @@ export default function SettingsScreen() {
                 icon="person-circle-outline"
                 label="Profile Settings"
                 sublabel="Name, username, bio, and privacy"
-                onPress={() => setSection("profile")}
+                onPress={goToProfile}
               />
             </View>
           </View>
@@ -244,7 +262,7 @@ export default function SettingsScreen() {
                 return (
                   <Pressable
                     key={opt.key}
-                    onPress={() => setMode(opt.key)}
+                    onPress={themeModeHandlers[opt.key]}
                     style={({ pressed }) => [
                       localStyles.themeBtn,
                       {
@@ -292,21 +310,21 @@ export default function SettingsScreen() {
               icon="book-outline"
               label="Manual Guide"
               sublabel="Step-by-step usage guide"
-              onPress={() => setSection("guide")}
+              onPress={goToGuide}
             />
             <View style={styles.divider} />
             <SettingsMenuItem
               icon="shield-checkmark-outline"
               label="About Trust Scores"
               sublabel="How safety ratings are calculated"
-              onPress={() => safePush("/trust-scores")}
+              onPress={goToTrustScores}
             />
             <View style={styles.divider} />
             <SettingsMenuItem
               icon="chatbubble-outline"
               label="Send Feedback"
               sublabel="Report bugs or suggest features"
-              onPress={() => setSection("feedback")}
+              onPress={goToFeedback}
             />
           </View>
         </View>
@@ -319,14 +337,14 @@ export default function SettingsScreen() {
               icon="document-text-outline"
               label="Terms of Service"
               sublabel="Usage rules, disclaimers and liability"
-              onPress={() => safePush("/terms")}
+              onPress={goToTerms}
             />
             <View style={styles.divider} />
             <SettingsMenuItem
               icon="lock-closed-outline"
               label="Privacy Policy"
               sublabel="How we collect and protect your data"
-              onPress={() => safePush("/privacy-policy")}
+              onPress={goToPrivacy}
             />
           </View>
         </View>

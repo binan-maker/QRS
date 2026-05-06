@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Alert } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as Haptics from "@/lib/haptics";
@@ -57,14 +57,14 @@ export function useSettings() {
     });
   }, []);
 
-  async function toggleHaptics() {
+  const toggleHaptics = useCallback(async () => {
     const next = !hapticsEnabled;
     setHapticsEnabledState(next);
     setHapticsEnabled(next);
     await AsyncStorage.setItem(HAPTIC_KEY, String(next));
-  }
+  }, [hapticsEnabled]);
 
-  async function handleSignOut() {
+  const handleSignOut = useCallback(async () => {
     Alert.alert("Sign Out", "Are you sure you want to sign out?", [
       { text: "Cancel", style: "cancel" },
       {
@@ -81,9 +81,9 @@ export function useSettings() {
         },
       },
     ]);
-  }
+  }, [signOut]);
 
-  async function handleClearData() {
+  const handleClearData = useCallback(async () => {
     Alert.alert("Clear All Data", "This will remove all locally stored data including scan history.", [
       { text: "Cancel", style: "cancel" },
       {
@@ -99,9 +99,9 @@ export function useSettings() {
         },
       },
     ]);
-  }
+  }, [user?.id]);
 
-  async function handleSubmitFeedback() {
+  const handleSubmitFeedback = useCallback(async () => {
     if (!feedbackText.trim()) return;
     setFeedbackSubmitting(true);
     try {
@@ -114,9 +114,9 @@ export function useSettings() {
     } finally {
       setFeedbackSubmitting(false);
     }
-  }
+  }, [feedbackText, feedbackEmail, user?.id]);
 
-  async function loadFollowing() {
+  const loadFollowing = useCallback(async () => {
     if (!user) return;
     setFollowingLoading(true);
     try {
@@ -124,9 +124,9 @@ export function useSettings() {
       setFollowingList(list);
     } catch {}
     setFollowingLoading(false);
-  }
+  }, [user?.id]);
 
-  async function loadMyComments() {
+  const loadMyComments = useCallback(async () => {
     if (!user) return;
     setCommentsLoading(true);
     try {
@@ -134,9 +134,9 @@ export function useSettings() {
       setMyComments(list);
     } catch {}
     setCommentsLoading(false);
-  }
+  }, [user?.id]);
 
-  async function loadMyHistory() {
+  const loadMyHistory = useCallback(async () => {
     if (!user) return;
     setHistoryLoading(true);
     try {
@@ -160,9 +160,9 @@ export function useSettings() {
       setMyHistory(merged);
     } catch {}
     setHistoryLoading(false);
-  }
+  }, [user?.id]);
 
-  async function handleDeleteComment(commentId: string, qrCodeId: string) {
+  const handleDeleteComment = useCallback(async (commentId: string, qrCodeId: string) => {
     Alert.alert("Delete Comment", "Are you sure you want to delete this comment?", [
       { text: "Cancel", style: "cancel" },
       {
@@ -179,9 +179,9 @@ export function useSettings() {
         },
       },
     ]);
-  }
+  }, [user?.id]);
 
-  async function handleDeleteAllComments() {
+  const handleDeleteAllComments = useCallback(async () => {
     Alert.alert(
       "Delete All Comments",
       "This will permanently delete all your comments. Under Indian DPDP Act and GDPR, your data will be removed within 7 days. This cannot be undone.",
@@ -204,9 +204,9 @@ export function useSettings() {
         },
       ]
     );
-  }
+  }, [user?.id, myComments]);
 
-  async function handleDeleteHistoryItem(item: any) {
+  const handleDeleteHistoryItem = useCallback(async (item: any) => {
     setMyHistory((prev) => prev.filter((h) => h.id !== item.id));
     try {
       if (user) {
@@ -228,9 +228,9 @@ export function useSettings() {
         )
       );
     }
-  }
+  }, [user?.id]);
 
-  async function handleDeleteAllHistory() {
+  const handleDeleteAllHistory = useCallback(async () => {
     Alert.alert(
       "Delete All History",
       "This will remove all your scan history from this device and the cloud. Security data is anonymised and retained for threat analysis under our privacy policy. This cannot be undone.",
@@ -256,9 +256,9 @@ export function useSettings() {
         },
       ]
     );
-  }
+  }, [user?.id, myHistory]);
 
-  async function handleDeleteAccount() {
+  const handleDeleteAccount = useCallback(async () => {
     if (deleteConfirmText.toLowerCase() !== "delete") {
       Alert.alert("Confirmation Required", 'Please type "delete" to confirm account deletion.');
       return;
@@ -298,14 +298,14 @@ export function useSettings() {
         },
       ]
     );
-  }
+  }, [deleteConfirmText, user?.id, signOut]);
 
-  function handleSectionChange(s: Section) {
+  const handleSectionChange = useCallback((s: Section) => {
     setSection(s);
     if (s === "following") loadFollowing();
     if (s === "comments") loadMyComments();
     if (s === "history") loadMyHistory();
-  }
+  }, [loadFollowing, loadMyComments, loadMyHistory]);
 
   return {
     user,

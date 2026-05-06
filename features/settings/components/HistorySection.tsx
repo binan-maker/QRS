@@ -1,4 +1,5 @@
-import { View, Text, FlatList, Pressable, Platform, ActionSheetIOS, Alert } from "react-native";
+import React, { useCallback, useMemo } from "react";
+import { View, Text, FlatList, Pressable, Platform, ActionSheetIOS, Alert, StyleSheet } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTheme } from "@/contexts/ThemeContext";
@@ -61,10 +62,10 @@ interface Props {
   onDeleteAll: () => void;
 }
 
-function HistoryRow({ item, onDelete }: { item: any; onDelete: (item: any) => void }) {
+const HistoryRow = React.memo(function HistoryRow({ item, onDelete }: { item: any; onDelete: (item: any) => void }) {
   const { colors } = useTheme();
 
-  function handleThreeDot() {
+  const handleThreeDot = useCallback(() => {
     if (Platform.OS === "ios") {
       ActionSheetIOS.showActionSheetWithOptions(
         { options: ["Cancel", "Delete"], destructiveButtonIndex: 1, cancelButtonIndex: 0 },
@@ -76,7 +77,7 @@ function HistoryRow({ item, onDelete }: { item: any; onDelete: (item: any) => vo
         { text: "Delete", style: "destructive", onPress: () => onDelete(item) },
       ]);
     }
-  }
+  }, [onDelete, item]);
 
   const sourceBadgeColor =
     item.source === "favorite" ? colors.dangerDim
@@ -91,51 +92,22 @@ function HistoryRow({ item, onDelete }: { item: any; onDelete: (item: any) => vo
     : item.source === "cloud" ? colors.accent
     : colors.textMuted;
 
+  const formattedDate = useMemo(() => formatDate(item.scannedAt), [item.scannedAt]);
+  const contentIcon = useMemo(() => getContentIcon(item.contentType), [item.contentType]);
+
   return (
-    <View style={{
-      flexDirection: "row",
-      alignItems: "center",
-      gap: 12,
-      backgroundColor: colors.surface,
-      borderRadius: 14,
-      borderWidth: 1,
-      borderColor: colors.surfaceBorder,
-      padding: 14,
-      marginBottom: 8,
-    }}>
-      <View style={{
-        width: 40,
-        height: 40,
-        borderRadius: 12,
-        backgroundColor: colors.primaryDim,
-        alignItems: "center",
-        justifyContent: "center",
-      }}>
-        <Ionicons name={getContentIcon(item.contentType)} size={18} color={colors.primary} />
+    <View style={[rowStyles.row, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
+      <View style={[rowStyles.iconWrap, { backgroundColor: colors.primaryDim }]}>
+        <Ionicons name={contentIcon} size={18} color={colors.primary} />
       </View>
       <View style={{ flex: 1 }}>
-        <Text
-          style={{ fontSize: 14, fontFamily: "Inter_500Medium", color: colors.text }}
-          numberOfLines={1}
-        >
+        <Text style={[rowStyles.content, { color: colors.text }]} numberOfLines={1}>
           {item.content}
         </Text>
         <View style={{ flexDirection: "row", alignItems: "center", gap: 8, marginTop: 4 }}>
-          <Text style={{ fontSize: 12, fontFamily: "Inter_400Regular", color: colors.textMuted }}>
-            {formatDate(item.scannedAt)}
-          </Text>
-          <View style={{
-            flexDirection: "row",
-            alignItems: "center",
-            gap: 4,
-            backgroundColor: sourceBadgeColor,
-            paddingHorizontal: 7,
-            paddingVertical: 2,
-            borderRadius: 8,
-          }}>
-            <Text style={{ fontSize: 12, fontFamily: "Inter_500Medium", color: sourceBadgeIconColor }}>
-              {sourceBadgeText}
-            </Text>
+          <Text style={[rowStyles.date, { color: colors.textMuted }]}>{formattedDate}</Text>
+          <View style={[rowStyles.badge, { backgroundColor: sourceBadgeColor }]}>
+            <Text style={[rowStyles.badgeText, { color: sourceBadgeIconColor }]}>{sourceBadgeText}</Text>
           </View>
         </View>
       </View>
@@ -148,13 +120,49 @@ function HistoryRow({ item, onDelete }: { item: any; onDelete: (item: any) => vo
       </Pressable>
     </View>
   );
-}
+});
+
+const rowStyles = StyleSheet.create({
+  row: {
+    flexDirection: "row", alignItems: "center", gap: 12,
+    borderRadius: 14, borderWidth: 1, padding: 14, marginBottom: 8,
+  },
+  iconWrap: { width: 40, height: 40, borderRadius: 12, alignItems: "center", justifyContent: "center" },
+  content: { fontSize: 14, fontFamily: "Inter_500Medium" },
+  date: { fontSize: 12, fontFamily: "Inter_400Regular" },
+  badge: { flexDirection: "row", alignItems: "center", gap: 4, paddingHorizontal: 7, paddingVertical: 2, borderRadius: 8 },
+  badgeText: { fontSize: 12, fontFamily: "Inter_500Medium" },
+});
 
 export default function HistorySection({ loading, history, onDelete, onDeleteAll }: Props) {
   const insets = useSafeAreaInsets();
   const { colors } = useTheme();
-  const styles = makeSettingsStyles(colors);
+  const styles = useMemo(() => makeSettingsStyles(colors), [colors]);
   const bottomPad = Platform.OS === "web" ? 34 + 84 : insets.bottom + 84;
+
+  const renderItem = useCallback(({ item }: { item: any }) => (
+    <HistoryRow item={item} onDelete={onDelete} />
+  ), [onDelete]);
+
+  const listHeader = useMemo(() => (
+    <Pressable
+      onPress={onDeleteAll}
+      style={({ pressed }) => ({
+        flexDirection: "row" as const,
+        alignItems: "center" as const,
+        gap: 8,
+        paddingVertical: 10,
+        paddingHorizontal: 4,
+        marginBottom: 8,
+        opacity: pressed ? 0.7 : 1,
+      })}
+    >
+      <Ionicons name="trash" size={16} color={colors.danger} />
+      <Text style={{ fontSize: 14, fontFamily: "Inter_600SemiBold", color: colors.danger }}>
+        Delete All History
+      </Text>
+    </Pressable>
+  ), [onDeleteAll, colors.danger]);
 
   if (loading) {
     return (
@@ -187,26 +195,8 @@ export default function HistorySection({ loading, history, onDelete, onDeleteAll
       keyExtractor={(item) => item.id}
       contentContainerStyle={[styles.scrollContent, { paddingBottom: bottomPad }]}
       showsVerticalScrollIndicator={false}
-      ListHeaderComponent={
-        <Pressable
-          onPress={onDeleteAll}
-          style={({ pressed }) => ({
-            flexDirection: "row",
-            alignItems: "center",
-            gap: 8,
-            paddingVertical: 10,
-            paddingHorizontal: 4,
-            marginBottom: 8,
-            opacity: pressed ? 0.7 : 1,
-          })}
-        >
-          <Ionicons name="trash" size={16} color={colors.danger} />
-          <Text style={{ fontSize: 14, fontFamily: "Inter_600SemiBold", color: colors.danger }}>
-            Delete All History
-          </Text>
-        </Pressable>
-      }
-      renderItem={({ item }) => <HistoryRow item={item} onDelete={onDelete} />}
+      ListHeaderComponent={listHeader}
+      renderItem={renderItem}
     />
   );
 }

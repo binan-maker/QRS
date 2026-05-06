@@ -1,3 +1,4 @@
+import React, { useCallback, useMemo } from "react";
 import { View, Text, FlatList, Pressable, Platform } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -22,14 +23,46 @@ interface Props {
   loading: boolean;
   comments: any[];
   onDelete: (commentId: string, qrCodeId: string) => void;
-  onDeleteAll: () => void;
+  onDeleteAll?: () => void;
 }
 
 export default function CommentsSection({ loading, comments, onDelete, onDeleteAll }: Props) {
   const insets = useSafeAreaInsets();
   const { colors } = useTheme();
-  const styles = makeSettingsStyles(colors);
+  const styles = useMemo(() => makeSettingsStyles(colors), [colors]);
   const bottomPad = Platform.OS === "web" ? 34 + 84 : insets.bottom + 84;
+
+  const renderItem = useCallback(({ item }: { item: any }) => (
+    <View style={styles.myCommentItem}>
+      <Text style={styles.myCommentText}>{item.text}</Text>
+      <View style={styles.myCommentMeta}>
+        <Text style={styles.myCommentDate}>{new Date(item.createdAt).toLocaleDateString()}</Text>
+        <Pressable onPress={() => onDelete(item.id, item.qrCodeId)} style={styles.deleteCommentBtn}>
+          <Ionicons name="trash-outline" size={16} color={colors.danger} />
+        </Pressable>
+      </View>
+    </View>
+  ), [styles, colors.danger, onDelete]);
+
+  const listHeader = useMemo(() => (
+    <Pressable
+      onPress={onDeleteAll}
+      style={({ pressed }) => ({
+        flexDirection: "row" as const,
+        alignItems: "center" as const,
+        gap: 8,
+        paddingVertical: 10,
+        paddingHorizontal: 4,
+        marginBottom: 8,
+        opacity: pressed ? 0.7 : 1,
+      })}
+    >
+      <Ionicons name="trash" size={16} color={colors.danger} />
+      <Text style={{ fontSize: 14, fontFamily: "Inter_600SemiBold", color: colors.danger }}>
+        Delete All Comments
+      </Text>
+    </Pressable>
+  ), [onDeleteAll, colors.danger]);
 
   if (loading) {
     return (
@@ -58,36 +91,8 @@ export default function CommentsSection({ loading, comments, onDelete, onDeleteA
       data={comments}
       keyExtractor={(item) => item.id}
       contentContainerStyle={[styles.scrollContent, { paddingBottom: bottomPad }]}
-      ListHeaderComponent={
-        <Pressable
-          onPress={onDeleteAll}
-          style={({ pressed }) => ({
-            flexDirection: "row",
-            alignItems: "center",
-            gap: 8,
-            paddingVertical: 10,
-            paddingHorizontal: 4,
-            marginBottom: 8,
-            opacity: pressed ? 0.7 : 1,
-          })}
-        >
-          <Ionicons name="trash" size={16} color={colors.danger} />
-          <Text style={{ fontSize: 14, fontFamily: "Inter_600SemiBold", color: colors.danger }}>
-            Delete All Comments
-          </Text>
-        </Pressable>
-      }
-      renderItem={({ item }) => (
-        <View style={styles.myCommentItem}>
-          <Text style={styles.myCommentText}>{item.text}</Text>
-          <View style={styles.myCommentMeta}>
-            <Text style={styles.myCommentDate}>{new Date(item.createdAt).toLocaleDateString()}</Text>
-            <Pressable onPress={() => onDelete(item.id, item.qrCodeId)} style={styles.deleteCommentBtn}>
-              <Ionicons name="trash-outline" size={16} color={colors.danger} />
-            </Pressable>
-          </View>
-        </View>
-      )}
+      ListHeaderComponent={listHeader}
+      renderItem={renderItem}
     />
   );
 }

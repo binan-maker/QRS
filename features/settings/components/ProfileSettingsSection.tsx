@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useMemo, memo } from "react";
 import {
   View, Text, TextInput, Pressable, Switch, ScrollView,
   StyleSheet, ActivityIndicator, Alert, Keyboard,
@@ -26,13 +26,11 @@ export default function ProfileSettingsSection() {
   const { colors } = useTheme();
   const { user, updateLocalDisplayName } = useAuth();
 
-  // Display name
   const [displayName, setDisplayName] = useState(user?.displayName || "");
   const [editingName, setEditingName] = useState(false);
   const [newName, setNewName] = useState("");
   const [savingName, setSavingName] = useState(false);
 
-  // Username
   const [username, setUsername] = useState<string | null>(null);
   const [editingUsername, setEditingUsername] = useState(false);
   const [newUsername, setNewUsername] = useState("");
@@ -42,13 +40,11 @@ export default function ProfileSettingsSection() {
   const [usernameError, setUsernameError] = useState("");
   const [daysUntilEdit, setDaysUntilEdit] = useState(0);
 
-  // Bio
   const [bio, setBio] = useState("");
   const [editingBio, setEditingBio] = useState(false);
   const [newBio, setNewBio] = useState("");
   const [savingBio, setSavingBio] = useState(false);
 
-  // Privacy
   const [privacy, setPrivacy] = useState<PrivacySettings>({
     isPrivate: false,
     showQrCodes: true,
@@ -77,7 +73,6 @@ export default function ProfileSettingsSection() {
     getPrivacySettings(user.id).then(setPrivacy).finally(() => setPrivacyLoading(false));
   }, [user?.id]);
 
-  // Username availability check
   useEffect(() => {
     if (!editingUsername || !newUsername) { setUsernameAvailable(null); return; }
     if (!/^[a-z][a-z0-9_]{2,19}$/.test(newUsername)) { setUsernameAvailable(null); return; }
@@ -91,7 +86,7 @@ export default function ProfileSettingsSection() {
     return () => clearTimeout(t);
   }, [newUsername, editingUsername, username]);
 
-  async function handleSaveName() {
+  const handleSaveName = useCallback(async () => {
     if (!newName.trim() || !user) return;
     Keyboard.dismiss();
     setSavingName(true);
@@ -109,9 +104,9 @@ export default function ProfileSettingsSection() {
     } finally {
       setSavingName(false);
     }
-  }
+  }, [newName, user?.id, updateLocalDisplayName]);
 
-  async function handleSaveUsername() {
+  const handleSaveUsername = useCallback(async () => {
     if (!user || !newUsername.trim()) return;
     Keyboard.dismiss();
     setUsernameError("");
@@ -127,9 +122,9 @@ export default function ProfileSettingsSection() {
     } finally {
       setSavingUsername(false);
     }
-  }
+  }, [user?.id, newUsername]);
 
-  async function handleSaveBio() {
+  const handleSaveBio = useCallback(async () => {
     if (!user) return;
     Keyboard.dismiss();
     setSavingBio(true);
@@ -142,21 +137,33 @@ export default function ProfileSettingsSection() {
     } finally {
       setSavingBio(false);
     }
-  }
+  }, [user?.id, newBio]);
 
-  async function handlePrivacyToggle(key: keyof PrivacySettings, val: boolean) {
+  const handlePrivacyToggle = useCallback(async (key: keyof PrivacySettings, val: boolean) => {
     if (!user) return;
-    const updated = { ...privacy, [key]: val };
-    setPrivacy(updated);
-    setSavingPrivacy(true);
-    try {
-      await updatePrivacySettings(user.id, updated);
-    } catch {
-      setPrivacy(privacy);
-    } finally {
-      setSavingPrivacy(false);
-    }
-  }
+    setPrivacy((prev) => {
+      const updated = { ...prev, [key]: val };
+      setSavingPrivacy(true);
+      updatePrivacySettings(user.id, updated)
+        .catch(() => setPrivacy(prev))
+        .finally(() => setSavingPrivacy(false));
+      return updated;
+    });
+  }, [user?.id]);
+
+  const onTogglePrivate    = useCallback((v: boolean) => handlePrivacyToggle("isPrivate", v),       [handlePrivacyToggle]);
+  const onToggleStats      = useCallback((v: boolean) => handlePrivacyToggle("showStats", v),       [handlePrivacyToggle]);
+  const onToggleFriends    = useCallback((v: boolean) => handlePrivacyToggle("showFriendsCount", v),[handlePrivacyToggle]);
+  const onToggleScanAct    = useCallback((v: boolean) => handlePrivacyToggle("showScanActivity", v),[handlePrivacyToggle]);
+
+  const startEditName     = useCallback(() => { setNewName(displayName); setEditingName(true); }, [displayName]);
+  const cancelEditName    = useCallback(() => setEditingName(false), []);
+  const startEditUsername = useCallback(() => {
+    if (daysUntilEdit === 0) { setNewUsername(username || ""); setEditingUsername(true); }
+  }, [daysUntilEdit, username]);
+  const cancelEditUsername = useCallback(() => { setEditingUsername(false); setUsernameError(""); }, []);
+  const startEditBio      = useCallback(() => { setNewBio(bio); setEditingBio(true); }, [bio]);
+  const cancelEditBio     = useCallback(() => { setEditingBio(false); setNewBio(bio); }, [bio]);
 
   const canEditUsername = daysUntilEdit === 0;
 
@@ -186,12 +193,12 @@ export default function ProfileSettingsSection() {
               <Pressable onPress={handleSaveName} disabled={savingName} style={[styles.saveBtn, { backgroundColor: colors.primary }]}>
                 {savingName ? <ActivityIndicator size="small" color={colors.primaryText} /> : <Text style={[styles.saveBtnText, { color: colors.primaryText }]}>Save</Text>}
               </Pressable>
-              <Pressable onPress={() => setEditingName(false)} style={styles.cancelBtn}>
+              <Pressable onPress={cancelEditName} style={styles.cancelBtn}>
                 <Ionicons name="close" size={17} color={colors.textMuted} />
               </Pressable>
             </View>
           ) : (
-            <Pressable onPress={() => { setNewName(displayName); setEditingName(true); }} style={styles.valueRow}>
+            <Pressable onPress={startEditName} style={styles.valueRow}>
               <Text style={[styles.valueText, { color: colors.text }]}>{displayName || "—"}</Text>
               <Ionicons name="pencil" size={13} color={colors.textMuted} />
             </Pressable>
@@ -227,7 +234,7 @@ export default function ProfileSettingsSection() {
                 <Text style={[styles.hintText, { color: colors.textMuted }]}>3–20 characters, letters/numbers/underscore</Text>
               ) : null}
               <View style={styles.editRowActions}>
-                <Pressable onPress={() => { setEditingUsername(false); setUsernameError(""); }} style={styles.cancelBtn}>
+                <Pressable onPress={cancelEditUsername} style={styles.cancelBtn}>
                   <Text style={[styles.cancelText, { color: colors.textMuted }]}>Cancel</Text>
                 </Pressable>
                 <Pressable
@@ -241,7 +248,7 @@ export default function ProfileSettingsSection() {
             </View>
           ) : (
             <Pressable
-              onPress={() => { if (canEditUsername) { setNewUsername(username || ""); setEditingUsername(true); } }}
+              onPress={startEditUsername}
               style={[styles.valueRow, !canEditUsername && { opacity: 0.6 }]}
             >
               <Text style={[styles.valueText, { color: username ? colors.primary : colors.textMuted }]}>
@@ -277,7 +284,7 @@ export default function ProfileSettingsSection() {
               />
               <View style={styles.editRowActions}>
                 <Text style={[styles.charCount, { color: colors.textMuted }]}>{newBio.length}/150</Text>
-                <Pressable onPress={() => { setEditingBio(false); setNewBio(bio); }} style={styles.cancelBtn}>
+                <Pressable onPress={cancelEditBio} style={styles.cancelBtn}>
                   <Text style={[styles.cancelText, { color: colors.textMuted }]}>Cancel</Text>
                 </Pressable>
                 <Pressable onPress={handleSaveBio} disabled={savingBio} style={[styles.saveBtn, { backgroundColor: colors.primary }]}>
@@ -286,7 +293,7 @@ export default function ProfileSettingsSection() {
               </View>
             </View>
           ) : (
-            <Pressable onPress={() => { setNewBio(bio); setEditingBio(true); }} style={styles.valueRow}>
+            <Pressable onPress={startEditBio} style={styles.valueRow}>
               <Text style={[styles.valueText, { color: bio ? colors.text : colors.textMuted, flex: 1 }]} numberOfLines={2}>
                 {bio || "Add a bio"}
               </Text>
@@ -312,7 +319,7 @@ export default function ProfileSettingsSection() {
               label={privacy.isPrivate ? "Private Account" : "Public Account"}
               sub={privacy.isPrivate ? "Only friends can see your profile" : "Visible to everyone"}
               value={privacy.isPrivate}
-              onChange={(v) => handlePrivacyToggle("isPrivate", v)}
+              onChange={onTogglePrivate}
               colors={colors}
             />
             {!privacy.isPrivate && (
@@ -320,15 +327,15 @@ export default function ProfileSettingsSection() {
                 <View style={[styles.divider, { backgroundColor: colors.surfaceBorder }]} />
                 <PrivacyToggle icon="bar-chart-outline" iconColor={colors.primary} iconBg={colors.primaryDim}
                   label="Show Stats" sub="QR codes, scans on your profile"
-                  value={privacy.showStats} onChange={(v) => handlePrivacyToggle("showStats", v)} colors={colors} />
+                  value={privacy.showStats} onChange={onToggleStats} colors={colors} />
                 <View style={[styles.divider, { backgroundColor: colors.surfaceBorder }]} />
                 <PrivacyToggle icon="people-outline" iconColor={colors.safe} iconBg={colors.safeDim}
                   label="Show Friends Count" sub="Display your friend count publicly"
-                  value={privacy.showFriendsCount} onChange={(v) => handlePrivacyToggle("showFriendsCount", v)} colors={colors} />
+                  value={privacy.showFriendsCount} onChange={onToggleFriends} colors={colors} />
                 <View style={[styles.divider, { backgroundColor: colors.surfaceBorder }]} />
                 <PrivacyToggle icon="scan-outline" iconColor={colors.accent} iconBg={colors.accentDim}
                   label="Show Scan Activity" sub="Display your scan count publicly"
-                  value={privacy.showScanActivity} onChange={(v) => handlePrivacyToggle("showScanActivity", v)} colors={colors} />
+                  value={privacy.showScanActivity} onChange={onToggleScanAct} colors={colors} />
               </>
             )}
           </>
@@ -342,7 +349,7 @@ export default function ProfileSettingsSection() {
   );
 }
 
-function PrivacyToggle({ icon, iconColor, iconBg, label, sub, value, onChange, colors }: {
+const PrivacyToggle = memo(function PrivacyToggle({ icon, iconColor, iconBg, label, sub, value, onChange, colors }: {
   icon: keyof typeof Ionicons.glyphMap;
   iconColor: string; iconBg: string;
   label: string; sub: string;
@@ -366,7 +373,7 @@ function PrivacyToggle({ icon, iconColor, iconBg, label, sub, value, onChange, c
       />
     </View>
   );
-}
+});
 
 const styles = StyleSheet.create({
   scroll: { paddingHorizontal: 20, paddingTop: 8 },

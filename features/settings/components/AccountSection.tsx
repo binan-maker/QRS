@@ -1,3 +1,4 @@
+import { useMemo } from "react";
 import { View, Text, TextInput, Pressable, ScrollView } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -12,13 +13,13 @@ interface Props {
   setDeleteConfirmText: (v: string) => void;
   handleDeleteAccount: () => void;
   goToComments: () => void;
-  goToHistory: () => void;
+  goToHistory?: () => void;
 }
 
 export default function AccountSection({ user, deleteConfirmText, setDeleteConfirmText, handleDeleteAccount, goToComments, goToHistory }: Props) {
   const insets = useSafeAreaInsets();
   const { colors } = useTheme();
-  const styles = makeSettingsStyles(colors);
+  const styles = useMemo(() => makeSettingsStyles(colors), [colors]);
   return (
     <ScrollView
       showsVerticalScrollIndicator={false}
@@ -32,7 +33,7 @@ export default function AccountSection({ user, deleteConfirmText, setDeleteConfi
               icon="time-outline"
               label="My History"
               sublabel="View and delete your scan history"
-              onPress={goToHistory}
+              onPress={goToHistory ?? (() => {})}
             />
             <View style={styles.divider} />
             <SettingsMenuItem

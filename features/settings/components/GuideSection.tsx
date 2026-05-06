@@ -1,3 +1,4 @@
+import { useMemo } from "react";
 import { ScrollView, View, Text } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -19,7 +20,8 @@ const GUIDE_STEPS = [
 export default function GuideSection() {
   const insets = useSafeAreaInsets();
   const { colors } = useTheme();
-  const styles = makeSettingsStyles(colors);
+  const styles = useMemo(() => makeSettingsStyles(colors), [colors]);
+
   return (
     <ScrollView
       showsVerticalScrollIndicator={false}

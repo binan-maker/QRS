@@ -1,3 +1,4 @@
+import { useMemo } from "react";
 import { View, Text, TextInput, Pressable, ScrollView, ActivityIndicator } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -20,7 +21,7 @@ export default function FeedbackSection({
 }: Props) {
   const insets = useSafeAreaInsets();
   const { colors } = useTheme();
-  const styles = makeSettingsStyles(colors);
+  const styles = useMemo(() => makeSettingsStyles(colors), [colors]);
 
   if (feedbackDone) {
     return (

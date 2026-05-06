@@ -1,3 +1,4 @@
+import React, { useCallback, useMemo } from "react";
 import { Pressable, Text, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import * as Haptics from "@/lib/haptics";
@@ -12,15 +13,18 @@ interface Props {
   danger?: boolean;
 }
 
-export default function SettingsMenuItem({ icon, label, sublabel, onPress, danger }: Props) {
+const SettingsMenuItem = React.memo(function SettingsMenuItem({ icon, label, sublabel, onPress, danger }: Props) {
   const { colors } = useTheme();
-  const styles = makeSettingsStyles(colors);
+  const styles = useMemo(() => makeSettingsStyles(colors), [colors]);
+
+  const handlePress = useCallback(() => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    onPress();
+  }, [onPress]);
+
   return (
     <Pressable
-      onPress={() => {
-        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-        onPress();
-      }}
+      onPress={handlePress}
       style={({ pressed }) => [styles.menuItem, { opacity: pressed ? 0.75 : 1 }]}
     >
       <View style={[styles.menuIconWrap, {
@@ -37,4 +41,6 @@ export default function SettingsMenuItem({ icon, label, sublabel, onPress, dange
       </View>
     </Pressable>
   );
-}
+});
+
+export default SettingsMenuItem;
