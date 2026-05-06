@@ -13,16 +13,6 @@ import { subscribeToNotificationCount } from "@/lib/firestore-service";
 import { LinearGradient } from "expo-linear-gradient";
 import { useAppTranslation } from "@/lib/i18n/useAppTranslation";
 
-function useEmailVerificationGuard() {
-  const { user, isLoading } = useAuth();
-  useEffect(() => {
-    if (isLoading) return;
-    if (user && !user.emailVerified) {
-      router.replace("/(auth)/verify-email");
-    }
-  }, [user, isLoading]);
-}
-
 function ScanTabButton({ onPress }: { onPress?: () => void }) {
   const { colors } = useTheme();
   return (
@@ -68,7 +58,6 @@ function useNotificationCount() {
 
 function NativeTabLayout() {
   const { t } = useAppTranslation();
-  useEmailVerificationGuard();
   return (
     <NativeTabs>
       <NativeTabs.Trigger name="index">
@@ -101,7 +90,6 @@ function ClassicTabLayout() {
   const insets = useSafeAreaInsets();
   const { colors } = useTheme();
   const { t } = useAppTranslation();
-  useEmailVerificationGuard();
 
   const tabBarHeight = isWeb ? 84 : 70 + insets.bottom;
 
