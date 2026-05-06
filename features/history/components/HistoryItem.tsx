@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useMemo, useCallback } from "react";
 import { View, Text, Pressable, StyleSheet } from "react-native";
 import { router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
@@ -44,7 +44,6 @@ function getRiskConfig(risk: string, colors: any) {
     label: "Caution",
     color: colors.warning,
     bg: colors.warningDim ?? colors.warning + "18",
-    cardTint: null,
     borderColor: colors.warning + "50",
   };
   return null;
@@ -89,9 +88,7 @@ function getDisplayLabel(contentType: string, content: string): string {
 }
 
 function getSubtitle(contentType: string, content: string): string | null {
-  if (contentType === "url") {
-    return content;
-  }
+  if (contentType === "url") return content;
   if (contentType === "payment") {
     try {
       const parsed = parseAnyPaymentQr(content);
@@ -119,10 +116,22 @@ const HistoryItem = React.memo(function HistoryItem({ item, risk, onDelete }: Hi
 
   const isFavorite = item.source === "favorite";
   const isSynced   = item.source === "cloud";
-  const displayLabel = getDisplayLabel(item.contentType, item.content);
-  const subtitle = getSubtitle(item.contentType, item.content);
-  const meta = getTypeMeta(item.contentType, colors);
-  const riskCfg = getRiskConfig(risk, colors);
+
+  // Memoize all expensive per-item computations
+  const displayLabel = useMemo(() => getDisplayLabel(item.contentType, item.content), [item.contentType, item.content]);
+  const subtitle     = useMemo(() => getSubtitle(item.contentType, item.content), [item.contentType, item.content]);
+  const meta         = useMemo(() => getTypeMeta(item.contentType, colors), [item.contentType, colors]);
+  const riskCfg      = useMemo(() => getRiskConfig(risk, colors), [risk, colors]);
+  const paymentData  = useMemo(
+    () => item.contentType === "payment" ? getPaymentData(item.content) : null,
+    [item.contentType, item.content]
+  );
+  const formattedAmount = useMemo(
+    () => paymentData?.amount ? formatAmount(paymentData.amount) : null,
+    [paymentData]
+  );
+  const timeAgo = useMemo(() => formatRelativeTime(item.scannedAt), [item.scannedAt]);
+
   const showRisk = (item.contentType === "url" || item.contentType === "payment") && risk !== "safe";
 
   const gradient: [string, string] = isFavorite
@@ -131,37 +140,32 @@ const HistoryItem = React.memo(function HistoryItem({ item, risk, onDelete }: Hi
         ? [colors.warning, colors.warningShade ?? colors.warning]
         : meta.gradient;
 
-  const paymentData = item.contentType === "payment" ? getPaymentData(item.content) : null;
-  const formattedAmount = paymentData?.amount ? formatAmount(paymentData.amount) : null;
-
-  function handlePress() {
-    if (item.qrCodeId) {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-      router.push({ pathname: "/qr-detail/[id]", params: { id: item.qrCodeId } });
-    }
-  }
-
-  const isDangerous = false;
-  const cardBg = isDark ? colors.surface : "#ffffff";
-
   const accentBorder = showRisk && riskCfg
     ? riskCfg.borderColor
     : isFavorite
       ? colors.danger + "35"
       : colors.surfaceBorder;
 
-  const renderRightActions = () => (
-    <Pressable
-      onPress={() => {
-        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-        onDelete(item);
-      }}
-      style={styles.swipeDeleteBtn}
-    >
+  const cardBg = isDark ? colors.surface : "#ffffff";
+
+  const handlePress = useCallback(() => {
+    if (item.qrCodeId) {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      router.push({ pathname: "/qr-detail/[id]", params: { id: item.qrCodeId } });
+    }
+  }, [item.qrCodeId]);
+
+  const handleDelete = useCallback(() => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    onDelete(item);
+  }, [onDelete, item]);
+
+  const renderRightActions = useCallback(() => (
+    <Pressable onPress={handleDelete} style={styles.swipeDeleteBtn}>
       <Ionicons name="trash-outline" size={20} color="#fff" />
       <Text style={styles.swipeDeleteText}>Delete</Text>
     </Pressable>
-  );
+  ), [handleDelete]);
 
   return (
     <Swipeable
@@ -189,20 +193,12 @@ const HistoryItem = React.memo(function HistoryItem({ item, risk, onDelete }: Hi
           end={{ x: 1, y: 1 }}
           style={styles.iconBox}
         >
-          <Ionicons
-            name={isFavorite ? "heart" : meta.icon}
-            size={21}
-            color="#fff"
-          />
+          <Ionicons name={isFavorite ? "heart" : meta.icon} size={21} color="#fff" />
         </LinearGradient>
 
         <View style={styles.body}>
           <View style={styles.titleRow}>
-            <Text
-              style={[styles.title, { color: colors.text }]}
-              numberOfLines={1}
-              maxFontSizeMultiplier={1}
-            >
+            <Text style={[styles.title, { color: colors.text }]} numberOfLines={1} maxFontSizeMultiplier={1}>
               {paymentData ? paymentData.name : displayLabel}
             </Text>
             {formattedAmount && (
@@ -215,11 +211,7 @@ const HistoryItem = React.memo(function HistoryItem({ item, risk, onDelete }: Hi
           </View>
 
           {subtitle && (
-            <Text
-              style={[styles.subtitle, { color: colors.textSecondary }]}
-              numberOfLines={1}
-              maxFontSizeMultiplier={1}
-            >
+            <Text style={[styles.subtitle, { color: colors.textSecondary }]} numberOfLines={1} maxFontSizeMultiplier={1}>
               {subtitle}
             </Text>
           )}
@@ -233,7 +225,6 @@ const HistoryItem = React.memo(function HistoryItem({ item, risk, onDelete }: Hi
                 </Text>
               </View>
             )}
-
             {isSynced && (
               <Ionicons name="cloud-done-outline" size={12} color={colors.safe} />
             )}
@@ -242,7 +233,7 @@ const HistoryItem = React.memo(function HistoryItem({ item, risk, onDelete }: Hi
 
         <View style={styles.right}>
           <Text style={[styles.time, { color: colors.textMuted }]} maxFontSizeMultiplier={1}>
-            {formatRelativeTime(item.scannedAt)}
+            {timeAgo}
           </Text>
           <View style={[styles.chevronWrap, { backgroundColor: gradient[0] + "18" }]}>
             <Ionicons name="chevron-forward" size={13} color={gradient[0]} />
@@ -269,15 +260,6 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
     shadowRadius: 12,
     elevation: 2,
-  },
-  dangerStripe: {
-    position: "absolute",
-    left: 0,
-    top: 0,
-    bottom: 0,
-    width: 3,
-    borderTopLeftRadius: 20,
-    borderBottomLeftRadius: 20,
   },
   iconBox: {
     width: 48,

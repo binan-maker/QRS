@@ -3,7 +3,6 @@ import {
   View,
   Text,
   StyleSheet,
-  FlatList,
   Pressable,
   Platform,
   RefreshControl,
@@ -11,6 +10,7 @@ import {
   TextInput,
   Keyboard,
 } from "react-native";
+import { FlashList } from "@shopify/flash-list";
 import { router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
@@ -119,23 +119,22 @@ function HistoryScreen() {
   const topInset = Platform.OS === "web" ? 67 : insets.top;
   const { width } = useWindowDimensions();
   const s = Math.min(Math.max(width / 390, 0.82), 1.0);
-  const rf = (size: number) => Math.round(size * s);
+  const rf = useCallback((size: number) => Math.round(size * s), [s]);
 
-  function openSearch() {
+  const openSearch = useCallback(() => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     setSearchVisible(true);
-  }
+  }, []);
 
-  function closeSearch() {
+  const closeSearch = useCallback(() => {
     setSearchQuery("");
     setSearchVisible(false);
     Keyboard.dismiss();
-  }
+  }, []);
 
   const totalCount = scanStats?.total ?? history.length;
   const showNAStats = !isOnline && scanStats === null;
 
-  // Filter chips counts from true totals (from scanStats) or fallback to loaded history
   const activeFilters: { key: Filter; label: string; count?: number }[] = useMemo(() => {
     const base = FILTERS.map((f) => {
       let count = 0;
@@ -150,7 +149,6 @@ function HistoryScreen() {
     return base;
   }, [scanStats, history, user]);
 
-  // Apply inline search on top of the filter-based displayItems
   const searchedItems = useMemo(() => {
     if (!searchQuery.trim()) return displayItems;
     return displayItems.filter((item) => matchesSearch(item, searchQuery));
@@ -203,6 +201,11 @@ function HistoryScreen() {
   const keyExtractor = useCallback((row: ListRow) =>
     row.kind === "header" ? row.id : row.item.id,
   []);
+
+  const getItemType = useCallback(
+    (row: ListRow) => (row.kind === "header" ? "header" : "item"),
+    []
+  );
 
   const emptyComponent = () => {
     if (!user) {
@@ -262,12 +265,10 @@ function HistoryScreen() {
     }
     const emptyIcon: keyof typeof Ionicons.glyphMap =
       filter === "favorites" ? "heart-outline" : "time-outline";
-    const emptyMsg =
-      filter === "favorites" ? "No favorites yet" : "No scans yet";
-    const emptySub =
-      filter === "favorites"
-        ? "Tap the heart on a QR detail to save it here"
-        : "Scanned QR codes will appear here";
+    const emptyMsg = filter === "favorites" ? "No favorites yet" : "No scans yet";
+    const emptySub = filter === "favorites"
+      ? "Tap the heart on a QR detail to save it here"
+      : "Scanned QR codes will appear here";
     return (
       <View style={styles.emptyState}>
         <LinearGradient
@@ -281,6 +282,17 @@ function HistoryScreen() {
       </View>
     );
   };
+
+  const statsHeader = showStats && !searchVisible ? (
+    <View style={[styles.statsCard, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
+      <View style={[styles.statItem, { borderRightWidth: 0 }]}>
+        <Text style={[styles.statNumber, { color: showNAStats ? colors.textMuted : colors.text }]} maxFontSizeMultiplier={1}>
+          {showNAStats ? "N/A" : totalCount}
+        </Text>
+        <Text style={[styles.statLabel, { color: colors.textMuted }]} maxFontSizeMultiplier={1}>Total Scans</Text>
+      </View>
+    </View>
+  ) : null;
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background, paddingTop: topInset }]}>
@@ -312,7 +324,6 @@ function HistoryScreen() {
           </View>
         </View>
       ) : (
-        /* ── Search bar ───────────────────────────────────────────── */
         <View style={[styles.searchBar, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
           <Ionicons name="search-outline" size={17} color={colors.textMuted} />
           <TextInput
@@ -337,19 +348,13 @@ function HistoryScreen() {
         </View>
       )}
 
-
       {/* ── Cloud Error Banner ─────────────────────────────────────── */}
       {user && cloudError && !searchVisible && (
         <Pressable
           onPress={onRefresh}
           style={[
             styles.cloudErrorBanner,
-            {
-              backgroundColor: colors.warningDim,
-              borderColor: colors.warning + "40",
-              marginHorizontal: 16,
-              marginBottom: 6,
-            },
+            { backgroundColor: colors.warningDim, borderColor: colors.warning + "40", marginHorizontal: 16, marginBottom: 6 },
           ]}
         >
           <Ionicons name="cloud-offline-outline" size={15} color={colors.warning} />
@@ -368,7 +373,7 @@ function HistoryScreen() {
         />
       )}
 
-      {/* ── Offline Banner (below filters) ──────────────────────────── */}
+      {/* ── Offline Banner ──────────────────────────────────────────── */}
       {!isOnline && user && !searchVisible && (
         <View style={[styles.offlineBanner, { backgroundColor: colors.surface, borderColor: "#3b82f6" + "30" }]}>
           <View style={[styles.offlineBannerDot, { backgroundColor: "#3b82f6" + "20" }]}>
@@ -389,29 +394,20 @@ function HistoryScreen() {
         </View>
       )}
 
-      {/* ── List ───────────────────────────────────────────────────── */}
-      <FlatList
+      {/* ── Virtualized List (FlashList) ────────────────────────────── */}
+      <FlashList
         data={listRows}
         renderItem={renderItem}
         keyExtractor={keyExtractor}
+        getItemType={getItemType}
+        estimatedItemSize={88}
         contentContainerStyle={[
           styles.list,
           { paddingBottom: Platform.OS === "web" ? 34 + 84 : insets.bottom + 84 },
         ]}
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
-        ListHeaderComponent={
-          showStats && !searchVisible ? (
-            <View style={[styles.statsCard, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
-              <View style={[styles.statItem, { borderRightWidth: 0 }]}>
-                <Text style={[styles.statNumber, { color: showNAStats ? colors.textMuted : colors.text }]} maxFontSizeMultiplier={1}>
-                  {showNAStats ? "N/A" : totalCount}
-                </Text>
-                <Text style={[styles.statLabel, { color: colors.textMuted }]} maxFontSizeMultiplier={1}>Total Scans</Text>
-              </View>
-            </View>
-          ) : null
-        }
+        ListHeaderComponent={statsHeader}
         refreshControl={
           !searchVisible ? (
             <RefreshControl
@@ -432,9 +428,7 @@ function HistoryScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
+  container: { flex: 1 },
   header: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -443,207 +437,48 @@ const styles = StyleSheet.create({
     paddingTop: 8,
     paddingBottom: 10,
   },
-  headerTitle: {
-    fontFamily: "Inter_700Bold",
-    letterSpacing: -0.5,
-    lineHeight: 28,
-  },
-  headerActions: {
-    flexDirection: "row",
-    gap: 8,
-    alignItems: "center",
-  },
+  headerTitle: { fontFamily: "Inter_700Bold", letterSpacing: -0.5, lineHeight: 28 },
+  headerActions: { flexDirection: "row", gap: 8, alignItems: "center" },
   headerBtn: {
-    width: 38,
-    height: 38,
-    borderRadius: 12,
-    alignItems: "center",
-    justifyContent: "center",
-    borderWidth: 1,
+    width: 38, height: 38, borderRadius: 12,
+    alignItems: "center", justifyContent: "center", borderWidth: 1,
   },
   searchBar: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 10,
-    marginHorizontal: 16,
-    marginTop: 8,
-    marginBottom: 10,
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    borderRadius: 14,
-    borderWidth: 1,
+    flexDirection: "row", alignItems: "center", gap: 10,
+    marginHorizontal: 16, marginTop: 8, marginBottom: 10,
+    paddingHorizontal: 14, paddingVertical: 10, borderRadius: 14, borderWidth: 1,
   },
-  searchInput: {
-    flex: 1,
-    fontSize: 14,
-    fontFamily: "Inter_400Regular",
-    paddingVertical: 0,
-  },
-  searchCancel: {
-    fontFamily: "Inter_600SemiBold",
-    fontSize: 14,
-  },
-  searchResultsRow: {
-    paddingHorizontal: 20,
-    paddingBottom: 8,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-  },
-  searchResultsText: {
-    fontFamily: "Inter_400Regular",
-  },
-  statsCard: {
-    flexDirection: "row",
-    marginBottom: 12,
-    borderWidth: 1,
-    borderRadius: 16,
-    overflow: "hidden",
-  },
-  statItem: {
-    flex: 1,
-    alignItems: "center",
-    paddingVertical: 10,
-    borderRightWidth: 1,
-  },
-  statNumber: {
-    fontFamily: "Inter_700Bold",
-    fontSize: 18,
-    lineHeight: 22,
-    letterSpacing: -0.5,
-  },
-  statLabel: {
-    fontFamily: "Inter_500Medium",
-    fontSize: 10,
-    letterSpacing: 0.2,
-    marginTop: 1,
-  },
+  searchInput: { flex: 1, fontSize: 14, fontFamily: "Inter_400Regular", paddingVertical: 0 },
+  searchCancel: { fontFamily: "Inter_600SemiBold", fontSize: 14 },
+  searchResultsRow: { paddingHorizontal: 20, paddingBottom: 8, borderBottomWidth: StyleSheet.hairlineWidth },
+  searchResultsText: { fontFamily: "Inter_400Regular" },
+  statsCard: { flexDirection: "row", marginBottom: 12, borderWidth: 1, borderRadius: 16, overflow: "hidden" },
+  statItem: { flex: 1, alignItems: "center", paddingVertical: 10, borderRightWidth: 1 },
+  statNumber: { fontFamily: "Inter_700Bold", fontSize: 18, lineHeight: 22, letterSpacing: -0.5 },
+  statLabel: { fontFamily: "Inter_500Medium", fontSize: 10, letterSpacing: 0.2, marginTop: 1 },
   sectionHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 9,
-    paddingVertical: 13,
-    paddingHorizontal: 2,
-    marginBottom: 2,
+    flexDirection: "row", alignItems: "center", gap: 9,
+    paddingVertical: 13, paddingHorizontal: 2, marginBottom: 2,
   },
-  sectionLabel: {
-    fontSize: 11,
-    fontFamily: "Inter_700Bold",
-    textTransform: "uppercase",
-    letterSpacing: 1.3,
-    flexShrink: 0,
-  },
-  sectionLine: {
-    flex: 1,
-    height: 1,
-  },
-  sectionCount: {
-    borderRadius: 100,
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    flexShrink: 0,
-  },
-  sectionCountText: {
-    fontSize: 10,
-    fontFamily: "Inter_700Bold",
-    letterSpacing: 0.2,
-  },
-  list: {
-    paddingHorizontal: 16,
-    paddingTop: 2,
-  },
-  threatBanner: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 9,
-    padding: 10,
-    borderRadius: 12,
-    borderWidth: 1,
-  },
-  threatBannerIcon: {
-    width: 26,
-    height: 26,
-    borderRadius: 8,
-    alignItems: "center",
-    justifyContent: "center",
-    flexShrink: 0,
-  },
-  threatBannerText: {
-    fontFamily: "Inter_600SemiBold",
-    flex: 1,
-  },
-  cloudErrorBanner: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-    padding: 10,
-    borderRadius: 12,
-    borderWidth: 1,
-  },
-  cloudErrorText: {
-    fontFamily: "Inter_500Medium",
-    flex: 1,
-  },
-  emptyState: {
-    alignItems: "center",
-    gap: 10,
-    paddingVertical: 60,
-    paddingHorizontal: 36,
-  },
-  emptyIconWrap: {
-    width: 80,
-    height: 80,
-    borderRadius: 24,
-    alignItems: "center",
-    justifyContent: "center",
-    marginBottom: 8,
-  },
-  emptyTitle: {
-    fontFamily: "Inter_700Bold",
-    textAlign: "center",
-    letterSpacing: -0.3,
-  },
-  emptySubtext: {
-    fontFamily: "Inter_400Regular",
-    textAlign: "center",
-    lineHeight: 20,
-  },
-  signInBtn: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-    marginTop: 10,
-    paddingHorizontal: 28,
-    paddingVertical: 13,
-    borderRadius: 14,
-  },
-  signInBtnText: {
-    fontFamily: "Inter_700Bold",
-    color: "#fff",
-    letterSpacing: 0.2,
-  },
+  sectionLabel: { fontSize: 11, fontFamily: "Inter_700Bold", textTransform: "uppercase", letterSpacing: 1.3, flexShrink: 0 },
+  sectionLine: { flex: 1, height: 1 },
+  sectionCount: { borderRadius: 100, paddingHorizontal: 8, paddingVertical: 2, flexShrink: 0 },
+  sectionCountText: { fontSize: 10, fontFamily: "Inter_700Bold", letterSpacing: 0.2 },
+  list: { paddingHorizontal: 16, paddingTop: 2 },
+  cloudErrorBanner: { flexDirection: "row", alignItems: "center", gap: 8, padding: 10, borderRadius: 12, borderWidth: 1 },
+  cloudErrorText: { fontFamily: "Inter_500Medium", flex: 1 },
+  emptyState: { alignItems: "center", gap: 10, paddingVertical: 60, paddingHorizontal: 36 },
+  emptyIconWrap: { width: 80, height: 80, borderRadius: 24, alignItems: "center", justifyContent: "center", marginBottom: 8 },
+  emptyTitle: { fontFamily: "Inter_700Bold", textAlign: "center", letterSpacing: -0.3 },
+  emptySubtext: { fontFamily: "Inter_400Regular", textAlign: "center", lineHeight: 20 },
+  signInBtn: { flexDirection: "row", alignItems: "center", gap: 8, marginTop: 10, paddingHorizontal: 28, paddingVertical: 13, borderRadius: 14 },
+  signInBtnText: { fontFamily: "Inter_700Bold", color: "#fff", letterSpacing: 0.2 },
   offlineBanner: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-    marginHorizontal: 16,
-    marginBottom: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 12,
-    borderWidth: 1,
+    flexDirection: "row", alignItems: "center", gap: 8,
+    marginHorizontal: 16, marginBottom: 8, paddingHorizontal: 12, paddingVertical: 8, borderRadius: 12, borderWidth: 1,
   },
-  offlineBannerDot: {
-    width: 22,
-    height: 22,
-    borderRadius: 7,
-    alignItems: "center",
-    justifyContent: "center",
-    flexShrink: 0,
-  },
-  offlineBannerText: {
-    fontFamily: "Inter_500Medium",
-    fontSize: 12,
-    flex: 1,
-  },
+  offlineBannerDot: { width: 22, height: 22, borderRadius: 7, alignItems: "center", justifyContent: "center", flexShrink: 0 },
+  offlineBannerText: { fontFamily: "Inter_500Medium", fontSize: 12, flex: 1 },
 });
 
 export default React.memo(HistoryScreen);
