@@ -1,0 +1,16 @@
+Based on your description and the current state of the project, here is an explanation of why you are seeing these issues:
+1. QR Code Missing in PDF
+When you download a PDF and the QR code is missing, it is usually due to one of these technical reasons:
+Image Loading Race Condition: The app uses a library (like expo-print) to convert HTML to a PDF. If the PDF is generated before the QR code image has finished rendering or loading in the background, the PDF "snapshot" will capture an empty space where the QR code should be.
+Local URI Access: The PDF generator often runs in a separate environment that may not have access to local file paths (like file://...). If the QR code is saved as a local file and then referenced in the PDF HTML, the generator might be blocked from reading it.
+Base64 Encoding: For QR codes to show up reliably in PDFs, they usually need to be converted into a Base64 Data URI (a long string of text representing the image). If the code is passing a simple web link or a raw SVG that hasn't been converted, the PDF engine may fail to render it.
+2. Share Button / Image Sharing Issues
+If the "Share" button is not sharing the image correctly, the problem is likely related to:
+File Preparation: To share an image, the app must first save the QR code to a temporary folder on your phone. If the "Share" action is triggered before the file is fully written to the disk, you will end up sharing a "null" or empty file.
+URI Formatting: Sharing libraries (like expo-sharing) require a specific file:// prefix. If the app tries to share a raw image buffer or a web URL instead of a local file path, the sharing dialog will open but won't attach the actual image.
+MIME Type Mismatch: The phone needs to be told exactly what kind of file it is sharing (e.g., image/png). If this "MIME type" is missing, the phone might treat the QR code as a plain text file or a broken link.
+3. The "Always Offline" Problem (Revisited)
+The reason your app shows "Offline" while your internet works (and Sign-in works) is because:
+Broken Logic: The logic that checks for internet (the useNetworkStatus hook) is likely disconnected or returning a "false" value by default.
+Auth vs. App State: Sign-in works because it uses a separate, direct connection to the server that doesn't check the app's internal "offline" flag. However, the rest of the app (Scanner, History, Details) is "listening" to that faulty flag and refusing to connect to the database because it thinks there is no internet.
+In short: The "brain" of the app (the logic files you recently deleted or modified) is currently misinterpreting the signals from the phone's hardware, leading to these display and functional errors.

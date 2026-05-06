@@ -1,0 +1,26 @@
+1. The "Stats Row" (The Biggest Clutter)
+In your code (Lines 191–208), you have a row showing "Safe Scans," "Stay Alert," and "Community."
+The Problem: These look like "Marketing" boxes. They don't show live data (like "You have scanned 5 QRs"). They are just icons and text that take up a lot of vertical space.
+User Perspective: When I open the app, I want to Scan or see my Recent History. These boxes push your "Recent Scans" further down the screen. On a small phone, the user might not even see their history without scrolling.
+Recommendation: Remove this row. Move these "educational" items to the "How it Works" page or the "Settings" page. Keep the home screen focused on Action.
+2. The "Hero Card" Pills (Visual Noise)
+Inside your main Scan card (Lines 179–185), you have three pills: "Safe check," "Fraud detect," "Trust score."
+The Problem: These are "Feature Labels." They tell the user what the app does, but the user already knows this because they downloaded the app.
+User Perspective: It makes the main button look "busy." A clean, bold "Scan QR Code" button is more powerful than one covered in small labels.
+Recommendation: Remove the pills. Let the big icon and the "Scan QR Code" text do the talking. It will make the app look much more "Premium" and less like an advertisement.
+3. The "Tagline" (Minor Friction)
+In your header (Line 97), you have: "Scan smart. Stay safe."
+The Problem: It’s a nice slogan, but in a utility app, every pixel counts.
+User Perspective: After the 5th time I open the app, I don't need to read the slogan. I just want to see my profile and my notifications.
+Recommendation: Remove the tagline or move it into the "Welcome" greeting only for new users. This allows the "Hero Card" to sit higher up on the screen.
+4. The "Recent Scans" Empty State
+When a user is new (Lines 229–236), you show a "No scans yet" box.
+The Problem: It's a bit "Cold."
+User Perspective: It tells me what I don't have, but it doesn't encourage me to do something.
+Recommendation: Instead of just saying "No scans yet," add a small "Tutorial" or a "Sample Safe QR" that they can scan to see how the app works. This turns "Empty Space" into "Engagement."
+Summary: The "Clean" Home Page
+If you remove the Stats Row, the Tagline, and the Hero Pills, your home page becomes a "Speed Machine":
+Header: (Profile & Notifications) — Very Clean.
+Hero Card: (Big "Scan" Button) — Instant Action.
+Recent Scans: (Your History) — Immediate Value.
+Realistic Verdict: Right now, your home page is trying to "Sell" the app to the user who already has it. You should stop "Selling" and start "Serving." By removing these three things, the app will feel 2x faster and much more professional.

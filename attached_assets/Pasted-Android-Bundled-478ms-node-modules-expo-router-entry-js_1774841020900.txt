@@ -1,0 +1,39 @@
+Android Bundled 478ms node_modules\expo-router\entry.js (1 module)
+ WARN  Require cycle: lib/db/index.ts -> lib/db/firebase.ts -> lib/services/qr-service.ts -> lib/db/index.ts
+
+Require cycles are allowed, but can result in uninitialized values. Consider refactoring to remove the need for a cycle.
+ WARN  Require cycle: lib/db/index.ts -> lib/db/firebase.ts -> lib/services/qr-detail-service.ts -> lib/db/index.ts
+
+Require cycles are allowed, but can result in uninitialized values. Consider refactoring to remove the need for a cycle.
+ WARN  Require cycle: lib/db/index.ts -> lib/db/firebase.ts -> lib/services/qr-detail-service.ts -> lib/services/report-service.ts -> lib/db/index.ts
+
+Require cycles are allowed, but can result in uninitialized values. Consider refactoring to remove the need for a cycle.
+ WARN  Require cycle: lib/db/index.ts -> lib/db/firebase.ts -> lib/services/qr-detail-service.ts -> lib/services/report-service.ts -> lib/services/notification-service.ts -> lib/db/index.ts
+
+Require cycles are allowed, but can result in uninitialized values. Consider refactoring to remove the need for a cycle.
+ WARN  Require cycle: lib/db/index.ts -> lib/db/firebase.ts -> lib/services/qr-detail-service.ts -> lib/services/report-service.ts -> lib/services/integrity-service.ts -> lib/db/index.ts
+
+Require cycles are allowed, but can result in uninitialized values. Consider refactoring to remove the need for a cycle.
+ WARN  Require cycle: lib/db/index.ts -> lib/db/firebase.ts -> lib/services/qr-detail-service.ts -> lib/services/follow-service.ts -> lib/db/index.ts
+
+Require cycles are allowed, but can result in uninitialized values. Consider refactoring to remove the need for a cycle.
+ WARN  Require cycle: lib/db/index.ts -> lib/db/firebase.ts -> lib/services/qr-detail-service.ts -> lib/services/user-service.ts -> lib/db/index.ts
+
+Require cycles are allowed, but can result in uninitialized values. Consider refactoring to remove the need for a cycle.
+ WARN  Require cycle: lib/db/index.ts -> lib/db/firebase.ts -> lib/services/scan-history-service.ts -> lib/db/index.ts
+
+Require cycles are allowed, but can result in uninitialized values. Consider refactoring to remove the need for a cycle.
+ WARN  Require cycle: lib/db/index.ts -> lib/db/firebase.ts -> lib/services/comment-service.ts -> lib/db/index.ts
+
+Require cycles are allowed, but can result in uninitialized values. Consider refactoring to remove the need for a cycle.
+ WARN  Require cycle: lib/db/index.ts -> lib/db/firebase.ts -> lib/services/generator-service.ts -> lib/db/index.ts
+
+Require cycles are allowed, but can result in uninitialized values. Consider refactoring to remove the need for a cycle.
+ WARN  Require cycle: lib/db/index.ts -> lib/db/firebase.ts -> lib/services/guard-service.ts -> lib/db/index.ts
+
+Require cycles are allowed, but can result in uninitialized values. Consider refactoring to remove the need for a cycle.
+ WARN  Require cycle: lib/db/index.ts -> lib/db/firebase.ts -> lib/services/message-service.ts -> lib/db/index.ts
+
+Require cycles are allowed, but can result in uninitialized values. Consider refactoring to remove the need for a cycle.
+ WARN  Route "./my-qr/styles.ts" is missing the required default export. Ensure a React component is exported as default.
+ WARN  Route "./qr-detail/styles.ts" is missing the required default export. Ensure a React component is exported as default.     

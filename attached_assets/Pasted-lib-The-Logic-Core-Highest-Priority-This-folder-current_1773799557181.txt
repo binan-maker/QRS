@@ -1,0 +1,50 @@
+lib/ — The Logic Core (Highest Priority)
+This folder currently has some good sub-structure (lib/analysis/, lib/cache/, lib/services/, lib/utils/) but lib/firestore-service.ts is almost certainly a massive single file doing everything — reads, writes, subscriptions, transformations. That's the single biggest architectural debt remaining.
+
+The right expansion is to split it by domain:
+
+lib/services/qr.service.ts — QR code reads/writes
+lib/services/comments.service.ts — comment CRUD, moderation
+lib/services/user.service.ts — profile, stats, username
+lib/services/notifications.service.ts — RTDB notification logic
+lib/services/favorites.service.ts — favorites and following
+This makes testing and future team scaling much easier.
+
+2. components/ — Missing a layouts/ Layer
+Right now components are split as qr-detail/, scanner/, home/, profile/, ui/. What's missing is a shared layouts layer — things like:
+
+A standard ScreenHeader component (nav bar with back + title + optional right button) — this pattern repeats in nearly every screen
+A ListEmptyState component — the empty icon + title + subtitle pattern is duplicated across history, favorites, my-qr-codes, and settings
+These small extractions alone would remove 50-100 duplicate lines per screen.
+
+3. features/ — Three Features Still Missing Their Folder
+The features/ directory is partially adopted. Three screens still handle everything inline with no feature folder:
+
+features/auth/ — login.tsx, register.tsx, and forgot-password.tsx all have their own inline validation, error handling, and form logic. They'd benefit from a useLogin, useRegister hook pattern and shared AuthFormInput component.
+features/history/ — the useHistory hook exists in hooks/ but the renderItem and filter chips belong in a features/history/ folder with their own components.
+features/account/ — account-management.tsx is 455 lines with no hook at all.
+4. constants/ — Only One File
+The constants/colors.ts is the only constant. A production app this complex should also have:
+
+constants/config.ts — app version, feature flags, page sizes
+constants/routes.ts — typed route paths instead of string literals scattered across every router.push()
+constants/limits.ts — things like PAGE_SIZE = 20, username rules, cooldown days — these are currently hardcoded inside hooks
+5. server/ — The Backend Is Underdeveloped
+The Express server currently does only one thing: decode QR images. But looking at the architecture, several things that currently run client-side would be much safer and cheaper as backend endpoints:
+
+Username uniqueness check (currently a direct Firestore read — anyone can query it)
+Trust score aggregation (currently computed on the client from raw Firestore data)
+Comment keyword filtering (currently runs on device — easily bypassed)
+Feedback submission (no rate limiting currently)
+Adding a server/routes/ structure with proper middleware would be a significant security and reliability upgrade.
+
+6. shared/ — Drizzle/PostgreSQL Is Dead Code
+The shared/ folder has a Drizzle schema that's not imported anywhere. The plan is to activate it at ~10k users. The next expansion here is writing a migration plan document and adding the first few tables (users, qr_codes) so the migration isn't a scramble when the time comes.
+
+7. Testing — Completely Absent
+There is zero test coverage. The architecture is now clean enough to add:
+
+Unit tests for lib/qr-analysis.ts (pure functions, easy to test)
+Unit tests for each hook using React Testing Library
+Integration tests for the Firestore service layer
+A __tests__/ folder at the root is the natural next step.

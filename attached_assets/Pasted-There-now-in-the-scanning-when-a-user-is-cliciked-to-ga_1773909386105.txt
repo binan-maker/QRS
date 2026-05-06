@@ -1,0 +1,22 @@
+There now in the scanning when a user is cliciked to gallery and selected a image of qr code and selected now the app shows  error noetwork request failed we until now not looked to this fix this entirely this need to work fully entirley ok lets do it  and there in emails signup there will have fake emails can be made and signup make sure restrict it like user use temp mail to create a email id and they paste into our app and in our app sends a verifcation link to that email to temp mail and they recivve and they get a account that email is fake but we are not preventing that issue from this app now we need to make sure fix it make the codes write entirley profestional becomes its not a startup its a big company a large company so code orgnaized way and code it files and fodlers and all entirllly so make sure and also its  a cyber app can be called aslo fix it entilrey and also make sure user can't attack to this app by scanning qr codes like hackers will try scammers will try allso in gallery qr code  scan and camera scan make sure its security is tietens no hackable or attacks can be made to this app entirey impossible 
+
+
+ A core feature is broken right now
+The gallery QR scan in features/scanner/hooks/useScanner.ts line 299 uses globalThis.fetch — the wrong network function for Expo. It will fail with "Network request failed" on most real devices. This is unacceptable in a production app.
+
+3. The rate limiter will reset every time the server restarts
+In server/routes.ts, the rateLimitMap is a plain JavaScript Map stored in memory. Every time the Express server restarts, all rate limit data is wiped. A production app uses Redis or a database for this.   No error monitoring exists
+There is no Sentry, no Crashlytics, no logging service anywhere in the code. When a real user's app crashes, you will never know it happened. In production, you need to know about every crash within seconds.
+
+5. Firebase free tier will break the app
+Firebase Firestore free tier allows 50,000 reads per day. With 1,000 active users each opening the app 5 times and loading 3–4 screens, that is already 750,000+ reads per day — 15× over the limit. The entire app goes blank. There is no Firebase billing setup, no usage monitoring, no alerts. 
+
+
+7. The server has zero authentication on the image decode endpoint
+In server/routes.ts, the /api/qr/decode-image endpoint checks a token header but does not reject requests without one. Any person on the internet can spam this endpoint with images and consume your server resources, even without an account.
+
+No automated tests
+Zero test files exist in the project. Every change you make can silently break something you do not know about until a real user reports it.   The app cannot run without Expo Go
+The package.json shows "main": "expo-router/entry" and the build scripts show expo start --localhost. This means users cannot download a standalone app from Play Store or App Store. They must first download Expo Go, then scan a QR code to open your app. Every normal user will stop at this step. A production app has its own standalone .apk or .ipa file.
+
+ we are not using expo go i have no idea why there showing this expo go becoms i am using locall building development in device oto development i am not using expo go app now explain why this app 

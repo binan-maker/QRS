@@ -1,0 +1,16 @@
+description and a quick analysis of the source code (specifically the QrDetailScreen and its dependencies), the "always offline" problem is likely caused by one of the following issues in the network detection logic:
+1. The Root Cause: useNetworkStatus Hook
+The app relies on a custom hook called useNetworkStatus (imported from @/lib/use-network) to determine if the device is online. If this hook is incorrectly reporting isOffline: true, the entire app will enter "Offline Mode" even if your internet is working perfectly.
+Why this happens:
+Library Mismatch: In React Native/Expo, network detection often uses expo-network or @react-native-community/netinfo. If the hook is listening to the wrong state or if the library isn't correctly configured for the specific platform (Web vs. Android/iOS), it might default to "offline" as a safety measure.
+Hardcoded State: Sometimes during development, a "mock" offline state is left enabled in the code to test offline features.
+Missing Permissions: On some mobile devices, if the app doesn't have the ACCESS_NETWORK_STATE permission, the library might fail to detect the connection and report "offline" by default.
+2. How it Affects the Pages
+QR Details Page: In [id].tsx, the code checks q.offlineMode. If true, it skips fetching community data (trust scores, comments, reports) from Firestore and only shows "cached" content. This is why you see the offline banner there.
+Scanner & History: These pages likely use the same useNetworkStatus hook. When it reports offline, they disable features that require a server connection (like uploading scans or syncing history) to prevent errors.
+3. Why Sign-in/Sign-up Still Works
+Sign-in and Sign-up usually use the Firebase Auth SDK directly. The Auth SDK handles its own network requests and often ignores the app's internal "offline" state. It will attempt to connect to the server regardless of what the useNetworkStatus hook says. If your internet is actually working, the Auth request succeeds, but the rest of the app remains "offline" because it's still trusting the faulty hook.
+Summary of the Problem
+The app has a "Network Guard" that is stuck in the "Off" position. Even though the "Internet" is flowing through the pipe (allowing Sign-in), the guard is telling the UI components (QR Details, Scanner, History) that the pipe is empty, forcing them into their restricted offline modes.
+To fix this (without coding):
+The logic inside lib/use-network.ts needs to be verified to ensure it's correctly interpreting the network state from the underlying operating system.

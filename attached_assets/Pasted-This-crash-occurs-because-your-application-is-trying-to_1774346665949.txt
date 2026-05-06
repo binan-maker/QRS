@@ -1,0 +1,25 @@
+This crash occurs because your application is trying to initialize the camera hardware on a device (or emulator) that reports having zero available cameras. When the Camera component from expo-camera is rendered, it immediately attempts to connect to the physical lens; if it fails to find one, the native Android layer throws an unhandled exception, causing the app to shut down.
+Here is the solution to prevent the crash and keep the "Scan from Gallery" functionality working:
+1. Check for Hardware Availability
+Before you even show the scanner UI, you must check if the device actually has a camera.
+The Logic: Use the isAvailableAsync() method provided by your camera library. This check should happen in a useEffect when the scanner page loads.
+The Result: If this returns false, you should set a state variable (e.g., isCameraSupported) to false.
+2. Conditional Rendering (The "Safety Switch")
+The most important step is to never render the Camera component if the hardware is missing or broken.
+The Problem: If your code looks like return <View><Camera />...</View>, the app will crash instantly on a broken device.
+The Fix: Wrap the Camera component in a conditional statement. If isCameraSupported is false, show a friendly message like "Camera hardware not detected" or a simple dark background instead of the live preview.
+3. Decouple the Gallery Button
+Ensure your "Scan from Gallery" button is not a child of the Camera component.
+The Structure: Place your Gallery button in a standard View or an absolute-positioned overlay that is independent of the camera's lifecycle.
+The Benefit: Even if the camera fails to load or is disabled, the rest of the screen (including the gallery button) remains interactive. The user can still click "Gallery," pick an image, and trigger the decoding logic you have already built.
+4. Handle Emulator Issues
+If you are seeing this on an emulator, it is because the emulator's "Virtual Camera" is turned off or not configured in the AVD (Android Virtual Device) settings.
+The Fix: Go to your Emulator settings -> Advanced -> Camera and ensure "Back Camera" is set to "VirtualScene" or "Webcam". However, your code should still handle this gracefully so real users with broken hardware don't experience a crash.
+5. Use a React Error Boundary
+As a final safety net, wrap your Scanner page in a React Error Boundary.
+How it works: If the camera component throws a "CameraUnavailable" error during its initialization, the Error Boundary will catch it. Instead of the whole app crashing, it will simply show a fallback UI (like an error message) while keeping the rest of the app (navigation, settings, etc.) alive.
+Summary of the logic flow:
+Page Loads -> Check isAvailableAsync().
+If true -> Show Camera + Gallery Button.
+If false -> Show "Camera Unavailable" message + Gallery Button.
+User clicks Gallery -> App processes image normally without ever touching the camera hardware.

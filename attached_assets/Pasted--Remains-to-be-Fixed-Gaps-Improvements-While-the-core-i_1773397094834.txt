@@ -1,0 +1,16 @@
+
+ Remains to be Fixed (Gaps & Improvements)
+While the core is solid, there are several critical areas that need attention:
+A. Security Vulnerabilities (High Priority)
+Permissive Firestore Rules: The current firestore.rules allow create and update on the qrCodes collection for anyone (allow create, update: if true;). This means a malicious user could overwrite the ownerId of any QR code and "steal" its branding.
+PII Exposure: User profile rules are too broad. Any authenticated user can potentially read another user's profile document if they have the ID, which could leak sensitive information if not carefully filtered.
+Backend Rate Limiting: The /api/qr/decode-image endpoint lacks rate limiting, making it vulnerable to Denial of Service (DoS) attacks User Account Management: Missing features like "Delete Account," "Export Data," or a comprehensive "Scan History" management (currently only shows recent scans). Code Quality & Maintenance
+Silent Failures: Many try-catch blocks in firestore-service.ts have empty catch blocks. This hides errors and makes it extremely difficult to diagnose issues when a database operation fails.
+Project Duplication: The QRS directory appears to be a near-duplicate of scan-guard. This creates confusion and should be merged or removed to ensure a single source of truth.
+Offline Data Consistency: The offline mode is "read-only" for cached data. There is no logic to queue actions (like comments or reports) made while offline to be synced when the connection returns. Security	⚠️ To Fix	Permissive Firestore rules and lack of backend rate limiting.
+Moderation	⚠️ To Fix	Missing Admin UI for managing reports.
+User Features	⚠️ To Fix	Basic profile management; needs account deletion and settings.
+Architecture	⚠️ To Fix	Project duplication (QRS vs scan-guard) and silent error handling.n RPC 'Write' stream 0x206a27c5 transport errored. Name: undefined Message: undefined
+ WARN  [2026-03-13T10:08:58.818Z]  @firebase/firestore: Firestore (12.10.0): WebChannelConnection RPC 'Write' stream 0x206a27c6 transport errored. Name: undefined Message: undefined
+ WARN  [2026-03-13T10:10:26.899Z]  @firebase/firestore: Firestore (12.10.0): WebChannelConnection RPC 'Write' stream 0x206a27c7 transport errored. Name: undefined Message: undefined
+ WARN  [2026-03-13T10:11:39.796Z]  @firebase/firestore: Firestore (12.10.0): WebChannelConnection RPC 'Write' stream 0x206a27c8 transport errored. Name: undefined Message: undefined fix it half already fixed fix it entiley 
