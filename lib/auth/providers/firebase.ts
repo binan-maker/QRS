@@ -31,7 +31,7 @@ function wrapUser(fbUser: FirebaseUser): AuthAdapterUser {
     displayName: fbUser.displayName,
     photoURL: fbUser.photoURL,
     emailVerified: fbUser.emailVerified,
-    getIdToken: () => fbUser.getIdToken(),
+    getIdToken: (forceRefresh?: boolean) => fbUser.getIdToken(forceRefresh),
     reload: () => fbUser.reload(),
   };
 }

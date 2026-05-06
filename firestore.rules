@@ -11,6 +11,16 @@ service cloud.firestore {
       return isSignedIn() && request.auth.uid == uid;
     }
 
+    // Email must be verified before any account data can be written.
+    // This is checked via the JWT claim so it cannot be spoofed client-side.
+    function isEmailVerified() {
+      return isSignedIn() && request.auth.token.email_verified == true;
+    }
+
+    function isVerifiedOwner(uid) {
+      return isEmailVerified() && request.auth.uid == uid;
+    }
+
     function isValidReportType(data) {
       return data.reportType is string
         && data.reportType in ['safe', 'scam', 'fake', 'spam', 'expired', 'misleading', 'phishing', 'malware'];
@@ -30,22 +40,29 @@ service cloud.firestore {
     // ─── QR Codes ─────────────────────────────────────────────────────────────
     match /qrCodes/{qrId} {
       allow read: if true;
-      allow create: if isSignedIn();
+      // Only verified users may create QR codes
+      allow create: if isEmailVerified();
 
       allow update: if isSignedIn() && (
-        // Case 1: Owner toggling active / deactivation
+        // Case 1: Owner toggling active / deactivation — must be verified
         (
+          isEmailVerified() &&
           resource.data.ownerId == request.auth.uid &&
           request.resource.data.diff(resource.data).affectedKeys()
             .hasOnly(['isActive', 'deactivationMessage'])
         )
         ||
-        // Case 2: Scan count increments (any authenticated user)
-        request.resource.data.diff(resource.data).affectedKeys()
-          .hasOnly(['scanCount', 'ownerScanCount', 'scanCountFrozen', 'lastScannedAt'])
-        ||
-        // Case 3: Owner claiming an unowned QR code
+        // Case 2: Scan count increments — any signed-in user (anonymous scans
+        // go through the backend; only authenticated clients write these fields)
         (
+          isSignedIn() &&
+          request.resource.data.diff(resource.data).affectedKeys()
+            .hasOnly(['scanCount', 'ownerScanCount', 'scanCountFrozen', 'lastScannedAt'])
+        )
+        ||
+        // Case 3: Owner claiming an unowned QR code — must be verified
+        (
+          isEmailVerified() &&
           resource.data.ownerId == null &&
           request.resource.data.ownerId == request.auth.uid &&
           request.resource.data.diff(resource.data).affectedKeys()
@@ -54,8 +71,9 @@ service cloud.firestore {
                       'ownerVerified'])
         )
         ||
-        // Case 4: Owner-initiated updates — system integrity fields cannot be changed
+        // Case 4: Owner-initiated updates — must be verified, integrity fields locked
         (
+          isEmailVerified() &&
           resource.data.ownerId == request.auth.uid &&
           request.resource.data.ownerVerified == resource.data.ownerVerified &&
           request.resource.data.scanCount == resource.data.scanCount &&
@@ -64,7 +82,7 @@ service cloud.firestore {
           request.resource.data.brandedUuid == resource.data.brandedUuid
         )
         ||
-        // Case 5: Collusion/velocity flag updates (authenticated)
+        // Case 5: Collusion/velocity flag updates — any signed-in user (system writes)
         (
           isSignedIn() &&
           request.resource.data.diff(resource.data).affectedKeys().hasOnly([
@@ -73,14 +91,14 @@ service cloud.firestore {
             'suspiciousLastChecked', 'voteVelocityWindowStart', 'voteVelocityCount'
           ])
         )
-      ); // ← Close the main allow update condition
+      );
 
       allow delete: if false;
 
       // ── Reports ──────────────────────────────────────────────────────────────
       match /reports/{userId} {
         allow read: if true;
-        allow create, update: if isOwner(userId)
+        allow create, update: if isVerifiedOwner(userId)
           && isValidReportType(request.resource.data)
           && isValidWeight(request.resource.data);
         allow delete: if false;
@@ -90,38 +108,39 @@ service cloud.firestore {
       match /comments/{commentId} {
         allow read: if true;
 
-        allow create: if isSignedIn()
+        allow create: if isEmailVerified()
           && request.resource.data.userId == request.auth.uid
           && request.resource.data.text is string
           && request.resource.data.text.size() > 0
           && request.resource.data.text.size() <= 500;
 
         allow update: if isSignedIn() && (
-          // Author soft-deleting their own comment
+          // Author soft-deleting their own comment — must be verified
           (
+            isEmailVerified() &&
             resource.data.userId == request.auth.uid &&
             request.resource.data.diff(resource.data).affectedKeys()
               .hasOnly(['isDeleted', 'deletedAt', 'text', 'likeCount', 'dislikeCount',
                         'reportCount', 'isHidden', 'userUsername'])
           )
           ||
-          // Any authenticated user can update aggregated counters
+          // Any signed-in user can update aggregated counters
           request.resource.data.diff(resource.data).affectedKeys()
             .hasOnly(['likeCount', 'dislikeCount', 'reportCount', 'isHidden'])
-        ); // ← Close allow update
+        );
 
         allow delete: if false;
 
         // Comment likes
         match /likes/{userId} {
           allow read: if true;
-          allow write: if isOwner(userId);
+          allow write: if isVerifiedOwner(userId);
         }
 
         // Comment reports
         match /reports/{userId} {
           allow read: if isSignedIn();
-          allow create, update: if isOwner(userId) && isValidCommentReason(request.resource.data);
+          allow create, update: if isVerifiedOwner(userId) && isValidCommentReason(request.resource.data);
           allow delete: if false;
         }
       }
@@ -129,70 +148,72 @@ service cloud.firestore {
       // ── Followers ────────────────────────────────────────────────────────────
       match /followers/{userId} {
         allow read: if true;
-        allow create, update: if isOwner(userId);
-        allow delete: if isOwner(userId);
+        allow create, update: if isVerifiedOwner(userId);
+        allow delete: if isVerifiedOwner(userId);
       }
     }
 
     // ─── Usernames ────────────────────────────────────────────────────────────
     match /usernames/{username} {
       allow read: if true;
-      allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
-      allow delete: if isSignedIn() && resource.data.userId == request.auth.uid;
+      // Only verified users may reserve or release a username
+      allow create: if isEmailVerified() && request.resource.data.userId == request.auth.uid;
+      allow delete: if isEmailVerified() && resource.data.userId == request.auth.uid;
       allow update: if false;
     }
 
     // ─── Users ───────────────────────────────────────────────────────────────
     match /users/{userId} {
       allow read: if true;
-      allow write: if isOwner(userId);
+      // Only the verified owner may write their own profile
+      allow write: if isVerifiedOwner(userId);
 
       match /scans/{scanId} {
-        allow read, write: if isOwner(userId);
+        allow read, write: if isVerifiedOwner(userId);
       }
       match /favorites/{favId} {
-        allow read, write: if isOwner(userId);
+        allow read, write: if isVerifiedOwner(userId);
       }
       match /following/{qrId} {
-        allow read, write: if isOwner(userId);
+        allow read, write: if isVerifiedOwner(userId);
       }
       match /comments/{commentId} {
-        allow read, write: if isOwner(userId);
+        allow read, write: if isVerifiedOwner(userId);
       }
       match /generatedQrs/{docId} {
-        allow read, write: if isOwner(userId);
+        allow read, write: if isVerifiedOwner(userId);
       }
 
       match /reportLog/{qrId} {
-        allow read, write: if isOwner(userId);
+        allow read, write: if isVerifiedOwner(userId);
       }
 
       match /qrGroups/{groupId} {
-        allow read, write: if isOwner(userId);
+        allow read, write: if isVerifiedOwner(userId);
       }
 
       match /countedScans/{qrId} {
-        allow read: if isOwner(userId);
-        allow create: if isOwner(userId);
+        allow read: if isVerifiedOwner(userId);
+        allow create: if isVerifiedOwner(userId);
         allow update, delete: if false;
       }
 
       match /ownerScans/{docId} {
-        allow read, write: if isOwner(userId);
+        allow read, write: if isVerifiedOwner(userId);
       }
 
       match /friends/{friendId} {
-        allow read, write: if isOwner(userId);
-        allow read: if isSignedIn() && friendId == request.auth.uid;
-        allow create: if isSignedIn() && friendId == request.auth.uid;
-        allow update: if isSignedIn() && friendId == request.auth.uid;
-        allow delete: if isSignedIn() && friendId == request.auth.uid;
+        allow read, write: if isVerifiedOwner(userId);
+        allow read: if isEmailVerified() && friendId == request.auth.uid;
+        allow create: if isEmailVerified() && friendId == request.auth.uid;
+        allow update: if isEmailVerified() && friendId == request.auth.uid;
+        allow delete: if isEmailVerified() && friendId == request.auth.uid;
       }
     }
 
     // ─── Private Messages to QR Owners ───────────────────────────────────────
     match /qrMessages/{messageId} {
-      allow create: if isSignedIn()
+      allow create: if isEmailVerified()
         && request.resource.data.fromUserId == request.auth.uid
         && request.resource.data.message is string
         && request.resource.data.message.size() > 0
@@ -203,11 +224,11 @@ service cloud.firestore {
         request.auth.uid == resource.data.fromUserId
       );
 
-      allow update: if isSignedIn()
+      allow update: if isEmailVerified()
         && request.auth.uid == resource.data.toUserId
         && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['read']);
 
-      allow delete: if isSignedIn() && request.auth.uid == resource.data.toUserId;
+      allow delete: if isEmailVerified() && request.auth.uid == resource.data.toUserId;
     }
 
     // ─── Feedback ─────────────────────────────────────────────────────────────
@@ -227,16 +248,16 @@ service cloud.firestore {
 
     // ─── Moderation Queue ─────────────────────────────────────────────────────
     match /moderationQueue/{docId} {
-      allow create: if isSignedIn();
+      allow create: if isEmailVerified();
       allow read, update, delete: if false;
     }
 
     // ─── Living Shield / Guard Links ──────────────────────────────────────────
     match /guardLinks/{uuid} {
       allow read: if true;
-      allow create: if isSignedIn()
+      allow create: if isEmailVerified()
         && request.resource.data.ownerId == request.auth.uid;
-      allow update: if isSignedIn()
+      allow update: if isEmailVerified()
         && resource.data.ownerId == request.auth.uid
         && request.resource.data.ownerId == resource.data.ownerId;
       allow delete: if false;
@@ -244,13 +265,13 @@ service cloud.firestore {
 
     // ─── Verification Requests ────────────────────────────────────────────────
     match /verificationRequests/{docId} {
-      allow create: if isSignedIn()
+      allow create: if isEmailVerified()
         && request.resource.data.userId == request.auth.uid
         && request.resource.data.businessName is string
         && request.resource.data.businessName.size() > 0
         && request.resource.data.businessName.size() <= 200;
-      allow read: if isSignedIn() && resource.data.userId == request.auth.uid;
-      allow update: if isSignedIn()
+      allow read: if isEmailVerified() && resource.data.userId == request.auth.uid;
+      allow update: if isEmailVerified()
         && resource.data.userId == request.auth.uid
         && request.resource.data.userId == request.auth.uid;
       allow delete: if false;

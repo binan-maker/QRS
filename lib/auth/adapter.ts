@@ -11,7 +11,7 @@ export interface AuthAdapterUser {
   displayName: string | null;
   photoURL: string | null;
   emailVerified: boolean;
-  getIdToken(): Promise<string>;
+  getIdToken(forceRefresh?: boolean): Promise<string>;
   reload(): Promise<void>;
 }
 

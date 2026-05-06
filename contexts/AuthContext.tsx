@@ -142,6 +142,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const unsubscribe = authAdapter.onIdTokenChanged(async (adapterUser) => {
       if (adapterUser) {
+        // Hard gate: unverified email users are never reflected in app-level state.
+        // The Firebase session deliberately stays alive so the verify screen can
+        // call sendEmailVerification on auth.currentUser without requiring re-login.
+        if (!adapterUser.emailVerified) {
+          setUser(null);
+          setToken(null);
+          setIsLoading(false);
+          return;
+        }
         try {
           const idToken = await adapterUser.getIdToken();
           // Set user immediately from auth token — no Firestore wait, eliminates session flicker
@@ -254,7 +263,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const adapterUser = await authAdapter.signUp(email, password);
       await authAdapter.updateDisplayName(adapterUser, displayName);
       await authAdapter.sendVerificationEmail(adapterUser);
-      await syncUserToDb(adapterUser.uid, adapterUser.email, displayName, null, displayName);
+      // Deliberately do NOT call syncUserToDb here.
+      // No Firestore user record or username is created until the user confirms
+      // their email address in refreshUser() — preventing ghost accounts.
       await authAdapter.signOut();
       const err = new Error("VERIFICATION_SENT") as any;
       err.code = "auth/verification-sent";
@@ -392,6 +403,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       await currentUser.reload();
       const reloaded = authAdapter.getCurrentUser();
       if (reloaded) {
+        if (reloaded.emailVerified) {
+          // Force-refresh the JWT so Firebase's internal token cache gets a new
+          // token with email_verified=true. Firestore rules read this claim, so
+          // the force-refresh MUST happen before any Firestore writes below.
+          try {
+            const freshToken = await reloaded.getIdToken(true);
+            setToken(freshToken);
+          } catch {}
+          // Now create the Firestore user record + reserve username.
+          // This is the ONLY place it happens for email/password accounts.
+          // syncUserToDb is idempotent — safe to call on every status check.
+          await syncUserToDb(
+            reloaded.uid,
+            reloaded.email,
+            reloaded.displayName,
+            reloaded.photoURL,
+          ).catch(() => {});
+        }
         const authUser: AuthUser = {
           id: reloaded.uid,
           email: reloaded.email ?? "",
@@ -399,16 +428,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           photoURL: reloaded.photoURL,
           emailVerified: reloaded.emailVerified,
         };
-        try {
-          await db.update(["users", reloaded.uid], {
-            displayName: reloaded.displayName || "",
-            photoURL: reloaded.photoURL || null,
-          });
-        } catch {}
-        try {
-          const userData = await db.get(["users", reloaded.uid]);
-          if (userData?.username) authUser.username = userData.username as string;
-        } catch {}
+        if (reloaded.emailVerified) {
+          try {
+            await db.update(["users", reloaded.uid], {
+              displayName: reloaded.displayName || "",
+              photoURL: reloaded.photoURL || null,
+            });
+          } catch {}
+          try {
+            const userData = await db.get(["users", reloaded.uid]);
+            if (userData?.username) authUser.username = userData.username as string;
+          } catch {}
+        }
         setUser(authUser);
       }
     } catch {}
