@@ -1,0 +1,33 @@
+{
+  "rules": {
+    ".read": false,
+    ".write": false,
+
+    "qrScanVelocity": {
+      "$qrId": {
+        ".read": false,
+        "$pushId": {
+          ".write": "newData.hasChildren(['ts']) && newData.child('ts').isNumber()",
+          ".validate": "newData.hasChildren(['ts'])"
+        }
+      }
+    },
+
+    "blockedScans": {
+      "$qrId": {
+        ".read": false,
+        "$pushId": {
+          ".write": "newData.hasChildren(['ts','reason']) && newData.child('ts').isNumber() && newData.child('reason').isString()",
+          ".validate": "newData.hasChildren(['ts','reason'])"
+        }
+      }
+    },
+
+    "notifications": {
+      "$uid": {
+        ".read": "auth != null && auth.uid == $uid",
+        ".write": "auth != null && auth.uid == $uid"
+      }
+    }
+  }
+}

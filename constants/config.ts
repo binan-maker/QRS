@@ -1,0 +1,17 @@
+export const PAGE_SIZE = 20;
+export const COMMENTS_PAGE_SIZE = 20;
+export const REPLIES_PAGE_SIZE = 10;
+export const MAX_LOCAL_HISTORY = 100;
+export const USERNAME_CHANGE_COOLDOWN_DAYS = 15;
+export const MIN_USERNAME_LENGTH = 3;
+export const MAX_USERNAME_LENGTH = 20;
+export const USERNAME_REGEX = /^[a-z][a-z0-9_]{2,19}$/;
+export const MAX_DISPLAY_NAME_LENGTH = 40;
+export const MAX_COMMENT_DEPTH = 2;
+export const APP_VERSION = "1.0.0";
+export const REPORTER_WEIGHT_EMAIL_BONUS = 0.3;
+export const REPORTER_WEIGHT_SENIOR_BONUS = 0.3;
+export const REPORTER_WEIGHT_MAX = 1.8;
+export const TRUST_SAFE_THRESHOLD = 0.7;
+export const TRUST_CAUTION_THRESHOLD = 0.4;
+export const MIN_REPORTERS_FOR_CONFIDENCE = 3;

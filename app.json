@@ -1,0 +1,62 @@
+{
+  "expo": {
+    "name": "QR Guard",
+    "slug": "qr-guard",
+    "version": "1.0.9",
+    "orientation": "portrait",
+    "icon": "./assets/images/icon.png",
+    "scheme": "scanguard",
+    "userInterfaceStyle": "automatic",
+    "newArchEnabled": true,
+    "platforms": [
+      "android",
+      "ios"
+    ],
+    "splash": {
+      "image": "./assets/images/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#0A0E17"
+    },
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "com.qrguard.app"
+    },
+    "android": {
+      "package": "com.qrguard.app",
+      "adaptiveIcon": {
+        "backgroundColor": "#0A0E17",
+        "backgroundImage": "./assets/images/icon.png"
+      }
+    },
+    "plugins": [
+      "expo-router",
+      "expo-font",
+      "expo-web-browser",
+      "@react-native-google-signin/google-signin",
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Allow QR Guard to use your camera to scan QR codes"
+        }
+      ],
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "usesCleartextTraffic": true,
+            "compileSdkVersion": 35,
+            "targetSdkVersion": 35,
+            "minSdkVersion": 24
+          }
+        }
+      ],
+      "./plugins/android-network-security.js",
+      "expo-localization",
+      "expo-secure-store"
+    ],
+    "experiments": {
+      "typedRoutes": true,
+      "reactCompiler": true
+    }
+  }
+}
