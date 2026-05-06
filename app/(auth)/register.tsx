@@ -68,7 +68,8 @@ export default function RegisterScreen() {
       }
     }
     if (!password.trim()) { newFieldErrors.password = "Password is required."; hasFieldError = true; }
-    else if (password.length < 6) { newFieldErrors.password = "Password must be at least 6 characters."; hasFieldError = true; }
+    else if (password.length < 8) { newFieldErrors.password = "Password must be at least 8 characters."; hasFieldError = true; }
+    else if (!/(?=.*[0-9])/.test(password)) { newFieldErrors.password = "Password must contain at least one number."; hasFieldError = true; }
     if (hasFieldError) { setFieldErrors(newFieldErrors); setError(""); return; }
     setError(""); setFieldErrors({ name: "", email: "", password: "" }); setLoading(true);
     try {
@@ -221,7 +222,7 @@ export default function RegisterScreen() {
                 />
                 <AuthFormInput
                   icon="lock-closed-outline"
-                  placeholder="Password (min. 6 characters)"
+                  placeholder="Password (min. 8 chars + number)"
                   value={password}
                   onChangeText={(v) => { setPassword(v); if (fieldErrors.password) setFieldErrors((p) => ({ ...p, password: "" })); }}
                   secureTextEntry={!showPassword}

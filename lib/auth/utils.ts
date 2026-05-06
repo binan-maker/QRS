@@ -12,7 +12,7 @@ export function getAuthErrorMessage(code: string): string {
     case "auth/email-already-in-use":
       return "An account with this email already exists. Try signing in instead.";
     case "auth/weak-password":
-      return "Password must be at least 6 characters.";
+      return "Password must be at least 8 characters and include a number.";
     case "auth/too-many-requests":
       return "Too many failed attempts. Please wait a moment and try again.";
     case "auth/network-request-failed":
@@ -30,6 +30,18 @@ export function getAuthErrorMessage(code: string): string {
       return "Sign-in was cancelled. Please try again.";
     case "auth/account-exists-with-different-credential":
       return "An account already exists with this email using a different sign-in method.";
+    case "auth/credential-already-in-use":
+      return "This credential is already linked to another account.";
+    case "auth/expired-action-code":
+      return "This link has expired. Please request a new one.";
+    case "auth/invalid-action-code":
+      return "This link is invalid or has already been used.";
+    case "auth/missing-email":
+      return "Please enter your email address.";
+    case "auth/quota-exceeded":
+      return "Service is temporarily unavailable. Please try again later.";
+    case "auth/session-cookie-expired":
+      return "Your session has expired. Please sign in again.";
     case "ACCOUNT_DELETED":
       return "This account has been deleted.";
     default:

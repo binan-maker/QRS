@@ -37,15 +37,16 @@ export default function ForgotPasswordScreen() {
   async function handleReset() {
     setError(""); setEmailError("");
     if (!email.trim()) { setEmailError("Email address is required."); return; }
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email.trim())) { setEmailError("Please enter a valid email address."); return; }
     setLoading(true);
     try {
       await sendPasswordReset(email.trim());
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      setSent(true);
-    } catch (e: any) {
-      setError(e.message || "Failed to send reset email.");
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+    } catch {
+      // Intentionally swallow all errors — always show success to prevent email enumeration attacks
     } finally { setLoading(false); }
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    setSent(true);
   }
 
   if (sent) {

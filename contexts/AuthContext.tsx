@@ -144,6 +144,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (adapterUser) {
         try {
           const idToken = await adapterUser.getIdToken();
+          // Set user immediately from auth token — no Firestore wait, eliminates session flicker
           const authUser: AuthUser = {
             id: adapterUser.uid,
             email: adapterUser.email ?? "",
@@ -151,23 +152,39 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             photoURL: adapterUser.photoURL,
             emailVerified: adapterUser.emailVerified,
           };
-          try {
-            const userData = await db.get(["users", adapterUser.uid]);
-            if (userData?.username) authUser.username = userData.username as string;
-            // Prefer the photo stored in our DB (custom upload) over the auth-provider photo
-            if (userData?.photoURL) authUser.photoURL = userData.photoURL as string;
-          } catch {}
           setUser(authUser);
           setToken(idToken);
+          setIsLoading(false);
+          // Prefetch Firestore profile in background — updates user state without blocking
+          queryClient.prefetchQuery({
+            queryKey: ["userProfile", adapterUser.uid],
+            queryFn: async () => {
+              const userData = await db.get(["users", adapterUser.uid]);
+              if (userData) {
+                setUser((prev) => {
+                  if (!prev || prev.id !== adapterUser.uid) return prev;
+                  return {
+                    ...prev,
+                    username: (userData.username as string) || prev.username,
+                    photoURL: (userData.photoURL as string) || prev.photoURL,
+                  };
+                });
+              }
+              return userData;
+            },
+            staleTime: 5 * 60 * 1000,
+          });
         } catch {
           setUser(null);
           setToken(null);
+          setIsLoading(false);
         }
       } else {
         setUser(null);
         setToken(null);
+        setIsLoading(false);
+        queryClient.removeQueries({ queryKey: ["userProfile"] });
       }
-      setIsLoading(false);
     });
     return unsubscribe;
   }, []);
