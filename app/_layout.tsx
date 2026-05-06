@@ -1,7 +1,7 @@
 import "@/polyfills";
 import "@/lib/i18n";
 import { QueryClientProvider } from "@tanstack/react-query";
-import { Stack } from "expo-router";
+import { Stack, useRouter, useSegments } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import React, { useEffect, useRef } from "react";
 import { Platform, View } from "react-native";
@@ -25,6 +25,22 @@ import { WEB_MAX_WIDTH } from "@/lib/utils/platform";
 import ConsentModal, { hasUserConsented } from "@/components/ConsentModal";
 
 SplashScreen.preventAutoHideAsync();
+
+function AuthNavigationGuard() {
+  const { user, isLoading } = useAuth();
+  const segments = useSegments();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (isLoading) return;
+    const inTabsGroup = segments[0] === "(tabs)";
+    if (!user && inTabsGroup) {
+      router.replace("/(auth)/login");
+    }
+  }, [user, isLoading, segments]);
+
+  return null;
+}
 
 function SplashGate({ fontsReady }: { fontsReady: boolean }) {
   const { isLoading: authLoading } = useAuth();
@@ -139,6 +155,7 @@ function ConsentGatedApp() {
 
   return (
     <>
+      <AuthNavigationGuard />
       <AuthGatedApp />
       <ConsentModal
         visible={!consentGiven}

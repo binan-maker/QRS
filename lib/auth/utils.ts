@@ -49,9 +49,11 @@ export function getAuthErrorMessage(code: string): string {
   }
 }
 
-export function mapFirebaseError(e: any): Error {
+export function mapFirebaseError(e: any): Error & { code?: string } {
   const code = e?.code ?? e?.message ?? "";
-  return new Error(getAuthErrorMessage(code));
+  const err = new Error(getAuthErrorMessage(code)) as Error & { code?: string };
+  err.code = code;
+  return err;
 }
 
 export async function generateUniqueUsername(displayName: string): Promise<string> {

@@ -30,6 +30,7 @@ export default function RegisterScreen() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const [errorCode, setErrorCode] = useState("");
   const [fieldErrors, setFieldErrors] = useState({ name: "", email: "", password: "" });
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
@@ -71,7 +72,7 @@ export default function RegisterScreen() {
     else if (password.length < 8) { newFieldErrors.password = "Password must be at least 8 characters."; hasFieldError = true; }
     else if (!/(?=.*[0-9])/.test(password)) { newFieldErrors.password = "Password must contain at least one number."; hasFieldError = true; }
     if (hasFieldError) { setFieldErrors(newFieldErrors); setError(""); return; }
-    setError(""); setFieldErrors({ name: "", email: "", password: "" }); setLoading(true);
+    setError(""); setErrorCode(""); setFieldErrors({ name: "", email: "", password: "" }); setLoading(true);
     try {
       await signUp(email.trim(), displayName.trim(), password);
     } catch (e: any) {
@@ -80,6 +81,7 @@ export default function RegisterScreen() {
         setRegisteredEmail(email.trim());
         setVerificationSent(true);
       } else {
+        setErrorCode(e.code ?? "");
         setError(e.message || "Sign up failed. Please try again.");
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
       }
@@ -171,9 +173,21 @@ export default function RegisterScreen() {
               },
             ]}>
               {error ? (
-                <View style={[styles.errorBanner, { backgroundColor: colors.dangerDim, borderColor: colors.danger + "40", marginBottom: sp(12) }]}>
-                  <Ionicons name="alert-circle" size={14} color={colors.danger} />
-                  <Text style={[styles.errorText, { color: colors.danger, fontSize: sp(12) }]}>{error}</Text>
+                <View style={[styles.errorBanner, { backgroundColor: errorCode === "auth/email-already-in-use" ? colors.warningDim : colors.dangerDim, borderColor: errorCode === "auth/email-already-in-use" ? colors.warning + "40" : colors.danger + "40", marginBottom: sp(12) }]}>
+                  <View style={styles.errorRow}>
+                    <Ionicons name="alert-circle" size={14} color={errorCode === "auth/email-already-in-use" ? colors.warning : colors.danger} />
+                    <Text style={[styles.errorText, { color: errorCode === "auth/email-already-in-use" ? colors.warning : colors.danger, fontSize: sp(12) }]}>{error}</Text>
+                  </View>
+                  {errorCode === "auth/email-already-in-use" && (
+                    <View style={styles.errorActions}>
+                      <Pressable onPress={() => router.replace("/(auth)/login")} hitSlop={6} style={[styles.errorActionBtn, { backgroundColor: colors.primary }]}>
+                        <Text style={[styles.errorActionText, { fontSize: sp(11) }]}>Sign In</Text>
+                      </Pressable>
+                      <Pressable onPress={() => router.replace("/(auth)/forgot-password")} hitSlop={6} style={[styles.errorActionBtn, { backgroundColor: colors.surfaceLight, borderWidth: 1, borderColor: colors.surfaceBorder }]}>
+                        <Text style={[styles.errorActionText, { color: colors.textSecondary, fontSize: sp(11) }]}>Forgot Password?</Text>
+                      </Pressable>
+                    </View>
+                  )}
                 </View>
               ) : null}
 
@@ -333,14 +347,17 @@ const styles = StyleSheet.create({
     elevation: 5,
   },
   errorBanner: {
-    flexDirection: "row",
-    alignItems: "flex-start",
+    flexDirection: "column",
     gap: 8,
     padding: 12,
     borderRadius: 12,
     borderWidth: 1,
   },
+  errorRow: { flexDirection: "row", alignItems: "flex-start", gap: 8 },
   errorText: { fontFamily: "Inter_500Medium", flex: 1, lineHeight: 17 },
+  errorActions: { flexDirection: "row", gap: 8, marginTop: 2, paddingLeft: 22 },
+  errorActionBtn: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: 8 },
+  errorActionText: { fontFamily: "Inter_600SemiBold", color: "#fff" },
   googleBtn: {
     flexDirection: "row",
     alignItems: "center",
