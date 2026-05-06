@@ -1,3 +1,4 @@
+import React, { memo } from "react";
 import { View, Text, StyleSheet, TextInput, Pressable } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useTheme } from "@/contexts/ThemeContext";
@@ -17,7 +18,7 @@ interface Props {
   setExtraField: (key: string, val: string) => void;
 }
 
-export default function InputSection({
+function InputSection({
   selectedPreset, inputValue, extraFields, qrMode, isBranded,
   businessCategory = "website",
   setInputValue, setExtraField,
@@ -85,6 +86,8 @@ export default function InputSection({
     </>
   );
 }
+
+export default memo(InputSection);
 
 const styles = StyleSheet.create({
   sectionLabel: {

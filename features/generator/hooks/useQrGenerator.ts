@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { Alert, Animated, Platform, ToastAndroid } from "react-native";
 import * as Clipboard from "expo-clipboard";
 import * as Haptics from "@/lib/haptics";
@@ -200,7 +200,7 @@ export function useQrGenerator() {
     return () => clearTimeout(timer);
   }, [inputValue, extraFields, selectedPreset, qrMode, businessCategory, isBranded]);
 
-  function showToast(msg: string, type: "success" | "error" = "success") {
+  const showToast = useCallback((msg: string, type: "success" | "error" = "success") => {
     if (toastTimer.current) clearTimeout(toastTimer.current);
     setToastMsg(msg);
     setToastType(type);
@@ -210,117 +210,117 @@ export function useQrGenerator() {
       Animated.timing(toastAnim, { toValue: 0, duration: 220, useNativeDriver: true }),
     ]).start();
     toastTimer.current = setTimeout(() => setToastMsg(""), 2400);
-  }
+  }, [toastAnim]);
 
-  function setExtraField(key: string, val: string) {
+  const setExtraField = useCallback((key: string, val: string) => {
     setExtraFields((prev) => ({ ...prev, [key]: val }));
-  }
+  }, []);
 
-  function switchPreset(idx: number) {
+  const switchPreset = useCallback((idx: number) => {
     setSelectedPreset(idx);
     setInputValue("");
     setExtraFields({});
     setQrValue("");
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-  }
+  }, []);
 
-  function switchBusinessCategory(cat: BusinessCategory) {
+  const switchBusinessCategory = useCallback((cat: BusinessCategory) => {
     setBusinessCategory(cat);
     setInputValue("");
     setExtraFields({});
     setQrValue("");
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-  }
+  }, []);
 
-  function buildBusinessDestination(): string | null {
-    const v = inputValue.trim();
-    if (!v) return null;
-    switch (businessCategory) {
-      case "website":
-        return v.startsWith("http") ? v : `https://${v}`;
-      case "whatsapp": {
-        const phone = v.replace(/[\s\-()]/g, "").replace(/^\+/, "");
-        const msg = extraFields.message?.trim() || "";
-        return msg ? `https://wa.me/${phone}?text=${encodeURIComponent(msg)}` : `https://wa.me/${phone}`;
-      }
-      case "upi": {
-        const params = new URLSearchParams({ pa: v, cu: "INR" });
-        const name = extraFields.name?.trim();
-        const amount = extraFields.amount?.trim();
-        const note = extraFields.note?.trim();
-        if (name) params.set("pn", name);
-        if (amount) params.set("am", amount);
-        if (note) params.set("tn", note);
-        return `upi://pay?${params.toString()}`;
-      }
-      case "wifi": {
-        const security = extraFields.security?.trim() || "WPA";
-        const password = extraFields.password?.trim() || "";
-        const secType = security === "Open" ? "nopass" : security;
-        return `WIFI:T:${secType};S:${v};P:${password};;`;
-      }
-      case "event": {
-        const startDateStr2 = (extraFields.startDate ?? extraFields.date ?? "").trim();
-        const endDateStr2 = (extraFields.endDate ?? extraFields.date ?? startDateStr2).trim();
-        const startH = String(extraFields.startHour ?? "9").padStart(2, "0");
-        const startM = String(extraFields.startMin ?? "0").padStart(2, "0");
-        const endH = String(extraFields.endHour ?? "10").padStart(2, "0");
-        const endM = String(extraFields.endMin ?? "0").padStart(2, "0");
-        const location = extraFields.location?.trim() || "";
-        if (startDateStr2) {
-          const ds = startDateStr2.replace(/-/g, "");
-          const de = endDateStr2 ? endDateStr2.replace(/-/g, "") : ds;
-          const lines = [
-            "BEGIN:VCALENDAR", "VERSION:2.0", "BEGIN:VEVENT",
-            `SUMMARY:${v}`,
-            `DTSTART:${ds}T${startH}${startM}00`,
-            `DTEND:${de}T${endH}${endM}00`,
-            location ? `LOCATION:${location}` : "",
-            "END:VEVENT", "END:VCALENDAR",
-          ].filter(Boolean);
-          return lines.join("\r\n");
+  const handleGenerate = useCallback(async () => {
+    function buildDest(): string | null {
+      const v = inputValue.trim();
+      if (!v) return null;
+      switch (businessCategory) {
+        case "website":
+          return v.startsWith("http") ? v : `https://${v}`;
+        case "whatsapp": {
+          const phone = v.replace(/[\s\-()]/g, "").replace(/^\+/, "");
+          const msg = extraFields.message?.trim() || "";
+          return msg ? `https://wa.me/${phone}?text=${encodeURIComponent(msg)}` : `https://wa.me/${phone}`;
         }
-        return `https://calendar.google.com/calendar/r/eventedit?text=${encodeURIComponent(v)}`;
+        case "upi": {
+          const params = new URLSearchParams({ pa: v, cu: "INR" });
+          const name = extraFields.name?.trim();
+          const amount = extraFields.amount?.trim();
+          const note = extraFields.note?.trim();
+          if (name) params.set("pn", name);
+          if (amount) params.set("am", amount);
+          if (note) params.set("tn", note);
+          return `upi://pay?${params.toString()}`;
+        }
+        case "wifi": {
+          const security = extraFields.security?.trim() || "WPA";
+          const password = extraFields.password?.trim() || "";
+          const secType = security === "Open" ? "nopass" : security;
+          return `WIFI:T:${secType};S:${v};P:${password};;`;
+        }
+        case "event": {
+          const startDateStr2 = (extraFields.startDate ?? extraFields.date ?? "").trim();
+          const endDateStr2 = (extraFields.endDate ?? extraFields.date ?? startDateStr2).trim();
+          const startH = String(extraFields.startHour ?? "9").padStart(2, "0");
+          const startM = String(extraFields.startMin ?? "0").padStart(2, "0");
+          const endH = String(extraFields.endHour ?? "10").padStart(2, "0");
+          const endM = String(extraFields.endMin ?? "0").padStart(2, "0");
+          const location = extraFields.location?.trim() || "";
+          if (startDateStr2) {
+            const ds = startDateStr2.replace(/-/g, "");
+            const de = endDateStr2 ? endDateStr2.replace(/-/g, "") : ds;
+            const lines = [
+              "BEGIN:VCALENDAR", "VERSION:2.0", "BEGIN:VEVENT",
+              `SUMMARY:${v}`,
+              `DTSTART:${ds}T${startH}${startM}00`,
+              `DTEND:${de}T${endH}${endM}00`,
+              location ? `LOCATION:${location}` : "",
+              "END:VEVENT", "END:VCALENDAR",
+            ].filter(Boolean);
+            return lines.join("\r\n");
+          }
+          return `https://calendar.google.com/calendar/r/eventedit?text=${encodeURIComponent(v)}`;
+        }
+        case "phone": {
+          const cleaned = v.replace(/[\s\-()]/g, "");
+          return `tel:${cleaned}`;
+        }
+        default:
+          return v.startsWith("http") ? v : `https://${v}`;
       }
-      case "phone": {
-        const cleaned = v.replace(/[\s\-()]/g, "");
-        return `tel:${cleaned}`;
-      }
-      default:
-        return v.startsWith("http") ? v : `https://${v}`;
     }
-  }
 
-  function validateBusinessInput(): string | null {
-    const v = inputValue.trim();
-    if (!v) return "Please fill in the required field.";
-    if (businessCategory === "whatsapp" || businessCategory === "phone") {
-      const clean = v.replace(/[\s\-()]/g, "");
-      if (!/^\+?\d{7,15}$/.test(clean)) return "Please enter a valid phone number with country code (e.g. +91 9876543210).";
+    function validateBusiness(): string | null {
+      const v = inputValue.trim();
+      if (!v) return "Please fill in the required field.";
+      if (businessCategory === "whatsapp" || businessCategory === "phone") {
+        const clean = v.replace(/[\s\-()]/g, "");
+        if (!/^\+?\d{7,15}$/.test(clean)) return "Please enter a valid phone number with country code (e.g. +91 9876543210).";
+        return null;
+      }
+      if (businessCategory === "upi") {
+        if (!/^[\w.\-+]+@[\w]+$/.test(v) && !/^\d{10,12}@/.test(v)) {
+          return "Please enter a valid UPI ID (e.g. name@upi or 9876543210@paytm).";
+        }
+        return null;
+      }
+      if (businessCategory === "wifi") return null;
+      if (businessCategory === "event") return null;
+      if (businessCategory === "phone") return null;
+      const withScheme = v.startsWith("http") ? v : `https://${v}`;
+      try {
+        const url = new URL(withScheme);
+        if (!url.hostname.includes(".") || url.hostname.length < 4) return "Please enter a valid URL.";
+      } catch {
+        return "Please enter a valid URL.";
+      }
       return null;
     }
-    if (businessCategory === "upi") {
-      if (!/^[\w.\-+]+@[\w]+$/.test(v) && !/^\d{10,12}@/.test(v)) {
-        return "Please enter a valid UPI ID (e.g. name@upi or 9876543210@paytm).";
-      }
-      return null;
-    }
-    if (businessCategory === "wifi") return null;
-    if (businessCategory === "event") return null;
-    if (businessCategory === "phone") return null;
-    const withScheme = v.startsWith("http") ? v : `https://${v}`;
-    try {
-      const url = new URL(withScheme);
-      if (!url.hostname.includes(".") || url.hostname.length < 4) return "Please enter a valid URL.";
-    } catch {
-      return "Please enter a valid URL.";
-    }
-    return null;
-  }
 
-  async function handleGenerate() {
     if (qrMode === "business" && isBranded) {
-      const err = validateBusinessInput();
+      const err = validateBusiness();
       if (err) { showToast(err, "error"); Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error); return; }
     } else {
       const error = validateQrInput(selectedPreset, inputValue, extraFields);
@@ -332,7 +332,7 @@ export function useQrGenerator() {
     }
 
     const builtContent = qrMode === "business" && isBranded
-      ? (buildBusinessDestination() ?? "")
+      ? (buildDest() ?? "")
       : buildQrContent(selectedPreset, inputValue, extraFields);
 
     const uuid = await Crypto.digestStringAsync(Crypto.CryptoDigestAlgorithm.SHA256, builtContent + Date.now());
@@ -387,9 +387,13 @@ export function useQrGenerator() {
       }
       setSaving(false);
     }
-  }
+  }, [
+    qrMode, isBranded, selectedPreset, inputValue, extraFields,
+    user, customLogoBase64, businessName, businessCategory,
+    qrFgColor, qrBgColor, advancedSettings, privateMode, showToast,
+  ]);
 
-  async function handlePickCustomLogo() {
+  const handlePickCustomLogo = useCallback(async () => {
     const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (!perm.granted) { showToast("Gallery permission is required.", "error"); return; }
     const result = await ImagePicker.launchImageLibraryAsync({
@@ -405,25 +409,25 @@ export function useQrGenerator() {
       }
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     }
-  }
+  }, [showToast]);
 
-  function handleRemoveLogo() {
+  const handleRemoveLogo = useCallback(() => {
     setCustomLogoUri(null);
     setCustomLogoBase64(null);
     setShowDefaultLogo(false);
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-  }
+  }, []);
 
-  function handleToggleDefaultLogo() {
+  const handleToggleDefaultLogo = useCallback(() => {
     setShowDefaultLogo((prev) => !prev);
     if (customLogoUri) {
       setCustomLogoUri(null);
       setCustomLogoBase64(null);
     }
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-  }
+  }, [customLogoUri]);
 
-  async function handleCopy() {
+  const handleCopy = useCallback(async () => {
     if (!qrValue) return;
     const rawContent = qrMode === "business" && isBranded
       ? inputValue.trim()
@@ -431,9 +435,9 @@ export function useQrGenerator() {
     await Clipboard.setStringAsync(rawContent || qrValue);
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     showToast("Copied to clipboard!", "success");
-  }
+  }, [qrValue, qrMode, isBranded, inputValue, selectedPreset, extraFields, showToast]);
 
-  async function handleShare() {
+  const handleShare = useCallback(async () => {
     if (!qrValue || sharingQr) return;
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     if (Platform.OS === "web") {
@@ -446,8 +450,6 @@ export function useQrGenerator() {
       const fileName = `qrguard_${Date.now()}.png`;
       const dir = FileSystem.cacheDirectory ?? FileSystem.documentDirectory ?? "";
       const fileUri = dir + fileName;
-      // Use string literal 'base64' — FileSystem.EncodingType is a TS-only
-      // type in expo-file-system v19 and evaluates to undefined at runtime.
       await FileSystem.writeAsStringAsync(fileUri, rawBase64, { encoding: "base64" });
       const canShare = await Sharing.isAvailableAsync();
       if (!canShare) {
@@ -462,9 +464,9 @@ export function useQrGenerator() {
     } finally {
       setSharingQr(false);
     }
-  }
+  }, [qrValue, sharingQr, svgRef, showToast]);
 
-  async function handleDownloadPdf() {
+  const handleDownloadPdf = useCallback(async () => {
     if (!qrValue || downloadingPdf) return;
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     if (Platform.OS === "web") {
@@ -512,9 +514,80 @@ export function useQrGenerator() {
       pdfUri = result.uri;
 
       if (Platform.OS === "android") {
-        await saveAndroidPdf(pdfUri, `QRGuard_${Date.now()}.pdf`);
+        const SAF = FileSystem.StorageAccessFramework;
+        const fileName = `QRGuard_${Date.now()}.pdf`;
+        console.log("[PDF] saveAndroidPdf called — pdfUri:", pdfUri, "fileName:", fileName);
+        console.log("[PDF] StorageAccessFramework available:", !!SAF);
+
+        await new Promise<void>((resolve) => {
+          Alert.alert(
+            "Save PDF to Downloads",
+            "Do you want to save this QR code PDF to your Downloads folder?",
+            [
+              {
+                text: "Cancel",
+                style: "cancel",
+                onPress: () => {
+                  console.log("[PDF] User cancelled save dialog");
+                  resolve();
+                },
+              },
+              {
+                text: "Save",
+                onPress: async () => {
+                  try {
+                    const cachedDirUri = await AsyncStorage.getItem("qrguard_downloads_dir_uri");
+                    console.log("[PDF] Cached dir URI:", cachedDirUri);
+
+                    if (cachedDirUri) {
+                      try {
+                        console.log("[PDF] Trying cached URI...");
+                        const base64 = await FileSystem.readAsStringAsync(pdfUri!, { encoding: "base64" });
+                        const destUri = await SAF.createFileAsync(cachedDirUri, fileName, "application/pdf");
+                        await FileSystem.writeAsStringAsync(destUri, base64, { encoding: "base64" });
+                        console.log("[PDF] Saved via cached URI successfully");
+                        ToastAndroid.show("PDF saved to Downloads ✓", ToastAndroid.LONG);
+                        resolve();
+                        return;
+                      } catch (cacheErr: any) {
+                        console.warn("[PDF] Cached URI failed, clearing:", cacheErr?.message);
+                        await AsyncStorage.removeItem("qrguard_downloads_dir_uri");
+                      }
+                    }
+
+                    const downloadsUri = SAF.getUriForDirectoryInRoot("Download");
+                    console.log("[PDF] Requesting SAF permission, initial URI:", downloadsUri);
+                    const permissions = await SAF.requestDirectoryPermissionsAsync(downloadsUri);
+                    console.log("[PDF] SAF permissions result:", JSON.stringify(permissions));
+
+                    if (!permissions.granted) {
+                      console.warn("[PDF] SAF permission denied");
+                      showToast("Permission denied. PDF was not saved.", "error");
+                      resolve();
+                      return;
+                    }
+
+                    await AsyncStorage.setItem("qrguard_downloads_dir_uri", permissions.directoryUri);
+                    console.log("[PDF] Permission granted, dir URI:", permissions.directoryUri);
+
+                    const base64 = await FileSystem.readAsStringAsync(pdfUri!, { encoding: "base64" });
+                    const destUri = await SAF.createFileAsync(permissions.directoryUri, fileName, "application/pdf");
+                    await FileSystem.writeAsStringAsync(destUri, base64, { encoding: "base64" });
+                    console.log("[PDF] Saved successfully via new SAF permission");
+                    ToastAndroid.show("PDF saved to Downloads ✓", ToastAndroid.LONG);
+                    resolve();
+                  } catch (e: any) {
+                    console.error("[PDF] Save failed:", e?.message, e);
+                    showToast(e?.message || "Could not save PDF to Downloads.", "error");
+                    resolve();
+                  }
+                },
+              },
+            ],
+            { cancelable: true }
+          );
+        });
       } else {
-        // iOS — share sheet is the standard "Save to Files" flow
         const canShare = await Sharing.isAvailableAsync();
         if (!canShare) { showToast("Could not save PDF on this device.", "error"); return; }
         await Sharing.shareAsync(pdfUri, { mimeType: "application/pdf", dialogTitle: "Save QR Code as PDF", UTI: "com.adobe.pdf" });
@@ -527,88 +600,9 @@ export function useQrGenerator() {
       }
       setDownloadingPdf(false);
     }
-  }
+  }, [qrValue, downloadingPdf, qrMode, isBranded, inputValue, svgRef, showToast]);
 
-  async function saveAndroidPdf(pdfUri: string, fileName: string) {
-    const SAF = FileSystem.StorageAccessFramework;
-    console.log("[PDF] saveAndroidPdf called — pdfUri:", pdfUri, "fileName:", fileName);
-    console.log("[PDF] StorageAccessFramework available:", !!SAF);
-
-    return new Promise<void>((resolve) => {
-      Alert.alert(
-        "Save PDF to Downloads",
-        "Do you want to save this QR code PDF to your Downloads folder?",
-        [
-          {
-            text: "Cancel",
-            style: "cancel",
-            onPress: () => {
-              console.log("[PDF] User cancelled save dialog");
-              resolve();
-            },
-          },
-          {
-            text: "Save",
-            onPress: async () => {
-              try {
-                // Try cached permission URI first — fully silent for repeat saves
-                const cachedDirUri = await AsyncStorage.getItem("qrguard_downloads_dir_uri");
-                console.log("[PDF] Cached dir URI:", cachedDirUri);
-
-                if (cachedDirUri) {
-                  try {
-                    console.log("[PDF] Trying cached URI...");
-                    const base64 = await FileSystem.readAsStringAsync(pdfUri, { encoding: "base64" });
-                    const destUri = await SAF.createFileAsync(cachedDirUri, fileName, "application/pdf");
-                    await FileSystem.writeAsStringAsync(destUri, base64, { encoding: "base64" });
-                    console.log("[PDF] Saved via cached URI successfully");
-                    ToastAndroid.show("PDF saved to Downloads ✓", ToastAndroid.LONG);
-                    resolve();
-                    return;
-                  } catch (cacheErr: any) {
-                    console.warn("[PDF] Cached URI failed, clearing:", cacheErr?.message);
-                    await AsyncStorage.removeItem("qrguard_downloads_dir_uri");
-                  }
-                }
-
-                // No cached permission — open SAF pre-navigated to the Downloads folder.
-                // getUriForDirectoryInRoot("Download") returns the Downloads content URI so
-                // the picker opens directly there; user just taps "Allow" (one tap, once only).
-                const downloadsUri = SAF.getUriForDirectoryInRoot("Download");
-                console.log("[PDF] Requesting SAF permission, initial URI:", downloadsUri);
-                const permissions = await SAF.requestDirectoryPermissionsAsync(downloadsUri);
-                console.log("[PDF] SAF permissions result:", JSON.stringify(permissions));
-
-                if (!permissions.granted) {
-                  console.warn("[PDF] SAF permission denied");
-                  showToast("Permission denied. PDF was not saved.", "error");
-                  resolve();
-                  return;
-                }
-
-                await AsyncStorage.setItem("qrguard_downloads_dir_uri", permissions.directoryUri);
-                console.log("[PDF] Permission granted, dir URI:", permissions.directoryUri);
-
-                const base64 = await FileSystem.readAsStringAsync(pdfUri, { encoding: "base64" });
-                const destUri = await SAF.createFileAsync(permissions.directoryUri, fileName, "application/pdf");
-                await FileSystem.writeAsStringAsync(destUri, base64, { encoding: "base64" });
-                console.log("[PDF] Saved successfully via new SAF permission");
-                ToastAndroid.show("PDF saved to Downloads ✓", ToastAndroid.LONG);
-                resolve();
-              } catch (e: any) {
-                console.error("[PDF] Save failed:", e?.message, e);
-                showToast(e?.message || "Could not save PDF to Downloads.", "error");
-                resolve();
-              }
-            },
-          },
-        ],
-        { cancelable: true }
-      );
-    });
-  }
-
-  function handleClear() {
+  const handleClear = useCallback(() => {
     setInputValue("");
     setExtraFields({});
     setQrValue("");
@@ -627,7 +621,7 @@ export function useQrGenerator() {
     setCustomBgColor("#FFFFFF");
     setAdvancedSettings({ scanLimit: null, expiryPreset: "never", expiryCustomDate: "", label: "" });
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-  }
+  }, []);
 
   return {
     user,

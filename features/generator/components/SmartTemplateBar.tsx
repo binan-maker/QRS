@@ -1,3 +1,4 @@
+import React, { memo } from "react";
 import { View, Text, Pressable, StyleSheet } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useTheme } from "@/contexts/ThemeContext";
@@ -10,7 +11,7 @@ interface Props {
   onClearTemplate: () => void;
 }
 
-export default function SmartTemplateBar({ selectedPreset, detectedType, onOpenTemplates, onClearTemplate }: Props) {
+function SmartTemplateBar({ selectedPreset, detectedType, onOpenTemplates, onClearTemplate }: Props) {
   const { colors } = useTheme();
   const isTemplate = selectedPreset > 0;
   const preset = QR_PRESETS[selectedPreset];
@@ -54,6 +55,8 @@ export default function SmartTemplateBar({ selectedPreset, detectedType, onOpenT
     </View>
   );
 }
+
+export default memo(SmartTemplateBar);
 
 const styles = StyleSheet.create({
   row: {

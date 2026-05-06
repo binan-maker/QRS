@@ -1,3 +1,4 @@
+import React, { memo } from "react";
 import { View, Text, StyleSheet, Pressable, Image, ActivityIndicator } from "react-native";
 import { shadow } from "@/lib/utils/platform";
 import { Ionicons } from "@expo/vector-icons";
@@ -55,7 +56,7 @@ function formatShortDate(date: Date): string {
   return date.toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" });
 }
 
-export default function QrOutputCard({
+function QrOutputCard({
   qrValue, qrSize, isBranded, privateMode, qrMode, logoPosition,
   customLogoUri, showDefaultLogo, generatedUuid, generatedAt, saving, savedToProfile,
   savedDocId,
@@ -261,6 +262,8 @@ export default function QrOutputCard({
     </Animated.View>
   );
 }
+
+export default memo(QrOutputCard);
 
 const styles = StyleSheet.create({
   qrCard: { borderRadius: 20, borderWidth: 1, overflow: "hidden", marginBottom: 8 },

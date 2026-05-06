@@ -1,3 +1,4 @@
+import React, { memo } from "react";
 import { View, Text, StyleSheet, Pressable, TextInput } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import * as Haptics from "@/lib/haptics";
@@ -17,7 +18,7 @@ interface Props {
   switchBusinessCategory: (cat: BusinessCategory) => void;
 }
 
-export default function ModeSelector({ user, qrMode, businessName, businessCategory, setQrMode, setBusinessName, switchBusinessCategory }: Props) {
+function ModeSelector({ user, qrMode, businessName, businessCategory, setQrMode, setBusinessName, switchBusinessCategory }: Props) {
   const { colors } = useTheme();
 
   function handleMode(mode: QrMode) {
@@ -139,6 +140,8 @@ export default function ModeSelector({ user, qrMode, businessName, businessCateg
     </>
   );
 }
+
+export default memo(ModeSelector);
 
 const styles = StyleSheet.create({
   modeRow: { flexDirection: "row", gap: 10, marginBottom: 10 },

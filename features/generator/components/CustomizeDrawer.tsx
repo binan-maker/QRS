@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, memo } from "react";
 import {
   View, Text, Pressable, TextInput, ScrollView,
 } from "react-native";
@@ -40,7 +40,7 @@ const EXPIRY_PRESETS: { key: ExpiryPreset; label: string }[] = [
   { key: "custom", label: "Custom"   },
 ];
 
-export default function CustomizeDrawer({
+function CustomizeDrawer({
   qrReady,
   selectedThemeIdx, onSelectTheme,
   isCustomTheme, customFgColor, customBgColor, onSetCustomFg, onSetCustomBg,
@@ -552,3 +552,5 @@ export default function CustomizeDrawer({
     </View>
   );
 }
+
+export default memo(CustomizeDrawer);

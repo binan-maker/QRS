@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useCallback } from "react";
 import { View, Text, StyleSheet, Pressable, ScrollView, Platform, Animated, useWindowDimensions, Keyboard } from "react-native";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -51,7 +51,7 @@ function QrGeneratorScreen() {
     filterByKeyboardType, sharingQr, downloadingPdf,
   } = useQrGenerator();
 
-  const styles = makeStyles(colors, width);
+  const styles = useMemo(() => makeStyles(colors, width), [colors, width]);
 
   const detectedType = useMemo(() => {
     const v = inputValue.trim();
@@ -62,9 +62,63 @@ function QrGeneratorScreen() {
     return null;
   }, [inputValue, selectedPreset]);
 
-  function getLogoPositionLabel() {
-    return LOGO_POSITIONS.find((p) => p.key === logoPosition)?.label || "Center";
-  }
+  const logoPositionLabel = useMemo(
+    () => LOGO_POSITIONS.find((p) => p.key === logoPosition)?.label || "Center",
+    [logoPosition]
+  );
+
+  const buttonState = useMemo(() => {
+    const hasLiveQr = !!qrValue;
+    const isRegistered = !!generatedUuid;
+    const canSave = user && !privateMode;
+
+    let btnLabel = "Generate QR Code";
+    let btnIcon: React.ComponentProps<typeof MaterialCommunityIcons>["name"] = "qrcode-edit";
+    let btnColors: [string, string] = [colors.primary, colors.primaryShade];
+
+    if (hasLiveQr && canSave && !isRegistered) {
+      btnLabel = qrMode === "business" ? "Activate Smart Redirect" : "Save to Profile";
+      btnIcon = qrMode === "business" ? "shield-check" : "content-save-outline";
+      btnColors = qrMode === "business"
+        ? [colors.warning, (colors as any).warningShade ?? colors.warning]
+        : [colors.safe, (colors as any).safeShade ?? colors.safe];
+    } else if (hasLiveQr && isRegistered) {
+      btnLabel = "Registered ✓";
+      btnIcon = "check-circle-outline";
+      btnColors = [colors.safe, (colors as any).safeShade ?? colors.safe];
+    } else if (hasLiveQr && privateMode) {
+      btnLabel = "Private QR Generated ✓";
+      btnIcon = "eye-off-outline";
+      btnColors = [colors.textSecondary, colors.textMuted];
+    }
+
+    return { btnLabel, btnIcon, btnColors };
+  }, [qrValue, generatedUuid, user, privateMode, qrMode, colors]);
+
+  const handleOpenTemplates = useCallback(() => {
+    Keyboard.dismiss();
+    setTimeout(() => setTemplateModalOpen(true), 80);
+  }, []);
+
+  const handleClearTemplate = useCallback(() => switchPreset(0), [switchPreset]);
+
+  const handleOpenPosition = useCallback(() => setPositionModalOpen(true), [setPositionModalOpen]);
+
+  const handleOpenInfo = useCallback(() => setInfoModalOpen(true), [setInfoModalOpen]);
+
+  const handleCloseTemplates = useCallback(() => setTemplateModalOpen(false), []);
+
+  const handleClosePosition = useCallback(() => setPositionModalOpen(false), [setPositionModalOpen]);
+
+  const handleCloseInfo = useCallback(() => setInfoModalOpen(false), [setInfoModalOpen]);
+
+  const handleOpenGroupPicker = useCallback(() => setGroupPickerOpen(true), []);
+
+  const handleCloseGroupPicker = useCallback(() => setGroupPickerOpen(false), []);
+
+  const handleSizeIncrease = useCallback(() => setQrSize((s) => Math.min(320, s + 20)), []);
+
+  const handleSizeDecrease = useCallback(() => setQrSize((s) => Math.max(160, s - 20)), []);
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background, paddingTop: topInset }]}>
@@ -75,7 +129,7 @@ function QrGeneratorScreen() {
           <Text style={[styles.navSubtitle, { color: colors.textMuted }]}>Create custom QR codes</Text>
         </View>
         <Pressable
-          onPress={() => setInfoModalOpen(true)}
+          onPress={handleOpenInfo}
           style={[styles.infoBtn, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}
         >
           <Ionicons name="information-circle-outline" size={22} color={colors.textSecondary} />
@@ -103,11 +157,8 @@ function QrGeneratorScreen() {
           <SmartTemplateBar
             selectedPreset={selectedPreset}
             detectedType={detectedType}
-            onOpenTemplates={() => {
-              Keyboard.dismiss();
-              setTimeout(() => setTemplateModalOpen(true), 80);
-            }}
-            onClearTemplate={() => switchPreset(0)}
+            onOpenTemplates={handleOpenTemplates}
+            onClearTemplate={handleClearTemplate}
           />
         </Reanimated.View>
 
@@ -138,63 +189,35 @@ function QrGeneratorScreen() {
             onChangeSettings={setAdvancedSettings}
             customLogoUri={customLogoUri}
             showDefaultLogo={showDefaultLogo}
-            logoPositionLabel={getLogoPositionLabel()}
+            logoPositionLabel={logoPositionLabel}
             onPickLogo={handlePickCustomLogo}
             onRemoveLogo={handleRemoveLogo}
             onToggleDefaultLogo={handleToggleDefaultLogo}
-            onOpenPosition={() => setPositionModalOpen(true)}
+            onOpenPosition={handleOpenPosition}
           />
         </Reanimated.View>
 
         <Reanimated.View entering={FadeInDown.duration(400).delay(200)}>
-          {(() => {
-            const hasLiveQr = !!qrValue;
-            const isRegistered = !!generatedUuid;
-            const canSave = user && !privateMode;
-
-            let btnLabel = "Generate QR Code";
-            let btnIcon: React.ComponentProps<typeof MaterialCommunityIcons>["name"] = "qrcode-edit";
-            let btnColors: [string, string] = [colors.primary, colors.primaryShade];
-
-            if (hasLiveQr && canSave && !isRegistered) {
-              btnLabel = qrMode === "business" ? "Activate Smart Redirect" : "Save to Profile";
-              btnIcon = qrMode === "business" ? "shield-check" : "content-save-outline";
-              btnColors = qrMode === "business"
-                ? [colors.warning, (colors as any).warningShade ?? colors.warning]
-                : [colors.safe, (colors as any).safeShade ?? colors.safe];
-            } else if (hasLiveQr && isRegistered) {
-              btnLabel = "Registered ✓";
-              btnIcon = "check-circle-outline";
-              btnColors = [colors.safe, (colors as any).safeShade ?? colors.safe];
-            } else if (hasLiveQr && privateMode) {
-              btnLabel = "Private QR Generated ✓";
-              btnIcon = "eye-off-outline";
-              btnColors = [colors.textSecondary, colors.textMuted];
-            }
-
-            return (
-              <Pressable
-                onPress={handleGenerate}
-                style={({ pressed }) => [{ opacity: pressed ? 0.85 : 1, transform: [{ scale: pressed ? 0.97 : 1 }] }, styles.generateBtnWrap]}
-              >
-                <LinearGradient
-                  colors={btnColors}
-                  style={styles.generateBtn}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 1 }}
-                >
-                  <MaterialCommunityIcons name={btnIcon} size={22} color="#fff" />
-                  <Text style={styles.generateBtnText}>{btnLabel}</Text>
-                </LinearGradient>
-              </Pressable>
-            );
-          })()}
+          <Pressable
+            onPress={handleGenerate}
+            style={({ pressed }) => [{ opacity: pressed ? 0.85 : 1, transform: [{ scale: pressed ? 0.97 : 1 }] }, styles.generateBtnWrap]}
+          >
+            <LinearGradient
+              colors={buttonState.btnColors}
+              style={styles.generateBtn}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+            >
+              <MaterialCommunityIcons name={buttonState.btnIcon} size={22} color="#fff" />
+              <Text style={styles.generateBtnText}>{buttonState.btnLabel}</Text>
+            </LinearGradient>
+          </Pressable>
         </Reanimated.View>
 
         {savedDocId && (
           <Reanimated.View entering={FadeInDown.duration(350).springify()}>
             <Pressable
-              onPress={() => setGroupPickerOpen(true)}
+              onPress={handleOpenGroupPicker}
               style={({ pressed }) => [{
                 flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8,
                 borderRadius: 16, borderWidth: 1,
@@ -229,13 +252,13 @@ function QrGeneratorScreen() {
             savedDocId={savedDocId}
             user={user}
             svgRef={svgRef}
-            logoPositionLabel={getLogoPositionLabel()}
+            logoPositionLabel={logoPositionLabel}
             qrFgColor={qrFgColor}
             qrBgColor={qrBgColor}
             businessDestination={qrMode === "business" ? inputValue.trim() : undefined}
             businessCategory={qrMode === "business" ? businessCategory : undefined}
-            onSizeIncrease={() => setQrSize((s) => Math.min(320, s + 20))}
-            onSizeDecrease={() => setQrSize((s) => Math.max(160, s - 20))}
+            onSizeIncrease={handleSizeIncrease}
+            onSizeDecrease={handleSizeDecrease}
             onCopy={handleCopy}
             onShare={handleShare}
             onDownload={handleDownloadPdf}
@@ -295,21 +318,21 @@ function QrGeneratorScreen() {
         visible={templateModalOpen}
         selectedPreset={selectedPreset}
         onSelect={switchPreset}
-        onClose={() => setTemplateModalOpen(false)}
+        onClose={handleCloseTemplates}
       />
 
       <PositionModal
         visible={positionModalOpen}
         logoPosition={logoPosition}
         onSelect={setLogoPosition}
-        onClose={() => setPositionModalOpen(false)}
+        onClose={handleClosePosition}
       />
 
-      <InfoModal visible={infoModalOpen} onClose={() => setInfoModalOpen(false)} />
+      <InfoModal visible={infoModalOpen} onClose={handleCloseInfo} />
 
       <GroupPickerModal
         visible={groupPickerOpen}
-        onClose={() => setGroupPickerOpen(false)}
+        onClose={handleCloseGroupPicker}
         qrDocId={savedDocId ?? ""}
         qrLabel={qrValue}
       />
