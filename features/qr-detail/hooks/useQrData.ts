@@ -1,4 +1,5 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
+import { useQuery } from "@tanstack/react-query";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { getAnonymousQrContent } from "@/lib/cache/anonymous-session";
 import {
@@ -24,17 +25,69 @@ async function recordViewedLocally(
     const arr: any[] = stored ? JSON.parse(stored) : [];
     const alreadyExists = arr.some((e) => e.qrCodeId === qrCodeId);
     if (alreadyExists) return;
-    const entry = {
+    arr.unshift({
       id: `viewed_${qrCodeId}_${Date.now()}`,
       qrCodeId,
       content,
       contentType,
       scanSource: "viewed",
       scannedAt: new Date().toISOString(),
-    };
-    arr.unshift(entry);
+    });
     await AsyncStorage.setItem(key, JSON.stringify(arr));
   } catch {}
+}
+
+async function loadOfflineFallback(id: string): Promise<{ content: string; contentType: string } | null> {
+  const inMem = getAnonymousQrContent(id);
+  if (inMem) return { content: inMem.content, contentType: inMem.contentType || "text" };
+  try {
+    const raw = await AsyncStorage.getItem(`qr_content_${id}`);
+    if (raw) {
+      const { content, contentType } = JSON.parse(raw);
+      return { content, contentType: contentType || "text" };
+    }
+  } catch {}
+  return null;
+}
+
+type QrFetchResult =
+  | { status: "data"; detail: any; isFreshFetch: boolean }
+  | { status: "offline"; content: string; contentType: string }
+  | { status: "error" };
+
+async function fetchQrData(id: string, userId: string | null): Promise<QrFetchResult> {
+  const cached = await getCachedQrDetail<any>(id, userId);
+  if (cached) return { status: "data", detail: cached, isFreshFetch: false };
+
+  let lastErr: any = null;
+  for (let attempt = 0; attempt < 3; attempt++) {
+    try {
+      if (attempt > 0) await new Promise((r) => setTimeout(r, attempt * 1500));
+      const detail = await loadQrDetail(id, userId);
+      if (!detail) {
+        if (attempt < 2) { lastErr = new Error("not_found"); continue; }
+        const offline = await loadOfflineFallback(id);
+        if (offline) return { status: "offline", ...offline };
+        return { status: "error" };
+      }
+      AsyncStorage.setItem(`qr_content_${id}`, JSON.stringify({
+        content: detail.qrCode.content,
+        contentType: detail.qrCode.contentType,
+      })).catch(() => {});
+      return { status: "data", detail, isFreshFetch: true };
+    } catch (err: any) {
+      console.warn(`[qrData] Firestore fetch attempt ${attempt + 1}/3 failed: code=${err?.code} message=${err?.message}`);
+      lastErr = err;
+    }
+  }
+
+  const trulyOffline =
+    lastErr?.code === "unavailable" ||
+    (typeof navigator !== "undefined" && !navigator.onLine) ||
+    /network|offline|failed to fetch/i.test(lastErr?.message || "");
+  const offline = await loadOfflineFallback(id);
+  if (offline && (trulyOffline || offline)) return { status: "offline", ...offline };
+  return { status: "error" };
 }
 
 export interface QrDetail {
@@ -46,149 +99,78 @@ export interface QrDetail {
   signature?: string;
   ownerId?: string;
   ownerName?: string;
-  // Fraud-guard fields
-  ownerScanCount?: number;     // Owner's own scan attempts (separate from public count)
-  scanCountFrozen?: boolean;   // True when anomaly detection freezes the public count
+  ownerScanCount?: number;
+  scanCountFrozen?: boolean;
   scanCountFreezeReason?: string;
 }
 
 export function useQrData(id: string, userId: string | null) {
-  const [qrCode, setQrCode] = useState<QrDetail | null>(null);
   const [totalScans, setTotalScans] = useState(0);
   const [totalComments, setTotalComments] = useState(0);
-  const [loading, setLoading] = useState(true);
-  const [loadError, setLoadError] = useState(false);
-  const [offlineMode, setOfflineMode] = useState(false);
-  const [offlineContent, setOfflineContent] = useState<string | null>(null);
-  const [offlineContentType, setOfflineContentType] = useState<string>("text");
   const [ownerInfo, setOwnerInfo] = useState<QrOwnerInfo | null>(null);
   const [isQrOwner, setIsQrOwner] = useState(false);
 
-  async function loadOfflineFallback(): Promise<boolean> {
-    const inMem = getAnonymousQrContent(id);
-    if (inMem) {
-      setOfflineContent(inMem.content);
-      setOfflineContentType(inMem.contentType || "text");
-      return true;
-    }
-    try {
-      const raw = await AsyncStorage.getItem(`qr_content_${id}`);
-      if (raw) {
-        const { content, contentType } = JSON.parse(raw);
-        setOfflineContent(content);
-        setOfflineContentType(contentType || "text");
-        return true;
-      }
-    } catch {}
-    return false;
-  }
+  const ownerFetchedForId = useRef<string | null>(null);
+
+  const { data: result, isPending, isError } = useQuery<QrFetchResult>({
+    queryKey: ["qr-detail", id, userId],
+    queryFn: () => fetchQrData(id, userId),
+    staleTime: 5 * 60 * 1000,
+    gcTime: 30 * 60 * 1000,
+    refetchOnWindowFocus: false,
+    retry: false,
+  });
+
+  const loading = isPending;
+  const offlineMode = result?.status === "offline";
+  const loadError = result?.status === "error" || isError;
+  const qrCode: QrDetail | null = result?.status === "data" ? result.detail.qrCode : null;
+  const offlineContent = result?.status === "offline" ? result.content : null;
+  const offlineContentType = result?.status === "offline" ? result.contentType : "text";
 
   useEffect(() => {
-    setQrCode(null);
-    setOwnerInfo(null);
-    setIsQrOwner(false);
-    setLoadError(false);
-    setOfflineMode(false);
-    setLoading(true);
-    setTotalScans(0);
-    setTotalComments(0);
-    setOfflineContent(null);
-    setOfflineContentType("text");
+    if (result?.status !== "data") return;
+    const detail = result.detail;
+    setTotalScans(detail.totalScans || 0);
+    setTotalComments(detail.totalComments || 0);
 
-    async function fetchDetail() {
-      const cached = await getCachedQrDetail<any>(id, userId);
-      if (cached) {
-        setQrCode(cached.qrCode);
-        setTotalScans(cached.totalScans || 0);
-        setTotalComments(cached.totalComments || 0);
-        if (cached.ownerInfo) {
-          setOwnerInfo(cached.ownerInfo);
-          setIsQrOwner(userId === cached.ownerInfo.ownerId);
-        }
-        setLoading(false);
-        return;
-      }
-
-      // NOTE: anonymous-session cache (getAnonymousQrContent) is NOT checked
-      // here. Checking it here used to set offlineMode=true immediately after
-      // every scan, blocking all Firestore subscriptions. It is already used
-      // correctly as a fallback inside loadOfflineFallback() below.
-
-      // Retry up to 3 times to handle transient Firestore connection issues.
-      let lastErr: any = null;
-      for (let attempt = 0; attempt < 3; attempt++) {
-        try {
-          if (attempt > 0) await new Promise((r) => setTimeout(r, attempt * 1500));
-          const detail = await loadQrDetail(id, userId);
-          if (!detail) {
-            // QR not found in Firestore yet — give it one more short wait then try
-            // the offline fallback (covers recently-scanned QRs still propagating).
-            if (attempt < 2) { lastErr = new Error("not_found"); continue; }
-            const hasFallback = await loadOfflineFallback();
-            if (hasFallback) {
-              setOfflineMode(true);
-            } else {
-              setLoadError(true);
-            }
-            setLoading(false);
-            return;
-          }
-          setQrCode(detail.qrCode);
-          setTotalScans(detail.totalScans || 0);
-          setTotalComments(detail.totalComments || 0);
-          try {
-            await AsyncStorage.setItem(`qr_content_${id}`, JSON.stringify({
-              content: detail.qrCode.content,
-              contentType: detail.qrCode.contentType,
-            }));
-          } catch {}
-          if (userId) {
-            recordViewedLocally(id, detail.qrCode.content, detail.qrCode.contentType, userId).catch(() => {});
-          }
-          setLoading(false);
-          // Fetch owner info in background — don't block the page render
-          (async () => {
-            let ownerData: any = null;
-            try {
-              const owner = await getQrOwnerInfo(id);
-              if (owner) {
-                setOwnerInfo(owner);
-                setIsQrOwner(userId === owner.ownerId);
-                ownerData = owner;
-              }
-            } catch {}
-            try {
-              await setCachedQrDetail(id, userId, { ...detail, ownerInfo: ownerData });
-            } catch {}
-          })();
-          return;
-        } catch (err: any) {
-          console.warn(`[qrData] Firestore fetch attempt ${attempt + 1}/3 failed: code=${err?.code} message=${err?.message} ${String(err)}`);
-          lastErr = err;
-        }
-      }
-
-      // All retries exhausted — decide between offline mode and load error.
-      const trulyOffline =
-        lastErr?.code === "unavailable" ||
-        (typeof navigator !== "undefined" && !navigator.onLine) ||
-        /network|offline|failed to fetch/i.test(lastErr?.message || "");
-
-      const hasFallback = await loadOfflineFallback();
-      if (trulyOffline && hasFallback) {
-        setOfflineMode(true);
-      } else if (hasFallback) {
-        // Firestore had an error but we have local content — show it without
-        // the "offline" label so the user knows it's a server issue, not network.
-        setOfflineMode(true);
-      } else {
-        setLoadError(true);
-      }
-      setLoading(false);
+    if (detail.ownerInfo) {
+      setOwnerInfo(detail.ownerInfo);
+      setIsQrOwner(userId === detail.ownerInfo.ownerId);
     }
 
-    fetchDetail();
-  }, [id, userId]);
+    if (!result.isFreshFetch) return;
+
+    if (userId && qrCode) {
+      recordViewedLocally(id, qrCode.content, qrCode.contentType, userId).catch(() => {});
+    }
+
+    if (ownerFetchedForId.current === id) return;
+    ownerFetchedForId.current = id;
+
+    let cancelled = false;
+    (async () => {
+      let ownerData: any = null;
+      try {
+        const owner = await getQrOwnerInfo(id);
+        if (!cancelled && owner) {
+          setOwnerInfo(owner);
+          setIsQrOwner(userId === owner.ownerId);
+          ownerData = owner;
+        }
+      } catch {}
+      if (!cancelled) {
+        setCachedQrDetail(id, userId, { ...detail, ownerInfo: ownerData }).catch(() => {});
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [result, id, userId]);
+
+  useEffect(() => {
+    if (!result || result.status !== "data") {
+      ownerFetchedForId.current = null;
+    }
+  }, [id]);
 
   useEffect(() => {
     if (offlineMode) return;

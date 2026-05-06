@@ -1,5 +1,6 @@
 import React from "react";
-import { View, Text, StyleSheet, Pressable, Image } from "react-native";
+import { View, Text, StyleSheet, Pressable } from "react-native";
+import { Image } from "expo-image";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { useTheme } from "@/contexts/ThemeContext";
@@ -59,7 +60,13 @@ const OwnerCard = React.memo(function OwnerCard({
 
         {ownerInfo.ownerLogoBase64 && qrType === "business" && (
           <View style={styles.logoRow}>
-            <Image source={{ uri: ownerInfo.ownerLogoBase64 }} style={styles.logo} resizeMode="contain" />
+            <Image
+              source={{ uri: ownerInfo.ownerLogoBase64 }}
+              style={styles.logo}
+              contentFit="contain"
+              cachePolicy="memory-disk"
+              transition={150}
+            />
           </View>
         )}
 

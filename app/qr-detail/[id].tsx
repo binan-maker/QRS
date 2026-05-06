@@ -530,12 +530,12 @@ export default function QrDetailScreen() {
   const [toastState, setToastState] = useState<{ message: string; icon: keyof typeof Ionicons.glyphMap; key: number }>({ message: "", icon: "checkmark-circle", key: 0 });
   const lastToastTime = useRef(0);
 
-  function showToast(message: string, icon: keyof typeof Ionicons.glyphMap = "checkmark-circle") {
+  const showToast = useCallback((message: string, icon: keyof typeof Ionicons.glyphMap = "checkmark-circle") => {
     const now = Date.now();
     if (now - lastToastTime.current < 2200) return;
     lastToastTime.current = now;
     setToastState(prev => ({ message, icon, key: prev.key + 1 }));
-  }
+  }, []);
 
   useEffect(() => {
     if (!guardUuid) return;
@@ -574,7 +574,7 @@ export default function QrDetailScreen() {
 
   const hasOwner = !!q.ownerInfo?.ownerId;
 
-  function handleCreatorFollowPress() {
+  const handleCreatorFollowPress = useCallback(() => {
     if (!user) { router.push("/(auth)/login"); return; }
     if (!isOnline) { setOfflineToastKey((k) => k + 1); return; }
     const willFollow = !q.isFollowingCreator;
@@ -585,26 +585,26 @@ export default function QrDetailScreen() {
       willFollow ? `Following ${creatorLabel}` : `Unfollowed ${creatorLabel}`,
       willFollow ? "person-add" : "person-remove-outline"
     );
-  }
+  }, [user, isOnline, q.isFollowingCreator, q.handleToggleFollowCreator, q.ownerInfo, showToast]);
 
-  function handleWatchPress() {
+  const handleWatchPress = useCallback(() => {
     if (!user) { router.push("/(auth)/login"); return; }
     if (!isOnline) { setOfflineToastKey((k) => k + 1); return; }
     const willWatch = !q.isFollowing;
     q.handleToggleFollow();
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     showToast(willWatch ? "Watching this QR" : "Unwatched", willWatch ? "notifications" : "notifications-off-outline");
-  }
+  }, [user, isOnline, q.isFollowing, q.handleToggleFollow, showToast]);
 
-  function handleFavoritePress() {
+  const handleFavoritePress = useCallback(() => {
     if (!user) { router.push("/(auth)/login"); return; }
     const willFav = !q.isFavorite;
     q.handleToggleFavorite();
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     showToast(willFav ? "Added to favorites" : "Removed from favorites", willFav ? "heart" : "heart-outline");
-  }
+  }, [user, q.isFavorite, q.handleToggleFavorite, showToast]);
 
-  async function handleSharePress() {
+  const handleSharePress = useCallback(async () => {
     const label = q.ownerInfo?.businessName || q.ownerInfo?.ownerName || "QR Code";
     const content = effectiveContent || currentContent;
     try {
@@ -615,7 +615,7 @@ export default function QrDetailScreen() {
     } catch {
       showToast("Could not share", "alert-circle-outline");
     }
-  }
+  }, [q.ownerInfo, effectiveContent, currentContent, showToast]);
 
   const hasLocalWarnings =
     (effectiveContentType === "payment" && q.paymentSafety?.isSuspicious) ||

@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback, useRef } from "react";
+import { useEffect, useState, useCallback, useRef, useMemo } from "react";
 import { Alert } from "react-native";
 import { router } from "expo-router";
 import * as Haptics from "@/lib/haptics";
@@ -52,20 +52,20 @@ export function useQrComments(id: string, userId: string | null, offlineMode: bo
 
   const lastCommentRef = useRef<any>(undefined);
   const commentInputRef = useRef<any>(null);
-  // Debounce: track server-committed like state, pending final state, and timers
   const committedLikesRef = useRef<Record<string, "like" | "dislike" | null>>({});
   const pendingFinalLikeRef = useRef<Record<string, "like" | "dislike" | null>>({});
   const likeTimersRef = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
   const scrollRef = useRef<any>(null);
 
-  // Optimistic state: comments added locally but not yet confirmed by Firestore
   const pendingCommentsRef = useRef<CommentItem[]>([]);
-  // IDs of comments being deleted — subscription results are filtered to hide them
   const deletingIdsRef = useRef<Set<string>>(new Set());
 
-  const topLevelComments = commentsList.filter((c) => !c.parentId);
+  const topLevelComments = useMemo(
+    () => commentsList.filter((c) => !c.parentId),
+    [commentsList]
+  );
 
-  function getAllDescendants(rootId: string): CommentItem[] {
+  const getAllDescendants = useCallback((rootId: string): CommentItem[] => {
     const result: CommentItem[] = [];
     const queue = [rootId];
     while (queue.length > 0) {
@@ -75,35 +75,31 @@ export function useQrComments(id: string, userId: string | null, offlineMode: bo
       queue.push(...children.map((c) => c.id));
     }
     return result.sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
-  }
+  }, [commentsList]);
 
-  function getRootCommentId(commentId: string): string {
+  const getRootCommentId = useCallback((commentId: string): string => {
     const comment = commentsList.find((c) => c.id === commentId);
     if (!comment || !comment.parentId) return commentId;
     return getRootCommentId(comment.parentId);
-  }
+  }, [commentsList]);
 
-  function toggleReplies(commentId: string) {
+  const toggleReplies = useCallback((commentId: string) => {
     setExpandedReplies((prev) => ({ ...prev, [commentId]: !prev[commentId] }));
     if (!visibleRepliesCount[commentId]) {
       setVisibleRepliesCount((prev) => ({ ...prev, [commentId]: REPLIES_PER_PAGE }));
     }
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-  }
+  }, [visibleRepliesCount]);
 
-  function showMoreReplies(commentId: string) {
+  const showMoreReplies = useCallback((commentId: string) => {
     setVisibleRepliesCount((prev) => ({
       ...prev,
       [commentId]: (prev[commentId] || REPLIES_PER_PAGE) + REPLIES_PER_PAGE,
     }));
-  }
+  }, []);
 
-  // Merge live subscription results with optimistic state
   function mergeWithOptimistic(liveComments: CommentItem[]): CommentItem[] {
-    // Filter out any IDs being deleted
     const filteredLive = liveComments.filter((c) => !deletingIdsRef.current.has(c.id));
-
-    // Drop pending comments that Firestore has now confirmed (matched by userId + text + parentId)
     const confirmedPending = pendingCommentsRef.current.filter((pending) =>
       !filteredLive.some(
         (live) =>
@@ -113,8 +109,6 @@ export function useQrComments(id: string, userId: string | null, offlineMode: bo
       )
     );
     pendingCommentsRef.current = confirmedPending;
-
-    // Pending comments appear first (they're the newest)
     return [...confirmedPending, ...filteredLive];
   }
 
@@ -123,7 +117,6 @@ export function useQrComments(id: string, userId: string | null, offlineMode: bo
     const ids = commentsList.map((c) => c.id);
     getCommentUserLikes(id, ids, userId).then((likes) => {
       setUserLikes((prev) => ({ ...prev, ...likes }));
-      // Seed committedLikesRef with server truth (only for IDs not currently pending)
       Object.entries(likes).forEach(([cid, val]) => {
         if (!likeTimersRef.current.has(cid)) {
           committedLikesRef.current[cid] = val;
@@ -132,7 +125,6 @@ export function useQrComments(id: string, userId: string | null, offlineMode: bo
     });
   }, [commentsList, userId, id]);
 
-  // Sync current user's live profile data into their displayed comments
   const userUsername = (user as any)?.username;
   const userPhotoURL = user?.photoURL;
   const userDisplayName = user?.displayName;
@@ -215,7 +207,6 @@ export function useQrComments(id: string, userId: string | null, offlineMode: bo
     const clientPhotoURL: string | undefined = user?.photoURL || undefined;
     const clientDisplayName: string = user?.displayName || "User";
 
-    // Optimistic insert — show the comment immediately with @username (never full name)
     const tempId = `pending_${Date.now()}`;
     const parentId = replyTo ? replyTo.rootId : null;
     const optimisticComment: CommentItem = {
@@ -237,7 +228,6 @@ export function useQrComments(id: string, userId: string | null, offlineMode: bo
     pendingCommentsRef.current = [optimisticComment, ...pendingCommentsRef.current];
     setCommentsList((prev) => [optimisticComment, ...prev]);
 
-    // Clear input and reply state immediately
     setNewComment("");
     setReplyTo(null);
     if (parentId) {
@@ -248,11 +238,8 @@ export function useQrComments(id: string, userId: string | null, offlineMode: bo
     setSubmitting(true);
 
     try {
-      // Pass username and photoURL so the server always stores them on the comment document
       await addComment(id, userId, clientDisplayName, trimmed, parentId, emailVerified, clientUsername, clientPhotoURL);
-      // Subscription will fire and confirm the real comment — pending gets cleared then
     } catch (e: any) {
-      // Remove the optimistic comment on failure
       pendingCommentsRef.current = pendingCommentsRef.current.filter((c) => c.id !== tempId);
       setCommentsList((prev) => prev.filter((c) => c.id !== tempId));
       Alert.alert("Cannot Post Comment", e.message);
@@ -264,7 +251,6 @@ export function useQrComments(id: string, userId: string | null, offlineMode: bo
   function handleCommentLike(commentId: string, action: "like" | "dislike") {
     if (!userId) { router.push("/(auth)/login"); return; }
 
-    // --- Instant optimistic UI update ---
     const prevLike = userLikes[commentId] ?? null;
     const newLike: "like" | "dislike" | null = prevLike === action ? null : action;
     setUserLikes((prev) => {
@@ -290,9 +276,7 @@ export function useQrComments(id: string, userId: string | null, offlineMode: bo
     );
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
 
-    // --- Debounce: track desired final state and delay API call ---
     pendingFinalLikeRef.current[commentId] = newLike;
-
     const existingTimer = likeTimersRef.current.get(commentId);
     if (existingTimer) clearTimeout(existingTimer);
 
@@ -302,16 +286,8 @@ export function useQrComments(id: string, userId: string | null, offlineMode: bo
       const desired = pendingFinalLikeRef.current[commentId] ?? null;
       delete pendingFinalLikeRef.current[commentId];
       const committed = committedLikesRef.current[commentId] ?? null;
-
-      // Skip API if server already reflects the desired state
       if (desired === committed) return;
-
-      // Determine isLike flag:
-      // - desired="like"     → send like
-      // - desired="dislike"  → send dislike
-      // - desired=null       → toggle off whatever server currently has
       const isLike = desired !== null ? desired === "like" : committed === "like";
-
       try {
         const data = await toggleCommentLike(id, commentId, capturedUserId, isLike);
         committedLikesRef.current[commentId] = desired;
@@ -340,7 +316,6 @@ export function useQrComments(id: string, userId: string | null, offlineMode: bo
     if (!userId) return;
     setCommentMenuId(null);
 
-    // Optimistic removal — mark ID as deleting so subscription doesn't restore it
     deletingIdsRef.current.add(commentId);
     const removedComment = commentsList.find((c) => c.id === commentId);
     setCommentsList((prev) => prev.filter((c) => c.id !== commentId));
@@ -349,10 +324,7 @@ export function useQrComments(id: string, userId: string | null, offlineMode: bo
 
     try {
       await softDeleteComment(id, commentId, userId);
-      // Keep in deletingIds — subscription will fire without this doc (isDeleted filtered)
-      // and we can safely remove from set at that point, but it's harmless to keep it.
     } catch {
-      // Rollback: remove from deleting set and restore comment
       deletingIdsRef.current.delete(commentId);
       if (removedComment) {
         setCommentsList((prev) => {

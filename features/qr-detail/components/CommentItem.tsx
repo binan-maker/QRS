@@ -1,5 +1,6 @@
 import React from "react";
-import { View, Text, StyleSheet, Pressable, Image, ActivityIndicator } from "react-native";
+import { View, Text, StyleSheet, Pressable, ActivityIndicator } from "react-native";
+import { Image } from "expo-image";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import Animated, { FadeIn } from "react-native-reanimated";
@@ -68,8 +69,6 @@ const CommentItem = React.memo(function CommentItem({
   const visibleReplies = descendants.slice(0, showCount);
   const hasMore = replyCount > showCount;
 
-  // ENFORCE: always show @username. NEVER fall back to the user's full name.
-  // If username is not stored on the comment, derive a stable anonymous handle from the user ID.
   const displayName = comment.userUsername
     ? `@${comment.userUsername}`
     : comment.userId
@@ -111,12 +110,15 @@ const CommentItem = React.memo(function CommentItem({
           styles.commentRow,
           isReply && { paddingLeft: 42 },
         ]}>
-          {/* Avatar */}
+          {/* Avatar — expo-image with memory+disk cache for 0 re-downloads on navigation */}
           <Pressable onPress={navigateToProfile} disabled={!navigateToProfile} style={{ flexShrink: 0, marginTop: 1 }}>
             {comment.userPhotoURL ? (
               <Image
                 source={{ uri: comment.userPhotoURL }}
                 style={{ width: avatarSize, height: avatarSize, borderRadius: avatarSize / 2 }}
+                cachePolicy="memory-disk"
+                contentFit="cover"
+                transition={150}
               />
             ) : (
               <LinearGradient
