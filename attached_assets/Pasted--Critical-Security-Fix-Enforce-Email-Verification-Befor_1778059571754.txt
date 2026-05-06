@@ -1,0 +1,374 @@
+# 🚨 Critical Security Fix: Enforce Email Verification Before Access
+
+You are absolutely correct. Allowing immediate access after signup without email verification is a **critical security vulnerability**. It allows anyone to hijack an account by simply guessing someone else's email address.
+
+Here is the complete analysis and the **exact code implementation** to fix this flow in your GitHub repository.
+
+---
+
+## 🔒 The New Secure Flow (Required)
+
+1.  **User Signs Up:** Enters Email, Name, Password.
+2.  **App Action:** Creates Firebase User → Sends Verification Email → **DOES NOT LOG IN**.
+3.  **Redirect:** Immediately sends user to a new screen: `VerifyEmailScreen`.
+4.  **VerifyEmailScreen:**
+    *   Shows: "Check your inbox for confirmation."
+    *   Button: **"Resend Email"** (if they didn't get it).
+    *   Button: **"Back to Login"** (to log in *after* they verify).
+5.  **Login Attempt:** When user tries to log in with that email:
+    *   App checks `user.emailVerified`.
+    *   If `false` → Show error: "Please verify your email first."
+    *   If `true` → Allow login and redirect to Home.
+
+---
+
+## 🛠️ Implementation Steps
+
+### 1️ Create the New Screen: `app/(auth)/verify-email.tsx`
+
+This screen replaces the direct redirect to Home. It informs the user to check their email.
+
+```tsx
+// app/(auth)/verify-email.tsx
+import { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, ActivityIndicator, Alert } from 'react-native';
+import { useRouter } from 'expo-router';
+import { sendEmailVerification, signOut, onAuthStateChanged } from 'firebase/auth';
+import { auth } from '@/lib/firebase';
+import { Button } from '@/components/ui/button'; // Assuming you have a Button component
+import { Ionicons } from '@expo/vector-icons';
+
+export default function VerifyEmailScreen() {
+  const router = useRouter();
+  const [isSending, setIsSending] = useState(false);
+  const [userEmail, setUserEmail] = useState<string | null>(null);
+
+  useEffect(() => {
+    // Get the current user who just signed up
+    const unsub = onAuthStateChanged(auth, (user) => {
+      if (user) {
+        setUserEmail(user.email);
+        // If they somehow verified already (e.g., clicked link in another tab), send them home
+        if (user.emailVerified) {
+          router.replace('/(tabs)/home');
+        }
+      } else {
+        // If no user, they shouldn't be here, send to login
+        router.replace('/login');
+      }
+    });
+    return () => unsub();
+  }, []);
+
+  const handleResendEmail = async () => {
+    if (!auth.currentUser) return;
+    
+    setIsSending(true);
+    try {
+      await sendEmailVerification(auth.currentUser);
+      Alert.alert('Success', 'Verification email sent again! Please check your inbox.');
+    } catch (error: any) {
+      Alert.alert('Error', error.message || 'Failed to resend email.');
+    } finally {
+      setIsSending(false);
+    }
+  };
+
+  const handleSignOutAndLogin = async () => {
+    await signOut(auth);
+    router.replace('/login');
+  };
+
+  if (!userEmail) {
+    return (
+      <View style={styles.center}>
+        <ActivityIndicator size="large" color="#3b82f6" />
+      </View>
+    );
+  }
+
+  return (
+    <View style={styles.container}>
+      <Ionicons name="mail-outline" size={64} color="#3b82f6" style={styles.icon} />
+      <Text style={styles.title}>Check Your Email</Text>
+      <Text style={styles.subtitle}>
+        We've sent a verification link to{'\n'}
+        <Text style={styles.email}>{userEmail}</Text>
+      </Text>
+      <Text style={styles.info}>
+        Please click the link in the email to confirm your account. You won't be able to sign in until you verify.
+      </Text>
+
+      <View style={styles.buttonContainer}>
+        <Button 
+          title="Resend Email" 
+          variant="outline" 
+          onPress={handleResendEmail} 
+          disabled={isSending}
+          loading={isSending}
+        />
+        
+        <Button 
+          title="Back to Login" 
+          variant="primary" 
+          onPress={handleSignOutAndLogin} 
+          style={{ marginTop: 12 }}
+        />
+      </View>
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: { flex: 1, padding: 24, justifyContent: 'center', alignItems: 'center', backgroundColor: '#fff' },
+  center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
+  icon: { marginBottom: 24 },
+  title: { fontSize: 24, fontWeight: 'bold', color: '#1e293b', textAlign: 'center', marginBottom: 12 },
+  subtitle: { fontSize: 16, color: '#64748b', textAlign: 'center', marginBottom: 8, lineHeight: 24 },
+  email: { fontWeight: 'bold', color: '#3b82f6' },
+  info: { fontSize: 14, color: '#94a3b8', textAlign: 'center', marginBottom: 32, lineHeight: 20 },
+  buttonContainer: { width: '100%' }
+});
+```
+
+---
+
+### 2️⃣ Update Signup Logic: `lib/auth/auth-service.ts`
+
+Modify the signup function to **send the email** and **return success** without logging the user in automatically.
+
+```typescript
+// lib/auth/auth-service.ts
+import { createUserWithEmailAndPassword, sendEmailVerification, updateProfile } from 'firebase/auth';
+import { auth, db } from '@/lib/firebase';
+import { doc, setDoc } from 'firebase/firestore';
+
+export async function signUpWithEmail(email: string, password: string, fullName: string) {
+  try {
+    // 1. Create the user in Firebase Auth
+    const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+    const user = userCredential.user;
+
+    // 2. Update Profile with Full Name
+    await updateProfile(user, { displayName: fullName });
+
+    // 3. Create Firestore Document (Mark as unverified initially)
+    await setDoc(doc(db, 'users', user.uid), {
+      uid: user.uid,
+      email: user.email,
+      displayName: fullName,
+      createdAt: new Date(),
+      plan: 'free',
+      verified: false, // Important flag
+      role: 'user'
+    });
+
+    // 4. Send Verification Email
+    await sendEmailVerification(user);
+
+    // 5. IMPORTANT: Do NOT return success that triggers auto-login.
+    // The UI will handle redirecting to the 'verify-email' screen.
+    return { 
+      success: true, 
+      message: 'Account created. Please verify your email.',
+      needsVerification: true 
+    };
+
+  } catch (error: any) {
+    return { 
+      success: false, 
+      error: handleAuthError(error) 
+    };
+  }
+}
+
+// Helper for errors
+const handleAuthError = (error: any) => {
+  switch (error.code) {
+    case 'auth/email-already-in-use': return 'This email is already registered.';
+    case 'auth/weak-password': return 'Password must be at least 6 characters.';
+    case 'auth/invalid-email': return 'Invalid email address.';
+    default: return error.message || 'Signup failed.';
+  }
+};
+```
+
+---
+
+### 3️ Update Signup Screen: `app/(auth)/signup.tsx`
+
+Change the logic so that upon successful signup, it redirects to `/verify-email` instead of `/home`.
+
+```tsx
+// app/(auth)/signup.tsx (Snippet)
+import { signUpWithEmail } from '@/lib/auth/auth-service';
+import { useRouter } from 'expo-router';
+
+export default function SignupScreen() {
+  const router = useRouter();
+  // ... form setup ...
+
+  const onSubmit = async (data: FormData) => {
+    const result = await signUpWithEmail(data.email, data.password, data.fullName);
+
+    if (result.success) {
+      if (result.needsVerification) {
+        // ✅ REDIRECT TO VERIFY SCREEN, NOT HOME
+        router.replace('/verify-email');
+      } else {
+        router.replace('/(tabs)/home');
+      }
+    } else {
+      showToast(result.error, 'alert-circle');
+    }
+  };
+
+  // ... rest of component
+}
+```
+
+---
+
+### 4️⃣ Update Login Logic: `lib/auth/auth-service.ts` & `login.tsx`
+
+Add a check during login to ensure the email is verified. If not, block access.
+
+**Update `signInWithEmail` in `auth-service.ts`:**
+
+```typescript
+import { signInWithEmailAndPassword } from 'firebase/auth';
+
+export async function signInWithEmail(email: string, password: string) {
+  try {
+    const userCredential = await signInWithEmailAndPassword(auth, email, password);
+    const user = userCredential.user;
+
+    // 🚨 SECURITY CHECK: Is email verified?
+    if (!user.emailVerified) {
+      // Sign out immediately so they can't stay logged in
+      await auth.signOut(); 
+      throw new Error('EMAIL_NOT_VERIFIED');
+    }
+
+    return { success: true, user };
+  } catch (error: any) {
+    if (error.message === 'EMAIL_NOT_VERIFIED') {
+      return { 
+        success: false, 
+        error: 'Please verify your email address before signing in. Check your inbox.' 
+      };
+    }
+    return { success: false, error: handleAuthError(error) };
+  }
+}
+```
+
+**Update `login.tsx` to handle the specific error:**
+
+```tsx
+// app/(auth)/login.tsx (Snippet)
+const onSubmit = async (data: FormData) => {
+  const result = await signInWithEmail(data.email, data.password);
+
+  if (result.success) {
+    router.replace('/(tabs)/home');
+  } else {
+    // Specific handling for unverified emails
+    if (result.error.includes('verify')) {
+      // Optional: Redirect them straight to the verify screen if they forgot
+      // router.push('/verify-email'); 
+      showToast(result.error, 'alert-circle');
+    } else {
+      showToast(result.error, 'alert-circle');
+    }
+  }
+};
+```
+
+---
+
+### 5️⃣ Add Middleware Protection (Optional but Recommended)
+
+Ensure that even if someone hacks the client-side redirect, they can't access protected routes without verification.
+
+Create/Update `app/_layout.tsx` or a middleware file:
+
+```typescript
+// app/_layout.tsx (Inside the AuthProvider or similar)
+import { useAuthSession } from '@/lib/hooks/useAuthSession';
+import { useRouter, useSegments } from 'expo-router';
+import { useEffect } from 'react';
+
+export function AuthGuard({ children }: { children: React.ReactNode }) {
+  const { user, loading } = useAuthSession();
+  const router = useRouter();
+  const segments = useSegments();
+
+  useEffect(() => {
+    if (loading) return;
+
+    const inAuthGroup = segments[0] === '(auth)';
+    const inTabsGroup = segments[0] === '(tabs)';
+
+    if (!user) {
+      // Not logged in -> Go to login
+      if (!inAuthGroup) router.replace('/login');
+    } else {
+      // Logged in but NOT verified -> Force to verify screen or logout
+      if (!user.emailVerified) {
+        // If they are trying to access tabs, kick them to verify screen
+        if (inTabsGroup) {
+          router.replace('/verify-email');
+        }
+        // If they are already on verify screen, let them stay
+      } else {
+        // Verified and logged in -> Can access tabs
+        if (inAuthGroup) router.replace('/(tabs)/home');
+      }
+    }
+  }, [user, loading, segments]);
+
+  return <>{children}</>;
+}
+```
+
+---
+
+## 🧪 Testing Protocol (Do This Now)
+
+1.  **Test Signup:**
+    *   Enter a new email (e.g., `test@example.com`).
+    *   Click "Create Account".
+    *   **Expected:** Redirects to `Verify Email` screen. Does **NOT** go to Home.
+    *   Check Gmail: Receive verification email.
+
+2.  **Test Unverified Login:**
+    *   Go to Login screen.
+    *   Enter `test@example.com` and password.
+    *   Click "Sign In".
+    *   **Expected:** Error toast: "Please verify your email..." and user is logged out.
+
+3.  **Test Verified Login:**
+    *   Click the link in the Gmail verification email.
+    *   Go back to App -> Login.
+    *   Enter credentials.
+    *   **Expected:** Successfully logs in and redirects to Home. Name and Profile load correctly.
+
+4.  **Test Hijacking Prevention:**
+    *   Try to sign up with someone else's email (e.g., `ceo@company.com`).
+    *   Since you cannot access that email to click the link, the account remains unusable.
+    *   **Result:** The attacker cannot access the account. Security preserved.
+
+---
+
+##  Summary of Changes
+
+| File | Change | Purpose |
+|------|--------|---------|
+| `app/(auth)/verify-email.tsx` | **Created** | New screen to instruct users to check email. |
+| `lib/auth/auth-service.ts` | Modified `signUp` | Sends email, returns `needsVerification: true`. |
+| `lib/auth/auth-service.ts` | Modified `signIn` | Checks `emailVerified`, blocks login if false. |
+| `app/(auth)/signup.tsx` | Modified Redirect | Routes to `/verify-email` instead of `/home`. |
+| `app/_layout.tsx` | Added Guard | Prevents access to Tabs if `!emailVerified`. |
+
+This implementation completely closes the security hole where non-owners could create accounts using other people's emails. **No one can use the app until they prove they own the email address.**
