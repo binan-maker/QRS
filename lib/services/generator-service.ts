@@ -251,7 +251,7 @@ export function subscribeToUserGeneratedQrs(
 ): () => void {
   return db.onQuery(
     ["users", userId, "generatedQrs"],
-    { orderBy: { field: "createdAt", direction: "desc" } },
+    { orderBy: { field: "createdAt", direction: "desc" }, limit: 100 },
     (docs) => {
       const base: GeneratedQrItem[] = docs.map((d) => {
         const data = d.data;

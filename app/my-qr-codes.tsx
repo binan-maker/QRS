@@ -1,8 +1,9 @@
 import { useState, useEffect, useRef, useMemo } from "react";
 import {
-  View, Text, FlatList, Pressable, Platform,
+  View, Text, Pressable, Platform,
   RefreshControl, useWindowDimensions, ScrollView,
 } from "react-native";
+import { FlashList } from "@shopify/flash-list";
 import { router } from "expo-router";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -543,10 +544,11 @@ export default function MyQrCodesScreen() {
             </Text>
           </Animated.View>
         ) : (
-          <FlatList
+          <FlashList
             data={groups}
             keyExtractor={(g) => g.id}
             renderItem={renderGroupItem}
+            estimatedItemSize={90}
             contentContainerStyle={{ paddingHorizontal: sp(20), paddingTop: sp(2), paddingBottom: tabBarHeight + sp(80) }}
             showsVerticalScrollIndicator={false}
             ListHeaderComponent={
@@ -579,10 +581,11 @@ export default function MyQrCodesScreen() {
           )}
         </Animated.View>
       ) : (
-        <FlatList
+        <FlashList
           data={filtered}
           keyExtractor={(item) => item.docId}
           renderItem={renderQrItem}
+          estimatedItemSize={100}
           contentContainerStyle={{ paddingHorizontal: sp(20), paddingTop: sp(2), paddingBottom: tabBarHeight + sp(80) }}
           showsVerticalScrollIndicator={false}
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={handleRefresh} tintColor={colors.primary} />}
