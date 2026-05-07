@@ -11,10 +11,38 @@ import { useAuth } from "@/contexts/AuthContext";
 import {
   getGeneratedQrById, updateQrDesign, setQrActiveState,
   subscribeToComments, addComment, ownerHideComment, softDeleteComment,
-  getGuardLink, updateGuardLinkDestination,
+  getGuardLink, updateGuardLinkDestination, updateSavedQrContent,
   getQrFollowersList, getQrFollowCount,
   type GeneratedQrItem, type CommentItem, type GuardLink, type FollowerInfo,
 } from "@/lib/firestore-service";
+
+const KNOWN_PHISHING_KEYWORDS = /phishing|scam|hack|malware|virus|spyware|trojan|ransomware/i;
+const TYPOSQUATTING = /paypa[l1]|amaz[o0]n|g[o0]{2}gle|micros[o0]ft|app[l1]e|faceb[o0]{2}k/i;
+const SHORTENER_HOSTS = new Set(["bit.ly", "tinyurl.com", "t.co", "ow.ly", "is.gd", "buff.ly", "adf.ly"]);
+
+export function validateDestinationUrl(raw: string): string | null {
+  const dest = raw.trim().startsWith("http") ? raw.trim() : `https://${raw.trim()}`;
+  let url: URL;
+  try {
+    url = new URL(dest);
+  } catch {
+    return "Please enter a valid URL (e.g. https://example.com).";
+  }
+  const host = url.hostname.toLowerCase();
+  if (/^\d+\.\d+\.\d+\.\d+$/.test(host)) {
+    return "IP addresses are not allowed as destinations for security reasons.";
+  }
+  if (/^(192\.168\.|10\.|172\.(1[6-9]|2\d|3[01])\.|127\.|localhost)/.test(host)) {
+    return "Local or private addresses cannot be used as destinations.";
+  }
+  if (SHORTENER_HOSTS.has(host)) {
+    return "URL shorteners are not allowed. Please use the full destination URL.";
+  }
+  if (KNOWN_PHISHING_KEYWORDS.test(host) || TYPOSQUATTING.test(host)) {
+    return "This URL was flagged as potentially unsafe. Please check and try again.";
+  }
+  return null;
+}
 
 export type LogoPosition = "center" | "top-left" | "top-right" | "bottom-left" | "bottom-right";
 
@@ -76,6 +104,16 @@ export function useMyQrDetail(id: string) {
   const [editingDestination, setEditingDestination] = useState(false);
   const [newDestination, setNewDestination] = useState("");
   const [savingDestination, setSavingDestination] = useState(false);
+  const [destinationError, setDestinationError] = useState<string | null>(null);
+
+  const [editingSavedContent, setEditingSavedContent] = useState(false);
+  const [newSavedContent, setNewSavedContent] = useState("");
+  const [savingSavedContent, setSavingSavedContent] = useState(false);
+  const [savedContentError, setSavedContentError] = useState<string | null>(null);
+
+  const [confirmModalOpen, setConfirmModalOpen] = useState(false);
+  const [pendingConfirmAction, setPendingConfirmAction] = useState<(() => Promise<void>) | null>(null);
+  const [confirmModalMessage, setConfirmModalMessage] = useState("");
 
   const [followersList, setFollowersList] = useState<FollowerInfo[]>([]);
   const [followersModalOpen, setFollowersModalOpen] = useState(false);
@@ -154,23 +192,87 @@ export function useMyQrDetail(id: string) {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
   }
 
-  async function handleUpdateDestination() {
-    if (!user || !qrItem?.guardUuid || !newDestination.trim()) return;
+  function handleRequestDestinationUpdate() {
+    if (!newDestination.trim()) return;
     const dest = newDestination.trim().startsWith("http") ? newDestination.trim() : `https://${newDestination.trim()}`;
-    setSavingDestination(true);
-    try {
-      await updateGuardLinkDestination(qrItem.guardUuid, dest, user.id);
-      const refreshed = await getGuardLink(qrItem.guardUuid);
-      setGuardLink(refreshed);
-      setNewDestination(refreshed?.currentDestination || dest);
-      setEditingDestination(false);
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      Alert.alert("Updated!", "Destination changed. Scanners will see a 24-hour caution notice while trust rebuilds.");
-    } catch (err: any) {
-      Alert.alert("Error", err?.message || "Could not update destination. Try again.");
-    } finally {
-      setSavingDestination(false);
+    const error = validateDestinationUrl(dest);
+    if (error) {
+      setDestinationError(error);
+      return;
     }
+    setDestinationError(null);
+    setConfirmModalMessage(
+      `Updating will redirect all future scans to:\n\n${dest}\n\nThis cannot be undone instantly — scanners will see a 24-hour caution notice while trust rebuilds.`
+    );
+    setPendingConfirmAction(() => async () => {
+      if (!user || !qrItem?.guardUuid) return;
+      setSavingDestination(true);
+      try {
+        await updateGuardLinkDestination(qrItem.guardUuid!, dest, user.id);
+        const refreshed = await getGuardLink(qrItem.guardUuid!);
+        setGuardLink(refreshed);
+        setNewDestination(refreshed?.currentDestination || dest);
+        setEditingDestination(false);
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        Alert.alert("Updated!", "Destination changed. Scanners will see a 24-hour caution notice while trust rebuilds.");
+      } catch (err: any) {
+        Alert.alert("Error", err?.message || "Could not update destination. Try again.");
+      } finally {
+        setSavingDestination(false);
+      }
+    });
+    setConfirmModalOpen(true);
+  }
+
+  async function handleUpdateDestination() {
+    handleRequestDestinationUpdate();
+  }
+
+  async function handleConfirmPendingAction() {
+    setConfirmModalOpen(false);
+    if (pendingConfirmAction) {
+      await pendingConfirmAction();
+      setPendingConfirmAction(null);
+    }
+  }
+
+  function handleCancelPendingAction() {
+    setConfirmModalOpen(false);
+    setPendingConfirmAction(null);
+  }
+
+  function handleRequestSavedContentUpdate() {
+    if (!newSavedContent.trim()) return;
+    const raw = newSavedContent.trim();
+    const looksLikeUrl = raw.startsWith("http") || raw.startsWith("www.") || /^[\w-]+\.\w{2,}/.test(raw);
+    if (looksLikeUrl) {
+      const error = validateDestinationUrl(raw);
+      if (error) {
+        setSavedContentError(error);
+        return;
+      }
+    }
+    setSavedContentError(null);
+    setConfirmModalMessage(
+      `Updating will change this QR code's content to:\n\n${raw}\n\nNote: Any previously printed copies of this QR code will be outdated and should be reprinted.`
+    );
+    setPendingConfirmAction(() => async () => {
+      if (!user || !qrItem?.docId) return;
+      setSavingSavedContent(true);
+      try {
+        await updateSavedQrContent(user.id, qrItem.docId, raw);
+        setQrItem({ ...qrItem, content: raw });
+        setNewSavedContent(raw);
+        setEditingSavedContent(false);
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        Alert.alert("Updated!", "QR content updated. Reprint any physical copies.");
+      } catch (err: any) {
+        Alert.alert("Error", err?.message || "Could not update content. Try again.");
+      } finally {
+        setSavingSavedContent(false);
+      }
+    });
+    setConfirmModalOpen(true);
   }
 
   async function handleSaveDesign() {
@@ -500,13 +602,20 @@ export function useMyQrDetail(id: string) {
     deactivationMsgInput, setDeactivationMsgInput,
     guardLink, editingDestination, setEditingDestination,
     newDestination, setNewDestination, savingDestination,
+    destinationError, setDestinationError,
+    editingSavedContent, setEditingSavedContent,
+    newSavedContent, setNewSavedContent,
+    savingSavedContent, savedContentError, setSavedContentError,
+    confirmModalOpen, confirmModalMessage,
+    handleConfirmPendingAction, handleCancelPendingAction,
     followersList, followersModalOpen, setFollowersModalOpen,
     followersLoading, followCount,
     customColorOpen, setCustomColorOpen,
     customColorTarget, setCustomColorTarget,
     customColorInput, setCustomColorInput,
     topLevelComments, getAllDescendants,
-    handleLoadFollowers, applyCustomColor, handleUpdateDestination,
+    handleLoadFollowers, applyCustomColor,
+    handleUpdateDestination, handleRequestSavedContentUpdate,
     handleSaveDesign, handleSubmitComment, handleModerateComment,
     handleToggleActive, handleConfirmDeactivate, handleCopyContent,
     handleShare, handleDownloadPdf, sharingQr, downloadingPdf,

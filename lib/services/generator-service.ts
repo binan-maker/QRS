@@ -299,6 +299,34 @@ export function subscribeToUserGeneratedQrs(
   );
 }
 
+export async function updateSavedQrContent(
+  userId: string,
+  docId: string,
+  newContent: string
+): Promise<void> {
+  const data = await db.get(["users", userId, "generatedQrs", docId]);
+  if (!data) throw new Error("QR not found");
+
+  const contentType = detectContentType(newContent);
+
+  const changeEntry = {
+    changedAt: new Date().toISOString(),
+    from: data.content || "",
+    to: newContent,
+    changedBy: userId,
+  };
+
+  const existingLog: any[] = Array.isArray(data.contentChangeLog) ? data.contentChangeLog : [];
+  const updatedLog = [...existingLog, changeEntry].slice(-10);
+
+  await db.update(["users", userId, "generatedQrs", docId], {
+    content: newContent,
+    contentType,
+    contentChangeLog: updatedLog,
+    updatedAt: db.timestamp(),
+  });
+}
+
 export async function updateQrDesign(
   userId: string,
   docId: string,

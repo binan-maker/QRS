@@ -32,10 +32,22 @@ export async function updateGuardLinkDestination(
   const data = await db.get(["guardLinks", uuid]);
   if (!data) throw new Error("Guard link not found");
   if (data.ownerId !== userId) throw new Error("Not authorized");
+
+  const changeEntry = {
+    changedAt: new Date().toISOString(),
+    from: data.currentDestination,
+    to: newDestination,
+    changedBy: userId,
+  };
+
+  const existingLog: any[] = Array.isArray(data.changeLog) ? data.changeLog : [];
+  const updatedLog = [...existingLog, changeEntry].slice(-10);
+
   await db.update(["guardLinks", uuid], {
     previousDestination: data.currentDestination,
     currentDestination: newDestination,
     destinationChangedAt: db.timestamp(),
+    changeLog: updatedLog,
   });
 }
 
@@ -43,6 +55,14 @@ export async function getGuardLink(uuid: string): Promise<GuardLink | null> {
   try {
     const data = await db.get(["guardLinks", uuid]);
     if (!data) return null;
+    const rawLog: any[] = Array.isArray(data.changeLog) ? data.changeLog : [];
+    const changeLog = rawLog.map((e: any) => ({
+      changedAt: typeof e.changedAt === "string" ? e.changedAt : new Date().toISOString(),
+      from: e.from || "",
+      to: e.to || "",
+      changedBy: e.changedBy || "",
+    }));
+
     return {
       uuid,
       currentDestination: data.currentDestination || "",
@@ -53,6 +73,7 @@ export async function getGuardLink(uuid: string): Promise<GuardLink | null> {
       isActive: data.isActive !== false,
       destinationChangedAt: data.destinationChangedAt ? tsToString(data.destinationChangedAt) : null,
       createdAt: tsToString(data.createdAt),
+      changeLog,
     };
   } catch (e) {
     console.warn("[db] getGuardLink failed:", e);

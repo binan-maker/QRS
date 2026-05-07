@@ -1,7 +1,7 @@
 import { useState } from "react";
 import {
   View, Text, ScrollView, Pressable, Platform, Switch,
-  TextInput, useWindowDimensions, ActivityIndicator,
+  TextInput, useWindowDimensions, ActivityIndicator, Modal,
 } from "react-native";
 import { useLocalSearchParams, router } from "expo-router";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
@@ -115,7 +115,14 @@ export default function MyQrDetailScreen() {
     deactivationMsgInput, setDeactivationMsgInput,
     guardLink, editingDestination, setEditingDestination,
     newDestination, setNewDestination, savingDestination,
-    handleUpdateDestination, handleSaveDesign, handleToggleActive,
+    destinationError, setDestinationError,
+    editingSavedContent, setEditingSavedContent,
+    newSavedContent, setNewSavedContent,
+    savingSavedContent, savedContentError, setSavedContentError,
+    confirmModalOpen, confirmModalMessage,
+    handleConfirmPendingAction, handleCancelPendingAction,
+    handleUpdateDestination, handleRequestSavedContentUpdate,
+    handleSaveDesign, handleToggleActive,
     handleConfirmDeactivate, handleCopyContent, handleShare, handleDownloadPdf,
     sharingQr, downloadingPdf,
   } = useMyQrDetail(id as string);
@@ -299,16 +306,18 @@ export default function MyQrDetailScreen() {
           </View>
         </Animated.View>
 
-        {/* Smart Redirect — business only */}
-        {isBusiness && guardLink && (
+        {/* Dynamic Destination — all QR types with a guard link */}
+        {guardLink && (
           <Animated.View entering={FadeInDown.duration(350).delay(80)}>
             <View style={{
               borderRadius: sp(18), borderWidth: 1, borderColor: "#6366F1" + "40",
               backgroundColor: "#6366F1" + "0D", padding: sp(16), marginBottom: sp(14),
             }}>
-              <View style={{ flexDirection: "row", alignItems: "center", gap: sp(8), marginBottom: sp(8) }}>
+              <View style={{ flexDirection: "row", alignItems: "center", gap: sp(8), marginBottom: sp(6) }}>
                 <Ionicons name="git-branch-outline" size={rf(15)} color="#6366F1" />
-                <Text style={{ fontSize: rf(13), fontFamily: "Inter_700Bold", color: "#6366F1" }}>Smart Redirect</Text>
+                <Text style={{ fontSize: rf(13), fontFamily: "Inter_700Bold", color: "#6366F1" }}>
+                  {isBusiness ? "Smart Redirect" : "Dynamic Destination"}
+                </Text>
                 <View style={{ borderRadius: sp(6), paddingHorizontal: sp(7), paddingVertical: sp(2), backgroundColor: "#6366F1" + "20" }}>
                   <Text style={{ fontSize: rf(9), fontFamily: "Inter_700Bold", color: "#6366F1" }}>DYNAMIC</Text>
                 </View>
@@ -316,23 +325,39 @@ export default function MyQrDetailScreen() {
               <Text style={{ fontSize: rf(11), fontFamily: "Inter_400Regular", color: colors.textSecondary, marginBottom: sp(10) }} numberOfLines={2}>
                 {guardLink.currentDestination}
               </Text>
+
               {editingDestination ? (
                 <View style={{ gap: sp(8) }}>
                   <TextInput
                     value={newDestination}
-                    onChangeText={setNewDestination}
+                    onChangeText={(t) => { setNewDestination(t); setDestinationError(null); }}
                     placeholder="https://new-url.com"
                     placeholderTextColor={colors.textMuted}
                     autoCapitalize="none"
                     keyboardType="url"
                     style={{
                       backgroundColor: colors.surface, borderRadius: sp(10), borderWidth: 1,
-                      borderColor: colors.surfaceBorder, paddingHorizontal: sp(12), paddingVertical: sp(9),
+                      borderColor: destinationError ? colors.danger : colors.surfaceBorder,
+                      paddingHorizontal: sp(12), paddingVertical: sp(9),
                       fontSize: rf(13), color: colors.text, fontFamily: "Inter_400Regular",
                     }}
                   />
+                  {destinationError && (
+                    <View style={{ flexDirection: "row", alignItems: "center", gap: sp(4) }}>
+                      <Ionicons name="warning-outline" size={rf(12)} color={colors.danger} />
+                      <Text style={{ fontSize: rf(11), fontFamily: "Inter_400Regular", color: colors.danger, flex: 1 }}>
+                        {destinationError}
+                      </Text>
+                    </View>
+                  )}
+                  <View style={{ flexDirection: "row", alignItems: "center", gap: sp(6), backgroundColor: colors.surface, borderRadius: sp(8), padding: sp(8) }}>
+                    <Ionicons name="shield-checkmark-outline" size={rf(12)} color={colors.textMuted} />
+                    <Text style={{ fontSize: rf(10), fontFamily: "Inter_400Regular", color: colors.textMuted, flex: 1 }}>
+                      New URL will be checked for threats before saving
+                    </Text>
+                  </View>
                   <View style={{ flexDirection: "row", gap: sp(8) }}>
-                    <Pressable onPress={() => setEditingDestination(false)} style={{ flex: 1, borderRadius: sp(10), borderWidth: 1, borderColor: colors.surfaceBorder, padding: sp(9), alignItems: "center" }}>
+                    <Pressable onPress={() => { setEditingDestination(false); setDestinationError(null); }} style={{ flex: 1, borderRadius: sp(10), borderWidth: 1, borderColor: colors.surfaceBorder, padding: sp(9), alignItems: "center" }}>
                       <Text style={{ fontSize: rf(13), fontFamily: "Inter_600SemiBold", color: colors.textSecondary }}>Cancel</Text>
                     </Pressable>
                     <Pressable onPress={handleUpdateDestination} disabled={savingDestination} style={{ flex: 2, borderRadius: sp(10), backgroundColor: "#6366F1", padding: sp(9), alignItems: "center" }}>
@@ -353,6 +378,106 @@ export default function MyQrDetailScreen() {
                   <Ionicons name="pencil-outline" size={rf(13)} color="#6366F1" />
                   <Text style={{ fontSize: rf(12), fontFamily: "Inter_600SemiBold", color: "#6366F1" }}>Change Destination</Text>
                 </Pressable>
+              )}
+
+              {/* Change history */}
+              {!editingDestination && guardLink.changeLog && guardLink.changeLog.length > 0 && (
+                <View style={{ marginTop: sp(12), gap: sp(6) }}>
+                  <Text style={{ fontSize: rf(10), fontFamily: "Inter_600SemiBold", color: colors.textMuted }}>RECENT CHANGES</Text>
+                  {guardLink.changeLog.slice(-3).reverse().map((entry, idx) => (
+                    <View key={idx} style={{ flexDirection: "row", alignItems: "flex-start", gap: sp(6), backgroundColor: colors.surface, borderRadius: sp(8), padding: sp(8) }}>
+                      <Ionicons name="time-outline" size={rf(11)} color={colors.textMuted} style={{ marginTop: 1 }} />
+                      <View style={{ flex: 1 }}>
+                        <Text style={{ fontSize: rf(10), fontFamily: "Inter_400Regular", color: colors.textMuted }}>
+                          {new Date(entry.changedAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
+                        </Text>
+                        <Text style={{ fontSize: rf(10), fontFamily: "Inter_400Regular", color: colors.textSecondary }} numberOfLines={1}>
+                          → {entry.to.length > 40 ? entry.to.slice(0, 40) + "…" : entry.to}
+                        </Text>
+                      </View>
+                    </View>
+                  ))}
+                </View>
+              )}
+            </View>
+          </Animated.View>
+        )}
+
+        {/* Edit Destination — saved QRs without a guard link */}
+        {!isBusiness && !guardLink && (
+          <Animated.View entering={FadeInDown.duration(350).delay(80)}>
+            <View style={{
+              borderRadius: sp(18), borderWidth: 1, borderColor: colors.primaryDim,
+              backgroundColor: colors.primaryDim + "50", padding: sp(16), marginBottom: sp(14),
+            }}>
+              <View style={{ flexDirection: "row", alignItems: "center", gap: sp(8), marginBottom: sp(6) }}>
+                <Ionicons name="create-outline" size={rf(15)} color={colors.primary} />
+                <Text style={{ fontSize: rf(13), fontFamily: "Inter_700Bold", color: colors.primary }}>Edit Destination</Text>
+              </View>
+
+              {editingSavedContent ? (
+                <View style={{ gap: sp(8) }}>
+                  <TextInput
+                    value={newSavedContent}
+                    onChangeText={(t) => { setNewSavedContent(t); setSavedContentError(null); }}
+                    placeholder={qrItem.content || "Enter new content…"}
+                    placeholderTextColor={colors.textMuted}
+                    autoCapitalize="none"
+                    multiline={!qrItem.content?.startsWith("http")}
+                    style={{
+                      backgroundColor: colors.surface, borderRadius: sp(10), borderWidth: 1,
+                      borderColor: savedContentError ? colors.danger : colors.surfaceBorder,
+                      paddingHorizontal: sp(12), paddingVertical: sp(9),
+                      fontSize: rf(13), color: colors.text, fontFamily: "Inter_400Regular",
+                    }}
+                  />
+                  {savedContentError && (
+                    <View style={{ flexDirection: "row", alignItems: "center", gap: sp(4) }}>
+                      <Ionicons name="warning-outline" size={rf(12)} color={colors.danger} />
+                      <Text style={{ fontSize: rf(11), fontFamily: "Inter_400Regular", color: colors.danger, flex: 1 }}>
+                        {savedContentError}
+                      </Text>
+                    </View>
+                  )}
+                  <View style={{ flexDirection: "row", alignItems: "center", gap: sp(6), backgroundColor: colors.surface, borderRadius: sp(8), padding: sp(8) }}>
+                    <Ionicons name="print-outline" size={rf(12)} color={colors.textMuted} />
+                    <Text style={{ fontSize: rf(10), fontFamily: "Inter_400Regular", color: colors.textMuted, flex: 1 }}>
+                      Printed copies of this QR will be outdated after updating
+                    </Text>
+                  </View>
+                  <View style={{ flexDirection: "row", gap: sp(8) }}>
+                    <Pressable onPress={() => { setEditingSavedContent(false); setSavedContentError(null); }} style={{ flex: 1, borderRadius: sp(10), borderWidth: 1, borderColor: colors.surfaceBorder, padding: sp(9), alignItems: "center" }}>
+                      <Text style={{ fontSize: rf(13), fontFamily: "Inter_600SemiBold", color: colors.textSecondary }}>Cancel</Text>
+                    </Pressable>
+                    <Pressable
+                      onPress={handleRequestSavedContentUpdate}
+                      disabled={savingSavedContent}
+                      style={{ flex: 2, borderRadius: sp(10), backgroundColor: colors.primary, padding: sp(9), alignItems: "center" }}
+                    >
+                      <Text style={{ fontSize: rf(13), fontFamily: "Inter_700Bold", color: "#fff" }}>
+                        {savingSavedContent ? "Saving…" : "Update Content"}
+                      </Text>
+                    </Pressable>
+                  </View>
+                </View>
+              ) : (
+                <View style={{ gap: sp(8) }}>
+                  <Text style={{ fontSize: rf(11), fontFamily: "Inter_400Regular", color: colors.textSecondary }} numberOfLines={2}>
+                    {qrItem.content || "No content"}
+                  </Text>
+                  <Pressable
+                    onPress={() => { setNewSavedContent(qrItem.content || ""); setEditingSavedContent(true); }}
+                    style={({ pressed }) => [{
+                      flexDirection: "row", alignItems: "center", gap: sp(6),
+                      borderRadius: sp(10), backgroundColor: colors.primaryDim,
+                      paddingHorizontal: sp(12), paddingVertical: sp(8), alignSelf: "flex-start",
+                      opacity: pressed ? 0.8 : 1,
+                    }]}
+                  >
+                    <Ionicons name="pencil-outline" size={rf(13)} color={colors.primary} />
+                    <Text style={{ fontSize: rf(12), fontFamily: "Inter_600SemiBold", color: colors.primary }}>Edit Content</Text>
+                  </Pressable>
+                </View>
               )}
             </View>
           </Animated.View>
@@ -470,6 +595,42 @@ export default function MyQrDetailScreen() {
           </Pressable>
         </Animated.View>
       </ScrollView>
+
+      {/* Confirmation modal for destination / content changes */}
+      <Modal
+        visible={confirmModalOpen}
+        transparent
+        animationType="fade"
+        onRequestClose={handleCancelPendingAction}
+      >
+        <View style={{ flex: 1, backgroundColor: "rgba(0,0,0,0.55)", justifyContent: "center", alignItems: "center", padding: sp(24) }}>
+          <View style={{ backgroundColor: colors.surface, borderRadius: sp(22), padding: sp(24), width: "100%", maxWidth: 380 }}>
+            <View style={{ flexDirection: "row", alignItems: "center", gap: sp(10), marginBottom: sp(14) }}>
+              <View style={{ width: sp(38), height: sp(38), borderRadius: sp(12), backgroundColor: colors.warningDim, alignItems: "center", justifyContent: "center" }}>
+                <Ionicons name="warning-outline" size={rf(20)} color={colors.warning} />
+              </View>
+              <Text style={{ fontSize: rf(15), fontFamily: "Inter_700Bold", color: colors.text, flex: 1 }}>Confirm Update</Text>
+            </View>
+            <Text style={{ fontSize: rf(13), fontFamily: "Inter_400Regular", color: colors.textSecondary, lineHeight: rf(20), marginBottom: sp(20) }}>
+              {confirmModalMessage}
+            </Text>
+            <View style={{ flexDirection: "row", gap: sp(10) }}>
+              <Pressable
+                onPress={handleCancelPendingAction}
+                style={({ pressed }) => [{ flex: 1, borderRadius: sp(12), borderWidth: 1, borderColor: colors.surfaceBorder, paddingVertical: sp(12), alignItems: "center", opacity: pressed ? 0.75 : 1 }]}
+              >
+                <Text style={{ fontSize: rf(13), fontFamily: "Inter_600SemiBold", color: colors.textSecondary }}>Cancel</Text>
+              </Pressable>
+              <Pressable
+                onPress={handleConfirmPendingAction}
+                style={({ pressed }) => [{ flex: 2, borderRadius: sp(12), backgroundColor: colors.primary, paddingVertical: sp(12), alignItems: "center", opacity: pressed ? 0.85 : 1 }]}
+              >
+                <Text style={{ fontSize: rf(13), fontFamily: "Inter_700Bold", color: "#fff" }}>Confirm Update</Text>
+              </Pressable>
+            </View>
+          </View>
+        </View>
+      </Modal>
 
       <DeactivateModal
         visible={deactivateModalOpen}

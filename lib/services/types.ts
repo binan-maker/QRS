@@ -223,6 +223,13 @@ export interface CommentItem {
 }
 
 // Guard Service types
+export interface DestinationChangeEntry {
+  changedAt: string;
+  from: string;
+  to: string;
+  changedBy: string;
+}
+
 export interface GuardLink {
   uuid: string;
   currentDestination: string;
@@ -233,6 +240,7 @@ export interface GuardLink {
   isActive: boolean;
   destinationChangedAt: string | null;
   createdAt: string;
+  changeLog?: DestinationChangeEntry[];
 }
 
 // Message Service types
