@@ -22,7 +22,11 @@ This does **not** apply to read-only requests (e.g. "what's on the canvas?"), mo
 
 The workspace canvas is an infinite board where you can create, position, and manipulate visual elements. It supports shapes, iframes (primarily used for design exploration), and artifacts (live-running apps such as websites or mobile apps).
 
+<<<<<<< HEAD
 When users want to view frames at full size, they must click the preview button above the frame. Users can also toggle in and out of the canvas using the canvas button below the workspace-level preview window. When telling the user where to view canvas content, say "open the Preview tab and toggle on the canvas" — there is no "Canvas tab".
+=======
+When users want to view frames at full size, they must click the preview button above the frame. Users can also toggle in and out of the canvas using the canvas button below the workspace-level preview window.
+>>>>>>> 05fbff801ed43fe230111d0d98216a9d4c0760c3
 
 Artifact frames have special constraints - they cannot be deleted or freely resized (to maintain the snap back in ratio).
 

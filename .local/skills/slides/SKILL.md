@@ -28,17 +28,25 @@ When creating a NEW slide deck, the backend has already presented the user with 
 
 ### Using the Selected Template
 
+<<<<<<< HEAD
 This section is about *what* to match, not *when* to start. The order of operations for new decks lives in `<first_build>` — follow that sequence. Do not begin writing slide files from this section; the Content Outline Review still has to happen first.
 
 1. **Study the template preview** — A preview image for the selected template was automatically injected into your context. This is your primary visual target — match it as closely as possible.
 2. **Read the reference file** — Read `templates/<template-id>.md` (relative to the skill file) for exact hex codes, font choices, layout details, source code for all 4 slides, and design patterns.
 3. **Plan Slide 1 fidelity first** — When you do build (after the Content Outline Review in `<first_build>` step 2), write Slide 1 first to match the reference image as closely as possible. Take a screenshot and compare against the reference image to verify fidelity before extending the patterns to the remaining slides.
 4. **Extend patterns to the rest of the deck** — Maintain consistent styling throughout the deck guided by both the reference images and the text description. Templates only ship with ~4 sample slides and their images, so for any additional slides you'll need to fill in the gaps yourself: source or generate fitting images via `imageSearch` or the `media-generation` skill, and extend the template's layout patterns to cover the remaining content.
+=======
+1. **Study the template preview** — A preview image for the selected template was automatically injected into your context. This is your primary visual target — match it as closely as possible.
+2. **Read the reference file** — Read `templates/<template-id>.md` (relative to the skill file) for exact hex codes, font choices, layout details, source code for all 4 slides, and design patterns.
+3. **Build Slide 1 first** — Create the first slide matching the reference image as closely as possible. Take a screenshot and compare against the reference image to verify fidelity before proceeding.
+4. **Then build remaining slides** — Maintain consistent styling throughout the deck guided by both the reference images and the text description. Templates only ship with ~4 sample slides and their images, so for any additional slides you'll need to fill in the gaps yourself: source or generate fitting images via `imageSearch` or the `media-generation` skill, and extend the template's layout patterns to cover the remaining content.
+>>>>>>> 05fbff801ed43fe230111d0d98216a9d4c0760c3
 
 The preview image is the ground truth. The text description and source code supplement it with precise values. Follow both as your creative direction, then adapt to the specific content.
 
 When the user selected an "Auto" option, no preview image is injected. Follow the standard planning process below to develop an original creative direction.
 
+<<<<<<< HEAD
 ### Required: Content Outline Review (new decks only)
 
 For every new slide deck, call `user_query` with an `AgentQuerySlideOutline` before writing any slide files, unless one of the skip cases below applies. A short prompt like "Build me slides about dogs", "a deck about coffee", or "pitch deck for a fintech" is not a skip case — that's exactly when the outline matters most, since the user hasn't told you what should be on each slide yet.
@@ -46,6 +54,11 @@ For every new slide deck, call `user_query` with an `AgentQuerySlideOutline` bef
 **Research first when the deck depends on real facts.** If the deck is about a real company, real product, real industry, or any subject where the slides will need verifiable claims (revenue, headcount, market data, product specifics, dates), complete brand research and content/fact verification *before* drafting the outline — see `<first_build>` steps 0–1 and `<planning>` steps 1–2. Once the user confirms the outline, the "User-supplied copy is canonical" rule in `<constraints>` → Content treats it as verbatim source material, so any guessed fact you slip into the draft gets locked in. **Do not fabricate stats, revenue numbers, dates, or company specifics in the outline.** If you cannot verify a figure from a real source, omit it from the draft or label it explicitly as a placeholder (e.g. "[stat to verify]"). For purely topical or creative decks ("dogs", "coffee", "birthday party") with no verifiable claims, you can draft the outline immediately after studying the template.
 
 Then call `user_query` with:
+=======
+### Content Outline Review
+
+After studying the template, generate the full slide-by-slide content based on the user's topic and selected theme. Then call `user_query` with:
+>>>>>>> 05fbff801ed43fe230111d0d98216a9d4c0760c3
 
 1. **Content outline** — `AgentQuerySlideOutline`:
    - Use the `AgentQuerySlideOutline` query type. Set `prompt` to a read-only message shown above the editable cards (e.g. "Here's a draft outline for your deck. Edit anything you'd like, then confirm."). Set `slides` to an array of `{headline, body}` objects — one per slide.
@@ -58,6 +71,7 @@ Wait for the user's response. If they request changes, incorporate them. Then pr
 
 ### Skip conditions
 
+<<<<<<< HEAD
 Skip the content outline review and proceed directly to building only when one of these is true:
 
 - The user is asking to edit/modify an existing deck, not create a new one.
@@ -73,6 +87,14 @@ Don't skip just because:
 - You feel confident you can fill in sensible defaults — that's exactly when the outline review is most valuable.
 
 If you're unsure whether the user supplied "enough", err toward running the outline review — it costs one round-trip and prevents rebuilding a deck that misses the user's intent.
+=======
+Skip the content outline review and proceed directly to building if:
+
+- The user is asking to edit/modify an existing deck, not create a new one
+- The user is importing/converting from an existing file (PPTX, PDF, etc.) — the source file already defines the content and structure
+
+When in doubt, ask.
+>>>>>>> 05fbff801ed43fe230111d0d98216a9d4c0760c3
 
 ### Static Asset Paths
 
@@ -129,29 +151,46 @@ Only ask clarifying questions for information the user has not already given you
 If the user provided it, do NOT re-ask. If the user provided enough to start (count + topic, or topic + clear brand, or topic + audience), skip clarifying questions entirely and start building. Use sensible defaults for anything missing — pick a slide count of around 6-8, infer audience from topic, and commit to an aesthetic that matches the subject.
 
 Only ask when the request is genuinely ambiguous AND the missing information would change the deck materially (e.g. "make a deck" with no topic, no count, no brand — ask). When you do ask, ask the minimum needed to unblock — never re-ask things that were already specified.
+<<<<<<< HEAD
 
 This section governs only short clarifying Q&A. It doesn't override the Content Outline Review under "Template Selection and Pre-Generation Flow" — that step still runs on every new deck unless one of the Skip conditions there applies.
+=======
+>>>>>>> 05fbff801ed43fe230111d0d98216a9d4c0760c3
 </clarifying_questions>
 
 <first_build>
 When building a new slide deck for the first time, follow this exact sequence:
 
+<<<<<<< HEAD
 0. **Research brand** (real companies only): **Skip this step entirely if the user already supplied the brand source of truth** — attached brand guide, exact hex codes, approved fonts, design system file, sibling artifact CSS, etc. Use what they gave you. Otherwise, for real companies, prefer the Firecrawl-backed tools — they return real, structured data. The order is: `extractBranding` → `webFetch` on official pages → `webSearch` only as a last resort.
+=======
+1. **Research brand** (real companies only): **Skip this step entirely if the user already supplied the brand source of truth** — attached brand guide, exact hex codes, approved fonts, design system file, sibling artifact CSS, etc. Use what they gave you. Otherwise, for real companies, prefer the Firecrawl-backed tools — they return real, structured data. The order is: `extractBranding` → `webFetch` on official pages → `webSearch` only as a last resort.
+>>>>>>> 05fbff801ed43fe230111d0d98216a9d4c0760c3
    - Start with `extractBranding` on the official site for colors, fonts, and visual identity.
    - Use `webFetch` on the homepage, about page, or key product pages for real company copy and positioning.
    - Only fall back to `webSearch` if neither tool can reach the site (e.g. the company has no public site, or you genuinely cannot find the URL). Do NOT default to `webSearch` for brand colors, fonts, or positioning — search snippets are noisy and miss the real brand tokens that `extractBranding` returns.
    - `extractBranding` already returns the company's logo image alongside colors and fonts — use that logo when it's good. `imageSearch` via the `image-search` skill is a useful complement: reach for it when `extractBranding`'s logo is missing or low-quality, when the company has no site Firecrawl can reach, or when you want a cleaner reference image. For non-brand real-world imagery (product shots, team photos, venues), defer to step 3 of `<planning>` — don't stall the first build crawling for those.
    - If the visual feel of the source site matters, use external-URL `screenshot` for quick visual reference.
+<<<<<<< HEAD
 1. **Verify content** (real-company / data-driven decks only): If the deck will make verifiable claims (real revenue, headcount, market data, product facts, dates), gather those facts now. Lead with `webFetch` on the company's own pages, then `webSearch` only for facts not on the company's site. See `<planning>` step 2 for the full guidance and concurrent-query pattern. Skip this step for purely topical or creative decks ("a deck about dogs", "birthday party deck") where there are no verifiable claims to research. **Do not fabricate stats, revenue numbers, dates, or company specifics.** Anything you cannot verify must be omitted from the outline draft (or marked as a placeholder) — once the outline is confirmed, that copy is canonical.
 2. **Run the Content Outline Review** — call `user_query` with an `AgentQuerySlideOutline`, using only verified facts from steps 0–1, and wait for the user's response before any of the steps below. Skip only for the cases listed in "Skip conditions" under "Template Selection and Pre-Generation Flow".
 3. **Generate images** (if needed): Kick off `generateImageAsync` via the media-generation skill so images generate in parallel while you write slides.
 4. **Write ALL files in a single parallel batch.** `index.html`, `index.css`, every slide `.tsx` file, and `slides-manifest.json` are all independent — write them ALL in one parallel tool call. Do not write them sequentially.
+=======
+2. **Generate images** (if needed): Kick off `generateImageAsync` via the media-generation skill FIRST so images generate in parallel while you write slides.
+3. **Write ALL files in a single parallel batch.** `index.html`, `index.css`, every slide `.tsx` file, and `slides-manifest.json` are all independent — write them ALL in one parallel tool call. Do not write them sequentially.
+>>>>>>> 05fbff801ed43fe230111d0d98216a9d4c0760c3
    - `index.html`: Update Google Fonts links for your chosen display + body fonts.
    - `index.css`: Fill in CSS variables in `:root` with brand palette and font families. Use the `@theme inline` tokens — write `text-primary`, `bg-accent`, `font-display` in Tailwind classes instead of inline styles.
    - Each slide `.tsx` file in `src/pages/slides/`
    - `slides-manifest.json` with all entries
+<<<<<<< HEAD
 5. **Run validation**: `pnpm run --filter @workspace/<slug> validate-slides`
 6. **Restart workflow** — done.
+=======
+4. **Run validation**: `pnpm run --filter @workspace/<slug> validate-slides`
+5. **Restart workflow** — done.
+>>>>>>> 05fbff801ed43fe230111d0d98216a9d4c0760c3
 
 Do NOT restart workflow until all slides are written. Do NOT read files you just scaffolded — they are already in your context.
 A quick seamless build is what you are aiming for. If the user gave you an exact slide count (in their prompt or the additional-comments box on the length question), use that exact number. If they picked a length range, pick a slide count that feels right inside that range. Otherwise limit to around 6 — don't go longer unless the user asked for it.
@@ -231,8 +270,11 @@ Before writing any code, establish your creative direction:
    **Context matters for imagery too.** Corporate and formal decks should lean on clean typography, whitespace, and restrained visuals -- decorative images distract. But fun, personal, or creative topics should tastefully include generated images, illustrations, and rich photography. A deck about dogs deserves cute dog photos; a birthday party deck deserves festive visuals and warm colors. Read the room and design accordingly.
 
    **Commit to a system up front.** Before writing slides, write out (in planning text) the system you'll use for the whole deck: the section-header layout, the title-slide layout, how content slides are composed, the image-slide pattern, and the closing-slide treatment. Limit the deck to **1–2 background colors max** — varied background tones break visual cohesion fast. Decide where visual rhythm comes from (a recurring accent shape, a consistent type lockup, a divider style). State the system before you build it; it's what separates a designed deck from an assembled one.
+<<<<<<< HEAD
 
    **Professional / corporate / formal decks — extra consistency rules.** When the user asks for a professional deck (or the context reads that way — investor, board, exec, sales, internal report, quarterly review): pick **one mode and hold it** — either consistently light or consistently dark, never alternating slide-to-slide. Hold the same background tone family across every content slide. Save full-bleed image slides for 1–2 hero moments max, and lean on typography + whitespace for the rest unless the user explicitly asks for a more visually rich treatment. A professional deck reads as professional because it's restrained and consistent, not because every slide brings a new visual trick.
+=======
+>>>>>>> 05fbff801ed43fe230111d0d98216a9d4c0760c3
 7. **Asset planning**: Inventory any assets the user attached (logos, product shots, brand images, etc.) and decide where each one appears. Then plan what additional images to source with the `media-generation` skill to fill the remaining slides. Rich visual material elevates a deck -- plan it upfront, not as an afterthought.
 
 Commit to a direction and execute.
@@ -336,8 +378,13 @@ Typography is the backbone of slide design. Get this right and the deck is 80% t
 
 1. **Display / Hero**: Headlines, big stats, section titles. Use your display font at large scale (4-7vw for main headlines). Bold or black weight. Tight letter-spacing (`tracking-tighter` or `tracking-tight`).
 2. **Subheading**: Slide subtitles, column headers. Same display font at medium scale (2-3vw), or body font at bold weight.
+<<<<<<< HEAD
 3. **Body**: Supporting text, bullet points, descriptions. Body font at readable scale (2-2.5vw). Regular or medium weight.
 4. **Caption / Detail**: Attribution, footnotes, fine print. Body font at small scale (1.5vw — the floor; nothing renders below it). Light or regular weight. Lower opacity (60-80%).
+=======
+3. **Body**: Supporting text, bullet points, descriptions. Body font at readable scale (1.5-2vw). Regular or medium weight.
+4. **Caption / Detail**: Attribution, footnotes, fine print. Body font at small scale (1.2-1.5vw). Light or regular weight. Lower opacity (60-80%).
+>>>>>>> 05fbff801ed43fe230111d0d98216a9d4c0760c3
 
 **Rules:**
 
@@ -352,11 +399,19 @@ Typography is the backbone of slide design. Get this right and the deck is 80% t
 | Hero headline | 5-7vw | Bold/Black |
 | Slide headline | 3-4.5vw | Bold |
 | Subheading | 2-3vw | Semibold |
+<<<<<<< HEAD
 | Body text | 2-2.5vw | Regular/Medium |
 | Caption | 1.5vw | Regular/Light |
 | Big stat number | 8-12vw | Black |
 
 **Minimum readable size at export.** `1.5vw` is the absolute floor — captions and footnotes only. Body copy targets `2vw+` (aim for 2-2.5vw); nothing on the slide should render below `1.5vw`. Read the smallest font size across your slide JSX; if any body text falls below `2vw`, or anything at all falls below `1.5vw`, raise it. See `./references/visual_qa.md` for the full text-scaling rules and forbidden patterns (no `clamp()` with px caps, no `transform: scale` on text, no hardcoded `px` font sizes).
+=======
+| Body text | 1.5-2vw | Regular/Medium |
+| Caption | 1.2-1.5vw | Regular/Light |
+| Big stat number | 8-12vw | Black |
+
+**Minimum readable size at export.** At the 1920x1080 export size, body text must render at ≥24px equivalent — that's `1.5vw` or larger. Read the smallest font size across your slide JSX; if it falls below `1.5vw`, raise it. See `./references/visual_qa.md` for the full text-scaling rules and forbidden patterns (no `clamp()` with px caps, no `transform: scale` on text, no hardcoded `px` font sizes).
+>>>>>>> 05fbff801ed43fe230111d0d98216a9d4c0760c3
 
 **Font selection:**
 
@@ -488,8 +543,12 @@ The deeper text-scaling forbidden patterns (`clamp` with px caps, `transform: sc
 
 **Typography:**
 
+<<<<<<< HEAD
 - **Body text target: 2vw+. The 1.5vw rule is the floor, not the goal.** Aim for 2–2.5vw on standard body copy, and scale headlines and hero stats well above that. Captions and footnotes are the only place 1.5vw is acceptable; nothing should ever fall below it.
 - **Back-of-the-room test.** Decks are presented on projectors and conference-room TVs. Before finishing a slide, ask: could someone standing at the back of the room read this? If text would shrink to an unreadable size on a projected 16:9 frame, increase it — even if that means cutting copy or splitting the slide. Sizing layout to fit the text is correct; shrinking text to fit the layout is not.
+=======
+- No text smaller than 1.5vw
+>>>>>>> 05fbff801ed43fe230111d0d98216a9d4c0760c3
 - Max 6 lines of text per slide -- if you have more to say, split it across two slides
 - Max 2 fonts (one display + one body)
 - Only use common PowerPoint-bundled fonts or popular Google Fonts -- niche or decorative fonts break when exported to PPTX or other platforms. Font selection rules (banned defaults, weight discipline, vary across decks) live in the **Font selection** sub-block of `<typography_system>` — follow them.
@@ -504,14 +563,20 @@ The deeper text-scaling forbidden patterns (`clamp` with px caps, `transform: sc
 - No drop shadows on everything
 - No overusing AI-generated images (especially as full-slide backgrounds) -- use them sparingly and purposefully
 - No more than 2-3 image-background slides per deck
+<<<<<<< HEAD
 - Default to a single mode for the whole deck. Mixed light/dark is only acceptable when the selected template's reference clearly uses it, an attached brand guide specifies it, or the user explicitly asks for it. When you do commit to mixed mode, make it look intentional (e.g. a dark cover or closing slide paired with light content slides), not random
+=======
+>>>>>>> 05fbff801ed43fe230111d0d98216a9d4c0760c3
 - **Avoid the AI-slop trope** of rounded-corner containers with a left-border accent color — it's the visual equivalent of "as an AI language model." Use real card treatments (subtle shadow, tinted background, restrained borders) or no container at all.
 
 **Content:**
 
 - **User-supplied copy is canonical — use it verbatim.** If the user gave you exact slide text (in the prompt, an attached doc, the `AgentQuerySlideOutline` response, or any other channel), reproduce it word-for-word. Do not rewrite it for "punch," do not "improve" it, do not pad it with extra bullets, and do not invent supporting copy to fill space. Match casing, punctuation, and line breaks. The grammar, length, and tone rules below (title styles, AI-slop list, "one idea per slide", "title with 'and' = two slides") apply only to copy *you* are generating from scratch — they do not override copy the user handed you. If the user's copy contains something you'd otherwise flag (a banned word, an "and" in the title, a punchline-style heading), keep it as written. If you genuinely think a change is needed, ask first; do not edit silently.
 - **Speaker notes: off by default, generate when asked.** Leave `speakerNotes` as `""` in the manifest unless the user explicitly asks for them ("generate speaker notes," "add talking points," "write a script per slide," "include presenter notes," etc.). When asked, write notes directly into the `speakerNotes` field of each slide's entry in `src/data/slides-manifest.json` — that is where they live, not inside the slide JSX. Re-read the manifest right before writing in case the workspace updated it, and run `validate-slides` afterward.
+<<<<<<< HEAD
 - **Speaker notes formatting.** Write speaker notes as short bullets with `-` dashes and `\n` line breaks, not one long paragraph. Use `\n\n` to add a blank-line gap between sections (e.g. between a framing sentence and the bullets) for readability. Example: `"speakerNotes": "Open with the framing question.\n\n- 40% of customers churn within 90 days.\n- Most cite onboarding friction.\n- Segue into the new flow on the next slide."`
+=======
+>>>>>>> 05fbff801ed43fe230111d0d98216a9d4c0760c3
 - **Never use emoji.** Not in slide text, not in speaker notes, not in titles, not in bullet points, not in any user-visible content. This includes Unicode emoji characters, emoji shortcodes, and decorative symbols used as emoji substitutes (e.g. 🚀 🎯 💡 ✅ 📊 🔥 and similar are all banned). Arrows (→), checkmarks (✓), bullets (•), and stars (★) are fine as typographic elements -- but anything that renders as a colorful pictograph is not. Emoji makes slides look unserious and unprofessional. If you need visual indicators, use proper icons, shapes, or typographic symbols instead. This rule has zero exceptions -- even for "fun" or "casual" decks.
 - **Avoid AI-slop language.** Strike on sight in titles, headlines, subtitles, captions, and speaker notes — these are the SaaS-deck vocabulary that signal an LLM wrote the copy:
   - Words: "magic", "delight", "seamless", "unlock", "rethink/rethinking", "game-changer", "supercharge", "leverage", "empower"

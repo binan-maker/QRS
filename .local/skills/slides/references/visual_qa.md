@@ -40,7 +40,11 @@ Text uses viewport-relative units (`vw`/`vh`) so it scales with the slide, never
 - **`zoom: ...` on slide content.** Same compounding issue as `transform: scale`, and it doesn't translate to the PPTX export pipeline.
 - **CSS container queries (`cqw`/`cqh`) for text sizing.** The export pipeline doesn't always establish a containment context, so the unit can silently fall back to `0`. Stick to `vw`/`vh` for text.
 
+<<<<<<< HEAD
 **Floor:** at the 1920x1080 export size, standard body text must render at `2vw+` (aim for `2-2.5vw`). `1.5vw` is the absolute floor for captions, footnotes, attributions, and other detail text only; nothing on the slide may render below `1.5vw`. Read the smallest `vw` value across all slides — if any body text is below `2vw`, or any text at all is below `1.5vw`, raise it.
+=======
+**Floor:** at the 1920x1080 export size, body text must render at ≥24px equivalent. That means `1.5vw` or larger for body text, and proportionally more for everything above it. Read the smallest `vw` value across all slides — if it's below `1.5vw`, raise it.
+>>>>>>> 05fbff801ed43fe230111d0d98216a9d4c0760c3
 
 **Long-string trap:** an unbroken word (URL, hash, ID) at large `vw` sizes will overflow horizontally. Break with `overflow-wrap: anywhere` or shorten the string — do not let it punch through the 1920px width.
 
@@ -54,7 +58,11 @@ Imagine squinting at each slide. Can you still see the visual hierarchy? If ever
 
 ### Readability test
 
+<<<<<<< HEAD
 Is all body text at least `2vw`, with only captions, footnotes, attributions, or detail text allowed down to `1.5vw`? Could someone in the back row of a conference room read every word? If any body text falls below `2vw`, or anything at all falls below `1.5vw`, raise it.
+=======
+Is all text at least 1.5vw? Could someone in the back row of a conference room read every word? If the smallest font size in your JSX falls below `1.5vw`, raise it.
+>>>>>>> 05fbff801ed43fe230111d0d98216a9d4c0760c3
 
 ### Consistency test
 
