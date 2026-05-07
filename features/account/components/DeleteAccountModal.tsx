@@ -6,6 +6,7 @@ import { useState } from "react";
 import { router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import * as Haptics from "@/lib/haptics";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTheme } from "@/contexts/ThemeContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { deleteUserAccount } from "@/lib/firestore-service";
@@ -20,6 +21,7 @@ const CONFIRM_PHRASE = "DELETE MY ACCOUNT";
 
 export default function DeleteAccountModal({ visible, onClose }: DeleteAccountModalProps) {
   const { colors } = useTheme();
+  const insets = useSafeAreaInsets();
   const { user, signOut } = useAuth();
   const [confirmText, setConfirmText] = useState("");
   const [password, setPassword] = useState("");
@@ -72,7 +74,7 @@ export default function DeleteAccountModal({ visible, onClose }: DeleteAccountMo
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={handleClose}>
       <Pressable style={styles.overlay} onPress={handleClose}>
-        <Pressable style={[styles.box, { backgroundColor: colors.surface, borderColor: colors.danger + "50" }]} onPress={() => {}}>
+        <Pressable style={[styles.box, { backgroundColor: colors.surface, borderColor: colors.danger + "50", paddingBottom: Math.max(insets.bottom, 40) }]} onPress={() => {}}>
           <View style={styles.header}>
             <View style={styles.titleRow}>
               <Ionicons name="warning" size={20} color={colors.danger} />

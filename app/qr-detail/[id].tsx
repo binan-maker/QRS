@@ -1117,7 +1117,7 @@ export default function QrDetailScreen() {
         onRequestClose={() => setOwnerSheetOpen(false)}
       >
         <Pressable style={commentMenuStyles.backdrop} onPress={() => setOwnerSheetOpen(false)}>
-          <View style={[ownerSheetStyles.sheet, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
+          <View style={[ownerSheetStyles.sheet, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder, paddingBottom: Math.max(insets.bottom, 36) }]}>
             <View style={[commentMenuStyles.handle, { backgroundColor: colors.surfaceBorder }]} />
             {q.ownerInfo && (
               <>
@@ -1199,7 +1199,7 @@ export default function QrDetailScreen() {
         onRequestClose={() => q.setCommentMenuId(null)}
       >
         <Pressable style={commentMenuStyles.backdrop} onPress={() => q.setCommentMenuId(null)}>
-          <View style={[commentMenuStyles.sheet, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
+          <View style={[commentMenuStyles.sheet, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder, paddingBottom: Math.max(insets.bottom, 36) }]}>
             <View style={[commentMenuStyles.handle, { backgroundColor: colors.surfaceBorder }]} />
             {q.commentMenuOwner ? (
               <Pressable
@@ -1246,7 +1246,7 @@ export default function QrDetailScreen() {
         onRequestClose={() => setOverflowOpen(false)}
       >
         <Pressable style={overflowStyles.backdrop} onPress={() => setOverflowOpen(false)}>
-          <Pressable style={[overflowStyles.sheet, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
+          <Pressable style={[overflowStyles.sheet, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder, paddingBottom: Math.max(insets.bottom, 32) }]}>
 
             {/* ── Favorites ── */}
             <Pressable

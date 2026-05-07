@@ -4,6 +4,7 @@ import {
   ActivityIndicator, TextInput, Platform, KeyboardAvoidingView,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTheme } from "@/contexts/ThemeContext";
 
 interface Props {
@@ -22,7 +23,8 @@ const VerificationModal = React.memo(function VerificationModal({
   onChangeBizName, onPickDoc, onSubmit, onClose,
 }: Props) {
   const { colors } = useTheme();
-  const styles = makeStyles(colors);
+  const insets = useSafeAreaInsets();
+  const styles = makeStyles(colors, Math.max(insets.bottom, 32));
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === "ios" ? "padding" : "height"}>
@@ -115,12 +117,12 @@ const VerificationModal = React.memo(function VerificationModal({
 
 export default VerificationModal;
 
-function makeStyles(c: ReturnType<typeof import("@/contexts/ThemeContext").useTheme>["colors"]) {
+function makeStyles(c: ReturnType<typeof import("@/contexts/ThemeContext").useTheme>["colors"], bottomInset: number = 32) {
   return StyleSheet.create({
     overlay: { flex: 1, backgroundColor: "transparent", justifyContent: "flex-end" },
     sheet: {
       backgroundColor: c.surface, borderTopLeftRadius: 24, borderTopRightRadius: 24,
-      padding: 20, paddingBottom: 32, borderWidth: 1, borderColor: c.surfaceBorder,
+      padding: 20, paddingBottom: bottomInset, borderWidth: 1, borderColor: c.surfaceBorder,
     },
     handle: { width: 40, height: 4, backgroundColor: c.surfaceLight, borderRadius: 2, alignSelf: "center", marginBottom: 16 },
     header: { marginBottom: 16 },

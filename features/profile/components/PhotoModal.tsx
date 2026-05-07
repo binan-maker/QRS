@@ -1,6 +1,7 @@
 import React from "react";
 import { View, Text, StyleSheet, Pressable, Modal } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTheme } from "@/contexts/ThemeContext";
 
 interface Props {
@@ -12,11 +13,12 @@ interface Props {
 
 const PhotoModal = React.memo(function PhotoModal({ visible, onCamera, onGallery, onClose }: Props) {
   const { colors } = useTheme();
+  const insets = useSafeAreaInsets();
 
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
       <Pressable style={styles.overlay} onPress={onClose}>
-        <Pressable style={[styles.sheet, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]} onPress={() => {}}>
+        <Pressable style={[styles.sheet, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder, paddingBottom: Math.max(insets.bottom, 36) }]} onPress={() => {}}>
           <View style={[styles.handle, { backgroundColor: colors.surfaceBorder }]} />
           <Text style={[styles.title, { color: colors.text }]}>Change Profile Photo</Text>
           <Pressable style={styles.option} onPress={onCamera}>

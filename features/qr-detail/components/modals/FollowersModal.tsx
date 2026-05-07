@@ -1,6 +1,7 @@
 import React from "react";
 import { View, Text, StyleSheet, Pressable, Modal, ScrollView, ActivityIndicator, Image } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTheme } from "@/contexts/ThemeContext";
 import { formatCompactNumber } from "@/lib/number-format";
 import type { FollowerInfo } from "@/lib/firestore-service";
@@ -37,7 +38,8 @@ const FollowersModal = React.memo(function FollowersModal({
   emptyText = "No followers yet",
 }: Props) {
   const { colors } = useTheme();
-  const styles = makeStyles(colors);
+  const insets = useSafeAreaInsets();
+  const styles = makeStyles(colors, Math.max(insets.bottom, 32));
   const resolvedSubtitle = subtitle ?? `${formatCompactNumber(followCount)} ${followCount === 1 ? "person follows" : "people follow"} this QR`;
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
@@ -90,12 +92,12 @@ const FollowersModal = React.memo(function FollowersModal({
 
 export default FollowersModal;
 
-function makeStyles(c: ReturnType<typeof import("@/contexts/ThemeContext").useTheme>["colors"]) {
+function makeStyles(c: ReturnType<typeof import("@/contexts/ThemeContext").useTheme>["colors"], bottomInset: number = 32) {
   return StyleSheet.create({
     overlay: { flex: 1, backgroundColor: "transparent", justifyContent: "flex-end" },
     sheet: {
       backgroundColor: c.surface, borderTopLeftRadius: 24, borderTopRightRadius: 24,
-      padding: 20, paddingBottom: 32, borderWidth: 1, borderColor: c.surfaceBorder,
+      padding: 20, paddingBottom: bottomInset, borderWidth: 1, borderColor: c.surfaceBorder,
     },
     handle: { width: 40, height: 4, backgroundColor: c.surfaceLight, borderRadius: 2, alignSelf: "center", marginBottom: 16 },
     header: { marginBottom: 16 },

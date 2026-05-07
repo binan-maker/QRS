@@ -1,5 +1,6 @@
 import { View, Text, StyleSheet, Pressable, Modal } from "react-native";
 import * as Haptics from "@/lib/haptics";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTheme } from "@/contexts/ThemeContext";
 import { LOGO_POSITIONS, type LogoPosition } from "@/hooks/useQrGenerator";
 
@@ -12,11 +13,12 @@ interface Props {
 
 export default function PositionModal({ visible, logoPosition, onSelect, onClose }: Props) {
   const { colors } = useTheme();
+  const insets = useSafeAreaInsets();
 
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
       <Pressable style={styles.overlay} onPress={onClose}>
-        <Pressable style={[styles.sheet, { backgroundColor: colors.surface }]} onPress={() => {}}>
+        <Pressable style={[styles.sheet, { backgroundColor: colors.surface, paddingBottom: Math.max(insets.bottom, 16) }]} onPress={() => {}}>
           <View style={[styles.handle, { backgroundColor: colors.surfaceBorder }]} />
           <Text style={[styles.title, { color: colors.text }]}>Logo Position</Text>
           <Text style={[styles.sub, { color: colors.textSecondary }]}>Choose where to place your logo on the QR code</Text>
