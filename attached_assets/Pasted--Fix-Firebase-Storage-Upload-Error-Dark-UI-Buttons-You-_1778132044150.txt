@@ -1,0 +1,458 @@
+# 🔧 Fix: Firebase Storage Upload Error & Dark UI Buttons
+
+You have **two critical issues** to fix. Let me address both:
+
+---
+
+## 🚨 Issue 1: Firebase Storage Permission Error
+
+**Problem**: Users can't upload profile photos because Firebase Storage security rules are blocking access.
+
+
+## 🎨 Issue 2: Dark/Invisible Buttons After Image Crop
+
+**Problem**: After selecting and cropping an image, buttons appear dark/invisible due to theme/color conflicts.
+
+### ✅ Solution: Fix Image Cropper UI Styling
+
+Update your image cropping component with explicit colors:
+
+```typescript
+// features/profile/components/ImageCropper.tsx (or wherever your cropper is)
+import React from 'react';
+import { View, StyleSheet, Modal, TouchableOpacity, Text } from 'react-native';
+import ImageResizer from 'react-native-image-resizer';
+// OR if using react-image-crop or similar
+// import { ImageCropPicker } from 'react-native-image-crop-picker';
+
+export default function ImageCropper({ 
+  image, 
+  onCrop, 
+  onCancel,
+  visible 
+}) {
+  return (
+    <Modal
+      visible={visible}
+      transparent={true}
+      animationType="slide"
+    >
+      <View style={styles.modalContainer}>
+        {/* Header with explicit background */}
+        <View style={styles.header}>
+          <TouchableOpacity 
+            onPress={onCancel}
+            style={styles.cancelButton}
+          >
+            <Text style={styles.cancelButtonText}>Cancel</Text>
+          </TouchableOpacity>
+          
+          <Text style={styles.headerTitle}>Crop Photo</Text>
+          
+          <TouchableOpacity 
+            onPress={onCrop}
+            style={styles.doneButton}
+          >
+            <Text style={styles.doneButtonText}>Done</Text>
+          </TouchableOpacity>
+        </View>
+
+        {/* Your image cropper component here */}
+        <View style={styles.cropperContainer}>
+          {/* Add your cropping library component */}
+          {/* Make sure it has proper contrast */}
+        </View>
+
+        {/* Instructions with visible text */}
+        <View style={styles.footer}>
+          <Text style={styles.footerText}>
+            Adjust the crop area and tap Done
+          </Text>
+        </View>
+      </View>
+    </Modal>
+  );
+}
+
+const styles = StyleSheet.create({
+  modalContainer: {
+    flex: 1,
+    backgroundColor: '#ffffff', // Explicit white background
+  },
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    backgroundColor: '#f8fafc', // Light gray header
+    borderBottomWidth: 1,
+    borderBottomColor: '#e2e8f0',
+  },
+  headerTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#1e293b', // Dark text
+  },
+  cancelButton: {
+    padding: 8,
+  },
+  cancelButtonText: {
+    color: '#64748b', // Visible gray text
+    fontSize: 14,
+    fontWeight: '500',
+  },
+  doneButton: {
+    padding: 8,
+    backgroundColor: '#3b82f6', // Blue button
+    paddingHorizontal: 16,
+    borderRadius: 6,
+  },
+  doneButtonText: {
+    color: '#ffffff', // White text
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  cropperContainer: {
+    flex: 1,
+    backgroundColor: '#000000', // Black background for cropper
+  },
+  footer: {
+    padding: 16,
+    backgroundColor: '#f8fafc',
+    borderTopWidth: 1,
+    borderTopColor: '#e2e8f0',
+  },
+  footerText: {
+    color: '#64748b',
+    textAlign: 'center',
+    fontSize: 13,
+  },
+});
+```
+
+---
+
+### If Using `react-native-image-crop-picker`:
+
+```typescript
+// lib/services/image-service.ts
+import ImagePicker from 'react-native-image-crop-picker';
+
+export async function pickAndCropProfileImage() {
+  try {
+    const image = await ImagePicker.openPicker({
+      width: 400,
+      height: 400,
+      cropping: true,
+      compressImageQuality: 0.8,
+      // ✅ Fix dark UI: Force light theme
+      cropperCircleOverlay: false,
+      freeStyleCropEnabled: true,
+      // Explicit colors for better visibility
+      cropperToolbarColor: '#ffffff',
+      cropperToolbarTitle: 'Edit Photo',
+      cropperToolbarWidgetColor: '#3b82f6',
+      // Button colors
+      cropperActiveWidgetColor: '#3b82f6',
+      cropperStatusBarColor: '#f8fafc',
+    });
+
+    return {
+      success: true,
+      uri: image.path,
+      width: image.width,
+      height: image.height,
+    };
+  } catch (error) {
+    if (error.code !== 'E_PICKER_CANCELLED') {
+      console.error('Image picker error:', error);
+    }
+    return { success: false, error: error.message };
+  }
+}
+```
+
+---
+
+### If Using `expo-image-picker` + Manual Crop:
+
+```typescript
+// features/profile/components/ProfilePhotoUploader.tsx
+import * as ImagePicker from 'expo-image-picker';
+import { useState } from 'react';
+import { View, TouchableOpacity, Text, StyleSheet, Image } from 'react-native';
+
+export default function ProfilePhotoUploader({ onImageSelected }) {
+  const [selectedImage, setSelectedImage] = useState(null);
+
+  const pickImage = async () => {
+    // Request permissions
+    const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    
+    if (permissionResult.granted === false) {
+      alert('Permission to access camera roll is required!');
+      return;
+    }
+
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 0.8,
+    });
+
+    if (!result.canceled) {
+      setSelectedImage(result.assets[0].uri);
+      onImageSelected(result.assets[0]);
+    }
+  };
+
+  return (
+    <View>
+      <TouchableOpacity 
+        onPress={pickImage}
+        style={styles.uploadButton}
+      >
+        {selectedImage ? (
+          <Image source={{ uri: selectedImage }} style={styles.previewImage} />
+        ) : (
+          <View style={styles.placeholder}>
+            <Text style={styles.placeholderIcon}>📷</Text>
+            <Text style={styles.placeholderText}>Tap to upload</Text>
+          </View>
+        )}
+      </TouchableOpacity>
+
+      {/* Confirm/Cancel buttons with explicit colors */}
+      {selectedImage && (
+        <View style={styles.actionButtons}>
+          <TouchableOpacity 
+            onPress={() => setSelectedImage(null)}
+            style={[styles.actionButton, styles.cancelActionButton]}
+          >
+            <Text style={styles.cancelActionText}>Cancel</Text>
+          </TouchableOpacity>
+          
+          <TouchableOpacity 
+            onPress={() => {/* Upload logic */}}
+            style={[styles.actionButton, styles.confirmActionButton]}
+          >
+            <Text style={styles.confirmActionText}>Confirm</Text>
+          </TouchableOpacity>
+        </View>
+      )}
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  uploadButton: {
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    overflow: 'hidden',
+    backgroundColor: '#f1f5f9',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: '#e2e8f0',
+  },
+  placeholder: {
+    alignItems: 'center',
+  },
+  placeholderIcon: {
+    fontSize: 32,
+    marginBottom: 4,
+  },
+  placeholderText: {
+    color: '#64748b',
+    fontSize: 12,
+  },
+  previewImage: {
+    width: '100%',
+    height: '100%',
+  },
+  actionButtons: {
+    flexDirection: 'row',
+    gap: 12,
+    marginTop: 16,
+  },
+  actionButton: {
+    flex: 1,
+    paddingVertical: 12,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  cancelActionButton: {
+    backgroundColor: '#f1f5f9',
+    borderWidth: 1,
+    borderColor: '#cbd5e1',
+  },
+  cancelActionText: {
+    color: '#475569',
+    fontWeight: '600',
+    fontSize: 14,
+  },
+  confirmActionButton: {
+    backgroundColor: '#3b82f6',
+  },
+  confirmActionText: {
+    color: '#ffffff',
+    fontWeight: '600',
+    fontSize: 14,
+  },
+});
+```
+
+---
+
+## 🔥 Complete Upload Flow Fix
+
+Update your storage service to handle errors gracefully:
+
+```typescript
+// lib/services/storage-service.ts
+import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { auth } from '@/lib/firebase';
+
+const storage = getStorage();
+
+export async function uploadProfilePhoto(imageUri: string) {
+  try {
+    const user = auth.currentUser;
+    if (!user) {
+      throw new Error('User not authenticated');
+    }
+
+    // Fetch the image
+    const response = await fetch(imageUri);
+    const blob = await response.blob();
+
+    // Create unique filename
+    const timestamp = Date.now();
+    const randomId = Math.random().toString(36).substring(7);
+    const fileName = `profile-photos/${user.uid}_${timestamp}_${randomId}.jpeg`;
+
+    // Create storage reference
+    const storageRef = ref(storage, fileName);
+
+    // Upload with metadata
+    const metadata = {
+      contentType: 'image/jpeg',
+      customMetadata: {
+        uploadedBy: user.uid,
+        uploadedAt: new Date().toISOString(),
+      },
+    };
+
+    // Upload file
+    const snapshot = await uploadBytes(storageRef, blob, metadata);
+
+    // Get download URL
+    const downloadURL = await getDownloadURL(snapshot.ref);
+
+    return {
+      success: true,
+      url: downloadURL,
+      path: fileName,
+    };
+  } catch (error: any) {
+    console.error('[storage] uploadProfilePhoto failed:', error);
+    
+    // Handle specific errors
+    if (error.code === 'storage/unauthorized') {
+      return {
+        success: false,
+        error: 'Permission denied. Please check your Firebase Storage rules.',
+      };
+    }
+    
+    return {
+      success: false,
+      error: error.message || 'Failed to upload image',
+    };
+  }
+}
+```
+
+---
+
+## ✅ Testing Checklist
+
+1. **Storage Rules**:
+   - [ ] Publish new rules in Firebase Console
+   - [ ] Wait 1-2 minutes for rules to propagate
+   - [ ] Test upload with authenticated user
+
+2. **UI Buttons**:
+   - [ ] Select image from gallery
+   - [ ] Verify crop screen has visible buttons
+   - [ ] Check "Done" button is blue with white text
+   - [ ] Check "Cancel" button has visible text
+
+3. **Upload Flow**:
+   - [ ] Pick image → Crop → Upload
+   - [ ] Verify no "unauthorized" error
+   - [ ] Check profile photo appears in app
+   - [ ] Verify photo is readable in Firebase Storage
+
+---
+
+## 🚀 Quick Fix Summary
+
+| Issue | Fix | Time |
+|-------|-----|------|
+| Storage Permission | Update Firebase Storage Rules | 5 min |
+| Dark Buttons | Add explicit colors to cropper styles | 15 min |
+| Upload Errors | Add error handling in storage service | 10 min |
+
+**Total: 30 minutes to fix both issues completely.** and storage rules write this updated rules rules_version = '2';
+
+service firebase.storage {
+  match /b/{bucket}/o {
+    
+    // 🟢 Profile Photos: userId subfolder for isolation
+    match /profile-photos/{userId}/{fileName} {
+      allow read: if true; // Public read for profile display
+      allow write: if request.auth != null 
+                    && request.auth.uid == userId
+                    && fileName.matches('^[a-zA-Z0-9_-]+\\.(jpg|jpeg|png|webp)$'); // Validate filename
+    }
+    
+    // 🟢 QR Logos: Same structure
+    match /qr-logos/{userId}/{fileName} {
+      allow read: if true;
+      allow write: if request.auth != null 
+                    && request.auth.uid == userId
+                    && request.resource.size < 5 * 1024 * 1024 // Max 5MB
+                    && fileName.matches('^[a-zA-Z0-9_-]+\\.(jpg|jpeg|png|webp|svg)$');
+    }
+    
+    // 🟢 Verification Docs: More restrictive
+    match /verification-docs/{userId}/{fileName} {
+      allow read: if request.auth != null 
+                   && (request.auth.uid == userId || isModerator());
+      allow write: if request.auth != null 
+                    && request.auth.uid == userId
+                    && request.resource.size < 10 * 1024 * 1024 // Max 10MB
+                    && fileName.matches('^[a-zA-Z0-9_-]+\\.(jpg|jpeg|png|pdf)$');
+    }
+    
+    // 🟢 Public assets (app icons, etc.)
+    match /public/{fileName} {
+      allow read: if true;
+      allow write: if false; // Only upload via Firebase Console/CLI
+    }
+    
+    // 🔴 Default deny everything else
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+  
+  // Helper function for role-based access (optional)
+  function isModerator() {
+    return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'moderator';
+  }
+}

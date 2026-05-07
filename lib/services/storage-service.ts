@@ -33,10 +33,11 @@ export async function uploadImage(
   try {
     // Generate unique filename
     const extension = file.type.split("/")[1] || "jpg";
-    const filename = `${userId || "anon"}_${generateUniqueId()}.${extension}`;
-    
-    // Create storage reference
-    const storagePath = `${folder}/${filename}`;
+    const filename = `${generateUniqueId()}.${extension}`;
+
+    // Use a per-user subfolder so storage rules can enforce uid == userId.
+    // Path: {folder}/{userId}/{timestamp_random}.ext  (or {folder}/anon/... as fallback)
+    const storagePath = `${folder}/${userId || "anon"}/${filename}`;
     const storageRef: StorageReference = ref(storage, storagePath);
     
     // Upload the file
