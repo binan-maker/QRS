@@ -1,57 +1,107 @@
 import React, { memo } from "react";
-import { View, Text, Pressable, StyleSheet } from "react-native";
+import { View, Text, Pressable, ScrollView, StyleSheet } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import * as Haptics from "@/lib/haptics";
 import { useTheme } from "@/contexts/ThemeContext";
 import { QR_PRESETS } from "@/features/generator/data/presets";
 
+const QUICK_TYPES: { presetIdx: number; label: string; icon: keyof typeof Ionicons.glyphMap }[] = [
+  { presetIdx: 1, label: "Link",     icon: "link-outline"    },
+  { presetIdx: 7, label: "UPI Pay",  icon: "card-outline"    },
+  { presetIdx: 6, label: "WiFi",     icon: "wifi-outline"    },
+  { presetIdx: 5, label: "WhatsApp", icon: "logo-whatsapp"   },
+  { presetIdx: 9, label: "Contact",  icon: "person-outline"  },
+  { presetIdx: 0, label: "Text",     icon: "text-outline"    },
+];
+
+const QUICK_IDXS = new Set(QUICK_TYPES.map((q) => q.presetIdx));
+
 interface Props {
   selectedPreset: number;
-  detectedType: string | null;
+  qrMode: "individual" | "business" | "private";
+  onSelectPreset: (idx: number) => void;
   onOpenTemplates: () => void;
-  onClearTemplate: () => void;
 }
 
-function SmartTemplateBar({ selectedPreset, detectedType, onOpenTemplates, onClearTemplate }: Props) {
+function SmartTemplateBar({ selectedPreset, qrMode, onSelectPreset, onOpenTemplates }: Props) {
   const { colors } = useTheme();
-  const isTemplate = selectedPreset > 0;
-  const preset = QR_PRESETS[selectedPreset];
+
+  if (qrMode === "business") return null;
+
+  const selectedFromFull = selectedPreset > 0 && !QUICK_IDXS.has(selectedPreset);
+
+  function handleSelect(idx: number) {
+    onSelectPreset(idx);
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+  }
 
   return (
-    <View style={styles.row}>
-      {isTemplate ? (
-        <View style={[styles.chip, { backgroundColor: colors.primaryDim, borderColor: colors.primary + "50" }]}>
-          <Ionicons name={preset.icon as any} size={13} color={colors.primary} />
-          <Text style={[styles.chipText, { color: colors.primary }]} numberOfLines={1}>
-            {preset.label} template
-          </Text>
-          <Pressable onPress={onClearTemplate} hitSlop={10} style={styles.chipClose}>
-            <Ionicons name="close-circle" size={16} color={colors.primary} />
-          </Pressable>
-        </View>
-      ) : (
-        <View style={[styles.chip, { backgroundColor: colors.surfaceLight, borderColor: colors.surfaceBorder }]}>
-          <View style={[styles.dot, { backgroundColor: detectedType ? colors.safe : colors.textMuted }]} />
-          <Text style={[styles.autoText, { color: colors.textSecondary }]} numberOfLines={1}>
-            {detectedType ? `Detected: ${detectedType}` : "Smart auto-detect"}
-          </Text>
-        </View>
-      )}
-
-      <Pressable
-        onPress={onOpenTemplates}
-        style={({ pressed }) => [
-          styles.templatesBtn,
-          {
-            backgroundColor: colors.surface,
-            borderColor: colors.surfaceBorder,
-            opacity: pressed ? 0.7 : 1,
-          },
-        ]}
+    <View style={styles.container}>
+      <Text style={[styles.label, { color: colors.textMuted }]}>QR Type</Text>
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={styles.row}
       >
-        <Ionicons name="apps-outline" size={14} color={colors.textSecondary} />
-        <Text style={[styles.templatesBtnText, { color: colors.textSecondary }]}>Templates</Text>
-        <Ionicons name="chevron-down" size={11} color={colors.textMuted} />
-      </Pressable>
+        {QUICK_TYPES.map((qt) => {
+          const active = selectedPreset === qt.presetIdx;
+          return (
+            <Pressable
+              key={qt.presetIdx}
+              onPress={() => handleSelect(qt.presetIdx)}
+              style={({ pressed }) => [
+                styles.chip,
+                {
+                  backgroundColor: active ? colors.primaryDim : colors.surface,
+                  borderColor: active ? colors.primary + "80" : colors.surfaceBorder,
+                  opacity: pressed ? 0.75 : 1,
+                },
+              ]}
+            >
+              <Ionicons
+                name={qt.icon}
+                size={14}
+                color={active ? colors.primary : colors.textMuted}
+              />
+              <Text style={[styles.chipText, { color: active ? colors.primary : colors.textSecondary }]}>
+                {qt.label}
+              </Text>
+            </Pressable>
+          );
+        })}
+
+        {selectedFromFull && (
+          <Pressable
+            style={[styles.chip, { backgroundColor: colors.primaryDim, borderColor: colors.primary + "80" }]}
+          >
+            <Ionicons
+              name={QR_PRESETS[selectedPreset]?.icon as keyof typeof Ionicons.glyphMap}
+              size={14}
+              color={colors.primary}
+            />
+            <Text style={[styles.chipText, { color: colors.primary }]}>
+              {QR_PRESETS[selectedPreset]?.label}
+            </Text>
+          </Pressable>
+        )}
+
+        <Pressable
+          onPress={onOpenTemplates}
+          style={({ pressed }) => [
+            styles.chip,
+            styles.moreChip,
+            {
+              backgroundColor: colors.surfaceLight,
+              borderColor: colors.surfaceBorder,
+              opacity: pressed ? 0.7 : 1,
+            },
+          ]}
+        >
+          <Ionicons name="apps-outline" size={14} color={colors.textMuted} />
+          <Text style={[styles.chipText, { color: colors.textMuted }]}>More</Text>
+          <Ionicons name="chevron-forward" size={11} color={colors.textMuted} />
+        </Pressable>
+      </ScrollView>
     </View>
   );
 }
@@ -59,51 +109,24 @@ function SmartTemplateBar({ selectedPreset, detectedType, onOpenTemplates, onCle
 export default memo(SmartTemplateBar);
 
 const styles = StyleSheet.create({
-  row: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-    marginBottom: 12,
+  container: { marginBottom: 14 },
+  label: {
+    fontSize: 11,
+    fontFamily: "Inter_600SemiBold",
+    textTransform: "uppercase",
+    letterSpacing: 0.8,
+    marginBottom: 8,
   },
+  row: { flexDirection: "row", gap: 8, paddingBottom: 2 },
   chip: {
-    flex: 1,
     flexDirection: "row",
     alignItems: "center",
-    gap: 7,
+    gap: 6,
     paddingHorizontal: 12,
     paddingVertical: 9,
     borderRadius: 14,
     borderWidth: 1,
   },
-  dot: {
-    width: 7,
-    height: 7,
-    borderRadius: 4,
-  },
-  autoText: {
-    fontSize: 12,
-    fontFamily: "Inter_500Medium",
-    flex: 1,
-  },
-  chipText: {
-    fontSize: 12,
-    fontFamily: "Inter_600SemiBold",
-    flex: 1,
-  },
-  chipClose: {
-    marginLeft: 2,
-  },
-  templatesBtn: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 5,
-    paddingHorizontal: 12,
-    paddingVertical: 9,
-    borderRadius: 14,
-    borderWidth: 1,
-  },
-  templatesBtnText: {
-    fontSize: 12,
-    fontFamily: "Inter_600SemiBold",
-  },
+  chipText: { fontSize: 12, fontFamily: "Inter_600SemiBold" },
+  moreChip: {},
 });

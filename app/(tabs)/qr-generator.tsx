@@ -53,15 +53,6 @@ function QrGeneratorScreen() {
 
   const styles = useMemo(() => makeStyles(colors, width), [colors, width]);
 
-  const detectedType = useMemo(() => {
-    const v = inputValue.trim();
-    if (!v || selectedPreset > 0) return null;
-    if (/^https?:\/\//i.test(v) || /^www\./i.test(v)) return "URL";
-    if (/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v)) return "Email";
-    if (/^\+?[\d\s\-().]{7,}$/.test(v)) return "Phone";
-    return null;
-  }, [inputValue, selectedPreset]);
-
   const logoPositionLabel = useMemo(
     () => LOGO_POSITIONS.find((p) => p.key === logoPosition)?.label || "Center",
     [logoPosition]
@@ -100,8 +91,6 @@ function QrGeneratorScreen() {
     setTimeout(() => setTemplateModalOpen(true), 80);
   }, []);
 
-  const handleClearTemplate = useCallback(() => switchPreset(0), [switchPreset]);
-
   const handleOpenPosition = useCallback(() => setPositionModalOpen(true), [setPositionModalOpen]);
 
   const handleOpenInfo = useCallback(() => setInfoModalOpen(true), [setInfoModalOpen]);
@@ -126,7 +115,7 @@ function QrGeneratorScreen() {
       <View style={styles.navBar}>
         <View>
           <Text style={[styles.navTitle, { color: colors.text }]}>QR Generator</Text>
-          <Text style={[styles.navSubtitle, { color: colors.textMuted }]}>Create custom QR codes</Text>
+          <Text style={[styles.navSubtitle, { color: colors.textMuted }]}>What do you want to create?</Text>
         </View>
         <Pressable
           onPress={handleOpenInfo}
@@ -156,9 +145,9 @@ function QrGeneratorScreen() {
         <Reanimated.View entering={FadeInDown.duration(400).delay(80)}>
           <SmartTemplateBar
             selectedPreset={selectedPreset}
-            detectedType={detectedType}
+            qrMode={qrMode}
+            onSelectPreset={switchPreset}
             onOpenTemplates={handleOpenTemplates}
-            onClearTemplate={handleClearTemplate}
           />
         </Reanimated.View>
 
