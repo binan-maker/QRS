@@ -119,6 +119,7 @@ export default function MyQrDetailScreen() {
     editingSavedContent, setEditingSavedContent,
     newSavedContent, setNewSavedContent,
     savingSavedContent, savedContentError, setSavedContentError,
+    isValidating,
     confirmModalOpen, confirmModalMessage,
     handleConfirmPendingAction, handleCancelPendingAction,
     handleUpdateDestination, handleRequestSavedContentUpdate,
@@ -360,8 +361,11 @@ export default function MyQrDetailScreen() {
                     <Pressable onPress={() => { setEditingDestination(false); setDestinationError(null); }} style={{ flex: 1, borderRadius: sp(10), borderWidth: 1, borderColor: colors.surfaceBorder, padding: sp(9), alignItems: "center" }}>
                       <Text style={{ fontSize: rf(13), fontFamily: "Inter_600SemiBold", color: colors.textSecondary }}>Cancel</Text>
                     </Pressable>
-                    <Pressable onPress={handleUpdateDestination} disabled={savingDestination} style={{ flex: 2, borderRadius: sp(10), backgroundColor: "#6366F1", padding: sp(9), alignItems: "center" }}>
-                      <Text style={{ fontSize: rf(13), fontFamily: "Inter_700Bold", color: "#fff" }}>{savingDestination ? "Saving…" : "Update URL"}</Text>
+                    <Pressable onPress={handleUpdateDestination} disabled={savingDestination || isValidating} style={{ flex: 2, borderRadius: sp(10), backgroundColor: "#6366F1", padding: sp(9), alignItems: "center", flexDirection: "row", justifyContent: "center", gap: sp(6) }}>
+                      {(isValidating || savingDestination) && <ActivityIndicator size="small" color="#fff" />}
+                      <Text style={{ fontSize: rf(13), fontFamily: "Inter_700Bold", color: "#fff" }}>
+                        {isValidating ? "Scanning…" : savingDestination ? "Saving…" : "Update URL"}
+                      </Text>
                     </Pressable>
                   </View>
                 </View>
@@ -451,11 +455,12 @@ export default function MyQrDetailScreen() {
                     </Pressable>
                     <Pressable
                       onPress={handleRequestSavedContentUpdate}
-                      disabled={savingSavedContent}
-                      style={{ flex: 2, borderRadius: sp(10), backgroundColor: colors.primary, padding: sp(9), alignItems: "center" }}
+                      disabled={savingSavedContent || isValidating}
+                      style={{ flex: 2, borderRadius: sp(10), backgroundColor: colors.primary, padding: sp(9), alignItems: "center", flexDirection: "row", justifyContent: "center", gap: sp(6) }}
                     >
+                      {(isValidating || savingSavedContent) && <ActivityIndicator size="small" color="#fff" />}
                       <Text style={{ fontSize: rf(13), fontFamily: "Inter_700Bold", color: "#fff" }}>
-                        {savingSavedContent ? "Saving…" : "Update Content"}
+                        {isValidating ? "Scanning…" : savingSavedContent ? "Saving…" : "Update Content"}
                       </Text>
                     </Pressable>
                   </View>

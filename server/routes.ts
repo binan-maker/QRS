@@ -345,6 +345,44 @@ export async function registerRoutes(app: Express): Promise<Server> {
     });
   });
 
+  // ─── /go/:slug — unified fast redirect (Saved & Business QRs) ───────────────
+  // True 302 redirect: no intermediate HTML page on clean destinations.
+  // Falls back to caution page when destination was changed recently.
+  app.get("/go/:slug", async (req: Request, res: Response) => {
+    const slug = Array.isArray(req.params.slug) ? req.params.slug[0] : req.params.slug;
+
+    if (!slug || slug.length < 4) {
+      return res.status(400).send(guardNotFoundHtml());
+    }
+
+    const link = await fetchGuardLinkFromFirestore(slug);
+
+    if (!link) {
+      return res.status(404).send(guardNotFoundHtml());
+    }
+
+    if (!link.isActive) {
+      return res.status(200).send(guardDeactivatedHtml(link.businessName));
+    }
+
+    const destination = link.currentDestination;
+    if (!destination || !isSafeRedirectDestination(destination)) {
+      return res.status(404).send(guardNotFoundHtml());
+    }
+
+    const changedAt = link.destinationChangedAt ? new Date(link.destinationChangedAt).getTime() : null;
+    const changedRecently = changedAt && (Date.now() - changedAt) < CAUTION_WINDOW_MS;
+
+    if (changedRecently) {
+      const businessName = link.businessName || "QR Code";
+      return res.status(200).send(guardCautionHtml(businessName, link.ownerName, destination, slug));
+    }
+
+    // Clean destination — issue a true 302 redirect (no intermediate page)
+    res.setHeader("Cache-Control", "no-store, no-cache");
+    return res.redirect(302, destination);
+  });
+
   // ─── Living Shield redirect ─────────────────────────────────────────────────
   app.get("/guard/:uuid", async (req: Request, res: Response) => {
     const uuid = Array.isArray(req.params.uuid) ? req.params.uuid[0] : req.params.uuid;

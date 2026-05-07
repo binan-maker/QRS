@@ -15,34 +15,7 @@ import {
   getQrFollowersList, getQrFollowCount,
   type GeneratedQrItem, type CommentItem, type GuardLink, type FollowerInfo,
 } from "@/lib/firestore-service";
-
-const KNOWN_PHISHING_KEYWORDS = /phishing|scam|hack|malware|virus|spyware|trojan|ransomware/i;
-const TYPOSQUATTING = /paypa[l1]|amaz[o0]n|g[o0]{2}gle|micros[o0]ft|app[l1]e|faceb[o0]{2}k/i;
-const SHORTENER_HOSTS = new Set(["bit.ly", "tinyurl.com", "t.co", "ow.ly", "is.gd", "buff.ly", "adf.ly"]);
-
-export function validateDestinationUrl(raw: string): string | null {
-  const dest = raw.trim().startsWith("http") ? raw.trim() : `https://${raw.trim()}`;
-  let url: URL;
-  try {
-    url = new URL(dest);
-  } catch {
-    return "Please enter a valid URL (e.g. https://example.com).";
-  }
-  const host = url.hostname.toLowerCase();
-  if (/^\d+\.\d+\.\d+\.\d+$/.test(host)) {
-    return "IP addresses are not allowed as destinations for security reasons.";
-  }
-  if (/^(192\.168\.|10\.|172\.(1[6-9]|2\d|3[01])\.|127\.|localhost)/.test(host)) {
-    return "Local or private addresses cannot be used as destinations.";
-  }
-  if (SHORTENER_HOSTS.has(host)) {
-    return "URL shorteners are not allowed. Please use the full destination URL.";
-  }
-  if (KNOWN_PHISHING_KEYWORDS.test(host) || TYPOSQUATTING.test(host)) {
-    return "This URL was flagged as potentially unsafe. Please check and try again.";
-  }
-  return null;
-}
+import { scanUrl, scanUrlSync } from "@/lib/security/url-scanner";
 
 export type LogoPosition = "center" | "top-left" | "top-right" | "bottom-left" | "bottom-right";
 
@@ -110,6 +83,8 @@ export function useMyQrDetail(id: string) {
   const [newSavedContent, setNewSavedContent] = useState("");
   const [savingSavedContent, setSavingSavedContent] = useState(false);
   const [savedContentError, setSavedContentError] = useState<string | null>(null);
+
+  const [isValidating, setIsValidating] = useState(false);
 
   const [confirmModalOpen, setConfirmModalOpen] = useState(false);
   const [pendingConfirmAction, setPendingConfirmAction] = useState<(() => Promise<void>) | null>(null);
@@ -192,15 +167,26 @@ export function useMyQrDetail(id: string) {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
   }
 
-  function handleRequestDestinationUpdate() {
+  async function handleRequestDestinationUpdate() {
     if (!newDestination.trim()) return;
     const dest = newDestination.trim().startsWith("http") ? newDestination.trim() : `https://${newDestination.trim()}`;
-    const error = validateDestinationUrl(dest);
-    if (error) {
-      setDestinationError(error);
+
+    setIsValidating(true);
+    setDestinationError(null);
+    let scanResult;
+    try {
+      scanResult = await scanUrl(dest);
+    } catch {
+      scanResult = { valid: true };
+    } finally {
+      setIsValidating(false);
+    }
+
+    if (!scanResult.valid) {
+      setDestinationError(scanResult.error ?? "URL failed security check. Please try a different URL.");
       return;
     }
-    setDestinationError(null);
+
     setConfirmModalMessage(
       `Updating will redirect all future scans to:\n\n${dest}\n\nThis cannot be undone instantly — scanners will see a 24-hour caution notice while trust rebuilds.`
     );
@@ -225,7 +211,7 @@ export function useMyQrDetail(id: string) {
   }
 
   async function handleUpdateDestination() {
-    handleRequestDestinationUpdate();
+    await handleRequestDestinationUpdate();
   }
 
   async function handleConfirmPendingAction() {
@@ -241,17 +227,28 @@ export function useMyQrDetail(id: string) {
     setPendingConfirmAction(null);
   }
 
-  function handleRequestSavedContentUpdate() {
+  async function handleRequestSavedContentUpdate() {
     if (!newSavedContent.trim()) return;
     const raw = newSavedContent.trim();
     const looksLikeUrl = raw.startsWith("http") || raw.startsWith("www.") || /^[\w-]+\.\w{2,}/.test(raw);
+
     if (looksLikeUrl) {
-      const error = validateDestinationUrl(raw);
-      if (error) {
-        setSavedContentError(error);
+      setIsValidating(true);
+      setSavedContentError(null);
+      let scanResult;
+      try {
+        scanResult = await scanUrl(raw);
+      } catch {
+        scanResult = { valid: true };
+      } finally {
+        setIsValidating(false);
+      }
+      if (!scanResult.valid) {
+        setSavedContentError(scanResult.error ?? "URL failed security check. Please try a different URL.");
         return;
       }
     }
+
     setSavedContentError(null);
     setConfirmModalMessage(
       `Updating will change this QR code's content to:\n\n${raw}\n\nNote: Any previously printed copies of this QR code will be outdated and should be reprinted.`
@@ -606,6 +603,7 @@ export function useMyQrDetail(id: string) {
     editingSavedContent, setEditingSavedContent,
     newSavedContent, setNewSavedContent,
     savingSavedContent, savedContentError, setSavedContentError,
+    isValidating,
     confirmModalOpen, confirmModalMessage,
     handleConfirmPendingAction, handleCancelPendingAction,
     followersList, followersModalOpen, setFollowersModalOpen,
