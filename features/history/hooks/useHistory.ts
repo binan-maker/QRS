@@ -13,6 +13,16 @@ import {
   type ScanStatsResult,
 } from "@/lib/firestore-service";
 import { parseAnyPaymentQr, analyzeAnyPaymentQr, analyzeUrlHeuristics } from "@/lib/qr-analysis";
+import { queryClient as globalQueryClient } from "@/lib/query-client";
+import {
+  getCachedHistoryPage,
+  setCachedHistoryPage,
+  getCachedFavorites,
+  setCachedFavorites,
+  getCachedScanStats,
+  setCachedScanStats,
+  invalidateHistoryCache,
+} from "@/lib/cache/qr-cache";
 
 export interface HistoryItem {
   id: string;
@@ -49,7 +59,48 @@ export function useHistory() {
   const [refreshing, setRefreshing] = useState(false);
   const [filter, setFilter] = useState<Filter>("all");
 
-  // ── Cloud history: paginated with React Query (15 min stale, 1 hr cache) ─────
+  // ── Disk pre-warm: seed React Query caches from disk before any network call.
+  //    All three caches (history page 1, favorites, stats) are pre-populated
+  //    so the screen shows real data instantly on cold launch — zero Firestore
+  //    reads needed until the 15-min stale window expires. ──────────────────────
+  useEffect(() => {
+    if (!user?.id) return;
+    const uid = user.id;
+
+    // History page 1 → infinite query cache
+    getCachedHistoryPage<{ items: any[]; hasMore: boolean }>(uid).then((cached) => {
+      if (!cached?.items?.length) return;
+      const qk = ["history", uid];
+      if (!globalQueryClient.getQueryData(qk)) {
+        globalQueryClient.setQueryData(qk, {
+          pages: [{ items: cached.items, cursor: null, hasMore: cached.hasMore }],
+          pageParams: [null],
+        });
+      }
+    }).catch(() => {});
+
+    // Favorites → regular query cache
+    getCachedFavorites<any[]>(uid).then((cached) => {
+      if (!cached?.length) return;
+      const qk = ["favorites", uid];
+      if (!globalQueryClient.getQueryData(qk)) {
+        globalQueryClient.setQueryData(qk, cached);
+      }
+    }).catch(() => {});
+
+    // Scan stats → regular query cache
+    getCachedScanStats<ScanStatsResult>(uid).then((cached) => {
+      if (!cached) return;
+      const qk = ["scan-stats", uid];
+      if (!globalQueryClient.getQueryData(qk)) {
+        globalQueryClient.setQueryData(qk, cached);
+      }
+    }).catch(() => {});
+  }, [user?.id]);
+
+  // ── Cloud history: paginated with React Query (15 min stale, 1 hr cache).
+  //    First page is persisted to disk after each successful fetch so the
+  //    next cold launch pre-warms from disk instead of hitting Firestore. ────────
   const {
     data: cloudData,
     fetchNextPage,
@@ -60,8 +111,17 @@ export function useHistory() {
     refetch: refetchCloud,
   } = useInfiniteQuery({
     queryKey: ["history", user?.id],
-    queryFn: ({ pageParam }) =>
-      getUserScansPaginated(user!.id, PAGE_SIZE, pageParam ?? undefined),
+    queryFn: async ({ pageParam }) => {
+      const result = await getUserScansPaginated(user!.id, PAGE_SIZE, pageParam ?? undefined);
+      // Persist first page so cold launch can pre-warm from disk
+      if (!pageParam) {
+        setCachedHistoryPage(user!.id, {
+          items: result.items,
+          hasMore: result.hasMore,
+        }).catch(() => {});
+      }
+      return result;
+    },
     getNextPageParam: (lastPage) => lastPage.cursor ?? null,
     initialPageParam: null,
     staleTime: STALE_MS,
@@ -74,7 +134,11 @@ export function useHistory() {
   // ── Favorites: React Query (15 min stale, 1 hr cache) ────────────────────────
   const { data: favoritesRaw, refetch: refetchFavorites } = useQuery({
     queryKey: ["favorites", user?.id],
-    queryFn: () => getUserFavorites(user!.id),
+    queryFn: async () => {
+      const data = await getUserFavorites(user!.id);
+      setCachedFavorites(user!.id, data).catch(() => {});
+      return data;
+    },
     staleTime: STALE_MS,
     gcTime: 60 * 60 * 1000,
     refetchOnWindowFocus: false,
@@ -85,7 +149,11 @@ export function useHistory() {
   // ── Scan stats: React Query (15 min stale, 1 hr cache) ───────────────────────
   const { data: scanStats, isLoading: statsLoading, refetch: refetchStats } = useQuery<ScanStatsResult>({
     queryKey: ["scan-stats", user?.id],
-    queryFn: () => getUserScanStats(user!.id),
+    queryFn: async () => {
+      const stats = await getUserScanStats(user!.id);
+      setCachedScanStats(user!.id, stats).catch(() => {});
+      return stats;
+    },
     staleTime: STALE_MS,
     gcTime: 60 * 60 * 1000,
     refetchOnWindowFocus: false,
@@ -191,8 +259,10 @@ export function useHistory() {
     }, [user?.id, loadLocalHistory, queryClient, refetchCloud, refetchFavorites, refetchStats])
   );
 
+  // Pull-to-refresh: bust all disk caches then re-fetch everything fresh
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
+    if (user?.id) invalidateHistoryCache(user.id);
     await loadLocalHistory(user?.id ?? null);
     if (user?.id) {
       await Promise.all([refetchCloud(), refetchFavorites(), refetchStats()]);
