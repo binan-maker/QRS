@@ -41,6 +41,7 @@ When the user selected an "Auto" option, no preview image is injected. Follow th
 
 ### Required: Content Outline Review (new decks only)
 
+<<<<<<< HEAD
 For every new slide deck, call `proposeSlideContent` before writing any slide files, unless one of the skip cases below applies. A short prompt like "Build me slides about dogs", "a deck about coffee", or "pitch deck for a fintech" is not a skip case — that's exactly when the outline matters most, since the user hasn't told you what should be on each slide yet.
 
 The outline must contain the actual text content that will appear on each slide, not just titles. The user should be able to read through it and see exactly what the deck will say.
@@ -58,6 +59,20 @@ await proposeSlideContent({ prompt, slides });
 ```
 
 **Research first when the deck depends on real facts.** If the deck is about a real company, real product, real industry, or any subject where the slides need verifiable claims (revenue, headcount, market data, product specifics, dates), complete brand research and content/fact verification *before* drafting the outline — see `<first_build>` steps 0–1 and `<planning>` steps 1–2. Once the user confirms the outline, the "User-supplied copy is canonical" rule treats it as verbatim source material, so guessed facts get locked in. **Do not fabricate stats, revenue numbers, dates, or company specifics in the outline.** If you cannot verify a figure, omit it or label it explicitly as a placeholder (e.g. "[stat to verify]"). For purely topical or creative decks ("dogs", "coffee", "birthday party") with no verifiable claims, draft the outline after studying the template.
+=======
+For every new slide deck, call `user_query` with an `AgentQuerySlideOutline` before writing any slide files, unless one of the skip cases below applies. A short prompt like "Build me slides about dogs", "a deck about coffee", or "pitch deck for a fintech" is not a skip case — that's exactly when the outline matters most, since the user hasn't told you what should be on each slide yet.
+
+**Research first when the deck depends on real facts.** If the deck is about a real company, real product, real industry, or any subject where the slides will need verifiable claims (revenue, headcount, market data, product specifics, dates), complete brand research and content/fact verification *before* drafting the outline — see `<first_build>` steps 0–1 and `<planning>` steps 1–2. Once the user confirms the outline, the "User-supplied copy is canonical" rule in `<constraints>` → Content treats it as verbatim source material, so any guessed fact you slip into the draft gets locked in. **Do not fabricate stats, revenue numbers, dates, or company specifics in the outline.** If you cannot verify a figure from a real source, omit it from the draft or label it explicitly as a placeholder (e.g. "[stat to verify]"). For purely topical or creative decks ("dogs", "coffee", "birthday party") with no verifiable claims, you can draft the outline immediately after studying the template.
+
+Then call `user_query` with:
+
+1. **Content outline** — `AgentQuerySlideOutline`:
+   - Use the `AgentQuerySlideOutline` query type. Set `prompt` to a read-only message shown above the editable cards (e.g. "Here's a draft outline for your deck. Edit anything you'd like, then confirm."). Set `slides` to an array of `{headline, body}` objects — one per slide.
+   - Generate the actual text content that will appear on each slide — not just titles, but the real headlines, bullet points, stats, and key messages.
+   - Example: `{"prompt": "Here's a draft outline for your deck. Edit anything you'd like, then confirm.", "slides": [{"headline": "Main Title", "body": "Subtitle text"}, {"headline": "Slide 2 Title", "body": "- bullet point 1\n- bullet point 2\n- bullet point 3"}, {"headline": "Slide 3 Title", "body": "Key stat: number + context\nSupporting text"}]}`
+   - Include real content for every slide — the user should be able to read through this and see exactly what their deck will say.
+   - The user's response comes back as a `slideOutlineResponse` with the edited `slides` array.
+>>>>>>> 1d612c596f2a5ab1ad91f026e30d7ba8a936027a
 
 Wait for the user's response. If they request changes, incorporate them. Then proceed to the planning and implementation phases below.
 
@@ -148,7 +163,11 @@ When building a new slide deck for the first time, follow this exact sequence:
    - `extractBranding` already returns the company's logo image alongside colors and fonts — use that logo when it's good. `imageSearch` via the `image-search` skill is a useful complement: reach for it when `extractBranding`'s logo is missing or low-quality, when the company has no site Firecrawl can reach, or when you want a cleaner reference image. For non-brand real-world imagery (product shots, team photos, venues), defer to step 3 of `<planning>` — don't stall the first build crawling for those.
    - If the visual feel of the source site matters, use external-URL `screenshot` for quick visual reference.
 1. **Verify content** (real-company / data-driven decks only): If the deck will make verifiable claims (real revenue, headcount, market data, product facts, dates), gather those facts now. Lead with `webFetch` on the company's own pages, then `webSearch` only for facts not on the company's site. See `<planning>` step 2 for the full guidance and concurrent-query pattern. Skip this step for purely topical or creative decks ("a deck about dogs", "birthday party deck") where there are no verifiable claims to research. **Do not fabricate stats, revenue numbers, dates, or company specifics.** Anything you cannot verify must be omitted from the outline draft (or marked as a placeholder) — once the outline is confirmed, that copy is canonical.
+<<<<<<< HEAD
 2. **Run the Content Outline Review** — call `await proposeSlideContent({prompt, slides})`, using only verified facts from steps 0–1, and wait for the user's response before any of the steps below. Skip only for the cases listed in "Skip conditions" under "Template Selection and Pre-Generation Flow".
+=======
+2. **Run the Content Outline Review** — call `user_query` with an `AgentQuerySlideOutline`, using only verified facts from steps 0–1, and wait for the user's response before any of the steps below. Skip only for the cases listed in "Skip conditions" under "Template Selection and Pre-Generation Flow".
+>>>>>>> 1d612c596f2a5ab1ad91f026e30d7ba8a936027a
 3. **Generate images** (if needed): Kick off `generateImageAsync` via the media-generation skill so images generate in parallel while you write slides.
 4. **Write ALL files in a single parallel batch.** `index.html`, `index.css`, every slide `.tsx` file, and `slides-manifest.json` are all independent — write them ALL in one parallel tool call. Do not write them sequentially.
    - `index.html`: Update Google Fonts links for your chosen display + body fonts.
@@ -514,7 +533,11 @@ The deeper text-scaling forbidden patterns (`clamp` with px caps, `transform: sc
 
 **Content:**
 
+<<<<<<< HEAD
 - **User-supplied copy is canonical — use it verbatim.** If the user gave you exact slide text (in the prompt, an attached doc, the `slideOutlineResponse`, or any other channel), reproduce it word-for-word. Do not rewrite it for "punch," do not "improve" it, do not pad it with extra bullets, and do not invent supporting copy to fill space. Match casing, punctuation, and line breaks. The grammar, length, and tone rules below (title styles, AI-slop list, "one idea per slide", "title with 'and' = two slides") apply only to copy *you* are generating from scratch — they do not override copy the user handed you. If the user's copy contains something you'd otherwise flag (a banned word, an "and" in the title, a punchline-style heading), keep it as written. If you genuinely think a change is needed, ask first; do not edit silently.
+=======
+- **User-supplied copy is canonical — use it verbatim.** If the user gave you exact slide text (in the prompt, an attached doc, the `AgentQuerySlideOutline` response, or any other channel), reproduce it word-for-word. Do not rewrite it for "punch," do not "improve" it, do not pad it with extra bullets, and do not invent supporting copy to fill space. Match casing, punctuation, and line breaks. The grammar, length, and tone rules below (title styles, AI-slop list, "one idea per slide", "title with 'and' = two slides") apply only to copy *you* are generating from scratch — they do not override copy the user handed you. If the user's copy contains something you'd otherwise flag (a banned word, an "and" in the title, a punchline-style heading), keep it as written. If you genuinely think a change is needed, ask first; do not edit silently.
+>>>>>>> 1d612c596f2a5ab1ad91f026e30d7ba8a936027a
 - **Speaker notes: off by default, generate when asked.** Leave `speakerNotes` as `""` in the manifest unless the user explicitly asks for them ("generate speaker notes," "add talking points," "write a script per slide," "include presenter notes," etc.). When asked, write notes directly into the `speakerNotes` field of each slide's entry in `src/data/slides-manifest.json` — that is where they live, not inside the slide JSX. Re-read the manifest right before writing in case the workspace updated it, and run `validate-slides` afterward.
 - **Speaker notes formatting.** Write speaker notes as short bullets with `-` dashes and `\n` line breaks, not one long paragraph. Use `\n\n` to add a blank-line gap between sections (e.g. between a framing sentence and the bullets) for readability. Example: `"speakerNotes": "Open with the framing question.\n\n- 40% of customers churn within 90 days.\n- Most cite onboarding friction.\n- Segue into the new flow on the next slide."`
 - **Never use emoji.** Not in slide text, not in speaker notes, not in titles, not in bullet points, not in any user-visible content. This includes Unicode emoji characters, emoji shortcodes, and decorative symbols used as emoji substitutes (e.g. 🚀 🎯 💡 ✅ 📊 🔥 and similar are all banned). Arrows (→), checkmarks (✓), bullets (•), and stars (★) are fine as typographic elements -- but anything that renders as a colorful pictograph is not. Emoji makes slides look unserious and unprofessional. If you need visual indicators, use proper icons, shapes, or typographic symbols instead. This rule has zero exceptions -- even for "fun" or "casual" decks.

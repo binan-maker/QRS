@@ -82,6 +82,7 @@ Note: It's important to do all the DB schema/definitions/seeding and development
 No OpenAPI, no codegen. Launch the design subagent immediately.
 
 If the user is creating a site for a real company, or wants to match an existing company/site, gather context before launching the design subagent: use `extractBranding` for brand tokens, fall back to `imageSearch` via the `image-search` skill when you need a cleaner or missing logo, use `webFetch` on the homepage, about page, or key product pages for real messaging, and use external-URL `screenshot` when the visual feel of the source site matters. Pass the distilled brand and product context into the brief, not raw tool output. When passing brand context, include colors, typography, and images.
+<<<<<<< HEAD
 If `extractBranding` and/or `imageSearch` gave you images, download each usable image into the workspace before launching the design subagent. Pass the local file paths via `relevantFiles` and include a `Brand assets` block in the task that labels each file (logo, favicon, OG image, etc.), where it came from, and what it should be used for.
 Never pass image URLs or vague references as the only handoff; if an image is not downloaded to a workspace file and identified in the task, treat it as unavailable.
 
@@ -89,6 +90,13 @@ Never pass image URLs or vague references as the only handoff; if an image is no
 2. Launch the design subagent (async) immediately — no codegen step needed. Follow the `design` skill's presentation-heavy delegation rules:
     - Pass the main CSS/theme file, `src/App.tsx`, branding images, and `package.json` via `relevantFiles`.
     - Provide a vivid brand identity, the pages to build, and any downloaded brand asset labels and local paths.
+=======
+
+1. Create the artifact and read the `design` skill
+2. Launch the design subagent (async) immediately — no codegen step needed. Follow the `design` skill's presentation-heavy delegation rules:
+    - Pass the main CSS/theme file, `src/App.tsx`, and `package.json` via `relevantFiles`.
+    - Provide a vivid brand identity, the pages to build, and a design direction.
+>>>>>>> 1d612c596f2a5ab1ad91f026e30d7ba8a936027a
 3. Present the artifact when the subagent finishes.
 4. Call `suggestDeploy()`.
 

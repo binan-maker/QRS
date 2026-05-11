@@ -4,7 +4,10 @@
   "exclude": ["node_modules", "build", "dist", "**/*.test.ts"],
   "compilerOptions": {
     "noEmit": true,
+<<<<<<< HEAD
     "lib": ["es2022", "dom", "dom.iterable"],
+=======
+>>>>>>> 1d612c596f2a5ab1ad91f026e30d7ba8a936027a
     "jsx": "preserve",
     "resolveJsonModule": true,
     "allowImportingTsExtensions": true,
