@@ -4,7 +4,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useSharedValue, useAnimatedStyle, withRepeat, withTiming, withSequence } from "react-native-reanimated";
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/contexts/AuthContext";
-import { getUserPhotoURL } from "@/lib/firestore-service";
+import { getUserPhotoURL, getUserScansPaginated } from "@/lib/firestore-service";
 import { useNotifications } from "@/features/notifications/hooks/useNotifications";
 
 export interface LocalScan {
@@ -15,14 +15,16 @@ export interface LocalScan {
   qrCodeId?: string;
 }
 
+const HOME_STALE_MS = 5 * 60 * 1000;
+
 export function useHome() {
   const { user } = useAuth();
-  const [recentScans, setRecentScans] = useState<LocalScan[]>([]);
+  const [localScans, setLocalScans] = useState<LocalScan[]>([]);
   const [refreshing, setRefreshing] = useState(false);
   const prevUserIdRef = useRef<string | null | undefined>(undefined);
   const notif = useNotifications();
 
-  // ── Photo URL: React Query (5 min stale, 30 min cache) ──────────────────────
+  // ── Photo URL: React Query ─────────────────────────────────────────────────
   const { data: photoURL = null } = useQuery<string | null>({
     queryKey: ["photoURL", user?.id],
     queryFn: () => getUserPhotoURL(user!.id),
@@ -32,6 +34,30 @@ export function useHome() {
     refetchOnMount: false,
     enabled: !!user?.id,
     placeholderData: user?.photoURL ?? null,
+  });
+
+  // ── Cloud recent scans: last 5 from Firestore (no time restriction) ────────
+  const {
+    data: cloudScansRaw,
+    refetch: refetchCloud,
+  } = useQuery<LocalScan[]>({
+    queryKey: ["home-recent-scans", user?.id],
+    queryFn: async () => {
+      const { items } = await getUserScansPaginated(user!.id, 5);
+      return items.map((s: any): LocalScan => ({
+        id: s.id,
+        content: s.content,
+        contentType: s.contentType,
+        scannedAt: s.scannedAt,
+        qrCodeId: s.qrCodeId,
+      }));
+    },
+    staleTime: HOME_STALE_MS,
+    gcTime: 30 * 60 * 1000,
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
+    enabled: !!user?.id,
+    placeholderData: [],
   });
 
   // ── Pulse animation for the scan hero button ────────────────────────────────
@@ -44,36 +70,53 @@ export function useHome() {
   }, []);
   const pulseStyle = useAnimatedStyle(() => ({ transform: [{ scale: scanPulse.value }] }));
 
-  const loadRecentScans = useCallback(async (userId?: string | null) => {
-    if (!userId) { setRecentScans([]); return; }
+  const loadLocalScans = useCallback(async (userId?: string | null) => {
+    if (!userId) { setLocalScans([]); return; }
     try {
       const stored = await AsyncStorage.getItem(`local_scan_history_${userId}`);
       if (stored) {
         const all: LocalScan[] = JSON.parse(stored);
-        setRecentScans(all.slice(0, 5));
+        setLocalScans(all);
       } else {
-        setRecentScans([]);
+        setLocalScans([]);
       }
-    } catch {}
+    } catch {
+      setLocalScans([]);
+    }
   }, []);
 
-  // Load only when the home tab is focused — not on every mount
+  // Refresh on tab focus; reset on user change
   useFocusEffect(
     useCallback(() => {
       const currentUserId = user?.id ?? null;
       if (prevUserIdRef.current !== currentUserId) {
         prevUserIdRef.current = currentUserId;
-        setRecentScans([]);
+        setLocalScans([]);
       }
-      loadRecentScans(currentUserId);
-    }, [user?.id, loadRecentScans])
+      loadLocalScans(currentUserId);
+    }, [user?.id, loadLocalScans])
   );
+
+  // Merge local + cloud; deduplicate by qrCodeId; take 5 most recent
+  const recentScans: LocalScan[] = (() => {
+    const cloud: LocalScan[] = cloudScansRaw ?? [];
+    const merged: LocalScan[] = [...localScans];
+    for (const c of cloud) {
+      if (!merged.find((l) => l.qrCodeId && l.qrCodeId === c.qrCodeId)) {
+        merged.push(c);
+      }
+    }
+    return merged
+      .sort((a, b) => new Date(b.scannedAt).getTime() - new Date(a.scannedAt).getTime())
+      .slice(0, 5);
+  })();
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
-    await loadRecentScans(user?.id);
+    await loadLocalScans(user?.id);
+    if (user?.id) await refetchCloud();
     setRefreshing(false);
-  }, [loadRecentScans, user?.id]);
+  }, [loadLocalScans, user?.id, refetchCloud]);
 
   const deleteScan = useCallback(async (scanId: string) => {
     if (!user?.id) return;
@@ -83,7 +126,7 @@ export function useHome() {
       const all: LocalScan[] = JSON.parse(stored);
       const updated = all.filter((s) => s.id !== scanId);
       await AsyncStorage.setItem(`local_scan_history_${user.id}`, JSON.stringify(updated));
-      setRecentScans(updated.slice(0, 5));
+      setLocalScans(updated);
     } catch {}
   }, [user?.id]);
 

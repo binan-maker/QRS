@@ -376,6 +376,25 @@ function HomeScreen() {
                     onDelete={deleteScan}
                   />
                 ))}
+                <Pressable
+                  onPress={() => {
+                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                    router.push("/(tabs)/history");
+                  }}
+                  style={({ pressed }) => [
+                    styles.fullHistoryBtn,
+                    {
+                      backgroundColor: colors.surface,
+                      borderColor: colors.surfaceBorder,
+                      opacity: pressed ? 0.82 : 1,
+                      transform: [{ scale: pressed ? 0.985 : 1 }],
+                    },
+                  ]}
+                >
+                  <Ionicons name="time-outline" size={16} color={colors.primary} />
+                  <Text style={[styles.fullHistoryText, { color: colors.primary }]}>See Full History</Text>
+                  <Ionicons name="arrow-forward" size={14} color={colors.primary} />
+                </Pressable>
               </View>
             )}
           </Animated.View>
@@ -455,6 +474,12 @@ function makeStyles(
     emptySub: { fontSize: rf(13), fontFamily: "Inter_400Regular" },
 
     recentList: { gap: 10 },
+
+    fullHistoryBtn: {
+      flexDirection: "row", alignItems: "center", justifyContent: "center",
+      gap: 8, paddingVertical: 14, borderRadius: 20, borderWidth: 1, marginTop: 2,
+    },
+    fullHistoryText: { fontSize: rf(14), fontFamily: "Inter_600SemiBold", flex: 0 },
   });
 }
 
