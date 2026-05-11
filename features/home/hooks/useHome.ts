@@ -4,8 +4,9 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useSharedValue, useAnimatedStyle, withRepeat, withTiming, withSequence } from "react-native-reanimated";
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/contexts/AuthContext";
-import { getUserPhotoURL, getUserScansPaginated } from "@/lib/firestore-service";
+import { getUserScansPaginated } from "@/lib/firestore-service";
 import { useNotifications } from "@/features/notifications/hooks/useNotifications";
+import { useAvatar } from "@/contexts/AvatarContext";
 
 export interface LocalScan {
   id: string;
@@ -24,17 +25,14 @@ export function useHome() {
   const prevUserIdRef = useRef<string | null | undefined>(undefined);
   const notif = useNotifications();
 
-  // ── Photo URL: React Query ─────────────────────────────────────────────────
-  const { data: photoURL = null } = useQuery<string | null>({
-    queryKey: ["photoURL", user?.id],
-    queryFn: () => getUserPhotoURL(user!.id),
-    staleTime: 5 * 60 * 1000,
-    gcTime: 30 * 60 * 1000,
-    refetchOnWindowFocus: false,
-    refetchOnMount: false,
-    enabled: !!user?.id,
-    placeholderData: user?.photoURL ?? null,
-  });
+  // ── Avatar: from shared AvatarContext (no extra network call here) ───────────
+  const { syncAvatar } = useAvatar();
+
+  // Seed the context with the user's known photoURL whenever the user changes,
+  // so the avatar is immediately available from auth state on first paint.
+  useEffect(() => {
+    if (user?.photoURL) syncAvatar(user.photoURL);
+  }, [user?.id, user?.photoURL, syncAvatar]);
 
   // ── Cloud recent scans: last 5 from Firestore (no time restriction) ────────
   const {
@@ -132,7 +130,6 @@ export function useHome() {
 
   return {
     user,
-    photoURL: photoURL ?? user?.photoURL ?? null,
     recentScans,
     refreshing,
     onRefresh,

@@ -4,6 +4,7 @@ import { useFocusEffect, router } from "expo-router";
 import * as ImagePicker from "expo-image-picker";
 import * as Haptics from "@/lib/haptics";
 import { useAuth } from "@/contexts/AuthContext";
+import { useAvatar } from "@/contexts/AvatarContext";
 import { authAdapter } from "@/lib/auth";
 import { db } from "@/lib/db";
 import {
@@ -37,6 +38,7 @@ interface ProfileExtras {
 
 export function useProfile() {
   const { user, signOut, updateLocalDisplayName } = useAuth();
+  const { setAvatar, syncAvatar, clearAvatar } = useAvatar();
 
   const [editingName, setEditingName] = useState(false);
   const [newName, setNewName] = useState(user?.displayName || "");
@@ -113,7 +115,7 @@ export function useProfile() {
         getUsernameData(user.id),
       ]);
       setStats(s);
-      if (photo) setPhotoURL(photo);
+      if (photo) { setPhotoURL(photo); syncAvatar(photo); }
       if (unameData.username) setCurrentUsername(unameData.username);
       setUsernameLastChangedAt(unameData.usernameLastChangedAt);
       lastStatsFetchRef.current = Date.now();
@@ -277,11 +279,16 @@ export function useProfile() {
       const blob = await response.blob();
 
       const { uploadProfilePhoto } = await import("@/lib/services/storage-service");
+      // Optimistic: show the local file URI immediately everywhere
+      setAvatar(asset.uri);
+
       const newPhotoUrl = await uploadProfilePhoto(blob, user!.id, photoURL);
 
       await updateUserPhotoURL(user!.id, newPhotoUrl);
 
+      // Swap in the real CDN URL (version bump → cache-bust)
       setPhotoURL(newPhotoUrl);
+      setAvatar(newPhotoUrl);
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     } catch (error: any) {
       Alert.alert("Error", `Could not update photo: ${error.message}`);
@@ -304,6 +311,7 @@ export function useProfile() {
         style: "destructive",
         onPress: async () => {
           try {
+            clearAvatar();
             await signOut();
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
             router.replace("/(tabs)/" as any);

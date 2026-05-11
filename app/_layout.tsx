@@ -13,6 +13,7 @@ import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { queryClient } from "@/lib/query-client";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import { ThemeProvider, useTheme } from "@/contexts/ThemeContext";
+import { AvatarProvider } from "@/contexts/AvatarContext";
 import { StatusBar } from "expo-status-bar";
 import {
   useFonts,
@@ -171,8 +172,10 @@ export default function RootLayout() {
       <ThemeProvider>
         <QueryClientProvider client={queryClient}>
           <AuthProvider>
-            <SplashGate fontsReady={fontsReady} />
-            <ConsentGatedApp />
+            <AvatarProvider>
+              <SplashGate fontsReady={fontsReady} />
+              <ConsentGatedApp />
+            </AvatarProvider>
           </AuthProvider>
         </QueryClientProvider>
       </ThemeProvider>

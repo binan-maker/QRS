@@ -1,0 +1,93 @@
+
+
+interface AvatarState {
+  url: string | null;
+  version: number;
+  setAvatar: (url: string, version?: number) => void;
+  clearAvatar: () => void;
+}
+
+export const useAvatarStore = create<AvatarState>((set) => ({
+  url: storage.getString(AVATAR_URL_KEY) || null,
+  version: Number(storage.getString(AVATAR_VERSION_KEY) || '0'),
+  
+  setAvatar: (url, version = Date.now()) => {
+    storage.set(AVATAR_URL_KEY, url);
+    storage.set(AVATAR_VERSION_KEY, String(version));
+    set({ url, version });
+  },
+  
+  clearAvatar: () => {
+    storage.delete(AVATAR_URL_KEY);
+    storage.delete(AVATAR_VERSION_KEY);
+    set({ url: null, version: 0 });
+  }
+}));
+```
+
+### 2️⃣ Cached Avatar Component (Drop-in Replacement)
+```tsx
+// components/ui/CachedAvatar.tsx
+import { Image } from 'expo-image';
+import { View, Text, StyleSheet } from 'react-native';
+import { useAvatarStore } from '@/lib/store/avatarStore';
+
+export function CachedAvatar({ 
+  size = 40, 
+  fallback = '👤',
+  borderRadius 
+}: { 
+  size?: number; 
+  fallback?: string;
+  borderRadius?: number;
+}) {
+  const { url, version } = useAvatarStore();
+  const radius = borderRadius ?? size / 2;
+  
+  // ✅ Cache-bust ONLY when version changes
+  const cacheBustedUrl = url ? `${url}?v=${version}` : null;
+
+  return (
+    <View style={[styles.container, { width: size, height: size, borderRadius: radius }]}>
+      {cacheBustedUrl ? (
+        <Image
+          source={{ uri: cacheBustedUrl }}
+          style={{ width: size, height: size, borderRadius: radius }}
+          cachePolicy="memory-disk" // ✅ Aggressive caching
+          placeholder={fallback}
+          contentFit="cover"
+          transition={200}
+        />
+      ) : (
+        <View style={[styles.fallback, { borderRadius: radius }]}>
+          <Text style={{ fontSize: size * 0.4 }}>{fallback}</Text>
+        </View>
+      )}
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: { backgroundColor: '#f1f5f9', overflow: 'hidden', justifyContent: 'center', alignItems: 'center' },
+  fallback: { width: '100%', height: '100%', justifyContent: 'center', alignItems: 'center', backgroundColor: '#e2e8f0' }
+});
+```
+
+### 3️⃣ Upload Hook with Optimistic UI & Instant Sync
+```typescript
+// features/profile/hooks/useUpdateAvatar.ts
+import { useMutation } from '@tanstack/react-query';
+import { doc, updateDoc } from 'firebase/firestore';
+import { auth, db } from '@/lib/firebase';
+import { useAvatarStore } from '@/lib/store/avatarStore';
+import { uploadProfilePhoto } from '@/lib/services/storage-service';
+
+export function useUpdateAvatar() {
+  const { setAvatar, url: prevUrl, version: prevVersion } = useAvatarStore();
+
+  return useMutation({
+    mutationFn: async (localUri: string) => {
+      const result = await uploadProfilePhoto(localUri);
+      if (!result.success) throw new Error(result.error || 'Upload failed');
+      return result.url;
+    },

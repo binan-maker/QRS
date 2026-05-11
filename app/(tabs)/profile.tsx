@@ -19,6 +19,7 @@ import { formatCompactNumber } from "@/lib/number-format";
 import PhotoModal from "@/features/profile/components/PhotoModal";
 import NotificationsModal from "@/features/home/components/NotificationsModal";
 import { useProfile } from "@/hooks/useProfile";
+import { useAvatar } from "@/contexts/AvatarContext";
 import { useNotifications } from "@/features/notifications/hooks/useNotifications";
 import QRCode from "react-native-qrcode-svg";
 
@@ -28,13 +29,14 @@ function ProfileScreen() {
   const {
     user,
     stats, statsLoading,
-    photoURL, photoModalOpen, setPhotoModalOpen, uploadingPhoto,
+    photoModalOpen, setPhotoModalOpen, uploadingPhoto,
     myQrCodes, myQrLoading,
     currentUsername,
     initials,
     bio, friendsCount,
     handlePickPhoto, handleSignOut,
   } = useProfile();
+  const { cachedUrl: photoURL } = useAvatar();
   const {
     notifCount, notifOpen, setNotifOpen,
     notifications, markingRead,

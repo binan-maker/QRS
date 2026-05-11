@@ -20,6 +20,7 @@ import { parseAnyPaymentQr } from "@/lib/qr-analysis";
 import Animated, { FadeInDown, FadeInRight } from "react-native-reanimated";
 import { useTheme } from "@/contexts/ThemeContext";
 import { useHome, type LocalScan } from "@/hooks/useHome";
+import { useAvatar } from "@/contexts/AvatarContext";
 import { detectContentType, getContentTypeIcon, truncate, formatRelativeTime } from "@/lib/utils/formatters";
 
 // ── Pure helpers (module-level — no re-creation on render) ──────────────────
@@ -204,7 +205,8 @@ const cardStyles = StyleSheet.create({
 function HomeScreen() {
   const insets = useSafeAreaInsets();
   const { colors, isDark } = useTheme();
-  const { user, photoURL, recentScans, refreshing, onRefresh, deleteScan, pulseStyle } = useHome();
+  const { user, recentScans, refreshing, onRefresh, deleteScan, pulseStyle } = useHome();
+  const { cachedUrl: photoURL } = useAvatar();
 
   const topInset = Platform.OS === "web" ? 67 : insets.top;
   const { width } = useWindowDimensions();
@@ -399,7 +401,7 @@ function HomeScreen() {
             )}
           </Animated.View>
 
-          <View style={{ height: 110 }} />
+          <View style={{ height: Math.max(110, 70 + insets.bottom) }} />
         </ScrollView>
       </View>
     </>
