@@ -52,6 +52,7 @@ const TTL = {
   TRUST_SCORE: 2 * 60 * 1000,
   USER_STATS: 3 * 60 * 1000,
   HISTORY_PAGE: 5 * 60 * 1000,
+  HOME_SCANS: 30 * 60 * 1000,
   FAVORITES: 5 * 60 * 1000,
   SCAN_STATS: 5 * 60 * 1000,
   PROFILE_EXTRAS: 10 * 60 * 1000,
@@ -87,6 +88,16 @@ export function invalidateUserCache(userId: string): void {
   invalidateCache(`user_stats_${userId}`);
   invalidateCache(`profile_extras_${userId}`);
   invalidateCache(`photo_url_${userId}`);
+}
+
+export async function getCachedHomeScans<T>(userId: string): Promise<T | null> {
+  return getCache<T>(`home_scans_${userId}`);
+}
+export async function setCachedHomeScans<T>(userId: string, value: T): Promise<void> {
+  return setCache<T>(`home_scans_${userId}`, value, TTL.HOME_SCANS);
+}
+export function invalidateHomeScansCache(userId: string): void {
+  invalidateCache(`home_scans_${userId}`);
 }
 
 export async function getCachedHistoryPage<T>(userId: string): Promise<T | null> {

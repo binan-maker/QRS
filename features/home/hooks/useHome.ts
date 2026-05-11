@@ -7,6 +7,12 @@ import { useAuth } from "@/contexts/AuthContext";
 import { getUserScansPaginated } from "@/lib/firestore-service";
 import { useNotifications } from "@/features/notifications/hooks/useNotifications";
 import { useAvatar } from "@/contexts/AvatarContext";
+import { queryClient } from "@/lib/query-client";
+import {
+  getCachedHomeScans,
+  setCachedHomeScans,
+  invalidateHomeScansCache,
+} from "@/lib/cache/qr-cache";
 
 export interface LocalScan {
   id: string;
@@ -16,7 +22,9 @@ export interface LocalScan {
   qrCodeId?: string;
 }
 
+// 5 min in-memory stale window — after a force-close the disk cache backs this up
 const HOME_STALE_MS = 5 * 60 * 1000;
+const HOME_QUERY_KEY = (uid: string) => ["home-recent-scans", uid] as const;
 
 export function useHome() {
   const { user } = useAuth();
@@ -25,30 +33,48 @@ export function useHome() {
   const prevUserIdRef = useRef<string | null | undefined>(undefined);
   const notif = useNotifications();
 
-  // ── Avatar: from shared AvatarContext (no extra network call here) ───────────
+  // ── Avatar: shared context — no extra network call ────────────────────────
   const { syncAvatar } = useAvatar();
-
-  // Seed the context with the user's known photoURL whenever the user changes,
-  // so the avatar is immediately available from auth state on first paint.
   useEffect(() => {
     if (user?.photoURL) syncAvatar(user.photoURL);
   }, [user?.id, user?.photoURL, syncAvatar]);
 
-  // ── Cloud recent scans: last 5 from Firestore (no time restriction) ────────
+  // ── Disk pre-warm: seed the React Query cache from AsyncStorage before the
+  //    network call fires so the list appears instantly on cold launch. ────────
+  useEffect(() => {
+    if (!user?.id) return;
+    getCachedHomeScans<LocalScan[]>(user.id).then((cached) => {
+      if (!cached || cached.length === 0) return;
+      const qk = HOME_QUERY_KEY(user.id);
+      const existing = queryClient.getQueryData<LocalScan[]>(qk);
+      if (!existing || existing.length === 0) {
+        queryClient.setQueryData(qk, cached);
+      }
+    }).catch(() => {});
+  }, [user?.id]);
+
+  // ── Cloud recent scans: last 5 from Firestore ─────────────────────────────
+  // - staleTime: 5 min in-memory; disk cache extends this across force-closes.
+  // - refetchOnMount: false — rely on pull-to-refresh for manual updates.
+  // - On success the result is persisted to disk (30-min TTL) so the next cold
+  //   launch pre-warms from disk instead of hitting Firestore.
   const {
     data: cloudScansRaw,
     refetch: refetchCloud,
   } = useQuery<LocalScan[]>({
-    queryKey: ["home-recent-scans", user?.id],
+    queryKey: HOME_QUERY_KEY(user?.id ?? ""),
     queryFn: async () => {
       const { items } = await getUserScansPaginated(user!.id, 5);
-      return items.map((s: any): LocalScan => ({
+      const scans = items.map((s: any): LocalScan => ({
         id: s.id,
         content: s.content,
         contentType: s.contentType,
         scannedAt: s.scannedAt,
         qrCodeId: s.qrCodeId,
       }));
+      // Persist for next cold launch (fire-and-forget)
+      setCachedHomeScans<LocalScan[]>(user!.id, scans).catch(() => {});
+      return scans;
     },
     staleTime: HOME_STALE_MS,
     gcTime: 30 * 60 * 1000,
@@ -58,7 +84,7 @@ export function useHome() {
     placeholderData: [],
   });
 
-  // ── Pulse animation for the scan hero button ────────────────────────────────
+  // ── Pulse animation for the scan hero button ──────────────────────────────
   const scanPulse = useSharedValue(1);
   useEffect(() => {
     scanPulse.value = withRepeat(
@@ -68,22 +94,19 @@ export function useHome() {
   }, []);
   const pulseStyle = useAnimatedStyle(() => ({ transform: [{ scale: scanPulse.value }] }));
 
+  // ── Local scans from device AsyncStorage ──────────────────────────────────
+  // Re-read on every focus so newly-scanned codes (written by the scanner tab)
+  // appear immediately when the user returns to Home.
   const loadLocalScans = useCallback(async (userId?: string | null) => {
     if (!userId) { setLocalScans([]); return; }
     try {
       const stored = await AsyncStorage.getItem(`local_scan_history_${userId}`);
-      if (stored) {
-        const all: LocalScan[] = JSON.parse(stored);
-        setLocalScans(all);
-      } else {
-        setLocalScans([]);
-      }
+      setLocalScans(stored ? JSON.parse(stored) : []);
     } catch {
       setLocalScans([]);
     }
   }, []);
 
-  // Refresh on tab focus; reset on user change
   useFocusEffect(
     useCallback(() => {
       const currentUserId = user?.id ?? null;
@@ -95,7 +118,7 @@ export function useHome() {
     }, [user?.id, loadLocalScans])
   );
 
-  // Merge local + cloud; deduplicate by qrCodeId; take 5 most recent
+  // ── Merge local + cloud; deduplicate by qrCodeId; take 5 most recent ──────
   const recentScans: LocalScan[] = (() => {
     const cloud: LocalScan[] = cloudScansRaw ?? [];
     const merged: LocalScan[] = [...localScans];
@@ -109,20 +132,25 @@ export function useHome() {
       .slice(0, 5);
   })();
 
+  // ── Pull-to-refresh: bust disk cache then re-fetch everything ─────────────
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
+    if (user?.id) invalidateHomeScansCache(user.id);
     await loadLocalScans(user?.id);
-    if (user?.id) await refetchCloud();
+    if (user?.id) {
+      await queryClient.invalidateQueries({ queryKey: HOME_QUERY_KEY(user.id) });
+      await refetchCloud();
+    }
     setRefreshing(false);
   }, [loadLocalScans, user?.id, refetchCloud]);
 
+  // ── Delete a local scan from AsyncStorage ─────────────────────────────────
   const deleteScan = useCallback(async (scanId: string) => {
     if (!user?.id) return;
     try {
       const stored = await AsyncStorage.getItem(`local_scan_history_${user.id}`);
       if (!stored) return;
-      const all: LocalScan[] = JSON.parse(stored);
-      const updated = all.filter((s) => s.id !== scanId);
+      const updated = (JSON.parse(stored) as LocalScan[]).filter((s) => s.id !== scanId);
       await AsyncStorage.setItem(`local_scan_history_${user.id}`, JSON.stringify(updated));
       setLocalScans(updated);
     } catch {}
