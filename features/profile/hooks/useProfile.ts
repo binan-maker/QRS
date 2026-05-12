@@ -49,6 +49,7 @@ export function useProfile() {
   const [photoURL, setPhotoURL] = useState<string | null>(user?.photoURL || null);
   const [photoModalOpen, setPhotoModalOpen] = useState(false);
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
   const [myQrCodes, setMyQrCodes] = useState<GeneratedQrItem[]>([]);
   const [myQrLoading, setMyQrLoading] = useState(true);
   const qrUnsubscribeRef = useRef<(() => void) | null>(null);
@@ -343,6 +344,17 @@ export function useProfile() {
     setUsernameAvailable(null);
   }, []);
 
+  const handleRefresh = useCallback(async () => {
+    if (refreshing) return;
+    setRefreshing(true);
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    try {
+      await Promise.all([loadStats(true), loadProfileExtras(true)]);
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    } catch {}
+    setRefreshing(false);
+  }, [refreshing, loadStats, loadProfileExtras]);
+
   const handleSignOut = useCallback(async () => {
     Alert.alert("Sign Out", "Are you sure you want to sign out?", [
       { text: "Cancel", style: "cancel" },
@@ -416,6 +428,8 @@ export function useProfile() {
     handleSaveName,
     handleSaveUsername,
     handleCancelUsername,
+    refreshing,
+    handleRefresh,
     handlePickPhoto,
     handleRemovePhoto,
     handleSignOut,

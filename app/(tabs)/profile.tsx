@@ -5,6 +5,7 @@ import {
   StyleSheet,
   Pressable,
   ScrollView,
+  RefreshControl,
   Platform,
   ActivityIndicator,
 } from "react-native";
@@ -34,6 +35,7 @@ function ProfileScreen() {
     currentUsername,
     initials,
     bio, friendsCount,
+    refreshing, handleRefresh,
     handlePickPhoto, handleRemovePhoto, handleSignOut,
   } = useProfile();
   const { cachedUrl: photoURL } = useAvatar();
@@ -53,9 +55,11 @@ function ProfileScreen() {
   );
 
   const statsItems = useMemo(() => [
-    { label: "QR Hits", value: totalQrScans, color: colors.accent, loading: myQrLoading },
-    { label: "Following", value: stats.followingCount, color: colors.primary, loading: statsLoading },
-  ], [totalQrScans, myQrLoading, stats.followingCount, statsLoading, colors.accent, colors.primary]);
+    { label: "QR Hits",   value: totalQrScans,               color: colors.accent,  loading: myQrLoading  },
+    { label: "Following", value: stats.followingCount,         color: colors.primary, loading: statsLoading },
+    { label: "Comments",  value: stats.commentCount,           color: colors.safe,    loading: statsLoading },
+    { label: "Likes",     value: stats.totalLikesReceived,     color: "#EC4899",      loading: statsLoading },
+  ], [totalQrScans, myQrLoading, stats.followingCount, stats.commentCount, stats.totalLikesReceived, statsLoading, colors.accent, colors.primary, colors.safe]);
 
   const formattedStats = useMemo(
     () => statsItems.map((s) => ({ ...s, formatted: formatCompactNumber(s.value) })),
@@ -116,6 +120,14 @@ function ProfileScreen() {
       <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={[styles.scrollContent, { paddingBottom: tabBarHeight + 24 }]}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={handleRefresh}
+            tintColor={colors.primary}
+            colors={[colors.primary]}
+          />
+        }
       >
         {/* ── TOP BAR ── */}
         <View style={styles.topBar}>
@@ -199,12 +211,19 @@ function ProfileScreen() {
           </Pressable>
         </Animated.View>
 
-        {/* ── STATS ── */}
-        <Animated.View entering={FadeInDown.duration(400).delay(60)} style={[styles.statsRow, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
+        {/* ── STATS 2×2 GRID ── */}
+        <Animated.View entering={FadeInDown.duration(400).delay(60)} style={[styles.statsGrid, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
           {formattedStats.map((s, i) => (
-            <View key={s.label} style={[styles.statItem, i < 1 && { borderRightWidth: 1, borderRightColor: colors.surfaceBorder }]}>
+            <View
+              key={s.label}
+              style={[
+                styles.statCell,
+                i % 2 === 0 && { borderRightWidth: 1, borderRightColor: colors.surfaceBorder },
+                i < 2        && { borderBottomWidth: 1, borderBottomColor: colors.surfaceBorder },
+              ]}
+            >
               {s.loading
-                ? <SkeletonBox width={32} height={18} borderRadius={5} />
+                ? <SkeletonBox width={28} height={16} borderRadius={5} />
                 : <Text style={[styles.statValue, { color: s.color }]}>{s.formatted}</Text>
               }
               <Text style={[styles.statLabel, { color: colors.textMuted }]}>{s.label}</Text>
@@ -454,12 +473,13 @@ const styles = StyleSheet.create({
   },
   editProfileText: { fontSize: 13, fontFamily: "Inter_600SemiBold" },
 
-  statsRow: {
-    flexDirection: "row", borderRadius: 18, borderWidth: 1,
+  statsGrid: {
+    flexDirection: "row", flexWrap: "wrap",
+    borderRadius: 18, borderWidth: 1,
     marginBottom: 22, overflow: "hidden",
   },
-  statItem: { flex: 1, alignItems: "center", paddingVertical: 14, gap: 3 },
-  statValue: { fontSize: 18, fontFamily: "Inter_700Bold" },
+  statCell: { width: "50%", alignItems: "center", paddingVertical: 16, gap: 4 },
+  statValue: { fontSize: 17, fontFamily: "Inter_700Bold" },
   statLabel: { fontSize: 11, fontFamily: "Inter_400Regular" },
 
   section: { marginBottom: 22 },

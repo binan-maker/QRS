@@ -209,9 +209,11 @@ export default function MyQrCodesScreen() {
   const rf = (size: number) => Math.round(size * s);
   const sp = (v: number)    => Math.round(v * s);
 
-  const topInset     = Platform.OS === "web" ? 67 : insets.top;
-  const bottomInset  = insets.bottom;
-  const tabBarHeight = 62 + bottomInset + 8;
+  const topInset          = Platform.OS === "web" ? 67 : insets.top;
+  const bottomInset       = insets.bottom;
+  // This is NOT a tab screen, so there is no tab bar. We only need to
+  // account for the system navigation bar (bottomInset) and the FAB (54px).
+  const contentPaddingBottom = bottomInset + sp(54) + sp(36);
 
   const [qrCodes,       setQrCodes]       = useState<GeneratedQrItem[]>([]);
   const [groups,        setGroups]        = useState<QrGroup[]>([]);
@@ -549,7 +551,7 @@ export default function MyQrCodesScreen() {
             keyExtractor={(g) => g.id}
             renderItem={renderGroupItem}
             estimatedItemSize={90}
-            contentContainerStyle={{ paddingHorizontal: sp(20), paddingTop: sp(2), paddingBottom: tabBarHeight + sp(80) }}
+            contentContainerStyle={{ paddingHorizontal: sp(20), paddingTop: sp(2), paddingBottom: contentPaddingBottom }}
             showsVerticalScrollIndicator={false}
             ListHeaderComponent={
               <Text style={{ fontSize: rf(12), fontFamily: "Inter_500Medium", color: colors.textMuted, marginBottom: sp(10) }}>
@@ -586,7 +588,7 @@ export default function MyQrCodesScreen() {
           keyExtractor={(item) => item.docId}
           renderItem={renderQrItem}
           estimatedItemSize={100}
-          contentContainerStyle={{ paddingHorizontal: sp(20), paddingTop: sp(2), paddingBottom: tabBarHeight + sp(80) }}
+          contentContainerStyle={{ paddingHorizontal: sp(20), paddingTop: sp(2), paddingBottom: contentPaddingBottom }}
           showsVerticalScrollIndicator={false}
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={handleRefresh} tintColor={colors.primary} />}
           ListHeaderComponent={
@@ -603,7 +605,7 @@ export default function MyQrCodesScreen() {
         onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium); router.push("/create-group" as any); }}
         style={({ pressed }) => [{
           position: "absolute",
-          bottom: bottomInset + sp(8) + 62,
+          bottom: bottomInset + sp(20),
           right: sp(20),
           width: sp(54), height: sp(54), borderRadius: sp(27),
           alignItems: "center", justifyContent: "center",

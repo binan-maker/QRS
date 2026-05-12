@@ -3,6 +3,7 @@ import "@/lib/i18n";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Stack } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
+import * as SystemUI from "expo-system-ui";
 import React, { useEffect, useRef } from "react";
 import { Platform, View } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -78,6 +79,16 @@ function RootLayoutNav() {
 function ThemedApp() {
   const { colors } = useTheme();
   const isWeb = Platform.OS === "web";
+
+  // Keep the Android system navigation bar background in sync with the app theme.
+  // Without this, the gesture/button bar at the bottom appears transparent on
+  // edge-to-edge Android builds.
+  useEffect(() => {
+    if (Platform.OS === "android") {
+      SystemUI.setBackgroundColorAsync(colors.background).catch(() => {});
+    }
+  }, [colors.background]);
+
   return (
     <GestureHandlerRootView
       style={{
