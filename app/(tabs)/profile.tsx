@@ -117,7 +117,7 @@ function ProfileScreen() {
     <View style={[styles.container, { paddingTop: topInset, backgroundColor: colors.background }]}>
       <ScrollView
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={[styles.scrollContent, { paddingBottom: tabBarHeight + 24 }]}
+        contentContainerStyle={[styles.scrollContent, { paddingBottom: tabBarHeight + 60 }]}
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
@@ -368,11 +368,15 @@ const QrPreviewCard = React.memo(function QrPreviewCard({
     const content = qr.content || "";
     try {
       const url = new URL(content.startsWith("http") ? content : `https://${content}`);
-      if (url.hostname.includes(".")) {
-        return url.hostname.replace(/^www\./, "");
+      const host = url.hostname.replace(/^www\./, "");
+      const isLocal = /^(192\.168\.|10\.|127\.|localhost)/.test(host);
+      if (isLocal || url.pathname.startsWith("/guard/")) {
+        return qr.businessName || "Business QR";
       }
+      if (host.includes(".") && host.length >= 4) return host;
     } catch {}
-    return content.length > 14 ? content.slice(0, 14) + "…" : content;
+    if (content.startsWith("/guard/") || content.includes("/guard/")) return "Business QR";
+    return content.length > 14 ? content.slice(0, 14) + "…" : content || "QR Code";
   }, [qr.businessName, qr.content]);
   const onPress = useCallback(() => safePush(`/my-qr/${qr.docId}`), [qr.docId]);
 
