@@ -1,9 +1,14 @@
-import { View, Text, Modal, Pressable, ScrollView, TextInput, StyleSheet, Platform, useWindowDimensions } from "react-native";
-import { useState, useMemo } from "react";
+import {
+  View, Text, Modal, Pressable, ScrollView, TextInput,
+  StyleSheet, useWindowDimensions, ActivityIndicator,
+} from "react-native";
+import { useState, useMemo, useEffect, useCallback, memo } from "react";
 import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import Animated, { FadeIn } from "react-native-reanimated";
 import { useTheme } from "@/contexts/ThemeContext";
-import { QR_PRESETS, PRESET_CATEGORIES } from "@/features/generator/data/presets";
+import { CategoryRegistryService } from "@/lib/services/category-registry-service";
+import type { CategorySchema, CategorySearchResult } from "@/lib/schemas/CategorySchema";
 
 interface Props {
   visible: boolean;
@@ -12,32 +17,103 @@ interface Props {
   onClose: () => void;
 }
 
-export default function TemplatePickerModal({ visible, selectedPreset, onSelect, onClose }: Props) {
+const TAG_FILTERS = [
+  { key: "all",      label: "All",       icon: "apps-outline"           },
+  { key: "india",    label: "🇮🇳 India",  icon: "card-outline"           },
+  { key: "payment",  label: "Payments",  icon: "cash-outline"           },
+  { key: "social",   label: "Social",    icon: "people-outline"         },
+  { key: "contact",  label: "Contact",   icon: "person-circle-outline"  },
+  { key: "business", label: "Business",  icon: "business-outline"       },
+  { key: "utility",  label: "Utility",   icon: "construct-outline"      },
+];
+
+function TemplatePickerModal({ visible, selectedPreset, onSelect, onClose }: Props) {
   const { colors } = useTheme();
   const insets = useSafeAreaInsets();
   const { height: screenHeight } = useWindowDimensions();
+
   const [search, setSearch] = useState("");
+  const [activeTag, setActiveTag] = useState("all");
+  const [allCategories, setAllCategories] = useState<CategorySchema[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const sheetHeight = screenHeight * 0.84;
+  const sheetHeight = screenHeight * 0.88;
 
-  const searchResults = useMemo(() => {
-    const q = search.trim().toLowerCase();
-    if (!q) return null;
-    return QR_PRESETS
-      .map((p, idx) => ({ ...p, idx }))
-      .filter((p) => p.label.toLowerCase().includes(q) || p.contentType.toLowerCase().includes(q));
-  }, [search]);
+  useEffect(() => {
+    if (!visible) return;
+    setLoading(true);
+    CategoryRegistryService.getAll()
+      .then(setAllCategories)
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, [visible]);
 
-  function handleSelect(idx: number) {
-    onSelect(idx);
-    setSearch("");
-    onClose();
+  const indiaFirst = useMemo(
+    () => allCategories.filter(c => c.isIndiaFirst || c.region === "india").slice(0, 5),
+    [allCategories]
+  );
+
+  const searchResults = useMemo((): CategorySearchResult[] | null => {
+    const q = search.trim();
+    if (!q && activeTag === "all") return null;
+
+    let pool = allCategories;
+
+    if (activeTag !== "all") {
+      pool = pool.filter(c =>
+        c.tags.includes(activeTag) ||
+        c.id.includes(activeTag) ||
+        (activeTag === "india" && (c.region === "india" || c.isIndiaFirst))
+      );
+    }
+
+    if (!q) {
+      return pool
+        .sort((a, b) => b.popularity - a.popularity)
+        .map(c => ({ category: c, score: c.popularity, matchedOn: [] }));
+    }
+
+    const lower = q.toLowerCase();
+    const words = lower.split(/\s+/).filter(Boolean);
+
+    const scored: CategorySearchResult[] = pool.map(c => {
+      const name = c.name.toLowerCase();
+      const desc = c.description.toLowerCase();
+      const tags = c.tags.map(t => t.toLowerCase());
+      let score = 0;
+      const matchedOn: string[] = [];
+
+      for (const word of words) {
+        if (name === word) { score += 100; matchedOn.push("exact"); continue; }
+        if (name.startsWith(word)) { score += 60; matchedOn.push("name"); continue; }
+        if (name.includes(word)) { score += 40; matchedOn.push("name"); continue; }
+        if (tags.some(t => t === word)) { score += 35; matchedOn.push("tag"); continue; }
+        if (tags.some(t => t.includes(word))) { score += 20; matchedOn.push("tag"); continue; }
+        if (desc.includes(word)) { score += 10; matchedOn.push("desc"); }
+      }
+      score += Math.min(c.popularity / 10, 8);
+      return { category: c, score, matchedOn };
+    });
+
+    return scored.filter(r => r.score > 8).sort((a, b) => b.score - a.score);
+  }, [search, activeTag, allCategories]);
+
+  function handleSelect(cat: CategorySchema) {
+    if (cat.presetIdx !== undefined) {
+      onSelect(cat.presetIdx);
+      setSearch("");
+      setActiveTag("all");
+      onClose();
+    }
   }
 
   function handleClose() {
     setSearch("");
+    setActiveTag("all");
     onClose();
   }
+
+  const totalCount = allCategories.length;
 
   return (
     <Modal
@@ -62,11 +138,12 @@ export default function TemplatePickerModal({ visible, selectedPreset, onSelect,
         >
           <View style={[styles.handle, { backgroundColor: colors.surfaceBorder }]} />
 
+          {/* Header */}
           <View style={styles.header}>
             <View style={{ flex: 1 }}>
-              <Text style={[styles.title, { color: colors.text }]}>QR Templates</Text>
+              <Text style={[styles.title, { color: colors.text }]}>Choose QR Type</Text>
               <Text style={[styles.subtitle, { color: colors.textMuted }]}>
-                {QR_PRESETS.length} types — tap one to get structured fields
+                {totalCount} types — India-first, globally trusted
               </Text>
             </View>
             <Pressable
@@ -77,17 +154,19 @@ export default function TemplatePickerModal({ visible, selectedPreset, onSelect,
             </Pressable>
           </View>
 
+          {/* Search */}
           <View style={[styles.searchWrap, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
             <Ionicons name="search-outline" size={16} color={colors.textMuted} />
             <TextInput
               style={[styles.searchInput, { color: colors.text }]}
               value={search}
               onChangeText={setSearch}
-              placeholder="Search templates…"
+              placeholder="What do you need a QR for?"
               placeholderTextColor={colors.textMuted}
               autoCapitalize="none"
               autoCorrect={false}
               autoFocus={false}
+              returnKeyType="search"
             />
             {search.length > 0 && (
               <Pressable onPress={() => setSearch("")} hitSlop={8}>
@@ -96,73 +175,140 @@ export default function TemplatePickerModal({ visible, selectedPreset, onSelect,
             )}
           </View>
 
+          {/* Tag filter chips */}
           <ScrollView
-            showsVerticalScrollIndicator={false}
-            style={{ flex: 1 }}
-            keyboardShouldPersistTaps="handled"
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.tagRow}
           >
-            {searchResults ? (
-              <View style={styles.resultsList}>
-                {searchResults.length === 0 ? (
-                  <Text style={[styles.emptyText, { color: colors.textMuted }]}>No templates match "{search}"</Text>
-                ) : (
-                  searchResults.map((p) => (
-                    <PresetRow
-                      key={p.idx}
-                      icon={p.icon}
-                      label={p.label}
-                      hint={p.hint}
-                      isSelected={selectedPreset === p.idx}
-                      onPress={() => handleSelect(p.idx)}
-                      colors={colors}
-                    />
-                  ))
-                )}
-              </View>
-            ) : (
-              PRESET_CATEGORIES.map((cat) => (
-                <View key={cat.label}>
-                  <View style={[styles.catHeader, { borderBottomColor: colors.surfaceBorder }]}>
-                    <View style={[styles.catIconBox, { backgroundColor: colors.primaryDim }]}>
-                      <Ionicons name={cat.icon as any} size={13} color={colors.primary} />
-                    </View>
-                    <Text style={[styles.catLabel, { color: colors.primary }]}>
-                      {cat.label.toUpperCase()}
-                    </Text>
-                  </View>
+            {TAG_FILTERS.map(t => {
+              const active = activeTag === t.key;
+              return (
+                <Pressable
+                  key={t.key}
+                  onPress={() => setActiveTag(t.key)}
+                  style={[
+                    styles.tagChip,
+                    {
+                      backgroundColor: active ? colors.primaryDim : colors.surface,
+                      borderColor: active ? colors.primary + "60" : colors.surfaceBorder,
+                    },
+                  ]}
+                >
+                  <Text style={[styles.tagChipText, { color: active ? colors.primary : colors.textMuted }]}>
+                    {t.label}
+                  </Text>
+                </Pressable>
+              );
+            })}
+          </ScrollView>
+
+          {/* List */}
+          {loading ? (
+            <View style={styles.loadingWrap}>
+              <ActivityIndicator size="small" color={colors.primary} />
+              <Text style={[styles.loadingText, { color: colors.textMuted }]}>Loading categories…</Text>
+            </View>
+          ) : (
+            <ScrollView
+              showsVerticalScrollIndicator={false}
+              style={{ flex: 1 }}
+              keyboardShouldPersistTaps="handled"
+              contentContainerStyle={{ paddingBottom: 16 }}
+            >
+              {searchResults === null ? (
+                <>
+                  {/* India-first pinned section */}
+                  {indiaFirst.length > 0 && (
+                    <Animated.View entering={FadeIn.duration(300)}>
+                      <SectionHeader
+                        label="🇮🇳 India Business"
+                        sublabel="Most popular in India"
+                        colors={colors}
+                      />
+                      <View style={styles.catItems}>
+                        {indiaFirst.map(cat => (
+                          <CategoryRow
+                            key={cat.id}
+                            category={cat}
+                            isSelected={cat.presetIdx === selectedPreset}
+                            onPress={() => handleSelect(cat)}
+                            colors={colors}
+                          />
+                        ))}
+                      </View>
+                    </Animated.View>
+                  )}
+
+                  {/* All categories grouped */}
+                  <SectionHeader
+                    label="All Types"
+                    sublabel={`${totalCount} types available`}
+                    colors={colors}
+                  />
                   <View style={styles.catItems}>
-                    {cat.presets.map((idx) => {
-                      const p = QR_PRESETS[idx];
-                      if (!p) return null;
-                      return (
-                        <PresetRow
-                          key={idx}
-                          icon={p.icon}
-                          label={p.label}
-                          hint={p.hint}
-                          isSelected={selectedPreset === idx}
-                          onPress={() => handleSelect(idx)}
+                    {allCategories
+                      .filter(c => !c.isIndiaFirst)
+                      .sort((a, b) => b.popularity - a.popularity)
+                      .map(cat => (
+                        <CategoryRow
+                          key={cat.id}
+                          category={cat}
+                          isSelected={cat.presetIdx === selectedPreset}
+                          onPress={() => handleSelect(cat)}
                           colors={colors}
                         />
-                      );
-                    })}
+                      ))}
                   </View>
-                </View>
-              ))
-            )}
-            <View style={{ height: 20 }} />
-          </ScrollView>
+                </>
+              ) : searchResults.length === 0 ? (
+                <EmptyState query={search} activeTag={activeTag} colors={colors} />
+              ) : (
+                <Animated.View entering={FadeIn.duration(200)}>
+                  <SectionHeader
+                    label={search ? `Results for "${search}"` : TAG_FILTERS.find(t => t.key === activeTag)?.label ?? ""}
+                    sublabel={`${searchResults.length} type${searchResults.length !== 1 ? "s" : ""} found`}
+                    colors={colors}
+                  />
+                  <View style={styles.catItems}>
+                    {searchResults.map(({ category: cat, matchedOn }) => (
+                      <CategoryRow
+                        key={cat.id}
+                        category={cat}
+                        isSelected={cat.presetIdx === selectedPreset}
+                        onPress={() => handleSelect(cat)}
+                        colors={colors}
+                        matchedOn={matchedOn}
+                      />
+                    ))}
+                  </View>
+                </Animated.View>
+              )}
+            </ScrollView>
+          )}
         </View>
       </View>
     </Modal>
   );
 }
 
-function PresetRow({
-  icon, label, hint, isSelected, onPress, colors,
+function SectionHeader({ label, sublabel, colors }: { label: string; sublabel: string; colors: any }) {
+  return (
+    <View style={[styles.catHeader, { borderBottomColor: colors.surfaceBorder }]}>
+      <Text style={[styles.catLabel, { color: colors.primary }]}>{label}</Text>
+      <Text style={[styles.catSublabel, { color: colors.textMuted }]}>{sublabel}</Text>
+    </View>
+  );
+}
+
+function CategoryRow({
+  category, isSelected, onPress, colors, matchedOn,
 }: {
-  icon: string; label: string; hint?: string;
-  isSelected: boolean; onPress: () => void; colors: any;
+  category: CategorySchema;
+  isSelected: boolean;
+  onPress: () => void;
+  colors: any;
+  matchedOn?: string[];
 }) {
   return (
     <Pressable
@@ -177,18 +323,34 @@ function PresetRow({
       ]}
     >
       <View style={[styles.presetIconBox, { backgroundColor: isSelected ? colors.primary + "25" : colors.surfaceLight }]}>
-        <Ionicons name={icon as any} size={17} color={isSelected ? colors.primary : colors.textSecondary} />
+        <Ionicons
+          name={category.icon as any}
+          size={17}
+          color={isSelected ? colors.primary : colors.textSecondary}
+        />
       </View>
+
       <View style={{ flex: 1, minWidth: 0 }}>
-        <Text style={[styles.presetLabel, { color: isSelected ? colors.primary : colors.text }]} numberOfLines={1}>
-          {label}
-        </Text>
-        {hint && (
-          <Text style={[styles.presetHint, { color: colors.textMuted }]} numberOfLines={1}>
-            {hint}
+        <View style={styles.rowTitleLine}>
+          <Text style={[styles.presetLabel, { color: isSelected ? colors.primary : colors.text }]} numberOfLines={1}>
+            {category.name}
           </Text>
-        )}
+          {category.badge && (
+            <View style={[styles.badge, { backgroundColor: (category.badgeColor ?? colors.primary) + "22" }]}>
+              <Text style={[styles.badgeText, { color: category.badgeColor ?? colors.primary }]}>
+                {category.badge}
+              </Text>
+            </View>
+          )}
+          {category.region === "india" && !category.badge && (
+            <Text style={styles.flagEmoji}>🇮🇳</Text>
+          )}
+        </View>
+        <Text style={[styles.presetHint, { color: colors.textMuted }]} numberOfLines={1}>
+          {category.description}
+        </Text>
       </View>
+
       {isSelected ? (
         <Ionicons name="checkmark-circle" size={19} color={colors.primary} />
       ) : (
@@ -198,23 +360,31 @@ function PresetRow({
   );
 }
 
+function EmptyState({ query, activeTag, colors }: { query: string; activeTag: string; colors: any }) {
+  return (
+    <View style={styles.emptyWrap}>
+      <Text style={{ fontSize: 36, marginBottom: 12 }}>🔍</Text>
+      <Text style={[styles.emptyTitle, { color: colors.text }]}>
+        {query ? `No results for "${query}"` : "Nothing here yet"}
+      </Text>
+      <Text style={[styles.emptySubtitle, { color: colors.textMuted }]}>
+        {query
+          ? "Try different keywords — e.g. \"payment\", \"wifi\", \"review\""
+          : "Try a different filter"}
+      </Text>
+    </View>
+  );
+}
+
+export default memo(TemplatePickerModal);
+
 const styles = StyleSheet.create({
-  overlay: {
-    flex: 1,
-    justifyContent: "flex-end",
-  },
-  backdrop: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: "rgba(0,0,0,0.5)",
-  },
+  overlay: { flex: 1, justifyContent: "flex-end" },
+  backdrop: { ...StyleSheet.absoluteFillObject, backgroundColor: "rgba(0,0,0,0.5)" },
   sheet: {
-    borderTopLeftRadius: 28,
-    borderTopRightRadius: 28,
-    borderTopWidth: 1,
-    borderLeftWidth: 1,
-    borderRightWidth: 1,
-    paddingTop: 12,
-    overflow: "hidden",
+    borderTopLeftRadius: 28, borderTopRightRadius: 28,
+    borderTopWidth: 1, borderLeftWidth: 1, borderRightWidth: 1,
+    paddingTop: 12, overflow: "hidden",
   },
   handle: {
     width: 40, height: 4, borderRadius: 2,
@@ -223,37 +393,34 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: "row", alignItems: "flex-start",
     justifyContent: "space-between",
-    paddingHorizontal: 20, marginBottom: 16,
+    paddingHorizontal: 20, marginBottom: 14,
   },
   title: { fontSize: 18, fontFamily: "Inter_700Bold" },
   subtitle: { fontSize: 12, fontFamily: "Inter_400Regular", marginTop: 3 },
   closeBtn: {
     width: 34, height: 34, borderRadius: 17,
-    alignItems: "center", justifyContent: "center",
-    marginLeft: 12,
+    alignItems: "center", justifyContent: "center", marginLeft: 12,
   },
   searchWrap: {
     flexDirection: "row", alignItems: "center", gap: 8,
-    marginHorizontal: 16, marginBottom: 8,
+    marginHorizontal: 16, marginBottom: 12,
     borderRadius: 14, borderWidth: 1,
     paddingHorizontal: 14, paddingVertical: 11,
   },
   searchInput: { flex: 1, fontSize: 14, fontFamily: "Inter_400Regular" },
-  resultsList: { paddingHorizontal: 16, paddingTop: 8 },
-  emptyText: {
-    textAlign: "center", marginTop: 32,
-    fontSize: 14, fontFamily: "Inter_400Regular",
+  tagRow: { flexDirection: "row", gap: 8, paddingHorizontal: 16, paddingBottom: 12 },
+  tagChip: {
+    borderRadius: 20, borderWidth: 1,
+    paddingHorizontal: 14, paddingVertical: 8,
   },
+  tagChipText: { fontSize: 12, fontFamily: "Inter_600SemiBold" },
   catHeader: {
-    flexDirection: "row", alignItems: "center", gap: 8,
+    flexDirection: "row", alignItems: "baseline", justifyContent: "space-between",
     paddingHorizontal: 20, paddingVertical: 10,
     borderBottomWidth: 1, marginTop: 4,
   },
-  catIconBox: {
-    width: 24, height: 24, borderRadius: 7,
-    alignItems: "center", justifyContent: "center",
-  },
-  catLabel: { fontSize: 11, fontFamily: "Inter_700Bold", letterSpacing: 0.8 },
+  catLabel: { fontSize: 12, fontFamily: "Inter_700Bold", letterSpacing: 0.5 },
+  catSublabel: { fontSize: 11, fontFamily: "Inter_400Regular" },
   catItems: { paddingHorizontal: 16, paddingTop: 6, gap: 6 },
   presetRow: {
     flexDirection: "row", alignItems: "center", gap: 12,
@@ -262,9 +429,22 @@ const styles = StyleSheet.create({
   },
   presetIconBox: {
     width: 36, height: 36, borderRadius: 10,
-    alignItems: "center", justifyContent: "center",
-    flexShrink: 0,
+    alignItems: "center", justifyContent: "center", flexShrink: 0,
   },
+  rowTitleLine: { flexDirection: "row", alignItems: "center", gap: 6, marginBottom: 2 },
   presetLabel: { fontSize: 14, fontFamily: "Inter_600SemiBold" },
-  presetHint: { fontSize: 11, fontFamily: "Inter_400Regular", marginTop: 1 },
+  presetHint: { fontSize: 11, fontFamily: "Inter_400Regular" },
+  badge: { borderRadius: 5, paddingHorizontal: 6, paddingVertical: 2 },
+  badgeText: { fontSize: 9, fontFamily: "Inter_700Bold", letterSpacing: 0.3 },
+  flagEmoji: { fontSize: 11, marginLeft: 2 },
+  loadingWrap: {
+    flex: 1, alignItems: "center", justifyContent: "center",
+    paddingTop: 60, gap: 12,
+  },
+  loadingText: { fontSize: 13, fontFamily: "Inter_400Regular" },
+  emptyWrap: {
+    alignItems: "center", paddingTop: 48, paddingHorizontal: 32, gap: 4,
+  },
+  emptyTitle: { fontSize: 15, fontFamily: "Inter_700Bold", textAlign: "center", marginBottom: 6 },
+  emptySubtitle: { fontSize: 13, fontFamily: "Inter_400Regular", textAlign: "center", lineHeight: 19 },
 });
