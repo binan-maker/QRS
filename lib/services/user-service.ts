@@ -105,9 +105,9 @@ export async function getUserStats(userId: string): Promise<UserStats> {
   }
 }
 
-export async function updateUserPhotoURL(userId: string, photoURL: string): Promise<void> {
+export async function updateUserPhotoURL(userId: string, photoURL: string | null): Promise<void> {
   try {
-    await db.update(["users", userId], { photoURL });
+    await db.update(["users", userId], { photoURL: photoURL ?? null });
   } catch {}
 }
 
@@ -407,13 +407,28 @@ export async function getUserBio(userId: string): Promise<string> {
 }
 
 export async function deleteUserAccount(userId: string): Promise<void> {
+  // Read current photo URL before deleting the doc so we can clean up Storage
+  let photoUrl: string | null = null;
+  try {
+    const userDoc = await db.get(["users", userId]);
+    photoUrl = userDoc?.photoURL || null;
+  } catch {}
+
   await db.update(["users", userId], {
     isDeleted: true,
     deletedAt: db.timestamp(),
   });
+
   try {
     await rtdb.remove(`notifications/${userId}`);
   } catch {}
+
+  // GDPR/DPDP: fire-and-forget Storage cleanup (don't block account deletion)
+  if (photoUrl && photoUrl.includes("firebasestorage")) {
+    import("./storage-service").then(({ deleteProfilePhoto }) => {
+      deleteProfilePhoto(userId, photoUrl!).catch(() => {});
+    }).catch(() => {});
+  }
 }
 
 export interface UserSearchResult {

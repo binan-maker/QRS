@@ -11,19 +11,51 @@ import {
   type StorageReference,
 } from "firebase/storage";
 
-/**
- * Generate a unique ID for filenames
- */
 function generateUniqueId(): string {
   return `${Date.now()}_${Math.random().toString(36).substring(2, 11)}`;
 }
 
 /**
- * Upload an image to Firebase Storage
- * @param file - The image file to upload (Blob or File)
- * @param folder - The folder path in storage (e.g., 'profile-photos', 'qr-logos')
- * @param userId - Optional user ID for organizing files
- * @returns The download URL of the uploaded image
+ * Extract the Firebase Storage path from a download URL.
+ * Firebase download URLs have the form:
+ *   https://firebasestorage.googleapis.com/v0/b/{bucket}/o/{encoded-path}?alt=media&token=...
+ * The path segment is in pathname (everything after /o/), URL-encoded.
+ */
+export function getStoragePathFromUrl(imageUrl: string): string {
+  try {
+    const url = new URL(imageUrl);
+    // pathname ends at the '?' so we just grab everything after /o/
+    const match = url.pathname.match(/\/o\/(.+)/);
+    if (match?.[1]) {
+      return decodeURIComponent(match[1]);
+    }
+    return "";
+  } catch {
+    return "";
+  }
+}
+
+/**
+ * Delete an image from Firebase Storage given its download URL.
+ * Silently ignores "object not found" errors.
+ */
+export async function deleteImage(imageUrl: string): Promise<void> {
+  try {
+    // Must use the storage path, NOT the full download URL, to build a valid ref.
+    const path = getStoragePathFromUrl(imageUrl);
+    if (!path) return;
+    const storageRef: StorageReference = ref(storage, path);
+    await deleteObject(storageRef);
+  } catch (error: any) {
+    if (error?.code !== "storage/object-not-found") {
+      console.error("[storage] deleteImage failed:", error);
+    }
+  }
+}
+
+/**
+ * Upload an image blob to Firebase Storage.
+ * Stores files at: {folder}/{userId}/{timestamp_random}.ext
  */
 export async function uploadImage(
   file: Blob | File,
@@ -31,22 +63,12 @@ export async function uploadImage(
   userId?: string
 ): Promise<string> {
   try {
-    // Generate unique filename
-    const extension = file.type.split("/")[1] || "jpg";
+    const extension = (file.type || "image/jpeg").split("/")[1] || "jpg";
     const filename = `${generateUniqueId()}.${extension}`;
-
-    // Use a per-user subfolder so storage rules can enforce uid == userId.
-    // Path: {folder}/{userId}/{timestamp_random}.ext  (or {folder}/anon/... as fallback)
     const storagePath = `${folder}/${userId || "anon"}/${filename}`;
     const storageRef: StorageReference = ref(storage, storagePath);
-    
-    // Upload the file
     const snapshot = await uploadBytes(storageRef, file);
-    
-    // Get the download URL
-    const downloadURL = await getDownloadURL(snapshot.ref);
-    
-    return downloadURL;
+    return await getDownloadURL(snapshot.ref);
   } catch (error: any) {
     console.error("[storage] uploadImage failed:", error);
     throw new Error(`Failed to upload image: ${error.message}`);
@@ -54,14 +76,7 @@ export async function uploadImage(
 }
 
 /**
- * Upload a base64 image to Firebase Storage with automatic compression
- * @param base64Data - Base64 encoded image data (with or without data:image prefix)
- * @param folder - The folder path in storage
- * @param userId - Optional user ID for organizing files
- * @param compress - Whether to compress the image (default: true for profile photos)
- * @param maxWidth - Maximum width for compression (default: 400px for profile photos)
- * @param quality - JPEG quality 0-1 (default: 0.8)
- * @returns The download URL of the uploaded image
+ * Upload a base64 image to Firebase Storage.
  */
 export async function uploadBase64Image(
   base64Data: string,
@@ -72,26 +87,22 @@ export async function uploadBase64Image(
   quality: number = 0.85
 ): Promise<string> {
   try {
-    // Extract base64 data and mime type
     let base64String = base64Data;
     let mimeType = "image/jpeg";
-    
+
     if (base64Data.includes(",")) {
       const parts = base64Data.split(",");
       mimeType = parts[0].match(/:(.*?);/)![1];
       base64String = parts[1];
     }
-    
-    // Convert base64 to Blob
+
     const response = await fetch(`data:${mimeType};base64,${base64String}`);
     let blob = await response.blob();
-    
-    // FIX #7: Compress image before upload if requested (for profile photos)
+
     if (compress && mimeType.startsWith("image/")) {
       blob = await compressImage(blob, maxWidth, quality);
     }
-    
-    // Upload the blob
+
     return await uploadImage(blob, folder, userId);
   } catch (error: any) {
     console.error("[storage] uploadBase64Image failed:", error);
@@ -99,44 +110,24 @@ export async function uploadBase64Image(
   }
 }
 
-// FIX #7: Image compression helper to reduce storage and bandwidth costs
-async function compressImage(
-  blob: Blob,
-  maxWidth: number,
-  quality: number
-): Promise<Blob> {
+async function compressImage(blob: Blob, maxWidth: number, quality: number): Promise<Blob> {
   return new Promise((resolve, reject) => {
     const img = new Image();
     img.onload = () => {
       const canvas = document.createElement("canvas");
       let width = img.width;
       let height = img.height;
-      
-      // Calculate new dimensions while maintaining aspect ratio
       if (width > maxWidth) {
         height = Math.round((height * maxWidth) / width);
         width = maxWidth;
       }
-      
       canvas.width = width;
       canvas.height = height;
-      
       const ctx = canvas.getContext("2d");
-      if (!ctx) {
-        reject(new Error("Could not get canvas context"));
-        return;
-      }
-      
+      if (!ctx) { reject(new Error("Could not get canvas context")); return; }
       ctx.drawImage(img, 0, 0, width, height);
-      
       canvas.toBlob(
-        (compressedBlob) => {
-          if (compressedBlob) {
-            resolve(compressedBlob);
-          } else {
-            reject(new Error("Compression failed"));
-          }
-        },
+        (compressed) => compressed ? resolve(compressed) : reject(new Error("Compression failed")),
         "image/jpeg",
         quality
       );
@@ -147,74 +138,53 @@ async function compressImage(
 }
 
 /**
- * Delete an image from Firebase Storage
- * @param imageUrl - The URL of the image to delete
- */
-export async function deleteImage(imageUrl: string): Promise<void> {
-  try {
-    // Create a reference from the URL
-    const storageRef: StorageReference = ref(storage, imageUrl);
-    await deleteObject(storageRef);
-  } catch (error: any) {
-    // Ignore errors if file doesn't exist
-    if (error.code !== "storage/object-not-found") {
-      console.error("[storage] deleteImage failed:", error);
-      throw new Error(`Failed to delete image: ${error.message}`);
-    }
-  }
-}
-
-/**
- * Get the storage path from a URL (for deletion purposes)
- * @param imageUrl - The download URL
- * @returns The storage path
- */
-export function getStoragePathFromUrl(imageUrl: string): string {
-  try {
-    const url = new URL(imageUrl);
-    // Firebase Storage URLs format: https://firebasestorage.googleapis.com/v0/b/{bucket}/o/{path}?...
-    const pathMatch = url.pathname.match(/\/o\/(.+)\?/);
-    if (pathMatch) {
-      return decodeURIComponent(pathMatch[1]);
-    }
-    return "";
-  } catch {
-    return "";
-  }
-}
-
-/**
- * Upload profile photo with automatic cleanup of old photo
- * @param file - The new profile photo file
- * @param userId - User ID
- * @param oldPhotoUrl - Optional old photo URL to delete
- * @returns The download URL of the new photo
+ * Upload a new profile photo and delete the old one (if it was a user-owned
+ * Firebase Storage file).  The new upload happens first so a failure never
+ * leaves the user with no photo.
+ *
+ * Security: the old file is only deleted when its storage path contains
+ * `profile-photos/{userId}/`, preventing accidental cross-user deletions.
  */
 export async function uploadProfilePhoto(
   file: Blob | File,
   userId: string,
   oldPhotoUrl?: string | null
 ): Promise<string> {
-  try {
-    // Delete old photo if exists
-    if (oldPhotoUrl && oldPhotoUrl.includes("firebasestorage")) {
-      await deleteImage(oldPhotoUrl).catch(() => {}); // Ignore errors
+  // 1. Upload new photo first
+  const newUrl = await uploadImage(file, "profile-photos", userId);
+
+  // 2. Fire-and-forget cleanup of the old photo (don't block the return value)
+  if (oldPhotoUrl && oldPhotoUrl.includes("firebasestorage")) {
+    const oldPath = getStoragePathFromUrl(oldPhotoUrl);
+    if (oldPath && oldPath.includes(`profile-photos/${userId}/`)) {
+      deleteImage(oldPhotoUrl).catch((err) =>
+        console.warn("[storage] old photo cleanup failed (non-blocking):", err)
+      );
     }
-    
-    // Upload new photo
-    return await uploadImage(file, "profile-photos", userId);
-  } catch (error: any) {
-    console.error("[storage] uploadProfilePhoto failed:", error);
-    throw error;
   }
+
+  return newUrl;
 }
 
 /**
- * Upload QR code logo with automatic cleanup of old logo
- * @param file - The new logo file
- * @param qrId - QR code ID
- * @param oldLogoUrl - Optional old logo URL to delete
- * @returns The download URL of the new logo
+ * Delete a user's current profile photo from Storage.
+ * Security: validates the path belongs to the user before deleting.
+ */
+export async function deleteProfilePhoto(
+  userId: string,
+  photoUrl: string
+): Promise<void> {
+  if (!photoUrl.includes("firebasestorage")) return;
+  const path = getStoragePathFromUrl(photoUrl);
+  if (!path || !path.includes(`profile-photos/${userId}/`)) {
+    console.warn("[storage] deleteProfilePhoto: path mismatch, skipping", { userId, path });
+    return;
+  }
+  await deleteImage(photoUrl);
+}
+
+/**
+ * Upload QR code logo with automatic cleanup of old logo.
  */
 export async function uploadQrLogo(
   file: Blob | File,
@@ -222,12 +192,9 @@ export async function uploadQrLogo(
   oldLogoUrl?: string | null
 ): Promise<string> {
   try {
-    // Delete old logo if exists
     if (oldLogoUrl && oldLogoUrl.includes("firebasestorage")) {
-      await deleteImage(oldLogoUrl).catch(() => {}); // Ignore errors
+      deleteImage(oldLogoUrl).catch(() => {});
     }
-    
-    // Upload new logo
     return await uploadImage(file, "qr-logos", qrId);
   } catch (error: any) {
     console.error("[storage] uploadQrLogo failed:", error);

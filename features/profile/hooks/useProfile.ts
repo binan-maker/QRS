@@ -274,37 +274,68 @@ export function useProfile() {
       if (source === "camera") {
         const perm = await ImagePicker.requestCameraPermissionsAsync();
         if (!perm.granted) { Alert.alert("Permission needed", "Camera access is required."); return; }
-        result = await ImagePicker.launchCameraAsync({ mediaTypes: ["images"], allowsEditing: true, aspect: [1, 1], quality: 0.5 });
+        result = await ImagePicker.launchCameraAsync({ mediaTypes: ["images"], allowsEditing: true, aspect: [1, 1], quality: 0.6 });
       } else {
         const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
         if (!perm.granted) { Alert.alert("Permission needed", "Gallery access is required."); return; }
-        result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ["images"], allowsEditing: true, aspect: [1, 1], quality: 0.5 });
+        result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ["images"], allowsEditing: true, aspect: [1, 1], quality: 0.6 });
       }
       if (result.canceled || !result.assets?.[0]) return;
       const asset = result.assets[0];
+
+      // ── OPTIMISTIC UI ──────────────────────────────────────────────────────
+      // Show the local file immediately so the user sees their new photo at once.
+      // The CDN URL swap happens silently in the background.
+      const prevPhotoUrl = photoURL;
+      setAvatar(asset.uri);
       setUploadingPhoto(true);
 
       const response = await fetch(asset.uri);
       const blob = await response.blob();
 
       const { uploadProfilePhoto } = await import("@/lib/services/storage-service");
-      // Optimistic: show the local file URI immediately everywhere
-      setAvatar(asset.uri);
-
-      const newPhotoUrl = await uploadProfilePhoto(blob, user!.id, photoURL);
+      const newPhotoUrl = await uploadProfilePhoto(blob, user!.id, prevPhotoUrl ?? undefined);
 
       await updateUserPhotoURL(user!.id, newPhotoUrl);
 
-      // Swap in the real CDN URL (version bump → cache-bust)
+      // Swap optimistic local URI → real CDN URL (triggers a version bump + cache-bust)
       setPhotoURL(newPhotoUrl);
       setAvatar(newPhotoUrl);
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     } catch (error: any) {
+      // Rollback: restore the previous avatar so the UI doesn't stay broken
+      if (photoURL) setAvatar(photoURL); else clearAvatar();
       Alert.alert("Error", `Could not update photo: ${error.message}`);
     } finally {
       setUploadingPhoto(false);
     }
-  }, [user?.id, photoURL]);
+  }, [user?.id, photoURL, setAvatar, clearAvatar]);
+
+  const handleRemovePhoto = useCallback(async () => {
+    if (!user?.id) return;
+    setPhotoModalOpen(false);
+    const prevUrl = photoURL;
+
+    // ── OPTIMISTIC UI: clear avatar immediately ────────────────────────────
+    clearAvatar();
+    setPhotoURL(null);
+
+    try {
+      // Delete from Storage (fire-and-forget, non-blocking)
+      if (prevUrl && prevUrl.includes("firebasestorage")) {
+        const { deleteProfilePhoto } = await import("@/lib/services/storage-service");
+        deleteProfilePhoto(user.id, prevUrl).catch(() => {});
+      }
+      // Clear in Firestore
+      await updateUserPhotoURL(user.id, null);
+      invalidateUserCache(user.id);
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    } catch {
+      // Rollback on failure
+      if (prevUrl) setAvatar(prevUrl);
+      setPhotoURL(prevUrl);
+    }
+  }, [user?.id, photoURL, clearAvatar, setAvatar]);
 
   const handleCancelUsername = useCallback(() => {
     setEditingUsername(false);
@@ -386,6 +417,7 @@ export function useProfile() {
     handleSaveUsername,
     handleCancelUsername,
     handlePickPhoto,
+    handleRemovePhoto,
     handleSignOut,
   };
 }

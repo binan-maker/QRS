@@ -34,7 +34,7 @@ function ProfileScreen() {
     currentUsername,
     initials,
     bio, friendsCount,
-    handlePickPhoto, handleSignOut,
+    handlePickPhoto, handleRemovePhoto, handleSignOut,
   } = useProfile();
   const { cachedUrl: photoURL } = useAvatar();
   const {
@@ -155,9 +155,7 @@ function ProfileScreen() {
           <Pressable onPress={openPhotoModal} style={styles.avatarPressable}>
             <View style={[styles.avatarRing, { borderColor: colors.primary + "50" }]}>
               <View style={[styles.avatarInner, { backgroundColor: colors.surfaceLight }]}>
-                {uploadingPhoto ? (
-                  <ActivityIndicator color={colors.primary} />
-                ) : photoURL ? (
+                {photoURL ? (
                   <Image
                     source={{ uri: photoURL }}
                     style={styles.avatarPhoto}
@@ -167,6 +165,12 @@ function ProfileScreen() {
                   />
                 ) : (
                   <Text style={[styles.avatarInitials, { color: colors.primary }]}>{initials}</Text>
+                )}
+                {/* Subtle overlay during background upload — never hides the photo */}
+                {uploadingPhoto && (
+                  <View style={styles.avatarUploadOverlay}>
+                    <ActivityIndicator size="small" color="#fff" />
+                  </View>
                 )}
               </View>
             </View>
@@ -312,6 +316,8 @@ function ProfileScreen() {
         visible={photoModalOpen}
         onCamera={onCamera}
         onGallery={onGallery}
+        onRemove={handleRemovePhoto}
+        hasPhoto={!!photoURL && photoURL.includes("firebasestorage")}
         onClose={closePhotoModal}
       />
       <NotificationsModal
@@ -424,6 +430,13 @@ const styles = StyleSheet.create({
   avatarPhoto: { width: 76, height: 76, borderRadius: 38 },
   avatarPlaceholder: { backgroundColor: "#e2e8f0" },
   avatarInitials: { fontSize: 26, fontFamily: "Inter_700Bold" },
+  avatarUploadOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: "rgba(0,0,0,0.45)",
+    alignItems: "center",
+    justifyContent: "center",
+    borderRadius: 38,
+  },
   cameraBtn: {
     position: "absolute", bottom: 0, right: 0,
     width: 24, height: 24, borderRadius: 12,
