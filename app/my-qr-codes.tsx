@@ -486,54 +486,59 @@ export default function MyQrCodesScreen() {
 
       {/* Filters + Sort */}
       <View style={{ paddingBottom: sp(10) }}>
-        <View style={{ flexDirection: "row", alignItems: "center", paddingHorizontal: sp(20), marginBottom: sp(8) }}>
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={{ flexDirection: "row", gap: sp(6), paddingRight: sp(8) }}
-            style={{ flex: 1 }}
-          >
-            {FILTERS.map((f) => {
-              const active = filter === f.key;
-              return (
-                <Pressable
-                  key={f.key}
-                  onPress={() => { setFilter(f.key); setSortOpen(false); Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); }}
-                  style={[{
-                    flexDirection: "row", alignItems: "center", gap: sp(4),
-                    paddingHorizontal: sp(11), paddingVertical: sp(7),
-                    borderRadius: sp(20), borderWidth: 1,
-                  }, active
-                    ? { backgroundColor: colors.primaryDim, borderColor: colors.primary + "50" }
-                    : { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }
-                  ]}
-                >
-                  <Ionicons name={f.icon} size={rf(11)} color={active ? colors.primary : colors.textMuted} />
-                  <Text style={{ fontSize: rf(11), fontFamily: "Inter_600SemiBold", color: active ? colors.primary : colors.textMuted }}>
-                    {f.label}
-                  </Text>
-                </Pressable>
-              );
-            })}
-          </ScrollView>
+        {/* Filter pills row */}
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={{ flexDirection: "row", gap: sp(6), paddingHorizontal: sp(20) }}
+          style={{ marginBottom: sp(8) }}
+        >
+          {FILTERS.map((f) => {
+            const active = filter === f.key;
+            return (
+              <Pressable
+                key={f.key}
+                onPress={() => { setFilter(f.key); setSortOpen(false); Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); }}
+                style={[{
+                  flexDirection: "row", alignItems: "center", gap: sp(4),
+                  paddingHorizontal: sp(11), paddingVertical: sp(7),
+                  borderRadius: sp(20), borderWidth: 1,
+                }, active
+                  ? { backgroundColor: colors.primaryDim, borderColor: colors.primary + "50" }
+                  : { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }
+                ]}
+              >
+                <Ionicons name={f.icon} size={rf(11)} color={active ? colors.primary : colors.textMuted} />
+                <Text style={{ fontSize: rf(11), fontFamily: "Inter_600SemiBold", color: active ? colors.primary : colors.textMuted }}>
+                  {f.label}
+                </Text>
+              </Pressable>
+            );
+          })}
+        </ScrollView>
 
-          {!isGroupsView && (
+        {/* Sort button — sits below filters, never overlaps */}
+        {!isGroupsView && (
+          <View style={{ paddingHorizontal: sp(20), marginBottom: sp(4) }}>
             <Pressable
               onPress={() => { setSortOpen((v) => !v); Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); }}
               style={({ pressed }) => [{
                 flexDirection: "row", alignItems: "center", gap: sp(4),
+                alignSelf: "flex-start",
                 paddingHorizontal: sp(10), paddingVertical: sp(7),
-                borderRadius: sp(20), borderWidth: 1, marginLeft: sp(6),
+                borderRadius: sp(20), borderWidth: 1,
                 backgroundColor: sortOpen ? colors.primaryDim : colors.surface,
                 borderColor: sortOpen ? colors.primary + "50" : colors.surfaceBorder,
                 opacity: pressed ? 0.8 : 1,
               }]}
             >
               <Ionicons name="swap-vertical-outline" size={rf(11)} color={sortOpen ? colors.primary : colors.textMuted} />
-              <Text style={{ fontSize: rf(11), fontFamily: "Inter_600SemiBold", color: sortOpen ? colors.primary : colors.textMuted }}>Sort</Text>
+              <Text style={{ fontSize: rf(11), fontFamily: "Inter_600SemiBold", color: sortOpen ? colors.primary : colors.textMuted }}>
+                Sort{sortKey !== "newest" ? `: ${SORT_OPTIONS.find((o) => o.key === sortKey)?.label}` : ""}
+              </Text>
             </Pressable>
-          )}
-        </View>
+          </View>
+        )}
 
         {sortOpen && !isGroupsView && (
           <Animated.View entering={FadeIn.duration(200)}>

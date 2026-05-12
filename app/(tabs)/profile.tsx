@@ -55,11 +55,9 @@ function ProfileScreen() {
   );
 
   const statsItems = useMemo(() => [
-    { label: "QR Hits",   value: totalQrScans,               color: colors.accent,  loading: myQrLoading  },
-    { label: "Following", value: stats.followingCount,         color: colors.primary, loading: statsLoading },
-    { label: "Comments",  value: stats.commentCount,           color: colors.safe,    loading: statsLoading },
-    { label: "Likes",     value: stats.totalLikesReceived,     color: "#EC4899",      loading: statsLoading },
-  ], [totalQrScans, myQrLoading, stats.followingCount, stats.commentCount, stats.totalLikesReceived, statsLoading, colors.accent, colors.primary, colors.safe]);
+    { label: "QR Hits",   value: totalQrScans,        color: colors.accent,  loading: myQrLoading  },
+    { label: "Following", value: stats.followingCount, color: colors.primary, loading: statsLoading },
+  ], [totalQrScans, myQrLoading, stats.followingCount, statsLoading, colors.accent, colors.primary]);
 
   const formattedStats = useMemo(
     () => statsItems.map((s) => ({ ...s, formatted: formatCompactNumber(s.value) })),
@@ -219,7 +217,6 @@ function ProfileScreen() {
               style={[
                 styles.statCell,
                 i % 2 === 0 && { borderRightWidth: 1, borderRightColor: colors.surfaceBorder },
-                i < 2        && { borderBottomWidth: 1, borderBottomColor: colors.surfaceBorder },
               ]}
             >
               {s.loading
@@ -366,10 +363,17 @@ const QrPreviewCard = React.memo(function QrPreviewCard({
   qr: QrItem;
   colors: any;
 }) {
-  const label = useMemo(
-    () => qr.businessName || (qr.content.length > 14 ? qr.content.slice(0, 14) + "…" : qr.content),
-    [qr.businessName, qr.content]
-  );
+  const label = useMemo(() => {
+    if (qr.businessName) return qr.businessName;
+    const content = qr.content || "";
+    try {
+      const url = new URL(content.startsWith("http") ? content : `https://${content}`);
+      if (url.hostname.includes(".")) {
+        return url.hostname.replace(/^www\./, "");
+      }
+    } catch {}
+    return content.length > 14 ? content.slice(0, 14) + "…" : content;
+  }, [qr.businessName, qr.content]);
   const onPress = useCallback(() => safePush(`/my-qr/${qr.docId}`), [qr.docId]);
 
   return (
