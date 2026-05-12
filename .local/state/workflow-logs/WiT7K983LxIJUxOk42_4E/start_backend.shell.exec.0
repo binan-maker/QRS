@@ -30,6 +30,7 @@ express server serving on port 5000
   memory: [32m'96.67%'[39m,
   rpm: [33m0[39m
 }
+<<<<<<< HEAD
 [HEALTH] {
   status: [32m'unhealthy'[39m,
   uptime: [32m'20m 0s'[39m,
@@ -102,3 +103,5 @@ express server serving on port 5000
   memory: [32m'94.29%'[39m,
   rpm: [33m0[39m
 }
+=======
+>>>>>>> 37146a1b66169078483efb0f85ffb18043fd90b9
