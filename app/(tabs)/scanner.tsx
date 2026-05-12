@@ -245,6 +245,8 @@ export default function ScannerScreen() {
     scannerMsg,
     scannerMsgType,
     dismissScannerMsg,
+    conversionBannerMsg,
+    dismissConversionBanner,
     handleBarCodeScanned,
     handlePickImage,
     cycleZoom,
@@ -403,9 +405,35 @@ export default function ScannerScreen() {
         </View>
       )}
 
+      {/* Conversion banner — nudges anonymous users to sign up at scan milestones */}
+      {conversionBannerMsg && !user && (
+        <Reanimated.View
+          entering={FadeInDown.duration(380).springify()}
+          style={[conversionStyles.banner, { bottom: bottomInset + 16 }]}
+        >
+          <View style={conversionStyles.body}>
+            <Ionicons name="person-circle-outline" size={22} color="#00d4ff" />
+            <Text style={conversionStyles.text} numberOfLines={2}>
+              {conversionBannerMsg}
+            </Text>
+          </View>
+          <View style={conversionStyles.actions}>
+            <Pressable
+              onPress={() => { dismissConversionBanner(); router.push("/(auth)/login"); }}
+              style={({ pressed }) => [conversionStyles.signInBtn, { opacity: pressed ? 0.8 : 1 }]}
+            >
+              <Text style={conversionStyles.signInText}>Sign In</Text>
+            </Pressable>
+            <Pressable onPress={dismissConversionBanner} style={conversionStyles.dismissBtn}>
+              <Ionicons name="close" size={16} color="rgba(255,255,255,0.4)" />
+            </Pressable>
+          </View>
+        </Reanimated.View>
+      )}
+
       {/* Gallery scan errors (no QR found, network issues) */}
       {galleryErrorMsg && (
-        <View style={[toastStyles.container, { bottom: bottomInset + 16 }]}>
+        <View style={[toastStyles.container, { bottom: bottomInset + (conversionBannerMsg ? 96 : 16) }]}>
           <ScannerToast
             message={galleryErrorMsg}
             type="error"
@@ -670,5 +698,59 @@ const bannerStyles = StyleSheet.create({
     fontSize: 15,
     fontFamily: "Inter_700Bold",
     color: "#000",
+  },
+});
+
+const conversionStyles = StyleSheet.create({
+  banner: {
+    position: "absolute",
+    left: 16,
+    right: 16,
+    backgroundColor: "rgba(10,20,40,0.96)",
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: "rgba(0,212,255,0.3)",
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    gap: 8,
+  },
+  body: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    flex: 1,
+  },
+  text: {
+    flex: 1,
+    fontSize: 13,
+    fontFamily: "Inter_500Medium",
+    color: "#a5f3ff",
+    lineHeight: 18,
+  },
+  actions: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "flex-end",
+    gap: 8,
+    marginTop: 4,
+  },
+  signInBtn: {
+    backgroundColor: "#00d4ff",
+    paddingHorizontal: 18,
+    paddingVertical: 8,
+    borderRadius: 10,
+  },
+  signInText: {
+    fontSize: 13,
+    fontFamily: "Inter_700Bold",
+    color: "#000",
+  },
+  dismissBtn: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: "rgba(255,255,255,0.06)",
+    alignItems: "center",
+    justifyContent: "center",
   },
 });

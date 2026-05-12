@@ -14,12 +14,40 @@ import {
   detectContentType,
   getQrCodeId,
 } from "@/lib/firestore-service";
-// SECURITY FIX P1: QR Input validation for XSS prevention
 import { validateQrInput } from "@/lib/services/profanity-filter";
-// SECURITY FIX P2: Advanced URL security analysis
 import { analyzeUrl } from "@/lib/security/url-security-analyzer";
-// SECURITY FIX P3: Scam detection
 import { detectScam } from "@/lib/security/scam-detector";
+
+// ─── Anonymous scan rate-limiting & conversion helpers ────────────────────────
+const ANON_DAILY_SCAN_LIMIT = 50;
+const ANON_CONVERSION_MILESTONES = new Set([3, 10, 25]);
+
+function anonTodayKey(): string {
+  return `anon_daily_${new Date().toDateString()}`;
+}
+
+async function consumeAnonScanSlot(): Promise<{ allowed: boolean; totalCount: number }> {
+  try {
+    const todayKey = anonTodayKey();
+    const totalKey = "anon_total_scan_count";
+    const [dailyRaw, totalRaw] = await Promise.all([
+      AsyncStorage.getItem(todayKey),
+      AsyncStorage.getItem(totalKey),
+    ]);
+    const daily = dailyRaw ? parseInt(dailyRaw, 10) : 0;
+    if (daily >= ANON_DAILY_SCAN_LIMIT) {
+      return { allowed: false, totalCount: totalRaw ? parseInt(totalRaw, 10) : 0 };
+    }
+    const newTotal = (totalRaw ? parseInt(totalRaw, 10) : 0) + 1;
+    await Promise.all([
+      AsyncStorage.setItem(todayKey, String(daily + 1)),
+      AsyncStorage.setItem(totalKey, String(newTotal)),
+    ]);
+    return { allowed: true, totalCount: newTotal };
+  } catch {
+    return { allowed: true, totalCount: 0 };
+  }
+}
 
 export const FINDER_SIZE = 270;
 export const CORNER_SIZE = 32;
@@ -106,6 +134,7 @@ export function useScanner() {
   const [galleryErrorMsg, setGalleryErrorMsg] = useState<string | null>(null);
   const [scannerMsg, setScannerMsg] = useState<string | null>(null);
   const [scannerMsgType, setScannerMsgType] = useState<"error" | "warning" | "info">("error");
+  const [conversionBannerMsg, setConversionBannerMsg] = useState<string | null>(null);
 
   const scanLockRef = useRef(false);
   const canScanRef = useRef(false);
@@ -258,7 +287,23 @@ export function useScanner() {
   async function processScanAnonymous(content: string) {
     setProcessing(true);
     try {
-      // SECURITY FIX P1: Validate QR input for XSS prevention
+      // ── Rate limit: max 50 anonymous scans per day ────────────────────────────
+      const slot = await consumeAnonScanSlot();
+      if (!slot.allowed) {
+        setProcessing(false);
+        setScanned(false);
+        setScanSuccess(false);
+        scanLockRef.current = false;
+        canScanRef.current = true;
+        showScannerMsg(
+          "You've reached 50 scans today. Sign up for unlimited scanning.",
+          "info"
+        );
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+        return;
+      }
+
+      // Validate QR input for XSS prevention
       const validation = validateQrInput(content);
       if (!validation.valid) {
         setProcessing(false);
@@ -271,6 +316,16 @@ export function useScanner() {
       const qrId = await getQrCodeId(content);
       setAnonymousQrContent(qrId, content, contentType);
       setProcessing(false);
+
+      // ── Conversion prompt at milestones (non-blocking) ────────────────────────
+      if (ANON_CONVERSION_MILESTONES.has(slot.totalCount)) {
+        const msgs: Record<number, string> = {
+          3: "Sign up to save your scan history across devices.",
+          10: "You've scanned 10 QR codes! Create a free account to keep your history.",
+          25: "25 scans and counting — sign in to unlock all features.",
+        };
+        setConversionBannerMsg(msgs[slot.totalCount] ?? null);
+      }
 
       // Enhanced security analysis with URL analyzer and scam detector
       if (contentType === "url") {
@@ -422,7 +477,11 @@ export function useScanner() {
           `qr_content_${qr.id}`,
           JSON.stringify({ content: qr.content, contentType: qr.contentType })
         ).catch(() => {});
-        recordScan(qr.id, content, qr.contentType, user?.id || null, false, scanSource).catch(() => {});
+        // Only record scan in Firestore for authenticated users — anonymous scans
+        // must never write to the database (avoids polluting stats + RTDB velocity tracker).
+        if (user?.id) {
+          recordScan(qr.id, content, qr.contentType, user.id, false, scanSource).catch(() => {});
+        }
         if (user) {
           const scanEntry = {
             id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
@@ -523,6 +582,10 @@ export function useScanner() {
 
   function dismissScannerMsg() {
     setScannerMsg(null);
+  }
+
+  function dismissConversionBanner() {
+    setConversionBannerMsg(null);
   }
 
   async function handlePickImage() {
@@ -630,6 +693,8 @@ export function useScanner() {
     scannerMsg,
     scannerMsgType,
     dismissScannerMsg,
+    conversionBannerMsg,
+    dismissConversionBanner,
     handleBarCodeScanned,
     handlePickImage,
     cycleZoom,
