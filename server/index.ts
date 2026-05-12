@@ -244,7 +244,7 @@ function setupCspHeaders(app: express.Application) {
   app.use((_req: Request, res: Response, next: NextFunction) => {
     res.setHeader(
       "Content-Security-Policy",
-      "default-src 'self'; script-src 'self'; object-src 'none'; frame-ancestors 'none'"
+      "default-src 'self' https: data: blob:; script-src 'self' 'unsafe-inline' 'unsafe-eval' https:; style-src 'self' 'unsafe-inline' https: data:; img-src 'self' data: blob: https:; font-src 'self' data: https:; connect-src 'self' https: wss: ws:; media-src 'self' blob: https:; object-src 'none'; frame-ancestors 'none'"
     );
     next();
   });
