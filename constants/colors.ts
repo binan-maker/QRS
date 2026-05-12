@@ -124,7 +124,7 @@ const light: AppColors = {
   textSecondary: "#3A5278",
   textMuted: "#7A99BC",
 
-  tabIconDefault: "#7A99BC",
+  tabIconDefault: "#4A6E94",
   tabIconSelected: "#0052CC",
   tint: "#0052CC",
   scanLine: "#0052CC",

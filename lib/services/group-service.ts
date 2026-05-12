@@ -20,6 +20,26 @@ export function getDefaultGroupColor(index: number): string {
   return GROUP_COLORS[index % GROUP_COLORS.length];
 }
 
+export async function getUserGroupsOnce(userId: string): Promise<QrGroup[]> {
+  try {
+    const { docs } = await db.query(["users", userId, "qrGroups"], {
+      orderBy: { field: "createdAt", direction: "desc" },
+    });
+    return docs.map((d) => ({
+      id: d.id,
+      name: d.data.name ?? "Unnamed Group",
+      description: d.data.description ?? "",
+      color: d.data.color ?? "#6366F1",
+      icon: d.data.icon ?? "folder-outline",
+      qrDocIds: d.data.qrDocIds ?? [],
+      createdAt: d.data.createdAt?.toDate?.()?.toISOString?.() ?? d.data.createdAt ?? new Date().toISOString(),
+      updatedAt: d.data.updatedAt?.toDate?.()?.toISOString?.() ?? d.data.updatedAt ?? new Date().toISOString(),
+    }));
+  } catch {
+    return [];
+  }
+}
+
 export function subscribeToUserGroups(
   userId: string,
   callback: (groups: QrGroup[]) => void

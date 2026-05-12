@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useMemo } from "react";
+import { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import {
   View, Text, Pressable, Platform,
   RefreshControl, useWindowDimensions, ScrollView,
@@ -10,16 +10,38 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import * as Haptics from "@/lib/haptics";
 import Animated, { FadeInDown, FadeIn } from "react-native-reanimated";
 import { LinearGradient } from "expo-linear-gradient";
-import QRCode from "react-native-qrcode-svg";
 import SkeletonBox from "@/components/ui/SkeletonBox";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useTheme } from "@/contexts/ThemeContext";
 import { useAuth } from "@/contexts/AuthContext";
 import {
-  subscribeToUserGeneratedQrs,
-  subscribeToUserGroups,
+  getUserGeneratedQrs,
+  getUserGroupsOnce,
   type GeneratedQrItem,
   type QrGroup,
 } from "@/lib/firestore-service";
+
+const MY_QRS_CACHE_TTL = 5 * 60 * 1000;
+const MY_GROUPS_CACHE_TTL = 5 * 60 * 1000;
+
+async function readCache<T>(key: string): Promise<T | null> {
+  try {
+    const raw = await AsyncStorage.getItem(key);
+    if (!raw) return null;
+    const { value, expiresAt } = JSON.parse(raw);
+    if (expiresAt <= Date.now()) { AsyncStorage.removeItem(key).catch(() => {}); return null; }
+    return value as T;
+  } catch { return null; }
+}
+
+async function writeCache<T>(key: string, value: T, ttlMs: number): Promise<void> {
+  try {
+    await AsyncStorage.setItem(key, JSON.stringify({ value, expiresAt: Date.now() + ttlMs }));
+  } catch {}
+}
+
+function qrsCacheKey(userId: string) { return `myqrs_v1_${userId}`; }
+function groupsCacheKey(userId: string) { return `mygroups_v1_${userId}`; }
 
 type Filter = "all" | "individual" | "business" | "groups";
 type SortKey = "newest" | "oldest" | "mostScanned";
@@ -223,35 +245,54 @@ export default function MyQrCodesScreen() {
   const [filter,     setFilter]     = useState<Filter>("all");
   const [sortKey,    setSortKey]    = useState<SortKey>("newest");
   const [sortOpen,   setSortOpen]   = useState(false);
-  const unsubQrsRef    = useRef<(() => void) | null>(null);
-  const unsubGroupsRef = useRef<(() => void) | null>(null);
-  const hasLoadedRef   = useRef(false);
+  const hasLoadedRef = useRef(false);
+
+  const fetchQrCodes = useCallback(async (forceRefresh = false) => {
+    if (!user) return;
+    if (!forceRefresh) {
+      const cached = await readCache<GeneratedQrItem[]>(qrsCacheKey(user.id));
+      if (cached) { setQrCodes(cached); setLoading(false); hasLoadedRef.current = true; return; }
+    }
+    if (!hasLoadedRef.current) setLoading(true);
+    try {
+      const items = await getUserGeneratedQrs(user.id);
+      setQrCodes(items);
+      hasLoadedRef.current = true;
+      writeCache(qrsCacheKey(user.id), items, MY_QRS_CACHE_TTL);
+    } catch (e) {
+      console.warn("[my-qr-codes] fetchQrCodes error:", e);
+    } finally {
+      setLoading(false);
+    }
+  }, [user]);
+
+  const fetchGroups = useCallback(async (forceRefresh = false) => {
+    if (!user) return;
+    if (!forceRefresh) {
+      const cached = await readCache<QrGroup[]>(groupsCacheKey(user.id));
+      if (cached) { setGroups(cached); setGroupsLoading(false); return; }
+    }
+    setGroupsLoading(true);
+    try {
+      const gs = await getUserGroupsOnce(user.id);
+      setGroups(gs);
+      writeCache(groupsCacheKey(user.id), gs, MY_GROUPS_CACHE_TTL);
+    } catch (e) {
+      console.warn("[my-qr-codes] fetchGroups error:", e);
+    } finally {
+      setGroupsLoading(false);
+    }
+  }, [user]);
 
   useEffect(() => {
     if (!user) return;
-    if (!hasLoadedRef.current) setLoading(true);
-    if (unsubQrsRef.current) { unsubQrsRef.current(); unsubQrsRef.current = null; }
-    unsubQrsRef.current = subscribeToUserGeneratedQrs(user.id, (items) => {
-      setQrCodes(items);
-      setLoading(false);
-      setRefreshing(false);
-      hasLoadedRef.current = true;
-    });
-    if (unsubGroupsRef.current) { unsubGroupsRef.current(); unsubGroupsRef.current = null; }
-    setGroupsLoading(true);
-    unsubGroupsRef.current = subscribeToUserGroups(user.id, (gs) => {
-      setGroups(gs);
-      setGroupsLoading(false);
-    });
-    return () => {
-      unsubQrsRef.current?.();
-      unsubGroupsRef.current?.();
-    };
+    fetchQrCodes();
+    fetchGroups();
   }, [user?.id]);
 
   function handleRefresh() {
     setRefreshing(true);
-    setTimeout(() => setRefreshing(false), 800);
+    Promise.all([fetchQrCodes(true), fetchGroups(true)]).finally(() => setRefreshing(false));
   }
 
   const filtered = useMemo(() => {
@@ -284,20 +325,15 @@ export default function MyQrCodesScreen() {
             transform: [{ scale: pressed ? 0.988 : 1 }],
           }]}
         >
-          {/* QR preview */}
+          {/* Content-type icon thumbnail — fast, no SVG render cost */}
           <View style={{
-            width: sp(56), height: sp(56), borderRadius: sp(12), overflow: "hidden",
-            backgroundColor: (item as any).bgColor || "#F8FAFC",
+            width: sp(56), height: sp(56), borderRadius: sp(12),
+            backgroundColor: ctMeta.bg,
             alignItems: "center", justifyContent: "center", flexShrink: 0,
+            borderWidth: 1,
+            borderColor: ctMeta.color + "28",
           }}>
-            <QRCode
-              value={item.content || "https://qrguard.app"}
-              size={sp(44)}
-              color={(item as any).fgColor || "#0A0E17"}
-              backgroundColor={(item as any).bgColor || "#F8FAFC"}
-              quietZone={2}
-              ecl="L"
-            />
+            <Ionicons name={ctMeta.icon as any} size={sp(26)} color={ctMeta.color} />
           </View>
 
           {/* Content */}

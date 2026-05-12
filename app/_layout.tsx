@@ -4,6 +4,7 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { Stack } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import * as SystemUI from "expo-system-ui";
+import * as NavigationBar from "expo-navigation-bar";
 import React, { useEffect, useRef } from "react";
 import { Platform, View } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -81,13 +82,16 @@ function ThemedApp() {
   const isWeb = Platform.OS === "web";
 
   // Keep the Android system navigation bar background in sync with the app theme.
-  // Without this, the gesture/button bar at the bottom appears transparent on
-  // edge-to-edge Android builds.
+  // Without this, the gesture/button bar at the bottom appears transparent or
+  // white-on-white in light mode on edge-to-edge Android builds.
   useEffect(() => {
     if (Platform.OS === "android") {
       SystemUI.setBackgroundColorAsync(colors.background).catch(() => {});
+      NavigationBar.setBackgroundColorAsync(colors.surface).catch(() => {});
+      NavigationBar.setButtonStyleAsync(colors.isDark ? "light" : "dark").catch(() => {});
+      NavigationBar.setBorderColorAsync(colors.surfaceBorder).catch(() => {});
     }
-  }, [colors.background]);
+  }, [colors.background, colors.surface, colors.surfaceBorder, colors.isDark]);
 
   return (
     <GestureHandlerRootView
