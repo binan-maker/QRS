@@ -1,20 +1,27 @@
 import React, { useState, useMemo, useCallback } from "react";
-import { View, Text, StyleSheet, Pressable, ScrollView, Platform, Animated, useWindowDimensions, Keyboard } from "react-native";
+import {
+  View, Text, StyleSheet, Pressable, ScrollView,
+  Platform, Animated, useWindowDimensions, Keyboard,
+} from "react-native";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import Reanimated, { FadeIn, FadeInDown } from "react-native-reanimated";
+import Reanimated, { FadeIn, FadeInDown, SlideInRight, SlideInLeft } from "react-native-reanimated";
 import { LinearGradient } from "expo-linear-gradient";
 import { useTheme } from "@/contexts/ThemeContext";
 import { useQrGenerator, LOGO_POSITIONS } from "@/hooks/useQrGenerator";
-import ModeSelector from "@/features/generator/components/ModeSelector";
+import TypePickerHome from "@/features/generator/components/TypePickerHome";
 import SmartTemplateBar from "@/features/generator/components/SmartTemplateBar";
 import TemplatePickerModal from "@/features/generator/components/TemplatePickerModal";
+import CustomQrBuilderModal from "@/features/generator/components/CustomQrBuilderModal";
 import InputSection from "@/features/generator/components/InputSection";
 import QrOutputCard from "@/features/generator/components/QrOutputCard";
 import InfoModal from "@/features/generator/components/InfoModal";
 import PositionModal from "@/features/generator/components/PositionModal";
 import CustomizeDrawer from "@/features/generator/components/CustomizeDrawer";
 import GroupPickerModal from "@/components/groups/GroupPickerModal";
+import { QR_PRESETS } from "@/features/generator/data/presets";
+
+type GeneratorView = "home" | "create";
 
 function QrGeneratorScreen() {
   const insets = useSafeAreaInsets();
@@ -23,8 +30,10 @@ function QrGeneratorScreen() {
   const tabBarHeight = 62 + insets.bottom + 8;
   const { width } = useWindowDimensions();
 
+  const [view, setView] = useState<GeneratorView>("home");
   const [qrSize, setQrSize] = useState(220);
   const [templateModalOpen, setTemplateModalOpen] = useState(false);
+  const [customBuilderOpen, setCustomBuilderOpen] = useState(false);
   const [groupPickerOpen, setGroupPickerOpen] = useState(false);
 
   const {
@@ -87,200 +96,278 @@ function QrGeneratorScreen() {
     return { btnLabel, btnIcon, btnColors };
   }, [qrValue, generatedUuid, user, privateMode, qrMode, colors]);
 
+  const handleSelectPreset = useCallback((idx: number) => {
+    switchPreset(idx);
+    setView("create");
+  }, [switchPreset]);
+
   const handleOpenTemplates = useCallback(() => {
     Keyboard.dismiss();
     setTimeout(() => setTemplateModalOpen(true), 80);
   }, []);
 
-  const handleOpenPosition = useCallback(() => setPositionModalOpen(true), [setPositionModalOpen]);
+  const handleOpenTemplatesFromHome = useCallback(() => {
+    setTemplateModalOpen(true);
+  }, []);
 
-  const handleOpenInfo = useCallback(() => setInfoModalOpen(true), [setInfoModalOpen]);
+  const handleSelectFromModal = useCallback((idx: number) => {
+    switchPreset(idx);
+    setView("create");
+  }, [switchPreset]);
 
-  const handleCloseTemplates = useCallback(() => setTemplateModalOpen(false), []);
+  const handleCustomGenerate = useCallback((content: string, label: string) => {
+    switchPreset(0);
+    setInputValue(content);
+    setView("create");
+  }, [switchPreset, setInputValue]);
 
-  const handleClosePosition = useCallback(() => setPositionModalOpen(false), [setPositionModalOpen]);
-
-  const handleCloseInfo = useCallback(() => setInfoModalOpen(false), [setInfoModalOpen]);
-
-  const handleOpenGroupPicker = useCallback(() => setGroupPickerOpen(true), []);
-
-  const handleCloseGroupPicker = useCallback(() => setGroupPickerOpen(false), []);
+  const handleBackToHome = useCallback(() => {
+    setView("home");
+    handleClear();
+  }, [handleClear]);
 
   const handleSizeIncrease = useCallback(() => setQrSize((s) => Math.min(320, s + 20)), []);
-
   const handleSizeDecrease = useCallback(() => setQrSize((s) => Math.max(160, s - 20)), []);
+  const handleOpenPosition = useCallback(() => setPositionModalOpen(true), [setPositionModalOpen]);
+  const handleOpenInfo = useCallback(() => setInfoModalOpen(true), [setInfoModalOpen]);
+  const handleCloseTemplates = useCallback(() => setTemplateModalOpen(false), []);
+  const handleClosePosition = useCallback(() => setPositionModalOpen(false), [setPositionModalOpen]);
+  const handleCloseInfo = useCallback(() => setInfoModalOpen(false), [setInfoModalOpen]);
+  const handleOpenGroupPicker = useCallback(() => setGroupPickerOpen(true), []);
+  const handleCloseGroupPicker = useCallback(() => setGroupPickerOpen(false), []);
+
+  const selectedPresetDef = QR_PRESETS[selectedPreset];
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background, paddingTop: topInset }]}>
-      {/* Header */}
-      <View style={styles.navBar}>
-        <View>
-          <Text style={[styles.navTitle, { color: colors.text }]}>QR Generator</Text>
-          <Text style={[styles.navSubtitle, { color: colors.textMuted }]}>What do you want to create?</Text>
-        </View>
-        <Pressable
-          onPress={handleOpenInfo}
-          style={[styles.infoBtn, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}
-        >
-          <Ionicons name="information-circle-outline" size={22} color={colors.textSecondary} />
-        </Pressable>
-      </View>
-
-      <ScrollView
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={[styles.scrollContent, { paddingBottom: tabBarHeight + 24 }]}
-        keyboardShouldPersistTaps="handled"
-      >
-        <Reanimated.View entering={FadeInDown.duration(400)}>
-          <ModeSelector
-            user={user}
-            qrMode={qrMode}
-            businessName={businessName}
-            businessCategory={businessCategory}
-            setQrMode={setQrMode}
-            setBusinessName={setBusinessName}
-            switchBusinessCategory={switchBusinessCategory}
-          />
-        </Reanimated.View>
-
-        <Reanimated.View entering={FadeInDown.duration(400).delay(80)}>
-          <SmartTemplateBar
-            selectedPreset={selectedPreset}
-            qrMode={qrMode}
-            onSelectPreset={switchPreset}
-            onOpenTemplates={handleOpenTemplates}
-          />
-        </Reanimated.View>
-
-        <Reanimated.View entering={FadeInDown.duration(400).delay(140)}>
-          <InputSection
-            selectedPreset={selectedPreset}
-            inputValue={inputValue}
-            extraFields={extraFields}
-            qrMode={qrMode}
-            isBranded={isBranded}
-            businessCategory={businessCategory}
-            setInputValue={setInputValue}
-            setExtraField={setExtraField}
-          />
-        </Reanimated.View>
-
-        <Reanimated.View entering={FadeInDown.duration(400).delay(180)}>
-          <CustomizeDrawer
-            qrReady={!!qrValue}
-            selectedThemeIdx={selectedThemeIdx}
-            onSelectTheme={setSelectedThemeIdx}
-            isCustomTheme={isCustomTheme}
-            customFgColor={customFgColor}
-            customBgColor={customBgColor}
-            onSetCustomFg={setCustomFgColor}
-            onSetCustomBg={setCustomBgColor}
-            settings={advancedSettings}
-            onChangeSettings={setAdvancedSettings}
-            customLogoUri={customLogoUri}
-            showDefaultLogo={showDefaultLogo}
-            logoPositionLabel={logoPositionLabel}
-            onPickLogo={handlePickCustomLogo}
-            onRemoveLogo={handleRemoveLogo}
-            onToggleDefaultLogo={handleToggleDefaultLogo}
-            onOpenPosition={handleOpenPosition}
-          />
-        </Reanimated.View>
-
-        <Reanimated.View entering={FadeInDown.duration(400).delay(200)}>
-          <Pressable
-            onPress={handleGenerate}
-            style={({ pressed }) => [{ opacity: pressed ? 0.85 : 1, transform: [{ scale: pressed ? 0.97 : 1 }] }, styles.generateBtnWrap]}
-          >
-            <LinearGradient
-              colors={buttonState.btnColors}
-              style={styles.generateBtn}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
-            >
-              <MaterialCommunityIcons name={buttonState.btnIcon} size={22} color="#fff" />
-              <Text style={styles.generateBtnText}>{buttonState.btnLabel}</Text>
-            </LinearGradient>
-          </Pressable>
-        </Reanimated.View>
-
-        {savedDocId && (
-          <Reanimated.View entering={FadeInDown.duration(350).springify()}>
-            <Pressable
-              onPress={handleOpenGroupPicker}
-              style={({ pressed }) => [{
-                flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8,
-                borderRadius: 16, borderWidth: 1,
-                borderColor: "#6366F1" + "40",
-                paddingVertical: 11, marginBottom: 16,
-                backgroundColor: "#6366F1" + "10",
-                opacity: pressed ? 0.8 : 1,
-              }]}
-            >
-              <Ionicons name="folder-outline" size={16} color="#6366F1" />
-              <Text style={{ fontSize: 13, fontFamily: "Inter_600SemiBold", color: "#6366F1" }}>
-                Manage Groups
+      {/* ── HOME VIEW ── */}
+      {view === "home" && (
+        <Reanimated.View entering={SlideInLeft.duration(260)} style={{ flex: 1 }}>
+          {/* Header */}
+          <View style={styles.navBar}>
+            <View>
+              <Text style={[styles.navTitle, { color: colors.text }]}>QR Generator</Text>
+              <Text style={[styles.navSubtitle, { color: colors.textMuted }]}>
+                Create secure, trusted QR codes
               </Text>
-            </Pressable>
-          </Reanimated.View>
-        )}
-
-        {qrValue ? (
-          <QrOutputCard
-            qrValue={qrValue}
-            qrSize={qrSize}
-            isBranded={isBranded}
-            privateMode={privateMode}
-            qrMode={qrMode}
-            logoPosition={logoPosition}
-            customLogoUri={customLogoUri}
-            showDefaultLogo={showDefaultLogo}
-            generatedUuid={generatedUuid}
-            generatedAt={generatedAt}
-            saving={saving}
-            savedToProfile={savedToProfile}
-            savedDocId={savedDocId}
-            user={user}
-            svgRef={svgRef}
-            logoPositionLabel={logoPositionLabel}
-            qrFgColor={qrFgColor}
-            qrBgColor={qrBgColor}
-            businessDestination={qrMode === "business" ? inputValue.trim() : undefined}
-            businessCategory={qrMode === "business" ? businessCategory : undefined}
-            urlRiskScore={urlRiskScore}
-            urlRiskReasons={urlRiskReasons}
-            onSizeIncrease={handleSizeIncrease}
-            onSizeDecrease={handleSizeDecrease}
-            onCopy={handleCopy}
-            onShare={handleShare}
-            onDownload={handleDownloadPdf}
-            onClear={handleClear}
-            sharingQr={sharingQr}
-            downloadingPdf={downloadingPdf}
-          />
-        ) : (
-          <Reanimated.View entering={FadeIn.duration(400)}>
-            <View style={[styles.emptyQr, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
-              <LinearGradient
-                colors={colors.isDark ? ["rgba(0,229,255,0.12)", "rgba(0,111,255,0.08)"] : ["rgba(0,111,255,0.08)", "rgba(0,71,204,0.05)"]}
-                style={styles.emptyQrIconWrap}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-              >
-                <MaterialCommunityIcons name="qrcode-scan" size={52} color={colors.primary} />
-              </LinearGradient>
-              <Text style={[styles.emptyQrText, { color: colors.text }]}>Your QR code will appear here</Text>
-              <Text style={[styles.emptyQrSub, { color: colors.textMuted }]}>Just start typing — your QR generates automatically</Text>
             </View>
-          </Reanimated.View>
-        )}
-      </ScrollView>
+            <Pressable
+              onPress={handleOpenInfo}
+              style={[styles.infoBtn, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}
+            >
+              <Ionicons name="information-circle-outline" size={22} color={colors.textSecondary} />
+            </Pressable>
+          </View>
 
+          <TypePickerHome
+            onSelectPreset={handleSelectPreset}
+            onOpenTemplates={handleOpenTemplatesFromHome}
+            onOpenCustom={() => setCustomBuilderOpen(true)}
+            user={user}
+          />
+        </Reanimated.View>
+      )}
+
+      {/* ── CREATE VIEW ── */}
+      {view === "create" && (
+        <Reanimated.View entering={SlideInRight.duration(260)} style={{ flex: 1 }}>
+          {/* Slim top bar */}
+          <View style={[styles.createTopBar, { borderBottomColor: colors.surfaceBorder }]}>
+            <Pressable
+              onPress={handleBackToHome}
+              style={[styles.backBtn, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}
+            >
+              <Ionicons name="chevron-back" size={18} color={colors.textSecondary} />
+            </Pressable>
+
+            {/* Current type chip */}
+            <Pressable
+              onPress={handleOpenTemplates}
+              style={[styles.typeChip, { backgroundColor: colors.primaryDim, borderColor: colors.primary + "40" }]}
+            >
+              <Ionicons
+                name={(selectedPresetDef?.icon ?? "qr-code-outline") as keyof typeof Ionicons.glyphMap}
+                size={14}
+                color={colors.primary}
+              />
+              <Text style={[styles.typeChipText, { color: colors.primary }]} numberOfLines={1}>
+                {selectedPresetDef?.label ?? "QR Type"}
+              </Text>
+              <Ionicons name="chevron-down" size={12} color={colors.primary} />
+            </Pressable>
+
+            <Pressable
+              onPress={handleOpenInfo}
+              style={[styles.infoBtn, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}
+            >
+              <Ionicons name="information-circle-outline" size={20} color={colors.textSecondary} />
+            </Pressable>
+          </View>
+
+          <ScrollView
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={[styles.scrollContent, { paddingBottom: tabBarHeight + 24 }]}
+            keyboardShouldPersistTaps="handled"
+          >
+            {/* Template quick-switcher */}
+            <Reanimated.View entering={FadeInDown.duration(300)}>
+              <SmartTemplateBar
+                selectedPreset={selectedPreset}
+                qrMode={qrMode}
+                onSelectPreset={switchPreset}
+                onOpenTemplates={handleOpenTemplates}
+              />
+            </Reanimated.View>
+
+            {/* Input */}
+            <Reanimated.View entering={FadeInDown.duration(320).delay(40)}>
+              <InputSection
+                selectedPreset={selectedPreset}
+                inputValue={inputValue}
+                extraFields={extraFields}
+                qrMode={qrMode}
+                isBranded={isBranded}
+                businessCategory={businessCategory}
+                setInputValue={setInputValue}
+                setExtraField={setExtraField}
+              />
+            </Reanimated.View>
+
+            {/* Customize drawer */}
+            <Reanimated.View entering={FadeInDown.duration(340).delay(80)}>
+              <CustomizeDrawer
+                qrReady={!!qrValue}
+                selectedThemeIdx={selectedThemeIdx}
+                onSelectTheme={setSelectedThemeIdx}
+                isCustomTheme={isCustomTheme}
+                customFgColor={customFgColor}
+                customBgColor={customBgColor}
+                onSetCustomFg={setCustomFgColor}
+                onSetCustomBg={setCustomBgColor}
+                settings={advancedSettings}
+                onChangeSettings={setAdvancedSettings}
+                customLogoUri={customLogoUri}
+                showDefaultLogo={showDefaultLogo}
+                logoPositionLabel={logoPositionLabel}
+                onPickLogo={handlePickCustomLogo}
+                onRemoveLogo={handleRemoveLogo}
+                onToggleDefaultLogo={handleToggleDefaultLogo}
+                onOpenPosition={handleOpenPosition}
+              />
+            </Reanimated.View>
+
+            {/* Generate button */}
+            <Reanimated.View entering={FadeInDown.duration(360).delay(100)}>
+              <Pressable
+                onPress={handleGenerate}
+                style={({ pressed }) => [
+                  { opacity: pressed ? 0.85 : 1, transform: [{ scale: pressed ? 0.97 : 1 }] },
+                  styles.generateBtnWrap,
+                ]}
+              >
+                <LinearGradient
+                  colors={buttonState.btnColors}
+                  style={styles.generateBtn}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 1 }}
+                >
+                  <MaterialCommunityIcons name={buttonState.btnIcon} size={22} color="#fff" />
+                  <Text style={styles.generateBtnText}>{buttonState.btnLabel}</Text>
+                </LinearGradient>
+              </Pressable>
+            </Reanimated.View>
+
+            {/* Group manager */}
+            {savedDocId && (
+              <Reanimated.View entering={FadeInDown.duration(350).springify()}>
+                <Pressable
+                  onPress={handleOpenGroupPicker}
+                  style={({ pressed }) => [{
+                    flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8,
+                    borderRadius: 16, borderWidth: 1,
+                    borderColor: "#6366F1" + "40",
+                    paddingVertical: 11, marginBottom: 16,
+                    backgroundColor: "#6366F1" + "10",
+                    opacity: pressed ? 0.8 : 1,
+                  }]}
+                >
+                  <Ionicons name="folder-outline" size={16} color="#6366F1" />
+                  <Text style={{ fontSize: 13, fontFamily: "Inter_600SemiBold", color: "#6366F1" }}>
+                    Manage Groups
+                  </Text>
+                </Pressable>
+              </Reanimated.View>
+            )}
+
+            {/* QR output */}
+            {qrValue ? (
+              <QrOutputCard
+                qrValue={qrValue}
+                qrSize={qrSize}
+                isBranded={isBranded}
+                privateMode={privateMode}
+                qrMode={qrMode}
+                logoPosition={logoPosition}
+                customLogoUri={customLogoUri}
+                showDefaultLogo={showDefaultLogo}
+                generatedUuid={generatedUuid}
+                generatedAt={generatedAt}
+                saving={saving}
+                savedToProfile={savedToProfile}
+                savedDocId={savedDocId}
+                user={user}
+                svgRef={svgRef}
+                logoPositionLabel={logoPositionLabel}
+                qrFgColor={qrFgColor}
+                qrBgColor={qrBgColor}
+                businessDestination={qrMode === "business" ? inputValue.trim() : undefined}
+                businessCategory={qrMode === "business" ? businessCategory : undefined}
+                urlRiskScore={urlRiskScore}
+                urlRiskReasons={urlRiskReasons}
+                onSizeIncrease={handleSizeIncrease}
+                onSizeDecrease={handleSizeDecrease}
+                onCopy={handleCopy}
+                onShare={handleShare}
+                onDownload={handleDownloadPdf}
+                onClear={handleClear}
+                sharingQr={sharingQr}
+                downloadingPdf={downloadingPdf}
+              />
+            ) : (
+              <Reanimated.View entering={FadeIn.duration(400)}>
+                <View style={[styles.emptyQr, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
+                  <LinearGradient
+                    colors={colors.isDark
+                      ? ["rgba(0,229,255,0.12)", "rgba(0,111,255,0.08)"]
+                      : ["rgba(0,111,255,0.08)", "rgba(0,71,204,0.05)"]}
+                    style={styles.emptyQrIconWrap}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 1 }}
+                  >
+                    <MaterialCommunityIcons name="qrcode-scan" size={52} color={colors.primary} />
+                  </LinearGradient>
+                  <Text style={[styles.emptyQrText, { color: colors.text }]}>
+                    Your QR appears here
+                  </Text>
+                  <Text style={[styles.emptyQrSub, { color: colors.textMuted }]}>
+                    Start typing above — it generates automatically
+                  </Text>
+                </View>
+              </Reanimated.View>
+            )}
+          </ScrollView>
+        </Reanimated.View>
+      )}
+
+      {/* ── TOAST ── */}
       {toastMsg ? (
         <Animated.View
           style={[
             styles.toast,
-            { backgroundColor: colors.surface, borderColor: toastType === "error" ? colors.danger + "40" : colors.safe + "40" },
+            {
+              backgroundColor: colors.surface,
+              borderColor: toastType === "error" ? colors.danger + "40" : colors.safe + "40",
+            },
             {
               opacity: toastAnim,
               transform: [{ translateY: toastAnim.interpolate({ inputRange: [0, 1], outputRange: [20, 0] }) }],
@@ -289,7 +376,9 @@ function QrGeneratorScreen() {
           ]}
         >
           <LinearGradient
-            colors={toastType === "error" ? [colors.danger + "25", colors.danger + "10"] : [colors.safe + "25", colors.safe + "10"]}
+            colors={toastType === "error"
+              ? [colors.danger + "25", colors.danger + "10"]
+              : [colors.safe + "25", colors.safe + "10"]}
             style={styles.toastIconWrap}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
@@ -306,11 +395,18 @@ function QrGeneratorScreen() {
         </Animated.View>
       ) : null}
 
+      {/* ── MODALS ── */}
       <TemplatePickerModal
         visible={templateModalOpen}
         selectedPreset={selectedPreset}
-        onSelect={switchPreset}
+        onSelect={handleSelectFromModal}
         onClose={handleCloseTemplates}
+      />
+
+      <CustomQrBuilderModal
+        visible={customBuilderOpen}
+        onClose={() => setCustomBuilderOpen(false)}
+        onGenerate={handleCustomGenerate}
       />
 
       <PositionModal
@@ -344,15 +440,30 @@ function makeStyles(_c: unknown, width: number) {
     navTitle: { fontSize: rf(20), fontFamily: "Inter_700Bold" },
     navSubtitle: { fontSize: rf(12), fontFamily: "Inter_400Regular", marginTop: 2 },
     infoBtn: {
-      width: 42, height: 42, borderRadius: 21,
+      width: 38, height: 38, borderRadius: 19,
       borderWidth: 1, alignItems: "center", justifyContent: "center",
-      marginTop: 4,
     },
+    createTopBar: {
+      flexDirection: "row", alignItems: "center", gap: 10,
+      paddingHorizontal: 16, paddingVertical: 10,
+      borderBottomWidth: 0,
+    },
+    backBtn: {
+      width: 38, height: 38, borderRadius: 12,
+      borderWidth: 1, alignItems: "center", justifyContent: "center",
+      flexShrink: 0,
+    },
+    typeChip: {
+      flex: 1, flexDirection: "row", alignItems: "center", gap: 6,
+      borderRadius: 12, borderWidth: 1,
+      paddingHorizontal: 12, paddingVertical: 9,
+    },
+    typeChipText: { flex: 1, fontSize: 13, fontFamily: "Inter_700Bold" },
     scrollContent: { paddingHorizontal: 20, paddingTop: 8 },
-    generateBtnWrap: { marginBottom: 24 },
+    generateBtnWrap: { marginBottom: 16 },
     generateBtn: {
       flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 10,
-      paddingVertical: 13, borderRadius: 20,
+      paddingVertical: 14, borderRadius: 20,
     },
     generateBtnText: { fontSize: rf(15), fontFamily: "Inter_700Bold", color: "#fff" },
     emptyQr: {
@@ -363,14 +474,15 @@ function makeStyles(_c: unknown, width: number) {
       width: 100, height: 100, borderRadius: 28,
       alignItems: "center", justifyContent: "center",
     },
-    emptyQrText: { fontSize: rf(16), fontFamily: "Inter_700Bold", textAlign: "center" },
-    emptyQrSub: { fontSize: rf(13), fontFamily: "Inter_400Regular", textAlign: "center" },
+    emptyQrText: { fontSize: rf(15), fontFamily: "Inter_700Bold", textAlign: "center" },
+    emptyQrSub: { fontSize: rf(12), fontFamily: "Inter_400Regular", textAlign: "center" },
     toast: {
       position: "absolute", bottom: 110, left: 20, right: 20, borderRadius: 18,
       flexDirection: "row", alignItems: "center", gap: 10,
       paddingHorizontal: 16, paddingVertical: 14,
       borderWidth: 1,
-      shadowColor: "#000", shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.15, shadowRadius: 12, elevation: 10,
+      shadowColor: "#000", shadowOffset: { width: 0, height: 4 },
+      shadowOpacity: 0.15, shadowRadius: 12, elevation: 10,
     },
     toastIconWrap: { width: 32, height: 32, borderRadius: 16, alignItems: "center", justifyContent: "center" },
     toastText: { fontSize: rf(14), fontFamily: "Inter_600SemiBold", flex: 1 },
