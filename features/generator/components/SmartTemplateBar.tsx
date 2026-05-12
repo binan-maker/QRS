@@ -5,16 +5,60 @@ import * as Haptics from "@/lib/haptics";
 import { useTheme } from "@/contexts/ThemeContext";
 import { QR_PRESETS } from "@/features/generator/data/presets";
 
-const QUICK_TYPES: { presetIdx: number; label: string; icon: keyof typeof Ionicons.glyphMap }[] = [
-  { presetIdx: 1, label: "Link",     icon: "link-outline"    },
-  { presetIdx: 7, label: "UPI Pay",  icon: "card-outline"    },
-  { presetIdx: 6, label: "WiFi",     icon: "wifi-outline"    },
-  { presetIdx: 5, label: "WhatsApp", icon: "logo-whatsapp"   },
-  { presetIdx: 9, label: "Contact",  icon: "person-outline"  },
-  { presetIdx: 0, label: "Text",     icon: "text-outline"    },
+interface QuickType {
+  presetIdx: number;
+  label: string;
+  icon: keyof typeof Ionicons.glyphMap;
+  badge?: string;
+  badgeColor?: string;
+  accent?: string;
+}
+
+const INDIA_QUICK_TYPES: QuickType[] = [
+  {
+    presetIdx: 7,
+    label: "UPI Pay",
+    icon: "card-outline",
+    badge: "NPCI",
+    badgeColor: "#8B5CF6",
+    accent: "#8B5CF6",
+  },
+  {
+    presetIdx: 24,
+    label: "BharatQR",
+    icon: "shield-checkmark-outline",
+    badge: "Certified",
+    badgeColor: "#10B981",
+    accent: "#10B981",
+  },
+  {
+    presetIdx: 25,
+    label: "Reviews",
+    icon: "star-outline",
+    badge: "Google",
+    badgeColor: "#F59E0B",
+    accent: "#F59E0B",
+  },
+  {
+    presetIdx: 26,
+    label: "Menu",
+    icon: "restaurant-outline",
+    accent: "#EC4899",
+  },
 ];
 
-const QUICK_IDXS = new Set(QUICK_TYPES.map((q) => q.presetIdx));
+const UNIVERSAL_QUICK_TYPES: QuickType[] = [
+  { presetIdx: 1,  label: "Link",     icon: "link-outline"    },
+  { presetIdx: 5,  label: "WhatsApp", icon: "logo-whatsapp"   },
+  { presetIdx: 6,  label: "WiFi",     icon: "wifi-outline"    },
+  { presetIdx: 9,  label: "Contact",  icon: "person-outline"  },
+  { presetIdx: 0,  label: "Text",     icon: "text-outline"    },
+];
+
+const ALL_QUICK_IDXS = new Set([
+  ...INDIA_QUICK_TYPES.map((q) => q.presetIdx),
+  ...UNIVERSAL_QUICK_TYPES.map((q) => q.presetIdx),
+]);
 
 interface Props {
   selectedPreset: number;
@@ -28,47 +72,74 @@ function SmartTemplateBar({ selectedPreset, qrMode, onSelectPreset, onOpenTempla
 
   if (qrMode === "business") return null;
 
-  const selectedFromFull = selectedPreset > 0 && !QUICK_IDXS.has(selectedPreset);
+  const selectedFromFull = !ALL_QUICK_IDXS.has(selectedPreset);
 
   function handleSelect(idx: number) {
     onSelectPreset(idx);
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
   }
 
+  function renderChip(qt: QuickType, idx: number) {
+    const active = selectedPreset === qt.presetIdx;
+    const accent = qt.accent ?? colors.primary;
+    return (
+      <Pressable
+        key={qt.presetIdx}
+        onPress={() => handleSelect(qt.presetIdx)}
+        style={({ pressed }) => [
+          styles.chip,
+          {
+            backgroundColor: active ? accent + "18" : colors.surface,
+            borderColor: active ? accent + "80" : colors.surfaceBorder,
+            opacity: pressed ? 0.75 : 1,
+          },
+        ]}
+      >
+        <Ionicons
+          name={qt.icon}
+          size={14}
+          color={active ? accent : colors.textMuted}
+        />
+        <Text style={[styles.chipText, { color: active ? accent : colors.textSecondary }]}>
+          {qt.label}
+        </Text>
+        {qt.badge ? (
+          <View style={[styles.badge, { backgroundColor: (qt.badgeColor ?? accent) + "22" }]}>
+            <Text style={[styles.badgeText, { color: qt.badgeColor ?? accent }]}>
+              {qt.badge}
+            </Text>
+          </View>
+        ) : null}
+      </Pressable>
+    );
+  }
+
   return (
     <View style={styles.container}>
-      <Text style={[styles.label, { color: colors.textMuted }]}>QR Type</Text>
+      {/* India Section */}
+      <View style={styles.sectionHeader}>
+        <Text style={styles.flagEmoji}>🇮🇳</Text>
+        <Text style={[styles.sectionLabel, { color: colors.textMuted }]}>India Business</Text>
+      </View>
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={[styles.row, { marginBottom: 10 }]}
+      >
+        {INDIA_QUICK_TYPES.map(renderChip)}
+      </ScrollView>
+
+      {/* Universal Section */}
+      <View style={styles.sectionHeader}>
+        <Ionicons name="globe-outline" size={11} color={colors.textMuted} />
+        <Text style={[styles.sectionLabel, { color: colors.textMuted }]}>QR Type</Text>
+      </View>
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={styles.row}
       >
-        {QUICK_TYPES.map((qt) => {
-          const active = selectedPreset === qt.presetIdx;
-          return (
-            <Pressable
-              key={qt.presetIdx}
-              onPress={() => handleSelect(qt.presetIdx)}
-              style={({ pressed }) => [
-                styles.chip,
-                {
-                  backgroundColor: active ? colors.primaryDim : colors.surface,
-                  borderColor: active ? colors.primary + "80" : colors.surfaceBorder,
-                  opacity: pressed ? 0.75 : 1,
-                },
-              ]}
-            >
-              <Ionicons
-                name={qt.icon}
-                size={14}
-                color={active ? colors.primary : colors.textMuted}
-              />
-              <Text style={[styles.chipText, { color: active ? colors.primary : colors.textSecondary }]}>
-                {qt.label}
-              </Text>
-            </Pressable>
-          );
-        })}
+        {UNIVERSAL_QUICK_TYPES.map(renderChip)}
 
         {selectedFromFull && (
           <Pressable
@@ -109,13 +180,19 @@ function SmartTemplateBar({ selectedPreset, qrMode, onSelectPreset, onOpenTempla
 export default memo(SmartTemplateBar);
 
 const styles = StyleSheet.create({
-  container: { marginBottom: 14 },
-  label: {
+  container: { marginBottom: 16 },
+  sectionHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 5,
+    marginBottom: 8,
+  },
+  flagEmoji: { fontSize: 11 },
+  sectionLabel: {
     fontSize: 11,
     fontFamily: "Inter_600SemiBold",
     textTransform: "uppercase",
     letterSpacing: 0.8,
-    marginBottom: 8,
   },
   row: { flexDirection: "row", gap: 8, paddingBottom: 2 },
   chip: {
@@ -128,5 +205,15 @@ const styles = StyleSheet.create({
     borderWidth: 1,
   },
   chipText: { fontSize: 12, fontFamily: "Inter_600SemiBold" },
+  badge: {
+    borderRadius: 5,
+    paddingHorizontal: 5,
+    paddingVertical: 2,
+  },
+  badgeText: {
+    fontSize: 9,
+    fontFamily: "Inter_700Bold",
+    letterSpacing: 0.3,
+  },
   moreChip: {},
 });

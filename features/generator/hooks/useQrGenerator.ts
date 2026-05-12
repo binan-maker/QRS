@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useCallback } from "react";
+import { useState, useRef, useEffect, useCallback, useMemo } from "react";
 import { Alert, Animated, Platform, ToastAndroid } from "react-native";
 import * as Clipboard from "expo-clipboard";
 import * as Haptics from "@/lib/haptics";
@@ -17,6 +17,7 @@ import { buildQrContent, getRawContent, filterByKeyboardType, validateQrInput } 
 import { type BusinessCategory } from "@/features/generator/components/BusinessTypeSelector";
 import { QR_COLOR_THEMES } from "@/features/generator/components/QrThemeSection";
 import { type AdvancedSettings, resolveExpiryDate } from "@/features/generator/components/AdvancedSettingsPanel";
+import { computeUrlRisk } from "@/lib/utils/url-risk";
 
 export type LogoPosition = "center" | "top-left" | "top-right" | "bottom-left" | "bottom-right";
 
@@ -75,6 +76,10 @@ export function useQrGenerator() {
   const [savedDocId, setSavedDocId] = useState<string | null>(null);
   const [sharingQr, setSharingQr] = useState(false);
   const [downloadingPdf, setDownloadingPdf] = useState(false);
+
+  const [urlRiskScore, setUrlRiskScore] = useState(0);
+  const [urlRiskReasons, setUrlRiskReasons] = useState<string[]>([]);
+  const riskShownFor = useRef<string>("");
 
   const [toastMsg, setToastMsg] = useState("");
   const [toastType, setToastType] = useState<"success" | "error">("success");
@@ -199,6 +204,29 @@ export function useQrGenerator() {
 
     return () => clearTimeout(timer);
   }, [inputValue, extraFields, selectedPreset, qrMode, businessCategory, isBranded]);
+
+  useEffect(() => {
+    if (!qrValue) {
+      setUrlRiskScore(0);
+      setUrlRiskReasons([]);
+      riskShownFor.current = "";
+      return;
+    }
+    if (qrMode === "business") {
+      setUrlRiskScore(0);
+      setUrlRiskReasons([]);
+      return;
+    }
+    const { score, reasons } = computeUrlRisk(qrValue);
+    setUrlRiskScore(score);
+    setUrlRiskReasons(reasons);
+    if (score >= 35 && riskShownFor.current !== qrValue) {
+      riskShownFor.current = qrValue;
+      const level = score >= 70 ? "High risk" : "Caution";
+      const reasonText = reasons[0] ?? "Suspicious content";
+      setTimeout(() => showToast(`${level}: ${reasonText}`, "error"), 300);
+    }
+  }, [qrValue, qrMode]);
 
   const showToast = useCallback((msg: string, type: "success" | "error" = "success") => {
     if (toastTimer.current) clearTimeout(toastTimer.current);
@@ -682,5 +710,7 @@ export function useQrGenerator() {
     filterByKeyboardType,
     sharingQr,
     downloadingPdf,
+    urlRiskScore,
+    urlRiskReasons,
   };
 }

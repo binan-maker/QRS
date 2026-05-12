@@ -1,4 +1,4 @@
-import React, { memo } from "react";
+import React, { memo, useMemo } from "react";
 import { View, Text, StyleSheet, Pressable, Image, ActivityIndicator } from "react-native";
 import { shadow } from "@/lib/utils/platform";
 import { Ionicons } from "@expo/vector-icons";
@@ -29,6 +29,8 @@ interface Props {
   qrBgColor?: string;
   businessDestination?: string;
   businessCategory?: string;
+  urlRiskScore?: number;
+  urlRiskReasons?: string[];
   onSizeIncrease: () => void;
   onSizeDecrease: () => void;
   onCopy: () => void;
@@ -42,18 +44,41 @@ interface Props {
 function getBusinessDestinationMeta(category: string | undefined, destination: string | undefined): { label: string; value: string } | null {
   if (!destination) return null;
   switch (category) {
-    case "website": return { label: "URL", value: destination };
-    case "whatsapp": return { label: "WhatsApp", value: destination };
-    case "phone": return { label: "Phone", value: destination };
-    case "upi": return { label: "UPI ID", value: destination };
-    case "wifi": return { label: "Network", value: destination };
-    case "event": return { label: "Event", value: destination };
-    default: return { label: "Destination", value: destination };
+    case "website":  return { label: "URL",       value: destination };
+    case "whatsapp": return { label: "WhatsApp",  value: destination };
+    case "phone":    return { label: "Phone",      value: destination };
+    case "upi":      return { label: "UPI ID",     value: destination };
+    case "wifi":     return { label: "Network",    value: destination };
+    case "event":    return { label: "Event",      value: destination };
+    default:         return { label: "Destination", value: destination };
   }
 }
 
 function formatShortDate(date: Date): string {
   return date.toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" });
+}
+
+function getSecurityMeta(qrValue: string, businessCategory?: string): {
+  level: "safe" | "warning" | "danger" | "info";
+  label: string;
+  icon: React.ComponentProps<typeof Ionicons>["name"];
+} | null {
+  const isUpi = qrValue.startsWith("upi://");
+  const isBharatQr = isUpi && qrValue.includes("mode=02");
+  const isHttps = qrValue.startsWith("https://");
+  const isHttp = qrValue.startsWith("http://") && !isHttps;
+  const isWifi = qrValue.startsWith("WIFI:");
+  const isVCard = qrValue.startsWith("BEGIN:VCARD");
+  const isCalendar = qrValue.startsWith("BEGIN:VCALENDAR");
+
+  if (isBharatQr) return { level: "safe", label: "NPCI BharatQR — Bank-grade security", icon: "shield-checkmark" };
+  if (isUpi)      return { level: "safe", label: "UPI verified — NPCI compliant",         icon: "shield-checkmark" };
+  if (isWifi)     return { level: "info", label: "WiFi credentials encoded",               icon: "wifi" };
+  if (isVCard)    return { level: "info", label: "Contact card (vCard 3.0)",               icon: "person" };
+  if (isCalendar) return { level: "info", label: "Calendar event (iCal)",                  icon: "calendar" };
+  if (isHttp)     return { level: "warning", label: "Insecure link (HTTP, not HTTPS)",     icon: "warning" };
+  if (isHttps)    return { level: "safe", label: "Secure link (HTTPS encrypted)",          icon: "lock-closed" };
+  return null;
 }
 
 function QrOutputCard({
@@ -63,6 +88,7 @@ function QrOutputCard({
   user, svgRef, logoPositionLabel,
   qrFgColor = "#0A0E17", qrBgColor = "#F8FAFC",
   businessDestination, businessCategory,
+  urlRiskScore = 0, urlRiskReasons = [],
   onSizeIncrease, onSizeDecrease, onCopy, onShare, onDownload, onClear,
   sharingQr = false, downloadingPdf = false,
 }: Props) {
@@ -73,6 +99,10 @@ function QrOutputCard({
     : showDefaultLogo
     ? require("../../../assets/images/icon.png")
     : undefined;
+
+  const securityMeta = useMemo(() => getSecurityMeta(qrValue, businessCategory), [qrValue, businessCategory]);
+
+  const riskLevel = urlRiskScore >= 70 ? "danger" : urlRiskScore >= 35 ? "warning" : null;
 
   return (
     <Animated.View entering={FadeIn.duration(400)} style={[styles.qrCard, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
@@ -97,9 +127,9 @@ function QrOutputCard({
               style={[
                 styles.cornerLogoWrapper,
                 { pointerEvents: "none" },
-                logoPosition === "top-left" && { top: 10, left: 10 },
-                logoPosition === "top-right" && { top: 10, right: 10 },
-                logoPosition === "bottom-left" && { bottom: 10, left: 10 },
+                logoPosition === "top-left"     && { top: 10, left: 10 },
+                logoPosition === "top-right"    && { top: 10, right: 10 },
+                logoPosition === "bottom-left"  && { bottom: 10, left: 10 },
                 logoPosition === "bottom-right" && { bottom: 10, right: 10 },
               ]}
             >
@@ -111,6 +141,53 @@ function QrOutputCard({
           )}
         </View>
       </View>
+
+      {/* Security meta strip */}
+      {securityMeta && (
+        <View style={[
+          styles.securityStrip,
+          securityMeta.level === "safe"    && { backgroundColor: colors.safeDim,    borderColor: colors.safe + "30"    },
+          securityMeta.level === "warning" && { backgroundColor: colors.warningDim, borderColor: colors.warning + "40" },
+          securityMeta.level === "danger"  && { backgroundColor: colors.dangerDim,  borderColor: colors.danger + "40"  },
+          securityMeta.level === "info"    && { backgroundColor: colors.primaryDim, borderColor: colors.primary + "30" },
+        ]}>
+          <Ionicons
+            name={securityMeta.icon}
+            size={13}
+            color={
+              securityMeta.level === "safe"    ? colors.safe :
+              securityMeta.level === "warning" ? colors.warning :
+              securityMeta.level === "danger"  ? colors.danger :
+              colors.primary
+            }
+          />
+          <Text style={[
+            styles.securityStripText,
+            { color: securityMeta.level === "safe" ? colors.safe : securityMeta.level === "warning" ? colors.warning : securityMeta.level === "danger" ? colors.danger : colors.primary },
+          ]}>
+            {securityMeta.label}
+          </Text>
+        </View>
+      )}
+
+      {/* Threat risk warning (from heuristic) */}
+      {riskLevel && urlRiskReasons.length > 0 && (
+        <View style={[
+          styles.threatStrip,
+          { backgroundColor: riskLevel === "danger" ? colors.dangerDim : colors.warningDim,
+            borderColor: riskLevel === "danger" ? colors.danger + "40" : colors.warning + "40" },
+        ]}>
+          <Ionicons name="alert-circle" size={14} color={riskLevel === "danger" ? colors.danger : colors.warning} />
+          <View style={{ flex: 1 }}>
+            <Text style={[styles.threatLabel, { color: riskLevel === "danger" ? colors.danger : colors.warning }]}>
+              {riskLevel === "danger" ? "High Risk Detected" : "Caution"}
+            </Text>
+            <Text style={[styles.threatSub, { color: riskLevel === "danger" ? colors.danger : colors.warning }]}>
+              {urlRiskReasons.join(" · ")}
+            </Text>
+          </View>
+        </View>
+      )}
 
       {logoPosition !== "center" && logoSource && (
         <View style={[styles.positionNote, { backgroundColor: colors.primaryDim }]}>
@@ -129,7 +206,7 @@ function QrOutputCard({
       {isBranded && !generatedUuid && (
         <View style={[styles.livePreviewBanner, { backgroundColor: colors.primaryDim, borderTopColor: colors.primary + "25" }]}>
           <Ionicons name="flash-outline" size={13} color={colors.primary} />
-          <Text style={[styles.livePreviewText, { color: colors.primary }]}>Live preview — tap Save to Profile to register this QR</Text>
+          <Text style={[styles.livePreviewText, { color: colors.primary }]}>Live preview — tap Generate to register this QR</Text>
         </View>
       )}
 
@@ -278,6 +355,19 @@ const styles = StyleSheet.create({
     borderWidth: 1, borderColor: "rgba(0,0,0,0.08)",
   },
   cornerLogoImage: { width: 34, height: 34, borderRadius: 8 },
+  securityStrip: {
+    flexDirection: "row", alignItems: "center", gap: 7,
+    marginHorizontal: 12, marginBottom: 8, paddingHorizontal: 12, paddingVertical: 8,
+    borderRadius: 10, borderWidth: 1,
+  },
+  securityStripText: { fontSize: 12, fontFamily: "Inter_600SemiBold", flex: 1 },
+  threatStrip: {
+    flexDirection: "row", alignItems: "flex-start", gap: 8,
+    marginHorizontal: 12, marginBottom: 8, paddingHorizontal: 12, paddingVertical: 10,
+    borderRadius: 10, borderWidth: 1,
+  },
+  threatLabel: { fontSize: 12, fontFamily: "Inter_700Bold", marginBottom: 2 },
+  threatSub: { fontSize: 11, fontFamily: "Inter_400Regular" },
   positionNote: {
     flexDirection: "row", alignItems: "center", gap: 6,
     marginHorizontal: 16, marginTop: -8, marginBottom: 8, padding: 8, borderRadius: 8,

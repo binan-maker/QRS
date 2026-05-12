@@ -49,6 +49,7 @@ function QrGeneratorScreen() {
     handlePickCustomLogo, handleRemoveLogo, handleToggleDefaultLogo,
     handleCopy, handleShare, handleDownloadPdf, handleClear,
     filterByKeyboardType, sharingQr, downloadingPdf,
+    urlRiskScore, urlRiskReasons,
   } = useQrGenerator();
 
   const styles = useMemo(() => makeStyles(colors, width), [colors, width]);
@@ -246,6 +247,8 @@ function QrGeneratorScreen() {
             qrBgColor={qrBgColor}
             businessDestination={qrMode === "business" ? inputValue.trim() : undefined}
             businessCategory={qrMode === "business" ? businessCategory : undefined}
+            urlRiskScore={urlRiskScore}
+            urlRiskReasons={urlRiskReasons}
             onSizeIncrease={handleSizeIncrease}
             onSizeDecrease={handleSizeDecrease}
             onCopy={handleCopy}
