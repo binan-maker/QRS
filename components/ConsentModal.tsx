@@ -11,8 +11,8 @@ import {
   NativeScrollEvent,
   NativeSyntheticEvent,
   useWindowDimensions,
+  Linking,
 } from "react-native";
-import { router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { useTheme } from "@/contexts/ThemeContext";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -62,8 +62,10 @@ export default function ConsentModal({ visible, onAccept }: ConsentModalProps) {
     onAccept();
   };
 
-  const openPrivacyPolicy = () => router.push("/privacy-policy" as never);
-  const openTerms = () => router.push("/terms" as never);
+  const openPrivacyPolicy = () =>
+    Linking.openURL("https://binan-maker.github.io/qrguard/privacy.html");
+  const openTerms = () =>
+    Linking.openURL("https://binan-maker.github.io/qrguard/terms.html");
 
   const cardHeight = Math.min(height * 0.72, 620);
 

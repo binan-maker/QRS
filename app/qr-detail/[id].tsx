@@ -331,7 +331,30 @@ function LivingShieldBanner({ guardLink, loading }: { guardLink: GuardLink | nul
   function handleOpenDestination() {
     if (!guardLink?.currentDestination) return;
     const dest = guardLink.currentDestination;
-    Linking.openURL(dest.startsWith("http") ? dest : `https://${dest}`);
+
+    let parsed: URL;
+    try {
+      parsed = new URL(dest.startsWith("http") ? dest : `https://${dest}`);
+    } catch {
+      return;
+    }
+
+    const scheme = parsed.protocol;
+    if (scheme !== "https:" && scheme !== "http:") return;
+
+    const hostname = parsed.hostname.toLowerCase();
+    const privateIPPatterns = [
+      /^localhost$/,
+      /^127\./,
+      /^10\./,
+      /^192\.168\./,
+      /^172\.(1[6-9]|2\d|3[01])\./,
+      /^169\.254\./,
+      /^::1$/,
+    ];
+    if (privateIPPatterns.some((re) => re.test(hostname))) return;
+
+    Linking.openURL(parsed.href);
   }
 
   const recentlyChanged = guardLink?.destinationChangedAt

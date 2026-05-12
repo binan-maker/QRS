@@ -464,7 +464,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       res.json({ content, kind: validation.kind });
     } catch (e: any) {
-      res.status(500).json({ message: e.message });
+      console.error("[decode-image] error:", e);
+      res.status(500).json({ message: "Image decode failed" });
     }
   });
 

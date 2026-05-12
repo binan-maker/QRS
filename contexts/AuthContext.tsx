@@ -16,7 +16,9 @@ import { validateEmail } from "@/lib/utils/email-validator";
 
 const SERVER_BASE_URL = process.env.EXPO_PUBLIC_DOMAIN
   ? `https://${process.env.EXPO_PUBLIC_DOMAIN}`
-  : "http://localhost:5000";
+  : __DEV__
+    ? "http://localhost:5000"
+    : "";
 
 async function serverValidateEmail(email: string): Promise<{ valid: boolean; reason?: string }> {
   try {
