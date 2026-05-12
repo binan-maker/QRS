@@ -248,6 +248,15 @@ const GUARD_CACHE_TTL_MS = 30_000;
 interface CacheEntry { data: GuardLinkFields | null; expiresAt: number }
 const guardLinkCache = new Map<string, CacheEntry>();
 
+interface StandardLinkFields {
+  rawContent: string;
+  contentType: string;
+  ownerName: string;
+  isActive: boolean;
+}
+interface StandardCacheEntry { data: StandardLinkFields | null; expiresAt: number }
+const standardLinkCache = new Map<string, StandardCacheEntry>();
+
 const FIREBASE_PROJECT_ID = process.env.EXPO_PUBLIC_FIREBASE_PROJECT_ID || process.env.FIREBASE_PROJECT_ID || "";
 const FIREBASE_API_KEY = process.env.EXPO_PUBLIC_FIREBASE_API_KEY || process.env.FIREBASE_API_KEY || "";
 const CAUTION_WINDOW_MS = 24 * 60 * 60 * 1000;
@@ -299,7 +308,179 @@ setInterval(() => {
   for (const [key, entry] of guardLinkCache.entries()) {
     if (now >= entry.expiresAt) guardLinkCache.delete(key);
   }
+  for (const [key, entry] of standardLinkCache.entries()) {
+    if (now >= entry.expiresAt) standardLinkCache.delete(key);
+  }
 }, GUARD_CACHE_TTL_MS);
+
+async function fetchStandardLinkFromFirestore(uuid: string): Promise<StandardLinkFields | null> {
+  const now = Date.now();
+  const cached = standardLinkCache.get(uuid);
+  if (cached && now < cached.expiresAt) return cached.data;
+
+  const url = `https://firestore.googleapis.com/v1/projects/${FIREBASE_PROJECT_ID}/databases/(default)/documents/standardLinks/${encodeURIComponent(uuid)}?key=${FIREBASE_API_KEY}`;
+  try {
+    const res = await fetch(url);
+    if (!res.ok) {
+      standardLinkCache.set(uuid, { data: null, expiresAt: now + GUARD_CACHE_TTL_MS });
+      return null;
+    }
+    const data = await res.json() as any;
+    const f = data?.fields;
+    if (!f) {
+      standardLinkCache.set(uuid, { data: null, expiresAt: now + GUARD_CACHE_TTL_MS });
+      return null;
+    }
+    const link: StandardLinkFields = {
+      rawContent: f.rawContent?.stringValue || "",
+      contentType: f.contentType?.stringValue || "text",
+      ownerName: f.ownerName?.stringValue || "QR Guard User",
+      isActive: f.isActive?.booleanValue !== false,
+    };
+    standardLinkCache.set(uuid, { data: link, expiresAt: now + GUARD_CACHE_TTL_MS });
+    return link;
+  } catch {
+    return null;
+  }
+}
+
+function serveStandardContent(res: Response, link: StandardLinkFields, uuid: string): void {
+  const { rawContent, contentType, ownerName } = link;
+
+  if (!link.isActive) {
+    (res as any).status(200).send(guardShell("QR Code Deactivated", `
+<div class="icon">🔒</div>
+<div class="badge badge-dead">Deactivated</div>
+<h1>QR Code Unavailable</h1>
+<p>The owner has deactivated this QR code. Please contact them directly.</p>
+<button onclick="history.back()" class="btn btn-back">← Go Back</button>
+`));
+    return;
+  }
+
+  if (rawContent.startsWith("https://") || rawContent.startsWith("http://")) {
+    (res as any).setHeader("Cache-Control", "no-store, no-cache");
+    (res as any).redirect(302, rawContent);
+    return;
+  }
+
+  if (rawContent.startsWith("upi://")) {
+    (res as any).status(200).send(guardShell("UPI Payment", `
+<div class="icon">💳</div>
+<div class="badge badge-shield">✦ QR Guard Protected</div>
+<h1>UPI Payment</h1>
+<p style="margin-bottom:8px">by ${escHtml(ownerName)}</p>
+<hr class="divider">
+<div class="label">UPI Deep Link</div>
+<div class="url-box">${escHtml(rawContent)}</div>
+<a href="${escAttr(rawContent)}" class="btn btn-go">Open in UPI App →</a>
+<p style="margin-top:14px;font-size:12px;color:#64748b">Works with PhonePe, GPay, Paytm, BHIM and all UPI apps</p>
+`));
+    return;
+  }
+
+  if (rawContent.startsWith("WIFI:")) {
+    const ssidMatch = rawContent.match(/S:([^;]+);/);
+    const passMatch = rawContent.match(/P:([^;]*);/);
+    const typeMatch = rawContent.match(/T:([^;]+);/);
+    const ssid = ssidMatch ? ssidMatch[1] : "Unknown";
+    const pass = passMatch ? passMatch[1] : "";
+    const security = typeMatch ? typeMatch[1] : "WPA";
+    (res as any).status(200).send(guardShell("WiFi Credentials", `
+<div class="icon">📶</div>
+<div class="badge badge-shield">✦ QR Guard Protected</div>
+<h1>WiFi Network</h1>
+<p style="margin-bottom:8px">Shared by ${escHtml(ownerName)}</p>
+<hr class="divider">
+<div class="label">Network Name (SSID)</div>
+<div class="val">${escHtml(ssid)}</div>
+<div class="label">Security</div>
+<div class="val">${escHtml(security === "nopass" ? "Open (no password)" : security)}</div>
+${pass ? `<div class="label">Password</div><div class="val">${escHtml(pass)}</div>` : ""}
+<p style="font-size:12px;color:#64748b;margin-top:8px">Open WiFi settings on your device to connect manually</p>
+`));
+    return;
+  }
+
+  if (rawContent.startsWith("BEGIN:VCARD")) {
+    const nameMatch = rawContent.match(/FN:([^\r\n]+)/);
+    const telMatch = rawContent.match(/TEL[^:]*:([^\r\n]+)/);
+    const emailMatch = rawContent.match(/EMAIL[^:]*:([^\r\n]+)/);
+    const displayName = nameMatch ? nameMatch[1] : "Contact";
+    const dataUri = `data:text/vcard;charset=utf-8,${encodeURIComponent(rawContent)}`;
+    (res as any).status(200).send(guardShell("Contact Card", `
+<div class="icon">👤</div>
+<div class="badge badge-shield">✦ QR Guard Protected</div>
+<h1>${escHtml(displayName)}</h1>
+<p style="margin-bottom:8px">Shared by ${escHtml(ownerName)}</p>
+<hr class="divider">
+${telMatch ? `<div class="label">Phone</div><div class="val">${escHtml(telMatch[1])}</div>` : ""}
+${emailMatch ? `<div class="label">Email</div><div class="val">${escHtml(emailMatch[1])}</div>` : ""}
+<a href="${escAttr(dataUri)}" download="contact.vcf" class="btn btn-go">Save Contact →</a>
+`));
+    return;
+  }
+
+  if (rawContent.startsWith("BEGIN:VCALENDAR")) {
+    const summaryMatch = rawContent.match(/SUMMARY:([^\r\n]+)/);
+    const dtStartMatch = rawContent.match(/DTSTART:([^\r\n]+)/);
+    const locationMatch = rawContent.match(/LOCATION:([^\r\n]+)/);
+    const title = summaryMatch ? summaryMatch[1] : "Event";
+    const dtRaw = dtStartMatch ? dtStartMatch[1] : "";
+    const dateStr = dtRaw
+      ? `${dtRaw.slice(0, 4)}-${dtRaw.slice(4, 6)}-${dtRaw.slice(6, 8)} at ${dtRaw.slice(9, 11)}:${dtRaw.slice(11, 13)}`
+      : "";
+    const dataUri = `data:text/calendar;charset=utf-8,${encodeURIComponent(rawContent)}`;
+    (res as any).status(200).send(guardShell("Calendar Event", `
+<div class="icon">📅</div>
+<div class="badge badge-shield">✦ QR Guard Protected</div>
+<h1>${escHtml(title)}</h1>
+<p style="margin-bottom:8px">Shared by ${escHtml(ownerName)}</p>
+<hr class="divider">
+${dateStr ? `<div class="label">When</div><div class="val">${escHtml(dateStr)}</div>` : ""}
+${locationMatch ? `<div class="label">Where</div><div class="val">${escHtml(locationMatch[1])}</div>` : ""}
+<a href="${escAttr(dataUri)}" download="event.ics" class="btn btn-go">Add to Calendar →</a>
+`));
+    return;
+  }
+
+  if (rawContent.startsWith("tel:")) {
+    const number = rawContent.replace("tel:", "");
+    (res as any).status(200).send(guardShell("Phone Call", `
+<div class="icon">📞</div>
+<div class="badge badge-shield">✦ QR Guard Protected</div>
+<h1>Phone Number</h1>
+<p style="margin-bottom:8px">Shared by ${escHtml(ownerName)}</p>
+<hr class="divider">
+<div class="label">Number</div>
+<div class="val">${escHtml(number)}</div>
+<a href="${escAttr(rawContent)}" class="btn btn-go">Tap to Call →</a>
+`));
+    return;
+  }
+
+  if (rawContent.startsWith("mailto:")) {
+    (res as any).setHeader("Cache-Control", "no-store, no-cache");
+    (res as any).redirect(302, rawContent);
+    return;
+  }
+
+  if (rawContent.startsWith("smsto:") || rawContent.startsWith("sms:")) {
+    (res as any).setHeader("Cache-Control", "no-store, no-cache");
+    (res as any).redirect(302, rawContent);
+    return;
+  }
+
+  (res as any).status(200).send(guardShell("QR Content", `
+<div class="icon">📄</div>
+<div class="badge badge-shield">✦ QR Guard Protected</div>
+<h1>QR Content</h1>
+<p style="margin-bottom:8px">Shared by ${escHtml(ownerName)}</p>
+<hr class="divider">
+<div class="url-box" style="text-align:center;font-size:14px;padding:16px">${escHtml(rawContent)}</div>
+<button onclick="navigator.clipboard&&navigator.clipboard.writeText(${JSON.stringify(escAttr(rawContent))})" class="btn btn-go" style="margin-top:4px">Copy Content</button>
+`));
+}
 
 const SAFE_REDIRECT_PROTOCOLS = new Set(["https:", "http:"]);
 
@@ -345,9 +526,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     });
   });
 
-  // ─── /go/:slug — unified fast redirect (Saved & Business QRs) ───────────────
-  // True 302 redirect: no intermediate HTML page on clean destinations.
-  // Falls back to caution page when destination was changed recently.
+  // ─── /go/:slug — Standard QR content lookup (QR Guard Protected QRs) ─────────
+  // Looks up rawContent from standardLinks collection and serves it.
+  // Other scanners see a branded web page; QR Guard app recognises the URL and
+  // fetches content natively — making our database the key to decode the QR.
   app.get("/go/:slug", async (req: Request, res: Response) => {
     const slug = Array.isArray(req.params.slug) ? req.params.slug[0] : req.params.slug;
 
@@ -355,30 +537,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
       return res.status(400).send(guardNotFoundHtml());
     }
 
-    const link = await fetchGuardLinkFromFirestore(slug);
+    // 1. Check standardLinks first (Standard QRs — most common for /go/)
+    const standardLink = await fetchStandardLinkFromFirestore(slug);
+    if (standardLink) {
+      return serveStandardContent(res, standardLink, slug);
+    }
 
-    if (!link) {
+    // 2. Fall back to guardLinks (legacy Business QRs that used /go/ path)
+    const guardLink = await fetchGuardLinkFromFirestore(slug);
+    if (!guardLink) {
       return res.status(404).send(guardNotFoundHtml());
     }
 
-    if (!link.isActive) {
-      return res.status(200).send(guardDeactivatedHtml(link.businessName));
+    if (!guardLink.isActive) {
+      return res.status(200).send(guardDeactivatedHtml(guardLink.businessName));
     }
 
-    const destination = link.currentDestination;
+    const destination = guardLink.currentDestination;
     if (!destination || !isSafeRedirectDestination(destination)) {
       return res.status(404).send(guardNotFoundHtml());
     }
 
-    const changedAt = link.destinationChangedAt ? new Date(link.destinationChangedAt).getTime() : null;
+    const changedAt = guardLink.destinationChangedAt ? new Date(guardLink.destinationChangedAt).getTime() : null;
     const changedRecently = changedAt && (Date.now() - changedAt) < CAUTION_WINDOW_MS;
 
     if (changedRecently) {
-      const businessName = link.businessName || "QR Code";
-      return res.status(200).send(guardCautionHtml(businessName, link.ownerName, destination, slug));
+      const businessName = guardLink.businessName || "QR Code";
+      return res.status(200).send(guardCautionHtml(businessName, guardLink.ownerName, destination, slug));
     }
 
-    // Clean destination — issue a true 302 redirect (no intermediate page)
     res.setHeader("Cache-Control", "no-store, no-cache");
     return res.redirect(302, destination);
   });

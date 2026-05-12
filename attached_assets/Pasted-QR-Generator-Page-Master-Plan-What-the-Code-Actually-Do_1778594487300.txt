@@ -1,0 +1,176 @@
+QR Generator Page — Master Plan
+What the Code Actually Does Today (The Real Situation)
+The Three Modes (they already exist in code)
+The hook useQrGenerator.ts has qrMode with three states:
+
+"individual" — saves to Firestore with a unique UUID, full scan history tracking
+"business" — creates a /guard/UUID Smart Redirect URL (the Living Shield), saves a guardLinks Firestore doc so the destination can be changed later without reprinting
+"private" — generates entirely locally, nothing written to Firestore, no UUID
+The 28 QR Content Types (they already exist in code)
+Defined in QR_PRESETS and BUILT_IN_CATEGORIES, grouped as:
+
+Group	Types
+Basic	Plain Text, Website URL
+Communication	Email, Phone, SMS, WhatsApp, Telegram
+Social	Instagram, Twitter/X, YouTube, LinkedIn, Spotify, Facebook
+Contact & Network	Contact Card (vCard), WiFi
+Payments	UPI 🇮🇳, BharatQR 🇮🇳, Crypto, PayPal, Venmo, GrabPay
+Utility	Location, Zoom, Calendar Event, App Download
+India Business	Google Review 🇮🇳, Restaurant Menu 🇮🇳, Donation/Tip
+Business Mode Has Its OWN Separate Type System
+BusinessTypeSelector.tsx defines 6 business-specific input categories: Website, WhatsApp, UPI Pay, WiFi, Event, Phone Call. These are different from the 28 regular types. When business mode is active, the SmartTemplateBar disappears entirely and a different form (BusinessQrForm.tsx) takes over.
+
+The Core Problems (Why It's Confusing)
+Problem 1 — Mode vs Type are tangled together.
+The user has to first pick a QR Type (from 28), then the mode is buried inside the form. But in Business mode, the types change to a different 6-option system. So the same thing ("what the QR points to") is controlled by two completely different selectors that look totally different.
+
+Problem 2 — Business mode is hidden and de-prioritised.
+Business QR is the most powerful feature (Smart Redirect = change destination without reprinting). But the home screen shows 4 tiles (Link, Chat, WiFi, Contact) with no mention of Business at all. Users who need business QRs won't even know it exists.
+
+Problem 3 — 28 types feels like a wall.
+"Browse all 28 types" is a link at the very bottom of the home screen. There's no clear grouping strategy visible to the user.
+
+Problem 4 — Private mode has no dedicated entry.
+Private mode is hidden inside the ModeSelector which lives deep inside the create view. It should be a first-class entry point for privacy-conscious users.
+
+Problem 5 — Business types are a subset of the 28, but presented as separate.
+Website, WhatsApp, UPI, WiFi, Event, Phone — all of these already exist in the 28-type list. The reason Business uses a separate system is because those 6 types can be cleanly "Smart Redirected" — their destination URL can be rewritten on the server side. Non-redirectable types (vCard, WiFi, Calendar) embed the data directly into the QR pattern itself so the server can't intercept them. But this distinction is never explained to the user.
+
+The Three Modes — Defined Clearly
+Mode 1: Standard QR
+Who it's for: Individuals, creators, anyone who wants to keep a record of what they created.
+
+What it does:
+
+Supports all 28 content types
+Saved to user's profile with a unique ID
+Tracks scan history (how many times scanned, from where)
+Can be organized into groups
+Can be shared, downloaded as PDF
+Requires login to save (guests get a prompt, they can still generate without saving)
+Technical: Saves to Firestore generatedQrs collection. The QR value is the raw encoded content (e.g. upi://pay?pa=...). UUID is stored for reference but is not embedded in the QR itself.
+
+Mode 2: Business QR (The Hero Feature)
+Who it's for: Shop owners, restaurants, businesses, freelancers — anyone who prints a physical QR and needs to update where it points later.
+
+What it does:
+
+Supports 6 "Smart Redirect" compatible types: Website, WhatsApp, UPI Pay, WiFi, Event, Phone Call
+The printed QR points to yourdomain.com/guard/UUID — a server-side redirect
+Owner can change the actual destination anytime from the app without reprinting
+Shows a branded "Living Shield" interstitial if destination was recently changed (caution mode)
+Business name displayed on the redirect page
+Full scan analytics
+Requires login (Business mode is only for registered users)
+Why only 6 types? Because the server redirect page can only redirect HTTP traffic. UPI, WhatsApp, Phone, WiFi, and Calendar are all URL-convertible. Types like vCard (raw data), plain text, or crypto wallet addresses cannot be served via a redirect — the QR must carry the raw data directly.
+
+Technical: Saves to guardLinks collection in Firestore. The QR value is yourdomain.com/guard/UUID. The guard/:uuid server route reads currentDestination from Firestore and redirects.
+
+Mode 3: Private QR
+Who it's for: Anyone who wants to generate a QR code with zero digital footprint — for sensitive info, test QRs, or just offline use.
+
+What it does:
+
+Supports all 28 content types (same as Standard)
+Generated entirely on-device — no network calls, no Firestore writes
+Cannot be saved to profile (by design)
+Can be downloaded/shared as image
+No UUID, no scan tracking, no server involvement
+Available to both guests and logged-in users
+Technical: privateMode = qrMode === "private". The handleGenerate function skips all Firestore saves. No UUID is assigned.
+
+The Redesigned Page Architecture
+Phase 1 — Home Screen (Pick Your Mode First)
+The home screen should lead with mode selection, not type selection. Three clear cards:
+
+┌──────────────────────────────────────┐
+│           QR Generator               │
+│    Create secure, trusted QR codes   │
+└──────────────────────────────────────┘
+[Standard QR]   [Business QR ⭐]   [Private QR]
+ Saved + tracked  Smart Redirect   No trace, offline
+ All 28 types     Change anytime   All 28 types
+─── Quick Create ───────────────────────
+[Link] [WhatsApp] [WiFi] [Contact]
+            Browse all 28 →
+
+Standard is the default selected state on first launch
+Business has a special highlight (gold/amber accent) — it's the hero feature
+Private has a subtle muted style (eye-off icon)
+Tapping a Quick Create tile goes directly into create view with Standard mode pre-selected
+Mode persists between sessions (AsyncStorage)
+Phase 2 — Create View Structure
+The create view layout (top to bottom):
+
+← Back    [Current Type Chip ▼]    [ℹ]
+── MODE BANNER ──────────────────────
+[🔖 Standard | 🏢 Business | 👁 Private]
+  "Saved to profile"  or  "Smart Redirect"  or  "No trace"
+── TYPE SELECTOR ────────────────────
+[Horizontal chips — mode-aware list]
+── INPUT FORM ───────────────────────
+[Dynamic form based on type]
+── CUSTOMISE ────────────────────────
+[Collapsed drawer: Theme, Logo, Advanced]
+── GENERATE / SAVE BUTTON ──────────
+── QR OUTPUT CARD ───────────────────
+
+Key change: The mode switcher is always visible at the top of the create view, not buried in the form. It's a 3-segment control (or 2 for guests: Standard + Private).
+
+Phase 3 — Type Selector Strategy (Mode-Aware)
+Standard mode: Show all 28 types. Group them:
+
+Row 1 header: "🇮🇳 India" — UPI, BharatQR, Google Review, Restaurant Menu
+Row 2 header: "Popular" — Link, WhatsApp, WiFi, Contact, Text
+"More types →" opens the full 28-type modal
+Business mode: Show only the 6 Smart-Redirect-capable types: Website, WhatsApp, UPI Pay, WiFi, Event, Phone. These are the BusinessTypeSelector chips that already exist. Also show a small banner explaining WHY these 6 and not all 28: "Only types whose destination the server can redirect — so you can update it anytime."
+
+Private mode: Same as Standard — all 28 types. The only difference is the banner at top says "No trace — generated locally."
+
+Phase 4 — Input Form Per Mode
+Standard + Private: Use the existing InputSection + DynamicCategoryForm system (the 28 QR_PRESETS flow). No change needed here — this already works well.
+
+Business: Use the existing BusinessQrForm (6-category form). Add an optional "Business Name" field at the top (already in ModeSelector). The destination field label changes per category (e.g. "Website URL", "WhatsApp Number", "UPI ID").
+
+Phase 5 — Generate Button States
+The button label and colour should change clearly per mode:
+
+State	Label	Colour
+No input	"Generate QR Code"	Primary blue
+Has QR, Standard, not saved	"Save to Profile"	Green
+Has QR, Business, not saved	"Activate Smart Redirect"	Amber/gold
+Has QR, Private	"Private QR Ready"	Grey (muted)
+Saved	"Saved ✓" / "Activated ✓"	Green / Amber
+This already works in the existing code — the buttonState logic in qr-generator.tsx does exactly this. No change needed.
+
+Phase 6 — Output Card (QrOutputCard)
+No structural change needed. The card already handles:
+
+QR preview with size controls
+Copy / Share / Download PDF actions
+Business: shows the guard URL + actual destination
+Branded (logged-in) vs guest view
+One improvement to plan: the business output card should show TWO pieces of info clearly:
+
+What the QR scans to → yourdomain.com/guard/UUID (the permanent printable URL)
+Where it currently redirects → the actual destination (website, WhatsApp link, etc.)
+This helps business owners understand what to print vs what they can change.
+
+What Stays The Same (Don't Touch)
+buildQrContent() — the encoding logic for all 28 types works perfectly
+useQrGenerator hook — all the state management, Firestore saves, URL risk scoring
+QrOutputCard — the output display is good
+CustomizeDrawer — theme/logo/advanced settings are fine
+guardLinks Firestore structure and /guard/:uuid server route
+ModeSelector component — reuse it, just move it higher in the UI hierarchy
+All 28 category definitions in BUILT_IN_CATEGORIES and QR_PRESETS
+What Needs to Be Built/Changed
+Area	Change Type	Priority
+Home screen (TypePickerHome)	Redesign — add mode selector above quick tiles	High
+Create view top section	Move mode banner above type chips (always visible)	High
+Business mode type explanation	Add one-line "why only 6 types" banner	Medium
+Business output card	Show guard URL + current destination separately	Medium
+Mode persistence	Save last used mode to AsyncStorage	Low
+Type chip grouping in Standard/Private	Add India / Popular / More row headers	Low
+Summary in Plain Terms
+The app already has all three modes coded. The problem is entirely information architecture — the mode picker is buried, business mode feels like a completely separate product, and the 28-type library is presented as a flat list without guidance. The fix is to make mode the first decision the user makes, then let the type selector adapt to that mode. Business gets 6 curated types. Standard and Private get all 28. The forms, encoding, Firestore logic, and output — all of that already works correctly and just needs to be surfaced from the right order.

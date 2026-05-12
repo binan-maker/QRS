@@ -266,12 +266,19 @@ function QrOutputCard({
               )}
             </>
           ) : (
-            <View style={[styles.ownershipNote, { backgroundColor: colors.primaryDim, borderColor: colors.primary + "30" }]}>
-              <Ionicons name="lock-closed" size={12} color={colors.primary} />
-              <Text style={[styles.ownershipNoteText, { color: colors.primary }]}>
-                This QR is registered to your account. Only you can manage its comments and view followers.
-              </Text>
-            </View>
+            <>
+              <View style={[styles.destinationRow, { backgroundColor: colors.surfaceLight, borderColor: colors.surfaceBorder, marginBottom: 8 }]}>
+                <Text style={[styles.destinationLabel, { color: colors.textMuted }]}>QR Sticker Encodes</Text>
+                <Text style={[styles.destinationValue, { color: colors.text }]} numberOfLines={2}>{qrValue}</Text>
+              </View>
+              <View style={[styles.ownershipNote, { backgroundColor: colors.primaryDim, borderColor: colors.primary + "30" }]}>
+                <Ionicons name="shield-checkmark" size={12} color={colors.primary} />
+                <Text style={[styles.ownershipNoteText, { color: colors.primary }]}>
+                  <Text style={{ fontFamily: "Inter_700Bold" }}>Database-locked QR — </Text>
+                  the QR sticker points to our secure server. Only QR Guard's database reveals the real content. Other scanners see our web page. You own this link forever.
+                </Text>
+              </View>
+            </>
           )}
         </View>
       ) : privateMode ? (

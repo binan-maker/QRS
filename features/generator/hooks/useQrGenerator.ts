@@ -10,7 +10,7 @@ import * as Print from "expo-print";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { captureQrImage } from "@/lib/capture-qr";
 import { useAuth } from "@/contexts/AuthContext";
-import { saveGeneratedQr, saveGuardLink, type QrType } from "@/lib/firestore-service";
+import { saveGeneratedQr, saveGuardLink, saveStandardLink, type QrType } from "@/lib/firestore-service";
 import { getApiUrl } from "@/lib/query-client";
 import { QR_PRESETS } from "@/features/generator/data/presets";
 import { buildQrContent, getRawContent, filterByKeyboardType, validateQrInput } from "@/features/generator/data/qr-builder";
@@ -336,7 +336,6 @@ export function useQrGenerator() {
       }
       if (businessCategory === "wifi") return null;
       if (businessCategory === "event") return null;
-      if (businessCategory === "phone") return null;
       const withScheme = v.startsWith("http") ? v : `https://${v}`;
       try {
         const url = new URL(withScheme);
@@ -367,10 +366,14 @@ export function useQrGenerator() {
     const shortUuid = uuid.slice(0, 16).toUpperCase().match(/.{1,4}/g)?.join("-") || uuid.slice(0, 16);
     const isBusinessMode = qrMode === "business" && isBranded && !!user;
 
+    const base = getApiUrl().replace(/\/$/, "");
+    const isStandardMode = !isBusinessMode && isBranded && !privateMode && !!user;
+
     let encodedValue = builtContent;
     if (isBusinessMode) {
-      const base = getApiUrl().replace(/\/$/, "");
       encodedValue = `${base}/guard/${shortUuid}`;
+    } else if (isStandardMode) {
+      encodedValue = `${base}/go/${shortUuid}`;
     }
 
     setQrValue(encodedValue);
@@ -386,13 +389,17 @@ export function useQrGenerator() {
         const qt: QrType = qrMode === "business" ? "business" : "individual";
         const logoToStore = qrMode === "business" && customLogoBase64 ? customLogoBase64 : null;
         const bName = qrMode === "business" ? (businessName.trim() || null) : null;
-        if (isBusinessMode) {
-          await saveGuardLink(shortUuid, builtContent, bName, user.displayName, user.id);
-        }
-        const expiryDate = resolveExpiryDate(advancedSettings.expiryPreset, advancedSettings.expiryCustomDate);
         const savedContentType = isBusinessMode
           ? getBusinessContentType(businessCategory)
           : getFirestoreContentType(selectedPreset);
+
+        if (isBusinessMode) {
+          await saveGuardLink(shortUuid, builtContent, bName, user.displayName, user.id);
+        } else if (isStandardMode) {
+          await saveStandardLink(shortUuid, builtContent, savedContentType, user.id, user.displayName);
+        }
+
+        const expiryDate = resolveExpiryDate(advancedSettings.expiryPreset, advancedSettings.expiryCustomDate);
         const docId = await saveGeneratedQr(
           user.id, user.displayName, encodedValue,
           savedContentType,

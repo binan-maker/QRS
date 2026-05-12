@@ -91,3 +91,38 @@ export async function setGuardLinkActive(
   if (data.ownerId !== userId) throw new Error("Not authorized");
   await db.update(["guardLinks", uuid], { isActive });
 }
+
+export async function saveStandardLink(
+  uuid: string,
+  rawContent: string,
+  contentType: string,
+  ownerId: string,
+  ownerName: string
+): Promise<void> {
+  await db.set(["standardLinks", uuid], {
+    uuid,
+    rawContent,
+    contentType,
+    ownerId,
+    ownerName,
+    isActive: true,
+    createdAt: db.timestamp(),
+  });
+}
+
+export async function getStandardLink(uuid: string): Promise<{ rawContent: string; contentType: string; ownerId: string; ownerName: string; isActive: boolean } | null> {
+  try {
+    const data = await db.get(["standardLinks", uuid]);
+    if (!data) return null;
+    return {
+      rawContent: data.rawContent || "",
+      contentType: data.contentType || "text",
+      ownerId: data.ownerId || "",
+      ownerName: data.ownerName || "",
+      isActive: data.isActive !== false,
+    };
+  } catch (e) {
+    console.warn("[db] getStandardLink failed:", e);
+    return null;
+  }
+}

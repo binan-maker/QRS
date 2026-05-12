@@ -286,12 +286,14 @@ function setupErrorHandler(app: express.Application) {
   // by the time res.json() is invoked.
   app.use(signApiResponses);
 
-  configureExpoAndLanding(app);
-
   const server = await registerRoutes(app);
-  
+
   // Register health check and monitoring endpoints
   registerHealthEndpoints(app);
+
+  // Static file serving MUST come after routes so /go/:slug and /guard/:slug
+  // are handled by Express before the catch-all serves index.html.
+  configureExpoAndLanding(app);
 
   setupErrorHandler(app);
 
