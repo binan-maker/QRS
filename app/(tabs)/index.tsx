@@ -258,6 +258,7 @@ function HomeScreen() {
                           style={styles.avatarImg}
                           cachePolicy="memory-disk"
                           contentFit="cover"
+                          key={photoURL}
                         />
                       ) : (
                         <Text style={[styles.avatarInitial, { color: colors.primary }]}>

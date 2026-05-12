@@ -33,11 +33,13 @@ export function useHome() {
   const prevUserIdRef = useRef<string | null | undefined>(undefined);
   const notif = useNotifications();
 
-  // ── Avatar: shared context — no extra network call ────────────────────────
-  const { syncAvatar } = useAvatar();
+  // ── Avatar: only fall back to Google photo if no app-uploaded avatar exists.
+  // Checking `url` (raw stored value) prevents overriding a custom upload with
+  // the Google account photo on every tab focus.
+  const { url: appAvatarUrl, syncAvatar } = useAvatar();
   useEffect(() => {
-    if (user?.photoURL) syncAvatar(user.photoURL);
-  }, [user?.id, user?.photoURL, syncAvatar]);
+    if (!appAvatarUrl && user?.photoURL) syncAvatar(user.photoURL);
+  }, [user?.id, user?.photoURL, syncAvatar, appAvatarUrl]);
 
   // ── Disk pre-warm: seed the React Query cache from AsyncStorage before the
   //    network call fires so the list appears instantly on cold launch. ────────

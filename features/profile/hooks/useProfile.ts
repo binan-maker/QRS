@@ -45,6 +45,7 @@ export function useProfile() {
   const [savingName, setSavingName] = useState(false);
   const [stats, setStats] = useState<UserStats>({ followingCount: 0, scanCount: 0, commentCount: 0, totalLikesReceived: 0 });
   const [statsLoading, setStatsLoading] = useState(false);
+  const hasLoadedStatsRef = useRef(false);
   const [photoURL, setPhotoURL] = useState<string | null>(user?.photoURL || null);
   const [photoModalOpen, setPhotoModalOpen] = useState(false);
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
@@ -66,6 +67,7 @@ export function useProfile() {
     setPhotoURL(user?.photoURL || null);
     setCurrentUsername(user?.username || null);
     setStats({ followingCount: 0, scanCount: 0, commentCount: 0, totalLikesReceived: 0 });
+    hasLoadedStatsRef.current = false;
     setEditingName(false);
     setEditingUsername(false);
     setUsernameError("");
@@ -89,7 +91,10 @@ export function useProfile() {
     if (inFlightStatsRef.current) return;
     if (!forceRefresh && Date.now() - lastStatsFetchRef.current < STATS_STALE_MS) return;
     inFlightStatsRef.current = true;
-    setStatsLoading(true);
+    // Only show skeleton on first-ever load for this user, not on tab re-focus.
+    // This eliminates the "skeleton flash" every time the profile tab is revisited.
+    const showSkeleton = !hasLoadedStatsRef.current;
+    if (showSkeleton) setStatsLoading(true);
     try {
       if (!forceRefresh) {
         const cached = await getCachedUserStats<{
@@ -103,6 +108,7 @@ export function useProfile() {
           if (cached.photoURL) setPhotoURL(cached.photoURL);
           if (cached.username) setCurrentUsername(cached.username);
           setUsernameLastChangedAt(cached.usernameLastChangedAt);
+          hasLoadedStatsRef.current = true;
           setStatsLoading(false);
           inFlightStatsRef.current = false;
           lastStatsFetchRef.current = Date.now();
@@ -115,9 +121,12 @@ export function useProfile() {
         getUsernameData(user.id),
       ]);
       setStats(s);
+      // Sync Firestore photo into avatar store — this is authoritative and always wins
+      // over the Google photo synced during login.
       if (photo) { setPhotoURL(photo); syncAvatar(photo); }
       if (unameData.username) setCurrentUsername(unameData.username);
       setUsernameLastChangedAt(unameData.usernameLastChangedAt);
+      hasLoadedStatsRef.current = true;
       lastStatsFetchRef.current = Date.now();
       await setCachedUserStats(user.id, {
         stats: s,

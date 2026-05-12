@@ -162,8 +162,8 @@ function ProfileScreen() {
                     source={{ uri: photoURL }}
                     style={styles.avatarPhoto}
                     cachePolicy="memory-disk"
-                    placeholder={styles.avatarPlaceholder}
                     contentFit="cover"
+                    key={photoURL}
                   />
                 ) : (
                   <Text style={[styles.avatarInitials, { color: colors.primary }]}>{initials}</Text>
