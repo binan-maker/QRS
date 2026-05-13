@@ -10,7 +10,6 @@ import { LinearGradient } from "expo-linear-gradient";
 import { useTheme } from "@/contexts/ThemeContext";
 import { useQrGenerator, LOGO_POSITIONS } from "@/hooks/useQrGenerator";
 import TypePickerHome from "@/features/generator/components/TypePickerHome";
-import SmartTemplateBar from "@/features/generator/components/SmartTemplateBar";
 import TemplatePickerModal from "@/features/generator/components/TemplatePickerModal";
 import CustomQrBuilderModal from "@/features/generator/components/CustomQrBuilderModal";
 import InputSection from "@/features/generator/components/InputSection";
@@ -19,7 +18,6 @@ import InfoModal from "@/features/generator/components/InfoModal";
 import PositionModal from "@/features/generator/components/PositionModal";
 import CustomizeDrawer from "@/features/generator/components/CustomizeDrawer";
 import GroupPickerModal from "@/components/groups/GroupPickerModal";
-import { QR_PRESETS } from "@/features/generator/data/presets";
 import type { BusinessCategory } from "@/features/generator/components/BusinessTypeSelector";
 
 type GeneratorView = "home" | "create";
@@ -173,8 +171,8 @@ function QrGeneratorScreen() {
   const handleOpenGroupPicker = useCallback(() => setGroupPickerOpen(true), []);
   const handleCloseGroupPicker = useCallback(() => setGroupPickerOpen(false), []);
 
-  const selectedPresetDef = QR_PRESETS[selectedPreset];
   const activeModeColor = MODE_DEFS.find((m) => m.key === qrMode)?.color ?? colors.primary;
+  const activeModeLabel = MODE_DEFS.find((m) => m.key === qrMode)?.label ?? "Create";
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background, paddingTop: topInset }]}>
@@ -222,29 +220,12 @@ function QrGeneratorScreen() {
               <Ionicons name="chevron-back" size={18} color={colors.textSecondary} />
             </Pressable>
 
-            {qrMode !== "business" ? (
-              <Pressable
-                onPress={handleOpenTemplates}
-                style={[styles.typeChip, { backgroundColor: colors.primaryDim, borderColor: colors.primary + "40" }]}
-              >
-                <Ionicons
-                  name={(selectedPresetDef?.icon ?? "qr-code-outline") as keyof typeof Ionicons.glyphMap}
-                  size={14}
-                  color={colors.primary}
-                />
-                <Text style={[styles.typeChipText, { color: colors.primary }]} numberOfLines={1}>
-                  {selectedPresetDef?.label ?? "QR Type"}
-                </Text>
-                <Ionicons name="chevron-down" size={12} color={colors.primary} />
-              </Pressable>
-            ) : (
-              <View style={[styles.typeChip, { backgroundColor: "#F59E0B" + "18", borderColor: "#F59E0B" + "40", flex: 1 }]}>
-                <Ionicons name="storefront-outline" size={14} color="#F59E0B" />
-                <Text style={[styles.typeChipText, { color: "#F59E0B" }]} numberOfLines={1}>
-                  Business — Smart Redirect
-                </Text>
-              </View>
-            )}
+            <View style={styles.createTitleWrap}>
+              <View style={[styles.createModeDot, { backgroundColor: activeModeColor }]} />
+              <Text style={[styles.createTitle, { color: colors.text }]}>
+                {activeModeLabel} QR
+              </Text>
+            </View>
 
             <Pressable
               onPress={handleOpenInfo}
@@ -307,18 +288,6 @@ function QrGeneratorScreen() {
                 </Text>
               </View>
             </Reanimated.View>
-
-            {/* Template quick-switcher (hidden for business) */}
-            {qrMode !== "business" && (
-              <Reanimated.View entering={FadeInDown.duration(300).delay(40)}>
-                <SmartTemplateBar
-                  selectedPreset={selectedPreset}
-                  qrMode={qrMode}
-                  onSelectPreset={switchPreset}
-                  onOpenTemplates={handleOpenTemplates}
-                />
-              </Reanimated.View>
-            )}
 
             {/* Input */}
             <Reanimated.View entering={FadeInDown.duration(320).delay(60)}>
@@ -579,12 +548,16 @@ function makeStyles(_c: unknown, width: number) {
       borderWidth: 1, alignItems: "center", justifyContent: "center",
       flexShrink: 0,
     },
-    typeChip: {
-      flex: 1, flexDirection: "row", alignItems: "center", gap: 6,
-      borderRadius: 12, borderWidth: 1,
-      paddingHorizontal: 12, paddingVertical: 9,
+    createTitleWrap: {
+      flex: 1, flexDirection: "row", alignItems: "center", gap: 8,
+      justifyContent: "center",
     },
-    typeChipText: { flex: 1, fontSize: 13, fontFamily: "Inter_700Bold" },
+    createModeDot: {
+      width: 8, height: 8, borderRadius: 4,
+    },
+    createTitle: {
+      fontSize: 15, fontFamily: "Inter_700Bold",
+    },
     scrollContent: { paddingHorizontal: 20, paddingTop: 8 },
 
     modeSwitcherBar: {
