@@ -382,9 +382,11 @@ const styles = StyleSheet.create({
   tagRow: { flexDirection: "row", gap: 8, paddingHorizontal: 16, paddingBottom: 12 },
   tagChip: {
     borderRadius: 20, borderWidth: 1,
-    paddingHorizontal: 14, paddingVertical: 8,
+    paddingHorizontal: 14,
+    height: 36,
+    alignItems: "center", justifyContent: "center",
   },
-  tagChipText: { fontSize: 12, fontFamily: "Inter_600SemiBold" },
+  tagChipText: { fontSize: 12, fontFamily: "Inter_600SemiBold", lineHeight: 16 },
   catHeader: {
     flexDirection: "row", alignItems: "baseline", justifyContent: "space-between",
     paddingHorizontal: 20, paddingVertical: 10,
