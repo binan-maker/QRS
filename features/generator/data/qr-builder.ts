@@ -143,6 +143,50 @@ export function buildQrContent(presetIdx: number, value: string, extra: Record<s
       const base = v.startsWith("http") ? v : `https://${v}`;
       return base;
     }
+    case 28: { // razorpay
+      const base = v.startsWith("http") ? v : `https://${v}`;
+      const note = extra.note?.trim() || "";
+      return note ? `${base}?description=${encodeURIComponent(note)}` : base;
+    }
+    case 29: { // google_maps
+      const lat = extra.lat?.trim() || "";
+      const lng = extra.lng?.trim() || "";
+      if (lat && lng) return `https://maps.google.com/?q=${lat},${lng}`;
+      return `https://maps.google.com/?q=${encodeURIComponent(v)}`;
+    }
+    case 30: { // discord
+      return v.startsWith("http") ? v : `https://discord.gg/${v}`;
+    }
+    case 31: { // tiktok
+      const username = v.replace(/^@/, "");
+      return `https://www.tiktok.com/@${username}`;
+    }
+    case 32: { // snapchat
+      const username = v.replace(/^@/, "");
+      return `https://www.snapchat.com/add/${username}`;
+    }
+    case 33: { // google pay (UPI, gpay-optimised)
+      const name = extra.name?.trim() || "";
+      const amount = extra.amount?.trim() || "";
+      let url = `upi://pay?pa=${encodeURIComponent(v)}`;
+      if (name) url += `&pn=${encodeURIComponent(name)}`;
+      if (amount) url += `&am=${amount}&cu=INR`;
+      return url;
+    }
+    case 34: { // linktree / bio link
+      return v.startsWith("http") ? v : `https://${v}`;
+    }
+    case 35: { // mecard
+      const phone = extra.phone?.trim() || "";
+      const email = extra.email?.trim() || "";
+      const note  = extra.note?.trim()  || "";
+      let card = `MECARD:N:${v};`;
+      if (phone) card += `TEL:${phone.replace(/[\s\-()]/g, "")};`;
+      if (email) card += `EMAIL:${email};`;
+      if (note)  card += `NOTE:${note};`;
+      card += `;`;
+      return card;
+    }
     default: return v;
   }
 }
