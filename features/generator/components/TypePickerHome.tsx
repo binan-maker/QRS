@@ -68,10 +68,10 @@ interface QuickTile {
 }
 
 const STANDARD_TILES: QuickTile[] = [
-  { presetIdx: 1,  label: "Link",    icon: "link-outline",               color: "#3B82F6" },
-  { presetIdx: 5,  label: "Chat",    icon: "chatbubble-ellipses-outline", color: "#22C55E" },
-  { presetIdx: 6,  label: "WiFi",    icon: "wifi-outline",                color: "#F59E0B" },
-  { presetIdx: 9,  label: "Contact", icon: "person-outline",              color: "#8B5CF6" },
+  { presetIdx: 0,  label: "Text",    icon: "text-outline",               color: "#6366F1" },
+  { presetIdx: 1,  label: "URL",     icon: "link-outline",               color: "#3B82F6" },
+  { presetIdx: 6,  label: "WiFi",    icon: "wifi-outline",               color: "#F59E0B" },
+  { presetIdx: 9,  label: "Contact", icon: "person-outline",             color: "#8B5CF6" },
 ];
 
 interface BusinessTile {
@@ -119,12 +119,6 @@ function TypePickerHome({
   function pressMode(mode: QrMode) {
     if (mode === "business" && !user) return;
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    onModeCardPress(mode);
-  }
-
-  function tapModeBadge(mode: QrMode) {
-    if (mode === "business" && !user) return;
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     onSetMode(mode);
   }
 
@@ -156,8 +150,6 @@ function TypePickerHome({
             <Pressable
               key={m.key}
               onPress={() => pressMode(m.key)}
-              onLongPress={() => tapModeBadge(m.key)}
-              delayLongPress={400}
               style={({ pressed }) => [
                 styles.modeCard,
                 {
@@ -176,7 +168,7 @@ function TypePickerHome({
               )}
 
               <View style={[styles.modeIconWrap, { backgroundColor: m.color + (active ? "28" : "16") }]}>
-                <Ionicons name={m.icon} size={22} color={m.color} />
+                <Ionicons name={m.icon} size={20} color={m.color} />
               </View>
 
               <Text style={[styles.modeLabel, { color: active ? m.color : colors.text }]} numberOfLines={1}>
@@ -233,7 +225,7 @@ function TypePickerHome({
                 styles.tile,
                 {
                   width: tileSize,
-                  height: tileSize * 0.78,
+                  height: tileSize * 0.72,
                   backgroundColor: colors.surface,
                   borderColor: colors.surfaceBorder,
                   opacity: pressed ? 0.76 : 1,
@@ -242,7 +234,7 @@ function TypePickerHome({
               ]}
             >
               <View style={[styles.tileIcon, { backgroundColor: t.color + "18" }]}>
-                <Ionicons name={t.icon} size={24} color={t.color} />
+                <Ionicons name={t.icon} size={22} color={t.color} />
               </View>
               <Text style={[styles.tileLabel, { color: colors.text }]}>{t.label}</Text>
             </Pressable>
@@ -322,7 +314,7 @@ function TypePickerHome({
             style={({ pressed }) => [styles.browseRow, { opacity: pressed ? 0.6 : 1 }]}
           >
             <Ionicons name="apps-outline" size={14} color={colors.textMuted} />
-            <Text style={[styles.browseText, { color: colors.textMuted }]}>Browse all types</Text>
+            <Text style={[styles.browseText, { color: colors.textMuted }]}>Browse all QR types</Text>
             <Ionicons name="chevron-forward" size={12} color={colors.textMuted} />
           </Pressable>
         </Reanimated.View>
@@ -333,7 +325,7 @@ function TypePickerHome({
 
 export default memo(TypePickerHome);
 
-const CARD_HEIGHT = 118;
+const CARD_HEIGHT = 92;
 
 const styles = StyleSheet.create({
   root: { gap: 12 },
@@ -342,39 +334,39 @@ const styles = StyleSheet.create({
   modeCard: {
     flex: 1,
     height: CARD_HEIGHT,
-    borderRadius: 20,
+    borderRadius: 18,
     alignItems: "center",
     justifyContent: "center",
-    gap: 5,
+    gap: 4,
     position: "relative",
     overflow: "hidden",
     paddingHorizontal: 8,
-    paddingVertical: 14,
+    paddingVertical: 10,
   },
   modeBadge: {
     position: "absolute",
-    top: 8,
-    right: 8,
-    borderRadius: 6,
+    top: 7,
+    right: 7,
+    borderRadius: 5,
     borderWidth: 1,
-    paddingHorizontal: 5,
-    paddingVertical: 2,
+    paddingHorizontal: 4,
+    paddingVertical: 1,
   },
-  modeBadgeText: { fontSize: 7.5, fontFamily: "Inter_700Bold", letterSpacing: 0.5 },
+  modeBadgeText: { fontSize: 7, fontFamily: "Inter_700Bold", letterSpacing: 0.4 },
   modeIconWrap: {
-    width: 44,
-    height: 44,
-    borderRadius: 14,
+    width: 38,
+    height: 38,
+    borderRadius: 12,
     alignItems: "center",
     justifyContent: "center",
   },
   modeLabel: {
-    fontSize: 13,
+    fontSize: 12,
     fontFamily: "Inter_700Bold",
     textAlign: "center",
   },
   modeTag: {
-    fontSize: 10,
+    fontSize: 9.5,
     fontFamily: "Inter_500Medium",
     textAlign: "center",
   },
@@ -392,16 +384,16 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "flex-start",
     gap: 8,
-    borderRadius: 14,
+    borderRadius: 12,
     borderWidth: 1,
     paddingHorizontal: 12,
-    paddingVertical: 9,
+    paddingVertical: 8,
   },
   bannerText: {
     flex: 1,
-    fontSize: 12,
+    fontSize: 11.5,
     fontFamily: "Inter_400Regular",
-    lineHeight: 17,
+    lineHeight: 16,
   },
 
   sectionRow: {
@@ -420,44 +412,44 @@ const styles = StyleSheet.create({
 
   grid: { flexDirection: "row", flexWrap: "wrap", gap: 10 },
   tile: {
-    borderRadius: 22,
+    borderRadius: 20,
     borderWidth: 1,
     alignItems: "flex-start",
     justifyContent: "flex-end",
-    padding: 16,
+    padding: 14,
     gap: 6,
   },
   tileIcon: {
     position: "absolute",
-    top: 14,
-    right: 14,
-    width: 46,
-    height: 46,
-    borderRadius: 15,
+    top: 12,
+    right: 12,
+    width: 42,
+    height: 42,
+    borderRadius: 13,
     alignItems: "center",
     justifyContent: "center",
   },
-  tileLabel: { fontSize: 17, fontFamily: "Inter_700Bold" },
+  tileLabel: { fontSize: 15, fontFamily: "Inter_700Bold" },
 
   bizRow: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 14,
-    borderRadius: 16,
+    gap: 12,
+    borderRadius: 14,
     borderWidth: 1,
     paddingHorizontal: 14,
-    paddingVertical: 12,
+    paddingVertical: 11,
   },
   bizIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: 13,
+    width: 38,
+    height: 38,
+    borderRadius: 12,
     alignItems: "center",
     justifyContent: "center",
     flexShrink: 0,
   },
   bizLabel: { fontSize: 14, fontFamily: "Inter_700Bold" },
-  bizSub: { fontSize: 12, fontFamily: "Inter_400Regular", marginTop: 1 },
+  bizSub: { fontSize: 11.5, fontFamily: "Inter_400Regular", marginTop: 1 },
   bizNote: {
     flexDirection: "row",
     alignItems: "center",
@@ -474,21 +466,21 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 14,
-    borderRadius: 18,
+    borderRadius: 16,
     borderWidth: 1,
-    paddingHorizontal: 16,
-    paddingVertical: 14,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
   },
   footerIcon: {
-    width: 38,
-    height: 38,
-    borderRadius: 12,
+    width: 36,
+    height: 36,
+    borderRadius: 11,
     alignItems: "center",
     justifyContent: "center",
     flexShrink: 0,
   },
-  footerLabel: { fontSize: 15, fontFamily: "Inter_700Bold" },
-  footerSub: { fontSize: 12, fontFamily: "Inter_400Regular", marginTop: 1 },
+  footerLabel: { fontSize: 14, fontFamily: "Inter_700Bold" },
+  footerSub: { fontSize: 11.5, fontFamily: "Inter_400Regular", marginTop: 1 },
   browseRow: {
     flexDirection: "row",
     alignItems: "center",

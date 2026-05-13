@@ -2,7 +2,7 @@ import {
   View, Text, Modal, Pressable, ScrollView, TextInput,
   StyleSheet, useWindowDimensions, ActivityIndicator,
 } from "react-native";
-import { useState, useMemo, useEffect, useCallback, memo } from "react";
+import { useState, useMemo, useEffect, memo } from "react";
 import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Animated, { FadeIn } from "react-native-reanimated";
@@ -17,9 +17,13 @@ interface Props {
   onClose: () => void;
 }
 
+const BRAND_IDS = new Set([
+  "whatsapp", "instagram", "twitter", "facebook", "linkedin",
+  "youtube", "spotify", "paypal", "venmo", "grab", "bharat_qr", "telegram",
+]);
+
 const TAG_FILTERS = [
   { key: "all",      label: "All",       icon: "apps-outline"           },
-  { key: "india",    label: "🇮🇳 India",  icon: "card-outline"           },
   { key: "payment",  label: "Payments",  icon: "cash-outline"           },
   { key: "social",   label: "Social",    icon: "people-outline"         },
   { key: "contact",  label: "Contact",   icon: "person-circle-outline"  },
@@ -43,15 +47,10 @@ function TemplatePickerModal({ visible, selectedPreset, onSelect, onClose }: Pro
     if (!visible) return;
     setLoading(true);
     CategoryRegistryService.getAll()
-      .then(setAllCategories)
+      .then((cats) => setAllCategories(cats.filter((c) => !BRAND_IDS.has(c.id))))
       .catch(() => {})
       .finally(() => setLoading(false));
   }, [visible]);
-
-  const indiaFirst = useMemo(
-    () => allCategories.filter(c => c.isIndiaFirst || c.region === "india").slice(0, 5),
-    [allCategories]
-  );
 
   const searchResults = useMemo((): CategorySearchResult[] | null => {
     const q = search.trim();
@@ -62,8 +61,7 @@ function TemplatePickerModal({ visible, selectedPreset, onSelect, onClose }: Pro
     if (activeTag !== "all") {
       pool = pool.filter(c =>
         c.tags.includes(activeTag) ||
-        c.id.includes(activeTag) ||
-        (activeTag === "india" && (c.region === "india" || c.isIndiaFirst))
+        c.id.includes(activeTag)
       );
     }
 
@@ -143,7 +141,7 @@ function TemplatePickerModal({ visible, selectedPreset, onSelect, onClose }: Pro
             <View style={{ flex: 1 }}>
               <Text style={[styles.title, { color: colors.text }]}>Choose QR Type</Text>
               <Text style={[styles.subtitle, { color: colors.textMuted }]}>
-                {totalCount} types — India-first, globally trusted
+                {totalCount} types available worldwide
               </Text>
             </View>
             <Pressable
@@ -217,30 +215,7 @@ function TemplatePickerModal({ visible, selectedPreset, onSelect, onClose }: Pro
               contentContainerStyle={{ paddingBottom: 16 }}
             >
               {searchResults === null ? (
-                <>
-                  {/* India-first pinned section */}
-                  {indiaFirst.length > 0 && (
-                    <Animated.View entering={FadeIn.duration(300)}>
-                      <SectionHeader
-                        label="🇮🇳 India Business"
-                        sublabel="Most popular in India"
-                        colors={colors}
-                      />
-                      <View style={styles.catItems}>
-                        {indiaFirst.map(cat => (
-                          <CategoryRow
-                            key={cat.id}
-                            category={cat}
-                            isSelected={cat.presetIdx === selectedPreset}
-                            onPress={() => handleSelect(cat)}
-                            colors={colors}
-                          />
-                        ))}
-                      </View>
-                    </Animated.View>
-                  )}
-
-                  {/* All categories grouped */}
+                <Animated.View entering={FadeIn.duration(300)}>
                   <SectionHeader
                     label="All Types"
                     sublabel={`${totalCount} types available`}
@@ -248,7 +223,6 @@ function TemplatePickerModal({ visible, selectedPreset, onSelect, onClose }: Pro
                   />
                   <View style={styles.catItems}>
                     {allCategories
-                      .filter(c => !c.isIndiaFirst)
                       .sort((a, b) => b.popularity - a.popularity)
                       .map(cat => (
                         <CategoryRow
@@ -260,7 +234,7 @@ function TemplatePickerModal({ visible, selectedPreset, onSelect, onClose }: Pro
                         />
                       ))}
                   </View>
-                </>
+                </Animated.View>
               ) : searchResults.length === 0 ? (
                 <EmptyState query={search} activeTag={activeTag} colors={colors} />
               ) : (
@@ -342,9 +316,6 @@ function CategoryRow({
               </Text>
             </View>
           )}
-          {category.region === "india" && !category.badge && (
-            <Text style={styles.flagEmoji}>🇮🇳</Text>
-          )}
         </View>
         <Text style={[styles.presetHint, { color: colors.textMuted }]} numberOfLines={1}>
           {category.description}
@@ -369,7 +340,7 @@ function EmptyState({ query, activeTag, colors }: { query: string; activeTag: st
       </Text>
       <Text style={[styles.emptySubtitle, { color: colors.textMuted }]}>
         {query
-          ? "Try different keywords — e.g. \"payment\", \"wifi\", \"review\""
+          ? "Try different keywords — e.g. \"payment\", \"wifi\", \"contact\""
           : "Try a different filter"}
       </Text>
     </View>
@@ -436,7 +407,6 @@ const styles = StyleSheet.create({
   presetHint: { fontSize: 11, fontFamily: "Inter_400Regular" },
   badge: { borderRadius: 5, paddingHorizontal: 6, paddingVertical: 2 },
   badgeText: { fontSize: 9, fontFamily: "Inter_700Bold", letterSpacing: 0.3 },
-  flagEmoji: { fontSize: 11, marginLeft: 2 },
   loadingWrap: {
     flex: 1, alignItems: "center", justifyContent: "center",
     paddingTop: 60, gap: 12,
