@@ -1,44 +1,15 @@
 import { isLiquidGlassAvailable } from "expo-glass-effect";
-import { Tabs, router } from "expo-router";
+import { Tabs } from "expo-router";
 import { NativeTabs, Icon, Label } from "expo-router/unstable-native-tabs";
 import { BlurView } from "expo-blur";
-import { Platform, StyleSheet, View, Pressable, Text } from "react-native";
+import { Platform, StyleSheet, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { MaterialCommunityIcons, Ionicons } from "@expo/vector-icons";
 import React, { useState, useEffect } from "react";
 import { useTheme } from "@/contexts/ThemeContext";
-import * as Haptics from "@/lib/haptics";
 import { useAuth } from "@/contexts/AuthContext";
 import { subscribeToNotificationCount } from "@/lib/firestore-service";
-import { LinearGradient } from "expo-linear-gradient";
 import { useAppTranslation } from "@/lib/i18n/useAppTranslation";
-
-function ScanTabButton({ onPress }: { onPress?: () => void }) {
-  const { colors } = useTheme();
-  return (
-    <Pressable
-      onPress={() => {
-        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-        if (onPress) onPress();
-      }}
-      style={styles.scanTabBtn}
-      accessibilityLabel="Scan"
-      accessibilityRole="button"
-    >
-      <LinearGradient
-        colors={[colors.primary, colors.primaryShade]}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-        style={[styles.scanTabBtnInner, {
-          borderColor: colors.background,
-          shadowColor: colors.primary,
-        }]}
-      >
-        <MaterialCommunityIcons name="qrcode-scan" size={30} color="#fff" />
-      </LinearGradient>
-    </Pressable>
-  );
-}
 
 function useNotificationCount() {
   const { user } = useAuth();
@@ -68,10 +39,6 @@ function NativeTabLayout() {
         <Icon sf={{ default: "qrcode", selected: "qrcode" }} />
         <Label>{t("tabs.generator")}</Label>
       </NativeTabs.Trigger>
-      <NativeTabs.Trigger name="scanner">
-        <Icon sf={{ default: "qrcode.viewfinder", selected: "qrcode.viewfinder" }} />
-        <Label>{t("tabs.scanner")}</Label>
-      </NativeTabs.Trigger>
       <NativeTabs.Trigger name="history">
         <Icon sf={{ default: "clock", selected: "clock.fill" }} />
         <Label>{t("tabs.history")}</Label>
@@ -92,6 +59,8 @@ function ClassicTabLayout() {
   const { t } = useAppTranslation();
 
   const tabBarHeight = isWeb ? 84 : 70 + insets.bottom;
+
+  const hiddenTabBar = { display: "none" as const };
 
   return (
     <Tabs
@@ -166,6 +135,7 @@ function ClassicTabLayout() {
         },
       }}
     >
+      {/* ── Visible tabs (nav bar shows) ── */}
       <Tabs.Screen
         name="index"
         options={{
@@ -185,17 +155,6 @@ function ClassicTabLayout() {
             <View style={focused ? [styles.activeIconWrap, { backgroundColor: color + "18" }] : styles.iconWrap}>
               <MaterialCommunityIcons name={focused ? "qrcode-edit" : "qrcode"} size={24} color={color} />
             </View>
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="scanner"
-        options={{
-          title: "",
-          tabBarLabel: () => null,
-          tabBarStyle: { display: "none" },
-          tabBarButton: (props) => (
-            <ScanTabButton onPress={props.onPress as () => void} />
           ),
         }}
       />
@@ -221,11 +180,20 @@ function ClassicTabLayout() {
           ),
         }}
       />
+
+      {/* ── Hidden screens (no tab button, no nav bar) ── */}
+      <Tabs.Screen
+        name="scanner"
+        options={{
+          href: null,
+          tabBarStyle: hiddenTabBar,
+        }}
+      />
       <Tabs.Screen
         name="settings"
         options={{
           href: null,
-          tabBarStyle: { display: "none" },
+          tabBarStyle: hiddenTabBar,
         }}
       />
     </Tabs>
@@ -240,24 +208,6 @@ export default function TabLayout() {
 }
 
 const styles = StyleSheet.create({
-  scanTabBtn: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-    marginTop: -28,
-  },
-  scanTabBtnInner: {
-    width: 66,
-    height: 66,
-    borderRadius: 33,
-    alignItems: "center",
-    justifyContent: "center",
-    borderWidth: 3.5,
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.5,
-    shadowRadius: 16,
-    elevation: 16,
-  },
   iconWrap: {
     width: 40,
     height: 28,
