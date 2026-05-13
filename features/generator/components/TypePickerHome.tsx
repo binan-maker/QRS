@@ -4,6 +4,7 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import Reanimated, { FadeIn, FadeInUp } from "react-native-reanimated";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTheme } from "@/contexts/ThemeContext";
 import * as Haptics from "@/lib/haptics";
 import type { BusinessCategory } from "@/features/generator/components/BusinessTypeSelector";
@@ -67,10 +68,10 @@ interface QuickTile {
 }
 
 const STANDARD_TILES: QuickTile[] = [
-  { presetIdx: 1, label: "Link",    icon: "link-outline",               color: "#3B82F6" },
-  { presetIdx: 5, label: "Chat",    icon: "chatbubble-ellipses-outline", color: "#22C55E" },
-  { presetIdx: 6, label: "WiFi",    icon: "wifi-outline",                color: "#F59E0B" },
-  { presetIdx: 9, label: "Contact", icon: "person-outline",              color: "#8B5CF6" },
+  { presetIdx: 1,  label: "Link",    icon: "link-outline",               color: "#3B82F6" },
+  { presetIdx: 5,  label: "Chat",    icon: "chatbubble-ellipses-outline", color: "#22C55E" },
+  { presetIdx: 6,  label: "WiFi",    icon: "wifi-outline",                color: "#F59E0B" },
+  { presetIdx: 9,  label: "Contact", icon: "person-outline",              color: "#8B5CF6" },
 ];
 
 interface BusinessTile {
@@ -82,17 +83,17 @@ interface BusinessTile {
 }
 
 const BUSINESS_TILES: BusinessTile[] = [
-  { category: "website",  label: "Website",  sub: "Redirect to any URL",      icon: "globe-outline",    color: "#3B82F6" },
-  { category: "whatsapp", label: "WhatsApp", sub: "Redirect to chat",         icon: "logo-whatsapp",    color: "#22C55E" },
-  { category: "upi",      label: "UPI Pay",  sub: "Redirect to payment",      icon: "card-outline",     color: "#8B5CF6" },
-  { category: "wifi",     label: "WiFi",     sub: "Show network credentials", icon: "wifi-outline",     color: "#F59E0B" },
-  { category: "event",    label: "Event",    sub: "Redirect to calendar",     icon: "calendar-outline", color: "#EC4899" },
-  { category: "phone",    label: "Phone",    sub: "Redirect to call",         icon: "call-outline",     color: "#14B8A6" },
+  { category: "website",  label: "Website",    sub: "Redirect to any URL",   icon: "globe-outline",              color: "#3B82F6" },
+  { category: "whatsapp", label: "Chat Link",  sub: "Redirect to chat",      icon: "chatbubble-ellipses-outline", color: "#22C55E" },
+  { category: "wifi",     label: "WiFi",       sub: "Share credentials",     icon: "wifi-outline",               color: "#F59E0B" },
+  { category: "event",    label: "Event",      sub: "Redirect to calendar",  icon: "calendar-outline",           color: "#EC4899" },
+  { category: "phone",    label: "Phone",      sub: "Redirect to call",      icon: "call-outline",               color: "#14B8A6" },
 ];
 
 interface Props {
   qrMode: QrMode;
   onSetMode: (mode: QrMode) => void;
+  onModeCardPress: (mode: QrMode) => void;
   onSelectPreset: (idx: number) => void;
   onSelectBusinessCategory: (cat: BusinessCategory) => void;
   onOpenTemplates: () => void;
@@ -101,21 +102,29 @@ interface Props {
 }
 
 function TypePickerHome({
-  qrMode, onSetMode,
+  qrMode, onSetMode, onModeCardPress,
   onSelectPreset, onSelectBusinessCategory,
   onOpenTemplates, onOpenCustom,
   user,
 }: Props) {
   const { colors } = useTheme();
   const { width } = useWindowDimensions();
+  const insets = useSafeAreaInsets();
 
   const pad = 20;
   const gap = 10;
   const tileSize = (width - pad * 2 - gap) / 2;
+  const scrollPadBottom = insets.bottom + 80;
 
-  function pickMode(mode: QrMode) {
+  function pressMode(mode: QrMode) {
     if (mode === "business" && !user) return;
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    onModeCardPress(mode);
+  }
+
+  function tapModeBadge(mode: QrMode) {
+    if (mode === "business" && !user) return;
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     onSetMode(mode);
   }
 
@@ -136,9 +145,9 @@ function TypePickerHome({
     <ScrollView
       style={{ flex: 1 }}
       showsVerticalScrollIndicator={false}
-      contentContainerStyle={[styles.root, { paddingHorizontal: pad, paddingBottom: 40 }]}
+      contentContainerStyle={[styles.root, { paddingHorizontal: pad, paddingBottom: scrollPadBottom }]}
     >
-      {/* ── Mode selector ── */}
+      {/* ── Mode cards ── */}
       <Reanimated.View entering={FadeIn.duration(300)} style={styles.modeRow}>
         {MODES.map((m) => {
           const active = qrMode === m.key;
@@ -146,7 +155,9 @@ function TypePickerHome({
           return (
             <Pressable
               key={m.key}
-              onPress={() => pickMode(m.key)}
+              onPress={() => pressMode(m.key)}
+              onLongPress={() => tapModeBadge(m.key)}
+              delayLongPress={400}
               style={({ pressed }) => [
                 styles.modeCard,
                 {
@@ -172,7 +183,12 @@ function TypePickerHome({
                 {m.label}
               </Text>
 
-              <Text style={[styles.modeTag, { color: disabled ? colors.textMuted : active ? m.color + "CC" : colors.textMuted }]} numberOfLines={1}>
+              <Text
+                style={[styles.modeTag, {
+                  color: disabled ? colors.textMuted : active ? m.color + "CC" : colors.textMuted,
+                }]}
+                numberOfLines={1}
+              >
                 {disabled ? "Sign in" : m.tag}
               </Text>
 
@@ -234,7 +250,7 @@ function TypePickerHome({
         </Reanimated.View>
       )}
 
-      {/* ── Business: list of 6 types ── */}
+      {/* ── Business: 5 generic redirect types ── */}
       {qrMode === "business" && (
         <Reanimated.View entering={FadeInUp.duration(300).delay(80)} style={{ gap: 8 }}>
           {BUSINESS_TILES.map((t) => (
@@ -265,7 +281,7 @@ function TypePickerHome({
           <View style={[styles.bizNote, { backgroundColor: colors.surfaceLight, borderColor: colors.surfaceBorder }]}>
             <Ionicons name="swap-horizontal-outline" size={13} color={colors.textMuted} />
             <Text style={[styles.bizNoteText, { color: colors.textMuted }]}>
-              All 6 types support destination changes without reprinting.
+              All types support destination changes without reprinting.
             </Text>
           </View>
         </Reanimated.View>
@@ -306,7 +322,7 @@ function TypePickerHome({
             style={({ pressed }) => [styles.browseRow, { opacity: pressed ? 0.6 : 1 }]}
           >
             <Ionicons name="apps-outline" size={14} color={colors.textMuted} />
-            <Text style={[styles.browseText, { color: colors.textMuted }]}>Browse all 28 types</Text>
+            <Text style={[styles.browseText, { color: colors.textMuted }]}>Browse all types</Text>
             <Ionicons name="chevron-forward" size={12} color={colors.textMuted} />
           </Pressable>
         </Reanimated.View>
@@ -322,7 +338,6 @@ const CARD_HEIGHT = 118;
 const styles = StyleSheet.create({
   root: { gap: 12 },
 
-  /* Mode row */
   modeRow: { flexDirection: "row", gap: 10 },
   modeCard: {
     flex: 1,
@@ -373,7 +388,6 @@ const styles = StyleSheet.create({
     borderTopRightRadius: 3,
   },
 
-  /* Banner */
   banner: {
     flexDirection: "row",
     alignItems: "flex-start",
@@ -390,7 +404,6 @@ const styles = StyleSheet.create({
     lineHeight: 17,
   },
 
-  /* Section divider */
   sectionRow: {
     flexDirection: "row",
     alignItems: "center",
@@ -405,7 +418,6 @@ const styles = StyleSheet.create({
     letterSpacing: 1,
   },
 
-  /* Quick-create tiles */
   grid: { flexDirection: "row", flexWrap: "wrap", gap: 10 },
   tile: {
     borderRadius: 22,
@@ -427,7 +439,6 @@ const styles = StyleSheet.create({
   },
   tileLabel: { fontSize: 17, fontFamily: "Inter_700Bold" },
 
-  /* Business rows */
   bizRow: {
     flexDirection: "row",
     alignItems: "center",
@@ -459,7 +470,6 @@ const styles = StyleSheet.create({
   },
   bizNoteText: { flex: 1, fontSize: 11, fontFamily: "Inter_400Regular" },
 
-  /* Footer */
   footerRow: {
     flexDirection: "row",
     alignItems: "center",

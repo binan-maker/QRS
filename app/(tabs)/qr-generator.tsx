@@ -131,6 +131,13 @@ function QrGeneratorScreen() {
     setQrMode(mode);
   }, [setQrMode, user]);
 
+  const handleModeCardPress = useCallback((mode: QrMode) => {
+    if (mode === "business" && !user) return;
+    setQrMode(mode);
+    switchPreset(0);
+    setView("create");
+  }, [setQrMode, switchPreset, user]);
+
   const handleOpenTemplates = useCallback(() => {
     Keyboard.dismiss();
     setTimeout(() => setTemplateModalOpen(true), 80);
@@ -193,6 +200,7 @@ function QrGeneratorScreen() {
           <TypePickerHome
             qrMode={qrMode}
             onSetMode={handleSetHomeMode}
+            onModeCardPress={handleModeCardPress}
             onSelectPreset={handleSelectPreset}
             onSelectBusinessCategory={handleSelectBusinessCategory}
             onOpenTemplates={handleOpenTemplatesFromHome}
