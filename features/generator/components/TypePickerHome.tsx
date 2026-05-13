@@ -13,7 +13,7 @@ type QrMode = "individual" | "business" | "private";
 interface ModeCard {
   key: QrMode;
   label: string;
-  sub: string;
+  tag: string;
   icon: keyof typeof Ionicons.glyphMap;
   color: string;
   badge?: string;
@@ -23,14 +23,14 @@ const MODES: ModeCard[] = [
   {
     key: "individual",
     label: "Standard",
-    sub: "Saved + tracked",
-    icon: "bookmark-outline",
+    tag: "Saved · Tracked",
+    icon: "shield-checkmark-outline",
     color: "#3B82F6",
   },
   {
     key: "business",
     label: "Business",
-    sub: "Smart Redirect",
+    tag: "Smart Redirect",
     icon: "storefront-outline",
     color: "#F59E0B",
     badge: "PRO",
@@ -38,25 +38,39 @@ const MODES: ModeCard[] = [
   {
     key: "private",
     label: "Private",
-    sub: "No trace",
+    tag: "No trace",
     icon: "eye-off-outline",
     color: "#64748B",
   },
 ];
 
+const BANNER: Record<QrMode, { icon: keyof typeof Ionicons.glyphMap; line: string }> = {
+  individual: {
+    icon: "shield-checkmark-outline",
+    line: "QR sticker encodes a qrguard.app/go/ID link — only our database reveals the real content.",
+  },
+  business: {
+    icon: "sync-outline",
+    line: "Same database-lock as Standard — change the destination anytime without reprinting.",
+  },
+  private: {
+    icon: "eye-off-outline",
+    line: "Raw content baked directly into the QR. No server, no database, no tracking.",
+  },
+};
+
 interface QuickTile {
   presetIdx: number;
   label: string;
-  sub: string;
   icon: keyof typeof Ionicons.glyphMap;
   color: string;
 }
 
 const STANDARD_TILES: QuickTile[] = [
-  { presetIdx: 1, label: "Link",    sub: "Website or URL",    icon: "link-outline",               color: "#3B82F6" },
-  { presetIdx: 5, label: "Chat",    sub: "WhatsApp message",  icon: "chatbubble-ellipses-outline", color: "#22C55E" },
-  { presetIdx: 6, label: "WiFi",    sub: "Share password",    icon: "wifi-outline",                color: "#F59E0B" },
-  { presetIdx: 9, label: "Contact", sub: "Business card",     icon: "person-outline",              color: "#8B5CF6" },
+  { presetIdx: 1, label: "Link",    icon: "link-outline",               color: "#3B82F6" },
+  { presetIdx: 5, label: "Chat",    icon: "chatbubble-ellipses-outline", color: "#22C55E" },
+  { presetIdx: 6, label: "WiFi",    icon: "wifi-outline",                color: "#F59E0B" },
+  { presetIdx: 9, label: "Contact", icon: "person-outline",              color: "#8B5CF6" },
 ];
 
 interface BusinessTile {
@@ -68,12 +82,12 @@ interface BusinessTile {
 }
 
 const BUSINESS_TILES: BusinessTile[] = [
-  { category: "website",  label: "Website",   sub: "URL — redirect to any site",       icon: "globe-outline",    color: "#3B82F6" },
-  { category: "whatsapp", label: "WhatsApp",  sub: "Chat link — redirect to number",   icon: "logo-whatsapp",    color: "#22C55E" },
-  { category: "upi",      label: "UPI Pay",   sub: "Payment — redirect to UPI ID",     icon: "card-outline",     color: "#8B5CF6" },
-  { category: "wifi",     label: "WiFi",      sub: "Network — show credentials",       icon: "wifi-outline",     color: "#F59E0B" },
-  { category: "event",    label: "Event",     sub: "Calendar — redirect to event",     icon: "calendar-outline", color: "#EC4899" },
-  { category: "phone",    label: "Phone",     sub: "Call — redirect to phone number",  icon: "call-outline",     color: "#14B8A6" },
+  { category: "website",  label: "Website",  sub: "Redirect to any URL",      icon: "globe-outline",    color: "#3B82F6" },
+  { category: "whatsapp", label: "WhatsApp", sub: "Redirect to chat",         icon: "logo-whatsapp",    color: "#22C55E" },
+  { category: "upi",      label: "UPI Pay",  sub: "Redirect to payment",      icon: "card-outline",     color: "#8B5CF6" },
+  { category: "wifi",     label: "WiFi",     sub: "Show network credentials", icon: "wifi-outline",     color: "#F59E0B" },
+  { category: "event",    label: "Event",    sub: "Redirect to calendar",     icon: "calendar-outline", color: "#EC4899" },
+  { category: "phone",    label: "Phone",    sub: "Redirect to call",         icon: "call-outline",     color: "#14B8A6" },
 ];
 
 interface Props {
@@ -116,6 +130,7 @@ function TypePickerHome({
   }
 
   const activeMode = MODES.find((m) => m.key === qrMode)!;
+  const banner = BANNER[qrMode];
 
   return (
     <ScrollView
@@ -135,80 +150,60 @@ function TypePickerHome({
               style={({ pressed }) => [
                 styles.modeCard,
                 {
-                  backgroundColor: active ? m.color + "1A" : colors.surface,
-                  borderColor: active ? m.color : colors.surfaceBorder,
+                  backgroundColor: active ? m.color + "18" : colors.surface,
+                  borderColor: active ? m.color + "80" : colors.surfaceBorder,
                   borderWidth: active ? 1.5 : 1,
-                  opacity: pressed ? 0.78 : disabled ? 0.42 : 1,
-                  transform: [{ scale: pressed ? 0.96 : 1 }],
+                  opacity: disabled ? 0.4 : pressed ? 0.76 : 1,
+                  transform: [{ scale: pressed && !disabled ? 0.96 : 1 }],
                 },
               ]}
             >
               {m.badge && (
-                <View style={[styles.modeBadge, { backgroundColor: m.color + "25", borderColor: m.color + "40" }]}>
+                <View style={[styles.modeBadge, { backgroundColor: m.color + "25", borderColor: m.color + "50" }]}>
                   <Text style={[styles.modeBadgeText, { color: m.color }]}>{m.badge}</Text>
                 </View>
               )}
+
               <View style={[styles.modeIconWrap, { backgroundColor: m.color + (active ? "28" : "16") }]}>
-                <Ionicons name={m.icon} size={20} color={m.color} />
+                <Ionicons name={m.icon} size={22} color={m.color} />
               </View>
+
               <Text style={[styles.modeLabel, { color: active ? m.color : colors.text }]} numberOfLines={1}>
                 {m.label}
               </Text>
-              <Text style={[styles.modeSub, { color: colors.textMuted }]} numberOfLines={2}>
-                {disabled ? "Login required" : m.sub}
+
+              <Text style={[styles.modeTag, { color: disabled ? colors.textMuted : active ? m.color + "CC" : colors.textMuted }]} numberOfLines={1}>
+                {disabled ? "Sign in" : m.tag}
               </Text>
-              {active && <View style={[styles.modeActiveDot, { backgroundColor: m.color }]} />}
+
+              {active && (
+                <View style={[styles.activeBar, { backgroundColor: m.color }]} />
+              )}
             </Pressable>
           );
         })}
       </Reanimated.View>
 
-      {/* ── Mode description banner ── */}
+      {/* ── Mode banner ── */}
       <Reanimated.View entering={FadeIn.duration(280).delay(40)}>
-        <View style={[styles.modeBanner, {
-          backgroundColor: activeMode.color + "0E",
-          borderColor: activeMode.color + "30",
+        <View style={[styles.banner, {
+          backgroundColor: activeMode.color + "0C",
+          borderColor: activeMode.color + "28",
         }]}>
-          {qrMode === "individual" && (
-            <>
-              <Ionicons name="shield-checkmark-outline" size={13} color={activeMode.color} style={{ marginTop: 1 }} />
-              <Text style={[styles.modeBannerText, { color: activeMode.color }]}>
-                QR encodes a{" "}
-                <Text style={{ fontFamily: "Inter_700Bold" }}>qrguard.app/go/ID</Text>
-                {" "}— only QR Guard's database can reveal the real content. Scan history tracked. Other apps see our web page.
-              </Text>
-            </>
-          )}
-          {qrMode === "business" && (
-            <>
-              <Ionicons name="sync-outline" size={13} color={activeMode.color} style={{ marginTop: 1 }} />
-              <Text style={[styles.modeBannerText, { color: activeMode.color }]}>
-                <Text style={{ fontFamily: "Inter_700Bold" }}>Smart Redirect — </Text>
-                QR encodes a{" "}
-                <Text style={{ fontFamily: "Inter_700Bold" }}>/guard/ID</Text>
-                {" "}link. Change the destination anytime without reprinting.
-              </Text>
-            </>
-          )}
-          {qrMode === "private" && (
-            <>
-              <Ionicons name="eye-off-outline" size={13} color={activeMode.color} style={{ marginTop: 1 }} />
-              <Text style={[styles.modeBannerText, { color: activeMode.color }]}>
-                <Text style={{ fontFamily: "Inter_700Bold" }}>No trace — </Text>
-                raw content embedded directly in QR. No database, no server, no save. Works fully offline.
-              </Text>
-            </>
-          )}
+          <Ionicons name={banner.icon} size={13} color={activeMode.color} style={{ flexShrink: 0, marginTop: 1 }} />
+          <Text style={[styles.bannerText, { color: activeMode.color }]} numberOfLines={2}>
+            {banner.line}
+          </Text>
         </View>
       </Reanimated.View>
 
-      {/* ── Section divider ── */}
-      <Reanimated.View entering={FadeInUp.duration(260).delay(60)} style={styles.sectionHeaderRow}>
-        <View style={[styles.dividerLine, { backgroundColor: colors.surfaceBorder }]} />
-        <Text style={[styles.sectionHeaderText, { color: colors.textMuted }]}>
+      {/* ── Section label ── */}
+      <Reanimated.View entering={FadeInUp.duration(260).delay(60)} style={styles.sectionRow}>
+        <View style={[styles.divider, { backgroundColor: colors.surfaceBorder }]} />
+        <Text style={[styles.sectionLabel, { color: colors.textMuted }]}>
           {qrMode === "business" ? "Choose Type" : "Quick Create"}
         </Text>
-        <View style={[styles.dividerLine, { backgroundColor: colors.surfaceBorder }]} />
+        <View style={[styles.divider, { backgroundColor: colors.surfaceBorder }]} />
       </Reanimated.View>
 
       {/* ── Standard / Private: 2×2 tile grid ── */}
@@ -222,25 +217,24 @@ function TypePickerHome({
                 styles.tile,
                 {
                   width: tileSize,
-                  height: tileSize * 0.82,
+                  height: tileSize * 0.78,
                   backgroundColor: colors.surface,
                   borderColor: colors.surfaceBorder,
-                  opacity: pressed ? 0.78 : 1,
+                  opacity: pressed ? 0.76 : 1,
                   transform: [{ scale: pressed ? 0.96 : 1 }],
                 },
               ]}
             >
-              <View style={[styles.tileIconRing, { backgroundColor: t.color + "18" }]}>
-                <Ionicons name={t.icon} size={26} color={t.color} />
+              <View style={[styles.tileIcon, { backgroundColor: t.color + "18" }]}>
+                <Ionicons name={t.icon} size={24} color={t.color} />
               </View>
               <Text style={[styles.tileLabel, { color: colors.text }]}>{t.label}</Text>
-              <Text style={[styles.tileSub, { color: colors.textMuted }]}>{t.sub}</Text>
             </Pressable>
           ))}
         </Reanimated.View>
       )}
 
-      {/* ── Business: list of 6 redirect-capable types ── */}
+      {/* ── Business: list of 6 types ── */}
       {qrMode === "business" && (
         <Reanimated.View entering={FadeInUp.duration(300).delay(80)} style={{ gap: 8 }}>
           {BUSINESS_TILES.map((t) => (
@@ -248,36 +242,36 @@ function TypePickerHome({
               key={t.category}
               onPress={() => pickBusiness(t.category)}
               style={({ pressed }) => [
-                styles.businessRow,
+                styles.bizRow,
                 {
                   backgroundColor: colors.surface,
                   borderColor: colors.surfaceBorder,
-                  opacity: pressed ? 0.78 : 1,
+                  opacity: pressed ? 0.76 : 1,
                   transform: [{ scale: pressed ? 0.98 : 1 }],
                 },
               ]}
             >
-              <View style={[styles.businessIconBox, { backgroundColor: t.color + "18" }]}>
+              <View style={[styles.bizIcon, { backgroundColor: t.color + "18" }]}>
                 <Ionicons name={t.icon} size={20} color={t.color} />
               </View>
               <View style={{ flex: 1 }}>
-                <Text style={[styles.businessRowLabel, { color: colors.text }]}>{t.label}</Text>
-                <Text style={[styles.businessRowSub, { color: colors.textMuted }]}>{t.sub}</Text>
+                <Text style={[styles.bizLabel, { color: colors.text }]}>{t.label}</Text>
+                <Text style={[styles.bizSub, { color: colors.textMuted }]} numberOfLines={1}>{t.sub}</Text>
               </View>
-              <Ionicons name="chevron-forward" size={16} color={colors.textMuted} />
+              <Ionicons name="chevron-forward" size={15} color={colors.textMuted} />
             </Pressable>
           ))}
 
-          <View style={[styles.whyBanner, { backgroundColor: colors.surfaceLight, borderColor: colors.surfaceBorder }]}>
-            <Ionicons name="information-circle-outline" size={13} color={colors.textMuted} />
-            <Text style={[styles.whyText, { color: colors.textMuted }]}>
-              Only these 6 types support Smart Redirect. Their destination can be updated server-side at any time without reprinting.
+          <View style={[styles.bizNote, { backgroundColor: colors.surfaceLight, borderColor: colors.surfaceBorder }]}>
+            <Ionicons name="swap-horizontal-outline" size={13} color={colors.textMuted} />
+            <Text style={[styles.bizNoteText, { color: colors.textMuted }]}>
+              All 6 types support destination changes without reprinting.
             </Text>
           </View>
         </Reanimated.View>
       )}
 
-      {/* ── Standard / Private footer actions ── */}
+      {/* ── Footer actions (Standard / Private) ── */}
       {qrMode !== "business" && (
         <Reanimated.View entering={FadeInUp.duration(300).delay(120)} style={{ gap: 10, marginTop: 4 }}>
           <Pressable
@@ -286,22 +280,22 @@ function TypePickerHome({
               onOpenCustom();
             }}
             style={({ pressed }) => [
-              styles.customRow,
+              styles.footerRow,
               {
                 backgroundColor: colors.surface,
                 borderColor: colors.surfaceBorder,
-                opacity: pressed ? 0.78 : 1,
+                opacity: pressed ? 0.76 : 1,
               },
             ]}
           >
-            <View style={[styles.customIconBox, { backgroundColor: colors.primaryDim }]}>
+            <View style={[styles.footerIcon, { backgroundColor: colors.primaryDim }]}>
               <Ionicons name="add" size={20} color={colors.primary} />
             </View>
             <View style={{ flex: 1 }}>
-              <Text style={[styles.customLabel, { color: colors.text }]}>Custom QR</Text>
-              <Text style={[styles.customSub, { color: colors.textMuted }]}>Build with your own fields</Text>
+              <Text style={[styles.footerLabel, { color: colors.text }]}>Custom QR</Text>
+              <Text style={[styles.footerSub, { color: colors.textMuted }]}>Build with your own fields</Text>
             </View>
-            <Ionicons name="chevron-forward" size={16} color={colors.textMuted} />
+            <Ionicons name="chevron-forward" size={15} color={colors.textMuted} />
           </Pressable>
 
           <Pressable
@@ -309,11 +303,11 @@ function TypePickerHome({
               Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
               onOpenTemplates();
             }}
-            style={({ pressed }) => [styles.moreRow, { opacity: pressed ? 0.65 : 1 }]}
+            style={({ pressed }) => [styles.browseRow, { opacity: pressed ? 0.6 : 1 }]}
           >
-            <Ionicons name="apps-outline" size={15} color={colors.textMuted} />
-            <Text style={[styles.moreText, { color: colors.textMuted }]}>Browse all 28 types</Text>
-            <Ionicons name="chevron-forward" size={13} color={colors.textMuted} />
+            <Ionicons name="apps-outline" size={14} color={colors.textMuted} />
+            <Text style={[styles.browseText, { color: colors.textMuted }]}>Browse all 28 types</Text>
+            <Ionicons name="chevron-forward" size={12} color={colors.textMuted} />
           </Pressable>
         </Reanimated.View>
       )}
@@ -323,18 +317,24 @@ function TypePickerHome({
 
 export default memo(TypePickerHome);
 
-const styles = StyleSheet.create({
-  root: { gap: 14 },
+const CARD_HEIGHT = 118;
 
+const styles = StyleSheet.create({
+  root: { gap: 12 },
+
+  /* Mode row */
   modeRow: { flexDirection: "row", gap: 10 },
   modeCard: {
     flex: 1,
-    borderRadius: 18,
-    padding: 14,
+    height: CARD_HEIGHT,
+    borderRadius: 20,
     alignItems: "center",
-    gap: 6,
+    justifyContent: "center",
+    gap: 5,
     position: "relative",
     overflow: "hidden",
+    paddingHorizontal: 8,
+    paddingVertical: 14,
   },
   modeBadge: {
     position: "absolute",
@@ -345,7 +345,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 5,
     paddingVertical: 2,
   },
-  modeBadgeText: { fontSize: 8, fontFamily: "Inter_700Bold", letterSpacing: 0.4 },
+  modeBadgeText: { fontSize: 7.5, fontFamily: "Inter_700Bold", letterSpacing: 0.5 },
   modeIconWrap: {
     width: 44,
     height: 44,
@@ -353,59 +353,72 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-  modeLabel: { fontSize: 13, fontFamily: "Inter_700Bold", textAlign: "center" },
-  modeSub: { fontSize: 10, fontFamily: "Inter_400Regular", textAlign: "center", lineHeight: 14 },
-  modeActiveDot: {
+  modeLabel: {
+    fontSize: 13,
+    fontFamily: "Inter_700Bold",
+    textAlign: "center",
+  },
+  modeTag: {
+    fontSize: 10,
+    fontFamily: "Inter_500Medium",
+    textAlign: "center",
+  },
+  activeBar: {
     position: "absolute",
-    bottom: 8,
-    width: 4,
-    height: 4,
-    borderRadius: 2,
+    bottom: 0,
+    left: "20%",
+    right: "20%",
+    height: 3,
+    borderTopLeftRadius: 3,
+    borderTopRightRadius: 3,
   },
 
-  modeBanner: {
+  /* Banner */
+  banner: {
     flexDirection: "row",
     alignItems: "flex-start",
     gap: 8,
     borderRadius: 14,
     borderWidth: 1,
     paddingHorizontal: 12,
-    paddingVertical: 10,
+    paddingVertical: 9,
   },
-  modeBannerText: {
+  bannerText: {
     flex: 1,
     fontSize: 12,
     fontFamily: "Inter_400Regular",
     lineHeight: 17,
   },
 
-  sectionHeaderRow: {
+  /* Section divider */
+  sectionRow: {
     flexDirection: "row",
     alignItems: "center",
     gap: 10,
     marginVertical: 2,
   },
-  dividerLine: { flex: 1, height: 1 },
-  sectionHeaderText: {
-    fontSize: 11,
+  divider: { flex: 1, height: StyleSheet.hairlineWidth },
+  sectionLabel: {
+    fontSize: 10,
     fontFamily: "Inter_600SemiBold",
     textTransform: "uppercase",
-    letterSpacing: 0.8,
+    letterSpacing: 1,
   },
 
+  /* Quick-create tiles */
   grid: { flexDirection: "row", flexWrap: "wrap", gap: 10 },
   tile: {
     borderRadius: 22,
     borderWidth: 1,
-    padding: 18,
     alignItems: "flex-start",
     justifyContent: "flex-end",
-    gap: 4,
+    padding: 16,
+    gap: 6,
   },
-  tileIconRing: {
+  tileIcon: {
     position: "absolute",
-    top: 16,
-    right: 16,
+    top: 14,
+    right: 14,
     width: 46,
     height: 46,
     borderRadius: 15,
@@ -413,18 +426,18 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   tileLabel: { fontSize: 17, fontFamily: "Inter_700Bold" },
-  tileSub: { fontSize: 11, fontFamily: "Inter_400Regular" },
 
-  businessRow: {
+  /* Business rows */
+  bizRow: {
     flexDirection: "row",
     alignItems: "center",
     gap: 14,
     borderRadius: 16,
     borderWidth: 1,
     paddingHorizontal: 14,
-    paddingVertical: 13,
+    paddingVertical: 12,
   },
-  businessIconBox: {
+  bizIcon: {
     width: 40,
     height: 40,
     borderRadius: 13,
@@ -432,22 +445,22 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     flexShrink: 0,
   },
-  businessRowLabel: { fontSize: 14, fontFamily: "Inter_700Bold" },
-  businessRowSub: { fontSize: 12, fontFamily: "Inter_400Regular", marginTop: 1 },
-
-  whyBanner: {
+  bizLabel: { fontSize: 14, fontFamily: "Inter_700Bold" },
+  bizSub: { fontSize: 12, fontFamily: "Inter_400Regular", marginTop: 1 },
+  bizNote: {
     flexDirection: "row",
-    alignItems: "flex-start",
-    gap: 8,
+    alignItems: "center",
+    gap: 7,
     borderRadius: 12,
     borderWidth: 1,
     paddingHorizontal: 12,
-    paddingVertical: 10,
-    marginTop: 4,
+    paddingVertical: 9,
+    marginTop: 2,
   },
-  whyText: { flex: 1, fontSize: 11, fontFamily: "Inter_400Regular", lineHeight: 16 },
+  bizNoteText: { flex: 1, fontSize: 11, fontFamily: "Inter_400Regular" },
 
-  customRow: {
+  /* Footer */
+  footerRow: {
     flexDirection: "row",
     alignItems: "center",
     gap: 14,
@@ -456,7 +469,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 14,
   },
-  customIconBox: {
+  footerIcon: {
     width: 38,
     height: 38,
     borderRadius: 12,
@@ -464,14 +477,14 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     flexShrink: 0,
   },
-  customLabel: { fontSize: 15, fontFamily: "Inter_700Bold" },
-  customSub: { fontSize: 12, fontFamily: "Inter_400Regular", marginTop: 1 },
-  moreRow: {
+  footerLabel: { fontSize: 15, fontFamily: "Inter_700Bold" },
+  footerSub: { fontSize: 12, fontFamily: "Inter_400Regular", marginTop: 1 },
+  browseRow: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
     gap: 6,
     paddingVertical: 10,
   },
-  moreText: { fontSize: 13, fontFamily: "Inter_500Medium" },
+  browseText: { fontSize: 13, fontFamily: "Inter_500Medium" },
 });

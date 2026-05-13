@@ -282,33 +282,21 @@ function QrGeneratorScreen() {
                 backgroundColor: activeModeColor + "0D",
                 borderColor: activeModeColor + "28",
               }]}>
-                {qrMode === "individual" && (
-                  <>
-                    <Ionicons name="shield-checkmark-outline" size={12} color={activeModeColor} />
-                    <Text style={[styles.modeInfoText, { color: activeModeColor }]}>
-                      <Text style={{ fontFamily: "Inter_700Bold" }}>Standard — Protected QR:</Text>
-                      {" "}your QR sticker encodes a <Text style={{ fontFamily: "Inter_600SemiBold" }}>qrguard.app/go/ID</Text> link. Only QR Guard's database reveals the real content. Other scanners see our web page.
-                    </Text>
-                  </>
-                )}
-                {qrMode === "business" && (
-                  <>
-                    <Ionicons name="sync-outline" size={12} color={activeModeColor} />
-                    <Text style={[styles.modeInfoText, { color: activeModeColor }]}>
-                      <Text style={{ fontFamily: "Inter_700Bold" }}>Business — Smart Redirect:</Text>
-                      {" "}QR encodes a <Text style={{ fontFamily: "Inter_600SemiBold" }}>/guard/ID</Text> link. Change the destination anytime without reprinting.
-                    </Text>
-                  </>
-                )}
-                {qrMode === "private" && (
-                  <>
-                    <Ionicons name="eye-off-outline" size={12} color={activeModeColor} />
-                    <Text style={[styles.modeInfoText, { color: activeModeColor }]}>
-                      <Text style={{ fontFamily: "Inter_700Bold" }}>Private — No trace:</Text>
-                      {" "}raw content embedded directly in QR. No database, no server, no tracking.
-                    </Text>
-                  </>
-                )}
+                <Ionicons
+                  name={
+                    qrMode === "individual" ? "shield-checkmark-outline"
+                    : qrMode === "business" ? "sync-outline"
+                    : "eye-off-outline"
+                  }
+                  size={12}
+                  color={activeModeColor}
+                  style={{ flexShrink: 0, marginTop: 1 }}
+                />
+                <Text style={[styles.modeInfoText, { color: activeModeColor }]} numberOfLines={2}>
+                  {qrMode === "individual" && "QR encodes a qrguard.app/go/ID link — only our database reveals the real content."}
+                  {qrMode === "business"   && "Change the destination anytime — no reprint needed. QR encodes a /guard/ID link."}
+                  {qrMode === "private"    && "Raw content baked directly into the QR. No server, no database, no tracking."}
+                </Text>
               </View>
             </Reanimated.View>
 
@@ -477,10 +465,10 @@ function QrGeneratorScreen() {
                   </Text>
                   <Text style={[styles.emptyQrSub, { color: colors.textMuted }]}>
                     {qrMode === "individual"
-                      ? "Type above — your protected /go/ID QR generates live"
+                      ? "Type above — protected QR previews live"
                       : qrMode === "business"
-                      ? "Fill in your destination — Smart Redirect QR generates live"
-                      : "Type above — private QR generates locally, no server"}
+                      ? "Enter destination — Smart Redirect QR previews live"
+                      : "Type above — private QR generates offline"}
                   </Text>
                 </View>
               </Reanimated.View>
