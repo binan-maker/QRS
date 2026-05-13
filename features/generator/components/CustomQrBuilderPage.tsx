@@ -1,8 +1,7 @@
-import React, { useState, useCallback, memo, useMemo } from "react";
+import React, { useState, memo, useMemo } from "react";
 import {
   View, Text, Pressable, ScrollView, TextInput,
   StyleSheet, Platform, KeyboardAvoidingView,
-  useWindowDimensions,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -32,7 +31,7 @@ interface Template {
   fields: FieldDef[];
 }
 
-/* ─────────── templates (output built invisibly) ─────────── */
+/* ─────────── templates ─────────── */
 const TEMPLATES: Template[] = [
   {
     id: "upi",
@@ -41,10 +40,10 @@ const TEMPLATES: Template[] = [
     color: "#EC4899",
     icon: "card-outline",
     fields: [
-      { key: "pa",  label: "UPI ID",       type: "upi",    placeholder: "yourname@upi" },
-      { key: "pn",  label: "Payee Name",   type: "text",   placeholder: "Your name or shop" },
-      { key: "am",  label: "Amount (₹)",   type: "amount", placeholder: "Leave blank to let payer decide", optional: true },
-      { key: "tn",  label: "Note",         type: "text",   placeholder: "e.g. Table 5 order", optional: true },
+      { key: "pa", label: "UPI ID",       type: "upi",    placeholder: "yourname@upi" },
+      { key: "pn", label: "Payee Name",   type: "text",   placeholder: "Your name or shop" },
+      { key: "am", label: "Amount (₹)",   type: "amount", placeholder: "Leave blank to let payer decide", optional: true },
+      { key: "tn", label: "Note",         type: "text",   placeholder: "e.g. Table 5 order", optional: true },
     ],
     build: (v) => {
       let url = `upi://pay?pa=${encodeURIComponent(v.pa)}&pn=${encodeURIComponent(v.pn)}&cu=INR`;
@@ -56,7 +55,7 @@ const TEMPLATES: Template[] = [
   {
     id: "menu",
     emoji: "🍽️",
-    name: "Table / Menu",
+    name: "Table Menu",
     color: "#F59E0B",
     icon: "restaurant-outline",
     fields: [
@@ -95,9 +94,9 @@ const TEMPLATES: Template[] = [
     color: "#3B82F6",
     icon: "arrow-forward-circle-outline",
     fields: [
-      { key: "url",  label: "Website URL",   type: "url",  placeholder: "https://yoursite.com/page" },
-      { key: "ref",  label: "Source Tag",    type: "text", placeholder: "e.g. store_entrance", optional: true },
-      { key: "code", label: "Promo Code",    type: "text", placeholder: "e.g. SAVE10", optional: true },
+      { key: "url",  label: "Website URL",  type: "url",  placeholder: "https://yoursite.com/page" },
+      { key: "ref",  label: "Source Tag",   type: "text", placeholder: "e.g. store_entrance", optional: true },
+      { key: "code", label: "Promo Code",   type: "text", placeholder: "e.g. SAVE10", optional: true },
     ],
     build: (v) => {
       let url = v.url;
@@ -115,8 +114,8 @@ const TEMPLATES: Template[] = [
     color: "#F97316",
     icon: "star-outline",
     fields: [
-      { key: "url",      label: "Review URL",  type: "url",  placeholder: "https://yoursite.com/review" },
-      { key: "location", label: "Location",    type: "text", placeholder: "e.g. Main Branch" },
+      { key: "url",      label: "Review URL",    type: "url",  placeholder: "https://yoursite.com/review" },
+      { key: "location", label: "Location",      type: "text", placeholder: "e.g. Main Branch" },
       { key: "order",    label: "Order / Table", type: "text", placeholder: "e.g. Table 12", optional: true },
     ],
     build: (v) => {
@@ -132,10 +131,10 @@ const TEMPLATES: Template[] = [
     color: "#10B981",
     icon: "calendar-outline",
     fields: [
-      { key: "url",      label: "Booking URL",     type: "url",  placeholder: "https://booking.example.com" },
-      { key: "date",     label: "Date",             type: "date", placeholder: "DD/MM/YYYY" },
-      { key: "name",     label: "Patient / Client", type: "text", placeholder: "Full name" },
-      { key: "slot",     label: "Time Slot",        type: "text", placeholder: "e.g. 10:30 AM", optional: true },
+      { key: "url",  label: "Booking URL",     type: "url",  placeholder: "https://booking.example.com" },
+      { key: "date", label: "Date",             type: "date", placeholder: "DD/MM/YYYY" },
+      { key: "name", label: "Patient / Client", type: "text", placeholder: "Full name" },
+      { key: "slot", label: "Time Slot",        type: "text", placeholder: "e.g. 10:30 AM", optional: true },
     ],
     build: (v) => {
       let url = `${v.url}?date=${encodeURIComponent(v.date)}&name=${encodeURIComponent(v.name)}`;
@@ -146,15 +145,10 @@ const TEMPLATES: Template[] = [
 ];
 
 /* ─────────── blank field ─────────── */
-interface BlankField {
-  id: string;
-  label: string;
-  value: string;
-}
-
+interface BlankField { id: string; label: string; value: string; }
 function uid() { return Math.random().toString(36).slice(2, 8); }
 
-/* ─────────── keyboard type helper ─────────── */
+/* ─────────── keyboard type ─────────── */
 function kbType(type: FieldType) {
   if (type === "number") return "number-pad" as const;
   if (type === "amount") return "decimal-pad" as const;
@@ -164,7 +158,7 @@ function kbType(type: FieldType) {
   return "default" as const;
 }
 
-/* ─────────── component ─────────── */
+/* ─────────── props ─────────── */
 interface Props {
   onBack: () => void;
   onGenerate: (content: string, label: string) => void;
@@ -173,15 +167,31 @@ interface Props {
 function CustomQrBuilderPage({ onBack, onGenerate }: Props) {
   const { colors } = useTheme();
   const insets = useSafeAreaInsets();
-  const { width } = useWindowDimensions();
-  const topInset = Platform.OS === "web" ? 67 : insets.top;
+  const topInset = Platform.OS === "web" ? 0 : insets.top;
   const tabBarHeight = 62 + insets.bottom + 8;
 
-  const [selectedTemplate, setSelectedTemplate] = useState<Template | "blank" | null>(null);
+  type Mode = "blank" | "template";
+  const [mode, setMode] = useState<Mode>("blank");
+  const [selectedTemplate, setSelectedTemplate] = useState<Template>(TEMPLATES[0]);
   const [templateValues, setTemplateValues] = useState<Record<string, string>>({});
   const [blankFields, setBlankFields] = useState<BlankField[]>([
-    { id: uid(), label: "Field 1", value: "" },
+    { id: uid(), label: "Name",  value: "" },
+    { id: uid(), label: "Info",  value: "" },
   ]);
+
+  /* blank helpers */
+  function addBlankField() {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    setBlankFields(prev => [...prev, { id: uid(), label: "", value: "" }]);
+  }
+  function updateBlankField(id: string, patch: Partial<BlankField>) {
+    setBlankFields(prev => prev.map(f => f.id === id ? { ...f, ...patch } : f));
+  }
+  function removeBlankField(id: string) {
+    if (blankFields.length <= 1) return;
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    setBlankFields(prev => prev.filter(f => f.id !== id));
+  }
 
   /* pick template */
   function pickTemplate(t: Template) {
@@ -190,218 +200,168 @@ function CustomQrBuilderPage({ onBack, onGenerate }: Props) {
     setTemplateValues({});
   }
 
-  function pickBlank() {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    setSelectedTemplate("blank");
-    setBlankFields([{ id: uid(), label: "Field 1", value: "" }]);
-  }
-
-  /* blank helpers */
-  function addBlankField() {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    const n = blankFields.length + 1;
-    setBlankFields(prev => [...prev, { id: uid(), label: `Field ${n}`, value: "" }]);
-  }
-
-  function updateBlankField(id: string, patch: Partial<BlankField>) {
-    setBlankFields(prev => prev.map(f => f.id === id ? { ...f, ...patch } : f));
-  }
-
-  function removeBlankField(id: string) {
-    if (blankFields.length <= 1) return;
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    setBlankFields(prev => prev.filter(f => f.id !== id));
-  }
-
   /* readiness */
   const canGenerate = useMemo(() => {
-    if (!selectedTemplate) return false;
-    if (selectedTemplate === "blank") {
-      return blankFields.every(f => f.label.trim() && f.value.trim());
+    if (mode === "blank") {
+      return blankFields.some(f => f.label.trim() && f.value.trim());
     }
     const required = selectedTemplate.fields.filter(f => !f.optional);
     return required.every(f => (templateValues[f.key] ?? "").trim().length > 0);
-  }, [selectedTemplate, templateValues, blankFields]);
+  }, [mode, selectedTemplate, templateValues, blankFields]);
+
+  /* live preview text */
+  const previewContent = useMemo(() => {
+    if (mode === "blank") {
+      const filled = blankFields.filter(f => f.label.trim() || f.value.trim());
+      if (!filled.length) return null;
+      return filled.map(f => `${f.label || "—"}: ${f.value || "—"}`).join("\n");
+    }
+    // Build template with current values (show placeholders for empty required fields)
+    const vals: Record<string, string> = {};
+    for (const field of selectedTemplate.fields) {
+      vals[field.key] = templateValues[field.key] ?? "";
+    }
+    const hasAnyValue = Object.values(vals).some(v => v.trim().length > 0);
+    if (!hasAnyValue) return null;
+    try { return selectedTemplate.build(vals); } catch { return null; }
+  }, [mode, blankFields, selectedTemplate, templateValues]);
 
   function handleGenerate() {
     if (!canGenerate) return;
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     let content: string;
     let label: string;
-    if (selectedTemplate === "blank") {
+    if (mode === "blank") {
       content = blankFields
         .filter(f => f.label.trim() && f.value.trim())
         .map(f => `${f.label}: ${f.value}`)
         .join("\n");
       label = "Custom QR";
     } else {
-      content = (selectedTemplate as Template).build(templateValues);
-      label = (selectedTemplate as Template).name;
+      content = selectedTemplate.build(templateValues);
+      label = selectedTemplate.name;
     }
     onGenerate(content, label);
     onBack();
   }
 
-  const tpl = selectedTemplate && selectedTemplate !== "blank" ? selectedTemplate as Template : null;
-
   return (
-    <Reanimated.View entering={SlideInRight.duration(240)} style={[styles.container, { backgroundColor: colors.background, paddingTop: topInset }]}>
+    <Reanimated.View
+      entering={SlideInRight.duration(240)}
+      style={[styles.container, { backgroundColor: colors.background }]}
+    >
+      {/* Safe area spacer — flush header to status bar */}
+      <View style={{ height: topInset, backgroundColor: colors.background }} />
+
       <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} style={{ flex: 1 }}>
 
-        {/* ── Top bar ── */}
-        <View style={styles.topBar}>
+        {/* ── Header ── */}
+        <View style={styles.header}>
           <Pressable
             onPress={onBack}
             style={[styles.backBtn, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}
           >
             <Ionicons name="chevron-back" size={18} color={colors.textSecondary} />
           </Pressable>
-          <Text style={[styles.topTitle, { color: colors.text }]}>Custom QR</Text>
-          <View style={{ width: 38 }} />
+          <View style={{ flex: 1, marginLeft: 12 }}>
+            <Text style={[styles.headerTitle, { color: colors.text }]}>Custom QR</Text>
+            <Text style={[styles.headerSub, { color: colors.textMuted }]}>Build anything</Text>
+          </View>
+        </View>
+
+        {/* ── Mode tabs ── */}
+        <View style={[styles.modeTabs, { backgroundColor: colors.surfaceLight, borderColor: colors.surfaceBorder }]}>
+          <Pressable
+            onPress={() => { setMode("blank"); Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); }}
+            style={[
+              styles.modeTab,
+              mode === "blank" && { backgroundColor: colors.primary + "18", borderColor: colors.primary + "50" },
+            ]}
+          >
+            <Ionicons name="create-outline" size={14} color={mode === "blank" ? colors.primary : colors.textMuted} />
+            <Text style={[styles.modeTabText, { color: mode === "blank" ? colors.primary : colors.textMuted }]}>
+              Blank
+            </Text>
+          </Pressable>
+          <Pressable
+            onPress={() => { setMode("template"); Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); }}
+            style={[
+              styles.modeTab,
+              mode === "template" && { backgroundColor: colors.primary + "18", borderColor: colors.primary + "50" },
+            ]}
+          >
+            <Ionicons name="grid-outline" size={14} color={mode === "template" ? colors.primary : colors.textMuted} />
+            <Text style={[styles.modeTabText, { color: mode === "template" ? colors.primary : colors.textMuted }]}>
+              Templates
+            </Text>
+          </Pressable>
         </View>
 
         <ScrollView
           showsVerticalScrollIndicator={false}
-          contentContainerStyle={[styles.scroll, { paddingBottom: tabBarHeight + 16 }]}
+          contentContainerStyle={[styles.scroll, { paddingBottom: tabBarHeight + 24 }]}
           keyboardShouldPersistTaps="handled"
         >
 
-          {/* ── Template selector ── */}
-          <View style={styles.section}>
-            <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>CHOOSE TYPE</Text>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.templatesRow}>
-              {TEMPLATES.map((t, i) => {
-                const active = tpl?.id === t.id;
-                return (
-                  <Reanimated.View key={t.id} entering={FadeInDown.duration(200).delay(i * 20)}>
-                    <Pressable
-                      onPress={() => pickTemplate(t)}
-                      style={({ pressed }) => [
-                        styles.templatePill,
-                        {
-                          backgroundColor: active ? t.color + "18" : colors.surface,
-                          borderColor: active ? t.color + "70" : colors.surfaceBorder,
-                          borderWidth: active ? 1.5 : 1,
-                          opacity: pressed ? 0.75 : 1,
-                          transform: [{ scale: pressed ? 0.96 : 1 }],
-                        },
-                      ]}
-                    >
-                      <Text style={styles.templateEmoji}>{t.emoji}</Text>
-                      <Text style={[styles.templateName, { color: active ? t.color : colors.text }]}>
-                        {t.name}
-                      </Text>
-                    </Pressable>
-                  </Reanimated.View>
-                );
-              })}
+          {/* ══════════ BLANK MODE ══════════ */}
+          {mode === "blank" && (
+            <Reanimated.View entering={FadeIn.duration(200)} style={{ gap: 14 }}>
 
-              {/* Blank option */}
-              <Reanimated.View entering={FadeInDown.duration(200).delay(TEMPLATES.length * 20)}>
-                <Pressable
-                  onPress={pickBlank}
-                  style={({ pressed }) => [
-                    styles.templatePill,
-                    {
-                      backgroundColor: selectedTemplate === "blank" ? colors.primaryDim : colors.surface,
-                      borderColor: selectedTemplate === "blank" ? colors.primary + "70" : colors.surfaceBorder,
-                      borderWidth: selectedTemplate === "blank" ? 1.5 : 1,
-                      opacity: pressed ? 0.75 : 1,
-                      transform: [{ scale: pressed ? 0.96 : 1 }],
-                    },
-                  ]}
-                >
-                  <Text style={styles.templateEmoji}>✏️</Text>
-                  <Text style={[styles.templateName, { color: selectedTemplate === "blank" ? colors.primary : colors.text }]}>
-                    Blank
+              {/* Explainer */}
+              <View style={[styles.explainerCard, { backgroundColor: colors.primaryDim, borderColor: colors.primary + "30" }]}>
+                <Ionicons name="bulb-outline" size={15} color={colors.primary} />
+                <View style={{ flex: 1 }}>
+                  <Text style={[styles.explainerTitle, { color: colors.primary }]}>
+                    Write anything into your QR
                   </Text>
-                </Pressable>
-              </Reanimated.View>
-            </ScrollView>
-          </View>
-
-          {/* ── No selection placeholder ── */}
-          {!selectedTemplate && (
-            <Reanimated.View entering={FadeIn.duration(300)} style={[styles.emptyHint, { borderColor: colors.surfaceBorder }]}>
-              <Ionicons name="apps-outline" size={32} color={colors.textMuted} />
-              <Text style={[styles.emptyHintText, { color: colors.textMuted }]}>
-                Pick a type above to get started
-              </Text>
-            </Reanimated.View>
-          )}
-
-          {/* ── Template fields ── */}
-          {tpl && (
-            <Reanimated.View entering={FadeIn.duration(220)} style={styles.section}>
-              <View style={[styles.templateBanner, { backgroundColor: tpl.color + "12", borderColor: tpl.color + "30" }]}>
-                <Text style={{ fontSize: 18 }}>{tpl.emoji}</Text>
-                <Text style={[styles.templateBannerName, { color: tpl.color }]}>{tpl.name}</Text>
+                  <Text style={[styles.explainerBody, { color: colors.primary + "CC" }]}>
+                    Add rows of info — like a label and its value. When someone scans the QR, they'll see all of it. Great for business cards, product tags, info boards.
+                  </Text>
+                </View>
               </View>
 
-              {tpl.fields.map((f, i) => (
-                <Reanimated.View key={f.key} entering={FadeInDown.duration(180).delay(i * 25)}>
-                  <View style={styles.fieldWrap}>
-                    <View style={styles.fieldLabelRow}>
-                      <Text style={[styles.fieldLabel, { color: colors.textMuted }]}>{f.label.toUpperCase()}</Text>
-                      {f.optional && (
-                        <Text style={[styles.optionalTag, { color: colors.textMuted }]}>optional</Text>
-                      )}
-                    </View>
-                    <View style={[
-                      styles.inputCard,
-                      {
-                        backgroundColor: colors.surface,
-                        borderColor: (templateValues[f.key] ?? "").length > 0
-                          ? tpl.color + "60"
-                          : colors.surfaceBorder,
-                      },
-                    ]}>
-                      <TextInput
-                        style={[styles.inputText, { color: colors.text }]}
-                        value={templateValues[f.key] ?? ""}
-                        onChangeText={v => setTemplateValues(prev => ({ ...prev, [f.key]: v }))}
-                        placeholder={f.placeholder}
-                        placeholderTextColor={colors.textMuted}
-                        keyboardType={kbType(f.type)}
-                        autoCapitalize={
-                          f.type === "url" || f.type === "email" || f.type === "upi" ? "none" : "sentences"
-                        }
-                        autoCorrect={false}
-                        selectTextOnFocus
-                      />
-                      {(templateValues[f.key] ?? "").length > 0 && (
-                        <Ionicons name="checkmark-circle" size={16} color={tpl.color} />
-                      )}
-                    </View>
+              {/* Example preview (greyed) */}
+              <View style={[styles.exampleCard, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
+                <Text style={[styles.exampleTitle, { color: colors.textMuted }]}>EXAMPLE OUTPUT</Text>
+                {[
+                  { label: "Shop Name", value: "Ramesh Stores" },
+                  { label: "Phone",     value: "+91 98765 43210" },
+                  { label: "Address",   value: "Shop 4, MG Road" },
+                ].map((row, i) => (
+                  <View key={i} style={styles.exampleRow}>
+                    <Text style={[styles.exampleLabel, { color: colors.textMuted }]}>{row.label}:</Text>
+                    <Text style={[styles.exampleValue, { color: colors.textMuted }]}>{row.value}</Text>
                   </View>
-                </Reanimated.View>
-              ))}
-            </Reanimated.View>
-          )}
-
-          {/* ── Blank fields ── */}
-          {selectedTemplate === "blank" && (
-            <Reanimated.View entering={FadeIn.duration(220)} style={styles.section}>
-              <View style={styles.blankHeader}>
-                <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>YOUR FIELDS</Text>
-                <Pressable
-                  onPress={addBlankField}
-                  style={[styles.addFieldBtn, { backgroundColor: colors.primaryDim, borderColor: colors.primary + "40" }]}
-                >
-                  <Ionicons name="add" size={14} color={colors.primary} />
-                  <Text style={[styles.addFieldBtnText, { color: colors.primary }]}>Add Field</Text>
-                </Pressable>
+                ))}
+                <Text style={[styles.exampleNote, { color: colors.textMuted }]}>
+                  ↑ This is what gets saved into the QR code
+                </Text>
               </View>
 
-              {blankFields.map((f, i) => (
-                <Reanimated.View key={f.id} entering={FadeInDown.duration(180).delay(i * 20)}>
-                  <View style={[styles.blankFieldCard, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
-                    <View style={styles.blankFieldRow}>
+              {/* Fields */}
+              <View style={{ gap: 8 }}>
+                <View style={styles.rowBetween}>
+                  <Text style={[styles.sectionLabel, { color: colors.textMuted }]}>YOUR ROWS</Text>
+                  <Pressable
+                    onPress={addBlankField}
+                    style={[styles.addBtn, { backgroundColor: colors.primaryDim, borderColor: colors.primary + "40" }]}
+                  >
+                    <Ionicons name="add" size={14} color={colors.primary} />
+                    <Text style={[styles.addBtnText, { color: colors.primary }]}>Add row</Text>
+                  </Pressable>
+                </View>
+
+                {blankFields.map((f, i) => (
+                  <Reanimated.View key={f.id} entering={FadeInDown.duration(160).delay(i * 20)}>
+                    <View style={[styles.blankRow, {
+                      backgroundColor: colors.surface,
+                      borderColor: (f.label.trim() && f.value.trim()) ? colors.primary + "40" : colors.surfaceBorder,
+                    }]}>
                       <TextInput
                         style={[styles.blankLabelInput, { color: colors.textSecondary, borderRightColor: colors.surfaceBorder }]}
                         value={f.label}
                         onChangeText={v => updateBlankField(f.id, { label: v })}
-                        placeholder="Label"
+                        placeholder={i === 0 ? "e.g. Name" : i === 1 ? "e.g. Phone" : "Label"}
                         placeholderTextColor={colors.textMuted}
                         selectTextOnFocus
                       />
@@ -409,56 +369,168 @@ function CustomQrBuilderPage({ onBack, onGenerate }: Props) {
                         style={[styles.blankValueInput, { color: colors.text }]}
                         value={f.value}
                         onChangeText={v => updateBlankField(f.id, { value: v })}
-                        placeholder="Value"
+                        placeholder={i === 0 ? "Your name" : i === 1 ? "+91 …" : "Value"}
                         placeholderTextColor={colors.textMuted}
                         selectTextOnFocus
                       />
                       {blankFields.length > 1 && (
-                        <Pressable onPress={() => removeBlankField(f.id)} hitSlop={10} style={{ paddingLeft: 8 }}>
-                          <Ionicons name="close" size={15} color={colors.textMuted} />
+                        <Pressable onPress={() => removeBlankField(f.id)} hitSlop={12} style={styles.removeBtn}>
+                          <Ionicons name="close" size={14} color={colors.textMuted} />
                         </Pressable>
                       )}
                     </View>
+                  </Reanimated.View>
+                ))}
+              </View>
+
+              {/* Live preview */}
+              {previewContent && (
+                <Reanimated.View entering={FadeIn.duration(220)}>
+                  <View style={[styles.previewCard, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
+                    <View style={styles.previewHeader}>
+                      <Ionicons name="eye-outline" size={13} color={colors.textMuted} />
+                      <Text style={[styles.previewLabel, { color: colors.textMuted }]}>WHAT THE QR WILL SHOW</Text>
+                    </View>
+                    <Text style={[styles.previewContent, { color: colors.text }]}>{previewContent}</Text>
                   </View>
                 </Reanimated.View>
-              ))}
+              )}
+            </Reanimated.View>
+          )}
+
+          {/* ══════════ TEMPLATE MODE ══════════ */}
+          {mode === "template" && (
+            <Reanimated.View entering={FadeIn.duration(200)} style={{ gap: 14 }}>
+
+              {/* Template pills */}
+              <View style={{ gap: 6 }}>
+                <Text style={[styles.sectionLabel, { color: colors.textMuted }]}>CHOOSE TEMPLATE</Text>
+                <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingVertical: 2 }}>
+                  {TEMPLATES.map((t, i) => {
+                    const active = selectedTemplate.id === t.id;
+                    return (
+                      <Reanimated.View key={t.id} entering={FadeInDown.duration(180).delay(i * 15)}>
+                        <Pressable
+                          onPress={() => pickTemplate(t)}
+                          style={({ pressed }) => [
+                            styles.templatePill,
+                            {
+                              backgroundColor: active ? t.color + "18" : colors.surface,
+                              borderColor: active ? t.color + "70" : colors.surfaceBorder,
+                              borderWidth: active ? 1.5 : 1,
+                              opacity: pressed ? 0.75 : 1,
+                              transform: [{ scale: pressed ? 0.96 : 1 }],
+                            },
+                          ]}
+                        >
+                          <Text style={{ fontSize: 15 }}>{t.emoji}</Text>
+                          <Text style={[styles.templatePillText, { color: active ? t.color : colors.text }]}>
+                            {t.name}
+                          </Text>
+                        </Pressable>
+                      </Reanimated.View>
+                    );
+                  })}
+                </ScrollView>
+              </View>
+
+              {/* Selected template banner */}
+              <View style={[styles.templateBanner, { backgroundColor: selectedTemplate.color + "12", borderColor: selectedTemplate.color + "30" }]}>
+                <Text style={{ fontSize: 20 }}>{selectedTemplate.emoji}</Text>
+                <Text style={[styles.templateBannerName, { color: selectedTemplate.color }]}>{selectedTemplate.name}</Text>
+              </View>
+
+              {/* Fields */}
+              <View style={{ gap: 10 }}>
+                {selectedTemplate.fields.map((f, i) => (
+                  <Reanimated.View key={f.key} entering={FadeInDown.duration(180).delay(i * 25)}>
+                    <View style={{ gap: 6 }}>
+                      <View style={styles.rowBetween}>
+                        <Text style={[styles.fieldLabel, { color: colors.textMuted }]}>{f.label.toUpperCase()}</Text>
+                        {f.optional && (
+                          <Text style={[styles.optionalTag, { color: colors.textMuted }]}>optional</Text>
+                        )}
+                      </View>
+                      <View style={[styles.inputCard, {
+                        backgroundColor: colors.surface,
+                        borderColor: (templateValues[f.key] ?? "").length > 0
+                          ? selectedTemplate.color + "60"
+                          : colors.surfaceBorder,
+                      }]}>
+                        <TextInput
+                          style={[styles.inputText, { color: colors.text }]}
+                          value={templateValues[f.key] ?? ""}
+                          onChangeText={v => setTemplateValues(prev => ({ ...prev, [f.key]: v }))}
+                          placeholder={f.placeholder}
+                          placeholderTextColor={colors.textMuted}
+                          keyboardType={kbType(f.type)}
+                          autoCapitalize={
+                            f.type === "url" || f.type === "email" || f.type === "upi" ? "none" : "sentences"
+                          }
+                          autoCorrect={false}
+                          selectTextOnFocus
+                        />
+                        {(templateValues[f.key] ?? "").length > 0 && (
+                          <Ionicons name="checkmark-circle" size={16} color={selectedTemplate.color} />
+                        )}
+                      </View>
+                    </View>
+                  </Reanimated.View>
+                ))}
+              </View>
+
+              {/* Live preview */}
+              {previewContent && (
+                <Reanimated.View entering={FadeIn.duration(220)}>
+                  <View style={[styles.previewCard, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
+                    <View style={styles.previewHeader}>
+                      <Ionicons name="eye-outline" size={13} color={colors.textMuted} />
+                      <Text style={[styles.previewLabel, { color: colors.textMuted }]}>WHAT THE QR WILL ENCODE</Text>
+                    </View>
+                    <Text style={[styles.previewContent, { color: colors.text }]} numberOfLines={5} selectable>
+                      {previewContent}
+                    </Text>
+                  </View>
+                </Reanimated.View>
+              )}
             </Reanimated.View>
           )}
 
           {/* ── Generate button ── */}
-          {selectedTemplate && (
-            <Reanimated.View entering={FadeIn.duration(240)} style={styles.generateWrap}>
-              <Pressable
-                onPress={handleGenerate}
-                disabled={!canGenerate}
-                style={({ pressed }) => ({
-                  opacity: pressed ? 0.85 : 1,
-                  transform: [{ scale: pressed ? 0.98 : 1 }],
-                  borderRadius: 18,
-                  overflow: "hidden" as const,
-                })}
+          <View style={styles.generateWrap}>
+            <Pressable
+              onPress={handleGenerate}
+              disabled={!canGenerate}
+              style={({ pressed }) => ({
+                opacity: pressed ? 0.85 : 1,
+                transform: [{ scale: pressed ? 0.98 : 1 }],
+                borderRadius: 18,
+                overflow: "hidden" as const,
+              })}
+            >
+              <LinearGradient
+                colors={canGenerate
+                  ? [colors.primary, (colors as any).primaryShade ?? colors.primary]
+                  : [colors.surfaceLight, colors.surfaceLight]}
+                style={styles.generateBtn}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
               >
-                <LinearGradient
-                  colors={canGenerate
-                    ? [colors.primary, (colors as any).primaryShade ?? colors.primary]
-                    : [colors.surfaceLight, colors.surfaceLight]}
-                  style={styles.generateBtn}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 1 }}
-                >
-                  <Ionicons name="qr-code" size={20} color={canGenerate ? "#fff" : colors.textMuted} />
-                  <Text style={[styles.generateBtnText, { color: canGenerate ? "#fff" : colors.textMuted }]}>
-                    Create QR Code
-                  </Text>
-                </LinearGradient>
-              </Pressable>
-              {!canGenerate && (
-                <Text style={[styles.disabledHint, { color: colors.textMuted }]}>
-                  Fill in all required fields above
+                <Ionicons name="qr-code" size={20} color={canGenerate ? "#fff" : colors.textMuted} />
+                <Text style={[styles.generateBtnText, { color: canGenerate ? "#fff" : colors.textMuted }]}>
+                  Create QR Code
                 </Text>
-              )}
-            </Reanimated.View>
-          )}
+              </LinearGradient>
+            </Pressable>
+            {!canGenerate && (
+              <Text style={[styles.disabledHint, { color: colors.textMuted }]}>
+                {mode === "blank"
+                  ? "Add at least one row with a label and value"
+                  : "Fill in all required fields above"}
+              </Text>
+            )}
+          </View>
+
         </ScrollView>
       </KeyboardAvoidingView>
     </Reanimated.View>
@@ -470,45 +542,106 @@ export default memo(CustomQrBuilderPage);
 const styles = StyleSheet.create({
   container: { flex: 1 },
 
-  topBar: {
+  /* Header */
+  header: {
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "space-between",
     paddingHorizontal: 16,
-    paddingVertical: 10,
-    paddingBottom: 6,
+    paddingTop: 8,
+    paddingBottom: 10,
   },
   backBtn: {
     width: 38, height: 38, borderRadius: 12,
     borderWidth: 1, alignItems: "center", justifyContent: "center",
+    flexShrink: 0,
   },
-  topTitle: { fontSize: 17, fontFamily: "Inter_700Bold" },
+  headerTitle: { fontSize: 17, fontFamily: "Inter_700Bold", lineHeight: 21 },
+  headerSub: { fontSize: 11, fontFamily: "Inter_400Regular", marginTop: 1 },
 
-  scroll: { paddingHorizontal: 20, gap: 20, paddingTop: 8 },
-
-  section: { gap: 10 },
-
-  sectionTitle: {
-    fontSize: 10, fontFamily: "Inter_700Bold",
-    letterSpacing: 0.8, marginBottom: 2,
+  /* Mode tabs */
+  modeTabs: {
+    flexDirection: "row",
+    marginHorizontal: 16,
+    marginBottom: 14,
+    borderRadius: 14,
+    borderWidth: 1,
+    padding: 3,
+    gap: 4,
   },
+  modeTab: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 6,
+    paddingVertical: 9,
+    borderRadius: 11,
+    borderWidth: 1,
+    borderColor: "transparent",
+  },
+  modeTabText: { fontSize: 13, fontFamily: "Inter_700Bold" },
 
-  templatesRow: { gap: 8, paddingVertical: 2 },
+  /* Scroll */
+  scroll: { paddingHorizontal: 16, paddingTop: 2, gap: 0 },
+
+  /* Explainer */
+  explainerCard: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: 10,
+    borderRadius: 14,
+    borderWidth: 1,
+    padding: 13,
+  },
+  explainerTitle: { fontSize: 13, fontFamily: "Inter_700Bold", marginBottom: 4 },
+  explainerBody:  { fontSize: 12, fontFamily: "Inter_400Regular", lineHeight: 17 },
+
+  /* Example */
+  exampleCard: {
+    borderRadius: 14, borderWidth: 1, padding: 12, gap: 5,
+  },
+  exampleTitle: { fontSize: 9, fontFamily: "Inter_700Bold", letterSpacing: 0.7, marginBottom: 4 },
+  exampleRow:   { flexDirection: "row", gap: 6 },
+  exampleLabel: { fontSize: 12, fontFamily: "Inter_600SemiBold", minWidth: 70 },
+  exampleValue: { fontSize: 12, fontFamily: "Inter_400Regular" },
+  exampleNote:  { fontSize: 10, fontFamily: "Inter_400Regular", marginTop: 4, fontStyle: "italic" },
+
+  /* Section */
+  sectionLabel: { fontSize: 10, fontFamily: "Inter_700Bold", letterSpacing: 0.7 },
+  rowBetween:   { flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
+
+  /* Add button */
+  addBtn: {
+    flexDirection: "row", alignItems: "center", gap: 4,
+    borderRadius: 9, borderWidth: 1,
+    paddingHorizontal: 10, paddingVertical: 5,
+  },
+  addBtnText: { fontSize: 12, fontFamily: "Inter_600SemiBold" },
+
+  /* Blank row */
+  blankRow: {
+    flexDirection: "row", alignItems: "center",
+    borderRadius: 14, borderWidth: 1.5, overflow: "hidden",
+  },
+  blankLabelInput: {
+    width: 100, paddingHorizontal: 12, paddingVertical: 13,
+    fontSize: 13, fontFamily: "Inter_600SemiBold",
+    borderRightWidth: StyleSheet.hairlineWidth,
+  },
+  blankValueInput: {
+    flex: 1, paddingHorizontal: 12, paddingVertical: 13,
+    fontSize: 14, fontFamily: "Inter_400Regular",
+  },
+  removeBtn: { paddingHorizontal: 10 },
+
+  /* Template pills */
   templatePill: {
     flexDirection: "row", alignItems: "center", gap: 7,
-    borderRadius: 12, borderWidth: 1,
-    paddingHorizontal: 12, paddingVertical: 8,
+    borderRadius: 12, paddingHorizontal: 12, paddingVertical: 8,
   },
-  templateEmoji: { fontSize: 16 },
-  templateName: { fontSize: 13, fontFamily: "Inter_600SemiBold" },
+  templatePillText: { fontSize: 13, fontFamily: "Inter_600SemiBold" },
 
-  emptyHint: {
-    alignItems: "center", justifyContent: "center", gap: 10,
-    paddingVertical: 40,
-    borderRadius: 18, borderWidth: 1, borderStyle: "dashed",
-  },
-  emptyHintText: { fontSize: 14, fontFamily: "Inter_400Regular" },
-
+  /* Template banner */
   templateBanner: {
     flexDirection: "row", alignItems: "center", gap: 10,
     borderRadius: 12, borderWidth: 1,
@@ -516,11 +649,9 @@ const styles = StyleSheet.create({
   },
   templateBannerName: { fontSize: 14, fontFamily: "Inter_700Bold" },
 
-  fieldWrap: { gap: 6 },
-  fieldLabelRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
-  fieldLabel: { fontSize: 10, fontFamily: "Inter_700Bold", letterSpacing: 0.7 },
+  /* Field */
+  fieldLabel:  { fontSize: 10, fontFamily: "Inter_700Bold", letterSpacing: 0.7 },
   optionalTag: { fontSize: 10, fontFamily: "Inter_400Regular", fontStyle: "italic" },
-
   inputCard: {
     flexDirection: "row", alignItems: "center",
     borderRadius: 14, borderWidth: 1.5,
@@ -528,31 +659,16 @@ const styles = StyleSheet.create({
   },
   inputText: { flex: 1, fontSize: 14, fontFamily: "Inter_400Regular" },
 
-  blankHeader: {
-    flexDirection: "row", alignItems: "center", justifyContent: "space-between",
+  /* Preview */
+  previewCard: {
+    borderRadius: 14, borderWidth: 1, padding: 12, marginTop: 4, gap: 8,
   },
-  addFieldBtn: {
-    flexDirection: "row", alignItems: "center", gap: 4,
-    borderRadius: 9, borderWidth: 1,
-    paddingHorizontal: 10, paddingVertical: 5,
-  },
-  addFieldBtnText: { fontSize: 12, fontFamily: "Inter_600SemiBold" },
+  previewHeader: { flexDirection: "row", alignItems: "center", gap: 6 },
+  previewLabel:  { fontSize: 9, fontFamily: "Inter_700Bold", letterSpacing: 0.7 },
+  previewContent: { fontSize: 12, fontFamily: "Inter_400Regular", lineHeight: 19 },
 
-  blankFieldCard: {
-    borderRadius: 14, borderWidth: 1, overflow: "hidden",
-  },
-  blankFieldRow: { flexDirection: "row", alignItems: "center" },
-  blankLabelInput: {
-    width: 100, paddingHorizontal: 12, paddingVertical: 13,
-    fontSize: 13, fontFamily: "Inter_600SemiBold",
-    borderRightWidth: 1,
-  },
-  blankValueInput: {
-    flex: 1, paddingHorizontal: 12, paddingVertical: 13,
-    fontSize: 14, fontFamily: "Inter_400Regular",
-  },
-
-  generateWrap: { gap: 8, marginTop: 4 },
+  /* Generate */
+  generateWrap: { gap: 8, marginTop: 20 },
   generateBtn: {
     flexDirection: "row", alignItems: "center", justifyContent: "center",
     gap: 10, paddingVertical: 16,
