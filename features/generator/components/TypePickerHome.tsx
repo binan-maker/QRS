@@ -75,6 +75,8 @@ interface Props {
   user?: any;
   /** When true only the mode cards render — the action rows are hidden */
   hideActions?: boolean;
+  /** When true the mode card row is hidden (used in form view where mode is pre-selected) */
+  hideModeCards?: boolean;
 }
 
 function TypePickerHome({
@@ -83,6 +85,7 @@ function TypePickerHome({
   onOpenTemplates, onOpenCustom,
   user,
   hideActions = false,
+  hideModeCards = false,
 }: Props) {
   const { colors } = useTheme();
   const { width }  = useWindowDimensions();
@@ -101,44 +104,41 @@ function TypePickerHome({
 
   return (
     <View style={[styles.root, { paddingHorizontal: PAD }]}>
-      {/* ── Mode cards ── */}
-      <Reanimated.View entering={FadeIn.duration(300)} style={styles.modeRow}>
-        {MODES.map((m) => {
-          const active   = qrMode === m.key;
-          const disabled = m.key === "business" && !user;
-          return (
-            <Pressable
-              key={m.key}
-              onPress={() => pressMode(m.key)}
-              style={({ pressed }) => [
-                styles.modeCard,
-                {
-                  backgroundColor: active ? m.color + "18" : colors.surface,
-                  borderColor:     active ? m.color + "80" : colors.surfaceBorder,
-                  borderWidth:     active ? 1.5 : 1,
-                  opacity:         disabled ? 0.4 : pressed ? 0.76 : 1,
-                  transform:       [{ scale: pressed && !disabled ? 0.96 : 1 }],
-                },
-              ]}
-            >
-              {/* Icon */}
-              <View style={[styles.modeIconWrap, { backgroundColor: m.color + (active ? "28" : "16") }]}>
-                <Ionicons name={m.icon} size={20} color={m.color} />
-              </View>
-
-              {/* Label */}
-              <Text style={[styles.modeLabel, { color: active ? m.color : colors.text }]} numberOfLines={1}>
-                {m.label}
-              </Text>
-
-              {/* Active underline */}
-              {active && (
-                <View style={[styles.activeBar, { backgroundColor: m.color }]} />
-              )}
-            </Pressable>
-          );
-        })}
-      </Reanimated.View>
+      {/* ── Mode cards (hidden in form view since mode is pre-selected) ── */}
+      {!hideModeCards && (
+        <Reanimated.View entering={FadeIn.duration(300)} style={styles.modeRow}>
+          {MODES.map((m) => {
+            const active   = qrMode === m.key;
+            const disabled = m.key === "business" && !user;
+            return (
+              <Pressable
+                key={m.key}
+                onPress={() => pressMode(m.key)}
+                style={({ pressed }) => [
+                  styles.modeCard,
+                  {
+                    backgroundColor: active ? m.color + "18" : colors.surface,
+                    borderColor:     active ? m.color + "80" : colors.surfaceBorder,
+                    borderWidth:     active ? 1.5 : 1,
+                    opacity:         disabled ? 0.4 : pressed ? 0.76 : 1,
+                    transform:       [{ scale: pressed && !disabled ? 0.96 : 1 }],
+                  },
+                ]}
+              >
+                <View style={[styles.modeIconWrap, { backgroundColor: m.color + (active ? "28" : "16") }]}>
+                  <Ionicons name={m.icon} size={20} color={m.color} />
+                </View>
+                <Text style={[styles.modeLabel, { color: active ? m.color : colors.text }]} numberOfLines={1}>
+                  {m.label}
+                </Text>
+                {active && (
+                  <View style={[styles.activeBar, { backgroundColor: m.color }]} />
+                )}
+              </Pressable>
+            );
+          })}
+        </Reanimated.View>
+      )}
 
       {/* ── Actions section (hidden when a type is already picked) ── */}
       {!hideActions && (

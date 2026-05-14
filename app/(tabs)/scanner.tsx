@@ -1,5 +1,6 @@
 import { useRef, useEffect, useState, Component } from "react";
 import { Platform, View, Text, StyleSheet, ActivityIndicator, Animated, Dimensions, Pressable } from "react-native";
+import { StatusBar } from "expo-status-bar";
 import { CameraView, useCameraPermissions } from "expo-camera";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Reanimated, { FadeIn, FadeInDown } from "react-native-reanimated";
@@ -263,18 +264,30 @@ export default function ScannerScreen() {
 
   if (!permission.granted) {
     return (
-      <View style={[{ flex: 1, backgroundColor: "#000" }, { paddingTop: topInset }]}>
+      <View style={{ flex: 1, backgroundColor: "#000" }}>
+        <StatusBar style="light" backgroundColor="#000" />
         <PermissionScreen
           canAskAgain={permission.canAskAgain}
           onRequestPermission={requestPermission}
           onPickImage={handlePickImage}
         />
+        {galleryErrorMsg && (
+          <View style={[toastStyles.container, { bottom: 32 }]}>
+            <ScannerToast message={galleryErrorMsg} type="error" onDone={dismissGalleryError} />
+          </View>
+        )}
+        {scannerMsg && !galleryErrorMsg && (
+          <View style={[toastStyles.container, { bottom: 32 }]}>
+            <ScannerToast message={scannerMsg} type={scannerMsgType} onDone={dismissScannerMsg} />
+          </View>
+        )}
       </View>
     );
   }
 
   return (
     <View style={{ flex: 1, backgroundColor: "#000" }}>
+      <StatusBar style="light" backgroundColor="transparent" translucent />
 
       {/* Camera section — CameraView is NEVER rendered if hardware is absent */}
       {hardwareAvailable === null ? (

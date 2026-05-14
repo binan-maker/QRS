@@ -79,6 +79,7 @@ function QrGeneratorScreen() {
   const tabBarHeight = 62 + insets.bottom + 8;
   const { width } = useWindowDimensions();
 
+  const [showLanding, setShowLanding] = useState(true);
   const [presetActive, setPresetActive] = useState(false);
   const [qrSize, setQrSize] = useState(220);
   const [templateModalOpen, setTemplateModalOpen] = useState(false);
@@ -284,10 +285,17 @@ function QrGeneratorScreen() {
 
   const handleClearPreset = useCallback(() => {
     setPresetActive(false);
+    setShowLanding(true);
     setCustomSchema(null);
     setCustomFieldValues({});
     handleClear();
   }, [handleClear]);
+
+  const handleLandingCardPress = useCallback((mode: QrMode) => {
+    if (mode === "business" && !user) return;
+    setQrMode(mode);
+    setShowLanding(false);
+  }, [setQrMode, user]);
 
   function _hideGenError() { setShowGenError(false); }
 
@@ -372,21 +380,109 @@ function QrGeneratorScreen() {
         contentContainerStyle={[styles.scrollContent, { paddingBottom: tabBarHeight + 24 }]}
         keyboardShouldPersistTaps="handled"
       >
-        {/* Mode cards + type-pick actions (actions collapse once a type is active) */}
-        <TypePickerHome
-          qrMode={qrMode}
-          onSetMode={handleSetHomeMode}
-          onModeCardPress={handleModeCardPress}
-          onSelectPreset={handleSelectPreset}
-          onSelectBusinessCategory={handleSelectBusinessCategory}
-          onOpenTemplates={handleOpenTemplatesFromHome}
-          onOpenCustom={() => setCustomModalOpen(true)}
-          user={user}
-          hideActions={presetActive}
-        />
+        {showLanding ? (
+          /* ── BEAUTIFUL LANDING ── */
+          <Reanimated.View entering={FadeIn.duration(280)} style={{ paddingHorizontal: 20, paddingTop: 12, gap: 14 }}>
+            <Text style={[styles.landingSubtitle, { color: colors.textMuted }]}>What would you like to create?</Text>
 
-        {/* ── INLINE FORM — only visible once a type is picked ── */}
-        <>
+            {(
+              [
+                {
+                  key: "individual" as QrMode,
+                  label: "Standard QR",
+                  sub: "Save & share secure, verifiable QR codes",
+                  icon: "shield-checkmark-outline" as const,
+                  fromC: "#1D4ED8", toC: "#3B82F6", accent: "#93C5FD",
+                  disabled: false,
+                },
+                {
+                  key: "business" as QrMode,
+                  label: "Business QR",
+                  sub: "Smart redirect QR codes for your business",
+                  icon: "storefront-outline" as const,
+                  fromC: "#92400E", toC: "#D97706", accent: "#FDE68A",
+                  disabled: !user,
+                },
+                {
+                  key: "private" as QrMode,
+                  label: "Private QR",
+                  sub: "No tracking, no data saved — fully offline",
+                  icon: "eye-off-outline" as const,
+                  fromC: "#1E293B", toC: "#475569", accent: "#CBD5E1",
+                  disabled: false,
+                },
+              ] as const
+            ).map((m, idx) => (
+              <Reanimated.View key={m.key} entering={FadeInDown.duration(320).delay(idx * 60)}>
+                <Pressable
+                  onPress={() => !m.disabled && handleLandingCardPress(m.key)}
+                  style={({ pressed }) => ({
+                    borderRadius: 22,
+                    overflow: "hidden" as const,
+                    opacity: m.disabled ? 0.45 : pressed ? 0.88 : 1,
+                    transform: [{ scale: pressed && !m.disabled ? 0.975 : 1 }],
+                  })}
+                >
+                  <LinearGradient
+                    colors={[m.fromC, m.toC]}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 1 }}
+                    style={styles.landingCard}
+                  >
+                    <View style={[styles.landingCardIcon, { backgroundColor: "rgba(255,255,255,0.15)" }]}>
+                      <Ionicons name={m.icon} size={28} color="#fff" />
+                    </View>
+                    <View style={{ flex: 1, gap: 3 }}>
+                      <Text style={styles.landingCardTitle}>{m.label}</Text>
+                      <Text style={styles.landingCardSub} numberOfLines={2}>{m.sub}</Text>
+                      {m.disabled && (
+                        <Text style={[styles.landingCardLock, { color: m.accent }]}>Sign in to use Business QR</Text>
+                      )}
+                    </View>
+                    <Ionicons name="chevron-forward" size={20} color="rgba(255,255,255,0.7)" />
+                  </LinearGradient>
+                </Pressable>
+              </Reanimated.View>
+            ))}
+          </Reanimated.View>
+        ) : (
+          <>
+            {/* ── Back bar (compact) ── */}
+            <Reanimated.View entering={FadeIn.duration(200)} style={[styles.createTopBar, { paddingHorizontal: 16, paddingTop: 4, paddingBottom: 4 }]}>
+              <Pressable
+                onPress={handleClearPreset}
+                style={({ pressed }) => [styles.backBtn, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder, opacity: pressed ? 0.7 : 1 }]}
+              >
+                <Ionicons name="chevron-back" size={20} color={colors.textSecondary} />
+              </Pressable>
+              <View style={styles.createTitleWrap}>
+                <View style={[styles.createModeDot, { backgroundColor: activeModeColor }]} />
+                <Text style={[styles.createTitle, { color: activeModeColor }]}>{activeModeLabel} QR</Text>
+              </View>
+              <Pressable
+                onPress={handleOpenInfo}
+                style={[styles.infoBtn, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}
+              >
+                <Ionicons name="information-circle-outline" size={20} color={colors.textSecondary} />
+              </Pressable>
+            </Reanimated.View>
+
+            {/* Mode action buttons (business tiles or custom QR — no mode cards since mode is pre-selected) */}
+            <TypePickerHome
+              qrMode={qrMode}
+              onSetMode={handleSetHomeMode}
+              onModeCardPress={handleModeCardPress}
+              onSelectPreset={handleSelectPreset}
+              onSelectBusinessCategory={handleSelectBusinessCategory}
+              onOpenTemplates={handleOpenTemplatesFromHome}
+              onOpenCustom={() => setCustomModalOpen(true)}
+              user={user}
+              hideActions={presetActive}
+              hideModeCards={true}
+            />
+
+            {/* ── INLINE FORM — only visible once a type is picked ── */}
+            <>
             {/* Input fields — only show when a preset or custom schema is active */}
             {(presetActive || customSchema) && (
               <Reanimated.View entering={FadeInDown.duration(320).delay(60)} style={{ marginHorizontal: 20 }}>
@@ -605,7 +701,9 @@ function QrGeneratorScreen() {
                 </View>
               </Reanimated.View>
             )}
-        </>
+            </>
+          </>
+        )}
       </ScrollView>
 
       {/* ── TOAST ── */}
@@ -710,6 +808,45 @@ function makeStyles(_c: unknown, width: number) {
       fontFamily: "Inter_700Bold",
     },
     scrollContent: { paddingHorizontal: 0, paddingTop: 4 },
+
+    landingSubtitle: {
+      fontSize: rf(13),
+      fontFamily: "Inter_500Medium",
+      letterSpacing: 0.2,
+      marginBottom: 4,
+    },
+    landingCard: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 16,
+      paddingHorizontal: 20,
+      paddingVertical: 22,
+      borderRadius: 22,
+    },
+    landingCardIcon: {
+      width: 52,
+      height: 52,
+      borderRadius: 16,
+      alignItems: "center",
+      justifyContent: "center",
+      flexShrink: 0,
+    },
+    landingCardTitle: {
+      fontSize: rf(16),
+      fontFamily: "Inter_700Bold",
+      color: "#fff",
+    },
+    landingCardSub: {
+      fontSize: rf(12),
+      fontFamily: "Inter_400Regular",
+      color: "rgba(255,255,255,0.72)",
+      lineHeight: 17,
+    },
+    landingCardLock: {
+      fontSize: rf(11),
+      fontFamily: "Inter_600SemiBold",
+      marginTop: 2,
+    },
 
     /* Type chip row (shown between mode cards and inline form) */
     typeChipRow: {

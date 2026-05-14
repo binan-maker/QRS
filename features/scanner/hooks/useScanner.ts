@@ -598,7 +598,9 @@ export function useScanner() {
     try {
       result = await ImagePicker.launchImageLibraryAsync({
         mediaTypes: ["images"],
-        quality: 0.7,
+        allowsEditing: false,
+        allowsMultipleSelection: false,
+        exif: false,
       });
     } catch {
       showGalleryError("Could not open your gallery. Please try again.");
