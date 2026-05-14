@@ -7,6 +7,7 @@ interface Props {
   value: string;
   onChange: (dateStr: string) => void;
   label?: string;
+  futureDatesOnly?: boolean;
 }
 
 const MONTHS = ["January","February","March","April","May","June","July","August","September","October","November","December"];
@@ -29,13 +30,16 @@ function formatDisplay(value: string): string {
   return `${dd}/${mm}/${yyyy}`;
 }
 
-export default function CalendarPicker({ value, onChange, label }: Props) {
+export default function CalendarPicker({ value, onChange, label, futureDatesOnly = false }: Props) {
   const { colors } = useTheme();
   const today = new Date();
+  const todayY = today.getFullYear();
+  const todayM = today.getMonth();
+  const todayD = today.getDate();
 
   const parsed = value ? new Date(value + "T00:00:00") : null;
-  const initYear = parsed?.getFullYear() ?? today.getFullYear();
-  const initMonth = parsed?.getMonth() ?? today.getMonth();
+  const initYear = parsed?.getFullYear() ?? todayY;
+  const initMonth = parsed?.getMonth() ?? todayM;
 
   const [open, setOpen] = useState(false);
   const [viewYear, setViewYear] = useState(initYear);
@@ -44,7 +48,19 @@ export default function CalendarPicker({ value, onChange, label }: Props) {
   const totalDays = daysInMonth(viewYear, viewMonth);
   const startDay = firstDayOfMonth(viewYear, viewMonth);
 
+  function isPastOrToday(day: number): boolean {
+    if (!futureDatesOnly) return false;
+    if (viewYear < todayY) return true;
+    if (viewYear === todayY && viewMonth < todayM) return true;
+    if (viewYear === todayY && viewMonth === todayM && day <= todayD) return true;
+    return false;
+  }
+
   function prevMonth() {
+    if (futureDatesOnly) {
+      const atCurrentMonth = viewYear === todayY && viewMonth === todayM;
+      if (atCurrentMonth) return;
+    }
     if (viewMonth === 0) { setViewMonth(11); setViewYear(y => y - 1); }
     else setViewMonth(m => m - 1);
   }
@@ -54,6 +70,7 @@ export default function CalendarPicker({ value, onChange, label }: Props) {
   }
 
   function selectDay(day: number) {
+    if (isPastOrToday(day)) return;
     const mm = String(viewMonth + 1).padStart(2, "0");
     const dd = String(day).padStart(2, "0");
     onChange(`${viewYear}-${mm}-${dd}`);
@@ -101,7 +118,12 @@ export default function CalendarPicker({ value, onChange, label }: Props) {
       {open && (
         <View style={[styles.calendarBox, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
           <View style={styles.header}>
-            <Pressable onPress={prevMonth} hitSlop={10} style={[styles.navBtn, { backgroundColor: colors.surfaceLight }]}>
+            <Pressable
+              onPress={prevMonth}
+              hitSlop={10}
+              disabled={futureDatesOnly && viewYear === todayY && viewMonth === todayM}
+              style={[styles.navBtn, { backgroundColor: colors.surfaceLight, opacity: (futureDatesOnly && viewYear === todayY && viewMonth === todayM) ? 0.3 : 1 }]}
+            >
               <Ionicons name="chevron-back" size={16} color={colors.textSecondary} />
             </Pressable>
             <Text style={[styles.monthLabel, { color: colors.text }]}>
@@ -123,14 +145,17 @@ export default function CalendarPicker({ value, onChange, label }: Props) {
               if (!day) return <View key={`e-${i}`} style={styles.cell} />;
               const isSelected = day === selectedDay;
               const isToday = day === todayDay;
+              const isPast = isPastOrToday(day);
               return (
                 <Pressable
                   key={day}
                   onPress={() => selectDay(day)}
+                  disabled={isPast}
                   style={[
                     styles.cell,
                     isSelected && { backgroundColor: colors.primary, borderRadius: 10 },
                     !isSelected && isToday && { borderWidth: 1.5, borderRadius: 10, borderColor: colors.primary },
+                    isPast && { opacity: 0.28 },
                   ]}
                 >
                   <Text style={[

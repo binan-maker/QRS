@@ -53,7 +53,6 @@ export default function QrFormPage({ mode }: Props) {
   const insets = useSafeAreaInsets();
   const { colors } = useTheme();
   const topInset = Platform.OS === "web" ? 67 : insets.top;
-  const tabBarHeight = 62 + insets.bottom + 8;
   const { width } = useWindowDimensions();
 
   const [presetActive, setPresetActive] = useState(false);
@@ -286,7 +285,7 @@ export default function QrFormPage({ mode }: Props) {
       {/* ── Form scroll ── */}
       <ScrollView
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={[styles.scrollContent, { paddingBottom: tabBarHeight + 24 }]}
+        contentContainerStyle={[styles.scrollContent, { paddingBottom: insets.bottom + 32 }]}
         keyboardShouldPersistTaps="handled"
       >
         {/* Action buttons (business tiles or custom QR — mode cards hidden since mode is pre-selected) */}
@@ -353,7 +352,7 @@ export default function QrFormPage({ mode }: Props) {
         )}
 
         {/* Customize drawer */}
-        <Reanimated.View entering={FadeInDown.duration(340).delay(100)} style={{ marginHorizontal: 20 }}>
+        <Reanimated.View entering={FadeInDown.duration(340).delay(100)} style={{ marginHorizontal: 20, marginTop: 16 }}>
           <CustomizeDrawer
             qrReady={!!qrValue}
             selectedThemeIdx={selectedThemeIdx}

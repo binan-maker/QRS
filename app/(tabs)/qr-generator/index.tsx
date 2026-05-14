@@ -31,7 +31,7 @@ const LANDING_MODES = [
     toC: "#3B82F6",
     midC: "#2563EB",
     features: ["Saved to your account", "Trust score & analytics", "Community safety check"],
-    route: "/(tabs)/qr-generator/standard",
+    route: "/qr-standard",
     requiresAuth: false,
   },
   {
@@ -46,7 +46,7 @@ const LANDING_MODES = [
     toC: "#F59E0B",
     midC: "#D97706",
     features: ["Update destination anytime", "Scan analytics dashboard", "Branded with your logo"],
-    route: "/(tabs)/qr-generator/business",
+    route: "/qr-business",
     requiresAuth: true,
   },
   {
@@ -61,7 +61,7 @@ const LANDING_MODES = [
     toC: "#475569",
     midC: "#334155",
     features: ["No account needed", "Nothing stored anywhere", "Instant & anonymous"],
-    route: "/(tabs)/qr-generator/private",
+    route: "/qr-private",
     requiresAuth: false,
   },
 ] as const;

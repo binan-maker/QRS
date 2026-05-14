@@ -283,16 +283,7 @@ function HistoryScreen() {
     );
   };
 
-  const statsHeader = showStats && !searchVisible ? (
-    <View style={[styles.statsCard, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
-      <View style={[styles.statItem, { borderRightWidth: 0 }]}>
-        <Text style={[styles.statNumber, { color: showNAStats ? colors.textMuted : colors.text }]} maxFontSizeMultiplier={1}>
-          {showNAStats ? "N/A" : totalCount}
-        </Text>
-        <Text style={[styles.statLabel, { color: colors.textMuted }]} maxFontSizeMultiplier={1}>Total Scans</Text>
-      </View>
-    </View>
-  ) : null;
+  const statsHeader = null;
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background, paddingTop: topInset }]}>

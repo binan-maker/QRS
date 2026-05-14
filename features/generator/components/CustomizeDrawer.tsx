@@ -2,6 +2,7 @@ import { useState, memo } from "react";
 import {
   View, Text, Pressable, TextInput, ScrollView,
 } from "react-native";
+import CalendarPicker from "./CalendarPicker";
 import { Ionicons } from "@expo/vector-icons";
 import Animated, { FadeIn, FadeInDown } from "react-native-reanimated";
 import { LinearGradient } from "expo-linear-gradient";
@@ -414,7 +415,7 @@ function CustomizeDrawer({
                   <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
                     <Ionicons name="pricetag-outline" size={13} color={colors.textMuted} />
                     <Text style={{ fontSize: 12, fontFamily: "Inter_600SemiBold", color: colors.textSecondary }}>
-                      Private Label
+                      Label
                     </Text>
                     <View style={{ borderRadius: 5, paddingHorizontal: 5, paddingVertical: 1, backgroundColor: colors.surfaceLight }}>
                       <Text style={{ fontSize: 9, fontFamily: "Inter_500Medium", color: colors.textMuted }}>optional</Text>
@@ -529,19 +530,13 @@ function CustomizeDrawer({
                     })}
                   </View>
                   {settings.expiryPreset === "custom" && (
-                    <TextInput
-                      style={{
-                        borderRadius: 12, borderWidth: 1, paddingHorizontal: 12, paddingVertical: 9,
-                        fontSize: 13, fontFamily: "Inter_400Regular", marginTop: 2,
-                        color: colors.text, backgroundColor: colors.surfaceLight, borderColor: colors.surfaceBorder,
-                      }}
-                      placeholder="YYYY-MM-DD"
-                      placeholderTextColor={colors.textMuted}
-                      value={settings.expiryCustomDate}
-                      onChangeText={(v) => set({ expiryCustomDate: v })}
-                      keyboardType="numbers-and-punctuation"
-                      maxLength={10}
-                    />
+                    <View style={{ marginTop: 2 }}>
+                      <CalendarPicker
+                        value={settings.expiryCustomDate}
+                        onChange={(v) => set({ expiryCustomDate: v })}
+                        futureDatesOnly
+                      />
+                    </View>
                   )}
                 </View>
               </View>

@@ -63,6 +63,7 @@ export function useHome() {
   const {
     data: cloudScansRaw,
     refetch: refetchCloud,
+    isLoading: cloudLoading,
   } = useQuery<LocalScan[]>({
     queryKey: HOME_QUERY_KEY(user?.id ?? ""),
     queryFn: async () => {
@@ -161,6 +162,7 @@ export function useHome() {
   return {
     user,
     recentScans,
+    isLoading: cloudLoading && (!cloudScansRaw || cloudScansRaw.length === 0),
     refreshing,
     onRefresh,
     deleteScan,

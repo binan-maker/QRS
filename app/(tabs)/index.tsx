@@ -180,7 +180,7 @@ const cardStyles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
     shadowRadius: 10,
     shadowOpacity: 0.04,
-    elevation: 1,
+    elevation: Platform.OS === "android" ? 0 : 1,
   },
   scanIconBox: { width: 46, height: 46, borderRadius: 14, alignItems: "center", justifyContent: "center", flexShrink: 0 },
   scanBody: { flex: 1, minWidth: 0, gap: 4 },
@@ -205,7 +205,7 @@ const cardStyles = StyleSheet.create({
 function HomeScreen() {
   const insets = useSafeAreaInsets();
   const { colors, isDark } = useTheme();
-  const { user, recentScans, refreshing, onRefresh, deleteScan, pulseStyle } = useHome();
+  const { user, recentScans, isLoading, refreshing, onRefresh, deleteScan, pulseStyle } = useHome();
   const { cachedUrl: photoURL } = useAvatar();
 
   const topInset = Platform.OS === "web" ? 67 : insets.top;
@@ -236,7 +236,7 @@ function HomeScreen() {
             <View style={styles.headerLeft}>
               {user ? (
                 <Text style={styles.greeting} numberOfLines={1} ellipsizeMode="tail">
-                  Hey,{" "}
+                  {"👋 Hey, "}
                   <Text style={{ color: colors.primary }}>{getFirstName(user.displayName)}</Text>
                 </Text>
               ) : (
@@ -359,7 +359,30 @@ function HomeScreen() {
               )}
             </View>
 
-            {recentScans.length === 0 ? (
+            {isLoading ? (
+              <View style={styles.recentList}>
+                {[0, 1, 2].map((i) => (
+                  <Animated.View
+                    key={i}
+                    entering={FadeInRight.duration(300).delay(i * 60)}
+                    style={[
+                      cardStyles.scanItem,
+                      { backgroundColor: colors.surface, borderColor: colors.surfaceBorder, opacity: 0.7 },
+                    ]}
+                  >
+                    <View style={{ width: 46, height: 46, borderRadius: 14, backgroundColor: colors.surfaceBorder }} />
+                    <View style={{ flex: 1, gap: 8 }}>
+                      <View style={{ height: 14, width: "65%", borderRadius: 7, backgroundColor: colors.surfaceBorder }} />
+                      <View style={{ height: 11, width: "40%", borderRadius: 5.5, backgroundColor: colors.surfaceBorder }} />
+                    </View>
+                    <View style={{ gap: 8, alignItems: "flex-end" }}>
+                      <View style={{ height: 11, width: 36, borderRadius: 5.5, backgroundColor: colors.surfaceBorder }} />
+                      <View style={{ width: 28, height: 28, borderRadius: 9, backgroundColor: colors.surfaceBorder }} />
+                    </View>
+                  </Animated.View>
+                ))}
+              </View>
+            ) : recentScans.length === 0 ? (
               <View style={[styles.emptyWrap, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
                 <View style={[styles.emptyIconBox, { backgroundColor: colors.surfaceLight }]}>
                   <Ionicons name="scan-outline" size={32} color={colors.textMuted} />

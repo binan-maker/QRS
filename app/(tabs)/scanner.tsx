@@ -1,5 +1,6 @@
-import { useRef, useEffect, useState, Component } from "react";
+import { useRef, useEffect, useState, Component, useCallback } from "react";
 import { Platform, View, Text, StyleSheet, ActivityIndicator, Animated, Dimensions, Pressable } from "react-native";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { StatusBar } from "expo-status-bar";
 import { CameraView, useCameraPermissions } from "expo-camera";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -161,6 +162,19 @@ export default function ScannerScreen() {
   const topInset = Platform.OS === "web" ? 67 : insets.top;
   const bottomInset = Math.max(insets.bottom, 24);
 
+  const [showDonationBanner, setShowDonationBanner] = useState(false);
+  const DONATION_DISMISS_KEY = "@qrg_donation_dismissed";
+  const SCAN_COUNT_KEY = "@qrg_total_scan_count";
+
+  useEffect(() => {
+    AsyncStorage.getItem(DONATION_DISMISS_KEY).then((dismissed) => {
+      if (dismissed) return;
+      AsyncStorage.getItem(SCAN_COUNT_KEY).then((c) => {
+        if (parseInt(c || "0", 10) >= 5) setShowDonationBanner(true);
+      }).catch(() => {});
+    }).catch(() => {});
+  }, []);
+
   // Step 1: Check hardware availability BEFORE rendering CameraView.
   // On Android, isAvailableAsync() can return false incorrectly on many real
   // devices in production (driver timing, permission state, OEM restrictions).
@@ -258,6 +272,18 @@ export default function ScannerScreen() {
     handleUnverifiedBack,
   } = useScanner();
 
+  const handleScanWithCount = useCallback(async (data: any) => {
+    handleBarCodeScanned(data);
+    try {
+      const dismissed = await AsyncStorage.getItem(DONATION_DISMISS_KEY);
+      if (dismissed) return;
+      const stored = await AsyncStorage.getItem(SCAN_COUNT_KEY);
+      const newCount = parseInt(stored || "0", 10) + 1;
+      await AsyncStorage.setItem(SCAN_COUNT_KEY, String(newCount));
+      if (newCount >= 5) setShowDonationBanner(true);
+    } catch {}
+  }, [handleBarCodeScanned]);
+
   if (!permission) {
     return <View style={{ flex: 1, backgroundColor: "#000" }} />;
   }
@@ -308,7 +334,7 @@ export default function ScannerScreen() {
             enableTorch={flashOn && facing === "back"}
             zoom={zoom}
             barcodeScannerSettings={{ barcodeTypes: ["qr"] }}
-            onBarcodeScanned={scanned ? undefined : handleBarCodeScanned}
+            onBarcodeScanned={scanned ? undefined : handleScanWithCount}
             onCameraReady={markCameraReady}
             onMountError={(error) => {
               const msg = (error?.message ?? "").toLowerCase();
@@ -410,6 +436,33 @@ export default function ScannerScreen() {
             </View>
           </Reanimated.View>
         </View>
+      )}
+
+      {/* Donation micro-banner — appears after 5 cumulative scans */}
+      {showDonationBanner && (
+        <Reanimated.View
+          entering={FadeInDown.duration(380).springify()}
+          style={[donationBannerStyles.banner, { bottom: bottomInset + (conversionBannerMsg && !user ? 106 : 16) }]}
+        >
+          <Pressable
+            onPress={() => router.push("/donation" as any)}
+            style={donationBannerStyles.body}
+          >
+            <Text style={donationBannerStyles.heart}>❤</Text>
+            <Text style={donationBannerStyles.text} numberOfLines={1}>
+              Enjoying QR Guard? Support us
+            </Text>
+          </Pressable>
+          <Pressable
+            onPress={async () => {
+              setShowDonationBanner(false);
+              try { await AsyncStorage.setItem(DONATION_DISMISS_KEY, "1"); } catch {}
+            }}
+            style={donationBannerStyles.closeBtn}
+          >
+            <Ionicons name="close" size={15} color="rgba(255,255,255,0.5)" />
+          </Pressable>
+        </Reanimated.View>
       )}
 
       {/* Conversion banner — nudges anonymous users to sign up at scan milestones */}
@@ -756,6 +809,48 @@ const conversionStyles = StyleSheet.create({
     width: 28,
     height: 28,
     borderRadius: 14,
+    backgroundColor: "rgba(255,255,255,0.06)",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+});
+
+const donationBannerStyles = StyleSheet.create({
+  banner: {
+    position: "absolute",
+    left: 16,
+    right: 16,
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "rgba(15,20,35,0.92)",
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: "rgba(255,80,120,0.35)",
+    paddingVertical: 10,
+    paddingLeft: 14,
+    paddingRight: 8,
+    gap: 8,
+  },
+  body: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
+  heart: {
+    fontSize: 14,
+    color: "#FF6B8A",
+  },
+  text: {
+    flex: 1,
+    fontSize: 13,
+    fontFamily: "Inter_500Medium",
+    color: "rgba(255,255,255,0.82)",
+  },
+  closeBtn: {
+    width: 26,
+    height: 26,
+    borderRadius: 13,
     backgroundColor: "rgba(255,255,255,0.06)",
     alignItems: "center",
     justifyContent: "center",
