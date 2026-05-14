@@ -341,7 +341,7 @@ function QrGeneratorScreen() {
                       {preset?.label ?? "Custom"}
                     </Text>
                   </View>
-                  <View style={{ flexDirection: "row", gap: 6 }}>
+                  <View style={{ flexDirection: "row", gap: 6, flexShrink: 0 }}>
                     <Pressable
                       onPress={() => setCustomModalOpen(true)}
                       style={({ pressed }) => [
@@ -380,7 +380,7 @@ function QrGeneratorScreen() {
             </Reanimated.View>
 
             {/* Input fields */}
-            <Reanimated.View entering={FadeInDown.duration(320).delay(60)}>
+            <Reanimated.View entering={FadeInDown.duration(320).delay(60)} style={{ marginHorizontal: 20 }}>
               <InputSection
                 selectedPreset={selectedPreset}
                 inputValue={inputValue}
@@ -655,7 +655,8 @@ function makeStyles(_c: unknown, width: number) {
       alignItems: "center",
       justifyContent: "space-between",
       paddingHorizontal: 20,
-      paddingVertical: 8,
+      paddingTop: 4,
+      paddingBottom: 12,
       gap: 10,
     },
     typeChip: {
@@ -665,20 +666,21 @@ function makeStyles(_c: unknown, width: number) {
       borderRadius: 20,
       borderWidth: 1,
       paddingHorizontal: 12,
-      paddingVertical: 6,
+      paddingVertical: 7,
+      flexShrink: 1,
     },
     typeChipDot: { width: 7, height: 7, borderRadius: 4 },
     typeChipLabel: { fontSize: 13, fontFamily: "Inter_700Bold" },
     clearChipBtn: {
       flexDirection: "row",
       alignItems: "center",
-      gap: 4,
-      borderRadius: 14,
+      gap: 5,
+      borderRadius: 12,
       borderWidth: 1,
       paddingHorizontal: 10,
-      paddingVertical: 6,
+      paddingVertical: 7,
     },
-    clearChipText: { fontSize: 12, fontFamily: "Inter_500Medium" },
+    clearChipText: { fontSize: 12, fontFamily: "Inter_600SemiBold" },
 
     modeSwitcherBar: {
       flexDirection: "row",
