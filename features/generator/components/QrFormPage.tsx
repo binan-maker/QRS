@@ -307,6 +307,34 @@ export default function QrFormPage({ mode }: Props) {
           </Reanimated.View>
         )}
 
+        {/* Custom QR option — business mode only, before QR is generated */}
+        {mode === "business" && presetActive && !qrValue && (
+          <Reanimated.View entering={FadeInDown.duration(280).delay(70)} style={{ marginHorizontal: 20, marginBottom: 8 }}>
+            <Pressable
+              onPress={() => { setCustomModalOpen(true); }}
+              style={({ pressed }) => ({
+                flexDirection: "row" as const,
+                alignItems: "center" as const,
+                gap: 8,
+                borderRadius: 12,
+                borderWidth: 1,
+                borderStyle: "dashed" as const,
+                borderColor: colors.primary + "50",
+                paddingHorizontal: 14,
+                paddingVertical: 9,
+                backgroundColor: colors.primaryDim + "60",
+                opacity: pressed ? 0.8 : 1,
+              })}
+            >
+              <Ionicons name="create-outline" size={15} color={colors.primary} />
+              <Text style={{ fontSize: 12, fontFamily: "Inter_600SemiBold", color: colors.primary, flex: 1 }}>
+                Custom QR
+              </Text>
+              <Ionicons name="chevron-forward" size={13} color={colors.primary + "80"} />
+            </Pressable>
+          </Reanimated.View>
+        )}
+
         {/* Business name — business mode only */}
         {mode === "business" && presetActive && (
           <Reanimated.View entering={FadeInDown.duration(320).delay(80)}>

@@ -243,7 +243,8 @@ export default function MyQrDetailScreen() {
                 const dest = guardLink?.currentDestination || null;
                 const raw = qrItem.content || "";
                 const isGuardUrl = raw.includes("/guard/");
-                const subtitle = dest ?? (isGuardUrl ? null : (raw !== qrItem.businessName ? raw : null));
+                const isPrivateIpDest = dest ? /^https?:\/\/(192\.168\.|10\.|172\.(1[6-9]|2\d|3[01])\.|127\.|localhost)/.test(dest) || dest.includes("/guard/") : false;
+                const subtitle = (dest && !isPrivateIpDest) ? dest : (isGuardUrl ? null : (raw !== qrItem.businessName ? raw : null));
                 if (!subtitle) return null;
                 return (
                   <Text style={{ fontSize: rf(11), fontFamily: "Inter_400Regular", color: colors.textMuted, marginTop: sp(3), textAlign: "center" }} numberOfLines={1}>
@@ -324,9 +325,16 @@ export default function MyQrDetailScreen() {
                   <Text style={{ fontSize: rf(9), fontFamily: "Inter_700Bold", color: "#6366F1" }}>DYNAMIC</Text>
                 </View>
               </View>
-              <Text style={{ fontSize: rf(11), fontFamily: "Inter_400Regular", color: colors.textSecondary, marginBottom: sp(10) }} numberOfLines={2}>
-                {guardLink.currentDestination}
-              </Text>
+              {(() => {
+                const dest = guardLink.currentDestination || "";
+                const isPrivate = /^https?:\/\/(192\.168\.|10\.|172\.(1[6-9]|2\d|3[01])\.|127\.|localhost)/.test(dest) || dest.includes("/guard/");
+                if (isPrivate || !dest) return null;
+                return (
+                  <Text style={{ fontSize: rf(11), fontFamily: "Inter_400Regular", color: colors.textSecondary, marginBottom: sp(10) }} numberOfLines={2}>
+                    {dest}
+                  </Text>
+                );
+              })()}
 
               {editingDestination ? (
                 <View style={{ gap: sp(8) }}>

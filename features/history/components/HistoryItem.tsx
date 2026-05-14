@@ -81,14 +81,29 @@ function getDisplayLabel(contentType: string, content: string): string {
     } catch { return "Payment QR"; }
   }
   if (contentType === "url") {
-    try { return new URL(content).hostname.replace("www.", ""); }
-    catch { return content; }
+    try {
+      const u = new URL(content);
+      const host = u.hostname.replace("www.", "");
+      const isPrivateIp = /^(192\.168\.|10\.|172\.(1[6-9]|2\d|3[01])\.|127\.|localhost)/.test(host);
+      const isGuardPath = u.pathname.startsWith("/guard/");
+      if (isPrivateIp || isGuardPath) return "Smart Redirect";
+      return host;
+    } catch { return content; }
   }
   return content;
 }
 
 function getSubtitle(contentType: string, content: string): string | null {
-  if (contentType === "url") return content;
+  if (contentType === "url") {
+    try {
+      const u = new URL(content);
+      const host = u.hostname;
+      const isPrivateIp = /^(192\.168\.|10\.|172\.(1[6-9]|2\d|3[01])\.|127\.|localhost)/.test(host);
+      const isGuardPath = u.pathname.startsWith("/guard/");
+      if (isPrivateIp || isGuardPath) return null;
+    } catch {}
+    return content;
+  }
   if (contentType === "payment") {
     try {
       const parsed = parseAnyPaymentQr(content);

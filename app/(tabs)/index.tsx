@@ -61,8 +61,17 @@ function computeScanMeta(
     } catch {}
   } else if (contentType === "url") {
     try {
-      displayLabel = new URL(scan.content).hostname.replace("www.", "");
-      subtitle = scan.content;
+      const u = new URL(scan.content);
+      const host = u.hostname.replace("www.", "");
+      const isPrivateIp = /^(192\.168\.|10\.|172\.(1[6-9]|2\d|3[01])\.|127\.|localhost)/.test(host);
+      const isGuardPath = u.pathname.startsWith("/guard/");
+      if (isPrivateIp || isGuardPath) {
+        displayLabel = "Smart Redirect";
+        subtitle = null;
+      } else {
+        displayLabel = host;
+        subtitle = scan.content;
+      }
     } catch {}
   } else if (scan.content.length > 44) {
     subtitle = scan.content.slice(0, 44) + "…";

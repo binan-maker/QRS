@@ -53,6 +53,7 @@ export function useProfile() {
   const [myQrCodes, setMyQrCodes] = useState<GeneratedQrItem[]>([]);
   const [myQrLoading, setMyQrLoading] = useState(true);
   const myQrCodesRef = useRef<GeneratedQrItem[]>([]);
+  const hasLoadedQrsRef = useRef(false);
   useEffect(() => { myQrCodesRef.current = myQrCodes; }, [myQrCodes]);
   const qrUnsubscribeRef = useRef<(() => void) | null>(null);
   const lastStatsFetchRef = useRef<number>(0);
@@ -201,10 +202,11 @@ export function useProfile() {
         setMyQrLoading(false);
         return;
       }
-      setMyQrLoading(myQrCodesRef.current.length === 0);
+      setMyQrLoading(!hasLoadedQrsRef.current && myQrCodesRef.current.length === 0);
       if (qrUnsubscribeRef.current) { qrUnsubscribeRef.current(); qrUnsubscribeRef.current = null; }
       const unsub = subscribeToUserGeneratedQrs(user.id, (items) => {
         setMyQrCodes(items);
+        hasLoadedQrsRef.current = true;
         setMyQrLoading(false);
       });
       qrUnsubscribeRef.current = unsub;

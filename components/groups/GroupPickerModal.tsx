@@ -86,14 +86,29 @@ export default function GroupPickerModal({ visible, onClose, qrDocId, qrLabel, o
 
   async function handleToggle(group: QrGroup) {
     if (!user || toggling) return;
+    if (!qrDocId) return;
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     setToggling(group.id);
+    const wasIn = memberOf.has(group.id);
+    setMemberOf((prev) => {
+      const next = new Set(prev);
+      if (wasIn) next.delete(group.id);
+      else next.add(group.id);
+      return next;
+    });
     try {
-      if (memberOf.has(group.id)) {
+      if (wasIn) {
         await removeQrFromGroup(user.id, group.id, qrDocId);
       } else {
         await addQrToGroup(user.id, group.id, qrDocId);
       }
+    } catch {
+      setMemberOf((prev) => {
+        const next = new Set(prev);
+        if (wasIn) next.add(group.id);
+        else next.delete(group.id);
+        return next;
+      });
     } finally {
       setToggling(null);
     }
@@ -129,7 +144,7 @@ export default function GroupPickerModal({ visible, onClose, qrDocId, qrLabel, o
   );
 
   return (
-    <Modal visible={visible} animationType="slide" transparent statusBarTranslucent onRequestClose={onClose}>
+    <Modal visible={visible} animationType="fade" transparent statusBarTranslucent onRequestClose={onClose}>
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : "height"}
         style={{ flex: 1, justifyContent: "flex-end" }}
