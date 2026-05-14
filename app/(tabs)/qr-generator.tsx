@@ -24,7 +24,7 @@ import { useTheme } from "@/contexts/ThemeContext";
 import { useQrGenerator, LOGO_POSITIONS } from "@/hooks/useQrGenerator";
 import TypePickerHome from "@/features/generator/components/TypePickerHome";
 import TemplatePickerModal from "@/features/generator/components/TemplatePickerModal";
-import CustomQrBuilderPage from "@/features/generator/components/CustomQrBuilderPage";
+import CustomQrModal from "@/features/generator/components/CustomQrModal";
 import InputSection from "@/features/generator/components/InputSection";
 import QrOutputCard from "@/features/generator/components/QrOutputCard";
 import InfoModal from "@/features/generator/components/InfoModal";
@@ -33,7 +33,7 @@ import CustomizeDrawer from "@/features/generator/components/CustomizeDrawer";
 import GroupPickerModal from "@/components/groups/GroupPickerModal";
 import type { BusinessCategory } from "@/features/generator/components/BusinessTypeSelector";
 
-type GeneratorView = "home" | "create" | "custom";
+type GeneratorView = "home" | "create";
 
 type QrMode = "individual" | "business" | "private";
 
@@ -78,6 +78,7 @@ function QrGeneratorScreen() {
   const [qrSize, setQrSize] = useState(220);
   const [templateModalOpen, setTemplateModalOpen] = useState(false);
   const [groupPickerOpen, setGroupPickerOpen] = useState(false);
+  const [customModalOpen, setCustomModalOpen] = useState(false);
 
   const {
     user,
@@ -346,18 +347,10 @@ function QrGeneratorScreen() {
             onSelectPreset={handleSelectPreset}
             onSelectBusinessCategory={handleSelectBusinessCategory}
             onOpenTemplates={handleOpenTemplatesFromHome}
-            onOpenCustom={() => setView("custom")}
+            onOpenCustom={() => setCustomModalOpen(true)}
             user={user}
           />
         </Reanimated.View>
-      )}
-
-      {/* ── CUSTOM QR VIEW ── */}
-      {view === "custom" && (
-        <CustomQrBuilderPage
-          onBack={() => setView("home")}
-          onGenerate={handleCustomGenerate}
-        />
       )}
 
       {/* ── CREATE VIEW ── */}
@@ -795,6 +788,11 @@ function QrGeneratorScreen() {
       ) : null}
 
       {/* ── MODALS ── */}
+      <CustomQrModal
+        visible={customModalOpen}
+        onClose={() => setCustomModalOpen(false)}
+      />
+
       <TemplatePickerModal
         visible={templateModalOpen}
         selectedPreset={selectedPreset}

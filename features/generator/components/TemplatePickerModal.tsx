@@ -359,12 +359,12 @@ const styles = StyleSheet.create({
   },
   handle: {
     width: 40, height: 4, borderRadius: 2,
-    alignSelf: "center", marginBottom: 16,
+    alignSelf: "center", marginBottom: 8,
   },
   header: {
     flexDirection: "row", alignItems: "flex-start",
     justifyContent: "space-between",
-    paddingHorizontal: 20, marginBottom: 14,
+    paddingHorizontal: 20, marginBottom: 6,
   },
   title: { fontSize: 18, fontFamily: "Inter_700Bold" },
   subtitle: { fontSize: 12, fontFamily: "Inter_400Regular", marginTop: 3 },
