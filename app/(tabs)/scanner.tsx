@@ -264,19 +264,13 @@ export default function ScannerScreen() {
 
   if (!permission.granted) {
     return (
-      <View style={{ flex: 1, backgroundColor: "#000" }}>
-        <StatusBar style="light" backgroundColor="#000" />
+      <View style={{ flex: 1, backgroundColor: colors.background }}>
+        <StatusBar style={colors.isDark ? "light" : "dark"} />
         <PermissionScreen
           canAskAgain={permission.canAskAgain}
           onRequestPermission={requestPermission}
-          onPickImage={handlePickImage}
         />
-        {galleryErrorMsg && (
-          <View style={[toastStyles.container, { bottom: 32 }]}>
-            <ScannerToast message={galleryErrorMsg} type="error" onDone={dismissGalleryError} />
-          </View>
-        )}
-        {scannerMsg && !galleryErrorMsg && (
+        {scannerMsg && (
           <View style={[toastStyles.container, { bottom: 32 }]}>
             <ScannerToast message={scannerMsg} type={scannerMsgType} onDone={dismissScannerMsg} />
           </View>
