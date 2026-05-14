@@ -117,7 +117,7 @@ function TemplatePickerModal({ visible, selectedPreset, onSelect, onClose }: Pro
     <Modal
       visible={visible}
       transparent
-      animationType="slide"
+      animationType="fade"
       onRequestClose={handleClose}
       statusBarTranslucent
     >

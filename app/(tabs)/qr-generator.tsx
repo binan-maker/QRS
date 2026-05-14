@@ -301,9 +301,6 @@ function QrGeneratorScreen() {
       <View style={styles.navBar}>
         <View>
           <Text style={[styles.navTitle, { color: colors.text }]}>QR Generator</Text>
-          <Text style={[styles.navSubtitle, { color: colors.textMuted }]}>
-            Create secure, trusted QR codes
-          </Text>
         </View>
         <Pressable
           onPress={handleOpenInfo}
@@ -742,14 +739,14 @@ function makeStyles(_c: unknown, width: number) {
     },
     fieldInputText: { fontSize: 13, fontFamily: "Inter_400Regular" },
 
-    generateBtnWrap: { marginBottom: 16 },
+    generateBtnWrap: { marginBottom: 16, marginHorizontal: 20 },
     generateBtn: {
       flexDirection: "row",
       alignItems: "center",
       justifyContent: "center",
       gap: 10,
       paddingVertical: 14,
-      borderRadius: 20,
+      borderRadius: 18,
     },
     generateBtnText: {
       fontSize: rf(15),

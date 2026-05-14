@@ -123,7 +123,7 @@ function TypePickerHome({
             >
               {/* Icon */}
               <View style={[styles.modeIconWrap, { backgroundColor: m.color + (active ? "28" : "16") }]}>
-                <Ionicons name={m.icon} size={24} color={m.color} />
+                <Ionicons name={m.icon} size={20} color={m.color} />
               </View>
 
               {/* Label */}
@@ -180,10 +180,10 @@ function TypePickerHome({
             </Reanimated.View>
           )}
 
-          {/* Standard / Private: Custom QR + Browse all */}
+          {/* Standard / Private: Custom QR + Choose QR type */}
           {qrMode !== "business" && (
-            <Reanimated.View entering={FadeInUp.duration(300).delay(80)} style={{ gap: 12 }}>
-              {/* Custom QR — prominent gradient card */}
+            <Reanimated.View entering={FadeInUp.duration(300).delay(80)} style={{ gap: 10 }}>
+              {/* Custom QR */}
               <Pressable
                 onPress={() => {
                   Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
@@ -192,7 +192,7 @@ function TypePickerHome({
                 style={({ pressed }) => ({
                   opacity:      pressed ? 0.82 : 1,
                   transform:    [{ scale: pressed ? 0.98 : 1 }],
-                  borderRadius: 20,
+                  borderRadius: 16,
                   overflow:     "hidden" as const,
                 })}
               >
@@ -202,19 +202,14 @@ function TypePickerHome({
                   style={[styles.customCard, { borderColor: colors.primary + "40" }]}
                 >
                   <View style={[styles.customCardIcon, { backgroundColor: colors.primaryDim }]}>
-                    <Ionicons name="create-outline" size={26} color={colors.primary} />
+                    <Ionicons name="create-outline" size={22} color={colors.primary} />
                   </View>
-                  <View style={{ flex: 1 }}>
-                    <Text style={[styles.customCardTitle, { color: colors.text }]}>Custom QR</Text>
-                    <Text style={[styles.customCardSub, { color: colors.textMuted }]}>
-                      Build with your own fields — text, phone, URL, payment, date &amp; more
-                    </Text>
-                  </View>
-                  <Ionicons name="chevron-forward" size={17} color={colors.primary} />
+                  <Text style={[styles.customCardTitle, { color: colors.text }]}>Custom QR</Text>
+                  <Ionicons name="chevron-forward" size={16} color={colors.primary} />
                 </LinearGradient>
               </Pressable>
 
-              {/* Browse all QR types */}
+              {/* Choose QR type */}
               <Pressable
                 onPress={() => {
                   Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -231,15 +226,10 @@ function TypePickerHome({
                 ]}
               >
                 <View style={[styles.browseCardIcon, { backgroundColor: colors.surfaceLight }]}>
-                  <Ionicons name="apps-outline" size={22} color={colors.textSecondary} />
+                  <Ionicons name="apps-outline" size={20} color={colors.textSecondary} />
                 </View>
-                <View style={{ flex: 1 }}>
-                  <Text style={[styles.browseCardTitle, { color: colors.text }]}>Browse All QR Types</Text>
-                  <Text style={[styles.browseCardSub, { color: colors.textMuted }]}>
-                    35+ types — UPI, WhatsApp, WiFi, Google Maps &amp; more
-                  </Text>
-                </View>
-                <Ionicons name="chevron-forward" size={17} color={colors.textMuted} />
+                <Text style={[styles.browseCardTitle, { color: colors.text }]}>Choose QR Type</Text>
+                <Ionicons name="chevron-forward" size={16} color={colors.textMuted} />
               </Pressable>
             </Reanimated.View>
           )}
@@ -251,24 +241,22 @@ function TypePickerHome({
 
 export default memo(TypePickerHome);
 
-const CARD_HEIGHT = 115;
-
 const styles = StyleSheet.create({
-  root: { gap: 14, paddingTop: 8 },
+  root: { gap: 12, paddingTop: 8 },
 
   /* Mode cards */
-  modeRow: { flexDirection: "row", gap: 10 },
+  modeRow: { flexDirection: "row", gap: 8 },
   modeCard: {
     flex: 1,
-    height: CARD_HEIGHT,
-    borderRadius: 20,
+    height: 72,
+    borderRadius: 16,
     alignItems: "center",
     justifyContent: "center",
     gap: 5,
     position: "relative",
     overflow: "hidden",
     paddingHorizontal: 8,
-    paddingVertical: 12,
+    paddingVertical: 10,
   },
   modeBadge: {
     position: "absolute", top: 7, right: 7,
@@ -278,10 +266,10 @@ const styles = StyleSheet.create({
   modeBadgeText: { fontSize: 7, fontFamily: "Inter_700Bold", letterSpacing: 0.4 },
   infoIcon: { position: "absolute", top: 7, left: 7 },
   modeIconWrap: {
-    width: 42, height: 42, borderRadius: 14,
+    width: 34, height: 34, borderRadius: 10,
     alignItems: "center", justifyContent: "center",
   },
-  modeLabel: { fontSize: 13, fontFamily: "Inter_700Bold", textAlign: "center" },
+  modeLabel: { fontSize: 12, fontFamily: "Inter_700Bold", textAlign: "center" },
   modeTag:   { fontSize: 10, fontFamily: "Inter_500Medium", textAlign: "center" },
   activeBar: {
     position: "absolute", bottom: 0,
@@ -310,27 +298,25 @@ const styles = StyleSheet.create({
 
   /* Custom QR card */
   customCard: {
-    flexDirection: "row", alignItems: "center", gap: 14,
-    borderWidth: 1.5, borderRadius: 20,
-    paddingHorizontal: 16, paddingVertical: 16,
+    flexDirection: "row", alignItems: "center", gap: 12,
+    borderWidth: 1.5, borderRadius: 16,
+    paddingHorizontal: 14, paddingVertical: 12,
   },
   customCardIcon: {
-    width: 52, height: 52, borderRadius: 16,
+    width: 38, height: 38, borderRadius: 12,
     alignItems: "center", justifyContent: "center", flexShrink: 0,
   },
-  customCardTitle: { fontSize: 15, fontFamily: "Inter_700Bold", marginBottom: 3 },
-  customCardSub:   { fontSize: 12, fontFamily: "Inter_400Regular", lineHeight: 17 },
+  customCardTitle: { fontSize: 14, fontFamily: "Inter_700Bold", flex: 1 },
 
   /* Browse card */
   browseCard: {
-    flexDirection: "row", alignItems: "center", gap: 14,
-    borderRadius: 18, borderWidth: 1,
-    paddingHorizontal: 16, paddingVertical: 14,
+    flexDirection: "row", alignItems: "center", gap: 12,
+    borderRadius: 16, borderWidth: 1,
+    paddingHorizontal: 14, paddingVertical: 12,
   },
   browseCardIcon: {
-    width: 44, height: 44, borderRadius: 13,
+    width: 38, height: 38, borderRadius: 12,
     alignItems: "center", justifyContent: "center", flexShrink: 0,
   },
-  browseCardTitle: { fontSize: 14, fontFamily: "Inter_700Bold", marginBottom: 2 },
-  browseCardSub:   { fontSize: 12, fontFamily: "Inter_400Regular", lineHeight: 16 },
+  browseCardTitle: { fontSize: 14, fontFamily: "Inter_700Bold", flex: 1 },
 });

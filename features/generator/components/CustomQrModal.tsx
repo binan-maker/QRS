@@ -86,7 +86,7 @@ function CustomQrModal({ visible, onClose, onConfirm }: Props) {
     <Modal
       visible={visible}
       transparent
-      animationType="slide"
+      animationType="fade"
       onRequestClose={handleClose}
       statusBarTranslucent
     >
