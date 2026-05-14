@@ -27,7 +27,6 @@ const TAG_FILTERS = [
   { key: "payment",  label: "Payments",  icon: "cash-outline"           },
   { key: "social",   label: "Social",    icon: "people-outline"         },
   { key: "contact",  label: "Contact",   icon: "person-circle-outline"  },
-  { key: "business", label: "Business",  icon: "business-outline"       },
   { key: "utility",  label: "Utility",   icon: "construct-outline"      },
 ];
 

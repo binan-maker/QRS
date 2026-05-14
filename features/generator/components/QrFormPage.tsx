@@ -33,13 +33,10 @@ import InfoModal from "@/features/generator/components/InfoModal";
 import PositionModal from "@/features/generator/components/PositionModal";
 import CustomizeDrawer from "@/features/generator/components/CustomizeDrawer";
 import GroupPickerModal from "@/components/groups/GroupPickerModal";
-import type { BusinessCategory } from "@/features/generator/components/BusinessTypeSelector";
-
-type QrMode = "individual" | "business" | "private";
+type QrMode = "individual" | "private";
 
 const MODE_META: Record<QrMode, { label: string; color: string }> = {
   individual: { label: "Standard", color: "#3B82F6" },
-  business:   { label: "Business", color: "#F59E0B" },
   private:    { label: "Private",  color: "#64748B" },
 };
 
@@ -75,10 +72,6 @@ export default function QrFormPage({ mode }: Props) {
     setExtraField,
     qrValue,
     setQrMode,
-    businessName,
-    setBusinessName,
-    businessCategory,
-    switchBusinessCategory,
     customLogoUri,
     showDefaultLogo,
     logoPosition,
@@ -106,7 +99,6 @@ export default function QrFormPage({ mode }: Props) {
     toastMsg,
     toastType,
     toastAnim,
-    isBranded,
     privateMode,
     switchPreset,
     handleGenerate,
@@ -125,10 +117,6 @@ export default function QrFormPage({ mode }: Props) {
 
   useEffect(() => {
     setQrMode(mode);
-    if (mode === "business") {
-      switchBusinessCategory("website");
-      setPresetActive(true);
-    }
   }, []);
 
 
@@ -150,17 +138,11 @@ export default function QrFormPage({ mode }: Props) {
     let btnColors: [string, string] = [colors.primary, colors.primaryShade];
 
     if (hasLiveQr && canSave && !isRegistered) {
-      if (mode === "business") {
-        btnLabel = "Activate Smart Redirect";
-        btnIcon = "shield-check";
-        btnColors = [colors.warning, (colors as any).warningShade ?? colors.warning];
-      } else {
-        btnLabel = "Save Protected QR";
-        btnIcon = "shield-lock-outline";
-        btnColors = [colors.safe, (colors as any).safeShade ?? colors.safe];
-      }
+      btnLabel = "Save Protected QR";
+      btnIcon = "shield-lock-outline";
+      btnColors = [colors.safe, (colors as any).safeShade ?? colors.safe];
     } else if (hasLiveQr && isRegistered) {
-      btnLabel = mode === "business" ? "Smart Redirect Active ✓" : "Protected QR Saved ✓";
+      btnLabel = "Protected QR Saved ✓";
       btnIcon = "check-circle-outline";
       btnColors = [colors.safe, (colors as any).safeShade ?? colors.safe];
     } else if (hasLiveQr && privateMode) {
@@ -180,29 +162,9 @@ export default function QrFormPage({ mode }: Props) {
     [switchPreset],
   );
 
-  const handleSelectBusinessCategory = useCallback(
-    (cat: BusinessCategory) => {
-      setQrMode("business");
-      switchBusinessCategory(cat);
-      setPresetActive(true);
-    },
-    [setQrMode, switchBusinessCategory],
-  );
-
   const handleSetHomeMode = useCallback(
-    (m: QrMode) => {
-      if (m === "business" && !user) return;
-      setQrMode(m);
-    },
-    [setQrMode, user],
-  );
-
-  const handleModeCardPress = useCallback(
-    (m: QrMode) => {
-      if (m === "business" && !user) return;
-      setQrMode(m);
-    },
-    [setQrMode, user],
+    (m: QrMode) => { setQrMode(m); },
+    [setQrMode],
   );
 
   const handleOpenTemplatesFromHome = useCallback(() => setTemplateModalOpen(true), []);
@@ -277,16 +239,12 @@ export default function QrFormPage({ mode }: Props) {
         contentContainerStyle={[styles.scrollContent, { paddingBottom: insets.bottom + 32 }]}
         keyboardShouldPersistTaps="handled"
       >
-        {/* Action buttons (business tiles or custom QR — mode cards hidden since mode is pre-selected) */}
+        {/* Action buttons — mode cards hidden since mode is pre-selected from landing */}
         <TypePickerHome
           qrMode={mode}
           onSetMode={handleSetHomeMode}
-          onModeCardPress={handleModeCardPress}
-          onSelectPreset={handleSelectPreset}
-          onSelectBusinessCategory={handleSelectBusinessCategory}
           onOpenTemplates={handleOpenTemplatesFromHome}
           onOpenCustom={() => setQrTemplateOpen(true)}
-          user={user}
           hideActions={presetActive}
           hideModeCards={true}
         />
@@ -298,68 +256,12 @@ export default function QrFormPage({ mode }: Props) {
               selectedPreset={selectedPreset}
               inputValue={inputValue}
               extraFields={extraFields}
-              qrMode={mode}
-              isBranded={isBranded}
-              businessCategory={businessCategory}
               setInputValue={setInputValue}
               setExtraField={setExtraField}
             />
           </Reanimated.View>
         )}
 
-        {/* Choose Template — business mode only, before QR is generated */}
-        {mode === "business" && presetActive && !qrValue && (
-          <Reanimated.View entering={FadeInDown.duration(280).delay(70)} style={{ marginHorizontal: 20, marginBottom: 8 }}>
-            <Pressable
-              onPress={() => setQrTemplateOpen(true)}
-              style={({ pressed }) => ({
-                flexDirection: "row" as const,
-                alignItems: "center" as const,
-                gap: 8,
-                borderRadius: 12,
-                borderWidth: 1,
-                borderColor: colors.primary + "50",
-                paddingHorizontal: 14,
-                paddingVertical: 9,
-                backgroundColor: colors.primaryDim + "60",
-                opacity: pressed ? 0.8 : 1,
-              })}
-            >
-              <Ionicons name="grid-outline" size={15} color={colors.primary} />
-              <Text style={{ fontSize: 12, fontFamily: "Inter_600SemiBold", color: colors.primary, flex: 1 }}>
-                Choose Template
-              </Text>
-              <Ionicons name="chevron-forward" size={13} color={colors.primary + "80"} />
-            </Pressable>
-          </Reanimated.View>
-        )}
-
-        {/* Business name — business mode only */}
-        {mode === "business" && presetActive && (
-          <Reanimated.View entering={FadeInDown.duration(320).delay(80)}>
-            <View style={{ marginBottom: 16, marginHorizontal: 20 }}>
-              <Text style={[styles.fieldLabel, { color: colors.textMuted }]}>
-                Business Name
-              </Text>
-              <View style={[styles.fieldInput, { backgroundColor: colors.inputBackground, borderColor: businessName.trim() ? colors.primary + "60" : colors.surfaceBorder }]}>
-                <Ionicons name="storefront-outline" size={16} color={businessName.trim() ? colors.primary : colors.textMuted} />
-                <TextInput
-                  style={[styles.fieldInputText, { color: colors.text, flex: 1 }]}
-                  value={businessName}
-                  onChangeText={setBusinessName}
-                  placeholder="Your shop or brand name"
-                  placeholderTextColor={colors.textMuted}
-                  autoCapitalize="words"
-                  autoCorrect={false}
-                  returnKeyType="done"
-                />
-                {businessName.trim().length > 0 && (
-                  <Ionicons name="checkmark-circle" size={16} color={colors.primary} />
-                )}
-              </View>
-            </View>
-          </Reanimated.View>
-        )}
 
         {/* Customize drawer */}
         <Reanimated.View entering={FadeInDown.duration(340).delay(100)} style={{ marginHorizontal: 20, marginTop: 16 }}>
@@ -476,7 +378,7 @@ export default function QrFormPage({ mode }: Props) {
           <QrOutputCard
             qrValue={qrValue}
             qrSize={qrSize}
-            isBranded={isBranded}
+            isBranded={false}
             privateMode={privateMode}
             qrMode={mode}
             logoPosition={logoPosition}
@@ -492,8 +394,6 @@ export default function QrFormPage({ mode }: Props) {
             logoPositionLabel={logoPositionLabel}
             qrFgColor={qrFgColor}
             qrBgColor={qrBgColor}
-            businessDestination={mode === "business" ? inputValue.trim() : undefined}
-            businessCategory={mode === "business" ? businessCategory : undefined}
             urlRiskScore={urlRiskScore}
             urlRiskReasons={urlRiskReasons}
             onSizeIncrease={handleSizeIncrease}
@@ -522,9 +422,7 @@ export default function QrFormPage({ mode }: Props) {
               <Text style={[styles.emptyQrSub, { color: colors.textMuted }]}>
                 {mode === "individual"
                   ? "Type above — protected QR previews live"
-                  : mode === "business"
-                    ? "Enter destination — Smart Redirect QR previews live"
-                    : "Type above — private QR generates offline"}
+                  : "Type above — private QR generates offline"}
               </Text>
             </View>
           </Reanimated.View>

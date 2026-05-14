@@ -13,7 +13,7 @@ interface Props {
   qrSize: number;
   isBranded: boolean;
   privateMode: boolean;
-  qrMode: "individual" | "business" | "private";
+  qrMode: "individual" | "private";
   logoPosition: LogoPosition;
   customLogoUri: string | null;
   showDefaultLogo: boolean;
@@ -27,8 +27,6 @@ interface Props {
   logoPositionLabel: string;
   qrFgColor?: string;
   qrBgColor?: string;
-  businessDestination?: string;
-  businessCategory?: string;
   urlRiskScore?: number;
   urlRiskReasons?: string[];
   onSizeIncrease: () => void;
@@ -41,24 +39,11 @@ interface Props {
   downloadingPdf?: boolean;
 }
 
-function getBusinessDestinationMeta(category: string | undefined, destination: string | undefined): { label: string; value: string } | null {
-  if (!destination) return null;
-  switch (category) {
-    case "website":  return { label: "URL",       value: destination };
-    case "whatsapp": return { label: "WhatsApp",  value: destination };
-    case "phone":    return { label: "Phone",      value: destination };
-    case "upi":      return { label: "UPI ID",     value: destination };
-    case "wifi":     return { label: "Network",    value: destination };
-    case "event":    return { label: "Event",      value: destination };
-    default:         return { label: "Destination", value: destination };
-  }
-}
-
 function formatShortDate(date: Date): string {
   return date.toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" });
 }
 
-function getSecurityMeta(qrValue: string, businessCategory?: string): {
+function getSecurityMeta(qrValue: string): {
   level: "safe" | "warning" | "danger" | "info";
   label: string;
   icon: React.ComponentProps<typeof Ionicons>["name"];
@@ -87,7 +72,6 @@ function QrOutputCard({
   savedDocId,
   user, svgRef, logoPositionLabel,
   qrFgColor = "#0A0E17", qrBgColor = "#F8FAFC",
-  businessDestination, businessCategory,
   urlRiskScore = 0, urlRiskReasons = [],
   onSizeIncrease, onSizeDecrease, onCopy, onShare, onDownload, onClear,
   sharingQr = false, downloadingPdf = false,
@@ -100,7 +84,7 @@ function QrOutputCard({
     ? require("../../../assets/images/icon.png")
     : undefined;
 
-  const securityMeta = useMemo(() => getSecurityMeta(qrValue, businessCategory), [qrValue, businessCategory]);
+  const securityMeta = useMemo(() => getSecurityMeta(qrValue), [qrValue]);
 
   const riskLevel = urlRiskScore >= 70 ? "danger" : urlRiskScore >= 35 ? "warning" : null;
 
@@ -233,36 +217,7 @@ function QrOutputCard({
               </View>
             )}
           </View>
-          {qrMode === "business" ? (
-            <>
-              {(() => {
-                const meta = getBusinessDestinationMeta(businessCategory, businessDestination);
-                return meta ? (
-                  <View style={[styles.destinationRow, { backgroundColor: colors.surfaceLight, borderColor: colors.surfaceBorder }]}>
-                    <Text style={[styles.destinationLabel, { color: colors.textMuted }]}>{meta.label}</Text>
-                    <Text style={[styles.destinationValue, { color: colors.text }]} numberOfLines={2}>{meta.value}</Text>
-                  </View>
-                ) : null;
-              })()}
-              <View style={[styles.ownershipNote, { borderColor: colors.warning + "30", backgroundColor: colors.warningDim }]}>
-                <Ionicons name="shield" size={12} color={colors.warning} />
-                <Text style={[styles.ownershipNoteText, { color: colors.warning }]}>
-                  Smart Redirect active — update the destination anytime from My QR Codes without reprinting.
-                </Text>
-              </View>
-              {savedDocId && generatedUuid && (
-                <Pressable
-                  onPress={() => router.push(`/qr-detail/${savedDocId}?guardUuid=${generatedUuid}`)}
-                  style={[styles.viewDetailsBtn, { backgroundColor: colors.primaryDim, borderColor: colors.primary + "40" }]}
-                >
-                  <Ionicons name="document-text-outline" size={15} color={colors.primary} />
-                  <Text style={[styles.viewDetailsBtnText, { color: colors.primary }]}>View QR Details</Text>
-                  <Ionicons name="chevron-forward" size={14} color={colors.primary} />
-                </Pressable>
-              )}
-            </>
-          ) : (
-            <>
+          <>
               <View style={[styles.destinationRow, { backgroundColor: colors.surfaceLight, borderColor: colors.surfaceBorder, marginBottom: 8 }]}>
                 <Text style={[styles.destinationLabel, { color: colors.textMuted }]}>QR Sticker Encodes</Text>
                 <Text style={[styles.destinationValue, { color: colors.text }]} numberOfLines={2}>{qrValue}</Text>
@@ -275,7 +230,6 @@ function QrOutputCard({
                 </Text>
               </View>
             </>
-          )}
         </View>
       ) : privateMode ? (
         <View style={[styles.privateFooter, { borderTopColor: colors.surfaceBorder }]}>
@@ -284,11 +238,7 @@ function QrOutputCard({
         </View>
       ) : null}
 
-      {qrMode === "business" && businessDestination && !generatedUuid ? (
-        <Text style={[styles.qrContentPreview, { color: colors.textMuted }]} numberOfLines={2}>{businessDestination}</Text>
-      ) : qrMode !== "business" ? (
-        <Text style={[styles.qrContentPreview, { color: colors.textMuted }]} numberOfLines={2}>{qrValue}</Text>
-      ) : null}
+      <Text style={[styles.qrContentPreview, { color: colors.textMuted }]} numberOfLines={2}>{qrValue}</Text>
 
       <View style={[styles.sizeRow, { borderTopColor: colors.surfaceBorder }]}>
         <Text style={[styles.sizeLabel, { color: colors.textSecondary }]}>Size</Text>

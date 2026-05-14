@@ -4,40 +4,21 @@ import { Ionicons } from "@expo/vector-icons";
 import { useTheme } from "@/contexts/ThemeContext";
 import { QR_PRESETS } from "@/features/generator/data/presets";
 import { filterByKeyboardType } from "@/features/generator/data/qr-builder";
-import type { BusinessCategory } from "@/features/generator/components/BusinessTypeSelector";
-import BusinessQrForm from "@/features/generator/components/BusinessQrForm";
 
 interface Props {
   selectedPreset: number;
   inputValue: string;
   extraFields: Record<string, string>;
-  qrMode: "individual" | "business" | "private";
-  isBranded: boolean;
-  businessCategory?: BusinessCategory;
   setInputValue: (v: string) => void;
   setExtraField: (key: string, val: string) => void;
 }
 
 function InputSection({
-  selectedPreset, inputValue, extraFields, qrMode, isBranded,
-  businessCategory = "website",
+  selectedPreset, inputValue, extraFields,
   setInputValue, setExtraField,
 }: Props) {
   const { colors } = useTheme();
   const preset = QR_PRESETS[selectedPreset];
-  const isBusinessMode = qrMode === "business" && isBranded;
-
-  if (isBusinessMode) {
-    return (
-      <BusinessQrForm
-        businessCategory={businessCategory}
-        inputValue={inputValue}
-        extraFields={extraFields}
-        setInputValue={setInputValue}
-        setExtraField={setExtraField}
-      />
-    );
-  }
 
   return (
     <>

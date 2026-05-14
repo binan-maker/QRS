@@ -1,5 +1,4 @@
-import QrFormPage from "@/features/generator/components/QrFormPage";
-
-export default function BusinessQrScreen() {
-  return <QrFormPage mode="business" />;
+import { Redirect } from "expo-router";
+export default function BusinessQrRedirect() {
+  return <Redirect href="/qr-standard" />;
 }

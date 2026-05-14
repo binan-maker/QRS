@@ -5,7 +5,6 @@ export default function QrGeneratorLayout() {
     <Stack screenOptions={{ headerShown: false, animation: "slide_from_right" }}>
       <Stack.Screen name="index" />
       <Stack.Screen name="standard" />
-      <Stack.Screen name="business" />
       <Stack.Screen name="private" />
     </Stack>
   );

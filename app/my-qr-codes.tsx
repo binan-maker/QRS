@@ -43,14 +43,13 @@ async function writeCache<T>(key: string, value: T, ttlMs: number): Promise<void
 function qrsCacheKey(userId: string) { return `myqrs_v1_${userId}`; }
 function groupsCacheKey(userId: string) { return `mygroups_v1_${userId}`; }
 
-type Filter = "all" | "individual" | "business" | "groups";
+type Filter = "all" | "individual" | "groups";
 type SortKey = "newest" | "oldest" | "mostScanned";
 
 const FILTERS: { key: Filter; label: string; icon: keyof typeof Ionicons.glyphMap }[] = [
   { key: "all",        label: "All",        icon: "layers-outline"     },
   { key: "groups",     label: "Groups",     icon: "folder-outline"     },
   { key: "individual", label: "Individual", icon: "person-outline"     },
-  { key: "business",   label: "Business",   icon: "storefront-outline" },
 ];
 
 const SORT_OPTIONS: { key: SortKey; label: string }[] = [
@@ -297,8 +296,7 @@ export default function MyQrCodesScreen() {
 
   const filtered = useMemo(() => {
     let list = qrCodes.filter((qr) => {
-      if (filter === "individual") return qr.qrType === "individual";
-      if (filter === "business")   return qr.qrType === "business";
+      if (filter === "individual") return qr.qrType !== "groups";
       return true;
     });
     if (sortKey === "mostScanned") list = [...list].sort((a, b) => (b.scanCount || 0) - (a.scanCount || 0));
@@ -307,7 +305,6 @@ export default function MyQrCodesScreen() {
   }, [qrCodes, filter, sortKey]);
 
   function renderQrItem({ item, index }: { item: GeneratedQrItem; index: number }) {
-    const isBusiness  = item.qrType === "business";
     const displayText = getDisplayText(item);
     const ctMeta      = getContentTypeMeta(getEffectiveContentType(item));
     const labelText   = (item as any).label as string | undefined;
@@ -342,11 +339,11 @@ export default function MyQrCodesScreen() {
               <View style={{
                 flexDirection: "row", alignItems: "center", gap: 3,
                 borderRadius: sp(6), paddingHorizontal: sp(7), paddingVertical: sp(2),
-                backgroundColor: isBusiness ? colors.warningDim : colors.primaryDim,
+                backgroundColor: colors.primaryDim,
               }}>
-                <Ionicons name={isBusiness ? "storefront" : "person"} size={rf(9)} color={isBusiness ? colors.warning : colors.primary} />
-                <Text style={{ fontSize: rf(10), fontFamily: "Inter_700Bold", color: isBusiness ? colors.warning : colors.primary }}>
-                  {isBusiness ? "Business" : "Individual"}
+                <Ionicons name="person" size={rf(9)} color={colors.primary} />
+                <Text style={{ fontSize: rf(10), fontFamily: "Inter_700Bold", color: colors.primary }}>
+                  Individual
                 </Text>
               </View>
               <View style={{
@@ -609,7 +606,7 @@ export default function MyQrCodesScreen() {
         <Animated.View entering={FadeIn.duration(400)} style={{ flex: 1, alignItems: "center", justifyContent: "center", paddingHorizontal: sp(40), gap: sp(12) }}>
           <MaterialCommunityIcons name="qrcode-plus" size={rf(48)} color={colors.textMuted} />
           <Text style={{ fontSize: rf(16), fontFamily: "Inter_700Bold", color: colors.text, textAlign: "center" }}>
-            {filter === "business" ? "No business codes" : filter === "individual" ? "No individual codes" : "No QR codes yet"}
+            {filter === "individual" ? "No individual codes" : "No QR codes yet"}
           </Text>
           <Text style={{ fontSize: rf(13), fontFamily: "Inter_400Regular", color: colors.textSecondary, textAlign: "center", lineHeight: rf(19) }}>
             {filter === "all" ? "Create your first QR code using the generator" : `No ${filter} QR codes found`}
