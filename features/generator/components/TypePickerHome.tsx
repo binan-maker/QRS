@@ -1,7 +1,6 @@
 import React, { memo } from "react";
 import {
   View, Text, Pressable, StyleSheet, useWindowDimensions,
-  Alert,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import Reanimated, { FadeIn, FadeInUp } from "react-native-reanimated";
@@ -26,27 +25,26 @@ const MODES: ModeCard[] = [
   {
     key:   "individual",
     label: "Standard",
-    tag:   "Saved · Tracked",
+    tag:   "",
     icon:  "shield-checkmark-outline",
     color: "#3B82F6",
-    info:  "QR sticker encodes a qrguard.app/go/ID link — only our database reveals the real content. Scan history is saved securely to your account.",
+    info:  "",
   },
   {
     key:   "business",
     label: "Business",
-    tag:   "Smart Redirect",
+    tag:   "",
     icon:  "storefront-outline",
     color: "#F59E0B",
-    badge: "PRO",
-    info:  "Same database-lock as Standard — change the destination URL anytime without reprinting the QR code. Perfect for flyers, menus, and signage.",
+    info:  "",
   },
   {
     key:   "private",
     label: "Private",
-    tag:   "No trace",
+    tag:   "",
     icon:  "eye-off-outline",
     color: "#64748B",
-    info:  "Raw content baked directly into the QR. No server, no database, no tracking — completely anonymous and offline-safe.",
+    info:  "",
   },
 ];
 
@@ -101,11 +99,6 @@ function TypePickerHome({
     onSelectBusinessCategory(cat);
   }
 
-  function showInfo(m: ModeCard) {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    Alert.alert(m.label, m.info, [{ text: "Got it" }]);
-  }
-
   return (
     <View style={[styles.root, { paddingHorizontal: PAD }]}>
       {/* ── Mode cards ── */}
@@ -128,40 +121,14 @@ function TypePickerHome({
                 },
               ]}
             >
-              {/* PRO badge */}
-              {m.badge && (
-                <View style={[styles.modeBadge, { backgroundColor: m.color + "25", borderColor: m.color + "50" }]}>
-                  <Text style={[styles.modeBadgeText, { color: m.color }]}>{m.badge}</Text>
-                </View>
-              )}
-
-              {/* Info icon — top left */}
-              <Pressable
-                onPress={(e) => { e.stopPropagation(); showInfo(m); }}
-                hitSlop={10}
-                style={styles.infoIcon}
-              >
-                <Ionicons name="information-circle-outline" size={15} color={active ? m.color + "CC" : colors.textMuted} />
-              </Pressable>
-
               {/* Icon */}
               <View style={[styles.modeIconWrap, { backgroundColor: m.color + (active ? "28" : "16") }]}>
-                <Ionicons name={m.icon} size={22} color={m.color} />
+                <Ionicons name={m.icon} size={24} color={m.color} />
               </View>
 
               {/* Label */}
               <Text style={[styles.modeLabel, { color: active ? m.color : colors.text }]} numberOfLines={1}>
                 {m.label}
-              </Text>
-
-              {/* Tag */}
-              <Text
-                style={[styles.modeTag, {
-                  color: disabled ? colors.textMuted : active ? m.color + "CC" : colors.textMuted,
-                }]}
-                numberOfLines={1}
-              >
-                {disabled ? "Sign in" : m.tag}
               </Text>
 
               {/* Active underline */}

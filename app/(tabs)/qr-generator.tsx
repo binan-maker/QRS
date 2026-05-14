@@ -332,27 +332,42 @@ function QrGeneratorScreen() {
           hideActions={presetActive}
         />
 
-        {/* ── INLINE FORM — appears below the mode cards when a type is picked ── */}
-        {presetActive && (
-          <>
-            {/* "Selected type" chip + Change-type button */}
+        {/* ── INLINE FORM — always visible below the mode cards ── */}
+        <>
+            {/* "Selected type" chip + Change-type button  OR  "Choose QR Type" prompt */}
             <Reanimated.View entering={FadeInDown.duration(260)} style={styles.typeChipRow}>
-              <View style={[styles.typeChip, { backgroundColor: activeModeColor + "14", borderColor: activeModeColor + "40" }]}>
-                <View style={[styles.typeChipDot, { backgroundColor: activeModeColor }]} />
-                <Text style={[styles.typeChipLabel, { color: activeModeColor }]}>
-                  {preset?.label ?? "Custom"}
-                </Text>
-              </View>
-              <Pressable
-                onPress={handleClearPreset}
-                style={({ pressed }) => [
-                  styles.clearChipBtn,
-                  { backgroundColor: colors.surface, borderColor: colors.surfaceBorder, opacity: pressed ? 0.7 : 1 },
-                ]}
-              >
-                <Ionicons name="close" size={13} color={colors.textMuted} />
-                <Text style={[styles.clearChipText, { color: colors.textMuted }]}>Change type</Text>
-              </Pressable>
+              {presetActive ? (
+                <>
+                  <View style={[styles.typeChip, { backgroundColor: activeModeColor + "14", borderColor: activeModeColor + "40" }]}>
+                    <View style={[styles.typeChipDot, { backgroundColor: activeModeColor }]} />
+                    <Text style={[styles.typeChipLabel, { color: activeModeColor }]}>
+                      {preset?.label ?? "Custom"}
+                    </Text>
+                  </View>
+                  <Pressable
+                    onPress={handleOpenTemplates}
+                    style={({ pressed }) => [
+                      styles.clearChipBtn,
+                      { backgroundColor: colors.surface, borderColor: colors.surfaceBorder, opacity: pressed ? 0.7 : 1 },
+                    ]}
+                  >
+                    <Ionicons name="swap-horizontal" size={13} color={colors.textMuted} />
+                    <Text style={[styles.clearChipText, { color: colors.textMuted }]}>Change type</Text>
+                  </Pressable>
+                </>
+              ) : (
+                <Pressable
+                  onPress={handleOpenTemplates}
+                  style={({ pressed }) => [
+                    styles.clearChipBtn,
+                    { backgroundColor: colors.surface, borderColor: colors.surfaceBorder, opacity: pressed ? 0.7 : 1, paddingHorizontal: 14 },
+                  ]}
+                >
+                  <Ionicons name="apps-outline" size={14} color={colors.textMuted} />
+                  <Text style={[styles.clearChipText, { color: colors.textMuted }]}>Choose QR Type</Text>
+                  <Ionicons name="chevron-forward" size={12} color={colors.textMuted} />
+                </Pressable>
+              )}
             </Reanimated.View>
 
             {/* Mode info stripe */}
@@ -538,8 +553,7 @@ function QrGeneratorScreen() {
                 </View>
               </Reanimated.View>
             )}
-          </>
-        )}
+        </>
       </ScrollView>
 
       {/* ── TOAST ── */}
@@ -564,7 +578,14 @@ function QrGeneratorScreen() {
       ) : null}
 
       {/* ── MODALS ── */}
-      <CustomQrModal visible={customModalOpen} onClose={() => setCustomModalOpen(false)} />
+      <CustomQrModal
+        visible={customModalOpen}
+        onClose={() => setCustomModalOpen(false)}
+        onConfirm={(presetIdx) => {
+          handleSelectPreset(presetIdx);
+          setCustomModalOpen(false);
+        }}
+      />
       <TemplatePickerModal visible={templateModalOpen} selectedPreset={selectedPreset} onSelect={handleSelectFromModal} onClose={handleCloseTemplates} />
       <PositionModal visible={positionModalOpen} logoPosition={logoPosition} onSelect={setLogoPosition} onClose={handleClosePosition} />
       <InfoModal visible={infoModalOpen} onClose={handleCloseInfo} />
