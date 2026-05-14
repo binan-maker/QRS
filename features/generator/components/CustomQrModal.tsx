@@ -14,7 +14,7 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import Reanimated, { FadeInDown } from "react-native-reanimated";
+import Reanimated, { FadeIn } from "react-native-reanimated";
 import { LinearGradient } from "expo-linear-gradient";
 import { useTheme } from "@/contexts/ThemeContext";
 import * as Haptics from "@/lib/haptics";
@@ -127,7 +127,7 @@ function CustomQrModal({ visible, onClose, onConfirm }: Props) {
             contentContainerStyle={S.scroll}
           >
             {/* ── Main field name ── */}
-            <Reanimated.View entering={FadeInDown.duration(220)}>
+            <Reanimated.View entering={FadeIn.duration(220)}>
               <Text style={[S.sectionLabel, { color: colors.textMuted }]}>FIELD NAME (optional)</Text>
               <View style={[S.fieldInput, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
                 <Ionicons name="pencil-outline" size={16} color={colors.textMuted} />
@@ -145,13 +145,13 @@ function CustomQrModal({ visible, onClose, onConfirm }: Props) {
             </Reanimated.View>
 
             {/* ── Content type grid ── */}
-            <Reanimated.View entering={FadeInDown.duration(240).delay(40)}>
+            <Reanimated.View entering={FadeIn.duration(240).delay(40)}>
               <Text style={[S.sectionLabel, { color: colors.textMuted }]}>CONTENT TYPE</Text>
               <View style={S.typeGrid}>
                 {QR_TYPES.map((t, i) => {
                   const active = selectedType.key === t.key;
                   return (
-                    <Reanimated.View key={t.key} entering={FadeInDown.duration(160).delay(i * 18)} style={{ width: "31%" }}>
+                    <Reanimated.View key={t.key} entering={FadeIn.duration(160).delay(i * 18)} style={{ width: "31%" }}>
                       <Pressable
                         onPress={() => handleSelect(t)}
                         style={[
@@ -185,7 +185,7 @@ function CustomQrModal({ visible, onClose, onConfirm }: Props) {
             </Reanimated.View>
 
             {/* ── Selected type summary ── */}
-            <Reanimated.View entering={FadeInDown.duration(220).delay(80)}>
+            <Reanimated.View entering={FadeIn.duration(220).delay(80)}>
               <View style={[S.selectedSummary, { backgroundColor: selectedType.color + "0D", borderColor: selectedType.color + "30" }]}>
                 <Ionicons name={selectedType.icon} size={14} color={selectedType.color} />
                 <Text style={[S.selectedSummaryText, { color: selectedType.color }]}>

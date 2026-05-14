@@ -341,16 +341,28 @@ function QrGeneratorScreen() {
                       {preset?.label ?? "Custom"}
                     </Text>
                   </View>
-                  <Pressable
-                    onPress={handleOpenTemplates}
-                    style={({ pressed }) => [
-                      styles.clearChipBtn,
-                      { backgroundColor: colors.surface, borderColor: colors.surfaceBorder, opacity: pressed ? 0.7 : 1 },
-                    ]}
-                  >
-                    <Ionicons name="swap-horizontal" size={13} color={colors.textMuted} />
-                    <Text style={[styles.clearChipText, { color: colors.textMuted }]}>Change type</Text>
-                  </Pressable>
+                  <View style={{ flexDirection: "row", gap: 6 }}>
+                    <Pressable
+                      onPress={() => setCustomModalOpen(true)}
+                      style={({ pressed }) => [
+                        styles.clearChipBtn,
+                        { backgroundColor: colors.surface, borderColor: colors.surfaceBorder, opacity: pressed ? 0.7 : 1 },
+                      ]}
+                    >
+                      <Ionicons name="create-outline" size={13} color={colors.textMuted} />
+                      <Text style={[styles.clearChipText, { color: colors.textMuted }]}>Custom QR</Text>
+                    </Pressable>
+                    <Pressable
+                      onPress={handleOpenTemplates}
+                      style={({ pressed }) => [
+                        styles.clearChipBtn,
+                        { backgroundColor: colors.surface, borderColor: colors.surfaceBorder, opacity: pressed ? 0.7 : 1 },
+                      ]}
+                    >
+                      <Ionicons name="swap-horizontal" size={13} color={colors.textMuted} />
+                      <Text style={[styles.clearChipText, { color: colors.textMuted }]}>Change type</Text>
+                    </Pressable>
+                  </View>
                 </>
               ) : (
                 <Pressable
@@ -365,23 +377,6 @@ function QrGeneratorScreen() {
                   <Ionicons name="chevron-forward" size={12} color={colors.textMuted} />
                 </Pressable>
               )}
-            </Reanimated.View>
-
-            {/* Mode info stripe */}
-            <Reanimated.View entering={FadeInDown.duration(280).delay(20)}>
-              <View style={[styles.modeInfoStripe, { backgroundColor: activeModeColor + "0D", borderColor: activeModeColor + "28" }]}>
-                <Ionicons
-                  name={qrMode === "individual" ? "shield-checkmark-outline" : qrMode === "business" ? "sync-outline" : "eye-off-outline"}
-                  size={12}
-                  color={activeModeColor}
-                  style={{ flexShrink: 0, marginTop: 1 }}
-                />
-                <Text style={[styles.modeInfoText, { color: activeModeColor }]} numberOfLines={2}>
-                  {qrMode === "individual" && "QR encodes a qrguard.app/go/ID link — only our database reveals the real content."}
-                  {qrMode === "business"    && "Change the destination anytime — no reprint needed. QR encodes a /guard/ID link."}
-                  {qrMode === "private"    && "Raw content baked directly into the QR. No server, no database, no tracking."}
-                </Text>
-              </View>
             </Reanimated.View>
 
             {/* Input fields */}
@@ -401,7 +396,7 @@ function QrGeneratorScreen() {
             {/* Business name (business mode only) */}
             {qrMode === "business" && (
               <Reanimated.View entering={FadeInDown.duration(320).delay(80)}>
-                <View style={{ marginBottom: 16 }}>
+                <View style={{ marginBottom: 16, marginHorizontal: 20 }}>
                   <Text style={[styles.fieldLabel, { color: colors.textMuted }]}>
                     Business Name (optional)
                   </Text>
@@ -422,7 +417,7 @@ function QrGeneratorScreen() {
             )}
 
             {/* Customize drawer */}
-            <Reanimated.View entering={FadeInDown.duration(340).delay(100)}>
+            <Reanimated.View entering={FadeInDown.duration(340).delay(100)} style={{ marginHorizontal: 20 }}>
               <CustomizeDrawer
                 qrReady={!!qrValue}
                 selectedThemeIdx={selectedThemeIdx}
@@ -480,6 +475,7 @@ function QrGeneratorScreen() {
                     borderColor: "#6366F1" + "40",
                     paddingVertical: 11,
                     marginBottom: 16,
+                    marginHorizontal: 20,
                     backgroundColor: "#6366F1" + "10",
                     opacity: pressed ? 0.8 : 1,
                   }]}
@@ -754,12 +750,14 @@ function makeStyles(_c: unknown, width: number) {
       color: "#fff",
     },
     emptyQr: {
-      borderRadius: 24,
+      borderRadius: 20,
       borderWidth: 1,
-      padding: 44,
+      paddingVertical: 36,
+      paddingHorizontal: 24,
       alignItems: "center",
       gap: 14,
       marginBottom: 20,
+      marginHorizontal: 20,
     },
     emptyQrIconWrap: {
       width: 100,
