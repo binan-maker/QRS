@@ -180,10 +180,9 @@ function TypePickerHome({
             </Reanimated.View>
           )}
 
-          {/* Standard / Private: Custom QR + Choose QR type */}
+          {/* Standard / Private: Custom QR only */}
           {qrMode !== "business" && (
-            <Reanimated.View entering={FadeInUp.duration(300).delay(80)} style={{ gap: 10 }}>
-              {/* Custom QR */}
+            <Reanimated.View entering={FadeInUp.duration(300).delay(80)}>
               <Pressable
                 onPress={() => {
                   Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
@@ -207,29 +206,6 @@ function TypePickerHome({
                   <Text style={[styles.customCardTitle, { color: colors.text }]}>Custom QR</Text>
                   <Ionicons name="chevron-forward" size={16} color={colors.primary} />
                 </LinearGradient>
-              </Pressable>
-
-              {/* Choose QR type */}
-              <Pressable
-                onPress={() => {
-                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                  onOpenTemplates();
-                }}
-                style={({ pressed }) => [
-                  styles.browseCard,
-                  {
-                    backgroundColor: colors.surface,
-                    borderColor:     colors.surfaceBorder,
-                    opacity:         pressed ? 0.76 : 1,
-                    transform:       [{ scale: pressed ? 0.98 : 1 }],
-                  },
-                ]}
-              >
-                <View style={[styles.browseCardIcon, { backgroundColor: colors.surfaceLight }]}>
-                  <Ionicons name="apps-outline" size={20} color={colors.textSecondary} />
-                </View>
-                <Text style={[styles.browseCardTitle, { color: colors.text }]}>Choose QR Type</Text>
-                <Ionicons name="chevron-forward" size={16} color={colors.textMuted} />
               </Pressable>
             </Reanimated.View>
           )}

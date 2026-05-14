@@ -16,6 +16,10 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Reanimated, {
   FadeIn,
   FadeInDown,
+  useSharedValue,
+  useAnimatedStyle,
+  withTiming,
+  runOnJS,
 } from "react-native-reanimated";
 import { LinearGradient } from "expo-linear-gradient";
 import { useTheme } from "@/contexts/ThemeContext";
@@ -82,6 +86,16 @@ function QrGeneratorScreen() {
   const [customModalOpen, setCustomModalOpen] = useState(false);
   const [customSchema, setCustomSchema] = useState<CustomQrType | null>(null);
   const [customFieldValues, setCustomFieldValues] = useState<Record<string, string>>({});
+  const [showGenError, setShowGenError] = useState(false);
+  const errorProgress = useSharedValue(0);
+  const errorOpacity = useSharedValue(0);
+
+  const errorBarStyle = useAnimatedStyle(() => ({
+    width: `${errorProgress.value * 100}%` as any,
+  }));
+  const errorContainerStyle = useAnimatedStyle(() => ({
+    opacity: errorOpacity.value,
+  }));
 
   useEffect(() => {
     if (!customSchema) return;
@@ -243,6 +257,7 @@ function QrGeneratorScreen() {
     Keyboard.dismiss();
     setTimeout(() => setTemplateModalOpen(true), 80);
   }, []);
+  void handleOpenTemplates; // available via TemplatePickerModal trigger
 
   const handleOpenTemplatesFromHome = useCallback(() => {
     setTemplateModalOpen(true);
@@ -273,6 +288,28 @@ function QrGeneratorScreen() {
     setCustomFieldValues({});
     handleClear();
   }, [handleClear]);
+
+  function _hideGenError() { setShowGenError(false); }
+
+  const handleGenerateWithValidation = useCallback(() => {
+    const isEmpty = customSchema
+      ? Object.values(customFieldValues).every(v => !v.trim())
+      : !inputValue.trim();
+    if (isEmpty) {
+      setShowGenError(true);
+      errorProgress.value = 0;
+      errorOpacity.value = 1;
+      errorProgress.value = withTiming(1, { duration: 1100 }, (finished) => {
+        if (finished) {
+          errorOpacity.value = withTiming(0, { duration: 280 }, () => {
+            runOnJS(_hideGenError)();
+          });
+        }
+      });
+      return;
+    }
+    handleGenerate();
+  }, [inputValue, customFieldValues, customSchema, handleGenerate]);
 
   const handleSizeIncrease = useCallback(
     () => setQrSize((s) => Math.min(320, s + 20)),
@@ -350,54 +387,6 @@ function QrGeneratorScreen() {
 
         {/* ── INLINE FORM — always visible below the mode cards ── */}
         <>
-            {/* "Selected type" chip + Change-type button  OR  "Choose QR Type" prompt */}
-            <Reanimated.View entering={FadeInDown.duration(260)} style={styles.typeChipRow}>
-              {presetActive ? (
-                <>
-                  <View style={[styles.typeChip, { backgroundColor: activeModeColor + "14", borderColor: activeModeColor + "40" }]}>
-                    <View style={[styles.typeChipDot, { backgroundColor: activeModeColor }]} />
-                    <Text style={[styles.typeChipLabel, { color: activeModeColor }]}>
-                      {customSchema?.name ?? preset?.label ?? "Custom"}
-                    </Text>
-                  </View>
-                  <View style={{ flexDirection: "row", gap: 6, flexShrink: 0 }}>
-                    <Pressable
-                      onPress={() => setCustomModalOpen(true)}
-                      style={({ pressed }) => [
-                        styles.clearChipBtn,
-                        { backgroundColor: colors.surface, borderColor: colors.surfaceBorder, opacity: pressed ? 0.7 : 1 },
-                      ]}
-                    >
-                      <Ionicons name="create-outline" size={13} color={colors.textMuted} />
-                      <Text style={[styles.clearChipText, { color: colors.textMuted }]}>Custom QR</Text>
-                    </Pressable>
-                    <Pressable
-                      onPress={handleOpenTemplates}
-                      style={({ pressed }) => [
-                        styles.clearChipBtn,
-                        { backgroundColor: colors.surface, borderColor: colors.surfaceBorder, opacity: pressed ? 0.7 : 1 },
-                      ]}
-                    >
-                      <Ionicons name="swap-horizontal" size={13} color={colors.textMuted} />
-                      <Text style={[styles.clearChipText, { color: colors.textMuted }]}>Change type</Text>
-                    </Pressable>
-                  </View>
-                </>
-              ) : (
-                <Pressable
-                  onPress={handleOpenTemplates}
-                  style={({ pressed }) => [
-                    styles.clearChipBtn,
-                    { backgroundColor: colors.surface, borderColor: colors.surfaceBorder, opacity: pressed ? 0.7 : 1, paddingHorizontal: 14 },
-                  ]}
-                >
-                  <Ionicons name="apps-outline" size={14} color={colors.textMuted} />
-                  <Text style={[styles.clearChipText, { color: colors.textMuted }]}>Choose QR Type</Text>
-                  <Ionicons name="chevron-forward" size={12} color={colors.textMuted} />
-                </Pressable>
-              )}
-            </Reanimated.View>
-
             {/* Input fields */}
             <Reanimated.View entering={FadeInDown.duration(320).delay(60)} style={{ marginHorizontal: 20 }}>
               {customSchema ? (
@@ -471,7 +460,7 @@ function QrGeneratorScreen() {
             {/* Generate button */}
             <Reanimated.View entering={FadeInDown.duration(360).delay(120)}>
               <Pressable
-                onPress={handleGenerate}
+                onPress={handleGenerateWithValidation}
                 style={({ pressed }) => [
                   { opacity: pressed ? 0.85 : 1, transform: [{ scale: pressed ? 0.97 : 1 }] },
                   styles.generateBtnWrap,
@@ -487,6 +476,45 @@ function QrGeneratorScreen() {
                   <Text style={styles.generateBtnText}>{buttonState.btnLabel}</Text>
                 </LinearGradient>
               </Pressable>
+
+              {/* Inline error — red sweep animation */}
+              {showGenError && (
+                <Reanimated.View
+                  style={[
+                    errorContainerStyle,
+                    {
+                      marginHorizontal: 20,
+                      marginTop: 8,
+                      borderRadius: 10,
+                      overflow: "hidden",
+                      height: 32,
+                      backgroundColor: colors.danger + "12",
+                    },
+                  ]}
+                >
+                  <Reanimated.View
+                    style={[
+                      errorBarStyle,
+                      {
+                        position: "absolute",
+                        top: 0, bottom: 0, left: 0,
+                        backgroundColor: colors.danger + "35",
+                        borderRadius: 10,
+                      },
+                    ]}
+                  />
+                  <Text style={{
+                    fontSize: 11,
+                    fontFamily: "Inter_600SemiBold",
+                    color: colors.danger,
+                    textAlign: "center",
+                    lineHeight: 32,
+                    zIndex: 1,
+                  }}>
+                    Please type something first
+                  </Text>
+                </Reanimated.View>
+              )}
             </Reanimated.View>
 
             {/* Group manager */}
