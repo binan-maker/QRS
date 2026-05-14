@@ -427,8 +427,8 @@ export async function getScanVelocity(qrId: string): Promise<ScanVelocityBucket[
         }
       }
     }
-  } catch (e) {
-    logError("getScanVelocity", e, { qrId });
+  } catch {
+    // Permission denied or network error — return empty buckets silently
   }
   return buckets;
 }

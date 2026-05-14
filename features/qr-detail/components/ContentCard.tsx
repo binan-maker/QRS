@@ -284,7 +284,15 @@ const ContentCard = React.memo(function ContentCard({ content, contentType, pars
         <View style={[styles.urlBox, { backgroundColor: isDark ? colors.surfaceLight : colors.background, borderColor: colors.surfaceBorder }]}>
           <Ionicons name="link-outline" size={14} color={cfg.gradient[0]} />
           <Text style={[styles.urlText, { color: colors.textSecondary }]} numberOfLines={1} selectable>
-            {(() => { try { return new URL(content.startsWith("http") ? content : `https://${content}`).hostname.replace(/^www\./, ""); } catch { return content; } })()}
+            {(() => {
+              try {
+                const parsed = new URL(content.startsWith("http") ? content : `https://${content}`);
+                const h = parsed.hostname.toLowerCase();
+                const isPrivate = /^(localhost|127\.|10\.|192\.168\.|172\.(1[6-9]|2\d|3[01])\.)/.test(h);
+                if (isPrivate || parsed.pathname.startsWith("/guard/")) return "Smart Redirect";
+                return h.replace(/^www\./, "");
+              } catch { return content; }
+            })()}
           </Text>
         </View>
       )}

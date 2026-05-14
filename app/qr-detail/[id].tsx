@@ -679,19 +679,21 @@ export default function QrDetailScreen() {
 
           {/* Nav */}
           <View style={styles.navBar}>
-            <Pressable onPress={safeBack} style={styles.navBackBtn}>
-              <Ionicons name="chevron-back" size={24} color={colors.text} />
-            </Pressable>
+            <View style={{ flex: 1, flexDirection: "row", alignItems: "center", gap: 10, minWidth: 0 }}>
+              <Pressable onPress={safeBack} style={styles.navBackBtn}>
+                <Ionicons name="chevron-back" size={24} color={colors.text} />
+              </Pressable>
 
-            <View style={{ flex: 1, alignItems: "center", paddingHorizontal: 8 }}>
-              <Text style={styles.navTitle} numberOfLines={1}>
-                {hasOwner
-                  ? (q.ownerInfo?.businessName || q.ownerInfo?.ownerName || "QR Details")
-                  : "QR Details"}
-              </Text>
-              {q.offlineMode && (
-                <Text style={[navOfflineStyles.badge, { color: colors.warning }]}>● Offline</Text>
-              )}
+              <View style={{ flex: 1, minWidth: 0 }}>
+                <Text style={[styles.navTitle, { textAlign: "left" }]} numberOfLines={1}>
+                  {hasOwner
+                    ? (q.ownerInfo?.businessName || q.ownerInfo?.ownerName || "QR Details")
+                    : "QR Details"}
+                </Text>
+                {q.offlineMode && (
+                  <Text style={[navOfflineStyles.badge, { color: colors.warning }]}>● Offline</Text>
+                )}
+              </View>
             </View>
 
             <View style={styles.navActions}>
@@ -1169,7 +1171,7 @@ export default function QrDetailScreen() {
       <Modal
         visible={ownerSheetOpen}
         transparent
-        animationType="slide"
+        animationType="fade"
         onRequestClose={() => setOwnerSheetOpen(false)}
       >
         <Pressable style={commentMenuStyles.backdrop} onPress={() => setOwnerSheetOpen(false)}>
@@ -1251,7 +1253,7 @@ export default function QrDetailScreen() {
       <Modal
         visible={q.commentMenuId !== null}
         transparent
-        animationType="slide"
+        animationType="fade"
         onRequestClose={() => q.setCommentMenuId(null)}
       >
         <Pressable style={commentMenuStyles.backdrop} onPress={() => q.setCommentMenuId(null)}>
@@ -1710,7 +1712,7 @@ const signInCommentBtnText = _signInStyles.commentBtnText;
 const commentMenuStyles = StyleSheet.create({
   backdrop: {
     flex: 1,
-    backgroundColor: "transparent",
+    backgroundColor: "rgba(0,0,0,0.55)",
     justifyContent: "flex-end",
   },
   sheet: {

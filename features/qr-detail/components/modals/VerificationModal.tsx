@@ -26,7 +26,7 @@ const VerificationModal = React.memo(function VerificationModal({
   const insets = useSafeAreaInsets();
   const styles = makeStyles(colors, Math.max(insets.bottom, 32));
   return (
-    <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
+    <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === "ios" ? "padding" : "height"}>
         <Pressable style={styles.overlay} onPress={onClose}>
           <Pressable style={[styles.sheet, { maxHeight: "80%" }]} onPress={() => {}}>
@@ -119,7 +119,7 @@ export default VerificationModal;
 
 function makeStyles(c: ReturnType<typeof import("@/contexts/ThemeContext").useTheme>["colors"], bottomInset: number = 32) {
   return StyleSheet.create({
-    overlay: { flex: 1, backgroundColor: "transparent", justifyContent: "flex-end" },
+    overlay: { flex: 1, backgroundColor: "rgba(0,0,0,0.6)", justifyContent: "flex-end" },
     sheet: {
       backgroundColor: c.surface, borderTopLeftRadius: 24, borderTopRightRadius: 24,
       padding: 20, paddingBottom: bottomInset, borderWidth: 1, borderColor: c.surfaceBorder,
