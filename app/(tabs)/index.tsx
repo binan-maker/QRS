@@ -402,7 +402,7 @@ function HomeScreen() {
             )}
           </Animated.View>
 
-          <View style={{ height: Math.max(110, 70 + insets.bottom) }} />
+          <View style={{ height: Math.max(160, 110 + insets.bottom) }} />
         </ScrollView>
       </View>
     </>

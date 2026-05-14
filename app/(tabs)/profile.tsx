@@ -10,6 +10,7 @@ import {
   ActivityIndicator,
 } from "react-native";
 import { Image } from "expo-image";
+import { LinearGradient } from "expo-linear-gradient";
 import { safePush } from "@/lib/utils/navigation";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -312,6 +313,35 @@ function ProfileScreen() {
           </View>
         </Animated.View>
 
+        {/* ── SUPPORT QR GUARD ── */}
+        <Animated.View entering={FadeInDown.duration(400).delay(120)}>
+          <Pressable
+            onPress={() => safePush("/donation")}
+            style={({ pressed }) => [
+              styles.donationBtn,
+              {
+                backgroundColor: colors.isDark ? "rgba(124,58,237,0.12)" : "rgba(124,58,237,0.07)",
+                borderColor: "#7C3AED30",
+                opacity: pressed ? 0.88 : 1,
+              },
+            ]}
+          >
+            <LinearGradient
+              colors={["#7C3AED", "#6366F1"]}
+              style={styles.donationIconWrap}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+            >
+              <Ionicons name="heart" size={15} color="#fff" />
+            </LinearGradient>
+            <View style={{ flex: 1 }}>
+              <Text style={[styles.donationTitle, { color: colors.text }]}>Support QR Guard</Text>
+              <Text style={[styles.donationSub, { color: colors.textSecondary }]}>Donate ₹10 · ₹50 · ₹100 via Play Store</Text>
+            </View>
+            <Ionicons name="chevron-forward" size={16} color={colors.textMuted} />
+          </Pressable>
+        </Animated.View>
+
         {/* ── SIGN OUT ── */}
         <Animated.View entering={FadeInDown.duration(400).delay(140)}>
           <Pressable
@@ -527,6 +557,17 @@ const styles = StyleSheet.create({
   },
   peopleCardCount: { fontSize: 18, fontFamily: "Inter_700Bold" },
   peopleCardLabel: { fontSize: 12, fontFamily: "Inter_400Regular" },
+
+  donationBtn: {
+    flexDirection: "row", alignItems: "center", gap: 12,
+    borderRadius: 16, borderWidth: 1, padding: 14, marginBottom: 10,
+  },
+  donationIconWrap: {
+    width: 34, height: 34, borderRadius: 10,
+    alignItems: "center", justifyContent: "center", flexShrink: 0,
+  },
+  donationTitle: { fontSize: 14, fontFamily: "Inter_700Bold", marginBottom: 2 },
+  donationSub: { fontSize: 12, fontFamily: "Inter_400Regular" },
 
   signOutBtn: {
     flexDirection: "row", alignItems: "center", justifyContent: "center",

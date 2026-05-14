@@ -1,6 +1,14 @@
 import React, { useMemo } from "react";
-import { View, Text, StyleSheet, Pressable, ScrollView, Platform, useWindowDimensions } from "react-native";
-import { Ionicons } from "@expo/vector-icons";
+import {
+  View,
+  Text,
+  StyleSheet,
+  Pressable,
+  ScrollView,
+  Platform,
+  useWindowDimensions,
+} from "react-native";
+import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Reanimated, { FadeIn, FadeInDown } from "react-native-reanimated";
@@ -14,37 +22,64 @@ const LANDING_MODES = [
   {
     key: "individual" as QrMode,
     label: "Standard QR",
-    sub: "Save & share secure, verifiable QR codes",
-    icon: "shield-checkmark-outline" as const,
+    tagline: "Personal & shareable",
+    badge: "FREE",
+    badgeColor: "#22C55E",
+    icon: "shield-checkmark" as const,
+    mcIcon: null,
     fromC: "#1D4ED8",
     toC: "#3B82F6",
-    accent: "#93C5FD",
-    route: "./standard",
+    midC: "#2563EB",
+    features: ["Saved to your account", "Trust score & analytics", "Community safety check"],
+    route: "/(tabs)/qr-generator/standard",
     requiresAuth: false,
   },
   {
     key: "business" as QrMode,
     label: "Business QR",
-    sub: "Smart redirect QR codes for your business",
-    icon: "storefront-outline" as const,
+    tagline: "Smart redirect codes",
+    badge: "PRO",
+    badgeColor: "#F59E0B",
+    icon: "storefront" as const,
+    mcIcon: null,
     fromC: "#92400E",
-    toC: "#D97706",
-    accent: "#FDE68A",
-    route: "./business",
+    toC: "#F59E0B",
+    midC: "#D97706",
+    features: ["Update destination anytime", "Scan analytics dashboard", "Branded with your logo"],
+    route: "/(tabs)/qr-generator/business",
     requiresAuth: true,
   },
   {
     key: "private" as QrMode,
     label: "Private QR",
-    sub: "No tracking, no data saved — fully offline",
-    icon: "eye-off-outline" as const,
+    tagline: "Zero data, fully offline",
+    badge: "OFFLINE",
+    badgeColor: "#94A3B8",
+    icon: "eye-off" as const,
+    mcIcon: null,
     fromC: "#1E293B",
     toC: "#475569",
-    accent: "#CBD5E1",
-    route: "./private",
+    midC: "#334155",
+    features: ["No account needed", "Nothing stored anywhere", "Instant & anonymous"],
+    route: "/(tabs)/qr-generator/private",
     requiresAuth: false,
   },
 ] as const;
+
+function FeatureRow({ text }: { text: string }) {
+  return (
+    <View style={featureRowStyles.row}>
+      <View style={featureRowStyles.dot} />
+      <Text style={featureRowStyles.text} numberOfLines={1}>{text}</Text>
+    </View>
+  );
+}
+
+const featureRowStyles = StyleSheet.create({
+  row: { flexDirection: "row", alignItems: "center", gap: 8 },
+  dot: { width: 4, height: 4, borderRadius: 2, backgroundColor: "rgba(255,255,255,0.55)", flexShrink: 0 },
+  text: { fontSize: 12, fontFamily: "Inter_400Regular", color: "rgba(255,255,255,0.72)", flex: 1 },
+});
 
 export default function QrGeneratorLanding() {
   const insets = useSafeAreaInsets();
@@ -62,50 +97,82 @@ export default function QrGeneratorLanding() {
       <View style={styles.navBar}>
         <View>
           <Text style={[styles.navTitle, { color: colors.text }]}>QR Generator</Text>
-          <Text style={[styles.navSubtitle, { color: colors.textMuted }]}>Create secure QR codes</Text>
+          <Text style={[styles.navSubtitle, { color: colors.textMuted }]}>Create secure, verifiable codes</Text>
+        </View>
+        <View style={[styles.navBadge, { backgroundColor: colors.primaryDim, borderColor: colors.primary + "40" }]}>
+          <MaterialCommunityIcons name="qrcode-edit" size={16} color={colors.primary} />
         </View>
       </View>
 
-      {/* ── Landing cards ── */}
       <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={[styles.scrollContent, { paddingBottom: tabBarHeight + 24 }]}
       >
         <Reanimated.View entering={FadeIn.duration(280)} style={styles.cardList}>
-          <Text style={[styles.sectionLabel, { color: colors.textMuted }]}>What would you like to create?</Text>
+          <Text style={[styles.sectionLabel, { color: colors.textMuted }]}>Choose a type to get started</Text>
 
           {LANDING_MODES.map((m, idx) => {
             const disabled = m.requiresAuth && !user;
             return (
-              <Reanimated.View key={m.key} entering={FadeInDown.duration(320).delay(idx * 70)}>
+              <Reanimated.View key={m.key} entering={FadeInDown.duration(340).delay(idx * 90)}>
                 <Pressable
                   onPress={() => !disabled && router.push(m.route as any)}
                   style={({ pressed }) => ({
-                    borderRadius: 22,
+                    borderRadius: 24,
                     overflow: "hidden" as const,
-                    opacity: disabled ? 0.45 : pressed ? 0.88 : 1,
-                    transform: [{ scale: pressed && !disabled ? 0.975 : 1 }],
+                    opacity: disabled ? 0.5 : pressed ? 0.91 : 1,
+                    transform: [{ scale: pressed && !disabled ? 0.972 : 1 }],
+                    shadowColor: m.toC,
+                    shadowOffset: { width: 0, height: 8 },
+                    shadowOpacity: pressed ? 0.15 : 0.28,
+                    shadowRadius: 18,
+                    elevation: pressed ? 4 : 8,
                   })}
                 >
                   <LinearGradient
-                    colors={[m.fromC, m.toC]}
+                    colors={[m.fromC, m.midC, m.toC]}
                     start={{ x: 0, y: 0 }}
                     end={{ x: 1, y: 1 }}
                     style={styles.card}
                   >
-                    <View style={styles.cardIconWrap}>
-                      <Ionicons name={m.icon} size={28} color="#fff" />
+                    {/* Decorative glow circle top-right */}
+                    <View style={styles.cardGlow} />
+
+                    {/* Top row: icon + badge + arrow */}
+                    <View style={styles.cardTopRow}>
+                      <View style={styles.cardIconWrap}>
+                        <Ionicons name={m.icon} size={30} color="#fff" />
+                      </View>
+                      <View style={[styles.badgeWrap, { backgroundColor: m.badgeColor + "30", borderColor: m.badgeColor + "60" }]}>
+                        <Text style={[styles.badgeText, { color: m.badgeColor }]}>{m.badge}</Text>
+                      </View>
+                      <View style={{ flex: 1 }} />
+                      <View style={styles.arrowCircle}>
+                        <Ionicons name="arrow-forward" size={16} color="#fff" />
+                      </View>
                     </View>
-                    <View style={{ flex: 1, gap: 3 }}>
+
+                    {/* Title + tagline */}
+                    <View style={styles.cardTitleBlock}>
                       <Text style={styles.cardTitle}>{m.label}</Text>
-                      <Text style={styles.cardSub} numberOfLines={2}>{m.sub}</Text>
-                      {disabled && (
-                        <Text style={[styles.cardLock, { color: m.accent }]}>
-                          Sign in to use Business QR
-                        </Text>
-                      )}
+                      <Text style={styles.cardTagline}>{m.tagline}</Text>
                     </View>
-                    <Ionicons name="chevron-forward" size={20} color="rgba(255,255,255,0.7)" />
+
+                    {/* Divider */}
+                    <View style={styles.cardDivider} />
+
+                    {/* Feature list */}
+                    <View style={styles.featureList}>
+                      {m.features.map((f) => <FeatureRow key={f} text={f} />)}
+                    </View>
+
+                    {/* Auth lock notice */}
+                    {disabled && (
+                      <View style={styles.lockRow}>
+                        <Ionicons name="lock-closed" size={11} color="rgba(255,255,255,0.6)" />
+                        <Text style={styles.lockText}>Sign in to unlock Business QR</Text>
+                      </View>
+                    )}
                   </LinearGradient>
                 </Pressable>
               </Reanimated.View>
@@ -126,57 +193,64 @@ function makeStyles(colors: any, width: number) {
       paddingHorizontal: 22,
       paddingVertical: 14,
       paddingBottom: 10,
-    },
-    navTitle: { fontSize: rf(20), fontFamily: "Inter_700Bold" },
-    navSubtitle: {
-      fontSize: rf(12),
-      fontFamily: "Inter_400Regular",
-      marginTop: 2,
-    },
-    scrollContent: { paddingHorizontal: 0, paddingTop: 4 },
-    cardList: {
-      paddingHorizontal: 20,
-      paddingTop: 8,
-      gap: 14,
-    },
-    sectionLabel: {
-      fontSize: rf(13),
-      fontFamily: "Inter_500Medium",
-      letterSpacing: 0.2,
-      marginBottom: 4,
-    },
-    card: {
       flexDirection: "row",
       alignItems: "center",
-      gap: 16,
-      paddingHorizontal: 20,
-      paddingVertical: 22,
-      borderRadius: 22,
+      justifyContent: "space-between",
+    },
+    navTitle: { fontSize: rf(21), fontFamily: "Inter_700Bold" },
+    navSubtitle: { fontSize: rf(12), fontFamily: "Inter_400Regular", marginTop: 2 },
+    navBadge: {
+      width: 38, height: 38, borderRadius: 12,
+      alignItems: "center", justifyContent: "center", borderWidth: 1,
+    },
+    scrollContent: { paddingTop: 4 },
+    cardList: { paddingHorizontal: 18, paddingTop: 4, gap: 16 },
+    sectionLabel: {
+      fontSize: rf(12), fontFamily: "Inter_500Medium",
+      letterSpacing: 0.4, marginBottom: 2, textTransform: "uppercase",
+    },
+    card: {
+      borderRadius: 24, padding: 20,
+      overflow: "hidden", position: "relative",
+    },
+    cardGlow: {
+      position: "absolute", top: -40, right: -40,
+      width: 130, height: 130, borderRadius: 65,
+      backgroundColor: "rgba(255,255,255,0.07)",
+    },
+    cardTopRow: {
+      flexDirection: "row", alignItems: "center", gap: 12, marginBottom: 16,
     },
     cardIconWrap: {
-      width: 52,
-      height: 52,
-      borderRadius: 16,
-      backgroundColor: "rgba(255,255,255,0.15)",
-      alignItems: "center",
-      justifyContent: "center",
-      flexShrink: 0,
+      width: 56, height: 56, borderRadius: 18,
+      backgroundColor: "rgba(255,255,255,0.18)",
+      alignItems: "center", justifyContent: "center", flexShrink: 0,
     },
-    cardTitle: {
-      fontSize: rf(16),
-      fontFamily: "Inter_700Bold",
-      color: "#fff",
+    badgeWrap: {
+      paddingHorizontal: 10, paddingVertical: 4,
+      borderRadius: 100, borderWidth: 1,
     },
-    cardSub: {
-      fontSize: rf(12),
-      fontFamily: "Inter_400Regular",
-      color: "rgba(255,255,255,0.72)",
-      lineHeight: 17,
+    badgeText: { fontSize: 10, fontFamily: "Inter_700Bold", letterSpacing: 0.8 },
+    arrowCircle: {
+      width: 34, height: 34, borderRadius: 17,
+      backgroundColor: "rgba(255,255,255,0.18)",
+      alignItems: "center", justifyContent: "center",
     },
-    cardLock: {
-      fontSize: rf(11),
-      fontFamily: "Inter_600SemiBold",
-      marginTop: 2,
+    cardTitleBlock: { gap: 4, marginBottom: 14 },
+    cardTitle: { fontSize: rf(20), fontFamily: "Inter_700Bold", color: "#fff" },
+    cardTagline: { fontSize: rf(13), fontFamily: "Inter_400Regular", color: "rgba(255,255,255,0.72)" },
+    cardDivider: {
+      height: StyleSheet.hairlineWidth,
+      backgroundColor: "rgba(255,255,255,0.2)",
+      marginBottom: 14,
+    },
+    featureList: { gap: 7 },
+    lockRow: {
+      flexDirection: "row", alignItems: "center", gap: 5, marginTop: 12,
+    },
+    lockText: {
+      fontSize: rf(11), fontFamily: "Inter_500Medium",
+      color: "rgba(255,255,255,0.6)",
     },
   });
 }
