@@ -26,7 +26,7 @@ import { useTheme } from "@/contexts/ThemeContext";
 import { useQrGenerator, LOGO_POSITIONS } from "@/hooks/useQrGenerator";
 import TypePickerHome from "@/features/generator/components/TypePickerHome";
 import TemplatePickerModal from "@/features/generator/components/TemplatePickerModal";
-import CustomQrBuilderModal from "@/features/generator/components/CustomQrBuilderModal";
+import QrTemplateModal from "@/features/generator/components/QrTemplateModal";
 import InputSection from "@/features/generator/components/InputSection";
 import QrOutputCard from "@/features/generator/components/QrOutputCard";
 import InfoModal from "@/features/generator/components/InfoModal";
@@ -57,7 +57,7 @@ export default function QrFormPage({ mode }: Props) {
   const [qrSize, setQrSize] = useState(220);
   const [templateModalOpen, setTemplateModalOpen] = useState(false);
   const [groupPickerOpen, setGroupPickerOpen] = useState(false);
-  const [customModalOpen, setCustomModalOpen] = useState(false);
+  const [qrTemplateOpen, setQrTemplateOpen] = useState(false);
   const [showGenError, setShowGenError] = useState(false);
 
   const errorProgress = useSharedValue(0);
@@ -285,7 +285,7 @@ export default function QrFormPage({ mode }: Props) {
           onSelectPreset={handleSelectPreset}
           onSelectBusinessCategory={handleSelectBusinessCategory}
           onOpenTemplates={handleOpenTemplatesFromHome}
-          onOpenCustom={() => setCustomModalOpen(true)}
+          onOpenCustom={() => setQrTemplateOpen(true)}
           user={user}
           hideActions={presetActive}
           hideModeCards={true}
@@ -307,18 +307,17 @@ export default function QrFormPage({ mode }: Props) {
           </Reanimated.View>
         )}
 
-        {/* Custom QR option — business mode only, before QR is generated */}
+        {/* Choose Template — business mode only, before QR is generated */}
         {mode === "business" && presetActive && !qrValue && (
           <Reanimated.View entering={FadeInDown.duration(280).delay(70)} style={{ marginHorizontal: 20, marginBottom: 8 }}>
             <Pressable
-              onPress={() => { setCustomModalOpen(true); }}
+              onPress={() => setQrTemplateOpen(true)}
               style={({ pressed }) => ({
                 flexDirection: "row" as const,
                 alignItems: "center" as const,
                 gap: 8,
                 borderRadius: 12,
                 borderWidth: 1,
-                borderStyle: "dashed" as const,
                 borderColor: colors.primary + "50",
                 paddingHorizontal: 14,
                 paddingVertical: 9,
@@ -326,9 +325,9 @@ export default function QrFormPage({ mode }: Props) {
                 opacity: pressed ? 0.8 : 1,
               })}
             >
-              <Ionicons name="create-outline" size={15} color={colors.primary} />
+              <Ionicons name="grid-outline" size={15} color={colors.primary} />
               <Text style={{ fontSize: 12, fontFamily: "Inter_600SemiBold", color: colors.primary, flex: 1 }}>
-                Custom QR
+                Choose Template
               </Text>
               <Ionicons name="chevron-forward" size={13} color={colors.primary + "80"} />
             </Pressable>
@@ -564,13 +563,13 @@ export default function QrFormPage({ mode }: Props) {
       ) : null}
 
       {/* ── Modals ── */}
-      <CustomQrBuilderModal
-        visible={customModalOpen}
-        onClose={() => setCustomModalOpen(false)}
+      <QrTemplateModal
+        visible={qrTemplateOpen}
+        onClose={() => setQrTemplateOpen(false)}
         onGenerate={(content) => {
           setInputValue(content);
           setPresetActive(true);
-          setCustomModalOpen(false);
+          setQrTemplateOpen(false);
         }}
       />
       <TemplatePickerModal

@@ -201,9 +201,9 @@ function TypePickerHome({
                   style={[styles.customCard, { borderColor: colors.primary + "40" }]}
                 >
                   <View style={[styles.customCardIcon, { backgroundColor: colors.primaryDim }]}>
-                    <Ionicons name="create-outline" size={22} color={colors.primary} />
+                    <Ionicons name="grid-outline" size={22} color={colors.primary} />
                   </View>
-                  <Text style={[styles.customCardTitle, { color: colors.text }]}>Custom QR</Text>
+                  <Text style={[styles.customCardTitle, { color: colors.text }]}>Choose Template</Text>
                   <Ionicons name="chevron-forward" size={16} color={colors.primary} />
                 </LinearGradient>
               </Pressable>
