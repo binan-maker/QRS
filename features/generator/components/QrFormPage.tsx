@@ -125,6 +125,10 @@ export default function QrFormPage({ mode }: Props) {
 
   useEffect(() => {
     setQrMode(mode);
+    if (mode === "business") {
+      switchBusinessCategory("website");
+      setPresetActive(true);
+    }
   }, []);
 
 
@@ -304,23 +308,27 @@ export default function QrFormPage({ mode }: Props) {
         )}
 
         {/* Business name — business mode only */}
-        {mode === "business" && (
+        {mode === "business" && presetActive && (
           <Reanimated.View entering={FadeInDown.duration(320).delay(80)}>
             <View style={{ marginBottom: 16, marginHorizontal: 20 }}>
               <Text style={[styles.fieldLabel, { color: colors.textMuted }]}>
-                Business Name (optional)
+                Business Name
               </Text>
-              <View style={[styles.fieldInput, { backgroundColor: colors.inputBackground, borderColor: colors.surfaceBorder }]}>
-                <Ionicons name="storefront-outline" size={16} color={colors.textMuted} style={{ marginTop: 2 }} />
+              <View style={[styles.fieldInput, { backgroundColor: colors.inputBackground, borderColor: businessName.trim() ? colors.primary + "60" : colors.surfaceBorder }]}>
+                <Ionicons name="storefront-outline" size={16} color={businessName.trim() ? colors.primary : colors.textMuted} />
                 <TextInput
                   style={[styles.fieldInputText, { color: colors.text, flex: 1 }]}
                   value={businessName}
                   onChangeText={setBusinessName}
-                  placeholder="e.g. My Coffee Shop"
+                  placeholder="Your shop or brand name"
                   placeholderTextColor={colors.textMuted}
                   autoCapitalize="words"
                   autoCorrect={false}
+                  returnKeyType="done"
                 />
+                {businessName.trim().length > 0 && (
+                  <Ionicons name="checkmark-circle" size={16} color={colors.primary} />
+                )}
               </View>
             </View>
           </Reanimated.View>

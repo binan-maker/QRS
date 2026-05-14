@@ -23,7 +23,7 @@ const LANDING_MODES = [
     key: "individual" as QrMode,
     label: "Standard QR",
     tagline: "Personal & shareable",
-    badge: "FREE",
+    badge: "",
     badgeColor: "#22C55E",
     icon: "shield-checkmark" as const,
     mcIcon: null,
@@ -143,9 +143,11 @@ export default function QrGeneratorLanding() {
                       <View style={styles.cardIconWrap}>
                         <Ionicons name={m.icon} size={30} color="#fff" />
                       </View>
-                      <View style={[styles.badgeWrap, { backgroundColor: m.badgeColor + "30", borderColor: m.badgeColor + "60" }]}>
-                        <Text style={[styles.badgeText, { color: m.badgeColor }]}>{m.badge}</Text>
-                      </View>
+                      {m.badge ? (
+                        <View style={[styles.badgeWrap, { backgroundColor: m.badgeColor + "30", borderColor: m.badgeColor + "60" }]}>
+                          <Text style={[styles.badgeText, { color: m.badgeColor }]}>{m.badge}</Text>
+                        </View>
+                      ) : null}
                       <View style={{ flex: 1 }} />
                       <View style={styles.arrowCircle}>
                         <Ionicons name="arrow-forward" size={16} color="#fff" />

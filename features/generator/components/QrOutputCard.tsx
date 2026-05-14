@@ -226,10 +226,6 @@ function QrOutputCard({
               <Text style={[styles.brandedMetaLabel, { color: colors.textMuted }]}>QR ID</Text>
               <Text style={[styles.brandedMetaValue, { color: colors.text }]} numberOfLines={1}>{generatedUuid}</Text>
             </View>
-            <View style={styles.brandedMetaItem}>
-              <Text style={[styles.brandedMetaLabel, { color: colors.textMuted }]}>Created by</Text>
-              <Text style={[styles.brandedMetaValue, { color: colors.text }]} numberOfLines={1}>{user?.displayName}</Text>
-            </View>
             {generatedAt && (
               <View style={styles.brandedMetaItem}>
                 <Text style={[styles.brandedMetaLabel, { color: colors.textMuted }]}>Date</Text>

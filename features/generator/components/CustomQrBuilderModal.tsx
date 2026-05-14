@@ -1,10 +1,9 @@
 import React, {
-  useState, useCallback, memo, useMemo, useRef,
+  useState, useCallback, memo, useMemo, useRef, useEffect,
 } from "react";
 import {
   View, Text, Modal, Pressable, ScrollView, TextInput,
-  StyleSheet, Platform, KeyboardAvoidingView, Animated,
-  PanResponder, useWindowDimensions,
+  StyleSheet, Animated, PanResponder, useWindowDimensions,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -55,6 +54,19 @@ interface Template {
 }
 
 const STARTER_TEMPLATES: Template[] = [
+  {
+    id: "url",
+    name: "URL / Link",
+    icon: "globe-outline",
+    color: "#3B82F6",
+    emoji: "🌐",
+    tagline: "Direct link to any website",
+    desc: "Encode any URL directly into a QR code — no setup needed.",
+    template: "{{url}}",
+    fields: [
+      { key: "url", label: "URL", type: "url", hint: "https://example.com" },
+    ],
+  },
   {
     id: "upi",
     name: "UPI Payment",
@@ -209,6 +221,16 @@ function CustomQrBuilderModal({ visible, onClose, onGenerate }: Props) {
   const [firstFocus, setFirstFocus] = useState<Record<string, boolean>>({});
 
   const sheetY = useRef(new Animated.Value(0)).current;
+  const overlayOpacity = useRef(new Animated.Value(0)).current;
+  const isClosingRef = useRef(false);
+
+  useEffect(() => {
+    if (visible) {
+      isClosingRef.current = false;
+      sheetY.setValue(0);
+      Animated.timing(overlayOpacity, { toValue: 1, duration: 220, useNativeDriver: true }).start();
+    }
+  }, [visible]);
 
   const panResponder = useRef(
     PanResponder.create({
@@ -218,7 +240,12 @@ function CustomQrBuilderModal({ visible, onClose, onGenerate }: Props) {
       },
       onPanResponderRelease: (_, g) => {
         if (g.dy > 100 || g.vy > 0.5) {
-          Animated.timing(sheetY, { toValue: screenH, duration: 220, useNativeDriver: true }).start(doClose);
+          if (isClosingRef.current) return;
+          isClosingRef.current = true;
+          Animated.parallel([
+            Animated.timing(sheetY, { toValue: 500, duration: 200, useNativeDriver: true }),
+            Animated.timing(overlayOpacity, { toValue: 0, duration: 200, useNativeDriver: true }),
+          ]).start(() => doClose());
         } else {
           Animated.spring(sheetY, { toValue: 0, useNativeDriver: true, bounciness: 4 }).start();
         }
@@ -227,7 +254,9 @@ function CustomQrBuilderModal({ visible, onClose, onGenerate }: Props) {
   ).current;
 
   function doClose() {
+    isClosingRef.current = false;
     sheetY.setValue(0);
+    overlayOpacity.setValue(0);
     setStep("pick");
     setTemplateName("");
     setOutputTemplate("");
@@ -238,7 +267,9 @@ function CustomQrBuilderModal({ visible, onClose, onGenerate }: Props) {
   }
 
   function handleClose() {
-    Animated.timing(sheetY, { toValue: screenH, duration: 200, useNativeDriver: true }).start(doClose);
+    if (isClosingRef.current) return;
+    isClosingRef.current = true;
+    Animated.timing(overlayOpacity, { toValue: 0, duration: 180, useNativeDriver: true }).start(() => doClose());
   }
 
   function applyTemplate(t: Template) {
@@ -318,35 +349,31 @@ function CustomQrBuilderModal({ visible, onClose, onGenerate }: Props) {
     handleClose();
   }
 
-  const sheetMaxH = screenH * 0.92;
+  const sheetMaxH = Math.min(screenH * 0.88, 680);
 
   return (
     <Modal
       visible={visible}
       transparent
-      animationType="slide"
+      animationType="none"
       onRequestClose={handleClose}
       statusBarTranslucent
     >
-      <KeyboardAvoidingView
-        behavior={Platform.OS === "ios" ? "padding" : "height"}
-        style={{ flex: 1 }}
-      >
-        <View style={styles.overlay}>
-          <Pressable style={styles.backdrop} onPress={handleClose} />
+      <Animated.View style={[styles.overlay, { opacity: overlayOpacity }]}>
+        <Pressable style={styles.backdrop} onPress={handleClose} />
 
-          <Animated.View
-            style={[
-              styles.sheet,
-              {
-                backgroundColor: colors.background,
-                borderColor: colors.surfaceBorder,
-                paddingBottom: insets.bottom + 24,
-                height: sheetMaxH,
-                transform: [{ translateY: sheetY }],
-              },
-            ]}
-          >
+        <Animated.View
+          style={[
+            styles.sheet,
+            {
+              backgroundColor: colors.background,
+              borderColor: colors.surfaceBorder,
+              paddingBottom: insets.bottom + 8,
+              height: sheetMaxH,
+              transform: [{ translateY: sheetY }],
+            },
+          ]}
+        >
             {/* Drag handle */}
             <View {...panResponder.panHandlers} style={styles.dragArea}>
               <View style={[styles.handle, { backgroundColor: colors.surfaceBorder }]} />
@@ -742,8 +769,7 @@ function CustomQrBuilderModal({ visible, onClose, onGenerate }: Props) {
               )}
             </ScrollView>
           </Animated.View>
-        </View>
-      </KeyboardAvoidingView>
+        </Animated.View>
     </Modal>
   );
 }
@@ -751,8 +777,8 @@ function CustomQrBuilderModal({ visible, onClose, onGenerate }: Props) {
 export default memo(CustomQrBuilderModal);
 
 const styles = StyleSheet.create({
-  overlay: { flex: 1, justifyContent: "flex-end" },
-  backdrop: { ...StyleSheet.absoluteFillObject, backgroundColor: "rgba(0,0,0,0.55)" },
+  overlay: { flex: 1, justifyContent: "flex-end", backgroundColor: "rgba(0,0,0,0.60)" },
+  backdrop: { ...StyleSheet.absoluteFillObject },
 
   sheet: {
     borderTopLeftRadius: 30,
