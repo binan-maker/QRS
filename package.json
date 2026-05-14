@@ -110,7 +110,7 @@
     "react-native-worklets": "0.5.1",
     "semver": "^7.7.4",
     "source-map": "^0.7.6",
-    "tsx": "^4.21.1",
+    "tsx": "^4.22.0",
     "ws": "^8.20.0",
     "zod": "^3.25.76",
     "zod-validation-error": "^3.5.4"
