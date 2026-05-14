@@ -26,16 +26,14 @@ import { useTheme } from "@/contexts/ThemeContext";
 import { useQrGenerator, LOGO_POSITIONS } from "@/hooks/useQrGenerator";
 import TypePickerHome from "@/features/generator/components/TypePickerHome";
 import TemplatePickerModal from "@/features/generator/components/TemplatePickerModal";
-import CustomQrModal from "@/features/generator/components/CustomQrModal";
+import CustomQrBuilderModal from "@/features/generator/components/CustomQrBuilderModal";
 import InputSection from "@/features/generator/components/InputSection";
-import CustomFieldInputs from "@/features/generator/components/CustomFieldInputs";
 import QrOutputCard from "@/features/generator/components/QrOutputCard";
 import InfoModal from "@/features/generator/components/InfoModal";
 import PositionModal from "@/features/generator/components/PositionModal";
 import CustomizeDrawer from "@/features/generator/components/CustomizeDrawer";
 import GroupPickerModal from "@/components/groups/GroupPickerModal";
 import type { BusinessCategory } from "@/features/generator/components/BusinessTypeSelector";
-import { type CustomQrType, buildCustomQrContent } from "@/features/generator/types/CustomQrType";
 
 type QrMode = "individual" | "business" | "private";
 
@@ -60,8 +58,6 @@ export default function QrFormPage({ mode }: Props) {
   const [templateModalOpen, setTemplateModalOpen] = useState(false);
   const [groupPickerOpen, setGroupPickerOpen] = useState(false);
   const [customModalOpen, setCustomModalOpen] = useState(false);
-  const [customSchema, setCustomSchema] = useState<CustomQrType | null>(null);
-  const [customFieldValues, setCustomFieldValues] = useState<Record<string, string>>({});
   const [showGenError, setShowGenError] = useState(false);
 
   const errorProgress = useSharedValue(0);
@@ -131,11 +127,6 @@ export default function QrFormPage({ mode }: Props) {
     setQrMode(mode);
   }, []);
 
-  useEffect(() => {
-    if (!customSchema) return;
-    const content = buildCustomQrContent(customSchema, customFieldValues);
-    setInputValue(content);
-  }, [customSchema, customFieldValues]);
 
   const styles = useMemo(() => makeStyles(colors, width), [colors, width]);
   const meta = MODE_META[mode];
@@ -180,8 +171,6 @@ export default function QrFormPage({ mode }: Props) {
   const handleSelectPreset = useCallback(
     (idx: number) => {
       switchPreset(idx);
-      setCustomSchema(null);
-      setCustomFieldValues({});
       setPresetActive(true);
     },
     [switchPreset],
@@ -217,8 +206,6 @@ export default function QrFormPage({ mode }: Props) {
   const handleSelectFromModal = useCallback(
     (idx: number) => {
       switchPreset(idx);
-      setCustomSchema(null);
-      setCustomFieldValues({});
       setPresetActive(true);
     },
     [switchPreset],
@@ -227,9 +214,7 @@ export default function QrFormPage({ mode }: Props) {
   function _hideGenError() { setShowGenError(false); }
 
   const handleGenerateWithValidation = useCallback(() => {
-    const isEmpty = customSchema
-      ? Object.values(customFieldValues).every(v => !v.trim())
-      : !inputValue.trim();
+    const isEmpty = !inputValue.trim();
     if (isEmpty) {
       setShowGenError(true);
       errorProgress.value = 0;
@@ -244,7 +229,7 @@ export default function QrFormPage({ mode }: Props) {
       return;
     }
     handleGenerate();
-  }, [inputValue, customFieldValues, customSchema, handleGenerate]);
+  }, [inputValue, handleGenerate]);
 
   const handleSizeIncrease = useCallback(() => setQrSize(s => Math.min(320, s + 20)), []);
   const handleSizeDecrease = useCallback(() => setQrSize(s => Math.max(160, s - 20)), []);
@@ -302,29 +287,19 @@ export default function QrFormPage({ mode }: Props) {
           hideModeCards={true}
         />
 
-        {/* Input fields — only when a preset or custom schema is active */}
-        {(presetActive || customSchema) && (
+        {/* Input fields — only when a preset is active */}
+        {presetActive && (
           <Reanimated.View entering={FadeInDown.duration(320).delay(60)} style={{ marginHorizontal: 20 }}>
-            {customSchema ? (
-              <CustomFieldInputs
-                schema={customSchema}
-                values={customFieldValues}
-                onChange={(id, val) =>
-                  setCustomFieldValues(prev => ({ ...prev, [id]: val }))
-                }
-              />
-            ) : (
-              <InputSection
-                selectedPreset={selectedPreset}
-                inputValue={inputValue}
-                extraFields={extraFields}
-                qrMode={mode}
-                isBranded={isBranded}
-                businessCategory={businessCategory}
-                setInputValue={setInputValue}
-                setExtraField={setExtraField}
-              />
-            )}
+            <InputSection
+              selectedPreset={selectedPreset}
+              inputValue={inputValue}
+              extraFields={extraFields}
+              qrMode={mode}
+              isBranded={isBranded}
+              businessCategory={businessCategory}
+              setInputValue={setInputValue}
+              setExtraField={setExtraField}
+            />
           </Reanimated.View>
         )}
 
@@ -553,13 +528,11 @@ export default function QrFormPage({ mode }: Props) {
       ) : null}
 
       {/* ── Modals ── */}
-      <CustomQrModal
+      <CustomQrBuilderModal
         visible={customModalOpen}
         onClose={() => setCustomModalOpen(false)}
-        onConfirm={(schema) => {
-          setCustomSchema(schema);
-          setCustomFieldValues({});
-          switchPreset(0);
+        onGenerate={(content) => {
+          setInputValue(content);
           setPresetActive(true);
           setCustomModalOpen(false);
         }}
