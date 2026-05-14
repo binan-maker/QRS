@@ -1,10 +1,12 @@
 import React, { memo } from "react";
 import {
-  View, Text, Pressable, StyleSheet, useWindowDimensions, ScrollView,
+  View, Text, Pressable, StyleSheet, useWindowDimensions,
+  ScrollView, Alert,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import Reanimated, { FadeIn, FadeInUp } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { LinearGradient } from "expo-linear-gradient";
 import { useTheme } from "@/contexts/ThemeContext";
 import * as Haptics from "@/lib/haptics";
 import type { BusinessCategory } from "@/features/generator/components/BusinessTypeSelector";
@@ -18,60 +20,35 @@ interface ModeCard {
   icon: keyof typeof Ionicons.glyphMap;
   color: string;
   badge?: string;
+  info: string;
 }
 
 const MODES: ModeCard[] = [
   {
-    key: "individual",
+    key:   "individual",
     label: "Standard",
-    tag: "Saved · Tracked",
-    icon: "shield-checkmark-outline",
+    tag:   "Saved · Tracked",
+    icon:  "shield-checkmark-outline",
     color: "#3B82F6",
+    info:  "QR sticker encodes a qrguard.app/go/ID link — only our database reveals the real content. Scan history is saved securely to your account.",
   },
   {
-    key: "business",
+    key:   "business",
     label: "Business",
-    tag: "Smart Redirect",
-    icon: "storefront-outline",
+    tag:   "Smart Redirect",
+    icon:  "storefront-outline",
     color: "#F59E0B",
     badge: "PRO",
+    info:  "Same database-lock as Standard — change the destination URL anytime without reprinting the QR code. Perfect for flyers, menus, and signage.",
   },
   {
-    key: "private",
+    key:   "private",
     label: "Private",
-    tag: "No trace",
-    icon: "eye-off-outline",
+    tag:   "No trace",
+    icon:  "eye-off-outline",
     color: "#64748B",
+    info:  "Raw content baked directly into the QR. No server, no database, no tracking — completely anonymous and offline-safe.",
   },
-];
-
-const BANNER: Record<QrMode, { icon: keyof typeof Ionicons.glyphMap; line: string }> = {
-  individual: {
-    icon: "shield-checkmark-outline",
-    line: "QR sticker encodes a qrguard.app/go/ID link — only our database reveals the real content.",
-  },
-  business: {
-    icon: "sync-outline",
-    line: "Same database-lock as Standard — change the destination anytime without reprinting.",
-  },
-  private: {
-    icon: "eye-off-outline",
-    line: "Raw content baked directly into the QR. No server, no database, no tracking.",
-  },
-};
-
-interface QuickTile {
-  presetIdx: number;
-  label: string;
-  icon: keyof typeof Ionicons.glyphMap;
-  color: string;
-}
-
-const STANDARD_TILES: QuickTile[] = [
-  { presetIdx: 0,  label: "Text",    icon: "text-outline",               color: "#6366F1" },
-  { presetIdx: 1,  label: "URL",     icon: "link-outline",               color: "#3B82F6" },
-  { presetIdx: 6,  label: "WiFi",    icon: "wifi-outline",               color: "#F59E0B" },
-  { presetIdx: 9,  label: "Contact", icon: "person-outline",             color: "#8B5CF6" },
 ];
 
 interface BusinessTile {
@@ -83,11 +60,11 @@ interface BusinessTile {
 }
 
 const BUSINESS_TILES: BusinessTile[] = [
-  { category: "website",  label: "Website",    sub: "Redirect to any URL",   icon: "globe-outline",              color: "#3B82F6" },
-  { category: "whatsapp", label: "Chat Link",  sub: "Redirect to chat",      icon: "chatbubble-ellipses-outline", color: "#22C55E" },
-  { category: "wifi",     label: "WiFi",       sub: "Share credentials",     icon: "wifi-outline",               color: "#F59E0B" },
-  { category: "event",    label: "Event",      sub: "Redirect to calendar",  icon: "calendar-outline",           color: "#EC4899" },
-  { category: "phone",    label: "Phone",      sub: "Redirect to call",      icon: "call-outline",               color: "#14B8A6" },
+  { category: "website",  label: "Website",    sub: "Redirect to any URL",    icon: "globe-outline",               color: "#3B82F6" },
+  { category: "whatsapp", label: "Chat Link",  sub: "Redirect to WhatsApp",   icon: "chatbubble-ellipses-outline",  color: "#22C55E" },
+  { category: "wifi",     label: "WiFi",       sub: "Share credentials",      icon: "wifi-outline",                color: "#F59E0B" },
+  { category: "event",    label: "Event",      sub: "Redirect to calendar",   icon: "calendar-outline",            color: "#EC4899" },
+  { category: "phone",    label: "Phone",      sub: "Redirect to call",       icon: "call-outline",                color: "#14B8A6" },
 ];
 
 interface Props {
@@ -108,12 +85,8 @@ function TypePickerHome({
   user,
 }: Props) {
   const { colors } = useTheme();
-  const { width } = useWindowDimensions();
-  const insets = useSafeAreaInsets();
-
-  const pad = 20;
-  const gap = 10;
-  const tileSize = (width - pad * 2 - gap) / 2;
+  const { width }  = useWindowDimensions();
+  const insets     = useSafeAreaInsets();
   const scrollPadBottom = insets.bottom + 80;
 
   function pressMode(mode: QrMode) {
@@ -122,29 +95,28 @@ function TypePickerHome({
     onSetMode(mode);
   }
 
-  function pickPreset(idx: number) {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    onSelectPreset(idx);
-  }
-
   function pickBusiness(cat: BusinessCategory) {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     onSelectBusinessCategory(cat);
   }
 
-  const activeMode = MODES.find((m) => m.key === qrMode)!;
-  const banner = BANNER[qrMode];
+  function showInfo(m: ModeCard) {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    Alert.alert(m.label, m.info, [{ text: "Got it" }]);
+  }
+
+  const PAD = 20;
 
   return (
     <ScrollView
       style={{ flex: 1 }}
       showsVerticalScrollIndicator={false}
-      contentContainerStyle={[styles.root, { paddingHorizontal: pad, paddingBottom: scrollPadBottom }]}
+      contentContainerStyle={[styles.root, { paddingHorizontal: PAD, paddingBottom: scrollPadBottom }]}
     >
       {/* ── Mode cards ── */}
       <Reanimated.View entering={FadeIn.duration(300)} style={styles.modeRow}>
         {MODES.map((m) => {
-          const active = qrMode === m.key;
+          const active   = qrMode === m.key;
           const disabled = m.key === "business" && !user;
           return (
             <Pressable
@@ -154,27 +126,40 @@ function TypePickerHome({
                 styles.modeCard,
                 {
                   backgroundColor: active ? m.color + "18" : colors.surface,
-                  borderColor: active ? m.color + "80" : colors.surfaceBorder,
-                  borderWidth: active ? 1.5 : 1,
-                  opacity: disabled ? 0.4 : pressed ? 0.76 : 1,
-                  transform: [{ scale: pressed && !disabled ? 0.96 : 1 }],
+                  borderColor:     active ? m.color + "80" : colors.surfaceBorder,
+                  borderWidth:     active ? 1.5 : 1,
+                  opacity:         disabled ? 0.4 : pressed ? 0.76 : 1,
+                  transform:       [{ scale: pressed && !disabled ? 0.96 : 1 }],
                 },
               ]}
             >
+              {/* PRO badge */}
               {m.badge && (
                 <View style={[styles.modeBadge, { backgroundColor: m.color + "25", borderColor: m.color + "50" }]}>
                   <Text style={[styles.modeBadgeText, { color: m.color }]}>{m.badge}</Text>
                 </View>
               )}
 
+              {/* Info icon — top right */}
+              <Pressable
+                onPress={(e) => { e.stopPropagation(); showInfo(m); }}
+                hitSlop={10}
+                style={styles.infoIcon}
+              >
+                <Ionicons name="information-circle-outline" size={15} color={active ? m.color + "CC" : colors.textMuted} />
+              </Pressable>
+
+              {/* Icon */}
               <View style={[styles.modeIconWrap, { backgroundColor: m.color + (active ? "28" : "16") }]}>
-                <Ionicons name={m.icon} size={20} color={m.color} />
+                <Ionicons name={m.icon} size={22} color={m.color} />
               </View>
 
+              {/* Label */}
               <Text style={[styles.modeLabel, { color: active ? m.color : colors.text }]} numberOfLines={1}>
                 {m.label}
               </Text>
 
+              {/* Tag */}
               <Text
                 style={[styles.modeTag, {
                   color: disabled ? colors.textMuted : active ? m.color + "CC" : colors.textMuted,
@@ -184,6 +169,7 @@ function TypePickerHome({
                 {disabled ? "Sign in" : m.tag}
               </Text>
 
+              {/* Active underline */}
               {active && (
                 <View style={[styles.activeBar, { backgroundColor: m.color }]} />
               )}
@@ -192,57 +178,7 @@ function TypePickerHome({
         })}
       </Reanimated.View>
 
-      {/* ── Mode banner ── */}
-      <Reanimated.View entering={FadeIn.duration(280).delay(40)}>
-        <View style={[styles.banner, {
-          backgroundColor: activeMode.color + "0C",
-          borderColor: activeMode.color + "28",
-        }]}>
-          <Ionicons name={banner.icon} size={13} color={activeMode.color} style={{ flexShrink: 0, marginTop: 1 }} />
-          <Text style={[styles.bannerText, { color: activeMode.color }]} numberOfLines={2}>
-            {banner.line}
-          </Text>
-        </View>
-      </Reanimated.View>
-
-      {/* ── Section label ── */}
-      <Reanimated.View entering={FadeInUp.duration(260).delay(60)} style={styles.sectionRow}>
-        <View style={[styles.divider, { backgroundColor: colors.surfaceBorder }]} />
-        <Text style={[styles.sectionLabel, { color: colors.textMuted }]}>
-          {qrMode === "business" ? "Choose Type" : "Quick Create"}
-        </Text>
-        <View style={[styles.divider, { backgroundColor: colors.surfaceBorder }]} />
-      </Reanimated.View>
-
-      {/* ── Standard / Private: 2×2 tile grid ── */}
-      {qrMode !== "business" && (
-        <Reanimated.View entering={FadeInUp.duration(300).delay(80)} style={styles.grid}>
-          {STANDARD_TILES.map((t) => (
-            <Pressable
-              key={t.presetIdx}
-              onPress={() => pickPreset(t.presetIdx)}
-              style={({ pressed }) => [
-                styles.tile,
-                {
-                  width: tileSize,
-                  height: tileSize * 0.72,
-                  backgroundColor: colors.surface,
-                  borderColor: colors.surfaceBorder,
-                  opacity: pressed ? 0.76 : 1,
-                  transform: [{ scale: pressed ? 0.96 : 1 }],
-                },
-              ]}
-            >
-              <View style={[styles.tileIcon, { backgroundColor: t.color + "18" }]}>
-                <Ionicons name={t.icon} size={22} color={t.color} />
-              </View>
-              <Text style={[styles.tileLabel, { color: colors.text }]}>{t.label}</Text>
-            </Pressable>
-          ))}
-        </Reanimated.View>
-      )}
-
-      {/* ── Business: 5 generic redirect types ── */}
+      {/* ── Business: type tiles ── */}
       {qrMode === "business" && (
         <Reanimated.View entering={FadeInUp.duration(300).delay(80)} style={{ gap: 8 }}>
           {BUSINESS_TILES.map((t) => (
@@ -253,9 +189,9 @@ function TypePickerHome({
                 styles.bizRow,
                 {
                   backgroundColor: colors.surface,
-                  borderColor: colors.surfaceBorder,
-                  opacity: pressed ? 0.76 : 1,
-                  transform: [{ scale: pressed ? 0.98 : 1 }],
+                  borderColor:     colors.surfaceBorder,
+                  opacity:         pressed ? 0.76 : 1,
+                  transform:       [{ scale: pressed ? 0.98 : 1 }],
                 },
               ]}
             >
@@ -279,43 +215,67 @@ function TypePickerHome({
         </Reanimated.View>
       )}
 
-      {/* ── Footer actions (Standard / Private) ── */}
+      {/* ── Standard / Private: main actions ── */}
       {qrMode !== "business" && (
-        <Reanimated.View entering={FadeInUp.duration(300).delay(120)} style={{ gap: 10, marginTop: 4 }}>
+        <Reanimated.View entering={FadeInUp.duration(300).delay(80)} style={{ gap: 12 }}>
+
+          {/* Custom QR — prominent gradient card */}
           <Pressable
             onPress={() => {
-              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
               onOpenCustom();
             }}
-            style={({ pressed }) => [
-              styles.footerRow,
-              {
-                backgroundColor: colors.surface,
-                borderColor: colors.surfaceBorder,
-                opacity: pressed ? 0.76 : 1,
-              },
-            ]}
+            style={({ pressed }) => ({
+              opacity:    pressed ? 0.82 : 1,
+              transform:  [{ scale: pressed ? 0.98 : 1 }],
+              borderRadius: 20,
+              overflow: "hidden" as const,
+            })}
           >
-            <View style={[styles.footerIcon, { backgroundColor: colors.primaryDim }]}>
-              <Ionicons name="add" size={20} color={colors.primary} />
-            </View>
-            <View style={{ flex: 1 }}>
-              <Text style={[styles.footerLabel, { color: colors.text }]}>Custom QR</Text>
-              <Text style={[styles.footerSub, { color: colors.textMuted }]}>Build with your own fields</Text>
-            </View>
-            <Ionicons name="chevron-forward" size={15} color={colors.textMuted} />
+            <LinearGradient
+              colors={[colors.primary + "22", colors.primary + "08"]}
+              start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
+              style={[styles.customCard, { borderColor: colors.primary + "40" }]}
+            >
+              <View style={[styles.customCardIcon, { backgroundColor: colors.primaryDim }]}>
+                <Ionicons name="create-outline" size={26} color={colors.primary} />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={[styles.customCardTitle, { color: colors.text }]}>Custom QR</Text>
+                <Text style={[styles.customCardSub, { color: colors.textMuted }]}>
+                  Build with your own fields — text, phone, URL, payment, date &amp; more
+                </Text>
+              </View>
+              <Ionicons name="chevron-forward" size={17} color={colors.primary} />
+            </LinearGradient>
           </Pressable>
 
+          {/* Browse all QR types */}
           <Pressable
             onPress={() => {
               Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
               onOpenTemplates();
             }}
-            style={({ pressed }) => [styles.browseRow, { opacity: pressed ? 0.6 : 1 }]}
+            style={({ pressed }) => [
+              styles.browseCard,
+              {
+                backgroundColor: colors.surface,
+                borderColor:     colors.surfaceBorder,
+                opacity:         pressed ? 0.76 : 1,
+                transform:       [{ scale: pressed ? 0.98 : 1 }],
+              },
+            ]}
           >
-            <Ionicons name="apps-outline" size={14} color={colors.textMuted} />
-            <Text style={[styles.browseText, { color: colors.textMuted }]}>Browse all QR types</Text>
-            <Ionicons name="chevron-forward" size={12} color={colors.textMuted} />
+            <View style={[styles.browseCardIcon, { backgroundColor: colors.surfaceLight }]}>
+              <Ionicons name="apps-outline" size={22} color={colors.textSecondary} />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={[styles.browseCardTitle, { color: colors.text }]}>Browse All QR Types</Text>
+              <Text style={[styles.browseCardSub, { color: colors.textMuted }]}>
+                35+ types — UPI, WhatsApp, WiFi, Google Maps &amp; more
+              </Text>
+            </View>
+            <Ionicons name="chevron-forward" size={17} color={colors.textMuted} />
           </Pressable>
         </Reanimated.View>
       )}
@@ -325,168 +285,88 @@ function TypePickerHome({
 
 export default memo(TypePickerHome);
 
-const CARD_HEIGHT = 92;
+const CARD_HEIGHT = 115;
 
 const styles = StyleSheet.create({
-  root: { gap: 12 },
+  root: { gap: 14 },
 
+  /* Mode cards */
   modeRow: { flexDirection: "row", gap: 10 },
   modeCard: {
     flex: 1,
     height: CARD_HEIGHT,
-    borderRadius: 18,
+    borderRadius: 20,
     alignItems: "center",
     justifyContent: "center",
-    gap: 4,
+    gap: 5,
     position: "relative",
     overflow: "hidden",
     paddingHorizontal: 8,
-    paddingVertical: 10,
+    paddingVertical: 12,
   },
   modeBadge: {
-    position: "absolute",
-    top: 7,
-    right: 7,
-    borderRadius: 5,
-    borderWidth: 1,
-    paddingHorizontal: 4,
-    paddingVertical: 1,
+    position: "absolute", top: 7, right: 7,
+    borderRadius: 5, borderWidth: 1,
+    paddingHorizontal: 4, paddingVertical: 1,
   },
   modeBadgeText: { fontSize: 7, fontFamily: "Inter_700Bold", letterSpacing: 0.4 },
+  infoIcon: {
+    position: "absolute", top: 7, left: 7,
+  },
   modeIconWrap: {
-    width: 38,
-    height: 38,
-    borderRadius: 12,
-    alignItems: "center",
-    justifyContent: "center",
+    width: 42, height: 42, borderRadius: 14,
+    alignItems: "center", justifyContent: "center",
   },
-  modeLabel: {
-    fontSize: 12,
-    fontFamily: "Inter_700Bold",
-    textAlign: "center",
-  },
-  modeTag: {
-    fontSize: 9.5,
-    fontFamily: "Inter_500Medium",
-    textAlign: "center",
-  },
+  modeLabel: { fontSize: 13, fontFamily: "Inter_700Bold", textAlign: "center" },
+  modeTag:   { fontSize: 10, fontFamily: "Inter_500Medium", textAlign: "center" },
   activeBar: {
-    position: "absolute",
-    bottom: 0,
-    left: "20%",
-    right: "20%",
-    height: 3,
-    borderTopLeftRadius: 3,
-    borderTopRightRadius: 3,
+    position: "absolute", bottom: 0,
+    left: "20%", right: "20%",
+    height: 3, borderTopLeftRadius: 3, borderTopRightRadius: 3,
   },
 
-  banner: {
-    flexDirection: "row",
-    alignItems: "flex-start",
-    gap: 8,
-    borderRadius: 12,
-    borderWidth: 1,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-  },
-  bannerText: {
-    flex: 1,
-    fontSize: 11.5,
-    fontFamily: "Inter_400Regular",
-    lineHeight: 16,
-  },
-
-  sectionRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 10,
-    marginVertical: 2,
-  },
-  divider: { flex: 1, height: StyleSheet.hairlineWidth },
-  sectionLabel: {
-    fontSize: 10,
-    fontFamily: "Inter_600SemiBold",
-    textTransform: "uppercase",
-    letterSpacing: 1,
-  },
-
-  grid: { flexDirection: "row", flexWrap: "wrap", gap: 10 },
-  tile: {
-    borderRadius: 20,
-    borderWidth: 1,
-    alignItems: "flex-start",
-    justifyContent: "flex-end",
-    padding: 14,
-    gap: 6,
-  },
-  tileIcon: {
-    position: "absolute",
-    top: 12,
-    right: 12,
-    width: 42,
-    height: 42,
-    borderRadius: 13,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  tileLabel: { fontSize: 15, fontFamily: "Inter_700Bold" },
-
+  /* Business tiles */
   bizRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 12,
-    borderRadius: 14,
-    borderWidth: 1,
-    paddingHorizontal: 14,
-    paddingVertical: 11,
+    flexDirection: "row", alignItems: "center", gap: 12,
+    borderRadius: 14, borderWidth: 1,
+    paddingHorizontal: 14, paddingVertical: 11,
   },
   bizIcon: {
-    width: 38,
-    height: 38,
-    borderRadius: 12,
-    alignItems: "center",
-    justifyContent: "center",
-    flexShrink: 0,
+    width: 38, height: 38, borderRadius: 12,
+    alignItems: "center", justifyContent: "center", flexShrink: 0,
   },
   bizLabel: { fontSize: 14, fontFamily: "Inter_700Bold" },
-  bizSub: { fontSize: 11.5, fontFamily: "Inter_400Regular", marginTop: 1 },
+  bizSub:   { fontSize: 11.5, fontFamily: "Inter_400Regular", marginTop: 1 },
   bizNote: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 7,
-    borderRadius: 12,
-    borderWidth: 1,
-    paddingHorizontal: 12,
-    paddingVertical: 9,
-    marginTop: 2,
+    flexDirection: "row", alignItems: "center", gap: 7,
+    borderRadius: 12, borderWidth: 1,
+    paddingHorizontal: 12, paddingVertical: 9, marginTop: 2,
   },
   bizNoteText: { flex: 1, fontSize: 11, fontFamily: "Inter_400Regular" },
 
-  footerRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 14,
-    borderRadius: 16,
-    borderWidth: 1,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
+  /* Custom QR card */
+  customCard: {
+    flexDirection: "row", alignItems: "center", gap: 14,
+    borderWidth: 1.5, borderRadius: 20,
+    paddingHorizontal: 16, paddingVertical: 16,
   },
-  footerIcon: {
-    width: 36,
-    height: 36,
-    borderRadius: 11,
-    alignItems: "center",
-    justifyContent: "center",
-    flexShrink: 0,
+  customCardIcon: {
+    width: 52, height: 52, borderRadius: 16,
+    alignItems: "center", justifyContent: "center", flexShrink: 0,
   },
-  footerLabel: { fontSize: 14, fontFamily: "Inter_700Bold" },
-  footerSub: { fontSize: 11.5, fontFamily: "Inter_400Regular", marginTop: 1 },
-  browseRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 6,
-    paddingVertical: 10,
+  customCardTitle: { fontSize: 15, fontFamily: "Inter_700Bold", marginBottom: 3 },
+  customCardSub:   { fontSize: 12, fontFamily: "Inter_400Regular", lineHeight: 17 },
+
+  /* Browse card */
+  browseCard: {
+    flexDirection: "row", alignItems: "center", gap: 14,
+    borderRadius: 18, borderWidth: 1,
+    paddingHorizontal: 16, paddingVertical: 14,
   },
-  browseText: { fontSize: 13, fontFamily: "Inter_500Medium" },
+  browseCardIcon: {
+    width: 44, height: 44, borderRadius: 13,
+    alignItems: "center", justifyContent: "center", flexShrink: 0,
+  },
+  browseCardTitle: { fontSize: 14, fontFamily: "Inter_700Bold", marginBottom: 2 },
+  browseCardSub:   { fontSize: 12, fontFamily: "Inter_400Regular", lineHeight: 16 },
 });
