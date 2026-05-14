@@ -385,31 +385,33 @@ function QrGeneratorScreen() {
           hideActions={presetActive}
         />
 
-        {/* ── INLINE FORM — always visible below the mode cards ── */}
+        {/* ── INLINE FORM — only visible once a type is picked ── */}
         <>
-            {/* Input fields */}
-            <Reanimated.View entering={FadeInDown.duration(320).delay(60)} style={{ marginHorizontal: 20 }}>
-              {customSchema ? (
-                <CustomFieldInputs
-                  schema={customSchema}
-                  values={customFieldValues}
-                  onChange={(id, val) =>
-                    setCustomFieldValues(prev => ({ ...prev, [id]: val }))
-                  }
-                />
-              ) : (
-                <InputSection
-                  selectedPreset={selectedPreset}
-                  inputValue={inputValue}
-                  extraFields={extraFields}
-                  qrMode={qrMode}
-                  isBranded={isBranded}
-                  businessCategory={businessCategory}
-                  setInputValue={setInputValue}
-                  setExtraField={setExtraField}
-                />
-              )}
-            </Reanimated.View>
+            {/* Input fields — only show when a preset or custom schema is active */}
+            {(presetActive || customSchema) && (
+              <Reanimated.View entering={FadeInDown.duration(320).delay(60)} style={{ marginHorizontal: 20 }}>
+                {customSchema ? (
+                  <CustomFieldInputs
+                    schema={customSchema}
+                    values={customFieldValues}
+                    onChange={(id, val) =>
+                      setCustomFieldValues(prev => ({ ...prev, [id]: val }))
+                    }
+                  />
+                ) : (
+                  <InputSection
+                    selectedPreset={selectedPreset}
+                    inputValue={inputValue}
+                    extraFields={extraFields}
+                    qrMode={qrMode}
+                    isBranded={isBranded}
+                    businessCategory={businessCategory}
+                    setInputValue={setInputValue}
+                    setExtraField={setExtraField}
+                  />
+                )}
+              </Reanimated.View>
+            )}
 
             {/* Business name (business mode only) */}
             {qrMode === "business" && (

@@ -342,7 +342,7 @@ function CustomQrBuilderModal({ visible, onClose, onGenerate }: Props) {
                 backgroundColor: colors.background,
                 borderColor: colors.surfaceBorder,
                 paddingBottom: insets.bottom + 24,
-                maxHeight: sheetMaxH,
+                height: sheetMaxH,
                 transform: [{ translateY: sheetY }],
               },
             ]}
@@ -405,6 +405,7 @@ function CustomQrBuilderModal({ visible, onClose, onGenerate }: Props) {
 
             <ScrollView
               showsVerticalScrollIndicator={false}
+              style={{ flex: 1 }}
               contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 24 }}
               keyboardShouldPersistTaps="handled"
             >

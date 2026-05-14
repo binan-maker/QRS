@@ -182,7 +182,7 @@ function TypePickerHome({
 
           {/* Standard / Private: Custom QR only */}
           {qrMode !== "business" && (
-            <Reanimated.View entering={FadeInUp.duration(300).delay(80)}>
+            <Reanimated.View entering={FadeInUp.duration(300).delay(80)} style={{ marginTop: 12 }}>
               <Pressable
                 onPress={() => {
                   Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
