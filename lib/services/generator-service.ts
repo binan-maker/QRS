@@ -325,6 +325,22 @@ export async function updateSavedQrContent(
   }
 }
 
+export async function updateDisplayDestination(
+  userId: string,
+  docId: string,
+  displayDestination: string
+): Promise<void> {
+  try {
+    await db.update(["users", userId, "generatedQrs", docId], {
+      displayDestination,
+      updatedAt: db.timestamp(),
+    });
+  } catch (e) {
+    logError("updateDisplayDestination", e, { userId, docId });
+    throw e;
+  }
+}
+
 export async function updateQrDesign(
   userId: string,
   docId: string,

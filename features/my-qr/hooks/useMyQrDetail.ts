@@ -12,6 +12,7 @@ import {
   getGeneratedQrById, updateQrDesign, setQrActiveState,
   subscribeToComments, addComment, ownerHideComment, softDeleteComment,
   getGuardLink, updateGuardLinkDestination, updateSavedQrContent,
+  getStandardLink, updateStandardLinkRawContent, updateDisplayDestination,
   getQrFollowersList, getQrFollowCount,
   type GeneratedQrItem, type CommentItem, type GuardLink, type FollowerInfo,
 } from "@/lib/firestore-service";
@@ -74,6 +75,7 @@ export function useMyQrDetail(id: string) {
   const [deactivationMsgInput, setDeactivationMsgInput] = useState("");
 
   const [guardLink, setGuardLink] = useState<GuardLink | null>(null);
+  const [standardLink, setStandardLink] = useState<{ rawContent: string; contentType: string; ownerId: string; ownerName: string; isActive: boolean } | null>(null);
   const [editingDestination, setEditingDestination] = useState(false);
   const [newDestination, setNewDestination] = useState("");
   const [savingDestination, setSavingDestination] = useState(false);
@@ -137,6 +139,18 @@ export function useMyQrDetail(id: string) {
       if (link) setNewDestination(link.currentDestination);
     });
   }, [qrItem?.guardUuid]);
+
+  useEffect(() => {
+    const isStandardRedirect =
+      qrItem?.qrType === "individual" &&
+      !qrItem?.guardUuid &&
+      (qrItem?.content || "").includes("/go/");
+    if (!isStandardRedirect || !qrItem?.uuid) { setStandardLink(null); return; }
+    getStandardLink(qrItem.uuid).then((link) => {
+      setStandardLink(link);
+      if (link) setNewDestination(link.rawContent);
+    });
+  }, [qrItem?.uuid, qrItem?.guardUuid, qrItem?.qrType, qrItem?.content]);
 
   useEffect(() => {
     if (!qrItem?.qrCodeId) return;
@@ -212,6 +226,54 @@ export function useMyQrDetail(id: string) {
 
   async function handleUpdateDestination() {
     await handleRequestDestinationUpdate();
+  }
+
+  async function handleUpdateStandardDestination() {
+    if (!newDestination.trim() || !user || !qrItem?.uuid) return;
+    const dest = newDestination.trim().startsWith("http")
+      ? newDestination.trim()
+      : `https://${newDestination.trim()}`;
+
+    setIsValidating(true);
+    setDestinationError(null);
+    let scanResult: any;
+    try {
+      scanResult = await scanUrl(dest);
+    } catch {
+      scanResult = { valid: true };
+    } finally {
+      setIsValidating(false);
+    }
+
+    if (!scanResult.valid) {
+      setDestinationError(scanResult.error ?? "URL failed security check. Please try a different URL.");
+      return;
+    }
+
+    setConfirmModalMessage(
+      `Updating will redirect all future scans to:\n\n${dest}\n\nThe QR code pattern stays the same — only the destination changes.`
+    );
+    setPendingConfirmAction(() => async () => {
+      if (!user || !qrItem?.uuid) return;
+      setSavingDestination(true);
+      try {
+        await updateStandardLinkRawContent(qrItem.uuid, dest, user.id);
+        if (qrItem.docId) {
+          await updateDisplayDestination(user.id, qrItem.docId, dest).catch(() => {});
+        }
+        const refreshed = await getStandardLink(qrItem.uuid);
+        setStandardLink(refreshed);
+        setNewDestination(refreshed?.rawContent || dest);
+        setEditingDestination(false);
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        Alert.alert("Updated!", "The QR code now redirects to the new destination.");
+      } catch (err: any) {
+        Alert.alert("Error", err?.message || "Could not update destination. Try again.");
+      } finally {
+        setSavingDestination(false);
+      }
+    });
+    setConfirmModalOpen(true);
   }
 
   async function handleConfirmPendingAction() {
@@ -597,7 +659,8 @@ export function useMyQrDetail(id: string) {
     expandedReplies, setExpandedReplies,
     togglingActive, deactivateModalOpen, setDeactivateModalOpen,
     deactivationMsgInput, setDeactivationMsgInput,
-    guardLink, editingDestination, setEditingDestination,
+    guardLink, standardLink,
+    editingDestination, setEditingDestination,
     newDestination, setNewDestination, savingDestination,
     destinationError, setDestinationError,
     editingSavedContent, setEditingSavedContent,
@@ -613,7 +676,7 @@ export function useMyQrDetail(id: string) {
     customColorInput, setCustomColorInput,
     topLevelComments, getAllDescendants,
     handleLoadFollowers, applyCustomColor,
-    handleUpdateDestination, handleRequestSavedContentUpdate,
+    handleUpdateDestination, handleUpdateStandardDestination, handleRequestSavedContentUpdate,
     handleSaveDesign, handleSubmitComment, handleModerateComment,
     handleToggleActive, handleConfirmDeactivate, handleCopyContent,
     handleShare, handleDownloadPdf, sharingQr, downloadingPdf,

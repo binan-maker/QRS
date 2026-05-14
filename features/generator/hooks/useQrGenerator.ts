@@ -366,7 +366,14 @@ export function useQrGenerator() {
     const shortUuid = uuid.slice(0, 16).toUpperCase().match(/.{1,4}/g)?.join("-") || uuid.slice(0, 16);
     const isBusinessMode = qrMode === "business" && isBranded && !!user;
 
-    const base = getApiUrl().replace(/\/$/, "");
+    // Use stable public domain for QR encoding — never the local dev IP.
+    // The QR pattern must be permanent and scannable from anywhere.
+    function getStableQrBase(): string {
+      const domain = process.env.EXPO_PUBLIC_DOMAIN;
+      if (domain && domain.trim()) return `https://${domain.trim()}`.replace(/\/$/, "");
+      return "https://qrguard.app";
+    }
+    const base = getStableQrBase();
     const isStandardMode = !isBusinessMode && isBranded && !privateMode && !!user;
 
     let encodedValue = builtContent;
@@ -416,7 +423,7 @@ export function useQrGenerator() {
             expiryDate,
             label: advancedSettings.label.trim() || null,
           },
-          isBusinessMode ? inputValue.trim() : null
+          isBusinessMode ? inputValue.trim() : (isStandardMode ? builtContent : null)
         );
         setSavedDocId(docId);
         setSavedToProfile(true);

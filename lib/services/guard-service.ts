@@ -1,5 +1,6 @@
 import { db } from "../db/client";
 import { tsToString } from "./utils";
+import { detectContentType } from "./qr-service";
 import type { GuardLink } from "./types";
 
 export type { GuardLink };
@@ -107,6 +108,21 @@ export async function saveStandardLink(
     ownerName,
     isActive: true,
     createdAt: db.timestamp(),
+  });
+}
+
+export async function updateStandardLinkRawContent(
+  uuid: string,
+  newRawContent: string,
+  userId: string
+): Promise<void> {
+  const data = await db.get(["standardLinks", uuid]);
+  if (!data) throw new Error("Standard link not found");
+  if (data.ownerId !== userId) throw new Error("Not authorized");
+  await db.update(["standardLinks", uuid], {
+    rawContent: newRawContent,
+    contentType: detectContentType(newRawContent),
+    updatedAt: db.timestamp(),
   });
 }
 
