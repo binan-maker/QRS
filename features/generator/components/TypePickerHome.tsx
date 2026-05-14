@@ -1,11 +1,10 @@
 import React, { memo } from "react";
 import {
   View, Text, Pressable, StyleSheet, useWindowDimensions,
-  ScrollView, Alert,
+  Alert,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import Reanimated, { FadeIn, FadeInUp } from "react-native-reanimated";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
 import { useTheme } from "@/contexts/ThemeContext";
 import * as Haptics from "@/lib/haptics";
@@ -60,11 +59,11 @@ interface BusinessTile {
 }
 
 const BUSINESS_TILES: BusinessTile[] = [
-  { category: "website",  label: "Website",    sub: "Redirect to any URL",    icon: "globe-outline",               color: "#3B82F6" },
-  { category: "whatsapp", label: "Chat Link",  sub: "Redirect to WhatsApp",   icon: "chatbubble-ellipses-outline",  color: "#22C55E" },
-  { category: "wifi",     label: "WiFi",       sub: "Share credentials",      icon: "wifi-outline",                color: "#F59E0B" },
-  { category: "event",    label: "Event",      sub: "Redirect to calendar",   icon: "calendar-outline",            color: "#EC4899" },
-  { category: "phone",    label: "Phone",      sub: "Redirect to call",       icon: "call-outline",                color: "#14B8A6" },
+  { category: "website",  label: "Website",   sub: "Redirect to any URL",   icon: "globe-outline",               color: "#3B82F6" },
+  { category: "whatsapp", label: "Chat Link", sub: "Redirect to WhatsApp",  icon: "chatbubble-ellipses-outline", color: "#22C55E" },
+  { category: "wifi",     label: "WiFi",      sub: "Share credentials",     icon: "wifi-outline",                color: "#F59E0B" },
+  { category: "event",    label: "Event",     sub: "Redirect to calendar",  icon: "calendar-outline",            color: "#EC4899" },
+  { category: "phone",    label: "Phone",     sub: "Redirect to call",      icon: "call-outline",                color: "#14B8A6" },
 ];
 
 interface Props {
@@ -76,18 +75,20 @@ interface Props {
   onOpenTemplates: () => void;
   onOpenCustom: () => void;
   user?: any;
+  /** When true only the mode cards render — the action rows are hidden */
+  hideActions?: boolean;
 }
 
 function TypePickerHome({
-  qrMode, onSetMode, onModeCardPress,
-  onSelectPreset, onSelectBusinessCategory,
+  qrMode, onSetMode,
+  onSelectBusinessCategory,
   onOpenTemplates, onOpenCustom,
   user,
+  hideActions = false,
 }: Props) {
   const { colors } = useTheme();
   const { width }  = useWindowDimensions();
-  const insets     = useSafeAreaInsets();
-  const scrollPadBottom = insets.bottom + 80;
+  const PAD = 20;
 
   function pressMode(mode: QrMode) {
     if (mode === "business" && !user) return;
@@ -105,14 +106,8 @@ function TypePickerHome({
     Alert.alert(m.label, m.info, [{ text: "Got it" }]);
   }
 
-  const PAD = 20;
-
   return (
-    <ScrollView
-      style={{ flex: 1 }}
-      showsVerticalScrollIndicator={false}
-      contentContainerStyle={[styles.root, { paddingHorizontal: PAD, paddingBottom: scrollPadBottom }]}
-    >
+    <View style={[styles.root, { paddingHorizontal: PAD }]}>
       {/* ── Mode cards ── */}
       <Reanimated.View entering={FadeIn.duration(300)} style={styles.modeRow}>
         {MODES.map((m) => {
@@ -140,7 +135,7 @@ function TypePickerHome({
                 </View>
               )}
 
-              {/* Info icon — top right */}
+              {/* Info icon — top left */}
               <Pressable
                 onPress={(e) => { e.stopPropagation(); showInfo(m); }}
                 hitSlop={10}
@@ -178,108 +173,112 @@ function TypePickerHome({
         })}
       </Reanimated.View>
 
-      {/* ── Business: type tiles ── */}
-      {qrMode === "business" && (
-        <Reanimated.View entering={FadeInUp.duration(300).delay(80)} style={{ gap: 8 }}>
-          {BUSINESS_TILES.map((t) => (
-            <Pressable
-              key={t.category}
-              onPress={() => pickBusiness(t.category)}
-              style={({ pressed }) => [
-                styles.bizRow,
-                {
-                  backgroundColor: colors.surface,
-                  borderColor:     colors.surfaceBorder,
-                  opacity:         pressed ? 0.76 : 1,
-                  transform:       [{ scale: pressed ? 0.98 : 1 }],
-                },
-              ]}
-            >
-              <View style={[styles.bizIcon, { backgroundColor: t.color + "18" }]}>
-                <Ionicons name={t.icon} size={20} color={t.color} />
-              </View>
-              <View style={{ flex: 1 }}>
-                <Text style={[styles.bizLabel, { color: colors.text }]}>{t.label}</Text>
-                <Text style={[styles.bizSub, { color: colors.textMuted }]} numberOfLines={1}>{t.sub}</Text>
-              </View>
-              <Ionicons name="chevron-forward" size={15} color={colors.textMuted} />
-            </Pressable>
-          ))}
+      {/* ── Actions section (hidden when a type is already picked) ── */}
+      {!hideActions && (
+        <>
+          {/* Business: type tiles */}
+          {qrMode === "business" && (
+            <Reanimated.View entering={FadeInUp.duration(300).delay(80)} style={{ gap: 8 }}>
+              {BUSINESS_TILES.map((t) => (
+                <Pressable
+                  key={t.category}
+                  onPress={() => pickBusiness(t.category)}
+                  style={({ pressed }) => [
+                    styles.bizRow,
+                    {
+                      backgroundColor: colors.surface,
+                      borderColor:     colors.surfaceBorder,
+                      opacity:         pressed ? 0.76 : 1,
+                      transform:       [{ scale: pressed ? 0.98 : 1 }],
+                    },
+                  ]}
+                >
+                  <View style={[styles.bizIcon, { backgroundColor: t.color + "18" }]}>
+                    <Ionicons name={t.icon} size={20} color={t.color} />
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <Text style={[styles.bizLabel, { color: colors.text }]}>{t.label}</Text>
+                    <Text style={[styles.bizSub, { color: colors.textMuted }]} numberOfLines={1}>{t.sub}</Text>
+                  </View>
+                  <Ionicons name="chevron-forward" size={15} color={colors.textMuted} />
+                </Pressable>
+              ))}
 
-          <View style={[styles.bizNote, { backgroundColor: colors.surfaceLight, borderColor: colors.surfaceBorder }]}>
-            <Ionicons name="swap-horizontal-outline" size={13} color={colors.textMuted} />
-            <Text style={[styles.bizNoteText, { color: colors.textMuted }]}>
-              All types support destination changes without reprinting.
-            </Text>
-          </View>
-        </Reanimated.View>
-      )}
-
-      {/* ── Standard / Private: main actions ── */}
-      {qrMode !== "business" && (
-        <Reanimated.View entering={FadeInUp.duration(300).delay(80)} style={{ gap: 12 }}>
-
-          {/* Custom QR — prominent gradient card */}
-          <Pressable
-            onPress={() => {
-              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-              onOpenCustom();
-            }}
-            style={({ pressed }) => ({
-              opacity:    pressed ? 0.82 : 1,
-              transform:  [{ scale: pressed ? 0.98 : 1 }],
-              borderRadius: 20,
-              overflow: "hidden" as const,
-            })}
-          >
-            <LinearGradient
-              colors={[colors.primary + "22", colors.primary + "08"]}
-              start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
-              style={[styles.customCard, { borderColor: colors.primary + "40" }]}
-            >
-              <View style={[styles.customCardIcon, { backgroundColor: colors.primaryDim }]}>
-                <Ionicons name="create-outline" size={26} color={colors.primary} />
-              </View>
-              <View style={{ flex: 1 }}>
-                <Text style={[styles.customCardTitle, { color: colors.text }]}>Custom QR</Text>
-                <Text style={[styles.customCardSub, { color: colors.textMuted }]}>
-                  Build with your own fields — text, phone, URL, payment, date &amp; more
+              <View style={[styles.bizNote, { backgroundColor: colors.surfaceLight, borderColor: colors.surfaceBorder }]}>
+                <Ionicons name="swap-horizontal-outline" size={13} color={colors.textMuted} />
+                <Text style={[styles.bizNoteText, { color: colors.textMuted }]}>
+                  All types support destination changes without reprinting.
                 </Text>
               </View>
-              <Ionicons name="chevron-forward" size={17} color={colors.primary} />
-            </LinearGradient>
-          </Pressable>
+            </Reanimated.View>
+          )}
 
-          {/* Browse all QR types */}
-          <Pressable
-            onPress={() => {
-              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-              onOpenTemplates();
-            }}
-            style={({ pressed }) => [
-              styles.browseCard,
-              {
-                backgroundColor: colors.surface,
-                borderColor:     colors.surfaceBorder,
-                opacity:         pressed ? 0.76 : 1,
-                transform:       [{ scale: pressed ? 0.98 : 1 }],
-              },
-            ]}
-          >
-            <View style={[styles.browseCardIcon, { backgroundColor: colors.surfaceLight }]}>
-              <Ionicons name="apps-outline" size={22} color={colors.textSecondary} />
-            </View>
-            <View style={{ flex: 1 }}>
-              <Text style={[styles.browseCardTitle, { color: colors.text }]}>Browse All QR Types</Text>
-              <Text style={[styles.browseCardSub, { color: colors.textMuted }]}>
-                35+ types — UPI, WhatsApp, WiFi, Google Maps &amp; more
-              </Text>
-            </View>
-            <Ionicons name="chevron-forward" size={17} color={colors.textMuted} />
-          </Pressable>
-        </Reanimated.View>
+          {/* Standard / Private: Custom QR + Browse all */}
+          {qrMode !== "business" && (
+            <Reanimated.View entering={FadeInUp.duration(300).delay(80)} style={{ gap: 12 }}>
+              {/* Custom QR — prominent gradient card */}
+              <Pressable
+                onPress={() => {
+                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                  onOpenCustom();
+                }}
+                style={({ pressed }) => ({
+                  opacity:      pressed ? 0.82 : 1,
+                  transform:    [{ scale: pressed ? 0.98 : 1 }],
+                  borderRadius: 20,
+                  overflow:     "hidden" as const,
+                })}
+              >
+                <LinearGradient
+                  colors={[colors.primary + "22", colors.primary + "08"]}
+                  start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
+                  style={[styles.customCard, { borderColor: colors.primary + "40" }]}
+                >
+                  <View style={[styles.customCardIcon, { backgroundColor: colors.primaryDim }]}>
+                    <Ionicons name="create-outline" size={26} color={colors.primary} />
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <Text style={[styles.customCardTitle, { color: colors.text }]}>Custom QR</Text>
+                    <Text style={[styles.customCardSub, { color: colors.textMuted }]}>
+                      Build with your own fields — text, phone, URL, payment, date &amp; more
+                    </Text>
+                  </View>
+                  <Ionicons name="chevron-forward" size={17} color={colors.primary} />
+                </LinearGradient>
+              </Pressable>
+
+              {/* Browse all QR types */}
+              <Pressable
+                onPress={() => {
+                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                  onOpenTemplates();
+                }}
+                style={({ pressed }) => [
+                  styles.browseCard,
+                  {
+                    backgroundColor: colors.surface,
+                    borderColor:     colors.surfaceBorder,
+                    opacity:         pressed ? 0.76 : 1,
+                    transform:       [{ scale: pressed ? 0.98 : 1 }],
+                  },
+                ]}
+              >
+                <View style={[styles.browseCardIcon, { backgroundColor: colors.surfaceLight }]}>
+                  <Ionicons name="apps-outline" size={22} color={colors.textSecondary} />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={[styles.browseCardTitle, { color: colors.text }]}>Browse All QR Types</Text>
+                  <Text style={[styles.browseCardSub, { color: colors.textMuted }]}>
+                    35+ types — UPI, WhatsApp, WiFi, Google Maps &amp; more
+                  </Text>
+                </View>
+                <Ionicons name="chevron-forward" size={17} color={colors.textMuted} />
+              </Pressable>
+            </Reanimated.View>
+          )}
+        </>
       )}
-    </ScrollView>
+    </View>
   );
 }
 
@@ -288,7 +287,7 @@ export default memo(TypePickerHome);
 const CARD_HEIGHT = 115;
 
 const styles = StyleSheet.create({
-  root: { gap: 14 },
+  root: { gap: 14, paddingTop: 8 },
 
   /* Mode cards */
   modeRow: { flexDirection: "row", gap: 10 },
@@ -310,9 +309,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 4, paddingVertical: 1,
   },
   modeBadgeText: { fontSize: 7, fontFamily: "Inter_700Bold", letterSpacing: 0.4 },
-  infoIcon: {
-    position: "absolute", top: 7, left: 7,
-  },
+  infoIcon: { position: "absolute", top: 7, left: 7 },
   modeIconWrap: {
     width: 42, height: 42, borderRadius: 14,
     alignItems: "center", justifyContent: "center",
