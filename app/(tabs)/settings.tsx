@@ -244,7 +244,7 @@ export default function SettingsScreen() {
               <SettingsMenuItem
                 icon="person-circle-outline"
                 label="Profile Settings"
-                sublabel="Name, username, bio, and privacy"
+                sublabel="Name and username"
                 onPress={goToProfile}
               />
             </View>

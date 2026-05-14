@@ -35,7 +35,7 @@ function ProfileScreen() {
     myQrCodes, myQrLoading,
     currentUsername,
     initials,
-    bio, friendsCount,
+    bio,
     refreshing, handleRefresh,
     handlePickPhoto, handleRemovePhoto, handleSignOut,
   } = useProfile();
@@ -84,8 +84,6 @@ function ProfileScreen() {
   const goToRegister = useCallback(() => safePush("/(auth)/register"), []);
   const goToMyQrCodes = useCallback(() => safePush("/my-qr-codes"), []);
   const goToGenerator = useCallback(() => safePush("/(tabs)/qr-generator"), []);
-  const goToFriends = useCallback(() => safePush("/friends"), []);
-  const goToSearch = useCallback(() => safePush("/search"), []);
 
   if (!user) {
     return (
@@ -283,34 +281,6 @@ function ProfileScreen() {
               )}
             </View>
           )}
-        </Animated.View>
-
-        {/* ── PEOPLE ── */}
-        <Animated.View entering={FadeInDown.duration(400).delay(100)} style={styles.section}>
-          <Text style={[styles.sectionTitle, { color: colors.text }]}>People</Text>
-          <View style={styles.peopleRow}>
-            <Pressable
-              onPress={goToFriends}
-              style={({ pressed }) => [styles.peopleCard, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder, opacity: pressed ? 0.82 : 1 }]}
-            >
-              <View style={[styles.peopleIconWrap, { backgroundColor: colors.safeDim }]}>
-                <Ionicons name="people" size={20} color={colors.safe} />
-              </View>
-              <Text style={[styles.peopleCardCount, { color: colors.text }]}>{friendsCount}</Text>
-              <Text style={[styles.peopleCardLabel, { color: colors.textMuted }]}>Friends</Text>
-            </Pressable>
-
-            <Pressable
-              onPress={goToSearch}
-              style={({ pressed }) => [styles.peopleCard, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder, opacity: pressed ? 0.82 : 1 }]}
-            >
-              <View style={[styles.peopleIconWrap, { backgroundColor: colors.primaryDim }]}>
-                <Ionicons name="person-add" size={20} color={colors.primary} />
-              </View>
-              <Text style={[styles.peopleCardCount, { color: colors.text }]}>Find</Text>
-              <Text style={[styles.peopleCardLabel, { color: colors.textMuted }]}>People</Text>
-            </Pressable>
-          </View>
         </Animated.View>
 
         {/* ── SUPPORT QR GUARD ── */}

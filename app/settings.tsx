@@ -285,22 +285,6 @@ export default function SettingsScreen() {
 
             </View>
 
-            {/* Social Links */}
-            <View style={[styles.menuGroup, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder, marginTop: 10 }]}>
-              <SettingsMenuItem
-                icon="people-outline"
-                label="My Friends"
-                sublabel="View and manage your friend list"
-                onPress={() => safePush("/friends")}
-              />
-              <View style={[styles.divider, { backgroundColor: colors.surfaceBorder }]} />
-              <SettingsMenuItem
-                icon="person-add-outline"
-                label="Find People"
-                sublabel="Search for friends by username"
-                onPress={() => safePush("/search")}
-              />
-            </View>
           </View>
         )}
 

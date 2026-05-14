@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useMemo, memo } from "react";
 import {
-  View, Text, TextInput, Pressable, Switch, ScrollView,
+  View, Text, TextInput, Pressable, ScrollView,
   StyleSheet, ActivityIndicator, Alert, Keyboard,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
@@ -9,13 +9,6 @@ import { useAuth } from "@/contexts/AuthContext";
 import { authAdapter } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { invalidateUserCache } from "@/lib/cache/qr-cache";
-import {
-  updateBio,
-  getUserBio,
-  getPrivacySettings,
-  updatePrivacySettings,
-  PrivacySettings,
-} from "@/lib/services/user-service";
 import {
   getUsernameData,
   updateUsername,
@@ -40,26 +33,8 @@ export default function ProfileSettingsSection() {
   const [usernameError, setUsernameError] = useState("");
   const [daysUntilEdit, setDaysUntilEdit] = useState(0);
 
-  const [bio, setBio] = useState("");
-  const [editingBio, setEditingBio] = useState(false);
-  const [newBio, setNewBio] = useState("");
-  const [savingBio, setSavingBio] = useState(false);
-
-  const [privacy, setPrivacy] = useState<PrivacySettings>({
-    isPrivate: false,
-    showQrCodes: true,
-    showStats: true,
-    showActivity: true,
-    showRanking: true,
-    showScanActivity: true,
-    showFriendsCount: true,
-  });
-  const [privacyLoading, setPrivacyLoading] = useState(true);
-  const [savingPrivacy, setSavingPrivacy] = useState(false);
-
   useEffect(() => {
     if (!user) return;
-    getUserBio(user.id).then(setBio).catch(() => {});
     getUsernameData(user.id).then((d) => {
       if (d.username) setUsername(d.username);
       const lastChanged = d.usernameLastChangedAt instanceof Date
@@ -70,7 +45,6 @@ export default function ProfileSettingsSection() {
         : 0;
       setDaysUntilEdit(days);
     }).catch(() => {});
-    getPrivacySettings(user.id).then(setPrivacy).finally(() => setPrivacyLoading(false));
   }, [user?.id]);
 
   useEffect(() => {
@@ -124,46 +98,12 @@ export default function ProfileSettingsSection() {
     }
   }, [user?.id, newUsername]);
 
-  const handleSaveBio = useCallback(async () => {
-    if (!user) return;
-    Keyboard.dismiss();
-    setSavingBio(true);
-    try {
-      await updateBio(user.id, newBio);
-      setBio(newBio.trim().slice(0, 150));
-      setEditingBio(false);
-    } catch {
-      Alert.alert("Error", "Could not update bio.");
-    } finally {
-      setSavingBio(false);
-    }
-  }, [user?.id, newBio]);
-
-  const handlePrivacyToggle = useCallback(async (key: keyof PrivacySettings, val: boolean) => {
-    if (!user) return;
-    setPrivacy((prev) => {
-      const updated = { ...prev, [key]: val };
-      setSavingPrivacy(true);
-      updatePrivacySettings(user.id, updated)
-        .catch(() => setPrivacy(prev))
-        .finally(() => setSavingPrivacy(false));
-      return updated;
-    });
-  }, [user?.id]);
-
-  const onTogglePrivate    = useCallback((v: boolean) => handlePrivacyToggle("isPrivate", v),       [handlePrivacyToggle]);
-  const onToggleStats      = useCallback((v: boolean) => handlePrivacyToggle("showStats", v),       [handlePrivacyToggle]);
-  const onToggleFriends    = useCallback((v: boolean) => handlePrivacyToggle("showFriendsCount", v),[handlePrivacyToggle]);
-  const onToggleScanAct    = useCallback((v: boolean) => handlePrivacyToggle("showScanActivity", v),[handlePrivacyToggle]);
-
   const startEditName     = useCallback(() => { setNewName(displayName); setEditingName(true); }, [displayName]);
   const cancelEditName    = useCallback(() => setEditingName(false), []);
   const startEditUsername = useCallback(() => {
     if (daysUntilEdit === 0) { setNewUsername(username || ""); setEditingUsername(true); }
   }, [daysUntilEdit, username]);
   const cancelEditUsername = useCallback(() => { setEditingUsername(false); setUsernameError(""); }, []);
-  const startEditBio      = useCallback(() => { setNewBio(bio); setEditingBio(true); }, [bio]);
-  const cancelEditBio     = useCallback(() => { setEditingBio(false); setNewBio(bio); }, [bio]);
 
   const canEditUsername = daysUntilEdit === 0;
 
@@ -265,115 +205,11 @@ export default function ProfileSettingsSection() {
           )}
         </View>
 
-        <View style={[styles.divider, { backgroundColor: colors.surfaceBorder }]} />
-
-        {/* Bio */}
-        <View style={styles.fieldBlock}>
-          <Text style={[styles.fieldLabel, { color: colors.textMuted }]}>Bio</Text>
-          {editingBio ? (
-            <View style={styles.editCol}>
-              <TextInput
-                style={[styles.bioInput, { backgroundColor: colors.inputBackground ?? colors.surfaceLight, borderColor: colors.primary, color: colors.text }]}
-                value={newBio}
-                onChangeText={setNewBio}
-                placeholder="Tell people about yourself"
-                placeholderTextColor={colors.textMuted}
-                multiline
-                maxLength={150}
-                autoFocus
-              />
-              <View style={styles.editRowActions}>
-                <Text style={[styles.charCount, { color: colors.textMuted }]}>{newBio.length}/150</Text>
-                <Pressable onPress={cancelEditBio} style={styles.cancelBtn}>
-                  <Text style={[styles.cancelText, { color: colors.textMuted }]}>Cancel</Text>
-                </Pressable>
-                <Pressable onPress={handleSaveBio} disabled={savingBio} style={[styles.saveBtn, { backgroundColor: colors.primary }]}>
-                  {savingBio ? <ActivityIndicator size="small" color={colors.primaryText} /> : <Text style={[styles.saveBtnText, { color: colors.primaryText }]}>Save</Text>}
-                </Pressable>
-              </View>
-            </View>
-          ) : (
-            <Pressable onPress={startEditBio} style={styles.valueRow}>
-              <Text style={[styles.valueText, { color: bio ? colors.text : colors.textMuted, flex: 1 }]} numberOfLines={2}>
-                {bio || "Add a bio"}
-              </Text>
-              <Ionicons name="pencil" size={13} color={colors.textMuted} />
-            </Pressable>
-          )}
-        </View>
-
-      </View>
-
-      {/* ── PRIVACY ── */}
-      <Text style={[styles.sectionLabel, { color: colors.textMuted }]}>PRIVACY</Text>
-
-      <View style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
-        {privacyLoading ? (
-          <ActivityIndicator color={colors.primary} style={{ padding: 24 }} />
-        ) : (
-          <>
-            <PrivacyToggle
-              icon={privacy.isPrivate ? "lock-closed-outline" : "globe-outline"}
-              iconColor={privacy.isPrivate ? colors.accent : colors.primary}
-              iconBg={privacy.isPrivate ? colors.accentDim : colors.primaryDim}
-              label={privacy.isPrivate ? "Private Account" : "Public Account"}
-              sub={privacy.isPrivate ? "Only friends can see your profile" : "Visible to everyone"}
-              value={privacy.isPrivate}
-              onChange={onTogglePrivate}
-              colors={colors}
-            />
-            {!privacy.isPrivate && (
-              <>
-                <View style={[styles.divider, { backgroundColor: colors.surfaceBorder }]} />
-                <PrivacyToggle icon="bar-chart-outline" iconColor={colors.primary} iconBg={colors.primaryDim}
-                  label="Show Stats" sub="QR codes, scans on your profile"
-                  value={privacy.showStats} onChange={onToggleStats} colors={colors} />
-                <View style={[styles.divider, { backgroundColor: colors.surfaceBorder }]} />
-                <PrivacyToggle icon="people-outline" iconColor={colors.safe} iconBg={colors.safeDim}
-                  label="Show Friends Count" sub="Display your friend count publicly"
-                  value={privacy.showFriendsCount} onChange={onToggleFriends} colors={colors} />
-                <View style={[styles.divider, { backgroundColor: colors.surfaceBorder }]} />
-                <PrivacyToggle icon="scan-outline" iconColor={colors.accent} iconBg={colors.accentDim}
-                  label="Show Scan Activity" sub="Display your scan count publicly"
-                  value={privacy.showScanActivity} onChange={onToggleScanAct} colors={colors} />
-              </>
-            )}
-          </>
-        )}
-        {savingPrivacy && (
-          <View style={[styles.savingBar, { backgroundColor: colors.primary }]} />
-        )}
       </View>
 
     </ScrollView>
   );
 }
-
-const PrivacyToggle = memo(function PrivacyToggle({ icon, iconColor, iconBg, label, sub, value, onChange, colors }: {
-  icon: keyof typeof Ionicons.glyphMap;
-  iconColor: string; iconBg: string;
-  label: string; sub: string;
-  value: boolean; onChange: (v: boolean) => void;
-  colors: any;
-}) {
-  return (
-    <View style={styles.toggleRow}>
-      <View style={[styles.toggleIcon, { backgroundColor: iconBg }]}>
-        <Ionicons name={icon} size={17} color={iconColor} />
-      </View>
-      <View style={{ flex: 1, gap: 1 }}>
-        <Text style={[styles.toggleLabel, { color: colors.text }]}>{label}</Text>
-        <Text style={[styles.toggleSub, { color: colors.textMuted }]}>{sub}</Text>
-      </View>
-      <Switch
-        value={value}
-        onValueChange={onChange}
-        trackColor={{ false: colors.surfaceBorder, true: colors.primary + "99" }}
-        thumbColor={value ? colors.primary : colors.textMuted}
-      />
-    </View>
-  );
-});
 
 const styles = StyleSheet.create({
   scroll: { paddingHorizontal: 20, paddingTop: 8 },
@@ -384,7 +220,6 @@ const styles = StyleSheet.create({
   },
   card: { borderRadius: 18, borderWidth: 1, marginBottom: 24, overflow: "hidden" },
   divider: { height: 1, marginHorizontal: 16 },
-  savingBar: { height: 2, opacity: 0.6 },
 
   fieldBlock: { padding: 16, gap: 6 },
   fieldLabel: { fontSize: 11, fontFamily: "Inter_600SemiBold", textTransform: "uppercase", letterSpacing: 0.8 },
@@ -403,11 +238,6 @@ const styles = StyleSheet.create({
     borderRadius: 10, paddingHorizontal: 11, paddingVertical: 9,
     borderWidth: 1,
   },
-  bioInput: {
-    fontSize: 12, fontFamily: "Inter_400Regular",
-    borderRadius: 10, paddingHorizontal: 11, paddingVertical: 9,
-    borderWidth: 1, minHeight: 72, textAlignVertical: "top", lineHeight: 18,
-  },
 
   saveBtn: { paddingHorizontal: 14, paddingVertical: 8, borderRadius: 10 },
   saveBtnText: { fontSize: 12, fontFamily: "Inter_700Bold" },
@@ -416,10 +246,4 @@ const styles = StyleSheet.create({
 
   hintText: { fontSize: 11, fontFamily: "Inter_400Regular" },
   errorText: { fontSize: 11, fontFamily: "Inter_500Medium" },
-  charCount: { flex: 1, fontSize: 11, fontFamily: "Inter_400Regular" },
-
-  toggleRow: { flexDirection: "row", alignItems: "center", gap: 14, paddingHorizontal: 16, paddingVertical: 14 },
-  toggleIcon: { width: 34, height: 34, borderRadius: 10, alignItems: "center", justifyContent: "center" },
-  toggleLabel: { fontSize: 13, fontFamily: "Inter_600SemiBold" },
-  toggleSub: { fontSize: 11, fontFamily: "Inter_400Regular" },
 });

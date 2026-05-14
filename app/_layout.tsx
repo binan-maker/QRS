@@ -69,8 +69,6 @@ function RootLayoutNav() {
       <Stack.Screen name="trust-scores" options={{ headerShown: false }} />
       <Stack.Screen name="how-it-works" options={{ headerShown: false }} />
       <Stack.Screen name="account-management" options={{ headerShown: false }} />
-      <Stack.Screen name="search" options={{ headerShown: false }} />
-      <Stack.Screen name="friends" options={{ headerShown: false }} />
       <Stack.Screen name="privacy-settings" options={{ headerShown: false }} />
       <Stack.Screen name="profile/[username]" options={{ headerShown: false }} />
     </Stack>
