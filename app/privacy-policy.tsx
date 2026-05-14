@@ -295,7 +295,25 @@ export default function PrivacyPolicyScreen() {
           </Para>
         </SectionCard>
 
-        <SectionCard title="Contact Us" num="14" icon="mail-outline" colors={colors}>
+        <SectionCard title="In-App Donations & Payments" num="14" icon="heart-outline" colors={colors}>
+          <Para colors={colors}>
+            QR Guard offers optional, voluntary in-app donations processed exclusively through Google Play Store's billing system (Google Play In-App Billing). Donations are available in amounts of ₹10, ₹50, and ₹100 (Indian Rupees).
+          </Para>
+          <SubHead text="What We Collect During Donations" colors={colors} />
+          <Bullet text="We do not collect or store your payment card details, UPI VPA, or bank account information. All payment data is handled entirely by Google Play's secure billing infrastructure." colors={colors} />
+          <Bullet text="We receive from Google only: the transaction ID, purchase token, product ID purchased, and purchase timestamp." colors={colors} />
+          <Bullet text="Donation records are associated with your Google Play account, not your QR Guard account." colors={colors} />
+          <SubHead text="Purpose of Donations" colors={colors} />
+          <Bullet text="All donations go directly towards server infrastructure costs, threat intelligence API fees, and ongoing development by the solo founder." colors={colors} />
+          <Bullet text="Donations are not required to use QR Guard. The app remains fully free for all users." colors={colors} />
+          <Bullet text="Donations do not unlock premium features or remove any limitations." colors={colors} />
+          <SubHead text="Refunds" colors={colors} />
+          <Bullet text="All donation purchases are subject to Google Play's refund policy. For refunds, contact Google Play Support directly." colors={colors} />
+          <Bullet text="We do not process refunds directly for in-app purchases made through Google Play Store." colors={colors} />
+          <WarningBox text="Donations are non-refundable through QR Guard directly. Please contact Google Play Support for any billing disputes." colors={colors} />
+        </SectionCard>
+
+        <SectionCard title="Contact Us" num="15" icon="mail-outline" colors={colors}>
           <Para colors={colors}>For privacy questions, data access requests, or to exercise your rights, contact us:</Para>
           <View style={[styles.contactCard, { backgroundColor: colors.primaryDim, borderColor: colors.primary + "30" }]}>
             <View style={[styles.contactIconWrap, { backgroundColor: colors.primary + "22" }]}>

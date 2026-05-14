@@ -286,7 +286,22 @@ export default function TermsScreen() {
           </Para>
         </SectionCard>
 
-        <SectionCard title="Contact" num="15" colors={colors}>
+        <SectionCard title="In-App Donations" num="15" colors={colors}>
+          <Para colors={colors}>
+            QR Guard offers optional, voluntary donations processed via Google Play Store In-App Billing. By making a donation, you agree to the following terms in addition to Google Play's Terms of Service.
+          </Para>
+          <Bullet text="Donations are available in amounts of ₹10, ₹50, and ₹100 (Indian Rupees) and are entirely voluntary." colors={colors} />
+          <Bullet text="Donations are one-time purchases and do not create any subscription, obligation, or recurring charge." colors={colors} />
+          <Bullet text="Donations do not entitle you to any premium features, preferential treatment, or additional rights within the App." colors={colors} />
+          <Bullet text="All donation transactions are processed and billed by Google LLC via Google Play's secure billing infrastructure. QR Guard does not access or store your payment details." colors={colors} />
+          <Bullet text="Proceeds from donations are used solely for server costs, API fees, and development expenses incurred in running QR Guard." colors={colors} />
+          <WarnBox text="DONATIONS ARE NON-REFUNDABLE THROUGH QR GUARD. For refund requests, contact Google Play Support directly. QR Guard has no ability to issue refunds for Play Store transactions." colors={colors} />
+          <Para colors={colors}>
+            QR Guard reserves the right to modify, suspend, or discontinue the donation feature at any time without notice. No liability arises from any such change.
+          </Para>
+        </SectionCard>
+
+        <SectionCard title="Contact" num="16" colors={colors}>
           <Para colors={colors}>For legal matters, policy questions, or to report a violation, contact us at:</Para>
           <View style={[styles.contactCard, { backgroundColor: colors.primaryDim, borderColor: colors.primary + "30" }]}>
             <Ionicons name="mail-outline" size={20} color={colors.primary} />

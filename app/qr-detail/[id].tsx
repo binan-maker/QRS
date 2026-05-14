@@ -1128,6 +1128,39 @@ export default function QrDetailScreen() {
               </Animated.View>
             )}
 
+            {/* ── Support the Developer ────────────────────────────────────── */}
+            <Animated.View entering={FadeInDown.duration(400).delay(200)}>
+              <Pressable
+                onPress={() => router.push("/donation")}
+                style={({ pressed }) => [
+                  donationBannerStyles.card,
+                  {
+                    backgroundColor: colors.isDark ? "rgba(124,58,237,0.12)" : "rgba(124,58,237,0.07)",
+                    borderColor: "#7C3AED30",
+                    opacity: pressed ? 0.88 : 1,
+                  },
+                ]}
+              >
+                <LinearGradient
+                  colors={["#7C3AED", "#6366F1"]}
+                  style={donationBannerStyles.iconWrap}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 1 }}
+                >
+                  <Ionicons name="heart" size={18} color="#fff" />
+                </LinearGradient>
+                <View style={donationBannerStyles.textWrap}>
+                  <Text style={[donationBannerStyles.title, { color: colors.text }]}>
+                    Support QR Guard
+                  </Text>
+                  <Text style={[donationBannerStyles.sub, { color: colors.textSecondary }]}>
+                    Donate ₹10 · ₹50 · ₹100 via Play Store to keep this app free & secure
+                  </Text>
+                </View>
+                <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
+              </Pressable>
+            </Animated.View>
+
           </ScrollView>
         </View>
       </KeyboardAvoidingView>
@@ -1898,4 +1931,27 @@ const overflowStyles = StyleSheet.create({
     height: StyleSheet.hairlineWidth,
     marginHorizontal: 20,
   },
+});
+
+const donationBannerStyles = StyleSheet.create({
+  card: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    borderRadius: 16,
+    borderWidth: 1,
+    padding: 14,
+    marginTop: 8,
+  },
+  iconWrap: {
+    width: 38,
+    height: 38,
+    borderRadius: 12,
+    alignItems: "center",
+    justifyContent: "center",
+    flexShrink: 0,
+  },
+  textWrap: { flex: 1 },
+  title: { fontSize: 14, fontFamily: "Inter_700Bold", marginBottom: 2 },
+  sub: { fontSize: 12, fontFamily: "Inter_400Regular", lineHeight: 17 },
 });

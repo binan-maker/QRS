@@ -1,5 +1,7 @@
 import { StyleSheet } from "react-native";
 
+export default function QrDetailStylesScreen() { return null; }
+
 export function makeStyles(colors: any) {
   return StyleSheet.create({
     container: { flex: 1, backgroundColor: colors.background },

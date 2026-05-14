@@ -1,6 +1,8 @@
 import { StyleSheet } from "react-native";
 import Colors from "@/constants/colors";
 
+export default function MyQrStylesScreen() { return null; }
+
 export const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: Colors.dark.background },
   centered: { flex: 1, alignItems: "center", justifyContent: "center" },
