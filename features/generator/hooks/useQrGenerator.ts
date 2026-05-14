@@ -393,10 +393,14 @@ export function useQrGenerator() {
           ? getBusinessContentType(businessCategory)
           : getFirestoreContentType(selectedPreset);
 
-        if (isBusinessMode) {
-          await saveGuardLink(shortUuid, builtContent, bName, user.displayName, user.id);
-        } else if (isStandardMode) {
-          await saveStandardLink(shortUuid, builtContent, savedContentType, user.id, user.displayName);
+        try {
+          if (isBusinessMode) {
+            await saveGuardLink(shortUuid, builtContent, bName, user.displayName, user.id);
+          } else if (isStandardMode) {
+            await saveStandardLink(shortUuid, builtContent, savedContentType, user.id, user.displayName);
+          }
+        } catch (linkErr: any) {
+          if (__DEV__) console.warn("[save] link registration failed (non-fatal):", linkErr?.message);
         }
 
         const expiryDate = resolveExpiryDate(advancedSettings.expiryPreset, advancedSettings.expiryCustomDate);
