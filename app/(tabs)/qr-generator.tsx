@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useCallback } from "react";
+import React, { useState, useMemo, useCallback, useEffect } from "react";
 import {
   View,
   Text,
@@ -24,12 +24,17 @@ import TypePickerHome from "@/features/generator/components/TypePickerHome";
 import TemplatePickerModal from "@/features/generator/components/TemplatePickerModal";
 import CustomQrModal from "@/features/generator/components/CustomQrModal";
 import InputSection from "@/features/generator/components/InputSection";
+import CustomFieldInputs from "@/features/generator/components/CustomFieldInputs";
 import QrOutputCard from "@/features/generator/components/QrOutputCard";
 import InfoModal from "@/features/generator/components/InfoModal";
 import PositionModal from "@/features/generator/components/PositionModal";
 import CustomizeDrawer from "@/features/generator/components/CustomizeDrawer";
 import GroupPickerModal from "@/components/groups/GroupPickerModal";
 import type { BusinessCategory } from "@/features/generator/components/BusinessTypeSelector";
+import {
+  type CustomQrType,
+  buildCustomQrContent,
+} from "@/features/generator/types/CustomQrType";
 
 type QrMode = "individual" | "business" | "private";
 
@@ -75,6 +80,14 @@ function QrGeneratorScreen() {
   const [templateModalOpen, setTemplateModalOpen] = useState(false);
   const [groupPickerOpen, setGroupPickerOpen] = useState(false);
   const [customModalOpen, setCustomModalOpen] = useState(false);
+  const [customSchema, setCustomSchema] = useState<CustomQrType | null>(null);
+  const [customFieldValues, setCustomFieldValues] = useState<Record<string, string>>({});
+
+  useEffect(() => {
+    if (!customSchema) return;
+    const content = buildCustomQrContent(customSchema, customFieldValues);
+    setInputValue(content);
+  }, [customSchema, customFieldValues]);
 
   const {
     user,
@@ -194,6 +207,8 @@ function QrGeneratorScreen() {
   const handleSelectPreset = useCallback(
     (idx: number) => {
       switchPreset(idx);
+      setCustomSchema(null);
+      setCustomFieldValues({});
       setPresetActive(true);
     },
     [switchPreset],
@@ -236,6 +251,8 @@ function QrGeneratorScreen() {
   const handleSelectFromModal = useCallback(
     (idx: number) => {
       switchPreset(idx);
+      setCustomSchema(null);
+      setCustomFieldValues({});
       setPresetActive(true);
     },
     [switchPreset],
@@ -252,6 +269,8 @@ function QrGeneratorScreen() {
 
   const handleClearPreset = useCallback(() => {
     setPresetActive(false);
+    setCustomSchema(null);
+    setCustomFieldValues({});
     handleClear();
   }, [handleClear]);
 
@@ -338,7 +357,7 @@ function QrGeneratorScreen() {
                   <View style={[styles.typeChip, { backgroundColor: activeModeColor + "14", borderColor: activeModeColor + "40" }]}>
                     <View style={[styles.typeChipDot, { backgroundColor: activeModeColor }]} />
                     <Text style={[styles.typeChipLabel, { color: activeModeColor }]}>
-                      {preset?.label ?? "Custom"}
+                      {customSchema?.name ?? preset?.label ?? "Custom"}
                     </Text>
                   </View>
                   <View style={{ flexDirection: "row", gap: 6, flexShrink: 0 }}>
@@ -381,16 +400,26 @@ function QrGeneratorScreen() {
 
             {/* Input fields */}
             <Reanimated.View entering={FadeInDown.duration(320).delay(60)} style={{ marginHorizontal: 20 }}>
-              <InputSection
-                selectedPreset={selectedPreset}
-                inputValue={inputValue}
-                extraFields={extraFields}
-                qrMode={qrMode}
-                isBranded={isBranded}
-                businessCategory={businessCategory}
-                setInputValue={setInputValue}
-                setExtraField={setExtraField}
-              />
+              {customSchema ? (
+                <CustomFieldInputs
+                  schema={customSchema}
+                  values={customFieldValues}
+                  onChange={(id, val) =>
+                    setCustomFieldValues(prev => ({ ...prev, [id]: val }))
+                  }
+                />
+              ) : (
+                <InputSection
+                  selectedPreset={selectedPreset}
+                  inputValue={inputValue}
+                  extraFields={extraFields}
+                  qrMode={qrMode}
+                  isBranded={isBranded}
+                  businessCategory={businessCategory}
+                  setInputValue={setInputValue}
+                  setExtraField={setExtraField}
+                />
+              )}
             </Reanimated.View>
 
             {/* Business name (business mode only) */}
@@ -574,8 +603,11 @@ function QrGeneratorScreen() {
       <CustomQrModal
         visible={customModalOpen}
         onClose={() => setCustomModalOpen(false)}
-        onConfirm={(presetIdx) => {
-          handleSelectPreset(presetIdx);
+        onConfirm={(schema) => {
+          setCustomSchema(schema);
+          setCustomFieldValues({});
+          switchPreset(0);
+          setPresetActive(true);
           setCustomModalOpen(false);
         }}
       />

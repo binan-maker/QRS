@@ -1,12 +1,12 @@
 /**
- * CustomQrModal — Schema builder.
+ * CustomQrModal — Custom QR Type Builder
  *
- * The user picks a field name (label) and a content type.
- * No data entry happens here — the actual value is typed on the QR Generator page.
- * onConfirm(presetIdx) sends the chosen type back to the parent.
+ * User defines a named QR type (e.g. "WhatsApp", "My Store")
+ * with one or more typed fields. Saved types reappear at the top
+ * so they can be reused instantly.
  */
 
-import React, { useState, useCallback, memo } from "react";
+import React, { useState, useCallback, useEffect, memo } from "react";
 import {
   View, Text, Modal, Pressable, ScrollView, TextInput,
   StyleSheet, useWindowDimensions, Platform,
@@ -14,79 +14,121 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import Reanimated, { FadeIn } from "react-native-reanimated";
+import Reanimated, { FadeIn, FadeInDown } from "react-native-reanimated";
 import { LinearGradient } from "expo-linear-gradient";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useTheme } from "@/contexts/ThemeContext";
 import * as Haptics from "@/lib/haptics";
+import {
+  type CustomQrType,
+  type CustomQrField,
+  type CustomFieldType,
+  FIELD_TYPE_DEFS,
+  CUSTOM_TYPES_STORAGE_KEY,
+} from "@/features/generator/types/CustomQrType";
 
-/* ─────────────────────────────────────────────────────────────
-   QR TYPES  (maps to preset indices in built-in-categories.ts)
-───────────────────────────────────────────────────────────── */
-interface QrTypeDef {
-  key: string;
-  label: string;
-  icon: React.ComponentProps<typeof Ionicons>["name"];
-  color: string;
-  presetIdx: number;
-  hint: string;
-}
+function uid() { return Math.random().toString(36).slice(2, 9); }
 
-const QR_TYPES: QrTypeDef[] = [
-  { key: "text",    label: "Text",       icon: "text-outline",             color: "#6366F1", presetIdx: 0,  hint: "Free text or message" },
-  { key: "url",     label: "URL",        icon: "link-outline",             color: "#3B82F6", presetIdx: 1,  hint: "Any website link" },
-  { key: "email",   label: "Email",      icon: "mail-outline",             color: "#EC4899", presetIdx: 2,  hint: "Email address" },
-  { key: "phone",   label: "Phone",      icon: "call-outline",             color: "#14B8A6", presetIdx: 3,  hint: "Phone / dial" },
-  { key: "wifi",    label: "WiFi",       icon: "wifi-outline",             color: "#F59E0B", presetIdx: 6,  hint: "Network credentials" },
-  { key: "upi",     label: "UPI Pay",    icon: "cash-outline",             color: "#10B981", presetIdx: 7,  hint: "Collect payments" },
-  { key: "maps",    label: "Location",   icon: "location-outline",         color: "#EF4444", presetIdx: 8,  hint: "Map coordinates" },
-  { key: "contact", label: "Contact",    icon: "person-circle-outline",    color: "#8B5CF6", presetIdx: 9,  hint: "vCard / contact card" },
-  { key: "whatsapp",label: "WhatsApp",   icon: "logo-whatsapp",            color: "#22C55E", presetIdx: 5,  hint: "Chat link" },
-  { key: "insta",   label: "Instagram",  icon: "logo-instagram",           color: "#E1306C", presetIdx: 11, hint: "Instagram profile" },
-  { key: "youtube", label: "YouTube",    icon: "logo-youtube",             color: "#FF0000", presetIdx: 13, hint: "Channel / video" },
-  { key: "bitcoin", label: "Crypto",     icon: "logo-bitcoin",             color: "#F59E0B", presetIdx: 10, hint: "Crypto wallet" },
-];
-
-/* ─────────────────────────────────────────────────────────────
-   PROPS
-───────────────────────────────────────────────────────────── */
 interface Props {
   visible: boolean;
   onClose: () => void;
-  onConfirm: (presetIdx: number) => void;
+  onConfirm: (schema: CustomQrType) => void;
 }
 
 function CustomQrModal({ visible, onClose, onConfirm }: Props) {
   const { colors } = useTheme();
   const insets = useSafeAreaInsets();
   const { height: screenH } = useWindowDimensions();
-  const sheetH = Math.min(screenH * 0.82, 640);
+  const sheetH = Math.min(screenH * 0.88, 680);
 
-  const [selectedType, setSelectedType] = useState<QrTypeDef>(QR_TYPES[0]);
-  const [fieldName, setFieldName] = useState("");
+  const [typeName, setTypeName] = useState("");
+  const [fields, setFields] = useState<CustomQrField[]>([
+    { id: uid(), label: "", type: "text" },
+  ]);
+  const [savedTypes, setSavedTypes] = useState<CustomQrType[]>([]);
 
-  const handleSelect = useCallback((t: QrTypeDef) => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    setSelectedType(t);
-  }, []);
+  useEffect(() => {
+    if (visible) loadSavedTypes();
+  }, [visible]);
 
-  const handleConfirm = useCallback(() => {
+  async function loadSavedTypes() {
+    try {
+      const raw = await AsyncStorage.getItem(CUSTOM_TYPES_STORAGE_KEY);
+      if (raw) setSavedTypes(JSON.parse(raw));
+    } catch {}
+  }
+
+  async function saveType(schema: CustomQrType) {
+    try {
+      const updated = [schema, ...savedTypes.filter(t => t.id !== schema.id)].slice(0, 10);
+      await AsyncStorage.setItem(CUSTOM_TYPES_STORAGE_KEY, JSON.stringify(updated));
+      setSavedTypes(updated);
+    } catch {}
+  }
+
+  const handleConfirm = useCallback(async () => {
+    const name = typeName.trim();
+    const validFields = fields.filter(f => f.label.trim());
+    if (!name || !validFields.length) return;
+
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+
+    const schema: CustomQrType = {
+      id: uid(),
+      name,
+      fields: validFields,
+      createdAt: Date.now(),
+    };
+
+    await saveType(schema);
+    onConfirm(schema);
+    reset();
+  }, [typeName, fields, onConfirm, savedTypes]);
+
+  const handleUseSaved = useCallback((schema: CustomQrType) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    onConfirm(selectedType.presetIdx);
-    setFieldName("");
-    setSelectedType(QR_TYPES[0]);
-  }, [selectedType, onConfirm]);
+    onConfirm(schema);
+    reset();
+  }, [onConfirm]);
+
+  function reset() {
+    setTypeName("");
+    setFields([{ id: uid(), label: "", type: "text" }]);
+  }
 
   const handleClose = useCallback(() => {
-    setFieldName("");
-    setSelectedType(QR_TYPES[0]);
+    reset();
     onClose();
   }, [onClose]);
+
+  function addField() {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    setFields(prev => [...prev, { id: uid(), label: "", type: "text" }]);
+  }
+
+  function removeField(id: string) {
+    if (fields.length <= 1) return;
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    setFields(prev => prev.filter(f => f.id !== id));
+  }
+
+  function updateFieldLabel(id: string, label: string) {
+    setFields(prev => prev.map(f => f.id === id ? { ...f, label } : f));
+  }
+
+  function updateFieldType(id: string, type: CustomFieldType) {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    setFields(prev => prev.map(f => f.id === id ? { ...f, type } : f));
+  }
+
+  const canCreate = typeName.trim().length > 0 && fields.some(f => f.label.trim());
+  const primaryColor = "#6366F1";
 
   return (
     <Modal
       visible={visible}
       transparent
-      animationType="fade"
+      animationType="slide"
       onRequestClose={handleClose}
       statusBarTranslucent
     >
@@ -102,20 +144,16 @@ function CustomQrModal({ visible, onClose, onConfirm }: Props) {
             paddingBottom: insets.bottom + 16,
           }]}
         >
-          {/* Drag handle */}
           <View style={[S.handle, { backgroundColor: colors.surfaceBorder }]} />
 
           {/* Header */}
           <View style={S.header}>
-            <View style={[S.headerIcon, { backgroundColor: "#6366F1" + "18" }]}>
-              <Ionicons name="create-outline" size={20} color="#6366F1" />
+            <View style={[S.headerIcon, { backgroundColor: primaryColor + "18" }]}>
+              <Ionicons name="create-outline" size={20} color={primaryColor} />
             </View>
-            <View style={{ flex: 1, marginLeft: 10 }}>
-              <Text style={[S.headerTitle, { color: colors.text }]}>Custom QR Builder</Text>
-              <Text style={[S.headerSub, { color: colors.textMuted }]}>
-                Choose a type — enter data on the next screen
-              </Text>
-            </View>
+            <Text style={[S.headerTitle, { color: colors.text, flex: 1, marginLeft: 10 }]}>
+              Custom QR Builder
+            </Text>
             <Pressable onPress={handleClose} style={[S.closeBtn, { backgroundColor: colors.surfaceLight }]}>
               <Ionicons name="close" size={18} color={colors.textSecondary} />
             </Pressable>
@@ -126,96 +164,173 @@ function CustomQrModal({ visible, onClose, onConfirm }: Props) {
             keyboardShouldPersistTaps="handled"
             contentContainerStyle={S.scroll}
           >
-            {/* ── Main field name ── */}
-            <Reanimated.View entering={FadeIn.duration(220)}>
-              <Text style={[S.sectionLabel, { color: colors.textMuted }]}>FIELD NAME (optional)</Text>
-              <View style={[S.fieldInput, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
-                <Ionicons name="pencil-outline" size={16} color={colors.textMuted} />
+
+            {/* ── Previous types ── */}
+            {savedTypes.length > 0 && (
+              <Reanimated.View entering={FadeIn.duration(200)}>
+                <Text style={[S.sectionLabel, { color: colors.textMuted }]}>PREVIOUS TYPES</Text>
+                <ScrollView
+                  horizontal
+                  showsHorizontalScrollIndicator={false}
+                  contentContainerStyle={{ gap: 8, paddingBottom: 4 }}
+                >
+                  {savedTypes.map((t) => (
+                    <Pressable
+                      key={t.id}
+                      onPress={() => handleUseSaved(t)}
+                      style={({ pressed }) => [
+                        S.savedChip,
+                        {
+                          backgroundColor: colors.surface,
+                          borderColor: colors.surfaceBorder,
+                          opacity: pressed ? 0.7 : 1,
+                        },
+                      ]}
+                    >
+                      <Ionicons name="layers-outline" size={13} color={primaryColor} />
+                      <Text style={[S.savedChipText, { color: colors.text }]} numberOfLines={1}>
+                        {t.name}
+                      </Text>
+                      <Text style={[S.savedChipSub, { color: colors.textMuted }]}>
+                        {t.fields.length} field{t.fields.length !== 1 ? "s" : ""}
+                      </Text>
+                    </Pressable>
+                  ))}
+                </ScrollView>
+
+                <View style={[S.divider, { backgroundColor: colors.surfaceBorder }]} />
+              </Reanimated.View>
+            )}
+
+            {/* ── Type name ── */}
+            <Reanimated.View entering={FadeIn.duration(220).delay(20)}>
+              <View style={[S.nameInput, { backgroundColor: colors.surface, borderColor: typeName.trim() ? primaryColor + "60" : colors.surfaceBorder }]}>
+                <Ionicons name="bookmark-outline" size={16} color={typeName.trim() ? primaryColor : colors.textMuted} />
                 <TextInput
-                  style={[S.fieldInputText, { color: colors.text }]}
-                  value={fieldName}
-                  onChangeText={setFieldName}
-                  placeholder={`e.g. "My ${selectedType.label}" or "Store Website"`}
+                  style={[S.nameInputText, { color: colors.text }]}
+                  value={typeName}
+                  onChangeText={setTypeName}
+                  placeholder="Type name — e.g. WhatsApp, YouTube, My Store…"
                   placeholderTextColor={colors.textMuted}
                   autoCapitalize="words"
                   autoCorrect={false}
                   returnKeyType="next"
                 />
+                {typeName.length > 0 && (
+                  <Pressable onPress={() => setTypeName("")} hitSlop={8}>
+                    <Ionicons name="close-circle" size={16} color={colors.textMuted} />
+                  </Pressable>
+                )}
               </View>
             </Reanimated.View>
 
-            {/* ── Content type grid ── */}
-            <Reanimated.View entering={FadeIn.duration(240).delay(40)}>
-              <Text style={[S.sectionLabel, { color: colors.textMuted }]}>CONTENT TYPE</Text>
-              <View style={S.typeGrid}>
-                {QR_TYPES.map((t, i) => {
-                  const active = selectedType.key === t.key;
-                  return (
-                    <Reanimated.View key={t.key} entering={FadeIn.duration(160).delay(i * 18)} style={{ width: "31%" }}>
-                      <Pressable
-                        onPress={() => handleSelect(t)}
-                        style={[
-                          S.typeCard,
-                          {
-                            backgroundColor: active ? t.color + "18" : colors.surface,
-                            borderColor:     active ? t.color + "80" : colors.surfaceBorder,
-                            borderWidth:     active ? 1.5 : 1,
-                          },
-                        ]}
-                      >
-                        <View style={[S.typeCardIcon, { backgroundColor: t.color + (active ? "28" : "16") }]}>
-                          <Ionicons name={t.icon} size={20} color={t.color} />
+            {/* ── Fields ── */}
+            <Reanimated.View entering={FadeIn.duration(240).delay(40)} style={{ gap: 10 }}>
+              {fields.map((field, idx) => {
+                const fieldTypeDef = FIELD_TYPE_DEFS.find(t => t.value === field.type);
+                return (
+                  <Reanimated.View
+                    key={field.id}
+                    entering={FadeInDown.duration(200).delay(idx * 30)}
+                  >
+                    <View style={[S.fieldCard, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
+                      {/* Field label row */}
+                      <View style={S.fieldLabelRow}>
+                        <View style={[S.fieldNumBadge, { backgroundColor: primaryColor + "14" }]}>
+                          <Text style={[S.fieldNumText, { color: primaryColor }]}>{idx + 1}</Text>
                         </View>
-                        <Text style={[S.typeCardLabel, { color: active ? t.color : colors.text }]} numberOfLines={1}>
-                          {t.label}
-                        </Text>
-                        <Text style={[S.typeCardHint, { color: colors.textMuted }]} numberOfLines={1}>
-                          {t.hint}
-                        </Text>
-                        {active && (
-                          <View style={[S.typeCardCheck, { backgroundColor: t.color }]}>
-                            <Ionicons name="checkmark" size={9} color="#fff" />
-                          </View>
+                        <TextInput
+                          style={[S.fieldLabelInput, { color: colors.text, flex: 1 }]}
+                          value={field.label}
+                          onChangeText={v => updateFieldLabel(field.id, v)}
+                          placeholder="Field name — e.g. Phone Number, Message, URL"
+                          placeholderTextColor={colors.textMuted}
+                          autoCapitalize="words"
+                          autoCorrect={false}
+                          returnKeyType="next"
+                        />
+                        {fields.length > 1 && (
+                          <Pressable onPress={() => removeField(field.id)} hitSlop={10}>
+                            <Ionicons name="trash-outline" size={16} color={colors.danger + "AA"} />
+                          </Pressable>
                         )}
-                      </Pressable>
-                    </Reanimated.View>
-                  );
-                })}
-              </View>
-            </Reanimated.View>
+                      </View>
 
-            {/* ── Selected type summary ── */}
-            <Reanimated.View entering={FadeIn.duration(220).delay(80)}>
-              <View style={[S.selectedSummary, { backgroundColor: selectedType.color + "0D", borderColor: selectedType.color + "30" }]}>
-                <Ionicons name={selectedType.icon} size={14} color={selectedType.color} />
-                <Text style={[S.selectedSummaryText, { color: selectedType.color }]}>
-                  {fieldName.trim()
-                    ? `"${fieldName.trim()}" will be a ${selectedType.label} field — enter the ${selectedType.hint} on the next screen`
-                    : `You selected ${selectedType.label} — enter the ${selectedType.hint} on the next screen`}
-                </Text>
-              </View>
+                      {/* Type tags */}
+                      <ScrollView
+                        horizontal
+                        showsHorizontalScrollIndicator={false}
+                        style={{ marginTop: 10 }}
+                        contentContainerStyle={{ gap: 6, paddingBottom: 2 }}
+                      >
+                        {FIELD_TYPE_DEFS.map(t => {
+                          const active = field.type === t.value;
+                          return (
+                            <Pressable
+                              key={t.value}
+                              onPress={() => updateFieldType(field.id, t.value)}
+                              style={[
+                                S.typeTag,
+                                {
+                                  backgroundColor: active ? t.color + "20" : colors.surfaceLight,
+                                  borderColor: active ? t.color + "70" : "transparent",
+                                  borderWidth: active ? 1 : 0,
+                                },
+                              ]}
+                            >
+                              <Ionicons
+                                name={t.icon as any}
+                                size={12}
+                                color={active ? t.color : colors.textMuted}
+                              />
+                              <Text style={[S.typeTagText, { color: active ? t.color : colors.textMuted }]}>
+                                {t.label}
+                              </Text>
+                            </Pressable>
+                          );
+                        })}
+                      </ScrollView>
+                    </View>
+                  </Reanimated.View>
+                );
+              })}
+
+              {/* Add field button */}
+              <Pressable
+                onPress={addField}
+                style={({ pressed }) => [
+                  S.addFieldBtn,
+                  {
+                    borderColor: colors.surfaceBorder,
+                    opacity: pressed ? 0.6 : 1,
+                  },
+                ]}
+              >
+                <Ionicons name="add-circle-outline" size={16} color={colors.textMuted} />
+                <Text style={[S.addFieldText, { color: colors.textMuted }]}>Add Another Field</Text>
+              </Pressable>
             </Reanimated.View>
 
             {/* ── Create button ── */}
             <Pressable
               onPress={handleConfirm}
+              disabled={!canCreate}
               style={({ pressed }) => ({
-                opacity: pressed ? 0.85 : 1,
-                transform: [{ scale: pressed ? 0.98 : 1 }],
+                opacity: canCreate ? (pressed ? 0.82 : 1) : 0.4,
+                transform: [{ scale: pressed && canCreate ? 0.98 : 1 }],
                 borderRadius: 18,
                 overflow: "hidden" as const,
+                marginTop: 4,
               })}
             >
               <LinearGradient
-                colors={[selectedType.color, selectedType.color + "CC"]}
-                style={S.confirmBtn}
+                colors={[primaryColor, "#818CF8"]}
+                style={S.createBtn}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 1 }}
               >
-                <Ionicons name={selectedType.icon} size={20} color="#fff" />
-                <Text style={S.confirmBtnText}>
-                  Create {selectedType.label} QR
-                </Text>
+                <Ionicons name="qr-code-outline" size={20} color="#fff" />
+                <Text style={S.createBtnText}>Create QR Type</Text>
                 <Ionicons name="arrow-forward" size={16} color="#fff" />
               </LinearGradient>
             </Pressable>
@@ -237,46 +352,61 @@ const S = StyleSheet.create({
     overflow: "hidden",
   },
   handle: { width: 40, height: 4, borderRadius: 2, alignSelf: "center", marginTop: 10, marginBottom: 8 },
-  header: { flexDirection: "row", alignItems: "center", paddingHorizontal: 18, paddingBottom: 10 },
+  header: { flexDirection: "row", alignItems: "center", paddingHorizontal: 18, paddingBottom: 12 },
   headerIcon: { width: 38, height: 38, borderRadius: 12, alignItems: "center", justifyContent: "center" },
   headerTitle: { fontSize: 15, fontFamily: "Inter_700Bold" },
-  headerSub:   { fontSize: 11.5, fontFamily: "Inter_400Regular", marginTop: 1 },
   closeBtn: { width: 34, height: 34, borderRadius: 17, alignItems: "center", justifyContent: "center" },
-  scroll: { paddingHorizontal: 18, paddingTop: 8, paddingBottom: 20, gap: 16 },
+  scroll: { paddingHorizontal: 18, paddingTop: 4, paddingBottom: 20, gap: 14 },
 
   sectionLabel: { fontSize: 10.5, fontFamily: "Inter_700Bold", letterSpacing: 0.8, textTransform: "uppercase", marginBottom: 8 },
+  divider: { height: 1, marginTop: 14, marginBottom: 2 },
 
-  fieldInput: {
+  savedChip: {
+    flexDirection: "row", alignItems: "center", gap: 6,
+    paddingHorizontal: 12, paddingVertical: 8,
+    borderRadius: 20, borderWidth: 1,
+  },
+  savedChipText: { fontSize: 13, fontFamily: "Inter_600SemiBold", maxWidth: 100 },
+  savedChipSub:  { fontSize: 11, fontFamily: "Inter_400Regular" },
+
+  nameInput: {
     flexDirection: "row", alignItems: "center", gap: 10,
-    borderRadius: 14, borderWidth: 1,
-    paddingHorizontal: 14, paddingVertical: 13,
+    borderRadius: 16, borderWidth: 1.5,
+    paddingHorizontal: 14, paddingVertical: 14,
   },
-  fieldInputText: { flex: 1, fontSize: 14, fontFamily: "Inter_400Regular" },
+  nameInputText: { flex: 1, fontSize: 15, fontFamily: "Inter_500Medium" },
 
-  typeGrid: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
-  typeCard: {
-    borderRadius: 14, padding: 10,
-    alignItems: "center", gap: 5, position: "relative",
+  fieldCard: {
+    borderRadius: 16, borderWidth: 1,
+    paddingHorizontal: 14, paddingVertical: 12,
   },
-  typeCardIcon: { width: 38, height: 38, borderRadius: 11, alignItems: "center", justifyContent: "center" },
-  typeCardLabel: { fontSize: 11.5, fontFamily: "Inter_700Bold", textAlign: "center" },
-  typeCardHint:  { fontSize: 9.5,  fontFamily: "Inter_400Regular", textAlign: "center" },
-  typeCardCheck: {
-    position: "absolute", top: 6, right: 6,
-    width: 16, height: 16, borderRadius: 8,
+  fieldLabelRow: {
+    flexDirection: "row", alignItems: "center", gap: 10,
+  },
+  fieldNumBadge: {
+    width: 22, height: 22, borderRadius: 11,
     alignItems: "center", justifyContent: "center",
   },
+  fieldNumText: { fontSize: 11, fontFamily: "Inter_700Bold" },
+  fieldLabelInput: { fontSize: 13, fontFamily: "Inter_400Regular" },
 
-  selectedSummary: {
-    flexDirection: "row", alignItems: "flex-start", gap: 8,
-    borderRadius: 12, borderWidth: 1,
-    paddingHorizontal: 12, paddingVertical: 10,
+  typeTag: {
+    flexDirection: "row", alignItems: "center", gap: 5,
+    paddingHorizontal: 10, paddingVertical: 5,
+    borderRadius: 20,
   },
-  selectedSummaryText: { flex: 1, fontSize: 12, fontFamily: "Inter_400Regular", lineHeight: 17 },
+  typeTagText: { fontSize: 12, fontFamily: "Inter_600SemiBold" },
 
-  confirmBtn: {
+  addFieldBtn: {
+    flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8,
+    borderRadius: 14, borderWidth: 1.5, borderStyle: "dashed",
+    paddingVertical: 12,
+  },
+  addFieldText: { fontSize: 13, fontFamily: "Inter_500Medium" },
+
+  createBtn: {
     flexDirection: "row", alignItems: "center", justifyContent: "center",
-    gap: 10, paddingVertical: 15, borderRadius: 18,
+    gap: 10, paddingVertical: 16, borderRadius: 18,
   },
-  confirmBtnText: { fontSize: 15, fontFamily: "Inter_700Bold", color: "#fff" },
+  createBtnText: { fontSize: 15, fontFamily: "Inter_700Bold", color: "#fff" },
 });
