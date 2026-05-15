@@ -8,7 +8,7 @@ import { router } from "expo-router";
 import { formatCompactNumber } from "@/lib/number-format";
 import { formatRelativeTime } from "@/lib/utils/formatters";
 import { useTheme } from "@/contexts/ThemeContext";
-import type { CommentItem as CommentItemType } from "@/hooks/useQrDetail";
+import type { CommentItem as CommentItemType } from "@/features/qr-detail/hooks/useQrDetail";
 
 interface Props {
   comment: CommentItemType;

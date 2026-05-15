@@ -7,7 +7,7 @@ import { Swipeable } from "react-native-gesture-handler";
 import * as Haptics from "@/lib/haptics";
 import { useTheme } from "@/contexts/ThemeContext";
 import { formatRelativeTime, getContentTypeMeta, getContentDisplayLabel, getContentSubtitle } from "@/lib/utils/formatters";
-import type { HistoryItem as HistoryItemType } from "@/hooks/useHistory";
+import type { HistoryItem as HistoryItemType } from "@/features/history/hooks/useHistory";
 import { parseAnyPaymentQr } from "@/lib/qr-analysis";
 
 function getTypeMeta(type: string): {

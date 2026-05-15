@@ -6,7 +6,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
 import { useTheme } from "@/contexts/ThemeContext";
-import { useSettings } from "@/hooks/useSettings";
+import { useSettings } from "@/features/settings/hooks/useSettings";
 import { makeSettingsStyles } from "@/features/settings/styles";
 import SettingsMenuItem from "@/features/settings/components/SettingsMenuItem";
 import AccountSection from "@/features/settings/components/AccountSection";

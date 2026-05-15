@@ -20,7 +20,7 @@ import SkeletonBox from "@/components/ui/SkeletonBox";
 import { formatCompactNumber } from "@/lib/number-format";
 import PhotoModal from "@/features/profile/components/PhotoModal";
 import NotificationsModal from "@/features/home/components/NotificationsModal";
-import { useProfile } from "@/hooks/useProfile";
+import { useProfile } from "@/features/profile/hooks/useProfile";
 import { useAvatar } from "@/contexts/AvatarContext";
 import { useNotifications } from "@/features/notifications/hooks/useNotifications";
 import QRCode from "react-native-qrcode-svg";

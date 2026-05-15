@@ -6,7 +6,7 @@ import { router } from "expo-router";
 import Animated, { FadeIn } from "react-native-reanimated";
 import QRCode from "react-native-qrcode-svg";
 import { useTheme } from "@/contexts/ThemeContext";
-import type { LogoPosition } from "@/hooks/useQrGenerator";
+import type { LogoPosition } from "@/features/generator/hooks/useQrGenerator";
 
 interface Props {
   qrValue: string;

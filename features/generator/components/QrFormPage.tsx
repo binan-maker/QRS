@@ -22,7 +22,7 @@ import Reanimated, {
 import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
 import { useTheme } from "@/contexts/ThemeContext";
-import { useQrGenerator, LOGO_POSITIONS } from "@/hooks/useQrGenerator";
+import { useQrGenerator, LOGO_POSITIONS } from "@/features/generator/hooks/useQrGenerator";
 import TypePickerHome from "@/features/generator/components/TypePickerHome";
 import QrTemplateModal from "@/features/generator/components/QrTemplateModal";
 import CustomQrBuilderModal from "@/features/generator/components/CustomQrBuilderModal";

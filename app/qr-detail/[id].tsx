@@ -31,7 +31,7 @@ import { useTheme } from "@/contexts/ThemeContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { formatCompactNumber } from "@/lib/number-format";
 import { smartName } from "@/lib/utils/formatters";
-import { useQrDetail } from "@/hooks/useQrDetail";
+import { useQrDetail } from "@/features/qr-detail/hooks/useQrDetail";
 import { useNetworkStatus } from "@/lib/use-network";
 import { getGuardLink, getStandardLink, type GuardLink } from "@/lib/services/guard-service";
 import { makeStyles } from "@/features/qr-detail/styles";

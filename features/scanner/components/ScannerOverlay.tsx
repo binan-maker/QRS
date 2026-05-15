@@ -10,7 +10,7 @@ import {
 import { shadow } from "@/lib/utils/platform";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { router } from "expo-router";
-import { FINDER_SIZE } from "@/hooks/useScanner";
+import { FINDER_SIZE } from "@/features/scanner/hooks/useScanner";
 import { formatFirstName } from "@/lib/utils/formatters";
 
 const CORNER_LEN = 28;

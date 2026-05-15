@@ -28,7 +28,7 @@ class CameraErrorBoundary extends Component<
   }
 }
 import { useTheme } from "@/contexts/ThemeContext";
-import { useScanner } from "@/hooks/useScanner";
+import { useScanner } from "@/features/scanner/hooks/useScanner";
 import ScannerOverlay from "@/features/scanner/components/ScannerOverlay";
 import SafetyModal from "@/features/scanner/components/SafetyModal";
 import VerifiedModal from "@/features/scanner/components/VerifiedModal";

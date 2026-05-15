@@ -19,7 +19,7 @@ import * as Haptics from "@/lib/haptics";
 import { parseAnyPaymentQr } from "@/lib/qr-analysis";
 import Animated, { FadeInDown, FadeInRight } from "react-native-reanimated";
 import { useTheme } from "@/contexts/ThemeContext";
-import { useHome, type LocalScan } from "@/hooks/useHome";
+import { useHome, type LocalScan } from "@/features/home/hooks/useHome";
 import { useAvatar } from "@/contexts/AvatarContext";
 import { detectContentType, getContentTypeMeta, getContentDisplayLabel, getContentSubtitle, truncate, formatRelativeTime } from "@/lib/utils/formatters";
 
