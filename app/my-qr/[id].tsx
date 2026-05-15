@@ -480,6 +480,7 @@ export default function MyQrDetailScreen() {
   const tabBarHeight = 62 + insets.bottom + 8;
 
   const [groupPickerOpen, setGroupPickerOpen] = useState(false);
+  const [structuredFields, setStructuredFields] = useState<Record<string, string>>({});
 
   const {
     user, svgRef, qrItem, loading,
@@ -497,7 +498,7 @@ export default function MyQrDetailScreen() {
     isValidating,
     confirmModalOpen, confirmModalMessage,
     handleConfirmPendingAction, handleCancelPendingAction,
-    handleUpdateDestination, handleUpdateStandardDestination, handleRequestSavedContentUpdate,
+    handleUpdateDestination, handleUpdateStandardDestination, handleUpdateRawContent, handleRequestSavedContentUpdate,
     handleSaveDesign, handleToggleActive,
     handleConfirmDeactivate, handleCopyContent, handleShare, handleDownloadPdf,
     sharingQr, downloadingPdf,
@@ -842,58 +843,340 @@ export default function MyQrDetailScreen() {
           </Animated.View>
         )}
 
-        {/* Standard Link — Dynamic Destination for Standard QR (non-business) */}
+        {/* Standard Link — Dynamic Destination / Structured Edit for Standard QR (non-business) */}
         {!isBusiness && standardLink && (
           <Animated.View entering={FadeInDown.duration(350).delay(80)}>
             {(() => {
               const rawContent = standardLink.rawContent || "";
-              const NON_URL_SCHEMES = ["tel:", "upi://", "WIFI:", "BEGIN:", "SMSTO:", "sms:", "mailto:", "bitcoin:", "ethereum:", "litecoin:", "solana:", "geo:"];
-              // Types whose raw content is NOT a web URL — block raw-URL editing for these
-              const FIXED_CONTENT_TYPES = new Set(["text", "phone", "wifi", "contact", "event", "calendar", "sms", "email", "crypto", "upi", "scantopay", "bharatqr", "mobilepay", "bharatpay", "grab"]);
-              const isNonUrlContent = NON_URL_SCHEMES.some((s) => rawContent.startsWith(s)) || FIXED_CONTENT_TYPES.has(effectiveContentType);
-              const isUrlContent = !isNonUrlContent && (rawContent.startsWith("http") || rawContent.startsWith("www.") || /^[\w-]+\.\w{2,}/.test(rawContent));
+
+              // Types that get structured edit forms (not a raw URL input)
+              const STRUCTURED_TYPES = new Set([
+                "text", "phone", "mobilepay", "grab",
+                "email", "sms",
+                "upi", "scantopay", "bharatqr",
+                "wifi",
+                "calendly", "zoom",
+              ]);
+              // Types too complex to inline-edit (vCard / iCal) — keep read-only info
+              const READONLY_TYPES = new Set(["contact", "event", "calendar"]);
+
+              const ct = effectiveContentType;
+              const isStructured = STRUCTURED_TYPES.has(ct);
+              const isReadOnly   = !isStructured && READONLY_TYPES.has(ct);
+              const isUrlEdit    = !isStructured && !isReadOnly;
+
+              // ─── Parse rawContent into structured field defaults ─────────────────
+              function initFields(): Record<string, string> {
+                switch (ct) {
+                  case "text":
+                    return { text: rawContent.replace(/^https?:\/\//, "") };
+                  case "phone": case "mobilepay": case "grab":
+                    return { phone: rawContent.replace(/^tel:/, "") };
+                  case "email": {
+                    const bare = rawContent.replace(/^mailto:/, "");
+                    const [addr, qs = ""] = bare.split("?");
+                    const p = new URLSearchParams(qs);
+                    return { email: addr, subject: p.get("subject") || "", body: p.get("body") || "" };
+                  }
+                  case "sms": {
+                    const stripped = rawContent.replace(/^SMSTO?:/i, "");
+                    const colonIdx = stripped.indexOf(":");
+                    return colonIdx !== -1
+                      ? { phone: stripped.slice(0, colonIdx), message: stripped.slice(colonIdx + 1) }
+                      : { phone: stripped, message: "" };
+                  }
+                  case "upi": case "scantopay": case "bharatqr": {
+                    if (rawContent.startsWith("upi://pay?")) {
+                      const p = new URLSearchParams(rawContent.replace("upi://pay?", ""));
+                      return { pa: p.get("pa") || "", pn: p.get("pn") || "", am: p.get("am") || "" };
+                    }
+                    return { pa: rawContent, pn: "", am: "" };
+                  }
+                  case "wifi":
+                    return {
+                      ssid:     rawContent.match(/S:([^;]+)/)?.[1] || "",
+                      password: rawContent.match(/P:([^;]+)/)?.[1] || "",
+                      security: rawContent.match(/T:([^;]+)/)?.[1] || "WPA",
+                    };
+                  case "calendly": {
+                    try {
+                      const u = new URL(rawContent.startsWith("http") ? rawContent : `https://${rawContent}`);
+                      const parts = u.pathname.replace(/^\//, "").split("/").filter(Boolean);
+                      return { username: parts[0] || "", eventType: parts[1] || "" };
+                    } catch { return { username: "", eventType: "" }; }
+                  }
+                  case "zoom": {
+                    const meetingId = rawContent.includes("zoom.us/j/")
+                      ? rawContent.split("/j/")[1]?.split("?")[0] || ""
+                      : rawContent;
+                    let passcode = "";
+                    try { passcode = new URL(rawContent).searchParams.get("pwd") || ""; } catch {}
+                    return { meetingId, passcode };
+                  }
+                  default:
+                    return {};
+                }
+              }
+
+              // ─── Build saveable content string from edited fields ─────────────────
+              function buildContent(f: Record<string, string>): string {
+                switch (ct) {
+                  case "text":
+                    return f.text || "";
+                  case "phone": case "mobilepay": case "grab":
+                    return "tel:" + (f.phone || "").replace(/^tel:/, "");
+                  case "email": {
+                    const addr = (f.email || "").replace(/^mailto:/, "");
+                    const p = new URLSearchParams();
+                    if (f.subject) p.set("subject", f.subject);
+                    if (f.body) p.set("body", f.body);
+                    const qs = p.toString();
+                    return "mailto:" + addr + (qs ? "?" + qs : "");
+                  }
+                  case "sms":
+                    return "SMSTO:" + (f.phone || "") + ":" + (f.message || "");
+                  case "upi": case "scantopay": case "bharatqr": {
+                    const p = new URLSearchParams();
+                    if (f.pa) p.set("pa", f.pa);
+                    if (f.pn) p.set("pn", f.pn);
+                    p.set("cu", "INR");
+                    if (f.am) p.set("am", f.am);
+                    return "upi://pay?" + p.toString();
+                  }
+                  case "wifi":
+                    return `WIFI:T:${f.security || "WPA"};S:${f.ssid || ""};P:${f.password || ""};H:false;;`;
+                  case "calendly": {
+                    const u = (f.username || "").replace(/^\//, "").trim();
+                    const e = (f.eventType || "").replace(/^\//, "").trim();
+                    return `https://calendly.com/${u}${e ? "/" + e : ""}`;
+                  }
+                  case "zoom": {
+                    const id = (f.meetingId || "").replace(/\D/g, "");
+                    const pwd = f.passcode || "";
+                    return `https://zoom.us/j/${id}${pwd ? "?pwd=" + pwd : ""}`;
+                  }
+                  default:
+                    return rawContent;
+                }
+              }
+
+              // ─── Shared styles ────────────────────────────────────────────────────
+              const inputStyle = {
+                backgroundColor: colors.surface, borderRadius: sp(10), borderWidth: 1,
+                borderColor: colors.surfaceBorder,
+                paddingHorizontal: sp(12), paddingVertical: sp(9),
+                fontSize: rf(13), color: colors.text, fontFamily: "Inter_400Regular",
+              } as const;
+              const labelStyle = {
+                fontSize: rf(10), fontFamily: "Inter_600SemiBold", color: colors.textMuted,
+                textTransform: "uppercase" as const, letterSpacing: 0.4, marginBottom: sp(4),
+              };
+
+              // ─── Render type-specific input fields ───────────────────────────────
+              function renderFields() {
+                const f = structuredFields;
+                const set = (key: string, val: string) => setStructuredFields({ ...f, [key]: val });
+                switch (ct) {
+                  case "text":
+                    return (
+                      <View>
+                        <Text style={labelStyle}>Text Content</Text>
+                        <TextInput
+                          value={f.text || ""}
+                          onChangeText={(v) => set("text", v)}
+                          placeholder="Enter your text…"
+                          placeholderTextColor={colors.textMuted}
+                          multiline
+                          style={{ ...inputStyle, minHeight: sp(80), textAlignVertical: "top" }}
+                        />
+                      </View>
+                    );
+                  case "phone": case "mobilepay": case "grab":
+                    return (
+                      <View>
+                        <Text style={labelStyle}>Phone Number</Text>
+                        <TextInput value={f.phone || ""} onChangeText={(v) => set("phone", v)} placeholder="+1 555 000 0000" placeholderTextColor={colors.textMuted} keyboardType="phone-pad" style={inputStyle} />
+                      </View>
+                    );
+                  case "email":
+                    return (
+                      <View style={{ gap: sp(10) }}>
+                        <View>
+                          <Text style={labelStyle}>Email Address</Text>
+                          <TextInput value={f.email || ""} onChangeText={(v) => set("email", v)} placeholder="name@example.com" placeholderTextColor={colors.textMuted} keyboardType="email-address" autoCapitalize="none" style={inputStyle} />
+                        </View>
+                        <View>
+                          <Text style={labelStyle}>Subject (optional)</Text>
+                          <TextInput value={f.subject || ""} onChangeText={(v) => set("subject", v)} placeholder="Hello!" placeholderTextColor={colors.textMuted} style={inputStyle} />
+                        </View>
+                      </View>
+                    );
+                  case "sms":
+                    return (
+                      <View style={{ gap: sp(10) }}>
+                        <View>
+                          <Text style={labelStyle}>Phone Number</Text>
+                          <TextInput value={f.phone || ""} onChangeText={(v) => set("phone", v)} placeholder="+1 555 000 0000" placeholderTextColor={colors.textMuted} keyboardType="phone-pad" style={inputStyle} />
+                        </View>
+                        <View>
+                          <Text style={labelStyle}>Pre-filled Message (optional)</Text>
+                          <TextInput value={f.message || ""} onChangeText={(v) => set("message", v)} placeholder="Hello!" placeholderTextColor={colors.textMuted} multiline style={{ ...inputStyle, minHeight: sp(60), textAlignVertical: "top" }} />
+                        </View>
+                      </View>
+                    );
+                  case "upi": case "scantopay": case "bharatqr":
+                    return (
+                      <View style={{ gap: sp(10) }}>
+                        <View>
+                          <Text style={labelStyle}>UPI ID / Payment Handle</Text>
+                          <TextInput value={f.pa || ""} onChangeText={(v) => set("pa", v)} placeholder="name@upi" placeholderTextColor={colors.textMuted} autoCapitalize="none" keyboardType="email-address" style={inputStyle} />
+                        </View>
+                        <View>
+                          <Text style={labelStyle}>Payee Name</Text>
+                          <TextInput value={f.pn || ""} onChangeText={(v) => set("pn", v)} placeholder="Business or Person Name" placeholderTextColor={colors.textMuted} style={inputStyle} />
+                        </View>
+                        <View>
+                          <Text style={labelStyle}>Amount ₹ (optional)</Text>
+                          <TextInput value={f.am || ""} onChangeText={(v) => set("am", v)} placeholder="0.00" placeholderTextColor={colors.textMuted} keyboardType="decimal-pad" style={inputStyle} />
+                        </View>
+                      </View>
+                    );
+                  case "wifi":
+                    return (
+                      <View style={{ gap: sp(10) }}>
+                        <View>
+                          <Text style={labelStyle}>Network Name (SSID)</Text>
+                          <TextInput value={f.ssid || ""} onChangeText={(v) => set("ssid", v)} placeholder="MyWiFiNetwork" placeholderTextColor={colors.textMuted} style={inputStyle} />
+                        </View>
+                        <View>
+                          <Text style={labelStyle}>Password</Text>
+                          <TextInput value={f.password || ""} onChangeText={(v) => set("password", v)} placeholder="WiFi password" placeholderTextColor={colors.textMuted} secureTextEntry style={inputStyle} />
+                        </View>
+                        <View>
+                          <Text style={labelStyle}>Security Type</Text>
+                          <TextInput value={f.security || ""} onChangeText={(v) => set("security", v)} placeholder="WPA" placeholderTextColor={colors.textMuted} autoCapitalize="characters" style={inputStyle} />
+                        </View>
+                      </View>
+                    );
+                  case "calendly":
+                    return (
+                      <View style={{ gap: sp(10) }}>
+                        <View>
+                          <Text style={labelStyle}>Calendly Username</Text>
+                          <TextInput value={f.username || ""} onChangeText={(v) => set("username", v)} placeholder="yourusername" placeholderTextColor={colors.textMuted} autoCapitalize="none" style={inputStyle} />
+                        </View>
+                        <View>
+                          <Text style={labelStyle}>Event Type Slug (optional)</Text>
+                          <TextInput value={f.eventType || ""} onChangeText={(v) => set("eventType", v)} placeholder="30min" placeholderTextColor={colors.textMuted} autoCapitalize="none" style={inputStyle} />
+                        </View>
+                      </View>
+                    );
+                  case "zoom":
+                    return (
+                      <View style={{ gap: sp(10) }}>
+                        <View>
+                          <Text style={labelStyle}>Meeting ID</Text>
+                          <TextInput value={f.meetingId || ""} onChangeText={(v) => set("meetingId", v)} placeholder="123 456 7890" placeholderTextColor={colors.textMuted} keyboardType="number-pad" style={inputStyle} />
+                        </View>
+                        <View>
+                          <Text style={labelStyle}>Passcode (optional)</Text>
+                          <TextInput value={f.passcode || ""} onChangeText={(v) => set("passcode", v)} placeholder="123456" placeholderTextColor={colors.textMuted} keyboardType="number-pad" style={inputStyle} />
+                        </View>
+                      </View>
+                    );
+                  default:
+                    return null;
+                }
+              }
+
+              // ─── Header appearance varies by edit mode ────────────────────────────
+              const headerIcon  = isReadOnly ? "lock-closed-outline" : "pencil-outline";
+              const headerColor = isReadOnly ? colors.textSecondary : colors.primary;
+              const headerTitle = isReadOnly
+                ? "Encoded Content"
+                : isStructured ? "Edit Content" : "Dynamic Destination";
+              const badgeLabel  = isReadOnly ? "READ ONLY" : "DYNAMIC";
+              const cardBorderColor = isReadOnly ? colors.surfaceBorder : colors.primary + "40";
+              const cardBgColor     = isReadOnly ? colors.surfaceLight  : colors.primaryDim + "30";
 
               return (
-                <View style={{
-                  borderRadius: sp(18), borderWidth: 1,
-                  borderColor: isNonUrlContent ? colors.surfaceBorder : colors.primary + "40",
-                  backgroundColor: isNonUrlContent ? colors.surfaceLight : colors.primaryDim + "30",
-                  padding: sp(16), marginBottom: sp(14),
-                }}>
-                  <View style={{ flexDirection: "row", alignItems: "center", gap: sp(8), marginBottom: sp(10) }}>
-                    <Ionicons
-                      name={isNonUrlContent ? "lock-closed-outline" : "git-branch-outline"}
-                      size={rf(15)}
-                      color={isNonUrlContent ? colors.textSecondary : colors.primary}
-                    />
-                    <Text style={{ fontSize: rf(13), fontFamily: "Inter_700Bold", color: isNonUrlContent ? colors.textSecondary : colors.primary }}>
-                      {isNonUrlContent ? "Encoded Content" : "Dynamic Destination"}
+                <View style={{ borderRadius: sp(18), borderWidth: 1, borderColor: cardBorderColor, backgroundColor: cardBgColor, padding: sp(16), marginBottom: sp(14) }}>
+
+                  {/* Section header */}
+                  <View style={{ flexDirection: "row", alignItems: "center", gap: sp(8), marginBottom: sp(12) }}>
+                    <Ionicons name={headerIcon as any} size={rf(15)} color={headerColor} />
+                    <Text style={{ fontSize: rf(13), fontFamily: "Inter_700Bold", color: headerColor, flex: 1 }}>
+                      {headerTitle}
                     </Text>
-                    <View style={{
-                      borderRadius: sp(6), paddingHorizontal: sp(7), paddingVertical: sp(2),
-                      backgroundColor: isNonUrlContent ? colors.surfaceBorder : colors.primaryDim,
-                    }}>
-                      <Text style={{ fontSize: rf(9), fontFamily: "Inter_700Bold", color: isNonUrlContent ? colors.textMuted : colors.primary }}>
-                        {isNonUrlContent ? "FIXED" : "DYNAMIC"}
+                    <View style={{ borderRadius: sp(6), paddingHorizontal: sp(7), paddingVertical: sp(2), backgroundColor: isReadOnly ? colors.surfaceBorder : colors.primaryDim }}>
+                      <Text style={{ fontSize: rf(9), fontFamily: "Inter_700Bold", color: isReadOnly ? colors.textMuted : colors.primary }}>
+                        {badgeLabel}
                       </Text>
                     </View>
                   </View>
 
-                  {isNonUrlContent ? (
-                    /* Non-URL content (UPI, WiFi, Phone, Contact, etc.): show info — no raw editing */
-                    <View style={{ gap: sp(8) }}>
-                      <View style={{ flexDirection: "row", alignItems: "flex-start", gap: sp(8), backgroundColor: colors.surface, borderRadius: sp(10), padding: sp(10) }}>
-                        <Ionicons name="information-circle-outline" size={rf(14)} color={colors.textMuted} style={{ marginTop: 1 }} />
-                        <Text style={{ fontSize: rf(11), fontFamily: "Inter_400Regular", color: colors.textSecondary, flex: 1, lineHeight: rf(17) }}>
-                          This QR encodes {CONTENT_TYPE_LABEL[effectiveContentType] || "structured"} data directly. The content is fixed to this type and cannot be changed to a raw URL. To use different details, create a new QR code.
-                        </Text>
-                      </View>
+                  {/* ── READ-ONLY: vCard / iCal ── */}
+                  {isReadOnly && (
+                    <View style={{ flexDirection: "row", alignItems: "flex-start", gap: sp(8), backgroundColor: colors.surface, borderRadius: sp(10), padding: sp(10) }}>
+                      <Ionicons name="information-circle-outline" size={rf(14)} color={colors.textMuted} style={{ marginTop: 1 }} />
+                      <Text style={{ fontSize: rf(11), fontFamily: "Inter_400Regular", color: colors.textSecondary, flex: 1, lineHeight: rf(17) }}>
+                        {ct === "contact"
+                          ? "Contact (vCard) data is structured and complex. To update contact details, generate a new Contact QR code."
+                          : "Calendar event data is structured and complex. To update event details, generate a new Event QR code."}
+                      </Text>
                     </View>
-                  ) : isUrlContent ? (
-                    /* URL content: show URL + allow editing */
+                  )}
+
+                  {/* ── STRUCTURED EDIT (text, phone, UPI, WiFi, Calendly, Zoom, …) ── */}
+                  {isStructured && (
+                    editingDestination ? (
+                      <View style={{ gap: sp(12) }}>
+                        {renderFields()}
+                        {destinationError && (
+                          <View style={{ flexDirection: "row", alignItems: "center", gap: sp(4) }}>
+                            <Ionicons name="warning-outline" size={rf(12)} color={colors.danger} />
+                            <Text style={{ fontSize: rf(11), fontFamily: "Inter_400Regular", color: colors.danger, flex: 1 }}>{destinationError}</Text>
+                          </View>
+                        )}
+                        <View style={{ flexDirection: "row", gap: sp(8) }}>
+                          <Pressable
+                            onPress={() => { setEditingDestination(false); setDestinationError(null); }}
+                            style={{ flex: 1, borderRadius: sp(10), borderWidth: 1, borderColor: colors.surfaceBorder, padding: sp(9), alignItems: "center" }}
+                          >
+                            <Text style={{ fontSize: rf(13), fontFamily: "Inter_600SemiBold", color: colors.textSecondary }}>Cancel</Text>
+                          </Pressable>
+                          <Pressable
+                            onPress={() => {
+                              const built = buildContent(structuredFields);
+                              if (!built.trim()) { setDestinationError("Please fill in the required fields."); return; }
+                              handleUpdateRawContent(built);
+                            }}
+                            disabled={savingDestination || isValidating}
+                            style={{ flex: 2, borderRadius: sp(10), backgroundColor: colors.primary, padding: sp(9), alignItems: "center", flexDirection: "row", justifyContent: "center", gap: sp(6) }}
+                          >
+                            {(savingDestination || isValidating) && <ActivityIndicator size="small" color="#fff" />}
+                            <Text style={{ fontSize: rf(13), fontFamily: "Inter_700Bold", color: "#fff" }}>
+                              {isValidating ? "Checking…" : savingDestination ? "Saving…" : "Save Changes"}
+                            </Text>
+                          </Pressable>
+                        </View>
+                      </View>
+                    ) : (
+                      <Pressable
+                        onPress={() => { setStructuredFields(initFields()); setEditingDestination(true); setDestinationError(null); }}
+                        style={({ pressed }) => [{ flexDirection: "row", alignItems: "center", gap: sp(6), borderRadius: sp(10), backgroundColor: colors.primaryDim, paddingHorizontal: sp(12), paddingVertical: sp(8), alignSelf: "flex-start", opacity: pressed ? 0.8 : 1 }]}
+                      >
+                        <Ionicons name="pencil-outline" size={rf(13)} color={colors.primary} />
+                        <Text style={{ fontSize: rf(12), fontFamily: "Inter_600SemiBold", color: colors.primary }}>Edit Content</Text>
+                      </Pressable>
+                    )
+                  )}
+
+                  {/* ── URL EDIT (paymentlink, reviewpage, generic url, youtube, etc.) ── */}
+                  {isUrlEdit && (
                     <>
-                      {/* Only show raw URL for generic url type — service types (calendly, youtube, etc.) already show parsed data in the QR Content card above */}
-                      {!editingDestination && effectiveContentType === "url" && (
+                      {/* Only show the raw URL for truly generic "url" type — service types already have parsed info in the QR Content card above */}
+                      {!editingDestination && ct === "url" && (
                         <Text style={{ fontSize: rf(11), fontFamily: "Inter_400Regular", color: colors.textSecondary, marginBottom: sp(10) }} numberOfLines={2}>
                           {rawContent}
                         </Text>
@@ -938,7 +1221,7 @@ export default function MyQrDetailScreen() {
                         </View>
                       ) : (
                         <Pressable
-                          onPress={() => { setNewDestination(rawContent); setEditingDestination(true); }}
+                          onPress={() => { setNewDestination(rawContent); setEditingDestination(true); setDestinationError(null); }}
                           style={({ pressed }) => [{ flexDirection: "row", alignItems: "center", gap: sp(6), borderRadius: sp(10), backgroundColor: colors.primaryDim, paddingHorizontal: sp(12), paddingVertical: sp(8), alignSelf: "flex-start", opacity: pressed ? 0.8 : 1 }]}
                         >
                           <Ionicons name="pencil-outline" size={rf(13)} color={colors.primary} />
@@ -946,7 +1229,8 @@ export default function MyQrDetailScreen() {
                         </Pressable>
                       )}
                     </>
-                  ) : null}
+                  )}
+
                 </View>
               );
             })()}

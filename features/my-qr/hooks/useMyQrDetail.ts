@@ -228,6 +228,51 @@ export function useMyQrDetail(id: string) {
     await handleRequestDestinationUpdate();
   }
 
+  // Saves any content (URL or structured non-URL) as-is into the standard link.
+  // For http/https content, runs a security scan first.
+  // Used by structured edit forms (text, UPI, WiFi, Calendly, phone, etc.)
+  async function handleUpdateRawContent(content: string) {
+    if (!content.trim() || !user || !qrItem?.uuid) return;
+    const dest = content.trim();
+
+    // Scan URLs for threats; skip for non-URL structured content
+    if (dest.startsWith("http://") || dest.startsWith("https://")) {
+      setIsValidating(true);
+      setDestinationError(null);
+      let scanResult: any;
+      try {
+        scanResult = await scanUrl(dest);
+      } catch {
+        scanResult = { valid: true };
+      } finally {
+        setIsValidating(false);
+      }
+      if (!scanResult.valid) {
+        setDestinationError(scanResult.error ?? "URL failed security check. Please try a different link.");
+        return;
+      }
+    }
+
+    setSavingDestination(true);
+    setDestinationError(null);
+    try {
+      await updateStandardLinkRawContent(qrItem.uuid, dest, user.id);
+      if ((qrItem as any).docId) {
+        await updateDisplayDestination(user.id, (qrItem as any).docId, dest).catch(() => {});
+      }
+      const refreshed = await getStandardLink(qrItem.uuid);
+      setStandardLink(refreshed);
+      setNewDestination(refreshed?.rawContent || dest);
+      setEditingDestination(false);
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      Alert.alert("Updated!", "QR content has been saved.");
+    } catch (err: any) {
+      Alert.alert("Error", err?.message || "Could not save content. Try again.");
+    } finally {
+      setSavingDestination(false);
+    }
+  }
+
   async function handleUpdateStandardDestination() {
     if (!newDestination.trim() || !user || !qrItem?.uuid) return;
     const raw = newDestination.trim();
@@ -678,7 +723,7 @@ export function useMyQrDetail(id: string) {
     customColorInput, setCustomColorInput,
     topLevelComments, getAllDescendants,
     handleLoadFollowers, applyCustomColor,
-    handleUpdateDestination, handleUpdateStandardDestination, handleRequestSavedContentUpdate,
+    handleUpdateDestination, handleUpdateStandardDestination, handleUpdateRawContent, handleRequestSavedContentUpdate,
     handleSaveDesign, handleSubmitComment, handleModerateComment,
     handleToggleActive, handleConfirmDeactivate, handleCopyContent,
     handleShare, handleDownloadPdf, sharingQr, downloadingPdf,
