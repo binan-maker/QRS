@@ -3,6 +3,7 @@ import {
   View, Text, ScrollView, Pressable, Platform, Switch,
   TextInput, useWindowDimensions, ActivityIndicator, Modal,
 } from "react-native";
+import { StatusBar } from "expo-status-bar";
 import { useLocalSearchParams, router } from "expo-router";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -333,6 +334,7 @@ export default function MyQrDetailScreen() {
   if (loading) {
     return (
       <View style={{ flex: 1, backgroundColor: colors.background, alignItems: "center", justifyContent: "center" }}>
+        <StatusBar style={isDark ? "light" : "dark"} backgroundColor={colors.background} />
         <ActivityIndicator size="large" color={colors.primary} />
       </View>
     );
@@ -341,6 +343,7 @@ export default function MyQrDetailScreen() {
   if (!qrItem) {
     return (
       <View style={{ flex: 1, backgroundColor: colors.background, alignItems: "center", justifyContent: "center", paddingTop: topInset }}>
+        <StatusBar style={isDark ? "light" : "dark"} backgroundColor={colors.background} />
         <Pressable onPress={() => router.back()} style={{ position: "absolute", top: topInset + sp(12), left: sp(20), width: sp(38), height: sp(38), borderRadius: sp(19), backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.surfaceBorder, alignItems: "center", justifyContent: "center" }}>
           <Ionicons name="chevron-back" size={rf(20)} color={colors.text} />
         </Pressable>
@@ -431,6 +434,7 @@ export default function MyQrDetailScreen() {
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.background }}>
+      <StatusBar style={isDark ? "light" : "dark"} backgroundColor={colors.background} />
       {/* ── Header ── */}
       <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingHorizontal: sp(20), paddingTop: topInset + sp(6), paddingBottom: sp(10) }}>
         <Pressable onPress={() => router.back()} style={{ width: sp(38), height: sp(38), borderRadius: sp(19), backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.surfaceBorder, alignItems: "center", justifyContent: "center" }}>

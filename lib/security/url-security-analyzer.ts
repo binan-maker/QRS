@@ -81,6 +81,7 @@ export function analyzeUrl(content: string): UrlAnalysisResult {
     details: {}
   };
 
+  if (!content || typeof content !== 'string') return result;
   const trimmedContent = content.trim();
   
   // Check if it's a URL
@@ -241,6 +242,7 @@ export function analyzeUrl(content: string): UrlAnalysisResult {
 }
 
 function detectTyposquatting(hostname: string): string | null {
+  if (!hostname || typeof hostname !== 'string') return null;
   // Direct match against known typosquat patterns
   for (const [brand, typos] of Object.entries(TYPOSQUAT_PATTERNS)) {
     if (typos.includes(hostname)) {
@@ -250,7 +252,7 @@ function detectTyposquatting(hostname: string): string | null {
   
   // Fuzzy matching - check similarity to brand domains
   for (const brand of BRAND_DOMAINS) {
-    if (hostname === brand) continue; // Exact match is fine
+    if (!brand || hostname === brand) continue; // Exact match is fine
     
     const similarity = levenshteinDistance(hostname, brand);
     const maxLen = Math.max(hostname.length, brand.length);
@@ -276,6 +278,9 @@ function detectHomographAttack(hostname: string): boolean {
 
 // Levenshtein distance for fuzzy string matching
 function levenshteinDistance(str1: string, str2: string): number {
+  if (!str1 || typeof str1 !== 'string') str1 = '';
+  if (!str2 || typeof str2 !== 'string') str2 = '';
+  if (str1 === '' || str2 === '') return Math.max(str1.length, str2.length);
   const matrix: number[][] = [];
   
   for (let i = 0; i <= str2.length; i++) {

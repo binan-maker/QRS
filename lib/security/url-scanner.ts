@@ -36,6 +36,7 @@ const PRIVATE_PREFIXES = ["192.168.", "10.", "172.16.", "172.17.", "172.18.",
   "172.26.", "172.27.", "172.28.", "172.29.", "172.30.", "172.31."];
 
 function normalise(raw: string): string {
+  if (!raw || typeof raw !== "string") return "https://invalid.invalid";
   const t = raw.trim();
   return t.startsWith("http") ? t : `https://${t}`;
 }
@@ -123,6 +124,9 @@ export async function scanUrl(raw: string): Promise<UrlScanResult> {
  * the Google Safe Browsing check.
  */
 export function scanUrlSync(raw: string): UrlScanResult {
+  if (!raw || typeof raw !== "string") {
+    return { valid: false, error: "Please enter a valid URL (e.g. https://example.com)." };
+  }
   const normalised = normalise(raw);
 
   let parsed: URL;
