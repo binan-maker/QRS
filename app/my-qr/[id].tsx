@@ -7,6 +7,7 @@ import { StatusBar } from "expo-status-bar";
 import { useLocalSearchParams, router } from "expo-router";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useTopInset } from "@/lib/utils/platform";
 import Animated, { FadeInDown, FadeIn } from "react-native-reanimated";
 import { LinearGradient } from "expo-linear-gradient";
 import QRCode from "react-native-qrcode-svg";
@@ -303,7 +304,7 @@ export default function MyQrDetailScreen() {
   const s = Math.min(Math.max(width / 390, 0.82), 1.0);
   const rf = (n: number) => Math.round(n * s);
   const sp = (n: number) => Math.round(n * s);
-  const topInset = Platform.OS === "web" ? 67 : insets.top;
+  const topInset = useTopInset();
   const tabBarHeight = 62 + insets.bottom + 8;
 
   const [groupPickerOpen, setGroupPickerOpen] = useState(false);

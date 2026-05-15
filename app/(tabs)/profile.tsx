@@ -14,6 +14,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import { safePush } from "@/lib/utils/navigation";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useTopInset } from "@/lib/utils/platform";
 import Animated, { FadeInDown } from "react-native-reanimated";
 import { useTheme } from "@/contexts/ThemeContext";
 import SkeletonBox from "@/components/ui/SkeletonBox";
@@ -46,7 +47,7 @@ function ProfileScreen() {
     handleOpenNotifications, handleClearNotifications,
   } = useNotifications();
 
-  const topInset = Platform.OS === "web" ? 67 : insets.top;
+  const topInset = useTopInset();
   const tabBarHeight = 60 + insets.bottom;
 
   const previewQrs = useMemo(() => myQrCodes.slice(0, 3), [myQrCodes]);

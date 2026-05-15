@@ -11,6 +11,7 @@ import {
 } from "react-native";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useTopInset } from "@/lib/utils/platform";
 import Reanimated, {
   FadeIn,
   FadeInDown,
@@ -46,7 +47,7 @@ interface Props {
 export default function QrFormPage({ mode }: Props) {
   const insets = useSafeAreaInsets();
   const { colors } = useTheme();
-  const topInset = Platform.OS === "web" ? 67 : insets.top;
+  const topInset = useTopInset();
   const { width } = useWindowDimensions();
 
   const [presetActive, setPresetActive] = useState(false);

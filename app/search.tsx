@@ -7,6 +7,8 @@ import { router } from "expo-router";
 import { safePush } from "@/lib/utils/navigation";
 import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useTopInset } from "@/lib/utils/platform";
+import ScreenHeader from "@/components/ui/ScreenHeader";
 import { LinearGradient } from "expo-linear-gradient";
 import { useTheme } from "@/contexts/ThemeContext";
 import { useAuth } from "@/contexts/AuthContext";
@@ -26,7 +28,7 @@ export default function SearchScreen() {
   const insets = useSafeAreaInsets();
   const { colors } = useTheme();
   const { user } = useAuth();
-  const topInset = Platform.OS === "web" ? 67 : insets.top;
+  const topInset = useTopInset();
 
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<ResultItem[]>([]);
@@ -100,20 +102,14 @@ export default function SearchScreen() {
 
   return (
     <KeyboardAvoidingView
-      style={[styles.container, { backgroundColor: colors.background }]}
+      style={[styles.container, { backgroundColor: colors.background, paddingTop: topInset + 8 }]}
       behavior={Platform.OS === "ios" ? "padding" : undefined}
     >
       {/* Nav */}
-      <View style={[styles.nav, { paddingTop: topInset + 8 }]}>
-        <Pressable
-          onPress={() => router.canGoBack() ? router.back() : router.replace("/(tabs)/profile" as any)}
-          style={[styles.navBack, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}
-        >
-          <Ionicons name="chevron-back" size={22} color={colors.text} />
-        </Pressable>
-        <Text style={[styles.navTitle, { color: colors.text }]}>Find People</Text>
-        <View style={{ width: 40 }} />
-      </View>
+      <ScreenHeader
+        title="Find People"
+        onBack={() => router.canGoBack() ? router.back() : router.replace("/(tabs)/profile" as any)}
+      />
 
       {/* Search bar */}
       <View style={[styles.searchBar, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>

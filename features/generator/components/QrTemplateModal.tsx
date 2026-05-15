@@ -1,8 +1,9 @@
 import React, { useState, useMemo, useCallback, memo, useRef } from "react";
 import {
-  View, Text, Modal, Pressable, ScrollView, TextInput,
+  View, Text, Pressable, ScrollView, TextInput,
   useWindowDimensions, KeyboardAvoidingView, Platform, ActivityIndicator,
 } from "react-native";
+import BottomSheet from "@/components/ui/BottomSheet";
 import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Animated, { FadeIn, FadeInDown, FadeInUp } from "react-native-reanimated";
@@ -803,39 +804,17 @@ function QrTemplateModal({ visible, onClose, onGenerate, onOpenAdvancedBuilder }
     : "Choose how to create your QR code";
 
   return (
-    <Modal
+    <BottomSheet
       visible={visible}
-      transparent
-      animationType="fade"
-      onRequestClose={handleClose}
-      statusBarTranslucent
+      onClose={handleClose}
+      maxHeight={sheetH}
+      sheetStyle={{
+        paddingHorizontal: 0,
+        paddingBottom: 0,
+        paddingTop: sp(2),
+        backgroundColor: colors.background,
+      }}
     >
-      <View style={{ flex: 1 }}>
-        {/* Backdrop — outside KAV so it doesn't shift */}
-        <Pressable
-          style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0, backgroundColor: "rgba(0,0,0,0.55)" }}
-          onPress={handleClose}
-        />
-
-        {/* Sheet anchored to bottom */}
-        <View style={{ flex: 1, justifyContent: "flex-end" }}>
-          <Animated.View
-            entering={FadeInDown.duration(300).springify()}
-            style={{
-              backgroundColor: colors.background,
-              borderTopLeftRadius: sp(28),
-              borderTopRightRadius: sp(28),
-              borderTopWidth: 1,
-              borderLeftWidth: 1,
-              borderRightWidth: 1,
-              borderColor: colors.surfaceBorder,
-              height: sheetH,
-            }}
-          >
-            {/* Handle — FIXED, never moves */}
-            <View style={{ alignItems: "center", paddingTop: sp(12), marginBottom: sp(2) }}>
-              <View style={{ width: sp(40), height: sp(4), borderRadius: sp(2), backgroundColor: colors.surfaceBorder }} />
-            </View>
 
             {/* Header — FIXED, never moves with keyboard */}
             <View style={{
@@ -927,10 +906,7 @@ function QrTemplateModal({ visible, onClose, onGenerate, onOpenAdvancedBuilder }
                 )}
               </View>
             </KeyboardAvoidingView>
-          </Animated.View>
-        </View>
-      </View>
-    </Modal>
+    </BottomSheet>
   );
 }
 

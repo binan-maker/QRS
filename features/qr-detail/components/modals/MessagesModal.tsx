@@ -1,13 +1,13 @@
 import React from "react";
 import {
-  View, Text, StyleSheet, Pressable, Modal, ScrollView,
-  ActivityIndicator, TextInput, Platform, KeyboardAvoidingView,
+  View, Text, StyleSheet, Pressable, ScrollView,
+  ActivityIndicator, TextInput,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTheme } from "@/contexts/ThemeContext";
 import type { QrOwnerInfo, QrMessage } from "@/lib/firestore-service";
+import BottomSheet from "@/components/ui/BottomSheet";
 
 interface Props {
   visible: boolean;
@@ -38,120 +38,107 @@ const MessagesModal = React.memo(function MessagesModal({
   sendingMessage, user, onChangeText, onSend, onMarkRead, onClose,
 }: Props) {
   const { colors } = useTheme();
-  const insets = useSafeAreaInsets();
-  const styles = makeStyles(colors, Math.max(insets.bottom, 32));
+  const styles = makeStyles(colors);
+
   return (
-    <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
-      <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === "ios" ? "padding" : "height"}>
-        <Pressable style={styles.overlay} onPress={onClose}>
-          <Pressable style={[styles.sheet, { maxHeight: "80%" }]} onPress={() => {}}>
-            <View style={styles.handle} />
-            <View style={styles.header}>
-              <Text style={styles.title}>{isQrOwner ? "Inbox" : "Message Owner"}</Text>
-              <Text style={styles.sub}>
-                {isQrOwner
-                  ? "Private messages sent to this QR code"
-                  : ownerInfo
-                  ? `Send a private message to ${ownerInfo.ownerName}`
-                  : "Private messaging — branded QRs only"}
-              </Text>
-            </View>
+    <BottomSheet visible={visible} onClose={onClose} maxHeight="80%">
+      <View style={styles.header}>
+        <Text style={styles.title}>{isQrOwner ? "Inbox" : "Message Owner"}</Text>
+        <Text style={styles.sub}>
+          {isQrOwner
+            ? "Private messages sent to this QR code"
+            : ownerInfo
+            ? `Send a private message to ${ownerInfo.ownerName}`
+            : "Private messaging — branded QRs only"}
+        </Text>
+      </View>
 
-            {isQrOwner ? (
-              messages.length === 0 ? (
-                <View style={styles.center}>
-                  <Ionicons name="mail-outline" size={40} color={colors.textMuted} />
-                  <Text style={styles.emptyTitle}>No messages yet</Text>
-                  <Text style={styles.emptySub}>Messages from people scanning this QR will appear here</Text>
+      {isQrOwner ? (
+        messages.length === 0 ? (
+          <View style={styles.center}>
+            <Ionicons name="mail-outline" size={40} color={colors.textMuted} />
+            <Text style={styles.emptyTitle}>No messages yet</Text>
+            <Text style={styles.emptySub}>Messages from people scanning this QR will appear here</Text>
+          </View>
+        ) : (
+          <ScrollView style={{ maxHeight: 350 }}>
+            {messages.map((msg) => (
+              <Pressable
+                key={msg.id}
+                onPress={() => onMarkRead(msg.id)}
+                style={[styles.msgRow, !msg.read && styles.msgRowUnread]}
+              >
+                <View style={styles.msgAvatar}>
+                  <Text style={styles.msgAvatarText}>{(msg.fromDisplayName ?? msg.senderName).charAt(0).toUpperCase()}</Text>
                 </View>
-              ) : (
-                <ScrollView style={{ maxHeight: 350 }}>
-                  {messages.map((msg) => (
-                    <Pressable
-                      key={msg.id}
-                      onPress={() => onMarkRead(msg.id)}
-                      style={[styles.msgRow, !msg.read && styles.msgRowUnread]}
-                    >
-                      <View style={styles.msgAvatar}>
-                        <Text style={styles.msgAvatarText}>{(msg.fromDisplayName ?? msg.senderName).charAt(0).toUpperCase()}</Text>
-                      </View>
-                      <View style={{ flex: 1 }}>
-                        <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
-                          <Text style={styles.msgSender}>{msg.fromDisplayName ?? msg.senderName}</Text>
-                          {!msg.read && <View style={styles.unreadDot} />}
-                        </View>
-                        <Text style={styles.msgText} numberOfLines={2}>{msg.message}</Text>
-                        <Text style={styles.msgTime}>{formatRelative(msg.createdAt)}</Text>
-                      </View>
-                    </Pressable>
-                  ))}
-                </ScrollView>
-              )
-            ) : ownerInfo ? (
-              <View style={styles.composeArea}>
-                <Text style={styles.privacyNote}>
-                  Your message will be sent privately to {ownerInfo.ownerName}. They will see your name.
-                </Text>
-                <View style={styles.inputRow}>
-                  <TextInput
-                    style={styles.input}
-                    placeholder="Write your message..."
-                    placeholderTextColor={colors.textMuted}
-                    value={messageText}
-                    onChangeText={onChangeText}
-                    multiline
-                    maxLength={500}
-                  />
+                <View style={{ flex: 1 }}>
+                  <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
+                    <Text style={styles.msgSender}>{msg.fromDisplayName ?? msg.senderName}</Text>
+                    {!msg.read && <View style={styles.unreadDot} />}
+                  </View>
+                  <Text style={styles.msgText} numberOfLines={2}>{msg.message}</Text>
+                  <Text style={styles.msgTime}>{formatRelative(msg.createdAt)}</Text>
                 </View>
-                <Pressable
-                  onPress={onSend}
-                  disabled={sendingMessage || !messageText.trim() || !user}
-                  style={({ pressed }) => [styles.sendBtn, { opacity: sendingMessage || !messageText.trim() || !user || pressed ? 0.6 : 1 }]}
-                >
-                  {sendingMessage ? (
-                    <ActivityIndicator size="small" color={colors.primaryText} />
-                  ) : (
-                    <>
-                      <Ionicons name="send" size={18} color={colors.primaryText} />
-                      <Text style={styles.sendBtnText}>Send Message</Text>
-                    </>
-                  )}
-                </Pressable>
-                {!user && (
-                  <Pressable onPress={() => { onClose(); router.push("/(auth)/login"); }} style={styles.signInBtn}>
-                    <Text style={styles.signInBtnText}>Sign in to send a message</Text>
-                  </Pressable>
-                )}
-              </View>
+              </Pressable>
+            ))}
+          </ScrollView>
+        )
+      ) : ownerInfo ? (
+        <View style={styles.composeArea}>
+          <Text style={styles.privacyNote}>
+            Your message will be sent privately to {ownerInfo.ownerName}. They will see your name.
+          </Text>
+          <View style={styles.inputRow}>
+            <TextInput
+              style={styles.input}
+              placeholder="Write your message..."
+              placeholderTextColor={colors.textMuted}
+              value={messageText}
+              onChangeText={onChangeText}
+              multiline
+              maxLength={500}
+            />
+          </View>
+          <Pressable
+            onPress={onSend}
+            disabled={sendingMessage || !messageText.trim() || !user}
+            style={({ pressed }) => [styles.sendBtn, { opacity: sendingMessage || !messageText.trim() || !user || pressed ? 0.6 : 1 }]}
+          >
+            {sendingMessage ? (
+              <ActivityIndicator size="small" color={colors.primaryText} />
             ) : (
-              <View style={styles.center}>
-                <Ionicons name="lock-closed-outline" size={40} color={colors.textMuted} />
-                <Text style={[styles.emptyTitle, { textAlign: "center" }]}>
-                  Private messaging is only available for branded QR codes
-                </Text>
-              </View>
+              <>
+                <Ionicons name="send" size={18} color={colors.primaryText} />
+                <Text style={styles.sendBtnText}>Send Message</Text>
+              </>
             )}
-
-            <Pressable style={styles.closeBtn} onPress={onClose}>
-              <Text style={styles.closeBtnText}>Close</Text>
-            </Pressable>
           </Pressable>
-        </Pressable>
-      </KeyboardAvoidingView>
-    </Modal>
+          {!user && (
+            <Pressable onPress={() => { onClose(); router.push("/(auth)/login"); }} style={styles.signInBtn}>
+              <Text style={styles.signInBtnText}>Sign in to send a message</Text>
+            </Pressable>
+          )}
+        </View>
+      ) : (
+        <View style={styles.center}>
+          <Ionicons name="lock-closed-outline" size={40} color={colors.textMuted} />
+          <Text style={[styles.emptyTitle, { textAlign: "center" }]}>
+            Private messaging is only available for branded QR codes
+          </Text>
+        </View>
+      )}
+
+      <Pressable style={styles.closeBtn} onPress={onClose}>
+        <Text style={styles.closeBtnText}>Close</Text>
+      </Pressable>
+    </BottomSheet>
   );
 });
 
 export default MessagesModal;
 
-function makeStyles(c: ReturnType<typeof import("@/contexts/ThemeContext").useTheme>["colors"], bottomInset: number = 32) {
+function makeStyles(c: ReturnType<typeof import("@/contexts/ThemeContext").useTheme>["colors"]) {
   return StyleSheet.create({
-    overlay: { flex: 1, backgroundColor: "transparent", justifyContent: "flex-end" },
-    sheet: {
-      backgroundColor: c.surface, borderTopLeftRadius: 24, borderTopRightRadius: 24,
-      padding: 20, paddingBottom: bottomInset, borderWidth: 1, borderColor: c.surfaceBorder,
-    },
-    handle: { width: 40, height: 4, backgroundColor: c.surfaceLight, borderRadius: 2, alignSelf: "center", marginBottom: 16 },
     header: { marginBottom: 16 },
     title: { fontSize: 18, fontFamily: "Inter_700Bold", color: c.text },
     sub: { fontSize: 13, fontFamily: "Inter_400Regular", color: c.textSecondary, marginTop: 3 },

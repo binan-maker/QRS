@@ -7,6 +7,7 @@ import { router } from "expo-router";
 import { safePush } from "@/lib/utils/navigation";
 import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useTopInset } from "@/lib/utils/platform";
 import { LinearGradient } from "expo-linear-gradient";
 import { useTheme } from "@/contexts/ThemeContext";
 import { useAuth } from "@/contexts/AuthContext";
@@ -53,7 +54,7 @@ export default function PrivacySettingsScreen() {
   const insets = useSafeAreaInsets();
   const { colors, isDark } = useTheme();
   const { user } = useAuth();
-  const topInset = Platform.OS === "web" ? 67 : insets.top;
+  const topInset = useTopInset();
 
   const [privacy, setPrivacy] = useState<PrivacySettings>({
     isPrivate: false,

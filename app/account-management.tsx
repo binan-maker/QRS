@@ -9,6 +9,8 @@ import {
 import { router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useTopInset } from "@/lib/utils/platform";
+import ScreenHeader from "@/components/ui/ScreenHeader";
 import { useState } from "react";
 import * as Haptics from "@/lib/haptics";
 import { useTheme } from "@/contexts/ThemeContext";
@@ -19,19 +21,13 @@ export default function AccountManagementScreen() {
   const { colors } = useTheme();
   const { user } = useAuth();
   const insets = useSafeAreaInsets();
-  const topInset = Platform.OS === "web" ? 67 : insets.top;
+  const topInset = useTopInset();
   const [deleteModal, setDeleteModal] = useState(false);
 
   if (!user) {
     return (
       <View style={[styles.container, { paddingTop: topInset, backgroundColor: colors.background }]}>
-        <View style={[styles.navBar, { borderBottomColor: colors.surfaceBorder }]}>
-          <Pressable onPress={() => router.back()} style={[styles.backBtn, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
-            <Ionicons name="chevron-back" size={24} color={colors.text} />
-          </Pressable>
-          <Text style={[styles.navTitle, { color: colors.text }]}>Account Management</Text>
-          <View style={{ width: 40 }} />
-        </View>
+        <ScreenHeader title="Account Management" />
         <View style={styles.center}>
           <Ionicons name="person-outline" size={52} color={colors.textMuted} />
           <Text style={[styles.emptyTitle, { color: colors.text }]}>Not signed in</Text>
@@ -47,13 +43,7 @@ export default function AccountManagementScreen() {
   return (
     <>
       <View style={[styles.container, { paddingTop: topInset, backgroundColor: colors.background }]}>
-        <View style={[styles.navBar, { borderBottomColor: colors.surfaceBorder }]}>
-          <Pressable onPress={() => router.back()} style={[styles.backBtn, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
-            <Ionicons name="chevron-back" size={24} color={colors.text} />
-          </Pressable>
-          <Text style={[styles.navTitle, { color: colors.text }]}>Account Management</Text>
-          <View style={{ width: 40 }} />
-        </View>
+        <ScreenHeader title="Account Management" />
 
         <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={[styles.scrollContent, { paddingBottom: insets.bottom + 40 }]}>
           <View style={[styles.profileCard, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>

@@ -1,16 +1,16 @@
 import {
-  View, Text, StyleSheet, Modal, Pressable,
+  View, Text, StyleSheet, Pressable,
   TextInput, ActivityIndicator, Alert,
 } from "react-native";
 import { useState } from "react";
 import { router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import * as Haptics from "@/lib/haptics";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTheme } from "@/contexts/ThemeContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { deleteUserAccount } from "@/lib/firestore-service";
 import { authAdapter } from "@/lib/auth";
+import BottomSheet from "@/components/ui/BottomSheet";
 
 interface DeleteAccountModalProps {
   visible: boolean;
@@ -21,7 +21,6 @@ const CONFIRM_PHRASE = "DELETE MY ACCOUNT";
 
 export default function DeleteAccountModal({ visible, onClose }: DeleteAccountModalProps) {
   const { colors } = useTheme();
-  const insets = useSafeAreaInsets();
   const { user, signOut } = useAuth();
   const [confirmText, setConfirmText] = useState("");
   const [password, setPassword] = useState("");
@@ -72,129 +71,124 @@ export default function DeleteAccountModal({ visible, onClose }: DeleteAccountMo
   if (!user) return null;
 
   return (
-    <Modal visible={visible} transparent animationType="slide" onRequestClose={handleClose}>
-      <Pressable style={styles.overlay} onPress={handleClose}>
-        <Pressable style={[styles.box, { backgroundColor: colors.surface, borderColor: colors.danger + "50", paddingBottom: Math.max(insets.bottom, 40) }]} onPress={() => {}}>
-          <View style={styles.header}>
-            <View style={styles.titleRow}>
-              <Ionicons name="warning" size={20} color={colors.danger} />
-              <Text style={[styles.title, { color: colors.text }]}>
-                {step === 1 ? "Confirm Deletion" : "Re-authentication Required"}
-              </Text>
-            </View>
-            <Pressable onPress={handleClose} style={[styles.closeBtn, { backgroundColor: colors.surfaceLight }]}>
-              <Ionicons name="close" size={22} color={colors.textMuted} />
+    <BottomSheet
+      visible={visible}
+      onClose={handleClose}
+      sheetStyle={{ borderTopWidth: 1.5, borderColor: colors.danger + "50" }}
+    >
+      <View style={styles.header}>
+        <View style={styles.titleRow}>
+          <Ionicons name="warning" size={20} color={colors.danger} />
+          <Text style={[styles.title, { color: colors.text }]}>
+            {step === 1 ? "Confirm Deletion" : "Re-authentication Required"}
+          </Text>
+        </View>
+        <Pressable onPress={handleClose} style={[styles.closeBtn, { backgroundColor: colors.surfaceLight }]}>
+          <Ionicons name="close" size={22} color={colors.textMuted} />
+        </Pressable>
+      </View>
+
+      {step === 1 ? (
+        <>
+          <Text style={[styles.body, { color: colors.textSecondary }]}>
+            You are about to permanently delete the account associated with:
+          </Text>
+          <View style={[styles.emailPill, { backgroundColor: colors.dangerDim, borderColor: colors.danger + "30" }]}>
+            <Ionicons name="mail-outline" size={15} color={colors.danger} />
+            <Text style={[styles.emailPillText, { color: colors.danger }]}>{user.email}</Text>
+          </View>
+          <Text style={[styles.body, { color: colors.textSecondary }]}>
+            This will erase all your data from QR Guard's servers. There is no recovery.
+          </Text>
+          <Text style={[styles.instruction, { color: colors.textSecondary }]}>
+            To confirm, type exactly: <Text style={[styles.phrase, { color: colors.danger }]}>{CONFIRM_PHRASE}</Text>
+          </Text>
+          <TextInput
+            style={[
+              styles.input,
+              { backgroundColor: colors.surfaceLight, borderColor: colors.surfaceBorder, color: colors.text },
+              isConfirmMatch && { borderColor: colors.danger, backgroundColor: colors.dangerDim },
+            ]}
+            placeholder={CONFIRM_PHRASE}
+            placeholderTextColor={colors.textMuted}
+            value={confirmText}
+            onChangeText={setConfirmText}
+            autoCapitalize="characters"
+            autoCorrect={false}
+          />
+          <Pressable
+            onPress={handleDeleteAccount}
+            disabled={!isConfirmMatch || deleting}
+            style={({ pressed }) => [
+              styles.deleteBtn,
+              { backgroundColor: colors.danger, opacity: !isConfirmMatch || deleting ? 0.4 : pressed ? 0.85 : 1 },
+            ]}
+          >
+            {deleting ? (
+              <ActivityIndicator color="#fff" />
+            ) : (
+              <>
+                <Ionicons name="trash-outline" size={18} color="#fff" />
+                <Text style={styles.deleteBtnText}>Permanently Delete Account</Text>
+              </>
+            )}
+          </Pressable>
+          <Pressable onPress={handleClose} style={styles.cancelBtn}>
+            <Text style={[styles.cancelBtnText, { color: colors.primary }]}>Cancel — Keep My Account</Text>
+          </Pressable>
+        </>
+      ) : (
+        <>
+          <Text style={[styles.body, { color: colors.textSecondary }]}>
+            For your security, please re-enter your password before deleting your account.
+          </Text>
+          <Text style={[styles.instruction, { color: colors.textSecondary }]}>Password for {user.email}</Text>
+          <View style={styles.passwordRow}>
+            <TextInput
+              style={[styles.input, { flex: 1, backgroundColor: colors.surfaceLight, borderColor: colors.surfaceBorder, color: colors.text }]}
+              placeholder="Enter your password"
+              placeholderTextColor={colors.textMuted}
+              value={password}
+              onChangeText={setPassword}
+              secureTextEntry={!showPassword}
+              autoCapitalize="none"
+              autoCorrect={false}
+            />
+            <Pressable onPress={() => setShowPassword(!showPassword)} style={[styles.eyeBtn, { backgroundColor: colors.surfaceLight, borderColor: colors.surfaceBorder }]}>
+              <Ionicons
+                name={showPassword ? "eye-off-outline" : "eye-outline"}
+                size={20}
+                color={colors.textMuted}
+              />
             </Pressable>
           </View>
-
-          {step === 1 ? (
-            <>
-              <Text style={[styles.body, { color: colors.textSecondary }]}>
-                You are about to permanently delete the account associated with:
-              </Text>
-              <View style={[styles.emailPill, { backgroundColor: colors.dangerDim, borderColor: colors.danger + "30" }]}>
-                <Ionicons name="mail-outline" size={15} color={colors.danger} />
-                <Text style={[styles.emailPillText, { color: colors.danger }]}>{user.email}</Text>
-              </View>
-              <Text style={[styles.body, { color: colors.textSecondary }]}>
-                This will erase all your data from QR Guard's servers. There is no recovery.
-              </Text>
-              <Text style={[styles.instruction, { color: colors.textSecondary }]}>
-                To confirm, type exactly: <Text style={[styles.phrase, { color: colors.danger }]}>{CONFIRM_PHRASE}</Text>
-              </Text>
-              <TextInput
-                style={[
-                  styles.input,
-                  { backgroundColor: colors.surfaceLight, borderColor: colors.surfaceBorder, color: colors.text },
-                  isConfirmMatch && { borderColor: colors.danger, backgroundColor: colors.dangerDim },
-                ]}
-                placeholder={CONFIRM_PHRASE}
-                placeholderTextColor={colors.textMuted}
-                value={confirmText}
-                onChangeText={setConfirmText}
-                autoCapitalize="characters"
-                autoCorrect={false}
-              />
-              <Pressable
-                onPress={handleDeleteAccount}
-                disabled={!isConfirmMatch || deleting}
-                style={({ pressed }) => [
-                  styles.deleteBtn,
-                  { backgroundColor: colors.danger, opacity: !isConfirmMatch || deleting ? 0.4 : pressed ? 0.85 : 1 },
-                ]}
-              >
-                {deleting ? (
-                  <ActivityIndicator color="#fff" />
-                ) : (
-                  <>
-                    <Ionicons name="trash-outline" size={18} color="#fff" />
-                    <Text style={styles.deleteBtnText}>Permanently Delete Account</Text>
-                  </>
-                )}
-              </Pressable>
-              <Pressable onPress={handleClose} style={styles.cancelBtn}>
-                <Text style={[styles.cancelBtnText, { color: colors.primary }]}>Cancel — Keep My Account</Text>
-              </Pressable>
-            </>
-          ) : (
-            <>
-              <Text style={[styles.body, { color: colors.textSecondary }]}>
-                For your security, please re-enter your password before deleting your account.
-              </Text>
-              <Text style={[styles.instruction, { color: colors.textSecondary }]}>Password for {user.email}</Text>
-              <View style={styles.passwordRow}>
-                <TextInput
-                  style={[styles.input, { flex: 1, backgroundColor: colors.surfaceLight, borderColor: colors.surfaceBorder, color: colors.text }]}
-                  placeholder="Enter your password"
-                  placeholderTextColor={colors.textMuted}
-                  value={password}
-                  onChangeText={setPassword}
-                  secureTextEntry={!showPassword}
-                  autoCapitalize="none"
-                  autoCorrect={false}
-                />
-                <Pressable onPress={() => setShowPassword(!showPassword)} style={[styles.eyeBtn, { backgroundColor: colors.surfaceLight, borderColor: colors.surfaceBorder }]}>
-                  <Ionicons
-                    name={showPassword ? "eye-off-outline" : "eye-outline"}
-                    size={20}
-                    color={colors.textMuted}
-                  />
-                </Pressable>
-              </View>
-              <Pressable
-                onPress={handleDeleteAccount}
-                disabled={!password.trim() || deleting}
-                style={({ pressed }) => [
-                  styles.deleteBtn,
-                  { backgroundColor: colors.danger, opacity: !password.trim() || deleting ? 0.4 : pressed ? 0.85 : 1 },
-                ]}
-              >
-                {deleting ? (
-                  <ActivityIndicator color="#fff" />
-                ) : (
-                  <>
-                    <Ionicons name="trash-outline" size={18} color="#fff" />
-                    <Text style={styles.deleteBtnText}>Confirm & Delete Account</Text>
-                  </>
-                )}
-              </Pressable>
-              <Pressable onPress={handleClose} style={styles.cancelBtn}>
-                <Text style={[styles.cancelBtnText, { color: colors.primary }]}>Cancel — Keep My Account</Text>
-              </Pressable>
-            </>
-          )}
-        </Pressable>
-      </Pressable>
-    </Modal>
+          <Pressable
+            onPress={handleDeleteAccount}
+            disabled={!password.trim() || deleting}
+            style={({ pressed }) => [
+              styles.deleteBtn,
+              { backgroundColor: colors.danger, opacity: !password.trim() || deleting ? 0.4 : pressed ? 0.85 : 1 },
+            ]}
+          >
+            {deleting ? (
+              <ActivityIndicator color="#fff" />
+            ) : (
+              <>
+                <Ionicons name="trash-outline" size={18} color="#fff" />
+                <Text style={styles.deleteBtnText}>Confirm & Delete Account</Text>
+              </>
+            )}
+          </Pressable>
+          <Pressable onPress={handleClose} style={styles.cancelBtn}>
+            <Text style={[styles.cancelBtnText, { color: colors.primary }]}>Cancel — Keep My Account</Text>
+          </Pressable>
+        </>
+      )}
+    </BottomSheet>
   );
 }
 
 const styles = StyleSheet.create({
-  overlay: { flex: 1, backgroundColor: "transparent", justifyContent: "flex-end" },
-  box: {
-    borderTopLeftRadius: 26, borderTopRightRadius: 26,
-    padding: 24, paddingBottom: 40, borderTopWidth: 1.5,
-  },
   header: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 14 },
   titleRow: { flexDirection: "row", alignItems: "center", gap: 8 },
   title: { fontSize: 18, fontFamily: "Inter_700Bold" },
@@ -219,6 +213,6 @@ const styles = StyleSheet.create({
     paddingVertical: 16, borderRadius: 14, marginBottom: 10,
   },
   deleteBtnText: { fontSize: 16, fontFamily: "Inter_700Bold", color: "#FFFFFF" },
-  cancelBtn: { alignItems: "center", paddingVertical: 12 },
+  cancelBtn: { alignItems: "center", paddingVertical: 12, marginBottom: 4 },
   cancelBtnText: { fontSize: 14, fontFamily: "Inter_600SemiBold" },
 });

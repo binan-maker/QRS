@@ -12,6 +12,7 @@ import { router, useFocusEffect } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useTopInset } from "@/lib/utils/platform";
 import * as Haptics from "@/lib/haptics";
 import Animated, { FadeInDown, FadeIn } from "react-native-reanimated";
 import { useTheme } from "@/contexts/ThemeContext";
@@ -85,7 +86,7 @@ export default function FavoritesScreen() {
   const { colors } = useTheme();
   const { user } = useAuth();
   const insets = useSafeAreaInsets();
-  const topInset = Platform.OS === "web" ? 67 : insets.top;
+  const topInset = useTopInset();
   const tabBarHeight = 62 + insets.bottom + 8;
 
   const [favorites, setFavorites] = useState<FavoriteItem[]>([]);

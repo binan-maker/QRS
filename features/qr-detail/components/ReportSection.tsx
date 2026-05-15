@@ -2,6 +2,7 @@ import React from "react";
 import { View, Text, StyleSheet, Pressable, ActivityIndicator } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useTheme } from "@/contexts/ThemeContext";
+import { REPORT_TYPES } from "@/features/qr-detail/data/reportTypes";
 
 interface Props {
   userReport: string | null;
@@ -12,12 +13,6 @@ interface Props {
 const ReportSection = React.memo(function ReportSection({ userReport, reportLoading, onReport }: Props) {
   const { colors } = useTheme();
 
-  const REPORT_TYPES = [
-    { key: "safe", label: "Safe", icon: "shield-checkmark", color: colors.safe, bg: colors.safeDim },
-    { key: "scam", label: "Scam", icon: "warning", color: colors.danger, bg: colors.dangerDim },
-    { key: "fake", label: "Fake", icon: "close-circle", color: colors.warning, bg: colors.warningDim },
-    { key: "spam", label: "Spam", icon: "mail-unread", color: colors.accent, bg: colors.accentDim },
-  ];
 
   return (
     <View style={styles.section}>
@@ -34,20 +29,20 @@ const ReportSection = React.memo(function ReportSection({ userReport, reportLoad
               disabled={!!reportLoading}
               style={({ pressed }) => [
                 styles.reportBtn,
-                { backgroundColor: r.bg, borderColor: r.color + "50" },
-                isSelected && { borderColor: r.color, borderWidth: 2 },
+                { backgroundColor: r.bg(colors), borderColor: r.color(colors) + "50" },
+                isSelected && { borderColor: r.color(colors), borderWidth: 2 },
                 { opacity: pressed || (reportLoading && !isLoading) ? 0.7 : 1 },
               ]}
             >
               {isLoading ? (
-                <ActivityIndicator size="small" color={r.color} />
+                <ActivityIndicator size="small" color={r.color(colors)} />
               ) : (
-                <Ionicons name={r.icon as any} size={22} color={r.color} />
+                <Ionicons name={r.icon as any} size={22} color={r.color(colors)} />
               )}
-              <Text style={[styles.reportBtnText, { color: r.color }]}>{r.label}</Text>
+              <Text style={[styles.reportBtnText, { color: r.color(colors) }]}>{r.label}</Text>
               {isSelected ? (
                 <View style={styles.selectedCheck}>
-                  <Ionicons name="checkmark-circle" size={14} color={r.color} />
+                  <Ionicons name="checkmark-circle" size={14} color={r.color(colors)} />
                 </View>
               ) : null}
             </Pressable>

@@ -4,6 +4,7 @@ import { router, useLocalSearchParams, useFocusEffect } from "expo-router";
 import { safePush } from "@/lib/utils/navigation";
 import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useTopInset } from "@/lib/utils/platform";
 import { LinearGradient } from "expo-linear-gradient";
 import { useTheme } from "@/contexts/ThemeContext";
 import { useSettings } from "@/features/settings/hooks/useSettings";
@@ -37,7 +38,7 @@ const THEME_OPTIONS: { key: ThemeMode; label: string; icon: keyof typeof Ionicon
 
 export default function SettingsScreen() {
   const insets = useSafeAreaInsets();
-  const topInset = Platform.OS === "web" ? 67 : insets.top;
+  const topInset = useTopInset();
   const { colors, mode, setMode } = useTheme();
   const { width } = useWindowDimensions();
 

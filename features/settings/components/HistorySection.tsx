@@ -4,20 +4,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTheme } from "@/contexts/ThemeContext";
 import { makeSettingsStyles } from "@/features/settings/styles";
-import SkeletonBox from "@/components/ui/SkeletonBox";
-
-function SkeletonListRow() {
-  const { colors } = useTheme();
-  return (
-    <View style={{ flexDirection: "row", alignItems: "center", gap: 12, paddingVertical: 14, paddingHorizontal: 16, borderBottomWidth: 1, borderBottomColor: colors.surfaceBorder }}>
-      <SkeletonBox width={40} height={40} borderRadius={12} />
-      <View style={{ flex: 1, gap: 8 }}>
-        <SkeletonBox width="70%" height={12} />
-        <SkeletonBox width="40%" height={10} />
-      </View>
-    </View>
-  );
-}
+import SkeletonListRow from "@/features/settings/components/SkeletonListRow";
 
 function getContentIcon(type: string): keyof typeof Ionicons.glyphMap {
   switch (type) {

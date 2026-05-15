@@ -233,3 +233,46 @@ export function makeCommonStyleDefs(c: AppColors) {
 }
 
 export type CommonStyleDefs = ReturnType<typeof makeCommonStyleDefs>;
+
+// ── Design token style helpers ────────────────────────────────────────────────
+// Use these instead of repeating the same object in every component.
+
+export function cardStyle(c: AppColors) {
+  return {
+    borderRadius: 16,
+    borderWidth: 1,
+    padding: 16,
+    backgroundColor: c.surface,
+    borderColor: c.surfaceBorder,
+  } as const;
+}
+
+export function dividerStyle(c: AppColors) {
+  return {
+    height: StyleSheet.hairlineWidth,
+    backgroundColor: c.surfaceBorder,
+  } as const;
+}
+
+export function rowHeaderStyle() {
+  return {
+    flexDirection: "row" as const,
+    alignItems: "center" as const,
+    justifyContent: "space-between" as const,
+    marginBottom: 14,
+  } as const;
+}
+
+export function pillStyle(color: string) {
+  return {
+    flexDirection: "row" as const,
+    alignItems: "center" as const,
+    gap: 5,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 100,
+    borderWidth: 1,
+    borderColor: color + "40",
+    backgroundColor: color + "14",
+  } as const;
+}

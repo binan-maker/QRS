@@ -1,14 +1,14 @@
 import {
-  View, Text, Modal, Pressable, ScrollView, TextInput,
+  View, Text, Pressable, ScrollView, TextInput,
   StyleSheet, useWindowDimensions, ActivityIndicator,
 } from "react-native";
 import { useState, useMemo, useEffect, memo } from "react";
 import { Ionicons } from "@expo/vector-icons";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Animated, { FadeIn } from "react-native-reanimated";
 import { useTheme } from "@/contexts/ThemeContext";
 import { CategoryRegistryService } from "@/lib/services/category-registry-service";
 import type { CategorySchema, CategorySearchResult } from "@/lib/schemas/CategorySchema";
+import BottomSheet from "@/components/ui/BottomSheet";
 
 interface Props {
   visible: boolean;
@@ -32,7 +32,6 @@ const TAG_FILTERS = [
 
 function TemplatePickerModal({ visible, selectedPreset, onSelect, onClose }: Props) {
   const { colors } = useTheme();
-  const insets = useSafeAreaInsets();
   const { height: screenHeight } = useWindowDimensions();
 
   const [search, setSearch] = useState("");
@@ -113,155 +112,140 @@ function TemplatePickerModal({ visible, selectedPreset, onSelect, onClose }: Pro
   const totalCount = allCategories.length;
 
   return (
-    <Modal
+    <BottomSheet
       visible={visible}
-      transparent
-      animationType="fade"
-      onRequestClose={handleClose}
-      statusBarTranslucent
+      onClose={handleClose}
+      maxHeight={sheetHeight}
+      sheetStyle={{
+        paddingHorizontal: 0,
+        backgroundColor: colors.background,
+      }}
     >
-      <View style={styles.overlay}>
-        <Pressable style={styles.backdrop} onPress={handleClose} />
-        <View
-          style={[
-            styles.sheet,
-            {
-              backgroundColor: colors.background,
-              borderColor: colors.surfaceBorder,
-              height: sheetHeight,
-              paddingBottom: insets.bottom + 16,
-            },
-          ]}
-        >
-          <View style={[styles.handle, { backgroundColor: colors.surfaceBorder }]} />
-
-          {/* Header */}
-          <View style={styles.header}>
-            <View style={{ flex: 1 }}>
-              <Text style={[styles.title, { color: colors.text }]}>Choose QR Type</Text>
-              <Text style={[styles.subtitle, { color: colors.textMuted }]}>
-                {totalCount} types available worldwide
-              </Text>
-            </View>
-            <Pressable
-              onPress={handleClose}
-              style={[styles.closeBtn, { backgroundColor: colors.surfaceLight }]}
-            >
-              <Ionicons name="close" size={18} color={colors.textSecondary} />
-            </Pressable>
-          </View>
-
-          {/* Search */}
-          <View style={[styles.searchWrap, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
-            <Ionicons name="search-outline" size={16} color={colors.textMuted} />
-            <TextInput
-              style={[styles.searchInput, { color: colors.text }]}
-              value={search}
-              onChangeText={setSearch}
-              placeholder="What do you need a QR for?"
-              placeholderTextColor={colors.textMuted}
-              autoCapitalize="none"
-              autoCorrect={false}
-              autoFocus={false}
-              returnKeyType="search"
-            />
-            {search.length > 0 && (
-              <Pressable onPress={() => setSearch("")} hitSlop={8}>
-                <Ionicons name="close-circle" size={16} color={colors.textMuted} />
-              </Pressable>
-            )}
-          </View>
-
-          {/* Tag filter chips */}
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.tagRow}
-          >
-            {TAG_FILTERS.map(t => {
-              const active = activeTag === t.key;
-              return (
-                <Pressable
-                  key={t.key}
-                  onPress={() => setActiveTag(t.key)}
-                  style={[
-                    styles.tagChip,
-                    {
-                      backgroundColor: active ? colors.primaryDim : colors.surface,
-                      borderColor: active ? colors.primary + "60" : colors.surfaceBorder,
-                    },
-                  ]}
-                >
-                  <Text style={[styles.tagChipText, { color: active ? colors.primary : colors.textMuted }]}>
-                    {t.label}
-                  </Text>
-                </Pressable>
-              );
-            })}
-          </ScrollView>
-
-          {/* List */}
-          {loading ? (
-            <View style={styles.loadingWrap}>
-              <ActivityIndicator size="small" color={colors.primary} />
-              <Text style={[styles.loadingText, { color: colors.textMuted }]}>Loading categories…</Text>
-            </View>
-          ) : (
-            <ScrollView
-              showsVerticalScrollIndicator={false}
-              style={{ flex: 1 }}
-              keyboardShouldPersistTaps="handled"
-              contentContainerStyle={{ paddingBottom: 16 }}
-            >
-              {searchResults === null ? (
-                <Animated.View entering={FadeIn.duration(300)}>
-                  <SectionHeader
-                    label="All Types"
-                    sublabel={`${totalCount} types available`}
-                    colors={colors}
-                  />
-                  <View style={styles.catItems}>
-                    {allCategories
-                      .sort((a, b) => b.popularity - a.popularity)
-                      .map(cat => (
-                        <CategoryRow
-                          key={cat.id}
-                          category={cat}
-                          isSelected={cat.presetIdx === selectedPreset}
-                          onPress={() => handleSelect(cat)}
-                          colors={colors}
-                        />
-                      ))}
-                  </View>
-                </Animated.View>
-              ) : searchResults.length === 0 ? (
-                <EmptyState query={search} activeTag={activeTag} colors={colors} />
-              ) : (
-                <Animated.View entering={FadeIn.duration(200)}>
-                  <SectionHeader
-                    label={search ? `Results for "${search}"` : TAG_FILTERS.find(t => t.key === activeTag)?.label ?? ""}
-                    sublabel={`${searchResults.length} type${searchResults.length !== 1 ? "s" : ""} found`}
-                    colors={colors}
-                  />
-                  <View style={styles.catItems}>
-                    {searchResults.map(({ category: cat, matchedOn }) => (
-                      <CategoryRow
-                        key={cat.id}
-                        category={cat}
-                        isSelected={cat.presetIdx === selectedPreset}
-                        onPress={() => handleSelect(cat)}
-                        colors={colors}
-                        matchedOn={matchedOn}
-                      />
-                    ))}
-                  </View>
-                </Animated.View>
-              )}
-            </ScrollView>
-          )}
+      {/* Header */}
+      <View style={styles.header}>
+        <View style={{ flex: 1 }}>
+          <Text style={[styles.title, { color: colors.text }]}>Choose QR Type</Text>
+          <Text style={[styles.subtitle, { color: colors.textMuted }]}>
+            {totalCount} types available worldwide
+          </Text>
         </View>
+        <Pressable
+          onPress={handleClose}
+          style={[styles.closeBtn, { backgroundColor: colors.surfaceLight }]}
+        >
+          <Ionicons name="close" size={18} color={colors.textSecondary} />
+        </Pressable>
       </View>
-    </Modal>
+
+      {/* Search */}
+      <View style={[styles.searchWrap, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
+        <Ionicons name="search-outline" size={16} color={colors.textMuted} />
+        <TextInput
+          style={[styles.searchInput, { color: colors.text }]}
+          value={search}
+          onChangeText={setSearch}
+          placeholder="What do you need a QR for?"
+          placeholderTextColor={colors.textMuted}
+          autoCapitalize="none"
+          autoCorrect={false}
+          autoFocus={false}
+          returnKeyType="search"
+        />
+        {search.length > 0 && (
+          <Pressable onPress={() => setSearch("")} hitSlop={8}>
+            <Ionicons name="close-circle" size={16} color={colors.textMuted} />
+          </Pressable>
+        )}
+      </View>
+
+      {/* Tag filter chips */}
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={styles.tagRow}
+      >
+        {TAG_FILTERS.map(t => {
+          const active = activeTag === t.key;
+          return (
+            <Pressable
+              key={t.key}
+              onPress={() => setActiveTag(t.key)}
+              style={[
+                styles.tagChip,
+                {
+                  backgroundColor: active ? colors.primaryDim : colors.surface,
+                  borderColor: active ? colors.primary + "60" : colors.surfaceBorder,
+                },
+              ]}
+            >
+              <Text style={[styles.tagChipText, { color: active ? colors.primary : colors.textMuted }]}>
+                {t.label}
+              </Text>
+            </Pressable>
+          );
+        })}
+      </ScrollView>
+
+      {/* List */}
+      {loading ? (
+        <View style={styles.loadingWrap}>
+          <ActivityIndicator size="small" color={colors.primary} />
+          <Text style={[styles.loadingText, { color: colors.textMuted }]}>Loading categories…</Text>
+        </View>
+      ) : (
+        <ScrollView
+          showsVerticalScrollIndicator={false}
+          style={{ flex: 1 }}
+          keyboardShouldPersistTaps="handled"
+          contentContainerStyle={{ paddingBottom: 16 }}
+        >
+          {searchResults === null ? (
+            <Animated.View entering={FadeIn.duration(300)}>
+              <SectionHeader
+                label="All Types"
+                sublabel={`${totalCount} types available`}
+                colors={colors}
+              />
+              <View style={styles.catItems}>
+                {allCategories
+                  .sort((a, b) => b.popularity - a.popularity)
+                  .map(cat => (
+                    <CategoryRow
+                      key={cat.id}
+                      category={cat}
+                      isSelected={cat.presetIdx === selectedPreset}
+                      onPress={() => handleSelect(cat)}
+                      colors={colors}
+                    />
+                  ))}
+              </View>
+            </Animated.View>
+          ) : searchResults.length === 0 ? (
+            <EmptyState query={search} activeTag={activeTag} colors={colors} />
+          ) : (
+            <Animated.View entering={FadeIn.duration(200)}>
+              <SectionHeader
+                label={search ? `Results for "${search}"` : TAG_FILTERS.find(t => t.key === activeTag)?.label ?? ""}
+                sublabel={`${searchResults.length} type${searchResults.length !== 1 ? "s" : ""} found`}
+                colors={colors}
+              />
+              <View style={styles.catItems}>
+                {searchResults.map(({ category: cat, matchedOn }) => (
+                  <CategoryRow
+                    key={cat.id}
+                    category={cat}
+                    isSelected={cat.presetIdx === selectedPreset}
+                    onPress={() => handleSelect(cat)}
+                    colors={colors}
+                    matchedOn={matchedOn}
+                  />
+                ))}
+              </View>
+            </Animated.View>
+          )}
+        </ScrollView>
+      )}
+    </BottomSheet>
   );
 }
 
@@ -349,17 +333,6 @@ function EmptyState({ query, activeTag, colors }: { query: string; activeTag: st
 export default memo(TemplatePickerModal);
 
 const styles = StyleSheet.create({
-  overlay: { flex: 1, justifyContent: "flex-end" },
-  backdrop: { ...StyleSheet.absoluteFillObject, backgroundColor: "rgba(0,0,0,0.5)" },
-  sheet: {
-    borderTopLeftRadius: 28, borderTopRightRadius: 28,
-    borderTopWidth: 1, borderLeftWidth: 1, borderRightWidth: 1,
-    paddingTop: 12, overflow: "hidden",
-  },
-  handle: {
-    width: 40, height: 4, borderRadius: 2,
-    alignSelf: "center", marginBottom: 8,
-  },
   header: {
     flexDirection: "row", alignItems: "flex-start",
     justifyContent: "space-between",

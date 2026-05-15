@@ -7,6 +7,8 @@ import { router } from "expo-router";
 import { safePush } from "@/lib/utils/navigation";
 import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useTopInset } from "@/lib/utils/platform";
+import ScreenHeader from "@/components/ui/ScreenHeader";
 import { useTheme } from "@/contexts/ThemeContext";
 import { useAuth } from "@/contexts/AuthContext";
 import {
@@ -24,7 +26,7 @@ export default function FriendsScreen() {
   const insets = useSafeAreaInsets();
   const { colors } = useTheme();
   const { user } = useAuth();
-  const topInset = Platform.OS === "web" ? 67 : insets.top;
+  const topInset = useTopInset();
 
   const [tab, setTab] = useState<Tab>("friends");
   const [friends, setFriends] = useState<FriendEntry[]>([]);
@@ -126,23 +128,20 @@ export default function FriendsScreen() {
   const listData = tab === "friends" ? friends : requests;
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.background }]}>
+    <View style={[styles.container, { backgroundColor: colors.background, paddingTop: topInset + 8 }]}>
       {/* Nav */}
-      <View style={[styles.nav, { paddingTop: topInset + 8 }]}>
-        <Pressable
-          onPress={() => router.canGoBack() ? router.back() : router.replace("/(tabs)/profile" as any)}
-          style={[styles.navBack, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}
-        >
-          <Ionicons name="chevron-back" size={22} color={colors.text} />
-        </Pressable>
-        <Text style={[styles.navTitle, { color: colors.text }]}>Friends</Text>
-        <Pressable
-          onPress={() => safePush("/search")}
-          style={[styles.navAdd, { backgroundColor: colors.primaryDim, borderColor: colors.primary + "40" }]}
-        >
-          <Ionicons name="person-add-outline" size={18} color={colors.primary} />
-        </Pressable>
-      </View>
+      <ScreenHeader
+        title="Friends"
+        onBack={() => router.canGoBack() ? router.back() : router.replace("/(tabs)/profile" as any)}
+        right={
+          <Pressable
+            onPress={() => safePush("/search")}
+            style={[styles.navAdd, { backgroundColor: colors.primaryDim, borderColor: colors.primary + "40" }]}
+          >
+            <Ionicons name="person-add-outline" size={18} color={colors.primary} />
+          </Pressable>
+        }
+      />
 
       {/* Tabs */}
       <View style={[styles.tabs, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>

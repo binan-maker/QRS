@@ -13,6 +13,7 @@ import { Image } from "expo-image";
 import { router } from "expo-router";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useTopInset } from "@/lib/utils/platform";
 import { LinearGradient } from "expo-linear-gradient";
 import { Swipeable } from "react-native-gesture-handler";
 import * as Haptics from "@/lib/haptics";
@@ -189,7 +190,7 @@ function HomeScreen() {
   const { user, recentScans, isLoading, refreshing, onRefresh, deleteScan, pulseStyle } = useHome();
   const { cachedUrl: photoURL } = useAvatar();
 
-  const topInset = Platform.OS === "web" ? 67 : insets.top;
+  const topInset = useTopInset();
   const { width } = useWindowDimensions();
 
   // Memoize styles — only recomputes when colors or screen width changes

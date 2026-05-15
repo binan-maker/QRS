@@ -9,6 +9,8 @@ import {
 import { router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useTopInset } from "@/lib/utils/platform";
+import ScreenHeader from "@/components/ui/ScreenHeader";
 import { useTheme } from "@/contexts/ThemeContext";
 
 function StepCard({ number, icon, title, desc, tips, totalSteps = 6 }: { number: number; icon: string; title: string; desc: string; tips?: string[]; totalSteps?: number }) {
@@ -85,17 +87,11 @@ function WarnBox({ text }: { text: string }) {
 export default function HowItWorksScreen() {
   const { colors } = useTheme();
   const insets = useSafeAreaInsets();
-  const topInset = Platform.OS === "web" ? 67 : insets.top;
+  const topInset = useTopInset();
 
   return (
     <View style={[styles.container, { paddingTop: topInset, backgroundColor: colors.background }]}>
-      <View style={[styles.navBar, { borderBottomColor: colors.surfaceBorder }]}>
-        <Pressable onPress={() => router.back()} style={[styles.backBtn, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
-          <Ionicons name="chevron-back" size={24} color={colors.text} />
-        </Pressable>
-        <Text style={[styles.navTitle, { color: colors.text }]}>How It Works</Text>
-        <View style={{ width: 40 }} />
-      </View>
+      <ScreenHeader title="How It Works" />
 
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={[styles.scrollContent, { paddingBottom: insets.bottom + 40 }]}>
         <View style={[styles.heroBanner, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>

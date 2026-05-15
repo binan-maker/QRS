@@ -9,6 +9,8 @@ import {
 import { router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useTopInset } from "@/lib/utils/platform";
+import ScreenHeader from "@/components/ui/ScreenHeader";
 import { LinearGradient } from "expo-linear-gradient";
 import { useTheme } from "@/contexts/ThemeContext";
 import type { AppColors } from "@/constants/colors";
@@ -61,20 +63,11 @@ function WarnBox({ text, colors }: { text: string; colors: AppColors }) {
 export default function TermsScreen() {
   const { colors } = useTheme();
   const insets = useSafeAreaInsets();
-  const topInset = Platform.OS === "web" ? 67 : insets.top;
+  const topInset = useTopInset();
 
   return (
     <View style={[styles.container, { paddingTop: topInset, backgroundColor: colors.background }]}>
-      <View style={[styles.navBar, { borderBottomColor: colors.surfaceBorder }]}>
-        <Pressable
-          onPress={() => router.back()}
-          style={[styles.backBtn, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}
-        >
-          <Ionicons name="chevron-back" size={22} color={colors.text} />
-        </Pressable>
-        <Text style={[styles.navTitle, { color: colors.text }]}>Terms of Service</Text>
-        <View style={{ width: 40 }} />
-      </View>
+      <ScreenHeader title="Terms of Service" />
 
       <ScrollView
         showsVerticalScrollIndicator={false}

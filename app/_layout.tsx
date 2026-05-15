@@ -26,6 +26,7 @@ import {
 } from "@expo-google-fonts/inter";
 import { WEB_MAX_WIDTH } from "@/lib/utils/platform";
 import ConsentModal, { hasUserConsented } from "@/components/ConsentModal";
+import { ToastProvider } from "@/components/ui/Toast";
 
 SplashScreen.preventAutoHideAsync();
 
@@ -188,8 +189,10 @@ export default function RootLayout() {
         <QueryClientProvider client={queryClient}>
           <AuthProvider>
             <AvatarProvider>
-              <SplashGate fontsReady={fontsReady} consentReady={consentReady} />
-              <ConsentGatedApp onReady={() => setConsentReady(true)} />
+              <ToastProvider>
+                <SplashGate fontsReady={fontsReady} consentReady={consentReady} />
+                <ConsentGatedApp onReady={() => setConsentReady(true)} />
+              </ToastProvider>
             </AvatarProvider>
           </AuthProvider>
         </QueryClientProvider>

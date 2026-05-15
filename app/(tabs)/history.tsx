@@ -15,6 +15,7 @@ import { router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useTopInset } from "@/lib/utils/platform";
 import * as Haptics from "@/lib/haptics";
 import { useTheme } from "@/contexts/ThemeContext";
 import { useHistory, type HistoryItem, type Filter } from "@/features/history/hooks/useHistory";
@@ -116,7 +117,7 @@ function HistoryScreen() {
   const [searchQuery, setSearchQuery] = useState("");
   const searchInputRef = useRef<TextInput>(null);
 
-  const topInset = Platform.OS === "web" ? 67 : insets.top;
+  const topInset = useTopInset();
   const { width } = useWindowDimensions();
   const s = Math.min(Math.max(width / 390, 0.82), 1.0);
   const rf = useCallback((size: number) => Math.round(size * s), [s]);

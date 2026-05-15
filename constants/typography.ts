@@ -12,6 +12,11 @@ function scale(size: number): number {
   return Math.round(PixelRatio.roundToNearestPixel(clamped));
 }
 
+export const FONT_REGULAR = "Inter_400Regular";
+export const FONT_MEDIUM = "Inter_500Medium";
+export const FONT_SEMIBOLD = "Inter_600SemiBold";
+export const FONT_BOLD = "Inter_700Bold";
+
 export const fs = {
   xs: scale(12),
   sm: scale(13),

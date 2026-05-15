@@ -4,6 +4,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { StatusBar } from "expo-status-bar";
 import { CameraView, useCameraPermissions } from "expo-camera";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useTopInset } from "@/lib/utils/platform";
 import Reanimated, { FadeIn, FadeInDown } from "react-native-reanimated";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
@@ -159,7 +160,7 @@ export default function ScannerScreen() {
   const cameraReadyTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const insets = useSafeAreaInsets();
   const { colors } = useTheme();
-  const topInset = Platform.OS === "web" ? 67 : insets.top;
+  const topInset = useTopInset();
   const bottomInset = Math.max(insets.bottom, 24);
 
   const [showDonationBanner, setShowDonationBanner] = useState(false);

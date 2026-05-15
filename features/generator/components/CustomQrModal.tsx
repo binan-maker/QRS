@@ -1,13 +1,12 @@
-import React, { useState, useCallback, useEffect, memo, useRef } from "react";
+import React, { useState, useCallback, useEffect, memo } from "react";
 import {
-  View, Text, Modal, Pressable, ScrollView, TextInput,
+  View, Text, Pressable, ScrollView, TextInput,
   StyleSheet, useWindowDimensions, Platform,
   KeyboardAvoidingView,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Reanimated, {
-  FadeIn, FadeInDown, SlideInDown,
+  FadeIn, FadeInDown,
 } from "react-native-reanimated";
 import { LinearGradient } from "expo-linear-gradient";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -20,6 +19,7 @@ import {
   FIELD_TYPE_DEFS,
   CUSTOM_TYPES_STORAGE_KEY,
 } from "@/features/generator/types/CustomQrType";
+import BottomSheet from "@/components/ui/BottomSheet";
 
 function uid() { return Math.random().toString(36).slice(2, 9); }
 
@@ -31,7 +31,6 @@ interface Props {
 
 function CustomQrModal({ visible, onClose, onConfirm }: Props) {
   const { colors } = useTheme();
-  const insets = useSafeAreaInsets();
   const { height: screenH } = useWindowDimensions();
   const sheetH = Math.min(screenH * 0.88, 660);
 
@@ -119,255 +118,218 @@ function CustomQrModal({ visible, onClose, onConfirm }: Props) {
   const PRIMARY = "#6366F1";
 
   return (
-    <Modal
+    <BottomSheet
       visible={visible}
-      transparent
-      animationType="fade"
-      onRequestClose={handleClose}
-      statusBarTranslucent
+      onClose={handleClose}
+      maxHeight={sheetH}
+      sheetStyle={{ paddingHorizontal: 0, backgroundColor: colors.background }}
     >
-      <View style={S.overlay}>
-        <Pressable style={S.backdrop} onPress={handleClose} />
+      {/* Header */}
+      <View style={S.header}>
+        <View style={[S.headerBadge, { backgroundColor: PRIMARY + "18", borderColor: PRIMARY + "30" }]}>
+          <Text style={[S.headerBadgeText, { color: PRIMARY }]}>QR</Text>
+        </View>
+        <View style={{ flex: 1, marginLeft: 10 }}>
+          <Text style={[S.headerTitle, { color: colors.text }]}>Custom QR Builder</Text>
+          <Text style={[S.headerSub, { color: colors.textMuted }]}>Define your own type & fields</Text>
+        </View>
+        <Pressable onPress={handleClose} hitSlop={10} style={[S.closeBtn, { backgroundColor: colors.surfaceLight }]}>
+          <Ionicons name="close" size={16} color={colors.textSecondary} />
+        </Pressable>
+      </View>
 
-        <Reanimated.View
-          entering={SlideInDown.duration(340).springify().damping(18)}
-          style={[S.sheet, {
-            backgroundColor: colors.background,
-            borderColor: colors.surfaceBorder,
-            maxHeight: sheetH,
-            paddingBottom: insets.bottom + 12,
-          }]}
+      {/* Divider */}
+      <View style={[S.headerDivider, { backgroundColor: colors.surfaceBorder }]} />
+
+      <KeyboardAvoidingView
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        style={{ flex: 1 }}
+      >
+        <ScrollView
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+          contentContainerStyle={S.scroll}
         >
-          {/* Handle */}
-          <View style={[S.handle, { backgroundColor: colors.surfaceBorder }]} />
+          {/* Previous types */}
+          {savedTypes.length > 0 && (
+            <Reanimated.View entering={FadeIn.duration(200)}>
+              <Text style={[S.sectionLabel, { color: colors.textMuted }]}>RECENT</Text>
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={{ gap: 6, paddingBottom: 2 }}
+              >
+                {savedTypes.map((t) => (
+                  <Pressable
+                    key={t.id}
+                    onPress={() => handleUseSaved(t)}
+                    style={({ pressed }) => [
+                      S.savedChip,
+                      {
+                        backgroundColor: pressed ? PRIMARY + "14" : colors.surface,
+                        borderColor: pressed ? PRIMARY + "50" : colors.surfaceBorder,
+                      },
+                    ]}
+                  >
+                    <View style={[S.savedChipDot, { backgroundColor: PRIMARY }]} />
+                    <Text style={[S.savedChipText, { color: colors.text }]} numberOfLines={1}>
+                      {t.name}
+                    </Text>
+                    <Text style={[S.savedChipCount, { color: colors.textMuted }]}>
+                      {t.fields.length}f
+                    </Text>
+                  </Pressable>
+                ))}
+              </ScrollView>
+              <View style={[S.divider, { backgroundColor: colors.surfaceBorder }]} />
+            </Reanimated.View>
+          )}
 
-          {/* Header */}
-          <View style={S.header}>
-            <View style={[S.headerBadge, { backgroundColor: PRIMARY + "18", borderColor: PRIMARY + "30" }]}>
-              <Text style={[S.headerBadgeText, { color: PRIMARY }]}>QR</Text>
+          {/* Type name input */}
+          <Reanimated.View entering={FadeIn.duration(220).delay(20)}>
+            <Text style={[S.inputLabel, { color: colors.textMuted }]}>TYPE NAME</Text>
+            <View style={[S.nameRow, {
+              backgroundColor: colors.surface,
+              borderColor: typeName.trim() ? PRIMARY + "55" : colors.surfaceBorder,
+            }]}>
+              <Text style={[S.namePrefix, { color: typeName.trim() ? PRIMARY : colors.textMuted }]}>#</Text>
+              <TextInput
+                style={[S.nameInput, { color: colors.text }]}
+                value={typeName}
+                onChangeText={setTypeName}
+                placeholder="e.g. WhatsApp, YouTube"
+                placeholderTextColor={colors.textMuted}
+                autoCapitalize="words"
+                autoCorrect={false}
+                returnKeyType="next"
+              />
+              {typeName.length > 0 && (
+                <Pressable onPress={() => setTypeName("")} hitSlop={10}>
+                  <Ionicons name="close-circle" size={15} color={colors.textMuted} />
+                </Pressable>
+              )}
             </View>
-            <View style={{ flex: 1, marginLeft: 10 }}>
-              <Text style={[S.headerTitle, { color: colors.text }]}>Custom QR Builder</Text>
-              <Text style={[S.headerSub, { color: colors.textMuted }]}>Define your own type & fields</Text>
-            </View>
-            <Pressable onPress={handleClose} hitSlop={10} style={[S.closeBtn, { backgroundColor: colors.surfaceLight }]}>
-              <Ionicons name="close" size={16} color={colors.textSecondary} />
-            </Pressable>
-          </View>
+          </Reanimated.View>
 
-          {/* Divider */}
-          <View style={[S.headerDivider, { backgroundColor: colors.surfaceBorder }]} />
+          {/* Fields */}
+          <Reanimated.View entering={FadeIn.duration(240).delay(40)} style={{ gap: 8 }}>
+            <Text style={[S.inputLabel, { color: colors.textMuted }]}>FIELDS</Text>
 
-          <KeyboardAvoidingView
-            behavior={Platform.OS === "ios" ? "padding" : "height"}
-            style={{ flex: 1 }}
-          >
-            <ScrollView
-              showsVerticalScrollIndicator={false}
-              keyboardShouldPersistTaps="handled"
-              contentContainerStyle={S.scroll}
-            >
+            {fields.map((field, idx) => (
+              <Reanimated.View
+                key={field.id}
+                entering={FadeInDown.duration(180).delay(idx * 25)}
+              >
+                <View style={[S.fieldCard, {
+                  backgroundColor: colors.surface,
+                  borderColor: field.label.trim() ? PRIMARY + "30" : colors.surfaceBorder,
+                }]}>
+                  <View style={S.fieldTop}>
+                    <Text style={[S.fieldIdx, { color: PRIMARY }]}>
+                      {String(idx + 1).padStart(2, "0")}
+                    </Text>
+                    <TextInput
+                      style={[S.fieldLabel, { color: colors.text, flex: 1 }]}
+                      value={field.label}
+                      onChangeText={v => updateFieldLabel(field.id, v)}
+                      placeholder="Field label"
+                      placeholderTextColor={colors.textMuted}
+                      autoCapitalize="words"
+                      autoCorrect={false}
+                      returnKeyType="next"
+                    />
+                    {fields.length > 1 && (
+                      <Pressable onPress={() => removeField(field.id)} hitSlop={12} style={S.deleteBtn}>
+                        <Ionicons name="remove" size={13} color={colors.danger + "CC"} />
+                      </Pressable>
+                    )}
+                  </View>
 
-              {/* Previous types */}
-              {savedTypes.length > 0 && (
-                <Reanimated.View entering={FadeIn.duration(200)}>
-                  <Text style={[S.sectionLabel, { color: colors.textMuted }]}>RECENT</Text>
+                  {/* Type chips */}
                   <ScrollView
                     horizontal
                     showsHorizontalScrollIndicator={false}
-                    contentContainerStyle={{ gap: 6, paddingBottom: 2 }}
+                    style={{ marginTop: 8 }}
+                    contentContainerStyle={{ gap: 5 }}
                   >
-                    {savedTypes.map((t) => (
-                      <Pressable
-                        key={t.id}
-                        onPress={() => handleUseSaved(t)}
-                        style={({ pressed }) => [
-                          S.savedChip,
-                          {
-                            backgroundColor: pressed ? PRIMARY + "14" : colors.surface,
-                            borderColor: pressed ? PRIMARY + "50" : colors.surfaceBorder,
-                          },
-                        ]}
-                      >
-                        <View style={[S.savedChipDot, { backgroundColor: PRIMARY }]} />
-                        <Text style={[S.savedChipText, { color: colors.text }]} numberOfLines={1}>
-                          {t.name}
-                        </Text>
-                        <Text style={[S.savedChipCount, { color: colors.textMuted }]}>
-                          {t.fields.length}f
-                        </Text>
-                      </Pressable>
-                    ))}
+                    {FIELD_TYPE_DEFS.map(t => {
+                      const active = field.type === t.value;
+                      return (
+                        <Pressable
+                          key={t.value}
+                          onPress={() => updateFieldType(field.id, t.value)}
+                          style={[
+                            S.typeChip,
+                            {
+                              backgroundColor: active ? t.color + "1A" : colors.surfaceLight,
+                              borderColor: active ? t.color + "60" : "transparent",
+                              borderWidth: active ? 1 : 0,
+                            },
+                          ]}
+                        >
+                          <Ionicons
+                            name={t.icon as any}
+                            size={11}
+                            color={active ? t.color : colors.textMuted}
+                          />
+                          <Text style={[S.typeChipText, { color: active ? t.color : colors.textMuted }]}>
+                            {t.label}
+                          </Text>
+                        </Pressable>
+                      );
+                    })}
                   </ScrollView>
-                  <View style={[S.divider, { backgroundColor: colors.surfaceBorder }]} />
-                </Reanimated.View>
-              )}
-
-              {/* Type name input */}
-              <Reanimated.View entering={FadeIn.duration(220).delay(20)}>
-                <Text style={[S.inputLabel, { color: colors.textMuted }]}>TYPE NAME</Text>
-                <View style={[S.nameRow, {
-                  backgroundColor: colors.surface,
-                  borderColor: typeName.trim() ? PRIMARY + "55" : colors.surfaceBorder,
-                }]}>
-                  <Text style={[S.namePrefix, { color: typeName.trim() ? PRIMARY : colors.textMuted }]}>#</Text>
-                  <TextInput
-                    style={[S.nameInput, { color: colors.text }]}
-                    value={typeName}
-                    onChangeText={setTypeName}
-                    placeholder="e.g. WhatsApp, YouTube"
-                    placeholderTextColor={colors.textMuted}
-                    autoCapitalize="words"
-                    autoCorrect={false}
-                    returnKeyType="next"
-                  />
-                  {typeName.length > 0 && (
-                    <Pressable onPress={() => setTypeName("")} hitSlop={10}>
-                      <Ionicons name="close-circle" size={15} color={colors.textMuted} />
-                    </Pressable>
-                  )}
                 </View>
               </Reanimated.View>
+            ))}
 
-              {/* Fields */}
-              <Reanimated.View entering={FadeIn.duration(240).delay(40)} style={{ gap: 8 }}>
-                <Text style={[S.inputLabel, { color: colors.textMuted }]}>FIELDS</Text>
+            {/* Add field button */}
+            <Pressable
+              onPress={addField}
+              style={({ pressed }) => [
+                S.addBtn,
+                {
+                  backgroundColor: pressed ? PRIMARY + "10" : colors.surface,
+                  borderColor: colors.surfaceBorder,
+                },
+              ]}
+            >
+              <Ionicons name="add" size={18} color={PRIMARY} />
+            </Pressable>
+          </Reanimated.View>
 
-                {fields.map((field, idx) => (
-                  <Reanimated.View
-                    key={field.id}
-                    entering={FadeInDown.duration(180).delay(idx * 25)}
-                  >
-                    <View style={[S.fieldCard, {
-                      backgroundColor: colors.surface,
-                      borderColor: field.label.trim() ? PRIMARY + "30" : colors.surfaceBorder,
-                    }]}>
-                      <View style={S.fieldTop}>
-                        <Text style={[S.fieldIdx, { color: PRIMARY }]}>
-                          {String(idx + 1).padStart(2, "0")}
-                        </Text>
-                        <TextInput
-                          style={[S.fieldLabel, { color: colors.text, flex: 1 }]}
-                          value={field.label}
-                          onChangeText={v => updateFieldLabel(field.id, v)}
-                          placeholder="Field label"
-                          placeholderTextColor={colors.textMuted}
-                          autoCapitalize="words"
-                          autoCorrect={false}
-                          returnKeyType="next"
-                        />
-                        {fields.length > 1 && (
-                          <Pressable onPress={() => removeField(field.id)} hitSlop={12} style={S.deleteBtn}>
-                            <Ionicons name="remove" size={13} color={colors.danger + "CC"} />
-                          </Pressable>
-                        )}
-                      </View>
+          {/* Create button */}
+          <Pressable
+            onPress={handleConfirm}
+            disabled={!canCreate}
+            style={({ pressed }) => ({
+              opacity: canCreate ? (pressed ? 0.82 : 1) : 0.38,
+              transform: [{ scale: pressed && canCreate ? 0.98 : 1 }],
+              borderRadius: 16,
+              overflow: "hidden" as const,
+              marginTop: 6,
+            })}
+          >
+            <LinearGradient
+              colors={[PRIMARY, "#818CF8"]}
+              style={S.createBtn}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 0 }}
+            >
+              <Ionicons name="flash-outline" size={17} color="#fff" />
+              <Text style={S.createBtnText}>Create QR Type</Text>
+            </LinearGradient>
+          </Pressable>
 
-                      {/* Type chips */}
-                      <ScrollView
-                        horizontal
-                        showsHorizontalScrollIndicator={false}
-                        style={{ marginTop: 8 }}
-                        contentContainerStyle={{ gap: 5 }}
-                      >
-                        {FIELD_TYPE_DEFS.map(t => {
-                          const active = field.type === t.value;
-                          return (
-                            <Pressable
-                              key={t.value}
-                              onPress={() => updateFieldType(field.id, t.value)}
-                              style={[
-                                S.typeChip,
-                                {
-                                  backgroundColor: active ? t.color + "1A" : colors.surfaceLight,
-                                  borderColor: active ? t.color + "60" : "transparent",
-                                  borderWidth: active ? 1 : 0,
-                                },
-                              ]}
-                            >
-                              <Ionicons
-                                name={t.icon as any}
-                                size={11}
-                                color={active ? t.color : colors.textMuted}
-                              />
-                              <Text style={[S.typeChipText, { color: active ? t.color : colors.textMuted }]}>
-                                {t.label}
-                              </Text>
-                            </Pressable>
-                          );
-                        })}
-                      </ScrollView>
-                    </View>
-                  </Reanimated.View>
-                ))}
-
-                {/* Add field — compact "+" button */}
-                <Pressable
-                  onPress={addField}
-                  style={({ pressed }) => [
-                    S.addBtn,
-                    {
-                      backgroundColor: pressed ? PRIMARY + "10" : colors.surface,
-                      borderColor: colors.surfaceBorder,
-                    },
-                  ]}
-                >
-                  <Ionicons name="add" size={18} color={PRIMARY} />
-                </Pressable>
-              </Reanimated.View>
-
-              {/* Create button */}
-              <Pressable
-                onPress={handleConfirm}
-                disabled={!canCreate}
-                style={({ pressed }) => ({
-                  opacity: canCreate ? (pressed ? 0.82 : 1) : 0.38,
-                  transform: [{ scale: pressed && canCreate ? 0.98 : 1 }],
-                  borderRadius: 16,
-                  overflow: "hidden" as const,
-                  marginTop: 6,
-                })}
-              >
-                <LinearGradient
-                  colors={[PRIMARY, "#818CF8"]}
-                  style={S.createBtn}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 0 }}
-                >
-                  <Ionicons name="flash-outline" size={17} color="#fff" />
-                  <Text style={S.createBtnText}>Create QR Type</Text>
-                </LinearGradient>
-              </Pressable>
-
-            </ScrollView>
-          </KeyboardAvoidingView>
-        </Reanimated.View>
-      </View>
-    </Modal>
+        </ScrollView>
+      </KeyboardAvoidingView>
+    </BottomSheet>
   );
 }
 
 export default memo(CustomQrModal);
 
 const S = StyleSheet.create({
-  overlay: {
-    flex: 1,
-    justifyContent: "flex-end",
-    backgroundColor: "rgba(0,0,0,0.60)",
-  },
-  backdrop: { ...StyleSheet.absoluteFillObject },
-  sheet: {
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
-    borderTopWidth: 1,
-    borderLeftWidth: 1,
-    borderRightWidth: 1,
-    overflow: "hidden",
-  },
-  handle: {
-    width: 36, height: 3, borderRadius: 2,
-    alignSelf: "center", marginTop: 8, marginBottom: 6,
-  },
   header: {
     flexDirection: "row", alignItems: "center",
     paddingHorizontal: 16, paddingTop: 2, paddingBottom: 10,

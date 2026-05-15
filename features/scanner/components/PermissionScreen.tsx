@@ -1,10 +1,10 @@
 import { View, Text, StyleSheet, Pressable, Linking } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import Reanimated, { FadeInDown, FadeIn } from "react-native-reanimated";
-import { LinearGradient } from "expo-linear-gradient";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTheme } from "@/contexts/ThemeContext";
 import { useAppTranslation } from "@/lib/i18n/useAppTranslation";
+import GradientButton from "@/components/ui/GradientButton";
 
 interface Props {
   canAskAgain: boolean;
@@ -45,20 +45,13 @@ export default function PermissionScreen({ canAskAgain, onRequestPermission }: P
 
         {/* Buttons */}
         <Reanimated.View entering={FadeInDown.duration(350).delay(220)} style={styles.btns}>
-          <Pressable
+          <GradientButton
+            label="Enable Camera"
+            icon="camera"
             onPress={onRequestPermission}
-            style={({ pressed }) => [styles.primary, { opacity: pressed ? 0.85 : 1 }]}
-          >
-            <LinearGradient
-              colors={[colors.primary, colors.primaryShade ?? colors.primary]}
-              style={styles.primaryInner}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 0 }}
-            >
-              <Ionicons name="camera" size={19} color="#fff" />
-              <Text style={styles.primaryText}>Enable Camera</Text>
-            </LinearGradient>
-          </Pressable>
+            size="lg"
+            style={styles.primary}
+          />
 
           {!canAskAgain && (
             <Pressable

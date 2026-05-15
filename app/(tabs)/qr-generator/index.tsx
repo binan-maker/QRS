@@ -11,6 +11,7 @@ import {
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useTopInset } from "@/lib/utils/platform";
 import Reanimated, { FadeIn, FadeInDown } from "react-native-reanimated";
 import { router } from "expo-router";
 import { useTheme } from "@/contexts/ThemeContext";
@@ -63,7 +64,7 @@ export default function QrGeneratorLanding() {
   const insets = useSafeAreaInsets();
   const { colors } = useTheme();
   const { width } = useWindowDimensions();
-  const topInset = Platform.OS === "web" ? 67 : insets.top;
+  const topInset = useTopInset();
   const tabBarHeight = 62 + insets.bottom + 8;
 
   const styles = useMemo(() => makeStyles(colors, width), [colors, width]);

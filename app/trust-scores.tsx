@@ -9,6 +9,8 @@ import {
 import { router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useTopInset } from "@/lib/utils/platform";
+import ScreenHeader from "@/components/ui/ScreenHeader";
 import { LinearGradient } from "expo-linear-gradient";
 import { useTheme } from "@/contexts/ThemeContext";
 
@@ -109,7 +111,7 @@ function WarnBox({ text }: { text: string }) {
 export default function TrustScoresScreen() {
   const { colors } = useTheme();
   const insets = useSafeAreaInsets();
-  const topInset = Platform.OS === "web" ? 67 : insets.top;
+  const topInset = useTopInset();
 
   return (
     <View style={[styles.container, { paddingTop: topInset, backgroundColor: colors.background }]}>
@@ -117,16 +119,7 @@ export default function TrustScoresScreen() {
         backgroundColor: colors.isDark ? "rgba(0,229,255,0.04)" : "rgba(0,111,255,0.04)",
       }]} />
 
-      <View style={[styles.navBar, { borderBottomColor: colors.surfaceBorder }]}>
-        <Pressable
-          onPress={() => router.back()}
-          style={[styles.backBtn, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}
-        >
-          <Ionicons name="chevron-back" size={22} color={colors.text} />
-        </Pressable>
-        <Text style={[styles.navTitle, { color: colors.text }]}>Trust Scores</Text>
-        <View style={{ width: 40 }} />
-      </View>
+      <ScreenHeader title="Trust Scores" />
 
       <ScrollView
         showsVerticalScrollIndicator={false}

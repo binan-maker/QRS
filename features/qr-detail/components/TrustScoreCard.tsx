@@ -4,6 +4,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { formatCompactNumber } from "@/lib/number-format";
 import { useTheme } from "@/contexts/ThemeContext";
+import { REPORT_TYPES } from "@/features/qr-detail/data/reportTypes";
 
 interface TrustInfo {
   score: number;
@@ -36,13 +37,6 @@ const TrustScoreCard = React.memo(function TrustScoreCard({
   scanCountFrozen, ownerScanCount,
 }: Props) {
   const { colors, isDark } = useTheme();
-
-  const REPORT_TYPES = [
-    { key: "safe", label: "Safe",  icon: "shield-checkmark-outline" as const, color: colors.safe    },
-    { key: "scam", label: "Scam",  icon: "warning-outline" as const,          color: colors.danger  },
-    { key: "fake", label: "Fake",  icon: "close-circle-outline" as const,     color: colors.warning },
-    { key: "spam", label: "Spam",  icon: "mail-unread-outline" as const,      color: colors.primary },
-  ];
 
   const total = REPORT_TYPES.reduce((sum, r) => sum + (reportCounts[r.key] || 0), 0);
   const hasScore = trustInfo.score >= 0;
@@ -180,11 +174,11 @@ const TrustScoreCard = React.memo(function TrustScoreCard({
               return (
                 <View key={rt.key} style={styles.breakdownRow}>
                   <View style={styles.breakdownLabelRow}>
-                    <Ionicons name={rt.icon} size={12} color={rt.color} />
+                    <Ionicons name={rt.outlineIcon as any} size={12} color={rt.color(colors)} />
                     <Text style={[styles.breakdownLabel, { color: colors.textSecondary }]} maxFontSizeMultiplier={1}>
                       {rt.label}
                     </Text>
-                    <Text style={[styles.breakdownPct, { color: rt.color }]} maxFontSizeMultiplier={1}>
+                    <Text style={[styles.breakdownPct, { color: rt.color(colors) }]} maxFontSizeMultiplier={1}>
                       {count} {count === 1 ? "person" : "people"}
                     </Text>
                   </View>
@@ -192,7 +186,7 @@ const TrustScoreCard = React.memo(function TrustScoreCard({
                     <View
                       style={[
                         styles.barFill,
-                        { width: `${pct}%` as any, backgroundColor: rt.color },
+                        { width: `${pct}%` as any, backgroundColor: rt.color(colors) },
                       ]}
                     />
                   </View>

@@ -1,14 +1,8 @@
-import React, { useEffect } from "react";
-import { View, Text, StyleSheet, Pressable, Modal } from "react-native";
-import Animated, {
-  useSharedValue,
-  useAnimatedStyle,
-  withTiming,
-  Easing,
-} from "react-native-reanimated";
+import React from "react";
+import { View, Text, StyleSheet, Pressable } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTheme } from "@/contexts/ThemeContext";
+import BottomSheet from "@/components/ui/BottomSheet";
 
 interface Props {
   visible: boolean;
@@ -28,142 +22,73 @@ const PhotoModal = React.memo(function PhotoModal({
   onClose,
 }: Props) {
   const { colors } = useTheme();
-  const insets = useSafeAreaInsets();
-
-  // ── Animation ──────────────────────────────────────────────────────────────
-  const backdropOpacity = useSharedValue(0);
-  const sheetTranslateY = useSharedValue(300);
-
-  useEffect(() => {
-    if (visible) {
-      backdropOpacity.value = withTiming(1, { duration: 220, easing: Easing.out(Easing.ease) });
-      sheetTranslateY.value = withTiming(0, { duration: 260, easing: Easing.out(Easing.exp) });
-    } else {
-      backdropOpacity.value = withTiming(0, { duration: 180, easing: Easing.in(Easing.ease) });
-      sheetTranslateY.value = withTiming(300, { duration: 200, easing: Easing.in(Easing.ease) });
-    }
-  }, [visible]);
-
-  const backdropStyle = useAnimatedStyle(() => ({ opacity: backdropOpacity.value }));
-  const sheetStyle = useAnimatedStyle(() => ({
-    transform: [{ translateY: sheetTranslateY.value }],
-  }));
 
   return (
-    <Modal visible={visible} transparent animationType="none" onRequestClose={onClose}>
-      {/* ── Dark backdrop ── */}
-      <Pressable style={styles.overlay} onPress={onClose}>
-        <Animated.View style={[styles.backdrop, backdropStyle]} />
+    <BottomSheet visible={visible} onClose={onClose}>
+      <Text style={[styles.title, { color: colors.text }]}>Profile Photo</Text>
+
+      <Pressable
+        style={({ pressed }) => [styles.option, { opacity: pressed ? 0.7 : 1 }]}
+        onPress={onCamera}
+      >
+        <View style={[styles.optionIcon, { backgroundColor: colors.primaryDim }]}>
+          <Ionicons name="camera-outline" size={22} color={colors.primary} />
+        </View>
+        <View style={styles.optionText}>
+          <Text style={[styles.optionLabel, { color: colors.text }]}>Take Photo</Text>
+          <Text style={[styles.optionSub, { color: colors.textSecondary }]}>Use your camera</Text>
+        </View>
       </Pressable>
 
-      {/* ── Bottom sheet ── */}
-      <Animated.View
-        style={[
-          styles.sheet,
-          sheetStyle,
-          {
-            backgroundColor: colors.surface,
-            borderColor: colors.surfaceBorder,
-            paddingBottom: Math.max(insets.bottom, 28),
-          },
-        ]}
-        pointerEvents="box-none"
+      <View style={[styles.divider, { backgroundColor: colors.surfaceBorder }]} />
+
+      <Pressable
+        style={({ pressed }) => [styles.option, { opacity: pressed ? 0.7 : 1 }]}
+        onPress={onGallery}
       >
-        <View style={[styles.handle, { backgroundColor: colors.surfaceBorder }]} />
-        <Text style={[styles.title, { color: colors.text }]}>Profile Photo</Text>
+        <View style={[styles.optionIcon, { backgroundColor: colors.accentDim }]}>
+          <Ionicons name="images-outline" size={22} color={colors.accent} />
+        </View>
+        <View style={styles.optionText}>
+          <Text style={[styles.optionLabel, { color: colors.text }]}>Choose from Gallery</Text>
+          <Text style={[styles.optionSub, { color: colors.textSecondary }]}>Pick an existing photo</Text>
+        </View>
+      </Pressable>
 
-        {/* Take Photo */}
-        <Pressable
-          style={({ pressed }) => [styles.option, { opacity: pressed ? 0.7 : 1 }]}
-          onPress={onCamera}
-        >
-          <View style={[styles.optionIcon, { backgroundColor: colors.primaryDim }]}>
-            <Ionicons name="camera-outline" size={22} color={colors.primary} />
-          </View>
-          <View style={styles.optionText}>
-            <Text style={[styles.optionLabel, { color: colors.text }]}>Take Photo</Text>
-            <Text style={[styles.optionSub, { color: colors.textSecondary }]}>Use your camera</Text>
-          </View>
-        </Pressable>
+      {hasPhoto && onRemove && (
+        <>
+          <View style={[styles.divider, { backgroundColor: colors.surfaceBorder }]} />
+          <Pressable
+            style={({ pressed }) => [styles.option, { opacity: pressed ? 0.7 : 1 }]}
+            onPress={onRemove}
+          >
+            <View style={[styles.optionIcon, { backgroundColor: colors.dangerDim }]}>
+              <Ionicons name="trash-outline" size={22} color={colors.danger} />
+            </View>
+            <View style={styles.optionText}>
+              <Text style={[styles.optionLabel, { color: colors.danger }]}>Remove Photo</Text>
+              <Text style={[styles.optionSub, { color: colors.textSecondary }]}>Revert to default avatar</Text>
+            </View>
+          </Pressable>
+        </>
+      )}
 
-        <View style={[styles.divider, { backgroundColor: colors.surfaceBorder }]} />
-
-        {/* Choose from Gallery */}
-        <Pressable
-          style={({ pressed }) => [styles.option, { opacity: pressed ? 0.7 : 1 }]}
-          onPress={onGallery}
-        >
-          <View style={[styles.optionIcon, { backgroundColor: colors.accentDim }]}>
-            <Ionicons name="images-outline" size={22} color={colors.accent} />
-          </View>
-          <View style={styles.optionText}>
-            <Text style={[styles.optionLabel, { color: colors.text }]}>Choose from Gallery</Text>
-            <Text style={[styles.optionSub, { color: colors.textSecondary }]}>Pick an existing photo</Text>
-          </View>
-        </Pressable>
-
-        {/* Remove Photo — only shown if user has an app-uploaded photo */}
-        {hasPhoto && onRemove && (
-          <>
-            <View style={[styles.divider, { backgroundColor: colors.surfaceBorder }]} />
-            <Pressable
-              style={({ pressed }) => [styles.option, { opacity: pressed ? 0.7 : 1 }]}
-              onPress={onRemove}
-            >
-              <View style={[styles.optionIcon, { backgroundColor: colors.dangerDim }]}>
-                <Ionicons name="trash-outline" size={22} color={colors.danger} />
-              </View>
-              <View style={styles.optionText}>
-                <Text style={[styles.optionLabel, { color: colors.danger }]}>Remove Photo</Text>
-                <Text style={[styles.optionSub, { color: colors.textSecondary }]}>Revert to default avatar</Text>
-              </View>
-            </Pressable>
-          </>
-        )}
-
-        <Pressable
-          style={({ pressed }) => [
-            styles.cancelBtn,
-            { backgroundColor: colors.surfaceLight, borderColor: colors.surfaceBorder, opacity: pressed ? 0.7 : 1 },
-          ]}
-          onPress={onClose}
-        >
-          <Text style={[styles.cancelText, { color: colors.textSecondary }]}>Cancel</Text>
-        </Pressable>
-      </Animated.View>
-    </Modal>
+      <Pressable
+        style={({ pressed }) => [
+          styles.cancelBtn,
+          { backgroundColor: colors.surfaceLight, borderColor: colors.surfaceBorder, opacity: pressed ? 0.7 : 1 },
+        ]}
+        onPress={onClose}
+      >
+        <Text style={[styles.cancelText, { color: colors.textSecondary }]}>Cancel</Text>
+      </Pressable>
+    </BottomSheet>
   );
 });
 
 export default PhotoModal;
 
 const styles = StyleSheet.create({
-  overlay: {
-    ...StyleSheet.absoluteFillObject,
-    justifyContent: "flex-end",
-  },
-  backdrop: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: "rgba(0,0,0,0.52)",
-  },
-  sheet: {
-    position: "absolute",
-    bottom: 0,
-    left: 0,
-    right: 0,
-    borderTopLeftRadius: 26,
-    borderTopRightRadius: 26,
-    padding: 24,
-    borderWidth: 1,
-    borderBottomWidth: 0,
-  },
-  handle: {
-    width: 36,
-    height: 4,
-    borderRadius: 2,
-    alignSelf: "center",
-    marginBottom: 20,
-  },
   title: {
     fontSize: 17,
     fontFamily: "Inter_700Bold",

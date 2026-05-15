@@ -7,6 +7,7 @@ import {
 import { router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useTopInset } from "@/lib/utils/platform";
 import * as Haptics from "@/lib/haptics";
 import Animated, { FadeIn, FadeInDown } from "react-native-reanimated";
 import { LinearGradient } from "expo-linear-gradient";
@@ -34,7 +35,7 @@ export default function CreateGroupScreen() {
   const rf = (n: number) => Math.round(n * s);
   const sp = (n: number) => Math.round(n * s);
 
-  const topInset = Platform.OS === "web" ? 67 : insets.top;
+  const topInset = useTopInset();
 
   const [qrCodes, setQrCodes] = useState<GeneratedQrItem[]>([]);
   const [selected, setSelected] = useState<Set<string>>(new Set());

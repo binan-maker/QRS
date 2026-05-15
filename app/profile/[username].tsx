@@ -6,6 +6,7 @@ import {
 import { useLocalSearchParams, router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useTopInset } from "@/lib/utils/platform";
 import Animated, { FadeInDown } from "react-native-reanimated";
 import { useTheme } from "@/contexts/ThemeContext";
 import { useAuth } from "@/contexts/AuthContext";
@@ -38,7 +39,7 @@ export default function PublicProfileScreen() {
   const { colors } = useTheme();
   const { user } = useAuth();
   const insets = useSafeAreaInsets();
-  const topInset = Platform.OS === "web" ? 67 : insets.top;
+  const topInset = useTopInset();
 
   const { profile, loading, notFound, getGuardianRank } = usePublicProfile(username ?? "");
   const isOwnProfile = user?.id === profile?.userId;

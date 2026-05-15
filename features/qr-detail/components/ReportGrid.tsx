@@ -1,6 +1,7 @@
 import { View, Text, StyleSheet, Pressable } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useTheme } from "@/contexts/ThemeContext";
+import { RATE_TYPES } from "@/features/qr-detail/data/reportTypes";
 
 interface ReportGridProps {
   reportCounts: Record<string, number>;
@@ -12,12 +13,6 @@ interface ReportGridProps {
 
 export default function ReportGrid({ reportCounts: _reportCounts, userReport, isLoggedIn, isPayment, onReport }: ReportGridProps) {
   const { colors, isDark } = useTheme();
-
-  const REPORT_TYPES = [
-    { key: "safe", label: "Safe",  icon: "shield-checkmark" as const, color: colors.safe    },
-    { key: "scam", label: "Scam",  icon: "warning" as const,          color: colors.danger  },
-    { key: "spam", label: "Spam",  icon: "mail-unread" as const,      color: colors.primary },
-  ];
 
   return (
     <View style={styles.container}>
@@ -36,8 +31,9 @@ export default function ReportGrid({ reportCounts: _reportCounts, userReport, is
       </View>
 
       <View style={styles.row}>
-        {REPORT_TYPES.map((rt) => {
+        {RATE_TYPES.map((rt) => {
           const isSelected = userReport === rt.key;
+          const rtColor = rt.color(colors);
           return (
             <Pressable
               key={rt.key}
@@ -45,17 +41,17 @@ export default function ReportGrid({ reportCounts: _reportCounts, userReport, is
               style={({ pressed }) => [
                 styles.rateBtn,
                 isSelected
-                  ? { backgroundColor: rt.color + (isDark ? "22" : "14"), borderColor: rt.color, borderWidth: 1.5 }
+                  ? { backgroundColor: rtColor + (isDark ? "22" : "14"), borderColor: rtColor, borderWidth: 1.5 }
                   : { backgroundColor: isDark ? colors.surfaceLight : colors.background, borderColor: colors.surfaceBorder, borderWidth: 1 },
                 { opacity: pressed ? 0.75 : 1, transform: [{ scale: pressed ? 0.96 : 1 }] },
               ]}
             >
               <Ionicons
-                name={rt.icon}
+                name={rt.icon as any}
                 size={17}
-                color={isSelected ? rt.color : colors.textMuted}
+                color={isSelected ? rtColor : colors.textMuted}
               />
-              <Text style={[styles.rateBtnLabel, { color: isSelected ? rt.color : colors.textSecondary }]}>
+              <Text style={[styles.rateBtnLabel, { color: isSelected ? rtColor : colors.textSecondary }]}>
                 {rt.label}
               </Text>
             </Pressable>

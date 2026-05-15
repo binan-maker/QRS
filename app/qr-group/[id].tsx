@@ -6,6 +6,7 @@ import {
 import { router, useLocalSearchParams } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useTopInset } from "@/lib/utils/platform";
 import Animated, { FadeIn, FadeInDown } from "react-native-reanimated";
 import { LinearGradient } from "expo-linear-gradient";
 import QRCode from "react-native-qrcode-svg";
@@ -88,7 +89,7 @@ export default function QrGroupDetailScreen() {
   const s = Math.min(Math.max(width / 390, 0.82), 1.0);
   const rf = (n: number) => Math.round(n * s);
   const sp = (n: number) => Math.round(n * s);
-  const topInset = Platform.OS === "web" ? 67 : insets.top;
+  const topInset = useTopInset();
   const bottomInset = Platform.OS === "web" ? 0 : insets.bottom;
 
   const [group, setGroup] = useState<QrGroup | null>(null);

@@ -7,6 +7,7 @@ import { FlashList } from "@shopify/flash-list";
 import { router } from "expo-router";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useTopInset } from "@/lib/utils/platform";
 import * as Haptics from "@/lib/haptics";
 import Animated, { FadeInDown, FadeIn } from "react-native-reanimated";
 import { LinearGradient } from "expo-linear-gradient";
@@ -481,7 +482,7 @@ export default function MyQrCodesScreen() {
   const rf = (size: number) => Math.round(size * s);
   const sp = (v: number)    => Math.round(v * s);
 
-  const topInset          = Platform.OS === "web" ? 67 : insets.top;
+  const topInset = useTopInset();
   const bottomInset       = insets.bottom;
   const contentPaddingBottom = bottomInset + sp(36);
 

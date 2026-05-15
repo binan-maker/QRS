@@ -11,11 +11,11 @@ import {
   RefreshControl,
   StyleSheet,
   Keyboard,
-  Modal,
   Share,
   Linking,
   Animated as RNAnimated,
 } from "react-native";
+import BottomSheet from "@/components/ui/BottomSheet";
 import * as Haptics from "expo-haptics";
 
 import { StatusBar } from "expo-status-bar";
@@ -23,6 +23,7 @@ import { useLocalSearchParams, router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useTopInset } from "@/lib/utils/platform";
 import Animated, {
   FadeInDown,
   FadeIn,
@@ -656,7 +657,7 @@ export default function QrDetailScreen() {
   const q = useQrDetail(id);
   const { isOnline } = useNetworkStatus();
   const [offlineToastKey, setOfflineToastKey] = useState(0);
-  const topInset = Platform.OS === "web" ? 67 : insets.top;
+  const topInset = useTopInset();
   const trust = q.getTrustInfo();
   const verdict = q.getCombinedVerdict();
   const currentContent = q.qrCode?.content || q.offlineContent || "";
@@ -1266,15 +1267,11 @@ export default function QrDetailScreen() {
       </KeyboardAvoidingView>
 
       {/* ── Owner Info Bottom Sheet ─────────────────────────────── */}
-      <Modal
+      <BottomSheet
         visible={ownerSheetOpen}
-        transparent
-        animationType="fade"
-        onRequestClose={() => setOwnerSheetOpen(false)}
+        onClose={() => setOwnerSheetOpen(false)}
+        sheetStyle={{ paddingHorizontal: 0 }}
       >
-        <Pressable style={commentMenuStyles.backdrop} onPress={() => setOwnerSheetOpen(false)}>
-          <View style={[ownerSheetStyles.sheet, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder, paddingBottom: Math.max(insets.bottom, 36) }]}>
-            <View style={[commentMenuStyles.handle, { backgroundColor: colors.surfaceBorder }]} />
             {q.ownerInfo && (
               <>
                 <View style={ownerSheetStyles.avatarRow}>
@@ -1343,20 +1340,14 @@ export default function QrDetailScreen() {
             <Pressable onPress={() => setOwnerSheetOpen(false)} style={commentMenuStyles.cancelBtn}>
               <Text style={[commentMenuStyles.cancelText, { color: colors.textSecondary }]}>Close</Text>
             </Pressable>
-          </View>
-        </Pressable>
-      </Modal>
+      </BottomSheet>
 
       {/* Comment 3-dot Menu — YouTube-style bottom sheet */}
-      <Modal
+      <BottomSheet
         visible={q.commentMenuId !== null}
-        transparent
-        animationType="fade"
-        onRequestClose={() => q.setCommentMenuId(null)}
+        onClose={() => q.setCommentMenuId(null)}
+        sheetStyle={{ paddingHorizontal: 0 }}
       >
-        <Pressable style={commentMenuStyles.backdrop} onPress={() => q.setCommentMenuId(null)}>
-          <View style={[commentMenuStyles.sheet, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder, paddingBottom: Math.max(insets.bottom, 36) }]}>
-            <View style={[commentMenuStyles.handle, { backgroundColor: colors.surfaceBorder }]} />
             {q.commentMenuOwner ? (
               <Pressable
                 onPress={() => {
@@ -1389,20 +1380,15 @@ export default function QrDetailScreen() {
             <Pressable onPress={() => q.setCommentMenuId(null)} style={commentMenuStyles.cancelBtn}>
               <Text style={[commentMenuStyles.cancelText, { color: colors.textSecondary }]}>Cancel</Text>
             </Pressable>
-          </View>
-        </Pressable>
-      </Modal>
+      </BottomSheet>
 
       {/* Modals */}
       {/* ── Overflow menu ─────────────────────────────────────────── */}
-      <Modal
+      <BottomSheet
         visible={overflowOpen}
-        transparent
-        animationType="fade"
-        onRequestClose={() => setOverflowOpen(false)}
+        onClose={() => setOverflowOpen(false)}
+        sheetStyle={{ paddingHorizontal: 0 }}
       >
-        <Pressable style={overflowStyles.backdrop} onPress={() => setOverflowOpen(false)}>
-          <Pressable style={[overflowStyles.sheet, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder, paddingBottom: Math.max(insets.bottom, 32) }]}>
 
             {/* ── Favorites ── */}
             <Pressable
@@ -1479,9 +1465,7 @@ export default function QrDetailScreen() {
               </View>
             </Pressable>
 
-          </Pressable>
-        </Pressable>
-      </Modal>
+      </BottomSheet>
 
       <CommentReportModal
         commentId={q.commentReportModal}

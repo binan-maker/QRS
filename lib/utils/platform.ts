@@ -1,4 +1,5 @@
 import { Platform, ViewStyle } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 /**
  * Cross-platform shadow helper.
@@ -47,6 +48,17 @@ export function pointerEvents(value: "auto" | "none" | "box-none" | "box-only"):
  * Wrap screen content with this on web.
  */
 export const WEB_MAX_WIDTH = 480;
+
+/**
+ * Returns the top inset for the current platform.
+ * On web, uses a fixed offset for the browser toolbar.
+ * On native, reads the real status-bar / notch height.
+ * Replace every `Platform.OS === "web" ? 67 : insets.top` with this.
+ */
+export function useTopInset(): number {
+  const insets = useSafeAreaInsets();
+  return Platform.OS === "web" ? 67 : insets.top;
+}
 
 export function webContainer(): ViewStyle {
   if (Platform.OS !== "web") return {};
