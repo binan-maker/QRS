@@ -19,73 +19,359 @@ const CONTENT_TYPE_LABEL: Record<string, string> = {
   contact: "Contact", email: "Email", phone: "Phone", whatsapp: "WhatsApp",
   instagram: "Instagram", twitter: "Twitter", youtube: "YouTube",
   linkedin: "LinkedIn", crypto: "Crypto", location: "Location",
-  calendar: "Event", zoom: "Zoom", event: "Event", social: "Social",
+  calendar: "Event", event: "Event", zoom: "Zoom", social: "Social",
+  telegram: "Telegram", facebook: "Facebook", spotify: "Spotify",
+  discord: "Discord", tiktok: "TikTok", media: "Media",
+  payment: "Payment", paymentlink: "Payment", scantopay: "Scan-to-Pay",
+  mobilepay: "Mobile Pay", grab: "GrabPay", bharatpay: "BharatPay",
+  reviewpage: "Review", googlereview: "Review",
+  restaurantmenu: "Menu", menucatalogue: "Menu",
+  donation: "Donation", paypal: "PayPal", venmo: "Venmo",
+  appdownload: "App", app: "App", sms: "SMS", document: "Document",
 };
+
+function getDetailContentType(item: any): string {
+  const stored = item.contentType as string || "text";
+  if (stored && stored !== "text") return stored;
+
+  const displayDest = item.displayDestination as string | null;
+  const content = item.content as string || "";
+  const src = displayDest || content;
+
+  if (!src) return stored;
+
+  if (src.startsWith("tel:")) return "phone";
+  if (src.startsWith("WIFI:")) return "wifi";
+  if (src.startsWith("upi://")) return "upi";
+  if (src.startsWith("BEGIN:VCALENDAR") || src.startsWith("BEGIN:VEVENT")) return "event";
+  if (src.startsWith("BEGIN:VCARD")) return "contact";
+  if (src.startsWith("SMSTO:") || src.startsWith("sms:")) return "sms";
+  if (src.startsWith("mailto:")) return "email";
+  if (src.includes("wa.me") || src.includes("whatsapp.com")) return "whatsapp";
+  if (src.includes("instagram.com") || src.includes("instagr.am")) return "instagram";
+  if (src.includes("twitter.com") || src.includes("x.com/")) return "twitter";
+  if (src.includes("youtube.com") || src.includes("youtu.be")) return "youtube";
+  if (src.includes("linkedin.com")) return "linkedin";
+  if (src.includes("t.me/") || src.includes("telegram.me/")) return "telegram";
+  if (src.includes("facebook.com") || src.includes("fb.com")) return "facebook";
+  if (src.includes("open.spotify.com")) return "spotify";
+  if (src.includes("discord.gg") || src.includes("discord.com")) return "discord";
+  if (src.includes("tiktok.com")) return "tiktok";
+  if (src.includes("paypal.me") || src.includes("paypal.com")) return "paypal";
+  if (src.includes("venmo.com")) return "venmo";
+  if (src.includes("zoom.us")) return "zoom";
+  if (/^bitcoin:|^ethereum:|^litecoin:|^solana:/.test(src)) return "crypto";
+  if (/^[\w.\-+]+@[\w]{2,}$/.test(src) && !/\.(com|in|org|net|io|co|app)$/.test(src.split("@")[1] || "")) return "upi";
+  if (/^\+?[\d]{7,15}$/.test(src.replace(/[\s\-()]/g, ""))) return "phone";
+  const withScheme = src.startsWith("http") ? src : `https://${src}`;
+  try {
+    const u = new URL(withScheme);
+    const h = u.hostname;
+    if (
+      h.includes(".") && h.length >= 4 &&
+      !/^(192\.168\.|10\.|172\.(1[6-9]|2\d|3[01])\.|127\.|localhost)/.test(h) &&
+      !u.pathname.startsWith("/guard/") && !u.pathname.startsWith("/go/")
+    ) return "url";
+  } catch {}
+  return stored;
+}
 
 function getDetailDisplayTitle(item: any): string {
   if (item.businessName) return item.businessName;
   const lbl = item.label as string | null;
   if (lbl) return lbl;
 
-  const displayDest = item.displayDestination as string | null;
-  if (displayDest) {
-    const withScheme = displayDest.startsWith("http") ? displayDest : `https://${displayDest}`;
-    try {
-      const u = new URL(withScheme);
-      if (u.hostname.includes(".") && u.hostname.length >= 4) return u.hostname.replace(/^www\./, "");
-    } catch {}
-    return displayDest.length > 45 ? displayDest.slice(0, 45) + "…" : displayDest;
-  }
-
-  const content = item.content as string || "";
-  if (content.startsWith("tel:")) return content.replace("tel:", "").trim();
-  if (content.startsWith("WIFI:")) { const m = content.match(/S:([^;]+)/); if (m) return m[1]; }
-  if (content.startsWith("upi://pay?")) {
-    try { const pa = new URLSearchParams(content.replace("upi://pay?", "")).get("pa"); if (pa) return pa; } catch {}
-  }
-  if (content.startsWith("BEGIN:VCALENDAR") || content.startsWith("BEGIN:VEVENT")) {
-    const m = content.match(/SUMMARY:([^\r\n]+)/); if (m) return m[1].trim();
-  }
-  try {
-    const url = new URL(content);
-    const host = url.hostname.replace(/^www\./, "");
-    const isLocal = /^(192\.168\.|10\.|127\.|localhost)/.test(host);
-    if (!isLocal && !url.pathname.startsWith("/guard/")) {
-      if (host === "wa.me" || host === "api.whatsapp.com") {
-        const phone = url.pathname.replace(/^\//, "");
-        if (phone) return phone;
-      }
-      return host;
-    }
-  } catch {}
-  return "QR Code";
-}
-
-function getDetailContentType(item: any): string {
-  const stored = item.contentType as string || "text";
-  if (stored !== "text") return stored;
-
-  const guardUuid = item.guardUuid as string | null;
-  if (!guardUuid) return stored;
-
+  const contentType = getDetailContentType(item);
   const displayDest = item.displayDestination as string | null;
   const content = item.content as string || "";
   const src = displayDest || content;
 
-  if (src.startsWith("tel:")) return "phone";
-  if (src.startsWith("WIFI:")) return "wifi";
-  if (src.startsWith("upi://")) return "upi";
-  if (src.startsWith("BEGIN:VCALENDAR") || src.startsWith("BEGIN:VEVENT")) return "event";
-  if (src.includes("wa.me") || src.includes("whatsapp")) return "whatsapp";
-  if (/^[\w.\-+]+@[\w]{2,}$/.test(src) && !/\.(com|in|org|net|io)$/.test(src.split("@")[1] || "")) return "upi";
-  if (/^\+?[\d]{7,15}$/.test(src.replace(/[\s\-()]/g, ""))) return "phone";
-  const withScheme = src.startsWith("http") ? src : `https://${src}`;
-  try {
-    const u = new URL(withScheme);
-    const h = u.hostname;
-    if (h.includes(".") && h.length >= 4 && !/^(192\.168\.|10\.|127\.|localhost)/.test(h) && !u.pathname.startsWith("/guard/")) return "url";
-  } catch {}
-  return stored;
+  switch (contentType) {
+    case "phone":
+    case "mobilepay":
+    case "grab":
+      return src.replace(/^tel:/, "").trim();
+    case "wifi": {
+      const m = src.match(/S:([^;]+)/);
+      if (m) return m[1];
+      break;
+    }
+    case "upi":
+    case "scantopay":
+    case "bharatqr": {
+      if (src.startsWith("upi://pay?")) {
+        try { const pa = new URLSearchParams(src.replace("upi://pay?", "")).get("pa"); if (pa) return pa; } catch {}
+      }
+      if (/^[\w.\-+]+@[\w]+$/.test(src)) return src;
+      break;
+    }
+    case "event":
+    case "calendar": {
+      if (src.startsWith("BEGIN:")) {
+        const m = src.match(/SUMMARY:([^\r\n]+)/);
+        if (m) return m[1].trim();
+      }
+      break;
+    }
+    case "contact": {
+      const m = src.match(/FN:([^\r\n]+)/);
+      if (m) return m[1].trim();
+      break;
+    }
+    case "sms":
+      return src.replace(/^SMSTO?:/i, "").split(":")[0].trim();
+    case "email":
+      return src.replace(/^mailto:/i, "").split("?")[0].trim();
+    case "whatsapp": {
+      try {
+        const u = new URL(src.startsWith("http") ? src : `https://${src}`);
+        if (u.hostname === "wa.me" || u.hostname === "api.whatsapp.com") {
+          const phone = u.pathname.replace(/^\//, "");
+          if (phone) return "+" + phone;
+        }
+      } catch {}
+      break;
+    }
+    case "instagram":
+    case "twitter":
+    case "telegram": {
+      const parts = src.replace(/\/$/, "").split("/");
+      const handle = parts[parts.length - 1] || "";
+      if (handle && !handle.includes(".")) return "@" + handle;
+      break;
+    }
+    case "tiktok": {
+      const handle = src.replace(/.*tiktok\.com\/@?/, "").replace(/\/$/, "");
+      if (handle) return "@" + handle.replace(/^@/, "");
+      break;
+    }
+    case "zoom": {
+      if (src.includes("zoom.us/j/")) {
+        return "Meeting " + (src.split("/j/")[1]?.split("?")[0] || "");
+      }
+      return "Zoom Meeting";
+    }
+  }
+
+  if (src) {
+    const isGuardOrGo = src.includes("/guard/") || src.includes("/go/");
+    const withScheme = src.startsWith("http") ? src : `https://${src}`;
+    try {
+      const u = new URL(withScheme);
+      const h = u.hostname.replace(/^www\./, "");
+      const isLocal = /^(192\.168\.|10\.|172\.(1[6-9]|2\d|3[01])\.|127\.|localhost)/.test(h);
+      if (!isLocal && !isGuardOrGo) {
+        if (h === "wa.me" || h === "api.whatsapp.com") {
+          const phone = u.pathname.replace(/^\//, "");
+          if (phone) return "+" + phone;
+        }
+        return h;
+      }
+    } catch {}
+    if (!isGuardOrGo) return src.length > 45 ? src.slice(0, 45) + "…" : src;
+  }
+
+  return "QR Code";
+}
+
+interface ContentDetailRow { label: string; value: string; icon: string; }
+
+function parseQrContentDetails(item: any): ContentDetailRow[] {
+  const contentType = getDetailContentType(item);
+  const displayDest = item.displayDestination as string | null;
+  const content = item.content as string || "";
+  const src = displayDest || content;
+
+  if (!src) return [];
+
+  const isGuardOrGo = src.includes("/guard/") || src.includes("/go/");
+
+  switch (contentType) {
+    case "phone":
+    case "mobilepay":
+    case "grab": {
+      const num = src.replace(/^tel:/, "").trim();
+      if (!num || isGuardOrGo) return [];
+      return [{ label: "Phone Number", value: num, icon: "call-outline" }];
+    }
+    case "wifi": {
+      if (!src.startsWith("WIFI:")) return [];
+      const ssid = src.match(/S:([^;]+)/)?.[1] || "";
+      const sec = src.match(/T:([^;]+)/)?.[1] || "WPA";
+      const hidden = src.includes("H:true");
+      const rows: ContentDetailRow[] = [];
+      if (ssid) rows.push({ label: "Network (SSID)", value: ssid, icon: "wifi-outline" });
+      rows.push({ label: "Security", value: sec === "nopass" ? "Open" : sec, icon: "shield-outline" });
+      if (hidden) rows.push({ label: "Hidden Network", value: "Yes", icon: "eye-off-outline" });
+      return rows;
+    }
+    case "upi":
+    case "scantopay":
+    case "bharatqr": {
+      if (src.startsWith("upi://pay?")) {
+        try {
+          const params = new URLSearchParams(src.replace("upi://pay?", ""));
+          const rows: ContentDetailRow[] = [];
+          const pa = params.get("pa"); const pn = params.get("pn"); const am = params.get("am");
+          if (pa) rows.push({ label: "UPI ID", value: pa, icon: "card-outline" });
+          if (pn) rows.push({ label: "Payee Name", value: pn, icon: "person-outline" });
+          if (am) rows.push({ label: "Amount", value: "₹" + am, icon: "cash-outline" });
+          if (rows.length > 0) return rows;
+        } catch {}
+      }
+      if (/^[\w.\-+]+@[\w]+$/.test(src)) return [{ label: "UPI ID", value: src, icon: "card-outline" }];
+      return [];
+    }
+    case "event":
+    case "calendar": {
+      if (!src.startsWith("BEGIN:")) return [];
+      const title = src.match(/SUMMARY:([^\r\n]+)/)?.[1]?.trim() || "";
+      const start = src.match(/DTSTART:([^\r\n]+)/)?.[1]?.trim() || "";
+      const loc = src.match(/LOCATION:([^\r\n]+)/)?.[1]?.trim() || "";
+      const desc = src.match(/DESCRIPTION:([^\r\n]+)/)?.[1]?.trim() || "";
+      const rows: ContentDetailRow[] = [];
+      if (title) rows.push({ label: "Event Title", value: title, icon: "calendar-outline" });
+      if (start) {
+        const ds = start.replace(/(\d{4})(\d{2})(\d{2})T(\d{2})(\d{2}).*/, "$3/$2/$1 $4:$5");
+        rows.push({ label: "Start", value: ds, icon: "time-outline" });
+      }
+      if (loc) rows.push({ label: "Location", value: loc, icon: "location-outline" });
+      if (desc) rows.push({ label: "Description", value: desc.length > 60 ? desc.slice(0, 60) + "…" : desc, icon: "document-text-outline" });
+      return rows;
+    }
+    case "contact": {
+      if (!src.startsWith("BEGIN:VCARD")) return [];
+      const fn = src.match(/FN:([^\r\n]+)/)?.[1]?.trim() || "";
+      const tel = src.match(/TEL[^:]*:([^\r\n]+)/)?.[1]?.trim() || "";
+      const mail = src.match(/EMAIL[^:]*:([^\r\n]+)/)?.[1]?.trim() || "";
+      const org = src.match(/ORG:([^\r\n]+)/)?.[1]?.trim() || "";
+      const url = src.match(/URL:([^\r\n]+)/)?.[1]?.trim() || "";
+      const rows: ContentDetailRow[] = [];
+      if (fn) rows.push({ label: "Name", value: fn, icon: "person-circle-outline" });
+      if (tel) rows.push({ label: "Phone", value: tel, icon: "call-outline" });
+      if (mail) rows.push({ label: "Email", value: mail, icon: "mail-outline" });
+      if (org) rows.push({ label: "Organisation", value: org, icon: "business-outline" });
+      if (url) rows.push({ label: "Website", value: url.replace(/^www\./, ""), icon: "link-outline" });
+      return rows;
+    }
+    case "sms": {
+      if (!src.startsWith("SMSTO") && !src.startsWith("sms:")) return [];
+      const phone = src.replace(/^SMSTO?:/i, "").split(":")[0].trim();
+      const msg = src.split(":").slice(2).join(":");
+      const rows: ContentDetailRow[] = [];
+      if (phone) rows.push({ label: "Phone", value: phone, icon: "chatbubble-outline" });
+      if (msg) rows.push({ label: "Message", value: msg.length > 60 ? msg.slice(0, 60) + "…" : msg, icon: "text-outline" });
+      return rows;
+    }
+    case "email": {
+      if (!src.startsWith("mailto:")) return [];
+      const address = src.replace(/^mailto:/i, "").split("?")[0].trim();
+      let subject = ""; let body = "";
+      try { const u = new URL(src); subject = u.searchParams.get("subject") || ""; body = u.searchParams.get("body") || ""; } catch {}
+      const rows: ContentDetailRow[] = [];
+      if (address) rows.push({ label: "Email Address", value: address, icon: "mail-outline" });
+      if (subject) rows.push({ label: "Subject", value: subject, icon: "text-outline" });
+      if (body) rows.push({ label: "Body", value: body.length > 60 ? body.slice(0, 60) + "…" : body, icon: "document-text-outline" });
+      return rows;
+    }
+    case "whatsapp": {
+      try {
+        const u = new URL(src.startsWith("http") ? src : `https://${src}`);
+        if (u.hostname === "wa.me" || u.hostname === "api.whatsapp.com") {
+          const phone = "+" + u.pathname.replace(/^\//, "");
+          const msg = u.searchParams.get("text") || "";
+          const rows: ContentDetailRow[] = [{ label: "WhatsApp Number", value: phone, icon: "logo-whatsapp" }];
+          if (msg) rows.push({ label: "Pre-filled Message", value: msg.length > 60 ? msg.slice(0, 60) + "…" : msg, icon: "text-outline" });
+          return rows;
+        }
+      } catch {}
+      if (/^\+?[\d]{7,15}$/.test(src.replace(/[\s\-()]/g, ""))) {
+        return [{ label: "WhatsApp Number", value: src, icon: "logo-whatsapp" }];
+      }
+      return [];
+    }
+    case "instagram": {
+      const parts = src.replace(/\/$/, "").split("/");
+      const handle = parts[parts.length - 1] || "";
+      if (!handle || handle.includes(".")) return [];
+      return [{ label: "Instagram", value: "@" + handle, icon: "logo-instagram" }];
+    }
+    case "twitter": {
+      const parts = src.replace(/\/$/, "").split("/");
+      const handle = parts[parts.length - 1] || "";
+      if (!handle || handle.includes(".")) return [];
+      return [{ label: "Twitter / X", value: "@" + handle, icon: "logo-twitter" }];
+    }
+    case "telegram": {
+      const parts = src.replace(/\/$/, "").split("/");
+      const handle = parts[parts.length - 1] || "";
+      if (!handle || handle.includes(".")) return [];
+      return [{ label: "Telegram", value: "@" + handle, icon: "send-outline" }];
+    }
+    case "tiktok": {
+      const handle = src.replace(/.*tiktok\.com\/@?/, "").replace(/\/$/, "");
+      if (!handle) return [];
+      return [{ label: "TikTok", value: "@" + handle.replace(/^@/, ""), icon: "musical-note-outline" }];
+    }
+    case "youtube": {
+      const rows: ContentDetailRow[] = [];
+      try {
+        const u = new URL(src.startsWith("http") ? src : `https://${src}`);
+        const channel = u.pathname.replace(/^\/(c\/|channel\/|@)?/, "").replace(/\/$/, "");
+        if (channel) rows.push({ label: "Channel", value: channel, icon: "logo-youtube" });
+      } catch {}
+      if (rows.length === 0) rows.push({ label: "YouTube", value: src, icon: "logo-youtube" });
+      return rows;
+    }
+    case "linkedin": {
+      const rows: ContentDetailRow[] = [];
+      try {
+        const u = new URL(src.startsWith("http") ? src : `https://${src}`);
+        const profile = u.pathname.replace(/^\/(in\/|company\/)?/, "").replace(/\/$/, "");
+        if (profile) rows.push({ label: "LinkedIn", value: profile, icon: "logo-linkedin" });
+      } catch {}
+      if (rows.length === 0) rows.push({ label: "LinkedIn", value: src, icon: "logo-linkedin" });
+      return rows;
+    }
+    case "zoom": {
+      let meetingId = "";
+      if (src.includes("zoom.us/j/")) meetingId = src.split("/j/")[1]?.split("?")[0] || "";
+      return meetingId ? [{ label: "Meeting ID", value: meetingId, icon: "videocam-outline" }] : [];
+    }
+    case "crypto": {
+      const coin = src.split(":")[0] || "crypto";
+      const address = src.split(":")[1]?.split("?")[0] || "";
+      const rows: ContentDetailRow[] = [
+        { label: "Coin", value: coin.charAt(0).toUpperCase() + coin.slice(1), icon: "logo-bitcoin" },
+      ];
+      if (address) rows.push({ label: "Wallet Address", value: address.length > 28 ? address.slice(0, 28) + "…" : address, icon: "copy-outline" });
+      return rows;
+    }
+    case "location": {
+      try {
+        const u = new URL(src.startsWith("http") ? src : `https://${src}`);
+        const q = u.searchParams.get("q") || u.searchParams.get("query") || "";
+        if (q) return [{ label: "Location", value: q, icon: "location-outline" }];
+      } catch {}
+      return [];
+    }
+    case "url": {
+      if (isGuardOrGo) return [];
+      try {
+        const u = new URL(src.startsWith("http") ? src : `https://${src}`);
+        const h = u.hostname.replace(/^www\./, "");
+        const isLocal = /^(192\.168\.|10\.|127\.|localhost)/.test(h);
+        if (!isLocal) return [{ label: "URL", value: src, icon: "link-outline" }];
+      } catch {}
+      return [];
+    }
+    case "text": {
+      if (src.length < 200 && !isGuardOrGo) return [{ label: "Text Content", value: src, icon: "text-outline" }];
+      return [];
+    }
+    default:
+      return [];
+  }
 }
 
 function formatDate(iso: string) {
@@ -308,6 +594,54 @@ export default function MyQrDetailScreen() {
             ))}
           </View>
         </Animated.View>
+
+        {/* QR Content Details Card — shows human-readable parsed content for all types */}
+        {(() => {
+          const rows = parseQrContentDetails(qrItem as any);
+          if (rows.length === 0) return null;
+          return (
+            <Animated.View entering={FadeInDown.duration(350).delay(65)}>
+              <View style={{
+                borderRadius: sp(18), borderWidth: 1, borderColor: colors.surfaceBorder,
+                backgroundColor: colors.surface, padding: sp(16), marginBottom: sp(14),
+              }}>
+                <View style={{ flexDirection: "row", alignItems: "center", gap: sp(8), marginBottom: sp(12) }}>
+                  <View style={{ width: sp(30), height: sp(30), borderRadius: sp(9), backgroundColor: colors.primaryDim, alignItems: "center", justifyContent: "center" }}>
+                    <Ionicons name="information-circle-outline" size={rf(15)} color={colors.primary} />
+                  </View>
+                  <Text style={{ fontSize: rf(13), fontFamily: "Inter_700Bold", color: colors.text }}>
+                    QR Content
+                  </Text>
+                  <View style={{ borderRadius: sp(6), paddingHorizontal: sp(6), paddingVertical: sp(2), backgroundColor: colors.primaryDim }}>
+                    <Text style={{ fontSize: rf(9), fontFamily: "Inter_600SemiBold", color: colors.primary }}>
+                      {CONTENT_TYPE_LABEL[effectiveContentType] || effectiveContentType?.toUpperCase() || "QR"}
+                    </Text>
+                  </View>
+                </View>
+                {rows.map((row, idx) => (
+                  <View key={idx} style={{
+                    flexDirection: "row", alignItems: "flex-start", gap: sp(10),
+                    paddingVertical: sp(8),
+                    borderTopWidth: idx === 0 ? 0 : 1,
+                    borderTopColor: colors.surfaceBorder,
+                  }}>
+                    <View style={{ width: sp(28), height: sp(28), borderRadius: sp(8), backgroundColor: colors.surfaceLight, alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                      <Ionicons name={row.icon as any} size={rf(13)} color={colors.textSecondary} />
+                    </View>
+                    <View style={{ flex: 1, gap: sp(2) }}>
+                      <Text style={{ fontSize: rf(10), fontFamily: "Inter_600SemiBold", color: colors.textMuted, textTransform: "uppercase", letterSpacing: 0.4 }}>
+                        {row.label}
+                      </Text>
+                      <Text style={{ fontSize: rf(13), fontFamily: "Inter_500Medium", color: colors.text }} selectable>
+                        {row.value}
+                      </Text>
+                    </View>
+                  </View>
+                ))}
+              </View>
+            </Animated.View>
+          );
+        })()}
 
         {/* Dynamic Destination — all QR types with a guard link */}
         {guardLink && (

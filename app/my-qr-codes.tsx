@@ -48,127 +48,362 @@ const SORT_OPTIONS: { key: SortKey; label: string }[] = [
 ];
 
 const CONTENT_TYPE_META: Record<string, { label: string; icon: string; color: string; bg: string }> = {
-  url:            { label: "URL",        icon: "link-outline",          color: "#1D4ED8", bg: "#EFF6FF" },
-  text:           { label: "Text",       icon: "text-outline",          color: "#6B7280", bg: "#F9FAFB" },
-  wifi:           { label: "WiFi",       icon: "wifi-outline",          color: "#059669", bg: "#ECFDF5" },
-  upi:            { label: "UPI",        icon: "card-outline",          color: "#F59E0B", bg: "#FFFBEB" },
-  bharatqr:       { label: "BharatQR",   icon: "card-outline",          color: "#F59E0B", bg: "#FFFBEB" },
-  payment:        { label: "Payment",    icon: "card-outline",          color: "#F59E0B", bg: "#FFFBEB" },
-  contact:        { label: "Contact",    icon: "person-circle-outline", color: "#8B5CF6", bg: "#F5F3FF" },
-  email:          { label: "Email",      icon: "mail-outline",          color: "#3B82F6", bg: "#EFF6FF" },
-  phone:          { label: "Phone",      icon: "call-outline",          color: "#10B981", bg: "#ECFDF5" },
-  social:         { label: "Social",     icon: "share-social-outline",  color: "#EC4899", bg: "#FDF2F8" },
-  whatsapp:       { label: "WhatsApp",   icon: "logo-whatsapp",         color: "#22C55E", bg: "#F0FDF4" },
-  instagram:      { label: "Instagram",  icon: "logo-instagram",        color: "#E1306C", bg: "#FFF1F2" },
-  twitter:        { label: "Twitter",    icon: "logo-twitter",          color: "#1DA1F2", bg: "#EFF6FF" },
-  youtube:        { label: "YouTube",    icon: "logo-youtube",          color: "#FF0000", bg: "#FFF1F2" },
-  linkedin:       { label: "LinkedIn",   icon: "logo-linkedin",         color: "#0A66C2", bg: "#EFF6FF" },
-  media:          { label: "Media",      icon: "play-circle-outline",   color: "#8B5CF6", bg: "#F5F3FF" },
-  crypto:         { label: "Crypto",     icon: "logo-bitcoin",          color: "#F7931A", bg: "#FFFBEB" },
-  location:       { label: "Location",   icon: "location-outline",      color: "#EF4444", bg: "#FFF1F2" },
-  calendar:       { label: "Event",      icon: "calendar-outline",      color: "#8B5CF6", bg: "#F5F3FF" },
-  event:          { label: "Event",      icon: "calendar-outline",      color: "#8B5CF6", bg: "#F5F3FF" },
-  zoom:           { label: "Zoom",       icon: "videocam-outline",      color: "#2D8CFF", bg: "#EFF6FF" },
-  app:            { label: "App",        icon: "download-outline",      color: "#10B981", bg: "#ECFDF5" },
-  appdownload:    { label: "App",        icon: "download-outline",      color: "#10B981", bg: "#ECFDF5" },
-  googlereview:   { label: "Review",     icon: "star-outline",          color: "#F59E0B", bg: "#FFFBEB" },
-  restaurantmenu: { label: "Menu",       icon: "restaurant-outline",    color: "#EF4444", bg: "#FFF1F2" },
-  donation:       { label: "Donation",   icon: "heart-outline",         color: "#F43F5E", bg: "#FFF1F2" },
-  paypal:         { label: "PayPal",     icon: "wallet-outline",        color: "#003087", bg: "#EFF6FF" },
-  venmo:          { label: "Venmo",      icon: "people-outline",        color: "#008CFF", bg: "#EFF6FF" },
-  sms:            { label: "SMS",        icon: "chatbubble-outline",    color: "#6B7280", bg: "#F9FAFB" },
-  document:       { label: "Document",   icon: "document-outline",      color: "#3B82F6", bg: "#EFF6FF" },
+  url:            { label: "URL",          icon: "link-outline",            color: "#1D4ED8", bg: "#EFF6FF" },
+  text:           { label: "Text",         icon: "text-outline",            color: "#6B7280", bg: "#F9FAFB" },
+  wifi:           { label: "WiFi",         icon: "wifi-outline",            color: "#059669", bg: "#ECFDF5" },
+  upi:            { label: "UPI",          icon: "card-outline",            color: "#F59E0B", bg: "#FFFBEB" },
+  bharatqr:       { label: "BharatQR",    icon: "shield-checkmark-outline", color: "#10B981", bg: "#ECFDF5" },
+  payment:        { label: "Payment",      icon: "card-outline",            color: "#F59E0B", bg: "#FFFBEB" },
+  paymentlink:    { label: "Payment",      icon: "card-outline",            color: "#F59E0B", bg: "#FFFBEB" },
+  scantopay:      { label: "Scan-to-Pay",  icon: "qr-code-outline",         color: "#F59E0B", bg: "#FFFBEB" },
+  mobilepay:      { label: "Mobile Pay",   icon: "phone-portrait-outline",  color: "#10B981", bg: "#ECFDF5" },
+  grab:           { label: "GrabPay",      icon: "car-outline",             color: "#00B14F", bg: "#F0FDF4" },
+  contact:        { label: "Contact",      icon: "person-circle-outline",   color: "#8B5CF6", bg: "#F5F3FF" },
+  email:          { label: "Email",        icon: "mail-outline",            color: "#3B82F6", bg: "#EFF6FF" },
+  phone:          { label: "Phone",        icon: "call-outline",            color: "#10B981", bg: "#ECFDF5" },
+  social:         { label: "Social",       icon: "share-social-outline",    color: "#EC4899", bg: "#FDF2F8" },
+  whatsapp:       { label: "WhatsApp",     icon: "logo-whatsapp",           color: "#22C55E", bg: "#F0FDF4" },
+  instagram:      { label: "Instagram",    icon: "logo-instagram",          color: "#E1306C", bg: "#FFF1F2" },
+  twitter:        { label: "Twitter",      icon: "logo-twitter",            color: "#1DA1F2", bg: "#EFF6FF" },
+  youtube:        { label: "YouTube",      icon: "logo-youtube",            color: "#FF0000", bg: "#FFF1F2" },
+  linkedin:       { label: "LinkedIn",     icon: "logo-linkedin",           color: "#0A66C2", bg: "#EFF6FF" },
+  telegram:       { label: "Telegram",     icon: "send-outline",            color: "#0088CC", bg: "#EFF6FF" },
+  facebook:       { label: "Facebook",     icon: "logo-facebook",           color: "#1877F2", bg: "#EFF6FF" },
+  spotify:        { label: "Spotify",      icon: "musical-notes-outline",   color: "#1DB954", bg: "#F0FDF4" },
+  discord:        { label: "Discord",      icon: "logo-discord",            color: "#5865F2", bg: "#F5F3FF" },
+  tiktok:         { label: "TikTok",       icon: "musical-note-outline",    color: "#010101", bg: "#F9FAFB" },
+  media:          { label: "Media",        icon: "play-circle-outline",     color: "#8B5CF6", bg: "#F5F3FF" },
+  crypto:         { label: "Crypto",       icon: "logo-bitcoin",            color: "#F7931A", bg: "#FFFBEB" },
+  location:       { label: "Location",     icon: "location-outline",        color: "#EF4444", bg: "#FFF1F2" },
+  calendar:       { label: "Event",        icon: "calendar-outline",        color: "#8B5CF6", bg: "#F5F3FF" },
+  event:          { label: "Event",        icon: "calendar-outline",        color: "#8B5CF6", bg: "#F5F3FF" },
+  zoom:           { label: "Zoom",         icon: "videocam-outline",        color: "#2D8CFF", bg: "#EFF6FF" },
+  app:            { label: "App",          icon: "download-outline",        color: "#10B981", bg: "#ECFDF5" },
+  appdownload:    { label: "App",          icon: "download-outline",        color: "#10B981", bg: "#ECFDF5" },
+  googlereview:   { label: "Review",       icon: "star-outline",            color: "#F59E0B", bg: "#FFFBEB" },
+  reviewpage:     { label: "Review",       icon: "star-outline",            color: "#F59E0B", bg: "#FFFBEB" },
+  restaurantmenu: { label: "Menu",         icon: "restaurant-outline",      color: "#EF4444", bg: "#FFF1F2" },
+  menucatalogue:  { label: "Menu",         icon: "list-outline",            color: "#EF4444", bg: "#FFF1F2" },
+  donation:       { label: "Donation",     icon: "heart-outline",           color: "#F43F5E", bg: "#FFF1F2" },
+  paypal:         { label: "PayPal",       icon: "wallet-outline",          color: "#003087", bg: "#EFF6FF" },
+  venmo:          { label: "Venmo",        icon: "people-outline",          color: "#008CFF", bg: "#EFF6FF" },
+  sms:            { label: "SMS",          icon: "chatbubble-outline",      color: "#6B7280", bg: "#F9FAFB" },
+  document:       { label: "Document",     icon: "document-outline",        color: "#3B82F6", bg: "#EFF6FF" },
 };
 
 function getContentTypeMeta(contentType: string) {
   return CONTENT_TYPE_META[contentType] ?? { label: "QR Code", icon: "qr-code-outline", color: "#6B7280", bg: "#F9FAFB" };
 }
 
-function getDisplayText(item: GeneratedQrItem): string {
-  const displayDest = (item as any).displayDestination as string | null;
-  if (displayDest) {
-    const withScheme = displayDest.startsWith("http") ? displayDest : `https://${displayDest}`;
-    try {
-      const u = new URL(withScheme);
-      if (u.hostname.includes(".") && u.hostname.length >= 4) {
-        return u.hostname.replace(/^www\./, "");
-      }
-    } catch {}
-    return displayDest.length > 45 ? displayDest.slice(0, 45) + "…" : displayDest;
-  }
-
-  const lbl = (item as any).label as string | null;
-  if (lbl) return lbl;
-
-  const content = item.content || "";
-
-  if (content.startsWith("tel:")) return content.replace("tel:", "").trim();
-  if (content.startsWith("WIFI:")) {
-    const m = content.match(/S:([^;]+)/);
-    if (m) return m[1];
-  }
-  if (content.startsWith("upi://pay?")) {
-    try {
-      const pa = new URLSearchParams(content.replace("upi://pay?", "")).get("pa");
-      if (pa) return pa;
-    } catch {}
-  }
-  if (content.startsWith("BEGIN:VCALENDAR") || content.startsWith("BEGIN:VEVENT")) {
-    const m = content.match(/SUMMARY:([^\r\n]+)/);
-    if (m) return m[1].trim();
-  }
-
-  try {
-    const url = new URL(content);
-    const host = url.hostname.replace(/^www\./, "");
-    if (host === "wa.me" || host === "api.whatsapp.com") {
-      const phone = url.pathname.replace(/^\//, "");
-      if (phone) return phone;
-    }
-    const isLocal = /^(192\.168\.|10\.|127\.|localhost)/.test(host);
-    if (isLocal || url.pathname.startsWith("/guard/")) {
-      const bName = (item as any).businessName as string | null;
-      if (bName) return bName;
-      return "Business QR";
-    }
-    return host;
-  } catch {}
-
-  if (content.startsWith("/guard/") || content.includes("/guard/")) return "Business QR";
-  if (content.length > 50) return content.slice(0, 50) + "…";
-  return content || "QR Code";
-}
-
 function getEffectiveContentType(item: GeneratedQrItem): string {
   const stored = (item as any).contentType as string || "text";
-  if (stored !== "text") return stored;
-
-  const guardUuid = (item as any).guardUuid as string | null;
-  if (!guardUuid) return stored;
+  if (stored && stored !== "text") return stored;
 
   const displayDest = (item as any).displayDestination as string | null;
-  const content = (item as any).content as string || "";
+  const content = item.content || "";
   const src = displayDest || content;
+
+  if (!src) return stored;
 
   if (src.startsWith("tel:")) return "phone";
   if (src.startsWith("WIFI:")) return "wifi";
   if (src.startsWith("upi://")) return "upi";
   if (src.startsWith("BEGIN:VCALENDAR") || src.startsWith("BEGIN:VEVENT")) return "event";
-  if (src.includes("wa.me") || src.includes("whatsapp")) return "whatsapp";
+  if (src.startsWith("BEGIN:VCARD")) return "contact";
+  if (src.startsWith("SMSTO:") || src.startsWith("sms:")) return "sms";
+  if (src.startsWith("mailto:")) return "email";
+  if (src.includes("wa.me") || src.includes("whatsapp.com")) return "whatsapp";
+  if (src.includes("instagram.com") || src.includes("instagr.am")) return "instagram";
+  if (src.includes("twitter.com") || src.includes("x.com/")) return "twitter";
+  if (src.includes("youtube.com") || src.includes("youtu.be")) return "youtube";
+  if (src.includes("linkedin.com")) return "linkedin";
+  if (src.includes("t.me/") || src.includes("telegram.me/")) return "telegram";
+  if (src.includes("facebook.com") || src.includes("fb.com")) return "facebook";
+  if (src.includes("open.spotify.com")) return "spotify";
+  if (src.includes("discord.gg") || src.includes("discord.com")) return "discord";
+  if (src.includes("tiktok.com")) return "tiktok";
+  if (src.includes("paypal.me") || src.includes("paypal.com")) return "paypal";
+  if (src.includes("venmo.com")) return "venmo";
+  if (src.includes("rzp.io") || src.includes("razorpay.com")) return "payment";
+  if (src.includes("zoom.us")) return "zoom";
+  if (/^bitcoin:|^ethereum:|^litecoin:|^solana:/.test(src)) return "crypto";
 
-  if (/^[\w.\-+]+@[\w]{2,}$/.test(src) && !/\.(com|in|org|net|io)$/.test(src.split("@")[1] || "")) return "upi";
+  if (/^[\w.\-+]+@[\w]{2,}$/.test(src) && !/\.(com|in|org|net|io|co|app)$/.test(src.split("@")[1] || "")) return "upi";
   if (/^\+?[\d]{7,15}$/.test(src.replace(/[\s\-()]/g, ""))) return "phone";
 
   const withScheme = src.startsWith("http") ? src : `https://${src}`;
   try {
     const u = new URL(withScheme);
     const h = u.hostname;
-    if (h.includes(".") && h.length >= 4 && !/^(192\.168\.|10\.|127\.|localhost)/.test(h) && !u.pathname.startsWith("/guard/")) {
+    if (
+      h.includes(".") && h.length >= 4 &&
+      !/^(192\.168\.|10\.|172\.(1[6-9]|2\d|3[01])\.|127\.|localhost)/.test(h) &&
+      !u.pathname.startsWith("/guard/") &&
+      !u.pathname.startsWith("/go/")
+    ) {
       return "url";
     }
   } catch {}
 
   return stored;
+}
+
+function getDisplayText(item: GeneratedQrItem): string {
+  const contentType = getEffectiveContentType(item);
+  const displayDest = (item as any).displayDestination as string | null;
+  const content = item.content || "";
+  const lbl = (item as any).label as string | null;
+  const bName = (item as any).businessName as string | null;
+  const src = displayDest || content;
+
+  switch (contentType) {
+    case "phone": {
+      if (src.startsWith("tel:")) return src.replace("tel:", "").trim();
+      if (/^\+?[\d\s\-()]{7,}$/.test(src)) return src.trim();
+      break;
+    }
+    case "mobilepay":
+    case "grab": {
+      const num = src.replace(/^tel:/, "").trim();
+      return num || src;
+    }
+    case "wifi": {
+      const m = src.match(/S:([^;]+)/);
+      if (m) return m[1];
+      break;
+    }
+    case "upi": {
+      if (src.startsWith("upi://pay?")) {
+        try {
+          const pa = new URLSearchParams(src.replace("upi://pay?", "")).get("pa");
+          if (pa) return pa;
+        } catch {}
+      }
+      if (/^[\w.\-+]+@[\w]+$/.test(src)) return src;
+      break;
+    }
+    case "scantopay":
+    case "bharatqr": {
+      if (src.startsWith("upi://pay?")) {
+        try {
+          const pa = new URLSearchParams(src.replace("upi://pay?", "")).get("pa");
+          if (pa) return pa;
+        } catch {}
+      }
+      if (/^[\w.\-+]+@[\w]+$/.test(src)) return src;
+      break;
+    }
+    case "event":
+    case "calendar": {
+      if (src.startsWith("BEGIN:")) {
+        const m = src.match(/SUMMARY:([^\r\n]+)/);
+        if (m) return m[1].trim();
+      }
+      try {
+        const u = new URL(src.startsWith("http") ? src : `https://${src}`);
+        const title = u.searchParams.get("text");
+        if (title) return title;
+      } catch {}
+      break;
+    }
+    case "contact": {
+      const fnMatch = src.match(/FN:([^\r\n]+)/);
+      if (fnMatch) return fnMatch[1].trim();
+      const nMatch = src.match(/N:([^\r\n]+)/);
+      if (nMatch) return nMatch[1].replace(/;+/g, " ").trim();
+      break;
+    }
+    case "sms": {
+      return src.replace(/^SMSTO?:/i, "").split(":")[0].trim();
+    }
+    case "email": {
+      return src.replace(/^mailto:/i, "").split("?")[0].trim();
+    }
+    case "whatsapp": {
+      try {
+        const u = new URL(src.startsWith("http") ? src : `https://${src}`);
+        if (u.hostname === "wa.me" || u.hostname === "api.whatsapp.com") {
+          const phone = u.pathname.replace(/^\//, "");
+          if (phone) return "+" + phone;
+        }
+      } catch {}
+      if (/^\+?[\d\s\-()]{7,}$/.test(src)) return src.trim();
+      break;
+    }
+    case "instagram": {
+      if (src.includes("instagram.com")) {
+        const parts = src.replace(/\/$/, "").split("/");
+        const handle = parts[parts.length - 1] || parts[parts.length - 2] || "";
+        if (handle) return "@" + handle;
+      }
+      return src.startsWith("@") ? src : "@" + src;
+    }
+    case "twitter": {
+      if (src.includes("twitter.com") || src.includes("x.com")) {
+        const parts = src.replace(/\/$/, "").split("/");
+        const handle = parts[parts.length - 1] || "";
+        if (handle && handle !== "twitter.com" && handle !== "x.com") return "@" + handle;
+      }
+      return src.startsWith("@") ? src : "@" + src;
+    }
+    case "telegram": {
+      if (src.includes("t.me") || src.includes("telegram.me")) {
+        const parts = src.replace(/\/$/, "").split("/");
+        const handle = parts[parts.length - 1] || "";
+        if (handle) return "@" + handle;
+      }
+      return src.startsWith("@") ? src : "@" + src;
+    }
+    case "tiktok": {
+      const handle = src.replace(/.*tiktok\.com\/@?/, "").replace(/\/$/, "");
+      if (handle) return "@" + handle.replace(/^@/, "");
+      return src.startsWith("@") ? src : "@" + src;
+    }
+    case "zoom": {
+      if (src.includes("zoom.us/j/")) {
+        const id = src.split("/j/")[1]?.split("?")[0] || "";
+        if (id) return "Meeting " + id;
+      }
+      return "Zoom Meeting";
+    }
+    case "crypto": {
+      const address = src.split(":")[1]?.split("?")[0] || src;
+      return address.length > 22 ? address.slice(0, 22) + "…" : address;
+    }
+    case "location": {
+      try {
+        const u = new URL(src.startsWith("http") ? src : `https://${src}`);
+        const q = u.searchParams.get("q") || u.searchParams.get("query") || "";
+        if (q) return q;
+        return u.hostname.replace(/^www\./, "");
+      } catch {}
+      break;
+    }
+    case "text": {
+      if (!src) return "Text QR";
+      return src.length > 50 ? src.slice(0, 50) + "…" : src;
+    }
+  }
+
+  if (src) {
+    const isGuardOrGo = src.includes("/guard/") || src.includes("/go/");
+    const isLocal = /^https?:\/\/(192\.168\.|10\.|127\.|localhost)/.test(src);
+
+    if (isGuardOrGo || isLocal) {
+      if (lbl) return lbl;
+      if (bName) return bName;
+      return contentType === "business" ? "Business QR" : "QR Code";
+    }
+
+    const withScheme = src.startsWith("http") ? src : `https://${src}`;
+    try {
+      const u = new URL(withScheme);
+      const h = u.hostname.replace(/^www\./, "");
+      if (h.includes(".") && h.length >= 4) return h;
+    } catch {}
+
+    if (lbl) return lbl;
+    if (bName) return bName;
+    return src.length > 45 ? src.slice(0, 45) + "…" : src;
+  }
+
+  if (lbl) return lbl;
+  if (bName) return bName;
+  return "QR Code";
+}
+
+function getSubtitleText(item: GeneratedQrItem): string | null {
+  const contentType = getEffectiveContentType(item);
+  const displayDest = (item as any).displayDestination as string | null;
+  const content = item.content || "";
+  const src = displayDest || content;
+
+  switch (contentType) {
+    case "upi":
+    case "scantopay": {
+      if (src.startsWith("upi://pay?")) {
+        try {
+          const params = new URLSearchParams(src.replace("upi://pay?", ""));
+          const pn = params.get("pn");
+          const am = params.get("am");
+          if (pn && am) return `${pn} · ₹${am}`;
+          if (pn) return pn;
+          if (am) return `₹${am}`;
+        } catch {}
+      }
+      break;
+    }
+    case "wifi": {
+      const sec = src.match(/T:([^;]+)/)?.[1] || "WPA";
+      const pw = src.match(/P:([^;]+)/)?.[1];
+      if (pw && pw.length > 0) return `${sec === "nopass" ? "Open" : sec} · Password set`;
+      return `${sec === "nopass" ? "Open network" : sec}`;
+    }
+    case "contact": {
+      const phone = src.match(/TEL[^:]*:([^\r\n]+)/)?.[1]?.trim();
+      if (phone) return phone;
+      break;
+    }
+    case "whatsapp": {
+      try {
+        const u = new URL(src.startsWith("http") ? src : `https://${src}`);
+        const msg = u.searchParams.get("text");
+        if (msg) return msg.length > 40 ? msg.slice(0, 40) + "…" : msg;
+      } catch {}
+      break;
+    }
+    case "sms": {
+      const msg = src.split(":").slice(2).join(":");
+      if (msg) return msg.length > 40 ? msg.slice(0, 40) + "…" : msg;
+      break;
+    }
+    case "event":
+    case "calendar": {
+      if (src.startsWith("BEGIN:")) {
+        const start = src.match(/DTSTART:([^\r\n]+)/)?.[1]?.trim();
+        if (start) {
+          const ds = start.replace(/(\d{4})(\d{2})(\d{2})T(\d{2})(\d{2}).*/, "$3/$2/$1 $4:$5");
+          return ds;
+        }
+      }
+      break;
+    }
+    case "location": {
+      try {
+        const u = new URL(src.startsWith("http") ? src : `https://${src}`);
+        const lat = u.searchParams.get("lat");
+        const lng = u.searchParams.get("lng") || u.searchParams.get("lon");
+        if (lat && lng) return `${lat}, ${lng}`;
+      } catch {}
+      break;
+    }
+    case "url":
+    case "reviewpage":
+    case "googlereview":
+    case "restaurantmenu":
+    case "menucatalogue":
+    case "donation":
+    case "appdownload":
+    case "app":
+    case "paymentlink":
+    case "facebook":
+    case "youtube":
+    case "linkedin":
+    case "spotify":
+    case "discord": {
+      try {
+        const u = new URL(src.startsWith("http") ? src : `https://${src}`);
+        const path = u.pathname.replace(/\/$/, "");
+        if (path && path.length > 1 && !path.startsWith("/guard/") && !path.startsWith("/go/")) {
+          return (u.hostname.replace(/^www\./, "") + path).length > 45
+            ? (u.hostname.replace(/^www\./, "") + path).slice(0, 45) + "…"
+            : u.hostname.replace(/^www\./, "") + path;
+        }
+      } catch {}
+      break;
+    }
+  }
+  return null;
 }
 
 function SkeletonQrCard() {
@@ -250,8 +485,10 @@ export default function MyQrCodesScreen() {
 
   function renderQrItem({ item, index }: { item: GeneratedQrItem; index: number }) {
     const displayText = getDisplayText(item);
+    const subtitle    = getSubtitleText(item);
     const ctMeta      = getContentTypeMeta(getEffectiveContentType(item));
     const labelText   = (item as any).label as string | undefined;
+    const isBusiness  = (item as any).qrType === "business";
 
     return (
       <Animated.View entering={FadeInDown.duration(320).delay(index * 35).springify()}>
@@ -286,6 +523,11 @@ export default function MyQrCodesScreen() {
                 <Ionicons name={ctMeta.icon as any} size={rf(9)} color={ctMeta.color} />
                 <Text style={{ fontSize: rf(10), fontFamily: "Inter_600SemiBold", color: ctMeta.color }}>{ctMeta.label}</Text>
               </View>
+              {isBusiness && (
+                <View style={{ borderRadius: sp(6), paddingHorizontal: sp(6), paddingVertical: sp(2), backgroundColor: "#F59E0B" + "18" }}>
+                  <Text style={{ fontSize: rf(9), fontFamily: "Inter_600SemiBold", color: "#B45309" }}>Business</Text>
+                </View>
+              )}
               {item.isActive === false && (
                 <View style={{ borderRadius: sp(6), paddingHorizontal: sp(6), paddingVertical: sp(2), backgroundColor: colors.dangerDim }}>
                   <Text style={{ fontSize: rf(10), fontFamily: "Inter_600SemiBold", color: colors.danger }}>Inactive</Text>
@@ -302,6 +544,12 @@ export default function MyQrCodesScreen() {
             <Text style={{ fontSize: rf(13), fontFamily: "Inter_700Bold", color: colors.text }} numberOfLines={1}>
               {displayText.length > 45 ? displayText.slice(0, 45) + "…" : displayText}
             </Text>
+
+            {subtitle && (
+              <Text style={{ fontSize: rf(11), fontFamily: "Inter_400Regular", color: colors.textSecondary }} numberOfLines={1}>
+                {subtitle}
+              </Text>
+            )}
 
             <View style={{ flexDirection: "row", alignItems: "center", gap: sp(8), marginTop: sp(1) }}>
               <View style={{ flexDirection: "row", alignItems: "center", gap: sp(3) }}>
@@ -347,7 +595,6 @@ export default function MyQrCodesScreen() {
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.background }}>
-      {/* NavBar */}
       <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingHorizontal: sp(20), paddingTop: topInset + sp(6), paddingBottom: sp(12) }}>
         <Pressable
           onPress={() => router.back()}
@@ -373,7 +620,6 @@ export default function MyQrCodesScreen() {
         </Pressable>
       </View>
 
-      {/* Sort */}
       <View style={{ paddingBottom: sp(10) }}>
         <View style={{ paddingHorizontal: sp(20), marginBottom: sp(4) }}>
           <Pressable
@@ -427,7 +673,6 @@ export default function MyQrCodesScreen() {
         )}
       </View>
 
-      {/* Content */}
       {loading && qrCodes.length === 0 ? (
         <View style={{ paddingHorizontal: sp(20), paddingTop: sp(4) }}>
           <SkeletonQrCard /><SkeletonQrCard /><SkeletonQrCard /><SkeletonQrCard />
