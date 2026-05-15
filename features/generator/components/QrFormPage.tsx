@@ -25,6 +25,7 @@ import { useTheme } from "@/contexts/ThemeContext";
 import { useQrGenerator, LOGO_POSITIONS } from "@/hooks/useQrGenerator";
 import TypePickerHome from "@/features/generator/components/TypePickerHome";
 import QrTemplateModal from "@/features/generator/components/QrTemplateModal";
+import CustomQrBuilderModal from "@/features/generator/components/CustomQrBuilderModal";
 import InputSection from "@/features/generator/components/InputSection";
 import QrOutputCard from "@/features/generator/components/QrOutputCard";
 import InfoModal from "@/features/generator/components/InfoModal";
@@ -53,6 +54,7 @@ export default function QrFormPage({ mode }: Props) {
   const [templateName, setTemplateName] = useState("");
   const [qrSize, setQrSize] = useState(220);
   const [qrTemplateOpen, setQrTemplateOpen] = useState(false);
+  const [advancedBuilderOpen, setAdvancedBuilderOpen] = useState(false);
   const [showGenError, setShowGenError] = useState(false);
 
   const errorProgress = useSharedValue(0);
@@ -488,6 +490,21 @@ export default function QrFormPage({ mode }: Props) {
           setTemplateName(tName);
           setPresetActive(true);
           setQrTemplateOpen(false);
+        }}
+        onOpenAdvancedBuilder={() => {
+          setQrTemplateOpen(false);
+          setAdvancedBuilderOpen(true);
+        }}
+      />
+      <CustomQrBuilderModal
+        visible={advancedBuilderOpen}
+        onClose={() => setAdvancedBuilderOpen(false)}
+        onGenerate={(content, label) => {
+          setInputValue(content);
+          setTemplateGenerated(true);
+          setTemplateName(label);
+          setPresetActive(true);
+          setAdvancedBuilderOpen(false);
         }}
       />
       <PositionModal

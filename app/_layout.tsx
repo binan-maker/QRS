@@ -29,7 +29,7 @@ import ConsentModal, { hasUserConsented } from "@/components/ConsentModal";
 
 SplashScreen.preventAutoHideAsync();
 
-function SplashGate({ fontsReady }: { fontsReady: boolean }) {
+function SplashGate({ fontsReady, consentReady }: { fontsReady: boolean; consentReady: boolean }) {
   const { isLoading: authLoading } = useAuth();
   const hiddenRef = useRef(false);
 
@@ -44,11 +44,11 @@ function SplashGate({ fontsReady }: { fontsReady: boolean }) {
   }, []);
 
   useEffect(() => {
-    if (fontsReady && !authLoading && !hiddenRef.current) {
+    if (fontsReady && !authLoading && consentReady && !hiddenRef.current) {
       hiddenRef.current = true;
       SplashScreen.hideAsync().catch(() => {});
     }
-  }, [fontsReady, authLoading]);
+  }, [fontsReady, authLoading, consentReady]);
 
   return null;
 }
@@ -132,7 +132,7 @@ function AuthGatedApp() {
   return <ThemedApp />;
 }
 
-function ConsentGatedApp() {
+function ConsentGatedApp({ onReady }: { onReady: () => void }) {
   const [consentChecked, setConsentChecked] = React.useState(false);
   const [consentGiven, setConsentGiven] = React.useState(false);
 
@@ -140,6 +140,7 @@ function ConsentGatedApp() {
     hasUserConsented().then((given) => {
       setConsentGiven(given);
       setConsentChecked(true);
+      onReady();
     });
   }, []);
 
@@ -148,7 +149,7 @@ function ConsentGatedApp() {
   };
 
   if (!consentChecked) {
-    return null;
+    return <View style={{ flex: 1, backgroundColor: "#0A0E17" }} />;
   }
 
   return (
@@ -169,6 +170,7 @@ export default function RootLayout() {
     Inter_600SemiBold,
     Inter_700Bold,
   });
+  const [consentReady, setConsentReady] = React.useState(false);
 
   const fontsReady = fontsLoaded || !!fontError;
 
@@ -186,8 +188,8 @@ export default function RootLayout() {
         <QueryClientProvider client={queryClient}>
           <AuthProvider>
             <AvatarProvider>
-              <SplashGate fontsReady={fontsReady} />
-              <ConsentGatedApp />
+              <SplashGate fontsReady={fontsReady} consentReady={consentReady} />
+              <ConsentGatedApp onReady={() => setConsentReady(true)} />
             </AvatarProvider>
           </AuthProvider>
         </QueryClientProvider>
