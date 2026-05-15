@@ -21,7 +21,7 @@ import Animated, { FadeInDown, FadeInRight } from "react-native-reanimated";
 import { useTheme } from "@/contexts/ThemeContext";
 import { useHome, type LocalScan } from "@/hooks/useHome";
 import { useAvatar } from "@/contexts/AvatarContext";
-import { detectContentType, getContentTypeIcon, truncate, formatRelativeTime } from "@/lib/utils/formatters";
+import { detectContentType, getContentTypeMeta, getContentDisplayLabel, getContentSubtitle, truncate, formatRelativeTime } from "@/lib/utils/formatters";
 
 // ── Pure helpers (module-level — no re-creation on render) ──────────────────
 
@@ -29,52 +29,24 @@ function getFirstName(name: string) {
   return name ? name.trim().split(/\s+/)[0] : "";
 }
 
-function getScanGradient(
-  contentType: string,
-  colors: ReturnType<typeof import("@/contexts/ThemeContext").useTheme>["colors"]
-): [string, string] {
-  if (contentType === "payment") return [colors.warning, colors.warningShade];
-  if (contentType === "location") return [colors.danger, colors.dangerShade];
-  if (contentType === "phone") return [colors.safe, colors.safeShade];
-  if (contentType === "otp") return [colors.safe, colors.safeShade];
-  return [colors.primary, colors.primaryShade];
-}
-
-function computeScanMeta(
-  scan: LocalScan,
-  colors: ReturnType<typeof import("@/contexts/ThemeContext").useTheme>["colors"]
-) {
+function computeScanMeta(scan: LocalScan) {
   const contentType = detectContentType(scan.content);
-  const gradient = getScanGradient(contentType, colors);
-  const icon = getContentTypeIcon(contentType) as any;
+  const ctMeta = getContentTypeMeta(contentType);
+  const gradient: [string, string] = ctMeta.gradient;
+  const icon = ctMeta.icon as any;
 
-  let displayLabel = scan.content;
-  let subtitle: string | null = null;
+  let displayLabel = getContentDisplayLabel(scan.content, contentType);
+  let subtitle: string | null = getContentSubtitle(scan.content, contentType);
   let amountText: string | null = null;
 
-  if (contentType === "payment") {
+  if (contentType === "payment" || contentType === "upi") {
     try {
       const parsed = parseAnyPaymentQr(scan.content);
-      displayLabel = parsed?.recipientName || parsed?.vpa || "Payment QR";
-      subtitle = parsed?.vpa && parsed?.recipientName ? parsed.vpa : null;
       if (parsed?.amount) amountText = `₹${Number(parsed.amount).toLocaleString("en-IN")}`;
+      if (parsed?.recipientName) displayLabel = parsed.recipientName;
+      else if (parsed?.vpa) displayLabel = parsed.vpa;
+      if (parsed?.vpa && parsed?.recipientName) subtitle = parsed.vpa;
     } catch {}
-  } else if (contentType === "url") {
-    try {
-      const u = new URL(scan.content);
-      const host = u.hostname.replace("www.", "");
-      const isPrivateIp = /^(192\.168\.|10\.|172\.(1[6-9]|2\d|3[01])\.|127\.|localhost)/.test(host);
-      const isGuardPath = u.pathname.startsWith("/guard/");
-      if (isPrivateIp || isGuardPath) {
-        displayLabel = "Smart Redirect";
-        subtitle = null;
-      } else {
-        displayLabel = host;
-        subtitle = scan.content;
-      }
-    } catch {}
-  } else if (scan.content.length > 44) {
-    subtitle = scan.content.slice(0, 44) + "…";
   }
 
   return { contentType, gradient, icon, displayLabel: truncate(displayLabel, 36), subtitle, amountText };
@@ -99,7 +71,7 @@ const RecentScanCard = React.memo(function RecentScanCard({
   onDelete,
 }: RecentScanCardProps) {
   // Memoize all per-item computed values
-  const meta = useMemo(() => computeScanMeta(scan, colors), [scan, colors]);
+  const meta = useMemo(() => computeScanMeta(scan), [scan]);
 
   const handlePress = useCallback(() => {
     if (scan.qrCodeId) {

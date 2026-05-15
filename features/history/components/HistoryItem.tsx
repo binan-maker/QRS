@@ -6,36 +6,17 @@ import { LinearGradient } from "expo-linear-gradient";
 import { Swipeable } from "react-native-gesture-handler";
 import * as Haptics from "@/lib/haptics";
 import { useTheme } from "@/contexts/ThemeContext";
-import { formatRelativeTime } from "@/lib/utils/formatters";
+import { formatRelativeTime, getContentTypeMeta, getContentDisplayLabel, getContentSubtitle } from "@/lib/utils/formatters";
 import type { HistoryItem as HistoryItemType } from "@/hooks/useHistory";
 import { parseAnyPaymentQr } from "@/lib/qr-analysis";
 
-function getTypeMeta(type: string, colors: any): {
+function getTypeMeta(type: string): {
   icon: keyof typeof Ionicons.glyphMap;
   label: string;
   gradient: [string, string];
 } {
-  const p = colors.primary;
-  const pg: [string, string] = [p, colors.primaryShade ?? p];
-  const map: Record<string, { icon: keyof typeof Ionicons.glyphMap; label: string; gradient: [string, string] }> = {
-    url:      { icon: "globe",            label: "URL",       gradient: pg },
-    phone:    { icon: "call",             label: "Phone",     gradient: pg },
-    email:    { icon: "mail",             label: "Email",     gradient: pg },
-    wifi:     { icon: "wifi",             label: "Wi-Fi",     gradient: pg },
-    location: { icon: "location",         label: "Location",  gradient: pg },
-    payment:  { icon: "card",             label: "Payment",   gradient: pg },
-    sms:      { icon: "chatbubble",       label: "SMS",       gradient: pg },
-    contact:  { icon: "person",           label: "Contact",   gradient: pg },
-    event:    { icon: "calendar",         label: "Event",     gradient: pg },
-    otp:      { icon: "lock-closed",      label: "OTP",       gradient: pg },
-    app:      { icon: "apps",             label: "App",       gradient: pg },
-    social:   { icon: "people",           label: "Social",    gradient: pg },
-    media:    { icon: "play-circle",      label: "Media",     gradient: pg },
-    document: { icon: "document-text",    label: "Document",  gradient: pg },
-    boarding: { icon: "airplane",         label: "Boarding",  gradient: pg },
-    product:  { icon: "barcode",          label: "Product",   gradient: pg },
-  };
-  return map[type] ?? { icon: "document-text", label: "Text", gradient: pg };
+  const m = getContentTypeMeta(type);
+  return { icon: m.icon as keyof typeof Ionicons.glyphMap, label: m.label, gradient: m.gradient };
 }
 
 function getRiskConfig(risk: string, colors: any) {
@@ -49,15 +30,6 @@ function getRiskConfig(risk: string, colors: any) {
   return null;
 }
 
-function detectCrypto(content: string): { name: string } | null {
-  const lower = content.toLowerCase();
-  if (lower.startsWith("bitcoin:") || lower.includes("bc1")) return { name: "Bitcoin" };
-  if (lower.startsWith("ethereum:") || lower.includes("0x")) return { name: "Ethereum" };
-  if (lower.startsWith("litecoin:")) return { name: "Litecoin" };
-  if (lower.startsWith("tron:")) return { name: "Tron" };
-  return null;
-}
-
 function getPaymentData(content: string) {
   try {
     const parsed = parseAnyPaymentQr(content);
@@ -67,52 +39,6 @@ function getPaymentData(content: string) {
       vpa: parsed?.vpa || null,
     };
   } catch { return null; }
-}
-
-function getDisplayLabel(contentType: string, content: string): string {
-  if (contentType === "payment") {
-    try {
-      const parsed = parseAnyPaymentQr(content);
-      if (parsed?.recipientName) return parsed.recipientName;
-      if (parsed?.vpa) return parsed.vpa;
-      const crypto = detectCrypto(content);
-      if (crypto) return crypto.name;
-      return "Payment QR";
-    } catch { return "Payment QR"; }
-  }
-  if (contentType === "url") {
-    try {
-      const u = new URL(content);
-      const host = u.hostname.replace("www.", "");
-      const isPrivateIp = /^(192\.168\.|10\.|172\.(1[6-9]|2\d|3[01])\.|127\.|localhost)/.test(host);
-      const isGuardPath = u.pathname.startsWith("/guard/");
-      if (isPrivateIp || isGuardPath) return "Smart Redirect";
-      return host;
-    } catch { return content; }
-  }
-  return content;
-}
-
-function getSubtitle(contentType: string, content: string): string | null {
-  if (contentType === "url") {
-    try {
-      const u = new URL(content);
-      const host = u.hostname;
-      const isPrivateIp = /^(192\.168\.|10\.|172\.(1[6-9]|2\d|3[01])\.|127\.|localhost)/.test(host);
-      const isGuardPath = u.pathname.startsWith("/guard/");
-      if (isPrivateIp || isGuardPath) return null;
-    } catch {}
-    return content;
-  }
-  if (contentType === "payment") {
-    try {
-      const parsed = parseAnyPaymentQr(content);
-      if (parsed?.vpa && parsed?.recipientName) return parsed.vpa;
-    } catch {}
-    return null;
-  }
-  if (content.length > 48) return content.slice(0, 48) + "…";
-  return null;
 }
 
 function formatAmount(amount?: number | string) {
@@ -133,9 +59,9 @@ const HistoryItem = React.memo(function HistoryItem({ item, risk, onDelete }: Hi
   const isSynced   = item.source === "cloud";
 
   // Memoize all expensive per-item computations
-  const displayLabel = useMemo(() => getDisplayLabel(item.contentType, item.content), [item.contentType, item.content]);
-  const subtitle     = useMemo(() => getSubtitle(item.contentType, item.content), [item.contentType, item.content]);
-  const meta         = useMemo(() => getTypeMeta(item.contentType, colors), [item.contentType, colors]);
+  const displayLabel = useMemo(() => getContentDisplayLabel(item.content, item.contentType), [item.contentType, item.content]);
+  const subtitle     = useMemo(() => getContentSubtitle(item.content, item.contentType), [item.contentType, item.content]);
+  const meta         = useMemo(() => getTypeMeta(item.contentType), [item.contentType]);
   const riskCfg      = useMemo(() => getRiskConfig(risk, colors), [risk, colors]);
   const paymentData  = useMemo(
     () => item.contentType === "payment" ? getPaymentData(item.content) : null,

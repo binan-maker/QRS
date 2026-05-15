@@ -23,25 +23,56 @@ function getTypeCfg(type: string, colors: AppColors): {
   const danger: GradientPair = [colors.danger, colors.dangerShade];
   const neutral: GradientPair = [colors.textSecondary, colors.textMuted];
 
+  const whatsapp:  GradientPair = ["#16A34A", "#22C55E"];
+  const instagram: GradientPair = ["#E1306C", "#F472B6"];
+  const twitter:   GradientPair = ["#1DA1F2", "#38BDF8"];
+  const youtube:   GradientPair = ["#DC2626", "#EF4444"];
+  const linkedin:  GradientPair = ["#0A66C2", "#2563EB"];
+  const telegram:  GradientPair = ["#0088CC", "#38BDF8"];
+  const facebook:  GradientPair = ["#1877F2", "#3B82F6"];
+  const spotify:   GradientPair = ["#1DB954", "#22C55E"];
+  const discord:   GradientPair = ["#5865F2", "#818CF8"];
+  const tiktok:    GradientPair = ["#374151", "#6B7280"];
+  const zoom:      GradientPair = ["#2D8CFF", "#60A5FA"];
+  const crypto:    GradientPair = ["#D97706", "#F59E0B"];
+  const purple:    GradientPair = ["#7C3AED", "#8B5CF6"];
+  const slate:     GradientPair = ["#64748B", "#94A3B8"];
+
   const map: Record<string, { icon: keyof typeof Ionicons.glyphMap; label: string; gradient: GradientPair; openLabel: string }> = {
-    url:      { icon: "globe-outline",         label: "Website URL",      gradient: primary,  openLabel: "Open Link"          },
-    phone:    { icon: "call-outline",           label: "Phone Number",     gradient: safe,     openLabel: "Call Number"        },
-    email:    { icon: "mail-outline",           label: "Email",            gradient: primary,  openLabel: "Send Email"         },
-    wifi:     { icon: "wifi-outline",           label: "Wi-Fi Network",    gradient: primary,  openLabel: "Connect to Wi-Fi"  },
-    location: { icon: "location-outline",       label: "Location",         gradient: danger,   openLabel: "Open in Maps"      },
-    payment:  { icon: "card-outline",           label: "Payment",          gradient: payment,  openLabel: "Open Payment"      },
-    sms:      { icon: "chatbubble-outline",     label: "SMS Message",      gradient: primary,  openLabel: "Send SMS"          },
-    contact:  { icon: "person-outline",         label: "Contact Card",     gradient: primary,  openLabel: "Save Contact"      },
-    event:    { icon: "calendar-outline",       label: "Calendar Event",   gradient: primary,  openLabel: "Add to Calendar"   },
-    otp:      { icon: "lock-closed-outline",    label: "OTP / 2FA",        gradient: safe,     openLabel: "Open Authenticator"},
-    app:      { icon: "apps-outline",           label: "App Link",         gradient: primary,  openLabel: "Open App"          },
-    social:   { icon: "people-outline",         label: "Social Profile",   gradient: primary,  openLabel: "Open Profile"      },
-    media:    { icon: "play-circle-outline",    label: "Media",            gradient: primary,  openLabel: "Play Media"        },
-    document: { icon: "document-outline",       label: "Document",         gradient: neutral,  openLabel: "Open Document"     },
-    boarding: { icon: "airplane-outline",       label: "Boarding Pass",    gradient: primary,  openLabel: "View Pass"         },
-    product:  { icon: "barcode-outline",        label: "Product",          gradient: primary,  openLabel: "View Product"      },
-    text:      { icon: "document-text-outline",  label: "Text",             gradient: neutral,   openLabel: "Open"              },
-    encrypted: { icon: "key-outline",            label: "Encrypted Data",   gradient: [colors.warning, colors.warningShade], openLabel: "Open" },
+    url:         { icon: "globe-outline",            label: "Website URL",      gradient: primary,   openLabel: "Open Link"           },
+    phone:       { icon: "call-outline",             label: "Phone Number",     gradient: safe,      openLabel: "Call Number"         },
+    email:       { icon: "mail-outline",             label: "Email",            gradient: primary,   openLabel: "Send Email"          },
+    wifi:        { icon: "wifi-outline",             label: "Wi-Fi Network",    gradient: safe,      openLabel: "Connect to Wi-Fi"   },
+    location:    { icon: "location-outline",         label: "Location",         gradient: danger,    openLabel: "Open in Maps"        },
+    payment:     { icon: "card-outline",             label: "Payment",          gradient: payment,   openLabel: "Open Payment"        },
+    upi:         { icon: "card-outline",             label: "UPI Payment",      gradient: payment,   openLabel: "Open Payment"        },
+    sms:         { icon: "chatbubble-outline",       label: "SMS Message",      gradient: slate,     openLabel: "Send SMS"            },
+    contact:     { icon: "person-circle-outline",    label: "Contact Card",     gradient: purple,    openLabel: "Save Contact"        },
+    event:       { icon: "calendar-outline",         label: "Calendar Event",   gradient: purple,    openLabel: "Add to Calendar"     },
+    calendar:    { icon: "calendar-outline",         label: "Calendar Event",   gradient: purple,    openLabel: "Add to Calendar"     },
+    otp:         { icon: "lock-closed-outline",      label: "OTP / 2FA",        gradient: safe,      openLabel: "Open Authenticator"  },
+    app:         { icon: "download-outline",         label: "App Link",         gradient: safe,      openLabel: "Open App"            },
+    appdownload: { icon: "download-outline",         label: "App Download",     gradient: safe,      openLabel: "Download App"        },
+    social:      { icon: "share-social-outline",     label: "Social Profile",   gradient: instagram, openLabel: "Open Profile"        },
+    media:       { icon: "play-circle-outline",      label: "Media",            gradient: purple,    openLabel: "Play Media"          },
+    document:    { icon: "document-outline",         label: "Document",         gradient: neutral,   openLabel: "Open Document"       },
+    boarding:    { icon: "airplane-outline",         label: "Boarding Pass",    gradient: zoom,      openLabel: "View Pass"           },
+    product:     { icon: "barcode-outline",          label: "Product",          gradient: slate,     openLabel: "View Product"        },
+    whatsapp:    { icon: "logo-whatsapp",            label: "WhatsApp",         gradient: whatsapp,  openLabel: "Open WhatsApp"       },
+    instagram:   { icon: "logo-instagram",           label: "Instagram",        gradient: instagram, openLabel: "Open Instagram"      },
+    twitter:     { icon: "logo-twitter",             label: "Twitter / X",      gradient: twitter,   openLabel: "Open Twitter"        },
+    youtube:     { icon: "logo-youtube",             label: "YouTube",          gradient: youtube,   openLabel: "Open YouTube"        },
+    linkedin:    { icon: "logo-linkedin",            label: "LinkedIn",         gradient: linkedin,  openLabel: "Open LinkedIn"       },
+    telegram:    { icon: "send-outline",             label: "Telegram",         gradient: telegram,  openLabel: "Open Telegram"       },
+    facebook:    { icon: "logo-facebook",            label: "Facebook",         gradient: facebook,  openLabel: "Open Facebook"       },
+    spotify:     { icon: "musical-notes-outline",    label: "Spotify",          gradient: spotify,   openLabel: "Play on Spotify"     },
+    discord:     { icon: "logo-discord",             label: "Discord",          gradient: discord,   openLabel: "Open Discord"        },
+    tiktok:      { icon: "musical-note-outline",     label: "TikTok",           gradient: tiktok,    openLabel: "Open TikTok"         },
+    crypto:      { icon: "logo-bitcoin",             label: "Crypto Address",   gradient: crypto,    openLabel: "Open Wallet"         },
+    zoom:        { icon: "videocam-outline",         label: "Zoom Meeting",     gradient: zoom,      openLabel: "Join Meeting"        },
+    calendly:    { icon: "calendar-outline",         label: "Calendly",         gradient: primary,   openLabel: "Book Appointment"    },
+    text:        { icon: "document-text-outline",    label: "Text",             gradient: neutral,   openLabel: "Open"                },
+    encrypted:   { icon: "key-outline",              label: "Encrypted Data",   gradient: [colors.warning, colors.warningShade], openLabel: "Open" },
   };
   return map[type] ?? map.text;
 }
@@ -162,12 +193,15 @@ const ContentCard = React.memo(function ContentCard({ content, contentType, pars
     }
   }
 
+  const URL_LIKE_TYPES = new Set(["url", "whatsapp", "instagram", "twitter", "youtube", "linkedin", "telegram", "facebook", "spotify", "discord", "tiktok", "zoom", "calendly", "appdownload", "app", "social", "media"]);
+  const isUrlLike = URL_LIKE_TYPES.has(contentType);
+
   const wifi = contentType === "wifi" ? parseWifi(content) : null;
   const contact = contentType === "contact" ? parseContact(content) : null;
   const smsData = contentType === "sms" ? parseSms(content) : null;
-  const eventData = contentType === "event" ? parseEvent(content) : null;
+  const eventData = (contentType === "event" || contentType === "calendar") ? parseEvent(content) : null;
   const eventOver = eventData ? isEventPast(eventData.dtend, eventData.dtstart) : false;
-  const basicPayment = (contentType === "payment" && !parsedPayment) ? extractBasicPaymentInfo(content) : null;
+  const basicPayment = ((contentType === "payment" || contentType === "upi") && !parsedPayment) ? extractBasicPaymentInfo(content) : null;
   const isEmvContent = content.startsWith("000201") || content.startsWith("00020");
 
   if (contentType === "encrypted") {
@@ -223,7 +257,7 @@ const ContentCard = React.memo(function ContentCard({ content, contentType, pars
     );
   }
 
-  if (contentType === "payment") {
+  if (contentType === "payment" || contentType === "upi") {
     const paymentData: ParsedPaymentQr = parsedPayment ?? (isEmvContent ? {
       app: "emv_generic", appDisplayName: "Bank Merchant QR", appCategory: "emv",
       region: "Regional", recipientId: "", rawContent: content, isAmountPreFilled: false,
@@ -265,8 +299,8 @@ const ContentCard = React.memo(function ContentCard({ content, contentType, pars
         </Pressable>
       </View>
 
-      {/* Content text — hidden for URL and event types */}
-      {contentType !== "url" && contentType !== "event" && (
+      {/* Content text — hidden for URL-like and event types */}
+      {!isUrlLike && contentType !== "event" && contentType !== "calendar" && (
         <View style={[styles.contentBox, { backgroundColor: isDark ? colors.surfaceLight : colors.background, borderColor: colors.surfaceBorder }]}>
           <Text style={[styles.contentText, { color: colors.text }]} selectable numberOfLines={contentExpanded ? undefined : 4}>
             {content}
@@ -279,8 +313,8 @@ const ContentCard = React.memo(function ContentCard({ content, contentType, pars
         </View>
       )}
 
-      {/* URL display */}
-      {contentType === "url" && (
+      {/* URL / link display for URL-like types */}
+      {isUrlLike && (
         <View style={[styles.urlBox, { backgroundColor: isDark ? colors.surfaceLight : colors.background, borderColor: colors.surfaceBorder }]}>
           <Ionicons name="link-outline" size={14} color={cfg.gradient[0]} />
           <Text style={[styles.urlText, { color: colors.textSecondary }]} numberOfLines={1} selectable>
@@ -290,8 +324,10 @@ const ContentCard = React.memo(function ContentCard({ content, contentType, pars
                 const h = parsed.hostname.toLowerCase();
                 const isPrivate = /^(localhost|127\.|10\.|192\.168\.|172\.(1[6-9]|2\d|3[01])\.)/.test(h);
                 if (isPrivate || parsed.pathname.startsWith("/guard/")) return "Smart Redirect";
-                return h.replace(/^www\./, "");
-              } catch { return content; }
+                const host = h.replace(/^www\./, "");
+                const path = parsed.pathname.replace(/\/$/, "");
+                return path && path !== "/" ? `${host}${path}` : host;
+              } catch { return content.length > 44 ? content.slice(0, 44) + "…" : content; }
             })()}
           </Text>
         </View>
