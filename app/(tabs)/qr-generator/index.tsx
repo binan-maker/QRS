@@ -160,8 +160,8 @@ function makeStyles(colors: any, width: number) {
       alignItems: "center",
       justifyContent: "space-between",
     },
-    navTitle: { fontSize: rf(21), fontFamily: "Inter_700Bold" },
-    navSubtitle: { fontSize: rf(12), fontFamily: "Inter_400Regular", marginTop: 2 },
+    navTitle: { fontSize: rf(17), fontFamily: "Inter_700Bold" },
+    navSubtitle: { fontSize: rf(11), fontFamily: "Inter_400Regular", marginTop: 2 },
     navBadge: {
       width: 38, height: 38, borderRadius: 12,
       alignItems: "center", justifyContent: "center", borderWidth: 1,
@@ -169,7 +169,7 @@ function makeStyles(colors: any, width: number) {
     scrollContent: { paddingTop: 4 },
     cardList: { paddingHorizontal: 18, paddingTop: 4, gap: 16 },
     sectionLabel: {
-      fontSize: rf(12), fontFamily: "Inter_500Medium",
+      fontSize: rf(11), fontFamily: "Inter_500Medium",
       letterSpacing: 0.4, marginBottom: 2, textTransform: "uppercase",
     },
     card: {
@@ -200,8 +200,8 @@ function makeStyles(colors: any, width: number) {
       alignItems: "center", justifyContent: "center",
     },
     cardTitleBlock: { gap: 4, marginBottom: 14 },
-    cardTitle: { fontSize: rf(20), fontFamily: "Inter_700Bold", color: "#fff" },
-    cardTagline: { fontSize: rf(13), fontFamily: "Inter_400Regular", color: "rgba(255,255,255,0.72)" },
+    cardTitle: { fontSize: rf(16), fontFamily: "Inter_700Bold", color: "#fff" },
+    cardTagline: { fontSize: rf(12), fontFamily: "Inter_400Regular", color: "rgba(255,255,255,0.72)" },
     cardDivider: {
       height: StyleSheet.hairlineWidth,
       backgroundColor: "rgba(255,255,255,0.2)",

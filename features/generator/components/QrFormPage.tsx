@@ -537,8 +537,8 @@ function makeStyles(colors: any, width: number) {
       width: 40, height: 40, borderRadius: 12,
       alignItems: "center", justifyContent: "center", flexShrink: 0,
     },
-    templateReadyTitle: { fontSize: rf(14), fontFamily: "Inter_700Bold" },
-    templateReadySub: { fontSize: rf(11), fontFamily: "Inter_400Regular", marginTop: 2 },
+    templateReadyTitle: { fontSize: rf(13), fontFamily: "Inter_700Bold" },
+    templateReadySub: { fontSize: rf(10), fontFamily: "Inter_400Regular", marginTop: 2 },
     changeBtn: {
       borderRadius: 10, paddingHorizontal: 12, paddingVertical: 7,
     },
@@ -548,7 +548,7 @@ function makeStyles(colors: any, width: number) {
       flexDirection: "row", alignItems: "center", justifyContent: "center",
       gap: 10, paddingVertical: 14, borderRadius: 18,
     },
-    generateBtnText: { fontSize: rf(15), fontFamily: "Inter_700Bold", color: "#fff" },
+    generateBtnText: { fontSize: rf(14), fontFamily: "Inter_700Bold", color: "#fff" },
     emptyQr: {
       borderRadius: 20, borderWidth: 1, paddingVertical: 36,
       paddingHorizontal: 24, alignItems: "center", gap: 14,
@@ -558,8 +558,8 @@ function makeStyles(colors: any, width: number) {
       width: 100, height: 100, borderRadius: 28,
       alignItems: "center", justifyContent: "center",
     },
-    emptyQrText: { fontSize: rf(15), fontFamily: "Inter_700Bold", textAlign: "center" },
-    emptyQrSub: { fontSize: rf(12), fontFamily: "Inter_400Regular", textAlign: "center" },
+    emptyQrText: { fontSize: rf(13), fontFamily: "Inter_700Bold", textAlign: "center" },
+    emptyQrSub: { fontSize: rf(11), fontFamily: "Inter_400Regular", textAlign: "center" },
     toast: {
       position: "absolute", bottom: 110, left: 20, right: 20,
       borderRadius: 18, flexDirection: "row", alignItems: "center",

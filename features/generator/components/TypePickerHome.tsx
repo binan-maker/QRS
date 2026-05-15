@@ -166,5 +166,5 @@ const styles = StyleSheet.create({
     width: 38, height: 38, borderRadius: 12,
     alignItems: "center", justifyContent: "center", flexShrink: 0,
   },
-  customCardTitle: { fontSize: 14, fontFamily: "Inter_700Bold", flex: 1 },
+  customCardTitle: { fontSize: 13, fontFamily: "Inter_700Bold", flex: 1 },
 });

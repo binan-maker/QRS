@@ -311,7 +311,7 @@ const styles = StyleSheet.create({
   },
   urlPrefix: { fontSize: 13, fontFamily: "Inter_400Regular" },
   textInput: {
-    flex: 1, fontSize: 14, fontFamily: "Inter_400Regular",
+    flex: 1, fontSize: 13, fontFamily: "Inter_400Regular",
     maxHeight: 100,
   },
   hint: { fontSize: 11, fontFamily: "Inter_400Regular", marginTop: 2 },
