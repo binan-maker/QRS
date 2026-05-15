@@ -35,7 +35,6 @@ const MODES: ModeCard[] = [
 interface Props {
   qrMode: QrMode;
   onSetMode: (mode: QrMode) => void;
-  onOpenTemplates: () => void;
   onOpenCustom: () => void;
   /** When true only the mode cards render — the action rows are hidden */
   hideActions?: boolean;

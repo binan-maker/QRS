@@ -249,7 +249,7 @@ const TEMPLATES: QrTemplate[] = [
 interface Props {
   visible: boolean;
   onClose: () => void;
-  onGenerate: (content: string) => void;
+  onGenerate: (content: string, templateName: string) => void;
 }
 
 // ── Main Component ────────────────────────────────────────────────────────────
@@ -326,7 +326,7 @@ function QrTemplateModal({ visible, onClose, onGenerate }: Props) {
     if (!selected || !validate()) return;
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     const content = selected.generate(values, { encType });
-    onGenerate(content);
+    onGenerate(content, selected.name);
     handleClose();
   }
 
