@@ -79,9 +79,10 @@ const CONTENT_TYPE_META: Record<string, { label: string; icon: string; color: st
   event:          { label: "Event",        icon: "calendar-outline",        color: "#8B5CF6", bg: "#F5F3FF" },
   zoom:           { label: "Zoom",         icon: "videocam-outline",        color: "#2D8CFF", bg: "#EFF6FF" },
   app:            { label: "App",          icon: "download-outline",        color: "#10B981", bg: "#ECFDF5" },
-  appdownload:    { label: "App",          icon: "download-outline",        color: "#10B981", bg: "#ECFDF5" },
-  googlereview:   { label: "Review",       icon: "star-outline",            color: "#F59E0B", bg: "#FFFBEB" },
-  reviewpage:     { label: "Review",       icon: "star-outline",            color: "#F59E0B", bg: "#FFFBEB" },
+  appdownload:    { label: "App Download",  icon: "download-outline",        color: "#10B981", bg: "#ECFDF5" },
+  googlereview:   { label: "Review Page",  icon: "star-outline",            color: "#F59E0B", bg: "#FFFBEB" },
+  reviewpage:     { label: "Review Page",  icon: "star-outline",            color: "#F59E0B", bg: "#FFFBEB" },
+  calendly:       { label: "Calendly",     icon: "calendar-outline",        color: "#006BFF", bg: "#EFF6FF" },
   restaurantmenu: { label: "Menu",         icon: "restaurant-outline",      color: "#EF4444", bg: "#FFF1F2" },
   menucatalogue:  { label: "Menu",         icon: "list-outline",            color: "#EF4444", bg: "#FFF1F2" },
   donation:       { label: "Donation",     icon: "heart-outline",           color: "#F43F5E", bg: "#FFF1F2" },
@@ -97,7 +98,10 @@ function getContentTypeMeta(contentType: string) {
 
 function getEffectiveContentType(item: GeneratedQrItem): string {
   const stored = (item as any).contentType as string || "text";
-  if (stored && stored !== "text") return stored;
+  // Only return early for specific non-URL stored types.
+  // For "url" and "text", run content detection so service-specific URLs
+  // (e.g. calendly.com saved as generic "url") get their own type.
+  if (stored && stored !== "text" && stored !== "url") return stored;
 
   const displayDest = (item as any).displayDestination as string | null;
   const content = item.content || "";
@@ -105,6 +109,7 @@ function getEffectiveContentType(item: GeneratedQrItem): string {
 
   if (!src) return stored;
 
+  // Protocol-based detection
   if (src.startsWith("tel:")) return "phone";
   if (src.startsWith("WIFI:")) return "wifi";
   if (src.startsWith("upi://")) return "upi";
@@ -112,6 +117,9 @@ function getEffectiveContentType(item: GeneratedQrItem): string {
   if (src.startsWith("BEGIN:VCARD")) return "contact";
   if (src.startsWith("SMSTO:") || src.startsWith("sms:")) return "sms";
   if (src.startsWith("mailto:")) return "email";
+  if (/^bitcoin:|^ethereum:|^litecoin:|^solana:/.test(src)) return "crypto";
+
+  // Service-specific URL detection
   if (src.includes("wa.me") || src.includes("whatsapp.com")) return "whatsapp";
   if (src.includes("instagram.com") || src.includes("instagr.am")) return "instagram";
   if (src.includes("twitter.com") || src.includes("x.com/")) return "twitter";
@@ -122,11 +130,13 @@ function getEffectiveContentType(item: GeneratedQrItem): string {
   if (src.includes("open.spotify.com")) return "spotify";
   if (src.includes("discord.gg") || src.includes("discord.com")) return "discord";
   if (src.includes("tiktok.com")) return "tiktok";
-  if (src.includes("paypal.me") || src.includes("paypal.com")) return "paypal";
+  if (src.includes("paypal.me") || src.includes("paypal.com/paypalme")) return "paypal";
   if (src.includes("venmo.com")) return "venmo";
   if (src.includes("rzp.io") || src.includes("razorpay.com")) return "payment";
   if (src.includes("zoom.us")) return "zoom";
-  if (/^bitcoin:|^ethereum:|^litecoin:|^solana:/.test(src)) return "crypto";
+  if (src.includes("calendly.com")) return "calendly";
+  if (src.includes("maps.google.com") || src.includes("goo.gl/maps") || src.includes("maps.app.goo.gl")) return "location";
+  if (src.includes("apps.apple.com") || src.includes("play.google.com") || src.includes("appstore.com")) return "appdownload";
 
   if (/^[\w.\-+]+@[\w]{2,}$/.test(src) && !/\.(com|in|org|net|io|co|app)$/.test(src.split("@")[1] || "")) return "upi";
   if (/^\+?[\d]{7,15}$/.test(src.replace(/[\s\-()]/g, ""))) return "phone";
@@ -279,9 +289,44 @@ function getDisplayText(item: GeneratedQrItem): string {
       } catch {}
       break;
     }
+    case "calendly": {
+      try {
+        const u = new URL(src.startsWith("http") ? src : `https://${src}`);
+        const parts = u.pathname.replace(/^\//, "").split("/").filter(Boolean);
+        const username = parts[0] || "";
+        const eventType = parts[1] || "";
+        if (username) return username + (eventType ? " / " + eventType : "");
+      } catch {}
+      return "Calendly";
+    }
+    case "appdownload":
+    case "app": {
+      try {
+        const u = new URL(src.startsWith("http") ? src : `https://${src}`);
+        const appName = u.pathname.split("/").filter(Boolean).pop()?.replace(/-/g, " ") || "";
+        if (appName && appName.length < 40) return appName;
+        return u.hostname.includes("apple") ? "App Store" : "Google Play";
+      } catch {}
+      return "App Download";
+    }
+    case "paymentlink":
+    case "payment":
+    case "reviewpage":
+    case "googlereview":
+    case "menucatalogue":
+    case "restaurantmenu":
+    case "donation": {
+      try {
+        const u = new URL(src.startsWith("http") ? src : `https://${src}`);
+        return u.hostname.replace(/^www\./, "");
+      } catch {}
+      break;
+    }
     case "text": {
       if (!src) return "Text QR";
-      return src.length > 50 ? src.slice(0, 50) + "…" : src;
+      // Strip any accidental https:// that may have been prepended to plain text
+      const cleaned = src.replace(/^https?:\/\//, "");
+      return cleaned.length > 50 ? cleaned.slice(0, 50) + "…" : cleaned;
     }
   }
 

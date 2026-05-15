@@ -22,17 +22,22 @@ const CONTENT_TYPE_LABEL: Record<string, string> = {
   calendar: "Event", event: "Event", zoom: "Zoom", social: "Social",
   telegram: "Telegram", facebook: "Facebook", spotify: "Spotify",
   discord: "Discord", tiktok: "TikTok", media: "Media",
-  payment: "Payment", paymentlink: "Payment", scantopay: "Scan-to-Pay",
+  payment: "Payment", paymentlink: "Payment Link", scantopay: "Scan-to-Pay",
   mobilepay: "Mobile Pay", grab: "GrabPay", bharatpay: "BharatPay",
-  reviewpage: "Review", googlereview: "Review",
-  restaurantmenu: "Menu", menucatalogue: "Menu",
+  reviewpage: "Review Page", googlereview: "Review Page",
+  restaurantmenu: "Menu", menucatalogue: "Menu / Catalogue",
   donation: "Donation", paypal: "PayPal", venmo: "Venmo",
-  appdownload: "App", app: "App", sms: "SMS", document: "Document",
+  appdownload: "App Download", app: "App",
+  sms: "SMS", document: "Document",
+  calendly: "Calendly",
 };
 
 function getDetailContentType(item: any): string {
   const stored = item.contentType as string || "text";
-  if (stored && stored !== "text") return stored;
+  // Return early only for specific known non-URL stored types.
+  // For "url" and "text" we still run content detection to catch service-specific URLs
+  // (e.g. a QR saved as generic "url" type but pointing at calendly.com).
+  if (stored && stored !== "text" && stored !== "url") return stored;
 
   const displayDest = item.displayDestination as string | null;
   const content = item.content as string || "";
@@ -40,6 +45,7 @@ function getDetailContentType(item: any): string {
 
   if (!src) return stored;
 
+  // Protocol-based detection
   if (src.startsWith("tel:")) return "phone";
   if (src.startsWith("WIFI:")) return "wifi";
   if (src.startsWith("upi://")) return "upi";
@@ -47,6 +53,9 @@ function getDetailContentType(item: any): string {
   if (src.startsWith("BEGIN:VCARD")) return "contact";
   if (src.startsWith("SMSTO:") || src.startsWith("sms:")) return "sms";
   if (src.startsWith("mailto:")) return "email";
+  if (/^bitcoin:|^ethereum:|^litecoin:|^solana:/.test(src)) return "crypto";
+
+  // Service-specific URL detection (runs for BOTH "url" and "text" stored types)
   if (src.includes("wa.me") || src.includes("whatsapp.com")) return "whatsapp";
   if (src.includes("instagram.com") || src.includes("instagr.am")) return "instagram";
   if (src.includes("twitter.com") || src.includes("x.com/")) return "twitter";
@@ -57,12 +66,19 @@ function getDetailContentType(item: any): string {
   if (src.includes("open.spotify.com")) return "spotify";
   if (src.includes("discord.gg") || src.includes("discord.com")) return "discord";
   if (src.includes("tiktok.com")) return "tiktok";
-  if (src.includes("paypal.me") || src.includes("paypal.com")) return "paypal";
+  if (src.includes("paypal.me") || src.includes("paypal.com/paypalme")) return "paypal";
   if (src.includes("venmo.com")) return "venmo";
   if (src.includes("zoom.us")) return "zoom";
-  if (/^bitcoin:|^ethereum:|^litecoin:|^solana:/.test(src)) return "crypto";
+  if (src.includes("calendly.com")) return "calendly";
+  if (src.includes("maps.google.com") || src.includes("goo.gl/maps") || src.includes("maps.app.goo.gl")) return "location";
+  if (src.includes("apps.apple.com") || src.includes("play.google.com") || src.includes("appstore.com")) return "appdownload";
+  if (src.includes("rzp.io") || src.includes("razorpay.com") || src.includes("paytm.com/pay")) return "paymentlink";
+
+  // Pattern-based detection
   if (/^[\w.\-+]+@[\w]{2,}$/.test(src) && !/\.(com|in|org|net|io|co|app)$/.test(src.split("@")[1] || "")) return "upi";
   if (/^\+?[\d]{7,15}$/.test(src.replace(/[\s\-()]/g, ""))) return "phone";
+
+  // Generic URL detection
   const withScheme = src.startsWith("http") ? src : `https://${src}`;
   try {
     const u = new URL(withScheme);
@@ -366,8 +382,80 @@ function parseQrContentDetails(item: any): ContentDetailRow[] {
       return [];
     }
     case "text": {
-      if (src.length < 200 && !isGuardOrGo) return [{ label: "Text Content", value: src, icon: "text-outline" }];
+      if (src.length < 500 && !isGuardOrGo) return [{ label: "Text Content", value: src, icon: "text-outline" }];
       return [];
+    }
+    case "calendly": {
+      if (isGuardOrGo) return [];
+      try {
+        const u = new URL(src.startsWith("http") ? src : `https://${src}`);
+        const parts = u.pathname.replace(/^\//, "").split("/").filter(Boolean);
+        const username = parts[0] || "";
+        const eventType = parts[1] || "";
+        const rows: ContentDetailRow[] = [];
+        if (username) rows.push({ label: "Calendly Username", value: username, icon: "person-outline" });
+        if (eventType) rows.push({ label: "Event Type", value: eventType, icon: "calendar-outline" });
+        if (rows.length > 0) return rows;
+      } catch {}
+      return [];
+    }
+    case "paymentlink":
+    case "payment": {
+      if (isGuardOrGo) return [];
+      try {
+        const u = new URL(src.startsWith("http") ? src : `https://${src}`);
+        const domain = u.hostname.replace(/^www\./, "");
+        const rows: ContentDetailRow[] = [{ label: "Payment Page", value: domain, icon: "card-outline" }];
+        if (u.pathname && u.pathname !== "/") rows.push({ label: "Path", value: u.pathname, icon: "git-branch-outline" });
+        return rows;
+      } catch {}
+      return [];
+    }
+    case "reviewpage":
+    case "googlereview": {
+      if (isGuardOrGo) return [];
+      try {
+        const u = new URL(src.startsWith("http") ? src : `https://${src}`);
+        const domain = u.hostname.replace(/^www\./, "");
+        const rows: ContentDetailRow[] = [{ label: "Review Page", value: domain, icon: "star-outline" }];
+        if (u.pathname && u.pathname !== "/") rows.push({ label: "Path", value: u.pathname, icon: "git-branch-outline" });
+        return rows;
+      } catch {}
+      return [];
+    }
+    case "menucatalogue":
+    case "restaurantmenu": {
+      if (isGuardOrGo) return [];
+      try {
+        const u = new URL(src.startsWith("http") ? src : `https://${src}`);
+        const domain = u.hostname.replace(/^www\./, "");
+        return [{ label: "Menu / Catalogue", value: domain, icon: "list-outline" }];
+      } catch {}
+      return [];
+    }
+    case "donation": {
+      if (isGuardOrGo) return [];
+      try {
+        const u = new URL(src.startsWith("http") ? src : `https://${src}`);
+        const domain = u.hostname.replace(/^www\./, "");
+        return [{ label: "Donation Page", value: domain, icon: "heart-outline" }];
+      } catch {}
+      return [];
+    }
+    case "appdownload":
+    case "app": {
+      if (isGuardOrGo) return [];
+      const isApple = src.includes("apps.apple.com");
+      const isGoogle = src.includes("play.google.com");
+      const store = isApple ? "App Store" : isGoogle ? "Google Play" : "App Store";
+      try {
+        const u = new URL(src.startsWith("http") ? src : `https://${src}`);
+        const appName = u.searchParams.get("mt") ? "" : u.pathname.split("/").filter(Boolean).pop()?.replace(/-/g, " ") || "";
+        const rows: ContentDetailRow[] = [{ label: "Store", value: store, icon: "download-outline" }];
+        if (appName) rows.push({ label: "App", value: appName, icon: "apps-outline" });
+        return rows;
+      } catch {}
+      return [{ label: "Store", value: store, icon: "download-outline" }];
     }
     default:
       return [];
@@ -760,7 +848,9 @@ export default function MyQrDetailScreen() {
             {(() => {
               const rawContent = standardLink.rawContent || "";
               const NON_URL_SCHEMES = ["tel:", "upi://", "WIFI:", "BEGIN:", "SMSTO:", "sms:", "mailto:", "bitcoin:", "ethereum:", "litecoin:", "solana:", "geo:"];
-              const isNonUrlContent = NON_URL_SCHEMES.some((s) => rawContent.startsWith(s));
+              // Types whose raw content is NOT a web URL — block raw-URL editing for these
+              const FIXED_CONTENT_TYPES = new Set(["text", "phone", "wifi", "contact", "event", "calendar", "sms", "email", "crypto", "upi", "scantopay", "bharatqr", "mobilepay", "bharatpay", "grab"]);
+              const isNonUrlContent = NON_URL_SCHEMES.some((s) => rawContent.startsWith(s)) || FIXED_CONTENT_TYPES.has(effectiveContentType);
               const isUrlContent = !isNonUrlContent && (rawContent.startsWith("http") || rawContent.startsWith("www.") || /^[\w-]+\.\w{2,}/.test(rawContent));
 
               return (
@@ -802,7 +892,8 @@ export default function MyQrDetailScreen() {
                   ) : isUrlContent ? (
                     /* URL content: show URL + allow editing */
                     <>
-                      {!editingDestination && (
+                      {/* Only show raw URL for generic url type — service types (calendly, youtube, etc.) already show parsed data in the QR Content card above */}
+                      {!editingDestination && effectiveContentType === "url" && (
                         <Text style={{ fontSize: rf(11), fontFamily: "Inter_400Regular", color: colors.textSecondary, marginBottom: sp(10) }} numberOfLines={2}>
                           {rawContent}
                         </Text>
