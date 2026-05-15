@@ -1143,7 +1143,7 @@ function HomeView({ templates, colors, isDark, rf, sp, onOpenAi, onOpenAdvancedB
                 })}
               >
                 <View style={{ width: sp(36), height: sp(36), borderRadius: sp(11), backgroundColor: t.color + "18", alignItems: "center", justifyContent: "center" }}>
-                  <Text style={{ fontSize: rf(18) }}>{t.emoji}</Text>
+                  <Ionicons name={t.icon as any} size={rf(18)} color={t.color} />
                 </View>
                 <View style={{ flex: 1, minWidth: 0 }}>
                   <Text style={{ fontSize: rf(12), fontFamily: "Inter_600SemiBold", color: colors.text }} numberOfLines={1}>{t.name}</Text>
@@ -1449,7 +1449,7 @@ function BuilderView({ template, allTemplates, values, errors, showPass, encType
                     opacity: pressed ? 0.8 : 1,
                   })}
                 >
-                  <Text style={{ fontSize: rf(14) }}>{t.emoji}</Text>
+                  <Ionicons name={t.icon as any} size={rf(13)} color={active ? t.color : colors.textSecondary} />
                   <Text style={{ fontSize: rf(12), fontFamily: active ? "Inter_700Bold" : "Inter_500Medium", color: active ? t.color : colors.textSecondary }}>
                     {t.name}
                   </Text>
