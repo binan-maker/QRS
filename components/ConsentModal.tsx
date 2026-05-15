@@ -47,9 +47,6 @@ export default function ConsentModal({ visible, onAccept }: ConsentModalProps) {
   const [scrolledToBottom, setScrolledToBottom] = useState(false);
   const scrollRef = useRef<ScrollView>(null);
 
-  const statusBarHeight =
-    Platform.OS === "android" ? (StatusBar.currentHeight ?? 24) : 44;
-
   const handleScroll = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
     const { layoutMeasurement, contentOffset, contentSize } = e.nativeEvent;
     const isAtBottom =
@@ -67,20 +64,19 @@ export default function ConsentModal({ visible, onAccept }: ConsentModalProps) {
   const openTerms = () =>
     Linking.openURL("https://binan-maker.github.io/qrguard/terms.html");
 
-  const cardHeight = Math.min(height * 0.72, 620);
+  const cardHeight = Math.min(height * 0.78, 580);
 
-  const cardBg = isDark ? "#141E2B" : "#FFFFFF";
-  const overlayBg = "rgba(0,0,0,0.6)";
-  const divider = isDark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.07)";
-  const bodyText = isDark ? "#94A3B8" : "#4B5563";
-  const boldText = isDark ? "#F1F5F9" : "#111827";
-  const sectionLabel = isDark ? "#3B82F6" : "#2563EB";
-  const accentWarning = "#F59E0B";
-  const hintText = isDark ? "#475569" : "#9CA3AF";
+  const cardBg      = isDark ? "#141E2B" : "#FFFFFF";
+  const divider     = isDark ? "rgba(255,255,255,0.07)" : "rgba(0,0,0,0.06)";
+  const bodyText    = isDark ? "#94A3B8" : "#4B5563";
+  const boldText    = isDark ? "#F1F5F9" : "#111827";
+  const sectionBlue = isDark ? "#60A5FA" : "#2563EB";
+  const hintText    = isDark ? "#475569" : "#9CA3AF";
   const checkboxBorder = isDark ? "#334155" : "#D1D5DB";
-  const checkboxLabel = isDark ? "#CBD5E1" : "#374151";
-  const linkColor = colors.primary;
-  const tagBg = isDark ? "rgba(59,130,246,0.12)" : "rgba(37,99,235,0.08)";
+  const checkboxLabel  = isDark ? "#CBD5E1" : "#374151";
+  const linkColor   = colors.primary;
+  const infoBg      = isDark ? "rgba(59,130,246,0.09)" : "rgba(37,99,235,0.06)";
+  const infoBorder  = isDark ? "rgba(59,130,246,0.22)" : "rgba(37,99,235,0.18)";
 
   return (
     <Modal
@@ -90,36 +86,29 @@ export default function ConsentModal({ visible, onAccept }: ConsentModalProps) {
       statusBarTranslucent
       onRequestClose={() => {}}
     >
-      <View style={[styles.overlay, { backgroundColor: overlayBg }]}>
+      <View style={[styles.overlay, { backgroundColor: "rgba(0,0,0,0.55)" }]}>
         <View
           style={[
             styles.card,
-            {
-              backgroundColor: cardBg,
-              height: cardHeight,
-              shadowColor: "#000",
-            },
+            { backgroundColor: cardBg, height: cardHeight, shadowColor: "#000" },
           ]}
         >
-          {/* Header */}
+          {/* ── Header ───────────────────────────────────────────── */}
           <View style={[styles.header, { borderBottomColor: divider }]}>
-            <View style={[styles.iconWrap, { backgroundColor: tagBg }]}>
+            <View style={[styles.iconWrap, { backgroundColor: colors.primaryDim ?? (colors.primary + "18") }]}>
               <Ionicons name="shield-checkmark" size={22} color={colors.primary} />
             </View>
             <View style={styles.headerText}>
               <Text style={[styles.title, { color: boldText }]}>
-                QR Guard Terms &amp; Privacy
+                QR Guard — Terms &amp; Privacy
               </Text>
               <Text style={[styles.subtitle, { color: hintText }]}>
-                Review before continuing
+                A quick read before you dive in
               </Text>
-            </View>
-            <View style={[styles.betaBadge, { backgroundColor: accentWarning + "22" }]}>
-              <Text style={[styles.betaText, { color: accentWarning }]}>BETA</Text>
             </View>
           </View>
 
-          {/* Scrollable Terms */}
+          {/* ── Scrollable Terms ─────────────────────────────────── */}
           <View style={styles.scrollWrapper}>
             <ScrollView
               ref={scrollRef}
@@ -130,15 +119,17 @@ export default function ConsentModal({ visible, onAccept }: ConsentModalProps) {
               showsVerticalScrollIndicator={true}
               bounces={Platform.OS === "ios"}
             >
-              <Section label="Beta Notice" accent={accentWarning} icon="warning-outline">
-                <Body color={bodyText}>
-                  QR Guard is a{" "}
-                  <Bold color={boldText}>beta-stage application</Bold> under active development.
-                  Features may change without notice. Use at your own risk.
-                </Body>
-              </Section>
+              {/* Beta notice — calm blue info style */}
+              <View style={[styles.infoBox, { backgroundColor: infoBg, borderColor: infoBorder }]}>
+                <Ionicons name="information-circle-outline" size={14} color={sectionBlue} style={{ marginTop: 1, flexShrink: 0 }} />
+                <Text style={[styles.infoBoxText, { color: bodyText }]}>
+                  QR Guard is in{" "}
+                  <Text style={{ fontWeight: "700", color: boldText }}>beta</Text>
+                  {" "}— features may change without notice. Use at your own discretion.
+                </Text>
+              </View>
 
-              <Section label="Nature of Service" color={sectionLabel}>
+              <Section label="Nature of Service" color={sectionBlue}>
                 <Body color={bodyText}>
                   Our security analysis is{" "}
                   <Bold color={boldText}>advisory only</Bold> — not a substitute for
@@ -146,7 +137,7 @@ export default function ConsentModal({ visible, onAccept }: ConsentModalProps) {
                 </Body>
               </Section>
 
-              <Section label="No Warranty" color={sectionLabel}>
+              <Section label="No Warranty" color={sectionBlue}>
                 <Body color={bodyText}>
                   This app is provided{" "}
                   <Bold color={boldText}>"as is"</Bold> without any warranty of
@@ -154,7 +145,7 @@ export default function ConsentModal({ visible, onAccept }: ConsentModalProps) {
                 </Body>
               </Section>
 
-              <Section label="Limitation of Liability" color={sectionLabel}>
+              <Section label="Limitation of Liability" color={sectionBlue}>
                 <Body color={bodyText}>
                   QR Guard is{" "}
                   <Bold color={boldText}>not liable</Bold> for any direct, indirect, or
@@ -163,7 +154,7 @@ export default function ConsentModal({ visible, onAccept }: ConsentModalProps) {
                 </Body>
               </Section>
 
-              <Section label="Data We Collect" color={sectionLabel}>
+              <Section label="Data We Collect" color={sectionBlue}>
                 <Bullets
                   color={bodyText}
                   bullet={colors.primary}
@@ -179,7 +170,7 @@ export default function ConsentModal({ visible, onAccept }: ConsentModalProps) {
                 />
               </Section>
 
-              <Section label="How We Use Your Data" color={sectionLabel}>
+              <Section label="How We Use Your Data" color={sectionBlue}>
                 <Bullets
                   color={bodyText}
                   bullet={colors.primary}
@@ -193,7 +184,7 @@ export default function ConsentModal({ visible, onAccept }: ConsentModalProps) {
                 />
               </Section>
 
-              <Section label="AI Training" accent={accentWarning} icon="alert-circle-outline">
+              <Section label="AI Training" color={sectionBlue}>
                 <Body color={bodyText}>
                   <Bold color={boldText}>By using QR Guard</Bold>, your anonymised scan
                   data may be used to{" "}
@@ -202,7 +193,7 @@ export default function ConsentModal({ visible, onAccept }: ConsentModalProps) {
                 </Body>
               </Section>
 
-              <Section label="Advertising" color={sectionLabel}>
+              <Section label="Advertising" color={sectionBlue}>
                 <Body color={bodyText}>
                   QR Guard may display ads. Aggregated, non-personal usage data may be
                   shared with ad partners. We do{" "}
@@ -211,7 +202,7 @@ export default function ConsentModal({ visible, onAccept }: ConsentModalProps) {
                 </Body>
               </Section>
 
-              <Section label="Third-Party Services" color={sectionLabel}>
+              <Section label="Third-Party Services" color={sectionBlue}>
                 <Body color={bodyText}>
                   Integrates Firebase, Google Safe Browsing, and Razorpay. We are{" "}
                   <Bold color={boldText}>not responsible</Bold> for those parties'
@@ -219,7 +210,7 @@ export default function ConsentModal({ visible, onAccept }: ConsentModalProps) {
                 </Body>
               </Section>
 
-              <Section label="Your Responsibility" color={sectionLabel}>
+              <Section label="Your Responsibility" color={sectionBlue}>
                 <Bullets
                   color={bodyText}
                   bullet={colors.primary}
@@ -231,7 +222,7 @@ export default function ConsentModal({ visible, onAccept }: ConsentModalProps) {
                 />
               </Section>
 
-              <Section label="Governing Law" color={sectionLabel}>
+              <Section label="Governing Law" color={sectionBlue}>
                 <Body color={bodyText}>
                   Governed by the laws of{" "}
                   <Bold color={boldText}>the Republic of India</Bold>. Disputes are
@@ -240,7 +231,7 @@ export default function ConsentModal({ visible, onAccept }: ConsentModalProps) {
                 </Body>
               </Section>
 
-              <Section label="Contact" color={sectionLabel}>
+              <Section label="Contact" color={sectionBlue}>
                 <Body color={bodyText}>
                   <Bold color={boldText}>legal@qrguard.app</Bold>
                   {"  ·  "}
@@ -272,7 +263,7 @@ export default function ConsentModal({ visible, onAccept }: ConsentModalProps) {
             )}
           </View>
 
-          {/* Footer */}
+          {/* ── Footer ───────────────────────────────────────────── */}
           <View style={[styles.footer, { borderTopColor: divider }]}>
             <Pressable
               style={styles.checkRow}
@@ -307,8 +298,10 @@ export default function ConsentModal({ visible, onAccept }: ConsentModalProps) {
               style={[
                 styles.acceptBtn,
                 {
-                  backgroundColor: checked ? colors.primary : (isDark ? "#1E3A5F" : "#EFF6FF"),
-                  opacity: checked ? 1 : 0.7,
+                  backgroundColor: checked
+                    ? colors.primary
+                    : isDark ? "#1E293B" : "#F1F5F9",
+                  opacity: checked ? 1 : 0.65,
                 },
               ]}
               onPress={checked ? handleAccept : undefined}
@@ -318,7 +311,7 @@ export default function ConsentModal({ visible, onAccept }: ConsentModalProps) {
               <Text
                 style={[
                   styles.acceptBtnText,
-                  { color: checked ? "#fff" : (isDark ? "#3B82F6" : "#93C5FD") },
+                  { color: checked ? "#fff" : (isDark ? "#475569" : "#9CA3AF") },
                 ]}
               >
                 Continue
@@ -334,36 +327,31 @@ export default function ConsentModal({ visible, onAccept }: ConsentModalProps) {
   );
 }
 
+// ── Sub-components ────────────────────────────────────────────────────────────
+
 function Section({
   label,
-  accent,
   color,
-  icon,
   children,
 }: {
   label: string;
-  accent?: string;
-  color?: string;
-  icon?: string;
+  color: string;
   children: React.ReactNode;
 }) {
-  const labelColor = accent ?? color ?? "#9CA3AF";
   return (
-    <View style={{ marginBottom: 14 }}>
-      <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 5, gap: 4 }}>
-        {icon && <Ionicons name={icon as any} size={11} color={labelColor} />}
-        <Text
-          style={{
-            fontSize: 10,
-            fontWeight: "700",
-            letterSpacing: 0.7,
-            textTransform: "uppercase",
-            color: labelColor,
-          }}
-        >
-          {label}
-        </Text>
-      </View>
+    <View style={{ marginBottom: 13 }}>
+      <Text
+        style={{
+          fontSize: 10,
+          fontWeight: "700",
+          letterSpacing: 0.6,
+          textTransform: "uppercase",
+          color,
+          marginBottom: 4,
+        }}
+      >
+        {label}
+      </Text>
       {children}
     </View>
   );
@@ -402,22 +390,24 @@ function Bullets({
   );
 }
 
+// ── Styles ────────────────────────────────────────────────────────────────────
+
 const styles = StyleSheet.create({
   overlay: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    paddingHorizontal: 16,
+    paddingHorizontal: 18,
   },
   card: {
     width: "100%",
-    maxWidth: 460,
-    borderRadius: 20,
+    maxWidth: 440,
+    borderRadius: 22,
     overflow: "hidden",
-    elevation: 30,
-    shadowOpacity: 0.3,
-    shadowRadius: 24,
-    shadowOffset: { width: 0, height: 10 },
+    elevation: 28,
+    shadowOpacity: 0.22,
+    shadowRadius: 20,
+    shadowOffset: { width: 0, height: 8 },
   },
   header: {
     flexDirection: "row",
@@ -439,23 +429,28 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   title: {
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: "700",
     letterSpacing: -0.2,
     marginBottom: 1,
   },
   subtitle: {
+    fontSize: 11.5,
+  },
+  infoBox: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: 8,
+    borderRadius: 12,
+    borderWidth: 1,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    marginBottom: 14,
+  },
+  infoBoxText: {
+    flex: 1,
     fontSize: 12,
-  },
-  betaBadge: {
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 6,
-  },
-  betaText: {
-    fontSize: 10,
-    fontWeight: "800",
-    letterSpacing: 0.5,
+    lineHeight: 18,
   },
   scrollWrapper: {
     flex: 1,
@@ -479,7 +474,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     gap: 4,
-    paddingVertical: 8,
+    paddingVertical: 7,
   },
   fadeHintText: {
     fontSize: 11,
