@@ -230,9 +230,11 @@ export function useMyQrDetail(id: string) {
 
   async function handleUpdateStandardDestination() {
     if (!newDestination.trim() || !user || !qrItem?.uuid) return;
-    const dest = newDestination.trim().startsWith("http")
-      ? newDestination.trim()
-      : `https://${newDestination.trim()}`;
+    const raw = newDestination.trim();
+    // Preserve non-URL schemes as-is; only add https:// to bare domain/path inputs
+    const NON_URL_SCHEMES = ["tel:", "upi://", "WIFI:", "BEGIN:", "SMSTO:", "sms:", "mailto:", "bitcoin:", "ethereum:", "litecoin:", "solana:", "geo:", "market:"];
+    const isNonUrl = NON_URL_SCHEMES.some((s) => raw.startsWith(s));
+    const dest = isNonUrl || raw.startsWith("http") ? raw : `https://${raw}`;
 
     setIsValidating(true);
     setDestinationError(null);

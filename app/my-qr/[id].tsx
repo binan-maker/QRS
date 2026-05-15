@@ -595,9 +595,17 @@ export default function MyQrDetailScreen() {
           </View>
         </Animated.View>
 
-        {/* QR Content Details Card — shows human-readable parsed content for all types */}
+        {/* QR Content Details Card — always uses the most current live content as source */}
         {(() => {
-          const rows = parseQrContentDetails(qrItem as any);
+          // Use live standardLink.rawContent or guardLink.currentDestination if available,
+          // so the card always reflects real current data rather than stale Firestore snapshot.
+          const liveRaw = standardLink?.rawContent
+            ?? (guardLink?.currentDestination && !guardLink.currentDestination.includes("/guard/") && !guardLink.currentDestination.includes("/go/")
+              ? guardLink.currentDestination : null);
+          const liveItem = liveRaw
+            ? { ...(qrItem as any), content: liveRaw, displayDestination: liveRaw }
+            : (qrItem as any);
+          const rows = parseQrContentDetails(liveItem);
           if (rows.length === 0) return null;
           return (
             <Animated.View entering={FadeInDown.duration(350).delay(65)}>
@@ -643,190 +651,214 @@ export default function MyQrDetailScreen() {
           );
         })()}
 
-        {/* Dynamic Destination — all QR types with a guard link */}
+        {/* Dynamic Destination — Business QRs with guard link */}
         {guardLink && (
           <Animated.View entering={FadeInDown.duration(350).delay(80)}>
-            <View style={{
-              borderRadius: sp(18), borderWidth: 1, borderColor: "#6366F1" + "40",
-              backgroundColor: "#6366F1" + "0D", padding: sp(16), marginBottom: sp(14),
-            }}>
-              <View style={{ flexDirection: "row", alignItems: "center", gap: sp(8), marginBottom: sp(6) }}>
-                <Ionicons name="git-branch-outline" size={rf(15)} color="#6366F1" />
-                <Text style={{ fontSize: rf(13), fontFamily: "Inter_700Bold", color: "#6366F1" }}>
-                  {isBusiness ? "Smart Redirect" : "Dynamic Destination"}
-                </Text>
-                <View style={{ borderRadius: sp(6), paddingHorizontal: sp(7), paddingVertical: sp(2), backgroundColor: "#6366F1" + "20" }}>
-                  <Text style={{ fontSize: rf(9), fontFamily: "Inter_700Bold", color: "#6366F1" }}>DYNAMIC</Text>
-                </View>
-              </View>
-              {(() => {
-                const dest = guardLink.currentDestination || "";
-                const isPrivate = /^https?:\/\/(192\.168\.|10\.|172\.(1[6-9]|2\d|3[01])\.|127\.|localhost)/.test(dest) || dest.includes("/guard/");
-                if (isPrivate || !dest) return null;
-                return (
-                  <Text style={{ fontSize: rf(11), fontFamily: "Inter_400Regular", color: colors.textSecondary, marginBottom: sp(10) }} numberOfLines={2}>
-                    {dest}
-                  </Text>
-                );
-              })()}
+            {(() => {
+              const dest = guardLink.currentDestination || "";
+              const isPrivate = /^https?:\/\/(192\.168\.|10\.|172\.(1[6-9]|2\d|3[01])\.|127\.|localhost)/.test(dest) || dest.includes("/guard/");
+              const NON_URL_SCHEMES = ["tel:", "upi://", "WIFI:", "BEGIN:", "SMSTO:", "sms:", "mailto:", "bitcoin:", "ethereum:", "litecoin:", "solana:", "geo:"];
+              const isNonUrlDest = NON_URL_SCHEMES.some((s) => dest.startsWith(s));
+              const showDest = !isPrivate && dest && !isNonUrlDest;
 
-              {editingDestination ? (
-                <View style={{ gap: sp(8) }}>
-                  <TextInput
-                    value={newDestination}
-                    onChangeText={(t) => { setNewDestination(t); setDestinationError(null); }}
-                    placeholder="https://new-url.com"
-                    placeholderTextColor={colors.textMuted}
-                    autoCapitalize="none"
-                    keyboardType="url"
-                    style={{
-                      backgroundColor: colors.surface, borderRadius: sp(10), borderWidth: 1,
-                      borderColor: destinationError ? colors.danger : colors.surfaceBorder,
-                      paddingHorizontal: sp(12), paddingVertical: sp(9),
-                      fontSize: rf(13), color: colors.text, fontFamily: "Inter_400Regular",
-                    }}
-                  />
-                  {destinationError && (
-                    <View style={{ flexDirection: "row", alignItems: "center", gap: sp(4) }}>
-                      <Ionicons name="warning-outline" size={rf(12)} color={colors.danger} />
-                      <Text style={{ fontSize: rf(11), fontFamily: "Inter_400Regular", color: colors.danger, flex: 1 }}>
-                        {destinationError}
-                      </Text>
-                    </View>
-                  )}
-                  <View style={{ flexDirection: "row", alignItems: "center", gap: sp(6), backgroundColor: colors.surface, borderRadius: sp(8), padding: sp(8) }}>
-                    <Ionicons name="shield-checkmark-outline" size={rf(12)} color={colors.textMuted} />
-                    <Text style={{ fontSize: rf(10), fontFamily: "Inter_400Regular", color: colors.textMuted, flex: 1 }}>
-                      New URL will be checked for threats before saving
+              return (
+                <View style={{
+                  borderRadius: sp(18), borderWidth: 1, borderColor: "#6366F1" + "40",
+                  backgroundColor: "#6366F1" + "0D", padding: sp(16), marginBottom: sp(14),
+                }}>
+                  <View style={{ flexDirection: "row", alignItems: "center", gap: sp(8), marginBottom: sp(10) }}>
+                    <Ionicons name="git-branch-outline" size={rf(15)} color="#6366F1" />
+                    <Text style={{ fontSize: rf(13), fontFamily: "Inter_700Bold", color: "#6366F1" }}>
+                      {isBusiness ? "Smart Redirect" : "Dynamic Destination"}
                     </Text>
+                    <View style={{ borderRadius: sp(6), paddingHorizontal: sp(7), paddingVertical: sp(2), backgroundColor: "#6366F1" + "20" }}>
+                      <Text style={{ fontSize: rf(9), fontFamily: "Inter_700Bold", color: "#6366F1" }}>DYNAMIC</Text>
+                    </View>
                   </View>
-                  <View style={{ flexDirection: "row", gap: sp(8) }}>
-                    <Pressable onPress={() => { setEditingDestination(false); setDestinationError(null); }} style={{ flex: 1, borderRadius: sp(10), borderWidth: 1, borderColor: colors.surfaceBorder, padding: sp(9), alignItems: "center" }}>
-                      <Text style={{ fontSize: rf(13), fontFamily: "Inter_600SemiBold", color: colors.textSecondary }}>Cancel</Text>
-                    </Pressable>
-                    <Pressable onPress={handleUpdateDestination} disabled={savingDestination || isValidating} style={{ flex: 2, borderRadius: sp(10), backgroundColor: "#6366F1", padding: sp(9), alignItems: "center", flexDirection: "row", justifyContent: "center", gap: sp(6) }}>
-                      {(isValidating || savingDestination) && <ActivityIndicator size="small" color="#fff" />}
-                      <Text style={{ fontSize: rf(13), fontFamily: "Inter_700Bold", color: "#fff" }}>
-                        {isValidating ? "Scanning…" : savingDestination ? "Saving…" : "Update URL"}
-                      </Text>
-                    </Pressable>
-                  </View>
-                </View>
-              ) : (
-                <Pressable
-                  onPress={() => setEditingDestination(true)}
-                  style={({ pressed }) => [{
-                    flexDirection: "row", alignItems: "center", gap: sp(6),
-                    borderRadius: sp(10), backgroundColor: "#6366F1" + "20",
-                    paddingHorizontal: sp(12), paddingVertical: sp(8), alignSelf: "flex-start",
-                    opacity: pressed ? 0.8 : 1,
-                  }]}
-                >
-                  <Ionicons name="pencil-outline" size={rf(13)} color="#6366F1" />
-                  <Text style={{ fontSize: rf(12), fontFamily: "Inter_600SemiBold", color: "#6366F1" }}>Change Destination</Text>
-                </Pressable>
-              )}
 
-              {/* Change history */}
-              {!editingDestination && guardLink.changeLog && guardLink.changeLog.length > 0 && (
-                <View style={{ marginTop: sp(12), gap: sp(6) }}>
-                  <Text style={{ fontSize: rf(10), fontFamily: "Inter_600SemiBold", color: colors.textMuted }}>RECENT CHANGES</Text>
-                  {guardLink.changeLog.slice(-3).reverse().map((entry, idx) => (
-                    <View key={idx} style={{ flexDirection: "row", alignItems: "flex-start", gap: sp(6), backgroundColor: colors.surface, borderRadius: sp(8), padding: sp(8) }}>
-                      <Ionicons name="time-outline" size={rf(11)} color={colors.textMuted} style={{ marginTop: 1 }} />
-                      <View style={{ flex: 1 }}>
-                        <Text style={{ fontSize: rf(10), fontFamily: "Inter_400Regular", color: colors.textMuted }}>
-                          {new Date(entry.changedAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
-                        </Text>
-                        <Text style={{ fontSize: rf(10), fontFamily: "Inter_400Regular", color: colors.textSecondary }} numberOfLines={1}>
-                          → {entry.to.length > 40 ? entry.to.slice(0, 40) + "…" : entry.to}
-                        </Text>
+                  {showDest && !editingDestination && (
+                    <Text style={{ fontSize: rf(11), fontFamily: "Inter_400Regular", color: colors.textSecondary, marginBottom: sp(10) }} numberOfLines={2}>
+                      {dest}
+                    </Text>
+                  )}
+
+                  {editingDestination ? (
+                    <View style={{ gap: sp(8) }}>
+                      <TextInput
+                        value={newDestination}
+                        onChangeText={(t) => { setNewDestination(t); setDestinationError(null); }}
+                        placeholder="https://new-url.com"
+                        placeholderTextColor={colors.textMuted}
+                        autoCapitalize="none"
+                        keyboardType="url"
+                        style={{
+                          backgroundColor: colors.surface, borderRadius: sp(10), borderWidth: 1,
+                          borderColor: destinationError ? colors.danger : colors.surfaceBorder,
+                          paddingHorizontal: sp(12), paddingVertical: sp(9),
+                          fontSize: rf(13), color: colors.text, fontFamily: "Inter_400Regular",
+                        }}
+                      />
+                      {destinationError && (
+                        <View style={{ flexDirection: "row", alignItems: "center", gap: sp(4) }}>
+                          <Ionicons name="warning-outline" size={rf(12)} color={colors.danger} />
+                          <Text style={{ fontSize: rf(11), fontFamily: "Inter_400Regular", color: colors.danger, flex: 1 }}>{destinationError}</Text>
+                        </View>
+                      )}
+                      <View style={{ flexDirection: "row", alignItems: "center", gap: sp(6), backgroundColor: colors.surface, borderRadius: sp(8), padding: sp(8) }}>
+                        <Ionicons name="shield-checkmark-outline" size={rf(12)} color={colors.textMuted} />
+                        <Text style={{ fontSize: rf(10), fontFamily: "Inter_400Regular", color: colors.textMuted, flex: 1 }}>New URL will be scanned for threats before saving</Text>
+                      </View>
+                      <View style={{ flexDirection: "row", gap: sp(8) }}>
+                        <Pressable onPress={() => { setEditingDestination(false); setDestinationError(null); }} style={{ flex: 1, borderRadius: sp(10), borderWidth: 1, borderColor: colors.surfaceBorder, padding: sp(9), alignItems: "center" }}>
+                          <Text style={{ fontSize: rf(13), fontFamily: "Inter_600SemiBold", color: colors.textSecondary }}>Cancel</Text>
+                        </Pressable>
+                        <Pressable onPress={handleUpdateDestination} disabled={savingDestination || isValidating} style={{ flex: 2, borderRadius: sp(10), backgroundColor: "#6366F1", padding: sp(9), alignItems: "center", flexDirection: "row", justifyContent: "center", gap: sp(6) }}>
+                          {(isValidating || savingDestination) && <ActivityIndicator size="small" color="#fff" />}
+                          <Text style={{ fontSize: rf(13), fontFamily: "Inter_700Bold", color: "#fff" }}>
+                            {isValidating ? "Scanning…" : savingDestination ? "Saving…" : "Update URL"}
+                          </Text>
+                        </Pressable>
                       </View>
                     </View>
-                  ))}
+                  ) : (
+                    <Pressable
+                      onPress={() => setEditingDestination(true)}
+                      style={({ pressed }) => [{ flexDirection: "row", alignItems: "center", gap: sp(6), borderRadius: sp(10), backgroundColor: "#6366F1" + "20", paddingHorizontal: sp(12), paddingVertical: sp(8), alignSelf: "flex-start", opacity: pressed ? 0.8 : 1 }]}
+                    >
+                      <Ionicons name="pencil-outline" size={rf(13)} color="#6366F1" />
+                      <Text style={{ fontSize: rf(12), fontFamily: "Inter_600SemiBold", color: "#6366F1" }}>Change Destination</Text>
+                    </Pressable>
+                  )}
+
+                  {!editingDestination && guardLink.changeLog && guardLink.changeLog.length > 0 && (
+                    <View style={{ marginTop: sp(12), gap: sp(6) }}>
+                      <Text style={{ fontSize: rf(10), fontFamily: "Inter_600SemiBold", color: colors.textMuted }}>RECENT CHANGES</Text>
+                      {guardLink.changeLog.slice(-3).reverse().map((entry, idx) => (
+                        <View key={idx} style={{ flexDirection: "row", alignItems: "flex-start", gap: sp(6), backgroundColor: colors.surface, borderRadius: sp(8), padding: sp(8) }}>
+                          <Ionicons name="time-outline" size={rf(11)} color={colors.textMuted} style={{ marginTop: 1 }} />
+                          <View style={{ flex: 1 }}>
+                            <Text style={{ fontSize: rf(10), fontFamily: "Inter_400Regular", color: colors.textMuted }}>
+                              {new Date(entry.changedAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
+                            </Text>
+                            <Text style={{ fontSize: rf(10), fontFamily: "Inter_400Regular", color: colors.textSecondary }} numberOfLines={1}>
+                              → {entry.to.length > 40 ? entry.to.slice(0, 40) + "…" : entry.to}
+                            </Text>
+                          </View>
+                        </View>
+                      ))}
+                    </View>
+                  )}
                 </View>
-              )}
-            </View>
+              );
+            })()}
           </Animated.View>
         )}
 
-        {/* Standard Link — Dynamic Destination for Standard QR */}
+        {/* Standard Link — Dynamic Destination for Standard QR (non-business) */}
         {!isBusiness && standardLink && (
           <Animated.View entering={FadeInDown.duration(350).delay(80)}>
-            <View style={{
-              borderRadius: sp(18), borderWidth: 1, borderColor: colors.primary + "40",
-              backgroundColor: colors.primaryDim + "30", padding: sp(16), marginBottom: sp(14),
-            }}>
-              <View style={{ flexDirection: "row", alignItems: "center", gap: sp(8), marginBottom: sp(6) }}>
-                <Ionicons name="git-branch-outline" size={rf(15)} color={colors.primary} />
-                <Text style={{ fontSize: rf(13), fontFamily: "Inter_700Bold", color: colors.primary }}>
-                  Dynamic Destination
-                </Text>
-                <View style={{ borderRadius: sp(6), paddingHorizontal: sp(7), paddingVertical: sp(2), backgroundColor: colors.primaryDim }}>
-                  <Text style={{ fontSize: rf(9), fontFamily: "Inter_700Bold", color: colors.primary }}>DYNAMIC</Text>
-                </View>
-              </View>
-              <Text style={{ fontSize: rf(11), fontFamily: "Inter_400Regular", color: colors.textSecondary, marginBottom: sp(10) }} numberOfLines={2}>
-                {standardLink.rawContent}
-              </Text>
+            {(() => {
+              const rawContent = standardLink.rawContent || "";
+              const NON_URL_SCHEMES = ["tel:", "upi://", "WIFI:", "BEGIN:", "SMSTO:", "sms:", "mailto:", "bitcoin:", "ethereum:", "litecoin:", "solana:", "geo:"];
+              const isNonUrlContent = NON_URL_SCHEMES.some((s) => rawContent.startsWith(s));
+              const isUrlContent = !isNonUrlContent && (rawContent.startsWith("http") || rawContent.startsWith("www.") || /^[\w-]+\.\w{2,}/.test(rawContent));
 
-              {editingDestination ? (
-                <View style={{ gap: sp(8) }}>
-                  <TextInput
-                    value={newDestination}
-                    onChangeText={(t) => { setNewDestination(t); setDestinationError(null); }}
-                    placeholder="https://new-url.com"
-                    placeholderTextColor={colors.textMuted}
-                    autoCapitalize="none"
-                    keyboardType="url"
-                    style={{
-                      backgroundColor: colors.surface, borderRadius: sp(10), borderWidth: 1,
-                      borderColor: destinationError ? colors.danger : colors.surfaceBorder,
-                      paddingHorizontal: sp(12), paddingVertical: sp(9),
-                      fontSize: rf(13), color: colors.text, fontFamily: "Inter_400Regular",
-                    }}
-                  />
-                  {destinationError && (
-                    <View style={{ flexDirection: "row", alignItems: "center", gap: sp(4) }}>
-                      <Ionicons name="warning-outline" size={rf(12)} color={colors.danger} />
-                      <Text style={{ fontSize: rf(11), fontFamily: "Inter_400Regular", color: colors.danger, flex: 1 }}>
-                        {destinationError}
+              return (
+                <View style={{
+                  borderRadius: sp(18), borderWidth: 1,
+                  borderColor: isNonUrlContent ? colors.surfaceBorder : colors.primary + "40",
+                  backgroundColor: isNonUrlContent ? colors.surfaceLight : colors.primaryDim + "30",
+                  padding: sp(16), marginBottom: sp(14),
+                }}>
+                  <View style={{ flexDirection: "row", alignItems: "center", gap: sp(8), marginBottom: sp(10) }}>
+                    <Ionicons
+                      name={isNonUrlContent ? "lock-closed-outline" : "git-branch-outline"}
+                      size={rf(15)}
+                      color={isNonUrlContent ? colors.textSecondary : colors.primary}
+                    />
+                    <Text style={{ fontSize: rf(13), fontFamily: "Inter_700Bold", color: isNonUrlContent ? colors.textSecondary : colors.primary }}>
+                      {isNonUrlContent ? "Encoded Content" : "Dynamic Destination"}
+                    </Text>
+                    <View style={{
+                      borderRadius: sp(6), paddingHorizontal: sp(7), paddingVertical: sp(2),
+                      backgroundColor: isNonUrlContent ? colors.surfaceBorder : colors.primaryDim,
+                    }}>
+                      <Text style={{ fontSize: rf(9), fontFamily: "Inter_700Bold", color: isNonUrlContent ? colors.textMuted : colors.primary }}>
+                        {isNonUrlContent ? "FIXED" : "DYNAMIC"}
                       </Text>
                     </View>
-                  )}
-                  <View style={{ flexDirection: "row", alignItems: "center", gap: sp(6), backgroundColor: colors.surface, borderRadius: sp(8), padding: sp(8) }}>
-                    <Ionicons name="shield-checkmark-outline" size={rf(12)} color={colors.textMuted} />
-                    <Text style={{ fontSize: rf(10), fontFamily: "Inter_400Regular", color: colors.textMuted, flex: 1 }}>
-                      New URL will be checked for threats before saving
-                    </Text>
                   </View>
-                  <View style={{ flexDirection: "row", gap: sp(8) }}>
-                    <Pressable onPress={() => { setEditingDestination(false); setDestinationError(null); }} style={{ flex: 1, borderRadius: sp(10), borderWidth: 1, borderColor: colors.surfaceBorder, padding: sp(9), alignItems: "center" }}>
-                      <Text style={{ fontSize: rf(13), fontFamily: "Inter_600SemiBold", color: colors.textSecondary }}>Cancel</Text>
-                    </Pressable>
-                    <Pressable onPress={handleUpdateStandardDestination} disabled={savingDestination || isValidating} style={{ flex: 2, borderRadius: sp(10), backgroundColor: colors.primary, padding: sp(9), alignItems: "center", flexDirection: "row", justifyContent: "center", gap: sp(6) }}>
-                      {(isValidating || savingDestination) && <ActivityIndicator size="small" color="#fff" />}
-                      <Text style={{ fontSize: rf(13), fontFamily: "Inter_700Bold", color: "#fff" }}>
-                        {isValidating ? "Scanning…" : savingDestination ? "Saving…" : "Update URL"}
-                      </Text>
-                    </Pressable>
-                  </View>
+
+                  {isNonUrlContent ? (
+                    /* Non-URL content (UPI, WiFi, Phone, Contact, etc.): show info — no raw editing */
+                    <View style={{ gap: sp(8) }}>
+                      <View style={{ flexDirection: "row", alignItems: "flex-start", gap: sp(8), backgroundColor: colors.surface, borderRadius: sp(10), padding: sp(10) }}>
+                        <Ionicons name="information-circle-outline" size={rf(14)} color={colors.textMuted} style={{ marginTop: 1 }} />
+                        <Text style={{ fontSize: rf(11), fontFamily: "Inter_400Regular", color: colors.textSecondary, flex: 1, lineHeight: rf(17) }}>
+                          This QR encodes {CONTENT_TYPE_LABEL[effectiveContentType] || "structured"} data directly. The content is fixed to this type and cannot be changed to a raw URL. To use different details, create a new QR code.
+                        </Text>
+                      </View>
+                    </View>
+                  ) : isUrlContent ? (
+                    /* URL content: show URL + allow editing */
+                    <>
+                      {!editingDestination && (
+                        <Text style={{ fontSize: rf(11), fontFamily: "Inter_400Regular", color: colors.textSecondary, marginBottom: sp(10) }} numberOfLines={2}>
+                          {rawContent}
+                        </Text>
+                      )}
+                      {editingDestination ? (
+                        <View style={{ gap: sp(8) }}>
+                          <TextInput
+                            value={newDestination}
+                            onChangeText={(t) => { setNewDestination(t); setDestinationError(null); }}
+                            placeholder="https://new-url.com"
+                            placeholderTextColor={colors.textMuted}
+                            autoCapitalize="none"
+                            keyboardType="url"
+                            style={{
+                              backgroundColor: colors.surface, borderRadius: sp(10), borderWidth: 1,
+                              borderColor: destinationError ? colors.danger : colors.surfaceBorder,
+                              paddingHorizontal: sp(12), paddingVertical: sp(9),
+                              fontSize: rf(13), color: colors.text, fontFamily: "Inter_400Regular",
+                            }}
+                          />
+                          {destinationError && (
+                            <View style={{ flexDirection: "row", alignItems: "center", gap: sp(4) }}>
+                              <Ionicons name="warning-outline" size={rf(12)} color={colors.danger} />
+                              <Text style={{ fontSize: rf(11), fontFamily: "Inter_400Regular", color: colors.danger, flex: 1 }}>{destinationError}</Text>
+                            </View>
+                          )}
+                          <View style={{ flexDirection: "row", alignItems: "center", gap: sp(6), backgroundColor: colors.surface, borderRadius: sp(8), padding: sp(8) }}>
+                            <Ionicons name="shield-checkmark-outline" size={rf(12)} color={colors.textMuted} />
+                            <Text style={{ fontSize: rf(10), fontFamily: "Inter_400Regular", color: colors.textMuted, flex: 1 }}>New URL will be scanned for threats before saving</Text>
+                          </View>
+                          <View style={{ flexDirection: "row", gap: sp(8) }}>
+                            <Pressable onPress={() => { setEditingDestination(false); setDestinationError(null); }} style={{ flex: 1, borderRadius: sp(10), borderWidth: 1, borderColor: colors.surfaceBorder, padding: sp(9), alignItems: "center" }}>
+                              <Text style={{ fontSize: rf(13), fontFamily: "Inter_600SemiBold", color: colors.textSecondary }}>Cancel</Text>
+                            </Pressable>
+                            <Pressable onPress={handleUpdateStandardDestination} disabled={savingDestination || isValidating} style={{ flex: 2, borderRadius: sp(10), backgroundColor: colors.primary, padding: sp(9), alignItems: "center", flexDirection: "row", justifyContent: "center", gap: sp(6) }}>
+                              {(isValidating || savingDestination) && <ActivityIndicator size="small" color="#fff" />}
+                              <Text style={{ fontSize: rf(13), fontFamily: "Inter_700Bold", color: "#fff" }}>
+                                {isValidating ? "Scanning…" : savingDestination ? "Saving…" : "Update URL"}
+                              </Text>
+                            </Pressable>
+                          </View>
+                        </View>
+                      ) : (
+                        <Pressable
+                          onPress={() => { setNewDestination(rawContent); setEditingDestination(true); }}
+                          style={({ pressed }) => [{ flexDirection: "row", alignItems: "center", gap: sp(6), borderRadius: sp(10), backgroundColor: colors.primaryDim, paddingHorizontal: sp(12), paddingVertical: sp(8), alignSelf: "flex-start", opacity: pressed ? 0.8 : 1 }]}
+                        >
+                          <Ionicons name="pencil-outline" size={rf(13)} color={colors.primary} />
+                          <Text style={{ fontSize: rf(12), fontFamily: "Inter_600SemiBold", color: colors.primary }}>Change Destination</Text>
+                        </Pressable>
+                      )}
+                    </>
+                  ) : null}
                 </View>
-              ) : (
-                <Pressable
-                  onPress={() => { setNewDestination(standardLink.rawContent); setEditingDestination(true); }}
-                  style={({ pressed }) => [{
-                    flexDirection: "row", alignItems: "center", gap: sp(6),
-                    borderRadius: sp(10), backgroundColor: colors.primaryDim,
-                    paddingHorizontal: sp(12), paddingVertical: sp(8), alignSelf: "flex-start",
-                    opacity: pressed ? 0.8 : 1,
-                  }]}
-                >
-                  <Ionicons name="pencil-outline" size={rf(13)} color={colors.primary} />
-                  <Text style={{ fontSize: rf(12), fontFamily: "Inter_600SemiBold", color: colors.primary }}>Change Destination</Text>
-                </Pressable>
-              )}
-            </View>
+              );
+            })()}
           </Animated.View>
         )}
 
