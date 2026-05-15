@@ -116,8 +116,8 @@ const TEMPLATES: QrTemplate[] = [
     },
   },
   {
-    id: "google_pay", name: "Google Pay", emoji: "🟢", color: "#4285F4",
-    icon: "logo-google", tagline: "GPay deep link for instant pay", category: "Payment",
+    id: "google_pay", name: "Google Pay", emoji: "💵", color: "#4285F4",
+    icon: "card-outline", tagline: "GPay deep link for instant pay", category: "Payment",
     securityNote: "Generates a standard UPI URL compatible with Google Pay.",
     securityIcon: "shield-checkmark-outline",
     fields: [
@@ -135,7 +135,7 @@ const TEMPLATES: QrTemplate[] = [
   // ── SOCIAL MEDIA ──
   {
     id: "whatsapp", name: "WhatsApp", emoji: "💬", color: "#25D366",
-    icon: "logo-whatsapp", tagline: "Open a chat with pre-filled message", category: "Social",
+    icon: "chatbubble-ellipses-outline", tagline: "Open a chat with pre-filled message", category: "Social",
     securityNote: "Opens WhatsApp directly. Message is pre-filled but not sent until user taps.",
     securityIcon: "shield-outline",
     fields: [
@@ -242,7 +242,7 @@ const TEMPLATES: QrTemplate[] = [
   },
   {
     id: "tiktok", name: "TikTok", emoji: "🎵", color: "#010101",
-    icon: "musical-notes-outline", tagline: "Link to your TikTok profile", category: "Social",
+    icon: "musical-note-outline", tagline: "Link to your TikTok profile", category: "Social",
     securityNote: "Direct link to TikTok profile page.",
     securityIcon: "person-outline",
     fields: [
@@ -272,7 +272,7 @@ const TEMPLATES: QrTemplate[] = [
   },
   {
     id: "discord", name: "Discord", emoji: "🎮", color: "#5865F2",
-    icon: "game-controller-outline", tagline: "Invite to your Discord server", category: "Social",
+    icon: "headset-outline", tagline: "Invite to your Discord server", category: "Social",
     securityNote: "Invite link opens Discord app or browser.",
     securityIcon: "people-outline",
     fields: [
@@ -358,7 +358,7 @@ const TEMPLATES: QrTemplate[] = [
     },
   },
   {
-    id: "google_meet", name: "Google Meet", emoji: "🟢", color: "#00897B",
+    id: "google_meet", name: "Google Meet", emoji: "📹", color: "#00897B",
     icon: "videocam-outline", tagline: "Join a Google Meet session", category: "Work",
     securityNote: "Google Meet links require a Google account to join by default.",
     securityIcon: "shield-outline",
@@ -371,7 +371,7 @@ const TEMPLATES: QrTemplate[] = [
     },
   },
   {
-    id: "ms_teams", name: "Microsoft Teams", emoji: "🟦", color: "#6264A7",
+    id: "ms_teams", name: "Microsoft Teams", emoji: "👥", color: "#6264A7",
     icon: "people-outline", tagline: "Join a Teams meeting", category: "Work",
     securityNote: "Microsoft Teams meeting links are organisation-specific.",
     securityIcon: "shield-outline",
@@ -570,16 +570,67 @@ const BASE_URL = process.env.EXPO_PUBLIC_DOMAIN
   ? `https://${process.env.EXPO_PUBLIC_DOMAIN}`
   : "http://localhost:5000";
 
+function clientSmartParse(p: string): string {
+  const lower = p.toLowerCase();
+
+  const urlMatch = p.match(/https?:\/\/[^\s,]+/);
+  if (urlMatch) return urlMatch[0];
+
+  if (/whatsapp/i.test(lower)) {
+    const phone = p.match(/[\+\d][\d\s\-()]{7,}/)?.[0]?.replace(/[^\d+]/g, "") ?? "";
+    if (phone) return `https://wa.me/${phone.replace(/^\+/, "")}`;
+  }
+
+  if (/wi-?fi|ssid|network.*pass|pass.*network/i.test(lower)) {
+    const ssid = (p.match(/(?:ssid|network(?:\s+name)?|named?|called?|for)\s*[:"']?\s*([^,\n"']+?)(?:\s*[,\n]|$)/i)?.[1]
+      ?? p.match(/^([^,]+),/)?.[1] ?? "MyNetwork").trim();
+    const pass = p.match(/(?:password|pwd|pass(?:word)?)\s*[:"']?\s*(\S+)/i)?.[1] ?? "";
+    return `WIFI:S:${ssid};T:${pass ? "WPA" : "nopass"};P:${pass};;`;
+  }
+
+  if (/upi|gpay|paytm|pay.*@|@.*pay/i.test(lower)) {
+    const vpa = p.match(/[\w.\-+]+@[\w]+/)?.[0] ?? "";
+    const amount = p.match(/₹?\s*(\d+(?:\.\d+)?)/)?.[1] ?? "";
+    if (vpa) {
+      const base = `upi://pay?pa=${encodeURIComponent(vpa)}&cu=INR`;
+      return amount ? `${base}&am=${amount}` : base;
+    }
+  }
+
+  const telMatch = p.match(/(?:call|phone|tel(?:ephone)?|ring)[^0-9+]*([\+\d][\d\s\-()]{7,})/i);
+  if (telMatch) return `tel:${telMatch[1].replace(/[^\d+]/g, "")}`;
+
+  const emailMatch = p.match(/[\w.\-+]+@[\w.\-]+\.[a-z]{2,}/i);
+  if (emailMatch) return `mailto:${emailMatch[0]}`;
+
+  if (/sms|text me|message me/i.test(lower)) {
+    const phone = p.match(/[\+\d][\d\s\-()]{7,}/)?.[0]?.replace(/[^\d+]/g, "") ?? "";
+    if (phone) return `sms:${phone}`;
+  }
+
+  const domainMatch = p.match(/^(?:www\.)?[\w-]+\.(com|in|org|net|io|app|co|edu|gov|dev|ai|me)(?:\/[^\s]*)?$/i);
+  if (domainMatch) return `https://${p}`;
+
+  return p;
+}
+
 async function callAiQrGenerate(prompt: string): Promise<string> {
-  const res = await fetch(`${BASE_URL}/api/ai/qr-generate`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ prompt }),
-  });
-  if (!res.ok) throw new Error(`Server error ${res.status}`);
-  const data = await res.json();
-  if (!data.content) throw new Error("No content returned");
-  return data.content as string;
+  try {
+    const res = await fetch(`${BASE_URL}/api/ai/qr-generate`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ prompt }),
+      signal: AbortSignal.timeout(8000),
+    });
+    if (!res.ok) throw new Error(`Server error ${res.status}`);
+    const data = await res.json();
+    if (!data.content) throw new Error("No content returned");
+    return data.content as string;
+  } catch {
+    const result = clientSmartParse(prompt.trim());
+    if (!result) throw new Error("Could not parse prompt");
+    return result;
+  }
 }
 
 // ── Props ────────────────────────────────────────────────────────────────────
@@ -759,120 +810,126 @@ function QrTemplateModal({ visible, onClose, onGenerate, onOpenAdvancedBuilder }
       onRequestClose={handleClose}
       statusBarTranslucent
     >
-      <KeyboardAvoidingView
-        behavior={Platform.OS === "ios" ? "padding" : "height"}
-        style={{ flex: 1, justifyContent: "flex-end" }}
-      >
+      <View style={{ flex: 1 }}>
+        {/* Backdrop — outside KAV so it doesn't shift */}
         <Pressable
           style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0, backgroundColor: "rgba(0,0,0,0.55)" }}
           onPress={handleClose}
         />
 
-        <Animated.View
-          entering={FadeInDown.duration(300).springify()}
-          style={{
-            backgroundColor: colors.background,
-            borderTopLeftRadius: sp(28),
-            borderTopRightRadius: sp(28),
-            borderTopWidth: 1,
-            borderLeftWidth: 1,
-            borderRightWidth: 1,
-            borderColor: colors.surfaceBorder,
-            paddingBottom: bottomPad,
-            maxHeight: sheetH,
-            zIndex: 10,
-          }}
-        >
-          {/* Handle */}
-          <View style={{ alignItems: "center", paddingTop: sp(12), marginBottom: sp(2) }}>
-            <View style={{ width: sp(40), height: sp(4), borderRadius: sp(2), backgroundColor: colors.surfaceBorder }} />
-          </View>
-
-          {/* Header */}
-          <View style={{
-            flexDirection: "row", alignItems: "center",
-            paddingHorizontal: sp(20), paddingTop: sp(8), paddingBottom: sp(12),
-          }}>
-            {view !== "home" ? (
-              <Pressable
-                onPress={handleBack}
-                hitSlop={10}
-                style={{ width: sp(36), height: sp(36), borderRadius: sp(18), backgroundColor: colors.surfaceLight, alignItems: "center", justifyContent: "center", marginRight: sp(10) }}
-              >
-                <Ionicons name="chevron-back" size={rf(18)} color={colors.text} />
-              </Pressable>
-            ) : null}
-            <View style={{ flex: 1 }}>
-              <Text style={{ fontSize: rf(17), fontFamily: "Inter_700Bold", color: colors.text }}>
-                {headerTitle}
-              </Text>
-              <Text style={{ fontSize: rf(11), fontFamily: "Inter_400Regular", color: colors.textMuted, marginTop: sp(2) }}>
-                {headerSub}
-              </Text>
+        {/* Sheet anchored to bottom */}
+        <View style={{ flex: 1, justifyContent: "flex-end" }}>
+          <Animated.View
+            entering={FadeInDown.duration(300).springify()}
+            style={{
+              backgroundColor: colors.background,
+              borderTopLeftRadius: sp(28),
+              borderTopRightRadius: sp(28),
+              borderTopWidth: 1,
+              borderLeftWidth: 1,
+              borderRightWidth: 1,
+              borderColor: colors.surfaceBorder,
+              maxHeight: sheetH,
+            }}
+          >
+            {/* Handle — FIXED, never moves */}
+            <View style={{ alignItems: "center", paddingTop: sp(12), marginBottom: sp(2) }}>
+              <View style={{ width: sp(40), height: sp(4), borderRadius: sp(2), backgroundColor: colors.surfaceBorder }} />
             </View>
-            <Pressable
-              onPress={handleClose}
-              style={{ width: sp(34), height: sp(34), borderRadius: sp(17), backgroundColor: colors.surfaceLight, alignItems: "center", justifyContent: "center" }}
+
+            {/* Header — FIXED, never moves with keyboard */}
+            <View style={{
+              flexDirection: "row", alignItems: "center",
+              paddingHorizontal: sp(20), paddingTop: sp(8), paddingBottom: sp(12),
+            }}>
+              {view !== "home" ? (
+                <Pressable
+                  onPress={handleBack}
+                  hitSlop={10}
+                  style={{ width: sp(36), height: sp(36), borderRadius: sp(18), backgroundColor: colors.surfaceLight, alignItems: "center", justifyContent: "center", marginRight: sp(10) }}
+                >
+                  <Ionicons name="chevron-back" size={rf(18)} color={colors.text} />
+                </Pressable>
+              ) : null}
+              <View style={{ flex: 1 }}>
+                <Text style={{ fontSize: rf(17), fontFamily: "Inter_700Bold", color: colors.text }}>
+                  {headerTitle}
+                </Text>
+                <Text style={{ fontSize: rf(11), fontFamily: "Inter_400Regular", color: colors.textMuted, marginTop: sp(2) }}>
+                  {headerSub}
+                </Text>
+              </View>
+              <Pressable
+                onPress={handleClose}
+                style={{ width: sp(34), height: sp(34), borderRadius: sp(17), backgroundColor: colors.surfaceLight, alignItems: "center", justifyContent: "center" }}
+              >
+                <Ionicons name="close" size={rf(17)} color={colors.textSecondary} />
+              </Pressable>
+            </View>
+
+            {/* Content area — KAV wraps ONLY this section so header stays fixed */}
+            <KeyboardAvoidingView
+              behavior={Platform.OS === "ios" ? "padding" : "height"}
+              style={{ flex: 1 }}
             >
-              <Ionicons name="close" size={rf(17)} color={colors.textSecondary} />
-            </Pressable>
-          </View>
+              <View style={{ flex: 1, paddingBottom: bottomPad }}>
+                {view === "home" && (
+                  <HomeView
+                    templates={TEMPLATES}
+                    colors={colors}
+                    isDark={isDark}
+                    rf={rf} sp={sp}
+                    onOpenAi={handleOpenAi}
+                    onOpenAdvancedBuilder={onOpenAdvancedBuilder}
+                    onPickTemplate={handlePickTemplate}
+                  />
+                )}
 
-          {/* Content */}
-          {view === "home" && (
-            <HomeView
-              templates={TEMPLATES}
-              colors={colors}
-              isDark={isDark}
-              rf={rf} sp={sp}
-              onOpenAi={handleOpenAi}
-              onOpenAdvancedBuilder={onOpenAdvancedBuilder}
-              onPickTemplate={handlePickTemplate}
-            />
-          )}
+                {view === "ai" && (
+                  <AiView
+                    prompt={aiPrompt}
+                    loading={aiLoading}
+                    result={aiResult}
+                    error={aiError}
+                    colors={colors}
+                    isDark={isDark}
+                    rf={rf} sp={sp}
+                    bottomPad={bottomPad}
+                    onChangePrompt={setAiPrompt}
+                    onGenerate={handleAiGenerate}
+                    onConfirm={handleAiConfirm}
+                    onRetry={() => { setAiResult(null); setAiError(null); }}
+                  />
+                )}
 
-          {view === "ai" && (
-            <AiView
-              prompt={aiPrompt}
-              loading={aiLoading}
-              result={aiResult}
-              error={aiError}
-              colors={colors}
-              isDark={isDark}
-              rf={rf} sp={sp}
-              bottomPad={bottomPad}
-              onChangePrompt={setAiPrompt}
-              onGenerate={handleAiGenerate}
-              onConfirm={handleAiConfirm}
-              onRetry={() => { setAiResult(null); setAiError(null); }}
-            />
-          )}
-
-          {(view === "builder" || view === "template-form") && selected && (
-            <BuilderView
-              template={selected}
-              allTemplates={TEMPLATES}
-              values={values}
-              errors={errors}
-              showPass={showPass}
-              encType={encType}
-              canGenerate={canGenerate}
-              isBuilderView={view === "builder"}
-              colors={colors}
-              rf={rf} sp={sp}
-              onSelectTemplate={(t) => {
-                setSelected(t);
-                setValues({});
-                setErrors({});
-              }}
-              onSetValue={setFieldValue}
-              onTogglePass={() => setShowPass((v) => !v)}
-              onSetEncType={setEncType}
-              onGenerate={handleGenerate}
-            />
-          )}
-        </Animated.View>
-      </KeyboardAvoidingView>
+                {(view === "builder" || view === "template-form") && selected && (
+                  <BuilderView
+                    template={selected}
+                    allTemplates={TEMPLATES}
+                    values={values}
+                    errors={errors}
+                    showPass={showPass}
+                    encType={encType}
+                    canGenerate={canGenerate}
+                    isBuilderView={view === "builder"}
+                    colors={colors}
+                    rf={rf} sp={sp}
+                    onSelectTemplate={(t) => {
+                      setSelected(t);
+                      setValues({});
+                      setErrors({});
+                    }}
+                    onSetValue={setFieldValue}
+                    onTogglePass={() => setShowPass((v) => !v)}
+                    onSetEncType={setEncType}
+                    onGenerate={handleGenerate}
+                  />
+                )}
+              </View>
+            </KeyboardAvoidingView>
+          </Animated.View>
+        </View>
+      </View>
     </Modal>
   );
 }

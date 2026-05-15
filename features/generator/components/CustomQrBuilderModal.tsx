@@ -4,6 +4,7 @@ import React, {
 import {
   View, Text, Modal, Pressable, ScrollView, TextInput,
   StyleSheet, Animated, PanResponder, useWindowDimensions,
+  KeyboardAvoidingView, Platform,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -430,6 +431,10 @@ function CustomQrBuilderModal({ visible, onClose, onGenerate }: Props) {
               ))}
             </View>
 
+            <KeyboardAvoidingView
+              behavior={Platform.OS === "ios" ? "padding" : "height"}
+              style={{ flex: 1 }}
+            >
             <ScrollView
               showsVerticalScrollIndicator={false}
               style={{ flex: 1 }}
@@ -768,6 +773,7 @@ function CustomQrBuilderModal({ visible, onClose, onGenerate }: Props) {
                 </Reanimated.View>
               )}
             </ScrollView>
+            </KeyboardAvoidingView>
           </Animated.View>
         </Animated.View>
     </Modal>
