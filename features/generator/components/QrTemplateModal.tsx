@@ -829,7 +829,7 @@ function QrTemplateModal({ visible, onClose, onGenerate, onOpenAdvancedBuilder }
               borderLeftWidth: 1,
               borderRightWidth: 1,
               borderColor: colors.surfaceBorder,
-              maxHeight: sheetH,
+              height: sheetH,
             }}
           >
             {/* Handle — FIXED, never moves */}
