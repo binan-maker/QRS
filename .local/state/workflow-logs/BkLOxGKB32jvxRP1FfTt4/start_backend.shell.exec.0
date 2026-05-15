@@ -1,8 +1,0 @@
-⠙[1G[0K
-> expo-app@1.0.0 server:dev
-> NODE_ENV=development ./node_modules/.bin/tsx server/index.ts
-
-⠙[1G[0KServing static Expo files with dynamic manifest routing
-Web build found — serving web app to browsers
-Expo routing: Checking expo-platform header on / and /manifest
-express server serving on port 5000
