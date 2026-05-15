@@ -33,7 +33,7 @@ import { formatCompactNumber } from "@/lib/number-format";
 import { smartName } from "@/lib/utils/formatters";
 import { useQrDetail } from "@/hooks/useQrDetail";
 import { useNetworkStatus } from "@/lib/use-network";
-import { getGuardLink, type GuardLink } from "@/lib/services/guard-service";
+import { getGuardLink, getStandardLink, type GuardLink } from "@/lib/services/guard-service";
 import { makeStyles } from "@/features/qr-detail/styles";
 import LoadingSkeleton from "@/features/qr-detail/components/LoadingSkeleton";
 import ContentCard from "@/features/qr-detail/components/ContentCard";
@@ -57,16 +57,27 @@ function safeBack() {
 
 function detectContentType(content: string): string {
   if (!content) return "text";
-  if (content.startsWith("https://") || content.startsWith("http://")) return "url";
-  if (content.startsWith("upi://")) return "payment";
-  if (content.startsWith("tel:")) return "phone";
-  if (content.startsWith("mailto:")) return "email";
-  if (content.startsWith("WIFI:")) return "wifi";
-  if (content.startsWith("geo:")) return "location";
-  if (content.startsWith("SMSTO:") || content.startsWith("sms:")) return "sms";
-  if (content.startsWith("BEGIN:VCARD")) return "contact";
-  if (content.startsWith("BEGIN:VCALENDAR")) return "event";
-  return "url";
+  const c = content.trim();
+  const lower = c.toLowerCase();
+  if (lower.startsWith("https://") || lower.startsWith("http://")) return "url";
+  if (lower.startsWith("upi://") || lower.startsWith("tez://upi") || lower.startsWith("gpay://upi") || lower.startsWith("phonepe://pay")) return "payment";
+  if (lower.startsWith("paytm://") || lower.startsWith("bhim://") || lower.startsWith("000201") || lower.startsWith("00020")) return "payment";
+  if (lower.startsWith("tel:") || lower.startsWith("callto:") || lower.startsWith("facetime:")) return "phone";
+  if (lower.startsWith("mailto:")) return "email";
+  if (lower.startsWith("wifi:") || lower.startsWith("WIFI:")) return "wifi";
+  if (lower.startsWith("geo:") || lower.startsWith("comgooglemaps://")) return "location";
+  if (lower.startsWith("smsto:") || lower.startsWith("sms:")) return "sms";
+  if (c.startsWith("BEGIN:VCARD") || lower.startsWith("mecard:")) return "contact";
+  if (c.startsWith("BEGIN:VCALENDAR")) return "event";
+  if (lower.startsWith("otpauth://")) return "otp";
+  if (lower.startsWith("market://") || lower.startsWith("itms-apps://") || lower.startsWith("itms://")) return "app";
+  if (lower.startsWith("instagram://") || lower.startsWith("twitter://") || lower.startsWith("fb://") ||
+      lower.startsWith("linkedin://") || lower.startsWith("youtube://") || lower.startsWith("tg://") ||
+      lower.startsWith("snapchat://") || lower.startsWith("tiktok://")) return "social";
+  if (lower.startsWith("bitcoin:") || lower.startsWith("ethereum:") || lower.startsWith("litecoin:") ||
+      lower.startsWith("monero:") || lower.startsWith("ripple:")) return "payment";
+  if (/^[A-Za-z0-9+/]{40,}={0,2}$/.test(c) || /^[0-9a-fA-F]{40,}$/.test(c)) return "encrypted";
+  return "text";
 }
 
 function SectionHeader({
@@ -539,8 +550,64 @@ const lsBannerStyles = StyleSheet.create({
   },
 });
 
+function StandardQrBanner({ loading, ready, ownerName, isActive }: { loading: boolean; ready: boolean; ownerName: string | null; isActive: boolean }) {
+  const { colors, isDark } = useTheme();
+  const accent = "#22c55e";
+
+  return (
+    <Animated.View entering={FadeInDown.duration(280)}>
+      <View style={[lsBannerStyles.card, { backgroundColor: isDark ? "#0a1a0e" : "#f0fdf4", borderColor: accent + "30" }]}>
+        <LinearGradient
+          colors={[accent + "18", accent + "06"]}
+          style={StyleSheet.absoluteFill}
+          start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
+        />
+        <View style={lsBannerStyles.header}>
+          <View style={[lsBannerStyles.iconWrap, { backgroundColor: accent + "20", borderColor: accent + "40" }]}>
+            <Ionicons name="shield-checkmark-outline" size={22} color={accent} />
+          </View>
+          <View style={{ flex: 1 }}>
+            <Text style={[lsBannerStyles.title, { color: accent }]}>Protected QR</Text>
+            <Text style={[lsBannerStyles.sub, { color: colors.textSecondary }]}>Verified QR Guard link — content resolved below</Text>
+          </View>
+        </View>
+
+        {loading && (
+          <View style={lsBannerStyles.loadingRow}>
+            <ActivityIndicator size="small" color={accent} />
+            <Text style={[lsBannerStyles.loadingText, { color: colors.textSecondary }]}>Resolving QR content…</Text>
+          </View>
+        )}
+
+        {!loading && ready && ownerName && (
+          <View style={[lsBannerStyles.infoRow, { borderColor: colors.surfaceBorder }]}>
+            <Ionicons name="person-circle-outline" size={14} color={colors.textSecondary} />
+            <Text style={[lsBannerStyles.infoLabel, { color: colors.textSecondary }]}>Created by</Text>
+            <Text style={[lsBannerStyles.infoValue, { color: colors.text }]} numberOfLines={1}>{ownerName}</Text>
+          </View>
+        )}
+
+        {!loading && !isActive && (
+          <View style={[lsBannerStyles.deactivatedRow, { backgroundColor: "#ef444418", borderColor: "#ef444440" }]}>
+            <Ionicons name="ban-outline" size={14} color="#ef4444" />
+            <Text style={[lsBannerStyles.warningText, { color: "#ef4444" }]}>
+              This QR code has been deactivated by its owner
+            </Text>
+          </View>
+        )}
+
+        {!loading && !ready && (
+          <Text style={[lsBannerStyles.loadingText, { color: colors.textSecondary }]}>
+            Could not load QR content
+          </Text>
+        )}
+      </View>
+    </Animated.View>
+  );
+}
+
 export default function QrDetailScreen() {
-  const { id, guardUuid } = useLocalSearchParams<{ id: string; guardUuid?: string }>();
+  const { id, guardUuid, standardUuid } = useLocalSearchParams<{ id: string; guardUuid?: string; standardUuid?: string }>();
   const { user } = useAuth();
   const { colors, isDark } = useTheme();
   const insets = useSafeAreaInsets();
@@ -548,6 +615,8 @@ export default function QrDetailScreen() {
   const [disclaimerExpanded, setDisclaimerExpanded] = useState(false);
   const [guardLink, setGuardLink] = useState<GuardLink | null>(null);
   const [guardLinkLoading, setGuardLinkLoading] = useState(!!guardUuid);
+  const [standardLinkData, setStandardLinkData] = useState<{ rawContent: string; contentType: string; ownerName: string; isActive: boolean } | null>(null);
+  const [standardLinkLoading, setStandardLinkLoading] = useState(!!standardUuid);
   const [ownerSheetOpen, setOwnerSheetOpen] = useState(false);
   const [overflowOpen, setOverflowOpen] = useState(false);
   const [toastState, setToastState] = useState<{ message: string; icon: keyof typeof Ionicons.glyphMap; key: number }>({ message: "", icon: "checkmark-circle", key: 0 });
@@ -572,6 +641,18 @@ export default function QrDetailScreen() {
     });
   }, [guardUuid]);
 
+  useEffect(() => {
+    if (!standardUuid) return;
+    setStandardLinkLoading(true);
+    getStandardLink(standardUuid).then((link) => {
+      setStandardLinkData(link);
+    }).catch(() => {
+      setStandardLinkData(null);
+    }).finally(() => {
+      setStandardLinkLoading(false);
+    });
+  }, [standardUuid]);
+
   const q = useQrDetail(id);
   const { isOnline } = useNetworkStatus();
   const [offlineToastKey, setOfflineToastKey] = useState(0);
@@ -582,18 +663,25 @@ export default function QrDetailScreen() {
   const currentContentType = q.qrCode?.contentType || q.offlineContentType;
 
   const isGuardQr = !!guardUuid;
+  const isStandardQr = !!standardUuid;
   const guardReady = isGuardQr && !guardLinkLoading && !!guardLink?.currentDestination;
+  const standardReady = isStandardQr && !standardLinkLoading && !!standardLinkData?.rawContent;
 
   const effectiveContent = guardReady
     ? guardLink!.currentDestination
-    : isGuardQr
-      ? ""
-      : currentContent;
+    : standardReady
+      ? standardLinkData!.rawContent
+      : (isGuardQr || isStandardQr)
+        ? ""
+        : currentContent;
+
   const effectiveContentType = guardReady
     ? detectContentType(guardLink!.currentDestination)
-    : isGuardQr
-      ? "url"
-      : currentContentType;
+    : standardReady
+      ? detectContentType(standardLinkData!.rawContent)
+      : (isGuardQr || isStandardQr)
+        ? "url"
+        : (currentContentType || detectContentType(currentContent));
 
   const hasOwner = !!q.ownerInfo?.ownerId;
 
@@ -866,14 +954,24 @@ export default function QrDetailScreen() {
               <LivingShieldBanner guardLink={guardLink} loading={guardLinkLoading} />
             )}
 
+            {/* ── Standard Protected QR Banner ─────────────────────────── */}
+            {isStandardQr && (
+              <StandardQrBanner
+                loading={standardLinkLoading}
+                ready={standardReady}
+                ownerName={standardLinkData?.ownerName ?? null}
+                isActive={standardLinkData?.isActive !== false}
+              />
+            )}
+
             {/* ── Content Card ────────────────────────────────────────────── */}
-            {(!isGuardQr || guardReady) && (
+            {((!isGuardQr && !isStandardQr) || guardReady || standardReady) && (
               <Animated.View entering={FadeInDown.duration(300).delay(50)}>
                 <ContentCard
                   content={effectiveContent}
                   contentType={effectiveContentType}
                   parsedPayment={q.parsedPayment}
-                  isDeactivated={q.ownerInfo?.isActive === false}
+                  isDeactivated={q.ownerInfo?.isActive === false || standardLinkData?.isActive === false}
                   onOpenContent={q.handleOpenContent}
                   hideOpenAction={!user || isGuardQr}
                 />

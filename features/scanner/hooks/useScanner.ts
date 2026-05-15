@@ -62,6 +62,9 @@ export const ZOOM_LEVELS = [
 const GUARD_PATTERN =
   /\/guard\/([A-Za-z0-9]{4}-[A-Za-z0-9]{4}-[A-Za-z0-9]{4}-[A-Za-z0-9]{4})(?:[/?#]|$)/;
 
+const STANDARD_PATTERN =
+  /\/go\/([A-Za-z0-9]{4}-[A-Za-z0-9]{4}-[A-Za-z0-9]{4}-[A-Za-z0-9]{4})(?:[/?#]|$)/i;
+
 function isInsecureHttpUrl(content: string): boolean {
   return /^http:\/\//i.test(content.trim());
 }
@@ -381,6 +384,15 @@ export function useScanner() {
         router.push(`/qr-detail/${qrId}?guardUuid=${guardUuid}`);
         return;
       }
+      const standardMatch = content.match(STANDARD_PATTERN);
+      if (standardMatch) {
+        const standardUuid = standardMatch[1].toUpperCase();
+        setProcessing(false);
+        setScanSuccess(true);
+        const qrId = await getQrCodeId(content);
+        router.push(`/qr-detail/${qrId}?standardUuid=${standardUuid}`);
+        return;
+      }
       await processScanAnonymous(content);
       return;
     }
@@ -393,6 +405,17 @@ export function useScanner() {
       setScanSuccess(true);
       const qrId = await getQrCodeId(content);
       router.push(`/qr-detail/${qrId}?guardUuid=${guardUuid}`);
+      return;
+    }
+
+    // Standard QR Guard links (/go/<uuid>): resolve real content on detail page
+    const standardMatch = content.match(STANDARD_PATTERN);
+    if (standardMatch) {
+      const standardUuid = standardMatch[1].toUpperCase();
+      setProcessing(false);
+      setScanSuccess(true);
+      const qrId = await getQrCodeId(content);
+      router.push(`/qr-detail/${qrId}?standardUuid=${standardUuid}`);
       return;
     }
 
