@@ -2,20 +2,8 @@ import { View, Text, StyleSheet, Pressable, Modal, ScrollView, Image, ActivityIn
 import { Ionicons } from "@expo/vector-icons";
 import Animated, { FadeInDown } from "react-native-reanimated";
 import { useTheme } from "@/contexts/ThemeContext";
+import { formatCompactRelativeTime } from "@/lib/utils/formatters";
 import type { FollowerInfo } from "@/lib/firestore-service";
-
-function timeAgo(iso: string) {
-  if (!iso) return "";
-  try {
-    const diff = Date.now() - new Date(iso).getTime();
-    const m = Math.floor(diff / 60000);
-    if (m < 1) return "just now";
-    if (m < 60) return `${m}m ago`;
-    const h = Math.floor(m / 60);
-    if (h < 24) return `${h}h ago`;
-    return `${Math.floor(h / 24)}d ago`;
-  } catch { return ""; }
-}
 
 interface Props {
   visible: boolean;
@@ -72,7 +60,7 @@ export default function FollowersModal({ visible, onClose, followCount, follower
                   <View style={{ flex: 1 }}>
                     <Text style={[styles.name, { color: colors.text }]}>{f.displayName}</Text>
                     {f.username ? <Text style={[styles.username, { color: colors.primary }]}>@{f.username}</Text> : null}
-                    <Text style={[styles.followTime, { color: colors.textMuted }]}>Followed {timeAgo(f.followedAt)}</Text>
+                    <Text style={[styles.followTime, { color: colors.textMuted }]}>Followed {formatCompactRelativeTime(f.followedAt)}</Text>
                   </View>
                   <View style={styles.personIcon}>
                     <Ionicons name="person" size={18} color={colors.safe} />

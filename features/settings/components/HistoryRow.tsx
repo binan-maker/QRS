@@ -2,44 +2,7 @@ import React, { useCallback, useMemo } from "react";
 import { View, Text, Pressable, Platform, ActionSheetIOS, Alert, StyleSheet } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useTheme } from "@/contexts/ThemeContext";
-
-// ── Helpers ───────────────────────────────────────────────────────────────────
-
-function getContentIcon(type: string): keyof typeof Ionicons.glyphMap {
-  switch (type) {
-    case "url":       return "link";
-    case "phone":     return "call";
-    case "email":     return "mail";
-    case "wifi":      return "wifi";
-    case "location":  return "location";
-    case "payment":   return "card";
-    case "sms":       return "chatbubble";
-    case "contact":   return "person";
-    case "event":     return "calendar";
-    case "otp":       return "lock-closed";
-    case "app":       return "apps";
-    case "social":    return "people";
-    case "media":     return "play-circle";
-    case "document":  return "document";
-    case "boarding":  return "airplane";
-    case "product":   return "barcode";
-    default:          return "document-text";
-  }
-}
-
-function formatRelativeDate(d: string): string {
-  const date = new Date(d);
-  const now = new Date();
-  const diff = now.getTime() - date.getTime();
-  const mins = Math.floor(diff / 60000);
-  if (mins < 1) return "Just now";
-  if (mins < 60) return `${mins}m ago`;
-  const hrs = Math.floor(mins / 60);
-  if (hrs < 24) return `${hrs}h ago`;
-  const days = Math.floor(hrs / 24);
-  if (days < 7) return `${days}d ago`;
-  return date.toLocaleDateString();
-}
+import { getContentTypeIcon, formatCompactRelativeTime } from "@/lib/utils/formatters";
 
 // ── Component ─────────────────────────────────────────────────────────────────
 
@@ -78,8 +41,8 @@ const HistoryRow = React.memo(function HistoryRow({ item, onDelete }: HistoryRow
     : item.source === "cloud" ? colors.accent
     : colors.textMuted;
 
-  const formattedDate = useMemo(() => formatRelativeDate(item.scannedAt), [item.scannedAt]);
-  const contentIcon = useMemo(() => getContentIcon(item.contentType), [item.contentType]);
+  const formattedDate = useMemo(() => formatCompactRelativeTime(item.scannedAt), [item.scannedAt]);
+  const contentIcon = useMemo(() => getContentTypeIcon(item.contentType) as keyof typeof Ionicons.glyphMap, [item.contentType]);
 
   return (
     <View style={[styles.row, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>

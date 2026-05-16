@@ -7,6 +7,7 @@ import Animated, { FadeIn } from "react-native-reanimated";
 import QRCode from "react-native-qrcode-svg";
 import { useTheme } from "@/contexts/ThemeContext";
 import type { LogoPosition } from "@/features/generator/types/form-types";
+import { formatShortDate } from "@/lib/utils/formatters";
 
 interface Props {
   qrValue: string;
@@ -37,10 +38,6 @@ interface Props {
   onClear: () => void;
   sharingQr?: boolean;
   downloadingPdf?: boolean;
-}
-
-function formatShortDate(date: Date): string {
-  return date.toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" });
 }
 
 function getSecurityMeta(qrValue: string): {

@@ -8,6 +8,7 @@ import { router } from "expo-router";
 import { useTheme } from "@/contexts/ThemeContext";
 import type { QrOwnerInfo, QrMessage } from "@/lib/firestore-service";
 import BottomSheet from "@/components/ui/BottomSheet";
+import { formatCompactRelativeTime } from "@/lib/utils/formatters";
 
 interface Props {
   visible: boolean;
@@ -21,16 +22,6 @@ interface Props {
   onSend: () => void;
   onMarkRead: (msgId: string) => void;
   onClose: () => void;
-}
-
-function formatRelative(iso: string): string {
-  const diff = Date.now() - new Date(iso).getTime();
-  const mins = Math.floor(diff / 60000);
-  if (mins < 1) return "just now";
-  if (mins < 60) return `${mins}m ago`;
-  const hrs = Math.floor(mins / 60);
-  if (hrs < 24) return `${hrs}h ago`;
-  return `${Math.floor(hrs / 24)}d ago`;
 }
 
 const MessagesModal = React.memo(function MessagesModal({
@@ -77,7 +68,7 @@ const MessagesModal = React.memo(function MessagesModal({
                     {!msg.read && <View style={styles.unreadDot} />}
                   </View>
                   <Text style={styles.msgText} numberOfLines={2}>{msg.message}</Text>
-                  <Text style={styles.msgTime}>{formatRelative(msg.createdAt)}</Text>
+                  <Text style={styles.msgTime}>{formatCompactRelativeTime(msg.createdAt)}</Text>
                 </View>
               </Pressable>
             ))}

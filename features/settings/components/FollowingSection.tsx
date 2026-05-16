@@ -8,6 +8,7 @@ import Animated, { FadeInDown } from "react-native-reanimated";
 import { useTheme } from "@/contexts/ThemeContext";
 import SkeletonBox from "@/components/ui/SkeletonBox";
 import { db } from "@/lib/db/client";
+import { formatShortDate } from "@/lib/utils/formatters";
 
 function getMeta(type: string, colors: any): { gradient: [string, string]; icon: keyof typeof Ionicons.glyphMap; label: string } {
   const map: Record<string, { gradient: [string, string]; icon: keyof typeof Ionicons.glyphMap; label: string }> = {
@@ -22,13 +23,6 @@ function getMeta(type: string, colors: any): { gradient: [string, string]; icon:
     social:   { gradient: [colors.primary, colors.primaryShade],   icon: "people-outline",        label: "Social" },
   };
   return map[type?.toLowerCase()] ?? { gradient: [colors.primary, colors.primaryShade] as [string, string], icon: "qr-code-outline" as keyof typeof Ionicons.glyphMap, label: "QR Code" };
-}
-
-function formatDate(iso: string) {
-  if (!iso) return "";
-  try {
-    return new Date(iso).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
-  } catch { return ""; }
 }
 
 function SkeletonCard() {
@@ -211,7 +205,7 @@ export default function FollowingSection({ loading, list }: Props) {
                       <View style={{ flexDirection: "row", alignItems: "center", gap: 3 }}>
                         <Ionicons name="heart-outline" size={10} color={colors.textMuted} />
                         <Text style={{ fontSize: 11, fontFamily: "Inter_400Regular", color: colors.textMuted }}>
-                          {formatDate(item.createdAt)}
+                          {formatShortDate(new Date(item.createdAt))}
                         </Text>
                       </View>
                     </>
