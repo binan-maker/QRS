@@ -16,6 +16,6 @@ export function getActiveFilters(
     else                          count = scanStats?.byOther  ?? history.filter((i) => !["url", "text", "payment"].includes(i.contentType)).length;
     return { ...f, count };
   });
-  if (user) base.push({ key: "favorites" as Filter, label: "Favorites" });
+  if (user) base.push({ key: "favorites" as Filter, label: "Favorites", count: 0 });
   return base;
 }

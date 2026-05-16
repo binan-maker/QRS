@@ -49,7 +49,7 @@ export default function GenerateButton({
     if (!showError) return;
     errorProgress.value = 0;
     errorOpacity.value  = 1;
-    errorProgress.value = withTiming(1, { duration: 1100 }, (finished) => {
+    errorProgress.value = withTiming(1, { duration: 1100 }, (finished: boolean) => {
       if (finished) {
         errorOpacity.value = withTiming(0, { duration: 280 }, () => {
           runOnJS(onHideError)();

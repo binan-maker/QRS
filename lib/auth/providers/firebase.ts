@@ -24,7 +24,7 @@ import {
 import { firebaseAuth } from "@/lib/firebase";
 import type { AuthAdapter, AuthAdapterUser } from "../adapter";
 
-function wrapUser(fbUser: FirebaseUser): AuthAdapterUser {
+function wrapUser(fbUser: any): AuthAdapterUser {
   return {
     uid: fbUser.uid,
     email: fbUser.email,
@@ -38,7 +38,7 @@ function wrapUser(fbUser: FirebaseUser): AuthAdapterUser {
 
 export const firebaseAuthProvider: AuthAdapter = {
   onIdTokenChanged(cb) {
-    const unsub = fbOnIdTokenChanged(firebaseAuth, (fbUser) => {
+    const unsub = fbOnIdTokenChanged(firebaseAuth, (fbUser: any) => {
       cb(fbUser ? wrapUser(fbUser) : null);
     });
     return unsub;

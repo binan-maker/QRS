@@ -153,7 +153,9 @@ export default function DonationScreen() {
         if (!mounted) return;
         setConnected(true);
 
-        const items = await iapModule!.getProducts({ skus: DONATION_SKUS });
+        const items = await (iapModule as any)!.fetchProducts({ productIds: DONATION_SKUS })
+          ?? await (iapModule as any)!.getProducts?.({ skus: DONATION_SKUS })
+          ?? [];
         if (!mounted) return;
 
         const priceMap: Record<string, string> = {};
@@ -195,7 +197,7 @@ export default function DonationScreen() {
 
       setPurchasingSkus((prev) => new Set([...prev, sku]));
       try {
-        await iapModule!.requestPurchase({ skus: [sku] });
+        await (iapModule as any)!.requestPurchase({ sku, skus: [sku] });
         Alert.alert(
           "Thank You! 🙏",
           "Your donation means the world to us. It goes directly to supporting the developer and keeping QR Guard running and improving.",

@@ -13,7 +13,7 @@ interface Props {
 
 export default function OwnerCommentRow({ comment, isReply, onReply, onModerate }: Props) {
   const { colors } = useTheme();
-  const initials = comment.user.displayName?.[0]?.toUpperCase() || "?";
+  const initials = comment.user?.displayName?.[0]?.toUpperCase() || "?";
   return (
     <View style={styles.commentItem}>
       <View style={[styles.commentAvatar, { backgroundColor: colors.primaryDim }, isReply && styles.commentAvatarSmall]}>
@@ -21,8 +21,8 @@ export default function OwnerCommentRow({ comment, isReply, onReply, onModerate 
       </View>
       <View style={{ flex: 1 }}>
         <View style={styles.commentMeta}>
-          <Text style={[styles.commentAuthor, { color: colors.text }]}>{comment.user.displayName}</Text>
-          <Text style={[styles.commentTime, { color: colors.textMuted }]}>{formatCompactRelativeTime(comment.createdAt)}</Text>
+          <Text style={[styles.commentAuthor, { color: colors.text }]}>{comment.user?.displayName}</Text>
+          <Text style={[styles.commentTime, { color: colors.textMuted }]}>{formatCompactRelativeTime(comment.createdAt ?? "")}</Text>
         </View>
         <Text style={[styles.commentText, { color: colors.textSecondary }]}>{comment.text}</Text>
         <View style={styles.commentActions}>
@@ -30,7 +30,7 @@ export default function OwnerCommentRow({ comment, isReply, onReply, onModerate 
             <Ionicons name="return-down-forward-outline" size={14} color={colors.textMuted} />
             <Text style={[styles.commentActionText, { color: colors.textMuted }]}>Reply</Text>
           </Pressable>
-          <Pressable onPress={() => onModerate(comment.id, comment.userId)} style={styles.commentActionBtn}>
+          <Pressable onPress={() => onModerate(comment.id, comment.userId ?? "")} style={styles.commentActionBtn}>
             <Ionicons name="trash-outline" size={14} color={colors.danger} />
             <Text style={[styles.commentActionText, { color: colors.danger }]}>Remove</Text>
           </Pressable>

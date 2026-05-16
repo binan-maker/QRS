@@ -7,7 +7,7 @@ import { ownerCircleRowStyles } from "@/features/qr-detail/styles";
 interface OwnerInfo {
   businessName?: string | null;
   ownerName: string;
-  qrType: string;
+  qrType?: string;
   isBranded: boolean;
   ownerId: string;
 }

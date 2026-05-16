@@ -15,7 +15,7 @@ export interface DonationRecord {
   donorEmail: string;
   userId: string | null;
   status: string;
-  paidAt: Timestamp | null;
+  paidAt: any;
 }
 
 export async function createDonationOrder(params: {
@@ -66,7 +66,7 @@ export async function fetchMyDonations(userId: string): Promise<DonationRecord[]
       limit(20)
     );
     const snap = await getDocs(q);
-    return snap.docs.map((doc) => ({ id: doc.id, ...doc.data() } as DonationRecord));
+    return snap.docs.map((d: any) => ({ id: d.id, ...d.data() } as DonationRecord));
   } catch {
     return [];
   }

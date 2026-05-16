@@ -130,7 +130,7 @@ export default function QrFormPage({ mode }: Props) {
       >
         {!showTemplateReady && (
           <TypePickerHome
-            qrMode={mode}
+            qrMode={mode as any}
             onSetMode={() => {}}
             onOpenCustom={() => setQrTemplateOpen(true)}
             hideActions={presetActive}
@@ -208,7 +208,7 @@ export default function QrFormPage({ mode }: Props) {
             qrSize={qrSize}
             isBranded={false}
             privateMode={privateMode}
-            qrMode={mode}
+            qrMode={mode as any}
             logoPosition={logoPosition}
             customLogoUri={customLogoUri}
             showDefaultLogo={showDefaultLogo}

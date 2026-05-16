@@ -508,10 +508,10 @@ export async function getUsernameData(userId: string): Promise<UsernameData> {
           ? data.usernameLastChangedAt.toDate()
           : new Date(data.usernameLastChangedAt);
       }
-      return { username, usernameLastChangedAt };
+      return { username, usernameLastChangedAt, userId, claimedAt: "" };
     }
   } catch {}
-  return { username: null, usernameLastChangedAt: null };
+  return { username: null, usernameLastChangedAt: null, userId, claimedAt: "" };
 }
 
 export async function updateUsername(userId: string, newUsername: string): Promise<void> {

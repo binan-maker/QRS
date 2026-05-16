@@ -60,7 +60,7 @@ function ProfileScreen() {
 
   const formattedStats = useMemo(() => [
     { label: "QR Hits",   value: totalQrScans,        color: colors.accent,  loading: myQrLoading,   formatted: formatCompactNumber(totalQrScans) },
-    { label: "Following", value: stats.followingCount, color: colors.primary, loading: statsLoading,  formatted: formatCompactNumber(stats.followingCount) },
+    { label: "Following", value: stats.followingCount ?? 0, color: colors.primary, loading: statsLoading,  formatted: formatCompactNumber(stats.followingCount ?? 0) },
   ], [totalQrScans, myQrLoading, stats.followingCount, statsLoading, colors.accent, colors.primary]);
 
   // ── Stable callbacks ──────────────────────────────────────────────────────

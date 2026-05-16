@@ -3,7 +3,8 @@ import {
   View, Text, Pressable, Platform,
   RefreshControl, useWindowDimensions, ScrollView,
 } from "react-native";
-import { FlashList } from "@shopify/flash-list";
+import { FlashList as _FlashList } from "@shopify/flash-list";
+const FlashList = _FlashList as any;
 import { router } from "expo-router";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -677,7 +678,7 @@ export default function MyQrCodesScreen() {
       ) : (
         <FlashList
           data={sorted}
-          keyExtractor={(item) => item.docId}
+          keyExtractor={(item: any) => item.docId ?? item.id}
           renderItem={renderQrItem}
           estimatedItemSize={100}
           contentContainerStyle={{ paddingHorizontal: sp(20), paddingTop: sp(2), paddingBottom: contentPaddingBottom }}

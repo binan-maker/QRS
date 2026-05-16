@@ -117,7 +117,7 @@ export default function OwnerCommentsSection({
                   <OwnerCommentRow
                     comment={comment}
                     onReply={(c) => {
-                      setReplyTo({ id: c.id, author: c.user.displayName });
+                      setReplyTo({ id: c.id, author: c.user?.displayName ?? "" });
                       commentInputRef.current?.focus();
                     }}
                     onModerate={handleModerateComment}
@@ -147,7 +147,7 @@ export default function OwnerCommentsSection({
                                   comment={reply}
                                   isReply
                                   onReply={(c) => {
-                                    setReplyTo({ id: comment.id, author: c.user.displayName });
+                                    setReplyTo({ id: comment.id, author: c.user?.displayName ?? "" });
                                     commentInputRef.current?.focus();
                                   }}
                                   onModerate={handleModerateComment}

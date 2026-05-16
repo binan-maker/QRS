@@ -44,7 +44,7 @@ export async function deleteImage(imageUrl: string): Promise<void> {
     // Must use the storage path, NOT the full download URL, to build a valid ref.
     const path = getStoragePathFromUrl(imageUrl);
     if (!path) return;
-    const storageRef: StorageReference = ref(storage, path);
+    const storageRef: any = ref(storage, path);
     await deleteObject(storageRef);
   } catch (error: any) {
     if (error?.code !== "storage/object-not-found") {
@@ -66,7 +66,7 @@ export async function uploadImage(
     const extension = (file.type || "image/jpeg").split("/")[1] || "jpg";
     const filename = `${generateUniqueId()}.${extension}`;
     const storagePath = `${folder}/${userId || "anon"}/${filename}`;
-    const storageRef: StorageReference = ref(storage, storagePath);
+    const storageRef: any = ref(storage, storagePath);
     const snapshot = await uploadBytes(storageRef, file);
     return await getDownloadURL(snapshot.ref);
   } catch (error: any) {

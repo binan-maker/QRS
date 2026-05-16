@@ -237,7 +237,7 @@ export default function QrDetailScreen() {
             </Animated.View>
 
             {q.ownerInfo?.isBranded && (
-              <OwnerCircleRow ownerInfo={q.ownerInfo} onPress={() => setOwnerSheetOpen(true)} />
+              <OwnerCircleRow ownerInfo={q.ownerInfo as any} onPress={() => setOwnerSheetOpen(true)} />
             )}
 
             <Animated.View entering={FadeInDown.duration(250).delay(30)}>
@@ -349,8 +349,8 @@ export default function QrDetailScreen() {
                 <CommentsSection
                   user={user}
                   totalComments={q.totalComments}
-                  commentsList={q.commentsList}
-                  topLevelComments={q.topLevelComments}
+                  commentsList={q.commentsList as any}
+                  topLevelComments={q.topLevelComments as any}
                   hasMoreComments={q.hasMoreComments}
                   commentsLoading={q.commentsLoading}
                   newComment={q.newComment}
@@ -366,13 +366,13 @@ export default function QrDetailScreen() {
                   deletingCommentId={q.deletingCommentId}
                   revealedComments={q.revealedComments}
                   setRevealedComments={q.setRevealedComments}
-                  expandedReplies={q.expandedReplies}
+                  expandedReplies={q.expandedReplies as any}
                   visibleRepliesCount={q.visibleRepliesCount}
                   handleSubmitComment={q.handleSubmitComment}
-                  handleCommentLike={q.handleCommentLike}
+                  handleCommentLike={q.handleCommentLike as any}
                   handleDeleteComment={q.handleDeleteComment}
                   setCommentReportModal={q.setCommentReportModal}
-                  getAllDescendants={q.getAllDescendants}
+                  getAllDescendants={q.getAllDescendants as any}
                   getRootCommentId={q.getRootCommentId}
                   toggleReplies={q.toggleReplies}
                   showMoreReplies={q.showMoreReplies}
@@ -402,7 +402,7 @@ export default function QrDetailScreen() {
         </View>
       </KeyboardAvoidingView>
 
-      <OwnerInfoSheet visible={ownerSheetOpen} onClose={() => setOwnerSheetOpen(false)} ownerInfo={q.ownerInfo} guardLink={guardLink} />
+      <OwnerInfoSheet visible={ownerSheetOpen} onClose={() => setOwnerSheetOpen(false)} ownerInfo={q.ownerInfo as any} guardLink={guardLink} />
 
       <CommentMenuSheet
         visible={q.commentMenuId !== null}

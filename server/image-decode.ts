@@ -10,7 +10,7 @@ export async function decodeQrFromImage(base64Data: string): Promise<string | nu
     const maxDim = 1200;
     if (image.bitmap.width > maxDim || image.bitmap.height > maxDim) {
       const scale = maxDim / Math.max(image.bitmap.width, image.bitmap.height);
-      image = image.resize({ w: Math.round(image.bitmap.width * scale), h: Math.round(image.bitmap.height * scale) });
+      image = (image as any).resize({ w: Math.round(image.bitmap.width * scale), h: Math.round(image.bitmap.height * scale) });
     }
 
     const { width, height } = image.bitmap;

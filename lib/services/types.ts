@@ -20,6 +20,7 @@ export interface QrCodeData {
   ownerName?: string;
   qrType?: QrType;
   uuid?: string;
+  brandedUuid?: string;
   businessName?: string;
   privateMode?: boolean;
   customLogoUri?: string;
@@ -28,6 +29,7 @@ export interface QrCodeData {
   ownerScanCount?: number;
   scanCountFrozen?: boolean;
   scanCountFreezeReason?: string;
+  ownerVerified?: boolean;
 }
 
 export interface UserData {
@@ -121,13 +123,14 @@ export interface FollowData {
 // Trust Score types
 export interface TrustScore {
   score: number;
-  level: 'low' | 'medium' | 'high' | 'verified';
+  level?: 'low' | 'medium' | 'high' | 'verified';
   label?: string;
-  factors: TrustFactor[];
-  lastUpdated: string;
+  factors?: TrustFactor[];
+  lastUpdated?: string;
   isVerified?: boolean;
   verificationMethod?: string;
   manipulationWarning?: boolean;
+  totalReports?: number;
 }
 
 export interface TrustFactor {
@@ -139,21 +142,27 @@ export interface TrustFactor {
 
 // User Stats types
 export interface UserStats {
-  totalScans: number;
-  totalComments: number;
-  totalLikes: number;
-  totalFollowers: number;
-  totalFollowing: number;
-  totalQrsCreated: number;
-  accountAge: number;
-  reputationScore: number;
+  totalScans?: number;
+  totalComments?: number;
+  totalLikes?: number;
+  totalFollowers?: number;
+  totalFollowing?: number;
+  totalQrsCreated?: number;
+  accountAge?: number;
+  reputationScore?: number;
+  followingCount?: number;
+  scanCount?: number;
+  commentCount?: number;
+  totalLikesReceived?: number;
+  friendsCount?: number;
 }
 
 export interface UsernameData {
-  username: string;
+  username: string | null;
   userId: string;
   claimedAt: string;
   lastChangedAt?: string;
+  usernameLastChangedAt?: Date | string | null;
   isVerified?: boolean;
 }
 
@@ -166,6 +175,26 @@ export interface GeneratedQrItem {
   createdAt: string;
   expiresAt?: string;
   downloadUrl?: string;
+  docId?: string;
+  qrCodeId?: string;
+  uuid?: string;
+  scanCount?: number;
+  commentCount?: number;
+  isActive?: boolean;
+  qrType?: string;
+  label?: string;
+  guardUuid?: string;
+  deactivationMessage?: string | null;
+  fgColor?: string;
+  bgColor?: string;
+  logoPosition?: string;
+  logoUri?: string | null;
+  businessName?: string;
+  privateMode?: boolean;
+  isBranded?: boolean;
+  ownerName?: string;
+  ownerId?: string;
+  username?: string;
 }
 
 export interface QrOwnerInfo {
@@ -175,21 +204,24 @@ export interface QrOwnerInfo {
   badgeType?: 'business' | 'government' | 'creator';
   joinDate?: string;
   totalQrs?: number;
-  qrType?: QrType;
+  qrType?: QrType | string;
   isActive?: boolean;
   isBranded?: boolean;
   businessName?: string;
   ownerLogoBase64?: string;
   brandedUuid?: string;
-  deactivationMessage?: string;
+  deactivationMessage?: string | null;
+  signature?: string;
+  ownerVerified?: boolean;
 }
 
 export interface ScanVelocityBucket {
-  bucket: string;
+  bucket?: string;
   count: number;
-  windowStart: string;
-  windowEnd: string;
+  windowStart?: string;
+  windowEnd?: string;
   label?: string;
+  hour?: number;
 }
 
 export interface VerificationStatus {
@@ -200,26 +232,30 @@ export interface VerificationStatus {
   pendingReview?: boolean;
   status?: 'none' | 'pending' | 'approved' | 'rejected';
   businessName?: string;
+  submittedAt?: string;
 }
 
 // Comment Service types
 export interface CommentItem {
   id: string;
-  qrCodeId: string;
-  userId: string;
-  userName: string;
+  qrCodeId?: string;
+  userId?: string;
+  userName?: string;
   userAvatar?: string;
-  text: string;
-  createdAt: string;
+  text?: string;
+  createdAt?: string;
   updatedAt?: string;
-  likes: number;
-  likedBy: string[];
+  likes?: number;
+  likedBy?: string[];
   replies?: CommentItem[];
-  parentId?: string;
+  parentId?: string | null;
   isEdited?: boolean;
   isPinned?: boolean;
   isVerifiedOwner?: boolean;
   reports?: number;
+  user?: { displayName: string; [key: string]: any };
+  userUsername?: string;
+  [key: string]: any;
 }
 
 // Guard Service types
@@ -246,16 +282,20 @@ export interface GuardLink {
 // Message Service types
 export interface QrMessage {
   id: string;
-  qrCodeId: string;
-  senderId: string;
-  senderName: string;
-  content: string;
-  messageType: 'text' | 'warning' | 'info' | 'alert';
+  qrCodeId?: string;
+  senderId?: string;
+  senderName?: string;
+  content?: string;
+  messageType?: 'text' | 'warning' | 'info' | 'alert';
   createdAt: string;
-  read: boolean;
+  read?: boolean;
   priority?: 'low' | 'normal' | 'high' | 'urgent';
   fromDisplayName?: string;
+  fromUserId?: string;
+  toUserId?: string;
+  qrBrandedUuid?: string;
   message?: string;
+  [key: string]: any;
 }
 
 // Follow Service types
@@ -264,12 +304,12 @@ export interface FollowerInfo {
   followerName: string;
   followerAvatar?: string;
   followedAt: string;
-  isMutual: boolean;
+  isMutual?: boolean;
   isVerified?: boolean;
   userId?: string;
-  photoURL?: string;
+  photoURL?: string | null;
   displayName?: string;
-  username?: string;
+  username?: string | null;
 }
 
 // Additional utility types

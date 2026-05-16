@@ -60,7 +60,7 @@ const MessagesModal = React.memo(function MessagesModal({
                 style={[styles.msgRow, !msg.read && styles.msgRowUnread]}
               >
                 <View style={styles.msgAvatar}>
-                  <Text style={styles.msgAvatarText}>{(msg.fromDisplayName ?? msg.senderName).charAt(0).toUpperCase()}</Text>
+                  <Text style={styles.msgAvatarText}>{(msg.fromDisplayName ?? msg.senderName ?? "?").charAt(0).toUpperCase()}</Text>
                 </View>
                 <View style={{ flex: 1 }}>
                   <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>

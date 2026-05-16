@@ -15,8 +15,8 @@ import { Pool } from "pg";
 import type { DbAdapter, RealtimeAdapter, QueryOptions, QueryResult, DbDocument } from "../adapter";
 
 // ─── Connection pool ──────────────────────────────────────────────────────────
-let _pool: Pool | null = null;
-function getPool(): Pool {
+let _pool: any = null;
+function getPool(): any {
   if (!_pool) {
     const url = process.env.DATABASE_URL;
     if (!url) throw new Error("[postgres] DATABASE_URL env var is not set.");
@@ -144,7 +144,7 @@ export const postgresDb: DbAdapter = {
       [prefix + "%", prefix + "%/%"]
     );
 
-    let docs: DbDocument[] = rows.map((r) => ({
+    let docs: DbDocument[] = rows.map((r: any) => ({
       id: docIdFromKey(r.path_key, prefix),
       data: r.data,
     }));
@@ -336,7 +336,7 @@ export const postgresRtdb: RealtimeAdapter = {
     }
 
     poll();
-    return cb;
+    return () => { active = false; };
   },
 
   offValue(_path, _cb) {

@@ -133,7 +133,7 @@ export default function MyQrDetailScreen() {
   })();
 
   function initStructuredFields(): Record<string, string> {
-    const rawContent = standardLink?.rawContent || qrItem.content || "";
+    const rawContent = standardLink?.rawContent || qrItem?.content || "";
     switch (effectiveContentType) {
       case "text": return { text: rawContent.replace(/^https?:\/\//, "") };
       case "phone": case "mobilepay": case "grab": return { phone: rawContent.replace(/^tel:/, "") };

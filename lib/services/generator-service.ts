@@ -495,6 +495,7 @@ export async function getQrOwnerInfo(qrId: string): Promise<QrOwnerInfo | null> 
       ownerName: data.ownerName || "Unknown",
       brandedUuid: data.brandedUuid || "",
       isBranded: true,
+      isVerified: data.ownerVerified || false,
       signature: data.signature,
       ownerVerified: data.ownerVerified || false,
       qrType: (data.qrType as QrType) || "individual",

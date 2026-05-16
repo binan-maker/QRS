@@ -122,7 +122,7 @@ export function useRecentScans() {
 
   return {
     recentScans,
-    isLoading: cloudLoading && (!cloudScansRaw || cloudScansRaw.length === 0),
+    isLoading: cloudLoading && (!cloudScansRaw || (cloudScansRaw as LocalScan[]).length === 0),
     refreshing,
     onRefresh,
     deleteScan,

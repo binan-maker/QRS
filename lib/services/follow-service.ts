@@ -159,7 +159,7 @@ export async function getQrFollowersList(qrId: string): Promise<FollowerInfo[]> 
           photoURL = userData.photoURL || null;
         }
       } catch {}
-      followers.push({ userId, displayName, followedAt: tsToString(d.data.createdAt), username, photoURL });
+      followers.push({ userId, followerId: userId, followerName: displayName, displayName, followedAt: tsToString(d.data.createdAt), username, photoURL });
     }));
     return followers.sort((a, b) => new Date(b.followedAt).getTime() - new Date(a.followedAt).getTime());
   } catch { return []; }

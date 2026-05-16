@@ -44,7 +44,7 @@ export async function getOrCreateQrCode(content: string): Promise<QrCodeData> {
         brandedUuid: data.brandedUuid,
         isBranded: data.isBranded || false,
         signature: data.signature,
-        ownerVerified: data.ownerVerified || false,
+        ownerVerified: (data as any).ownerVerified || false,
       };
     }
     await db.set(["qrCodes", qrId], {

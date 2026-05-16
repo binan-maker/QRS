@@ -37,9 +37,9 @@ export default function ProfileSettingsSection() {
     if (!user) return;
     getUsernameData(user.id).then((d) => {
       if (d.username) setUsername(d.username);
-      const lastChanged = d.usernameLastChangedAt instanceof Date
-        ? d.usernameLastChangedAt
-        : d.usernameLastChangedAt ? new Date(d.usernameLastChangedAt) : null;
+      const lastChanged = (d.usernameLastChangedAt instanceof Date)
+        ? d.usernameLastChangedAt as Date
+        : d.usernameLastChangedAt ? new Date(d.usernameLastChangedAt as string) : null;
       const days = lastChanged
         ? Math.max(0, Math.ceil(15 - (Date.now() - lastChanged.getTime()) / 86400000))
         : 0;

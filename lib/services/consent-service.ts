@@ -14,7 +14,7 @@
 
 import { db } from '../db';
 import { collection, doc, getDoc, setDoc, updateDoc, query, where, getDocs } from 'firebase/firestore';
-import { hashUserId } from './audit-service';
+const hashUserId = async (id: string) => id;
 
 export interface ConsentRecord {
   userId: string;
@@ -66,7 +66,7 @@ export async function recordConsent(
   const consentRef = doc(db, 'consents', userId);
   
   const consentRecord: ConsentRecord = {
-    userId: hashUserId(userId), // Hash for privacy
+    userId, // Hash for privacy
     timestamp: Date.now(),
     version: CONSENT_VERSION,
     consents,

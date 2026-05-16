@@ -5,7 +5,8 @@ import { safePush } from "@/lib/utils/navigation";
 import { styles } from "@/features/profile/styles";
 
 export interface QrItem {
-  docId: string;
+  docId?: string;
+  id?: string;
   content: string;
   scanCount?: number;
   bgColor?: string;

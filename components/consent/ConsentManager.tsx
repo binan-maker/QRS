@@ -21,8 +21,32 @@ import {
   ActivityIndicator,
 } from "react-native";
 import { useAuth } from "../../contexts/AuthContext";
-import { logAuditEvent } from "../services/audit-service";
-import { db } from "../db/client";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+
+async function logAuditEvent(event: string, userId: string, meta?: object) {
+  try {
+    const entry = { event, userId, ts: new Date().toISOString(), ...meta };
+    const key = `audit_${userId}`;
+    const raw = await AsyncStorage.getItem(key);
+    const log: object[] = raw ? JSON.parse(raw) : [];
+    log.push(entry);
+    await AsyncStorage.setItem(key, JSON.stringify(log.slice(-200)));
+  } catch {}
+}
+
+const db = {
+  async get(path: string[]): Promise<any> {
+    try {
+      const raw = await AsyncStorage.getItem(path.join("/"));
+      return raw ? JSON.parse(raw) : null;
+    } catch { return null; }
+  },
+  async set(path: string[], value: unknown): Promise<void> {
+    try {
+      await AsyncStorage.setItem(path.join("/"), JSON.stringify(value));
+    } catch {}
+  },
+};
 
 export interface ConsentStatus {
   camera: boolean;
@@ -76,7 +100,7 @@ export const ConsentManager: React.FC<ConsentManagerProps> = ({
   async function loadExistingConsent() {
     try {
       if (!user) return;
-      const consentData = await db.get(["users", user.uid, "consent"]);
+      const consentData = await db.get(["users", user.id, "consent"]);
       if (consentData) {
         setConsent({ ...DEFAULT_CONSENT, ...consentData });
       } else {
@@ -99,11 +123,11 @@ export const ConsentManager: React.FC<ConsentManagerProps> = ({
         lastUpdated: new Date().toISOString(),
       };
 
-      await db.set(["users", user.uid, "consent"], updatedConsent);
+      await db.set(["users", user.id, "consent"], updatedConsent);
 
       await logAuditEvent(
         consent.scanHistory ? "consent_given" : "consent_withdrawn",
-        user.uid,
+        user.id,
         {
           metadata: { consentType: "scan_history", granted: consent.scanHistory },
           actionResult: "success",

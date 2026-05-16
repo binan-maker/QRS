@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Alert, TextInput } from "react-native";
 import * as Haptics from "@/lib/haptics";
 import {
@@ -9,7 +9,7 @@ import { useAuth } from "@/contexts/AuthContext";
 
 export function useOwnerComments(qrCodeId: string | null | undefined) {
   const { user } = useAuth();
-  const commentInputRef = useRef<TextInput>(null);
+  const commentInputRef = useRef<TextInput>(null) as React.RefObject<TextInput>;
 
   const [comments, setComments] = useState<CommentItem[]>([]);
   const [commentsLoading, setCommentsLoading] = useState(true);

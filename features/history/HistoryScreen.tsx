@@ -1,6 +1,7 @@
 import React, { useCallback, useMemo } from "react";
 import { View, StyleSheet, Platform, RefreshControl, useWindowDimensions } from "react-native";
-import { FlashList } from "@shopify/flash-list";
+import { FlashList as _FlashList } from "@shopify/flash-list";
+const FlashList = _FlashList as any;
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTopInset } from "@/lib/utils/platform";
 import { useTheme } from "@/contexts/ThemeContext";

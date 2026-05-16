@@ -74,7 +74,7 @@ export default function CharityDonationSection() {
   const loadHistory = useCallback(async () => {
     if (!user) return;
     setLoadingHistory(true);
-    const data = await fetchMyDonations(user.uid);
+    const data = await fetchMyDonations(user.id);
     setDonations(data);
     setLoadingHistory(false);
   }, [user]);
@@ -94,7 +94,7 @@ export default function CharityDonationSection() {
         amount: finalAmount,
         donorName: user?.displayName || "Anonymous",
         donorEmail: user?.email || "",
-        userId: user?.uid,
+        userId: user?.id,
       });
 
       const checkoutUrl = buildCheckoutUrl({
@@ -103,7 +103,7 @@ export default function CharityDonationSection() {
         currency: order.currency,
         name: user?.displayName || "",
         email: user?.email || "",
-        userId: user?.uid || "",
+        userId: user?.id || "",
       });
 
       const result = await WebBrowser.openBrowserAsync(checkoutUrl, {

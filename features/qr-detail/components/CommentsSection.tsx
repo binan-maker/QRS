@@ -162,19 +162,19 @@ export default function CommentsSection({
         topLevelComments.map((comment) => (
           <CommentItem
             key={comment.id}
-            comment={comment}
+            comment={comment as any}
             isReply={false}
-            currentUserLike={userLikes[comment.id] ?? null}
+            currentUserLike={(userLikes[comment.id] ?? null) as any}
             isMenuOpen={commentMenuId === comment.id}
             isDeleting={deletingCommentId === comment.id}
             isRevealed={revealedComments.has(comment.id)}
             isCommentOwner={user?.id === comment.userId}
             canDelete={user?.id === comment.userId}
-            descendants={getAllDescendants(comment.id)}
-            expandedReplies={expandedReplies}
+            descendants={getAllDescendants(comment.id) as any}
+            expandedReplies={expandedReplies as any}
             visibleRepliesCount={visibleRepliesCount}
-            allComments={commentsList}
-            userLikes={userLikes}
+            allComments={commentsList as any}
+            userLikes={userLikes as any}
             commentMenuId={commentMenuId}
             deletingCommentId={deletingCommentId}
             revealedComments={revealedComments}

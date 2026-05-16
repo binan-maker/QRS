@@ -129,7 +129,13 @@ export function useProfile() {
       // over the Google photo synced during login.
       if (photo) { setPhotoURL(photo); syncAvatar(photo); }
       if (unameData.username) setCurrentUsername(unameData.username);
-      setUsernameLastChangedAt(unameData.usernameLastChangedAt);
+      setUsernameLastChangedAt(
+        unameData.usernameLastChangedAt instanceof Date
+          ? unameData.usernameLastChangedAt
+          : unameData.usernameLastChangedAt
+            ? new Date(unameData.usernameLastChangedAt as string)
+            : null
+      );
       hasLoadedStatsRef.current = true;
       lastStatsFetchRef.current = Date.now();
       await setCachedUserStats(user.id, {

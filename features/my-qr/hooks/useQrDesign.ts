@@ -71,7 +71,7 @@ export function useQrDesign(qrItem: GeneratedQrItem | null) {
     if (!user || !qrItem) return;
     setSaving(true);
     try {
-      await updateQrDesign(user.id, qrItem.docId, { fgColor, bgColor, logoPosition, logoUri: null });
+      await updateQrDesign(user.id, qrItem.docId!, { fgColor, bgColor, logoPosition, logoUri: null });
       setDesignDirty(false);
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       Alert.alert("Saved", "Design updated successfully.");

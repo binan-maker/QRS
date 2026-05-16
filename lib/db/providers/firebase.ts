@@ -137,7 +137,7 @@ export const firebaseDb: DbAdapter = {
       const colRef = buildColRef(collectionPath);
       const q = buildQuery(colRef, opts);
       const snap = await getDocs(q);
-      const docs: DbDocument[] = snap.docs.map((d) => ({ id: d.id, data: d.data() as Record<string, any> }));
+      const docs: DbDocument[] = snap.docs.map((d: any) => ({ id: d.id, data: d.data() as Record<string, any> }));
       const cursor = snap.docs.length > 0 ? snap.docs[snap.docs.length - 1] : null;
       return { docs, cursor };
     });
@@ -148,7 +148,7 @@ export const firebaseDb: DbAdapter = {
   },
 
   onDoc(path, cb) {
-    return onSnapshot(buildDocRef(path), (snap) => {
+    return onSnapshot(buildDocRef(path), (snap: any) => {
       cb(snap.exists() ? (snap.data() as Record<string, any>) : null);
     }, () => cb(null));
   },
@@ -156,8 +156,8 @@ export const firebaseDb: DbAdapter = {
   onQuery(collectionPath, opts, cb) {
     const colRef = buildColRef(collectionPath);
     const q = buildQuery(colRef, opts);
-    return onSnapshot(q, (snap) => {
-      cb(snap.docs.map((d) => ({ id: d.id, data: d.data() as Record<string, any> })));
+    return onSnapshot(q, (snap: any) => {
+      cb(snap.docs.map((d: any) => ({ id: d.id, data: d.data() as Record<string, any> })));
     }, () => cb([]));
   },
 
