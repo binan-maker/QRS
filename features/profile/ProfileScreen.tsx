@@ -2,11 +2,9 @@ import React, { useCallback, useMemo } from "react";
 import {
   View,
   Text,
-  StyleSheet,
   Pressable,
   ScrollView,
   RefreshControl,
-  Platform,
   ActivityIndicator,
 } from "react-native";
 import { Image } from "expo-image";
@@ -19,12 +17,14 @@ import Animated, { FadeInDown } from "react-native-reanimated";
 import { useTheme } from "@/contexts/ThemeContext";
 import SkeletonBox from "@/components/ui/SkeletonBox";
 import { formatCompactNumber } from "@/lib/number-format";
-import PhotoModal from "@/features/profile/components/PhotoModal";
-import NotificationsModal from "@/components/notifications/NotificationsModal";
 import { useProfile } from "@/features/profile/hooks/useProfile";
 import { useAvatar } from "@/contexts/AvatarContext";
 import { useNotifications } from "@/components/notifications/hooks/useNotifications";
-import QRCode from "react-native-qrcode-svg";
+import PhotoModal from "@/features/profile/components/PhotoModal";
+import GuestView from "@/features/profile/components/GuestView";
+import QrPreviewCard from "@/features/profile/components/QrPreviewCard";
+import NotificationsModal from "@/components/notifications/NotificationsModal";
+import { styles } from "@/features/profile/styles";
 
 function ProfileScreen() {
   const insets = useSafeAreaInsets();
@@ -50,68 +50,48 @@ function ProfileScreen() {
   const topInset = useTopInset();
   const tabBarHeight = 60 + insets.bottom;
 
+  // ── Derived data ──────────────────────────────────────────────────────────
+
   const previewQrs = useMemo(() => myQrCodes.slice(0, 3), [myQrCodes]);
   const totalQrScans = useMemo(
     () => myQrCodes.reduce((sum, qr) => sum + (qr.scanCount || 0), 0),
-    [myQrCodes]
+    [myQrCodes],
   );
 
-  const statsItems = useMemo(() => [
-    { label: "QR Hits",   value: totalQrScans,        color: colors.accent,  loading: myQrLoading  },
-    { label: "Following", value: stats.followingCount, color: colors.primary, loading: statsLoading },
+  const formattedStats = useMemo(() => [
+    { label: "QR Hits",   value: totalQrScans,        color: colors.accent,  loading: myQrLoading,   formatted: formatCompactNumber(totalQrScans) },
+    { label: "Following", value: stats.followingCount, color: colors.primary, loading: statsLoading,  formatted: formatCompactNumber(stats.followingCount) },
   ], [totalQrScans, myQrLoading, stats.followingCount, statsLoading, colors.accent, colors.primary]);
 
-  const formattedStats = useMemo(
-    () => statsItems.map((s) => ({ ...s, formatted: formatCompactNumber(s.value) })),
-    [statsItems]
-  );
+  // ── Stable callbacks ──────────────────────────────────────────────────────
 
-  const openPhotoModal = useCallback(() => setPhotoModalOpen(true), [setPhotoModalOpen]);
+  const openPhotoModal  = useCallback(() => setPhotoModalOpen(true),  [setPhotoModalOpen]);
   const closePhotoModal = useCallback(() => setPhotoModalOpen(false), [setPhotoModalOpen]);
-  const closeNotifModal = useCallback(() => setNotifOpen(false), [setNotifOpen]);
+  const closeNotifModal = useCallback(() => setNotifOpen(false),      [setNotifOpen]);
+  const onCamera        = useCallback(() => handlePickPhoto("camera"),  [handlePickPhoto]);
+  const onGallery       = useCallback(() => handlePickPhoto("gallery"), [handlePickPhoto]);
 
-  const onCamera = useCallback(() => handlePickPhoto("camera"), [handlePickPhoto]);
-  const onGallery = useCallback(() => handlePickPhoto("gallery"), [handlePickPhoto]);
+  const goToSettings    = useCallback(() => safePush({ pathname: "/(tabs)/settings" as any, params: { from: "profile" } }), []);
+  const goToEditProfile = useCallback(() => safePush({ pathname: "/(tabs)/settings" as any, params: { initialSection: "profile", fromProfile: "1" } }), []);
+  const goToLogin       = useCallback(() => safePush("/(auth)/login"),         []);
+  const goToRegister    = useCallback(() => safePush("/(auth)/register"),      []);
+  const goToMyQrCodes   = useCallback(() => safePush("/my-qr-codes"),          []);
+  const goToGenerator   = useCallback(() => safePush("/(tabs)/qr-generator"),  []);
 
-  const goToSettings = useCallback(
-    () => safePush({ pathname: "/(tabs)/settings" as any, params: { from: "profile" } }),
-    []
-  );
-  const goToEditProfile = useCallback(
-    () => safePush({ pathname: "/(tabs)/settings" as any, params: { initialSection: "profile", fromProfile: "1" } }),
-    []
-  );
-  const goToLogin = useCallback(() => safePush("/(auth)/login"), []);
-  const goToRegister = useCallback(() => safePush("/(auth)/register"), []);
-  const goToMyQrCodes = useCallback(() => safePush("/my-qr-codes"), []);
-  const goToGenerator = useCallback(() => safePush("/(tabs)/qr-generator"), []);
+  // ── Guest view ────────────────────────────────────────────────────────────
 
   if (!user) {
     return (
-      <View style={[styles.container, { paddingTop: topInset, backgroundColor: colors.background }]}>
-        <View style={styles.guestWrap}>
-          <Animated.View entering={FadeInDown.duration(400)} style={styles.guestInner}>
-            <View style={[styles.guestIconRing, { backgroundColor: colors.primaryDim }]}>
-              <Ionicons name="person-outline" size={40} color={colors.primary} />
-            </View>
-            <Text style={[styles.guestTitle, { color: colors.text }]}>Not signed in</Text>
-            <Text style={[styles.guestSub, { color: colors.textSecondary }]}>
-              Sign in to view your profile and activity
-            </Text>
-            <Pressable
-              onPress={goToLogin}
-              style={({ pressed }) => [styles.guestSignInBtn, { backgroundColor: colors.primary, opacity: pressed ? 0.88 : 1 }]}
-            >
-              <Text style={[styles.guestSignInText, { color: colors.primaryText }]}>Sign In</Text>
-            </Pressable>
-            <Pressable onPress={goToRegister} style={styles.guestRegBtn}>
-              <Text style={[styles.guestRegText, { color: colors.primary }]}>Create Account</Text>
-            </Pressable>
-          </Animated.View>
-        </View>
-      </View>
+      <GuestView
+        colors={colors}
+        topInset={topInset}
+        onSignIn={goToLogin}
+        onRegister={goToRegister}
+      />
     );
   }
+
+  // ── Authenticated view ────────────────────────────────────────────────────
 
   return (
     <View style={[styles.container, { paddingTop: topInset, backgroundColor: colors.background }]}>
@@ -188,7 +168,9 @@ function ProfileScreen() {
             </View>
           </Pressable>
 
-          <Text style={[styles.displayName, { color: colors.text }]} numberOfLines={1}>{user.displayName}</Text>
+          <Text style={[styles.displayName, { color: colors.text }]} numberOfLines={1}>
+            {user.displayName}
+          </Text>
           {currentUsername ? (
             <Text style={[styles.usernameText, { color: colors.primary }]}>@{currentUsername}</Text>
           ) : null}
@@ -199,17 +181,22 @@ function ProfileScreen() {
               <Text style={[styles.bioHint, { color: colors.textMuted }]}>+ Add a bio</Text>
             </Pressable>
           )}
-
           <Pressable
             onPress={goToEditProfile}
-            style={({ pressed }) => [styles.editProfileBtn, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder, opacity: pressed ? 0.8 : 1 }]}
+            style={({ pressed }) => [
+              styles.editProfileBtn,
+              { backgroundColor: colors.surface, borderColor: colors.surfaceBorder, opacity: pressed ? 0.8 : 1 },
+            ]}
           >
             <Text style={[styles.editProfileText, { color: colors.text }]}>Edit Profile</Text>
           </Pressable>
         </Animated.View>
 
         {/* ── STATS GRID ── */}
-        <Animated.View entering={FadeInDown.duration(400).delay(60)} style={[styles.statsGrid, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
+        <Animated.View
+          entering={FadeInDown.duration(400).delay(60)}
+          style={[styles.statsGrid, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}
+        >
           {formattedStats.map((s, i) => (
             <View
               key={s.label}
@@ -253,7 +240,10 @@ function ProfileScreen() {
           ) : previewQrs.length === 0 ? (
             <Pressable
               onPress={goToGenerator}
-              style={({ pressed }) => [styles.emptyQrCard, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder, opacity: pressed ? 0.8 : 1 }]}
+              style={({ pressed }) => [
+                styles.emptyQrCard,
+                { backgroundColor: colors.surface, borderColor: colors.surfaceBorder, opacity: pressed ? 0.8 : 1 },
+              ]}
             >
               <MaterialCommunityIcons name="qrcode-plus" size={22} color={colors.textMuted} />
               <Text style={[styles.emptyQrText, { color: colors.textMuted }]}>No QR codes yet — create one</Text>
@@ -261,11 +251,7 @@ function ProfileScreen() {
           ) : (
             <View style={styles.qrRow}>
               {previewQrs.map((qr) => (
-                <QrPreviewCard
-                  key={qr.docId}
-                  qr={qr}
-                  colors={colors}
-                />
+                <QrPreviewCard key={qr.docId} qr={qr} colors={colors} />
               ))}
               {myQrCodes.length > 3 && (
                 <Pressable
@@ -328,6 +314,7 @@ function ProfileScreen() {
         </Animated.View>
       </ScrollView>
 
+      {/* ── MODALS ── */}
       <PhotoModal
         visible={photoModalOpen}
         onCamera={onCamera}
@@ -346,191 +333,5 @@ function ProfileScreen() {
     </View>
   );
 }
-
-type QrItem = {
-  docId: string;
-  content: string;
-  scanCount?: number;
-  bgColor?: string;
-  fgColor?: string;
-  businessName?: string;
-};
-
-const QrPreviewCard = React.memo(function QrPreviewCard({
-  qr,
-  colors,
-}: {
-  qr: QrItem;
-  colors: any;
-}) {
-  const label = useMemo(() => {
-    if (qr.businessName) return qr.businessName;
-    const content = qr.content || "";
-    try {
-      const url = new URL(content.startsWith("http") ? content : `https://${content}`);
-      const host = url.hostname.replace(/^www\./, "");
-      const isLocal = /^(192\.168\.|10\.|127\.|localhost)/.test(host);
-      if (isLocal || url.pathname.startsWith("/guard/")) {
-        return qr.businessName || "Business QR";
-      }
-      if (host.includes(".") && host.length >= 4) return host;
-    } catch {}
-    if (content.startsWith("/guard/") || content.includes("/guard/")) return "Business QR";
-    return content.length > 14 ? content.slice(0, 14) + "…" : content || "QR Code";
-  }, [qr.businessName, qr.content]);
-  const onPress = useCallback(() => safePush(`/my-qr/${qr.docId}`), [qr.docId]);
-
-  return (
-    <Pressable
-      onPress={onPress}
-      style={({ pressed }) => [
-        styles.qrCard,
-        { backgroundColor: colors.surface, borderColor: colors.surfaceBorder, opacity: pressed ? 0.8 : 1 },
-      ]}
-    >
-      <View style={[styles.qrCodeWrap, { backgroundColor: qr.bgColor || "#F8FAFC" }]}>
-        <QRCode
-          value={qr.content || "https://qrguard.app"}
-          size={52}
-          color={qr.fgColor || "#0A0E17"}
-          backgroundColor={qr.bgColor || "#F8FAFC"}
-          quietZone={3}
-          ecl="L"
-        />
-      </View>
-      <Text style={[styles.qrCardLabel, { color: colors.textSecondary }]} numberOfLines={1}>
-        {label}
-      </Text>
-    </Pressable>
-  );
-});
-
-const styles = StyleSheet.create({
-  container: { flex: 1 },
-  scrollContent: { paddingHorizontal: 20, paddingTop: 8 },
-
-  guestWrap: { flex: 1, alignItems: "center", justifyContent: "center", padding: 32 },
-  guestInner: { alignItems: "center", gap: 12, width: "100%" },
-  guestIconRing: {
-    width: 80, height: 80, borderRadius: 40,
-    alignItems: "center", justifyContent: "center", marginBottom: 4,
-  },
-  guestTitle: { fontSize: 19, fontFamily: "Inter_700Bold", textAlign: "center" },
-  guestSub: { fontSize: 13, fontFamily: "Inter_400Regular", textAlign: "center", lineHeight: 19 },
-  guestSignInBtn: {
-    paddingVertical: 13, paddingHorizontal: 40, borderRadius: 14,
-    marginTop: 6, width: "100%", alignItems: "center",
-  },
-  guestSignInText: { fontSize: 15, fontFamily: "Inter_700Bold" },
-  guestRegBtn: { paddingVertical: 10 },
-  guestRegText: { fontSize: 13, fontFamily: "Inter_600SemiBold" },
-
-  topBar: {
-    flexDirection: "row", alignItems: "center",
-    justifyContent: "space-between", marginBottom: 24, marginTop: 4,
-  },
-  pageTitle: { fontSize: 22, fontFamily: "Inter_700Bold" },
-  topBarActions: { flexDirection: "row", alignItems: "center", gap: 8 },
-  iconBtn: {
-    width: 34, height: 34, borderRadius: 10,
-    alignItems: "center", justifyContent: "center", borderWidth: 1,
-  },
-  notifDot: {
-    position: "absolute", top: -4, right: -4,
-    minWidth: 15, height: 15, borderRadius: 8,
-    alignItems: "center", justifyContent: "center",
-    paddingHorizontal: 2, borderWidth: 1.5,
-  },
-  notifDotText: { fontSize: 9, fontFamily: "Inter_700Bold", lineHeight: 12 },
-
-  avatarSection: { alignItems: "center", gap: 6, marginBottom: 22 },
-  avatarPressable: { position: "relative", marginBottom: 6 },
-  avatarRing: {
-    width: 84, height: 84, borderRadius: 42,
-    borderWidth: 2, padding: 3,
-    alignItems: "center", justifyContent: "center",
-  },
-  avatarInner: {
-    width: 76, height: 76, borderRadius: 38,
-    alignItems: "center", justifyContent: "center", overflow: "hidden",
-  },
-  avatarPhoto: { width: 76, height: 76, borderRadius: 38 },
-  avatarInitials: { fontSize: 26, fontFamily: "Inter_700Bold" },
-  avatarUploadOverlay: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: "rgba(0,0,0,0.45)",
-    alignItems: "center",
-    justifyContent: "center",
-    borderRadius: 38,
-  },
-  cameraBtn: {
-    position: "absolute", bottom: 0, right: 0,
-    width: 24, height: 24, borderRadius: 12,
-    alignItems: "center", justifyContent: "center", borderWidth: 2,
-  },
-
-  displayName: { fontSize: 20, fontFamily: "Inter_700Bold" },
-  usernameText: { fontSize: 13, fontFamily: "Inter_500Medium" },
-  bioText: { fontSize: 13, fontFamily: "Inter_400Regular", textAlign: "center", lineHeight: 18, paddingHorizontal: 24 },
-  bioHint: { fontSize: 13, fontFamily: "Inter_500Medium", textDecorationLine: "underline" },
-
-  editProfileBtn: {
-    marginTop: 6, paddingHorizontal: 22, paddingVertical: 8,
-    borderRadius: 10, borderWidth: 1,
-  },
-  editProfileText: { fontSize: 13, fontFamily: "Inter_600SemiBold" },
-
-  statsGrid: {
-    flexDirection: "row", flexWrap: "wrap",
-    borderRadius: 18, borderWidth: 1,
-    marginBottom: 22, overflow: "hidden",
-  },
-  statCell: { width: "50%", alignItems: "center", paddingVertical: 16, gap: 4 },
-  statValue: { fontSize: 17, fontFamily: "Inter_700Bold" },
-  statLabel: { fontSize: 11, fontFamily: "Inter_400Regular" },
-
-  section: { marginBottom: 22 },
-  sectionHeader: {
-    flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 12,
-  },
-  sectionTitle: { fontSize: 15, fontFamily: "Inter_700Bold", marginBottom: 12 },
-  seeAllBtn: { flexDirection: "row", alignItems: "center", gap: 2 },
-  seeAllText: { fontSize: 13, fontFamily: "Inter_500Medium" },
-
-  qrRow: { flexDirection: "row", gap: 10 },
-  qrCard: {
-    flex: 1, borderRadius: 14, padding: 12, borderWidth: 1,
-    alignItems: "center", gap: 8,
-  },
-  qrCardMore: { justifyContent: "center" },
-  qrCodeWrap: { borderRadius: 10, padding: 4, overflow: "hidden" },
-  qrCardLabel: { fontSize: 11, fontFamily: "Inter_500Medium", textAlign: "center" },
-  qrMoreCount: { fontSize: 18, fontFamily: "Inter_700Bold" },
-  qrMoreLabel: { fontSize: 11, fontFamily: "Inter_500Medium" },
-
-  emptyQrCard: {
-    flexDirection: "row", alignItems: "center", gap: 10,
-    borderRadius: 14, padding: 16, borderWidth: 1,
-    borderStyle: "dashed",
-  },
-  emptyQrText: { fontSize: 13, fontFamily: "Inter_400Regular" },
-
-  donationBtn: {
-    flexDirection: "row", alignItems: "center", gap: 12,
-    borderRadius: 16, borderWidth: 1, padding: 14, marginBottom: 10,
-  },
-  donationIconWrap: {
-    width: 34, height: 34, borderRadius: 10,
-    alignItems: "center", justifyContent: "center", flexShrink: 0,
-  },
-  donationTitle: { fontSize: 14, fontFamily: "Inter_700Bold", marginBottom: 2 },
-  donationSub: { fontSize: 12, fontFamily: "Inter_400Regular" },
-
-  signOutBtn: {
-    flexDirection: "row", alignItems: "center", justifyContent: "center",
-    gap: 8, borderRadius: 14, paddingVertical: 13, borderWidth: 1,
-  },
-  signOutText: { fontSize: 14, fontFamily: "Inter_600SemiBold" },
-});
 
 export default React.memo(ProfileScreen);
