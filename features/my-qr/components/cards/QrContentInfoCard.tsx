@@ -30,7 +30,7 @@ export default function QrContentInfoCard({
   const { rf, sp } = useScaleFns();
 
   return (
-    <Animated.View entering={FadeInDown.duration(350).delay(65)}>
+    <Animated.View entering={FadeInDown.duration(160)}>
       <View style={{ borderRadius: sp(18), borderWidth: 1.5, borderColor: ctMeta.color + "35", backgroundColor: isDark ? ctMeta.color + "10" : ctMeta.color + "0A", padding: sp(16), marginBottom: sp(14) }}>
         {/* Header */}
         <View style={{ flexDirection: "row", alignItems: "center", gap: sp(10), marginBottom: sp(14) }}>

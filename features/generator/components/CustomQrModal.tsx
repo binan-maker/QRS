@@ -186,7 +186,7 @@ function CustomQrModal({ visible, onClose, onConfirm }: Props) {
           )}
 
           {/* Type name input */}
-          <Reanimated.View entering={FadeIn.duration(220).delay(20)}>
+          <Reanimated.View entering={FadeIn.duration(220)}>
             <Text style={[S.inputLabel, { color: colors.textMuted }]}>TYPE NAME</Text>
             <View style={[S.nameRow, {
               backgroundColor: colors.surface,
@@ -212,7 +212,7 @@ function CustomQrModal({ visible, onClose, onConfirm }: Props) {
           </Reanimated.View>
 
           {/* Fields */}
-          <Reanimated.View entering={FadeIn.duration(240).delay(40)} style={{ gap: 8 }}>
+          <Reanimated.View entering={FadeIn.duration(240)} style={{ gap: 8 }}>
             <Text style={[S.inputLabel, { color: colors.textMuted }]}>FIELDS</Text>
 
             {fields.map((field, idx) => (

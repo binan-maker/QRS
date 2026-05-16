@@ -165,7 +165,7 @@ export default function PublicProfileScreen() {
         </View>
 
         <ScrollView contentContainerStyle={{ padding: 24, gap: 20 }} showsVerticalScrollIndicator={false}>
-          <Animated.View entering={FadeInDown.duration(400)} style={S.privateAvatar}>
+          <Animated.View entering={FadeInDown.duration(180)} style={S.privateAvatar}>
             <View style={[S.avatarRing, { borderColor: colors.primary + "40" }]}>
               <View style={[S.avatarInner, { backgroundColor: colors.surfaceLight }]}>
                 {profile.photoURL
@@ -178,7 +178,7 @@ export default function PublicProfileScreen() {
             <Text style={[S.usernameText, { color: colors.primary }]}>@{profile.username}</Text>
           </Animated.View>
 
-          <Animated.View entering={FadeInDown.duration(400).delay(80)}>
+          <Animated.View entering={FadeInDown.duration(180)}>
             <View style={[S.privateCard, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
               <View style={[S.privateIconWrap, { backgroundColor: colors.accentDim }]}>
                 <Ionicons name="lock-closed" size={22} color={colors.accent} />
@@ -191,7 +191,7 @@ export default function PublicProfileScreen() {
           </Animated.View>
 
           {user && (
-            <Animated.View entering={FadeInDown.duration(400).delay(140)}>
+            <Animated.View entering={FadeInDown.duration(180)}>
               <Pressable
                 onPress={handleFriendAction}
                 disabled={friendLoading}
@@ -257,7 +257,7 @@ export default function PublicProfileScreen() {
         contentContainerStyle={[S.scrollContent, { paddingBottom: insets.bottom + 40 }]}
       >
         {/* ── Avatar + Identity ── */}
-        <Animated.View entering={FadeInDown.duration(400)} style={S.identityBlock}>
+        <Animated.View entering={FadeInDown.duration(180)} style={S.identityBlock}>
           <View style={[S.avatarRing, { borderColor: colors.primary + "40" }]}>
             <View style={[S.avatarInner, { backgroundColor: colors.surfaceLight }]}>
               {profile.photoURL
@@ -281,7 +281,7 @@ export default function PublicProfileScreen() {
 
         {/* ── Stats ── */}
         {profile.privacy.showStats !== false && STAT_ITEMS.length > 0 && (
-          <Animated.View entering={FadeInDown.duration(400).delay(60)} style={S.statsRow}>
+          <Animated.View entering={FadeInDown.duration(180)} style={S.statsRow}>
             {STAT_ITEMS.map((s, i) => (
               <View key={i} style={[S.statItem, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
                 <Text style={[S.statValue, { color: s.color }]}>{formatCompactNumber(s.value)}</Text>
@@ -293,7 +293,7 @@ export default function PublicProfileScreen() {
 
         {/* ── Friend action (non-own profiles only) ── */}
         {!isOwnProfile && user && (
-          <Animated.View entering={FadeInDown.duration(400).delay(100)}>
+          <Animated.View entering={FadeInDown.duration(180)}>
             {friendStatus === "friends" ? (
               <View style={S.friendedRow}>
                 <View style={[S.friendedBadge, { backgroundColor: colors.safeDim, borderColor: colors.safe + "40" }]}>

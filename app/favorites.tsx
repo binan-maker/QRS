@@ -111,7 +111,7 @@ export default function FavoritesScreen() {
     const subtitle = getSubtitle(item.contentType, item.content);
 
     return (
-      <Animated.View entering={FadeInDown.duration(380).delay(index * 50).springify()}>
+      <Animated.View entering={FadeInDown.duration(160).springify()}>
         <Pressable
           onPress={() => {
             Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -207,7 +207,7 @@ export default function FavoritesScreen() {
           <SkeletonFavoriteCard /><SkeletonFavoriteCard /><SkeletonFavoriteCard /><SkeletonFavoriteCard />
         </View>
       ) : favorites.length === 0 ? (
-        <Animated.View entering={FadeIn.duration(400)} style={styles.center}>
+        <Animated.View entering={FadeIn.duration(180)} style={styles.center}>
           <View style={[styles.emptyIconCircle, { backgroundColor: colors.dangerDim }]}>
             <Ionicons name="heart" size={34} color={colors.danger} />
           </View>

@@ -26,7 +26,7 @@ export function StatsRow() {
   ], [colors]);
 
   return (
-    <Animated.View entering={FadeInDown.duration(500).delay(160)}>
+    <Animated.View entering={FadeInDown.duration(180)}>
       <View style={styles.statsRow}>
         {STAT_ITEMS.map((item, idx) => (
           <View

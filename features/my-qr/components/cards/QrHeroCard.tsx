@@ -42,7 +42,7 @@ export default function QrHeroCard({
   const { rf, sp } = useScaleFns();
 
   return (
-    <Animated.View entering={FadeIn.duration(350)}>
+    <Animated.View entering={FadeIn.duration(160)}>
       <View style={{ borderRadius: sp(24), borderWidth: 1, borderColor: colors.surfaceBorder, backgroundColor: colors.surface, marginBottom: sp(14), overflow: "hidden" }}>
         <LinearGradient
           colors={[ctMeta.color + "22", ctMeta.color + "06"]}

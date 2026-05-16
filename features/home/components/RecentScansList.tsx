@@ -23,7 +23,7 @@ export function RecentScansList({ recentScans, isLoading, onDelete }: Props) {
   const styles = useMemo(() => makeStyles(colors, s), [colors, s]);
 
   return (
-    <Animated.View entering={FadeInDown.duration(500).delay(320)}>
+    <Animated.View entering={FadeInDown.duration(180)}>
       <View style={styles.sectionHeader}>
         <View style={styles.sectionTitleRow}>
           <View style={[styles.sectionDot, { backgroundColor: colors.primary }]} />

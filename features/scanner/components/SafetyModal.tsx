@@ -36,14 +36,14 @@ export default function SafetyModal({ visible, warnings, riskLevel, riskScore = 
   return (
     <View style={styles.overlay}>
       <Reanimated.View
-        entering={FadeInDown.duration(380).springify()}
+        entering={FadeInDown.duration(160).springify()}
         style={[styles.sheet, { backgroundColor: colors.surface, borderColor: accentBorder }]}
       >
         {/* Glow accent at top */}
         <View style={[styles.accentStripe, { backgroundColor: accentColor }]} />
 
         {/* Icon */}
-        <Reanimated.View entering={FadeIn.duration(400).delay(100)} style={styles.iconGroup}>
+        <Reanimated.View entering={FadeIn.duration(180)} style={styles.iconGroup}>
           <View style={[styles.iconOuterRing, { borderColor: accentBorder, backgroundColor: accentDim }]}>
             <View style={[styles.iconInnerRing, { borderColor: accentColor + "40", backgroundColor: accentDim }]}>
               <Ionicons

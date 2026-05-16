@@ -18,12 +18,12 @@ export default function VerifiedModal({ visible, ownerName }: Props) {
   return (
     <View style={styles.overlay}>
       <Reanimated.View
-        entering={FadeInDown.duration(380).springify()}
+        entering={FadeInDown.duration(160).springify()}
         style={[styles.sheet, { backgroundColor: colors.surface }]}
       >
         <View style={styles.accentStripe} />
 
-        <Reanimated.View entering={FadeIn.duration(500).delay(120)} style={styles.iconGroup}>
+        <Reanimated.View entering={FadeIn.duration(180)} style={styles.iconGroup}>
           <View style={styles.iconOuterRing}>
             <View style={styles.iconInnerRing}>
               <View style={styles.iconCore}>

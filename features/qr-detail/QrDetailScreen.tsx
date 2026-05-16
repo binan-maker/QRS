@@ -218,7 +218,7 @@ export default function QrDetailScreen() {
           >
             {/* Deactivated banner */}
             {q.ownerInfo?.isActive === false && (
-              <Animated.View entering={FadeIn.duration(300)}>
+              <Animated.View entering={FadeIn.duration(150)}>
                 <View style={styles.deactivatedBanner}>
                   <LinearGradient colors={["rgba(239,68,68,0.18)", "rgba(239,68,68,0.08)"]} style={StyleSheet.absoluteFill} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} />
                   <View style={styles.deactivatedIconWrap}>
@@ -240,7 +240,7 @@ export default function QrDetailScreen() {
               <OwnerCircleRow ownerInfo={q.ownerInfo as any} onPress={() => setOwnerSheetOpen(true)} />
             )}
 
-            <Animated.View entering={FadeInDown.duration(250).delay(30)}>
+            <Animated.View entering={FadeInDown.duration(250)}>
               <AdvisoryDisclaimer />
             </Animated.View>
 
@@ -250,7 +250,7 @@ export default function QrDetailScreen() {
             )}
 
             {((!isGuardQr && !isStandardQr) || guardReady || standardReady) && (
-              <Animated.View entering={FadeInDown.duration(300).delay(50)}>
+              <Animated.View entering={FadeInDown.duration(150)}>
                 <ContentCard
                   content={effectiveContent}
                   contentType={effectiveContentType}
@@ -266,26 +266,26 @@ export default function QrDetailScreen() {
               const warnings = (q.paymentSafety?.warnings ?? []).filter((w) => !w.toLowerCase().startsWith("pre-filled amount"));
               if (!warnings.length) return null;
               return (
-                <Animated.View entering={FadeInDown.duration(300).delay(75)}>
+                <Animated.View entering={FadeInDown.duration(150)}>
                   <SafetyWarningCard riskLevel={q.paymentSafety!.riskLevel as "caution" | "dangerous"} warnings={warnings} title={q.paymentSafety!.riskLevel === "dangerous" ? "Payment Security Warning" : "Payment Security Notice"} />
                 </Animated.View>
               );
             })()}
 
             {effectiveContentType === "payment" && q.paymentSafety?.evidence && q.paymentSafety.evidence.length > 0 && (
-              <Animated.View entering={FadeInDown.duration(300).delay(90)}>
+              <Animated.View entering={FadeInDown.duration(150)}>
                 <EvidenceCard title="Payment Analysis" evidence={q.paymentSafety.evidence} />
               </Animated.View>
             )}
 
             {!q.ownerInfo?.isBranded && !q.offlineMode && (
-              <Animated.View entering={FadeInDown.duration(300).delay(75)}>
+              <Animated.View entering={FadeInDown.duration(150)}>
                 <ExternalQrBanner />
               </Animated.View>
             )}
 
             {!q.offlineMode && (
-              <Animated.View entering={FadeInDown.duration(400).delay(80)}>
+              <Animated.View entering={FadeInDown.duration(180)}>
                 <TrustScoreCard
                   trustInfo={trust}
                   reportCounts={q.reportCounts}
@@ -303,7 +303,7 @@ export default function QrDetailScreen() {
 
             {user && (
               <>
-                <Animated.View entering={FadeInDown.duration(400).delay(110)}>
+                <Animated.View entering={FadeInDown.duration(180)}>
                   {q.offlineMode ? (
                     <View style={offlineSectionStyles.row}>
                       <Ionicons name="cloud-offline-outline" size={16} color={colors.textMuted} />
@@ -326,7 +326,7 @@ export default function QrDetailScreen() {
                 </Animated.View>
 
                 {((effectiveContentType === "url" && q.urlSafety?.isSuspicious) || q.offlineBlacklistMatch.matched) && (
-                  <Animated.View entering={FadeInDown.duration(300).delay(130)}>
+                  <Animated.View entering={FadeInDown.duration(150)}>
                     {effectiveContentType === "url" && q.urlSafety?.isSuspicious && (
                       <SafetyWarningCard riskLevel={q.urlSafety.riskLevel as "caution" | "dangerous"} warnings={q.urlSafety.warnings} title={q.urlSafety.riskLevel === "dangerous" ? "Dangerous URL Detected" : "Proceed with Caution"} />
                     )}
@@ -337,7 +337,7 @@ export default function QrDetailScreen() {
                 )}
 
                 {effectiveContentType === "url" && q.urlSafety?.evidence && q.urlSafety.evidence.length > 0 && (
-                  <Animated.View entering={FadeInDown.duration(300).delay(145)}>
+                  <Animated.View entering={FadeInDown.duration(150)}>
                     <EvidenceCard title="URL Analysis" evidence={q.urlSafety.evidence} />
                   </Animated.View>
                 )}
@@ -345,7 +345,7 @@ export default function QrDetailScreen() {
             )}
 
             {!q.offlineMode && (
-              <Animated.View entering={FadeInDown.duration(400).delay(210)}>
+              <Animated.View entering={FadeInDown.duration(180)}>
                 <CommentsSection
                   user={user}
                   totalComments={q.totalComments}
@@ -382,7 +382,7 @@ export default function QrDetailScreen() {
             )}
 
             {user && q.ownerInfo && (
-              <Animated.View entering={FadeInDown.duration(400).delay(170)}>
+              <Animated.View entering={FadeInDown.duration(180)}>
                 <SectionHeader icon="storefront-outline" label="Creator" gradient={[colors.primary, colors.primaryShade]} />
                 <OwnerCard
                   ownerInfo={q.ownerInfo}
@@ -395,7 +395,7 @@ export default function QrDetailScreen() {
               </Animated.View>
             )}
 
-            <Animated.View entering={FadeInDown.duration(400).delay(200)}>
+            <Animated.View entering={FadeInDown.duration(180)}>
               <DonationBanner />
             </Animated.View>
           </ScrollView>

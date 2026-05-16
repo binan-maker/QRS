@@ -146,7 +146,7 @@ export default function QrFormPage({ mode }: Props) {
         )}
 
         {showInputSection && (
-          <Reanimated.View entering={FadeInDown.duration(320).delay(60)} style={styles.inputWrap}>
+          <Reanimated.View entering={FadeInDown.duration(150)} style={styles.inputWrap}>
             <InputSection
               selectedPreset={selectedPreset}
               inputValue={inputValue}
@@ -157,7 +157,7 @@ export default function QrFormPage({ mode }: Props) {
           </Reanimated.View>
         )}
 
-        <Reanimated.View entering={FadeInDown.duration(340).delay(100)} style={styles.drawerWrap}>
+        <Reanimated.View entering={FadeInDown.duration(160)} style={styles.drawerWrap}>
           <CustomizeDrawer
             qrReady={!!qrValue}
             selectedThemeIdx={selectedThemeIdx}
@@ -191,7 +191,7 @@ export default function QrFormPage({ mode }: Props) {
         )}
 
         {templateGenerated && qrValue && (
-          <Reanimated.View entering={FadeInDown.duration(360).delay(80)} style={styles.templateSaveBtnWrap}>
+          <Reanimated.View entering={FadeInDown.duration(160)} style={styles.templateSaveBtnWrap}>
             <GenerateButton
               btnLabel={buttonState.btnLabel}
               btnIcon={buttonState.btnIcon}

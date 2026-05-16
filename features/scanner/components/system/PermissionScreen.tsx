@@ -28,9 +28,9 @@ export default function PermissionScreen({ canAskAgain, onRequestPermission }: P
         paddingBottom:   insets.bottom + 24,
       },
     ]}>
-      <Reanimated.View entering={FadeIn.duration(400)} style={styles.centerContent}>
+      <Reanimated.View entering={FadeIn.duration(180)} style={styles.centerContent}>
 
-        <Reanimated.View entering={FadeInDown.duration(380).delay(60)} style={styles.iconSection}>
+        <Reanimated.View entering={FadeInDown.duration(160)} style={styles.iconSection}>
           <View style={[styles.iconOuterRing, { backgroundColor: accentDim, borderColor: accentBorder }]}>
             <View style={[styles.iconInnerRing, { backgroundColor: accentDim, borderColor: accentBorder }]}>
               <Ionicons name="camera-outline" size={42} color={colors.primary} />
@@ -38,7 +38,7 @@ export default function PermissionScreen({ canAskAgain, onRequestPermission }: P
           </View>
         </Reanimated.View>
 
-        <Reanimated.View entering={FadeInDown.duration(350).delay(140)} style={styles.textGroup}>
+        <Reanimated.View entering={FadeInDown.duration(160)} style={styles.textGroup}>
           <Text style={[styles.title, { color: colors.text }]}>
             {t("scanner.cameraPermissionTitle")}
           </Text>
@@ -47,7 +47,7 @@ export default function PermissionScreen({ canAskAgain, onRequestPermission }: P
           </Text>
         </Reanimated.View>
 
-        <Reanimated.View entering={FadeInDown.duration(350).delay(220)} style={styles.btns}>
+        <Reanimated.View entering={FadeInDown.duration(160)} style={styles.btns}>
           <GradientButton
             label="Enable Camera"
             icon="camera"

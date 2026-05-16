@@ -38,7 +38,7 @@ export default function GuardDestinationCard({
   };
 
   return (
-    <Animated.View entering={FadeInDown.duration(350).delay(80)}>
+    <Animated.View entering={FadeInDown.duration(160)}>
       <View style={{ borderRadius: sp(18), borderWidth: 1, borderColor: "#6366F140", backgroundColor: isDark ? "#6366F10D" : "#F5F3FF", padding: sp(16), marginBottom: sp(14) }}>
         {/* Header */}
         <View style={{ flexDirection: "row", alignItems: "center", gap: sp(8), marginBottom: sp(12) }}>

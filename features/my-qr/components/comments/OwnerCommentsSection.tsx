@@ -41,7 +41,7 @@ export default function OwnerCommentsSection({
   }
 
   return (
-    <Animated.View entering={FadeInDown.duration(350).delay(120)}>
+    <Animated.View entering={FadeInDown.duration(160)}>
       <View style={{ borderRadius: sp(18), borderWidth: 1, borderColor: colors.surfaceBorder, backgroundColor: colors.surface, padding: sp(16), marginBottom: sp(14) }}>
         {/* Header */}
         <View style={{ flexDirection: "row", alignItems: "center", gap: sp(10), marginBottom: sp(14) }}>

@@ -141,7 +141,7 @@ function ProfileScreen() {
         </View>
 
         {/* ── AVATAR + IDENTITY ── */}
-        <Animated.View entering={FadeInDown.duration(400)} style={styles.avatarSection}>
+        <Animated.View entering={FadeInDown.duration(180)} style={styles.avatarSection}>
           <Pressable onPress={openPhotoModal} style={styles.avatarPressable}>
             <View style={[styles.avatarRing, { borderColor: colors.primary + "50" }]}>
               <View style={[styles.avatarInner, { backgroundColor: colors.surfaceLight }]}>
@@ -194,7 +194,7 @@ function ProfileScreen() {
 
         {/* ── STATS GRID ── */}
         <Animated.View
-          entering={FadeInDown.duration(400).delay(60)}
+          entering={FadeInDown.duration(180)}
           style={[styles.statsGrid, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}
         >
           {formattedStats.map((s, i) => (
@@ -215,7 +215,7 @@ function ProfileScreen() {
         </Animated.View>
 
         {/* ── MY QR CODES ── */}
-        <Animated.View entering={FadeInDown.duration(400).delay(80)} style={styles.section}>
+        <Animated.View entering={FadeInDown.duration(180)} style={styles.section}>
           <View style={styles.sectionHeader}>
             <Text style={[styles.sectionTitle, { color: colors.text }]}>My QR Codes</Text>
             <Pressable
@@ -270,7 +270,7 @@ function ProfileScreen() {
         </Animated.View>
 
         {/* ── SUPPORT QR GUARD ── */}
-        <Animated.View entering={FadeInDown.duration(400).delay(120)}>
+        <Animated.View entering={FadeInDown.duration(180)}>
           <Pressable
             onPress={() => safePush("/donation")}
             style={({ pressed }) => [styles.donationBtn, { opacity: pressed ? 0.9 : 1 }]}
@@ -310,7 +310,7 @@ function ProfileScreen() {
         </Animated.View>
 
         {/* ── SIGN OUT ── */}
-        <Animated.View entering={FadeInDown.duration(400).delay(140)}>
+        <Animated.View entering={FadeInDown.duration(180)}>
           <Pressable
             onPress={handleSignOut}
             style={({ pressed }) => [

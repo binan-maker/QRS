@@ -16,7 +16,7 @@ export default function QrSettingsPanel({ isActive, togglingActive, deactivation
   const { rf, sp } = useScaleFns();
 
   return (
-    <Animated.View entering={FadeInDown.duration(350).delay(95)}>
+    <Animated.View entering={FadeInDown.duration(160)}>
       <View style={{ borderRadius: sp(18), borderWidth: 1, borderColor: colors.surfaceBorder, backgroundColor: colors.surface, padding: sp(16), marginBottom: sp(14), gap: sp(14) }}>
         <Text style={{ fontSize: rf(12), fontFamily: "Inter_700Bold", color: colors.textSecondary, textTransform: "uppercase", letterSpacing: 0.6 }}>QR Settings</Text>
 

@@ -59,7 +59,7 @@ export default function GenerateButton({
   }, [showError]);
 
   return (
-    <Reanimated.View entering={FadeInDown.duration(360).delay(120)}>
+    <Reanimated.View entering={FadeInDown.duration(160)}>
       <Pressable
         onPress={handlePress}
         style={({ pressed }) => [

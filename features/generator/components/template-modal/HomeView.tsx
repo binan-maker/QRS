@@ -93,7 +93,7 @@ function HomeView({ templates, onOpenAi, onOpenAdvancedBuilder, onPickTemplate }
 
       {/* Advanced Builder card */}
       {!!onOpenAdvancedBuilder && (
-        <Animated.View entering={FadeInDown.duration(250).delay(60)}>
+        <Animated.View entering={FadeInDown.duration(250)}>
           <Pressable
             onPress={onOpenAdvancedBuilder}
             style={({ pressed }) => ({
@@ -130,7 +130,7 @@ function HomeView({ templates, onOpenAi, onOpenAdvancedBuilder, onPickTemplate }
       )}
 
       {/* Search bar */}
-      <Animated.View entering={FadeInDown.duration(200).delay(80)}>
+      <Animated.View entering={FadeInDown.duration(200)}>
         <View style={{
           flexDirection: "row", alignItems: "center", gap: sp(10),
           backgroundColor: isDark ? colors.surface : colors.surfaceLight,
@@ -156,7 +156,7 @@ function HomeView({ templates, onOpenAi, onOpenAdvancedBuilder, onPickTemplate }
       </Animated.View>
 
       {/* Category pills */}
-      <Animated.View entering={FadeInDown.duration(200).delay(100)}>
+      <Animated.View entering={FadeInDown.duration(200)}>
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: sp(6), paddingVertical: sp(2) }}>
           {HOME_CATEGORIES.map((cat) => {
             const active = activeCategory === cat;

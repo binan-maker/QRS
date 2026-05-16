@@ -10,7 +10,7 @@ export const LANDING_MODES = [
     toC:        "#3B82F6",
     midC:       "#2563EB",
     features:   ["Saved to your account", "Trust score & analytics", "Community safety check"],
-    route:      "/qr-standard",
+    route:      "/qr-generator/standard",
   },
   {
     key:        "private",
@@ -23,6 +23,6 @@ export const LANDING_MODES = [
     toC:        "#475569",
     midC:       "#334155",
     features:   ["No account needed", "Nothing stored anywhere", "Instant & anonymous"],
-    route:      "/qr-private",
+    route:      "/qr-generator/private",
   },
 ] as const;

@@ -123,7 +123,7 @@ export default function StandardLinkCard({
   }
 
   return (
-    <Animated.View entering={FadeInDown.duration(350).delay(80)}>
+    <Animated.View entering={FadeInDown.duration(160)}>
       <View style={{ borderRadius: sp(18), borderWidth: 1, borderColor: colors.primary + "40", backgroundColor: isDark ? colors.primaryDim : colors.primaryDim + "60", padding: sp(16), marginBottom: sp(14) }}>
         {/* Header */}
         <View style={{ flexDirection: "row", alignItems: "center", gap: sp(8), marginBottom: sp(12) }}>

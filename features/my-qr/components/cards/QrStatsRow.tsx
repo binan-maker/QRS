@@ -21,7 +21,7 @@ export default function QrStatsRow({ scanCount, commentCount, createdAt }: Props
   ];
 
   return (
-    <Animated.View entering={FadeInDown.duration(350).delay(50)}>
+    <Animated.View entering={FadeInDown.duration(160)}>
       <View style={{ flexDirection: "row", gap: sp(10), marginBottom: sp(14) }}>
         {stats.map((stat) => (
           <View key={stat.label} style={{ flex: 1, borderRadius: sp(14), borderWidth: 1, borderColor: colors.surfaceBorder, backgroundColor: colors.surface, padding: sp(12), alignItems: "center", gap: sp(4) }}>

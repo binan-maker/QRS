@@ -1,7 +1,7 @@
 import { router } from "expo-router";
 
 let lastNavTime = 0;
-const NAV_GUARD_MS = 300;
+const NAV_GUARD_MS = 150;
 
 function canNavigate(): boolean {
   const now = Date.now();

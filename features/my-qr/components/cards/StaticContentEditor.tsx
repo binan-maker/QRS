@@ -32,7 +32,7 @@ export default function StaticContentEditor({
   const showPreview = currentContent && !currentContent.includes("/guard/") && !currentContent.includes("/go/");
 
   return (
-    <Animated.View entering={FadeInDown.duration(350).delay(80)}>
+    <Animated.View entering={FadeInDown.duration(160)}>
       <View style={{ borderRadius: sp(18), borderWidth: 1, borderColor: colors.primaryDim, backgroundColor: (colors as any).isDark ? colors.primaryDim + "50" : colors.primaryDim + "80", padding: sp(16), marginBottom: sp(14) }}>
         {/* Header */}
         <View style={{ flexDirection: "row", alignItems: "center", gap: sp(8), marginBottom: sp(10) }}>

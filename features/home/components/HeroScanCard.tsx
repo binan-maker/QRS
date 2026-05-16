@@ -18,7 +18,7 @@ export function HeroScanCard() {
   const styles = useMemo(() => makeStyles(colors, s), [colors, s]);
 
   return (
-    <Animated.View entering={FadeInDown.duration(500).delay(80)}>
+    <Animated.View entering={FadeInDown.duration(180)}>
       <Pressable
         onPress={() => {
           Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);

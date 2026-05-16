@@ -32,12 +32,12 @@ export default function SafetyModal({
   return (
     <View style={styles.overlay}>
       <Reanimated.View
-        entering={FadeInDown.duration(380).springify()}
+        entering={FadeInDown.duration(160).springify()}
         style={[styles.sheet, { backgroundColor: colors.surface, borderColor: ACCENT_BORDER }]}
       >
         <View style={[styles.accentStripe, { backgroundColor: ACCENT }]} />
 
-        <Reanimated.View entering={FadeIn.duration(400).delay(100)} style={styles.iconGroup}>
+        <Reanimated.View entering={FadeIn.duration(180)} style={styles.iconGroup}>
           <View style={[styles.iconOuterRing, { borderColor: ACCENT_BORDER, backgroundColor: ACCENT_DIM }]}>
             <View style={[styles.iconInnerRing, { borderColor: ACCENT + "40", backgroundColor: ACCENT_DIM }]}>
               <Ionicons name="alert-circle" size={36} color={ACCENT} />

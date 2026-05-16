@@ -27,7 +27,7 @@ export default function DesignPanel({
   const { rf, sp } = useScaleFns();
 
   return (
-    <Animated.View entering={FadeInDown.duration(350).delay(110)}>
+    <Animated.View entering={FadeInDown.duration(160)}>
       <Pressable
         onPress={() => setDesignOpen((v) => !v)}
         style={({ pressed }) => [{

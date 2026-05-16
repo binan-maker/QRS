@@ -34,13 +34,13 @@ export default function GeneratorLanding() {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={[styles.scrollContent, { paddingBottom: tabBarHeight + 24 }]}
       >
-        <Reanimated.View entering={FadeIn.duration(280)} style={styles.cardList}>
+        <Reanimated.View entering={FadeIn.duration(150)} style={styles.cardList}>
           <Text style={[styles.sectionLabel, { color: colors.textMuted }]}>
             Choose a type to get started
           </Text>
 
-          {LANDING_MODES.map((m, idx) => (
-            <Reanimated.View key={m.key} entering={FadeInDown.duration(340).delay(idx * 90)}>
+          {LANDING_MODES.map((m) => (
+            <Reanimated.View key={m.key} entering={FadeInDown.duration(160)}>
               <ModeCard mode={m} />
             </Reanimated.View>
           ))}
