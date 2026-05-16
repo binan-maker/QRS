@@ -33,7 +33,7 @@ export default function StaticContentEditor({
 
   return (
     <Animated.View entering={FadeInDown.duration(350).delay(80)}>
-      <View style={{ borderRadius: sp(18), borderWidth: 1, borderColor: colors.primaryDim, backgroundColor: colors.isDark ? colors.primaryDim + "50" : colors.primaryDim + "80", padding: sp(16), marginBottom: sp(14) }}>
+      <View style={{ borderRadius: sp(18), borderWidth: 1, borderColor: colors.primaryDim, backgroundColor: (colors as any).isDark ? colors.primaryDim + "50" : colors.primaryDim + "80", padding: sp(16), marginBottom: sp(14) }}>
         {/* Header */}
         <View style={{ flexDirection: "row", alignItems: "center", gap: sp(8), marginBottom: sp(10) }}>
           <View style={{ width: sp(34), height: sp(34), borderRadius: sp(10), backgroundColor: colors.primaryDim, alignItems: "center", justifyContent: "center" }}>

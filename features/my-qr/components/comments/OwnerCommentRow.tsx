@@ -11,7 +11,7 @@ interface Props {
   onModerate: (id: string, commentUserId: string) => void;
 }
 
-export default function CommentRow({ comment, isReply, onReply, onModerate }: Props) {
+export default function OwnerCommentRow({ comment, isReply, onReply, onModerate }: Props) {
   const { colors } = useTheme();
   const initials = comment.user.displayName?.[0]?.toUpperCase() || "?";
   return (

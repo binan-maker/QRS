@@ -10,17 +10,21 @@ import { useMyQrDetail } from "@/features/my-qr/hooks/useMyQrDetail";
 import { useScaleFns } from "@/lib/utils/use-scale";
 import { getDetailContentType, getDetailDisplayTitle, parseQrContentDetails } from "@/lib/services/qr-display-utils";
 import { getContentTypeMeta as getCtMeta } from "@/constants/content-types";
-import DeactivateModal from "@/features/my-qr/components/DeactivateModal";
+
 import MyQrNavBar from "@/features/my-qr/components/MyQrNavBar";
-import QrHeroCard from "@/features/my-qr/components/QrHeroCard";
-import QrStatsRow from "@/features/my-qr/components/QrStatsRow";
-import QrContentInfoCard from "@/features/my-qr/components/QrContentInfoCard";
-import GuardDestinationCard from "@/features/my-qr/components/GuardDestinationCard";
-import StandardLinkCard from "@/features/my-qr/components/StandardLinkCard";
-import StaticContentEditor from "@/features/my-qr/components/StaticContentEditor";
-import QrSettingsPanel from "@/features/my-qr/components/QrSettingsPanel";
-import DesignPanel from "@/features/my-qr/components/DesignPanel";
-import ConfirmActionModal from "@/features/my-qr/components/ConfirmActionModal";
+import QrHeroCard from "@/features/my-qr/components/cards/QrHeroCard";
+import QrStatsRow from "@/features/my-qr/components/cards/QrStatsRow";
+import QrContentInfoCard from "@/features/my-qr/components/cards/QrContentInfoCard";
+import GuardDestinationCard from "@/features/my-qr/components/cards/GuardDestinationCard";
+import StandardLinkCard from "@/features/my-qr/components/cards/StandardLinkCard";
+import StaticContentEditor from "@/features/my-qr/components/cards/StaticContentEditor";
+import QrSettingsPanel from "@/features/my-qr/components/panels/QrSettingsPanel";
+import DesignPanel from "@/features/my-qr/components/panels/DesignPanel";
+import OwnerCommentsSection from "@/features/my-qr/components/comments/OwnerCommentsSection";
+import DeactivateModal from "@/features/my-qr/components/modals/DeactivateModal";
+import ConfirmActionModal from "@/features/my-qr/components/modals/ConfirmActionModal";
+import FollowersModal from "@/features/my-qr/components/modals/FollowersModal";
+import CustomColorModal from "@/features/my-qr/components/modals/CustomColorModal";
 
 export default function MyQrDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -33,9 +37,13 @@ export default function MyQrDetailScreen() {
   const [structuredFields, setStructuredFields] = useState<Record<string, string>>({});
 
   const {
-    user, svgRef, qrItem, loading,
+    user, svgRef, scrollRef, qrItem, loading,
     fgColor, setFgColor, bgColor, setBgColor,
     saving, designDirty, setDesignDirty, designOpen, setDesignOpen,
+    customColorOpen, setCustomColorOpen,
+    customColorTarget, setCustomColorTarget,
+    customColorInput, setCustomColorInput,
+    applyCustomColor,
     togglingActive, deactivateModalOpen, setDeactivateModalOpen,
     deactivationMsgInput, setDeactivationMsgInput,
     guardLink, standardLink,
@@ -53,6 +61,14 @@ export default function MyQrDetailScreen() {
     handleSaveDesign, handleToggleActive,
     handleConfirmDeactivate, handleCopyContent, handleShare, handleDownloadPdf,
     sharingQr, downloadingPdf,
+    followersList, followersModalOpen, setFollowersModalOpen,
+    followersLoading, followCount,
+    commentInputRef,
+    comments, commentsLoading, commentText, setCommentText,
+    replyTo, setReplyTo, submittingComment,
+    expandedReplies, setExpandedReplies,
+    topLevelComments, getAllDescendants,
+    handleSubmitComment, handleModerateComment,
   } = useMyQrDetail(id as string);
 
   if (loading) {
@@ -80,7 +96,7 @@ export default function MyQrDetailScreen() {
     );
   }
 
-  // ── Derived state ────────────────────────────────────────────────────────────
+  // ── Derived state ─────────────────────────────────────────────────────────────
   const isBusiness = qrItem.qrType === "business";
   const isActive = qrItem.isActive !== false;
   const isGuardQr = !!(qrItem as any).guardUuid;
@@ -140,7 +156,9 @@ export default function MyQrDetailScreen() {
     }
   };
 
-  // ── Render ────────────────────────────────────────────────────────────────────
+  const ownerInitials = user?.displayName?.[0]?.toUpperCase() || "?";
+
+  // ── Render ─────────────────────────────────────────────────────────────────────
   return (
     <View style={{ flex: 1, backgroundColor: colors.background }}>
       <StatusBar style={isDark ? "light" : "dark"} backgroundColor={colors.background} />
@@ -156,6 +174,7 @@ export default function MyQrDetailScreen() {
       </View>
 
       <ScrollView
+        ref={scrollRef}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{ paddingHorizontal: sp(20), paddingBottom: tabBarHeight + 20 }}
       >
@@ -272,13 +291,37 @@ export default function MyQrDetailScreen() {
           setDesignDirty={setDesignDirty}
           saving={saving}
           handleSaveDesign={handleSaveDesign}
+          onOpenCustomColor={(target) => {
+            setCustomColorTarget(target);
+            setCustomColorInput("");
+            setCustomColorOpen(true);
+          }}
+        />
+
+        <OwnerCommentsSection
+          comments={comments}
+          commentsLoading={commentsLoading}
+          commentText={commentText}
+          setCommentText={setCommentText}
+          replyTo={replyTo}
+          setReplyTo={setReplyTo}
+          submittingComment={submittingComment}
+          expandedReplies={expandedReplies}
+          setExpandedReplies={setExpandedReplies}
+          topLevelComments={topLevelComments}
+          getAllDescendants={getAllDescendants}
+          handleSubmitComment={handleSubmitComment}
+          handleModerateComment={handleModerateComment}
+          commentInputRef={commentInputRef}
+          ownerInitials={ownerInitials}
+          commentCount={qrItem.commentCount ?? 0}
         />
       </ScrollView>
 
       <DeactivateModal
         visible={deactivateModalOpen}
-        message={deactivationMsgInput}
-        onChangeMessage={setDeactivationMsgInput}
+        msgInput={deactivationMsgInput}
+        onChangeMsgInput={setDeactivationMsgInput}
         onConfirm={handleConfirmDeactivate}
         onCancel={() => setDeactivateModalOpen(false)}
       />
@@ -288,6 +331,24 @@ export default function MyQrDetailScreen() {
         message={confirmModalMessage}
         onConfirm={handleConfirmPendingAction}
         onCancel={handleCancelPendingAction}
+      />
+
+      <FollowersModal
+        visible={followersModalOpen}
+        onClose={() => setFollowersModalOpen(false)}
+        followCount={followCount}
+        followers={followersList}
+        loading={followersLoading}
+        topInset={topInset}
+      />
+
+      <CustomColorModal
+        visible={customColorOpen}
+        target={customColorTarget}
+        colorInput={customColorInput}
+        onChangeInput={setCustomColorInput}
+        onCancel={() => setCustomColorOpen(false)}
+        onApply={applyCustomColor}
       />
     </View>
   );

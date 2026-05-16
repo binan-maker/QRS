@@ -38,7 +38,7 @@ export default function QrHeroCard({
   fgColor, bgColor, svgRef, guardDest, isPrivateDest, standardRawContent,
   sharingQr, downloadingPdf, onShare, onDownloadPdf, onCopy,
 }: Props) {
-  const { colors, isDark } = useTheme();
+  const { colors } = useTheme();
   const { rf, sp } = useScaleFns();
 
   return (

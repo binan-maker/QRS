@@ -1,5 +1,5 @@
 import { useState, useCallback, useRef, useEffect } from "react";
-import { Alert, Platform, TextInput, ToastAndroid } from "react-native";
+import { Alert, Platform } from "react-native";
 import * as Haptics from "@/lib/haptics";
 import * as Clipboard from "expo-clipboard";
 import * as FileSystem from "expo-file-system/legacy";
@@ -9,100 +9,40 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { captureQrImage } from "@/lib/utils/capture-qr";
 import { useAuth } from "@/contexts/AuthContext";
 import {
-  getGeneratedQrById, updateQrDesign, setQrActiveState,
-  subscribeToComments, addComment, ownerHideComment, softDeleteComment,
-  getGuardLink, updateGuardLinkDestination, updateSavedQrContent,
-  getStandardLink, updateStandardLinkRawContent, updateDisplayDestination,
+  getGeneratedQrById, setQrActiveState,
   getQrFollowersList, getQrFollowCount,
-  type GeneratedQrItem, type CommentItem, type GuardLink, type FollowerInfo,
+  type GeneratedQrItem, type FollowerInfo,
 } from "@/lib/firestore-service";
-import { scanUrl } from "@/lib/analysis/url-scanner";
+import { useQrDesign } from "./useQrDesign";
+import { useQrDestination } from "./useQrDestination";
+import { useOwnerComments } from "./useOwnerComments";
 
-export type LogoPosition = "center" | "top-left" | "top-right" | "bottom-left" | "bottom-right";
-
-export const FG_COLORS = [
-  { color: "#0A0E17", label: "Dark" },
-  { color: "#1e3a5f", label: "Navy" },
-  { color: "#7C3AED", label: "Purple" },
-  { color: "#10B981", label: "Green" },
-  { color: "#EF4444", label: "Red" },
-  { color: "#F59E0B", label: "Amber" },
-  { color: "#000000", label: "Black" },
-];
-
-export const BG_COLORS = [
-  { color: "#F8FAFC", label: "Light" },
-  { color: "#FFFFFF", label: "White" },
-  { color: "#E0F2FE", label: "Sky" },
-  { color: "#FEF3C7", label: "Cream" },
-  { color: "#F0FDF4", label: "Mint" },
-];
-
-export const LOGO_POSITIONS: { key: LogoPosition; label: string }[] = [
-  { key: "center", label: "Center" },
-  { key: "top-left", label: "Top Left" },
-  { key: "top-right", label: "Top Right" },
-  { key: "bottom-left", label: "Bot. Left" },
-  { key: "bottom-right", label: "Bot. Right" },
-];
+export { FG_COLORS, BG_COLORS, LOGO_POSITIONS } from "./useQrDesign";
+export type { LogoPosition } from "./useQrDesign";
 
 export function useMyQrDetail(id: string) {
   const { user } = useAuth();
   const svgRef = useRef<any>(null);
-  const commentInputRef = useRef<TextInput>(null);
   const scrollRef = useRef<any>(null);
 
   const [qrItem, setQrItem] = useState<GeneratedQrItem | null>(null);
   const [loading, setLoading] = useState(true);
 
-  const [fgColor, setFgColor] = useState("#0A0E17");
-  const [bgColor, setBgColor] = useState("#F8FAFC");
-  const [logoPosition, setLogoPosition] = useState<LogoPosition>("center");
-  const [logoUri, setLogoUri] = useState<string | null>(null);
-  const [saving, setSaving] = useState(false);
-  const [designDirty, setDesignDirty] = useState(false);
-  const [designOpen, setDesignOpen] = useState(false);
-
-  const [comments, setComments] = useState<CommentItem[]>([]);
-  const [commentsLoading, setCommentsLoading] = useState(true);
-  const [commentText, setCommentText] = useState("");
-  const [replyTo, setReplyTo] = useState<{ id: string; author: string } | null>(null);
-  const [submittingComment, setSubmittingComment] = useState(false);
-  const [expandedReplies, setExpandedReplies] = useState<Record<string, boolean>>({});
-
   const [togglingActive, setTogglingActive] = useState(false);
   const [deactivateModalOpen, setDeactivateModalOpen] = useState(false);
   const [deactivationMsgInput, setDeactivationMsgInput] = useState("");
-
-  const [guardLink, setGuardLink] = useState<GuardLink | null>(null);
-  const [standardLink, setStandardLink] = useState<{ rawContent: string; contentType: string; ownerId: string; ownerName: string; isActive: boolean } | null>(null);
-  const [editingDestination, setEditingDestination] = useState(false);
-  const [newDestination, setNewDestination] = useState("");
-  const [savingDestination, setSavingDestination] = useState(false);
-  const [destinationError, setDestinationError] = useState<string | null>(null);
-
-  const [editingSavedContent, setEditingSavedContent] = useState(false);
-  const [newSavedContent, setNewSavedContent] = useState("");
-  const [savingSavedContent, setSavingSavedContent] = useState(false);
-  const [savedContentError, setSavedContentError] = useState<string | null>(null);
-
-  const [isValidating, setIsValidating] = useState(false);
-
-  const [confirmModalOpen, setConfirmModalOpen] = useState(false);
-  const [pendingConfirmAction, setPendingConfirmAction] = useState<(() => Promise<void>) | null>(null);
-  const [confirmModalMessage, setConfirmModalMessage] = useState("");
 
   const [followersList, setFollowersList] = useState<FollowerInfo[]>([]);
   const [followersModalOpen, setFollowersModalOpen] = useState(false);
   const [followersLoading, setFollowersLoading] = useState(false);
   const [followCount, setFollowCount] = useState(0);
 
-  const [customColorOpen, setCustomColorOpen] = useState(false);
-  const [customColorTarget, setCustomColorTarget] = useState<"fg" | "bg">("fg");
-  const [customColorInput, setCustomColorInput] = useState("");
-
   const [sharingQr, setSharingQr] = useState(false);
   const [downloadingPdf, setDownloadingPdf] = useState(false);
+
+  const design = useQrDesign(qrItem);
+  const destination = useQrDestination(qrItem, setQrItem as any);
+  const ownerComments = useOwnerComments(qrItem?.qrCodeId);
 
   const loadQr = useCallback(async () => {
     if (!user?.id) return;
@@ -111,46 +51,13 @@ export function useMyQrDetail(id: string) {
       const found = await getGeneratedQrById(user.id, id);
       if (found) {
         setQrItem(found);
-        setFgColor(found.fgColor || "#0A0E17");
-        setBgColor(found.bgColor || "#F8FAFC");
-        setLogoPosition((found.logoPosition as LogoPosition) || "center");
-        setLogoUri(found.logoUri || null);
+        design.initDesignFromQrItem(found);
       }
     } catch {}
     setLoading(false);
   }, [user?.id, id]);
 
   useEffect(() => { loadQr(); }, [loadQr]);
-
-  useEffect(() => {
-    if (!qrItem?.qrCodeId) return;
-    setCommentsLoading(true);
-    const unsub = subscribeToComments(qrItem.qrCodeId, 200, (list) => {
-      setComments(list);
-      setCommentsLoading(false);
-    });
-    return unsub;
-  }, [qrItem?.qrCodeId]);
-
-  useEffect(() => {
-    if (!qrItem?.guardUuid) { setGuardLink(null); return; }
-    getGuardLink(qrItem.guardUuid).then((link) => {
-      setGuardLink(link);
-      if (link) setNewDestination(link.currentDestination);
-    });
-  }, [qrItem?.guardUuid]);
-
-  useEffect(() => {
-    const isStandardRedirect =
-      qrItem?.qrType === "individual" &&
-      !qrItem?.guardUuid &&
-      (qrItem?.content || "").includes("/go/");
-    if (!isStandardRedirect || !qrItem?.uuid) { setStandardLink(null); return; }
-    getStandardLink(qrItem.uuid).then((link) => {
-      setStandardLink(link);
-      if (link) setNewDestination(link.rawContent);
-    });
-  }, [qrItem?.uuid, qrItem?.guardUuid, qrItem?.qrType, qrItem?.content]);
 
   useEffect(() => {
     if (!qrItem?.qrCodeId) return;
@@ -167,274 +74,10 @@ export function useMyQrDetail(id: string) {
     setFollowersLoading(false);
   }
 
-  function applyCustomColor() {
-    let hex = customColorInput.trim();
-    if (!hex.startsWith("#")) hex = "#" + hex;
-    if (!/^#([0-9A-Fa-f]{3}|[0-9A-Fa-f]{6})$/.test(hex)) {
-      Alert.alert("Invalid color", "Please enter a valid hex color (e.g. #FF5500)");
-      return;
-    }
-    if (customColorTarget === "fg") setFgColor(hex);
-    else setBgColor(hex);
-    setDesignDirty(true);
-    setCustomColorOpen(false);
+  function openFollowers() {
+    handleLoadFollowers();
+    setFollowersModalOpen(true);
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-  }
-
-  async function handleRequestDestinationUpdate() {
-    if (!newDestination.trim()) return;
-    const dest = newDestination.trim().startsWith("http") ? newDestination.trim() : `https://${newDestination.trim()}`;
-
-    setIsValidating(true);
-    setDestinationError(null);
-    let scanResult;
-    try {
-      scanResult = await scanUrl(dest);
-    } catch {
-      scanResult = { valid: true };
-    } finally {
-      setIsValidating(false);
-    }
-
-    if (!scanResult.valid) {
-      setDestinationError(scanResult.error ?? "URL failed security check. Please try a different URL.");
-      return;
-    }
-
-    setConfirmModalMessage(
-      `Updating will redirect all future scans to:\n\n${dest}\n\nThis cannot be undone instantly — scanners will see a 24-hour caution notice while trust rebuilds.`
-    );
-    setPendingConfirmAction(() => async () => {
-      if (!user || !qrItem?.guardUuid) return;
-      setSavingDestination(true);
-      try {
-        await updateGuardLinkDestination(qrItem.guardUuid!, dest, user.id);
-        const refreshed = await getGuardLink(qrItem.guardUuid!);
-        setGuardLink(refreshed);
-        setNewDestination(refreshed?.currentDestination || dest);
-        setEditingDestination(false);
-        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-        Alert.alert("Updated!", "Destination changed. Scanners will see a 24-hour caution notice while trust rebuilds.");
-      } catch (err: any) {
-        Alert.alert("Error", err?.message || "Could not update destination. Try again.");
-      } finally {
-        setSavingDestination(false);
-      }
-    });
-    setConfirmModalOpen(true);
-  }
-
-  async function handleUpdateDestination() {
-    await handleRequestDestinationUpdate();
-  }
-
-  // Saves any content (URL or structured non-URL) as-is into the standard link.
-  // For http/https content, runs a security scan first.
-  // Used by structured edit forms (text, UPI, WiFi, Calendly, phone, etc.)
-  async function handleUpdateRawContent(content: string) {
-    if (!content.trim() || !user || !qrItem?.uuid) return;
-    const dest = content.trim();
-
-    // Scan URLs for threats; skip for non-URL structured content
-    if (dest.startsWith("http://") || dest.startsWith("https://")) {
-      setIsValidating(true);
-      setDestinationError(null);
-      let scanResult: any;
-      try {
-        scanResult = await scanUrl(dest);
-      } catch {
-        scanResult = { valid: true };
-      } finally {
-        setIsValidating(false);
-      }
-      if (!scanResult.valid) {
-        setDestinationError(scanResult.error ?? "URL failed security check. Please try a different link.");
-        return;
-      }
-    }
-
-    setSavingDestination(true);
-    setDestinationError(null);
-    try {
-      await updateStandardLinkRawContent(qrItem.uuid, dest, user.id);
-      if ((qrItem as any).docId) {
-        await updateDisplayDestination(user.id, (qrItem as any).docId, dest).catch(() => {});
-      }
-      const refreshed = await getStandardLink(qrItem.uuid);
-      setStandardLink(refreshed);
-      setNewDestination(refreshed?.rawContent || dest);
-      setEditingDestination(false);
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      Alert.alert("Updated!", "QR content has been saved.");
-    } catch (err: any) {
-      Alert.alert("Error", err?.message || "Could not save content. Try again.");
-    } finally {
-      setSavingDestination(false);
-    }
-  }
-
-  async function handleUpdateStandardDestination() {
-    if (!newDestination.trim() || !user || !qrItem?.uuid) return;
-    const raw = newDestination.trim();
-    // Preserve non-URL schemes as-is; only add https:// to bare domain/path inputs
-    const NON_URL_SCHEMES = ["tel:", "upi://", "WIFI:", "BEGIN:", "SMSTO:", "sms:", "mailto:", "bitcoin:", "ethereum:", "litecoin:", "solana:", "geo:", "market:"];
-    const isNonUrl = NON_URL_SCHEMES.some((s) => raw.startsWith(s));
-    const dest = isNonUrl || raw.startsWith("http") ? raw : `https://${raw}`;
-
-    setIsValidating(true);
-    setDestinationError(null);
-    let scanResult: any;
-    try {
-      scanResult = await scanUrl(dest);
-    } catch {
-      scanResult = { valid: true };
-    } finally {
-      setIsValidating(false);
-    }
-
-    if (!scanResult.valid) {
-      setDestinationError(scanResult.error ?? "URL failed security check. Please try a different URL.");
-      return;
-    }
-
-    setConfirmModalMessage(
-      `Updating will redirect all future scans to:\n\n${dest}\n\nThe QR code pattern stays the same — only the destination changes.`
-    );
-    setPendingConfirmAction(() => async () => {
-      if (!user || !qrItem?.uuid) return;
-      setSavingDestination(true);
-      try {
-        await updateStandardLinkRawContent(qrItem.uuid, dest, user.id);
-        if (qrItem.docId) {
-          await updateDisplayDestination(user.id, qrItem.docId, dest).catch(() => {});
-        }
-        const refreshed = await getStandardLink(qrItem.uuid);
-        setStandardLink(refreshed);
-        setNewDestination(refreshed?.rawContent || dest);
-        setEditingDestination(false);
-        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-        Alert.alert("Updated!", "The QR code now redirects to the new destination.");
-      } catch (err: any) {
-        Alert.alert("Error", err?.message || "Could not update destination. Try again.");
-      } finally {
-        setSavingDestination(false);
-      }
-    });
-    setConfirmModalOpen(true);
-  }
-
-  async function handleConfirmPendingAction() {
-    setConfirmModalOpen(false);
-    if (pendingConfirmAction) {
-      await pendingConfirmAction();
-      setPendingConfirmAction(null);
-    }
-  }
-
-  function handleCancelPendingAction() {
-    setConfirmModalOpen(false);
-    setPendingConfirmAction(null);
-  }
-
-  async function handleRequestSavedContentUpdate() {
-    if (!newSavedContent.trim()) return;
-    const raw = newSavedContent.trim();
-    const looksLikeUrl = raw.startsWith("http") || raw.startsWith("www.") || /^[\w-]+\.\w{2,}/.test(raw);
-
-    if (looksLikeUrl) {
-      setIsValidating(true);
-      setSavedContentError(null);
-      let scanResult;
-      try {
-        scanResult = await scanUrl(raw);
-      } catch {
-        scanResult = { valid: true };
-      } finally {
-        setIsValidating(false);
-      }
-      if (!scanResult.valid) {
-        setSavedContentError(scanResult.error ?? "URL failed security check. Please try a different URL.");
-        return;
-      }
-    }
-
-    setSavedContentError(null);
-    setConfirmModalMessage(
-      `Updating will change this QR code's content to:\n\n${raw}\n\nNote: Any previously printed copies of this QR code will be outdated and should be reprinted.`
-    );
-    setPendingConfirmAction(() => async () => {
-      if (!user || !qrItem?.docId) return;
-      setSavingSavedContent(true);
-      try {
-        await updateSavedQrContent(user.id, qrItem.docId, raw);
-        setQrItem({ ...qrItem, content: raw });
-        setNewSavedContent(raw);
-        setEditingSavedContent(false);
-        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-        Alert.alert("Updated!", "QR content updated. Reprint any physical copies.");
-      } catch (err: any) {
-        Alert.alert("Error", err?.message || "Could not update content. Try again.");
-      } finally {
-        setSavingSavedContent(false);
-      }
-    });
-    setConfirmModalOpen(true);
-  }
-
-  async function handleSaveDesign() {
-    if (!user || !qrItem) return;
-    setSaving(true);
-    try {
-      await updateQrDesign(user.id, qrItem.docId, { fgColor, bgColor, logoPosition, logoUri: null });
-      setDesignDirty(false);
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      Alert.alert("Saved", "Design updated successfully.");
-    } catch {
-      Alert.alert("Error", "Could not save design. Try again.");
-    } finally {
-      setSaving(false);
-    }
-  }
-
-  async function handleSubmitComment() {
-    if (!user || !qrItem?.qrCodeId || !commentText.trim()) return;
-    setSubmittingComment(true);
-    try {
-      const clientUsername: string | undefined = (user as any)?.username || undefined;
-      const clientPhotoURL: string | undefined = user?.photoURL || undefined;
-      await addComment(qrItem.qrCodeId, user.id, user.displayName, commentText.trim(), replyTo?.id || null, user.emailVerified ?? false, clientUsername, clientPhotoURL);
-      setCommentText("");
-      setReplyTo(null);
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-    } catch (err: any) {
-      Alert.alert("Error", err?.message || "Could not post comment.");
-    } finally {
-      setSubmittingComment(false);
-    }
-  }
-
-  async function handleModerateComment(commentId: string, commentUserId: string) {
-    if (!user || !qrItem?.qrCodeId) return;
-    const isOwn = user.id === commentUserId;
-    Alert.alert(
-      isOwn ? "Delete comment?" : "Remove comment?",
-      isOwn ? "This cannot be undone." : "This will hide the comment from everyone.",
-      [
-        { text: "Cancel", style: "cancel" },
-        {
-          text: isOwn ? "Delete" : "Remove",
-          style: "destructive",
-          onPress: async () => {
-            try {
-              if (isOwn) await softDeleteComment(qrItem.qrCodeId, commentId, user.id);
-              else await ownerHideComment(qrItem.qrCodeId, commentId);
-            } catch {
-              Alert.alert("Error", "Could not remove comment.");
-            }
-          },
-        },
-      ]
-    );
   }
 
   async function handleToggleActive(newState: boolean) {
@@ -496,8 +139,6 @@ export function useMyQrDetail(id: string) {
       const fileName = `qrguard_${Date.now()}.png`;
       const dir = FileSystem.cacheDirectory ?? FileSystem.documentDirectory ?? "";
       const fileUri = dir + fileName;
-      // Use string literal 'base64' — FileSystem.EncodingType is a TS-only
-      // type in expo-file-system v19 and evaluates to undefined at runtime.
       await FileSystem.writeAsStringAsync(fileUri, rawBase64, { encoding: "base64" });
       const canShare = await Sharing.isAvailableAsync();
       if (!canShare) {
@@ -516,72 +157,45 @@ export function useMyQrDetail(id: string) {
 
   async function saveAndroidPdf(pdfUri: string, fileName: string) {
     const SAF = FileSystem.StorageAccessFramework;
-    console.log("[PDF] saveAndroidPdf called — pdfUri:", pdfUri, "fileName:", fileName);
-    console.log("[PDF] StorageAccessFramework available:", !!SAF);
-
     return new Promise<void>((resolve) => {
       Alert.alert(
         "Save PDF to Downloads",
         "Do you want to save this QR code PDF to your Downloads folder?",
         [
-          {
-            text: "Cancel",
-            style: "cancel",
-            onPress: () => {
-              console.log("[PDF] User cancelled save dialog");
-              resolve();
-            },
-          },
+          { text: "Cancel", style: "cancel", onPress: () => resolve() },
           {
             text: "Save",
             onPress: async () => {
               try {
-                // Try cached permission URI first — fully silent for repeat saves
                 const cachedDirUri = await AsyncStorage.getItem("qrguard_downloads_dir_uri");
-                console.log("[PDF] Cached dir URI:", cachedDirUri);
-
                 if (cachedDirUri) {
                   try {
-                    console.log("[PDF] Trying cached URI...");
                     const base64 = await FileSystem.readAsStringAsync(pdfUri, { encoding: "base64" });
                     const destUri = await SAF.createFileAsync(cachedDirUri, fileName, "application/pdf");
                     await FileSystem.writeAsStringAsync(destUri, base64, { encoding: "base64" });
-                    console.log("[PDF] Saved via cached URI successfully");
+                    const { ToastAndroid } = await import("react-native");
                     ToastAndroid.show("PDF saved to Downloads ✓", ToastAndroid.LONG);
                     resolve();
                     return;
-                  } catch (cacheErr: any) {
-                    console.warn("[PDF] Cached URI failed, clearing:", cacheErr?.message);
+                  } catch {
                     await AsyncStorage.removeItem("qrguard_downloads_dir_uri");
                   }
                 }
-
-                // No cached permission — open SAF pre-navigated to the Downloads folder.
-                // getUriForDirectoryInRoot("Download") returns the Downloads content URI so
-                // the picker opens directly there; user just taps "Allow" (one tap, once only).
                 const downloadsUri = SAF.getUriForDirectoryInRoot("Download");
-                console.log("[PDF] Requesting SAF permission, initial URI:", downloadsUri);
                 const permissions = await SAF.requestDirectoryPermissionsAsync(downloadsUri);
-                console.log("[PDF] SAF permissions result:", JSON.stringify(permissions));
-
                 if (!permissions.granted) {
-                  console.warn("[PDF] SAF permission denied");
                   Alert.alert("Permission denied", "PDF was not saved. Please try again and allow access to Downloads.");
                   resolve();
                   return;
                 }
-
                 await AsyncStorage.setItem("qrguard_downloads_dir_uri", permissions.directoryUri);
-                console.log("[PDF] Permission granted, dir URI:", permissions.directoryUri);
-
                 const base64 = await FileSystem.readAsStringAsync(pdfUri, { encoding: "base64" });
                 const destUri = await SAF.createFileAsync(permissions.directoryUri, fileName, "application/pdf");
                 await FileSystem.writeAsStringAsync(destUri, base64, { encoding: "base64" });
-                console.log("[PDF] Saved successfully via new SAF permission");
+                const { ToastAndroid } = await import("react-native");
                 ToastAndroid.show("PDF saved to Downloads ✓", ToastAndroid.LONG);
                 resolve();
               } catch (e: any) {
-                console.error("[PDF] Save failed:", e?.message, e);
                 Alert.alert("Save Failed", e?.message || "Could not save PDF to Downloads. Please try again.");
                 resolve();
               }
@@ -620,7 +234,9 @@ export function useMyQrDetail(id: string) {
         return c || "QR Code";
       })();
       const label = rawLabel.length > 60 ? rawLabel.slice(0, 57) + "…" : rawLabel;
-      const createdStr = qrItem?.createdAt ? new Date(qrItem.createdAt).toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" }) : "";
+      const createdStr = qrItem?.createdAt
+        ? new Date(qrItem.createdAt).toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" })
+        : "";
       const html = `<!DOCTYPE html>
 <html>
   <head>
@@ -640,12 +256,8 @@ export function useMyQrDetail(id: string) {
   </head>
   <body>
     <div class="container">
-      <div class="logo-row">
-        <span class="logo-text">QR Guard</span>
-      </div>
-      <div class="qr-wrap">
-        <img src="${imgSrc}" alt="QR Code" />
-      </div>
+      <div class="logo-row"><span class="logo-text">QR Guard</span></div>
+      <div class="qr-wrap"><img src="${imgSrc}" alt="QR Code" /></div>
       <p class="label">${label}</p>
       ${createdStr ? `<p class="date">Created ${createdStr}</p>` : ""}
       <p class="footer">Generated by QR Guard &bull; Scan to verify safety</p>
@@ -654,11 +266,9 @@ export function useMyQrDetail(id: string) {
 </html>`;
       const result = await Print.printToFileAsync({ html, base64: false });
       pdfUri = result.uri;
-
       if (Platform.OS === "android") {
         await saveAndroidPdf(pdfUri, `QRGuard_${Date.now()}.pdf`);
       } else {
-        // iOS — share sheet is the standard "Save to Files" flow
         const canShare = await Sharing.isAvailableAsync();
         if (!canShare) { Alert.alert("Not available", "Could not save PDF on this device."); return; }
         await Sharing.shareAsync(pdfUri, { mimeType: "application/pdf", dialogTitle: "Save QR Code as PDF", UTI: "com.adobe.pdf" });
@@ -666,67 +276,32 @@ export function useMyQrDetail(id: string) {
     } catch (e: any) {
       Alert.alert("PDF Failed", e?.message || "Could not generate the PDF. Please try again.");
     } finally {
-      if (pdfUri) {
-        FileSystem.deleteAsync(pdfUri, { idempotent: true }).catch(() => {});
-      }
+      if (pdfUri) FileSystem.deleteAsync(pdfUri, { idempotent: true }).catch(() => {});
       setDownloadingPdf(false);
     }
   }
 
-  const topLevelComments = comments.filter((c) => !c.parentId);
-
-  function getAllDescendants(parentId: string): CommentItem[] {
-    const result: CommentItem[] = [];
-    const queue = [parentId];
-    while (queue.length > 0) {
-      const curr = queue.shift()!;
-      const children = comments.filter((c) => c.parentId === curr);
-      children.forEach((child) => {
-        result.push(child);
-        queue.push(child.id);
-      });
-    }
-    return result;
-  }
-
-  function openFollowers() {
-    handleLoadFollowers();
-    setFollowersModalOpen(true);
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-  }
-
   return {
-    user, svgRef, commentInputRef, scrollRef,
+    user, svgRef, scrollRef,
     qrItem, loading,
-    fgColor, setFgColor, bgColor, setBgColor,
-    logoPosition, setLogoPosition, logoUri,
-    saving, designDirty, setDesignDirty, designOpen, setDesignOpen,
-    comments, commentsLoading, commentText, setCommentText,
-    replyTo, setReplyTo, submittingComment,
-    expandedReplies, setExpandedReplies,
+
+    ...design,
+
+    ...destination,
+
+    ...ownerComments,
+    commentInputRef: ownerComments.commentInputRef,
+
     togglingActive, deactivateModalOpen, setDeactivateModalOpen,
     deactivationMsgInput, setDeactivationMsgInput,
-    guardLink, standardLink,
-    editingDestination, setEditingDestination,
-    newDestination, setNewDestination, savingDestination,
-    destinationError, setDestinationError,
-    editingSavedContent, setEditingSavedContent,
-    newSavedContent, setNewSavedContent,
-    savingSavedContent, savedContentError, setSavedContentError,
-    isValidating,
-    confirmModalOpen, confirmModalMessage,
-    handleConfirmPendingAction, handleCancelPendingAction,
+
     followersList, followersModalOpen, setFollowersModalOpen,
     followersLoading, followCount,
-    customColorOpen, setCustomColorOpen,
-    customColorTarget, setCustomColorTarget,
-    customColorInput, setCustomColorInput,
-    topLevelComments, getAllDescendants,
-    handleLoadFollowers, applyCustomColor,
-    handleUpdateDestination, handleUpdateStandardDestination, handleUpdateRawContent, handleRequestSavedContentUpdate,
-    handleSaveDesign, handleSubmitComment, handleModerateComment,
+
+    sharingQr, downloadingPdf,
+
     handleToggleActive, handleConfirmDeactivate, handleCopyContent,
-    handleShare, handleDownloadPdf, sharingQr, downloadingPdf,
-    openFollowers,
+    handleShare, handleDownloadPdf,
+    handleLoadFollowers, openFollowers,
   };
 }

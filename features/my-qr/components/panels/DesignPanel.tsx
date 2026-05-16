@@ -3,7 +3,7 @@ import { Ionicons } from "@expo/vector-icons";
 import Animated, { FadeInDown } from "react-native-reanimated";
 import { useTheme } from "@/contexts/ThemeContext";
 import { useScaleFns } from "@/lib/utils/use-scale";
-import { FG_COLORS, BG_COLORS } from "@/features/my-qr/hooks/useMyQrDetail";
+import { FG_COLORS, BG_COLORS } from "@/features/my-qr/hooks/useQrDesign";
 
 interface Props {
   fgColor: string;
@@ -16,12 +16,13 @@ interface Props {
   setDesignDirty: (v: boolean) => void;
   saving: boolean;
   handleSaveDesign: () => void;
+  onOpenCustomColor: (target: "fg" | "bg") => void;
 }
 
 export default function DesignPanel({
   fgColor, bgColor, setFgColor, setBgColor,
   designOpen, setDesignOpen, designDirty, setDesignDirty,
-  saving, handleSaveDesign,
+  saving, handleSaveDesign, onOpenCustomColor,
 }: Props) {
   const { colors } = useTheme();
   const { rf, sp } = useScaleFns();
@@ -62,7 +63,7 @@ export default function DesignPanel({
           style={{ borderRadius: sp(18), borderTopLeftRadius: 0, borderTopRightRadius: 0, borderWidth: 1, borderTopWidth: 0, borderColor: colors.surfaceBorder, backgroundColor: colors.surface, padding: sp(16), marginBottom: sp(14) }}
         >
           <Text style={{ fontSize: rf(11), fontFamily: "Inter_600SemiBold", color: colors.textSecondary, marginBottom: sp(10) }}>QR Color</Text>
-          <View style={{ flexDirection: "row", flexWrap: "wrap", gap: sp(10), marginBottom: sp(16) }}>
+          <View style={{ flexDirection: "row", flexWrap: "wrap", gap: sp(10), marginBottom: sp(4) }}>
             {FG_COLORS.map((c) => (
               <Pressable
                 key={c.color}
@@ -72,9 +73,15 @@ export default function DesignPanel({
                 {fgColor === c.color && <Ionicons name="checkmark" size={rf(14)} color="#fff" />}
               </Pressable>
             ))}
+            <Pressable
+              onPress={() => onOpenCustomColor("fg")}
+              style={{ width: sp(36), height: sp(36), borderRadius: sp(18), borderWidth: 1, borderColor: colors.surfaceBorder, alignItems: "center", justifyContent: "center", backgroundColor: colors.surfaceLight }}
+            >
+              <Ionicons name="add" size={rf(16)} color={colors.textMuted} />
+            </Pressable>
           </View>
 
-          <Text style={{ fontSize: rf(11), fontFamily: "Inter_600SemiBold", color: colors.textSecondary, marginBottom: sp(10) }}>Background</Text>
+          <Text style={{ fontSize: rf(11), fontFamily: "Inter_600SemiBold", color: colors.textSecondary, marginBottom: sp(10), marginTop: sp(12) }}>Background</Text>
           <View style={{ flexDirection: "row", flexWrap: "wrap", gap: sp(10), marginBottom: sp(16) }}>
             {BG_COLORS.map((c) => (
               <Pressable
@@ -85,6 +92,12 @@ export default function DesignPanel({
                 {bgColor === c.color && <Ionicons name="checkmark" size={rf(14)} color={c.color === "#FFFFFF" ? "#94a3b8" : fgColor} />}
               </Pressable>
             ))}
+            <Pressable
+              onPress={() => onOpenCustomColor("bg")}
+              style={{ width: sp(36), height: sp(36), borderRadius: sp(18), borderWidth: 1, borderColor: colors.surfaceBorder, alignItems: "center", justifyContent: "center", backgroundColor: colors.surfaceLight }}
+            >
+              <Ionicons name="add" size={rf(16)} color={colors.textMuted} />
+            </Pressable>
           </View>
 
           {designDirty && (
