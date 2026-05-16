@@ -96,13 +96,14 @@ export const styles = StyleSheet.create({
   seeAllText: { fontSize: 13, fontFamily: "Inter_500Medium" },
   qrRow: { flexDirection: "row", gap: 10 },
   qrCard: {
-    flex: 1, borderRadius: 14, padding: 12, borderWidth: 1,
-    alignItems: "center", gap: 8,
+    flex: 1, borderRadius: 16, padding: 10, borderWidth: 1,
+    alignItems: "center", justifyContent: "center",
+    aspectRatio: 1,
   },
   qrCardMore: { justifyContent: "center" },
-  qrCodeWrap: { borderRadius: 10, padding: 4, overflow: "hidden" },
+  qrCodeWrap: { borderRadius: 12, padding: 4, overflow: "hidden" },
   qrCardLabel: { fontSize: 11, fontFamily: "Inter_500Medium", textAlign: "center" },
-  qrMoreCount: { fontSize: 18, fontFamily: "Inter_700Bold" },
+  qrMoreCount: { fontSize: 20, fontFamily: "Inter_700Bold" },
   qrMoreLabel: { fontSize: 11, fontFamily: "Inter_500Medium" },
   emptyQrCard: {
     flexDirection: "row", alignItems: "center", gap: 10,
@@ -113,15 +114,40 @@ export const styles = StyleSheet.create({
 
   // ── Donation banner ──────────────────────────────────────────────────────
   donationBtn: {
-    flexDirection: "row", alignItems: "center", gap: 12,
-    borderRadius: 16, borderWidth: 1, padding: 14, marginBottom: 10,
+    borderRadius: 20, overflow: "hidden", marginBottom: 10,
+  },
+  donationGrad: {
+    padding: 18, gap: 10,
+  },
+  donationTopRow: {
+    flexDirection: "row", alignItems: "center", justifyContent: "space-between",
+  },
+  donationHeartRow: {
+    flexDirection: "row", alignItems: "center", gap: 8,
   },
   donationIconWrap: {
-    width: 34, height: 34, borderRadius: 10,
+    width: 32, height: 32, borderRadius: 10,
     alignItems: "center", justifyContent: "center", flexShrink: 0,
+    backgroundColor: "rgba(255,255,255,0.18)",
   },
-  donationTitle: { fontSize: 14, fontFamily: "Inter_700Bold", marginBottom: 2 },
-  donationSub: { fontSize: 12, fontFamily: "Inter_400Regular" },
+  donationTitle: { fontSize: 15, fontFamily: "Inter_700Bold", color: "#fff", marginBottom: 1 },
+  donationSub: { fontSize: 12, fontFamily: "Inter_400Regular", color: "rgba(255,255,255,0.75)" },
+  donationPillRow: {
+    flexDirection: "row", gap: 7, marginTop: 2,
+  },
+  donationPill: {
+    paddingHorizontal: 12, paddingVertical: 5,
+    borderRadius: 100, backgroundColor: "rgba(255,255,255,0.15)",
+    borderWidth: 1, borderColor: "rgba(255,255,255,0.22)",
+  },
+  donationPillText: {
+    fontSize: 12, fontFamily: "Inter_700Bold", color: "#fff",
+  },
+  donationArrow: {
+    width: 30, height: 30, borderRadius: 15,
+    alignItems: "center", justifyContent: "center",
+    backgroundColor: "rgba(255,255,255,0.15)",
+  },
 
   // ── Sign-out button ──────────────────────────────────────────────────────
   signOutBtn: {

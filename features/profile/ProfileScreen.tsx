@@ -273,28 +273,39 @@ function ProfileScreen() {
         <Animated.View entering={FadeInDown.duration(400).delay(120)}>
           <Pressable
             onPress={() => safePush("/donation")}
-            style={({ pressed }) => [
-              styles.donationBtn,
-              {
-                backgroundColor: colors.isDark ? "rgba(124,58,237,0.12)" : "rgba(124,58,237,0.07)",
-                borderColor: "#7C3AED30",
-                opacity: pressed ? 0.88 : 1,
-              },
-            ]}
+            style={({ pressed }) => [styles.donationBtn, { opacity: pressed ? 0.9 : 1 }]}
           >
             <LinearGradient
-              colors={["#7C3AED", "#6366F1"]}
-              style={styles.donationIconWrap}
+              colors={["#6D28D9", "#7C3AED", "#4F46E5"]}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 1 }}
+              style={styles.donationGrad}
             >
-              <Ionicons name="heart" size={15} color="#fff" />
+              <View style={styles.donationTopRow}>
+                <View style={styles.donationHeartRow}>
+                  <View style={styles.donationIconWrap}>
+                    <Ionicons name="heart" size={16} color="#fff" />
+                  </View>
+                  <View>
+                    <Text style={styles.donationTitle}>Support QR Guard</Text>
+                    <Text style={styles.donationSub}>Help keep the app free &amp; secure</Text>
+                  </View>
+                </View>
+                <View style={styles.donationArrow}>
+                  <Ionicons name="arrow-forward" size={15} color="#fff" />
+                </View>
+              </View>
+              <View style={styles.donationPillRow}>
+                {["₹10", "₹50", "₹100"].map((amt) => (
+                  <View key={amt} style={styles.donationPill}>
+                    <Text style={styles.donationPillText}>{amt}</Text>
+                  </View>
+                ))}
+                <View style={[styles.donationPill, { backgroundColor: "rgba(255,255,255,0.08)" }]}>
+                  <Text style={styles.donationPillText}>via Play Store ›</Text>
+                </View>
+              </View>
             </LinearGradient>
-            <View style={{ flex: 1 }}>
-              <Text style={[styles.donationTitle, { color: colors.text }]}>Support QR Guard</Text>
-              <Text style={[styles.donationSub, { color: colors.textSecondary }]}>Donate ₹10 · ₹50 · ₹100 via Play Store</Text>
-            </View>
-            <Ionicons name="chevron-forward" size={16} color={colors.textMuted} />
           </Pressable>
         </Animated.View>
 
