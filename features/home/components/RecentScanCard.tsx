@@ -1,13 +1,12 @@
 import React, { useCallback, useMemo } from "react";
-import {
-  View, Text, StyleSheet, Pressable, Platform,
-} from "react-native";
+import { View, Text, Pressable } from "react-native";
 import { router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { Swipeable } from "react-native-gesture-handler";
 import Animated, { FadeInRight } from "react-native-reanimated";
 import * as Haptics from "@/lib/haptics";
+import { useTheme } from "@/contexts/ThemeContext";
 import { parseAnyPaymentQr } from "@/lib/qr-analysis";
 import {
   detectContentType,
@@ -17,7 +16,8 @@ import {
   truncate,
   formatRelativeTime,
 } from "@/lib/utils/formatters";
-import type { LocalScan, HomeColors } from "@/features/home/types";
+import { cardStyles } from "@/features/home/components/scanCardStyles";
+import type { LocalScan } from "@/features/home/types";
 
 // ── Scan meta computation ─────────────────────────────────────────────────────
 
@@ -54,16 +54,13 @@ export function computeScanMeta(scan: LocalScan) {
 // ── Component ─────────────────────────────────────────────────────────────────
 
 interface Props {
-  scan:    LocalScan;
-  index:   number;
-  colors:  HomeColors;
-  isDark:  boolean;
-  onDelete:(id: string) => void;
+  scan:     LocalScan;
+  index:    number;
+  onDelete: (id: string) => void;
 }
 
-export const RecentScanCard = React.memo(function RecentScanCard({
-  scan, index, colors, isDark, onDelete,
-}: Props) {
+export const RecentScanCard = React.memo(function RecentScanCard({ scan, index, onDelete }: Props) {
+  const { colors, isDark } = useTheme();
   const meta    = useMemo(() => computeScanMeta(scan), [scan]);
   const timeAgo = useMemo(() => formatRelativeTime(scan.scannedAt), [scan.scannedAt]);
 
@@ -149,30 +146,4 @@ export const RecentScanCard = React.memo(function RecentScanCard({
       </Swipeable>
     </Animated.View>
   );
-});
-
-// ── Styles ────────────────────────────────────────────────────────────────────
-
-export const cardStyles = StyleSheet.create({
-  scanItem: {
-    flexDirection: "row", alignItems: "center",
-    borderRadius: 20, borderWidth: 1,
-    paddingHorizontal: 14, paddingVertical: 13, gap: 13,
-    shadowOffset: { width: 0, height: 2 },
-    shadowRadius: 10,
-    shadowOpacity: 0.04,
-    elevation: Platform.OS === "android" ? 0 : 1,
-  },
-  scanIconBox:    { width: 46, height: 46, borderRadius: 14, alignItems: "center", justifyContent: "center", flexShrink: 0 },
-  scanBody:       { flex: 1, minWidth: 0, gap: 4 },
-  scanTopRow:     { flexDirection: "row", alignItems: "center", gap: 7 },
-  scanContent:    { fontSize: 14, fontFamily: "Inter_700Bold", lineHeight: 20, flex: 1, letterSpacing: -0.1 },
-  scanAmountPill: { paddingHorizontal: 7, paddingVertical: 2, borderRadius: 100, flexShrink: 0 },
-  scanAmount:     { fontSize: 12, fontFamily: "Inter_700Bold" },
-  scanSub:        { fontSize: 12, fontFamily: "Inter_400Regular", lineHeight: 16 },
-  scanRight:      { alignItems: "flex-end", gap: 8, flexShrink: 0 },
-  scanTime:       { fontSize: 11, fontFamily: "Inter_500Medium", letterSpacing: 0.1 },
-  safeIndicator:  { width: 28, height: 28, borderRadius: 9, alignItems: "center", justifyContent: "center" },
-  swipeDeleteBtn: { backgroundColor: "#DC2626", justifyContent: "center", alignItems: "center", width: 72, borderRadius: 20, marginLeft: 8, gap: 3 },
-  swipeDeleteText:{ fontSize: 10, fontFamily: "Inter_600SemiBold", color: "#fff" },
 });

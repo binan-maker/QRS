@@ -1,31 +1,29 @@
 import React, { useMemo } from "react";
-import { View, Text, StyleSheet, Pressable, useWindowDimensions } from "react-native";
+import { View, Text, StyleSheet, Pressable } from "react-native";
 import { router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import Animated, { FadeInDown } from "react-native-reanimated";
 import * as Haptics from "@/lib/haptics";
-import { makeResponsiveFont } from "@/features/home/utils";
+import { useTheme } from "@/contexts/ThemeContext";
+import { useScaleFns } from "@/lib/utils/use-scale";
 import { RecentScanCard } from "@/features/home/components/RecentScanCard";
 import { ScanSkeletonList } from "@/features/home/components/ScanSkeletonList";
 import { EmptyScans } from "@/features/home/components/EmptyScans";
-import type { LocalScan, HomeColors } from "@/features/home/types";
+import type { LocalScan } from "@/features/home/types";
 
 interface Props {
   recentScans: LocalScan[];
   isLoading:   boolean;
-  colors:      HomeColors;
-  isDark:      boolean;
   onDelete:    (id: string) => void;
 }
 
-export function RecentScansList({ recentScans, isLoading, colors, isDark, onDelete }: Props) {
-  const { width } = useWindowDimensions();
-  const rf = useMemo(() => makeResponsiveFont(width), [width]);
-  const styles = useMemo(() => makeStyles(colors, rf), [colors, rf]);
+export function RecentScansList({ recentScans, isLoading, onDelete }: Props) {
+  const { colors } = useTheme();
+  const { s } = useScaleFns();
+  const styles = useMemo(() => makeStyles(colors, s), [colors, s]);
 
   return (
     <Animated.View entering={FadeInDown.duration(500).delay(320)}>
-      {/* ── Section header ── */}
       <View style={styles.sectionHeader}>
         <View style={styles.sectionTitleRow}>
           <View style={[styles.sectionDot, { backgroundColor: colors.primary }]} />
@@ -42,11 +40,10 @@ export function RecentScansList({ recentScans, isLoading, colors, isDark, onDele
         )}
       </View>
 
-      {/* ── Content: skeleton | empty | list ── */}
       {isLoading ? (
-        <ScanSkeletonList colors={colors} />
+        <ScanSkeletonList />
       ) : recentScans.length === 0 ? (
-        <EmptyScans colors={colors} />
+        <EmptyScans />
       ) : (
         <View style={styles.recentList}>
           {recentScans.map((scan, idx) => (
@@ -54,8 +51,6 @@ export function RecentScansList({ recentScans, isLoading, colors, isDark, onDele
               key={scan.id}
               scan={scan}
               index={idx}
-              colors={colors}
-              isDark={isDark}
               onDelete={onDelete}
             />
           ))}
@@ -85,7 +80,8 @@ export function RecentScansList({ recentScans, isLoading, colors, isDark, onDele
   );
 }
 
-function makeStyles(c: HomeColors, rf: (n: number) => number) {
+function makeStyles(c: any, s: number) {
+  const rf = (n: number) => Math.round(n * s);
   return StyleSheet.create({
     sectionHeader:   { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 14 },
     sectionTitleRow: { flexDirection: "row", alignItems: "center", gap: 8 },

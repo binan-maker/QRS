@@ -13,17 +13,9 @@ import { RecentScansList } from "@/features/home/components/RecentScansList";
 function HomeScreen() {
   const insets   = useSafeAreaInsets();
   const topInset = useTopInset();
-  const { colors, isDark } = useTheme();
+  const { colors } = useTheme();
   const { cachedUrl: photoURL } = useAvatar();
-  const {
-    user,
-    recentScans,
-    isLoading,
-    refreshing,
-    onRefresh,
-    deleteScan,
-    pulseStyle,
-  } = useHome();
+  const { user, recentScans, isLoading, refreshing, onRefresh, deleteScan } = useHome();
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background, paddingTop: topInset }]}>
@@ -34,17 +26,15 @@ function HomeScreen() {
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} />
         }
       >
-        <HomeHeader user={user} colors={colors} photoURL={photoURL} />
+        <HomeHeader user={user} photoURL={photoURL} />
 
-        <HeroScanCard colors={colors} isDark={isDark} pulseStyle={pulseStyle} />
+        <HeroScanCard />
 
-        <StatsRow colors={colors} />
+        <StatsRow />
 
         <RecentScansList
           recentScans={recentScans}
           isLoading={isLoading}
-          colors={colors}
-          isDark={isDark}
           onDelete={deleteScan}
         />
 

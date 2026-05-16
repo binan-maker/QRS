@@ -2,23 +2,14 @@ import { useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useAvatar } from "@/contexts/AvatarContext";
 import { useNotifications } from "@/components/notifications/hooks/useNotifications";
-import { usePulseAnimation } from "@/features/home/hooks/usePulseAnimation";
 import { useRecentScans } from "@/features/home/hooks/useRecentScans";
 
 export function useHome() {
-  const { user }                = useAuth();
+  const { user }                          = useAuth();
   const { url: appAvatarUrl, syncAvatar } = useAvatar();
-  const notif                   = useNotifications();
-  const pulseStyle              = usePulseAnimation();
-  const {
-    recentScans,
-    isLoading,
-    refreshing,
-    onRefresh,
-    deleteScan,
-  } = useRecentScans();
+  const notif                             = useNotifications();
+  const { recentScans, isLoading, refreshing, onRefresh, deleteScan } = useRecentScans();
 
-  // ── Sync Google photo as default avatar if no custom one exists ───────────
   useEffect(() => {
     if (!appAvatarUrl && user?.photoURL) syncAvatar(user.photoURL);
   }, [user?.id, user?.photoURL, syncAvatar, appAvatarUrl]);
@@ -30,7 +21,6 @@ export function useHome() {
     refreshing,
     onRefresh,
     deleteScan,
-    pulseStyle,
     notifCount:               notif.notifCount,
     notifOpen:                notif.notifOpen,
     setNotifOpen:             notif.setNotifOpen,

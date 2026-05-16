@@ -1,26 +1,21 @@
 import React, { useMemo } from "react";
-import { View, Text, StyleSheet, Pressable, useWindowDimensions } from "react-native";
+import { View, Text, StyleSheet, Pressable } from "react-native";
 import { router } from "expo-router";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
-import Animated, { FadeInDown, type AnimatedStyle } from "react-native-reanimated";
+import Animated, { FadeInDown } from "react-native-reanimated";
 import * as Haptics from "@/lib/haptics";
-import { makeResponsiveFont } from "@/features/home/utils";
-import type { HomeColors } from "@/features/home/types";
-import type { ViewStyle } from "react-native";
+import { useTheme } from "@/contexts/ThemeContext";
+import { useScaleFns } from "@/lib/utils/use-scale";
+import { usePulseAnimation } from "@/features/home/hooks/usePulseAnimation";
 
 const HERO_PILLS = ["Safe check", "Fraud detect", "Trust score"] as const;
 
-interface Props {
-  colors:     HomeColors;
-  isDark:     boolean;
-  pulseStyle: AnimatedStyle<ViewStyle>;
-}
-
-export function HeroScanCard({ colors, isDark, pulseStyle }: Props) {
-  const { width } = useWindowDimensions();
-  const rf = useMemo(() => makeResponsiveFont(width), [width]);
-  const styles = useMemo(() => makeStyles(colors, rf), [colors, rf]);
+export function HeroScanCard() {
+  const { colors, isDark } = useTheme();
+  const { s } = useScaleFns();
+  const pulseStyle = usePulseAnimation();
+  const styles = useMemo(() => makeStyles(colors, s), [colors, s]);
 
   return (
     <Animated.View entering={FadeInDown.duration(500).delay(80)}>
@@ -84,7 +79,8 @@ export function HeroScanCard({ colors, isDark, pulseStyle }: Props) {
   );
 }
 
-function makeStyles(c: HomeColors, rf: (n: number) => number) {
+function makeStyles(c: any, s: number) {
+  const rf = (n: number) => Math.round(n * s);
   return StyleSheet.create({
     heroCard:         { borderRadius: 24, overflow: "hidden", marginBottom: 18 },
     heroGradient:     { borderRadius: 24, padding: 20 },

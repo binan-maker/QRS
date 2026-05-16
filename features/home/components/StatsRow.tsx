@@ -1,10 +1,10 @@
 import React, { useMemo } from "react";
-import { View, Text, StyleSheet, useWindowDimensions } from "react-native";
+import { View, Text, StyleSheet } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import Animated, { FadeInDown } from "react-native-reanimated";
-import { makeResponsiveFont } from "@/features/home/utils";
-import type { HomeColors } from "@/features/home/types";
+import { useTheme } from "@/contexts/ThemeContext";
+import { useScaleFns } from "@/lib/utils/use-scale";
 
 interface StatItem {
   icon:  React.ComponentProps<typeof Ionicons>["name"];
@@ -14,42 +14,38 @@ interface StatItem {
   bg:    string;
 }
 
-interface Props {
-  colors: HomeColors;
-}
-
-export function StatsRow({ colors }: Props) {
-  const { width } = useWindowDimensions();
-  const rf = useMemo(() => makeResponsiveFont(width), [width]);
-  const styles = useMemo(() => makeStyles(colors, rf), [colors, rf]);
+export function StatsRow() {
+  const { colors } = useTheme();
+  const { s } = useScaleFns();
+  const styles = useMemo(() => makeStyles(s), [s]);
 
   const STAT_ITEMS = useMemo<StatItem[]>(() => [
-    { icon: "shield-checkmark", label: "Safe Scans", desc: "Verified clean",  color: colors.safe,    bg: colors.safeDim    },
-    { icon: "warning",          label: "Stay Alert", desc: "Report risks",    color: colors.warning, bg: colors.warningDim },
-    { icon: "chatbubbles",      label: "Community",  desc: "Trust reviews",   color: colors.primary, bg: colors.primaryDim },
+    { icon: "shield-checkmark", label: "Safe Scans", desc: "Verified clean", color: colors.safe,    bg: colors.safeDim    },
+    { icon: "warning",          label: "Stay Alert", desc: "Report risks",   color: colors.warning, bg: colors.warningDim },
+    { icon: "chatbubbles",      label: "Community",  desc: "Trust reviews",  color: colors.primary, bg: colors.primaryDim },
   ], [colors]);
 
   return (
     <Animated.View entering={FadeInDown.duration(500).delay(160)}>
       <View style={styles.statsRow}>
-        {STAT_ITEMS.map((s, idx) => (
+        {STAT_ITEMS.map((item, idx) => (
           <View
             key={idx}
             style={[styles.statCard, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}
           >
             <LinearGradient
-              colors={[s.bg, "transparent"]}
+              colors={[item.bg, "transparent"]}
               style={styles.statCardGlow}
               start={{ x: 0.5, y: 0 }} end={{ x: 0.5, y: 1 }}
             />
-            <View style={[styles.statIconWrap, { backgroundColor: s.bg }]}>
-              <Ionicons name={s.icon} size={18} color={s.color} />
+            <View style={[styles.statIconWrap, { backgroundColor: item.bg }]}>
+              <Ionicons name={item.icon} size={18} color={item.color} />
             </View>
             <Text style={[styles.statLabel, { color: colors.text }]} numberOfLines={1} maxFontSizeMultiplier={1}>
-              {s.label}
+              {item.label}
             </Text>
-            <Text style={[styles.statDesc, { color: s.color }]} numberOfLines={1} maxFontSizeMultiplier={1}>
-              {s.desc}
+            <Text style={[styles.statDesc, { color: item.color }]} numberOfLines={1} maxFontSizeMultiplier={1}>
+              {item.desc}
             </Text>
           </View>
         ))}
@@ -58,7 +54,8 @@ export function StatsRow({ colors }: Props) {
   );
 }
 
-function makeStyles(c: HomeColors, rf: (n: number) => number) {
+function makeStyles(s: number) {
+  const rf = (n: number) => Math.round(n * s);
   return StyleSheet.create({
     statsRow:     { flexDirection: "row", gap: 10, marginBottom: 18 },
     statCard:     { flex: 1, borderRadius: 18, padding: 14, alignItems: "center", borderWidth: 1, gap: 5, overflow: "hidden" },

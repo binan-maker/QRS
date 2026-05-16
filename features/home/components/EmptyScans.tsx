@@ -1,17 +1,13 @@
 import React, { useMemo } from "react";
-import { View, Text, StyleSheet, useWindowDimensions } from "react-native";
+import { View, Text, StyleSheet } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { makeResponsiveFont } from "@/features/home/utils";
-import type { HomeColors } from "@/features/home/types";
+import { useTheme } from "@/contexts/ThemeContext";
+import { useScaleFns } from "@/lib/utils/use-scale";
 
-interface Props {
-  colors: HomeColors;
-}
-
-export function EmptyScans({ colors }: Props) {
-  const { width } = useWindowDimensions();
-  const rf = useMemo(() => makeResponsiveFont(width), [width]);
-  const styles = useMemo(() => makeStyles(colors, rf), [colors, rf]);
+export function EmptyScans() {
+  const { colors } = useTheme();
+  const { s } = useScaleFns();
+  const styles = useMemo(() => makeStyles(s), [s]);
 
   return (
     <View style={[styles.emptyWrap, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
@@ -19,12 +15,13 @@ export function EmptyScans({ colors }: Props) {
         <Ionicons name="scan-outline" size={32} color={colors.textMuted} />
       </View>
       <Text style={[styles.emptyTitle, { color: colors.textSecondary }]}>No scans yet</Text>
-      <Text style={[styles.emptySub,   { color: colors.textMuted }]}>Scan a QR code to get started</Text>
+      <Text style={[styles.emptySub, { color: colors.textMuted }]}>Scan a QR code to get started</Text>
     </View>
   );
 }
 
-function makeStyles(c: HomeColors, rf: (n: number) => number) {
+function makeStyles(s: number) {
+  const rf = (n: number) => Math.round(n * s);
   return StyleSheet.create({
     emptyWrap:    { alignItems: "center", paddingVertical: 40, gap: 10, borderRadius: 20, borderWidth: 1 },
     emptyIconBox: { width: 70, height: 70, borderRadius: 18, alignItems: "center", justifyContent: "center", marginBottom: 4 },

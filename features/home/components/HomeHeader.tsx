@@ -1,24 +1,24 @@
 import React, { useMemo } from "react";
-import { View, Text, StyleSheet, Pressable, useWindowDimensions } from "react-native";
+import { View, Text, StyleSheet, Pressable } from "react-native";
 import { Image } from "expo-image";
 import { router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import Animated, { FadeInDown } from "react-native-reanimated";
 import * as Haptics from "@/lib/haptics";
-import { getFirstName, makeResponsiveFont } from "@/features/home/utils";
-import type { HomeColors } from "@/features/home/types";
+import { useTheme } from "@/contexts/ThemeContext";
+import { useScaleFns } from "@/lib/utils/use-scale";
+import { getFirstName } from "@/features/home/utils";
 
 interface Props {
   user:     { displayName: string; id: string } | null;
-  colors:   HomeColors;
   photoURL: string | null;
 }
 
-export function HomeHeader({ user, colors, photoURL }: Props) {
-  const { width } = useWindowDimensions();
-  const rf = useMemo(() => makeResponsiveFont(width), [width]);
-  const styles = useMemo(() => makeStyles(colors, rf), [colors, rf]);
+export function HomeHeader({ user, photoURL }: Props) {
+  const { colors } = useTheme();
+  const { s } = useScaleFns();
+  const styles = useMemo(() => makeStyles(colors, s), [colors, s]);
 
   return (
     <Animated.View entering={FadeInDown.duration(500)} style={styles.header}>
@@ -75,20 +75,19 @@ export function HomeHeader({ user, colors, photoURL }: Props) {
   );
 }
 
-function makeStyles(c: HomeColors, rf: (n: number) => number) {
+function makeStyles(c: any, s: number) {
+  const rf = (n: number) => Math.round(n * s);
   return StyleSheet.create({
-    header:      { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 22, gap: 8 },
-    headerLeft:  { flex: 1, minWidth: 0 },
-    headerRight: { flexDirection: "row", alignItems: "center", gap: 10 },
-    greeting:    { fontSize: rf(22), fontFamily: "Inter_700Bold", color: c.text, flexShrink: 1 },
-
+    header:             { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 22, gap: 8 },
+    headerLeft:         { flex: 1, minWidth: 0 },
+    headerRight:        { flexDirection: "row", alignItems: "center", gap: 10 },
+    greeting:           { fontSize: rf(22), fontFamily: "Inter_700Bold", color: c.text, flexShrink: 1 },
     avatarRing:         { width: 46, height: 46, borderRadius: 23 },
     avatarRingGradient: { width: 46, height: 46, borderRadius: 23, padding: 2, alignItems: "center", justifyContent: "center" },
     avatarInner:        { width: 42, height: 42, borderRadius: 21, alignItems: "center", justifyContent: "center", overflow: "hidden" },
     avatarImg:          { width: 42, height: 42, borderRadius: 21 },
     avatarInitial:      { fontSize: rf(17), fontFamily: "Inter_700Bold" },
-
-    signInPill:     { flexDirection: "row", alignItems: "center", gap: 5, paddingHorizontal: 13, paddingVertical: 9, borderRadius: 22, borderWidth: 1 },
-    signInPillText: { fontFamily: "Inter_600SemiBold", fontSize: rf(13) },
+    signInPill:         { flexDirection: "row", alignItems: "center", gap: 5, paddingHorizontal: 13, paddingVertical: 9, borderRadius: 22, borderWidth: 1 },
+    signInPillText:     { fontFamily: "Inter_600SemiBold", fontSize: rf(13) },
   });
 }

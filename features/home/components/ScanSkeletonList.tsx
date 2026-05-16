@@ -1,14 +1,12 @@
 import React from "react";
 import { View } from "react-native";
 import Animated, { FadeInRight } from "react-native-reanimated";
-import { cardStyles } from "@/features/home/components/RecentScanCard";
-import type { HomeColors } from "@/features/home/types";
+import { useTheme } from "@/contexts/ThemeContext";
+import { cardStyles } from "@/features/home/components/scanCardStyles";
 
-interface Props {
-  colors: HomeColors;
-}
+export function ScanSkeletonList() {
+  const { colors } = useTheme();
 
-export function ScanSkeletonList({ colors }: Props) {
   return (
     <View style={{ gap: 10 }}>
       {[0, 1, 2].map((i) => (
