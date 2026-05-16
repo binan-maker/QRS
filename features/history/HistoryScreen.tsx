@@ -1,97 +1,40 @@
-import React, { useCallback, useMemo, useState, useRef } from "react";
-import {
-  View,
-  Text,
-  StyleSheet,
-  Pressable,
-  Platform,
-  RefreshControl,
-  useWindowDimensions,
-  TextInput,
-  Keyboard,
-} from "react-native";
+import React, { useCallback, useMemo } from "react";
+import { View, StyleSheet, Platform, RefreshControl, useWindowDimensions } from "react-native";
 import { FlashList } from "@shopify/flash-list";
-import { router } from "expo-router";
-import { Ionicons } from "@expo/vector-icons";
-import { LinearGradient } from "expo-linear-gradient";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTopInset } from "@/lib/utils/platform";
-import * as Haptics from "@/lib/haptics";
 import { useTheme } from "@/contexts/ThemeContext";
-import { useHistory, type HistoryItem, type Filter } from "@/features/history/hooks/useHistory";
-import HistoryItemComponent from "@/features/history/components/HistoryItem";
-import HistoryItemSkeleton from "@/features/history/components/HistoryItemSkeleton";
-import FilterBar from "@/features/history/components/FilterBar";
-import { parseAnyPaymentQr } from "@/lib/qr-analysis";
 import { useNetworkStatus } from "@/lib/utils/use-network";
 
-const SKELETON_COUNT = 8;
+import { useHistory }         from "@/features/history/hooks/useHistory";
+import { useSearch }          from "@/features/history/hooks/useSearch";
+import { groupByDate }        from "@/features/history/utils/date-utils";
+import { matchesSearch }      from "@/features/history/utils/search-utils";
+import { getActiveFilters }   from "@/features/history/utils/filter-utils";
+import type { ListRow }       from "@/features/history/types";
 
-const FILTERS: { key: Filter; label: string }[] = [
-  { key: "all",     label: "All"     },
-  { key: "url",     label: "URLs"    },
-  { key: "payment", label: "Payment" },
-  { key: "text",    label: "Text"    },
-  { key: "other",   label: "Other"   },
-];
-
-type ListRow =
-  | { kind: "header"; label: string; count: number; id: string }
-  | { kind: "item"; item: HistoryItem };
-
-function getDateLabel(date: Date): string {
-  const now = new Date();
-  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-  const yesterday = new Date(today.getTime() - 86400000);
-  const d = new Date(date.getFullYear(), date.getMonth(), date.getDate());
-  if (d.getTime() === today.getTime()) return "Today";
-  if (d.getTime() === yesterday.getTime()) return "Yesterday";
-  return date.toLocaleDateString("en-US", { day: "numeric", month: "short", year: "numeric" });
-}
-
-function groupByDate(items: HistoryItem[]): ListRow[] {
-  const rows: ListRow[] = [];
-  let lastLabel = "";
-  for (let i = 0; i < items.length; i++) {
-    const item = items[i];
-    const label = getDateLabel(new Date(item.scannedAt));
-    if (label !== lastLabel) {
-      const count = items.slice(i).filter(
-        (it) => getDateLabel(new Date(it.scannedAt)) === label
-      ).length;
-      rows.push({ kind: "header", label, count, id: `header-${label}` });
-      lastLabel = label;
-    }
-    rows.push({ kind: "item", item });
-  }
-  return rows;
-}
-
-function matchesSearch(item: HistoryItem, q: string): boolean {
-  const lower = q.toLowerCase().trim();
-  if (!lower) return true;
-  if (item.content.toLowerCase().includes(lower)) return true;
-  if (item.contentType.toLowerCase().includes(lower)) return true;
-  if (item.contentType === "url") {
-    try {
-      const host = new URL(item.content).hostname.replace("www.", "");
-      if (host.toLowerCase().includes(lower)) return true;
-    } catch {}
-  }
-  if (item.contentType === "payment") {
-    try {
-      const parsed = parseAnyPaymentQr(item.content);
-      if (parsed?.recipientName?.toLowerCase().includes(lower)) return true;
-      if (parsed?.vpa?.toLowerCase().includes(lower)) return true;
-      if (parsed?.recipientId?.toLowerCase().includes(lower)) return true;
-    } catch {}
-  }
-  return false;
-}
+import HistoryHeader     from "@/features/history/components/HistoryHeader";
+import SectionHeader     from "@/features/history/components/SectionHeader";
+import EmptyState        from "@/features/history/components/EmptyState";
+import CloudErrorBanner  from "@/features/history/components/CloudErrorBanner";
+import OfflineBanner     from "@/features/history/components/OfflineBanner";
+import SearchResultsRow  from "@/features/history/components/SearchResultsRow";
+import FilterBar         from "@/features/history/components/FilterBar";
+import HistoryItemComponent from "@/features/history/components/HistoryItem";
+import HistoryItemSkeleton  from "@/features/history/components/HistoryItemSkeleton";
 
 function HistoryScreen() {
-  const insets = useSafeAreaInsets();
+  const insets   = useSafeAreaInsets();
+  const topInset = useTopInset();
   const { colors } = useTheme();
+  const { isOnline } = useNetworkStatus();
+
+  // Responsive font scaling
+  const { width } = useWindowDimensions();
+  const scale = Math.min(Math.max(width / 390, 0.82), 1.0);
+  const rf = useCallback((size: number) => Math.round(size * scale), [scale]);
+
+  // Data + actions
   const {
     user,
     history,
@@ -107,74 +50,31 @@ function HistoryScreen() {
     handleEndReached,
     deleteItem,
     scanStats,
-    statsLoading,
-    allStatsItems,
   } = useHistory();
 
-  const { isOnline } = useNetworkStatus();
+  // Search state
+  const {
+    searchVisible,
+    searchQuery,
+    setSearchQuery,
+    searchInputRef,
+    openSearch,
+    closeSearch,
+  } = useSearch();
 
-  const [searchVisible, setSearchVisible] = useState(false);
-  const [searchQuery, setSearchQuery] = useState("");
-  const searchInputRef = useRef<TextInput>(null);
+  // Derived display data
+  const activeFilters  = useMemo(() => getActiveFilters(history, scanStats, user), [history, scanStats, user]);
+  const searchedItems  = useMemo(
+    () => searchQuery.trim() ? displayItems.filter((item) => matchesSearch(item, searchQuery)) : displayItems,
+    [displayItems, searchQuery]
+  );
+  const listRows       = useMemo(() => groupByDate(searchedItems), [searchedItems]);
 
-  const topInset = useTopInset();
-  const { width } = useWindowDimensions();
-  const s = Math.min(Math.max(width / 390, 0.82), 1.0);
-  const rf = useCallback((size: number) => Math.round(size * s), [s]);
-
-  const openSearch = useCallback(() => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    setSearchVisible(true);
-  }, []);
-
-  const closeSearch = useCallback(() => {
-    setSearchQuery("");
-    setSearchVisible(false);
-    Keyboard.dismiss();
-  }, []);
-
-  const totalCount = scanStats?.total ?? history.length;
-  const showNAStats = !isOnline && scanStats === null;
-
-  const activeFilters: { key: Filter; label: string; count?: number }[] = useMemo(() => {
-    const base = FILTERS.map((f) => {
-      let count = 0;
-      if (f.key === "all")          count = scanStats?.total ?? history.length;
-      else if (f.key === "url")     count = scanStats?.byUrl ?? history.filter((i) => i.contentType === "url").length;
-      else if (f.key === "payment") count = scanStats?.byPayment ?? history.filter((i) => i.contentType === "payment").length;
-      else if (f.key === "text")    count = scanStats?.byText ?? history.filter((i) => i.contentType === "text").length;
-      else                          count = scanStats?.byOther ?? history.filter((i) => !["url","text","payment"].includes(i.contentType)).length;
-      return { ...f, count };
-    });
-    if (user) base.push({ key: "favorites" as Filter, label: "Favorites" });
-    return base;
-  }, [scanStats, history, user]);
-
-  const searchedItems = useMemo(() => {
-    if (!searchQuery.trim()) return displayItems;
-    return displayItems.filter((item) => matchesSearch(item, searchQuery));
-  }, [displayItems, searchQuery]);
-
-  const listRows = useMemo(() => groupByDate(searchedItems), [searchedItems]);
-
-  const showStats = user && !cloudLoading && (history.length > 0 || (scanStats !== null && scanStats.total > 0));
-
+  // ── List renderers ─────────────────────────────────────────────────────────
   const renderItem = useCallback(
     ({ item: row }: { item: ListRow }) => {
       if (row.kind === "header") {
-        return (
-          <View style={[styles.sectionHeader, { borderColor: colors.surfaceBorder + "60" }]}>
-            <Text style={[styles.sectionLabel, { color: colors.textMuted }]} maxFontSizeMultiplier={1}>
-              {row.label}
-            </Text>
-            <View style={[styles.sectionLine, { backgroundColor: colors.surfaceBorder }]} />
-            <View style={[styles.sectionCount, { backgroundColor: colors.surfaceBorder + "80" }]}>
-              <Text style={[styles.sectionCountText, { color: colors.textMuted }]} maxFontSizeMultiplier={1}>
-                {row.count}
-              </Text>
-            </View>
-          </View>
-        );
+        return <SectionHeader label={row.label} count={row.count} colors={colors} />;
       }
       const risk = safetyRiskMap.get(row.item.id) ?? "safe";
       return (
@@ -192,191 +92,53 @@ function HistoryScreen() {
     if (!loadingMore) return null;
     return (
       <View style={{ paddingTop: 4 }}>
-        {Array.from({ length: 3 }).map((_, i) => (
-          <HistoryItemSkeleton key={i} />
-        ))}
+        {Array.from({ length: 3 }).map((_, i) => <HistoryItemSkeleton key={i} />)}
       </View>
     );
   }, [loadingMore]);
 
-  const keyExtractor = useCallback((row: ListRow) =>
-    row.kind === "header" ? row.id : row.item.id,
-  []);
+  const renderEmpty = useCallback(() => (
+    <EmptyState
+      user={user}
+      cloudLoading={cloudLoading}
+      searchQuery={searchQuery}
+      filter={filter}
+      colors={colors}
+      fontSize={rf}
+    />
+  ), [user, cloudLoading, searchQuery, filter, colors, rf]);
 
-  const getItemType = useCallback(
-    (row: ListRow) => (row.kind === "header" ? "header" : "item"),
-    []
-  );
-
-  const emptyComponent = () => {
-    if (!user) {
-      return (
-        <View style={styles.emptyState}>
-          <LinearGradient
-            colors={[colors.primary + "20", colors.primary + "08"]}
-            style={styles.emptyIconWrap}
-          >
-            <Ionicons name="person-outline" size={32} color={colors.primary} />
-          </LinearGradient>
-          <Text style={[styles.emptyTitle, { color: colors.text, fontSize: rf(18) }]}>
-            Sign in to view history
-          </Text>
-          <Text style={[styles.emptySubtext, { color: colors.textSecondary, fontSize: rf(13) }]}>
-            Your scan history is saved to your account and synced across all your devices.
-          </Text>
-          <Pressable
-            onPress={() => router.push("/(auth)/login")}
-            style={({ pressed }) => [
-              styles.signInBtn,
-              { backgroundColor: colors.primary, opacity: pressed ? 0.85 : 1, transform: [{ scale: pressed ? 0.97 : 1 }] },
-            ]}
-          >
-            <Ionicons name="log-in-outline" size={17} color="#fff" />
-            <Text style={[styles.signInBtnText, { fontSize: rf(14) }]}>Sign In</Text>
-          </Pressable>
-        </View>
-      );
-    }
-    if (cloudLoading) {
-      return (
-        <View style={{ paddingTop: 4 }}>
-          {Array.from({ length: SKELETON_COUNT }).map((_, i) => (
-            <HistoryItemSkeleton key={i} />
-          ))}
-        </View>
-      );
-    }
-    if (searchQuery.trim()) {
-      return (
-        <View style={styles.emptyState}>
-          <LinearGradient
-            colors={[colors.surfaceBorder + "80", colors.surfaceBorder + "30"]}
-            style={styles.emptyIconWrap}
-          >
-            <Ionicons name="search-outline" size={32} color={colors.textMuted} />
-          </LinearGradient>
-          <Text style={[styles.emptyTitle, { color: colors.textSecondary, fontSize: rf(17) }]}>
-            No results for "{searchQuery}"
-          </Text>
-          <Text style={[styles.emptySubtext, { color: colors.textMuted, fontSize: rf(13) }]}>
-            Try searching by URL, payment name, or QR content
-          </Text>
-        </View>
-      );
-    }
-    const emptyIcon: keyof typeof Ionicons.glyphMap =
-      filter === "favorites" ? "heart-outline" : "time-outline";
-    const emptyMsg = filter === "favorites" ? "No favorites yet" : "No scans yet";
-    const emptySub = filter === "favorites"
-      ? "Tap the heart on a QR detail to save it here"
-      : "Scanned QR codes will appear here";
-    return (
-      <View style={styles.emptyState}>
-        <LinearGradient
-          colors={[colors.surfaceBorder + "80", colors.surfaceBorder + "30"]}
-          style={styles.emptyIconWrap}
-        >
-          <Ionicons name={emptyIcon} size={32} color={colors.textMuted} />
-        </LinearGradient>
-        <Text style={[styles.emptyTitle, { color: colors.textSecondary, fontSize: rf(17) }]}>{emptyMsg}</Text>
-        <Text style={[styles.emptySubtext, { color: colors.textMuted, fontSize: rf(13) }]}>{emptySub}</Text>
-      </View>
-    );
-  };
+  const keyExtractor  = useCallback((row: ListRow) => row.kind === "header" ? row.id : row.item.id, []);
+  const getItemType   = useCallback((row: ListRow) => row.kind === "header" ? "header" : "item", []);
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background, paddingTop: topInset }]}>
 
-      {!searchVisible ? (
-        <View style={styles.header}>
-          <Text style={[styles.headerTitle, { color: colors.text, fontSize: rf(22) }]}>
-            Scan History
-          </Text>
-          <View style={styles.headerActions}>
-            <Pressable
-              onPress={openSearch}
-              style={[styles.headerBtn, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}
-              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-            >
-              <Ionicons name="search-outline" size={18} color={colors.textSecondary} />
-            </Pressable>
-            <Pressable
-              onPress={() => {
-                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                router.push({ pathname: "/settings" as any, params: { from: "history" } });
-              }}
-              style={[styles.headerBtn, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}
-              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-            >
-              <Ionicons name="settings-outline" size={18} color={colors.textSecondary} />
-            </Pressable>
-          </View>
-        </View>
-      ) : (
-        <View style={[styles.searchBar, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
-          <Ionicons name="search-outline" size={17} color={colors.textMuted} />
-          <TextInput
-            ref={searchInputRef}
-            value={searchQuery}
-            onChangeText={setSearchQuery}
-            placeholder="Search URLs, payments, text…"
-            placeholderTextColor={colors.textMuted}
-            style={[styles.searchInput, { color: colors.text }]}
-            autoCapitalize="none"
-            autoCorrect={false}
-            returnKeyType="search"
-            clearButtonMode="while-editing"
-            maxFontSizeMultiplier={1}
-            autoFocus
-          />
-          <Pressable onPress={closeSearch} hitSlop={8}>
-            <Text style={[styles.searchCancel, { color: colors.primary }]} maxFontSizeMultiplier={1}>
-              Cancel
-            </Text>
-          </Pressable>
-        </View>
-      )}
+      <HistoryHeader
+        searchVisible={searchVisible}
+        searchQuery={searchQuery}
+        onChangeQuery={setSearchQuery}
+        onOpenSearch={openSearch}
+        onCloseSearch={closeSearch}
+        searchInputRef={searchInputRef}
+        colors={colors}
+        fontSize={rf}
+      />
 
       {user && cloudError && !searchVisible && (
-        <Pressable
-          onPress={onRefresh}
-          style={[
-            styles.cloudErrorBanner,
-            { backgroundColor: colors.warningDim, borderColor: colors.warning + "40", marginHorizontal: 16, marginBottom: 6 },
-          ]}
-        >
-          <Ionicons name="cloud-offline-outline" size={15} color={colors.warning} />
-          <Text style={[styles.cloudErrorText, { color: colors.warning, fontSize: rf(12) }]}>
-            Couldn't load cloud history — tap to retry
-          </Text>
-        </Pressable>
+        <CloudErrorBanner onRetry={onRefresh} colors={colors} fontSize={rf} />
       )}
 
       {!searchVisible && (
-        <FilterBar
-          filters={activeFilters}
-          activeFilter={filter}
-          onFilterChange={setFilter}
-        />
+        <FilterBar filters={activeFilters} activeFilter={filter} onFilterChange={setFilter} />
       )}
 
       {!isOnline && user && !searchVisible && (
-        <View style={[styles.offlineBanner, { backgroundColor: colors.surface, borderColor: "#3b82f6" + "30" }]}>
-          <View style={[styles.offlineBannerDot, { backgroundColor: "#3b82f6" + "20" }]}>
-            <Ionicons name="wifi-outline" size={12} color="#3b82f6" />
-          </View>
-          <Text style={[styles.offlineBannerText, { color: "#3b82f6" }]} maxFontSizeMultiplier={1}>
-            You're Offline · Showing cached data
-          </Text>
-        </View>
+        <OfflineBanner colors={colors} />
       )}
 
       {searchVisible && searchQuery.trim() && searchedItems.length > 0 && (
-        <View style={[styles.searchResultsRow, { borderBottomColor: colors.surfaceBorder }]}>
-          <Text style={[styles.searchResultsText, { color: colors.textMuted, fontSize: rf(12) }]} maxFontSizeMultiplier={1}>
-            {searchedItems.length} result{searchedItems.length !== 1 ? "s" : ""} for "{searchQuery}"
-          </Text>
-        </View>
+        <SearchResultsRow count={searchedItems.length} query={searchQuery} colors={colors} fontSize={rf} />
       )}
 
       <FlashList
@@ -404,7 +166,7 @@ function HistoryScreen() {
         onEndReached={handleEndReached}
         onEndReachedThreshold={0.4}
         ListFooterComponent={renderFooter}
-        ListEmptyComponent={emptyComponent}
+        ListEmptyComponent={renderEmpty}
       />
     </View>
   );
@@ -412,52 +174,7 @@ function HistoryScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  header: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    paddingHorizontal: 20,
-    paddingTop: 8,
-    paddingBottom: 10,
-  },
-  headerTitle: { fontFamily: "Inter_700Bold", letterSpacing: -0.5, lineHeight: 28 },
-  headerActions: { flexDirection: "row", gap: 8, alignItems: "center" },
-  headerBtn: {
-    width: 38, height: 38, borderRadius: 12,
-    alignItems: "center", justifyContent: "center", borderWidth: 1,
-  },
-  searchBar: {
-    flexDirection: "row", alignItems: "center", gap: 10,
-    marginHorizontal: 16, marginTop: 8, marginBottom: 10,
-    paddingHorizontal: 14, paddingVertical: 10, borderRadius: 14, borderWidth: 1,
-  },
-  searchInput: { flex: 1, fontSize: 14, fontFamily: "Inter_400Regular", paddingVertical: 0 },
-  searchCancel: { fontFamily: "Inter_600SemiBold", fontSize: 14 },
-  searchResultsRow: { paddingHorizontal: 20, paddingBottom: 8, borderBottomWidth: StyleSheet.hairlineWidth },
-  searchResultsText: { fontFamily: "Inter_400Regular" },
-  sectionHeader: {
-    flexDirection: "row", alignItems: "center", gap: 9,
-    paddingVertical: 13, paddingHorizontal: 2, marginBottom: 2,
-  },
-  sectionLabel: { fontSize: 11, fontFamily: "Inter_700Bold", textTransform: "uppercase", letterSpacing: 1.3, flexShrink: 0 },
-  sectionLine: { flex: 1, height: 1 },
-  sectionCount: { borderRadius: 100, paddingHorizontal: 8, paddingVertical: 2, flexShrink: 0 },
-  sectionCountText: { fontSize: 10, fontFamily: "Inter_700Bold", letterSpacing: 0.2 },
-  list: { paddingHorizontal: 16, paddingTop: 2 },
-  cloudErrorBanner: { flexDirection: "row", alignItems: "center", gap: 8, padding: 10, borderRadius: 12, borderWidth: 1 },
-  cloudErrorText: { fontFamily: "Inter_500Medium", flex: 1 },
-  emptyState: { alignItems: "center", gap: 10, paddingVertical: 60, paddingHorizontal: 36 },
-  emptyIconWrap: { width: 80, height: 80, borderRadius: 24, alignItems: "center", justifyContent: "center", marginBottom: 8 },
-  emptyTitle: { fontFamily: "Inter_700Bold", textAlign: "center", letterSpacing: -0.3 },
-  emptySubtext: { fontFamily: "Inter_400Regular", textAlign: "center", lineHeight: 20 },
-  signInBtn: { flexDirection: "row", alignItems: "center", gap: 8, marginTop: 10, paddingHorizontal: 28, paddingVertical: 13, borderRadius: 14 },
-  signInBtnText: { fontFamily: "Inter_700Bold", color: "#fff", letterSpacing: 0.2 },
-  offlineBanner: {
-    flexDirection: "row", alignItems: "center", gap: 8,
-    marginHorizontal: 16, marginBottom: 8, paddingHorizontal: 12, paddingVertical: 8, borderRadius: 12, borderWidth: 1,
-  },
-  offlineBannerDot: { width: 22, height: 22, borderRadius: 7, alignItems: "center", justifyContent: "center", flexShrink: 0 },
-  offlineBannerText: { fontFamily: "Inter_500Medium", fontSize: 12, flex: 1 },
+  list:      { paddingHorizontal: 16, paddingTop: 2 },
 });
 
 export default React.memo(HistoryScreen);

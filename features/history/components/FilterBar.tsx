@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, Pressable, ScrollView } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import * as Haptics from "@/lib/haptics";
 import { useTheme } from "@/contexts/ThemeContext";
-import type { Filter } from "@/features/history/hooks/useHistory";
+import type { Filter } from "@/features/history/types";
 
 interface FilterOption {
   key: Filter;
