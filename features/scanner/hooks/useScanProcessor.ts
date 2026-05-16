@@ -20,6 +20,8 @@ import {
   ANON_CONVERSION_MESSAGES,
 } from "@/features/scanner/utils/anon-scan-limit";
 import { runSecurityCheck } from "@/features/scanner/utils/security-analysis";
+import { decodeQrFromImageUri } from "@/features/scanner/utils/qr-decode";
+import { appendToLocalScanHistory, makeScanEntry } from "@/features/scanner/utils/scan-history";
 import type { ScanModalControls } from "@/features/scanner/hooks/useScanModals";
 
 const GUARD_PATTERN =
@@ -27,38 +29,6 @@ const GUARD_PATTERN =
 
 const STANDARD_PATTERN =
   /\/go\/([A-Za-z0-9]{4}-[A-Za-z0-9]{4}-[A-Za-z0-9]{4}-[A-Za-z0-9]{4})(?:[/?#]|$)/i;
-
-async function decodeQrClientSide(imageUri: string): Promise<string | null> {
-  return new Promise((resolve) => {
-    const img = new (window as any).Image() as HTMLImageElement;
-    img.crossOrigin = "anonymous";
-    img.onload = async () => {
-      try {
-        const canvas    = document.createElement("canvas");
-        const maxDim    = 1200;
-        const scale     =
-          img.naturalWidth > maxDim || img.naturalHeight > maxDim
-            ? maxDim / Math.max(img.naturalWidth, img.naturalHeight)
-            : 1;
-        canvas.width  = Math.round(img.naturalWidth  * scale);
-        canvas.height = Math.round(img.naturalHeight * scale);
-        const ctx = canvas.getContext("2d");
-        if (!ctx) { resolve(null); return; }
-        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-        const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-        const jsQR      = (await import("jsqr")).default;
-        const code      = jsQR(imageData.data, imageData.width, imageData.height, {
-          inversionAttempts: "attemptBoth",
-        });
-        resolve(code ? code.data : null);
-      } catch {
-        resolve(null);
-      }
-    };
-    img.onerror = () => resolve(null);
-    img.src = imageUri;
-  });
-}
 
 export interface ScanProcessorParams {
   anonymousMode:          boolean;
@@ -94,7 +64,7 @@ export function useScanProcessor({
     router.push(`/qr-detail/${qrId}`);
   }
 
-  // ─── Offline path ────────────────────────────────────────────────────────────
+  // ─── Offline path ─────────────────────────────────────────────────────────────
   async function processOfflineScan(content: string, scanSource: "camera" | "gallery" = "camera") {
     const validation = validateQrInput(content);
     if (!validation.valid) {
@@ -112,24 +82,11 @@ export function useScanProcessor({
       JSON.stringify({ content, contentType })
     ).catch(() => {});
 
-    if (user) {
-      const entry = {
-        id:          Date.now().toString() + Math.random().toString(36).substr(2, 9),
-        content,
-        contentType,
-        scannedAt:   new Date().toISOString(),
-        qrCodeId:    qrId,
-        scanSource,
-        offline:     true,
-      };
-      const historyKey = `local_scan_history_${user.id}`;
-      try {
-        const stored  = await AsyncStorage.getItem(historyKey);
-        const history = stored ? JSON.parse(stored) : [];
-        history.unshift(entry);
-        if (history.length > 100) history.pop();
-        await AsyncStorage.setItem(historyKey, JSON.stringify(history));
-      } catch {}
+    if (user?.id) {
+      await appendToLocalScanHistory(
+        user.id,
+        makeScanEntry(content, contentType, qrId, scanSource, true)
+      );
     }
 
     setProcessing(false);
@@ -146,7 +103,7 @@ export function useScanProcessor({
     await navigateToQrDetail(qrId);
   }
 
-  // ─── Anonymous scan path ─────────────────────────────────────────────────────
+  // ─── Anonymous scan path ──────────────────────────────────────────────────────
   async function processScanAnonymous(content: string) {
     setProcessing(true);
     try {
@@ -202,7 +159,7 @@ export function useScanProcessor({
     }
   }
 
-  // ─── Background Firestore sync (fire-and-forget) ─────────────────────────────
+  // ─── Background Firestore sync (fire-and-forget) ──────────────────────────────
   function _backgroundSync(
     content:     string,
     localQrId:   string,
@@ -218,30 +175,16 @@ export function useScanProcessor({
         ).catch(() => {});
         if (user?.id) {
           recordScan(qr.id, content, qr.contentType, user.id, false, scanSource).catch(() => {});
-        }
-        if (user) {
-          const entry = {
-            id:          Date.now().toString() + Math.random().toString(36).substr(2, 9),
-            content,
-            contentType: qr.contentType,
-            scannedAt:   new Date().toISOString(),
-            qrCodeId:    qr.id,
-            scanSource,
-          };
-          const historyKey = `local_scan_history_${user.id}`;
-          try {
-            const stored  = await AsyncStorage.getItem(historyKey);
-            const history = stored ? JSON.parse(stored) : [];
-            history.unshift(entry);
-            if (history.length > 100) history.pop();
-            await AsyncStorage.setItem(historyKey, JSON.stringify(history));
-          } catch {}
+          await appendToLocalScanHistory(
+            user.id,
+            makeScanEntry(content, qr.contentType, qr.id, scanSource)
+          );
         }
       } catch {}
     })();
   }
 
-  // ─── Main scan path ──────────────────────────────────────────────────────────
+  // ─── Main scan path ───────────────────────────────────────────────────────────
   async function processScan(content: string, scanSource: "camera" | "gallery" = "camera") {
     const routeGuard = async (uuid: string, param: string) => {
       setProcessing(false);
@@ -300,7 +243,7 @@ export function useScanProcessor({
     }
   }
 
-  // ─── Public handlers ─────────────────────────────────────────────────────────
+  // ─── Public handlers ──────────────────────────────────────────────────────────
   const handleBarCodeScanned = useCallback(
     async ({ data }: { data: string }) => {
       if (!canScanRef.current || scanLockRef.current || scanned) return;
@@ -322,10 +265,10 @@ export function useScanProcessor({
     let result: ImagePicker.ImagePickerResult;
     try {
       result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes:             ["images"],
-        allowsEditing:          false,
+        mediaTypes:              ["images"],
+        allowsEditing:           false,
         allowsMultipleSelection: false,
-        exif:                   false,
+        exif:                    false,
       });
     } catch {
       showGalleryError("Could not open your gallery. Please try again.");
@@ -338,11 +281,11 @@ export function useScanProcessor({
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
 
     try {
+      const uri     = result.assets[0].uri;
       let content: string | null = null;
-      const uri = result.assets[0].uri;
 
       if (Platform.OS === "web") {
-        content = await decodeQrClientSide(uri);
+        content = await decodeQrFromImageUri(uri);
       } else {
         const results = await scanFromURLAsync(uri, ["qr"]);
         content = results?.[0]?.data ?? null;

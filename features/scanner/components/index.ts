@@ -1,15 +1,25 @@
-export { CameraErrorBoundary } from "./CameraErrorBoundary";
-export { CameraUnavailableBanner, type CameraErrorType } from "./CameraUnavailableBanner";
-export { ConversionBanner } from "./ConversionBanner";
-export { DonationBanner } from "./DonationBanner";
-export { default as FinderFrame } from "./FinderFrame";
-export { default as LivingShieldModal } from "./LivingShieldModal";
-export { default as OverlayBottomBar } from "./OverlayBottomBar";
-export { default as OverlayTopBar } from "./OverlayTopBar";
-export { default as PermissionScreen } from "./PermissionScreen";
-export { default as ProcessingOverlay } from "./ProcessingOverlay";
-export { default as SafetyModal } from "./SafetyModal";
-export { default as ScannerOverlay } from "./ScannerOverlay";
-export { ScannerToast, toastContainerStyle } from "./ScannerToast";
-export { UnverifiedModal } from "./UnverifiedModal";
-export { default as VerifiedModal } from "./VerifiedModal";
+// Overlay
+export { default as ScannerOverlay }  from "./overlay/ScannerOverlay";
+export { default as FinderFrame }     from "./overlay/FinderFrame";
+export { default as OverlayTopBar }   from "./overlay/OverlayTopBar";
+export { default as OverlayBottomBar }from "./overlay/OverlayBottomBar";
+export { SCANNER_GLOW, SCANNER_AMBER, VIGNETTE } from "./overlay/constants";
+
+// Modals
+export { default as SafetyModal }     from "./modals/SafetyModal";
+export { default as VerifiedModal }   from "./modals/VerifiedModal";
+export { UnverifiedModal }            from "./modals/UnverifiedModal";
+export { default as LivingShieldModal }from "./modals/LivingShieldModal";
+
+// Feedback
+export { ScannerToast, toastContainerStyle } from "./feedback/ScannerToast";
+export type { ToastType }             from "./feedback/ScannerToast";
+export { DonationBanner }             from "./feedback/DonationBanner";
+export { ConversionBanner }           from "./feedback/ConversionBanner";
+
+// System
+export { CameraErrorBoundary }        from "./system/CameraErrorBoundary";
+export { CameraUnavailableBanner }    from "./system/CameraUnavailableBanner";
+export type { CameraErrorType }       from "./system/CameraUnavailableBanner";
+export { default as PermissionScreen }from "./system/PermissionScreen";
+export { default as ProcessingOverlay }from "./system/ProcessingOverlay";

@@ -4,17 +4,17 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useCameraControls } from "@/features/scanner/hooks/useCameraControls";
 import { useScanModals } from "@/features/scanner/hooks/useScanModals";
 import { useScanProcessor } from "@/features/scanner/hooks/useScanProcessor";
+import { useScanMessages } from "@/features/scanner/hooks/useScanMessages";
 
-// Re-export constants so ScannerOverlay can source them from one place
 export { FINDER_SIZE, CORNER_SIZE, CORNER_WIDTH, ZOOM_LEVELS } from "@/features/scanner/hooks/useCameraControls";
 
 export function useScanner() {
   const { user } = useAuth();
 
-  // ── Camera hardware, zoom, flash, scan lifecycle ──────────────────────────
+  // ── Camera hardware, zoom, flash, scan lifecycle ───────────────────────────
   const camera = useCameraControls();
 
-  // ── Camera facing (not in useCameraControls — purely UI preference) ───────
+  // ── Camera facing (UI preference, not hardware state) ─────────────────────
   const [facing, setFacing] = useState<"back" | "front">("back");
   function flipCamera() {
     setFacing((prev) => {
@@ -25,28 +25,16 @@ export function useScanner() {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
   }
 
-  // ── Anonymous mode toggle ─────────────────────────────────────────────────
+  // ── Anonymous mode ────────────────────────────────────────────────────────
   const [anonymousMode, setAnonymousMode] = useState(false);
 
-  // ── Toast / inline message state ─────────────────────────────────────────
-  const [galleryErrorMsg,      setGalleryErrorMsg]      = useState<string | null>(null);
-  const [scannerMsg,           setScannerMsg]            = useState<string | null>(null);
-  const [scannerMsgType,       setScannerMsgType]        = useState<"error" | "warning" | "info">("error");
-  const [conversionBannerMsg,  setConversionBannerMsg]   = useState<string | null>(null);
-
-  function showScannerMsg(msg: string, type: "error" | "warning" | "info" = "error") {
-    setScannerMsg(msg);
-    setScannerMsgType(type);
-  }
-  function showGalleryError(msg: string)  { setGalleryErrorMsg(msg); }
-  function dismissGalleryError()          { setGalleryErrorMsg(null); }
-  function dismissScannerMsg()            { setScannerMsg(null); }
-  function dismissConversionBanner()      { setConversionBannerMsg(null); }
+  // ── Toast / banner messages ───────────────────────────────────────────────
+  const messages = useScanMessages();
 
   // ── Post-scan modals ──────────────────────────────────────────────────────
   const modals = useScanModals(camera.resetScan);
 
-  // ── Scan processing (all business logic) ─────────────────────────────────
+  // ── Scan processing (all business logic) ──────────────────────────────────
   const { handleBarCodeScanned, handlePickImage } = useScanProcessor({
     anonymousMode,
     scanned:                camera.scanned,
@@ -56,25 +44,25 @@ export function useScanner() {
     scanLockRef:            camera.scanLockRef,
     canScanRef:             camera.canScanRef,
     modalControls:          modals.controls,
-    showScannerMsg,
-    showGalleryError,
-    setConversionBannerMsg,
+    showScannerMsg:         messages.showScannerMsg,
+    showGalleryError:       messages.showGalleryError,
+    setConversionBannerMsg: messages.setConversionBannerMsg,
   });
 
   return {
     user,
     // Camera state
-    scanned:       camera.scanned,
-    processing:    camera.processing,
-    scanSuccess:   camera.scanSuccess,
-    flashOn:       camera.flashOn,
-    setFlashOn:    camera.setFlashOn,
-    zoom:          camera.zoom,
-    zoomLabel:     camera.zoomLabel,
-    scanLineAnim:  camera.scanLineAnim,
+    scanned:      camera.scanned,
+    processing:   camera.processing,
+    scanSuccess:  camera.scanSuccess,
+    flashOn:      camera.flashOn,
+    setFlashOn:   camera.setFlashOn,
+    zoom:         camera.zoom,
+    zoomLabel:    camera.zoomLabel,
+    scanLineAnim: camera.scanLineAnim,
     // Camera actions
-    cycleZoom:     camera.cycleZoom,
-    resetScan:     camera.resetScan,
+    cycleZoom:    camera.cycleZoom,
+    resetScan:    camera.resetScan,
     // Facing
     facing,
     flipCamera,
@@ -89,19 +77,24 @@ export function useScanner() {
     verifiedOwnerName:     modals.verifiedOwnerName,
     unverifiedModal:       modals.unverifiedModal,
     unverifiedCountdown:   modals.unverifiedCountdown,
+    livingShieldModal:     modals.livingShieldModal,
+    livingShieldData:      modals.livingShieldData,
+    livingShieldLoading:   modals.livingShieldLoading,
     // Modal handlers
-    handleSafetyModalProceed:  modals.handleSafetyModalProceed,
-    handleSafetyModalBack:     modals.handleSafetyModalBack,
-    handleUnverifiedProceed:   modals.handleUnverifiedProceed,
-    handleUnverifiedBack:      modals.handleUnverifiedBack,
-    // Message state
-    galleryErrorMsg,
-    dismissGalleryError,
-    scannerMsg,
-    scannerMsgType,
-    dismissScannerMsg,
-    conversionBannerMsg,
-    dismissConversionBanner,
+    handleSafetyModalProceed:    modals.handleSafetyModalProceed,
+    handleSafetyModalBack:       modals.handleSafetyModalBack,
+    handleUnverifiedProceed:     modals.handleUnverifiedProceed,
+    handleUnverifiedBack:        modals.handleUnverifiedBack,
+    handleLivingShieldProceed:   modals.handleLivingShieldProceed,
+    handleLivingShieldCancel:    modals.handleLivingShieldCancel,
+    // Messages
+    galleryErrorMsg:          messages.galleryErrorMsg,
+    dismissGalleryError:      messages.dismissGalleryError,
+    scannerMsg:               messages.scannerMsg,
+    scannerMsgType:           messages.scannerMsgType,
+    dismissScannerMsg:        messages.dismissScannerMsg,
+    conversionBannerMsg:      messages.conversionBannerMsg,
+    dismissConversionBanner:  messages.dismissConversionBanner,
     // Scan handlers
     handleBarCodeScanned,
     handlePickImage,
