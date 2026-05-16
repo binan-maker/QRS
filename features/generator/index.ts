@@ -1,4 +1,8 @@
-export { default as QrFormPage } from "./components/QrFormPage";
-export { useQrGenerator } from "./hooks/useQrGenerator";
-export { QR_PRESETS } from "./data/presets";
-export { buildQrContent } from "./data/qr-builder";
+export { default as QrFormPage }       from "./components/QrFormPage";
+export { default as GeneratorLanding } from "./landing/GeneratorLanding";
+export { useQrGenerator }              from "./hooks/useQrGenerator";
+export { QR_PRESETS }                  from "./data/presets";
+export { buildQrContent }              from "./data/qr-builder";
+export { buildBusinessContent, validateBusinessInput } from "./data/business-content";
+export type { QrMode, LogoPosition }   from "./types/form-types";
+export { LOGO_POSITIONS, FORM_MODE_META } from "./types/form-types";
