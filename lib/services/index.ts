@@ -12,4 +12,3 @@ export * from "./user-service";
 export * from "./notification-service";
 export * from "./guard-service";
 export * from "./message-service";
-export * from "./group-service";

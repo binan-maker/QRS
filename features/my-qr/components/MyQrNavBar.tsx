@@ -9,11 +9,10 @@ interface Props {
   publicShortUuid: string | null;
   isBusiness: boolean;
   docId: string;
-  onGroupPicker: () => void;
   onViewPublic: () => void;
 }
 
-export default function MyQrNavBar({ ctLabel, publicShortUuid, isBusiness, docId, onGroupPicker, onViewPublic }: Props) {
+export default function MyQrNavBar({ ctLabel, publicShortUuid, isBusiness, docId, onViewPublic }: Props) {
   const { colors } = useTheme();
   const { rf, sp } = useScaleFns();
 
@@ -39,13 +38,9 @@ export default function MyQrNavBar({ ctLabel, publicShortUuid, isBusiness, docId
           >
             <Ionicons name="globe-outline" size={rf(18)} color={colors.primary} />
           </Pressable>
-        ) : null}
-        <Pressable
-          onPress={onGroupPicker}
-          style={{ width: sp(38), height: sp(38), borderRadius: sp(19), backgroundColor: "#6366F115", borderWidth: 1, borderColor: "#6366F135", alignItems: "center", justifyContent: "center" }}
-        >
-          <Ionicons name="folder-outline" size={rf(18)} color="#6366F1" />
-        </Pressable>
+        ) : (
+          <View style={{ width: sp(38) }} />
+        )}
       </View>
     </View>
   );

@@ -11,7 +11,6 @@ import { useScaleFns } from "@/lib/utils/use-scale";
 import { getDetailContentType, getDetailDisplayTitle, parseQrContentDetails } from "@/lib/services/qr-display-utils";
 import { getContentTypeMeta as getCtMeta } from "@/constants/content-types";
 import DeactivateModal from "@/features/my-qr/components/DeactivateModal";
-import GroupPickerModal from "@/components/groups/GroupPickerModal";
 import MyQrNavBar from "@/features/my-qr/components/MyQrNavBar";
 import QrHeroCard from "@/features/my-qr/components/QrHeroCard";
 import QrStatsRow from "@/features/my-qr/components/QrStatsRow";
@@ -31,7 +30,6 @@ export default function MyQrDetailScreen() {
   const topInset = useTopInset();
   const tabBarHeight = 62 + insets.bottom + 8;
 
-  const [groupPickerOpen, setGroupPickerOpen] = useState(false);
   const [structuredFields, setStructuredFields] = useState<Record<string, string>>({});
 
   const {
@@ -153,7 +151,6 @@ export default function MyQrDetailScreen() {
           publicShortUuid={publicShortUuid}
           isBusiness={isBusiness}
           docId={id as string}
-          onGroupPicker={() => setGroupPickerOpen(true)}
           onViewPublic={handleViewPublic}
         />
       </View>
@@ -285,14 +282,6 @@ export default function MyQrDetailScreen() {
         onConfirm={handleConfirmDeactivate}
         onCancel={() => setDeactivateModalOpen(false)}
       />
-
-      {qrItem && (
-        <GroupPickerModal
-          visible={groupPickerOpen}
-          qrId={qrItem.docId}
-          onClose={() => setGroupPickerOpen(false)}
-        />
-      )}
 
       <ConfirmActionModal
         visible={confirmModalOpen}
