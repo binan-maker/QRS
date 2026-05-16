@@ -30,7 +30,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { formatCompactNumber } from "@/lib/number-format";
 import { smartName } from "@/lib/utils/formatters";
 import { useQrDetail } from "@/features/qr-detail/hooks/useQrDetail";
-import { useNetworkStatus } from "@/lib/use-network";
+import { useNetworkStatus } from "@/lib/utils/use-network";
 import { getGuardLink, getStandardLink, type GuardLink } from "@/lib/services/guard-service";
 import { makeStyles } from "@/features/qr-detail/styles";
 import LoadingSkeleton from "@/features/qr-detail/components/LoadingSkeleton";

@@ -9,7 +9,7 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { useNetworkStatus } from "@/lib/use-network";
+import { useNetworkStatus } from "@/lib/utils/use-network";
 import { useTheme } from "@/contexts/ThemeContext";
 
 /**

@@ -5,7 +5,7 @@ import { useSharedValue, useAnimatedStyle, withRepeat, withTiming, withSequence 
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/contexts/AuthContext";
 import { getUserScansPaginated } from "@/lib/firestore-service";
-import { useNotifications } from "@/features/notifications/hooks/useNotifications";
+import { useNotifications } from "@/components/notifications/hooks/useNotifications";
 import { useAvatar } from "@/contexts/AvatarContext";
 import { queryClient } from "@/lib/query-client";
 import {

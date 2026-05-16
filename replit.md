@@ -32,12 +32,25 @@ A mobile-first QR code scanning and management app for Android, focused on secur
 
 ## Where things live
 
-- **Expo Router screens**: `app/`
-- **Feature-scoped logic (hooks + components)**: `features/`
-- **Shared components**: `components/`
-- **Core libraries**: `lib/` (services, analysis, DB adapters, i18n, haptics)
+- **Expo Router screens**: `app/` — thin wrappers; all screen logic lives in `features/`
+- **Feature modules**: `features/` — domain-scoped, each with `components/`, `hooks/`, `styles.ts`, `index.ts`
+- **Shared UI components**: `components/` — global atoms (`ui/`), feedback boundaries (`feedback/`), consent (`consent/`), notifications, groups
+- **Core libraries**: `lib/`
+  - `lib/services/` — domain services (qr, follow, report, notification, etc.)
+  - `lib/analysis/` — QR/URL heuristic analysis, threat intelligence, scam detection
+  - `lib/security/` — ECDSA signature verification (used by analysis)
+  - `lib/utils/` — shared utilities: `capture-qr.ts`, `use-network.ts`, formatters, platform helpers, URL risk
+  - `lib/db/` — database adapter pattern (Firebase locked; Supabase/Postgres stubs)
+  - `lib/cache/` — anonymous session and QR caching
+  - `lib/i18n/` — multi-language support (EN, HI, ML, TA, TE)
+  - `lib/notifications/config.ts` — NOTIFICATIONS_ENABLED feature flag
+  - `lib/config/region.ts` — data residency / legal compliance constants
+  - `lib/schemas/` — shared schema types (CategorySchema)
+  - `lib/styles/common.ts` — reusable StyleSheet token helpers
+- **QR Type Registry**: `features/generator/data/registry.ts` — single source of truth for all QR types; **add new types here only**
 - **Express backend**: `server/`
 - **Firebase config**: `lib/firebase.ts`
+- **Firestore service layer**: `lib/firestore-service.ts`
 - **DB schema (PostgreSQL stub)**: `shared/schema.ts`
 - **DB provider config**: `lib/db/config.ts`
 - **Color system**: `constants/colors.ts`
@@ -45,11 +58,13 @@ A mobile-first QR code scanning and management app for Android, focused on secur
 
 ## Architecture decisions
 
-- **Android-only focus**: Web support was removed to streamline development and focus on the primary mobile use case, simplifying build processes and security configurations.
-- **Pluggable Database**: The application uses a database adapter pattern (`lib/db/adapter.ts`) allowing switching between Firebase, Supabase (stub), and PostgreSQL. Currently locked to Firebase Firestore for primary data and Firebase Realtime Database for notifications/velocity.
-- **Client-side Firebase Auth**: All authentication is handled directly by Firebase on the client, with session syncing across devices and auto-login, reducing backend complexity.
-- **Service Layer Design**: Business logic is encapsulated in a granular service layer (`lib/services/`) where each service owns a single responsibility (e.g., `qr-service.ts` for QR CRUD, `report-service.ts` for reporting).
-- **Security by Default**: Comprehensive QR input validation, ECDSA response signing, report rate limits, Firestore circuit breaker, and encrypted threat storage via `expo-secure-store` are implemented across the stack.
+- **Android-only focus**: Web support was removed to streamline development and focus on the primary mobile use case.
+- **Pluggable Database**: Database adapter pattern (`lib/db/adapter.ts`) supports Firebase, Supabase, and PostgreSQL. Currently locked to Firebase Firestore for primary data and Firebase Realtime Database for notifications/velocity.
+- **Client-side Firebase Auth**: All authentication is handled directly by Firebase on the client, with session syncing and auto-login.
+- **Service Layer Design**: Business logic is in `lib/services/` — each service owns a single responsibility (e.g. `qr-service.ts`, `report-service.ts`, `follow-service.ts`).
+- **Security by Default**: QR input validation, ECDSA response signing, report rate limits, Firestore circuit breaker, and encrypted threat storage via `expo-secure-store`.
+- **QR Type Registry pattern**: `features/generator/data/registry.ts` is the single source of truth. `presets.ts` and `qr-builder.ts` derive from it. Adding a new QR type = append one object to `QR_REGISTRY` + add key to `QR_CATEGORY_KEYS`. No other files need to change.
+- **Navigation links (owner flow)**: Generator success → `/my-qr/[docId]`. My QR management header has a globe button → `/qr-detail/[uuid]?ownerDocId=...`. QR detail shows "Manage" button when logged-in user is the QR owner.
 
 ## Product
 
@@ -72,6 +87,7 @@ A mobile-first QR code scanning and management app for Android, focused on secur
 - **Firebase Rules Deployment**: Changes to `firestore.rules` require manual deployment via Firebase CLI (`firebase deploy --only firestore:rules`) to take effect.
 - **PostgreSQL/Drizzle**: The `server/storage.ts` and Drizzle schema are not actively used for database operations; they are a stub for future migration and should not be deleted.
 - **Local Dev Env**: Requires Android SDK, `adb`, Node 20+, npm, and a physical Android device or emulator. Replit cannot run `npx expo run:android`.
+- **lib/security/**: Only `signature-verifier.ts` is active (used by `lib/analysis/threat-service.ts`). Do not add duplicate analysis files here.
 
 ## Pointers
 

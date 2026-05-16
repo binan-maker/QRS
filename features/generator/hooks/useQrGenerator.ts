@@ -8,7 +8,7 @@ import * as FileSystem from "expo-file-system/legacy";
 import * as Sharing from "expo-sharing";
 import * as Print from "expo-print";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { captureQrImage } from "@/lib/capture-qr";
+import { captureQrImage } from "@/lib/utils/capture-qr";
 import { useAuth } from "@/contexts/AuthContext";
 import { saveGeneratedQr, saveGuardLink, saveStandardLink, type QrType } from "@/lib/firestore-service";
 import { getApiUrl } from "@/lib/query-client";

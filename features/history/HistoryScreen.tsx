@@ -23,7 +23,7 @@ import HistoryItemComponent from "@/features/history/components/HistoryItem";
 import HistoryItemSkeleton from "@/features/history/components/HistoryItemSkeleton";
 import FilterBar from "@/features/history/components/FilterBar";
 import { parseAnyPaymentQr } from "@/lib/qr-analysis";
-import { useNetworkStatus } from "@/lib/use-network";
+import { useNetworkStatus } from "@/lib/utils/use-network";
 
 const SKELETON_COUNT = 8;
 
