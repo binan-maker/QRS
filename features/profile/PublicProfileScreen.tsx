@@ -20,7 +20,7 @@ import {
   removeFriend,
   FriendStatus,
 } from "@/lib/services/friend-service";
-import { S } from "@/features/profile/publicProfileStyles";
+import { publicStyles as S } from "@/features/profile/styles";
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 

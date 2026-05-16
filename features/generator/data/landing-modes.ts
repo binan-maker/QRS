@@ -1,0 +1,28 @@
+export const LANDING_MODES = [
+  {
+    key:        "individual",
+    label:      "Standard QR",
+    tagline:    "Personal & shareable",
+    badge:      "",
+    badgeColor: "#22C55E",
+    icon:       "shield-checkmark" as const,
+    fromC:      "#1D4ED8",
+    toC:        "#3B82F6",
+    midC:       "#2563EB",
+    features:   ["Saved to your account", "Trust score & analytics", "Community safety check"],
+    route:      "/qr-standard",
+  },
+  {
+    key:        "private",
+    label:      "Private QR",
+    tagline:    "Zero data, fully offline",
+    badge:      "OFFLINE",
+    badgeColor: "#94A3B8",
+    icon:       "eye-off" as const,
+    fromC:      "#1E293B",
+    toC:        "#475569",
+    midC:       "#334155",
+    features:   ["No account needed", "Nothing stored anywhere", "Instant & anonymous"],
+    route:      "/qr-private",
+  },
+] as const;
