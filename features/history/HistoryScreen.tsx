@@ -74,7 +74,7 @@ function HistoryScreen() {
   const renderItem = useCallback(
     ({ item: row }: { item: ListRow }) => {
       if (row.kind === "header") {
-        return <SectionHeader label={row.label} count={row.count} colors={colors} />;
+        return <SectionHeader label={row.label} count={row.count} />;
       }
       const risk = safetyRiskMap.get(row.item.id) ?? "safe";
       return (
@@ -85,7 +85,7 @@ function HistoryScreen() {
         />
       );
     },
-    [safetyRiskMap, deleteItem, colors]
+    [safetyRiskMap, deleteItem]
   );
 
   const renderFooter = useCallback(() => {

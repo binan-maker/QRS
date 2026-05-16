@@ -381,6 +381,14 @@ export function extractPaymentName(content: string): string | null {
   return null;
 }
 
+export function formatDate(iso: string): string {
+  try {
+    return new Date(iso).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+  } catch {
+    return iso;
+  }
+}
+
 export function extractPaymentAmount(content: string): string | null {
   try {
     if (!content) return null;
