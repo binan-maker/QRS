@@ -1,6 +1,10 @@
 ---
 name: media-generation
+<<<<<<< HEAD
 description: "Generate and retrieve media including AI-generated images and stock images. Use this skill for visual content creation and retrieval. For AI video clips, read `media-generation/video_generation.md`; for music, sound effects, and text-to-speech audio, read `media-generation/audio_generation.md`"
+=======
+description: "Generate and retrieve media including AI-generated images and stock images. Use this skill for visual content creation and retrieval. For AI video clips, read `media-generation/video_generation.md`"
+>>>>>>> a488cfd78f6ddee3b3cf2587530c841f77492a5a
 ---
 
 # Media Generation Skill

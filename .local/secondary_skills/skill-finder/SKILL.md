@@ -131,7 +131,11 @@ The catalog below is a snapshot. New skills may be added to the platform at any 
 
 |-------|-------------|
 
+<<<<<<< HEAD
 | **media-generation** | Generate AI images. For AI video clips, read `media-generation/video_generation.md`; for music, sound effects, and text-to-speech audio, read `media-generation/audio_generation.md` |
+=======
+| **media-generation** | Generate AI images. For AI video clips, read `media-generation/video_generation.md` |
+>>>>>>> a488cfd78f6ddee3b3cf2587530c841f77492a5a
 
 | **photo-editor** | Edit, resize, crop, filter, and optimize images |
 

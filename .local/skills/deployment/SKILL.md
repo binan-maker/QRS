@@ -90,7 +90,10 @@ Fetch the repl's current deployment metadata directly from the deployments servi
 - `additionalUrls` (list[str]): other public URLs (e.g. additional verified custom domains). Empty list when none
 - `deploymentType` (str): one of `"autoscale"`, `"vm"`, `"static"`, `"scheduled"`, or `""` if unknown / not applicable. Matches the `deploymentTarget` vocabulary `deployConfig()` accepts
 - `hasSuccessfulBuild` (bool): `true` only when the deployment's current build is in the `success` status. `false` when the build is still pending, failed, suspended, or no current build exists. When `isDeployed` is `true` but this is `false`, the `primaryUrl` may be unreachable or still be serving a previous successful build — if the user reports the live site is broken, suspect the in-flight or failed build first (see `.local/skills/deployment/references/deployment-failure-debugging.md` for how to investigate)
+<<<<<<< HEAD
 - `visibility` (str): publishing visibility of the current build — `"public"` (reachable by anyone on the internet), `"private"` (invited collaborators only), `"password"` (public URL gated by a shared password), or `""` (undeployed, or a deployment kind with no user-facing visibility). Use this to reason about who can actually reach a leaked secret or vulnerable endpoint
+=======
+>>>>>>> a488cfd78f6ddee3b3cf2587530c841f77492a5a
 
 **Example:**
 
