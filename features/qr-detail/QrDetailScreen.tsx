@@ -87,7 +87,7 @@ function detectContentType(content: string): string {
 
 
 export default function QrDetailScreen() {
-  const { id, guardUuid, standardUuid } = useLocalSearchParams<{ id: string; guardUuid?: string; standardUuid?: string }>();
+  const { id, guardUuid, standardUuid, ownerDocId } = useLocalSearchParams<{ id: string; guardUuid?: string; standardUuid?: string; ownerDocId?: string }>();
   const { user } = useAuth();
   const { colors, isDark } = useTheme();
   const insets = useSafeAreaInsets();
@@ -215,7 +215,7 @@ export default function QrDetailScreen() {
 
   if (q.loading) return <LoadingSkeleton topInset={topInset} />;
 
-  if (q.loadError) {
+  if (q.loadError && !isGuardQr && !isStandardQr) {
     return (
       <View style={[styles.container, { paddingTop: topInset }]}>
         <View style={styles.navBar}>
@@ -326,6 +326,26 @@ export default function QrDetailScreen() {
                       <Text style={styles.followCountPillText}>{formatCompactNumber(q.followCount)}</Text>
                     </View>
                   )}
+                </Pressable>
+              )}
+
+              {/* Manage button — shown only to the QR owner */}
+              {user?.id && q.ownerInfo?.ownerId && user.id === q.ownerInfo.ownerId && (
+                <Pressable
+                  onPress={() => {
+                    if (ownerDocId) {
+                      router.push(`/my-qr/${ownerDocId}` as any);
+                    } else {
+                      router.push("/(tabs)/profile");
+                    }
+                  }}
+                  style={({ pressed }) => [
+                    styles.followBtn,
+                    { backgroundColor: colors.primaryDim, borderColor: colors.primary + "40", opacity: pressed ? 0.8 : 1 },
+                  ]}
+                >
+                  <Ionicons name="settings-outline" size={14} color={colors.primary} />
+                  <Text style={[styles.followBtnText, { color: colors.primary }]}>Manage</Text>
                 </Pressable>
               )}
 

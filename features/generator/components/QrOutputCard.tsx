@@ -181,9 +181,20 @@ function QrOutputCard({
       )}
 
       {savedToProfile && (
-        <Pressable onPress={() => router.push("/(tabs)/profile")} style={[styles.savedBanner, { backgroundColor: colors.safeDim, borderColor: colors.safe + "40" }]}>
+        <Pressable
+          onPress={() => {
+            if (savedDocId) {
+              router.push(`/my-qr/${savedDocId}` as any);
+            } else {
+              router.push("/(tabs)/profile");
+            }
+          }}
+          style={[styles.savedBanner, { backgroundColor: colors.safeDim, borderColor: colors.safe + "40" }]}
+        >
           <Ionicons name="checkmark-circle" size={16} color={colors.safe} />
-          <Text style={[styles.savedBannerText, { color: colors.safe }]}>Saved to your profile! Tap to view →</Text>
+          <Text style={[styles.savedBannerText, { color: colors.safe }]}>
+            {savedDocId ? "Saved! Tap to manage this QR →" : "Saved to your profile! Tap to view →"}
+          </Text>
         </Pressable>
       )}
 

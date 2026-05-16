@@ -433,6 +433,25 @@ export default function MyQrDetailScreen() {
   const isStructured = STRUCTURED_TYPES.has(effectiveContentType);
   const isReadOnly = !isStructured && READONLY_TYPES.has(effectiveContentType);
 
+  const publicShortUuid: string | null = (() => {
+    if (isBusiness) {
+      return (qrItem as any).guardUuid || (qrItem as any).shortUuid || null;
+    }
+    const content = (qrItem as any).content || "";
+    const match = content.match(/\/go\/([A-Za-z0-9_-]+)/);
+    if (match) return match[1];
+    return (qrItem as any).shortUuid || null;
+  })();
+
+  const handleViewPublic = () => {
+    if (!publicShortUuid) return;
+    if (isBusiness) {
+      router.push(`/qr-detail/guard-${publicShortUuid}?guardUuid=${publicShortUuid}&ownerDocId=${id}` as any);
+    } else {
+      router.push(`/qr-detail/std-${publicShortUuid}?standardUuid=${publicShortUuid}&ownerDocId=${id}` as any);
+    }
+  };
+
   return (
     <View style={{ flex: 1, backgroundColor: colors.background }}>
       <StatusBar style={isDark ? "light" : "dark"} backgroundColor={colors.background} />
@@ -445,9 +464,19 @@ export default function MyQrDetailScreen() {
           <Text style={{ fontSize: rf(16), fontFamily: "Inter_700Bold", color: colors.text }}>My QR Code</Text>
           <Text style={{ fontSize: rf(10), fontFamily: "Inter_500Medium", color: colors.textMuted, marginTop: 1 }}>{ctMeta.label}</Text>
         </View>
-        <Pressable onPress={() => setGroupPickerOpen(true)} style={{ width: sp(38), height: sp(38), borderRadius: sp(19), backgroundColor: "#6366F115", borderWidth: 1, borderColor: "#6366F135", alignItems: "center", justifyContent: "center" }}>
-          <Ionicons name="folder-outline" size={rf(18)} color="#6366F1" />
-        </Pressable>
+        <View style={{ flexDirection: "row", alignItems: "center", gap: sp(8) }}>
+          {publicShortUuid ? (
+            <Pressable
+              onPress={handleViewPublic}
+              style={{ width: sp(38), height: sp(38), borderRadius: sp(19), backgroundColor: colors.primaryDim, borderWidth: 1, borderColor: colors.primary + "35", alignItems: "center", justifyContent: "center" }}
+            >
+              <Ionicons name="globe-outline" size={rf(18)} color={colors.primary} />
+            </Pressable>
+          ) : null}
+          <Pressable onPress={() => setGroupPickerOpen(true)} style={{ width: sp(38), height: sp(38), borderRadius: sp(19), backgroundColor: "#6366F115", borderWidth: 1, borderColor: "#6366F135", alignItems: "center", justifyContent: "center" }}>
+            <Ionicons name="folder-outline" size={rf(18)} color="#6366F1" />
+          </Pressable>
+        </View>
       </View>
 
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: sp(20), paddingBottom: tabBarHeight + 20 }}>
