@@ -5,6 +5,9 @@ export {
   CORNER_WIDTH,
   ZOOM_LEVELS,
 } from "./useCameraControls";
-export { useScanModals } from "./useScanModals";
+export { useScanModals }      from "./useScanModals";
+export { useScanProcessor }   from "./useScanProcessor";
+export { useOverlayAnimations } from "./useOverlayAnimations";
+export { useScanner }         from "./useScanner";
 export type { ScanModalControls } from "./useScanModals";
-export { useScanner } from "./useScanner";
+export type { ScanProcessorParams } from "./useScanProcessor";

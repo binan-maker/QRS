@@ -13,37 +13,37 @@ import { Linking } from "react-native";
 import type { GuardLink } from "@/lib/firestore-service";
 
 export interface ScanModalControls {
-  openSafetyModal: (qrId: string, riskLevel: "caution" | "dangerous") => void;
-  openVerifiedModal: (qrId: string, ownerName: string) => void;
+  openSafetyModal:       (qrId: string, warnings: string[], riskLevel: "caution" | "dangerous") => void;
+  openVerifiedModal:     (qrId: string, ownerName: string) => void;
   openLivingShieldModal: () => void;
-  setLivingShieldData: (data: GuardLink | null) => void;
-  setLivingShieldLoading: (loading: boolean) => void;
+  setLivingShieldData:   (data: GuardLink | null) => void;
+  setLivingShieldLoading:(loading: boolean) => void;
 }
 
 export function useScanModals(resetScan: () => void) {
   // ── Safety modal ────────────────────────────────────────────────────────────
-  const [safetyModal, setSafetyModal]           = useState(false);
-  const [pendingQrId, setPendingQrId]           = useState<string | null>(null);
-  const [safetyWarnings, setSafetyWarnings]     = useState<string[]>([]);
-  const [safetyRiskLevel, setSafetyRiskLevel]   = useState<"caution" | "dangerous">("caution");
+  const [safetyModal,     setSafetyModal]     = useState(false);
+  const [pendingQrId,     setPendingQrId]     = useState<string | null>(null);
+  const [safetyWarnings,  setSafetyWarnings]  = useState<string[]>([]);
+  const [safetyRiskLevel, setSafetyRiskLevel] = useState<"caution" | "dangerous">("caution");
 
   // ── Verified modal ──────────────────────────────────────────────────────────
-  const [verifiedModal, setVerifiedModal]       = useState(false);
+  const [verifiedModal,     setVerifiedModal]     = useState(false);
   const [verifiedOwnerName, setVerifiedOwnerName] = useState("");
-  const [verifiedQrId, setVerifiedQrId]         = useState<string | null>(null);
+  const [verifiedQrId,      setVerifiedQrId]      = useState<string | null>(null);
 
   // ── Unverified modal ────────────────────────────────────────────────────────
-  const [unverifiedModal, setUnverifiedModal]   = useState(false);
-  const [unverifiedQrId, setUnverifiedQrId]     = useState<string | null>(null);
+  const [unverifiedModal,     setUnverifiedModal]     = useState(false);
+  const [unverifiedQrId,      setUnverifiedQrId]      = useState<string | null>(null);
   const [unverifiedCountdown, setUnverifiedCountdown] = useState(3);
   const countdownRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   // ── Living Shield modal ─────────────────────────────────────────────────────
-  const [livingShieldModal, setLivingShieldModal]   = useState(false);
-  const [livingShieldData, setLivingShieldData]     = useState<GuardLink | null>(null);
+  const [livingShieldModal,   setLivingShieldModal]   = useState(false);
+  const [livingShieldData,    setLivingShieldData]    = useState<GuardLink | null>(null);
   const [livingShieldLoading, setLivingShieldLoading] = useState(false);
 
-  // ── Verified modal: auto-navigate after 2.2s ────────────────────────────────
+  // ── Verified modal: auto-navigate after 2.2 s ───────────────────────────────
   useEffect(() => {
     if (!verifiedModal) return;
     const t = setTimeout(() => {
@@ -74,8 +74,9 @@ export function useScanModals(resetScan: () => void) {
   }, [unverifiedModal, unverifiedQrId]);
 
   // ── Control functions exposed to useScanProcessor ──────────────────────────
-  function openSafetyModal(qrId: string, riskLevel: "caution" | "dangerous") {
+  function openSafetyModal(qrId: string, warnings: string[], riskLevel: "caution" | "dangerous") {
     setPendingQrId(qrId);
+    setSafetyWarnings(warnings);
     setSafetyRiskLevel(riskLevel);
     setSafetyModal(true);
   }
