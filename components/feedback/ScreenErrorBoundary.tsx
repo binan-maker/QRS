@@ -1,9 +1,9 @@
 import React from "react";
-import { ErrorBoundary } from "@/components/ErrorBoundary";
+import { ErrorBoundary } from "@/components/feedback/ErrorBoundary";
 import {
   ScreenErrorFallback,
   type ScreenErrorFallbackProps,
-} from "@/components/ScreenErrorFallback";
+} from "@/components/feedback/ScreenErrorFallback";
 import { recordHandledError } from "@/lib/setup-global-error-handlers";
 
 export type ScreenErrorBoundaryProps = React.PropsWithChildren<{

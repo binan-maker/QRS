@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, Pressable, Platform } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { useTheme } from "@/contexts/ThemeContext";
-import type { ErrorFallbackProps } from "@/components/ErrorFallback";
+import type { ErrorFallbackProps } from "@/components/feedback/ErrorFallback";
 
 function classifyError(error: Error): {
   title: string;

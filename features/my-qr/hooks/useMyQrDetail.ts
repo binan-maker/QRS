@@ -16,7 +16,7 @@ import {
   getQrFollowersList, getQrFollowCount,
   type GeneratedQrItem, type CommentItem, type GuardLink, type FollowerInfo,
 } from "@/lib/firestore-service";
-import { scanUrl } from "@/lib/security/url-scanner";
+import { scanUrl } from "@/lib/analysis/url-scanner";
 
 export type LogoPosition = "center" | "top-left" | "top-right" | "bottom-left" | "bottom-right";
 

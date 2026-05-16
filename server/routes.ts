@@ -5,7 +5,7 @@ import { registerDonationRoutes } from "./routes/donation";
 import { registerSafeBrowsingRoute } from "./routes/safe-browsing";
 import { registerQrActiveRoute } from "./routes/qr-active";
 import { validateEmail } from "../lib/utils/email-validator";
-import { validateQrContent } from "../lib/security/qr-validator";
+import { validateQrContent } from "../lib/analysis/qr-validator";
 
 // ─── Rate Limiter (Redis-backed for serverless deployments) ─────────────────
 // CRITICAL SECURITY FIX: File-based rate limiting fails in serverless environments

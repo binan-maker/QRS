@@ -11,7 +11,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { setHapticsEnabled } from "@/lib/haptics";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { KeyboardProvider } from "react-native-keyboard-controller";
-import { ErrorBoundary } from "@/components/ErrorBoundary";
+import { ErrorBoundary } from "@/components/feedback/ErrorBoundary";
 import { queryClient } from "@/lib/query-client";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import { ThemeProvider, useTheme } from "@/contexts/ThemeContext";
@@ -25,7 +25,7 @@ import {
   Inter_700Bold,
 } from "@expo-google-fonts/inter";
 import { WEB_MAX_WIDTH } from "@/lib/utils/platform";
-import ConsentModal, { hasUserConsented } from "@/components/ConsentModal";
+import ConsentModal, { hasUserConsented } from "@/components/consent/ConsentModal";
 import { ToastProvider } from "@/components/ui/Toast";
 
 SplashScreen.preventAutoHideAsync();

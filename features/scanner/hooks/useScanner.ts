@@ -15,8 +15,8 @@ import {
   getQrCodeId,
 } from "@/lib/firestore-service";
 import { validateQrInput } from "@/lib/services/profanity-filter";
-import { analyzeUrl } from "@/lib/security/url-security-analyzer";
-import { detectScam } from "@/lib/security/scam-detector";
+import { analyzeUrl } from "@/lib/analysis/url-security-analyzer";
+import { detectScam } from "@/lib/analysis/scam-detector";
 
 // ─── Anonymous scan rate-limiting & conversion helpers ────────────────────────
 const ANON_DAILY_SCAN_LIMIT = 50;
