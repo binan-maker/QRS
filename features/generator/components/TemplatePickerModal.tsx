@@ -201,11 +201,7 @@ function TemplatePickerModal({ visible, selectedPreset, onSelect, onClose }: Pro
         >
           {searchResults === null ? (
             <Animated.View entering={FadeIn.duration(300)}>
-              <SectionHeader
-                label="All Types"
-                sublabel={`${totalCount} types available`}
-                colors={colors}
-              />
+              <SectionHeader label="All Types" sublabel={`${totalCount} types available`} />
               <View style={styles.catItems}>
                 {allCategories
                   .sort((a, b) => b.popularity - a.popularity)
@@ -215,19 +211,17 @@ function TemplatePickerModal({ visible, selectedPreset, onSelect, onClose }: Pro
                       category={cat}
                       isSelected={cat.presetIdx === selectedPreset}
                       onPress={() => handleSelect(cat)}
-                      colors={colors}
                     />
                   ))}
               </View>
             </Animated.View>
           ) : searchResults.length === 0 ? (
-            <EmptyState query={search} activeTag={activeTag} colors={colors} />
+            <EmptyState query={search} activeTag={activeTag} />
           ) : (
             <Animated.View entering={FadeIn.duration(200)}>
               <SectionHeader
                 label={search ? `Results for "${search}"` : TAG_FILTERS.find(t => t.key === activeTag)?.label ?? ""}
                 sublabel={`${searchResults.length} type${searchResults.length !== 1 ? "s" : ""} found`}
-                colors={colors}
               />
               <View style={styles.catItems}>
                 {searchResults.map(({ category: cat, matchedOn }) => (
@@ -236,7 +230,6 @@ function TemplatePickerModal({ visible, selectedPreset, onSelect, onClose }: Pro
                     category={cat}
                     isSelected={cat.presetIdx === selectedPreset}
                     onPress={() => handleSelect(cat)}
-                    colors={colors}
                     matchedOn={matchedOn}
                   />
                 ))}
@@ -249,7 +242,8 @@ function TemplatePickerModal({ visible, selectedPreset, onSelect, onClose }: Pro
   );
 }
 
-function SectionHeader({ label, sublabel, colors }: { label: string; sublabel: string; colors: any }) {
+function SectionHeader({ label, sublabel }: { label: string; sublabel: string }) {
+  const { colors } = useTheme();
   return (
     <View style={[styles.catHeader, { borderBottomColor: colors.surfaceBorder }]}>
       <Text style={[styles.catLabel, { color: colors.primary }]}>{label}</Text>
@@ -259,14 +253,14 @@ function SectionHeader({ label, sublabel, colors }: { label: string; sublabel: s
 }
 
 function CategoryRow({
-  category, isSelected, onPress, colors, matchedOn,
+  category, isSelected, onPress, matchedOn,
 }: {
   category: CategorySchema;
   isSelected: boolean;
   onPress: () => void;
-  colors: any;
   matchedOn?: string[];
 }) {
+  const { colors } = useTheme();
   return (
     <Pressable
       onPress={onPress}
@@ -314,7 +308,8 @@ function CategoryRow({
   );
 }
 
-function EmptyState({ query, activeTag, colors }: { query: string; activeTag: string; colors: any }) {
+function EmptyState({ query, activeTag }: { query: string; activeTag: string }) {
+  const { colors } = useTheme();
   return (
     <View style={styles.emptyWrap}>
       <Text style={{ fontSize: 36, marginBottom: 12 }}>🔍</Text>
@@ -354,8 +349,7 @@ const styles = StyleSheet.create({
   tagRow: { flexDirection: "row", gap: 8, paddingHorizontal: 16, paddingBottom: 12 },
   tagChip: {
     borderRadius: 20, borderWidth: 1,
-    paddingHorizontal: 14,
-    height: 36,
+    paddingHorizontal: 14, height: 36,
     alignItems: "center", justifyContent: "center",
   },
   tagChipText: { fontSize: 12, fontFamily: "Inter_600SemiBold", lineHeight: 16 },
@@ -386,9 +380,7 @@ const styles = StyleSheet.create({
     paddingTop: 60, gap: 12,
   },
   loadingText: { fontSize: 13, fontFamily: "Inter_400Regular" },
-  emptyWrap: {
-    alignItems: "center", paddingTop: 48, paddingHorizontal: 32, gap: 4,
-  },
+  emptyWrap: { alignItems: "center", paddingTop: 48, paddingHorizontal: 32, gap: 4 },
   emptyTitle: { fontSize: 15, fontFamily: "Inter_700Bold", textAlign: "center", marginBottom: 6 },
   emptySubtitle: { fontSize: 13, fontFamily: "Inter_400Regular", textAlign: "center", lineHeight: 19 },
 });

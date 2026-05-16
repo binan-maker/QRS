@@ -12,197 +12,16 @@ import Reanimated, { FadeIn, FadeInDown, FadeInUp } from "react-native-reanimate
 import { LinearGradient } from "expo-linear-gradient";
 import { useTheme } from "@/contexts/ThemeContext";
 import * as Haptics from "@/lib/haptics";
-
-type FieldType = "text" | "number" | "url" | "phone" | "email" | "amount" | "upi" | "date";
-
-interface CustomField {
-  id: string;
-  key: string;
-  label: string;
-  type: FieldType;
-  hint?: string;
-}
+import {
+  STARTER_TEMPLATES, FIELD_TYPES, FIELD_TYPE_MAP,
+  uid, buildOutput, parseTemplateTokens,
+  type CustomField, type FieldType, type StarterTemplate,
+} from "@/features/generator/data/starter-templates";
 
 interface Props {
   visible: boolean;
   onClose: () => void;
   onGenerate: (content: string, label: string) => void;
-}
-
-const FIELD_TYPES: { value: FieldType; label: string; icon: keyof typeof Ionicons.glyphMap; color: string; desc: string }[] = [
-  { value: "text",   label: "Text",   icon: "text-outline",        color: "#6366F1", desc: "Any text or message" },
-  { value: "url",    label: "Link",   icon: "link-outline",         color: "#3B82F6", desc: "Website URL" },
-  { value: "phone",  label: "Phone",  icon: "call-outline",         color: "#22C55E", desc: "Phone number" },
-  { value: "email",  label: "Email",  icon: "mail-outline",         color: "#F59E0B", desc: "Email address" },
-  { value: "number", label: "Number", icon: "calculator-outline",   color: "#8B5CF6", desc: "Any number" },
-  { value: "amount", label: "Amount", icon: "cash-outline",         color: "#10B981", desc: "Payment amount" },
-  { value: "upi",    label: "UPI ID", icon: "card-outline",         color: "#EC4899", desc: "UPI payment ID" },
-  { value: "date",   label: "Date",   icon: "calendar-outline",     color: "#F97316", desc: "Date value" },
-];
-
-const FIELD_TYPE_MAP = Object.fromEntries(FIELD_TYPES.map(t => [t.value, t]));
-
-interface Template {
-  id: string;
-  name: string;
-  icon: keyof typeof Ionicons.glyphMap;
-  color: string;
-  emoji: string;
-  tagline: string;
-  desc: string;
-  template: string;
-  fields: Omit<CustomField, "id">[];
-}
-
-const STARTER_TEMPLATES: Template[] = [
-  {
-    id: "url",
-    name: "URL / Link",
-    icon: "globe-outline",
-    color: "#3B82F6",
-    emoji: "🌐",
-    tagline: "Direct link to any website",
-    desc: "Encode any URL directly into a QR code — no setup needed.",
-    template: "{{url}}",
-    fields: [
-      { key: "url", label: "URL", type: "url", hint: "https://example.com" },
-    ],
-  },
-  {
-    id: "upi",
-    name: "UPI Payment",
-    icon: "card-outline",
-    color: "#EC4899",
-    emoji: "💳",
-    tagline: "Accept payments instantly",
-    desc: "Generates a UPI deep-link — customers can pay you with any app.",
-    template: "upi://pay?pa={{upi_id}}&pn={{name}}&am={{amount}}&tn={{note}}&cu=INR",
-    fields: [
-      { key: "upi_id",  label: "UPI ID",       type: "upi",   hint: "e.g. yourname@upi" },
-      { key: "name",    label: "Payee Name",   type: "text",  hint: "Your name or shop name" },
-      { key: "amount",  label: "Amount (₹)",   type: "amount", hint: "Leave blank for custom" },
-      { key: "note",    label: "Note",          type: "text",  hint: "e.g. Table 5 Order" },
-    ],
-  },
-  {
-    id: "table_order",
-    name: "Table / Menu",
-    icon: "restaurant-outline",
-    color: "#F59E0B",
-    emoji: "🍽️",
-    tagline: "Contactless menu for any table",
-    desc: "Each table gets its own QR that passes the table number to your website.",
-    template: "https://{{website}}/menu?table={{table}}&section={{section}}",
-    fields: [
-      { key: "website",  label: "Your Website",  type: "url",  hint: "yourmenu.com" },
-      { key: "table",    label: "Table Number",  type: "number", hint: "e.g. 5" },
-      { key: "section",  label: "Section",       type: "text",   hint: "e.g. Ground Floor" },
-    ],
-  },
-  {
-    id: "event_pass",
-    name: "Event / Ticket",
-    icon: "ticket-outline",
-    color: "#8B5CF6",
-    emoji: "🎟️",
-    tagline: "Entry pass or RSVP link",
-    desc: "A scannable ticket QR with attendee name and ticket code.",
-    template: "https://{{website}}/entry?name={{name}}&ticket={{ticket_id}}&gate={{gate}}",
-    fields: [
-      { key: "website",   label: "Event Website", type: "url",  hint: "event.example.com" },
-      { key: "name",      label: "Attendee Name", type: "text", hint: "Full name" },
-      { key: "ticket_id", label: "Ticket Code",   type: "text", hint: "e.g. TKT-001" },
-      { key: "gate",      label: "Gate / Hall",   type: "text", hint: "e.g. Gate A" },
-    ],
-  },
-  {
-    id: "redirect",
-    name: "Smart Link",
-    icon: "arrow-forward-circle-outline",
-    color: "#3B82F6",
-    emoji: "🔗",
-    tagline: "Any URL with dynamic params",
-    desc: "Pass any data as URL parameters — product IDs, promo codes, tracking tags.",
-    template: "https://{{website}}?ref={{ref}}&code={{code}}",
-    fields: [
-      { key: "website", label: "Base URL",     type: "url",  hint: "yoursite.com/page" },
-      { key: "ref",     label: "Source / Ref", type: "text", hint: "e.g. store_entrance" },
-      { key: "code",    label: "Promo Code",   type: "text", hint: "e.g. SAVE10" },
-    ],
-  },
-  {
-    id: "feedback",
-    name: "Feedback Form",
-    icon: "star-outline",
-    color: "#F97316",
-    emoji: "⭐",
-    tagline: "Collect reviews in one tap",
-    desc: "Direct customers to your review page with location or order info pre-filled.",
-    template: "https://{{website}}/review?location={{location}}&order={{order_id}}",
-    fields: [
-      { key: "website",   label: "Review URL",  type: "url",  hint: "yoursite.com/review" },
-      { key: "location",  label: "Location",    type: "text", hint: "e.g. Main Branch" },
-      { key: "order_id",  label: "Order / Table", type: "text", hint: "e.g. T12 or ORD-99" },
-    ],
-  },
-];
-
-function uid() {
-  return Math.random().toString(36).slice(2, 8);
-}
-
-function buildOutput(template: string, fields: CustomField[], values: Record<string, string>): string {
-  if (!template) return "";
-  let out = template;
-  for (const f of fields) {
-    out = out.replaceAll(`{{${f.key}}}`, values[f.key] ?? "");
-  }
-  return out;
-}
-
-function parseTemplateTokens(template: string, fields: CustomField[], colors: any) {
-  if (!template) return null;
-  const parts: React.ReactNode[] = [];
-  const regex = /\{\{(\w+)\}\}/g;
-  let last = 0;
-  let match;
-  let i = 0;
-  while ((match = regex.exec(template)) !== null) {
-    if (match.index > last) {
-      parts.push(
-        <Text key={`txt-${i}`} style={{ color: colors.textSecondary, fontSize: 12, fontFamily: "Inter_400Regular" }}>
-          {template.slice(last, match.index)}
-        </Text>
-      );
-    }
-    const key = match[1];
-    const field = fields.find(f => f.key === key);
-    const ftColor = field ? (FIELD_TYPE_MAP[field.type]?.color ?? colors.primary) : colors.danger;
-    parts.push(
-      <Text key={`tok-${i}`} style={{
-        color: ftColor,
-        fontFamily: "Inter_700Bold",
-        fontSize: 12,
-        backgroundColor: ftColor + "18",
-        borderRadius: 4,
-        paddingHorizontal: 4,
-        paddingVertical: 1,
-        overflow: "hidden",
-      }}>
-        {`{{${key}}}`}
-      </Text>
-    );
-    last = match.index + match[0].length;
-    i++;
-  }
-  if (last < template.length) {
-    parts.push(
-      <Text key={`txt-end`} style={{ color: colors.textSecondary, fontSize: 12, fontFamily: "Inter_400Regular" }}>
-        {template.slice(last)}
-      </Text>
-    );
-  }
-  return parts;
 }
 
 type Step = "pick" | "build" | "fill";
@@ -273,7 +92,7 @@ function CustomQrBuilderModal({ visible, onClose, onGenerate }: Props) {
     Animated.timing(overlayOpacity, { toValue: 0, duration: 180, useNativeDriver: true }).start(() => doClose());
   }
 
-  function applyTemplate(t: Template) {
+  function applyTemplate(t: StarterTemplate) {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     setTemplateName(t.name);
     setOutputTemplate(t.template);
@@ -375,73 +194,70 @@ function CustomQrBuilderModal({ visible, onClose, onGenerate }: Props) {
             },
           ]}
         >
-            {/* Drag handle */}
-            <View {...panResponder.panHandlers} style={styles.dragArea}>
-              <View style={[styles.handle, { backgroundColor: colors.surfaceBorder }]} />
-            </View>
+          {/* Drag handle */}
+          <View {...panResponder.panHandlers} style={styles.dragArea}>
+            <View style={[styles.handle, { backgroundColor: colors.surfaceBorder }]} />
+          </View>
 
-            {/* Header */}
-            <View style={styles.header}>
-              <View style={{ flex: 1 }}>
-                {step === "pick" && (
-                  <Reanimated.View entering={FadeIn.duration(180)}>
-                    <Text style={[styles.title, { color: colors.text }]}>Custom QR Builder</Text>
-                    <Text style={[styles.subtitle, { color: colors.textMuted }]}>
-                      Pick a template or start from scratch
+          {/* Header */}
+          <View style={styles.header}>
+            <View style={{ flex: 1 }}>
+              {step === "pick" && (
+                <Reanimated.View entering={FadeIn.duration(180)}>
+                  <Text style={[styles.title, { color: colors.text }]}>Custom QR Builder</Text>
+                  <Text style={[styles.subtitle, { color: colors.textMuted }]}>
+                    Pick a template or start from scratch
+                  </Text>
+                </Reanimated.View>
+              )}
+              {step === "build" && (
+                <Reanimated.View entering={FadeIn.duration(180)} style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+                  <Pressable onPress={() => setStep("pick")} hitSlop={8} style={styles.backBtn}>
+                    <Ionicons name="chevron-back" size={18} color={colors.primary} />
+                  </Pressable>
+                  <View>
+                    <Text style={[styles.title, { color: colors.text }]}>
+                      {templateName || "Build Your Template"}
                     </Text>
-                  </Reanimated.View>
-                )}
-                {step === "build" && (
-                  <Reanimated.View entering={FadeIn.duration(180)} style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
-                    <Pressable onPress={() => setStep("pick")} hitSlop={8} style={styles.backBtn}>
-                      <Ionicons name="chevron-back" size={18} color={colors.primary} />
-                    </Pressable>
-                    <View>
-                      <Text style={[styles.title, { color: colors.text }]}>
-                        {templateName || "Build Your Template"}
-                      </Text>
-                      <Text style={[styles.subtitle, { color: colors.textMuted }]}>Define fields → set output</Text>
-                    </View>
-                  </Reanimated.View>
-                )}
-                {step === "fill" && (
-                  <Reanimated.View entering={FadeIn.duration(180)} style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
-                    <Pressable onPress={() => setStep("build")} hitSlop={8} style={styles.backBtn}>
-                      <Ionicons name="chevron-back" size={18} color={colors.primary} />
-                    </Pressable>
-                    <View>
-                      <Text style={[styles.title, { color: colors.text }]}>{templateName || "Fill in Values"}</Text>
-                      <Text style={[styles.subtitle, { color: colors.textMuted }]}>Almost there — enter your details</Text>
-                    </View>
-                  </Reanimated.View>
-                )}
-              </View>
-              <Pressable onPress={handleClose} style={[styles.closeBtn, { backgroundColor: colors.surfaceLight }]}>
-                <Ionicons name="close" size={18} color={colors.textSecondary} />
-              </Pressable>
+                    <Text style={[styles.subtitle, { color: colors.textMuted }]}>Define fields → set output</Text>
+                  </View>
+                </Reanimated.View>
+              )}
+              {step === "fill" && (
+                <Reanimated.View entering={FadeIn.duration(180)} style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+                  <Pressable onPress={() => setStep("build")} hitSlop={8} style={styles.backBtn}>
+                    <Ionicons name="chevron-back" size={18} color={colors.primary} />
+                  </Pressable>
+                  <View>
+                    <Text style={[styles.title, { color: colors.text }]}>{templateName || "Fill in Values"}</Text>
+                    <Text style={[styles.subtitle, { color: colors.textMuted }]}>Almost there — enter your details</Text>
+                  </View>
+                </Reanimated.View>
+              )}
             </View>
+            <Pressable onPress={handleClose} style={[styles.closeBtn, { backgroundColor: colors.surfaceLight }]}>
+              <Ionicons name="close" size={18} color={colors.textSecondary} />
+            </Pressable>
+          </View>
 
-            {/* Step indicator */}
-            <View style={styles.stepDots}>
-              {(["pick", "build", "fill"] as Step[]).map((s, i) => (
-                <View key={s} style={[
-                  styles.stepDot,
-                  { backgroundColor: step === s ? colors.primary : step === "fill" && i < 2 ? colors.safe : step === "build" && i < 1 ? colors.safe : colors.surfaceBorder }
-                ]} />
-              ))}
-            </View>
+          {/* Step indicator */}
+          <View style={styles.stepDots}>
+            {(["pick", "build", "fill"] as Step[]).map((s, i) => (
+              <View key={s} style={[
+                styles.stepDot,
+                { backgroundColor: step === s ? colors.primary : step === "fill" && i < 2 ? colors.safe : step === "build" && i < 1 ? colors.safe : colors.surfaceBorder }
+              ]} />
+            ))}
+          </View>
 
-            <KeyboardAvoidingView
-              behavior={Platform.OS === "ios" ? "padding" : "height"}
-              style={{ flex: 1 }}
-            >
+          <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} style={{ flex: 1 }}>
             <ScrollView
               showsVerticalScrollIndicator={false}
               style={{ flex: 1 }}
               contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 24 }}
               keyboardShouldPersistTaps="handled"
             >
-              {/* ── STEP 1: PICK TEMPLATE ── */}
+              {/* STEP 1: PICK TEMPLATE */}
               {step === "pick" && (
                 <Reanimated.View entering={FadeInUp.duration(220)} style={{ gap: 10 }}>
                   <View style={[styles.infoCard, { backgroundColor: colors.primaryDim, borderColor: colors.primary + "30" }]}>
@@ -493,7 +309,7 @@ function CustomQrBuilderModal({ visible, onClose, onGenerate }: Props) {
                 </Reanimated.View>
               )}
 
-              {/* ── STEP 2: BUILD TEMPLATE ── */}
+              {/* STEP 2: BUILD TEMPLATE */}
               {step === "build" && (
                 <Reanimated.View entering={FadeInUp.duration(220)} style={{ gap: 14 }}>
                   {/* Template name */}
@@ -597,7 +413,6 @@ function CustomQrBuilderModal({ visible, onClose, onGenerate }: Props) {
                       {" "}anywhere to insert a field's value.
                     </Text>
 
-                    {/* Available keys chips */}
                     <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 8 }}>
                       <View style={{ flexDirection: "row", gap: 6, paddingVertical: 2 }}>
                         {fields.map(f => {
@@ -641,7 +456,6 @@ function CustomQrBuilderModal({ visible, onClose, onGenerate }: Props) {
                       </Reanimated.View>
                     )}
 
-                    {/* Token preview */}
                     {outputTemplate.length > 0 && missingKeys.length === 0 && (
                       <Reanimated.View entering={FadeIn.duration(200)}>
                         <View style={[styles.previewCard, { backgroundColor: colors.primaryDim, borderColor: colors.primary + "28" }]}>
@@ -665,10 +479,7 @@ function CustomQrBuilderModal({ visible, onClose, onGenerate }: Props) {
                     disabled={!canProceed}
                     style={({ pressed }) => [
                       styles.proceedBtn,
-                      {
-                        opacity: pressed ? 0.85 : 1,
-                        transform: [{ scale: pressed ? 0.98 : 1 }],
-                      },
+                      { opacity: pressed ? 0.85 : 1, transform: [{ scale: pressed ? 0.98 : 1 }] },
                     ]}
                   >
                     <LinearGradient
@@ -685,7 +496,7 @@ function CustomQrBuilderModal({ visible, onClose, onGenerate }: Props) {
                 </Reanimated.View>
               )}
 
-              {/* ── STEP 3: FILL VALUES ── */}
+              {/* STEP 3: FILL VALUES */}
               {step === "fill" && (
                 <Reanimated.View entering={FadeInUp.duration(220)} style={{ gap: 12 }}>
                   <View style={[styles.infoCard, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
@@ -773,9 +584,9 @@ function CustomQrBuilderModal({ visible, onClose, onGenerate }: Props) {
                 </Reanimated.View>
               )}
             </ScrollView>
-            </KeyboardAvoidingView>
-          </Animated.View>
+          </KeyboardAvoidingView>
         </Animated.View>
+      </Animated.View>
     </Modal>
   );
 }
@@ -785,300 +596,67 @@ export default memo(CustomQrBuilderModal);
 const styles = StyleSheet.create({
   overlay: { flex: 1, justifyContent: "flex-end", backgroundColor: "rgba(0,0,0,0.60)" },
   backdrop: { ...StyleSheet.absoluteFillObject },
-
   sheet: {
-    borderTopLeftRadius: 30,
-    borderTopRightRadius: 30,
-    borderTopWidth: 1,
-    borderLeftWidth: 1,
-    borderRightWidth: 1,
-    paddingTop: 0,
-    overflow: "hidden",
+    borderTopLeftRadius: 30, borderTopRightRadius: 30,
+    borderTopWidth: 1, borderLeftWidth: 1, borderRightWidth: 1,
+    paddingTop: 0, overflow: "hidden",
   },
-
-  dragArea: {
-    alignItems: "center",
-    paddingTop: 12,
-    paddingBottom: 8,
-  },
+  dragArea: { alignItems: "center", paddingTop: 12, paddingBottom: 8 },
   handle: { width: 40, height: 4, borderRadius: 2 },
-
   header: {
-    flexDirection: "row",
-    alignItems: "flex-start",
-    justifyContent: "space-between",
-    paddingHorizontal: 20,
-    paddingBottom: 10,
+    flexDirection: "row", alignItems: "flex-start", justifyContent: "space-between",
+    paddingHorizontal: 20, paddingBottom: 10,
   },
   title: { fontSize: 17, fontFamily: "Inter_700Bold" },
   subtitle: { fontSize: 11.5, fontFamily: "Inter_400Regular", marginTop: 2 },
-  backBtn: {
-    width: 28, height: 28, borderRadius: 8,
-    alignItems: "center", justifyContent: "center",
-    marginRight: 2,
-  },
-  closeBtn: {
-    width: 32, height: 32, borderRadius: 16,
-    alignItems: "center", justifyContent: "center",
-    marginLeft: 10,
-  },
-
-  stepDots: {
-    flexDirection: "row",
-    justifyContent: "center",
-    gap: 6,
-    marginBottom: 14,
-  },
-  stepDot: {
-    width: 6, height: 6, borderRadius: 3,
-  },
-
-  infoCard: {
-    flexDirection: "row",
-    alignItems: "flex-start",
-    gap: 10,
-    borderRadius: 14,
-    borderWidth: 1,
-    padding: 12,
-  },
+  backBtn: { width: 28, height: 28, borderRadius: 8, alignItems: "center", justifyContent: "center", marginRight: 2 },
+  closeBtn: { width: 32, height: 32, borderRadius: 16, alignItems: "center", justifyContent: "center", marginLeft: 10 },
+  stepDots: { flexDirection: "row", justifyContent: "center", gap: 6, marginBottom: 14 },
+  stepDot: { width: 6, height: 6, borderRadius: 3 },
+  infoCard: { flexDirection: "row", alignItems: "flex-start", gap: 10, borderRadius: 14, borderWidth: 1, padding: 12 },
   infoText: { flex: 1, fontSize: 12.5, fontFamily: "Inter_400Regular", lineHeight: 18 },
-
-  sectionLabel: {
-    fontSize: 10,
-    fontFamily: "Inter_700Bold",
-    letterSpacing: 0.8,
-    marginBottom: 2,
-    marginTop: 4,
-  },
-
-  templateCard: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 12,
-    borderRadius: 16,
-    borderWidth: 1,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-  },
-  templateCardIcon: {
-    width: 46,
-    height: 46,
-    borderRadius: 14,
-    alignItems: "center",
-    justifyContent: "center",
-    flexShrink: 0,
-  },
+  sectionLabel: { fontSize: 10, fontFamily: "Inter_700Bold", letterSpacing: 0.8, marginBottom: 2, marginTop: 4 },
+  templateCard: { flexDirection: "row", alignItems: "center", gap: 12, borderRadius: 16, borderWidth: 1, paddingHorizontal: 14, paddingVertical: 12 },
+  templateCardIcon: { width: 46, height: 46, borderRadius: 14, alignItems: "center", justifyContent: "center", flexShrink: 0 },
   templateCardName: { fontSize: 14, fontFamily: "Inter_700Bold" },
   templateCardTagline: { fontSize: 11.5, fontFamily: "Inter_600SemiBold", marginTop: 1 },
   templateCardDesc: { fontSize: 11, fontFamily: "Inter_400Regular", marginTop: 2, lineHeight: 15 },
-
-  blankBtn: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 8,
-    borderRadius: 14,
-    borderWidth: 1,
-    borderStyle: "dashed",
-    paddingVertical: 14,
-    marginTop: 4,
-  },
+  blankBtn: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, borderRadius: 14, borderWidth: 1, borderStyle: "dashed", paddingVertical: 14, marginTop: 4 },
   blankBtnText: { fontSize: 13, fontFamily: "Inter_500Medium" },
-
-  fieldLabel: {
-    fontSize: 10,
-    fontFamily: "Inter_700Bold",
-    letterSpacing: 0.7,
-    marginBottom: 6,
-  },
-  helperText: {
-    fontSize: 12,
-    fontFamily: "Inter_400Regular",
-    lineHeight: 17,
-    marginBottom: 10,
-  },
-
-  rowBetween: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    marginBottom: 4,
-  },
-  addBtn: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 4,
-    borderRadius: 9,
-    borderWidth: 1,
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-  },
+  fieldLabel: { fontSize: 10, fontFamily: "Inter_700Bold", letterSpacing: 0.7, marginBottom: 6 },
+  helperText: { fontSize: 12, fontFamily: "Inter_400Regular", lineHeight: 17, marginBottom: 10 },
+  rowBetween: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 4 },
+  addBtn: { flexDirection: "row", alignItems: "center", gap: 4, borderRadius: 9, borderWidth: 1, paddingHorizontal: 10, paddingVertical: 5 },
   addBtnText: { fontSize: 12, fontFamily: "Inter_600SemiBold" },
-
-  fieldCard: {
-    borderRadius: 14,
-    borderWidth: 1,
-    padding: 12,
-    marginBottom: 8,
-    gap: 6,
-  },
-  fieldCardTop: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 10,
-  },
-  fieldNameInput: {
-    fontSize: 14,
-    fontFamily: "Inter_600SemiBold",
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    paddingBottom: 4,
-  },
-  keyBadge: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 5,
-    borderRadius: 6,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    alignSelf: "flex-start",
-  },
+  fieldCard: { borderRadius: 14, borderWidth: 1, padding: 12, marginBottom: 8, gap: 6 },
+  fieldCardTop: { flexDirection: "row", alignItems: "center", gap: 10 },
+  fieldNameInput: { fontSize: 14, fontFamily: "Inter_600SemiBold", borderBottomWidth: StyleSheet.hairlineWidth, paddingBottom: 4 },
+  keyBadge: { flexDirection: "row", alignItems: "center", gap: 5, borderRadius: 6, paddingHorizontal: 8, paddingVertical: 4, alignSelf: "flex-start" },
   keyBadgeText: { fontSize: 11, fontFamily: "Inter_700Bold" },
   keyBadgeHint: { fontSize: 10, fontFamily: "Inter_400Regular" },
-
-  typeChip: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 4,
-    borderRadius: 8,
-    paddingHorizontal: 9,
-    paddingVertical: 5,
-  },
+  typeChip: { flexDirection: "row", alignItems: "center", gap: 4, borderRadius: 8, paddingHorizontal: 9, paddingVertical: 5 },
   typeChipText: { fontSize: 11, fontFamily: "Inter_600SemiBold" },
   typeDesc: { fontSize: 10.5, fontFamily: "Inter_400Regular", marginTop: 2 },
-
-  keyInsertChip: {
-    borderRadius: 8,
-    borderWidth: 1,
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-  },
+  keyInsertChip: { borderRadius: 8, borderWidth: 1, paddingHorizontal: 10, paddingVertical: 5 },
   keyInsertText: { fontSize: 11.5, fontFamily: "Inter_700Bold" },
-
-  templateInputCard: {
-    borderRadius: 14,
-    borderWidth: 1,
-    padding: 12,
-    marginBottom: 8,
-  },
-  templateInput: {
-    fontSize: 13,
-    fontFamily: "Inter_400Regular",
-    minHeight: 72,
-    textAlignVertical: "top",
-    lineHeight: 20,
-  },
-
-  warnCard: {
-    flexDirection: "row",
-    alignItems: "flex-start",
-    gap: 8,
-    borderRadius: 10,
-    borderWidth: 1,
-    padding: 10,
-    marginBottom: 8,
-  },
+  templateInputCard: { borderRadius: 14, borderWidth: 1, padding: 12, marginBottom: 8 },
+  templateInput: { fontSize: 13, fontFamily: "Inter_400Regular", minHeight: 72, textAlignVertical: "top", lineHeight: 20 },
+  warnCard: { flexDirection: "row", alignItems: "flex-start", gap: 8, borderRadius: 10, borderWidth: 1, padding: 10, marginBottom: 8 },
   warnText: { flex: 1, fontSize: 12, fontFamily: "Inter_400Regular", lineHeight: 17 },
-
-  previewCard: {
-    borderRadius: 14,
-    borderWidth: 1,
-    padding: 14,
-    gap: 8,
-    marginBottom: 4,
-  },
-  previewHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 6,
-  },
-  previewLabel: {
-    fontSize: 10,
-    fontFamily: "Inter_700Bold",
-    textTransform: "uppercase",
-    letterSpacing: 0.6,
-  },
-  previewHint: {
-    fontSize: 10,
-    fontFamily: "Inter_400Regular",
-    marginTop: 4,
-  },
-
-  inputCard: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 10,
-    borderRadius: 14,
-    borderWidth: 1,
-    paddingHorizontal: 12,
-    paddingVertical: 11,
-  },
+  previewCard: { borderRadius: 14, borderWidth: 1, padding: 14, gap: 8, marginBottom: 4 },
+  previewHeader: { flexDirection: "row", alignItems: "center", gap: 6 },
+  previewLabel: { fontSize: 10, fontFamily: "Inter_700Bold", textTransform: "uppercase", letterSpacing: 0.6 },
+  previewHint: { fontSize: 10, fontFamily: "Inter_400Regular", marginTop: 4 },
+  inputCard: { flexDirection: "row", alignItems: "center", gap: 10, borderRadius: 14, borderWidth: 1, paddingHorizontal: 12, paddingVertical: 11 },
   inputText: { fontSize: 14, fontFamily: "Inter_400Regular" },
-
-  proceedBtn: {
-    borderRadius: 16,
-    overflow: "hidden",
-    marginTop: 4,
-  },
-  proceedBtnInner: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 8,
-    paddingVertical: 15,
-  },
+  proceedBtn: { borderRadius: 16, overflow: "hidden", marginTop: 4 },
+  proceedBtnInner: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, paddingVertical: 15 },
   proceedBtnText: { fontSize: 15, fontFamily: "Inter_700Bold" },
-
-  fillLabel: {
-    fontSize: 10,
-    fontFamily: "Inter_700Bold",
-    letterSpacing: 0.7,
-    marginBottom: 6,
-  },
-  fillInputCard: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 10,
-    borderRadius: 14,
-    borderWidth: 1.5,
-    paddingHorizontal: 10,
-    paddingVertical: 11,
-  },
-  fillTypeIcon: {
-    width: 30,
-    height: 30,
-    borderRadius: 9,
-    alignItems: "center",
-    justifyContent: "center",
-    flexShrink: 0,
-  },
+  fillLabel: { fontSize: 10, fontFamily: "Inter_700Bold", letterSpacing: 0.7, marginBottom: 6 },
+  fillInputCard: { flexDirection: "row", alignItems: "center", gap: 10, borderRadius: 14, borderWidth: 1.5, paddingHorizontal: 10, paddingVertical: 11 },
+  fillTypeIcon: { width: 30, height: 30, borderRadius: 9, alignItems: "center", justifyContent: "center", flexShrink: 0 },
   fillInput: { flex: 1, fontSize: 14, fontFamily: "Inter_400Regular" },
-
-  outputCard: {
-    borderRadius: 14,
-    borderWidth: 1,
-    padding: 14,
-    gap: 8,
-  },
-  outputText: {
-    fontSize: 12,
-    fontFamily: "Inter_400Regular",
-    lineHeight: 18,
-  },
-
-  incompleteHint: {
-    fontSize: 12,
-    fontFamily: "Inter_400Regular",
-    textAlign: "center",
-    marginTop: -6,
-  },
+  outputCard: { borderRadius: 14, borderWidth: 1, padding: 14, gap: 8 },
+  outputText: { fontSize: 12, fontFamily: "Inter_400Regular", lineHeight: 18 },
+  incompleteHint: { fontSize: 12, fontFamily: "Inter_400Regular", textAlign: "center", marginTop: -6 },
 });
