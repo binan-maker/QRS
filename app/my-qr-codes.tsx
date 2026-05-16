@@ -12,7 +12,6 @@ import * as Haptics from "@/lib/haptics";
 import Animated, { FadeInDown, FadeIn } from "react-native-reanimated";
 import { LinearGradient } from "expo-linear-gradient";
 import SkeletonBox from "@/components/ui/SkeletonBox";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useTheme } from "@/contexts/ThemeContext";
 import { useAuth } from "@/contexts/AuthContext";
 import {
@@ -20,23 +19,10 @@ import {
   type GeneratedQrItem,
 } from "@/lib/firestore-service";
 
+import { readCache, writeCache } from "@/lib/cache/local-cache";
+import { getContentTypeMeta } from "@/constants/content-types";
+
 const MY_QRS_CACHE_TTL = 5 * 60 * 1000;
-
-async function readCache<T>(key: string): Promise<T | null> {
-  try {
-    const raw = await AsyncStorage.getItem(key);
-    if (!raw) return null;
-    const { value, expiresAt } = JSON.parse(raw);
-    if (expiresAt <= Date.now()) { AsyncStorage.removeItem(key).catch(() => {}); return null; }
-    return value as T;
-  } catch { return null; }
-}
-
-async function writeCache<T>(key: string, value: T, ttlMs: number): Promise<void> {
-  try {
-    await AsyncStorage.setItem(key, JSON.stringify({ value, expiresAt: Date.now() + ttlMs }));
-  } catch {}
-}
 
 function qrsCacheKey(userId: string) { return `myqrs_v1_${userId}`; }
 
@@ -47,55 +33,6 @@ const SORT_OPTIONS: { key: SortKey; label: string }[] = [
   { key: "mostScanned", label: "Most Scanned" },
   { key: "oldest",      label: "Oldest"       },
 ];
-
-const CONTENT_TYPE_META: Record<string, { label: string; icon: string; color: string; bg: string }> = {
-  url:            { label: "URL",          icon: "link-outline",            color: "#1D4ED8", bg: "#EFF6FF" },
-  text:           { label: "Text",         icon: "text-outline",            color: "#6B7280", bg: "#F9FAFB" },
-  wifi:           { label: "WiFi",         icon: "wifi-outline",            color: "#059669", bg: "#ECFDF5" },
-  upi:            { label: "UPI",          icon: "card-outline",            color: "#F59E0B", bg: "#FFFBEB" },
-  bharatqr:       { label: "BharatQR",    icon: "shield-checkmark-outline", color: "#10B981", bg: "#ECFDF5" },
-  payment:        { label: "Payment",      icon: "card-outline",            color: "#F59E0B", bg: "#FFFBEB" },
-  paymentlink:    { label: "Payment",      icon: "card-outline",            color: "#F59E0B", bg: "#FFFBEB" },
-  scantopay:      { label: "Scan-to-Pay",  icon: "qr-code-outline",         color: "#F59E0B", bg: "#FFFBEB" },
-  mobilepay:      { label: "Mobile Pay",   icon: "phone-portrait-outline",  color: "#10B981", bg: "#ECFDF5" },
-  grab:           { label: "GrabPay",      icon: "car-outline",             color: "#00B14F", bg: "#F0FDF4" },
-  contact:        { label: "Contact",      icon: "person-circle-outline",   color: "#8B5CF6", bg: "#F5F3FF" },
-  email:          { label: "Email",        icon: "mail-outline",            color: "#3B82F6", bg: "#EFF6FF" },
-  phone:          { label: "Phone",        icon: "call-outline",            color: "#10B981", bg: "#ECFDF5" },
-  social:         { label: "Social",       icon: "share-social-outline",    color: "#EC4899", bg: "#FDF2F8" },
-  whatsapp:       { label: "WhatsApp",     icon: "logo-whatsapp",           color: "#22C55E", bg: "#F0FDF4" },
-  instagram:      { label: "Instagram",    icon: "logo-instagram",          color: "#E1306C", bg: "#FFF1F2" },
-  twitter:        { label: "Twitter",      icon: "logo-twitter",            color: "#1DA1F2", bg: "#EFF6FF" },
-  youtube:        { label: "YouTube",      icon: "logo-youtube",            color: "#FF0000", bg: "#FFF1F2" },
-  linkedin:       { label: "LinkedIn",     icon: "logo-linkedin",           color: "#0A66C2", bg: "#EFF6FF" },
-  telegram:       { label: "Telegram",     icon: "send-outline",            color: "#0088CC", bg: "#EFF6FF" },
-  facebook:       { label: "Facebook",     icon: "logo-facebook",           color: "#1877F2", bg: "#EFF6FF" },
-  spotify:        { label: "Spotify",      icon: "musical-notes-outline",   color: "#1DB954", bg: "#F0FDF4" },
-  discord:        { label: "Discord",      icon: "logo-discord",            color: "#5865F2", bg: "#F5F3FF" },
-  tiktok:         { label: "TikTok",       icon: "musical-note-outline",    color: "#010101", bg: "#F9FAFB" },
-  media:          { label: "Media",        icon: "play-circle-outline",     color: "#8B5CF6", bg: "#F5F3FF" },
-  crypto:         { label: "Crypto",       icon: "logo-bitcoin",            color: "#F7931A", bg: "#FFFBEB" },
-  location:       { label: "Location",     icon: "location-outline",        color: "#EF4444", bg: "#FFF1F2" },
-  calendar:       { label: "Event",        icon: "calendar-outline",        color: "#8B5CF6", bg: "#F5F3FF" },
-  event:          { label: "Event",        icon: "calendar-outline",        color: "#8B5CF6", bg: "#F5F3FF" },
-  zoom:           { label: "Zoom",         icon: "videocam-outline",        color: "#2D8CFF", bg: "#EFF6FF" },
-  app:            { label: "App",          icon: "download-outline",        color: "#10B981", bg: "#ECFDF5" },
-  appdownload:    { label: "App Download",  icon: "download-outline",        color: "#10B981", bg: "#ECFDF5" },
-  googlereview:   { label: "Review Page",  icon: "star-outline",            color: "#F59E0B", bg: "#FFFBEB" },
-  reviewpage:     { label: "Review Page",  icon: "star-outline",            color: "#F59E0B", bg: "#FFFBEB" },
-  calendly:       { label: "Calendly",     icon: "calendar-outline",        color: "#006BFF", bg: "#EFF6FF" },
-  restaurantmenu: { label: "Menu",         icon: "restaurant-outline",      color: "#EF4444", bg: "#FFF1F2" },
-  menucatalogue:  { label: "Menu",         icon: "list-outline",            color: "#EF4444", bg: "#FFF1F2" },
-  donation:       { label: "Donation",     icon: "heart-outline",           color: "#F43F5E", bg: "#FFF1F2" },
-  paypal:         { label: "PayPal",       icon: "wallet-outline",          color: "#003087", bg: "#EFF6FF" },
-  venmo:          { label: "Venmo",        icon: "people-outline",          color: "#008CFF", bg: "#EFF6FF" },
-  sms:            { label: "SMS",          icon: "chatbubble-outline",      color: "#6B7280", bg: "#F9FAFB" },
-  document:       { label: "Document",     icon: "document-outline",        color: "#3B82F6", bg: "#EFF6FF" },
-};
-
-function getContentTypeMeta(contentType: string) {
-  return CONTENT_TYPE_META[contentType] ?? { label: "QR Code", icon: "qr-code-outline", color: "#6B7280", bg: "#F9FAFB" };
-}
 
 function getEffectiveContentType(item: GeneratedQrItem): string {
   const stored = (item as any).contentType as string || "text";

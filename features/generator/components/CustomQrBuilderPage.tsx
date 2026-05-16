@@ -53,51 +53,8 @@ import type { CategorySchema, FieldDefinition } from "@/lib/schemas/CategorySche
    CONSTANTS
 ───────────────────────────────────────────────────────────── */
 
-/** Colour assigned to each QR category id */
-const CAT_COLOR: Record<string, string> = {
-  text: "#6366F1",         url: "#3B82F6",       email: "#EC4899",
-  phone: "#14B8A6",        sms: "#22C55E",        whatsapp: "#25D366",
-  wifi: "#F59E0B",         upi: "#8B5CF6",        location: "#EF4444",
-  contact: "#3B82F6",      crypto: "#F97316",     instagram: "#C13584",
-  twitter: "#1DA1F2",      youtube: "#FF0000",    linkedin: "#0077B5",
-  telegram: "#2CA5E0",     spotify: "#1DB954",    facebook: "#1877F2",
-  paypal: "#003087",       venmo: "#3D95CE",      grab: "#00B14F",
-  zoom: "#2D8CFF",         event: "#8B5CF6",      app_download: "#6366F1",
-  bharat_qr: "#10B981",    google_review: "#F59E0B", restaurant_menu: "#F97316",
-  donation: "#EF4444",     razorpay: "#3395FF",   google_maps: "#34A853",
-  discord: "#5865F2",      tiktok: "#010101",     snapchat: "#FFFC00",
-  google_pay: "#4285F4",   linktree: "#43E660",   mecard: "#8B5CF6",
-};
-function catColor(id: string) { return CAT_COLOR[id] ?? "#3B82F6"; }
-
-/** IDs of the 6 most popular types shown in the "Popular" strip */
-const POPULAR_IDS = ["google_pay", "upi", "whatsapp", "url", "wifi", "google_review"];
-
-/** Category group definitions */
-const GROUPS: { emoji: string; label: string; ids: string[] }[] = [
-  { emoji: "🇮🇳", label: "India First",  ids: ["upi", "bharat_qr", "google_pay", "google_review", "restaurant_menu", "razorpay"] },
-  { emoji: "💳",  label: "Payments",     ids: ["paypal", "venmo", "crypto", "donation"] },
-  { emoji: "📱",  label: "Social Media", ids: ["whatsapp", "instagram", "twitter", "youtube", "linkedin", "telegram", "spotify", "facebook", "tiktok", "discord", "snapchat"] },
-  { emoji: "👤",  label: "Contact",      ids: ["contact", "mecard", "phone", "email", "sms"] },
-  { emoji: "🔧",  label: "Utility",      ids: ["wifi", "event", "location", "google_maps", "zoom", "app_download"] },
-  { emoji: "🌐",  label: "Web & Links",  ids: ["url", "text", "linktree"] },
-];
-
-/** Security badge derived from QR content string */
-function securityBadge(content: string): { icon: React.ComponentProps<typeof Ionicons>["name"]; label: string; color: string } {
-  if (content.startsWith("upi://"))         return { icon: "shield-checkmark", label: "UPI Verified — NPCI Compliant", color: "#10B981" };
-  if (content.startsWith("MECARD:"))        return { icon: "person",           label: "MeCard — Quick Contact",        color: "#3B82F6" };
-  if (content.startsWith("BEGIN:VCARD"))    return { icon: "person",           label: "vCard 3.0 Contact",             color: "#3B82F6" };
-  if (content.startsWith("BEGIN:VCALENDAR")) return { icon: "calendar",        label: "Calendar Event (iCal)",         color: "#8B5CF6" };
-  if (content.startsWith("WIFI:"))          return { icon: "wifi",             label: "WiFi Credentials Encoded",      color: "#F59E0B" };
-  if (content.startsWith("tel:"))           return { icon: "call",             label: "Phone Direct-Dial",             color: "#14B8A6" };
-  if (content.startsWith("mailto:"))        return { icon: "mail",             label: "Email Direct-Open",             color: "#EC4899" };
-  if (content.startsWith("geo:"))           return { icon: "location",         label: "GPS Coordinates",               color: "#EF4444" };
-  if (content.startsWith("https://maps.google.com")) return { icon: "map",    label: "Google Maps Link",              color: "#34A853" };
-  if (content.startsWith("https://"))       return { icon: "lock-closed",      label: "Secure Link (HTTPS)",           color: "#10B981" };
-  if (content.startsWith("http://"))        return { icon: "warning",          label: "Insecure Link (HTTP)",          color: "#F59E0B" };
-  return                                           { icon: "document-text",    label: "Custom Data",                   color: "#6366F1" };
-}
+import { CAT_COLOR, catColor, POPULAR_IDS, GROUPS } from "@/features/generator/data/category-config";
+import { getSecurityBadge as securityBadge } from "@/lib/utils/security-badge";
 
 /* ─────────────────────────────────────────────────────────────
    BLANK / CUSTOM FIELD TYPES

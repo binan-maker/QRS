@@ -51,6 +51,7 @@ import { QrToast } from "@/features/qr-detail/components/QrToast";
 import { VerdictBanner } from "@/features/qr-detail/components/VerdictBanner";
 import { LivingShieldBanner } from "@/features/qr-detail/components/banners/LivingShieldBanner";
 import { StandardQrBanner } from "@/features/qr-detail/components/banners/StandardQrBanner";
+import { detectContentType } from "@/lib/services/qr-content-type";
 
 function safeBack() {
   if (router.canGoBack()) {
@@ -58,31 +59,6 @@ function safeBack() {
   } else {
     router.replace("/(tabs)");
   }
-}
-
-function detectContentType(content: string): string {
-  if (!content) return "text";
-  const c = content.trim();
-  const lower = c.toLowerCase();
-  if (lower.startsWith("https://") || lower.startsWith("http://")) return "url";
-  if (lower.startsWith("upi://") || lower.startsWith("tez://upi") || lower.startsWith("gpay://upi") || lower.startsWith("phonepe://pay")) return "payment";
-  if (lower.startsWith("paytm://") || lower.startsWith("bhim://") || lower.startsWith("000201") || lower.startsWith("00020")) return "payment";
-  if (lower.startsWith("tel:") || lower.startsWith("callto:") || lower.startsWith("facetime:")) return "phone";
-  if (lower.startsWith("mailto:")) return "email";
-  if (lower.startsWith("wifi:") || lower.startsWith("WIFI:")) return "wifi";
-  if (lower.startsWith("geo:") || lower.startsWith("comgooglemaps://")) return "location";
-  if (lower.startsWith("smsto:") || lower.startsWith("sms:")) return "sms";
-  if (c.startsWith("BEGIN:VCARD") || lower.startsWith("mecard:")) return "contact";
-  if (c.startsWith("BEGIN:VCALENDAR")) return "event";
-  if (lower.startsWith("otpauth://")) return "otp";
-  if (lower.startsWith("market://") || lower.startsWith("itms-apps://") || lower.startsWith("itms://")) return "app";
-  if (lower.startsWith("instagram://") || lower.startsWith("twitter://") || lower.startsWith("fb://") ||
-      lower.startsWith("linkedin://") || lower.startsWith("youtube://") || lower.startsWith("tg://") ||
-      lower.startsWith("snapchat://") || lower.startsWith("tiktok://")) return "social";
-  if (lower.startsWith("bitcoin:") || lower.startsWith("ethereum:") || lower.startsWith("litecoin:") ||
-      lower.startsWith("monero:") || lower.startsWith("ripple:")) return "payment";
-  if (/^[A-Za-z0-9+/]{40,}={0,2}$/.test(c) || /^[0-9a-fA-F]{40,}$/.test(c)) return "encrypted";
-  return "text";
 }
 
 
