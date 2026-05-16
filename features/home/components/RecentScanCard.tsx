@@ -1,10 +1,6 @@
 import React, { useCallback, useMemo } from "react";
 import {
-  View,
-  Text,
-  StyleSheet,
-  Pressable,
-  Platform,
+  View, Text, StyleSheet, Pressable, Platform,
 } from "react-native";
 import { router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
@@ -21,18 +17,13 @@ import {
   truncate,
   formatRelativeTime,
 } from "@/lib/utils/formatters";
-import type { LocalScan } from "@/features/home/hooks/useHome";
-import type { useTheme } from "@/contexts/ThemeContext";
+import type { LocalScan, HomeColors } from "@/features/home/types";
 
-export type HomeColors = ReturnType<typeof useTheme>["colors"];
-
-export function getFirstName(name: string) {
-  return name ? name.trim().split(/\s+/)[0] : "";
-}
+// ── Scan meta computation ─────────────────────────────────────────────────────
 
 export function computeScanMeta(scan: LocalScan) {
   const contentType = detectContentType(scan.content);
-  const ctMeta = getContentTypeMeta(contentType);
+  const ctMeta      = getContentTypeMeta(contentType);
   const gradient: [string, string] = ctMeta.gradient;
   const icon = ctMeta.icon as any;
 
@@ -43,32 +34,38 @@ export function computeScanMeta(scan: LocalScan) {
   if (contentType === "payment" || contentType === "upi") {
     try {
       const parsed = parseAnyPaymentQr(scan.content);
-      if (parsed?.amount) amountText = `₹${Number(parsed.amount).toLocaleString("en-IN")}`;
+      if (parsed?.amount)        amountText   = `₹${Number(parsed.amount).toLocaleString("en-IN")}`;
       if (parsed?.recipientName) displayLabel = parsed.recipientName;
-      else if (parsed?.vpa) displayLabel = parsed.vpa;
+      else if (parsed?.vpa)      displayLabel = parsed.vpa;
       if (parsed?.vpa && parsed?.recipientName) subtitle = parsed.vpa;
     } catch {}
   }
 
-  return { contentType, gradient, icon, displayLabel: truncate(displayLabel, 36), subtitle, amountText };
+  return {
+    contentType,
+    gradient,
+    icon,
+    displayLabel: truncate(displayLabel, 36),
+    subtitle,
+    amountText,
+  };
 }
 
-interface RecentScanCardProps {
-  scan: LocalScan;
-  index: number;
-  colors: HomeColors;
-  isDark: boolean;
-  onDelete: (id: string) => void;
+// ── Component ─────────────────────────────────────────────────────────────────
+
+interface Props {
+  scan:    LocalScan;
+  index:   number;
+  colors:  HomeColors;
+  isDark:  boolean;
+  onDelete:(id: string) => void;
 }
 
 export const RecentScanCard = React.memo(function RecentScanCard({
-  scan,
-  index,
-  colors,
-  isDark,
-  onDelete,
-}: RecentScanCardProps) {
-  const meta = useMemo(() => computeScanMeta(scan), [scan]);
+  scan, index, colors, isDark, onDelete,
+}: Props) {
+  const meta    = useMemo(() => computeScanMeta(scan), [scan]);
+  const timeAgo = useMemo(() => formatRelativeTime(scan.scannedAt), [scan.scannedAt]);
 
   const handlePress = useCallback(() => {
     if (scan.qrCodeId) {
@@ -89,8 +86,6 @@ export const RecentScanCard = React.memo(function RecentScanCard({
     </Pressable>
   ), [handleDelete]);
 
-  const timeAgo = useMemo(() => formatRelativeTime(scan.scannedAt), [scan.scannedAt]);
-
   return (
     <Animated.View entering={FadeInRight.duration(350).delay(index * 55)}>
       <Swipeable renderRightActions={renderRightActions} overshootRight={false} friction={2}>
@@ -100,16 +95,15 @@ export const RecentScanCard = React.memo(function RecentScanCard({
             cardStyles.scanItem,
             {
               backgroundColor: isDark ? colors.surface : "#ffffff",
-              borderColor: colors.surfaceBorder,
-              opacity: pressed ? 0.9 : 1,
-              transform: [{ scale: pressed ? 0.984 : 1 }],
+              borderColor:     colors.surfaceBorder,
+              opacity:         pressed ? 0.9 : 1,
+              transform:       [{ scale: pressed ? 0.984 : 1 }],
             },
           ]}
         >
           <LinearGradient
             colors={meta.gradient}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
+            start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
             style={cardStyles.scanIconBox}
           >
             <Ionicons name={meta.icon} size={20} color="#fff" />
@@ -117,7 +111,11 @@ export const RecentScanCard = React.memo(function RecentScanCard({
 
           <View style={cardStyles.scanBody}>
             <View style={cardStyles.scanTopRow}>
-              <Text style={[cardStyles.scanContent, { color: colors.text }]} numberOfLines={1} maxFontSizeMultiplier={1}>
+              <Text
+                style={[cardStyles.scanContent, { color: colors.text }]}
+                numberOfLines={1}
+                maxFontSizeMultiplier={1}
+              >
                 {meta.displayLabel}
               </Text>
               {meta.amountText && (
@@ -129,7 +127,11 @@ export const RecentScanCard = React.memo(function RecentScanCard({
               )}
             </View>
             {meta.subtitle && (
-              <Text style={[cardStyles.scanSub, { color: colors.textSecondary }]} numberOfLines={1} maxFontSizeMultiplier={1}>
+              <Text
+                style={[cardStyles.scanSub, { color: colors.textSecondary }]}
+                numberOfLines={1}
+                maxFontSizeMultiplier={1}
+              >
                 {meta.subtitle}
               </Text>
             )}
@@ -149,6 +151,8 @@ export const RecentScanCard = React.memo(function RecentScanCard({
   );
 });
 
+// ── Styles ────────────────────────────────────────────────────────────────────
+
 export const cardStyles = StyleSheet.create({
   scanItem: {
     flexDirection: "row", alignItems: "center",
@@ -159,20 +163,16 @@ export const cardStyles = StyleSheet.create({
     shadowOpacity: 0.04,
     elevation: Platform.OS === "android" ? 0 : 1,
   },
-  scanIconBox: { width: 46, height: 46, borderRadius: 14, alignItems: "center", justifyContent: "center", flexShrink: 0 },
-  scanBody: { flex: 1, minWidth: 0, gap: 4 },
-  scanTopRow: { flexDirection: "row", alignItems: "center", gap: 7 },
-  scanContent: { fontSize: 14, fontFamily: "Inter_700Bold", lineHeight: 20, flex: 1, letterSpacing: -0.1 },
+  scanIconBox:    { width: 46, height: 46, borderRadius: 14, alignItems: "center", justifyContent: "center", flexShrink: 0 },
+  scanBody:       { flex: 1, minWidth: 0, gap: 4 },
+  scanTopRow:     { flexDirection: "row", alignItems: "center", gap: 7 },
+  scanContent:    { fontSize: 14, fontFamily: "Inter_700Bold", lineHeight: 20, flex: 1, letterSpacing: -0.1 },
   scanAmountPill: { paddingHorizontal: 7, paddingVertical: 2, borderRadius: 100, flexShrink: 0 },
-  scanAmount: { fontSize: 12, fontFamily: "Inter_700Bold" },
-  scanSub: { fontSize: 12, fontFamily: "Inter_400Regular", lineHeight: 16 },
-  scanRight: { alignItems: "flex-end", gap: 8, flexShrink: 0 },
-  scanTime: { fontSize: 11, fontFamily: "Inter_500Medium", letterSpacing: 0.1 },
-  safeIndicator: { width: 28, height: 28, borderRadius: 9, alignItems: "center", justifyContent: "center" },
-  swipeDeleteBtn: {
-    backgroundColor: "#DC2626",
-    justifyContent: "center", alignItems: "center",
-    width: 72, borderRadius: 20, marginLeft: 8, gap: 3,
-  },
-  swipeDeleteText: { fontSize: 10, fontFamily: "Inter_600SemiBold", color: "#fff" },
+  scanAmount:     { fontSize: 12, fontFamily: "Inter_700Bold" },
+  scanSub:        { fontSize: 12, fontFamily: "Inter_400Regular", lineHeight: 16 },
+  scanRight:      { alignItems: "flex-end", gap: 8, flexShrink: 0 },
+  scanTime:       { fontSize: 11, fontFamily: "Inter_500Medium", letterSpacing: 0.1 },
+  safeIndicator:  { width: 28, height: 28, borderRadius: 9, alignItems: "center", justifyContent: "center" },
+  swipeDeleteBtn: { backgroundColor: "#DC2626", justifyContent: "center", alignItems: "center", width: 72, borderRadius: 20, marginLeft: 8, gap: 3 },
+  swipeDeleteText:{ fontSize: 10, fontFamily: "Inter_600SemiBold", color: "#fff" },
 });

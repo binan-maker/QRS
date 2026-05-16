@@ -1,3 +1,13 @@
 export { default as HomeScreen } from "./HomeScreen";
 export { useHome } from "./hooks/useHome";
-export { RecentScanCard, getFirstName } from "./components/RecentScanCard";
+export { useRecentScans } from "./hooks/useRecentScans";
+export { usePulseAnimation } from "./hooks/usePulseAnimation";
+export { RecentScanCard, cardStyles, computeScanMeta } from "./components/RecentScanCard";
+export { HomeHeader } from "./components/HomeHeader";
+export { HeroScanCard } from "./components/HeroScanCard";
+export { StatsRow } from "./components/StatsRow";
+export { RecentScansList } from "./components/RecentScansList";
+export { ScanSkeletonList } from "./components/ScanSkeletonList";
+export { EmptyScans } from "./components/EmptyScans";
+export { getFirstName, makeResponsiveFont } from "./utils";
+export type { LocalScan, HomeColors } from "./types";
