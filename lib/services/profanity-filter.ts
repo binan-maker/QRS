@@ -106,7 +106,7 @@ export function checkProfanity(text: string): ProfanityCheckResult {
  */
 export function validateQrInput(content: string): { valid: boolean; error?: string } {
   // Lazy-require to avoid import cycles with security/* modules during native bundle.
-  const { validateQrContent } = require('../security/qr-validator') as {
+  const { validateQrContent } = require('../analysis/qr-validator') as {
     validateQrContent: (c: unknown) => { valid: boolean; error?: string };
   };
 
