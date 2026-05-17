@@ -98,16 +98,16 @@ function ThemedApp() {
   useEffect(() => {
     if (Platform.OS === "android") {
       SystemUI.setBackgroundColorAsync(colors.background).catch(() => {});
-      // Use the app background color for the nav bar so dark/light themes are both
-      // visually consistent. The surface (#FFFFFF light / #101929 dark) was leaving
-      // the dark-mode nav bar appearing transparent against dark content.
+      // Force the nav bar out of edge-to-edge transparent/overlay mode and
+      // pin it to the app background. setPositionAsync("relative") is the key
+      // call — without it, Android's edge-to-edge mode resets the bar to
+      // transparent on every screen transition even if the color was set.
+      NavigationBar.setPositionAsync("relative").catch(() => {});
       NavigationBar.setBackgroundColorAsync(colors.background).catch(() => {});
       NavigationBar.setButtonStyleAsync(colors.isDark ? "light" : "dark").catch(() => {});
-      NavigationBar.setBorderColorAsync(
-        colors.isDark ? colors.surfaceBorder : colors.surfaceBorder,
-      ).catch(() => {});
+      NavigationBar.setBorderColorAsync(colors.surfaceBorder).catch(() => {});
     }
-  }, [colors.background, colors.surface, colors.surfaceBorder, colors.isDark]);
+  }, [colors.background, colors.surfaceBorder, colors.isDark]);
 
   return (
     <GestureHandlerRootView

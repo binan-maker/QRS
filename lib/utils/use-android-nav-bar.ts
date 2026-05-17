@@ -18,6 +18,7 @@ export function useAndroidNavBar(
   useEffect(() => {
     if (Platform.OS !== "android") return;
     const color = visible ? openColor : restoreColor;
+    NavigationBar.setPositionAsync("relative").catch(() => {});
     NavigationBar.setBackgroundColorAsync(color).catch(() => {});
     NavigationBar.setButtonStyleAsync(isDark ? "light" : "dark").catch(() => {});
   }, [visible, openColor, restoreColor, isDark]);

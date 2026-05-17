@@ -33,9 +33,11 @@ export default function BottomSheet({ visible, onClose, children, maxHeight = "8
   useEffect(() => {
     if (Platform.OS !== "android") return;
     if (visible) {
+      NavigationBar.setPositionAsync("relative").catch(() => {});
       NavigationBar.setBackgroundColorAsync(colors.surface).catch(() => {});
       NavigationBar.setButtonStyleAsync(colors.isDark ? "light" : "dark").catch(() => {});
     } else {
+      NavigationBar.setPositionAsync("relative").catch(() => {});
       NavigationBar.setBackgroundColorAsync(colors.background).catch(() => {});
       NavigationBar.setButtonStyleAsync(colors.isDark ? "light" : "dark").catch(() => {});
     }
