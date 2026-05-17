@@ -286,7 +286,7 @@ export default function QrDetailScreen() {
               </Animated.View>
             )}
 
-            {!q.ownerInfo?.isBranded && !q.offlineMode && !hasOwner && (
+            {!q.ownerInfo?.isBranded && !q.offlineMode && !hasOwner && !isGuardQr && !isStandardQr && (
               <Animated.View entering={FadeInDown.duration(150)}>
                 <ExternalQrBanner />
               </Animated.View>
