@@ -1,0 +1,25 @@
+
+> expo-app@1.0.0 server:dev
+> NODE_ENV=development npx tsx server/index.ts
+
+⠙[1G[0KServing static Expo files with dynamic manifest routing
+Web build found — serving web app to browsers
+Expo routing: Checking expo-platform header on / and /manifest
+express server serving on port 5000
+Internal Server Error: [Error: ENOENT: no such file or directory, stat '/home/runner/workspace/web-build/index.html'] {
+  errno: [33m-2[39m,
+  code: [32m'ENOENT'[39m,
+  syscall: [32m'stat'[39m,
+  path: [32m'/home/runner/workspace/web-build/index.html'[39m,
+  expose: [33mfalse[39m,
+  statusCode: [33m404[39m,
+  status: [33m404[39m
+}
+[HEALTH] {
+  status: [32m'unhealthy'[39m,
+  uptime: [32m'5m 1s'[39m,
+  db_latency: [32m'1545ms'[39m,
+  api_latency: [32m'67ms'[39m,
+  memory: [32m'97%'[39m,
+  rpm: [33m0[39m
+}
