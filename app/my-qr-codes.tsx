@@ -80,7 +80,51 @@ function getDisplayText(item: GeneratedQrItem, index: number): string {
   if (lbl && lbl.trim()) return lbl.trim();
   const bName = (item as any).businessName as string | null;
   if (bName && bName.trim()) return bName.trim();
-  return `Label ${index + 1}`;
+
+  const ct = getEffectiveContentType(item);
+  const c = item.content || "";
+
+  if (ct === "wifi") {
+    const ssid = c.match(/S:([^;]*)/)?.[1];
+    if (ssid) return ssid;
+  }
+  if (ct === "contact") {
+    const name = c.match(/FN:([^\r\n]+)/)?.[1] || c.match(/MECARD:N:([^;]+)/)?.[1];
+    if (name) return name.trim();
+  }
+  if (ct === "email") return c.replace(/^mailto:/i, "").split("?")[0] || c;
+  if (ct === "phone") return c.replace(/^(tel:|callto:)/i, "").trim();
+  if (ct === "whatsapp") {
+    try {
+      const u = new URL(c.startsWith("http") ? c : `https://${c}`);
+      const p = u.pathname.replace(/^\//, "").replace(/\D/g, "");
+      if (p) return `+${p}`;
+    } catch {}
+  }
+  if (ct === "sms") return c.replace(/^SMSTO?:/i, "").split(":")[0].trim() || c;
+  if (ct === "crypto") {
+    const m = c.match(/^(bitcoin|ethereum|litecoin|solana):([^?]{6,})/i);
+    if (m) return `${m[1].charAt(0).toUpperCase() + m[1].slice(1)}: ${m[2].slice(0, 14)}…`;
+  }
+  if (ct === "calendar" || ct === "event") {
+    const summary = c.match(/SUMMARY:([^\r\n]+)/)?.[1];
+    if (summary) return summary.trim();
+  }
+  if (ct === "location") {
+    const q = c.match(/[?&]q=([^&\n]+)/)?.[1];
+    if (q) return decodeURIComponent(q);
+    const geo = c.replace(/^geo:/i, "").split("?")[0];
+    if (geo && geo !== c) return `Location (${geo})`;
+  }
+  if (["upi", "scantopay", "paymentlink", "payment"].includes(ct)) {
+    const vpa = c.match(/pa=([^&\s]+)/i)?.[1];
+    if (vpa) return decodeURIComponent(vpa);
+  }
+  if (c.startsWith("http")) {
+    try { return new URL(c).hostname.replace(/^www\./, ""); } catch {}
+  }
+
+  return `QR Code ${index + 1}`;
 }
 
 function formatScanCount(n: number): string {

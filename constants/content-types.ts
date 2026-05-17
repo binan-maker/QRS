@@ -51,6 +51,8 @@ export const CONTENT_TYPE_META: Record<string, ContentTypeMeta> = {
   otp:            { label: "OTP / 2FA",     icon: "key-outline",              color: "#8B5CF6", bg: "#F5F3FF" },
   boarding:       { label: "Boarding Pass", icon: "airplane-outline",         color: "#0284C7", bg: "#E0F2FE" },
   product:        { label: "Product",       icon: "barcode-outline",          color: "#6B7280", bg: "#F9FAFB" },
+  razorpay:       { label: "Razorpay",      icon: "card-outline",             color: "#3366FF", bg: "#EFF6FF" },
+  snapchat:       { label: "Snapchat",      icon: "camera-outline",           color: "#D4A000", bg: "#FEFCE8" },
 };
 
 export const DEFAULT_CONTENT_TYPE_META: ContentTypeMeta = {

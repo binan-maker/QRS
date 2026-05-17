@@ -71,8 +71,18 @@ function getTypeCfg(type: string, colors: AppColors): {
     crypto:      { icon: "logo-bitcoin",             label: "Crypto Address",   gradient: crypto,    openLabel: "Open Wallet"         },
     zoom:        { icon: "videocam-outline",         label: "Zoom Meeting",     gradient: zoom,      openLabel: "Join Meeting"        },
     calendly:    { icon: "calendar-outline",         label: "Calendly",         gradient: primary,   openLabel: "Book Appointment"    },
-    text:        { icon: "document-text-outline",    label: "Text",             gradient: neutral,   openLabel: "Open"                },
-    encrypted:   { icon: "key-outline",              label: "Encrypted Data",   gradient: [colors.warning, colors.warningShade], openLabel: "Open" },
+    text:          { icon: "document-text-outline",    label: "Text",             gradient: neutral,                    openLabel: "Open"              },
+    encrypted:     { icon: "key-outline",              label: "Encrypted Data",   gradient: [colors.warning, colors.warningShade], openLabel: "Open" },
+    paymentlink:   { icon: "card-outline",             label: "Payment Link",     gradient: payment,                    openLabel: "Pay Now"           },
+    scantopay:     { icon: "qr-code-outline",          label: "Scan-to-Pay",      gradient: payment,                    openLabel: "Pay Now"           },
+    paypal:        { icon: "wallet-outline",            label: "PayPal",           gradient: ["#003087","#0070BA"],       openLabel: "Pay via PayPal"    },
+    venmo:         { icon: "people-outline",            label: "Venmo",            gradient: ["#008CFF","#60A5FA"],       openLabel: "Pay via Venmo"     },
+    mobilepay:     { icon: "phone-portrait-outline",    label: "Mobile Pay",       gradient: safe,                       openLabel: "Open Payment App"  },
+    reviewpage:    { icon: "star-outline",              label: "Review Page",      gradient: payment,                    openLabel: "Leave a Review"    },
+    menucatalogue: { icon: "list-outline",              label: "Menu / Catalogue", gradient: danger,                     openLabel: "View Menu"         },
+    donation:      { icon: "heart-outline",             label: "Donation",         gradient: ["#F43F5E","#FB7185"],       openLabel: "Donate"            },
+    razorpay:      { icon: "card-outline",              label: "Razorpay",         gradient: ["#3366FF","#60A5FA"],       openLabel: "Pay Now"           },
+    snapchat:      { icon: "camera-outline",            label: "Snapchat",         gradient: ["#D4A000","#F59E0B"],       openLabel: "Open Snapchat"     },
   };
   return map[type] ?? map.text;
 }
@@ -175,6 +185,36 @@ function isEventPast(dtend: string, dtstart: string): boolean {
   return date ? date < new Date() : false;
 }
 
+function parseLocation(content: string) {
+  const lower = content.toLowerCase();
+  if (lower.startsWith("geo:")) {
+    const afterGeo = content.slice(4);
+    const [coordsPart, queryPart = ""] = afterGeo.split("?");
+    const [lat = "", lon = ""] = coordsPart.split(",");
+    const label = new URLSearchParams(queryPart).get("q") || "";
+    return { lat: lat.trim(), lon: lon.trim(), label: label ? decodeURIComponent(label) : "" };
+  }
+  if (lower.includes("maps.google.com") || lower.includes("goo.gl/maps")) {
+    try {
+      const u = new URL(content);
+      const q = u.searchParams.get("q") || "";
+      return { lat: "", lon: "", label: q ? decodeURIComponent(q) : content };
+    } catch {}
+  }
+  return { lat: "", lon: "", label: content };
+}
+
+function parseCrypto(content: string) {
+  const m = content.match(/^(bitcoin|ethereum|litecoin|solana):([^?]+)(\?(.*))?$/i);
+  if (m) {
+    const coin = m[1].charAt(0).toUpperCase() + m[1].slice(1);
+    const address = m[2].trim();
+    const amount = new URLSearchParams(m[4] || "").get("amount") || "";
+    return { coin, address, amount };
+  }
+  return { coin: "", address: content, amount: "" };
+}
+
 function extractBasicPaymentInfo(content: string) {
   try {
     return {
@@ -215,7 +255,7 @@ const ContentCard = React.memo(function ContentCard({ content, contentType, pars
     }
   }
 
-  const URL_LIKE_TYPES = new Set(["url", "instagram", "twitter", "youtube", "linkedin", "telegram", "facebook", "spotify", "discord", "tiktok", "zoom", "calendly", "appdownload", "app", "social", "media"]);
+  const URL_LIKE_TYPES = new Set(["url", "instagram", "twitter", "youtube", "linkedin", "telegram", "facebook", "spotify", "discord", "tiktok", "zoom", "calendly", "appdownload", "app", "social", "media", "paypal", "venmo", "mobilepay", "reviewpage", "menucatalogue", "donation", "razorpay", "snapchat"]);
   const isUrlLike = URL_LIKE_TYPES.has(contentType);
 
   const wifi = contentType === "wifi" ? parseWifi(content) : null;
@@ -225,8 +265,11 @@ const ContentCard = React.memo(function ContentCard({ content, contentType, pars
   const whatsappData = contentType === "whatsapp" ? parseWhatsApp(content) : null;
   const emailData = contentType === "email" ? parseEmail(content) : null;
   const phoneStr = contentType === "phone" ? parsePhone(content) : null;
+  const locationData = contentType === "location" ? parseLocation(content) : null;
+  const cryptoData = contentType === "crypto" ? parseCrypto(content) : null;
   const eventOver = eventData ? isEventPast(eventData.dtend, eventData.dtstart) : false;
-  const basicPayment = ((contentType === "payment" || contentType === "upi") && !parsedPayment) ? extractBasicPaymentInfo(content) : null;
+  const isPaymentType = contentType === "payment" || contentType === "upi" || contentType === "scantopay" || contentType === "paymentlink";
+  const basicPayment = (isPaymentType && !parsedPayment) ? extractBasicPaymentInfo(content) : null;
   const isEmvContent = content.startsWith("000201") || content.startsWith("00020");
 
   if (contentType === "encrypted") {
@@ -282,7 +325,7 @@ const ContentCard = React.memo(function ContentCard({ content, contentType, pars
     );
   }
 
-  if (contentType === "payment" || contentType === "upi") {
+  if (contentType === "payment" || contentType === "upi" || contentType === "scantopay" || contentType === "paymentlink") {
     const paymentData: ParsedPaymentQr = parsedPayment ?? (isEmvContent ? {
       app: "emv_generic", appDisplayName: "Bank Merchant QR", appCategory: "emv",
       region: "Regional", recipientId: "", rawContent: content, isAmountPreFilled: false,
@@ -324,8 +367,8 @@ const ContentCard = React.memo(function ContentCard({ content, contentType, pars
         </Pressable>
       </View>
 
-      {/* Content text — hidden for URL-like, event, whatsapp, email, phone types */}
-      {!isUrlLike && contentType !== "event" && contentType !== "calendar" && contentType !== "whatsapp" && contentType !== "email" && contentType !== "phone" && (
+      {/* Content text — hidden for URL-like, structured, and parsed types */}
+      {!isUrlLike && !["event", "calendar", "whatsapp", "email", "phone", "location", "crypto"].includes(contentType) && (
         <View style={[styles.contentBox, { backgroundColor: isDark ? colors.surfaceLight : colors.background, borderColor: colors.surfaceBorder }]}>
           <Text style={[styles.contentText, { color: colors.text }]} selectable numberOfLines={contentExpanded ? undefined : 4}>
             {content}
@@ -398,6 +441,20 @@ const ContentCard = React.memo(function ContentCard({ content, contentType, pars
       {phoneStr && (
         <View style={[styles.infoGrid, { backgroundColor: isDark ? colors.surfaceLight : colors.background, borderColor: colors.surfaceBorder }]}>
           <InfoRow label="Phone Number" value={phoneStr} selectable gradient={cfg.gradient} colors={colors} />
+        </View>
+      )}
+      {locationData && (
+        <View style={[styles.infoGrid, { backgroundColor: isDark ? colors.surfaceLight : colors.background, borderColor: colors.surfaceBorder }]}>
+          {locationData.label ? <InfoRow label="Place" value={locationData.label} gradient={cfg.gradient} colors={colors} /> : null}
+          {locationData.lat ? <InfoRow label="Latitude" value={locationData.lat} selectable gradient={cfg.gradient} colors={colors} /> : null}
+          {locationData.lon ? <InfoRow label="Longitude" value={locationData.lon} selectable gradient={cfg.gradient} colors={colors} /> : null}
+        </View>
+      )}
+      {cryptoData && (
+        <View style={[styles.infoGrid, { backgroundColor: isDark ? colors.surfaceLight : colors.background, borderColor: colors.surfaceBorder }]}>
+          {cryptoData.coin ? <InfoRow label="Coin" value={cryptoData.coin} gradient={cfg.gradient} colors={colors} /> : null}
+          <InfoRow label="Address" value={cryptoData.address} selectable gradient={cfg.gradient} colors={colors} />
+          {cryptoData.amount ? <InfoRow label="Amount" value={cryptoData.amount} gradient={cfg.gradient} colors={colors} /> : null}
         </View>
       )}
       {eventData && (
