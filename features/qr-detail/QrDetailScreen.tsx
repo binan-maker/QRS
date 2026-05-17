@@ -35,7 +35,6 @@ import { OfflineToast } from "@/features/qr-detail/components/OfflineToast";
 import { QrToast } from "@/features/qr-detail/components/QrToast";
 import { VerdictBanner } from "@/features/qr-detail/components/VerdictBanner";
 import { LivingShieldBanner } from "@/features/qr-detail/components/banners/LivingShieldBanner";
-import { StandardQrBanner } from "@/features/qr-detail/components/banners/StandardQrBanner";
 import { formatCompactNumber } from "@/lib/number-format";
 
 import QrDetailNavBar from "@/features/qr-detail/components/QrDetailNavBar";
@@ -109,6 +108,18 @@ export default function QrDetailScreen() {
     : standardReady ? detectContentType(standardLinkData!.rawContent)
     : (isGuardQr || isStandardQr) ? "url"
     : (q.qrCode?.contentType || q.offlineContentType || detectContentType(q.qrCode?.content || q.offlineContent || ""));
+
+  const standardOwnerInfo = isStandardQr && standardLinkData
+    ? {
+        businessName: null,
+        ownerName: standardLinkData.ownerName,
+        qrType: "standard" as const,
+        isBranded: true,
+        ownerId: "",
+        brandedUuid: standardUuid,
+        isActive: standardLinkData.isActive,
+      }
+    : null;
 
   const hasOwner = !!q.ownerInfo?.ownerId;
   const trust = q.getTrustInfo();
@@ -236,8 +247,12 @@ export default function QrDetailScreen() {
               <VerdictBanner verdict={verdict} offlineMode={q.offlineMode} />
             </Animated.View>
 
-            {q.ownerInfo?.isBranded && (
+            {q.ownerInfo?.isBranded && !isStandardQr && (
               <OwnerCircleRow ownerInfo={q.ownerInfo as any} onPress={() => setOwnerSheetOpen(true)} />
+            )}
+
+            {isStandardQr && standardOwnerInfo && (
+              <OwnerCircleRow ownerInfo={standardOwnerInfo as any} onPress={() => setOwnerSheetOpen(true)} />
             )}
 
             <Animated.View entering={FadeInDown.duration(250)}>
@@ -245,16 +260,6 @@ export default function QrDetailScreen() {
             </Animated.View>
 
             {isGuardQr && <LivingShieldBanner guardLink={guardLink} loading={guardLinkLoading} />}
-
-            {isStandardQr && (
-              <StandardQrBanner
-                loading={standardLinkLoading}
-                ready={standardReady}
-                ownerName={standardLinkData?.ownerName ?? null}
-                isActive={standardLinkData?.isActive !== false}
-                qrId={standardUuid}
-              />
-            )}
 
             {((!isGuardQr && !isStandardQr) || guardReady || standardReady) && (
               <Animated.View entering={FadeInDown.duration(150)}>
@@ -412,7 +417,7 @@ export default function QrDetailScreen() {
         </View>
       </KeyboardAvoidingView>
 
-      <OwnerInfoSheet visible={ownerSheetOpen} onClose={() => setOwnerSheetOpen(false)} ownerInfo={q.ownerInfo as any} guardLink={guardLink} />
+      <OwnerInfoSheet visible={ownerSheetOpen} onClose={() => setOwnerSheetOpen(false)} ownerInfo={isStandardQr ? (standardOwnerInfo as any) : (q.ownerInfo as any)} guardLink={isStandardQr ? null : guardLink} />
 
       <CommentMenuSheet
         visible={q.commentMenuId !== null}

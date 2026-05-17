@@ -34,13 +34,19 @@ export default function OwnerInfoSheet({ visible, onClose, ownerInfo, guardLink 
         <>
           <View style={ownerSheetStyles.avatarRow}>
             <LinearGradient
-              colors={ownerInfo.qrType === "business" ? [colors.warning, colors.warningShade] : [colors.safe, colors.safeShade]}
+              colors={
+                ownerInfo.qrType === "business"
+                  ? [colors.warning, colors.warningShade]
+                  : ownerInfo.qrType === "standard"
+                  ? [colors.primary, colors.primaryShade]
+                  : [colors.safe, colors.safeShade]
+              }
               style={ownerSheetStyles.avatar}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 1 }}
             >
               <Ionicons
-                name={ownerInfo.qrType === "business" ? "storefront" : "person"}
+                name={ownerInfo.qrType === "business" ? "storefront" : ownerInfo.qrType === "standard" ? "qr-code" : "person"}
                 size={30}
                 color="#fff"
               />
@@ -59,13 +65,25 @@ export default function OwnerInfoSheet({ visible, onClose, ownerInfo, guardLink 
                   style={[
                     ownerSheetStyles.typeBadge,
                     {
-                      backgroundColor: (ownerInfo.qrType === "business" ? colors.warning : colors.safe) + "20",
-                      borderColor: (ownerInfo.qrType === "business" ? colors.warning : colors.safe) + "50",
+                      backgroundColor: (
+                        ownerInfo.qrType === "business" ? colors.warning
+                        : ownerInfo.qrType === "standard" ? colors.primary
+                        : colors.safe
+                      ) + "20",
+                      borderColor: (
+                        ownerInfo.qrType === "business" ? colors.warning
+                        : ownerInfo.qrType === "standard" ? colors.primary
+                        : colors.safe
+                      ) + "50",
                     },
                   ]}
                 >
-                  <Text style={[ownerSheetStyles.typeBadgeText, { color: ownerInfo.qrType === "business" ? colors.warning : colors.safe }]}>
-                    {ownerInfo.qrType === "business" ? "Business" : "Individual"}
+                  <Text style={[ownerSheetStyles.typeBadgeText, {
+                    color: ownerInfo.qrType === "business" ? colors.warning
+                      : ownerInfo.qrType === "standard" ? colors.primary
+                      : colors.safe
+                  }]}>
+                    {ownerInfo.qrType === "business" ? "Business" : ownerInfo.qrType === "standard" ? "Standard" : "Individual"}
                   </Text>
                 </View>
                 {ownerInfo.isBranded && (

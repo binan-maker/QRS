@@ -29,12 +29,22 @@ export default function OwnerCircleRow({ ownerInfo, onPress }: Props) {
       ]}
     >
       <LinearGradient
-        colors={ownerInfo.qrType === "business" ? [colors.warning, colors.warningShade] : [colors.safe, colors.safeShade]}
+        colors={
+          ownerInfo.qrType === "business"
+            ? [colors.warning, colors.warningShade]
+            : ownerInfo.qrType === "standard"
+            ? [colors.primary, colors.primaryShade]
+            : [colors.safe, colors.safeShade]
+        }
         style={ownerCircleRowStyles.circle}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
       >
-        <Ionicons name={ownerInfo.qrType === "business" ? "storefront" : "person"} size={18} color="#fff" />
+        <Ionicons
+          name={ownerInfo.qrType === "business" ? "storefront" : ownerInfo.qrType === "standard" ? "qr-code" : "person"}
+          size={18}
+          color="#fff"
+        />
       </LinearGradient>
       <View style={{ flex: 1, minWidth: 0 }}>
         {ownerInfo.businessName ? (
