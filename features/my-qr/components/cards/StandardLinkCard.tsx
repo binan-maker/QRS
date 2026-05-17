@@ -64,6 +64,7 @@ export default function StandardLinkCard({
           <View style={{ gap: sp(10) }}>
             <View><Text style={labelStyle}>Email Address</Text><TextInput value={f.email || ""} onChangeText={(v) => set("email", v)} placeholder="name@example.com" placeholderTextColor={colors.textMuted} keyboardType="email-address" autoCapitalize="none" style={inputStyle} /></View>
             <View><Text style={labelStyle}>Subject (optional)</Text><TextInput value={f.subject || ""} onChangeText={(v) => set("subject", v)} placeholder="Hello!" placeholderTextColor={colors.textMuted} style={inputStyle} /></View>
+            <View><Text style={labelStyle}>Body (optional)</Text><TextInput value={f.body || ""} onChangeText={(v) => set("body", v)} placeholder="Email body text…" placeholderTextColor={colors.textMuted} multiline style={{ ...inputStyle, minHeight: sp(72), textAlignVertical: "top" }} /></View>
           </View>
         );
       case "sms":
