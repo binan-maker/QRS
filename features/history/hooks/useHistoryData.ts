@@ -26,7 +26,7 @@ import {
   setCachedScanStats,
 } from "@/lib/cache/qr-cache";
 import type { HistoryItem, RiskLevel, Filter } from "@/features/history/types";
-import { PAGE_SIZE, STALE_MS } from "@/features/history/utils/constants";
+import { PAGE_SIZE, STALE_MS, SOCIAL_TYPES, PAYMENT_TYPES, CONTACT_TYPES, UTILITY_TYPES, BUSINESS_TYPES } from "@/features/history/utils/constants";
 
 function mapScanItem(s: any): HistoryItem {
   return {
@@ -185,13 +185,22 @@ export function useHistoryData(filter: Filter) {
   const displayItems = useMemo<HistoryItem[]>(() => {
     if (filter === "favorites") return favorites;
     return history.filter((item) => {
-      if (filter === "all")     return true;
-      if (filter === "url")     return item.contentType === "url";
-      if (filter === "text")    return item.contentType === "text";
-      if (filter === "payment") return item.contentType === "payment";
-      if (filter === "camera")  return (item.scanSource ?? "camera") === "camera";
-      if (filter === "gallery") return item.scanSource === "gallery";
-      return !["url", "text", "payment"].includes(item.contentType);
+      const ct = item.contentType;
+      switch (filter) {
+        case "all":      return true;
+        case "url":      return ct === "url";
+        case "text":     return ct === "text";
+        case "social":   return (SOCIAL_TYPES as readonly string[]).includes(ct);
+        case "payment":  return (PAYMENT_TYPES as readonly string[]).includes(ct);
+        case "contact":  return (CONTACT_TYPES as readonly string[]).includes(ct);
+        case "wifi":     return ct === "wifi";
+        case "location": return ct === "location";
+        case "utility":  return (UTILITY_TYPES as readonly string[]).includes(ct);
+        case "business": return (BUSINESS_TYPES as readonly string[]).includes(ct);
+        case "camera":   return (item.scanSource ?? "camera") === "camera";
+        case "gallery":  return item.scanSource === "gallery";
+        default:         return true;
+      }
     });
   }, [filter, history, favorites]);
 
