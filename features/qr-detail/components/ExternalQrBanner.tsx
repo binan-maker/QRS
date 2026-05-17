@@ -1,53 +1,47 @@
-import { View, Text, Pressable } from "react-native";
+import { View, Text } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { router } from "expo-router";
 import { useTheme } from "@/contexts/ThemeContext";
-import { externalQrBannerStyles } from "@/features/qr-detail/styles";
+import { useScaleFns } from "@/lib/utils/use-scale";
 
 export default function ExternalQrBanner() {
   const { colors } = useTheme();
+  const { rf, sp } = useScaleFns();
 
   return (
-    <View style={[externalQrBannerStyles.card, { backgroundColor: colors.surface, borderColor: colors.warning + "30" }]}>
-      <View style={[externalQrBannerStyles.accentStrip, { backgroundColor: colors.warning }]} />
-      <View style={externalQrBannerStyles.innerContent}>
-        <View style={[externalQrBannerStyles.iconWrap, { backgroundColor: colors.warning + "18", borderColor: colors.warning + "35" }]}>
-          <Ionicons name="qr-code-outline" size={20} color={colors.warning} />
-        </View>
-        <View style={externalQrBannerStyles.textBlock}>
-          <Text style={[externalQrBannerStyles.title, { color: colors.text }]} maxFontSizeMultiplier={1}>
-            Standard QR
-          </Text>
-          <Text style={[externalQrBannerStyles.subtitle, { color: colors.textSecondary }]} maxFontSizeMultiplier={1}>
-            We cannot verify the owner's identity
-          </Text>
-        </View>
+    <View style={{
+      flexDirection: "row",
+      alignItems: "center",
+      gap: sp(10),
+      backgroundColor: colors.surface,
+      borderRadius: sp(14),
+      borderWidth: 1,
+      borderColor: colors.warning + "35",
+      paddingHorizontal: sp(14),
+      paddingVertical: sp(12),
+      marginBottom: sp(10),
+    }}>
+      <View style={{
+        width: sp(36),
+        height: sp(36),
+        borderRadius: sp(10),
+        backgroundColor: colors.warning + "18",
+        borderWidth: 1,
+        borderColor: colors.warning + "30",
+        alignItems: "center",
+        justifyContent: "center",
+        flexShrink: 0,
+      }}>
+        <Ionicons name="qr-code-outline" size={rf(18)} color={colors.warning} />
       </View>
 
-      <Pressable
-        onPress={() => router.push("/(tabs)/generate" as any)}
-        style={({ pressed }) => [{
-          flexDirection: "row",
-          alignItems: "center",
-          gap: 8,
-          marginTop: 2,
-          marginLeft: 10,
-          paddingHorizontal: 12,
-          paddingVertical: 9,
-          borderRadius: 10,
-          borderWidth: 1,
-          borderColor: colors.primary + "50",
-          backgroundColor: colors.primaryDim,
-          opacity: pressed ? 0.8 : 1,
-          alignSelf: "flex-start",
-        }]}
-      >
-        <Ionicons name="shield-checkmark-outline" size={15} color={colors.primary} />
-        <Text style={{ fontSize: 12, fontFamily: "Inter_600SemiBold", color: colors.primary }}>
-          Protect with QR Guard
+      <View style={{ flex: 1, gap: sp(2) }}>
+        <Text style={{ fontSize: rf(13), fontFamily: "Inter_700Bold", color: colors.text }} maxFontSizeMultiplier={1}>
+          Standard QR Code
         </Text>
-        <Ionicons name="arrow-forward" size={13} color={colors.primary} />
-      </Pressable>
+        <Text style={{ fontSize: rf(12), fontFamily: "Inter_400Regular", color: colors.textSecondary }} maxFontSizeMultiplier={1}>
+          Owner identity is unverified
+        </Text>
+      </View>
     </View>
   );
 }
