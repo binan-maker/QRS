@@ -98,9 +98,14 @@ function ThemedApp() {
   useEffect(() => {
     if (Platform.OS === "android") {
       SystemUI.setBackgroundColorAsync(colors.background).catch(() => {});
-      NavigationBar.setBackgroundColorAsync(colors.surface).catch(() => {});
+      // Use the app background color for the nav bar so dark/light themes are both
+      // visually consistent. The surface (#FFFFFF light / #101929 dark) was leaving
+      // the dark-mode nav bar appearing transparent against dark content.
+      NavigationBar.setBackgroundColorAsync(colors.background).catch(() => {});
       NavigationBar.setButtonStyleAsync(colors.isDark ? "light" : "dark").catch(() => {});
-      NavigationBar.setBorderColorAsync(colors.surfaceBorder).catch(() => {});
+      NavigationBar.setBorderColorAsync(
+        colors.isDark ? colors.surfaceBorder : colors.surfaceBorder,
+      ).catch(() => {});
     }
   }, [colors.background, colors.surface, colors.surfaceBorder, colors.isDark]);
 

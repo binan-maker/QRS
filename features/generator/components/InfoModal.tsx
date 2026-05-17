@@ -126,7 +126,7 @@ export default function InfoModal({ visible, onClose }: Props) {
 
 const styles = StyleSheet.create({
   header: {
-    flexDirection: "row", alignItems: "center", gap: 10, marginBottom: 18,
+    flexDirection: "row", alignItems: "center", gap: 10, marginBottom: 12,
   },
   headerIcon: {
     width: 36, height: 36, borderRadius: 10,

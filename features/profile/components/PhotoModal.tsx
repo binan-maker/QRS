@@ -57,20 +57,6 @@ const PhotoModal = React.memo(function PhotoModal({
 
   return (
     <BottomSheet visible={visible} onClose={onClose}>
-      {/* Header */}
-      <View style={styles.header}>
-        <View style={[styles.headerIcon, { backgroundColor: colors.primaryDim }]}>
-          <Ionicons name="person-circle-outline" size={22} color={colors.primary} />
-        </View>
-        <View style={{ flex: 1 }}>
-          <Text style={[styles.title, { color: colors.text }]}>Profile Photo</Text>
-          <Text style={[styles.subtitle, { color: colors.textMuted }]}>Choose how to update your photo</Text>
-        </View>
-      </View>
-
-      <View style={[styles.divider, { backgroundColor: colors.surfaceBorder }]} />
-
-      {/* Options */}
       {options.map((opt, i) => (
         <React.Fragment key={opt.label}>
           <Pressable
@@ -100,42 +86,16 @@ const PhotoModal = React.memo(function PhotoModal({
 export default PhotoModal;
 
 const styles = StyleSheet.create({
-  header: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 12,
-    marginBottom: 14,
-  },
-  headerIcon: {
-    width: 42,
-    height: 42,
-    borderRadius: 12,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  title: {
-    fontSize: 16,
-    fontFamily: "Inter_700Bold",
-  },
-  subtitle: {
-    fontSize: 12,
-    fontFamily: "Inter_400Regular",
-    marginTop: 2,
-  },
-  divider: {
-    height: 1,
-    marginBottom: 8,
-  },
   option: {
     flexDirection: "row",
     alignItems: "center",
     gap: 14,
-    paddingVertical: 12,
+    paddingVertical: 14,
   },
   optionIcon: {
-    width: 44,
-    height: 44,
-    borderRadius: 13,
+    width: 46,
+    height: 46,
+    borderRadius: 14,
     alignItems: "center",
     justifyContent: "center",
   },

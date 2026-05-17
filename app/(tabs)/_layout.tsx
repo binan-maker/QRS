@@ -143,7 +143,7 @@ function ClassicTabLayout() {
           letterSpacing: 0.1, includeFontPadding: false,
         },
         tabBarItemStyle: {
-          paddingTop: 6, paddingBottom: 0,
+          paddingTop: 6, paddingBottom: 4,
           alignItems: "center", justifyContent: "center",
         },
       }}

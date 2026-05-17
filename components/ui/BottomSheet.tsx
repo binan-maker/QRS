@@ -80,7 +80,7 @@ export default function BottomSheet({ visible, onClose, children, maxHeight = "8
                 styles.sheet,
                 {
                   backgroundColor: colors.surface,
-                  borderColor: colors.surfaceBorder,
+                  borderTopColor: colors.surfaceBorder,
                   paddingBottom: bottomPad,
                   // When a pixel number is given, fix the height so flex:1 children
                   // have a defined parent size and don't collapse to half-open.
@@ -116,8 +116,6 @@ const styles = StyleSheet.create({
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
     borderTopWidth: 1,
-    borderLeftWidth: 1,
-    borderRightWidth: 1,
     paddingHorizontal: 20,
     paddingTop: 12,
   },
