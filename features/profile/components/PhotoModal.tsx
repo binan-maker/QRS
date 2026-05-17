@@ -23,65 +23,76 @@ const PhotoModal = React.memo(function PhotoModal({
 }: Props) {
   const { colors } = useTheme();
 
+  const options = [
+    {
+      icon: "camera-outline" as const,
+      label: "Take Photo",
+      sub: "Use your camera",
+      iconBg: colors.primaryDim,
+      iconColor: colors.primary,
+      onPress: onCamera,
+      danger: false,
+    },
+    {
+      icon: "images-outline" as const,
+      label: "Choose from Gallery",
+      sub: "Pick an existing photo",
+      iconBg: colors.accentDim,
+      iconColor: colors.accent,
+      onPress: onGallery,
+      danger: false,
+    },
+    ...(hasPhoto && onRemove
+      ? [{
+          icon: "trash-outline" as const,
+          label: "Remove Photo",
+          sub: "Revert to default avatar",
+          iconBg: colors.dangerDim,
+          iconColor: colors.danger,
+          onPress: onRemove,
+          danger: true,
+        }]
+      : []),
+  ];
+
   return (
     <BottomSheet visible={visible} onClose={onClose}>
-      <Text style={[styles.title, { color: colors.text }]}>Profile Photo</Text>
-
-      <Pressable
-        style={({ pressed }) => [styles.option, { opacity: pressed ? 0.7 : 1 }]}
-        onPress={onCamera}
-      >
-        <View style={[styles.optionIcon, { backgroundColor: colors.primaryDim }]}>
-          <Ionicons name="camera-outline" size={22} color={colors.primary} />
+      {/* Header */}
+      <View style={styles.header}>
+        <View style={[styles.headerIcon, { backgroundColor: colors.primaryDim }]}>
+          <Ionicons name="person-circle-outline" size={22} color={colors.primary} />
         </View>
-        <View style={styles.optionText}>
-          <Text style={[styles.optionLabel, { color: colors.text }]}>Take Photo</Text>
-          <Text style={[styles.optionSub, { color: colors.textSecondary }]}>Use your camera</Text>
+        <View style={{ flex: 1 }}>
+          <Text style={[styles.title, { color: colors.text }]}>Profile Photo</Text>
+          <Text style={[styles.subtitle, { color: colors.textMuted }]}>Choose how to update your photo</Text>
         </View>
-      </Pressable>
+      </View>
 
       <View style={[styles.divider, { backgroundColor: colors.surfaceBorder }]} />
 
-      <Pressable
-        style={({ pressed }) => [styles.option, { opacity: pressed ? 0.7 : 1 }]}
-        onPress={onGallery}
-      >
-        <View style={[styles.optionIcon, { backgroundColor: colors.accentDim }]}>
-          <Ionicons name="images-outline" size={22} color={colors.accent} />
-        </View>
-        <View style={styles.optionText}>
-          <Text style={[styles.optionLabel, { color: colors.text }]}>Choose from Gallery</Text>
-          <Text style={[styles.optionSub, { color: colors.textSecondary }]}>Pick an existing photo</Text>
-        </View>
-      </Pressable>
-
-      {hasPhoto && onRemove && (
-        <>
-          <View style={[styles.divider, { backgroundColor: colors.surfaceBorder }]} />
+      {/* Options */}
+      {options.map((opt, i) => (
+        <React.Fragment key={opt.label}>
           <Pressable
-            style={({ pressed }) => [styles.option, { opacity: pressed ? 0.7 : 1 }]}
-            onPress={onRemove}
+            style={({ pressed }) => [styles.option, { opacity: pressed ? 0.72 : 1 }]}
+            onPress={() => { opt.onPress?.(); onClose(); }}
           >
-            <View style={[styles.optionIcon, { backgroundColor: colors.dangerDim }]}>
-              <Ionicons name="trash-outline" size={22} color={colors.danger} />
+            <View style={[styles.optionIcon, { backgroundColor: opt.iconBg }]}>
+              <Ionicons name={opt.icon} size={22} color={opt.iconColor} />
             </View>
             <View style={styles.optionText}>
-              <Text style={[styles.optionLabel, { color: colors.danger }]}>Remove Photo</Text>
-              <Text style={[styles.optionSub, { color: colors.textSecondary }]}>Revert to default avatar</Text>
+              <Text style={[styles.optionLabel, { color: opt.danger ? colors.danger : colors.text }]}>
+                {opt.label}
+              </Text>
+              <Text style={[styles.optionSub, { color: colors.textMuted }]}>{opt.sub}</Text>
             </View>
+            <Ionicons name="chevron-forward" size={16} color={colors.textMuted} />
           </Pressable>
-        </>
-      )}
-
-      <Pressable
-        style={({ pressed }) => [
-          styles.cancelBtn,
-          { backgroundColor: colors.surfaceLight, borderColor: colors.surfaceBorder, opacity: pressed ? 0.7 : 1 },
-        ]}
-        onPress={onClose}
-      >
-        <Text style={[styles.cancelText, { color: colors.textSecondary }]}>Cancel</Text>
-      </Pressable>
+          {i < options.length - 1 && (
+            <View style={[styles.rowDivider, { backgroundColor: colors.surfaceBorder }]} />
+          )}
+        </React.Fragment>
+      ))}
     </BottomSheet>
   );
 });
@@ -89,34 +100,47 @@ const PhotoModal = React.memo(function PhotoModal({
 export default PhotoModal;
 
 const styles = StyleSheet.create({
+  header: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    marginBottom: 14,
+  },
+  headerIcon: {
+    width: 42,
+    height: 42,
+    borderRadius: 12,
+    alignItems: "center",
+    justifyContent: "center",
+  },
   title: {
-    fontSize: 17,
+    fontSize: 16,
     fontFamily: "Inter_700Bold",
-    marginBottom: 16,
+  },
+  subtitle: {
+    fontSize: 12,
+    fontFamily: "Inter_400Regular",
+    marginTop: 2,
+  },
+  divider: {
+    height: 1,
+    marginBottom: 8,
   },
   option: {
     flexDirection: "row",
     alignItems: "center",
     gap: 14,
-    paddingVertical: 11,
+    paddingVertical: 12,
   },
   optionIcon: {
     width: 44,
     height: 44,
-    borderRadius: 12,
+    borderRadius: 13,
     alignItems: "center",
     justifyContent: "center",
   },
   optionText: { flex: 1 },
   optionLabel: { fontSize: 15, fontFamily: "Inter_600SemiBold" },
   optionSub: { fontSize: 12, fontFamily: "Inter_400Regular", marginTop: 2 },
-  divider: { height: 1, marginVertical: 4 },
-  cancelBtn: {
-    marginTop: 16,
-    paddingVertical: 14,
-    borderRadius: 14,
-    alignItems: "center",
-    borderWidth: 1,
-  },
-  cancelText: { fontSize: 15, fontFamily: "Inter_600SemiBold" },
+  rowDivider: { height: StyleSheet.hairlineWidth, marginVertical: 2 },
 });
