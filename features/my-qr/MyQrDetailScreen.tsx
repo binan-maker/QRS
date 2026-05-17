@@ -199,17 +199,22 @@ export default function MyQrDetailScreen() {
           onOpenAnalytics={() => router.push(`/my-qr-analytics/${id}` as any)}
         />
 
-        <QrContentInfoCard
-          ctMeta={ctMeta}
-          effectiveContentType={effectiveContentType}
-          isDynamic={isDynamic}
-          isBusiness={isBusiness}
-          contentRows={contentRows}
-          liveRaw={liveRaw}
-          isGuardQr={isGuardQr}
-          guardLink={guardLink}
-          standardLink={standardLink}
-        />
+        {/* Skip the content-info card for types whose fields are visually
+            noisy when rendered as structured rows (email, phone, sms, etc.).
+            Those QR codes identify themselves clearly via the label / title. */}
+        {!["email", "sms", "phone", "mobilepay", "grab"].includes(effectiveContentType) && (
+          <QrContentInfoCard
+            ctMeta={ctMeta}
+            effectiveContentType={effectiveContentType}
+            isDynamic={isDynamic}
+            isBusiness={isBusiness}
+            contentRows={contentRows}
+            liveRaw={liveRaw}
+            isGuardQr={isGuardQr}
+            guardLink={guardLink}
+            standardLink={standardLink}
+          />
+        )}
 
         {hasGuardLink && (
           <GuardDestinationCard

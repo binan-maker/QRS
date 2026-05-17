@@ -124,7 +124,7 @@ export function getDetailDisplayTitle(item: any): string {
     case "sms":
       return src.replace(/^SMSTO?:/i, "").split(":")[0].trim();
     case "email":
-      return src.replace(/^mailto:/i, "").split("?")[0].trim();
+      return "Email QR Code";
     case "whatsapp": {
       try {
         const u = new URL(src.startsWith("http") ? src : `https://${src}`);

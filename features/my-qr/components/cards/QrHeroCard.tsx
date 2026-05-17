@@ -41,7 +41,10 @@ export default function QrHeroCard({
   const { colors } = useTheme();
   const { rf, sp } = useScaleFns();
 
-  const dest = !isPrivateDest ? (guardDest || standardRawContent || null) : null;
+  // Only show the destination hint for URL-like content — never show raw
+  // mailto:, tel:, sms:, etc. schemes as they read as ugly protocol strings.
+  const rawDest = !isPrivateDest ? (guardDest || standardRawContent || null) : null;
+  const dest = rawDest && /^https?:\/\//i.test(rawDest) ? rawDest : null;
 
   return (
     <Animated.View entering={FadeIn.duration(160)}>
@@ -54,35 +57,18 @@ export default function QrHeroCard({
           style={{ paddingTop: sp(22), paddingHorizontal: sp(20), paddingBottom: sp(18), alignItems: "center" }}
           start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
         >
-          {/* Single clean type row */}
-          <View style={{
-            flexDirection: "row", alignItems: "center",
-            alignSelf: "stretch", marginBottom: sp(20),
-          }}>
+          {/* Paused badge — only rendered when the QR is inactive */}
+          {!isActive && (
             <View style={{
-              flexDirection: "row", alignItems: "center", gap: sp(5),
+              flexDirection: "row", alignItems: "center", gap: sp(4),
+              alignSelf: "flex-end", marginBottom: sp(16),
               borderRadius: sp(10), paddingHorizontal: sp(9), paddingVertical: sp(4),
-              backgroundColor: ctMeta.color + "18",
+              backgroundColor: "#ef444414",
             }}>
-              <Ionicons name={ctMeta.icon as any} size={rf(11)} color={ctMeta.color} />
-              <Text style={{ fontSize: rf(11), fontFamily: "Inter_600SemiBold", color: ctMeta.color }}>
-                {ctMeta.label}{isBusiness ? " · Business" : ""}
-              </Text>
+              <View style={{ width: sp(5), height: sp(5), borderRadius: sp(3), backgroundColor: "#ef4444" }} />
+              <Text style={{ fontSize: rf(11), fontFamily: "Inter_600SemiBold", color: "#ef4444" }}>Paused</Text>
             </View>
-
-            <View style={{ flex: 1 }} />
-
-            {!isActive && (
-              <View style={{
-                flexDirection: "row", alignItems: "center", gap: sp(4),
-                borderRadius: sp(10), paddingHorizontal: sp(9), paddingVertical: sp(4),
-                backgroundColor: "#ef444414",
-              }}>
-                <View style={{ width: sp(5), height: sp(5), borderRadius: sp(3), backgroundColor: "#ef4444" }} />
-                <Text style={{ fontSize: rf(11), fontFamily: "Inter_600SemiBold", color: "#ef4444" }}>Paused</Text>
-              </View>
-            )}
-          </View>
+          )}
 
           {/* QR Code */}
           <View style={{
