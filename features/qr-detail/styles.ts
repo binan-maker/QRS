@@ -617,26 +617,3 @@ export const overflowStyles = StyleSheet.create({
     marginHorizontal: 20,
   },
 });
-
-export const donationBannerStyles = StyleSheet.create({
-  card: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 12,
-    borderRadius: 16,
-    borderWidth: 1,
-    padding: 14,
-    marginTop: 8,
-  },
-  iconWrap: {
-    width: 38,
-    height: 38,
-    borderRadius: 12,
-    alignItems: "center",
-    justifyContent: "center",
-    flexShrink: 0,
-  },
-  textWrap: { flex: 1 },
-  title: { fontSize: 14, fontFamily: "Inter_700Bold", marginBottom: 2 },
-  sub: { fontSize: 12, fontFamily: "Inter_400Regular", lineHeight: 17 },
-});
