@@ -13,7 +13,7 @@ interface Props {
   hasOwner: boolean;
   onFavorite: () => void;
   onWatch: () => void;
-  onShare: () => void;
+  onReport: () => void;
 }
 
 export default function OverflowSheet({
@@ -25,7 +25,7 @@ export default function OverflowSheet({
   hasOwner,
   onFavorite,
   onWatch,
-  onShare,
+  onReport,
 }: Props) {
   const { colors } = useTheme();
 
@@ -52,7 +52,7 @@ export default function OverflowSheet({
 
       <View style={[overflowStyles.separator, { backgroundColor: colors.surfaceBorder }]} />
 
-      {/* Watch (only for branded QR — secondary action) */}
+      {/* Watch (only for owned QR — secondary action) */}
       {hasOwner && (
         <>
           <Pressable
@@ -86,14 +86,14 @@ export default function OverflowSheet({
         </>
       )}
 
-      {/* Share */}
-      <Pressable style={overflowStyles.item} onPress={() => { onClose(); onShare(); }}>
-        <View style={[overflowStyles.iconWrap, { backgroundColor: colors.surfaceLight }]}>
-          <Ionicons name="share-social-outline" size={20} color={colors.textSecondary} />
+      {/* Report */}
+      <Pressable style={overflowStyles.item} onPress={() => { onClose(); onReport(); }}>
+        <View style={[overflowStyles.iconWrap, { backgroundColor: colors.danger + "18" }]}>
+          <Ionicons name="flag-outline" size={20} color={colors.danger} />
         </View>
         <View style={{ flex: 1 }}>
-          <Text style={[overflowStyles.itemLabel, { color: colors.text }]}>Share QR</Text>
-          <Text style={[overflowStyles.itemSub, { color: colors.textMuted }]}>Send this QR code to someone</Text>
+          <Text style={[overflowStyles.itemLabel, { color: colors.danger }]}>Report QR</Text>
+          <Text style={[overflowStyles.itemSub, { color: colors.textMuted }]}>Flag this QR as suspicious or harmful</Text>
         </View>
       </Pressable>
     </BottomSheet>

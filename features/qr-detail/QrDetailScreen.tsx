@@ -1,7 +1,7 @@
 import { useState, useCallback, useRef } from "react";
 import {
   View, Text, Pressable, ScrollView, RefreshControl,
-  StyleSheet, Share, KeyboardAvoidingView,
+  StyleSheet, KeyboardAvoidingView,
 } from "react-native";
 import { StatusBar } from "expo-status-bar";
 import { useLocalSearchParams, router } from "expo-router";
@@ -70,6 +70,7 @@ export default function QrDetailScreen() {
   const [overflowOpen, setOverflowOpen] = useState(false);
   const [toastState, setToastState] = useState<{ message: string; icon: keyof typeof Ionicons.glyphMap; key: number }>({ message: "", icon: "checkmark-circle", key: 0 });
   const lastToastTime = useRef(0);
+  const reportSectionY = useRef(0);
 
   const showToast = useCallback((message: string, icon: keyof typeof Ionicons.glyphMap = "checkmark-circle") => {
     const now = Date.now();
@@ -141,16 +142,13 @@ export default function QrDetailScreen() {
     showToast(willFav ? "Added to favorites" : "Removed from favorites", willFav ? "heart" : "heart-outline");
   }, [user, q.isFavorite, q.handleToggleFavorite, showToast]);
 
-  const handleSharePress = useCallback(async () => {
-    const label = q.ownerInfo?.businessName || q.ownerInfo?.ownerName || "QR Code";
-    const content = effectiveContent || (q.qrCode?.content || q.offlineContent || "");
-    try {
-      await Share.share({
-        message: `Check out this QR code${label !== "QR Code" ? ` from ${label}` : ""}: ${content}`,
-        title: label,
-      });
-    } catch { showToast("Could not share", "alert-circle-outline"); }
-  }, [q.ownerInfo, effectiveContent, q.qrCode, q.offlineContent, showToast]);
+  const handleReportPress = useCallback(() => {
+    setOverflowOpen(false);
+    if (!user) { router.push("/(auth)/login"); return; }
+    setTimeout(() => {
+      q.scrollRef.current?.scrollTo({ y: reportSectionY.current, animated: true });
+    }, 280);
+  }, [user, q.scrollRef]);
 
   if (q.loading) return <LoadingSkeleton topInset={topInset} />;
 
@@ -312,7 +310,10 @@ export default function QrDetailScreen() {
 
             {user && (
               <>
-                <Animated.View entering={FadeInDown.duration(180)}>
+                <Animated.View
+                  entering={FadeInDown.duration(180)}
+                  onLayout={(e) => { reportSectionY.current = e.nativeEvent.layout.y; }}
+                >
                   {q.offlineMode ? (
                     <View style={offlineSectionStyles.row}>
                       <Ionicons name="cloud-offline-outline" size={16} color={colors.textMuted} />
@@ -430,7 +431,7 @@ export default function QrDetailScreen() {
         hasOwner={hasOwner}
         onFavorite={handleFavoritePress}
         onWatch={handleWatchPress}
-        onShare={handleSharePress}
+        onReport={handleReportPress}
       />
 
       <CommentReportModal commentId={q.commentReportModal} onReport={q.handleCommentReport} onClose={() => q.setCommentReportModal(null)} />
