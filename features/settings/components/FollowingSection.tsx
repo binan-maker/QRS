@@ -8,38 +8,31 @@ import Animated, { FadeInDown } from "react-native-reanimated";
 import { useTheme } from "@/contexts/ThemeContext";
 import SkeletonBox from "@/components/ui/SkeletonBox";
 import { db } from "@/lib/db/client";
-import { formatShortDate } from "@/lib/utils/formatters";
-
-function getMeta(type: string, colors: any): { gradient: [string, string]; icon: keyof typeof Ionicons.glyphMap; label: string } {
-  const map: Record<string, { gradient: [string, string]; icon: keyof typeof Ionicons.glyphMap; label: string }> = {
-    url:      { gradient: [colors.primary, colors.primaryShade],   icon: "globe-outline",         label: "Website" },
-    payment:  { gradient: [colors.warning, colors.warningShade],   icon: "card-outline",          label: "Payment" },
-    email:    { gradient: [colors.primary, colors.primaryShade],   icon: "mail-outline",          label: "Email" },
-    phone:    { gradient: [colors.safe, colors.safeShade],         icon: "call-outline",          label: "Phone" },
-    wifi:     { gradient: [colors.primary, colors.primaryShade],   icon: "wifi-outline",          label: "WiFi" },
-    location: { gradient: [colors.danger, colors.dangerShade],     icon: "location-outline",      label: "Location" },
-    contact:  { gradient: [colors.safe, colors.safeShade],         icon: "person-outline",        label: "Contact" },
-    sms:      { gradient: [colors.primary, colors.primaryShade],   icon: "chatbubble-outline",    label: "SMS" },
-    social:   { gradient: [colors.primary, colors.primaryShade],   icon: "people-outline",        label: "Social" },
-  };
-  return map[type?.toLowerCase()] ?? { gradient: [colors.primary, colors.primaryShade] as [string, string], icon: "qr-code-outline" as keyof typeof Ionicons.glyphMap, label: "QR Code" };
-}
+import {
+  formatShortDate,
+  getContentTypeMeta,
+  getContentDisplayLabel,
+  getContentSubtitle,
+} from "@/lib/utils/formatters";
 
 function SkeletonCard() {
   const { colors } = useTheme();
   return (
     <View style={{
-      backgroundColor: colors.surface, borderRadius: 18, borderWidth: 1,
-      borderColor: colors.surfaceBorder, padding: 14, marginBottom: 10,
-      flexDirection: "row", alignItems: "center", gap: 12,
+      backgroundColor: colors.surface, borderRadius: 20, borderWidth: 1,
+      borderColor: colors.surfaceBorder, paddingHorizontal: 14, paddingVertical: 13,
+      marginBottom: 10, flexDirection: "row", alignItems: "center", gap: 13,
     }}>
-      <SkeletonBox width={46} height={46} borderRadius={14} />
-      <View style={{ flex: 1, gap: 9 }}>
-        <SkeletonBox width="65%" height={12} borderRadius={4} />
-        <SkeletonBox width="45%" height={10} borderRadius={4} />
-        <SkeletonBox width="55%" height={9} borderRadius={4} />
+      <SkeletonBox width={48} height={48} borderRadius={15} />
+      <View style={{ flex: 1, gap: 6 }}>
+        <SkeletonBox width="65%" height={13} borderRadius={4} />
+        <SkeletonBox width="45%" height={11} borderRadius={4} />
+        <SkeletonBox width="55%" height={10} borderRadius={4} />
       </View>
-      <SkeletonBox width={28} height={28} borderRadius={14} />
+      <View style={{ alignItems: "flex-end", gap: 8 }}>
+        <SkeletonBox width={38} height={11} borderRadius={4} />
+        <SkeletonBox width={28} height={28} borderRadius={9} />
+      </View>
     </View>
   );
 }
@@ -131,8 +124,15 @@ export default function FollowingSection({ loading, list }: Props) {
         </Text>
       }
       renderItem={({ item, index }) => {
-        const meta = getMeta(item.contentType, colors);
-        const displayContent = item.content.length > 46 ? item.content.slice(0, 43) + "…" : item.content;
+        const rawMeta = getContentTypeMeta(item.contentType);
+        const meta = {
+          icon: rawMeta.icon as keyof typeof Ionicons.glyphMap,
+          label: rawMeta.label,
+          gradient: rawMeta.gradient as [string, string],
+        };
+        const displayLabel = getContentDisplayLabel(item.content, item.contentType);
+        const subtitle = getContentSubtitle(item.content, item.contentType);
+        const cardBg = isDark ? colors.surface : "#ffffff";
 
         return (
           <Animated.View entering={FadeInDown.duration(320).delay(index * 45).springify()}>
@@ -141,84 +141,69 @@ export default function FollowingSection({ loading, list }: Props) {
               style={({ pressed }) => [
                 s.card,
                 {
-                  backgroundColor: colors.surface,
+                  backgroundColor: cardBg,
                   borderColor: colors.surfaceBorder,
-                  opacity: pressed ? 0.87 : 1,
-                  transform: [{ scale: pressed ? 0.985 : 1 }],
+                  opacity: pressed ? 0.9 : 1,
+                  transform: [{ scale: pressed ? 0.984 : 1 }],
+                  shadowColor: isDark ? "#000" : "#0008FF",
+                  shadowOpacity: isDark ? 0.18 : 0.05,
                 },
               ]}
             >
               <LinearGradient
-                colors={[meta.gradient[0] + (isDark ? "12" : "08"), "transparent"]}
-                start={{ x: 0, y: 0.5 }} end={{ x: 1, y: 0.5 }}
-                style={StyleSheet.absoluteFill}
-              />
-
-              <LinearGradient
                 colors={meta.gradient}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
                 style={s.iconBox}
-                start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
               >
-                <Ionicons name={meta.icon} size={19} color="#fff" />
+                <Ionicons name={meta.icon} size={21} color="#fff" />
               </LinearGradient>
 
-              <View style={{ flex: 1, minWidth: 0, gap: 4 }}>
-                <Text style={[s.contentText, { color: colors.text }]} numberOfLines={1}>
-                  {displayContent}
+              <View style={s.body}>
+                <Text style={[s.title, { color: colors.text }]} numberOfLines={1} maxFontSizeMultiplier={1}>
+                  {displayLabel}
                 </Text>
 
-                <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
-                  <LinearGradient
-                    colors={meta.gradient}
-                    style={s.typeBadge}
-                    start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}
-                  >
-                    <Text style={s.typeBadgeText}>{meta.label}</Text>
-                  </LinearGradient>
-                  {item.ownerName && (
-                    <View style={{ flexDirection: "row", alignItems: "center", gap: 3 }}>
-                      <Ionicons name="person-circle-outline" size={10} color={colors.textMuted} />
-                      <Text style={{ fontSize: 10, fontFamily: "Inter_500Medium", color: colors.textMuted }} numberOfLines={1}>
-                        {item.ownerName.length > 18 ? item.ownerName.slice(0, 16) + "…" : item.ownerName}
-                      </Text>
-                    </View>
-                  )}
-                </View>
+                {subtitle ? (
+                  <Text style={[s.subtitle, { color: colors.textSecondary }]} numberOfLines={1} maxFontSizeMultiplier={1}>
+                    {subtitle}
+                  </Text>
+                ) : null}
 
-                <View style={{ flexDirection: "row", alignItems: "center", gap: 10, marginTop: 1 }}>
-                  <View style={{ flexDirection: "row", alignItems: "center", gap: 3 }}>
-                    <Ionicons name="scan-outline" size={10} color={colors.textMuted} />
-                    <Text style={{ fontSize: 11, fontFamily: "Inter_400Regular", color: colors.textMuted }}>
-                      {item.scanCount} {item.scanCount === 1 ? "scan" : "scans"}
-                    </Text>
+                <View style={s.metaRow}>
+                  <View style={[s.typeBadge, { backgroundColor: meta.gradient[0] + "22" }]}>
+                    <Text style={[s.typeBadgeText, { color: meta.gradient[0] }]}>{meta.label}</Text>
                   </View>
-                  <View style={{ width: 3, height: 3, borderRadius: 1.5, backgroundColor: colors.surfaceBorder }} />
-                  <View style={{ flexDirection: "row", alignItems: "center", gap: 3 }}>
-                    <Ionicons name="chatbubble-outline" size={10} color={colors.textMuted} />
-                    <Text style={{ fontSize: 11, fontFamily: "Inter_400Regular", color: colors.textMuted }}>
-                      {item.commentCount}
-                    </Text>
-                  </View>
-                  {item.createdAt ? (
+                  {item.scanCount > 0 && (
                     <>
-                      <View style={{ width: 3, height: 3, borderRadius: 1.5, backgroundColor: colors.surfaceBorder }} />
-                      <View style={{ flexDirection: "row", alignItems: "center", gap: 3 }}>
-                        <Ionicons name="heart-outline" size={10} color={colors.textMuted} />
-                        <Text style={{ fontSize: 11, fontFamily: "Inter_400Regular", color: colors.textMuted }}>
-                          {formatShortDate(new Date(item.createdAt))}
-                        </Text>
-                      </View>
+                      <View style={s.dot} />
+                      <Ionicons name="scan-outline" size={10} color={colors.textMuted} />
+                      <Text style={[s.metaText, { color: colors.textMuted }]} maxFontSizeMultiplier={1}>
+                        {item.scanCount} {item.scanCount === 1 ? "scan" : "scans"}
+                      </Text>
                     </>
-                  ) : null}
+                  )}
+                  {item.commentCount > 0 && (
+                    <>
+                      <View style={s.dot} />
+                      <Ionicons name="chatbubble-outline" size={10} color={colors.textMuted} />
+                      <Text style={[s.metaText, { color: colors.textMuted }]} maxFontSizeMultiplier={1}>
+                        {item.commentCount}
+                      </Text>
+                    </>
+                  )}
                 </View>
               </View>
 
-              <View style={{
-                width: 30, height: 30, borderRadius: 15,
-                backgroundColor: colors.surfaceLight,
-                alignItems: "center", justifyContent: "center", flexShrink: 0,
-              }}>
-                <Ionicons name="chevron-forward" size={14} color={colors.textMuted} />
+              <View style={s.right}>
+                {item.createdAt ? (
+                  <Text style={[s.time, { color: colors.textMuted }]} maxFontSizeMultiplier={1}>
+                    {formatShortDate(new Date(item.createdAt))}
+                  </Text>
+                ) : null}
+                <View style={[s.chevronWrap, { backgroundColor: meta.gradient[0] + "18" }]}>
+                  <Ionicons name="chevron-forward" size={13} color={meta.gradient[0]} />
+                </View>
               </View>
             </Pressable>
           </Animated.View>
@@ -239,29 +224,50 @@ const s = StyleSheet.create({
   card: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 12,
-    borderRadius: 18,
-    borderWidth: 1,
-    padding: 14,
+    borderRadius: 20,
     marginBottom: 10,
+    borderWidth: 1,
     overflow: "hidden",
+    paddingHorizontal: 14,
+    paddingVertical: 13,
+    gap: 13,
+    shadowOffset: { width: 0, height: 2 },
+    shadowRadius: 12,
+    elevation: 2,
   },
   iconBox: {
-    width: 46,
-    height: 46,
-    borderRadius: 14,
+    width: 48,
+    height: 48,
+    borderRadius: 15,
     alignItems: "center",
     justifyContent: "center",
     flexShrink: 0,
   },
-  contentText: {
-    fontSize: 13,
-    fontFamily: "Inter_600SemiBold",
-    lineHeight: 18,
+  body: {
+    flex: 1,
+    minWidth: 0,
+    gap: 4,
+  },
+  title: {
+    fontSize: 14,
+    fontFamily: "Inter_700Bold",
+    lineHeight: 20,
+    letterSpacing: -0.1,
+  },
+  subtitle: {
+    fontSize: 12,
+    fontFamily: "Inter_400Regular",
+    lineHeight: 16,
+  },
+  metaRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    marginTop: 1,
+    flexWrap: "nowrap",
   },
   typeBadge: {
-    alignSelf: "flex-start",
-    paddingHorizontal: 7,
+    paddingHorizontal: 6,
     paddingVertical: 2,
     borderRadius: 100,
   },
@@ -269,6 +275,32 @@ const s = StyleSheet.create({
     fontSize: 10,
     fontFamily: "Inter_700Bold",
     letterSpacing: 0.2,
-    color: "#fff",
+  },
+  dot: {
+    width: 3,
+    height: 3,
+    borderRadius: 1.5,
+    backgroundColor: "#99999960",
+  },
+  metaText: {
+    fontSize: 11,
+    fontFamily: "Inter_400Regular",
+  },
+  right: {
+    alignItems: "flex-end",
+    gap: 8,
+    flexShrink: 0,
+  },
+  time: {
+    fontSize: 11,
+    fontFamily: "Inter_500Medium",
+    letterSpacing: 0.1,
+  },
+  chevronWrap: {
+    width: 28,
+    height: 28,
+    borderRadius: 9,
+    alignItems: "center",
+    justifyContent: "center",
   },
 });
