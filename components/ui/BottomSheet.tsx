@@ -70,7 +70,13 @@ export default function BottomSheet({ visible, onClose, children, maxHeight = "8
     }
   }, [internalVisible]);
 
-  const bottomPad = Math.max(Platform.OS === "web" ? 0 : insets.bottom, 24);
+  // Inside a transparent Modal on Android the safe-area context can report
+  // bottom=0 because the modal is constrained above the nav bar. Always add
+  // 16 px on top of whatever the context gives us, and never go below 32 px
+  // on Android so the last row never sits flush against the nav bar.
+  const bottomPad = Platform.OS === "web"
+    ? 0
+    : Math.max(insets.bottom + 16, Platform.OS === "android" ? 32 : 24);
 
   return (
     <Modal
