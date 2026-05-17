@@ -124,12 +124,16 @@ function ClassicTabLayout() {
               }]}
             />
           ) : (
+            // Extend `bottom` well past 0 so there is no sub-pixel gap
+            // between the floating bar and the system navigation bar.
+            // Fully-opaque background avoids colour mismatch with the nav bar.
             <View style={[StyleSheet.absoluteFill, {
-              backgroundColor: colors.isDark ? "rgba(8,15,28,0.97)" : "rgba(255,255,255,0.98)",
+              bottom: -120,
+              backgroundColor: colors.isDark ? colors.background : colors.surface,
               borderTopLeftRadius: 22, borderTopRightRadius: 22,
               borderBottomLeftRadius: 0, borderBottomRightRadius: 0,
-              borderTopWidth: 1, borderLeftWidth: 1,
-              borderRightWidth: 1, borderBottomWidth: 0,
+              borderTopWidth: 1, borderLeftWidth: 0,
+              borderRightWidth: 0, borderBottomWidth: 0,
               borderColor: colors.surfaceBorder,
               shadowColor: "#000",
               shadowOffset: { width: 0, height: -6 },
