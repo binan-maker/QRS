@@ -182,7 +182,9 @@ export interface GeneratedQrItem {
   commentCount?: number;
   isActive?: boolean;
   qrType?: string;
-  label?: string;
+  label?: string | null;
+  scanLimit?: number | null;
+  expiryDate?: string | null;
   guardUuid?: string;
   deactivationMessage?: string | null;
   fgColor?: string;

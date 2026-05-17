@@ -5,9 +5,18 @@ import Animated, { FadeIn, FadeInDown } from "react-native-reanimated";
 import { LinearGradient } from "expo-linear-gradient";
 import { useTheme } from "@/contexts/ThemeContext";
 import { QR_COLOR_THEMES } from "@/features/generator/components/QrThemeSection";
-import type { LogoPosition } from "@/features/my-qr/hooks/useQrDesign";
+import type { LogoPosition, ExpiryPreset } from "@/features/my-qr/hooks/useQrDesign";
 
 type Tab = "colors" | "logo" | "options";
+
+const EXPIRY_PRESETS: { key: ExpiryPreset; label: string }[] = [
+  { key: "never",  label: "Never"    },
+  { key: "1d",     label: "1 Day"    },
+  { key: "7d",     label: "7 Days"   },
+  { key: "30d",    label: "30 Days"  },
+  { key: "90d",    label: "3 Months" },
+  { key: "custom", label: "Custom"   },
+];
 
 interface Props {
   fgColor: string;
@@ -28,6 +37,12 @@ interface Props {
   onOpenPosition: () => void;
   label: string;
   onChangeLabel: (s: string) => void;
+  scanLimit: number | null;
+  onChangeScanLimit: (n: number | null) => void;
+  expiryPreset: ExpiryPreset;
+  expiryCustomDate: string;
+  onChangeExpiryPreset: (p: ExpiryPreset) => void;
+  onChangeExpiryCustomDate: (d: string) => void;
   designOpen: boolean;
   setDesignOpen: (fn: (v: boolean) => boolean) => void;
   designDirty: boolean;
@@ -42,6 +57,8 @@ export default function DesignPanel({
   showDefaultLogo, customLogoUri, logoPositionLabel,
   onToggleDefaultLogo, onPickLogo, onRemoveLogo, onOpenPosition,
   label, onChangeLabel,
+  scanLimit, onChangeScanLimit,
+  expiryPreset, expiryCustomDate, onChangeExpiryPreset, onChangeExpiryCustomDate,
   designOpen, setDesignOpen, designDirty, saving, handleSaveDesign,
 }: Props) {
   const { colors } = useTheme();
@@ -51,7 +68,7 @@ export default function DesignPanel({
 
   const hasTheme   = selectedThemeIdx !== 0 || isCustomTheme;
   const hasLogo    = !!customLogoUri || showDefaultLogo;
-  const hasOptions = label.trim().length > 0;
+  const hasOptions = label.trim().length > 0 || scanLimit !== null || expiryPreset !== "never";
   const hasAny     = hasTheme || hasLogo || hasOptions;
 
   const dots: Tab[] = [];
@@ -397,11 +414,13 @@ export default function DesignPanel({
             {/* ── Options tab ── */}
             {tab === "options" && (
               <View style={{ gap: 16 }}>
+
+                {/* Label */}
                 <View style={{ gap: 6 }}>
                   <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
                     <Ionicons name="pricetag-outline" size={13} color={colors.textMuted} />
                     <Text style={{ fontSize: 12, fontFamily: "Inter_600SemiBold", color: colors.textSecondary }}>
-                      Label
+                      Private Label
                     </Text>
                     <View style={{ borderRadius: 5, paddingHorizontal: 5, paddingVertical: 1, backgroundColor: colors.surfaceLight }}>
                       <Text style={{ fontSize: 9, fontFamily: "Inter_500Medium", color: colors.textMuted }}>optional</Text>
@@ -419,7 +438,133 @@ export default function DesignPanel({
                     onChangeText={onChangeLabel}
                     maxLength={80}
                   />
+                  <Text style={{ fontSize: 10, fontFamily: "Inter_400Regular", color: colors.textMuted }}>
+                    Only visible to you — helps organize your QR codes
+                  </Text>
                 </View>
+
+                {/* Max Scans */}
+                <View style={{ gap: 6 }}>
+                  <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
+                    <Ionicons name="scan-outline" size={13} color={colors.textMuted} />
+                    <Text style={{ fontSize: 12, fontFamily: "Inter_600SemiBold", color: colors.textSecondary }}>
+                      Max Scans
+                    </Text>
+                  </View>
+                  <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+                    <Pressable
+                      onPress={() => onChangeScanLimit(null)}
+                      style={{
+                        borderRadius: 10, borderWidth: 1,
+                        paddingHorizontal: 12, paddingVertical: 8,
+                        borderColor: scanLimit === null ? colors.textMuted + "40" : colors.surfaceBorder,
+                        backgroundColor: scanLimit === null ? colors.surfaceLight : colors.surface,
+                      }}
+                    >
+                      <Text style={{ fontSize: 12, fontFamily: "Inter_500Medium", color: scanLimit === null ? colors.textSecondary : colors.textMuted }}>
+                        Unlimited
+                      </Text>
+                    </Pressable>
+                    <View style={{ flex: 1, flexDirection: "row", alignItems: "center", gap: 6 }}>
+                      <Pressable
+                        onPress={() => onChangeScanLimit(Math.max(1, (scanLimit ?? 0) - 1))}
+                        style={{
+                          width: 32, height: 32, borderRadius: 10, borderWidth: 1,
+                          alignItems: "center", justifyContent: "center",
+                          borderColor: colors.surfaceBorder, backgroundColor: colors.surfaceLight,
+                        }}
+                      >
+                        <Ionicons name="remove" size={14} color={colors.textSecondary} />
+                      </Pressable>
+                      <TextInput
+                        style={{
+                          flex: 1, borderRadius: 10, borderWidth: 1,
+                          paddingHorizontal: 10, paddingVertical: 7,
+                          fontSize: 13, fontFamily: "Inter_600SemiBold",
+                          textAlign: "center",
+                          color: colors.text, backgroundColor: colors.surfaceLight, borderColor: colors.surfaceBorder,
+                        }}
+                        value={scanLimit !== null ? String(scanLimit) : ""}
+                        onChangeText={(v) => {
+                          const n = parseInt(v, 10);
+                          onChangeScanLimit(isNaN(n) || n <= 0 ? null : n);
+                        }}
+                        placeholder="e.g. 100"
+                        placeholderTextColor={colors.textMuted}
+                        keyboardType="number-pad"
+                        maxLength={6}
+                      />
+                      <Pressable
+                        onPress={() => onChangeScanLimit((scanLimit ?? 0) + 1)}
+                        style={{
+                          width: 32, height: 32, borderRadius: 10, borderWidth: 1,
+                          alignItems: "center", justifyContent: "center",
+                          borderColor: colors.surfaceBorder, backgroundColor: colors.surfaceLight,
+                        }}
+                      >
+                        <Ionicons name="add" size={14} color={colors.textSecondary} />
+                      </Pressable>
+                    </View>
+                  </View>
+                  {scanLimit !== null && scanLimit > 0 && (
+                    <Text style={{ fontSize: 10, fontFamily: "Inter_400Regular", color: colors.warning }}>
+                      QR auto-deactivates after {scanLimit} scan{scanLimit === 1 ? "" : "s"}
+                    </Text>
+                  )}
+                </View>
+
+                {/* Expiry */}
+                <View style={{ gap: 6 }}>
+                  <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
+                    <Ionicons name="time-outline" size={13} color={colors.textMuted} />
+                    <Text style={{ fontSize: 12, fontFamily: "Inter_600SemiBold", color: colors.textSecondary }}>
+                      Expiry / Active Until
+                    </Text>
+                  </View>
+                  <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 6 }}>
+                    {EXPIRY_PRESETS.map((p) => {
+                      const active = expiryPreset === p.key;
+                      return (
+                        <Pressable
+                          key={p.key}
+                          onPress={() => onChangeExpiryPreset(p.key)}
+                          style={{
+                            borderRadius: 10, borderWidth: 1,
+                            paddingHorizontal: 10, paddingVertical: 6,
+                            backgroundColor: active ? colors.primaryDim : colors.surfaceLight,
+                            borderColor: active ? colors.primary + "60" : colors.surfaceBorder,
+                          }}
+                        >
+                          <Text style={{ fontSize: 11, fontFamily: "Inter_600SemiBold", color: active ? colors.primary : colors.textMuted }}>
+                            {p.label}
+                          </Text>
+                        </Pressable>
+                      );
+                    })}
+                  </View>
+                  {expiryPreset === "custom" && (
+                    <TextInput
+                      style={{
+                        borderRadius: 12, borderWidth: 1, paddingHorizontal: 12, paddingVertical: 9,
+                        fontSize: 13, fontFamily: "Inter_400Regular",
+                        color: colors.text, backgroundColor: colors.surfaceLight, borderColor: colors.surfaceBorder,
+                        marginTop: 4,
+                      }}
+                      placeholder="YYYY-MM-DD (e.g. 2026-12-31)"
+                      placeholderTextColor={colors.textMuted}
+                      value={expiryCustomDate}
+                      onChangeText={onChangeExpiryCustomDate}
+                      keyboardType="numbers-and-punctuation"
+                      maxLength={10}
+                    />
+                  )}
+                  {expiryPreset !== "never" && (
+                    <Text style={{ fontSize: 10, fontFamily: "Inter_400Regular", color: colors.safe }}>
+                      QR deactivates automatically on the set date
+                    </Text>
+                  )}
+                </View>
+
               </View>
             )}
 
@@ -438,7 +583,7 @@ export default function DesignPanel({
               >
                 {saving && <ActivityIndicator size="small" color="#fff" />}
                 <Text style={{ fontSize: 13, fontFamily: "Inter_700Bold", color: "#fff" }}>
-                  {saving ? "Saving…" : "Save Design"}
+                  {saving ? "Saving…" : "Save Changes"}
                 </Text>
               </Pressable>
             )}

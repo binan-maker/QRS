@@ -48,6 +48,8 @@ export default function MyQrDetailScreen() {
     logoPositionLabel,
     handlePickLogo, handleRemoveLogo, handleToggleDefaultLogo,
     label, setLabel,
+    scanLimit, handleChangeScanLimit,
+    expiryPreset, expiryCustomDate, handleChangeExpiryPreset, handleChangeExpiryCustomDate,
     saving, designDirty, setDesignDirty, designOpen, setDesignOpen,
     togglingActive,
     guardLink, standardLink,
@@ -301,6 +303,12 @@ export default function MyQrDetailScreen() {
           onOpenPosition={() => setPositionModalOpen(true)}
           label={label}
           onChangeLabel={(s) => { setLabel(s); setDesignDirty(true); }}
+          scanLimit={scanLimit}
+          onChangeScanLimit={handleChangeScanLimit}
+          expiryPreset={expiryPreset}
+          expiryCustomDate={expiryCustomDate}
+          onChangeExpiryPreset={handleChangeExpiryPreset}
+          onChangeExpiryCustomDate={handleChangeExpiryCustomDate}
           designOpen={designOpen}
           setDesignOpen={setDesignOpen}
           designDirty={designDirty}

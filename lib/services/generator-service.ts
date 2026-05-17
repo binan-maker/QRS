@@ -147,6 +147,9 @@ export async function getGeneratedQrById(userId: string, docId: string): Promise
       bgColor: data.bgColor || "#F8FAFC",
       logoPosition: data.logoPosition || "center",
       logoUri: data.logoUri || null,
+      label: data.label || null,
+      scanLimit: data.scanLimit ?? null,
+      expiryDate: data.expiryDate || null,
       scanCount, commentCount,
       qrType: (data.qrType as QrType) || "individual",
       isActive, deactivationMessage,
@@ -344,7 +347,15 @@ export async function updateDisplayDestination(
 export async function updateQrDesign(
   userId: string,
   docId: string,
-  design: { fgColor: string; bgColor: string; logoPosition: string; logoUri: string | null }
+  design: {
+    fgColor: string;
+    bgColor: string;
+    logoPosition: string;
+    logoUri: string | null;
+    label?: string | null;
+    scanLimit?: number | null;
+    expiryDate?: string | null;
+  }
 ): Promise<void> {
   try {
     await db.update(["users", userId, "generatedQrs", docId], {
@@ -352,6 +363,9 @@ export async function updateQrDesign(
       bgColor: design.bgColor,
       logoPosition: design.logoPosition,
       logoUri: design.logoUri || null,
+      label: design.label || null,
+      scanLimit: design.scanLimit ?? null,
+      expiryDate: design.expiryDate || null,
     });
   } catch (e) {
     logError("updateQrDesign", e, { userId, docId });

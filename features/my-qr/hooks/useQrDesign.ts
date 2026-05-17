@@ -5,8 +5,13 @@ import * as Haptics from "@/lib/haptics";
 import { updateQrDesign, type GeneratedQrItem } from "@/lib/firestore-service";
 import { useAuth } from "@/contexts/AuthContext";
 import { QR_COLOR_THEMES } from "@/features/generator/components/QrThemeSection";
+import {
+  resolveExpiryDate,
+  type ExpiryPreset,
+} from "@/features/generator/components/AdvancedSettingsPanel";
 
 export type LogoPosition = "center" | "top-left" | "top-right" | "bottom-left" | "bottom-right";
+export type { ExpiryPreset };
 
 export const LOGO_POSITIONS: { key: LogoPosition; label: string }[] = [
   { key: "center",       label: "Center"     },
@@ -32,7 +37,10 @@ export function useQrDesign(qrItem: GeneratedQrItem | null) {
   const [showDefaultLogo,   setShowDefaultLogo]   = useState(false);
   const [positionModalOpen, setPositionModalOpen] = useState(false);
 
-  const [label,        setLabel]       = useState("");
+  const [label,            setLabel]            = useState("");
+  const [scanLimit,        setScanLimit]        = useState<number | null>(null);
+  const [expiryPreset,     setExpiryPreset]     = useState<ExpiryPreset>("never");
+  const [expiryCustomDate, setExpiryCustomDate] = useState("");
 
   const [saving,       setSaving]      = useState(false);
   const [designDirty,  setDesignDirty] = useState(false);
@@ -80,7 +88,16 @@ export function useQrDesign(qrItem: GeneratedQrItem | null) {
     setCustomBgColor(bg);
     setLogoPosition((item.logoPosition as LogoPosition) || "center");
     setCustomLogoUri(item.logoUri || null);
-    setLabel((item as any).label || "");
+    setLabel(item.label || "");
+    setScanLimit(item.scanLimit ?? null);
+
+    if (item.expiryDate) {
+      setExpiryPreset("custom");
+      setExpiryCustomDate(item.expiryDate.slice(0, 10));
+    } else {
+      setExpiryPreset("never");
+      setExpiryCustomDate("");
+    }
 
     const matchIdx = QR_COLOR_THEMES.findIndex((t) => t.fg === fg && t.bg === bg);
     if (matchIdx >= 0) {
@@ -132,15 +149,34 @@ export function useQrDesign(qrItem: GeneratedQrItem | null) {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
   }
 
+  function handleChangeScanLimit(n: number | null) {
+    setScanLimit(n);
+    setDesignDirty(true);
+  }
+
+  function handleChangeExpiryPreset(p: ExpiryPreset) {
+    setExpiryPreset(p);
+    setDesignDirty(true);
+  }
+
+  function handleChangeExpiryCustomDate(d: string) {
+    setExpiryCustomDate(d);
+    setDesignDirty(true);
+  }
+
   async function handleSaveDesign() {
     if (!user || !qrItem) return;
     setSaving(true);
     try {
+      const resolvedExpiry = resolveExpiryDate(expiryPreset, expiryCustomDate);
       await updateQrDesign(user.id, qrItem.docId!, {
         fgColor,
         bgColor,
         logoPosition,
         logoUri: customLogoUri || null,
+        label: label.trim() || null,
+        scanLimit: scanLimit ?? null,
+        expiryDate: resolvedExpiry,
       });
       setDesignDirty(false);
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
@@ -168,6 +204,9 @@ export function useQrDesign(qrItem: GeneratedQrItem | null) {
     logoPositionLabel,
     handlePickLogo, handleRemoveLogo, handleToggleDefaultLogo,
     label, setLabel,
+    scanLimit, handleChangeScanLimit,
+    expiryPreset, handleChangeExpiryPreset,
+    expiryCustomDate, handleChangeExpiryCustomDate,
     saving, designDirty, setDesignDirty,
     designOpen, setDesignOpen,
     initDesignFromQrItem, handleSaveDesign,
