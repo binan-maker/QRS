@@ -17,7 +17,7 @@ import { useQrDesign } from "./useQrDesign";
 import { useQrDestination } from "./useQrDestination";
 import { useOwnerComments } from "./useOwnerComments";
 
-export { FG_COLORS, BG_COLORS, LOGO_POSITIONS } from "./useQrDesign";
+export { LOGO_POSITIONS } from "./useQrDesign";
 export type { LogoPosition } from "./useQrDesign";
 
 export function useMyQrDetail(id: string) {

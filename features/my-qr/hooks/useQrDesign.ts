@@ -1,69 +1,134 @@
 import { useState } from "react";
 import { Alert } from "react-native";
+import * as ImagePicker from "expo-image-picker";
 import * as Haptics from "@/lib/haptics";
 import { updateQrDesign, type GeneratedQrItem } from "@/lib/firestore-service";
 import { useAuth } from "@/contexts/AuthContext";
+import { QR_COLOR_THEMES } from "@/features/generator/components/QrThemeSection";
 
 export type LogoPosition = "center" | "top-left" | "top-right" | "bottom-left" | "bottom-right";
 
-export const FG_COLORS = [
-  { color: "#0A0E17", label: "Dark" },
-  { color: "#1e3a5f", label: "Navy" },
-  { color: "#7C3AED", label: "Purple" },
-  { color: "#10B981", label: "Green" },
-  { color: "#EF4444", label: "Red" },
-  { color: "#F59E0B", label: "Amber" },
-  { color: "#000000", label: "Black" },
-];
-
-export const BG_COLORS = [
-  { color: "#F8FAFC", label: "Light" },
-  { color: "#FFFFFF", label: "White" },
-  { color: "#E0F2FE", label: "Sky" },
-  { color: "#FEF3C7", label: "Cream" },
-  { color: "#F0FDF4", label: "Mint" },
-];
-
 export const LOGO_POSITIONS: { key: LogoPosition; label: string }[] = [
-  { key: "center", label: "Center" },
-  { key: "top-left", label: "Top Left" },
-  { key: "top-right", label: "Top Right" },
-  { key: "bottom-left", label: "Bot. Left" },
+  { key: "center",       label: "Center"     },
+  { key: "top-left",     label: "Top Left"   },
+  { key: "top-right",    label: "Top Right"  },
+  { key: "bottom-left",  label: "Bot. Left"  },
   { key: "bottom-right", label: "Bot. Right" },
 ];
 
 export function useQrDesign(qrItem: GeneratedQrItem | null) {
   const { user } = useAuth();
+
   const [fgColor, setFgColor] = useState("#0A0E17");
   const [bgColor, setBgColor] = useState("#F8FAFC");
-  const [logoPosition, setLogoPosition] = useState<LogoPosition>("center");
-  const [logoUri, setLogoUri] = useState<string | null>(null);
-  const [saving, setSaving] = useState(false);
-  const [designDirty, setDesignDirty] = useState(false);
-  const [designOpen, setDesignOpen] = useState(false);
 
-  const [customColorOpen, setCustomColorOpen] = useState(false);
-  const [customColorTarget, setCustomColorTarget] = useState<"fg" | "bg">("fg");
-  const [customColorInput, setCustomColorInput] = useState("");
+  const [selectedThemeIdx, setSelectedThemeIdx] = useState(0);
+  const [isCustomTheme,    setIsCustomTheme]    = useState(false);
+  const [customFgColor,    setCustomFgColor]    = useState("#0A0E17");
+  const [customBgColor,    setCustomBgColor]    = useState("#F8FAFC");
 
-  function initDesignFromQrItem(item: GeneratedQrItem) {
-    setFgColor(item.fgColor || "#0A0E17");
-    setBgColor(item.bgColor || "#F8FAFC");
-    setLogoPosition((item.logoPosition as LogoPosition) || "center");
-    setLogoUri(item.logoUri || null);
+  const [logoPosition,      setLogoPosition]      = useState<LogoPosition>("center");
+  const [customLogoUri,     setCustomLogoUri]     = useState<string | null>(null);
+  const [showDefaultLogo,   setShowDefaultLogo]   = useState(false);
+  const [positionModalOpen, setPositionModalOpen] = useState(false);
+
+  const [label,        setLabel]       = useState("");
+
+  const [saving,       setSaving]      = useState(false);
+  const [designDirty,  setDesignDirty] = useState(false);
+  const [designOpen,   setDesignOpen]  = useState(false);
+
+  const CUSTOM_THEME_IDX = QR_COLOR_THEMES.length;
+
+  function onSelectTheme(idx: number) {
+    if (idx === CUSTOM_THEME_IDX) {
+      setIsCustomTheme(true);
+      setSelectedThemeIdx(idx);
+    } else {
+      setIsCustomTheme(false);
+      setSelectedThemeIdx(idx);
+      setFgColor(QR_COLOR_THEMES[idx].fg);
+      setBgColor(QR_COLOR_THEMES[idx].bg);
+      setCustomFgColor(QR_COLOR_THEMES[idx].fg);
+      setCustomBgColor(QR_COLOR_THEMES[idx].bg);
+      setDesignDirty(true);
+    }
   }
 
-  function applyCustomColor() {
-    let hex = customColorInput.trim();
-    if (!hex.startsWith("#")) hex = "#" + hex;
-    if (!/^#([0-9A-Fa-f]{3}|[0-9A-Fa-f]{6})$/.test(hex)) {
-      Alert.alert("Invalid color", "Please enter a valid hex color (e.g. #FF5500)");
+  function onSetCustomFg(hex: string) {
+    setCustomFgColor(hex);
+    if (/^#([0-9A-Fa-f]{3}|[0-9A-Fa-f]{6})$/.test(hex)) {
+      setFgColor(hex);
+      setDesignDirty(true);
+    }
+  }
+
+  function onSetCustomBg(hex: string) {
+    setCustomBgColor(hex);
+    if (/^#([0-9A-Fa-f]{3}|[0-9A-Fa-f]{6})$/.test(hex)) {
+      setBgColor(hex);
+      setDesignDirty(true);
+    }
+  }
+
+  function initDesignFromQrItem(item: GeneratedQrItem) {
+    const fg = item.fgColor || "#0A0E17";
+    const bg = item.bgColor || "#F8FAFC";
+    setFgColor(fg);
+    setBgColor(bg);
+    setCustomFgColor(fg);
+    setCustomBgColor(bg);
+    setLogoPosition((item.logoPosition as LogoPosition) || "center");
+    setCustomLogoUri(item.logoUri || null);
+    setLabel((item as any).label || "");
+
+    const matchIdx = QR_COLOR_THEMES.findIndex((t) => t.fg === fg && t.bg === bg);
+    if (matchIdx >= 0) {
+      setSelectedThemeIdx(matchIdx);
+      setIsCustomTheme(false);
+    } else {
+      setIsCustomTheme(true);
+      setSelectedThemeIdx(CUSTOM_THEME_IDX);
+    }
+  }
+
+  async function handlePickLogo() {
+    const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (!perm.granted) {
+      Alert.alert("Permission required", "Gallery permission is required to pick a logo.");
       return;
     }
-    if (customColorTarget === "fg") setFgColor(hex);
-    else setBgColor(hex);
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ["images"],
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 0.3,
+      base64: true,
+    });
+    if (!result.canceled && result.assets?.[0]) {
+      const asset = result.assets[0];
+      const uri = asset.base64
+        ? `data:image/jpeg;base64,${asset.base64}`
+        : asset.uri;
+      setCustomLogoUri(uri);
+      setShowDefaultLogo(false);
+      setDesignDirty(true);
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    }
+  }
+
+  function handleRemoveLogo() {
+    setCustomLogoUri(null);
+    setShowDefaultLogo(false);
     setDesignDirty(true);
-    setCustomColorOpen(false);
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+  }
+
+  function handleToggleDefaultLogo() {
+    const next = !showDefaultLogo;
+    setShowDefaultLogo(next);
+    if (next) setCustomLogoUri(null);
+    setDesignDirty(true);
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
   }
 
@@ -71,7 +136,12 @@ export function useQrDesign(qrItem: GeneratedQrItem | null) {
     if (!user || !qrItem) return;
     setSaving(true);
     try {
-      await updateQrDesign(user.id, qrItem.docId!, { fgColor, bgColor, logoPosition, logoUri: null });
+      await updateQrDesign(user.id, qrItem.docId!, {
+        fgColor,
+        bgColor,
+        logoPosition,
+        logoUri: customLogoUri || null,
+      });
       setDesignDirty(false);
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       Alert.alert("Saved", "Design updated successfully.");
@@ -82,16 +152,24 @@ export function useQrDesign(qrItem: GeneratedQrItem | null) {
     }
   }
 
+  const logoPositionLabel =
+    LOGO_POSITIONS.find((p) => p.key === logoPosition)?.label ?? "Center";
+
   return {
     fgColor, setFgColor,
     bgColor, setBgColor,
+    selectedThemeIdx, isCustomTheme,
+    customFgColor, customBgColor,
+    onSelectTheme, onSetCustomFg, onSetCustomBg,
     logoPosition, setLogoPosition,
-    logoUri, setLogoUri,
+    customLogoUri, setCustomLogoUri,
+    showDefaultLogo,
+    positionModalOpen, setPositionModalOpen,
+    logoPositionLabel,
+    handlePickLogo, handleRemoveLogo, handleToggleDefaultLogo,
+    label, setLabel,
     saving, designDirty, setDesignDirty,
     designOpen, setDesignOpen,
-    customColorOpen, setCustomColorOpen,
-    customColorTarget, setCustomColorTarget,
-    customColorInput, setCustomColorInput,
-    initDesignFromQrItem, applyCustomColor, handleSaveDesign,
+    initDesignFromQrItem, handleSaveDesign,
   };
 }

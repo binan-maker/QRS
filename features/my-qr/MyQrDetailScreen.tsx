@@ -24,7 +24,8 @@ import OwnerCommentsSection from "@/features/my-qr/components/comments/OwnerComm
 import DeactivateModal from "@/features/my-qr/components/modals/DeactivateModal";
 import ConfirmActionModal from "@/features/my-qr/components/modals/ConfirmActionModal";
 import FollowersModal from "@/features/my-qr/components/modals/FollowersModal";
-import CustomColorModal from "@/features/my-qr/components/modals/CustomColorModal";
+import PositionModal from "@/features/generator/components/PositionModal";
+import type { LogoPosition } from "@/features/my-qr/hooks/useQrDesign";
 
 export default function MyQrDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -38,12 +39,16 @@ export default function MyQrDetailScreen() {
 
   const {
     user, svgRef, scrollRef, qrItem, loading,
-    fgColor, setFgColor, bgColor, setBgColor,
+    fgColor, bgColor,
+    selectedThemeIdx, isCustomTheme,
+    customFgColor, customBgColor,
+    onSelectTheme, onSetCustomFg, onSetCustomBg,
+    showDefaultLogo, positionModalOpen, setPositionModalOpen,
+    logoPosition, setLogoPosition,
+    logoPositionLabel,
+    handlePickLogo, handleRemoveLogo, handleToggleDefaultLogo,
+    label, setLabel,
     saving, designDirty, setDesignDirty, designOpen, setDesignOpen,
-    customColorOpen, setCustomColorOpen,
-    customColorTarget, setCustomColorTarget,
-    customColorInput, setCustomColorInput,
-    applyCustomColor,
     togglingActive, deactivateModalOpen, setDeactivateModalOpen,
     deactivationMsgInput, setDeactivationMsgInput,
     guardLink, standardLink,
@@ -69,6 +74,7 @@ export default function MyQrDetailScreen() {
     expandedReplies, setExpandedReplies,
     topLevelComments, getAllDescendants,
     handleSubmitComment, handleModerateComment,
+    customLogoUri,
   } = useMyQrDetail(id as string);
 
   if (loading) {
@@ -96,7 +102,6 @@ export default function MyQrDetailScreen() {
     );
   }
 
-  // ── Derived state ─────────────────────────────────────────────────────────────
   const isBusiness = qrItem.qrType === "business";
   const isActive = qrItem.isActive !== false;
   const isGuardQr = !!(qrItem as any).guardUuid;
@@ -158,7 +163,6 @@ export default function MyQrDetailScreen() {
 
   const ownerInitials = user?.displayName?.[0]?.toUpperCase() || "?";
 
-  // ── Render ─────────────────────────────────────────────────────────────────────
   return (
     <View style={{ flex: 1, backgroundColor: colors.background }}>
       <StatusBar style={isDark ? "light" : "dark"} backgroundColor={colors.background} />
@@ -286,19 +290,27 @@ export default function MyQrDetailScreen() {
         <DesignPanel
           fgColor={fgColor}
           bgColor={bgColor}
-          setFgColor={setFgColor}
-          setBgColor={setBgColor}
+          selectedThemeIdx={selectedThemeIdx}
+          isCustomTheme={isCustomTheme}
+          customFgColor={customFgColor}
+          customBgColor={customBgColor}
+          onSelectTheme={onSelectTheme}
+          onSetCustomFg={onSetCustomFg}
+          onSetCustomBg={onSetCustomBg}
+          showDefaultLogo={showDefaultLogo}
+          customLogoUri={customLogoUri ?? null}
+          logoPositionLabel={logoPositionLabel}
+          onToggleDefaultLogo={handleToggleDefaultLogo}
+          onPickLogo={handlePickLogo}
+          onRemoveLogo={handleRemoveLogo}
+          onOpenPosition={() => setPositionModalOpen(true)}
+          label={label}
+          onChangeLabel={(s) => { setLabel(s); setDesignDirty(true); }}
           designOpen={designOpen}
           setDesignOpen={setDesignOpen}
           designDirty={designDirty}
-          setDesignDirty={setDesignDirty}
           saving={saving}
           handleSaveDesign={handleSaveDesign}
-          onOpenCustomColor={(target) => {
-            setCustomColorTarget(target);
-            setCustomColorInput("");
-            setCustomColorOpen(true);
-          }}
         />
 
         <OwnerCommentsSection
@@ -345,13 +357,11 @@ export default function MyQrDetailScreen() {
         topInset={topInset}
       />
 
-      <CustomColorModal
-        visible={customColorOpen}
-        target={customColorTarget}
-        colorInput={customColorInput}
-        onChangeInput={setCustomColorInput}
-        onCancel={() => setCustomColorOpen(false)}
-        onApply={applyCustomColor}
+      <PositionModal
+        visible={positionModalOpen}
+        logoPosition={logoPosition as any}
+        onSelect={(pos) => { setLogoPosition(pos as LogoPosition); setDesignDirty(true); }}
+        onClose={() => setPositionModalOpen(false)}
       />
     </View>
   );
