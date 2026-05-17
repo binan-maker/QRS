@@ -104,6 +104,13 @@ export default function StandardLinkCard({
             <View><Text style={labelStyle}>Passcode (optional)</Text><TextInput value={f.passcode || ""} onChangeText={(v) => set("passcode", v)} placeholder="123456" placeholderTextColor={colors.textMuted} keyboardType="number-pad" style={inputStyle} /></View>
           </View>
         );
+      case "whatsapp":
+        return (
+          <View style={{ gap: sp(10) }}>
+            <View><Text style={labelStyle}>WhatsApp Number</Text><TextInput value={f.phone || ""} onChangeText={(v) => set("phone", v)} placeholder="+91 98765 43210" placeholderTextColor={colors.textMuted} keyboardType="phone-pad" style={inputStyle} /></View>
+            <View><Text style={labelStyle}>Pre-filled Message (optional)</Text><TextInput value={f.message || ""} onChangeText={(v) => set("message", v)} placeholder="Hello!" placeholderTextColor={colors.textMuted} multiline style={{ ...inputStyle, minHeight: sp(72), textAlignVertical: "top" }} /></View>
+          </View>
+        );
       default:
         return null;
     }
@@ -119,6 +126,7 @@ export default function StandardLinkCard({
       case "wifi": return `WIFI:T:${f.security || "WPA"};S:${f.ssid || ""};P:${f.password || ""};;`;
       case "calendly": return `https://calendly.com/${f.username || ""}${f.eventType ? "/" + f.eventType : ""}`;
       case "zoom": { const base = `https://zoom.us/j/${(f.meetingId || "").replace(/\s/g, "")}`; return f.passcode ? base + `?pwd=${f.passcode}` : base; }
+      case "whatsapp": { const phone = (f.phone || "").replace(/\D/g, ""); const msg = (f.message || "").trim(); return `https://wa.me/${phone}${msg ? "?text=" + encodeURIComponent(msg) : ""}`; }
       default: return "";
     }
   }

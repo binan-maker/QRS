@@ -117,7 +117,7 @@ export default function MyQrDetailScreen() {
   const displayTitle = getDetailDisplayTitle(liveItem);
   const contentRows = parseQrContentDetails(liveItem);
 
-  const STRUCTURED_TYPES = new Set(["text", "phone", "mobilepay", "grab", "email", "sms", "upi", "scantopay", "bharatqr", "wifi", "calendly", "zoom"]);
+  const STRUCTURED_TYPES = new Set(["text", "phone", "mobilepay", "grab", "email", "sms", "upi", "scantopay", "bharatqr", "wifi", "calendly", "zoom", "whatsapp"]);
   const READONLY_TYPES = new Set(["contact", "event", "calendar"]);
   const isStructured = STRUCTURED_TYPES.has(effectiveContentType);
   const isReadOnly = !isStructured && READONLY_TYPES.has(effectiveContentType);
@@ -141,6 +141,7 @@ export default function MyQrDetailScreen() {
       case "wifi": return { ssid: rawContent.match(/S:([^;]+)/)?.[1] || "", password: rawContent.match(/P:([^;]+)/)?.[1] || "", security: rawContent.match(/T:([^;]+)/)?.[1] || "WPA" };
       case "calendly": { try { const u = new URL(rawContent.startsWith("http") ? rawContent : `https://${rawContent}`); const parts = u.pathname.replace(/^\//, "").split("/").filter(Boolean); return { username: parts[0] || "", eventType: parts[1] || "" }; } catch { return { username: "", eventType: "" }; } }
       case "zoom": { const meetingId = rawContent.includes("zoom.us/j/") ? rawContent.split("/j/")[1]?.split("?")[0] || "" : rawContent; let passcode = ""; try { passcode = new URL(rawContent).searchParams.get("pwd") || ""; } catch {} return { meetingId, passcode }; }
+      case "whatsapp": { try { const u = new URL(rawContent.startsWith("http") ? rawContent : `https://${rawContent}`); const phone = u.pathname.replace(/^\//, "").replace(/\D/g, ""); const text = u.searchParams.get("text") || ""; return { phone: phone ? "+" + phone : "", message: text }; } catch { return { phone: rawContent, message: "" }; } }
       default: return {};
     }
   }

@@ -113,6 +113,28 @@ function parseSms(content: string) {
   } catch { return { to: content.replace(/^sms[to]*:/i, "").split("?")[0], body: "" }; }
 }
 
+function parseWhatsApp(content: string) {
+  try {
+    const u = new URL(content.startsWith("http") ? content : `https://${content}`);
+    const phone = u.pathname.replace(/^\//, "").replace(/\D/g, "");
+    const text = u.searchParams.get("text") ?? "";
+    return { phone: phone ? "+" + phone : content, text };
+  } catch { return { phone: content, text: "" }; }
+}
+
+function parseEmail(content: string) {
+  try {
+    const bare = content.replace(/^mailto:/i, "");
+    const [addr, qs = ""] = bare.split("?");
+    const p = new URLSearchParams(qs);
+    return { email: addr || "", subject: p.get("subject") ?? "", body: p.get("body") ?? "" };
+  } catch { return { email: content, subject: "", body: "" }; }
+}
+
+function parsePhone(content: string) {
+  return content.replace(/^(tel:|callto:|facetime:)/i, "").trim();
+}
+
 function parseEvent(content: string) {
   return {
     summary: content.match(/SUMMARY:([^\r\n]+)/)?.[1] ?? "",
@@ -193,13 +215,16 @@ const ContentCard = React.memo(function ContentCard({ content, contentType, pars
     }
   }
 
-  const URL_LIKE_TYPES = new Set(["url", "whatsapp", "instagram", "twitter", "youtube", "linkedin", "telegram", "facebook", "spotify", "discord", "tiktok", "zoom", "calendly", "appdownload", "app", "social", "media"]);
+  const URL_LIKE_TYPES = new Set(["url", "instagram", "twitter", "youtube", "linkedin", "telegram", "facebook", "spotify", "discord", "tiktok", "zoom", "calendly", "appdownload", "app", "social", "media"]);
   const isUrlLike = URL_LIKE_TYPES.has(contentType);
 
   const wifi = contentType === "wifi" ? parseWifi(content) : null;
   const contact = contentType === "contact" ? parseContact(content) : null;
   const smsData = contentType === "sms" ? parseSms(content) : null;
   const eventData = (contentType === "event" || contentType === "calendar") ? parseEvent(content) : null;
+  const whatsappData = contentType === "whatsapp" ? parseWhatsApp(content) : null;
+  const emailData = contentType === "email" ? parseEmail(content) : null;
+  const phoneStr = contentType === "phone" ? parsePhone(content) : null;
   const eventOver = eventData ? isEventPast(eventData.dtend, eventData.dtstart) : false;
   const basicPayment = ((contentType === "payment" || contentType === "upi") && !parsedPayment) ? extractBasicPaymentInfo(content) : null;
   const isEmvContent = content.startsWith("000201") || content.startsWith("00020");
@@ -299,8 +324,8 @@ const ContentCard = React.memo(function ContentCard({ content, contentType, pars
         </Pressable>
       </View>
 
-      {/* Content text — hidden for URL-like and event types */}
-      {!isUrlLike && contentType !== "event" && contentType !== "calendar" && (
+      {/* Content text — hidden for URL-like, event, whatsapp, email, phone types */}
+      {!isUrlLike && contentType !== "event" && contentType !== "calendar" && contentType !== "whatsapp" && contentType !== "email" && contentType !== "phone" && (
         <View style={[styles.contentBox, { backgroundColor: isDark ? colors.surfaceLight : colors.background, borderColor: colors.surfaceBorder }]}>
           <Text style={[styles.contentText, { color: colors.text }]} selectable numberOfLines={contentExpanded ? undefined : 4}>
             {content}
@@ -355,6 +380,24 @@ const ContentCard = React.memo(function ContentCard({ content, contentType, pars
         <View style={[styles.infoGrid, { backgroundColor: isDark ? colors.surfaceLight : colors.background, borderColor: colors.surfaceBorder }]}>
           {smsData.to ? <InfoRow label="To" value={smsData.to} gradient={cfg.gradient} colors={colors} /> : null}
           {smsData.body ? <InfoRow label="Message" value={smsData.body} gradient={cfg.gradient} colors={colors} /> : null}
+        </View>
+      )}
+      {whatsappData && (
+        <View style={[styles.infoGrid, { backgroundColor: isDark ? colors.surfaceLight : colors.background, borderColor: colors.surfaceBorder }]}>
+          {whatsappData.phone ? <InfoRow label="WhatsApp Number" value={whatsappData.phone} selectable gradient={cfg.gradient} colors={colors} /> : null}
+          {whatsappData.text ? <InfoRow label="Pre-filled Message" value={whatsappData.text} selectable gradient={cfg.gradient} colors={colors} /> : null}
+        </View>
+      )}
+      {emailData && (
+        <View style={[styles.infoGrid, { backgroundColor: isDark ? colors.surfaceLight : colors.background, borderColor: colors.surfaceBorder }]}>
+          {emailData.email ? <InfoRow label="Email Address" value={emailData.email} selectable gradient={cfg.gradient} colors={colors} /> : null}
+          {emailData.subject ? <InfoRow label="Subject" value={emailData.subject} selectable gradient={cfg.gradient} colors={colors} /> : null}
+          {emailData.body ? <InfoRow label="Body" value={emailData.body} selectable gradient={cfg.gradient} colors={colors} /> : null}
+        </View>
+      )}
+      {phoneStr && (
+        <View style={[styles.infoGrid, { backgroundColor: isDark ? colors.surfaceLight : colors.background, borderColor: colors.surfaceBorder }]}>
+          <InfoRow label="Phone Number" value={phoneStr} selectable gradient={cfg.gradient} colors={colors} />
         </View>
       )}
       {eventData && (

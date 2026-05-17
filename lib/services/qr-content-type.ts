@@ -48,9 +48,10 @@ export function detectContentType(content: string): string {
     const scheme = url.protocol;
 
     if (scheme !== "http:" && scheme !== "https:") {
+      if (scheme === "whatsapp:" || scheme === "wa:") return "whatsapp";
       const socialSchemes = new Set([
         "instagram:", "twitter:", "fb:", "facebook:", "linkedin:", "tiktok:",
-        "snapchat:", "pinterest:", "reddit:", "tumblr:", "whatsapp:", "wa:",
+        "snapchat:", "pinterest:", "reddit:", "tumblr:",
         "tg:", "telegram:", "signal:", "discord:", "twitch:", "youtube:",
         "weibo:", "line:", "viber:", "kakaotalk:", "wechat:", "zalo:",
         "vk:", "ok:", "naver:", "band:", "kakao:",
@@ -66,12 +67,15 @@ export function detectContentType(content: string): string {
     if (host === "galaxy.store") return "app";
     if (host === "apps.microsoft.com") return "app";
 
+    const WHATSAPP_HOSTS = new Set(["wa.me", "api.whatsapp.com", "chat.whatsapp.com", "web.whatsapp.com"]);
+    if (WHATSAPP_HOSTS.has(host) || [...WHATSAPP_HOSTS].some((d) => host.endsWith("." + d))) return "whatsapp";
+
     const SOCIAL = new Set([
       "instagram.com", "twitter.com", "x.com", "facebook.com", "fb.com",
       "linkedin.com", "tiktok.com", "youtube.com", "youtu.be",
       "snapchat.com", "pinterest.com", "reddit.com", "tumblr.com",
       "threads.net", "bsky.app", "mastodon.social",
-      "wa.me", "t.me", "telegram.me", "discord.gg", "discord.com",
+      "t.me", "telegram.me", "discord.gg", "discord.com",
       "slack.com", "twitch.tv", "vk.com", "ok.ru",
       "weibo.com", "line.me", "viber.com", "naver.com",
       "band.us", "kakaostory.com",
@@ -128,8 +132,6 @@ export function detectContentType(content: string): string {
     ]);
     if (DOC_HOSTS.has(host) || [...DOC_HOSTS].some((d) => host.endsWith("." + d))) return "document";
 
-    const MSG_HOSTS = new Set(["wa.me", "api.whatsapp.com", "chat.whatsapp.com"]);
-    if (MSG_HOSTS.has(host)) return "social";
 
     return "url";
   }

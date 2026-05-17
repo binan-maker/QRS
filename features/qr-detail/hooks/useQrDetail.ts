@@ -216,6 +216,9 @@ export function useQrDetail(id: string) {
     } else if (contentType === "sms") {
       const smsUrl = lower.startsWith("sms:") || lower.startsWith("smsto:") ? content : `sms:${content}`;
       Linking.openURL(smsUrl).catch(() => Alert.alert("Error", "Could not open SMS app"));
+    } else if (contentType === "whatsapp") {
+      const waUrl = lower.startsWith("http") ? content : `https://wa.me/${content.replace(/\D/g, "")}`;
+      Linking.openURL(waUrl).catch(() => Alert.alert("App Not Found", "Could not open WhatsApp. Make sure WhatsApp is installed."));
     } else if (contentType === "social") {
       const isHttpUrl = lower.startsWith("http://") || lower.startsWith("https://");
       const isDeepLink = !isHttpUrl && content.includes("://");
