@@ -202,6 +202,7 @@ export default function QrDetailScreen() {
             onOpenCreatorFollowers={() => { q.handleLoadCreatorFollowers(); q.setCreatorFollowersModalOpen(true); }}
             onWatch={handleWatchPress}
             onManage={() => ownerDocId ? router.push(`/my-qr/${ownerDocId}` as any) : router.push("/(tabs)/profile")}
+            onAnalytics={() => ownerDocId ? router.push(`/my-qr-analytics/${ownerDocId}` as any) : undefined}
             onOverflowOpen={() => setOverflowOpen(true)}
           />
 
@@ -246,7 +247,7 @@ export default function QrDetailScreen() {
 
             {isGuardQr && <LivingShieldBanner guardLink={guardLink} loading={guardLinkLoading} />}
             {isStandardQr && (
-              <StandardQrBanner loading={standardLinkLoading} ready={standardReady} ownerName={standardLinkData?.ownerName ?? null} isActive={standardLinkData?.isActive !== false} />
+              <StandardQrBanner loading={standardLinkLoading} ready={standardReady} ownerName={standardLinkData?.ownerName ?? null} isActive={standardLinkData?.isActive !== false} qrId={standardUuid} />
             )}
 
             {((!isGuardQr && !isStandardQr) || guardReady || standardReady) && (
@@ -278,7 +279,7 @@ export default function QrDetailScreen() {
               </Animated.View>
             )}
 
-            {!q.ownerInfo?.isBranded && !q.offlineMode && (
+            {!q.ownerInfo?.isBranded && !q.offlineMode && !hasOwner && (
               <Animated.View entering={FadeInDown.duration(150)}>
                 <ExternalQrBanner />
               </Animated.View>

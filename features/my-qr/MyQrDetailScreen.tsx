@@ -170,6 +170,7 @@ export default function MyQrDetailScreen() {
           isBusiness={isBusiness}
           docId={id as string}
           onViewPublic={handleViewPublic}
+          onViewAnalytics={() => router.push(`/my-qr-analytics/${id}` as any)}
         />
       </View>
 
@@ -202,6 +203,8 @@ export default function MyQrDetailScreen() {
           scanCount={qrItem.scanCount ?? 0}
           commentCount={qrItem.commentCount ?? 0}
           createdAt={(qrItem as any).createdAt || ""}
+          followCount={followCount}
+          onOpenAnalytics={() => router.push(`/my-qr-analytics/${id}` as any)}
         />
 
         <QrContentInfoCard

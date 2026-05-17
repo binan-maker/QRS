@@ -125,7 +125,7 @@ export default function QrFormPage({ mode }: Props) {
 
       <ScrollView
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={[styles.scroll, { paddingBottom: insets.bottom + 32 }]}
+        contentContainerStyle={[styles.scroll, { paddingBottom: insets.bottom + 110 }]}
         keyboardShouldPersistTaps="handled"
       >
         {!showTemplateReady && (

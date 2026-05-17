@@ -1,6 +1,5 @@
-import { View, Text, Pressable, ActivityIndicator, StyleSheet } from "react-native";
+import { View, Text, Pressable, ActivityIndicator } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { router } from "expo-router";
 import { useTheme } from "@/contexts/ThemeContext";
 import { makeStyles } from "@/features/qr-detail/styles";
 import { navOfflineStyles } from "@/features/qr-detail/styles";
@@ -24,6 +23,7 @@ interface Props {
   onWatch: () => void;
   onManage: () => void;
   onOverflowOpen: () => void;
+  onAnalytics?: () => void;
 }
 
 export default function QrDetailNavBar({
@@ -44,6 +44,7 @@ export default function QrDetailNavBar({
   onWatch,
   onManage,
   onOverflowOpen,
+  onAnalytics,
 }: Props) {
   const { colors } = useTheme();
   const styles = makeStyles(colors);
@@ -65,7 +66,34 @@ export default function QrDetailNavBar({
       </View>
 
       <View style={styles.navActions}>
-        {hasOwner ? (
+        {isQrOwner ? (
+          /* Owner sees Analytics + Manage — no Follow button shown */
+          <>
+            {onAnalytics && (
+              <Pressable
+                onPress={onAnalytics}
+                style={({ pressed }) => [
+                  styles.followBtn,
+                  { backgroundColor: colors.accentDim, borderColor: colors.accent + "40", opacity: pressed ? 0.8 : 1 },
+                ]}
+              >
+                <Ionicons name="bar-chart-outline" size={14} color={colors.accent} />
+                <Text style={[styles.followBtnText, { color: colors.accent }]}>Analytics</Text>
+              </Pressable>
+            )}
+            <Pressable
+              onPress={onManage}
+              style={({ pressed }) => [
+                styles.followBtn,
+                { backgroundColor: colors.primaryDim, borderColor: colors.primary + "40", opacity: pressed ? 0.8 : 1 },
+              ]}
+            >
+              <Ionicons name="settings-outline" size={14} color={colors.primary} />
+              <Text style={[styles.followBtnText, { color: colors.primary }]}>Manage</Text>
+            </Pressable>
+          </>
+        ) : hasOwner ? (
+          /* Visitor on a QR Guard QR: show Follow creator button */
           <Pressable
             onPress={creatorFollowLoading ? undefined : onFollowCreator}
             style={({ pressed }) => [
@@ -95,48 +123,9 @@ export default function QrDetailNavBar({
               </Pressable>
             )}
           </Pressable>
-        ) : (
-          <Pressable
-            onPress={followLoading ? undefined : onWatch}
-            style={({ pressed }) => [
-              styles.followBtn,
-              isFollowing && styles.followBtnActive,
-              followLoading && { opacity: 0.55 },
-              !followLoading && { opacity: pressed ? 0.8 : 1, transform: [{ scale: pressed ? 0.97 : 1 }] },
-            ]}
-          >
-            {followLoading ? (
-              <ActivityIndicator size={13} color={isFollowing ? colors.primary : colors.textSecondary} />
-            ) : (
-              <Ionicons
-                name={isFollowing ? "notifications" : "notifications-outline"}
-                size={14}
-                color={isFollowing ? colors.primary : colors.textSecondary}
-              />
-            )}
-            <Text style={[styles.followBtnText, isFollowing && styles.followBtnTextActive]}>
-              {isFollowing ? "Watching" : "Watch"}
-            </Text>
-            {followCount > 0 && !followLoading && (
-              <View style={styles.followCountPill}>
-                <Text style={styles.followCountPillText}>{formatCompactNumber(followCount)}</Text>
-              </View>
-            )}
-          </Pressable>
-        )}
-
-        {isQrOwner && (
-          <Pressable
-            onPress={onManage}
-            style={({ pressed }) => [
-              styles.followBtn,
-              { backgroundColor: colors.primaryDim, borderColor: colors.primary + "40", opacity: pressed ? 0.8 : 1 },
-            ]}
-          >
-            <Ionicons name="settings-outline" size={14} color={colors.primary} />
-            <Text style={[styles.followBtnText, { color: colors.primary }]}>Manage</Text>
-          </Pressable>
-        )}
+        ) : null
+        /* External QR with no registered owner → no follow/watch button */
+        }
 
         <Pressable
           onPress={onOverflowOpen}

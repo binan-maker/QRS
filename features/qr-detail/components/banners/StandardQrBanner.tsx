@@ -9,17 +9,19 @@ export function StandardQrBanner({
   ready,
   ownerName,
   isActive,
+  qrId,
 }: {
   loading: boolean;
   ready: boolean;
   ownerName: string | null;
   isActive: boolean;
+  qrId?: string;
 }) {
   const { colors, isDark } = useTheme();
   const accent = "#22c55e";
 
   return (
-    <Animated.View entering={FadeInDown.duration(280)}>
+    <Animated.View entering={FadeInDown.duration(180)}>
       <View
         style={[
           styles.card,
@@ -33,9 +35,7 @@ export function StandardQrBanner({
           end={{ x: 1, y: 1 }}
         />
         <View style={styles.header}>
-          <View
-            style={[styles.iconWrap, { backgroundColor: accent + "20", borderColor: accent + "40" }]}
-          >
+          <View style={[styles.iconWrap, { backgroundColor: accent + "20", borderColor: accent + "40" }]}>
             <Ionicons name="shield-checkmark-outline" size={22} color={accent} />
           </View>
           <View style={{ flex: 1 }}>
@@ -55,23 +55,31 @@ export function StandardQrBanner({
           </View>
         )}
 
-        {!loading && ready && ownerName && (
-          <View style={[styles.infoRow, { borderColor: colors.surfaceBorder }]}>
-            <Ionicons name="person-circle-outline" size={14} color={colors.textSecondary} />
-            <Text style={[styles.infoLabel, { color: colors.textSecondary }]}>Created by</Text>
-            <Text style={[styles.infoValue, { color: colors.text }]} numberOfLines={1}>
-              {ownerName}
-            </Text>
+        {!loading && ready && (
+          <View style={[styles.infoBlock, { borderColor: colors.surfaceBorder }]}>
+            {ownerName ? (
+              <View style={styles.infoRow}>
+                <Ionicons name="person-circle-outline" size={14} color={colors.textSecondary} />
+                <Text style={[styles.infoLabel, { color: colors.textSecondary }]}>Created by</Text>
+                <Text style={[styles.infoValue, { color: colors.text }]} numberOfLines={1}>
+                  {ownerName}
+                </Text>
+              </View>
+            ) : null}
+            {qrId ? (
+              <View style={styles.infoRow}>
+                <Ionicons name="qr-code-outline" size={14} color={colors.textSecondary} />
+                <Text style={[styles.infoLabel, { color: colors.textSecondary }]}>QR ID</Text>
+                <Text style={[styles.infoValue, { color: colors.textMuted, fontFamily: "Inter_400Regular" }]} numberOfLines={1}>
+                  {qrId}
+                </Text>
+              </View>
+            ) : null}
           </View>
         )}
 
         {!loading && !isActive && (
-          <View
-            style={[
-              styles.deactivatedRow,
-              { backgroundColor: "#ef444418", borderColor: "#ef444440" },
-            ]}
-          >
+          <View style={[styles.deactivatedRow, { backgroundColor: "#ef444418", borderColor: "#ef444440" }]}>
             <Ionicons name="ban-outline" size={14} color="#ef4444" />
             <Text style={[styles.warningText, { color: "#ef4444" }]}>
               This QR code has been deactivated by its owner
@@ -106,20 +114,24 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     alignItems: "center",
     justifyContent: "center",
+    flexShrink: 0,
   },
   title: { fontSize: 15, fontFamily: "Inter_700Bold" },
   sub: { fontSize: 12, fontFamily: "Inter_400Regular", marginTop: 2 },
   loadingRow: { flexDirection: "row", alignItems: "center", gap: 8 },
   loadingText: { fontSize: 13, fontFamily: "Inter_400Regular" },
-  infoRow: {
-    flexDirection: "row",
-    alignItems: "center",
+  infoBlock: {
     gap: 8,
     paddingTop: 10,
     borderTopWidth: StyleSheet.hairlineWidth,
   },
-  infoLabel: { fontSize: 12, fontFamily: "Inter_600SemiBold", width: 68, flexShrink: 0 },
-  infoValue: { fontSize: 13, fontFamily: "Inter_400Regular", flex: 1 },
+  infoRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
+  infoLabel: { fontSize: 12, fontFamily: "Inter_600SemiBold", flexShrink: 0, minWidth: 66 },
+  infoValue: { fontSize: 13, fontFamily: "Inter_500Medium", flex: 1 },
   deactivatedRow: {
     flexDirection: "row",
     alignItems: "flex-start",

@@ -10,9 +10,10 @@ interface Props {
   isBusiness: boolean;
   docId: string;
   onViewPublic: () => void;
+  onViewAnalytics?: () => void;
 }
 
-export default function MyQrNavBar({ ctLabel, publicShortUuid, isBusiness, docId, onViewPublic }: Props) {
+export default function MyQrNavBar({ ctLabel, publicShortUuid, isBusiness, docId, onViewPublic, onViewAnalytics }: Props) {
   const { colors } = useTheme();
   const { rf, sp } = useScaleFns();
 
@@ -31,10 +32,18 @@ export default function MyQrNavBar({ ctLabel, publicShortUuid, isBusiness, docId
       </View>
 
       <View style={{ flexDirection: "row", alignItems: "center", gap: sp(8) }}>
+        {onViewAnalytics && (
+          <Pressable
+            onPress={onViewAnalytics}
+            style={({ pressed }) => ({ width: sp(38), height: sp(38), borderRadius: sp(19), backgroundColor: colors.accentDim, borderWidth: 1, borderColor: colors.accent + "35", alignItems: "center", justifyContent: "center", opacity: pressed ? 0.75 : 1 })}
+          >
+            <Ionicons name="bar-chart-outline" size={rf(17)} color={colors.accent} />
+          </Pressable>
+        )}
         {publicShortUuid ? (
           <Pressable
             onPress={onViewPublic}
-            style={{ width: sp(38), height: sp(38), borderRadius: sp(19), backgroundColor: colors.primaryDim, borderWidth: 1, borderColor: colors.primary + "35", alignItems: "center", justifyContent: "center" }}
+            style={({ pressed }) => ({ width: sp(38), height: sp(38), borderRadius: sp(19), backgroundColor: colors.primaryDim, borderWidth: 1, borderColor: colors.primary + "35", alignItems: "center", justifyContent: "center", opacity: pressed ? 0.75 : 1 })}
           >
             <Ionicons name="globe-outline" size={rf(18)} color={colors.primary} />
           </Pressable>
