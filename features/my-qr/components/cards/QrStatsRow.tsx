@@ -54,12 +54,6 @@ export default function QrStatsRow({ createdAt, onOpenAnalytics }: Props) {
         </Pressable>
       )}
 
-      <Text style={{
-        fontSize: rf(10), fontFamily: "Inter_400Regular",
-        color: colors.textMuted, textAlign: "center", marginTop: sp(10),
-      }}>
-        Created {formatDate(createdAt)}
-      </Text>
     </Animated.View>
   );
 }

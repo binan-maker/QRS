@@ -158,7 +158,6 @@ export default function MyQrDetailScreen() {
 
       <View style={{ paddingTop: topInset }}>
         <MyQrNavBar
-          ctLabel={ctMeta.label}
           publicShortUuid={publicShortUuid}
           isBusiness={isBusiness}
           docId={id as string}

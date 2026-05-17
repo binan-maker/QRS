@@ -5,7 +5,6 @@ import { useTheme } from "@/contexts/ThemeContext";
 import { useScaleFns } from "@/lib/utils/use-scale";
 
 interface Props {
-  ctLabel: string;
   publicShortUuid: string | null;
   isBusiness: boolean;
   docId: string;
@@ -13,7 +12,7 @@ interface Props {
   onViewAnalytics?: () => void;
 }
 
-export default function MyQrNavBar({ ctLabel, publicShortUuid, isBusiness, docId, onViewPublic, onViewAnalytics }: Props) {
+export default function MyQrNavBar({ publicShortUuid, isBusiness, docId, onViewPublic, onViewAnalytics }: Props) {
   const { colors } = useTheme();
   const { rf, sp } = useScaleFns();
 
@@ -26,10 +25,7 @@ export default function MyQrNavBar({ ctLabel, publicShortUuid, isBusiness, docId
         <Ionicons name="chevron-back" size={rf(20)} color={colors.text} />
       </Pressable>
 
-      <View style={{ alignItems: "center" }}>
-        <Text style={{ fontSize: rf(16), fontFamily: "Inter_700Bold", color: colors.text }}>My QR Code</Text>
-        <Text style={{ fontSize: rf(10), fontFamily: "Inter_500Medium", color: colors.textMuted, marginTop: 1 }}>{ctLabel}</Text>
-      </View>
+      <Text style={{ fontSize: rf(16), fontFamily: "Inter_700Bold", color: colors.text }}>My QR Code</Text>
 
       <View style={{ flexDirection: "row", alignItems: "center", gap: sp(8) }}>
         {onViewAnalytics && (
