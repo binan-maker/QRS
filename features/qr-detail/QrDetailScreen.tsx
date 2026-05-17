@@ -113,9 +113,9 @@ export default function QrDetailScreen() {
     ? {
         businessName: null,
         ownerName: standardLinkData.ownerName,
-        qrType: "standard" as const,
+        qrType: "individual",
         isBranded: true,
-        ownerId: "",
+        ownerId: standardLinkData.ownerId ?? "",
         brandedUuid: standardUuid,
         isActive: standardLinkData.isActive,
       }
