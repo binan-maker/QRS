@@ -15,6 +15,9 @@ export function makeSettingsStyles(c: AppColors, width = 390) {
       justifyContent: "space-between",
       paddingHorizontal: sp(20),
       paddingVertical: sp(14),
+      backgroundColor: c.background,
+      borderBottomWidth: StyleSheet.hairlineWidth,
+      borderBottomColor: c.surfaceBorder,
     },
     navBackBtn: {
       width: sp(40), height: sp(40), borderRadius: sp(20),
