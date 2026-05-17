@@ -63,7 +63,7 @@ export default function QrDetailScreen() {
 
   const [guardLink, setGuardLink] = useState<GuardLink | null>(null);
   const [guardLinkLoading, setGuardLinkLoading] = useState(!!guardUuid);
-  const [standardLinkData, setStandardLinkData] = useState<{ rawContent: string; contentType: string; ownerName: string; isActive: boolean } | null>(null);
+  const [standardLinkData, setStandardLinkData] = useState<{ rawContent: string; contentType: string; ownerId: string; ownerName: string; isActive: boolean } | null>(null);
   const [standardLinkLoading, setStandardLinkLoading] = useState(!!standardUuid);
   const [ownerSheetOpen, setOwnerSheetOpen] = useState(false);
   const [overflowOpen, setOverflowOpen] = useState(false);

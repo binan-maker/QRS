@@ -1,8 +1,10 @@
-import { View, Text, Pressable } from "react-native";
+import { useEffect, useState } from "react";
+import { View, Text, Pressable, StyleSheet } from "react-native";
+import { Image } from "expo-image";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { useTheme } from "@/contexts/ThemeContext";
-import { ownerCircleRowStyles } from "@/features/qr-detail/styles";
+import { getUserPhotoURL } from "@/lib/services/user-service";
 
 interface OwnerInfo {
   businessName?: string | null;
@@ -19,48 +21,112 @@ interface Props {
 
 export default function OwnerCircleRow({ ownerInfo, onPress }: Props) {
   const { colors } = useTheme();
+  const [photoURL, setPhotoURL] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!ownerInfo.ownerId) return;
+    getUserPhotoURL(ownerInfo.ownerId).then(setPhotoURL).catch(() => setPhotoURL(null));
+  }, [ownerInfo.ownerId]);
+
+  const gradientColors: [string, string] =
+    ownerInfo.qrType === "business"
+      ? [colors.warning, colors.warningShade]
+      : ownerInfo.qrType === "standard"
+      ? [colors.primary, colors.primaryShade]
+      : [colors.safe, colors.safeShade];
+
+  const iconName: any =
+    ownerInfo.qrType === "business" ? "storefront"
+    : ownerInfo.qrType === "standard" ? "qr-code"
+    : "person";
 
   return (
     <Pressable
       onPress={onPress}
       style={({ pressed }) => [
-        ownerCircleRowStyles.row,
+        s.row,
         { backgroundColor: colors.surface, borderColor: colors.surfaceBorder, opacity: pressed ? 0.8 : 1 },
       ]}
     >
-      <LinearGradient
-        colors={
-          ownerInfo.qrType === "business"
-            ? [colors.warning, colors.warningShade]
-            : ownerInfo.qrType === "standard"
-            ? [colors.primary, colors.primaryShade]
-            : [colors.safe, colors.safeShade]
-        }
-        style={ownerCircleRowStyles.circle}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-      >
-        <Ionicons
-          name={ownerInfo.qrType === "business" ? "storefront" : ownerInfo.qrType === "standard" ? "qr-code" : "person"}
-          size={18}
-          color="#fff"
+      {photoURL ? (
+        <Image
+          source={{ uri: photoURL }}
+          style={[s.circle, { borderWidth: 2, borderColor: colors.surfaceBorder }]}
+          contentFit="cover"
         />
-      </LinearGradient>
+      ) : (
+        <LinearGradient
+          colors={gradientColors}
+          style={s.circle}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+        >
+          <Ionicons name={iconName} size={18} color="#fff" />
+        </LinearGradient>
+      )}
+
       <View style={{ flex: 1, minWidth: 0 }}>
         {ownerInfo.businessName ? (
-          <Text style={[ownerCircleRowStyles.name, { color: colors.text }]} numberOfLines={1}>
+          <Text style={[s.name, { color: colors.text }]} numberOfLines={1}>
             {ownerInfo.businessName}
           </Text>
         ) : null}
-        <Text style={[ownerCircleRowStyles.by, { color: colors.textSecondary }]} numberOfLines={1}>
+        <Text style={[s.by, { color: colors.textSecondary }]} numberOfLines={1}>
           by {ownerInfo.ownerName}
         </Text>
       </View>
-      <View style={[ownerCircleRowStyles.verifiedBadge, { backgroundColor: colors.primaryDim, borderColor: colors.primary + "50" }]}>
+
+      <View style={[s.verifiedBadge, { backgroundColor: colors.primaryDim, borderColor: colors.primary + "50" }]}>
         <Ionicons name="shield-checkmark" size={11} color={colors.primary} />
-        <Text style={[ownerCircleRowStyles.verifiedText, { color: colors.primary }]}>Verified</Text>
+        <Text style={[s.verifiedText, { color: colors.primary }]}>Verified</Text>
       </View>
+
       <Ionicons name="chevron-forward" size={16} color={colors.textMuted} />
     </Pressable>
   );
 }
+
+const s = StyleSheet.create({
+  row: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    borderRadius: 16,
+    paddingVertical: 10,
+    paddingHorizontal: 14,
+    marginBottom: 10,
+    borderWidth: 1,
+  },
+  circle: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    alignItems: "center",
+    justifyContent: "center",
+    flexShrink: 0,
+    overflow: "hidden",
+  },
+  name: {
+    fontSize: 14,
+    fontFamily: "Inter_700Bold",
+    lineHeight: 18,
+  },
+  by: {
+    fontSize: 12,
+    fontFamily: "Inter_400Regular",
+  },
+  verifiedBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 3,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 100,
+    borderWidth: 1,
+    flexShrink: 0,
+  },
+  verifiedText: {
+    fontSize: 11,
+    fontFamily: "Inter_700Bold",
+  },
+});
