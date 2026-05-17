@@ -1,11 +1,12 @@
-import { View, Text, Pressable, ScrollView, Platform, Switch, useWindowDimensions } from "react-native";
-import { useCallback, useEffect, useMemo } from "react";
-import { router, useLocalSearchParams, useFocusEffect } from "expo-router";
+import { View, Text, Pressable, ScrollView, Platform, useWindowDimensions } from "react-native";
+import { useCallback, useMemo } from "react";
+import { useLocalSearchParams, useFocusEffect } from "expo-router";
 import { safePush } from "@/lib/utils/navigation";
 import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTopInset } from "@/lib/utils/platform";
 import { LinearGradient } from "expo-linear-gradient";
+import * as NavigationBar from "expo-navigation-bar";
 import { useTheme } from "@/contexts/ThemeContext";
 import { useSettings } from "@/features/settings/hooks/useSettings";
 import { makeSettingsStyles } from "@/features/settings/styles";
@@ -38,13 +39,24 @@ export default function SettingsScreen() {
     myComments, commentsLoading,
     myHistory, historyLoading,
     deleteConfirmText, setDeleteConfirmText,
-    hapticsEnabled, toggleHaptics,
     handleSignOut, handleClearData,
     handleSubmitFeedback,
     handleDeleteComment, handleDeleteAllComments,
     handleDeleteHistoryItem, handleDeleteAllHistory,
     handleDeleteAccount,
   } = useSettings();
+
+  // Pin the Android system nav bar to the app background whenever this screen
+  // is in focus. The tab navigator doesn't set navigationBarColor, so without
+  // this the bar appears transparent (black) in dark theme.
+  useFocusEffect(
+    useCallback(() => {
+      if (Platform.OS === "android") {
+        NavigationBar.setBackgroundColorAsync(colors.background).catch(() => {});
+        NavigationBar.setButtonStyleAsync(colors.isDark ? "light" : "dark").catch(() => {});
+      }
+    }, [colors.background, colors.isDark])
+  );
 
   useFocusEffect(
     useCallback(() => {
@@ -270,24 +282,6 @@ export default function SettingsScreen() {
                   </Pressable>
                 );
               })}
-            </View>
-            <View style={styles.hapticsDivider} />
-            <View style={styles.hapticsRow}>
-              <View style={styles.hapticsLeft}>
-                <View style={[styles.hapticsIcon, { backgroundColor: colors.surfaceLight }]}>
-                  <Ionicons name="phone-portrait-outline" size={18} color={colors.textSecondary} />
-                </View>
-                <View style={{ marginLeft: 12 }}>
-                  <Text style={[styles.hapticsLabel, { color: colors.text }]}>Haptic Feedback</Text>
-                  <Text style={[styles.hapticsSub, { color: colors.textMuted }]}>Vibration on button presses</Text>
-                </View>
-              </View>
-              <Switch
-                value={hapticsEnabled}
-                onValueChange={toggleHaptics}
-                trackColor={{ false: colors.surfaceBorder, true: colors.primaryDim }}
-                thumbColor={hapticsEnabled ? colors.primary : colors.textMuted}
-              />
             </View>
           </View>
         </View>

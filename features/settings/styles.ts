@@ -115,14 +115,6 @@ export function makeSettingsStyles(c: AppColors, width = 390) {
     themeBtnText: { fontSize: rf(11), fontFamily: "Inter_600SemiBold" },
     activeIndicator: { position: "absolute", bottom: 6, width: sp(18), height: 3, borderRadius: 2 },
 
-    // ── Appearance — haptics row ──────────────────────────────────────────────
-    hapticsDivider: { height: 1, backgroundColor: c.surfaceBorder, marginTop: sp(16), marginBottom: sp(16) },
-    hapticsRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
-    hapticsLeft: { flexDirection: "row", alignItems: "center", flex: 1 },
-    hapticsIcon: { width: sp(38), height: sp(38), borderRadius: sp(12), alignItems: "center", justifyContent: "center" },
-    hapticsLabel: { fontSize: rf(13), fontFamily: "Inter_600SemiBold" },
-    hapticsSub: { fontSize: rf(11), fontFamily: "Inter_400Regular", marginTop: 1 },
-
     // ── Sign out ─────────────────────────────────────────────────────────────
     signOutBtn: {
       flexDirection: "row", alignItems: "center", justifyContent: "center", gap: sp(10),
