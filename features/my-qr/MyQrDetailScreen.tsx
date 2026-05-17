@@ -20,8 +20,6 @@ import StandardLinkCard from "@/features/my-qr/components/cards/StandardLinkCard
 import StaticContentEditor from "@/features/my-qr/components/cards/StaticContentEditor";
 import QrSettingsPanel from "@/features/my-qr/components/panels/QrSettingsPanel";
 import DesignPanel from "@/features/my-qr/components/panels/DesignPanel";
-import OwnerCommentsSection from "@/features/my-qr/components/comments/OwnerCommentsSection";
-import DeactivateModal from "@/features/my-qr/components/modals/DeactivateModal";
 import ConfirmActionModal from "@/features/my-qr/components/modals/ConfirmActionModal";
 import FollowersModal from "@/features/my-qr/components/modals/FollowersModal";
 import PositionModal from "@/features/generator/components/PositionModal";
@@ -49,8 +47,7 @@ export default function MyQrDetailScreen() {
     handlePickLogo, handleRemoveLogo, handleToggleDefaultLogo,
     label, setLabel,
     saving, designDirty, setDesignDirty, designOpen, setDesignOpen,
-    togglingActive, deactivateModalOpen, setDeactivateModalOpen,
-    deactivationMsgInput, setDeactivationMsgInput,
+    togglingActive,
     guardLink, standardLink,
     editingDestination, setEditingDestination,
     newDestination, setNewDestination, savingDestination,
@@ -64,16 +61,10 @@ export default function MyQrDetailScreen() {
     handleUpdateDestination, handleUpdateStandardDestination,
     handleUpdateRawContent, handleRequestSavedContentUpdate,
     handleSaveDesign, handleToggleActive,
-    handleConfirmDeactivate, handleCopyContent, handleShare, handleDownloadPdf,
+    handleCopyContent, handleShare, handleDownloadPdf,
     sharingQr, downloadingPdf,
     followersList, followersModalOpen, setFollowersModalOpen,
     followersLoading, followCount,
-    commentInputRef,
-    comments, commentsLoading, commentText, setCommentText,
-    replyTo, setReplyTo, submittingComment,
-    expandedReplies, setExpandedReplies,
-    topLevelComments, getAllDescendants,
-    handleSubmitComment, handleModerateComment,
     customLogoUri,
   } = useMyQrDetail(id as string);
 
@@ -160,8 +151,6 @@ export default function MyQrDetailScreen() {
       router.push(`/qr-detail/std-${publicShortUuid}?standardUuid=${publicShortUuid}&ownerDocId=${id}` as any);
     }
   };
-
-  const ownerInitials = user?.displayName?.[0]?.toUpperCase() || "?";
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.background }}>
@@ -280,11 +269,7 @@ export default function MyQrDetailScreen() {
         <QrSettingsPanel
           isActive={isActive}
           togglingActive={togglingActive}
-          deactivationMessage={(qrItem as any).deactivationMessage}
-          onToggleActive={(v) => {
-            if (!v) setDeactivateModalOpen(true);
-            else handleToggleActive(true);
-          }}
+          onToggleActive={(v) => handleToggleActive(v)}
         />
 
         <DesignPanel
@@ -312,34 +297,7 @@ export default function MyQrDetailScreen() {
           saving={saving}
           handleSaveDesign={handleSaveDesign}
         />
-
-        <OwnerCommentsSection
-          comments={comments}
-          commentsLoading={commentsLoading}
-          commentText={commentText}
-          setCommentText={setCommentText}
-          replyTo={replyTo}
-          setReplyTo={setReplyTo}
-          submittingComment={submittingComment}
-          expandedReplies={expandedReplies}
-          setExpandedReplies={setExpandedReplies}
-          topLevelComments={topLevelComments}
-          getAllDescendants={getAllDescendants}
-          handleSubmitComment={handleSubmitComment}
-          handleModerateComment={handleModerateComment}
-          commentInputRef={commentInputRef}
-          ownerInitials={ownerInitials}
-          commentCount={qrItem.commentCount ?? 0}
-        />
       </ScrollView>
-
-      <DeactivateModal
-        visible={deactivateModalOpen}
-        msgInput={deactivationMsgInput}
-        onChangeMsgInput={setDeactivationMsgInput}
-        onConfirm={handleConfirmDeactivate}
-        onCancel={() => setDeactivateModalOpen(false)}
-      />
 
       <ConfirmActionModal
         visible={confirmModalOpen}
