@@ -12,6 +12,7 @@ import { useScaleFns } from "@/lib/utils/use-scale";
 import { useAuth } from "@/contexts/AuthContext";
 import { getGeneratedQrById, type GeneratedQrItem } from "@/lib/services/generator-service";
 import { getQrFollowCount } from "@/lib/firestore-service";
+import { getDetailDisplayTitle, getDetailContentType } from "@/lib/services/qr-display-utils";
 
 function formatDate(iso: string | number | undefined): string {
   if (!iso) return "—";
@@ -85,89 +86,120 @@ export default function MyQrAnalyticsScreen() {
     );
   }
 
+  const NavBar = ({ subtitle }: { subtitle?: string }) => (
+    <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingHorizontal: sp(20), paddingTop: sp(6), paddingBottom: sp(10) }}>
+      <Pressable
+        onPress={() => router.back()}
+        style={({ pressed }) => ({
+          width: sp(38), height: sp(38), borderRadius: sp(19),
+          borderWidth: 1, borderColor: colors.surfaceBorder,
+          backgroundColor: colors.surface,
+          alignItems: "center", justifyContent: "center",
+          opacity: pressed ? 0.7 : 1,
+        })}
+      >
+        <Ionicons name="chevron-back" size={rf(20)} color={colors.text} />
+      </Pressable>
+      <View style={{ alignItems: "center" }}>
+        <Text style={{ fontSize: rf(16), fontFamily: "Inter_700Bold", color: colors.text }}>Analytics</Text>
+        {subtitle && (
+          <Text style={{ fontSize: rf(10), fontFamily: "Inter_500Medium", color: colors.textMuted, marginTop: sp(1) }}>
+            {subtitle}
+          </Text>
+        )}
+      </View>
+      <View style={{ width: sp(38) }} />
+    </View>
+  );
+
   if (!qrItem) {
     return (
       <View style={{ flex: 1, backgroundColor: colors.background }}>
         <StatusBar style={isDark ? "light" : "dark"} backgroundColor={colors.background} />
         <View style={{ paddingTop: topInset }}>
-          <View style={styles.navBar}>
-            <Pressable onPress={() => router.back()} style={styles.backBtn}>
-              <Ionicons name="chevron-back" size={rf(20)} color={colors.text} />
-            </Pressable>
-            <Text style={[styles.navTitle, { color: colors.text, fontSize: rf(16) }]}>Analytics</Text>
-            <View style={{ width: sp(38) }} />
-          </View>
+          <NavBar />
         </View>
-        <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
-          <Ionicons name="bar-chart-outline" size={48} color={colors.textMuted} />
-          <Text style={{ color: colors.textMuted, fontSize: rf(14), fontFamily: "Inter_500Medium", marginTop: 12 }}>QR code not found</Text>
+        <View style={{ flex: 1, alignItems: "center", justifyContent: "center", gap: sp(10) }}>
+          <Ionicons name="bar-chart-outline" size={rf(44)} color={colors.textMuted} />
+          <Text style={{ color: colors.textMuted, fontSize: rf(14), fontFamily: "Inter_500Medium" }}>QR code not found</Text>
         </View>
       </View>
     );
   }
 
+  const displayTitle = getDetailDisplayTitle(qrItem as any);
   const primaryColor = isGuardQr ? colors.primary : isStandardQr ? "#22c55e" : colors.textSecondary;
 
   const topStats = [
-    { icon: "scan-outline" as const,      label: "Total Scans",     value: String(scanCount),       color: colors.primary },
-    { icon: "people-outline" as const,    label: "Followers",       value: String(followCount),     color: "#a855f7" },
-    { icon: "chatbubble-outline" as const, label: "Comments",       value: String(commentCount),    color: "#f59e0b" },
-    { icon: "trending-up-outline" as const, label: "Scans / Day",   value: avgScansPerDay,          color: "#22c55e" },
+    { icon: "scan-outline" as const,        label: "Total Scans",  value: String(scanCount),    color: colors.primary },
+    { icon: "people-outline" as const,      label: "Followers",    value: String(followCount),  color: "#a855f7" },
+    { icon: "chatbubble-outline" as const,  label: "Comments",     value: String(commentCount), color: "#f59e0b" },
+    { icon: "trending-up-outline" as const, label: "Scans / Day",  value: avgScansPerDay,       color: "#22c55e" },
+  ];
+
+  const lifecycleRows = [
+    { icon: "calendar-outline" as const,        label: "Created",      value: formatDate(createdAt) },
+    { icon: "time-outline" as const,            label: "Last updated", value: formatDateTime(updatedAt) },
+    { icon: "hourglass-outline" as const,       label: "Age",          value: ageInDays === 1 ? "1 day" : `${ageInDays} days` },
+    { icon: "checkmark-circle-outline" as const,label: "Status",       value: isActive ? "Active" : "Paused" },
+    { icon: "flash-outline" as const,           label: "Type",         value: isDynamic ? "Dynamic" : "Static QR" },
+  ];
+
+  const engagementRows = [
+    { icon: "scan-outline" as const,        label: "Total scans",      value: scanCount === 0 ? "No scans yet" : `${scanCount} scan${scanCount === 1 ? "" : "s"}`,                   color: colors.primary },
+    { icon: "trending-up-outline" as const, label: "Avg / day",        value: `${avgScansPerDay} per day`,                                                                              color: "#22c55e" },
+    { icon: "people-outline" as const,      label: "Followers",        value: followCount === 0 ? "No followers yet" : `${followCount} follower${followCount === 1 ? "" : "s"}`,       color: "#a855f7" },
+    { icon: "chatbubble-outline" as const,  label: "Comments",         value: commentCount === 0 ? "No comments yet" : `${commentCount} comment${commentCount === 1 ? "" : "s"}`,     color: "#f59e0b" },
   ];
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.background }}>
       <StatusBar style={isDark ? "light" : "dark"} backgroundColor={colors.background} />
 
-      {/* Nav bar */}
       <View style={{ paddingTop: topInset }}>
-        <View style={styles.navBar}>
-          <Pressable
-            onPress={() => router.back()}
-            style={[styles.backBtn, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}
-          >
-            <Ionicons name="chevron-back" size={rf(20)} color={colors.text} />
-          </Pressable>
-          <View style={{ alignItems: "center" }}>
-            <Text style={[styles.navTitle, { color: colors.text, fontSize: rf(16) }]}>Analytics</Text>
-            <Text style={{ fontSize: rf(10), fontFamily: "Inter_500Medium", color: colors.textMuted, marginTop: 1 }}>
-              QR Performance
-            </Text>
-          </View>
-          <View style={{ width: sp(38) }} />
-        </View>
+        <NavBar subtitle="QR Performance" />
       </View>
 
       <ScrollView
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ paddingHorizontal: sp(20), paddingBottom: insets.bottom + 100 }}
+        contentContainerStyle={{ paddingHorizontal: sp(20), paddingBottom: insets.bottom + sp(100) }}
       >
-        {/* Hero section */}
-        <Animated.View entering={FadeIn.duration(160)}>
-          <View style={[styles.heroCard, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
+        {/* ── HERO ── */}
+        <Animated.View entering={FadeIn.duration(160)} style={{ marginBottom: sp(20) }}>
+          <View style={{
+            borderRadius: sp(20), borderWidth: 1,
+            borderColor: colors.surfaceBorder,
+            backgroundColor: colors.surface,
+            padding: sp(18), overflow: "hidden",
+          }}>
             <LinearGradient
               colors={[primaryColor + "22", primaryColor + "06"]}
               style={StyleSheet.absoluteFill}
               start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
             />
-            <View style={styles.heroRow}>
-              <View style={[styles.heroIconWrap, { backgroundColor: primaryColor + "20", borderColor: primaryColor + "40" }]}>
-                <Ionicons name="bar-chart" size={26} color={primaryColor} />
+            <View style={{ flexDirection: "row", alignItems: "flex-start", gap: sp(14) }}>
+              <View style={{
+                width: sp(50), height: sp(50), borderRadius: sp(15),
+                borderWidth: 1, borderColor: primaryColor + "40",
+                backgroundColor: primaryColor + "20",
+                alignItems: "center", justifyContent: "center", flexShrink: 0,
+              }}>
+                <Ionicons name="bar-chart" size={rf(24)} color={primaryColor} />
               </View>
               <View style={{ flex: 1 }}>
-                <Text style={[styles.heroTitle, { color: colors.text }]} numberOfLines={2}>
-                  {(qrItem as any).displayTitle || qrItem.content || "QR Code"}
+                <Text style={{ fontSize: rf(15), fontFamily: "Inter_700Bold", color: colors.text, lineHeight: rf(22) }} numberOfLines={2}>
+                  {displayTitle}
                 </Text>
-                <View style={{ flexDirection: "row", alignItems: "center", gap: 6, marginTop: 4 }}>
-                  <View style={[styles.typeBadge, { backgroundColor: primaryColor + "20", borderColor: primaryColor + "40" }]}>
-                    <Text style={[styles.typeBadgeText, { color: primaryColor }]}>
+                <View style={{ flexDirection: "row", alignItems: "center", gap: sp(6), marginTop: sp(6), flexWrap: "wrap" }}>
+                  <View style={{ flexDirection: "row", alignItems: "center", paddingHorizontal: sp(8), paddingVertical: sp(3), borderRadius: sp(100), borderWidth: 1, backgroundColor: primaryColor + "20", borderColor: primaryColor + "40" }}>
+                    <Text style={{ fontSize: rf(10), fontFamily: "Inter_700Bold", color: primaryColor }}>
                       {isDynamic ? (isGuardQr ? "Guard Link" : "Standard Link") : "Static QR"}
                     </Text>
                   </View>
-                  <View style={[styles.typeBadge, { backgroundColor: isActive ? colors.safe + "20" : colors.danger + "20", borderColor: isActive ? colors.safe + "40" : colors.danger + "40" }]}>
-                    <View style={{ width: 5, height: 5, borderRadius: 3, backgroundColor: isActive ? colors.safe : colors.danger, marginRight: 3 }} />
-                    <Text style={[styles.typeBadgeText, { color: isActive ? colors.safe : colors.danger }]}>
-                      {isActive ? "Active" : "Deactivated"}
+                  <View style={{ flexDirection: "row", alignItems: "center", paddingHorizontal: sp(8), paddingVertical: sp(3), borderRadius: sp(100), borderWidth: 1, backgroundColor: isActive ? colors.safe + "20" : colors.danger + "20", borderColor: isActive ? colors.safe + "40" : colors.danger + "40" }}>
+                    <View style={{ width: sp(5), height: sp(5), borderRadius: sp(3), backgroundColor: isActive ? colors.safe : colors.danger, marginRight: sp(4) }} />
+                    <Text style={{ fontSize: rf(10), fontFamily: "Inter_700Bold", color: isActive ? colors.safe : colors.danger }}>
+                      {isActive ? "Active" : "Paused"}
                     </Text>
                   </View>
                 </View>
@@ -176,19 +208,25 @@ export default function MyQrAnalyticsScreen() {
           </View>
         </Animated.View>
 
-        {/* Top stats grid */}
-        <Animated.View entering={FadeInDown.duration(160)} style={{ marginBottom: sp(14) }}>
-          <Text style={[styles.sectionLabel, { color: colors.textMuted }]}>Performance Overview</Text>
-          <View style={styles.statsGrid}>
-            {topStats.map((stat, i) => (
-              <View key={stat.label} style={[styles.statCard, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
-                <View style={[styles.statIconWrap, { backgroundColor: stat.color + "18" }]}>
+        {/* ── TOP STATS GRID ── */}
+        <Animated.View entering={FadeInDown.duration(160)} style={{ marginBottom: sp(18) }}>
+          <Text style={{ fontSize: rf(11), fontFamily: "Inter_600SemiBold", letterSpacing: 0.8, textTransform: "uppercase", color: colors.textMuted, marginBottom: sp(10) }}>
+            Performance Overview
+          </Text>
+          <View style={{ flexDirection: "row", flexWrap: "wrap", gap: sp(10) }}>
+            {topStats.map((stat) => (
+              <View key={stat.label} style={{
+                width: "47%", borderRadius: sp(16), borderWidth: 1,
+                borderColor: colors.surfaceBorder, backgroundColor: colors.surface,
+                padding: sp(16), alignItems: "center", gap: sp(6),
+              }}>
+                <View style={{ width: sp(36), height: sp(36), borderRadius: sp(10), backgroundColor: stat.color + "18", alignItems: "center", justifyContent: "center", marginBottom: sp(2) }}>
                   <Ionicons name={stat.icon} size={rf(16)} color={stat.color} />
                 </View>
-                <Text style={[styles.statValue, { color: colors.text, fontSize: rf(22) }]}>
+                <Text style={{ fontSize: rf(22), fontFamily: "Inter_800ExtraBold", color: colors.text }}>
                   {stat.value}
                 </Text>
-                <Text style={[styles.statLabel, { color: colors.textMuted, fontSize: rf(10) }]}>
+                <Text style={{ fontSize: rf(10), fontFamily: "Inter_400Regular", color: colors.textMuted, textAlign: "center" }}>
                   {stat.label}
                 </Text>
               </View>
@@ -196,102 +234,71 @@ export default function MyQrAnalyticsScreen() {
           </View>
         </Animated.View>
 
-        {/* Lifecycle info */}
-        <Animated.View entering={FadeInDown.duration(170)}>
-          <Text style={[styles.sectionLabel, { color: colors.textMuted }]}>QR Lifecycle</Text>
-          <View style={[styles.infoCard, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
-            {[
-              { icon: "calendar-outline" as const,        label: "Created",       value: formatDate(createdAt) },
-              { icon: "time-outline" as const,             label: "Last updated",  value: formatDateTime(updatedAt) },
-              { icon: "hourglass-outline" as const,        label: "Age",           value: ageInDays === 1 ? "1 day" : `${ageInDays} days` },
-              { icon: "checkmark-circle-outline" as const, label: "Status",        value: isActive ? "Active" : "Deactivated" },
-              { icon: "flash-outline" as const,            label: "Type",          value: isDynamic ? "Dynamic (editable destination)" : "Static QR" },
-            ].map((row, i, arr) => (
+        {/* ── LIFECYCLE ── */}
+        <Animated.View entering={FadeInDown.duration(170)} style={{ marginBottom: sp(18) }}>
+          <Text style={{ fontSize: rf(11), fontFamily: "Inter_600SemiBold", letterSpacing: 0.8, textTransform: "uppercase", color: colors.textMuted, marginBottom: sp(10) }}>
+            QR Lifecycle
+          </Text>
+          <View style={{ borderRadius: sp(16), borderWidth: 1, borderColor: colors.surfaceBorder, backgroundColor: colors.surface, overflow: "hidden" }}>
+            {lifecycleRows.map((row, i, arr) => (
               <View
                 key={row.label}
-                style={[
-                  styles.infoRow,
-                  i < arr.length - 1 && { borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.surfaceBorder },
-                ]}
+                style={{ flexDirection: "row", alignItems: "center", gap: sp(12), paddingHorizontal: sp(16), paddingVertical: sp(13), borderBottomWidth: i < arr.length - 1 ? StyleSheet.hairlineWidth : 0, borderBottomColor: colors.surfaceBorder }}
               >
-                <View style={[styles.infoIconWrap, { backgroundColor: colors.surfaceLight }]}>
+                <View style={{ width: sp(28), height: sp(28), borderRadius: sp(8), backgroundColor: colors.surfaceLight, alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
                   <Ionicons name={row.icon} size={rf(14)} color={colors.textSecondary} />
                 </View>
-                <Text style={[styles.infoLabel, { color: colors.textSecondary, fontSize: rf(12) }]}>{row.label}</Text>
-                <Text style={[styles.infoValue, { color: colors.text, fontSize: rf(12) }]} numberOfLines={1}>{row.value}</Text>
+                <Text style={{ fontSize: rf(12), fontFamily: "Inter_500Medium", color: colors.textSecondary, width: sp(100), flexShrink: 0 }}>{row.label}</Text>
+                <Text style={{ fontSize: rf(12), fontFamily: "Inter_600SemiBold", color: colors.text, flex: 1, textAlign: "right" }} numberOfLines={1}>{row.value}</Text>
               </View>
             ))}
           </View>
         </Animated.View>
 
-        {/* Engagement summary */}
-        <Animated.View entering={FadeInDown.duration(180)}>
-          <Text style={[styles.sectionLabel, { color: colors.textMuted }]}>Engagement</Text>
-          <View style={[styles.infoCard, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
-            {[
-              {
-                icon: "scan-outline" as const,
-                label: "Total scans",
-                value: scanCount === 0 ? "No scans yet" : `${scanCount} scan${scanCount === 1 ? "" : "s"}`,
-                color: colors.primary,
-              },
-              {
-                icon: "trending-up-outline" as const,
-                label: "Avg scans / day",
-                value: `${avgScansPerDay} per day`,
-                color: "#22c55e",
-              },
-              {
-                icon: "people-outline" as const,
-                label: "Creator followers",
-                value: followCount === 0 ? "No followers yet" : `${followCount} follower${followCount === 1 ? "" : "s"}`,
-                color: "#a855f7",
-              },
-              {
-                icon: "chatbubble-outline" as const,
-                label: "Comments",
-                value: commentCount === 0 ? "No comments yet" : `${commentCount} comment${commentCount === 1 ? "" : "s"}`,
-                color: "#f59e0b",
-              },
-            ].map((row, i, arr) => (
+        {/* ── ENGAGEMENT ── */}
+        <Animated.View entering={FadeInDown.duration(180)} style={{ marginBottom: sp(18) }}>
+          <Text style={{ fontSize: rf(11), fontFamily: "Inter_600SemiBold", letterSpacing: 0.8, textTransform: "uppercase", color: colors.textMuted, marginBottom: sp(10) }}>
+            Engagement
+          </Text>
+          <View style={{ borderRadius: sp(16), borderWidth: 1, borderColor: colors.surfaceBorder, backgroundColor: colors.surface, overflow: "hidden" }}>
+            {engagementRows.map((row, i, arr) => (
               <View
                 key={row.label}
-                style={[
-                  styles.infoRow,
-                  i < arr.length - 1 && { borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.surfaceBorder },
-                ]}
+                style={{ flexDirection: "row", alignItems: "center", gap: sp(12), paddingHorizontal: sp(16), paddingVertical: sp(13), borderBottomWidth: i < arr.length - 1 ? StyleSheet.hairlineWidth : 0, borderBottomColor: colors.surfaceBorder }}
               >
-                <View style={[styles.infoIconWrap, { backgroundColor: row.color + "18" }]}>
+                <View style={{ width: sp(28), height: sp(28), borderRadius: sp(8), backgroundColor: row.color + "18", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
                   <Ionicons name={row.icon} size={rf(14)} color={row.color} />
                 </View>
-                <Text style={[styles.infoLabel, { color: colors.textSecondary, fontSize: rf(12) }]}>{row.label}</Text>
-                <Text style={[styles.infoValue, { color: colors.text, fontSize: rf(12) }]} numberOfLines={1}>{row.value}</Text>
+                <Text style={{ fontSize: rf(12), fontFamily: "Inter_500Medium", color: colors.textSecondary, width: sp(100), flexShrink: 0 }}>{row.label}</Text>
+                <Text style={{ fontSize: rf(12), fontFamily: "Inter_600SemiBold", color: colors.text, flex: 1, textAlign: "right" }} numberOfLines={1}>{row.value}</Text>
               </View>
             ))}
           </View>
         </Animated.View>
 
-        {/* QR ID */}
+        {/* ── IDENTIFIERS ── */}
         {qrItem.qrCodeId && (
-          <Animated.View entering={FadeInDown.duration(190)}>
-            <Text style={[styles.sectionLabel, { color: colors.textMuted }]}>Identifiers</Text>
-            <View style={[styles.infoCard, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
-              <View style={styles.infoRow}>
-                <View style={[styles.infoIconWrap, { backgroundColor: colors.surfaceLight }]}>
+          <Animated.View entering={FadeInDown.duration(190)} style={{ marginBottom: sp(18) }}>
+            <Text style={{ fontSize: rf(11), fontFamily: "Inter_600SemiBold", letterSpacing: 0.8, textTransform: "uppercase", color: colors.textMuted, marginBottom: sp(10) }}>
+              Identifiers
+            </Text>
+            <View style={{ borderRadius: sp(16), borderWidth: 1, borderColor: colors.surfaceBorder, backgroundColor: colors.surface, overflow: "hidden" }}>
+              <View style={{ flexDirection: "row", alignItems: "center", gap: sp(12), paddingHorizontal: sp(16), paddingVertical: sp(13), borderBottomWidth: (qrItem as any).guardUuid ? StyleSheet.hairlineWidth : 0, borderBottomColor: colors.surfaceBorder }}>
+                <View style={{ width: sp(28), height: sp(28), borderRadius: sp(8), backgroundColor: colors.surfaceLight, alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
                   <Ionicons name="key-outline" size={rf(14)} color={colors.textSecondary} />
                 </View>
-                <Text style={[styles.infoLabel, { color: colors.textSecondary, fontSize: rf(12) }]}>QR Code ID</Text>
-                <Text style={[styles.infoValue, { color: colors.textMuted, fontSize: rf(11), fontFamily: "Inter_400Regular" }]} numberOfLines={1} selectable>
+                <Text style={{ fontSize: rf(12), fontFamily: "Inter_500Medium", color: colors.textSecondary, width: sp(100), flexShrink: 0 }}>QR Code ID</Text>
+                <Text style={{ fontSize: rf(11), fontFamily: "Inter_400Regular", color: colors.textMuted, flex: 1, textAlign: "right" }} numberOfLines={1} selectable>
                   {qrItem.qrCodeId}
                 </Text>
               </View>
               {(qrItem as any).guardUuid && (
-                <View style={[styles.infoRow, { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: colors.surfaceBorder }]}>
-                  <View style={[styles.infoIconWrap, { backgroundColor: colors.surfaceLight }]}>
+                <View style={{ flexDirection: "row", alignItems: "center", gap: sp(12), paddingHorizontal: sp(16), paddingVertical: sp(13) }}>
+                  <View style={{ width: sp(28), height: sp(28), borderRadius: sp(8), backgroundColor: colors.surfaceLight, alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
                     <Ionicons name="shield-outline" size={rf(14)} color={colors.primary} />
                   </View>
-                  <Text style={[styles.infoLabel, { color: colors.textSecondary, fontSize: rf(12) }]}>Guard UUID</Text>
-                  <Text style={[styles.infoValue, { color: colors.textMuted, fontSize: rf(11), fontFamily: "Inter_400Regular" }]} numberOfLines={1} selectable>
+                  <Text style={{ fontSize: rf(12), fontFamily: "Inter_500Medium", color: colors.textSecondary, width: sp(100), flexShrink: 0 }}>Guard UUID</Text>
+                  <Text style={{ fontSize: rf(11), fontFamily: "Inter_400Regular", color: colors.textMuted, flex: 1, textAlign: "right" }} numberOfLines={1} selectable>
                     {(qrItem as any).guardUuid}
                   </Text>
                 </View>
@@ -300,12 +307,12 @@ export default function MyQrAnalyticsScreen() {
           </Animated.View>
         )}
 
-        {/* Note about real-time analytics */}
-        <Animated.View entering={FadeInDown.duration(200)}>
-          <View style={[styles.noteCard, { backgroundColor: colors.primaryDim, borderColor: colors.primary + "30" }]}>
+        {/* ── NOTE ── */}
+        <Animated.View entering={FadeInDown.duration(200)} style={{ marginBottom: sp(8) }}>
+          <View style={{ flexDirection: "row", alignItems: "flex-start", gap: sp(10), borderRadius: sp(14), borderWidth: 1, borderColor: colors.primary + "30", backgroundColor: colors.primaryDim, padding: sp(14) }}>
             <Ionicons name="information-circle-outline" size={rf(16)} color={colors.primary} />
-            <Text style={[styles.noteText, { color: colors.textSecondary, fontSize: rf(11) }]}>
-              Scan counts are updated in real time. Follower counts refresh when you open this page. Detailed scan heatmaps and location analytics are coming soon.
+            <Text style={{ fontSize: rf(11), fontFamily: "Inter_400Regular", color: colors.textSecondary, flex: 1, lineHeight: rf(17) }}>
+              Scan counts update in real time. Follower counts refresh when you open this page. Detailed scan heatmaps and location analytics are coming soon.
             </Text>
           </View>
         </Animated.View>
@@ -313,114 +320,3 @@ export default function MyQrAnalyticsScreen() {
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  navBar: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    paddingHorizontal: 20,
-    paddingTop: 6,
-    paddingBottom: 10,
-  },
-  backBtn: {
-    width: 38,
-    height: 38,
-    borderRadius: 19,
-    borderWidth: 1,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  navTitle: { fontFamily: "Inter_700Bold" },
-  heroCard: {
-    borderRadius: 20,
-    borderWidth: 1,
-    padding: 18,
-    marginBottom: 20,
-    overflow: "hidden",
-  },
-  heroRow: { flexDirection: "row", alignItems: "flex-start", gap: 14 },
-  heroIconWrap: {
-    width: 52,
-    height: 52,
-    borderRadius: 16,
-    borderWidth: 1,
-    alignItems: "center",
-    justifyContent: "center",
-    flexShrink: 0,
-  },
-  heroTitle: { fontSize: 15, fontFamily: "Inter_700Bold", lineHeight: 22 },
-  typeBadge: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 100,
-    borderWidth: 1,
-  },
-  typeBadgeText: { fontSize: 10, fontFamily: "Inter_700Bold" },
-  sectionLabel: {
-    fontSize: 11,
-    fontFamily: "Inter_600SemiBold",
-    letterSpacing: 0.8,
-    textTransform: "uppercase",
-    marginBottom: 10,
-    marginTop: 4,
-  },
-  statsGrid: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: 10,
-  },
-  statCard: {
-    width: "47%",
-    borderRadius: 16,
-    borderWidth: 1,
-    padding: 16,
-    alignItems: "center",
-    gap: 6,
-  },
-  statIconWrap: {
-    width: 36,
-    height: 36,
-    borderRadius: 10,
-    alignItems: "center",
-    justifyContent: "center",
-    marginBottom: 2,
-  },
-  statValue: { fontFamily: "Inter_800ExtraBold" },
-  statLabel: { fontFamily: "Inter_400Regular", textAlign: "center" },
-  infoCard: {
-    borderRadius: 16,
-    borderWidth: 1,
-    overflow: "hidden",
-    marginBottom: 18,
-  },
-  infoRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 12,
-    paddingHorizontal: 16,
-    paddingVertical: 13,
-  },
-  infoIconWrap: {
-    width: 28,
-    height: 28,
-    borderRadius: 8,
-    alignItems: "center",
-    justifyContent: "center",
-    flexShrink: 0,
-  },
-  infoLabel: { fontFamily: "Inter_500Medium", width: 110, flexShrink: 0 },
-  infoValue: { fontFamily: "Inter_600SemiBold", flex: 1, textAlign: "right" },
-  noteCard: {
-    flexDirection: "row",
-    alignItems: "flex-start",
-    gap: 10,
-    borderRadius: 14,
-    borderWidth: 1,
-    padding: 14,
-    marginBottom: 8,
-  },
-  noteText: { fontFamily: "Inter_400Regular", flex: 1, lineHeight: 17 },
-});
