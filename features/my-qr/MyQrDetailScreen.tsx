@@ -160,11 +160,8 @@ export default function MyQrDetailScreen() {
 
       <View style={{ paddingTop: topInset }}>
         <MyQrNavBar
-          publicShortUuid={publicShortUuid}
           isBusiness={isBusiness}
           docId={id as string}
-          onViewPublic={handleViewPublic}
-          onViewAnalytics={() => router.push(`/my-qr-analytics/${id}` as any)}
         />
       </View>
 
@@ -309,6 +306,22 @@ export default function MyQrDetailScreen() {
           saving={saving}
           handleSaveDesign={handleSaveDesign}
         />
+
+        {publicShortUuid && (
+          <Pressable
+            onPress={handleViewPublic}
+            style={({ pressed }) => [{
+              flexDirection: "row", alignItems: "center", justifyContent: "center",
+              gap: sp(8), borderRadius: sp(16), paddingVertical: sp(14),
+              backgroundColor: colors.primary,
+              opacity: pressed ? 0.82 : 1,
+              marginBottom: sp(6),
+            }]}
+          >
+            <Ionicons name="globe-outline" size={rf(18)} color="#fff" />
+            <Text style={{ fontSize: rf(14), fontFamily: "Inter_700Bold", color: "#fff" }}>Public Live View</Text>
+          </Pressable>
+        )}
       </ScrollView>
 
       <ConfirmActionModal

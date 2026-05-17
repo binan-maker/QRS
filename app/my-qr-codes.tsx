@@ -75,93 +75,12 @@ function getEffectiveContentType(item: GeneratedQrItem): string {
   return stored;
 }
 
-function getDisplayText(item: GeneratedQrItem): string {
-  const contentType = getEffectiveContentType(item);
-  const displayDest = (item as any).displayDestination as string | null;
-  const content = item.content || "";
+function getDisplayText(item: GeneratedQrItem, index: number): string {
   const lbl = (item as any).label as string | null;
+  if (lbl && lbl.trim()) return lbl.trim();
   const bName = (item as any).businessName as string | null;
-  const src = displayDest || content;
-
-  switch (contentType) {
-    case "phone": case "mobilepay": case "grab": {
-      const num = src.replace(/^tel:/, "").trim();
-      return num || src;
-    }
-    case "wifi": { const m = src.match(/S:([^;]+)/); if (m) return m[1]; break; }
-    case "upi": case "scantopay": case "bharatqr": {
-      if (src.startsWith("upi://pay?")) { try { const pa = new URLSearchParams(src.replace("upi://pay?", "")).get("pa"); if (pa) return pa; } catch {} }
-      if (/^[\w.\-+]+@[\w]+$/.test(src)) return src;
-      break;
-    }
-    case "event": case "calendar": {
-      if (src.startsWith("BEGIN:")) { const m = src.match(/SUMMARY:([^\r\n]+)/); if (m) return m[1].trim(); }
-      try { const u = new URL(src.startsWith("http") ? src : `https://${src}`); const t = u.searchParams.get("text"); if (t) return t; } catch {}
-      break;
-    }
-    case "contact": {
-      const fn = src.match(/FN:([^\r\n]+)/); if (fn) return fn[1].trim();
-      const n = src.match(/N:([^\r\n]+)/); if (n) return n[1].replace(/;+/g, " ").trim();
-      break;
-    }
-    case "sms":   return src.replace(/^SMSTO?:/i, "").split(":")[0].trim();
-    case "email": return src.replace(/^mailto:/i, "").split("?")[0].trim();
-    case "whatsapp": {
-      try { const u = new URL(src.startsWith("http") ? src : `https://${src}`); if (u.hostname === "wa.me" || u.hostname === "api.whatsapp.com") { const p = u.pathname.replace(/^\//, ""); if (p) return "+" + p; } } catch {}
-      if (/^\+?[\d\s\-()]{7,}$/.test(src)) return src.trim();
-      break;
-    }
-    case "instagram": {
-      if (src.includes("instagram.com")) { const parts = src.replace(/\/$/, "").split("/"); const h = parts[parts.length - 1] || parts[parts.length - 2] || ""; if (h) return "@" + h; }
-      return src.startsWith("@") ? src : "@" + src;
-    }
-    case "twitter": {
-      if (src.includes("twitter.com") || src.includes("x.com")) { const parts = src.replace(/\/$/, "").split("/"); const h = parts[parts.length - 1] || ""; if (h && h !== "twitter.com" && h !== "x.com") return "@" + h; }
-      return src.startsWith("@") ? src : "@" + src;
-    }
-    case "telegram": {
-      if (src.includes("t.me") || src.includes("telegram.me")) { const parts = src.replace(/\/$/, "").split("/"); const h = parts[parts.length - 1] || ""; if (h) return "@" + h; }
-      return src.startsWith("@") ? src : "@" + src;
-    }
-    case "tiktok": { const h = src.replace(/.*tiktok\.com\/@?/, "").replace(/\/$/, ""); if (h) return "@" + h.replace(/^@/, ""); return src.startsWith("@") ? src : "@" + src; }
-    case "zoom": { if (src.includes("zoom.us/j/")) { const id = src.split("/j/")[1]?.split("?")[0] || ""; if (id) return "Meeting " + id; } return "Zoom Meeting"; }
-    case "crypto": { const addr = src.split(":")[1]?.split("?")[0] || src; return addr.length > 20 ? addr.slice(0, 20) + "…" : addr; }
-    case "location": {
-      try { const u = new URL(src.startsWith("http") ? src : `https://${src}`); const q = u.searchParams.get("q") || u.searchParams.get("query") || ""; if (q) return q; return u.hostname.replace(/^www\./, ""); } catch {}
-      break;
-    }
-    case "calendly": {
-      try { const u = new URL(src.startsWith("http") ? src : `https://${src}`); const parts = u.pathname.replace(/^\//, "").split("/").filter(Boolean); const user = parts[0] || ""; const ev = parts[1] || ""; if (user) return user + (ev ? " / " + ev : ""); } catch {}
-      return "Calendly";
-    }
-    case "appdownload": case "app": {
-      try { const u = new URL(src.startsWith("http") ? src : `https://${src}`); const n = u.pathname.split("/").filter(Boolean).pop()?.replace(/-/g, " ") || ""; if (n && n.length < 40) return n; return u.hostname.includes("apple") ? "App Store" : "Google Play"; } catch {}
-      return "App Download";
-    }
-    case "text": {
-      if (!src) return "Text QR";
-      const cleaned = src.replace(/^https?:\/\//, "");
-      return cleaned.length > 50 ? cleaned.slice(0, 50) + "…" : cleaned;
-    }
-  }
-
-  if (src) {
-    const isGuardOrGo = src.includes("/guard/") || src.includes("/go/");
-    const isLocal = /^https?:\/\/(192\.168\.|10\.|127\.|localhost)/.test(src);
-    if (isGuardOrGo || isLocal) {
-      if (lbl) return lbl;
-      if (bName) return bName;
-      return contentType === "business" ? "Business QR" : "QR Code";
-    }
-    const withScheme = src.startsWith("http") ? src : `https://${src}`;
-    try { const u = new URL(withScheme); const h = u.hostname.replace(/^www\./, ""); if (h.includes(".") && h.length >= 4) return h; } catch {}
-    if (lbl) return lbl;
-    if (bName) return bName;
-    return src.length > 40 ? src.slice(0, 40) + "…" : src;
-  }
-  if (lbl) return lbl;
-  if (bName) return bName;
-  return "QR Code";
+  if (bName && bName.trim()) return bName.trim();
+  return `Label ${index + 1}`;
 }
 
 function formatScanCount(n: number): string {
@@ -242,7 +161,7 @@ export default function MyQrCodesScreen() {
   }, [qrCodes, sortKey]);
 
   function renderQrItem({ item, index }: { item: GeneratedQrItem; index: number }) {
-    const displayText = getDisplayText(item);
+    const displayText = getDisplayText(item, index);
     const ctMeta      = getContentTypeMeta(getEffectiveContentType(item));
     const isBusiness  = (item as any).qrType === "business";
     const isInactive  = item.isActive === false;
