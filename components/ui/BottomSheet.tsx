@@ -133,8 +133,10 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(0,0,0,0.6)",
   },
   sheetContainer: {
-    flex: 1,
-    justifyContent: "flex-end",
+    position: "absolute",
+    left: 0,
+    right: 0,
+    bottom: 0,
   },
   sheet: {
     borderTopLeftRadius: 24,
