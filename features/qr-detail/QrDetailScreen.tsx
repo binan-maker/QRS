@@ -1,7 +1,7 @@
 import { useState, useCallback, useRef } from "react";
 import {
   View, Text, Pressable, ScrollView, RefreshControl,
-  StyleSheet, Share, KeyboardAvoidingView,
+  StyleSheet, Share, KeyboardAvoidingView, ActivityIndicator,
 } from "react-native";
 import { StatusBar } from "expo-status-bar";
 import { useLocalSearchParams, router } from "expo-router";
@@ -35,7 +35,6 @@ import { OfflineToast } from "@/features/qr-detail/components/OfflineToast";
 import { QrToast } from "@/features/qr-detail/components/QrToast";
 import { VerdictBanner } from "@/features/qr-detail/components/VerdictBanner";
 import { LivingShieldBanner } from "@/features/qr-detail/components/banners/LivingShieldBanner";
-import { StandardQrBanner } from "@/features/qr-detail/components/banners/StandardQrBanner";
 import { formatCompactNumber } from "@/lib/number-format";
 
 import QrDetailNavBar from "@/features/qr-detail/components/QrDetailNavBar";
@@ -246,8 +245,36 @@ export default function QrDetailScreen() {
             </Animated.View>
 
             {isGuardQr && <LivingShieldBanner guardLink={guardLink} loading={guardLinkLoading} />}
+
             {isStandardQr && (
-              <StandardQrBanner loading={standardLinkLoading} ready={standardReady} ownerName={standardLinkData?.ownerName ?? null} isActive={standardLinkData?.isActive !== false} qrId={standardUuid} />
+              <Animated.View entering={FadeInDown.duration(180)}>
+                <View style={{
+                  flexDirection: "row", alignItems: "center", gap: 8,
+                  borderRadius: 12, borderWidth: 1,
+                  borderColor: "#22c55e30",
+                  backgroundColor: colors.isDark ? "#0a1a0e" : "#f0fdf4",
+                  paddingHorizontal: 12, paddingVertical: 9,
+                  marginBottom: 4,
+                }}>
+                  <Ionicons name="shield-checkmark" size={15} color="#22c55e" />
+                  <Text style={{ flex: 1, fontSize: 12, fontFamily: "Inter_600SemiBold", color: "#22c55e" }}>
+                    Protected by QR Guard
+                  </Text>
+                  {standardLinkData?.ownerName ? (
+                    <Text style={{ fontSize: 11, fontFamily: "Inter_400Regular", color: colors.textMuted }} numberOfLines={1}>
+                      {standardLinkData.ownerName}
+                    </Text>
+                  ) : standardLinkLoading ? (
+                    <ActivityIndicator size="small" color="#22c55e" />
+                  ) : null}
+                  {!standardLinkLoading && standardLinkData?.isActive === false && (
+                    <View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
+                      <Ionicons name="ban-outline" size={13} color={colors.danger} />
+                      <Text style={{ fontSize: 11, fontFamily: "Inter_500Medium", color: colors.danger }}>Deactivated</Text>
+                    </View>
+                  )}
+                </View>
+              </Animated.View>
             )}
 
             {((!isGuardQr && !isStandardQr) || guardReady || standardReady) && (

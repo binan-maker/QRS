@@ -1,5 +1,6 @@
-import { View, Text } from "react-native";
+import { View, Text, Pressable } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import { router } from "expo-router";
 import { useTheme } from "@/contexts/ThemeContext";
 import { externalQrBannerStyles } from "@/features/qr-detail/styles";
 
@@ -22,6 +23,31 @@ export default function ExternalQrBanner() {
           </Text>
         </View>
       </View>
+
+      <Pressable
+        onPress={() => router.push("/(tabs)/generate" as any)}
+        style={({ pressed }) => [{
+          flexDirection: "row",
+          alignItems: "center",
+          gap: 8,
+          marginTop: 2,
+          marginLeft: 10,
+          paddingHorizontal: 12,
+          paddingVertical: 9,
+          borderRadius: 10,
+          borderWidth: 1,
+          borderColor: colors.primary + "50",
+          backgroundColor: colors.primaryDim,
+          opacity: pressed ? 0.8 : 1,
+          alignSelf: "flex-start",
+        }]}
+      >
+        <Ionicons name="shield-checkmark-outline" size={15} color={colors.primary} />
+        <Text style={{ fontSize: 12, fontFamily: "Inter_600SemiBold", color: colors.primary }}>
+          Protect with QR Guard
+        </Text>
+        <Ionicons name="arrow-forward" size={13} color={colors.primary} />
+      </Pressable>
     </View>
   );
 }
