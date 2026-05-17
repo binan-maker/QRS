@@ -180,8 +180,6 @@ export function validateQrInput(content: string): {
   // Lazy-require to avoid import cycles with security/* modules during native bundle.
 
   const { validateQrContent } = require("../analysis/qr-validator") as {
-    
-  const { validateQrContent } = require('../analysis/qr-validator') as {
 
     validateQrContent: (c: unknown) => { valid: boolean; error?: string };
   };
