@@ -310,14 +310,14 @@ const styles = StyleSheet.create({
   commentBody: { flex: 1, gap: 5 },
   commentHeader: { flexDirection: "row", alignItems: "center", gap: 6 },
   authorPressable: { flex: 1, minWidth: 0 },
-  authorName: { fontSize: 13, fontFamily: "Inter_700Bold" },
-  commentTime: { fontSize: 12, fontFamily: "Inter_400Regular", flexShrink: 0 },
-  readMoreText: { fontSize: 13, fontFamily: "Inter_600SemiBold" },
+  authorName: { fontSize: 12, fontFamily: "Inter_700Bold" },
+  commentTime: { fontSize: 11, fontFamily: "Inter_400Regular", flexShrink: 0 },
+  readMoreText: { fontSize: 12, fontFamily: "Inter_600SemiBold" },
   sensitiveTag: {
     paddingHorizontal: 5, paddingVertical: 2, borderRadius: 5,
   },
   menuBtn: { padding: 2 },
-  commentText: { fontSize: 14, fontFamily: "Inter_400Regular", lineHeight: 21 },
+  commentText: { fontSize: 13, fontFamily: "Inter_400Regular", lineHeight: 19 },
   actionRow: { flexDirection: "row", alignItems: "center", gap: 6, marginTop: 4 },
   actionBtn: {},
   actionPill: {
