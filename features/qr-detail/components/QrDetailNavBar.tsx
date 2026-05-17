@@ -9,6 +9,7 @@ interface Props {
   offlineMode: boolean;
   ownerName: string | null;
   hasOwner: boolean;
+  isGuardCreatedQr: boolean;
   isFollowingCreator: boolean;
   creatorFollowLoading: boolean;
   creatorFollowerCount: number;
@@ -30,6 +31,7 @@ export default function QrDetailNavBar({
   offlineMode,
   ownerName,
   hasOwner,
+  isGuardCreatedQr,
   isFollowingCreator,
   creatorFollowLoading,
   creatorFollowerCount,
@@ -66,8 +68,8 @@ export default function QrDetailNavBar({
       </View>
 
       <View style={styles.navActions}>
-        {isQrOwner ? (
-          /* Owner sees Analytics + Manage — no Follow button shown */
+        {isQrOwner && isGuardCreatedQr ? (
+          /* QR Guard QR — owner sees Analytics button only (Manage is in overflow) */
           <>
             {onAnalytics && (
               <Pressable
@@ -81,19 +83,9 @@ export default function QrDetailNavBar({
                 <Text style={[styles.followBtnText, { color: colors.accent }]}>Analytics</Text>
               </Pressable>
             )}
-            <Pressable
-              onPress={onManage}
-              style={({ pressed }) => [
-                styles.followBtn,
-                { backgroundColor: colors.primaryDim, borderColor: colors.primary + "40", opacity: pressed ? 0.8 : 1 },
-              ]}
-            >
-              <Ionicons name="settings-outline" size={14} color={colors.primary} />
-              <Text style={[styles.followBtnText, { color: colors.primary }]}>Manage</Text>
-            </Pressable>
           </>
-        ) : hasOwner ? (
-          /* Visitor on a QR Guard QR: show Follow creator button */
+        ) : isGuardCreatedQr && hasOwner ? (
+          /* QR Guard QR — visitor sees Follow / Unfollow creator button */
           <Pressable
             onPress={creatorFollowLoading ? undefined : onFollowCreator}
             style={({ pressed }) => [
@@ -124,7 +116,7 @@ export default function QrDetailNavBar({
             )}
           </Pressable>
         ) : null
-        /* External QR with no registered owner → no follow/watch button */
+        /* External / non-Guard QR → no action button shown */
         }
 
         <Pressable

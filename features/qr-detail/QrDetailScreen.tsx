@@ -189,6 +189,7 @@ export default function QrDetailScreen() {
             offlineMode={q.offlineMode}
             ownerName={q.ownerInfo?.businessName || q.ownerInfo?.ownerName || null}
             hasOwner={hasOwner}
+            isGuardCreatedQr={isGuardQr || isStandardQr}
             isFollowingCreator={q.isFollowingCreator}
             creatorFollowLoading={q.creatorFollowLoading}
             creatorFollowerCount={q.creatorFollowerCount}
