@@ -4,6 +4,7 @@ import {
   Platform, ViewStyle,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import * as NavigationBar from "expo-navigation-bar";
 import { useTheme } from "@/contexts/ThemeContext";
 
 interface Props {
@@ -24,6 +25,21 @@ export default function BottomSheet({ visible, onClose, children, maxHeight = "8
   // Use 900 so the sheet always starts fully below the screen regardless of its height
   const sheetAnim = useRef(new Animated.Value(visible ? 0 : 900)).current;
   const animRef = useRef<Animated.CompositeAnimation | null>(null);
+
+  // Keep the Android system nav bar themed while the modal is open.
+  // Transparent modals reset the nav bar to transparent on Android, which
+  // shows black in dark mode. We pin it to the sheet color on open and
+  // restore to the app background on close.
+  useEffect(() => {
+    if (Platform.OS !== "android") return;
+    if (visible) {
+      NavigationBar.setBackgroundColorAsync(colors.surface).catch(() => {});
+      NavigationBar.setButtonStyleAsync(colors.isDark ? "light" : "dark").catch(() => {});
+    } else {
+      NavigationBar.setBackgroundColorAsync(colors.background).catch(() => {});
+      NavigationBar.setButtonStyleAsync(colors.isDark ? "light" : "dark").catch(() => {});
+    }
+  }, [visible, colors.surface, colors.background, colors.isDark]);
 
   useEffect(() => {
     if (visible) {

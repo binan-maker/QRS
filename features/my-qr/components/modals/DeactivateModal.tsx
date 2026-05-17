@@ -1,6 +1,7 @@
 import { View, Text, StyleSheet, Pressable, Modal, TextInput } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useTheme } from "@/contexts/ThemeContext";
+import { useAndroidNavBar } from "@/lib/utils/use-android-nav-bar";
 
 interface Props {
   visible: boolean;
@@ -12,6 +13,7 @@ interface Props {
 
 export default function DeactivateModal({ visible, msgInput, onChangeMsgInput, onCancel, onConfirm }: Props) {
   const { colors } = useTheme();
+  useAndroidNavBar(visible, colors.surface, colors.background, colors.isDark);
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onCancel}>
       <View style={styles.overlay}>

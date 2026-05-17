@@ -62,7 +62,7 @@ function RootLayoutNav() {
       animation: "slide_from_right",
       contentStyle: { backgroundColor: colors.background },
       ...(Platform.OS === "android" ? {
-        navigationBarColor: colors.surface,
+        navigationBarColor: colors.background,
       } : {}),
     }}>
       <Stack.Screen name="(tabs)" options={{ headerShown: false, animation: "none" }} />
@@ -70,7 +70,7 @@ function RootLayoutNav() {
         presentation: "modal",
         animation: "slide_from_bottom",
         headerShown: false,
-        ...(Platform.OS === "android" ? { navigationBarColor: colors.surface } : {}),
+        ...(Platform.OS === "android" ? { navigationBarColor: colors.background } : {}),
       }} />
       <Stack.Screen name="qr-detail/[id]" options={{ headerShown: false }} />
       <Stack.Screen name="my-qr/[id]" options={{ headerShown: false }} />

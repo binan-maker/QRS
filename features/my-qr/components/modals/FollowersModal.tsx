@@ -2,6 +2,7 @@ import { View, Text, StyleSheet, Pressable, Modal, ScrollView, Image, ActivityIn
 import { Ionicons } from "@expo/vector-icons";
 import Animated, { FadeInDown } from "react-native-reanimated";
 import { useTheme } from "@/contexts/ThemeContext";
+import { useAndroidNavBar } from "@/lib/utils/use-android-nav-bar";
 import { formatCompactRelativeTime } from "@/lib/utils/formatters";
 import type { FollowerInfo } from "@/lib/firestore-service";
 
@@ -16,6 +17,7 @@ interface Props {
 
 export default function FollowersModal({ visible, onClose, followCount, followers, loading, topInset }: Props) {
   const { colors } = useTheme();
+  useAndroidNavBar(visible, colors.background, colors.background, colors.isDark);
   return (
     <Modal visible={visible} animationType="slide" onRequestClose={onClose}>
       <View style={{ flex: 1, backgroundColor: colors.background }}>

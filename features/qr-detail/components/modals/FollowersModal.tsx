@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, Pressable, Modal, ScrollView, ActivityIndicator
 import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTheme } from "@/contexts/ThemeContext";
+import { useAndroidNavBar } from "@/lib/utils/use-android-nav-bar";
 import { formatCompactNumber } from "@/lib/number-format";
 import { formatCompactRelativeTime } from "@/lib/utils/formatters";
 import type { FollowerInfo } from "@/lib/firestore-service";
@@ -28,6 +29,7 @@ const FollowersModal = React.memo(function FollowersModal({
 }: Props) {
   const { colors } = useTheme();
   const insets = useSafeAreaInsets();
+  useAndroidNavBar(visible, colors.surface, colors.background, colors.isDark);
   const styles = makeStyles(colors, Math.max(insets.bottom, 32));
   const resolvedSubtitle = subtitle ?? `${formatCompactNumber(followCount)} ${followCount === 1 ? "person follows" : "people follow"} this QR`;
   return (
