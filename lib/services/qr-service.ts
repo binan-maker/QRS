@@ -94,6 +94,9 @@ export async function getQrCodeById(qrId: string): Promise<QrCodeData | null> {
       ownerScanCount: data.ownerScanCount,
       scanCountFrozen: data.scanCountFrozen,
       scanCountFreezeReason: data.scanCountFreezeReason,
+      // Deactivation state
+      isActive: data.isActive !== false,
+      deactivationMessage: data.deactivationMessage ?? null,
     };
   } catch (e) {
     console.warn("[db] getQrCodeById failed:", e);

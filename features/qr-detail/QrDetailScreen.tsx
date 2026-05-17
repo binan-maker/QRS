@@ -126,6 +126,22 @@ export default function QrDetailScreen() {
   const verdict = q.getCombinedVerdict();
   const isQrOwner = !!(user?.id && q.ownerInfo?.ownerId && user.id === q.ownerInfo.ownerId);
 
+  // Single source of truth for deactivation — covers all QR types:
+  // 1. Branded QR: ownerInfo.isActive (after async getQrOwnerInfo resolves)
+  // 2. Branded QR fast path: qrCode.isActive (available immediately from loadQrDetail)
+  // 3. Standard link QR: standardLinkData.isActive
+  // 4. Guard link QR: guardLink.isActive
+  const isDeactivated =
+    q.ownerInfo?.isActive === false ||
+    q.qrCode?.isActive === false ||
+    standardLinkData?.isActive === false ||
+    (isGuardQr && guardLink?.isActive === false);
+
+  const deactivationMsg =
+    q.ownerInfo?.deactivationMessage ||
+    q.qrCode?.deactivationMessage ||
+    null;
+
   const handleCreatorFollowPress = useCallback(() => {
     if (!user) { router.push("/(auth)/login"); return; }
     if (!isOnline) { setOfflineToastKey((k) => k + 1); return; }
@@ -228,7 +244,7 @@ export default function QrDetailScreen() {
             }
           >
             {/* Deactivated banner */}
-            {q.ownerInfo?.isActive === false && (
+            {isDeactivated && (
               <Animated.View entering={FadeIn.duration(150)}>
                 <View style={styles.deactivatedBanner}>
                   <LinearGradient colors={["rgba(239,68,68,0.18)", "rgba(239,68,68,0.08)"]} style={StyleSheet.absoluteFill} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} />
@@ -237,7 +253,9 @@ export default function QrDetailScreen() {
                   </View>
                   <View style={{ flex: 1 }}>
                     <Text style={styles.deactivatedTitle}>QR Code Deactivated</Text>
-                    <Text style={styles.deactivatedSub}>The owner has turned off this QR code. Links and actions are disabled.</Text>
+                    <Text style={styles.deactivatedSub}>
+                      {deactivationMsg || "The owner has turned off this QR code. Links and actions are disabled."}
+                    </Text>
                   </View>
                 </View>
               </Animated.View>
@@ -267,7 +285,7 @@ export default function QrDetailScreen() {
                   content={effectiveContent}
                   contentType={effectiveContentType}
                   parsedPayment={q.parsedPayment}
-                  isDeactivated={q.ownerInfo?.isActive === false || standardLinkData?.isActive === false}
+                  isDeactivated={isDeactivated}
                   onOpenContent={q.handleOpenContent}
                   hideOpenAction={!user || isGuardQr}
                 />
