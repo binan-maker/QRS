@@ -78,7 +78,7 @@ export function useMyQrDetail(id: string) {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
   }
 
-  async function handleToggleActive(newState: boolean) {
+  async function handleToggleActive(newState: boolean, deactivationMessage: string | null = null) {
     if (!user || !qrItem?.qrCodeId) return;
     if (qrItem.qrType === "government") {
       Alert.alert("Permanent QR", "Government QR codes cannot be deactivated.");
@@ -86,8 +86,8 @@ export function useMyQrDetail(id: string) {
     }
     setTogglingActive(true);
     try {
-      await setQrActiveState(qrItem.qrCodeId, user.id, newState, null);
-      setQrItem({ ...qrItem, isActive: newState, deactivationMessage: null });
+      await setQrActiveState(qrItem.qrCodeId, user.id, newState, newState ? null : deactivationMessage);
+      setQrItem({ ...qrItem, isActive: newState, deactivationMessage: newState ? null : deactivationMessage });
       if (newState) {
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       } else {

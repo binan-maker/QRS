@@ -21,6 +21,7 @@ import StaticContentEditor from "@/features/my-qr/components/cards/StaticContent
 import QrSettingsPanel from "@/features/my-qr/components/panels/QrSettingsPanel";
 import DesignPanel from "@/features/my-qr/components/panels/DesignPanel";
 import ConfirmActionModal from "@/features/my-qr/components/modals/ConfirmActionModal";
+import DeactivateModal from "@/features/my-qr/components/modals/DeactivateModal";
 import FollowersModal from "@/features/my-qr/components/modals/FollowersModal";
 import PositionModal from "@/features/generator/components/PositionModal";
 import type { LogoPosition } from "@/features/my-qr/hooks/useQrDesign";
@@ -34,6 +35,7 @@ export default function MyQrDetailScreen() {
   const tabBarHeight = 62 + insets.bottom + 8;
 
   const [structuredFields, setStructuredFields] = useState<Record<string, string>>({});
+  const [deactivateModalOpen, setDeactivateModalOpen] = useState(false);
 
   const {
     user, svgRef, scrollRef, qrItem, loading,
@@ -273,7 +275,13 @@ export default function MyQrDetailScreen() {
         <QrSettingsPanel
           isActive={isActive}
           togglingActive={togglingActive}
-          onToggleActive={(v) => handleToggleActive(v)}
+          onToggleActive={(v) => {
+            if (!v) {
+              setDeactivateModalOpen(true);
+            } else {
+              handleToggleActive(true);
+            }
+          }}
         />
 
         <DesignPanel
@@ -308,6 +316,15 @@ export default function MyQrDetailScreen() {
         message={confirmModalMessage}
         onConfirm={handleConfirmPendingAction}
         onCancel={handleCancelPendingAction}
+      />
+
+      <DeactivateModal
+        visible={deactivateModalOpen}
+        onCancel={() => setDeactivateModalOpen(false)}
+        onConfirm={(message) => {
+          setDeactivateModalOpen(false);
+          handleToggleActive(false, message);
+        }}
       />
 
       <FollowersModal
