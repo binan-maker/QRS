@@ -187,6 +187,9 @@ export async function getUserGeneratedQrs(userId: string): Promise<GeneratedQrIt
         bgColor: data.bgColor || "#F8FAFC",
         logoPosition: data.logoPosition || "center",
         logoUri: data.logoUri || null,
+        label: data.label || null,
+        scanLimit: data.scanLimit ?? null,
+        expiryDate: data.expiryDate || null,
         scanCount: data.scanCount || 0,
         commentCount: data.commentCount || 0,
         qrType: (data.qrType as QrType) || "individual",
@@ -196,6 +199,7 @@ export async function getUserGeneratedQrs(userId: string): Promise<GeneratedQrIt
         guardUuid: data.guardUuid || null,
         displayDestination: data.displayDestination || null,
         templateKey: data.templateKey || null,
+        formValues: data.formValues || null,
       } as any;
     });
 
@@ -260,6 +264,9 @@ export function subscribeToUserGeneratedQrs(
           bgColor: data.bgColor || "#F8FAFC",
           logoPosition: data.logoPosition || "center",
           logoUri: data.logoUri || null,
+          label: data.label || null,
+          scanLimit: data.scanLimit ?? null,
+          expiryDate: data.expiryDate || null,
           scanCount: data.scanCount || 0,
           commentCount: data.commentCount || 0,
           qrType: (data.qrType as QrType) || "individual",
@@ -269,6 +276,7 @@ export function subscribeToUserGeneratedQrs(
           guardUuid: data.guardUuid || null,
           displayDestination: data.displayDestination || null,
           templateKey: data.templateKey || null,
+          formValues: data.formValues || null,
         } as any;
       });
 

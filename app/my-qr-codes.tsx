@@ -79,10 +79,8 @@ function getEffectiveContentType(item: GeneratedQrItem): string {
 }
 
 function getDisplayText(item: GeneratedQrItem, index: number): string {
-  const lbl = (item as any).label as string | null;
-  if (lbl && lbl.trim()) return lbl.trim();
-  const bName = (item as any).businessName as string | null;
-  if (bName && bName.trim()) return bName.trim();
+  if (item.label?.trim()) return item.label.trim();
+  if (item.businessName?.trim()) return item.businessName.trim();
 
   const ct = getEffectiveContentType(item);
   const c = item.content || "";
