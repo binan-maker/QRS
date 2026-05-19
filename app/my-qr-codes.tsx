@@ -353,16 +353,7 @@ export default function MyQrCodesScreen() {
           <Ionicons name="chevron-back" size={rf(20)} color={colors.text} />
         </Pressable>
 
-        <View style={{ alignItems: "center" }}>
-          <Text style={{ fontSize: rf(17), fontFamily: "Inter_700Bold", color: colors.text }}>My QR Codes</Text>
-          {!loading && (
-            <Text style={{ fontSize: rf(11), fontFamily: "Inter_400Regular", color: colors.textMuted, marginTop: 1 }}>
-              {searchQuery.trim()
-                ? `${sorted.length} result${sorted.length === 1 ? "" : "s"}`
-                : `${sorted.length} ${sorted.length === 1 ? "code" : "codes"}`}
-            </Text>
-          )}
-        </View>
+        <Text style={{ fontSize: rf(17), fontFamily: "Inter_700Bold", color: colors.text }}>My QR Codes</Text>
 
         <Pressable
           onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); router.push("/(tabs)/qr-generator"); }}
@@ -380,17 +371,17 @@ export default function MyQrCodesScreen() {
 
       {/* Search bar */}
       <View style={{
-        marginHorizontal: sp(20), marginBottom: sp(10),
-        flexDirection: "row", alignItems: "center", gap: sp(8),
-        borderRadius: sp(14), borderWidth: 1,
-        borderColor: searchQuery.trim() ? colors.primary + "55" : colors.surfaceBorder,
+        marginHorizontal: sp(20), marginBottom: sp(8),
+        flexDirection: "row", alignItems: "center", gap: sp(6),
+        borderRadius: sp(12), borderWidth: 1,
+        borderColor: searchQuery.trim() ? colors.primary + "50" : colors.surfaceBorder,
         backgroundColor: colors.surface,
-        paddingHorizontal: sp(12), paddingVertical: sp(9),
+        paddingHorizontal: sp(10), paddingVertical: sp(7),
       }}>
-        <Ionicons name="search-outline" size={rf(16)} color={searchQuery.trim() ? colors.primary : colors.textMuted} />
+        <Ionicons name="search-outline" size={rf(14)} color={searchQuery.trim() ? colors.primary : colors.textMuted} />
         <TextInput
-          style={{ flex: 1, fontSize: rf(14), fontFamily: "Inter_400Regular", color: colors.text }}
-          placeholder="Search your QR codes…"
+          style={{ flex: 1, fontSize: rf(13), fontFamily: "Inter_400Regular", color: colors.text }}
+          placeholder="Search by name…"
           placeholderTextColor={colors.textMuted}
           value={searchQuery}
           onChangeText={setSearchQuery}
@@ -399,7 +390,7 @@ export default function MyQrCodesScreen() {
         />
         {searchQuery.length > 0 && (
           <Pressable onPress={() => setSearchQuery("")} hitSlop={8}>
-            <Ionicons name="close-circle" size={rf(16)} color={colors.textMuted} />
+            <Ionicons name="close-circle" size={rf(14)} color={colors.textMuted} />
           </Pressable>
         )}
       </View>

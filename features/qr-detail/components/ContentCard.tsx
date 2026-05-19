@@ -233,48 +233,30 @@ const ContentCard = React.memo(function ContentCard({ content, contentType, pars
     const isHex = /^[0-9a-fA-F]{40,}$/.test(content.trim());
     const dataHint = isBase64 ? "Base64-encoded" : isHex ? "Hex-encoded" : "Proprietary";
     return (
-      <View style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.warning + "40" }]}>
-        <LinearGradient
-          colors={[colors.warning + (isDark ? "18" : "0D"), "transparent"]}
-          style={StyleSheet.absoluteFill}
-        />
-        <View style={styles.typeRow}>
-          <LinearGradient colors={[colors.warning, colors.warningShade]} style={styles.typeIcon} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}>
-            <Ionicons name="key-outline" size={18} color="#fff" />
+      <View style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.warning + "50" }]}>
+        <LinearGradient colors={[colors.warning + (isDark ? "20" : "10"), "transparent"]} style={StyleSheet.absoluteFill} />
+        {/* Header */}
+        <View style={styles.cardHeader}>
+          <LinearGradient colors={[colors.warning, colors.warningShade ?? colors.warning]} style={styles.cardIcon} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}>
+            <Ionicons name="key-outline" size={22} color="#fff" />
           </LinearGradient>
-          <Text style={[styles.typeLabel, { color: colors.text }]}>Encrypted Data</Text>
-          <Pressable
-            onPress={handleCopy}
-            style={({ pressed }) => [
-              styles.copyBtn,
-              {
-                backgroundColor: copied ? colors.safe + "18" : isDark ? colors.surfaceLight : colors.background,
-                borderColor: copied ? colors.safe : colors.surfaceBorder,
-                opacity: pressed ? 0.75 : 1,
-              },
-            ]}
-          >
-            <Ionicons name={copied ? "checkmark-circle" : "copy-outline"} size={15} color={copied ? colors.safe : colors.textMuted} />
+          <View style={{ flex: 1 }}>
+            <Text style={[styles.cardTitle, { color: colors.text }]}>Encrypted Data</Text>
+            <Text style={[styles.cardSub, { color: colors.textMuted }]}>{dataHint} · {content.length} chars</Text>
+          </View>
+          <Pressable onPress={handleCopy} style={({ pressed }) => [styles.copyBtn, { backgroundColor: copied ? colors.safe + "18" : isDark ? colors.surfaceLight : colors.background, borderColor: copied ? colors.safe : colors.surfaceBorder, opacity: pressed ? 0.75 : 1 }]}>
+            <Ionicons name={copied ? "checkmark-circle" : "copy-outline"} size={14} color={copied ? colors.safe : colors.textMuted} />
             <Text style={[styles.copiedText, { color: copied ? colors.safe : colors.textMuted }]}>{copied ? "Copied!" : "Copy"}</Text>
           </Pressable>
         </View>
-        <View style={[styles.encryptedInfoBox, { backgroundColor: colors.warning + "10", borderColor: colors.warning + "30" }]}>
-          <View style={styles.encryptedBadgeRow}>
-            <View style={[styles.encryptedBadge, { backgroundColor: colors.warning + "20" }]}>
-              <Text style={[styles.encryptedBadgeText, { color: colors.warning }]}>{dataHint}</Text>
-            </View>
-            <Text style={[styles.encryptedByteHint, { color: colors.textMuted }]}>{content.length} chars</Text>
-          </View>
-          <Text style={[styles.encryptedDesc, { color: colors.textSecondary }]}>
-            This QR code contains encrypted or proprietary data — likely from a government agency, bank, or private system (e.g. voter ID, ID card, access token). The content is intentionally unreadable without the issuer's private key.
+        <View style={[styles.infoChipRow, { backgroundColor: colors.warning + "12", borderColor: colors.warning + "30" }]}>
+          <Ionicons name="information-circle-outline" size={13} color={colors.warning} />
+          <Text style={[styles.infoChipText, { color: colors.warning }]}>
+            Proprietary or government-issued data — requires issuer's key to decode.
           </Text>
         </View>
-        <View style={[styles.contentBox, { backgroundColor: isDark ? colors.surfaceLight : colors.background, borderColor: colors.surfaceBorder }]}>
-          <Text style={[styles.encryptedRaw, { color: colors.textMuted }]} selectable numberOfLines={2}>{preview}</Text>
-        </View>
-        <View style={[styles.encryptedTipRow, { borderColor: colors.surfaceBorder }]}>
-          <Ionicons name="shield-checkmark-outline" size={14} color={colors.textMuted} />
-          <Text style={[styles.encryptedTip, { color: colors.textMuted }]}>Only trust this QR if you received it from a verified official source.</Text>
+        <View style={[styles.rawBox, { backgroundColor: isDark ? colors.surfaceLight : colors.background, borderColor: colors.surfaceBorder }]}>
+          <Text style={[styles.rawText, { color: colors.textMuted }]} selectable numberOfLines={2}>{preview}</Text>
         </View>
       </View>
     );
@@ -293,128 +275,124 @@ const ContentCard = React.memo(function ContentCard({ content, contentType, pars
     return <View><PaymentCard parsedPayment={paymentData} isDeactivated={isDeactivated} onOpenContent={onOpenContent} /></View>;
   }
 
+  const accentColor = cfg.gradient[0];
+  const accentAlpha = isDark ? "22" : "12";
+
   return (
-    <View style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
+    <View style={[styles.card, { backgroundColor: colors.surface, borderColor: accentColor + "45" }]}>
       <LinearGradient
-        colors={[cfg.gradient[0] + (isDark ? "14" : "09"), "transparent"]}
+        colors={[accentColor + (isDark ? "18" : "0C"), "transparent"]}
         style={StyleSheet.absoluteFill}
       />
 
-      {/* Type header row */}
-      <View style={styles.typeRow}>
-        <LinearGradient colors={[...cfg.gradient]} style={styles.typeIcon} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}>
-          <Ionicons name={cfg.icon as keyof typeof Ionicons.glyphMap} size={15} color="#fff" />
+      {/* Card header — icon + type label + copy */}
+      <View style={styles.cardHeader}>
+        <LinearGradient colors={[...cfg.gradient]} style={styles.cardIcon} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}>
+          <Ionicons name={cfg.icon as keyof typeof Ionicons.glyphMap} size={22} color="#fff" />
         </LinearGradient>
-        <Text style={[styles.typeLabel, { color: colors.text }]}>{cfg.label}</Text>
+        <View style={{ flex: 1 }}>
+          <Text style={[styles.cardTitle, { color: colors.text }]}>{cfg.label}</Text>
+          {isUrlLike && (
+            <Text style={[styles.cardSub, { color: colors.textMuted }]} numberOfLines={1}>
+              {cfg.extractDisplayValue
+                ? cfg.extractDisplayValue(content)
+                : (() => {
+                    try {
+                      const parsed = new URL(content.startsWith("http") ? content : `https://${content}`);
+                      const h = parsed.hostname.toLowerCase();
+                      const isPrivate = /^(localhost|127\.|10\.|192\.168\.|172\.(1[6-9]|2\d|3[01])\.)/.test(h);
+                      if (isPrivate || parsed.pathname.startsWith("/guard/")) return "Smart Redirect";
+                      return h.replace(/^www\./, "");
+                    } catch { return ""; }
+                  })()
+              }
+            </Text>
+          )}
+        </View>
         <Pressable
           onPress={handleCopy}
-          style={({ pressed }) => [
-            styles.copyBtn,
-            {
-              backgroundColor: copied ? colors.safe + "18" : isDark ? colors.surfaceLight : colors.background,
-              borderColor: copied ? colors.safe : colors.surfaceBorder,
-              opacity: pressed ? 0.75 : 1,
-            },
-          ]}
+          style={({ pressed }) => [styles.copyBtn, {
+            backgroundColor: copied ? colors.safe + "18" : isDark ? colors.surfaceLight : colors.background,
+            borderColor: copied ? colors.safe : colors.surfaceBorder,
+            opacity: pressed ? 0.75 : 1,
+          }]}
         >
-          <Ionicons name={copied ? "checkmark-circle" : "copy-outline"} size={15} color={copied ? colors.safe : colors.textMuted} />
+          <Ionicons name={copied ? "checkmark-circle" : "copy-outline"} size={14} color={copied ? colors.safe : colors.textMuted} />
           <Text style={[styles.copiedText, { color: copied ? colors.safe : colors.textMuted }]}>{copied ? "Copied!" : "Copy"}</Text>
         </Pressable>
       </View>
 
-      {/* Content text — hidden for URL-like, structured, and parsed types */}
+      {/* Plain text content */}
       {!isUrlLike && !["event", "calendar", "whatsapp", "email", "phone", "location", "crypto", "contact"].includes(contentType) && (
-        <View style={[styles.contentBox, { backgroundColor: isDark ? colors.surfaceLight : colors.background, borderColor: colors.surfaceBorder }]}>
-          <Text style={[styles.contentText, { color: colors.text }]} selectable numberOfLines={contentExpanded ? undefined : 4}>
+        <View style={[styles.rawBox, { backgroundColor: isDark ? colors.surfaceLight : colors.background, borderColor: colors.surfaceBorder }]}>
+          <Text style={[styles.rawText, { color: colors.text }]} selectable numberOfLines={contentExpanded ? undefined : 4}>
             {content}
           </Text>
           {isLongContent && (
-            <Pressable onPress={() => setContentExpanded(v => !v)} style={styles.expandBtn}>
-              <Text style={[styles.expandBtnText, { color: cfg.gradient[0] }]}>{contentExpanded ? "Show less" : "Show more"}</Text>
+            <Pressable onPress={() => setContentExpanded(v => !v)}>
+              <Text style={[styles.expandBtnText, { color: accentColor }]}>{contentExpanded ? "Show less" : "Show more"}</Text>
             </Pressable>
           )}
         </View>
       )}
 
-      {/* URL / link display for URL-like types */}
-      {isUrlLike && (
-        <View style={[styles.urlBox, { backgroundColor: isDark ? colors.surfaceLight : colors.background, borderColor: colors.surfaceBorder }]}>
-          <Ionicons name="link-outline" size={14} color={cfg.gradient[0]} />
-          <Text style={[styles.urlText, { color: colors.textSecondary }]} numberOfLines={1} selectable>
-            {cfg.extractDisplayValue
-              ? cfg.extractDisplayValue(content)
-              : (() => {
-                  try {
-                    const parsed = new URL(content.startsWith("http") ? content : `https://${content}`);
-                    const h = parsed.hostname.toLowerCase();
-                    const isPrivate = /^(localhost|127\.|10\.|192\.168\.|172\.(1[6-9]|2\d|3[01])\.)/.test(h);
-                    if (isPrivate || parsed.pathname.startsWith("/guard/")) return "Smart Redirect";
-                    const host = h.replace(/^www\./, "");
-                    const path = parsed.pathname.replace(/\/$/, "");
-                    return path && path !== "/" ? `${host}${path}` : host;
-                  } catch { return content.length > 44 ? content.slice(0, 44) + "…" : content; }
-                })()
-            }
-          </Text>
-        </View>
-      )}
-
-      {/* Parsed info rows */}
+      {/* Structured info cards */}
       {wifi && (
-        <View style={[styles.infoGrid, { backgroundColor: isDark ? colors.surfaceLight : colors.background, borderColor: colors.surfaceBorder }]}>
-          <InfoRow label="Network" value={wifi.ssid} gradient={cfg.gradient} colors={colors} />
-          <InfoRow label="Security" value={wifi.security} gradient={cfg.gradient} colors={colors} />
-          {wifi.password ? <InfoRow label="Password" value={wifi.password} selectable gradient={cfg.gradient} colors={colors} /> : null}
-          {wifi.hidden ? <InfoRow label="Hidden" value="Yes" gradient={cfg.gradient} colors={colors} /> : null}
+        <View style={[styles.infoGrid, { backgroundColor: accentColor + accentAlpha, borderColor: accentColor + "30" }]}>
+          <InfoRow label="Network" value={wifi.ssid} icon="wifi-outline" accentColor={accentColor} colors={colors} />
+          <Divider colors={colors} />
+          <InfoRow label="Security" value={wifi.security} icon="lock-closed-outline" accentColor={accentColor} colors={colors} />
+          {wifi.password ? <><Divider colors={colors} /><InfoRow label="Password" value={wifi.password} icon="key-outline" accentColor={accentColor} colors={colors} selectable /></> : null}
+          {wifi.hidden ? <><Divider colors={colors} /><InfoRow label="Hidden" value="Yes" icon="eye-off-outline" accentColor={accentColor} colors={colors} /></> : null}
         </View>
       )}
       {contact && (contact.name || contact.phone || contact.email) && (
-        <View style={[styles.infoGrid, { backgroundColor: isDark ? colors.surfaceLight : colors.background, borderColor: colors.surfaceBorder }]}>
-          {contact.name  ? <InfoRow label="Name"    value={contact.name}  gradient={cfg.gradient} colors={colors} /> : null}
-          {contact.title ? <InfoRow label="Title"   value={contact.title} gradient={cfg.gradient} colors={colors} /> : null}
-          {contact.org   ? <InfoRow label="Company" value={contact.org}   gradient={cfg.gradient} colors={colors} /> : null}
-          {contact.phone ? <InfoRow label="Phone"   value={contact.phone} selectable gradient={cfg.gradient} colors={colors} /> : null}
-          {contact.email ? <InfoRow label="Email"   value={contact.email} selectable gradient={cfg.gradient} colors={colors} /> : null}
-          {contact.url   ? <InfoRow label="Website" value={contact.url}   selectable gradient={cfg.gradient} colors={colors} /> : null}
-          {contact.note  ? <InfoRow label="Note"    value={contact.note}  gradient={cfg.gradient} colors={colors} /> : null}
+        <View style={[styles.infoGrid, { backgroundColor: accentColor + accentAlpha, borderColor: accentColor + "30" }]}>
+          {contact.name  ? <InfoRow label="Name"    value={contact.name}  icon="person-outline"   accentColor={accentColor} colors={colors} /> : null}
+          {contact.title ? <><Divider colors={colors} /><InfoRow label="Title"   value={contact.title} icon="briefcase-outline" accentColor={accentColor} colors={colors} /></> : null}
+          {contact.org   ? <><Divider colors={colors} /><InfoRow label="Company" value={contact.org}   icon="business-outline" accentColor={accentColor} colors={colors} /></> : null}
+          {contact.phone ? <><Divider colors={colors} /><InfoRow label="Phone"   value={contact.phone} icon="call-outline"      accentColor={accentColor} colors={colors} selectable /></> : null}
+          {contact.email ? <><Divider colors={colors} /><InfoRow label="Email"   value={contact.email} icon="mail-outline"      accentColor={accentColor} colors={colors} selectable /></> : null}
+          {contact.url   ? <><Divider colors={colors} /><InfoRow label="Website" value={contact.url}   icon="link-outline"      accentColor={accentColor} colors={colors} selectable /></> : null}
+          {contact.note  ? <><Divider colors={colors} /><InfoRow label="Note"    value={contact.note}  icon="document-text-outline" accentColor={accentColor} colors={colors} /></> : null}
         </View>
       )}
       {smsData && (smsData.to || smsData.body) && (
-        <View style={[styles.infoGrid, { backgroundColor: isDark ? colors.surfaceLight : colors.background, borderColor: colors.surfaceBorder }]}>
-          {smsData.to ? <InfoRow label="To" value={smsData.to} gradient={cfg.gradient} colors={colors} /> : null}
-          {smsData.body ? <InfoRow label="Message" value={smsData.body} gradient={cfg.gradient} colors={colors} /> : null}
+        <View style={[styles.infoGrid, { backgroundColor: accentColor + accentAlpha, borderColor: accentColor + "30" }]}>
+          {smsData.to ? <InfoRow label="To" value={smsData.to} icon="person-outline" accentColor={accentColor} colors={colors} /> : null}
+          {smsData.body ? <><Divider colors={colors} /><InfoRow label="Message" value={smsData.body} icon="chatbubble-outline" accentColor={accentColor} colors={colors} /></> : null}
         </View>
       )}
       {whatsappData && (
-        <View style={[styles.infoGrid, { backgroundColor: isDark ? colors.surfaceLight : colors.background, borderColor: colors.surfaceBorder }]}>
-          {whatsappData.phone ? <InfoRow label="WhatsApp Number" value={whatsappData.phone} selectable gradient={cfg.gradient} colors={colors} /> : null}
-          {whatsappData.text ? <InfoRow label="Pre-filled Message" value={whatsappData.text} selectable gradient={cfg.gradient} colors={colors} /> : null}
+        <View style={[styles.infoGrid, { backgroundColor: accentColor + accentAlpha, borderColor: accentColor + "30" }]}>
+          {whatsappData.phone ? <InfoRow label="Number" value={whatsappData.phone} icon="logo-whatsapp" accentColor={accentColor} colors={colors} selectable /> : null}
+          {whatsappData.text ? <><Divider colors={colors} /><InfoRow label="Message" value={whatsappData.text} icon="chatbubble-outline" accentColor={accentColor} colors={colors} selectable /></> : null}
         </View>
       )}
       {emailData && (
-        <View style={[styles.infoGrid, { backgroundColor: isDark ? colors.surfaceLight : colors.background, borderColor: colors.surfaceBorder }]}>
-          {emailData.email ? <InfoRow label="Email Address" value={emailData.email} selectable gradient={cfg.gradient} colors={colors} /> : null}
-          {emailData.subject ? <InfoRow label="Subject" value={emailData.subject} selectable gradient={cfg.gradient} colors={colors} /> : null}
-          {emailData.body ? <InfoRow label="Body" value={emailData.body} selectable gradient={cfg.gradient} colors={colors} /> : null}
+        <View style={[styles.infoGrid, { backgroundColor: accentColor + accentAlpha, borderColor: accentColor + "30" }]}>
+          {emailData.email ? <InfoRow label="Email" value={emailData.email} icon="mail-outline" accentColor={accentColor} colors={colors} selectable /> : null}
+          {emailData.subject ? <><Divider colors={colors} /><InfoRow label="Subject" value={emailData.subject} icon="text-outline" accentColor={accentColor} colors={colors} selectable /></> : null}
+          {emailData.body ? <><Divider colors={colors} /><InfoRow label="Body" value={emailData.body} icon="document-text-outline" accentColor={accentColor} colors={colors} selectable /></> : null}
         </View>
       )}
       {phoneStr && (
-        <View style={[styles.infoGrid, { backgroundColor: isDark ? colors.surfaceLight : colors.background, borderColor: colors.surfaceBorder }]}>
-          <InfoRow label="Phone Number" value={phoneStr} selectable gradient={cfg.gradient} colors={colors} />
+        <View style={[styles.infoGrid, { backgroundColor: accentColor + accentAlpha, borderColor: accentColor + "30" }]}>
+          <InfoRow label="Phone" value={phoneStr} icon="call-outline" accentColor={accentColor} colors={colors} selectable />
         </View>
       )}
       {locationData && (
-        <View style={[styles.infoGrid, { backgroundColor: isDark ? colors.surfaceLight : colors.background, borderColor: colors.surfaceBorder }]}>
-          {locationData.label ? <InfoRow label="Place" value={locationData.label} gradient={cfg.gradient} colors={colors} /> : null}
-          {locationData.lat ? <InfoRow label="Latitude" value={locationData.lat} selectable gradient={cfg.gradient} colors={colors} /> : null}
-          {locationData.lon ? <InfoRow label="Longitude" value={locationData.lon} selectable gradient={cfg.gradient} colors={colors} /> : null}
+        <View style={[styles.infoGrid, { backgroundColor: accentColor + accentAlpha, borderColor: accentColor + "30" }]}>
+          {locationData.label ? <InfoRow label="Place" value={locationData.label} icon="location-outline" accentColor={accentColor} colors={colors} /> : null}
+          {locationData.lat ? <><Divider colors={colors} /><InfoRow label="Lat" value={locationData.lat} icon="navigate-outline" accentColor={accentColor} colors={colors} selectable /></> : null}
+          {locationData.lon ? <><Divider colors={colors} /><InfoRow label="Lon" value={locationData.lon} icon="navigate-outline" accentColor={accentColor} colors={colors} selectable /></> : null}
         </View>
       )}
       {cryptoData && (
-        <View style={[styles.infoGrid, { backgroundColor: isDark ? colors.surfaceLight : colors.background, borderColor: colors.surfaceBorder }]}>
-          {cryptoData.coin ? <InfoRow label="Coin" value={cryptoData.coin} gradient={cfg.gradient} colors={colors} /> : null}
-          <InfoRow label="Address" value={cryptoData.address} selectable gradient={cfg.gradient} colors={colors} />
-          {cryptoData.amount ? <InfoRow label="Amount" value={cryptoData.amount} gradient={cfg.gradient} colors={colors} /> : null}
+        <View style={[styles.infoGrid, { backgroundColor: accentColor + accentAlpha, borderColor: accentColor + "30" }]}>
+          {cryptoData.coin ? <InfoRow label="Coin" value={cryptoData.coin} icon="logo-bitcoin" accentColor={accentColor} colors={colors} /> : null}
+          <><Divider colors={colors} /><InfoRow label="Address" value={cryptoData.address} icon="copy-outline" accentColor={accentColor} colors={colors} selectable /></>
+          {cryptoData.amount ? <><Divider colors={colors} /><InfoRow label="Amount" value={cryptoData.amount} icon="cash-outline" accentColor={accentColor} colors={colors} /></> : null}
         </View>
       )}
       {eventData && (
@@ -489,43 +467,54 @@ const ContentCard = React.memo(function ContentCard({ content, contentType, pars
   );
 });
 
-function InfoRow({ label, value, selectable, gradient, colors }: { label: string; value: string; selectable?: boolean; gradient: GradientPair; colors: any }) {
+function InfoRow({ label, value, selectable, icon, accentColor, colors }: { label: string; value: string; selectable?: boolean; icon: keyof typeof Ionicons.glyphMap; accentColor: string; colors: any }) {
   return (
     <View style={styles.infoRow}>
-      <Text style={[styles.infoLabel, { color: gradient[0] }]}>{label}</Text>
+      <View style={[styles.infoIconWrap, { backgroundColor: accentColor + "20" }]}>
+        <Ionicons name={icon} size={13} color={accentColor} />
+      </View>
+      <Text style={[styles.infoLabel, { color: colors.textSecondary }]}>{label}</Text>
       <Text style={[styles.infoValue, { color: colors.text }]} selectable={selectable} numberOfLines={2}>{value}</Text>
     </View>
   );
+}
+
+function Divider({ colors }: { colors: any }) {
+  return <View style={[styles.divider, { backgroundColor: colors.surfaceBorder }]} />;
 }
 
 export default ContentCard;
 
 const styles = StyleSheet.create({
   card: {
-    borderRadius: 16,
-    padding: 14,
+    borderRadius: 20,
+    padding: 16,
     marginBottom: 12,
     borderWidth: 1,
     overflow: "hidden",
-    gap: 10,
+    gap: 12,
   },
-  typeRow: {
+  cardHeader: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 9,
+    gap: 12,
   },
-  typeIcon: {
-    width: 30,
-    height: 30,
-    borderRadius: 9,
+  cardIcon: {
+    width: 48,
+    height: 48,
+    borderRadius: 15,
     alignItems: "center",
     justifyContent: "center",
     flexShrink: 0,
   },
-  typeLabel: {
-    fontSize: 13,
+  cardTitle: {
+    fontSize: 16,
     fontFamily: "Inter_700Bold",
-    flex: 1,
+  },
+  cardSub: {
+    fontSize: 12,
+    fontFamily: "Inter_400Regular",
+    marginTop: 2,
   },
   copyBtn: {
     flexDirection: "row",
@@ -537,104 +526,62 @@ const styles = StyleSheet.create({
     borderWidth: 1,
   },
   copiedText: { fontSize: 11, fontFamily: "Inter_600SemiBold" },
-  contentBox: {
+  rawBox: {
     borderRadius: 12,
     padding: 12,
     borderWidth: 1,
     gap: 6,
   },
-  urlBox: {
+  rawText: {
+    fontSize: 13,
+    fontFamily: "Inter_400Regular",
+    lineHeight: 20,
+    letterSpacing: 0.1,
+  },
+  expandBtnText: { fontSize: 12, fontFamily: "Inter_600SemiBold", marginTop: 4 },
+  infoGrid: {
+    borderRadius: 14,
+    padding: 12,
+    gap: 0,
+    borderWidth: 1,
+  },
+  infoRow: {
     flexDirection: "row",
     alignItems: "center",
+    gap: 8,
+    paddingVertical: 9,
+  },
+  infoIconWrap: {
+    width: 24,
+    height: 24,
+    borderRadius: 7,
+    alignItems: "center",
+    justifyContent: "center",
+    flexShrink: 0,
+  },
+  infoLabel: { fontSize: 12, fontFamily: "Inter_500Medium", width: 68 },
+  infoValue: { fontSize: 13, fontFamily: "Inter_600SemiBold", flex: 1, textAlign: "right" },
+  divider: { height: 1, marginHorizontal: -2 },
+  infoChipRow: {
+    flexDirection: "row",
+    alignItems: "flex-start",
     gap: 7,
     borderRadius: 10,
     paddingHorizontal: 12,
     paddingVertical: 9,
     borderWidth: 1,
   },
-  urlText: { flex: 1, fontSize: 12, fontFamily: "Inter_500Medium" },
-  contentText: {
-    fontSize: 13,
-    fontFamily: "Inter_400Regular",
-    lineHeight: 20,
-    letterSpacing: 0.1,
-  },
-  expandBtn: { alignSelf: "flex-start" },
-  expandBtnText: { fontSize: 12, fontFamily: "Inter_600SemiBold" },
-  infoGrid: {
-    borderRadius: 14,
-    padding: 14,
-    gap: 10,
-    borderWidth: 1,
-  },
-  infoRow: {
-    flexDirection: "row",
-    alignItems: "flex-start",
-    justifyContent: "space-between",
-    gap: 8,
-  },
-  infoLabel: { fontSize: 13, fontFamily: "Inter_700Bold", minWidth: 72, letterSpacing: 0.2 },
-  infoValue: { fontSize: 14, fontFamily: "Inter_500Medium", flex: 1, textAlign: "right" },
+  infoChipText: { fontSize: 12, fontFamily: "Inter_400Regular", flex: 1, lineHeight: 17 },
   openBtn: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
     gap: 7,
-    borderRadius: 11,
-    paddingVertical: 10,
+    borderRadius: 12,
+    paddingVertical: 12,
     paddingHorizontal: 14,
   },
-  openBtnText: { fontSize: 13, fontFamily: "Inter_700Bold", color: "#fff" },
-  encryptedInfoBox: {
-    borderRadius: 14,
-    padding: 14,
-    borderWidth: 1,
-    gap: 10,
-  },
-  encryptedBadgeRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-  },
-  encryptedBadge: {
-    borderRadius: 6,
-    paddingHorizontal: 9,
-    paddingVertical: 3,
-  },
-  encryptedBadgeText: {
-    fontSize: 11,
-    fontFamily: "Inter_700Bold",
-    letterSpacing: 0.4,
-  },
-  encryptedByteHint: {
-    fontSize: 11,
-    fontFamily: "Inter_400Regular",
-  },
-  encryptedDesc: {
-    fontSize: 13,
-    fontFamily: "Inter_400Regular",
-    lineHeight: 19,
-  },
-  encryptedRaw: {
-    fontSize: 12,
-    fontFamily: "Inter_400Regular",
-    lineHeight: 18,
-    letterSpacing: 0.2,
-    fontVariant: ["tabular-nums"],
-  },
-  encryptedTipRow: {
-    flexDirection: "row",
-    alignItems: "flex-start",
-    gap: 7,
-    paddingTop: 10,
-    borderTopWidth: 1,
-  },
-  encryptedTip: {
-    fontSize: 12,
-    fontFamily: "Inter_400Regular",
-    lineHeight: 17,
-    flex: 1,
-  },
+  openBtnText: { fontSize: 14, fontFamily: "Inter_700Bold", color: "#fff" },
   eventOverBanner: {
     flexDirection: "row",
     alignItems: "center",
