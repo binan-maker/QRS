@@ -322,8 +322,8 @@ const ContentCard = React.memo(function ContentCard({ content, contentType, pars
         </Pressable>
       </View>
 
-      {/* Plain text content */}
-      {!isUrlLike && !["event", "calendar", "whatsapp", "email", "phone", "location", "crypto", "contact"].includes(contentType) && (
+      {/* Plain text content — only for types that have no structured parser */}
+      {!isUrlLike && !["wifi", "sms", "event", "calendar", "whatsapp", "email", "phone", "location", "crypto", "contact"].includes(contentType) && (
         <View style={[styles.rawBox, { backgroundColor: isDark ? colors.surfaceLight : colors.background, borderColor: colors.surfaceBorder }]}>
           <Text style={[styles.rawText, { color: colors.text }]} selectable numberOfLines={contentExpanded ? undefined : 4}>
             {content}
