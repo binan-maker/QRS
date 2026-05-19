@@ -1,0 +1,123 @@
+
+> expo-app@1.0.0 server:dev
+> NODE_ENV=development node_modules/.bin/tsx server/index.ts
+
+Serving static Expo files with dynamic manifest routing
+Web build found — serving web app to browsers
+Expo routing: Checking expo-platform header on / and /manifest
+express server serving on port 5000
+[HEALTH] {
+  status: [32m'unhealthy'[39m,
+  uptime: [32m'5m 0s'[39m,
+  db_latency: [32m'200ms'[39m,
+  api_latency: [32m'10ms'[39m,
+  memory: [32m'97.17%'[39m,
+  rpm: [33m0[39m
+}
+[HEALTH] {
+  status: [32m'unhealthy'[39m,
+  uptime: [32m'10m 0s'[39m,
+  db_latency: [32m'156ms'[39m,
+  api_latency: [32m'2ms'[39m,
+  memory: [32m'89.43%'[39m,
+  rpm: [33m0[39m
+}
+[HEALTH] {
+  status: [32m'unhealthy'[39m,
+  uptime: [32m'15m 0s'[39m,
+  db_latency: [32m'143ms'[39m,
+  api_latency: [32m'3ms'[39m,
+  memory: [32m'91.18%'[39m,
+  rpm: [33m0[39m
+}
+[HEALTH] {
+  status: [32m'unhealthy'[39m,
+  uptime: [32m'20m 0s'[39m,
+  db_latency: [32m'172ms'[39m,
+  api_latency: [32m'2ms'[39m,
+  memory: [32m'92.74%'[39m,
+  rpm: [33m0[39m
+}
+<<<<<<< HEAD
+[HEALTH] {
+  status: [32m'unhealthy'[39m,
+  uptime: [32m'25m 0s'[39m,
+  db_latency: [32m'151ms'[39m,
+  api_latency: [32m'2ms'[39m,
+  memory: [32m'94.28%'[39m,
+  rpm: [33m0[39m
+}
+[HEALTH] {
+  status: [32m'unhealthy'[39m,
+  uptime: [32m'30m 0s'[39m,
+  db_latency: [32m'148ms'[39m,
+  api_latency: [32m'4ms'[39m,
+  memory: [32m'96.72%'[39m,
+  rpm: [33m0[39m
+}
+[HEALTH] {
+  status: [32m'unhealthy'[39m,
+  uptime: [32m'35m 0s'[39m,
+  db_latency: [32m'134ms'[39m,
+  api_latency: [32m'2ms'[39m,
+  memory: [32m'92.78%'[39m,
+  rpm: [33m0[39m
+}
+[HEALTH] {
+  status: [32m'unhealthy'[39m,
+  uptime: [32m'40m 0s'[39m,
+  db_latency: [32m'160ms'[39m,
+  api_latency: [32m'3ms'[39m,
+  memory: [32m'94.19%'[39m,
+  rpm: [33m0[39m
+}
+[HEALTH] {
+  status: [32m'unhealthy'[39m,
+  uptime: [32m'45m 0s'[39m,
+  db_latency: [32m'149ms'[39m,
+  api_latency: [32m'2ms'[39m,
+  memory: [32m'95.6%'[39m,
+  rpm: [33m0[39m
+}
+[HEALTH] {
+  status: [32m'unhealthy'[39m,
+  uptime: [32m'50m 0s'[39m,
+  db_latency: [32m'174ms'[39m,
+  api_latency: [32m'3ms'[39m,
+  memory: [32m'87.45%'[39m,
+  rpm: [33m0[39m
+}
+[HEALTH] {
+  status: [32m'unhealthy'[39m,
+  uptime: [32m'55m 0s'[39m,
+  db_latency: [32m'176ms'[39m,
+  api_latency: [32m'2ms'[39m,
+  memory: [32m'89.44%'[39m,
+  rpm: [33m0[39m
+}
+[HEALTH] {
+  status: [32m'unhealthy'[39m,
+  uptime: [32m'60m 0s'[39m,
+  db_latency: [32m'172ms'[39m,
+  api_latency: [32m'2ms'[39m,
+  memory: [32m'90.75%'[39m,
+  rpm: [33m0[39m
+}
+[HEALTH] {
+  status: [32m'unhealthy'[39m,
+  uptime: [32m'65m 0s'[39m,
+  db_latency: [32m'139ms'[39m,
+  api_latency: [32m'2ms'[39m,
+  memory: [32m'92.83%'[39m,
+  rpm: [33m0[39m
+}
+[HEALTH] {
+  status: [32m'unhealthy'[39m,
+  uptime: [32m'70m 0s'[39m,
+  db_latency: [32m'167ms'[39m,
+  api_latency: [32m'2ms'[39m,
+  memory: [32m'94.18%'[39m,
+  rpm: [33m0[39m
+}
+=======
+>>>>>>> 04a70bd482f9cd8e558cbefbec649cb6cfb9b39b
