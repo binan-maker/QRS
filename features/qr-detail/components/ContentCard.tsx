@@ -207,6 +207,22 @@ const ContentCard = React.memo(function ContentCard({ content, contentType, pars
   const locationData = contentType === "location" ? parseLocation(content) : null;
   const cryptoData = contentType === "crypto" ? parseCrypto(content) : null;
   const eventOver = eventData ? isEventPast(eventData.dtend, eventData.dtstart) : false;
+
+  const smartActionLabel = React.useMemo((): string => {
+    if ((contentType === "contact" || contentType === "mecard") && contact) {
+      if (contact.phone) return "Call Now";
+      if (contact.email) return "Send Email";
+    }
+    return cfg.openLabel;
+  }, [contentType, contact, cfg.openLabel]);
+
+  const smartActionIcon = React.useMemo((): keyof typeof Ionicons.glyphMap => {
+    if ((contentType === "contact" || contentType === "mecard") && contact) {
+      if (contact.phone) return "call-outline";
+      if (contact.email) return "mail-outline";
+    }
+    return "open-outline";
+  }, [contentType, contact]);
   const isPaymentType = contentType === "payment" || contentType === "upi" || contentType === "scantopay" || contentType === "paymentlink";
   const basicPayment = (isPaymentType && !parsedPayment) ? extractBasicPaymentInfo(content) : null;
   const isEmvContent = content.startsWith("000201") || content.startsWith("00020");
@@ -464,8 +480,8 @@ const ContentCard = React.memo(function ContentCard({ content, contentType, pars
       {hasOpenAction && (
         <Pressable onPress={onOpenContent} style={({ pressed }) => [{ opacity: pressed ? 0.85 : 1 }]}>
           <LinearGradient colors={[...cfg.gradient]} style={styles.openBtn} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}>
-            <Ionicons name="open-outline" size={14} color="#fff" />
-            <Text style={styles.openBtnText}>{cfg.openLabel}</Text>
+            <Ionicons name={smartActionIcon} size={14} color="#fff" />
+            <Text style={styles.openBtnText}>{smartActionLabel}</Text>
           </LinearGradient>
         </Pressable>
       )}

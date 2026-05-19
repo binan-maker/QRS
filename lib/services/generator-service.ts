@@ -38,7 +38,8 @@ export async function saveGeneratedQr(
     label?: string | null;
   } | null,
   displayDestination?: string | null,
-  templateKey?: string | null
+  templateKey?: string | null,
+  formValues?: { value: string; extra: Record<string, string> } | null
 ): Promise<string> {
   const { SIGNATURE_SALT: SALT } = await import("./types");
   const qrId = await getQrCodeId(content);
@@ -63,6 +64,7 @@ export async function saveGeneratedQr(
       guardUuid: guardUuid || null,
       ...(templateKey ? { templateKey } : {}),
       ...(displayDestination ? { displayDestination } : {}),
+      ...(formValues ? { formValues } : {}),
       ...(signature ? { signature } : {}),
       fgColor: design?.fgColor || "#0A0E17",
       bgColor: design?.bgColor || "#F8FAFC",
@@ -158,6 +160,8 @@ export async function getGeneratedQrById(userId: string, docId: string): Promise
       businessName: data.businessName || null,
       guardUuid: data.guardUuid || null,
       displayDestination: data.displayDestination || null,
+      templateKey: data.templateKey || null,
+      formValues: data.formValues || null,
     } as any;
   } catch (e) {
     logError("getGeneratedQrById", e, { docId });
@@ -191,6 +195,7 @@ export async function getUserGeneratedQrs(userId: string): Promise<GeneratedQrIt
         businessName: data.businessName || null,
         guardUuid: data.guardUuid || null,
         displayDestination: data.displayDestination || null,
+        templateKey: data.templateKey || null,
       } as any;
     });
 
@@ -263,6 +268,7 @@ export function subscribeToUserGeneratedQrs(
           businessName: data.businessName || null,
           guardUuid: data.guardUuid || null,
           displayDestination: data.displayDestination || null,
+          templateKey: data.templateKey || null,
         } as any;
       });
 
@@ -342,6 +348,26 @@ export async function updateDisplayDestination(
     });
   } catch (e) {
     logError("updateDisplayDestination", e, { userId, docId });
+    throw e;
+  }
+}
+
+export async function updateSavedQrFormValues(
+  userId: string,
+  docId: string,
+  newContent: string,
+  formValues: { value: string; extra: Record<string, string> }
+): Promise<void> {
+  try {
+    const contentType = detectContentType(newContent);
+    await db.update(["users", userId, "generatedQrs", docId], {
+      content: newContent,
+      contentType,
+      formValues,
+      updatedAt: db.timestamp(),
+    });
+  } catch (e) {
+    logError("updateSavedQrFormValues", e, { userId, docId });
     throw e;
   }
 }

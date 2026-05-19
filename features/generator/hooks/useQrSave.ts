@@ -167,6 +167,7 @@ export function useQrSave({
               ? builtContent
               : null,
           templateKey,
+          isBusinessMode ? null : { value: inputValue, extra: extraFields },
         );
         setSavedDocId(docId);
         setSavedToProfile(true);

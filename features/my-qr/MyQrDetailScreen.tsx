@@ -18,6 +18,7 @@ import QrContentInfoCard from "@/features/my-qr/components/cards/QrContentInfoCa
 import GuardDestinationCard from "@/features/my-qr/components/cards/GuardDestinationCard";
 import StandardLinkCard from "@/features/my-qr/components/cards/StandardLinkCard";
 import StaticContentEditor from "@/features/my-qr/components/cards/StaticContentEditor";
+import StructuredContentEditor from "@/features/my-qr/components/cards/StructuredContentEditor";
 import QrSettingsPanel from "@/features/my-qr/components/panels/QrSettingsPanel";
 import DesignPanel from "@/features/my-qr/components/panels/DesignPanel";
 import ConfirmActionModal from "@/features/my-qr/components/modals/ConfirmActionModal";
@@ -70,6 +71,7 @@ export default function MyQrDetailScreen() {
     followersList, followersModalOpen, setFollowersModalOpen,
     followersLoading, followCount,
     customLogoUri,
+    savingStructured, handleUpdateFormValues,
   } = useMyQrDetail(id as string);
 
   if (loading) {
@@ -118,6 +120,10 @@ export default function MyQrDetailScreen() {
   const ctMeta = getCtMeta(effectiveContentType);
   const displayTitle = getDetailDisplayTitle(liveItem);
   const contentRows = parseQrContentDetails(liveItem);
+
+  const tmplKey = (qrItem as any).templateKey as string | null;
+  const qrFormValues = (qrItem as any).formValues as { value: string; extra: Record<string, string> } | null;
+  const hasStructuredEdit = !!(tmplKey && qrFormValues);
 
   const STRUCTURED_TYPES = new Set(["text", "phone", "mobilepay", "grab", "email", "sms", "upi", "scantopay", "bharatqr", "wifi", "calendly", "zoom", "whatsapp"]);
   const READONLY_TYPES = new Set(["contact", "event", "calendar"]);
@@ -258,18 +264,27 @@ export default function MyQrDetailScreen() {
         )}
 
         {!isBusiness && !hasGuardLink && !hasStandardLink && (
-          <StaticContentEditor
-            currentContent={qrItem.content || ""}
-            editingSavedContent={editingSavedContent}
-            setEditingSavedContent={setEditingSavedContent}
-            newSavedContent={newSavedContent}
-            setNewSavedContent={setNewSavedContent}
-            savedContentError={savedContentError}
-            setSavedContentError={setSavedContentError}
-            savingSavedContent={savingSavedContent}
-            isValidating={isValidating}
-            handleRequestSavedContentUpdate={handleRequestSavedContentUpdate}
-          />
+          hasStructuredEdit ? (
+            <StructuredContentEditor
+              templateKey={tmplKey!}
+              formValues={qrFormValues!}
+              saving={savingStructured}
+              onSave={handleUpdateFormValues}
+            />
+          ) : (
+            <StaticContentEditor
+              currentContent={qrItem.content || ""}
+              editingSavedContent={editingSavedContent}
+              setEditingSavedContent={setEditingSavedContent}
+              newSavedContent={newSavedContent}
+              setNewSavedContent={setNewSavedContent}
+              savedContentError={savedContentError}
+              setSavedContentError={setSavedContentError}
+              savingSavedContent={savingSavedContent}
+              isValidating={isValidating}
+              handleRequestSavedContentUpdate={handleRequestSavedContentUpdate}
+            />
+          )
         )}
 
         <QrSettingsPanel

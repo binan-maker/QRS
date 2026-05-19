@@ -198,6 +198,9 @@ export interface GeneratedQrItem {
   ownerName?: string;
   ownerId?: string;
   username?: string;
+  templateKey?: string;
+  formValues?: { value: string; extra: Record<string, string> };
+  displayDestination?: string | null;
 }
 
 export interface QrOwnerInfo {

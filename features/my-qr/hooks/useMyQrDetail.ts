@@ -11,6 +11,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import {
   getGeneratedQrById, setQrActiveState,
   getQrFollowersList, getQrFollowCount,
+  updateSavedQrFormValues,
   type GeneratedQrItem, type FollowerInfo,
 } from "@/lib/firestore-service";
 import { useQrDesign } from "./useQrDesign";
@@ -37,6 +38,7 @@ export function useMyQrDetail(id: string) {
 
   const [sharingQr, setSharingQr] = useState(false);
   const [downloadingPdf, setDownloadingPdf] = useState(false);
+  const [savingStructured, setSavingStructured] = useState(false);
 
   const design = useQrDesign(qrItem);
   const destination = useQrDestination(qrItem, setQrItem as any);
@@ -215,6 +217,26 @@ export function useMyQrDetail(id: string) {
     }
   }
 
+  async function handleUpdateFormValues(
+    newContent: string,
+    newFormValues: { value: string; extra: Record<string, string> }
+  ) {
+    if (!user?.id || !id) return;
+    setSavingStructured(true);
+    try {
+      await updateSavedQrFormValues(user.id, id, newContent, newFormValues);
+      setQrItem(prev =>
+        prev ? { ...prev, content: newContent, formValues: newFormValues } as any : null
+      );
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    } catch (e: any) {
+      Alert.alert("Error", e?.message || "Could not save changes.");
+      throw e;
+    } finally {
+      setSavingStructured(false);
+    }
+  }
+
   return {
     user, svgRef, scrollRef, qrItem, loading,
     ...design,
@@ -226,5 +248,6 @@ export function useMyQrDetail(id: string) {
     ...ownerComments,
     handleToggleActive,
     handleCopyContent, handleShare, handleDownloadPdf,
+    savingStructured, handleUpdateFormValues,
   };
 }
