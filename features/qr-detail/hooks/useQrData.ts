@@ -102,6 +102,7 @@ export interface QrDetail {
   ownerScanCount?: number;
   scanCountFrozen?: boolean;
   scanCountFreezeReason?: string;
+  templateKey?: string;
 }
 
 export function useQrData(id: string, userId: string | null) {

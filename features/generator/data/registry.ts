@@ -22,6 +22,7 @@ export interface ExtraFieldDef {
   keyboardType?: KeyboardTypeOptions;
   optional?: boolean;
   secureText?: boolean;
+  maxLength?: number;
 }
 
 export interface QrTypeEntry {
@@ -109,7 +110,7 @@ export const QR_REGISTRY: QrTypeEntry[] = [
     hint: "Include country code — scanning opens a pre-filled SMS",
     emptyMessage: "Please enter the recipient's phone number.",
     extraFields: [
-      { key: "message", label: "Message (optional)", placeholder: "Hello!", keyboardType: "default", optional: true },
+      { key: "message", label: "Message (optional)", placeholder: "Hello!", keyboardType: "default", optional: true, maxLength: 500 },
     ],
     build: (v, extra) => {
       const cleanPhone = v.replace(/\s/g, "");
@@ -131,7 +132,7 @@ export const QR_REGISTRY: QrTypeEntry[] = [
     hint: "Include country code — opens a direct chat with this number",
     emptyMessage: "Please enter the recipient's WhatsApp number.",
     extraFields: [
-      { key: "message", label: "Pre-filled message (optional)", placeholder: "Hi there!", keyboardType: "default", optional: true },
+      { key: "message", label: "Pre-filled message (optional)", placeholder: "Hi there!", keyboardType: "default", optional: true, maxLength: 500 },
     ],
     build: (v, extra) => {
       const cleanPhone = v.replace(/[\s\-()]/g, "").replace(/^\+/, "");
@@ -155,7 +156,7 @@ export const QR_REGISTRY: QrTypeEntry[] = [
     hint: "Scanning will auto-connect to this WiFi network",
     emptyMessage: "Please enter the WiFi network name (SSID).",
     extraFields: [
-      { key: "password", label: "Password", placeholder: "WiFi password", keyboardType: "default", secureText: true },
+      { key: "password", label: "Password", placeholder: "WiFi password", keyboardType: "default", secureText: true, maxLength: 63 },
       { key: "encryption", label: "Security (WPA / WEP / nopass)", placeholder: "WPA", keyboardType: "default", optional: true },
       { key: "hidden", label: "Hidden network? (true / false)", placeholder: "false", keyboardType: "default", optional: true },
     ],

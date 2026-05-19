@@ -8,87 +8,9 @@ import type { ParsedPaymentQr } from "@/lib/qr-analysis";
 import { useTheme } from "@/contexts/ThemeContext";
 import PaymentCard from "./PaymentCard";
 import type { AppColors } from "@/constants/colors";
+import { getQrTypeStyle } from "@/lib/config/qr-type-styles";
 
-type GradientPair = [string, string];
-
-function getTypeCfg(type: string, colors: AppColors, templateKey?: string): {
-  icon: keyof typeof Ionicons.glyphMap;
-  label: string;
-  gradient: GradientPair;
-  openLabel: string;
-} {
-  const primary: GradientPair = [colors.primary, colors.primaryShade];
-  const safe: GradientPair = [colors.safe, colors.safeShade];
-  const payment: GradientPair = [colors.warning, colors.warningShade];
-  const danger: GradientPair = [colors.danger, colors.dangerShade];
-  const neutral: GradientPair = [colors.textSecondary, colors.textMuted];
-
-  const whatsapp:  GradientPair = ["#16A34A", "#22C55E"];
-  const instagram: GradientPair = ["#E1306C", "#F472B6"];
-  const twitter:   GradientPair = ["#1DA1F2", "#38BDF8"];
-  const youtube:   GradientPair = ["#DC2626", "#EF4444"];
-  const linkedin:  GradientPair = ["#0A66C2", "#2563EB"];
-  const telegram:  GradientPair = ["#0088CC", "#38BDF8"];
-  const facebook:  GradientPair = ["#1877F2", "#3B82F6"];
-  const spotify:   GradientPair = ["#1DB954", "#22C55E"];
-  const discord:   GradientPair = ["#5865F2", "#818CF8"];
-  const tiktok:    GradientPair = ["#374151", "#6B7280"];
-  const zoom:      GradientPair = ["#2D8CFF", "#60A5FA"];
-  const crypto:    GradientPair = ["#D97706", "#F59E0B"];
-  const purple:    GradientPair = ["#7C3AED", "#8B5CF6"];
-  const slate:     GradientPair = ["#64748B", "#94A3B8"];
-
-  const map: Record<string, { icon: keyof typeof Ionicons.glyphMap; label: string; gradient: GradientPair; openLabel: string }> = {
-    url:         { icon: "globe-outline",            label: "Website URL",      gradient: primary,   openLabel: "Open Link"           },
-    phone:       { icon: "call-outline",             label: "Phone Number",     gradient: safe,      openLabel: "Call Number"         },
-    email:       { icon: "mail-outline",             label: "Email",            gradient: primary,   openLabel: "Send Email"          },
-    wifi:        { icon: "wifi-outline",             label: "Wi-Fi Network",    gradient: safe,      openLabel: "Connect to Wi-Fi"   },
-    location:    { icon: "location-outline",         label: "Location",         gradient: danger,    openLabel: "Open in Maps"        },
-    payment:     { icon: "card-outline",             label: "Payment",          gradient: payment,   openLabel: "Open Payment"        },
-    upi:         { icon: "card-outline",             label: "UPI Payment",      gradient: payment,   openLabel: "Open Payment"        },
-    sms:         { icon: "chatbubble-outline",       label: "SMS Message",      gradient: slate,     openLabel: "Send SMS"            },
-    contact:     { icon: "person-circle-outline",    label: "Contact Card",     gradient: purple,    openLabel: "Save Contact"        },
-    event:       { icon: "calendar-outline",         label: "Calendar Event",   gradient: purple,    openLabel: "Add to Calendar"     },
-    calendar:    { icon: "calendar-outline",         label: "Calendar Event",   gradient: purple,    openLabel: "Add to Calendar"     },
-    otp:         { icon: "lock-closed-outline",      label: "OTP / 2FA",        gradient: safe,      openLabel: "Open Authenticator"  },
-    app:         { icon: "download-outline",         label: "App Link",         gradient: safe,      openLabel: "Open App"            },
-    appdownload: { icon: "download-outline",         label: "App Download",     gradient: safe,      openLabel: "Download App"        },
-    social:      { icon: "share-social-outline",     label: "Social Profile",   gradient: instagram, openLabel: "Open Profile"        },
-    media:       { icon: "play-circle-outline",      label: "Media",            gradient: purple,    openLabel: "Play Media"          },
-    document:    { icon: "document-outline",         label: "Document",         gradient: neutral,   openLabel: "Open Document"       },
-    boarding:    { icon: "airplane-outline",         label: "Boarding Pass",    gradient: zoom,      openLabel: "View Pass"           },
-    product:     { icon: "barcode-outline",          label: "Product",          gradient: slate,     openLabel: "View Product"        },
-    whatsapp:    { icon: "logo-whatsapp",            label: "WhatsApp",         gradient: whatsapp,  openLabel: "Open WhatsApp"       },
-    instagram:   { icon: "logo-instagram",           label: "Instagram",        gradient: instagram, openLabel: "Open Instagram"      },
-    twitter:     { icon: "logo-twitter",             label: "Twitter / X",      gradient: twitter,   openLabel: "Open Twitter"        },
-    youtube:     { icon: "logo-youtube",             label: "YouTube",          gradient: youtube,   openLabel: "Open YouTube"        },
-    linkedin:    { icon: "logo-linkedin",            label: "LinkedIn",         gradient: linkedin,  openLabel: "Open LinkedIn"       },
-    telegram:    { icon: "send-outline",             label: "Telegram",         gradient: telegram,  openLabel: "Open Telegram"       },
-    facebook:    { icon: "logo-facebook",            label: "Facebook",         gradient: facebook,  openLabel: "Open Facebook"       },
-    spotify:     { icon: "musical-notes-outline",    label: "Spotify",          gradient: spotify,   openLabel: "Play on Spotify"     },
-    discord:     { icon: "logo-discord",             label: "Discord",          gradient: discord,   openLabel: "Open Discord"        },
-    tiktok:      { icon: "musical-note-outline",     label: "TikTok",           gradient: tiktok,    openLabel: "Open TikTok"         },
-    crypto:      { icon: "logo-bitcoin",             label: "Crypto Address",   gradient: crypto,    openLabel: "Open Wallet"         },
-    zoom:        { icon: "videocam-outline",         label: "Zoom Meeting",     gradient: zoom,      openLabel: "Join Meeting"        },
-    calendly:    { icon: "calendar-outline",         label: "Calendly",         gradient: primary,   openLabel: "Book Appointment"    },
-    text:          { icon: "document-text-outline",    label: "Text",             gradient: neutral,                    openLabel: "Open"              },
-    encrypted:     { icon: "key-outline",              label: "Encrypted Data",   gradient: [colors.warning, colors.warningShade], openLabel: "Open" },
-    paymentlink:   { icon: "card-outline",             label: "Payment Link",     gradient: payment,                    openLabel: "Pay Now"           },
-    scantopay:     { icon: "qr-code-outline",          label: "Scan-to-Pay",      gradient: payment,                    openLabel: "Pay Now"           },
-    paypal:        { icon: "wallet-outline",            label: "PayPal",           gradient: ["#003087","#0070BA"],       openLabel: "Pay via PayPal"    },
-    venmo:         { icon: "people-outline",            label: "Venmo",            gradient: ["#008CFF","#60A5FA"],       openLabel: "Pay via Venmo"     },
-    mobilepay:     { icon: "phone-portrait-outline",    label: "Mobile Pay",       gradient: safe,                       openLabel: "Open Payment App"  },
-    reviewpage:    { icon: "star-outline",              label: "Review Page",      gradient: payment,                    openLabel: "Leave a Review"    },
-    menucatalogue: { icon: "list-outline",              label: "Menu / Catalogue", gradient: danger,                     openLabel: "View Menu"         },
-    donation:      { icon: "heart-outline",             label: "Donation",         gradient: ["#F43F5E","#FB7185"],       openLabel: "Donate"            },
-    razorpay:      { icon: "card-outline",              label: "Razorpay",         gradient: ["#3366FF","#60A5FA"],       openLabel: "Pay Now"           },
-    snapchat:      { icon: "camera-outline",            label: "Snapchat",         gradient: ["#D4A000","#F59E0B"],       openLabel: "Open Snapchat"     },
-  };
-  // templateKey takes priority when it resolves to a richer style than the
-  // stored contentType (e.g. templateKey="menucatalogue" beats contentType="url")
-  if (templateKey && map[templateKey]) return map[templateKey];
-  return map[type] ?? map.text;
-}
+type GradientPair = readonly [string, string];
 
 function parseWifi(content: string) {
   try {
@@ -260,7 +182,7 @@ const ContentCard = React.memo(function ContentCard({ content, contentType, pars
   const [contentExpanded, setContentExpanded] = React.useState(false);
 
   const isLongContent = content.length > EXPAND_THRESHOLD || content.includes("\n");
-  const cfg = getTypeCfg(contentType, colors, templateKey);
+  const cfg = getQrTypeStyle(contentType, templateKey);
   const hasOpenAction = !isDeactivated && !hideOpenAction && contentType !== "text" && contentType !== "product";
 
   async function handleCopy() {
@@ -364,8 +286,8 @@ const ContentCard = React.memo(function ContentCard({ content, contentType, pars
 
       {/* Type header row */}
       <View style={styles.typeRow}>
-        <LinearGradient colors={cfg.gradient} style={styles.typeIcon} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}>
-          <Ionicons name={cfg.icon} size={15} color="#fff" />
+        <LinearGradient colors={[...cfg.gradient]} style={styles.typeIcon} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}>
+          <Ionicons name={cfg.icon as keyof typeof Ionicons.glyphMap} size={15} color="#fff" />
         </LinearGradient>
         <Text style={[styles.typeLabel, { color: colors.text }]}>{cfg.label}</Text>
         <Pressable
@@ -403,17 +325,20 @@ const ContentCard = React.memo(function ContentCard({ content, contentType, pars
         <View style={[styles.urlBox, { backgroundColor: isDark ? colors.surfaceLight : colors.background, borderColor: colors.surfaceBorder }]}>
           <Ionicons name="link-outline" size={14} color={cfg.gradient[0]} />
           <Text style={[styles.urlText, { color: colors.textSecondary }]} numberOfLines={1} selectable>
-            {(() => {
-              try {
-                const parsed = new URL(content.startsWith("http") ? content : `https://${content}`);
-                const h = parsed.hostname.toLowerCase();
-                const isPrivate = /^(localhost|127\.|10\.|192\.168\.|172\.(1[6-9]|2\d|3[01])\.)/.test(h);
-                if (isPrivate || parsed.pathname.startsWith("/guard/")) return "Smart Redirect";
-                const host = h.replace(/^www\./, "");
-                const path = parsed.pathname.replace(/\/$/, "");
-                return path && path !== "/" ? `${host}${path}` : host;
-              } catch { return content.length > 44 ? content.slice(0, 44) + "…" : content; }
-            })()}
+            {cfg.extractDisplayValue
+              ? cfg.extractDisplayValue(content)
+              : (() => {
+                  try {
+                    const parsed = new URL(content.startsWith("http") ? content : `https://${content}`);
+                    const h = parsed.hostname.toLowerCase();
+                    const isPrivate = /^(localhost|127\.|10\.|192\.168\.|172\.(1[6-9]|2\d|3[01])\.)/.test(h);
+                    if (isPrivate || parsed.pathname.startsWith("/guard/")) return "Smart Redirect";
+                    const host = h.replace(/^www\./, "");
+                    const path = parsed.pathname.replace(/\/$/, "");
+                    return path && path !== "/" ? `${host}${path}` : host;
+                  } catch { return content.length > 44 ? content.slice(0, 44) + "…" : content; }
+                })()
+            }
           </Text>
         </View>
       )}
@@ -538,7 +463,7 @@ const ContentCard = React.memo(function ContentCard({ content, contentType, pars
       {/* Open action */}
       {hasOpenAction && (
         <Pressable onPress={onOpenContent} style={({ pressed }) => [{ opacity: pressed ? 0.85 : 1 }]}>
-          <LinearGradient colors={cfg.gradient} style={styles.openBtn} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}>
+          <LinearGradient colors={[...cfg.gradient]} style={styles.openBtn} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}>
             <Ionicons name="open-outline" size={14} color="#fff" />
             <Text style={styles.openBtnText}>{cfg.openLabel}</Text>
           </LinearGradient>

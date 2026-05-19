@@ -2,6 +2,7 @@ import { useState, useCallback } from "react";
 import { Alert, Linking } from "react-native";
 import * as Clipboard from "expo-clipboard";
 import * as Haptics from "@/lib/haptics";
+import { smartOpenContent } from "@/lib/utils/smart-open";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTheme } from "@/contexts/ThemeContext";
 import { useQrData, type QrDetail } from "./useQrData";
@@ -183,95 +184,13 @@ export function useQrDetail(id: string) {
 
   async function handleOpenContent() {
     if (!content) return;
-    const lower = content.toLowerCase();
-
+    // Payment types have complex UPI/EMV routing that depends on parsedPayment
+    // state — keep that handler here; route everything else through smartOpenContent.
     if (contentType === "payment") {
       handleOpenPayment(content);
-    } else if (contentType === "url") {
-      const url = lower.startsWith("http") ? content : `https://${content}`;
-      Linking.openURL(url).catch(() => Alert.alert("Error", "Could not open link"));
-    } else if (contentType === "location") {
-      let mapsUrl = content;
-      if (lower.startsWith("geo:")) {
-        const afterGeo = content.slice(4);
-        const coords = afterGeo.split("?")[0];
-        const qParam = afterGeo.includes("q=") ? afterGeo.split("q=")[1]?.split("&")[0] : "";
-        mapsUrl = qParam
-          ? `https://maps.google.com/?q=${encodeURIComponent(qParam)}`
-          : `https://maps.google.com/?q=${coords}`;
-      } else if (lower.startsWith("comgooglemaps://")) {
-        mapsUrl = content.replace("comgooglemaps://", "https://maps.google.com/");
-      } else if (!lower.startsWith("http")) {
-        mapsUrl = `https://maps.google.com/?q=${encodeURIComponent(content)}`;
-      }
-      Linking.openURL(mapsUrl).catch(() =>
-        Alert.alert("Error", "Could not open Maps. Make sure a maps app is installed.")
-      );
-    } else if (contentType === "phone") {
-      const cleaned = content.replace(/^(tel:|callto:|facetime:)/i, "");
-      Linking.openURL(`tel:${cleaned}`).catch(() => Alert.alert("Error", "Could not make call"));
-    } else if (contentType === "email") {
-      const emailUrl = lower.startsWith("mailto:") ? content : `mailto:${content}`;
-      Linking.openURL(emailUrl).catch(() => Alert.alert("Error", "Could not open email app"));
-    } else if (contentType === "sms") {
-      const smsUrl = lower.startsWith("sms:") || lower.startsWith("smsto:") ? content : `sms:${content}`;
-      Linking.openURL(smsUrl).catch(() => Alert.alert("Error", "Could not open SMS app"));
-    } else if (contentType === "contact") {
-      // Try to call the phone number first; if no phone, open the email
-      const phone = content.match(/^TEL[^:\r\n]*:(.+)$/m)?.[1]?.trim()
-        || content.match(/TEL:([^;]+)/)?.[1]?.trim();
-      const email = content.match(/^EMAIL[^:\r\n]*:(.+)$/m)?.[1]?.trim()
-        || content.match(/EMAIL:([^;]+)/)?.[1]?.trim();
-      if (phone) {
-        Linking.openURL(`tel:${phone}`).catch(() =>
-          Alert.alert("Error", "Could not open the phone app.")
-        );
-      } else if (email) {
-        Linking.openURL(`mailto:${email}`).catch(() =>
-          Alert.alert("Error", "Could not open the email app.")
-        );
-      }
-    } else if (contentType === "whatsapp") {
-      const waUrl = lower.startsWith("http") ? content : `https://wa.me/${content.replace(/\D/g, "")}`;
-      const canOpen = await Linking.canOpenURL(waUrl).catch(() => false);
-      if (canOpen) {
-        Linking.openURL(waUrl).catch(() =>
-          Alert.alert("App Not Found", "WhatsApp is not installed on this device.")
-        );
-      } else {
-        Alert.alert(
-          "WhatsApp Not Found",
-          "WhatsApp does not appear to be installed. Would you like to open this in your browser instead?",
-          [
-            { text: "Cancel", style: "cancel" },
-            { text: "Open in Browser", onPress: () => Linking.openURL(waUrl).catch(() => {}) },
-          ]
-        );
-      }
-    } else if (contentType === "social") {
-      const isHttpUrl = lower.startsWith("http://") || lower.startsWith("https://");
-      const isDeepLink = !isHttpUrl && content.includes("://");
-      if (isDeepLink) {
-        Linking.openURL(content).catch(() => {
-          const httpFallback = `https://${content.split("://").slice(1).join("://")}`;
-          Linking.openURL(httpFallback).catch(() =>
-            Alert.alert("App Not Found", "Could not open this social profile. Make sure the app is installed.")
-          );
-        });
-      } else {
-        const socialUrl = isHttpUrl ? content : `https://${content}`;
-        Linking.openURL(socialUrl).catch(() => Alert.alert("Error", "Could not open social profile"));
-      }
-    } else if (contentType === "app" || contentType === "otp") {
-      Linking.openURL(content).catch(() => Alert.alert("App Not Found", "Could not open the link. Make sure the required app is installed."));
-    } else if (contentType === "media" || contentType === "document") {
-      const mediaUrl = lower.startsWith("http") ? content : `https://${content}`;
-      Linking.openURL(mediaUrl).catch(() => Alert.alert("Error", "Could not open link"));
-    } else {
-      if (lower.startsWith("http://") || lower.startsWith("https://")) {
-        Linking.openURL(content).catch(() => Alert.alert("Error", "Could not open link"));
-      }
+      return;
     }
+    await smartOpenContent(content, contentType, data.qrCode?.templateKey);
   }
 
   async function handleCopyContent() {

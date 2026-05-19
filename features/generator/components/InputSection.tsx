@@ -58,6 +58,7 @@ function InputSection({
               autoCorrect={false}
               keyboardType={field.keyboardType ?? "default"}
               secureTextEntry={field.secureText}
+              maxLength={field.maxLength ?? 300}
             />
           </View>
         </View>

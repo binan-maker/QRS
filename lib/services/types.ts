@@ -25,6 +25,7 @@ export interface QrCodeData {
   privateMode?: boolean;
   customLogoUri?: string;
   logoPosition?: string;
+  templateKey?: string;
   // Fraud-guard fields
   ownerScanCount?: number;
   scanCountFrozen?: boolean;
