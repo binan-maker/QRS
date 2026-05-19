@@ -1,8 +1,9 @@
 import React, { useState, useCallback, useRef } from "react";
 import {
-  View, Text, TextInput, Pressable, FlatList, ActivityIndicator,
+  View, Text, TextInput, Pressable, ActivityIndicator,
   StyleSheet, Image, Platform, KeyboardAvoidingView,
 } from "react-native";
+import { FlashList } from "@shopify/flash-list";
 import { router } from "expo-router";
 import { safePush } from "@/lib/utils/navigation";
 import { Ionicons } from "@expo/vector-icons";
@@ -169,9 +170,10 @@ export default function SearchScreen() {
 
       {/* Results */}
       {!loading && results.length > 0 && (
-        <FlatList
+        <FlashList
           data={results}
           keyExtractor={(r) => r.userId}
+          estimatedItemSize={72}
           contentContainerStyle={{ paddingHorizontal: 18, paddingTop: 10, paddingBottom: insets.bottom + 24 }}
           ItemSeparatorComponent={() => <View style={{ height: 10 }} />}
           renderItem={({ item }) => {

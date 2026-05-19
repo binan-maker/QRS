@@ -3,11 +3,11 @@ import {
   View,
   Text,
   StyleSheet,
-  FlatList,
   Pressable,
   Platform,
   RefreshControl,
 } from "react-native";
+import { FlashList } from "@shopify/flash-list";
 import { router, useFocusEffect } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
@@ -217,10 +217,11 @@ export default function FavoritesScreen() {
           </Text>
         </Animated.View>
       ) : (
-        <FlatList
+        <FlashList
           data={favorites}
           keyExtractor={(item) => item.id}
           renderItem={renderItem}
+          estimatedItemSize={74}
           contentContainerStyle={[styles.list, { paddingBottom: tabBarHeight + 20 }]}
           showsVerticalScrollIndicator={false}
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={handleRefresh} tintColor={colors.danger} />}

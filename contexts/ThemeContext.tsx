@@ -4,6 +4,7 @@ import React, {
   useEffect,
   useState,
   useCallback,
+  useMemo,
 } from "react";
 import { useColorScheme } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -65,12 +66,15 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     SystemUI.setBackgroundColorAsync(colors.background).catch(() => {});
   }, [colors.background]);
 
+  const contextValue = useMemo(
+    () => ({ colors, isDark: effectiveIsDark, mode, setMode, toggleTheme }),
+    [colors, effectiveIsDark, mode, setMode, toggleTheme]
+  );
+
   if (!ready) return null;
 
   return (
-    <ThemeContext.Provider
-      value={{ colors, isDark: effectiveIsDark, mode, setMode, toggleTheme }}
-    >
+    <ThemeContext.Provider value={contextValue}>
       {children}
     </ThemeContext.Provider>
   );

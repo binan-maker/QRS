@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useCallback } from "react";
 import {
-  View, Text, Pressable, FlatList, ActivityIndicator,
+  View, Text, Pressable, ActivityIndicator,
   StyleSheet, Image, Platform, RefreshControl,
 } from "react-native";
+import { FlashList } from "@shopify/flash-list";
 import { router } from "expo-router";
 import { safePush } from "@/lib/utils/navigation";
 import { Ionicons } from "@expo/vector-icons";
@@ -200,9 +201,10 @@ export default function FriendsScreen() {
           )}
         </View>
       ) : (
-        <FlatList
+        <FlashList
           data={listData}
           keyExtractor={(item) => item.userId}
+          estimatedItemSize={72}
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} />}
           contentContainerStyle={{ paddingHorizontal: 16, paddingTop: 10, paddingBottom: insets.bottom + 24 }}
           ItemSeparatorComponent={() => <View style={{ height: 10 }} />}

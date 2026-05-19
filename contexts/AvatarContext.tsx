@@ -14,7 +14,7 @@
  * No new packages needed — Context + AsyncStorage + expo-image cachePolicy covers it.
  */
 
-import React, { createContext, useCallback, useContext, useEffect, useState } from "react";
+import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const AVATAR_URL_KEY = "qrg:avatar:url";
@@ -81,10 +81,15 @@ export function AvatarProvider({ children }: { children: React.ReactNode }) {
     AsyncStorage.multiRemove([AVATAR_URL_KEY, AVATAR_VER_KEY]).catch(() => {});
   }, []);
 
-  const cachedUrl = url ? `${url}?v=${version}` : null;
+  const cachedUrl = useMemo(() => (url ? `${url}?v=${version}` : null), [url, version]);
+
+  const contextValue = useMemo(
+    () => ({ url, version, cachedUrl, setAvatar, syncAvatar, clearAvatar }),
+    [url, version, cachedUrl, setAvatar, syncAvatar, clearAvatar]
+  );
 
   return (
-    <AvatarContext.Provider value={{ url, version, cachedUrl, setAvatar, syncAvatar, clearAvatar }}>
+    <AvatarContext.Provider value={contextValue}>
       {children}
     </AvatarContext.Provider>
   );

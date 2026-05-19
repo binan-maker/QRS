@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
-import { View, Text, FlatList, Pressable, StyleSheet } from "react-native";
+import { View, Text, Pressable, StyleSheet } from "react-native";
+import { FlashList } from "@shopify/flash-list";
 import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { router } from "expo-router";
@@ -113,9 +114,10 @@ export default function FollowingSection({ loading, list }: Props) {
   }
 
   return (
-    <FlatList
+    <FlashList
       data={enriched}
       keyExtractor={(item) => item.id}
+      estimatedItemSize={88}
       contentContainerStyle={{ paddingHorizontal: 16, paddingTop: 10, paddingBottom: insets.bottom + 24 }}
       showsVerticalScrollIndicator={false}
       ListHeaderComponent={
