@@ -280,6 +280,7 @@ export interface GuardLink {
   createdAt: string;
   changeLog?: DestinationChangeEntry[];
   contentType?: string;
+  templateKey?: string;
 }
 
 // Message Service types

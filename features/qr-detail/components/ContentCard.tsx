@@ -11,7 +11,7 @@ import type { AppColors } from "@/constants/colors";
 
 type GradientPair = [string, string];
 
-function getTypeCfg(type: string, colors: AppColors): {
+function getTypeCfg(type: string, colors: AppColors, templateKey?: string): {
   icon: keyof typeof Ionicons.glyphMap;
   label: string;
   gradient: GradientPair;
@@ -84,6 +84,9 @@ function getTypeCfg(type: string, colors: AppColors): {
     razorpay:      { icon: "card-outline",              label: "Razorpay",         gradient: ["#3366FF","#60A5FA"],       openLabel: "Pay Now"           },
     snapchat:      { icon: "camera-outline",            label: "Snapchat",         gradient: ["#D4A000","#F59E0B"],       openLabel: "Open Snapchat"     },
   };
+  // templateKey takes priority when it resolves to a richer style than the
+  // stored contentType (e.g. templateKey="menucatalogue" beats contentType="url")
+  if (templateKey && map[templateKey]) return map[templateKey];
   return map[type] ?? map.text;
 }
 
@@ -246,17 +249,18 @@ interface Props {
   isDeactivated: boolean;
   onOpenContent: () => void;
   hideOpenAction?: boolean;
+  templateKey?: string;
 }
 
 const EXPAND_THRESHOLD = 120;
 
-const ContentCard = React.memo(function ContentCard({ content, contentType, parsedPayment, isDeactivated, onOpenContent, hideOpenAction }: Props) {
+const ContentCard = React.memo(function ContentCard({ content, contentType, parsedPayment, isDeactivated, onOpenContent, hideOpenAction, templateKey }: Props) {
   const { colors, isDark } = useTheme();
   const [copied, setCopied] = React.useState(false);
   const [contentExpanded, setContentExpanded] = React.useState(false);
 
   const isLongContent = content.length > EXPAND_THRESHOLD || content.includes("\n");
-  const cfg = getTypeCfg(contentType, colors);
+  const cfg = getTypeCfg(contentType, colors, templateKey);
   const hasOpenAction = !isDeactivated && !hideOpenAction && contentType !== "text" && contentType !== "product";
 
   async function handleCopy() {

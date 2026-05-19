@@ -11,7 +11,8 @@ export async function saveGuardLink(
   businessName: string | null,
   ownerName: string,
   ownerId: string,
-  contentType?: string
+  contentType?: string,
+  templateKey?: string | null
 ): Promise<void> {
   await db.set(["guardLinks", uuid], {
     uuid,
@@ -24,6 +25,7 @@ export async function saveGuardLink(
     destinationChangedAt: null,
     createdAt: db.timestamp(),
     ...(contentType ? { contentType } : {}),
+    ...(templateKey ? { templateKey } : {}),
   });
 }
 
@@ -78,6 +80,7 @@ export async function getGuardLink(uuid: string): Promise<GuardLink | null> {
       createdAt: tsToString(data.createdAt),
       changeLog,
       contentType: data.contentType || undefined,
+      templateKey: data.templateKey || undefined,
     };
   } catch (e) {
     console.warn("[db] getGuardLink failed:", e);
@@ -101,7 +104,8 @@ export async function saveStandardLink(
   rawContent: string,
   contentType: string,
   ownerId: string,
-  ownerName: string
+  ownerName: string,
+  templateKey?: string | null
 ): Promise<void> {
   await db.set(["standardLinks", uuid], {
     uuid,
@@ -111,6 +115,7 @@ export async function saveStandardLink(
     ownerName,
     isActive: true,
     createdAt: db.timestamp(),
+    ...(templateKey ? { templateKey } : {}),
   });
 }
 
@@ -129,7 +134,7 @@ export async function updateStandardLinkRawContent(
   });
 }
 
-export async function getStandardLink(uuid: string): Promise<{ rawContent: string; contentType: string; ownerId: string; ownerName: string; isActive: boolean } | null> {
+export async function getStandardLink(uuid: string): Promise<{ rawContent: string; contentType: string; ownerId: string; ownerName: string; isActive: boolean; templateKey?: string } | null> {
   try {
     const data = await db.get(["standardLinks", uuid]);
     if (!data) return null;
@@ -139,6 +144,7 @@ export async function getStandardLink(uuid: string): Promise<{ rawContent: strin
       ownerId: data.ownerId || "",
       ownerName: data.ownerName || "",
       isActive: data.isActive !== false,
+      templateKey: data.templateKey || undefined,
     };
   } catch (e) {
     console.warn("[db] getStandardLink failed:", e);

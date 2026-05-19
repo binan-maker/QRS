@@ -63,7 +63,7 @@ export default function QrDetailScreen() {
 
   const [guardLink, setGuardLink] = useState<GuardLink | null>(null);
   const [guardLinkLoading, setGuardLinkLoading] = useState(!!guardUuid);
-  const [standardLinkData, setStandardLinkData] = useState<{ rawContent: string; contentType: string; ownerId: string; ownerName: string; isActive: boolean } | null>(null);
+  const [standardLinkData, setStandardLinkData] = useState<{ rawContent: string; contentType: string; ownerId: string; ownerName: string; isActive: boolean; templateKey?: string } | null>(null);
   const [standardLinkLoading, setStandardLinkLoading] = useState(!!standardUuid);
   const [ownerSheetOpen, setOwnerSheetOpen] = useState(false);
   const [overflowOpen, setOverflowOpen] = useState(false);
@@ -110,6 +110,13 @@ export default function QrDetailScreen() {
     ? (standardLinkData!.contentType || detectContentType(standardLinkData!.rawContent))
     : (isGuardQr || isStandardQr) ? "url"
     : (q.qrCode?.contentType || q.offlineContentType || detectContentType(q.qrCode?.content || q.offlineContent || ""));
+
+  // templateKey enriches the style map when contentType is generic (e.g. "url")
+  const effectiveTemplateKey: string | undefined =
+    (guardReady ? guardLink!.templateKey : undefined) ??
+    (standardReady ? standardLinkData!.templateKey : undefined) ??
+    ((q.qrCode as any)?.templateKey as string | undefined) ??
+    undefined;
 
   const standardOwnerInfo = isStandardQr && standardLinkData
     ? {
@@ -290,6 +297,7 @@ export default function QrDetailScreen() {
                   isDeactivated={isDeactivated}
                   onOpenContent={q.handleOpenContent}
                   hideOpenAction={isGuardQr}
+                  templateKey={effectiveTemplateKey}
                 />
               </Animated.View>
             )}

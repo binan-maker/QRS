@@ -134,9 +134,9 @@ export function useQrSave({
 
         try {
           if (isBusinessMode) {
-            await saveGuardLink(shortUuid, builtContent, bName, user.displayName, user.id, savedContentType);
+            await saveGuardLink(shortUuid, builtContent, bName, user.displayName, user.id, savedContentType, templateKey);
           } else if (isStandardMode) {
-            await saveStandardLink(shortUuid, builtContent, savedContentType, user.id, user.displayName);
+            await saveStandardLink(shortUuid, builtContent, savedContentType, user.id, user.displayName, templateKey);
           }
         } catch (linkErr: any) {
           if (__DEV__) console.warn("[save] link registration failed (non-fatal):", linkErr?.message);

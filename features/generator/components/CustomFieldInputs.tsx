@@ -17,6 +17,17 @@ interface Props {
   onChange: (id: string, val: string) => void;
 }
 
+function maxLengthForType(type: string): number {
+  switch (type) {
+    case "phone":
+    case "number": return 20;
+    case "upi":    return 100;
+    case "email":  return 254;
+    case "url":    return 500;
+    default:       return 200;
+  }
+}
+
 function CustomFieldInputs({ schema, values, onChange }: Props) {
   const { colors } = useTheme();
 
@@ -30,6 +41,7 @@ function CustomFieldInputs({ schema, values, onChange }: Props) {
         const typeDef = FIELD_TYPE_DEFS.find(t => t.value === field.type);
         const kbType  = fieldTypeKeyboardType(field.type);
         const val     = values[field.id] ?? "";
+        const maxLen  = maxLengthForType(field.type);
 
         const fieldPlaceholder = (() => {
           switch (field.type) {
@@ -65,6 +77,7 @@ function CustomFieldInputs({ schema, values, onChange }: Props) {
                 keyboardType={kbType}
                 autoCapitalize="none"
                 autoCorrect={false}
+                maxLength={maxLen}
               />
 
               {val.length > 0 && (
@@ -73,6 +86,11 @@ function CustomFieldInputs({ schema, values, onChange }: Props) {
                 </Pressable>
               )}
             </View>
+            {val.length > 0 && maxLen <= 200 && (
+              <Text style={[S.charCount, { color: val.length >= maxLen ? colors.danger : colors.textMuted }]}>
+                {val.length}/{maxLen}
+              </Text>
+            )}
           </View>
         );
       })}
@@ -115,5 +133,12 @@ const S = StyleSheet.create({
     fontSize: 13,
     fontFamily: "Inter_400Regular",
     minHeight: 36,
+  },
+  charCount: {
+    fontSize: 11,
+    fontFamily: "Inter_400Regular",
+    textAlign: "right",
+    marginTop: 2,
+    marginRight: 4,
   },
 });
