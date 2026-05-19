@@ -5,6 +5,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
 import FeatureRow from "@/features/generator/components/FeatureRow";
 import type { LANDING_MODES } from "@/features/generator/data/landing-modes";
+import { useAuth } from "@/contexts/AuthContext";
 
 type Mode = (typeof LANDING_MODES)[number];
 
@@ -13,9 +14,19 @@ interface Props {
 }
 
 export default function ModeCard({ mode: m }: Props) {
+  const { user } = useAuth();
+
+  function handlePress() {
+    if (m.key === "individual" && !user) {
+      router.push("/(auth)/login" as any);
+      return;
+    }
+    router.push(m.route as any);
+  }
+
   return (
     <Pressable
-      onPress={() => router.push(m.route as any)}
+      onPress={handlePress}
       style={({ pressed }) => ({
         borderRadius:  24,
         overflow:      "hidden" as const,
