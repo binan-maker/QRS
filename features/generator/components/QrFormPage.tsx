@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useCallback } from "react";
-import { View, StyleSheet } from "react-native";
+import { View, StyleSheet, Text, TextInput } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTopInset } from "@/lib/utils/platform";
 import Reanimated, { FadeInDown } from "react-native-reanimated";
@@ -8,6 +8,7 @@ import { useQrGenerator } from "@/features/generator/hooks/useQrGenerator";
 import { LOGO_POSITIONS } from "@/features/generator/types/form-types";
 import type { QrMode } from "@/features/generator/types/form-types";
 import { ScrollView } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
 
 import FormTopBar          from "@/features/generator/components/FormTopBar";
 import TemplateReadyCard   from "@/features/generator/components/TemplateReadyCard";
@@ -37,9 +38,10 @@ export default function QrFormPage({ mode }: Props) {
   const [templateGenerated,  setTemplateGenerated]  = useState(false);
   const [templateName,       setTemplateName]       = useState("");
   const [qrSize,             setQrSize]             = useState(220);
-  const [qrTemplateOpen,     setQrTemplateOpen]     = useState(true);
+  const [qrTemplateOpen,     setQrTemplateOpen]     = useState(false);
   const [advancedBuilderOpen, setAdvancedBuilderOpen] = useState(false);
   const [showGenError,       setShowGenError]       = useState(false);
+  const [showNameError,      setShowNameError]      = useState(false);
 
   // ── Generator hook ────────────────────────────────────────────────────────
   const {
@@ -93,9 +95,12 @@ export default function QrFormPage({ mode }: Props) {
   }, [switchPreset]);
 
   const handleGenerateWithValidation = useCallback(() => {
+    const nameVal = advancedSettings.label.trim();
+    if (!nameVal) { setShowNameError(true); return; }
     if (!inputValue.trim()) { setShowGenError(true); return; }
+    setShowNameError(false);
     handleGenerate();
-  }, [inputValue, handleGenerate]);
+  }, [inputValue, advancedSettings.label, handleGenerate]);
 
   const handleClearAll = useCallback(() => {
     setTemplateGenerated(false);
@@ -144,6 +149,56 @@ export default function QrFormPage({ mode }: Props) {
             onChange={handleChangeTemplate}
           />
         )}
+
+        {/* QR Name field — always visible */}
+        <Reanimated.View entering={FadeInDown.duration(150)} style={styles.nameWrap}>
+          <View style={[
+            styles.nameCard,
+            {
+              backgroundColor: colors.surface,
+              borderColor: showNameError ? colors.danger + "80" : advancedSettings.label.trim() ? colors.primary + "55" : colors.surfaceBorder,
+            }
+          ]}>
+            <View style={styles.nameRow}>
+              <Ionicons
+                name="pricetag-outline"
+                size={15}
+                color={showNameError ? colors.danger : advancedSettings.label.trim() ? colors.primary : colors.textMuted}
+              />
+              <Text style={[styles.nameLabel, { color: showNameError ? colors.danger : colors.textSecondary }]}>
+                QR Code Name
+              </Text>
+              <View style={[styles.requiredTag, { backgroundColor: showNameError ? colors.danger + "18" : colors.primaryDim }]}>
+                <Text style={[styles.requiredText, { color: showNameError ? colors.danger : colors.primary }]}>Required</Text>
+              </View>
+            </View>
+            <TextInput
+              style={[styles.nameInput, {
+                color: colors.text,
+                backgroundColor: colors.surfaceLight,
+                borderColor: showNameError ? colors.danger + "60" : colors.surfaceBorder,
+              }]}
+              placeholder="e.g. Office WiFi, Menu Standee, My Portfolio…"
+              placeholderTextColor={colors.textMuted}
+              value={advancedSettings.label}
+              onChangeText={(v) => {
+                setAdvancedSettings({ ...advancedSettings, label: v });
+                if (v.trim()) setShowNameError(false);
+              }}
+              maxLength={80}
+            />
+            {showNameError && (
+              <Text style={[styles.nameErrorText, { color: colors.danger }]}>
+                Please give your QR code a name before generating
+              </Text>
+            )}
+            {!showNameError && (
+              <Text style={[styles.nameHint, { color: colors.textMuted }]}>
+                This name will be shown on your QR codes list
+              </Text>
+            )}
+          </View>
+        </Reanimated.View>
 
         {showInputSection && (
           <Reanimated.View entering={FadeInDown.duration(150)} style={styles.inputWrap}>
@@ -279,4 +334,13 @@ const styles = StyleSheet.create({
   inputWrap:           { marginHorizontal: 20 },
   drawerWrap:          { marginHorizontal: 20, marginTop: 16 },
   templateSaveBtnWrap: { marginHorizontal: 0 },
+  nameWrap:            { marginHorizontal: 20, marginBottom: 16 },
+  nameCard:            { borderRadius: 16, borderWidth: 1, padding: 14, gap: 8 },
+  nameRow:             { flexDirection: "row", alignItems: "center", gap: 6 },
+  nameLabel:           { fontSize: 13, fontFamily: "Inter_600SemiBold", flex: 1 },
+  requiredTag:         { borderRadius: 6, paddingHorizontal: 6, paddingVertical: 2 },
+  requiredText:        { fontSize: 9, fontFamily: "Inter_600SemiBold" },
+  nameInput:           { borderRadius: 12, borderWidth: 1, paddingHorizontal: 12, paddingVertical: 9, fontSize: 14, fontFamily: "Inter_400Regular" },
+  nameErrorText:       { fontSize: 11, fontFamily: "Inter_500Medium" },
+  nameHint:            { fontSize: 10, fontFamily: "Inter_400Regular" },
 });

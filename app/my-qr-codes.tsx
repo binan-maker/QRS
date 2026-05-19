@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import {
   View, Text, Pressable, ScrollView,
-  RefreshControl, useWindowDimensions,
+  RefreshControl, useWindowDimensions, TextInput,
 } from "react-native";
 import { FlashList as _FlashList } from "@shopify/flash-list";
 const FlashList = _FlashList as any;
@@ -166,10 +166,11 @@ export default function MyQrCodesScreen() {
   const topInset = useTopInset();
   const contentPaddingBottom = insets.bottom + sp(36);
 
-  const [qrCodes,   setQrCodes]   = useState<GeneratedQrItem[]>([]);
+  const [qrCodes,    setQrCodes]   = useState<GeneratedQrItem[]>([]);
   const [loading,    setLoading]    = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [sortKey,    setSortKey]    = useState<SortKey>("newest");
+  const [searchQuery, setSearchQuery] = useState("");
   const hasLoadedRef = useRef(false);
 
   const fetchQrCodes = useCallback(async (forceRefresh = false) => {
@@ -202,8 +203,17 @@ export default function MyQrCodesScreen() {
     let list = [...qrCodes];
     if (sortKey === "mostScanned") list.sort((a, b) => (b.scanCount || 0) - (a.scanCount || 0));
     else if (sortKey === "oldest") list.sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
+    if (searchQuery.trim()) {
+      const q = searchQuery.trim().toLowerCase();
+      list = list.filter((item, idx) => {
+        const displayText = getDisplayText(item, idx).toLowerCase();
+        const label = (item.label || "").toLowerCase();
+        const businessName = (item.businessName || "").toLowerCase();
+        return displayText.includes(q) || label.includes(q) || businessName.includes(q);
+      });
+    }
     return list;
-  }, [qrCodes, sortKey]);
+  }, [qrCodes, sortKey, searchQuery]);
 
   function renderQrItem({ item, index }: { item: GeneratedQrItem; index: number }) {
     const displayText = getDisplayText(item, index);
@@ -347,7 +357,9 @@ export default function MyQrCodesScreen() {
           <Text style={{ fontSize: rf(17), fontFamily: "Inter_700Bold", color: colors.text }}>My QR Codes</Text>
           {!loading && (
             <Text style={{ fontSize: rf(11), fontFamily: "Inter_400Regular", color: colors.textMuted, marginTop: 1 }}>
-              {sorted.length} {sorted.length === 1 ? "code" : "codes"}
+              {searchQuery.trim()
+                ? `${sorted.length} result${sorted.length === 1 ? "" : "s"}`
+                : `${sorted.length} ${sorted.length === 1 ? "code" : "codes"}`}
             </Text>
           )}
         </View>
@@ -364,6 +376,32 @@ export default function MyQrCodesScreen() {
             <Ionicons name="add" size={rf(20)} color="#fff" />
           </LinearGradient>
         </Pressable>
+      </View>
+
+      {/* Search bar */}
+      <View style={{
+        marginHorizontal: sp(20), marginBottom: sp(10),
+        flexDirection: "row", alignItems: "center", gap: sp(8),
+        borderRadius: sp(14), borderWidth: 1,
+        borderColor: searchQuery.trim() ? colors.primary + "55" : colors.surfaceBorder,
+        backgroundColor: colors.surface,
+        paddingHorizontal: sp(12), paddingVertical: sp(9),
+      }}>
+        <Ionicons name="search-outline" size={rf(16)} color={searchQuery.trim() ? colors.primary : colors.textMuted} />
+        <TextInput
+          style={{ flex: 1, fontSize: rf(14), fontFamily: "Inter_400Regular", color: colors.text }}
+          placeholder="Search your QR codes…"
+          placeholderTextColor={colors.textMuted}
+          value={searchQuery}
+          onChangeText={setSearchQuery}
+          returnKeyType="search"
+          clearButtonMode="while-editing"
+        />
+        {searchQuery.length > 0 && (
+          <Pressable onPress={() => setSearchQuery("")} hitSlop={8}>
+            <Ionicons name="close-circle" size={rf(16)} color={colors.textMuted} />
+          </Pressable>
+        )}
       </View>
 
       {/* Sort pills */}
@@ -407,27 +445,49 @@ export default function MyQrCodesScreen() {
       ) : sorted.length === 0 ? (
         <Animated.View entering={FadeIn.duration(400)} style={{ flex: 1, alignItems: "center", justifyContent: "center", paddingHorizontal: sp(40), gap: sp(14) }}>
           <View style={{ width: sp(72), height: sp(72), borderRadius: sp(22), backgroundColor: colors.primaryDim, alignItems: "center", justifyContent: "center" }}>
-            <MaterialCommunityIcons name="qrcode-plus" size={rf(34)} color={colors.primary} />
+            {searchQuery.trim()
+              ? <Ionicons name="search-outline" size={rf(34)} color={colors.primary} />
+              : <MaterialCommunityIcons name="qrcode-plus" size={rf(34)} color={colors.primary} />}
           </View>
           <View style={{ gap: sp(6), alignItems: "center" }}>
-            <Text style={{ fontSize: rf(17), fontFamily: "Inter_700Bold", color: colors.text }}>No QR codes yet</Text>
+            <Text style={{ fontSize: rf(17), fontFamily: "Inter_700Bold", color: colors.text }}>
+              {searchQuery.trim() ? "No results found" : "No QR codes yet"}
+            </Text>
             <Text style={{ fontSize: rf(13), fontFamily: "Inter_400Regular", color: colors.textSecondary, textAlign: "center", lineHeight: rf(20) }}>
-              Tap + to create your first one
+              {searchQuery.trim()
+                ? `No QR codes match "${searchQuery.trim()}"`
+                : "Tap + to create your first one"}
             </Text>
           </View>
-          <Pressable
-            onPress={() => router.push("/(tabs)/qr-generator")}
-            style={({ pressed }) => [{ opacity: pressed ? 0.85 : 1, marginTop: sp(4) }]}
-          >
-            <LinearGradient
-              colors={[colors.primary, colors.primaryShade]}
-              style={{ flexDirection: "row", alignItems: "center", gap: sp(7), paddingHorizontal: sp(28), paddingVertical: sp(13), borderRadius: sp(16) }}
-              start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
+          {searchQuery.trim() ? (
+            <Pressable
+              onPress={() => setSearchQuery("")}
+              style={({ pressed }) => [{ opacity: pressed ? 0.85 : 1, marginTop: sp(4) }]}
             >
-              <Ionicons name="add" size={rf(16)} color="#fff" />
-              <Text style={{ fontSize: rf(14), fontFamily: "Inter_700Bold", color: "#fff" }}>Create QR Code</Text>
-            </LinearGradient>
-          </Pressable>
+              <LinearGradient
+                colors={[colors.primary, colors.primaryShade]}
+                style={{ flexDirection: "row", alignItems: "center", gap: sp(7), paddingHorizontal: sp(28), paddingVertical: sp(13), borderRadius: sp(16) }}
+                start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
+              >
+                <Ionicons name="close" size={rf(16)} color="#fff" />
+                <Text style={{ fontSize: rf(14), fontFamily: "Inter_700Bold", color: "#fff" }}>Clear Search</Text>
+              </LinearGradient>
+            </Pressable>
+          ) : (
+            <Pressable
+              onPress={() => router.push("/(tabs)/qr-generator")}
+              style={({ pressed }) => [{ opacity: pressed ? 0.85 : 1, marginTop: sp(4) }]}
+            >
+              <LinearGradient
+                colors={[colors.primary, colors.primaryShade]}
+                style={{ flexDirection: "row", alignItems: "center", gap: sp(7), paddingHorizontal: sp(28), paddingVertical: sp(13), borderRadius: sp(16) }}
+                start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
+              >
+                <Ionicons name="add" size={rf(16)} color="#fff" />
+                <Text style={{ fontSize: rf(14), fontFamily: "Inter_700Bold", color: "#fff" }}>Create QR Code</Text>
+              </LinearGradient>
+            </Pressable>
+          )}
         </Animated.View>
       ) : (
         <FlashList
