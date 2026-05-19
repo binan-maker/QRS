@@ -6,6 +6,7 @@ import { Platform, StyleSheet, View, Pressable } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { MaterialCommunityIcons, Ionicons } from "@expo/vector-icons";
 import React, { useState, useEffect } from "react";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useTheme } from "@/contexts/ThemeContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { subscribeToNotificationCount } from "@/lib/firestore-service";
@@ -86,6 +87,14 @@ function ClassicTabLayout() {
   const insets = useSafeAreaInsets();
   const { colors } = useTheme();
   const { t } = useAppTranslation();
+
+  useEffect(() => {
+    AsyncStorage.getItem("qrg:startup:screen").then((pref) => {
+      if (pref === "scanner") {
+        router.replace("/(tabs)/scanner");
+      }
+    }).catch(() => {});
+  }, []);
 
   const tabBarHeight = isWeb ? 84 : 70 + insets.bottom;
   const hiddenTabBar = { display: "none" as const };

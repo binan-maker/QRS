@@ -39,6 +39,7 @@ export default function SettingsScreen() {
     myComments, commentsLoading,
     myHistory, historyLoading,
     deleteConfirmText, setDeleteConfirmText,
+    startupScreen, setStartupScreen,
     handleSignOut, handleClearData,
     handleSubmitFeedback,
     handleDeleteComment, handleDeleteAllComments,
@@ -265,6 +266,42 @@ export default function SettingsScreen() {
                   <Pressable
                     key={opt.key}
                     onPress={themeModeHandlers[opt.key]}
+                    style={({ pressed }) => [
+                      styles.themeBtn,
+                      {
+                        backgroundColor: isActive ? colors.primaryDim : colors.surfaceLight,
+                        borderColor: isActive ? colors.primary : colors.surfaceBorder,
+                        opacity: pressed ? 0.8 : 1,
+                      },
+                    ]}
+                  >
+                    <Ionicons name={opt.icon} size={18} color={isActive ? colors.primary : colors.textMuted} />
+                    <Text style={[styles.themeBtnText, { color: isActive ? colors.primary : colors.textMuted }]}>
+                      {opt.label}
+                    </Text>
+                    {isActive && <View style={[styles.activeIndicator, { backgroundColor: colors.primary }]} />}
+                  </Pressable>
+                );
+              })}
+            </View>
+          </View>
+        </View>
+
+        {/* ── PREFERENCES ── */}
+        <View style={styles.section}>
+          <Text style={styles.sectionLabel}>PREFERENCES</Text>
+          <View style={[styles.menuGroup, { padding: 16 }]}>
+            <Text style={[styles.appearanceLabel, { color: colors.textSecondary }]}>App opens on</Text>
+            <View style={styles.themeRow}>
+              {([
+                { key: "home",    label: "Home",    icon: "home-outline"    },
+                { key: "scanner", label: "Scanner", icon: "scan-outline"    },
+              ] as const).map((opt) => {
+                const isActive = startupScreen === opt.key;
+                return (
+                  <Pressable
+                    key={opt.key}
+                    onPress={() => setStartupScreen(opt.key)}
                     style={({ pressed }) => [
                       styles.themeBtn,
                       {

@@ -16,11 +16,10 @@ const CATEGORY_LABELS: Record<string, string> = {
 interface Props {
   templates: QrTemplate[];
   onOpenAi: () => void;
-  onOpenAdvancedBuilder?: () => void;
   onPickTemplate: (t: QrTemplate) => void;
 }
 
-function HomeView({ templates, onOpenAi, onOpenAdvancedBuilder, onPickTemplate }: Props) {
+function HomeView({ templates, onOpenAi, onPickTemplate }: Props) {
   const { colors, isDark } = useTheme();
   const { width: screenW } = useWindowDimensions();
   const s = Math.min(Math.max(screenW / 390, 0.82), 1.0);
@@ -91,43 +90,6 @@ function HomeView({ templates, onOpenAi, onOpenAdvancedBuilder, onPickTemplate }
         </Pressable>
       </Animated.View>
 
-      {/* Advanced Builder card */}
-      {!!onOpenAdvancedBuilder && (
-        <Animated.View entering={FadeInDown.duration(250)}>
-          <Pressable
-            onPress={onOpenAdvancedBuilder}
-            style={({ pressed }) => ({
-              borderRadius: sp(20),
-              overflow: "hidden",
-              opacity: pressed ? 0.88 : 1,
-              transform: [{ scale: pressed ? 0.97 : 1 }],
-            })}
-          >
-            <LinearGradient
-              colors={isDark ? ["#0F2027", "#1A3A2A"] : ["#E8F5E9", "#E3F2FD"]}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
-              style={{
-                borderRadius: sp(20), borderWidth: 1.5, borderColor: "#10B981" + "50",
-                padding: sp(16), flexDirection: "row", alignItems: "center", gap: sp(14),
-              }}
-            >
-              <View style={{ width: sp(48), height: sp(48), borderRadius: sp(16), backgroundColor: "#10B981" + "25", alignItems: "center", justifyContent: "center" }}>
-                <Ionicons name="grid-outline" size={rf(22)} color="#10B981" />
-              </View>
-              <View style={{ flex: 1 }}>
-                <Text style={{ fontSize: rf(15), fontFamily: "Inter_700Bold", color: colors.text }}>Custom Builder</Text>
-                <Text style={{ fontSize: rf(11), fontFamily: "Inter_400Regular", color: colors.textMuted, marginTop: sp(2) }}>
-                  Design your own template with custom fields
-                </Text>
-              </View>
-              <View style={{ backgroundColor: "#10B981" + "20", paddingHorizontal: sp(8), paddingVertical: sp(3), borderRadius: sp(20) }}>
-                <Text style={{ fontSize: rf(9), fontFamily: "Inter_700Bold", color: "#10B981" }}>PRO</Text>
-              </View>
-            </LinearGradient>
-          </Pressable>
-        </Animated.View>
-      )}
 
       {/* Search bar */}
       <Animated.View entering={FadeInDown.duration(200)}>

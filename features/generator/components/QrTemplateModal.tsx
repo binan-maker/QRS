@@ -17,10 +17,9 @@ interface Props {
   visible: boolean;
   onClose: () => void;
   onGenerate: (content: string, templateName: string) => void;
-  onOpenAdvancedBuilder?: () => void;
 }
 
-function QrTemplateModal({ visible, onClose, onGenerate, onOpenAdvancedBuilder }: Props) {
+function QrTemplateModal({ visible, onClose, onGenerate }: Props) {
   const { colors } = useTheme();
   const insets = useSafeAreaInsets();
   const { height: screenH, width: screenW } = useWindowDimensions();
@@ -226,7 +225,6 @@ function QrTemplateModal({ visible, onClose, onGenerate, onOpenAdvancedBuilder }
             <HomeView
               templates={TEMPLATES}
               onOpenAi={handleOpenAi}
-              onOpenAdvancedBuilder={onOpenAdvancedBuilder}
               onPickTemplate={handlePickTemplate}
             />
           )}

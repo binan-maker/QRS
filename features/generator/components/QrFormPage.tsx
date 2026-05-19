@@ -37,7 +37,7 @@ export default function QrFormPage({ mode }: Props) {
   const [templateGenerated,  setTemplateGenerated]  = useState(false);
   const [templateName,       setTemplateName]       = useState("");
   const [qrSize,             setQrSize]             = useState(220);
-  const [qrTemplateOpen,     setQrTemplateOpen]     = useState(false);
+  const [qrTemplateOpen,     setQrTemplateOpen]     = useState(true);
   const [advancedBuilderOpen, setAdvancedBuilderOpen] = useState(false);
   const [showGenError,       setShowGenError]       = useState(false);
 
@@ -249,10 +249,6 @@ export default function QrFormPage({ mode }: Props) {
           setTemplateName(tName);
           setPresetActive(true);
           setQrTemplateOpen(false);
-        }}
-        onOpenAdvancedBuilder={() => {
-          setQrTemplateOpen(false);
-          setAdvancedBuilderOpen(true);
         }}
       />
       <CustomQrBuilderModal

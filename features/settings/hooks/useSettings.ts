@@ -21,6 +21,7 @@ import {
 export type Section = "main" | "profile" | "account" | "guide" | "feedback" | "following" | "comments" | "history";
 
 const HAPTIC_KEY = "haptic_enabled";
+const STARTUP_SCREEN_KEY = "qrg:startup:screen";
 
 export function useSettings() {
   const { user, token, signOut } = useAuth();
@@ -37,6 +38,7 @@ export function useSettings() {
   const [historyLoading, setHistoryLoading] = useState(false);
   const [deleteConfirmText, setDeleteConfirmText] = useState("");
   const [hapticsEnabled, setHapticsEnabledState] = useState(false);
+  const [startupScreen, setStartupScreenState] = useState<"home" | "scanner">("home");
 
   useEffect(() => {
     setFeedbackEmail(user?.email || "");
@@ -55,6 +57,9 @@ export function useSettings() {
       setHapticsEnabledState(enabled);
       setHapticsEnabled(enabled);
     });
+    AsyncStorage.getItem(STARTUP_SCREEN_KEY).then((v) => {
+      if (v === "scanner") setStartupScreenState("scanner");
+    });
   }, []);
 
   const toggleHaptics = useCallback(async () => {
@@ -63,6 +68,11 @@ export function useSettings() {
     setHapticsEnabled(next);
     await AsyncStorage.setItem(HAPTIC_KEY, String(next));
   }, [hapticsEnabled]);
+
+  const setStartupScreen = useCallback(async (screen: "home" | "scanner") => {
+    setStartupScreenState(screen);
+    await AsyncStorage.setItem(STARTUP_SCREEN_KEY, screen);
+  }, []);
 
   const handleSignOut = useCallback(async () => {
     Alert.alert("Sign Out", "Are you sure you want to sign out?", [
@@ -328,6 +338,8 @@ export function useSettings() {
     setDeleteConfirmText,
     hapticsEnabled,
     toggleHaptics,
+    startupScreen,
+    setStartupScreen,
     handleSignOut,
     handleClearData,
     handleSubmitFeedback,
