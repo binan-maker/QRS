@@ -279,6 +279,7 @@ export interface GuardLink {
   destinationChangedAt: string | null;
   createdAt: string;
   changeLog?: DestinationChangeEntry[];
+  contentType?: string;
 }
 
 // Message Service types

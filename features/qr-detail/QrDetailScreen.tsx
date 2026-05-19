@@ -104,8 +104,10 @@ export default function QrDetailScreen() {
     : (isGuardQr || isStandardQr) ? ""
     : (q.qrCode?.content || q.offlineContent || "");
 
-  const effectiveContentType = guardReady ? detectContentType(guardLink!.currentDestination)
-    : standardReady ? detectContentType(standardLinkData!.rawContent)
+  const effectiveContentType = guardReady
+    ? (guardLink!.contentType || detectContentType(guardLink!.currentDestination))
+    : standardReady
+    ? (standardLinkData!.contentType || detectContentType(standardLinkData!.rawContent))
     : (isGuardQr || isStandardQr) ? "url"
     : (q.qrCode?.contentType || q.offlineContentType || detectContentType(q.qrCode?.content || q.offlineContent || ""));
 
@@ -287,7 +289,7 @@ export default function QrDetailScreen() {
                   parsedPayment={q.parsedPayment}
                   isDeactivated={isDeactivated}
                   onOpenContent={q.handleOpenContent}
-                  hideOpenAction={!user || isGuardQr}
+                  hideOpenAction={isGuardQr}
                 />
               </Animated.View>
             )}

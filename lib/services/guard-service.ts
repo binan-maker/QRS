@@ -10,7 +10,8 @@ export async function saveGuardLink(
   destination: string,
   businessName: string | null,
   ownerName: string,
-  ownerId: string
+  ownerId: string,
+  contentType?: string
 ): Promise<void> {
   await db.set(["guardLinks", uuid], {
     uuid,
@@ -22,6 +23,7 @@ export async function saveGuardLink(
     isActive: true,
     destinationChangedAt: null,
     createdAt: db.timestamp(),
+    ...(contentType ? { contentType } : {}),
   });
 }
 
@@ -75,6 +77,7 @@ export async function getGuardLink(uuid: string): Promise<GuardLink | null> {
       destinationChangedAt: data.destinationChangedAt ? tsToString(data.destinationChangedAt) : null,
       createdAt: tsToString(data.createdAt),
       changeLog,
+      contentType: data.contentType || undefined,
     };
   } catch (e) {
     console.warn("[db] getGuardLink failed:", e);

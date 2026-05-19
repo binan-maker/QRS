@@ -130,7 +130,7 @@ export function useQrSave({
 
         try {
           if (isBusinessMode) {
-            await saveGuardLink(shortUuid, builtContent, bName, user.displayName, user.id);
+            await saveGuardLink(shortUuid, builtContent, bName, user.displayName, user.id, savedContentType);
           } else if (isStandardMode) {
             await saveStandardLink(shortUuid, builtContent, savedContentType, user.id, user.displayName);
           }
