@@ -14,6 +14,7 @@ import {
   getBusinessContentType,
 } from "@/features/generator/data/business-content";
 import { QR_PRESETS } from "@/features/generator/data/presets";
+import { QR_REGISTRY } from "@/features/generator/data/registry";
 import { resolveExpiryDate, type AdvancedSettings } from "@/features/generator/components/AdvancedSettingsPanel";
 import type { BusinessCategory } from "@/features/generator/components/BusinessTypeSelector";
 import type { QrMode } from "@/features/generator/types/form-types";
@@ -127,6 +128,9 @@ export function useQrSave({
         const savedContentType = isBusinessMode
           ? getBusinessContentType(businessCategory)
           : getFirestoreContentType(selectedPreset);
+        const templateKey = isBusinessMode
+          ? businessCategory
+          : (QR_REGISTRY[selectedPreset]?.key ?? null);
 
         try {
           if (isBusinessMode) {
@@ -162,6 +166,7 @@ export function useQrSave({
             : isStandardMode
               ? builtContent
               : null,
+          templateKey,
         );
         setSavedDocId(docId);
         setSavedToProfile(true);

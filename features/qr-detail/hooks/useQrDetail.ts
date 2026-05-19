@@ -181,7 +181,7 @@ export function useQrDetail(id: string) {
     }
   }
 
-  function handleOpenContent() {
+  async function handleOpenContent() {
     if (!content) return;
     const lower = content.toLowerCase();
 
@@ -216,9 +216,38 @@ export function useQrDetail(id: string) {
     } else if (contentType === "sms") {
       const smsUrl = lower.startsWith("sms:") || lower.startsWith("smsto:") ? content : `sms:${content}`;
       Linking.openURL(smsUrl).catch(() => Alert.alert("Error", "Could not open SMS app"));
+    } else if (contentType === "contact") {
+      // Try to call the phone number first; if no phone, open the email
+      const phone = content.match(/^TEL[^:\r\n]*:(.+)$/m)?.[1]?.trim()
+        || content.match(/TEL:([^;]+)/)?.[1]?.trim();
+      const email = content.match(/^EMAIL[^:\r\n]*:(.+)$/m)?.[1]?.trim()
+        || content.match(/EMAIL:([^;]+)/)?.[1]?.trim();
+      if (phone) {
+        Linking.openURL(`tel:${phone}`).catch(() =>
+          Alert.alert("Error", "Could not open the phone app.")
+        );
+      } else if (email) {
+        Linking.openURL(`mailto:${email}`).catch(() =>
+          Alert.alert("Error", "Could not open the email app.")
+        );
+      }
     } else if (contentType === "whatsapp") {
       const waUrl = lower.startsWith("http") ? content : `https://wa.me/${content.replace(/\D/g, "")}`;
-      Linking.openURL(waUrl).catch(() => Alert.alert("App Not Found", "Could not open WhatsApp. Make sure WhatsApp is installed."));
+      const canOpen = await Linking.canOpenURL(waUrl).catch(() => false);
+      if (canOpen) {
+        Linking.openURL(waUrl).catch(() =>
+          Alert.alert("App Not Found", "WhatsApp is not installed on this device.")
+        );
+      } else {
+        Alert.alert(
+          "WhatsApp Not Found",
+          "WhatsApp does not appear to be installed. Would you like to open this in your browser instead?",
+          [
+            { text: "Cancel", style: "cancel" },
+            { text: "Open in Browser", onPress: () => Linking.openURL(waUrl).catch(() => {}) },
+          ]
+        );
+      }
     } else if (contentType === "social") {
       const isHttpUrl = lower.startsWith("http://") || lower.startsWith("https://");
       const isDeepLink = !isHttpUrl && content.includes("://");

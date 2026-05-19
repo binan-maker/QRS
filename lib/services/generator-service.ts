@@ -37,7 +37,8 @@ export async function saveGeneratedQr(
     expiryDate?: string | null;
     label?: string | null;
   } | null,
-  displayDestination?: string | null
+  displayDestination?: string | null,
+  templateKey?: string | null
 ): Promise<string> {
   const { SIGNATURE_SALT: SALT } = await import("./types");
   const qrId = await getQrCodeId(content);
@@ -60,6 +61,7 @@ export async function saveGeneratedQr(
       qrCodeId: qrId, qrType,
       businessName: businessName || null,
       guardUuid: guardUuid || null,
+      ...(templateKey ? { templateKey } : {}),
       ...(displayDestination ? { displayDestination } : {}),
       ...(signature ? { signature } : {}),
       fgColor: design?.fgColor || "#0A0E17",

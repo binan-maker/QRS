@@ -99,17 +99,30 @@ function parseWifi(content: string) {
 }
 
 function parseContact(content: string) {
-  const r = { name: "", phone: "", email: "", org: "", url: "" };
+  const r = { name: "", phone: "", email: "", org: "", url: "", title: "", note: "" };
   if (content.startsWith("BEGIN:VCARD")) {
-    r.name = content.match(/FN:([^\r\n]+)/)?.[1] ?? content.match(/N:([^\r\n]+)/)?.[1] ?? "";
-    r.phone = content.match(/TEL[^:]*:([^\r\n]+)/)?.[1] ?? "";
-    r.email = content.match(/EMAIL[^:]*:([^\r\n]+)/)?.[1] ?? "";
-    r.org = content.match(/ORG:([^\r\n]+)/)?.[1] ?? "";
-    r.url = content.match(/URL:([^\r\n]+)/)?.[1] ?? "";
+    // FN (Formatted Name) preferred; fall back to structured N field
+    const fn = content.match(/^FN:(.+)$/m)?.[1]?.trim() ?? "";
+    if (fn) {
+      r.name = fn;
+    } else {
+      const nField = content.match(/^N:(.+)$/m)?.[1]?.trim() ?? "";
+      // N field is Last;First;Middle;Prefix;Suffix — reassemble to "First Last"
+      const [last = "", first = ""] = nField.split(";");
+      r.name = [first.trim(), last.trim()].filter(Boolean).join(" ");
+    }
+    // TEL — strip type parameters like ;TYPE=CELL, ;TYPE=WORK
+    r.phone = (content.match(/^TEL[^:\r\n]*:(.+)$/m)?.[1] ?? "").trim();
+    // EMAIL — strip type parameters
+    r.email = (content.match(/^EMAIL[^:\r\n]*:(.+)$/m)?.[1] ?? "").trim();
+    r.org   = (content.match(/^ORG:(.+)$/m)?.[1] ?? "").trim().split(";")[0].trim();
+    r.url   = (content.match(/^URL:(.+)$/m)?.[1] ?? "").trim();
+    r.title = (content.match(/^TITLE:(.+)$/m)?.[1] ?? "").trim();
+    r.note  = (content.match(/^NOTE:(.+)$/m)?.[1] ?? "").trim().slice(0, 120);
   } else if (content.toLowerCase().startsWith("mecard:")) {
-    r.name = content.match(/N:([^;]+)/)?.[1] ?? "";
-    r.phone = content.match(/TEL:([^;]+)/)?.[1] ?? "";
-    r.email = content.match(/EMAIL:([^;]+)/)?.[1] ?? "";
+    r.name  = content.match(/N:([^;]+)/)?.[1]?.trim() ?? "";
+    r.phone = content.match(/TEL:([^;]+)/)?.[1]?.trim() ?? "";
+    r.email = content.match(/EMAIL:([^;]+)/)?.[1]?.trim() ?? "";
   }
   return r;
 }
@@ -368,7 +381,7 @@ const ContentCard = React.memo(function ContentCard({ content, contentType, pars
       </View>
 
       {/* Content text — hidden for URL-like, structured, and parsed types */}
-      {!isUrlLike && !["event", "calendar", "whatsapp", "email", "phone", "location", "crypto"].includes(contentType) && (
+      {!isUrlLike && !["event", "calendar", "whatsapp", "email", "phone", "location", "crypto", "contact"].includes(contentType) && (
         <View style={[styles.contentBox, { backgroundColor: isDark ? colors.surfaceLight : colors.background, borderColor: colors.surfaceBorder }]}>
           <Text style={[styles.contentText, { color: colors.text }]} selectable numberOfLines={contentExpanded ? undefined : 4}>
             {content}
@@ -412,11 +425,13 @@ const ContentCard = React.memo(function ContentCard({ content, contentType, pars
       )}
       {contact && (contact.name || contact.phone || contact.email) && (
         <View style={[styles.infoGrid, { backgroundColor: isDark ? colors.surfaceLight : colors.background, borderColor: colors.surfaceBorder }]}>
-          {contact.name ? <InfoRow label="Name" value={contact.name} gradient={cfg.gradient} colors={colors} /> : null}
-          {contact.org ? <InfoRow label="Org" value={contact.org} gradient={cfg.gradient} colors={colors} /> : null}
-          {contact.phone ? <InfoRow label="Phone" value={contact.phone} selectable gradient={cfg.gradient} colors={colors} /> : null}
-          {contact.email ? <InfoRow label="Email" value={contact.email} selectable gradient={cfg.gradient} colors={colors} /> : null}
-          {contact.url ? <InfoRow label="Website" value={contact.url} selectable gradient={cfg.gradient} colors={colors} /> : null}
+          {contact.name  ? <InfoRow label="Name"    value={contact.name}  gradient={cfg.gradient} colors={colors} /> : null}
+          {contact.title ? <InfoRow label="Title"   value={contact.title} gradient={cfg.gradient} colors={colors} /> : null}
+          {contact.org   ? <InfoRow label="Company" value={contact.org}   gradient={cfg.gradient} colors={colors} /> : null}
+          {contact.phone ? <InfoRow label="Phone"   value={contact.phone} selectable gradient={cfg.gradient} colors={colors} /> : null}
+          {contact.email ? <InfoRow label="Email"   value={contact.email} selectable gradient={cfg.gradient} colors={colors} /> : null}
+          {contact.url   ? <InfoRow label="Website" value={contact.url}   selectable gradient={cfg.gradient} colors={colors} /> : null}
+          {contact.note  ? <InfoRow label="Note"    value={contact.note}  gradient={cfg.gradient} colors={colors} /> : null}
         </View>
       )}
       {smsData && (smsData.to || smsData.body) && (
