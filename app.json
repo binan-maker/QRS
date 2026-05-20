@@ -2,7 +2,7 @@
   "expo": {
     "name": "QR Guard",
     "slug": "qr-guard",
-    "version": "1.0.9",
+    "version": "1.0.11",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "scanguard",
