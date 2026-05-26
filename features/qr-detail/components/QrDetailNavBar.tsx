@@ -59,7 +59,7 @@ export default function QrDetailNavBar({
         </Pressable>
         <View style={{ flex: 1, minWidth: 0 }}>
           <Text style={[styles.navTitle, { textAlign: "left" }]} numberOfLines={1}>
-            {hasOwner ? (ownerName || "QR Details") : "QR Details"}
+            QR Guard
           </Text>
           {offlineMode && (
             <Text style={[navOfflineStyles.badge, { color: colors.warning }]}>● Offline</Text>
