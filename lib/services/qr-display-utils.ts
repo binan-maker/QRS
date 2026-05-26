@@ -9,14 +9,15 @@ export interface ContentDetailRow {
   icon: string;
 }
 
+const GENERIC_STORED = new Set(["text", "url", "link", "biolink", "social"]);
+
 export function getDetailContentType(item: any): string {
   const stored = (item.contentType as string) || "text";
   const templateKey = (item.templateKey as string) || "";
-  // Non-generic stored type wins immediately.
-  if (stored && stored !== "text" && stored !== "url") return stored;
-  // templateKey is the authoritative generator label — trust it when it points
-  // to a specific type that isn't a plain URL/text alias.
-  if (templateKey && templateKey !== "url" && templateKey !== "text" && templateKey !== "biolink") return templateKey;
+  // templateKey is the authoritative generator label — prefer it when non-generic.
+  if (templateKey && !GENERIC_STORED.has(templateKey)) return templateKey;
+  // Non-generic stored type wins next.
+  if (stored && !GENERIC_STORED.has(stored)) return stored;
   const displayDest = item.displayDestination as string | null;
   const content = (item.content as string) || "";
   const src = displayDest || content;
@@ -153,11 +154,85 @@ export function getDetailDisplayTitle(item: any): string {
       if (handle) return "@" + handle.replace(/^@/, "");
       break;
     }
+    case "youtube": {
+      try {
+        const u = new URL(src.startsWith("http") ? src : `https://${src}`);
+        const parts = u.pathname.replace(/\/$/, "").split("/").filter(Boolean);
+        const special = ["c", "channel", "user"];
+        const name = special.includes(parts[0]) ? parts[1] || parts[0] : parts[0];
+        if (name) return "@" + name.replace(/^@/, "");
+      } catch {}
+      return "YouTube Channel";
+    }
+    case "linkedin": {
+      const parts = src.replace(/\/$/, "").split("/").filter(Boolean);
+      const last = parts[parts.length - 1];
+      if (last && !last.includes(".")) return last;
+      return "LinkedIn Profile";
+    }
+    case "facebook": {
+      try {
+        const u = new URL(src.startsWith("http") ? src : `https://${src}`);
+        const parts = u.pathname.replace(/\/$/, "").split("/").filter(Boolean);
+        const last = parts[parts.length - 1];
+        if (last && !last.includes(".") && last !== "pages" && last !== "groups") return last;
+      } catch {}
+      return "Facebook Page";
+    }
+    case "spotify": {
+      try {
+        const u = new URL(src.startsWith("http") ? src : `https://${src}`);
+        const parts = u.pathname.replace(/\/$/, "").split("/").filter(Boolean);
+        if (parts[1]) return parts[1];
+      } catch {}
+      return "Spotify";
+    }
+    case "discord":
+      return "Discord Server";
+    case "snapchat": {
+      const parts = src.replace(/\/$/, "").split("/").filter(Boolean);
+      const last = parts[parts.length - 1];
+      if (last && !last.includes(".")) return "@" + last.replace(/^@/, "");
+      return "Snapchat";
+    }
     case "zoom": {
       if (src.includes("zoom.us/j/"))
         return "Meeting " + (src.split("/j/")[1]?.split("?")[0] || "");
       return "Zoom Meeting";
     }
+    case "calendly": {
+      try {
+        const u = new URL(src.startsWith("http") ? src : `https://${src}`);
+        const parts = u.pathname.replace(/\/$/, "").split("/").filter(Boolean);
+        if (parts[0]) return "Calendly: " + parts[0];
+      } catch {}
+      return "Calendly";
+    }
+    case "reviewpage":
+    case "googlereview":
+      return "Google Review Page";
+    case "menucatalogue":
+    case "restaurantmenu":
+      return "Menu / Catalogue";
+    case "donation":
+      return "Donation Link";
+    case "paypal": {
+      const me = src.match(/paypal\.me\/([^/?#]+)/i);
+      if (me) return "PayPal: " + me[1];
+      return "PayPal";
+    }
+    case "venmo": {
+      const me = src.match(/venmo\.com\/(?:u\/)?([^/?#]+)/i);
+      if (me) return "Venmo: " + me[1];
+      return "Venmo";
+    }
+    case "razorpay":
+    case "paymentlink": {
+      try { return new URL(src.startsWith("http") ? src : `https://${src}`).hostname.replace(/^www\./, ""); } catch {}
+      return "Payment Link";
+    }
+    case "appdownload":
+      return "App Download";
   }
   if (src) {
     const isGuardOrGo = src.includes("/guard/") || src.includes("/go/");

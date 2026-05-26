@@ -1,0 +1,1 @@
+- [QR type resolution pattern](qr-type-resolution.md) — templateKey beats stored contentType; GENERIC_STORED/GENERIC_CT sets define what counts as "generic" (text/url/link/biolink/social — NOT wifi).

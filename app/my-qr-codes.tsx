@@ -32,12 +32,14 @@ const SORT_OPTIONS: { key: SortKey; label: string; icon: string }[] = [
   { key: "oldest",      label: "Oldest",       icon: "hourglass-outline"  },
 ];
 
+const GENERIC_CT = new Set(["text", "url", "link", "biolink", "social"]);
+
 function getEffectiveContentType(item: GeneratedQrItem): string {
   const stored = (item as any).contentType as string || "text";
-  // If a richer templateKey is stored, prefer it when contentType is generic
   const tmplKey = (item as any).templateKey as string | undefined;
-  if (tmplKey && (stored === "text" || stored === "url" || stored === "wifi" || stored === "social")) return tmplKey;
-  if (stored && stored !== "text" && stored !== "url" && stored !== "wifi") return stored;
+  // Always prefer a specific templateKey over a generic stored contentType
+  if (tmplKey && !GENERIC_CT.has(tmplKey)) return tmplKey;
+  if (stored && !GENERIC_CT.has(stored)) return stored;
   const displayDest = (item as any).displayDestination as string | null;
   const content = item.content || "";
   const src = displayDest || content;
@@ -78,12 +80,23 @@ function getEffectiveContentType(item: GeneratedQrItem): string {
   return stored;
 }
 
+function extractSocialHandle(url: string, prefix = "@"): string | null {
+  try {
+    const u = new URL(url.startsWith("http") ? url : `https://${url}`);
+    const parts = u.pathname.replace(/\/$/, "").split("/").filter(Boolean);
+    const last = parts[parts.length - 1] || "";
+    if (last && !last.includes(".") && last.length > 0) return prefix + last.replace(/^@/, "");
+  } catch {}
+  return null;
+}
+
 function getDisplayText(item: GeneratedQrItem, index: number): string {
   if (item.label?.trim()) return item.label.trim();
   if (item.businessName?.trim()) return item.businessName.trim();
 
   const ct = getEffectiveContentType(item);
-  const c = item.content || "";
+  // Use displayDestination first (Living Shield QRs store real dest here)
+  const c = (item as any).displayDestination || item.content || "";
 
   if (ct === "wifi") {
     const ssid = c.match(/S:([^;]*)/)?.[1];
@@ -117,9 +130,76 @@ function getDisplayText(item: GeneratedQrItem, index: number): string {
     const geo = c.replace(/^geo:/i, "").split("?")[0];
     if (geo && geo !== c) return `Location (${geo})`;
   }
-  if (["upi", "scantopay", "paymentlink", "payment"].includes(ct)) {
+  if (["upi", "scantopay", "bharatqr"].includes(ct)) {
+    if (c.startsWith("upi://pay?")) {
+      try {
+        const pa = new URLSearchParams(c.replace("upi://pay?", "")).get("pa");
+        if (pa) return pa;
+      } catch {}
+    }
+    if (/^[\w.\-+]+@[\w]+$/.test(c)) return c;
+  }
+  if (["paymentlink", "payment", "razorpay"].includes(ct)) {
+    if (c.startsWith("http")) {
+      try { return new URL(c).hostname.replace(/^www\./, ""); } catch {}
+    }
     const vpa = c.match(/pa=([^&\s]+)/i)?.[1];
     if (vpa) return decodeURIComponent(vpa);
+  }
+  if (["instagram", "twitter", "telegram", "snapchat"].includes(ct)) {
+    const handle = extractSocialHandle(c);
+    if (handle) return handle;
+  }
+  if (ct === "tiktok") {
+    const handle = c.replace(/.*tiktok\.com\/@?/, "").replace(/\/$/, "");
+    if (handle && !handle.includes(".")) return "@" + handle.replace(/^@/, "");
+  }
+  if (ct === "youtube") {
+    try {
+      const u = new URL(c.startsWith("http") ? c : `https://${c}`);
+      const parts = u.pathname.replace(/\/$/, "").split("/").filter(Boolean);
+      const special = ["c", "channel", "user"];
+      const name = special.includes(parts[0]) ? parts[1] || parts[0] : parts[0];
+      if (name) return "@" + name.replace(/^@/, "");
+    } catch {}
+  }
+  if (["linkedin", "facebook", "discord"].includes(ct)) {
+    const handle = extractSocialHandle(c, "");
+    if (handle) return handle;
+  }
+  if (ct === "spotify") {
+    try {
+      const u = new URL(c.startsWith("http") ? c : `https://${c}`);
+      const parts = u.pathname.replace(/\/$/, "").split("/").filter(Boolean);
+      if (parts[1]) return parts[1];
+    } catch {}
+  }
+  if (["reviewpage", "googlereview"].includes(ct)) return "Google Review Page";
+  if (["menucatalogue", "restaurantmenu"].includes(ct)) return "Menu / Catalogue";
+  if (ct === "donation") return "Donation Link";
+  if (ct === "paypal") {
+    const me = c.match(/paypal\.me\/([^/?#]+)/i);
+    if (me) return "PayPal: " + me[1];
+    return "PayPal";
+  }
+  if (ct === "venmo") {
+    const me = c.match(/venmo\.com\/(?:u\/)?([^/?#]+)/i);
+    if (me) return "Venmo: " + me[1];
+    return "Venmo";
+  }
+  if (ct === "appdownload") return "App Download";
+  if (ct === "calendly") {
+    try {
+      const u = new URL(c.startsWith("http") ? c : `https://${c}`);
+      const parts = u.pathname.replace(/\/$/, "").split("/").filter(Boolean);
+      if (parts[0]) return "Calendly: " + parts[0];
+    } catch {}
+    return "Calendly";
+  }
+  if (ct === "zoom") {
+    if (c.includes("zoom.us/j/"))
+      return "Meeting " + (c.split("/j/")[1]?.split("?")[0] || "");
+    return "Zoom Meeting";
   }
   if (c.startsWith("http")) {
     try { return new URL(c).hostname.replace(/^www\./, ""); } catch {}
