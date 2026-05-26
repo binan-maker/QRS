@@ -1,6 +1,7 @@
 import { View, Text, StyleSheet, Pressable } from "react-native";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { router } from "expo-router";
+import Animated, { FadeInDown, FadeIn, ZoomIn } from "react-native-reanimated";
 import { SCANNER_GLOW } from "./constants";
 
 interface Props {
@@ -25,54 +26,71 @@ export default function OverlayTopBar({
   user,
 }: Props) {
   return (
-    <View style={[styles.topBar, { paddingTop: topInset + 10 }]}>
-      <Pressable onPress={() => router.back()} style={styles.btn}>
-        <Ionicons name="chevron-back" size={20} color="rgba(255,255,255,0.9)" />
-      </Pressable>
+    <Animated.View
+      entering={FadeInDown.delay(60).springify().damping(20)}
+      style={[styles.topBar, { paddingTop: topInset + 10 }]}
+    >
+      {/* Back button */}
+      <Animated.View entering={FadeIn.delay(120).duration(280)}>
+        <Pressable onPress={() => router.back()} style={styles.btn}>
+          <Ionicons name="chevron-back" size={20} color="rgba(255,255,255,0.9)" />
+        </Pressable>
+      </Animated.View>
 
-      <View style={styles.center}>
+      {/* Title */}
+      <Animated.View
+        entering={FadeInDown.delay(80).springify().damping(18)}
+        style={styles.center}
+      >
         <MaterialCommunityIcons name="shield-check" size={18} color={SCANNER_GLOW} />
         <Text style={styles.title}>QR Guard</Text>
-      </View>
+      </Animated.View>
 
+      {/* Right controls — staggered */}
       <View style={styles.rightGroup}>
         {user && (
-          <Pressable
-            onPress={onToggleAnonymous}
-            style={[styles.btn, anonymousMode && styles.btnPrivate]}
-          >
+          <Animated.View entering={ZoomIn.delay(130).springify().damping(16)}>
+            <Pressable
+              onPress={onToggleAnonymous}
+              style={[styles.btn, anonymousMode && styles.btnPrivate]}
+            >
+              <Ionicons
+                name={anonymousMode ? "eye-off" : "eye-off-outline"}
+                size={17}
+                color={anonymousMode ? "#F5A623" : "rgba(255,255,255,0.45)"}
+              />
+            </Pressable>
+          </Animated.View>
+        )}
+        <Animated.View entering={ZoomIn.delay(160).springify().damping(16)}>
+          <Pressable onPress={onFlipCamera} style={styles.btn}>
             <Ionicons
-              name={anonymousMode ? "eye-off" : "eye-off-outline"}
-              size={17}
-              color={anonymousMode ? "#F5A623" : "rgba(255,255,255,0.45)"}
+              name="camera-reverse-outline"
+              size={20}
+              color={facing === "front" ? SCANNER_GLOW : "rgba(255,255,255,0.75)"}
             />
           </Pressable>
-        )}
-        <Pressable onPress={onFlipCamera} style={styles.btn}>
-          <Ionicons
-            name="camera-reverse-outline"
-            size={20}
-            color={facing === "front" ? SCANNER_GLOW : "rgba(255,255,255,0.75)"}
-          />
-        </Pressable>
-        <Pressable
-          onPress={facing === "front" ? undefined : onToggleFlash}
-          style={[styles.btn, flashOn && facing === "back" && styles.btnActive]}
-        >
-          <Ionicons
-            name={flashOn && facing === "back" ? "flash" : "flash-off"}
-            size={18}
-            color={
-              facing === "front"
-                ? "rgba(255,255,255,0.2)"
-                : flashOn
-                ? SCANNER_GLOW
-                : "rgba(255,255,255,0.75)"
-            }
-          />
-        </Pressable>
+        </Animated.View>
+        <Animated.View entering={ZoomIn.delay(200).springify().damping(16)}>
+          <Pressable
+            onPress={facing === "front" ? undefined : onToggleFlash}
+            style={[styles.btn, flashOn && facing === "back" && styles.btnActive]}
+          >
+            <Ionicons
+              name={flashOn && facing === "back" ? "flash" : "flash-off"}
+              size={18}
+              color={
+                facing === "front"
+                  ? "rgba(255,255,255,0.2)"
+                  : flashOn
+                  ? SCANNER_GLOW
+                  : "rgba(255,255,255,0.75)"
+              }
+            />
+          </Pressable>
+        </Animated.View>
       </View>
-    </View>
+    </Animated.View>
   );
 }
 

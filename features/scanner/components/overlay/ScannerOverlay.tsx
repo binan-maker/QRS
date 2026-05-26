@@ -1,5 +1,6 @@
 import React from "react";
 import { View, Text, StyleSheet, Animated, useWindowDimensions } from "react-native";
+import ReAnimated, { FadeIn, ZoomIn, FadeInDown } from "react-native-reanimated";
 import { FINDER_SIZE } from "@/features/scanner/hooks/useCameraControls";
 import { useOverlayAnimations } from "@/features/scanner/hooks/useOverlayAnimations";
 import FinderFrame from "./FinderFrame";
@@ -60,28 +61,39 @@ export default function ScannerOverlay({
   return (
     <View style={[StyleSheet.absoluteFillObject, styles.outerContainer]}>
 
-      {/* Vignette masks + finder frame + hint (non-interactive) */}
+      {/* Vignette masks (non-interactive, no animation needed — they're ambient) */}
       <View style={[StyleSheet.absoluteFillObject, styles.nonInteractive]}>
-        <View style={[styles.mask, { top: 0, left: 0, right: 0, height: finderTop }]} />
-        <View style={[styles.mask, { top: finderTop, left: 0, width: finderLeft, height: FINDER_SIZE }]} />
-        <View style={[styles.mask, { top: finderTop, left: finderLeft + FINDER_SIZE, right: 0, height: FINDER_SIZE }]} />
-        <View style={[styles.mask, { top: finderTop + FINDER_SIZE, left: 0, right: 0, bottom: 0 }]} />
+        <ReAnimated.View
+          entering={FadeIn.delay(30).duration(500)}
+          style={StyleSheet.absoluteFillObject}
+        >
+          <View style={[styles.mask, { top: 0, left: 0, right: 0, height: finderTop }]} />
+          <View style={[styles.mask, { top: finderTop, left: 0, width: finderLeft, height: FINDER_SIZE }]} />
+          <View style={[styles.mask, { top: finderTop, left: finderLeft + FINDER_SIZE, right: 0, height: FINDER_SIZE }]} />
+          <View style={[styles.mask, { top: finderTop + FINDER_SIZE, left: 0, right: 0, bottom: 0 }]} />
+        </ReAnimated.View>
 
+        {/* Finder frame — zooms in from centre */}
         <View style={{ position: "absolute", top: finderTop, left: finderLeft }}>
-          <FinderFrame
-            scanned={scanned}
-            scanSuccess={scanSuccess}
-            scanLineAnim={scanLineAnim}
-            cornerGlow={anims.cornerGlow}
-            pulse1Scale={anims.pulse1Scale}
-            pulse1Opacity={anims.pulse1Opacity}
-            pulse2Scale={anims.pulse2Scale}
-            pulse2Opacity={anims.pulse2Opacity}
-          />
+          <ReAnimated.View entering={ZoomIn.delay(100).springify().damping(16).stiffness(140)}>
+            <FinderFrame
+              scanned={scanned}
+              scanSuccess={scanSuccess}
+              scanLineAnim={scanLineAnim}
+              cornerGlow={anims.cornerGlow}
+              pulse1Scale={anims.pulse1Scale}
+              pulse1Opacity={anims.pulse1Opacity}
+              pulse2Scale={anims.pulse2Scale}
+              pulse2Opacity={anims.pulse2Opacity}
+            />
+          </ReAnimated.View>
         </View>
 
-        {/* Hint text below finder */}
-        <View style={[styles.hintArea, { top: finderTop + FINDER_SIZE + 18 }]}>
+        {/* Hint text below finder — fades in after frame */}
+        <ReAnimated.View
+          entering={FadeInDown.delay(280).springify().damping(20)}
+          style={[styles.hintArea, { top: finderTop + FINDER_SIZE + 18 }]}
+        >
           <Text style={styles.hintMain}>
             {scanSuccess
               ? "Code captured"
@@ -90,12 +102,15 @@ export default function ScannerOverlay({
               : "Position QR code inside the frame"}
           </Text>
           {!scanned && (
-            <View style={styles.liveRow}>
+            <ReAnimated.View
+              entering={FadeIn.delay(400).duration(300)}
+              style={styles.liveRow}
+            >
               <Animated.View style={[styles.liveDot, { opacity: anims.dotBlink }]} />
               <Text style={styles.liveText}>Shield Active</Text>
-            </View>
+            </ReAnimated.View>
           )}
-        </View>
+        </ReAnimated.View>
       </View>
 
       {/* Top bar */}

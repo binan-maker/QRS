@@ -1,6 +1,7 @@
 import { View, Text, StyleSheet, Pressable, Animated } from "react-native";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { router } from "expo-router";
+import ReAnimated, { FadeInUp, ZoomIn, FadeIn } from "react-native-reanimated";
 import { formatFirstName } from "@/lib/utils/formatters";
 import { SCANNER_GLOW } from "./constants";
 
@@ -29,33 +30,51 @@ export default function OverlayBottomBar({
   scanReady,
 }: Props) {
   return (
-    <View style={[styles.bottomBar, { paddingBottom: Math.max(bottomInset, 8) + 20 }]}>
-      <View style={styles.pillRow}>
+    <ReAnimated.View
+      entering={FadeInUp.delay(80).springify().damping(20)}
+      style={[styles.bottomBar, { paddingBottom: Math.max(bottomInset, 8) + 20 }]}
+    >
+      {/* Zoom + anon pills */}
+      <ReAnimated.View
+        entering={FadeIn.delay(200).duration(320)}
+        style={styles.pillRow}
+      >
         <Pressable onPress={onCycleZoom} style={styles.zoomPill}>
           <MaterialCommunityIcons name="magnify" size={13} color={SCANNER_GLOW} />
           <Text style={styles.zoomText}>{zoomLabel}</Text>
         </Pressable>
 
         {anonymousMode && (
-          <View style={styles.anonPill}>
+          <ReAnimated.View
+            entering={ZoomIn.springify().damping(16)}
+            style={styles.anonPill}
+          >
             <Ionicons name="eye-off" size={12} color="#F5A623" />
             <Text style={styles.anonText}>Private</Text>
-          </View>
+          </ReAnimated.View>
         )}
-      </View>
+      </ReAnimated.View>
 
+      {/* Action row */}
       <View style={styles.actionRow}>
-        <Pressable
-          onPress={onPickImage}
-          style={({ pressed }) => [styles.sideAction, { opacity: pressed ? 0.75 : 1 }]}
-        >
-          <View style={styles.sideCircle}>
-            <Ionicons name="images-outline" size={22} color="rgba(255,255,255,0.9)" />
-          </View>
-          <Text style={styles.sideLabel}>Gallery</Text>
-        </Pressable>
+        {/* Gallery */}
+        <ReAnimated.View entering={ZoomIn.delay(140).springify().damping(16).stiffness(160)}>
+          <Pressable
+            onPress={onPickImage}
+            style={({ pressed }) => [styles.sideAction, { opacity: pressed ? 0.75 : 1 }]}
+          >
+            <View style={styles.sideCircle}>
+              <Ionicons name="images-outline" size={22} color="rgba(255,255,255,0.9)" />
+            </View>
+            <Text style={styles.sideLabel}>Gallery</Text>
+          </Pressable>
+        </ReAnimated.View>
 
-        <View style={styles.centerGroup}>
+        {/* Center scan button */}
+        <ReAnimated.View
+          entering={ZoomIn.delay(60).springify().damping(14).stiffness(140)}
+          style={styles.centerGroup}
+        >
           {scanned ? (
             <Pressable onPress={onReset} style={styles.scanBtn}>
               <View style={styles.scanOuter}>
@@ -74,32 +93,35 @@ export default function OverlayBottomBar({
             </Animated.View>
           )}
           <Text style={styles.scanLabel}>{scanned ? "Scan Again" : "Scan"}</Text>
-        </View>
+        </ReAnimated.View>
 
-        <Pressable
-          onPress={() => router.push(user ? "/(tabs)/profile" : "/(auth)/login")}
-          style={({ pressed }) => [styles.sideAction, { opacity: pressed ? 0.75 : 1 }]}
-        >
-          {user ? (
-            <>
-              <View style={[styles.sideCircle, styles.sideCircleActive]}>
-                <Ionicons name="person" size={20} color={SCANNER_GLOW} />
-              </View>
-              <Text style={[styles.sideLabel, { color: SCANNER_GLOW }]}>
-                {formatFirstName(user.displayName)}
-              </Text>
-            </>
-          ) : (
-            <>
-              <View style={styles.sideCircle}>
-                <Ionicons name="person-outline" size={20} color="rgba(255,255,255,0.9)" />
-              </View>
-              <Text style={styles.sideLabel}>Sign In</Text>
-            </>
-          )}
-        </Pressable>
+        {/* Profile / Sign in */}
+        <ReAnimated.View entering={ZoomIn.delay(140).springify().damping(16).stiffness(160)}>
+          <Pressable
+            onPress={() => router.push(user ? "/(tabs)/profile" : "/(auth)/login")}
+            style={({ pressed }) => [styles.sideAction, { opacity: pressed ? 0.75 : 1 }]}
+          >
+            {user ? (
+              <>
+                <View style={[styles.sideCircle, styles.sideCircleActive]}>
+                  <Ionicons name="person" size={20} color={SCANNER_GLOW} />
+                </View>
+                <Text style={[styles.sideLabel, { color: SCANNER_GLOW }]}>
+                  {formatFirstName(user.displayName)}
+                </Text>
+              </>
+            ) : (
+              <>
+                <View style={styles.sideCircle}>
+                  <Ionicons name="person-outline" size={20} color="rgba(255,255,255,0.9)" />
+                </View>
+                <Text style={styles.sideLabel}>Sign In</Text>
+              </>
+            )}
+          </Pressable>
+        </ReAnimated.View>
       </View>
-    </View>
+    </ReAnimated.View>
   );
 }
 
