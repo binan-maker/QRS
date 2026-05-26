@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo } from "react";
+import React, { useCallback, useMemo, useEffect } from "react";
 import {
   View,
   Text,
@@ -13,7 +13,16 @@ import { safePush } from "@/lib/utils/navigation";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTopInset } from "@/lib/utils/platform";
-import Animated, { FadeInDown } from "react-native-reanimated";
+import Animated, {
+  FadeInDown,
+  FadeIn,
+  ZoomIn,
+  useSharedValue,
+  useAnimatedStyle,
+  withTiming,
+  withSpring,
+  Easing,
+} from "react-native-reanimated";
 import { useTheme } from "@/contexts/ThemeContext";
 import SkeletonBox from "@/components/ui/SkeletonBox";
 import { formatCompactNumber } from "@/lib/number-format";
@@ -26,6 +35,69 @@ import QrPreviewCard from "@/features/profile/components/QrPreviewCard";
 import NotificationsModal from "@/components/notifications/NotificationsModal";
 import { styles } from "@/features/profile/styles";
 
+// ── Animated stat cell with number reveal ─────────────────────────────────────
+function StatCell({
+  label, formatted, color, loading, index,
+}: {
+  label: string;
+  formatted: string;
+  color: string;
+  loading: boolean;
+  index: number;
+}) {
+  const { colors } = useTheme();
+  const opacity   = useSharedValue(0);
+  const translateY = useSharedValue(10);
+
+  useEffect(() => {
+    if (!loading) {
+      opacity.value   = withTiming(1, { duration: 350, easing: Easing.out(Easing.cubic) });
+      translateY.value = withSpring(0, { damping: 18, stiffness: 200 });
+    } else {
+      opacity.value   = 0;
+      translateY.value = 10;
+    }
+  }, [loading]);
+
+  const anim = useAnimatedStyle(() => ({
+    opacity:   opacity.value,
+    transform: [{ translateY: translateY.value }],
+  }));
+
+  return (
+    <Animated.View
+      entering={FadeInDown.delay(120 + index * 55).springify().damping(18)}
+      style={[
+        styles.statCell,
+        index % 2 === 0 && { borderRightWidth: 1, borderRightColor: colors.surfaceBorder },
+      ]}
+    >
+      {loading ? (
+        <SkeletonBox width={36} height={18} borderRadius={6} />
+      ) : (
+        <Animated.Text style={[styles.statValue, { color }, anim]}>
+          {formatted}
+        </Animated.Text>
+      )}
+      <Text style={[styles.statLabel, { color: colors.textMuted }]}>{label}</Text>
+    </Animated.View>
+  );
+}
+
+// ── QR skeleton tile ───────────────────────────────────────────────────────────
+function QrSkeletonCard({ index }: { index: number }) {
+  const { colors } = useTheme();
+  return (
+    <Animated.View
+      entering={ZoomIn.delay(index * 60).springify().damping(18)}
+      style={[styles.qrCard, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}
+    >
+      <SkeletonBox width={58} height={58} borderRadius={12} />
+    </Animated.View>
+  );
+}
+
+// ── Main screen ───────────────────────────────────────────────────────────────
 function ProfileScreen() {
   const insets = useSafeAreaInsets();
   const { colors } = useTheme();
@@ -50,8 +122,6 @@ function ProfileScreen() {
   const topInset = useTopInset();
   const tabBarHeight = 60 + insets.bottom;
 
-  // ── Derived data ──────────────────────────────────────────────────────────
-
   const previewQrs = useMemo(() => myQrCodes.slice(0, 3), [myQrCodes]);
   const totalQrScans = useMemo(
     () => myQrCodes.reduce((sum, qr) => sum + (qr.scanCount || 0), 0),
@@ -59,11 +129,21 @@ function ProfileScreen() {
   );
 
   const formattedStats = useMemo(() => [
-    { label: "QR Hits",   value: totalQrScans,        color: colors.accent,  loading: myQrLoading,   formatted: formatCompactNumber(totalQrScans) },
-    { label: "Following", value: stats.followingCount ?? 0, color: colors.primary, loading: statsLoading,  formatted: formatCompactNumber(stats.followingCount ?? 0) },
+    {
+      label: "QR Hits",
+      value: totalQrScans,
+      color: colors.accent,
+      loading: myQrLoading,
+      formatted: formatCompactNumber(totalQrScans),
+    },
+    {
+      label: "Following",
+      value: stats.followingCount ?? 0,
+      color: colors.primary,
+      loading: statsLoading,
+      formatted: formatCompactNumber(stats.followingCount ?? 0),
+    },
   ], [totalQrScans, myQrLoading, stats.followingCount, statsLoading, colors.accent, colors.primary]);
-
-  // ── Stable callbacks ──────────────────────────────────────────────────────
 
   const openPhotoModal  = useCallback(() => setPhotoModalOpen(true),  [setPhotoModalOpen]);
   const closePhotoModal = useCallback(() => setPhotoModalOpen(false), [setPhotoModalOpen]);
@@ -73,12 +153,10 @@ function ProfileScreen() {
 
   const goToSettings    = useCallback(() => safePush({ pathname: "/(tabs)/settings" as any, params: { from: "profile" } }), []);
   const goToEditProfile = useCallback(() => safePush({ pathname: "/(tabs)/settings" as any, params: { initialSection: "profile", fromProfile: "1" } }), []);
-  const goToLogin       = useCallback(() => safePush("/(auth)/login"),         []);
-  const goToRegister    = useCallback(() => safePush("/(auth)/register"),      []);
-  const goToMyQrCodes   = useCallback(() => safePush("/my-qr-codes"),          []);
-  const goToGenerator   = useCallback(() => safePush("/(tabs)/qr-generator"),  []);
-
-  // ── Guest view ────────────────────────────────────────────────────────────
+  const goToLogin       = useCallback(() => safePush("/(auth)/login"),        []);
+  const goToRegister    = useCallback(() => safePush("/(auth)/register"),     []);
+  const goToMyQrCodes   = useCallback(() => safePush("/my-qr-codes"),         []);
+  const goToGenerator   = useCallback(() => safePush("/(tabs)/qr-generator"), []);
 
   if (!user) {
     return (
@@ -90,8 +168,6 @@ function ProfileScreen() {
       />
     );
   }
-
-  // ── Authenticated view ────────────────────────────────────────────────────
 
   return (
     <View style={[styles.container, { paddingTop: topInset, backgroundColor: colors.background }]}>
@@ -107,115 +183,149 @@ function ProfileScreen() {
           />
         }
       >
-        {/* ── TOP BAR ── */}
-        <View style={styles.topBar}>
+        {/* ── TOP BAR ──────────────────────────────────────────── */}
+        <Animated.View
+          entering={FadeInDown.delay(0).springify().damping(20)}
+          style={styles.topBar}
+        >
           <Text style={[styles.pageTitle, { color: colors.text }]}>Profile</Text>
           <View style={styles.topBarActions}>
-            <Pressable
-              onPress={handleOpenNotifications}
-              style={[styles.iconBtn, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}
-              accessibilityLabel="Notifications"
-              hitSlop={8}
-            >
-              <Ionicons
-                name={notifCount > 0 ? "notifications" : "notifications-outline"}
-                size={17}
-                color={notifCount > 0 ? colors.primary : colors.textSecondary}
-              />
-              {notifCount > 0 && (
-                <View style={[styles.notifDot, { backgroundColor: colors.primary, borderColor: colors.background }]}>
-                  <Text style={[styles.notifDotText, { color: "#fff" }]}>
-                    {notifCount > 9 ? "9+" : notifCount}
-                  </Text>
-                </View>
-              )}
-            </Pressable>
-            <Pressable
-              onPress={goToSettings}
-              style={[styles.iconBtn, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}
-              hitSlop={8}
-            >
-              <Ionicons name="settings-outline" size={17} color={colors.textSecondary} />
-            </Pressable>
+            <Animated.View entering={FadeIn.delay(80).duration(250)}>
+              <Pressable
+                onPress={handleOpenNotifications}
+                style={[styles.iconBtn, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}
+                accessibilityLabel="Notifications"
+                hitSlop={8}
+              >
+                <Ionicons
+                  name={notifCount > 0 ? "notifications" : "notifications-outline"}
+                  size={17}
+                  color={notifCount > 0 ? colors.primary : colors.textSecondary}
+                />
+                {notifCount > 0 && (
+                  <Animated.View
+                    entering={ZoomIn.springify().damping(14)}
+                    style={[styles.notifDot, { backgroundColor: colors.primary, borderColor: colors.background }]}
+                  >
+                    <Text style={[styles.notifDotText, { color: "#fff" }]}>
+                      {notifCount > 9 ? "9+" : notifCount}
+                    </Text>
+                  </Animated.View>
+                )}
+              </Pressable>
+            </Animated.View>
+            <Animated.View entering={FadeIn.delay(110).duration(250)}>
+              <Pressable
+                onPress={goToSettings}
+                style={[styles.iconBtn, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}
+                hitSlop={8}
+              >
+                <Ionicons name="settings-outline" size={17} color={colors.textSecondary} />
+              </Pressable>
+            </Animated.View>
           </View>
-        </View>
-
-        {/* ── AVATAR + IDENTITY ── */}
-        <Animated.View entering={FadeInDown.duration(180)} style={styles.avatarSection}>
-          <Pressable onPress={openPhotoModal} style={styles.avatarPressable}>
-            <View style={[styles.avatarRing, { borderColor: colors.primary + "50" }]}>
-              <View style={[styles.avatarInner, { backgroundColor: colors.surfaceLight }]}>
-                {photoURL ? (
-                  <Image
-                    source={{ uri: photoURL }}
-                    style={styles.avatarPhoto}
-                    cachePolicy="memory-disk"
-                    contentFit="cover"
-                    key={photoURL}
-                  />
-                ) : (
-                  <Text style={[styles.avatarInitials, { color: colors.primary }]}>{initials}</Text>
-                )}
-                {uploadingPhoto && (
-                  <View style={styles.avatarUploadOverlay}>
-                    <ActivityIndicator size="small" color="#fff" />
-                  </View>
-                )}
-              </View>
-            </View>
-            <View style={[styles.cameraBtn, { backgroundColor: colors.primary, borderColor: colors.background }]}>
-              <Ionicons name="camera" size={11} color={colors.primaryText} />
-            </View>
-          </Pressable>
-
-          <Text style={[styles.displayName, { color: colors.text }]} numberOfLines={1}>
-            {user.displayName}
-          </Text>
-          {currentUsername ? (
-            <Text style={[styles.usernameText, { color: colors.primary }]}>@{currentUsername}</Text>
-          ) : null}
-          {bio ? (
-            <Text style={[styles.bioText, { color: colors.textSecondary }]} numberOfLines={2}>{bio}</Text>
-          ) : (
-            <Pressable onPress={goToEditProfile} hitSlop={8}>
-              <Text style={[styles.bioHint, { color: colors.textMuted }]}>+ Add a bio</Text>
-            </Pressable>
-          )}
-          <Pressable
-            onPress={goToEditProfile}
-            style={({ pressed }) => [
-              styles.editProfileBtn,
-              { backgroundColor: colors.surface, borderColor: colors.surfaceBorder, opacity: pressed ? 0.8 : 1 },
-            ]}
-          >
-            <Text style={[styles.editProfileText, { color: colors.text }]}>Edit Profile</Text>
-          </Pressable>
         </Animated.View>
 
-        {/* ── STATS GRID ── */}
+        {/* ── AVATAR + IDENTITY ─────────────────────────────────── */}
         <Animated.View
-          entering={FadeInDown.duration(180)}
+          entering={FadeInDown.delay(60).springify().damping(18)}
+          style={styles.avatarSection}
+        >
+          {/* Avatar */}
+          <Animated.View entering={ZoomIn.delay(80).springify().damping(15).stiffness(160)}>
+            <Pressable onPress={openPhotoModal} style={styles.avatarPressable}>
+              <View style={[styles.avatarRing, { borderColor: colors.primary + "50" }]}>
+                <View style={[styles.avatarInner, { backgroundColor: colors.surfaceLight }]}>
+                  {photoURL ? (
+                    <Image
+                      source={{ uri: photoURL }}
+                      style={styles.avatarPhoto}
+                      cachePolicy="memory-disk"
+                      contentFit="cover"
+                      key={photoURL}
+                    />
+                  ) : (
+                    <Text style={[styles.avatarInitials, { color: colors.primary }]}>{initials}</Text>
+                  )}
+                  {uploadingPhoto && (
+                    <View style={styles.avatarUploadOverlay}>
+                      <ActivityIndicator size="small" color="#fff" />
+                    </View>
+                  )}
+                </View>
+              </View>
+              <View style={[styles.cameraBtn, { backgroundColor: colors.primary, borderColor: colors.background }]}>
+                <Ionicons name="camera" size={11} color={colors.primaryText} />
+              </View>
+            </Pressable>
+          </Animated.View>
+
+          {/* Name */}
+          <Animated.Text
+            entering={FadeInDown.delay(130).springify().damping(20)}
+            style={[styles.displayName, { color: colors.text }]}
+            numberOfLines={1}
+          >
+            {user.displayName}
+          </Animated.Text>
+
+          {/* Username */}
+          {currentUsername ? (
+            <Animated.Text
+              entering={FadeInDown.delay(160).springify().damping(20)}
+              style={[styles.usernameText, { color: colors.primary }]}
+            >
+              @{currentUsername}
+            </Animated.Text>
+          ) : null}
+
+          {/* Bio */}
+          <Animated.View entering={FadeInDown.delay(190).springify().damping(20)}>
+            {bio ? (
+              <Text style={[styles.bioText, { color: colors.textSecondary }]} numberOfLines={2}>{bio}</Text>
+            ) : (
+              <Pressable onPress={goToEditProfile} hitSlop={8}>
+                <Text style={[styles.bioHint, { color: colors.textMuted }]}>+ Add a bio</Text>
+              </Pressable>
+            )}
+          </Animated.View>
+
+          {/* Edit profile button */}
+          <Animated.View entering={FadeInDown.delay(220).springify().damping(20)}>
+            <Pressable
+              onPress={goToEditProfile}
+              style={({ pressed }) => [
+                styles.editProfileBtn,
+                { backgroundColor: colors.surface, borderColor: colors.surfaceBorder, opacity: pressed ? 0.8 : 1 },
+              ]}
+            >
+              <Text style={[styles.editProfileText, { color: colors.text }]}>Edit Profile</Text>
+            </Pressable>
+          </Animated.View>
+        </Animated.View>
+
+        {/* ── STATS GRID ────────────────────────────────────────── */}
+        <Animated.View
+          entering={FadeInDown.delay(100).springify().damping(18)}
           style={[styles.statsGrid, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}
         >
           {formattedStats.map((s, i) => (
-            <View
+            <StatCell
               key={s.label}
-              style={[
-                styles.statCell,
-                i % 2 === 0 && { borderRightWidth: 1, borderRightColor: colors.surfaceBorder },
-              ]}
-            >
-              {s.loading
-                ? <SkeletonBox width={28} height={16} borderRadius={5} />
-                : <Text style={[styles.statValue, { color: s.color }]}>{s.formatted}</Text>
-              }
-              <Text style={[styles.statLabel, { color: colors.textMuted }]}>{s.label}</Text>
-            </View>
+              label={s.label}
+              formatted={s.formatted}
+              color={s.color}
+              loading={s.loading}
+              index={i}
+            />
           ))}
         </Animated.View>
 
-        {/* ── MY QR CODES ── */}
-        <Animated.View entering={FadeInDown.duration(180)} style={styles.section}>
+        {/* ── MY QR CODES ───────────────────────────────────────── */}
+        <Animated.View
+          entering={FadeInDown.delay(180).springify().damping(18)}
+          style={styles.section}
+        >
           <View style={styles.sectionHeader}>
             <Text style={[styles.sectionTitle, { color: colors.text }]}>My QR Codes</Text>
             <Pressable
@@ -231,46 +341,56 @@ function ProfileScreen() {
           {myQrLoading ? (
             <View style={styles.qrRow}>
               {[0, 1, 2].map((i) => (
-                <View key={i} style={[styles.qrCard, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
-                  <SkeletonBox width={52} height={52} borderRadius={10} />
-                  <SkeletonBox width={50} height={10} borderRadius={4} style={{ marginTop: 8 }} />
-                </View>
+                <QrSkeletonCard key={i} index={i} />
               ))}
             </View>
           ) : previewQrs.length === 0 ? (
-            <Pressable
-              onPress={goToGenerator}
-              style={({ pressed }) => [
-                styles.emptyQrCard,
-                { backgroundColor: colors.surface, borderColor: colors.surfaceBorder, opacity: pressed ? 0.8 : 1 },
-              ]}
-            >
-              <MaterialCommunityIcons name="qrcode-plus" size={22} color={colors.textMuted} />
-              <Text style={[styles.emptyQrText, { color: colors.textMuted }]}>No QR codes yet — create one</Text>
-            </Pressable>
+            <Animated.View entering={FadeInDown.delay(240).springify().damping(18)}>
+              <Pressable
+                onPress={goToGenerator}
+                style={({ pressed }) => [
+                  styles.emptyQrCard,
+                  { backgroundColor: colors.surface, borderColor: colors.surfaceBorder, opacity: pressed ? 0.8 : 1 },
+                ]}
+              >
+                <MaterialCommunityIcons name="qrcode-plus" size={22} color={colors.textMuted} />
+                <Text style={[styles.emptyQrText, { color: colors.textMuted }]}>No QR codes yet — create one</Text>
+              </Pressable>
+            </Animated.View>
           ) : (
             <View style={styles.qrRow}>
-              {previewQrs.map((qr) => (
-                <QrPreviewCard key={qr.docId} qr={qr} colors={colors} />
+              {previewQrs.map((qr, i) => (
+                <QrPreviewCard key={qr.docId} qr={qr} colors={colors} index={i} />
               ))}
               {myQrCodes.length > 3 && (
-                <Pressable
-                  onPress={goToMyQrCodes}
-                  style={({ pressed }) => [
-                    styles.qrCard, styles.qrCardMore,
-                    { backgroundColor: colors.primaryDim, borderColor: colors.primary + "30", opacity: pressed ? 0.8 : 1 },
-                  ]}
+                <Animated.View
+                  entering={ZoomIn.delay(previewQrs.length * 70 + 40).springify().damping(16)}
+                  style={{ flex: 1 }}
                 >
-                  <Text style={[styles.qrMoreCount, { color: colors.primary }]}>+{myQrCodes.length - 3}</Text>
-                  <Text style={[styles.qrMoreLabel, { color: colors.primary }]}>more</Text>
-                </Pressable>
+                  <Pressable
+                    onPress={goToMyQrCodes}
+                    style={({ pressed }) => [
+                      styles.qrCard, styles.qrCardMore,
+                      {
+                        backgroundColor: colors.primaryDim,
+                        borderColor: colors.primary + "30",
+                        opacity: pressed ? 0.8 : 1,
+                      },
+                    ]}
+                  >
+                    <Text style={[styles.qrMoreCount, { color: colors.primary }]}>+{myQrCodes.length - 3}</Text>
+                    <Text style={[styles.qrMoreLabel, { color: colors.primary }]}>more</Text>
+                  </Pressable>
+                </Animated.View>
               )}
             </View>
           )}
         </Animated.View>
 
-        {/* ── SUPPORT QR GUARD ── */}
-        <Animated.View entering={FadeInDown.duration(180)}>
+        {/* ── SUPPORT QR GUARD ──────────────────────────────────── */}
+        <Animated.View
+          entering={FadeInDown.delay(250).springify().damping(18)}
+        >
           <Pressable
             onPress={() => safePush("/donation")}
             style={({ pressed }) => [styles.donationBtn, { opacity: pressed ? 0.9 : 1 }]}
@@ -309,8 +429,10 @@ function ProfileScreen() {
           </Pressable>
         </Animated.View>
 
-        {/* ── SIGN OUT ── */}
-        <Animated.View entering={FadeInDown.duration(180)}>
+        {/* ── SIGN OUT ──────────────────────────────────────────── */}
+        <Animated.View
+          entering={FadeInDown.delay(300).springify().damping(18)}
+        >
           <Pressable
             onPress={handleSignOut}
             style={({ pressed }) => [
