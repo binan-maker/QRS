@@ -36,8 +36,8 @@ function getEffectiveContentType(item: GeneratedQrItem): string {
   const stored = (item as any).contentType as string || "text";
   // If a richer templateKey is stored, prefer it when contentType is generic
   const tmplKey = (item as any).templateKey as string | undefined;
-  if (tmplKey && (stored === "text" || stored === "url" || stored === "social")) return tmplKey;
-  if (stored && stored !== "text" && stored !== "url") return stored;
+  if (tmplKey && (stored === "text" || stored === "url" || stored === "wifi" || stored === "social")) return tmplKey;
+  if (stored && stored !== "text" && stored !== "url" && stored !== "wifi") return stored;
   const displayDest = (item as any).displayDestination as string | null;
   const content = item.content || "";
   const src = displayDest || content;

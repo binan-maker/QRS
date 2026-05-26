@@ -17,9 +17,11 @@ interface Props {
   visible: boolean;
   onClose: () => void;
   onGenerate: (content: string, templateName: string) => void;
+  initialTemplateId?: string;
+  openAiBuilder?: boolean;
 }
 
-function QrTemplateModal({ visible, onClose, onGenerate }: Props) {
+function QrTemplateModal({ visible, onClose, onGenerate, initialTemplateId, openAiBuilder }: Props) {
   const { colors } = useTheme();
   const insets = useSafeAreaInsets();
   const { height: screenH, width: screenW } = useWindowDimensions();
@@ -34,6 +36,26 @@ function QrTemplateModal({ visible, onClose, onGenerate }: Props) {
   const [aiLoading, setAiLoading] = useState(false);
   const [aiResult, setAiResult] = useState<string | null>(null);
   const [aiError, setAiError] = useState<string | null>(null);
+
+  React.useEffect(() => {
+    if (!visible) return;
+    if (initialTemplateId) {
+      const t = TEMPLATES.find((tmpl) => tmpl.id === initialTemplateId);
+      if (t) {
+        setSelected(t);
+        setValues({});
+        setErrors({});
+        setShowPass(false);
+        setEncType("WPA");
+        setView("template-form");
+      }
+    } else if (openAiBuilder) {
+      setAiPrompt("");
+      setAiResult(null);
+      setAiError(null);
+      setView("ai");
+    }
+  }, [visible, initialTemplateId, openAiBuilder]);
 
   const s = Math.min(Math.max(screenW / 390, 0.82), 1.0);
   const rf = (n: number) => Math.round(n * s);

@@ -26,9 +26,11 @@ import InfoModal           from "@/features/generator/components/InfoModal";
 
 interface Props {
   mode: QrMode;
+  initialTemplateId?: string;
+  openAiBuilder?: boolean;
 }
 
-export default function QrFormPage({ mode }: Props) {
+export default function QrFormPage({ mode, initialTemplateId, openAiBuilder }: Props) {
   const insets   = useSafeAreaInsets();
   const { colors } = useTheme();
   const topInset = useTopInset();
@@ -38,10 +40,17 @@ export default function QrFormPage({ mode }: Props) {
   const [templateGenerated,  setTemplateGenerated]  = useState(false);
   const [templateName,       setTemplateName]       = useState("");
   const [qrSize,             setQrSize]             = useState(220);
-  const [qrTemplateOpen,     setQrTemplateOpen]     = useState(false);
+  const [qrTemplateOpen,      setQrTemplateOpen]      = useState(false);
   const [advancedBuilderOpen, setAdvancedBuilderOpen] = useState(false);
-  const [showGenError,       setShowGenError]       = useState(false);
-  const [showNameError,      setShowNameError]      = useState(false);
+  const [showGenError,        setShowGenError]        = useState(false);
+  const [showNameError,       setShowNameError]       = useState(false);
+
+  const [initTid] = useState(initialTemplateId);
+  const [initAi]  = useState(openAiBuilder);
+
+  React.useEffect(() => {
+    if (initTid || initAi) setQrTemplateOpen(true);
+  }, []);
 
   // ── Generator hook ────────────────────────────────────────────────────────
   const {
@@ -298,6 +307,8 @@ export default function QrFormPage({ mode }: Props) {
       <QrTemplateModal
         visible={qrTemplateOpen}
         onClose={() => setQrTemplateOpen(false)}
+        initialTemplateId={initTid}
+        openAiBuilder={initAi}
         onGenerate={(content, tName) => {
           setInputValue(content);
           setTemplateGenerated(true);

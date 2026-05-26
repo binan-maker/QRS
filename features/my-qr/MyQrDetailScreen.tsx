@@ -125,7 +125,7 @@ export default function MyQrDetailScreen() {
   const qrFormValues = (qrItem as any).formValues as { value: string; extra: Record<string, string> } | null;
   const hasStructuredEdit = !!(tmplKey && qrFormValues);
 
-  const STRUCTURED_TYPES = new Set(["text", "phone", "mobilepay", "grab", "email", "sms", "upi", "scantopay", "bharatqr", "wifi", "calendly", "zoom", "whatsapp"]);
+  const STRUCTURED_TYPES = new Set(["text", "phone", "mobilepay", "grab", "email", "sms", "upi", "scantopay", "bharatqr", "calendly", "zoom", "whatsapp"]);
   const READONLY_TYPES = new Set(["contact", "event", "calendar"]);
   const isStructured = STRUCTURED_TYPES.has(effectiveContentType);
   const isReadOnly = !isStructured && READONLY_TYPES.has(effectiveContentType);
@@ -210,7 +210,7 @@ export default function MyQrDetailScreen() {
         {/* Skip the content-info card for types whose fields are visually
             noisy when rendered as structured rows (email, phone, sms, etc.).
             Those QR codes identify themselves clearly via the label / title. */}
-        {!["email", "sms", "phone", "mobilepay", "grab"].includes(effectiveContentType) && (
+        {!["email", "sms", "phone", "mobilepay", "grab", "url", "wifi"].includes(effectiveContentType) && (
           <QrContentInfoCard
             ctMeta={ctMeta}
             effectiveContentType={effectiveContentType}
