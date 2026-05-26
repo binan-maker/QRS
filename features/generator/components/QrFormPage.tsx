@@ -2,7 +2,7 @@ import React, { useState, useMemo, useCallback } from "react";
 import { View, StyleSheet, Text, TextInput } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTopInset } from "@/lib/utils/platform";
-import Reanimated, { FadeInDown } from "react-native-reanimated";
+import Reanimated, { FadeInDown, ZoomIn } from "react-native-reanimated";
 import { useTheme } from "@/contexts/ThemeContext";
 import { useQrGenerator } from "@/features/generator/hooks/useQrGenerator";
 import { LOGO_POSITIONS } from "@/features/generator/types/form-types";
@@ -151,7 +151,7 @@ export default function QrFormPage({ mode, initialTemplateId, openAiBuilder }: P
         )}
 
         {/* ── QR Name field ────────────────────────────────────── */}
-        <Reanimated.View entering={FadeInDown.duration(150)} style={styles.nameWrap}>
+        <Reanimated.View entering={FadeInDown.delay(40).springify().damping(20)} style={styles.nameWrap}>
           <View style={[
             styles.nameCard,
             {
@@ -204,7 +204,7 @@ export default function QrFormPage({ mode, initialTemplateId, openAiBuilder }: P
 
         {/* ── Content input ────────────────────────────────────── */}
         {showInputSection && (
-          <Reanimated.View entering={FadeInDown.duration(150)} style={styles.inputWrap}>
+          <Reanimated.View entering={FadeInDown.delay(0).springify().damping(20)} style={styles.inputWrap}>
             <InputSection
               selectedPreset={selectedPreset}
               inputValue={inputValue}
@@ -216,7 +216,7 @@ export default function QrFormPage({ mode, initialTemplateId, openAiBuilder }: P
         )}
 
         {/* ── Customize drawer ─────────────────────────────────── */}
-        <Reanimated.View entering={FadeInDown.duration(160)} style={styles.drawerWrap}>
+        <Reanimated.View entering={FadeInDown.delay(80).springify().damping(20)} style={styles.drawerWrap}>
           <CustomizeDrawer
             qrReady={!!qrValue}
             selectedThemeIdx={selectedThemeIdx}
@@ -251,7 +251,7 @@ export default function QrFormPage({ mode, initialTemplateId, openAiBuilder }: P
         )}
 
         {templateGenerated && qrValue && (
-          <Reanimated.View entering={FadeInDown.duration(160)} style={styles.templateSaveBtnWrap}>
+          <Reanimated.View entering={FadeInDown.delay(60).springify().damping(18)} style={styles.templateSaveBtnWrap}>
             <GenerateButton
               btnLabel={buttonState.btnLabel}
               btnIcon={buttonState.btnIcon}

@@ -36,7 +36,7 @@ function TypePickerHome({ qrMode, onSetMode, onOpenCustom, hideActions = false, 
   return (
     <View style={[styles.root, { paddingHorizontal: 20 }]}>
       {!hideModeCards && (
-        <Reanimated.View entering={FadeIn.duration(150)} style={styles.modeRow}>
+        <Reanimated.View entering={FadeIn.delay(40).duration(220)} style={styles.modeRow}>
           {MODES.map((m) => {
             const active = qrMode === m.key;
             return (
@@ -70,7 +70,7 @@ function TypePickerHome({ qrMode, onSetMode, onOpenCustom, hideActions = false, 
       )}
 
       {!hideActions && (
-        <Reanimated.View entering={FadeInUp.duration(150)} style={{ marginTop: hideModeCards ? 0 : 10 }}>
+        <Reanimated.View entering={FadeInUp.delay(80).springify().damping(18)} style={{ marginTop: hideModeCards ? 0 : 10 }}>
           <Pressable
             onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium); onOpenCustom(); }}
             style={({ pressed }) => ({

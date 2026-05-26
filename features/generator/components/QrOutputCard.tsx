@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, Pressable, Image, ActivityIndicator } from "rea
 import { shadow } from "@/lib/utils/platform";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
-import Animated, { FadeIn } from "react-native-reanimated";
+import Animated, { FadeIn, FadeInDown, ZoomIn } from "react-native-reanimated";
 import QRCode from "react-native-qrcode-svg";
 import { useTheme } from "@/contexts/ThemeContext";
 import type { LogoPosition } from "@/features/generator/types/form-types";
@@ -86,8 +86,8 @@ function QrOutputCard({
   const riskLevel = urlRiskScore >= 70 ? "danger" : urlRiskScore >= 35 ? "warning" : null;
 
   return (
-    <Animated.View entering={FadeIn.duration(400)} style={[styles.qrCard, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
-      <View style={styles.qrWrapper}>
+    <Animated.View entering={FadeInDown.delay(120).springify().damping(18)} style={[styles.qrCard, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
+      <Animated.View entering={ZoomIn.delay(200).springify().damping(16)} style={styles.qrWrapper}>
         <View style={styles.qrBg}>
           <QRCode
             value={qrValue}
@@ -121,7 +121,7 @@ function QrOutputCard({
             </View>
           )}
         </View>
-      </View>
+      </Animated.View>
 
       {/* Security meta strip */}
       {securityMeta && (
@@ -248,7 +248,7 @@ function QrOutputCard({
 
       <Text style={[styles.qrContentPreview, { color: colors.textMuted }]} numberOfLines={2}>{qrValue}</Text>
 
-      <View style={[styles.sizeRow, { borderTopColor: colors.surfaceBorder }]}>
+      <Animated.View entering={FadeInDown.delay(260).springify().damping(22)} style={[styles.sizeRow, { borderTopColor: colors.surfaceBorder }]}>
         <Text style={[styles.sizeLabel, { color: colors.textSecondary }]}>Size</Text>
         <View style={styles.sizeButtons}>
           <Pressable onPress={onSizeDecrease} style={[styles.sizeBtn, { backgroundColor: colors.primaryDim }]}>
@@ -259,44 +259,29 @@ function QrOutputCard({
             <Ionicons name="add" size={18} color={colors.primary} />
           </Pressable>
         </View>
-      </View>
+      </Animated.View>
 
-      <View style={[styles.qrActions, { borderTopColor: colors.surfaceBorder }]}>
-        <Pressable
-          onPress={onCopy}
-          style={({ pressed }) => [styles.qrActionBtn, { backgroundColor: colors.surfaceLight, borderColor: colors.surfaceBorder, opacity: pressed ? 0.7 : 1 }]}
-        >
-          <Ionicons name="copy-outline" size={18} color={colors.textSecondary} />
-          <Text style={[styles.qrActionText, { color: colors.textSecondary }]}>Copy</Text>
-        </Pressable>
-        <Pressable
-          onPress={onShare}
-          disabled={sharingQr}
-          style={({ pressed }) => [styles.qrActionBtn, { backgroundColor: colors.surfaceLight, borderColor: colors.surfaceBorder, opacity: pressed || sharingQr ? 0.7 : 1 }]}
-        >
-          {sharingQr
-            ? <ActivityIndicator size={16} color={colors.textSecondary} />
-            : <Ionicons name="share-outline" size={18} color={colors.textSecondary} />}
-          <Text style={[styles.qrActionText, { color: colors.textSecondary }]}>{sharingQr ? "…" : "Share"}</Text>
-        </Pressable>
-        <Pressable
-          onPress={onDownload}
-          disabled={downloadingPdf}
-          style={({ pressed }) => [styles.qrActionBtn, { backgroundColor: colors.surfaceLight, borderColor: colors.surfaceBorder, opacity: pressed || downloadingPdf ? 0.7 : 1 }]}
-        >
-          {downloadingPdf
-            ? <ActivityIndicator size={16} color={colors.textSecondary} />
-            : <Ionicons name="download-outline" size={18} color={colors.textSecondary} />}
-          <Text style={[styles.qrActionText, { color: colors.textSecondary }]}>{downloadingPdf ? "…" : "PDF"}</Text>
-        </Pressable>
-        <Pressable
-          onPress={onClear}
-          style={({ pressed }) => [styles.qrActionBtn, { backgroundColor: colors.surfaceLight, borderColor: colors.surfaceBorder, opacity: pressed ? 0.7 : 1 }]}
-        >
-          <Ionicons name="trash-outline" size={18} color={colors.textMuted} />
-          <Text style={[styles.qrActionText, { color: colors.textMuted }]}>Clear</Text>
-        </Pressable>
-      </View>
+      <Animated.View entering={FadeInDown.delay(300).springify().damping(22)} style={[styles.qrActions, { borderTopColor: colors.surfaceBorder }]}>
+        {[
+          { icon: "copy-outline"     as const, label: "Copy",  color: colors.textSecondary, onPress: onCopy,     disabled: false,          loading: false          },
+          { icon: "share-outline"    as const, label: "Share", color: colors.textSecondary, onPress: onShare,    disabled: sharingQr,      loading: sharingQr      },
+          { icon: "download-outline" as const, label: "PDF",   color: colors.textSecondary, onPress: onDownload, disabled: downloadingPdf, loading: downloadingPdf },
+          { icon: "trash-outline"    as const, label: "Clear", color: colors.textMuted,     onPress: onClear,    disabled: false,          loading: false          },
+        ].map(({ icon, label, color, onPress, disabled, loading }, idx) => (
+          <Animated.View key={label} entering={FadeInDown.delay(300 + idx * 35).springify().damping(20)} style={{ flex: 1 }}>
+            <Pressable
+              onPress={onPress}
+              disabled={disabled}
+              style={({ pressed }) => [styles.qrActionBtn, { backgroundColor: colors.surfaceLight, borderColor: colors.surfaceBorder, opacity: pressed || disabled ? 0.7 : 1 }]}
+            >
+              {loading
+                ? <ActivityIndicator size={16} color={color} />
+                : <Ionicons name={icon} size={18} color={color} />}
+              <Text style={[styles.qrActionText, { color }]}>{loading ? "…" : label}</Text>
+            </Pressable>
+          </Animated.View>
+        ))}
+      </Animated.View>
     </Animated.View>
   );
 }

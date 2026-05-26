@@ -3,7 +3,7 @@ import {
   View, Text, Pressable, ScrollView, TextInput, useWindowDimensions,
 } from "react-native";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
-import Animated, { FadeInDown } from "react-native-reanimated";
+import Animated, { FadeInDown, FadeIn, ZoomIn } from "react-native-reanimated";
 import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -54,26 +54,32 @@ export default function GeneratorLanding() {
     <View style={{ flex: 1, backgroundColor: colors.background, paddingTop: topInset }}>
 
       {/* ── NavBar ──────────────────────────────────────────────────────── */}
-      <View style={{
-        paddingHorizontal: sp(22), paddingVertical: sp(14), paddingBottom: sp(10),
-        flexDirection: "row", alignItems: "center", justifyContent: "space-between",
-      }}>
-        <View>
+      <Animated.View
+        entering={FadeInDown.delay(0).springify().damping(22)}
+        style={{
+          paddingHorizontal: sp(22), paddingVertical: sp(14), paddingBottom: sp(10),
+          flexDirection: "row", alignItems: "center", justifyContent: "space-between",
+        }}
+      >
+        <Animated.View entering={FadeInDown.delay(40).springify().damping(20)}>
           <Text style={{ fontSize: rf(17), fontFamily: "Inter_700Bold", color: colors.text }}>
             QR Generator
           </Text>
           <Text style={{ fontSize: rf(11), fontFamily: "Inter_400Regular", color: colors.textMuted, marginTop: 2 }}>
             Choose a mode or pick a template below
           </Text>
-        </View>
-        <View style={{
-          width: sp(38), height: sp(38), borderRadius: sp(12),
-          alignItems: "center", justifyContent: "center",
-          backgroundColor: colors.primaryDim, borderWidth: 1, borderColor: colors.primary + "40",
-        }}>
+        </Animated.View>
+        <Animated.View
+          entering={ZoomIn.delay(80).springify().damping(16)}
+          style={{
+            width: sp(38), height: sp(38), borderRadius: sp(12),
+            alignItems: "center", justifyContent: "center",
+            backgroundColor: colors.primaryDim, borderWidth: 1, borderColor: colors.primary + "40",
+          }}
+        >
           <MaterialCommunityIcons name="qrcode-edit" size={rf(16)} color={colors.primary} />
-        </View>
-      </View>
+        </Animated.View>
+      </Animated.View>
 
       <ScrollView
         showsVerticalScrollIndicator={false}
@@ -83,7 +89,7 @@ export default function GeneratorLanding() {
 
         {/* ── Mode cards (Standard QR + Private QR) ───────────────────── */}
         {LANDING_MODES.map((m, idx) => (
-          <Animated.View key={m.key} entering={FadeInDown.duration(220).delay(idx * 60)}>
+          <Animated.View key={m.key} entering={FadeInDown.delay(60 + idx * 80).springify().damping(18)}>
             <Pressable
               onPress={() => onPressMode(m.route, m.key === "individual")}
               style={({ pressed }) => ({
@@ -165,16 +171,16 @@ export default function GeneratorLanding() {
         ))}
 
         {/* ── Divider: "or pick a template" ───────────────────────────── */}
-        <View style={{ flexDirection: "row", alignItems: "center", gap: sp(10) }}>
+        <Animated.View entering={FadeIn.delay(220).duration(280)} style={{ flexDirection: "row", alignItems: "center", gap: sp(10) }}>
           <View style={{ flex: 1, height: 1, backgroundColor: colors.surfaceBorder }} />
           <Text style={{ fontSize: rf(10), fontFamily: "Inter_500Medium", color: colors.textMuted }}>
             OR CHOOSE A TEMPLATE
           </Text>
           <View style={{ flex: 1, height: 1, backgroundColor: colors.surfaceBorder }} />
-        </View>
+        </Animated.View>
 
         {/* ── Search ──────────────────────────────────────────────────── */}
-        <Animated.View entering={FadeInDown.duration(180)}>
+        <Animated.View entering={FadeInDown.delay(260).springify().damping(20)}>
           <View style={{
             flexDirection: "row", alignItems: "center", gap: sp(10),
             backgroundColor: isDark ? colors.surface : colors.surfaceLight,
@@ -200,18 +206,18 @@ export default function GeneratorLanding() {
 
         {/* ── Template grid ───────────────────────────────────────────── */}
         {filtered.length === 0 ? (
-          <View style={{ alignItems: "center", paddingVertical: sp(32), gap: sp(8) }}>
+          <Animated.View entering={FadeIn.delay(300).duration(260)} style={{ alignItems: "center", paddingVertical: sp(32), gap: sp(8) }}>
             <Ionicons name="search-outline" size={rf(32)} color={colors.textMuted} />
             <Text style={{ fontSize: rf(14), fontFamily: "Inter_500Medium", color: colors.textMuted }}>
               No templates found
             </Text>
-          </View>
+          </Animated.View>
         ) : (
           <View style={{ flexDirection: "row", flexWrap: "wrap", gap: sp(8) }}>
             {filtered.map((t, idx) => (
               <Animated.View
                 key={t.id}
-                entering={FadeInDown.duration(200).delay(idx * 30)}
+                entering={FadeInDown.delay(300 + Math.min(idx, 8) * 35).springify().damping(20)}
                 style={{ width: "47.5%" }}
               >
                 <Pressable
