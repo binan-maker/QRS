@@ -26,6 +26,10 @@ export interface QrCodeData {
   customLogoUri?: string;
   logoPosition?: string;
   templateKey?: string;
+  formValues?: { value: string; extra: Record<string, string> } | null;
+  displayDestination?: string | null;
+  isActive?: boolean;
+  deactivationMessage?: string | null;
   // Fraud-guard fields
   ownerScanCount?: number;
   scanCountFrozen?: boolean;

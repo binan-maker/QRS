@@ -88,6 +88,9 @@ export async function saveGeneratedQr(
               businessName: businessName || null,
               ...(signature ? { signature } : {}),
               ...(ownerLogoBase64 ? { ownerLogoBase64 } : {}),
+              ...(templateKey ? { templateKey } : {}),
+              ...(displayDestination ? { displayDestination } : {}),
+              ...(formValues ? { formValues } : {}),
             });
           }
         } else {
@@ -101,6 +104,9 @@ export async function saveGeneratedQr(
             businessName: businessName || null,
             ...(signature ? { signature } : {}),
             ...(ownerLogoBase64 ? { ownerLogoBase64 } : {}),
+            ...(templateKey ? { templateKey } : {}),
+            ...(displayDestination ? { displayDestination } : {}),
+            ...(formValues ? { formValues } : {}),
           });
         }
       } catch (e) {
@@ -338,6 +344,18 @@ export async function updateSavedQrContent(
       contentChangeLog: updatedLog,
       updatedAt: db.timestamp(),
     });
+
+    if (data.qrCodeId) {
+      try {
+        await db.update(["qrCodes", data.qrCodeId], {
+          content: newContent,
+          contentType,
+          updatedAt: db.timestamp(),
+        });
+      } catch (e) {
+        logError("updateSavedQrContent/qrCodes-sync", e, { docId });
+      }
+    }
   } catch (e) {
     logError("updateSavedQrContent", e, { userId, docId });
     throw e;
@@ -354,6 +372,18 @@ export async function updateDisplayDestination(
       displayDestination,
       updatedAt: db.timestamp(),
     });
+
+    try {
+      const data = await db.get(["users", userId, "generatedQrs", docId]);
+      if (data?.qrCodeId) {
+        await db.update(["qrCodes", data.qrCodeId], {
+          displayDestination,
+          updatedAt: db.timestamp(),
+        });
+      }
+    } catch (e) {
+      logError("updateDisplayDestination/qrCodes-sync", e, { docId });
+    }
   } catch (e) {
     logError("updateDisplayDestination", e, { userId, docId });
     throw e;
@@ -374,6 +404,20 @@ export async function updateSavedQrFormValues(
       formValues,
       updatedAt: db.timestamp(),
     });
+
+    try {
+      const data = await db.get(["users", userId, "generatedQrs", docId]);
+      if (data?.qrCodeId) {
+        await db.update(["qrCodes", data.qrCodeId], {
+          content: newContent,
+          contentType,
+          formValues,
+          updatedAt: db.timestamp(),
+        });
+      }
+    } catch (e) {
+      logError("updateSavedQrFormValues/qrCodes-sync", e, { docId });
+    }
   } catch (e) {
     logError("updateSavedQrFormValues", e, { userId, docId });
     throw e;

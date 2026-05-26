@@ -90,6 +90,9 @@ export async function getQrCodeById(qrId: string): Promise<QrCodeData | null> {
       privateMode: data.privateMode,
       customLogoUri: data.customLogoUri,
       logoPosition: data.logoPosition,
+      templateKey: data.templateKey ?? null,
+      formValues: data.formValues ?? null,
+      displayDestination: data.displayDestination ?? null,
       // Fraud-guard fields
       ownerScanCount: data.ownerScanCount,
       scanCountFrozen: data.scanCountFrozen,

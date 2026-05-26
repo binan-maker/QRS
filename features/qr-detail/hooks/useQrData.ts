@@ -102,7 +102,11 @@ export interface QrDetail {
   ownerScanCount?: number;
   scanCountFrozen?: boolean;
   scanCountFreezeReason?: string;
-  templateKey?: string;
+  templateKey?: string | null;
+  formValues?: { value: string; extra: Record<string, string> } | null;
+  displayDestination?: string | null;
+  isActive?: boolean;
+  deactivationMessage?: string | null;
 }
 
 export function useQrData(id: string, userId: string | null) {
