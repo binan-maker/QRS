@@ -366,7 +366,8 @@ export default function StaticQrDetailScreen({ id, ownerDocId }: Props) {
                       isLoggedIn={true}
                       isPayment={contentType === "payment"}
                       onReport={(type) => {
-                        q.handleReport(type);
+                        const reported = q.handleReport(type);
+                        if (!reported) return;
                         const labels: Record<string, string> = {
                           safe: "Safe",
                           scam: "Scam",

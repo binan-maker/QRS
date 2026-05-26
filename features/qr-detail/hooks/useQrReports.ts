@@ -1,4 +1,5 @@
 import { useEffect, useState, useRef } from "react";
+import { Alert } from "react-native";
 import { router } from "expo-router";
 import * as Haptics from "@/lib/haptics";
 import { useAuth } from "@/contexts/AuthContext";
@@ -164,15 +165,13 @@ export function useQrReports(id: string, userId: string | null, offlineMode: boo
     }
   }
 
-  function handleReport(type: string) {
-    if (!userId) { router.push("/(auth)/login"); return; }
+  function handleReport(type: string): boolean {
+    if (!userId) { router.push("/(auth)/login"); return false; }
     if (isQrOwner) {
-      import("react-native").then(({ Alert }) => {
-        Alert.alert("Not Allowed", "You cannot rate your own QR code.");
-      });
-      return;
+      Alert.alert("Not Allowed", "You cannot rate your own QR code.");
+      return false;
     }
-    if (!userReportLoadedRef.current) return;
+    if (!userReportLoadedRef.current) return false;
 
     // Determine next desired state
     const isToggleOff = pendingReportRef.current === type;
@@ -202,6 +201,7 @@ export function useQrReports(id: string, userId: string | null, offlineMode: boo
     // Debounce the actual API call so rapid taps only fire once
     if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
     debounceTimerRef.current = setTimeout(commitReport, DEBOUNCE_MS);
+    return true;
   }
 
   return { reportCounts, trustScore, userReport, setUserReport, setTrustScore, reportLoading, handleReport };

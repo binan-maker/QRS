@@ -371,7 +371,8 @@ export default function StandardQrDetailScreen({ id, standardUuid, ownerDocId }:
                   isLoggedIn={true}
                   isPayment={false}
                   onReport={(type) => {
-                    q.handleReport(type);
+                    const reported = q.handleReport(type);
+                    if (!reported) return;
                     const labels: Record<string, string> = { safe: "Safe", scam: "Scam", fake: "Fake", spam: "Spam" };
                     const icons: Record<string, keyof typeof Ionicons.glyphMap> = { safe: "shield-checkmark", scam: "warning", fake: "close-circle", spam: "mail-unread" };
                     showToast(`Voted ${labels[type] ?? type}`, icons[type] ?? "flag");
