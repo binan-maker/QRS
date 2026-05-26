@@ -19,7 +19,6 @@ import { detectContentType } from "@/lib/services/qr-content-type";
 import { makeStyles, offlineSectionStyles } from "@/features/qr-detail/styles";
 import { formatCompactNumber } from "@/lib/number-format";
 
-import ContentCard from "@/features/qr-detail/components/ContentCard";
 import TrustScoreCard from "@/features/qr-detail/components/TrustScoreCard";
 import ReportGrid from "@/features/qr-detail/components/ReportGrid";
 import FollowersModal from "@/features/qr-detail/components/modals/FollowersModal";
@@ -380,21 +379,6 @@ export default function GuardQrDetailScreen({ id, guardUuid, ownerDocId }: Props
                 <OwnerCircleRow
                   ownerInfo={ownerInfoForSheet as any}
                   onPress={() => setOwnerSheetOpen(true)}
-                />
-              </Animated.View>
-            )}
-
-            {/* ── Destination content card ─────────────────── */}
-            {!guardLoading && guardLink && effectiveContent && (
-              <Animated.View entering={FadeInDown.duration(260)}>
-                <ContentCard
-                  content={effectiveContent}
-                  contentType={effectiveContentType}
-                  parsedPayment={null}
-                  isDeactivated={isDeactivated}
-                  onOpenContent={() => sanitizeAndOpen(effectiveContent)}
-                  hideOpenAction={true}
-                  templateKey={guardLink.templateKey}
                 />
               </Animated.View>
             )}

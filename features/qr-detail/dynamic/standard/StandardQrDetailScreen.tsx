@@ -13,6 +13,7 @@ import { useTheme } from "@/contexts/ThemeContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTopInset } from "@/lib/utils/platform";
 import { useQrDetail } from "@/features/qr-detail/hooks/useQrDetail";
+import { useQrSafety } from "@/features/qr-detail/hooks/useQrSafety";
 import { useNetworkStatus } from "@/lib/utils/use-network";
 import { getStandardLink } from "@/lib/services/guard-service";
 import { detectContentType } from "@/lib/services/qr-content-type";
@@ -98,10 +99,14 @@ export default function StandardQrDetailScreen({ id, standardUuid, ownerDocId }:
   const { isOnline } = useNetworkStatus();
   const [offlineToastKey, setOfflineToastKey] = useState(0);
 
+  // Derive content from the database record — NEVER from the scanned guard URL
   const effectiveContent = standardData?.rawContent ?? "";
   const effectiveContentType = standardData
     ? (standardData.contentType || detectContentType(standardData.rawContent))
     : "text";
+
+  // Run safety analysis on rawContent directly, not on the scanned guard URL
+  const contentSafety = useQrSafety(effectiveContent || null, effectiveContentType || null);
 
   const isDeactivated = standardData?.isActive === false;
   const isQrOwner = !!(user?.id && standardData?.ownerId && user.id === standardData.ownerId);
@@ -266,13 +271,13 @@ export default function StandardQrDetailScreen({ id, standardUuid, ownerDocId }:
               </Animated.View>
             )}
 
-            {/* ── Content card ─────────────────────────────── */}
+            {/* ── Content card — shows rawContent from database, never the scanned guard URL */}
             {!standardLoading && effectiveContent && (
               <Animated.View entering={FadeInDown.duration(250)}>
                 <ContentCard
                   content={effectiveContent}
                   contentType={effectiveContentType}
-                  parsedPayment={null}
+                  parsedPayment={contentSafety.parsedPayment}
                   isDeactivated={isDeactivated}
                   onOpenContent={() => smartOpenContent(effectiveContent, effectiveContentType, standardData?.templateKey)}
                   hideOpenAction={false}
@@ -281,14 +286,35 @@ export default function StandardQrDetailScreen({ id, standardUuid, ownerDocId }:
               </Animated.View>
             )}
 
-            {/* ── Safety warnings (if URL is suspicious) ───── */}
-            {effectiveContentType === "url" && q.urlSafety?.isSuspicious && (
+            {/* ── Payment safety (analyzed from rawContent) ─── */}
+            {effectiveContentType === "payment" && contentSafety.paymentSafety?.isSuspicious && (() => {
+              const warnings = (contentSafety.paymentSafety?.warnings ?? []).filter(
+                (w) => !w.toLowerCase().startsWith("pre-filled amount")
+              );
+              if (!warnings.length) return null;
+              return (
+                <Animated.View entering={FadeInDown.duration(258)}>
+                  <SafetyWarningCard
+                    riskLevel={contentSafety.paymentSafety!.riskLevel as "caution" | "dangerous"}
+                    warnings={warnings}
+                    title={
+                      contentSafety.paymentSafety!.riskLevel === "dangerous"
+                        ? "Payment Security Warning"
+                        : "Payment Security Notice"
+                    }
+                  />
+                </Animated.View>
+              );
+            })()}
+
+            {/* ── URL safety (analyzed from rawContent) ────── */}
+            {effectiveContentType === "url" && contentSafety.urlSafety?.isSuspicious && (
               <Animated.View entering={FadeInDown.duration(260)}>
                 <SafetyWarningCard
-                  riskLevel={q.urlSafety.riskLevel as "caution" | "dangerous"}
-                  warnings={q.urlSafety.warnings}
+                  riskLevel={contentSafety.urlSafety.riskLevel as "caution" | "dangerous"}
+                  warnings={contentSafety.urlSafety.warnings}
                   title={
-                    q.urlSafety.riskLevel === "dangerous"
+                    contentSafety.urlSafety.riskLevel === "dangerous"
                       ? "Destination Warning"
                       : "Proceed with Caution"
                   }
@@ -296,9 +322,9 @@ export default function StandardQrDetailScreen({ id, standardUuid, ownerDocId }:
               </Animated.View>
             )}
 
-            {effectiveContentType === "url" && q.urlSafety?.evidence && q.urlSafety.evidence.length > 0 && (
+            {effectiveContentType === "url" && contentSafety.urlSafety?.evidence && contentSafety.urlSafety.evidence.length > 0 && (
               <Animated.View entering={FadeInDown.duration(265)}>
-                <EvidenceCard title="URL Analysis" evidence={q.urlSafety.evidence} />
+                <EvidenceCard title="URL Analysis" evidence={contentSafety.urlSafety.evidence} />
               </Animated.View>
             )}
 
