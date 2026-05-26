@@ -18,15 +18,15 @@ export default function DonationBanner() {
         gap: sp(12),
         borderRadius: sp(16),
         borderWidth: 1,
-        borderColor: colors.primary + "30",
-        backgroundColor: colors.isDark ? "rgba(124,58,237,0.12)" : "rgba(124,58,237,0.07)",
+        borderColor: "#22c55e30",
+        backgroundColor: colors.isDark ? "rgba(34,197,94,0.12)" : "rgba(34,197,94,0.07)",
         padding: sp(14),
         marginTop: sp(8),
         opacity: pressed ? 0.88 : 1,
       })}
     >
       <LinearGradient
-        colors={["#7C3AED", "#6366F1"]}
+        colors={["#16a34a", "#22c55e"]}
         style={{
           width: sp(38),
           height: sp(38),

@@ -26,7 +26,6 @@ import MessagesModal from "@/features/qr-detail/components/modals/MessagesModal"
 import CommentReportModal from "@/features/qr-detail/components/modals/CommentReportModal";
 import { OfflineToast } from "@/features/qr-detail/components/OfflineToast";
 import { QrToast } from "@/features/qr-detail/components/QrToast";
-import OwnerCircleRow from "@/features/qr-detail/components/OwnerCircleRow";
 import CommentsSection from "@/features/qr-detail/components/CommentsSection";
 import DonationBanner from "@/features/qr-detail/components/DonationBanner";
 import OwnerInfoSheet from "@/features/qr-detail/components/sheets/OwnerInfoSheet";
@@ -373,15 +372,6 @@ export default function GuardQrDetailScreen({ id, guardUuid, ownerDocId }: Props
               </View>
             </Animated.View>
 
-            {/* ── Owner row ────────────────────────────────── */}
-            {hasOwner && ownerInfoForSheet && (
-              <Animated.View entering={FadeInDown.duration(240)}>
-                <OwnerCircleRow
-                  ownerInfo={ownerInfoForSheet as any}
-                  onPress={() => setOwnerSheetOpen(true)}
-                />
-              </Animated.View>
-            )}
 
             {/* ── Community: Trust score ───────────────────── */}
             {!q.offlineMode && (
