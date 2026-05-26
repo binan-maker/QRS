@@ -37,6 +37,7 @@ import OwnerInfoSheet from "@/features/qr-detail/components/sheets/OwnerInfoShee
 import CommentMenuSheet from "@/features/qr-detail/components/sheets/CommentMenuSheet";
 import OverflowSheet from "@/features/qr-detail/components/sheets/OverflowSheet";
 import { smartOpenContent } from "@/lib/utils/smart-open";
+import { VerdictBanner } from "@/features/qr-detail/components/VerdictBanner";
 
 const ACCENT = "#3b82f6";
 
@@ -111,6 +112,10 @@ export default function StandardQrDetailScreen({ id, standardUuid, ownerDocId }:
   const isDeactivated = standardData?.isActive === false;
   const isQrOwner = !!(user?.id && standardData?.ownerId && user.id === standardData.ownerId);
   const trust = q.getTrustInfo();
+  const baseVerdict = q.getCombinedVerdict();
+  const verdict = isQrOwner
+    ? { level: "safe" as const, label: "YOUR QR", reason: "You created this QR code", color: colors.safe }
+    : baseVerdict;
 
   const ownerInfoForSheet = standardData
     ? {
@@ -165,11 +170,8 @@ export default function StandardQrDetailScreen({ id, standardUuid, ownerDocId }:
               <Ionicons name="chevron-back" size={24} color={colors.text} />
             </Pressable>
             <View style={stdStyles.navTitleRow}>
-              <View style={[stdStyles.navBadgeWrap, { backgroundColor: ACCENT + "18" }]}>
-                <Ionicons name="qr-code-outline" size={14} color={ACCENT} />
-              </View>
               <Text style={[stdStyles.navTitle, { color: colors.text }]} numberOfLines={1}>
-                QR Guard Standard
+                QR Guard
               </Text>
             </View>
             <Pressable onPress={() => setOverflowOpen(true)} style={styles.navBackBtn}>
@@ -260,6 +262,13 @@ export default function StandardQrDetailScreen({ id, standardUuid, ownerDocId }:
                 )}
               </View>
             </Animated.View>
+
+            {/* ── Verdict banner (YOUR QR / SAFE / UNVERIFIED) ─ */}
+            {!q.offlineMode && !standardLoading && (
+              <Animated.View entering={FadeInDown.duration(225)}>
+                <VerdictBanner verdict={verdict} offlineMode={q.offlineMode} />
+              </Animated.View>
+            )}
 
             {/* ── Owner circle row ─────────────────────────── */}
             {ownerInfoForSheet && (
@@ -493,13 +502,6 @@ const stdStyles = StyleSheet.create({
     alignItems: "center",
     gap: 7,
     minWidth: 0,
-  },
-  navBadgeWrap: {
-    width: 26,
-    height: 26,
-    borderRadius: 8,
-    alignItems: "center",
-    justifyContent: "center",
   },
   navTitle: {
     fontSize: 16,

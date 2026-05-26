@@ -1,7 +1,15 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { View, Text, StyleSheet, Pressable } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withTiming,
+  withDelay,
+  Easing,
+  FadeInDown,
+} from "react-native-reanimated";
 import { formatCompactNumber } from "@/lib/number-format";
 import { useTheme } from "@/contexts/ThemeContext";
 import { REPORT_TYPES } from "@/features/qr-detail/data/reportTypes";
@@ -44,6 +52,34 @@ const TrustScoreCard = React.memo(function TrustScoreCard({
 
   const votedTypes = REPORT_TYPES.filter((r) => (reportCounts[r.key] || 0) > 0);
 
+  // Animated score bar
+  const barProgress = useSharedValue(0);
+  useEffect(() => {
+    if (hasScore) {
+      barProgress.value = withDelay(
+        200,
+        withTiming(Math.min(100, trustInfo.score) / 100, {
+          duration: 900,
+          easing: Easing.out(Easing.cubic),
+        })
+      );
+    }
+  }, [trustInfo.score, hasScore]);
+
+  const animatedBarStyle = useAnimatedStyle(() => ({
+    width: `${barProgress.value * 100}%` as any,
+  }));
+
+  // Animated vote breakdown bars (per report type)
+  const breakdownProgress = useSharedValue(0);
+  useEffect(() => {
+    breakdownProgress.value = 0;
+    breakdownProgress.value = withDelay(
+      350,
+      withTiming(1, { duration: 700, easing: Easing.out(Easing.cubic) })
+    );
+  }, [total]);
+
   const STATS = [
     { icon: "scan-outline" as const,   label: "Scans",     value: totalScans },
     { icon: "people-outline" as const, label: "Followers", value: followCount, onPress: isQrOwner ? onOpenFollowers : undefined },
@@ -51,10 +87,13 @@ const TrustScoreCard = React.memo(function TrustScoreCard({
   ];
 
   return (
-    <View style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
+    <Animated.View
+      entering={FadeInDown.duration(280).springify().damping(18)}
+      style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}
+    >
       {/* Score hero */}
       <View style={styles.scoreHero}>
-        <View style={styles.scoreRingWrap}>
+        <Animated.View entering={FadeInDown.delay(80).duration(400)} style={styles.scoreRingWrap}>
           <LinearGradient colors={scoreGradient} style={styles.scoreRing} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}>
             <View style={[styles.scoreInner, { backgroundColor: isDark ? colors.surface : "#fff" }]}>
               {hasScore ? (
@@ -67,9 +106,9 @@ const TrustScoreCard = React.memo(function TrustScoreCard({
               )}
             </View>
           </LinearGradient>
-        </View>
+        </Animated.View>
 
-        <View style={styles.scoreMeta}>
+        <Animated.View entering={FadeInDown.delay(120).duration(350)} style={styles.scoreMeta}>
           <Text style={[styles.scoreTitle, { color: colors.text }]} maxFontSizeMultiplier={1}>Trust Score</Text>
 
           {hasScore ? (
@@ -80,12 +119,14 @@ const TrustScoreCard = React.memo(function TrustScoreCard({
                 </Text>
               </View>
               <View style={[styles.scoreBar, { backgroundColor: isDark ? colors.surfaceLight : colors.background }]}>
-                <LinearGradient
-                  colors={scoreGradient}
-                  style={[styles.scoreBarFill, { width: `${Math.min(100, trustInfo.score)}%` as any }]}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 0 }}
-                />
+                <Animated.View style={[styles.scoreBarFillBase, animatedBarStyle]}>
+                  <LinearGradient
+                    colors={scoreGradient}
+                    style={StyleSheet.absoluteFill}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 0 }}
+                  />
+                </Animated.View>
               </View>
               {total > 0 && (
                 <Text style={[styles.voteCount, { color: colors.textMuted }]} maxFontSizeMultiplier={1}>
@@ -99,42 +140,42 @@ const TrustScoreCard = React.memo(function TrustScoreCard({
               <Text style={[styles.firstVoteText, { color: colors.primary }]} maxFontSizeMultiplier={1}>Be the first to vote</Text>
             </View>
           )}
-        </View>
+        </Animated.View>
       </View>
 
       {/* Manipulation warning */}
       {manipulationWarning && (
-        <View style={[styles.manipBanner, { backgroundColor: colors.warningDim, borderColor: colors.warning + "40" }]}>
+        <Animated.View entering={FadeInDown.delay(160).duration(300)} style={[styles.manipBanner, { backgroundColor: colors.warningDim, borderColor: colors.warning + "40" }]}>
           <Ionicons name="alert-circle" size={13} color={colors.warning} />
           <Text style={[styles.manipText, { color: colors.warning }]}>
             Unusual voting activity detected — score may not reflect real opinion.
           </Text>
-        </View>
+        </Animated.View>
       )}
 
       {/* Scan count frozen badge */}
       {scanCountFrozen && (
-        <View style={[styles.manipBanner, { backgroundColor: colors.dangerDim, borderColor: colors.danger + "40" }]}>
+        <Animated.View entering={FadeInDown.delay(160).duration(300)} style={[styles.manipBanner, { backgroundColor: colors.dangerDim, borderColor: colors.danger + "40" }]}>
           <Ionicons name="lock-closed" size={13} color={colors.danger} />
           <Text style={[styles.manipText, { color: colors.danger }]}>
             Scan count is temporarily frozen — abnormal activity detected and flagged for review.
           </Text>
-        </View>
+        </Animated.View>
       )}
 
       {/* Owner-only analytics panel */}
       {isQrOwner && ownerScanCount !== undefined && ownerScanCount > 0 && (
-        <View style={[styles.ownerPanel, { backgroundColor: colors.primaryDim, borderColor: colors.primary + "35" }]}>
+        <Animated.View entering={FadeInDown.delay(180).duration(300)} style={[styles.ownerPanel, { backgroundColor: colors.primaryDim, borderColor: colors.primary + "35" }]}>
           <Ionicons name="eye-outline" size={14} color={colors.primary} />
           <Text style={[styles.ownerPanelText, { color: colors.primary }]}>
             Your own scans: <Text style={{ fontFamily: "Inter_700Bold" }}>{formatCompactNumber(ownerScanCount)}</Text>
             {" "}(tracked separately — not counted in public total)
           </Text>
-        </View>
+        </Animated.View>
       )}
 
       {/* Stats row */}
-      <View style={[styles.statsGrid, { borderColor: colors.surfaceBorder }]}>
+      <Animated.View entering={FadeInDown.delay(200).duration(350)} style={[styles.statsGrid, { borderColor: colors.surfaceBorder }]}>
         {STATS.map((s, i) => (
           <Pressable
             key={i}
@@ -159,20 +200,20 @@ const TrustScoreCard = React.memo(function TrustScoreCard({
             </Text>
           </Pressable>
         ))}
-      </View>
+      </Animated.View>
 
       {/* Vote breakdown — only shown when there are any votes */}
       {votedTypes.length > 0 && (
-        <View style={[styles.voteBreakdown, { borderTopColor: colors.surfaceBorder }]}>
+        <Animated.View entering={FadeInDown.delay(260).duration(350)} style={[styles.voteBreakdown, { borderTopColor: colors.surfaceBorder }]}>
           <Text style={[styles.breakdownTitle, { color: colors.textMuted }]} maxFontSizeMultiplier={1}>
             COMMUNITY VOTES
           </Text>
           <View style={styles.breakdownRows}>
-            {votedTypes.map((rt) => {
+            {votedTypes.map((rt, idx) => {
               const count = reportCounts[rt.key] || 0;
               const pct = Math.round((count / total) * 100);
               return (
-                <View key={rt.key} style={styles.breakdownRow}>
+                <Animated.View key={rt.key} entering={FadeInDown.delay(300 + idx * 60).duration(300)} style={styles.breakdownRow}>
                   <View style={styles.breakdownLabelRow}>
                     <Ionicons name={rt.outlineIcon as any} size={12} color={rt.color(colors)} />
                     <Text style={[styles.breakdownLabel, { color: colors.textSecondary }]} maxFontSizeMultiplier={1}>
@@ -183,22 +224,26 @@ const TrustScoreCard = React.memo(function TrustScoreCard({
                     </Text>
                   </View>
                   <View style={[styles.barTrack, { backgroundColor: isDark ? colors.surfaceLight : colors.background }]}>
-                    <View
-                      style={[
-                        styles.barFill,
-                        { width: `${pct}%` as any, backgroundColor: rt.color(colors) },
-                      ]}
-                    />
+                    <BreakdownBar pct={pct} color={rt.color(colors)} />
                   </View>
-                </View>
+                </Animated.View>
               );
             })}
           </View>
-        </View>
+        </Animated.View>
       )}
-    </View>
+    </Animated.View>
   );
 });
+
+function BreakdownBar({ pct, color }: { pct: number; color: string }) {
+  const progress = useSharedValue(0);
+  useEffect(() => {
+    progress.value = withDelay(400, withTiming(pct / 100, { duration: 700, easing: Easing.out(Easing.cubic) }));
+  }, [pct]);
+  const animStyle = useAnimatedStyle(() => ({ width: `${progress.value * 100}%` as any }));
+  return <Animated.View style={[styles.barFill, { backgroundColor: color }, animStyle]} />;
+}
 
 export default TrustScoreCard;
 
@@ -254,7 +299,7 @@ const styles = StyleSheet.create({
   firstVoteText: { fontSize: 12, fontFamily: "Inter_600SemiBold" },
   voteCount: { fontSize: 12, fontFamily: "Inter_400Regular" },
   scoreBar: { height: 5, borderRadius: 3, overflow: "hidden" },
-  scoreBarFill: { height: "100%", borderRadius: 3 },
+  scoreBarFillBase: { height: 5, borderRadius: 3, overflow: "hidden" },
   manipBanner: {
     flexDirection: "row",
     alignItems: "flex-start",
@@ -324,7 +369,7 @@ const styles = StyleSheet.create({
     overflow: "hidden",
   },
   barFill: {
-    height: "100%",
+    height: 5,
     borderRadius: 3,
   },
 });
