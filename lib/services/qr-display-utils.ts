@@ -11,7 +11,12 @@ export interface ContentDetailRow {
 
 export function getDetailContentType(item: any): string {
   const stored = (item.contentType as string) || "text";
+  const templateKey = (item.templateKey as string) || "";
+  // Non-generic stored type wins immediately.
   if (stored && stored !== "text" && stored !== "url") return stored;
+  // templateKey is the authoritative generator label — trust it when it points
+  // to a specific type that isn't a plain URL/text alias.
+  if (templateKey && templateKey !== "url" && templateKey !== "text" && templateKey !== "biolink") return templateKey;
   const displayDest = item.displayDestination as string | null;
   const content = (item.content as string) || "";
   const src = displayDest || content;

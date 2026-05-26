@@ -1,0 +1,329 @@
+Based on the architecture you've described and the behavior you're seeing, I don't think this is primarily an import/export problem. It looks like a **data flow problem**.
+
+# What is probably happening
+
+## Generator
+
+When user creates a QR:
+
+```text
+Generator Screen
+    ↓
+generator-service.ts
+    ↓
+qrCodes/{qrId}
+```
+
+Saved fields:
+
+```ts
+content
+contentType
+templateKey
+formValues
+displayDestination
+isBranded
+```
+
+This part appears to work.
+
+---
+
+## My QR
+
+My QR loads:
+
+```text
+qrCodes
+```
+
+or
+
+```text
+generatedQrs
+```
+
+depending on the screen.
+
+Works partially.
+
+---
+
+## QR Detail
+
+QR Detail loads:
+
+```text
+qrCodes/{id}
+```
+
+BUT then renders using:
+
+```ts
+contentType
+content
+```
+
+instead of:
+
+```ts
+templateKey
+formValues
+```
+
+So:
+
+```text
+WiFi QR
+↓
+templateKey = wifi
+↓
+QR Detail ignores templateKey
+↓
+falls back to generic Text card
+```
+
+---
+
+# The Files I Would Fix First
+
+## 1. Central Model
+
+Create one type:
+
+```text
+shared/types/QrRecord.ts
+```
+
+Example:
+
+```ts
+export interface QrRecord {
+  id: string;
+  content: string;
+
+  templateKey: string;
+
+  contentType: string;
+
+  formValues?: Record<string, any>;
+
+  displayDestination?: string;
+
+  isBranded?: boolean;
+
+  ownerId?: string;
+
+  createdAt?: number;
+}
+```
+
+Every screen imports this.
+
+---
+
+## 2. Generator
+
+File:
+
+```text
+lib/services/generator-service.ts
+```
+
+Verify these fields are written:
+
+```ts
+templateKey,
+formValues,
+displayDestination,
+isBranded,
+contentType,
+```
+
+If missing, add them.
+
+---
+
+## 3. QR Detail
+
+Most important file:
+
+```text
+features/qr-detail/components/ContentCard.tsx
+```
+
+Current logic is likely:
+
+```ts
+switch(contentType)
+```
+
+Change it to:
+
+```ts
+switch(templateKey)
+```
+
+Example:
+
+```ts
+switch (qr.templateKey) {
+  case "wifi":
+    return <WifiCard data={qr.formValues} />;
+
+  case "upi":
+    return <UpiCard data={qr.formValues} />;
+
+  case "vcard":
+    return <ContactCard data={qr.formValues} />;
+
+  default:
+    return <GenericCard />;
+}
+```
+
+This is probably the single biggest fix.
+
+---
+
+## 4. Verification
+
+File:
+
+```text
+features/qr-detail/hooks/useQrDetail.ts
+```
+
+Currently you likely have:
+
+```ts
+verified = qr.isBranded === true;
+```
+
+Instead use:
+
+```ts
+verified =
+  qr.isBranded === true ||
+  qr.ownerId === currentUser.uid;
+```
+
+or whatever your business rule is.
+
+Otherwise every generated QR appears unverified.
+
+---
+
+## 5. My QR
+
+File:
+
+```text
+features/my-qr/*
+```
+
+Ensure it reads:
+
+```ts
+templateKey
+```
+
+from the QR record.
+
+Not:
+
+```ts
+contentType
+```
+
+only.
+
+---
+
+# How to Make It Perfect
+
+Use this architecture:
+
+```text
+qrCodes
+│
+├── qrId
+│     ├── templateKey
+│     ├── contentType
+│     ├── formValues
+│     ├── displayDestination
+│     ├── isBranded
+│     ├── ownerId
+│     └── content
+```
+
+Then:
+
+```text
+Generator
+     ↓
+qrCodes
+
+My QR
+     ↓
+qrCodes
+
+QR Detail
+     ↓
+qrCodes
+
+History
+     ↓
+qrCodes
+
+Analytics
+     ↓
+qrCodes
+```
+
+# Priority Order
+
+If I were fixing QRS today, I would do:
+
+### Priority 1
+
+```text
+features/qr-detail/components/ContentCard.tsx
+```
+
+Make it render from:
+
+```text
+templateKey
+```
+
+instead of guessing from content.
+
+### Priority 2
+
+```text
+features/qr-detail/hooks/useQrDetail.ts
+```
+
+Fix verification logic.
+
+### Priority 3
+
+```text
+features/my-qr/*
+```
+
+Use the same centralized QR model.
+
+### Priority 4
+
+Remove duplicate logic based on:
+
+```text
+content.startsWith(...)
+switch(contentType)
+```
+
+wherever possible.
+
+The biggest symptom you described—generated WiFi/Business/Event QR codes showing as generic text and unverified—almost always comes from the detail page still using old parsing logic rather than the new centralized template system.

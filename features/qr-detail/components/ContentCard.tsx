@@ -307,7 +307,7 @@ const ContentCard = React.memo(function ContentCard({ content, contentType, pars
 
   const isLongContent = content.length > EXPAND_THRESHOLD || content.includes("\n");
   const cfg = getQrTypeStyle(contentType, templateKey);
-  const hasOpenAction = !isDeactivated && !hideOpenAction && contentType !== "text" && contentType !== "product";
+  const hasOpenAction = !isDeactivated && !hideOpenAction && effectiveType !== "text" && effectiveType !== "product";
 
   async function handleCopy() {
     await Clipboard.setStringAsync(content);
@@ -318,40 +318,47 @@ const ContentCard = React.memo(function ContentCard({ content, contentType, pars
     }
   }
 
-  const URL_LIKE_TYPES = new Set(["url", "instagram", "twitter", "youtube", "linkedin", "telegram", "facebook", "spotify", "discord", "tiktok", "zoom", "calendly", "appdownload", "app", "social", "media", "paypal", "venmo", "mobilepay", "reviewpage", "menucatalogue", "donation", "razorpay", "snapchat"]);
-  const isUrlLike = URL_LIKE_TYPES.has(contentType);
+  // effectiveType: use templateKey whenever it carries a specific type (not a
+  // generic alias). This ensures Business QR templates (reviewpage, menucatalogue,
+  // etc.) and structured types (wifi, contact, …) stored only as templateKey are
+  // rendered correctly even when contentType is the broad "url" or "text".
+  const GENERIC_TYPES = new Set(["url", "text", "biolink"]);
+  const effectiveType = (templateKey && !GENERIC_TYPES.has(templateKey)) ? templateKey : contentType;
 
-  const wifi = contentType === "wifi" ? parseWifi(content) : null;
-  const contact = contentType === "contact" ? parseContact(content) : null;
-  const smsData = contentType === "sms" ? parseSms(content) : null;
-  const eventData = (contentType === "event" || contentType === "calendar") ? parseEvent(content) : null;
-  const whatsappData = contentType === "whatsapp" ? parseWhatsApp(content) : null;
-  const emailData = contentType === "email" ? parseEmail(content) : null;
-  const phoneStr = contentType === "phone" ? parsePhone(content) : null;
-  const locationData = contentType === "location" ? parseLocation(content) : null;
-  const cryptoData = contentType === "crypto" ? parseCrypto(content) : null;
+  const URL_LIKE_TYPES = new Set(["url", "instagram", "twitter", "youtube", "linkedin", "telegram", "facebook", "spotify", "discord", "tiktok", "zoom", "calendly", "appdownload", "app", "social", "media", "paypal", "venmo", "mobilepay", "reviewpage", "menucatalogue", "donation", "razorpay", "snapchat"]);
+  const isUrlLike = URL_LIKE_TYPES.has(effectiveType) || URL_LIKE_TYPES.has(contentType);
+
+  const wifi = effectiveType === "wifi" ? parseWifi(content) : null;
+  const contact = effectiveType === "contact" ? parseContact(content) : null;
+  const smsData = effectiveType === "sms" ? parseSms(content) : null;
+  const eventData = (effectiveType === "event" || effectiveType === "calendar") ? parseEvent(content) : null;
+  const whatsappData = effectiveType === "whatsapp" ? parseWhatsApp(content) : null;
+  const emailData = effectiveType === "email" ? parseEmail(content) : null;
+  const phoneStr = effectiveType === "phone" ? parsePhone(content) : null;
+  const locationData = effectiveType === "location" ? parseLocation(content) : null;
+  const cryptoData = effectiveType === "crypto" ? parseCrypto(content) : null;
   const eventOver = eventData ? isEventPast(eventData.dtend, eventData.dtstart) : false;
 
   const smartActionLabel = React.useMemo((): string => {
-    if ((contentType === "contact" || contentType === "mecard") && contact) {
+    if ((effectiveType === "contact" || effectiveType === "mecard") && contact) {
       if (contact.phone) return "Call Now";
       if (contact.email) return "Send Email";
     }
     return cfg.openLabel;
-  }, [contentType, contact, cfg.openLabel]);
+  }, [effectiveType, contact, cfg.openLabel]);
 
   const smartActionIcon = React.useMemo((): keyof typeof Ionicons.glyphMap => {
-    if ((contentType === "contact" || contentType === "mecard") && contact) {
+    if ((effectiveType === "contact" || effectiveType === "mecard") && contact) {
       if (contact.phone) return "call-outline";
       if (contact.email) return "mail-outline";
     }
     return "open-outline";
-  }, [contentType, contact]);
-  const isPaymentType = contentType === "payment" || contentType === "upi" || contentType === "scantopay" || contentType === "paymentlink";
+  }, [effectiveType, contact]);
+  const isPaymentType = effectiveType === "payment" || effectiveType === "upi" || effectiveType === "scantopay" || effectiveType === "paymentlink";
   const basicPayment = (isPaymentType && !parsedPayment) ? extractBasicPaymentInfo(content) : null;
   const isEmvContent = content.startsWith("000201") || content.startsWith("00020");
 
-  if (contentType === "encrypted") {
+  if (effectiveType === "encrypted") {
     const preview = content.length > 40 ? content.slice(0, 40) + "…" : content;
     const isBase64 = /^[A-Za-z0-9+/]{20,}={0,2}$/.test(content.trim());
     const isHex = /^[0-9a-fA-F]{40,}$/.test(content.trim());
@@ -386,7 +393,7 @@ const ContentCard = React.memo(function ContentCard({ content, contentType, pars
     );
   }
 
-  if (contentType === "payment" || contentType === "upi" || contentType === "scantopay" || contentType === "paymentlink") {
+  if (effectiveType === "payment" || effectiveType === "upi" || effectiveType === "scantopay" || effectiveType === "paymentlink") {
     const paymentData: ParsedPaymentQr = parsedPayment ?? (isEmvContent ? {
       app: "emv_generic", appDisplayName: "Bank Merchant QR", appCategory: "emv",
       region: "Regional", recipientId: "", rawContent: content, isAmountPreFilled: false,
@@ -399,7 +406,7 @@ const ContentCard = React.memo(function ContentCard({ content, contentType, pars
     return <View><PaymentCard parsedPayment={paymentData} isDeactivated={isDeactivated} onOpenContent={onOpenContent} /></View>;
   }
 
-  const urlFields = isUrlLike ? extractUrlDisplayFields(contentType, content) : [];
+  const urlFields = isUrlLike ? extractUrlDisplayFields(effectiveType, content) : [];
 
   const accentColor = cfg.gradient[0];
   const accentAlpha = isDark ? "22" : "12";
@@ -461,7 +468,7 @@ const ContentCard = React.memo(function ContentCard({ content, contentType, pars
       )}
 
       {/* Plain text content — only for types that have no structured parser */}
-      {!isUrlLike && !["wifi", "sms", "event", "calendar", "whatsapp", "email", "phone", "location", "crypto", "contact"].includes(contentType) && (
+      {!isUrlLike && !["wifi", "sms", "event", "calendar", "whatsapp", "email", "phone", "location", "crypto", "contact"].includes(effectiveType) && (
         <View style={[styles.rawBox, { backgroundColor: isDark ? colors.surfaceLight : colors.background, borderColor: colors.surfaceBorder }]}>
           <Text style={[styles.rawText, { color: colors.text }]} selectable numberOfLines={contentExpanded ? undefined : 4}>
             {content}

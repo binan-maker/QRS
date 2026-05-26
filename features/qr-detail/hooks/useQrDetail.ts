@@ -66,14 +66,23 @@ export function useQrDetail(id: string) {
   function getCombinedVerdict() {
     const { offlineBlacklistMatch, paymentSafety, urlSafety, instantVerdict } = safety;
     const trust = getTrustInfo();
-    // QR Guard verified = owner has branded flag set (either from ownerInfo async fetch
-    // OR from the qrCode document itself which is available immediately on first render).
+    // QR Guard verified = current user owns it, OR owner has branded flag set
+    // (either from ownerInfo async fetch OR from the qrCode document itself).
     const isQrGuardVerified =
+      data.isQrOwner === true ||
       data.ownerInfo?.isBranded === true ||
       (data.qrCode as any)?.isBranded === true;
 
     if (offlineBlacklistMatch.matched) {
       return { level: "caution" as const, label: "CAUTION ADVISED", reason: offlineBlacklistMatch.reason ?? "Potential scam pattern detected", color: colors.warning };
+    }
+
+    // Owner viewing their own QR — skip community/threat checks and confirm ownership.
+    if (data.isQrOwner === true) {
+      if (paymentSafety?.isSuspicious || urlSafety?.isSuspicious) {
+        return { level: "caution" as const, label: "CAUTION", reason: "Local analysis detected a potential risk in this QR", color: colors.warning };
+      }
+      return { level: "safe" as const, label: "YOUR QR", reason: "You created this QR code", color: colors.safe };
     }
 
     const isCommunityAvailable = trust.score >= 0;
@@ -86,7 +95,6 @@ export function useQrDetail(id: string) {
         if (isQrGuardVerified) {
           return { level: "safe" as const, label: "SAFE", reason: `${Math.round(trust.score)}% community trust · QR Guard Verified`, color: colors.safe };
         }
-        // Good community score, but owner is NOT verified by QR Guard — stay cautious.
         return { level: "caution" as const, label: "UNVERIFIED QR", reason: `${Math.round(trust.score)}% community trust · Owner not verified by QR Guard`, color: colors.warning };
       }
       if (trust.label === "Caution" || trust.label === "Uncertain") {
