@@ -163,17 +163,6 @@ const TrustScoreCard = React.memo(function TrustScoreCard({
         </Animated.View>
       )}
 
-      {/* Owner-only analytics panel */}
-      {isQrOwner && ownerScanCount !== undefined && ownerScanCount > 0 && (
-        <Animated.View entering={FadeInDown.delay(180).duration(300)} style={[styles.ownerPanel, { backgroundColor: colors.primaryDim, borderColor: colors.primary + "35" }]}>
-          <Ionicons name="eye-outline" size={14} color={colors.primary} />
-          <Text style={[styles.ownerPanelText, { color: colors.primary }]}>
-            Your own scans: <Text style={{ fontFamily: "Inter_700Bold" }}>{formatCompactNumber(ownerScanCount)}</Text>
-            {" "}(tracked separately — not counted in public total)
-          </Text>
-        </Animated.View>
-      )}
-
       {/* Stats row */}
       <Animated.View entering={FadeInDown.delay(200).duration(350)} style={[styles.statsGrid, { borderColor: colors.surfaceBorder }]}>
         {STATS.map((s, i) => (
@@ -309,15 +298,6 @@ const styles = StyleSheet.create({
     borderWidth: 1,
   },
   manipText: { flex: 1, fontSize: 12, fontFamily: "Inter_400Regular", lineHeight: 17 },
-  ownerPanel: {
-    flexDirection: "row",
-    alignItems: "flex-start",
-    gap: 8,
-    borderRadius: 12,
-    padding: 11,
-    borderWidth: 1,
-  },
-  ownerPanelText: { flex: 1, fontSize: 12, fontFamily: "Inter_400Regular", lineHeight: 17 },
   statsGrid: {
     flexDirection: "row",
     borderRadius: 14,
