@@ -62,6 +62,12 @@ export function useScanProcessor({
   function navigateToQrDetail(qrId: string) {
     setScanSuccess(true);
     router.push(`/qr-detail/${qrId}`);
+    // Auto-clear tick after navigation — prevents it staying stuck if the
+    // user returns to the scanner before useFocusEffect fires.
+    setTimeout(() => {
+      setScanSuccess(false);
+      setScanned(false);
+    }, 1200);
   }
 
   // ─── Offline path ─────────────────────────────────────────────────────────────
@@ -196,6 +202,10 @@ export function useScanProcessor({
       );
       const qrId = await getQrCodeId(content);
       router.push(`/qr-detail/${qrId}?${param}=${uuid}`);
+      setTimeout(() => {
+        setScanSuccess(false);
+        setScanned(false);
+      }, 1200);
     };
 
     const guardMatch    = content.match(GUARD_PATTERN);
