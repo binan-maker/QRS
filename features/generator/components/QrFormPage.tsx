@@ -35,7 +35,6 @@ export default function QrFormPage({ mode, initialTemplateId, openAiBuilder }: P
   const { colors } = useTheme();
   const topInset = useTopInset();
 
-  // ── Local UI state ────────────────────────────────────────────────────────
   const [presetActive,       setPresetActive]       = useState(false);
   const [templateGenerated,  setTemplateGenerated]  = useState(false);
   const [templateName,       setTemplateName]       = useState("");
@@ -52,7 +51,6 @@ export default function QrFormPage({ mode, initialTemplateId, openAiBuilder }: P
     if (initTid || initAi) setQrTemplateOpen(true);
   }, []);
 
-  // ── Generator hook ────────────────────────────────────────────────────────
   const {
     user, svgRef,
     selectedPreset, inputValue, setInputValue, extraFields, setExtraField,
@@ -76,7 +74,6 @@ export default function QrFormPage({ mode, initialTemplateId, openAiBuilder }: P
 
   React.useEffect(() => { setQrMode(mode); }, []);
 
-  // ── Derived ───────────────────────────────────────────────────────────────
   const logoPositionLabel = useMemo(
     () => LOGO_POSITIONS.find((p) => p.key === logoPosition)?.label ?? "Center",
     [logoPosition],
@@ -88,15 +85,14 @@ export default function QrFormPage({ mode, initialTemplateId, openAiBuilder }: P
     const canSave      = user && !privateMode;
 
     if (hasLiveQr && canSave && !isRegistered)
-      return { btnLabel: "Save Protected QR",       btnIcon: "shield-lock-outline"  as const, btnColors: [colors.safe, (colors as any).safeShade ?? colors.safe]    as [string, string] };
+      return { btnLabel: "Save Protected QR",      btnIcon: "shield-lock-outline"  as const, btnColors: [colors.safe, (colors as any).safeShade ?? colors.safe]   as [string, string] };
     if (hasLiveQr && isRegistered)
-      return { btnLabel: "Protected QR Saved ✓",    btnIcon: "check-circle-outline" as const, btnColors: [colors.safe, (colors as any).safeShade ?? colors.safe]    as [string, string] };
+      return { btnLabel: "Protected QR Saved ✓",   btnIcon: "check-circle-outline" as const, btnColors: [colors.safe, (colors as any).safeShade ?? colors.safe]   as [string, string] };
     if (hasLiveQr && privateMode)
-      return { btnLabel: "Private QR Generated ✓",  btnIcon: "eye-off-outline"      as const, btnColors: [colors.textSecondary, colors.textMuted]                   as [string, string] };
-    return   { btnLabel: "Generate QR Code",         btnIcon: "qrcode-edit"          as const, btnColors: [colors.primary, colors.primaryShade]                      as [string, string] };
+      return { btnLabel: "Private QR Generated ✓", btnIcon: "eye-off-outline"      as const, btnColors: [colors.textSecondary, colors.textMuted]                  as [string, string] };
+    return   { btnLabel: "Generate QR Code",        btnIcon: "qrcode-edit"          as const, btnColors: [colors.primary, colors.primaryShade]                     as [string, string] };
   }, [qrValue, generatedUuid, user, privateMode, colors]);
 
-  // ── Callbacks ─────────────────────────────────────────────────────────────
   const handleSelectPreset = useCallback((idx: number) => {
     switchPreset(idx);
     setPresetActive(true);
@@ -132,16 +128,14 @@ export default function QrFormPage({ mode, initialTemplateId, openAiBuilder }: P
   return (
     <View style={[styles.container, { backgroundColor: colors.background, paddingTop: topInset }]}>
 
-      <FormTopBar
-        mode={mode}
-        onOpenInfo={() => setInfoModalOpen(true)}
-      />
+      <FormTopBar mode={mode} onOpenInfo={() => setInfoModalOpen(true)} />
 
       <ScrollView
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={[styles.scroll, { paddingBottom: insets.bottom + 110 }]}
+        contentContainerStyle={[styles.scroll, { paddingBottom: insets.bottom + 100 }]}
         keyboardShouldPersistTaps="handled"
       >
+        {/* ── Template picker / ready card ─────────────────────── */}
         {!showTemplateReady && (
           <TypePickerHome
             qrMode={mode as any}
@@ -153,41 +147,45 @@ export default function QrFormPage({ mode, initialTemplateId, openAiBuilder }: P
         )}
 
         {showTemplateReady && (
-          <TemplateReadyCard
-            templateName={templateName}
-            onChange={handleChangeTemplate}
-          />
+          <TemplateReadyCard templateName={templateName} onChange={handleChangeTemplate} />
         )}
 
-        {/* QR Name field — always visible */}
+        {/* ── QR Name field ────────────────────────────────────── */}
         <Reanimated.View entering={FadeInDown.duration(150)} style={styles.nameWrap}>
           <View style={[
             styles.nameCard,
             {
               backgroundColor: colors.surface,
-              borderColor: showNameError ? colors.danger + "80" : advancedSettings.label.trim() ? colors.primary + "55" : colors.surfaceBorder,
-            }
+              borderColor: showNameError
+                ? colors.danger + "80"
+                : advancedSettings.label.trim()
+                ? colors.primary + "50"
+                : colors.surfaceBorder,
+            },
           ]}>
+            {/* Header row */}
             <View style={styles.nameRow}>
               <Ionicons
                 name="pricetag-outline"
-                size={15}
+                size={13}
                 color={showNameError ? colors.danger : advancedSettings.label.trim() ? colors.primary : colors.textMuted}
               />
               <Text style={[styles.nameLabel, { color: showNameError ? colors.danger : colors.textSecondary }]}>
                 QR Code Name
               </Text>
-              <View style={[styles.requiredTag, { backgroundColor: showNameError ? colors.danger + "18" : colors.primaryDim }]}>
+              <View style={[styles.requiredTag, { backgroundColor: showNameError ? colors.danger + "16" : colors.primaryDim }]}>
                 <Text style={[styles.requiredText, { color: showNameError ? colors.danger : colors.primary }]}>Required</Text>
               </View>
             </View>
+
+            {/* Input */}
             <TextInput
               style={[styles.nameInput, {
                 color: colors.text,
                 backgroundColor: colors.surfaceLight,
-                borderColor: showNameError ? colors.danger + "60" : colors.surfaceBorder,
+                borderColor: showNameError ? colors.danger + "55" : colors.surfaceBorder,
               }]}
-              placeholder="e.g. Office WiFi, Menu Standee, My Portfolio…"
+              placeholder="e.g. Office WiFi, Menu Card, Portfolio…"
               placeholderTextColor={colors.textMuted}
               value={advancedSettings.label}
               onChangeText={(v) => {
@@ -196,19 +194,15 @@ export default function QrFormPage({ mode, initialTemplateId, openAiBuilder }: P
               }}
               maxLength={80}
             />
-            {showNameError && (
-              <Text style={[styles.nameErrorText, { color: colors.danger }]}>
-                Please give your QR code a name before generating
-              </Text>
-            )}
-            {!showNameError && (
-              <Text style={[styles.nameHint, { color: colors.textMuted }]}>
-                This name will be shown on your QR codes list
-              </Text>
-            )}
+
+            {/* Hint / error */}
+            <Text style={[styles.nameHint, { color: showNameError ? colors.danger : colors.textMuted }]}>
+              {showNameError ? "Please give your QR code a name before generating" : "Shown on your QR codes list"}
+            </Text>
           </View>
         </Reanimated.View>
 
+        {/* ── Content input ────────────────────────────────────── */}
         {showInputSection && (
           <Reanimated.View entering={FadeInDown.duration(150)} style={styles.inputWrap}>
             <InputSection
@@ -221,6 +215,7 @@ export default function QrFormPage({ mode, initialTemplateId, openAiBuilder }: P
           </Reanimated.View>
         )}
 
+        {/* ── Customize drawer ─────────────────────────────────── */}
         <Reanimated.View entering={FadeInDown.duration(160)} style={styles.drawerWrap}>
           <CustomizeDrawer
             qrReady={!!qrValue}
@@ -243,6 +238,7 @@ export default function QrFormPage({ mode, initialTemplateId, openAiBuilder }: P
           />
         </Reanimated.View>
 
+        {/* ── Generate button ───────────────────────────────────── */}
         {!templateGenerated && (
           <GenerateButton
             btnLabel={buttonState.btnLabel}
@@ -266,6 +262,7 @@ export default function QrFormPage({ mode, initialTemplateId, openAiBuilder }: P
           </Reanimated.View>
         )}
 
+        {/* ── QR Output or placeholder ──────────────────────────── */}
         {qrValue ? (
           <QrOutputCard
             qrValue={qrValue}
@@ -340,18 +337,25 @@ export default function QrFormPage({ mode, initialTemplateId, openAiBuilder }: P
 }
 
 const styles = StyleSheet.create({
-  container:           { flex: 1 },
-  scroll:              { paddingHorizontal: 0, paddingTop: 4 },
-  inputWrap:           { marginHorizontal: 20 },
-  drawerWrap:          { marginHorizontal: 20, marginTop: 16 },
+  container: { flex: 1 },
+  scroll: { paddingHorizontal: 0, paddingTop: 6, gap: 0 },
+
+  nameWrap: { marginHorizontal: 20, marginTop: 12, marginBottom: 12 },
+  nameCard: {
+    borderRadius: 14, borderWidth: 1, padding: 12, gap: 7,
+  },
+  nameRow: { flexDirection: "row", alignItems: "center", gap: 5 },
+  nameLabel: { fontSize: 12, fontFamily: "Inter_600SemiBold", flex: 1 },
+  requiredTag: { borderRadius: 5, paddingHorizontal: 5, paddingVertical: 1 },
+  requiredText: { fontSize: 9, fontFamily: "Inter_600SemiBold" },
+  nameInput: {
+    borderRadius: 10, borderWidth: 1,
+    paddingHorizontal: 11, paddingVertical: 8,
+    fontSize: 13, fontFamily: "Inter_400Regular",
+  },
+  nameHint: { fontSize: 10, fontFamily: "Inter_400Regular" },
+
+  inputWrap:           { marginHorizontal: 20, marginBottom: 0 },
+  drawerWrap:          { marginHorizontal: 20, marginTop: 12, marginBottom: 0 },
   templateSaveBtnWrap: { marginHorizontal: 0 },
-  nameWrap:            { marginHorizontal: 20, marginBottom: 16 },
-  nameCard:            { borderRadius: 16, borderWidth: 1, padding: 14, gap: 8 },
-  nameRow:             { flexDirection: "row", alignItems: "center", gap: 6 },
-  nameLabel:           { fontSize: 13, fontFamily: "Inter_600SemiBold", flex: 1 },
-  requiredTag:         { borderRadius: 6, paddingHorizontal: 6, paddingVertical: 2 },
-  requiredText:        { fontSize: 9, fontFamily: "Inter_600SemiBold" },
-  nameInput:           { borderRadius: 12, borderWidth: 1, paddingHorizontal: 12, paddingVertical: 9, fontSize: 14, fontFamily: "Inter_400Regular" },
-  nameErrorText:       { fontSize: 11, fontFamily: "Inter_500Medium" },
-  nameHint:            { fontSize: 10, fontFamily: "Inter_400Regular" },
 });

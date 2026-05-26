@@ -1,6 +1,6 @@
 import React, { memo } from "react";
 import {
-  View, Text, Pressable, StyleSheet, useWindowDimensions,
+  View, Text, Pressable, StyleSheet,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import Reanimated, { FadeIn, FadeInUp } from "react-native-reanimated";
@@ -18,49 +18,23 @@ interface ModeCard {
 }
 
 const MODES: ModeCard[] = [
-  {
-    key:   "individual",
-    label: "Standard",
-    icon:  "shield-checkmark-outline",
-    color: "#3B82F6",
-  },
-  {
-    key:   "private",
-    label: "Private",
-    icon:  "eye-off-outline",
-    color: "#64748B",
-  },
+  { key: "individual", label: "Standard", icon: "shield-checkmark-outline", color: "#3B82F6" },
+  { key: "private",   label: "Private",   icon: "eye-off-outline",           color: "#64748B" },
 ];
 
 interface Props {
   qrMode: QrMode;
   onSetMode: (mode: QrMode) => void;
   onOpenCustom: () => void;
-  /** When true only the mode cards render — the action rows are hidden */
   hideActions?: boolean;
-  /** When true the mode card row is hidden (used in form view where mode is pre-selected) */
   hideModeCards?: boolean;
 }
 
-function TypePickerHome({
-  qrMode,
-  onSetMode,
-  onOpenCustom,
-  hideActions = false,
-  hideModeCards = false,
-}: Props) {
+function TypePickerHome({ qrMode, onSetMode, onOpenCustom, hideActions = false, hideModeCards = false }: Props) {
   const { colors } = useTheme();
-  const { width }  = useWindowDimensions();
-  const PAD = 20;
-
-  function pressMode(mode: QrMode) {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    onSetMode(mode);
-  }
 
   return (
-    <View style={[styles.root, { paddingHorizontal: PAD }]}>
-      {/* ── Mode cards (hidden in form view since mode is pre-selected) ── */}
+    <View style={[styles.root, { paddingHorizontal: 20 }]}>
       {!hideModeCards && (
         <Reanimated.View entering={FadeIn.duration(150)} style={styles.modeRow}>
           {MODES.map((m) => {
@@ -68,20 +42,20 @@ function TypePickerHome({
             return (
               <Pressable
                 key={m.key}
-                onPress={() => pressMode(m.key)}
+                onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium); onSetMode(m.key); }}
                 style={({ pressed }) => [
                   styles.modeCard,
                   {
                     backgroundColor: active ? m.color + "18" : colors.surface,
-                    borderColor:     active ? m.color + "80" : colors.surfaceBorder,
+                    borderColor:     active ? m.color + "70" : colors.surfaceBorder,
                     borderWidth:     active ? 1.5 : 1,
                     opacity:         pressed ? 0.76 : 1,
                     transform:       [{ scale: pressed ? 0.96 : 1 }],
                   },
                 ]}
               >
-                <View style={[styles.modeIconWrap, { backgroundColor: m.color + (active ? "28" : "16") }]}>
-                  <Ionicons name={m.icon} size={20} color={m.color} />
+                <View style={[styles.modeIconWrap, { backgroundColor: m.color + (active ? "28" : "14") }]}>
+                  <Ionicons name={m.icon} size={17} color={m.color} />
                 </View>
                 <Text style={[styles.modeLabel, { color: active ? m.color : colors.text }]} numberOfLines={1}>
                   {m.label}
@@ -95,31 +69,32 @@ function TypePickerHome({
         </Reanimated.View>
       )}
 
-      {/* ── Actions: Choose Template card ── */}
       {!hideActions && (
-        <Reanimated.View entering={FadeInUp.duration(150)} style={{ marginTop: 12 }}>
+        <Reanimated.View entering={FadeInUp.duration(150)} style={{ marginTop: hideModeCards ? 0 : 10 }}>
           <Pressable
-            onPress={() => {
-              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-              onOpenCustom();
-            }}
+            onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium); onOpenCustom(); }}
             style={({ pressed }) => ({
-              opacity:      pressed ? 0.82 : 1,
-              transform:    [{ scale: pressed ? 0.98 : 1 }],
-              borderRadius: 16,
-              overflow:     "hidden" as const,
+              opacity: pressed ? 0.82 : 1,
+              transform: [{ scale: pressed ? 0.985 : 1 }],
+              borderRadius: 14,
+              overflow: "hidden" as const,
             })}
           >
             <LinearGradient
-              colors={[colors.primary + "22", colors.primary + "08"]}
+              colors={[colors.primary + "1A", colors.primary + "08"]}
               start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
-              style={[styles.customCard, { borderColor: colors.primary + "40" }]}
+              style={[styles.customCard, { borderColor: colors.primary + "35" }]}
             >
               <View style={[styles.customCardIcon, { backgroundColor: colors.primaryDim }]}>
-                <Ionicons name="grid-outline" size={22} color={colors.primary} />
+                <Ionicons name="grid-outline" size={18} color={colors.primary} />
               </View>
-              <Text style={[styles.customCardTitle, { color: colors.text }]}>Choose Template</Text>
-              <Ionicons name="chevron-forward" size={16} color={colors.primary} />
+              <View style={{ flex: 1 }}>
+                <Text style={[styles.customCardTitle, { color: colors.text }]}>Choose Template</Text>
+                <Text style={[styles.customCardSub, { color: colors.textMuted }]}>UPI, Contact, WiFi, Email, URL</Text>
+              </View>
+              <View style={[styles.arrowWrap, { backgroundColor: colors.primaryDim }]}>
+                <Ionicons name="chevron-forward" size={13} color={colors.primary} />
+              </View>
             </LinearGradient>
           </Pressable>
         </Reanimated.View>
@@ -131,40 +106,39 @@ function TypePickerHome({
 export default memo(TypePickerHome);
 
 const styles = StyleSheet.create({
-  root: { gap: 12, paddingTop: 8 },
+  root: { gap: 10, paddingTop: 6 },
 
   modeRow: { flexDirection: "row", gap: 8 },
   modeCard: {
-    flex: 1,
-    height: 72,
-    borderRadius: 16,
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 5,
-    position: "relative",
-    overflow: "hidden",
-    paddingHorizontal: 8,
-    paddingVertical: 10,
+    flex: 1, height: 62, borderRadius: 14,
+    alignItems: "center", justifyContent: "center",
+    gap: 5, position: "relative", overflow: "hidden",
+    paddingHorizontal: 8, paddingVertical: 8,
   },
   modeIconWrap: {
-    width: 34, height: 34, borderRadius: 10,
+    width: 30, height: 30, borderRadius: 9,
     alignItems: "center", justifyContent: "center",
   },
-  modeLabel: { fontSize: 12, fontFamily: "Inter_700Bold", textAlign: "center" },
+  modeLabel: { fontSize: 11, fontFamily: "Inter_700Bold", textAlign: "center" },
   activeBar: {
     position: "absolute", bottom: 0,
     left: "20%", right: "20%",
-    height: 3, borderTopLeftRadius: 3, borderTopRightRadius: 3,
+    height: 2.5, borderTopLeftRadius: 2, borderTopRightRadius: 2,
   },
 
   customCard: {
-    flexDirection: "row", alignItems: "center", gap: 12,
-    borderWidth: 1.5, borderRadius: 16,
-    paddingHorizontal: 14, paddingVertical: 12,
+    flexDirection: "row", alignItems: "center", gap: 11,
+    borderWidth: 1, borderRadius: 14,
+    paddingHorizontal: 12, paddingVertical: 11,
   },
   customCardIcon: {
-    width: 38, height: 38, borderRadius: 12,
+    width: 34, height: 34, borderRadius: 10,
     alignItems: "center", justifyContent: "center", flexShrink: 0,
   },
-  customCardTitle: { fontSize: 13, fontFamily: "Inter_700Bold", flex: 1 },
+  customCardTitle: { fontSize: 13, fontFamily: "Inter_600SemiBold" },
+  customCardSub:   { fontSize: 10, fontFamily: "Inter_400Regular", marginTop: 1 },
+  arrowWrap: {
+    width: 26, height: 26, borderRadius: 8,
+    alignItems: "center", justifyContent: "center", flexShrink: 0,
+  },
 });
