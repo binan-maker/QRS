@@ -23,3 +23,18 @@ export function useAndroidNavBar(
     NavigationBar.setButtonStyleAsync(isDark ? "light" : "dark").catch(() => {});
   }, [visible, openColor, restoreColor, isDark]);
 }
+
+/**
+ * Always keeps the Android system navigation bar pinned to `color` for the
+ * lifetime of the screen. Use this on full-screen non-tab pages (e.g. QR
+ * detail) so the bar colour matches the app background the same way the home
+ * tab does via its extended background view.
+ */
+export function useAndroidNavBarScreen(color: string, isDark: boolean) {
+  useEffect(() => {
+    if (Platform.OS !== "android") return;
+    NavigationBar.setPositionAsync("relative").catch(() => {});
+    NavigationBar.setBackgroundColorAsync(color).catch(() => {});
+    NavigationBar.setButtonStyleAsync(isDark ? "light" : "dark").catch(() => {});
+  }, [color, isDark]);
+}

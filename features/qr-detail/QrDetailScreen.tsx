@@ -1,9 +1,14 @@
 import { useLocalSearchParams } from "expo-router";
+import { useTheme } from "@/contexts/ThemeContext";
+import { useAndroidNavBarScreen } from "@/lib/utils/use-android-nav-bar";
 import StaticQrDetailScreen from "./static/StaticQrDetailScreen";
 import GuardQrDetailScreen from "./dynamic/guard/GuardQrDetailScreen";
 import StandardQrDetailScreen from "./dynamic/standard/StandardQrDetailScreen";
 
 export default function QrDetailScreen() {
+  const { colors, isDark } = useTheme();
+  useAndroidNavBarScreen(colors.background, isDark);
+
   const { id, guardUuid, standardUuid, ownerDocId } = useLocalSearchParams<{
     id: string;
     guardUuid?: string;
