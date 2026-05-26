@@ -168,13 +168,17 @@ export default function BottomSheet({
 const styles = StyleSheet.create({
   root: {
     flex: 1,
-    justifyContent: "flex-end",
+    width: "100%",
+    height: "100%",
   },
   backdrop: {
     backgroundColor: "rgba(0,0,0,0.6)",
   },
   sheetContainer: {
-    width: "100%",
+    position: "absolute",
+    left: 0,
+    right: 0,
+    bottom: 0,
   },
   sheet: {
     borderTopLeftRadius: 24,
