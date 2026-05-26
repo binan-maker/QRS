@@ -1,7 +1,7 @@
 import type { Ionicons } from "@expo/vector-icons";
 
 export type EncType = "WPA" | "WEP" | "nopass";
-export type ModalView = "home" | "ai" | "builder" | "template-form";
+export type ModalView = "home" | "builder" | "template-form";
 
 export interface TemplateField {
   key: string;

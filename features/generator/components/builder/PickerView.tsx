@@ -45,7 +45,7 @@ function PickerView({
         <View style={{ flex: 1, marginLeft: 12 }}>
           <Text style={[S.headerTitle, { color: colors.text }]}>Custom QR</Text>
           <Text style={[S.headerSub, { color: colors.textMuted }]}>
-            {BUILT_IN_CATEGORIES.length}+ types — pick one to start
+            {BUILT_IN_CATEGORIES.length} types — pick one to start
           </Text>
         </View>
       </View>

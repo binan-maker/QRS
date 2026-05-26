@@ -8,9 +8,7 @@ import * as Haptics from "@/lib/haptics";
 
 import type { EncType, ModalView, QrTemplate } from "@/features/generator/types/template-types";
 import { TEMPLATES } from "@/features/generator/data/templates";
-import { callAiQrGenerate } from "@/features/generator/data/ai-generator";
 import HomeView from "./template-modal/HomeView";
-import AiView from "./template-modal/AiView";
 import BuilderView from "./template-modal/BuilderView";
 
 interface Props {
@@ -21,7 +19,7 @@ interface Props {
   openAiBuilder?: boolean;
 }
 
-function QrTemplateModal({ visible, onClose, onGenerate, initialTemplateId, openAiBuilder }: Props) {
+function QrTemplateModal({ visible, onClose, onGenerate, initialTemplateId }: Props) {
   const { colors } = useTheme();
   const insets = useSafeAreaInsets();
   const { height: screenH, width: screenW } = useWindowDimensions();
@@ -32,10 +30,6 @@ function QrTemplateModal({ visible, onClose, onGenerate, initialTemplateId, open
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [showPass, setShowPass] = useState(false);
   const [encType, setEncType] = useState<EncType>("WPA");
-  const [aiPrompt, setAiPrompt] = useState("");
-  const [aiLoading, setAiLoading] = useState(false);
-  const [aiResult, setAiResult] = useState<string | null>(null);
-  const [aiError, setAiError] = useState<string | null>(null);
 
   React.useEffect(() => {
     if (!visible) return;
@@ -49,13 +43,8 @@ function QrTemplateModal({ visible, onClose, onGenerate, initialTemplateId, open
         setEncType("WPA");
         setView("template-form");
       }
-    } else if (openAiBuilder) {
-      setAiPrompt("");
-      setAiResult(null);
-      setAiError(null);
-      setView("ai");
     }
-  }, [visible, initialTemplateId, openAiBuilder]);
+  }, [visible, initialTemplateId]);
 
   const s = Math.min(Math.max(screenW / 390, 0.82), 1.0);
   const rf = (n: number) => Math.round(n * s);
@@ -70,10 +59,6 @@ function QrTemplateModal({ visible, onClose, onGenerate, initialTemplateId, open
     setErrors({});
     setShowPass(false);
     setEncType("WPA");
-    setAiPrompt("");
-    setAiLoading(false);
-    setAiResult(null);
-    setAiError(null);
   }
 
   function handleClose() {
@@ -91,33 +76,13 @@ function QrTemplateModal({ visible, onClose, onGenerate, initialTemplateId, open
     setView("template-form");
   }
 
-  function handleOpenBuilder(t?: QrTemplate) {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    const initial = t ?? TEMPLATES[0];
-    setSelected(initial);
-    setValues({});
-    setErrors({});
-    setShowPass(false);
-    setEncType("WPA");
-    setView("builder");
-  }
-
-  function handleOpenAi() {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    setAiResult(null);
-    setAiError(null);
-    setView("ai");
-  }
-
   function handleBack() {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    if (view === "template-form" || view === "builder" || view === "ai") {
+    if (view === "template-form" || view === "builder") {
       setView("home");
       setSelected(null);
       setValues({});
       setErrors({});
-      setAiResult(null);
-      setAiError(null);
     }
   }
 
@@ -152,31 +117,6 @@ function QrTemplateModal({ visible, onClose, onGenerate, initialTemplateId, open
     handleClose();
   }
 
-  async function handleAiGenerate() {
-    if (!aiPrompt.trim() || aiLoading) return;
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    setAiLoading(true);
-    setAiResult(null);
-    setAiError(null);
-    try {
-      const content = await callAiQrGenerate(aiPrompt.trim());
-      setAiResult(content);
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-    } catch {
-      setAiError("Could not generate QR. Check your connection and try again.");
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-    } finally {
-      setAiLoading(false);
-    }
-  }
-
-  function handleAiConfirm() {
-    if (!aiResult) return;
-    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-    onGenerate(aiResult, "AI Generated");
-    handleClose();
-  }
-
   const canGenerate = useMemo(() => {
     if (!selected) return false;
     for (const field of selected.fields) {
@@ -185,15 +125,13 @@ function QrTemplateModal({ visible, onClose, onGenerate, initialTemplateId, open
     return true;
   }, [selected, values]);
 
-  const headerTitle = view === "ai" ? "AI Builder"
-    : view === "builder" ? "Custom Builder"
+  const headerTitle = view === "builder" ? "Custom Builder"
     : view === "template-form" && selected ? selected.name
-    : "Build Your QR";
+    : "Choose a Template";
 
-  const headerSub = view === "ai" ? "Describe what you want, AI builds it"
-    : view === "builder" ? "Pick a format and fill in your details"
+  const headerSub = view === "builder" ? "Pick a format and fill in your details"
     : view === "template-form" && selected ? selected.tagline
-    : "Choose how to create your QR code";
+    : "Select a QR code type to get started";
 
   return (
     <BottomSheet
@@ -246,21 +184,7 @@ function QrTemplateModal({ visible, onClose, onGenerate, initialTemplateId, open
           {view === "home" && (
             <HomeView
               templates={TEMPLATES}
-              onOpenAi={handleOpenAi}
               onPickTemplate={handlePickTemplate}
-            />
-          )}
-
-          {view === "ai" && (
-            <AiView
-              prompt={aiPrompt}
-              loading={aiLoading}
-              result={aiResult}
-              error={aiError}
-              onChangePrompt={setAiPrompt}
-              onGenerate={handleAiGenerate}
-              onConfirm={handleAiConfirm}
-              onRetry={() => { setAiResult(null); setAiError(null); }}
             />
           )}
 
