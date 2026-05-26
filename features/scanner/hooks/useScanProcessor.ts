@@ -189,6 +189,11 @@ export function useScanProcessor({
     const routeGuard = async (uuid: string, param: string) => {
       setProcessing(false);
       setScanSuccess(true);
+      const isGuard = param === "guardUuid";
+      showScannerMsg(
+        isGuard ? "Living Shield QR detected" : "QR Guard standard code detected",
+        "info"
+      );
       const qrId = await getQrCodeId(content);
       router.push(`/qr-detail/${qrId}?${param}=${uuid}`);
     };
