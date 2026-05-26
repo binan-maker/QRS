@@ -1,0 +1,88 @@
+⠙[1G[0K
+> expo-app@1.0.0 server:dev
+> NODE_ENV=development node_modules/.bin/tsx server/index.ts
+
+⠙[1G[0KServing static Expo files with dynamic manifest routing
+Web build found — serving web app to browsers
+Expo routing: Checking expo-platform header on / and /manifest
+express server serving on port 5000
+[HEALTH] {
+  status: [32m'unhealthy'[39m,
+  uptime: [32m'5m 0s'[39m,
+  db_latency: [32m'198ms'[39m,
+  api_latency: [32m'16ms'[39m,
+  memory: [32m'88.75%'[39m,
+  rpm: [33m0[39m
+}
+[HEALTH] {
+  status: [32m'unhealthy'[39m,
+  uptime: [32m'10m 0s'[39m,
+  db_latency: [32m'157ms'[39m,
+  api_latency: [32m'3ms'[39m,
+  memory: [32m'91.73%'[39m,
+  rpm: [33m0[39m
+}
+[HEALTH] {
+  status: [32m'unhealthy'[39m,
+  uptime: [32m'15m 0s'[39m,
+  db_latency: [32m'150ms'[39m,
+  api_latency: [32m'3ms'[39m,
+  memory: [32m'95.22%'[39m,
+  rpm: [33m0[39m
+}
+[HEALTH] {
+  status: [32m'unhealthy'[39m,
+  uptime: [32m'20m 0s'[39m,
+  db_latency: [32m'161ms'[39m,
+  api_latency: [32m'2ms'[39m,
+  memory: [32m'84.82%'[39m,
+  rpm: [33m0[39m
+}
+[HEALTH] {
+  status: [32m'unhealthy'[39m,
+  uptime: [32m'25m 0s'[39m,
+  db_latency: [32m'202ms'[39m,
+  api_latency: [32m'3ms'[39m,
+  memory: [32m'86.36%'[39m,
+  rpm: [33m0[39m
+}
+[HEALTH] {
+  status: [32m'unhealthy'[39m,
+  uptime: [32m'30m 0s'[39m,
+  db_latency: [32m'141ms'[39m,
+  api_latency: [32m'3ms'[39m,
+  memory: [32m'87.95%'[39m,
+  rpm: [33m0[39m
+}
+[HEALTH] {
+  status: [32m'unhealthy'[39m,
+  uptime: [32m'35m 0s'[39m,
+  db_latency: [32m'167ms'[39m,
+  api_latency: [32m'2ms'[39m,
+  memory: [32m'92.21%'[39m,
+  rpm: [33m0[39m
+}
+[HEALTH] {
+  status: [32m'unhealthy'[39m,
+  uptime: [32m'40m 0s'[39m,
+  db_latency: [32m'157ms'[39m,
+  api_latency: [32m'2ms'[39m,
+  memory: [32m'93.99%'[39m,
+  rpm: [33m0[39m
+}
+[HEALTH] {
+  status: [32m'unhealthy'[39m,
+  uptime: [32m'45m 0s'[39m,
+  db_latency: [32m'151ms'[39m,
+  api_latency: [32m'2ms'[39m,
+  memory: [32m'92.45%'[39m,
+  rpm: [33m0[39m
+}
+[HEALTH] {
+  status: [32m'unhealthy'[39m,
+  uptime: [32m'50m 0s'[39m,
+  db_latency: [32m'167ms'[39m,
+  api_latency: [32m'3ms'[39m,
+  memory: [32m'94.27%'[39m,
+  rpm: [33m0[39m
+}
