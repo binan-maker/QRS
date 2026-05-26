@@ -1,5 +1,5 @@
 import React from "react";
-import { View, Text, StyleSheet, Pressable, Platform } from "react-native";
+import { View, Text, StyleSheet, Pressable } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import * as Clipboard from "expo-clipboard";
@@ -20,10 +20,8 @@ export function CardHeader({ icon, gradient, title, subtitle, content, colors }:
   async function handleCopy() {
     await Clipboard.setStringAsync(content);
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-    if (Platform.OS !== "android") {
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    }
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
   }
 
   return (
@@ -34,7 +32,7 @@ export function CardHeader({ icon, gradient, title, subtitle, content, colors }:
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
       >
-        <Ionicons name={icon} size={22} color="#fff" />
+        <Ionicons name={icon} size={19} color="#fff" />
       </LinearGradient>
       <View style={{ flex: 1 }}>
         <Text style={[styles.title, { color: colors.text }]}>{title}</Text>
@@ -49,7 +47,7 @@ export function CardHeader({ icon, gradient, title, subtitle, content, colors }:
         style={({ pressed }) => [styles.copyBtn, {
           backgroundColor: copied ? colors.safe + "18" : colors.surfaceLight,
           borderColor: copied ? colors.safe : colors.surfaceBorder,
-          opacity: pressed ? 0.75 : 1,
+          opacity: pressed ? 0.7 : 1,
         }]}
       >
         <Ionicons
@@ -72,21 +70,21 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   icon: {
-    width: 48,
-    height: 48,
-    borderRadius: 15,
+    width: 40,
+    height: 40,
+    borderRadius: 12,
     alignItems: "center",
     justifyContent: "center",
     flexShrink: 0,
   },
   title: {
-    fontSize: 16,
+    fontSize: 15,
     fontFamily: "Inter_700Bold",
   },
   subtitle: {
     fontSize: 12,
     fontFamily: "Inter_400Regular",
-    marginTop: 2,
+    marginTop: 1,
   },
   copyBtn: {
     flexDirection: "row",
