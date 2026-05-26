@@ -306,7 +306,15 @@ const ContentCard = React.memo(function ContentCard({ content, contentType, pars
   const [contentExpanded, setContentExpanded] = React.useState(false);
 
   const isLongContent = content.length > EXPAND_THRESHOLD || content.includes("\n");
-  const cfg = getQrTypeStyle(contentType, templateKey);
+
+  // effectiveType: use templateKey whenever it carries a specific type (not a
+  // generic alias). This ensures Business QR templates (reviewpage, menucatalogue,
+  // etc.) and structured types (wifi, contact, …) stored only as templateKey are
+  // rendered correctly even when contentType is the broad "url" or "text".
+  const GENERIC_TYPES = new Set(["url", "text", "biolink"]);
+  const effectiveType = (templateKey && !GENERIC_TYPES.has(templateKey)) ? templateKey : contentType;
+
+  const cfg = getQrTypeStyle(effectiveType, templateKey);
   const hasOpenAction = !isDeactivated && !hideOpenAction && effectiveType !== "text" && effectiveType !== "product";
 
   async function handleCopy() {
@@ -317,13 +325,6 @@ const ContentCard = React.memo(function ContentCard({ content, contentType, pars
       setTimeout(() => setCopied(false), 2000);
     }
   }
-
-  // effectiveType: use templateKey whenever it carries a specific type (not a
-  // generic alias). This ensures Business QR templates (reviewpage, menucatalogue,
-  // etc.) and structured types (wifi, contact, …) stored only as templateKey are
-  // rendered correctly even when contentType is the broad "url" or "text".
-  const GENERIC_TYPES = new Set(["url", "text", "biolink"]);
-  const effectiveType = (templateKey && !GENERIC_TYPES.has(templateKey)) ? templateKey : contentType;
 
   const URL_LIKE_TYPES = new Set(["url", "instagram", "twitter", "youtube", "linkedin", "telegram", "facebook", "spotify", "discord", "tiktok", "zoom", "calendly", "appdownload", "app", "social", "media", "paypal", "venmo", "mobilepay", "reviewpage", "menucatalogue", "donation", "razorpay", "snapchat"]);
   const isUrlLike = URL_LIKE_TYPES.has(effectiveType) || URL_LIKE_TYPES.has(contentType);
