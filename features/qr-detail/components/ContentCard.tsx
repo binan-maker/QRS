@@ -308,11 +308,21 @@ const ContentCard = React.memo(function ContentCard({ content, contentType, pars
   const isLongContent = content.length > EXPAND_THRESHOLD || content.includes("\n");
 
   // effectiveType: use templateKey whenever it carries a specific type (not a
-  // generic alias). This ensures Business QR templates (reviewpage, menucatalogue,
-  // etc.) and structured types (wifi, contact, …) stored only as templateKey are
-  // rendered correctly even when contentType is the broad "url" or "text".
+  // generic alias). This ensures structured types (wifi, contact, …) stored only
+  // as templateKey are rendered correctly even when contentType is "url"/"text".
   const GENERIC_TYPES = new Set(["url", "text", "biolink"]);
-  const effectiveType = (templateKey && !GENERIC_TYPES.has(templateKey)) ? templateKey : contentType;
+  const rawEffective = (templateKey && !GENERIC_TYPES.has(templateKey)) ? templateKey : contentType;
+
+  // Types actively supported for rich display. Anything else (old removed social/
+  // payment/media types like instagram, twitter, youtube, linkedin, facebook,
+  // spotify, discord, tiktok, snapchat, telegram, zoom, paypal, venmo, razorpay,
+  // donation, menucatalogue, reviewpage, google_maps, etc.) falls back to "url".
+  const ACTIVE_DISPLAY_TYPES = new Set([
+    "url", "text", "email", "wifi", "paymentlink", "contact", "mecard",
+    "payment", "upi", "scantopay", "phone", "sms", "location", "event",
+    "calendar", "whatsapp", "crypto", "encrypted",
+  ]);
+  const effectiveType = ACTIVE_DISPLAY_TYPES.has(rawEffective) ? rawEffective : "url";
 
   const cfg = getQrTypeStyle(effectiveType, templateKey);
   const hasOpenAction = !isDeactivated && !hideOpenAction && effectiveType !== "text" && effectiveType !== "product";
