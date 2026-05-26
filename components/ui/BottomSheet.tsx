@@ -1,7 +1,12 @@
 import React, { useState, useRef, useEffect } from "react";
 import {
-  Modal, View, Animated, Pressable, StyleSheet,
-  Platform, ViewStyle,
+  Modal,
+  View,
+  Animated,
+  Pressable,
+  StyleSheet,
+  Platform,
+  ViewStyle,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import * as NavigationBar from "expo-navigation-bar";
@@ -17,7 +22,13 @@ interface Props {
   sheetStyle?: ViewStyle;
 }
 
-export default function BottomSheet({ visible, onClose, children, maxHeight = "85%", sheetStyle }: Props) {
+export default function BottomSheet({
+  visible,
+  onClose,
+  children,
+  maxHeight = "85%",
+  sheetStyle,
+}: Props) {
   const { colors } = useTheme();
   const insets = useSafeAreaInsets();
   const [internalVisible, setInternalVisible] = useState(visible);
@@ -35,11 +46,15 @@ export default function BottomSheet({ visible, onClose, children, maxHeight = "8
     if (visible) {
       NavigationBar.setPositionAsync("relative").catch(() => {});
       NavigationBar.setBackgroundColorAsync(colors.surface).catch(() => {});
-      NavigationBar.setButtonStyleAsync(colors.isDark ? "light" : "dark").catch(() => {});
+      NavigationBar.setButtonStyleAsync(colors.isDark ? "light" : "dark").catch(
+        () => {},
+      );
     } else {
       NavigationBar.setPositionAsync("relative").catch(() => {});
       NavigationBar.setBackgroundColorAsync(colors.background).catch(() => {});
-      NavigationBar.setButtonStyleAsync(colors.isDark ? "light" : "dark").catch(() => {});
+      NavigationBar.setButtonStyleAsync(colors.isDark ? "light" : "dark").catch(
+        () => {},
+      );
     }
   }, [visible, colors.surface, colors.background, colors.isDark]);
 
@@ -49,8 +64,16 @@ export default function BottomSheet({ visible, onClose, children, maxHeight = "8
     } else {
       animRef.current?.stop();
       animRef.current = Animated.parallel([
-        Animated.timing(overlayAnim, { toValue: 0, duration: 180, useNativeDriver: true }),
-        Animated.timing(sheetAnim, { toValue: 900, duration: 220, useNativeDriver: true }),
+        Animated.timing(overlayAnim, {
+          toValue: 0,
+          duration: 180,
+          useNativeDriver: true,
+        }),
+        Animated.timing(sheetAnim, {
+          toValue: 900,
+          duration: 220,
+          useNativeDriver: true,
+        }),
       ]);
       animRef.current.start(({ finished }) => {
         if (finished) setInternalVisible(false);
@@ -63,8 +86,16 @@ export default function BottomSheet({ visible, onClose, children, maxHeight = "8
       overlayAnim.setValue(0);
       sheetAnim.setValue(900);
       animRef.current = Animated.parallel([
-        Animated.timing(overlayAnim, { toValue: 1, duration: 200, useNativeDriver: true }),
-        Animated.timing(sheetAnim, { toValue: 0, duration: 240, useNativeDriver: true }),
+        Animated.timing(overlayAnim, {
+          toValue: 1,
+          duration: 200,
+          useNativeDriver: true,
+        }),
+        Animated.timing(sheetAnim, {
+          toValue: 0,
+          duration: 240,
+          useNativeDriver: true,
+        }),
       ]);
       animRef.current.start();
     }
@@ -74,9 +105,10 @@ export default function BottomSheet({ visible, onClose, children, maxHeight = "8
   // bottom=0 because the modal is constrained above the nav bar. Always add
   // 16 px on top of whatever the context gives us, and never go below 32 px
   // on Android so the last row never sits flush against the nav bar.
-  const bottomPad = Platform.OS === "web"
-    ? 0
-    : Math.max(insets.bottom + 16, Platform.OS === "android" ? 32 : 24);
+  const bottomPad =
+    Platform.OS === "web"
+      ? 24 // Gives the bottom action button breathing space above the window frame
+      : Math.max(insets.bottom + 16, Platform.OS === "android" ? 32 : 24);
 
   return (
     <Modal
@@ -88,7 +120,11 @@ export default function BottomSheet({ visible, onClose, children, maxHeight = "8
     >
       <View style={styles.root}>
         <Animated.View
-          style={[StyleSheet.absoluteFillObject, styles.backdrop, { opacity: overlayAnim }]}
+          style={[
+            StyleSheet.absoluteFillObject,
+            styles.backdrop,
+            { opacity: overlayAnim },
+          ]}
           pointerEvents="box-none"
         >
           <Pressable style={StyleSheet.absoluteFill} onPress={onClose} />
@@ -97,7 +133,6 @@ export default function BottomSheet({ visible, onClose, children, maxHeight = "8
         <View style={styles.sheetContainer} pointerEvents="box-none">
           <Animated.View
             style={{ transform: [{ translateY: sheetAnim }] }}
-            pointerEvents="box-none"
           >
             <View
               style={[
@@ -115,7 +150,12 @@ export default function BottomSheet({ visible, onClose, children, maxHeight = "8
                 sheetStyle,
               ]}
             >
-              <View style={[styles.handle, { backgroundColor: colors.surfaceLight }]} />
+              <View
+                style={[
+                  styles.handle,
+                  { backgroundColor: colors.surfaceLight },
+                ]}
+              />
               {children}
             </View>
           </Animated.View>
@@ -128,15 +168,13 @@ export default function BottomSheet({ visible, onClose, children, maxHeight = "8
 const styles = StyleSheet.create({
   root: {
     flex: 1,
+    justifyContent: "flex-end",
   },
   backdrop: {
     backgroundColor: "rgba(0,0,0,0.6)",
   },
   sheetContainer: {
-    position: "absolute",
-    left: 0,
-    right: 0,
-    bottom: 0,
+    width: "100%",
   },
   sheet: {
     borderTopLeftRadius: 24,

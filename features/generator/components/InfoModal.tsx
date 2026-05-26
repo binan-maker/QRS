@@ -58,17 +58,32 @@ export default function InfoModal({ visible, onClose }: Props) {
   return (
     <BottomSheet visible={visible} onClose={onClose}>
       <View style={styles.header}>
-        <View style={[styles.headerIcon, { backgroundColor: colors.primaryDim }]}>
-          <Ionicons name="information-circle" size={18} color={colors.primary} />
+        <View
+          style={[styles.headerIcon, { backgroundColor: colors.primaryDim }]}
+        >
+          <Ionicons
+            name="information-circle"
+            size={18}
+            color={colors.primary}
+          />
         </View>
         <View style={{ flex: 1 }}>
-          <Text style={[styles.title, { color: colors.text }]}>About QR Generation</Text>
-          <Text style={[styles.subtitle, { color: colors.textMuted }]}>Three modes — one powerful platform</Text>
+          <Text style={[styles.title, { color: colors.text }]}>
+            About QR Generation
+          </Text>
+          <Text style={[styles.subtitle, { color: colors.textMuted }]}>
+            Three modes — one powerful platform
+          </Text>
         </View>
       </View>
 
-      <ScrollView showsVerticalScrollIndicator={false} style={{ maxHeight: 380 }}>
-        <Text style={[styles.sectionLabel, { color: colors.textMuted }]}>MODES</Text>
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        style={{ maxHeight: 380 }}
+      >
+        <Text style={[styles.sectionLabel, { color: colors.textMuted }]}>
+          MODES
+        </Text>
 
         {MODES.map((f, i) => (
           <View
@@ -76,20 +91,34 @@ export default function InfoModal({ visible, onClose }: Props) {
             style={[
               styles.item,
               { borderBottomColor: colors.surfaceBorder },
-              i === MODES.length - 1 && { borderBottomWidth: 0, marginBottom: 12 },
+              i === MODES.length - 1 && {
+                borderBottomWidth: 0,
+                marginBottom: 12,
+              },
             ]}
           >
             <View style={[styles.itemIcon, { backgroundColor: f.iconBg }]}>
               <Ionicons name={f.icon} size={17} color={f.iconColor} />
             </View>
             <View style={{ flex: 1 }}>
-              <Text style={[styles.itemLabel, { color: f.accent }]}>{f.label}</Text>
-              <Text style={[styles.itemDesc, { color: colors.textSecondary }]}>{f.desc}</Text>
+              <Text style={[styles.itemLabel, { color: f.accent }]}>
+                {f.label}
+              </Text>
+              <Text style={[styles.itemDesc, { color: colors.textSecondary }]}>
+                {f.desc}
+              </Text>
             </View>
           </View>
         ))}
 
-        <Text style={[styles.sectionLabel, { color: colors.textMuted, marginTop: 4 }]}>FEATURES</Text>
+        <Text
+          style={[
+            styles.sectionLabel,
+            { color: colors.textMuted, marginTop: 4 },
+          ]}
+        >
+          FEATURES
+        </Text>
 
         {EXTRAS.map((f, i) => (
           <View
@@ -104,8 +133,12 @@ export default function InfoModal({ visible, onClose }: Props) {
               <Ionicons name={f.icon} size={17} color={f.iconColor} />
             </View>
             <View style={{ flex: 1 }}>
-              <Text style={[styles.itemLabel, { color: colors.text }]}>{f.label}</Text>
-              <Text style={[styles.itemDesc, { color: colors.textSecondary }]}>{f.desc}</Text>
+              <Text style={[styles.itemLabel, { color: colors.text }]}>
+                {f.label}
+              </Text>
+              <Text style={[styles.itemDesc, { color: colors.textSecondary }]}>
+                {f.desc}
+              </Text>
             </View>
           </View>
         ))}
@@ -118,43 +151,77 @@ export default function InfoModal({ visible, onClose }: Props) {
         ]}
         onPress={onClose}
       >
-        <Text style={[styles.closeBtnText, { color: colors.primaryText }]}>Got it</Text>
+        <Text style={[styles.closeBtnText, { color: colors.primaryText }]}>
+          Got it
+        </Text>
       </Pressable>
     </BottomSheet>
   );
 }
-
 const styles = StyleSheet.create({
   header: {
-    flexDirection: "row", alignItems: "center", gap: 10, marginBottom: 12,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    marginBottom: 18, // Increased from 12 for vertical elegance
   },
   headerIcon: {
-    width: 36, height: 36, borderRadius: 10,
-    alignItems: "center", justifyContent: "center",
+    width: 40, // Increased size slightly to feel more grounded
+    height: 40,
+    borderRadius: 12,
+    alignItems: "center",
+    justifyContent: "center",
   },
-  title: { fontSize: 16, fontFamily: "Inter_700Bold", lineHeight: 20 },
-  subtitle: { fontSize: 11, fontFamily: "Inter_400Regular", marginTop: 2 },
+  title: {
+    fontSize: 17, // Made slightly bigger for strong header hierarchy
+    fontFamily: "Inter_700Bold",
+    lineHeight: 22,
+  },
+  subtitle: {
+    fontSize: 12,
+    fontFamily: "Inter_400Regular",
+    marginTop: 2,
+  },
   sectionLabel: {
-    fontSize: 10,
+    fontSize: 11,
     fontFamily: "Inter_600SemiBold",
-    letterSpacing: 1.1,
-    marginBottom: 4,
+    letterSpacing: 1.2,
+    marginBottom: 8, // More spacing below the section label
     marginLeft: 2,
   },
   item: {
-    flexDirection: "row", gap: 12,
-    paddingVertical: 11,
+    flexDirection: "row",
+    gap: 14, // Extra horizontal breathing space between icon and text
+    paddingVertical: 14, // Expanded cell heights
     borderBottomWidth: StyleSheet.hairlineWidth,
   },
   itemIcon: {
-    width: 38, height: 38, borderRadius: 11,
-    alignItems: "center", justifyContent: "center", flexShrink: 0,
+    width: 38,
+    height: 38,
+    borderRadius: 11,
+    alignItems: "center",
+    justifyContent: "center",
+    flexShrink: 0,
   },
-  itemLabel: { fontSize: 13, fontFamily: "Inter_600SemiBold", marginBottom: 2 },
-  itemDesc: { fontSize: 12, fontFamily: "Inter_400Regular", lineHeight: 17 },
+  itemLabel: {
+    fontSize: 14,
+    fontFamily: "Inter_600SemiBold",
+    marginBottom: 3,
+  },
+  itemDesc: {
+    fontSize: 12,
+    fontFamily: "Inter_400Regular",
+    lineHeight: 18, // Augmented line-height prevents squishing in long descriptions
+  },
   closeBtn: {
-    marginTop: 14, marginBottom: 4, paddingVertical: 13,
-    borderRadius: 14, alignItems: "center",
+    marginTop: 18,
+    marginBottom: 8,
+    paddingVertical: 14,
+    borderRadius: 14,
+    alignItems: "center",
   },
-  closeBtnText: { fontSize: 14, fontFamily: "Inter_700Bold" },
+  closeBtnText: {
+    fontSize: 15,
+    fontFamily: "Inter_700Bold",
+  },
 });
