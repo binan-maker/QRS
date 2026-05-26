@@ -18,6 +18,10 @@ import { QR_REGISTRY } from "@/features/generator/data/registry";
 import { resolveExpiryDate, type AdvancedSettings } from "@/features/generator/components/AdvancedSettingsPanel";
 import type { BusinessCategory } from "@/features/generator/components/BusinessTypeSelector";
 import type { QrMode } from "@/features/generator/types/form-types";
+import { appendToLocalScanHistory } from "@/features/scanner/utils/scan-history";
+import { clearCache } from "@/lib/cache/local-cache";
+
+function myQrsCacheKey(userId: string) { return `myqrs_v1_${userId}`; }
 
 function getFirestoreContentType(presetIdx: number): string {
   return QR_PRESETS[presetIdx]?.contentType ?? "text";
@@ -172,6 +176,27 @@ export function useQrSave({
         setSavedDocId(docId);
         setSavedToProfile(true);
         setTimeout(() => setSavedToProfile(false), 4000);
+
+        // Compute the qrCodeId (SHA-256 of encodedValue, first 20 chars) so the
+        // History page can navigate to the correct QR Detail screen.
+        const qrIdHash = await Crypto.digestStringAsync(
+          Crypto.CryptoDigestAlgorithm.SHA256,
+          encodedValue,
+        );
+        const computedQrCodeId = qrIdHash.slice(0, 20);
+
+        // Add to local scan history so this QR appears on the History page.
+        appendToLocalScanHistory(user.id, {
+          id: `gen_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
+          content: builtContent,
+          contentType: savedContentType,
+          scannedAt: new Date().toISOString(),
+          qrCodeId: computedQrCodeId,
+          scanSource: "camera",
+        }).catch(() => {});
+
+        // Invalidate the My QR Codes 5-min cache so the new QR appears immediately.
+        clearCache(myQrsCacheKey(user.id)).catch(() => {});
       } catch (err: any) {
         showToast(err?.message || "Could not save QR code. Please try again.", "error");
       } finally {

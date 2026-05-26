@@ -5,7 +5,7 @@ import {
 } from "react-native";
 import { FlashList as _FlashList } from "@shopify/flash-list";
 const FlashList = _FlashList as any;
-import { router } from "expo-router";
+import { router, useFocusEffect } from "expo-router";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTopInset } from "@/lib/utils/platform";
@@ -193,6 +193,17 @@ export default function MyQrCodesScreen() {
   }, [user]);
 
   useEffect(() => { if (!user) return; fetchQrCodes(); }, [user?.id]);
+
+  useFocusEffect(
+    useCallback(() => {
+      if (!user?.id) return;
+      // Re-check the cache on every focus — if the cache was cleared (e.g. after
+      // generating a new QR), fetch fresh data so the new QR appears immediately.
+      readCache<GeneratedQrItem[]>(qrsCacheKey(user.id)).then((cached) => {
+        if (!cached) fetchQrCodes(true);
+      }).catch(() => {});
+    }, [user?.id, fetchQrCodes])
+  );
 
   function handleRefresh() {
     setRefreshing(true);

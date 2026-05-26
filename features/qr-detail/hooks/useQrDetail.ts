@@ -24,7 +24,8 @@ export function useQrDetail(id: string) {
   const [copied, setCopied] = useState(false);
 
   const data = useQrData(id, userId);
-  const content = data.qrCode?.content || data.offlineContent;
+  const rawContent = data.qrCode?.content || data.offlineContent;
+  const content = (data.qrCode as any)?.displayDestination || rawContent;
   const contentType = data.qrCode?.contentType || data.offlineContentType;
 
   const creatorId = data.ownerInfo?.ownerId ?? null;
@@ -65,8 +66,11 @@ export function useQrDetail(id: string) {
   function getCombinedVerdict() {
     const { offlineBlacklistMatch, paymentSafety, urlSafety, instantVerdict } = safety;
     const trust = getTrustInfo();
-    // Only QR codes generated and cryptographically signed by QR Guard can receive a green SAFE verdict.
-    const isQrGuardVerified = data.ownerInfo?.isBranded === true;
+    // QR Guard verified = owner has branded flag set (either from ownerInfo async fetch
+    // OR from the qrCode document itself which is available immediately on first render).
+    const isQrGuardVerified =
+      data.ownerInfo?.isBranded === true ||
+      (data.qrCode as any)?.isBranded === true;
 
     if (offlineBlacklistMatch.matched) {
       return { level: "caution" as const, label: "CAUTION ADVISED", reason: offlineBlacklistMatch.reason ?? "Potential scam pattern detected", color: colors.warning };
