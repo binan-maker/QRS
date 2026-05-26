@@ -1,8 +1,13 @@
 import React, { useEffect, useRef } from "react";
 import { View, Animated, StyleSheet } from "react-native";
+import ReAnimated, { FadeInDown } from "react-native-reanimated";
 import { useTheme } from "@/contexts/ThemeContext";
 
-export default function HistoryItemSkeleton() {
+interface Props {
+  index?: number;
+}
+
+export default function HistoryItemSkeleton({ index = 0 }: Props) {
   const { colors, isDark } = useTheme();
   const shimmer = useRef(new Animated.Value(0)).current;
 
@@ -23,21 +28,23 @@ export default function HistoryItemSkeleton() {
   );
 
   return (
-    <View style={[styles.card, { backgroundColor: cardBg, borderColor: colors.surfaceBorder }]}>
-      {bone({ width: 48, height: 48, borderRadius: 15, flexShrink: 0 })}
-      <View style={styles.body}>
-        {bone({ height: 14, width: "68%", marginBottom: 5, borderRadius: 7 })}
-        {bone({ height: 11, width: "45%", marginBottom: 7, borderRadius: 6 })}
-        <View style={styles.metaRow}>
-          {bone({ height: 20, width: 52, borderRadius: 100 })}
-          {bone({ height: 20, width: 38, borderRadius: 100 })}
+    <ReAnimated.View entering={FadeInDown.delay(index * 70).springify().damping(20)}>
+      <View style={[styles.card, { backgroundColor: cardBg, borderColor: colors.surfaceBorder }]}>
+        {bone({ width: 48, height: 48, borderRadius: 15, flexShrink: 0 })}
+        <View style={styles.body}>
+          {bone({ height: 14, width: "68%", marginBottom: 5, borderRadius: 7 })}
+          {bone({ height: 11, width: "45%", marginBottom: 7, borderRadius: 6 })}
+          <View style={styles.metaRow}>
+            {bone({ height: 20, width: 52, borderRadius: 100 })}
+            {bone({ height: 20, width: 38, borderRadius: 100 })}
+          </View>
+        </View>
+        <View style={styles.right}>
+          {bone({ height: 10, width: 42, borderRadius: 6 })}
+          {bone({ width: 28, height: 28, borderRadius: 9 })}
         </View>
       </View>
-      <View style={styles.right}>
-        {bone({ height: 10, width: 42, borderRadius: 6 })}
-        {bone({ width: 28, height: 28, borderRadius: 9 })}
-      </View>
-    </View>
+    </ReAnimated.View>
   );
 }
 

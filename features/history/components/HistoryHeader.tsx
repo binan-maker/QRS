@@ -2,6 +2,7 @@ import React from "react";
 import { View, Text, StyleSheet, Pressable, TextInput } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
+import Animated, { FadeInDown, FadeIn, ZoomIn } from "react-native-reanimated";
 import * as Haptics from "@/lib/haptics";
 
 interface Props {
@@ -27,7 +28,10 @@ const HistoryHeader = React.memo(function HistoryHeader({
 }: Props) {
   if (searchVisible) {
     return (
-      <View style={[styles.searchBar, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
+      <Animated.View
+        entering={FadeIn.duration(200)}
+        style={[styles.searchBar, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}
+      >
         <Ionicons name="search-outline" size={17} color={colors.textMuted} />
         <TextInput
           ref={searchInputRef}
@@ -48,35 +52,42 @@ const HistoryHeader = React.memo(function HistoryHeader({
             Cancel
           </Text>
         </Pressable>
-      </View>
+      </Animated.View>
     );
   }
 
   return (
-    <View style={styles.header}>
-      <Text style={[styles.title, { color: colors.text, fontSize: fontSize(22) }]}>
+    <Animated.View entering={FadeInDown.delay(0).springify().damping(22)} style={styles.header}>
+      <Animated.Text
+        entering={FadeInDown.delay(40).springify().damping(20)}
+        style={[styles.title, { color: colors.text, fontSize: fontSize(22) }]}
+      >
         Scan History
-      </Text>
-      <View style={styles.actions}>
-        <Pressable
-          onPress={onOpenSearch}
-          style={[styles.btn, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}
-          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-        >
-          <Ionicons name="search-outline" size={18} color={colors.textSecondary} />
-        </Pressable>
-        <Pressable
-          onPress={() => {
-            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-            router.push({ pathname: "/settings" as any, params: { from: "history" } });
-          }}
-          style={[styles.btn, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}
-          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-        >
-          <Ionicons name="settings-outline" size={18} color={colors.textSecondary} />
-        </Pressable>
-      </View>
-    </View>
+      </Animated.Text>
+      <Animated.View entering={FadeInDown.delay(60).springify().damping(20)} style={styles.actions}>
+        <Animated.View entering={ZoomIn.delay(80).springify().damping(16)}>
+          <Pressable
+            onPress={onOpenSearch}
+            style={[styles.btn, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+          >
+            <Ionicons name="search-outline" size={18} color={colors.textSecondary} />
+          </Pressable>
+        </Animated.View>
+        <Animated.View entering={ZoomIn.delay(110).springify().damping(16)}>
+          <Pressable
+            onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              router.push({ pathname: "/settings" as any, params: { from: "history" } });
+            }}
+            style={[styles.btn, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+          >
+            <Ionicons name="settings-outline" size={18} color={colors.textSecondary} />
+          </Pressable>
+        </Animated.View>
+      </Animated.View>
+    </Animated.View>
   );
 });
 

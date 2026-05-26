@@ -73,7 +73,7 @@ function HistoryScreen() {
 
   // ── List renderers ─────────────────────────────────────────────────────────
   const renderItem = useCallback(
-    ({ item: row }: { item: ListRow }) => {
+    ({ item: row, index }: { item: ListRow; index: number }) => {
       if (row.kind === "header") {
         return <SectionHeader label={row.label} count={row.count} />;
       }
@@ -83,6 +83,7 @@ function HistoryScreen() {
           item={row.item}
           risk={risk as "safe" | "caution" | "dangerous"}
           onDelete={deleteItem}
+          index={index}
         />
       );
     },
@@ -93,7 +94,7 @@ function HistoryScreen() {
     if (!loadingMore) return null;
     return (
       <View style={{ paddingTop: 4 }}>
-        {Array.from({ length: 3 }).map((_, i) => <HistoryItemSkeleton key={i} />)}
+        {Array.from({ length: 3 }).map((_, i) => <HistoryItemSkeleton key={i} index={i} />)}
       </View>
     );
   }, [loadingMore]);

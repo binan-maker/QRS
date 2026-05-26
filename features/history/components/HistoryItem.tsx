@@ -4,6 +4,7 @@ import { router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { Swipeable } from "react-native-gesture-handler";
+import Animated, { FadeInDown } from "react-native-reanimated";
 import * as Haptics from "@/lib/haptics";
 import { useTheme } from "@/contexts/ThemeContext";
 import { formatRelativeTime, getContentTypeMeta, getContentDisplayLabel, getContentSubtitle } from "@/lib/utils/formatters";
@@ -50,15 +51,15 @@ interface HistoryItemProps {
   item: HistoryItemType;
   risk: "safe" | "caution" | "dangerous";
   onDelete: (item: HistoryItemType) => void;
+  index?: number;
 }
 
-const HistoryItem = React.memo(function HistoryItem({ item, risk, onDelete }: HistoryItemProps) {
+const HistoryItem = React.memo(function HistoryItem({ item, risk, onDelete, index = 0 }: HistoryItemProps) {
   const { colors, isDark } = useTheme();
 
   const isFavorite = item.source === "favorite";
   const isSynced   = item.source === "cloud";
 
-  // Memoize all expensive per-item computations
   const displayLabel = useMemo(() => getContentDisplayLabel(item.content, item.contentType), [item.contentType, item.content]);
   const subtitle     = useMemo(() => getContentSubtitle(item.content, item.contentType), [item.contentType, item.content]);
   const meta         = useMemo(() => getTypeMeta(item.contentType), [item.contentType]);
@@ -109,79 +110,81 @@ const HistoryItem = React.memo(function HistoryItem({ item, risk, onDelete }: Hi
   ), [handleDelete]);
 
   return (
-    <Swipeable
-      renderRightActions={renderRightActions}
-      overshootRight={false}
-      friction={2}
-    >
-      <Pressable
-        onPress={handlePress}
-        style={({ pressed }) => [
-          styles.card,
-          {
-            backgroundColor: cardBg,
-            borderColor: accentBorder,
-            opacity: pressed ? 0.9 : 1,
-            transform: [{ scale: pressed ? 0.984 : 1 }],
-            shadowColor: showRisk && riskCfg ? riskCfg.color : (isDark ? "#000" : "#0008FF"),
-            shadowOpacity: isDark ? 0.18 : 0.05,
-          },
-        ]}
+    <Animated.View entering={FadeInDown.delay(Math.min(index, 7) * 50).springify().damping(20)}>
+      <Swipeable
+        renderRightActions={renderRightActions}
+        overshootRight={false}
+        friction={2}
       >
-        <LinearGradient
-          colors={gradient}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={styles.iconBox}
+        <Pressable
+          onPress={handlePress}
+          style={({ pressed }) => [
+            styles.card,
+            {
+              backgroundColor: cardBg,
+              borderColor: accentBorder,
+              opacity: pressed ? 0.9 : 1,
+              transform: [{ scale: pressed ? 0.984 : 1 }],
+              shadowColor: showRisk && riskCfg ? riskCfg.color : (isDark ? "#000" : "#0008FF"),
+              shadowOpacity: isDark ? 0.18 : 0.05,
+            },
+          ]}
         >
-          <Ionicons name={isFavorite ? "heart" : meta.icon} size={21} color="#fff" />
-        </LinearGradient>
+          <LinearGradient
+            colors={gradient}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={styles.iconBox}
+          >
+            <Ionicons name={isFavorite ? "heart" : meta.icon} size={21} color="#fff" />
+          </LinearGradient>
 
-        <View style={styles.body}>
-          <View style={styles.titleRow}>
-            <Text style={[styles.title, { color: colors.text }]} numberOfLines={1} maxFontSizeMultiplier={1}>
-              {paymentData ? paymentData.name : displayLabel}
+          <View style={styles.body}>
+            <View style={styles.titleRow}>
+              <Text style={[styles.title, { color: colors.text }]} numberOfLines={1} maxFontSizeMultiplier={1}>
+                {paymentData ? paymentData.name : displayLabel}
+              </Text>
+              {formattedAmount && (
+                <View style={[styles.amountPill, { backgroundColor: colors.warning + "1E" }]}>
+                  <Text style={[styles.amountText, { color: colors.warning }]} maxFontSizeMultiplier={1}>
+                    {formattedAmount}
+                  </Text>
+                </View>
+              )}
+            </View>
+
+            {subtitle && (
+              <Text style={[styles.subtitle, { color: colors.textSecondary }]} numberOfLines={1} maxFontSizeMultiplier={1}>
+                {subtitle}
+              </Text>
+            )}
+
+            <View style={styles.metaRow}>
+              {showRisk && riskCfg && (
+                <View style={[styles.riskBadge, { backgroundColor: riskCfg.bg, borderColor: riskCfg.color + "45" }]}>
+                  <Ionicons name={riskCfg.icon} size={9} color={riskCfg.color} />
+                  <Text style={[styles.riskText, { color: riskCfg.color }]} maxFontSizeMultiplier={1}>
+                    {riskCfg.label}
+                  </Text>
+                </View>
+              )}
+              {isSynced && (
+                <Ionicons name="cloud-done-outline" size={12} color={colors.safe} />
+              )}
+            </View>
+          </View>
+
+          <View style={styles.right}>
+            <Text style={[styles.time, { color: colors.textMuted }]} maxFontSizeMultiplier={1}>
+              {timeAgo}
             </Text>
-            {formattedAmount && (
-              <View style={[styles.amountPill, { backgroundColor: colors.warning + "1E" }]}>
-                <Text style={[styles.amountText, { color: colors.warning }]} maxFontSizeMultiplier={1}>
-                  {formattedAmount}
-                </Text>
-              </View>
-            )}
+            <View style={[styles.chevronWrap, { backgroundColor: gradient[0] + "18" }]}>
+              <Ionicons name="chevron-forward" size={13} color={gradient[0]} />
+            </View>
           </View>
-
-          {subtitle && (
-            <Text style={[styles.subtitle, { color: colors.textSecondary }]} numberOfLines={1} maxFontSizeMultiplier={1}>
-              {subtitle}
-            </Text>
-          )}
-
-          <View style={styles.metaRow}>
-            {showRisk && riskCfg && (
-              <View style={[styles.riskBadge, { backgroundColor: riskCfg.bg, borderColor: riskCfg.color + "45" }]}>
-                <Ionicons name={riskCfg.icon} size={9} color={riskCfg.color} />
-                <Text style={[styles.riskText, { color: riskCfg.color }]} maxFontSizeMultiplier={1}>
-                  {riskCfg.label}
-                </Text>
-              </View>
-            )}
-            {isSynced && (
-              <Ionicons name="cloud-done-outline" size={12} color={colors.safe} />
-            )}
-          </View>
-        </View>
-
-        <View style={styles.right}>
-          <Text style={[styles.time, { color: colors.textMuted }]} maxFontSizeMultiplier={1}>
-            {timeAgo}
-          </Text>
-          <View style={[styles.chevronWrap, { backgroundColor: gradient[0] + "18" }]}>
-            <Ionicons name="chevron-forward" size={13} color={gradient[0]} />
-          </View>
-        </View>
-      </Pressable>
-    </Swipeable>
+        </Pressable>
+      </Swipeable>
+    </Animated.View>
   );
 });
 

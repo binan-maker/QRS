@@ -1,6 +1,7 @@
 import React from "react";
 import { View, Text, StyleSheet, Pressable, ScrollView } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import Animated, { FadeInDown } from "react-native-reanimated";
 import * as Haptics from "@/lib/haptics";
 import { useTheme } from "@/contexts/ThemeContext";
 import type { Filter } from "@/features/history/types";
@@ -66,7 +67,7 @@ const FilterBar = React.memo(function FilterBar({
       bounces={false}
       style={styles.scroll}
     >
-      {filters.map((f) => {
+      {filters.map((f, idx) => {
         const isFavorite = f.key === "favorites";
         const isActive   = activeFilter === f.key;
 
@@ -76,47 +77,51 @@ const FilterBar = React.memo(function FilterBar({
           : (FILTER_ICONS[f.key] ?? "apps-outline");
 
         return (
-          <Pressable
+          <Animated.View
             key={f.key}
-            onPress={() => {
-              onFilterChange(f.key);
-              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-            }}
-            style={({ pressed }) => [
-              styles.chip,
-              isActive
-                ? {
-                    backgroundColor: activeColor,
-                    borderColor: "transparent",
-                    shadowColor: activeColor,
-                    shadowOffset: { width: 0, height: 4 },
-                    shadowOpacity: isDark ? 0.45 : 0.3,
-                    shadowRadius: 10,
-                    elevation: 5,
-                  }
-                : {
-                    backgroundColor: isDark ? colors.surfaceLight + "CC" : colors.surface,
-                    borderColor: colors.surfaceBorder,
-                  },
-              { opacity: pressed ? 0.78 : 1, transform: [{ scale: pressed ? 0.96 : 1 }] },
-            ]}
+            entering={FadeInDown.delay(80 + Math.min(idx, 8) * 40).springify().damping(18)}
           >
-            <Ionicons
-              name={iconName}
-              size={13}
-              color={isActive ? "#fff" : colors.textSecondary}
-            />
-            <Text
-              style={[
-                styles.chipText,
-                { color: isActive ? "#fff" : colors.textSecondary },
+            <Pressable
+              onPress={() => {
+                onFilterChange(f.key);
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              }}
+              style={({ pressed }) => [
+                styles.chip,
+                isActive
+                  ? {
+                      backgroundColor: activeColor,
+                      borderColor: "transparent",
+                      shadowColor: activeColor,
+                      shadowOffset: { width: 0, height: 4 },
+                      shadowOpacity: isDark ? 0.45 : 0.3,
+                      shadowRadius: 10,
+                      elevation: 5,
+                    }
+                  : {
+                      backgroundColor: isDark ? colors.surfaceLight + "CC" : colors.surface,
+                      borderColor: colors.surfaceBorder,
+                    },
+                { opacity: pressed ? 0.78 : 1, transform: [{ scale: pressed ? 0.96 : 1 }] },
               ]}
-              numberOfLines={1}
-              maxFontSizeMultiplier={1}
             >
-              {f.label}
-            </Text>
-          </Pressable>
+              <Ionicons
+                name={iconName}
+                size={13}
+                color={isActive ? "#fff" : colors.textSecondary}
+              />
+              <Text
+                style={[
+                  styles.chipText,
+                  { color: isActive ? "#fff" : colors.textSecondary },
+                ]}
+                numberOfLines={1}
+                maxFontSizeMultiplier={1}
+              >
+                {f.label}
+              </Text>
+            </Pressable>
+          </Animated.View>
         );
       })}
     </ScrollView>
