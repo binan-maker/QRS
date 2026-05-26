@@ -7,7 +7,7 @@ import { StatusBar } from "expo-status-bar";
 import { router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
-import Animated, { FadeInDown, FadeIn } from "react-native-reanimated";
+import Animated, { FadeInDown, FadeIn, ZoomIn } from "react-native-reanimated";
 import * as Haptics from "expo-haptics";
 import { useTheme } from "@/contexts/ThemeContext";
 import { useAuth } from "@/contexts/AuthContext";
@@ -168,10 +168,12 @@ export default function GuardQrDetailScreen({ id, guardUuid, ownerDocId }: Props
         <View style={[styles.container, { paddingTop: topInset }]}>
 
           {/* ── Guard NavBar ─────────────────────────────────── */}
-          <View style={[styles.navBar, { gap: 10 }]}>
-            <Pressable onPress={safeBack} style={styles.navBackBtn}>
-              <Ionicons name="chevron-back" size={24} color={colors.text} />
-            </Pressable>
+          <Animated.View entering={FadeInDown.delay(0).springify().damping(20)} style={[styles.navBar, { gap: 10 }]}>
+            <Animated.View entering={ZoomIn.delay(60).springify().damping(18)}>
+              <Pressable onPress={safeBack} style={styles.navBackBtn}>
+                <Ionicons name="chevron-back" size={24} color={colors.text} />
+              </Pressable>
+            </Animated.View>
             <View style={guardStyles.navTitleRow}>
               <View style={[guardStyles.navShieldWrap, { backgroundColor: ACCENT + "18" }]}>
                 <Ionicons name="shield-checkmark" size={15} color={ACCENT} />
@@ -180,10 +182,12 @@ export default function GuardQrDetailScreen({ id, guardUuid, ownerDocId }: Props
                 Living Shield QR
               </Text>
             </View>
-            <Pressable onPress={() => setOverflowOpen(true)} style={styles.navBackBtn}>
-              <Ionicons name="ellipsis-horizontal" size={22} color={colors.text} />
-            </Pressable>
-          </View>
+            <Animated.View entering={ZoomIn.delay(80).springify().damping(18)}>
+              <Pressable onPress={() => setOverflowOpen(true)} style={styles.navBackBtn}>
+                <Ionicons name="ellipsis-horizontal" size={22} color={colors.text} />
+              </Pressable>
+            </Animated.View>
+          </Animated.View>
 
           <ScrollView
             ref={q.scrollRef}
@@ -202,7 +206,7 @@ export default function GuardQrDetailScreen({ id, guardUuid, ownerDocId }: Props
             }
           >
             {/* ── Hero: Living Shield Card ─────────────────── */}
-            <Animated.View entering={FadeInDown.duration(220)}>
+            <Animated.View entering={FadeInDown.delay(60).springify().damping(18)}>
               <View style={[guardStyles.heroCard, {
                 backgroundColor: isDark ? "#0d0d1a" : "#f5f5ff",
                 borderColor: ACCENT + "28",
@@ -375,7 +379,7 @@ export default function GuardQrDetailScreen({ id, guardUuid, ownerDocId }: Props
 
             {/* ── Community: Trust score ───────────────────── */}
             {!q.offlineMode && (
-              <Animated.View entering={FadeInDown.duration(280)}>
+              <Animated.View entering={FadeInDown.delay(180).springify().damping(18)}>
                 <TrustScoreCard
                   trustInfo={trust}
                   reportCounts={q.reportCounts}
@@ -398,7 +402,7 @@ export default function GuardQrDetailScreen({ id, guardUuid, ownerDocId }: Props
             {/* ── Reports (logged-in only) ─────────────────── */}
             {user && !q.offlineMode && (
               <Animated.View
-                entering={FadeInDown.duration(290)}
+                entering={FadeInDown.delay(240).springify().damping(18)}
                 onLayout={(e: any) => { reportSectionY.current = e.nativeEvent.layout.y; }}
               >
                 <ReportGrid
@@ -419,7 +423,7 @@ export default function GuardQrDetailScreen({ id, guardUuid, ownerDocId }: Props
 
             {/* ── Comments ─────────────────────────────────── */}
             {!q.offlineMode && (
-              <Animated.View entering={FadeInDown.duration(300)}>
+              <Animated.View entering={FadeInDown.delay(300).springify().damping(18)}>
                 <CommentsSection
                   user={user}
                   totalComments={q.totalComments}
@@ -455,7 +459,7 @@ export default function GuardQrDetailScreen({ id, guardUuid, ownerDocId }: Props
               </Animated.View>
             )}
 
-            <Animated.View entering={FadeInDown.duration(300)}>
+            <Animated.View entering={FadeInDown.delay(360).springify().damping(18)}>
               <DonationBanner />
             </Animated.View>
           </ScrollView>

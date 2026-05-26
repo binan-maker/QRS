@@ -219,7 +219,7 @@ export default function StaticQrDetailScreen({ id, ownerDocId }: Props) {
           >
             {/* External QR source badge */}
             {!q.offlineMode && !hasOwner && (
-              <Animated.View entering={FadeIn.duration(200)}>
+              <Animated.View entering={FadeInDown.delay(60).springify().damping(18)}>
                 <View style={[staticStyles.externalBadge, {
                   backgroundColor: isDark ? "#1a1208" : "#fffbeb",
                   borderColor: "#f59e0b30",
@@ -234,7 +234,7 @@ export default function StaticQrDetailScreen({ id, ownerDocId }: Props) {
 
             {/* Deactivated banner */}
             {isDeactivated && (
-              <Animated.View entering={FadeIn.duration(150)}>
+              <Animated.View entering={FadeInDown.delay(60).springify().damping(18)}>
                 <View style={[styles.deactivatedBanner, { borderColor: "#ef444440" }]}>
                   <LinearGradient
                     colors={["rgba(239,68,68,0.18)", "rgba(239,68,68,0.08)"]}
@@ -257,7 +257,7 @@ export default function StaticQrDetailScreen({ id, ownerDocId }: Props) {
             )}
 
             {/* Verdict is the hero element for static QRs */}
-            <Animated.View entering={FadeInDown.duration(220)}>
+            <Animated.View entering={FadeInDown.delay(80).springify().damping(18)}>
               <VerdictBanner verdict={verdict} offlineMode={q.offlineMode} />
             </Animated.View>
 
@@ -268,11 +268,11 @@ export default function StaticQrDetailScreen({ id, ownerDocId }: Props) {
               />
             )}
 
-            <Animated.View entering={FadeInDown.duration(240)}>
+            <Animated.View entering={FadeInDown.delay(140).springify().damping(18)}>
               <AdvisoryDisclaimer />
             </Animated.View>
 
-            <Animated.View entering={FadeInDown.duration(250)}>
+            <Animated.View entering={FadeInDown.delay(200).springify().damping(18)}>
               <ContentCard
                 content={content}
                 contentType={contentType}
@@ -292,7 +292,7 @@ export default function StaticQrDetailScreen({ id, ownerDocId }: Props) {
                 );
                 if (!warnings.length) return null;
                 return (
-                  <Animated.View entering={FadeInDown.duration(150)}>
+                  <Animated.View entering={FadeInDown.delay(220).springify().damping(18)}>
                     <SafetyWarningCard
                       riskLevel={q.paymentSafety!.riskLevel as "caution" | "dangerous"}
                       warnings={warnings}
@@ -309,19 +309,19 @@ export default function StaticQrDetailScreen({ id, ownerDocId }: Props) {
             {contentType === "payment" &&
               q.paymentSafety?.evidence &&
               q.paymentSafety.evidence.length > 0 && (
-                <Animated.View entering={FadeInDown.duration(150)}>
+                <Animated.View entering={FadeInDown.delay(240).springify().damping(18)}>
                   <EvidenceCard title="Payment Analysis" evidence={q.paymentSafety.evidence} />
                 </Animated.View>
               )}
 
             {!q.ownerInfo?.isBranded && !q.offlineMode && !hasOwner && (
-              <Animated.View entering={FadeInDown.duration(150)}>
+              <Animated.View entering={FadeInDown.delay(220).springify().damping(18)}>
                 <ExternalQrBanner />
               </Animated.View>
             )}
 
             {!q.offlineMode && (
-              <Animated.View entering={FadeInDown.duration(180)}>
+              <Animated.View entering={FadeInDown.delay(260).springify().damping(18)}>
                 <TrustScoreCard
                   trustInfo={trust}
                   reportCounts={q.reportCounts}
@@ -347,7 +347,7 @@ export default function StaticQrDetailScreen({ id, ownerDocId }: Props) {
             {user && (
               <>
                 <Animated.View
-                  entering={FadeInDown.duration(180)}
+                  entering={FadeInDown.delay(300).springify().damping(18)}
                   onLayout={(e: any) => {
                     reportSectionY.current = e.nativeEvent.layout.y;
                   }}
@@ -388,7 +388,7 @@ export default function StaticQrDetailScreen({ id, ownerDocId }: Props) {
 
                 {((contentType === "url" && q.urlSafety?.isSuspicious) ||
                   q.offlineBlacklistMatch.matched) && (
-                  <Animated.View entering={FadeInDown.duration(150)}>
+                  <Animated.View entering={FadeInDown.delay(320).springify().damping(18)}>
                     {contentType === "url" && q.urlSafety?.isSuspicious && (
                       <SafetyWarningCard
                         riskLevel={q.urlSafety.riskLevel as "caution" | "dangerous"}
@@ -413,7 +413,7 @@ export default function StaticQrDetailScreen({ id, ownerDocId }: Props) {
                 {contentType === "url" &&
                   q.urlSafety?.evidence &&
                   q.urlSafety.evidence.length > 0 && (
-                    <Animated.View entering={FadeInDown.duration(150)}>
+                    <Animated.View entering={FadeInDown.delay(340).springify().damping(18)}>
                       <EvidenceCard title="URL Analysis" evidence={q.urlSafety.evidence} />
                     </Animated.View>
                   )}
@@ -421,7 +421,7 @@ export default function StaticQrDetailScreen({ id, ownerDocId }: Props) {
             )}
 
             {!q.offlineMode && (
-              <Animated.View entering={FadeInDown.duration(180)}>
+              <Animated.View entering={FadeInDown.delay(340).springify().damping(18)}>
                 <CommentsSection
                   user={user}
                   totalComments={q.totalComments}
@@ -458,7 +458,7 @@ export default function StaticQrDetailScreen({ id, ownerDocId }: Props) {
             )}
 
             {user && q.ownerInfo && (
-              <Animated.View entering={FadeInDown.duration(180)}>
+              <Animated.View entering={FadeInDown.delay(360).springify().damping(18)}>
                 <SectionHeader
                   icon="storefront-outline"
                   label="Creator"
@@ -478,7 +478,7 @@ export default function StaticQrDetailScreen({ id, ownerDocId }: Props) {
               </Animated.View>
             )}
 
-            <Animated.View entering={FadeInDown.duration(180)}>
+            <Animated.View entering={FadeInDown.delay(380).springify().damping(18)}>
               <DonationBanner />
             </Animated.View>
           </ScrollView>

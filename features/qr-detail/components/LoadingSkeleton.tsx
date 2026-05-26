@@ -1,4 +1,5 @@
 import { View, ScrollView, StyleSheet } from "react-native";
+import Animated, { FadeIn } from "react-native-reanimated";
 import SkeletonBox from "@/components/ui/SkeletonBox";
 import { useTheme } from "@/contexts/ThemeContext";
 
@@ -24,7 +25,7 @@ export default function LoadingSkeleton({ topInset }: Props) {
   const { colors } = useTheme();
   const styles = makeStyles(colors);
   return (
-    <View style={[styles.container, { paddingTop: topInset }]}>
+    <Animated.View entering={FadeIn.duration(200)} style={[styles.container, { paddingTop: topInset }]}>
       <View style={styles.navBar}>
         <SkeletonBox width={38} height={38} borderRadius={19} />
         <SkeletonBox width={100} height={16} borderRadius={8} style={{ marginHorizontal: "auto" }} />
@@ -65,7 +66,7 @@ export default function LoadingSkeleton({ topInset }: Props) {
         <SkeletonBox height={50} borderRadius={14} style={{ marginBottom: 16 }} />
         {[0, 1, 2].map((i) => <SkeletonCommentCard key={i} colors={colors} />)}
       </ScrollView>
-    </View>
+    </Animated.View>
   );
 }
 

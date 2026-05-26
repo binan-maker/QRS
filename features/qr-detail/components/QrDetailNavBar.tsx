@@ -1,5 +1,6 @@
 import { View, Text, Pressable, ActivityIndicator } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import Animated, { FadeInDown, ZoomIn } from "react-native-reanimated";
 import { useTheme } from "@/contexts/ThemeContext";
 import { makeStyles } from "@/features/qr-detail/styles";
 import { navOfflineStyles } from "@/features/qr-detail/styles";
@@ -52,11 +53,13 @@ export default function QrDetailNavBar({
   const styles = makeStyles(colors);
 
   return (
-    <View style={styles.navBar}>
+    <Animated.View entering={FadeInDown.delay(0).springify().damping(20)} style={styles.navBar}>
       <View style={{ flex: 1, flexDirection: "row", alignItems: "center", gap: 10, minWidth: 0 }}>
-        <Pressable onPress={onBack} style={styles.navBackBtn}>
-          <Ionicons name="chevron-back" size={24} color={colors.text} />
-        </Pressable>
+        <Animated.View entering={ZoomIn.delay(60).springify().damping(18)}>
+          <Pressable onPress={onBack} style={styles.navBackBtn}>
+            <Ionicons name="chevron-back" size={24} color={colors.text} />
+          </Pressable>
+        </Animated.View>
         <View style={{ flex: 1, minWidth: 0 }}>
           <Text style={[styles.navTitle, { textAlign: "left" }]} numberOfLines={1}>
             QR Guard
@@ -119,13 +122,15 @@ export default function QrDetailNavBar({
         /* External / non-Guard QR → no action button shown */
         }
 
-        <Pressable
-          onPress={onOverflowOpen}
-          style={({ pressed }) => [styles.navActionBtn, { opacity: pressed ? 0.7 : 1 }]}
-        >
-          <Ionicons name="ellipsis-vertical" size={20} color={colors.text} />
-        </Pressable>
+        <Animated.View entering={ZoomIn.delay(80).springify().damping(18)}>
+          <Pressable
+            onPress={onOverflowOpen}
+            style={({ pressed }) => [styles.navActionBtn, { opacity: pressed ? 0.7 : 1 }]}
+          >
+            <Ionicons name="ellipsis-vertical" size={20} color={colors.text} />
+          </Pressable>
+        </Animated.View>
       </View>
-    </View>
+    </Animated.View>
   );
 }
