@@ -70,7 +70,7 @@ export default function LoadingSkeleton({ topInset }: Props) {
   );
 }
 
-function makeStyles(c: ReturnType<typeof import("@/contexts/ThemeContext").useTheme>["colors"]) {
+function makeStyles(c: ReturnType<typeof import("@/shared/contexts/ThemeContext").useTheme>["colors"]) {
   return StyleSheet.create({
     container: { flex: 1, backgroundColor: c.background },
     navBar: {

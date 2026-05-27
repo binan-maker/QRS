@@ -128,7 +128,7 @@ const MessagesModal = React.memo(function MessagesModal({
 
 export default MessagesModal;
 
-function makeStyles(c: ReturnType<typeof import("@/contexts/ThemeContext").useTheme>["colors"]) {
+function makeStyles(c: ReturnType<typeof import("@/shared/contexts/ThemeContext").useTheme>["colors"]) {
   return StyleSheet.create({
     header: { marginBottom: 16 },
     title: { fontSize: 18, fontFamily: "Inter_700Bold", color: c.text },

@@ -71,7 +71,7 @@ const MerchantDashboard = React.memo(function MerchantDashboard({
 
 export default MerchantDashboard;
 
-function makeStyles(c: ReturnType<typeof import("@/contexts/ThemeContext").useTheme>["colors"]) {
+function makeStyles(c: ReturnType<typeof import("@/shared/contexts/ThemeContext").useTheme>["colors"]) {
   return StyleSheet.create({
     card: {
       backgroundColor: c.surface, borderRadius: 16, padding: 18,

@@ -122,7 +122,7 @@ const FollowersModal = React.memo(function FollowersModal({
 
 export default FollowersModal;
 
-function makeStyles(c: ReturnType<typeof import("@/contexts/ThemeContext").useTheme>["colors"], bottomInset: number = 20) {
+function makeStyles(c: ReturnType<typeof import("@/shared/contexts/ThemeContext").useTheme>["colors"], bottomInset: number = 20) {
   return StyleSheet.create({
     overlay: {
       flex: 1,
