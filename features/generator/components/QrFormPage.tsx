@@ -163,7 +163,6 @@ export default function QrFormPage({ mode, initialTemplateId, openAiBuilder }: P
                 : colors.surfaceBorder,
             },
           ]}>
-            {/* Header row */}
             <View style={styles.nameRow}>
               <Ionicons
                 name="pricetag-outline"
@@ -178,7 +177,6 @@ export default function QrFormPage({ mode, initialTemplateId, openAiBuilder }: P
               </View>
             </View>
 
-            {/* Input */}
             <TextInput
               style={[styles.nameInput, {
                 color: colors.text,
@@ -195,7 +193,6 @@ export default function QrFormPage({ mode, initialTemplateId, openAiBuilder }: P
               maxLength={80}
             />
 
-            {/* Hint / error */}
             <Text style={[styles.nameHint, { color: showNameError ? colors.danger : colors.textMuted }]}>
               {showNameError ? "Please give your QR code a name before generating" : "Shown on your QR codes list"}
             </Text>
@@ -301,37 +298,46 @@ export default function QrFormPage({ mode, initialTemplateId, openAiBuilder }: P
 
       <QrFormToast msg={toastMsg} type={toastType} animVal={toastAnim} />
 
-      <QrTemplateModal
-        visible={qrTemplateOpen}
-        onClose={() => setQrTemplateOpen(false)}
-        initialTemplateId={initTid}
-        openAiBuilder={initAi}
-        onGenerate={(content, tName) => {
-          setInputValue(content);
-          setTemplateGenerated(true);
-          setTemplateName(tName);
-          setPresetActive(true);
-          setQrTemplateOpen(false);
-        }}
-      />
-      <CustomQrBuilderModal
-        visible={advancedBuilderOpen}
-        onClose={() => setAdvancedBuilderOpen(false)}
-        onGenerate={(content, label) => {
-          setInputValue(content);
-          setTemplateGenerated(true);
-          setTemplateName(label);
-          setPresetActive(true);
-          setAdvancedBuilderOpen(false);
-        }}
-      />
-      <PositionModal
-        visible={positionModalOpen}
-        logoPosition={logoPosition}
-        onSelect={setLogoPosition}
-        onClose={() => setPositionModalOpen(false)}
-      />
-      <InfoModal visible={infoModalOpen} onClose={() => setInfoModalOpen(false)} />
+      {/* ── Modals — lazy mounted (only when open) ────────────── */}
+      {qrTemplateOpen && (
+        <QrTemplateModal
+          visible={qrTemplateOpen}
+          onClose={() => setQrTemplateOpen(false)}
+          initialTemplateId={initTid}
+          openAiBuilder={initAi}
+          onGenerate={(content, tName) => {
+            setInputValue(content);
+            setTemplateGenerated(true);
+            setTemplateName(tName);
+            setPresetActive(true);
+            setQrTemplateOpen(false);
+          }}
+        />
+      )}
+      {advancedBuilderOpen && (
+        <CustomQrBuilderModal
+          visible={advancedBuilderOpen}
+          onClose={() => setAdvancedBuilderOpen(false)}
+          onGenerate={(content, label) => {
+            setInputValue(content);
+            setTemplateGenerated(true);
+            setTemplateName(label);
+            setPresetActive(true);
+            setAdvancedBuilderOpen(false);
+          }}
+        />
+      )}
+      {positionModalOpen && (
+        <PositionModal
+          visible={positionModalOpen}
+          logoPosition={logoPosition}
+          onSelect={setLogoPosition}
+          onClose={() => setPositionModalOpen(false)}
+        />
+      )}
+      {infoModalOpen && (
+        <InfoModal visible={infoModalOpen} onClose={() => setInfoModalOpen(false)} />
+      )}
     </View>
   );
 }
@@ -341,13 +347,11 @@ const styles = StyleSheet.create({
   scroll: { paddingHorizontal: 0, paddingTop: 6, gap: 0 },
 
   nameWrap: { marginHorizontal: 20, marginTop: 12, marginBottom: 12 },
-  nameCard: {
-    borderRadius: 14, borderWidth: 1, padding: 12, gap: 7,
-  },
-  nameRow: { flexDirection: "row", alignItems: "center", gap: 5 },
-  nameLabel: { fontSize: 12, fontFamily: "Inter_600SemiBold", flex: 1 },
+  nameCard: { borderRadius: 14, borderWidth: 1, padding: 12, gap: 7 },
+  nameRow:  { flexDirection: "row", alignItems: "center", gap: 5 },
+  nameLabel:{ fontSize: 12, fontFamily: "Inter_600SemiBold", flex: 1 },
   requiredTag: { borderRadius: 5, paddingHorizontal: 5, paddingVertical: 1 },
-  requiredText: { fontSize: 9, fontFamily: "Inter_600SemiBold" },
+  requiredText:{ fontSize: 9, fontFamily: "Inter_600SemiBold" },
   nameInput: {
     borderRadius: 10, borderWidth: 1,
     paddingHorizontal: 11, paddingVertical: 8,
