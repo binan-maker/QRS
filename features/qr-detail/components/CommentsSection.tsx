@@ -3,7 +3,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { useTheme } from "@/shared/contexts/ThemeContext";
 import { makeStyles } from "@/features/qr-detail/styles";
-import { SectionHeader } from "@/features/qr-detail/components/SectionHeader";
+import { SectionHeader } from "@/shared/components/ui/SectionHeader";
 import CommentItem from "@/features/qr-detail/components/CommentItem";
 import { formatCompactNumber } from "@/shared/utils/number-format";
 import { smartName } from "@/shared/utils/formatters";

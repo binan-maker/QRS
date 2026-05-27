@@ -11,7 +11,7 @@ export { default as HistoryItem }        from "./components/HistoryItem";
 export { default as HistoryItemSkeleton } from "./components/HistoryItemSkeleton";
 export { default as FilterBar }          from "./components/FilterBar";
 export { default as HistoryHeader }      from "./components/HistoryHeader";
-export { default as SectionHeader }      from "./components/SectionHeader";
+export { SectionHeader }                 from "@/shared/components/ui/SectionHeader";
 export { default as EmptyState }         from "./components/EmptyState";
 export { default as CloudErrorBanner }   from "./components/CloudErrorBanner";
 export { default as OfflineBanner }      from "./components/OfflineBanner";

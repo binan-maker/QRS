@@ -28,7 +28,7 @@ import ReportGrid from "@/features/qr-detail/components/ReportGrid";
 import FollowersModal from "@/features/qr-detail/components/modals/FollowersModal";
 import MessagesModal from "@/features/qr-detail/components/modals/MessagesModal";
 import CommentReportModal from "@/features/qr-detail/components/modals/CommentReportModal";
-import { SectionHeader } from "@/features/qr-detail/components/SectionHeader";
+import { SectionHeader } from "@/shared/components/ui/SectionHeader";
 import { OfflineToast } from "@/features/qr-detail/components/OfflineToast";
 import { QrToast } from "@/features/qr-detail/components/QrToast";
 import { VerdictBanner } from "@/features/qr-detail/components/VerdictBanner";

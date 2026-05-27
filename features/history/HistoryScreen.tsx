@@ -15,7 +15,7 @@ import { getActiveFilters }   from "@/features/history/utils/filter-utils";
 import type { ListRow }       from "@/features/history/types";
 
 import HistoryHeader     from "@/features/history/components/HistoryHeader";
-import SectionHeader     from "@/features/history/components/SectionHeader";
+import { SectionHeader } from "@/shared/components/ui/SectionHeader";
 import EmptyState        from "@/features/history/components/EmptyState";
 import CloudErrorBanner  from "@/features/history/components/CloudErrorBanner";
 import OfflineBanner     from "@/features/history/components/OfflineBanner";

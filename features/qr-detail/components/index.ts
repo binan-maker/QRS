@@ -9,7 +9,7 @@ export { default as ReportGrid } from "./ReportGrid";
 export { default as ReportSection } from "./ReportSection";
 export { default as SafetyWarningCard } from "./SafetyWarningCard";
 export { default as TrustScoreCard } from "./TrustScoreCard";
-export { SectionHeader } from "./SectionHeader";
+export { SectionHeader } from "@/shared/components/ui/SectionHeader";
 export { OfflineToast } from "./OfflineToast";
 export { QrToast } from "./QrToast";
 export { VerdictBanner } from "./VerdictBanner";

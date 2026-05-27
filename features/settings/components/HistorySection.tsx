@@ -5,7 +5,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTheme } from "@/shared/contexts/ThemeContext";
 import { makeSettingsStyles } from "@/features/settings/styles";
-import SkeletonListRow from "@/features/settings/components/SkeletonListRow";
+import SkeletonListRow from "@/shared/components/ui/SkeletonListRow";
 import HistoryRow from "@/features/settings/components/HistoryRow";
 
 interface Props {

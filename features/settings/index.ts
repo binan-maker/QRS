@@ -9,7 +9,7 @@ export { default as PrivacySettingsScreen } from "./PrivacySettingsScreen";
 export { default as AccountSection } from "./components/AccountSection";
 export { default as ProfileSettingsSection } from "./components/ProfileSettingsSection";
 export { default as SettingsMenuItem } from "./components/SettingsMenuItem";
-export { default as SkeletonListRow } from "./components/SkeletonListRow";
+export { default as SkeletonListRow } from "@/shared/components/ui/SkeletonListRow";
 export { default as GuideSection } from "./components/GuideSection";
 export { default as FeedbackSection } from "./components/FeedbackSection";
 export { default as CommentsSection } from "./components/CommentsSection";

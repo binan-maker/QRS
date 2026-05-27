@@ -1,6 +1,6 @@
 import Animated, { FadeInDown } from "react-native-reanimated";
 import OwnerCard from "@/features/qr-detail/components/OwnerCard";
-import { SectionHeader } from "@/features/qr-detail/components/SectionHeader";
+import { SectionHeader } from "@/shared/components/ui/SectionHeader";
 
 interface Props {
   user: any;
