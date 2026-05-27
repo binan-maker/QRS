@@ -12,9 +12,9 @@ import Animated, { FadeInDown, FadeIn } from "react-native-reanimated";
 import * as Haptics from "expo-haptics";
 import { useTheme } from "@/shared/contexts/ThemeContext";
 import { useAuth } from "@/shared/contexts/AuthContext";
-import { useTopInset } from "@/lib/utils/platform";
+import { useTopInset } from "@/shared/utils/platform";
 import { useQrDetail } from "@/features/qr-detail/hooks/useQrDetail";
-import { useNetworkStatus } from "@/lib/utils/use-network";
+import { useNetworkStatus } from "@/shared/utils/use-network";
 import { makeStyles, offlineSectionStyles } from "@/features/qr-detail/styles";
 import { formatCompactNumber } from "@/lib/number-format";
 

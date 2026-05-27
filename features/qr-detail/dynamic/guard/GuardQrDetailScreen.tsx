@@ -11,11 +11,11 @@ import Animated, { FadeInDown, FadeIn } from "react-native-reanimated";
 import * as Haptics from "expo-haptics";
 import { useTheme } from "@/shared/contexts/ThemeContext";
 import { useAuth } from "@/shared/contexts/AuthContext";
-import { useTopInset } from "@/lib/utils/platform";
+import { useTopInset } from "@/shared/utils/platform";
 import { useQrDetail } from "@/features/qr-detail/hooks/useQrDetail";
-import { useNetworkStatus } from "@/lib/utils/use-network";
-import { getGuardLink, type GuardLink } from "@/lib/services/guard-service";
-import { detectContentType } from "@/lib/services/qr-content-type";
+import { useNetworkStatus } from "@/shared/utils/use-network";
+import { getGuardLink, type GuardLink } from "@/services/guard-service";
+import { detectContentType } from "@/services/qr-content-type";
 import { makeStyles, offlineSectionStyles } from "@/features/qr-detail/styles";
 import { formatCompactNumber } from "@/lib/number-format";
 

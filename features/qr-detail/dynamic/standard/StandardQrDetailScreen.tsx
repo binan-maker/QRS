@@ -11,12 +11,12 @@ import Animated, { FadeInDown, FadeIn } from "react-native-reanimated";
 import * as Haptics from "expo-haptics";
 import { useTheme } from "@/shared/contexts/ThemeContext";
 import { useAuth } from "@/shared/contexts/AuthContext";
-import { useTopInset } from "@/lib/utils/platform";
+import { useTopInset } from "@/shared/utils/platform";
 import { useQrDetail } from "@/features/qr-detail/hooks/useQrDetail";
 import { useQrSafety } from "@/features/qr-detail/hooks/useQrSafety";
-import { useNetworkStatus } from "@/lib/utils/use-network";
-import { getStandardLink } from "@/lib/services/guard-service";
-import { detectContentType } from "@/lib/services/qr-content-type";
+import { useNetworkStatus } from "@/shared/utils/use-network";
+import { getStandardLink } from "@/services/guard-service";
+import { detectContentType } from "@/services/qr-content-type";
 import { makeStyles, offlineSectionStyles } from "@/features/qr-detail/styles";
 import { formatCompactNumber } from "@/lib/number-format";
 
@@ -35,7 +35,7 @@ import DonationBanner from "@/features/qr-detail/components/DonationBanner";
 import OwnerInfoSheet from "@/features/qr-detail/components/sheets/OwnerInfoSheet";
 import CommentMenuSheet from "@/features/qr-detail/components/sheets/CommentMenuSheet";
 import OverflowSheet from "@/features/qr-detail/components/sheets/OverflowSheet";
-import { smartOpenContent } from "@/lib/utils/smart-open";
+import { smartOpenContent } from "@/shared/utils/smart-open";
 import { VerdictBanner } from "@/features/qr-detail/components/VerdictBanner";
 
 const ACCENT = "#3b82f6";
