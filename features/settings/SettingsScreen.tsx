@@ -1,7 +1,7 @@
 import { View, Text, Pressable, ScrollView, Platform, useWindowDimensions } from "react-native";
 import { useCallback, useMemo } from "react";
 import { useLocalSearchParams, useFocusEffect } from "expo-router";
-import { safePush } from "@/shared/utils/navigation";
+import { safePush, safeBack } from "@/shared/utils/navigation";
 import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTopInset } from "@/shared/utils/platform";
@@ -33,7 +33,7 @@ export default function SettingsScreen() {
 
   const styles = useMemo(() => makeSettingsStyles(colors, width), [colors, width]);
 
-  const params = useLocalSearchParams<{ initialSection?: string; fromProfile?: string; from?: string }>();
+  const params = useLocalSearchParams<{ initialSection?: string }>();
 
   const {
     user, section, setSection,
@@ -84,21 +84,17 @@ export default function SettingsScreen() {
   const goToPrivacy   = useCallback(() => safePush("/privacy-policy"), []);
   const goToLogin     = useCallback(() => safePush("/(auth)/login"), []);
 
+  // Sub-sections are state changes only (same URL, nothing on the native stack).
+  // Always reset to "main" — never router.push here.
   const handleSubSectionBack = useCallback(() => {
-    if (section === "profile" && params.fromProfile === "1") {
-      safePush("/(tabs)/profile");
-    } else {
-      setSection("main");
-    }
-  }, [section, params.fromProfile, setSection]);
+    setSection("main");
+  }, [setSection]);
 
+  // Pop Settings off the stack back to whoever pushed it (Profile, History, etc.).
+  // Using safeBack() preserves the native back stack — never push a new screen to go "back".
   const handleMainBack = useCallback(() => {
-    if (params.from === "history") {
-      safePush("/(tabs)/history");
-    } else {
-      safePush("/(tabs)/profile");
-    }
-  }, [params.from]);
+    safeBack();
+  }, []);
 
   const handleSetSystemMode = useCallback(() => setMode("system"), [setMode]);
   const handleSetLightMode  = useCallback(() => setMode("light"),  [setMode]);
