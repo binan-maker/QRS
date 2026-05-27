@@ -1,16 +1,16 @@
 import React from "react";
 import {
-  View, Text, StyleSheet, Pressable, Animated as RNAnimated,
+  View, Text, Pressable, Animated as RNAnimated, StyleSheet,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
-import Animated, {
-  FadeInDown, FadeIn, ZoomIn,
-} from "react-native-reanimated";
+import Animated, { FadeInDown, FadeIn } from "react-native-reanimated";
 import * as Clipboard from "expo-clipboard";
 import * as Haptics from "@/shared/utils/haptics";
 import { useTheme } from "@/shared/contexts/ThemeContext";
 import { parseWebsite } from "../parsers";
+import { InfoRow } from "./WebsiteInfoRow";
+import { styles } from "./WebsiteCardStyles";
 
 interface Props {
   content: string;
@@ -19,10 +19,10 @@ interface Props {
   hideOpenAction?: boolean;
 }
 
-const BLUE_DARK   = "#1E3A8A";
-const BLUE_MID    = "#1D4ED8";
-const BLUE_LIGHT  = "#3B82F6";
-const BLUE_GLOW   = "#60A5FA";
+const BLUE_DARK  = "#1E3A8A";
+const BLUE_MID   = "#1D4ED8";
+const BLUE_LIGHT = "#3B82F6";
+const BLUE_GLOW  = "#60A5FA";
 
 function stripProtocol(url: string) {
   return url.replace(/^https?:\/\/(www\.)?/, "");
@@ -75,7 +75,6 @@ export default function WebsiteCard({ content, onOpenContent, isDeactivated, hid
         }
       ]}>
 
-        {/* ── Ambient glow background ───────────────────────────── */}
         <LinearGradient
           colors={isDark
             ? [BLUE_DARK + "40", BLUE_MID + "18", "transparent"]
@@ -85,9 +84,7 @@ export default function WebsiteCard({ content, onOpenContent, isDeactivated, hid
           end={{ x: 1, y: 1 }}
         />
 
-        {/* ── Hero domain block ─────────────────────────────────── */}
         <Animated.View entering={FadeIn.delay(30).duration(260)} style={styles.heroRow}>
-          {/* Pulsing avatar with glow ring */}
           <View style={styles.avatarWrap}>
             <RNAnimated.View style={[styles.glowRing, {
               borderColor: BLUE_GLOW + (isDark ? "55" : "35"),
@@ -101,7 +98,6 @@ export default function WebsiteCard({ content, onOpenContent, isDeactivated, hid
             >
               <Text style={styles.avatarLetter}>{initial}</Text>
             </LinearGradient>
-            {/* Security dot overlay */}
             <Animated.View entering={FadeIn.delay(70).duration(240)} style={[
               styles.secDot,
               { backgroundColor: site?.isSecure ? "#22C55E" : "#F59E0B" }
@@ -114,7 +110,6 @@ export default function WebsiteCard({ content, onOpenContent, isDeactivated, hid
             </Animated.View>
           </View>
 
-          {/* Domain + label */}
           <View style={styles.heroText}>
             <Text style={[styles.domainName, { color: isDark ? "#F0F9FF" : "#1E3A8A" }]} numberOfLines={1}>
               {domainOnly}
@@ -133,9 +128,7 @@ export default function WebsiteCard({ content, onOpenContent, isDeactivated, hid
                   size={9}
                   color={site?.isSecure ? "#22C55E" : "#F59E0B"}
                 />
-                <Text style={[styles.protoText, {
-                  color: site?.isSecure ? "#22C55E" : "#F59E0B"
-                }]}>
+                <Text style={[styles.protoText, { color: site?.isSecure ? "#22C55E" : "#F59E0B" }]}>
                   {site?.isSecure ? "SECURE" : "INSECURE"}
                 </Text>
               </View>
@@ -145,7 +138,6 @@ export default function WebsiteCard({ content, onOpenContent, isDeactivated, hid
             </View>
           </View>
 
-          {/* Copy button */}
           <Pressable
             onPress={handleCopy}
             style={({ pressed }) => [styles.copyBtn, {
@@ -163,15 +155,12 @@ export default function WebsiteCard({ content, onOpenContent, isDeactivated, hid
               size={14}
               color={copied ? "#22C55E" : isDark ? BLUE_GLOW : BLUE_MID}
             />
-            <Text style={[styles.copyText, {
-              color: copied ? "#22C55E" : isDark ? BLUE_GLOW : BLUE_MID,
-            }]}>
+            <Text style={[styles.copyText, { color: copied ? "#22C55E" : isDark ? BLUE_GLOW : BLUE_MID }]}>
               {copied ? "Copied!" : "Copy"}
             </Text>
           </Pressable>
         </Animated.View>
 
-        {/* ── URL strip — clean, no https:// ────────────────────── */}
         <Animated.View entering={FadeInDown.delay(40).duration(260)}>
           <View style={[styles.urlStrip, {
             backgroundColor: isDark ? "#1E293B" : "#DBEAFE",
@@ -190,7 +179,6 @@ export default function WebsiteCard({ content, onOpenContent, isDeactivated, hid
           </View>
         </Animated.View>
 
-        {/* ── Path + query chips ────────────────────────────────── */}
         {(hasPath || hasQuery) && (
           <Animated.View entering={FadeInDown.delay(50).duration(260)}>
             <Pressable
@@ -280,7 +268,6 @@ export default function WebsiteCard({ content, onOpenContent, isDeactivated, hid
           </Animated.View>
         )}
 
-        {/* ── Open Link CTA ─────────────────────────────────────── */}
         {hasOpenAction && (
           <Animated.View entering={FadeInDown.delay(150).duration(260)}>
             <Pressable
@@ -308,257 +295,3 @@ export default function WebsiteCard({ content, onOpenContent, isDeactivated, hid
     </Animated.View>
   );
 }
-
-function InfoRow({
-  icon, label, value, accent, colors, isDark,
-}: {
-  icon: keyof typeof Ionicons.glyphMap;
-  label: string;
-  value: string;
-  accent: string;
-  colors: any;
-  isDark: boolean;
-}) {
-  return (
-    <View style={styles.infoRow}>
-      <View style={[styles.infoIcon, { backgroundColor: accent + "22" }]}>
-        <Ionicons name={icon} size={11} color={accent} />
-      </View>
-      <Text style={[styles.infoLabel, { color: isDark ? "#64748B" : "#93C5FD" }]}>{label}</Text>
-      <Text style={[styles.infoValue, { color: isDark ? "#E2E8F0" : "#1E40AF" }]} numberOfLines={1}>
-        {value}
-      </Text>
-    </View>
-  );
-}
-
-const styles = StyleSheet.create({
-  card: {
-    borderRadius: 22,
-    padding: 16,
-    marginBottom: 12,
-    borderWidth: 1,
-    overflow: "hidden",
-    gap: 11,
-  },
-
-  heroRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 13,
-  },
-  avatarWrap: {
-    width: 52,
-    height: 52,
-    alignItems: "center",
-    justifyContent: "center",
-    flexShrink: 0,
-  },
-  glowRing: {
-    position: "absolute",
-    width: 52,
-    height: 52,
-    borderRadius: 17,
-    borderWidth: 1.5,
-  },
-  avatarGrad: {
-    width: 46,
-    height: 46,
-    borderRadius: 15,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  avatarLetter: {
-    fontSize: 22,
-    fontFamily: "Inter_700Bold",
-    color: "#fff",
-    letterSpacing: -0.5,
-  },
-  secDot: {
-    position: "absolute",
-    bottom: 0,
-    right: 0,
-    width: 16,
-    height: 16,
-    borderRadius: 8,
-    alignItems: "center",
-    justifyContent: "center",
-    borderWidth: 1.5,
-    borderColor: "#0F172A",
-  },
-
-  heroText: {
-    flex: 1,
-    gap: 5,
-  },
-  domainName: {
-    fontSize: 18,
-    fontFamily: "Inter_700Bold",
-    letterSpacing: -0.4,
-  },
-  badgeRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 7,
-  },
-  protoBadge: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 4,
-    paddingHorizontal: 7,
-    paddingVertical: 3,
-    borderRadius: 6,
-    borderWidth: 1,
-  },
-  protoText: {
-    fontSize: 9,
-    fontFamily: "Inter_700Bold",
-    letterSpacing: 0.5,
-  },
-  websiteLabel: {
-    fontSize: 11,
-    fontFamily: "Inter_500Medium",
-    letterSpacing: 0.2,
-  },
-
-  copyBtn: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 4,
-    height: 30,
-    paddingHorizontal: 10,
-    borderRadius: 9,
-    borderWidth: 1,
-    flexShrink: 0,
-  },
-  copyText: {
-    fontSize: 11,
-    fontFamily: "Inter_600SemiBold",
-  },
-
-  urlStrip: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 9,
-    borderRadius: 12,
-    paddingVertical: 10,
-    paddingHorizontal: 12,
-    borderWidth: 1,
-  },
-  urlIcon: {
-    width: 22,
-    height: 22,
-    borderRadius: 7,
-    alignItems: "center",
-    justifyContent: "center",
-    flexShrink: 0,
-  },
-  urlText: {
-    flex: 1,
-    fontSize: 12.5,
-    fontFamily: "Inter_500Medium",
-    lineHeight: 18,
-    letterSpacing: 0.1,
-  },
-
-  detailsToggle: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    borderRadius: 11,
-    paddingHorizontal: 12,
-    paddingVertical: 9,
-    borderWidth: 1,
-  },
-  detailsLeft: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 6,
-  },
-  detailsToggleText: {
-    fontSize: 12,
-    fontFamily: "Inter_600SemiBold",
-  },
-  chipGroup: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 5,
-  },
-  chip: {
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: 5,
-    borderWidth: 1,
-  },
-  chipText: {
-    fontSize: 9,
-    fontFamily: "Inter_700Bold",
-    letterSpacing: 0.3,
-  },
-
-  detailsBox: {
-    borderRadius: 13,
-    paddingVertical: 4,
-    paddingHorizontal: 12,
-    borderWidth: 1,
-    marginTop: 6,
-  },
-  infoRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 9,
-    paddingVertical: 9,
-  },
-  infoIcon: {
-    width: 22,
-    height: 22,
-    borderRadius: 6,
-    alignItems: "center",
-    justifyContent: "center",
-    flexShrink: 0,
-  },
-  infoLabel: {
-    fontSize: 11,
-    fontFamily: "Inter_500Medium",
-    width: 48,
-  },
-  infoValue: {
-    fontSize: 12,
-    fontFamily: "Inter_600SemiBold",
-    flex: 1,
-    textAlign: "right",
-  },
-  sep: {
-    height: 1,
-    marginHorizontal: -2,
-  },
-
-  openBtn: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    borderRadius: 14,
-    paddingVertical: 13,
-    paddingLeft: 18,
-    paddingRight: 10,
-    overflow: "hidden",
-  },
-  openBtnInner: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 9,
-  },
-  openBtnText: {
-    fontSize: 15,
-    fontFamily: "Inter_700Bold",
-    color: "#fff",
-    letterSpacing: 0.1,
-  },
-  openBtnArrow: {
-    width: 34,
-    height: 34,
-    borderRadius: 10,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-});

@@ -1,6 +1,5 @@
 import {
-  View, Text, Pressable, ScrollView, TextInput,
-  StyleSheet, useWindowDimensions, ActivityIndicator,
+  View, Text, Pressable, ScrollView, TextInput, ActivityIndicator,
 } from "react-native";
 import { useState, useMemo, useEffect, memo } from "react";
 import { Ionicons } from "@expo/vector-icons";
@@ -9,6 +8,9 @@ import { useTheme } from "@/shared/contexts/ThemeContext";
 import { CategoryRegistryService } from "@/services/category-registry-service";
 import type { CategorySchema, CategorySearchResult } from "@/shared/schemas/CategorySchema";
 import BottomSheet from "@/shared/components/ui/BottomSheet";
+import { useWindowDimensions } from "react-native";
+import { SectionHeader, CategoryRow, EmptyState } from "./template-picker-rows";
+import { styles } from "./template-picker-styles";
 
 interface Props {
   visible: boolean;
@@ -55,14 +57,9 @@ function TemplatePickerModal({ visible, selectedPreset, onSelect, onClose }: Pro
     if (!q && activeTag === "all") return null;
 
     let pool = allCategories;
-
     if (activeTag !== "all") {
-      pool = pool.filter(c =>
-        c.tags.includes(activeTag) ||
-        c.id.includes(activeTag)
-      );
+      pool = pool.filter(c => c.tags.includes(activeTag) || c.id.includes(activeTag));
     }
-
     if (!q) {
       return pool
         .sort((a, b) => b.popularity - a.popularity)
@@ -71,26 +68,23 @@ function TemplatePickerModal({ visible, selectedPreset, onSelect, onClose }: Pro
 
     const lower = q.toLowerCase();
     const words = lower.split(/\s+/).filter(Boolean);
-
     const scored: CategorySearchResult[] = pool.map(c => {
       const name = c.name.toLowerCase();
       const desc = c.description.toLowerCase();
       const tags = c.tags.map(t => t.toLowerCase());
       let score = 0;
       const matchedOn: string[] = [];
-
       for (const word of words) {
-        if (name === word) { score += 100; matchedOn.push("exact"); continue; }
-        if (name.startsWith(word)) { score += 60; matchedOn.push("name"); continue; }
-        if (name.includes(word)) { score += 40; matchedOn.push("name"); continue; }
-        if (tags.some(t => t === word)) { score += 35; matchedOn.push("tag"); continue; }
-        if (tags.some(t => t.includes(word))) { score += 20; matchedOn.push("tag"); continue; }
-        if (desc.includes(word)) { score += 10; matchedOn.push("desc"); }
+        if (name === word)                        { score += 100; matchedOn.push("exact"); continue; }
+        if (name.startsWith(word))                { score += 60;  matchedOn.push("name");  continue; }
+        if (name.includes(word))                  { score += 40;  matchedOn.push("name");  continue; }
+        if (tags.some(t => t === word))           { score += 35;  matchedOn.push("tag");   continue; }
+        if (tags.some(t => t.includes(word)))     { score += 20;  matchedOn.push("tag");   continue; }
+        if (desc.includes(word))                  { score += 10;  matchedOn.push("desc"); }
       }
       score += Math.min(c.popularity / 10, 8);
       return { category: c, score, matchedOn };
     });
-
     return scored.filter(r => r.score > 8).sort((a, b) => b.score - a.score);
   }, [search, activeTag, allCategories]);
 
@@ -116,10 +110,7 @@ function TemplatePickerModal({ visible, selectedPreset, onSelect, onClose }: Pro
       visible={visible}
       onClose={handleClose}
       maxHeight={sheetHeight}
-      sheetStyle={{
-        paddingHorizontal: 0,
-        backgroundColor: colors.background,
-      }}
+      sheetStyle={{ paddingHorizontal: 0, backgroundColor: colors.background }}
     >
       {/* Header */}
       <View style={styles.header}>
@@ -129,10 +120,7 @@ function TemplatePickerModal({ visible, selectedPreset, onSelect, onClose }: Pro
             {totalCount} types available worldwide
           </Text>
         </View>
-        <Pressable
-          onPress={handleClose}
-          style={[styles.closeBtn, { backgroundColor: colors.surfaceLight }]}
-        >
+        <Pressable onPress={handleClose} style={[styles.closeBtn, { backgroundColor: colors.surfaceLight }]}>
           <Ionicons name="close" size={18} color={colors.textSecondary} />
         </Pressable>
       </View>
@@ -159,11 +147,7 @@ function TemplatePickerModal({ visible, selectedPreset, onSelect, onClose }: Pro
       </View>
 
       {/* Tag filter chips */}
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={styles.tagRow}
-      >
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.tagRow}>
         {TAG_FILTERS.map(t => {
           const active = activeTag === t.key;
           return (
@@ -242,145 +226,4 @@ function TemplatePickerModal({ visible, selectedPreset, onSelect, onClose }: Pro
   );
 }
 
-function SectionHeader({ label, sublabel }: { label: string; sublabel: string }) {
-  const { colors } = useTheme();
-  return (
-    <View style={[styles.catHeader, { borderBottomColor: colors.surfaceBorder }]}>
-      <Text style={[styles.catLabel, { color: colors.primary }]}>{label}</Text>
-      <Text style={[styles.catSublabel, { color: colors.textMuted }]}>{sublabel}</Text>
-    </View>
-  );
-}
-
-function CategoryRow({
-  category, isSelected, onPress, matchedOn,
-}: {
-  category: CategorySchema;
-  isSelected: boolean;
-  onPress: () => void;
-  matchedOn?: string[];
-}) {
-  const { colors } = useTheme();
-  return (
-    <Pressable
-      onPress={onPress}
-      style={({ pressed }) => [
-        styles.presetRow,
-        {
-          backgroundColor: isSelected ? colors.primaryDim : colors.surface,
-          borderColor: isSelected ? colors.primary + "50" : colors.surfaceBorder,
-          opacity: pressed ? 0.75 : 1,
-        },
-      ]}
-    >
-      <View style={[styles.presetIconBox, { backgroundColor: isSelected ? colors.primary + "25" : colors.surfaceLight }]}>
-        <Ionicons
-          name={category.icon as any}
-          size={17}
-          color={isSelected ? colors.primary : colors.textSecondary}
-        />
-      </View>
-
-      <View style={{ flex: 1, minWidth: 0 }}>
-        <View style={styles.rowTitleLine}>
-          <Text style={[styles.presetLabel, { color: isSelected ? colors.primary : colors.text }]} numberOfLines={1}>
-            {category.name}
-          </Text>
-          {category.badge && (
-            <View style={[styles.badge, { backgroundColor: (category.badgeColor ?? colors.primary) + "22" }]}>
-              <Text style={[styles.badgeText, { color: category.badgeColor ?? colors.primary }]}>
-                {category.badge}
-              </Text>
-            </View>
-          )}
-        </View>
-        <Text style={[styles.presetHint, { color: colors.textMuted }]} numberOfLines={1}>
-          {category.description}
-        </Text>
-      </View>
-
-      {isSelected ? (
-        <Ionicons name="checkmark-circle" size={19} color={colors.primary} />
-      ) : (
-        <Ionicons name="chevron-forward" size={14} color={colors.textMuted} />
-      )}
-    </Pressable>
-  );
-}
-
-function EmptyState({ query, activeTag }: { query: string; activeTag: string }) {
-  const { colors } = useTheme();
-  return (
-    <View style={styles.emptyWrap}>
-      <Text style={{ fontSize: 36, marginBottom: 12 }}>🔍</Text>
-      <Text style={[styles.emptyTitle, { color: colors.text }]}>
-        {query ? `No results for "${query}"` : "Nothing here yet"}
-      </Text>
-      <Text style={[styles.emptySubtitle, { color: colors.textMuted }]}>
-        {query
-          ? "Try different keywords — e.g. \"payment\", \"wifi\", \"contact\""
-          : "Try a different filter"}
-      </Text>
-    </View>
-  );
-}
-
 export default memo(TemplatePickerModal);
-
-const styles = StyleSheet.create({
-  header: {
-    flexDirection: "row", alignItems: "flex-start",
-    justifyContent: "space-between",
-    paddingHorizontal: 20, marginBottom: 6,
-  },
-  title: { fontSize: 18, fontFamily: "Inter_700Bold" },
-  subtitle: { fontSize: 12, fontFamily: "Inter_400Regular", marginTop: 3 },
-  closeBtn: {
-    width: 34, height: 34, borderRadius: 17,
-    alignItems: "center", justifyContent: "center", marginLeft: 12,
-  },
-  searchWrap: {
-    flexDirection: "row", alignItems: "center", gap: 8,
-    marginHorizontal: 16, marginBottom: 12,
-    borderRadius: 14, borderWidth: 1,
-    paddingHorizontal: 14, paddingVertical: 11,
-  },
-  searchInput: { flex: 1, fontSize: 14, fontFamily: "Inter_400Regular" },
-  tagRow: { flexDirection: "row", gap: 8, paddingHorizontal: 16, paddingBottom: 12 },
-  tagChip: {
-    borderRadius: 20, borderWidth: 1,
-    paddingHorizontal: 14, height: 36,
-    alignItems: "center", justifyContent: "center",
-  },
-  tagChipText: { fontSize: 12, fontFamily: "Inter_600SemiBold", lineHeight: 16 },
-  catHeader: {
-    flexDirection: "row", alignItems: "baseline", justifyContent: "space-between",
-    paddingHorizontal: 20, paddingVertical: 10,
-    borderBottomWidth: 1, marginTop: 4,
-  },
-  catLabel: { fontSize: 12, fontFamily: "Inter_700Bold", letterSpacing: 0.5 },
-  catSublabel: { fontSize: 11, fontFamily: "Inter_400Regular" },
-  catItems: { paddingHorizontal: 16, paddingTop: 6, gap: 6 },
-  presetRow: {
-    flexDirection: "row", alignItems: "center", gap: 12,
-    paddingHorizontal: 12, paddingVertical: 10,
-    borderRadius: 14, borderWidth: 1,
-  },
-  presetIconBox: {
-    width: 36, height: 36, borderRadius: 10,
-    alignItems: "center", justifyContent: "center", flexShrink: 0,
-  },
-  rowTitleLine: { flexDirection: "row", alignItems: "center", gap: 6, marginBottom: 2 },
-  presetLabel: { fontSize: 14, fontFamily: "Inter_600SemiBold" },
-  presetHint: { fontSize: 11, fontFamily: "Inter_400Regular" },
-  badge: { borderRadius: 5, paddingHorizontal: 6, paddingVertical: 2 },
-  badgeText: { fontSize: 9, fontFamily: "Inter_700Bold", letterSpacing: 0.3 },
-  loadingWrap: {
-    flex: 1, alignItems: "center", justifyContent: "center",
-    paddingTop: 60, gap: 12,
-  },
-  loadingText: { fontSize: 13, fontFamily: "Inter_400Regular" },
-  emptyWrap: { alignItems: "center", paddingTop: 48, paddingHorizontal: 32, gap: 4 },
-  emptyTitle: { fontSize: 15, fontFamily: "Inter_700Bold", textAlign: "center", marginBottom: 6 },
-  emptySubtitle: { fontSize: 13, fontFamily: "Inter_400Regular", textAlign: "center", lineHeight: 19 },
-});

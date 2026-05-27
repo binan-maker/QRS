@@ -13,6 +13,7 @@ import Animated, {
 import { formatCompactNumber } from "@/shared/utils/number-format";
 import { useTheme } from "@/shared/contexts/ThemeContext";
 import { REPORT_TYPES } from "@/features/qr-detail/data/reportTypes";
+import { styles } from "./trust-score-card-styles";
 
 interface TrustInfo {
   score: number;
@@ -52,7 +53,6 @@ const TrustScoreCard = React.memo(function TrustScoreCard({
 
   const votedTypes = REPORT_TYPES.filter((r) => (reportCounts[r.key] || 0) > 0);
 
-  // Animated score bar
   const barProgress = useSharedValue(0);
   useEffect(() => {
     if (hasScore) {
@@ -70,7 +70,6 @@ const TrustScoreCard = React.memo(function TrustScoreCard({
     width: `${barProgress.value * 100}%` as any,
   }));
 
-  // Animated vote breakdown bars (per report type)
   const breakdownProgress = useSharedValue(0);
   useEffect(() => {
     breakdownProgress.value = 0;
@@ -143,7 +142,6 @@ const TrustScoreCard = React.memo(function TrustScoreCard({
         </Animated.View>
       </View>
 
-      {/* Manipulation warning */}
       {manipulationWarning && (
         <Animated.View entering={FadeInDown.delay(50).duration(260)} style={[styles.manipBanner, { backgroundColor: colors.warningDim, borderColor: colors.warning + "40" }]}>
           <Ionicons name="alert-circle" size={13} color={colors.warning} />
@@ -153,7 +151,6 @@ const TrustScoreCard = React.memo(function TrustScoreCard({
         </Animated.View>
       )}
 
-      {/* Scan count frozen badge */}
       {scanCountFrozen && (
         <Animated.View entering={FadeInDown.delay(50).duration(260)} style={[styles.manipBanner, { backgroundColor: colors.dangerDim, borderColor: colors.danger + "40" }]}>
           <Ionicons name="lock-closed" size={13} color={colors.danger} />
@@ -163,7 +160,6 @@ const TrustScoreCard = React.memo(function TrustScoreCard({
         </Animated.View>
       )}
 
-      {/* Stats row */}
       <Animated.View entering={FadeInDown.delay(70).duration(260)} style={[styles.statsGrid, { borderColor: colors.surfaceBorder }]}>
         {STATS.map((s, i) => (
           <Pressable
@@ -191,7 +187,6 @@ const TrustScoreCard = React.memo(function TrustScoreCard({
         ))}
       </Animated.View>
 
-      {/* Vote breakdown — only shown when there are any votes */}
       {votedTypes.length > 0 && (
         <Animated.View entering={FadeInDown.delay(80).duration(260)} style={[styles.voteBreakdown, { borderTopColor: colors.surfaceBorder }]}>
           <Text style={[styles.breakdownTitle, { color: colors.textMuted }]} maxFontSizeMultiplier={1}>
@@ -235,121 +230,3 @@ function BreakdownBar({ pct, color }: { pct: number; color: string }) {
 }
 
 export default TrustScoreCard;
-
-const styles = StyleSheet.create({
-  card: {
-    borderRadius: 20,
-    borderWidth: 1,
-    marginBottom: 12,
-    overflow: "hidden",
-    padding: 18,
-    gap: 16,
-  },
-  scoreHero: { flexDirection: "row", alignItems: "center", gap: 18 },
-  scoreRingWrap: { flexShrink: 0 },
-  scoreRing: {
-    width: 82,
-    height: 82,
-    borderRadius: 41,
-    padding: 3,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  scoreInner: {
-    width: 76,
-    height: 76,
-    borderRadius: 38,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  scoreNumRow: { flexDirection: "row", alignItems: "baseline" },
-  scoreNum: { fontSize: 28, fontFamily: "Inter_700Bold", lineHeight: 34 },
-  scorePct: { fontSize: 13, fontFamily: "Inter_700Bold", marginLeft: 1 },
-  scoreMeta: { flex: 1, gap: 8 },
-  scoreTitle: { fontSize: 17, fontFamily: "Inter_700Bold" },
-  scoreLabelBadge: {
-    alignSelf: "flex-start",
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 100,
-    borderWidth: 1,
-  },
-  scoreLabelText: { fontSize: 12, fontFamily: "Inter_700Bold", letterSpacing: 0.4 },
-  firstVoteBadge: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 6,
-    alignSelf: "flex-start",
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    borderRadius: 100,
-    borderWidth: 1,
-  },
-  firstVoteText: { fontSize: 12, fontFamily: "Inter_600SemiBold" },
-  voteCount: { fontSize: 12, fontFamily: "Inter_400Regular" },
-  scoreBar: { height: 5, borderRadius: 3, overflow: "hidden" },
-  scoreBarFillBase: { height: 5, borderRadius: 3, overflow: "hidden" },
-  manipBanner: {
-    flexDirection: "row",
-    alignItems: "flex-start",
-    gap: 8,
-    borderRadius: 12,
-    padding: 11,
-    borderWidth: 1,
-  },
-  manipText: { flex: 1, fontSize: 12, fontFamily: "Inter_400Regular", lineHeight: 17 },
-  statsGrid: {
-    flexDirection: "row",
-    borderRadius: 14,
-    borderWidth: 1,
-    overflow: "hidden",
-  },
-  statCell: {
-    flex: 1,
-    alignItems: "center",
-    paddingVertical: 12,
-    gap: 3,
-  },
-  statCellBorder: {
-    borderRightWidth: StyleSheet.hairlineWidth,
-  },
-  statNum: { fontSize: 16, fontFamily: "Inter_700Bold" },
-  statLabel: { fontSize: 11, fontFamily: "Inter_600SemiBold", textAlign: "center" },
-
-  /* Vote breakdown */
-  voteBreakdown: {
-    borderTopWidth: StyleSheet.hairlineWidth,
-    paddingTop: 14,
-    gap: 10,
-  },
-  breakdownTitle: {
-    fontSize: 10,
-    fontFamily: "Inter_700Bold",
-    letterSpacing: 1.2,
-  },
-  breakdownRows: { gap: 8 },
-  breakdownRow: { gap: 5 },
-  breakdownLabelRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 5,
-  },
-  breakdownLabel: {
-    flex: 1,
-    fontSize: 12,
-    fontFamily: "Inter_600SemiBold",
-  },
-  breakdownPct: {
-    fontSize: 12,
-    fontFamily: "Inter_700Bold",
-  },
-  barTrack: {
-    height: 5,
-    borderRadius: 3,
-    overflow: "hidden",
-  },
-  barFill: {
-    height: 5,
-    borderRadius: 3,
-  },
-});
