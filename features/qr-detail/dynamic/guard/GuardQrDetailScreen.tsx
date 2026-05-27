@@ -1,12 +1,11 @@
 import { useState, useCallback, useRef, useEffect } from "react";
 import {
   View, Text, Pressable, ScrollView, RefreshControl,
-  StyleSheet, KeyboardAvoidingView, ActivityIndicator, Linking,
+  StyleSheet, KeyboardAvoidingView, Linking,
 } from "react-native";
 import { StatusBar } from "expo-status-bar";
 import { router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
-import { LinearGradient } from "expo-linear-gradient";
 import Animated, { FadeInDown, FadeIn } from "react-native-reanimated";
 import * as Haptics from "expo-haptics";
 import { useTheme } from "@/shared/contexts/ThemeContext";
@@ -16,9 +15,10 @@ import { useQrDetail } from "@/features/qr-detail/hooks/useQrDetail";
 import { useNetworkStatus } from "@/shared/utils/use-network";
 import { getGuardLink, type GuardLink } from "@/services/guard-service";
 import { detectContentType } from "@/services/qr-content-type";
-import { makeStyles, offlineSectionStyles } from "@/features/qr-detail/styles";
+import { makeStyles } from "@/features/qr-detail/styles";
 import { formatCompactNumber } from "@/shared/utils/number-format";
 
+import GuardHeroCard from "./GuardHeroCard";
 import TrustScoreCard from "@/features/qr-detail/components/TrustScoreCard";
 import ReportGrid from "@/features/qr-detail/components/ReportGrid";
 import FollowersModal from "@/features/qr-detail/components/modals/FollowersModal";
@@ -37,15 +37,6 @@ const ACCENT = "#6366f1";
 function safeBack() {
   if (router.canGoBack()) router.back();
   else router.replace("/(tabs)");
-}
-
-function formatRelativeTime(isoString: string): string {
-  const diff = Date.now() - new Date(isoString).getTime();
-  const mins = Math.floor(diff / 60000);
-  if (mins < 60) return `${mins}m ago`;
-  const hrs = Math.floor(mins / 60);
-  if (hrs < 24) return `${hrs}h ago`;
-  return `${Math.floor(hrs / 24)}d ago`;
 }
 
 function sanitizeAndOpen(dest: string) {
@@ -78,9 +69,7 @@ export default function GuardQrDetailScreen({ id, guardUuid, ownerDocId }: Props
   const [ownerSheetOpen, setOwnerSheetOpen] = useState(false);
   const [overflowOpen, setOverflowOpen] = useState(false);
   const [toastState, setToastState] = useState<{
-    message: string;
-    icon: keyof typeof Ionicons.glyphMap;
-    key: number;
+    message: string; icon: keyof typeof Ionicons.glyphMap; key: number;
   }>({ message: "", icon: "checkmark-circle", key: 0 });
   const lastToastTime = useRef(0);
 
@@ -90,8 +79,7 @@ export default function GuardQrDetailScreen({ id, guardUuid, ownerDocId }: Props
       if (now - lastToastTime.current < 2200) return;
       lastToastTime.current = now;
       setToastState((prev) => ({ message, icon, key: prev.key + 1 }));
-    },
-    []
+    }, []
   );
 
   useEffect(() => {
@@ -106,11 +94,6 @@ export default function GuardQrDetailScreen({ id, guardUuid, ownerDocId }: Props
   const { isOnline } = useNetworkStatus();
   const [offlineToastKey, setOfflineToastKey] = useState(0);
 
-  const effectiveContent = guardLink?.currentDestination ?? "";
-  const effectiveContentType = guardLink
-    ? (guardLink.contentType || detectContentType(guardLink.currentDestination))
-    : "url";
-
   const recentlyChanged = guardLink?.destinationChangedAt
     ? Date.now() - new Date(guardLink.destinationChangedAt).getTime() < 24 * 60 * 60 * 1000
     : false;
@@ -120,17 +103,15 @@ export default function GuardQrDetailScreen({ id, guardUuid, ownerDocId }: Props
   const isDeactivated = guardLink?.isActive === false;
   const isQrOwner = !!(user?.id && guardLink?.ownerId && user.id === guardLink.ownerId);
 
-  const ownerInfoForSheet = guardLink
-    ? {
-        businessName: guardLink.businessName,
-        ownerName: guardLink.ownerName,
-        qrType: "guard",
-        isBranded: true,
-        ownerId: guardLink.ownerId,
-        brandedUuid: guardUuid,
-        isActive: guardLink.isActive,
-      }
-    : null;
+  const ownerInfoForSheet = guardLink ? {
+    businessName: guardLink.businessName,
+    ownerName: guardLink.ownerName,
+    qrType: "guard",
+    isBranded: true,
+    ownerId: guardLink.ownerId,
+    brandedUuid: guardUuid,
+    isActive: guardLink.isActive,
+  } : null;
 
   const handleWatchPress = useCallback(() => {
     if (!user) { router.push("/(auth)/login"); return; }
@@ -153,9 +134,7 @@ export default function GuardQrDetailScreen({ id, guardUuid, ownerDocId }: Props
   const handleReportPress = useCallback(() => {
     setOverflowOpen(false);
     if (!user) { router.push("/(auth)/login"); return; }
-    setTimeout(() => {
-      q.scrollRef.current?.scrollTo({ y: reportSectionY.current, animated: true });
-    }, 280);
+    setTimeout(() => { q.scrollRef.current?.scrollTo({ y: reportSectionY.current, animated: true }); }, 280);
   }, [user, q.scrollRef]);
 
   return (
@@ -167,18 +146,18 @@ export default function GuardQrDetailScreen({ id, guardUuid, ownerDocId }: Props
       <KeyboardAvoidingView style={{ flex: 1 }} behavior="padding" keyboardVerticalOffset={0}>
         <View style={[styles.container, { paddingTop: topInset }]}>
 
-          {/* ── Guard NavBar ─────────────────────────────────── */}
+          {/* ── Guard NavBar ── */}
           <Animated.View entering={FadeInDown.delay(0).duration(260)} style={[styles.navBar, { gap: 10 }]}>
             <Animated.View entering={FadeIn.delay(30).duration(240)}>
               <Pressable onPress={safeBack} style={styles.navBackBtn}>
                 <Ionicons name="chevron-back" size={24} color={colors.text} />
               </Pressable>
             </Animated.View>
-            <View style={guardStyles.navTitleRow}>
-              <View style={[guardStyles.navShieldWrap, { backgroundColor: ACCENT + "18" }]}>
+            <View style={guardNavStyles.titleRow}>
+              <View style={[guardNavStyles.shieldWrap, { backgroundColor: ACCENT + "18" }]}>
                 <Ionicons name="shield-checkmark" size={15} color={ACCENT} />
               </View>
-              <Text style={[guardStyles.navTitle, { color: colors.text }]} numberOfLines={1}>
+              <Text style={[guardNavStyles.title, { color: colors.text }]} numberOfLines={1}>
                 Living Shield QR
               </Text>
             </View>
@@ -205,179 +184,22 @@ export default function GuardQrDetailScreen({ id, guardUuid, ownerDocId }: Props
               />
             }
           >
-            {/* ── Hero: Living Shield Card ─────────────────── */}
+            {/* ── Hero Card ── */}
             <Animated.View entering={FadeInDown.delay(30).duration(260)}>
-              <View style={[guardStyles.heroCard, {
-                backgroundColor: isDark ? "#0d0d1a" : "#f5f5ff",
-                borderColor: ACCENT + "28",
-              }]}>
-                <LinearGradient
-                  colors={[ACCENT + "1a", ACCENT + "06"]}
-                  style={StyleSheet.absoluteFill}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 1 }}
-                />
-
-                {/* Header row */}
-                <View style={guardStyles.heroHeader}>
-                  <View style={[guardStyles.heroIconWrap, {
-                    backgroundColor: ACCENT + "22",
-                    borderColor: ACCENT + "44",
-                  }]}>
-                    <Ionicons name="git-branch-outline" size={24} color={ACCENT} />
-                  </View>
-                  <View style={{ flex: 1 }}>
-                    <Text style={[guardStyles.heroLabel, { color: ACCENT }]}>SMART REDIRECT QR</Text>
-                    <Text style={[guardStyles.heroSub, { color: colors.textSecondary }]}>
-                      Destination is owner-controlled &amp; verified by QR Guard
-                    </Text>
-                  </View>
-                  {isDeactivated && (
-                    <View style={[guardStyles.statusPill, { backgroundColor: "#ef444422", borderColor: "#ef444440" }]}>
-                      <Ionicons name="ban" size={12} color="#ef4444" />
-                      <Text style={[guardStyles.statusPillText, { color: "#ef4444" }]}>Inactive</Text>
-                    </View>
-                  )}
-                  {!isDeactivated && !guardLoading && guardLink && (
-                    <View style={[guardStyles.statusPill, { backgroundColor: "#22c55e22", borderColor: "#22c55e40" }]}>
-                      <View style={[guardStyles.statusDot, { backgroundColor: "#22c55e" }]} />
-                      <Text style={[guardStyles.statusPillText, { color: "#22c55e" }]}>Active</Text>
-                    </View>
-                  )}
-                </View>
-
-                {guardLoading && (
-                  <View style={guardStyles.loadingRow}>
-                    <ActivityIndicator size="small" color={ACCENT} />
-                    <Text style={[guardStyles.loadingText, { color: colors.textSecondary }]}>
-                      Loading destination…
-                    </Text>
-                  </View>
-                )}
-
-                {!guardLoading && guardLink && (
-                  <>
-                    {/* Owner */}
-                    {(guardLink.businessName || guardLink.ownerName) && (
-                      <View style={[guardStyles.infoRow, { borderColor: colors.surfaceBorder + "60" }]}>
-                        <Ionicons name="business-outline" size={14} color={colors.textSecondary} />
-                        <Text style={[guardStyles.infoLabel, { color: colors.textSecondary }]}>Owner</Text>
-                        <Text style={[guardStyles.infoValue, { color: colors.text }]} numberOfLines={1}>
-                          {guardLink.businessName || guardLink.ownerName}
-                        </Text>
-                      </View>
-                    )}
-
-                    {/* Current destination */}
-                    <View style={[guardStyles.infoRow, { borderColor: colors.surfaceBorder + "60" }]}>
-                      <Ionicons name="link-outline" size={14} color={colors.textSecondary} />
-                      <Text style={[guardStyles.infoLabel, { color: colors.textSecondary }]}>Points to</Text>
-                      <Text style={[guardStyles.infoValue, { color: colors.text }]} numberOfLines={2}>
-                        {guardLink.currentDestination}
-                      </Text>
-                    </View>
-
-                    {/* Last changed timestamp */}
-                    {guardLink.destinationChangedAt && (
-                      <View style={[guardStyles.infoRow, { borderColor: colors.surfaceBorder + "60" }]}>
-                        <Ionicons name="time-outline" size={14} color={colors.textSecondary} />
-                        <Text style={[guardStyles.infoLabel, { color: colors.textSecondary }]}>Changed</Text>
-                        <Text style={[guardStyles.infoValue, { color: colors.text }]}>
-                          {formatRelativeTime(guardLink.destinationChangedAt)}
-                        </Text>
-                      </View>
-                    )}
-
-                    {/* Recently changed warning */}
-                    {recentlyChanged && (
-                      <View style={[guardStyles.alertRow, { backgroundColor: "#f59e0b18", borderColor: "#f59e0b40" }]}>
-                        <Ionicons name="warning-outline" size={14} color="#f59e0b" />
-                        <Text style={[guardStyles.alertText, { color: "#f59e0b" }]}>
-                          Destination changed within the last 24 hours — verify before opening
-                        </Text>
-                      </View>
-                    )}
-
-                    {/* Deactivated state */}
-                    {isDeactivated && (
-                      <View style={[guardStyles.alertRow, { backgroundColor: "#ef444418", borderColor: "#ef444440" }]}>
-                        <Ionicons name="ban-outline" size={14} color="#ef4444" />
-                        <Text style={[guardStyles.alertText, { color: "#ef4444" }]}>
-                          This QR code has been deactivated by its owner
-                        </Text>
-                      </View>
-                    )}
-
-                    {/* Open destination button */}
-                    {!isDeactivated && (
-                      <Pressable
-                        style={({ pressed }) => [
-                          guardStyles.openBtn,
-                          { backgroundColor: ACCENT, opacity: pressed ? 0.82 : 1 },
-                        ]}
-                        onPress={() => sanitizeAndOpen(guardLink.currentDestination)}
-                      >
-                        <Ionicons name="open-outline" size={16} color="#fff" />
-                        <Text style={guardStyles.openBtnText}>Open Destination</Text>
-                      </Pressable>
-                    )}
-
-                    {/* Change history accordion */}
-                    {guardLink.changeLog && guardLink.changeLog.length > 0 && (
-                      <>
-                        <Pressable
-                          style={[guardStyles.historyToggle, { borderColor: colors.surfaceBorder + "60" }]}
-                          onPress={() => setHistoryExpanded((v) => !v)}
-                        >
-                          <Ionicons name="time-outline" size={14} color={ACCENT} />
-                          <Text style={[guardStyles.historyToggleText, { color: ACCENT }]}>
-                            Change history ({guardLink.changeLog.length})
-                          </Text>
-                          <Ionicons
-                            name={historyExpanded ? "chevron-up" : "chevron-down"}
-                            size={14}
-                            color={ACCENT}
-                          />
-                        </Pressable>
-
-                        {historyExpanded && (
-                          <View style={guardStyles.historyList}>
-                            {[...guardLink.changeLog].reverse().map((entry, i) => (
-                              <View
-                                key={i}
-                                style={[guardStyles.historyEntry, {
-                                  borderColor: colors.surfaceBorder + "40",
-                                  backgroundColor: isDark ? "#ffffff06" : "#00000004",
-                                }]}
-                              >
-                                <Text style={[guardStyles.historyTime, { color: colors.textSecondary }]}>
-                                  {formatRelativeTime(entry.changedAt)}
-                                </Text>
-                                <Text style={[guardStyles.historyFrom, { color: colors.textMuted }]} numberOfLines={1}>
-                                  ← {entry.from}
-                                </Text>
-                                <Text style={[guardStyles.historyTo, { color: colors.text }]} numberOfLines={1}>
-                                  → {entry.to}
-                                </Text>
-                              </View>
-                            ))}
-                          </View>
-                        )}
-                      </>
-                    )}
-                  </>
-                )}
-
-                {!guardLoading && !guardLink && (
-                  <Text style={[guardStyles.loadingText, { color: colors.textSecondary }]}>
-                    Could not load guard link data
-                  </Text>
-                )}
-              </View>
+              <GuardHeroCard
+                guardLink={guardLink}
+                guardLoading={guardLoading}
+                isDeactivated={isDeactivated}
+                recentlyChanged={recentlyChanged}
+                historyExpanded={historyExpanded}
+                onToggleHistory={() => setHistoryExpanded((v) => !v)}
+                onOpenDestination={() => guardLink && sanitizeAndOpen(guardLink.currentDestination)}
+                colors={colors}
+                isDark={isDark}
+              />
             </Animated.View>
 
-
-            {/* ── Community: Trust score ───────────────────── */}
+            {/* ── Trust Score ── */}
             {!q.offlineMode && (
               <Animated.View entering={FadeInDown.delay(70).duration(260)}>
                 <TrustScoreCard
@@ -387,11 +209,7 @@ export default function GuardQrDetailScreen({ id, guardUuid, ownerDocId }: Props
                   isQrOwner={isQrOwner}
                   followCount={q.followCount}
                   followersModalOpen={user ? q.followersModalOpen : false}
-                  onOpenFollowers={
-                    user
-                      ? () => { q.handleLoadFollowers(); q.setFollowersModalOpen(true); }
-                      : () => {}
-                  }
+                  onOpenFollowers={user ? () => { q.handleLoadFollowers(); q.setFollowersModalOpen(true); } : () => {}}
                   manipulationWarning={trust.manipulationWarning}
                   scanCountFrozen={q.qrCode?.scanCountFrozen}
                   ownerScanCount={user && isQrOwner ? q.qrCode?.ownerScanCount : undefined}
@@ -399,7 +217,7 @@ export default function GuardQrDetailScreen({ id, guardUuid, ownerDocId }: Props
               </Animated.View>
             )}
 
-            {/* ── Reports (logged-in only) ─────────────────── */}
+            {/* ── Reports ── */}
             {user && !q.offlineMode && (
               <Animated.View
                 entering={FadeInDown.delay(80).duration(260)}
@@ -408,7 +226,7 @@ export default function GuardQrDetailScreen({ id, guardUuid, ownerDocId }: Props
                 <ReportGrid
                   reportCounts={q.reportCounts}
                   userReport={q.userReport}
-                  isLoggedIn={true}
+                  isLoggedIn
                   isPayment={false}
                   onReport={(type) => {
                     const reported = q.handleReport(type);
@@ -421,7 +239,7 @@ export default function GuardQrDetailScreen({ id, guardUuid, ownerDocId }: Props
               </Animated.View>
             )}
 
-            {/* ── Comments ─────────────────────────────────── */}
+            {/* ── Comments ── */}
             {!q.offlineMode && (
               <Animated.View entering={FadeInDown.delay(100).duration(260)}>
                 <CommentsSection
@@ -472,23 +290,13 @@ export default function GuardQrDetailScreen({ id, guardUuid, ownerDocId }: Props
         ownerInfo={ownerInfoForSheet as any}
         guardLink={guardLink}
       />
-
       <CommentMenuSheet
         visible={q.commentMenuId !== null}
         isOwner={q.commentMenuOwner}
         onClose={() => q.setCommentMenuId(null)}
-        onDelete={() => {
-          const cid = q.commentMenuId!;
-          q.setCommentMenuId(null);
-          q.handleDeleteComment(cid);
-        }}
-        onReport={() => {
-          const cid = q.commentMenuId!;
-          q.setCommentMenuId(null);
-          q.setCommentReportModal(cid);
-        }}
+        onDelete={() => { const cid = q.commentMenuId!; q.setCommentMenuId(null); q.handleDeleteComment(cid); }}
+        onReport={() => { const cid = q.commentMenuId!; q.setCommentMenuId(null); q.setCommentReportModal(cid); }}
       />
-
       <OverflowSheet
         visible={overflowOpen}
         onClose={() => setOverflowOpen(false)}
@@ -500,7 +308,6 @@ export default function GuardQrDetailScreen({ id, guardUuid, ownerDocId }: Props
         onWatch={handleWatchPress}
         onReport={handleReportPress}
       />
-
       <CommentReportModal
         commentId={q.commentReportModal}
         onReport={q.handleCommentReport}
@@ -513,9 +320,7 @@ export default function GuardQrDetailScreen({ id, guardUuid, ownerDocId }: Props
         loading={q.followersLoading}
         onClose={() => q.setFollowersModalOpen(false)}
         title="QR Watchers"
-        subtitle={`${formatCompactNumber(q.followCount)} ${
-          q.followCount === 1 ? "person is" : "people are"
-        } watching this QR`}
+        subtitle={`${formatCompactNumber(q.followCount)} ${q.followCount === 1 ? "person is" : "people are"} watching this QR`}
         emptyIcon="notifications-outline"
         emptyText="No watchers yet"
       />
@@ -536,108 +341,8 @@ export default function GuardQrDetailScreen({ id, guardUuid, ownerDocId }: Props
   );
 }
 
-const guardStyles = StyleSheet.create({
-  navTitleRow: {
-    flex: 1,
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 7,
-    minWidth: 0,
-  },
-  navShieldWrap: {
-    width: 26,
-    height: 26,
-    borderRadius: 8,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  navTitle: {
-    fontSize: 16,
-    fontFamily: "Inter_700Bold",
-    flex: 1,
-  },
-  heroCard: {
-    borderRadius: 18,
-    borderWidth: 1,
-    padding: 18,
-    gap: 12,
-    overflow: "hidden",
-    marginBottom: 12,
-  },
-  heroHeader: { flexDirection: "row", alignItems: "center", gap: 12 },
-  heroIconWrap: {
-    width: 48,
-    height: 48,
-    borderRadius: 14,
-    borderWidth: 1,
-    alignItems: "center",
-    justifyContent: "center",
-    flexShrink: 0,
-  },
-  heroLabel: {
-    fontSize: 11,
-    fontFamily: "Inter_700Bold",
-    letterSpacing: 1.3,
-    marginBottom: 2,
-  },
-  heroSub: { fontSize: 12, fontFamily: "Inter_400Regular", lineHeight: 16 },
-  statusPill: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 4,
-    borderRadius: 20,
-    borderWidth: 1,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-  },
-  statusDot: { width: 6, height: 6, borderRadius: 3 },
-  statusPillText: { fontSize: 11, fontFamily: "Inter_600SemiBold" },
-  loadingRow: { flexDirection: "row", alignItems: "center", gap: 8 },
-  loadingText: { fontSize: 13, fontFamily: "Inter_400Regular" },
-  infoRow: {
-    flexDirection: "row",
-    alignItems: "flex-start",
-    gap: 8,
-    paddingTop: 10,
-    borderTopWidth: StyleSheet.hairlineWidth,
-  },
-  infoLabel: { fontSize: 12, fontFamily: "Inter_600SemiBold", width: 66, flexShrink: 0, marginTop: 1 },
-  infoValue: { fontSize: 13, fontFamily: "Inter_400Regular", flex: 1, lineHeight: 18 },
-  alertRow: {
-    flexDirection: "row",
-    alignItems: "flex-start",
-    gap: 8,
-    padding: 10,
-    borderRadius: 10,
-    borderWidth: 1,
-  },
-  alertText: { fontSize: 12.5, fontFamily: "Inter_400Regular", flex: 1, lineHeight: 18 },
-  openBtn: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 8,
-    paddingVertical: 13,
-    borderRadius: 12,
-    marginTop: 2,
-  },
-  openBtnText: { color: "#fff", fontSize: 14, fontFamily: "Inter_600SemiBold" },
-  historyToggle: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 6,
-    paddingTop: 10,
-    borderTopWidth: StyleSheet.hairlineWidth,
-  },
-  historyToggleText: { fontSize: 13, fontFamily: "Inter_600SemiBold", flex: 1 },
-  historyList: { gap: 6, marginTop: 4 },
-  historyEntry: {
-    borderRadius: 8,
-    borderWidth: 1,
-    padding: 10,
-    gap: 2,
-  },
-  historyTime: { fontSize: 11, fontFamily: "Inter_400Regular" },
-  historyFrom: { fontSize: 12, fontFamily: "Inter_400Regular" },
-  historyTo: { fontSize: 12, fontFamily: "Inter_600SemiBold" },
+const guardNavStyles = StyleSheet.create({
+  titleRow: { flex: 1, flexDirection: "row", alignItems: "center", gap: 7, minWidth: 0 },
+  shieldWrap: { width: 26, height: 26, borderRadius: 8, alignItems: "center", justifyContent: "center" },
+  title: { fontSize: 16, fontFamily: "Inter_700Bold", flex: 1 },
 });

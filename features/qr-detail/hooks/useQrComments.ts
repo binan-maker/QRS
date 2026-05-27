@@ -1,113 +1,46 @@
 import { useEffect, useState, useCallback, useRef, useMemo } from "react";
-import { Alert } from "react-native";
-import { router } from "expo-router";
-import * as Haptics from "@/shared/utils/haptics";
 import { useAuth } from "@/shared/contexts/AuthContext";
-import {
-  getComments,
-  addComment,
-  toggleCommentLike,
-  reportComment,
-  softDeleteComment,
-  getCommentUserLikes,
-} from "@/lib/firestore-service";
+import { getComments } from "@/lib/firestore-service";
+import * as Haptics from "@/shared/utils/haptics";
 import { type CommentItem, COMMENTS_PER_PAGE, REPLIES_PER_PAGE } from "./comment-types";
+import { mergeWithOptimistic, getAllDescendants, getRootCommentId } from "./comment-list-utils";
+import { useCommentLikes } from "./useCommentLikes";
+import { useCommentActions } from "./useCommentActions";
 
 export type { CommentItem };
 
 export function useQrComments(id: string, userId: string | null, offlineMode: boolean) {
   const { user } = useAuth();
   const emailVerified = user?.emailVerified ?? false;
-  const [commentsList, setCommentsList] = useState<CommentItem[]>([]);
-  const [userLikes, setUserLikes] = useState<Record<string, "like" | "dislike">>({});
-  const [hasMoreComments, setHasMoreComments] = useState(false);
-  const [newComment, setNewComment] = useState("");
-  const [replyTo, setReplyTo] = useState<{ id: string; author: string; rootId: string; isNested: boolean } | null>(null);
-  const [commentsLoading, setCommentsLoading] = useState(false);
-  const [commentsRefreshing, setCommentsRefreshing] = useState(false);
-  const [submitting, setSubmitting] = useState(false);
-  const [commentMenuId, setCommentMenuId] = useState<string | null>(null);
-  const [commentMenuOwner, setCommentMenuOwner] = useState(false);
-  const [commentReportModal, setCommentReportModal] = useState<string | null>(null);
-  const [deletingCommentId, setDeletingCommentId] = useState<string | null>(null);
-  const [expandedReplies, setExpandedReplies] = useState<Record<string, boolean>>({});
-  const [visibleRepliesCount, setVisibleRepliesCount] = useState<Record<string, number>>({});
-  const [revealedComments, setRevealedComments] = useState<Set<string>>(new Set());
 
-  const lastCommentRef   = useRef<any>(undefined);
-  const commentInputRef  = useRef<any>(null);
-  const committedLikesRef      = useRef<Record<string, "like" | "dislike" | null>>({});
-  const pendingFinalLikeRef    = useRef<Record<string, "like" | "dislike" | null>>({});
-  const likeTimersRef          = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
-  const scrollRef              = useRef<any>(null);
-  const pendingCommentsRef     = useRef<CommentItem[]>([]);
-  const deletingIdsRef         = useRef<Set<string>>(new Set());
+  const [commentsList, setCommentsList]             = useState<CommentItem[]>([]);
+  const [hasMoreComments, setHasMoreComments]       = useState(false);
+  const [commentsLoading, setCommentsLoading]       = useState(false);
+  const [commentsRefreshing, setCommentsRefreshing] = useState(false);
+  const [expandedReplies, setExpandedReplies]       = useState<Record<string, boolean>>({});
+  const [visibleRepliesCount, setVisibleRepliesCount] = useState<Record<string, number>>({});
+  const [revealedComments, setRevealedComments]     = useState<Set<string>>(new Set());
+
+  const lastCommentRef      = useRef<any>(undefined);
+  const pendingCommentsRef  = useRef<CommentItem[]>([]);
+  const deletingIdsRef      = useRef<Set<string>>(new Set());
 
   const topLevelComments = useMemo(
     () => commentsList.filter((c) => !c.parentId),
     [commentsList]
   );
 
-  const getAllDescendants = useCallback((rootId: string): CommentItem[] => {
-    const result: CommentItem[] = [];
-    const queue = [rootId];
-    while (queue.length > 0) {
-      const pid = queue.shift()!;
-      const children = commentsList.filter((c) => c.parentId === pid);
-      result.push(...children);
-      queue.push(...children.map((c) => c.id));
-    }
-    return result.sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
-  }, [commentsList]);
+  const { userLikes, handleCommentLike } = useCommentLikes({
+    id, userId, commentsList, setCommentsList,
+  });
 
-  const getRootCommentId = useCallback((commentId: string): string => {
-    const comment = commentsList.find((c) => c.id === commentId);
-    if (!comment || !comment.parentId) return commentId;
-    return getRootCommentId(comment.parentId);
-  }, [commentsList]);
+  const actions = useCommentActions({
+    id, userId, emailVerified, user,
+    setCommentsList, pendingCommentsRef, deletingIdsRef, setExpandedReplies,
+  });
 
-  const toggleReplies = useCallback((commentId: string) => {
-    setExpandedReplies((prev) => ({ ...prev, [commentId]: !prev[commentId] }));
-    if (!visibleRepliesCount[commentId]) {
-      setVisibleRepliesCount((prev) => ({ ...prev, [commentId]: REPLIES_PER_PAGE }));
-    }
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-  }, [visibleRepliesCount]);
-
-  const showMoreReplies = useCallback((commentId: string) => {
-    setVisibleRepliesCount((prev) => ({
-      ...prev,
-      [commentId]: (prev[commentId] || REPLIES_PER_PAGE) + REPLIES_PER_PAGE,
-    }));
-  }, []);
-
-  function mergeWithOptimistic(liveComments: CommentItem[]): CommentItem[] {
-    const filteredLive = liveComments.filter((c) => !deletingIdsRef.current.has(c.id));
-    const confirmedPending = pendingCommentsRef.current.filter((pending) =>
-      !filteredLive.some(
-        (live) =>
-          live.userId === pending.userId &&
-          live.text === pending.text &&
-          (live.parentId ?? null) === (pending.parentId ?? null)
-      )
-    );
-    pendingCommentsRef.current = confirmedPending;
-    return [...confirmedPending, ...filteredLive];
-  }
-
-  useEffect(() => {
-    if (!userId || !commentsList.length) return;
-    const ids = commentsList.map((c) => c.id);
-    getCommentUserLikes(id, ids, userId).then((likes) => {
-      setUserLikes((prev) => ({ ...prev, ...likes }));
-      Object.entries(likes).forEach(([cid, val]) => {
-        if (!likeTimersRef.current.has(cid)) committedLikesRef.current[cid] = val;
-      });
-    });
-  }, [commentsList, userId, id]);
-
-  const userUsername = (user as any)?.username;
-  const userPhotoURL = user?.photoURL;
+  const userUsername   = (user as any)?.username;
+  const userPhotoURL   = user?.photoURL;
   const userDisplayName = user?.displayName;
   useEffect(() => {
     if (!userId) return;
@@ -116,26 +49,19 @@ export function useQrComments(id: string, userId: string | null, offlineMode: bo
         if (c.userId !== userId) return c;
         return {
           ...c,
-          userUsername: userUsername || c.userUsername,
-          userPhotoURL: userPhotoURL || c.userPhotoURL,
+          userUsername:   userUsername   || c.userUsername,
+          userPhotoURL:   userPhotoURL   || c.userPhotoURL,
           user: { displayName: userDisplayName || c.user.displayName },
         };
       })
     );
   }, [userUsername, userPhotoURL, userDisplayName, userId]);
 
-  useEffect(() => {
-    if (replyTo) {
-      const t = setTimeout(() => commentInputRef.current?.focus(), 100);
-      return () => clearTimeout(t);
-    }
-  }, [replyTo]);
-
   const loadInitialComments = useCallback(async (resetOptimistic = false) => {
     if (offlineMode) return;
     if (resetOptimistic) {
       pendingCommentsRef.current = [];
-      deletingIdsRef.current = new Set();
+      deletingIdsRef.current     = new Set();
     }
     const pageLimit = userId ? COMMENTS_PER_PAGE : 6;
     setCommentsLoading(true);
@@ -143,7 +69,7 @@ export function useQrComments(id: string, userId: string | null, offlineMode: bo
       const result = await getComments(id, pageLimit, undefined);
       if (result.cursor) lastCommentRef.current = result.cursor;
       setHasMoreComments(result.hasMore);
-      setCommentsList(mergeWithOptimistic(result.comments as unknown as CommentItem[]));
+      setCommentsList(mergeWithOptimistic(result.comments as unknown as CommentItem[], pendingCommentsRef, deletingIdsRef));
     } catch {}
     setCommentsLoading(false);
   }, [id, userId, offlineMode]);
@@ -156,7 +82,7 @@ export function useQrComments(id: string, userId: string | null, offlineMode: bo
       const result = await getComments(id, pageLimit, undefined);
       if (result.cursor) lastCommentRef.current = result.cursor;
       setHasMoreComments(result.hasMore);
-      setCommentsList(mergeWithOptimistic(result.comments as unknown as CommentItem[]));
+      setCommentsList(mergeWithOptimistic(result.comments as unknown as CommentItem[], pendingCommentsRef, deletingIdsRef));
     } catch {}
     setCommentsRefreshing(false);
   }, [id, userId, offlineMode]);
@@ -175,145 +101,38 @@ export function useQrComments(id: string, userId: string | null, offlineMode: bo
     setCommentsLoading(false);
   }, [id, commentsLoading, hasMoreComments]);
 
-  async function handleSubmitComment() {
-    if (!userId) { router.push("/(auth)/login"); return; }
-    const trimmed = newComment.trim();
-    if (!trimmed) return;
-
-    const clientUsername: string | undefined = (user as any)?.username || undefined;
-    const clientPhotoURL: string | undefined = user?.photoURL || undefined;
-    const clientDisplayName: string = user?.displayName || "User";
-    const tempId = `pending_${Date.now()}`;
-    const parentId = replyTo ? replyTo.rootId : null;
-    const optimisticComment: CommentItem = {
-      id: tempId, text: trimmed, userId,
-      user: { displayName: clientDisplayName },
-      userUsername: clientUsername, userPhotoURL: clientPhotoURL,
-      createdAt: new Date().toISOString(),
-      likeCount: 0, dislikeCount: 0, userLike: null,
-      parentId, isDeleted: false, isHidden: false, reportCount: 0,
-    };
-    pendingCommentsRef.current = [optimisticComment, ...pendingCommentsRef.current];
-    setCommentsList((prev) => [optimisticComment, ...prev]);
-    setNewComment("");
-    setReplyTo(null);
-    if (parentId) setExpandedReplies((prev) => ({ ...prev, [parentId]: true }));
-    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-    setSubmitting(true);
-    try {
-      await addComment(id, userId, clientDisplayName, trimmed, parentId, emailVerified, clientUsername, clientPhotoURL);
-    } catch (e: any) {
-      pendingCommentsRef.current = pendingCommentsRef.current.filter((c) => c.id !== tempId);
-      setCommentsList((prev) => prev.filter((c) => c.id !== tempId));
-      Alert.alert("Cannot Post Comment", e.message);
-    } finally {
-      setSubmitting(false);
+  const toggleReplies = useCallback((commentId: string) => {
+    setExpandedReplies((prev) => ({ ...prev, [commentId]: !prev[commentId] }));
+    if (!visibleRepliesCount[commentId]) {
+      setVisibleRepliesCount((prev) => ({ ...prev, [commentId]: REPLIES_PER_PAGE }));
     }
-  }
-
-  function handleCommentLike(commentId: string, action: "like" | "dislike") {
-    if (!userId) { router.push("/(auth)/login"); return; }
-    const prevLike = userLikes[commentId] ?? null;
-    const newLike: "like" | "dislike" | null = prevLike === action ? null : action;
-    setUserLikes((prev) => {
-      const next = { ...prev };
-      if (newLike === null) delete next[commentId];
-      else next[commentId] = newLike;
-      return next;
-    });
-    setCommentsList((prev) =>
-      prev.map((c) => {
-        if (c.id !== commentId) return c;
-        let likes = c.likeCount, dislikes = c.dislikeCount;
-        if (action === "like") {
-          likes = newLike === "like" ? likes + 1 : likes - 1;
-          if (prevLike === "dislike") dislikes = Math.max(0, dislikes - 1);
-        } else {
-          dislikes = newLike === "dislike" ? dislikes + 1 : dislikes - 1;
-          if (prevLike === "like") likes = Math.max(0, likes - 1);
-        }
-        return { ...c, likeCount: likes, dislikeCount: dislikes };
-      })
-    );
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    pendingFinalLikeRef.current[commentId] = newLike;
-    const existingTimer = likeTimersRef.current.get(commentId);
-    if (existingTimer) clearTimeout(existingTimer);
-    const capturedUserId = userId;
-    const timer = setTimeout(async () => {
-      likeTimersRef.current.delete(commentId);
-      const desired = pendingFinalLikeRef.current[commentId] ?? null;
-      delete pendingFinalLikeRef.current[commentId];
-      const committed = committedLikesRef.current[commentId] ?? null;
-      if (desired === committed) return;
-      const isLike = desired !== null ? desired === "like" : committed === "like";
-      try {
-        const data = await toggleCommentLike(id, commentId, capturedUserId, isLike);
-        committedLikesRef.current[commentId] = desired;
-        setCommentsList((prev) =>
-          prev.map((c) => c.id !== commentId ? c : { ...c, likeCount: data.likes, dislikeCount: data.dislikes })
-        );
-      } catch {}
-    }, 600);
-    likeTimersRef.current.set(commentId, timer);
-  }
+  }, [visibleRepliesCount]);
 
-  async function handleCommentReport(commentId: string, reason: string) {
-    setCommentReportModal(null);
-    if (!userId) return;
-    try {
-      await reportComment(id, commentId, userId, reason, emailVerified);
-      Alert.alert("Reported", "Thank you. We'll review this comment.");
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-    } catch (e: any) {
-      Alert.alert("Cannot Report", e.message);
-    }
-  }
+  const showMoreReplies = useCallback((commentId: string) => {
+    setVisibleRepliesCount((prev) => ({
+      ...prev,
+      [commentId]: (prev[commentId] || REPLIES_PER_PAGE) + REPLIES_PER_PAGE,
+    }));
+  }, []);
 
-  async function handleDeleteComment(commentId: string) {
-    if (!userId) return;
-    setCommentMenuId(null);
-    deletingIdsRef.current.add(commentId);
-    const removedComment = commentsList.find((c) => c.id === commentId);
-    setCommentsList((prev) => prev.filter((c) => c.id !== commentId));
-    setDeletingCommentId(commentId);
-    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-    try {
-      await softDeleteComment(id, commentId, userId);
-    } catch {
-      deletingIdsRef.current.delete(commentId);
-      if (removedComment) {
-        setCommentsList((prev) => {
-          const already = prev.find((c) => c.id === commentId);
-          if (already) return prev;
-          return [removedComment, ...prev];
-        });
-      }
-    } finally {
-      setDeletingCommentId(null);
-    }
-  }
+  const handleDeleteComment = useCallback(
+    (commentId: string) => actions.handleDeleteComment(commentId, commentsList),
+    [actions.handleDeleteComment, commentsList]
+  );
 
   return {
     commentsList, topLevelComments,
     userLikes, hasMoreComments,
-    newComment, setNewComment,
-    replyTo, setReplyTo,
     commentsLoading, commentsRefreshing, refreshComments,
-    submitting,
-    commentMenuId, setCommentMenuId,
-    commentMenuOwner, setCommentMenuOwner,
-    commentReportModal, setCommentReportModal,
-    deletingCommentId,
     expandedReplies, visibleRepliesCount,
     revealedComments, setRevealedComments,
-    commentInputRef, scrollRef,
-    getAllDescendants, getRootCommentId,
+    getAllDescendants: (rootId: string) => getAllDescendants(commentsList, rootId),
+    getRootCommentId: (commentId: string) => getRootCommentId(commentsList, commentId),
     toggleReplies, showMoreReplies,
     loadMoreComments,
-    handleSubmitComment,
     handleCommentLike,
-    handleCommentReport,
     handleDeleteComment,
+    ...actions,
   };
 }

@@ -1,0 +1,133 @@
+import { useState, useEffect, useCallback, useRef } from "react";
+import { Alert } from "react-native";
+import { router } from "expo-router";
+import * as Haptics from "@/shared/utils/haptics";
+import {
+  addComment,
+  reportComment,
+  softDeleteComment,
+} from "@/lib/firestore-service";
+import type { CommentItem } from "./comment-types";
+
+interface UseCommentActionsParams {
+  id: string;
+  userId: string | null;
+  emailVerified: boolean;
+  user: any;
+  setCommentsList: React.Dispatch<React.SetStateAction<CommentItem[]>>;
+  pendingCommentsRef: React.MutableRefObject<CommentItem[]>;
+  deletingIdsRef: React.MutableRefObject<Set<string>>;
+  setExpandedReplies: React.Dispatch<React.SetStateAction<Record<string, boolean>>>;
+}
+
+export function useCommentActions({
+  id, userId, emailVerified, user,
+  setCommentsList, pendingCommentsRef, deletingIdsRef, setExpandedReplies,
+}: UseCommentActionsParams) {
+  const [newComment, setNewComment] = useState("");
+  const [replyTo, setReplyTo] = useState<{ id: string; author: string; rootId: string; isNested: boolean } | null>(null);
+  const [submitting, setSubmitting] = useState(false);
+  const [commentMenuId, setCommentMenuId] = useState<string | null>(null);
+  const [commentMenuOwner, setCommentMenuOwner] = useState(false);
+  const [commentReportModal, setCommentReportModal] = useState<string | null>(null);
+  const [deletingCommentId, setDeletingCommentId] = useState<string | null>(null);
+
+  const commentInputRef = useRef<any>(null);
+  const scrollRef       = useRef<any>(null);
+
+  useEffect(() => {
+    if (replyTo) {
+      const t = setTimeout(() => commentInputRef.current?.focus(), 100);
+      return () => clearTimeout(t);
+    }
+  }, [replyTo]);
+
+  const handleSubmitComment = useCallback(async () => {
+    if (!userId) { router.push("/(auth)/login"); return; }
+    const trimmed = newComment.trim();
+    if (!trimmed) return;
+
+    const clientUsername: string | undefined = (user as any)?.username || undefined;
+    const clientPhotoURL: string | undefined = user?.photoURL || undefined;
+    const clientDisplayName: string = user?.displayName || "User";
+    const tempId = `pending_${Date.now()}`;
+    const parentId = replyTo ? replyTo.rootId : null;
+
+    const optimisticComment: CommentItem = {
+      id: tempId, text: trimmed, userId,
+      user: { displayName: clientDisplayName },
+      userUsername: clientUsername, userPhotoURL: clientPhotoURL,
+      createdAt: new Date().toISOString(),
+      likeCount: 0, dislikeCount: 0, userLike: null,
+      parentId, isDeleted: false, isHidden: false, reportCount: 0,
+    };
+
+    pendingCommentsRef.current = [optimisticComment, ...pendingCommentsRef.current];
+    setCommentsList((prev) => [optimisticComment, ...prev]);
+    setNewComment("");
+    setReplyTo(null);
+    if (parentId) setExpandedReplies((prev) => ({ ...prev, [parentId]: true }));
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+
+    setSubmitting(true);
+    try {
+      await addComment(id, userId, clientDisplayName, trimmed, parentId, emailVerified, clientUsername, clientPhotoURL);
+    } catch (e: any) {
+      pendingCommentsRef.current = pendingCommentsRef.current.filter((c) => c.id !== tempId);
+      setCommentsList((prev) => prev.filter((c) => c.id !== tempId));
+      Alert.alert("Cannot Post Comment", e.message);
+    } finally {
+      setSubmitting(false);
+    }
+  }, [id, userId, newComment, replyTo, emailVerified, user, pendingCommentsRef, deletingIdsRef, setCommentsList, setExpandedReplies]);
+
+  const handleCommentReport = useCallback(async (commentId: string, reason: string) => {
+    setCommentReportModal(null);
+    if (!userId) return;
+    try {
+      await reportComment(id, commentId, userId, reason, emailVerified);
+      Alert.alert("Reported", "Thank you. We'll review this comment.");
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    } catch (e: any) {
+      Alert.alert("Cannot Report", e.message);
+    }
+  }, [id, userId, emailVerified]);
+
+  const handleDeleteComment = useCallback(async (commentId: string, commentsList: CommentItem[]) => {
+    if (!userId) return;
+    setCommentMenuId(null);
+    deletingIdsRef.current.add(commentId);
+    const removedComment = commentsList.find((c) => c.id === commentId);
+    setCommentsList((prev) => prev.filter((c) => c.id !== commentId));
+    setDeletingCommentId(commentId);
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    try {
+      await softDeleteComment(id, commentId, userId);
+    } catch {
+      deletingIdsRef.current.delete(commentId);
+      if (removedComment) {
+        setCommentsList((prev) => {
+          const already = prev.find((c) => c.id === commentId);
+          if (already) return prev;
+          return [removedComment, ...prev];
+        });
+      }
+    } finally {
+      setDeletingCommentId(null);
+    }
+  }, [id, userId, deletingIdsRef, setCommentsList]);
+
+  return {
+    newComment, setNewComment,
+    replyTo, setReplyTo,
+    submitting,
+    commentMenuId, setCommentMenuId,
+    commentMenuOwner, setCommentMenuOwner,
+    commentReportModal, setCommentReportModal,
+    deletingCommentId,
+    commentInputRef, scrollRef,
+    handleSubmitComment,
+    handleCommentReport,
+    handleDeleteComment,
+  };
+}
