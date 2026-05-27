@@ -2,23 +2,14 @@ import React, { useMemo, useCallback } from "react";
 import { View, Text, Pressable, StyleSheet } from "react-native";
 import { router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
-import { LinearGradient } from "expo-linear-gradient";
 import { Swipeable } from "react-native-gesture-handler";
 import Animated, { FadeInDown } from "react-native-reanimated";
 import * as Haptics from "@/shared/utils/haptics";
 import { useTheme } from "@/shared/contexts/ThemeContext";
-import { formatRelativeTime, getContentTypeMeta, getContentDisplayLabel, getContentSubtitle } from "@/shared/utils/formatters";
+import { formatRelativeTime } from "@/shared/utils/formatters";
 import type { HistoryItem as HistoryItemType } from "@/features/history/types";
 import { parseAnyPaymentQr } from "@/services/analysis";
-
-function getTypeMeta(type: string): {
-  icon: keyof typeof Ionicons.glyphMap;
-  label: string;
-  gradient: [string, string];
-} {
-  const m = getContentTypeMeta(type);
-  return { icon: m.icon as keyof typeof Ionicons.glyphMap, label: m.label, gradient: m.gradient };
-}
+import { QrTypeIcon, useQrMeta } from "@/features/qr-engine";
 
 function getRiskConfig(risk: string, colors: any) {
   if (risk === "dangerous" || risk === "caution") return {
@@ -56,13 +47,11 @@ interface HistoryItemProps {
 
 const HistoryItem = React.memo(function HistoryItem({ item, risk, onDelete, index = 0 }: HistoryItemProps) {
   const { colors, isDark } = useTheme();
+  const { typeMeta, displayLabel, subtitle } = useQrMeta(item.content, item.contentType);
 
   const isFavorite = item.source === "favorite";
   const isSynced   = item.source === "cloud";
 
-  const displayLabel = useMemo(() => getContentDisplayLabel(item.content, item.contentType), [item.contentType, item.content]);
-  const subtitle     = useMemo(() => getContentSubtitle(item.content, item.contentType), [item.contentType, item.content]);
-  const meta         = useMemo(() => getTypeMeta(item.contentType), [item.contentType]);
   const riskCfg      = useMemo(() => getRiskConfig(risk, colors), [risk, colors]);
   const paymentData  = useMemo(
     () => item.contentType === "payment" ? getPaymentData(item.content) : null,
@@ -80,7 +69,7 @@ const HistoryItem = React.memo(function HistoryItem({ item, risk, onDelete, inde
     ? [colors.danger, colors.dangerShade ?? colors.danger]
     : (risk === "dangerous" || risk === "caution")
         ? [colors.warning, colors.warningShade ?? colors.warning]
-        : meta.gradient;
+        : typeMeta.gradient as [string, string];
 
   const accentBorder = showRisk && riskCfg
     ? riskCfg.borderColor
@@ -89,6 +78,8 @@ const HistoryItem = React.memo(function HistoryItem({ item, risk, onDelete, inde
       : colors.surfaceBorder;
 
   const cardBg = isDark ? colors.surface : "#ffffff";
+
+  const iconOverride = isFavorite ? "heart" : undefined;
 
   const handlePress = useCallback(() => {
     if (item.qrCodeId) {
@@ -130,14 +121,11 @@ const HistoryItem = React.memo(function HistoryItem({ item, risk, onDelete, inde
             },
           ]}
         >
-          <LinearGradient
-            colors={gradient}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-            style={styles.iconBox}
-          >
-            <Ionicons name={isFavorite ? "heart" : meta.icon} size={21} color="#fff" />
-          </LinearGradient>
+          <QrTypeIcon
+            contentType={isFavorite ? "donation" : item.contentType}
+            size={48}
+            overrideIcon={iconOverride}
+          />
 
           <View style={styles.body}>
             <View style={styles.titleRow}>
@@ -204,14 +192,6 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
     shadowRadius: 12,
     elevation: 2,
-  },
-  iconBox: {
-    width: 48,
-    height: 48,
-    borderRadius: 15,
-    alignItems: "center",
-    justifyContent: "center",
-    flexShrink: 0,
   },
   body: {
     flex: 1,
