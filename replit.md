@@ -52,7 +52,7 @@ A mobile-first QR code scanning and management app for Android, focused on secur
   - `services/cache/` — anonymous session and QR caching
   - `services/analysis/` — QR/URL heuristic analysis, threat intelligence, scam detection
   - `services/notifications/` — NOTIFICATIONS_ENABLED feature flag
-- **Core libraries**: `lib/`
+- **Core libraries**: `lib/` — only non-duplicated infrastructure lives here
   - `lib/db/` — database adapter pattern (Firebase locked; Supabase/Postgres stubs)
   - `lib/auth/` — auth adapter and Firebase auth provider
   - `lib/firebase.ts` / `lib/firebase/` — Firebase client config
@@ -63,6 +63,8 @@ A mobile-first QR code scanning and management app for Android, focused on secur
   - `lib/schemas/` — shared schema types (CategorySchema)
   - `lib/styles/common.ts` — reusable StyleSheet token helpers
   - `lib/qr-analysis.ts` — re-export barrel for `services/analysis/`
+  - `lib/haptics.ts`, `lib/number-format.ts`, `lib/query-client.ts` — standalone helpers
+  - **DO NOT ADD** `lib/services/`, `lib/analysis/`, `lib/utils/` — these are deprecated (renamed delete42–delete82)
 - **QR Type Registry**: `features/generator/data/registry.ts` — single source of truth for all QR types; **add new types here only**
 - **Express backend**: `server/`
 - **DB schema (PostgreSQL stub)**: `shared/schema.ts`
