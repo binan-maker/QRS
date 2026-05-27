@@ -1,0 +1,80 @@
+⠙[1G[0K
+> expo-app@1.0.0 server:dev
+> NODE_ENV=development node_modules/.bin/tsx server/index.ts
+
+⠙[1G[0KServing static Expo files with dynamic manifest routing
+Web build found — serving web app to browsers
+Expo routing: Checking expo-platform header on / and /manifest
+express server serving on port 5000
+[HEALTH] {
+  status: [32m'unhealthy'[39m,
+  uptime: [32m'5m 0s'[39m,
+  db_latency: [32m'223ms'[39m,
+  api_latency: [32m'14ms'[39m,
+  memory: [32m'89.27%'[39m,
+  rpm: [33m0[39m
+}
+[HEALTH] {
+  status: [32m'unhealthy'[39m,
+  uptime: [32m'10m 0s'[39m,
+  db_latency: [32m'173ms'[39m,
+  api_latency: [32m'3ms'[39m,
+  memory: [32m'92.72%'[39m,
+  rpm: [33m0[39m
+}
+[HEALTH] {
+  status: [32m'unhealthy'[39m,
+  uptime: [32m'15m 0s'[39m,
+  db_latency: [32m'179ms'[39m,
+  api_latency: [32m'4ms'[39m,
+  memory: [32m'94.59%'[39m,
+  rpm: [33m0[39m
+}
+[HEALTH] {
+  status: [32m'unhealthy'[39m,
+  uptime: [32m'20m 0s'[39m,
+  db_latency: [32m'141ms'[39m,
+  api_latency: [32m'2ms'[39m,
+  memory: [32m'85.46%'[39m,
+  rpm: [33m0[39m
+}
+[HEALTH] {
+  status: [32m'unhealthy'[39m,
+  uptime: [32m'25m 0s'[39m,
+  db_latency: [32m'161ms'[39m,
+  api_latency: [32m'2ms'[39m,
+  memory: [32m'88.4%'[39m,
+  rpm: [33m0[39m
+}
+[HEALTH] {
+  status: [32m'unhealthy'[39m,
+  uptime: [32m'30m 0s'[39m,
+  db_latency: [32m'131ms'[39m,
+  api_latency: [32m'3ms'[39m,
+  memory: [32m'90.02%'[39m,
+  rpm: [33m0[39m
+}
+[HEALTH] {
+  status: [32m'unhealthy'[39m,
+  uptime: [32m'35m 0s'[39m,
+  db_latency: [32m'139ms'[39m,
+  api_latency: [32m'2ms'[39m,
+  memory: [32m'91.58%'[39m,
+  rpm: [33m0[39m
+}
+[HEALTH] {
+  status: [32m'unhealthy'[39m,
+  uptime: [32m'40m 0s'[39m,
+  db_latency: [32m'170ms'[39m,
+  api_latency: [32m'2ms'[39m,
+  memory: [32m'93.34%'[39m,
+  rpm: [33m0[39m
+}
+[HEALTH] {
+  status: [32m'unhealthy'[39m,
+  uptime: [32m'45m 0s'[39m,
+  db_latency: [32m'144ms'[39m,
+  api_latency: [32m'2ms'[39m,
+  memory: [32m'91.81%'[39m,
+  rpm: [33m0[39m
+}
