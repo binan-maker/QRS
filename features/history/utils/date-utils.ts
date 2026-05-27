@@ -10,19 +10,26 @@ export function getDateLabel(date: Date): string {
   return date.toLocaleDateString("en-US", { day: "numeric", month: "short", year: "numeric" });
 }
 
+// O(n) single-pass grouping — previously had an O(n²) inner filter
+// for each section header's count.
 export function groupByDate(items: HistoryItem[]): ListRow[] {
+  if (items.length === 0) return [];
+
+  // First pass: count items per date label
+  const countMap = new Map<string, number>();
+  for (const item of items) {
+    const label = getDateLabel(new Date(item.scannedAt));
+    countMap.set(label, (countMap.get(label) ?? 0) + 1);
+  }
+
+  // Second pass: build rows, inserting headers on label change
   const rows: ListRow[] = [];
   let lastLabel = "";
 
-  for (let i = 0; i < items.length; i++) {
-    const item  = items[i];
+  for (const item of items) {
     const label = getDateLabel(new Date(item.scannedAt));
-
     if (label !== lastLabel) {
-      const count = items
-        .slice(i)
-        .filter((it) => getDateLabel(new Date(it.scannedAt)) === label).length;
-      rows.push({ kind: "header", label, count, id: `header-${label}` });
+      rows.push({ kind: "header", label, count: countMap.get(label) ?? 0, id: `header-${label}` });
       lastLabel = label;
     }
     rows.push({ kind: "item", item });

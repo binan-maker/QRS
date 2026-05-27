@@ -57,6 +57,7 @@ function HistoryScreen() {
   const {
     searchVisible,
     searchQuery,
+    debouncedQuery,
     setSearchQuery,
     searchInputRef,
     openSearch,
@@ -65,9 +66,11 @@ function HistoryScreen() {
 
   // Derived display data
   const activeFilters  = useMemo(() => getActiveFilters(history, scanStats, user), [history, scanStats, user]);
+  // Use debouncedQuery (300ms lag) so matchesSearch / parseAnyPaymentQr
+  // only runs after the user pauses typing, not on every keystroke.
   const searchedItems  = useMemo(
-    () => searchQuery.trim() ? displayItems.filter((item) => matchesSearch(item, searchQuery)) : displayItems,
-    [displayItems, searchQuery]
+    () => debouncedQuery.trim() ? displayItems.filter((item) => matchesSearch(item, debouncedQuery)) : displayItems,
+    [displayItems, debouncedQuery]
   );
   const listRows       = useMemo(() => groupByDate(searchedItems), [searchedItems]);
 
