@@ -8,7 +8,6 @@ import {
   ActivityIndicator,
 } from "react-native";
 import { Image } from "expo-image";
-import { LinearGradient } from "expo-linear-gradient";
 import { safePush } from "@/shared/utils/navigation";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -121,47 +120,31 @@ const QrSkeletonCard = React.memo(function QrSkeletonCard({ index }: { index: nu
   );
 });
 
-// ── Donation pill row (stable sub-tree, extracted to avoid re-renders) ─────────
-const DONATION_AMOUNTS = ["₹10", "₹50", "₹100"];
+// ── Donation entry card (clean, theme-aware, low visual weight) ────────────────
 const DonationCard = React.memo(function DonationCard() {
+  const { colors } = useTheme();
   const onPress = useCallback(() => safePush("/donation"), []);
   return (
     <Animated.View entering={ENTER_DONATION}>
       <Pressable
         onPress={onPress}
-        style={({ pressed }) => [styles.donationBtn, { opacity: pressed ? 0.9 : 1 }]}
+        style={({ pressed }) => [
+          styles.donationBtn,
+          {
+            backgroundColor: colors.surface,
+            borderColor: colors.primary + "30",
+            opacity: pressed ? 0.85 : 1,
+          },
+        ]}
       >
-        <LinearGradient
-          colors={["#6D28D9", "#7C3AED", "#4F46E5"]}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={styles.donationGrad}
-        >
-          <View style={styles.donationTopRow}>
-            <View style={styles.donationHeartRow}>
-              <View style={styles.donationIconWrap}>
-                <Ionicons name="heart" size={16} color="#fff" />
-              </View>
-              <View>
-                <Text style={styles.donationTitle}>Support QR Guard</Text>
-                <Text style={styles.donationSub}>Help keep the app free &amp; secure</Text>
-              </View>
-            </View>
-            <View style={styles.donationArrow}>
-              <Ionicons name="arrow-forward" size={15} color="#fff" />
-            </View>
-          </View>
-          <View style={styles.donationPillRow}>
-            {DONATION_AMOUNTS.map((amt) => (
-              <View key={amt} style={styles.donationPill}>
-                <Text style={styles.donationPillText}>{amt}</Text>
-              </View>
-            ))}
-            <View style={[styles.donationPill, { backgroundColor: "rgba(255,255,255,0.08)" }]}>
-              <Text style={styles.donationPillText}>via Play Store ›</Text>
-            </View>
-          </View>
-        </LinearGradient>
+        <View style={[styles.donationIconWrap, { backgroundColor: colors.primaryDim }]}>
+          <Ionicons name="shield-checkmark" size={17} color={colors.primary} />
+        </View>
+        <View style={styles.donationTextWrap}>
+          <Text style={[styles.donationTitle, { color: colors.text }]}>Support QR Guard</Text>
+          <Text style={[styles.donationSub, { color: colors.textMuted }]}>Help keep the app free &amp; independent</Text>
+        </View>
+        <Ionicons name="chevron-forward" size={16} color={colors.textMuted} />
       </Pressable>
     </Animated.View>
   );
