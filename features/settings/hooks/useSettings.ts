@@ -1,22 +1,10 @@
 import { useState, useEffect, useCallback } from "react";
-import { Alert } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import * as Haptics from "@/shared/utils/haptics";
 import { setHapticsEnabled } from "@/shared/utils/haptics";
-import { router } from "expo-router";
 import { useAuth } from "@/shared/contexts/AuthContext";
-import { authAdapter } from "@/lib/auth";
-import {
-  getUserFollowing,
-  getUserComments,
-  softDeleteComment,
-  submitFeedback,
-  deleteUserAccount,
-  deleteAllUserComments,
-  getUserScansPaginated,
-  deleteUserScan,
-  deleteAllUserScans,
-} from "@/lib/firestore-service";
+import { useFeedbackSettings } from "./useFeedbackSettings";
+import { useDataSettings } from "./useDataSettings";
+import { useAccountSettings } from "./useAccountSettings";
 
 export type Section = "main" | "profile" | "account" | "guide" | "feedback" | "following" | "comments" | "history";
 
@@ -26,29 +14,18 @@ const STARTUP_SCREEN_KEY = "qrg:startup:screen";
 export function useSettings() {
   const { user, signOut } = useAuth();
   const [section, setSection] = useState<Section>("main");
-  const [feedbackText, setFeedbackText] = useState("");
-  const [feedbackEmail, setFeedbackEmail] = useState(user?.email || "");
-  const [feedbackSubmitting, setFeedbackSubmitting] = useState(false);
-  const [feedbackDone, setFeedbackDone] = useState(false);
-  const [followingList, setFollowingList] = useState<any[]>([]);
-  const [followingLoading, setFollowingLoading] = useState(false);
-  const [myComments, setMyComments] = useState<any[]>([]);
-  const [commentsLoading, setCommentsLoading] = useState(false);
-  const [myHistory, setMyHistory] = useState<any[]>([]);
-  const [historyLoading, setHistoryLoading] = useState(false);
-  const [deleteConfirmText, setDeleteConfirmText] = useState("");
   const [hapticsEnabled, setHapticsEnabledState] = useState(false);
   const [startupScreen, setStartupScreenState] = useState<"home" | "scanner">("home");
 
+  const feedback = useFeedbackSettings({ userId: user?.id ?? null, userEmail: user?.email || "" });
+  const data = useDataSettings({ userId: user?.id });
+  const account = useAccountSettings({ userId: user?.id, signOut });
+
   useEffect(() => {
-    setFeedbackEmail(user?.email || "");
-    setFeedbackText("");
-    setFeedbackDone(false);
+    feedback.resetFeedback(user?.email || "");
     setSection("main");
-    setFollowingList([]);
-    setMyComments([]);
-    setMyHistory([]);
-    setDeleteConfirmText("");
+    data.resetData();
+    account.resetAccount();
   }, [user?.id]);
 
   useEffect(() => {
@@ -74,276 +51,23 @@ export function useSettings() {
     await AsyncStorage.setItem(STARTUP_SCREEN_KEY, screen);
   }, []);
 
-  const handleSignOut = useCallback(async () => {
-    Alert.alert("Sign Out", "Are you sure you want to sign out?", [
-      { text: "Cancel", style: "cancel" },
-      {
-        text: "Sign Out",
-        style: "destructive",
-        onPress: async () => {
-          try {
-            await signOut();
-            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-            router.replace("/(tabs)/" as any);
-          } catch (e: any) {
-            Alert.alert("Sign Out Failed", e?.message || "Could not sign out. Please try again.");
-          }
-        },
-      },
-    ]);
-  }, [signOut]);
-
-  const handleClearData = useCallback(async () => {
-    Alert.alert("Clear All Data", "This will remove all locally stored data including scan history.", [
-      { text: "Cancel", style: "cancel" },
-      {
-        text: "Clear",
-        style: "destructive",
-        onPress: async () => {
-          await AsyncStorage.removeItem("local_scan_history");
-          if (user?.id) {
-            await AsyncStorage.removeItem(`local_scan_history_${user.id}`);
-          }
-          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-          Alert.alert("Cleared", "Local data has been cleared.");
-        },
-      },
-    ]);
-  }, [user?.id]);
-
-  const handleSubmitFeedback = useCallback(async () => {
-    if (!feedbackText.trim()) return;
-    setFeedbackSubmitting(true);
-    try {
-      await submitFeedback(user?.id || null, feedbackEmail.trim() || null, feedbackText.trim());
-      setFeedbackDone(true);
-      setFeedbackText("");
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-    } catch {
-      Alert.alert("Error", "Could not submit feedback. Please try again.");
-    } finally {
-      setFeedbackSubmitting(false);
-    }
-  }, [feedbackText, feedbackEmail, user?.id]);
-
-  const loadFollowing = useCallback(async () => {
-    if (!user) return;
-    setFollowingLoading(true);
-    try {
-      const list = await getUserFollowing(user.id);
-      setFollowingList(list);
-    } catch {}
-    setFollowingLoading(false);
-  }, [user?.id]);
-
-  const loadMyComments = useCallback(async () => {
-    if (!user) return;
-    setCommentsLoading(true);
-    try {
-      const list = await getUserComments(user.id);
-      setMyComments(list);
-    } catch {}
-    setCommentsLoading(false);
-  }, [user?.id]);
-
-  const loadMyHistory = useCallback(async () => {
-    if (!user) return;
-    setHistoryLoading(true);
-    try {
-      const stored = await AsyncStorage.getItem(`local_scan_history_${user.id}`);
-      const local: any[] = stored
-        ? JSON.parse(stored).map((s: any) => ({ ...s, source: "local" as const }))
-        : [];
-      const { items } = await getUserScansPaginated(user.id, 100);
-      const cloud = items
-        .filter((s: any) => !s.isDeleted)
-        .map((s: any) => ({ ...s, source: "cloud" as const }));
-      const merged = [...local];
-      for (const c of cloud) {
-        if (!merged.find((i) => i.qrCodeId && i.qrCodeId === c.qrCodeId)) {
-          merged.push(c);
-        }
-      }
-      merged.sort(
-        (a, b) => new Date(b.scannedAt).getTime() - new Date(a.scannedAt).getTime()
-      );
-      setMyHistory(merged);
-    } catch {}
-    setHistoryLoading(false);
-  }, [user?.id]);
-
-  const handleDeleteComment = useCallback(async (commentId: string, qrCodeId: string) => {
-    Alert.alert("Delete Comment", "Are you sure you want to delete this comment?", [
-      { text: "Cancel", style: "cancel" },
-      {
-        text: "Delete",
-        style: "destructive",
-        onPress: async () => {
-          setMyComments((prev) => prev.filter((c) => c.id !== commentId));
-          try {
-            if (user) await softDeleteComment(qrCodeId, commentId, user.id);
-            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-          } catch {
-            Alert.alert("Error", "Could not delete comment.");
-          }
-        },
-      },
-    ]);
-  }, [user?.id]);
-
-  const handleDeleteAllComments = useCallback(async () => {
-    Alert.alert(
-      "Delete All Comments",
-      "This will permanently delete all your comments. Under Indian DPDP Act and GDPR, your data will be removed within 7 days. This cannot be undone.",
-      [
-        { text: "Cancel", style: "cancel" },
-        {
-          text: "Delete All",
-          style: "destructive",
-          onPress: async () => {
-            const prev = [...myComments];
-            setMyComments([]);
-            try {
-              if (user) await deleteAllUserComments(user.id);
-              Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-            } catch {
-              setMyComments(prev);
-              Alert.alert("Error", "Could not delete all comments.");
-            }
-          },
-        },
-      ]
-    );
-  }, [user?.id, myComments]);
-
-  const handleDeleteHistoryItem = useCallback(async (item: any) => {
-    setMyHistory((prev) => prev.filter((h) => h.id !== item.id));
-    try {
-      if (user) {
-        if (item.source === "cloud") {
-          await deleteUserScan(user.id, item.id);
-        } else {
-          const stored = await AsyncStorage.getItem(`local_scan_history_${user.id}`);
-          if (stored) {
-            const arr = JSON.parse(stored).filter((s: any) => s.id !== item.id);
-            await AsyncStorage.setItem(`local_scan_history_${user.id}`, JSON.stringify(arr));
-          }
-        }
-      }
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-    } catch {
-      setMyHistory((prev) =>
-        [item, ...prev].sort(
-          (a, b) => new Date(b.scannedAt).getTime() - new Date(a.scannedAt).getTime()
-        )
-      );
-    }
-  }, [user?.id]);
-
-  const handleDeleteAllHistory = useCallback(async () => {
-    Alert.alert(
-      "Delete All History",
-      "This will remove all your scan history from this device and the cloud. Security data is anonymised and retained for threat analysis under our privacy policy. This cannot be undone.",
-      [
-        { text: "Cancel", style: "cancel" },
-        {
-          text: "Delete All",
-          style: "destructive",
-          onPress: async () => {
-            const prev = [...myHistory];
-            setMyHistory([]);
-            try {
-              if (user) {
-                await AsyncStorage.removeItem(`local_scan_history_${user.id}`);
-                await deleteAllUserScans(user.id);
-              }
-              Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-            } catch {
-              setMyHistory(prev);
-              Alert.alert("Error", "Could not delete history.");
-            }
-          },
-        },
-      ]
-    );
-  }, [user?.id, myHistory]);
-
-  const handleDeleteAccount = useCallback(async () => {
-    if (deleteConfirmText.toLowerCase() !== "delete") {
-      Alert.alert("Confirmation Required", 'Please type "delete" to confirm account deletion.');
-      return;
-    }
-    Alert.alert(
-      "Delete Account",
-      "This will permanently delete your account and all associated data. This cannot be undone.",
-      [
-        { text: "Cancel", style: "cancel" },
-        {
-          text: "Delete Forever",
-          style: "destructive",
-          onPress: async () => {
-            try {
-              if (user) {
-                await deleteUserAccount(user.id);
-                const currentUser = authAdapter.getCurrentUser();
-                if (currentUser) {
-                  await authAdapter.deleteUser(currentUser);
-                }
-              }
-              await signOut();
-              Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-              router.replace("/(tabs)/" as any);
-            } catch (e: any) {
-              console.error("[DeleteAccount] Error:", e?.message, e?.code);
-              if (e?.code === "auth/requires-recent-login") {
-                Alert.alert(
-                  "Re-authentication Required",
-                  "For your security, please sign out and sign back in before deleting your account. This is required for sensitive operations."
-                );
-              } else {
-                Alert.alert("Error", e?.message || "Could not delete account. Please try again.");
-              }
-            }
-          },
-        },
-      ]
-    );
-  }, [deleteConfirmText, user?.id, signOut]);
-
   const handleSectionChange = useCallback((s: Section) => {
     setSection(s);
-    if (s === "following") loadFollowing();
-    if (s === "comments") loadMyComments();
-    if (s === "history") loadMyHistory();
-  }, [loadFollowing, loadMyComments, loadMyHistory]);
+    if (s === "following") data.loadFollowing();
+    if (s === "comments") data.loadMyComments();
+    if (s === "history") data.loadMyHistory();
+  }, [data.loadFollowing, data.loadMyComments, data.loadMyHistory]);
 
   return {
     user,
     section,
     setSection: handleSectionChange,
-    feedbackText,
-    setFeedbackText,
-    feedbackEmail,
-    setFeedbackEmail,
-    feedbackSubmitting,
-    feedbackDone,
-    followingList,
-    followingLoading,
-    myComments,
-    commentsLoading,
-    myHistory,
-    historyLoading,
-    deleteConfirmText,
-    setDeleteConfirmText,
+    hapticsEnabled,
+    toggleHaptics,
     startupScreen,
     setStartupScreen,
-    handleSignOut,
-    handleClearData,
-    handleSubmitFeedback,
-    handleDeleteComment,
-    handleDeleteAllComments,
-    handleDeleteHistoryItem,
-    handleDeleteAllHistory,
-    handleDeleteAccount,
+    ...feedback,
+    ...data,
+    ...account,
   };
 }

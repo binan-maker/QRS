@@ -11,26 +11,9 @@ import {
   softDeleteComment,
   getCommentUserLikes,
 } from "@/lib/firestore-service";
+import { type CommentItem, COMMENTS_PER_PAGE, REPLIES_PER_PAGE } from "./comment-types";
 
-export interface CommentItem {
-  id: string;
-  text: string;
-  createdAt: string;
-  likeCount: number;
-  dislikeCount: number;
-  userLike: "like" | "dislike" | null;
-  user: { displayName: string };
-  parentId?: string | null;
-  userId?: string;
-  isDeleted?: boolean;
-  isHidden?: boolean;
-  reportCount?: number;
-  userUsername?: string;
-  userPhotoURL?: string;
-}
-
-const COMMENTS_PER_PAGE = 20;
-const REPLIES_PER_PAGE = 10;
+export type { CommentItem };
 
 export function useQrComments(id: string, userId: string | null, offlineMode: boolean) {
   const { user } = useAuth();
@@ -41,6 +24,7 @@ export function useQrComments(id: string, userId: string | null, offlineMode: bo
   const [newComment, setNewComment] = useState("");
   const [replyTo, setReplyTo] = useState<{ id: string; author: string; rootId: string; isNested: boolean } | null>(null);
   const [commentsLoading, setCommentsLoading] = useState(false);
+  const [commentsRefreshing, setCommentsRefreshing] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [commentMenuId, setCommentMenuId] = useState<string | null>(null);
   const [commentMenuOwner, setCommentMenuOwner] = useState(false);
@@ -50,15 +34,14 @@ export function useQrComments(id: string, userId: string | null, offlineMode: bo
   const [visibleRepliesCount, setVisibleRepliesCount] = useState<Record<string, number>>({});
   const [revealedComments, setRevealedComments] = useState<Set<string>>(new Set());
 
-  const lastCommentRef = useRef<any>(undefined);
-  const commentInputRef = useRef<any>(null);
-  const committedLikesRef = useRef<Record<string, "like" | "dislike" | null>>({});
-  const pendingFinalLikeRef = useRef<Record<string, "like" | "dislike" | null>>({});
-  const likeTimersRef = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
-  const scrollRef = useRef<any>(null);
-
-  const pendingCommentsRef = useRef<CommentItem[]>([]);
-  const deletingIdsRef = useRef<Set<string>>(new Set());
+  const lastCommentRef   = useRef<any>(undefined);
+  const commentInputRef  = useRef<any>(null);
+  const committedLikesRef      = useRef<Record<string, "like" | "dislike" | null>>({});
+  const pendingFinalLikeRef    = useRef<Record<string, "like" | "dislike" | null>>({});
+  const likeTimersRef          = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
+  const scrollRef              = useRef<any>(null);
+  const pendingCommentsRef     = useRef<CommentItem[]>([]);
+  const deletingIdsRef         = useRef<Set<string>>(new Set());
 
   const topLevelComments = useMemo(
     () => commentsList.filter((c) => !c.parentId),
@@ -118,9 +101,7 @@ export function useQrComments(id: string, userId: string | null, offlineMode: bo
     getCommentUserLikes(id, ids, userId).then((likes) => {
       setUserLikes((prev) => ({ ...prev, ...likes }));
       Object.entries(likes).forEach(([cid, val]) => {
-        if (!likeTimersRef.current.has(cid)) {
-          committedLikesRef.current[cid] = val;
-        }
+        if (!likeTimersRef.current.has(cid)) committedLikesRef.current[cid] = val;
       });
     });
   }, [commentsList, userId, id]);
@@ -149,8 +130,6 @@ export function useQrComments(id: string, userId: string | null, offlineMode: bo
       return () => clearTimeout(t);
     }
   }, [replyTo]);
-
-  const [commentsRefreshing, setCommentsRefreshing] = useState(false);
 
   const loadInitialComments = useCallback(async (resetOptimistic = false) => {
     if (offlineMode) return;
@@ -182,9 +161,7 @@ export function useQrComments(id: string, userId: string | null, offlineMode: bo
     setCommentsRefreshing(false);
   }, [id, userId, offlineMode]);
 
-  useEffect(() => {
-    loadInitialComments(true);
-  }, [loadInitialComments]);
+  useEffect(() => { loadInitialComments(true); }, [loadInitialComments]);
 
   const loadMoreComments = useCallback(async () => {
     if (commentsLoading || !hasMoreComments) return;
@@ -206,37 +183,23 @@ export function useQrComments(id: string, userId: string | null, offlineMode: bo
     const clientUsername: string | undefined = (user as any)?.username || undefined;
     const clientPhotoURL: string | undefined = user?.photoURL || undefined;
     const clientDisplayName: string = user?.displayName || "User";
-
     const tempId = `pending_${Date.now()}`;
     const parentId = replyTo ? replyTo.rootId : null;
     const optimisticComment: CommentItem = {
-      id: tempId,
-      text: trimmed,
-      userId,
+      id: tempId, text: trimmed, userId,
       user: { displayName: clientDisplayName },
-      userUsername: clientUsername,
-      userPhotoURL: clientPhotoURL,
+      userUsername: clientUsername, userPhotoURL: clientPhotoURL,
       createdAt: new Date().toISOString(),
-      likeCount: 0,
-      dislikeCount: 0,
-      userLike: null,
-      parentId,
-      isDeleted: false,
-      isHidden: false,
-      reportCount: 0,
+      likeCount: 0, dislikeCount: 0, userLike: null,
+      parentId, isDeleted: false, isHidden: false, reportCount: 0,
     };
     pendingCommentsRef.current = [optimisticComment, ...pendingCommentsRef.current];
     setCommentsList((prev) => [optimisticComment, ...prev]);
-
     setNewComment("");
     setReplyTo(null);
-    if (parentId) {
-      setExpandedReplies((prev) => ({ ...prev, [parentId]: true }));
-    }
-
+    if (parentId) setExpandedReplies((prev) => ({ ...prev, [parentId]: true }));
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     setSubmitting(true);
-
     try {
       await addComment(id, userId, clientDisplayName, trimmed, parentId, emailVerified, clientUsername, clientPhotoURL);
     } catch (e: any) {
@@ -250,7 +213,6 @@ export function useQrComments(id: string, userId: string | null, offlineMode: bo
 
   function handleCommentLike(commentId: string, action: "like" | "dislike") {
     if (!userId) { router.push("/(auth)/login"); return; }
-
     const prevLike = userLikes[commentId] ?? null;
     const newLike: "like" | "dislike" | null = prevLike === action ? null : action;
     setUserLikes((prev) => {
@@ -262,8 +224,7 @@ export function useQrComments(id: string, userId: string | null, offlineMode: bo
     setCommentsList((prev) =>
       prev.map((c) => {
         if (c.id !== commentId) return c;
-        let likes = c.likeCount;
-        let dislikes = c.dislikeCount;
+        let likes = c.likeCount, dislikes = c.dislikeCount;
         if (action === "like") {
           likes = newLike === "like" ? likes + 1 : likes - 1;
           if (prevLike === "dislike") dislikes = Math.max(0, dislikes - 1);
@@ -275,11 +236,9 @@ export function useQrComments(id: string, userId: string | null, offlineMode: bo
       })
     );
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-
     pendingFinalLikeRef.current[commentId] = newLike;
     const existingTimer = likeTimersRef.current.get(commentId);
     if (existingTimer) clearTimeout(existingTimer);
-
     const capturedUserId = userId;
     const timer = setTimeout(async () => {
       likeTimersRef.current.delete(commentId);
@@ -296,7 +255,6 @@ export function useQrComments(id: string, userId: string | null, offlineMode: bo
         );
       } catch {}
     }, 600);
-
     likeTimersRef.current.set(commentId, timer);
   }
 
@@ -315,13 +273,11 @@ export function useQrComments(id: string, userId: string | null, offlineMode: bo
   async function handleDeleteComment(commentId: string) {
     if (!userId) return;
     setCommentMenuId(null);
-
     deletingIdsRef.current.add(commentId);
     const removedComment = commentsList.find((c) => c.id === commentId);
     setCommentsList((prev) => prev.filter((c) => c.id !== commentId));
     setDeletingCommentId(commentId);
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-
     try {
       await softDeleteComment(id, commentId, userId);
     } catch {
@@ -339,29 +295,21 @@ export function useQrComments(id: string, userId: string | null, offlineMode: bo
   }
 
   return {
-    commentsList,
-    topLevelComments,
-    userLikes,
-    hasMoreComments,
+    commentsList, topLevelComments,
+    userLikes, hasMoreComments,
     newComment, setNewComment,
     replyTo, setReplyTo,
-    commentsLoading,
-    commentsRefreshing,
-    refreshComments,
+    commentsLoading, commentsRefreshing, refreshComments,
     submitting,
     commentMenuId, setCommentMenuId,
     commentMenuOwner, setCommentMenuOwner,
     commentReportModal, setCommentReportModal,
     deletingCommentId,
-    expandedReplies,
-    visibleRepliesCount,
+    expandedReplies, visibleRepliesCount,
     revealedComments, setRevealedComments,
-    commentInputRef,
-    scrollRef,
-    getAllDescendants,
-    getRootCommentId,
-    toggleReplies,
-    showMoreReplies,
+    commentInputRef, scrollRef,
+    getAllDescendants, getRootCommentId,
+    toggleReplies, showMoreReplies,
     loadMoreComments,
     handleSubmitComment,
     handleCommentLike,
