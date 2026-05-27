@@ -9,17 +9,21 @@ import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { useTheme } from "@/contexts/ThemeContext";
 import { useScanner } from "@/features/scanner/hooks/useScanner";
-import ScannerOverlay from "@/features/scanner/components/ScannerOverlay";
-import ProcessingOverlay from "@/features/scanner/components/ProcessingOverlay";
-import SafetyModal from "@/features/scanner/components/SafetyModal";
-import VerifiedModal from "@/features/scanner/components/VerifiedModal";
-import PermissionScreen from "@/features/scanner/components/PermissionScreen";
-import { CameraErrorBoundary } from "@/features/scanner/components/CameraErrorBoundary";
-import { ScannerToast, toastContainerStyle } from "@/features/scanner/components/ScannerToast";
-import { CameraUnavailableBanner, type CameraErrorType } from "@/features/scanner/components/CameraUnavailableBanner";
-import { UnverifiedModal } from "@/features/scanner/components/UnverifiedModal";
-import { DonationBanner } from "@/features/scanner/components/DonationBanner";
-import { ConversionBanner } from "@/features/scanner/components/ConversionBanner";
+import {
+  ScannerOverlay,
+  ProcessingOverlay,
+  SafetyModal,
+  VerifiedModal,
+  PermissionScreen,
+  CameraErrorBoundary,
+  ScannerToast,
+  toastContainerStyle,
+  CameraUnavailableBanner,
+  UnverifiedModal,
+  DonationBanner,
+  ConversionBanner,
+} from "@/features/scanner/components";
+import type { CameraErrorType } from "@/features/scanner/components";
 
 const DONATION_DISMISS_KEY = "@qrg_donation_dismissed";
 const SCAN_COUNT_KEY       = "@qrg_total_scan_count";
@@ -202,10 +206,10 @@ export default function ScannerScreen() {
             onMountError={(error) => {
               const msg     = (error?.message ?? "").toLowerCase();
               const isInUse =
-                msg.includes("in use")     ||
-                msg.includes("busy")       ||
-                msg.includes("already")    ||
-                msg.includes("another app")||
+                msg.includes("in use")      ||
+                msg.includes("busy")        ||
+                msg.includes("already")     ||
+                msg.includes("another app") ||
                 msg.includes("restricted");
               markCameraUnavailable(isInUse ? "inuse" : "unavailable");
             }}
@@ -236,26 +240,33 @@ export default function ScannerScreen() {
         />
       )}
 
-      {/* Modals & overlays */}
+      {/* Processing overlay — lazy-mounted */}
       {processing && <ProcessingOverlay />}
 
-      <SafetyModal
-        visible={safetyModal}
-        warnings={safetyWarnings}
-        riskLevel={safetyRiskLevel}
-        onProceed={handleSafetyModalProceed}
-        onBack={handleSafetyModalBack}
-      />
+      {/* Modals — lazy-mounted (only rendered when open) */}
+      {safetyModal && (
+        <SafetyModal
+          visible={safetyModal}
+          warnings={safetyWarnings}
+          riskLevel={safetyRiskLevel}
+          onProceed={handleSafetyModalProceed}
+          onBack={handleSafetyModalBack}
+        />
+      )}
 
-      <VerifiedModal visible={verifiedModal} ownerName={verifiedOwnerName} />
+      {verifiedModal && (
+        <VerifiedModal visible={verifiedModal} ownerName={verifiedOwnerName} />
+      )}
 
-      <UnverifiedModal
-        visible={unverifiedModal}
-        countdown={unverifiedCountdown}
-        onProceed={handleUnverifiedProceed}
-        onBack={handleUnverifiedBack}
-        colors={colors}
-      />
+      {unverifiedModal && (
+        <UnverifiedModal
+          visible={unverifiedModal}
+          countdown={unverifiedCountdown}
+          onProceed={handleUnverifiedProceed}
+          onBack={handleUnverifiedBack}
+          colors={colors}
+        />
+      )}
 
       <DonationBanner
         visible={showDonationBanner}
