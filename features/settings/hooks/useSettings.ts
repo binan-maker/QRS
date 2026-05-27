@@ -24,7 +24,7 @@ const HAPTIC_KEY = "haptic_enabled";
 const STARTUP_SCREEN_KEY = "qrg:startup:screen";
 
 export function useSettings() {
-  const { user, token, signOut } = useAuth();
+  const { user, signOut } = useAuth();
   const [section, setSection] = useState<Section>("main");
   const [feedbackText, setFeedbackText] = useState("");
   const [feedbackEmail, setFeedbackEmail] = useState(user?.email || "");
@@ -327,7 +327,6 @@ export function useSettings() {
     setFeedbackEmail,
     feedbackSubmitting,
     feedbackDone,
-    setFeedbackDone,
     followingList,
     followingLoading,
     myComments,
@@ -336,8 +335,6 @@ export function useSettings() {
     historyLoading,
     deleteConfirmText,
     setDeleteConfirmText,
-    hapticsEnabled,
-    toggleHaptics,
     startupScreen,
     setStartupScreen,
     handleSignOut,

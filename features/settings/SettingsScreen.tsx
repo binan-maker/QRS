@@ -20,6 +20,11 @@ import CommentsSection from "@/features/settings/components/CommentsSection";
 import HistorySection from "@/features/settings/components/HistorySection";
 import ProfileSettingsSection from "@/features/settings/components/ProfileSettingsSection";
 
+const STARTUP_SCREEN_OPTIONS = [
+  { key: "home"    as const, label: "Home",    icon: "home-outline"  as const },
+  { key: "scanner" as const, label: "Scanner", icon: "scan-outline"  as const },
+];
+
 export default function SettingsScreen() {
   const insets = useSafeAreaInsets();
   const topInset = useTopInset();
@@ -105,6 +110,13 @@ export default function SettingsScreen() {
     light:  handleSetLightMode,
     dark:   handleSetDarkMode,
   }), [handleSetSystemMode, handleSetLightMode, handleSetDarkMode]);
+
+  const handleSetHomeScreen    = useCallback(() => setStartupScreen("home"),    [setStartupScreen]);
+  const handleSetScannerScreen = useCallback(() => setStartupScreen("scanner"), [setStartupScreen]);
+  const startupScreenHandlers: Record<"home" | "scanner", () => void> = useMemo(() => ({
+    home:    handleSetHomeScreen,
+    scanner: handleSetScannerScreen,
+  }), [handleSetHomeScreen, handleSetScannerScreen]);
 
   // ── Sub-section view ────────────────────────────────────────────────────────
 
@@ -293,15 +305,12 @@ export default function SettingsScreen() {
           <View style={[styles.menuGroup, { padding: 16 }]}>
             <Text style={[styles.appearanceLabel, { color: colors.textSecondary }]}>App opens on</Text>
             <View style={styles.themeRow}>
-              {([
-                { key: "home",    label: "Home",    icon: "home-outline"    },
-                { key: "scanner", label: "Scanner", icon: "scan-outline"    },
-              ] as const).map((opt) => {
+              {STARTUP_SCREEN_OPTIONS.map((opt) => {
                 const isActive = startupScreen === opt.key;
                 return (
                   <Pressable
                     key={opt.key}
-                    onPress={() => setStartupScreen(opt.key)}
+                    onPress={startupScreenHandlers[opt.key]}
                     style={({ pressed }) => [
                       styles.themeBtn,
                       {

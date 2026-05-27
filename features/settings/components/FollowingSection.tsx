@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { View, Text, Pressable, StyleSheet } from "react-native";
 import { FlashList } from "@shopify/flash-list";
 import { Ionicons } from "@expo/vector-icons";
@@ -113,6 +113,93 @@ export default function FollowingSection({ loading, list }: Props) {
     );
   }
 
+  const renderItem = useCallback(({ item, index }: { item: EnrichedItem; index: number }) => {
+    const rawMeta = getContentTypeMeta(item.contentType);
+    const meta = {
+      icon: rawMeta.icon as keyof typeof Ionicons.glyphMap,
+      label: rawMeta.label,
+      gradient: rawMeta.gradient as [string, string],
+    };
+    const displayLabel = getContentDisplayLabel(item.content, item.contentType);
+    const subtitle = getContentSubtitle(item.content, item.contentType);
+    const cardBg = isDark ? colors.surface : "#ffffff";
+
+    return (
+      <Animated.View entering={FadeInDown.duration(260).delay(Math.min(index, 4) * 22).duration(260)}>
+        <Pressable
+          onPress={() => router.push({ pathname: "/qr-detail/[id]", params: { id: item.qrCodeId } })}
+          style={({ pressed }) => [
+            s.card,
+            {
+              backgroundColor: cardBg,
+              borderColor: colors.surfaceBorder,
+              opacity: pressed ? 0.9 : 1,
+              transform: [{ scale: pressed ? 0.984 : 1 }],
+              shadowColor: isDark ? "#000" : "#0008FF",
+              shadowOpacity: isDark ? 0.18 : 0.05,
+            },
+          ]}
+        >
+          <LinearGradient
+            colors={meta.gradient}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={s.iconBox}
+          >
+            <Ionicons name={meta.icon} size={21} color="#fff" />
+          </LinearGradient>
+
+          <View style={s.body}>
+            <Text style={[s.title, { color: colors.text }]} numberOfLines={1} maxFontSizeMultiplier={1}>
+              {displayLabel}
+            </Text>
+
+            {subtitle ? (
+              <Text style={[s.subtitle, { color: colors.textSecondary }]} numberOfLines={1} maxFontSizeMultiplier={1}>
+                {subtitle}
+              </Text>
+            ) : null}
+
+            <View style={s.metaRow}>
+              <View style={[s.typeBadge, { backgroundColor: meta.gradient[0] + "22" }]}>
+                <Text style={[s.typeBadgeText, { color: meta.gradient[0] }]}>{meta.label}</Text>
+              </View>
+              {item.scanCount > 0 && (
+                <>
+                  <View style={s.dot} />
+                  <Ionicons name="scan-outline" size={10} color={colors.textMuted} />
+                  <Text style={[s.metaText, { color: colors.textMuted }]} maxFontSizeMultiplier={1}>
+                    {item.scanCount} {item.scanCount === 1 ? "scan" : "scans"}
+                  </Text>
+                </>
+              )}
+              {item.commentCount > 0 && (
+                <>
+                  <View style={s.dot} />
+                  <Ionicons name="chatbubble-outline" size={10} color={colors.textMuted} />
+                  <Text style={[s.metaText, { color: colors.textMuted }]} maxFontSizeMultiplier={1}>
+                    {item.commentCount}
+                  </Text>
+                </>
+              )}
+            </View>
+          </View>
+
+          <View style={s.right}>
+            {item.createdAt ? (
+              <Text style={[s.time, { color: colors.textMuted }]} maxFontSizeMultiplier={1}>
+                {formatShortDate(new Date(item.createdAt))}
+              </Text>
+            ) : null}
+            <View style={[s.chevronWrap, { backgroundColor: meta.gradient[0] + "18" }]}>
+              <Ionicons name="chevron-forward" size={13} color={meta.gradient[0]} />
+            </View>
+          </View>
+        </Pressable>
+      </Animated.View>
+    );
+  }, [colors, isDark]);
+
   return (
     <FlashList
       data={enriched}
@@ -125,92 +212,7 @@ export default function FollowingSection({ loading, list }: Props) {
           {enriched.length} {enriched.length === 1 ? "QR code" : "QR codes"} followed
         </Text>
       }
-      renderItem={({ item, index }) => {
-        const rawMeta = getContentTypeMeta(item.contentType);
-        const meta = {
-          icon: rawMeta.icon as keyof typeof Ionicons.glyphMap,
-          label: rawMeta.label,
-          gradient: rawMeta.gradient as [string, string],
-        };
-        const displayLabel = getContentDisplayLabel(item.content, item.contentType);
-        const subtitle = getContentSubtitle(item.content, item.contentType);
-        const cardBg = isDark ? colors.surface : "#ffffff";
-
-        return (
-          <Animated.View entering={FadeInDown.duration(260).delay(Math.min(index, 4) * 22).duration(260)}>
-            <Pressable
-              onPress={() => router.push({ pathname: "/qr-detail/[id]", params: { id: item.qrCodeId } })}
-              style={({ pressed }) => [
-                s.card,
-                {
-                  backgroundColor: cardBg,
-                  borderColor: colors.surfaceBorder,
-                  opacity: pressed ? 0.9 : 1,
-                  transform: [{ scale: pressed ? 0.984 : 1 }],
-                  shadowColor: isDark ? "#000" : "#0008FF",
-                  shadowOpacity: isDark ? 0.18 : 0.05,
-                },
-              ]}
-            >
-              <LinearGradient
-                colors={meta.gradient}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-                style={s.iconBox}
-              >
-                <Ionicons name={meta.icon} size={21} color="#fff" />
-              </LinearGradient>
-
-              <View style={s.body}>
-                <Text style={[s.title, { color: colors.text }]} numberOfLines={1} maxFontSizeMultiplier={1}>
-                  {displayLabel}
-                </Text>
-
-                {subtitle ? (
-                  <Text style={[s.subtitle, { color: colors.textSecondary }]} numberOfLines={1} maxFontSizeMultiplier={1}>
-                    {subtitle}
-                  </Text>
-                ) : null}
-
-                <View style={s.metaRow}>
-                  <View style={[s.typeBadge, { backgroundColor: meta.gradient[0] + "22" }]}>
-                    <Text style={[s.typeBadgeText, { color: meta.gradient[0] }]}>{meta.label}</Text>
-                  </View>
-                  {item.scanCount > 0 && (
-                    <>
-                      <View style={s.dot} />
-                      <Ionicons name="scan-outline" size={10} color={colors.textMuted} />
-                      <Text style={[s.metaText, { color: colors.textMuted }]} maxFontSizeMultiplier={1}>
-                        {item.scanCount} {item.scanCount === 1 ? "scan" : "scans"}
-                      </Text>
-                    </>
-                  )}
-                  {item.commentCount > 0 && (
-                    <>
-                      <View style={s.dot} />
-                      <Ionicons name="chatbubble-outline" size={10} color={colors.textMuted} />
-                      <Text style={[s.metaText, { color: colors.textMuted }]} maxFontSizeMultiplier={1}>
-                        {item.commentCount}
-                      </Text>
-                    </>
-                  )}
-                </View>
-              </View>
-
-              <View style={s.right}>
-                {item.createdAt ? (
-                  <Text style={[s.time, { color: colors.textMuted }]} maxFontSizeMultiplier={1}>
-                    {formatShortDate(new Date(item.createdAt))}
-                  </Text>
-                ) : null}
-                <View style={[s.chevronWrap, { backgroundColor: meta.gradient[0] + "18" }]}>
-                  <Ionicons name="chevron-forward" size={13} color={meta.gradient[0]} />
-                </View>
-              </View>
-            </Pressable>
-          </Animated.View>
-        );
-      }}
+      renderItem={renderItem}
     />
   );
 }
