@@ -1,7 +1,7 @@
 import React, { useCallback } from "react";
 import { View, Pressable } from "react-native";
 import QRCode from "react-native-qrcode-svg";
-import Animated, { ZoomIn } from "react-native-reanimated";
+import Animated, { FadeIn, ZoomIn } from "react-native-reanimated";
 import { safePush } from "@/lib/utils/navigation";
 import { styles } from "@/features/profile/styles";
 
