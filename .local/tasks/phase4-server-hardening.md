@@ -1,0 +1,39 @@
+# Phase 4 — Server Hardening & Ecosystem Foundation
+
+## What & Why
+The Express backend is currently a single large `server/routes.ts` file with inline HTML generation, no structured error handling, no request/response validation middleware, no API documentation, and no foundation for business or enterprise accounts. Phase 4 completes the server architecture: structured error responses, Zod-validated request schemas for all routes, a health/readiness endpoint, CORS hardening, response-time logging, and a stub `business accounts` layer that will support enterprise QR monitoring in future.
+
+## Done looks like
+- All API routes return structured JSON errors `{ error: string, code: string, status: number }` — no unhandled promise rejections leak to clients
+- Every POST route validates its body with a Zod schema; invalid payloads receive a 400 with field-level error details
+- `GET /health` returns `{ status: "ok", version, uptime, timestamp }` — used for deployment readiness checks
+- CORS is configured explicitly (not wildcard) with an allowed-origins list driven by `EXPO_PUBLIC_DOMAIN` and `REPLIT_DEV_DOMAIN` env vars
+- Request duration is logged per-route in development (`[GET /api/v1/analyze 42ms]`)
+- `server/middleware/` has: `validate.ts` (Zod body validator factory), `cors.ts` (origin whitelist), `error-handler.ts` (global Express error boundary), `request-logger.ts` (dev timing)
+- Business account stub: `POST /api/v1/business/register` creates a Firestore document under `businessAccounts/{uid}` with `plan: "free"`, laying the foundation for enterprise tiers without building the full product yet
+- `server/lib/firebase-admin.ts` initialises Firebase Admin SDK once and exports `adminDb` / `adminAuth` — removes ad-hoc initialisation scattered across server files
+
+## Out of scope
+- Full enterprise dashboard UI (future)
+- Payment/billing for business accounts (future)
+- WebSocket or SSE infrastructure
+- CI/CD pipeline changes
+
+## Steps
+1. **Global error handler middleware** — Create `server/middleware/error-handler.ts` with an Express 5-compatible error handler that catches thrown errors and always returns structured JSON. Register it last in `server/index.ts`.
+2. **Zod request validator factory** — Create `server/middleware/validate.ts` exporting a `validateBody(schema)` middleware factory. Apply it to all POST routes.
+3. **CORS hardening** — Create `server/middleware/cors.ts` that reads allowed origins from env vars and applies fine-grained CORS headers. Replace any existing wildcard CORS headers.
+4. **Request logger** — Create `server/middleware/request-logger.ts` that logs method, path, status, and duration in development. Register it early in `server/index.ts`.
+5. **Health endpoint** — Add `GET /health` and `GET /api/v1/health` routes returning uptime, version from `package.json`, and timestamp.
+6. **Firebase Admin initialisation** — Create `server/lib/firebase-admin.ts` that initialises the Admin SDK once using application default credentials or a service account env var, and exports `adminDb` and `adminAuth`. Update all server files that currently initialise Firebase Admin independently to import from this module.
+7. **Business account stub** — Add `POST /api/v1/business/register` in a new `server/routes/business.ts`. Validate the Firebase ID token, create a Firestore document under `businessAccounts/{uid}` with `{ plan: "free", createdAt, displayName }`. Return the created account object.
+8. **Cleanup server/routes.ts** — After the Phase 3 route reorganisation, `server/routes.ts` should only contain the top-level router assembly. Remove any remaining inline handlers and ensure all logic lives in domain route files.
+
+## Relevant files
+- `server/index.ts`
+- `server/routes.ts`
+- `server/middleware/`
+- `server/routes/`
+- `server/lib/`
+- `server/security/`
+- `package.json`
