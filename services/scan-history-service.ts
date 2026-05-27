@@ -340,7 +340,24 @@ export interface ScanEvent {
   platform: "android" | "ios" | "web" | "unknown";
   contentType: string;
   verdict: "safe" | "flagged" | "unknown";
-  scanSource: "camera" | "gallery";
+  scanSource: "camera" | "gallery" | "unknown";
+  /** ISO 3166-1 alpha-2 country code derived from device locale — non-PII */
+  country: string;
+}
+
+/** Derive ISO 3166-1 alpha-2 country code from device locale (non-PII). */
+function _getCountryCode(): string {
+  try {
+    const locale = Intl.DateTimeFormat().resolvedOptions().locale;
+    // "en-US" → "US", "hi-IN" → "IN", "zh-Hans-CN" → "CN"
+    const parts = locale.split("-");
+    if (parts.length < 2) return "unknown";
+    const tag = parts[parts.length - 1].toUpperCase();
+    // Accept only valid 2-letter ISO country codes
+    return /^[A-Z]{2}$/.test(tag) ? tag : "unknown";
+  } catch {
+    return "unknown";
+  }
 }
 
 export async function recordScanEvent(
@@ -348,7 +365,7 @@ export async function recordScanEvent(
   event: ScanEvent
 ): Promise<void> {
   // Fire-and-forget — never block scan result display.
-  // No PII is written: no userId, no IP, no location.
+  // Non-PII only: no userId, no IP, no GPS, no device ID.
   try {
     await db.add(["qrCodes", qrId, "events"], {
       ...event,
@@ -357,4 +374,12 @@ export async function recordScanEvent(
   } catch {
     // Intentionally silent — analytics loss is preferable to scan UX breakage.
   }
+}
+
+/** Convenience: emit an analytics event using the device's detected country. */
+export function emitScanEvent(
+  qrId: string,
+  opts: Omit<ScanEvent, "country">
+): void {
+  recordScanEvent(qrId, { ...opts, country: _getCountryCode() }).catch(() => {});
 }

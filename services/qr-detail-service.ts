@@ -113,6 +113,16 @@ export async function getQrAnalyticsSummary(
   const MS_7D  = 7  * 24 * 60 * 60 * 1000;
   const MS_30D = 30 * 24 * 60 * 60 * 1000;
 
+  // Read the authoritative fraud-guarded scan counter from the qrCode document first.
+  // This is accurate at any scale; event docs are capped at 2000 for trend analysis only.
+  let authoritiveScanCount = 0;
+  try {
+    const qrDoc = await db.get(["qrCodes", qrId]);
+    if (qrDoc?.scanCount != null) {
+      authoritiveScanCount = qrDoc.scanCount as number;
+    }
+  } catch {}
+
   let docs: Array<{ id: string; data: Record<string, any> }> = [];
   try {
     const result = await db.query(["qrCodes", qrId, "events"], {
@@ -124,7 +134,8 @@ export async function getQrAnalyticsSummary(
     // Return empty summary on error — non-fatal.
   }
 
-  const totalScans = docs.length;
+  // Use the authoritative counter; fall back to event count if doc has no counter yet
+  const totalScans = authoritiveScanCount > 0 ? authoritiveScanCount : docs.length;
   let scans7d = 0;
   let scans30d = 0;
   const trend7d = new Array(7).fill(0);

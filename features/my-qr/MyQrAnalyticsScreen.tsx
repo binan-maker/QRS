@@ -105,6 +105,39 @@ function HorizontalBar({ label, value, total, color }: { label: string; value: n
   );
 }
 
+function TopHoursChart({ data, color, chartWidth }: { data: number[]; color: string; chartWidth: number }) {
+  const maxVal = Math.max(...data, 1);
+  const n = 24;
+  const gap = 3;
+  const barW = Math.floor((chartWidth - gap * (n - 1)) / n);
+  const chartH = 60;
+  const currentHour = new Date().getHours();
+
+  return (
+    <View>
+      <Svg width={chartWidth} height={chartH + 18}>
+        {data.map((val, i) => {
+          const barH = Math.max(2, Math.round((val / maxVal) * chartH));
+          const x = i * (barW + gap);
+          const y = chartH - barH;
+          const isNow = i === currentHour;
+          const showLabel = i % 6 === 0;
+          return (
+            <G key={i}>
+              <Rect x={x} y={y} width={barW} height={barH} rx={2} fill={color} opacity={isNow ? 1 : 0.35} />
+              {showLabel && (
+                <SvgText x={x + barW / 2} y={chartH + 14} fontSize={9} fill={color} textAnchor="middle" opacity={0.6}>
+                  {i === 0 ? "12a" : i === 12 ? "12p" : i < 12 ? `${i}a` : `${i - 12}p`}
+                </SvgText>
+              )}
+            </G>
+          );
+        })}
+      </Svg>
+    </View>
+  );
+}
+
 export default function MyQrAnalyticsScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { colors, isDark } = useTheme();
@@ -342,6 +375,25 @@ export default function MyQrAnalyticsScreen() {
               {verdicts.unknown > 0 && (
                 <HorizontalBar label="Unknown" value={verdicts.unknown} total={totalVerdicts} color={colors.textMuted} />
               )}
+            </View>
+          </Animated.View>
+        )}
+
+        {/* ── TOP SCAN HOURS ── */}
+        {analytics && analytics.topHours.some((h) => h > 0) && (
+          <Animated.View entering={FadeInDown.duration(178)} style={{ marginBottom: sp(18) }}>
+            <Text style={[sectionLabel, { color: colors.textMuted, marginBottom: sp(10) }]}>Peak Scan Hours</Text>
+            <View style={{ borderRadius: sp(16), borderWidth: 1, borderColor: colors.surfaceBorder, backgroundColor: colors.surface, padding: sp(16) }}>
+              <View style={{ flexDirection: "row", justifyContent: "space-between", marginBottom: sp(12) }}>
+                <Text style={{ fontSize: rf(13), fontFamily: "Inter_700Bold", color: colors.text }}>
+                  Hour-of-day activity
+                </Text>
+                <Text style={{ fontSize: rf(11), fontFamily: "Inter_400Regular", color: colors.textMuted }}>UTC</Text>
+              </View>
+              <TopHoursChart data={analytics.topHours} color={"#a855f7"} chartWidth={chartWidth} />
+              <Text style={{ fontSize: rf(10), fontFamily: "Inter_400Regular", color: colors.textMuted, marginTop: sp(6) }}>
+                Brighter bar = current hour. Labels every 6 h.
+              </Text>
             </View>
           </Animated.View>
         )}

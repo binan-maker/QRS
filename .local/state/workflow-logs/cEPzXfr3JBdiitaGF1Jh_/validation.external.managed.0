@@ -1,0 +1,65 @@
+VERDICT: REJECTED
+The diff makes meaningful progress (event logging, analytics UI, and v1 route scaffolding), but it does not fully implement multiple core Phase 3 requirements and introduces functional gaps.
+
+Critical findings:
+1) Analytics event schema is incomplete vs task contract.
+- `recordScanEvent` stores `{ platform, contentType, verdict, scanSource, timestamp }` under `qrCodes/{qrId}/events`.
+- Required schema included `country`; this is not collected or stored.
+- `qrId` is implicit in collection path (acceptable), but missing `country` is a core requirement miss.
+
+2) “Every scan emits event” is not achieved.
+- In `useScanProcessor`, scans that match `/guard/...` or `/go/...` return early via `routeGuard(...)` and do not call `_backgroundSync` / `recordScanEvent`.
+- Anonymous-mode scans (`processScanAnonymous`) also do not emit analytics events.
+- This creates clear undercounting and violates the stated “every QR scan emits structured event” requirement.
+
+3) Creator daVERDICT: REJECTED
+shboard misses required metric: top scan hours.
+- UI now shows total/7d/30d, trend chart, platform breakdown, and verdict breakdown.
+- But there is no rendering of `topHours`, despite backend summary producing it and task explicitly requiring “top scThe diff makes meaningful progress (event logging, analytics UI, and v1 route scaffolding), but it does not fully implement multiple core Phase 3 requirements and introduces functional gaps.
+an hours”.
+
+4) API versioning is incomplete for required routes.
+- New `/api/v1` routers include validate-ema
+il, decode-image, qr active, donation, and analytics.
+- Required moved routes included `/safe-bCritical findings:
+rowsing` and `/analyze` (and explicit new `POST /api/v1/analyze` from Phase 2).
+- Neit1) Analytics event schema is incomplete vs task contract.
+her appears in `server/routes/security.ts` or `server/routes/index.ts`.
+
+5) Aggregat- `recordScanEvent` stores `{ platform, contentType, verdict, scanSource, timestamp }` under `qrCodes/{qrId}/events`.
+ion “all-time” can be wrong at scale.
+- Both client/service and server analytics endpoints cap read- Required schema included `country`; this is not collected or stored.
+s at 2000 events and report `totalScans = eventsSnap.size/docs.length`.
+- This is not true all-time once- `qrId` is implicit in collection path (acceptable), but missing `country` is a core requirement miss.
+ >2000 events.
+
+Security: none observed that are severe and task-blocking. Own
+er auth is enforced on `GET /api/v1/qr/:uuid/analytics` and `PATCH /api/v1/qr/:qrId/active`.
+
+Next actions:
+1) Complete event contract and coverage: add `country` collection (non-PII), and ensure all successful scan paths (including guard/standard URL paths and anonymous mode) call `recordScanEvent` fire-and-forget.
+2) Add missing v1 endpoints (`/api/v1/analyze`, safe-browsing equivalent) and keep unversioned compatibility paths as intended.
+3) Implement top scan hours section in `MyQrAnalyticsScree2) “Every scan emits event” is not achieved.
+n` and correct all-time totals (use authoritative counter or full aggregation strategy).- In `useScanProcessor`, scans that match `/guard/...` or `/go/...` return early via `routeGuard(...)` and do not call `_backgroundSync` / `recordScanEvent`.
+- Anonymous-mode scans (`processScanAnonymous`) also do not emit analytics events.
+- This creates clear undercounting and violates the stated “every QR scan emits structured event” requirement.
+
+3) Creator dashboard misses required metric: top scan hours.
+- UI now shows total/7d/30d, trend chart, platform breakdown, and verdict breakdown.
+- But there is no rendering of `topHours`, despite backend summary producing it and task explicitly requiring “top scan hours”.
+
+4) API versioning is incomplete for required routes.
+- New `/api/v1` routers include validate-email, decode-image, qr active, donation, and analytics.
+- Required moved routes included `/safe-browsing` and `/analyze` (and explicit new `POST /api/v1/analyze` from Phase 2).
+- Neither appears in `server/routes/security.ts` or `server/routes/index.ts`.
+
+5) Aggregation “all-time” can be wrong at scale.
+- Both client/service and server analytics endpoints cap reads at 2000 events and report `totalScans = eventsSnap.size/docs.length`.
+- This is not true all-time once >2000 events.
+
+Security: none observed that are severe and task-blocking. Owner auth is enforced on `GET /api/v1/qr/:uuid/analytics` and `PATCH /api/v1/qr/:qrId/active`.
+
+Next actions:
+1) Complete event contract and coverage: add `country` collection (non-PII), and ensure all successful scan paths (including guard/standard URL paths and anonymous mode) call `recordScanEvent` fire-and-forget.
+2) Add missing v1 endpoints (`/api/v1/analyze`, safe-browsing equivalent) and keep unversioned compatibility paths as intended.
+3) Implement top scan hours section in `MyQrAnalyticsScreen` and correct all-time totals (use authoritative counter or full aggregation strategy).

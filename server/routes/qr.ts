@@ -98,8 +98,12 @@ qrRouter.get("/:uuid/analytics", async (req: Request, res: Response) => {
       return res.status(403).json({ error: "QR code not found or you do not own it" });
     }
 
+    // Authoritative scan count from the QR doc (fraud-guarded, accurate at any scale)
+    const qrDoc = await db.collection("qrCodes").doc(qrDocId!).get();
+    const authoritativeScanCount: number = qrDoc.data()?.scanCount ?? 0;
+
     const eventsSnap = await db
-      .collection("qrCodes").doc(qrDocId).collection("events")
+      .collection("qrCodes").doc(qrDocId!).collection("events")
       .orderBy("timestamp", "desc")
       .limit(2000)
       .get();
@@ -137,8 +141,11 @@ qrRouter.get("/:uuid/analytics", async (req: Request, res: Response) => {
       topHours[new Date(ts).getHours()]++;
     }
 
+    // Use authoritative counter for totalScans; fall back to event count if doc has no counter yet
+    const totalScans = authoritativeScanCount > 0 ? authoritativeScanCount : eventsSnap.size;
+
     return res.json({
-      totalScans: eventsSnap.size,
+      totalScans,
       scans7d,
       scans30d,
       trend7d,

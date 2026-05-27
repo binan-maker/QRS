@@ -22,7 +22,7 @@ import {
 import { runSecurityCheck } from "@/features/scanner/utils/security-analysis";
 import { decodeQrFromImageUri } from "@/features/scanner/utils/qr-decode";
 import { appendToLocalScanHistory, makeScanEntry } from "@/features/scanner/utils/scan-history";
-import { recordScanEvent } from "@/services/scan-history-service";
+import { emitScanEvent } from "@/services/scan-history-service";
 import type { ScanModalControls } from "@/features/scanner/hooks/useScanModals";
 
 const GUARD_PATTERN =
@@ -103,10 +103,12 @@ export function useScanProcessor({
       if (check.hasThreat) {
         modalControls.openSafetyModal(qrId, check.warnings, check.riskLevel);
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+        emitScanEvent(qrId, { platform: _getPlatform(), contentType, verdict: "flagged", scanSource });
         return;
       }
     }
 
+    emitScanEvent(qrId, { platform: _getPlatform(), contentType, verdict: "safe", scanSource });
     await navigateToQrDetail(qrId);
   }
 
@@ -151,10 +153,13 @@ export function useScanProcessor({
         if (check.hasThreat) {
           modalControls.openSafetyModal(qrId, check.warnings, check.riskLevel);
           Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+          // Record event even for anonymous flagged scans — no PII stored
+          emitScanEvent(qrId, { platform: _getPlatform(), contentType, verdict: "flagged", scanSource: "camera" });
           return;
         }
       }
 
+      emitScanEvent(qrId, { platform: _getPlatform(), contentType, verdict: "safe", scanSource: "camera" });
       await navigateToQrDetail(qrId);
     } catch (e: any) {
       setProcessing(false);
@@ -195,12 +200,12 @@ export function useScanProcessor({
             makeScanEntry(content, qr.contentType, qr.id, scanSource)
           );
         }
-        recordScanEvent(qr.id, {
+        emitScanEvent(qr.id, {
           platform: _getPlatform(),
           contentType: qr.contentType,
           verdict,
           scanSource,
-        }).catch(() => {});
+        });
       } catch {}
     })();
   }
@@ -217,6 +222,8 @@ export function useScanProcessor({
       );
       const qrId = await getQrCodeId(content);
       router.push(`/qr-detail/${qrId}?${param}=${uuid}`);
+      // Always emit an event for guard/standard QR scans (these are URLs, treat as safe)
+      emitScanEvent(qrId, { platform: _getPlatform(), contentType: "url", verdict: "safe", scanSource });
       setTimeout(() => {
         setScanSuccess(false);
         setScanned(false);
