@@ -17,7 +17,7 @@ export default function VerifiedModal({ visible, ownerName }: Props) {
   return (
     <View style={styles.overlay}>
       <Reanimated.View
-        entering={FadeInDown.duration(160).springify()}
+        entering={FadeInDown.duration(160).duration(260)}
         style={[styles.sheet, { backgroundColor: colors.surface }]}
       >
         {/* Accent top stripe */}

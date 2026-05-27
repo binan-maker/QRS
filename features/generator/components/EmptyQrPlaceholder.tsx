@@ -13,7 +13,7 @@ interface Props {
 export default function EmptyQrPlaceholder({ mode }: Props) {
   const { colors } = useTheme();
   return (
-    <Reanimated.View entering={FadeIn.duration(400)} style={styles.outer}>
+    <Reanimated.View entering={FadeIn.duration(260)} style={styles.outer}>
       <View style={[styles.wrap, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
         <LinearGradient
           colors={

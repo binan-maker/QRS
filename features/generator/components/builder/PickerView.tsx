@@ -77,7 +77,7 @@ function PickerView({
         {hasSearch && (
           <Reanimated.View entering={FadeIn.duration(180)} style={{ gap: 8 }}>
             {searchResults && searchResults.length > 0 ? searchResults.map((cat, i) => (
-              <Reanimated.View key={cat.id} entering={FadeInDown.duration(160).delay(i * 20)}>
+              <Reanimated.View key={cat.id} entering={FadeInDown.duration(160).delay(Math.min(i, 4) * 22)}>
                 <Pressable
                   onPress={() => pickCategory(cat.id)}
                   style={({ pressed }) => [S.searchRow, {
@@ -161,7 +161,7 @@ function PickerView({
               const cats = BUILT_IN_CATEGORIES.filter(c => grp.ids.includes(c.id));
               if (!cats.length) return null;
               return (
-                <Reanimated.View key={grp.label} entering={FadeInDown.duration(240).delay((gi + 1) * 35)}>
+                <Reanimated.View key={grp.label} entering={FadeInDown.duration(240).delay(Math.min(gi + 1, 3) * 22)}>
                   <View style={S.groupHeader}>
                     <Text style={S.groupEmoji}>{grp.emoji}</Text>
                     <Text style={[S.groupLabel, { color: colors.textMuted }]}>{grp.label.toUpperCase()}</Text>
@@ -182,7 +182,7 @@ function PickerView({
               );
             })}
 
-            <Reanimated.View entering={FadeInDown.duration(240).delay((GROUPS.length + 1) * 35)}>
+            <Reanimated.View entering={FadeInDown.duration(240).delay(80)}>
               <View style={S.groupHeader}>
                 <Text style={S.groupEmoji}>✏️</Text>
                 <Text style={[S.groupLabel, { color: colors.textMuted }]}>CUSTOM FIELDS</Text>

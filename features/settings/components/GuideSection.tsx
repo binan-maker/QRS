@@ -28,7 +28,7 @@ export default function GuideSection() {
       contentContainerStyle={[styles.scrollContent, { paddingBottom: insets.bottom + 20 }]}
     >
       {GUIDE_STEPS.map((step, i) => (
-        <Animated.View key={i} entering={FadeInDown.duration(300).delay(i * 50)}>
+        <Animated.View key={i} entering={FadeInDown.duration(260).delay(Math.min(i, 4) * 22)}>
           <View style={styles.guideStep}>
             <View style={styles.guideStepNum}>
               <Text style={styles.guideStepNumText}>{i + 1}</Text>

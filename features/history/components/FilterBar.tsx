@@ -79,7 +79,7 @@ const FilterBar = React.memo(function FilterBar({
         return (
           <Animated.View
             key={f.key}
-            entering={FadeInDown.delay(80 + Math.min(idx, 8) * 40).springify().damping(18)}
+            entering={FadeInDown.delay(25 + Math.min(idx, 4) * 18).duration(260)}
           >
             <Pressable
               onPress={() => {

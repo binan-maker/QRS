@@ -22,7 +22,7 @@ export default function LivingShieldModal({ visible, loading, data, onProceed, o
 
   return (
     <View style={styles.overlay}>
-      <Reanimated.View entering={FadeInDown.duration(380)} style={[styles.sheet, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
+      <Reanimated.View entering={FadeInDown.duration(260)} style={[styles.sheet, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
         {loading ? (
           <>
             <View style={[styles.badge, { backgroundColor: colors.warningDim }]}>

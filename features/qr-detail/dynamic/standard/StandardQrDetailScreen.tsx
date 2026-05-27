@@ -7,7 +7,7 @@ import { StatusBar } from "expo-status-bar";
 import { router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
-import Animated, { FadeInDown, FadeIn, ZoomIn } from "react-native-reanimated";
+import Animated, { FadeInDown, FadeIn } from "react-native-reanimated";
 import * as Haptics from "expo-haptics";
 import { useTheme } from "@/contexts/ThemeContext";
 import { useAuth } from "@/contexts/AuthContext";
@@ -164,8 +164,8 @@ export default function StandardQrDetailScreen({ id, standardUuid, ownerDocId }:
         <View style={[styles.container, { paddingTop: topInset }]}>
 
           {/* ── Standard NavBar ──────────────────────────── */}
-          <Animated.View entering={FadeInDown.delay(0).springify().damping(20)} style={[styles.navBar, { gap: 10 }]}>
-            <Animated.View entering={ZoomIn.delay(60).springify().damping(18)}>
+          <Animated.View entering={FadeInDown.delay(0).duration(260)} style={[styles.navBar, { gap: 10 }]}>
+            <Animated.View entering={FadeIn.delay(30).duration(240)}>
               <Pressable onPress={safeBack} style={styles.navBackBtn}>
                 <Ionicons name="chevron-back" size={24} color={colors.text} />
               </Pressable>
@@ -175,7 +175,7 @@ export default function StandardQrDetailScreen({ id, standardUuid, ownerDocId }:
                 QR Guard
               </Text>
             </View>
-            <Animated.View entering={ZoomIn.delay(80).springify().damping(18)}>
+            <Animated.View entering={FadeIn.delay(40).duration(240)}>
               <Pressable onPress={() => setOverflowOpen(true)} style={styles.navBackBtn}>
                 <Ionicons name="ellipsis-horizontal" size={22} color={colors.text} />
               </Pressable>
@@ -199,7 +199,7 @@ export default function StandardQrDetailScreen({ id, standardUuid, ownerDocId }:
             }
           >
             {/* ── Brand header card ─────────────────────── */}
-            <Animated.View entering={FadeInDown.delay(60).springify().damping(18)}>
+            <Animated.View entering={FadeInDown.delay(30).duration(260)}>
               <View style={[stdStyles.brandCard, {
                 backgroundColor: isDark ? "#0a0f1a" : "#f0f6ff",
                 borderColor: ACCENT + "28",
@@ -268,7 +268,7 @@ export default function StandardQrDetailScreen({ id, standardUuid, ownerDocId }:
 
             {/* ── Verdict banner (YOUR QR / SAFE / UNVERIFIED) ─ */}
             {!q.offlineMode && !standardLoading && (
-              <Animated.View entering={FadeInDown.delay(140).springify().damping(18)}>
+              <Animated.View entering={FadeInDown.delay(60).duration(260)}>
                 <VerdictBanner verdict={verdict} offlineMode={q.offlineMode} />
               </Animated.View>
             )}
@@ -276,7 +276,7 @@ export default function StandardQrDetailScreen({ id, standardUuid, ownerDocId }:
 
             {/* ── Content card — shows rawContent from database, never the scanned guard URL */}
             {!standardLoading && effectiveContent && (
-              <Animated.View entering={FadeInDown.delay(200).springify().damping(18)}>
+              <Animated.View entering={FadeInDown.delay(70).duration(260)}>
                 <ContentCard
                   content={effectiveContent}
                   contentType={effectiveContentType}
@@ -296,7 +296,7 @@ export default function StandardQrDetailScreen({ id, standardUuid, ownerDocId }:
               );
               if (!warnings.length) return null;
               return (
-                <Animated.View entering={FadeInDown.delay(220).springify().damping(18)}>
+                <Animated.View entering={FadeInDown.delay(80).duration(260)}>
                   <SafetyWarningCard
                     riskLevel={contentSafety.paymentSafety!.riskLevel as "caution" | "dangerous"}
                     warnings={warnings}
@@ -312,7 +312,7 @@ export default function StandardQrDetailScreen({ id, standardUuid, ownerDocId }:
 
             {/* ── URL safety (analyzed from rawContent) ────── */}
             {effectiveContentType === "url" && contentSafety.urlSafety?.isSuspicious && (
-              <Animated.View entering={FadeInDown.delay(240).springify().damping(18)}>
+              <Animated.View entering={FadeInDown.delay(80).duration(260)}>
                 <SafetyWarningCard
                   riskLevel={contentSafety.urlSafety.riskLevel as "caution" | "dangerous"}
                   warnings={contentSafety.urlSafety.warnings}
@@ -326,14 +326,14 @@ export default function StandardQrDetailScreen({ id, standardUuid, ownerDocId }:
             )}
 
             {effectiveContentType === "url" && contentSafety.urlSafety?.evidence && contentSafety.urlSafety.evidence.length > 0 && (
-              <Animated.View entering={FadeInDown.delay(260).springify().damping(18)}>
+              <Animated.View entering={FadeInDown.delay(90).duration(260)}>
                 <EvidenceCard title="URL Analysis" evidence={contentSafety.urlSafety.evidence} />
               </Animated.View>
             )}
 
             {/* ── Community: Trust score ───────────────────── */}
             {!q.offlineMode && (
-              <Animated.View entering={FadeInDown.delay(280).springify().damping(18)}>
+              <Animated.View entering={FadeInDown.delay(90).duration(260)}>
                 <TrustScoreCard
                   trustInfo={trust}
                   reportCounts={q.reportCounts}
@@ -356,7 +356,7 @@ export default function StandardQrDetailScreen({ id, standardUuid, ownerDocId }:
             {/* ── Reports (logged-in only) ─────────────────── */}
             {user && !q.offlineMode && (
               <Animated.View
-                entering={FadeInDown.delay(320).springify().damping(18)}
+                entering={FadeInDown.delay(100).duration(260)}
                 onLayout={(e: any) => { reportSectionY.current = e.nativeEvent.layout.y; }}
               >
                 <ReportGrid
@@ -377,7 +377,7 @@ export default function StandardQrDetailScreen({ id, standardUuid, ownerDocId }:
 
             {/* ── Comments ─────────────────────────────────── */}
             {!q.offlineMode && (
-              <Animated.View entering={FadeInDown.delay(360).springify().damping(18)}>
+              <Animated.View entering={FadeInDown.delay(110).duration(260)}>
                 <CommentsSection
                   user={user}
                   totalComments={q.totalComments}
@@ -413,7 +413,7 @@ export default function StandardQrDetailScreen({ id, standardUuid, ownerDocId }:
               </Animated.View>
             )}
 
-            <Animated.View entering={FadeInDown.delay(400).springify().damping(18)}>
+            <Animated.View entering={FadeInDown.delay(120).duration(260)}>
               <DonationBanner />
             </Animated.View>
           </ScrollView>

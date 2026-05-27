@@ -12,7 +12,7 @@ export function ScanSkeletonList() {
       {[0, 1, 2].map((i) => (
         <Animated.View
           key={i}
-          entering={FadeInRight.duration(300).delay(i * 60)}
+          entering={FadeInRight.duration(260).delay(Math.min(i, 4) * 22)}
           style={[
             cardStyles.scanItem,
             { backgroundColor: colors.surface, borderColor: colors.surfaceBorder, opacity: 0.7 },

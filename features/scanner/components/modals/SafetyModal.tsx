@@ -32,7 +32,7 @@ export default function SafetyModal({
   return (
     <View style={styles.overlay}>
       <Reanimated.View
-        entering={FadeInDown.duration(160).springify()}
+        entering={FadeInDown.duration(160).duration(260)}
         style={[styles.sheet, { backgroundColor: colors.surface, borderColor: ACCENT_BORDER }]}
       >
         <View style={[styles.accentStripe, { backgroundColor: ACCENT }]} />

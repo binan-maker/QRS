@@ -110,7 +110,7 @@ function FormView({
                 const isMulti  = f.type === "multiline";
 
                 return (
-                  <Reanimated.View key={f.key} entering={FadeInDown.duration(200).delay(idx * 25)}>
+                  <Reanimated.View key={f.key} entering={FadeInDown.duration(200).delay(Math.min(idx, 4) * 22)}>
                     <View style={S.fieldLabelRow}>
                       <FieldCircle filled={filled} required={required} color={fCol} />
                       <Text style={[S.fieldLabel, { color: colors.textSecondary }]}>{f.label}</Text>
@@ -252,7 +252,7 @@ function FormView({
 
           {/* Live mini QR preview */}
           {liveQrContent.length > 3 && liveQrContent.length < 800 && (
-            <Reanimated.View entering={FadeIn.duration(300)}>
+            <Reanimated.View entering={FadeIn.duration(260)}>
               <View style={[S.livePreviewCard, { backgroundColor: colors.surface, borderColor: fCol + "30" }]}>
                 <View style={{ flex: 1 }}>
                   <Text style={[S.livePreviewLabel, { color: fCol }]}>LIVE PREVIEW</Text>

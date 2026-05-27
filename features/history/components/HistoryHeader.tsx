@@ -2,7 +2,7 @@ import React from "react";
 import { View, Text, StyleSheet, Pressable, TextInput } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
-import Animated, { FadeInDown, FadeIn, ZoomIn } from "react-native-reanimated";
+import Animated, { FadeInDown, FadeIn } from "react-native-reanimated";
 import * as Haptics from "@/lib/haptics";
 
 interface Props {
@@ -57,15 +57,15 @@ const HistoryHeader = React.memo(function HistoryHeader({
   }
 
   return (
-    <Animated.View entering={FadeInDown.delay(0).springify().damping(22)} style={styles.header}>
+    <Animated.View entering={FadeInDown.delay(0).duration(260)} style={styles.header}>
       <Animated.Text
-        entering={FadeInDown.delay(40).springify().damping(20)}
+        entering={FadeInDown.delay(40).duration(260)}
         style={[styles.title, { color: colors.text, fontSize: fontSize(22) }]}
       >
         Scan History
       </Animated.Text>
-      <Animated.View entering={FadeInDown.delay(60).springify().damping(20)} style={styles.actions}>
-        <Animated.View entering={ZoomIn.delay(80).springify().damping(16)}>
+      <Animated.View entering={FadeInDown.delay(30).duration(260)} style={styles.actions}>
+        <Animated.View entering={FadeIn.delay(40).duration(240)}>
           <Pressable
             onPress={onOpenSearch}
             style={[styles.btn, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}
@@ -74,7 +74,7 @@ const HistoryHeader = React.memo(function HistoryHeader({
             <Ionicons name="search-outline" size={18} color={colors.textSecondary} />
           </Pressable>
         </Animated.View>
-        <Animated.View entering={ZoomIn.delay(110).springify().damping(16)}>
+        <Animated.View entering={FadeIn.delay(50).duration(240)}>
           <Pressable
             onPress={() => {
               Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);

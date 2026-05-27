@@ -1,6 +1,6 @@
 import React from "react";
 import { View, Text, StyleSheet, Animated, useWindowDimensions } from "react-native";
-import ReAnimated, { FadeIn, ZoomIn, FadeInDown } from "react-native-reanimated";
+import ReAnimated, { FadeIn, FadeInDown } from "react-native-reanimated";
 import { FINDER_SIZE } from "@/features/scanner/hooks/useCameraControls";
 import { useOverlayAnimations } from "@/features/scanner/hooks/useOverlayAnimations";
 import FinderFrame from "./FinderFrame";
@@ -64,7 +64,7 @@ export default function ScannerOverlay({
       {/* Vignette masks (non-interactive, no animation needed — they're ambient) */}
       <View style={[StyleSheet.absoluteFillObject, styles.nonInteractive]}>
         <ReAnimated.View
-          entering={FadeIn.delay(30).duration(500)}
+          entering={FadeIn.delay(30).duration(260)}
           style={StyleSheet.absoluteFillObject}
         >
           <View style={[styles.mask, { top: 0, left: 0, right: 0, height: finderTop }]} />
@@ -75,7 +75,7 @@ export default function ScannerOverlay({
 
         {/* Finder frame — zooms in from centre */}
         <View style={{ position: "absolute", top: finderTop, left: finderLeft }}>
-          <ReAnimated.View entering={ZoomIn.delay(100).springify().damping(16).stiffness(140)}>
+          <ReAnimated.View entering={FadeIn.delay(50).duration(240)}>
             <FinderFrame
               scanned={scanned}
               scanSuccess={scanSuccess}
@@ -91,7 +91,7 @@ export default function ScannerOverlay({
 
         {/* Hint text below finder — fades in after frame */}
         <ReAnimated.View
-          entering={FadeInDown.delay(280).springify().damping(20)}
+          entering={FadeInDown.delay(90).duration(260)}
           style={[styles.hintArea, { top: finderTop + FINDER_SIZE + 18 }]}
         >
           <Text style={styles.hintMain}>
@@ -103,7 +103,7 @@ export default function ScannerOverlay({
           </Text>
           {!scanned && (
             <ReAnimated.View
-              entering={FadeIn.delay(400).duration(300)}
+              entering={FadeIn.delay(80).duration(260)}
               style={styles.liveRow}
             >
               <Animated.View style={[styles.liveDot, { opacity: anims.dotBlink }]} />

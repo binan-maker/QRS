@@ -3,7 +3,7 @@ import {
   View, Text, Pressable, ScrollView, TextInput, useWindowDimensions,
 } from "react-native";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
-import Animated, { FadeInDown, FadeIn, ZoomIn } from "react-native-reanimated";
+import Animated, { FadeInDown, FadeIn } from "react-native-reanimated";
 import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -55,13 +55,13 @@ export default function GeneratorLanding() {
 
       {/* ── NavBar ──────────────────────────────────────────────────────── */}
       <Animated.View
-        entering={FadeInDown.delay(0).springify().damping(22)}
+        entering={FadeInDown.delay(0).duration(260)}
         style={{
           paddingHorizontal: sp(22), paddingVertical: sp(14), paddingBottom: sp(10),
           flexDirection: "row", alignItems: "center", justifyContent: "space-between",
         }}
       >
-        <Animated.View entering={FadeInDown.delay(40).springify().damping(20)}>
+        <Animated.View entering={FadeInDown.delay(40).duration(260)}>
           <Text style={{ fontSize: rf(17), fontFamily: "Inter_700Bold", color: colors.text }}>
             QR Generator
           </Text>
@@ -70,7 +70,7 @@ export default function GeneratorLanding() {
           </Text>
         </Animated.View>
         <Animated.View
-          entering={ZoomIn.delay(80).springify().damping(16)}
+          entering={FadeIn.delay(50).duration(240)}
           style={{
             width: sp(38), height: sp(38), borderRadius: sp(12),
             alignItems: "center", justifyContent: "center",
@@ -89,7 +89,7 @@ export default function GeneratorLanding() {
 
         {/* ── Mode cards (Standard QR + Private QR) ───────────────────── */}
         {LANDING_MODES.map((m, idx) => (
-          <Animated.View key={m.key} entering={FadeInDown.delay(60 + idx * 80).springify().damping(18)}>
+          <Animated.View key={m.key} entering={FadeInDown.delay(40 + Math.min(idx, 3) * 25).duration(260)}>
             <Pressable
               onPress={() => onPressMode(m.route, m.key === "individual")}
               style={({ pressed }) => ({
@@ -171,7 +171,7 @@ export default function GeneratorLanding() {
         ))}
 
         {/* ── Divider: "or pick a template" ───────────────────────────── */}
-        <Animated.View entering={FadeIn.delay(220).duration(280)} style={{ flexDirection: "row", alignItems: "center", gap: sp(10) }}>
+        <Animated.View entering={FadeIn.delay(80).duration(260)} style={{ flexDirection: "row", alignItems: "center", gap: sp(10) }}>
           <View style={{ flex: 1, height: 1, backgroundColor: colors.surfaceBorder }} />
           <Text style={{ fontSize: rf(10), fontFamily: "Inter_500Medium", color: colors.textMuted }}>
             OR CHOOSE A TEMPLATE
@@ -180,7 +180,7 @@ export default function GeneratorLanding() {
         </Animated.View>
 
         {/* ── Search ──────────────────────────────────────────────────── */}
-        <Animated.View entering={FadeInDown.delay(260).springify().damping(20)}>
+        <Animated.View entering={FadeInDown.delay(90).duration(260)}>
           <View style={{
             flexDirection: "row", alignItems: "center", gap: sp(10),
             backgroundColor: isDark ? colors.surface : colors.surfaceLight,
@@ -206,7 +206,7 @@ export default function GeneratorLanding() {
 
         {/* ── Template grid ───────────────────────────────────────────── */}
         {filtered.length === 0 ? (
-          <Animated.View entering={FadeIn.delay(300).duration(260)} style={{ alignItems: "center", paddingVertical: sp(32), gap: sp(8) }}>
+          <Animated.View entering={FadeIn.delay(100).duration(260)} style={{ alignItems: "center", paddingVertical: sp(32), gap: sp(8) }}>
             <Ionicons name="search-outline" size={rf(32)} color={colors.textMuted} />
             <Text style={{ fontSize: rf(14), fontFamily: "Inter_500Medium", color: colors.textMuted }}>
               No templates found
@@ -217,7 +217,7 @@ export default function GeneratorLanding() {
             {filtered.map((t, idx) => (
               <Animated.View
                 key={t.id}
-                entering={FadeInDown.delay(300 + Math.min(idx, 8) * 35).springify().damping(20)}
+                entering={FadeInDown.delay(80 + Math.min(idx, 4) * 18).duration(260)}
                 style={{ width: "47.5%" }}
               >
                 <Pressable

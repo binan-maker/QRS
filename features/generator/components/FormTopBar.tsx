@@ -2,7 +2,7 @@ import React from "react";
 import { View, Text, StyleSheet, Pressable } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
-import Animated, { FadeInDown, FadeIn, ZoomIn } from "react-native-reanimated";
+import Animated, { FadeInDown, FadeIn } from "react-native-reanimated";
 import { useTheme } from "@/contexts/ThemeContext";
 import { FORM_MODE_META } from "@/features/generator/types/form-types";
 import type { QrMode } from "@/features/generator/types/form-types";
@@ -18,10 +18,10 @@ export default function FormTopBar({ mode, onOpenInfo }: Props) {
 
   return (
     <Animated.View
-      entering={FadeInDown.delay(0).springify().damping(20)}
+      entering={FadeInDown.delay(0).duration(260)}
       style={[styles.topBar, { borderBottomColor: colors.surfaceBorder }]}
     >
-      <Animated.View entering={ZoomIn.delay(60).springify().damping(18)}>
+      <Animated.View entering={FadeIn.delay(30).duration(240)}>
         <Pressable
           onPress={() => router.back()}
           style={({ pressed }) => [
@@ -37,12 +37,12 @@ export default function FormTopBar({ mode, onOpenInfo }: Props) {
         </Pressable>
       </Animated.View>
 
-      <Animated.View entering={FadeIn.delay(80).duration(280)} style={styles.center}>
+      <Animated.View entering={FadeIn.delay(40).duration(280)} style={styles.center}>
         <View style={[styles.modeDot, { backgroundColor: meta.color }]} />
         <Text style={[styles.title, { color: meta.color }]}>{meta.label} QR</Text>
       </Animated.View>
 
-      <Animated.View entering={ZoomIn.delay(60).springify().damping(18)}>
+      <Animated.View entering={FadeIn.delay(30).duration(240)}>
         <Pressable
           onPress={onOpenInfo}
           style={[styles.infoBtn, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}

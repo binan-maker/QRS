@@ -1,7 +1,7 @@
 import { View, Text, StyleSheet, Pressable } from "react-native";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { router } from "expo-router";
-import Animated, { FadeInDown, FadeIn, ZoomIn } from "react-native-reanimated";
+import Animated, { FadeInDown, FadeIn } from "react-native-reanimated";
 import { SCANNER_GLOW } from "./constants";
 
 interface Props {
@@ -27,11 +27,11 @@ export default function OverlayTopBar({
 }: Props) {
   return (
     <Animated.View
-      entering={FadeInDown.delay(60).springify().damping(20)}
+      entering={FadeInDown.delay(30).duration(260)}
       style={[styles.topBar, { paddingTop: topInset + 10 }]}
     >
       {/* Back button */}
-      <Animated.View entering={FadeIn.delay(120).duration(280)}>
+      <Animated.View entering={FadeIn.delay(50).duration(280)}>
         <Pressable onPress={() => router.back()} style={styles.btn}>
           <Ionicons name="chevron-back" size={20} color="rgba(255,255,255,0.9)" />
         </Pressable>
@@ -39,7 +39,7 @@ export default function OverlayTopBar({
 
       {/* Title */}
       <Animated.View
-        entering={FadeInDown.delay(80).springify().damping(18)}
+        entering={FadeInDown.delay(40).duration(260)}
         style={styles.center}
       >
         <MaterialCommunityIcons name="shield-check" size={18} color={SCANNER_GLOW} />
@@ -49,7 +49,7 @@ export default function OverlayTopBar({
       {/* Right controls — staggered */}
       <View style={styles.rightGroup}>
         {user && (
-          <Animated.View entering={ZoomIn.delay(130).springify().damping(16)}>
+          <Animated.View entering={FadeIn.delay(50).duration(240)}>
             <Pressable
               onPress={onToggleAnonymous}
               style={[styles.btn, anonymousMode && styles.btnPrivate]}
@@ -62,7 +62,7 @@ export default function OverlayTopBar({
             </Pressable>
           </Animated.View>
         )}
-        <Animated.View entering={ZoomIn.delay(160).springify().damping(16)}>
+        <Animated.View entering={FadeIn.delay(60).duration(240)}>
           <Pressable onPress={onFlipCamera} style={styles.btn}>
             <Ionicons
               name="camera-reverse-outline"
@@ -71,7 +71,7 @@ export default function OverlayTopBar({
             />
           </Pressable>
         </Animated.View>
-        <Animated.View entering={ZoomIn.delay(200).springify().damping(16)}>
+        <Animated.View entering={FadeIn.delay(70).duration(240)}>
           <Pressable
             onPress={facing === "front" ? undefined : onToggleFlash}
             style={[styles.btn, flashOn && facing === "back" && styles.btnActive]}

@@ -66,7 +66,7 @@ export default function WebsiteCard({ content, onOpenContent, isDeactivated, hid
   }
 
   return (
-    <Animated.View entering={FadeInDown.springify().damping(18)}>
+    <Animated.View entering={FadeInDown.duration(260)}>
       <View style={[
         styles.card,
         {
@@ -86,7 +86,7 @@ export default function WebsiteCard({ content, onOpenContent, isDeactivated, hid
         />
 
         {/* ── Hero domain block ─────────────────────────────────── */}
-        <Animated.View entering={FadeIn.delay(60).duration(300)} style={styles.heroRow}>
+        <Animated.View entering={FadeIn.delay(30).duration(260)} style={styles.heroRow}>
           {/* Pulsing avatar with glow ring */}
           <View style={styles.avatarWrap}>
             <RNAnimated.View style={[styles.glowRing, {
@@ -102,7 +102,7 @@ export default function WebsiteCard({ content, onOpenContent, isDeactivated, hid
               <Text style={styles.avatarLetter}>{initial}</Text>
             </LinearGradient>
             {/* Security dot overlay */}
-            <Animated.View entering={ZoomIn.delay(200).springify()} style={[
+            <Animated.View entering={FadeIn.delay(70).duration(240)} style={[
               styles.secDot,
               { backgroundColor: site?.isSecure ? "#22C55E" : "#F59E0B" }
             ]}>
@@ -172,7 +172,7 @@ export default function WebsiteCard({ content, onOpenContent, isDeactivated, hid
         </Animated.View>
 
         {/* ── URL strip — clean, no https:// ────────────────────── */}
-        <Animated.View entering={FadeInDown.delay(80).springify().damping(20)}>
+        <Animated.View entering={FadeInDown.delay(40).duration(260)}>
           <View style={[styles.urlStrip, {
             backgroundColor: isDark ? "#1E293B" : "#DBEAFE",
             borderColor: isDark ? BLUE_MID + "35" : BLUE_LIGHT + "55",
@@ -192,7 +192,7 @@ export default function WebsiteCard({ content, onOpenContent, isDeactivated, hid
 
         {/* ── Path + query chips ────────────────────────────────── */}
         {(hasPath || hasQuery) && (
-          <Animated.View entering={FadeInDown.delay(120).springify()}>
+          <Animated.View entering={FadeInDown.delay(50).duration(260)}>
             <Pressable
               onPress={() => setPathOpen(v => !v)}
               style={[styles.detailsToggle, {
@@ -235,7 +235,7 @@ export default function WebsiteCard({ content, onOpenContent, isDeactivated, hid
 
             {pathOpen && site && (
               <Animated.View
-                entering={FadeInDown.springify().damping(20)}
+                entering={FadeInDown.duration(260)}
                 style={[styles.detailsBox, {
                   backgroundColor: isDark ? "#0F172A" : "#DBEAFE",
                   borderColor: isDark ? BLUE_MID + "30" : BLUE_LIGHT + "50",
@@ -282,7 +282,7 @@ export default function WebsiteCard({ content, onOpenContent, isDeactivated, hid
 
         {/* ── Open Link CTA ─────────────────────────────────────── */}
         {hasOpenAction && (
-          <Animated.View entering={FadeInDown.delay(150).springify().damping(20)}>
+          <Animated.View entering={FadeInDown.delay(150).duration(260)}>
             <Pressable
               onPress={onOpenContent}
               style={({ pressed }) => [{ opacity: pressed ? 0.88 : 1 }]}

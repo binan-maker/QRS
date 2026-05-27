@@ -66,7 +66,7 @@ function StatCell({
 
   return (
     <Animated.View
-      entering={FadeInDown.delay(120 + index * 55).springify().damping(18)}
+      entering={FadeInDown.delay(Math.min(index, 4) * 25).duration(260)}
       style={[
         styles.statCell,
         index % 2 === 0 && { borderRightWidth: 1, borderRightColor: colors.surfaceBorder },
@@ -89,7 +89,7 @@ function QrSkeletonCard({ index }: { index: number }) {
   const { colors } = useTheme();
   return (
     <Animated.View
-      entering={ZoomIn.delay(index * 60).springify().damping(18)}
+      entering={FadeIn.delay(0).duration(240)}
       style={[styles.qrCard, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}
     >
       <SkeletonBox width={58} height={58} borderRadius={12} />
@@ -185,12 +185,12 @@ function ProfileScreen() {
       >
         {/* ── TOP BAR ──────────────────────────────────────────── */}
         <Animated.View
-          entering={FadeInDown.delay(0).springify().damping(20)}
+          entering={FadeInDown.delay(0).duration(260)}
           style={styles.topBar}
         >
           <Text style={[styles.pageTitle, { color: colors.text }]}>Profile</Text>
           <View style={styles.topBarActions}>
-            <Animated.View entering={FadeIn.delay(80).duration(250)}>
+            <Animated.View entering={FadeIn.delay(40).duration(250)}>
               <Pressable
                 onPress={handleOpenNotifications}
                 style={[styles.iconBtn, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}
@@ -204,7 +204,7 @@ function ProfileScreen() {
                 />
                 {notifCount > 0 && (
                   <Animated.View
-                    entering={ZoomIn.springify().damping(14)}
+                    entering={FadeIn.duration(240)}
                     style={[styles.notifDot, { backgroundColor: colors.primary, borderColor: colors.background }]}
                   >
                     <Text style={[styles.notifDotText, { color: "#fff" }]}>
@@ -214,7 +214,7 @@ function ProfileScreen() {
                 )}
               </Pressable>
             </Animated.View>
-            <Animated.View entering={FadeIn.delay(110).duration(250)}>
+            <Animated.View entering={FadeIn.delay(50).duration(250)}>
               <Pressable
                 onPress={goToSettings}
                 style={[styles.iconBtn, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}
@@ -228,11 +228,11 @@ function ProfileScreen() {
 
         {/* ── AVATAR + IDENTITY ─────────────────────────────────── */}
         <Animated.View
-          entering={FadeInDown.delay(60).springify().damping(18)}
+          entering={FadeInDown.delay(30).duration(260)}
           style={styles.avatarSection}
         >
           {/* Avatar */}
-          <Animated.View entering={ZoomIn.delay(80).springify().damping(15).stiffness(160)}>
+          <Animated.View entering={FadeIn.delay(40).duration(240)}>
             <Pressable onPress={openPhotoModal} style={styles.avatarPressable}>
               <View style={[styles.avatarRing, { borderColor: colors.primary + "50" }]}>
                 <View style={[styles.avatarInner, { backgroundColor: colors.surfaceLight }]}>
@@ -262,7 +262,7 @@ function ProfileScreen() {
 
           {/* Name */}
           <Animated.Text
-            entering={FadeInDown.delay(130).springify().damping(20)}
+            entering={FadeInDown.delay(50).duration(260)}
             style={[styles.displayName, { color: colors.text }]}
             numberOfLines={1}
           >
@@ -272,7 +272,7 @@ function ProfileScreen() {
           {/* Username */}
           {currentUsername ? (
             <Animated.Text
-              entering={FadeInDown.delay(160).springify().damping(20)}
+              entering={FadeInDown.delay(60).duration(260)}
               style={[styles.usernameText, { color: colors.primary }]}
             >
               @{currentUsername}
@@ -280,7 +280,7 @@ function ProfileScreen() {
           ) : null}
 
           {/* Bio */}
-          <Animated.View entering={FadeInDown.delay(190).springify().damping(20)}>
+          <Animated.View entering={FadeInDown.delay(70).duration(260)}>
             {bio ? (
               <Text style={[styles.bioText, { color: colors.textSecondary }]} numberOfLines={2}>{bio}</Text>
             ) : (
@@ -291,7 +291,7 @@ function ProfileScreen() {
           </Animated.View>
 
           {/* Edit profile button */}
-          <Animated.View entering={FadeInDown.delay(220).springify().damping(20)}>
+          <Animated.View entering={FadeInDown.delay(80).duration(260)}>
             <Pressable
               onPress={goToEditProfile}
               style={({ pressed }) => [
@@ -306,7 +306,7 @@ function ProfileScreen() {
 
         {/* ── STATS GRID ────────────────────────────────────────── */}
         <Animated.View
-          entering={FadeInDown.delay(100).springify().damping(18)}
+          entering={FadeInDown.delay(50).duration(260)}
           style={[styles.statsGrid, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}
         >
           {formattedStats.map((s, i) => (
@@ -323,7 +323,7 @@ function ProfileScreen() {
 
         {/* ── MY QR CODES ───────────────────────────────────────── */}
         <Animated.View
-          entering={FadeInDown.delay(180).springify().damping(18)}
+          entering={FadeInDown.delay(70).duration(260)}
           style={styles.section}
         >
           <View style={styles.sectionHeader}>
@@ -345,7 +345,7 @@ function ProfileScreen() {
               ))}
             </View>
           ) : previewQrs.length === 0 ? (
-            <Animated.View entering={FadeInDown.delay(240).springify().damping(18)}>
+            <Animated.View entering={FadeInDown.delay(80).duration(260)}>
               <Pressable
                 onPress={goToGenerator}
                 style={({ pressed }) => [
@@ -364,7 +364,7 @@ function ProfileScreen() {
               ))}
               {myQrCodes.length > 3 && (
                 <Animated.View
-                  entering={ZoomIn.delay(previewQrs.length * 70 + 40).springify().damping(16)}
+                  entering={FadeIn.delay(40).duration(240)}
                   style={{ flex: 1 }}
                 >
                   <Pressable
@@ -389,7 +389,7 @@ function ProfileScreen() {
 
         {/* ── SUPPORT QR GUARD ──────────────────────────────────── */}
         <Animated.View
-          entering={FadeInDown.delay(250).springify().damping(18)}
+          entering={FadeInDown.delay(80).duration(260)}
         >
           <Pressable
             onPress={() => safePush("/donation")}
@@ -431,7 +431,7 @@ function ProfileScreen() {
 
         {/* ── SIGN OUT ──────────────────────────────────────────── */}
         <Animated.View
-          entering={FadeInDown.delay(300).springify().damping(18)}
+          entering={FadeInDown.delay(100).duration(260)}
         >
           <Pressable
             onPress={handleSignOut}

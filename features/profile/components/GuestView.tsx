@@ -15,7 +15,7 @@ const GuestView = React.memo(function GuestView({ colors, topInset, onSignIn, on
   return (
     <View style={[styles.container, { paddingTop: topInset, backgroundColor: colors.background }]}>
       <View style={styles.guestWrap}>
-        <Animated.View entering={FadeInDown.duration(400)} style={styles.guestInner}>
+        <Animated.View entering={FadeInDown.duration(260)} style={styles.guestInner}>
           <View style={[styles.guestIconRing, { backgroundColor: colors.primaryDim }]}>
             <Ionicons name="person-outline" size={40} color={colors.primary} />
           </View>

@@ -200,7 +200,7 @@ function TemplatePickerModal({ visible, selectedPreset, onSelect, onClose }: Pro
           contentContainerStyle={{ paddingBottom: 16 }}
         >
           {searchResults === null ? (
-            <Animated.View entering={FadeIn.duration(300)}>
+            <Animated.View entering={FadeIn.duration(260)}>
               <SectionHeader label="All Types" sublabel={`${totalCount} types available`} />
               <View style={styles.catItems}>
                 {allCategories

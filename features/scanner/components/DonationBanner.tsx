@@ -21,7 +21,7 @@ export function DonationBanner({
 
   return (
     <Reanimated.View
-      entering={FadeInDown.duration(380).springify()}
+      entering={FadeInDown.duration(260)}
       style={{
         position: "absolute",
         left: sp(16),

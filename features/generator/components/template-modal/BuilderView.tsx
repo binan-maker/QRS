@@ -96,7 +96,7 @@ function BuilderView({
 
           {/* Fields */}
           {template.fields.map((field, idx) => (
-            <Animated.View key={field.key} entering={FadeInDown.duration(200).delay(idx * 35)}>
+            <Animated.View key={field.key} entering={FadeInDown.duration(200).delay(Math.min(idx, 3) * 22)}>
               <FieldInput
                 field={field}
                 value={values[field.key] ?? ""}

@@ -25,7 +25,7 @@ export default function AccountSection({ user, deleteConfirmText, setDeleteConfi
       showsVerticalScrollIndicator={false}
       contentContainerStyle={[styles.scrollContent, { paddingBottom: insets.bottom + 20 }]}
     >
-      <Animated.View entering={FadeInDown.duration(300)}>
+      <Animated.View entering={FadeInDown.duration(260)}>
         <View style={styles.section}>
           <Text style={styles.sectionLabel}>MY CONTENT</Text>
           <View style={styles.menuGroup}>

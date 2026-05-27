@@ -85,7 +85,7 @@ const CommentItem = React.memo(function CommentItem({
   if (comment.isHidden && !isRevealed) {
     return (
       <View key={comment.id}>
-        <Animated.View entering={FadeIn.duration(300)}>
+        <Animated.View entering={FadeIn.duration(260)}>
           <Pressable
             onPress={() => onReveal(comment.id)}
             style={styles.sensitiveRow}
@@ -105,7 +105,7 @@ const CommentItem = React.memo(function CommentItem({
 
   return (
     <View key={comment.id}>
-      <Animated.View entering={FadeIn.duration(300)}>
+      <Animated.View entering={FadeIn.duration(260)}>
         <View style={[
           styles.commentRow,
           isReply && { paddingLeft: 42 },

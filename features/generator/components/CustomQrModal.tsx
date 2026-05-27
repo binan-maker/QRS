@@ -218,7 +218,7 @@ function CustomQrModal({ visible, onClose, onConfirm }: Props) {
             {fields.map((field, idx) => (
               <Reanimated.View
                 key={field.id}
-                entering={FadeInDown.duration(180).delay(idx * 25)}
+                entering={FadeInDown.duration(180).delay(Math.min(idx, 4) * 22)}
               >
                 <View style={[S.fieldCard, {
                   backgroundColor: colors.surface,

@@ -28,7 +28,7 @@ export default function HistoryItemSkeleton({ index = 0 }: Props) {
   );
 
   return (
-    <ReAnimated.View entering={FadeInDown.delay(index * 70).springify().damping(20)}>
+    <ReAnimated.View entering={FadeInDown.delay(Math.min(index, 4) * 22).duration(260)}>
       <View style={[styles.card, { backgroundColor: cardBg, borderColor: colors.surfaceBorder }]}>
         {bone({ width: 48, height: 48, borderRadius: 15, flexShrink: 0 })}
         <View style={styles.body}>

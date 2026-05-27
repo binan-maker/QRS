@@ -70,7 +70,7 @@ function TypePickerHome({ qrMode, onSetMode, onOpenCustom, hideActions = false, 
       )}
 
       {!hideActions && (
-        <Reanimated.View entering={FadeInUp.delay(80).springify().damping(18)} style={{ marginTop: hideModeCards ? 0 : 10 }}>
+        <Reanimated.View entering={FadeInUp.delay(40).duration(260)} style={{ marginTop: hideModeCards ? 0 : 10 }}>
           <Pressable
             onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium); onOpenCustom(); }}
             style={({ pressed }) => ({

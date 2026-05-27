@@ -88,12 +88,12 @@ const TrustScoreCard = React.memo(function TrustScoreCard({
 
   return (
     <Animated.View
-      entering={FadeInDown.duration(280).springify().damping(18)}
+      entering={FadeInDown.duration(260)}
       style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}
     >
       {/* Score hero */}
       <View style={styles.scoreHero}>
-        <Animated.View entering={FadeInDown.delay(80).duration(400)} style={styles.scoreRingWrap}>
+        <Animated.View entering={FadeInDown.delay(40).duration(260)} style={styles.scoreRingWrap}>
           <LinearGradient colors={scoreGradient} style={styles.scoreRing} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}>
             <View style={[styles.scoreInner, { backgroundColor: isDark ? colors.surface : "#fff" }]}>
               {hasScore ? (
@@ -108,7 +108,7 @@ const TrustScoreCard = React.memo(function TrustScoreCard({
           </LinearGradient>
         </Animated.View>
 
-        <Animated.View entering={FadeInDown.delay(120).duration(350)} style={styles.scoreMeta}>
+        <Animated.View entering={FadeInDown.delay(50).duration(260)} style={styles.scoreMeta}>
           <Text style={[styles.scoreTitle, { color: colors.text }]} maxFontSizeMultiplier={1}>Trust Score</Text>
 
           {hasScore ? (
@@ -145,7 +145,7 @@ const TrustScoreCard = React.memo(function TrustScoreCard({
 
       {/* Manipulation warning */}
       {manipulationWarning && (
-        <Animated.View entering={FadeInDown.delay(160).duration(300)} style={[styles.manipBanner, { backgroundColor: colors.warningDim, borderColor: colors.warning + "40" }]}>
+        <Animated.View entering={FadeInDown.delay(50).duration(260)} style={[styles.manipBanner, { backgroundColor: colors.warningDim, borderColor: colors.warning + "40" }]}>
           <Ionicons name="alert-circle" size={13} color={colors.warning} />
           <Text style={[styles.manipText, { color: colors.warning }]}>
             Unusual voting activity detected — score may not reflect real opinion.
@@ -155,7 +155,7 @@ const TrustScoreCard = React.memo(function TrustScoreCard({
 
       {/* Scan count frozen badge */}
       {scanCountFrozen && (
-        <Animated.View entering={FadeInDown.delay(160).duration(300)} style={[styles.manipBanner, { backgroundColor: colors.dangerDim, borderColor: colors.danger + "40" }]}>
+        <Animated.View entering={FadeInDown.delay(50).duration(260)} style={[styles.manipBanner, { backgroundColor: colors.dangerDim, borderColor: colors.danger + "40" }]}>
           <Ionicons name="lock-closed" size={13} color={colors.danger} />
           <Text style={[styles.manipText, { color: colors.danger }]}>
             Scan count is temporarily frozen — abnormal activity detected and flagged for review.
@@ -164,7 +164,7 @@ const TrustScoreCard = React.memo(function TrustScoreCard({
       )}
 
       {/* Stats row */}
-      <Animated.View entering={FadeInDown.delay(200).duration(350)} style={[styles.statsGrid, { borderColor: colors.surfaceBorder }]}>
+      <Animated.View entering={FadeInDown.delay(70).duration(260)} style={[styles.statsGrid, { borderColor: colors.surfaceBorder }]}>
         {STATS.map((s, i) => (
           <Pressable
             key={i}
@@ -193,7 +193,7 @@ const TrustScoreCard = React.memo(function TrustScoreCard({
 
       {/* Vote breakdown — only shown when there are any votes */}
       {votedTypes.length > 0 && (
-        <Animated.View entering={FadeInDown.delay(260).duration(350)} style={[styles.voteBreakdown, { borderTopColor: colors.surfaceBorder }]}>
+        <Animated.View entering={FadeInDown.delay(80).duration(260)} style={[styles.voteBreakdown, { borderTopColor: colors.surfaceBorder }]}>
           <Text style={[styles.breakdownTitle, { color: colors.textMuted }]} maxFontSizeMultiplier={1}>
             COMMUNITY VOTES
           </Text>
@@ -202,7 +202,7 @@ const TrustScoreCard = React.memo(function TrustScoreCard({
               const count = reportCounts[rt.key] || 0;
               const pct = Math.round((count / total) * 100);
               return (
-                <Animated.View key={rt.key} entering={FadeInDown.delay(300 + idx * 60).duration(300)} style={styles.breakdownRow}>
+                <Animated.View key={rt.key} entering={FadeInDown.delay(40 + Math.min(idx, 3) * 20).duration(260)} style={styles.breakdownRow}>
                   <View style={styles.breakdownLabelRow}>
                     <Ionicons name={rt.outlineIcon as any} size={12} color={rt.color(colors)} />
                     <Text style={[styles.breakdownLabel, { color: colors.textSecondary }]} maxFontSizeMultiplier={1}>

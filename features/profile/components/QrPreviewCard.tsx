@@ -26,7 +26,7 @@ const QrPreviewCard = React.memo(function QrPreviewCard({ qr, colors, index = 0 
 
   return (
     <Animated.View
-      entering={ZoomIn.delay(index * 70).springify().damping(16).stiffness(180)}
+      entering={FadeIn.delay(0).duration(240)}
       style={{ flex: 1 }}
     >
       <Pressable

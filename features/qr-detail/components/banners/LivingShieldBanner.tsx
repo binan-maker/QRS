@@ -46,7 +46,7 @@ export function LivingShieldBanner({
     : false;
 
   return (
-    <Animated.View entering={FadeInDown.delay(60).springify().damping(18)}>
+    <Animated.View entering={FadeInDown.delay(60).duration(260)}>
       <View
         style={[
           styles.card,

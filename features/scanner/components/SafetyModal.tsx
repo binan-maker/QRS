@@ -36,7 +36,7 @@ export default function SafetyModal({ visible, warnings, riskLevel, riskScore = 
   return (
     <View style={styles.overlay}>
       <Reanimated.View
-        entering={FadeInDown.duration(160).springify()}
+        entering={FadeInDown.duration(160).duration(260)}
         style={[styles.sheet, { backgroundColor: colors.surface, borderColor: accentBorder }]}
       >
         {/* Glow accent at top */}

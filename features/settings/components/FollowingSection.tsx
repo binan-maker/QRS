@@ -137,7 +137,7 @@ export default function FollowingSection({ loading, list }: Props) {
         const cardBg = isDark ? colors.surface : "#ffffff";
 
         return (
-          <Animated.View entering={FadeInDown.duration(320).delay(index * 45).springify()}>
+          <Animated.View entering={FadeInDown.duration(260).delay(Math.min(index, 4) * 22).duration(260)}>
             <Pressable
               onPress={() => router.push({ pathname: "/qr-detail/[id]", params: { id: item.qrCodeId } })}
               style={({ pressed }) => [

@@ -270,7 +270,7 @@ function CustomQrBuilderModal({ visible, onClose, onGenerate }: Props) {
                   <Text style={[styles.sectionLabel, { color: colors.textMuted }]}>START WITH A TEMPLATE</Text>
 
                   {STARTER_TEMPLATES.map((t, idx) => (
-                    <Reanimated.View key={t.id} entering={FadeInDown.duration(220).delay(idx * 30)}>
+                    <Reanimated.View key={t.id} entering={FadeInDown.duration(220).delay(Math.min(idx, 3) * 22)}>
                       <Pressable
                         onPress={() => applyTemplate(t)}
                         style={({ pressed }) => [
@@ -509,7 +509,7 @@ function CustomQrBuilderModal({ visible, onClose, onGenerate }: Props) {
                   {fields.map((f, i) => {
                     const ft = FIELD_TYPE_MAP[f.type];
                     return (
-                      <Reanimated.View key={f.id} entering={FadeInDown.duration(200).delay(i * 30)}>
+                      <Reanimated.View key={f.id} entering={FadeInDown.duration(200).delay(Math.min(i, 3) * 22)}>
                         <Text style={[styles.fillLabel, { color: colors.textMuted }]}>
                           {f.label.toUpperCase()}
                         </Text>

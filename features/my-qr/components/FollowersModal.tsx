@@ -48,7 +48,7 @@ export default function FollowersModal({ visible, onClose, followCount, follower
         ) : (
           <ScrollView contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 40 }} showsVerticalScrollIndicator={false}>
             {followers.map((f, idx) => (
-              <Animated.View key={f.userId} entering={FadeInDown.duration(150).delay(idx * 30)}>
+              <Animated.View key={f.userId} entering={FadeInDown.duration(150).delay(Math.min(idx, 3) * 22)}>
                 <View style={[styles.row, { borderBottomColor: colors.surfaceBorder }]}>
                   {f.photoURL ? (
                     <Image source={{ uri: f.photoURL }} style={[styles.avatar, { backgroundColor: colors.surfaceLight }]} />

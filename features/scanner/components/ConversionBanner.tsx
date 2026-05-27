@@ -18,7 +18,7 @@ export function ConversionBanner({
   if (!visible || !message) return null;
   return (
     <Reanimated.View
-      entering={FadeInDown.duration(380).springify()}
+      entering={FadeInDown.duration(260)}
       style={[styles.banner, { bottom: bottomOffset }]}
     >
       <View style={styles.body}>

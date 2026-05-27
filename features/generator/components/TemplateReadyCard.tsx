@@ -12,7 +12,7 @@ interface Props {
 export default function TemplateReadyCard({ templateName, onChange }: Props) {
   const { colors } = useTheme();
   return (
-    <Reanimated.View entering={FadeInDown.duration(300)} style={styles.wrap}>
+    <Reanimated.View entering={FadeInDown.duration(260)} style={styles.wrap}>
       <View style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.primary + "40" }]}>
         <View style={[styles.iconWrap, { backgroundColor: colors.primaryDim }]}>
           <Ionicons name="checkmark-circle" size={20} color={colors.primary} />

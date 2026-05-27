@@ -1,7 +1,7 @@
 import { View, Text, StyleSheet, Pressable, Animated } from "react-native";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { router } from "expo-router";
-import ReAnimated, { FadeInUp, ZoomIn, FadeIn } from "react-native-reanimated";
+import ReAnimated, { FadeInUp, FadeIn } from "react-native-reanimated";
 import { formatFirstName } from "@/lib/utils/formatters";
 import { SCANNER_GLOW } from "./constants";
 
@@ -31,12 +31,12 @@ export default function OverlayBottomBar({
 }: Props) {
   return (
     <ReAnimated.View
-      entering={FadeInUp.delay(80).springify().damping(20)}
+      entering={FadeInUp.delay(40).duration(260)}
       style={[styles.bottomBar, { paddingBottom: Math.max(bottomInset, 8) + 20 }]}
     >
       {/* Zoom + anon pills */}
       <ReAnimated.View
-        entering={FadeIn.delay(200).duration(320)}
+        entering={FadeIn.delay(70).duration(260)}
         style={styles.pillRow}
       >
         <Pressable onPress={onCycleZoom} style={styles.zoomPill}>
@@ -46,7 +46,7 @@ export default function OverlayBottomBar({
 
         {anonymousMode && (
           <ReAnimated.View
-            entering={ZoomIn.springify().damping(16)}
+            entering={FadeIn.duration(240)}
             style={styles.anonPill}
           >
             <Ionicons name="eye-off" size={12} color="#F5A623" />
@@ -58,7 +58,7 @@ export default function OverlayBottomBar({
       {/* Action row */}
       <View style={styles.actionRow}>
         {/* Gallery */}
-        <ReAnimated.View entering={ZoomIn.delay(140).springify().damping(16).stiffness(160)}>
+        <ReAnimated.View entering={FadeIn.delay(60).duration(240)}>
           <Pressable
             onPress={onPickImage}
             style={({ pressed }) => [styles.sideAction, { opacity: pressed ? 0.75 : 1 }]}
@@ -72,7 +72,7 @@ export default function OverlayBottomBar({
 
         {/* Center scan button */}
         <ReAnimated.View
-          entering={ZoomIn.delay(60).springify().damping(14).stiffness(140)}
+          entering={FadeIn.delay(30).duration(240)}
           style={styles.centerGroup}
         >
           {scanned ? (
@@ -96,7 +96,7 @@ export default function OverlayBottomBar({
         </ReAnimated.View>
 
         {/* Profile / Sign in */}
-        <ReAnimated.View entering={ZoomIn.delay(140).springify().damping(16).stiffness(160)}>
+        <ReAnimated.View entering={FadeIn.delay(60).duration(240)}>
           <Pressable
             onPress={() => router.push(user ? "/(tabs)/profile" : "/(auth)/login")}
             style={({ pressed }) => [styles.sideAction, { opacity: pressed ? 0.75 : 1 }]}

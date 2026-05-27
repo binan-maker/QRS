@@ -84,7 +84,7 @@ export const RecentScanCard = React.memo(function RecentScanCard({ scan, index, 
   ), [handleDelete]);
 
   return (
-    <Animated.View entering={FadeInRight.duration(350).delay(index * 55)}>
+    <Animated.View entering={FadeInRight.duration(260).delay(Math.min(index, 4) * 22)}>
       <Swipeable renderRightActions={renderRightActions} overshootRight={false} friction={2}>
         <Pressable
           onPress={handlePress}

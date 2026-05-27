@@ -21,7 +21,7 @@ export function HomeHeader({ user, photoURL }: Props) {
   const styles = useMemo(() => makeStyles(colors, s), [colors, s]);
 
   return (
-    <Animated.View entering={FadeInDown.duration(500)} style={styles.header}>
+    <Animated.View entering={FadeInDown.duration(260)} style={styles.header}>
       <View style={styles.headerLeft}>
         {user ? (
           <Text style={styles.greeting} numberOfLines={1} ellipsizeMode="tail">

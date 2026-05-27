@@ -22,7 +22,7 @@ export function StandardQrBanner({
   const accent = "#22c55e";
 
   return (
-    <Animated.View entering={FadeInDown.delay(60).springify().damping(18)} style={{ marginBottom: 4 }}>
+    <Animated.View entering={FadeInDown.delay(60).duration(260)} style={{ marginBottom: 4 }}>
       <View style={{
         borderRadius: 12,
         borderWidth: 1,

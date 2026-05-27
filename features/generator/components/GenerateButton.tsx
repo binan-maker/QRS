@@ -40,7 +40,7 @@ export default function GenerateButton({ btnLabel, btnIcon, btnColors, onPress, 
   }, [showError]);
 
   return (
-    <Reanimated.View entering={FadeInDown.delay(120).springify().damping(18)}>
+    <Reanimated.View entering={FadeInDown.delay(50).duration(260)}>
       <Pressable
         onPress={onPress}
         style={({ pressed }) => [

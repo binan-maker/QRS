@@ -19,7 +19,7 @@ export function UnverifiedModal({ visible, countdown, onProceed, onBack }: Props
   return (
     <View style={styles.overlay}>
       <Reanimated.View
-        entering={FadeInDown.duration(380).springify()}
+        entering={FadeInDown.duration(260)}
         style={[styles.sheet, { backgroundColor: colors.surface }]}
       >
         <View style={styles.accentStripe} />

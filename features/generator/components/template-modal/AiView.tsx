@@ -147,7 +147,7 @@ function AiView({ prompt, loading, result, error, onChangePrompt, onGenerate, on
 
         {/* Result preview */}
         {result && !error && (
-          <Animated.View entering={FadeInDown.duration(300)} style={{ gap: sp(14) }}>
+          <Animated.View entering={FadeInDown.duration(260)} style={{ gap: sp(14) }}>
             <View style={{ flexDirection: "row", alignItems: "center", gap: sp(8) }}>
               <View style={{ width: sp(28), height: sp(28), borderRadius: sp(14), backgroundColor: "#22c55e20", alignItems: "center", justifyContent: "center" }}>
                 <Ionicons name="checkmark-circle" size={rf(18)} color="#22c55e" />

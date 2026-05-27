@@ -80,7 +80,7 @@ function OutputView({
         showsVerticalScrollIndicator={false}
         contentContainerStyle={[S.outputScroll, { paddingHorizontal: SIDE_PAD, paddingBottom: tabBarH + 16 }]}
       >
-        <Reanimated.View entering={FadeIn.duration(360)} style={{ gap: 14 }}>
+        <Reanimated.View entering={FadeIn.duration(260)} style={{ gap: 14 }}>
 
           <View style={[S.qrCard, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
             <View style={S.qrCardTop}>

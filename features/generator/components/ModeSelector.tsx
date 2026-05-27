@@ -1,7 +1,7 @@
 import React, { memo } from "react";
 import { View, Text, StyleSheet, Pressable, TextInput } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import Animated, { FadeInDown, FadeInUp, ZoomIn } from "react-native-reanimated";
+import Animated, { FadeInDown, FadeInUp } from "react-native-reanimated";
 import * as Haptics from "@/lib/haptics";
 import { router } from "expo-router";
 import { useTheme } from "@/contexts/ThemeContext";
@@ -29,8 +29,8 @@ function ModeSelector({ user, qrMode, businessName, businessCategory, setQrMode,
 
   return (
     <>
-      <Animated.Text entering={FadeInDown.delay(0).springify().damping(20)} style={[styles.sectionLabel, { color: colors.textMuted }]}>Save as</Animated.Text>
-      <Animated.View entering={FadeInDown.delay(40).springify().damping(18)} style={styles.modeRow}>
+      <Animated.Text entering={FadeInDown.delay(0).duration(260)} style={[styles.sectionLabel, { color: colors.textMuted }]}>Save as</Animated.Text>
+      <Animated.View entering={FadeInDown.delay(40).duration(260)} style={styles.modeRow}>
         {user ? (
           <>
             {[
@@ -80,7 +80,7 @@ function ModeSelector({ user, qrMode, businessName, businessCategory, setQrMode,
         )}
       </Animated.View>
 
-      <Animated.View entering={FadeInUp.delay(80).springify().damping(18)}>
+      <Animated.View entering={FadeInUp.delay(40).duration(260)}>
         {qrMode === "individual" && user ? (
           <View style={[styles.banner, { backgroundColor: colors.safeDim, borderColor: colors.safe + "40" }]}>
             <Ionicons name="bookmark" size={13} color={colors.safe} />
@@ -114,7 +114,7 @@ function ModeSelector({ user, qrMode, businessName, businessCategory, setQrMode,
       </Animated.View>
 
       {qrMode === "business" && user && (
-        <Animated.View entering={FadeInDown.delay(0).springify().damping(18)}>
+        <Animated.View entering={FadeInDown.delay(0).duration(260)}>
           <View style={[styles.businessNameRow, { backgroundColor: colors.surface, borderColor: colors.warning + "40" }]}>
             <Ionicons name="business-outline" size={16} color={colors.warning} style={{ marginRight: 8 }} />
             <TextInput
