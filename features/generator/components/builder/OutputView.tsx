@@ -7,7 +7,7 @@ import * as ExpoClipboard from "expo-clipboard";
 import { useTheme } from "@/contexts/ThemeContext";
 import * as Haptics from "@/lib/haptics";
 import { catColor } from "@/features/generator/data/category-config";
-import { getSecurityBadge } from "@/lib/utils/security-badge";
+import { getSecurityBadge } from "@/shared/utils/security-badge";
 import type { CategorySchema } from "@/lib/schemas/CategorySchema";
 import { S } from "./builderStyles";
 

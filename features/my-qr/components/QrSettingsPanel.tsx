@@ -2,7 +2,7 @@ import { View, Text, Switch, ActivityIndicator } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import Animated, { FadeInDown } from "react-native-reanimated";
 import { useTheme } from "@/contexts/ThemeContext";
-import { useScaleFns } from "@/lib/utils/use-scale";
+import { useScaleFns } from "@/shared/utils/use-scale";
 
 interface Props {
   isActive: boolean;

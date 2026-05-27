@@ -9,8 +9,8 @@ import {
 import { router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { useTopInset } from "@/lib/utils/platform";
-import ScreenHeader from "@/components/ui/ScreenHeader";
+import { useTopInset } from "@/shared/utils/platform";
+import ScreenHeader from "@/shared/components/ui/ScreenHeader";
 import { useState } from "react";
 import * as Haptics from "@/lib/haptics";
 import { useTheme } from "@/contexts/ThemeContext";

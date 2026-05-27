@@ -10,6 +10,9 @@
       ],
       "@shared/*": [
         "./shared/*"
+      ],
+      "@services/*": [
+        "./services/*"
       ]
     }
   },

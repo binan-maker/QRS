@@ -4,7 +4,7 @@ import { Image } from "expo-image";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { useTheme } from "@/contexts/ThemeContext";
-import { getUserPhotoURL } from "@/lib/services/user-service";
+import { getUserPhotoURL } from "@/services/user-service";
 
 interface OwnerInfo {
   businessName?: string | null;

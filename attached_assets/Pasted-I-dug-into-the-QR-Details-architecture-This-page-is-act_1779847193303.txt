@@ -1,0 +1,479 @@
+I dug into the QR Details architecture. This page is actually one of the most complex parts of your entire app.
+
+# How QR Details Works
+
+When user scans a QR:
+
+```text
+Scanner
+   ↓
+QR Result
+   ↓
+app/qr-detail/[id].tsx
+   ↓
+QrDetailScreen.tsx
+```
+
+Then the router decides:
+
+```text
+Static QR
+Guard QR
+Standard QR
+```
+
+using:
+
+```tsx
+if (guardUuid)
+   GuardQrDetailScreen
+
+if (standardUuid)
+   StandardQrDetailScreen
+
+else
+   StaticQrDetailScreen
+```
+
+So you currently have **3 different QR Detail systems**.
+
+---
+
+# Main Architecture
+
+```text
+QrDetailScreen
+│
+├── StaticQrDetailScreen
+├── GuardQrDetailScreen
+└── StandardQrDetailScreen
+```
+
+This is actually good.
+
+---
+
+# Brain of the Page
+
+The real brain is:
+
+```text
+useQrDetail()
+```
+
+Located:
+
+```text
+features/qr-detail/hooks/useQrDetail.ts
+```
+
+This hook controls:
+
+### Data Loading
+
+```text
+useQrData()
+```
+
+### Safety Analysis
+
+```text
+useQrSafety()
+```
+
+### Reports
+
+```text
+useQrReports()
+```
+
+### Favorites
+
+```text
+useQrFavorite()
+```
+
+### Comments
+
+```text
+useQrComments()
+```
+
+### Follow System
+
+```text
+useQrFollow()
+```
+
+### Owner Information
+
+```text
+useQrOwner()
+```
+
+### Creator Following
+
+```text
+useCreatorFollow()
+```
+
+---
+
+# QR Detail Page Sections
+
+Inside StaticQrDetailScreen I found:
+
+```text
+Navbar
+
+Verdict Banner
+
+Trust Score Card
+
+Content Card
+
+Owner Card
+
+Evidence Card
+
+Safety Warning
+
+Reports
+
+Comments
+
+Donation Banner
+
+Bottom Sheets
+
+Modals
+```
+
+This is almost like a mini social network page.
+
+---
+
+# Most Important Component
+
+This is:
+
+```text
+ContentCard
+```
+
+Current flow:
+
+```text
+QR Content
+      ↓
+ContentCard
+      ↓
+Detect Type
+      ↓
+Show Correct Card
+```
+
+---
+
+# Current Supported Types
+
+I found:
+
+```text
+Website
+Wifi
+Contact
+Email
+SMS
+WhatsApp
+Phone
+Location
+Crypto
+Event
+Encrypted
+Text
+```
+
+and
+
+```text
+Instagram
+Twitter
+YouTube
+LinkedIn
+Telegram
+Facebook
+Spotify
+Discord
+TikTok
+Snapchat
+Zoom
+Calendly
+PayPal
+Venmo
+Donation
+Review
+Menu
+Google Maps
+```
+
+and
+
+```text
+UPI
+Payment
+ScanToPay
+Payment Link
+```
+
+Total:
+
+≈ 35+ template types
+
+---
+
+# The Cards You Asked About
+
+You asked:
+
+> there is cards right there what is that thing to say that card shows url and other information
+
+Yes.
+
+Those cards are:
+
+```text
+features/qr-detail/content-cards/cards/
+```
+
+Examples:
+
+```text
+WebsiteCard
+WifiCard
+ContactCard
+EmailCard
+PhoneCard
+LocationCard
+CryptoCard
+EventCard
+```
+
+Each card extracts information and shows it beautifully.
+
+Example:
+
+---
+
+## WebsiteCard
+
+QR contains:
+
+```text
+https://google.com
+```
+
+Card shows:
+
+```text
+Website
+google.com
+
+Open Website
+Copy URL
+```
+
+---
+
+## WifiCard
+
+QR contains:
+
+```text
+WIFI:S:OfficeWifi;T:WPA;P:12345678;;
+```
+
+Card shows:
+
+```text
+Network Name
+OfficeWifi
+
+Security
+WPA
+
+Password
+••••••••
+```
+
+---
+
+## ContactCard
+
+QR contains:
+
+```text
+BEGIN:VCARD
+```
+
+Card shows:
+
+```text
+Name
+Phone
+Email
+Company
+```
+
+instead of raw text.
+
+---
+
+# Biggest Problem I Found
+
+The QR Detail page currently has too much responsibility.
+
+Current flow:
+
+```text
+StaticQrDetailScreen
+
+950+ lines
+```
+
+It handles:
+
+```text
+Navigation
+Toast
+Comments
+Reports
+Followers
+Owner Sheet
+Safety
+Content
+Analytics
+Refresh
+Offline
+```
+
+all in one screen.
+
+This is dangerous.
+
+One edit can break multiple features.
+
+---
+
+# What I Would Refactor
+
+Current:
+
+```text
+StaticQrDetailScreen
+      ↓
+Everything
+```
+
+Better:
+
+```text
+StaticQrDetailScreen
+│
+├── HeaderSection
+├── VerdictSection
+├── ContentSection
+├── TrustSection
+├── OwnerSection
+├── ReportSection
+├── CommentSection
+└── BottomSheetSection
+```
+
+Each section becomes independent.
+
+---
+
+# Another Problem
+
+I found:
+
+```text
+components/ContentCard.tsx
+```
+
+and
+
+```text
+content-cards/index.tsx
+```
+
+Both are involved in content display.
+
+This creates confusion.
+
+I would rename:
+
+```text
+content-cards/index.tsx
+```
+
+to
+
+```text
+QrContentRenderer.tsx
+```
+
+Much clearer.
+
+---
+
+# Best Part of Current Architecture
+
+Your parser system is actually well designed.
+
+```text
+content-cards/parsers/
+```
+
+contains:
+
+```text
+url.ts
+wifi.ts
+contact.ts
+event.ts
+crypto.ts
+location.ts
+communication.ts
+```
+
+Meaning:
+
+```text
+QR Raw Content
+      ↓
+Parser
+      ↓
+Structured Data
+      ↓
+Card
+```
+
+This is the correct architecture.
+
+---
+
+# My Overall Rating
+
+| Area                         | Rating |
+| ---------------------------- | ------ |
+| QR Type Routing              | 9/10   |
+| Parser Architecture          | 9/10   |
+| Card System                  | 9/10   |
+| Maintainability              | 6/10   |
+| Screen Size                  | 5/10   |
+| Separation of Concerns       | 6/10   |
+| Scalability to 100 Templates | 7/10   |
+
+The biggest risk is not the card system. The biggest risk is that `StaticQrDetailScreen` has become a giant controller handling too many things. If you continue adding features there, it will become increasingly difficult to maintain. The content-card parser architecture itself is solid and can scale well beyond your current 35 QR templates.

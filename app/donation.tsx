@@ -12,10 +12,10 @@ import {
 import { LinearGradient } from "expo-linear-gradient";
 import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { useTopInset } from "@/lib/utils/platform";
-import ScreenHeader from "@/components/ui/ScreenHeader";
+import { useTopInset } from "@/shared/utils/platform";
+import ScreenHeader from "@/shared/components/ui/ScreenHeader";
 import { useTheme } from "@/contexts/ThemeContext";
-import type { AppColors } from "@/constants/colors";
+import type { AppColors } from "@/shared/constants/colors";
 
 let iapModule: typeof import("react-native-iap") | null = null;
 try {

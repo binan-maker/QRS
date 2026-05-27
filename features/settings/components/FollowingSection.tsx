@@ -7,14 +7,14 @@ import { router } from "expo-router";
 import { LinearGradient } from "expo-linear-gradient";
 import Animated, { FadeInDown } from "react-native-reanimated";
 import { useTheme } from "@/contexts/ThemeContext";
-import SkeletonBox from "@/components/ui/SkeletonBox";
+import SkeletonBox from "@/shared/components/ui/SkeletonBox";
 import { db } from "@/lib/db/client";
 import {
   formatShortDate,
   getContentTypeMeta,
   getContentDisplayLabel,
   getContentSubtitle,
-} from "@/lib/utils/formatters";
+} from "@/shared/utils/formatters";
 
 function SkeletonCard() {
   const { colors } = useTheme();

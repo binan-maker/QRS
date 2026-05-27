@@ -9,7 +9,7 @@ import {
   getCachedHomeScans,
   setCachedHomeScans,
   invalidateHomeScansCache,
-} from "@/lib/cache/qr-cache";
+} from "@/services/cache/qr-cache";
 import type { LocalScan } from "@/features/home/types";
 
 const HOME_STALE_MS   = 5 * 60 * 1000;

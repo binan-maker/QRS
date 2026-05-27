@@ -2,7 +2,7 @@ import React, { useCallback, useMemo } from "react";
 import { View, Text, Pressable, Platform, ActionSheetIOS, Alert, StyleSheet } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useTheme } from "@/contexts/ThemeContext";
-import { getContentTypeIcon, formatCompactRelativeTime } from "@/lib/utils/formatters";
+import { getContentTypeIcon, formatCompactRelativeTime } from "@/shared/utils/formatters";
 
 // ── Component ─────────────────────────────────────────────────────────────────
 

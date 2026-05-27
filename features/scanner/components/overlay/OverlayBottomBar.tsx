@@ -2,7 +2,7 @@ import { View, Text, StyleSheet, Pressable, Animated } from "react-native";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import ReAnimated, { FadeInUp, FadeIn } from "react-native-reanimated";
-import { formatFirstName } from "@/lib/utils/formatters";
+import { formatFirstName } from "@/shared/utils/formatters";
 import { SCANNER_GLOW } from "./constants";
 
 interface Props {

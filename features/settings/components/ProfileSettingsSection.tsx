@@ -8,7 +8,7 @@ import { useTheme } from "@/contexts/ThemeContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { authAdapter } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { invalidateUserCache } from "@/lib/cache/qr-cache";
+import { invalidateUserCache } from "@/services/cache/qr-cache";
 import {
   getUsernameData,
   updateUsername,

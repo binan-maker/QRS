@@ -2,7 +2,7 @@ import { View, Text, Pressable } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { useTheme } from "@/contexts/ThemeContext";
-import { useScaleFns } from "@/lib/utils/use-scale";
+import { useScaleFns } from "@/shared/utils/use-scale";
 
 interface Props {
   isBusiness: boolean;

@@ -5,11 +5,11 @@ import {
 } from "react-native";
 import { FlashList } from "@shopify/flash-list";
 import { router } from "expo-router";
-import { safePush } from "@/lib/utils/navigation";
+import { safePush } from "@/shared/utils/navigation";
 import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { useTopInset } from "@/lib/utils/platform";
-import ScreenHeader from "@/components/ui/ScreenHeader";
+import { useTopInset } from "@/shared/utils/platform";
+import ScreenHeader from "@/shared/components/ui/ScreenHeader";
 import { useTheme } from "@/contexts/ThemeContext";
 import { useAuth } from "@/contexts/AuthContext";
 import {
@@ -19,7 +19,7 @@ import {
   rejectFriendRequest,
   removeFriend,
   FriendEntry,
-} from "@/lib/services/friend-service";
+} from "@/services/friend-service";
 
 type Tab = "friends" | "requests";
 

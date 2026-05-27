@@ -1,7 +1,7 @@
 import React from "react";
 import { View, StyleSheet, ScrollView, RefreshControl } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { useTopInset } from "@/lib/utils/platform";
+import { useTopInset } from "@/shared/utils/platform";
 import { useTheme } from "@/contexts/ThemeContext";
 import { useAvatar } from "@/contexts/AvatarContext";
 import { useHome } from "@/features/home/hooks/useHome";

@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useCallback, memo } from "react";
 import { View, Text, Pressable, useWindowDimensions, KeyboardAvoidingView, Platform } from "react-native";
-import BottomSheet from "@/components/ui/BottomSheet";
+import BottomSheet from "@/shared/components/ui/BottomSheet";
 import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTheme } from "@/contexts/ThemeContext";

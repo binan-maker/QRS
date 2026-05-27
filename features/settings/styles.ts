@@ -1,5 +1,5 @@
 import { StyleSheet } from "react-native";
-import { type AppColors } from "@/constants/colors";
+import { type AppColors } from "@/shared/constants/colors";
 
 export function makeSettingsStyles(c: AppColors, width = 390) {
   const s = Math.min(Math.max(width / 390, 0.82), 1.0);

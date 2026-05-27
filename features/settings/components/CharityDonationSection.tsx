@@ -22,7 +22,7 @@ import {
   buildCheckoutUrl,
   fetchMyDonations,
   type DonationRecord,
-} from "@/lib/services/donation-service";
+} from "@/services/donation-service";
 
 const PRESET_AMOUNTS = [500, 2000, 10000, 50000, 100000];
 

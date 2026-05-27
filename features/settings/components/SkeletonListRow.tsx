@@ -1,1 +1,1 @@
-export { default } from "@/components/ui/SkeletonListRow";
+export { default } from "@/shared/components/ui/SkeletonListRow";

@@ -4,7 +4,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import Animated, { FadeInDown } from "react-native-reanimated";
 import { useTheme } from "@/contexts/ThemeContext";
-import { useScaleFns } from "@/lib/utils/use-scale";
+import { useScaleFns } from "@/shared/utils/use-scale";
 
 interface StatItem {
   icon:  React.ComponentProps<typeof Ionicons>["name"];

@@ -1,1 +1,1 @@
-export { SectionHeader as default, SectionHeader } from "@/components/ui/SectionHeader";
+export { SectionHeader as default, SectionHeader } from "@/shared/components/ui/SectionHeader";

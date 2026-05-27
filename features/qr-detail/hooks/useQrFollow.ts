@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from "react";
 import { router } from "expo-router";
 import * as Haptics from "@/lib/haptics";
 import { toggleFollow, getQrFollowersList, isUserFollowingQrCode, getQrFollowCount, type FollowerInfo } from "@/lib/firestore-service";
-import { invalidateQrCache } from "@/lib/cache/qr-cache";
+import { invalidateQrCache } from "@/services/cache/qr-cache";
 
 const DEBOUNCE_MS = 700;
 

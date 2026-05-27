@@ -1,4 +1,4 @@
-import type { AppColors } from "@/constants/colors";
+import type { AppColors } from "@/shared/constants/colors";
 
 export type ReportKey = "safe" | "scam" | "fake" | "spam";
 

@@ -7,7 +7,7 @@ import { Alert } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as Haptics from "@/lib/haptics";
 import { deleteUserScan } from "@/lib/firestore-service";
-import { invalidateHistoryCache } from "@/lib/cache/qr-cache";
+import { invalidateHistoryCache } from "@/services/cache/qr-cache";
 import { useHistoryData } from "@/features/history/hooks/useHistoryData";
 import type { HistoryItem, Filter } from "@/features/history/types";
 

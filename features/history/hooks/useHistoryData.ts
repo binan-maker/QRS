@@ -24,7 +24,7 @@ import {
   setCachedFavorites,
   getCachedScanStats,
   setCachedScanStats,
-} from "@/lib/cache/qr-cache";
+} from "@/services/cache/qr-cache";
 import type { HistoryItem, RiskLevel, Filter } from "@/features/history/types";
 import { PAGE_SIZE, STALE_MS, SOCIAL_TYPES, PAYMENT_TYPES, CONTACT_TYPES, UTILITY_TYPES, BUSINESS_TYPES } from "@/features/history/utils/constants";
 

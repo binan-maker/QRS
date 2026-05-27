@@ -1,13 +1,13 @@
 import React, { memo, useMemo } from "react";
 import { View, Text, StyleSheet, Pressable, Image, ActivityIndicator } from "react-native";
-import { shadow } from "@/lib/utils/platform";
+import { shadow } from "@/shared/utils/platform";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import Animated, { FadeIn, FadeInDown } from "react-native-reanimated";
 import QRCode from "react-native-qrcode-svg";
 import { useTheme } from "@/contexts/ThemeContext";
 import type { LogoPosition } from "@/features/generator/types/form-types";
-import { formatShortDate } from "@/lib/utils/formatters";
+import { formatShortDate } from "@/shared/utils/formatters";
 
 interface Props {
   qrValue: string;

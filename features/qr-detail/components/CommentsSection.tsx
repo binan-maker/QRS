@@ -6,7 +6,7 @@ import { makeStyles } from "@/features/qr-detail/styles";
 import { SectionHeader } from "@/features/qr-detail/components/SectionHeader";
 import CommentItem from "@/features/qr-detail/components/CommentItem";
 import { formatCompactNumber } from "@/lib/number-format";
-import { smartName } from "@/lib/utils/formatters";
+import { smartName } from "@/shared/utils/formatters";
 
 interface ReplyTo {
   id: string;

@@ -4,7 +4,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import Animated, { FadeInDown } from "react-native-reanimated";
 import { Linking } from "react-native";
 import { useTheme } from "@/contexts/ThemeContext";
-import type { GuardLink } from "@/lib/services/guard-service";
+import type { GuardLink } from "@/services/guard-service";
 
 export function LivingShieldBanner({
   guardLink,

@@ -3,9 +3,9 @@ import { View, Text, StyleSheet } from "react-native";
 import { Image } from "expo-image";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
-import BottomSheet from "@/components/ui/BottomSheet";
+import BottomSheet from "@/shared/components/ui/BottomSheet";
 import { useTheme } from "@/contexts/ThemeContext";
-import { getUserPhotoURL } from "@/lib/services/user-service";
+import { getUserPhotoURL } from "@/services/user-service";
 
 interface GuardLink {
   currentDestination?: string;

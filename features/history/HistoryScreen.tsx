@@ -3,9 +3,9 @@ import { View, StyleSheet, Platform, RefreshControl, useWindowDimensions } from 
 import { FlashList as _FlashList } from "@shopify/flash-list";
 const FlashList = _FlashList as any;
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { useTopInset } from "@/lib/utils/platform";
+import { useTopInset } from "@/shared/utils/platform";
 import { useTheme } from "@/contexts/ThemeContext";
-import { useNetworkStatus } from "@/lib/utils/use-network";
+import { useNetworkStatus } from "@/shared/utils/use-network";
 
 import { useHistory }         from "@/features/history/hooks/useHistory";
 import { useSearch }          from "@/features/history/hooks/useSearch";

@@ -7,12 +7,12 @@ import { LinearGradient } from "expo-linear-gradient";
 import Animated, { FadeIn, FadeInDown } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTheme } from "@/contexts/ThemeContext";
-import { useTopInset } from "@/lib/utils/platform";
-import { useScaleFns } from "@/lib/utils/use-scale";
+import { useTopInset } from "@/shared/utils/platform";
+import { useScaleFns } from "@/shared/utils/use-scale";
 import { useAuth } from "@/contexts/AuthContext";
-import { getGeneratedQrById, type GeneratedQrItem } from "@/lib/services/generator-service";
+import { getGeneratedQrById, type GeneratedQrItem } from "@/services/generator-service";
 import { getQrFollowCount } from "@/lib/firestore-service";
-import { getDetailDisplayTitle, getDetailContentType } from "@/lib/services/qr-display-utils";
+import { getDetailDisplayTitle, getDetailContentType } from "@/services/qr-display-utils";
 
 function formatDate(iso: string | number | undefined): string {
   if (!iso) return "—";

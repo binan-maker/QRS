@@ -2,7 +2,7 @@ import type { QrTemplate, EncType } from "@/features/generator/types/template-ty
 import {
   validateVpa, validateUrl,
   validateEmail,
-} from "@/lib/utils/validators";
+} from "@/shared/utils/validators";
 
 /**
  * TEMPLATES — the five supported QR code types.

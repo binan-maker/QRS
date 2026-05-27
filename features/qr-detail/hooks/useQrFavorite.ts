@@ -3,8 +3,8 @@ import { router } from "expo-router";
 import NetInfo from "@react-native-community/netinfo";
 import * as Haptics from "@/lib/haptics";
 import { toggleFavorite } from "@/lib/firestore-service";
-import { invalidateQrCache } from "@/lib/cache/qr-cache";
-import { queueOfflineFavorite, syncOfflineFavorites } from "@/lib/services/offline-sync";
+import { invalidateQrCache } from "@/services/cache/qr-cache";
+import { queueOfflineFavorite, syncOfflineFavorites } from "@/services/offline-sync";
 
 const DEBOUNCE_MS = 700;
 

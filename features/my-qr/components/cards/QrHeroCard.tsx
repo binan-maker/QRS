@@ -4,7 +4,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import QRCode from "react-native-qrcode-svg";
 import Animated, { FadeIn } from "react-native-reanimated";
 import { useTheme } from "@/contexts/ThemeContext";
-import { useScaleFns } from "@/lib/utils/use-scale";
+import { useScaleFns } from "@/shared/utils/use-scale";
 
 interface ContentTypeMeta {
   color: string;

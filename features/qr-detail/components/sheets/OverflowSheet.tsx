@@ -1,6 +1,6 @@
 import { View, Text, Pressable, ActivityIndicator } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import BottomSheet from "@/components/ui/BottomSheet";
+import BottomSheet from "@/shared/components/ui/BottomSheet";
 import { useTheme } from "@/contexts/ThemeContext";
 import { overflowStyles } from "@/features/qr-detail/styles";
 

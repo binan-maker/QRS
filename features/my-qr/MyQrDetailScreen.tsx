@@ -4,12 +4,12 @@ import { StatusBar } from "expo-status-bar";
 import { useLocalSearchParams, router } from "expo-router";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { useTopInset } from "@/lib/utils/platform";
+import { useTopInset } from "@/shared/utils/platform";
 import { useTheme } from "@/contexts/ThemeContext";
 import { useMyQrDetail } from "@/features/my-qr/hooks/useMyQrDetail";
-import { useScaleFns } from "@/lib/utils/use-scale";
-import { getDetailContentType, getDetailDisplayTitle, parseQrContentDetails } from "@/lib/services/qr-display-utils";
-import { getContentTypeMeta as getCtMeta } from "@/constants/content-types";
+import { useScaleFns } from "@/shared/utils/use-scale";
+import { getDetailContentType, getDetailDisplayTitle, parseQrContentDetails } from "@/services/qr-display-utils";
+import { getContentTypeMeta as getCtMeta } from "@/shared/constants/content-types";
 
 import MyQrNavBar from "@/features/my-qr/components/MyQrNavBar";
 import QrHeroCard from "@/features/my-qr/components/cards/QrHeroCard";

@@ -15,7 +15,7 @@ import {
   getContentSubtitle,
   truncate,
   formatRelativeTime,
-} from "@/lib/utils/formatters";
+} from "@/shared/utils/formatters";
 import { cardStyles } from "@/features/home/components/scanCardStyles";
 import type { LocalScan } from "@/features/home/types";
 

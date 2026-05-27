@@ -3,7 +3,7 @@ import {
   getPublicProfile,
   getPublicQrCodes,
   type PublicProfile,
-} from "@/lib/services/user-service";
+} from "@/services/user-service";
 
 export type { PublicProfile };
 

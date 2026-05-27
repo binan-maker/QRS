@@ -1,7 +1,7 @@
 import { useEffect, useState, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { getAnonymousQrContent } from "@/lib/cache/anonymous-session";
+import { getAnonymousQrContent } from "@/services/cache/anonymous-session";
 import {
   loadQrDetail,
   subscribeToQrStats,
@@ -11,7 +11,7 @@ import {
 import {
   getCachedQrDetail,
   setCachedQrDetail,
-} from "@/lib/cache/qr-cache";
+} from "@/services/cache/qr-cache";
 
 async function recordViewedLocally(
   qrCodeId: string,

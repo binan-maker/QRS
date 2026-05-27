@@ -9,13 +9,13 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import * as Haptics from "@/lib/haptics";
 import { useTheme } from "@/contexts/ThemeContext";
 import { useAuth } from "@/contexts/AuthContext";
-import GoogleIcon from "@/components/GoogleIcon";
-import GoogleAuthLoading from "@/components/GoogleAuthLoading";
+import GoogleIcon from "@/shared/components/GoogleIcon";
+import GoogleAuthLoading from "@/shared/components/GoogleAuthLoading";
 import AuthFormInput from "@/features/auth/components/AuthFormInput";
 import AuthBrandBlock from "@/features/auth/components/AuthBrandBlock";
 import { useAuthScale } from "@/features/auth/hooks/useAuthScale";
 import { makeAuthStyles } from "@/features/auth/styles";
-import { validateEmail } from "@/lib/utils/email-validator";
+import { validateEmail } from "@/shared/utils/email-validator";
 
 export default function RegisterScreen() {
   const { signUp, signInWithGoogle, googleRequest, user } = useAuth();

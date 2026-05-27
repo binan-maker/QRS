@@ -4,7 +4,7 @@ import Reanimated, { FadeInDown, FadeIn } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTheme } from "@/contexts/ThemeContext";
 import { useAppTranslation } from "@/lib/i18n/useAppTranslation";
-import GradientButton from "@/components/ui/GradientButton";
+import GradientButton from "@/shared/components/ui/GradientButton";
 
 interface Props {
   canAskAgain:         boolean;

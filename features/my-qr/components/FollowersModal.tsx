@@ -2,7 +2,7 @@ import { View, Text, StyleSheet, Pressable, Modal, ScrollView, Image, ActivityIn
 import { Ionicons } from "@expo/vector-icons";
 import Animated, { FadeInDown } from "react-native-reanimated";
 import { useTheme } from "@/contexts/ThemeContext";
-import { formatCompactRelativeTime } from "@/lib/utils/formatters";
+import { formatCompactRelativeTime } from "@/shared/utils/formatters";
 import type { FollowerInfo } from "@/lib/firestore-service";
 
 interface Props {

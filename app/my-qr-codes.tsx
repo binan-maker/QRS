@@ -8,19 +8,19 @@ const FlashList = _FlashList as any;
 import { router, useFocusEffect } from "expo-router";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { useTopInset } from "@/lib/utils/platform";
+import { useTopInset } from "@/shared/utils/platform";
 import * as Haptics from "@/lib/haptics";
 import Animated, { FadeInDown, FadeIn } from "react-native-reanimated";
 import { LinearGradient } from "expo-linear-gradient";
-import SkeletonBox from "@/components/ui/SkeletonBox";
+import SkeletonBox from "@/shared/components/ui/SkeletonBox";
 import { useTheme } from "@/contexts/ThemeContext";
 import { useAuth } from "@/contexts/AuthContext";
 import {
   getUserGeneratedQrs,
   type GeneratedQrItem,
 } from "@/lib/firestore-service";
-import { readCache, writeCache } from "@/lib/cache/local-cache";
-import { getContentTypeMeta } from "@/constants/content-types";
+import { readCache, writeCache } from "@/services/cache/local-cache";
+import { getContentTypeMeta } from "@/shared/constants/content-types";
 
 const MY_QRS_CACHE_TTL = 5 * 60 * 1000;
 function qrsCacheKey(userId: string) { return `myqrs_v1_${userId}`; }

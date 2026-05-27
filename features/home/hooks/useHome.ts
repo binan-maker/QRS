@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useAvatar } from "@/contexts/AvatarContext";
-import { useNotifications } from "@/components/notifications/hooks/useNotifications";
+import { useNotifications } from "@/shared/components/notifications/hooks/useNotifications";
 import { useRecentScans } from "@/features/home/hooks/useRecentScans";
 
 export function useHome() {

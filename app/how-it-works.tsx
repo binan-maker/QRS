@@ -9,8 +9,8 @@ import {
 import { router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { useTopInset } from "@/lib/utils/platform";
-import ScreenHeader from "@/components/ui/ScreenHeader";
+import { useTopInset } from "@/shared/utils/platform";
+import ScreenHeader from "@/shared/components/ui/ScreenHeader";
 import { useTheme } from "@/contexts/ThemeContext";
 
 function StepCard({ number, icon, title, desc, tips, totalSteps = 6 }: { number: number; icon: string; title: string; desc: string; tips?: string[]; totalSteps?: number }) {

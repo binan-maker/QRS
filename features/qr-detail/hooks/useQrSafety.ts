@@ -10,7 +10,7 @@ import {
   type PaymentSafetyResult,
   type UrlSafetyResult,
 } from "@/lib/qr-analysis";
-import { fetchThreatDefinitions } from "@/lib/analysis/threat-service";
+import { fetchThreatDefinitions } from "@/services/analysis/threat-service";
 
 export type VerdictLevel = "safe" | "caution" | "dangerous" | "unknown";
 

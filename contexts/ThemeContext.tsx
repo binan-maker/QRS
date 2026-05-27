@@ -9,7 +9,7 @@ import React, {
 import { useColorScheme } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as SystemUI from "expo-system-ui";
-import Colors, { type AppColors } from "@/constants/colors";
+import Colors, { type AppColors } from "@/shared/constants/colors";
 
 type ThemeMode = "system" | "dark" | "light";
 

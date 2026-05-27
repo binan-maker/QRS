@@ -1,7 +1,7 @@
 import { View, Text, StyleSheet, Pressable, Animated } from "react-native";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { router } from "expo-router";
-import { formatFirstName } from "@/lib/utils/formatters";
+import { formatFirstName } from "@/shared/utils/formatters";
 
 const GLOW = "#00D4FF";
 

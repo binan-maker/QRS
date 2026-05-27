@@ -18,14 +18,14 @@ import {
   type UserStats,
   type GeneratedQrItem,
 } from "@/lib/firestore-service";
-import { getUserBio } from "@/lib/services/user-service";
+import { getUserBio } from "@/services/user-service";
 import {
   getCachedUserStats,
   setCachedUserStats,
   invalidateUserCache,
   getCachedProfileExtras,
   setCachedProfileExtras,
-} from "@/lib/cache/qr-cache";
+} from "@/services/cache/qr-cache";
 
 const STATS_STALE_MS = 3 * 60 * 1000;
 const EXTRAS_STALE_MS = 5 * 60 * 1000;
@@ -304,7 +304,7 @@ export function useProfile() {
       const response = await fetch(asset.uri);
       const blob = await response.blob();
 
-      const { uploadProfilePhoto } = await import("@/lib/services/storage-service");
+      const { uploadProfilePhoto } = await import("@/services/storage-service");
       const newPhotoUrl = await uploadProfilePhoto(blob, user!.id, prevPhotoUrl ?? undefined);
 
       await updateUserPhotoURL(user!.id, newPhotoUrl);
@@ -334,7 +334,7 @@ export function useProfile() {
     try {
       // Delete from Storage (fire-and-forget, non-blocking)
       if (prevUrl && prevUrl.includes("firebasestorage")) {
-        const { deleteProfilePhoto } = await import("@/lib/services/storage-service");
+        const { deleteProfilePhoto } = await import("@/services/storage-service");
         deleteProfilePhoto(user.id, prevUrl).catch(() => {});
       }
       // Clear in Firestore

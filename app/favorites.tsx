@@ -12,11 +12,11 @@ import { router, useFocusEffect } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { useTopInset } from "@/lib/utils/platform";
+import { useTopInset } from "@/shared/utils/platform";
 import * as Haptics from "@/lib/haptics";
 import Animated, { FadeInDown, FadeIn } from "react-native-reanimated";
 import { useTheme } from "@/contexts/ThemeContext";
-import SkeletonBox from "@/components/ui/SkeletonBox";
+import SkeletonBox from "@/shared/components/ui/SkeletonBox";
 import { useAuth } from "@/contexts/AuthContext";
 import { getUserFavorites } from "@/lib/firestore-service";
 

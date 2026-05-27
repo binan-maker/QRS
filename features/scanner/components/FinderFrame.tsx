@@ -1,7 +1,7 @@
 import React, { useMemo } from "react";
 import { View, StyleSheet, Animated } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { shadow } from "@/lib/utils/platform";
+import { shadow } from "@/shared/utils/platform";
 import { FINDER_SIZE } from "@/features/scanner/hooks/useCameraControls";
 
 const CORNER_LEN = 28;

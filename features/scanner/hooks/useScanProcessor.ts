@@ -5,7 +5,7 @@ import * as ImagePicker from "expo-image-picker";
 import * as Haptics from "@/lib/haptics";
 import { scanFromURLAsync } from "expo-camera";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { setAnonymousQrContent } from "@/lib/cache/anonymous-session";
+import { setAnonymousQrContent } from "@/services/cache/anonymous-session";
 import { useAuth } from "@/contexts/AuthContext";
 import {
   getOrCreateQrCode,
@@ -13,7 +13,7 @@ import {
   detectContentType,
   getQrCodeId,
 } from "@/lib/firestore-service";
-import { validateQrInput } from "@/lib/services/profanity-filter";
+import { validateQrInput } from "@/services/profanity-filter";
 import {
   consumeAnonScanSlot,
   ANON_CONVERSION_MILESTONES,

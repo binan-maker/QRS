@@ -6,7 +6,7 @@ import * as FileSystem from "expo-file-system/legacy";
 import * as Sharing from "expo-sharing";
 import * as Print from "expo-print";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { captureQrImage } from "@/lib/utils/capture-qr";
+import { captureQrImage } from "@/shared/utils/capture-qr";
 import { useAuth } from "@/contexts/AuthContext";
 import {
   getGeneratedQrById, setQrActiveState,

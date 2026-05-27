@@ -34,26 +34,38 @@ A mobile-first QR code scanning and management app for Android, focused on secur
 
 - **Expo Router screens**: `app/` — thin wrappers; all screen logic lives in `features/`
 - **Feature modules**: `features/` — domain-scoped, each with `components/`, `hooks/`, `styles.ts`, `index.ts`
-- **Shared UI components**: `components/` — global atoms (`ui/`), feedback boundaries (`feedback/`), consent (`consent/`), notifications, groups
+  - **QR Detail sub-structure** (`features/qr-detail/`):
+    - `screens/` — QrDetailScreen, GuardQrDetailScreen, StandardQrDetailScreen, StaticQrDetailScreen
+    - `cards/` — per-type card components (WifiCard, ContactCard, EmailCard, etc.)
+    - `parsers/` — per-type content parsers (wifi, contact, url, etc.)
+    - `shared/` — shared card atoms (CardHeader, InfoGrid, OpenButton)
+    - `components/ContentCard.tsx` — central switch-based type router
+    - `hooks/` — useQrDetail, useQrData, useQrSafety, etc.
+- **Shared layer**: `shared/`
+  - `shared/components/` — global UI atoms (`ui/`), feedback boundaries, consent, notifications
+  - `shared/constants/` — colors, typography, config, content-types
+  - `shared/utils/` — formatters, navigation, platform helpers, URL risk, hooks
+  - `shared/types/` — shared type definitions (qr, trust, user)
+- **Services layer**: `services/`
+  - `services/*.ts` — domain services (qr, follow, report, notification, etc.)
+  - `services/cache/` — anonymous session and QR caching
+  - `services/analysis/` — QR/URL heuristic analysis, threat intelligence, scam detection
+  - `services/notifications/` — NOTIFICATIONS_ENABLED feature flag
 - **Core libraries**: `lib/`
-  - `lib/services/` — domain services (qr, follow, report, notification, etc.)
-  - `lib/analysis/` — QR/URL heuristic analysis, threat intelligence, scam detection
-  - `lib/security/` — ECDSA signature verification (used by analysis)
-  - `lib/utils/` — shared utilities: `capture-qr.ts`, `use-network.ts`, formatters, platform helpers, URL risk
   - `lib/db/` — database adapter pattern (Firebase locked; Supabase/Postgres stubs)
-  - `lib/cache/` — anonymous session and QR caching
+  - `lib/auth/` — auth adapter and Firebase auth provider
+  - `lib/firebase.ts` / `lib/firebase/` — Firebase client config
+  - `lib/firestore-service.ts` — Firestore service layer
+  - `lib/security/` — ECDSA signature verification
   - `lib/i18n/` — multi-language support (EN, HI, ML, TA, TE)
-  - `lib/notifications/config.ts` — NOTIFICATIONS_ENABLED feature flag
-  - `lib/config/region.ts` — data residency / legal compliance constants
+  - `lib/config/` — region / data residency constants, QR type styles
   - `lib/schemas/` — shared schema types (CategorySchema)
   - `lib/styles/common.ts` — reusable StyleSheet token helpers
+  - `lib/qr-analysis.ts` — re-export barrel for `services/analysis/`
 - **QR Type Registry**: `features/generator/data/registry.ts` — single source of truth for all QR types; **add new types here only**
 - **Express backend**: `server/`
-- **Firebase config**: `lib/firebase.ts`
-- **Firestore service layer**: `lib/firestore-service.ts`
 - **DB schema (PostgreSQL stub)**: `shared/schema.ts`
 - **DB provider config**: `lib/db/config.ts`
-- **Color system**: `constants/colors.ts`
 - **Firestore Security Rules**: `firestore.rules` (deploy separately via Firebase CLI)
 
 ## Architecture decisions

@@ -6,7 +6,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import Animated, { FadeIn } from "react-native-reanimated";
 import { router } from "expo-router";
 import { formatCompactNumber } from "@/lib/number-format";
-import { formatRelativeTime } from "@/lib/utils/formatters";
+import { formatRelativeTime } from "@/shared/utils/formatters";
 import { useTheme } from "@/contexts/ThemeContext";
 import type { CommentItem as CommentItemType } from "@/features/qr-detail/hooks/useQrDetail";
 

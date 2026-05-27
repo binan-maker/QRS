@@ -1,10 +1,10 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { View, Text, Pressable, ScrollView, Platform, ActivityIndicator, Alert } from "react-native";
 import { router } from "expo-router";
-import { safePush } from "@/lib/utils/navigation";
+import { safePush } from "@/shared/utils/navigation";
 import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { useTopInset } from "@/lib/utils/platform";
+import { useTopInset } from "@/shared/utils/platform";
 import { LinearGradient } from "expo-linear-gradient";
 import { useTheme } from "@/contexts/ThemeContext";
 import { useAuth } from "@/contexts/AuthContext";
@@ -12,7 +12,7 @@ import {
   getPrivacySettings,
   updatePrivacySettings,
   PrivacySettings,
-} from "@/lib/services/user-service";
+} from "@/services/user-service";
 import PrivacyToggleRow from "@/features/settings/components/PrivacyToggleRow";
 import { privacySettingsStyles as styles } from "@/features/settings/privacySettingsStyles";
 

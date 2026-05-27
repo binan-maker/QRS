@@ -10,9 +10,9 @@ import {
   generateUniqueUsername,
 } from "@/lib/auth/utils";
 import { queryClient } from "@/lib/query-client";
-import { clearAllMemCache, clearAllAsyncStorageCache } from "@/lib/cache/qr-cache";
-import { clearAllAnonymousSessions } from "@/lib/cache/anonymous-session";
-import { validateEmail } from "@/lib/utils/email-validator";
+import { clearAllMemCache, clearAllAsyncStorageCache } from "@/services/cache/qr-cache";
+import { clearAllAnonymousSessions } from "@/services/cache/anonymous-session";
+import { validateEmail } from "@/shared/utils/email-validator";
 
 const SERVER_BASE_URL = process.env.EXPO_PUBLIC_DOMAIN
   ? `https://${process.env.EXPO_PUBLIC_DOMAIN}`

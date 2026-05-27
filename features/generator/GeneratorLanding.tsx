@@ -8,7 +8,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTheme } from "@/contexts/ThemeContext";
-import { useTopInset } from "@/lib/utils/platform";
+import { useTopInset } from "@/shared/utils/platform";
 import * as Haptics from "@/lib/haptics";
 import { TEMPLATES } from "@/features/templates";
 import { LANDING_MODES } from "@/features/generator/data/landing-modes";

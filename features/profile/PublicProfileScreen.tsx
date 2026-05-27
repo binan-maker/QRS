@@ -6,7 +6,7 @@ import {
 import { useLocalSearchParams, router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { useTopInset } from "@/lib/utils/platform";
+import { useTopInset } from "@/shared/utils/platform";
 import Animated, { FadeInDown } from "react-native-reanimated";
 import { useTheme } from "@/contexts/ThemeContext";
 import { useAuth } from "@/contexts/AuthContext";
@@ -19,7 +19,7 @@ import {
   acceptFriendRequest,
   removeFriend,
   FriendStatus,
-} from "@/lib/services/friend-service";
+} from "@/services/friend-service";
 import { publicStyles as S } from "@/features/profile/styles";
 
 // ── Helpers ──────────────────────────────────────────────────────────────────

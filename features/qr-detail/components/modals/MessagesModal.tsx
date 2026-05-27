@@ -7,8 +7,8 @@ import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { useTheme } from "@/contexts/ThemeContext";
 import type { QrOwnerInfo, QrMessage } from "@/lib/firestore-service";
-import BottomSheet from "@/components/ui/BottomSheet";
-import { formatCompactRelativeTime } from "@/lib/utils/formatters";
+import BottomSheet from "@/shared/components/ui/BottomSheet";
+import { formatCompactRelativeTime } from "@/shared/utils/formatters";
 
 interface Props {
   visible: boolean;

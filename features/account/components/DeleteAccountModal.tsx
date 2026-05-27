@@ -10,7 +10,7 @@ import { useTheme } from "@/contexts/ThemeContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { deleteUserAccount } from "@/lib/firestore-service";
 import { authAdapter } from "@/lib/auth";
-import BottomSheet from "@/components/ui/BottomSheet";
+import BottomSheet from "@/shared/components/ui/BottomSheet";
 
 interface DeleteAccountModalProps {
   visible: boolean;

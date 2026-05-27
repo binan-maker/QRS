@@ -1,6 +1,6 @@
 import { View, ScrollView, StyleSheet } from "react-native";
 import Animated, { FadeIn } from "react-native-reanimated";
-import SkeletonBox from "@/components/ui/SkeletonBox";
+import SkeletonBox from "@/shared/components/ui/SkeletonBox";
 import { useTheme } from "@/contexts/ThemeContext";
 
 function SkeletonCommentCard({ colors }: { colors: any }) {

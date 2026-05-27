@@ -9,7 +9,7 @@ import {
   calculateTrustScore,
   getUserQrReport,
 } from "@/lib/firestore-service";
-import { invalidateQrCache } from "@/lib/cache/qr-cache";
+import { invalidateQrCache } from "@/services/cache/qr-cache";
 import { db } from "@/lib/db";
 
 const DEBOUNCE_MS = 600;

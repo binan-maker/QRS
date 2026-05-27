@@ -1,1 +1,1 @@
-export * from "./analysis/index";
+export * from "@/services/analysis/index";

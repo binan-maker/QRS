@@ -19,7 +19,7 @@ import { resolveExpiryDate, type AdvancedSettings } from "@/features/generator/c
 import type { BusinessCategory } from "@/features/generator/components/BusinessTypeSelector";
 import type { QrMode } from "@/features/generator/types/form-types";
 import { appendToLocalScanHistory } from "@/features/scanner/utils/scan-history";
-import { clearCache } from "@/lib/cache/local-cache";
+import { clearCache } from "@/services/cache/local-cache";
 
 function myQrsCacheKey(userId: string) { return `myqrs_v1_${userId}`; }
 

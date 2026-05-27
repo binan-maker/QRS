@@ -1,10 +1,10 @@
 import { View, Text, Pressable, ScrollView, Platform, useWindowDimensions } from "react-native";
 import { useCallback, useMemo } from "react";
 import { useLocalSearchParams, useFocusEffect } from "expo-router";
-import { safePush } from "@/lib/utils/navigation";
+import { safePush } from "@/shared/utils/navigation";
 import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { useTopInset } from "@/lib/utils/platform";
+import { useTopInset } from "@/shared/utils/platform";
 import { LinearGradient } from "expo-linear-gradient";
 import * as NavigationBar from "expo-navigation-bar";
 import { useTheme } from "@/contexts/ThemeContext";

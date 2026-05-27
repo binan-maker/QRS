@@ -19,7 +19,7 @@ import {
   FIELD_TYPE_DEFS,
   CUSTOM_TYPES_STORAGE_KEY,
 } from "@/features/generator/types/CustomQrType";
-import BottomSheet from "@/components/ui/BottomSheet";
+import BottomSheet from "@/shared/components/ui/BottomSheet";
 
 function uid() { return Math.random().toString(36).slice(2, 9); }
 

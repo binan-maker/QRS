@@ -1,6 +1,6 @@
 import { View, Text, Pressable } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import BottomSheet from "@/components/ui/BottomSheet";
+import BottomSheet from "@/shared/components/ui/BottomSheet";
 import { useTheme } from "@/contexts/ThemeContext";
 import { commentMenuStyles } from "@/features/qr-detail/styles";
 

@@ -2,8 +2,8 @@ import { View, Text, ActivityIndicator, StyleSheet } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import Animated, { FadeInDown } from "react-native-reanimated";
 import { useTheme } from "@/contexts/ThemeContext";
-import { useScaleFns } from "@/lib/utils/use-scale";
-import type { ContentDetailRow } from "@/lib/services/qr-display-utils";
+import { useScaleFns } from "@/shared/utils/use-scale";
+import type { ContentDetailRow } from "@/services/qr-display-utils";
 
 interface ContentTypeMeta {
   color: string;

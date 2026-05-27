@@ -1,5 +1,5 @@
-import { analyzeUrl } from "@/lib/analysis/url-security-analyzer";
-import { detectScam } from "@/lib/analysis/scam-detector";
+import { analyzeUrl } from "@/services/analysis/url-security-analyzer";
+import { detectScam } from "@/services/analysis/scam-detector";
 
 export interface SecurityCheckResult {
   hasThreat:    boolean;

@@ -9,10 +9,10 @@ import {
 } from "react-native";
 import { Image } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
-import { safePush } from "@/lib/utils/navigation";
+import { safePush } from "@/shared/utils/navigation";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { useTopInset } from "@/lib/utils/platform";
+import { useTopInset } from "@/shared/utils/platform";
 import Animated, {
   FadeInDown,
   FadeIn,
@@ -24,15 +24,15 @@ import Animated, {
   Easing,
 } from "react-native-reanimated";
 import { useTheme } from "@/contexts/ThemeContext";
-import SkeletonBox from "@/components/ui/SkeletonBox";
+import SkeletonBox from "@/shared/components/ui/SkeletonBox";
 import { formatCompactNumber } from "@/lib/number-format";
 import { useProfile } from "@/features/profile/hooks/useProfile";
 import { useAvatar } from "@/contexts/AvatarContext";
-import { useNotifications } from "@/components/notifications/hooks/useNotifications";
+import { useNotifications } from "@/shared/components/notifications/hooks/useNotifications";
 import PhotoModal from "@/features/profile/components/PhotoModal";
 import GuestView from "@/features/profile/components/GuestView";
 import QrPreviewCard from "@/features/profile/components/QrPreviewCard";
-import NotificationsModal from "@/components/notifications/NotificationsModal";
+import NotificationsModal from "@/shared/components/notifications/NotificationsModal";
 import { styles } from "@/features/profile/styles";
 
 // ── Animated stat cell with number reveal ─────────────────────────────────────

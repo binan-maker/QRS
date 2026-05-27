@@ -9,11 +9,11 @@ import {
 import { router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { useTopInset } from "@/lib/utils/platform";
-import ScreenHeader from "@/components/ui/ScreenHeader";
+import { useTopInset } from "@/shared/utils/platform";
+import ScreenHeader from "@/shared/components/ui/ScreenHeader";
 import { LinearGradient } from "expo-linear-gradient";
 import { useTheme } from "@/contexts/ThemeContext";
-import type { AppColors } from "@/constants/colors";
+import type { AppColors } from "@/shared/constants/colors";
 
 const EFFECTIVE_DATE = "April 8, 2026";
 const CONTACT_EMAIL = "privacy@qrguard.app";
