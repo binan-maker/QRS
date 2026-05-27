@@ -1,0 +1,157 @@
+import { Router, type Request, type Response } from "express";
+import * as admin from "firebase-admin";
+
+export const qrRouter = Router();
+
+function getAdminApp(): admin.app.App | null {
+  try {
+    if (admin.apps.length > 0) return admin.apps[0]!;
+    const serviceAccount = process.env.FIREBASE_SERVICE_ACCOUNT_JSON;
+    if (!serviceAccount) return null;
+    return admin.initializeApp({
+      credential: admin.credential.cert(JSON.parse(serviceAccount)),
+    });
+  } catch {
+    return null;
+  }
+}
+
+// PATCH /api/v1/qr/:qrId/active  — toggle QR active/paused state
+qrRouter.patch("/:qrId/active", async (req: Request, res: Response) => {
+  const { qrId } = req.params;
+  const { isActive, deactivationMessage } = req.body;
+
+  if (!qrId) return res.status(400).json({ error: "Invalid QR code ID" });
+  if (typeof isActive !== "boolean") return res.status(400).json({ error: "isActive must be a boolean" });
+
+  const authHeader = req.headers["authorization"];
+  if (!authHeader?.startsWith("Bearer ")) return res.status(401).json({ error: "Unauthorized" });
+
+  const adminApp = getAdminApp();
+  if (!adminApp) {
+    return res.status(503).json({ error: "Server not configured. Set FIREBASE_SERVICE_ACCOUNT_JSON." });
+  }
+
+  try {
+    const decodedToken = await admin.auth(adminApp).verifyIdToken(authHeader.slice(7));
+    const uid = decodedToken.uid;
+
+    const db = admin.firestore(adminApp);
+    const docRef = db.collection("qrCodes").doc(qrId);
+    const docSnap = await docRef.get();
+
+    if (!docSnap.exists) return res.status(404).json({ error: "QR code not found" });
+    if (docSnap.data()?.ownerId !== uid) return res.status(403).json({ error: "Forbidden" });
+
+    const updateData: Record<string, any> = {
+      isActive,
+      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+    };
+    if (!isActive && deactivationMessage) {
+      updateData.deactivationMessage = deactivationMessage;
+    }
+    if (isActive) {
+      updateData.deactivationMessage = null;
+    }
+
+    await docRef.update(updateData);
+    return res.json({ success: true, isActive });
+  } catch (e: any) {
+    if (e.code === "auth/argument-error" || e.code === "auth/id-token-expired") {
+      return res.status(401).json({ error: "Invalid or expired token" });
+    }
+    console.error("[v1/qr/active] error:", e);
+    return res.status(500).json({ error: "Failed to update QR code" });
+  }
+});
+
+// GET /api/v1/qr/:uuid/analytics  — aggregated scan analytics (owner-only)
+qrRouter.get("/:uuid/analytics", async (req: Request, res: Response) => {
+  const { uuid } = req.params;
+  const authHeader = req.headers["authorization"];
+  if (!authHeader?.startsWith("Bearer ")) return res.status(401).json({ error: "Unauthorized" });
+
+  const adminApp = getAdminApp();
+  if (!adminApp) {
+    return res.status(503).json({ error: "Server not configured. Set FIREBASE_SERVICE_ACCOUNT_JSON." });
+  }
+
+  try {
+    const decodedToken = await admin.auth(adminApp).verifyIdToken(authHeader.slice(7));
+    const uid = decodedToken.uid;
+
+    const db = admin.firestore(adminApp);
+
+    // Resolve qrDocId: try direct doc by id, then by uuid field
+    let qrDocId: string | null = null;
+    const directDoc = await db.collection("qrCodes").doc(uuid).get();
+    if (directDoc.exists && directDoc.data()?.ownerId === uid) {
+      qrDocId = uuid;
+    } else {
+      const q = await db.collection("qrCodes").where("uuid", "==", uuid).limit(1).get();
+      if (!q.empty && q.docs[0].data().ownerId === uid) {
+        qrDocId = q.docs[0].id;
+      }
+    }
+
+    if (!qrDocId) {
+      return res.status(403).json({ error: "QR code not found or you do not own it" });
+    }
+
+    const eventsSnap = await db
+      .collection("qrCodes").doc(qrDocId).collection("events")
+      .orderBy("timestamp", "desc")
+      .limit(2000)
+      .get();
+
+    const now = Date.now();
+    const MS_7D  = 7  * 24 * 60 * 60 * 1000;
+    const MS_30D = 30 * 24 * 60 * 60 * 1000;
+
+    let scans7d = 0;
+    let scans30d = 0;
+    const trend7d    = new Array(7).fill(0);
+    const platformBreakdown = { android: 0, ios: 0, web: 0, unknown: 0 };
+    const verdictBreakdown  = { safe: 0, flagged: 0, unknown: 0 };
+    const topHours   = new Array(24).fill(0);
+
+    for (const doc of eventsSnap.docs) {
+      const d = doc.data();
+      const ts: number = d.timestamp?.toDate?.()?.getTime?.() ?? now;
+      const age = now - ts;
+
+      if (age < MS_7D) {
+        scans7d++;
+        trend7d[Math.min(6, Math.floor(age / 86_400_000))]++;
+      }
+      if (age < MS_30D) scans30d++;
+
+      const plat = d.platform || "unknown";
+      if (plat in platformBreakdown) (platformBreakdown as any)[plat]++;
+      else platformBreakdown.unknown++;
+
+      const ver = d.verdict || "unknown";
+      if (ver in verdictBreakdown) (verdictBreakdown as any)[ver]++;
+      else verdictBreakdown.unknown++;
+
+      topHours[new Date(ts).getHours()]++;
+    }
+
+    return res.json({
+      totalScans: eventsSnap.size,
+      scans7d,
+      scans30d,
+      trend7d,
+      platformBreakdown,
+      verdictBreakdown,
+      topHours,
+      cachedAt: now,
+    });
+  } catch (e: any) {
+    if (e.code === "auth/argument-error" || e.code === "auth/id-token-expired") {
+      return res.status(401).json({ error: "Invalid or expired token" });
+    }
+    console.error("[v1/qr/analytics] error:", e);
+    return res.status(500).json({ error: "Analytics query failed" });
+  }
+});

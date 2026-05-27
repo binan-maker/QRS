@@ -22,6 +22,7 @@ import {
 import { runSecurityCheck } from "@/features/scanner/utils/security-analysis";
 import { decodeQrFromImageUri } from "@/features/scanner/utils/qr-decode";
 import { appendToLocalScanHistory, makeScanEntry } from "@/features/scanner/utils/scan-history";
+import { recordScanEvent } from "@/services/scan-history-service";
 import type { ScanModalControls } from "@/features/scanner/hooks/useScanModals";
 
 const GUARD_PATTERN =
@@ -165,12 +166,20 @@ export function useScanProcessor({
     }
   }
 
+  function _getPlatform(): "android" | "ios" | "web" | "unknown" {
+    if (Platform.OS === "android") return "android";
+    if (Platform.OS === "ios") return "ios";
+    if (Platform.OS === "web") return "web";
+    return "unknown";
+  }
+
   // ─── Background Firestore sync (fire-and-forget) ──────────────────────────────
   function _backgroundSync(
     content:     string,
     localQrId:   string,
     contentType: string,
-    scanSource:  "camera" | "gallery"
+    scanSource:  "camera" | "gallery",
+    verdict:     "safe" | "flagged" | "unknown" = "safe"
   ) {
     (async () => {
       try {
@@ -186,6 +195,12 @@ export function useScanProcessor({
             makeScanEntry(content, qr.contentType, qr.id, scanSource)
           );
         }
+        recordScanEvent(qr.id, {
+          platform: _getPlatform(),
+          contentType: qr.contentType,
+          verdict,
+          scanSource,
+        }).catch(() => {});
       } catch {}
     })();
   }
@@ -246,13 +261,13 @@ export function useScanProcessor({
         if (check.hasThreat) {
           modalControls.openSafetyModal(qrId, check.warnings, check.riskLevel);
           Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
-          _backgroundSync(content, qrId, contentType, scanSource);
+          _backgroundSync(content, qrId, contentType, scanSource, "flagged");
           return;
         }
       }
 
       navigateToQrDetail(qrId);
-      _backgroundSync(content, qrId, contentType, scanSource);
+      _backgroundSync(content, qrId, contentType, scanSource, "safe");
     } catch {
       await processOfflineScan(content, scanSource);
     }

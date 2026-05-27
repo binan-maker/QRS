@@ -331,3 +331,30 @@ export async function hardDeleteOldSoftDeleteScans(): Promise<void> {
   }
 }
 
+
+// ─── Scan Event Analytics ─────────────────────────────────────────────────────
+// Writes structured, non-PII events to qrCodes/{qrId}/events subcollection.
+// Used by the creator analytics dashboard and /api/v1/qr/:uuid/analytics route.
+
+export interface ScanEvent {
+  platform: "android" | "ios" | "web" | "unknown";
+  contentType: string;
+  verdict: "safe" | "flagged" | "unknown";
+  scanSource: "camera" | "gallery";
+}
+
+export async function recordScanEvent(
+  qrId: string,
+  event: ScanEvent
+): Promise<void> {
+  // Fire-and-forget — never block scan result display.
+  // No PII is written: no userId, no IP, no location.
+  try {
+    await db.add(["qrCodes", qrId, "events"], {
+      ...event,
+      timestamp: db.timestamp(),
+    });
+  } catch {
+    // Intentionally silent — analytics loss is preferable to scan UX breakage.
+  }
+}

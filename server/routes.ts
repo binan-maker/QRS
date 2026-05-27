@@ -4,6 +4,7 @@ import { decodeQrFromImage } from "./image-decode";
 import { registerDonationRoutes } from "./routes/donation";
 import { registerSafeBrowsingRoute } from "./routes/safe-browsing";
 import { registerQrActiveRoute } from "./routes/qr-active";
+import { registerV1Routes } from "./routes/index";
 import { validateEmail } from "../shared/utils/email-validator";
 import { validateQrContent } from "../services/analysis/qr-validator";
 import { checkRateLimit, getClientIp } from "./middleware/rate-limiter";
@@ -175,6 +176,10 @@ const DYNAMIC_THREAT_PATTERNS: { pattern: string; reason: string }[] = [
 ];
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // ── Versioned API (all handlers mirrored under /api/v1/) ────────────────────
+  registerV1Routes(app);
+
+  // ── Legacy domain route modules (keep old paths alive for backward compat) ──
   registerDonationRoutes(app);
   registerSafeBrowsingRoute(app);
   registerQrActiveRoute(app);

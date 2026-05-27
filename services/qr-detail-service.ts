@@ -81,3 +81,92 @@ export async function loadQrDetail(
     isFollowing,
   };
 }
+
+// ─── QR Analytics Aggregation ─────────────────────────────────────────────────
+// Reads qrCodes/{qrId}/events subcollection and returns aggregated metrics.
+// Results are cached in-memory for 10 minutes to minimise Firestore reads.
+
+export interface QrAnalyticsSummary {
+  totalScans: number;
+  scans7d: number;
+  scans30d: number;
+  /** 7 values, index 0 = today, index 6 = 6 days ago */
+  trend7d: number[];
+  platformBreakdown: { android: number; ios: number; web: number; unknown: number };
+  verdictBreakdown: { safe: number; flagged: number; unknown: number };
+  /** 24 values, one per hour-of-day (UTC) */
+  topHours: number[];
+  cachedAt: number;
+}
+
+const _analyticsCache = new Map<string, { data: QrAnalyticsSummary; expiresAt: number }>();
+const ANALYTICS_CACHE_TTL_MS = 10 * 60 * 1000;
+
+export async function getQrAnalyticsSummary(
+  qrId: string,
+  _ownerId: string
+): Promise<QrAnalyticsSummary> {
+  const now = Date.now();
+  const cached = _analyticsCache.get(qrId);
+  if (cached && now < cached.expiresAt) return cached.data;
+
+  const MS_7D  = 7  * 24 * 60 * 60 * 1000;
+  const MS_30D = 30 * 24 * 60 * 60 * 1000;
+
+  let docs: Array<{ id: string; data: Record<string, any> }> = [];
+  try {
+    const result = await db.query(["qrCodes", qrId, "events"], {
+      orderBy: { field: "timestamp", direction: "desc" },
+      limit: 2000,
+    });
+    docs = result.docs;
+  } catch {
+    // Return empty summary on error — non-fatal.
+  }
+
+  const totalScans = docs.length;
+  let scans7d = 0;
+  let scans30d = 0;
+  const trend7d = new Array(7).fill(0);
+  const platformBreakdown = { android: 0, ios: 0, web: 0, unknown: 0 };
+  const verdictBreakdown  = { safe: 0, flagged: 0, unknown: 0 };
+  const topHours          = new Array(24).fill(0);
+
+  for (const doc of docs) {
+    const d = doc.data;
+    let ts: number;
+    if (d.timestamp && typeof d.timestamp.toDate === "function") {
+      ts = d.timestamp.toDate().getTime();
+    } else if (typeof d.timestamp === "string") {
+      ts = new Date(d.timestamp).getTime();
+    } else {
+      ts = now;
+    }
+    const age = now - ts;
+
+    if (age < MS_7D) {
+      scans7d++;
+      const dayIdx = Math.min(6, Math.floor(age / 86_400_000));
+      trend7d[dayIdx]++;
+    }
+    if (age < MS_30D) scans30d++;
+
+    const plat = (d.platform || "unknown") as string;
+    if (plat in platformBreakdown) (platformBreakdown as any)[plat]++;
+    else platformBreakdown.unknown++;
+
+    const ver = (d.verdict || "unknown") as string;
+    if (ver in verdictBreakdown) (verdictBreakdown as any)[ver]++;
+    else verdictBreakdown.unknown++;
+
+    topHours[new Date(ts).getHours()]++;
+  }
+
+  const summary: QrAnalyticsSummary = {
+    totalScans, scans7d, scans30d, trend7d,
+    platformBreakdown, verdictBreakdown, topHours, cachedAt: now,
+  };
+
+  _analyticsCache.set(qrId, { data: summary, expiresAt: now + ANALYTICS_CACHE_TTL_MS });
+  return summary;
+}
