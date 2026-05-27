@@ -26,6 +26,7 @@ A mobile-first QR code scanning and management app for Android, focused on secur
 - **Frontend**: Expo (React Native), Expo Router
 - **Backend**: Express.js 5.x
 - **Runtime**: Node 20+
+- **State**: Zustand (`store/`) + React Context (`shared/contexts/`) — both coexist
 - **ORM**: _Populate as you build_ (Drizzle ORM for PostgreSQL stub)
 - **Validation**: Joi (implied by usage, explicit in security hardening)
 - **Build Tool**: Metro Bundler, Expo CLI
@@ -33,6 +34,10 @@ A mobile-first QR code scanning and management app for Android, focused on secur
 ## Where things live
 
 - **Expo Router screens**: `app/` — thin wrappers; all screen logic lives in `features/`
+- **Zustand stores**: `store/` — global UI/auth/notification state
+  - `store/authStore.ts` — Zustand mirror of auth state (complements AuthContext)
+  - `store/uiStore.ts` — toasts, modal flags, loading states
+  - `store/notificationStore.ts` — notification badge count, read state
 - **Feature modules**: `features/` — domain-scoped, each with `components/`, `hooks/`, `styles.ts`, `index.ts`
   - **QR Detail** (`features/qr-detail/`):
     - `QrDetailScreen.tsx` — root router (dispatches to dynamic/guard, dynamic/standard, static)
@@ -41,11 +46,14 @@ A mobile-first QR code scanning and management app for Android, focused on secur
     - `content-cards/` — canonical card system: `cards/` (per-type UI), `parsers/` (per-type parsing), `shared/` (CardHeader, InfoGrid, OpenButton)
     - `components/` — shared detail components (TrustScoreCard, PaymentCard, CommentsSection, etc.)
     - `hooks/` — useQrDetail, useQrData, useQrSafety, etc.
-  - **My QR** (`features/my-qr/components/`):
-    - `cards/` — QrHeroCard, QrStatsRow, GuardDestinationCard, etc.
-    - `modals/` — DeactivateModal, ConfirmActionModal, FollowersModal, CustomColorModal
-    - `panels/` — DesignPanel, QrSettingsPanel
-    - `comments/` — OwnerCommentRow, OwnerCommentsSection
+    - `styles/` — split stylesheet directory: layout.ts, banners.ts, guest.ts, comments.ts, owner.ts, index.ts; `styles.ts` is a re-export barrel
+  - **My QR** (`features/my-qr/`):
+    - `components/cards/` — QrHeroCard, QrStatsRow, GuardDestinationCard, etc.
+    - `components/modals/` — DeactivateModal, ConfirmActionModal, FollowersModal, CustomColorModal
+    - `components/panels/` — DesignPanel (thin orchestrator), QrSettingsPanel
+    - `components/panels/tabs/` — ColorsTab, LogoTab, OptionsTab (tab content sub-components)
+    - `components/comments/` — OwnerCommentRow, OwnerCommentsSection
+    - `utils/qr-display.ts` — getEffectiveContentType, getDisplayText, extractSocialHandle
   - **Generator** (`features/generator/`):
     - `landing/` — GeneratorLanding, ModeCard, FeatureRow (entry point, imported by `app/(tabs)/qr-generator/index.tsx`)
     - `components/` — all form, output, and modal components
@@ -62,7 +70,10 @@ A mobile-first QR code scanning and management app for Android, focused on secur
   - `shared/types/` — shared type definitions (qr, trust, user)
   - `shared/utils/` — formatters, navigation, platform, haptics, number-format, query-client, URL risk, hooks
 - **Services layer**: `services/`
-  - `services/*.ts` — domain services (qr, follow, report, notification, user, comment, etc.)
+  - `services/generator-service.ts` — re-export barrel → `services/generator/` (crud, updates, branding, velocity, verification)
+  - `services/user-service.ts` — re-export barrel → `services/user/` (profile, favorites, privacy, username, search, leaderboard)
+  - `services/comment-service.ts` — re-export barrel → `services/comments/` (cache, read, write, report)
+  - `services/*.ts` — other domain services (qr, follow, report, notification, integrity, etc.)
   - `services/cache/` — anonymous session and QR caching
   - `services/analysis/` — QR/URL heuristic analysis, threat intelligence, scam detection
   - `services/notifications/` — NOTIFICATIONS_ENABLED feature flag
@@ -77,6 +88,10 @@ A mobile-first QR code scanning and management app for Android, focused on secur
   - **DO NOT ADD** business logic, utilities, or UI helpers to `lib/` — use `shared/` or `services/`
 - **QR Type Registry**: `features/generator/data/registry.ts` — single source of truth for all QR types; **add new types here only**
 - **Express backend**: `server/`
+  - `server/routes.ts` — thin orchestrator (~190 lines); calls `register*Route(app)` helpers
+  - `server/routes/ai-qr.ts` — AI QR generation (smart parser + OpenAI fallback)
+  - `server/routes/standard-content.ts` — `/go/:slug` standard QR content page
+  - `server/routes/donation.ts`, `safe-browsing.ts`, `qr-active.ts`, `index.ts` — other domain routes
 - **DB schema (PostgreSQL stub)**: `shared/schema.ts`
 - **DB provider config**: `lib/db/config.ts`
 - **Firestore Security Rules**: `firestore.rules` (deploy separately via Firebase CLI)
@@ -86,10 +101,12 @@ A mobile-first QR code scanning and management app for Android, focused on secur
 - **Android-only focus**: Web support was removed to streamline development and focus on the primary mobile use case.
 - **Pluggable Database**: Database adapter pattern (`lib/db/adapter.ts`) supports Firebase, Supabase, and PostgreSQL. Currently locked to Firebase Firestore for primary data and Firebase Realtime Database for notifications/velocity.
 - **Client-side Firebase Auth**: All authentication is handled directly by Firebase on the client, with session syncing and auto-login.
-- **Service Layer Design**: Business logic is in `services/` — each service owns a single responsibility (e.g. `qr-service.ts`, `report-service.ts`, `follow-service.ts`).
+- **Service Layer Design**: Business logic is in `services/` — each service owns a single responsibility. Large services are split into domain subdirectories (`services/generator/`, `services/user/`, `services/comments/`); the original `.ts` file becomes a re-export barrel so no imports break.
+- **State management**: Zustand (`store/`) for global UI/notification state; React Context (`shared/contexts/`) retained for auth, theme, and avatar. Both coexist — Zustand does not replace Context.
 - **Security by Default**: QR input validation, ECDSA response signing, report rate limits, Firestore circuit breaker, and encrypted threat storage via `expo-secure-store`.
 - **QR Type Registry pattern**: `features/generator/data/registry.ts` is the single source of truth. `presets.ts` and `qr-builder.ts` derive from it. Adding a new QR type = append one object to `QR_REGISTRY` + add key to `QR_CATEGORY_KEYS`. No other files need to change.
 - **Navigation links (owner flow)**: Generator success → `/my-qr/[docId]`. My QR management header has a globe button → `/qr-detail/[uuid]?ownerDocId=...`. QR detail shows "Manage" button when logged-in user is the QR owner.
+- **File size rule**: Files > ~300 lines are candidates for extraction. Pattern: move heavy logic into a sub-directory, keep the original file as a thin orchestrator or re-export barrel.
 
 ## Product
 
@@ -113,6 +130,7 @@ A mobile-first QR code scanning and management app for Android, focused on secur
 - **PostgreSQL/Drizzle**: The `server/storage.ts` and Drizzle schema are not actively used for database operations; they are a stub for future migration and should not be deleted.
 - **Local Dev Env**: Requires Android SDK, `adb`, Node 20+, npm, and a physical Android device or emulator. Replit cannot run `npx expo run:android`.
 - **lib/security/**: Only `signature-verifier.ts` is active (used by `services/analysis/threat-service.ts`). Do not add duplicate analysis files here.
+- **Re-export barrels**: `services/generator-service.ts`, `services/user-service.ts`, `services/comment-service.ts` are now 1-line barrels. Never add logic back to them — use the subdirectory files instead.
 
 ## Pointers
 

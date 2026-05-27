@@ -1,22 +1,16 @@
 import { useState } from "react";
-import { View, Text, Pressable, TextInput, ScrollView, ActivityIndicator } from "react-native";
+import { View, Text, Pressable, ActivityIndicator } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import Animated, { FadeIn, FadeInDown } from "react-native-reanimated";
 import { LinearGradient } from "expo-linear-gradient";
 import { useTheme } from "@/shared/contexts/ThemeContext";
 import { QR_COLOR_THEMES } from "@/features/generator/components/QrThemeSection";
 import type { LogoPosition, ExpiryPreset } from "@/features/my-qr/hooks/useQrDesign";
+import { ColorsTab } from "./tabs/ColorsTab";
+import { LogoTab } from "./tabs/LogoTab";
+import { OptionsTab } from "./tabs/OptionsTab";
 
 type Tab = "colors" | "logo" | "options";
-
-const EXPIRY_PRESETS: { key: ExpiryPreset; label: string }[] = [
-  { key: "never",  label: "Never"    },
-  { key: "1d",     label: "1 Day"    },
-  { key: "7d",     label: "7 Days"   },
-  { key: "30d",    label: "30 Days"  },
-  { key: "90d",    label: "3 Months" },
-  { key: "custom", label: "Custom"   },
-];
 
 interface Props {
   fgColor: string;
@@ -63,8 +57,6 @@ export default function DesignPanel({
 }: Props) {
   const { colors } = useTheme();
   const [tab, setTab] = useState<Tab>("colors");
-
-  const CUSTOM_THEME_IDX = QR_COLOR_THEMES.length;
 
   const hasTheme   = selectedThemeIdx !== 0 || isCustomTheme;
   const hasLogo    = !!customLogoUri || showDefaultLogo;
@@ -118,7 +110,6 @@ export default function DesignPanel({
           </Text>
         </View>
 
-        {/* Active color preview chips */}
         {!hasAny && (
           <View style={{ flexDirection: "row", gap: 4, marginRight: 4 }}>
             <View style={{ width: 16, height: 16, borderRadius: 4, backgroundColor: fgColor, borderWidth: 1, borderColor: colors.surfaceBorder }} />
@@ -151,8 +142,8 @@ export default function DesignPanel({
           {/* Tab bar */}
           <View style={{ flexDirection: "row", borderBottomWidth: 1, borderBottomColor: colors.surfaceBorder }}>
             {TABS.map((t) => {
-              const active  = tab === t.key;
-              const hasDot  = dots.includes(t.key);
+              const active = tab === t.key;
+              const hasDot = dots.includes(t.key);
               return (
                 <Pressable
                   key={t.key}
@@ -165,11 +156,7 @@ export default function DesignPanel({
                   }}
                 >
                   <View style={{ position: "relative" }}>
-                    <Ionicons
-                      name={t.icon}
-                      size={15}
-                      color={active ? colors.primary : colors.textMuted}
-                    />
+                    <Ionicons name={t.icon} size={15} color={active ? colors.primary : colors.textMuted} />
                     {hasDot && !active && (
                       <View style={{
                         position: "absolute", top: -2, right: -2,
@@ -192,380 +179,41 @@ export default function DesignPanel({
 
           {/* Tab content */}
           <Animated.View key={tab} entering={FadeInDown.duration(200)} style={{ padding: 14 }}>
-
-            {/* ── Colors tab ── */}
             {tab === "colors" && (
-              <View style={{ gap: 12 }}>
-                <ScrollView
-                  horizontal
-                  showsHorizontalScrollIndicator={false}
-                  contentContainerStyle={{ gap: 8, paddingRight: 4 }}
-                >
-                  {QR_COLOR_THEMES.map((theme, idx) => {
-                    const active = !isCustomTheme && idx === selectedThemeIdx;
-                    return (
-                      <Pressable
-                        key={theme.name}
-                        onPress={() => onSelectTheme(idx)}
-                        style={[{
-                          alignItems: "center", gap: 6,
-                          paddingHorizontal: 10, paddingVertical: 8,
-                          borderRadius: 14, borderWidth: 1.5,
-                        }, active
-                          ? { borderColor: colors.primary, backgroundColor: colors.primaryDim }
-                          : { borderColor: colors.surfaceBorder, backgroundColor: colors.surfaceLight }
-                        ]}
-                      >
-                        <View style={{
-                          flexDirection: "row", width: 36, height: 36,
-                          borderRadius: 10, overflow: "hidden",
-                          borderWidth: 1, borderColor: colors.surfaceBorder,
-                        }}>
-                          <View style={{ flex: 1, backgroundColor: theme.bg }} />
-                          <View style={{ flex: 1, backgroundColor: theme.fg }} />
-                        </View>
-                        <Text style={{
-                          fontSize: 10,
-                          fontFamily: active ? "Inter_700Bold" : "Inter_400Regular",
-                          color: active ? colors.primary : colors.textSecondary,
-                          textAlign: "center",
-                        }} numberOfLines={1}>
-                          {theme.name}
-                        </Text>
-                      </Pressable>
-                    );
-                  })}
-
-                  {/* Custom */}
-                  <Pressable
-                    onPress={() => onSelectTheme(CUSTOM_THEME_IDX)}
-                    style={[{
-                      alignItems: "center", gap: 6,
-                      paddingHorizontal: 10, paddingVertical: 8,
-                      borderRadius: 14, borderWidth: 1.5,
-                    }, isCustomTheme
-                      ? { borderColor: colors.primary, backgroundColor: colors.primaryDim }
-                      : { borderColor: colors.surfaceBorder, backgroundColor: colors.surfaceLight }
-                    ]}
-                  >
-                    <View style={{
-                      width: 36, height: 36, borderRadius: 10,
-                      borderWidth: 1, borderColor: colors.surfaceBorder,
-                      alignItems: "center", justifyContent: "center",
-                      backgroundColor: colors.surfaceLight,
-                    }}>
-                      <Ionicons name="color-palette-outline" size={18} color={isCustomTheme ? colors.primary : colors.textMuted} />
-                    </View>
-                    <Text style={{
-                      fontSize: 10,
-                      fontFamily: isCustomTheme ? "Inter_700Bold" : "Inter_400Regular",
-                      color: isCustomTheme ? colors.primary : colors.textSecondary,
-                      textAlign: "center",
-                    }}>
-                      Custom
-                    </Text>
-                  </Pressable>
-                </ScrollView>
-
-                {isCustomTheme && (
-                  <Animated.View entering={FadeInDown.duration(200)} style={{ gap: 10 }}>
-                    <View style={{ flexDirection: "row", gap: 10 }}>
-                      <View style={{ flex: 1, gap: 6 }}>
-                        <Text style={{ fontSize: 11, fontFamily: "Inter_600SemiBold", color: colors.textMuted, textTransform: "uppercase", letterSpacing: 0.6 }}>
-                          QR Color
-                        </Text>
-                        <View style={{ flexDirection: "row", alignItems: "center", gap: 8, borderRadius: 12, borderWidth: 1, borderColor: colors.surfaceBorder, backgroundColor: colors.surfaceLight, paddingHorizontal: 10, paddingVertical: 8 }}>
-                          <View style={{ width: 22, height: 22, borderRadius: 6, backgroundColor: customFgColor, borderWidth: 1, borderColor: colors.surfaceBorder }} />
-                          <TextInput
-                            style={{ flex: 1, fontSize: 13, fontFamily: "Inter_600SemiBold", color: colors.text }}
-                            value={customFgColor}
-                            onChangeText={(v) => {
-                              const clean = v.startsWith("#") ? v : `#${v}`;
-                              if (/^#[0-9A-Fa-f]{0,6}$/.test(clean)) onSetCustomFg(clean);
-                            }}
-                            placeholder="#000000"
-                            placeholderTextColor={colors.textMuted}
-                            autoCapitalize="characters"
-                            maxLength={7}
-                          />
-                        </View>
-                      </View>
-                      <View style={{ flex: 1, gap: 6 }}>
-                        <Text style={{ fontSize: 11, fontFamily: "Inter_600SemiBold", color: colors.textMuted, textTransform: "uppercase", letterSpacing: 0.6 }}>
-                          Background
-                        </Text>
-                        <View style={{ flexDirection: "row", alignItems: "center", gap: 8, borderRadius: 12, borderWidth: 1, borderColor: colors.surfaceBorder, backgroundColor: colors.surfaceLight, paddingHorizontal: 10, paddingVertical: 8 }}>
-                          <View style={{ width: 22, height: 22, borderRadius: 6, backgroundColor: customBgColor, borderWidth: 1, borderColor: colors.surfaceBorder }} />
-                          <TextInput
-                            style={{ flex: 1, fontSize: 13, fontFamily: "Inter_600SemiBold", color: colors.text }}
-                            value={customBgColor}
-                            onChangeText={(v) => {
-                              const clean = v.startsWith("#") ? v : `#${v}`;
-                              if (/^#[0-9A-Fa-f]{0,6}$/.test(clean)) onSetCustomBg(clean);
-                            }}
-                            placeholder="#FFFFFF"
-                            placeholderTextColor={colors.textMuted}
-                            autoCapitalize="characters"
-                            maxLength={7}
-                          />
-                        </View>
-                      </View>
-                    </View>
-                    <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
-                      <Ionicons name="information-circle-outline" size={13} color={colors.textMuted} />
-                      <Text style={{ fontSize: 11, fontFamily: "Inter_400Regular", color: colors.textMuted }}>
-                        Enter hex codes. Dark QR on light background scans best.
-                      </Text>
-                    </View>
-                  </Animated.View>
-                )}
-              </View>
+              <ColorsTab
+                selectedThemeIdx={selectedThemeIdx}
+                isCustomTheme={isCustomTheme}
+                customFgColor={customFgColor}
+                customBgColor={customBgColor}
+                onSelectTheme={onSelectTheme}
+                onSetCustomFg={onSetCustomFg}
+                onSetCustomBg={onSetCustomBg}
+              />
             )}
 
-            {/* ── Logo tab ── */}
             {tab === "logo" && (
-              <View style={{ gap: 12 }}>
-                {/* Default logo toggle */}
-                <Pressable
-                  onPress={onToggleDefaultLogo}
-                  style={({ pressed }) => [{
-                    flexDirection: "row", alignItems: "center", gap: 10,
-                    padding: 11, borderRadius: 12, borderWidth: 1,
-                    borderColor: showDefaultLogo ? colors.primary + "55" : colors.surfaceBorder,
-                    backgroundColor: showDefaultLogo ? colors.primaryDim : colors.surfaceLight,
-                    opacity: pressed ? 0.85 : 1,
-                  }]}
-                >
-                  <Ionicons name="shield-checkmark-outline" size={18} color={showDefaultLogo ? colors.primary : colors.textMuted} />
-                  <View style={{ flex: 1 }}>
-                    <Text style={{ fontSize: 13, fontFamily: "Inter_600SemiBold", color: showDefaultLogo ? colors.primary : colors.text }}>
-                      QR Guard Branding
-                    </Text>
-                    <Text style={{ fontSize: 11, fontFamily: "Inter_400Regular", color: colors.textMuted, marginTop: 1 }}>
-                      {showDefaultLogo ? "Showing logo — tap to remove" : "Tap to add logo"}
-                    </Text>
-                  </View>
-                  <View style={{
-                    width: 22, height: 22, borderRadius: 11, borderWidth: 1.5,
-                    alignItems: "center", justifyContent: "center",
-                    borderColor: showDefaultLogo ? colors.primary : colors.surfaceBorder,
-                    backgroundColor: showDefaultLogo ? colors.primary : "transparent",
-                  }}>
-                    {showDefaultLogo && <Ionicons name="checkmark" size={12} color="#fff" />}
-                  </View>
-                </Pressable>
-
-                {/* Custom logo */}
-                <View style={{ flexDirection: "row", gap: 8 }}>
-                  <Pressable
-                    onPress={onPickLogo}
-                    style={({ pressed }) => [{
-                      flex: 1, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 6,
-                      padding: 10, borderRadius: 12, borderWidth: 1,
-                      borderColor: customLogoUri ? colors.primary + "55" : colors.surfaceBorder,
-                      backgroundColor: customLogoUri ? colors.primaryDim : colors.surfaceLight,
-                      opacity: pressed ? 0.85 : 1,
-                    }]}
-                  >
-                    <Ionicons name={customLogoUri ? "checkmark-circle" : "cloud-upload-outline"} size={15} color={customLogoUri ? colors.primary : colors.textMuted} />
-                    <Text style={{ fontSize: 12, fontFamily: "Inter_600SemiBold", color: customLogoUri ? colors.primary : colors.textMuted }}>
-                      {customLogoUri ? "Custom logo set" : "Upload logo"}
-                    </Text>
-                  </Pressable>
-
-                  {customLogoUri && (
-                    <Pressable
-                      onPress={onRemoveLogo}
-                      style={({ pressed }) => [{
-                        width: 42, borderRadius: 12, borderWidth: 1, alignItems: "center", justifyContent: "center",
-                        borderColor: colors.danger + "40",
-                        backgroundColor: colors.dangerDim,
-                        opacity: pressed ? 0.8 : 1,
-                      }]}
-                    >
-                      <Ionicons name="trash-outline" size={16} color={colors.danger} />
-                    </Pressable>
-                  )}
-                </View>
-
-                {/* Logo position */}
-                <Pressable
-                  onPress={onOpenPosition}
-                  style={({ pressed }) => [{
-                    flexDirection: "row", alignItems: "center", gap: 8,
-                    padding: 11, borderRadius: 12, borderWidth: 1,
-                    borderColor: colors.surfaceBorder,
-                    backgroundColor: colors.surfaceLight,
-                    opacity: pressed ? 0.85 : 1,
-                  }]}
-                >
-                  <Ionicons name="move-outline" size={16} color={colors.textMuted} />
-                  <Text style={{ flex: 1, fontSize: 12, fontFamily: "Inter_500Medium", color: colors.textSecondary }}>
-                    Position
-                  </Text>
-                  <Text style={{ fontSize: 12, fontFamily: "Inter_600SemiBold", color: colors.primary }}>
-                    {logoPositionLabel}
-                  </Text>
-                  <Ionicons name="chevron-forward" size={13} color={colors.textMuted} />
-                </Pressable>
-              </View>
+              <LogoTab
+                showDefaultLogo={showDefaultLogo}
+                customLogoUri={customLogoUri}
+                logoPositionLabel={logoPositionLabel}
+                onToggleDefaultLogo={onToggleDefaultLogo}
+                onPickLogo={onPickLogo}
+                onRemoveLogo={onRemoveLogo}
+                onOpenPosition={onOpenPosition}
+              />
             )}
 
-            {/* ── Options tab ── */}
             {tab === "options" && (
-              <View style={{ gap: 16 }}>
-
-                {/* Label */}
-                <View style={{ gap: 6 }}>
-                  <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
-                    <Ionicons name="pricetag-outline" size={13} color={colors.textMuted} />
-                    <Text style={{ fontSize: 12, fontFamily: "Inter_600SemiBold", color: colors.textSecondary }}>
-                      Private Label
-                    </Text>
-                    <View style={{ borderRadius: 5, paddingHorizontal: 5, paddingVertical: 1, backgroundColor: colors.surfaceLight }}>
-                      <Text style={{ fontSize: 9, fontFamily: "Inter_500Medium", color: colors.textMuted }}>optional</Text>
-                    </View>
-                  </View>
-                  <TextInput
-                    style={{
-                      borderRadius: 12, borderWidth: 1, paddingHorizontal: 12, paddingVertical: 9,
-                      fontSize: 13, fontFamily: "Inter_400Regular",
-                      color: colors.text, backgroundColor: colors.surfaceLight, borderColor: colors.surfaceBorder,
-                    }}
-                    placeholder="e.g. Office WiFi, Menu Table 3…"
-                    placeholderTextColor={colors.textMuted}
-                    value={label}
-                    onChangeText={onChangeLabel}
-                    maxLength={80}
-                  />
-                  <Text style={{ fontSize: 10, fontFamily: "Inter_400Regular", color: colors.textMuted }}>
-                    Only visible to you — helps organize your QR codes
-                  </Text>
-                </View>
-
-                {/* Max Scans */}
-                <View style={{ gap: 6 }}>
-                  <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
-                    <Ionicons name="scan-outline" size={13} color={colors.textMuted} />
-                    <Text style={{ fontSize: 12, fontFamily: "Inter_600SemiBold", color: colors.textSecondary }}>
-                      Max Scans
-                    </Text>
-                  </View>
-                  <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
-                    <Pressable
-                      onPress={() => onChangeScanLimit(null)}
-                      style={{
-                        borderRadius: 10, borderWidth: 1,
-                        paddingHorizontal: 12, paddingVertical: 8,
-                        borderColor: scanLimit === null ? colors.textMuted + "40" : colors.surfaceBorder,
-                        backgroundColor: scanLimit === null ? colors.surfaceLight : colors.surface,
-                      }}
-                    >
-                      <Text style={{ fontSize: 12, fontFamily: "Inter_500Medium", color: scanLimit === null ? colors.textSecondary : colors.textMuted }}>
-                        Unlimited
-                      </Text>
-                    </Pressable>
-                    <View style={{ flex: 1, flexDirection: "row", alignItems: "center", gap: 6 }}>
-                      <Pressable
-                        onPress={() => onChangeScanLimit(Math.max(1, (scanLimit ?? 0) - 1))}
-                        style={{
-                          width: 32, height: 32, borderRadius: 10, borderWidth: 1,
-                          alignItems: "center", justifyContent: "center",
-                          borderColor: colors.surfaceBorder, backgroundColor: colors.surfaceLight,
-                        }}
-                      >
-                        <Ionicons name="remove" size={14} color={colors.textSecondary} />
-                      </Pressable>
-                      <TextInput
-                        style={{
-                          flex: 1, borderRadius: 10, borderWidth: 1,
-                          paddingHorizontal: 10, paddingVertical: 7,
-                          fontSize: 13, fontFamily: "Inter_600SemiBold",
-                          textAlign: "center",
-                          color: colors.text, backgroundColor: colors.surfaceLight, borderColor: colors.surfaceBorder,
-                        }}
-                        value={scanLimit !== null ? String(scanLimit) : ""}
-                        onChangeText={(v) => {
-                          const n = parseInt(v, 10);
-                          onChangeScanLimit(isNaN(n) || n <= 0 ? null : n);
-                        }}
-                        placeholder="e.g. 100"
-                        placeholderTextColor={colors.textMuted}
-                        keyboardType="number-pad"
-                        maxLength={6}
-                      />
-                      <Pressable
-                        onPress={() => onChangeScanLimit((scanLimit ?? 0) + 1)}
-                        style={{
-                          width: 32, height: 32, borderRadius: 10, borderWidth: 1,
-                          alignItems: "center", justifyContent: "center",
-                          borderColor: colors.surfaceBorder, backgroundColor: colors.surfaceLight,
-                        }}
-                      >
-                        <Ionicons name="add" size={14} color={colors.textSecondary} />
-                      </Pressable>
-                    </View>
-                  </View>
-                  {scanLimit !== null && scanLimit > 0 && (
-                    <Text style={{ fontSize: 10, fontFamily: "Inter_400Regular", color: colors.warning }}>
-                      QR auto-deactivates after {scanLimit} scan{scanLimit === 1 ? "" : "s"}
-                    </Text>
-                  )}
-                </View>
-
-                {/* Expiry */}
-                <View style={{ gap: 6 }}>
-                  <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
-                    <Ionicons name="time-outline" size={13} color={colors.textMuted} />
-                    <Text style={{ fontSize: 12, fontFamily: "Inter_600SemiBold", color: colors.textSecondary }}>
-                      Expiry / Active Until
-                    </Text>
-                  </View>
-                  <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 6 }}>
-                    {EXPIRY_PRESETS.map((p) => {
-                      const active = expiryPreset === p.key;
-                      return (
-                        <Pressable
-                          key={p.key}
-                          onPress={() => onChangeExpiryPreset(p.key)}
-                          style={{
-                            borderRadius: 10, borderWidth: 1,
-                            paddingHorizontal: 10, paddingVertical: 6,
-                            backgroundColor: active ? colors.primaryDim : colors.surfaceLight,
-                            borderColor: active ? colors.primary + "60" : colors.surfaceBorder,
-                          }}
-                        >
-                          <Text style={{ fontSize: 11, fontFamily: "Inter_600SemiBold", color: active ? colors.primary : colors.textMuted }}>
-                            {p.label}
-                          </Text>
-                        </Pressable>
-                      );
-                    })}
-                  </View>
-                  {expiryPreset === "custom" && (
-                    <TextInput
-                      style={{
-                        borderRadius: 12, borderWidth: 1, paddingHorizontal: 12, paddingVertical: 9,
-                        fontSize: 13, fontFamily: "Inter_400Regular",
-                        color: colors.text, backgroundColor: colors.surfaceLight, borderColor: colors.surfaceBorder,
-                        marginTop: 4,
-                      }}
-                      placeholder="YYYY-MM-DD (e.g. 2026-12-31)"
-                      placeholderTextColor={colors.textMuted}
-                      value={expiryCustomDate}
-                      onChangeText={onChangeExpiryCustomDate}
-                      keyboardType="numbers-and-punctuation"
-                      maxLength={10}
-                    />
-                  )}
-                  {expiryPreset !== "never" && (
-                    <Text style={{ fontSize: 10, fontFamily: "Inter_400Regular", color: colors.safe }}>
-                      QR deactivates automatically on the set date
-                    </Text>
-                  )}
-                </View>
-
-              </View>
+              <OptionsTab
+                label={label}
+                onChangeLabel={onChangeLabel}
+                scanLimit={scanLimit}
+                onChangeScanLimit={onChangeScanLimit}
+                expiryPreset={expiryPreset}
+                expiryCustomDate={expiryCustomDate}
+                onChangeExpiryPreset={onChangeExpiryPreset}
+                onChangeExpiryCustomDate={onChangeExpiryCustomDate}
+              />
             )}
 
             {/* Save button */}

@@ -101,7 +101,8 @@
     "tsx": "^4.22.3",
     "ws": "^8.20.0",
     "zod": "^3.25.76",
-    "zod-validation-error": "^3.5.4"
+    "zod-validation-error": "^3.5.4",
+    "zustand": "^5.0.13"
   },
   "devDependencies": {
     "@babel/core": "^7.29.0",
