@@ -9,7 +9,7 @@ import { useTheme } from "@/shared/contexts/ThemeContext";
 import { useMyQrDetail } from "@/features/my-qr/hooks/useMyQrDetail";
 import { useScaleFns } from "@/shared/utils/use-scale";
 import { getDetailContentType, getDetailDisplayTitle, parseQrContentDetails } from "@/services/qr-display-utils";
-import { getContentTypeMeta as getCtMeta } from "@/shared/constants/content-types";
+import { getQrTypeMeta as getCtMeta } from "@/features/qr-engine";
 
 import MyQrNavBar from "@/features/my-qr/components/MyQrNavBar";
 import QrHeroCard from "@/features/my-qr/components/cards/QrHeroCard";

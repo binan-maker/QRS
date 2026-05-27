@@ -21,7 +21,7 @@ import {
 } from "@/lib/firestore-service";
 import { readCache, writeCache } from "@/services/cache/local-cache";
 import { getEffectiveContentType, getDisplayText } from "@/features/my-qr/utils/qr-display";
-import { getContentTypeMeta } from "@/shared/constants/content-types";
+import { getQrTypeMeta as getContentTypeMeta } from "@/features/qr-engine";
 
 const MY_QRS_CACHE_TTL = 5 * 60 * 1000;
 function qrsCacheKey(userId: string) { return `myqrs_v1_${userId}`; }
