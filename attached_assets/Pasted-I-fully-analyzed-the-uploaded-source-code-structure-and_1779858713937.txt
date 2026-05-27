@@ -1,0 +1,720 @@
+I fully analyzed the uploaded source code structure and now I can clearly explain:
+
+# Your app architecture is powerful
+
+BUT
+
+# your folder/file organization has become fragmented and oversized
+
+Right now the project feels like:
+
+```text id="qh2r0l"
+multiple architectures merged together over time
+```
+
+instead of:
+
+```text id="8tbz4s"
+one clean scalable system
+```
+
+That is the core issue.
+
+---
+
+# 1. BIGGEST ORGANIZATION PROBLEM
+
+# TOO MANY PARALLEL ARCHITECTURES
+
+Your project currently contains ALL of these:
+
+| Folder        | Purpose                  |
+| ------------- | ------------------------ |
+| `features/`   | Feature architecture     |
+| `components/` | Shared UI                |
+| `shared/`     | Shared systems           |
+| `services/`   | Business logic           |
+| `lib/`        | Duplicate business logic |
+| `contexts/`   | State layer              |
+| `server/`     | Backend/server logic     |
+
+This means your app evolved through:
+
+* multiple refactors
+* multiple architectural styles
+* incomplete migrations
+
+Now the structure is inconsistent.
+
+---
+
+# 2. THE BIGGEST REAL PROBLEM
+
+# DUPLICATED SYSTEMS
+
+I found duplicated domains:
+
+| Duplicate                            | Exists |
+| ------------------------------------ | ------ |
+| `services/` + `lib/services/`        | YES    |
+| `components/` + `shared/components/` | YES    |
+| `contexts/` + `shared/contexts/`     | YES    |
+| `analysis/` duplicated               | YES    |
+
+---
+
+# EXAMPLE
+
+You literally have:
+
+```text id="ap7ml2"
+/services/analysis/
+/lib/analysis/
+```
+
+This is dangerous.
+
+---
+
+# WHY THIS IS BAD
+
+Developers eventually become confused:
+
+```text id="k6g6l0"
+Where should new code go?
+```
+
+That leads to:
+
+* duplicated logic
+* inconsistent imports
+* bundle bloat
+* performance issues
+* maintenance chaos
+
+---
+
+# 3. YOUR PROJECT CURRENTLY HAS “HYBRID ARCHITECTURE”
+
+Right now your app mixes:
+
+| Architecture                | Exists |
+| --------------------------- | ------ |
+| Feature-based               | YES    |
+| Service-based               | YES    |
+| Shared-layer                | YES    |
+| Legacy lib-layer            | YES    |
+| Global context architecture | YES    |
+
+This creates architectural confusion.
+
+---
+
+# 4. THE WORST FOLDER IN PROJECT
+
+# `/lib`
+
+This folder is now your biggest architecture problem.
+
+Because it became:
+
+```text id="9kl9wa"
+miscellaneous dumping ground
+```
+
+instead of focused layer.
+
+---
+
+# CURRENT `/lib` ISSUE
+
+It likely contains:
+
+* services
+* utils
+* firestore
+* analysis
+* parsers
+* helpers
+* duplicated business logic
+
+This becomes impossible to scale cleanly.
+
+---
+
+# BEST FIX
+
+# REMOVE `/lib` COMPLETELY
+
+After migration.
+
+Move things into proper domains.
+
+---
+
+# 5. YOUR BEST EXISTING ARCHITECTURE
+
+Actually:
+
+# `/features`
+
+is the BEST part of your app.
+
+This is the direction the ENTIRE app should move toward.
+
+---
+
+# WHY `features/` IS GOOD
+
+Feature architecture scales MUCH better.
+
+Example:
+
+```text id="q8q9d5"
+features/
+  profile/
+  notifications/
+  qr-detail/
+  history/
+  generator/
+```
+
+Excellent direction.
+
+---
+
+# 6. YOUR APP SHOULD BECOME FULL FEATURE-DRIVEN
+
+# IDEAL FUTURE STRUCTURE
+
+```text id="bxuz8z"
+app/
+features/
+shared/
+services/
+store/
+types/
+assets/
+```
+
+Very clean.
+
+---
+
+# 7. BEST FUTURE ARCHITECTURE
+
+# RECOMMENDED STRUCTURE
+
+```text id="ctbj99"
+app/
+  (tabs)/
+  settings/
+  profile/
+
+features/
+  auth/
+  profile/
+  notifications/
+  qr-generator/
+  qr-detail/
+  history/
+  analytics/
+  support/
+
+shared/
+  components/
+  ui/
+  hooks/
+  utils/
+  constants/
+
+services/
+  firebase/
+  api/
+  security/
+
+store/
+  auth/
+  ui/
+  notifications/
+
+types/
+
+assets/
+```
+
+This is MUCH cleaner.
+
+---
+
+# 8. REMOVE THESE FOLDERS
+
+# SHOULD BE REMOVED
+
+After migration:
+
+```text id="y4ibv0"
+/lib
+/components
+/contexts
+```
+
+because they are fragmented/duplicated.
+
+---
+
+# REPLACE WITH
+
+```text id="mf96d8"
+/shared
+/features
+/store
+```
+
+Much more scalable.
+
+---
+
+# 9. YOUR APP CURRENTLY HAS “UNCLEAR OWNERSHIP”
+
+Example problem:
+
+Where should notification code go?
+
+Currently maybe:
+
+```text id="z86wh7"
+components/notifications/
+shared/components/notifications/
+services/notification-service.ts
+lib/firestore-service.ts
+```
+
+That is architecture confusion.
+
+---
+
+# PROFESSIONAL ARCHITECTURE RULE
+
+Every feature owns itself.
+
+---
+
+# EXAMPLE
+
+```text id="hpk4f8"
+features/
+  notifications/
+    components/
+    hooks/
+    services/
+    store/
+    types/
+```
+
+Everything related stays together.
+
+This is extremely important.
+
+---
+
+# 10. YOUR FILES ARE TOO LARGE
+
+I found many giant files:
+
+| File                | Problem             |
+| ------------------- | ------------------- |
+| PaymentCard.tsx     | Extremely oversized |
+| payment-parser.ts   | Massive             |
+| AuthContext.tsx     | Too large           |
+| ProfileScreen.tsx   | Too large           |
+| CustomQrBuilder.tsx | Too large           |
+
+---
+
+# PROFESSIONAL RULE
+
+# 300–400 lines MAX
+
+After that:
+split.
+
+---
+
+# BAD
+
+```text id="egayh5"
+PaymentCard.tsx
+1184 lines
+```
+
+---
+
+# GOOD
+
+```text id="zcrf47"
+PaymentCard/
+  index.tsx
+  Header.tsx
+  Metadata.tsx
+  RiskInfo.tsx
+  Actions.tsx
+```
+
+Huge improvement.
+
+---
+
+# 11. YOUR SHARED LAYER NEEDS CLEANUP
+
+Current:
+
+```text id="qfg9ql"
+shared/
+```
+
+is partially good,
+but still inconsistent.
+
+---
+
+# RECOMMENDED SHARED STRUCTURE
+
+```text id="rqjlwm"
+shared/
+  ui/
+  components/
+  hooks/
+  utils/
+  constants/
+  animations/
+```
+
+VERY clean.
+
+---
+
+# 12. YOUR FIREBASE CODE IS SCATTERED
+
+Currently Firebase logic exists in:
+
+* services
+* lib
+* hooks
+* components
+
+This becomes dangerous.
+
+---
+
+# BEST STRUCTURE
+
+```text id="q2v4uy"
+services/
+  firebase/
+    auth.ts
+    firestore.ts
+    notifications.ts
+    storage.ts
+```
+
+Single source of truth.
+
+---
+
+# 13. YOU HAVE TOO MANY ROOT FOLDERS
+
+Top-level root currently is overloaded.
+
+I found:
+
+```text id="v0zb13"
+features/
+lib/
+services/
+shared/
+components/
+contexts/
+server/
+plugins/
+scripts/
+constants/
+```
+
+Too many competing layers.
+
+---
+
+# PROFESSIONAL APPS REDUCE ROOT CHAOS
+
+Keep root VERY clean.
+
+---
+
+# IDEAL ROOT
+
+```text id="w2ct6v"
+app/
+features/
+shared/
+services/
+store/
+types/
+assets/
+```
+
+Simple.
+
+---
+
+# 14. YOU HAVE DEVELOPMENT JUNK INSIDE PROJECT
+
+I found large unnecessary folders:
+
+| Folder          | Should Exist in Git? |
+| --------------- | -------------------- |
+| `.expo/`        | NO                   |
+| `.local/`       | NO                   |
+| `web-build/`    | NO                   |
+| `.config/`      | Usually NO           |
+| attached_assets | Probably NO          |
+
+---
+
+# HUGE ISSUE FOUND
+
+# `.local/`
+
+contains:
+
+# 1637 items
+
+This is enormous.
+
+Likely accidental environment/cache/dev data.
+
+This should NOT live inside app project.
+
+---
+
+# ALSO REMOVE FROM GIT
+
+```text id="u57j3v"
+.expo/
+web-build/
+.local/
+```
+
+These create:
+
+* repository bloat
+* slower installs
+* confusion
+* accidental commits
+
+---
+
+# 15. YOUR APP NEEDS A REAL STATE LAYER
+
+Current:
+
+* contexts everywhere
+* hooks everywhere
+
+This no longer scales.
+
+---
+
+# RECOMMENDED
+
+# Zustand
+
+Structure:
+
+```text id="u63m2w"
+store/
+  authStore.ts
+  uiStore.ts
+  notificationStore.ts
+```
+
+Much cleaner.
+
+---
+
+# 16. YOUR IMPORT PATHS ARE PROBABLY INCONSISTENT
+
+Likely mix of:
+
+```ts id="20b98n"
+../../../../
+@/lib/
+@/services/
+@/shared/
+```
+
+This becomes painful.
+
+---
+
+# FIX
+
+Use ONLY:
+
+```ts id="1n8mm0"
+@/features/
+@/shared/
+@/services/
+@/store/
+```
+
+Very clean.
+
+---
+
+# 17. YOUR APP NEEDS DOMAIN OWNERSHIP
+
+Each feature should fully own:
+
+* components
+* hooks
+* services
+* types
+* state
+
+---
+
+# EXAMPLE
+
+```text id="3zj14f"
+features/profile/
+  components/
+  hooks/
+  services/
+  store/
+  types/
+```
+
+This is modern scalable architecture.
+
+---
+
+# 18. BEST LONG-TERM STRUCTURE
+
+# FINAL RECOMMENDED ORGANIZATION
+
+```text id="uvyr0e"
+app/
+features/
+shared/
+services/
+store/
+types/
+assets/
+scripts/
+```
+
+Everything else should gradually disappear.
+
+---
+
+# 19. MOST IMPORTANT CLEANUP PRIORITY
+
+# DELETE/MIGRATE FIRST
+
+## Priority 1
+
+```text id="h1z3f8"
+/lib
+```
+
+---
+
+## Priority 2
+
+```text id="1cn4pm"
+/contexts
+```
+
+→ move to Zustand store.
+
+---
+
+## Priority 3
+
+```text id="nqj6u9"
+/components
+```
+
+→ move into:
+
+* shared/components
+* feature components
+
+---
+
+## Priority 4
+
+Remove:
+
+* .local
+* web-build
+* .expo
+
+from repository.
+
+---
+
+# 20. FINAL ARCHITECTURE TRUTH
+
+Your app is actually:
+
+# VERY advanced
+
+But the structure now reflects:
+
+* multiple generations of architecture
+* partial migrations
+* scaling without consolidation
+
+That is why:
+
+* performance suffers
+* navigation slows
+* maintenance becomes difficult
+* bugs become harder to trace
+* duplication increases
+
+---
+
+# FINAL RECOMMENDATION
+
+Your next major phase should NOT be adding features.
+
+It should be:
+
+# Architecture consolidation
+
+Specifically:
+
+1. Eliminate duplicate systems
+2. Fully adopt feature-driven architecture
+3. Remove `/lib`
+4. Reduce root folders
+5. Split giant files
+6. Introduce Zustand
+7. Centralize Firebase services
+8. Remove development junk folders
+9. Create strict ownership boundaries
+10. Standardize imports
+
+That transformation would massively improve:
+
+* performance
+* maintainability
+* scalability
+* developer clarity
+* bundle size
+* navigation speed
+* debugging
+* long-term stability
