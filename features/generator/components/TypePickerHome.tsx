@@ -6,7 +6,7 @@ import { Ionicons } from "@expo/vector-icons";
 import Reanimated, { FadeIn, FadeInUp } from "react-native-reanimated";
 import { LinearGradient } from "expo-linear-gradient";
 import { useTheme } from "@/shared/contexts/ThemeContext";
-import * as Haptics from "@/lib/haptics";
+import * as Haptics from "@/shared/utils/haptics";
 
 type QrMode = "individual" | "private";
 

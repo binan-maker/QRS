@@ -15,8 +15,8 @@ import {
   getUserScanStats,
   type ScanStatsResult,
 } from "@/lib/firestore-service";
-import { parseAnyPaymentQr, analyzeAnyPaymentQr, analyzeUrlHeuristics } from "@/lib/qr-analysis";
-import { queryClient as globalQueryClient } from "@/lib/query-client";
+import { parseAnyPaymentQr, analyzeAnyPaymentQr, analyzeUrlHeuristics } from "@/services/analysis";
+import { queryClient as globalQueryClient } from "@/shared/utils/query-client";
 import {
   getCachedHistoryPage,
   setCachedHistoryPage,

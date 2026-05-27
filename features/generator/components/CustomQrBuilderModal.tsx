@@ -11,7 +11,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Reanimated, { FadeIn, FadeInDown, FadeInUp } from "react-native-reanimated";
 import { LinearGradient } from "expo-linear-gradient";
 import { useTheme } from "@/shared/contexts/ThemeContext";
-import * as Haptics from "@/lib/haptics";
+import * as Haptics from "@/shared/utils/haptics";
 import {
   STARTER_TEMPLATES, FIELD_TYPES, FIELD_TYPE_MAP,
   uid, buildOutput, parseTemplateTokens,

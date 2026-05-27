@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { router } from "expo-router";
 import NetInfo from "@react-native-community/netinfo";
-import * as Haptics from "@/lib/haptics";
+import * as Haptics from "@/shared/utils/haptics";
 import { toggleFavorite } from "@/lib/firestore-service";
 import { invalidateQrCache } from "@/services/cache/qr-cache";
 import { queueOfflineFavorite, syncOfflineFavorites } from "@/services/offline-sync";

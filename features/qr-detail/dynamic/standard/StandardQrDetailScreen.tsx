@@ -18,7 +18,7 @@ import { useNetworkStatus } from "@/shared/utils/use-network";
 import { getStandardLink } from "@/services/guard-service";
 import { detectContentType } from "@/services/qr-content-type";
 import { makeStyles, offlineSectionStyles } from "@/features/qr-detail/styles";
-import { formatCompactNumber } from "@/lib/number-format";
+import { formatCompactNumber } from "@/shared/utils/number-format";
 
 import ContentCard from "@/features/qr-detail/components/ContentCard";
 import TrustScoreCard from "@/features/qr-detail/components/TrustScoreCard";

@@ -4,7 +4,7 @@ import Animated, { FadeIn, FadeInDown } from "react-native-reanimated";
 import { useTheme } from "@/shared/contexts/ThemeContext";
 import { makeStyles } from "@/features/qr-detail/styles";
 import { navOfflineStyles } from "@/features/qr-detail/styles";
-import { formatCompactNumber } from "@/lib/number-format";
+import { formatCompactNumber } from "@/shared/utils/number-format";
 
 interface Props {
   offlineMode: boolean;

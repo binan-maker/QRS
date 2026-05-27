@@ -1,1 +1,1 @@
-export { default } from "@/features/generator/GeneratorLanding";
+export { default } from "@/features/generator/landing/GeneratorLanding";

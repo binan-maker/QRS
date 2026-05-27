@@ -1,7 +1,7 @@
 import { useState, useCallback } from "react";
 import { Alert, Linking } from "react-native";
 import * as Clipboard from "expo-clipboard";
-import * as Haptics from "@/lib/haptics";
+import * as Haptics from "@/shared/utils/haptics";
 import { smartOpenContent } from "@/shared/utils/smart-open";
 import { useAuth } from "@/shared/contexts/AuthContext";
 import { useTheme } from "@/shared/contexts/ThemeContext";

@@ -4,7 +4,7 @@ import { Ionicons } from "@expo/vector-icons";
 import Animated, { FadeInDown, FadeInUp } from "react-native-reanimated";
 import { LinearGradient } from "expo-linear-gradient";
 import { useTheme } from "@/shared/contexts/ThemeContext";
-import * as Haptics from "@/lib/haptics";
+import * as Haptics from "@/shared/utils/haptics";
 import { AI_EXAMPLES } from "@/features/generator/data/ai-generator";
 
 interface Props {

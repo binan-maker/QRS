@@ -8,7 +8,7 @@ import Animated, {
   FadeInDown, FadeIn, ZoomIn,
 } from "react-native-reanimated";
 import * as Clipboard from "expo-clipboard";
-import * as Haptics from "@/lib/haptics";
+import * as Haptics from "@/shared/utils/haptics";
 import { useTheme } from "@/shared/contexts/ThemeContext";
 import { parseWebsite } from "../parsers";
 

@@ -3,7 +3,7 @@ import { Ionicons } from "@expo/vector-icons";
 import Reanimated, { FadeInDown, FadeIn } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTheme } from "@/shared/contexts/ThemeContext";
-import { useAppTranslation } from "@/lib/i18n/useAppTranslation";
+import { useAppTranslation } from "@/shared/i18n/useAppTranslation";
 import GradientButton from "@/shared/components/ui/GradientButton";
 
 interface Props {

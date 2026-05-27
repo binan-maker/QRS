@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Alert } from "react-native";
-import * as Haptics from "@/lib/haptics";
+import * as Haptics from "@/shared/utils/haptics";
 import {
   getGuardLink, updateGuardLinkDestination,
   getStandardLink, updateStandardLinkRawContent, updateDisplayDestination,

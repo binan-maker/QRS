@@ -1,8 +1,8 @@
 import { useState, useEffect, useCallback } from "react";
 import { Alert } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import * as Haptics from "@/lib/haptics";
-import { setHapticsEnabled } from "@/lib/haptics";
+import * as Haptics from "@/shared/utils/haptics";
+import { setHapticsEnabled } from "@/shared/utils/haptics";
 import { router } from "expo-router";
 import { useAuth } from "@/shared/contexts/AuthContext";
 import { authAdapter } from "@/lib/auth";

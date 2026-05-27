@@ -1,5 +1,5 @@
 import type { HistoryItem } from "@/features/history/types";
-import { parseAnyPaymentQr } from "@/lib/qr-analysis";
+import { parseAnyPaymentQr } from "@/services/analysis";
 
 export function matchesSearch(item: HistoryItem, q: string): boolean {
   const lower = q.toLowerCase().trim();

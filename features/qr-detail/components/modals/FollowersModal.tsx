@@ -7,7 +7,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTheme } from "@/shared/contexts/ThemeContext";
 import { useAndroidNavBar } from "@/shared/utils/use-android-nav-bar";
-import { formatCompactNumber } from "@/lib/number-format";
+import { formatCompactNumber } from "@/shared/utils/number-format";
 import { formatCompactRelativeTime } from "@/shared/utils/formatters";
 import type { FollowerInfo } from "@/lib/firestore-service";
 

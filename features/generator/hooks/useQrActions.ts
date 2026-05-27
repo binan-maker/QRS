@@ -5,7 +5,7 @@ import * as FileSystem from "expo-file-system/legacy";
 import * as Sharing from "expo-sharing";
 import * as Print from "expo-print";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import * as Haptics from "@/lib/haptics";
+import * as Haptics from "@/shared/utils/haptics";
 import { captureQrImage } from "@/shared/utils/capture-qr";
 import { getRawContent } from "@/features/generator/data/qr-builder";
 import type { QrMode } from "@/features/generator/types/form-types";

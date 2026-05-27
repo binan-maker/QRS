@@ -8,9 +8,9 @@ import Reanimated, { FadeIn, FadeInDown, SlideInRight } from "react-native-reani
 import { LinearGradient } from "expo-linear-gradient";
 import QRCode from "react-native-qrcode-svg";
 import { useTheme } from "@/shared/contexts/ThemeContext";
-import * as Haptics from "@/lib/haptics";
+import * as Haptics from "@/shared/utils/haptics";
 import { catColor } from "@/features/generator/data/category-config";
-import type { CategorySchema, FieldDefinition } from "@/lib/schemas/CategorySchema";
+import type { CategorySchema, FieldDefinition } from "@/shared/schemas/CategorySchema";
 import { S } from "./builderStyles";
 import FieldCircle from "./FieldCircle";
 

@@ -10,7 +10,7 @@ import Animated, {
   Easing,
   FadeInDown,
 } from "react-native-reanimated";
-import { formatCompactNumber } from "@/lib/number-format";
+import { formatCompactNumber } from "@/shared/utils/number-format";
 import { useTheme } from "@/shared/contexts/ThemeContext";
 import { REPORT_TYPES } from "@/features/qr-detail/data/reportTypes";
 

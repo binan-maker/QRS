@@ -5,7 +5,7 @@
 
 import React, { useState, useRef, useCallback, useEffect } from "react";
 import { Keyboard, TextInput } from "react-native";
-import * as Haptics from "@/lib/haptics";
+import * as Haptics from "@/shared/utils/haptics";
 
 const DEBOUNCE_MS = 300;
 

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import * as Haptics from "@/lib/haptics";
+import * as Haptics from "@/shared/utils/haptics";
 import { useAuth } from "@/shared/contexts/AuthContext";
 import { useCameraControls } from "@/features/scanner/hooks/useCameraControls";
 import { useScanModals } from "@/features/scanner/hooks/useScanModals";

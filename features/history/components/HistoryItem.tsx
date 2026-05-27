@@ -5,11 +5,11 @@ import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { Swipeable } from "react-native-gesture-handler";
 import Animated, { FadeInDown } from "react-native-reanimated";
-import * as Haptics from "@/lib/haptics";
+import * as Haptics from "@/shared/utils/haptics";
 import { useTheme } from "@/shared/contexts/ThemeContext";
 import { formatRelativeTime, getContentTypeMeta, getContentDisplayLabel, getContentSubtitle } from "@/shared/utils/formatters";
 import type { HistoryItem as HistoryItemType } from "@/features/history/types";
-import { parseAnyPaymentQr } from "@/lib/qr-analysis";
+import { parseAnyPaymentQr } from "@/services/analysis";
 
 function getTypeMeta(type: string): {
   icon: keyof typeof Ionicons.glyphMap;

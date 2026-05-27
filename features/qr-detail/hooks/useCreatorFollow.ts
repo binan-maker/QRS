@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import * as Haptics from "@/lib/haptics";
+import * as Haptics from "@/shared/utils/haptics";
 import {
   isUserFollowingCreator,
   toggleFollowCreator,

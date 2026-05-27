@@ -24,7 +24,7 @@ import Animated, {
 } from "react-native-reanimated";
 import { useTheme } from "@/shared/contexts/ThemeContext";
 import SkeletonBox from "@/shared/components/ui/SkeletonBox";
-import { formatCompactNumber } from "@/lib/number-format";
+import { formatCompactNumber } from "@/shared/utils/number-format";
 import { useProfile } from "@/features/profile/hooks/useProfile";
 import { useAvatar } from "@/shared/contexts/AvatarContext";
 import { useNotifications } from "@/shared/components/notifications/hooks/useNotifications";

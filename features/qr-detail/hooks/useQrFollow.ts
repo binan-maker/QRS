@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { router } from "expo-router";
-import * as Haptics from "@/lib/haptics";
+import * as Haptics from "@/shared/utils/haptics";
 import { toggleFollow, getQrFollowersList, isUserFollowingQrCode, getQrFollowCount, type FollowerInfo } from "@/lib/firestore-service";
 import { invalidateQrCache } from "@/services/cache/qr-cache";
 

@@ -1,5 +1,5 @@
 import { db } from "@/lib/db/client";
-import { checkCommentKeywords } from "@/lib/qr-analysis";
+import { checkCommentKeywords } from "@/services/analysis";
 import { tsToString } from "./utils";
 import {
   checkCommentEligibility,

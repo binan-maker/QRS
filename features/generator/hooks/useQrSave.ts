@@ -1,6 +1,6 @@
 import { useState, useCallback } from "react";
 import * as Crypto from "expo-crypto";
-import * as Haptics from "@/lib/haptics";
+import * as Haptics from "@/shared/utils/haptics";
 import {
   saveGeneratedQr,
   saveGuardLink,

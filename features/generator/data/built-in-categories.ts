@@ -1,4 +1,4 @@
-import type { CategorySchema } from "@/lib/schemas/CategorySchema";
+import type { CategorySchema } from "@/shared/schemas/CategorySchema";
 
 export const BUILT_IN_CATEGORIES: CategorySchema[] = [
   {

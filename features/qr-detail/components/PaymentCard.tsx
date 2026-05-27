@@ -1,6 +1,6 @@
 import React from "react";
 import { View } from "react-native";
-import type { ParsedPaymentQr } from "@/lib/qr-analysis";
+import type { ParsedPaymentQr } from "@/services/analysis";
 import { getAppBrand } from "./payment-card/brand-data";
 import { getBankFullName } from "./payment-card/utils";
 import { styles } from "./payment-card/styles";

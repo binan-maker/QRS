@@ -11,8 +11,8 @@ import { useTheme } from "@/shared/contexts/ThemeContext";
 import { useAuth } from "@/shared/contexts/AuthContext";
 import { subscribeToNotificationCount } from "@/lib/firestore-service";
 import { LinearGradient } from "expo-linear-gradient";
-import { useAppTranslation } from "@/lib/i18n/useAppTranslation";
-import * as Haptics from "@/lib/haptics";
+import { useAppTranslation } from "@/shared/i18n/useAppTranslation";
+import * as Haptics from "@/shared/utils/haptics";
 
 // ── Stable tab bar background components (memoized at module level) ────────────
 const IosTabBarBackground = React.memo(function IosTabBarBackground({

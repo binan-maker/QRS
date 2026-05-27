@@ -34,37 +34,47 @@ A mobile-first QR code scanning and management app for Android, focused on secur
 
 - **Expo Router screens**: `app/` — thin wrappers; all screen logic lives in `features/`
 - **Feature modules**: `features/` — domain-scoped, each with `components/`, `hooks/`, `styles.ts`, `index.ts`
-  - **QR Detail sub-structure** (`features/qr-detail/`):
-    - `screens/` — QrDetailScreen, GuardQrDetailScreen, StandardQrDetailScreen, StaticQrDetailScreen
-    - `cards/` — per-type card components (WifiCard, ContactCard, EmailCard, etc.)
-    - `parsers/` — per-type content parsers (wifi, contact, url, etc.)
-    - `shared/` — shared card atoms (CardHeader, InfoGrid, OpenButton)
-    - `components/ContentCard.tsx` — central switch-based type router
+  - **QR Detail** (`features/qr-detail/`):
+    - `QrDetailScreen.tsx` — root router (dispatches to dynamic/guard, dynamic/standard, static)
+    - `dynamic/guard/` + `dynamic/standard/` — Living Shield and Standard QR detail screens
+    - `static/` — StaticQrDetailScreen
+    - `content-cards/` — canonical card system: `cards/` (per-type UI), `parsers/` (per-type parsing), `shared/` (CardHeader, InfoGrid, OpenButton)
+    - `components/` — shared detail components (TrustScoreCard, PaymentCard, CommentsSection, etc.)
     - `hooks/` — useQrDetail, useQrData, useQrSafety, etc.
-- **Shared layer**: `shared/`
+  - **My QR** (`features/my-qr/components/`):
+    - `cards/` — QrHeroCard, QrStatsRow, GuardDestinationCard, etc.
+    - `modals/` — DeactivateModal, ConfirmActionModal, FollowersModal, CustomColorModal
+    - `panels/` — DesignPanel, QrSettingsPanel
+    - `comments/` — OwnerCommentRow, OwnerCommentsSection
+  - **Generator** (`features/generator/`):
+    - `landing/` — GeneratorLanding, ModeCard, FeatureRow (entry point, imported by `app/(tabs)/qr-generator/index.tsx`)
+    - `components/` — all form, output, and modal components
+    - `data/` — registry.ts (QR type registry), presets, templates, ai-generator
+    - `hooks/` — useQrGenerator, useQrActions, useQrSave, etc.
+- **Shared layer**: `shared/` — pure shared layer, NO business logic
   - `shared/components/` — global UI atoms (`ui/`), feedback boundaries, consent, notifications
-  - `shared/constants/` — colors, typography, config, content-types
+  - `shared/config/` — region constants, QR type styles
+  - `shared/constants/` — colors, typography, content-types
   - `shared/contexts/` — AuthContext, ThemeContext, AvatarContext (import via `@/shared/contexts/`)
-  - `shared/utils/` — formatters, navigation, platform helpers, URL risk, hooks
+  - `shared/i18n/` — multi-language support (EN, HI, ML, TA, TE) + translations/
+  - `shared/schemas/` — shared schema types (CategorySchema)
+  - `shared/styles/` — reusable StyleSheet token helpers (common.ts)
   - `shared/types/` — shared type definitions (qr, trust, user)
+  - `shared/utils/` — formatters, navigation, platform, haptics, number-format, query-client, URL risk, hooks
 - **Services layer**: `services/`
-  - `services/*.ts` — domain services (qr, follow, report, notification, etc.)
+  - `services/*.ts` — domain services (qr, follow, report, notification, user, comment, etc.)
   - `services/cache/` — anonymous session and QR caching
   - `services/analysis/` — QR/URL heuristic analysis, threat intelligence, scam detection
   - `services/notifications/` — NOTIFICATIONS_ENABLED feature flag
-- **Core libraries**: `lib/` — only non-duplicated infrastructure lives here
+- **Infrastructure**: `lib/` — ONLY pure infrastructure; do not add business logic here
   - `lib/db/` — database adapter pattern (Firebase locked; Supabase/Postgres stubs)
   - `lib/auth/` — auth adapter and Firebase auth provider
   - `lib/firebase.ts` / `lib/firebase/` — Firebase client config
   - `lib/firestore-service.ts` — Firestore service layer
   - `lib/security/` — ECDSA signature verification
-  - `lib/i18n/` — multi-language support (EN, HI, ML, TA, TE)
-  - `lib/config/` — region / data residency constants, QR type styles
-  - `lib/schemas/` — shared schema types (CategorySchema)
-  - `lib/styles/common.ts` — reusable StyleSheet token helpers
-  - `lib/qr-analysis.ts` — re-export barrel for `services/analysis/`
-  - `lib/haptics.ts`, `lib/number-format.ts`, `lib/query-client.ts` — standalone helpers
-  - **DO NOT ADD** `lib/services/`, `lib/analysis/`, `lib/utils/` — these are deprecated (renamed delete42–delete82)
+  - `lib/qr-analysis.ts` — re-export barrel for `services/analysis/` (backward compat)
+  - `lib/haptics.ts`, `lib/number-format.ts`, etc. — re-export barrels pointing to `shared/utils/` (backward compat; new code should import from `@/shared/utils/` directly)
+  - **DO NOT ADD** business logic, utilities, or UI helpers to `lib/` — use `shared/` or `services/`
 - **QR Type Registry**: `features/generator/data/registry.ts` — single source of truth for all QR types; **add new types here only**
 - **Express backend**: `server/`
 - **DB schema (PostgreSQL stub)**: `shared/schema.ts`

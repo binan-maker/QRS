@@ -11,7 +11,7 @@
  */
 
 import React from "react";
-import type { ParsedPaymentQr } from "@/lib/qr-analysis";
+import type { ParsedPaymentQr } from "@/services/analysis";
 import PaymentCard from "@/features/qr-detail/components/PaymentCard";
 import { View } from "react-native";
 import {

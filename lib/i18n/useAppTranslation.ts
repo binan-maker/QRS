@@ -1,7 +1,1 @@
-import { useTranslation } from "react-i18next";
-
-export function useAppTranslation() {
-  return useTranslation("translation");
-}
-
-export { useTranslation } from "react-i18next";
+export * from "@/shared/i18n/useAppTranslation";

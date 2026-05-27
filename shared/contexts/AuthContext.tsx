@@ -9,7 +9,7 @@ import {
   mapFirebaseError,
   generateUniqueUsername,
 } from "@/lib/auth/utils";
-import { queryClient } from "@/lib/query-client";
+import { queryClient } from "@/shared/utils/query-client";
 import { clearAllMemCache, clearAllAsyncStorageCache } from "@/services/cache/qr-cache";
 import { clearAllAnonymousSessions } from "@/services/cache/anonymous-session";
 import { validateEmail } from "@/shared/utils/email-validator";

@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Alert } from "react-native";
 import * as ImagePicker from "expo-image-picker";
-import * as Haptics from "@/lib/haptics";
+import * as Haptics from "@/shared/utils/haptics";
 import { updateQrDesign, type GeneratedQrItem } from "@/lib/firestore-service";
 import { useAuth } from "@/shared/contexts/AuthContext";
 import { QR_COLOR_THEMES } from "@/features/generator/components/QrThemeSection";

@@ -5,7 +5,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import { useTheme } from "@/shared/contexts/ThemeContext";
 import { CardHeader, InfoGrid, InfoRow, Divider, OpenButton } from "../shared";
 import { extractSocialFields } from "../parsers";
-import { getQrTypeStyle } from "@/lib/config/qr-type-styles";
+import { getQrTypeStyle } from "@/shared/config/qr-type-styles";
 
 interface Props {
   content: string;

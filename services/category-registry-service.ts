@@ -1,6 +1,6 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { BUILT_IN_CATEGORIES } from "@/features/generator/data/built-in-categories";
-import type { CategorySchema, CategoryRegion, CategorySearchResult } from "@/lib/schemas/CategorySchema";
+import type { CategorySchema, CategoryRegion, CategorySearchResult } from "@/shared/schemas/CategorySchema";
 import { db } from "@/lib/db/client";
 
 const CACHE_KEY = "qrg_category_registry_v1";

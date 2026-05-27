@@ -6,7 +6,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import { useTheme } from "@/shared/contexts/ThemeContext";
 import { BUILT_IN_CATEGORIES } from "@/features/generator/data/built-in-categories";
 import { catColor, GROUPS } from "@/features/generator/data/category-config";
-import type { CategorySchema } from "@/lib/schemas/CategorySchema";
+import type { CategorySchema } from "@/shared/schemas/CategorySchema";
 import { S } from "./builderStyles";
 import CircleTile from "./CircleTile";
 

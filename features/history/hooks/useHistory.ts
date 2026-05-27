@@ -5,7 +5,7 @@
 import { useState, useCallback } from "react";
 import { Alert } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import * as Haptics from "@/lib/haptics";
+import * as Haptics from "@/shared/utils/haptics";
 import { deleteUserScan } from "@/lib/firestore-service";
 import { invalidateHistoryCache } from "@/services/cache/qr-cache";
 import { useHistoryData } from "@/features/history/hooks/useHistoryData";

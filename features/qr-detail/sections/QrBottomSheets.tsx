@@ -1,5 +1,5 @@
 import { View } from "react-native";
-import { formatCompactNumber } from "@/lib/number-format";
+import { formatCompactNumber } from "@/shared/utils/number-format";
 import FollowersModal from "@/features/qr-detail/components/modals/FollowersModal";
 import MessagesModal from "@/features/qr-detail/components/modals/MessagesModal";
 import CommentReportModal from "@/features/qr-detail/components/modals/CommentReportModal";

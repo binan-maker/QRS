@@ -7,7 +7,7 @@ import { Ionicons } from "@expo/vector-icons";
 import Animated, { FadeIn } from "react-native-reanimated";
 import { useTheme } from "@/shared/contexts/ThemeContext";
 import { CategoryRegistryService } from "@/services/category-registry-service";
-import type { CategorySchema, CategorySearchResult } from "@/lib/schemas/CategorySchema";
+import type { CategorySchema, CategorySearchResult } from "@/shared/schemas/CategorySchema";
 import BottomSheet from "@/shared/components/ui/BottomSheet";
 
 interface Props {

@@ -5,9 +5,9 @@ import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { Swipeable } from "react-native-gesture-handler";
 import Animated, { FadeInRight } from "react-native-reanimated";
-import * as Haptics from "@/lib/haptics";
+import * as Haptics from "@/shared/utils/haptics";
 import { useTheme } from "@/shared/contexts/ThemeContext";
-import { parseAnyPaymentQr } from "@/lib/qr-analysis";
+import { parseAnyPaymentQr } from "@/services/analysis";
 import {
   detectContentType,
   getContentTypeMeta,

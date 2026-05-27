@@ -1,6 +1,6 @@
 import { useState, useCallback } from "react";
 import * as ImagePicker from "expo-image-picker";
-import * as Haptics from "@/lib/haptics";
+import * as Haptics from "@/shared/utils/haptics";
 import type { LogoPosition } from "@/features/generator/types/form-types";
 
 export function useQrLogo(

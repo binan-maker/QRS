@@ -2,7 +2,7 @@ import { useCallback } from "react";
 import { Platform } from "react-native";
 import { router } from "expo-router";
 import * as ImagePicker from "expo-image-picker";
-import * as Haptics from "@/lib/haptics";
+import * as Haptics from "@/shared/utils/haptics";
 import { scanFromURLAsync } from "expo-camera";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { setAnonymousQrContent } from "@/services/cache/anonymous-session";

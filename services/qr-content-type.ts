@@ -3,7 +3,7 @@
 // Single responsibility: takes raw QR string → returns a content type string.
 // No database access, no side-effects.
 
-import { isPaymentQr } from "@/lib/qr-analysis";
+import { isPaymentQr } from "@/services/analysis";
 
 export function detectContentType(content: string): string {
   if (!content) return "text";

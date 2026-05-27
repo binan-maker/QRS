@@ -2,7 +2,7 @@ import React, { memo } from "react";
 import { View, Text, StyleSheet, Pressable, TextInput } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import Animated, { FadeInDown, FadeInUp } from "react-native-reanimated";
-import * as Haptics from "@/lib/haptics";
+import * as Haptics from "@/shared/utils/haptics";
 import { router } from "expo-router";
 import { useTheme } from "@/shared/contexts/ThemeContext";
 import BusinessTypeSelector, { type BusinessCategory } from "./BusinessTypeSelector";

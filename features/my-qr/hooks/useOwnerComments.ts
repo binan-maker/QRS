@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Alert, TextInput } from "react-native";
-import * as Haptics from "@/lib/haptics";
+import * as Haptics from "@/shared/utils/haptics";
 import {
   subscribeToComments, addComment, ownerHideComment, softDeleteComment,
   type CommentItem,

@@ -5,10 +5,10 @@ import Reanimated, { FadeIn, SlideInRight } from "react-native-reanimated";
 import QRCode from "react-native-qrcode-svg";
 import * as ExpoClipboard from "expo-clipboard";
 import { useTheme } from "@/shared/contexts/ThemeContext";
-import * as Haptics from "@/lib/haptics";
+import * as Haptics from "@/shared/utils/haptics";
 import { catColor } from "@/features/generator/data/category-config";
 import { getSecurityBadge } from "@/shared/utils/security-badge";
-import type { CategorySchema } from "@/lib/schemas/CategorySchema";
+import type { CategorySchema } from "@/shared/schemas/CategorySchema";
 import { S } from "./builderStyles";
 
 export type QrTheme = "classic" | "dark" | "branded";

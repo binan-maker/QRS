@@ -2,7 +2,7 @@ import React from "react";
 import { View, Text, Pressable } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
-import type { ParsedPaymentQr } from "@/lib/qr-analysis";
+import type { ParsedPaymentQr } from "@/services/analysis";
 import type { AppBrand } from "./brand-data";
 import { styles } from "./styles";
 
