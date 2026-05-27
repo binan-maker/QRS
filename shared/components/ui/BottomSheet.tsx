@@ -39,13 +39,11 @@ export default function BottomSheet({
 
   useEffect(() => {
     if (Platform.OS === "android") {
-      NavigationBar.setPositionAsync("absolute").catch(() => {});
-      NavigationBar.setBackgroundColorAsync("transparent").catch(() => {});
-      NavigationBar.setButtonStyleAsync(colors.isDark ? "light" : "dark").catch(
-        () => {},
-      );
+      // setPositionAsync / setBackgroundColorAsync are no-ops on API 35+
+      // edge-to-edge builds and generate console warnings — omitted.
+      NavigationBar.setButtonStyleAsync(colors.isDark ? "light" : "dark").catch(() => {});
     }
-  }, []);
+  }, [colors.isDark]);
 
   useEffect(() => {
     if (visible) {

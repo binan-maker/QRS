@@ -3,11 +3,12 @@ import { Platform } from "react-native";
 import * as NavigationBar from "expo-navigation-bar";
 
 /**
- * Pins the Android system navigation bar to a specific color while `visible`
- * is true, then restores it to `restoreColor` when it becomes false.
+ * Syncs the Android navigation-bar button style (light/dark icons) whenever
+ * `visible` changes.
  *
- * Use this in every transparent / slide-up Modal so the bar never goes
- * transparent in dark theme.
+ * NOTE: On API 35+ (edge-to-edge enforced) setPositionAsync and
+ * setBackgroundColorAsync are no-ops and generate warnings. Only
+ * setButtonStyleAsync is respected — that is all we call here.
  */
 export function useAndroidNavBar(
   visible: boolean,
@@ -17,24 +18,20 @@ export function useAndroidNavBar(
 ) {
   useEffect(() => {
     if (Platform.OS !== "android") return;
-    const color = visible ? openColor : restoreColor;
-    NavigationBar.setPositionAsync("relative").catch(() => {});
-    NavigationBar.setBackgroundColorAsync(color).catch(() => {});
     NavigationBar.setButtonStyleAsync(isDark ? "light" : "dark").catch(() => {});
-  }, [visible, openColor, restoreColor, isDark]);
+  }, [visible, isDark]);
 }
 
 /**
- * Always keeps the Android system navigation bar pinned to `color` for the
- * lifetime of the screen. Use this on full-screen non-tab pages (e.g. QR
- * detail) so the bar colour matches the app background the same way the home
- * tab does via its extended background view.
+ * Syncs the Android navigation-bar button style for the lifetime of a screen.
+ * Use on full-screen non-tab pages (e.g. QR detail) to keep icons readable.
+ *
+ * NOTE: setPositionAsync / setBackgroundColorAsync are intentionally omitted —
+ * they are ignored on API 35+ edge-to-edge builds.
  */
 export function useAndroidNavBarScreen(color: string, isDark: boolean) {
   useEffect(() => {
     if (Platform.OS !== "android") return;
-    NavigationBar.setPositionAsync("relative").catch(() => {});
-    NavigationBar.setBackgroundColorAsync(color).catch(() => {});
     NavigationBar.setButtonStyleAsync(isDark ? "light" : "dark").catch(() => {});
-  }, [color, isDark]);
+  }, [isDark]);
 }

@@ -76,7 +76,6 @@ function RootLayoutNav() {
       <Stack.Screen name="my-qr/[id]" options={{ headerShown: false }} />
       <Stack.Screen name="my-qr-codes" options={{ headerShown: false }} />
       <Stack.Screen name="favorites" options={{ headerShown: false }} />
-      <Stack.Screen name="settings" options={{ headerShown: false }} />
       <Stack.Screen name="privacy-policy" options={{ headerShown: false }} />
       <Stack.Screen name="terms" options={{ headerShown: false }} />
       <Stack.Screen name="trust-scores" options={{ headerShown: false }} />
@@ -97,17 +96,14 @@ function ThemedApp() {
   // white-on-white in light mode on edge-to-edge Android builds.
   useEffect(() => {
     if (Platform.OS === "android") {
+      // expo-system-ui: colours the region behind the keyboard / safe-area.
       SystemUI.setBackgroundColorAsync(colors.background).catch(() => {});
-      // Force the nav bar out of edge-to-edge transparent/overlay mode and
-      // pin it to the app background. setPositionAsync("relative") is the key
-      // call — without it, Android's edge-to-edge mode resets the bar to
-      // transparent on every screen transition even if the color was set.
-      NavigationBar.setPositionAsync("relative").catch(() => {});
-      NavigationBar.setBackgroundColorAsync(colors.background).catch(() => {});
+      // On API 35+ (edge-to-edge enforced) only setButtonStyleAsync is respected;
+      // setPositionAsync / setBackgroundColorAsync / setBorderColorAsync are no-ops
+      // and generate console warnings — do not call them.
       NavigationBar.setButtonStyleAsync(colors.isDark ? "light" : "dark").catch(() => {});
-      NavigationBar.setBorderColorAsync(colors.surfaceBorder).catch(() => {});
     }
-  }, [colors.background, colors.surfaceBorder, colors.isDark]);
+  }, [colors.background, colors.isDark]);
 
   return (
     <GestureHandlerRootView

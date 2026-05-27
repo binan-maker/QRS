@@ -52,16 +52,14 @@ export default function SettingsScreen() {
     handleDeleteAccount,
   } = useSettings();
 
-  // Pin the Android system nav bar to the app background whenever this screen
-  // is in focus. The tab navigator doesn't set navigationBarColor, so without
-  // this the bar appears transparent (black) in dark theme.
+  // Keep nav-bar button icons (light/dark) in sync with the theme.
+  // setBackgroundColorAsync is omitted — it is a no-op on API 35+ edge-to-edge.
   useFocusEffect(
     useCallback(() => {
       if (Platform.OS === "android") {
-        NavigationBar.setBackgroundColorAsync(colors.background).catch(() => {});
         NavigationBar.setButtonStyleAsync(colors.isDark ? "light" : "dark").catch(() => {});
       }
-    }, [colors.background, colors.isDark])
+    }, [colors.isDark])
   );
 
   useFocusEffect(
