@@ -8,7 +8,7 @@ import {
   type GeneratedQrItem, type GuardLink,
 } from "@/lib/firestore-service";
 import { scanUrl } from "@/services/analysis/url-scanner";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/shared/contexts/AuthContext";
 
 type SetQrItem = (item: GeneratedQrItem) => void;
 

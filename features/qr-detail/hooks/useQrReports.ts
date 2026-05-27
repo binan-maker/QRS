@@ -2,7 +2,7 @@ import { useEffect, useState, useRef } from "react";
 import { Alert } from "react-native";
 import { router } from "expo-router";
 import * as Haptics from "@/lib/haptics";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/shared/contexts/AuthContext";
 import {
   subscribeToQrReports,
   reportQrCode,

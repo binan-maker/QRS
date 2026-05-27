@@ -5,7 +5,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
 import FeatureRow from "@/features/generator/components/FeatureRow";
 import type { LANDING_MODES } from "@/features/generator/data/landing-modes";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/shared/contexts/AuthContext";
 
 type Mode = (typeof LANDING_MODES)[number];
 

@@ -13,8 +13,8 @@ import * as Haptics from "@/lib/haptics";
 import Animated, { FadeInDown, FadeIn } from "react-native-reanimated";
 import { LinearGradient } from "expo-linear-gradient";
 import SkeletonBox from "@/shared/components/ui/SkeletonBox";
-import { useTheme } from "@/contexts/ThemeContext";
-import { useAuth } from "@/contexts/AuthContext";
+import { useTheme } from "@/shared/contexts/ThemeContext";
+import { useAuth } from "@/shared/contexts/AuthContext";
 import {
   getUserGeneratedQrs,
   type GeneratedQrItem,

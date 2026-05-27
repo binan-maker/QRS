@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, Pressable, ScrollView } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import Animated, { FadeInDown } from "react-native-reanimated";
 import * as Haptics from "@/lib/haptics";
-import { useTheme } from "@/contexts/ThemeContext";
+import { useTheme } from "@/shared/contexts/ThemeContext";
 import type { Filter } from "@/features/history/types";
 
 interface FilterOption {

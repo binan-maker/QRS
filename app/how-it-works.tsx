@@ -11,7 +11,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTopInset } from "@/shared/utils/platform";
 import ScreenHeader from "@/shared/components/ui/ScreenHeader";
-import { useTheme } from "@/contexts/ThemeContext";
+import { useTheme } from "@/shared/contexts/ThemeContext";
 
 function StepCard({ number, icon, title, desc, tips, totalSteps = 6 }: { number: number; icon: string; title: string; desc: string; tips?: string[]; totalSteps?: number }) {
   const { colors } = useTheme();

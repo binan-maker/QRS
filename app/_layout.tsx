@@ -13,9 +13,9 @@ import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { KeyboardProvider } from "react-native-keyboard-controller";
 import { ErrorBoundary } from "@/shared/components/feedback/ErrorBoundary";
 import { queryClient } from "@/lib/query-client";
-import { AuthProvider, useAuth } from "@/contexts/AuthContext";
-import { ThemeProvider, useTheme } from "@/contexts/ThemeContext";
-import { AvatarProvider } from "@/contexts/AvatarContext";
+import { AuthProvider, useAuth } from "@/shared/contexts/AuthContext";
+import { ThemeProvider, useTheme } from "@/shared/contexts/ThemeContext";
+import { AvatarProvider } from "@/shared/contexts/AvatarContext";
 import { StatusBar } from "expo-status-bar";
 import {
   useFonts,

@@ -4,8 +4,8 @@ import {
   StyleSheet, ActivityIndicator, Alert, Keyboard,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { useTheme } from "@/contexts/ThemeContext";
-import { useAuth } from "@/contexts/AuthContext";
+import { useTheme } from "@/shared/contexts/ThemeContext";
+import { useAuth } from "@/shared/contexts/AuthContext";
 import { authAdapter } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { invalidateUserCache } from "@/services/cache/qr-cache";

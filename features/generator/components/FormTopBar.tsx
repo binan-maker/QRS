@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, Pressable } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import Animated, { FadeInDown, FadeIn } from "react-native-reanimated";
-import { useTheme } from "@/contexts/ThemeContext";
+import { useTheme } from "@/shared/contexts/ThemeContext";
 import { FORM_MODE_META } from "@/features/generator/types/form-types";
 import type { QrMode } from "@/features/generator/types/form-types";
 

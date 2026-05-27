@@ -44,6 +44,7 @@ A mobile-first QR code scanning and management app for Android, focused on secur
 - **Shared layer**: `shared/`
   - `shared/components/` — global UI atoms (`ui/`), feedback boundaries, consent, notifications
   - `shared/constants/` — colors, typography, config, content-types
+  - `shared/contexts/` — AuthContext, ThemeContext, AvatarContext (import via `@/shared/contexts/`)
   - `shared/utils/` — formatters, navigation, platform helpers, URL risk, hooks
   - `shared/types/` — shared type definitions (qr, trust, user)
 - **Services layer**: `services/`
@@ -73,7 +74,7 @@ A mobile-first QR code scanning and management app for Android, focused on secur
 - **Android-only focus**: Web support was removed to streamline development and focus on the primary mobile use case.
 - **Pluggable Database**: Database adapter pattern (`lib/db/adapter.ts`) supports Firebase, Supabase, and PostgreSQL. Currently locked to Firebase Firestore for primary data and Firebase Realtime Database for notifications/velocity.
 - **Client-side Firebase Auth**: All authentication is handled directly by Firebase on the client, with session syncing and auto-login.
-- **Service Layer Design**: Business logic is in `lib/services/` — each service owns a single responsibility (e.g. `qr-service.ts`, `report-service.ts`, `follow-service.ts`).
+- **Service Layer Design**: Business logic is in `services/` — each service owns a single responsibility (e.g. `qr-service.ts`, `report-service.ts`, `follow-service.ts`).
 - **Security by Default**: QR input validation, ECDSA response signing, report rate limits, Firestore circuit breaker, and encrypted threat storage via `expo-secure-store`.
 - **QR Type Registry pattern**: `features/generator/data/registry.ts` is the single source of truth. `presets.ts` and `qr-builder.ts` derive from it. Adding a new QR type = append one object to `QR_REGISTRY` + add key to `QR_CATEGORY_KEYS`. No other files need to change.
 - **Navigation links (owner flow)**: Generator success → `/my-qr/[docId]`. My QR management header has a globe button → `/qr-detail/[uuid]?ownerDocId=...`. QR detail shows "Manage" button when logged-in user is the QR owner.
@@ -99,7 +100,7 @@ A mobile-first QR code scanning and management app for Android, focused on secur
 - **Firebase Rules Deployment**: Changes to `firestore.rules` require manual deployment via Firebase CLI (`firebase deploy --only firestore:rules`) to take effect.
 - **PostgreSQL/Drizzle**: The `server/storage.ts` and Drizzle schema are not actively used for database operations; they are a stub for future migration and should not be deleted.
 - **Local Dev Env**: Requires Android SDK, `adb`, Node 20+, npm, and a physical Android device or emulator. Replit cannot run `npx expo run:android`.
-- **lib/security/**: Only `signature-verifier.ts` is active (used by `lib/analysis/threat-service.ts`). Do not add duplicate analysis files here.
+- **lib/security/**: Only `signature-verifier.ts` is active (used by `services/analysis/threat-service.ts`). Do not add duplicate analysis files here.
 
 ## Pointers
 

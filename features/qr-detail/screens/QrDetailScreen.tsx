@@ -1,5 +1,5 @@
 import { useLocalSearchParams } from "expo-router";
-import { useTheme } from "@/contexts/ThemeContext";
+import { useTheme } from "@/shared/contexts/ThemeContext";
 import { useAndroidNavBarScreen } from "@/shared/utils/use-android-nav-bar";
 import StaticQrDetailScreen from "./StaticQrDetailScreen";
 import GuardQrDetailScreen from "./GuardQrDetailScreen";

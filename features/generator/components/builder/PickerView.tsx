@@ -3,7 +3,7 @@ import { View, Text, Pressable, ScrollView, TextInput } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import Reanimated, { FadeIn, FadeInDown, SlideInLeft } from "react-native-reanimated";
 import { LinearGradient } from "expo-linear-gradient";
-import { useTheme } from "@/contexts/ThemeContext";
+import { useTheme } from "@/shared/contexts/ThemeContext";
 import { BUILT_IN_CATEGORIES } from "@/features/generator/data/built-in-categories";
 import { catColor, GROUPS } from "@/features/generator/data/category-config";
 import type { CategorySchema } from "@/lib/schemas/CategorySchema";

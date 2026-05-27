@@ -7,7 +7,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTopInset } from "@/shared/utils/platform";
 import { LinearGradient } from "expo-linear-gradient";
 import * as NavigationBar from "expo-navigation-bar";
-import { useTheme } from "@/contexts/ThemeContext";
+import { useTheme } from "@/shared/contexts/ThemeContext";
 import { useSettings } from "@/features/settings/hooks/useSettings";
 import { makeSettingsStyles } from "@/features/settings/styles";
 import { SECTION_TITLES, THEME_OPTIONS, type ThemeMode } from "@/features/settings/constants";

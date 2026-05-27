@@ -1,6 +1,6 @@
 import { useState, useRef, useCallback, useMemo } from "react";
 import * as Haptics from "@/lib/haptics";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/shared/contexts/AuthContext";
 import { QR_PRESETS } from "@/features/generator/data/presets";
 import { filterByKeyboardType } from "@/features/generator/data/qr-builder";
 import { QR_COLOR_THEMES } from "@/features/generator/components/QrThemeSection";

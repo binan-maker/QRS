@@ -1,7 +1,7 @@
 import React, { memo } from "react";
 import { View, StyleSheet } from "react-native";
 import Animated, { FadeInDown } from "react-native-reanimated";
-import { useTheme } from "@/contexts/ThemeContext";
+import { useTheme } from "@/shared/contexts/ThemeContext";
 import type { LogoPosition } from "@/features/generator/types/form-types";
 import QrPreview        from "./output/QrPreview";
 import QrSecurityBadges from "./output/QrSecurityBadges";

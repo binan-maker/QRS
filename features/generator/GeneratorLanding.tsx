@@ -7,12 +7,12 @@ import Animated, { FadeInDown, FadeIn } from "react-native-reanimated";
 import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { useTheme } from "@/contexts/ThemeContext";
+import { useTheme } from "@/shared/contexts/ThemeContext";
 import { useTopInset } from "@/shared/utils/platform";
 import * as Haptics from "@/lib/haptics";
 import { TEMPLATES } from "@/features/templates";
 import { LANDING_MODES } from "@/features/generator/data/landing-modes";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/shared/contexts/AuthContext";
 import FeatureRow from "@/features/generator/components/FeatureRow";
 
 export default function GeneratorLanding() {

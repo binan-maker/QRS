@@ -4,7 +4,7 @@ import { Ionicons } from "@expo/vector-icons";
 import Reanimated, { FadeIn, SlideInRight } from "react-native-reanimated";
 import QRCode from "react-native-qrcode-svg";
 import * as ExpoClipboard from "expo-clipboard";
-import { useTheme } from "@/contexts/ThemeContext";
+import { useTheme } from "@/shared/contexts/ThemeContext";
 import * as Haptics from "@/lib/haptics";
 import { catColor } from "@/features/generator/data/category-config";
 import { getSecurityBadge } from "@/shared/utils/security-badge";

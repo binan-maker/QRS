@@ -5,7 +5,7 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
-import { useTheme } from "@/contexts/ThemeContext";
+import { useTheme } from "@/shared/contexts/ThemeContext";
 import type { QrOwnerInfo, QrMessage } from "@/lib/firestore-service";
 import BottomSheet from "@/shared/components/ui/BottomSheet";
 import { formatCompactRelativeTime } from "@/shared/utils/formatters";

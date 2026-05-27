@@ -1,7 +1,7 @@
 import { View, Text, StyleSheet, Pressable, ActivityIndicator } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import Reanimated, { FadeInDown } from "react-native-reanimated";
-import { useTheme } from "@/contexts/ThemeContext";
+import { useTheme } from "@/shared/contexts/ThemeContext";
 import type { GuardLink } from "@/lib/firestore-service";
 
 interface Props {

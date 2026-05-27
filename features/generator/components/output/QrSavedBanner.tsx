@@ -2,7 +2,7 @@ import React, { memo } from "react";
 import { View, Text, StyleSheet, Pressable, Image } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
-import { useTheme } from "@/contexts/ThemeContext";
+import { useTheme } from "@/shared/contexts/ThemeContext";
 import { formatShortDate } from "@/shared/utils/formatters";
 
 interface Props {

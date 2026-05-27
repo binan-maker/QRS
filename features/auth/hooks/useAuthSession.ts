@@ -1,4 +1,4 @@
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/shared/contexts/AuthContext";
 import { useQuery } from "@tanstack/react-query";
 import { db } from "@/lib/db";
 

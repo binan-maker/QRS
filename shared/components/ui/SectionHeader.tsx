@@ -1,5 +1,5 @@
 import { View, Text, StyleSheet } from "react-native";
-import { useTheme } from "@/contexts/ThemeContext";
+import { useTheme } from "@/shared/contexts/ThemeContext";
 
 interface Props {
   label: string;

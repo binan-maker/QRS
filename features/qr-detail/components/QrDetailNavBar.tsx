@@ -1,7 +1,7 @@
 import { View, Text, Pressable, ActivityIndicator } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import Animated, { FadeInDown } from "react-native-reanimated";
-import { useTheme } from "@/contexts/ThemeContext";
+import { useTheme } from "@/shared/contexts/ThemeContext";
 import { makeStyles } from "@/features/qr-detail/styles";
 import { navOfflineStyles } from "@/features/qr-detail/styles";
 import { formatCompactNumber } from "@/lib/number-format";

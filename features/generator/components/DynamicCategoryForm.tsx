@@ -4,7 +4,7 @@ import {
   type KeyboardTypeOptions,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { useTheme } from "@/contexts/ThemeContext";
+import { useTheme } from "@/shared/contexts/ThemeContext";
 import type { CategorySchema, FieldDefinition } from "@/lib/schemas/CategorySchema";
 import { fieldTypeToKeyboard } from "@/lib/schemas/CategorySchema";
 

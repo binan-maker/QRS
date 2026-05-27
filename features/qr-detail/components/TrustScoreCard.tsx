@@ -11,7 +11,7 @@ import Animated, {
   FadeInDown,
 } from "react-native-reanimated";
 import { formatCompactNumber } from "@/lib/number-format";
-import { useTheme } from "@/contexts/ThemeContext";
+import { useTheme } from "@/shared/contexts/ThemeContext";
 import { REPORT_TYPES } from "@/features/qr-detail/data/reportTypes";
 
 interface TrustInfo {

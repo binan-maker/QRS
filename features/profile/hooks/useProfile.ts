@@ -3,8 +3,8 @@ import { Alert } from "react-native";
 import { useFocusEffect, router } from "expo-router";
 import * as ImagePicker from "expo-image-picker";
 import * as Haptics from "@/lib/haptics";
-import { useAuth } from "@/contexts/AuthContext";
-import { useAvatar } from "@/contexts/AvatarContext";
+import { useAuth } from "@/shared/contexts/AuthContext";
+import { useAvatar } from "@/shared/contexts/AvatarContext";
 import { authAdapter } from "@/lib/auth";
 import { db } from "@/lib/db";
 import {

@@ -9,7 +9,7 @@ import Reanimated, {
   withTiming,
   runOnJS,
 } from "react-native-reanimated";
-import { useTheme } from "@/contexts/ThemeContext";
+import { useTheme } from "@/shared/contexts/ThemeContext";
 
 interface Props {
   btnLabel:    string;

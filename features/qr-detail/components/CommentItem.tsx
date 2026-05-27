@@ -7,7 +7,7 @@ import Animated, { FadeIn } from "react-native-reanimated";
 import { router } from "expo-router";
 import { formatCompactNumber } from "@/lib/number-format";
 import { formatRelativeTime } from "@/shared/utils/formatters";
-import { useTheme } from "@/contexts/ThemeContext";
+import { useTheme } from "@/shared/contexts/ThemeContext";
 import type { CommentItem as CommentItemType } from "@/features/qr-detail/hooks/useQrDetail";
 
 interface Props {

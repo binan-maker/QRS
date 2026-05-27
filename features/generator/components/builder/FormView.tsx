@@ -7,7 +7,7 @@ import { Ionicons } from "@expo/vector-icons";
 import Reanimated, { FadeIn, FadeInDown, SlideInRight } from "react-native-reanimated";
 import { LinearGradient } from "expo-linear-gradient";
 import QRCode from "react-native-qrcode-svg";
-import { useTheme } from "@/contexts/ThemeContext";
+import { useTheme } from "@/shared/contexts/ThemeContext";
 import * as Haptics from "@/lib/haptics";
 import { catColor } from "@/features/generator/data/category-config";
 import type { CategorySchema, FieldDefinition } from "@/lib/schemas/CategorySchema";

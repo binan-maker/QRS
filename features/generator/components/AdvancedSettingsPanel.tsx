@@ -4,7 +4,7 @@ import {
 } from "react-native";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
-import { useTheme } from "@/contexts/ThemeContext";
+import { useTheme } from "@/shared/contexts/ThemeContext";
 
 export type ExpiryPreset = "never" | "1d" | "7d" | "30d" | "90d" | "custom";
 

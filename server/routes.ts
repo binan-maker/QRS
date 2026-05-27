@@ -4,8 +4,8 @@ import { decodeQrFromImage } from "./image-decode";
 import { registerDonationRoutes } from "./routes/donation";
 import { registerSafeBrowsingRoute } from "./routes/safe-browsing";
 import { registerQrActiveRoute } from "./routes/qr-active";
-import { validateEmail } from "../lib/utils/email-validator";
-import { validateQrContent } from "../lib/analysis/qr-validator";
+import { validateEmail } from "../shared/utils/email-validator";
+import { validateQrContent } from "../services/analysis/qr-validator";
 import { checkRateLimit, getClientIp } from "./middleware/rate-limiter";
 import {
   guardShell, guardRedirectHtml, guardCautionHtml, guardDeactivatedHtml, guardNotFoundHtml,

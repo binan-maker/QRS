@@ -5,7 +5,7 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { useTheme } from "@/contexts/ThemeContext";
+import { useTheme } from "@/shared/contexts/ThemeContext";
 import type { Notification } from "@/lib/firestore-service";
 
 // ── Module-level helpers (no re-creation on render) ───────────────────────────

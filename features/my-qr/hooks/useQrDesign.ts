@@ -3,7 +3,7 @@ import { Alert } from "react-native";
 import * as ImagePicker from "expo-image-picker";
 import * as Haptics from "@/lib/haptics";
 import { updateQrDesign, type GeneratedQrItem } from "@/lib/firestore-service";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/shared/contexts/AuthContext";
 import { QR_COLOR_THEMES } from "@/features/generator/components/QrThemeSection";
 import {
   resolveExpiryDate,

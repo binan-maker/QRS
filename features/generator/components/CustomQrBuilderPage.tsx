@@ -1,7 +1,7 @@
 import React, { useState, memo, useMemo, useCallback } from "react";
 import { Platform, useWindowDimensions } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { useTheme } from "@/contexts/ThemeContext";
+import { useTheme } from "@/shared/contexts/ThemeContext";
 import * as Haptics from "@/lib/haptics";
 import { buildQrContent } from "@/features/generator/data/qr-builder";
 import { BUILT_IN_CATEGORIES } from "@/features/generator/data/built-in-categories";

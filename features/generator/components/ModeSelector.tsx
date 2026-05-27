@@ -4,7 +4,7 @@ import { Ionicons } from "@expo/vector-icons";
 import Animated, { FadeInDown, FadeInUp } from "react-native-reanimated";
 import * as Haptics from "@/lib/haptics";
 import { router } from "expo-router";
-import { useTheme } from "@/contexts/ThemeContext";
+import { useTheme } from "@/shared/contexts/ThemeContext";
 import BusinessTypeSelector, { type BusinessCategory } from "./BusinessTypeSelector";
 
 type QrMode = "individual" | "business" | "private";

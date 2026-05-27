@@ -1,6 +1,6 @@
 import { useEffect } from "react";
-import { useAuth } from "@/contexts/AuthContext";
-import { useAvatar } from "@/contexts/AvatarContext";
+import { useAuth } from "@/shared/contexts/AuthContext";
+import { useAvatar } from "@/shared/contexts/AvatarContext";
 import { useRecentScans } from "@/features/home/hooks/useRecentScans";
 
 export function useHome() {

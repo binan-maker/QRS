@@ -1,6 +1,6 @@
 import { View, Text, Switch, ActivityIndicator } from "react-native";
 import Animated, { FadeInDown } from "react-native-reanimated";
-import { useTheme } from "@/contexts/ThemeContext";
+import { useTheme } from "@/shared/contexts/ThemeContext";
 import { useScaleFns } from "@/shared/utils/use-scale";
 
 interface Props {

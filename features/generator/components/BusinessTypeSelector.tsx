@@ -1,7 +1,7 @@
 import { View, Text, StyleSheet, Pressable, ScrollView } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import * as Haptics from "@/lib/haptics";
-import { useTheme } from "@/contexts/ThemeContext";
+import { useTheme } from "@/shared/contexts/ThemeContext";
 
 export type BusinessCategory = "website" | "whatsapp" | "upi" | "wifi" | "event" | "phone";
 

@@ -1,5 +1,5 @@
 import { View, ViewStyle } from "react-native";
-import { useTheme } from "@/contexts/ThemeContext";
+import { useTheme } from "@/shared/contexts/ThemeContext";
 import SkeletonBox from "@/shared/components/ui/SkeletonBox";
 
 interface Props {

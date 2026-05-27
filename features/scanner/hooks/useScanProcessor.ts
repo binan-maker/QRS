@@ -6,7 +6,7 @@ import * as Haptics from "@/lib/haptics";
 import { scanFromURLAsync } from "expo-camera";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { setAnonymousQrContent } from "@/services/cache/anonymous-session";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/shared/contexts/AuthContext";
 import {
   getOrCreateQrCode,
   recordScan,

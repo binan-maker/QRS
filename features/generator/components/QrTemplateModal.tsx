@@ -3,7 +3,7 @@ import { View, Text, Pressable, useWindowDimensions, KeyboardAvoidingView, Platf
 import BottomSheet from "@/shared/components/ui/BottomSheet";
 import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { useTheme } from "@/contexts/ThemeContext";
+import { useTheme } from "@/shared/contexts/ThemeContext";
 import * as Haptics from "@/lib/haptics";
 
 import type { EncType, ModalView, QrTemplate } from "@/features/generator/types/template-types";

@@ -13,8 +13,8 @@ import { useTopInset } from "@/shared/utils/platform";
 import ScreenHeader from "@/shared/components/ui/ScreenHeader";
 import { useState } from "react";
 import * as Haptics from "@/lib/haptics";
-import { useTheme } from "@/contexts/ThemeContext";
-import { useAuth } from "@/contexts/AuthContext";
+import { useTheme } from "@/shared/contexts/ThemeContext";
+import { useAuth } from "@/shared/contexts/AuthContext";
 import DeleteAccountModal from "@/features/account/components/DeleteAccountModal";
 
 export default function AccountManagementScreen() {

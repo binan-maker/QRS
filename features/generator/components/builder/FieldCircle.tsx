@@ -1,7 +1,7 @@
 import React, { memo } from "react";
 import { View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { useTheme } from "@/contexts/ThemeContext";
+import { useTheme } from "@/shared/contexts/ThemeContext";
 import { S } from "./builderStyles";
 
 interface Props {

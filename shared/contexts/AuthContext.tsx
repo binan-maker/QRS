@@ -30,7 +30,6 @@ async function serverValidateEmail(email: string): Promise<{ valid: boolean; rea
     if (!res.ok) return { valid: false, reason: "Email validation failed. Please try again." };
     return await res.json();
   } catch {
-    // Server unreachable — fall back to client-side check only
     return validateEmail(email);
   }
 }
@@ -95,10 +94,8 @@ async function reserveUsername(uid: string, displayName: string): Promise<string
       await db.set(["usernames", candidate], { userId: uid, reservedAt: db.timestamp() });
       return candidate;
     } catch {
-      // Race condition: another user claimed this username a moment ago, try again
     }
   }
-  // Absolute fallback — UID suffix is guaranteed unique per user
   const fallback = "user" + uid.slice(-8).toLowerCase().replace(/[^a-z0-9]/g, "x");
   try { await db.set(["usernames", fallback], { userId: uid, reservedAt: db.timestamp() }); } catch {}
   return fallback;
@@ -144,9 +141,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const unsubscribe = authAdapter.onIdTokenChanged(async (adapterUser) => {
       if (adapterUser) {
-        // Hard gate: unverified email users are never reflected in app-level state.
-        // The Firebase session deliberately stays alive so the verify screen can
-        // call sendEmailVerification on auth.currentUser without requiring re-login.
         if (!adapterUser.emailVerified) {
           setUser(null);
           setToken(null);
@@ -155,7 +149,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
         try {
           const idToken = await adapterUser.getIdToken();
-          // Set user immediately from auth token — no Firestore wait, eliminates session flicker
           const authUser: AuthUser = {
             id: adapterUser.uid,
             email: adapterUser.email ?? "",
@@ -166,7 +159,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           setUser(authUser);
           setToken(idToken);
           setIsLoading(false);
-          // Prefetch Firestore profile in background — updates user state without blocking
           queryClient.prefetchQuery({
             queryKey: ["userProfile", adapterUser.uid],
             queryFn: async () => {
@@ -228,8 +220,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       const adapterUser = await authAdapter.signIn(email, password);
       if (!adapterUser.emailVerified) {
-        // Do NOT sign out here — keep the session alive so the verify screen
-        // can call sendEmailVerification on auth.currentUser straight away.
         const err = new Error(getAuthErrorMessage("auth/email-not-verified")) as any;
         err.code = "auth/email-not-verified";
         throw err;
@@ -252,9 +242,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   async function signUp(email: string, displayName: string, password: string) {
     try {
-      // Server-side disposable email check — runs before Firebase account creation.
-      // This is the bypass-proof gate: even if the client-side check was skipped
-      // (e.g. via direct API calls), the server rejects disposable email domains.
       const emailValidation = await serverValidateEmail(email);
       if (!emailValidation.valid) {
         const err = new Error(emailValidation.reason || "Please use a real email address.") as any;
@@ -265,9 +252,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const adapterUser = await authAdapter.signUp(email, password);
       await authAdapter.updateDisplayName(adapterUser, displayName);
       await authAdapter.sendVerificationEmail(adapterUser);
-      // Deliberately do NOT call syncUserToDb here.
-      // No Firestore user record or username is created until the user confirms
-      // their email address in refreshUser() — preventing ghost accounts.
       await authAdapter.signOut();
       const err = new Error("VERIFICATION_SENT") as any;
       err.code = "auth/verification-sent";
@@ -352,17 +336,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   async function signOut() {
     try {
       const AsyncStorage = (await import("@react-native-async-storage/async-storage")).default;
-      // Clear scan history for current user if signed in
       if (user?.id) {
         await AsyncStorage.removeItem(`local_scan_history_${user.id}`);
       }
-      // Also clear QR content cache and downloads directory URI
       const allKeys = await AsyncStorage.getAllKeys();
       const qrContentKeys = allKeys.filter((k) => k.startsWith("qr_content_"));
       if (qrContentKeys.length > 0) await AsyncStorage.multiRemove(qrContentKeys);
       await AsyncStorage.removeItem("qrguard_downloads_dir_uri");
     } catch {}
-    // Clear memory caches and AsyncStorage cache entries
     clearAllMemCache();
     clearAllAnonymousSessions();
     await clearAllAsyncStorageCache();
@@ -406,16 +387,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const reloaded = authAdapter.getCurrentUser();
       if (reloaded) {
         if (reloaded.emailVerified) {
-          // Force-refresh the JWT so Firebase's internal token cache gets a new
-          // token with email_verified=true. Firestore rules read this claim, so
-          // the force-refresh MUST happen before any Firestore writes below.
           try {
             const freshToken = await reloaded.getIdToken(true);
             setToken(freshToken);
           } catch {}
-          // Now create the Firestore user record + reserve username.
-          // This is the ONLY place it happens for email/password accounts.
-          // syncUserToDb is idempotent — safe to call on every status check.
           await syncUserToDb(
             reloaded.uid,
             reloaded.email,

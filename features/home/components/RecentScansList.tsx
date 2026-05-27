@@ -4,7 +4,7 @@ import { router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import Animated, { FadeInDown } from "react-native-reanimated";
 import * as Haptics from "@/lib/haptics";
-import { useTheme } from "@/contexts/ThemeContext";
+import { useTheme } from "@/shared/contexts/ThemeContext";
 import { useScaleFns } from "@/shared/utils/use-scale";
 import { RecentScanCard } from "@/features/home/components/RecentScanCard";
 import { ScanSkeletonList } from "@/features/home/components/ScanSkeletonList";

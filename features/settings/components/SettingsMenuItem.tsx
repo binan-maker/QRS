@@ -2,7 +2,7 @@ import React, { useCallback, useMemo } from "react";
 import { Pressable, Text, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import * as Haptics from "@/lib/haptics";
-import { useTheme } from "@/contexts/ThemeContext";
+import { useTheme } from "@/shared/contexts/ThemeContext";
 import { makeSettingsStyles } from "@/features/settings/styles";
 
 interface Props {

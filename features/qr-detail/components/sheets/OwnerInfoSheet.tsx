@@ -4,7 +4,7 @@ import { Image } from "expo-image";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import BottomSheet from "@/shared/components/ui/BottomSheet";
-import { useTheme } from "@/contexts/ThemeContext";
+import { useTheme } from "@/shared/contexts/ThemeContext";
 import { getUserPhotoURL } from "@/services/user-service";
 
 interface GuardLink {

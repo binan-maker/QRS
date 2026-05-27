@@ -1,7 +1,7 @@
 import React, { memo } from "react";
 import { View, Text, StyleSheet, TextInput, Pressable } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { useTheme } from "@/contexts/ThemeContext";
+import { useTheme } from "@/shared/contexts/ThemeContext";
 import { QR_PRESETS } from "@/features/generator/data/presets";
 import { filterByKeyboardType } from "@/features/generator/data/qr-builder";
 

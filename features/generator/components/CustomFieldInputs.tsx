@@ -3,7 +3,7 @@ import {
   View, Text, TextInput, StyleSheet, Pressable,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { useTheme } from "@/contexts/ThemeContext";
+import { useTheme } from "@/shared/contexts/ThemeContext";
 import {
   type CustomQrType,
   FIELD_TYPE_DEFS,

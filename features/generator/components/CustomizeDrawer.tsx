@@ -6,7 +6,7 @@ import CalendarPicker from "./CalendarPicker";
 import { Ionicons } from "@expo/vector-icons";
 import Animated, { FadeIn, FadeInDown } from "react-native-reanimated";
 import { LinearGradient } from "expo-linear-gradient";
-import { useTheme } from "@/contexts/ThemeContext";
+import { useTheme } from "@/shared/contexts/ThemeContext";
 import { QR_COLOR_THEMES } from "./QrThemeSection";
 import type { AdvancedSettings, ExpiryPreset } from "./AdvancedSettingsPanel";
 

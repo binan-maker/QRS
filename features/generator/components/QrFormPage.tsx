@@ -3,7 +3,7 @@ import { View, StyleSheet, Text, TextInput } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTopInset } from "@/shared/utils/platform";
 import Reanimated, { FadeInDown } from "react-native-reanimated";
-import { useTheme } from "@/contexts/ThemeContext";
+import { useTheme } from "@/shared/contexts/ThemeContext";
 import { useQrGenerator } from "@/features/generator/hooks/useQrGenerator";
 import { LOGO_POSITIONS } from "@/features/generator/types/form-types";
 import type { QrMode } from "@/features/generator/types/form-types";

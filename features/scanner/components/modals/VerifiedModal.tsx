@@ -1,7 +1,7 @@
 import { View, Text, StyleSheet } from "react-native";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import Reanimated, { FadeInDown, FadeIn } from "react-native-reanimated";
-import { useTheme } from "@/contexts/ThemeContext";
+import { useTheme } from "@/shared/contexts/ThemeContext";
 
 const SAFE_COLOR = "#22C55E";
 const BRAND_NOTE = "rgba(0,212,255,0.35)";

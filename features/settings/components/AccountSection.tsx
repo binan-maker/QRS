@@ -3,7 +3,7 @@ import { View, Text, TextInput, Pressable, ScrollView } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Animated, { FadeInDown } from "react-native-reanimated";
-import { useTheme } from "@/contexts/ThemeContext";
+import { useTheme } from "@/shared/contexts/ThemeContext";
 import { makeSettingsStyles } from "@/features/settings/styles";
 import SettingsMenuItem from "./SettingsMenuItem";
 

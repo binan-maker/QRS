@@ -5,7 +5,7 @@ import {
   subscribeToComments, addComment, ownerHideComment, softDeleteComment,
   type CommentItem,
 } from "@/lib/firestore-service";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/shared/contexts/AuthContext";
 
 export function useOwnerComments(qrCodeId: string | null | undefined) {
   const { user } = useAuth();

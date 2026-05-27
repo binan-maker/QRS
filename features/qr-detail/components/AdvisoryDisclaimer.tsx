@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { View, Text, Pressable } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { useTheme } from "@/contexts/ThemeContext";
+import { useTheme } from "@/shared/contexts/ThemeContext";
 import { advisoryStyles } from "@/features/qr-detail/styles";
 
 export default function AdvisoryDisclaimer() {

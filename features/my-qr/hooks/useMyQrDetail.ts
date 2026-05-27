@@ -7,7 +7,7 @@ import * as Sharing from "expo-sharing";
 import * as Print from "expo-print";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { captureQrImage } from "@/shared/utils/capture-qr";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/shared/contexts/AuthContext";
 import {
   getGeneratedQrById, setQrActiveState,
   getQrFollowersList, getQrFollowCount,

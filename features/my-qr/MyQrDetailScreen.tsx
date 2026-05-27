@@ -5,7 +5,7 @@ import { useLocalSearchParams, router } from "expo-router";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTopInset } from "@/shared/utils/platform";
-import { useTheme } from "@/contexts/ThemeContext";
+import { useTheme } from "@/shared/contexts/ThemeContext";
 import { useMyQrDetail } from "@/features/my-qr/hooks/useMyQrDetail";
 import { useScaleFns } from "@/shared/utils/use-scale";
 import { getDetailContentType, getDetailDisplayTitle, parseQrContentDetails } from "@/services/qr-display-utils";

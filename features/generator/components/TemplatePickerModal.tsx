@@ -5,7 +5,7 @@ import {
 import { useState, useMemo, useEffect, memo } from "react";
 import { Ionicons } from "@expo/vector-icons";
 import Animated, { FadeIn } from "react-native-reanimated";
-import { useTheme } from "@/contexts/ThemeContext";
+import { useTheme } from "@/shared/contexts/ThemeContext";
 import { CategoryRegistryService } from "@/services/category-registry-service";
 import type { CategorySchema, CategorySearchResult } from "@/lib/schemas/CategorySchema";
 import BottomSheet from "@/shared/components/ui/BottomSheet";

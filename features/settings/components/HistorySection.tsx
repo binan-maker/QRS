@@ -3,7 +3,7 @@ import { View, Text, Pressable, Platform } from "react-native";
 import { FlashList } from "@shopify/flash-list";
 import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { useTheme } from "@/contexts/ThemeContext";
+import { useTheme } from "@/shared/contexts/ThemeContext";
 import { makeSettingsStyles } from "@/features/settings/styles";
 import SkeletonListRow from "@/features/settings/components/SkeletonListRow";
 import HistoryRow from "@/features/settings/components/HistoryRow";

@@ -4,8 +4,8 @@ import { router, useLocalSearchParams } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import * as Haptics from "@/lib/haptics";
-import { useTheme } from "@/contexts/ThemeContext";
-import { useAuth } from "@/contexts/AuthContext";
+import { useTheme } from "@/shared/contexts/ThemeContext";
+import { useAuth } from "@/shared/contexts/AuthContext";
 import { useAuthScale } from "@/features/auth/hooks/useAuthScale";
 import { makeAuthStyles } from "@/features/auth/styles";
 

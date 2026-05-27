@@ -1,7 +1,7 @@
 import React, { memo } from "react";
 import { View, Text, Pressable } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { useTheme } from "@/contexts/ThemeContext";
+import { useTheme } from "@/shared/contexts/ThemeContext";
 import { catColor } from "@/features/generator/data/category-config";
 import type { CategorySchema } from "@/lib/schemas/CategorySchema";
 import { S } from "./builderStyles";

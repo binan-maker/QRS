@@ -2,7 +2,7 @@ import { View, Text, StyleSheet, Pressable, Linking } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import Reanimated, { FadeInDown, FadeIn } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { useTheme } from "@/contexts/ThemeContext";
+import { useTheme } from "@/shared/contexts/ThemeContext";
 import { useAppTranslation } from "@/lib/i18n/useAppTranslation";
 import GradientButton from "@/shared/components/ui/GradientButton";
 

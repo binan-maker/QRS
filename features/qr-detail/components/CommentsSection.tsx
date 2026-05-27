@@ -1,7 +1,7 @@
 import { View, Text, Pressable, TextInput, ActivityIndicator, Keyboard } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
-import { useTheme } from "@/contexts/ThemeContext";
+import { useTheme } from "@/shared/contexts/ThemeContext";
 import { makeStyles } from "@/features/qr-detail/styles";
 import { SectionHeader } from "@/features/qr-detail/components/SectionHeader";
 import CommentItem from "@/features/qr-detail/components/CommentItem";

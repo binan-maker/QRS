@@ -6,7 +6,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import { Swipeable } from "react-native-gesture-handler";
 import Animated, { FadeInRight } from "react-native-reanimated";
 import * as Haptics from "@/lib/haptics";
-import { useTheme } from "@/contexts/ThemeContext";
+import { useTheme } from "@/shared/contexts/ThemeContext";
 import { parseAnyPaymentQr } from "@/lib/qr-analysis";
 import {
   detectContentType,

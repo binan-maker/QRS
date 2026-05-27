@@ -1,7 +1,7 @@
 import React from "react";
 import { View, StyleSheet } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
-import { useTheme } from "@/contexts/ThemeContext";
+import { useTheme } from "@/shared/contexts/ThemeContext";
 import { CardHeader, InfoGrid, InfoRow, Divider, OpenButton } from "../shared";
 import { parseSms } from "../parsers";
 

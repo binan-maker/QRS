@@ -1,6 +1,6 @@
 import { Image } from "expo-image";
 import { View, Text, StyleSheet } from "react-native";
-import { useAvatar } from "@/contexts/AvatarContext";
+import { useAvatar } from "@/shared/contexts/AvatarContext";
 import { useMemo } from "react";
 
 interface SmartAvatarProps {

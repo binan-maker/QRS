@@ -1,7 +1,7 @@
 import { View, Text, StyleSheet, Pressable } from "react-native";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import Reanimated, { FadeInDown, FadeIn } from "react-native-reanimated";
-import { useTheme } from "@/contexts/ThemeContext";
+import { useTheme } from "@/shared/contexts/ThemeContext";
 import { getScamTypeLabel, getConfidenceLevel } from "@/services/analysis/scam-detector";
 
 interface Props {

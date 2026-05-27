@@ -3,7 +3,7 @@ import { View, Text, Pressable, ScrollView, TextInput, useWindowDimensions } fro
 import { Ionicons } from "@expo/vector-icons";
 import Animated, { FadeInDown, FadeInUp } from "react-native-reanimated";
 import { LinearGradient } from "expo-linear-gradient";
-import { useTheme } from "@/contexts/ThemeContext";
+import { useTheme } from "@/shared/contexts/ThemeContext";
 import * as Haptics from "@/lib/haptics";
 import type { EncType, QrTemplate, TemplateField } from "@/features/generator/types/template-types";
 

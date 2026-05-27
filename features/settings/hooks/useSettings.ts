@@ -4,7 +4,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as Haptics from "@/lib/haptics";
 import { setHapticsEnabled } from "@/lib/haptics";
 import { router } from "expo-router";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/shared/contexts/AuthContext";
 import { authAdapter } from "@/lib/auth";
 import {
   getUserFollowing,

@@ -5,7 +5,7 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { useTheme } from "@/contexts/ThemeContext";
+import { useTheme } from "@/shared/contexts/ThemeContext";
 import { useAndroidNavBar } from "@/shared/utils/use-android-nav-bar";
 import { formatCompactNumber } from "@/lib/number-format";
 import { formatCompactRelativeTime } from "@/shared/utils/formatters";

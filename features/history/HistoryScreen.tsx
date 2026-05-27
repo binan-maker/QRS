@@ -4,7 +4,7 @@ import { FlashList as _FlashList } from "@shopify/flash-list";
 const FlashList = _FlashList as any;
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTopInset } from "@/shared/utils/platform";
-import { useTheme } from "@/contexts/ThemeContext";
+import { useTheme } from "@/shared/contexts/ThemeContext";
 import { useNetworkStatus } from "@/shared/utils/use-network";
 
 import { useHistory }         from "@/features/history/hooks/useHistory";

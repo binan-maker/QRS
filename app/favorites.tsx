@@ -15,9 +15,9 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTopInset } from "@/shared/utils/platform";
 import * as Haptics from "@/lib/haptics";
 import Animated, { FadeInDown, FadeIn } from "react-native-reanimated";
-import { useTheme } from "@/contexts/ThemeContext";
+import { useTheme } from "@/shared/contexts/ThemeContext";
 import SkeletonBox from "@/shared/components/ui/SkeletonBox";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/shared/contexts/AuthContext";
 import { getUserFavorites } from "@/lib/firestore-service";
 
 interface FavoriteItem {

@@ -1,7 +1,7 @@
 import { View, Text, StyleSheet } from "react-native";
 import Reanimated, { FadeInDown } from "react-native-reanimated";
 import { Ionicons } from "@expo/vector-icons";
-import { useTheme } from "@/contexts/ThemeContext";
+import { useTheme } from "@/shared/contexts/ThemeContext";
 
 const AMBER = "#F59E0B";
 

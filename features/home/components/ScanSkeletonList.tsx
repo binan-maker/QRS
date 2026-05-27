@@ -1,7 +1,7 @@
 import React from "react";
 import { View } from "react-native";
 import Animated, { FadeInRight } from "react-native-reanimated";
-import { useTheme } from "@/contexts/ThemeContext";
+import { useTheme } from "@/shared/contexts/ThemeContext";
 import { cardStyles } from "@/features/home/components/scanCardStyles";
 
 export function ScanSkeletonList() {

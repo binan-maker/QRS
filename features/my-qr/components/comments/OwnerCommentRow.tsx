@@ -1,6 +1,6 @@
 import { View, Text, StyleSheet, Pressable } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { useTheme } from "@/contexts/ThemeContext";
+import { useTheme } from "@/shared/contexts/ThemeContext";
 import type { CommentItem } from "@/lib/firestore-service";
 import { formatCompactRelativeTime } from "@/shared/utils/formatters";
 

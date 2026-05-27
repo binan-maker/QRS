@@ -1,5 +1,5 @@
 import { View, Text, Pressable, ScrollView } from "react-native";
-import { useTheme } from "@/contexts/ThemeContext";
+import { useTheme } from "@/shared/contexts/ThemeContext";
 
 export interface QrColorTheme {
   name: string;

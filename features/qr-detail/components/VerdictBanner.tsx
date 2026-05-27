@@ -1,6 +1,6 @@
 import { View, Text, StyleSheet } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { useTheme } from "@/contexts/ThemeContext";
+import { useTheme } from "@/shared/contexts/ThemeContext";
 import { useQrDetail } from "@/features/qr-detail/hooks/useQrDetail";
 
 type Verdict = ReturnType<ReturnType<typeof useQrDetail>["getCombinedVerdict"]>;

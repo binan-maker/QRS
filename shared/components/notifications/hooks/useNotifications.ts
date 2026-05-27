@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import * as Haptics from "@/lib/haptics";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/shared/contexts/AuthContext";
 import {
   subscribeToNotifications,
   subscribeToNotificationCount,
