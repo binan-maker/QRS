@@ -1,0 +1,607 @@
+I inspected the actual Home Page code, not just the folder structure.
+
+# Overall Verdict
+
+**Home Page Architecture: 8.5/10**
+
+The page is actually much cleaner than the QR Detail page.
+
+The problem is **not the UI itself**.
+
+The main performance bottlenecks are hidden inside:
+
+```text
+useRecentScans()
+AvatarContext
+Notifications
+Firestore queries
+Animations
+```
+
+not inside HomeScreen.tsx.
+
+---
+
+# HomeScreen Analysis
+
+Current structure:
+
+```text
+HomeScreen
+│
+├── HomeHeader
+├── HeroScanCard
+├── StatsRow
+└── RecentScansList
+```
+
+This is good.
+
+HomeScreen itself:
+
+```tsx
+<HomeHeader />
+<HeroScanCard />
+<StatsRow />
+<RecentScansList />
+```
+
+Very lightweight.
+
+No issue here.
+
+---
+
+# Problem 1 — ScrollView
+
+Current:
+
+```tsx
+<ScrollView>
+```
+
+You are rendering:
+
+```text
+Header
+Hero
+Stats
+RecentScans
+History Button
+```
+
+Today it's fine.
+
+But if you later add:
+
+```text
+Community Feed
+Recommendations
+Trending QRs
+Notifications
+Ads
+```
+
+ScrollView will become slow.
+
+Better:
+
+```tsx
+FlashList
+```
+
+from Shopify.
+
+Especially for Android.
+
+---
+
+# Problem 2 — RecentScans Merge
+
+Inside:
+
+```tsx
+useRecentScans()
+```
+
+Every render:
+
+```tsx
+const recentScans = (() => {
+ ...
+})()
+```
+
+runs:
+
+```tsx
+sort()
+slice()
+find()
+merge()
+```
+
+again.
+
+Not huge today because:
+
+```tsx
+MAX_RECENT = 5
+```
+
+But technically wasteful.
+
+Should be:
+
+```tsx
+useMemo()
+```
+
+---
+
+# Problem 3 — Avatar Sync
+
+Found:
+
+```tsx
+useEffect(() => {
+ if (!appAvatarUrl && user?.photoURL)
+   syncAvatar(user.photoURL)
+})
+```
+
+This executes every login.
+
+Not dangerous.
+
+But if AvatarContext causes rerenders:
+
+```text
+HomeHeader
+Profile
+Settings
+```
+
+all rerender.
+
+Need to inspect AvatarContext.
+
+Could be contributing to slow startup.
+
+---
+
+# Problem 4 — Notification Hook
+
+Home page loads:
+
+```tsx
+useNotifications()
+```
+
+inside:
+
+```tsx
+useHome()
+```
+
+But HomeScreen never uses:
+
+```tsx
+notifCount
+notifications
+notifOpen
+```
+
+Current waste:
+
+```tsx
+const notif = useNotifications()
+```
+
+loads notification state.
+
+Home page doesn't display it.
+
+Potential unnecessary work.
+
+---
+
+# Problem 5 — Heavy Animations
+
+Every section:
+
+```tsx
+FadeInDown
+FadeInDown
+FadeInDown
+FadeInRight
+```
+
+And each Recent Scan Card:
+
+```tsx
+FadeInRight.duration(260)
+```
+
+If user has:
+
+```text
+5 recent scans
+```
+
+you get:
+
+```text
+Header animation
+Hero animation
+Stats animation
+Recent list animation
+5 card animations
+```
+
+= 9 animations
+
+Older Android phones can stutter.
+
+---
+
+# Problem 6 — Swipeable
+
+Each card:
+
+```tsx
+<Swipeable>
+```
+
+from gesture-handler.
+
+Even when user never swipes.
+
+This is expensive.
+
+Current:
+
+```text
+5 cards
+```
+
+fine.
+
+If history page reuses this:
+
+```text
+100 cards
+```
+
+bad.
+
+---
+
+# Biggest Loading Delay
+
+I found likely source.
+
+Inside:
+
+```tsx
+getUserScansPaginated()
+```
+
+Firestore.
+
+Flow:
+
+```text
+Open Home
+↓
+Query Firestore
+↓
+Convert results
+↓
+Cache
+↓
+Merge local scans
+↓
+Render
+```
+
+This is probably where you feel delay.
+
+---
+
+# Good Thing You Already Did
+
+You already implemented:
+
+```tsx
+getCachedHomeScans()
+```
+
+before network.
+
+This is smart.
+
+You preload cached scans.
+
+Meaning:
+
+```text
+Cold Launch
+↓
+Disk Cache
+↓
+Instant UI
+↓
+Firestore Updates Later
+```
+
+Excellent design.
+
+---
+
+# Shared Components Analysis
+
+Current home components:
+
+```text
+HomeHeader
+HeroScanCard
+StatsRow
+RecentScansList
+RecentScanCard
+EmptyScans
+ScanSkeletonList
+```
+
+Good separation.
+
+But I see duplication.
+
+Example:
+
+Buttons:
+
+```tsx
+See All
+See Full History
+Sign In
+```
+
+all custom.
+
+Could become:
+
+```text
+shared/components/Button
+```
+
+---
+
+# Waste Code Found
+
+Inside useHome:
+
+Returned:
+
+```tsx
+notifCount
+notifOpen
+notifications
+markingRead
+handleOpenNotifications
+handleClearNotifications
+```
+
+But HomeScreen never uses them.
+
+Waste.
+
+Either:
+
+```tsx
+remove
+```
+
+or
+
+```tsx
+future notification bell
+```
+
+---
+
+# Android Compatibility
+
+Based on code inspected:
+
+### Android 8
+
+✅ Supported
+
+No Android 9+ APIs detected.
+
+---
+
+### Android 9
+
+✅ Supported
+
+---
+
+### Android 10
+
+✅ Supported
+
+---
+
+### Android 11
+
+✅ Supported
+
+---
+
+### Android 12
+
+✅ Supported
+
+---
+
+### Android 13
+
+✅ Supported
+
+Need notification permission handling elsewhere.
+
+Not Home page issue.
+
+---
+
+### Android 14
+
+✅ Supported
+
+---
+
+### Android 15
+
+✅ Supported
+
+Nothing Home-specific will break.
+
+---
+
+# What Makes Home Feel Slow?
+
+Most likely ranking:
+
+### 1
+
+Firestore query
+
+```tsx
+getUserScansPaginated()
+```
+
+Biggest suspect.
+
+---
+
+### 2
+
+Notification initialization
+
+```tsx
+useNotifications()
+```
+
+---
+
+### 3
+
+Avatar synchronization
+
+```tsx
+syncAvatar()
+```
+
+---
+
+### 4
+
+Nine Reanimated animations on startup
+
+---
+
+### 5
+
+Theme Context rerenders
+
+Every component uses:
+
+```tsx
+useTheme()
+```
+
+If theme changes:
+
+```text
+Header rerenders
+Hero rerenders
+Stats rerenders
+Recent rerenders
+```
+
+Not a bug but extra work.
+
+---
+
+# Home Page Cleanup Plan
+
+### Remove
+
+```tsx
+unused notification state from useHome
+```
+
+if not displayed.
+
+---
+
+### Convert
+
+```tsx
+recentScans calculation
+```
+
+to:
+
+```tsx
+useMemo()
+```
+
+---
+
+### Keep
+
+```tsx
+cache system
+```
+
+Very good.
+
+---
+
+### Keep
+
+```tsx
+component separation
+```
+
+Very good.
+
+---
+
+### Consider
+
+```tsx
+FlashList
+```
+
+for future scaling.
+
+---
+
+# Final Assessment
+
+| Area                  | Rating |
+| --------------------- | ------ |
+| Component Structure   | 9/10   |
+| Folder Organization   | 9/10   |
+| Shared Components     | 7/10   |
+| Android Compatibility | 9/10   |
+| Startup Performance   | 7/10   |
+| Scalability           | 8/10   |
+| Waste Code            | 6/10   |
+| Firestore Efficiency  | 8/10   |
+
+The Home Page is **not the reason your app feels heavy overall**. From the source code, the larger performance risks are in the QR Detail system, notification system, Firestore reads, and project-wide cached/generated files. The Home Page itself is relatively clean and modular.

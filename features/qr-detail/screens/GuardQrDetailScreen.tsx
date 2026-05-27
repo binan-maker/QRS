@@ -16,21 +16,18 @@ import { useQrDetail } from "@/features/qr-detail/hooks/useQrDetail";
 import { useNetworkStatus } from "@/shared/utils/use-network";
 import { getGuardLink, type GuardLink } from "@/services/guard-service";
 import { detectContentType } from "@/services/qr-content-type";
-import { makeStyles, offlineSectionStyles } from "@/features/qr-detail/styles";
-import { formatCompactNumber } from "@/lib/number-format";
+import { makeStyles } from "@/features/qr-detail/styles";
 
-import TrustScoreCard from "@/features/qr-detail/components/TrustScoreCard";
-import ReportGrid from "@/features/qr-detail/components/ReportGrid";
-import FollowersModal from "@/features/qr-detail/components/modals/FollowersModal";
-import MessagesModal from "@/features/qr-detail/components/modals/MessagesModal";
-import CommentReportModal from "@/features/qr-detail/components/modals/CommentReportModal";
 import { OfflineToast } from "@/features/qr-detail/components/OfflineToast";
 import { QrToast } from "@/features/qr-detail/components/QrToast";
-import CommentsSection from "@/features/qr-detail/components/CommentsSection";
 import DonationBanner from "@/features/qr-detail/components/DonationBanner";
-import OwnerInfoSheet from "@/features/qr-detail/components/sheets/OwnerInfoSheet";
-import CommentMenuSheet from "@/features/qr-detail/components/sheets/CommentMenuSheet";
-import OverflowSheet from "@/features/qr-detail/components/sheets/OverflowSheet";
+
+import {
+  QrTrustSection,
+  QrReportSection,
+  QrCommentSection,
+  QrBottomSheets,
+} from "@/features/qr-detail/sections";
 
 const ACCENT = "#6366f1";
 
@@ -83,6 +80,7 @@ export default function GuardQrDetailScreen({ id, guardUuid, ownerDocId }: Props
     key: number;
   }>({ message: "", icon: "checkmark-circle", key: 0 });
   const lastToastTime = useRef(0);
+  const reportSectionY = useRef(0);
 
   const showToast = useCallback(
     (message: string, icon: keyof typeof Ionicons.glyphMap = "checkmark-circle") => {
@@ -106,7 +104,6 @@ export default function GuardQrDetailScreen({ id, guardUuid, ownerDocId }: Props
   const { isOnline } = useNetworkStatus();
   const [offlineToastKey, setOfflineToastKey] = useState(0);
 
-  const effectiveContent = guardLink?.currentDestination ?? "";
   const effectiveContentType = guardLink
     ? (guardLink.contentType || detectContentType(guardLink.currentDestination))
     : "url";
@@ -149,7 +146,6 @@ export default function GuardQrDetailScreen({ id, guardUuid, ownerDocId }: Props
     showToast(willFav ? "Added to favorites" : "Removed from favorites", willFav ? "heart" : "heart-outline");
   }, [user, q.isFavorite, q.handleToggleFavorite, showToast]);
 
-  const reportSectionY = useRef(0);
   const handleReportPress = useCallback(() => {
     setOverflowOpen(false);
     if (!user) { router.push("/(auth)/login"); return; }
@@ -167,7 +163,7 @@ export default function GuardQrDetailScreen({ id, guardUuid, ownerDocId }: Props
       <KeyboardAvoidingView style={{ flex: 1 }} behavior="padding" keyboardVerticalOffset={0}>
         <View style={[styles.container, { paddingTop: topInset }]}>
 
-          {/* ── Guard NavBar ─────────────────────────────────── */}
+          {/* Guard NavBar */}
           <Animated.View entering={FadeInDown.delay(0).duration(260)} style={[styles.navBar, { gap: 10 }]}>
             <Animated.View entering={FadeIn.delay(30).duration(240)}>
               <Pressable onPress={safeBack} style={styles.navBackBtn}>
@@ -205,7 +201,7 @@ export default function GuardQrDetailScreen({ id, guardUuid, ownerDocId }: Props
               />
             }
           >
-            {/* ── Hero: Living Shield Card ─────────────────── */}
+            {/* Hero: Living Shield Card */}
             <Animated.View entering={FadeInDown.delay(30).duration(260)}>
               <View style={[guardStyles.heroCard, {
                 backgroundColor: isDark ? "#0d0d1a" : "#f5f5ff",
@@ -218,7 +214,6 @@ export default function GuardQrDetailScreen({ id, guardUuid, ownerDocId }: Props
                   end={{ x: 1, y: 1 }}
                 />
 
-                {/* Header row */}
                 <View style={guardStyles.heroHeader}>
                   <View style={[guardStyles.heroIconWrap, {
                     backgroundColor: ACCENT + "22",
@@ -257,7 +252,6 @@ export default function GuardQrDetailScreen({ id, guardUuid, ownerDocId }: Props
 
                 {!guardLoading && guardLink && (
                   <>
-                    {/* Owner */}
                     {(guardLink.businessName || guardLink.ownerName) && (
                       <View style={[guardStyles.infoRow, { borderColor: colors.surfaceBorder + "60" }]}>
                         <Ionicons name="business-outline" size={14} color={colors.textSecondary} />
@@ -268,7 +262,6 @@ export default function GuardQrDetailScreen({ id, guardUuid, ownerDocId }: Props
                       </View>
                     )}
 
-                    {/* Current destination */}
                     <View style={[guardStyles.infoRow, { borderColor: colors.surfaceBorder + "60" }]}>
                       <Ionicons name="link-outline" size={14} color={colors.textSecondary} />
                       <Text style={[guardStyles.infoLabel, { color: colors.textSecondary }]}>Points to</Text>
@@ -277,7 +270,6 @@ export default function GuardQrDetailScreen({ id, guardUuid, ownerDocId }: Props
                       </Text>
                     </View>
 
-                    {/* Last changed timestamp */}
                     {guardLink.destinationChangedAt && (
                       <View style={[guardStyles.infoRow, { borderColor: colors.surfaceBorder + "60" }]}>
                         <Ionicons name="time-outline" size={14} color={colors.textSecondary} />
@@ -288,7 +280,6 @@ export default function GuardQrDetailScreen({ id, guardUuid, ownerDocId }: Props
                       </View>
                     )}
 
-                    {/* Recently changed warning */}
                     {recentlyChanged && (
                       <View style={[guardStyles.alertRow, { backgroundColor: "#f59e0b18", borderColor: "#f59e0b40" }]}>
                         <Ionicons name="warning-outline" size={14} color="#f59e0b" />
@@ -298,7 +289,6 @@ export default function GuardQrDetailScreen({ id, guardUuid, ownerDocId }: Props
                       </View>
                     )}
 
-                    {/* Deactivated state */}
                     {isDeactivated && (
                       <View style={[guardStyles.alertRow, { backgroundColor: "#ef444418", borderColor: "#ef444440" }]}>
                         <Ionicons name="ban-outline" size={14} color="#ef4444" />
@@ -308,7 +298,6 @@ export default function GuardQrDetailScreen({ id, guardUuid, ownerDocId }: Props
                       </View>
                     )}
 
-                    {/* Open destination button */}
                     {!isDeactivated && (
                       <Pressable
                         style={({ pressed }) => [
@@ -322,7 +311,6 @@ export default function GuardQrDetailScreen({ id, guardUuid, ownerDocId }: Props
                       </Pressable>
                     )}
 
-                    {/* Change history accordion */}
                     {guardLink.changeLog && guardLink.changeLog.length > 0 && (
                       <>
                         <Pressable
@@ -376,88 +364,39 @@ export default function GuardQrDetailScreen({ id, guardUuid, ownerDocId }: Props
               </View>
             </Animated.View>
 
+            <QrTrustSection
+              offlineMode={q.offlineMode}
+              trust={trust}
+              reportCounts={q.reportCounts}
+              totalScans={q.totalScans}
+              isQrOwner={isQrOwner}
+              followCount={q.followCount}
+              followersModalOpen={q.followersModalOpen}
+              onOpenFollowers={() => {
+                q.handleLoadFollowers();
+                q.setFollowersModalOpen(true);
+              }}
+              manipulationWarning={trust.manipulationWarning}
+              scanCountFrozen={q.qrCode?.scanCountFrozen}
+              ownerScanCount={q.qrCode?.ownerScanCount}
+              user={user}
+              delay={70}
+            />
 
-            {/* ── Community: Trust score ───────────────────── */}
-            {!q.offlineMode && (
-              <Animated.View entering={FadeInDown.delay(70).duration(260)}>
-                <TrustScoreCard
-                  trustInfo={trust}
-                  reportCounts={q.reportCounts}
-                  totalScans={q.totalScans}
-                  isQrOwner={isQrOwner}
-                  followCount={q.followCount}
-                  followersModalOpen={user ? q.followersModalOpen : false}
-                  onOpenFollowers={
-                    user
-                      ? () => { q.handleLoadFollowers(); q.setFollowersModalOpen(true); }
-                      : () => {}
-                  }
-                  manipulationWarning={trust.manipulationWarning}
-                  scanCountFrozen={q.qrCode?.scanCountFrozen}
-                  ownerScanCount={user && isQrOwner ? q.qrCode?.ownerScanCount : undefined}
-                />
-              </Animated.View>
-            )}
+            <QrReportSection
+              user={user}
+              offlineMode={q.offlineMode}
+              reportCounts={q.reportCounts}
+              userReport={q.userReport}
+              isPayment={effectiveContentType === "payment"}
+              handleReport={q.handleReport}
+              showToast={showToast}
+              onLayout={(e: any) => { reportSectionY.current = e.nativeEvent.layout.y; }}
+              colors={colors}
+              delay={80}
+            />
 
-            {/* ── Reports (logged-in only) ─────────────────── */}
-            {user && !q.offlineMode && (
-              <Animated.View
-                entering={FadeInDown.delay(80).duration(260)}
-                onLayout={(e: any) => { reportSectionY.current = e.nativeEvent.layout.y; }}
-              >
-                <ReportGrid
-                  reportCounts={q.reportCounts}
-                  userReport={q.userReport}
-                  isLoggedIn={true}
-                  isPayment={false}
-                  onReport={(type) => {
-                    const reported = q.handleReport(type);
-                    if (!reported) return;
-                    const labels: Record<string, string> = { safe: "Safe", scam: "Scam", fake: "Fake", spam: "Spam" };
-                    const icons: Record<string, keyof typeof Ionicons.glyphMap> = { safe: "shield-checkmark", scam: "warning", fake: "close-circle", spam: "mail-unread" };
-                    showToast(`Voted ${labels[type] ?? type}`, icons[type] ?? "flag");
-                  }}
-                />
-              </Animated.View>
-            )}
-
-            {/* ── Comments ─────────────────────────────────── */}
-            {!q.offlineMode && (
-              <Animated.View entering={FadeInDown.delay(100).duration(260)}>
-                <CommentsSection
-                  user={user}
-                  totalComments={q.totalComments}
-                  commentsList={q.commentsList as any}
-                  topLevelComments={q.topLevelComments as any}
-                  hasMoreComments={q.hasMoreComments}
-                  commentsLoading={q.commentsLoading}
-                  newComment={q.newComment}
-                  setNewComment={q.setNewComment}
-                  replyTo={q.replyTo}
-                  setReplyTo={q.setReplyTo}
-                  commentMenuId={q.commentMenuId}
-                  setCommentMenuId={q.setCommentMenuId}
-                  setCommentMenuOwner={q.setCommentMenuOwner}
-                  submitting={q.submitting}
-                  commentInputRef={q.commentInputRef}
-                  userLikes={q.userLikes}
-                  deletingCommentId={q.deletingCommentId}
-                  revealedComments={q.revealedComments}
-                  setRevealedComments={q.setRevealedComments}
-                  expandedReplies={q.expandedReplies as any}
-                  visibleRepliesCount={q.visibleRepliesCount}
-                  handleSubmitComment={q.handleSubmitComment}
-                  handleCommentLike={q.handleCommentLike as any}
-                  handleDeleteComment={q.handleDeleteComment}
-                  setCommentReportModal={q.setCommentReportModal}
-                  getAllDescendants={q.getAllDescendants as any}
-                  getRootCommentId={q.getRootCommentId}
-                  toggleReplies={q.toggleReplies}
-                  showMoreReplies={q.showMoreReplies}
-                  loadMoreComments={q.loadMoreComments}
-                />
-              </Animated.View>
-            )}
+            <QrCommentSection user={user} offlineMode={q.offlineMode} q={q} delay={100} />
 
             <Animated.View entering={FadeInDown.delay(110).duration(260)}>
               <DonationBanner />
@@ -466,178 +405,75 @@ export default function GuardQrDetailScreen({ id, guardUuid, ownerDocId }: Props
         </View>
       </KeyboardAvoidingView>
 
-      <OwnerInfoSheet
-        visible={ownerSheetOpen}
-        onClose={() => setOwnerSheetOpen(false)}
-        ownerInfo={ownerInfoForSheet as any}
+      <QrBottomSheets
+        ownerSheetOpen={ownerSheetOpen}
+        onCloseOwnerSheet={() => setOwnerSheetOpen(false)}
+        ownerInfo={ownerInfoForSheet}
         guardLink={guardLink}
-      />
-
-      <CommentMenuSheet
-        visible={q.commentMenuId !== null}
-        isOwner={q.commentMenuOwner}
-        onClose={() => q.setCommentMenuId(null)}
-        onDelete={() => {
-          const cid = q.commentMenuId!;
-          q.setCommentMenuId(null);
-          q.handleDeleteComment(cid);
-        }}
-        onReport={() => {
-          const cid = q.commentMenuId!;
-          q.setCommentMenuId(null);
-          q.setCommentReportModal(cid);
-        }}
-      />
-
-      <OverflowSheet
-        visible={overflowOpen}
-        onClose={() => setOverflowOpen(false)}
+        q={q}
+        overflowOpen={overflowOpen}
+        onCloseOverflow={() => setOverflowOpen(false)}
         isFavorite={q.isFavorite}
         isFollowing={q.isFollowing}
         followLoading={q.followLoading}
         hasOwner={hasOwner}
         onFavorite={handleFavoritePress}
         onWatch={handleWatchPress}
-        onReport={handleReportPress}
-      />
-
-      <CommentReportModal
-        commentId={q.commentReportModal}
-        onReport={q.handleCommentReport}
-        onClose={() => q.setCommentReportModal(null)}
-      />
-      <FollowersModal
-        visible={q.followersModalOpen}
-        followCount={q.followCount}
-        followers={q.followersList}
-        loading={q.followersLoading}
-        onClose={() => q.setFollowersModalOpen(false)}
-        title="QR Watchers"
-        subtitle={`${formatCompactNumber(q.followCount)} ${
-          q.followCount === 1 ? "person is" : "people are"
-        } watching this QR`}
-        emptyIcon="notifications-outline"
-        emptyText="No watchers yet"
-      />
-      <MessagesModal
-        visible={q.messagesModalOpen}
-        isQrOwner={isQrOwner}
-        ownerInfo={q.ownerInfo}
-        messages={q.messages}
-        messageText={q.messageText}
-        sendingMessage={q.sendingMessage}
+        onReportPress={handleReportPress}
         user={user}
-        onChangeText={q.setMessageText}
-        onSend={q.handleSendMessage}
-        onMarkRead={() => {}}
-        onClose={() => q.setMessagesModalOpen(false)}
+        isQrOwner={isQrOwner}
       />
     </View>
   );
 }
 
 const guardStyles = StyleSheet.create({
-  navTitleRow: {
-    flex: 1,
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 7,
-    minWidth: 0,
-  },
+  navTitleRow: { flex: 1, flexDirection: "row", alignItems: "center", gap: 7, minWidth: 0 },
   navShieldWrap: {
-    width: 26,
-    height: 26,
-    borderRadius: 8,
-    alignItems: "center",
-    justifyContent: "center",
+    width: 28, height: 28, borderRadius: 8,
+    alignItems: "center", justifyContent: "center", flexShrink: 0,
   },
-  navTitle: {
-    fontSize: 16,
-    fontFamily: "Inter_700Bold",
-    flex: 1,
-  },
-  heroCard: {
-    borderRadius: 18,
-    borderWidth: 1,
-    padding: 18,
-    gap: 12,
-    overflow: "hidden",
-    marginBottom: 12,
-  },
+  navTitle: { fontSize: 16, fontFamily: "Inter_700Bold", flex: 1 },
+  heroCard: { borderRadius: 18, borderWidth: 1, padding: 18, gap: 12, overflow: "hidden", marginBottom: 12 },
   heroHeader: { flexDirection: "row", alignItems: "center", gap: 12 },
   heroIconWrap: {
-    width: 48,
-    height: 48,
-    borderRadius: 14,
-    borderWidth: 1,
-    alignItems: "center",
-    justifyContent: "center",
-    flexShrink: 0,
+    width: 48, height: 48, borderRadius: 14, borderWidth: 1,
+    alignItems: "center", justifyContent: "center", flexShrink: 0,
   },
-  heroLabel: {
-    fontSize: 11,
-    fontFamily: "Inter_700Bold",
-    letterSpacing: 1.3,
-    marginBottom: 2,
-  },
+  heroLabel: { fontSize: 11, fontFamily: "Inter_700Bold", letterSpacing: 1.3, marginBottom: 2 },
   heroSub: { fontSize: 12, fontFamily: "Inter_400Regular", lineHeight: 16 },
   statusPill: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 4,
-    borderRadius: 20,
-    borderWidth: 1,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
+    flexDirection: "row", alignItems: "center", gap: 4,
+    borderRadius: 20, borderWidth: 1, paddingHorizontal: 8, paddingVertical: 4,
   },
   statusDot: { width: 6, height: 6, borderRadius: 3 },
   statusPillText: { fontSize: 11, fontFamily: "Inter_600SemiBold" },
   loadingRow: { flexDirection: "row", alignItems: "center", gap: 8 },
   loadingText: { fontSize: 13, fontFamily: "Inter_400Regular" },
   infoRow: {
-    flexDirection: "row",
-    alignItems: "flex-start",
-    gap: 8,
-    paddingTop: 10,
-    borderTopWidth: StyleSheet.hairlineWidth,
+    flexDirection: "row", alignItems: "center", gap: 8,
+    paddingTop: 10, borderTopWidth: StyleSheet.hairlineWidth,
   },
-  infoLabel: { fontSize: 12, fontFamily: "Inter_600SemiBold", width: 66, flexShrink: 0, marginTop: 1 },
-  infoValue: { fontSize: 13, fontFamily: "Inter_400Regular", flex: 1, lineHeight: 18 },
+  infoLabel: { fontSize: 12, fontFamily: "Inter_600SemiBold", width: 58 },
+  infoValue: { fontSize: 13, fontFamily: "Inter_400Regular", flex: 1 },
   alertRow: {
-    flexDirection: "row",
-    alignItems: "flex-start",
-    gap: 8,
-    padding: 10,
-    borderRadius: 10,
-    borderWidth: 1,
+    flexDirection: "row", alignItems: "center", gap: 8,
+    borderRadius: 10, borderWidth: 1, paddingHorizontal: 12, paddingVertical: 8,
   },
-  alertText: { fontSize: 12.5, fontFamily: "Inter_400Regular", flex: 1, lineHeight: 18 },
+  alertText: { fontSize: 12, fontFamily: "Inter_500Medium", flex: 1, lineHeight: 17 },
   openBtn: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 8,
-    paddingVertical: 13,
-    borderRadius: 12,
-    marginTop: 2,
+    flexDirection: "row", alignItems: "center", justifyContent: "center",
+    gap: 8, borderRadius: 12, paddingVertical: 12, paddingHorizontal: 20,
   },
   openBtnText: { color: "#fff", fontSize: 14, fontFamily: "Inter_600SemiBold" },
   historyToggle: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 6,
-    paddingTop: 10,
-    borderTopWidth: StyleSheet.hairlineWidth,
+    flexDirection: "row", alignItems: "center", gap: 6,
+    paddingTop: 10, borderTopWidth: StyleSheet.hairlineWidth,
   },
   historyToggleText: { fontSize: 13, fontFamily: "Inter_600SemiBold", flex: 1 },
-  historyList: { gap: 6, marginTop: 4 },
-  historyEntry: {
-    borderRadius: 8,
-    borderWidth: 1,
-    padding: 10,
-    gap: 2,
-  },
-  historyTime: { fontSize: 11, fontFamily: "Inter_400Regular" },
+  historyList: { gap: 8 },
+  historyEntry: { borderRadius: 10, borderWidth: 1, padding: 10, gap: 3 },
+  historyTime: { fontSize: 11, fontFamily: "Inter_500Medium" },
   historyFrom: { fontSize: 12, fontFamily: "Inter_400Regular" },
   historyTo: { fontSize: 12, fontFamily: "Inter_600SemiBold" },
 });
