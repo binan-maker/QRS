@@ -2,6 +2,12 @@
 # Dependencies
 node_modules/
 
+
+.agents/
+.config/
+.expo/
+.github/
+.local/
 # Build outputs
 dist/
 build/
