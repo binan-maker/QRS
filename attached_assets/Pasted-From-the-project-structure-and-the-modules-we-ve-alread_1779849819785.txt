@@ -1,0 +1,282 @@
+From the project structure and the modules we've already analyzed (Home, Scanner, History, QR Details, Notifications, Profile, Generator), I can give a fairly accurate architecture-level analysis of your Firestore usage. However, to perform a true file-by-file Firestore audit, I would need to reopen and inspect the actual ZIP contents again.
+
+Based on the code patterns visible throughout the app:
+
+Firestore Architecture Overview
+
+Your app appears to use Firestore for:
+
+Users
+Scans
+Generated QRs
+Comments
+Reports
+Followers
+Notifications
+Trust/Safety
+Favorites
+Profiles
+
+This is becoming a fairly large Firestore-backed platform.
+
+Biggest Strength
+
+You are not directly putting Firestore code everywhere.
+
+Most queries seem to be centralized into:
+
+services/
+hooks/
+lib/
+
+instead of:
+
+HomeScreen
+Firestore Query
+
+ProfileScreen
+Firestore Query
+
+HistoryScreen
+Firestore Query
+
+This is good architecture.
+
+Main Collections Likely Present
+
+Something similar to:
+
+users
+scans
+notifications
+comments
+reports
+favorites
+follows
+generated_qrs
+Biggest Firestore Risk #1
+Too Many Reads
+
+Current flow may look like:
+
+Home Open
+ ↓
+Get User
+ ↓
+Get Recent Scans
+ ↓
+Get Notifications
+ ↓
+Get Avatar
+
+Multiple reads.
+
+Better:
+
+Home Summary
+ ↓
+Single document
+
+Example:
+
+{
+  "totalScans": 125,
+  "recentScans": [...],
+  "unreadCount": 4,
+  "avatar": "..."
+}
+Biggest Firestore Risk #2
+
+Notifications
+
+From earlier analysis:
+
+useNotifications()
+
+appears connected in several places.
+
+Potential issue:
+
+Home
+Profile
+Notification Page
+
+all loading notification data.
+
+This increases reads.
+
+Biggest Firestore Risk #3
+
+QR Details
+
+This is likely the most expensive screen.
+
+Possible flow:
+
+Open QR
+ ↓
+Get QR
+ ↓
+Get Reports
+ ↓
+Get Comments
+ ↓
+Get Owner
+ ↓
+Get Trust
+ ↓
+Get Followers
+
+Many reads.
+
+This is probably your largest Firestore cost center.
+
+Biggest Firestore Risk #4
+
+History
+
+If history loads:
+
+All User Scans
+
+instead of:
+
+20
+20
+20
+20
+
+pagination,
+
+costs will rise as users grow.
+
+Good Thing I Found
+
+Home already appears to use:
+
+Cache
+ ↓
+Firestore Later
+
+which is excellent.
+
+This reduces:
+
+Reads
+Network Time
+Loading Delays
+Firestore Cost Ranking
+
+Most expensive likely:
+
+Feature	Cost
+QR Details	Very High
+Notifications	High
+History	High
+Profile	Medium
+Generator	Low
+Scanner	Low
+Settings	Very Low
+Biggest Missing Optimization
+Summary Documents
+
+Instead of calculating:
+
+Total Scans
+Followers
+Following
+Favorites
+Notifications
+
+every time,
+
+store:
+
+{
+  "totalScans": 143,
+  "followers": 54,
+  "following": 11,
+  "favorites": 29,
+  "unreadNotifications": 7
+}
+
+inside:
+
+users/{uid}
+
+One read.
+
+Firestore Security Analysis
+
+I would check for:
+
+allow read, write: if true;
+
+If this exists anywhere:
+
+❌ Dangerous.
+
+You should always use:
+
+request.auth != null
+
+at minimum.
+
+Firestore Structure I Recommend
+users
+ └─ uid
+
+user_stats
+ └─ uid
+
+scans
+ └─ scanId
+
+comments
+ └─ commentId
+
+notifications
+ └─ notificationId
+
+reports
+ └─ reportId
+
+favorites
+ └─ favoriteId
+
+Keep collections flat.
+
+Avoid deeply nested collections unless necessary.
+
+Biggest Future Scaling Problem
+
+Today:
+
+100 users
+
+Fine.
+
+Future:
+
+100,000 users
+
+The danger becomes:
+
+Comments
+Notifications
+Followers
+Trust Updates
+
+all generating Firestore reads and writes.
+
+Without aggregation documents and pagination, costs grow quickly.
+
+My Current Assessment
+Category	Rating
+Firestore Organization	8/10
+Query Structure	7/10
+Caching	8/10
+Scalability	6/10
+Security (unknown)	?
+Read Efficiency	7/10
+Write Efficiency	7/10
