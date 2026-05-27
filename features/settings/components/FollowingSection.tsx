@@ -9,12 +9,12 @@ import Animated, { FadeInDown } from "react-native-reanimated";
 import { useTheme } from "@/shared/contexts/ThemeContext";
 import SkeletonBox from "@/shared/components/ui/SkeletonBox";
 import { db } from "@/lib/db/client";
+import { formatShortDate } from "@/shared/utils/formatters";
 import {
-  formatShortDate,
-  getContentTypeMeta,
-  getContentDisplayLabel,
-  getContentSubtitle,
-} from "@/shared/utils/formatters";
+  getQrTypeMeta as getContentTypeMeta,
+  getDisplayLabel as getContentDisplayLabel,
+  getSubtitle as getContentSubtitle,
+} from "@/features/qr-engine";
 
 function SkeletonCard() {
   const { colors } = useTheme();

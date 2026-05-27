@@ -20,7 +20,7 @@ import { detectContentType } from "@/services/qr-content-type";
 import { makeStyles, offlineSectionStyles } from "@/features/qr-detail/styles";
 import { formatCompactNumber } from "@/shared/utils/number-format";
 
-import ContentCard from "@/features/qr-detail/components/ContentCard";
+import ContentCard from "@/features/qr-detail/content-cards";
 import TrustScoreCard from "@/features/qr-detail/components/TrustScoreCard";
 import SafetyWarningCard from "@/features/qr-detail/components/SafetyWarningCard";
 import EvidenceCard from "@/features/qr-detail/components/EvidenceCard";

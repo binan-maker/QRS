@@ -14,11 +14,7 @@ import { View, Text, ActivityIndicator, StyleSheet } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import Animated, { FadeInDown } from "react-native-reanimated";
 import { useTheme } from "@/shared/contexts/ThemeContext";
-import {
-  getContentDisplayLabel,
-  getContentSubtitle,
-} from "@/shared/utils/formatters/content-type";
-import { getQrTypeMeta } from "../registry";
+import { getQrTypeMeta, getDisplayLabel, getSubtitle } from "../registry";
 import type { QrRenderProps } from "../types";
 
 interface CompactRow {
@@ -165,7 +161,7 @@ export default function CompactRenderer({
   const { colors, isDark } = useTheme();
   const effectiveType = templateKey ?? contentType;
   const meta = getQrTypeMeta(effectiveType);
-  const displayLabel = getContentDisplayLabel(content, effectiveType);
+  const displayLabel = getDisplayLabel(content, effectiveType);
   const rows = extractRows(content, effectiveType);
 
   const description = isDynamic

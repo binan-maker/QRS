@@ -1,5 +1,5 @@
 export { default as CommentItem } from "./CommentItem";
-export { default as ContentCard } from "./ContentCard";
+export { default as ContentCard } from "../content-cards";
 export { default as EvidenceCard } from "./EvidenceCard";
 export { default as LoadingSkeleton } from "./LoadingSkeleton";
 export { default as MerchantDashboard } from "./MerchantDashboard";

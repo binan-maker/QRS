@@ -5,7 +5,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import { useTheme } from "@/shared/contexts/ThemeContext";
 import { CardHeader, InfoGrid, InfoRow, Divider, OpenButton } from "../shared";
 import { extractSocialFields } from "../parsers";
-import { getQrTypeStyle } from "@/shared/config/qr-type-styles";
+import { getQrTypeDef } from "@/features/qr-engine";
 
 interface Props {
   content: string;
@@ -17,18 +17,18 @@ interface Props {
 
 export default function SocialCard({ content, contentType, onOpenContent, isDeactivated, hideOpenAction }: Props) {
   const { colors, isDark } = useTheme();
-  const cfg = getQrTypeStyle(contentType);
+  const cfg = getQrTypeDef(contentType);
   const accentColor = cfg.gradient[0];
 
   const fields = extractSocialFields(contentType, content);
 
-  const displaySubtitle = cfg.extractDisplayValue
-    ? cfg.extractDisplayValue(content)
-    : (() => {
-        try {
-          return new URL(content.startsWith("http") ? content : `https://${content}`).hostname.replace(/^www\./, "");
-        } catch { return undefined; }
-      })();
+  const displaySubtitle = (() => {
+    try { return cfg.getDisplayLabel(content); } catch {}
+    try {
+      return new URL(content.startsWith("http") ? content : `https://${content}`)
+        .hostname.replace(/^www\./, "");
+    } catch { return undefined; }
+  })();
 
   return (
     <View style={[styles.card, { backgroundColor: colors.surface, borderColor: accentColor + "45" }]}>

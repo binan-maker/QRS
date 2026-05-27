@@ -11,10 +11,7 @@ import { truncate, formatRelativeTime, detectContentType } from "@/shared/utils/
 import { cardStyles } from "@/features/home/components/scanCardStyles";
 import type { LocalScan } from "@/features/home/types";
 import { QrTypeIcon, useQrMeta, getQrTypeMeta } from "@/features/qr-engine";
-import {
-  getContentDisplayLabel,
-  getContentSubtitle,
-} from "@/shared/utils/formatters/content-type";
+import { getDisplayLabel as getContentDisplayLabel, getSubtitle as getContentSubtitle } from "@/features/qr-engine";
 
 // ── Legacy helper kept for backward-compat (used by home screen hooks) ────────
 export function computeScanMeta(scan: LocalScan) {

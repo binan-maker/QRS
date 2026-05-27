@@ -15,7 +15,7 @@
  */
 
 import { Alert, Linking } from "react-native";
-import { getQrTypeStyle } from "@/shared/config/qr-type-styles";
+import { getQrTypeDef as getQrTypeStyle } from "@/features/qr-engine";
 
 export async function smartOpenContent(
   content: string,
