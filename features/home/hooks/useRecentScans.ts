@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useFocusEffect } from "expo-router";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useQuery } from "@tanstack/react-query";
@@ -85,7 +85,7 @@ export function useRecentScans() {
   );
 
   // ── Merge local + cloud; deduplicate by qrCodeId; take MAX_RECENT ─────────
-  const recentScans: LocalScan[] = (() => {
+  const recentScans = useMemo<LocalScan[]>(() => {
     const cloud  = cloudScansRaw ?? [];
     const merged = [...localScans];
     for (const c of cloud) {
@@ -94,7 +94,7 @@ export function useRecentScans() {
     return merged
       .sort((a, b) => new Date(b.scannedAt).getTime() - new Date(a.scannedAt).getTime())
       .slice(0, MAX_RECENT);
-  })();
+  }, [localScans, cloudScansRaw]);
 
   // ── Pull-to-refresh: bust disk cache then re-fetch ────────────────────────
   const onRefresh = useCallback(async () => {
