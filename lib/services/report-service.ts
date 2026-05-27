@@ -58,26 +58,28 @@ async function getServerAuthoritativeWeight(
   }
 }
 
-export async function getQrReportCounts(qrId: string): Promise<Record<string, number>> {
+export async function getQrReportData(qrId: string): Promise<{
+  counts: Record<string, number>;
+  weighted: Record<string, number>;
+}> {
   const { docs } = await db.query(["qrCodes", qrId, "reports"]);
   const counts: Record<string, number> = {};
-  for (const d of docs) {
-    if (d.data.userRemoved) continue;
-    const { reportType } = d.data;
-    counts[reportType] = (counts[reportType] || 0) + 1;
-  }
-  return counts;
-}
-
-export async function getQrWeightedReportCounts(qrId: string): Promise<Record<string, number>> {
-  const { docs } = await db.query(["qrCodes", qrId, "reports"]);
   const weighted: Record<string, number> = {};
   for (const d of docs) {
     if (d.data.userRemoved) continue;
     const { reportType, weight = 1 } = d.data;
+    counts[reportType] = (counts[reportType] || 0) + 1;
     weighted[reportType] = (weighted[reportType] || 0) + weight;
   }
-  return weighted;
+  return { counts, weighted };
+}
+
+export async function getQrReportCounts(qrId: string): Promise<Record<string, number>> {
+  return (await getQrReportData(qrId)).counts;
+}
+
+export async function getQrWeightedReportCounts(qrId: string): Promise<Record<string, number>> {
+  return (await getQrReportData(qrId)).weighted;
 }
 
 export async function getUserQrReport(qrId: string, userId: string): Promise<string | null> {

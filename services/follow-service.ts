@@ -11,15 +11,14 @@ export async function isUserFollowingQrCode(qrId: string, userId: string): Promi
 }
 
 export async function getFollowCount(qrId: string): Promise<number> {
-  const { docs } = await db.query(["qrCodes", qrId, "followers"]);
-  return docs.length;
+  try {
+    const qrData = await db.get(["qrCodes", qrId]);
+    return typeof qrData?.followerCount === "number" ? qrData.followerCount : 0;
+  } catch { return 0; }
 }
 
 export async function getQrFollowCount(qrId: string): Promise<number> {
-  try {
-    const { docs } = await db.query(["qrCodes", qrId, "followers"]);
-    return docs.length;
-  } catch { return 0; }
+  return getFollowCount(qrId);
 }
 
 export async function toggleFollow(
@@ -33,7 +32,10 @@ export async function toggleFollow(
   if (following) {
     await db.delete(["qrCodes", qrId, "followers", userId]);
     await db.delete(["users", userId, "following", qrId]);
-    await db.increment(["users", userId], "followingCount", -1);
+    await Promise.all([
+      db.increment(["users", userId], "followingCount", -1),
+      db.increment(["qrCodes", qrId], "followerCount", -1),
+    ]);
   } else {
     await db.set(["qrCodes", qrId, "followers", userId], {
       userId, createdAt: db.timestamp(),
@@ -41,7 +43,10 @@ export async function toggleFollow(
     await db.set(["users", userId, "following", qrId], {
       qrCodeId: qrId, content, contentType, createdAt: db.timestamp(),
     });
-    await db.increment(["users", userId], "followingCount", 1);
+    await Promise.all([
+      db.increment(["users", userId], "followingCount", 1),
+      db.increment(["qrCodes", qrId], "followerCount", 1),
+    ]);
     if (NOTIFICATIONS_ENABLED) {
       try {
         const qrData = await db.get(["qrCodes", qrId]);
@@ -71,9 +76,7 @@ export async function isUserFollowingCreator(creatorId: string, userId: string):
 export async function getCreatorFollowerCount(creatorId: string): Promise<number> {
   try {
     const userData = await db.get(["users", creatorId]);
-    if (typeof userData?.creatorFollowerCount === "number") return userData.creatorFollowerCount;
-    const { docs } = await db.query(["users", creatorId, "creatorFollowers"]);
-    return docs.length;
+    return typeof userData?.creatorFollowerCount === "number" ? userData.creatorFollowerCount : 0;
   } catch { return 0; }
 }
 

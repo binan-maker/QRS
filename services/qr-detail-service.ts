@@ -6,8 +6,8 @@
 
 import { db } from "@/lib/db/client";
 import { getQrCodeById } from "./qr-service";
-import { getQrReportCounts, getQrWeightedReportCounts, getUserQrReport } from "./report-service";
-import { isUserFollowingQrCode, getFollowCount } from "./follow-service";
+import { getQrReportData, getUserQrReport } from "./report-service";
+import { isUserFollowingQrCode } from "./follow-service";
 import { isUserFavorite } from "./user-service";
 import { calculateTrustScore } from "./trust-service";
 import type { QrCodeData, TrustScore } from "./types";
@@ -37,15 +37,13 @@ export async function loadQrDetail(
   let collusionFlags = { suspicious: false, safeWeightMultiplier: 1, negativeWeightMultiplier: 1 };
 
   try {
-    const [rc, wc, fc, qrDoc] = await Promise.all([
-      getQrReportCounts(qrId),
-      getQrWeightedReportCounts(qrId),
-      getFollowCount(qrId),
+    const [reportData, qrDoc] = await Promise.all([
+      getQrReportData(qrId),
       db.get(["qrCodes", qrId]),
     ]);
-    reportCounts = rc;
-    weightedCounts = wc;
-    followCount = fc;
+    reportCounts = reportData.counts;
+    weightedCounts = reportData.weighted;
+    followCount = typeof qrDoc?.followerCount === "number" ? qrDoc.followerCount : 0;
     if (qrDoc?.suspiciousVoteFlag) {
       collusionFlags = {
         suspicious: true,
