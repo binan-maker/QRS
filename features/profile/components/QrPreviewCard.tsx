@@ -1,7 +1,7 @@
 import React, { useCallback } from "react";
 import { View, Pressable } from "react-native";
 import QRCode from "react-native-qrcode-svg";
-import Animated, { FadeIn, ZoomIn } from "react-native-reanimated";
+import Animated, { FadeIn } from "react-native-reanimated";
 import { safePush } from "@/shared/utils/navigation";
 import { styles } from "@/features/profile/styles";
 
@@ -18,15 +18,14 @@ export interface QrItem {
 interface Props {
   qr: QrItem;
   colors: any;
-  index?: number;
 }
 
-const QrPreviewCard = React.memo(function QrPreviewCard({ qr, colors, index = 0 }: Props) {
+const QrPreviewCard = React.memo(function QrPreviewCard({ qr, colors }: Props) {
   const onPress = useCallback(() => safePush(`/my-qr/${qr.docId}`), [qr.docId]);
 
   return (
     <Animated.View
-      entering={FadeIn.delay(0).duration(240)}
+      entering={FadeIn.duration(240)}
       style={{ flex: 1 }}
     >
       <Pressable
