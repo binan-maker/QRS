@@ -1,3 +1,4 @@
+import React from "react";
 import { View, Text, StyleSheet } from "react-native";
 import { useTheme } from "@/shared/contexts/ThemeContext";
 
@@ -9,7 +10,7 @@ interface Props {
   gradient?: [string, string];
 }
 
-export function SectionHeader({ label, count, inline }: Props) {
+export const SectionHeader = React.memo(function SectionHeader({ label, count, inline }: Props) {
   const { colors } = useTheme();
 
   if (inline) {
@@ -43,34 +44,34 @@ export function SectionHeader({ label, count, inline }: Props) {
       </Text>
     </View>
   );
-}
+});
 
 export default SectionHeader;
 
 const styles = StyleSheet.create({
-  wrapper: { marginBottom: 10, marginTop: 2 },
-  label: { fontSize: 14, fontFamily: "Inter_700Bold" },
+  wrapper:    { marginBottom: 10, marginTop: 2 },
+  label:      { fontSize: 14, fontFamily: "Inter_700Bold" },
   row: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 9,
-    paddingVertical: 13,
+    flexDirection:  "row",
+    alignItems:     "center",
+    gap:            9,
+    paddingVertical:   13,
     paddingHorizontal: 2,
-    marginBottom: 2,
+    marginBottom:   2,
   },
   countLabel: {
-    fontSize: 11,
-    fontFamily: "Inter_700Bold",
+    fontSize:      11,
+    fontFamily:    "Inter_700Bold",
     textTransform: "uppercase",
     letterSpacing: 1.3,
-    flexShrink: 0,
+    flexShrink:    0,
   },
-  line: { flex: 1, height: 1 },
+  line:  { flex: 1, height: 1 },
   badge: {
-    borderRadius: 100,
+    borderRadius:    100,
     paddingHorizontal: 8,
-    paddingVertical: 2,
-    flexShrink: 0,
+    paddingVertical:   2,
+    flexShrink:      0,
   },
   badgeText: { fontSize: 10, fontFamily: "Inter_700Bold", letterSpacing: 0.2 },
 });

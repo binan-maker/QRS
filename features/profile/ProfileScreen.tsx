@@ -35,8 +35,32 @@ import QrPreviewCard from "@/features/profile/components/QrPreviewCard";
 import NotificationsModal from "@/shared/components/notifications/NotificationsModal";
 import { styles } from "@/features/profile/styles";
 
+// ── Module-level animation presets (created once, not per render) ──────────────
+const ENTER_TOP_BAR      = FadeInDown.delay(0).duration(260);
+const ENTER_NOTIF_BTN    = FadeIn.delay(40).duration(250);
+const ENTER_SETTINGS_BTN = FadeIn.delay(50).duration(250);
+const ENTER_AVATAR_SEC   = FadeInDown.delay(30).duration(260);
+const ENTER_AVATAR_WRAP  = FadeIn.delay(40).duration(240);
+const ENTER_NAME         = FadeInDown.delay(50).duration(260);
+const ENTER_USERNAME     = FadeInDown.delay(60).duration(260);
+const ENTER_BIO          = FadeInDown.delay(70).duration(260);
+const ENTER_EDIT_BTN     = FadeInDown.delay(80).duration(260);
+const ENTER_STATS_GRID   = FadeInDown.delay(50).duration(260);
+const ENTER_QR_SECTION   = FadeInDown.delay(70).duration(260);
+const ENTER_QR_EMPTY     = FadeInDown.delay(80).duration(260);
+const ENTER_QR_MORE      = FadeIn.delay(40).duration(240);
+const ENTER_NOTIF_DOT    = FadeIn.duration(240);
+const ENTER_DONATION     = FadeInDown.delay(80).duration(260);
+const ENTER_SIGNOUT      = FadeInDown.delay(100).duration(260);
+
+// Per-index stat cell entering (max 5 items, pre-built)
+const STAT_CELL_ENTER = [0, 1, 2, 3, 4].map((i) =>
+  FadeInDown.delay(Math.min(i, 4) * 25).duration(260),
+);
+const QR_SKELETON_ENTER = FadeIn.delay(0).duration(240);
+
 // ── Animated stat cell with number reveal ─────────────────────────────────────
-function StatCell({
+const StatCell = React.memo(function StatCell({
   label, formatted, color, loading, index,
 }: {
   label: string;
@@ -46,15 +70,15 @@ function StatCell({
   index: number;
 }) {
   const { colors } = useTheme();
-  const opacity   = useSharedValue(0);
+  const opacity    = useSharedValue(0);
   const translateY = useSharedValue(10);
 
   useEffect(() => {
     if (!loading) {
-      opacity.value   = withTiming(1, { duration: 350, easing: Easing.out(Easing.cubic) });
+      opacity.value    = withTiming(1, { duration: 350, easing: Easing.out(Easing.cubic) });
       translateY.value = withSpring(0, { damping: 18, stiffness: 200 });
     } else {
-      opacity.value   = 0;
+      opacity.value    = 0;
       translateY.value = 10;
     }
   }, [loading]);
@@ -66,7 +90,7 @@ function StatCell({
 
   return (
     <Animated.View
-      entering={FadeInDown.delay(Math.min(index, 4) * 25).duration(260)}
+      entering={STAT_CELL_ENTER[Math.min(index, 4)]}
       style={[
         styles.statCell,
         index % 2 === 0 && { borderRightWidth: 1, borderRightColor: colors.surfaceBorder },
@@ -82,20 +106,69 @@ function StatCell({
       <Text style={[styles.statLabel, { color: colors.textMuted }]}>{label}</Text>
     </Animated.View>
   );
-}
+});
 
 // ── QR skeleton tile ───────────────────────────────────────────────────────────
-function QrSkeletonCard({ index }: { index: number }) {
+const QrSkeletonCard = React.memo(function QrSkeletonCard({ index }: { index: number }) {
   const { colors } = useTheme();
   return (
     <Animated.View
-      entering={FadeIn.delay(0).duration(240)}
+      entering={QR_SKELETON_ENTER}
       style={[styles.qrCard, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}
     >
       <SkeletonBox width={58} height={58} borderRadius={12} />
     </Animated.View>
   );
-}
+});
+
+// ── Donation pill row (stable sub-tree, extracted to avoid re-renders) ─────────
+const DONATION_AMOUNTS = ["₹10", "₹50", "₹100"];
+const DonationCard = React.memo(function DonationCard() {
+  const onPress = useCallback(() => safePush("/donation"), []);
+  return (
+    <Animated.View entering={ENTER_DONATION}>
+      <Pressable
+        onPress={onPress}
+        style={({ pressed }) => [styles.donationBtn, { opacity: pressed ? 0.9 : 1 }]}
+      >
+        <LinearGradient
+          colors={["#6D28D9", "#7C3AED", "#4F46E5"]}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={styles.donationGrad}
+        >
+          <View style={styles.donationTopRow}>
+            <View style={styles.donationHeartRow}>
+              <View style={styles.donationIconWrap}>
+                <Ionicons name="heart" size={16} color="#fff" />
+              </View>
+              <View>
+                <Text style={styles.donationTitle}>Support QR Guard</Text>
+                <Text style={styles.donationSub}>Help keep the app free &amp; secure</Text>
+              </View>
+            </View>
+            <View style={styles.donationArrow}>
+              <Ionicons name="arrow-forward" size={15} color="#fff" />
+            </View>
+          </View>
+          <View style={styles.donationPillRow}>
+            {DONATION_AMOUNTS.map((amt) => (
+              <View key={amt} style={styles.donationPill}>
+                <Text style={styles.donationPillText}>{amt}</Text>
+              </View>
+            ))}
+            <View style={[styles.donationPill, { backgroundColor: "rgba(255,255,255,0.08)" }]}>
+              <Text style={styles.donationPillText}>via Play Store ›</Text>
+            </View>
+          </View>
+        </LinearGradient>
+      </Pressable>
+    </Animated.View>
+  );
+});
+
+// ── QR skeleton list (3 items, stable) ────────────────────────────────────────
+const QR_SKELETON_INDICES = [0, 1, 2];
 
 // ── Main screen ───────────────────────────────────────────────────────────────
 function ProfileScreen() {
@@ -119,10 +192,10 @@ function ProfileScreen() {
     handleOpenNotifications, handleClearNotifications,
   } = useNotifications();
 
-  const topInset = useTopInset();
+  const topInset     = useTopInset();
   const tabBarHeight = 60 + insets.bottom;
 
-  const previewQrs = useMemo(() => myQrCodes.slice(0, 3), [myQrCodes]);
+  const previewQrs   = useMemo(() => myQrCodes.slice(0, 3), [myQrCodes]);
   const totalQrScans = useMemo(
     () => myQrCodes.reduce((sum, qr) => sum + (qr.scanCount || 0), 0),
     [myQrCodes],
@@ -130,17 +203,17 @@ function ProfileScreen() {
 
   const formattedStats = useMemo(() => [
     {
-      label: "QR Hits",
-      value: totalQrScans,
-      color: colors.accent,
-      loading: myQrLoading,
+      label:     "QR Hits",
+      value:     totalQrScans,
+      color:     colors.accent,
+      loading:   myQrLoading,
       formatted: formatCompactNumber(totalQrScans),
     },
     {
-      label: "Following",
-      value: stats.followingCount ?? 0,
-      color: colors.primary,
-      loading: statsLoading,
+      label:     "Following",
+      value:     stats.followingCount ?? 0,
+      color:     colors.primary,
+      loading:   statsLoading,
       formatted: formatCompactNumber(stats.followingCount ?? 0),
     },
   ], [totalQrScans, myQrLoading, stats.followingCount, statsLoading, colors.accent, colors.primary]);
@@ -184,13 +257,10 @@ function ProfileScreen() {
         }
       >
         {/* ── TOP BAR ──────────────────────────────────────────── */}
-        <Animated.View
-          entering={FadeInDown.delay(0).duration(260)}
-          style={styles.topBar}
-        >
+        <Animated.View entering={ENTER_TOP_BAR} style={styles.topBar}>
           <Text style={[styles.pageTitle, { color: colors.text }]}>Profile</Text>
           <View style={styles.topBarActions}>
-            <Animated.View entering={FadeIn.delay(40).duration(250)}>
+            <Animated.View entering={ENTER_NOTIF_BTN}>
               <Pressable
                 onPress={handleOpenNotifications}
                 style={[styles.iconBtn, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}
@@ -204,7 +274,7 @@ function ProfileScreen() {
                 />
                 {notifCount > 0 && (
                   <Animated.View
-                    entering={FadeIn.duration(240)}
+                    entering={ENTER_NOTIF_DOT}
                     style={[styles.notifDot, { backgroundColor: colors.primary, borderColor: colors.background }]}
                   >
                     <Text style={[styles.notifDotText, { color: "#fff" }]}>
@@ -214,7 +284,7 @@ function ProfileScreen() {
                 )}
               </Pressable>
             </Animated.View>
-            <Animated.View entering={FadeIn.delay(50).duration(250)}>
+            <Animated.View entering={ENTER_SETTINGS_BTN}>
               <Pressable
                 onPress={goToSettings}
                 style={[styles.iconBtn, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}
@@ -227,12 +297,9 @@ function ProfileScreen() {
         </Animated.View>
 
         {/* ── AVATAR + IDENTITY ─────────────────────────────────── */}
-        <Animated.View
-          entering={FadeInDown.delay(30).duration(260)}
-          style={styles.avatarSection}
-        >
+        <Animated.View entering={ENTER_AVATAR_SEC} style={styles.avatarSection}>
           {/* Avatar */}
-          <Animated.View entering={FadeIn.delay(40).duration(240)}>
+          <Animated.View entering={ENTER_AVATAR_WRAP}>
             <Pressable onPress={openPhotoModal} style={styles.avatarPressable}>
               <View style={[styles.avatarRing, { borderColor: colors.primary + "50" }]}>
                 <View style={[styles.avatarInner, { backgroundColor: colors.surfaceLight }]}>
@@ -262,7 +329,7 @@ function ProfileScreen() {
 
           {/* Name */}
           <Animated.Text
-            entering={FadeInDown.delay(50).duration(260)}
+            entering={ENTER_NAME}
             style={[styles.displayName, { color: colors.text }]}
             numberOfLines={1}
           >
@@ -272,7 +339,7 @@ function ProfileScreen() {
           {/* Username */}
           {currentUsername ? (
             <Animated.Text
-              entering={FadeInDown.delay(60).duration(260)}
+              entering={ENTER_USERNAME}
               style={[styles.usernameText, { color: colors.primary }]}
             >
               @{currentUsername}
@@ -280,7 +347,7 @@ function ProfileScreen() {
           ) : null}
 
           {/* Bio */}
-          <Animated.View entering={FadeInDown.delay(70).duration(260)}>
+          <Animated.View entering={ENTER_BIO}>
             {bio ? (
               <Text style={[styles.bioText, { color: colors.textSecondary }]} numberOfLines={2}>{bio}</Text>
             ) : (
@@ -291,7 +358,7 @@ function ProfileScreen() {
           </Animated.View>
 
           {/* Edit profile button */}
-          <Animated.View entering={FadeInDown.delay(80).duration(260)}>
+          <Animated.View entering={ENTER_EDIT_BTN}>
             <Pressable
               onPress={goToEditProfile}
               style={({ pressed }) => [
@@ -306,7 +373,7 @@ function ProfileScreen() {
 
         {/* ── STATS GRID ────────────────────────────────────────── */}
         <Animated.View
-          entering={FadeInDown.delay(50).duration(260)}
+          entering={ENTER_STATS_GRID}
           style={[styles.statsGrid, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}
         >
           {formattedStats.map((s, i) => (
@@ -322,10 +389,7 @@ function ProfileScreen() {
         </Animated.View>
 
         {/* ── MY QR CODES ───────────────────────────────────────── */}
-        <Animated.View
-          entering={FadeInDown.delay(70).duration(260)}
-          style={styles.section}
-        >
+        <Animated.View entering={ENTER_QR_SECTION} style={styles.section}>
           <View style={styles.sectionHeader}>
             <Text style={[styles.sectionTitle, { color: colors.text }]}>My QR Codes</Text>
             <Pressable
@@ -340,12 +404,12 @@ function ProfileScreen() {
 
           {myQrLoading ? (
             <View style={styles.qrRow}>
-              {[0, 1, 2].map((i) => (
+              {QR_SKELETON_INDICES.map((i) => (
                 <QrSkeletonCard key={i} index={i} />
               ))}
             </View>
           ) : previewQrs.length === 0 ? (
-            <Animated.View entering={FadeInDown.delay(80).duration(260)}>
+            <Animated.View entering={ENTER_QR_EMPTY}>
               <Pressable
                 onPress={goToGenerator}
                 style={({ pressed }) => [
@@ -363,23 +427,20 @@ function ProfileScreen() {
                 <QrPreviewCard key={qr.docId} qr={qr} colors={colors} index={i} />
               ))}
               {myQrCodes.length > 3 && (
-                <Animated.View
-                  entering={FadeIn.delay(40).duration(240)}
-                  style={{ flex: 1 }}
-                >
+                <Animated.View entering={ENTER_QR_MORE} style={{ flex: 1 }}>
                   <Pressable
                     onPress={goToMyQrCodes}
                     style={({ pressed }) => [
                       styles.qrCard, styles.qrCardMore,
                       {
                         backgroundColor: colors.primaryDim,
-                        borderColor: colors.primary + "30",
-                        opacity: pressed ? 0.8 : 1,
+                        borderColor:     colors.primary + "30",
+                        opacity:         pressed ? 0.8 : 1,
                       },
                     ]}
                   >
                     <Text style={[styles.qrMoreCount, { color: colors.primary }]}>+{myQrCodes.length - 3}</Text>
-                    <Text style={[styles.qrMoreLabel, { color: colors.primary }]}>more</Text>
+                    <Text style={[styles.qrMoreLabel,  { color: colors.primary }]}>more</Text>
                   </Pressable>
                 </Animated.View>
               )}
@@ -388,51 +449,10 @@ function ProfileScreen() {
         </Animated.View>
 
         {/* ── SUPPORT QR GUARD ──────────────────────────────────── */}
-        <Animated.View
-          entering={FadeInDown.delay(80).duration(260)}
-        >
-          <Pressable
-            onPress={() => safePush("/donation")}
-            style={({ pressed }) => [styles.donationBtn, { opacity: pressed ? 0.9 : 1 }]}
-          >
-            <LinearGradient
-              colors={["#6D28D9", "#7C3AED", "#4F46E5"]}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
-              style={styles.donationGrad}
-            >
-              <View style={styles.donationTopRow}>
-                <View style={styles.donationHeartRow}>
-                  <View style={styles.donationIconWrap}>
-                    <Ionicons name="heart" size={16} color="#fff" />
-                  </View>
-                  <View>
-                    <Text style={styles.donationTitle}>Support QR Guard</Text>
-                    <Text style={styles.donationSub}>Help keep the app free &amp; secure</Text>
-                  </View>
-                </View>
-                <View style={styles.donationArrow}>
-                  <Ionicons name="arrow-forward" size={15} color="#fff" />
-                </View>
-              </View>
-              <View style={styles.donationPillRow}>
-                {["₹10", "₹50", "₹100"].map((amt) => (
-                  <View key={amt} style={styles.donationPill}>
-                    <Text style={styles.donationPillText}>{amt}</Text>
-                  </View>
-                ))}
-                <View style={[styles.donationPill, { backgroundColor: "rgba(255,255,255,0.08)" }]}>
-                  <Text style={styles.donationPillText}>via Play Store ›</Text>
-                </View>
-              </View>
-            </LinearGradient>
-          </Pressable>
-        </Animated.View>
+        <DonationCard />
 
         {/* ── SIGN OUT ──────────────────────────────────────────── */}
-        <Animated.View
-          entering={FadeInDown.delay(100).duration(260)}
-        >
+        <Animated.View entering={ENTER_SIGNOUT}>
           <Pressable
             onPress={handleSignOut}
             style={({ pressed }) => [

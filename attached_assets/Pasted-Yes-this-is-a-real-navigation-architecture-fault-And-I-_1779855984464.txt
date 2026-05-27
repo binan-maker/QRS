@@ -1,0 +1,424 @@
+Yes — this is a real navigation architecture fault.
+
+And I can explain exactly WHY it happens in your app.
+
+This is caused by:
+
+# Navigation stack inconsistency between:
+
+* App back button (`router.back()`)
+* Android hardware back button
+
+Your internal back button uses the router stack correctly,
+but Android hardware back is interacting with the ROOT navigation stack differently.
+
+That means your screen hierarchy is architected incorrectly.
+
+---
+
+# WHAT IS HAPPENING EXACTLY
+
+Current flow:
+
+```text id="6f6t2h"
+Home
+ → Settings
+   → Profile Settings
+```
+
+---
+
+# APP HEADER BACK BUTTON
+
+When user taps your custom back icon:
+
+```tsx id="hn87u9"
+router.back()
+```
+
+This pops:
+
+```text id="aq0k7j"
+Profile Settings
+→ back to Settings
+```
+
+Correct behavior.
+
+---
+
+# BUT DEVICE BACK BUTTON
+
+Android hardware back button:
+
+```text id="klmrjg"
+Profile Settings
+→ Home
+```
+
+This means:
+
+# Android thinks Settings is NOT in the active stack.
+
+That is the real issue.
+
+---
+
+# ROOT CAUSE
+
+Most likely your Settings page is opened using:
+
+```tsx id="u0lyfy"
+router.replace()
+```
+
+instead of:
+
+```tsx id="fcxhkc"
+router.push()
+```
+
+OR
+
+you are navigating across different navigation groups incorrectly.
+
+---
+
+# MOST LIKELY BAD FLOW
+
+Probably something like:
+
+```tsx id="s1epan"
+router.replace("/settings")
+```
+
+Then:
+
+```tsx id="2y24g3"
+router.push("/profile-settings")
+```
+
+---
+
+# WHY THIS BREAKS
+
+`replace()` removes previous screen from stack.
+
+So Android stack becomes:
+
+```text id="eb12j8"
+Home
+→ Profile Settings
+```
+
+NOT:
+
+```text id="9f9dfy"
+Home
+→ Settings
+→ Profile Settings
+```
+
+---
+
+# RESULT
+
+Your custom header back:
+
+```tsx id="zcod35"
+router.back()
+```
+
+works because Expo Router handles local history.
+
+BUT Android hardware back checks native navigation stack.
+
+So it skips Settings.
+
+---
+
+# SECOND POSSIBLE ROOT CAUSE
+
+You may have:
+
+# Nested stack mismatch
+
+Example:
+
+```text id="6jlzsm"
+(tabs)
+settings.tsx
+```
+
+BUT:
+
+```text id="mo2h3f"
+profile-settings.tsx
+```
+
+outside the same stack group.
+
+Then Android treats them differently.
+
+---
+
+# VERY LIKELY CURRENT STRUCTURE
+
+Probably:
+
+```text id="rq0uik"
+app/
+  (tabs)/
+    profile.tsx
+
+  settings.tsx
+  profile-settings.tsx
+```
+
+instead of:
+
+```text id="j0r5d0"
+app/
+  settings/
+    index.tsx
+    profile.tsx
+```
+
+---
+
+# WHY THIS MATTERS
+
+Expo Router stack history depends heavily on:
+
+* route grouping
+* stack nesting
+* push vs replace
+
+Your architecture currently breaks stack continuity.
+
+---
+
+# CORRECT ARCHITECTURE
+
+# GOOD STRUCTURE
+
+```text id="o4q0u3"
+app/
+  settings/
+    index.tsx
+    profile.tsx
+    privacy.tsx
+```
+
+Now navigation becomes:
+
+```tsx id="y4l6r8"
+router.push("/settings/profile")
+```
+
+This preserves stack properly.
+
+---
+
+# MOST IMPORTANT FIX
+
+# NEVER use `router.replace()` for normal page navigation
+
+Use:
+
+```tsx id="xyl73n"
+router.push()
+```
+
+OR:
+
+```tsx id="dih6f1"
+navigation.navigate()
+```
+
+---
+
+# USE replace() ONLY FOR:
+
+* auth redirects
+* onboarding completion
+* splash transitions
+* forced redirects
+
+NOT settings navigation.
+
+---
+
+# HOW TO FIND THE BUG
+
+Search entire project for:
+
+```tsx id="4m5wbm"
+router.replace(
+```
+
+Especially:
+
+* settings buttons
+* profile menu
+* account pages
+* modal redirects
+
+---
+
+# YOU WILL LIKELY FIND
+
+Something like:
+
+```tsx id="8lrn4d"
+router.replace("/settings")
+```
+
+Change to:
+
+```tsx id="5n1ik9"
+router.push("/settings")
+```
+
+---
+
+# ANOTHER POSSIBLE ISSUE
+
+You may have custom Android back handling.
+
+Search for:
+
+```tsx id="2jlwmk"
+BackHandler
+```
+
+OR:
+
+```tsx id="8r5znw"
+useFocusEffect
+```
+
+OR:
+
+```tsx id="o1ym1q"
+beforeRemove
+```
+
+You may accidentally force redirect to home.
+
+---
+
+# EXAMPLE OF BAD CODE
+
+```tsx id="5o0s1z"
+BackHandler.addEventListener("hardwareBackPress", () => {
+  router.push("/");
+  return true;
+});
+```
+
+This would exactly cause your issue.
+
+---
+
+# VERY IMPORTANT ARCHITECTURE ISSUE
+
+Your app currently mixes:
+
+* Expo Router history
+* native Android history
+* manual back handling
+
+This creates inconsistent navigation behavior.
+
+---
+
+# BEST PRACTICE ARCHITECTURE
+
+# 1. Use ONE stack hierarchy
+
+Example:
+
+```text id="7w60a7"
+(tabs)
+  settings/
+    index
+    profile
+    privacy
+```
+
+---
+
+# 2. Use `router.push()` for forward navigation
+
+NOT replace.
+
+---
+
+# 3. Use `router.back()` ONLY for UI back buttons
+
+---
+
+# 4. Avoid manual BackHandler unless absolutely needed
+
+Most apps overuse it unnecessarily.
+
+---
+
+# IDEAL SETTINGS FLOW
+
+```text id="1yk72f"
+Home
+→ Settings
+→ Profile Settings
+→ Notification Settings
+```
+
+Android hardware back should naturally pop:
+
+```text id="qj2ylz"
+Notification Settings
+→ Profile Settings
+→ Settings
+→ Home
+```
+
+without ANY custom code.
+
+---
+
+# CURRENT PROBLEM SEVERITY
+
+| Issue                           | Severity  |
+| ------------------------------- | --------- |
+| Broken Android back stack       | HIGH      |
+| Inconsistent navigation history | HIGH      |
+| Possible misuse of replace()    | VERY HIGH |
+| Stack hierarchy mismatch        | HIGH      |
+| UX confusion                    | HIGH      |
+
+---
+
+# MOST LIKELY EXACT FIX
+
+After analyzing your app structure:
+
+# 80% probability:
+
+You used:
+
+```tsx id="p6p5hy"
+router.replace()
+```
+
+inside settings/profile navigation.
+
+That is most likely the exact root cause.
+
+---
+
+# SECOND MOST LIKELY
+
+Settings-related pages are outside same stack hierarchy.
+
+Meaning routing architecture itself needs restructuring.

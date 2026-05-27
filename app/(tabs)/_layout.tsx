@@ -5,7 +5,7 @@ import { BlurView } from "expo-blur";
 import { Platform, StyleSheet, View, Pressable } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { MaterialCommunityIcons, Ionicons } from "@expo/vector-icons";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useTheme } from "@/shared/contexts/ThemeContext";
 import { useAuth } from "@/shared/contexts/AuthContext";
@@ -14,14 +14,77 @@ import { LinearGradient } from "expo-linear-gradient";
 import { useAppTranslation } from "@/lib/i18n/useAppTranslation";
 import * as Haptics from "@/lib/haptics";
 
-function ScanTabButton({ onPress }: { onPress?: () => void }) {
+// ── Stable tab bar background components (memoized at module level) ────────────
+const IosTabBarBackground = React.memo(function IosTabBarBackground({
+  isDark,
+  borderColor,
+}: {
+  isDark: boolean;
+  borderColor: string;
+}) {
+  return (
+    <BlurView
+      intensity={95}
+      tint={isDark ? "dark" : "light"}
+      style={[
+        StyleSheet.absoluteFill,
+        {
+          borderTopLeftRadius: 22, borderTopRightRadius: 22,
+          borderBottomLeftRadius: 0, borderBottomRightRadius: 0,
+          overflow: "hidden",
+          borderTopWidth: 1, borderLeftWidth: 1,
+          borderRightWidth: 1, borderBottomWidth: 0,
+          borderColor,
+        },
+      ]}
+    />
+  );
+});
+
+const AndroidTabBarBackground = React.memo(function AndroidTabBarBackground({
+  backgroundColor,
+  borderColor,
+}: {
+  backgroundColor: string;
+  borderColor: string;
+}) {
+  return (
+    <View
+      style={[
+        StyleSheet.absoluteFill,
+        {
+          bottom: -120,
+          backgroundColor,
+          borderTopLeftRadius: 22, borderTopRightRadius: 22,
+          borderBottomLeftRadius: 0, borderBottomRightRadius: 0,
+          borderTopWidth: 1, borderLeftWidth: 0,
+          borderRightWidth: 0, borderBottomWidth: 0,
+          borderColor,
+          shadowColor: "#000",
+          shadowOffset: { width: 0, height: -6 },
+          shadowOpacity: 0.18, shadowRadius: 20, elevation: 20,
+        },
+      ]}
+    />
+  );
+});
+
+// ── Scan FAB (memoized — contains LinearGradient which is GPU-expensive) ───────
+const ScanTabButton = React.memo(function ScanTabButton({
+  onPress,
+}: {
+  onPress?: () => void;
+}) {
   const { colors } = useTheme();
+
+  const handlePress = useCallback(() => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    onPress?.();
+  }, [onPress]);
+
   return (
     <Pressable
-      onPress={() => {
-        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-        if (onPress) onPress();
-      }}
+      onPress={handlePress}
       style={styles.scanTabBtn}
       accessibilityLabel="Scan"
       accessibilityRole="button"
@@ -30,16 +93,85 @@ function ScanTabButton({ onPress }: { onPress?: () => void }) {
         colors={[colors.primary, colors.primaryShade]}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
-        style={[styles.scanTabBtnInner, {
-          borderColor: colors.background,
-          shadowColor: colors.primary,
-        }]}
+        style={[
+          styles.scanTabBtnInner,
+          { borderColor: colors.background, shadowColor: colors.primary },
+        ]}
       >
         <MaterialCommunityIcons name="qrcode-scan" size={28} color="#fff" />
       </LinearGradient>
     </Pressable>
   );
-}
+});
+
+// ── Tab icon components (memoized to prevent recreation on every tab-bar paint) ─
+const HomeIcon = React.memo(function HomeIcon({
+  color,
+  focused,
+}: {
+  color: string;
+  focused: boolean;
+}) {
+  return (
+    <View
+      style={focused ? [styles.activeIconWrap, { backgroundColor: color + "18" }] : styles.iconWrap}
+    >
+      <Ionicons name={focused ? "home" : "home-outline"} size={24} color={color} />
+    </View>
+  );
+});
+
+const GeneratorIcon = React.memo(function GeneratorIcon({
+  color,
+  focused,
+}: {
+  color: string;
+  focused: boolean;
+}) {
+  return (
+    <View
+      style={focused ? [styles.activeIconWrap, { backgroundColor: color + "18" }] : styles.iconWrap}
+    >
+      <MaterialCommunityIcons
+        name={focused ? "qrcode-edit" : "qrcode"}
+        size={24}
+        color={color}
+      />
+    </View>
+  );
+});
+
+const HistoryIcon = React.memo(function HistoryIcon({
+  color,
+  focused,
+}: {
+  color: string;
+  focused: boolean;
+}) {
+  return (
+    <View
+      style={focused ? [styles.activeIconWrap, { backgroundColor: color + "18" }] : styles.iconWrap}
+    >
+      <Ionicons name={focused ? "time" : "time-outline"} size={24} color={color} />
+    </View>
+  );
+});
+
+const ProfileIcon = React.memo(function ProfileIcon({
+  color,
+  focused,
+}: {
+  color: string;
+  focused: boolean;
+}) {
+  return (
+    <View
+      style={focused ? [styles.activeIconWrap, { backgroundColor: color + "18" }] : styles.iconWrap}
+    >
+      <Ionicons name={focused ? "person" : "person-outline"} size={24} color={color} />
+    </View>
+  );
+});
 
 function useNotificationCount() {
   const { user } = useAuth();
@@ -81,6 +213,14 @@ function NativeTabLayout() {
   );
 }
 
+// ── Stable icon render functions (referentially stable across renders) ──────────
+const renderHomeIcon   = ({ color, focused }: { color: string; focused: boolean }) => <HomeIcon color={color} focused={focused} />;
+const renderGenIcon    = ({ color, focused }: { color: string; focused: boolean }) => <GeneratorIcon color={color} focused={focused} />;
+const renderHistIcon   = ({ color, focused }: { color: string; focused: boolean }) => <HistoryIcon color={color} focused={focused} />;
+const renderProfIcon   = ({ color, focused }: { color: string; focused: boolean }) => <ProfileIcon color={color} focused={focused} />;
+const renderScanButton = () => <ScanTabButton onPress={() => router.push("/(tabs)/scanner")} />;
+const renderNoLabel    = () => null;
+
 function ClassicTabLayout() {
   const isWeb  = Platform.OS === "web";
   const isIOS  = Platform.OS === "ios";
@@ -90,158 +230,110 @@ function ClassicTabLayout() {
 
   useEffect(() => {
     AsyncStorage.getItem("qrg:startup:screen").then((pref) => {
-      if (pref === "scanner") {
-        router.replace("/(tabs)/scanner");
-      }
+      if (pref === "scanner") router.replace("/(tabs)/scanner");
     }).catch(() => {});
   }, []);
 
   const tabBarHeight = isWeb ? 84 : 70 + insets.bottom;
-  const hiddenTabBar = { display: "none" as const };
+  const hiddenTabBar = useMemo(() => ({ display: "none" as const }), []);
+
+  // Memoize to prevent rebuilding screenOptions on every render
+  const tabBarBorderColor = isIOS
+    ? (colors.isDark ? "rgba(255,255,255,0.07)" : "rgba(0,0,0,0.06)")
+    : colors.surfaceBorder;
+
+  const tabBarBackground = useCallback(
+    () =>
+      isIOS ? (
+        <IosTabBarBackground isDark={colors.isDark} borderColor={tabBarBorderColor} />
+      ) : (
+        <AndroidTabBarBackground
+          backgroundColor={colors.isDark ? colors.background : colors.surface}
+          borderColor={tabBarBorderColor}
+        />
+      ),
+    [isIOS, colors.isDark, colors.background, colors.surface, tabBarBorderColor],
+  );
+
+  const screenOptions = useMemo(
+    () => ({
+      headerShown: false,
+      tabBarActiveTintColor:   colors.primary,
+      tabBarInactiveTintColor: colors.tabIconDefault,
+      tabBarStyle: {
+        position:        "absolute" as const,
+        backgroundColor: "transparent",
+        borderTopWidth:  0,
+        elevation:       0,
+        height:          tabBarHeight,
+        paddingBottom:   insets.bottom,
+        paddingTop:      0,
+        overflow:        "visible" as const,
+        marginHorizontal: 0,
+        marginBottom:    0,
+      },
+      tabBarBackground,
+      tabBarShowLabel: true,
+      tabBarLabelStyle: {
+        fontFamily:      "Inter_500Medium",
+        fontSize:        10.5,
+        marginTop:       2,
+        marginBottom:    0,
+        letterSpacing:   0.1,
+        includeFontPadding: false,
+      },
+      tabBarItemStyle: {
+        paddingTop:     6,
+        paddingBottom:  4,
+        alignItems:     "center" as const,
+        justifyContent: "center" as const,
+      },
+    }),
+    [colors.primary, colors.tabIconDefault, tabBarHeight, insets.bottom, tabBarBackground],
+  );
 
   return (
-    <Tabs
-      initialRouteName="index"
-      screenOptions={{
-        headerShown: false,
-        tabBarActiveTintColor: colors.primary,
-        tabBarInactiveTintColor: colors.tabIconDefault,
-        tabBarStyle: {
-          position: "absolute",
-          backgroundColor: "transparent",
-          borderTopWidth: 0,
-          elevation: 0,
-          height: tabBarHeight,
-          paddingBottom: insets.bottom,
-          paddingTop: 0,
-          overflow: "visible",
-          marginHorizontal: 0,
-          marginBottom: 0,
-        },
-        tabBarBackground: () =>
-          isIOS ? (
-            <BlurView
-              intensity={95}
-              tint={colors.isDark ? "dark" : "light"}
-              style={[StyleSheet.absoluteFill, {
-                borderTopLeftRadius: 22, borderTopRightRadius: 22,
-                borderBottomLeftRadius: 0, borderBottomRightRadius: 0,
-                overflow: "hidden",
-                borderTopWidth: 1, borderLeftWidth: 1,
-                borderRightWidth: 1, borderBottomWidth: 0,
-                borderColor: colors.isDark ? "rgba(255,255,255,0.07)" : "rgba(0,0,0,0.06)",
-              }]}
-            />
-          ) : (
-            // Extend `bottom` well past 0 so there is no sub-pixel gap
-            // between the floating bar and the system navigation bar.
-            // Fully-opaque background avoids colour mismatch with the nav bar.
-            <View style={[StyleSheet.absoluteFill, {
-              bottom: -120,
-              backgroundColor: colors.isDark ? colors.background : colors.surface,
-              borderTopLeftRadius: 22, borderTopRightRadius: 22,
-              borderBottomLeftRadius: 0, borderBottomRightRadius: 0,
-              borderTopWidth: 1, borderLeftWidth: 0,
-              borderRightWidth: 0, borderBottomWidth: 0,
-              borderColor: colors.surfaceBorder,
-              shadowColor: "#000",
-              shadowOffset: { width: 0, height: -6 },
-              shadowOpacity: 0.18, shadowRadius: 20, elevation: 20,
-            }]} />
-          ),
-        tabBarShowLabel: true,
-        tabBarLabelStyle: {
-          fontFamily: "Inter_500Medium", fontSize: 10.5,
-          marginTop: 2, marginBottom: 0,
-          letterSpacing: 0.1, includeFontPadding: false,
-        },
-        tabBarItemStyle: {
-          paddingTop: 6, paddingBottom: 4,
-          alignItems: "center", justifyContent: "center",
-        },
-      }}
-    >
-      {/* ── Home ── */}
+    <Tabs initialRouteName="index" screenOptions={screenOptions}>
       <Tabs.Screen
         name="index"
-        options={{
-          title: t("tabs.home"),
-          tabBarIcon: ({ color, focused }: { color: string; focused: boolean }) => (
-            <View style={focused ? [styles.activeIconWrap, { backgroundColor: color + "18" }] : styles.iconWrap}>
-              <Ionicons name={focused ? "home" : "home-outline"} size={24} color={color} />
-            </View>
-          ),
-        }}
+        options={{ title: t("tabs.home"), tabBarIcon: renderHomeIcon }}
       />
 
-      {/* ── Generator ── */}
       <Tabs.Screen
         name="qr-generator"
-        options={{
-          title: t("tabs.generator"),
-          tabBarIcon: ({ color, focused }: { color: string; focused: boolean }) => (
-            <View style={focused ? [styles.activeIconWrap, { backgroundColor: color + "18" }] : styles.iconWrap}>
-              <MaterialCommunityIcons name={focused ? "qrcode-edit" : "qrcode"} size={24} color={color} />
-            </View>
-          ),
-        }}
+        options={{ title: t("tabs.generator"), tabBarIcon: renderGenIcon }}
       />
 
-      {/* ── Scanner (floating center button, bar hidden when active) ── */}
       <Tabs.Screen
         name="scanner"
         options={{
-          title: "",
-          tabBarLabel: () => null,
-          tabBarStyle: hiddenTabBar,
-          tabBarButton: () => (
-            <ScanTabButton onPress={() => router.push("/(tabs)/scanner")} />
-          ),
+          title:           "",
+          tabBarLabel:     renderNoLabel,
+          tabBarStyle:     hiddenTabBar,
+          tabBarButton:    renderScanButton,
         }}
       />
 
-      {/* ── History ── */}
       <Tabs.Screen
         name="history"
-        options={{
-          title: t("tabs.history"),
-          tabBarIcon: ({ color, focused }: { color: string; focused: boolean }) => (
-            <View style={focused ? [styles.activeIconWrap, { backgroundColor: color + "18" }] : styles.iconWrap}>
-              <Ionicons name={focused ? "time" : "time-outline"} size={24} color={color} />
-            </View>
-          ),
-        }}
+        options={{ title: t("tabs.history"), tabBarIcon: renderHistIcon }}
       />
 
-      {/* ── Profile ── */}
       <Tabs.Screen
         name="profile"
-        options={{
-          title: t("tabs.profile"),
-          tabBarIcon: ({ color, focused }: { color: string; focused: boolean }) => (
-            <View style={focused ? [styles.activeIconWrap, { backgroundColor: color + "18" }] : styles.iconWrap}>
-              <Ionicons name={focused ? "person" : "person-outline"} size={24} color={color} />
-            </View>
-          ),
-        }}
+        options={{ title: t("tabs.profile"), tabBarIcon: renderProfIcon }}
       />
 
-      {/* ── Settings (hidden, no nav bar) ── */}
       <Tabs.Screen
         name="settings"
-        options={{
-          href: null,
-          tabBarStyle: hiddenTabBar,
-        }}
+        options={{ href: null, tabBarStyle: hiddenTabBar }}
       />
     </Tabs>
   );
 }
 
 export default function TabLayout() {
-  if (isLiquidGlassAvailable()) {
-    return <NativeTabLayout />;
-  }
+  if (isLiquidGlassAvailable()) return <NativeTabLayout />;
   return <ClassicTabLayout />;
 }
 
