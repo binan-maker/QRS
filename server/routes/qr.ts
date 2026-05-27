@@ -1,20 +1,7 @@
 import { Router, type Request, type Response } from "express";
-import * as admin from "firebase-admin";
+import { admin, getAdminDb, getAdminAuth } from "../lib/firebase-admin";
 
 export const qrRouter = Router();
-
-function getAdminApp(): admin.app.App | null {
-  try {
-    if (admin.apps.length > 0) return admin.apps[0]!;
-    const serviceAccount = process.env.FIREBASE_SERVICE_ACCOUNT_JSON;
-    if (!serviceAccount) return null;
-    return admin.initializeApp({
-      credential: admin.credential.cert(JSON.parse(serviceAccount)),
-    });
-  } catch {
-    return null;
-  }
-}
 
 // PATCH /api/v1/qr/:qrId/active  — toggle QR active/paused state
 qrRouter.patch("/:qrId/active", async (req: Request, res: Response) => {
@@ -27,16 +14,16 @@ qrRouter.patch("/:qrId/active", async (req: Request, res: Response) => {
   const authHeader = req.headers["authorization"];
   if (!authHeader?.startsWith("Bearer ")) return res.status(401).json({ error: "Unauthorized" });
 
-  const adminApp = getAdminApp();
-  if (!adminApp) {
+  const adminAuth = getAdminAuth();
+  const db = getAdminDb();
+  if (!adminAuth || !db) {
     return res.status(503).json({ error: "Server not configured. Set FIREBASE_SERVICE_ACCOUNT_JSON." });
   }
 
   try {
-    const decodedToken = await admin.auth(adminApp).verifyIdToken(authHeader.slice(7));
+    const decodedToken = await adminAuth.verifyIdToken(authHeader.slice(7));
     const uid = decodedToken.uid;
 
-    const db = admin.firestore(adminApp);
     const docRef = db.collection("qrCodes").doc(qrId);
     const docSnap = await docRef.get();
 
@@ -71,16 +58,15 @@ qrRouter.get("/:uuid/analytics", async (req: Request, res: Response) => {
   const authHeader = req.headers["authorization"];
   if (!authHeader?.startsWith("Bearer ")) return res.status(401).json({ error: "Unauthorized" });
 
-  const adminApp = getAdminApp();
-  if (!adminApp) {
+  const adminAuth = getAdminAuth();
+  const db = getAdminDb();
+  if (!adminAuth || !db) {
     return res.status(503).json({ error: "Server not configured. Set FIREBASE_SERVICE_ACCOUNT_JSON." });
   }
 
   try {
-    const decodedToken = await admin.auth(adminApp).verifyIdToken(authHeader.slice(7));
+    const decodedToken = await adminAuth.verifyIdToken(authHeader.slice(7));
     const uid = decodedToken.uid;
-
-    const db = admin.firestore(adminApp);
 
     // Resolve qrDocId: try direct doc by id, then by uuid field
     let qrDocId: string | null = null;

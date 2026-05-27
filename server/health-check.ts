@@ -269,10 +269,26 @@ export async function getHealthStatus(): Promise<HealthStatus> {
 }
 
 export function registerHealthEndpoints(app: Express): void {
-  // Basic health check (for load balancers)
+  // Basic health check (for load balancers / deployment readiness)
   app.get('/health', (_req, res) => {
     trackRequest();
-    res.json({ status: 'ok', timestamp: new Date().toISOString() });
+    res.json({
+      status: 'ok',
+      version: VERSION,
+      uptime: Math.floor((Date.now() - SERVER_START_TIME) / 1000),
+      timestamp: new Date().toISOString(),
+    });
+  });
+
+  // Versioned alias — same response, under /api/v1/health
+  app.get('/api/v1/health', (_req, res) => {
+    trackRequest();
+    res.json({
+      status: 'ok',
+      version: VERSION,
+      uptime: Math.floor((Date.now() - SERVER_START_TIME) / 1000),
+      timestamp: new Date().toISOString(),
+    });
   });
   
   // Detailed health check (for monitoring dashboards)
