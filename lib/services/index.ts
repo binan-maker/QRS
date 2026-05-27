@@ -9,6 +9,6 @@ export * from "./follow-service";
 export * from "./generator-service";
 export * from "./comment-service";
 export * from "./user-service";
-export * from "./notification-service";
+export * from "@/services/notification-service";
 export * from "./guard-service";
 export * from "./message-service";

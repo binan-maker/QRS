@@ -1,5 +1,5 @@
 import { db } from "../db/client";
-import { notifyFriendRequest, notifyFriendAccepted } from "./notification-service";
+import { notifyFriendRequest, notifyFriendAccepted } from "@/services/notification-service";
 
 export type FriendStatus = "none" | "sent" | "received" | "friends";
 

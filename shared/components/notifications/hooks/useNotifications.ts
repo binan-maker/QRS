@@ -7,7 +7,7 @@ import {
   markAllNotificationsRead,
   clearAllNotifications,
   type Notification,
-} from "@/lib/firestore-service";
+} from "@/services/notification-service";
 
 type CountListener = (count: number) => void;
 

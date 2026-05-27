@@ -1,5 +1,5 @@
 import { db } from "../db/client";
-import { notifyQrFollowers } from "./notification-service";
+import { notifyQrFollowers } from "@/services/notification-service";
 import {
   checkReportEligibility,
   recordReport,
