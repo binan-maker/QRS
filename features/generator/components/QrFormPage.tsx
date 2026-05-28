@@ -10,6 +10,7 @@ import type { QrMode } from "@/features/generator/types/form-types";
 import { ScrollView } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 
+import ComingSoonBanner    from "@/features/generator/components/ComingSoonBanner";
 import FormTopBar          from "@/features/generator/components/FormTopBar";
 import TemplateReadyCard   from "@/features/generator/components/TemplateReadyCard";
 import GenerateButton      from "@/features/generator/components/GenerateButton";
@@ -135,6 +136,9 @@ export default function QrFormPage({ mode, initialTemplateId, openAiBuilder }: P
         contentContainerStyle={[styles.scroll, { paddingBottom: insets.bottom + 100 }]}
         keyboardShouldPersistTaps="handled"
       >
+        {/* ── Phase 2 Coming Soon notice ───────────────────────── */}
+        <ComingSoonBanner compact />
+
         {/* ── Template picker / ready card ─────────────────────── */}
         {!showTemplateReady && (
           <TypePickerHome
