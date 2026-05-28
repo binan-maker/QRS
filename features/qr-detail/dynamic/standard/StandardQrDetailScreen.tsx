@@ -23,7 +23,6 @@ import { formatCompactNumber } from "@/shared/utils/number-format";
 import ContentCard from "@/features/qr-detail/content-cards";
 import TrustScoreCard from "@/features/qr-detail/components/TrustScoreCard";
 import SafetyWarningCard from "@/features/qr-detail/components/SafetyWarningCard";
-import EvidenceCard from "@/features/qr-detail/components/EvidenceCard";
 import ReportGrid from "@/features/qr-detail/components/ReportGrid";
 import FollowersModal from "@/features/qr-detail/components/modals/FollowersModal";
 import MessagesModal from "@/features/qr-detail/components/modals/MessagesModal";
@@ -36,7 +35,6 @@ import OwnerInfoSheet from "@/features/qr-detail/components/sheets/OwnerInfoShee
 import CommentMenuSheet from "@/features/qr-detail/components/sheets/CommentMenuSheet";
 import OverflowSheet from "@/features/qr-detail/components/sheets/OverflowSheet";
 import { smartOpenContent } from "@/shared/utils/smart-open";
-import { VerdictBanner } from "@/features/qr-detail/components/VerdictBanner";
 
 const ACCENT = "#3b82f6";
 
@@ -111,10 +109,6 @@ export default function StandardQrDetailScreen({ id, standardUuid, ownerDocId }:
   const isDeactivated = standardData?.isActive === false;
   const isQrOwner = !!(user?.id && standardData?.ownerId && user.id === standardData.ownerId);
   const trust = q.getTrustInfo();
-  const baseVerdict = q.getCombinedVerdict();
-  const verdict = isQrOwner
-    ? { level: "safe" as const, label: "YOUR QR", reason: "You created this QR code", color: colors.safe }
-    : baseVerdict;
 
   const ownerInfoForSheet = standardData
     ? {
@@ -266,14 +260,6 @@ export default function StandardQrDetailScreen({ id, standardUuid, ownerDocId }:
               </View>
             </Animated.View>
 
-            {/* ── Verdict banner (YOUR QR / SAFE / UNVERIFIED) ─ */}
-            {!q.offlineMode && !standardLoading && (
-              <Animated.View entering={FadeInDown.delay(60).duration(260)}>
-                <VerdictBanner verdict={verdict} offlineMode={q.offlineMode} />
-              </Animated.View>
-            )}
-
-
             {/* ── Content card — shows rawContent from database, never the scanned guard URL */}
             {!standardLoading && effectiveContent && (
               <Animated.View entering={FadeInDown.delay(70).duration(260)}>
@@ -322,12 +308,6 @@ export default function StandardQrDetailScreen({ id, standardUuid, ownerDocId }:
                       : "Proceed with Caution"
                   }
                 />
-              </Animated.View>
-            )}
-
-            {effectiveContentType === "url" && contentSafety.urlSafety?.evidence && contentSafety.urlSafety.evidence.length > 0 && (
-              <Animated.View entering={FadeInDown.delay(90).duration(260)}>
-                <EvidenceCard title="URL Analysis" evidence={contentSafety.urlSafety.evidence} />
               </Animated.View>
             )}
 
