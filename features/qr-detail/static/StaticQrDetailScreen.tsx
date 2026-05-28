@@ -315,7 +315,7 @@ export default function StaticQrDetailScreen({ id, ownerDocId }: Props) {
             </Animated.View>
 
             {/* ── Safety badge (compact — only if flagged) ─────── */}
-            {verdict && verdict.level !== "safe" && verdict.level !== "unknown" && (
+            {verdict && verdict.level !== "safe" && (
               <Animated.View entering={FadeIn.delay(60).duration(220)}>
                 <SafetyBadge verdict={verdict} />
               </Animated.View>
@@ -554,10 +554,16 @@ export default function StaticQrDetailScreen({ id, ownerDocId }: Props) {
       />
       <MessagesModal
         visible={q.messagesModalOpen}
-        onClose={() => q.setMessagesModalOpen(false)}
+        isQrOwner={isQrOwner}
         ownerInfo={q.ownerInfo}
-        currentUserId={user?.id}
-        qrCodeId={id}
+        messages={q.messages}
+        messageText={q.messageText}
+        sendingMessage={q.sendingMessage}
+        user={user}
+        onChangeText={q.setMessageText}
+        onSend={q.handleSendMessage}
+        onMarkRead={() => {}}
+        onClose={() => q.setMessagesModalOpen(false)}
       />
     </View>
   );

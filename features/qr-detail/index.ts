@@ -1,2 +1,2 @@
-export { default as QrDetailScreen } from "./screens/QrDetailScreen";
+export { default as QrDetailScreen } from "./QrDetailScreen";
 export { useQrDetail } from "./hooks/useQrDetail";

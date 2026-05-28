@@ -202,7 +202,7 @@ export function useQrDetail(id: string) {
       handleOpenPayment(content);
       return;
     }
-    await smartOpenContent(content, contentType, data.qrCode?.templateKey);
+    await smartOpenContent(content, contentType, data.qrCode?.templateKey ?? undefined);
   }
 
   async function handleCopyContent() {

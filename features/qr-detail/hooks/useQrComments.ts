@@ -122,6 +122,7 @@ export function useQrComments(id: string, userId: string | null, offlineMode: bo
   );
 
   return {
+    ...actions,
     commentsList, topLevelComments,
     userLikes, hasMoreComments,
     commentsLoading, commentsRefreshing, refreshComments,
@@ -133,6 +134,5 @@ export function useQrComments(id: string, userId: string | null, offlineMode: bo
     loadMoreComments,
     handleCommentLike,
     handleDeleteComment,
-    ...actions,
   };
 }
