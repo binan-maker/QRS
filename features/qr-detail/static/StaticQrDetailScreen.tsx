@@ -7,7 +7,6 @@ import { StatusBar } from "expo-status-bar";
 import { router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
-import { useEffect } from "react";
 import Animated, { FadeInDown, FadeIn } from "react-native-reanimated";
 import * as Haptics from "expo-haptics";
 import { useTheme } from "@/shared/contexts/ThemeContext";
@@ -69,7 +68,7 @@ function SafetyBadge({ verdict }: { verdict: { level: string; label: string } | 
 const safetyBadgeStyles = StyleSheet.create({
   row: {
     flexDirection: "row", alignItems: "center", gap: 6,
-    marginHorizontal: 16, marginBottom: 8,
+    marginBottom: 8,
     paddingHorizontal: 12, paddingVertical: 7,
     borderRadius: 10, borderWidth: 1,
   },
@@ -465,11 +464,7 @@ export default function StaticQrDetailScreen({ id, ownerDocId }: Props) {
             {/* ── Creator card ──────────────────────────────────── */}
             {user && q.ownerInfo && (
               <Animated.View entering={FadeInDown.delay(110).duration(260)}>
-                <SectionHeader
-                  icon="storefront-outline"
-                  label="Creator"
-                  gradient={[colors.primary, colors.primaryShade]}
-                />
+                <SectionHeader label="Creator" />
                 <OwnerCard
                   ownerInfo={q.ownerInfo}
                   isQrOwner={q.isQrOwner}
@@ -571,9 +566,10 @@ export default function StaticQrDetailScreen({ id, ownerDocId }: Props) {
 const staticStyles = StyleSheet.create({
   sourceBadge: {
     flexDirection: "row", alignItems: "center", gap: 6,
-    marginHorizontal: 16, marginBottom: 6, marginTop: 4,
+    marginBottom: 6, marginTop: 4,
     paddingHorizontal: 10, paddingVertical: 5,
     borderRadius: 8, borderWidth: 1,
+    alignSelf: "flex-start",
   },
   sourceBadgeText: {
     fontSize: 11, fontFamily: "Inter_500Medium",
