@@ -6,8 +6,8 @@ import {
   subscribeToNotificationCount,
   markAllNotificationsRead,
   clearAllNotifications,
-  type Notification,
 } from "@/services/notification-service";
+import type { Notification } from "@/services/types";
 
 type CountListener = (count: number) => void;
 

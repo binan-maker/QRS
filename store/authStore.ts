@@ -1,5 +1,8 @@
 import { create } from "zustand";
-import type { User } from "firebase/auth";
+// Use a loose type to avoid Firebase namespace conflicts in certain
+// TypeScript configurations. The auth store is a thin Zustand mirror of
+// AuthContext — access auth data from AuthContext for full type safety.
+type User = any;
 
 interface AuthState {
   user: User | null;

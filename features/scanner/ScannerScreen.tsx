@@ -264,7 +264,6 @@ export default function ScannerScreen() {
           countdown={unverifiedCountdown}
           onProceed={handleUnverifiedProceed}
           onBack={handleUnverifiedBack}
-          colors={colors}
         />
       )}
 

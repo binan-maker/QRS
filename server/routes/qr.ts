@@ -5,7 +5,7 @@ export const qrRouter = Router();
 
 // PATCH /api/v1/qr/:qrId/active  — toggle QR active/paused state
 qrRouter.patch("/:qrId/active", async (req: Request, res: Response) => {
-  const { qrId } = req.params;
+  const qrId = req.params.qrId as string;
   const { isActive, deactivationMessage } = req.body;
 
   if (!qrId) return res.status(400).json({ error: "Invalid QR code ID" });
@@ -21,7 +21,7 @@ qrRouter.patch("/:qrId/active", async (req: Request, res: Response) => {
   }
 
   try {
-    const decodedToken = await adminAuth.verifyIdToken(authHeader.slice(7));
+    const decodedToken = await adminAuth.verifyIdToken((authHeader as string).slice(7));
     const uid = decodedToken.uid;
 
     const docRef = db.collection("qrCodes").doc(qrId);
@@ -65,14 +65,15 @@ qrRouter.get("/:uuid/analytics", async (req: Request, res: Response) => {
   }
 
   try {
-    const decodedToken = await adminAuth.verifyIdToken(authHeader.slice(7));
+    const decodedToken = await adminAuth.verifyIdToken((authHeader as string).slice(7));
     const uid = decodedToken.uid;
 
     // Resolve qrDocId: try direct doc by id, then by uuid field
+    const uuidStr = uuid as string;
     let qrDocId: string | null = null;
-    const directDoc = await db.collection("qrCodes").doc(uuid).get();
+    const directDoc = await db.collection("qrCodes").doc(uuidStr).get();
     if (directDoc.exists && directDoc.data()?.ownerId === uid) {
-      qrDocId = uuid;
+      qrDocId = uuidStr;
     } else {
       const q = await db.collection("qrCodes").where("uuid", "==", uuid).limit(1).get();
       if (!q.empty && q.docs[0].data().ownerId === uid) {

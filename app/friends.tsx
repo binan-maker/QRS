@@ -3,7 +3,8 @@ import {
   View, Text, Pressable, ActivityIndicator,
   StyleSheet, Image, Platform, RefreshControl,
 } from "react-native";
-import { FlashList } from "@shopify/flash-list";
+import { FlashList as _FlashList } from "@shopify/flash-list";
+const FlashList = _FlashList as any;
 import { router } from "expo-router";
 import { safePush } from "@/shared/utils/navigation";
 import { Ionicons } from "@expo/vector-icons";
@@ -203,12 +204,12 @@ export default function FriendsScreen() {
       ) : (
         <FlashList
           data={listData}
-          keyExtractor={(item) => item.userId}
+          keyExtractor={(item: FriendEntry) => item.userId}
           estimatedItemSize={72}
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} />}
           contentContainerStyle={{ paddingHorizontal: 16, paddingTop: 10, paddingBottom: insets.bottom + 24 }}
           ItemSeparatorComponent={() => <View style={{ height: 10 }} />}
-          renderItem={({ item }) => renderEntry(item, tab)}
+          renderItem={({ item }: { item: FriendEntry }) => renderEntry(item, tab)}
         />
       )}
     </View>

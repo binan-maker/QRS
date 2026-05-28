@@ -407,7 +407,7 @@ function ProfileScreen() {
           ) : (
             <View style={styles.qrRow}>
               {previewQrs.map((qr, i) => (
-                <QrPreviewCard key={qr.docId} qr={qr} colors={colors} index={i} />
+                <QrPreviewCard key={qr.docId} qr={qr} colors={colors} />
               ))}
               {myQrCodes.length > 3 && (
                 <Animated.View entering={ENTER_QR_MORE} style={{ flex: 1 }}>

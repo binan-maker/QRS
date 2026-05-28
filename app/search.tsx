@@ -3,7 +3,8 @@ import {
   View, Text, TextInput, Pressable, ActivityIndicator,
   StyleSheet, Image, Platform, KeyboardAvoidingView,
 } from "react-native";
-import { FlashList } from "@shopify/flash-list";
+import { FlashList as _FlashList } from "@shopify/flash-list";
+const FlashList = _FlashList as any;
 import { router } from "expo-router";
 import { safePush } from "@/shared/utils/navigation";
 import { Ionicons } from "@expo/vector-icons";
@@ -172,11 +173,11 @@ export default function SearchScreen() {
       {!loading && results.length > 0 && (
         <FlashList
           data={results}
-          keyExtractor={(r) => r.userId}
+          keyExtractor={(r: ResultItem) => r.userId}
           estimatedItemSize={72}
           contentContainerStyle={{ paddingHorizontal: 18, paddingTop: 10, paddingBottom: insets.bottom + 24 }}
           ItemSeparatorComponent={() => <View style={{ height: 10 }} />}
-          renderItem={({ item }) => {
+          renderItem={({ item }: { item: ResultItem }) => {
             const initials = item.displayName.split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2);
             const actionColors = getActionColors(item.friendStatus);
             const isDisabled = item.friendStatus === "friends";

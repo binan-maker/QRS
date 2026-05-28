@@ -1,6 +1,7 @@
 import React, { useCallback, useMemo } from "react";
 import { View, Text, Pressable, Platform } from "react-native";
-import { FlashList } from "@shopify/flash-list";
+import { FlashList as _FlashList } from "@shopify/flash-list";
+const FlashList = _FlashList as any;
 import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTheme } from "@/shared/contexts/ThemeContext";
@@ -77,7 +78,7 @@ export default function CommentsSection({ loading, comments, onDelete, onDeleteA
   return (
     <FlashList
       data={comments}
-      keyExtractor={(item) => item.id}
+      keyExtractor={(item: any) => item.id}
       estimatedItemSize={80}
       contentContainerStyle={[styles.scrollContent, { paddingBottom: bottomPad }]}
       ListHeaderComponent={listHeader}

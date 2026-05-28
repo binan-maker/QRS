@@ -7,7 +7,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { Section, Body, Bold, Bullets } from "./consent-primitives";
 
 interface Props {
-  scrollRef: React.RefObject<ScrollView>;
+  scrollRef: React.RefObject<ScrollView | null>;
   onScroll: (e: NativeSyntheticEvent<NativeScrollEvent>) => void;
   scrolledToBottom: boolean;
   sectionBlue: string;

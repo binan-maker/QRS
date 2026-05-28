@@ -1,6 +1,7 @@
 import React, { useCallback, useMemo } from "react";
 import { View, Text, Pressable, Platform } from "react-native";
-import { FlashList } from "@shopify/flash-list";
+import { FlashList as _FlashList } from "@shopify/flash-list";
+const FlashList = _FlashList as any;
 import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTheme } from "@/shared/contexts/ThemeContext";
@@ -73,7 +74,7 @@ export default function HistorySection({ loading, history, onDelete, onDeleteAll
   return (
     <FlashList
       data={history}
-      keyExtractor={(item) => item.id}
+      keyExtractor={(item: any) => item.id}
       estimatedItemSize={68}
       contentContainerStyle={[styles.scrollContent, { paddingBottom: bottomPad }]}
       showsVerticalScrollIndicator={false}
