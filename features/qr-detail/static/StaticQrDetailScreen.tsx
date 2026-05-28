@@ -23,7 +23,6 @@ import ContentCard from "@/features/qr-detail/content-cards";
 import TrustScoreCard from "@/features/qr-detail/components/TrustScoreCard";
 import OwnerCard from "@/features/qr-detail/components/OwnerCard";
 import SafetyWarningCard from "@/features/qr-detail/components/SafetyWarningCard";
-import EvidenceCard from "@/features/qr-detail/components/EvidenceCard";
 import ReportGrid from "@/features/qr-detail/components/ReportGrid";
 import FollowersModal from "@/features/qr-detail/components/modals/FollowersModal";
 import MessagesModal from "@/features/qr-detail/components/modals/MessagesModal";
@@ -31,11 +30,8 @@ import CommentReportModal from "@/features/qr-detail/components/modals/CommentRe
 import { SectionHeader } from "@/shared/components/ui/SectionHeader";
 import { OfflineToast } from "@/features/qr-detail/components/OfflineToast";
 import { QrToast } from "@/features/qr-detail/components/QrToast";
-import { VerdictBanner } from "@/features/qr-detail/components/VerdictBanner";
 import QrDetailNavBar from "@/features/qr-detail/components/QrDetailNavBar";
 import OwnerCircleRow from "@/features/qr-detail/components/OwnerCircleRow";
-import AdvisoryDisclaimer from "@/features/qr-detail/components/AdvisoryDisclaimer";
-import ExternalQrBanner from "@/features/qr-detail/components/ExternalQrBanner";
 import CommentsSection from "@/features/qr-detail/components/CommentsSection";
 import DonationBanner from "@/features/qr-detail/components/DonationBanner";
 import OwnerInfoSheet from "@/features/qr-detail/components/sheets/OwnerInfoSheet";
@@ -51,6 +47,34 @@ interface Props {
   id: string;
   ownerDocId?: string;
 }
+
+// ─── Compact safety badge shown below content card ────────────────────────────
+function SafetyBadge({ verdict }: { verdict: { level: string; label: string } | null }) {
+  const { colors, isDark } = useTheme();
+  if (!verdict || verdict.level === "safe" || verdict.level === "unknown") return null;
+
+  const cfg = {
+    dangerous: { icon: "alert-circle"    as const, color: "#EF4444", bg: isDark ? "#3B0A0A" : "#FEF2F2", border: "#EF444440" },
+    caution:   { icon: "warning-outline" as const, color: "#F59E0B", bg: isDark ? "#2D1A00" : "#FFFBEB", border: "#F59E0B40" },
+  }[verdict.level] ?? { icon: "information-circle-outline" as const, color: colors.textMuted, bg: colors.surface, border: colors.surfaceBorder };
+
+  return (
+    <View style={[safetyBadgeStyles.row, { backgroundColor: cfg.bg, borderColor: cfg.border }]}>
+      <Ionicons name={cfg.icon} size={13} color={cfg.color} />
+      <Text style={[safetyBadgeStyles.text, { color: cfg.color }]}>{verdict.label}</Text>
+    </View>
+  );
+}
+
+const safetyBadgeStyles = StyleSheet.create({
+  row: {
+    flexDirection: "row", alignItems: "center", gap: 6,
+    marginHorizontal: 16, marginBottom: 8,
+    paddingHorizontal: 12, paddingVertical: 7,
+    borderRadius: 10, borderWidth: 1,
+  },
+  text: { fontSize: 12, fontFamily: "Inter_600SemiBold", flex: 1 },
+});
 
 export default function StaticQrDetailScreen({ id, ownerDocId }: Props) {
   const { user } = useAuth();
@@ -82,16 +106,29 @@ export default function StaticQrDetailScreen({ id, ownerDocId }: Props) {
   const { isOnline } = useNetworkStatus();
   const [offlineToastKey, setOfflineToastKey] = useState(0);
 
-  const hasOwner = !!q.ownerInfo?.ownerId;
-  const trust = q.getTrustInfo();
-  const verdict = q.getCombinedVerdict();
+  const hasOwner  = !!q.ownerInfo?.ownerId;
+  const trust     = q.getTrustInfo();
+  const verdict   = q.getCombinedVerdict();
   const isQrOwner = !!(user?.id && q.ownerInfo?.ownerId && user.id === q.ownerInfo.ownerId);
 
-  const content = q.qrCode?.content || q.offlineContent || "";
+  const content     = q.qrCode?.content || q.offlineContent || "";
   const contentType = q.qrCode?.contentType || q.offlineContentType || "text";
 
-  const isDeactivated = q.ownerInfo?.isActive === false || q.qrCode?.isActive === false;
+  const isDeactivated   = q.ownerInfo?.isActive === false || q.qrCode?.isActive === false;
   const deactivationMsg = q.ownerInfo?.deactivationMessage || q.qrCode?.deactivationMessage || null;
+
+  // Only show safety warnings for genuinely dangerous content
+  const showUrlDangerWarning =
+    contentType === "url" &&
+    q.urlSafety?.isSuspicious &&
+    q.urlSafety.riskLevel === "dangerous";
+
+  const showPaymentDangerWarning =
+    contentType === "payment" &&
+    q.paymentSafety?.isSuspicious &&
+    q.paymentSafety.riskLevel === "dangerous";
+
+  const showBlacklistWarning = q.offlineBlacklistMatch.matched;
 
   const handleCreatorFollowPress = useCallback(() => {
     if (!user) { router.push("/(auth)/login"); return; }
@@ -217,62 +254,56 @@ export default function StaticQrDetailScreen({ id, ownerDocId }: Props) {
               />
             }
           >
-            {/* External QR source badge */}
+            {/* ── Source badge ─────────────────────────────────── */}
             {!q.offlineMode && !hasOwner && (
-              <Animated.View entering={FadeInDown.delay(30).duration(260)}>
-                <View style={[staticStyles.externalBadge, {
+              <Animated.View entering={FadeIn.delay(20).duration(220)}>
+                <View style={[staticStyles.sourceBadge, {
                   backgroundColor: isDark ? "#1a1208" : "#fffbeb",
-                  borderColor: "#f59e0b30",
+                  borderColor: "#f59e0b25",
                 }]}>
-                  <Ionicons name="scan-outline" size={14} color="#f59e0b" />
-                  <Text style={[staticStyles.externalBadgeText, { color: "#f59e0b" }]}>
-                    External QR Code · Scanned from the wild
+                  <Ionicons name="scan-outline" size={12} color="#f59e0b" />
+                  <Text style={[staticStyles.sourceBadgeText, { color: "#d97706" }]}>
+                    External QR · Scanned from the wild
                   </Text>
                 </View>
               </Animated.View>
             )}
 
-            {/* Deactivated banner */}
+            {/* ── Deactivated banner ───────────────────────────── */}
             {isDeactivated && (
-              <Animated.View entering={FadeInDown.delay(30).duration(260)}>
+              <Animated.View entering={FadeInDown.delay(20).duration(240)}>
                 <View style={[styles.deactivatedBanner, { borderColor: "#ef444440" }]}>
                   <LinearGradient
-                    colors={["rgba(239,68,68,0.18)", "rgba(239,68,68,0.08)"]}
+                    colors={["rgba(239,68,68,0.14)", "rgba(239,68,68,0.06)"]}
                     style={StyleSheet.absoluteFill}
                     start={{ x: 0, y: 0 }}
                     end={{ x: 1, y: 1 }}
                   />
                   <View style={styles.deactivatedIconWrap}>
-                    <Ionicons name="ban" size={22} color="#EF4444" />
+                    <Ionicons name="ban" size={20} color="#EF4444" />
                   </View>
                   <View style={{ flex: 1 }}>
                     <Text style={styles.deactivatedTitle}>QR Code Deactivated</Text>
                     <Text style={styles.deactivatedSub}>
-                      {deactivationMsg ||
-                        "The owner has turned off this QR code. Links and actions are disabled."}
+                      {deactivationMsg || "The owner has turned off this QR code."}
                     </Text>
                   </View>
                 </View>
               </Animated.View>
             )}
 
-            {/* Verdict is the hero element for static QRs */}
-            <Animated.View entering={FadeInDown.delay(40).duration(260)}>
-              <VerdictBanner verdict={verdict} offlineMode={q.offlineMode} />
-            </Animated.View>
-
+            {/* ── Owner branding ───────────────────────────────── */}
             {q.ownerInfo?.isBranded && (
-              <OwnerCircleRow
-                ownerInfo={q.ownerInfo as any}
-                onPress={() => setOwnerSheetOpen(true)}
-              />
+              <Animated.View entering={FadeInDown.delay(30).duration(240)}>
+                <OwnerCircleRow
+                  ownerInfo={q.ownerInfo as any}
+                  onPress={() => setOwnerSheetOpen(true)}
+                />
+              </Animated.View>
             )}
 
-            <Animated.View entering={FadeInDown.delay(60).duration(260)}>
-              <AdvisoryDisclaimer />
-            </Animated.View>
-
-            <Animated.View entering={FadeInDown.delay(70).duration(260)}>
+            {/* ── CONTENT CARD — HERO ──────────────────────────── */}
+            <Animated.View entering={FadeInDown.delay(40).duration(280)}>
               <ContentCard
                 content={content}
                 contentType={contentType}
@@ -284,44 +315,55 @@ export default function StaticQrDetailScreen({ id, ownerDocId }: Props) {
               />
             </Animated.View>
 
-            {contentType === "payment" &&
-              q.paymentSafety?.isSuspicious &&
-              (() => {
-                const warnings = (q.paymentSafety?.warnings ?? []).filter(
-                  (w) => !w.toLowerCase().startsWith("pre-filled amount")
-                );
-                if (!warnings.length) return null;
-                return (
-                  <Animated.View entering={FadeInDown.delay(80).duration(260)}>
-                    <SafetyWarningCard
-                      riskLevel={q.paymentSafety!.riskLevel as "caution" | "dangerous"}
-                      warnings={warnings}
-                      title={
-                        q.paymentSafety!.riskLevel === "dangerous"
-                          ? "Payment Security Warning"
-                          : "Payment Security Notice"
-                      }
-                    />
-                  </Animated.View>
-                );
-              })()}
-
-            {contentType === "payment" &&
-              q.paymentSafety?.evidence &&
-              q.paymentSafety.evidence.length > 0 && (
-                <Animated.View entering={FadeInDown.delay(80).duration(260)}>
-                  <EvidenceCard title="Payment Analysis" evidence={q.paymentSafety.evidence} />
-                </Animated.View>
-              )}
-
-            {!q.ownerInfo?.isBranded && !q.offlineMode && !hasOwner && (
-              <Animated.View entering={FadeInDown.delay(80).duration(260)}>
-                <ExternalQrBanner />
+            {/* ── Safety badge (compact — only if flagged) ─────── */}
+            {verdict && verdict.level !== "safe" && verdict.level !== "unknown" && (
+              <Animated.View entering={FadeIn.delay(60).duration(220)}>
+                <SafetyBadge verdict={verdict} />
               </Animated.View>
             )}
 
+            {/* ── Dangerous URL warning (only for dangerous, not caution) ── */}
+            {user && showUrlDangerWarning && (
+              <Animated.View entering={FadeInDown.delay(70).duration(240)}>
+                <SafetyWarningCard
+                  riskLevel="dangerous"
+                  warnings={q.urlSafety!.warnings}
+                  title="Dangerous URL Detected"
+                />
+              </Animated.View>
+            )}
+
+            {/* ── Known blacklisted content ─────────────────────── */}
+            {showBlacklistWarning && (
+              <Animated.View entering={FadeInDown.delay(70).duration(240)}>
+                <SafetyWarningCard
+                  riskLevel="dangerous"
+                  warnings={[`Known scam pattern: ${q.offlineBlacklistMatch.reason}`]}
+                  title="Known Scam Pattern"
+                />
+              </Animated.View>
+            )}
+
+            {/* ── Dangerous payment warning ────────────────────── */}
+            {showPaymentDangerWarning && (() => {
+              const warnings = (q.paymentSafety?.warnings ?? []).filter(
+                (w) => !w.toLowerCase().startsWith("pre-filled amount")
+              );
+              if (!warnings.length) return null;
+              return (
+                <Animated.View entering={FadeInDown.delay(70).duration(240)}>
+                  <SafetyWarningCard
+                    riskLevel="dangerous"
+                    warnings={warnings}
+                    title="Payment Security Warning"
+                  />
+                </Animated.View>
+              );
+            })()}
+
+            {/* ── Trust score ──────────────────────────────────── */}
             {!q.offlineMode && (
-              <Animated.View entering={FadeInDown.delay(90).duration(260)}>
+              <Animated.View entering={FadeInDown.delay(80).duration(260)}>
                 <TrustScoreCard
                   trustInfo={trust}
                   reportCounts={q.reportCounts}
@@ -344,84 +386,47 @@ export default function StaticQrDetailScreen({ id, ownerDocId }: Props) {
               </Animated.View>
             )}
 
+            {/* ── Community report ─────────────────────────────── */}
             {user && (
-              <>
-                <Animated.View
-                  entering={FadeInDown.delay(100).duration(260)}
-                  onLayout={(e: any) => {
-                    reportSectionY.current = e.nativeEvent.layout.y;
-                  }}
-                >
-                  {q.offlineMode ? (
-                    <View style={offlineSectionStyles.row}>
-                      <Ionicons name="cloud-offline-outline" size={16} color={colors.textMuted} />
-                      <Text style={[offlineSectionStyles.text, { color: colors.textMuted }]}>
-                        Connect to the internet to submit your rating
-                      </Text>
-                    </View>
-                  ) : (
-                    <ReportGrid
-                      reportCounts={q.reportCounts}
-                      userReport={q.userReport}
-                      isLoggedIn={true}
-                      isPayment={contentType === "payment"}
-                      onReport={(type) => {
-                        const reported = q.handleReport(type);
-                        if (!reported) return;
-                        const labels: Record<string, string> = {
-                          safe: "Safe",
-                          scam: "Scam",
-                          fake: "Fake",
-                          spam: "Spam",
-                        };
-                        const icons: Record<string, keyof typeof Ionicons.glyphMap> = {
-                          safe: "shield-checkmark",
-                          scam: "warning",
-                          fake: "close-circle",
-                          spam: "mail-unread",
-                        };
-                        showToast(`Voted ${labels[type] ?? type}`, icons[type] ?? "flag");
-                      }}
-                    />
-                  )}
-                </Animated.View>
-
-                {((contentType === "url" && q.urlSafety?.isSuspicious) ||
-                  q.offlineBlacklistMatch.matched) && (
-                  <Animated.View entering={FadeInDown.delay(100).duration(260)}>
-                    {contentType === "url" && q.urlSafety?.isSuspicious && (
-                      <SafetyWarningCard
-                        riskLevel={q.urlSafety.riskLevel as "caution" | "dangerous"}
-                        warnings={q.urlSafety.warnings}
-                        title={
-                          q.urlSafety.riskLevel === "dangerous"
-                            ? "Dangerous URL Detected"
-                            : "Proceed with Caution"
-                        }
-                      />
-                    )}
-                    {q.offlineBlacklistMatch.matched && (
-                      <SafetyWarningCard
-                        riskLevel="dangerous"
-                        warnings={[`Known scam pattern: ${q.offlineBlacklistMatch.reason}`]}
-                        title="Known Scam Pattern"
-                      />
-                    )}
-                  </Animated.View>
+              <Animated.View
+                entering={FadeInDown.delay(90).duration(260)}
+                onLayout={(e: any) => {
+                  reportSectionY.current = e.nativeEvent.layout.y;
+                }}
+              >
+                {q.offlineMode ? (
+                  <View style={offlineSectionStyles.row}>
+                    <Ionicons name="cloud-offline-outline" size={16} color={colors.textMuted} />
+                    <Text style={[offlineSectionStyles.text, { color: colors.textMuted }]}>
+                      Connect to the internet to submit your rating
+                    </Text>
+                  </View>
+                ) : (
+                  <ReportGrid
+                    reportCounts={q.reportCounts}
+                    userReport={q.userReport}
+                    isLoggedIn={true}
+                    isPayment={contentType === "payment"}
+                    onReport={(type) => {
+                      const reported = q.handleReport(type);
+                      if (!reported) return;
+                      const labels: Record<string, string> = {
+                        safe: "Safe", scam: "Scam", fake: "Fake", spam: "Spam",
+                      };
+                      const icons: Record<string, keyof typeof Ionicons.glyphMap> = {
+                        safe: "shield-checkmark", scam: "warning",
+                        fake: "close-circle", spam: "mail-unread",
+                      };
+                      showToast(`Voted ${labels[type] ?? type}`, icons[type] ?? "flag");
+                    }}
+                  />
                 )}
-
-                {contentType === "url" &&
-                  q.urlSafety?.evidence &&
-                  q.urlSafety.evidence.length > 0 && (
-                    <Animated.View entering={FadeInDown.delay(110).duration(260)}>
-                      <EvidenceCard title="URL Analysis" evidence={q.urlSafety.evidence} />
-                    </Animated.View>
-                  )}
-              </>
+              </Animated.View>
             )}
 
+            {/* ── Comments ─────────────────────────────────────── */}
             {!q.offlineMode && (
-              <Animated.View entering={FadeInDown.delay(110).duration(260)}>
+              <Animated.View entering={FadeInDown.delay(100).duration(260)}>
                 <CommentsSection
                   user={user}
                   totalComments={q.totalComments}
@@ -457,6 +462,7 @@ export default function StaticQrDetailScreen({ id, ownerDocId }: Props) {
               </Animated.View>
             )}
 
+            {/* ── Creator card ──────────────────────────────────── */}
             {user && q.ownerInfo && (
               <Animated.View entering={FadeInDown.delay(110).duration(260)}>
                 <SectionHeader
@@ -546,43 +552,30 @@ export default function StaticQrDetailScreen({ id, ownerDocId }: Props) {
         onClose={() => q.setCreatorFollowersModalOpen(false)}
         title="Creator Followers"
         subtitle={`${formatCompactNumber(q.creatorFollowerCount)} ${
-          q.creatorFollowerCount === 1 ? "person follows" : "people follow"
-        } this creator`}
+          q.creatorFollowerCount === 1 ? "follower" : "followers"
+        }`}
         emptyIcon="people-outline"
         emptyText="No followers yet"
       />
       <MessagesModal
         visible={q.messagesModalOpen}
-        isQrOwner={q.isQrOwner}
-        ownerInfo={q.ownerInfo}
-        messages={q.messages}
-        messageText={q.messageText}
-        sendingMessage={q.sendingMessage}
-        user={user}
-        onChangeText={q.setMessageText}
-        onSend={q.handleSendMessage}
-        onMarkRead={() => {}}
         onClose={() => q.setMessagesModalOpen(false)}
+        ownerInfo={q.ownerInfo}
+        currentUserId={user?.id}
+        qrCodeId={id}
       />
     </View>
   );
 }
 
 const staticStyles = StyleSheet.create({
-  externalBadge: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 6,
-    borderRadius: 10,
-    borderWidth: 1,
-    paddingHorizontal: 12,
-    paddingVertical: 7,
-    marginBottom: 12,
-    alignSelf: "flex-start",
+  sourceBadge: {
+    flexDirection: "row", alignItems: "center", gap: 6,
+    marginHorizontal: 16, marginBottom: 6, marginTop: 4,
+    paddingHorizontal: 10, paddingVertical: 5,
+    borderRadius: 8, borderWidth: 1,
   },
-  externalBadgeText: {
-    fontSize: 12,
-    fontFamily: "Inter_600SemiBold",
-    letterSpacing: 0.2,
+  sourceBadgeText: {
+    fontSize: 11, fontFamily: "Inter_500Medium",
   },
 });

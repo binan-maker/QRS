@@ -28,6 +28,7 @@ import {
   EncryptedCard,
   TextCard,
   SocialCard,
+  OtpCard,
 } from "./cards";
 import { extractBasicPaymentInfo } from "./parsers";
 
@@ -42,6 +43,10 @@ const ACTIVE_TYPES = new Set([
   "payment", "upi", "scantopay", "paymentlink",
   "phone", "sms", "location", "event", "calendar",
   "whatsapp", "crypto", "encrypted",
+  // Auth / boarding / product (dedicated or text fallback)
+  "otp", "boarding", "product",
+  // Media / document links (URL-based, falls through to WebsiteCard)
+  "media", "document",
   // Social & URL-based (now fully supported)
   "url", "instagram", "twitter", "youtube", "linkedin",
   "telegram", "facebook", "spotify", "discord", "tiktok",
@@ -141,7 +146,15 @@ const ContentCard = React.memo(function ContentCard({
     case "crypto":   return <CryptoCard   {...commonProps} />;
     case "event":
     case "calendar": return <EventCard    {...commonProps} />;
-    case "text":     return <TextCard content={content} />;
+    case "otp":      return <OtpCard      {...commonProps} />;
+    // Plain text, product barcodes, boarding passes — show as TextCard
+    case "text":
+    case "boarding":
+    case "product":  return <TextCard content={content} />;
+    // Media / document: URL-based — fall through to WebsiteCard below
+    case "media":
+    case "document":
+      break;
   }
 
   // ── Social / platform URL types ────────────────────────────────────────────

@@ -11,3 +11,4 @@ export { default as EventCard } from "./EventCard";
 export { default as EncryptedCard } from "./EncryptedCard";
 export { default as TextCard } from "./TextCard";
 export { default as SocialCard } from "./SocialCard";
+export { default as OtpCard } from "./OtpCard";
