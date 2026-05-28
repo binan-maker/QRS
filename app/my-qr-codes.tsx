@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import {
-  View, Text, Pressable, ScrollView,
+  View, Text, Pressable, ScrollView, StyleSheet,
   RefreshControl, useWindowDimensions, TextInput,
 } from "react-native";
 import { FlashList as _FlashList } from "@shopify/flash-list";
@@ -344,23 +344,18 @@ export default function MyQrCodesScreen() {
           {[1, 2, 3, 4].map((k) => <SkeletonQrCard key={k} />)}
         </View>
       ) : sorted.length === 0 ? (
-        <Animated.View entering={FadeIn.duration(400)} style={{ flex: 1, alignItems: "center", justifyContent: "center", paddingHorizontal: sp(40), gap: sp(14) }}>
-          <View style={{ width: sp(72), height: sp(72), borderRadius: sp(22), backgroundColor: colors.primaryDim, alignItems: "center", justifyContent: "center" }}>
-            {searchQuery.trim()
-              ? <Ionicons name="search-outline" size={rf(34)} color={colors.primary} />
-              : <MaterialCommunityIcons name="qrcode-plus" size={rf(34)} color={colors.primary} />}
-          </View>
-          <View style={{ gap: sp(6), alignItems: "center" }}>
-            <Text style={{ fontSize: rf(17), fontFamily: "Inter_700Bold", color: colors.text }}>
-              {searchQuery.trim() ? "No results found" : "No QR codes yet"}
-            </Text>
-            <Text style={{ fontSize: rf(13), fontFamily: "Inter_400Regular", color: colors.textSecondary, textAlign: "center", lineHeight: rf(20) }}>
-              {searchQuery.trim()
-                ? `No QR codes match "${searchQuery.trim()}"`
-                : "Tap + to create your first one"}
-            </Text>
-          </View>
-          {searchQuery.trim() ? (
+        searchQuery.trim() ? (
+          /* ── Search no-results ── */
+          <Animated.View entering={FadeIn.duration(400)} style={{ flex: 1, alignItems: "center", justifyContent: "center", paddingHorizontal: sp(40), gap: sp(14) }}>
+            <View style={{ width: sp(72), height: sp(72), borderRadius: sp(22), backgroundColor: colors.primaryDim, alignItems: "center", justifyContent: "center" }}>
+              <Ionicons name="search-outline" size={rf(34)} color={colors.primary} />
+            </View>
+            <View style={{ gap: sp(6), alignItems: "center" }}>
+              <Text style={{ fontSize: rf(17), fontFamily: "Inter_700Bold", color: colors.text }}>No results found</Text>
+              <Text style={{ fontSize: rf(13), fontFamily: "Inter_400Regular", color: colors.textSecondary, textAlign: "center", lineHeight: rf(20) }}>
+                No QR codes match "{searchQuery.trim()}"
+              </Text>
+            </View>
             <Pressable onPress={() => setSearchQuery("")} style={({ pressed }) => [{ opacity: pressed ? 0.85 : 1, marginTop: sp(4) }]}>
               <LinearGradient
                 colors={[colors.primary, colors.primaryShade]}
@@ -371,19 +366,159 @@ export default function MyQrCodesScreen() {
                 <Text style={{ fontSize: rf(14), fontFamily: "Inter_700Bold", color: "#fff" }}>Clear Search</Text>
               </LinearGradient>
             </Pressable>
-          ) : (
-            <Pressable onPress={() => router.push("/(tabs)/qr-generator")} style={({ pressed }) => [{ opacity: pressed ? 0.85 : 1, marginTop: sp(4) }]}>
+          </Animated.View>
+        ) : (
+          /* ── Phase 2 Showcase ── */
+          <Animated.View entering={FadeIn.duration(400)} style={{ flex: 1 }}>
+            <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: sp(20), paddingBottom: sp(120), paddingTop: sp(4) }}>
+
+              {/* Showcase header */}
               <LinearGradient
-                colors={[colors.primary, colors.primaryShade]}
-                style={{ flexDirection: "row", alignItems: "center", gap: sp(7), paddingHorizontal: sp(28), paddingVertical: sp(13), borderRadius: sp(16) }}
+                colors={["#0F172A", "#1E1B4B"]}
                 start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
+                style={{
+                  borderRadius: sp(20), padding: sp(20), marginBottom: sp(20),
+                  overflow: "hidden", position: "relative",
+                }}
               >
-                <Ionicons name="add" size={rf(16)} color="#fff" />
-                <Text style={{ fontSize: rf(14), fontFamily: "Inter_700Bold", color: "#fff" }}>Create QR Code</Text>
+                <View style={{ position: "absolute", top: -40, right: -20, width: 110, height: 110, borderRadius: 55, backgroundColor: "rgba(124,58,237,0.18)" }} />
+                <View style={{ flexDirection: "row", alignItems: "center", gap: sp(10), marginBottom: sp(12) }}>
+                  <View style={{ width: sp(48), height: sp(48), borderRadius: sp(14), backgroundColor: "rgba(124,58,237,0.25)", alignItems: "center", justifyContent: "center" }}>
+                    <MaterialCommunityIcons name="qrcode-plus" size={rf(24)} color="#A78BFA" />
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <Text style={{ fontSize: rf(16), fontFamily: "Inter_700Bold", color: "#fff" }}>Your QR Dashboard</Text>
+                    <Text style={{ fontSize: rf(11), fontFamily: "Inter_400Regular", color: "rgba(255,255,255,0.55)", marginTop: 2 }}>
+                      See a preview of what's coming in Phase 2
+                    </Text>
+                  </View>
+                  <View style={{ paddingHorizontal: sp(8), paddingVertical: sp(4), borderRadius: sp(8), backgroundColor: "#7C3AED30", borderWidth: 1, borderColor: "#7C3AED60" }}>
+                    <Text style={{ fontSize: rf(8), fontFamily: "Inter_700Bold", color: "#A78BFA", letterSpacing: 1 }}>PHASE 2</Text>
+                  </View>
+                </View>
+
+                {/* 3 stat bubbles */}
+                <View style={{ flexDirection: "row", gap: sp(8) }}>
+                  {[
+                    { val: "∞", label: "QR Codes",   color: "#A78BFA" },
+                    { val: "0–100", label: "Trust Score", color: "#34D399" },
+                    { val: "Live", label: "Analytics",  color: "#60A5FA" },
+                  ].map((st) => (
+                    <View key={st.label} style={{ flex: 1, backgroundColor: "rgba(255,255,255,0.07)", borderRadius: sp(10), padding: sp(10), alignItems: "center", gap: sp(2) }}>
+                      <Text style={{ fontSize: rf(14), fontFamily: "Inter_700Bold", color: st.color }}>{st.val}</Text>
+                      <Text style={{ fontSize: rf(9), fontFamily: "Inter_400Regular", color: "rgba(255,255,255,0.45)" }}>{st.label}</Text>
+                    </View>
+                  ))}
+                </View>
               </LinearGradient>
-            </Pressable>
-          )}
-        </Animated.View>
+
+              {/* Preview label */}
+              <View style={{ flexDirection: "row", alignItems: "center", gap: sp(8), marginBottom: sp(12) }}>
+                <View style={{ flex: 1, height: StyleSheet.hairlineWidth, backgroundColor: colors.surfaceBorder }} />
+                <View style={{ flexDirection: "row", alignItems: "center", gap: sp(5), paddingHorizontal: sp(10), paddingVertical: sp(4), borderRadius: sp(8), backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.surfaceBorder }}>
+                  <Ionicons name="eye-outline" size={rf(10)} color={colors.textMuted} />
+                  <Text style={{ fontSize: rf(9), fontFamily: "Inter_600SemiBold", color: colors.textMuted, letterSpacing: 0.6 }}>PREVIEW ONLY</Text>
+                </View>
+                <View style={{ flex: 1, height: StyleSheet.hairlineWidth, backgroundColor: colors.surfaceBorder }} />
+              </View>
+
+              {/* Mock QR cards */}
+              {[
+                { type: "UPI Payment",   icon: "cash-outline",      color: "#10B981", label: "My Shop Payment",  scans: 247, active: true  },
+                { type: "WiFi Network",  icon: "wifi-outline",       color: "#3B82F6", label: "Home WiFi",         scans: 89,  active: true  },
+                { type: "Website URL",   icon: "link-outline",       color: "#6366F1", label: "My Portfolio",      scans: 512, active: true  },
+                { type: "Contact Card",  icon: "person-circle-outline", color: "#F59E0B", label: "Business Card",  scans: 34,  active: false },
+              ].map((mock, idx) => (
+                <Animated.View
+                  key={mock.label}
+                  entering={FadeInDown.duration(280).delay(idx * 60)}
+                  style={{
+                    flexDirection: "row", alignItems: "center", gap: sp(14),
+                    borderRadius: sp(18), borderWidth: 1,
+                    borderColor: colors.surfaceBorder,
+                    backgroundColor: colors.surface,
+                    padding: sp(14), marginBottom: sp(10),
+                    opacity: 0.72,
+                  }}
+                >
+                  {/* Icon */}
+                  <View style={{
+                    width: sp(48), height: sp(48), borderRadius: sp(13),
+                    backgroundColor: mock.color + "18",
+                    alignItems: "center", justifyContent: "center", flexShrink: 0, position: "relative",
+                  }}>
+                    <Ionicons name={mock.icon as any} size={sp(22)} color={mock.color} />
+                    {!mock.active && (
+                      <View style={{
+                        position: "absolute", top: -2, right: -2,
+                        width: sp(10), height: sp(10), borderRadius: sp(5),
+                        backgroundColor: colors.danger,
+                        borderWidth: 1.5, borderColor: colors.surface,
+                      }} />
+                    )}
+                  </View>
+
+                  {/* Text */}
+                  <View style={{ flex: 1, gap: sp(3) }}>
+                    <Text style={{ fontSize: rf(10), fontFamily: "Inter_500Medium", color: mock.color, textTransform: "uppercase", letterSpacing: 0.4 }}>
+                      {mock.type}
+                    </Text>
+                    <Text style={{ fontSize: rf(14), fontFamily: "Inter_700Bold", color: mock.active ? colors.text : colors.textMuted }}>
+                      {mock.label}
+                    </Text>
+                  </View>
+
+                  {/* Scan count */}
+                  <View style={{
+                    flexDirection: "row", alignItems: "center", gap: sp(3),
+                    backgroundColor: colors.surfaceLight,
+                    borderRadius: sp(9), paddingHorizontal: sp(8), paddingVertical: sp(4),
+                  }}>
+                    <Ionicons name="scan-outline" size={rf(9)} color={colors.textMuted} />
+                    <Text style={{ fontSize: rf(10), fontFamily: "Inter_600SemiBold", color: colors.textMuted }}>
+                      {mock.scans >= 1000 ? (mock.scans / 1000).toFixed(1) + "k" : mock.scans}
+                    </Text>
+                  </View>
+                </Animated.View>
+              ))}
+
+              {/* Bottom note */}
+              <View style={{
+                marginTop: sp(8), borderRadius: sp(16), borderWidth: 1,
+                borderColor: colors.primary + "30",
+                backgroundColor: colors.primaryDim,
+                padding: sp(16), flexDirection: "row", alignItems: "center", gap: sp(12),
+              }}>
+                <View style={{ width: sp(36), height: sp(36), borderRadius: sp(10), backgroundColor: colors.primary + "20", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                  <MaterialCommunityIcons name="rocket-launch-outline" size={rf(18)} color={colors.primary} />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={{ fontSize: rf(13), fontFamily: "Inter_700Bold", color: colors.text, marginBottom: sp(3) }}>
+                    Your QR codes appear here
+                  </Text>
+                  <Text style={{ fontSize: rf(11), fontFamily: "Inter_400Regular", color: colors.textSecondary, lineHeight: rf(17) }}>
+                    QR generation launches in Phase 2. For now, scan any QR code to check if it is safe.
+                  </Text>
+                </View>
+              </View>
+
+              {/* Scan now CTA */}
+              <Pressable
+                onPress={() => router.push("/(tabs)/scanner" as any)}
+                style={({ pressed }) => ({ opacity: pressed ? 0.86 : 1, transform: [{ scale: pressed ? 0.975 : 1 }], marginTop: sp(12) })}
+              >
+                <LinearGradient
+                  colors={["#059669", "#10B981"]}
+                  start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
+                  style={{ flexDirection: "row", alignItems: "center", justifyContent: "center", gap: sp(9), paddingVertical: sp(15), borderRadius: sp(16) }}
+                >
+                  <Ionicons name="scan" size={rf(18)} color="#fff" />
+                  <Text style={{ fontSize: rf(14), fontFamily: "Inter_700Bold", color: "#fff" }}>Scan a QR Code Now</Text>
+                </LinearGradient>
+              </Pressable>
+            </ScrollView>
+          </Animated.View>
+        )
       ) : (
         <FlashList
           data={sorted}
