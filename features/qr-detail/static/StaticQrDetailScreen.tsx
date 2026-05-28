@@ -314,8 +314,8 @@ export default function StaticQrDetailScreen({ id, ownerDocId }: Props) {
               />
             </Animated.View>
 
-            {/* ── Safety badge (compact — only if flagged) ─────── */}
-            {verdict && verdict.level !== "safe" && (
+            {/* ── Safety badge (compact — only for genuine threats, not generic "unverified" noise) ─── */}
+            {verdict && verdict.level !== "safe" && verdict.label !== "UNVERIFIED QR" && (
               <Animated.View entering={FadeIn.delay(60).duration(220)}>
                 <SafetyBadge verdict={verdict} />
               </Animated.View>
