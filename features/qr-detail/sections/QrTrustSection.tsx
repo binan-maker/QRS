@@ -10,10 +10,9 @@ interface Props {
   followCount: number;
   followersModalOpen: boolean;
   onOpenFollowers: () => void;
-  manipulationWarning: any;
-  scanCountFrozen?: boolean;
   ownerScanCount?: number;
   user: any;
+  hasOwner?: boolean;
   delay?: number;
 }
 
@@ -26,10 +25,9 @@ export function QrTrustSection({
   followCount,
   followersModalOpen,
   onOpenFollowers,
-  manipulationWarning,
-  scanCountFrozen,
   ownerScanCount,
   user,
+  hasOwner = false,
   delay = 90,
 }: Props) {
   if (offlineMode) return null;
@@ -44,9 +42,8 @@ export function QrTrustSection({
         followCount={followCount}
         followersModalOpen={user ? followersModalOpen : false}
         onOpenFollowers={user ? onOpenFollowers : () => {}}
-        manipulationWarning={manipulationWarning}
-        scanCountFrozen={scanCountFrozen}
         ownerScanCount={user && isQrOwner ? ownerScanCount : undefined}
+        hasOwner={hasOwner}
       />
     </Animated.View>
   );

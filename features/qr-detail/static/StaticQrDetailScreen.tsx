@@ -403,9 +403,8 @@ export default function StaticQrDetailScreen({ id, ownerDocId }: Props) {
                         }
                       : () => {}
                   }
-                  manipulationWarning={trust.manipulationWarning}
-                  scanCountFrozen={q.qrCode?.scanCountFrozen}
                   ownerScanCount={user && q.isQrOwner ? q.qrCode?.ownerScanCount : undefined}
+                  hasOwner={false}
                 />
               </Animated.View>
             )}

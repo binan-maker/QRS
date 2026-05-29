@@ -135,9 +135,9 @@ export default function WebsiteCard({ content, onOpenContent, isDeactivated, hid
             </View>
             <Text
               style={[styles.urlText, { color: isDark ? "#CBD5E1" : "#1E40AF" }]}
-              numberOfLines={1}
+              numberOfLines={2}
             >
-              {domainOnly}
+              {site?.fullUrl ?? content}
             </Text>
           </View>
         </Animated.View>

@@ -209,9 +209,8 @@ export default function GuardQrDetailScreen({ id, guardUuid, ownerDocId }: Props
                   followCount={q.followCount}
                   followersModalOpen={user ? q.followersModalOpen : false}
                   onOpenFollowers={user ? () => { q.handleLoadFollowers(); q.setFollowersModalOpen(true); } : () => {}}
-                  manipulationWarning={trust.manipulationWarning}
-                  scanCountFrozen={q.qrCode?.scanCountFrozen}
                   ownerScanCount={user && isQrOwner ? q.qrCode?.ownerScanCount : undefined}
+                  hasOwner={true}
                 />
               </Animated.View>
             )}

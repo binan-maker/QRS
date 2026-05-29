@@ -32,6 +32,7 @@ interface Props {
   manipulationWarning?: boolean;
   scanCountFrozen?: boolean;
   ownerScanCount?: number;
+  hasOwner?: boolean;
 }
 
 function getScoreGradient(score: number, colors: any): [string, string] {
@@ -42,8 +43,8 @@ function getScoreGradient(score: number, colors: any): [string, string] {
 
 const TrustScoreCard = React.memo(function TrustScoreCard({
   trustInfo, reportCounts, totalScans,
-  isQrOwner, followCount, onOpenFollowers, manipulationWarning,
-  scanCountFrozen, ownerScanCount,
+  isQrOwner, followCount, onOpenFollowers,
+  ownerScanCount, hasOwner = false,
 }: Props) {
   const { colors, isDark } = useTheme();
 
@@ -81,7 +82,7 @@ const TrustScoreCard = React.memo(function TrustScoreCard({
 
   const STATS = [
     { icon: "scan-outline" as const,   label: "Scans",     value: totalScans },
-    { icon: "people-outline" as const, label: "Followers", value: followCount, onPress: isQrOwner ? onOpenFollowers : undefined },
+    ...(hasOwner ? [{ icon: "people-outline" as const, label: "Followers", value: followCount, onPress: isQrOwner ? onOpenFollowers : undefined }] : []),
     { icon: "flag-outline" as const,   label: "Votes",     value: total },
   ];
 
@@ -141,24 +142,6 @@ const TrustScoreCard = React.memo(function TrustScoreCard({
           )}
         </Animated.View>
       </View>
-
-      {manipulationWarning && (
-        <Animated.View entering={FadeInDown.delay(50).duration(260)} style={[styles.manipBanner, { backgroundColor: colors.warningDim, borderColor: colors.warning + "40" }]}>
-          <Ionicons name="alert-circle" size={13} color={colors.warning} />
-          <Text style={[styles.manipText, { color: colors.warning }]}>
-            Unusual voting activity detected — score may not reflect real opinion.
-          </Text>
-        </Animated.View>
-      )}
-
-      {scanCountFrozen && (
-        <Animated.View entering={FadeInDown.delay(50).duration(260)} style={[styles.manipBanner, { backgroundColor: colors.dangerDim, borderColor: colors.danger + "40" }]}>
-          <Ionicons name="lock-closed" size={13} color={colors.danger} />
-          <Text style={[styles.manipText, { color: colors.danger }]}>
-            Scan count is temporarily frozen — abnormal activity detected and flagged for review.
-          </Text>
-        </Animated.View>
-      )}
 
       <Animated.View entering={FadeInDown.delay(70).duration(260)} style={[styles.statsGrid, { borderColor: colors.surfaceBorder }]}>
         {STATS.map((s, i) => (
