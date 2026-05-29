@@ -60,6 +60,18 @@ export function useScanProcessor({
 }: ScanProcessorParams) {
   const { user, token } = useAuth();
 
+  // ─── Auto-reset after an error so the scanner is ready for the next scan ─────
+  // Without this, scanned/lock state stays true and the camera never re-enables.
+  function autoResetAfterError(delayMs = 2500) {
+    setTimeout(() => {
+      setScanned(false);
+      setProcessing(false);
+      setScanSuccess(false);
+      scanLockRef.current = false;
+      canScanRef.current  = true;
+    }, delayMs);
+  }
+
   function navigateToQrDetail(qrId: string) {
     setScanSuccess(true);
     router.push(`/qr-detail/${qrId}`);
@@ -78,6 +90,7 @@ export function useScanProcessor({
       setProcessing(false);
       showScannerMsg(validation.error || "Invalid QR code content", "error");
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+      autoResetAfterError();
       return;
     }
 
@@ -119,15 +132,12 @@ export function useScanProcessor({
       const slot = await consumeAnonScanSlot();
       if (!slot.allowed) {
         setProcessing(false);
-        setScanned(false);
-        setScanSuccess(false);
-        scanLockRef.current = false;
-        canScanRef.current  = true;
         showScannerMsg(
           "You've reached 50 scans today. Sign up for unlimited scanning.",
           "info"
         );
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+        autoResetAfterError();
         return;
       }
 
@@ -136,6 +146,7 @@ export function useScanProcessor({
         setProcessing(false);
         showScannerMsg(validation.error || "Invalid QR code content", "error");
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+        autoResetAfterError();
         return;
       }
 
@@ -163,11 +174,8 @@ export function useScanProcessor({
       await navigateToQrDetail(qrId);
     } catch (e: any) {
       setProcessing(false);
-      setScanned(false);
-      setScanSuccess(false);
-      scanLockRef.current = false;
-      canScanRef.current  = true;
       showScannerMsg(e.message || "Could not process QR code. Please try again.", "error");
+      autoResetAfterError();
     }
   }
 
@@ -250,6 +258,7 @@ export function useScanProcessor({
         setProcessing(false);
         showScannerMsg(validation.error || "Invalid QR code content", "error");
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+        autoResetAfterError();
         return;
       }
 
