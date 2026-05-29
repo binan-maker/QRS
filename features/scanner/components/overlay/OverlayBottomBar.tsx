@@ -1,4 +1,4 @@
-import { View, StyleSheet, Pressable, Animated } from "react-native";
+import { View, Text, StyleSheet, Pressable, Animated } from "react-native";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import ReAnimated, { FadeInUp, FadeIn } from "react-native-reanimated";
 import { SCANNER_GLOW } from "./constants";
@@ -46,14 +46,15 @@ export default function OverlayBottomBar({
         </ReAnimated.View>
       )}
 
-      {/* Gallery — centered, only action button */}
-      <ReAnimated.View entering={FadeIn.delay(40).duration(240)}>
+      {/* Gallery — centered, icon + label */}
+      <ReAnimated.View entering={FadeIn.delay(40).duration(240)} style={styles.galleryWrap}>
         <Pressable
           onPress={onPickImage}
           style={({ pressed }) => [styles.galleryBtn, { opacity: pressed ? 0.6 : 1 }]}
         >
           <Ionicons name="images-outline" size={24} color="rgba(255,255,255,0.85)" />
         </Pressable>
+        <Text style={styles.galleryLabel}>Gallery</Text>
       </ReAnimated.View>
     </ReAnimated.View>
   );
@@ -101,6 +102,10 @@ const styles = StyleSheet.create({
     alignItems:      "center",
     justifyContent:  "center",
   },
+  galleryWrap: {
+    alignItems: "center",
+    gap:        6,
+  },
   galleryBtn: {
     width:           60,
     height:          60,
@@ -110,5 +115,11 @@ const styles = StyleSheet.create({
     borderColor:     "rgba(255,255,255,0.12)",
     alignItems:      "center",
     justifyContent:  "center",
+  },
+  galleryLabel: {
+    fontSize:      11,
+    fontFamily:    "Inter_600SemiBold",
+    color:         "rgba(255,255,255,0.65)",
+    letterSpacing: 0.3,
   },
 });

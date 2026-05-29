@@ -29,13 +29,13 @@ export default function OverlayTopBar({
   onToggleAnonymous,
   user,
 }: Props) {
-  const [expanded, setExpanded] = useState(false);
-
   const controlCount = user ? 3 : 2;
   const expandedH    = controlCount * BTN_SIZE + (controlCount - 1) * BTN_GAP;
 
-  const heightAnim = useRef(new Animated.Value(0)).current;
-  const opacAnim   = useRef(new Animated.Value(0)).current;
+  // ── Default: expanded (visible). User taps chevron to collapse. ───────────
+  const [expanded, setExpanded] = useState(true);
+  const heightAnim = useRef(new Animated.Value(expandedH)).current;
+  const opacAnim   = useRef(new Animated.Value(1)).current;
 
   function toggle() {
     const toExpand = !expanded;
@@ -44,7 +44,6 @@ export default function OverlayTopBar({
       Animated.timing(heightAnim, {
         toValue:         toExpand ? expandedH : 0,
         duration:        220,
-        easing:          undefined,
         useNativeDriver: false,
       }),
       Animated.timing(opacAnim, {
@@ -138,12 +137,12 @@ const styles = StyleSheet.create({
     paddingBottom:     10,
   },
   dropdown: {
-    alignSelf:      "flex-end",
-    alignItems:     "center",
-    flexDirection:  "column",
-    gap:            BTN_GAP,
-    paddingRight:   16,
-    overflow:       "hidden",
+    alignSelf:     "flex-end",
+    alignItems:    "center",
+    flexDirection: "column",
+    gap:           BTN_GAP,
+    paddingRight:  16,
+    overflow:      "hidden",
   },
   btn: {
     width:           BTN_SIZE,
