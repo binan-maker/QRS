@@ -83,11 +83,11 @@ export default function ScannerScreen() {
 
   // ── Camera ready watchdog ──────────────────────────────────────────────────
   // Restarts on every focus cycle (isFocused in deps) so each fresh camera
-  // mount gets its own 15-second window to call onCameraReady.
+  // mount gets its own window to call onCameraReady.
   useEffect(() => {
     if (!permission?.granted || hardwareAvailable !== true || !isFocused) return;
 
-    const timeoutMs = Platform.OS === "android" ? 15000 : 7000;
+    const timeoutMs = Platform.OS === "android" ? 25000 : 12000;
     cameraReadyTimerRef.current = setTimeout(() => {
       setCameraAvailable((prev) => {
         if (prev) setCameraErrorType("unavailable");
@@ -117,6 +117,15 @@ export default function ScannerScreen() {
       clearTimeout(cameraReadyTimerRef.current);
       cameraReadyTimerRef.current = null;
     }
+  }
+
+  function handleCameraRetry() {
+    if (cameraReadyTimerRef.current) {
+      clearTimeout(cameraReadyTimerRef.current);
+      cameraReadyTimerRef.current = null;
+    }
+    setCameraAvailable(true);
+    setCameraErrorType("unavailable");
   }
 
   // ── Scanner hook ──────────────────────────────────────────────────────────
@@ -215,7 +224,11 @@ export default function ScannerScreen() {
             </Pressable>
           </View>
           <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
-            <CameraUnavailableBanner onPickImage={handlePickImage} errorType={cameraErrorType} />
+            <CameraUnavailableBanner
+              onPickImage={handlePickImage}
+              onRetry={handleCameraRetry}
+              errorType={cameraErrorType}
+            />
           </View>
         </View>
       ) : isFocused ? (
