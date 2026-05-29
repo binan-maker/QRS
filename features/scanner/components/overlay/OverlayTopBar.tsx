@@ -16,6 +16,9 @@ interface Props {
   user:              any;
 }
 
+const BTN_SIZE = 40;
+const BTN_GAP  = 8;
+
 export default function OverlayTopBar({
   topInset,
   flashOn,
@@ -27,118 +30,125 @@ export default function OverlayTopBar({
   user,
 }: Props) {
   const [expanded, setExpanded] = useState(false);
-  const widthAnim  = useRef(new Animated.Value(0)).current;
+
+  const controlCount = user ? 3 : 2;
+  const expandedH    = controlCount * BTN_SIZE + (controlCount - 1) * BTN_GAP;
+
+  const heightAnim = useRef(new Animated.Value(0)).current;
   const opacAnim   = useRef(new Animated.Value(0)).current;
 
   function toggle() {
     const toExpand = !expanded;
     setExpanded(toExpand);
     Animated.parallel([
-      Animated.timing(widthAnim, {
-        toValue:         toExpand ? 1 : 0,
+      Animated.timing(heightAnim, {
+        toValue:         toExpand ? expandedH : 0,
         duration:        220,
+        easing:          undefined,
         useNativeDriver: false,
       }),
       Animated.timing(opacAnim, {
         toValue:         toExpand ? 1 : 0,
-        duration:        200,
+        duration:        180,
         useNativeDriver: false,
       }),
     ]).start();
   }
 
-  const controlsWidth = widthAnim.interpolate({
-    inputRange:  [0, 1],
-    outputRange: [0, user ? 144 : 96],
-  });
-
   return (
     <ReAnimated.View
       entering={FadeIn.delay(30).duration(260)}
-      style={[styles.topBar, { paddingTop: topInset + 10 }]}
+      style={{ paddingTop: topInset + 10 }}
     >
-      {/* Back button */}
-      <Pressable onPress={() => router.back()} style={styles.btn}>
-        <Ionicons name="chevron-back" size={20} color="rgba(255,255,255,0.9)" />
-      </Pressable>
+      {/* ── Top row: back  ·  spacer  ·  chevron toggle ── */}
+      <View style={styles.topRow}>
+        <Pressable onPress={() => router.back()} style={styles.btn}>
+          <Ionicons name="chevron-back" size={20} color="rgba(255,255,255,0.9)" />
+        </Pressable>
 
-      {/* Spacer */}
-      <View style={{ flex: 1 }} />
+        <View style={{ flex: 1 }} />
 
-      {/* Collapsible controls — expand from the toggle icon leftward */}
-      <View style={styles.rightGroup}>
-        <Animated.View
-          style={[styles.controlsRow, { width: controlsWidth, opacity: opacAnim }]}
-        >
-          {/* Private eye — only for logged-in users */}
-          {user && (
-            <Pressable
-              onPress={onToggleAnonymous}
-              style={[styles.btn, anonymousMode && styles.btnPrivate]}
-            >
-              <Ionicons
-                name={anonymousMode ? "eye-off" : "eye-off-outline"}
-                size={17}
-                color={anonymousMode ? "#F5A623" : "rgba(255,255,255,0.55)"}
-              />
-            </Pressable>
-          )}
-
-          {/* Camera flip */}
-          <Pressable onPress={onFlipCamera} style={styles.btn}>
-            <Ionicons
-              name="camera-reverse-outline"
-              size={20}
-              color={facing === "front" ? SCANNER_GLOW : "rgba(255,255,255,0.75)"}
-            />
-          </Pressable>
-
-          {/* Flash */}
-          <Pressable
-            onPress={facing === "front" ? undefined : onToggleFlash}
-            style={[styles.btn, flashOn && facing === "back" && styles.btnActive]}
-          >
-            <Ionicons
-              name={flashOn && facing === "back" ? "flash" : "flash-off"}
-              size={18}
-              color={
-                facing === "front"
-                  ? "rgba(255,255,255,0.2)"
-                  : flashOn
-                  ? SCANNER_GLOW
-                  : "rgba(255,255,255,0.75)"
-              }
-            />
-          </Pressable>
-        </Animated.View>
-
-        {/* Toggle button */}
         <Pressable
           onPress={toggle}
           style={[styles.btn, expanded && styles.btnActive]}
         >
           <Ionicons
-            name={expanded ? "close" : "ellipsis-horizontal"}
+            name={expanded ? "chevron-up" : "chevron-down"}
             size={18}
             color={expanded ? SCANNER_GLOW : "rgba(255,255,255,0.75)"}
           />
         </Pressable>
       </View>
+
+      {/* ── Vertical dropdown — slides down from under the chevron ── */}
+      <Animated.View
+        style={[styles.dropdown, { height: heightAnim, opacity: opacAnim }]}
+        pointerEvents={expanded ? "auto" : "none"}
+      >
+        {/* Private eye — logged-in users only */}
+        {user && (
+          <Pressable
+            onPress={onToggleAnonymous}
+            style={[styles.btn, anonymousMode && styles.btnPrivate]}
+          >
+            <Ionicons
+              name={anonymousMode ? "eye-off" : "eye-off-outline"}
+              size={17}
+              color={anonymousMode ? "#F5A623" : "rgba(255,255,255,0.55)"}
+            />
+          </Pressable>
+        )}
+
+        {/* Camera flip */}
+        <Pressable onPress={onFlipCamera} style={styles.btn}>
+          <Ionicons
+            name="camera-reverse-outline"
+            size={20}
+            color={facing === "front" ? SCANNER_GLOW : "rgba(255,255,255,0.75)"}
+          />
+        </Pressable>
+
+        {/* Flash */}
+        <Pressable
+          onPress={facing === "front" ? undefined : onToggleFlash}
+          style={[styles.btn, flashOn && facing === "back" && styles.btnActive]}
+        >
+          <Ionicons
+            name={flashOn && facing === "back" ? "flash" : "flash-off"}
+            size={18}
+            color={
+              facing === "front"
+                ? "rgba(255,255,255,0.2)"
+                : flashOn
+                ? SCANNER_GLOW
+                : "rgba(255,255,255,0.75)"
+            }
+          />
+        </Pressable>
+      </Animated.View>
     </ReAnimated.View>
   );
 }
 
 const styles = StyleSheet.create({
-  topBar: {
+  topRow: {
     flexDirection:     "row",
     alignItems:        "center",
     paddingHorizontal: 16,
     paddingBottom:     10,
   },
+  dropdown: {
+    alignSelf:      "flex-end",
+    alignItems:     "center",
+    flexDirection:  "column",
+    gap:            BTN_GAP,
+    paddingRight:   16,
+    overflow:       "hidden",
+  },
   btn: {
-    width:           40,
-    height:          40,
-    borderRadius:    20,
+    width:           BTN_SIZE,
+    height:          BTN_SIZE,
+    borderRadius:    BTN_SIZE / 2,
     backgroundColor: "rgba(0,0,0,0.5)",
     alignItems:      "center",
     justifyContent:  "center",
@@ -152,16 +162,5 @@ const styles = StyleSheet.create({
   btnPrivate: {
     backgroundColor: "rgba(245,166,35,0.14)",
     borderColor:     "rgba(245,166,35,0.4)",
-  },
-  rightGroup: {
-    flexDirection: "row",
-    alignItems:    "center",
-    gap:           8,
-  },
-  controlsRow: {
-    flexDirection: "row",
-    alignItems:    "center",
-    gap:           8,
-    overflow:      "hidden",
   },
 });

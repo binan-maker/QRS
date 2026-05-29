@@ -62,7 +62,7 @@ export default function QrDetailNavBar({
         </Animated.View>
         <View style={{ flex: 1, minWidth: 0 }}>
           <Text style={[styles.navTitle, { textAlign: "left" }]} numberOfLines={1}>
-            QR Guard
+            QR Details
           </Text>
           {offlineMode && (
             <Text style={[navOfflineStyles.badge, { color: colors.warning }]}>● Offline</Text>
