@@ -212,7 +212,17 @@ function validateUrlScheme(content: string): QrValidationResult {
   }
 
   if (!ALLOWED_URL_SCHEMES.has(scheme) && !ALLOWED_URL_SCHEMES.has(scheme.replace(/:$/, "") + ":")) {
-    return { valid: false, error: `URL scheme not allowed: ${scheme}` };
+    // Give friendly, specific messages for common-but-unsupported schemes
+    if (scheme === "otpauth:") {
+      return { valid: false, error: "This is a 2FA setup code for an authenticator app (like Google Authenticator). It can't be opened here — use your authenticator app to scan it instead." };
+    }
+    if (scheme === "market:" || scheme === "itms-apps:" || scheme === "itms:") {
+      return { valid: false, error: "This QR code links to an app store listing and can't be opened in QR Guard." };
+    }
+    if (scheme === "intent:") {
+      return { valid: false, error: "This QR code contains an Android deep link that can't be opened here." };
+    }
+    return { valid: false, error: "This QR code contains a link type that isn't supported. It may be for a specific app — try scanning it with that app directly." };
   }
 
   // For http/https, run through URL parser to catch malformed inputs.
