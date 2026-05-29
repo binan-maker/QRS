@@ -4,7 +4,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { StatusBar } from "expo-status-bar";
 import { CameraView, useCameraPermissions } from "expo-camera";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { useFocusEffect, router } from "expo-router";
+import { useFocusEffect, useIsFocused, router } from "expo-router";
 import { useTopInset } from "@/shared/utils/platform";
 import { Ionicons } from "@expo/vector-icons";
 import { useTheme } from "@/shared/contexts/ThemeContext";
@@ -33,13 +33,18 @@ export default function ScannerScreen() {
   const [hardwareAvailable, setHardwareAvailable] = useState<boolean | null>(null);
   const [cameraAvailable,   setCameraAvailable]   = useState(true);
   const [cameraErrorType,   setCameraErrorType]   = useState<CameraErrorType>("unavailable");
-  const [cameraKey,         setCameraKey]         = useState(0);
   const cameraReadyTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Force CameraView remount on focus to fix black screen when returning from detail page
+  // ── useIsFocused — the single source of truth for camera mount/unmount ──────
+  // When the screen loses focus (user navigates to QR detail, profile, etc.),
+  // isFocused → false and CameraView unmounts, giving Android time to release
+  // the hardware cleanly. When focus returns, CameraView mounts fresh.
+  // This is the standard fix for "black screen on return" in React Native Camera.
+  const isFocused = useIsFocused();
+
+  // Reset error state every time the screen comes back into view
   useFocusEffect(
     useCallback(() => {
-      setCameraKey((k) => k + 1);
       setCameraAvailable(true);
     }, [])
   );
@@ -75,8 +80,11 @@ export default function ScannerScreen() {
   }, []);
 
   // ── Camera ready watchdog ──────────────────────────────────────────────────
+  // Restarts on every focus cycle (isFocused in deps) so each fresh camera
+  // mount gets its own 15-second window to call onCameraReady.
   useEffect(() => {
-    if (!permission?.granted || hardwareAvailable !== true) return;
+    if (!permission?.granted || hardwareAvailable !== true || !isFocused) return;
+
     const timeoutMs = Platform.OS === "android" ? 15000 : 7000;
     cameraReadyTimerRef.current = setTimeout(() => {
       setCameraAvailable((prev) => {
@@ -84,13 +92,14 @@ export default function ScannerScreen() {
         return false;
       });
     }, timeoutMs);
+
     return () => {
       if (cameraReadyTimerRef.current) {
         clearTimeout(cameraReadyTimerRef.current);
         cameraReadyTimerRef.current = null;
       }
     };
-  }, [permission?.granted, hardwareAvailable]);
+  }, [permission?.granted, hardwareAvailable, isFocused]);
 
   function markCameraUnavailable(type: CameraErrorType) {
     if (cameraReadyTimerRef.current) {
@@ -183,15 +192,20 @@ export default function ScannerScreen() {
     );
   }
 
+  // ── Camera active: only when screen is focused ─────────────────────────────
+  const cameraLive = isFocused && hardwareAvailable === true && cameraAvailable;
+
   // ── Main render ───────────────────────────────────────────────────────────
   return (
     <View style={{ flex: 1, backgroundColor: "#000" }}>
       <StatusBar style="light" backgroundColor="transparent" translucent />
 
-      {/* Camera / hardware guard */}
+      {/* Camera — only mounted while this screen is focused */}
       {hardwareAvailable === null ? (
+        // Still checking hardware
         <View style={[StyleSheet.absoluteFillObject, { backgroundColor: "#000" }]} />
-      ) : hardwareAvailable === false || !cameraAvailable ? (
+      ) : hardwareAvailable === false || (!cameraAvailable && isFocused) ? (
+        // Hardware unavailable or camera error
         <View style={[StyleSheet.absoluteFillObject, { backgroundColor: "#080c14" }]}>
           <View style={{ paddingTop: topInset + 8, paddingHorizontal: 16, paddingBottom: 10 }}>
             <Pressable onPress={() => router.back()} style={styles.backBtn}>
@@ -202,10 +216,10 @@ export default function ScannerScreen() {
             <CameraUnavailableBanner onPickImage={handlePickImage} errorType={cameraErrorType} />
           </View>
         </View>
-      ) : (
+      ) : isFocused ? (
+        // Camera live — only rendered when screen is focused
         <CameraErrorBoundary onError={() => markCameraUnavailable("unavailable")}>
           <CameraView
-            key={cameraKey}
             style={StyleSheet.absoluteFillObject}
             facing={facing}
             enableTorch={flashOn && facing === "back"}
@@ -225,10 +239,13 @@ export default function ScannerScreen() {
             }}
           />
         </CameraErrorBoundary>
+      ) : (
+        // Screen not focused — render black background, camera unmounted
+        <View style={[StyleSheet.absoluteFillObject, { backgroundColor: "#000" }]} />
       )}
 
       {/* Scanner overlay (controls, finder, animations) */}
-      {hardwareAvailable === true && cameraAvailable && (
+      {cameraLive && (
         <ScannerOverlay
           topInset={topInset}
           bottomInset={bottomInset}
