@@ -81,9 +81,8 @@ const TrustScoreCard = React.memo(function TrustScoreCard({
   }, [total]);
 
   const STATS = [
-    { icon: "scan-outline" as const,   label: "Scans",     value: totalScans },
-    ...(hasOwner ? [{ icon: "people-outline" as const, label: "Followers", value: followCount, onPress: isQrOwner ? onOpenFollowers : undefined }] : []),
-    { icon: "flag-outline" as const,   label: "Votes",     value: total },
+    { icon: "scan-outline" as const, label: "Scans", value: totalScans },
+    { icon: "flag-outline" as const, label: "Votes", value: total },
   ];
 
   return (

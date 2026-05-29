@@ -252,46 +252,29 @@ export default function StaticQrDetailScreen({ id, ownerDocId }: Props) {
               />
             }
           >
-            {/* ── Trust verdict banner (non-owner QRs) ─────────── */}
-            {!q.offlineMode && !hasOwner && (() => {
-              const score   = trust?.score ?? -1;
-              const accent  = score >= 70 ? "#22C55E" : score >= 40 ? "#F59E0B" : "#94A3B8";
-              const iconName: any =
-                score >= 70 ? "shield-checkmark-outline"
-                : score >= 40 ? "information-circle-outline"
-                : "help-circle-outline";
-              const statusLabel =
-                score >= 70 ? "SAFE"
-                : score >= 40 ? "CAUTION"
-                : "UNKNOWN";
-              const bg = score >= 70
-                ? (isDark ? "#0a1a0e" : "#f0fdf4")
-                : score >= 40
-                ? (isDark ? "#16120400" : "#fffbeb")
-                : (isDark ? "#0f172a" : "#f8fafc");
-              return (
-                <Animated.View entering={FadeIn.delay(20).duration(220)} style={{ marginBottom: 12 }}>
-                  <View style={[verdictBannerStyles.banner, { backgroundColor: bg, borderColor: accent + "28" }]}>
-                    <View style={[verdictBannerStyles.accentBar, { backgroundColor: accent }]} />
-                    <View style={[verdictBannerStyles.iconBox, { borderColor: accent + "45", backgroundColor: accent + "12" }]}>
-                      <Ionicons name={iconName} size={22} color={accent} />
-                    </View>
-                    <View style={{ flex: 1 }}>
-                      <View style={verdictBannerStyles.eyebrowRow}>
-                        <View style={[verdictBannerStyles.dot, { backgroundColor: accent }]} />
-                        <Text style={[verdictBannerStyles.eyebrow, { color: accent }]}>{statusLabel}</Text>
-                      </View>
-                      <Text style={[verdictBannerStyles.scoreText, { color: isDark ? "#e2e8f0" : "#1e293b" }]}>
-                        {score >= 0 ? trust.label : "Unverified QR Code"}
-                      </Text>
-                      <Text style={[verdictBannerStyles.sub, { color: isDark ? "#94a3b8" : "#64748b" }]}>
-                        Community Trust Score{score >= 0 ? `: ${score}` : " — not yet rated"}
-                      </Text>
-                    </View>
+            {/* ── Trust verdict banner — SAFE only ─────────── */}
+            {!q.offlineMode && !hasOwner && (trust?.score ?? -1) >= 70 && (
+              <Animated.View entering={FadeIn.delay(20).duration(220)} style={{ marginBottom: 12 }}>
+                <View style={[verdictBannerStyles.banner, { backgroundColor: isDark ? "#0a1a0e" : "#f0fdf4", borderColor: "#22C55E28" }]}>
+                  <View style={[verdictBannerStyles.accentBar, { backgroundColor: "#22C55E" }]} />
+                  <View style={[verdictBannerStyles.iconBox, { borderColor: "#22C55E45", backgroundColor: "#22C55E12" }]}>
+                    <Ionicons name="shield-checkmark-outline" size={22} color="#22C55E" />
                   </View>
-                </Animated.View>
-              );
-            })()}
+                  <View style={{ flex: 1 }}>
+                    <View style={verdictBannerStyles.eyebrowRow}>
+                      <View style={[verdictBannerStyles.dot, { backgroundColor: "#22C55E" }]} />
+                      <Text style={[verdictBannerStyles.eyebrow, { color: "#22C55E" }]}>SAFE</Text>
+                    </View>
+                    <Text style={[verdictBannerStyles.scoreText, { color: isDark ? "#e2e8f0" : "#1e293b" }]}>
+                      {trust.label}
+                    </Text>
+                    <Text style={[verdictBannerStyles.sub, { color: isDark ? "#94a3b8" : "#64748b" }]}>
+                      Community Trust Score: {Math.round(trust.score)}
+                    </Text>
+                  </View>
+                </View>
+              </Animated.View>
+            )}
 
             {/* ── Deactivated banner ───────────────────────────── */}
             {isDeactivated && (
