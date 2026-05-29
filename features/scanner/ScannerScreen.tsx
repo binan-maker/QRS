@@ -35,14 +35,52 @@ export default function ScannerScreen() {
   const [hardwareAvailable, setHardwareAvailable] = useState<boolean | null>(null);
   const [cameraAvailable,   setCameraAvailable]   = useState(true);
   const [cameraErrorType,   setCameraErrorType]   = useState<CameraErrorType>("unavailable");
-  const cameraReadyTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const cameraReadyTimerRef    = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const cameraActivateTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // ── useIsFocused — the single source of truth for camera mount/unmount ──────
-  // When the screen loses focus (user navigates to QR detail, profile, etc.),
-  // isFocused → false and CameraView unmounts, giving Android time to release
-  // the hardware cleanly. When focus returns, CameraView mounts fresh.
-  // This is the standard fix for "black screen on return" in React Native Camera.
+  // ── useIsFocused — the single source of truth for focus state ─────────────
   const isFocused = useIsFocused();
+
+  // ── cameraActive: delayed mount gate ──────────────────────────────────────
+  // DO NOT mount CameraView the instant isFocused becomes true.
+  // The screen-transition animation is still running at that point and the
+  // camera renders before its container has settled dimensions, producing the
+  // "half-black / half-camera" split. A short delay lets the layout settle
+  // before the CameraView tries to fill it.
+  const [cameraActive, setCameraActive] = useState(false);
+
+  // ── focusKey: increment each focus cycle to force a clean remount ─────────
+  // Without this, the CameraView reuses its previous native instance across
+  // focus cycles and can carry over a stale, partially-rendered preview.
+  const focusCountRef = useRef(0);
+  const [focusKey, setFocusKey] = useState(0);
+
+  useEffect(() => {
+    if (cameraActivateTimerRef.current) {
+      clearTimeout(cameraActivateTimerRef.current);
+      cameraActivateTimerRef.current = null;
+    }
+
+    if (isFocused) {
+      // 180 ms gives the stack-navigator slide animation time to finish
+      // before the native camera surface requests its first frame.
+      const delay = Platform.OS === "android" ? 250 : 180;
+      cameraActivateTimerRef.current = setTimeout(() => {
+        focusCountRef.current += 1;
+        setFocusKey(focusCountRef.current);
+        setCameraActive(true);
+      }, delay);
+    } else {
+      setCameraActive(false);
+    }
+
+    return () => {
+      if (cameraActivateTimerRef.current) {
+        clearTimeout(cameraActivateTimerRef.current);
+        cameraActivateTimerRef.current = null;
+      }
+    };
+  }, [isFocused]);
 
   // Reset error state every time the screen comes back into view
   useFocusEffect(
@@ -82,10 +120,9 @@ export default function ScannerScreen() {
   }, []);
 
   // ── Camera ready watchdog ──────────────────────────────────────────────────
-  // Restarts on every focus cycle (isFocused in deps) so each fresh camera
-  // mount gets its own window to call onCameraReady.
+  // Restarts whenever cameraActive changes so each mount gets its own window.
   useEffect(() => {
-    if (!permission?.granted || hardwareAvailable !== true || !isFocused) return;
+    if (!permission?.granted || hardwareAvailable !== true || !cameraActive) return;
 
     const timeoutMs = Platform.OS === "android" ? 25000 : 12000;
     cameraReadyTimerRef.current = setTimeout(() => {
@@ -101,7 +138,7 @@ export default function ScannerScreen() {
         cameraReadyTimerRef.current = null;
       }
     };
-  }, [permission?.granted, hardwareAvailable, isFocused]);
+  }, [permission?.granted, hardwareAvailable, cameraActive]);
 
   function markCameraUnavailable(type: CameraErrorType) {
     if (cameraReadyTimerRef.current) {
@@ -124,6 +161,9 @@ export default function ScannerScreen() {
       clearTimeout(cameraReadyTimerRef.current);
       cameraReadyTimerRef.current = null;
     }
+    // Force a full remount with a fresh key
+    focusCountRef.current += 1;
+    setFocusKey(focusCountRef.current);
     setCameraAvailable(true);
     setCameraErrorType("unavailable");
   }
@@ -167,7 +207,10 @@ export default function ScannerScreen() {
     handleUnverifiedBack,
   } = useScanner();
 
-  // Track scan count for donation banner (does not affect scan logic)
+  // ── Barcode handler — always stable, refs gate double-scans ───────────────
+  // IMPORTANT: never pass `undefined` to onBarcodeScanned. Switching between
+  // a function and undefined causes CameraView to re-render its native surface,
+  // which is the primary trigger of the half-black screen artifact.
   const handleScanWithCount = useCallback(async (data: any) => {
     handleBarCodeScanned(data);
     try {
@@ -203,20 +246,22 @@ export default function ScannerScreen() {
     );
   }
 
-  // ── Camera active: only when screen is focused ─────────────────────────────
-  const cameraLive = isFocused && hardwareAvailable === true && cameraAvailable;
+  // ── Camera live: fully active and layout-settled ───────────────────────────
+  const cameraLive = cameraActive && hardwareAvailable === true && cameraAvailable;
 
   // ── Main render ───────────────────────────────────────────────────────────
   return (
     <Animated.View entering={FadeIn.duration(220)} style={{ flex: 1, backgroundColor: "#000" }}>
       <StatusBar style="light" backgroundColor="transparent" translucent />
 
-      {/* Camera — only mounted while this screen is focused */}
+      {/* Camera layer — black placeholder holds space during all non-camera states */}
+      <View style={[StyleSheet.absoluteFillObject, { backgroundColor: "#000" }]} />
+
       {hardwareAvailable === null ? (
-        // Still checking hardware
-        <View style={[StyleSheet.absoluteFillObject, { backgroundColor: "#000" }]} />
+        // Still checking hardware — black placeholder already rendered above
+        null
       ) : hardwareAvailable === false || (!cameraAvailable && isFocused) ? (
-        // Hardware unavailable or camera error
+        // Hardware unavailable or camera error — show recovery UI
         <View style={[StyleSheet.absoluteFillObject, { backgroundColor: "#080c14" }]}>
           <View style={{ paddingTop: topInset + 8, paddingHorizontal: 16, paddingBottom: 10 }}>
             <Pressable onPress={() => router.back()} style={styles.backBtn}>
@@ -231,16 +276,17 @@ export default function ScannerScreen() {
             />
           </View>
         </View>
-      ) : isFocused ? (
-        // Camera live — only rendered when screen is focused
+      ) : cameraActive ? (
+        // Camera live — layout has settled, safe to mount
         <CameraErrorBoundary onError={() => markCameraUnavailable("unavailable")}>
           <CameraView
+            key={focusKey}
             style={StyleSheet.absoluteFillObject}
             facing={facing}
             enableTorch={flashOn && facing === "back"}
             zoom={zoom}
             barcodeScannerSettings={{ barcodeTypes: ["qr"] }}
-            onBarcodeScanned={scanned ? undefined : handleScanWithCount}
+            onBarcodeScanned={handleScanWithCount}
             onCameraReady={markCameraReady}
             onMountError={(error) => {
               const msg     = (error?.message ?? "").toLowerCase();
@@ -254,10 +300,7 @@ export default function ScannerScreen() {
             }}
           />
         </CameraErrorBoundary>
-      ) : (
-        // Screen not focused — render black background, camera unmounted
-        <View style={[StyleSheet.absoluteFillObject, { backgroundColor: "#000" }]} />
-      )}
+      ) : null}
 
       {/* Scanner overlay (controls, finder, animations) */}
       {cameraLive && (
