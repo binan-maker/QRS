@@ -10,9 +10,9 @@ import { parseWebsite } from "../parsers";
 import { styles } from "./WebsiteCardStyles";
 
 interface Props {
-  content:        string;
-  onOpenContent:  () => void;
-  isDeactivated:  boolean;
+  content:         string;
+  onOpenContent:   () => void;
+  isDeactivated:   boolean;
   hideOpenAction?: boolean;
 }
 
@@ -30,7 +30,7 @@ export default function WebsiteCard({ content, onOpenContent, isDeactivated, hid
   const [copied, setCopied] = React.useState(false);
   const pulseAnim = React.useRef(new RNAnimated.Value(1)).current;
 
-  const site         = parseWebsite(content);
+  const site          = parseWebsite(content);
   const hasOpenAction = !isDeactivated && !hideOpenAction;
 
   const domainOnly = site?.hostname ?? content.replace(/^https?:\/\/(www\.)?/, "").split("/")[0];
@@ -72,8 +72,9 @@ export default function WebsiteCard({ content, onOpenContent, isDeactivated, hid
           end={{ x: 1, y: 1 }}
         />
 
-        {/* ── Hero row: avatar · domain · copy ─────────────────────────── */}
+        {/* ── Hero row: avatar · domain · copy ─────────────────────── */}
         <Animated.View entering={FadeIn.delay(30).duration(260)} style={styles.heroRow}>
+          {/* Domain avatar */}
           <View style={styles.avatarWrap}>
             <RNAnimated.View style={[
               styles.glowRing,
@@ -87,18 +88,9 @@ export default function WebsiteCard({ content, onOpenContent, isDeactivated, hid
             >
               <Text style={styles.avatarLetter}>{initial}</Text>
             </LinearGradient>
-            <Animated.View
-              entering={FadeIn.delay(70).duration(240)}
-              style={[styles.secDot, { backgroundColor: site?.isSecure ? "#22C55E" : "#F59E0B" }]}
-            >
-              <Ionicons
-                name={site?.isSecure ? "lock-closed" : "lock-open-outline"}
-                size={7}
-                color="#fff"
-              />
-            </Animated.View>
           </View>
 
+          {/* Domain name only — no badge, no "Website" label */}
           <View style={styles.heroText}>
             <Text
               style={[styles.domainName, { color: isDark ? "#F0F9FF" : "#1E3A8A" }]}
@@ -106,30 +98,9 @@ export default function WebsiteCard({ content, onOpenContent, isDeactivated, hid
             >
               {domainOnly}
             </Text>
-            <View style={styles.badgeRow}>
-              <View style={[styles.protoBadge, {
-                backgroundColor: site?.isSecure
-                  ? (isDark ? "#14532D55" : "#DCFCE7")
-                  : (isDark ? "#78350F55" : "#FEF3C7"),
-                borderColor: site?.isSecure
-                  ? (isDark ? "#22C55E55" : "#86EFAC")
-                  : (isDark ? "#F59E0B55" : "#FCD34D"),
-              }]}>
-                <Ionicons
-                  name={site?.isSecure ? "shield-checkmark" : "warning-outline"}
-                  size={9}
-                  color={site?.isSecure ? "#22C55E" : "#F59E0B"}
-                />
-                <Text style={[styles.protoText, { color: site?.isSecure ? "#22C55E" : "#F59E0B" }]}>
-                  {site?.isSecure ? "SECURE" : "INSECURE"}
-                </Text>
-              </View>
-              <Text style={[styles.websiteLabel, { color: isDark ? BLUE_GLOW + "BB" : BLUE_MID + "99" }]}>
-                Website
-              </Text>
-            </View>
           </View>
 
+          {/* Copy button */}
           <Pressable
             onPress={handleCopy}
             style={({ pressed }) => [styles.copyBtn, {
@@ -153,7 +124,7 @@ export default function WebsiteCard({ content, onOpenContent, isDeactivated, hid
           </Pressable>
         </Animated.View>
 
-        {/* ── URL strip — domain only, no path ─────────────────────────── */}
+        {/* ── URL strip ────────────────────────────────────────────── */}
         <Animated.View entering={FadeInDown.delay(40).duration(260)}>
           <View style={[styles.urlStrip, {
             backgroundColor: isDark ? "#1E293B" : "#DBEAFE",
@@ -168,13 +139,10 @@ export default function WebsiteCard({ content, onOpenContent, isDeactivated, hid
             >
               {domainOnly}
             </Text>
-            {site?.isSecure && (
-              <Ionicons name="shield-checkmark" size={13} color="#22C55E" />
-            )}
           </View>
         </Animated.View>
 
-        {/* ── Modern open button ────────────────────────────────────────── */}
+        {/* ── Open button — just the word "Open", nothing else ─────── */}
         {hasOpenAction && (
           <Animated.View entering={FadeInDown.delay(80).duration(260)}>
             <Pressable
@@ -182,60 +150,19 @@ export default function WebsiteCard({ content, onOpenContent, isDeactivated, hid
                 Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
                 onOpenContent();
               }}
-              style={({ pressed }) => [
-                cardOpenStyles.card,
-                {
-                  borderColor:     isDark ? BLUE_MID + "55" : BLUE_LIGHT + "70",
-                  backgroundColor: isDark ? BLUE_DARK + "50" : BLUE_LIGHT + "14",
-                  transform: [{ scale: pressed ? 0.975 : 1 }],
-                  opacity:   pressed ? 0.9 : 1,
-                },
-              ]}
+              style={({ pressed }) => ({
+                transform: [{ scale: pressed ? 0.975 : 1 }],
+                opacity:   pressed ? 0.88 : 1,
+              })}
             >
               <LinearGradient
-                colors={isDark
-                  ? [BLUE_MID + "30", BLUE_DARK + "55"]
-                  : [BLUE_LIGHT + "25", BLUE_GLOW + "10"]}
-                style={StyleSheet.absoluteFill}
+                colors={[BLUE_MID, BLUE_DARK]}
+                style={openBtnStyles.btn}
                 start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-              />
-              <View style={cardOpenStyles.inner}>
-                {/* Globe icon bubble */}
-                <LinearGradient
-                  colors={[BLUE_MID, BLUE_DARK]}
-                  style={cardOpenStyles.iconBubble}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 1 }}
-                >
-                  <Ionicons name="globe" size={20} color="#fff" />
-                </LinearGradient>
-
-                {/* Text group */}
-                <View style={{ flex: 1 }}>
-                  <Text style={[cardOpenStyles.label, { color: isDark ? "#F0F9FF" : "#1E3A8A" }]}>
-                    Open Website
-                  </Text>
-                  <Text style={[cardOpenStyles.sub, { color: isDark ? BLUE_GLOW + "BB" : BLUE_MID + "99" }]}>
-                    {domainOnly}
-                  </Text>
-                </View>
-
-                {/* Arrow pill */}
-                <View style={[
-                  cardOpenStyles.arrowPill,
-                  {
-                    backgroundColor: isDark ? BLUE_MID + "30" : BLUE_LIGHT + "25",
-                    borderColor:     isDark ? BLUE_MID + "55" : BLUE_LIGHT + "55",
-                  },
-                ]}>
-                  <Ionicons
-                    name="arrow-forward"
-                    size={16}
-                    color={isDark ? BLUE_GLOW : BLUE_MID}
-                  />
-                </View>
-              </View>
+                end={{ x: 1, y: 0 }}
+              >
+                <Text style={openBtnStyles.label}>Open</Text>
+              </LinearGradient>
             </Pressable>
           </Animated.View>
         )}
@@ -244,44 +171,17 @@ export default function WebsiteCard({ content, onOpenContent, isDeactivated, hid
   );
 }
 
-const cardOpenStyles = StyleSheet.create({
-  card: {
-    borderRadius: 16,
-    borderWidth:  1,
-    overflow:     "hidden",
-  },
-  inner: {
-    flexDirection:     "row",
-    alignItems:        "center",
-    gap:               14,
-    paddingVertical:   14,
-    paddingHorizontal: 14,
-  },
-  iconBubble: {
-    width:          44,
-    height:         44,
+const openBtnStyles = StyleSheet.create({
+  btn: {
     borderRadius:   14,
-    alignItems:     "center",
-    justifyContent: "center",
-    flexShrink:     0,
+    paddingVertical: 14,
+    alignItems:      "center",
+    justifyContent:  "center",
   },
   label: {
     fontSize:      15,
     fontFamily:    "Inter_700Bold",
-    letterSpacing: -0.2,
-  },
-  sub: {
-    fontSize:   12,
-    fontFamily: "Inter_400Regular",
-    marginTop:  2,
-  },
-  arrowPill: {
-    width:          36,
-    height:         36,
-    borderRadius:   11,
-    alignItems:     "center",
-    justifyContent: "center",
-    borderWidth:    1,
-    flexShrink:     0,
+    color:         "#fff",
+    letterSpacing: 0.3,
   },
 });
