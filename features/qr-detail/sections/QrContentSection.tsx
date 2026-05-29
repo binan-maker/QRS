@@ -1,5 +1,5 @@
 import Animated, { FadeInDown } from "react-native-reanimated";
-import ContentCard from "@/features/qr-detail/content-cards";
+import { ContentCard } from "@/features/qr-engine/content-cards";
 import SafetyWarningCard from "@/features/qr-detail/components/SafetyWarningCard";
 import EvidenceCard from "@/features/qr-detail/components/EvidenceCard";
 import ExternalQrBanner from "@/features/qr-detail/components/ExternalQrBanner";

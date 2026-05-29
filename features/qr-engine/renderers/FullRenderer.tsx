@@ -6,7 +6,7 @@
  */
 
 import React from "react";
-import ContentCard from "@/features/qr-detail/content-cards";
+import { ContentCard } from "@/features/qr-engine/content-cards";
 import type { QrRenderProps } from "../types";
 
 export default function FullRenderer({

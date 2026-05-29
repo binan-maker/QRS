@@ -18,7 +18,7 @@ import { makeStyles, offlineSectionStyles } from "@/features/qr-detail/styles";
 import { formatCompactNumber } from "@/shared/utils/number-format";
 
 import LoadingSkeleton from "@/features/qr-detail/components/LoadingSkeleton";
-import ContentCard from "@/features/qr-detail/content-cards";
+import { ContentCard } from "@/features/qr-engine/content-cards";
 import TrustScoreCard from "@/features/qr-detail/components/TrustScoreCard";
 import OwnerCard from "@/features/qr-detail/components/OwnerCard";
 import SafetyWarningCard from "@/features/qr-detail/components/SafetyWarningCard";

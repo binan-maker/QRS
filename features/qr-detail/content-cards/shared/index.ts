@@ -1,3 +1,2 @@
-export { CardHeader } from "./CardHeader";
-export { InfoRow, InfoGrid, Divider } from "./InfoGrid";
-export { OpenButton } from "./OpenButton";
+/** @deprecated Import from @/features/qr-engine instead */
+export { CardHeader, InfoRow, InfoGrid, Divider, OpenButton } from "@/features/qr-engine/content-cards/shared";
