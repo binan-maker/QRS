@@ -114,16 +114,7 @@ export default function ScannerOverlay({
       </View>
 
       {/* Top bar */}
-      <OverlayTopBar
-        topInset={topInset}
-        flashOn={flashOn}
-        onToggleFlash={onToggleFlash}
-        facing={facing}
-        onFlipCamera={onFlipCamera}
-        anonymousMode={anonymousMode}
-        onToggleAnonymous={onToggleAnonymous}
-        user={user}
-      />
+      <OverlayTopBar topInset={topInset} />
 
       {/* Bottom controls */}
       <OverlayBottomBar
@@ -137,6 +128,11 @@ export default function ScannerOverlay({
         onReset={onReset}
         user={user}
         scanReady={anims.scanReady}
+        flashOn={flashOn}
+        onToggleFlash={onToggleFlash}
+        facing={facing}
+        onFlipCamera={onFlipCamera}
+        onToggleAnonymous={onToggleAnonymous}
       />
     </View>
   );
