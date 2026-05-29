@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import * as Haptics from "@/shared/utils/haptics";
 import { useAuth } from "@/shared/contexts/AuthContext";
 import { useCameraControls } from "@/features/scanner/hooks/useCameraControls";
@@ -19,6 +19,7 @@ export function useScanner() {
   function flipCamera() {
     setFacing((prev) => {
       const next = prev === "back" ? "front" : "back";
+      // Disable torch when switching to front camera (no front torch)
       if (next === "front") camera.setFlashOn(false);
       return next;
     });
@@ -35,7 +36,7 @@ export function useScanner() {
   const modals = useScanModals(camera.resetScan);
 
   // ── Scan processing (all business logic) ──────────────────────────────────
-  const { handleBarCodeScanned, handlePickImage } = useScanProcessor({
+  const { handleBarCodeScanned: _rawHandleBarCodeScanned, handlePickImage } = useScanProcessor({
     anonymousMode,
     scanned:                camera.scanned,
     setScanned:             camera.setScanned,
@@ -49,6 +50,15 @@ export function useScanner() {
     setConversionBannerMsg: messages.setConversionBannerMsg,
   });
 
+  // ── Wrap handleBarCodeScanned to kill auto-flash immediately on scan hit ──
+  const handleBarCodeScanned = useCallback(
+    async (data: any) => {
+      camera.onScanSuccess(); // stop auto-torch + auto-zoom progression
+      await _rawHandleBarCodeScanned(data);
+    },
+    [_rawHandleBarCodeScanned, camera.onScanSuccess]
+  );
+
   return {
     user,
     // Camera state
@@ -56,7 +66,7 @@ export function useScanner() {
     processing:   camera.processing,
     scanSuccess:  camera.scanSuccess,
     flashOn:      camera.flashOn,
-    setFlashOn:   camera.setFlashOn,
+    toggleFlash:  camera.toggleFlash,
     zoom:         camera.zoom,
     zoomLabel:    camera.zoomLabel,
     scanLineAnim: camera.scanLineAnim,

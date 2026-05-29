@@ -117,7 +117,7 @@ export default function ScannerScreen() {
     anonymousMode,
     setAnonymousMode,
     flashOn,
-    setFlashOn,
+    toggleFlash,
     zoom,
     zoomLabel,
     facing,
@@ -233,7 +233,7 @@ export default function ScannerScreen() {
           topInset={topInset}
           bottomInset={bottomInset}
           flashOn={flashOn}
-          onToggleFlash={() => setFlashOn(!flashOn)}
+          onToggleFlash={toggleFlash}
           zoom={zoom}
           zoomLabel={zoomLabel}
           onCycleZoom={cycleZoom}
