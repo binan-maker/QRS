@@ -274,8 +274,8 @@ export default function StandardQrDetailScreen({ id, standardUuid, ownerDocId }:
               </Animated.View>
             )}
 
-            {/* ── Payment safety (analyzed from rawContent) ─── */}
-            {effectiveContentType === "payment" && contentSafety.paymentSafety?.isSuspicious && (() => {
+            {/* ── Payment safety — dangerous only ─── */}
+            {effectiveContentType === "payment" && contentSafety.paymentSafety?.riskLevel === "dangerous" && (() => {
               const warnings = (contentSafety.paymentSafety?.warnings ?? []).filter(
                 (w) => !w.toLowerCase().startsWith("pre-filled amount")
               );
@@ -283,29 +283,21 @@ export default function StandardQrDetailScreen({ id, standardUuid, ownerDocId }:
               return (
                 <Animated.View entering={FadeInDown.delay(80).duration(260)}>
                   <SafetyWarningCard
-                    riskLevel={contentSafety.paymentSafety!.riskLevel as "caution" | "dangerous"}
+                    riskLevel="dangerous"
                     warnings={warnings}
-                    title={
-                      contentSafety.paymentSafety!.riskLevel === "dangerous"
-                        ? "Payment Security Warning"
-                        : "Payment Security Notice"
-                    }
+                    title="Payment Security Warning"
                   />
                 </Animated.View>
               );
             })()}
 
-            {/* ── URL safety (analyzed from rawContent) ────── */}
-            {effectiveContentType === "url" && contentSafety.urlSafety?.isSuspicious && (
+            {/* ── URL safety — dangerous only ────── */}
+            {effectiveContentType === "url" && contentSafety.urlSafety?.riskLevel === "dangerous" && (
               <Animated.View entering={FadeInDown.delay(80).duration(260)}>
                 <SafetyWarningCard
-                  riskLevel={contentSafety.urlSafety.riskLevel as "caution" | "dangerous"}
+                  riskLevel="dangerous"
                   warnings={contentSafety.urlSafety.warnings}
-                  title={
-                    contentSafety.urlSafety.riskLevel === "dangerous"
-                      ? "Destination Warning"
-                      : "Proceed with Caution"
-                  }
+                  title="Destination Warning"
                 />
               </Animated.View>
             )}
