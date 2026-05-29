@@ -4,9 +4,9 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { StatusBar } from "expo-status-bar";
 import { CameraView, useCameraPermissions } from "expo-camera";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useFocusEffect, router } from "expo-router";
 import { useTopInset } from "@/shared/utils/platform";
 import { Ionicons } from "@expo/vector-icons";
-import { router } from "expo-router";
 import { useTheme } from "@/shared/contexts/ThemeContext";
 import { useScanner } from "@/features/scanner/hooks/useScanner";
 import {
@@ -33,7 +33,16 @@ export default function ScannerScreen() {
   const [hardwareAvailable, setHardwareAvailable] = useState<boolean | null>(null);
   const [cameraAvailable,   setCameraAvailable]   = useState(true);
   const [cameraErrorType,   setCameraErrorType]   = useState<CameraErrorType>("unavailable");
+  const [cameraKey,         setCameraKey]         = useState(0);
   const cameraReadyTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Force CameraView remount on focus to fix black screen when returning from detail page
+  useFocusEffect(
+    useCallback(() => {
+      setCameraKey((k) => k + 1);
+      setCameraAvailable(true);
+    }, [])
+  );
 
   const insets      = useSafeAreaInsets();
   const { colors }  = useTheme();
@@ -196,6 +205,7 @@ export default function ScannerScreen() {
       ) : (
         <CameraErrorBoundary onError={() => markCameraUnavailable("unavailable")}>
           <CameraView
+            key={cameraKey}
             style={StyleSheet.absoluteFillObject}
             facing={facing}
             enableTorch={flashOn && facing === "back"}

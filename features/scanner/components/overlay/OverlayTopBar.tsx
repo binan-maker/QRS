@@ -1,7 +1,8 @@
-import { View, Text, StyleSheet, Pressable } from "react-native";
-import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
+import { useRef, useState } from "react";
+import { View, StyleSheet, Pressable, Animated } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
-import Animated, { FadeInDown, FadeIn } from "react-native-reanimated";
+import ReAnimated, { FadeIn } from "react-native-reanimated";
 import { SCANNER_GLOW } from "./constants";
 
 interface Props {
@@ -25,31 +26,52 @@ export default function OverlayTopBar({
   onToggleAnonymous,
   user,
 }: Props) {
+  const [expanded, setExpanded] = useState(false);
+  const widthAnim  = useRef(new Animated.Value(0)).current;
+  const opacAnim   = useRef(new Animated.Value(0)).current;
+
+  function toggle() {
+    const toExpand = !expanded;
+    setExpanded(toExpand);
+    Animated.parallel([
+      Animated.timing(widthAnim, {
+        toValue:         toExpand ? 1 : 0,
+        duration:        220,
+        useNativeDriver: false,
+      }),
+      Animated.timing(opacAnim, {
+        toValue:         toExpand ? 1 : 0,
+        duration:        200,
+        useNativeDriver: false,
+      }),
+    ]).start();
+  }
+
+  const controlsWidth = widthAnim.interpolate({
+    inputRange:  [0, 1],
+    outputRange: [0, user ? 144 : 96],
+  });
+
   return (
-    <Animated.View
-      entering={FadeInDown.delay(30).duration(260)}
+    <ReAnimated.View
+      entering={FadeIn.delay(30).duration(260)}
       style={[styles.topBar, { paddingTop: topInset + 10 }]}
     >
       {/* Back button */}
-      <Animated.View entering={FadeIn.delay(50).duration(280)}>
-        <Pressable onPress={() => router.back()} style={styles.btn}>
-          <Ionicons name="chevron-back" size={20} color="rgba(255,255,255,0.9)" />
-        </Pressable>
-      </Animated.View>
+      <Pressable onPress={() => router.back()} style={styles.btn}>
+        <Ionicons name="chevron-back" size={20} color="rgba(255,255,255,0.9)" />
+      </Pressable>
 
-      {/* Title */}
-      <Animated.View
-        entering={FadeInDown.delay(40).duration(260)}
-        style={styles.center}
-      >
-        <MaterialCommunityIcons name="shield-check" size={18} color={SCANNER_GLOW} />
-        <Text style={styles.title}>QR Guard</Text>
-      </Animated.View>
+      {/* Spacer */}
+      <View style={{ flex: 1 }} />
 
-      {/* Right controls — staggered */}
+      {/* Collapsible controls — expand from the toggle icon leftward */}
       <View style={styles.rightGroup}>
-        {user && (
-          <Animated.View entering={FadeIn.delay(50).duration(240)}>
+        <Animated.View
+          style={[styles.controlsRow, { width: controlsWidth, opacity: opacAnim }]}
+        >
+          {/* Private eye — only for logged-in users */}
+          {user && (
             <Pressable
               onPress={onToggleAnonymous}
               style={[styles.btn, anonymousMode && styles.btnPrivate]}
@@ -57,12 +79,12 @@ export default function OverlayTopBar({
               <Ionicons
                 name={anonymousMode ? "eye-off" : "eye-off-outline"}
                 size={17}
-                color={anonymousMode ? "#F5A623" : "rgba(255,255,255,0.45)"}
+                color={anonymousMode ? "#F5A623" : "rgba(255,255,255,0.55)"}
               />
             </Pressable>
-          </Animated.View>
-        )}
-        <Animated.View entering={FadeIn.delay(60).duration(240)}>
+          )}
+
+          {/* Camera flip */}
           <Pressable onPress={onFlipCamera} style={styles.btn}>
             <Ionicons
               name="camera-reverse-outline"
@@ -70,8 +92,8 @@ export default function OverlayTopBar({
               color={facing === "front" ? SCANNER_GLOW : "rgba(255,255,255,0.75)"}
             />
           </Pressable>
-        </Animated.View>
-        <Animated.View entering={FadeIn.delay(70).duration(240)}>
+
+          {/* Flash */}
           <Pressable
             onPress={facing === "front" ? undefined : onToggleFlash}
             style={[styles.btn, flashOn && facing === "back" && styles.btnActive]}
@@ -89,8 +111,20 @@ export default function OverlayTopBar({
             />
           </Pressable>
         </Animated.View>
+
+        {/* Toggle button */}
+        <Pressable
+          onPress={toggle}
+          style={[styles.btn, expanded && styles.btnActive]}
+        >
+          <Ionicons
+            name={expanded ? "close" : "ellipsis-horizontal"}
+            size={18}
+            color={expanded ? SCANNER_GLOW : "rgba(255,255,255,0.75)"}
+          />
+        </Pressable>
       </View>
-    </Animated.View>
+    </ReAnimated.View>
   );
 }
 
@@ -98,7 +132,6 @@ const styles = StyleSheet.create({
   topBar: {
     flexDirection:     "row",
     alignItems:        "center",
-    justifyContent:    "space-between",
     paddingHorizontal: 16,
     paddingBottom:     10,
   },
@@ -120,16 +153,15 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(245,166,35,0.14)",
     borderColor:     "rgba(245,166,35,0.4)",
   },
-  rightGroup: { flexDirection: "row", gap: 8, alignItems: "center" },
-  center: {
+  rightGroup: {
     flexDirection: "row",
     alignItems:    "center",
-    gap:           7,
+    gap:           8,
   },
-  title: {
-    fontSize:      17,
-    fontFamily:    "Inter_700Bold",
-    color:         "#fff",
-    letterSpacing: 0.3,
+  controlsRow: {
+    flexDirection: "row",
+    alignItems:    "center",
+    gap:           8,
+    overflow:      "hidden",
   },
 });
