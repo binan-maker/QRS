@@ -98,6 +98,11 @@ export { useQrMeta } from "./hooks/useQrMeta";
 export { smartOpen, smartCopy, getQrActions } from "./actions";
 export type { QrAction } from "./actions";
 
+// ── Payment card (centralized) ────────────────────────────────────────────────
+export { PaymentCard, PaymentCardFace, PaymentCardActions, getAppBrand } from "./payment";
+export type { AppBrand } from "./payment";
+export { getBankFullName, formatAmount, addSoftHyphens } from "./payment";
+
 // ── Parsers (re-exported for convenience) ─────────────────────────────────────
 export * from "./parsers";
 

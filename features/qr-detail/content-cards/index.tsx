@@ -12,7 +12,7 @@
 
 import React from "react";
 import type { ParsedPaymentQr } from "@/services/analysis";
-import PaymentCard from "@/features/qr-detail/components/PaymentCard";
+import { PaymentCard } from "@/features/qr-engine/payment";
 import { View } from "react-native";
 import {
   WebsiteCard,
