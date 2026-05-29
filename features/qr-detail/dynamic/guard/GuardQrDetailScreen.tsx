@@ -27,7 +27,6 @@ import CommentReportModal from "@/features/qr-detail/components/modals/CommentRe
 import { OfflineToast } from "@/features/qr-detail/components/OfflineToast";
 import { QrToast } from "@/features/qr-detail/components/QrToast";
 import CommentsSection from "@/features/qr-detail/components/CommentsSection";
-import DonationBanner from "@/features/qr-detail/components/DonationBanner";
 import OwnerInfoSheet from "@/features/qr-detail/components/sheets/OwnerInfoSheet";
 import CommentMenuSheet from "@/features/qr-detail/components/sheets/CommentMenuSheet";
 import OverflowSheet from "@/features/qr-detail/components/sheets/OverflowSheet";
@@ -277,9 +276,6 @@ export default function GuardQrDetailScreen({ id, guardUuid, ownerDocId }: Props
               </Animated.View>
             )}
 
-            <Animated.View entering={FadeInDown.delay(110).duration(260)}>
-              <DonationBanner />
-            </Animated.View>
           </ScrollView>
         </View>
       </KeyboardAvoidingView>

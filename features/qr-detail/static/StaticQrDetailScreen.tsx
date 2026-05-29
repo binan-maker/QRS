@@ -32,7 +32,6 @@ import { QrToast } from "@/features/qr-detail/components/QrToast";
 import QrDetailNavBar from "@/features/qr-detail/components/QrDetailNavBar";
 import OwnerCircleRow from "@/features/qr-detail/components/OwnerCircleRow";
 import CommentsSection from "@/features/qr-detail/components/CommentsSection";
-import DonationBanner from "@/features/qr-detail/components/DonationBanner";
 import OwnerInfoSheet from "@/features/qr-detail/components/sheets/OwnerInfoSheet";
 import CommentMenuSheet from "@/features/qr-detail/components/sheets/CommentMenuSheet";
 import OverflowSheet from "@/features/qr-detail/components/sheets/OverflowSheet";
@@ -505,9 +504,6 @@ export default function StaticQrDetailScreen({ id, ownerDocId }: Props) {
               </Animated.View>
             )}
 
-            <Animated.View entering={FadeInDown.delay(120).duration(260)}>
-              <DonationBanner />
-            </Animated.View>
           </ScrollView>
         </View>
       </KeyboardAvoidingView>
