@@ -138,8 +138,8 @@ export default function BottomSheet({
 
                   paddingBottom:
                     Platform.OS === "android"
-                      ? insets.bottom + 18
-                      : insets.bottom + 10,
+                      ? Math.max(insets.bottom, 16) + 20
+                      : Math.max(insets.bottom, 8) + 10,
                 },
                 heightStyle,
                 sheetStyle,
