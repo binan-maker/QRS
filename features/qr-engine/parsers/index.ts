@@ -5,3 +5,5 @@
  * Import parsers from here, not from qr-detail internals.
  */
 export * from "@/features/qr-detail/content-cards/parsers";
+export * from "./payment";
+export type { ParsedPaymentQr } from "./payment";
