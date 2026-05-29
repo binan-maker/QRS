@@ -1,5 +1,6 @@
 import { useRef, useEffect, useState, useCallback } from "react";
 import { Platform, View, StyleSheet, Pressable } from "react-native";
+import Animated, { FadeIn } from "react-native-reanimated";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { StatusBar } from "expo-status-bar";
 import { CameraView, useCameraPermissions } from "expo-camera";
@@ -198,7 +199,7 @@ export default function ScannerScreen() {
 
   // ── Main render ───────────────────────────────────────────────────────────
   return (
-    <View style={{ flex: 1, backgroundColor: "#000" }}>
+    <Animated.View entering={FadeIn.duration(220)} style={{ flex: 1, backgroundColor: "#000" }}>
       <StatusBar style="light" backgroundColor="transparent" translucent />
 
       {/* Camera — only mounted while this screen is focused */}
@@ -323,7 +324,7 @@ export default function ScannerScreen() {
           <ScannerToast message={scannerMsg} type={scannerMsgType} onDone={dismissScannerMsg} />
         </View>
       )}
-    </View>
+    </Animated.View>
   );
 }
 
