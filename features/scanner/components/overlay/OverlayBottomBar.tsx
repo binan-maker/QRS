@@ -1,6 +1,5 @@
 import { View, StyleSheet, Pressable, Animated } from "react-native";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
-import { router } from "expo-router";
 import ReAnimated, { FadeInUp, FadeIn } from "react-native-reanimated";
 import { SCANNER_GLOW } from "./constants";
 
@@ -23,11 +22,7 @@ export default function OverlayBottomBar({
   zoomLabel,
   onCycleZoom,
   anonymousMode,
-  scanned,
   onPickImage,
-  onReset,
-  user,
-  scanReady,
 }: Props) {
   return (
     <ReAnimated.View
@@ -36,10 +31,7 @@ export default function OverlayBottomBar({
     >
       {/* Status pills — zoom only when not at 1×, anon when active */}
       {(zoom > 0 || anonymousMode) && (
-        <ReAnimated.View
-          entering={FadeIn.duration(200)}
-          style={styles.pillRow}
-        >
+        <ReAnimated.View entering={FadeIn.duration(200)} style={styles.pillRow}>
           {zoom > 0 && (
             <Pressable onPress={onCycleZoom} style={styles.zoomPill}>
               <MaterialCommunityIcons name="magnify" size={12} color={SCANNER_GLOW} />
@@ -54,55 +46,15 @@ export default function OverlayBottomBar({
         </ReAnimated.View>
       )}
 
-      {/* Action row — icons only, no labels */}
-      <View style={styles.actionRow}>
-
-        {/* Gallery */}
-        <ReAnimated.View entering={FadeIn.delay(60).duration(240)}>
-          <Pressable
-            onPress={onPickImage}
-            style={({ pressed }) => [styles.sideBtn, { opacity: pressed ? 0.6 : 1 }]}
-          >
-            <Ionicons name="images-outline" size={22} color="rgba(255,255,255,0.75)" />
-          </Pressable>
-        </ReAnimated.View>
-
-        {/* Center — scan / reset */}
-        <ReAnimated.View entering={FadeIn.delay(30).duration(240)}>
-          {scanned ? (
-            <Pressable onPress={onReset} style={styles.scanBtn}>
-              <View style={styles.scanOuter}>
-                <View style={styles.scanInner}>
-                  <Ionicons name="refresh" size={24} color={SCANNER_GLOW} />
-                </View>
-              </View>
-            </Pressable>
-          ) : (
-            <Animated.View style={[styles.scanBtn, { opacity: scanReady }]}>
-              <View style={styles.scanOuter}>
-                <View style={[styles.scanInner, styles.scanInnerReady]}>
-                  <MaterialCommunityIcons name="qrcode-scan" size={24} color={SCANNER_GLOW} />
-                </View>
-              </View>
-            </Animated.View>
-          )}
-        </ReAnimated.View>
-
-        {/* Profile / Sign in */}
-        <ReAnimated.View entering={FadeIn.delay(60).duration(240)}>
-          <Pressable
-            onPress={() => router.push(user ? "/(tabs)/profile" : "/(auth)/login")}
-            style={({ pressed }) => [styles.sideBtn, { opacity: pressed ? 0.6 : 1 }]}
-          >
-            <Ionicons
-              name={user ? "person" : "person-outline"}
-              size={22}
-              color={user ? SCANNER_GLOW : "rgba(255,255,255,0.75)"}
-            />
-          </Pressable>
-        </ReAnimated.View>
-
-      </View>
+      {/* Gallery — centered, only action button */}
+      <ReAnimated.View entering={FadeIn.delay(40).duration(240)}>
+        <Pressable
+          onPress={onPickImage}
+          style={({ pressed }) => [styles.galleryBtn, { opacity: pressed ? 0.6 : 1 }]}
+        >
+          <Ionicons name="images-outline" size={24} color="rgba(255,255,255,0.85)" />
+        </Pressable>
+      </ReAnimated.View>
     </ReAnimated.View>
   );
 }
@@ -115,7 +67,7 @@ const styles = StyleSheet.create({
     right:             0,
     paddingHorizontal: 40,
     alignItems:        "center",
-    gap:               12,
+    gap:               14,
   },
   pillRow: {
     flexDirection: "row",
@@ -149,48 +101,14 @@ const styles = StyleSheet.create({
     alignItems:      "center",
     justifyContent:  "center",
   },
-  actionRow: {
-    flexDirection:  "row",
-    alignItems:     "center",
-    justifyContent: "space-between",
-    width:          "100%",
-  },
-  sideBtn: {
-    width:           48,
-    height:          48,
-    borderRadius:    24,
-    backgroundColor: "rgba(0,0,0,0.4)",
-    borderWidth:     1,
-    borderColor:     "rgba(255,255,255,0.08)",
-    alignItems:      "center",
-    justifyContent:  "center",
-  },
-  scanBtn: {
-    alignItems:     "center",
-    justifyContent: "center",
-  },
-  scanOuter: {
-    width:           76,
-    height:          76,
-    borderRadius:    38,
-    borderWidth:     1.5,
-    borderColor:     SCANNER_GLOW + "55",
-    alignItems:      "center",
-    justifyContent:  "center",
-    backgroundColor: "rgba(0,212,255,0.04)",
-  },
-  scanInner: {
+  galleryBtn: {
     width:           60,
     height:          60,
     borderRadius:    30,
-    backgroundColor: "rgba(0,0,0,0.6)",
+    backgroundColor: "rgba(0,0,0,0.45)",
+    borderWidth:     1,
+    borderColor:     "rgba(255,255,255,0.12)",
     alignItems:      "center",
     justifyContent:  "center",
-    borderWidth:     1,
-    borderColor:     "rgba(255,255,255,0.08)",
-  },
-  scanInnerReady: {
-    backgroundColor: "rgba(0,212,255,0.08)",
-    borderColor:     SCANNER_GLOW + "30",
   },
 });
