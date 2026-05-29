@@ -53,7 +53,7 @@ export default function ScannerOverlay({
   const anims = useOverlayAnimations();
 
   const TOP_BAR_H    = topInset + 8 + 56;
-  const BOTTOM_BAR_H = Math.max(bottomInset, 8) + 16 + 140;
+  const BOTTOM_BAR_H = Math.max(bottomInset, 8) + 16 + 100;
   const availH       = screenHeight - TOP_BAR_H - BOTTOM_BAR_H;
   const finderTop    = TOP_BAR_H + Math.max(0, (availH - FINDER_SIZE) / 2);
   const finderLeft   = (screenWidth - FINDER_SIZE) / 2;
