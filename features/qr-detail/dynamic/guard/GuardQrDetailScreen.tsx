@@ -31,7 +31,6 @@ import OwnerInfoSheet from "@/features/qr-detail/components/sheets/OwnerInfoShee
 import CommentMenuSheet from "@/features/qr-detail/components/sheets/CommentMenuSheet";
 import OverflowSheet from "@/features/qr-detail/components/sheets/OverflowSheet";
 
-const ACCENT = "#6366f1";
 
 function safeBack() {
   if (router.canGoBack()) router.back();
@@ -148,8 +147,8 @@ export default function GuardQrDetailScreen({ id, guardUuid, ownerDocId }: Props
               </Pressable>
             </Animated.View>
             <View style={guardNavStyles.titleRow}>
-              <View style={[guardNavStyles.shieldWrap, { backgroundColor: ACCENT + "18" }]}>
-                <Ionicons name="shield-checkmark" size={15} color={ACCENT} />
+              <View style={[guardNavStyles.shieldWrap, { backgroundColor: colors.surfaceLight }]}>
+                <Ionicons name="shield-checkmark" size={15} color={colors.safe} />
               </View>
               <Text style={[guardNavStyles.title, { color: colors.text }]} numberOfLines={1}>
                 Living Shield QR
@@ -173,8 +172,8 @@ export default function GuardQrDetailScreen({ id, guardUuid, ownerDocId }: Props
               <RefreshControl
                 refreshing={q.commentsRefreshing ?? false}
                 onRefresh={q.refreshComments}
-                tintColor={ACCENT}
-                colors={[ACCENT]}
+                tintColor={colors.primary}
+                colors={[colors.primary]}
               />
             }
           >

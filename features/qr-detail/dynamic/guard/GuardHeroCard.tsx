@@ -8,8 +8,6 @@ import type { GuardLink } from "@/services/guard-service";
 import { formatRelativeTime } from "@/shared/utils/formatters";
 import type { AppColors } from "@/shared/constants/colors";
 
-const ACCENT = "#6366f1";
-
 interface Props {
   guardLink: GuardLink | null;
   guardLoading: boolean;
@@ -27,24 +25,26 @@ export default function GuardHeroCard({
   historyExpanded, onToggleHistory, onOpenDestination,
   colors, isDark,
 }: Props) {
+  const accent = colors.primary;
+
   return (
     <View style={[heroStyles.heroCard, {
-      backgroundColor: isDark ? "#0d0d1a" : "#f5f5ff",
-      borderColor: ACCENT + "28",
+      backgroundColor: colors.surface,
+      borderColor: colors.surfaceBorder,
     }]}>
       <LinearGradient
-        colors={[ACCENT + "1a", ACCENT + "06"]}
+        colors={[accent + (isDark ? "0d" : "0a"), "transparent"]}
         style={StyleSheet.absoluteFill}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
       />
 
       <View style={heroStyles.heroHeader}>
-        <View style={[heroStyles.heroIconWrap, { backgroundColor: ACCENT + "22", borderColor: ACCENT + "44" }]}>
-          <Ionicons name="git-branch-outline" size={24} color={ACCENT} />
+        <View style={[heroStyles.heroIconWrap, { backgroundColor: colors.surfaceLight, borderColor: colors.surfaceBorder }]}>
+          <Ionicons name="git-branch-outline" size={24} color={accent} />
         </View>
         <View style={{ flex: 1 }}>
-          <Text style={[heroStyles.heroLabel, { color: ACCENT }]}>SMART REDIRECT QR</Text>
+          <Text style={[heroStyles.heroLabel, { color: colors.textMuted }]}>SMART REDIRECT QR</Text>
           <Text style={[heroStyles.heroSub, { color: colors.textSecondary }]}>
             Destination is owner-controlled &amp; verified by QR Guard
           </Text>
@@ -65,7 +65,7 @@ export default function GuardHeroCard({
 
       {guardLoading && (
         <View style={heroStyles.loadingRow}>
-          <ActivityIndicator size="small" color={ACCENT} />
+          <ActivityIndicator size="small" color={colors.textMuted} />
           <Text style={[heroStyles.loadingText, { color: colors.textSecondary }]}>Loading destination…</Text>
         </View>
       )}
@@ -120,11 +120,18 @@ export default function GuardHeroCard({
 
           {!isDeactivated && (
             <Pressable
-              style={({ pressed }) => [heroStyles.openBtn, { backgroundColor: ACCENT, opacity: pressed ? 0.82 : 1 }]}
+              style={({ pressed }) => [heroStyles.openBtn, {
+                backgroundColor: isDark ? colors.surfaceLight : colors.primary,
+                borderWidth: 1,
+                borderColor: colors.surfaceBorder,
+                opacity: pressed ? 0.75 : 1,
+              }]}
               onPress={onOpenDestination}
             >
-              <Ionicons name="open-outline" size={16} color="#fff" />
-              <Text style={heroStyles.openBtnText}>Open Destination</Text>
+              <Ionicons name="open-outline" size={16} color={isDark ? colors.text : colors.primaryText} />
+              <Text style={[heroStyles.openBtnText, { color: isDark ? colors.text : colors.primaryText }]}>
+                Open Destination
+              </Text>
             </Pressable>
           )}
 
@@ -134,11 +141,11 @@ export default function GuardHeroCard({
                 style={[heroStyles.historyToggle, { borderColor: colors.surfaceBorder + "60" }]}
                 onPress={onToggleHistory}
               >
-                <Ionicons name="time-outline" size={14} color={ACCENT} />
-                <Text style={[heroStyles.historyToggleText, { color: ACCENT }]}>
+                <Ionicons name="time-outline" size={14} color={colors.textSecondary} />
+                <Text style={[heroStyles.historyToggleText, { color: colors.textSecondary }]}>
                   Change history ({guardLink.changeLog.length})
                 </Text>
-                <Ionicons name={historyExpanded ? "chevron-up" : "chevron-down"} size={14} color={ACCENT} />
+                <Ionicons name={historyExpanded ? "chevron-up" : "chevron-down"} size={14} color={colors.textMuted} />
               </Pressable>
 
               {historyExpanded && (
@@ -192,7 +199,7 @@ const heroStyles = StyleSheet.create({
   alertRow: { flexDirection: "row", alignItems: "flex-start", gap: 8, padding: 10, borderRadius: 10, borderWidth: 1 },
   alertText: { fontSize: 12.5, fontFamily: "Inter_400Regular", flex: 1, lineHeight: 18 },
   openBtn: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, paddingVertical: 13, borderRadius: 12, marginTop: 2 },
-  openBtnText: { color: "#fff", fontSize: 14, fontFamily: "Inter_600SemiBold" },
+  openBtnText: { fontSize: 14, fontFamily: "Inter_600SemiBold" },
   historyToggle: { flexDirection: "row", alignItems: "center", gap: 6, paddingTop: 10, borderTopWidth: StyleSheet.hairlineWidth },
   historyToggleText: { fontSize: 13, fontFamily: "Inter_600SemiBold", flex: 1 },
   historyList: { gap: 6, marginTop: 4 },

@@ -44,12 +44,12 @@ const READ_MORE_THRESHOLD = 200;
 
 function getInitialColor(name: string): [string, string] {
   const palettes: [string, string][] = [
-    ["#2563EB", "#3B82F6"],
-    ["#0052CC", "#4B8EF5"],
-    ["#1D4ED8", "#60A5FA"],
-    ["#1E40AF", "#93C5FD"],
-    ["#3B82F6", "#60A5FA"],
-    ["#2D6BC4", "#4B8EF5"],
+    ["#7C3AED", "#A78BFA"], // violet
+    ["#059669", "#34D399"], // emerald
+    ["#E11D48", "#FB7185"], // rose
+    ["#D97706", "#FBBF24"], // amber
+    ["#475569", "#94A3B8"], // slate
+    ["#0D9488", "#2DD4BF"], // teal
   ];
   const idx = name.charCodeAt(0) % palettes.length;
   return palettes[idx];

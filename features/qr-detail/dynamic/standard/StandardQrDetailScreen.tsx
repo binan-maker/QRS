@@ -35,7 +35,6 @@ import CommentMenuSheet from "@/features/qr-detail/components/sheets/CommentMenu
 import OverflowSheet from "@/features/qr-detail/components/sheets/OverflowSheet";
 import { smartOpenContent } from "@/shared/utils/smart-open";
 
-const ACCENT = "#3b82f6";
 
 function safeBack() {
   if (router.canGoBack()) router.back();
@@ -181,32 +180,32 @@ export default function StandardQrDetailScreen({ id, standardUuid, ownerDocId }:
               <RefreshControl
                 refreshing={q.commentsRefreshing ?? false}
                 onRefresh={q.refreshComments}
-                tintColor={ACCENT}
-                colors={[ACCENT]}
+                tintColor={colors.primary}
+                colors={[colors.primary]}
               />
             }
           >
             {/* ── Brand header card ─────────────────────── */}
             <Animated.View entering={FadeInDown.delay(30).duration(260)}>
               <View style={[stdStyles.brandCard, {
-                backgroundColor: isDark ? "#0a0f1a" : "#f0f6ff",
-                borderColor: ACCENT + "28",
+                backgroundColor: colors.surface,
+                borderColor: colors.surfaceBorder,
               }]}>
                 <LinearGradient
-                  colors={[ACCENT + "18", ACCENT + "05"]}
+                  colors={[colors.surfaceLight + "80", "transparent"]}
                   style={StyleSheet.absoluteFill}
                   start={{ x: 0, y: 0 }}
                   end={{ x: 1, y: 1 }}
                 />
                 <View style={stdStyles.brandHeader}>
                   <View style={[stdStyles.brandIconWrap, {
-                    backgroundColor: ACCENT + "20",
-                    borderColor: ACCENT + "44",
+                    backgroundColor: colors.surfaceLight,
+                    borderColor: colors.surfaceBorder,
                   }]}>
-                    <Ionicons name="qr-code-outline" size={22} color={ACCENT} />
+                    <Ionicons name="qr-code-outline" size={22} color={colors.textSecondary} />
                   </View>
                   <View style={{ flex: 1 }}>
-                    <Text style={[stdStyles.brandLabel, { color: ACCENT }]}>QR GUARD STANDARD</Text>
+                    <Text style={[stdStyles.brandLabel, { color: colors.textMuted }]}>QR GUARD STANDARD</Text>
                     <Text style={[stdStyles.brandSub, { color: colors.textSecondary }]}>
                       Verified QR code — content managed by owner
                     </Text>
@@ -226,7 +225,7 @@ export default function StandardQrDetailScreen({ id, standardUuid, ownerDocId }:
 
                 {standardLoading && (
                   <View style={stdStyles.loadingRow}>
-                    <ActivityIndicator size="small" color={ACCENT} />
+                    <ActivityIndicator size="small" color={colors.textMuted} />
                     <Text style={[stdStyles.loadingText, { color: colors.textSecondary }]}>
                       Loading content…
                     </Text>
