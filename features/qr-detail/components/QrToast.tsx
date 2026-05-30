@@ -12,25 +12,39 @@ export function QrToast({
   toastKey: number;
 }) {
   const opacity = useRef(new Animated.Value(0)).current;
-  const translateY = useRef(new Animated.Value(16)).current;
+  const isShowingRef = useRef(false);
+  const animRef = useRef<Animated.CompositeAnimation | null>(null);
 
   useEffect(() => {
     if (toastKey === 0) return;
-    opacity.setValue(0);
-    translateY.setValue(16);
-    Animated.parallel([
-      Animated.sequence([
-        Animated.timing(opacity, { toValue: 1, duration: 180, useNativeDriver: true }),
-        Animated.delay(2000),
-        Animated.timing(opacity, { toValue: 0, duration: 280, useNativeDriver: true }),
-      ]),
-      Animated.timing(translateY, { toValue: 0, duration: 200, useNativeDriver: true }),
-    ]).start();
+
+    if (animRef.current) {
+      animRef.current.stop();
+    }
+
+    if (!isShowingRef.current) {
+      opacity.setValue(0);
+    }
+
+    isShowingRef.current = true;
+
+    const anim = Animated.sequence([
+      Animated.timing(opacity, { toValue: 1, duration: 160, useNativeDriver: true }),
+      Animated.delay(2000),
+      Animated.timing(opacity, { toValue: 0, duration: 260, useNativeDriver: true }),
+    ]);
+
+    animRef.current = anim;
+    anim.start(({ finished }) => {
+      if (finished) {
+        isShowingRef.current = false;
+      }
+    });
   }, [toastKey]);
 
   return (
     <Animated.View
-      style={[styles.pill, { opacity, transform: [{ translateY }] }]}
+      style={[styles.pill, { opacity }]}
       pointerEvents="none"
     >
       <Ionicons name={icon} size={14} color="#fff" />

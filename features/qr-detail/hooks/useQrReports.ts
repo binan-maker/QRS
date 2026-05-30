@@ -134,9 +134,11 @@ export function useQrReports(id: string, userId: string | null, offlineMode: boo
         debounceTimerRef.current = setTimeout(commitReport, DEBOUNCE_MS);
         return;
       }
-      // Commit settled — apply the latest server snapshot so UI matches Firestore
-      setReportCounts(latestCounts.current);
-      setTrustScore(calculateTrustScore(latestCounts.current, latestWeighted.current, latestCollusion.current));
+      // Commit settled. Leave optimistic counts in place — the Firestore
+      // subscription will apply the authoritative snapshot on next tick
+      // (hasPendingAction is now false so it won't be blocked).
+      // Force-applying latestCounts.current here would briefly restore the
+      // pre-removal snapshot and cause a visible flicker loop.
       invalidateQrCache(id);
     } catch (e: any) {
       console.error("[Report] Error submitting report:", e?.message, e);
