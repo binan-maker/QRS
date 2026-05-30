@@ -1,4 +1,5 @@
 import { useState, useCallback, useRef, useEffect } from "react";
+import { useNavHide } from "@/shared/utils/use-nav-hide";
 import {
   View, Text, Pressable, ScrollView, RefreshControl,
   StyleSheet, KeyboardAvoidingView, ActivityIndicator,
@@ -133,6 +134,7 @@ export default function StandardQrDetailScreen({ id, standardUuid, ownerDocId }:
   }, [user, q.isFavorite, q.handleToggleFavorite, showToast]);
 
   const reportSectionY = useRef(0);
+  const { navAnimatedStyle, onNavScroll } = useNavHide();
   const handleReportPress = useCallback(() => {
     setOverflowOpen(false);
     if (!user) { router.push("/(auth)/login"); return; }
@@ -151,7 +153,7 @@ export default function StandardQrDetailScreen({ id, standardUuid, ownerDocId }:
         <View style={[styles.container, { paddingTop: topInset }]}>
 
           {/* ── Standard NavBar ──────────────────────────── */}
-          <Animated.View entering={FadeInDown.delay(0).duration(260)} style={[styles.navBar, { gap: 10 }]}>
+          <Animated.View entering={FadeInDown.delay(0).duration(260)} style={[styles.navBar, { gap: 10 }, navAnimatedStyle]}>
             <Animated.View entering={FadeIn.delay(30).duration(240)}>
               <Pressable onPress={safeBack} style={styles.navBackBtn}>
                 <Ionicons name="chevron-back" size={24} color={colors.text} />
@@ -175,6 +177,8 @@ export default function StandardQrDetailScreen({ id, standardUuid, ownerDocId }:
             showsVerticalScrollIndicator={false}
             contentContainerStyle={styles.scrollContent}
             keyboardShouldPersistTaps="handled"
+            onScroll={onNavScroll}
+            scrollEventThrottle={16}
             onScrollBeginDrag={() => q.setCommentMenuId(null)}
             refreshControl={
               <RefreshControl

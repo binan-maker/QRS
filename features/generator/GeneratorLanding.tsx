@@ -11,6 +11,7 @@ import Reanimated, { FadeInDown, FadeIn, ZoomIn } from "react-native-reanimated"
 import { useTheme } from "@/shared/contexts/ThemeContext";
 import { useTopInset } from "@/shared/utils/platform";
 import * as Haptics from "@/shared/utils/haptics";
+import { useTabBarScroll } from "@/shared/contexts/TabBarContext";
 
 // ─── QR type showcase data ────────────────────────────────────────────────────
 const QR_TYPES = [
@@ -80,6 +81,7 @@ export default function GeneratorLanding() {
   const [showPhase2Hint, setShowPhase2Hint] = useState(false);
   const hintAnim = useRef(new Animated.Value(0)).current;
   const pulseAnim = useRef(new Animated.Value(1)).current;
+  const { onTabScroll } = useTabBarScroll();
 
   const selectedTypeData = QR_TYPES.find((t) => t.key === selectedType) ?? QR_TYPES[0];
 
@@ -134,6 +136,8 @@ export default function GeneratorLanding() {
       <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={[styles.scroll, { paddingBottom: insets.bottom + 120 }]}
+        onScroll={onTabScroll}
+        scrollEventThrottle={16}
       >
 
         {/* ── Hero QR Preview Card ──────────────────────────────── */}

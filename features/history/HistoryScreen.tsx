@@ -23,6 +23,7 @@ import SearchResultsRow  from "@/features/history/components/SearchResultsRow";
 import FilterBar         from "@/features/history/components/FilterBar";
 import HistoryItemComponent from "@/features/history/components/HistoryItem";
 import HistoryItemSkeleton  from "@/features/history/components/HistoryItemSkeleton";
+import { useTabBarScroll } from "@/shared/contexts/TabBarContext";
 
 function HistoryScreen() {
   const insets   = useSafeAreaInsets();
@@ -52,6 +53,7 @@ function HistoryScreen() {
     deleteItem,
     scanStats,
   } = useHistory();
+  const { onTabScroll } = useTabBarScroll();
 
   // Search state
   const {
@@ -158,6 +160,8 @@ function HistoryScreen() {
         ]}
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
+        onScroll={onTabScroll}
+        scrollEventThrottle={16}
         refreshControl={
           !searchVisible ? (
             <RefreshControl

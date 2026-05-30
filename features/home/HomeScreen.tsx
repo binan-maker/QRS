@@ -9,6 +9,7 @@ import { HomeHeader } from "@/features/home/components/HomeHeader";
 import { HeroScanCard } from "@/features/home/components/HeroScanCard";
 import { StatsRow } from "@/features/home/components/StatsRow";
 import { RecentScansList } from "@/features/home/components/RecentScansList";
+import { useTabBarScroll } from "@/shared/contexts/TabBarContext";
 
 function HomeScreen() {
   const insets   = useSafeAreaInsets();
@@ -16,12 +17,15 @@ function HomeScreen() {
   const { colors } = useTheme();
   const { cachedUrl: photoURL } = useAvatar();
   const { user, recentScans, isLoading, refreshing, onRefresh, deleteScan } = useHome();
+  const { onTabScroll } = useTabBarScroll();
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background, paddingTop: topInset }]}>
       <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}
+        onScroll={onTabScroll}
+        scrollEventThrottle={16}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} />
         }

@@ -27,6 +27,7 @@ import SkeletonBox from "@/shared/components/ui/SkeletonBox";
 import { formatCompactNumber } from "@/shared/utils/number-format";
 import { useProfile } from "@/features/profile/hooks/useProfile";
 import { useAvatar } from "@/shared/contexts/AvatarContext";
+import { useTabBarScroll } from "@/shared/contexts/TabBarContext";
 import { useNotifications } from "@/shared/components/notifications/hooks/useNotifications";
 import PhotoModal from "@/features/profile/components/PhotoModal";
 import GuestView from "@/features/profile/components/GuestView";
@@ -177,6 +178,7 @@ function ProfileScreen() {
 
   const topInset     = useTopInset();
   const tabBarHeight = 60 + insets.bottom;
+  const { onTabScroll } = useTabBarScroll();
 
   const previewQrs   = useMemo(() => myQrCodes.slice(0, 3), [myQrCodes]);
   const totalQrScans = useMemo(
@@ -230,6 +232,8 @@ function ProfileScreen() {
       <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={[styles.scrollContent, { paddingBottom: tabBarHeight + 60 }]}
+        onScroll={onTabScroll}
+        scrollEventThrottle={16}
         refreshControl={
           <RefreshControl
             refreshing={refreshing}

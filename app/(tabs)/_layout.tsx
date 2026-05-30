@@ -13,6 +13,7 @@ import { subscribeToNotificationCount } from "@/lib/firestore-service";
 import { LinearGradient } from "expo-linear-gradient";
 import { useAppTranslation } from "@/shared/i18n/useAppTranslation";
 import * as Haptics from "@/shared/utils/haptics";
+import { TabBarProvider, useTabBarScroll } from "@/shared/contexts/TabBarContext";
 
 // ── Stable tab bar background components (memoized at module level) ────────────
 const IosTabBarBackground = React.memo(function IosTabBarBackground({
@@ -227,6 +228,7 @@ function ClassicTabLayout() {
   const insets = useSafeAreaInsets();
   const { colors } = useTheme();
   const { t } = useAppTranslation();
+  const { tabBarTranslateY } = useTabBarScroll();
 
   useEffect(() => {
     AsyncStorage.getItem("qrg:startup:screen").then((pref) => {
@@ -271,7 +273,8 @@ function ClassicTabLayout() {
         overflow:        "visible" as const,
         marginHorizontal: 0,
         marginBottom:    0,
-      },
+        transform:       [{ translateY: tabBarTranslateY }],
+      } as any,
       tabBarBackground,
       tabBarShowLabel: true,
       tabBarLabelStyle: {
@@ -334,7 +337,11 @@ function ClassicTabLayout() {
 
 export default function TabLayout() {
   if (isLiquidGlassAvailable()) return <NativeTabLayout />;
-  return <ClassicTabLayout />;
+  return (
+    <TabBarProvider>
+      <ClassicTabLayout />
+    </TabBarProvider>
+  );
 }
 
 const styles = StyleSheet.create({

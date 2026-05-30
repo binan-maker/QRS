@@ -1,4 +1,5 @@
 import { useState, useCallback, useRef } from "react";
+import { useNavHide } from "@/shared/utils/use-nav-hide";
 import {
   View, Text, Pressable, ScrollView, RefreshControl,
   StyleSheet, KeyboardAvoidingView,
@@ -88,6 +89,7 @@ export default function StaticQrDetailScreen({ id, ownerDocId }: Props) {
     key: number;
   }>({ message: "", icon: "checkmark-circle", key: 0 });
   const reportSectionY = useRef(0);
+  const { navAnimatedStyle, onNavScroll } = useNavHide();
 
   const showToast = useCallback(
     (message: string, icon: keyof typeof Ionicons.glyphMap = "checkmark-circle") => {
@@ -230,6 +232,7 @@ export default function StaticQrDetailScreen({ id, ownerDocId }: Props) {
               ownerDocId ? router.push(`/my-qr-analytics/${ownerDocId}` as any) : undefined
             }
             onOverflowOpen={() => setOverflowOpen(true)}
+            wrapStyle={navAnimatedStyle}
           />
 
           <ScrollView
@@ -238,6 +241,8 @@ export default function StaticQrDetailScreen({ id, ownerDocId }: Props) {
             showsVerticalScrollIndicator={false}
             contentContainerStyle={styles.scrollContent}
             keyboardShouldPersistTaps="handled"
+            onScroll={onNavScroll}
+            scrollEventThrottle={16}
             onScrollBeginDrag={() => q.setCommentMenuId(null)}
             refreshControl={
               <RefreshControl

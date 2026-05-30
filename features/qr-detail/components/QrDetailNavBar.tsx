@@ -5,7 +5,6 @@ import { useTheme } from "@/shared/contexts/ThemeContext";
 import { makeStyles } from "@/features/qr-detail/styles";
 import { navOfflineStyles } from "@/features/qr-detail/styles";
 import { formatCompactNumber } from "@/shared/utils/number-format";
-
 interface Props {
   offlineMode: boolean;
   ownerName: string | null;
@@ -26,6 +25,7 @@ interface Props {
   onManage: () => void;
   onOverflowOpen: () => void;
   onAnalytics?: () => void;
+  wrapStyle?: any;
 }
 
 export default function QrDetailNavBar({
@@ -48,12 +48,13 @@ export default function QrDetailNavBar({
   onManage,
   onOverflowOpen,
   onAnalytics,
+  wrapStyle,
 }: Props) {
   const { colors } = useTheme();
   const styles = makeStyles(colors);
 
   return (
-    <Animated.View entering={FadeInDown.delay(0).duration(260)} style={styles.navBar}>
+    <Animated.View entering={FadeInDown.delay(0).duration(260)} style={[styles.navBar, wrapStyle]}>
       <View style={{ flex: 1, flexDirection: "row", alignItems: "center", gap: 10, minWidth: 0 }}>
         <Animated.View entering={FadeIn.delay(30).duration(240)}>
           <Pressable onPress={onBack} style={styles.navBackBtn}>
