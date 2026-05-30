@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import {
   View, Text, StyleSheet, ScrollView, Pressable,
-  StatusBar, Animated, useWindowDimensions,
+  StatusBar, Animated, useWindowDimensions, Image,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
@@ -169,6 +169,13 @@ export default function GeneratorLanding() {
             <Animated.View style={[styles.heroQrWrap, { transform: [{ scale: pulseAnim }] }]}>
               <View style={[styles.heroQrCard, { backgroundColor: "#fff" }]}>
                 <MockQrDots size={90} dotColor="#0F172A" />
+                <View style={styles.heroQrLogoWrap} pointerEvents="none">
+                  <Image
+                    source={require("../../assets/images/icon.png")}
+                    style={styles.heroQrLogo}
+                    resizeMode="cover"
+                  />
+                </View>
               </View>
               <View style={[styles.heroQrLabel, { backgroundColor: "#22C55E20", borderColor: "#22C55E50" }]}>
                 <View style={[styles.heroQrDot, { backgroundColor: "#22C55E" }]} />
@@ -410,7 +417,9 @@ const styles = StyleSheet.create({
   heroStatVal:   { fontSize: 14, fontFamily: "Inter_700Bold", color: "#fff" },
   heroStatLabel: { fontSize: 9,  fontFamily: "Inter_400Regular", color: "rgba(255,255,255,0.5)" },
   heroQrWrap: { alignItems: "center", gap: 6 },
-  heroQrCard: { borderRadius: 12, padding: 8, shadowColor: "#000", shadowOpacity: 0.25, shadowRadius: 8, shadowOffset: { width: 0, height: 4 }, elevation: 6 },
+  heroQrCard: { borderRadius: 12, padding: 8, shadowColor: "#000", shadowOpacity: 0.25, shadowRadius: 8, shadowOffset: { width: 0, height: 4 }, elevation: 6, position: "relative" },
+  heroQrLogoWrap: { position: "absolute", top: 0, left: 0, right: 0, bottom: 0, alignItems: "center", justifyContent: "center" },
+  heroQrLogo: { width: 28, height: 28, borderRadius: 8, borderWidth: 1.5, borderColor: "rgba(255,255,255,0.9)" },
   heroQrLabel: { flexDirection: "row", alignItems: "center", gap: 4, paddingHorizontal: 8, paddingVertical: 3, borderRadius: 8, borderWidth: 1 },
   heroQrDot:   { width: 5, height: 5, borderRadius: 3 },
   heroQrLabelText: { fontSize: 9, fontFamily: "Inter_700Bold", color: "#22C55E" },
