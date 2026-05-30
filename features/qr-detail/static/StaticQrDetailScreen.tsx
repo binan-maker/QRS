@@ -45,6 +45,7 @@ function safeBack() {
 interface Props {
   id: string;
   ownerDocId?: string;
+  hint?: { content: string; contentType: string };
 }
 
 // ─── Compact safety badge shown below content card ────────────────────────────
@@ -75,7 +76,7 @@ const safetyBadgeStyles = StyleSheet.create({
   text: { fontSize: 12, fontFamily: "Inter_600SemiBold", flex: 1 },
 });
 
-export default function StaticQrDetailScreen({ id, ownerDocId }: Props) {
+export default function StaticQrDetailScreen({ id, ownerDocId, hint }: Props) {
   const { user } = useAuth();
   const { colors, isDark } = useTheme();
   const styles = makeStyles(colors);
@@ -98,7 +99,7 @@ export default function StaticQrDetailScreen({ id, ownerDocId }: Props) {
     []
   );
 
-  const q = useQrDetail(id);
+  const q = useQrDetail(id, hint);
   const { isOnline } = useNetworkStatus();
   const [offlineToastKey, setOfflineToastKey] = useState(0);
 

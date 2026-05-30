@@ -84,9 +84,12 @@ const HistoryItem = React.memo(function HistoryItem({ item, risk, onDelete, inde
   const handlePress = useCallback(() => {
     if (item.qrCodeId) {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-      router.push({ pathname: "/qr-detail/[id]", params: { id: item.qrCodeId } });
+      router.push({
+        pathname: "/qr-detail/[id]",
+        params: { id: item.qrCodeId, hintContent: item.content, hintContentType: item.contentType },
+      });
     }
-  }, [item.qrCodeId]);
+  }, [item.qrCodeId, item.content, item.contentType]);
 
   const handleDelete = useCallback(() => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);

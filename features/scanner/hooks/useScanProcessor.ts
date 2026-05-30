@@ -72,9 +72,16 @@ export function useScanProcessor({
     }, delayMs);
   }
 
-  function navigateToQrDetail(qrId: string) {
+  function navigateToQrDetail(qrId: string, content?: string, contentType?: string) {
     setScanSuccess(true);
-    router.push(`/qr-detail/${qrId}`);
+    if (content) {
+      router.push({
+        pathname: `/qr-detail/${qrId}`,
+        params: { hintContent: content, hintContentType: contentType || "text" },
+      } as any);
+    } else {
+      router.push(`/qr-detail/${qrId}`);
+    }
     // Auto-clear tick after navigation — prevents it staying stuck if the
     // user returns to the scanner before useFocusEffect fires.
     setTimeout(() => {
@@ -122,7 +129,7 @@ export function useScanProcessor({
     }
 
     emitScanEvent(qrId, { platform: _getPlatform(), contentType, verdict: "safe", scanSource });
-    await navigateToQrDetail(qrId);
+    await navigateToQrDetail(qrId, content, contentType);
   }
 
   // ─── Anonymous scan path ──────────────────────────────────────────────────────
@@ -171,7 +178,7 @@ export function useScanProcessor({
       }
 
       emitScanEvent(qrId, { platform: _getPlatform(), contentType, verdict: "safe", scanSource: "camera" });
-      await navigateToQrDetail(qrId);
+      await navigateToQrDetail(qrId, content, contentType);
     } catch (e: any) {
       setProcessing(false);
       showScannerMsg(e.message || "Could not process QR code. Please try again.", "error");
@@ -282,7 +289,7 @@ export function useScanProcessor({
         }
       }
 
-      navigateToQrDetail(qrId);
+      navigateToQrDetail(qrId, content, contentType);
       _backgroundSync(content, qrId, contentType, scanSource, "safe");
     } catch {
       await processOfflineScan(content, scanSource);

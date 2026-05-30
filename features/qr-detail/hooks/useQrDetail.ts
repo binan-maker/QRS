@@ -17,13 +17,13 @@ import { useCreatorFollow } from "./useCreatorFollow";
 
 export type { QrDetail, CommentItem };
 
-export function useQrDetail(id: string) {
+export function useQrDetail(id: string, hint?: { content: string; contentType: string }) {
   const { user } = useAuth();
   const { colors } = useTheme();
   const userId = user?.id ?? null;
   const [copied, setCopied] = useState(false);
 
-  const data = useQrData(id, userId);
+  const data = useQrData(id, userId, hint);
   const rawContent = data.qrCode?.content || data.offlineContent;
   const content = (data.qrCode as any)?.displayDestination || rawContent;
   const contentType = data.qrCode?.contentType || data.offlineContentType;

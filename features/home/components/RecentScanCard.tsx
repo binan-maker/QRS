@@ -69,9 +69,12 @@ export const RecentScanCard = React.memo(function RecentScanCard({ scan, index, 
   const handlePress = useCallback(() => {
     if (scan.qrCodeId) {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-      router.push({ pathname: "/qr-detail/[id]", params: { id: scan.qrCodeId } });
+      router.push({
+        pathname: "/qr-detail/[id]",
+        params: { id: scan.qrCodeId, hintContent: scan.content, hintContentType: contentType },
+      });
     }
-  }, [scan.qrCodeId]);
+  }, [scan.qrCodeId, scan.content, contentType]);
 
   const handleDelete = useCallback(() => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);

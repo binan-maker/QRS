@@ -109,13 +109,30 @@ export interface QrDetail {
   deactivationMessage?: string | null;
 }
 
-export function useQrData(id: string, userId: string | null) {
+export function useQrData(
+  id: string,
+  userId: string | null,
+  hint?: { content: string; contentType: string }
+) {
   const [totalScans, setTotalScans] = useState(0);
   const [totalComments, setTotalComments] = useState(0);
   const [ownerInfo, setOwnerInfo] = useState<QrOwnerInfo | null>(null);
   const [isQrOwner, setIsQrOwner] = useState(false);
 
   const ownerFetchedForId = useRef<string | null>(null);
+
+  const hintInitialData: QrFetchResult | undefined = hint?.content
+    ? {
+        status: "data",
+        detail: {
+          qrCode: { id, content: hint.content, contentType: hint.contentType, createdAt: "" },
+          totalScans: 0,
+          totalComments: 0,
+          ownerInfo: null,
+        },
+        isFreshFetch: false,
+      }
+    : undefined;
 
   const { data: result, isPending, isError } = useQuery<QrFetchResult>({
     queryKey: ["qr-detail", id, userId],
@@ -124,6 +141,8 @@ export function useQrData(id: string, userId: string | null) {
     gcTime: 30 * 60 * 1000,
     refetchOnWindowFocus: false,
     retry: false,
+    initialData: hintInitialData,
+    initialDataUpdatedAt: hintInitialData ? 0 : undefined,
   });
 
   const loading = isPending;

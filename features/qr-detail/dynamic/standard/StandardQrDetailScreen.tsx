@@ -55,9 +55,10 @@ interface Props {
   id: string;
   standardUuid: string;
   ownerDocId?: string;
+  hint?: { content: string; contentType: string };
 }
 
-export default function StandardQrDetailScreen({ id, standardUuid, ownerDocId }: Props) {
+export default function StandardQrDetailScreen({ id, standardUuid, ownerDocId, hint }: Props) {
   const { user } = useAuth();
   const { colors, isDark } = useTheme();
   const styles = makeStyles(colors);
@@ -87,7 +88,7 @@ export default function StandardQrDetailScreen({ id, standardUuid, ownerDocId }:
       .finally(() => setStandardLoading(false));
   }, [standardUuid]);
 
-  const q = useQrDetail(id);
+  const q = useQrDetail(id, hint);
   const { isOnline } = useNetworkStatus();
   const [offlineToastKey, setOfflineToastKey] = useState(0);
 

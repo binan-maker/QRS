@@ -54,9 +54,10 @@ interface Props {
   id: string;
   guardUuid: string;
   ownerDocId?: string;
+  hint?: { content: string; contentType: string };
 }
 
-export default function GuardQrDetailScreen({ id, guardUuid, ownerDocId }: Props) {
+export default function GuardQrDetailScreen({ id, guardUuid, ownerDocId, hint }: Props) {
   const { user } = useAuth();
   const { colors, isDark } = useTheme();
   const styles = makeStyles(colors);
@@ -84,7 +85,7 @@ export default function GuardQrDetailScreen({ id, guardUuid, ownerDocId }: Props
       .finally(() => setGuardLoading(false));
   }, [guardUuid]);
 
-  const q = useQrDetail(id);
+  const q = useQrDetail(id, hint);
   const { isOnline } = useNetworkStatus();
   const [offlineToastKey, setOfflineToastKey] = useState(0);
 
