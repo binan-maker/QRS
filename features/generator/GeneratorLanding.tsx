@@ -420,7 +420,7 @@ const styles = StyleSheet.create({
   interactiveBadge: { flexDirection: "row", alignItems: "center", gap: 4, paddingHorizontal: 8, paddingVertical: 3, borderRadius: 6, borderWidth: 1 },
   interactiveBadgeText: { fontSize: 9, fontFamily: "Inter_600SemiBold" },
 
-  typeChipsRow: { paddingHorizontal: 20, paddingBottom: 12, gap: 8 },
+  typeChipsRow: { paddingHorizontal: 20, paddingTop: 8, paddingBottom: 12, gap: 8 },
   typeChip:     { alignItems: "center", gap: 5, paddingHorizontal: 12, paddingVertical: 9, borderRadius: 14, borderWidth: 1 },
   typeChipIcon: { width: 30, height: 30, borderRadius: 9, alignItems: "center", justifyContent: "center" },
   typeChipLabel: { fontSize: 10, fontFamily: "Inter_600SemiBold" },
