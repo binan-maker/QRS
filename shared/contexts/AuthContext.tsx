@@ -141,31 +141,48 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const unsubscribe = authAdapter.onIdTokenChanged(async (adapterUser) => {
       if (adapterUser) {
+        // The persisted JWT can cache emailVerified: false even after the user
+        // has verified — the token is stale until refreshed. Before treating
+        // the session as unverified, reload from Firebase to get the latest state.
+        let resolvedUser = adapterUser;
         if (!adapterUser.emailVerified) {
-          setUser(null);
-          setToken(null);
-          setIsLoading(false);
-          return;
+          try {
+            await adapterUser.reload();
+            const fresh = authAdapter.getCurrentUser();
+            if (!fresh || !fresh.emailVerified) {
+              // Genuinely unverified — clear the session
+              setUser(null);
+              setToken(null);
+              setIsLoading(false);
+              return;
+            }
+            resolvedUser = fresh;
+          } catch {
+            setUser(null);
+            setToken(null);
+            setIsLoading(false);
+            return;
+          }
         }
         try {
-          const idToken = await adapterUser.getIdToken();
+          const idToken = await resolvedUser.getIdToken();
           const authUser: AuthUser = {
-            id: adapterUser.uid,
-            email: adapterUser.email ?? "",
-            displayName: adapterUser.displayName ?? adapterUser.email?.split("@")[0] ?? "User",
-            photoURL: adapterUser.photoURL,
-            emailVerified: adapterUser.emailVerified,
+            id: resolvedUser.uid,
+            email: resolvedUser.email ?? "",
+            displayName: resolvedUser.displayName ?? resolvedUser.email?.split("@")[0] ?? "User",
+            photoURL: resolvedUser.photoURL,
+            emailVerified: resolvedUser.emailVerified,
           };
           setUser(authUser);
           setToken(idToken);
           setIsLoading(false);
           queryClient.prefetchQuery({
-            queryKey: ["userProfile", adapterUser.uid],
+            queryKey: ["userProfile", resolvedUser.uid],
             queryFn: async () => {
-              const userData = await db.get(["users", adapterUser.uid]);
+              const userData = await db.get(["users", resolvedUser.uid]);
               if (userData) {
                 setUser((prev) => {
-                  if (!prev || prev.id !== adapterUser.uid) return prev;
+                  if (!prev || prev.id !== resolvedUser.uid) return prev;
                   return {
                     ...prev,
                     username: (userData.username as string) || prev.username,
