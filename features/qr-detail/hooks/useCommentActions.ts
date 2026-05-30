@@ -71,7 +71,12 @@ export function useCommentActions({
 
     setSubmitting(true);
     try {
-      await addComment(id, userId, clientDisplayName, trimmed, parentId, emailVerified, clientUsername, clientPhotoURL);
+      const saved = await addComment(id, userId, clientDisplayName, trimmed, parentId, emailVerified, clientUsername, clientPhotoURL);
+      // Replace optimistic comment with the server-resolved one (has the correct userUsername from Firestore)
+      pendingCommentsRef.current = pendingCommentsRef.current.filter((c) => c.id !== tempId);
+      setCommentsList((prev) =>
+        prev.map((c) => (c.id === tempId ? { ...saved, id: saved.id } : c))
+      );
     } catch (e: any) {
       pendingCommentsRef.current = pendingCommentsRef.current.filter((c) => c.id !== tempId);
       setCommentsList((prev) => prev.filter((c) => c.id !== tempId));

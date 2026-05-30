@@ -22,7 +22,20 @@ export function useCommentLikes({ id, userId, commentsList, setCommentsList }: U
     if (!userId || !commentsList.length) return;
     const ids = commentsList.map((c) => c.id);
     getCommentUserLikes(id, ids, userId).then((likes) => {
-      setUserLikes((prev) => ({ ...prev, ...likes }));
+      setUserLikes((prev) => {
+        const next = { ...prev };
+        Object.entries(likes).forEach(([cid, val]) => {
+          // Don't overwrite optimistic state for comments with an in-flight timer
+          if (!likeTimersRef.current.has(cid)) {
+            if (val === null || val === undefined) {
+              delete next[cid];
+            } else {
+              next[cid] = val;
+            }
+          }
+        });
+        return next;
+      });
       Object.entries(likes).forEach(([cid, val]) => {
         if (!likeTimersRef.current.has(cid)) committedLikesRef.current[cid] = val;
       });

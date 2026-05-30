@@ -64,9 +64,14 @@ export function QrReportSection({
             isLoggedIn={true}
             isPayment={isPayment}
             onReport={(type) => {
+              const isRemoving = userReport === type;
               const reported = handleReport(type);
               if (!reported) return;
-              showToast(`Voted ${REPORT_LABELS[type] ?? type}`, REPORT_ICONS[type] ?? "flag");
+              if (isRemoving) {
+                showToast(`Removed ${REPORT_LABELS[type] ?? type} vote`, "close-circle-outline");
+              } else {
+                showToast(`Voted ${REPORT_LABELS[type] ?? type}`, REPORT_ICONS[type] ?? "flag");
+              }
             }}
           />
         )}

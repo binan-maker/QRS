@@ -206,20 +206,15 @@ export function validateQrInput(content: string): {
 }
 
 /**
- * Sanitize comment text before display
- * Removes potentially harmful HTML/script content
+ * Sanitize comment text before storage.
+ * React Native <Text> renders plain strings — HTML entity encoding is NOT needed
+ * and causes characters like ' and / to display as &#x27; / &#x2F;.
+ * We only strip actual HTML tags to be safe.
  */
 export function sanitizeComment(text: string): string {
   if (!text || typeof text !== "string") {
     return "";
   }
-
-  // Basic HTML entity encoding to prevent XSS
-  return text
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#x27;")
-    .replace(/\//g, "&#x2F;");
+  // Strip any HTML/script tags — React Native doesn't render them, but storage should be clean
+  return text.replace(/<[^>]*>/g, "").trim();
 }
