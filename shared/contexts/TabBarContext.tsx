@@ -2,12 +2,12 @@ import React, { createContext, useContext, useRef, useCallback } from "react";
 import { Animated } from "react-native";
 
 const THRESHOLD = 4;
-export const TAB_BAR_HIDE_OFFSET = 100;
 
 interface TabBarCtx {
   tabBarTranslateY: Animated.Value;
   onTabScroll: (e: any) => void;
   resetTabBar: () => void;
+  setTabBarHeight: (h: number) => void;
 }
 
 const TabBarContext = createContext<TabBarCtx | null>(null);
@@ -16,6 +16,11 @@ export function TabBarProvider({ children }: { children: React.ReactNode }) {
   const tabBarTranslateY = useRef(new Animated.Value(0)).current;
   const lastY             = useRef(0);
   const hidden            = useRef(false);
+  const tabBarHeight      = useRef(120);
+
+  const setTabBarHeight = useCallback((h: number) => {
+    tabBarHeight.current = h + 2;
+  }, []);
 
   const animTo = useCallback((val: number) => {
     Animated.spring(tabBarTranslateY, {
@@ -31,7 +36,7 @@ export function TabBarProvider({ children }: { children: React.ReactNode }) {
     if (Math.abs(diff) < THRESHOLD) return;
     if (diff > 0 && y > 50 && !hidden.current) {
       hidden.current = true;
-      animTo(TAB_BAR_HIDE_OFFSET);
+      animTo(tabBarHeight.current);
     } else if (diff < 0 && hidden.current) {
       hidden.current = false;
       animTo(0);
@@ -48,7 +53,7 @@ export function TabBarProvider({ children }: { children: React.ReactNode }) {
   }, [tabBarTranslateY]);
 
   return (
-    <TabBarContext.Provider value={{ tabBarTranslateY, onTabScroll, resetTabBar }}>
+    <TabBarContext.Provider value={{ tabBarTranslateY, onTabScroll, resetTabBar, setTabBarHeight }}>
       {children}
     </TabBarContext.Provider>
   );

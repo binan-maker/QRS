@@ -228,7 +228,7 @@ function ClassicTabLayout() {
   const insets = useSafeAreaInsets();
   const { colors } = useTheme();
   const { t } = useAppTranslation();
-  const { tabBarTranslateY } = useTabBarScroll();
+  const { tabBarTranslateY, setTabBarHeight } = useTabBarScroll();
 
   useEffect(() => {
     AsyncStorage.getItem("qrg:startup:screen").then((pref) => {
@@ -237,6 +237,10 @@ function ClassicTabLayout() {
   }, []);
 
   const tabBarHeight = isWeb ? 84 : 70 + insets.bottom;
+
+  useEffect(() => {
+    setTabBarHeight(tabBarHeight);
+  }, [tabBarHeight, setTabBarHeight]);
   const hiddenTabBar = useMemo(() => ({ display: "none" as const }), []);
 
   // Memoize to prevent rebuilding screenOptions on every render
