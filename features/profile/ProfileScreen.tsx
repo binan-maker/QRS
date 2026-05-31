@@ -115,7 +115,11 @@ const QrSkeletonCard = React.memo(function QrSkeletonCard({ index }: { index: nu
       entering={QR_SKELETON_ENTER}
       style={[styles.qrCard, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}
     >
-      <SkeletonBox width={58} height={58} borderRadius={12} />
+      <SkeletonBox width={64} height={64} borderRadius={12} />
+      <View style={{ flex: 1, gap: 6 }}>
+        <SkeletonBox width="70%" height={13} borderRadius={6} />
+        <SkeletonBox width="45%" height={11} borderRadius={6} />
+      </View>
     </Animated.View>
   );
 });
@@ -384,7 +388,7 @@ function ProfileScreen() {
                 <QrPreviewCard key={qr.docId} qr={qr} colors={colors} />
               ))}
               {myQrCodes.length > 3 && (
-                <Animated.View entering={ENTER_QR_MORE} style={{ flex: 1 }}>
+                <Animated.View entering={ENTER_QR_MORE}>
                   <Pressable
                     onPress={goToMyQrCodes}
                     style={({ pressed }) => [
@@ -393,11 +397,15 @@ function ProfileScreen() {
                         backgroundColor: colors.primaryDim,
                         borderColor:     colors.primary + "30",
                         opacity:         pressed ? 0.8 : 1,
+                        flexDirection:   "row",
+                        gap:             8,
+                        paddingVertical: 14,
                       },
                     ]}
                   >
                     <Text style={[styles.qrMoreCount, { color: colors.primary }]}>+{myQrCodes.length - 3}</Text>
-                    <Text style={[styles.qrMoreLabel,  { color: colors.primary }]}>more</Text>
+                    <Text style={[styles.qrMoreLabel,  { color: colors.primary }]}>more QR codes</Text>
+                    <Ionicons name="chevron-forward" size={15} color={colors.primary} />
                   </Pressable>
                 </Animated.View>
               )}
