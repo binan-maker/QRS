@@ -127,6 +127,7 @@ export default function GuardQrDetailScreen({ id, guardUuid, ownerDocId, hint }:
 
   const reportSectionY = useRef(0);
   const { navAnimatedStyle, onNavScroll } = useNavHide();
+  const [navBarH, setNavBarH] = useState(0);
   const handleReportPress = useCallback(() => {
     setOverflowOpen(false);
     if (!user) { router.push("/(auth)/login"); return; }
@@ -140,35 +141,45 @@ export default function GuardQrDetailScreen({ id, guardUuid, ownerDocId, hint }:
       <StatusBar style={isDark ? "light" : "dark"} backgroundColor={colors.background} />
 
       <KeyboardAvoidingView style={{ flex: 1 }} behavior="padding" keyboardVerticalOffset={0}>
-        <View style={[styles.container, { paddingTop: topInset }]}>
+        <View style={styles.container}>
 
-          {/* ── Guard NavBar ── */}
-          <Animated.View entering={FadeInDown.delay(0).duration(260)} style={[styles.navBar, { gap: 10 }, navAnimatedStyle]}>
-            <Animated.View entering={FadeIn.delay(30).duration(240)}>
-              <Pressable onPress={safeBack} style={styles.navBackBtn}>
-                <Ionicons name="chevron-back" size={24} color={colors.text} />
-              </Pressable>
-            </Animated.View>
-            <View style={guardNavStyles.titleRow}>
-              <View style={[guardNavStyles.shieldWrap, { backgroundColor: colors.surfaceLight }]}>
-                <Ionicons name="shield-checkmark" size={15} color={colors.safe} />
-              </View>
-              <Text style={[guardNavStyles.title, { color: colors.text }]} numberOfLines={1}>
-                Living Shield QR
-              </Text>
+          {/* ── Absolute animated navBar ── */}
+          <Animated.View
+            style={[
+              { position: "absolute", top: 0, left: 0, right: 0, zIndex: 10, backgroundColor: colors.background },
+              navAnimatedStyle,
+            ]}
+            onLayout={(e: any) => setNavBarH(e.nativeEvent.layout.height)}
+          >
+            <View style={{ paddingTop: topInset }}>
+              <Animated.View entering={FadeInDown.delay(0).duration(260)} style={[styles.navBar, { gap: 10 }]}>
+                <Animated.View entering={FadeIn.delay(30).duration(240)}>
+                  <Pressable onPress={safeBack} style={styles.navBackBtn}>
+                    <Ionicons name="chevron-back" size={24} color={colors.text} />
+                  </Pressable>
+                </Animated.View>
+                <View style={guardNavStyles.titleRow}>
+                  <View style={[guardNavStyles.shieldWrap, { backgroundColor: colors.surfaceLight }]}>
+                    <Ionicons name="shield-checkmark" size={15} color={colors.safe} />
+                  </View>
+                  <Text style={[guardNavStyles.title, { color: colors.text }]} numberOfLines={1}>
+                    Living Shield QR
+                  </Text>
+                </View>
+                <Animated.View entering={FadeIn.delay(40).duration(240)}>
+                  <Pressable onPress={() => setOverflowOpen(true)} style={styles.navBackBtn}>
+                    <Ionicons name="ellipsis-horizontal" size={22} color={colors.text} />
+                  </Pressable>
+                </Animated.View>
+              </Animated.View>
             </View>
-            <Animated.View entering={FadeIn.delay(40).duration(240)}>
-              <Pressable onPress={() => setOverflowOpen(true)} style={styles.navBackBtn}>
-                <Ionicons name="ellipsis-horizontal" size={22} color={colors.text} />
-              </Pressable>
-            </Animated.View>
           </Animated.View>
 
           <ScrollView
             ref={q.scrollRef}
             style={{ flex: 1 }}
             showsVerticalScrollIndicator={false}
-            contentContainerStyle={styles.scrollContent}
+            contentContainerStyle={[styles.scrollContent, { paddingTop: navBarH }]}
             keyboardShouldPersistTaps="handled"
             onScroll={onNavScroll}
             scrollEventThrottle={16}

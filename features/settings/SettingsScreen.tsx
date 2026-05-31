@@ -1,6 +1,9 @@
-import { View, Text, Pressable, ScrollView, Platform, useWindowDimensions } from "react-native";
-import { useCallback, useMemo } from "react";
+import { View, Text, Pressable, ScrollView, Platform, useWindowDimensions, LayoutChangeEvent } from "react-native";
+import { useCallback, useMemo, useState } from "react";
 import { useLocalSearchParams, useFocusEffect } from "expo-router";
+import Reanimated from "react-native-reanimated";
+import { useHeaderHide } from "@/shared/utils/use-header-hide";
+import { useTabBarScroll } from "@/shared/contexts/TabBarContext";
 import { safePush, safeBack } from "@/shared/utils/navigation";
 import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -112,6 +115,14 @@ export default function SettingsScreen() {
     scanner: handleSetScannerScreen,
   }), [handleSetHomeScreen, handleSetScannerScreen]);
 
+  const { headerStyle, setHeight, onScroll: onHeaderScroll } = useHeaderHide();
+  const { onTabScroll } = useTabBarScroll();
+  const [headerH, setHeaderH] = useState(0);
+  const handleScroll = useCallback((e: any) => {
+    onHeaderScroll(e);
+    onTabScroll(e);
+  }, [onHeaderScroll, onTabScroll]);
+
   // ── Sub-section view ────────────────────────────────────────────────────────
 
   if (section !== "main") {
@@ -174,16 +185,34 @@ export default function SettingsScreen() {
   // ── Main settings view ──────────────────────────────────────────────────────
 
   return (
-    <View style={[styles.container, { paddingTop: topInset }]}>
-      <View style={styles.navBar}>
-        <Pressable onPress={handleMainBack} style={styles.navBackBtn}>
-          <Ionicons name="chevron-back" size={24} color={colors.text} />
-        </Pressable>
-        <Text style={styles.navTitle}>Settings</Text>
-        <View style={{ width: 40 }} />
-      </View>
+    <View style={styles.container}>
+      <Reanimated.View
+        style={[
+          { position: "absolute", top: 0, left: 0, right: 0, zIndex: 10, backgroundColor: colors.background },
+          headerStyle,
+        ]}
+        onLayout={(e: LayoutChangeEvent) => {
+          const h = e.nativeEvent.layout.height;
+          if (h > 0) { setHeaderH(h); setHeight(h); }
+        }}
+      >
+        <View style={{ paddingTop: topInset }}>
+          <View style={styles.navBar}>
+            <Pressable onPress={handleMainBack} style={styles.navBackBtn}>
+              <Ionicons name="chevron-back" size={24} color={colors.text} />
+            </Pressable>
+            <Text style={styles.navTitle}>Settings</Text>
+            <View style={{ width: 40 }} />
+          </View>
+        </View>
+      </Reanimated.View>
 
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        onScroll={handleScroll}
+        scrollEventThrottle={16}
+        contentContainerStyle={[styles.scrollContent, { paddingTop: headerH }]}
+      >
 
         {/* ── ACCOUNT ── */}
         <View style={styles.section}>

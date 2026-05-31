@@ -25,7 +25,6 @@ interface Props {
   onManage: () => void;
   onOverflowOpen: () => void;
   onAnalytics?: () => void;
-  wrapStyle?: any;
 }
 
 export default function QrDetailNavBar({
@@ -48,13 +47,12 @@ export default function QrDetailNavBar({
   onManage,
   onOverflowOpen,
   onAnalytics,
-  wrapStyle,
 }: Props) {
   const { colors } = useTheme();
   const styles = makeStyles(colors);
 
   return (
-    <Animated.View entering={FadeInDown.delay(0).duration(260)} style={[styles.navBar, wrapStyle]}>
+    <Animated.View entering={FadeInDown.delay(0).duration(260)} style={styles.navBar}>
       <View style={{ flex: 1, flexDirection: "row", alignItems: "center", gap: 10, minWidth: 0 }}>
         <Animated.View entering={FadeIn.delay(30).duration(240)}>
           <Pressable onPress={onBack} style={styles.navBackBtn}>

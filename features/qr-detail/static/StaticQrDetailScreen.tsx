@@ -91,6 +91,7 @@ export default function StaticQrDetailScreen({ id, ownerDocId, hint }: Props) {
   }>({ message: "", icon: "checkmark-circle", key: 0 });
   const reportSectionY = useRef(0);
   const { navAnimatedStyle, onNavScroll } = useNavHide();
+  const [navBarH, setNavBarH] = useState(0);
 
   const showToast = useCallback(
     (message: string, icon: keyof typeof Ionicons.glyphMap = "checkmark-circle") => {
@@ -202,45 +203,55 @@ export default function StaticQrDetailScreen({ id, ownerDocId, hint }: Props) {
       <StatusBar style={isDark ? "light" : "dark"} backgroundColor={colors.background} />
 
       <KeyboardAvoidingView style={{ flex: 1 }} behavior="padding" keyboardVerticalOffset={0}>
-        <View style={[styles.container, { paddingTop: topInset }]}>
+        <View style={styles.container}>
 
-          <QrDetailNavBar
-            offlineMode={q.offlineMode}
-            ownerName={q.ownerInfo?.businessName || q.ownerInfo?.ownerName || null}
-            hasOwner={hasOwner}
-            isGuardCreatedQr={false}
-            isFollowingCreator={q.isFollowingCreator}
-            creatorFollowLoading={q.creatorFollowLoading}
-            creatorFollowerCount={q.creatorFollowerCount}
-            isFollowing={q.isFollowing}
-            followLoading={q.followLoading}
-            followCount={q.followCount}
-            isQrOwner={isQrOwner}
-            ownerDocId={ownerDocId}
-            onBack={safeBack}
-            onFollowCreator={handleCreatorFollowPress}
-            onOpenCreatorFollowers={() => {
-              q.handleLoadCreatorFollowers();
-              q.setCreatorFollowersModalOpen(true);
-            }}
-            onWatch={handleWatchPress}
-            onManage={() =>
-              ownerDocId
-                ? router.push(`/my-qr/${ownerDocId}` as any)
-                : router.push("/(tabs)/profile")
-            }
-            onAnalytics={() =>
-              ownerDocId ? router.push(`/my-qr-analytics/${ownerDocId}` as any) : undefined
-            }
-            onOverflowOpen={() => setOverflowOpen(true)}
-            wrapStyle={navAnimatedStyle}
-          />
+          {/* Absolute animated navBar */}
+          <Animated.View
+            style={[
+              { position: "absolute", top: 0, left: 0, right: 0, zIndex: 10, backgroundColor: colors.background },
+              navAnimatedStyle,
+            ]}
+            onLayout={(e: any) => setNavBarH(e.nativeEvent.layout.height)}
+          >
+            <View style={{ paddingTop: topInset }}>
+              <QrDetailNavBar
+                offlineMode={q.offlineMode}
+                ownerName={q.ownerInfo?.businessName || q.ownerInfo?.ownerName || null}
+                hasOwner={hasOwner}
+                isGuardCreatedQr={false}
+                isFollowingCreator={q.isFollowingCreator}
+                creatorFollowLoading={q.creatorFollowLoading}
+                creatorFollowerCount={q.creatorFollowerCount}
+                isFollowing={q.isFollowing}
+                followLoading={q.followLoading}
+                followCount={q.followCount}
+                isQrOwner={isQrOwner}
+                ownerDocId={ownerDocId}
+                onBack={safeBack}
+                onFollowCreator={handleCreatorFollowPress}
+                onOpenCreatorFollowers={() => {
+                  q.handleLoadCreatorFollowers();
+                  q.setCreatorFollowersModalOpen(true);
+                }}
+                onWatch={handleWatchPress}
+                onManage={() =>
+                  ownerDocId
+                    ? router.push(`/my-qr/${ownerDocId}` as any)
+                    : router.push("/(tabs)/profile")
+                }
+                onAnalytics={() =>
+                  ownerDocId ? router.push(`/my-qr-analytics/${ownerDocId}` as any) : undefined
+                }
+                onOverflowOpen={() => setOverflowOpen(true)}
+              />
+            </View>
+          </Animated.View>
 
           <ScrollView
             ref={q.scrollRef}
             style={{ flex: 1 }}
             showsVerticalScrollIndicator={false}
-            contentContainerStyle={styles.scrollContent}
+            contentContainerStyle={[styles.scrollContent, { paddingTop: navBarH }]}
             keyboardShouldPersistTaps="handled"
             onScroll={onNavScroll}
             scrollEventThrottle={16}
