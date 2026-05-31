@@ -1,9 +1,15 @@
 import { useRef, useCallback } from "react";
-import { useSharedValue, withSpring, useAnimatedStyle } from "react-native-reanimated";
+import { useSharedValue, withTiming, Easing, useAnimatedStyle } from "react-native-reanimated";
 
-const THRESHOLD  = 4;
-const NAV_OFFSET = -64;
+const THRESHOLD    = 8;
+const NAV_OFFSET   = -64;
+const HIDE_DURATION = 280;
+const SHOW_DURATION = 340;
 
+/**
+ * Scroll-linked nav hide/show — LinkedIn-style slow ease.
+ * No spring: pure timing so it never snaps or bounces.
+ */
 export function useNavHide() {
   const navOffset = useSharedValue(0);
   const lastY     = useRef(0);
@@ -14,12 +20,19 @@ export function useNavHide() {
     const diff = y - lastY.current;
     lastY.current = y;
     if (Math.abs(diff) < THRESHOLD) return;
-    if (diff > 0 && y > 40 && !hidden.current) {
+
+    if (diff > 0 && y > 50 && !hidden.current) {
       hidden.current  = true;
-      navOffset.value = withSpring(NAV_OFFSET, { damping: 15, stiffness: 120 });
+      navOffset.value = withTiming(NAV_OFFSET, {
+        duration: HIDE_DURATION,
+        easing: Easing.in(Easing.cubic),
+      });
     } else if (diff < 0 && hidden.current) {
       hidden.current  = false;
-      navOffset.value = withSpring(0, { damping: 15, stiffness: 120 });
+      navOffset.value = withTiming(0, {
+        duration: SHOW_DURATION,
+        easing: Easing.out(Easing.cubic),
+      });
     }
   }, [navOffset]);
 

@@ -1,7 +1,9 @@
 import React, { createContext, useContext, useRef, useCallback } from "react";
 import { Animated, Easing } from "react-native";
 
-const THRESHOLD = 4;
+const THRESHOLD    = 8;
+const HIDE_DURATION = 280;
+const SHOW_DURATION = 340;
 
 interface TabBarCtx {
   tabBarTranslateY: Animated.Value;
@@ -25,17 +27,17 @@ export function TabBarProvider({ children }: { children: React.ReactNode }) {
   const animHide = useCallback(() => {
     Animated.timing(tabBarTranslateY, {
       toValue:         hideOffset.current,
-      duration:        210,
-      easing:          Easing.out(Easing.cubic),
+      duration:        HIDE_DURATION,
+      easing:          Easing.in(Easing.cubic),
       useNativeDriver: true,
     }).start();
   }, [tabBarTranslateY]);
 
   const animShow = useCallback(() => {
-    Animated.spring(tabBarTranslateY, {
+    Animated.timing(tabBarTranslateY, {
       toValue:         0,
-      tension:         68,
-      friction:        11,
+      duration:        SHOW_DURATION,
+      easing:          Easing.out(Easing.cubic),
       useNativeDriver: true,
     }).start();
   }, [tabBarTranslateY]);

@@ -1,20 +1,15 @@
 import { useRef, useCallback } from "react";
 import {
-  useSharedValue, useAnimatedStyle, withTiming, withSpring, Easing,
+  useSharedValue, useAnimatedStyle, withTiming, Easing,
 } from "react-native-reanimated";
 
-const THRESHOLD = 4;
+const THRESHOLD    = 8;
+const HIDE_DURATION = 260;
+const SHOW_DURATION = 320;
 
 /**
- * Animates a fixed page header out of view on scroll-down and springs it
- * back on scroll-up — matching the feel of the bottom tab bar.
- *
- * Usage:
- *   const { headerStyle, setHeight, onScroll, reset } = useHeaderHide();
- *   // Wrap your header in <Animated.View style={headerStyle} onLayout={…} />
- *   // Call setHeight(e.nativeEvent.layout.height) in onLayout
- *   // Pass onScroll to your ScrollView / FlashList
- *   // Call reset() to force the header back into view (e.g. on search open)
+ * Scroll-linked header hide/show — LinkedIn-style.
+ * Hides on scroll-down, slides back in smoothly on scroll-up (no spring bounce).
  */
 export function useHeaderHide() {
   const translateY = useSharedValue(0);
@@ -29,7 +24,10 @@ export function useHeaderHide() {
   const reset = useCallback(() => {
     hidden.current   = false;
     lastY.current    = 0;
-    translateY.value = withSpring(0, { damping: 18, stiffness: 180 });
+    translateY.value = withTiming(0, {
+      duration: SHOW_DURATION,
+      easing: Easing.out(Easing.cubic),
+    });
   }, [translateY]);
 
   const onScroll = useCallback((e: any) => {
@@ -38,15 +36,18 @@ export function useHeaderHide() {
     lastY.current = y;
     if (Math.abs(diff) < THRESHOLD) return;
 
-    if (diff > 0 && y > 40 && !hidden.current) {
+    if (diff > 0 && y > 50 && !hidden.current) {
       hidden.current   = true;
       translateY.value = withTiming(-heightRef.current, {
-        duration: 210,
-        easing: Easing.out(Easing.cubic),
+        duration: HIDE_DURATION,
+        easing: Easing.in(Easing.cubic),
       });
     } else if (diff < 0 && hidden.current) {
       hidden.current   = false;
-      translateY.value = withSpring(0, { damping: 18, stiffness: 180 });
+      translateY.value = withTiming(0, {
+        duration: SHOW_DURATION,
+        easing: Easing.out(Easing.cubic),
+      });
     }
   }, [translateY]);
 
