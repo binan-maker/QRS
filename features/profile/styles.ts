@@ -112,24 +112,6 @@ export const styles = StyleSheet.create({
   },
   emptyQrText: { fontSize: 13, fontFamily: "Inter_400Regular" },
 
-  // ── Donation entry row ───────────────────────────────────────────────────
-  donationBtn: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 12,
-    borderRadius: 16,
-    borderWidth: 1,
-    padding: 14,
-    marginBottom: 10,
-  },
-  donationIconWrap: {
-    width: 36, height: 36, borderRadius: 11,
-    alignItems: "center", justifyContent: "center", flexShrink: 0,
-  },
-  donationTextWrap: { flex: 1, gap: 2 },
-  donationTitle: { fontSize: 14, fontFamily: "Inter_600SemiBold" },
-  donationSub:   { fontSize: 12, fontFamily: "Inter_400Regular" },
-
   // ── Sign-out button ──────────────────────────────────────────────────────
   signOutBtn: {
     flexDirection: "row", alignItems: "center", justifyContent: "center",

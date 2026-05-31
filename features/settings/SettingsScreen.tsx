@@ -350,6 +350,13 @@ export default function SettingsScreen() {
               sublabel="Report bugs or suggest features"
               onPress={goToFeedback}
             />
+            <View style={styles.divider} />
+            <SettingsMenuItem
+              icon="heart-outline"
+              label="Support QR Guard"
+              sublabel="Buy us a coffee"
+              onPress={() => safePush("/donation")}
+            />
           </View>
         </View>
 

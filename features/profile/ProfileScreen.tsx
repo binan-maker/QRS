@@ -50,7 +50,6 @@ const ENTER_QR_SECTION   = FadeInDown.delay(70).duration(260);
 const ENTER_QR_EMPTY     = FadeInDown.delay(80).duration(260);
 const ENTER_QR_MORE      = FadeIn.delay(40).duration(240);
 const ENTER_NOTIF_DOT    = FadeIn.duration(240);
-const ENTER_DONATION     = FadeInDown.delay(80).duration(260);
 const ENTER_SIGNOUT      = FadeInDown.delay(100).duration(260);
 
 // Per-index stat cell entering (max 5 items, pre-built)
@@ -121,35 +120,6 @@ const QrSkeletonCard = React.memo(function QrSkeletonCard({ index }: { index: nu
   );
 });
 
-// ── Donation entry card (clean, theme-aware, low visual weight) ────────────────
-const DonationCard = React.memo(function DonationCard() {
-  const { colors } = useTheme();
-  const onPress = useCallback(() => safePush("/donation"), []);
-  return (
-    <Animated.View entering={ENTER_DONATION}>
-      <Pressable
-        onPress={onPress}
-        style={({ pressed }) => [
-          styles.donationBtn,
-          {
-            backgroundColor: colors.surface,
-            borderColor: colors.primary + "30",
-            opacity: pressed ? 0.85 : 1,
-          },
-        ]}
-      >
-        <View style={[styles.donationIconWrap, { backgroundColor: colors.primaryDim }]}>
-          <Ionicons name="shield-checkmark" size={17} color={colors.primary} />
-        </View>
-        <View style={styles.donationTextWrap}>
-          <Text style={[styles.donationTitle, { color: colors.text }]}>Support QR Guard</Text>
-          <Text style={[styles.donationSub, { color: colors.textMuted }]}>Help keep the app free &amp; independent</Text>
-        </View>
-        <Ionicons name="chevron-forward" size={16} color={colors.textMuted} />
-      </Pressable>
-    </Animated.View>
-  );
-});
 
 // ── QR skeleton list (3 items, stable) ────────────────────────────────────────
 const QR_SKELETON_INDICES = [0, 1, 2];
@@ -434,9 +404,6 @@ function ProfileScreen() {
             </View>
           )}
         </Animated.View>
-
-        {/* ── SUPPORT QR GUARD ──────────────────────────────────── */}
-        <DonationCard />
 
         {/* ── SIGN OUT ──────────────────────────────────────────── */}
         <Animated.View entering={ENTER_SIGNOUT}>
