@@ -9,8 +9,6 @@ import { useTheme } from "@/shared/contexts/ThemeContext";
 import { useScaleFns } from "@/shared/utils/use-scale";
 import { usePulseAnimation } from "@/features/home/hooks/usePulseAnimation";
 
-const HERO_PILLS = ["Safe check", "Fraud detect", "Trust score"] as const;
-
 export function HeroScanCard() {
   const { colors, isDark } = useTheme();
   const { s } = useScaleFns();
@@ -57,22 +55,6 @@ export function HeroScanCard() {
             </View>
           </View>
 
-          <View style={styles.heroPillRow}>
-            {HERO_PILLS.map((label) => (
-              <View
-                key={label}
-                style={[styles.heroPill, { backgroundColor: colors.primary + "18", borderColor: colors.primary + "30" }]}
-              >
-                <Text
-                  style={[styles.heroPillText, { color: colors.primary }]}
-                  maxFontSizeMultiplier={1}
-                  numberOfLines={1}
-                >
-                  {label}
-                </Text>
-              </View>
-            ))}
-          </View>
         </LinearGradient>
       </Pressable>
     </Animated.View>
@@ -91,8 +73,5 @@ function makeStyles(c: any, s: number) {
     heroTextBlock:    { flex: 1 },
     heroTitle:        { fontSize: rf(16), fontFamily: "Inter_700Bold", marginBottom: 4 },
     heroArrow:        { width: 40, height: 40, borderRadius: 20, alignItems: "center", justifyContent: "center", flexShrink: 0 },
-    heroPillRow:      { flexDirection: "row", gap: 6, flexWrap: "wrap" },
-    heroPill:         { paddingHorizontal: 8, paddingVertical: 3, borderRadius: 100, borderWidth: 1 },
-    heroPillText:     { fontSize: rf(12), fontFamily: "Inter_600SemiBold", letterSpacing: 0.2 },
   });
 }

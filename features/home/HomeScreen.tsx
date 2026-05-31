@@ -7,7 +7,6 @@ import { useAvatar } from "@/shared/contexts/AvatarContext";
 import { useHome } from "@/features/home/hooks/useHome";
 import { HomeHeader } from "@/features/home/components/HomeHeader";
 import { HeroScanCard } from "@/features/home/components/HeroScanCard";
-import { StatsRow } from "@/features/home/components/StatsRow";
 import { RecentScansList } from "@/features/home/components/RecentScansList";
 import { useTabBarScroll } from "@/shared/contexts/TabBarContext";
 
@@ -33,8 +32,6 @@ function HomeScreen() {
         <HomeHeader user={user} photoURL={photoURL} />
 
         <HeroScanCard />
-
-        <StatsRow />
 
         <RecentScansList
           recentScans={recentScans}
