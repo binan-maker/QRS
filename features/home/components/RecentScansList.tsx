@@ -1,4 +1,4 @@
-import React, { useMemo } from "react";
+import React, { useMemo, useCallback } from "react";
 import { View, Text, StyleSheet, Pressable } from "react-native";
 import { router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
@@ -6,10 +6,11 @@ import Animated, { FadeInDown } from "react-native-reanimated";
 import * as Haptics from "@/shared/utils/haptics";
 import { useTheme } from "@/shared/contexts/ThemeContext";
 import { useScaleFns } from "@/shared/utils/use-scale";
-import { RecentScanCard } from "@/features/home/components/RecentScanCard";
-import { ScanSkeletonList } from "@/features/home/components/ScanSkeletonList";
+import HistoryItem from "@/features/history/components/HistoryItem";
+import HistoryItemSkeleton from "@/features/history/components/HistoryItemSkeleton";
 import { EmptyScans } from "@/features/home/components/EmptyScans";
 import type { LocalScan } from "@/features/home/types";
+import type { HistoryItem as HistoryItemType } from "@/features/history/types";
 
 interface Props {
   recentScans: LocalScan[];
@@ -21,6 +22,16 @@ export function RecentScansList({ recentScans, isLoading, onDelete }: Props) {
   const { colors } = useTheme();
   const { s } = useScaleFns();
   const styles = useMemo(() => makeStyles(colors, s), [colors, s]);
+
+  const historyItems = useMemo<HistoryItemType[]>(
+    () => recentScans.map((scan) => ({ ...scan, source: "local" as const })),
+    [recentScans],
+  );
+
+  const handleDelete = useCallback(
+    (item: HistoryItemType) => onDelete(item.id),
+    [onDelete],
+  );
 
   return (
     <Animated.View entering={FadeInDown.duration(180)}>
@@ -41,17 +52,20 @@ export function RecentScansList({ recentScans, isLoading, onDelete }: Props) {
       </View>
 
       {isLoading ? (
-        <ScanSkeletonList />
+        <View>
+          {[0, 1, 2].map((i) => <HistoryItemSkeleton key={i} index={i} />)}
+        </View>
       ) : recentScans.length === 0 ? (
         <EmptyScans />
       ) : (
-        <View style={styles.recentList}>
-          {recentScans.map((scan, idx) => (
-            <RecentScanCard
-              key={scan.id}
-              scan={scan}
+        <View>
+          {historyItems.map((item, idx) => (
+            <HistoryItem
+              key={item.id}
+              item={item}
+              risk="safe"
+              onDelete={handleDelete}
               index={idx}
-              onDelete={onDelete}
             />
           ))}
 
@@ -89,7 +103,6 @@ function makeStyles(c: any, s: number) {
     sectionTitle:    { fontSize: rf(16), fontFamily: "Inter_700Bold" },
     seeAllBtn:       { flexDirection: "row", alignItems: "center", gap: 4, paddingHorizontal: 11, paddingVertical: 6, borderRadius: 12 },
     seeAllText:      { fontSize: rf(12), fontFamily: "Inter_600SemiBold" },
-    recentList:      { gap: 10 },
     fullHistoryBtn:  { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, paddingVertical: 14, borderRadius: 20, borderWidth: 1, marginTop: 2 },
     fullHistoryText: { fontSize: rf(14), fontFamily: "Inter_600SemiBold", flex: 0 },
   });
