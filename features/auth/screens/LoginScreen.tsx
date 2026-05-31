@@ -3,6 +3,10 @@ import {
   View, Text, Pressable, StyleSheet, ActivityIndicator,
   KeyboardAvoidingView, Platform, ScrollView,
 } from "react-native";
+import Animated, {
+  useSharedValue, useAnimatedStyle, withTiming, withDelay,
+  Easing,
+} from "react-native-reanimated";
 import { Link, router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -15,6 +19,26 @@ import AuthFormInput from "@/features/auth/components/AuthFormInput";
 import AuthBrandBlock from "@/features/auth/components/AuthBrandBlock";
 import { useAuthScale } from "@/features/auth/hooks/useAuthScale";
 import { makeAuthStyles } from "@/features/auth/styles";
+
+const EASE = Easing.bezier(0.25, 0.46, 0.45, 0.94);
+const DURATION = 380;
+
+function useFadeSlide(delay: number, offsetY = 22) {
+  const opacity = useSharedValue(0);
+  const translateY = useSharedValue(offsetY);
+
+  useEffect(() => {
+    opacity.value = withDelay(delay, withTiming(1, { duration: DURATION, easing: EASE }));
+    translateY.value = withDelay(delay, withTiming(0, { duration: DURATION, easing: EASE }));
+  }, []);
+
+  const style = useAnimatedStyle(() => ({
+    opacity: opacity.value,
+    transform: [{ translateY: translateY.value }],
+  }));
+
+  return style;
+}
 
 export default function LoginScreen() {
   const { signIn, signInWithGoogle, googleRequest, user } = useAuth();
@@ -31,6 +55,10 @@ export default function LoginScreen() {
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+
+  const brandStyle = useFadeSlide(0, -16);
+  const cardStyle  = useFadeSlide(80, 28);
+  const footerStyle = useFadeSlide(200, 16);
 
   useEffect(() => {
     if (user) router.replace("/(tabs)");
@@ -95,9 +123,11 @@ export default function LoginScreen() {
           overScrollMode="never"
         >
           <View style={S.inner}>
-            <AuthBrandBlock title="Welcome back" />
+            <Animated.View style={brandStyle}>
+              <AuthBrandBlock title="Welcome back" />
+            </Animated.View>
 
-            <View style={[S.card, { backgroundColor: colors.isDark ? "rgba(16,25,41,0.94)" : "#fff", borderColor: colors.surfaceBorder, padding: sp(20) }]}>
+            <Animated.View style={[{ backgroundColor: colors.isDark ? "rgba(16,25,41,0.94)" : "#fff", borderColor: colors.surfaceBorder, borderWidth: 1, borderRadius: 20, padding: sp(20), shadowColor: "#000", shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.07, shadowRadius: 24, elevation: 5 }, cardStyle]}>
               {error ? (
                 <View style={[S.errorBanner, { backgroundColor: bannerBg, borderColor: bannerBorder, marginBottom: sp(12) }]}>
                   <View style={S.errorRow}>
@@ -168,16 +198,16 @@ export default function LoginScreen() {
                 <GoogleIcon size={sp(18)} />
                 <Text style={[S.googleBtnText, { color: colors.text, fontSize: sp(13) }]}>Continue with Google</Text>
               </Pressable>
-            </View>
+            </Animated.View>
 
-            <View style={[S.footer, { marginTop: sp(20) }]}>
+            <Animated.View style={[S.footer, { marginTop: sp(20) }, footerStyle]}>
               <Text style={[S.footerText, { color: colors.textSecondary, fontSize: sp(13) }]}>Don't have an account?</Text>
               <Link href="/(auth)/register" asChild>
                 <Pressable hitSlop={8}>
                   <Text style={[S.footerLink, { color: colors.primary, fontSize: sp(13) }]}>Sign up</Text>
                 </Pressable>
               </Link>
-            </View>
+            </Animated.View>
           </View>
         </ScrollView>
       </KeyboardAvoidingView>

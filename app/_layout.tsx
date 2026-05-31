@@ -67,8 +67,7 @@ function RootLayoutNav() {
     }}>
       <Stack.Screen name="(tabs)" options={{ headerShown: false, animation: "none" }} />
       <Stack.Screen name="(auth)" options={{
-        presentation: "modal",
-        animation: "slide_from_bottom",
+        animation: "fade",
         headerShown: false,
         ...(Platform.OS === "android" ? { navigationBarColor: colors.background } : {}),
       }} />
