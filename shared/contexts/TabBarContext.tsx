@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useRef, useCallback } from "react";
-import { Animated } from "react-native";
+import { Animated, Easing } from "react-native";
 
 const THRESHOLD = 4;
 
@@ -16,16 +16,27 @@ export function TabBarProvider({ children }: { children: React.ReactNode }) {
   const tabBarTranslateY = useRef(new Animated.Value(0)).current;
   const lastY             = useRef(0);
   const hidden            = useRef(false);
-  const tabBarHeight      = useRef(120);
+  const hideOffset        = useRef(150);
 
   const setTabBarHeight = useCallback((h: number) => {
-    tabBarHeight.current = h + 2;
+    hideOffset.current = h;
   }, []);
 
-  const animTo = useCallback((val: number) => {
+  const animHide = useCallback(() => {
+    Animated.timing(tabBarTranslateY, {
+      toValue:         hideOffset.current,
+      duration:        210,
+      easing:          Easing.out(Easing.cubic),
+      useNativeDriver: true,
+    }).start();
+  }, [tabBarTranslateY]);
+
+  const animShow = useCallback(() => {
     Animated.spring(tabBarTranslateY, {
-      toValue: val, useNativeDriver: true,
-      tension: 110, friction: 16,
+      toValue:         0,
+      tension:         68,
+      friction:        11,
+      useNativeDriver: true,
     }).start();
   }, [tabBarTranslateY]);
 
@@ -36,21 +47,18 @@ export function TabBarProvider({ children }: { children: React.ReactNode }) {
     if (Math.abs(diff) < THRESHOLD) return;
     if (diff > 0 && y > 50 && !hidden.current) {
       hidden.current = true;
-      animTo(tabBarHeight.current);
+      animHide();
     } else if (diff < 0 && hidden.current) {
       hidden.current = false;
-      animTo(0);
+      animShow();
     }
-  }, [animTo]);
+  }, [animHide, animShow]);
 
   const resetTabBar = useCallback(() => {
     hidden.current = false;
     lastY.current  = 0;
-    Animated.spring(tabBarTranslateY, {
-      toValue: 0, useNativeDriver: true,
-      tension: 110, friction: 16,
-    }).start();
-  }, [tabBarTranslateY]);
+    animShow();
+  }, [animShow]);
 
   return (
     <TabBarContext.Provider value={{ tabBarTranslateY, onTabScroll, resetTabBar, setTabBarHeight }}>

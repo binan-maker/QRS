@@ -237,9 +237,13 @@ function ClassicTabLayout() {
   }, []);
 
   const tabBarHeight = isWeb ? 84 : 70 + insets.bottom;
+  // The scanner FAB sits 28px above the tab bar (marginTop: -28).
+  // The hide offset must cover the full bar height + that overhang so
+  // nothing is left visible when the bar is scrolled away.
+  const FAB_OVERHANG = 28;
 
   useEffect(() => {
-    setTabBarHeight(tabBarHeight);
+    setTabBarHeight(tabBarHeight + FAB_OVERHANG);
   }, [tabBarHeight, setTabBarHeight]);
   const hiddenTabBar = useMemo(() => ({ display: "none" as const }), []);
 
