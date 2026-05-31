@@ -6,6 +6,7 @@ import {
   ScrollView,
   RefreshControl,
   ActivityIndicator,
+  useWindowDimensions,
 } from "react-native";
 import { Image } from "expo-image";
 import { safePush } from "@/shared/utils/navigation";
@@ -107,18 +108,29 @@ const StatCell = React.memo(function StatCell({
   );
 });
 
+const H_PADDING = 40;
+const GAP = 8;
+const COLS = 3;
+
 // ── QR skeleton tile ───────────────────────────────────────────────────────────
 const QrSkeletonCard = React.memo(function QrSkeletonCard({ index }: { index: number }) {
   const { colors } = useTheme();
+  const { width: screenWidth } = useWindowDimensions();
+  const tileSize = Math.floor((screenWidth - H_PADDING - GAP * (COLS - 1)) / COLS);
   return (
     <Animated.View
       entering={QR_SKELETON_ENTER}
-      style={[styles.qrCard, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}
+      style={[
+        styles.qrCard,
+        { width: tileSize, height: tileSize, backgroundColor: colors.surface, borderColor: colors.surfaceBorder },
+      ]}
     >
-      <SkeletonBox width={64} height={64} borderRadius={12} />
-      <View style={{ flex: 1, gap: 6 }}>
-        <SkeletonBox width="70%" height={13} borderRadius={6} />
-        <SkeletonBox width="45%" height={11} borderRadius={6} />
+      <View style={styles.qrCodeWrap}>
+        <SkeletonBox width={tileSize * 0.52} height={tileSize * 0.52} borderRadius={10} />
+      </View>
+      <View style={[styles.qrCardFooter, { gap: 5 }]}>
+        <SkeletonBox width="75%" height={12} borderRadius={6} />
+        <SkeletonBox width="45%" height={10} borderRadius={6} />
       </View>
     </Animated.View>
   );
@@ -132,6 +144,8 @@ const QR_SKELETON_INDICES = [0, 1, 2];
 function ProfileScreen() {
   const insets = useSafeAreaInsets();
   const { colors } = useTheme();
+  const { width: screenWidth } = useWindowDimensions();
+  const tileSize = Math.floor((screenWidth - H_PADDING - GAP * (COLS - 1)) / COLS);
   const {
     user,
     stats, statsLoading,
@@ -394,18 +408,17 @@ function ProfileScreen() {
                     style={({ pressed }) => [
                       styles.qrCard, styles.qrCardMore,
                       {
+                        width:           tileSize,
+                        height:          tileSize,
                         backgroundColor: colors.primaryDim,
                         borderColor:     colors.primary + "30",
                         opacity:         pressed ? 0.8 : 1,
-                        flexDirection:   "row",
-                        gap:             8,
-                        paddingVertical: 14,
                       },
                     ]}
                   >
                     <Text style={[styles.qrMoreCount, { color: colors.primary }]}>+{myQrCodes.length - 3}</Text>
-                    <Text style={[styles.qrMoreLabel,  { color: colors.primary }]}>more QR codes</Text>
-                    <Ionicons name="chevron-forward" size={15} color={colors.primary} />
+                    <Text style={[styles.qrMoreLabel, { color: colors.primary }]}>more</Text>
+                    <Ionicons name="chevron-forward" size={16} color={colors.primary} />
                   </Pressable>
                 </Animated.View>
               )}

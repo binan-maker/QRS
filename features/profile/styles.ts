@@ -94,18 +94,29 @@ export const styles = StyleSheet.create({
   sectionTitle: { fontSize: 15, fontFamily: "Inter_700Bold", marginBottom: 12 },
   seeAllBtn: { flexDirection: "row", alignItems: "center", gap: 2 },
   seeAllText: { fontSize: 13, fontFamily: "Inter_500Medium" },
-  qrRow: { flexDirection: "column", gap: 8 },
+
+  // Grid layout — 3 square tiles per row
+  qrRow: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
   qrCard: {
-    borderRadius: 14, padding: 12, borderWidth: 1,
-    flexDirection: "row", alignItems: "center", gap: 12,
+    borderRadius: 16, borderWidth: 1,
+    overflow: "hidden",
+    // width & height set dynamically in component via useWindowDimensions
   },
-  qrCardMore: { justifyContent: "center", alignItems: "center" },
-  qrCodeWrap: { borderRadius: 12, padding: 4, overflow: "hidden" },
+  qrCardMore: { justifyContent: "center", alignItems: "center", gap: 4 },
+
+  // Square tile internals
+  qrCodeWrap: {
+    flex: 1, alignItems: "center", justifyContent: "center",
+    paddingTop: 14, paddingHorizontal: 10,
+  },
+  qrCardFooter: {
+    paddingHorizontal: 10, paddingTop: 8, paddingBottom: 10, gap: 2,
+  },
   qrCardLabel: { fontSize: 11, fontFamily: "Inter_500Medium", textAlign: "center" },
-  qrCardName: { fontSize: 13, fontFamily: "Inter_600SemiBold", marginBottom: 3 },
-  qrCardScans: { fontSize: 12, fontFamily: "Inter_400Regular" },
-  qrMoreCount: { fontSize: 17, fontFamily: "Inter_700Bold" },
-  qrMoreLabel: { fontSize: 13, fontFamily: "Inter_500Medium" },
+  qrCardName: { fontSize: 12, fontFamily: "Inter_600SemiBold" },
+  qrCardScans: { fontSize: 11, fontFamily: "Inter_400Regular" },
+  qrMoreCount: { fontSize: 20, fontFamily: "Inter_700Bold" },
+  qrMoreLabel: { fontSize: 11, fontFamily: "Inter_500Medium", textAlign: "center" },
   emptyQrCard: {
     flexDirection: "row", alignItems: "center", gap: 10,
     borderRadius: 14, padding: 16, borderWidth: 1,
