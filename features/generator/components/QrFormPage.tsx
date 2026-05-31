@@ -348,7 +348,7 @@ export default function QrFormPage({ mode, initialTemplateId, openAiBuilder }: P
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  scroll: { paddingHorizontal: 0, paddingTop: 6, gap: 0 },
+  scroll: { paddingHorizontal: 0, paddingTop: 4, gap: 0 },
 
   nameWrap: { marginHorizontal: 20, marginTop: 12, marginBottom: 12 },
   nameCard: { borderRadius: 14, borderWidth: 1, padding: 12, gap: 7 },

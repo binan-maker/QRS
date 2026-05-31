@@ -57,28 +57,14 @@ export default function ComingSoonBanner({ compact = false }: Props) {
 
   if (compact) {
     return (
-      <View style={[styles.compactWrap, { borderColor: "#F59E0B30" }]}>
-        <LinearGradient
-          colors={["#F59E0B18", "#F97316 10", "#EF444408"]}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={styles.compactGradient}
-        >
-          <View style={styles.compactRow}>
-            <View style={[styles.compactIconWrap, { backgroundColor: "#F59E0B20" }]}>
-              <MaterialCommunityIcons name="rocket-launch-outline" size={14} color="#F59E0B" />
-            </View>
-            <View style={{ flex: 1 }}>
-              <Text style={styles.compactTitle}>Phase 2 Feature — Coming Soon</Text>
-              <Text style={[styles.compactSub, { color: colors.textMuted }]}>
-                QR generation launches after Phase 1 (scanning). Scanning is live now.
-              </Text>
-            </View>
-            <View style={[styles.compactBadge, { backgroundColor: "#F59E0B20", borderColor: "#F59E0B50" }]}>
-              <Text style={styles.compactBadgeText}>PHASE 2</Text>
-            </View>
+      <View style={styles.pillWrap}>
+        <View style={[styles.pill, { backgroundColor: "#F59E0B14", borderColor: "#F59E0B35" }]}>
+          <MaterialCommunityIcons name="rocket-launch-outline" size={12} color="#F59E0B" />
+          <Text style={styles.pillText}>Coming in Phase 2</Text>
+          <View style={[styles.pillBadge, { backgroundColor: "#F59E0B22", borderColor: "#F59E0B50" }]}>
+            <Text style={styles.pillBadgeText}>SOON</Text>
           </View>
-        </LinearGradient>
+        </View>
       </View>
     );
   }
@@ -289,53 +275,36 @@ const styles = StyleSheet.create({
   scanNowBold: {
     fontFamily: "Inter_700Bold",
   },
-  compactWrap: {
+  pillWrap: {
     marginHorizontal: 20,
     marginTop: 8,
-    marginBottom: 4,
-    borderRadius: 14,
-    overflow: "hidden",
-    borderWidth: 1,
+    marginBottom: 2,
+    alignItems: "flex-start",
   },
-  compactGradient: {
-    borderRadius: 14,
-    padding: 12,
-  },
-  compactRow: {
+  pill: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 10,
-  },
-  compactIconWrap: {
-    width: 28,
-    height: 28,
-    borderRadius: 8,
-    alignItems: "center",
-    justifyContent: "center",
-    flexShrink: 0,
-  },
-  compactTitle: {
-    fontSize: 12,
-    fontFamily: "Inter_700Bold",
-    color: "#F59E0B",
-    marginBottom: 2,
-  },
-  compactSub: {
-    fontSize: 10,
-    fontFamily: "Inter_400Regular",
-    lineHeight: 14,
-  },
-  compactBadge: {
-    paddingHorizontal: 7,
-    paddingVertical: 3,
-    borderRadius: 6,
+    gap: 6,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 100,
     borderWidth: 1,
-    flexShrink: 0,
   },
-  compactBadgeText: {
-    fontSize: 8,
+  pillText: {
+    fontSize: 11,
+    fontFamily: "Inter_600SemiBold",
+    color: "#F59E0B",
+  },
+  pillBadge: {
+    paddingHorizontal: 5,
+    paddingVertical: 1,
+    borderRadius: 4,
+    borderWidth: 1,
+  },
+  pillBadgeText: {
+    fontSize: 7,
     fontFamily: "Inter_700Bold",
     color: "#F59E0B",
-    letterSpacing: 0.8,
+    letterSpacing: 0.6,
   },
 });

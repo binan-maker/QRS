@@ -46,24 +46,21 @@ export type AppColors = {
 };
 
 const dark: AppColors = {
-  // Pure neutral dark — no blue tint anywhere
-  background: "#0C0C0C",
-  surface: "#161616",
-  surfaceLight: "#1F1F1F",
-  surfaceBorder: "#2D2D2D",
-  surfaceOverlay: "rgba(12,12,12,0.97)",
-  modalOverlay: "rgba(0,0,0,0.78)",
+  background: "#0A0A0A",
+  surface: "#141414",
+  surfaceLight: "#1C1C1C",
+  surfaceBorder: "#272727",
+  surfaceOverlay: "rgba(10,10,10,0.97)",
+  modalOverlay: "rgba(0,0,0,0.80)",
 
-  // White as the primary interactive colour — clean and professional
-  primary: "#FFFFFF",
-  primaryShade: "#C0C0C0",
-  primaryDim: "rgba(255,255,255,0.08)",
-  primaryText: "#0C0C0C",
+  primary: "#3B82F6",
+  primaryShade: "#2563EB",
+  primaryDim: "rgba(59,130,246,0.12)",
+  primaryText: "#FFFFFF",
 
-  accent: "#FFFFFF",
-  accentDim: "rgba(255,255,255,0.08)",
+  accent: "#3B82F6",
+  accentDim: "rgba(59,130,246,0.12)",
 
-  // Functional colours — unchanged
   danger: "#F87171",
   dangerShade: "#DC2626",
   dangerDim: "rgba(248,113,113,0.10)",
@@ -76,20 +73,19 @@ const dark: AppColors = {
   safeShade: "#059669",
   safeDim: "rgba(52,211,153,0.10)",
 
-  // Text — pure neutral grays
   text: "#E8E8E8",
-  textSecondary: "#888888",
-  textMuted: "#484848",
+  textSecondary: "#9CA3AF",
+  textMuted: "#4B5563",
 
-  tabIconDefault: "#484848",
-  tabIconSelected: "#FFFFFF",
-  tint: "#FFFFFF",
-  scanLine: "#FFFFFF",
-  cardGlow: "rgba(255,255,255,0.025)",
+  tabIconDefault: "#4B5563",
+  tabIconSelected: "#3B82F6",
+  tint: "#3B82F6",
+  scanLine: "#3B82F6",
+  cardGlow: "rgba(59,130,246,0.04)",
 
-  inputBackground: "#111111",
-  skeletonBase: "#1A1A1A",
-  skeletonHighlight: "#242424",
+  inputBackground: "#0F0F0F",
+  skeletonBase: "#181818",
+  skeletonHighlight: "#222222",
   statusBar: "light",
   blurTint: "dark",
 
