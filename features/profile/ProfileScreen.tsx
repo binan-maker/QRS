@@ -228,10 +228,10 @@ function ProfileScreen() {
   }
 
   return (
-    <View style={[styles.container, { paddingTop: topInset, backgroundColor: colors.background }]}>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
       <ScrollView
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={[styles.scrollContent, { paddingBottom: tabBarHeight + 60 }]}
+        contentContainerStyle={[styles.scrollContent, { paddingTop: topInset + 8, paddingBottom: tabBarHeight + 60 }]}
         onScroll={onTabScroll}
         scrollEventThrottle={16}
         refreshControl={

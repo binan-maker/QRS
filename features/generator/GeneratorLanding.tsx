@@ -1,7 +1,7 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, useCallback } from "react";
 import {
   View, Text, StyleSheet, ScrollView, Pressable,
-  StatusBar, Animated, useWindowDimensions, Image,
+  StatusBar, Animated, useWindowDimensions, Image, LayoutChangeEvent,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
@@ -12,6 +12,7 @@ import { useTheme } from "@/shared/contexts/ThemeContext";
 import { useTopInset } from "@/shared/utils/platform";
 import * as Haptics from "@/shared/utils/haptics";
 import { useTabBarScroll } from "@/shared/contexts/TabBarContext";
+import { useHeaderHide } from "@/shared/utils/use-header-hide";
 
 // ─── QR type showcase data ────────────────────────────────────────────────────
 const QR_TYPES = [
@@ -79,9 +80,16 @@ export default function GeneratorLanding() {
 
   const [selectedType, setSelectedType] = useState<string>("upi");
   const [showPhase2Hint, setShowPhase2Hint] = useState(false);
+  const [headerH, setHeaderH] = useState(0);
   const hintAnim = useRef(new Animated.Value(0)).current;
   const pulseAnim = useRef(new Animated.Value(1)).current;
   const { onTabScroll } = useTabBarScroll();
+  const { headerStyle, setHeight, onScroll: onHeaderScroll } = useHeaderHide();
+
+  const handleScroll = useCallback((e: any) => {
+    onHeaderScroll(e);
+    onTabScroll(e);
+  }, [onHeaderScroll, onTabScroll]);
 
   const selectedTypeData = QR_TYPES.find((t) => t.key === selectedType) ?? QR_TYPES[0];
 
@@ -120,9 +128,16 @@ export default function GeneratorLanding() {
     <View style={[styles.root, { backgroundColor: colors.background }]}>
       <StatusBar barStyle={colors.isDark ? "light-content" : "dark-content"} backgroundColor="transparent" translucent />
 
-      {/* ── Header ──────────────────────────────────────────────── */}
-      <Reanimated.View entering={FadeInDown.delay(0).duration(240)}
-        style={[styles.header, { paddingTop: topInset + 6 }]}>
+      {/* ── Header (absolute, hides on scroll) ───────────────────── */}
+      <Reanimated.View
+        entering={FadeInDown.delay(0).duration(240)}
+        style={[
+          styles.header,
+          { paddingTop: topInset + 6, position: "absolute", top: 0, left: 0, right: 0, zIndex: 10, backgroundColor: colors.background },
+          headerStyle,
+        ]}
+        onLayout={(e: LayoutChangeEvent) => { const h = e.nativeEvent.layout.height; setHeaderH(h); setHeight(h); }}
+      >
         <View>
           <Text style={[styles.headerTitle, { color: colors.text }]}>QR Generator</Text>
           <Text style={[styles.headerSub, { color: colors.textMuted }]}>Build and protect QR codes</Text>
@@ -135,8 +150,8 @@ export default function GeneratorLanding() {
 
       <ScrollView
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={[styles.scroll, { paddingBottom: insets.bottom + 120 }]}
-        onScroll={onTabScroll}
+        contentContainerStyle={[styles.scroll, { paddingTop: headerH, paddingBottom: insets.bottom + 120 }]}
+        onScroll={handleScroll}
         scrollEventThrottle={16}
       >
 

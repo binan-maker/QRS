@@ -1,5 +1,5 @@
-import React, { useCallback, useMemo } from "react";
-import { View, StyleSheet, Platform, RefreshControl, useWindowDimensions } from "react-native";
+import React, { useCallback, useMemo, useState, useEffect } from "react";
+import { View, StyleSheet, Platform, RefreshControl, useWindowDimensions, LayoutChangeEvent } from "react-native";
 import { FlashList as _FlashList } from "@shopify/flash-list";
 const FlashList = _FlashList as any;
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -24,6 +24,8 @@ import FilterBar         from "@/features/history/components/FilterBar";
 import HistoryItemComponent from "@/features/history/components/HistoryItem";
 import HistoryItemSkeleton  from "@/features/history/components/HistoryItemSkeleton";
 import { useTabBarScroll } from "@/shared/contexts/TabBarContext";
+import { useHeaderHide }   from "@/shared/utils/use-header-hide";
+import Reanimated          from "react-native-reanimated";
 
 function HistoryScreen() {
   const insets   = useSafeAreaInsets();
@@ -54,6 +56,13 @@ function HistoryScreen() {
     scanStats,
   } = useHistory();
   const { onTabScroll } = useTabBarScroll();
+  const { headerStyle, setHeight, onScroll: onHeaderScroll, reset: resetHeader } = useHeaderHide();
+  const [headerH, setHeaderH] = useState(0);
+
+  const handleScroll = useCallback((e: any) => {
+    onHeaderScroll(e);
+    onTabScroll(e);
+  }, [onHeaderScroll, onTabScroll]);
 
   // Search state
   const {
@@ -65,6 +74,10 @@ function HistoryScreen() {
     openSearch,
     closeSearch,
   } = useSearch();
+
+  useEffect(() => {
+    if (searchVisible) resetHeader();
+  }, [searchVisible, resetHeader]);
 
   // Derived display data
   const activeFilters  = useMemo(() => getActiveFilters(history, scanStats, user), [history, scanStats, user]);
@@ -119,34 +132,50 @@ function HistoryScreen() {
   const getItemType   = useCallback((row: ListRow) => row.kind === "header" ? "header" : "item", []);
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.background, paddingTop: topInset }]}>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
 
-      <HistoryHeader
-        searchVisible={searchVisible}
-        searchQuery={searchQuery}
-        onChangeQuery={setSearchQuery}
-        onOpenSearch={openSearch}
-        onCloseSearch={closeSearch}
-        searchInputRef={searchInputRef}
-        colors={colors}
-        fontSize={rf}
-      />
+      {/* ── Absolute animated header group ─────────────────────── */}
+      <Reanimated.View
+        style={[
+          styles.headerWrap,
+          { backgroundColor: colors.background },
+          !searchVisible ? headerStyle : undefined,
+        ]}
+        onLayout={(e: LayoutChangeEvent) => {
+          const h = e.nativeEvent.layout.height;
+          setHeaderH(h);
+          setHeight(h);
+        }}
+      >
+        <View style={{ paddingTop: topInset }}>
+          <HistoryHeader
+            searchVisible={searchVisible}
+            searchQuery={searchQuery}
+            onChangeQuery={setSearchQuery}
+            onOpenSearch={openSearch}
+            onCloseSearch={closeSearch}
+            searchInputRef={searchInputRef}
+            colors={colors}
+            fontSize={rf}
+          />
 
-      {user && cloudError && !searchVisible && (
-        <CloudErrorBanner onRetry={onRefresh} colors={colors} fontSize={rf} />
-      )}
+          {user && cloudError && !searchVisible && (
+            <CloudErrorBanner onRetry={onRefresh} colors={colors} fontSize={rf} />
+          )}
 
-      {!searchVisible && (
-        <FilterBar filters={activeFilters} activeFilter={filter} onFilterChange={setFilter} />
-      )}
+          {!searchVisible && (
+            <FilterBar filters={activeFilters} activeFilter={filter} onFilterChange={setFilter} />
+          )}
 
-      {!isOnline && user && !searchVisible && (
-        <OfflineBanner colors={colors} />
-      )}
+          {!isOnline && user && !searchVisible && (
+            <OfflineBanner colors={colors} />
+          )}
 
-      {searchVisible && searchQuery.trim() && searchedItems.length > 0 && (
-        <SearchResultsRow count={searchedItems.length} query={searchQuery} colors={colors} fontSize={rf} />
-      )}
+          {searchVisible && searchQuery.trim() && searchedItems.length > 0 && (
+            <SearchResultsRow count={searchedItems.length} query={searchQuery} colors={colors} fontSize={rf} />
+          )}
+        </View>
+      </Reanimated.View>
 
       <FlashList
         data={listRows}
@@ -156,11 +185,11 @@ function HistoryScreen() {
         estimatedItemSize={88}
         contentContainerStyle={[
           styles.list,
-          { paddingBottom: Platform.OS === "web" ? 34 + 84 : insets.bottom + 84 },
+          { paddingTop: headerH, paddingBottom: Platform.OS === "web" ? 34 + 84 : insets.bottom + 84 },
         ]}
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
-        onScroll={onTabScroll}
+        onScroll={handleScroll}
         scrollEventThrottle={16}
         refreshControl={
           !searchVisible ? (
@@ -182,8 +211,9 @@ function HistoryScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1 },
-  list:      { paddingHorizontal: 16, paddingTop: 2 },
+  container:  { flex: 1 },
+  headerWrap: { position: "absolute", top: 0, left: 0, right: 0, zIndex: 10 },
+  list:       { paddingHorizontal: 16 },
 });
 
 export default React.memo(HistoryScreen);

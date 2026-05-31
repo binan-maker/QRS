@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import {
   View, Text, Pressable, ScrollView, StyleSheet,
-  RefreshControl, useWindowDimensions, TextInput,
+  RefreshControl, useWindowDimensions, TextInput, LayoutChangeEvent,
 } from "react-native";
 import { FlashList as _FlashList } from "@shopify/flash-list";
 const FlashList = _FlashList as any;
@@ -11,6 +11,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTopInset } from "@/shared/utils/platform";
 import * as Haptics from "@/shared/utils/haptics";
 import Animated, { FadeInDown, FadeIn } from "react-native-reanimated";
+import { useHeaderHide } from "@/shared/utils/use-header-hide";
 import { LinearGradient } from "expo-linear-gradient";
 import SkeletonBox from "@/shared/components/ui/SkeletonBox";
 import { useTheme } from "@/shared/contexts/ThemeContext";
@@ -70,6 +71,8 @@ export default function MyQrCodesScreen() {
 
   const topInset             = useTopInset();
   const contentPaddingBottom = insets.bottom + sp(36);
+  const { headerStyle, setHeight, onScroll: onHeaderScroll } = useHeaderHide();
+  const [headerH, setHeaderH] = useState(0);
 
   const [qrCodes,     setQrCodes]    = useState<GeneratedQrItem[]>([]);
   const [loading,     setLoading]    = useState(true);
@@ -254,11 +257,16 @@ export default function MyQrCodesScreen() {
   return (
     <View style={{ flex: 1, backgroundColor: colors.background }}>
 
-      {/* Header */}
-      <View style={{
-        flexDirection: "row", alignItems: "center", justifyContent: "space-between",
-        paddingHorizontal: sp(20), paddingTop: topInset + sp(6), paddingBottom: sp(16),
-      }}>
+      {/* Header — absolute, hides on scroll */}
+      <Animated.View
+        style={[{
+          position: "absolute", top: 0, left: 0, right: 0, zIndex: 10,
+          flexDirection: "row", alignItems: "center", justifyContent: "space-between",
+          paddingHorizontal: sp(20), paddingTop: topInset + sp(6), paddingBottom: sp(16),
+          backgroundColor: colors.background,
+        }, headerStyle]}
+        onLayout={(e: LayoutChangeEvent) => { const h = e.nativeEvent.layout.height; setHeaderH(h); setHeight(h); }}
+      >
         <Pressable
           onPress={() => router.back()}
           style={{ width: sp(38), height: sp(38), borderRadius: sp(19), alignItems: "center", justifyContent: "center", backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.surfaceBorder }}
@@ -280,7 +288,10 @@ export default function MyQrCodesScreen() {
             <Ionicons name="add" size={rf(20)} color="#fff" />
           </LinearGradient>
         </Pressable>
-      </View>
+      </Animated.View>
+
+      {/* Content offset below the absolute header */}
+      <View style={{ flex: 1, paddingTop: headerH }}>
 
       {/* Search bar */}
       <View style={{
@@ -527,9 +538,13 @@ export default function MyQrCodesScreen() {
           estimatedItemSize={84}
           contentContainerStyle={{ paddingHorizontal: sp(20), paddingTop: sp(2), paddingBottom: contentPaddingBottom }}
           showsVerticalScrollIndicator={false}
+          onScroll={onHeaderScroll}
+          scrollEventThrottle={16}
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={handleRefresh} tintColor={colors.primary} />}
         />
       )}
+
+      </View>{/* end content wrapper */}
     </View>
   );
 }
