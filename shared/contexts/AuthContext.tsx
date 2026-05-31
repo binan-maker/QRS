@@ -1,4 +1,5 @@
 import { createContext, useContext, useState, useEffect, useMemo, ReactNode } from "react";
+import { useAuthStore } from "@/store/authStore";
 import { Platform } from "react-native";
 import { db } from "@/lib/db";
 import { authAdapter } from "@/lib/auth";
@@ -137,7 +138,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     webClientId: GOOGLE_WEB_CLIENT_ID,
     androidClientId: GOOGLE_ANDROID_CLIENT_ID,
     scopes: ["profile", "email"],
-  })
+  });
+
+  // Keep the Zustand authStore in sync with AuthContext so components that
+  // read from useAuthStore selectors always see the same auth state.
+  // Using getState() avoids creating a store subscription inside a provider.
+  useEffect(() => {
+    const store = useAuthStore.getState();
+    store.setUser(user);
+    store.setLoading(isLoading);
+    store.setInitialized(!isLoading);
+  }, [user, isLoading]);
+
   useEffect(() => {
     const unsubscribe = authAdapter.onIdTokenChanged(async (adapterUser) => {
       if (adapterUser) {

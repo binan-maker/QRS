@@ -17,6 +17,29 @@ import {
   fetchGuardLink, fetchStandardLink, isSafeRedirectDestination,
   CAUTION_WINDOW_MS,
 } from "./lib/firebase-client";
+import { cacheGet, cacheSet } from "./lib/route-cache";
+
+// TTL constants for the in-memory route cache
+const STANDARD_LINK_TTL_MS = 60_000;   // standard QR content — stable, 60 s
+const GUARD_LINK_TTL_MS    = 30_000;   // guard links change destination — 30 s
+
+async function cachedStandardLink(slug: string) {
+  const key = `std:${slug}`;
+  const hit = cacheGet<Awaited<ReturnType<typeof fetchStandardLink>>>(key);
+  if (hit !== null) return hit;
+  const data = await fetchStandardLink(slug);
+  if (data) cacheSet(key, data, STANDARD_LINK_TTL_MS);
+  return data;
+}
+
+async function cachedGuardLink(id: string) {
+  const key = `guard:${id}`;
+  const hit = cacheGet<Awaited<ReturnType<typeof fetchGuardLink>>>(key);
+  if (hit !== null) return hit;
+  const data = await fetchGuardLink(id);
+  if (data) cacheSet(key, data, GUARD_LINK_TTL_MS);
+  return data;
+}
 
 // ─── Dynamic threat definitions (served to clients for live updates) ──────────
 const DYNAMIC_THREAT_PATTERNS: { pattern: string; reason: string }[] = [
@@ -66,13 +89,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
 
     // 1. Standard QRs (most common for /go/)
-    const standardLink = await fetchStandardLink(slug);
+    const standardLink = await cachedStandardLink(slug);
     if (standardLink) {
       return serveStandardContent(res, standardLink, slug);
     }
 
     // 2. Legacy Business QRs that used /go/ path
-    const guardLink = await fetchGuardLink(slug);
+    const guardLink = await cachedGuardLink(slug);
     if (!guardLink) {
       return res.status(404).send(guardNotFoundHtml());
     }
@@ -102,7 +125,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/guard/:uuid", async (req: Request, res: Response) => {
     const uuid = Array.isArray(req.params.uuid) ? req.params.uuid[0] : req.params.uuid;
 
-    const link = await fetchGuardLink(uuid);
+    const link = await cachedGuardLink(uuid);
     if (!link) {
       return res.status(404).send(guardNotFoundHtml());
     }

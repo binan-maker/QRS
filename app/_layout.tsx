@@ -40,7 +40,7 @@ function SplashGate({ fontsReady, consentReady }: { fontsReady: boolean; consent
         hiddenRef.current = true;
         SplashScreen.hideAsync().catch(() => {});
       }
-    }, 5000);
+    }, 2500);
     return () => clearTimeout(safety);
   }, []);
 
@@ -134,7 +134,7 @@ function AuthGatedApp() {
   const [timedOut, setTimedOut] = React.useState(false);
 
   React.useEffect(() => {
-    const t = setTimeout(() => setTimedOut(true), 4000);
+    const t = setTimeout(() => setTimedOut(true), 2000);
     return () => clearTimeout(t);
   }, []);
 
