@@ -128,3 +128,75 @@ if (typeof (global as any).location === "undefined") {
     reload: () => {},
   };
 }
+
+// ─── Fix: Event phase constants are non-writable in React Native 0.74+ ───────
+// React Native's DOM-compatible Event class defines NONE / CAPTURING_PHASE /
+// AT_TARGET / BUBBLING_PHASE on both Event and Event.prototype via
+// Object.defineProperty without writable:true (defaults to false) AND without
+// configurable:true (defaults to false).  Any subclass that tries
+//   this.NONE = 0   (class field or constructor assignment)
+// in strict mode throws: "TypeError: Cannot assign to read-only property 'NONE'"
+//
+// Fix: wrap the global Event in a subclass that shadows each constant on the
+// intermediate prototype with a writable descriptor.  All downstream
+// subclasses (Firebase, Expo, etc.) extend our wrapper and find the writable
+// version first in the prototype chain, so the assignment succeeds.
+try {
+  const _OriginalEvent = (global as any).Event;
+  if (typeof _OriginalEvent === "function") {
+    class _PatchedEvent extends _OriginalEvent {}
+
+    const _phaseConstants: [string, number][] = [
+      ["NONE", 0],
+      ["CAPTURING_PHASE", 1],
+      ["AT_TARGET", 2],
+      ["BUBBLING_PHASE", 3],
+    ];
+
+    for (const [name, value] of _phaseConstants) {
+      try {
+        Object.defineProperty(_PatchedEvent.prototype, name, {
+          value,
+          writable: true,
+          configurable: true,
+          enumerable: true,
+        });
+      } catch (_) {}
+      try {
+        Object.defineProperty(_PatchedEvent, name, {
+          value,
+          writable: true,
+          configurable: true,
+          enumerable: true,
+        });
+      } catch (_) {}
+    }
+
+    (global as any).Event = _PatchedEvent;
+  }
+} catch (_) {}
+
+// ─── Fix: Firebase Firestore internal User class global lookup ────────────────
+// Firebase Firestore's React-Native bundle defines a lightweight internal
+// User class (NOT the firebase/auth User) and immediately sets static
+// properties on it at module scope:
+//   User.UNAUTHENTICATED = new User(null)
+//   User.GOOGLE_CREDENTIALS = new User("google-credentials-uid")
+// In Hermes, when the module-scope class binding is not resolvable through the
+// local scope, the engine falls back to global lookup and throws
+// "ReferenceError: Property 'User' doesn't exist".
+// Providing a global stub prevents the ReferenceError; Firebase's own module-
+// scoped class overrides the stub's static properties once fully loaded.
+if (typeof (global as any).User === "undefined") {
+  class _UserStub {
+    uid: string | null;
+    constructor(uid: string | null) {
+      this.uid = uid;
+    }
+    isAuthenticated() { return this.uid != null; }
+    isUnauthenticated() { return this.uid == null; }
+    toKey() { return this.uid ? "uid:" + this.uid : "anonymous-user"; }
+    isEqual(other: any) { return other != null && other.uid === this.uid; }
+  }
+  (global as any).User = _UserStub;
+}
