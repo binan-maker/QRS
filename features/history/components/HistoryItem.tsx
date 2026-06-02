@@ -119,8 +119,6 @@ const HistoryItem = React.memo(function HistoryItem({ item, risk, onDelete, inde
               borderColor: accentBorder,
               opacity: pressed ? 0.9 : 1,
               transform: [{ scale: pressed ? 0.984 : 1 }],
-              shadowColor: showRisk && riskCfg ? riskCfg.color : (isDark ? "#000" : "#0008FF"),
-              shadowOpacity: isDark ? 0.18 : 0.05,
             },
           ]}
         >
@@ -192,9 +190,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 13,
     gap: 13,
-    shadowOffset: { width: 0, height: 2 },
-    shadowRadius: 12,
-    elevation: 2,
+    elevation: 0,
   },
   body: {
     flex: 1,
