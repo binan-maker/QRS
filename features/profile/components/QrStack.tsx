@@ -6,8 +6,8 @@ import type { QrItem } from "./QrPreviewCard";
 
 const CARD_W    = 88;
 const CARD_H    = 88;
-const OFFSET_X  = 30;   // how far each card peeks out to the right
-const MAX_STACK = 15;
+const OFFSET_X  = 30;   // how far each card peeks out
+const MAX_STACK = 10;
 
 interface Props {
   qrs:        QrItem[];
@@ -36,30 +36,34 @@ export function QrStack({ qrs, totalCount, colors, onViewAll }: Props) {
       })}
     >
       <View style={{ width: containerW, height: containerH, position: "relative" }}>
-        {/* Render back → front: card 0 is leftmost/back, card n-1 is rightmost/front */}
-        {visible.map((qr, i) => {
-          const isFront  = i === n - 1;
-          const thumbBg  = qr.bgColor || "#FFFFFF";
-          const fgColor  = qr.fgColor || "#000000";
+        {/*
+          i=0  → front card, rightmost  (left = (n-1)*OFFSET_X, zIndex = n)
+          i=n-1→ back card,  leftmost   (left = 0,               zIndex = 1)
+          Render back→front so the front card paints on top.
+        */}
+        {[...visible].reverse().map((qr, ri) => {
+          const i       = n - 1 - ri;          // 0 = front/right, n-1 = back/left
+          const isFront = i === 0;
+          const isBack  = i === n - 1;
+          const thumbBg = qr.bgColor || "#FFFFFF";
+          const fgColor = qr.fgColor || "#000000";
 
           return (
             <Animated.View
               key={qr.docId ?? i}
-              entering={FadeIn.delay(i * 20).duration(220)}
+              entering={FadeIn.delay(ri * 20).duration(220)}
               style={[
                 styles.card,
                 {
-                  left:            i * OFFSET_X,
+                  left:            (n - 1 - i) * OFFSET_X,
                   backgroundColor: thumbBg,
                   borderColor:     colors.surfaceBorder,
-                  // Front card gets a slightly more prominent shadow
                   shadowOpacity:   isFront ? 0.18 : 0.08,
-                  elevation:       i + 1,
-                  zIndex:          i,
+                  elevation:       n - i,
+                  zIndex:          n - i,
                 },
               ]}
             >
-              {/* QR code — render on all cards (hidden ones are clipped by card border anyway) */}
               <QRCode
                 value={qr.content || "https://qrguard.app"}
                 size={qrSize}
@@ -69,8 +73,8 @@ export function QrStack({ qrs, totalCount, colors, onViewAll }: Props) {
                 ecl="L"
               />
 
-              {/* "+N more" overlay on the backmost card */}
-              {i === 0 && extraCount > 0 && (
+              {/* "+N more" overlay on the backmost (leftmost) card */}
+              {isBack && extraCount > 0 && (
                 <View style={[styles.moreOverlay, { backgroundColor: colors.primary + "DD" }]}>
                   <Text style={styles.moreCount}>+{extraCount}</Text>
                   <Text style={styles.moreLabel}>more</Text>
