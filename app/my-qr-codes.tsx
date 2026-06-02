@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import {
   View, Text, Pressable, ScrollView, StyleSheet,
   RefreshControl, useWindowDimensions, TextInput, LayoutChangeEvent,
+  Animated,
 } from "react-native";
 import { FlashList as _FlashList } from "@shopify/flash-list";
 const FlashList = _FlashList as any;
@@ -10,11 +11,10 @@ import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTopInset } from "@/shared/utils/platform";
 import * as Haptics from "@/shared/utils/haptics";
-import Animated, { FadeInDown, FadeIn } from "react-native-reanimated";
+import ReAnimated, { FadeInDown, FadeIn } from "react-native-reanimated";
 import { useHeaderHide } from "@/shared/utils/use-header-hide";
 import { useTabBarScroll } from "@/shared/contexts/TabBarContext";
 import { LinearGradient } from "expo-linear-gradient";
-import SkeletonBox from "@/shared/components/ui/SkeletonBox";
 import { useTheme } from "@/shared/contexts/ThemeContext";
 import { useAuth } from "@/shared/contexts/AuthContext";
 import {
@@ -40,23 +40,45 @@ function formatScanCount(n: number): string {
   return String(n);
 }
 
-function SkeletonQrCard() {
-  const { colors } = useTheme();
-  const { width } = useWindowDimensions();
-  const sp = (v: number) => Math.round(v * Math.min(Math.max(width / 390, 0.82), 1.0));
+function SkeletonQrCard({ index = 0 }: { index?: number }) {
+  const { colors, isDark } = useTheme();
+  const shimmer = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(shimmer, { toValue: 1, duration: 900, useNativeDriver: true }),
+        Animated.timing(shimmer, { toValue: 0, duration: 900, useNativeDriver: true }),
+      ])
+    ).start();
+  }, []);
+
+  const opacity = shimmer.interpolate({ inputRange: [0, 1], outputRange: [0.3, 0.65] });
+  const cardBg = isDark ? colors.surface : "#ffffff";
+
+  const bone = (style: object) => (
+    <Animated.View style={[{ backgroundColor: colors.surfaceBorder, borderRadius: 8, opacity }, style]} />
+  );
+
   return (
-    <View style={{
-      backgroundColor: colors.surface, borderRadius: sp(20), marginBottom: sp(10),
-      padding: sp(16), flexDirection: "row", alignItems: "center", gap: sp(14),
-      borderWidth: 1, borderColor: colors.surfaceBorder,
-    }}>
-      <SkeletonBox width={sp(52)} height={sp(52)} borderRadius={sp(14)} />
-      <View style={{ flex: 1, gap: 8 }}>
-        <SkeletonBox width="30%" height={8} borderRadius={4} />
-        <SkeletonBox width="65%" height={14} borderRadius={5} />
+    <ReAnimated.View entering={FadeInDown.delay(Math.min(index, 4) * 22).duration(260)}>
+      <View style={{
+        flexDirection: "row", alignItems: "center",
+        borderRadius: 20, marginBottom: 10, borderWidth: 1,
+        borderColor: colors.surfaceBorder, backgroundColor: cardBg,
+        paddingHorizontal: 14, paddingVertical: 13, gap: 13,
+      }}>
+        {bone({ width: 48, height: 48, borderRadius: 15, flexShrink: 0 })}
+        <View style={{ flex: 1, minWidth: 0, gap: 5 }}>
+          {bone({ height: 14, width: "68%", borderRadius: 7 })}
+          {bone({ height: 11, width: "45%", borderRadius: 6 })}
+        </View>
+        <View style={{ alignItems: "flex-end", gap: 8, flexShrink: 0 }}>
+          {bone({ height: 10, width: 42, borderRadius: 6 })}
+          {bone({ width: 28, height: 28, borderRadius: 9 })}
+        </View>
       </View>
-      <SkeletonBox width={sp(34)} height={sp(18)} borderRadius={sp(9)} />
-    </View>
+    </ReAnimated.View>
   );
 }
 
@@ -146,7 +168,7 @@ export default function MyQrCodesScreen() {
     const scanCount   = item.scanCount || 0;
 
     return (
-      <Animated.View entering={FadeInDown.duration(300).delay(index * 30).springify()}>
+      <ReAnimated.View entering={FadeInDown.duration(300).delay(index * 30).springify()}>
         <Pressable
           onPress={() => {
             Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -218,7 +240,7 @@ export default function MyQrCodesScreen() {
             </Text>
           </View>
         </Pressable>
-      </Animated.View>
+      </ReAnimated.View>
     );
   }
 
@@ -263,8 +285,11 @@ export default function MyQrCodesScreen() {
   return (
     <View style={{ flex: 1, backgroundColor: colors.background }}>
 
+      {/* Fixed status-bar background — never animates, prevents black strip when header hides */}
+      <View style={{ position: "absolute", top: 0, left: 0, right: 0, height: topInset, backgroundColor: colors.background, zIndex: 20 }} />
+
       {/* Header — absolute, hides on scroll (title + search + sort all together) */}
-      <Animated.View
+      <ReAnimated.View
         style={[{
           position: "absolute", top: 0, left: 0, right: 0, zIndex: 10,
           backgroundColor: colors.background,
@@ -354,7 +379,7 @@ export default function MyQrCodesScreen() {
             );
           })}
         </ScrollView>
-      </Animated.View>
+      </ReAnimated.View>
 
       {/* Content — offset below the animated header */}
       <View style={{ flex: 1, paddingTop: headerH }}>
@@ -362,12 +387,12 @@ export default function MyQrCodesScreen() {
       {/* List */}
       {loading && qrCodes.length === 0 ? (
         <View style={{ paddingHorizontal: sp(20), paddingTop: sp(2) }}>
-          {[1, 2, 3, 4].map((k) => <SkeletonQrCard key={k} />)}
+          {[0, 1, 2, 3, 4].map((k) => <SkeletonQrCard key={k} index={k} />)}
         </View>
       ) : sorted.length === 0 ? (
         searchQuery.trim() ? (
           /* ── Search no-results ── */
-          <Animated.View entering={FadeIn.duration(400)} style={{ flex: 1, alignItems: "center", justifyContent: "center", paddingHorizontal: sp(40), gap: sp(14) }}>
+          <ReAnimated.View entering={FadeIn.duration(400)} style={{ flex: 1, alignItems: "center", justifyContent: "center", paddingHorizontal: sp(40), gap: sp(14) }}>
             <View style={{ width: sp(72), height: sp(72), borderRadius: sp(22), backgroundColor: colors.primaryDim, alignItems: "center", justifyContent: "center" }}>
               <Ionicons name="search-outline" size={rf(34)} color={colors.primary} />
             </View>
@@ -387,10 +412,10 @@ export default function MyQrCodesScreen() {
                 <Text style={{ fontSize: rf(14), fontFamily: "Inter_700Bold", color: "#fff" }}>Clear Search</Text>
               </LinearGradient>
             </Pressable>
-          </Animated.View>
+          </ReAnimated.View>
         ) : (
           /* ── Phase 2 Showcase ── */
-          <Animated.View entering={FadeIn.duration(400)} style={{ flex: 1 }}>
+          <ReAnimated.View entering={FadeIn.duration(400)} style={{ flex: 1 }}>
             <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: sp(20), paddingBottom: sp(120), paddingTop: sp(4) }}>
 
               {/* Showcase header */}
@@ -450,7 +475,7 @@ export default function MyQrCodesScreen() {
                 { type: "Website URL",   icon: "link-outline",       color: "#6366F1", label: "My Portfolio",      scans: 512, active: true  },
                 { type: "Contact Card",  icon: "person-circle-outline", color: "#F59E0B", label: "Business Card",  scans: 34,  active: false },
               ].map((mock, idx) => (
-                <Animated.View
+                <ReAnimated.View
                   key={mock.label}
                   entering={FadeInDown.duration(280).delay(idx * 60)}
                   style={{
@@ -500,7 +525,7 @@ export default function MyQrCodesScreen() {
                       {mock.scans >= 1000 ? (mock.scans / 1000).toFixed(1) + "k" : mock.scans}
                     </Text>
                   </View>
-                </Animated.View>
+                </ReAnimated.View>
               ))}
 
               {/* Bottom note */}
@@ -538,7 +563,7 @@ export default function MyQrCodesScreen() {
                 </LinearGradient>
               </Pressable>
             </ScrollView>
-          </Animated.View>
+          </ReAnimated.View>
         )
       ) : (
         <FlashList
