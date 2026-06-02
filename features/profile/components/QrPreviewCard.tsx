@@ -1,10 +1,9 @@
 import React, { useCallback } from "react";
-import { View, Text, Pressable, useWindowDimensions } from "react-native";
+import { View, Text, Pressable } from "react-native";
 import QRCode from "react-native-qrcode-svg";
-import Animated, { FadeIn } from "react-native-reanimated";
+import Animated, { FadeInDown } from "react-native-reanimated";
 import { Ionicons } from "@expo/vector-icons";
 import { safePush } from "@/shared/utils/navigation";
-import { styles } from "@/features/profile/styles";
 import { formatCompactNumber } from "@/shared/utils/number-format";
 
 export interface QrItem {
@@ -20,65 +19,103 @@ export interface QrItem {
 interface Props {
   qr: QrItem;
   colors: any;
+  index?: number;
 }
 
-// Horizontal padding of the scroll view (20 each side) + row gap (8 * 2 gaps)
-const H_PADDING = 40;
-const GAP = 8;
-const COLS = 3;
+const QR_THUMB = 46;
 
-const QrPreviewCard = React.memo(function QrPreviewCard({ qr, colors }: Props) {
-  const { width: screenWidth } = useWindowDimensions();
-  const tileSize = Math.floor((screenWidth - H_PADDING - GAP * (COLS - 1)) / COLS);
-  const qrSize = Math.floor(tileSize * 0.52);
-
+const QrPreviewCard = React.memo(function QrPreviewCard({ qr, colors, index = 0 }: Props) {
   const onPress = useCallback(() => safePush(`/my-qr/${qr.docId}`), [qr.docId]);
 
   const displayName = qr.businessName?.trim() || "QR Code";
   const scanCount   = qr.scanCount ?? 0;
 
+  const thumbBg = qr.bgColor || colors.surface;
+
   return (
-    <Animated.View entering={FadeIn.duration(240)}>
+    <Animated.View
+      entering={FadeInDown.delay(Math.min(index, 8) * 40).duration(280)}
+      style={{
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 3 },
+        shadowOpacity: 0.09,
+        shadowRadius: 8,
+        elevation: 3,
+        marginBottom: -6,
+      }}
+    >
       <Pressable
         onPress={onPress}
-        style={({ pressed }) => [
-          styles.qrCard,
-          {
-            width: tileSize,
-            height: tileSize,
-            backgroundColor: colors.surface,
-            borderColor: colors.surfaceBorder,
-            opacity: pressed ? 0.78 : 1,
-            transform: [{ scale: pressed ? 0.97 : 1 }],
-          },
-        ]}
+        style={({ pressed }) => ({
+          flexDirection: "row",
+          alignItems: "center",
+          gap: 14,
+          borderRadius: 18,
+          borderWidth: 1,
+          paddingHorizontal: 14,
+          paddingVertical: 12,
+          backgroundColor: colors.surface,
+          borderColor: colors.surfaceBorder,
+          opacity: pressed ? 0.85 : 1,
+          transform: [{ scale: pressed ? 0.984 : 1 }],
+        })}
       >
-        {/* QR code — centred, takes up most of the tile */}
-        <View style={[styles.qrCodeWrap, { backgroundColor: qr.bgColor || colors.surface }]}>
+        {/* QR thumbnail */}
+        <View
+          style={{
+            width: QR_THUMB + 16,
+            height: QR_THUMB + 16,
+            borderRadius: 14,
+            backgroundColor: thumbBg,
+            alignItems: "center",
+            justifyContent: "center",
+            flexShrink: 0,
+            overflow: "hidden",
+          }}
+        >
           <QRCode
             value={qr.content || "https://qrguard.app"}
-            size={qrSize}
+            size={QR_THUMB}
             color={qr.fgColor || "#0A0E17"}
-            backgroundColor={qr.bgColor || "transparent"}
-            quietZone={3}
+            backgroundColor={thumbBg}
+            quietZone={2}
             ecl="L"
           />
         </View>
 
-        {/* Name + scan count pinned to bottom */}
-        <View style={styles.qrCardFooter}>
+        {/* Info */}
+        <View style={{ flex: 1, minWidth: 0, gap: 3 }}>
           <Text
-            style={[styles.qrCardName, { color: colors.text }]}
+            style={{ fontSize: 14, fontFamily: "Inter_700Bold", color: colors.text, letterSpacing: -0.1 }}
             numberOfLines={1}
+            maxFontSizeMultiplier={1}
           >
             {displayName}
           </Text>
-          <View style={{ flexDirection: "row", alignItems: "center", gap: 3 }}>
-            <Ionicons name="scan-outline" size={10} color={colors.textMuted} />
-            <Text style={[styles.qrCardScans, { color: colors.textMuted }]}>
-              {formatCompactNumber(scanCount)}
+          <View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
+            <Ionicons name="scan-outline" size={11} color={colors.textMuted} />
+            <Text
+              style={{ fontSize: 12, fontFamily: "Inter_400Regular", color: colors.textMuted }}
+              maxFontSizeMultiplier={1}
+            >
+              {formatCompactNumber(scanCount)} scans
             </Text>
           </View>
+        </View>
+
+        {/* Chevron */}
+        <View
+          style={{
+            width: 28,
+            height: 28,
+            borderRadius: 9,
+            alignItems: "center",
+            justifyContent: "center",
+            backgroundColor: colors.primaryDim,
+            flexShrink: 0,
+          }}
+        >
+          <Ionicons name="chevron-forward" size={14} color={colors.primary} />
         </View>
       </Pressable>
     </Animated.View>

@@ -6,7 +6,6 @@ import {
   ScrollView,
   RefreshControl,
   ActivityIndicator,
-  useWindowDimensions,
 } from "react-native";
 import { Image } from "expo-image";
 import { safePush } from "@/shared/utils/navigation";
@@ -49,7 +48,6 @@ const ENTER_EDIT_BTN     = FadeInDown.delay(80).duration(260);
 const ENTER_STATS_GRID   = FadeInDown.delay(50).duration(260);
 const ENTER_QR_SECTION   = FadeInDown.delay(70).duration(260);
 const ENTER_QR_EMPTY     = FadeInDown.delay(80).duration(260);
-const ENTER_QR_MORE      = FadeIn.delay(40).duration(240);
 const ENTER_NOTIF_DOT    = FadeIn.duration(240);
 const ENTER_SIGNOUT      = FadeInDown.delay(100).duration(260);
 
@@ -108,29 +106,29 @@ const StatCell = React.memo(function StatCell({
   );
 });
 
-const H_PADDING = 40;
-const GAP = 8;
-const COLS = 3;
-
 // ── QR skeleton tile ───────────────────────────────────────────────────────────
 const QrSkeletonCard = React.memo(function QrSkeletonCard({ index }: { index: number }) {
   const { colors } = useTheme();
-  const { width: screenWidth } = useWindowDimensions();
-  const tileSize = Math.floor((screenWidth - H_PADDING - GAP * (COLS - 1)) / COLS);
   return (
     <Animated.View
       entering={QR_SKELETON_ENTER}
-      style={[
-        styles.qrCard,
-        { width: tileSize, height: tileSize, backgroundColor: colors.surface, borderColor: colors.surfaceBorder },
-      ]}
+      style={{
+        flexDirection: "row",
+        alignItems: "center",
+        gap: 14,
+        borderRadius: 18,
+        borderWidth: 1,
+        paddingHorizontal: 14,
+        paddingVertical: 12,
+        marginBottom: index < 2 ? -6 : 0,
+        backgroundColor: colors.surface,
+        borderColor: colors.surfaceBorder,
+      }}
     >
-      <View style={styles.qrCodeWrap}>
-        <SkeletonBox width={tileSize * 0.52} height={tileSize * 0.52} borderRadius={10} />
-      </View>
-      <View style={[styles.qrCardFooter, { gap: 5 }]}>
-        <SkeletonBox width="75%" height={12} borderRadius={6} />
-        <SkeletonBox width="45%" height={10} borderRadius={6} />
+      <SkeletonBox width={62} height={62} borderRadius={14} />
+      <View style={{ flex: 1, gap: 7 }}>
+        <SkeletonBox width="60%" height={13} borderRadius={6} />
+        <SkeletonBox width="35%" height={11} borderRadius={6} />
       </View>
     </Animated.View>
   );
@@ -144,8 +142,6 @@ const QR_SKELETON_INDICES = [0, 1, 2];
 function ProfileScreen() {
   const insets = useSafeAreaInsets();
   const { colors } = useTheme();
-  const { width: screenWidth } = useWindowDimensions();
-  const tileSize = Math.floor((screenWidth - H_PADDING - GAP * (COLS - 1)) / COLS);
   const {
     user,
     stats, statsLoading,
@@ -168,7 +164,7 @@ function ProfileScreen() {
   const tabBarHeight = 60 + insets.bottom;
   const { onTabScroll } = useTabBarScroll();
 
-  const previewQrs   = useMemo(() => myQrCodes.slice(0, 3), [myQrCodes]);
+  const previewQrs   = useMemo(() => myQrCodes, [myQrCodes]);
   const totalQrScans = useMemo(
     () => myQrCodes.reduce((sum, qr) => sum + (qr.scanCount || 0), 0),
     [myQrCodes],
@@ -399,29 +395,8 @@ function ProfileScreen() {
           ) : (
             <View style={styles.qrRow}>
               {previewQrs.map((qr, i) => (
-                <QrPreviewCard key={qr.docId} qr={qr} colors={colors} />
+                <QrPreviewCard key={qr.docId} qr={qr} colors={colors} index={i} />
               ))}
-              {myQrCodes.length > 3 && (
-                <Animated.View entering={ENTER_QR_MORE}>
-                  <Pressable
-                    onPress={goToMyQrCodes}
-                    style={({ pressed }) => [
-                      styles.qrCard, styles.qrCardMore,
-                      {
-                        width:           tileSize,
-                        height:          tileSize,
-                        backgroundColor: colors.primaryDim,
-                        borderColor:     colors.primary + "30",
-                        opacity:         pressed ? 0.8 : 1,
-                      },
-                    ]}
-                  >
-                    <Text style={[styles.qrMoreCount, { color: colors.primary }]}>+{myQrCodes.length - 3}</Text>
-                    <Text style={[styles.qrMoreLabel, { color: colors.primary }]}>more</Text>
-                    <Ionicons name="chevron-forward" size={16} color={colors.primary} />
-                  </Pressable>
-                </Animated.View>
-              )}
             </View>
           )}
         </Animated.View>
