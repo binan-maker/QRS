@@ -1,5 +1,18 @@
 import { Buffer } from "buffer";
 import { Text, TextInput } from "react-native";
+if (typeof DOMException === 'undefined') {
+  global.DOMException = class DOMException extends Error {
+    constructor(message: string, name?: string) {
+      super(message);
+      this.name = name || 'Error';
+    }
+  } as any;
+}
+
+// Also assign to globalThis for broader compatibility
+if (typeof globalThis.DOMException === 'undefined') {
+  globalThis.DOMException = global.DOMException;
+}
 
 if (typeof global.Buffer === "undefined") {
   global.Buffer = Buffer;
