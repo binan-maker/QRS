@@ -106,28 +106,28 @@ const StatCell = React.memo(function StatCell({
   );
 });
 
-// ── QR skeleton stack ─────────────────────────────────────────────────────────
+// ── QR skeleton stack (horizontal fan) ────────────────────────────────────────
 const QrSkeletonStack = React.memo(function QrSkeletonStack() {
   const { colors } = useTheme();
-  const CARD  = 96;
-  const OFF_X = 7;
-  const OFF_Y = 6;
-  const n     = 3;
+  const CARD  = 88;
+  const OFF_X = 30;
+  const n     = 4;
   return (
     <Animated.View
       entering={QR_SKELETON_ENTER}
-      style={{ width: CARD + (n - 1) * OFF_X, height: CARD + (n - 1) * OFF_Y, position: "relative" }}
+      style={{ width: CARD + (n - 1) * OFF_X, height: CARD, position: "relative" }}
     >
-      {[2, 1, 0].map((i) => (
+      {[0, 1, 2, 3].map((i) => (
         <View
           key={i}
           style={{
             position: "absolute",
-            left: i * OFF_X, top: i * OFF_Y,
+            left: i * OFF_X, top: 0,
             width: CARD, height: CARD,
-            borderRadius: 16, borderWidth: 1,
+            borderRadius: 18, borderWidth: 1.5,
             backgroundColor: colors.surface,
             borderColor: colors.surfaceBorder,
+            zIndex: i,
           }}
         />
       ))}
