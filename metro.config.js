@@ -3,6 +3,20 @@ const path = require("path");
 
 const config = getDefaultConfig(__dirname);
 
+// ── Early global polyfills ────────────────────────────────────────────────
+// Inject early-polyfills.js BEFORE React Native's own rn-get-polyfills list.
+// These run as raw global scripts before any __d() module (including
+// InitializeCore) is evaluated, giving DOMException and other DOM stubs to
+// the React Native 0.74+ bootstrap chain before it needs them.
+const _expoGetPolyfills = config.serializer && config.serializer.getPolyfills;
+config.serializer = {
+  ...config.serializer,
+  getPolyfills: function (context) {
+    var existing = _expoGetPolyfills ? _expoGetPolyfills(context) : [];
+    return [path.resolve(__dirname, "early-polyfills.js")].concat(existing);
+  },
+};
+
 config.watchFolders = [__dirname];
 
 // ── Transform ignore patterns ────────────────────────────────────────────────
