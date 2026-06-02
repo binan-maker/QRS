@@ -95,9 +95,9 @@ export const styles = StyleSheet.create({
   seeAllBtn: { flexDirection: "row", alignItems: "center", gap: 2 },
   seeAllText: { fontSize: 13, fontFamily: "Inter_500Medium" },
 
-  // Vertical stacked list
-  qrRow: { flexDirection: "column", paddingBottom: 6 },
-  qrCard: { borderRadius: 18, borderWidth: 1, overflow: "hidden" },
+  // Grid layout — 3 square image-only tiles per row
+  qrRow: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
+  qrCard: { borderRadius: 16, borderWidth: 1, overflow: "hidden" },
   qrCardMore: { justifyContent: "center", alignItems: "center", gap: 4 },
   qrCodeWrap: {
     flex: 1, alignItems: "center", justifyContent: "center",

@@ -69,8 +69,14 @@ export function TabBarProvider({ children }: { children: React.ReactNode }) {
   );
 }
 
+const NOOP_CTX: TabBarCtx = {
+  tabBarTranslateY: new Animated.Value(0),
+  onTabScroll: () => {},
+  resetTabBar: () => {},
+  setTabBarHeight: () => {},
+};
+
 export function useTabBarScroll(): TabBarCtx {
   const ctx = useContext(TabBarContext);
-  if (!ctx) throw new Error("useTabBarScroll must be inside TabBarProvider");
-  return ctx;
+  return ctx ?? NOOP_CTX;
 }

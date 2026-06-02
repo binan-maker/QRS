@@ -6,6 +6,7 @@ import {
   ScrollView,
   RefreshControl,
   ActivityIndicator,
+  useWindowDimensions,
 } from "react-native";
 import { Image } from "expo-image";
 import { safePush } from "@/shared/utils/navigation";
@@ -106,31 +107,23 @@ const StatCell = React.memo(function StatCell({
   );
 });
 
+const H_PADDING = 40;
+const GAP = 8;
+const COLS = 3;
+
 // ── QR skeleton tile ───────────────────────────────────────────────────────────
-const QrSkeletonCard = React.memo(function QrSkeletonCard({ index }: { index: number }) {
+const QrSkeletonCard = React.memo(function QrSkeletonCard({ tileSize }: { tileSize: number }) {
   const { colors } = useTheme();
   return (
     <Animated.View
       entering={QR_SKELETON_ENTER}
       style={{
-        flexDirection: "row",
-        alignItems: "center",
-        gap: 14,
-        borderRadius: 18,
-        borderWidth: 1,
-        paddingHorizontal: 14,
-        paddingVertical: 12,
-        marginBottom: index < 2 ? -6 : 0,
+        width: tileSize, height: tileSize,
+        borderRadius: 16, borderWidth: 1,
         backgroundColor: colors.surface,
         borderColor: colors.surfaceBorder,
       }}
-    >
-      <SkeletonBox width={62} height={62} borderRadius={14} />
-      <View style={{ flex: 1, gap: 7 }}>
-        <SkeletonBox width="60%" height={13} borderRadius={6} />
-        <SkeletonBox width="35%" height={11} borderRadius={6} />
-      </View>
-    </Animated.View>
+    />
   );
 });
 
@@ -142,6 +135,8 @@ const QR_SKELETON_INDICES = [0, 1, 2];
 function ProfileScreen() {
   const insets = useSafeAreaInsets();
   const { colors } = useTheme();
+  const { width: screenWidth } = useWindowDimensions();
+  const tileSize = Math.floor((screenWidth - H_PADDING - GAP * (COLS - 1)) / COLS);
   const {
     user,
     stats, statsLoading,
@@ -164,7 +159,11 @@ function ProfileScreen() {
   const tabBarHeight = 60 + insets.bottom;
   const { onTabScroll } = useTabBarScroll();
 
-  const previewQrs   = useMemo(() => myQrCodes, [myQrCodes]);
+  const hasMore    = myQrCodes.length > 15;
+  const previewQrs = useMemo(
+    () => hasMore ? myQrCodes.slice(0, 14) : myQrCodes.slice(0, 15),
+    [myQrCodes, hasMore],
+  );
   const totalQrScans = useMemo(
     () => myQrCodes.reduce((sum, qr) => sum + (qr.scanCount || 0), 0),
     [myQrCodes],
@@ -376,7 +375,7 @@ function ProfileScreen() {
           {myQrLoading ? (
             <View style={styles.qrRow}>
               {QR_SKELETON_INDICES.map((i) => (
-                <QrSkeletonCard key={i} index={i} />
+                <QrSkeletonCard key={i} tileSize={tileSize} />
               ))}
             </View>
           ) : previewQrs.length === 0 ? (
@@ -394,9 +393,32 @@ function ProfileScreen() {
             </Animated.View>
           ) : (
             <View style={styles.qrRow}>
-              {previewQrs.map((qr, i) => (
-                <QrPreviewCard key={qr.docId} qr={qr} colors={colors} index={i} />
+              {previewQrs.map((qr) => (
+                <QrPreviewCard key={qr.docId} qr={qr} colors={colors} tileSize={tileSize} />
               ))}
+              {hasMore && (
+                <Animated.View entering={FadeIn.duration(240)}>
+                  <Pressable
+                    onPress={goToMyQrCodes}
+                    style={({ pressed }) => ({
+                      width: tileSize, height: tileSize,
+                      borderRadius: 16, borderWidth: 1,
+                      backgroundColor: colors.primaryDim,
+                      borderColor: colors.primary + "40",
+                      alignItems: "center", justifyContent: "center", gap: 4,
+                      opacity: pressed ? 0.75 : 1,
+                      transform: [{ scale: pressed ? 0.96 : 1 }],
+                    })}
+                  >
+                    <Text style={{ fontSize: 18, fontFamily: "Inter_700Bold", color: colors.primary }}>
+                      +{myQrCodes.length - 14}
+                    </Text>
+                    <Text style={{ fontSize: 11, fontFamily: "Inter_500Medium", color: colors.primary }}>
+                      More
+                    </Text>
+                  </Pressable>
+                </Animated.View>
+              )}
             </View>
           )}
         </Animated.View>
