@@ -39,8 +39,8 @@ export function QrStack({ qrs, totalCount, colors, onViewAll }: Props) {
         {/* Render back → front: card 0 is leftmost/back, card n-1 is rightmost/front */}
         {visible.map((qr, i) => {
           const isFront  = i === n - 1;
-          const thumbBg  = qr.bgColor || colors.surface;
-          const fgColor  = qr.fgColor || "#0A0E17";
+          const thumbBg  = qr.bgColor || "#FFFFFF";
+          const fgColor  = qr.fgColor || "#000000";
 
           return (
             <Animated.View
@@ -59,17 +59,15 @@ export function QrStack({ qrs, totalCount, colors, onViewAll }: Props) {
                 },
               ]}
             >
-              {/* QR code — only render on fully-visible front card and a few behind */}
-              {(isFront || i >= n - 3) && (
-                <QRCode
-                  value={qr.content || "https://qrguard.app"}
-                  size={qrSize}
-                  color={fgColor}
-                  backgroundColor={thumbBg}
-                  quietZone={4}
-                  ecl="L"
-                />
-              )}
+              {/* QR code — render on all cards (hidden ones are clipped by card border anyway) */}
+              <QRCode
+                value={qr.content || "https://qrguard.app"}
+                size={qrSize}
+                color={fgColor}
+                backgroundColor={thumbBg}
+                quietZone={4}
+                ecl="L"
+              />
 
               {/* "+N more" overlay on the backmost card */}
               {i === 0 && extraCount > 0 && (
