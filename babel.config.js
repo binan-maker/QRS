@@ -13,6 +13,18 @@ module.exports = function (api) {
 
     plugins: [
       [
+        "module-resolver",
+        {
+          root: ["./"],
+          alias: {
+            "@": "./",
+            "@shared": "./shared",
+            "@services": "./services",
+          },
+          extensions: [".ts", ".tsx", ".js", ".jsx", ".json"],
+        },
+      ],
+      [
         "@babel/plugin-transform-class-properties",
         {
           loose: false,
