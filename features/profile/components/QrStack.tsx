@@ -7,7 +7,7 @@ import type { QrItem } from "./QrPreviewCard";
 const CARD_W    = 88;
 const CARD_H    = 88;
 const OFFSET_X  = 30;   // how far each card peeks out
-const MAX_STACK = 10;
+const MAX_STACK = 7;
 
 interface Props {
   qrs:        QrItem[];

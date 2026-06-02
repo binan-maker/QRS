@@ -296,6 +296,9 @@ export default function MyQrCodesScreen() {
   return (
     <View style={{ flex: 1, backgroundColor: colors.background }}>
 
+      {/* Status bar background — always covers the safe-area top so the battery/time area never shows a dark strip when the header slides in/out */}
+      <View style={{ position: "absolute", top: 0, left: 0, right: 0, height: topInset, backgroundColor: colors.background, zIndex: 20 }} />
+
       {/* Header — absolute, hides on scroll (title + search + sort all together) */}
       <ReAnimated.View
         style={[{
@@ -332,36 +335,37 @@ export default function MyQrCodesScreen() {
           </Pressable>
         </View>
 
-        {/* Search bar */}
+        {/* Search bar — compact, matches History style */}
         <View style={{
-          marginHorizontal: sp(20), marginBottom: sp(6),
-          flexDirection: "row", alignItems: "center", gap: sp(6),
-          borderRadius: sp(12), borderWidth: 1,
+          marginHorizontal: sp(16), marginBottom: sp(5),
+          flexDirection: "row", alignItems: "center", gap: sp(10),
+          borderRadius: 14, borderWidth: 1,
           borderColor: searchQuery.trim() ? colors.primary + "50" : colors.surfaceBorder,
           backgroundColor: colors.surface,
-          paddingHorizontal: sp(10), paddingVertical: sp(7),
+          paddingHorizontal: 14, paddingVertical: 10,
         }}>
-          <Ionicons name="search-outline" size={rf(14)} color={searchQuery.trim() ? colors.primary : colors.textMuted} />
+          <Ionicons name="search-outline" size={17} color={searchQuery.trim() ? colors.primary : colors.textMuted} />
           <TextInput
-            style={{ flex: 1, fontSize: rf(13), fontFamily: "Inter_400Regular", color: colors.text }}
+            style={{ flex: 1, fontSize: 14, fontFamily: "Inter_400Regular", color: colors.text, paddingVertical: 0 }}
             placeholder="Search by name…"
             placeholderTextColor={colors.textMuted}
             value={searchQuery}
             onChangeText={setSearchQuery}
             returnKeyType="search"
             clearButtonMode="while-editing"
+            maxFontSizeMultiplier={1}
           />
           {searchQuery.length > 0 && (
             <Pressable onPress={() => setSearchQuery("")} hitSlop={8}>
-              <Ionicons name="close-circle" size={rf(14)} color={colors.textMuted} />
+              <Ionicons name="close-circle" size={16} color={colors.textMuted} />
             </Pressable>
           )}
         </View>
 
-        {/* Sort pills */}
+        {/* Sort chips — compact */}
         <ScrollView
           horizontal showsHorizontalScrollIndicator={false}
-          contentContainerStyle={{ paddingHorizontal: sp(20), gap: sp(7), paddingBottom: sp(10) }}
+          contentContainerStyle={{ paddingHorizontal: sp(16), gap: sp(6), paddingBottom: sp(8) }}
           style={{ flexGrow: 0 }}
         >
           {SORT_OPTIONS.map((opt) => {
@@ -371,16 +375,16 @@ export default function MyQrCodesScreen() {
                 key={opt.key}
                 onPress={() => { setSortKey(opt.key); Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); }}
                 style={[{
-                  flexDirection: "row", alignItems: "center", gap: sp(5),
-                  borderRadius: sp(20), paddingHorizontal: sp(14), paddingVertical: sp(8),
+                  flexDirection: "row", alignItems: "center", gap: 4,
+                  borderRadius: 20, paddingHorizontal: 10, paddingVertical: 5,
                   borderWidth: 1,
                 }, active
                   ? { backgroundColor: colors.primary, borderColor: colors.primary }
                   : { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }
                 ]}
               >
-                <Ionicons name={opt.icon as any} size={rf(11)} color={active ? "#fff" : colors.textMuted} />
-                <Text style={{ fontSize: rf(12), fontFamily: "Inter_600SemiBold", color: active ? "#fff" : colors.textMuted }}>
+                <Ionicons name={opt.icon as any} size={10} color={active ? "#fff" : colors.textMuted} />
+                <Text style={{ fontSize: 11, fontFamily: "Inter_600SemiBold", color: active ? "#fff" : colors.textMuted }}>
                   {opt.label}
                 </Text>
               </Pressable>

@@ -106,18 +106,18 @@ const StatCell = React.memo(function StatCell({
   );
 });
 
-// ── QR skeleton stack (horizontal fan) ────────────────────────────────────────
+// ── QR skeleton stack (horizontal fan, matches MAX_STACK=7 + more slot) ───────
 const QrSkeletonStack = React.memo(function QrSkeletonStack() {
   const { colors } = useTheme();
   const CARD  = 88;
   const OFF_X = 30;
-  const n     = 4;
+  const n     = 8; // 7 real + 1 "more" slot
   return (
     <Animated.View
       entering={QR_SKELETON_ENTER}
       style={{ width: CARD + (n - 1) * OFF_X, height: CARD, position: "relative" }}
     >
-      {[0, 1, 2, 3].map((i) => (
+      {Array.from({ length: n }).map((_, i) => (
         <View
           key={i}
           style={{
@@ -125,11 +125,20 @@ const QrSkeletonStack = React.memo(function QrSkeletonStack() {
             left: i * OFF_X, top: 0,
             width: CARD, height: CARD,
             borderRadius: 18, borderWidth: 1.5,
-            backgroundColor: colors.surface,
-            borderColor: colors.surfaceBorder,
+            backgroundColor: i === n - 1 ? colors.primaryDim : colors.surface,
+            borderColor: i === n - 1 ? colors.primary + "40" : colors.surfaceBorder,
             zIndex: i,
+            alignItems: "center",
+            justifyContent: "center",
           }}
-        />
+        >
+          {i === n - 1 && (
+            <View style={{ alignItems: "center", gap: 2 }}>
+              <SkeletonBox width={28} height={10} borderRadius={5} />
+              <SkeletonBox width={20} height={8} borderRadius={4} />
+            </View>
+          )}
+        </View>
       ))}
     </Animated.View>
   );
@@ -161,7 +170,7 @@ function ProfileScreen() {
   const tabBarHeight = 60 + insets.bottom;
   const { onTabScroll } = useTabBarScroll();
 
-  const previewQrs = useMemo(() => myQrCodes.slice(0, 10), [myQrCodes]);
+  const previewQrs = useMemo(() => myQrCodes.slice(0, 7), [myQrCodes]);
   const totalQrScans = useMemo(
     () => myQrCodes.reduce((sum, qr) => sum + (qr.scanCount || 0), 0),
     [myQrCodes],
@@ -359,7 +368,7 @@ function ProfileScreen() {
         {/* ── MY QR CODES ───────────────────────────────────────── */}
         <Animated.View entering={ENTER_QR_SECTION} style={styles.section}>
           <View style={styles.sectionHeader}>
-            <Text style={[styles.sectionTitle, { color: colors.text }]}>My QR Codes</Text>
+            <Text style={[styles.sectionTitle, { color: colors.text }]}>My QRs</Text>
             <Pressable
               onPress={goToMyQrCodes}
               style={({ pressed }) => [styles.seeAllBtn, { opacity: pressed ? 0.7 : 1 }]}
