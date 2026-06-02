@@ -26,6 +26,7 @@ import { getEffectiveContentType, getDisplayText } from "@/features/my-qr/utils/
 import { getQrTypeMeta as getContentTypeMeta } from "@/features/qr-engine";
 
 const MY_QRS_CACHE_TTL = 5 * 60 * 1000;
+const PAGE_SIZE = 15;
 function qrsCacheKey(userId: string) { return `myqrs_v1_${userId}`; }
 
 type SortKey = "newest" | "oldest" | "mostScanned";
@@ -107,6 +108,7 @@ export default function MyQrCodesScreen() {
   const [refreshing,  setRefreshing] = useState(false);
   const [sortKey,     setSortKey]    = useState<SortKey>("newest");
   const [searchQuery, setSearchQuery] = useState("");
+  const [displayCount, setDisplayCount] = useState(PAGE_SIZE);
   const hasLoadedRef = useRef(false);
 
   const fetchQrCodes = useCallback(async (forceRefresh = false) => {
@@ -145,6 +147,7 @@ export default function MyQrCodesScreen() {
   }
 
   const sorted = useMemo(() => {
+    setDisplayCount(PAGE_SIZE);
     let list = [...qrCodes];
     if (sortKey === "mostScanned") list.sort((a, b) => (b.scanCount || 0) - (a.scanCount || 0));
     else if (sortKey === "oldest") list.sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
@@ -160,6 +163,14 @@ export default function MyQrCodesScreen() {
     return list;
   }, [qrCodes, sortKey, searchQuery]);
 
+  const paged = useMemo(() => sorted.slice(0, displayCount), [sorted, displayCount]);
+
+  const handleLoadMore = useCallback(() => {
+    if (displayCount < sorted.length) {
+      setDisplayCount((c) => Math.min(c + PAGE_SIZE, sorted.length));
+    }
+  }, [displayCount, sorted.length]);
+
   function renderQrItem({ item, index }: { item: GeneratedQrItem; index: number }) {
     const displayText = getDisplayText(item, index);
     const ctMeta      = getContentTypeMeta(getEffectiveContentType(item));
@@ -168,7 +179,7 @@ export default function MyQrCodesScreen() {
     const scanCount   = item.scanCount || 0;
 
     return (
-      <ReAnimated.View entering={FadeInDown.duration(300).delay(index * 30).springify()}>
+      <ReAnimated.View entering={FadeInDown.duration(260).delay(Math.min(index, 5) * 30)}>
         <Pressable
           onPress={() => {
             Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -258,7 +269,7 @@ export default function MyQrCodesScreen() {
           >
             <Ionicons name="chevron-back" size={rf(20)} color={colors.text} />
           </Pressable>
-          <Text style={{ fontSize: rf(17), fontFamily: "Inter_700Bold", color: colors.text }}>My QR Codes</Text>
+          <Text style={{ fontSize: rf(17), fontFamily: "Inter_700Bold", color: colors.text }}>My QRs</Text>
           <View style={{ width: sp(38) }} />
         </View>
         <View style={{ flex: 1, alignItems: "center", justifyContent: "center", paddingHorizontal: sp(40), gap: sp(14) }}>
@@ -285,9 +296,6 @@ export default function MyQrCodesScreen() {
   return (
     <View style={{ flex: 1, backgroundColor: colors.background }}>
 
-      {/* Fixed status-bar background — never animates, prevents black strip when header hides */}
-      <View style={{ position: "absolute", top: 0, left: 0, right: 0, height: topInset, backgroundColor: colors.background, zIndex: 20 }} />
-
       {/* Header — absolute, hides on scroll (title + search + sort all together) */}
       <ReAnimated.View
         style={[{
@@ -308,7 +316,7 @@ export default function MyQrCodesScreen() {
             <Ionicons name="chevron-back" size={rf(20)} color={colors.text} />
           </Pressable>
 
-          <Text style={{ fontSize: rf(17), fontFamily: "Inter_700Bold", color: colors.text }}>My QR Codes</Text>
+          <Text style={{ fontSize: rf(17), fontFamily: "Inter_700Bold", color: colors.text }}>My QRs</Text>
 
           <Pressable
             onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); router.push("/(tabs)/qr-generator"); }}
@@ -381,18 +389,18 @@ export default function MyQrCodesScreen() {
         </ScrollView>
       </ReAnimated.View>
 
-      {/* Content — offset below the animated header */}
-      <View style={{ flex: 1, paddingTop: headerH }}>
+      {/* Content — sits behind header; paddingTop pushed into each child so no dead gap remains when header hides */}
+      <View style={{ flex: 1 }}>
 
       {/* List */}
       {loading && qrCodes.length === 0 ? (
-        <View style={{ paddingHorizontal: sp(20), paddingTop: sp(2) }}>
+        <View style={{ paddingHorizontal: sp(20), paddingTop: headerH + sp(4) }}>
           {[0, 1, 2, 3, 4].map((k) => <SkeletonQrCard key={k} index={k} />)}
         </View>
       ) : sorted.length === 0 ? (
         searchQuery.trim() ? (
           /* ── Search no-results ── */
-          <ReAnimated.View entering={FadeIn.duration(400)} style={{ flex: 1, alignItems: "center", justifyContent: "center", paddingHorizontal: sp(40), gap: sp(14) }}>
+          <ReAnimated.View entering={FadeIn.duration(400)} style={{ flex: 1, alignItems: "center", justifyContent: "center", paddingHorizontal: sp(40), gap: sp(14), paddingTop: headerH }}>
             <View style={{ width: sp(72), height: sp(72), borderRadius: sp(22), backgroundColor: colors.primaryDim, alignItems: "center", justifyContent: "center" }}>
               <Ionicons name="search-outline" size={rf(34)} color={colors.primary} />
             </View>
@@ -416,7 +424,7 @@ export default function MyQrCodesScreen() {
         ) : (
           /* ── Phase 2 Showcase ── */
           <ReAnimated.View entering={FadeIn.duration(400)} style={{ flex: 1 }}>
-            <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: sp(20), paddingBottom: sp(120), paddingTop: sp(4) }}>
+            <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: sp(20), paddingBottom: sp(120), paddingTop: headerH + sp(4) }}>
 
               {/* Showcase header */}
               <LinearGradient
@@ -567,14 +575,16 @@ export default function MyQrCodesScreen() {
         )
       ) : (
         <FlashList
-          data={sorted}
+          data={paged}
           keyExtractor={(item: any) => item.docId ?? item.id}
           renderItem={renderQrItem}
           estimatedItemSize={84}
-          contentContainerStyle={{ paddingHorizontal: sp(20), paddingTop: sp(2), paddingBottom: contentPaddingBottom }}
+          contentContainerStyle={{ paddingHorizontal: sp(20), paddingTop: headerH + sp(4), paddingBottom: contentPaddingBottom }}
           showsVerticalScrollIndicator={false}
           onScroll={handleScroll}
           scrollEventThrottle={16}
+          onEndReached={handleLoadMore}
+          onEndReachedThreshold={0.3}
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={handleRefresh} tintColor={colors.primary} />}
         />
       )}
