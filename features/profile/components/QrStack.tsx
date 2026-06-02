@@ -37,30 +37,30 @@ export function QrStack({ qrs, totalCount, colors, onViewAll }: Props) {
     >
       <View style={{ width: containerW, height: containerH, position: "relative" }}>
         {/*
-          i=0  → front card, rightmost  (left = (n-1)*OFFSET_X, zIndex = n)
-          i=n-1→ back card,  leftmost   (left = 0,               zIndex = 1)
-          Render back→front so the front card paints on top.
+          Fan spreads → right.
+          i=0   → back card,  LEFTMOST  (left=0,              zIndex=1)
+          i=n-1 → front card, RIGHTMOST (left=(n-1)*OFFSET_X, zIndex=n)
+          Render in natural order so i=n-1 paints on top (frontmost).
+          More card overlays the rightmost/frontmost slot.
         */}
-        {[...visible].reverse().map((qr, ri) => {
-          const i       = n - 1 - ri;          // 0 = front/right, n-1 = back/left
-          const isFront = i === 0;
-          const isBack  = i === n - 1;
+        {visible.map((qr, i) => {
+          const isFront = i === n - 1;
           const thumbBg = qr.bgColor || "#FFFFFF";
           const fgColor = qr.fgColor || "#000000";
 
           return (
             <Animated.View
               key={qr.docId ?? i}
-              entering={FadeIn.delay(ri * 20).duration(220)}
+              entering={FadeIn.delay(i * 20).duration(220)}
               style={[
                 styles.card,
                 {
-                  left:            (n - 1 - i) * OFFSET_X,
+                  left:            i * OFFSET_X,
                   backgroundColor: thumbBg,
                   borderColor:     colors.surfaceBorder,
                   shadowOpacity:   isFront ? 0.18 : 0.08,
-                  elevation:       n - i,
-                  zIndex:          n - i,
+                  elevation:       i + 1,
+                  zIndex:          i + 1,
                 },
               ]}
             >
@@ -73,8 +73,8 @@ export function QrStack({ qrs, totalCount, colors, onViewAll }: Props) {
                 ecl="L"
               />
 
-              {/* "+N more" overlay on the backmost (leftmost) card */}
-              {isBack && extraCount > 0 && (
+              {/* "+N more" overlay on the frontmost (rightmost) card */}
+              {isFront && extraCount > 0 && (
                 <View style={[styles.moreOverlay, { backgroundColor: colors.primary + "DD" }]}>
                   <Text style={styles.moreCount}>+{extraCount}</Text>
                   <Text style={styles.moreLabel}>more</Text>
