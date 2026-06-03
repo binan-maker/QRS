@@ -363,28 +363,34 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   async function signOut() {
-    try {
-      const AsyncStorage = (await import("@react-native-async-storage/async-storage")).default;
-      if (user?.id) {
-        await AsyncStorage.removeItem(`local_scan_history_${user.id}`);
-      }
-      const allKeys = await AsyncStorage.getAllKeys();
-      const qrContentKeys = allKeys.filter((k) => k.startsWith("qr_content_"));
-      if (qrContentKeys.length > 0) await AsyncStorage.multiRemove(qrContentKeys);
-      await AsyncStorage.removeItem("qrguard_downloads_dir_uri");
-    } catch {}
-    clearAllMemCache();
-    clearAllAnonymousSessions();
-    await clearAllAsyncStorageCache();
-    queryClient.clear();
-    try {
-      if (Platform.OS !== "web" && GoogleSignin) {
-        await GoogleSignin.signOut().catch(() => {});
-      }
-      await authAdapter.signOut();
-    } catch {}
+    // Clear auth state immediately — UI responds at once, no visible delay.
+    const signedOutUserId = user?.id ?? null;
     setUser(null);
     setToken(null);
+    queryClient.clear();
+    clearAllMemCache();
+    clearAllAnonymousSessions();
+
+    // All remaining I/O runs in the background — don't await it.
+    (async () => {
+      try {
+        const AsyncStorage = (await import("@react-native-async-storage/async-storage")).default;
+        if (signedOutUserId) {
+          await AsyncStorage.removeItem(`local_scan_history_${signedOutUserId}`);
+        }
+        const allKeys = await AsyncStorage.getAllKeys();
+        const qrContentKeys = allKeys.filter((k) => k.startsWith("qr_content_"));
+        if (qrContentKeys.length > 0) await AsyncStorage.multiRemove(qrContentKeys);
+        await AsyncStorage.removeItem("qrguard_downloads_dir_uri");
+      } catch {}
+      await clearAllAsyncStorageCache().catch(() => {});
+      try {
+        if (Platform.OS !== "web" && GoogleSignin) {
+          await GoogleSignin.signOut().catch(() => {});
+        }
+        await authAdapter.signOut();
+      } catch {}
+    })();
   }
 
   async function sendPasswordReset(email: string) {
