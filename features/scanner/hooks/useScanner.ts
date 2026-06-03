@@ -8,7 +8,7 @@ import { useScanMessages } from "@/features/scanner/hooks/useScanMessages";
 
 export { FINDER_SIZE, CORNER_SIZE, CORNER_WIDTH, ZOOM_LEVELS } from "@/features/scanner/hooks/useCameraControls";
 
-export function useScanner() {
+export function useScanner({ isCameraAvailable = true }: { isCameraAvailable?: boolean } = {}) {
   const { user } = useAuth();
 
   // ── Camera hardware, zoom, flash, scan lifecycle ───────────────────────────
@@ -48,6 +48,7 @@ export function useScanner() {
     showScannerMsg:         messages.showScannerMsg,
     showGalleryError:       messages.showGalleryError,
     setConversionBannerMsg: messages.setConversionBannerMsg,
+    isCameraAvailable,
   });
 
   // ── Wrap handleBarCodeScanned to kill auto-flash immediately on scan hit ──

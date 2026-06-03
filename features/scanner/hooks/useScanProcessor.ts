@@ -4,6 +4,7 @@ import { router } from "expo-router";
 import * as ImagePicker from "expo-image-picker";
 import * as Haptics from "@/shared/utils/haptics";
 import { scanFromURLAsync } from "expo-camera";
+import * as FileSystem from "expo-file-system";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { setAnonymousQrContent } from "@/services/cache/anonymous-session";
 import { useAuth } from "@/shared/contexts/AuthContext";
@@ -43,6 +44,7 @@ export interface ScanProcessorParams {
   showScannerMsg:         (msg: string, type?: "error" | "warning" | "info") => void;
   showGalleryError:       (msg: string) => void;
   setConversionBannerMsg: (msg: string | null) => void;
+  isCameraAvailable?:     boolean;
 }
 
 export function useScanProcessor({
@@ -57,6 +59,7 @@ export function useScanProcessor({
   showScannerMsg,
   showGalleryError,
   setConversionBannerMsg,
+  isCameraAvailable = true,
 }: ScanProcessorParams) {
   const { user, token } = useAuth();
 
@@ -309,6 +312,30 @@ export function useScanProcessor({
     [scanned, anonymousMode, user, token]
   );
 
+  async function decodeImageViaServer(uri: string): Promise<string | null> {
+    try {
+      const base64 = await FileSystem.readAsStringAsync(uri, {
+        encoding: FileSystem.EncodingType.Base64,
+      });
+      const { getApiUrl } = await import("@/shared/utils/query-client");
+      const baseUrl = getApiUrl();
+      const url = new URL("/api/qr/decode-image", baseUrl).toString();
+      const res = await fetch(url, {
+        method: "POST",
+        headers: {
+          "Content-Type":  "application/json",
+          "Authorization": `Bearer ${token}`,
+        },
+        body: JSON.stringify({ imageBase64: base64 }),
+      });
+      if (!res.ok) return null;
+      const json = await res.json();
+      return json?.content ?? null;
+    } catch {
+      return null;
+    }
+  }
+
   async function handlePickImage() {
     if (!token) {
       showScannerMsg("Sign in to scan QR codes from your gallery.", "info");
@@ -334,14 +361,20 @@ export function useScanProcessor({
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
 
     try {
-      const uri     = result.assets[0].uri;
+      const uri = result.assets[0].uri;
       let content: string | null = null;
 
       if (Platform.OS === "web") {
         content = await decodeQrFromImageUri(uri);
+      } else if (Platform.OS === "android" && !isCameraAvailable) {
+        content = await decodeImageViaServer(uri);
       } else {
-        const results = await scanFromURLAsync(uri, ["qr"]);
-        content = results?.[0]?.data ?? null;
+        try {
+          const results = await scanFromURLAsync(uri, ["qr"]);
+          content = results?.[0]?.data ?? null;
+        } catch {
+          content = await decodeImageViaServer(uri);
+        }
       }
 
       if (!content) {

@@ -205,7 +205,7 @@ export default function ScannerScreen() {
     handleSafetyModalBack,
     handleUnverifiedProceed,
     handleUnverifiedBack,
-  } = useScanner();
+  } = useScanner({ isCameraAvailable: cameraAvailable });
 
   // ── Barcode handler — always stable, refs gate double-scans ───────────────
   // IMPORTANT: never pass `undefined` to onBarcodeScanned. Switching between
