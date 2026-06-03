@@ -270,7 +270,7 @@ export default function ScannerScreen() {
               <Ionicons name="chevron-back" size={22} color="#fff" />
             </Pressable>
           </View>
-          <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+          <View style={{ flex: 1, justifyContent: "center" }}>
             <CameraUnavailableBanner
               onPickImage={handlePickImage}
               onRetry={handleCameraRetry}

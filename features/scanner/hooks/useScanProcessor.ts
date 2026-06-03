@@ -338,6 +338,8 @@ export function useScanProcessor({
       return;
     }
 
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+
     const isAndroidNative = Platform.OS === "android";
 
     let result: ImagePicker.ImagePickerResult;
@@ -357,7 +359,6 @@ export function useScanProcessor({
     if (result.canceled || !result.assets?.[0]) return;
 
     setProcessing(true);
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
 
     try {
       const asset = result.assets[0];
