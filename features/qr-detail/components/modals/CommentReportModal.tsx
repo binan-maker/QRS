@@ -1,5 +1,5 @@
-import React from "react";
-import { View, Text, StyleSheet, Pressable, Modal, ScrollView } from "react-native";
+import React, { useEffect, useRef } from "react";
+import { View, Text, StyleSheet, Pressable, Modal, ScrollView, Animated } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useTheme } from "@/shared/contexts/ThemeContext";
 import { useAndroidNavBar } from "@/shared/utils/use-android-nav-bar";
@@ -27,37 +27,80 @@ const CommentReportModal = React.memo(function CommentReportModal({ commentId, o
   const { colors } = useTheme();
   useAndroidNavBar(!!commentId, colors.surface, colors.background, colors.isDark);
   const styles = makeStyles(colors);
+
+  const scaleAnim = useRef(new Animated.Value(0.85)).current;
+  const overlayOpacity = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    if (commentId) {
+      scaleAnim.setValue(0.85);
+      overlayOpacity.setValue(0);
+      Animated.parallel([
+        Animated.spring(scaleAnim, {
+          toValue: 1,
+          useNativeDriver: true,
+          tension: 180,
+          friction: 14,
+        }),
+        Animated.timing(overlayOpacity, {
+          toValue: 1,
+          duration: 200,
+          useNativeDriver: true,
+        }),
+      ]).start();
+    } else {
+      Animated.parallel([
+        Animated.spring(scaleAnim, {
+          toValue: 0.85,
+          useNativeDriver: true,
+          tension: 180,
+          friction: 14,
+        }),
+        Animated.timing(overlayOpacity, {
+          toValue: 0,
+          duration: 150,
+          useNativeDriver: true,
+        }),
+      ]).start();
+    }
+  }, [commentId]);
+
   return (
-    <Modal visible={!!commentId} transparent animationType="fade" onRequestClose={onClose}>
-      <Pressable style={styles.overlay} onPress={onClose}>
-        <Pressable style={styles.card} onPress={() => {}}>
-          <Text style={styles.title}>Report</Text>
-          <Text style={styles.subtitle}>What's going on?</Text>
-          <Text style={styles.note}>
-            We'll check for all community guidelines, so don't worry about making the perfect choice.
-          </Text>
-          <ScrollView showsVerticalScrollIndicator={false} style={{ maxHeight: 360 }}>
-            {REASONS.map((r, idx) => (
-              <Pressable
-                key={r.value}
-                onPress={() => commentId && onReport(commentId, r.value)}
-                style={({ pressed }) => [
-                  styles.option,
-                  idx < REASONS.length - 1 && styles.optionBorder,
-                  { opacity: pressed ? 0.7 : 1 },
-                ]}
-              >
-                <Ionicons name={r.icon as any} size={18} color={colors.textSecondary} style={{ marginRight: 12 }} />
-                <Text style={styles.optionText}>{r.label}</Text>
-                <Ionicons name="chevron-forward" size={16} color={colors.textMuted} style={{ marginLeft: "auto" as any }} />
-              </Pressable>
-            ))}
-          </ScrollView>
-          <Pressable onPress={onClose} style={styles.cancelBtn}>
-            <Text style={styles.cancelText}>Cancel</Text>
+    <Modal visible={!!commentId} transparent animationType="none" onRequestClose={onClose}>
+      <Animated.View
+        style={[styles.overlay, { opacity: overlayOpacity }]}
+      >
+        <Pressable style={StyleSheet.absoluteFill} onPress={onClose} />
+        <Animated.View style={[styles.card, { transform: [{ scale: scaleAnim }] }]}>
+          <Pressable onPress={() => {}}>
+            <Text style={styles.title}>Report</Text>
+            <Text style={styles.subtitle}>What's going on?</Text>
+            <Text style={styles.note}>
+              We'll check for all community guidelines, so don't worry about making the perfect choice.
+            </Text>
+            <ScrollView showsVerticalScrollIndicator={false} style={{ maxHeight: 360 }}>
+              {REASONS.map((r, idx) => (
+                <Pressable
+                  key={r.value}
+                  onPress={() => commentId && onReport(commentId, r.value)}
+                  style={({ pressed }) => [
+                    styles.option,
+                    idx < REASONS.length - 1 && styles.optionBorder,
+                    { opacity: pressed ? 0.7 : 1 },
+                  ]}
+                >
+                  <Ionicons name={r.icon as any} size={18} color={colors.textSecondary} style={{ marginRight: 12 }} />
+                  <Text style={styles.optionText}>{r.label}</Text>
+                  <Ionicons name="chevron-forward" size={16} color={colors.textMuted} style={{ marginLeft: "auto" as any }} />
+                </Pressable>
+              ))}
+            </ScrollView>
+            <Pressable onPress={onClose} style={styles.cancelBtn}>
+              <Text style={styles.cancelText}>Cancel</Text>
+            </Pressable>
           </Pressable>
-        </Pressable>
-      </Pressable>
+        </Animated.View>
+      </Animated.View>
     </Modal>
   );
 });
@@ -67,12 +110,19 @@ export default CommentReportModal;
 function makeStyles(c: ReturnType<typeof import("@/shared/contexts/ThemeContext").useTheme>["colors"]) {
   return StyleSheet.create({
     overlay: {
-      flex: 1, backgroundColor: "transparent",
-      justifyContent: "center", alignItems: "center", padding: 24,
+      flex: 1,
+      backgroundColor: "rgba(0,0,0,0.6)",
+      justifyContent: "center",
+      alignItems: "center",
+      padding: 24,
     },
     card: {
-      backgroundColor: c.surface, borderRadius: 20, padding: 20,
-      width: "100%", borderWidth: 1, borderColor: c.surfaceBorder,
+      backgroundColor: c.surface,
+      borderRadius: 20,
+      padding: 20,
+      width: "100%",
+      borderWidth: 1,
+      borderColor: c.surfaceBorder,
     },
     title: { fontSize: 18, fontFamily: "Inter_700Bold", color: c.text, marginBottom: 4 },
     subtitle: { fontSize: 15, fontFamily: "Inter_600SemiBold", color: c.text, marginBottom: 6 },

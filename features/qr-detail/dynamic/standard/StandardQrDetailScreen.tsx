@@ -439,7 +439,10 @@ export default function StandardQrDetailScreen({ id, standardUuid, ownerDocId, h
 
       <CommentReportModal
         commentId={q.commentReportModal}
-        onReport={q.handleCommentReport}
+        onReport={(commentId, reason) => {
+          q.handleCommentReport(commentId, reason);
+          showToast("Thanks for reporting", "flag-outline");
+        }}
         onClose={() => q.setCommentReportModal(null)}
       />
       <FollowersModal

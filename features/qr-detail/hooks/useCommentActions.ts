@@ -1,5 +1,4 @@
 import { useState, useEffect, useCallback, useRef } from "react";
-import { Alert } from "react-native";
 import { router } from "expo-router";
 import * as Haptics from "@/shared/utils/haptics";
 import {
@@ -91,10 +90,8 @@ export function useCommentActions({
     if (!userId) return;
     try {
       await reportComment(id, commentId, userId, reason, emailVerified);
-      Alert.alert("Reported", "Thank you. We'll review this comment.");
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-    } catch (e: any) {
-      Alert.alert("Cannot Report", e.message);
+    } catch {
     }
   }, [id, userId, emailVerified]);
 
