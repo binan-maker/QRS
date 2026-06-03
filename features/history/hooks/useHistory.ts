@@ -1,7 +1,3 @@
-// ─── useHistory (orchestrator) ────────────────────────────────────────────────
-// Composes useHistoryData with mutation/action logic: delete, refresh, clear,
-// and pagination end-reached. Exports the complete API consumed by HistoryScreen.
-
 import { useState, useCallback } from "react";
 import { Alert } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -9,16 +5,20 @@ import * as Haptics from "@/shared/utils/haptics";
 import { deleteUserScan } from "@/lib/firestore-service";
 import { invalidateHistoryCache } from "@/services/cache/qr-cache";
 import { useHistoryData } from "@/features/history/hooks/useHistoryData";
-import type { HistoryItem, Filter } from "@/features/history/types";
+import { toggleFilter } from "@/features/history/utils/filter-utils";
+import type { HistoryItem, FilterKey, ActiveFilters } from "@/features/history/types";
 
-// Re-export types so importers don't need to know about the split
-export type { HistoryItem, Filter };
+export type { HistoryItem, FilterKey, ActiveFilters };
 export type { RiskLevel } from "@/features/history/types";
 
 export function useHistory() {
-  const [filter, setFilter] = useState<Filter>("all");
+  const [activeFilters, setActiveFilters] = useState<ActiveFilters>(["all"]);
 
-  const data = useHistoryData(filter);
+  const handleFilterChange = useCallback((key: FilterKey) => {
+    setActiveFilters((prev) => toggleFilter(prev, key));
+  }, []);
+
+  const data = useHistoryData(activeFilters);
   const {
     user,
     queryClient,
@@ -47,7 +47,6 @@ export function useHistory() {
         }
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       } catch {
-        // Roll back optimistic remove
         setLocalHistory((prev) =>
           [...prev, item].sort((a, b) =>
             new Date(b.scannedAt).getTime() - new Date(a.scannedAt).getTime()
@@ -55,7 +54,6 @@ export function useHistory() {
         );
       }
     } else {
-      // Optimistic remove from React Query cache
       const cloudKey = ["history", user?.id];
       const favKey   = ["favorites", user?.id];
       const prevCloud = queryClient.getQueryData(cloudKey);
@@ -87,7 +85,7 @@ export function useHistory() {
     }
   }, [user?.id, queryClient, setLocalHistory]);
 
-  // ── Pull-to-refresh: bust disk caches then re-fetch everything ─────────────
+  // ── Pull-to-refresh ────────────────────────────────────────────────────────
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
     if (user?.id) invalidateHistoryCache(user.id);
@@ -98,12 +96,13 @@ export function useHistory() {
     setRefreshing(false);
   }, [user?.id, loadLocalHistory, refetchCloud, refetchFavorites, refetchStats, setRefreshing]);
 
-  // ── Load next page when list reaches the end ───────────────────────────────
+  // ── Load next page ─────────────────────────────────────────────────────────
   const handleEndReached = useCallback(() => {
-    if (filter !== "favorites" && cloudHasMore && !loadingMore) fetchNextPage();
-  }, [filter, cloudHasMore, loadingMore, fetchNextPage]);
+    const isFav = activeFilters.length === 1 && activeFilters[0] === "favorites";
+    if (!isFav && cloudHasMore && !loadingMore) fetchNextPage();
+  }, [activeFilters, cloudHasMore, loadingMore, fetchNextPage]);
 
-  // ── Clear all locally stored history ──────────────────────────────────────
+  // ── Clear local history ────────────────────────────────────────────────────
   async function clearLocalHistory() {
     Alert.alert(
       "Clear History",
@@ -111,7 +110,8 @@ export function useHistory() {
       [
         { text: "Cancel", style: "cancel" },
         {
-          text: "Clear", style: "destructive",
+          text: "Clear",
+          style: "destructive",
           onPress: async () => {
             if (user?.id) await AsyncStorage.removeItem(`local_scan_history_${user.id}`);
             setLocalHistory([]);
@@ -124,12 +124,12 @@ export function useHistory() {
 
   return {
     ...data,
-    filter,
-    setFilter,
+    activeFilters,
+    setActiveFilters,
+    onFilterChange: handleFilterChange,
     deleteItem,
     onRefresh,
     handleEndReached,
     clearLocalHistory,
-    allStatsItems: [] as Array<{ id: string; content: string; contentType: string }>,
   };
 }

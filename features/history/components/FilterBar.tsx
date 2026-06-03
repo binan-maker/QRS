@@ -1,21 +1,27 @@
-import React from "react";
-import { View, Text, StyleSheet, Pressable, ScrollView } from "react-native";
+import React, { useRef } from "react";
+import {
+  View,
+  Text,
+  StyleSheet,
+  Pressable,
+  ScrollView,
+} from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import Animated, { FadeInDown } from "react-native-reanimated";
 import * as Haptics from "@/shared/utils/haptics";
 import { useTheme } from "@/shared/contexts/ThemeContext";
-import type { Filter } from "@/features/history/types";
+import type { FilterKey, ActiveFilters } from "@/features/history/types";
 
 interface FilterOption {
-  key: Filter;
-  label: string;
+  key:    FilterKey;
+  label:  string;
   count?: number;
 }
 
 interface FilterBarProps {
-  filters: FilterOption[];
-  activeFilter: Filter;
-  onFilterChange: (filter: Filter) => void;
+  filters:        FilterOption[];
+  activeFilters:  ActiveFilters;
+  onFilterChange: (key: FilterKey) => void;
 }
 
 type IoniconName = React.ComponentProps<typeof Ionicons>["name"];
@@ -31,9 +37,8 @@ const FILTER_ICONS: Record<string, IoniconName> = {
   utility:   "construct-outline",
   business:  "trending-up-outline",
   text:      "document-text-outline",
+  others:    "ellipsis-horizontal-circle-outline",
   favorites: "bookmark-outline",
-  camera:    "camera-outline",
-  gallery:   "images-outline",
 };
 
 const FILTER_ICONS_ACTIVE: Record<string, IoniconName> = {
@@ -47,14 +52,13 @@ const FILTER_ICONS_ACTIVE: Record<string, IoniconName> = {
   utility:   "construct",
   business:  "trending-up",
   text:      "document-text",
+  others:    "ellipsis-horizontal-circle",
   favorites: "bookmark",
-  camera:    "camera",
-  gallery:   "images",
 };
 
 const FilterBar = React.memo(function FilterBar({
   filters,
-  activeFilter,
+  activeFilters,
   onFilterChange,
 }: FilterBarProps) {
   const { colors, isDark } = useTheme();
@@ -69,17 +73,19 @@ const FilterBar = React.memo(function FilterBar({
     >
       {filters.map((f, idx) => {
         const isFavorite = f.key === "favorites";
-        const isActive   = activeFilter === f.key;
+        const isActive   = activeFilters.includes(f.key);
 
         const activeColor = isFavorite ? colors.danger : colors.primary;
         const iconName    = isActive
           ? (FILTER_ICONS_ACTIVE[f.key] ?? "apps")
-          : (FILTER_ICONS[f.key] ?? "apps-outline");
+          : (FILTER_ICONS[f.key]        ?? "apps-outline");
+
+        const showCount = typeof f.count === "number" && f.count > 0;
 
         return (
           <Animated.View
             key={f.key}
-            entering={FadeInDown.delay(25 + Math.min(idx, 4) * 18).duration(260)}
+            entering={FadeInDown.delay(25 + Math.min(idx, 6) * 16).duration(250)}
           >
             <Pressable
               onPress={() => {
@@ -91,18 +97,20 @@ const FilterBar = React.memo(function FilterBar({
                 isActive
                   ? {
                       backgroundColor: activeColor,
-                      borderColor: "transparent",
-                      shadowColor: activeColor,
-                      shadowOffset: { width: 0, height: 4 },
-                      shadowOpacity: isDark ? 0.45 : 0.3,
-                      shadowRadius: 10,
-                      elevation: 5,
+                      borderColor:     "transparent",
+                      shadowColor:     activeColor,
+                      shadowOffset:    { width: 0, height: 4 },
+                      shadowOpacity:   isDark ? 0.45 : 0.28,
+                      shadowRadius:    10,
+                      elevation:       5,
                     }
                   : {
-                      backgroundColor: isDark ? colors.surfaceLight + "CC" : colors.surface,
+                      backgroundColor: isDark
+                        ? colors.surfaceLight + "CC"
+                        : colors.surface,
                       borderColor: colors.surfaceBorder,
                     },
-                { opacity: pressed ? 0.78 : 1, transform: [{ scale: pressed ? 0.96 : 1 }] },
+                { opacity: pressed ? 0.78 : 1, transform: [{ scale: pressed ? 0.95 : 1 }] },
               ]}
             >
               <Ionicons
@@ -120,6 +128,28 @@ const FilterBar = React.memo(function FilterBar({
               >
                 {f.label}
               </Text>
+              {showCount && (
+                <View
+                  style={[
+                    styles.badge,
+                    {
+                      backgroundColor: isActive
+                        ? "rgba(255,255,255,0.28)"
+                        : colors.surfaceBorder,
+                    },
+                  ]}
+                >
+                  <Text
+                    style={[
+                      styles.badgeText,
+                      { color: isActive ? "#fff" : colors.textMuted },
+                    ]}
+                    maxFontSizeMultiplier={1}
+                  >
+                    {f.count! > 99 ? "99+" : f.count}
+                  </Text>
+                </View>
+              )}
             </Pressable>
           </Animated.View>
         );
@@ -132,29 +162,41 @@ export default FilterBar;
 
 const styles = StyleSheet.create({
   scroll: {
-    flexGrow: 0,
+    flexGrow:   0,
     flexShrink: 0,
   },
   container: {
     paddingHorizontal: 16,
-    gap: 7,
+    gap:         7,
     paddingBottom: 8,
-    paddingTop: 2,
+    paddingTop:  2,
     flexDirection: "row",
-    alignItems: "center",
+    alignItems:  "center",
   },
   chip: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 5,
+    flexDirection:   "row",
+    alignItems:      "center",
+    gap:             5,
     paddingHorizontal: 13,
     paddingVertical: 8,
-    borderRadius: 100,
-    borderWidth: 1,
+    borderRadius:    100,
+    borderWidth:     1,
   },
   chipText: {
-    fontSize: 12,
-    fontFamily: "Inter_600SemiBold",
+    fontSize:    12,
+    fontFamily:  "Inter_600SemiBold",
     letterSpacing: 0.1,
+  },
+  badge: {
+    minWidth:        18,
+    height:          16,
+    borderRadius:    100,
+    alignItems:      "center",
+    justifyContent:  "center",
+    paddingHorizontal: 4,
+  },
+  badgeText: {
+    fontSize:   10,
+    fontFamily: "Inter_700Bold",
   },
 });

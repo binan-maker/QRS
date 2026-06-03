@@ -8,7 +8,7 @@ export interface HistoryItem {
   scanSource?: "camera" | "gallery" | "viewed";
 }
 
-export type Filter =
+export type FilterKey =
   | "all"
   | "url"
   | "text"
@@ -19,9 +19,14 @@ export type Filter =
   | "location"
   | "utility"
   | "business"
-  | "favorites"
-  | "camera"
-  | "gallery";
+  | "others"
+  | "favorites";
+
+/** @deprecated use FilterKey */
+export type Filter = FilterKey;
+
+/** The active filter state is always an array of FilterKey values. */
+export type ActiveFilters = FilterKey[];
 
 export type RiskLevel = "safe" | "caution" | "dangerous";
 

@@ -5,26 +5,25 @@ import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
 import HistoryItemSkeleton from "@/features/history/components/HistoryItemSkeleton";
 import { SKELETON_COUNT } from "@/features/history/utils/constants";
-import type { Filter } from "@/features/history/types";
+import type { ActiveFilters } from "@/features/history/types";
 
 interface Props {
-  user:         any;
-  cloudLoading: boolean;
-  searchQuery:  string;
-  filter:       Filter;
-  colors:       any;
-  fontSize:     (n: number) => number;
+  user:          any;
+  cloudLoading:  boolean;
+  searchQuery:   string;
+  activeFilters: ActiveFilters;
+  colors:        any;
+  fontSize:      (n: number) => number;
 }
 
 const EmptyState = React.memo(function EmptyState({
   user,
   cloudLoading,
   searchQuery,
-  filter,
+  activeFilters,
   colors,
   fontSize,
 }: Props) {
-  // ── Unauthenticated ─────────────────────────────────────────────────────────
   if (!user) {
     return (
       <View style={styles.wrap}>
@@ -58,7 +57,6 @@ const EmptyState = React.memo(function EmptyState({
     );
   }
 
-  // ── Cloud loading skeleton ───────────────────────────────────────────────────
   if (cloudLoading) {
     return (
       <View style={{ paddingTop: 4 }}>
@@ -69,7 +67,6 @@ const EmptyState = React.memo(function EmptyState({
     );
   }
 
-  // ── No search results ────────────────────────────────────────────────────────
   if (searchQuery.trim()) {
     return (
       <View style={styles.wrap}>
@@ -89,13 +86,22 @@ const EmptyState = React.memo(function EmptyState({
     );
   }
 
-  // ── Filter empty ─────────────────────────────────────────────────────────────
-  const isFavorites  = filter === "favorites";
+  const isFavorites = activeFilters.includes("favorites");
+  const isFiltered  = !activeFilters.includes("all") && activeFilters.length > 0;
+
   const emptyIcon: React.ComponentProps<typeof Ionicons>["name"] =
-    isFavorites ? "heart-outline" : "time-outline";
-  const emptyTitle   = isFavorites ? "No favorites yet" : "No scans yet";
-  const emptySub     = isFavorites
+    isFavorites ? "bookmark-outline" : isFiltered ? "filter-outline" : "time-outline";
+
+  const emptyTitle = isFavorites
+    ? "No favorites yet"
+    : isFiltered
+    ? "No scans match these filters"
+    : "No scans yet";
+
+  const emptySub = isFavorites
     ? "Tap the heart on a QR detail to save it here"
+    : isFiltered
+    ? "Try removing some filters to see more results"
     : "Scanned QR codes will appear here";
 
   return (
@@ -120,22 +126,22 @@ export default EmptyState;
 
 const styles = StyleSheet.create({
   wrap: {
-    alignItems:      "center",
-    gap:             10,
-    paddingVertical: 60,
+    alignItems:        "center",
+    gap:               10,
+    paddingVertical:   60,
     paddingHorizontal: 36,
   },
   iconWrap: {
-    width:         80,
-    height:        80,
-    borderRadius:  24,
-    alignItems:    "center",
+    width:          80,
+    height:         80,
+    borderRadius:   24,
+    alignItems:     "center",
     justifyContent: "center",
-    marginBottom:  8,
+    marginBottom:   8,
   },
   title: {
-    fontFamily:   "Inter_700Bold",
-    textAlign:    "center",
+    fontFamily:    "Inter_700Bold",
+    textAlign:     "center",
     letterSpacing: -0.3,
   },
   sub: {
@@ -144,17 +150,17 @@ const styles = StyleSheet.create({
     lineHeight: 20,
   },
   signInBtn: {
-    flexDirection:   "row",
-    alignItems:      "center",
-    gap:             8,
-    marginTop:       10,
+    flexDirection:     "row",
+    alignItems:        "center",
+    gap:               8,
+    marginTop:         10,
     paddingHorizontal: 28,
-    paddingVertical: 13,
-    borderRadius:    14,
+    paddingVertical:   13,
+    borderRadius:      14,
   },
   signInText: {
-    fontFamily:   "Inter_700Bold",
-    color:        "#fff",
+    fontFamily:    "Inter_700Bold",
+    color:         "#fff",
     letterSpacing: 0.2,
   },
 });

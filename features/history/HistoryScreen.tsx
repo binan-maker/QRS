@@ -33,19 +33,17 @@ function HistoryScreen() {
   const { colors } = useTheme();
   const { isOnline } = useNetworkStatus();
 
-  // Responsive font scaling
   const { width } = useWindowDimensions();
   const scale = Math.min(Math.max(width / 390, 0.82), 1.0);
   const rf = useCallback((size: number) => Math.round(size * scale), [scale]);
 
-  // Data + actions
   const {
     user,
     history,
     displayItems,
     safetyRiskMap,
-    filter,
-    setFilter,
+    activeFilters,
+    onFilterChange,
     refreshing,
     loadingMore,
     cloudLoading,
@@ -55,6 +53,7 @@ function HistoryScreen() {
     deleteItem,
     scanStats,
   } = useHistory();
+
   const { onTabScroll } = useTabBarScroll();
   const { headerStyle, setHeight, onScroll: onHeaderScroll, reset: resetHeader } = useHeaderHide();
   const [headerH, setHeaderH] = useState(0);
@@ -64,7 +63,6 @@ function HistoryScreen() {
     onTabScroll(e);
   }, [onHeaderScroll, onTabScroll]);
 
-  // Search state
   const {
     searchVisible,
     searchQuery,
@@ -79,17 +77,19 @@ function HistoryScreen() {
     if (searchVisible) resetHeader();
   }, [searchVisible, resetHeader]);
 
-  // Derived display data
-  const activeFilters  = useMemo(() => getActiveFilters(history, scanStats, user), [history, scanStats, user]);
-  // Use debouncedQuery (300ms lag) so matchesSearch / parseAnyPaymentQr
-  // only runs after the user pauses typing, not on every keystroke.
-  const searchedItems  = useMemo(
-    () => debouncedQuery.trim() ? displayItems.filter((item) => matchesSearch(item, debouncedQuery)) : displayItems,
+  const filterOptions = useMemo(
+    () => getActiveFilters(history, scanStats, user),
+    [history, scanStats, user]
+  );
+
+  const searchedItems = useMemo(
+    () => debouncedQuery.trim()
+      ? displayItems.filter((item) => matchesSearch(item, debouncedQuery))
+      : displayItems,
     [displayItems, debouncedQuery]
   );
-  const listRows       = useMemo(() => groupByDate(searchedItems), [searchedItems]);
+  const listRows = useMemo(() => groupByDate(searchedItems), [searchedItems]);
 
-  // ── List renderers ─────────────────────────────────────────────────────────
   const renderItem = useCallback(
     ({ item: row, index }: { item: ListRow; index: number }) => {
       if (row.kind === "header") {
@@ -122,20 +122,18 @@ function HistoryScreen() {
       user={user}
       cloudLoading={cloudLoading}
       searchQuery={searchQuery}
-      filter={filter}
+      activeFilters={activeFilters}
       colors={colors}
       fontSize={rf}
     />
-  ), [user, cloudLoading, searchQuery, filter, colors, rf]);
+  ), [user, cloudLoading, searchQuery, activeFilters, colors, rf]);
 
-  const keyExtractor  = useCallback((row: ListRow) => row.kind === "header" ? row.id : row.item.id, []);
-  const getItemType   = useCallback((row: ListRow) => row.kind === "header" ? "header" : "item", []);
+  const keyExtractor = useCallback((row: ListRow) => row.kind === "header" ? row.id : row.item.id, []);
+  const getItemType  = useCallback((row: ListRow) => row.kind === "header" ? "header" : "item", []);
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
 
-
-      {/* ── Absolute animated header group ─────────────────────── */}
       <Reanimated.View
         style={[
           styles.headerWrap,
@@ -165,7 +163,11 @@ function HistoryScreen() {
           )}
 
           {!searchVisible && (
-            <FilterBar filters={activeFilters} activeFilter={filter} onFilterChange={setFilter} />
+            <FilterBar
+              filters={filterOptions}
+              activeFilters={activeFilters}
+              onFilterChange={onFilterChange}
+            />
           )}
 
           {!isOnline && user && !searchVisible && (

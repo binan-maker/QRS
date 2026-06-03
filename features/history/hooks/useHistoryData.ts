@@ -1,9 +1,3 @@
-// ─── History Data ─────────────────────────────────────────────────────────────
-// Single responsibility: data fetching, caching, merging and derived state.
-// Covers: disk pre-warm, cloud history (paginated), favorites, scan stats,
-// local history, focus-based stale refetch, safety risk map, display filtering.
-// Contains zero action/mutation logic — see useHistory for delete/refresh.
-
 import { useCallback, useEffect, useMemo, useState } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useInfiniteQuery, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -25,8 +19,9 @@ import {
   getCachedScanStats,
   setCachedScanStats,
 } from "@/services/cache/qr-cache";
-import type { HistoryItem, RiskLevel, Filter } from "@/features/history/types";
-import { PAGE_SIZE, STALE_MS, SOCIAL_TYPES, PAYMENT_TYPES, CONTACT_TYPES, UTILITY_TYPES, BUSINESS_TYPES } from "@/features/history/utils/constants";
+import type { HistoryItem, RiskLevel, ActiveFilters } from "@/features/history/types";
+import { itemMatchesFilters } from "@/features/history/utils/filter-utils";
+import { PAGE_SIZE, STALE_MS } from "@/features/history/utils/constants";
 
 function mapScanItem(s: any): HistoryItem {
   return {
@@ -40,15 +35,13 @@ function mapScanItem(s: any): HistoryItem {
   };
 }
 
-export function useHistoryData(filter: Filter) {
+export function useHistoryData(activeFilters: ActiveFilters) {
   const { user }      = useAuth();
   const queryClient   = useQueryClient();
   const [localHistory, setLocalHistory] = useState<HistoryItem[]>([]);
   const [refreshing,   setRefreshing]   = useState(false);
 
-  // ── Disk pre-warm: seed React Query caches from disk before any network call.
-  //    Ensures the screen shows real data on cold launch with zero Firestore reads
-  //    until the 15-min stale window expires.
+  // ── Disk pre-warm ───────────────────────────────────────────────────────────
   useEffect(() => {
     if (!user?.id) return;
     const uid = user.id;
@@ -77,7 +70,7 @@ export function useHistoryData(filter: Filter) {
     }).catch(() => {});
   }, [user?.id]);
 
-  // ── Cloud history: paginated (15 min stale, 1 hr cache) ────────────────────
+  // ── Cloud history: paginated ────────────────────────────────────────────────
   const {
     data:               cloudData,
     fetchNextPage,
@@ -104,7 +97,7 @@ export function useHistoryData(filter: Filter) {
     enabled:          !!user?.id,
   });
 
-  // ── Favorites (15 min stale, 1 hr cache) ───────────────────────────────────
+  // ── Favorites ───────────────────────────────────────────────────────────────
   const { data: favoritesRaw, refetch: refetchFavorites } = useQuery({
     queryKey: ["favorites", user?.id],
     queryFn:  async () => {
@@ -119,7 +112,7 @@ export function useHistoryData(filter: Filter) {
     enabled:              !!user?.id,
   });
 
-  // ── Scan stats (15 min stale, 1 hr cache) ──────────────────────────────────
+  // ── Scan stats ──────────────────────────────────────────────────────────────
   const {
     data:      scanStats,
     isLoading: statsLoading,
@@ -183,26 +176,17 @@ export function useHistoryData(filter: Filter) {
   }, [history, favorites]);
 
   const displayItems = useMemo<HistoryItem[]>(() => {
-    if (filter === "favorites") return favorites;
-    return history.filter((item) => {
-      const ct = item.contentType;
-      switch (filter) {
-        case "all":      return true;
-        case "url":      return ct === "url";
-        case "text":     return ct === "text";
-        case "social":   return (SOCIAL_TYPES as readonly string[]).includes(ct);
-        case "payment":  return (PAYMENT_TYPES as readonly string[]).includes(ct);
-        case "contact":  return (CONTACT_TYPES as readonly string[]).includes(ct);
-        case "wifi":     return ct === "wifi";
-        case "location": return ct === "location";
-        case "utility":  return (UTILITY_TYPES as readonly string[]).includes(ct);
-        case "business": return (BUSINESS_TYPES as readonly string[]).includes(ct);
-        case "camera":   return (item.scanSource ?? "camera") === "camera";
-        case "gallery":  return item.scanSource === "gallery";
-        default:         return true;
-      }
-    });
-  }, [filter, history, favorites]);
+    // Favorites is always exclusive
+    if (activeFilters.includes("favorites")) return favorites;
+
+    // "all" (or empty) = show everything
+    const contentFilters = activeFilters.filter((k) => k !== "all");
+    if (contentFilters.length === 0) return history;
+
+    return history.filter((item) =>
+      itemMatchesFilters(item.contentType, contentFilters)
+    );
+  }, [activeFilters, history, favorites]);
 
   // ── Local history loading ───────────────────────────────────────────────────
   const loadLocalHistory = useCallback(async (userId?: string | null) => {
@@ -222,7 +206,7 @@ export function useHistoryData(filter: Filter) {
     loadLocalHistory(user?.id ?? null);
   }, [user?.id, loadLocalHistory]);
 
-  // ── Focus-based refetch: only when data is stale ────────────────────────────
+  // ── Focus-based refetch: only when stale ────────────────────────────────────
   useFocusEffect(
     useCallback(() => {
       loadLocalHistory(user?.id ?? null);
@@ -240,29 +224,23 @@ export function useHistoryData(filter: Filter) {
   return {
     user,
     queryClient,
-    // Local
     localHistory,
     setLocalHistory,
     loadLocalHistory,
-    // Cloud
     cloudHasMore:   cloudHasMore ?? false,
     loadingMore,
     cloudLoading,
     cloudError:     cloudError as boolean,
     fetchNextPage,
     refetchCloud,
-    // Favorites
     favorites,
     refetchFavorites,
-    // Stats
     scanStats:      scanStats ?? null,
     statsLoading,
     refetchStats,
-    // Derived
     history,
     safetyRiskMap,
     displayItems,
-    // Refresh state
     refreshing,
     setRefreshing,
   };
