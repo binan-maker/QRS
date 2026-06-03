@@ -7,24 +7,13 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { router } from "expo-router";
-import Reanimated, { FadeInDown, FadeIn, ZoomIn } from "react-native-reanimated";
+import Reanimated, { FadeInDown, ZoomIn } from "react-native-reanimated";
 import { useTheme } from "@/shared/contexts/ThemeContext";
 import { useTopInset } from "@/shared/utils/platform";
 import * as Haptics from "@/shared/utils/haptics";
 import { useTabBarScroll } from "@/shared/contexts/TabBarContext";
 import { useHeaderHide } from "@/shared/utils/use-header-hide";
 
-// ─── QR type showcase data ────────────────────────────────────────────────────
-const QR_TYPES = [
-  { key: "upi",      icon: "cash",                 label: "UPI Payment",   color: "#10B981", desc: "Generate UPI QR codes pre-filled with your VPA, amount, and payee name for instant payments." },
-  { key: "wifi",     icon: "wifi",                  label: "WiFi",          color: "#3B82F6", desc: "Share your WiFi network. Guests scan and connect instantly — no typing passwords ever again." },
-  { key: "url",      icon: "link",                  label: "Website URL",   color: "#6366F1", desc: "Turn any website link into a scannable QR code with full trust-score protection." },
-  { key: "contact",  icon: "person-circle",         label: "Contact Card",  color: "#F59E0B", desc: "Share your full contact info — name, phone, email, company — as a vCard via QR." },
-  { key: "business", icon: "storefront",            label: "Business",      color: "#EC4899", desc: "A full branded business QR page with your logo, hours, and verified merchant badge." },
-  { key: "event",    icon: "calendar",              label: "Event",         color: "#8B5CF6", desc: "Create QR codes for events with date, time, location, and RSVP link built in." },
-  { key: "sms",      icon: "chatbubble-ellipses",   label: "SMS",           color: "#14B8A6", desc: "Pre-fill an SMS message so users just hit send — perfect for feedback or support." },
-  { key: "email",    icon: "mail",                  label: "Email",         color: "#F97316", desc: "Open a pre-filled email with subject and body ready to send — zero friction." },
-] as const;
 
 // ─── Mock QR dot pattern (decorative, not real QR) ───────────────────────────
 const DOT_GRID = [
@@ -78,7 +67,6 @@ export default function GeneratorLanding() {
   const topInset   = useTopInset();
   const { width }  = useWindowDimensions();
 
-  const [selectedType, setSelectedType] = useState<string>("upi");
   const [showPhase2Hint, setShowPhase2Hint] = useState(false);
   const [headerH, setHeaderH] = useState(0);
   const hintAnim = useRef(new Animated.Value(0)).current;
@@ -91,8 +79,6 @@ export default function GeneratorLanding() {
     onTabScroll(e);
   }, [onHeaderScroll, onTabScroll]);
 
-  const selectedTypeData = QR_TYPES.find((t) => t.key === selectedType) ?? QR_TYPES[0];
-
   useEffect(() => {
     Animated.loop(
       Animated.sequence([
@@ -101,11 +87,6 @@ export default function GeneratorLanding() {
       ])
     ).start();
   }, []);
-
-  function handleTypePress(key: string) {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    setSelectedType(key);
-  }
 
   function handleModeCardPress() {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
@@ -171,7 +152,7 @@ export default function GeneratorLanding() {
                 <Text style={styles.heroBadgeText}>PREVIEW</Text>
               </View>
               <Text style={styles.heroTitle}>Your QR,{"\n"}Protected.</Text>
-              <Text style={styles.heroSub}>Every QR you create gets a trust score, analytics, and fraud protection built in.</Text>
+              <Text style={styles.heroSub}>Trust score, live analytics & fraud guard — built in.</Text>
               <View style={styles.heroStats}>
                 {[
                   { val: "0–100", label: "Trust Score" },
@@ -202,71 +183,6 @@ export default function GeneratorLanding() {
               </View>
             </Animated.View>
           </LinearGradient>
-        </Reanimated.View>
-
-        {/* ── QR Type Explorer ─────────────────────────────────── */}
-        <Reanimated.View entering={FadeInDown.delay(120).duration(300)}>
-          <View style={styles.sectionHeader}>
-            <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>EXPLORE QR TYPES</Text>
-            <View style={[styles.interactiveBadge, { backgroundColor: colors.primaryDim, borderColor: colors.primary + "40" }]}>
-              <Ionicons name="hand-left-outline" size={9} color={colors.primary} />
-              <Text style={[styles.interactiveBadgeText, { color: colors.primary }]}>tap to explore</Text>
-            </View>
-          </View>
-
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.typeChipsRow}
-          >
-            {QR_TYPES.map((t) => {
-              const active = selectedType === t.key;
-              return (
-                <Pressable
-                  key={t.key}
-                  onPress={() => handleTypePress(t.key)}
-                  style={({ pressed }) => [
-                    styles.typeChip,
-                    {
-                      backgroundColor: active ? t.color + "20" : colors.surface,
-                      borderColor:     active ? t.color + "80" : colors.surfaceBorder,
-                      borderWidth:     active ? 1.5 : 1,
-                      opacity:         pressed ? 0.78 : 1,
-                      transform:       [{ scale: pressed ? 0.93 : active ? 1.04 : 1 }],
-                    },
-                  ]}
-                >
-                  <View style={[styles.typeChipIcon, { backgroundColor: active ? t.color + "28" : colors.surfaceLight }]}>
-                    <Ionicons name={t.icon as any} size={15} color={active ? t.color : colors.textMuted} />
-                  </View>
-                  <Text style={[styles.typeChipLabel, { color: active ? t.color : colors.textSecondary }]}>
-                    {t.label}
-                  </Text>
-                </Pressable>
-              );
-            })}
-          </ScrollView>
-
-          {/* Type description card */}
-          <Reanimated.View
-            key={selectedType}
-            entering={FadeIn.duration(220)}
-            style={{ marginHorizontal: 20 }}
-          >
-            <View style={[styles.typeDescCard, {
-              backgroundColor: colors.surface,
-              borderColor: selectedTypeData.color + "40",
-              borderLeftColor: selectedTypeData.color,
-            }]}>
-              <View style={[styles.typeDescIcon, { backgroundColor: selectedTypeData.color + "18" }]}>
-                <Ionicons name={selectedTypeData.icon as any} size={20} color={selectedTypeData.color} />
-              </View>
-              <View style={{ flex: 1 }}>
-                <Text style={[styles.typeDescLabel, { color: selectedTypeData.color }]}>{selectedTypeData.label}</Text>
-                <Text style={[styles.typeDescText, { color: colors.textSecondary }]}>{selectedTypeData.desc}</Text>
-              </View>
-            </View>
-          </Reanimated.View>
         </Reanimated.View>
 
         {/* ── Mode Cards (interactive but Phase 2) ─────────────── */}
@@ -445,23 +361,6 @@ const styles = StyleSheet.create({
 
   sectionHeader: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingHorizontal: 20, marginBottom: 10 },
   sectionTitle:  { fontSize: 10, fontFamily: "Inter_700Bold", letterSpacing: 1 },
-  interactiveBadge: { flexDirection: "row", alignItems: "center", gap: 4, paddingHorizontal: 8, paddingVertical: 3, borderRadius: 6, borderWidth: 1 },
-  interactiveBadgeText: { fontSize: 9, fontFamily: "Inter_600SemiBold" },
-
-  typeChipsRow: { paddingHorizontal: 20, paddingTop: 8, paddingBottom: 12, gap: 8 },
-  typeChip:     { alignItems: "center", gap: 5, paddingHorizontal: 12, paddingVertical: 9, borderRadius: 14, borderWidth: 1 },
-  typeChipIcon: { width: 30, height: 30, borderRadius: 9, alignItems: "center", justifyContent: "center" },
-  typeChipLabel: { fontSize: 10, fontFamily: "Inter_600SemiBold" },
-
-  typeDescCard: {
-    flexDirection: "row", alignItems: "flex-start", gap: 12,
-    borderRadius: 14, borderWidth: 1, borderLeftWidth: 3,
-    padding: 14,
-  },
-  typeDescIcon:  { width: 38, height: 38, borderRadius: 11, alignItems: "center", justifyContent: "center", flexShrink: 0 },
-  typeDescLabel: { fontSize: 12, fontFamily: "Inter_700Bold", marginBottom: 3 },
-  typeDescText:  { fontSize: 12, fontFamily: "Inter_400Regular", lineHeight: 18 },
-
   modeSection:  { marginHorizontal: 20, gap: 12 },
   phase2Toast:  {
     flexDirection: "row", alignItems: "center", gap: 8,
