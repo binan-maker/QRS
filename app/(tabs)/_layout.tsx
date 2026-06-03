@@ -304,42 +304,62 @@ function ClassicTabLayout() {
   );
 
   return (
-    <Tabs initialRouteName="index" screenOptions={screenOptions}>
-      <Tabs.Screen
-        name="index"
-        options={{ title: t("tabs.home"), tabBarIcon: renderHomeIcon }}
-      />
+    <View style={{ flex: 1 }}>
+      <Tabs initialRouteName="index" screenOptions={screenOptions}>
+        <Tabs.Screen
+          name="index"
+          options={{ title: t("tabs.home"), tabBarIcon: renderHomeIcon }}
+        />
 
-      <Tabs.Screen
-        name="qr-generator"
-        options={{ title: t("tabs.generator"), tabBarIcon: renderGenIcon }}
-      />
+        <Tabs.Screen
+          name="qr-generator"
+          options={{ title: t("tabs.generator"), tabBarIcon: renderGenIcon }}
+        />
 
-      <Tabs.Screen
-        name="scanner"
-        options={{
-          title:           "",
-          tabBarLabel:     renderNoLabel,
-          tabBarStyle:     hiddenTabBar,
-          tabBarButton:    renderScanButton,
-        }}
-      />
+        <Tabs.Screen
+          name="scanner"
+          options={{
+            title:           "",
+            tabBarLabel:     renderNoLabel,
+            tabBarStyle:     hiddenTabBar,
+            tabBarButton:    renderScanButton,
+          }}
+        />
 
-      <Tabs.Screen
-        name="history"
-        options={{ title: t("tabs.history"), tabBarIcon: renderHistIcon }}
-      />
+        <Tabs.Screen
+          name="history"
+          options={{ title: t("tabs.history"), tabBarIcon: renderHistIcon }}
+        />
 
-      <Tabs.Screen
-        name="profile"
-        options={{ title: t("tabs.profile"), tabBarIcon: renderProfIcon }}
-      />
+        <Tabs.Screen
+          name="profile"
+          options={{ title: t("tabs.profile"), tabBarIcon: renderProfIcon }}
+        />
 
-      <Tabs.Screen
-        name="settings"
-        options={{ href: null, tabBarStyle: hiddenTabBar }}
-      />
-    </Tabs>
+        <Tabs.Screen
+          name="settings"
+          options={{ href: null, tabBarStyle: hiddenTabBar }}
+        />
+      </Tabs>
+
+      {/* Bottom system nav bar fill — covers the gesture/button nav zone when
+          the tab bar is animated off-screen during scroll, so the area never
+          shows raw content behind the system navigation buttons */}
+      {!isWeb && Platform.OS === "android" && insets.bottom > 0 && (
+        <View
+          pointerEvents="none"
+          style={{
+            position: "absolute",
+            bottom: 0,
+            left: 0,
+            right: 0,
+            height: insets.bottom,
+            backgroundColor: colors.background,
+            zIndex: 5,
+          }}
+        />
+      )}
+    </View>
   );
 }
 

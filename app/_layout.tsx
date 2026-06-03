@@ -7,6 +7,7 @@ import * as SystemUI from "expo-system-ui";
 import * as NavigationBar from "expo-navigation-bar";
 import React, { useEffect, useRef } from "react";
 import { Platform, View } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { setHapticsEnabled } from "@/shared/utils/haptics";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
@@ -85,6 +86,7 @@ function RootLayoutNav() {
 function ThemedApp() {
   const { colors } = useTheme();
   const isWeb = Platform.OS === "web";
+  const insets = useSafeAreaInsets();
 
   // Keep the Android system navigation bar background in sync with the app theme.
   // Without this, the gesture/button bar at the bottom appears transparent or
@@ -120,6 +122,26 @@ function ThemedApp() {
           <RootLayoutNav />
         </KeyboardProvider>
       </View>
+
+      {/* Status bar fill — permanently covers the top inset zone with the app
+          background color on every screen. Without this, when animated headers
+          slide away during scroll, card/list items show through behind the
+          transparent status bar (behind the battery / clock / signal icons).
+          pointerEvents="none" ensures it never blocks touch input. */}
+      {Platform.OS === "android" && insets.top > 0 && (
+        <View
+          pointerEvents="none"
+          style={{
+            position: "absolute",
+            top: 0,
+            left: 0,
+            right: 0,
+            height: insets.top,
+            backgroundColor: colors.background,
+            zIndex: 9999,
+          }}
+        />
+      )}
     </GestureHandlerRootView>
   );
 }
