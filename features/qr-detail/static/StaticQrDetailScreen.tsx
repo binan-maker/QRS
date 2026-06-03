@@ -202,6 +202,16 @@ export default function StaticQrDetailScreen({ id, ownerDocId, hint }: Props) {
       <QrToast message={toastState.message} icon={toastState.icon} toastKey={toastState.key} />
       <StatusBar style={isDark ? "light" : "dark"} backgroundColor={colors.background} />
 
+      {/* ── Permanent status-bar backdrop ───────────────────────────────────
+          The animated nav bar (zIndex 10) translates fully off-screen when the
+          user scrolls down — including the topInset padding area inside it.
+          This fixed strip (zIndex 11, never animated) always covers the battery /
+          clock region so scroll content never bleeds through behind the status bar. */}
+      <View
+        pointerEvents="none"
+        style={{ position: "absolute", top: 0, left: 0, right: 0, height: topInset, backgroundColor: colors.background, zIndex: 11 }}
+      />
+
       <KeyboardAvoidingView style={{ flex: 1 }} behavior="padding" keyboardVerticalOffset={0}>
         <View style={styles.container}>
 

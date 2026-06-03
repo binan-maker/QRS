@@ -151,6 +151,13 @@ export default function StandardQrDetailScreen({ id, standardUuid, ownerDocId, h
       <QrToast message={toastState.message} icon={toastState.icon} toastKey={toastState.key} />
       <StatusBar style={isDark ? "light" : "dark"} backgroundColor={colors.background} />
 
+      {/* ── Permanent status-bar backdrop ───────────────────────────────────
+          Keeps the battery / clock area clean when the nav bar slides off screen. */}
+      <View
+        pointerEvents="none"
+        style={{ position: "absolute", top: 0, left: 0, right: 0, height: topInset, backgroundColor: colors.background, zIndex: 11 }}
+      />
+
       <KeyboardAvoidingView style={{ flex: 1 }} behavior="padding" keyboardVerticalOffset={0}>
         <View style={styles.container}>
 
