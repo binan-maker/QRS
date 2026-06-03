@@ -13,7 +13,10 @@ function initAdminApp(): admin.app.App | null {
 
   try {
     const credential = admin.credential.cert(JSON.parse(serviceAccountJson));
-    return admin.initializeApp({ credential });
+    const databaseURL =
+      process.env.FIREBASE_DATABASE_URL ||
+      process.env.EXPO_PUBLIC_FIREBASE_DATABASE_URL;
+    return admin.initializeApp({ credential, ...(databaseURL ? { databaseURL } : {}) });
   } catch (err) {
     console.error("[firebase-admin] Failed to initialize Admin SDK:", err);
     return null;
