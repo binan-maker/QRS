@@ -19,10 +19,10 @@ function HomeScreen() {
   const { onTabScroll } = useTabBarScroll();
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.background, paddingTop: topInset }]}>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
       <ScrollView
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.scrollContent}
+        contentContainerStyle={[styles.scrollContent, { paddingTop: topInset + 6 }]}
         onScroll={onTabScroll}
         scrollEventThrottle={16}
         refreshControl={

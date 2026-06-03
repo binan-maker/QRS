@@ -123,25 +123,6 @@ function ThemedApp() {
         </KeyboardProvider>
       </View>
 
-      {/* Status bar fill — permanently covers the top inset zone with the app
-          background color on every screen. Without this, when animated headers
-          slide away during scroll, card/list items show through behind the
-          transparent status bar (behind the battery / clock / signal icons).
-          pointerEvents="none" ensures it never blocks touch input. */}
-      {Platform.OS === "android" && insets.top > 0 && (
-        <View
-          pointerEvents="none"
-          style={{
-            position: "absolute",
-            top: 0,
-            left: 0,
-            right: 0,
-            height: insets.top,
-            backgroundColor: colors.background,
-            zIndex: 9999,
-          }}
-        />
-      )}
     </GestureHandlerRootView>
   );
 }

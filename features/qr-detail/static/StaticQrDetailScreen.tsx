@@ -90,7 +90,7 @@ export default function StaticQrDetailScreen({ id, ownerDocId, hint }: Props) {
     key: number;
   }>({ message: "", icon: "checkmark-circle", key: 0 });
   const reportSectionY = useRef(0);
-  const { navAnimatedStyle, onNavScroll } = useNavHide();
+  const { navAnimatedStyle, onNavScroll, setNavHeight } = useNavHide();
   const [navBarH, setNavBarH] = useState(0);
 
   const showToast = useCallback(
@@ -211,7 +211,7 @@ export default function StaticQrDetailScreen({ id, ownerDocId, hint }: Props) {
               { position: "absolute", top: 0, left: 0, right: 0, zIndex: 10, backgroundColor: colors.background },
               navAnimatedStyle,
             ]}
-            onLayout={(e: any) => setNavBarH(e.nativeEvent.layout.height)}
+            onLayout={(e: any) => { const h = e.nativeEvent.layout.height; setNavBarH(h); setNavHeight(h); }}
           >
             <View style={{ paddingTop: topInset }}>
               <QrDetailNavBar

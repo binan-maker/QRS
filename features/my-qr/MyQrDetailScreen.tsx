@@ -2,6 +2,8 @@ import { useState } from "react";
 import { View, Text, ScrollView, Pressable, ActivityIndicator } from "react-native";
 import { StatusBar } from "expo-status-bar";
 import { useLocalSearchParams, router } from "expo-router";
+import Animated from "react-native-reanimated";
+import { useNavHide } from "@/shared/utils/use-nav-hide";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTopInset } from "@/shared/utils/platform";
@@ -34,6 +36,9 @@ export default function MyQrDetailScreen() {
   const { rf, sp } = useScaleFns();
   const topInset = useTopInset();
   const tabBarHeight = 62 + insets.bottom + 8;
+
+  const { navAnimatedStyle, onNavScroll, setNavHeight } = useNavHide();
+  const [navBarH, setNavBarH] = useState(0);
 
   const [structuredFields, setStructuredFields] = useState<Record<string, string>>({});
   const [deactivateModalOpen, setDeactivateModalOpen] = useState(false);
@@ -165,19 +170,30 @@ export default function MyQrDetailScreen() {
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.background }}>
-      <StatusBar style={isDark ? "light" : "dark"} backgroundColor={colors.background} />
+      <StatusBar style={isDark ? "light" : "dark"} />
 
-      <View style={{ paddingTop: topInset }}>
-        <MyQrNavBar
-          isBusiness={isBusiness}
-          docId={id as string}
-        />
-      </View>
+      {/* Animated nav bar — slides fully off screen on scroll-down */}
+      <Animated.View
+        style={[
+          { position: "absolute", top: 0, left: 0, right: 0, zIndex: 10, backgroundColor: colors.background },
+          navAnimatedStyle,
+        ]}
+        onLayout={(e: any) => { const h = e.nativeEvent.layout.height; setNavBarH(h); setNavHeight(h); }}
+      >
+        <View style={{ paddingTop: topInset }}>
+          <MyQrNavBar
+            isBusiness={isBusiness}
+            docId={id as string}
+          />
+        </View>
+      </Animated.View>
 
       <ScrollView
         ref={scrollRef}
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ paddingHorizontal: sp(20), paddingBottom: tabBarHeight + 20 }}
+        contentContainerStyle={{ paddingHorizontal: sp(20), paddingBottom: tabBarHeight + 20, paddingTop: navBarH }}
+        onScroll={onNavScroll}
+        scrollEventThrottle={16}
       >
         <QrHeroCard
           qrContent={qrItem.content || "https://qrguard.app"}

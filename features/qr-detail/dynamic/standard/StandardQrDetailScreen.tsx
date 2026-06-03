@@ -135,7 +135,7 @@ export default function StandardQrDetailScreen({ id, standardUuid, ownerDocId, h
   }, [user, q.isFavorite, q.handleToggleFavorite, showToast]);
 
   const reportSectionY = useRef(0);
-  const { navAnimatedStyle, onNavScroll } = useNavHide();
+  const { navAnimatedStyle, onNavScroll, setNavHeight } = useNavHide();
   const [navBarH, setNavBarH] = useState(0);
   const handleReportPress = useCallback(() => {
     setOverflowOpen(false);
@@ -160,7 +160,7 @@ export default function StandardQrDetailScreen({ id, standardUuid, ownerDocId, h
               { position: "absolute", top: 0, left: 0, right: 0, zIndex: 10, backgroundColor: colors.background },
               navAnimatedStyle,
             ]}
-            onLayout={(e: any) => setNavBarH(e.nativeEvent.layout.height)}
+            onLayout={(e: any) => { const h = e.nativeEvent.layout.height; setNavBarH(h); setNavHeight(h); }}
           >
             <View style={{ paddingTop: topInset }}>
               <Animated.View entering={FadeInDown.delay(0).duration(260)} style={[styles.navBar, { gap: 10 }]}>

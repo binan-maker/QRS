@@ -296,9 +296,6 @@ export default function MyQrCodesScreen() {
   return (
     <View style={{ flex: 1, backgroundColor: colors.background }}>
 
-      {/* Status bar background — always covers the safe-area top so the battery/time area never shows a dark strip when the header slides in/out */}
-      <View style={{ position: "absolute", top: 0, left: 0, right: 0, height: topInset, backgroundColor: colors.background, zIndex: 20 }} />
-
       {/* Header — absolute, hides on scroll (title + search + sort all together) */}
       <ReAnimated.View
         style={[{
