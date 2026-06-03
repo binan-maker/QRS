@@ -105,14 +105,20 @@ export default function CommentsSection({
     (c: CommentData) => {
       if (!user) { router.push("/(auth)/login"); return; }
       const rootId = getRootCommentId(c.id);
+      const author = c.userUsername ? `@${c.userUsername}` : smartName(c.user.displayName);
       setReplyTo({
         id: c.id,
-        author: c.userUsername ? `@${c.userUsername}` : smartName(c.user.displayName),
+        author,
         rootId,
         isNested: !!c.parentId,
       });
+      // YouTube-style: when replying to a reply (not the root comment),
+      // pre-fill the @mention so the flat thread shows who was replied to.
+      if (c.parentId) {
+        setNewComment(`${author} `);
+      }
     },
-    [user, getRootCommentId, setReplyTo],
+    [user, getRootCommentId, setReplyTo, setNewComment],
   );
 
   const onMenuOpen = useCallback(
@@ -167,7 +173,14 @@ export default function CommentsSection({
               <Text style={styles.replyBannerText} numberOfLines={1}>
                 Replying to <Text style={{ color: colors.text }}>{replyTo.author}</Text>
               </Text>
-              <Pressable onPress={() => setReplyTo(null)} style={{ marginLeft: "auto" as any }}>
+              <Pressable
+                onPress={() => {
+                  setReplyTo(null);
+                  // Clear the auto-filled @mention if dismissing a nested reply
+                  if (replyTo?.isNested) setNewComment("");
+                }}
+                style={{ marginLeft: "auto" as any }}
+              >
                 <Ionicons name="close" size={14} color={colors.textMuted} />
               </Pressable>
             </View>

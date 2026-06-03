@@ -203,10 +203,26 @@ const CommentItem = React.memo(function CommentItem({
           </Pressable>
         </View>
 
-        {/* Comment text */}
+        {/* Comment text — leading @mention rendered in primary colour */}
         <View>
           <Text style={[styles.commentText, { color: colors.text }]}>
-            {displayText}
+            {((): React.ReactNode => {
+              // Detect a leading @mention (e.g. "@username rest of reply")
+              if (displayText.startsWith("@")) {
+                const si = displayText.indexOf(" ");
+                if (si > 0) {
+                  return (
+                    <>
+                      <Text style={{ color: colors.primary, fontFamily: "Inter_600SemiBold" }}>
+                        {displayText.slice(0, si)}
+                      </Text>
+                      {displayText.slice(si)}
+                    </>
+                  );
+                }
+              }
+              return displayText;
+            })()}
             {isLong && !textExpanded && (
               <Text
                 style={[styles.readMoreText, { color: colors.primary }]}
