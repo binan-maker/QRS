@@ -21,6 +21,7 @@ import { db } from "./client";
 const NUM_SHARDS = 10; // Adjust based on expected peak load (10 = ~10 writes/sec)
 const MAX_RETRIES = 3;
 const INITIAL_RETRY_DELAY_MS = 100;
+const DISTRIBUTED_THRESHOLD = 1000; // Switch to sharded counters above this scan count
 
 /**
  * Get a random shard ID for distributing writes
@@ -176,10 +177,6 @@ export async function incrementSmartCounter(
   currentScanCount: number,
   delta: number = 1
 ): Promise<void> {
-  // Threshold: Switch to distributed counters after 1000 scans
-  // or if we detect high velocity (could add RTDB velocity check here)
-  const DISTRIBUTED_THRESHOLD = 1000;
-  
   if (currentScanCount >= DISTRIBUTED_THRESHOLD) {
     await incrementDistributedCounter(qrId, delta);
   } else {
