@@ -4,7 +4,6 @@ import { router } from "expo-router";
 import * as ImagePicker from "expo-image-picker";
 import * as Haptics from "@/shared/utils/haptics";
 import { scanFromURLAsync } from "expo-camera";
-import * as FileSystem from "expo-file-system";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { setAnonymousQrContent } from "@/services/cache/anonymous-session";
 import { useAuth } from "@/shared/contexts/AuthContext";
@@ -312,11 +311,8 @@ export function useScanProcessor({
     [scanned, anonymousMode, user, token]
   );
 
-  async function decodeImageViaServer(uri: string): Promise<string | null> {
+  async function decodeImageViaServer(base64: string): Promise<string | null> {
     try {
-      const base64 = await FileSystem.readAsStringAsync(uri, {
-        encoding: FileSystem.EncodingType.Base64,
-      });
       const { getApiUrl } = await import("@/shared/utils/query-client");
       const baseUrl = getApiUrl();
       const url = new URL("/api/qr/decode-image", baseUrl).toString();
@@ -342,6 +338,8 @@ export function useScanProcessor({
       return;
     }
 
+    const isAndroidNative = Platform.OS === "android";
+
     let result: ImagePicker.ImagePickerResult;
     try {
       result = await ImagePicker.launchImageLibraryAsync({
@@ -349,6 +347,7 @@ export function useScanProcessor({
         allowsEditing:           false,
         allowsMultipleSelection: false,
         exif:                    false,
+        base64:                  isAndroidNative,
       });
     } catch {
       showGalleryError("Could not open your gallery. Please try again.");
@@ -361,19 +360,19 @@ export function useScanProcessor({
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
 
     try {
-      const uri = result.assets[0].uri;
+      const asset = result.assets[0];
       let content: string | null = null;
 
       if (Platform.OS === "web") {
-        content = await decodeQrFromImageUri(uri);
-      } else if (Platform.OS === "android" && !isCameraAvailable) {
-        content = await decodeImageViaServer(uri);
+        content = await decodeQrFromImageUri(asset.uri);
+      } else if (isAndroidNative && !isCameraAvailable) {
+        content = await decodeImageViaServer(asset.base64 ?? "");
       } else {
         try {
-          const results = await scanFromURLAsync(uri, ["qr"]);
+          const results = await scanFromURLAsync(asset.uri, ["qr"]);
           content = results?.[0]?.data ?? null;
         } catch {
-          content = await decodeImageViaServer(uri);
+          if (asset.base64) content = await decodeImageViaServer(asset.base64);
         }
       }
 
