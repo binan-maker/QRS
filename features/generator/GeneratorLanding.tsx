@@ -111,8 +111,8 @@ export default function GeneratorLanding() {
 
 
       {/* ── Header (absolute, hides on scroll) ───────────────────── */}
+      {/* Outer: position + scroll-hide transform only — no entering prop */}
       <Reanimated.View
-        entering={FadeInDown.delay(0).duration(240)}
         style={[
           styles.header,
           { paddingTop: topInset + 6, position: "absolute", top: 0, left: 0, right: 0, zIndex: 10, backgroundColor: colors.background },
@@ -120,14 +120,17 @@ export default function GeneratorLanding() {
         ]}
         onLayout={(e: LayoutChangeEvent) => { const h = e.nativeEvent.layout.height; setHeaderH(h); setHeight(h); }}
       >
-        <View>
-          <Text style={[styles.headerTitle, { color: colors.text }]}>QR Generator</Text>
-          <Text style={[styles.headerSub, { color: colors.textMuted }]}>Build and protect QR codes</Text>
-        </View>
-        <View style={[styles.phasePill, { backgroundColor: "#7C3AED18", borderColor: "#7C3AED50" }]}>
-          <View style={[styles.phaseDot, { backgroundColor: "#7C3AED" }]} />
-          <Text style={styles.phasePillText}>PHASE 2</Text>
-        </View>
+        {/* Inner: mount animation only — no transform */}
+        <Reanimated.View entering={FadeInDown.delay(0).duration(240)} style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
+          <View>
+            <Text style={[styles.headerTitle, { color: colors.text }]}>QR Generator</Text>
+            <Text style={[styles.headerSub, { color: colors.textMuted }]}>Build and protect QR codes</Text>
+          </View>
+          <View style={[styles.phasePill, { backgroundColor: "#7C3AED18", borderColor: "#7C3AED50" }]}>
+            <View style={[styles.phaseDot, { backgroundColor: "#7C3AED" }]} />
+            <Text style={styles.phasePillText}>PHASE 2</Text>
+          </View>
+        </Reanimated.View>
       </Reanimated.View>
 
       <ScrollView
