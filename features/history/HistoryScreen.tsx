@@ -134,14 +134,6 @@ function HistoryScreen() {
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
 
-      {/* ── Permanent status-bar backdrop ───────────────────────────────────
-          The animated header (zIndex 10) slides fully off screen when scrolling
-          down, taking the topInset padding region with it. This fixed strip
-          (zIndex 11, never animated) keeps the battery / clock area covered. */}
-      <View
-        pointerEvents="none"
-        style={{ position: "absolute", top: 0, left: 0, right: 0, height: topInset, backgroundColor: colors.background, zIndex: 11 }}
-      />
 
       {/* ── Absolute animated header group ─────────────────────── */}
       <Reanimated.View

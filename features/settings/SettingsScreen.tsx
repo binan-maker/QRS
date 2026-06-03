@@ -186,14 +186,6 @@ export default function SettingsScreen() {
 
   return (
     <View style={styles.container}>
-      {/* ── Permanent status-bar backdrop ───────────────────────────────────
-          The animated header (zIndex 10) slides fully off screen when scrolling
-          down, taking the topInset padding region with it. This fixed strip
-          (zIndex 11, never animated) keeps the battery / clock area covered. */}
-      <View
-        pointerEvents="none"
-        style={{ position: "absolute", top: 0, left: 0, right: 0, height: topInset, backgroundColor: colors.background, zIndex: 11 }}
-      />
       <Reanimated.View
         style={[
           { position: "absolute", top: 0, left: 0, right: 0, zIndex: 10, backgroundColor: colors.background },

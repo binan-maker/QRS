@@ -172,12 +172,6 @@ export default function MyQrDetailScreen() {
     <View style={{ flex: 1, backgroundColor: colors.background }}>
       <StatusBar style={isDark ? "light" : "dark"} />
 
-      {/* ── Permanent status-bar backdrop ───────────────────────────────────
-          Keeps the battery / clock area clean when the nav bar slides off screen. */}
-      <View
-        pointerEvents="none"
-        style={{ position: "absolute", top: 0, left: 0, right: 0, height: topInset, backgroundColor: colors.background, zIndex: 11 }}
-      />
 
       {/* Animated nav bar — slides fully off screen on scroll-down */}
       <Animated.View

@@ -118,7 +118,7 @@ function ThemedApp() {
         }}
       >
         <KeyboardProvider>
-          <StatusBar style={colors.statusBar} backgroundColor={colors.background} />
+          <StatusBar style={colors.statusBar} backgroundColor="transparent" translucent />
           <RootLayoutNav />
         </KeyboardProvider>
       </View>
