@@ -186,6 +186,7 @@ const NotificationsModal = React.memo(function NotificationsModal({
           style={styles.list}
           showsVerticalScrollIndicator={false}
           contentContainerStyle={{ flexGrow: 1 }}
+          removeClippedSubviews={false}
         />
       </View>
     </Modal>
