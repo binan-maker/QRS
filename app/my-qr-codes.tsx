@@ -6,7 +6,7 @@ import {
 } from "react-native";
 import { FlashList as _FlashList } from "@shopify/flash-list";
 const FlashList = _FlashList as any;
-import { router, useFocusEffect } from "expo-router";
+import { router, useFocusEffect, useLocalSearchParams } from "expo-router";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTopInset } from "@/shared/utils/platform";
@@ -103,6 +103,11 @@ export default function MyQrCodesScreen() {
     onTabScroll(e);
   }, [onHeaderScroll, onTabScroll]);
 
+  const { scrollToId } = useLocalSearchParams<{ scrollToId?: string }>();
+
+  const flashListRef = useRef<any>(null);
+  const scrolledRef  = useRef(false);
+
   const [qrCodes,     setQrCodes]    = useState<GeneratedQrItem[]>([]);
   const [loading,     setLoading]    = useState(true);
   const [refreshing,  setRefreshing] = useState(false);
@@ -170,6 +175,23 @@ export default function MyQrCodesScreen() {
       setDisplayCount((c) => Math.min(c + PAGE_SIZE, sorted.length));
     }
   }, [displayCount, sorted.length]);
+
+  // Scroll to specific QR when navigated from profile card
+  useEffect(() => {
+    if (!scrollToId || scrolledRef.current || sorted.length === 0 || loading) return;
+    const idx = sorted.findIndex((q) => q.docId === scrollToId);
+    if (idx < 0) return;
+    scrolledRef.current = true;
+    // Ensure the item is within the paged window first
+    if (idx >= displayCount) setDisplayCount(idx + 1);
+    // Give FlashList a frame to render then scroll
+    const t = setTimeout(() => {
+      try {
+        flashListRef.current?.scrollToIndex({ index: idx, animated: true, viewPosition: 0 });
+      } catch {}
+    }, 200);
+    return () => clearTimeout(t);
+  }, [scrollToId, sorted, loading, displayCount]);
 
   function renderQrItem({ item, index }: { item: GeneratedQrItem; index: number }) {
     const displayText = getDisplayText(item, index);
@@ -577,6 +599,7 @@ export default function MyQrCodesScreen() {
         )
       ) : (
         <FlashList
+          ref={flashListRef}
           data={paged}
           keyExtractor={(item: any) => item.docId ?? item.id}
           renderItem={renderQrItem}

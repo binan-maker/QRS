@@ -7,16 +7,17 @@ import type { QrItem } from "./QrPreviewCard";
 const CARD_W    = 88;
 const CARD_H    = 88;
 const OFFSET_X  = 30;
-const MAX_STACK = 12;
+const MAX_STACK = 13;
 
 interface Props {
-  qrs:        QrItem[];
-  totalCount: number;
-  colors:     any;
-  onViewAll:  () => void;
+  qrs:          QrItem[];
+  totalCount:   number;
+  colors:       any;
+  onViewAll:    () => void;
+  onPressCard?: (qr: QrItem, index: number) => void;
 }
 
-export function QrStack({ qrs, totalCount, colors, onViewAll }: Props) {
+export function QrStack({ qrs, totalCount, colors, onViewAll, onPressCard }: Props) {
   const visible = qrs.slice(0, MAX_STACK);
   const n       = visible.length;
 
@@ -33,10 +34,10 @@ export function QrStack({ qrs, totalCount, colors, onViewAll }: Props) {
         i=0   → back card,  LEFTMOST  (left=0,              zIndex=1)
         i=n-1 → front card, RIGHTMOST (left=(n-1)*OFFSET_X, zIndex=n)
         Render in natural order so i=n-1 paints on top (frontmost).
-        More card overlays the rightmost/frontmost slot.
+        More-overlay goes on the frontmost (rightmost) slot.
 
-        Layout: Animated.View (entering only, no transform) wraps Pressable
-        (press scale/opacity only). This avoids the Reanimated warning about
+        Animated.View handles enter animation only; Pressable handles
+        press scale/opacity. This avoids the Reanimated warning about
         "transform overwritten by layout animation".
       */}
       {visible.map((qr, i) => {
@@ -47,7 +48,7 @@ export function QrStack({ qrs, totalCount, colors, onViewAll }: Props) {
         return (
           <Animated.View
             key={qr.docId ?? i}
-            entering={FadeIn.delay(i * 20).duration(220)}
+            entering={FadeIn.delay(i * 18).duration(210)}
             style={[
               styles.slot,
               {
@@ -58,7 +59,13 @@ export function QrStack({ qrs, totalCount, colors, onViewAll }: Props) {
             ]}
           >
             <Pressable
-              onPress={onViewAll}
+              onPress={() => {
+                if (onPressCard) {
+                  onPressCard(qr, i);
+                } else {
+                  onViewAll();
+                }
+              }}
               style={({ pressed }) => [
                 styles.card,
                 {
@@ -79,7 +86,6 @@ export function QrStack({ qrs, totalCount, colors, onViewAll }: Props) {
                 ecl="L"
               />
 
-              {/* "+N more" overlay on the frontmost (rightmost) card */}
               {isFront && extraCount > 0 && (
                 <View style={[styles.moreOverlay, { backgroundColor: colors.primary + "DD" }]}>
                   <Text style={styles.moreCount}>+{extraCount}</Text>

@@ -170,7 +170,7 @@ function ProfileScreen() {
   const tabBarHeight = 60 + insets.bottom;
   const { onTabScroll } = useTabBarScroll();
 
-  const previewQrs = useMemo(() => myQrCodes.slice(0, 7), [myQrCodes]);
+  const previewQrs = useMemo(() => myQrCodes.slice(0, 13), [myQrCodes]);
   const totalQrScans = useMemo(
     () => myQrCodes.reduce((sum, qr) => sum + (qr.scanCount || 0), 0),
     [myQrCodes],
@@ -204,6 +204,13 @@ function ProfileScreen() {
   const goToLogin       = useCallback(() => safePush("/(auth)/login"),        []);
   const goToRegister    = useCallback(() => safePush("/(auth)/register"),     []);
   const goToMyQrCodes   = useCallback(() => safePush("/my-qr-codes"),         []);
+
+  const handleQrCardPress = useCallback(
+    (qr: import("@/features/profile/components/QrPreviewCard").QrItem) => {
+      safePush({ pathname: "/my-qr-codes" as any, params: { scrollToId: qr.docId ?? "" } });
+    },
+    []
+  );
   const goToGenerator   = useCallback(() => safePush("/(tabs)/qr-generator"), []);
 
   if (!user) {
@@ -400,6 +407,7 @@ function ProfileScreen() {
               totalCount={myQrCodes.length}
               colors={colors}
               onViewAll={goToMyQrCodes}
+              onPressCard={handleQrCardPress}
             />
           )}
         </Animated.View>
