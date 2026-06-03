@@ -107,12 +107,11 @@ export default function ScannerScreen() {
   }, []);
 
   // ── Hardware availability check ────────────────────────────────────────────
+  // Run on ALL platforms — do NOT hardcode true for Android. Devices with 0
+  // cameras will make CameraX throw an uncaught native exception the moment
+  // CameraView mounts; isAvailableAsync() prevents the mount entirely.
   useEffect(() => {
     let cancelled = false;
-    if (Platform.OS === "android") {
-      setHardwareAvailable(true);
-      return () => { cancelled = true; };
-    }
     CameraView.isAvailableAsync()
       .then((available) => { if (!cancelled) setHardwareAvailable(available); })
       .catch(() => { if (!cancelled) setHardwareAvailable(false); });
@@ -124,7 +123,10 @@ export default function ScannerScreen() {
   useEffect(() => {
     if (!permission?.granted || hardwareAvailable !== true || !cameraActive) return;
 
-    const timeoutMs = Platform.OS === "android" ? 25000 : 12000;
+    // Shorter Android timeout — CameraX fails fast on broken hardware; a long
+    // window leaves the user able to trigger gallery/flash while CameraX is
+    // still crashing in a background thread.
+    const timeoutMs = Platform.OS === "android" ? 8000 : 12000;
     cameraReadyTimerRef.current = setTimeout(() => {
       setCameraAvailable((prev) => {
         if (prev) setCameraErrorType("unavailable");
