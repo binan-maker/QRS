@@ -106,12 +106,12 @@ const StatCell = React.memo(function StatCell({
   );
 });
 
-// ── QR skeleton stack (horizontal fan, matches MAX_STACK=7 + more slot) ───────
+// ── QR skeleton stack (horizontal fan, matches MAX_STACK=12 + more slot) ──────
 const QrSkeletonStack = React.memo(function QrSkeletonStack() {
   const { colors } = useTheme();
   const CARD  = 88;
   const OFF_X = 30;
-  const n     = 8; // 7 real + 1 "more" slot
+  const n     = 13; // 12 real + 1 "more" slot
   return (
     <Animated.View
       entering={QR_SKELETON_ENTER}

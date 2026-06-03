@@ -6,8 +6,8 @@ import type { QrItem } from "./QrPreviewCard";
 
 const CARD_W    = 88;
 const CARD_H    = 88;
-const OFFSET_X  = 30;   // how far each card peeks out
-const MAX_STACK = 7;
+const OFFSET_X  = 30;
+const MAX_STACK = 12;
 
 interface Props {
   qrs:        QrItem[];
@@ -20,7 +20,6 @@ export function QrStack({ qrs, totalCount, colors, onViewAll }: Props) {
   const visible = qrs.slice(0, MAX_STACK);
   const n       = visible.length;
 
-  // Total width: back card takes CARD_W, then each subsequent card adds OFFSET_X
   const containerW = CARD_W + (n - 1) * OFFSET_X;
   const containerH = CARD_H;
 
@@ -28,39 +27,46 @@ export function QrStack({ qrs, totalCount, colors, onViewAll }: Props) {
   const qrSize     = Math.floor(CARD_W * 0.66);
 
   return (
-    <Pressable
-      onPress={onViewAll}
-      style={({ pressed }) => ({
-        opacity:   pressed ? 0.88 : 1,
-        transform: [{ scale: pressed ? 0.97 : 1 }],
-      })}
-    >
-      <View style={{ width: containerW, height: containerH, position: "relative" }}>
-        {/*
-          Fan spreads → right.
-          i=0   → back card,  LEFTMOST  (left=0,              zIndex=1)
-          i=n-1 → front card, RIGHTMOST (left=(n-1)*OFFSET_X, zIndex=n)
-          Render in natural order so i=n-1 paints on top (frontmost).
-          More card overlays the rightmost/frontmost slot.
-        */}
-        {visible.map((qr, i) => {
-          const isFront = i === n - 1;
-          const thumbBg = qr.bgColor || "#FFFFFF";
-          const fgColor = qr.fgColor || "#000000";
+    <View style={{ width: containerW, height: containerH, position: "relative" }}>
+      {/*
+        Fan spreads → right.
+        i=0   → back card,  LEFTMOST  (left=0,              zIndex=1)
+        i=n-1 → front card, RIGHTMOST (left=(n-1)*OFFSET_X, zIndex=n)
+        Render in natural order so i=n-1 paints on top (frontmost).
+        More card overlays the rightmost/frontmost slot.
 
-          return (
-            <Animated.View
-              key={qr.docId ?? i}
-              entering={FadeIn.delay(i * 20).duration(220)}
-              style={[
+        Layout: Animated.View (entering only, no transform) wraps Pressable
+        (press scale/opacity only). This avoids the Reanimated warning about
+        "transform overwritten by layout animation".
+      */}
+      {visible.map((qr, i) => {
+        const isFront = i === n - 1;
+        const thumbBg = qr.bgColor || "#FFFFFF";
+        const fgColor = qr.fgColor || "#000000";
+
+        return (
+          <Animated.View
+            key={qr.docId ?? i}
+            entering={FadeIn.delay(i * 20).duration(220)}
+            style={[
+              styles.slot,
+              {
+                left:      i * OFFSET_X,
+                zIndex:    i + 1,
+                elevation: i + 1,
+              },
+            ]}
+          >
+            <Pressable
+              onPress={onViewAll}
+              style={({ pressed }) => [
                 styles.card,
                 {
-                  left:            i * OFFSET_X,
                   backgroundColor: thumbBg,
                   borderColor:     colors.surfaceBorder,
                   shadowOpacity:   isFront ? 0.18 : 0.08,
-                  elevation:       i + 1,
-                  zIndex:          i + 1,
+                  opacity:         pressed ? 0.82 : 1,
+                  transform:       [{ scale: pressed ? 0.93 : 1 }],
                 },
               ]}
             >
@@ -80,18 +86,20 @@ export function QrStack({ qrs, totalCount, colors, onViewAll }: Props) {
                   <Text style={styles.moreLabel}>more</Text>
                 </View>
               )}
-            </Animated.View>
-          );
-        })}
-      </View>
-    </Pressable>
+            </Pressable>
+          </Animated.View>
+        );
+      })}
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
+  slot: {
+    position: "absolute",
+    top:      0,
+  },
   card: {
-    position:       "absolute",
-    top:            0,
     width:          CARD_W,
     height:         CARD_H,
     borderRadius:   18,
