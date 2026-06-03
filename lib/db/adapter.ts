@@ -23,6 +23,14 @@ export interface QueryResult {
   cursor: any;
 }
 
+export interface BatchWriter {
+  set(path: string[], data: Record<string, any>): void;
+  update(path: string[], data: Record<string, any>): void;
+  delete(path: string[]): void;
+  increment(path: string[], field: string, delta?: number): void;
+  commit(): Promise<void>;
+}
+
 export interface DbAdapter {
   get(path: string[]): Promise<Record<string, any> | null>;
   set(path: string[], data: Record<string, any>): Promise<void>;
@@ -31,6 +39,7 @@ export interface DbAdapter {
   delete(path: string[]): Promise<void>;
   query(collectionPath: string[], opts?: QueryOptions): Promise<QueryResult>;
   increment(docPath: string[], field: string, delta?: number): Promise<void>;
+  batch(): BatchWriter;
   onDoc(path: string[], cb: (data: Record<string, any> | null) => void): () => void;
   onQuery(collectionPath: string[], opts: QueryOptions, cb: (docs: DbDocument[]) => void): () => void;
   timestamp(): any;

@@ -4,6 +4,7 @@ import { tsToString } from "../utils";
 import type { QrType, ScanVelocityBucket, GeneratedQrItem } from "../types";
 import { SIGNATURE_SALT } from "../types";
 import { getQrCodeId } from "../qr-service";
+import { getEffectiveScanCount } from "@/lib/db/distributed-counter";
 
 export type { QrType, ScanVelocityBucket, GeneratedQrItem };
 
@@ -159,7 +160,8 @@ export async function getGeneratedQrById(userId: string, docId: string): Promise
       try {
         const qrData = await db.get(["qrCodes", data.qrCodeId]);
         if (qrData) {
-          scanCount = qrData.scanCount || scanCount;
+          const storedScanCount = qrData.scanCount || scanCount;
+          scanCount = await getEffectiveScanCount(data.qrCodeId, storedScanCount);
           commentCount = qrData.commentCount || commentCount;
           isActive = qrData.isActive !== false;
           deactivationMessage = qrData.deactivationMessage || null;

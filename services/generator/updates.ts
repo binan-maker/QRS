@@ -21,24 +21,21 @@ export async function updateSavedQrContent(
     const existingLog: any[] = Array.isArray(data.contentChangeLog) ? data.contentChangeLog : [];
     const updatedLog = [...existingLog, changeEntry].slice(-10);
 
-    await db.update(["users", userId, "generatedQrs", docId], {
+    const batch = db.batch();
+    batch.update(["users", userId, "generatedQrs", docId], {
       content: newContent,
       contentType,
       contentChangeLog: updatedLog,
       updatedAt: db.timestamp(),
     });
-
     if (data.qrCodeId) {
-      try {
-        await db.update(["qrCodes", data.qrCodeId], {
-          content: newContent,
-          contentType,
-          updatedAt: db.timestamp(),
-        });
-      } catch (e) {
-        logError("updateSavedQrContent/qrCodes-sync", e, { docId });
-      }
+      batch.update(["qrCodes", data.qrCodeId], {
+        content: newContent,
+        contentType,
+        updatedAt: db.timestamp(),
+      });
     }
+    await batch.commit();
   } catch (e) {
     logError("updateSavedQrContent", e, { userId, docId });
     throw e;
@@ -51,22 +48,21 @@ export async function updateDisplayDestination(
   displayDestination: string
 ): Promise<void> {
   try {
-    await db.update(["users", userId, "generatedQrs", docId], {
+    const data = await db.get(["users", userId, "generatedQrs", docId]);
+    if (!data) throw new Error("QR not found");
+
+    const batch = db.batch();
+    batch.update(["users", userId, "generatedQrs", docId], {
       displayDestination,
       updatedAt: db.timestamp(),
     });
-
-    try {
-      const data = await db.get(["users", userId, "generatedQrs", docId]);
-      if (data?.qrCodeId) {
-        await db.update(["qrCodes", data.qrCodeId], {
-          displayDestination,
-          updatedAt: db.timestamp(),
-        });
-      }
-    } catch (e) {
-      logError("updateDisplayDestination/qrCodes-sync", e, { docId });
+    if (data.qrCodeId) {
+      batch.update(["qrCodes", data.qrCodeId], {
+        displayDestination,
+        updatedAt: db.timestamp(),
+      });
     }
+    await batch.commit();
   } catch (e) {
     logError("updateDisplayDestination", e, { userId, docId });
     throw e;
@@ -80,27 +76,27 @@ export async function updateSavedQrFormValues(
   formValues: { value: string; extra: Record<string, string> }
 ): Promise<void> {
   try {
+    const data = await db.get(["users", userId, "generatedQrs", docId]);
+    if (!data) throw new Error("QR not found");
+
     const contentType = detectContentType(newContent);
-    await db.update(["users", userId, "generatedQrs", docId], {
+
+    const batch = db.batch();
+    batch.update(["users", userId, "generatedQrs", docId], {
       content: newContent,
       contentType,
       formValues,
       updatedAt: db.timestamp(),
     });
-
-    try {
-      const data = await db.get(["users", userId, "generatedQrs", docId]);
-      if (data?.qrCodeId) {
-        await db.update(["qrCodes", data.qrCodeId], {
-          content: newContent,
-          contentType,
-          formValues,
-          updatedAt: db.timestamp(),
-        });
-      }
-    } catch (e) {
-      logError("updateSavedQrFormValues/qrCodes-sync", e, { docId });
+    if (data.qrCodeId) {
+      batch.update(["qrCodes", data.qrCodeId], {
+        content: newContent,
+        contentType,
+        formValues,
+        updatedAt: db.timestamp(),
+      });
     }
+    await batch.commit();
   } catch (e) {
     logError("updateSavedQrFormValues", e, { userId, docId });
     throw e;

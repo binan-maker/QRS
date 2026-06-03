@@ -15,6 +15,7 @@ import {
   increment,
   serverTimestamp,
   onSnapshot,
+  writeBatch,
 } from "firebase/firestore";
 import {
   ref as rtRef,
@@ -145,6 +146,27 @@ export const firebaseDb: DbAdapter = {
 
   async increment(docPath, field, delta = 1) {
     await withBreaker(() => updateDoc(buildDocRef(docPath), { [field]: increment(delta) }));
+  },
+
+  batch() {
+    const batchRef = writeBatch(firestore);
+    return {
+      set(path: string[], data: Record<string, any>) {
+        batchRef.set(buildDocRef(path), data);
+      },
+      update(path: string[], data: Record<string, any>) {
+        batchRef.update(buildDocRef(path), data);
+      },
+      delete(path: string[]) {
+        batchRef.delete(buildDocRef(path));
+      },
+      increment(path: string[], field: string, delta: number = 1) {
+        batchRef.update(buildDocRef(path), { [field]: increment(delta) });
+      },
+      async commit() {
+        await batchRef.commit();
+      },
+    };
   },
 
   onDoc(path, cb) {

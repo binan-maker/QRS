@@ -29,41 +29,44 @@ export async function toggleFollow(
   followerDisplayName?: string
 ): Promise<{ isFollowing: boolean; followCount: number }> {
   const following = await isUserFollowingQrCode(qrId, userId);
+
+  const batch = db.batch();
+
   if (following) {
-    await db.delete(["qrCodes", qrId, "followers", userId]);
-    await db.delete(["users", userId, "following", qrId]);
-    await Promise.all([
-      db.increment(["users", userId], "followingCount", -1),
-      db.increment(["qrCodes", qrId], "followerCount", -1),
-    ]);
+    batch.delete(["qrCodes", qrId, "followers", userId]);
+    batch.delete(["users", userId, "following", qrId]);
+    batch.increment(["users", userId], "followingCount", -1);
+    batch.increment(["qrCodes", qrId], "followerCount", -1);
   } else {
-    await db.set(["qrCodes", qrId, "followers", userId], {
+    batch.set(["qrCodes", qrId, "followers", userId], {
       userId, createdAt: db.timestamp(),
     });
-    await db.set(["users", userId, "following", qrId], {
+    batch.set(["users", userId, "following", qrId], {
       qrCodeId: qrId, content, contentType, createdAt: db.timestamp(),
     });
-    await Promise.all([
-      db.increment(["users", userId], "followingCount", 1),
-      db.increment(["qrCodes", qrId], "followerCount", 1),
-    ]);
-    if (NOTIFICATIONS_ENABLED) {
-      try {
-        const qrData = await db.get(["qrCodes", qrId]);
-        if (qrData?.ownerId && qrData.ownerId !== userId) {
-          const ownerId = qrData.ownerId as string;
-          const name = followerDisplayName || "Someone";
-          await rtdb.push(`notifications/${ownerId}/items`, {
-            type: "new_follow",
-            qrCodeId: qrId,
-            message: `${name} started following your QR code`,
-            read: false,
-            createdAt: Date.now(),
-          });
-        }
-      } catch {}
-    }
+    batch.increment(["users", userId], "followingCount", 1);
+    batch.increment(["qrCodes", qrId], "followerCount", 1);
   }
+
+  await batch.commit();
+
+  if (!following && NOTIFICATIONS_ENABLED) {
+    try {
+      const qrData = await db.get(["qrCodes", qrId]);
+      if (qrData?.ownerId && qrData.ownerId !== userId) {
+        const ownerId = qrData.ownerId as string;
+        const name = followerDisplayName || "Someone";
+        await rtdb.push(`notifications/${ownerId}/items`, {
+          type: "new_follow",
+          qrCodeId: qrId,
+          message: `${name} started following your QR code`,
+          read: false,
+          createdAt: Date.now(),
+        });
+      }
+    } catch {}
+  }
+
   const followCount = await getFollowCount(qrId);
   return { isFollowing: !following, followCount };
 }
@@ -87,33 +90,40 @@ export async function toggleFollowCreator(
   creatorName?: string
 ): Promise<{ isFollowing: boolean; followerCount: number }> {
   const following = await isUserFollowingCreator(creatorId, userId);
+
+  const batch = db.batch();
+
   if (following) {
-    await db.delete(["users", creatorId, "creatorFollowers", userId]);
-    await db.delete(["users", userId, "creatorFollowing", creatorId]);
-    await db.increment(["users", creatorId], "creatorFollowerCount", -1);
+    batch.delete(["users", creatorId, "creatorFollowers", userId]);
+    batch.delete(["users", userId, "creatorFollowing", creatorId]);
+    batch.increment(["users", creatorId], "creatorFollowerCount", -1);
   } else {
-    await db.set(["users", creatorId, "creatorFollowers", userId], {
+    batch.set(["users", creatorId, "creatorFollowers", userId], {
       followerId: userId, createdAt: db.timestamp(),
     });
-    await db.set(["users", userId, "creatorFollowing", creatorId], {
+    batch.set(["users", userId, "creatorFollowing", creatorId], {
       creatorId, creatorName: creatorName || "", createdAt: db.timestamp(),
     });
-    await db.increment(["users", creatorId], "creatorFollowerCount", 1);
-    if (NOTIFICATIONS_ENABLED) {
-      try {
-        if (creatorId !== userId) {
-          const name = followerDisplayName || "Someone";
-          await rtdb.push(`notifications/${creatorId}/items`, {
-            type: "new_creator_follow",
-            followerId: userId,
-            message: `${name} started following you`,
-            read: false,
-            createdAt: Date.now(),
-          });
-        }
-      } catch {}
-    }
+    batch.increment(["users", creatorId], "creatorFollowerCount", 1);
   }
+
+  await batch.commit();
+
+  if (!following && NOTIFICATIONS_ENABLED) {
+    try {
+      if (creatorId !== userId) {
+        const name = followerDisplayName || "Someone";
+        await rtdb.push(`notifications/${creatorId}/items`, {
+          type: "new_creator_follow",
+          followerId: userId,
+          message: `${name} started following you`,
+          read: false,
+          createdAt: Date.now(),
+        });
+      }
+    } catch {}
+  }
+
   const followerCount = await getCreatorFollowerCount(creatorId);
   return { isFollowing: !following, followerCount };
 }

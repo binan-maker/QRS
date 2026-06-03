@@ -149,6 +149,22 @@ export async function migrateToDistributedCounter(
 }
 
 /**
+ * Get the effective scan count for a QR code.
+ * For high-traffic QRs (>= DISTRIBUTED_THRESHOLD), the root doc scanCount field
+ * is frozen and only shards are updated — so we must sum the shards.
+ * For low-traffic QRs the root doc scanCount is the source of truth.
+ * @param qrId - The QR code ID
+ * @param storedScanCount - The scanCount value on the root qrCodes document
+ */
+export async function getEffectiveScanCount(qrId: string, storedScanCount: number): Promise<number> {
+  if (storedScanCount >= DISTRIBUTED_THRESHOLD) {
+    const shardTotal = await getDistributedCounter(qrId);
+    return shardTotal > 0 ? shardTotal : storedScanCount;
+  }
+  return storedScanCount;
+}
+
+/**
  * Hybrid approach: Use direct increment for low-traffic QRs,
  * distributed counters for high-traffic QRs
  * @param qrId - The QR code ID

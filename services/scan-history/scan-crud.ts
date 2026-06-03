@@ -75,11 +75,13 @@ export async function getUserScans(userId: string): Promise<any[]> {
     ["users", userId, "scans"],
     { orderBy: { field: "scannedAt", direction: "desc" }, limit: 100 }
   );
-  return docs.map((d) => ({
-    id: d.id,
-    ...d.data,
-    scannedAt: tsToString(d.data.scannedAt),
-  }));
+  return docs
+    .filter((d) => d.data.isDeleted !== true)
+    .map((d) => ({
+      id: d.id,
+      ...d.data,
+      scannedAt: tsToString(d.data.scannedAt),
+    }));
 }
 
 export async function getUserScansPaginated(
