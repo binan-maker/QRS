@@ -296,6 +296,22 @@ export default function MyQrCodesScreen() {
   return (
     <View style={{ flex: 1, backgroundColor: colors.background }}>
 
+      {/* ── Permanent status-bar backdrop ──────────────────────────────────
+          The sliding header translates fully off-screen (translateY: -headerH),
+          which takes the topInset padding region with it and lets scroll content
+          bleed through behind the battery / clock area.
+          This fixed strip sits at zIndex 11 (above the header's zIndex 10) and
+          never moves, so the status bar area always shows the background colour. */}
+      <View
+        style={{
+          position: "absolute", top: 0, left: 0, right: 0,
+          height: topInset,
+          backgroundColor: colors.background,
+          zIndex: 11,
+        }}
+        pointerEvents="none"
+      />
+
       {/* Header — absolute, hides on scroll (title + search + sort all together) */}
       <ReAnimated.View
         style={[{
