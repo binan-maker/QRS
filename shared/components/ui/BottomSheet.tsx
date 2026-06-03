@@ -9,18 +9,87 @@ import {
   ViewStyle,
   DimensionValue,
 } from "react-native";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
+import {
+  SafeAreaProvider,
+  useSafeAreaInsets,
+} from "react-native-safe-area-context";
 import * as NavigationBar from "expo-navigation-bar";
 import { useTheme } from "@/shared/contexts/ThemeContext";
 
 interface Props {
-  visible: boolean;
-  onClose: () => void;
-  children: React.ReactNode;
+  visible:    boolean;
+  onClose:    () => void;
+  children:   React.ReactNode;
   maxHeight?: DimensionValue;
   sheetStyle?: ViewStyle;
 }
 
+// ── Inner component rendered INSIDE the Modal + SafeAreaProvider ──────────────
+// Calling useSafeAreaInsets() here gives correct values because
+// SafeAreaProvider re-initialises from the Modal's native window,
+// which carries the real navigation-bar inset on Android edge-to-edge.
+interface BodyProps {
+  colors:      any;
+  children:    React.ReactNode;
+  heightStyle: ViewStyle;
+  sheetStyle?: ViewStyle;
+  sheetAnim:   Animated.Value;
+  overlayAnim: Animated.Value;
+  onClose:     () => void;
+}
+
+function SheetBody({
+  colors,
+  children,
+  heightStyle,
+  sheetStyle,
+  sheetAnim,
+  overlayAnim,
+  onClose,
+}: BodyProps) {
+  const insets = useSafeAreaInsets();
+
+  const paddingBottom =
+    Platform.OS === "android"
+      ? Math.max(insets.bottom, 16) + 20
+      : Math.max(insets.bottom, 8) + 10;
+
+  return (
+    <View style={styles.root}>
+      {/* Dark overlay */}
+      <Animated.View
+        style={[StyleSheet.absoluteFillObject, styles.backdrop, { opacity: overlayAnim }]}
+      >
+        <Pressable style={StyleSheet.absoluteFill} onPress={onClose} />
+      </Animated.View>
+
+      {/* Sheet */}
+      <View style={styles.container} pointerEvents="box-none">
+        <Animated.View
+          style={[styles.animatedContainer, { transform: [{ translateY: sheetAnim }] }]}
+        >
+          <View
+            style={[
+              styles.sheet,
+              {
+                backgroundColor: colors.surface,
+                borderTopColor:  colors.surfaceBorder,
+                paddingBottom,
+              },
+              heightStyle,
+              sheetStyle,
+            ]}
+          >
+            <View style={[styles.handle, { backgroundColor: colors.surfaceLight }]} />
+            {children}
+          </View>
+        </Animated.View>
+      </View>
+    </View>
+  );
+}
+
+// ── Public component ──────────────────────────────────────────────────────────
 export default function BottomSheet({
   visible,
   onClose,
@@ -29,61 +98,38 @@ export default function BottomSheet({
   sheetStyle,
 }: Props) {
   const { colors } = useTheme();
-  const insets = useSafeAreaInsets();
 
   const [internalVisible, setInternalVisible] = useState(visible);
-
   const overlayAnim = useRef(new Animated.Value(visible ? 1 : 0)).current;
-
-  const sheetAnim = useRef(new Animated.Value(visible ? 0 : 900)).current;
+  const sheetAnim   = useRef(new Animated.Value(visible ? 0 : 900)).current;
 
   useEffect(() => {
     if (Platform.OS === "android") {
-      // setPositionAsync / setBackgroundColorAsync are no-ops on API 35+
-      // edge-to-edge builds and generate console warnings — omitted.
-      NavigationBar.setButtonStyleAsync(colors.isDark ? "light" : "dark").catch(() => {});
+      NavigationBar.setButtonStyleAsync(
+        (colors as any).isDark ? "light" : "dark"
+      ).catch(() => {});
     }
-  }, [colors.isDark]);
+  }, [(colors as any).isDark]);
 
   useEffect(() => {
     if (visible) {
       setInternalVisible(true);
-
       overlayAnim.setValue(0);
       sheetAnim.setValue(900);
 
       Animated.parallel([
-        Animated.timing(overlayAnim, {
-          toValue: 1,
-          duration: 220,
-          useNativeDriver: true,
-        }),
-
-        Animated.spring(sheetAnim, {
-          toValue: 0,
-          useNativeDriver: true,
-          damping: 18,
-          stiffness: 140,
-          mass: 0.8,
+        Animated.timing(overlayAnim, { toValue: 1, duration: 220, useNativeDriver: true }),
+        Animated.spring(sheetAnim,   {
+          toValue: 0, useNativeDriver: true,
+          damping: 18, stiffness: 140, mass: 0.8,
         }),
       ]).start();
     } else {
       Animated.parallel([
-        Animated.timing(overlayAnim, {
-          toValue: 0,
-          duration: 180,
-          useNativeDriver: true,
-        }),
-
-        Animated.timing(sheetAnim, {
-          toValue: 900,
-          duration: 220,
-          useNativeDriver: true,
-        }),
+        Animated.timing(overlayAnim, { toValue: 0, duration: 180, useNativeDriver: true }),
+        Animated.timing(sheetAnim,   { toValue: 900, duration: 220, useNativeDriver: true }),
       ]).start(({ finished }) => {
-        if (finished) {
-          setInternalVisible(false);
-        }
+        if (finished) setInternalVisible(false);
       });
     }
   }, [visible]);
@@ -92,13 +138,8 @@ export default function BottomSheet({
 
   const heightStyle: ViewStyle =
     typeof maxHeight === "number"
-      ? {
-          height: maxHeight,
-          maxHeight,
-        }
-      : {
-          maxHeight: maxHeight as DimensionValue,
-        };
+      ? { height: maxHeight, maxHeight }
+      : { maxHeight: maxHeight as DimensionValue };
 
   return (
     <Modal
@@ -108,57 +149,24 @@ export default function BottomSheet({
       statusBarTranslucent
       onRequestClose={onClose}
     >
-      <View style={styles.root}>
-        <Animated.View
-          style={[
-            StyleSheet.absoluteFillObject,
-            styles.backdrop,
-            { opacity: overlayAnim },
-          ]}
+      {/*
+        SafeAreaProvider inside Modal creates a fresh insets context scoped
+        to the Modal's native window. This is what gives useSafeAreaInsets()
+        the correct bottom inset on Android edge-to-edge (API 35+),
+        instead of inheriting the potentially-stale value from the host tree.
+      */}
+      <SafeAreaProvider>
+        <SheetBody
+          colors={colors}
+          heightStyle={heightStyle}
+          sheetStyle={sheetStyle}
+          sheetAnim={sheetAnim}
+          overlayAnim={overlayAnim}
+          onClose={onClose}
         >
-          <Pressable style={StyleSheet.absoluteFill} onPress={onClose} />
-        </Animated.View>
-
-        <View style={styles.container} pointerEvents="box-none">
-          <Animated.View
-            style={[
-              styles.animatedContainer,
-              {
-                transform: [{ translateY: sheetAnim }],
-              },
-            ]}
-          >
-            <View
-              style={[
-                styles.sheet,
-
-                {
-                  backgroundColor: colors.surface,
-                  borderTopColor: colors.surfaceBorder,
-
-                  paddingBottom:
-                    Platform.OS === "android"
-                      ? Math.max(insets.bottom, 16) + 20
-                      : Math.max(insets.bottom, 8) + 10,
-                },
-                heightStyle,
-                sheetStyle,
-              ]}
-            >
-              <View
-                style={[
-                  styles.handle,
-                  {
-                    backgroundColor: colors.surfaceLight,
-                  },
-                ]}
-              />
-
-              {children}
-            </View>
-          </Animated.View>
-        </View>
-      </View>
+          {children}
+        </SheetBody>
+      </SafeAreaProvider>
     </Modal>
   );
 }
@@ -167,40 +175,30 @@ const styles = StyleSheet.create({
   root: {
     flex: 1,
   },
-
   backdrop: {
     backgroundColor: "rgba(0,0,0,0.55)",
   },
-
   container: {
-    flex: 1,
+    flex:           1,
     justifyContent: "flex-end",
   },
-
   animatedContainer: {
-    width: "100%",
+    width:          "100%",
     justifyContent: "flex-end",
   },
-
   sheet: {
-    width: "100%",
-
-    borderTopLeftRadius: 28,
+    width:               "100%",
+    borderTopLeftRadius:  28,
     borderTopRightRadius: 28,
-
-    borderTopWidth: 1,
-
-    paddingHorizontal: 20,
-    paddingTop: 12,
-
-    overflow: "hidden",
+    borderTopWidth:       1,
+    paddingHorizontal:    20,
+    paddingTop:           12,
   },
-
   handle: {
-    width: 44,
-    height: 5,
+    width:        44,
+    height:       5,
     borderRadius: 999,
-    alignSelf: "center",
+    alignSelf:    "center",
     marginBottom: 18,
   },
 });
