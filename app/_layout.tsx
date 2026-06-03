@@ -61,15 +61,11 @@ function RootLayoutNav() {
       headerShown: false,
       animation: "slide_from_right",
       contentStyle: { backgroundColor: colors.background },
-      ...(Platform.OS === "android" ? {
-        navigationBarColor: colors.background,
-      } : {}),
     }}>
       <Stack.Screen name="(tabs)" options={{ headerShown: false, animation: "none" }} />
       <Stack.Screen name="(auth)" options={{
         animation: "fade",
         headerShown: false,
-        ...(Platform.OS === "android" ? { navigationBarColor: colors.background } : {}),
       }} />
       <Stack.Screen name="qr-detail/[id]" options={{ headerShown: false }} />
       <Stack.Screen name="my-qr/[id]" options={{ headerShown: false }} />

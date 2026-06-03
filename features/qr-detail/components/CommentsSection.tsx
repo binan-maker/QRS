@@ -1,5 +1,5 @@
-import React, { useCallback, useMemo } from "react";
-import { View, Text, Pressable, TextInput, ActivityIndicator, Keyboard, FlatList } from "react-native";
+import React, { useCallback } from "react";
+import { View, Text, Pressable, TextInput, ActivityIndicator, Keyboard } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { useTheme } from "@/shared/contexts/ThemeContext";
@@ -93,7 +93,6 @@ export default function CommentsSection({
   const { colors } = useTheme();
   const styles = makeStyles(colors);
 
-  // ── Stable callbacks so CommentItem.memo actually skips re-renders ──────────
   const onLike = useCallback(
     (id: string, action: "like" | "dislike") => {
       if (!user) { router.push("/(auth)/login"); return; }
@@ -138,79 +137,6 @@ export default function CommentsSection({
   );
   const onToggleReplies = useCallback(toggleReplies, [toggleReplies]);
   const onShowMoreReplies = useCallback(showMoreReplies, [showMoreReplies]);
-
-  // extraData tells FlatList to re-render items when volatile state changes
-  const extraData = useMemo(
-    () => ({ commentMenuId, deletingCommentId, userLikes, expandedReplies, revealedComments, user }),
-    [commentMenuId, deletingCommentId, userLikes, expandedReplies, revealedComments, user],
-  );
-
-  const keyExtractor = useCallback((item: CommentData) => item.id, []);
-
-  const renderItem = useCallback(
-    ({ item: comment }: { item: CommentData }) => (
-      <CommentItem
-        comment={comment as any}
-        isReply={false}
-        currentUserLike={(userLikes[comment.id] ?? null) as any}
-        isMenuOpen={commentMenuId === comment.id}
-        isDeleting={deletingCommentId === comment.id}
-        isRevealed={revealedComments.has(comment.id)}
-        isCommentOwner={user?.id === comment.userId}
-        canDelete={user?.id === comment.userId}
-        descendants={getAllDescendants(comment.id) as any}
-        expandedReplies={expandedReplies as any}
-        visibleRepliesCount={visibleRepliesCount}
-        allComments={commentsList as any}
-        userLikes={userLikes as any}
-        commentMenuId={commentMenuId}
-        deletingCommentId={deletingCommentId}
-        revealedComments={revealedComments}
-        userId={user?.id}
-        onLike={onLike}
-        onReply={onReply}
-        onMenuOpen={onMenuOpen}
-        onMenuClose={onMenuClose}
-        onDelete={onDelete}
-        onReport={onReport}
-        onReveal={onReveal}
-        onToggleReplies={onToggleReplies}
-        onShowMoreReplies={onShowMoreReplies}
-      />
-    ),
-    [
-      commentMenuId, deletingCommentId, revealedComments, expandedReplies,
-      visibleRepliesCount, commentsList, userLikes, user,
-      getAllDescendants,
-      onLike, onReply, onMenuOpen, onMenuClose, onDelete, onReport,
-      onReveal, onToggleReplies, onShowMoreReplies,
-    ],
-  );
-
-  const ListEmptyComponent = useMemo(
-    () => (
-      <View style={styles.noComments}>
-        <Ionicons name="chatbubbles-outline" size={36} color={colors.textMuted} />
-        <Text style={styles.noCommentsText}>No comments yet</Text>
-        <Text style={styles.noCommentsSubtext}>Be the first to share your thoughts</Text>
-      </View>
-    ),
-    [colors.textMuted, styles.noComments, styles.noCommentsText, styles.noCommentsSubtext],
-  );
-
-  const ListFooterComponent = useMemo(
-    () =>
-      hasMoreComments ? (
-        <Pressable onPress={loadMoreComments} disabled={commentsLoading} style={styles.loadMoreBtn}>
-          {commentsLoading ? (
-            <ActivityIndicator size="small" color={colors.primary} />
-          ) : (
-            <Text style={styles.loadMoreText}>Load More Comments</Text>
-          )}
-        </Pressable>
-      ) : null,
-    [hasMoreComments, commentsLoading, loadMoreComments, colors.primary, styles.loadMoreBtn, styles.loadMoreText],
-  );
 
   return (
     <View>
@@ -271,22 +197,62 @@ export default function CommentsSection({
         </View>
       )}
 
-      {/* Comment list — FlatList with scrollEnabled=false so the parent ScrollView
-          handles scrolling; view recycling + stable callbacks keep memo effective */}
-      <FlatList
-        data={topLevelComments}
-        renderItem={renderItem}
-        keyExtractor={keyExtractor}
-        extraData={extraData}
-        scrollEnabled={false}
-        removeClippedSubviews
-        initialNumToRender={10}
-        maxToRenderPerBatch={5}
-        updateCellsBatchingPeriod={50}
-        windowSize={5}
-        ListEmptyComponent={ListEmptyComponent}
-        ListFooterComponent={ListFooterComponent}
-      />
+      {/* Comment list — plain View map instead of FlatList to avoid the
+          nested-VirtualizedList "property is not configurable" crash.
+          Parent ScrollView already owns all scrolling; scrollEnabled=false
+          on a FlatList still triggers the VirtualizedList property-redefinition
+          bug in React Native's Fabric renderer. */}
+      <View>
+        {topLevelComments.length === 0 ? (
+          <View style={styles.noComments}>
+            <Ionicons name="chatbubbles-outline" size={36} color={colors.textMuted} />
+            <Text style={styles.noCommentsText}>No comments yet</Text>
+            <Text style={styles.noCommentsSubtext}>Be the first to share your thoughts</Text>
+          </View>
+        ) : (
+          topLevelComments.map((comment) => (
+            <CommentItem
+              key={comment.id}
+              comment={comment as any}
+              isReply={false}
+              currentUserLike={(userLikes[comment.id] ?? null) as any}
+              isMenuOpen={commentMenuId === comment.id}
+              isDeleting={deletingCommentId === comment.id}
+              isRevealed={revealedComments.has(comment.id)}
+              isCommentOwner={user?.id === comment.userId}
+              canDelete={user?.id === comment.userId}
+              descendants={getAllDescendants(comment.id) as any}
+              expandedReplies={expandedReplies as any}
+              visibleRepliesCount={visibleRepliesCount}
+              allComments={commentsList as any}
+              userLikes={userLikes as any}
+              commentMenuId={commentMenuId}
+              deletingCommentId={deletingCommentId}
+              revealedComments={revealedComments}
+              userId={user?.id}
+              onLike={onLike}
+              onReply={onReply}
+              onMenuOpen={onMenuOpen}
+              onMenuClose={onMenuClose}
+              onDelete={onDelete}
+              onReport={onReport}
+              onReveal={onReveal}
+              onToggleReplies={onToggleReplies}
+              onShowMoreReplies={onShowMoreReplies}
+            />
+          ))
+        )}
+
+        {hasMoreComments && (
+          <Pressable onPress={loadMoreComments} disabled={commentsLoading} style={styles.loadMoreBtn}>
+            {commentsLoading ? (
+              <ActivityIndicator size="small" color={colors.primary} />
+            ) : (
+              <Text style={styles.loadMoreText}>Load More Comments</Text>
+            )}
+          </Pressable>
+        )}
+      </View>
     </View>
   );
 }
