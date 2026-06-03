@@ -106,12 +106,29 @@ const StatCell = React.memo(function StatCell({
   );
 });
 
-// ── QR skeleton stack (horizontal fan, matches MAX_STACK=12 + more slot) ──────
+// ── Single shimmering skeleton card ───────────────────────────────────────────
+function SkeletonCard({ color, borderColor, delay }: { color: string; borderColor: string; delay: number }) {
+  const shimmer = useSharedValue(0.4);
+  useEffect(() => {
+    shimmer.value = withRepeat(
+      withSequence(
+        withTiming(1,   { duration: 700 + delay * 30 }),
+        withTiming(0.4, { duration: 700 + delay * 30 }),
+      ),
+      -1,
+      true,
+    );
+  }, []);
+  const anim = useAnimatedStyle(() => ({ opacity: shimmer.value }));
+  return <Animated.View style={[{ backgroundColor: color, borderColor, borderWidth: 1.5, borderRadius: 18 }, anim]} />;
+}
+
+// ── QR skeleton stack (horizontal fan, matches MAX_STACK=13) ──────────────────
 const QrSkeletonStack = React.memo(function QrSkeletonStack() {
   const { colors } = useTheme();
   const CARD  = 88;
   const OFF_X = 30;
-  const n     = 13; // 12 real + 1 "more" slot
+  const n     = 5; // show 5 skeleton cards — enough to suggest a stack without overflow
   return (
     <Animated.View
       entering={QR_SKELETON_ENTER}
@@ -124,20 +141,14 @@ const QrSkeletonStack = React.memo(function QrSkeletonStack() {
             position: "absolute",
             left: i * OFF_X, top: 0,
             width: CARD, height: CARD,
-            borderRadius: 18, borderWidth: 1.5,
-            backgroundColor: i === n - 1 ? colors.primaryDim : colors.surface,
-            borderColor: i === n - 1 ? colors.primary + "40" : colors.surfaceBorder,
             zIndex: i,
-            alignItems: "center",
-            justifyContent: "center",
           }}
         >
-          {i === n - 1 && (
-            <View style={{ alignItems: "center", gap: 2 }}>
-              <SkeletonBox width={28} height={10} borderRadius={5} />
-              <SkeletonBox width={20} height={8} borderRadius={4} />
-            </View>
-          )}
+          <SkeletonCard
+            color={colors.surfaceLight}
+            borderColor={colors.surfaceBorder}
+            delay={i}
+          />
         </View>
       ))}
     </Animated.View>
