@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import * as Haptics from "@/shared/utils/haptics";
 import { toggleCommentLike, getCommentUserLikes } from "@/lib/firestore-service";
 import { router } from "expo-router";
@@ -14,14 +14,25 @@ interface UseCommentLikesParams {
 export function useCommentLikes({ id, userId, commentsList, setCommentsList }: UseCommentLikesParams) {
   const [userLikes, setUserLikes] = useState<Record<string, "like" | "dislike">>({});
 
-  // ── Synchronous ref — always reflects the latest like state, never stale.
-  // React state updates are batched/async; reading `userLikes[id]` inside a
-  // rapid tap handler gives the value from the *previous* render, causing the
-  // toggle to flip in the wrong direction and produce negative counts.
-  const currentLikeRef     = useRef<Record<string, "like" | "dislike" | null>>({});
+  // ── Synchronous refs — always hold the latest state without stale closures ─
+  const currentLikeRef      = useRef<Record<string, "like" | "dislike" | null>>({});
   const committedLikesRef   = useRef<Record<string, "like" | "dislike" | null>>({});
   const pendingFinalLikeRef = useRef<Record<string, "like" | "dislike" | null>>({});
+  // Holds the active debounce timer *and* acts as a guard for the useEffect:
+  // while a commentId key is present, the effect will not overwrite userLikes
+  // for that comment (prevents a mid-flight Firestore read from clobbering the
+  // optimistic UI). The key is deleted only AFTER the server call resolves so
+  // the guard stays active during the entire round-trip.
   const likeTimersRef       = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
+
+  // ── Stable comment-ID string — only changes when comments are added/removed ─
+  // Using the full `commentsList` object as a useEffect dep would re-run the
+  // Firestore fetch on every optimistic count update, producing a rapid series
+  // of reads that race with in-flight toggles and overwrite the optimistic UI.
+  const commentIdsKey = useMemo(
+    () => commentsList.map((c) => c.id).join(","),
+    [commentsList]
+  );
 
   useEffect(() => {
     if (!userId || !commentsList.length) return;
@@ -30,38 +41,38 @@ export function useCommentLikes({ id, userId, commentsList, setCommentsList }: U
       setUserLikes((prev) => {
         const next = { ...prev };
         Object.entries(likes).forEach(([cid, val]) => {
-          if (!likeTimersRef.current.has(cid)) {
-            if (val === null || val === undefined) {
-              delete next[cid];
-            } else {
-              next[cid] = val;
-            }
+          // Skip any comment whose timer (or in-flight request) is still active.
+          if (likeTimersRef.current.has(cid)) return;
+          if (val === null || val === undefined) {
+            delete next[cid];
+          } else {
+            next[cid] = val;
           }
         });
         return next;
       });
       Object.entries(likes).forEach(([cid, val]) => {
-        if (!likeTimersRef.current.has(cid)) {
-          committedLikesRef.current[cid] = val;
-          // Sync currentLikeRef with confirmed server state
-          currentLikeRef.current[cid] = val;
-        }
+        if (likeTimersRef.current.has(cid)) return;
+        committedLikesRef.current[cid] = val;
+        currentLikeRef.current[cid]    = val;
       });
     });
-  }, [commentsList, userId, id]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [commentIdsKey, userId, id]);
+  // ↑ Intentionally using commentIdsKey (not commentsList) so this only
+  //   re-runs when comments are added/removed, not on every count change.
 
   function handleCommentLike(commentId: string, action: "like" | "dislike") {
     if (!userId) { router.push("/(auth)/login"); return; }
 
-    // ── Read from the synchronous ref, not the async state, to avoid stale
-    //    closures when the user taps multiple times before a re-render.
+    // Read from the synchronous ref to avoid stale-closure bugs on rapid taps.
     const prevLike = currentLikeRef.current[commentId] ?? null;
     const newLike: "like" | "dislike" | null = prevLike === action ? null : action;
 
-    // Update the ref immediately so the next tap sees the correct prev value.
+    // Update ref immediately so the next tap sees the correct previous value.
     currentLikeRef.current[commentId] = newLike;
 
-    // Update the display state for the icon/colour.
+    // ── Optimistic UI: icon colour ─────────────────────────────────────────
     setUserLikes((prev) => {
       const next = { ...prev };
       if (newLike === null) delete next[commentId];
@@ -69,9 +80,7 @@ export function useCommentLikes({ id, userId, commentsList, setCommentsList }: U
       return next;
     });
 
-    // ── Optimistic count update ────────────────────────────────────────────
-    // Uses functional form so it always reads the latest commentsList, not a
-    // captured closure snapshot.
+    // ── Optimistic UI: counts ──────────────────────────────────────────────
     setCommentsList((prev) =>
       prev.map((c) => {
         if (c.id !== commentId) return c;
@@ -90,32 +99,69 @@ export function useCommentLikes({ id, userId, commentsList, setCommentsList }: U
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     pendingFinalLikeRef.current[commentId] = newLike;
 
-    // Debounce: cancel any in-flight timer for this comment so only the final
-    // intent is sent to Firestore.
+    // ── Debounce: cancel any pending timer, coalesce rapid taps ───────────
     const existingTimer = likeTimersRef.current.get(commentId);
     if (existingTimer) clearTimeout(existingTimer);
 
     const capturedUserId = userId;
+
     const timer = setTimeout(async () => {
-      likeTimersRef.current.delete(commentId);
-      const desired  = pendingFinalLikeRef.current[commentId] ?? null;
+      // NOTE: do NOT delete from likeTimersRef here. The key stays as a guard
+      // for the useEffect until the server round-trip finishes (see `finally`).
+
+      const desired   = pendingFinalLikeRef.current[commentId] ?? null;
       delete pendingFinalLikeRef.current[commentId];
       const committed = committedLikesRef.current[commentId] ?? null;
-      if (desired === committed) return;
+
+      // Nothing changed vs the last confirmed server state — skip the call.
+      if (desired === committed) {
+        likeTimersRef.current.delete(commentId);
+        return;
+      }
+
       const isLike = desired !== null ? desired === "like" : committed === "like";
+
       try {
         const data = await toggleCommentLike(id, commentId, capturedUserId, isLike);
         committedLikesRef.current[commentId] = desired;
-        // Sync currentLikeRef with confirmed server state (if no newer tap occurred)
-        if (currentLikeRef.current[commentId] === desired) {
-          // already in sync — no change needed
-        }
+
+        // Reconcile counts with the authoritative server value.
         setCommentsList((prev) =>
           prev.map((c) =>
             c.id !== commentId ? c : { ...c, likeCount: data.likes, dislikeCount: data.dislikes }
           )
         );
-      } catch {}
+      } catch {
+        // ── Server call failed — revert optimistic UI to the last committed state ─
+        currentLikeRef.current[commentId] = committed;
+
+        setUserLikes((prev) => {
+          const next = { ...prev };
+          if (committed === null) delete next[commentId];
+          else next[commentId] = committed;
+          return next;
+        });
+
+        // Revert the count delta that was applied optimistically.
+        setCommentsList((prev) =>
+          prev.map((c) => {
+            if (c.id !== commentId) return c;
+            let likes = c.likeCount, dislikes = c.dislikeCount;
+            // Undo the desired change
+            if (desired === "like")    likes    = Math.max(0, likes - 1);
+            if (desired === "dislike") dislikes = Math.max(0, dislikes - 1);
+            // Re-apply the committed state
+            if (committed === "like")    likes    = likes + 1;
+            if (committed === "dislike") dislikes = dislikes + 1;
+            return { ...c, likeCount: likes, dislikeCount: dislikes };
+          })
+        );
+      } finally {
+        // Guard lifted only after the server call resolves (success or failure).
+        // This prevents the useEffect from reading a stale Firestore snapshot
+        // during the async round-trip and clobbering the optimistic state.
+        likeTimersRef.current.delete(commentId);
+      }
     }, 600);
 
     likeTimersRef.current.set(commentId, timer);
