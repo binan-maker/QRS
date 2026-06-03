@@ -16,7 +16,7 @@ async function pushNotification(
   opts?: { qrCodeId?: string; fromUsername?: string }
 ): Promise<void> {
   if (!NOTIFICATIONS_ENABLED) return;
-  
+
   const notificationData = {
     type,
     message,
@@ -25,11 +25,11 @@ async function pushNotification(
     read: false,
     createdAt: Date.now(),
   };
-  
+
   await rtdb.push(`notifications/${userId}/items`, notificationData);
-  
-  // Auto-cleanup old notifications after writing
-  cleanupOldNotifications(userId).catch(() => {});
+  // Cleanup is intentionally NOT called here — the sender cannot read another
+  // user's notification list (blocked by RTDB rules). Cleanup runs in
+  // markAllNotificationsRead when the owner reads their own data.
 }
 
 // FIX #2: Cleanup old notifications to prevent unbounded storage growth
@@ -283,6 +283,8 @@ export async function markAllNotificationsRead(userId: string): Promise<void> {
       }
     }
     if (Object.keys(updates).length > 0) await rtdb.update(updates);
+    // Run cleanup here — owner just read their own data so rules allow it.
+    cleanupOldNotifications(userId).catch(() => {});
   } catch {}
 }
 

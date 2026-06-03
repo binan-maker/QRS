@@ -26,7 +26,12 @@
     "notifications": {
       "$uid": {
         ".read": "auth != null && auth.uid == $uid",
-        ".write": "auth != null && auth.uid == $uid"
+        ".write": "auth != null && auth.uid == $uid",
+        "items": {
+          "$pushId": {
+            ".write": "auth != null && (newData == null || (newData.hasChildren(['type', 'message', 'read', 'createdAt']) && newData.child('type').isString() && newData.child('message').isString() && newData.child('read').isBoolean() && newData.child('createdAt').isNumber()))"
+          }
+        }
       }
     }
   }
