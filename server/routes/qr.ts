@@ -28,18 +28,21 @@ qrRouter.patch("/:qrId/active", async (req: Request, res: Response) => {
     const docSnap = await docRef.get();
 
     if (!docSnap.exists) return res.status(404).json({ error: "QR code not found" });
-    if (docSnap.data()?.ownerId !== uid) return res.status(403).json({ error: "Forbidden" });
+    const data = docSnap.data()!;
+    if (data.ownerId !== uid) return res.status(403).json({ error: "Forbidden" });
+    if (data.qrType === "government") return res.status(403).json({ error: "Government QR codes cannot be modified" });
+
+    const msg = isActive
+      ? null
+      : typeof deactivationMessage === "string"
+        ? deactivationMessage.trim().slice(0, 100) || null
+        : null;
 
     const updateData: Record<string, any> = {
       isActive,
+      deactivationMessage: msg,
       updatedAt: admin.firestore.FieldValue.serverTimestamp(),
     };
-    if (!isActive && deactivationMessage) {
-      updateData.deactivationMessage = deactivationMessage;
-    }
-    if (isActive) {
-      updateData.deactivationMessage = null;
-    }
 
     await docRef.update(updateData);
     return res.json({ success: true, isActive });

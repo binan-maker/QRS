@@ -50,68 +50,54 @@ export async function ownerHideComment(qrId: string, commentId: string): Promise
   }
 }
 
+// NOTE: Comments live at qrCodes/{qrId}/comments/{commentId} — there is no
+// root-level "comments" collection to query. This function performs per-QR
+// cleanup scoped to a specific QR code instead of a cross-collection scan.
 export async function hardDeleteOldSoftDeletes(
-  options: { batchSize?: number; maxQrCodes?: number; continuationToken?: string } = {}
-): Promise<{ deletedCount: number; continuationToken?: string; hasMore: boolean }> {
+  options: { qrId?: string; batchSize?: number } = {}
+): Promise<{ deletedCount: number; hasMore: boolean }> {
+  if (!options.qrId) {
+    // No qrId provided — nothing to clean up without a collection group query.
+    return { deletedCount: 0, hasMore: false };
+  }
+
   const now = Date.now();
-  const batchSize = options.batchSize || 500;
+  const batchSize = options.batchSize || 100;
   let totalDeleted = 0;
 
   try {
-    const { docs: deletedComments } = await db.query(["comments"], {
+    const { docs } = await db.query(["qrCodes", options.qrId, "comments"], {
       where: [{ field: "isDeleted", op: "==", value: true }],
       orderBy: { field: "deletedAt", direction: "asc" },
       limit: batchSize,
-      cursor: options.continuationToken ? { startAt: [options.continuationToken] } : undefined,
     });
 
-    const toDeleteByQr: Map<string, string[]> = new Map();
-    let cutoffReached = false;
+    const toDelete: string[] = [];
+    let hasMore = false;
 
-    for (const d of deletedComments) {
+    for (const d of docs) {
       const deletedAt = d.data.deletedAt;
       let deletedAtMs = 0;
       if (deletedAt && typeof deletedAt === "object" && "toDate" in deletedAt) {
         deletedAtMs = (deletedAt as any).toDate().getTime();
-      } else if (deletedAt && typeof deletedAt === "string") {
+      } else if (typeof deletedAt === "string") {
         deletedAtMs = new Date(deletedAt).getTime();
       }
-
-      if (deletedAtMs > 0 && now - deletedAtMs <= SOFT_DELETE_TTL_MS) {
-        cutoffReached = true;
-        break;
-      }
-
       if (deletedAtMs > 0 && now - deletedAtMs > SOFT_DELETE_TTL_MS) {
-        const qrId = d.data.qrCodeId || d.data.parentId;
-        if (qrId) {
-          if (!toDeleteByQr.has(qrId)) toDeleteByQr.set(qrId, []);
-          toDeleteByQr.get(qrId)!.push(d.id);
-        }
+        toDelete.push(d.id);
       }
     }
 
-    const deletePromises: Promise<void>[] = [];
-    for (const [qrId, commentIds] of toDeleteByQr.entries()) {
-      for (let i = 0; i < commentIds.length; i += 500) {
-        const batch = commentIds.slice(i, i + 500);
-        deletePromises.push(
-          Promise.all(batch.map(id => db.delete(["qrCodes", qrId, "comments", id]).catch(() => {}))).then(() => {})
-        );
-      }
-      totalDeleted += commentIds.length;
-    }
+    hasMore = docs.length >= batchSize;
 
-    await Promise.all(deletePromises);
+    await Promise.all(
+      toDelete.map(id => db.delete(["qrCodes", options.qrId!, "comments", id]).catch(() => {}))
+    );
+    totalDeleted = toDelete.length;
 
-    const hasMore = !cutoffReached && deletedComments.length >= batchSize;
-    const nextToken = hasMore && deletedComments.length > 0
-      ? deletedComments[deletedComments.length - 1].id
-      : undefined;
-
-    return { deletedCount: totalDeleted, continuationToken: nextToken, hasMore };
+    return { deletedCount: totalDeleted, hasMore };
   } catch (e) {
     console.error("[cleanup] hardDeleteOldSoftDeletes failed:", e);
-    return { deletedCount: totalDeleted, hasMore: false };
+    return { deletedCount: 0, hasMore: false };
   }
 }

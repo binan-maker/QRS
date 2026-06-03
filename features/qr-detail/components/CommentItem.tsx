@@ -4,7 +4,6 @@ import { Image } from "expo-image";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import Animated, { FadeIn } from "react-native-reanimated";
-import { router } from "expo-router";
 import { formatCompactNumber } from "@/shared/utils/number-format";
 import { formatRelativeTime } from "@/shared/utils/formatters";
 import { useTheme } from "@/shared/contexts/ThemeContext";
@@ -137,10 +136,6 @@ const CommentItem = React.memo(function CommentItem({
     ? comment.userUsername.charAt(0).toUpperCase()
     : "U";
   const avatarGradient = getInitialColor(displayName);
-  const navigateToProfile = comment.userUsername
-    ? () => router.push(`/profile/${comment.userUsername}` as any)
-    : undefined;
-
   const avatarSize  = isReply ? 28 : 34;
   const surfaceBg   = isDark ? colors.surfaceLight : colors.background;
   const threadColor = isDark ? "rgba(148,163,184,0.25)" : "rgba(148,163,184,0.35)";
@@ -171,15 +166,15 @@ const CommentItem = React.memo(function CommentItem({
       <View style={styles.commentBody}>
         {/* Header row */}
         <View style={styles.commentHeader}>
-          <Pressable onPress={navigateToProfile} disabled={!navigateToProfile} style={styles.authorPressable}>
+          <View style={styles.authorPressable}>
             <Text
-              style={[styles.authorName, { color: comment.userUsername ? colors.primary : colors.text }]}
+              style={[styles.authorName, { color: colors.text }]}
               numberOfLines={1}
               ellipsizeMode="tail"
             >
               {displayName}
             </Text>
-          </Pressable>
+          </View>
           <Text style={[styles.commentTime, { color: colors.textMuted }]} numberOfLines={1}>
             {formatRelativeTime(comment.createdAt)}
           </Text>
@@ -277,18 +272,14 @@ const CommentItem = React.memo(function CommentItem({
           <View style={styles.commentRow}>
             {/* Left column: avatar + optional vertical thread stem */}
             <View style={styles.avatarColumn}>
-              <Pressable
-                onPress={navigateToProfile}
-                disabled={!navigateToProfile}
-                style={{ flexShrink: 0 }}
-              >
+              <View style={{ flexShrink: 0 }}>
                 <CommentAvatar
                   size={avatarSize}
                   photoURL={comment.userPhotoURL}
                   initial={avatarInitial}
                   gradient={avatarGradient}
                 />
-              </Pressable>
+              </View>
               {/* Vertical thread stem — shown when replies are expanded */}
               {replyCount > 0 && isExpanded && (
                 <View style={[styles.threadStem, { backgroundColor: threadColor }]} />
@@ -397,18 +388,14 @@ const CommentItem = React.memo(function CommentItem({
   return (
     <Animated.View entering={FadeIn.duration(220)}>
       <View style={styles.replyCommentRow}>
-        <Pressable
-          onPress={navigateToProfile}
-          disabled={!navigateToProfile}
-          style={{ flexShrink: 0, marginTop: 2 }}
-        >
+        <View style={{ flexShrink: 0, marginTop: 2 }}>
           <CommentAvatar
             size={avatarSize}
             photoURL={comment.userPhotoURL}
             initial={avatarInitial}
             gradient={avatarGradient}
           />
-        </Pressable>
+        </View>
         {renderBody()}
       </View>
     </Animated.View>
