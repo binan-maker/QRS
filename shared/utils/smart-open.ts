@@ -14,8 +14,17 @@
  * parsedPayment state from the QR detail hook and is kept in useQrDetail.ts.
  */
 
-import { Alert, Linking } from "react-native";
+import { Alert, Linking, Platform } from "react-native";
 import { getQrTypeDef as getQrTypeStyle } from "@/features/qr-engine";
+
+const AUTHENTICATOR_STORE_URL =
+  Platform.OS === "ios"
+    ? "https://apps.apple.com/app/google-authenticator/id388497605"
+    : "https://play.google.com/store/apps/details?id=com.google.android.apps.authenticator2";
+
+function openAuthenticatorStore() {
+  Linking.openURL(AUTHENTICATOR_STORE_URL).catch(() => {});
+}
 
 export async function smartOpenContent(
   content: string,
@@ -143,8 +152,31 @@ export async function smartOpenContent(
     return;
   }
 
-  // ── OTP / deep-link apps ──────────────────────────────────────────────────
-  if (contentType === "otp" || contentType === "app") {
+  // ── OTP (otpauth://) ──────────────────────────────────────────────────────
+  // Try to hand the URI to an installed authenticator. If the OS can't find a
+  // handler (no Google Authenticator / Authy / etc.), offer to install one
+  // instead of dropping the user on a dead-end "App Not Found" alert.
+  if (contentType === "otp") {
+    try {
+      await Linking.openURL(content);
+    } catch {
+      Alert.alert(
+        "No Authenticator App Found",
+        "You need an authenticator app to add this key. Install Google Authenticator or any TOTP app and try again.",
+        [
+          { text: "Cancel", style: "cancel" },
+          {
+            text: "Install Google Authenticator",
+            onPress: openAuthenticatorStore,
+          },
+        ]
+      );
+    }
+    return;
+  }
+
+  // ── Generic deep-link apps ────────────────────────────────────────────────
+  if (contentType === "app") {
     Linking.openURL(content).catch(() =>
       Alert.alert("App Not Found", "Could not open the link. Make sure the required app is installed.")
     );
