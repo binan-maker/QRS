@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import {
   View,
   Text,
@@ -23,29 +23,29 @@ try {
 
 const TIERS = [
   {
-    sku:     "qrguard_donate_10",
-    amount:  "₹10",
-    label:   "For the Founder",
-    desc:    "A small thank-you directly to the person building this",
+    sku:    "qrguard_donate_10",
+    amount: "₹10",
+    label:  "For the Founder",
+    desc:   "A small thank-you directly to the person building this",
   },
   {
-    sku:     "qrguard_donate_50",
-    amount:  "₹50",
-    label:   "App Development",
-    desc:    "Helps fund server costs and new features",
+    sku:    "qrguard_donate_50",
+    amount: "₹50",
+    label:  "App Development",
+    desc:   "Helps fund server costs and new features",
   },
   {
-    sku:     "qrguard_donate_100",
-    amount:  "₹100",
-    label:   "App Development",
-    desc:    "Powers security upgrades and threat intelligence",
+    sku:    "qrguard_donate_100",
+    amount: "₹100",
+    label:  "App Development",
+    desc:   "Powers security upgrades and threat intelligence",
   },
 ];
 
 export default function DonationScreen() {
   const { colors } = useTheme();
-  const insets    = useSafeAreaInsets();
-  const topInset  = useTopInset();
+  const insets     = useSafeAreaInsets();
+  const topInset   = useTopInset();
 
   const [products,        setProducts]        = useState<Record<string, string>>({});
   const [loadingProducts, setLoadingProducts] = useState(false);
@@ -53,19 +53,59 @@ export default function DonationScreen() {
   const [connected,       setConnected]       = useState(false);
   const [selected,        setSelected]        = useState(TIERS[1].sku);
 
+  const purchasingRef = useRef<string | null>(null);
+
   useEffect(() => {
     if (!iapModule || Platform.OS !== "android") return;
     let mounted = true;
+
+    const purchaseUpdateSub = iapModule.purchaseUpdatedListener(async (purchase) => {
+      const token = purchase.purchaseToken;
+      if (!token) return;
+      try {
+        await iapModule!.finishTransaction({ purchase, isConsumable: true });
+        if (mounted) {
+          setPurchasing(null);
+          purchasingRef.current = null;
+          Alert.alert(
+            "Thank You ❤️",
+            "Your support means everything. It goes directly to the person building QR Guard and keeping it running.",
+            [{ text: "Close" }]
+          );
+        }
+      } catch {
+        if (mounted) {
+          setPurchasing(null);
+          purchasingRef.current = null;
+        }
+      }
+    });
+
+    const purchaseErrorSub = iapModule.purchaseErrorListener((error: any) => {
+      if (mounted) {
+        setPurchasing(null);
+        purchasingRef.current = null;
+        if (error?.code !== "E_USER_CANCELLED") {
+          Alert.alert(
+            "Purchase Failed",
+            "Something went wrong. Your payment was not charged.",
+            [{ text: "OK" }]
+          );
+        }
+      }
+    });
+
     (async () => {
       try {
         setLoadingProducts(true);
         await iapModule!.initConnection();
         if (!mounted) return;
         setConnected(true);
+
         const skus  = TIERS.map((t) => t.sku);
-        const items =
-          (await (iapModule as any)!.fetchProducts?.({ productIds: skus })) ??
+        const items: any[] =
           (await (iapModule as any)!.getProducts?.({ skus })) ??
+          (await (iapModule as any)!.fetchProducts?.({ productIds: skus })) ??
           [];
         if (!mounted) return;
         const priceMap: Record<string, string> = {};
@@ -78,8 +118,11 @@ export default function DonationScreen() {
         if (mounted) setLoadingProducts(false);
       }
     })();
+
     return () => {
       mounted = false;
+      purchaseUpdateSub.remove();
+      purchaseErrorSub.remove();
       iapModule?.endConnection?.();
     };
   }, []);
@@ -94,20 +137,17 @@ export default function DonationScreen() {
       return;
     }
     const sku = selected;
+    if (purchasingRef.current) return;
+    purchasingRef.current = sku;
     setPurchasing(sku);
     try {
-      await (iapModule as any)!.requestPurchase({ sku, skus: [sku] });
-      Alert.alert(
-        "Thank You ❤️",
-        "Your support means everything. It goes directly to the person building QR Guard and keeping it running.",
-        [{ text: "Close" }]
-      );
+      await (iapModule as any)!.requestPurchase({ skus: [sku] });
     } catch (err: any) {
       if (err?.code !== "E_USER_CANCELLED") {
         Alert.alert("Purchase Failed", "Something went wrong. Your payment was not charged.", [{ text: "OK" }]);
       }
-    } finally {
       setPurchasing(null);
+      purchasingRef.current = null;
     }
   }, [selected, connected]);
 
@@ -145,8 +185,8 @@ export default function DonationScreen() {
         {/* ── TIER CARDS ───────────────────────────────────────── */}
         <View style={s.tiersCol}>
           {TIERS.map((tier) => {
-            const isActive       = selected === tier.sku;
-            const displayPrice   = products[tier.sku] || tier.amount;
+            const isActive     = selected === tier.sku;
+            const displayPrice = products[tier.sku] || tier.amount;
             return (
               <Pressable
                 key={tier.sku}
@@ -224,11 +264,11 @@ export default function DonationScreen() {
         <View style={[s.whereCard, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
           <Text style={[s.whereTitle, { color: colors.text }]}>Where your support goes</Text>
           {[
-            { icon: "person-outline"          as const, text: "₹10 — Goes directly to the founder" },
-            { icon: "code-slash-outline"      as const, text: "₹50 — QR Guard app development" },
+            { icon: "person-outline"           as const, text: "₹10 — Goes directly to the founder" },
+            { icon: "code-slash-outline"       as const, text: "₹50 — QR Guard app development" },
             { icon: "shield-checkmark-outline" as const, text: "₹100 — QR Guard app development" },
-            { icon: "server-outline"          as const, text: "Firebase, server & infrastructure costs" },
-            { icon: "bug-outline"             as const, text: "Security audits & performance improvements" },
+            { icon: "server-outline"           as const, text: "Firebase, server & infrastructure costs" },
+            { icon: "bug-outline"              as const, text: "Security audits & performance improvements" },
           ].map(({ icon, text }) => (
             <View key={text} style={s.whereRow}>
               <Ionicons name={icon} size={14} color={colors.primary} />
