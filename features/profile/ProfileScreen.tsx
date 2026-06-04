@@ -183,7 +183,7 @@ function ProfileScreen() {
   const tabBarHeight = 60 + insets.bottom;
   const { onTabScroll } = useTabBarScroll();
 
-  const previewQrs = useMemo(() => myQrCodes.slice(0, 13), [myQrCodes]);
+  const previewQrs = useMemo(() => myQrCodes.slice(0, 9), [myQrCodes]);
   const totalQrScans = useMemo(
     () => myQrCodes.reduce((sum, qr) => sum + (qr.scanCount || 0), 0),
     [myQrCodes],

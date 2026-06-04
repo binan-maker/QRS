@@ -7,7 +7,7 @@ import type { QrItem } from "./QrPreviewCard";
 const CARD_W    = 88;
 const CARD_H    = 88;
 const OFFSET_X  = 30;
-const MAX_STACK = 13;
+const MAX_STACK = 9;
 
 interface Props {
   qrs:          QrItem[];

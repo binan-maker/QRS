@@ -22,33 +22,30 @@ try {
 } catch {}
 
 const TIERS = [
-  { sku: "qrguard_donate_10",  amount: "₹10",  label: "Starter" },
-  { sku: "qrguard_donate_50",  amount: "₹50",  label: "Popular" },
-  { sku: "qrguard_donate_100", amount: "₹100", label: "Champion" },
-];
-
-const IMPACT_ITEMS = [
   {
-    icon: "shield-checkmark-outline" as const,
-    title: "Scam Detection",
-    desc: "Improves malicious QR identification",
+    sku:     "qrguard_donate_10",
+    amount:  "₹10",
+    label:   "For the Founder",
+    desc:    "A small thank-you directly to the person building this",
   },
   {
-    icon: "lock-closed-outline" as const,
-    title: "Privacy First",
-    desc: "Keeps the platform independent",
+    sku:     "qrguard_donate_50",
+    amount:  "₹50",
+    label:   "App Development",
+    desc:    "Helps fund server costs and new features",
   },
   {
-    icon: "flash-outline" as const,
-    title: "Faster Updates",
-    desc: "Ships better protection sooner",
+    sku:     "qrguard_donate_100",
+    amount:  "₹100",
+    label:   "App Development",
+    desc:    "Powers security upgrades and threat intelligence",
   },
 ];
 
 export default function DonationScreen() {
   const { colors } = useTheme();
-  const insets = useSafeAreaInsets();
-  const topInset = useTopInset();
+  const insets    = useSafeAreaInsets();
+  const topInset  = useTopInset();
 
   const [products,        setProducts]        = useState<Record<string, string>>({});
   const [loadingProducts, setLoadingProducts] = useState(false);
@@ -65,7 +62,7 @@ export default function DonationScreen() {
         await iapModule!.initConnection();
         if (!mounted) return;
         setConnected(true);
-        const skus = TIERS.map((t) => t.sku);
+        const skus  = TIERS.map((t) => t.sku);
         const items =
           (await (iapModule as any)!.fetchProducts?.({ productIds: skus })) ??
           (await (iapModule as any)!.getProducts?.({ skus })) ??
@@ -89,7 +86,7 @@ export default function DonationScreen() {
 
   const handleDonate = useCallback(async () => {
     if (Platform.OS !== "android") {
-      Alert.alert("Android Only", "In-app purchases are available on Android via Google Play.", [{ text: "OK" }]);
+      Alert.alert("Android Only", "Donations are available on Android via Google Play.", [{ text: "OK" }]);
       return;
     }
     if (!iapModule || !connected) {
@@ -101,8 +98,8 @@ export default function DonationScreen() {
     try {
       await (iapModule as any)!.requestPurchase({ sku, skus: [sku] });
       Alert.alert(
-        "Thank You",
-        "Your support means a lot. It goes directly to keeping QR Guard running and improving.",
+        "Thank You ❤️",
+        "Your support means everything. It goes directly to the person building QR Guard and keeping it running.",
         [{ text: "Close" }]
       );
     } catch (err: any) {
@@ -114,7 +111,7 @@ export default function DonationScreen() {
     }
   }, [selected, connected]);
 
-  const selectedTier = TIERS.find((t) => t.sku === selected) ?? TIERS[1];
+  const selectedTier  = TIERS.find((t) => t.sku === selected) ?? TIERS[1];
   const selectedPrice = products[selected] || selectedTier.amount;
 
   return (
@@ -129,84 +126,74 @@ export default function DonationScreen() {
         {/* ── HERO ─────────────────────────────────────────────── */}
         <View style={s.hero}>
           <View style={[s.heroIconRing, { borderColor: colors.primary + "28", backgroundColor: colors.primaryDim }]}>
-            <Ionicons name="shield-checkmark" size={28} color={colors.primary} />
+            <Ionicons name="heart" size={28} color={colors.primary} />
           </View>
           <Text style={[s.heroTitle, { color: colors.text }]}>
-            Support QR Guard
+            Help Build QR Guard
           </Text>
           <Text style={[s.heroSub, { color: colors.textSecondary }]}>
-            Help build a safer QR experience for everyone.{"\n"}Your support funds scam detection, security systems, and privacy-first features.
+            QR Guard is built by a solo developer. If this app has helped you stay safe, consider sending a small amount to support the work.
           </Text>
-          <View style={s.heroTagRow}>
-            {["100% Free", "No Ads", "No Subscriptions"].map((tag) => (
-              <View
-                key={tag}
-                style={[s.heroTag, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}
+          <View style={[s.noticeBox, { backgroundColor: colors.surface, borderColor: colors.primary + "30" }]}>
+            <Ionicons name="information-circle-outline" size={15} color={colors.primary} />
+            <Text style={[s.noticeText, { color: colors.textSecondary }]}>
+              This is a voluntary donation — not a subscription, not a purchase. You get nothing in return except the good feeling of supporting an independent app.
+            </Text>
+          </View>
+        </View>
+
+        {/* ── TIER CARDS ───────────────────────────────────────── */}
+        <View style={s.tiersCol}>
+          {TIERS.map((tier) => {
+            const isActive       = selected === tier.sku;
+            const displayPrice   = products[tier.sku] || tier.amount;
+            return (
+              <Pressable
+                key={tier.sku}
+                onPress={() => setSelected(tier.sku)}
+                style={({ pressed }) => [
+                  s.tierCard,
+                  {
+                    backgroundColor: isActive ? colors.primary + "12" : colors.surface,
+                    borderColor:     isActive ? colors.primary : colors.surfaceBorder,
+                    opacity:         pressed ? 0.85 : 1,
+                  },
+                ]}
               >
-                <Ionicons name="checkmark" size={11} color={colors.primary} />
-                <Text style={[s.heroTagText, { color: colors.textSecondary }]}>{tag}</Text>
-              </View>
-            ))}
-          </View>
-        </View>
-
-        {/* ── IMPACT CARDS ─────────────────────────────────────── */}
-        <View style={s.impactRow}>
-          {IMPACT_ITEMS.map((item) => (
-            <View
-              key={item.title}
-              style={[s.impactCard, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}
-            >
-              <View style={[s.impactIconWrap, { backgroundColor: colors.primaryDim }]}>
-                <Ionicons name={item.icon} size={15} color={colors.primary} />
-              </View>
-              <Text style={[s.impactTitle, { color: colors.text }]}>{item.title}</Text>
-              <Text style={[s.impactDesc, { color: colors.textMuted }]}>{item.desc}</Text>
-            </View>
-          ))}
-        </View>
-
-        {/* ── AMOUNT PICKER ────────────────────────────────────── */}
-        <View style={[s.pickerCard, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
-          <View style={s.pickerHeader}>
-            <Text style={[s.pickerLabel, { color: colors.text }]}>Choose an amount</Text>
-            {loadingProducts && <ActivityIndicator size="small" color={colors.primary} />}
-          </View>
-          <Text style={[s.pickerSub, { color: colors.textMuted }]}>
-            One-time · No recurring charges · via Google Play
-          </Text>
-
-          <View style={s.chipRow}>
-            {TIERS.map((tier) => {
-              const isActive = selected === tier.sku;
-              const displayPrice = products[tier.sku] || tier.amount;
-              return (
-                <Pressable
-                  key={tier.sku}
-                  onPress={() => setSelected(tier.sku)}
-                  style={({ pressed }) => [
-                    s.chip,
+                <View style={s.tierLeft}>
+                  <View style={[
+                    s.tierRadio,
                     {
-                      backgroundColor: isActive ? colors.primary : colors.surfaceLight,
-                      borderColor: isActive ? colors.primary : colors.surfaceBorder,
-                      opacity: pressed ? 0.85 : 1,
+                      borderColor:     isActive ? colors.primary : colors.surfaceBorder,
+                      backgroundColor: isActive ? colors.primary : "transparent",
                     },
-                  ]}
-                >
-                  <Text style={[s.chipAmount, { color: isActive ? "#fff" : colors.text }]}>
-                    {displayPrice}
-                  </Text>
-                  {isActive && (
-                    <Text style={[s.chipLabel, { color: "rgba(255,255,255,0.75)" }]}>
-                      {tier.label}
-                    </Text>
-                  )}
-                </Pressable>
-              );
-            })}
-          </View>
+                  ]}>
+                    {isActive && <View style={s.tierRadioDot} />}
+                  </View>
+                  <View style={s.tierInfo}>
+                    <Text style={[s.tierLabel, { color: colors.text }]}>{tier.label}</Text>
+                    <Text style={[s.tierDesc, { color: colors.textMuted }]}>{tier.desc}</Text>
+                  </View>
+                </View>
+                <Text style={[s.tierAmount, { color: isActive ? colors.primary : colors.text }]}>
+                  {displayPrice}
+                </Text>
+              </Pressable>
+            );
+          })}
+        </View>
 
-          {/* CTA */}
+        {/* ── DONATE BUTTON ────────────────────────────────────── */}
+        <View style={[s.ctaCard, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
+          <Text style={[s.ctaHint, { color: colors.textMuted }]}>
+            You can donate as many times as you like — every amount helps.
+          </Text>
+          {loadingProducts && (
+            <View style={s.ctaLoading}>
+              <ActivityIndicator size="small" color={colors.primary} />
+              <Text style={[s.ctaLoadingText, { color: colors.textMuted }]}>Loading prices…</Text>
+            </View>
+          )}
           <Pressable
             onPress={handleDonate}
             disabled={!!purchasing}
@@ -223,18 +210,13 @@ export default function DonationScreen() {
               ) : (
                 <>
                   <Ionicons name="heart" size={16} color="#fff" />
-                  <Text style={s.ctaText}>Support with {selectedPrice}</Text>
+                  <Text style={s.ctaText}>Send {selectedPrice}</Text>
                 </>
               )}
             </LinearGradient>
           </Pressable>
-        </View>
-
-        {/* ── TRUST NOTE ───────────────────────────────────────── */}
-        <View style={[s.trustCard, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
-          <Ionicons name="lock-closed-outline" size={14} color={colors.textMuted} style={{ marginTop: 1 }} />
-          <Text style={[s.trustText, { color: colors.textMuted }]}>
-            QR Guard never sells user data. Your support keeps the platform independent and free. Donations are voluntary and non-refundable. For refunds, contact Google Play Support.
+          <Text style={[s.ctaNote, { color: colors.textMuted }]}>
+            Processed via Google Play · Donations are non-refundable
           </Text>
         </View>
 
@@ -242,10 +224,11 @@ export default function DonationScreen() {
         <View style={[s.whereCard, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
           <Text style={[s.whereTitle, { color: colors.text }]}>Where your support goes</Text>
           {[
-            { icon: "server-outline" as const,          text: "Firebase & server infrastructure" },
-            { icon: "shield-checkmark-outline" as const, text: "Google Safe Browsing threat data" },
-            { icon: "code-slash-outline" as const,       text: "Solo developer building full-time" },
-            { icon: "bug-outline" as const,              text: "Security audits & performance" },
+            { icon: "person-outline"          as const, text: "₹10 — Goes directly to the founder" },
+            { icon: "code-slash-outline"      as const, text: "₹50 — QR Guard app development" },
+            { icon: "shield-checkmark-outline" as const, text: "₹100 — QR Guard app development" },
+            { icon: "server-outline"          as const, text: "Firebase, server & infrastructure costs" },
+            { icon: "bug-outline"             as const, text: "Security audits & performance improvements" },
           ].map(({ icon, text }) => (
             <View key={text} style={s.whereRow}>
               <Ionicons name={icon} size={14} color={colors.primary} />
@@ -268,10 +251,9 @@ const s = StyleSheet.create({
   container: { flex: 1 },
   scroll:    { paddingHorizontal: 16, paddingTop: 8, gap: 14 },
 
-  // Hero
   hero: {
     alignItems: "center",
-    paddingVertical: 28,
+    paddingVertical: 24,
     paddingHorizontal: 8,
     gap: 10,
   },
@@ -296,62 +278,70 @@ const s = StyleSheet.create({
     lineHeight: 21,
     maxWidth: 310,
   },
-  heroTagRow: { flexDirection: "row", gap: 7, flexWrap: "wrap", justifyContent: "center", marginTop: 2 },
-  heroTag: {
+  noticeBox: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: 8,
+    borderRadius: 14,
+    borderWidth: 1,
+    padding: 13,
+    marginTop: 4,
+    width: "100%",
+  },
+  noticeText: {
+    flex: 1,
+    fontSize: 12,
+    fontFamily: "Inter_400Regular",
+    lineHeight: 18,
+  },
+
+  tiersCol: { gap: 10 },
+  tierCard: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 4,
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    borderRadius: 100,
-    borderWidth: 1,
-  },
-  heroTagText: { fontSize: 11, fontFamily: "Inter_500Medium" },
-
-  // Impact cards
-  impactRow:  { flexDirection: "row", gap: 8 },
-  impactCard: {
-    flex: 1,
+    justifyContent: "space-between",
     borderRadius: 16,
-    borderWidth: 1,
-    padding: 14,
-    gap: 7,
+    borderWidth: 1.5,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
   },
-  impactIconWrap: {
-    width: 32, height: 32,
+  tierLeft:  { flexDirection: "row", alignItems: "center", gap: 12, flex: 1 },
+  tierRadio: {
+    width: 20, height: 20,
     borderRadius: 10,
+    borderWidth: 2,
     alignItems: "center",
     justifyContent: "center",
   },
-  impactTitle: { fontSize: 12, fontFamily: "Inter_600SemiBold", lineHeight: 16 },
-  impactDesc:  { fontSize: 11, fontFamily: "Inter_400Regular", lineHeight: 15 },
+  tierRadioDot: {
+    width: 8, height: 8,
+    borderRadius: 4,
+    backgroundColor: "#fff",
+  },
+  tierInfo:   { flex: 1 },
+  tierLabel:  { fontSize: 14, fontFamily: "Inter_600SemiBold" },
+  tierDesc:   { fontSize: 11, fontFamily: "Inter_400Regular", marginTop: 2, lineHeight: 16 },
+  tierAmount: { fontSize: 17, fontFamily: "Inter_700Bold", marginLeft: 8 },
 
-  // Picker card
-  pickerCard: {
+  ctaCard: {
     borderRadius: 20,
     borderWidth: 1,
     padding: 18,
     gap: 12,
   },
-  pickerHeader: { flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
-  pickerLabel:  { fontSize: 15, fontFamily: "Inter_700Bold" },
-  pickerSub:    { fontSize: 11.5, fontFamily: "Inter_400Regular", lineHeight: 17, marginTop: -4 },
-
-  // Amount chips
-  chipRow: { flexDirection: "row", gap: 8 },
-  chip: {
-    flex: 1,
-    borderRadius: 14,
-    borderWidth: 1.5,
-    paddingVertical: 13,
-    paddingHorizontal: 8,
-    alignItems: "center",
-    gap: 3,
+  ctaHint: {
+    fontSize: 12,
+    fontFamily: "Inter_400Regular",
+    textAlign: "center",
+    lineHeight: 18,
   },
-  chipAmount: { fontSize: 16, fontFamily: "Inter_700Bold" },
-  chipLabel:  { fontSize: 9,  fontFamily: "Inter_500Medium", letterSpacing: 0.2 },
-
-  // CTA
+  ctaLoading: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+  },
+  ctaLoadingText: { fontSize: 12, fontFamily: "Inter_400Regular" },
   ctaBtn:  { borderRadius: 16, overflow: "hidden" },
   ctaGrad: {
     flexDirection: "row",
@@ -367,24 +357,12 @@ const s = StyleSheet.create({
     color: "#fff",
     letterSpacing: 0.1,
   },
-
-  // Trust note
-  trustCard: {
-    flexDirection: "row",
-    alignItems: "flex-start",
-    gap: 8,
-    borderRadius: 14,
-    borderWidth: 1,
-    padding: 14,
-  },
-  trustText: {
-    flex: 1,
-    fontSize: 11.5,
+  ctaNote: {
+    fontSize: 11,
     fontFamily: "Inter_400Regular",
-    lineHeight: 18,
+    textAlign: "center",
   },
 
-  // Where it goes
   whereCard: {
     borderRadius: 18,
     borderWidth: 1,
@@ -395,7 +373,6 @@ const s = StyleSheet.create({
   whereRow:   { flexDirection: "row", alignItems: "center", gap: 10 },
   whereText:  { fontSize: 13, fontFamily: "Inter_400Regular", flex: 1, lineHeight: 19 },
 
-  // Footer
   footer: {
     fontSize: 11,
     fontFamily: "Inter_400Regular",
