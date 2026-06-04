@@ -107,26 +107,39 @@ export default function ScannerScreen() {
   }, []);
 
   // ── Hardware availability check ────────────────────────────────────────────
-  // Run on ALL platforms — do NOT hardcode true for Android. Devices with 0
-  // cameras will make CameraX throw an uncaught native exception the moment
-  // CameraView mounts; isAvailableAsync() prevents the mount entirely.
+  // isAvailableAsync() is NOT reliable on many Android ROMs — it can return
+  // false or throw on devices that have a perfectly working camera. We use it
+  // as a *hint*, not a hard gate. When it returns false or errors we still
+  // attempt to mount the camera and let onMountError / the watchdog be the
+  // authoritative failure signal.
   useEffect(() => {
     let cancelled = false;
     CameraView.isAvailableAsync()
       .then((available) => { if (!cancelled) setHardwareAvailable(available); })
-      .catch(() => { if (!cancelled) setHardwareAvailable(false); });
+      .catch(() => {
+        // API error means "unknown" — optimistically assume true so the camera
+        // gets a chance to mount. onMountError will catch genuine failures.
+        if (!cancelled) setHardwareAvailable(true);
+      });
     return () => { cancelled = true; };
   }, []);
 
   // ── Camera ready watchdog ──────────────────────────────────────────────────
   // Restarts whenever cameraActive changes so each mount gets its own window.
+  // We start the watchdog even when hardwareAvailable is false — isAvailableAsync()
+  // returns incorrect results on many Android ROMs, so we let the mount attempt
+  // (and onMountError / onCameraReady) be the authoritative outcome.
+  // When hardwareAvailable is false we use a shorter window (5 s) because a device
+  // that truly has no camera triggers onMountError almost immediately, so a long
+  // wait would just delay the error message needlessly.
   useEffect(() => {
-    if (!permission?.granted || hardwareAvailable !== true || !cameraActive) return;
+    if (!permission?.granted || hardwareAvailable === null || !cameraActive) return;
 
-    // Shorter Android timeout — CameraX fails fast on broken hardware; a long
-    // window leaves the user able to trigger gallery/flash while CameraX is
-    // still crashing in a background thread.
-    const timeoutMs = Platform.OS === "android" ? 8000 : 12000;
+    const timeoutMs =
+      hardwareAvailable === false
+        ? 5000                                     // likely no camera — fail fast
+        : Platform.OS === "android" ? 15000 : 12000; // real device — give plenty of time
+
     cameraReadyTimerRef.current = setTimeout(() => {
       setCameraAvailable((prev) => {
         if (prev) setCameraErrorType("unavailable");
@@ -248,8 +261,11 @@ export default function ScannerScreen() {
     );
   }
 
-  // ── Camera live: fully active and layout-settled ───────────────────────────
-  const cameraLive = cameraActive && hardwareAvailable === true && cameraAvailable;
+  // ── Camera live: fully active, layout settled, and camera responding ────────
+  // hardwareAvailable === false no longer blocks mounting — isAvailableAsync()
+  // is unreliable on many Android ROMs. cameraAvailable (driven by onCameraReady /
+  // onMountError / the watchdog) is the authoritative signal.
+  const cameraLive = cameraActive && hardwareAvailable !== null && cameraAvailable;
 
   // ── Main render ───────────────────────────────────────────────────────────
   return (
@@ -260,10 +276,10 @@ export default function ScannerScreen() {
       <View style={[StyleSheet.absoluteFillObject, { backgroundColor: "#000" }]} />
 
       {hardwareAvailable === null ? (
-        // Still checking hardware — black placeholder already rendered above
+        // Still waiting for isAvailableAsync() — black placeholder holds space
         null
-      ) : hardwareAvailable === false || (!cameraAvailable && isFocused) ? (
-        // Hardware unavailable or camera error — show recovery UI
+      ) : !cameraAvailable && isFocused ? (
+        // Camera failed (onMountError fired or watchdog expired) — show recovery UI
         <View style={[StyleSheet.absoluteFillObject, { backgroundColor: "#080c14" }]}>
           <View style={{ paddingTop: topInset + 8, paddingHorizontal: 16, paddingBottom: 10 }}>
             <Pressable onPress={() => router.back()} style={styles.backBtn}>
@@ -279,7 +295,9 @@ export default function ScannerScreen() {
           </View>
         </View>
       ) : cameraActive ? (
-        // Camera live — layout has settled, safe to mount
+        // Camera active — layout has settled, attempt mount.
+        // isAvailableAsync() returning false is treated as a hint only; onMountError
+        // is the authoritative signal for devices that genuinely lack a camera.
         <CameraErrorBoundary onError={() => markCameraUnavailable("unavailable")}>
           <CameraView
             key={focusKey}
