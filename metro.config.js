@@ -55,21 +55,29 @@ config.transformer = {
   ],
 };
 
+// ── Node.js-only package stubs ───────────────────────────────────────────────
+// These packages rely on Node.js built-ins (fs, net, tls, etc.) that don't
+// exist in the React Native / Hermes runtime. Metro bundles every reachable
+// import, so we redirect them to empty stubs at resolve-time.
+//
+// We use resolveRequest (not extraNodeModules) because extraNodeModules is only
+// consulted when the module is NOT found in node_modules. Since these packages
+// ARE installed, we must intercept resolution explicitly.
+const NODE_ONLY_STUBS = {
+  "firebase-admin": path.resolve(__dirname, "lib/db/providers/firebase-admin-stub.js"),
+  pg: path.resolve(__dirname, "lib/db/providers/pg-stub.js"),
+};
+
 config.resolver = {
   ...config.resolver,
   blockList: [
     /\.local\/.*/,
   ],
-  // Stub out the `pg` (node-postgres) package for React Native.
-  // The real `pg` relies on Node.js built-ins (net, tls, dns, fs) that do not
-  // exist in the React Native runtime. Since DB_PROVIDER is always "firebase"
-  // in the mobile app, the postgres provider is never executed at runtime, but
-  // Metro still tries to bundle it. The stub satisfies the import without
-  // pulling in any Node.js-specific code.
-  extraNodeModules: {
-    ...config.resolver?.extraNodeModules,
-    pg: path.resolve(__dirname, "lib/db/providers/pg-stub.js"),
-    "firebase-admin": path.resolve(__dirname, "lib/db/providers/firebase-admin-stub.js"),
+  resolveRequest(context, moduleName, platform) {
+    if (NODE_ONLY_STUBS[moduleName]) {
+      return { type: "sourceFile", filePath: NODE_ONLY_STUBS[moduleName] };
+    }
+    return context.resolveRequest(context, moduleName, platform);
   },
 };
 
