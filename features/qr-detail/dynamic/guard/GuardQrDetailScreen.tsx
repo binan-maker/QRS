@@ -166,6 +166,15 @@ export default function GuardQrDetailScreen({ id, guardUuid, ownerDocId, hint }:
                     Living Shield QR
                   </Text>
                 </View>
+                <Animated.View entering={FadeIn.delay(35).duration(240)}>
+                  <Pressable
+                    onPress={() => router.push("/donation")}
+                    style={styles.navBackBtn}
+                    hitSlop={6}
+                  >
+                    <Ionicons name="heart-outline" size={20} color={colors.primary} />
+                  </Pressable>
+                </Animated.View>
                 <Animated.View entering={FadeIn.delay(40).duration(240)}>
                   <Pressable onPress={() => setOverflowOpen(true)} style={styles.navBackBtn}>
                     <Ionicons name="ellipsis-horizontal" size={22} color={colors.text} />

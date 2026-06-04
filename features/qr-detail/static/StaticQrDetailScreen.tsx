@@ -243,6 +243,7 @@ export default function StaticQrDetailScreen({ id, ownerDocId, hint }: Props) {
                   ownerDocId ? router.push(`/my-qr-analytics/${ownerDocId}` as any) : undefined
                 }
                 onOverflowOpen={() => setOverflowOpen(true)}
+                onDonate={() => router.push("/donation")}
               />
             </View>
           </Animated.View>

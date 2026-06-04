@@ -25,6 +25,7 @@ interface Props {
   onManage: () => void;
   onOverflowOpen: () => void;
   onAnalytics?: () => void;
+  onDonate?: () => void;
 }
 
 export default function QrDetailNavBar({
@@ -47,6 +48,7 @@ export default function QrDetailNavBar({
   onManage,
   onOverflowOpen,
   onAnalytics,
+  onDonate,
 }: Props) {
   const { colors } = useTheme();
   const styles = makeStyles(colors);
@@ -121,6 +123,17 @@ export default function QrDetailNavBar({
         /* External / non-Guard QR → no action button shown */
         }
 
+        {onDonate && (
+          <Animated.View entering={FadeIn.delay(35).duration(240)}>
+            <Pressable
+              onPress={onDonate}
+              style={({ pressed }) => [styles.navActionBtn, { opacity: pressed ? 0.7 : 1 }]}
+              hitSlop={6}
+            >
+              <Ionicons name="heart-outline" size={20} color={colors.primary} />
+            </Pressable>
+          </Animated.View>
+        )}
         <Animated.View entering={FadeIn.delay(40).duration(240)}>
           <Pressable
             onPress={onOverflowOpen}
