@@ -69,6 +69,7 @@ config.resolver = {
   extraNodeModules: {
     ...config.resolver?.extraNodeModules,
     pg: path.resolve(__dirname, "lib/db/providers/pg-stub.js"),
+    "firebase-admin": path.resolve(__dirname, "lib/db/providers/firebase-admin-stub.js"),
   },
 };
 
