@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "QR Guard",
-    "slug": "qr-guard",
+    "name": "BinRo",
+    "slug": "binro",
     "version": "1.0.17",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
@@ -37,7 +37,7 @@
       [
         "expo-camera",
         {
-          "cameraPermission": "Allow QR Guard to use your camera to scan QR codes"
+          "cameraPermission": "Allow BinRo to use your camera to scan QR codes"
         }
       ],
       [

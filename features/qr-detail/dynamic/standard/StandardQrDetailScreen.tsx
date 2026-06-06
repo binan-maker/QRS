@@ -171,7 +171,7 @@ export default function StandardQrDetailScreen({ id, standardUuid, ownerDocId, h
                 </Animated.View>
                 <View style={stdStyles.navTitleRow}>
                   <Text style={[stdStyles.navTitle, { color: colors.text }]} numberOfLines={1}>
-                    QR Guard
+                    BinRo
                   </Text>
                 </View>
                 <Animated.View entering={FadeIn.delay(35).duration(240)}>

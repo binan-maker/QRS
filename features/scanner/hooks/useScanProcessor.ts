@@ -234,7 +234,7 @@ export function useScanProcessor({
       setScanSuccess(true);
       const isGuard = param === "guardUuid";
       showScannerMsg(
-        isGuard ? "Living Shield QR detected" : "QR Guard standard code detected",
+        isGuard ? "Living Shield QR detected" : "BinRo standard code detected",
         "info"
       );
       const qrId = await getQrCodeId(content);

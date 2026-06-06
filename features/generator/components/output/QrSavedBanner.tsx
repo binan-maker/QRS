@@ -53,7 +53,7 @@ function QrSavedBanner({
         <View style={[styles.brandedFooter, { borderTopColor: colors.surfaceBorder }]}>
           <View style={styles.brandedHeader}>
             <Image source={require("../../../../assets/images/icon.png")} style={styles.brandLogo} />
-            <Text style={[styles.brandName, { color: colors.text }]}>QR Guard</Text>
+            <Text style={[styles.brandName, { color: colors.text }]}>BinRo</Text>
             <View style={[styles.secureBadge, { backgroundColor: colors.safeDim }]}>
               <Ionicons name="shield-checkmark" size={11} color={colors.safe} />
               <Text style={[styles.secureText, { color: colors.safe }]}>Verified</Text>
@@ -80,7 +80,7 @@ function QrSavedBanner({
             <Ionicons name="shield-checkmark" size={12} color={colors.primary} />
             <Text style={[styles.ownershipNoteText, { color: colors.primary }]}>
               <Text style={{ fontFamily: "Inter_700Bold" }}>Database-locked QR — </Text>
-              the QR sticker points to our secure server. Only QR Guard's database reveals the real content. Other scanners see our web page. You own this link forever.
+              the QR sticker points to our secure server. Only BinRo's database reveals the real content. Other scanners see our web page. You own this link forever.
             </Text>
           </View>
         </View>

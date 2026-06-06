@@ -146,7 +146,7 @@ export default function SearchScreen() {
           </LinearGradient>
           <Text style={[styles.hintTitle, { color: colors.text }]}>Search for people</Text>
           <Text style={[styles.hintSub, { color: colors.textMuted }]}>
-            Type a username to find and add friends on QR Guard
+            Type a username to find and add friends on BinRo
           </Text>
         </View>
       )}

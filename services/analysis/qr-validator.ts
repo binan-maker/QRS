@@ -217,7 +217,7 @@ function validateUrlScheme(content: string): QrValidationResult {
       return { valid: false, error: "This is a 2FA setup code for an authenticator app (like Google Authenticator). It can't be opened here — use your authenticator app to scan it instead." };
     }
     if (scheme === "market:" || scheme === "itms-apps:" || scheme === "itms:") {
-      return { valid: false, error: "This QR code links to an app store listing and can't be opened in QR Guard." };
+      return { valid: false, error: "This QR code links to an app store listing and can't be opened in BinRo." };
     }
     if (scheme === "intent:") {
       return { valid: false, error: "This QR code contains an Android deep link that can't be opened here." };

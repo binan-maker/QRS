@@ -1,4 +1,4 @@
-# QR Guard
+# BinRo
 
 A mobile-first QR code scanning and management app for Android, focused on security and user-generated content.
 

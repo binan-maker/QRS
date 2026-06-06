@@ -43,7 +43,7 @@ export default function DonationBanner() {
 
       <View style={{ flex: 1, gap: sp(2) }}>
         <Text style={{ fontSize: rf(14), fontFamily: "Inter_700Bold", color: colors.text }}>
-          Support QR Guard
+          Support BinRo
         </Text>
         <Text style={{ fontSize: rf(12), fontFamily: "Inter_400Regular", color: colors.textSecondary, lineHeight: rf(17) }}>
           Donate ₹10 · ₹50 · ₹100 to keep this app free &amp; secure

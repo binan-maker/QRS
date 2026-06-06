@@ -49,7 +49,7 @@ export function StandardQrBanner({
 
           <View style={{ flex: 1 }}>
             <Text style={{ fontSize: 13, fontFamily: "Inter_600SemiBold", color: accent }}>
-              Protected by QR Guard
+              Protected by BinRo
             </Text>
             {!loading && ownerName ? (
               <Text style={{ fontSize: 11, fontFamily: "Inter_400Regular", color: colors.textMuted, marginTop: 1 }} numberOfLines={1}>

@@ -1,7 +1,7 @@
 /**
  * Threat Intelligence Client
  *
- * Integrates with Google Safe Browsing API (via the QR Guard backend) to
+ * Integrates with Google Safe Browsing API (via the BinRo backend) to
  * perform real, up-to-date threat detection on URLs. Falls back to local
  * heuristic analysis when the server is unreachable.
  *

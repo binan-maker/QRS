@@ -69,7 +69,7 @@ export default function ConsentModal({ visible, onAccept }: ConsentModalProps) {
               <Ionicons name="shield-checkmark" size={22} color={colors.primary} />
             </View>
             <View style={styles.headerText}>
-              <Text style={[styles.title, { color: boldText }]}>QR Guard — Terms &amp; Privacy</Text>
+              <Text style={[styles.title, { color: boldText }]}>BinRo — Terms &amp; Privacy</Text>
               <Text style={[styles.subtitle, { color: hintText }]}>A quick read before you dive in</Text>
             </View>
           </View>
@@ -107,7 +107,7 @@ export default function ConsentModal({ visible, onAccept }: ConsentModalProps) {
                 {checked && <Ionicons name="checkmark" size={11} color="#fff" />}
               </View>
               <Text style={[styles.checkLabel, { color: checkboxLabel }]}>
-                I agree to QR Guard's{" "}
+                I agree to BinRo's{" "}
                 <Text style={{ color: linkColor }} onPress={openPrivacyPolicy}>Privacy Policy</Text>
                 {" "}and{" "}
                 <Text style={{ color: linkColor }} onPress={openTerms}>Terms of Service</Text>

@@ -127,7 +127,7 @@ export function registerDonationRoutes(app: Express) {
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>QR Guard – Charity Donation</title>
+  <title>BinRo – Charity Donation</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
@@ -197,7 +197,7 @@ export function registerDonationRoutes(app: Express) {
 <body>
   <div class="card" id="payCard">
     <div class="heart">💜</div>
-    <h1>Support QR Guard</h1>
+    <h1>Support BinRo</h1>
     <p class="subtitle">Your donation helps keep this app free and safe for everyone.</p>
     <div class="amount-pill">₹${Math.round(Number(amount) / 100)}</div>
     <button class="pay-btn" id="payBtn" onclick="startPayment()">Donate Now</button>
@@ -220,7 +220,7 @@ export function registerDonationRoutes(app: Express) {
         key: "${keyId}",
         amount: "${amount}",
         currency: "${currency || "INR"}",
-        name: "QR Guard",
+        name: "BinRo",
         description: "Charity Donation",
         image: "",
         order_id: "${orderId}",

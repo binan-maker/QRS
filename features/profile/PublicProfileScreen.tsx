@@ -30,12 +30,12 @@ function safeBack() {
 }
 
 function formatJoinDate(iso: string | null): string {
-  if (!iso) return "QR Guard Member";
+  if (!iso) return "BinRo Member";
   try {
     const d = new Date(iso);
     return `Member since ${d.toLocaleDateString(undefined, { month: "long", year: "numeric" })}`;
   } catch {
-    return "QR Guard Member";
+    return "BinRo Member";
   }
 }
 

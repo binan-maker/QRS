@@ -94,7 +94,7 @@ export const TEMPLATES: QrTemplate[] = [
     securityIcon: "mail-open-outline",
     fields: [
       { key: "email", label: "To (Email address)", placeholder: "contact@example.com", type: "email", validate: validateEmail },
-      { key: "subject", label: "Subject", placeholder: "e.g. Hello from QR Guard", type: "text", optional: true, maxLength: 100 },
+      { key: "subject", label: "Subject", placeholder: "e.g. Hello from BinRo", type: "text", optional: true, maxLength: 100 },
       { key: "body", label: "Body", placeholder: "Message body (optional)", type: "multiline", optional: true, maxLength: 300 },
     ],
     generate: (v) => {

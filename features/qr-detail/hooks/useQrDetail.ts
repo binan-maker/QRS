@@ -66,7 +66,7 @@ export function useQrDetail(id: string, hint?: { content: string; contentType: s
   function getCombinedVerdict() {
     const { offlineBlacklistMatch, paymentSafety, urlSafety, instantVerdict } = safety;
     const trust = getTrustInfo();
-    // QR Guard verified = current user owns it, OR owner has branded flag set
+    // BinRo verified = current user owns it, OR owner has branded flag set
     // (either from ownerInfo async fetch OR from the qrCode document itself).
     const isQrGuardVerified =
       data.isQrOwner === true ||
@@ -93,9 +93,9 @@ export function useQrDetail(id: string, hint?: { content: string; contentType: s
           return { level: "caution" as const, label: "CAUTION", reason: "Community trusts it, but local analysis found risks", color: colors.warning };
         }
         if (isQrGuardVerified) {
-          return { level: "safe" as const, label: "SAFE", reason: `${Math.round(trust.score)}% community trust · QR Guard Verified`, color: colors.safe };
+          return { level: "safe" as const, label: "SAFE", reason: `${Math.round(trust.score)}% community trust · BinRo Verified`, color: colors.safe };
         }
-        return { level: "caution" as const, label: "UNVERIFIED QR", reason: `${Math.round(trust.score)}% community trust · Owner not verified by QR Guard`, color: colors.warning };
+        return { level: "caution" as const, label: "UNVERIFIED QR", reason: `${Math.round(trust.score)}% community trust · Owner not verified by BinRo`, color: colors.warning };
       }
       if (trust.label === "Caution" || trust.label === "Uncertain") {
         return { level: "caution" as const, label: "CAUTION", reason: "Mixed community reports", color: colors.warning };

@@ -49,7 +49,7 @@ export default function ConsentScrollBody({
         }}>
           <Ionicons name="information-circle-outline" size={14} color={sectionBlue} style={{ marginTop: 1, flexShrink: 0 }} />
           <Text style={{ flex: 1, fontSize: 12, lineHeight: 18, color: bodyText }}>
-            QR Guard is in{" "}
+            BinRo is in{" "}
             <Text style={{ fontWeight: "700", color: boldText }}>beta</Text>
             {" "}— features may change without notice. Use at your own discretion.
           </Text>
@@ -73,7 +73,7 @@ export default function ConsentScrollBody({
 
         <Section label="Limitation of Liability" color={sectionBlue}>
           <Body color={bodyText}>
-            QR Guard is{" "}
+            BinRo is{" "}
             <Bold color={boldText}>not liable</Bold> for any direct, indirect, or
             financial damages. Maximum liability is{" "}
             <Bold color={boldText}>₹0 or amount paid</Bold>, whichever is greater.
@@ -94,7 +94,7 @@ export default function ConsentScrollBody({
 
         <Section label="How We Use Your Data" color={sectionBlue}>
           <Bullets color={bodyText} bullet={primaryColor} items={[
-            "To provide and improve QR Guard.",
+            "To provide and improve BinRo.",
             "To perform security analysis on QR codes.",
             "To maintain your account and scan history.",
             "To detect and prevent abuse.",
@@ -104,7 +104,7 @@ export default function ConsentScrollBody({
 
         <Section label="AI Training" color={sectionBlue}>
           <Body color={bodyText}>
-            <Bold color={boldText}>By using QR Guard</Bold>, your anonymised scan
+            <Bold color={boldText}>By using BinRo</Bold>, your anonymised scan
             data may be used to{" "}
             <Bold color={boldText}>train AI threat detection models</Bold>.
             Opt-out is not available while using the scanning feature.
@@ -113,7 +113,7 @@ export default function ConsentScrollBody({
 
         <Section label="Advertising" color={sectionBlue}>
           <Body color={bodyText}>
-            QR Guard may display ads. Aggregated, non-personal usage data may be
+            BinRo may display ads. Aggregated, non-personal usage data may be
             shared with ad partners. We do{" "}
             <Bold color={boldText}>not</Bold> sell personally identifiable information.
           </Body>
@@ -128,7 +128,7 @@ export default function ConsentScrollBody({
 
         <Section label="Your Responsibility" color={sectionBlue}>
           <Bullets color={bodyText} bullet={primaryColor} items={[
-            "You use QR Guard voluntarily and at your own risk.",
+            "You use BinRo voluntarily and at your own risk.",
             "You are solely responsible for actions based on verdicts.",
             "SAFE / CAUTION / DANGEROUS are indicators, not guarantees.",
           ]} />

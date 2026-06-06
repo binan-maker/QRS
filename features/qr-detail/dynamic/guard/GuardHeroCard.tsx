@@ -46,7 +46,7 @@ export default function GuardHeroCard({
         <View style={{ flex: 1 }}>
           <Text style={[heroStyles.heroLabel, { color: colors.textMuted }]}>SMART REDIRECT QR</Text>
           <Text style={[heroStyles.heroSub, { color: colors.textSecondary }]}>
-            Destination is owner-controlled &amp; verified by QR Guard
+            Destination is owner-controlled &amp; verified by BinRo
           </Text>
         </View>
         {isDeactivated && (

@@ -65,7 +65,7 @@ export default function LogoSection({
               style={[styles.removeLogoBtn, { backgroundColor: colors.dangerDim, borderColor: colors.danger + "30" }]}
             >
               <Ionicons name="close" size={16} color={colors.danger} />
-              <Text style={[styles.removeLogoText, { color: colors.danger }]}>Remove QR Guard Logo</Text>
+              <Text style={[styles.removeLogoText, { color: colors.danger }]}>Remove BinRo Logo</Text>
             </Pressable>
           ) : (
             <View style={styles.logoActions}>
@@ -75,7 +75,7 @@ export default function LogoSection({
                 style={[styles.addDefaultBtn, { backgroundColor: colors.primaryDim, borderColor: colors.primary + "40" }]}
               >
                 <Ionicons name="shield-checkmark-outline" size={14} color={colors.primary} />
-                <Text style={[styles.addDefaultText, { color: colors.primary }]}>Add QR Guard Logo</Text>
+                <Text style={[styles.addDefaultText, { color: colors.primary }]}>Add BinRo Logo</Text>
               </Pressable>
             </View>
           )}

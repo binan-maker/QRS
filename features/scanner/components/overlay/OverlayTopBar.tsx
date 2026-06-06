@@ -19,7 +19,7 @@ export default function OverlayTopBar({ topInset }: Props) {
 
       <View style={styles.brand}>
         <MaterialCommunityIcons name="shield-check" size={20} color="#00D4FF" />
-        <Text style={styles.brandText}>QR Guard</Text>
+        <Text style={styles.brandText}>BinRo</Text>
       </View>
 
       <View style={styles.spacer} />

@@ -110,7 +110,7 @@ export default function DonateTab({
             { icon: "server-outline", text: "Server hosting & infrastructure costs" },
             { icon: "code-slash-outline", text: "Development time & ongoing maintenance" },
             { icon: "bulb-outline", text: "New security features & threat detection" },
-            { icon: "shield-checkmark-outline", text: "Keeping QR Guard independent & trustworthy" },
+            { icon: "shield-checkmark-outline", text: "Keeping BinRo independent & trustworthy" },
           ].map((item, i) => (
             <View key={i} style={[styles.impactRow, { gap: sp(12), padding: sp(14) }, i < 3 && { borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.surfaceBorder }]}>
               <View style={[{ width: sp(34), height: sp(34), borderRadius: sp(10), alignItems: "center", justifyContent: "center", backgroundColor: colors.primaryDim }]}>

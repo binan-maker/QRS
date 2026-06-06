@@ -33,7 +33,7 @@ export default function FeedbackSection({
           Thank you!
         </Text>
         <Text style={{ fontSize: 13, fontFamily: "Inter_400Regular", color: colors.textSecondary, textAlign: "center" }}>
-          Your feedback has been submitted. We appreciate you helping improve QR Guard.
+          Your feedback has been submitted. We appreciate you helping improve BinRo.
         </Text>
       </View>
     );

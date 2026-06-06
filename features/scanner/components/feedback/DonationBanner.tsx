@@ -48,7 +48,7 @@ export function DonationBanner({
           numberOfLines={1}
           style={{ flex: 1, fontSize: rf(13), fontFamily: "Inter_500Medium", color: colors.text }}
         >
-          Enjoying QR Guard? Support us
+          Enjoying BinRo? Support us
         </Text>
       </Pressable>
       <Pressable

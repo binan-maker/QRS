@@ -11,7 +11,7 @@ export function guardShell(title: string, body: string): string {
 <html lang="en"><head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>${title} — QR Guard</title>
+<title>${title} — BinRo</title>
 <style>
   *{box-sizing:border-box;margin:0;padding:0}
   body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
@@ -42,7 +42,7 @@ export function guardShell(title: string, body: string): string {
 </style>
 </head><body>
 <div class="card">${body}</div>
-<p class="app-link">Protected by <a href="https://qrguard.app">QR Guard</a></p>
+<p class="app-link">Protected by <a href="https://qrguard.app">BinRo</a></p>
 </body></html>`;
 }
 
@@ -99,7 +99,7 @@ export function guardNotFoundHtml(): string {
 export function guardUpiHtml(ownerName: string, rawContent: string): string {
   return guardShell("UPI Payment", `
 <div class="icon">💳</div>
-<div class="badge badge-shield">✦ QR Guard Protected</div>
+<div class="badge badge-shield">✦ BinRo Protected</div>
 <h1>UPI Payment</h1>
 <p style="margin-bottom:8px">by ${escHtml(ownerName)}</p>
 <hr class="divider">
@@ -113,7 +113,7 @@ export function guardUpiHtml(ownerName: string, rawContent: string): string {
 export function guardWifiHtml(ownerName: string, ssid: string, pass: string, security: string): string {
   return guardShell("WiFi Credentials", `
 <div class="icon">📶</div>
-<div class="badge badge-shield">✦ QR Guard Protected</div>
+<div class="badge badge-shield">✦ BinRo Protected</div>
 <h1>WiFi Network</h1>
 <p style="margin-bottom:8px">Shared by ${escHtml(ownerName)}</p>
 <hr class="divider">
@@ -129,7 +129,7 @@ ${pass ? `<div class="label">Password</div><div class="val">${escHtml(pass)}</di
 export function guardContactHtml(ownerName: string, displayName: string, telMatch: string | null, emailMatch: string | null, dataUri: string): string {
   return guardShell("Contact Card", `
 <div class="icon">👤</div>
-<div class="badge badge-shield">✦ QR Guard Protected</div>
+<div class="badge badge-shield">✦ BinRo Protected</div>
 <h1>${escHtml(displayName)}</h1>
 <p style="margin-bottom:8px">Shared by ${escHtml(ownerName)}</p>
 <hr class="divider">
@@ -142,7 +142,7 @@ ${emailMatch ? `<div class="label">Email</div><div class="val">${escHtml(emailMa
 export function guardCalendarHtml(ownerName: string, title: string, dateStr: string, locationMatch: string | null, dataUri: string): string {
   return guardShell("Calendar Event", `
 <div class="icon">📅</div>
-<div class="badge badge-shield">✦ QR Guard Protected</div>
+<div class="badge badge-shield">✦ BinRo Protected</div>
 <h1>${escHtml(title)}</h1>
 <p style="margin-bottom:8px">Shared by ${escHtml(ownerName)}</p>
 <hr class="divider">
@@ -155,7 +155,7 @@ ${locationMatch ? `<div class="label">Where</div><div class="val">${escHtml(loca
 export function guardPhoneHtml(ownerName: string, number: string, rawContent: string): string {
   return guardShell("Phone Call", `
 <div class="icon">📞</div>
-<div class="badge badge-shield">✦ QR Guard Protected</div>
+<div class="badge badge-shield">✦ BinRo Protected</div>
 <h1>Phone Number</h1>
 <p style="margin-bottom:8px">Shared by ${escHtml(ownerName)}</p>
 <hr class="divider">
@@ -168,7 +168,7 @@ export function guardPhoneHtml(ownerName: string, number: string, rawContent: st
 export function guardGenericHtml(ownerName: string, rawContent: string): string {
   return guardShell("QR Content", `
 <div class="icon">📄</div>
-<div class="badge badge-shield">✦ QR Guard Protected</div>
+<div class="badge badge-shield">✦ BinRo Protected</div>
 <h1>QR Content</h1>
 <p style="margin-bottom:8px">Shared by ${escHtml(ownerName)}</p>
 <hr class="divider">

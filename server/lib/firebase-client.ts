@@ -76,7 +76,7 @@ export async function fetchStandardLink(uuid: string): Promise<StandardLinkField
     const link: StandardLinkFields = {
       rawContent: f.rawContent?.stringValue || "",
       contentType: f.contentType?.stringValue || "text",
-      ownerName: f.ownerName?.stringValue || "QR Guard User",
+      ownerName: f.ownerName?.stringValue || "BinRo User",
       isActive: f.isActive?.booleanValue !== false,
     };
     standardCache.set(uuid, { data: link, expiresAt: now + CACHE_TTL_MS });

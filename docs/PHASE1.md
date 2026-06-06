@@ -1,4 +1,4 @@
-# QR Guard — Phase 1: QR Scanner (Active)
+# BinRo — Phase 1: QR Scanner (Active)
 
 > **Status: LIVE**
 > Phase 1 is the active development phase. The entire focus is on making the QR Scanner the best, most trustworthy QR code reader in India.
@@ -7,7 +7,7 @@
 
 ## What is Phase 1?
 
-Phase 1 is the **scanning-first** launch strategy. Before we ask users to create QR codes, we prove the core value proposition: **QR Guard tells you if a QR code is safe before you interact with it.**
+Phase 1 is the **scanning-first** launch strategy. Before we ask users to create QR codes, we prove the core value proposition: **BinRo tells you if a QR code is safe before you interact with it.**
 
 This is how trust is built. You don't ask someone to create content on a platform before showing them why the platform matters.
 
@@ -30,7 +30,7 @@ This is how trust is built. You don't ask someone to create content on a platfor
 | Anonymous Scanning | Live | 50 scans/day without an account, locally tracked |
 | Scan History | Live | Local + cloud sync of all past scans |
 | Static QR Detail | Live | Full detail view for locally parsed (static) QR codes |
-| Dynamic QR Detail | Live | Detail view for QR Guard registered dynamic QR codes |
+| Dynamic QR Detail | Live | Detail view for BinRo registered dynamic QR codes |
 | Guard QR Detail | Live | Living Shield protection status, redirect verification |
 | Community Reports | Live | Flag suspicious QR codes; weighted anti-collusion system |
 | Comments Section | Live | Community discussion on any scanned QR code |
@@ -64,10 +64,10 @@ A QR generation tool has zero value to a user who doesn't trust QR codes. By lea
 India processes 14 billion+ UPI transactions per month. UPI fraud has crossed ₹11,000 crore annually. Every news cycle has a new UPI scam story. The demand for a safety tool is immediate, obvious, and emotional. The demand for a QR generator is rational and deferred.
 
 ### The Viral Argument
-Someone being saved from a ₹50,000 UPI scam by QR Guard will tell every person they know. Someone generating a WiFi QR code will not. Lead with the feature that creates stories.
+Someone being saved from a ₹50,000 UPI scam by BinRo will tell every person they know. Someone generating a WiFi QR code will not. Lead with the feature that creates stories.
 
 ### The Startup Capital Argument
-Government grants (KSIM), institutional pilots (banks, police departments), and impact investors all respond to *protection* narratives far more readily than *creation* narratives. Phase 1 makes QR Guard fundable.
+Government grants (KSIM), institutional pilots (banks, police departments), and impact investors all respond to *protection* narratives far more readily than *creation* narratives. Phase 1 makes BinRo fundable.
 
 ---
 
@@ -94,7 +94,7 @@ Shareable fraud alert cards in Malayalam, shared in apartment, temple, school, a
 Authentic review by 1–2 Malayalam tech creators (10K–50K followers). No script. Real scam QR detection demo.
 
 ### Channel 3 — Kerala Police Cybercrime Cell
-Partnership proposal: QR Guard as recommended tool when filing UPI fraud complaints. Opens press coverage automatically.
+Partnership proposal: BinRo as recommended tool when filing UPI fraud complaints. Opens press coverage automatically.
 
 ### Channel 4 — District Collector Digital Literacy Programs
 Propose inclusion in e-governance digital literacy curriculum. One district approval cascades to all districts.

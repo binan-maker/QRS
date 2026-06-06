@@ -21,8 +21,8 @@ export default function AdvisoryDisclaimer() {
       />
       {expanded ? (
         <Text style={[advisoryStyles.text, { color: colors.textMuted }]} maxFontSizeMultiplier={1}>
-          QR Guard provides informational analysis only. Results are not guaranteed to be accurate
-          or complete. Always exercise your own judgment before acting on any QR code. QR Guard is
+          BinRo provides informational analysis only. Results are not guaranteed to be accurate
+          or complete. Always exercise your own judgment before acting on any QR code. BinRo is
           not liable for any loss or damage arising from use of this information.
         </Text>
       ) : (

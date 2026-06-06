@@ -32,7 +32,7 @@ export function DrawerLogoTab({
         <Ionicons name="shield-checkmark-outline" size={18} color={showDefaultLogo ? colors.primary : colors.textMuted} />
         <View style={{ flex: 1 }}>
           <Text style={{ fontSize: 13, fontFamily: "Inter_600SemiBold", color: showDefaultLogo ? colors.primary : colors.text }}>
-            QR Guard Branding
+            BinRo Branding
           </Text>
           <Text style={{ fontSize: 11, fontFamily: "Inter_400Regular", color: colors.textMuted, marginTop: 1 }}>
             {showDefaultLogo ? "Showing logo — tap to remove" : "Tap to add logo"}

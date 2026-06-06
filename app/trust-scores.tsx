@@ -160,12 +160,12 @@ export default function TrustScoresScreen() {
             False positives occur regularly: legitimate QR codes from reputable businesses, government services, banks, and external sources may be incorrectly flagged as dangerous. False negatives also occur: a genuinely malicious QR code may receive a safe rating if it has not yet been reported.
           </Para>
           <Para>
-            QR Guard accepts no liability for any harm caused by acting on, or failing to act on, any trust score displayed in this app. You must always exercise your own independent judgment.
+            BinRo accepts no liability for any harm caused by acting on, or failing to act on, any trust score displayed in this app. You must always exercise your own independent judgment.
           </Para>
         </SectionCard>
 
         <SectionCard title="What Is a Trust Score?" icon="help-circle-outline">
-          <Para>Every QR code scanned through QR Guard can receive a Trust Score — a number from 0 to 100 reflecting community safety ratings. It is a real-time safety signal built by people who have encountered that QR code in the real world.</Para>
+          <Para>Every QR code scanned through BinRo can receive a Trust Score — a number from 0 to 100 reflecting community safety ratings. It is a real-time safety signal built by people who have encountered that QR code in the real world.</Para>
           <Para>Trust scores combine community reports, scan patterns, and owner verification into a single indicator. The more people interact with a QR code, the more data the score has to work with — but more data does not mean more accuracy.</Para>
           <Para>An unrated code (no data yet) is neither safe nor unsafe — it is unknown. Always apply extra caution to unrated codes.</Para>
         </SectionCard>
@@ -212,13 +212,13 @@ export default function TrustScoresScreen() {
         </SectionCard>
 
         <SectionCard title="How Your Scan Data Is Used" icon="analytics-outline">
-          <WarnBox text="When you scan a QR code through QR Guard, anonymised data from that scan contributes to our community database and AI training systems." />
+          <WarnBox text="When you scan a QR code through BinRo, anonymised data from that scan contributes to our community database and AI training systems." />
           <Bullet text="The QR code content (URL, payment data, text) is analysed and logged in anonymised form to our threat intelligence database." />
           <Bullet text="Scan frequency data (how often a code is scanned app-wide) is used to calculate scan velocity signals." />
           <Bullet text="Aggregated, anonymised scan patterns are used to train and improve our AI threat detection models." />
           <Bullet text="Your individual scan history is stored in your account but is not publicly visible unless you choose to share it." />
           <Bullet text="Anonymous scan pattern data may be shared with or licensed to security research partners in aggregate form." />
-          <Para>This data collection is a core part of how QR Guard works and cannot be opted out of while using the scanning feature. By scanning a QR code through QR Guard, you consent to this use of your scan data.</Para>
+          <Para>This data collection is a core part of how BinRo works and cannot be opted out of while using the scanning feature. By scanning a QR code through BinRo, you consent to this use of your scan data.</Para>
         </SectionCard>
 
         <SectionCard title="Report Types Explained" icon="flag-outline">
@@ -231,24 +231,24 @@ export default function TrustScoresScreen() {
         </SectionCard>
 
         <SectionCard title="Unrated QR Codes" icon="help-outline">
-          <Para>When a QR code has never been scanned through QR Guard before, it is labelled Unrated. This is not the same as Safe — it simply means the community has not assessed it yet.</Para>
+          <Para>When a QR code has never been scanned through BinRo before, it is labelled Unrated. This is not the same as Safe — it simply means the community has not assessed it yet.</Para>
           <Para>Treat unrated codes with significant caution: verify the URL manually, look for spelling errors or lookalike domains, and never enter credentials on a site reached through an unrated QR code.</Para>
         </SectionCard>
 
         <SectionCard title="Verified & Branded QR Codes" icon="checkmark-shield-outline">
-          <Para>Businesses can create branded QR codes through QR Guard's generator. These display a verified owner panel with the creator's name and a unique identifier.</Para>
-          <Para>Verification means the code was created through QR Guard by an accountable user. It does NOT mean QR Guard endorses or vouches for the code owner's business, products, or services. Verified codes can be misused — always verify the business independently for important transactions.</Para>
+          <Para>Businesses can create branded QR codes through BinRo's generator. These display a verified owner panel with the creator's name and a unique identifier.</Para>
+          <Para>Verification means the code was created through BinRo by an accountable user. It does NOT mean BinRo endorses or vouches for the code owner's business, products, or services. Verified codes can be misused — always verify the business independently for important transactions.</Para>
         </SectionCard>
 
         <SectionCard title="Limitations & Known Issues" icon="alert-circle-outline">
-          <WarnBox text="QR Guard's safety analysis has known limitations. Understanding them helps you stay safe." />
+          <WarnBox text="BinRo's safety analysis has known limitations. Understanding them helps you stay safe." />
           <Bullet text="New or rare QR codes have no community data — scores start at zero and take time to become meaningful." />
           <Bullet text="Coordinated false reporting campaigns can temporarily manipulate scores before detection." />
           <Bullet text="QR codes from reputable external sources (banks, government, large brands) may be incorrectly flagged as dangerous." />
           <Bullet text="The app cannot scan QR codes embedded in secure PDFs, certain image formats, or very low-resolution images." />
           <Bullet text="AI analysis models may produce incorrect results for QR codes from regions or industries with limited training data." />
           <Bullet text="Internet connectivity is required for community trust data — offline mode shows only local heuristic results." />
-          <Para>QR Guard is a beta product under active development. These limitations are known and actively being worked on. Always treat the app as one tool in your security decision-making, not the only one.</Para>
+          <Para>BinRo is a beta product under active development. These limitations are known and actively being worked on. Always treat the app as one tool in your security decision-making, not the only one.</Para>
         </SectionCard>
 
         <LinearGradient
@@ -270,7 +270,7 @@ export default function TrustScoresScreen() {
 
         <View style={styles.footer}>
           <Ionicons name="shield-checkmark" size={16} color={colors.primary} />
-          <Text style={[styles.footerText, { color: colors.textMuted }]}>QR Guard — Safety powered by community · Beta v2.0</Text>
+          <Text style={[styles.footerText, { color: colors.textMuted }]}>BinRo — Safety powered by community · Beta v2.0</Text>
         </View>
       </ScrollView>
     </View>

@@ -25,7 +25,7 @@ export function serveStandardContent(res: Response, link: StandardLinkFields, _u
   if (rawContent.startsWith("upi://")) {
     (res as any).status(200).send(guardShell("UPI Payment", `
 <div class="icon">💳</div>
-<div class="badge badge-shield">✦ QR Guard Protected</div>
+<div class="badge badge-shield">✦ BinRo Protected</div>
 <h1>UPI Payment</h1>
 <p style="margin-bottom:8px">by ${escHtml(ownerName)}</p>
 <hr class="divider">
@@ -46,7 +46,7 @@ export function serveStandardContent(res: Response, link: StandardLinkFields, _u
     const security = typeMatch ? typeMatch[1] : "WPA";
     (res as any).status(200).send(guardShell("WiFi Credentials", `
 <div class="icon">📶</div>
-<div class="badge badge-shield">✦ QR Guard Protected</div>
+<div class="badge badge-shield">✦ BinRo Protected</div>
 <h1>WiFi Network</h1>
 <p style="margin-bottom:8px">Shared by ${escHtml(ownerName)}</p>
 <hr class="divider">
@@ -68,7 +68,7 @@ ${pass ? `<div class="label">Password</div><div class="val">${escHtml(pass)}</di
     const dataUri = `data:text/vcard;charset=utf-8,${encodeURIComponent(rawContent)}`;
     (res as any).status(200).send(guardShell("Contact Card", `
 <div class="icon">👤</div>
-<div class="badge badge-shield">✦ QR Guard Protected</div>
+<div class="badge badge-shield">✦ BinRo Protected</div>
 <h1>${escHtml(displayName)}</h1>
 <p style="margin-bottom:8px">Shared by ${escHtml(ownerName)}</p>
 <hr class="divider">
@@ -91,7 +91,7 @@ ${emailMatch ? `<div class="label">Email</div><div class="val">${escHtml(emailMa
     const dataUri = `data:text/calendar;charset=utf-8,${encodeURIComponent(rawContent)}`;
     (res as any).status(200).send(guardShell("Calendar Event", `
 <div class="icon">📅</div>
-<div class="badge badge-shield">✦ QR Guard Protected</div>
+<div class="badge badge-shield">✦ BinRo Protected</div>
 <h1>${escHtml(title)}</h1>
 <p style="margin-bottom:8px">Shared by ${escHtml(ownerName)}</p>
 <hr class="divider">
@@ -106,7 +106,7 @@ ${locationMatch ? `<div class="label">Where</div><div class="val">${escHtml(loca
     const number = rawContent.replace("tel:", "");
     (res as any).status(200).send(guardShell("Phone Call", `
 <div class="icon">📞</div>
-<div class="badge badge-shield">✦ QR Guard Protected</div>
+<div class="badge badge-shield">✦ BinRo Protected</div>
 <h1>Phone Number</h1>
 <p style="margin-bottom:8px">Shared by ${escHtml(ownerName)}</p>
 <hr class="divider">
@@ -125,7 +125,7 @@ ${locationMatch ? `<div class="label">Where</div><div class="val">${escHtml(loca
 
   (res as any).status(200).send(guardShell("QR Content", `
 <div class="icon">📄</div>
-<div class="badge badge-shield">✦ QR Guard Protected</div>
+<div class="badge badge-shield">✦ BinRo Protected</div>
 <h1>QR Content</h1>
 <p style="margin-bottom:8px">Shared by ${escHtml(ownerName)}</p>
 <hr class="divider">

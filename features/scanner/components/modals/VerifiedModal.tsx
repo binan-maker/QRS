@@ -42,7 +42,7 @@ export default function VerifiedModal({ visible, ownerName }: Props) {
           <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
             This QR code was cryptographically signed and verified as created by{" "}
             <Text style={styles.ownerName}>{ownerName}</Text>
-            {" "}using QR Guard's security system.
+            {" "}using BinRo's security system.
           </Text>
         </View>
 
@@ -72,7 +72,7 @@ export default function VerifiedModal({ visible, ownerName }: Props) {
 
         <View style={styles.bottomMark}>
           <MaterialCommunityIcons name="shield-check" size={11} color={BRAND_NOTE} />
-          <Text style={styles.bottomMarkText}>Verified by QR Guard Security</Text>
+          <Text style={styles.bottomMarkText}>Verified by BinRo Security</Text>
         </View>
       </Reanimated.View>
     </View>

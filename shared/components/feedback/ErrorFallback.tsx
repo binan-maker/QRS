@@ -76,7 +76,7 @@ export function ErrorFallback({ error, resetError }: ErrorFallbackProps) {
 
       <Text style={styles.title}>Something went wrong</Text>
       <Text style={styles.subtitle}>
-        QR Guard ran into an unexpected problem. You can reload to continue or send us a report to help us fix it.
+        BinRo ran into an unexpected problem. You can reload to continue or send us a report to help us fix it.
       </Text>
 
       <View style={styles.errorBox}>

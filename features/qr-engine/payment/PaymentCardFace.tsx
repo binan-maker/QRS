@@ -191,7 +191,7 @@ const PaymentCardFace = React.memo(function PaymentCardFace({
         <View style={styles.verifiedRow}>
           <View style={styles.verifiedDot} />
           <Text style={[styles.verifiedText, { color: brand.subtextOnCard }]} maxFontSizeMultiplier={1}>
-            Scanned & Analysed by QR Guard
+            Scanned & Analysed by BinRo
           </Text>
         </View>
         <Text style={[styles.regionText, { color: brand.accentColor }]} maxFontSizeMultiplier={1}>

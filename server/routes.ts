@@ -79,7 +79,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // ── /go/:slug — Standard QR content lookup ─────────────────────────────────
   // Looks up rawContent from standardLinks collection and serves it.
-  // Other scanners see a branded web page; QR Guard app recognises the URL and
+  // Other scanners see a branded web page; BinRo app recognises the URL and
   // fetches content natively — making our database the key to decode the QR.
   app.get("/go/:slug", async (req: Request, res: Response) => {
     const slug = Array.isArray(req.params.slug) ? req.params.slug[0] : req.params.slug;

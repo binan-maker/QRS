@@ -84,7 +84,7 @@ export default function SafetyModal({
 
         <View style={styles.bottomNote}>
           <MaterialCommunityIcons name="shield-check" size={11} color={BRAND_NOTE} />
-          <Text style={styles.bottomNoteText}>Security analysis by QR Guard</Text>
+          <Text style={styles.bottomNoteText}>Security analysis by BinRo</Text>
         </View>
       </Reanimated.View>
     </View>

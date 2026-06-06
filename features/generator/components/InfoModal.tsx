@@ -12,7 +12,7 @@ const MODES = [
   {
     icon: "shield-checkmark" as const,
     label: "Standard QR",
-    desc: "The sticker encodes a QR Guard URL — not the real content. Only our database reveals the destination. Other scanners just see our web page. You own this link forever.",
+    desc: "The sticker encodes a BinRo URL — not the real content. Only our database reveals the destination. Other scanners just see our web page. You own this link forever.",
     iconColor: "#6366F1",
     iconBg: "#6366F115",
     accent: "#6366F1",
@@ -46,7 +46,7 @@ const EXTRAS = [
   {
     icon: "lock-closed-outline" as const,
     label: "Database Licensing",
-    desc: "Third-party apps can't decode a Standard or Business QR without our database — enabling B2B licensing revenue for QR Guard.",
+    desc: "Third-party apps can't decode a Standard or Business QR without our database — enabling B2B licensing revenue for BinRo.",
     iconColor: "#A78BFA",
     iconBg: "#A78BFA15",
   },

@@ -98,7 +98,7 @@ export default function HowItWorksScreen() {
           <View style={[styles.heroIcon, { backgroundColor: colors.primaryDim, borderColor: colors.primary + "40" }]}>
             <Ionicons name="scan" size={32} color={colors.primary} />
           </View>
-          <Text style={[styles.heroTitle, { color: colors.text }]}>QR Guard in a Nutshell</Text>
+          <Text style={[styles.heroTitle, { color: colors.text }]}>BinRo in a Nutshell</Text>
           <Text style={[styles.heroSub, { color: colors.textSecondary }]}>
             A community-powered safety layer for the QR codes you encounter every day — on menus, flyers, packages, adverts, and everywhere in between.
           </Text>
@@ -108,9 +108,9 @@ export default function HowItWorksScreen() {
           </View>
         </View>
 
-        <Section title="Important: What QR Guard Can and Cannot Do">
-          <WarnBox text="QR Guard is an informational tool only. It CANNOT guarantee that a QR code is safe or dangerous. Trust scores reflect community opinion, not expert verification." />
-          <Para>QR Guard can help you:</Para>
+        <Section title="Important: What BinRo Can and Cannot Do">
+          <WarnBox text="BinRo is an informational tool only. It CANNOT guarantee that a QR code is safe or dangerous. Trust scores reflect community opinion, not expert verification." />
+          <Para>BinRo can help you:</Para>
           {[
             "See what a QR code contains before you act on it",
             "Check if the community has previously flagged a QR code as suspicious",
@@ -123,7 +123,7 @@ export default function HowItWorksScreen() {
               <Text style={[styles.ruleText, { color: colors.textSecondary }]}>{t}</Text>
             </View>
           ))}
-          <Para>QR Guard cannot:</Para>
+          <Para>BinRo cannot:</Para>
           {[
             "Guarantee that any QR code is 100% safe or dangerous",
             "Prevent you from visiting a malicious website if you choose to",
@@ -140,16 +140,16 @@ export default function HowItWorksScreen() {
 
         <Section title="Scanning a QR Code — Step by Step">
           <StepCard number={1} totalSteps={6} icon="camera-outline" title="Open the Scanner" desc="Tap the Scanner tab (centre of the bottom bar) to open the live camera scanner. Point your camera at any QR code and it will be detected automatically — no button press needed." tips={["Ensure good lighting for the fastest detection.", "Hold your phone steady about 15–30 cm from the code."]} />
-          <StepCard number={2} totalSteps={6} icon="image-outline" title="Or Choose from Gallery" desc="Already have a screenshot of a QR code? Tap the gallery icon in the scanner to pick an image from your camera roll. QR Guard will extract and decode the QR code from the photo." />
-          <StepCard number={3} totalSteps={6} icon="document-text-outline" title="View the QR Content" desc="After scanning, QR Guard instantly shows you what the QR code contains — a URL, plain text, payment details, contact information, and more — before you click or act on anything." tips={["Always read the destination URL carefully before opening it.", "Watch for lookalike domains (e.g. 'paypa1.com' vs 'paypal.com').", "When in doubt, do not proceed."]} />
+          <StepCard number={2} totalSteps={6} icon="image-outline" title="Or Choose from Gallery" desc="Already have a screenshot of a QR code? Tap the gallery icon in the scanner to pick an image from your camera roll. BinRo will extract and decode the QR code from the photo." />
+          <StepCard number={3} totalSteps={6} icon="document-text-outline" title="View the QR Content" desc="After scanning, BinRo instantly shows you what the QR code contains — a URL, plain text, payment details, contact information, and more — before you click or act on anything." tips={["Always read the destination URL carefully before opening it.", "Watch for lookalike domains (e.g. 'paypa1.com' vs 'paypal.com').", "When in doubt, do not proceed."]} />
           <StepCard number={4} totalSteps={6} icon="shield-checkmark-outline" title="Check the Trust Score" desc="See the community trust score at a glance. Green Safe suggests legitimacy. Yellow Caution means mixed signals. Red Dangerous means many users flagged it. NONE of these verdicts are guarantees." tips={["A Safe verdict does not mean the code is definitely safe.", "A Dangerous verdict may be a false positive — verify independently if important."]} />
           <StepCard number={5} totalSteps={6} icon="chatbubbles-outline" title="Read Community Comments" desc="Scroll down to read what other users have said about this QR code. Real experiences from real people — someone may have already encountered the same code and flagged a problem. Comments are user-submitted and are not verified." />
           <StepCard number={6} totalSteps={6} icon="flag-outline" title="Report What You Find" desc="Encountered this QR code in the real world? Report it as Safe, Scam, Fake, or Spam to help protect others. Sign in to report — this ensures accountability and prevents abuse." tips={["Your reports directly update the trust score.", "Even a 'Safe' report helps build confidence in legitimate codes.", "Only report based on your genuine personal experience."]} />
         </Section>
 
         <Section title="How Your Data Is Used When You Scan">
-          <WarnBox text="Every QR code scan through QR Guard contributes to our community database. Understand what happens to your data." />
-          <Para>When you scan any QR code through QR Guard, the following happens automatically:</Para>
+          <WarnBox text="Every QR code scan through BinRo contributes to our community database. Understand what happens to your data." />
+          <Para>When you scan any QR code through BinRo, the following happens automatically:</Para>
           {[
             "The QR code content is decoded on your device and analysed against our threat database.",
             "An anonymised record of the scan (QR content type, URL structure, timestamp) is logged to our community threat intelligence database.",
@@ -165,11 +165,11 @@ export default function HowItWorksScreen() {
               <Text style={[styles.ruleText, { color: colors.textSecondary }]}>{t}</Text>
             </View>
           ))}
-          <Para>This data contribution is a core part of how QR Guard works. By scanning, you consent to your anonymised scan data being used for community safety and AI improvement. Full details are in our Privacy Policy.</Para>
+          <Para>This data contribution is a core part of how BinRo works. By scanning, you consent to your anonymised scan data being used for community safety and AI improvement. Full details are in our Privacy Policy.</Para>
         </Section>
 
         <Section title="Understanding QR Code Types">
-          <Para>QR Guard automatically detects and labels the type of content inside every QR code:</Para>
+          <Para>BinRo automatically detects and labels the type of content inside every QR code:</Para>
           <View style={styles.typeGrid}>
             {[
               { icon: "link-outline", label: "URL / Website", color: colors.primary },
@@ -187,11 +187,11 @@ export default function HowItWorksScreen() {
               </View>
             ))}
           </View>
-          <WarnBox text="Payment QR codes (UPI, BharatQR) carry extra risk. ALWAYS verify the merchant name and VPA directly in your banking app before confirming any payment. QR Guard cannot protect you from payment fraud after you approve a transaction." />
+          <WarnBox text="Payment QR codes (UPI, BharatQR) carry extra risk. ALWAYS verify the merchant name and VPA directly in your banking app before confirming any payment. BinRo cannot protect you from payment fraud after you approve a transaction." />
         </Section>
 
         <Section title="Account Features">
-          <Para>You can use the scanner without an account — but signing in unlocks the full power of QR Guard:</Para>
+          <Para>You can use the scanner without an account — but signing in unlocks the full power of BinRo:</Para>
           <View style={styles.featureGrid}>
             <FeatureCard icon="cloud-outline" title="Sync History" desc="Your scan history is saved and available on any device." />
             <FeatureCard icon="flag-outline" title="Report QR Codes" desc="Help protect the community by submitting trusted reports." />
@@ -204,7 +204,7 @@ export default function HowItWorksScreen() {
         </Section>
 
         <Section title="Generating Your Own QR Codes">
-          <Para>QR Guard lets you create QR codes that carry your identity — giving scanners confidence in your code before they even open the link.</Para>
+          <Para>BinRo lets you create QR codes that carry your identity — giving scanners confidence in your code before they even open the link.</Para>
           <View style={[styles.genCard, { backgroundColor: colors.background, borderColor: colors.surfaceBorder }]}>
             <View style={styles.genRow}>
               <View style={[styles.genIcon, { backgroundColor: colors.primaryDim }]}>
@@ -212,7 +212,7 @@ export default function HowItWorksScreen() {
               </View>
               <View style={{ flex: 1 }}>
                 <Text style={[styles.genLabel, { color: colors.primary }]}>Individual QR Code</Text>
-                <Text style={[styles.genDesc, { color: colors.textSecondary }]}>A branded code tied to your personal QR Guard profile. Perfect for sharing your portfolio, social links, or contact details.</Text>
+                <Text style={[styles.genDesc, { color: colors.textSecondary }]}>A branded code tied to your personal BinRo profile. Perfect for sharing your portfolio, social links, or contact details.</Text>
               </View>
             </View>
             <View style={[styles.genRow, { borderTopWidth: 1, borderTopColor: colors.surfaceBorder, paddingTop: 14, marginTop: 4 }]}>
@@ -229,7 +229,7 @@ export default function HowItWorksScreen() {
         </Section>
 
         <Section title="Protecting Yourself — Critical Rules">
-          <Para>Even with QR Guard, good security habits are essential. Follow these rules every time:</Para>
+          <Para>Even with BinRo, good security habits are essential. Follow these rules every time:</Para>
           {[
             "Never scan QR codes placed over existing legitimate codes — fraudsters do this to hijack payments.",
             "Check the URL bar of any website before entering a password, OTP, or card number.",
@@ -237,7 +237,7 @@ export default function HowItWorksScreen() {
             "Treat unrated QR codes like a message from an unknown number — approach with maximum caution.",
             "When in doubt, type the URL manually into your browser instead of following the QR code link.",
             "For any payment QR code, verify the merchant name and UPI VPA in your banking app before approving.",
-            "QR Guard verdicts are advisory — for high-stakes transactions, always verify independently.",
+            "BinRo verdicts are advisory — for high-stakes transactions, always verify independently.",
           ].map((rule, i) => (
             <View key={i} style={styles.ruleRow}>
               <View style={[styles.ruleNum, { backgroundColor: colors.primaryDim, borderColor: colors.primary + "40" }]}>
@@ -251,17 +251,17 @@ export default function HowItWorksScreen() {
         <Section title="Notices for Government, Public Sector & Institutional Users">
           <WarnBox text="READ CAREFULLY IF YOU ARE A GOVERNMENT EMPLOYEE, PUBLIC OFFICIAL, OR USING QR GUARD IN AN OFFICIAL CAPACITY." />
           <Para>
-            QR Guard is a beta-stage consumer application. It is NOT certified for, designed for, or approved for use as part of any official government, law enforcement, military, intelligence, banking, healthcare, or critical infrastructure operation.
+            BinRo is a beta-stage consumer application. It is NOT certified for, designed for, or approved for use as part of any official government, law enforcement, military, intelligence, banking, healthcare, or critical infrastructure operation.
           </Para>
           <Para>
-            By using QR Guard in any official capacity, you acknowledge and agree:
+            By using BinRo in any official capacity, you acknowledge and agree:
           </Para>
           {[
-            "QR Guard's safety verdicts are community-sourced opinions and are NOT authoritative determinations suitable for use in official decision-making, investigations, enforcement actions, or procurement processes.",
-            "QR Guard accepts no liability for any government action, official decision, enforcement outcome, regulatory penalty, or institutional harm resulting from reliance on any QR Guard output.",
+            "BinRo's safety verdicts are community-sourced opinions and are NOT authoritative determinations suitable for use in official decision-making, investigations, enforcement actions, or procurement processes.",
+            "BinRo accepts no liability for any government action, official decision, enforcement outcome, regulatory penalty, or institutional harm resulting from reliance on any BinRo output.",
             "You are solely responsible for validating any QR code through official, certified channels before using such information for official purposes.",
-            "QR Guard makes no representations about compliance with government data handling, classified information, security clearance, or official procurement requirements.",
-            "Government data processed through QR Guard is subject to the same data handling practices as all other user data, including potential use for AI training and threat intelligence, as described in the Privacy Policy.",
+            "BinRo makes no representations about compliance with government data handling, classified information, security clearance, or official procurement requirements.",
+            "Government data processed through BinRo is subject to the same data handling practices as all other user data, including potential use for AI training and threat intelligence, as described in the Privacy Policy.",
           ].map((t, i) => (
             <View key={i} style={styles.ruleRow}>
               <View style={[styles.ruleNum, { backgroundColor: colors.dangerDim, borderColor: colors.danger + "40" }]}>
@@ -277,14 +277,14 @@ export default function HowItWorksScreen() {
           <View style={{ flex: 1 }}>
             <Text style={[styles.ctaTitle, { color: colors.primary }]}>You Are the Safety Net</Text>
             <Text style={[styles.ctaSub, { color: colors.textSecondary }]}>
-              Every scan, report, and comment you make helps protect the next person who encounters the same QR code — and improves our AI models for everyone. QR Guard gets smarter and safer with every user.
+              Every scan, report, and comment you make helps protect the next person who encounters the same QR code — and improves our AI models for everyone. BinRo gets smarter and safer with every user.
             </Text>
           </View>
         </View>
 
         <View style={styles.footer}>
           <Ionicons name="shield-checkmark" size={18} color={colors.primary} />
-          <Text style={[styles.footerText, { color: colors.textMuted }]}>QR Guard — Scan smart. Stay safe. Beta v2.0</Text>
+          <Text style={[styles.footerText, { color: colors.textMuted }]}>BinRo — Scan smart. Stay safe. Beta v2.0</Text>
         </View>
       </ScrollView>
     </View>

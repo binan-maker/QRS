@@ -382,7 +382,7 @@ export default function SettingsScreen() {
             <View style={styles.divider} />
             <SettingsMenuItem
               icon="heart-outline"
-              label="Support QR Guard"
+              label="Support BinRo"
               sublabel="Buy us a coffee"
               onPress={() => safePush("/donation")}
             />
@@ -444,7 +444,7 @@ export default function SettingsScreen() {
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
           >
-            <Text style={styles.footerBadgeText}>QR Guard v1.0.0</Text>
+            <Text style={styles.footerBadgeText}>BinRo v1.0.0</Text>
           </LinearGradient>
           <Text style={[styles.footerTagline, { color: colors.textMuted }]}>Scan smart. Stay safe.</Text>
           <Text style={[styles.footerDisclaimer, { color: colors.textMuted }]}>

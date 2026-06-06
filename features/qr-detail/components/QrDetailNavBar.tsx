@@ -73,7 +73,7 @@ export default function QrDetailNavBar({
 
       <View style={styles.navActions}>
         {isQrOwner && isGuardCreatedQr ? (
-          /* QR Guard QR — owner sees Analytics button only (Manage is in overflow) */
+          /* BinRo QR — owner sees Analytics button only (Manage is in overflow) */
           <>
             {onAnalytics && (
               <Pressable
@@ -89,7 +89,7 @@ export default function QrDetailNavBar({
             )}
           </>
         ) : isGuardCreatedQr && hasOwner ? (
-          /* QR Guard QR — visitor sees Follow / Unfollow creator button */
+          /* BinRo QR — visitor sees Follow / Unfollow creator button */
           <Pressable
             onPress={creatorFollowLoading ? undefined : onFollowCreator}
             style={({ pressed }) => [

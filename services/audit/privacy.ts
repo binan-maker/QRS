@@ -33,7 +33,7 @@ export function getDeviceInfo(): string {
     const expoConstants = require("expo-constants").default;
     const platform = expoConstants.platform?.os || "unknown";
     const osVersion = expoConstants.platform?.osVersion || "unknown";
-    const appName = expoConstants.expoConfig?.name || "QRGuard";
+    const appName = expoConstants.expoConfig?.name || "BinRo";
     return `${appName}/${platform}-${osVersion}`;
   } catch {
     return "unknown-device";

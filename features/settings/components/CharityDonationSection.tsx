@@ -106,7 +106,7 @@ export default function CharityDonationSection() {
         <Text style={[styles.heroEmoji, { fontSize: rf(40) }]}>🙏</Text>
         <Text style={[styles.heroTitle, { fontSize: rf(22), marginBottom: sp(8) }]}>Support the Creator</Text>
         <Text style={[styles.heroSub, { fontSize: rf(13), lineHeight: rf(21), marginBottom: sp(20) }]}>
-          QR Guard is built and maintained by an independent developer. Your contribution directly funds server infrastructure, ongoing development, and future improvements.
+          BinRo is built and maintained by an independent developer. Your contribution directly funds server infrastructure, ongoing development, and future improvements.
         </Text>
         <View style={[styles.heroPillRow, { gap: sp(6) }]}>
           {["Independent Developer", "No VC Funding", "Built with care"].map((t) => (

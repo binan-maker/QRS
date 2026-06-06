@@ -247,7 +247,7 @@ export default function AdvancedSettingsPanel({ settings, onChange }: Props) {
           }}>
             <Text style={{ fontSize: 13 }}>⚡</Text>
             <Text style={{ flex: 1, fontSize: 10, fontFamily: "Inter_400Regular", color: colors.primary, lineHeight: 15 }}>
-              Only QR Guard offers scan-limited and auto-expiring QR codes for free — used by businesses worldwide for exclusive offers, event tickets, and time-sensitive campaigns.
+              Only BinRo offers scan-limited and auto-expiring QR codes for free — used by businesses worldwide for exclusive offers, event tickets, and time-sensitive campaigns.
             </Text>
           </View>
         </View>

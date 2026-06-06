@@ -23,19 +23,19 @@ try {
 
 const TIERS = [
   {
-    sku:    "qrguard_donate_10",
+    sku:    "binro_donate_10",
     amount: "₹10",
     label:  "For the Founder",
     desc:   "A small thank-you directly to the person building this",
   },
   {
-    sku:    "qrguard_donate_50",
+    sku:    "binro_donate_50",
     amount: "₹50",
     label:  "App Development",
     desc:   "Helps fund server costs and new features",
   },
   {
-    sku:    "qrguard_donate_100",
+    sku:    "binro_donate_100",
     amount: "₹100",
     label:  "App Development",
     desc:   "Powers security upgrades and threat intelligence",
@@ -69,7 +69,7 @@ export default function DonationScreen() {
           purchasingRef.current = null;
           Alert.alert(
             "Thank You ❤️",
-            "Your support means everything. It goes directly to the person building QR Guard and keeping it running.",
+            "Your support means everything. It goes directly to the person building BinRo.",
             [{ text: "Close" }]
           );
         }
@@ -141,7 +141,7 @@ export default function DonationScreen() {
     purchasingRef.current = sku;
     setPurchasing(sku);
     try {
-      await (iapModule as any)!.requestPurchase({ skus: [sku] });
+      await (iapModule as any)!.requestPurchase({ sku });
     } catch (err: any) {
       if (err?.code !== "E_USER_CANCELLED") {
         Alert.alert("Purchase Failed", "Something went wrong. Your payment was not charged.", [{ text: "OK" }]);
@@ -156,7 +156,7 @@ export default function DonationScreen() {
 
   return (
     <View style={[s.container, { backgroundColor: colors.background, paddingTop: topInset }]}>
-      <ScreenHeader title="Support QR Guard" />
+      <ScreenHeader title="Support BinRo" />
 
       <ScrollView
         showsVerticalScrollIndicator={false}
@@ -169,10 +169,10 @@ export default function DonationScreen() {
             <Ionicons name="heart" size={28} color={colors.primary} />
           </View>
           <Text style={[s.heroTitle, { color: colors.text }]}>
-            Help Build QR Guard
+            Help Build BinRo
           </Text>
           <Text style={[s.heroSub, { color: colors.textSecondary }]}>
-            QR Guard is built by a solo developer. If this app has helped you stay safe, consider sending a small amount to support the work.
+            BinRo is built by a solo developer. If this app has helped you stay safe, consider sending a small amount to support the work.
           </Text>
           <View style={[s.noticeBox, { backgroundColor: colors.surface, borderColor: colors.primary + "30" }]}>
             <Ionicons name="information-circle-outline" size={15} color={colors.primary} />
@@ -265,8 +265,8 @@ export default function DonationScreen() {
           <Text style={[s.whereTitle, { color: colors.text }]}>Where your support goes</Text>
           {[
             { icon: "person-outline"           as const, text: "₹10 — Goes directly to the founder" },
-            { icon: "code-slash-outline"       as const, text: "₹50 — QR Guard app development" },
-            { icon: "shield-checkmark-outline" as const, text: "₹100 — QR Guard app development" },
+            { icon: "code-slash-outline"       as const, text: "₹50 — BinRo app development" },
+            { icon: "shield-checkmark-outline" as const, text: "₹100 — BinRo app development" },
             { icon: "server-outline"           as const, text: "Firebase, server & infrastructure costs" },
             { icon: "bug-outline"              as const, text: "Security audits & performance improvements" },
           ].map(({ icon, text }) => (
@@ -279,7 +279,7 @@ export default function DonationScreen() {
 
         {/* ── FOOTER ───────────────────────────────────────────── */}
         <Text style={[s.footer, { color: colors.textMuted }]}>
-          Made with care in India · QR Guard
+          Made with care in India · BinRo
         </Text>
 
       </ScrollView>

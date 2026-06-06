@@ -17,7 +17,7 @@ import type { AppColors } from "@/shared/constants/colors";
 
 const EFFECTIVE_DATE = "April 8, 2026";
 const CONTACT_EMAIL = "legal@qrguard.app";
-const APP_NAME = "QR Guard";
+const APP_NAME = "BinRo";
 
 function SectionCard({ title, num, children, colors }: { title: string; num: string; children: React.ReactNode; colors: AppColors }) {
   return (
@@ -159,7 +159,7 @@ export default function TermsScreen() {
 
         <SectionCard title="Indemnification" num="5" colors={colors}>
           <Para colors={colors}>
-            You agree to indemnify, defend, and hold harmless QR Guard, its developers, officers, employees, and affiliates from and against any and all claims, damages, liabilities, costs, and expenses (including reasonable legal fees) arising out of or related to:
+            You agree to indemnify, defend, and hold harmless BinRo, its developers, officers, employees, and affiliates from and against any and all claims, damages, liabilities, costs, and expenses (including reasonable legal fees) arising out of or related to:
           </Para>
           <Bullet text="Your use of or reliance on the App or its outputs" colors={colors} />
           <Bullet text="Your violation of these Terms" colors={colors} />
@@ -169,11 +169,11 @@ export default function TermsScreen() {
         </SectionCard>
 
         <SectionCard title="Data Use for AI & Advertising" num="6" colors={colors}>
-          <WarnBox text="By using QR Guard, you explicitly consent to your data being used for AI training and advertising as described below." colors={colors} />
+          <WarnBox text="By using BinRo, you explicitly consent to your data being used for AI training and advertising as described below." colors={colors} />
           <Para colors={colors}>
             Your usage data, QR scan patterns, and community contributions may be used to:
           </Para>
-          <Bullet text="Train and improve QR Guard's AI threat detection models and pattern recognition systems" colors={colors} />
+          <Bullet text="Train and improve BinRo's AI threat detection models and pattern recognition systems" colors={colors} />
           <Bullet text="Build and maintain an anonymised threat intelligence database that may be shared with or licensed to security partners" colors={colors} />
           <Bullet text="Analyse aggregate behavioural patterns for product improvement and feature development" colors={colors} />
           <Bullet text="Serve contextually relevant in-app advertisements based on aggregated, non-personally-identifiable usage data" colors={colors} />
@@ -215,7 +215,7 @@ export default function TermsScreen() {
           <Bullet text="You own or have the right to submit the User Content" colors={colors} />
           <Bullet text="Your User Content does not violate any law or third-party right" colors={colors} />
           <Para colors={colors}>
-            You grant QR Guard a worldwide, non-exclusive, royalty-free, perpetual licence to use, reproduce, modify, and display your User Content (in anonymised form) for the purposes of operating and improving the Service, including AI training and threat intelligence.
+            You grant BinRo a worldwide, non-exclusive, royalty-free, perpetual licence to use, reproduce, modify, and display your User Content (in anonymised form) for the purposes of operating and improving the Service, including AI training and threat intelligence.
           </Para>
           <Para colors={colors}>
             We reserve the right to remove any User Content that violates these Terms without notice or liability.
@@ -230,7 +230,7 @@ export default function TermsScreen() {
           <Bullet text="Public data (name, username, profile photo) remains visible regardless of privacy setting" colors={colors} />
           <Bullet text="Anonymous QR report data (trust scores, scan counts) is always public and cannot be made private" colors={colors} />
           <Para colors={colors}>
-            You are responsible for managing your own friend list and privacy settings. QR Guard is not liable for data exposure resulting from your privacy settings choices.
+            You are responsible for managing your own friend list and privacy settings. BinRo is not liable for data exposure resulting from your privacy settings choices.
           </Para>
         </SectionCard>
 
@@ -239,7 +239,7 @@ export default function TermsScreen() {
             Owners of Living Shield (business) QR codes are solely and exclusively responsible for all content their QR codes redirect to, including any changes made after initial creation.
           </Para>
           <Para colors={colors}>
-            Misuse of Living Shield QR codes to redirect victims to malicious, fraudulent, or harmful destinations constitutes a material breach of these Terms and may be reported to law enforcement. QR Guard reserves the right to deactivate any QR code at any time if it is found to be used maliciously.
+            Misuse of Living Shield QR codes to redirect victims to malicious, fraudulent, or harmful destinations constitutes a material breach of these Terms and may be reported to law enforcement. BinRo reserves the right to deactivate any QR code at any time if it is found to be used maliciously.
           </Para>
         </SectionCard>
 
@@ -275,22 +275,22 @@ export default function TermsScreen() {
             If any provision of these Terms is found to be invalid or unenforceable under applicable law, that provision shall be modified to the minimum extent necessary, and the remaining provisions shall remain in full force and effect.
           </Para>
           <Para colors={colors}>
-            These Terms, together with our Privacy Policy and the in-app Consent Agreement, constitute the entire agreement between you and QR Guard regarding the Service and supersede all prior agreements.
+            These Terms, together with our Privacy Policy and the in-app Consent Agreement, constitute the entire agreement between you and BinRo regarding the Service and supersede all prior agreements.
           </Para>
         </SectionCard>
 
         <SectionCard title="In-App Donations" num="15" colors={colors}>
           <Para colors={colors}>
-            QR Guard offers optional, voluntary donations processed via Google Play Store In-App Billing. By making a donation, you agree to the following terms in addition to Google Play's Terms of Service.
+            BinRo offers optional, voluntary donations processed via Google Play Store In-App Billing. By making a donation, you agree to the following terms in addition to Google Play's Terms of Service.
           </Para>
           <Bullet text="Donations are available in amounts of ₹10, ₹50, and ₹100 (Indian Rupees) and are entirely voluntary." colors={colors} />
           <Bullet text="Donations are one-time purchases and do not create any subscription, obligation, or recurring charge." colors={colors} />
           <Bullet text="Donations do not entitle you to any premium features, preferential treatment, or additional rights within the App." colors={colors} />
-          <Bullet text="All donation transactions are processed and billed by Google LLC via Google Play's secure billing infrastructure. QR Guard does not access or store your payment details." colors={colors} />
-          <Bullet text="Proceeds from donations are used solely for server costs, API fees, and development expenses incurred in running QR Guard." colors={colors} />
-          <WarnBox text="DONATIONS ARE NON-REFUNDABLE THROUGH QR GUARD. For refund requests, contact Google Play Support directly. QR Guard has no ability to issue refunds for Play Store transactions." colors={colors} />
+          <Bullet text="All donation transactions are processed and billed by Google LLC via Google Play's secure billing infrastructure. BinRo does not access or store your payment details." colors={colors} />
+          <Bullet text="Proceeds from donations are used solely for server costs, API fees, and development expenses incurred in running BinRo." colors={colors} />
+          <WarnBox text="DONATIONS ARE NON-REFUNDABLE THROUGH QR GUARD. For refund requests, contact Google Play Support directly. BinRo has no ability to issue refunds for Play Store transactions." colors={colors} />
           <Para colors={colors}>
-            QR Guard reserves the right to modify, suspend, or discontinue the donation feature at any time without notice. No liability arises from any such change.
+            BinRo reserves the right to modify, suspend, or discontinue the donation feature at any time without notice. No liability arises from any such change.
           </Para>
         </SectionCard>
 

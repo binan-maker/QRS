@@ -98,7 +98,7 @@ export default function DeleteAccountModal({ visible, onClose }: DeleteAccountMo
             <Text style={[styles.emailPillText, { color: colors.danger }]}>{user.email}</Text>
           </View>
           <Text style={[styles.body, { color: colors.textSecondary }]}>
-            This will erase all your data from QR Guard's servers. There is no recovery.
+            This will erase all your data from BinRo's servers. There is no recovery.
           </Text>
           <Text style={[styles.instruction, { color: colors.textSecondary }]}>
             To confirm, type exactly: <Text style={[styles.phrase, { color: colors.danger }]}>{CONFIRM_PHRASE}</Text>

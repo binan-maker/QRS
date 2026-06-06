@@ -105,8 +105,8 @@ export const ConsentManager: React.FC<ConsentManagerProps> = ({
             <ConsentOption title="Age Verification" description="I confirm that I am 18 years or older, or have parental consent" enabled={consent.ageVerified} onToggle={() => toggleConsent("ageVerified")} required icon="🎂" />
             <ConsentOption title="Terms of Service" description="I have read and agree to the Terms of Service" enabled={consent.termsAccepted} onToggle={() => toggleConsent("termsAccepted")} required icon="📄" />
             <ConsentOption title="Privacy Policy" description="I have read and agree to the Privacy Policy" enabled={consent.privacyPolicyAccepted} onToggle={() => toggleConsent("privacyPolicyAccepted")} required icon="🔒" />
-            <ConsentOption title="Camera Access" description="Allow QR Guard to scan QR codes using your camera" enabled={consent.camera} onToggle={() => toggleConsent("camera")} required={isRequired} icon="📷" />
-            <ConsentOption title="Gallery Access" description="Allow QR Guard to scan QR codes from your photo gallery" enabled={consent.gallery} onToggle={() => toggleConsent("gallery")} icon="🖼️" />
+            <ConsentOption title="Camera Access" description="Allow BinRo to scan QR codes using your camera" enabled={consent.camera} onToggle={() => toggleConsent("camera")} required={isRequired} icon="📷" />
+            <ConsentOption title="Gallery Access" description="Allow BinRo to scan QR codes from your photo gallery" enabled={consent.gallery} onToggle={() => toggleConsent("gallery")} icon="🖼️" />
             <ConsentOption title="Scan History" description="Save your scan history for future reference (can be deleted anytime)" enabled={consent.scanHistory} onToggle={() => toggleConsent("scanHistory")} icon="📜" />
             <ConsentOption title="Notifications" description="Send you alerts about QR code updates and security warnings" enabled={consent.notifications} onToggle={() => toggleConsent("notifications")} icon="🔔" />
             <ConsentOption title="Analytics" description="Help us improve by collecting anonymous usage statistics" enabled={consent.analytics} onToggle={() => toggleConsent("analytics")} icon="📊" />
@@ -117,7 +117,7 @@ export const ConsentManager: React.FC<ConsentManagerProps> = ({
             <View style={styles.warningBox}>
               <Text style={styles.warningIcon}>⚠️</Text>
               <Text style={styles.warningText}>
-                Required consents must be accepted to use QR Guard.
+                Required consents must be accepted to use BinRo.
               </Text>
             </View>
           )}

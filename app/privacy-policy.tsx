@@ -101,7 +101,7 @@ export default function PrivacyPolicyScreen() {
           <View style={{ flex: 1 }}>
             <Text style={[styles.heroTitle, { color: colors.text }]}>Privacy Policy</Text>
             <Text style={[styles.heroSub, { color: colors.textSecondary }]}>
-              QR Guard (Beta) — understand how your data is collected, used, and protected.
+              BinRo (Beta) — understand how your data is collected, used, and protected.
             </Text>
             <View style={[styles.dateBadge, { backgroundColor: colors.surfaceLight, borderColor: colors.surfaceBorder }]}>
               <Ionicons name="calendar-outline" size={12} color={colors.textMuted} />
@@ -112,13 +112,13 @@ export default function PrivacyPolicyScreen() {
 
         <SectionCard title="Who We Are" num="1" icon="shield-outline" colors={colors}>
           <Para colors={colors}>
-            QR Guard is a beta-stage mobile application designed to help users scan, analyse, generate, and manage QR codes. We are a private software project operating under the laws of India. This policy applies to all users of QR Guard on Android, iOS, and web platforms.
+            BinRo is a beta-stage mobile application designed to help users scan, analyse, generate, and manage QR codes. We are a private software project operating under the laws of India. This policy applies to all users of BinRo on Android, iOS, and web platforms.
           </Para>
-          <WarningBox text="QR Guard is a BETA product. Features, data handling practices, and policies may change. You will be required to re-accept updated terms when material changes are made." colors={colors} />
+          <WarningBox text="BinRo is a BETA product. Features, data handling practices, and policies may change. You will be required to re-accept updated terms when material changes are made." colors={colors} />
         </SectionCard>
 
         <SectionCard title="Data We Collect" num="2" icon="layers-outline" colors={colors}>
-          <Para colors={colors}>By using QR Guard, you agree we collect the following categories of information:</Para>
+          <Para colors={colors}>By using BinRo, you agree we collect the following categories of information:</Para>
 
           <SubHead text="Account & Identity Data" colors={colors} />
           <Bullet text="Email address, display name, profile photo (if uploaded)" colors={colors} />
@@ -148,7 +148,7 @@ export default function PrivacyPolicyScreen() {
         </SectionCard>
 
         <SectionCard title="How We Use Your Data" num="3" icon="settings-outline" colors={colors}>
-          <Para colors={colors}>Your data is used for the following purposes. By using QR Guard, you consent to all of these uses:</Para>
+          <Para colors={colors}>Your data is used for the following purposes. By using BinRo, you consent to all of these uses:</Para>
 
           <SubHead text="Core Service Delivery" colors={colors} />
           <Bullet text="Authenticate your account, maintain sessions, and secure your profile" colors={colors} />
@@ -180,7 +180,7 @@ export default function PrivacyPolicyScreen() {
 
         <SectionCard title="Data Pattern Analysis & Database Use" num="4" icon="analytics-outline" colors={colors}>
           <Para colors={colors}>
-            QR Guard maintains a continuously updated threat intelligence database derived from community scan data and reports. This database powers our real-time QR code safety analysis.
+            BinRo maintains a continuously updated threat intelligence database derived from community scan data and reports. This database powers our real-time QR code safety analysis.
           </Para>
           <Bullet text="Scan patterns across our entire user base are analysed to detect emerging fraud campaigns, phishing waves, and new malicious QR code formats." colors={colors} />
           <Bullet text="Payment QR codes (UPI, BharatQR, etc.) are analysed in aggregate for unusual merchant patterns that may indicate fraud." colors={colors} />
@@ -193,7 +193,7 @@ export default function PrivacyPolicyScreen() {
 
         <SectionCard title="Firebase & Third-Party Infrastructure" num="5" icon="server-outline" colors={colors}>
           <Para colors={colors}>
-            QR Guard uses Google Firebase for backend infrastructure. Your data is stored in Firebase Firestore, Firebase Realtime Database, and Firebase Auth. Firebase is compliant with GDPR, SOC 2, and ISO 27001.
+            BinRo uses Google Firebase for backend infrastructure. Your data is stored in Firebase Firestore, Firebase Realtime Database, and Firebase Auth. Firebase is compliant with GDPR, SOC 2, and ISO 27001.
           </Para>
           <Para colors={colors}>
             We also use: Google Safe Browsing API (URL threat checking), Razorpay (donation processing), and third-party analytics and crash reporting tools. These services have their own privacy policies which govern their use of data they receive.
@@ -226,7 +226,7 @@ export default function PrivacyPolicyScreen() {
 
         <SectionCard title="Government & Law Enforcement Requests" num="8" icon="business-outline" colors={colors}>
           <Para colors={colors}>
-            QR Guard operates under Indian law. We comply with lawful government and law enforcement requests for user data, including those made under the Information Technology Act, 2000, the Digital Personal Data Protection Act, 2023, and applicable court orders.
+            BinRo operates under Indian law. We comply with lawful government and law enforcement requests for user data, including those made under the Information Technology Act, 2000, the Digital Personal Data Protection Act, 2023, and applicable court orders.
           </Para>
           <Para colors={colors}>
             Where legally permitted to do so, we will notify affected users of such requests. We review all government data requests for legal validity before complying.
@@ -240,18 +240,18 @@ export default function PrivacyPolicyScreen() {
           <Para colors={colors}>
             All data in transit between your device and our servers is encrypted using TLS 1.2+. Firebase Auth uses industry-standard OAuth 2.0 and secure token management. Data at rest is encrypted using AES-256 where Firebase infrastructure supports it.
           </Para>
-          <WarningBox text="No system is 100% secure. Data breaches can and do happen to any service. By using QR Guard, you acknowledge and accept this risk." colors={colors} />
+          <WarningBox text="No system is 100% secure. Data breaches can and do happen to any service. By using BinRo, you acknowledge and accept this risk." colors={colors} />
           <Para colors={colors}>
             In the event of a data breach that affects your personal data, we will: (1) notify you by email or in-app notification as soon as practicable; (2) notify relevant authorities as required under applicable law; (3) take immediate steps to contain and remediate the breach.
           </Para>
           <Para colors={colors}>
-            QR Guard's liability for data breaches caused by third-party actors, cyberattacks, or events beyond our reasonable control is expressly limited to the extent permitted by applicable law.
+            BinRo's liability for data breaches caused by third-party actors, cyberattacks, or events beyond our reasonable control is expressly limited to the extent permitted by applicable law.
           </Para>
         </SectionCard>
 
         <SectionCard title="Profile Privacy Controls" num="10" icon="shield-half-outline" colors={colors}>
           <SubHead text="Public Account (Default)" colors={colors} />
-          <Bullet text="Your profile, QR codes, stats, and activity are visible to all QR Guard users worldwide." colors={colors} />
+          <Bullet text="Your profile, QR codes, stats, and activity are visible to all BinRo users worldwide." colors={colors} />
           <SubHead text="Private Account" colors={colors} />
           <Bullet text="Only approved friends can see your full profile, QR codes, and activity." colors={colors} />
           <Bullet text="Other users see only your name, username, and profile photo." colors={colors} />
@@ -275,13 +275,13 @@ export default function PrivacyPolicyScreen() {
 
         <SectionCard title="Children's Privacy" num="12" icon="happy-outline" colors={colors}>
           <Para colors={colors}>
-            QR Guard is not intended for users under 13 years of age. We do not knowingly collect personal information from children under 13. If you believe a child has provided us with personal data without parental consent, contact us immediately at {CONTACT_EMAIL} and we will delete the data.
+            BinRo is not intended for users under 13 years of age. We do not knowingly collect personal information from children under 13. If you believe a child has provided us with personal data without parental consent, contact us immediately at {CONTACT_EMAIL} and we will delete the data.
           </Para>
         </SectionCard>
 
         <SectionCard title="Changes to This Policy" num="13" icon="refresh-outline" colors={colors}>
           <Para colors={colors}>
-            We may update this Privacy Policy from time to time. When we make material changes, we will increment the consent version in the app, and all users will be required to re-accept before continuing to use QR Guard. Continued use of the app after accepting the updated policy constitutes your agreement to the revised terms.
+            We may update this Privacy Policy from time to time. When we make material changes, we will increment the consent version in the app, and all users will be required to re-accept before continuing to use BinRo. Continued use of the app after accepting the updated policy constitutes your agreement to the revised terms.
           </Para>
           <Para colors={colors}>
             We recommend reviewing this policy periodically. The effective date at the top of this page reflects the most recent revision.
@@ -290,20 +290,20 @@ export default function PrivacyPolicyScreen() {
 
         <SectionCard title="In-App Donations & Payments" num="14" icon="heart-outline" colors={colors}>
           <Para colors={colors}>
-            QR Guard offers optional, voluntary in-app donations processed exclusively through Google Play Store's billing system (Google Play In-App Billing). Donations are available in amounts of ₹10, ₹50, and ₹100 (Indian Rupees).
+            BinRo offers optional, voluntary in-app donations processed exclusively through Google Play Store's billing system (Google Play In-App Billing). Donations are available in amounts of ₹10, ₹50, and ₹100 (Indian Rupees).
           </Para>
           <SubHead text="What We Collect During Donations" colors={colors} />
           <Bullet text="We do not collect or store your payment card details, UPI VPA, or bank account information. All payment data is handled entirely by Google Play's secure billing infrastructure." colors={colors} />
           <Bullet text="We receive from Google only: the transaction ID, purchase token, product ID purchased, and purchase timestamp." colors={colors} />
-          <Bullet text="Donation records are associated with your Google Play account, not your QR Guard account." colors={colors} />
+          <Bullet text="Donation records are associated with your Google Play account, not your BinRo account." colors={colors} />
           <SubHead text="Purpose of Donations" colors={colors} />
           <Bullet text="All donations go directly towards server infrastructure costs, threat intelligence API fees, and ongoing development by the solo founder." colors={colors} />
-          <Bullet text="Donations are not required to use QR Guard. The app remains fully free for all users." colors={colors} />
+          <Bullet text="Donations are not required to use BinRo. The app remains fully free for all users." colors={colors} />
           <Bullet text="Donations do not unlock premium features or remove any limitations." colors={colors} />
           <SubHead text="Refunds" colors={colors} />
           <Bullet text="All donation purchases are subject to Google Play's refund policy. For refunds, contact Google Play Support directly." colors={colors} />
           <Bullet text="We do not process refunds directly for in-app purchases made through Google Play Store." colors={colors} />
-          <WarningBox text="Donations are non-refundable through QR Guard directly. Please contact Google Play Support for any billing disputes." colors={colors} />
+          <WarningBox text="Donations are non-refundable through BinRo directly. Please contact Google Play Support for any billing disputes." colors={colors} />
         </SectionCard>
 
         <SectionCard title="Contact Us" num="15" icon="mail-outline" colors={colors}>
@@ -322,7 +322,7 @@ export default function PrivacyPolicyScreen() {
 
         <View style={styles.footer}>
           <Ionicons name="shield-checkmark" size={16} color={colors.primary} />
-          <Text style={[styles.footerText, { color: colors.textMuted }]}>QR Guard — Scan smart. Stay safe. Stay private. v2.0</Text>
+          <Text style={[styles.footerText, { color: colors.textMuted }]}>BinRo — Scan smart. Stay safe. Stay private. v2.0</Text>
         </View>
       </ScrollView>
     </View>
