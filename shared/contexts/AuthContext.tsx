@@ -14,6 +14,7 @@ import { queryClient } from "@/shared/utils/query-client";
 import { clearAllMemCache, clearAllAsyncStorageCache } from "@/services/cache/qr-cache";
 import { clearAllAnonymousSessions } from "@/services/cache/anonymous-session";
 import { validateEmail } from "@/shared/utils/email-validator";
+import { trackLoginCompleted } from "@/lib/analytics";
 
 const SERVER_BASE_URL = process.env.EXPO_PUBLIC_DOMAIN
   ? `https://${process.env.EXPO_PUBLIC_DOMAIN}`
@@ -263,6 +264,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         emailVerified: adapterUser.emailVerified,
       });
       setToken(idToken);
+      trackLoginCompleted("email");
     } catch (e: any) {
       if (e.code === "auth/email-not-verified") throw e;
       throw mapFirebaseError(e);
@@ -304,6 +306,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         emailVerified: adapterUser.emailVerified,
       });
       setToken(idToken);
+      trackLoginCompleted("google");
       syncUserToDb(adapterUser.uid, adapterUser.email, adapterUser.displayName, adapterUser.photoURL).catch(() => {});
     } catch (e: any) {
       throw mapFirebaseError(e);
@@ -321,6 +324,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       emailVerified: adapterUser.emailVerified,
     });
     setToken(firebaseToken);
+    trackLoginCompleted("google");
     syncUserToDb(adapterUser.uid, adapterUser.email, adapterUser.displayName, adapterUser.photoURL).catch(() => {});
   }
 

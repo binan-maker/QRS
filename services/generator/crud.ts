@@ -1,4 +1,5 @@
-import { db, rtdb } from "@/lib/db/client";
+import { db } from "@/lib/db/client";
+import { trackQrGenerated } from "@/lib/analytics";
 import * as Crypto from "expo-crypto";
 import { tsToString } from "../utils";
 import type { QrType, ScanVelocityBucket, GeneratedQrItem } from "../types";
@@ -139,6 +140,7 @@ export async function saveGeneratedQr(
       }
     }
 
+    trackQrGenerated({ qrType, contentType, branded });
     return docRef.id;
   } catch (e) {
     logError("saveGeneratedQr/generatedQrs-write", e, { userId, contentType });

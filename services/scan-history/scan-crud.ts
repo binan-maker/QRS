@@ -6,6 +6,7 @@ import {
   recordOwnerScan,
   recordBlockedScan,
 } from "../scan-fraud-guard";
+import { trackQrScanned } from "@/lib/analytics";
 
 const SCAN_SOFT_DELETE_TTL_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
 
@@ -56,6 +57,15 @@ export async function recordScan(
   } catch (e) {
     console.warn("[db] recordScan: failed to check/increment scanCount:", e);
   }
+
+  // Track every scan regardless of auth state — QR type, verdict, and source
+  // are the signals we care about (no PII involved).
+  trackQrScanned({
+    contentType,
+    verdict: countThisScan ? "safe" : "flagged",
+    scanSource,
+    isAuthenticated: !!(userId && !isAnonymous),
+  });
 
   if (userId && !isAnonymous) {
     try {

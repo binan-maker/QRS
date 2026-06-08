@@ -202,20 +202,160 @@ export async function getUserBio(userId: string): Promise<string> {
 
 export async function deleteUserAccount(userId: string): Promise<void> {
   let photoUrl: string | null = null;
+  let username: string | null = null;
   try {
     const userDoc = await db.get(["users", userId]);
     photoUrl = userDoc?.photoURL || null;
+    username = userDoc?.username || null;
   } catch {}
 
+  // 1. Block access immediately — isDeleted gates all reads in the app
   await db.update(["users", userId], { isDeleted: true, deletedAt: db.timestamp() });
 
+  // 2. Remove RTDB notifications (fast, synchronous)
   try { await rtdb.remove(`notifications/${userId}`); } catch {}
 
+  // 3. Release username so another user can claim it
+  if (username) {
+    db.delete(["usernames", username]).catch(() => {});
+  }
+
+  // 4. Delete profile photo from Storage
   if (photoUrl && photoUrl.includes("firebasestorage")) {
     import("../storage-service").then(({ deleteProfilePhoto }) => {
       deleteProfilePhoto(userId, photoUrl!).catch(() => {});
     }).catch(() => {});
   }
+
+  // 5. Clean up all sub-collections and relational data in background.
+  //    This is intentionally non-blocking — the auth account will be deleted
+  //    by the caller immediately after this returns.
+  _cleanupUserSubcollections(userId).catch(() => {});
+}
+
+async function _paginatedDelete(
+  userId: string,
+  subcollection: string,
+  batchSize = 300,
+  beforeDelete?: (docs: Array<{ id: string; data: Record<string, any> }>) => Promise<void>
+): Promise<void> {
+  let hasMore = true;
+  while (hasMore) {
+    const { docs } = await db.query(["users", userId, subcollection], { limit: batchSize });
+    if (docs.length === 0) break;
+    if (beforeDelete) await beforeDelete(docs).catch(() => {});
+    await Promise.all(
+      docs.map((d) => db.delete(["users", userId, subcollection, d.id]).catch(() => {}))
+    );
+    hasMore = docs.length === batchSize;
+  }
+}
+
+async function _cleanupUserSubcollections(userId: string): Promise<void> {
+  await Promise.allSettled([
+    // Scan history — hard delete. QR scanCount on qrCodes is NEVER touched
+    // (YouTube-style: counts belong to the QR, not the user).
+    _paginatedDelete(userId, "scans"),
+
+    // Generated QRs — remove user's private records and anonymize the global
+    // qrCodes entry (strip owner identity, keep scanCount intact forever).
+    _paginatedDelete(userId, "generatedQrs", 200, async (docs) => {
+      await Promise.all(
+        docs.map((d) => {
+          const qrCodeId = d.data.qrCodeId as string | undefined;
+          if (!qrCodeId) return Promise.resolve();
+          return db.update(["qrCodes", qrCodeId], {
+            ownerId: null,
+            ownerName: "[deleted]",
+            ownerLogoBase64: null,
+            isOwnerDeleted: true,
+          }).catch(() => {});
+        })
+      );
+    }),
+
+    // Favorites
+    _paginatedDelete(userId, "favorites"),
+
+    // Owner scans log and counted-scan dedup markers
+    _paginatedDelete(userId, "ownerScans"),
+    _paginatedDelete(userId, "countedScans"),
+
+    // Comments — soft-delete comment text in qrCodes, delete user index entry
+    _cleanupComments(userId),
+
+    // QR follows — remove from qrCodes/{qrId}/followers and decrement counts
+    _cleanupQrFollowing(userId),
+
+    // Creator follows — remove from the creator's creatorFollowers sub-collection
+    _cleanupCreatorFollowing(userId),
+  ]);
+
+  // Hard-delete the user document itself last (after all sub-collections are gone)
+  db.delete(["users", userId]).catch(() => {});
+}
+
+async function _cleanupComments(userId: string): Promise<void> {
+  let hasMore = true;
+  while (hasMore) {
+    const { docs } = await db.query(["users", userId, "comments"], { limit: 200 });
+    if (docs.length === 0) break;
+    await Promise.all(
+      docs.map(async (d) => {
+        const { qrCodeId, commentId } = d.data;
+        if (qrCodeId && commentId) {
+          const batch = db.batch();
+          batch.update(["qrCodes", qrCodeId, "comments", commentId], {
+            isDeleted: true,
+            deletedAt: db.timestamp(),
+            text: "[deleted]",
+            userId: "[deleted]",
+            userDisplayName: "[deleted]",
+            userUsername: null,
+            userPhotoURL: null,
+          });
+          batch.increment(["qrCodes", qrCodeId], "commentCount", -1);
+          batch.delete(["users", userId, "comments", d.id]);
+          await batch.commit().catch(() => {});
+        } else {
+          await db.delete(["users", userId, "comments", d.id]).catch(() => {});
+        }
+      })
+    );
+    hasMore = docs.length === 200;
+  }
+}
+
+async function _cleanupQrFollowing(userId: string): Promise<void> {
+  const { docs } = await db.query(["users", userId, "following"], { limit: 500 });
+  await Promise.all(
+    docs.map(async (d) => {
+      const qrCodeId = d.id;
+      try {
+        const batch = db.batch();
+        batch.delete(["qrCodes", qrCodeId, "followers", userId]);
+        batch.delete(["users", userId, "following", qrCodeId]);
+        batch.increment(["qrCodes", qrCodeId], "followerCount", -1);
+        await batch.commit();
+      } catch {}
+    })
+  );
+}
+
+async function _cleanupCreatorFollowing(userId: string): Promise<void> {
+  const { docs } = await db.query(["users", userId, "creatorFollowing"], { limit: 200 });
+  await Promise.all(
+    docs.map(async (d) => {
+      const creatorId = d.id;
+      try {
+        const batch = db.batch();
+        batch.delete(["users", creatorId, "creatorFollowers", userId]);
+        batch.delete(["users", userId, "creatorFollowing", creatorId]);
+        batch.increment(["users", creatorId], "creatorFollowerCount", -1);
+        await batch.commit();
+      } catch {}
+    })
+  );
 }
 
 export async function submitFeedback(

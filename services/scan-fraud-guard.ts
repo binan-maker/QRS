@@ -22,6 +22,7 @@
 
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { db } from "@/lib/db/client";
+import { trackFraudDetected } from "@/lib/analytics";
 
 // ── Constants ──────────────────────────────────────────────────────────────────
 const VELOCITY_WINDOW_MS        = 60 * 1000;   // 1 minute window
@@ -164,11 +165,13 @@ export async function checkScanAllowed(
   // 4. Anomaly detection — freeze trust score if growth is unnatural
   if (hourlyVolume >= ANOMALY_HOURLY_THRESHOLD) {
     await maybeFreezeScanCount(qrId, hourlyVolume);
+    trackFraudDetected({ reason: "anomaly_detected", isAuthenticated: userId !== null });
     return { allowed: false, reason: "anomaly_detected", ownerScan: false };
   }
 
   // 5. Velocity gate — global burst protection
   if (velocityCount >= VELOCITY_THRESHOLD_PER_MIN) {
+    trackFraudDetected({ reason: "velocity_exceeded", isAuthenticated: userId !== null });
     return { allowed: false, reason: "velocity_exceeded", ownerScan: false };
   }
 

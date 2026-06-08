@@ -1,8 +1,10 @@
+import { useEffect } from "react";
 import { View, Text, Pressable, StyleSheet } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
 import { useTheme } from "@/shared/contexts/ThemeContext";
+import { trackLoginPromptShown } from "@/lib/analytics";
 
 interface Props {
   style?: object;
@@ -11,6 +13,10 @@ interface Props {
 
 export default function GuestUnlockBanner({ style, compact }: Props) {
   const { colors, isDark } = useTheme();
+
+  useEffect(() => {
+    trackLoginPromptShown("guest_unlock_banner");
+  }, []);
 
   return (
     <View
