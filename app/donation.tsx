@@ -16,6 +16,7 @@ import { useTopInset } from "@/shared/utils/platform";
 import ScreenHeader from "@/shared/components/ui/ScreenHeader";
 import { useTheme } from "@/shared/contexts/ThemeContext";
 
+// react-native-iap v15 — loaded lazily so the module doesn't crash on web/iOS simulator
 let iapModule: typeof import("react-native-iap") | null = null;
 try {
   iapModule = require("react-native-iap");
@@ -42,6 +43,8 @@ const TIERS = [
   },
 ];
 
+const SKUS = TIERS.map((t) => t.sku);
+
 export default function DonationScreen() {
   const { colors } = useTheme();
   const insets     = useSafeAreaInsets();
@@ -54,17 +57,19 @@ export default function DonationScreen() {
   const [selected,        setSelected]        = useState(TIERS[1].sku);
 
   const purchasingRef = useRef<string | null>(null);
+  const mountedRef    = useRef(true);
 
   useEffect(() => {
+    mountedRef.current = true;
     if (!iapModule || Platform.OS !== "android") return;
-    let mounted = true;
 
+    // ── v15 event listeners ──────────────────────────────────────────────────
     const purchaseUpdateSub = iapModule.purchaseUpdatedListener(async (purchase) => {
       const token = purchase.purchaseToken;
       if (!token) return;
       try {
         await iapModule!.finishTransaction({ purchase, isConsumable: true });
-        if (mounted) {
+        if (mountedRef.current) {
           setPurchasing(null);
           purchasingRef.current = null;
           Alert.alert(
@@ -74,7 +79,7 @@ export default function DonationScreen() {
           );
         }
       } catch {
-        if (mounted) {
+        if (mountedRef.current) {
           setPurchasing(null);
           purchasingRef.current = null;
         }
@@ -82,7 +87,7 @@ export default function DonationScreen() {
     });
 
     const purchaseErrorSub = iapModule.purchaseErrorListener((error: any) => {
-      if (mounted) {
+      if (mountedRef.current) {
         setPurchasing(null);
         purchasingRef.current = null;
         if (error?.code !== "E_USER_CANCELLED") {
@@ -95,32 +100,34 @@ export default function DonationScreen() {
       }
     });
 
+    // ── init + fetchProducts (v15 API) ───────────────────────────────────────
     (async () => {
       try {
         setLoadingProducts(true);
         await iapModule!.initConnection();
-        if (!mounted) return;
+        if (!mountedRef.current) return;
         setConnected(true);
 
-        const skus  = TIERS.map((t) => t.sku);
-        const items: any[] =
-          (await (iapModule as any)!.getProducts?.({ skus })) ??
-          (await (iapModule as any)!.fetchProducts?.({ productIds: skus })) ??
-          [];
-        if (!mounted) return;
+        // v15: fetchProducts({ skus, type })  ← NOT getProducts / productIds
+        const items = await iapModule!.fetchProducts({ skus: SKUS, type: "inapp" });
+        if (!mountedRef.current) return;
+
         const priceMap: Record<string, string> = {};
-        items.forEach((p: any) => {
-          priceMap[p.productId] = p.localizedPrice || p.price;
+        (items as any[]).forEach((p: any) => {
+          const id = p.productId ?? p.id;
+          priceMap[id] = p.localizedPrice ?? p.price ?? "";
         });
         setProducts(priceMap);
-      } catch {}
-      finally {
-        if (mounted) setLoadingProducts(false);
+      } catch (err: any) {
+        // Products not found in Play Console — fall back to hardcoded prices
+        // (the screen still works; user sees ₹10 / ₹50 / ₹100 labels)
+      } finally {
+        if (mountedRef.current) setLoadingProducts(false);
       }
     })();
 
     return () => {
-      mounted = false;
+      mountedRef.current = false;
       purchaseUpdateSub.remove();
       purchaseErrorSub.remove();
       iapModule?.endConnection?.();
@@ -129,22 +136,41 @@ export default function DonationScreen() {
 
   const handleDonate = useCallback(async () => {
     if (Platform.OS !== "android") {
-      Alert.alert("Android Only", "Donations are available on Android via Google Play.", [{ text: "OK" }]);
+      Alert.alert(
+        "Android Only",
+        "Donations are available on Android via Google Play.",
+        [{ text: "OK" }]
+      );
       return;
     }
     if (!iapModule || !connected) {
-      Alert.alert("Store Unavailable", "Google Play Store is not available right now. Please try again.", [{ text: "OK" }]);
+      Alert.alert(
+        "Store Unavailable",
+        "Google Play Store is not available right now. Please try again.",
+        [{ text: "OK" }]
+      );
       return;
     }
     const sku = selected;
     if (purchasingRef.current) return;
     purchasingRef.current = sku;
     setPurchasing(sku);
+
     try {
-      await (iapModule as any)!.requestPurchase({ sku });
+      // v15: requestPurchase({ request: { google: { skus } }, type })
+      await iapModule!.requestPurchase({
+        request: {
+          google: { skus: [sku] },
+        },
+        type: "in-app",
+      } as any);
     } catch (err: any) {
       if (err?.code !== "E_USER_CANCELLED") {
-        Alert.alert("Purchase Failed", "Something went wrong. Your payment was not charged.", [{ text: "OK" }]);
+        Alert.alert(
+          "Purchase Failed",
+          "Something went wrong. Your payment was not charged.",
+          [{ text: "OK" }]
+        );
       }
       setPurchasing(null);
       purchasingRef.current = null;

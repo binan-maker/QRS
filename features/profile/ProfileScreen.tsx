@@ -61,13 +61,14 @@ const QR_SKELETON_ENTER = FadeIn.delay(0).duration(240);
 
 // ── Animated stat cell with number reveal ─────────────────────────────────────
 const StatCell = React.memo(function StatCell({
-  label, formatted, color, loading, index,
+  label, formatted, color, loading, index, onPress,
 }: {
   label: string;
   formatted: string;
   color: string;
   loading: boolean;
   index: number;
+  onPress?: () => void;
 }) {
   const { colors } = useTheme();
   const opacity    = useSharedValue(0);
@@ -89,22 +90,31 @@ const StatCell = React.memo(function StatCell({
   }));
 
   return (
-    <Animated.View
-      entering={STAT_CELL_ENTER[Math.min(index, 4)]}
-      style={[
-        styles.statCell,
-        index % 2 === 0 && { borderRightWidth: 1, borderRightColor: colors.surfaceBorder },
-      ]}
+    <Pressable
+      onPress={onPress}
+      disabled={!onPress}
+      style={({ pressed }) => ({ opacity: onPress && pressed ? 0.7 : 1, flex: 1 })}
     >
-      {loading ? (
-        <SkeletonBox width={36} height={18} borderRadius={6} />
-      ) : (
-        <Animated.Text style={[styles.statValue, { color }, anim]}>
-          {formatted}
-        </Animated.Text>
-      )}
-      <Text style={[styles.statLabel, { color: colors.textMuted }]}>{label}</Text>
-    </Animated.View>
+      <Animated.View
+        entering={STAT_CELL_ENTER[Math.min(index, 4)]}
+        style={[
+          styles.statCell,
+          index % 2 === 0 && { borderRightWidth: 1, borderRightColor: colors.surfaceBorder },
+        ]}
+      >
+        {loading ? (
+          <SkeletonBox width={36} height={18} borderRadius={6} />
+        ) : (
+          <Animated.Text style={[styles.statValue, { color }, anim]}>
+            {formatted}
+          </Animated.Text>
+        )}
+        <View style={{ flexDirection: "row", alignItems: "center", gap: 3 }}>
+          <Text style={[styles.statLabel, { color: colors.textMuted }]}>{label}</Text>
+          {onPress && <Ionicons name="chevron-forward" size={10} color={colors.textMuted} />}
+        </View>
+      </Animated.View>
+    </Pressable>
   );
 });
 
@@ -184,18 +194,14 @@ function ProfileScreen() {
   const { onTabScroll } = useTabBarScroll();
 
   const previewQrs = useMemo(() => myQrCodes.slice(0, 9), [myQrCodes]);
-  const totalQrScans = useMemo(
-    () => myQrCodes.reduce((sum, qr) => sum + (qr.scanCount || 0), 0),
-    [myQrCodes],
-  );
-
   const formattedStats = useMemo(() => [
     {
-      label:     "QR Hits",
-      value:     totalQrScans,
+      label:     "My QRs",
+      value:     myQrCodes.length,
       color:     colors.accent,
       loading:   myQrLoading,
-      formatted: formatCompactNumber(totalQrScans),
+      formatted: formatCompactNumber(myQrCodes.length),
+      onPress:   goToMyQrCodes,
     },
     {
       label:     "Following",
@@ -203,8 +209,9 @@ function ProfileScreen() {
       color:     colors.primary,
       loading:   statsLoading,
       formatted: formatCompactNumber(stats.followingCount ?? 0),
+      onPress:   undefined,
     },
-  ], [totalQrScans, myQrLoading, stats.followingCount, statsLoading, colors.accent, colors.primary]);
+  ], [myQrCodes.length, myQrLoading, stats.followingCount, statsLoading, colors.accent, colors.primary, goToMyQrCodes]);
 
   const openPhotoModal  = useCallback(() => setPhotoModalOpen(true),  [setPhotoModalOpen]);
   const closePhotoModal = useCallback(() => setPhotoModalOpen(false), [setPhotoModalOpen]);
@@ -381,6 +388,7 @@ function ProfileScreen() {
               color={s.color}
               loading={s.loading}
               index={i}
+              onPress={s.onPress}
             />
           ))}
         </Animated.View>
