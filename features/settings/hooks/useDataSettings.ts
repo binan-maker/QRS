@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useRef, useEffect } from "react";
 import { Alert } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as Haptics from "@/shared/utils/haptics";
@@ -23,6 +23,15 @@ export function useDataSettings({ userId }: UseDataSettingsOptions) {
   const [commentsLoading, setCommentsLoading]  = useState(false);
   const [myHistory,       setMyHistory]        = useState<any[]>([]);
   const [historyLoading,  setHistoryLoading]   = useState(false);
+
+  // FIX (rollback closure): keep live refs to current list values so that
+  // the rollback inside handleDeleteAll* always restores the freshest snapshot,
+  // even if the list changed between when the callback was created and when
+  // the user confirms the alert.
+  const myCommentsRef = useRef(myComments);
+  const myHistoryRef  = useRef(myHistory);
+  useEffect(() => { myCommentsRef.current = myComments; }, [myComments]);
+  useEffect(() => { myHistoryRef.current  = myHistory;  }, [myHistory]);
 
   const resetData = useCallback(() => {
     setFollowingList([]);
@@ -58,11 +67,35 @@ export function useDataSettings({ userId }: UseDataSettingsOptions) {
       const local: any[] = stored
         ? JSON.parse(stored).map((s: any) => ({ ...s, source: "local" as const }))
         : [];
-      const { items } = await getUserScansPaginated(userId, 100);
-      const cloud = items.filter((s: any) => !s.isDeleted).map((s: any) => ({ ...s, source: "cloud" as const }));
+
+      // FIX (100-item hard cap): paginate through all cloud scans instead of
+      // truncating at 100. Each page is 500 items; most users will finish in
+      // one round-trip. The loop stops when Firestore signals no more pages.
+      const allCloudItems: any[] = [];
+      let cursor: any = undefined;
+      let hasMore = true;
+      while (hasMore) {
+        const { items, cursor: nextCursor, hasMore: more } =
+          await getUserScansPaginated(userId, 500, cursor);
+        allCloudItems.push(...items);
+        cursor = nextCursor;
+        hasMore = more && !!nextCursor;
+      }
+      const cloud = allCloudItems.map((s: any) => ({ ...s, source: "cloud" as const }));
+
+      // FIX (dedup key): previously only deduped by qrCodeId, so offline scans
+      // (which have no qrCodeId) were never checked against cloud scans and
+      // could appear twice. Now falls back to a source-prefixed id key.
       const merged = [...local];
+      const seenKeys = new Set<string>(
+        local.map((i) => i.qrCodeId ? `qr:${i.qrCodeId}` : `local:${i.id}`)
+      );
       for (const c of cloud) {
-        if (!merged.find((i) => i.qrCodeId && i.qrCodeId === c.qrCodeId)) merged.push(c);
+        const key = c.qrCodeId ? `qr:${c.qrCodeId}` : `cloud:${c.id}`;
+        if (!seenKeys.has(key)) {
+          seenKeys.add(key);
+          merged.push(c);
+        }
       }
       merged.sort((a, b) => new Date(b.scannedAt).getTime() - new Date(a.scannedAt).getTime());
       setMyHistory(merged);
@@ -97,20 +130,24 @@ export function useDataSettings({ userId }: UseDataSettingsOptions) {
         {
           text: "Delete All", style: "destructive",
           onPress: async () => {
-            const prev = [...myComments];
+            // FIX (rollback closure): read from ref so rollback always restores
+            // the list as it existed at the moment the user pressed Delete —
+            // not the potentially stale snapshot captured when the callback
+            // was last created by useCallback.
+            const snapshot = myCommentsRef.current;
             setMyComments([]);
             try {
               if (userId) await deleteAllUserComments(userId);
               Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
             } catch {
-              setMyComments(prev);
+              setMyComments(snapshot);
               Alert.alert("Error", "Could not delete all comments.");
             }
           },
         },
       ]
     );
-  }, [userId, myComments]);
+  }, [userId]);
 
   const handleDeleteHistoryItem = useCallback(async (item: any) => {
     setMyHistory((prev) => prev.filter((h) => h.id !== item.id));
@@ -143,7 +180,10 @@ export function useDataSettings({ userId }: UseDataSettingsOptions) {
         {
           text: "Delete All", style: "destructive",
           onPress: async () => {
-            const prev = [...myHistory];
+            // FIX (rollback closure): same pattern as comments — use the live
+            // ref so the rollback is always accurate regardless of when this
+            // callback was last re-created by useCallback.
+            const snapshot = myHistoryRef.current;
             setMyHistory([]);
             try {
               if (userId) {
@@ -152,14 +192,14 @@ export function useDataSettings({ userId }: UseDataSettingsOptions) {
               }
               Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
             } catch {
-              setMyHistory(prev);
+              setMyHistory(snapshot);
               Alert.alert("Error", "Could not delete history.");
             }
           },
         },
       ]
     );
-  }, [userId, myHistory]);
+  }, [userId]);
 
   return {
     followingList, followingLoading, loadFollowing,

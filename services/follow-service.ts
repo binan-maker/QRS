@@ -97,6 +97,9 @@ export async function toggleFollowCreator(
     batch.delete(["users", creatorId, "creatorFollowers", userId]);
     batch.delete(["users", userId, "creatorFollowing", creatorId]);
     batch.increment(["users", creatorId], "creatorFollowerCount", -1);
+    // FIX: also decrement the follower's own creatorFollowingCount so profile
+    // stats stay accurate. Previously only the creator's side was updated.
+    batch.increment(["users", userId], "creatorFollowingCount", -1);
   } else {
     batch.set(["users", creatorId, "creatorFollowers", userId], {
       followerId: userId, createdAt: db.timestamp(),
@@ -105,6 +108,9 @@ export async function toggleFollowCreator(
       creatorId, creatorName: creatorName || "", createdAt: db.timestamp(),
     });
     batch.increment(["users", creatorId], "creatorFollowerCount", 1);
+    // FIX: increment the follower's own creatorFollowingCount to mirror
+    // the QR follow pattern (which increments the follower's followingCount).
+    batch.increment(["users", userId], "creatorFollowingCount", 1);
   }
 
   await batch.commit();

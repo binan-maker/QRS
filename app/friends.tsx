@@ -1,11 +1,11 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import {
   View, Text, Pressable, ActivityIndicator,
   StyleSheet, Image, Platform, RefreshControl,
 } from "react-native";
 import { FlashList as _FlashList } from "@shopify/flash-list";
 const FlashList = _FlashList as any;
-import { router } from "expo-router";
+import { router, useFocusEffect } from "expo-router";
 import { safePush } from "@/shared/utils/navigation";
 import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -48,10 +48,23 @@ export default function FriendsScreen() {
     } catch {}
   }, [user]);
 
+  const hasLoadedRef = useRef(false);
+
   useEffect(() => {
     setLoading(true);
-    load().finally(() => setLoading(false));
+    load().finally(() => { setLoading(false); hasLoadedRef.current = true; });
   }, [load]);
+
+  // FIX (no focus-refresh): previously the friends list only loaded on mount.
+  // Navigating to another screen and back never re-fetched, so newly received
+  // requests or accepted friends stayed invisible until a manual pull-to-refresh.
+  // Now we silently background-reload on every subsequent focus (no spinner).
+  useFocusEffect(
+    useCallback(() => {
+      if (!hasLoadedRef.current) return;
+      load();
+    }, [load])
+  );
 
   async function onRefresh() {
     setRefreshing(true);

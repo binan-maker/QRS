@@ -87,10 +87,13 @@ export async function getComments(
 // Reads the user's comment index (IDs only), then fetches each comment's
 // full data from the source-of-truth path: qrCodes/{qrId}/comments/{commentId}.
 // The user sub-collection is a lightweight lookup table — no text is stored there.
-export async function getUserComments(userId: string): Promise<any[]> {
+// FIX: Added `limit` param (default 50) to prevent unbounded N+1 reads for
+// power users with hundreds of comments. The index query is capped; the parallel
+// Promise.all fetch for comment bodies is already batched — not sequential.
+export async function getUserComments(userId: string, limit = 50): Promise<any[]> {
   const { docs: indexDocs } = await db.query(
     ["users", userId, "comments"],
-    { orderBy: { field: "createdAt", direction: "desc" } }
+    { orderBy: { field: "createdAt", direction: "desc" }, limit }
   );
 
   const results = await Promise.all(

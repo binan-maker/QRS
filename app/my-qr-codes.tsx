@@ -137,11 +137,22 @@ export default function MyQrCodesScreen() {
 
   useEffect(() => { if (!user) return; fetchQrCodes(); }, [user?.id]);
 
+  // FIX: on every focus, check cache freshness. readCache returns null when the
+  // 5-min TTL has expired, so any expired or missing cache triggers a fresh fetch.
+  // This ensures newly created QRs (which invalidate the cache in useQrSave) and
+  // stale scan counts both surface when the user navigates back to this screen.
   useFocusEffect(
     useCallback(() => {
       if (!user?.id) return;
       readCache<GeneratedQrItem[]>(qrsCacheKey(user.id)).then((cached) => {
-        if (!cached) fetchQrCodes(true);
+        if (!cached) {
+          fetchQrCodes(true);
+        } else if (hasLoadedRef.current) {
+          // Cache hit but user is returning from another screen — silently
+          // background-refresh so scan counts stay reasonably up to date
+          // without blocking the UI. No loading spinner shown.
+          fetchQrCodes(false);
+        }
       }).catch(() => {});
     }, [user?.id, fetchQrCodes])
   );
@@ -151,8 +162,13 @@ export default function MyQrCodesScreen() {
     fetchQrCodes(true).finally(() => setRefreshing(false));
   }
 
-  const sorted = useMemo(() => {
+  // FIX: calling setState inside useMemo is a React anti-pattern — it causes
+  // extra renders and warnings in Strict Mode. Reset displayCount in an effect instead.
+  useEffect(() => {
     setDisplayCount(PAGE_SIZE);
+  }, [sortKey, searchQuery]);
+
+  const sorted = useMemo(() => {
     let list = [...qrCodes];
     if (sortKey === "mostScanned") list.sort((a, b) => (b.scanCount || 0) - (a.scanCount || 0));
     else if (sortKey === "oldest") list.sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
