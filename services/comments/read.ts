@@ -84,10 +84,33 @@ export async function getComments(
   return { comments, hasMore, cursor: allDocs.length > 0 ? newCursor : undefined };
 }
 
+// Reads the user's comment index (IDs only), then fetches each comment's
+// full data from the source-of-truth path: qrCodes/{qrId}/comments/{commentId}.
+// The user sub-collection is a lightweight lookup table — no text is stored there.
 export async function getUserComments(userId: string): Promise<any[]> {
-  const { docs } = await db.query(
+  const { docs: indexDocs } = await db.query(
     ["users", userId, "comments"],
     { orderBy: { field: "createdAt", direction: "desc" } }
   );
-  return docs.map((d) => ({ id: d.id, ...d.data, createdAt: tsToString(d.data.createdAt) }));
+
+  const results = await Promise.all(
+    indexDocs.map(async (d) => {
+      const { qrCodeId, commentId } = d.data;
+      if (!qrCodeId || !commentId) return null;
+      try {
+        const commentData = await db.get(["qrCodes", qrCodeId, "comments", commentId]);
+        if (!commentData || commentData.isDeleted) return null;
+        return {
+          id: commentId,
+          qrCodeId,
+          ...commentData,
+          createdAt: tsToString(commentData.createdAt),
+        };
+      } catch {
+        return null;
+      }
+    })
+  );
+
+  return results.filter(Boolean);
 }

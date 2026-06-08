@@ -21,7 +21,7 @@
 // ──────────────────────────────────────────────────────────────────────────────
 
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { db, rtdb } from "@/lib/db/client";
+import { db } from "@/lib/db/client";
 
 // ── Constants ──────────────────────────────────────────────────────────────────
 const VELOCITY_WINDOW_MS        = 60 * 1000;   // 1 minute window
@@ -84,14 +84,16 @@ async function markUserCounted(userId: string, qrId: string): Promise<void> {
   } catch {}
 }
 
-// ── Velocity helpers (uses existing RTDB qrScanVelocity) ──────────────────────
+// ── Velocity helpers (reads from Firestore qrCodes/{qrId}/scanVelocity) ────────
 async function getRecentVelocity(qrId: string): Promise<number> {
   try {
-    const raw: Record<string, { ts: number }> | null =
-      await rtdb.get(`qrScanVelocity/${qrId}`);
-    if (!raw) return 0;
     const now = Date.now();
-    return Object.values(raw).filter((v) => now - v.ts < VELOCITY_WINDOW_MS).length;
+    const cutoff = now - VELOCITY_WINDOW_MS;
+    const { docs } = await db.query(["qrCodes", qrId, "scanVelocity"], {
+      where: [{ field: "ts", op: ">=", value: cutoff }],
+      orderBy: { field: "ts", direction: "asc" },
+    });
+    return docs.length;
   } catch {
     return 0;
   }
@@ -99,11 +101,13 @@ async function getRecentVelocity(qrId: string): Promise<number> {
 
 async function getRecentHourlyVolume(qrId: string): Promise<number> {
   try {
-    const raw: Record<string, { ts: number }> | null =
-      await rtdb.get(`qrScanVelocity/${qrId}`);
-    if (!raw) return 0;
     const now = Date.now();
-    return Object.values(raw).filter((v) => now - v.ts < ANOMALY_WINDOW_MS).length;
+    const cutoff = now - ANOMALY_WINDOW_MS;
+    const { docs } = await db.query(["qrCodes", qrId, "scanVelocity"], {
+      where: [{ field: "ts", op: ">=", value: cutoff }],
+      orderBy: { field: "ts", direction: "asc" },
+    });
+    return docs.length;
   } catch {
     return 0;
   }
@@ -203,7 +207,7 @@ export async function recordBlockedScan(
   userId: string | null
 ): Promise<void> {
   try {
-    await rtdb.push(`blockedScans/${qrId}`, {
+    await db.add(["qrCodes", qrId, "blockedScans"], {
       ts: Date.now(),
       reason,
       uid: userId ?? "guest",

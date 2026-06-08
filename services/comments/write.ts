@@ -71,15 +71,20 @@ export async function addComment(
     createdAt: db.timestamp(),
   });
 
-  try { await db.increment(["qrCodes", qrId], "commentCount", 1); } catch (e) {
-    console.warn("[db] addComment: failed to increment commentCount:", e);
-  }
-
+  // Atomically increment QR comment count and write the user index entry.
+  // The index stores only IDs (no text) — source of truth is qrCodes/{qrId}/comments.
   try {
-    await db.set(["users", userId, "comments", commentId], {
-      commentId, qrCodeId: qrId, text: text.trim(), createdAt: db.timestamp(),
+    const batch = db.batch();
+    batch.increment(["qrCodes", qrId], "commentCount", 1);
+    batch.set(["users", userId, "comments", commentId], {
+      commentId,
+      qrCodeId: qrId,
+      createdAt: db.timestamp(),
     });
-  } catch {}
+    await batch.commit();
+  } catch (e) {
+    console.warn("[db] addComment: failed to increment commentCount or write user index:", e);
+  }
 
   await recordComment(userId);
 
@@ -123,18 +128,24 @@ export async function toggleCommentLike(
   if (existing) {
     const wasLike = existing.isLike;
     if (wasLike === isLike) {
-      await db.delete(likePath);
-      await db.increment(commentPath, isLike ? "likeCount" : "dislikeCount", -1);
+      const batch = db.batch();
+      batch.delete(likePath);
+      batch.increment(commentPath, isLike ? "likeCount" : "dislikeCount", -1);
+      await batch.commit();
       if (isLike) likeDelta = -1;
     } else {
-      await db.set(likePath, { isLike, createdAt: db.timestamp() });
-      await db.increment(commentPath, "likeCount", isLike ? 1 : -1);
-      await db.increment(commentPath, "dislikeCount", isLike ? -1 : 1);
+      const batch = db.batch();
+      batch.set(likePath, { isLike, createdAt: db.timestamp() });
+      batch.increment(commentPath, "likeCount", isLike ? 1 : -1);
+      batch.increment(commentPath, "dislikeCount", isLike ? -1 : 1);
+      await batch.commit();
       likeDelta = isLike ? 1 : -1;
     }
   } else {
-    await db.set(likePath, { isLike, createdAt: db.timestamp() });
-    await db.increment(commentPath, isLike ? "likeCount" : "dislikeCount", 1);
+    const batch = db.batch();
+    batch.set(likePath, { isLike, createdAt: db.timestamp() });
+    batch.increment(commentPath, isLike ? "likeCount" : "dislikeCount", 1);
+    await batch.commit();
     if (isLike) likeDelta = 1;
   }
 
@@ -150,9 +161,17 @@ export async function softDeleteComment(qrId: string, commentId: string, userId:
   const ref = ["qrCodes", qrId, "comments", commentId];
   const data = await db.get(ref);
   if (data && data.userId === userId) {
-    await db.update(ref, { isDeleted: true, deletedAt: db.timestamp(), text: "[deleted]" });
-    try { await db.increment(["qrCodes", qrId], "commentCount", -1); } catch {}
-    try { await db.delete(["users", userId, "comments", commentId]); } catch {}
+    // Atomically mark deleted, decrement count, and remove user index entry.
+    const batch = db.batch();
+    batch.update(ref, { isDeleted: true, deletedAt: db.timestamp(), text: "[deleted]" });
+    batch.increment(["qrCodes", qrId], "commentCount", -1);
+    batch.delete(["users", userId, "comments", commentId]);
+    try { await batch.commit(); } catch (e) {
+      console.warn("[db] softDeleteComment: batch failed, falling back:", e);
+      await db.update(ref, { isDeleted: true, deletedAt: db.timestamp(), text: "[deleted]" }).catch(() => {});
+      await db.increment(["qrCodes", qrId], "commentCount", -1).catch(() => {});
+      await db.delete(["users", userId, "comments", commentId]).catch(() => {});
+    }
     purgeOldSoftDeletes(qrId).catch(() => {});
   }
 }
@@ -193,12 +212,16 @@ export async function deleteAllUserComments(userId: string): Promise<void> {
     docs.map(async (d) => {
       const { qrCodeId, commentId } = d.data;
       if (qrCodeId && commentId) {
-        await db.update(["qrCodes", qrCodeId, "comments", commentId], {
+        const batch = db.batch();
+        batch.update(["qrCodes", qrCodeId, "comments", commentId], {
           isDeleted: true, deletedAt: db.timestamp(), text: "[deleted]",
-        }).catch(() => {});
-        await db.increment(["qrCodes", qrCodeId], "commentCount", -1).catch(() => {});
+        });
+        batch.increment(["qrCodes", qrCodeId], "commentCount", -1);
+        batch.delete(["users", userId, "comments", d.id]);
+        await batch.commit().catch(() => {});
+      } else {
+        await db.delete(["users", userId, "comments", d.id]).catch(() => {});
       }
-      await db.delete(["users", userId, "comments", d.id]).catch(() => {});
     })
   );
 }

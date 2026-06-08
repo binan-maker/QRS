@@ -1,4 +1,4 @@
-import { db, rtdb } from "@/lib/db/client";
+import { db } from "@/lib/db/client";
 import { tsToString } from "../utils";
 import { incrementSmartCounter } from "@/lib/db/distributed-counter";
 import {
@@ -8,6 +8,10 @@ import {
 } from "../scan-fraud-guard";
 
 const SCAN_SOFT_DELETE_TTL_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
+
+function generateDocId(): string {
+  return Date.now().toString(36) + Math.random().toString(36).slice(2, 9);
+}
 
 export async function recordScan(
   qrId: string,
@@ -19,8 +23,9 @@ export async function recordScan(
 ): Promise<void> {
   if (userId && isAnonymous) return;
 
+  // Write velocity event to Firestore (unified — no RTDB dependency).
   try {
-    await rtdb.push(`qrScanVelocity/${qrId}`, { ts: Date.now() });
+    await db.add(["qrCodes", qrId, "scanVelocity"], { ts: Date.now() });
   } catch {}
 
   let countThisScan = true;
@@ -54,7 +59,11 @@ export async function recordScan(
 
   if (userId && !isAnonymous) {
     try {
-      await db.add(["users", userId, "scans"], {
+      // Atomically write the scan record and increment personalScanCount together
+      // so the counter never drifts from the actual number of stored scan documents.
+      const scanId = generateDocId();
+      const batch = db.batch();
+      batch.set(["users", userId, "scans", scanId], {
         qrCodeId: qrId,
         content,
         contentType,
@@ -64,8 +73,9 @@ export async function recordScan(
         counted: countThisScan,
       });
       if (countThisScan) {
-        await db.increment(["users", userId], "personalScanCount", 1);
+        batch.increment(["users", userId], "personalScanCount", 1);
       }
+      await batch.commit();
     } catch {}
   }
 }
@@ -105,8 +115,10 @@ export async function getUserScansPaginated(
 
 export async function deleteUserScan(userId: string, scanId: string): Promise<void> {
   try {
-    await db.update(["users", userId, "scans", scanId], { isDeleted: true, deletedAt: db.timestamp() });
-    await db.increment(["users", userId], "personalScanCount", -1);
+    const batch = db.batch();
+    batch.update(["users", userId, "scans", scanId], { isDeleted: true, deletedAt: db.timestamp() });
+    batch.increment(["users", userId], "personalScanCount", -1);
+    await batch.commit();
   } catch {}
 }
 
