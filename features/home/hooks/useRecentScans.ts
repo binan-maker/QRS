@@ -57,7 +57,10 @@ export function useRecentScans() {
     staleTime:           HOME_STALE_MS,
     gcTime:              30 * 60 * 1000,
     refetchOnWindowFocus: false,
-    refetchOnMount:      false,
+    // BUG FIX: was false — with placeholderData:[] React Query treated [] as
+    // "data exists" and never re-fetched on re-mount, leaving the list blank
+    // after tab switches. true refetches when stale (respects staleTime).
+    refetchOnMount:      true,
     enabled:             !!user?.id,
     placeholderData:     [],
   });
@@ -81,7 +84,19 @@ export function useRecentScans() {
         setLocalScans([]);
       }
       loadLocalScans(currentUserId);
-    }, [user?.id, loadLocalScans])
+
+      // BUG FIX: previously only local scans were reloaded on focus.
+      // Cloud data was never refreshed unless the stale timer in refetchOnMount
+      // fired, but with placeholderData:[] that never happened after the first
+      // render. Now we explicitly trigger a cloud refetch when data is stale.
+      if (currentUserId) {
+        const state = queryClient.getQueryState(homeQueryKey(currentUserId));
+        const now = Date.now();
+        if (!state?.dataUpdatedAt || now - state.dataUpdatedAt > HOME_STALE_MS) {
+          refetchCloud();
+        }
+      }
+    }, [user?.id, loadLocalScans, refetchCloud])
   );
 
   // ── Merge local + cloud; deduplicate by qrCodeId; take MAX_RECENT ─────────

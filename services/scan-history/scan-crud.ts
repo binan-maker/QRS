@@ -109,16 +109,22 @@ export async function getUserScansPaginated(
   pageSize: number = 20,
   cursor?: any
 ): Promise<{ items: any[]; cursor: any; hasMore: boolean }> {
+  // BUG FIX (cursor + filter order):
+  // Previously fetched pageSize+1, sliced to pageSize, then filtered deleted items.
+  // This caused two bugs:
+  //   1. The cursor returned was the (pageSize+1)-th doc, so startAfter skipped one real item per page.
+  //   2. Filtering happened after the slice, returning fewer visible items per page with hasMore still true.
+  // Fix: fetch exactly pageSize docs. The cursor from db.query is now correctly the last shown item.
+  // hasMore = full page received (may do one extra empty fetch on the very last page — acceptable trade-off).
   const { docs, cursor: newCursor } = await db.query(
     ["users", userId, "scans"],
-    { orderBy: { field: "scannedAt", direction: "desc" }, limit: pageSize + 1, cursor }
+    { orderBy: { field: "scannedAt", direction: "desc" }, limit: pageSize, cursor }
   );
-  const hasMore = docs.length > pageSize;
-  const sliced = hasMore ? docs.slice(0, pageSize) : docs;
-  const items = sliced.filter((d) => d.data.isDeleted !== true);
+  const hasMore = docs.length === pageSize;
+  const items = docs.filter((d) => d.data.isDeleted !== true);
   return {
     items: items.map((d) => ({ id: d.id, ...d.data, scannedAt: tsToString(d.data.scannedAt) })),
-    cursor: items.length > 0 ? newCursor : null,
+    cursor: docs.length > 0 ? newCursor : null,
     hasMore,
   };
 }

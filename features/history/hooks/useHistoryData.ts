@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useInfiniteQuery, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useFocusEffect } from "expo-router";
@@ -93,7 +93,10 @@ export function useHistoryData(activeFilters: ActiveFilters) {
     staleTime:        STALE_MS,
     gcTime:           60 * 60 * 1000,
     refetchOnWindowFocus: false,
-    refetchOnMount:   false,
+    // BUG FIX: was false — disk pre-warm (setQueryData) sets dataUpdatedAt,
+    // tricking React Query into thinking data is fresh and skipping the initial
+    // network fetch. true respects staleTime so we still avoid unnecessary calls.
+    refetchOnMount:   true,
     enabled:          !!user?.id,
   });
 
@@ -108,7 +111,7 @@ export function useHistoryData(activeFilters: ActiveFilters) {
     staleTime:            STALE_MS,
     gcTime:               60 * 60 * 1000,
     refetchOnWindowFocus: false,
-    refetchOnMount:       false,
+    refetchOnMount:       true,
     enabled:              !!user?.id,
   });
 
@@ -127,7 +130,7 @@ export function useHistoryData(activeFilters: ActiveFilters) {
     staleTime:            STALE_MS,
     gcTime:               60 * 60 * 1000,
     refetchOnWindowFocus: false,
-    refetchOnMount:       false,
+    refetchOnMount:       true,
     enabled:              !!user?.id,
   });
 
@@ -157,22 +160,38 @@ export function useHistoryData(activeFilters: ActiveFilters) {
     return merged.sort((a, b) => new Date(b.scannedAt).getTime() - new Date(a.scannedAt).getTime());
   }, [localHistory, cloudHistory]);
 
-  const safetyRiskMap = useMemo<Map<string, RiskLevel>>(() => {
-    const map = new Map<string, RiskLevel>();
-    for (const item of [...history, ...favorites]) {
-      if (item.contentType === "url") {
-        try { map.set(item.id, analyzeUrlHeuristics(item.content).riskLevel as RiskLevel); }
-        catch { map.set(item.id, "safe"); }
-      } else if (item.contentType === "payment") {
-        try {
-          const parsed = parseAnyPaymentQr(item.content);
-          map.set(item.id, parsed ? analyzeAnyPaymentQr(parsed).riskLevel as RiskLevel : "safe");
-        } catch { map.set(item.id, "safe"); }
-      } else {
-        map.set(item.id, "safe");
+  // BUG FIX (Bug 5 — synchronous safety analysis freezing the UI):
+  // Previously a useMemo that ran synchronously on the main thread for every item
+  // on every render. With hundreds of items this blocks painting and makes the
+  // list appear frozen/blank. Moved to useEffect+setState so the list renders
+  // first and badges fill in asynchronously. A ref guards against running on
+  // stale effect closures when history/favorites change rapidly.
+  const [safetyRiskMap, setSafetyRiskMap] = useState<Map<string, RiskLevel>>(new Map());
+  const safetyRunIdRef = useRef(0);
+
+  useEffect(() => {
+    const runId = ++safetyRunIdRef.current;
+    const allItems = [...history, ...favorites];
+    // Yield to the renderer before starting the loop
+    const timer = setTimeout(() => {
+      if (safetyRunIdRef.current !== runId) return;
+      const map = new Map<string, RiskLevel>();
+      for (const item of allItems) {
+        if (item.contentType === "url") {
+          try { map.set(item.id, analyzeUrlHeuristics(item.content).riskLevel as RiskLevel); }
+          catch { map.set(item.id, "safe"); }
+        } else if (item.contentType === "payment") {
+          try {
+            const parsed = parseAnyPaymentQr(item.content);
+            map.set(item.id, parsed ? analyzeAnyPaymentQr(parsed).riskLevel as RiskLevel : "safe");
+          } catch { map.set(item.id, "safe"); }
+        } else {
+          map.set(item.id, "safe");
+        }
       }
-    }
-    return map;
+      if (safetyRunIdRef.current === runId) setSafetyRiskMap(map);
+    }, 0);
+    return () => clearTimeout(timer);
   }, [history, favorites]);
 
   const displayItems = useMemo<HistoryItem[]>(() => {
