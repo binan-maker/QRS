@@ -64,7 +64,10 @@ export default function FollowingSection({ loading, list }: Props) {
   useEffect(() => {
     if (list.length === 0) { setEnriched([]); return; }
     setEnriching(true);
-    const ids = [...new Set(list.map((i: any) => i.qrCodeId).filter(Boolean))];
+    // FIX: cap the number of parallel Firestore reads to avoid a read storm
+    // when a user follows many QR codes. 100 is the same cap used on getQrFollowersList.
+    const uniqueIds = [...new Set(list.map((i: any) => i.qrCodeId).filter(Boolean))];
+    const ids = uniqueIds.slice(0, 100);
     Promise.all(ids.map((id) => db.get(["qrCodes", id]).catch(() => null))).then((results) => {
       const map: Record<string, any> = {};
       ids.forEach((id, i) => { if (results[i]) map[id] = results[i]; });

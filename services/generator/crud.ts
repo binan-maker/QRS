@@ -182,7 +182,14 @@ export async function getGeneratedQrById(userId: string, docId: string): Promise
 
 export async function getUserGeneratedQrs(userId: string): Promise<GeneratedQrItem[]> {
   try {
-    const { docs } = await db.query(["users", userId, "generatedQrs"]);
+    // FIX: previously an unbounded query — a prolific user with thousands of
+    // saved QRs would trigger a full collection scan on every list load. Cap at
+    // 200 (sorted newest-first) so the initial render is fast; the My QR Codes
+    // screen already does client-side pagination of the returned array.
+    const { docs } = await db.query(["users", userId, "generatedQrs"], {
+      orderBy: { field: "createdAt", direction: "desc" },
+      limit: 200,
+    });
     const items: GeneratedQrItem[] = docs.map((d) => mapDocToItem(d.id, d.data));
 
     const idsNeedingLookup = [...new Set(items.map(i => i.qrCodeId).filter(Boolean))] as string[];
@@ -204,7 +211,7 @@ export async function getUserGeneratedQrs(userId: string): Promise<GeneratedQrIt
       });
     }
 
-    items.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    // Items already ordered by createdAt desc from Firestore — no client sort needed.
     return items;
   } catch (e) {
     logError("getUserGeneratedQrs", e, { userId });

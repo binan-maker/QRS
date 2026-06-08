@@ -11,28 +11,32 @@ import type { Notification } from "@/lib/firestore-service";
 // ── Module-level helpers (no re-creation on render) ───────────────────────────
 
 function getNotifIcon(type: string): keyof typeof Ionicons.glyphMap {
-  if (type === "new_comment")     return "chatbubble";
-  if (type === "owner_comment")   return "chatbubble-ellipses";
-  if (type === "comment_reply")   return "return-down-forward";
-  if (type === "mention")         return "at";
-  if (type === "new_follow")      return "person-add";
-  if (type === "friend_request")  return "person-add";
-  if (type === "friend_accepted") return "people";
-  if (type === "friend_declined") return "person-remove";
-  return "warning";
+  if (type === "new_comment")        return "chatbubble";
+  if (type === "owner_comment")      return "chatbubble-ellipses";
+  if (type === "comment_reply")      return "return-down-forward";
+  if (type === "mention")            return "at";
+  if (type === "new_follow")         return "person-add";
+  if (type === "new_creator_follow") return "person-add-outline";
+  if (type === "friend_request")     return "person-add";
+  if (type === "friend_accepted")    return "people";
+  if (type === "friend_declined")    return "person-remove";
+  if (type === "new_report")         return "flag-outline";
+  return "notifications-outline";
 }
 
 // Accepts colors as a parameter so it can live outside the component body.
 function getNotifColor(type: string, colors: any): string {
-  if (type === "new_comment")     return colors.primary;
-  if (type === "owner_comment")   return colors.primary;
-  if (type === "comment_reply")   return colors.accent;
-  if (type === "mention")         return colors.accent;
-  if (type === "new_follow")      return colors.safe;
-  if (type === "friend_request")  return colors.safe;
-  if (type === "friend_accepted") return colors.primary;
-  if (type === "friend_declined") return colors.danger;
-  return colors.warning;
+  if (type === "new_comment")        return colors.primary;
+  if (type === "owner_comment")      return colors.primary;
+  if (type === "comment_reply")      return colors.accent ?? colors.primary;
+  if (type === "mention")            return colors.accent ?? colors.primary;
+  if (type === "new_follow")         return colors.safe ?? "#22c55e";
+  if (type === "new_creator_follow") return colors.safe ?? "#22c55e";
+  if (type === "friend_request")     return colors.safe ?? "#22c55e";
+  if (type === "friend_accepted")    return colors.primary;
+  if (type === "friend_declined")    return colors.danger;
+  if (type === "new_report")         return colors.warning ?? "#f59e0b";
+  return colors.textMuted ?? "#888";
 }
 
 function formatRelativeTime(ts: number): string {
@@ -59,14 +63,16 @@ const NotificationItem = React.memo(function NotificationItem({ notif, colors, o
   const handlePress = useCallback(() => {
     onClose();
     const isFriendNotif =
-      notif.type === "friend_request" ||
+      notif.type === "friend_request"  ||
       notif.type === "friend_accepted" ||
-      notif.type === "friend_declined";
+      notif.type === "friend_declined" ||
+      notif.type === "new_creator_follow";
     if (isFriendNotif && notif.fromUsername) {
       router.push(`/profile/${notif.fromUsername}` as any);
     } else if (notif.qrCodeId) {
       router.push({ pathname: "/qr-detail/[id]", params: { id: notif.qrCodeId } });
     }
+    // If neither fromUsername nor qrCodeId is present, close is enough — no crash.
   }, [notif.type, notif.fromUsername, notif.qrCodeId, onClose]);
 
   return (

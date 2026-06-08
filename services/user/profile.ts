@@ -56,10 +56,15 @@ export async function getUserStats(userId: string): Promise<UserStats> {
       };
     }
 
+    // FIX: unbounded sub-collection queries used as fallback counters.
+    // These are only triggered when the denormalized counter fields are missing
+    // (e.g. old accounts). Add a generous limit so we don't scan the entire
+    // collection — the count is capped at 1000 items for display purposes.
+    const COUNT_LIMIT = 1000;
     const [followingResult, scansResult, commentsResult] = await Promise.all([
-      hasFollowingCount    ? Promise.resolve(null) : db.query(["users", userId, "following"]),
-      hasPersonalScanCount ? Promise.resolve(null) : db.query(["users", userId, "scans"]),
-      hasCommentCount      ? Promise.resolve(null) : db.query(["users", userId, "comments"]),
+      hasFollowingCount    ? Promise.resolve(null) : db.query(["users", userId, "following"], { limit: COUNT_LIMIT }),
+      hasPersonalScanCount ? Promise.resolve(null) : db.query(["users", userId, "scans"],     { limit: COUNT_LIMIT }),
+      hasCommentCount      ? Promise.resolve(null) : db.query(["users", userId, "comments"],  { limit: COUNT_LIMIT }),
     ]);
 
     return {

@@ -88,6 +88,23 @@ export async function recordScan(
       await batch.commit();
     } catch {}
   }
+
+  // FIX (scanVelocity unbounded growth): the scanVelocity sub-collection collects
+  // one document per scan and is queried with a 24h window filter. Without cleanup
+  // it grows forever. Probabilistically prune entries older than 48h after ~5% of
+  // scans so cleanup is distributed across all scans without adding latency to most.
+  if (Math.random() < 0.05) {
+    const cutoff = Date.now() - 48 * 60 * 60 * 1000;
+    db.query(["qrCodes", qrId, "scanVelocity"], {
+      where: [{ field: "ts", op: "<", value: cutoff }],
+      limit: 100,
+    }).then(({ docs }) => {
+      if (docs.length === 0) return;
+      Promise.all(
+        docs.map((d) => db.delete(["qrCodes", qrId, "scanVelocity", d.id]).catch(() => {}))
+      ).catch(() => {});
+    }).catch(() => {});
+  }
 }
 
 export async function getUserScans(userId: string): Promise<any[]> {

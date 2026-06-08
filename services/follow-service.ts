@@ -136,7 +136,8 @@ export async function toggleFollowCreator(
 
 export async function getCreatorFollowersList(creatorId: string): Promise<FollowerInfo[]> {
   try {
-    const { docs } = await db.query(["users", creatorId, "creatorFollowers"]);
+    // FIX: unbounded query — cap at 100 to prevent full collection scan
+    const { docs } = await db.query(["users", creatorId, "creatorFollowers"], { limit: 100 });
     const followers: FollowerInfo[] = [];
     await Promise.all(docs.map(async (d) => {
       const followerId = d.data.followerId || d.id;
@@ -163,7 +164,8 @@ export async function getCreatorFollowersList(creatorId: string): Promise<Follow
 
 export async function getQrFollowersList(qrId: string): Promise<FollowerInfo[]> {
   try {
-    const { docs } = await db.query(["qrCodes", qrId, "followers"]);
+    // FIX: unbounded query — cap at 100 to prevent full collection scan
+    const { docs } = await db.query(["qrCodes", qrId, "followers"], { limit: 100 });
     const followers: FollowerInfo[] = [];
     await Promise.all(docs.map(async (d) => {
       const userId = d.data.userId || d.id;

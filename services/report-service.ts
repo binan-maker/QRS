@@ -62,7 +62,9 @@ export async function getQrReportData(qrId: string): Promise<{
   counts: Record<string, number>;
   weighted: Record<string, number>;
 }> {
-  const { docs } = await db.query(["qrCodes", qrId, "reports"]);
+  // FIX: unbounded query — cap at 500 (far above any realistic report count
+  // per QR code; prevents a full collection scan on heavily reported QRs)
+  const { docs } = await db.query(["qrCodes", qrId, "reports"], { limit: 500 });
   const counts: Record<string, number> = {};
   const weighted: Record<string, number> = {};
   for (const d of docs) {
@@ -189,7 +191,8 @@ export function subscribeToQrReports(
     weightedCounts: Record<string, number>
   ) => void
 ): () => void {
-  return db.onQuery(["qrCodes", qrId, "reports"], {}, (docs) => {
+  // FIX: unbounded live listener — cap at 500 to match getQrReportData
+  return db.onQuery(["qrCodes", qrId, "reports"], { limit: 500 }, (docs) => {
     const counts: Record<string, number> = {};
     const weighted: Record<string, number> = {};
     for (const d of docs) {
