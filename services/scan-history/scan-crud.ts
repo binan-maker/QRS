@@ -126,23 +126,53 @@ export async function getUserScansPaginated(
   pageSize: number = 20,
   cursor?: any
 ): Promise<{ items: any[]; cursor: any; hasMore: boolean }> {
-  // BUG FIX (cursor + filter order):
-  // Previously fetched pageSize+1, sliced to pageSize, then filtered deleted items.
-  // This caused two bugs:
-  //   1. The cursor returned was the (pageSize+1)-th doc, so startAfter skipped one real item per page.
-  //   2. Filtering happened after the slice, returning fewer visible items per page with hasMore still true.
-  // Fix: fetch exactly pageSize docs. The cursor from db.query is now correctly the last shown item.
-  // hasMore = full page received (may do one extra empty fetch on the very last page — acceptable trade-off).
-  const { docs, cursor: newCursor } = await db.query(
-    ["users", userId, "scans"],
-    { orderBy: { field: "scannedAt", direction: "desc" }, limit: pageSize, cursor }
-  );
-  const hasMore = docs.length === pageSize;
-  const items = docs.filter((d) => d.data.isDeleted !== true);
+  // FIX: "Empty First Page" bug caused by soft-deletion interacting with pagination.
+  //
+  // Root cause of the old single-fetch approach:
+  //   When the user deletes their N most recent scans, the first Firestore page
+  //   returns N docs that are ALL marked isDeleted:true. After filtering, items=[]
+  //   even though hasMore=true (there are more pages). Because the list is empty,
+  //   the user can never scroll to trigger onEndReached, so page 2+ (which has
+  //   their real scans) is never fetched → blank history forever.
+  //
+  // Fix: loop fetching batches of pageSize raw docs until we have collected at
+  // least pageSize visible (non-deleted) items OR we exhaust all documents.
+  // The cursor always advances to the end of the last fetched batch, so
+  // subsequent page calls start from the correct Firestore position — no gaps,
+  // no duplicates.
+  //
+  // Worst case: MAX_LOOPS * pageSize deleted docs before finding anything.
+  // In practice this is 1 extra round-trip per "run" of deleted docs.
+  const visibleItems: any[] = [];
+  let currentCursor: any = cursor ?? null;
+  let exhausted = false;
+  const MAX_LOOPS = 15; // handles up to 15×pageSize consecutive deleted docs safely
+
+  for (let loops = 0; loops < MAX_LOOPS && visibleItems.length < pageSize && !exhausted; loops++) {
+    const { docs, cursor: newCursor } = await db.query(
+      ["users", userId, "scans"],
+      { orderBy: { field: "scannedAt", direction: "desc" }, limit: pageSize, cursor: currentCursor }
+    );
+
+    for (const d of docs) {
+      if (d.data.isDeleted !== true) visibleItems.push(d);
+    }
+
+    if (docs.length < pageSize) {
+      exhausted = true; // Firestore returned fewer than requested → no more docs
+    }
+
+    if (docs.length > 0) currentCursor = newCursor;
+  }
+
   return {
-    items: items.map((d) => ({ id: d.id, ...d.data, scannedAt: tsToString(d.data.scannedAt) })),
-    cursor: docs.length > 0 ? newCursor : null,
-    hasMore,
+    items: visibleItems.map((d) => ({
+      id: d.id,
+      ...d.data,
+      scannedAt: tsToString(d.data.scannedAt),
+    })),
+    cursor: exhausted ? null : currentCursor,
+    hasMore: !exhausted,
   };
 }
 

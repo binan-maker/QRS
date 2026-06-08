@@ -3,7 +3,7 @@ import { Alert } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as Haptics from "@/shared/utils/haptics";
 import { deleteUserScan } from "@/lib/firestore-service";
-import { invalidateHistoryCache } from "@/services/cache/qr-cache";
+import { invalidateHistoryCache, invalidateHomeScansCache } from "@/services/cache/qr-cache";
 import { useHistoryData } from "@/features/history/hooks/useHistoryData";
 import { toggleFilter } from "@/features/history/utils/filter-utils";
 import type { HistoryItem, FilterKey, ActiveFilters } from "@/features/history/types";
@@ -78,6 +78,13 @@ export function useHistory() {
         if (user?.id) await deleteUserScan(user.id, item.id);
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
         queryClient.invalidateQueries({ queryKey: ["scan-stats", user?.id] });
+        // Bust disk caches so the pre-warm on next launch doesn't re-seed
+        // stale data that still includes the deleted item. Without this the
+        // history/home pages can show deleted scans until the staleTime expires.
+        if (user?.id) {
+          invalidateHistoryCache(user.id);
+          invalidateHomeScansCache(user.id);
+        }
       } catch {
         queryClient.setQueryData(cloudKey, prevCloud);
         queryClient.setQueryData(favKey, prevFavs);
