@@ -1,6 +1,6 @@
-import React, { useCallback } from "react";
+import React from "react";
 import {
-  View, Text, StyleSheet, Pressable, Modal, FlatList, ActivityIndicator,
+  View, Text, StyleSheet, Pressable, Modal, ScrollView, ActivityIndicator,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
@@ -131,25 +131,6 @@ const NotificationsModal = React.memo(function NotificationsModal({
   const { colors } = useTheme();
   const insets = useSafeAreaInsets();
 
-  const keyExtractor = useCallback((item: Notification) => item.id, []);
-
-  const renderItem = useCallback(
-    ({ item }: { item: Notification }) => (
-      <NotificationItem notif={item} colors={colors} onClose={onClose} />
-    ),
-    [colors, onClose]
-  );
-
-  const renderEmpty = useCallback(
-    () => <EmptyNotifications colors={colors} />,
-    [colors]
-  );
-
-  const renderFooter = useCallback(
-    () => <View style={{ height: insets.bottom + 32 }} />,
-    [insets.bottom]
-  );
-
   return (
     <Modal
       visible={visible}
@@ -183,17 +164,20 @@ const NotificationsModal = React.memo(function NotificationsModal({
           </View>
         )}
 
-        <FlatList
-          data={notifications}
-          renderItem={renderItem}
-          keyExtractor={keyExtractor}
-          ListEmptyComponent={renderEmpty}
-          ListFooterComponent={renderFooter}
+        <ScrollView
           style={styles.list}
           showsVerticalScrollIndicator={false}
           contentContainerStyle={{ flexGrow: 1 }}
-          removeClippedSubviews={false}
-        />
+        >
+          {notifications.length === 0 ? (
+            <EmptyNotifications colors={colors} />
+          ) : (
+            notifications.map((notif) => (
+              <NotificationItem key={notif.id} notif={notif} colors={colors} onClose={onClose} />
+            ))
+          )}
+          <View style={{ height: insets.bottom + 32 }} />
+        </ScrollView>
       </View>
     </Modal>
   );
