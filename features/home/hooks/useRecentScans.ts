@@ -3,7 +3,7 @@ import { useFocusEffect } from "expo-router";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/shared/contexts/AuthContext";
-import { getUserScansPaginated } from "@/lib/firestore-service";
+import { getUserScansPaginated, deleteUserScan } from "@/lib/firestore-service";
 import { queryClient } from "@/shared/utils/query-client";
 import {
   getCachedHomeScans,
@@ -25,13 +25,22 @@ export function useRecentScans() {
 
   // ── Disk pre-warm: seed the React Query cache from disk before the
   //    network call fires so the list appears instantly on cold launch.
+  //    BUG FIX: After seeding, immediately invalidate (refetchType:'active')
+  //    so React Query kicks off a background network fetch right away.
+  //    Without this, setQueryData stamps dataUpdatedAt=now, staleTime makes
+  //    the data look "fresh", and refetchOnMount:true never fires — the user
+  //    is stuck with stale disk cache data until the staleTime window expires.
   useEffect(() => {
     if (!user?.id) return;
     getCachedHomeScans<LocalScan[]>(user.id).then((cached) => {
       if (!cached || cached.length === 0) return;
       const qk = homeQueryKey(user.id);
       const existing = queryClient.getQueryData<LocalScan[]>(qk);
-      if (!existing || existing.length === 0) queryClient.setQueryData(qk, cached);
+      if (!existing || existing.length === 0) {
+        queryClient.setQueryData(qk, cached);
+        // Mark stale immediately so a live fetch always runs behind the cached render
+        queryClient.invalidateQueries({ queryKey: qk, refetchType: "active" });
+      }
     }).catch(() => {});
   }, [user?.id]);
 
@@ -57,9 +66,6 @@ export function useRecentScans() {
     staleTime:           HOME_STALE_MS,
     gcTime:              30 * 60 * 1000,
     refetchOnWindowFocus: false,
-    // BUG FIX: was false — with placeholderData:[] React Query treated [] as
-    // "data exists" and never re-fetched on re-mount, leaving the list blank
-    // after tab switches. true refetches when stale (respects staleTime).
     refetchOnMount:      true,
     enabled:             !!user?.id,
     placeholderData:     [],
@@ -85,10 +91,6 @@ export function useRecentScans() {
       }
       loadLocalScans(currentUserId);
 
-      // BUG FIX: previously only local scans were reloaded on focus.
-      // Cloud data was never refreshed unless the stale timer in refetchOnMount
-      // fired, but with placeholderData:[] that never happened after the first
-      // render. Now we explicitly trigger a cloud refetch when data is stale.
       if (currentUserId) {
         const state = queryClient.getQueryState(homeQueryKey(currentUserId));
         const now = Date.now();
@@ -123,16 +125,49 @@ export function useRecentScans() {
     setRefreshing(false);
   }, [loadLocalScans, user?.id, refetchCloud]);
 
-  // ── Delete a local scan from AsyncStorage ─────────────────────────────────
+  // ── Delete a scan (local or cloud) ────────────────────────────────────────
+  // BUG FIX: old deleteScan only removed from AsyncStorage. Cloud scans (the
+  // majority for logged-in users) are never in AsyncStorage — they live in the
+  // React Query cache populated by getUserScansPaginated. Calling the old code
+  // on a cloud scan found stored=null → early return → card never disappeared.
+  //
+  // Fix: check whether the scan ID exists in the React Query cloud cache first.
+  // If yes → optimistic cache removal + Firestore soft-delete.
+  // If no  → it's a local-only scan → remove from AsyncStorage as before.
   const deleteScan = useCallback(async (scanId: string) => {
     if (!user?.id) return;
-    try {
-      const stored = await AsyncStorage.getItem(localStorageKey(user.id));
-      if (!stored) return;
-      const updated = (JSON.parse(stored) as LocalScan[]).filter((s) => s.id !== scanId);
-      await AsyncStorage.setItem(localStorageKey(user.id), JSON.stringify(updated));
-      setLocalScans(updated);
-    } catch {}
+
+    const qk = homeQueryKey(user.id);
+    const cloudData = queryClient.getQueryData<LocalScan[]>(qk);
+    const isCloudScan = Array.isArray(cloudData) && cloudData.some((s) => s.id === scanId);
+
+    if (isCloudScan) {
+      // Snapshot for rollback
+      const prev = cloudData;
+
+      // Optimistic removal from React Query cache
+      queryClient.setQueryData<LocalScan[]>(qk, (old) =>
+        old ? old.filter((s) => s.id !== scanId) : old
+      );
+      // Bust disk cache so next pre-warm won't re-show the deleted item
+      invalidateHomeScansCache(user.id);
+
+      try {
+        await deleteUserScan(user.id, scanId);
+      } catch {
+        // Revert optimistic update on failure
+        queryClient.setQueryData(qk, prev);
+      }
+    } else {
+      // Local scan: remove from AsyncStorage
+      try {
+        const stored = await AsyncStorage.getItem(localStorageKey(user.id));
+        if (!stored) return;
+        const updated = (JSON.parse(stored) as LocalScan[]).filter((s) => s.id !== scanId);
+        await AsyncStorage.setItem(localStorageKey(user.id), JSON.stringify(updated));
+        setLocalScans(updated);
+      } catch {}
+    }
   }, [user?.id]);
 
   return {

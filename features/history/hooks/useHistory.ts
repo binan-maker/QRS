@@ -77,10 +77,16 @@ export function useHistory() {
       try {
         if (user?.id) await deleteUserScan(user.id, item.id);
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        // Invalidate stats so badge counts update
         queryClient.invalidateQueries({ queryKey: ["scan-stats", user?.id] });
-        // Bust disk caches so the pre-warm on next launch doesn't re-seed
-        // stale data that still includes the deleted item. Without this the
-        // history/home pages can show deleted scans until the staleTime expires.
+        // Mark the history + home queries stale (refetchType:'none' = don't
+        // trigger an immediate background fetch, just let the next mount/focus
+        // refetch naturally). The optimistic removal above already gives instant
+        // visual feedback; this ensures the next load is always authoritative.
+        queryClient.invalidateQueries({ queryKey: cloudKey,          refetchType: "none" });
+        queryClient.invalidateQueries({ queryKey: favKey,            refetchType: "none" });
+        queryClient.invalidateQueries({ queryKey: ["home-recent-scans", user?.id], refetchType: "none" });
+        // Bust disk caches so the pre-warm on next launch doesn't re-seed stale data
         if (user?.id) {
           invalidateHistoryCache(user.id);
           invalidateHomeScansCache(user.id);
