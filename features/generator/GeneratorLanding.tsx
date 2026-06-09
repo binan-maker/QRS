@@ -11,6 +11,7 @@ import Reanimated, { FadeInDown, ZoomIn } from "react-native-reanimated";
 import { useTheme } from "@/shared/contexts/ThemeContext";
 import { useTopInset } from "@/shared/utils/platform";
 import * as Haptics from "@/shared/utils/haptics";
+import { useFocusEffect } from "expo-router";
 import { useTabBarScroll } from "@/shared/contexts/TabBarContext";
 import { useHeaderHide } from "@/shared/utils/use-header-hide";
 
@@ -71,8 +72,15 @@ export default function GeneratorLanding() {
   const [headerH, setHeaderH] = useState(0);
   const hintAnim = useRef(new Animated.Value(0)).current;
   const pulseAnim = useRef(new Animated.Value(1)).current;
-  const { onTabScroll } = useTabBarScroll();
-  const { headerStyle, setHeight, onScroll: onHeaderScroll } = useHeaderHide();
+  const { onTabScroll, resetTabBar } = useTabBarScroll();
+  const { headerStyle, setHeight, onScroll: onHeaderScroll, reset: resetHeader } = useHeaderHide();
+
+  useFocusEffect(
+    useCallback(() => {
+      resetTabBar();
+      resetHeader();
+    }, [resetTabBar, resetHeader])
+  );
 
   const handleScroll = useCallback((e: any) => {
     onHeaderScroll(e);

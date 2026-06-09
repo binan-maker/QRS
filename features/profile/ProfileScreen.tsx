@@ -29,6 +29,7 @@ import SkeletonBox from "@/shared/components/ui/SkeletonBox";
 import { formatCompactNumber } from "@/shared/utils/number-format";
 import { useProfile } from "@/features/profile/hooks/useProfile";
 import { useAvatar } from "@/shared/contexts/AvatarContext";
+import { useFocusEffect } from "expo-router";
 import { useTabBarScroll } from "@/shared/contexts/TabBarContext";
 import { useNotifications } from "@/shared/components/notifications/hooks/useNotifications";
 import PhotoModal from "@/features/profile/components/PhotoModal";
@@ -191,7 +192,13 @@ function ProfileScreen() {
 
   const topInset     = useTopInset();
   const tabBarHeight = 60 + insets.bottom;
-  const { onTabScroll } = useTabBarScroll();
+  const { onTabScroll, resetTabBar } = useTabBarScroll();
+
+  useFocusEffect(
+    useCallback(() => {
+      resetTabBar();
+    }, [resetTabBar])
+  );
 
   const previewQrs = useMemo(() => myQrCodes.slice(0, 9), [myQrCodes]);
   const formattedStats = useMemo(() => [

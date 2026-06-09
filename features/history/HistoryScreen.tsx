@@ -23,6 +23,7 @@ import SearchResultsRow  from "@/features/history/components/SearchResultsRow";
 import FilterBar         from "@/features/history/components/FilterBar";
 import HistoryItemComponent from "@/features/history/components/HistoryItem";
 import HistoryItemSkeleton  from "@/features/history/components/HistoryItemSkeleton";
+import { useFocusEffect } from "expo-router";
 import { useTabBarScroll } from "@/shared/contexts/TabBarContext";
 import { useHeaderHide }   from "@/shared/utils/use-header-hide";
 import Reanimated          from "react-native-reanimated";
@@ -54,8 +55,15 @@ function HistoryScreen() {
     scanStats,
   } = useHistory();
 
-  const { onTabScroll } = useTabBarScroll();
+  const { onTabScroll, resetTabBar } = useTabBarScroll();
   const { headerStyle, setHeight, onScroll: onHeaderScroll, reset: resetHeader } = useHeaderHide();
+
+  useFocusEffect(
+    useCallback(() => {
+      resetTabBar();
+      resetHeader();
+    }, [resetTabBar, resetHeader])
+  );
   const [headerH, setHeaderH] = useState(0);
 
   const handleScroll = useCallback((e: any) => {

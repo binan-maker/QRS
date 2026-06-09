@@ -1,5 +1,6 @@
-import React from "react";
+import React, { useCallback } from "react";
 import { View, StyleSheet, ScrollView, RefreshControl } from "react-native";
+import { useFocusEffect } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTopInset } from "@/shared/utils/platform";
 import { useTheme } from "@/shared/contexts/ThemeContext";
@@ -16,7 +17,13 @@ function HomeScreen() {
   const { colors } = useTheme();
   const { cachedUrl: photoURL } = useAvatar();
   const { user, recentScans, isLoading, refreshing, onRefresh, deleteScan } = useHome();
-  const { onTabScroll } = useTabBarScroll();
+  const { onTabScroll, resetTabBar } = useTabBarScroll();
+
+  useFocusEffect(
+    useCallback(() => {
+      resetTabBar();
+    }, [resetTabBar])
+  );
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
