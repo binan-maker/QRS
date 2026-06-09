@@ -205,6 +205,7 @@ export function makeSettingsStyles(c: AppColors, width = 390) {
     submitBtn: {
       flexDirection: "row", alignItems: "center", justifyContent: "center", gap: sp(8),
       borderRadius: sp(18), paddingVertical: sp(16), overflow: "hidden",
+      backgroundColor: c.primary,
     },
     submitBtnText: { fontSize: rf(14), fontFamily: "Inter_700Bold", color: "#fff" },
 
