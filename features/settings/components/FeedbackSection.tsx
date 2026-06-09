@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { View, Text, TextInput, Pressable, ScrollView, ActivityIndicator } from "react-native";
+import { View, Text, TextInput, Pressable, ScrollView, ActivityIndicator, StyleSheet } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTheme } from "@/shared/contexts/ThemeContext";
@@ -13,11 +13,12 @@ interface Props {
   feedbackSubmitting: boolean;
   feedbackDone: boolean;
   handleSubmitFeedback: () => void;
+  handleSendAnother: () => void;
 }
 
 export default function FeedbackSection({
   feedbackText, setFeedbackText, feedbackEmail, setFeedbackEmail,
-  feedbackSubmitting, feedbackDone, handleSubmitFeedback,
+  feedbackSubmitting, feedbackDone, handleSubmitFeedback, handleSendAnother,
 }: Props) {
   const insets = useSafeAreaInsets();
   const { colors } = useTheme();
@@ -35,6 +36,17 @@ export default function FeedbackSection({
         <Text style={{ fontSize: 13, fontFamily: "Inter_400Regular", color: colors.textSecondary, textAlign: "center" }}>
           Your feedback has been submitted. We appreciate you helping improve BinRo.
         </Text>
+
+        <Pressable
+          onPress={handleSendAnother}
+          style={({ pressed }) => [
+            local.anotherBtn,
+            { backgroundColor: colors.surface, borderColor: colors.surfaceBorder, opacity: pressed ? 0.7 : 1 },
+          ]}
+        >
+          <Ionicons name="add-circle-outline" size={18} color={colors.primary} />
+          <Text style={[local.anotherBtnText, { color: colors.primary }]}>Send Another</Text>
+        </Pressable>
       </View>
     );
   }
@@ -95,6 +107,25 @@ export default function FeedbackSection({
           </>
         )}
       </Pressable>
+
+      <Text style={[local.limitNote, { color: colors.textMuted }]}>
+        Limits: 1 per 5 min · 3 per hour · 10 per day · 20 per month
+      </Text>
     </ScrollView>
   );
 }
+
+const local = StyleSheet.create({
+  anotherBtn: {
+    flexDirection: "row", alignItems: "center", gap: 8,
+    paddingVertical: 13, paddingHorizontal: 24,
+    borderRadius: 18, borderWidth: 1, marginTop: 8,
+  },
+  anotherBtnText: {
+    fontSize: 14, fontFamily: "Inter_600SemiBold",
+  },
+  limitNote: {
+    fontSize: 11, fontFamily: "Inter_400Regular",
+    textAlign: "center", marginTop: 12, lineHeight: 16,
+  },
+});

@@ -49,7 +49,7 @@ export default function SettingsScreen() {
     deleteConfirmText, setDeleteConfirmText,
     startupScreen, setStartupScreen,
     handleSignOut, handleClearData,
-    handleSubmitFeedback,
+    handleSubmitFeedback, handleSendAnother,
     handleDeleteComment, handleDeleteAllComments,
     handleDeleteHistoryItem, handleDeleteAllHistory,
     handleDeleteAccount,
@@ -157,6 +157,7 @@ export default function SettingsScreen() {
             feedbackSubmitting={feedbackSubmitting}
             feedbackDone={feedbackDone}
             handleSubmitFeedback={handleSubmitFeedback}
+            handleSendAnother={handleSendAnother}
           />
         )}
         {section === "following" && (
