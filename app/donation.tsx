@@ -8,13 +8,16 @@ import {
   ActivityIndicator,
   Alert,
   Platform,
+  type LayoutChangeEvent,
 } from "react-native";
+import Reanimated from "react-native-reanimated";
 import { LinearGradient } from "expo-linear-gradient";
 import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTopInset } from "@/shared/utils/platform";
 import ScreenHeader from "@/shared/components/ui/ScreenHeader";
 import { useTheme } from "@/shared/contexts/ThemeContext";
+import { useHeaderHide } from "@/shared/utils/use-header-hide";
 
 // react-native-iap v15 — loaded lazily so it never crashes on non-Android builds
 let iap: typeof import("react-native-iap") | null = null;
@@ -234,6 +237,8 @@ export default function DonationScreen() {
   const { colors } = useTheme();
   const insets     = useSafeAreaInsets();
   const topInset   = useTopInset();
+  const { headerStyle, setHeight, onScroll: onHeaderScroll } = useHeaderHide();
+  const [headerH, setHeaderH] = useState(0);
 
   const [prices,          setPrices]          = useState<Record<string, string>>({});
   const [loadingProducts, setLoadingProducts] = useState(false);
@@ -372,12 +377,27 @@ export default function DonationScreen() {
   const btnLabel      = isAndroid ? `Send ${selectedPrice}` : "Available on Android";
 
   return (
-    <View style={[s.container, { backgroundColor: colors.background, paddingTop: topInset }]}>
-      <ScreenHeader title="Support BinRo" />
+    <View style={[s.container, { backgroundColor: colors.background }]}>
+      <Reanimated.View
+        style={[
+          { position: "absolute", top: 0, left: 0, right: 0, zIndex: 10, backgroundColor: colors.background },
+          headerStyle,
+        ]}
+        onLayout={(e: LayoutChangeEvent) => {
+          const h = e.nativeEvent.layout.height;
+          if (h > 0) { setHeaderH(h); setHeight(h); }
+        }}
+      >
+        <View style={{ paddingTop: topInset }}>
+          <ScreenHeader title="Support BinRo" />
+        </View>
+      </Reanimated.View>
 
       <ScrollView
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={[s.scroll, { paddingBottom: insets.bottom + 48 }]}
+        onScroll={onHeaderScroll}
+        scrollEventThrottle={16}
+        contentContainerStyle={[s.scroll, { paddingTop: headerH + 8, paddingBottom: insets.bottom + 48 }]}
       >
 
         {/* ── LAST ERROR BANNER (persistent until dismissed) ───────── */}
