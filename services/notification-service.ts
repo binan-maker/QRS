@@ -8,28 +8,26 @@ const MAX_NOTIFICATIONS_PER_USER = 100; // Limit max notifications stored
 
 // ─── Push notification title map ─────────────────────────────────────────────
 const PUSH_TITLES: Partial<Record<NotificationType, string>> = {
-  mention:        "💬 You were mentioned",
-  comment:        "💬 New Comment",
-  friend_request: "👋 Friend Request",
-  friend_accepted:"🤝 Request Accepted",
-  follow:         "🔔 New Follower",
-  qr_scan:        "📱 Your QR was scanned",
-  qr_report:      "🚨 QR Report",
-  system:         "📢 BinRo",
+  mention: "You were mentioned",
+  comment: "New Comment",
+  friend_request: "Friend Request",
+  friend_accepted: "Request Accepted",
+  follow: "New Follower",
+  qr_scan: "Your QR was scanned",
+  qr_report: "QR Report",
+  system: "BinRo",
 };
 
 /** Fire-and-forget helper: sends an Expo push via the server endpoint. */
 function deliverPushNotification(
   userId: string,
   type: NotificationType,
-  message: string
+  message: string,
 ): void {
   try {
     const title = PUSH_TITLES[type] ?? "📢 BinRo";
     const base =
-      typeof __DEV__ !== "undefined" && __DEV__
-        ? "http://localhost:5000"
-        : "";
+      typeof __DEV__ !== "undefined" && __DEV__ ? "http://localhost:5000" : "";
     fetch(`${base}/api/push/notify`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -45,7 +43,7 @@ async function pushNotification(
   userId: string,
   type: NotificationType,
   message: string,
-  opts?: { qrCodeId?: string; fromUsername?: string }
+  opts?: { qrCodeId?: string; fromUsername?: string },
 ): Promise<void> {
   if (!NOTIFICATIONS_ENABLED) return;
 
@@ -77,10 +75,15 @@ async function pushNotification(
     // The exact unread count is always correct after markAllRead (which resets to 0).
   });
   // Best-effort counter increment (fire-and-forget, badge is non-critical)
-  rtdb.get(`notifications/${userId}/unreadCount`).then((cur: any) => {
-    const current = typeof cur === "number" ? cur : 0;
-    rtdb.update({ [`notifications/${userId}/unreadCount`]: current + 1 }).catch(() => {});
-  }).catch(() => {});
+  rtdb
+    .get(`notifications/${userId}/unreadCount`)
+    .then((cur: any) => {
+      const current = typeof cur === "number" ? cur : 0;
+      rtdb
+        .update({ [`notifications/${userId}/unreadCount`]: current + 1 })
+        .catch(() => {});
+    })
+    .catch(() => {});
   // Cleanup is intentionally NOT called here — the sender cannot read another
   // user's notification list (blocked by RTDB rules). Cleanup runs in
   // markAllNotificationsRead when the owner reads their own data.
@@ -91,26 +94,29 @@ async function cleanupOldNotifications(userId: string): Promise<void> {
     const data = await rtdb.get(`notifications/${userId}/items`);
     // FIX: guard against non-object RTDB responses
     if (!data || typeof data !== "object") return;
-    
+
     const now = Date.now();
     const entries = Object.entries(data) as [string, any][];
-    
+
     // Sort by createdAt descending
     entries.sort((a, b) => b[1].createdAt - a[1].createdAt);
-    
+
     // Keep only recent notifications within TTL and under max limit
     const updates: Record<string, any> = {};
     let keepCount = 0;
-    
+
     for (const [key, val] of entries) {
       const age = now - val.createdAt;
-      if (age > NOTIFICATION_TTL_MS || keepCount >= MAX_NOTIFICATIONS_PER_USER) {
+      if (
+        age > NOTIFICATION_TTL_MS ||
+        keepCount >= MAX_NOTIFICATIONS_PER_USER
+      ) {
         updates[`notifications/${userId}/items/${key}`] = null;
       } else {
         keepCount++;
       }
     }
-    
+
     if (Object.keys(updates).length > 0) {
       await rtdb.update(updates);
     }
@@ -122,12 +128,16 @@ export async function notifyMentionedUsers(
   qrId: string,
   text: string,
   fromUserId: string,
-  fromDisplayName: string
+  fromDisplayName: string,
 ): Promise<void> {
   if (!NOTIFICATIONS_ENABLED) return;
-  const mentions = Array.from(new Set(
-    (text.match(/@([a-zA-Z0-9_.-]+)/g) || []).map((m) => m.slice(1).toLowerCase())
-  ));
+  const mentions = Array.from(
+    new Set(
+      (text.match(/@([a-zA-Z0-9_.-]+)/g) || []).map((m) =>
+        m.slice(1).toLowerCase(),
+      ),
+    ),
+  );
   if (mentions.length === 0) return;
   try {
     const writes: Promise<void>[] = [];
@@ -145,8 +155,8 @@ export async function notifyMentionedUsers(
             targetUserId,
             "mention",
             `${fromDisplayName} mentioned you in a comment`,
-            { qrCodeId: qrId }
-          )
+            { qrCodeId: qrId },
+          ),
         );
       } catch {}
     }
@@ -161,21 +171,21 @@ export async function notifyQrFollowers(
   qrId: string,
   type: NotificationType,
   message: string,
-  excludeUserId?: string
+  excludeUserId?: string,
 ): Promise<void> {
   if (!NOTIFICATIONS_ENABLED) return;
   try {
     const { docs } = await db.query(["qrCodes", qrId, "followers"]);
-    
+
     // FIX #2: Batch all notification writes into a single RTDB multi-path update
     // This reduces cost from N writes ($0.06 per 1000) to 1 write regardless of follower count
     const updates: Record<string, any> = {};
     let notificationCount = 0;
-    
+
     for (const d of docs) {
       const followerId = d.data.userId as string;
       if (!followerId || followerId === excludeUserId) continue;
-      
+
       // Use RTDB push-like key generation for unique IDs
       const notificationKey = `notifications/${followerId}/items/${Date.now()}_${Math.random().toString(36).slice(2)}`;
       updates[notificationKey] = {
@@ -187,11 +197,13 @@ export async function notifyQrFollowers(
       };
       notificationCount++;
     }
-    
+
     // Single atomic write operation regardless of follower count
     if (Object.keys(updates).length > 0) {
       await rtdb.update(updates);
-      console.log(`[notify] Sent ${notificationCount} follower notifications in single batch for QR ${qrId}`);
+      console.log(
+        `[notify] Sent ${notificationCount} follower notifications in single batch for QR ${qrId}`,
+      );
     }
   } catch (e) {
     console.warn("[notify] notifyQrFollowers failed:", e);
@@ -204,7 +216,7 @@ export async function notifyQrFollowers(
 export async function notifyQrOwner(
   qrId: string,
   fromUserId: string,
-  fromDisplayName: string
+  fromDisplayName: string,
 ): Promise<void> {
   if (!NOTIFICATIONS_ENABLED) return;
   try {
@@ -216,7 +228,7 @@ export async function notifyQrOwner(
       ownerId,
       "owner_comment",
       `${fromDisplayName} commented on your QR code`,
-      { qrCodeId: qrId }
+      { qrCodeId: qrId },
     );
   } catch {}
 }
@@ -228,11 +240,16 @@ export async function notifyCommentParentAuthor(
   qrId: string,
   parentCommentId: string,
   fromUserId: string,
-  fromDisplayName: string
+  fromDisplayName: string,
 ): Promise<void> {
   if (!NOTIFICATIONS_ENABLED) return;
   try {
-    const parentData = await db.get(["qrCodes", qrId, "comments", parentCommentId]);
+    const parentData = await db.get([
+      "qrCodes",
+      qrId,
+      "comments",
+      parentCommentId,
+    ]);
     if (!parentData?.userId) return;
     const parentAuthorId = parentData.userId as string;
     if (parentAuthorId === fromUserId) return;
@@ -241,7 +258,7 @@ export async function notifyCommentParentAuthor(
       parentAuthorId,
       "comment_reply",
       `${fromDisplayName} replied to your comment`,
-      { qrCodeId: qrId }
+      { qrCodeId: qrId },
     );
   } catch {}
 }
@@ -250,7 +267,7 @@ export async function notifyCommentParentAuthor(
 export async function notifyFriendRequest(
   toUserId: string,
   fromDisplayName: string,
-  fromUsername: string
+  fromUsername: string,
 ): Promise<void> {
   if (!NOTIFICATIONS_ENABLED) return;
   try {
@@ -258,7 +275,7 @@ export async function notifyFriendRequest(
       toUserId,
       "friend_request",
       `${fromDisplayName} sent you a friend request`,
-      { fromUsername }
+      { fromUsername },
     );
   } catch {}
 }
@@ -266,7 +283,7 @@ export async function notifyFriendRequest(
 export async function notifyFriendAccepted(
   toUserId: string,
   fromDisplayName: string,
-  fromUsername: string
+  fromUsername: string,
 ): Promise<void> {
   if (!NOTIFICATIONS_ENABLED) return;
   try {
@@ -274,7 +291,7 @@ export async function notifyFriendAccepted(
       toUserId,
       "friend_accepted",
       `${fromDisplayName} accepted your friend request`,
-      { fromUsername }
+      { fromUsername },
     );
   } catch {}
 }
@@ -286,26 +303,32 @@ export async function notifyFriendAccepted(
 // Falls back to scanning items if the counter node is absent (e.g. legacy users).
 export function subscribeToNotificationCount(
   userId: string,
-  onUpdate: (count: number) => void
+  onUpdate: (count: number) => void,
 ): () => void {
   if (!NOTIFICATIONS_ENABLED) {
     onUpdate(0);
     return () => {};
   }
   const counterPath = `notifications/${userId}/unreadCount`;
-  const itemsPath   = `notifications/${userId}/items`;
+  const itemsPath = `notifications/${userId}/items`;
 
   const counterHandler = (data: any) => {
     if (data === null || data === undefined) {
       // Counter node absent — fall back to counting items (legacy / first use)
-      rtdb.get(itemsPath).then((items: any) => {
-        if (!items || typeof items !== "object") { onUpdate(0); return; }
-        let unread = 0;
-        for (const key of Object.keys(items)) {
-          if (items[key] && !items[key].read) unread++;
-        }
-        onUpdate(unread);
-      }).catch(() => onUpdate(0));
+      rtdb
+        .get(itemsPath)
+        .then((items: any) => {
+          if (!items || typeof items !== "object") {
+            onUpdate(0);
+            return;
+          }
+          let unread = 0;
+          for (const key of Object.keys(items)) {
+            if (items[key] && !items[key].read) unread++;
+          }
+          onUpdate(unread);
+        })
+        .catch(() => onUpdate(0));
       return;
     }
     const n = typeof data === "number" ? data : 0;
@@ -318,7 +341,7 @@ export function subscribeToNotificationCount(
 // ─── Subscribe to notification list ──────────────────────────────────────────
 export function subscribeToNotifications(
   userId: string,
-  onUpdate: (notifications: Notification[]) => void
+  onUpdate: (notifications: Notification[]) => void,
 ): () => void {
   if (!NOTIFICATIONS_ENABLED) {
     onUpdate([]);
@@ -326,16 +349,22 @@ export function subscribeToNotifications(
   }
   const path = `notifications/${userId}/items`;
   const handler = (data: any) => {
-    if (!data || typeof data !== "object") { onUpdate([]); return; }
-    const items: Notification[] = Object.entries(data).map(([key, val]: [string, any]) => ({
-      id: key,
-      type:         val?.type         ?? "unknown",
-      message:      val?.message      ?? "",
-      qrCodeId:     val?.qrCodeId     ?? null,
-      fromUsername: val?.fromUsername  ?? null,
-      read:         val?.read         ?? false,
-      createdAt:    typeof val?.createdAt === "number" ? val.createdAt : Date.now(),
-    }));
+    if (!data || typeof data !== "object") {
+      onUpdate([]);
+      return;
+    }
+    const items: Notification[] = Object.entries(data).map(
+      ([key, val]: [string, any]) => ({
+        id: key,
+        type: val?.type ?? "unknown",
+        message: val?.message ?? "",
+        qrCodeId: val?.qrCodeId ?? null,
+        fromUsername: val?.fromUsername ?? null,
+        read: val?.read ?? false,
+        createdAt:
+          typeof val?.createdAt === "number" ? val.createdAt : Date.now(),
+      }),
+    );
     items.sort((a, b) => b.createdAt - a.createdAt);
     onUpdate(items);
   };
