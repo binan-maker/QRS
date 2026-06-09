@@ -6,6 +6,38 @@ import type { Notification, NotificationType } from "./types";
 const NOTIFICATION_TTL_MS = 30 * 24 * 60 * 60 * 1000; // 30 days
 const MAX_NOTIFICATIONS_PER_USER = 100; // Limit max notifications stored
 
+// ─── Push notification title map ─────────────────────────────────────────────
+const PUSH_TITLES: Partial<Record<NotificationType, string>> = {
+  mention:        "💬 You were mentioned",
+  comment:        "💬 New Comment",
+  friend_request: "👋 Friend Request",
+  friend_accepted:"🤝 Request Accepted",
+  follow:         "🔔 New Follower",
+  qr_scan:        "📱 Your QR was scanned",
+  qr_report:      "🚨 QR Report",
+  system:         "📢 BinRo",
+};
+
+/** Fire-and-forget helper: sends an Expo push via the server endpoint. */
+function deliverPushNotification(
+  userId: string,
+  type: NotificationType,
+  message: string
+): void {
+  try {
+    const title = PUSH_TITLES[type] ?? "📢 BinRo";
+    const base =
+      typeof __DEV__ !== "undefined" && __DEV__
+        ? "http://localhost:5000"
+        : "";
+    fetch(`${base}/api/push/notify`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ toUserId: userId, title, body: message }),
+    }).catch(() => {});
+  } catch {}
+}
+
 // ─── Internal helper ─────────────────────────────────────────────────────────
 // Platform-agnostic write: pushes a notification item for a single user.
 // When NOTIFICATIONS_ENABLED is false this is a no-op.
@@ -25,6 +57,9 @@ async function pushNotification(
     read: false,
     createdAt: Date.now(),
   };
+
+  // Also send a device push notification (non-blocking, non-critical)
+  deliverPushNotification(userId, type, message);
 
   // Push the item and increment the dedicated unreadCount counter in one
   // multi-path update. The counter node lets subscribeToNotificationCount

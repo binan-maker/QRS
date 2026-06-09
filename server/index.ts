@@ -1,4 +1,5 @@
 import express from "express";
+import { startScheduler } from "./scheduler";
 import type { Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { registerHealthEndpoints } from "./health-check";
@@ -199,6 +200,7 @@ function setupCspHeaders(app: express.Application) {
     },
     () => {
       log(`express server serving on port ${port}`);
+      startScheduler();
     },
   );
 })();

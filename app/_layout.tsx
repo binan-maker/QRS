@@ -28,6 +28,11 @@ import {
 import { WEB_MAX_WIDTH } from "@/shared/utils/platform";
 import ConsentModal, { hasUserConsented } from "@/shared/components/consent/ConsentModal";
 import { ToastProvider } from "@/shared/components/ui/Toast";
+import {
+  registerForPushNotifications,
+  trackAppOpen,
+  setupNotificationTapHandler,
+} from "@/lib/push-notifications";
 
 SplashScreen.preventAutoHideAsync();
 
@@ -128,13 +133,30 @@ function ThemedApp() {
 }
 
 function AuthGatedApp() {
-  const { isLoading } = useAuth();
+  const { isLoading, user } = useAuth();
   const { colors } = useTheme();
   const [timedOut, setTimedOut] = React.useState(false);
 
   React.useEffect(() => {
     const t = setTimeout(() => setTimedOut(true), 2000);
     return () => clearTimeout(t);
+  }, []);
+
+  // ── Push notifications ──────────────────────────────────────────────────────
+  // Register push token once per login and track every app open.
+  const pushRegisteredRef = React.useRef<string | null>(null);
+  React.useEffect(() => {
+    if (!user?.uid) return;
+    if (pushRegisteredRef.current === user.uid) return;
+    pushRegisteredRef.current = user.uid;
+    registerForPushNotifications(user.uid);
+    trackAppOpen(user.uid);
+  }, [user?.uid]);
+
+  // Set up tap-handler once on mount; clean up on unmount.
+  React.useEffect(() => {
+    const cleanup = setupNotificationTapHandler();
+    return cleanup;
   }, []);
 
   if (isLoading && !timedOut) {

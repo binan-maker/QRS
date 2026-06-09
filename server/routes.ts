@@ -7,6 +7,7 @@ import { registerQrActiveRoute } from "./routes/qr-active";
 import { registerV1Routes } from "./routes/index";
 import { registerAiQrRoute } from "./routes/ai-qr";
 import { serveStandardContent } from "./routes/standard-content";
+import { pushRouter } from "./routes/push";
 import { validateEmail } from "../shared/utils/email-validator";
 import { validateQrContent } from "../services/analysis/qr-validator";
 import { checkRateLimit, getClientIp } from "./middleware/rate-limiter";
@@ -66,6 +67,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   registerSafeBrowsingRoute(app);
   registerQrActiveRoute(app);
   registerAiQrRoute(app);
+  app.use("/api/push", pushRouter);
 
   // ── Health check ────────────────────────────────────────────────────────────
   app.get("/status", (_req, res) => {
