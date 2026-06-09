@@ -13,7 +13,7 @@ export default function OverlayTopBar({ topInset }: Props) {
       entering={FadeIn.delay(30).duration(260)}
       style={[styles.container, { paddingTop: topInset + 10 }]}
     >
-      <Pressable onPress={() => router.back()} style={styles.backBtn}>
+      <Pressable onPress={() => router.canGoBack() ? router.back() : router.replace("/(tabs)/index")} style={styles.backBtn}>
         <Ionicons name="chevron-back" size={20} color="rgba(255,255,255,0.9)" />
       </Pressable>
 
