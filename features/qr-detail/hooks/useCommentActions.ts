@@ -6,6 +6,7 @@ import {
   reportComment,
   softDeleteComment,
 } from "@/lib/firestore-service";
+import { queryClient } from "@/shared/utils/query-client";
 import type { CommentItem } from "./comment-types";
 
 interface UseCommentActionsParams {
@@ -46,8 +47,18 @@ export function useCommentActions({
     const trimmed = newComment.trim();
     if (!trimmed) return;
 
-    const clientUsername: string | undefined = (user as any)?.username || undefined;
-    const clientPhotoURL: string | undefined = user?.photoURL || undefined;
+    // user.username can be undefined briefly after a Firebase token refresh
+    // (AuthContext calls setUser without username, and the prefetchQuery may
+    // skip its queryFn while the cache is still fresh).  Fall back to the
+    // TanStack Query profile cache so the optimistic comment always shows the
+    // real username from the very first render.
+    const cachedProfile = userId
+      ? queryClient.getQueryData<any>(["userProfile", userId])
+      : undefined;
+    const clientUsername: string | undefined =
+      (user as any)?.username || (cachedProfile?.username as string) || undefined;
+    const clientPhotoURL: string | undefined =
+      user?.photoURL || (cachedProfile?.photoURL as string) || undefined;
     const clientDisplayName: string = user?.displayName || "User";
     const tempId = `pending_${Date.now()}`;
     const parentId = replyTo ? replyTo.rootId : null;

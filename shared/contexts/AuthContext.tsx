@@ -179,12 +179,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
         try {
           const idToken = await resolvedUser.getIdToken();
+          // If the TanStack Query cache already has the user's profile (from an
+          // earlier fetch this session), include username/photoURL immediately so
+          // there is never a gap where user.username is undefined.  Without this,
+          // every Firebase token refresh (hourly) calls setUser without a username,
+          // and if the prefetchQuery cache is still fresh it skips its queryFn —
+          // leaving user.username === undefined until the next cache expiry.
+          const cachedProfile = queryClient.getQueryData<any>(["userProfile", resolvedUser.uid]);
           const authUser: AuthUser = {
             id: resolvedUser.uid,
             email: resolvedUser.email ?? "",
             displayName: resolvedUser.displayName ?? resolvedUser.email?.split("@")[0] ?? "User",
-            photoURL: resolvedUser.photoURL,
+            photoURL: resolvedUser.photoURL ?? (cachedProfile?.photoURL as string) ?? undefined,
             emailVerified: resolvedUser.emailVerified,
+            username: (cachedProfile?.username as string) || undefined,
           };
           setUser(authUser);
           setToken(idToken);
