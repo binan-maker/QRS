@@ -49,7 +49,6 @@
             "compileSdkVersion": 35,
             "targetSdkVersion": 35,
             "minSdkVersion": 24,
-            "extraMavenRepos": [],
             "packagingOptions": {
               "pickFirst": [
                 "lib/armeabi-v7a/libc++_shared.so",
