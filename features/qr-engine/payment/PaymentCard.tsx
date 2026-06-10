@@ -11,10 +11,10 @@ import React from "react";
 import { View } from "react-native";
 import type { ParsedPaymentQr } from "@/services/analysis";
 import { getAppBrand } from "./brand-data";
-import { getBankFullName } from "./utils";
 import { styles } from "./styles";
 import PaymentCardFace from "./PaymentCardFace";
 import PaymentCardActions from "./PaymentCardActions";
+import { useBankName } from "./useBankName";
 
 interface Props {
   parsedPayment: ParsedPaymentQr;
@@ -31,7 +31,10 @@ const PaymentCard = React.memo(function PaymentCard({ parsedPayment, isDeactivat
 
   const effectiveBankHandle = parsedPayment.bankHandle ||
     (displayVpa?.includes("@") ? displayVpa.split("@")[1] : undefined);
-  const effectiveBankName = getBankFullName(effectiveBankHandle);
+
+  const ifsc = parsedPayment.extraFields?.ifsc as string | undefined;
+
+  const effectiveBankName = useBankName(effectiveBankHandle, ifsc);
 
   return (
     <View style={styles.wrapper}>
