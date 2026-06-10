@@ -20,6 +20,20 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 const AVATAR_URL_KEY = "qrg:avatar:url";
 const AVATAR_VER_KEY = "qrg:avatar:version";
 
+// Firebase Storage download URLs contain an expiring `token=xxx` query param
+// that the SDK rotates periodically.  Stripping query params before comparing
+// lets us treat the same underlying file as the same photo regardless of which
+// token is embedded in the URL — preventing spurious version bumps that cause
+// the avatar Image component to reload on every auth cycle.
+function stripQuery(url: string): string {
+  try {
+    const idx = url.indexOf("?");
+    return idx === -1 ? url : url.slice(0, idx);
+  } catch {
+    return url;
+  }
+}
+
 interface AvatarState {
   url: string | null;
   version: number;
@@ -64,7 +78,10 @@ export function AvatarProvider({ children }: { children: React.ReactNode }) {
   const syncAvatar = useCallback((newUrl: string | null) => {
     if (!newUrl) return;
     setUrl((prev) => {
-      if (prev === newUrl) return prev;
+      // Compare base paths only — Firebase Storage tokens rotate on every auth
+      // refresh, so the same file can arrive with a different ?token= param.
+      // Treating that as a new photo would bump the version and force a reload.
+      if (prev !== null && stripQuery(prev) === stripQuery(newUrl)) return prev;
       const v = Date.now();
       setVersion(v);
       AsyncStorage.multiSet([

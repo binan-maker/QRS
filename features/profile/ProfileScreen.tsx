@@ -339,7 +339,7 @@ function ProfileScreen() {
                       style={styles.avatarPhoto}
                       cachePolicy="memory-disk"
                       contentFit="cover"
-                      key={photoURL}
+                      transition={200}
                     />
                   ) : (
                     <Text style={[styles.avatarInitials, { color: colors.primary }]}>{initials}</Text>

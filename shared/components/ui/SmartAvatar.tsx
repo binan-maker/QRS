@@ -38,7 +38,6 @@ export function SmartAvatar({ size = 40, name = "", borderRadius }: SmartAvatarP
           cachePolicy="memory-disk"
           contentFit="cover"
           transition={200}
-          key={cachedUrl}
         />
       ) : (
         <Text style={[st.initials, { fontSize: size * 0.42, color: "#ffffff" }]}>
