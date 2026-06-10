@@ -240,6 +240,8 @@ function ProfileScreen() {
   const openPhotoModal  = useCallback(() => setPhotoModalOpen(true),  [setPhotoModalOpen]);
   const closePhotoModal = useCallback(() => setPhotoModalOpen(false), [setPhotoModalOpen]);
   const closeNotifModal = useCallback(() => setNotifOpen(false),      [setNotifOpen]);
+  const onCamera        = useCallback(() => handlePickPhoto("camera"),  [handlePickPhoto]);
+  const onGallery       = useCallback(() => handlePickPhoto("gallery"), [handlePickPhoto]);
 
   const handleQrCardPress = useCallback(
     (qr: import("@/features/profile/components/QrPreviewCard").QrItem) => {
