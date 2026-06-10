@@ -1,4 +1,4 @@
-import React, { useMemo } from "react";
+import React, { useMemo, useState } from "react";
 import { View, Text, StyleSheet, Pressable } from "react-native";
 import { Image } from "expo-image";
 import { router } from "expo-router";
@@ -19,8 +19,23 @@ export function HomeHeader({ user, photoURL }: Props) {
   const { colors } = useTheme();
   const { s } = useScaleFns();
   const styles = useMemo(() => makeStyles(colors, s), [colors, s]);
+  // Track per-URL load errors so we can fall back to the initial letter
+  // when expo-image silently fails (e.g. expired Firebase Storage token).
+  const [imgError, setImgError] = useState(false);
+  const prevPhotoRef = React.useRef<string | null>(null);
+  // Reset the error flag whenever the URL actually changes so a fresh URL
+  // gets a clean attempt rather than staying stuck on the fallback.
+  if (photoURL !== prevPhotoRef.current) {
+    prevPhotoRef.current = photoURL;
+    if (imgError) setImgError(false);
+  }
+
+  const showImage = !!photoURL && !imgError;
+  const initial = user?.displayName?.charAt(0)?.toUpperCase() ?? "?";
 
   return (
+    // entering only fires on true first-mount; we keep it on the outer shell
+    // so only the overall header animates in, not the avatar on every re-render.
     <Animated.View entering={FadeInDown.duration(260)} style={styles.header}>
       <View style={styles.headerLeft}>
         {user ? (
@@ -42,17 +57,17 @@ export function HomeHeader({ user, photoURL }: Props) {
               start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
             >
               <View style={[styles.avatarInner, { backgroundColor: colors.surface }]}>
-                {photoURL ? (
+                {showImage ? (
                   <Image
-                    source={{ uri: photoURL }}
+                    source={{ uri: photoURL! }}
                     style={styles.avatarImg}
                     cachePolicy="memory-disk"
                     contentFit="cover"
-                    key={photoURL}
+                    onError={() => setImgError(true)}
                   />
                 ) : (
                   <Text style={[styles.avatarInitial, { color: colors.primary }]}>
-                    {user.displayName.charAt(0).toUpperCase()}
+                    {initial}
                   </Text>
                 )}
               </View>
