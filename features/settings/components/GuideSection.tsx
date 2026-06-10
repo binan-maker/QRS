@@ -17,7 +17,12 @@ const GUIDE_STEPS = [
   { icon: "phone-portrait-outline", title: "Payment QR Codes", desc: "For UPI, Google Pay, PhonePe, and other payment QR codes, tap 'Open in Payment App' to pay securely." },
 ];
 
-export default function GuideSection() {
+interface Props {
+  onScroll?: (e: any) => void;
+  paddingTop?: number;
+}
+
+export default function GuideSection({ onScroll, paddingTop = 0 }: Props) {
   const insets = useSafeAreaInsets();
   const { colors } = useTheme();
   const styles = useMemo(() => makeSettingsStyles(colors), [colors]);
@@ -25,7 +30,9 @@ export default function GuideSection() {
   return (
     <ScrollView
       showsVerticalScrollIndicator={false}
-      contentContainerStyle={[styles.scrollContent, { paddingBottom: insets.bottom + 20 }]}
+      onScroll={onScroll}
+      scrollEventThrottle={16}
+      contentContainerStyle={[styles.scrollContent, { paddingTop, paddingBottom: insets.bottom + 20 }]}
     >
       {GUIDE_STEPS.map((step, i) => (
         <Animated.View key={i} entering={FadeInDown.duration(260).delay(Math.min(i, 4) * 22)}>

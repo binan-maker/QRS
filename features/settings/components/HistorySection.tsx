@@ -14,9 +14,11 @@ interface Props {
   history: any[];
   onDelete: (item: any) => void;
   onDeleteAll: () => void;
+  onScroll?: (e: any) => void;
+  paddingTop?: number;
 }
 
-export default function HistorySection({ loading, history, onDelete, onDeleteAll }: Props) {
+export default function HistorySection({ loading, history, onDelete, onDeleteAll, onScroll, paddingTop = 0 }: Props) {
   const insets = useSafeAreaInsets();
   const { colors } = useTheme();
   const styles = useMemo(() => makeSettingsStyles(colors), [colors]);
@@ -76,10 +78,12 @@ export default function HistorySection({ loading, history, onDelete, onDeleteAll
       data={history}
       keyExtractor={(item: any) => item.id}
       estimatedItemSize={68}
-      contentContainerStyle={[styles.scrollContent, { paddingBottom: bottomPad }]}
+      contentContainerStyle={[styles.scrollContent, { paddingTop, paddingBottom: bottomPad }]}
       showsVerticalScrollIndicator={false}
       ListHeaderComponent={listHeader}
       renderItem={renderItem}
+      onScroll={onScroll}
+      scrollEventThrottle={16}
     />
   );
 }

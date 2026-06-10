@@ -53,9 +53,11 @@ interface EnrichedItem {
 interface Props {
   loading: boolean;
   list: any[];
+  onScroll?: (e: any) => void;
+  paddingTop?: number;
 }
 
-export default function FollowingSection({ loading, list }: Props) {
+export default function FollowingSection({ loading, list, onScroll, paddingTop = 0 }: Props) {
   const insets = useSafeAreaInsets();
   const { colors, isDark } = useTheme();
   const [enriched, setEnriched] = useState<EnrichedItem[]>([]);
@@ -209,8 +211,10 @@ export default function FollowingSection({ loading, list }: Props) {
       data={enriched}
       keyExtractor={(item: EnrichedItem) => item.id}
       estimatedItemSize={88}
-      contentContainerStyle={{ paddingHorizontal: 16, paddingTop: 10, paddingBottom: insets.bottom + 24 }}
+      contentContainerStyle={{ paddingHorizontal: 16, paddingTop: paddingTop || 10, paddingBottom: insets.bottom + 24 }}
       showsVerticalScrollIndicator={false}
+      onScroll={onScroll}
+      scrollEventThrottle={16}
       ListHeaderComponent={
         <Text style={{ fontSize: 12, fontFamily: "Inter_500Medium", color: colors.textMuted, marginBottom: 10 }}>
           {enriched.length} {enriched.length === 1 ? "QR code" : "QR codes"} followed

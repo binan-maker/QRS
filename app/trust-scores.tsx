@@ -6,6 +6,7 @@ import {
   Pressable,
   Platform,
 } from "react-native";
+import { useState } from "react";
 import { router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -13,6 +14,8 @@ import { useTopInset } from "@/shared/utils/platform";
 import ScreenHeader from "@/shared/components/ui/ScreenHeader";
 import { LinearGradient } from "expo-linear-gradient";
 import { useTheme } from "@/shared/contexts/ThemeContext";
+import Reanimated from "react-native-reanimated";
+import { useHeaderHide } from "@/shared/utils/use-header-hide";
 
 function ScoreBand({
   color, bgStart, bgEnd, label, range, description, icon,
@@ -112,18 +115,29 @@ export default function TrustScoresScreen() {
   const { colors } = useTheme();
   const insets = useSafeAreaInsets();
   const topInset = useTopInset();
+  const { headerStyle, setHeight, onScroll } = useHeaderHide();
+  const [headerH, setHeaderH] = useState(0);
 
   return (
-    <View style={[styles.container, { paddingTop: topInset, backgroundColor: colors.background }]}>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
       <View style={[styles.bgAccent, {
         backgroundColor: colors.isDark ? "rgba(0,229,255,0.04)" : "rgba(0,111,255,0.04)",
       }]} />
 
-      <ScreenHeader title="Trust Scores" />
+      <Reanimated.View
+        style={[{ position: "absolute", top: 0, left: 0, right: 0, zIndex: 10, backgroundColor: colors.background }, headerStyle]}
+        onLayout={(e: any) => { const h = e.nativeEvent.layout.height; if (h > 0) { setHeaderH(h); setHeight(h); } }}
+      >
+        <View style={{ paddingTop: topInset }}>
+          <ScreenHeader title="Trust Scores" />
+        </View>
+      </Reanimated.View>
 
       <ScrollView
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={[styles.scrollContent, { paddingBottom: insets.bottom + 40 }]}
+        onScroll={onScroll}
+        scrollEventThrottle={16}
+        contentContainerStyle={[styles.scrollContent, { paddingTop: headerH, paddingBottom: insets.bottom + 40 }]}
       >
         <LinearGradient
           colors={colors.isDark

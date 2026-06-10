@@ -1,5 +1,5 @@
 import { View, Text, Pressable, ScrollView, Platform, useWindowDimensions, LayoutChangeEvent } from "react-native";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useLocalSearchParams, useFocusEffect } from "expo-router";
 import Reanimated from "react-native-reanimated";
 import { useHeaderHide } from "@/shared/utils/use-header-hide";
@@ -123,20 +123,39 @@ export default function SettingsScreen() {
     onTabScroll(e);
   }, [onHeaderScroll, onTabScroll]);
 
+  // ── Animated header for sub-sections ────────────────────────────────────────
+  const { headerStyle: subHeaderStyle, setHeight: setSubHeight, onScroll: onSubScroll, reset: resetSubHeader } = useHeaderHide();
+  const [subHeaderH, setSubHeaderH] = useState(0);
+
+  // Reset header visibility whenever the user navigates between sub-sections.
+  useEffect(() => {
+    if (section !== "main") resetSubHeader();
+  }, [section, resetSubHeader]);
+
   // ── Sub-section view ────────────────────────────────────────────────────────
 
   if (section !== "main") {
     return (
-      <View style={[styles.container, { paddingTop: topInset }]}>
-        <View style={styles.navBar}>
-          <Pressable onPress={handleSubSectionBack} style={styles.navBackBtn}>
-            <Ionicons name="chevron-back" size={24} color={colors.text} />
-          </Pressable>
-          <Text style={styles.navTitle}>{SECTION_TITLES[section] ?? "Settings"}</Text>
-          <View style={{ width: 40 }} />
-        </View>
+      <View style={styles.container}>
+        <Reanimated.View
+          style={[{ position: "absolute", top: 0, left: 0, right: 0, zIndex: 10, backgroundColor: colors.background }, subHeaderStyle]}
+          onLayout={(e: LayoutChangeEvent) => {
+            const h = e.nativeEvent.layout.height;
+            if (h > 0) { setSubHeaderH(h); setSubHeight(h); }
+          }}
+        >
+          <View style={{ paddingTop: topInset }}>
+            <View style={styles.navBar}>
+              <Pressable onPress={handleSubSectionBack} style={styles.navBackBtn}>
+                <Ionicons name="chevron-back" size={24} color={colors.text} />
+              </Pressable>
+              <Text style={styles.navTitle}>{SECTION_TITLES[section] ?? "Settings"}</Text>
+              <View style={{ width: 40 }} />
+            </View>
+          </View>
+        </Reanimated.View>
 
-        {section === "profile" && <ProfileSettingsSection />}
+        {section === "profile" && <ProfileSettingsSection onScroll={onSubScroll} paddingTop={subHeaderH} />}
         {section === "account" && (
           <AccountSection
             user={user}
@@ -145,9 +164,11 @@ export default function SettingsScreen() {
             handleDeleteAccount={handleDeleteAccount}
             goToComments={goToComments}
             goToHistory={goToHistory}
+            onScroll={onSubScroll}
+            paddingTop={subHeaderH}
           />
         )}
-        {section === "guide" && <GuideSection />}
+        {section === "guide" && <GuideSection onScroll={onSubScroll} paddingTop={subHeaderH} />}
         {section === "feedback" && (
           <FeedbackSection
             feedbackText={feedbackText}
@@ -158,10 +179,12 @@ export default function SettingsScreen() {
             feedbackDone={feedbackDone}
             handleSubmitFeedback={handleSubmitFeedback}
             handleSendAnother={handleSendAnother}
+            onScroll={onSubScroll}
+            paddingTop={subHeaderH}
           />
         )}
         {section === "following" && (
-          <FollowingSection loading={followingLoading} list={followingList} />
+          <FollowingSection loading={followingLoading} list={followingList} onScroll={onSubScroll} paddingTop={subHeaderH} />
         )}
         {section === "comments" && (
           <CommentsSection
@@ -169,6 +192,8 @@ export default function SettingsScreen() {
             comments={myComments}
             onDelete={handleDeleteComment}
             onDeleteAll={handleDeleteAllComments}
+            onScroll={onSubScroll}
+            paddingTop={subHeaderH}
           />
         )}
         {section === "history" && (
@@ -177,6 +202,8 @@ export default function SettingsScreen() {
             history={myHistory}
             onDelete={handleDeleteHistoryItem}
             onDeleteAll={handleDeleteAllHistory}
+            onScroll={onSubScroll}
+            paddingTop={subHeaderH}
           />
         )}
       </View>

@@ -14,16 +14,20 @@ interface Props {
   handleDeleteAccount: () => void;
   goToComments: () => void;
   goToHistory?: () => void;
+  onScroll?: (e: any) => void;
+  paddingTop?: number;
 }
 
-export default function AccountSection({ user, deleteConfirmText, setDeleteConfirmText, handleDeleteAccount, goToComments, goToHistory }: Props) {
+export default function AccountSection({ user, deleteConfirmText, setDeleteConfirmText, handleDeleteAccount, goToComments, goToHistory, onScroll, paddingTop = 0 }: Props) {
   const insets = useSafeAreaInsets();
   const { colors } = useTheme();
   const styles = useMemo(() => makeSettingsStyles(colors), [colors]);
   return (
     <ScrollView
       showsVerticalScrollIndicator={false}
-      contentContainerStyle={[styles.scrollContent, { paddingBottom: insets.bottom + 20 }]}
+      onScroll={onScroll}
+      scrollEventThrottle={16}
+      contentContainerStyle={[styles.scrollContent, { paddingTop, paddingBottom: insets.bottom + 20 }]}
     >
       <Animated.View entering={FadeInDown.duration(260)}>
         <View style={styles.section}>

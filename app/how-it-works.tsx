@@ -6,12 +6,15 @@ import {
   Pressable,
   Platform,
 } from "react-native";
+import { useState } from "react";
 import { router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTopInset } from "@/shared/utils/platform";
 import ScreenHeader from "@/shared/components/ui/ScreenHeader";
 import { useTheme } from "@/shared/contexts/ThemeContext";
+import Reanimated from "react-native-reanimated";
+import { useHeaderHide } from "@/shared/utils/use-header-hide";
 
 function StepCard({ number, icon, title, desc, tips, totalSteps = 6 }: { number: number; icon: string; title: string; desc: string; tips?: string[]; totalSteps?: number }) {
   const { colors } = useTheme();
@@ -88,12 +91,21 @@ export default function HowItWorksScreen() {
   const { colors } = useTheme();
   const insets = useSafeAreaInsets();
   const topInset = useTopInset();
+  const { headerStyle, setHeight, onScroll } = useHeaderHide();
+  const [headerH, setHeaderH] = useState(0);
 
   return (
-    <View style={[styles.container, { paddingTop: topInset, backgroundColor: colors.background }]}>
-      <ScreenHeader title="How It Works" />
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
+      <Reanimated.View
+        style={[{ position: "absolute", top: 0, left: 0, right: 0, zIndex: 10, backgroundColor: colors.background }, headerStyle]}
+        onLayout={(e: any) => { const h = e.nativeEvent.layout.height; if (h > 0) { setHeaderH(h); setHeight(h); } }}
+      >
+        <View style={{ paddingTop: topInset }}>
+          <ScreenHeader title="How It Works" />
+        </View>
+      </Reanimated.View>
 
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={[styles.scrollContent, { paddingBottom: insets.bottom + 40 }]}>
+      <ScrollView showsVerticalScrollIndicator={false} onScroll={onScroll} scrollEventThrottle={16} contentContainerStyle={[styles.scrollContent, { paddingTop: headerH, paddingBottom: insets.bottom + 40 }]}>
         <View style={[styles.heroBanner, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
           <View style={[styles.heroIcon, { backgroundColor: colors.primaryDim, borderColor: colors.primary + "40" }]}>
             <Ionicons name="scan" size={32} color={colors.primary} />

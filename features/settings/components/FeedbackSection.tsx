@@ -14,11 +14,14 @@ interface Props {
   feedbackDone: boolean;
   handleSubmitFeedback: () => void;
   handleSendAnother: () => void;
+  onScroll?: (e: any) => void;
+  paddingTop?: number;
 }
 
 export default function FeedbackSection({
   feedbackText, setFeedbackText, feedbackEmail, setFeedbackEmail,
   feedbackSubmitting, feedbackDone, handleSubmitFeedback, handleSendAnother,
+  onScroll, paddingTop = 0,
 }: Props) {
   const insets = useSafeAreaInsets();
   const { colors } = useTheme();
@@ -55,7 +58,9 @@ export default function FeedbackSection({
     <ScrollView
       showsVerticalScrollIndicator={false}
       keyboardShouldPersistTaps="handled"
-      contentContainerStyle={[styles.scrollContent, { paddingBottom: insets.bottom + 20 }]}
+      onScroll={onScroll}
+      scrollEventThrottle={16}
+      contentContainerStyle={[styles.scrollContent, { paddingTop, paddingBottom: insets.bottom + 20 }]}
     >
       <Text style={styles.feedbackIntro}>
         Found a bug? Have a feature idea? We'd love to hear from you.

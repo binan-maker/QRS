@@ -6,6 +6,7 @@ import {
   Pressable,
   Platform,
 } from "react-native";
+import { useState } from "react";
 import { router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -14,6 +15,8 @@ import ScreenHeader from "@/shared/components/ui/ScreenHeader";
 import { LinearGradient } from "expo-linear-gradient";
 import { useTheme } from "@/shared/contexts/ThemeContext";
 import type { AppColors } from "@/shared/constants/colors";
+import Reanimated from "react-native-reanimated";
+import { useHeaderHide } from "@/shared/utils/use-header-hide";
 
 const EFFECTIVE_DATE = "April 8, 2026";
 const CONTACT_EMAIL = "legal@qrguard.app";
@@ -64,14 +67,25 @@ export default function TermsScreen() {
   const { colors } = useTheme();
   const insets = useSafeAreaInsets();
   const topInset = useTopInset();
+  const { headerStyle, setHeight, onScroll } = useHeaderHide();
+  const [headerH, setHeaderH] = useState(0);
 
   return (
-    <View style={[styles.container, { paddingTop: topInset, backgroundColor: colors.background }]}>
-      <ScreenHeader title="Terms of Service" />
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
+      <Reanimated.View
+        style={[{ position: "absolute", top: 0, left: 0, right: 0, zIndex: 10, backgroundColor: colors.background }, headerStyle]}
+        onLayout={(e: any) => { const h = e.nativeEvent.layout.height; if (h > 0) { setHeaderH(h); setHeight(h); } }}
+      >
+        <View style={{ paddingTop: topInset }}>
+          <ScreenHeader title="Terms of Service" />
+        </View>
+      </Reanimated.View>
 
       <ScrollView
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={[styles.scrollContent, { paddingBottom: insets.bottom + 40 }]}
+        onScroll={onScroll}
+        scrollEventThrottle={16}
+        contentContainerStyle={[styles.scrollContent, { paddingTop: headerH, paddingBottom: insets.bottom + 40 }]}
       >
         <LinearGradient
           colors={colors.isDark

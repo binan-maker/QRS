@@ -15,7 +15,7 @@ import {
   checkUsernameAvailable,
 } from "@/lib/firestore-service";
 
-export default function ProfileSettingsSection() {
+export default function ProfileSettingsSection({ onScroll, paddingTop = 0 }: { onScroll?: (e: any) => void; paddingTop?: number }) {
   const { colors } = useTheme();
   const { user, updateLocalDisplayName } = useAuth();
 
@@ -108,7 +108,7 @@ export default function ProfileSettingsSection() {
   const canEditUsername = daysUntilEdit === 0;
 
   return (
-    <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={[styles.scroll, { paddingBottom: 60 }]}>
+    <ScrollView showsVerticalScrollIndicator={false} onScroll={onScroll} scrollEventThrottle={16} contentContainerStyle={[styles.scroll, { paddingTop, paddingBottom: 60 }]}>
 
       {/* ── IDENTITY ── */}
       <Text style={[styles.sectionLabel, { color: colors.textMuted }]}>IDENTITY</Text>

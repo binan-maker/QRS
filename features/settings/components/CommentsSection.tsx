@@ -13,9 +13,11 @@ interface Props {
   comments: any[];
   onDelete: (commentId: string, qrCodeId: string) => void;
   onDeleteAll?: () => void;
+  onScroll?: (e: any) => void;
+  paddingTop?: number;
 }
 
-export default function CommentsSection({ loading, comments, onDelete, onDeleteAll }: Props) {
+export default function CommentsSection({ loading, comments, onDelete, onDeleteAll, onScroll, paddingTop = 0 }: Props) {
   const insets = useSafeAreaInsets();
   const { colors } = useTheme();
   const styles = useMemo(() => makeSettingsStyles(colors), [colors]);
@@ -80,9 +82,11 @@ export default function CommentsSection({ loading, comments, onDelete, onDeleteA
       data={comments}
       keyExtractor={(item: any) => item.id}
       estimatedItemSize={80}
-      contentContainerStyle={[styles.scrollContent, { paddingBottom: bottomPad }]}
+      contentContainerStyle={[styles.scrollContent, { paddingTop, paddingBottom: bottomPad }]}
       ListHeaderComponent={listHeader}
       renderItem={renderItem}
+      onScroll={onScroll}
+      scrollEventThrottle={16}
     />
   );
 }
