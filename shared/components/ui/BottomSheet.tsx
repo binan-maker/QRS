@@ -17,11 +17,12 @@ import * as NavigationBar from "expo-navigation-bar";
 import { useTheme } from "@/shared/contexts/ThemeContext";
 
 interface Props {
-  visible:    boolean;
-  onClose:    () => void;
-  children:   React.ReactNode;
-  maxHeight?: DimensionValue;
-  sheetStyle?: ViewStyle;
+  visible:             boolean;
+  onClose:             () => void;
+  children:            React.ReactNode;
+  maxHeight?:          DimensionValue;
+  sheetStyle?:         ViewStyle;
+  extraBottomPadding?: number;
 }
 
 // ── Inner component rendered INSIDE the Modal + SafeAreaProvider ──────────────
@@ -29,13 +30,14 @@ interface Props {
 // SafeAreaProvider re-initialises from the Modal's native window,
 // which carries the real navigation-bar inset on Android edge-to-edge.
 interface BodyProps {
-  colors:      any;
-  children:    React.ReactNode;
-  heightStyle: ViewStyle;
-  sheetStyle?: ViewStyle;
-  sheetAnim:   Animated.Value;
-  overlayAnim: Animated.Value;
-  onClose:     () => void;
+  colors:              any;
+  children:            React.ReactNode;
+  heightStyle:         ViewStyle;
+  sheetStyle?:         ViewStyle;
+  sheetAnim:           Animated.Value;
+  overlayAnim:         Animated.Value;
+  onClose:             () => void;
+  extraBottomPadding?: number;
 }
 
 function SheetBody({
@@ -46,13 +48,19 @@ function SheetBody({
   sheetAnim,
   overlayAnim,
   onClose,
+  extraBottomPadding = 0,
 }: BodyProps) {
   const insets = useSafeAreaInsets();
 
-  const paddingBottom =
+  // Base padding clears the system home indicator / gesture bar.
+  // extraBottomPadding lets callers add the app tab-bar height so the
+  // sheet content is never hidden behind it.
+  const basePadding =
     Platform.OS === "android"
       ? Math.max(insets.bottom, 16) + 20
       : Math.max(insets.bottom, 8) + 10;
+
+  const paddingBottom = basePadding + extraBottomPadding;
 
   return (
     <View style={styles.root}>
@@ -96,6 +104,7 @@ export default function BottomSheet({
   children,
   maxHeight = "85%",
   sheetStyle,
+  extraBottomPadding = 0,
 }: Props) {
   const { colors } = useTheme();
 
@@ -163,6 +172,7 @@ export default function BottomSheet({
           sheetAnim={sheetAnim}
           overlayAnim={overlayAnim}
           onClose={onClose}
+          extraBottomPadding={extraBottomPadding}
         >
           {children}
         </SheetBody>

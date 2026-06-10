@@ -464,6 +464,7 @@ function ProfileScreen() {
         onRemove={handleRemovePhoto}
         hasPhoto={!!photoURL && photoURL.includes("firebasestorage")}
         onClose={closePhotoModal}
+        extraBottomPadding={tabBarHeight}
       />
       <NotificationsModal
         visible={notifOpen}

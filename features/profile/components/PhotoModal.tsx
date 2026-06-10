@@ -5,12 +5,13 @@ import { useTheme } from "@/shared/contexts/ThemeContext";
 import BottomSheet from "@/shared/components/ui/BottomSheet";
 
 interface Props {
-  visible: boolean;
-  onCamera: () => void;
-  onGallery: () => void;
-  onRemove?: () => void;
-  hasPhoto?: boolean;
-  onClose: () => void;
+  visible:             boolean;
+  onCamera:            () => void;
+  onGallery:           () => void;
+  onRemove?:           () => void;
+  hasPhoto?:           boolean;
+  onClose:             () => void;
+  extraBottomPadding?: number;
 }
 
 const PhotoModal = React.memo(function PhotoModal({
@@ -20,6 +21,7 @@ const PhotoModal = React.memo(function PhotoModal({
   onRemove,
   hasPhoto,
   onClose,
+  extraBottomPadding = 0,
 }: Props) {
   const { colors } = useTheme();
 
@@ -56,7 +58,7 @@ const PhotoModal = React.memo(function PhotoModal({
   ];
 
   return (
-    <BottomSheet visible={visible} onClose={onClose}>
+    <BottomSheet visible={visible} onClose={onClose} extraBottomPadding={extraBottomPadding}>
       {options.map((opt, i) => (
         <React.Fragment key={opt.label}>
           <Pressable
