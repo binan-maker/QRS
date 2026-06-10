@@ -13,6 +13,7 @@ import {
 import { queryClient } from "@/shared/utils/query-client";
 import { clearAllMemCache, clearAllAsyncStorageCache } from "@/services/cache/qr-cache";
 import { clearAllAnonymousSessions } from "@/services/cache/anonymous-session";
+import { prewarmUserData, clearPrewarmState } from "@/services/prewarm";
 import { validateEmail } from "@/shared/utils/email-validator";
 import { trackLoginCompleted } from "@/lib/analytics";
 
@@ -197,6 +198,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           setUser(authUser);
           setToken(idToken);
           setIsLoading(false);
+          // Pre-warm history/favorites/stats caches NOW so the History tab
+          // renders with data on first mount instead of showing skeletons.
+          prewarmUserData(resolvedUser.uid).catch(() => {});
           queryClient.prefetchQuery({
             queryKey: ["userProfile", resolvedUser.uid],
             queryFn: async () => {
@@ -381,6 +385,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setToken(null);
     queryClient.clear();
     clearAllMemCache();
+    clearPrewarmState();
     clearAllAnonymousSessions();
 
     // All remaining I/O runs in the background — don't await it.

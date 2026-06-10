@@ -153,11 +153,24 @@ export function useHistoryData(activeFilters: ActiveFilters) {
   );
 
   const history = useMemo<HistoryItem[]>(() => {
-    const merged: HistoryItem[] = [...localHistory];
-    for (const c of cloudHistory) {
-      if (!merged.find((i) => i.qrCodeId && i.qrCodeId === c.qrCodeId)) merged.push(c);
+    // O(n) merge replacing the old O(n²) .find() loop.
+    //
+    // Old bug (same as home-screen): dedup keyed only on qrCodeId meant all
+    // scans of the same QR code (e.g. a payment QR scanned 100 times) were
+    // collapsed into one row.  Fix: same event = same qrCodeId AND same
+    // 60-second window.  Same QR scanned on different minutes stays distinct.
+    const combined = [...localHistory, ...cloudHistory];
+    const seen     = new Set<string>();
+    const unique: HistoryItem[] = [];
+
+    for (const item of combined) {
+      if (!item.qrCodeId) { unique.push(item); continue; }
+      const minuteBucket = Math.floor(new Date(item.scannedAt).getTime() / 60_000);
+      const key = `${item.qrCodeId}|${minuteBucket}`;
+      if (!seen.has(key)) { seen.add(key); unique.push(item); }
     }
-    return merged.sort((a, b) => new Date(b.scannedAt).getTime() - new Date(a.scannedAt).getTime());
+
+    return unique.sort((a, b) => new Date(b.scannedAt).getTime() - new Date(a.scannedAt).getTime());
   }, [localHistory, cloudHistory]);
 
   // BUG FIX (Bug 5 — synchronous safety analysis freezing the UI):
