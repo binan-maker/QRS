@@ -19,27 +19,20 @@ export function formatRelativeTime(isoStringOrTimestamp: string | number): strin
   const date = typeof isoStringOrTimestamp === "number"
     ? new Date(isoStringOrTimestamp)
     : new Date(isoStringOrTimestamp);
-  const now = new Date();
-  const diff = now.getTime() - date.getTime();
+  const diff = Date.now() - date.getTime();
   const mins = Math.floor(diff / 60000);
   if (mins < 1) return "just now";
-  if (mins === 1) return "1 minute ago";
-  if (mins < 60) return `${mins} minutes ago`;
+  if (mins < 60) return `${mins}m`;
   const hrs = Math.floor(mins / 60);
-  if (hrs === 1) return "1 hour ago";
-  if (hrs < 24) return `${hrs} hours ago`;
+  if (hrs < 24) return `${hrs}h`;
   const days = Math.floor(hrs / 24);
-  if (days === 1) return "1 day ago";
-  if (days < 7) return `${days} days ago`;
+  if (days < 7) return `${days}d`;
   const weeks = Math.floor(days / 7);
-  if (weeks === 1) return "1 week ago";
-  if (weeks < 5) return `${weeks} weeks ago`;
+  if (weeks < 5) return `${weeks}w`;
   const months = Math.floor(days / 30);
-  if (months === 1) return "1 month ago";
-  if (months < 12) return `${months} months ago`;
+  if (months < 12) return `${months}mo`;
   const years = Math.floor(days / 365);
-  if (years === 1) return "1 year ago";
-  return `${years} years ago`;
+  return `${years}y`;
 }
 
 export function formatShortDate(date: Date): string {

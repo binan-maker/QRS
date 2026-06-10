@@ -82,10 +82,13 @@ export function useCommentActions({
     setSubmitting(true);
     try {
       const saved = await addComment(id, userId, clientDisplayName, trimmed, parentId, emailVerified, clientUsername, clientPhotoURL);
-      // Replace optimistic comment with the server-resolved one (has the correct userUsername from Firestore)
+      // Update the optimistic comment with server-resolved data but KEEP the tempId
+      // as the React key. Swapping to saved.id changes the key → React unmounts
+      // and remounts the Animated.View with FadeIn → visible flash. On the next
+      // natural refresh the real Firestore comment (with saved.id) will take over.
       pendingCommentsRef.current = pendingCommentsRef.current.filter((c) => c.id !== tempId);
       setCommentsList((prev) =>
-        prev.map((c) => (c.id === tempId ? { ...saved, id: saved.id } : c))
+        prev.map((c) => (c.id === tempId ? { ...saved, id: tempId } : c))
       );
     } catch (e: any) {
       pendingCommentsRef.current = pendingCommentsRef.current.filter((c) => c.id !== tempId);

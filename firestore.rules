@@ -98,9 +98,19 @@ service cloud.firestore {
       // ── Reports ──────────────────────────────────────────────────────────────
       match /reports/{userId} {
         allow read: if true;
-        allow create, update: if isVerifiedOwner(userId)
+        allow create: if isVerifiedOwner(userId)
           && isValidReportType(request.resource.data)
           && isValidWeight(request.resource.data);
+        allow update: if isVerifiedOwner(userId) && (
+          // Normal vote or vote-change: full type + weight validation required
+          (isValidReportType(request.resource.data) && isValidWeight(request.resource.data))
+          ||
+          // Toggle-off (soft-remove): only the userRemoved/removedAt markers change.
+          // The underlying reportType and weight fields on the doc are untouched,
+          // so we allow this narrow update without re-validating those fields.
+          request.resource.data.diff(resource.data).affectedKeys()
+            .hasOnly(['userRemoved', 'removedAt'])
+        );
         allow delete: if false;
       }
 
