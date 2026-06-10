@@ -53,6 +53,7 @@ export function useProfile() {
   const myQrCodesRef        = useRef<GeneratedQrItem[]>([]);
   const hasLoadedQrsRef     = useRef(false);
   const qrUnsubscribeRef    = useRef<(() => void) | null>(null);
+  const qrSubscribedUidRef  = useRef<string | null>(null); // tracks which user the listener is for
   const lastStatsFetchRef   = useRef<number>(0);
   const lastExtrasFetchRef  = useRef<number>(0);
   const inFlightStatsRef    = useRef(false);
@@ -166,30 +167,60 @@ export function useProfile() {
     }).catch(() => {});
   }, [user?.id]);
 
-  // Generated-QR listener — only active while profile tab is focused
+  // Generated-QR listener — started once per user and kept alive across tab
+  // switches.  Previously the listener was torn down on every blur and rebuilt
+  // on every focus, causing a brief data gap each time the user returned to
+  // the profile tab (visible as a blank/flickering QR stack).  Now we only
+  // create a new listener when the signed-in user changes; we never kill it
+  // just because the tab lost focus.  Cleanup on unmount is handled by the
+  // separate useEffect below.
   useFocusEffect(
     useCallback(() => {
       if (!user) {
+        // User signed out — tear down the listener and clear data
+        if (qrUnsubscribeRef.current) {
+          qrUnsubscribeRef.current();
+          qrUnsubscribeRef.current = null;
+          qrSubscribedUidRef.current = null;
+        }
         setMyQrCodes([]);
         setMyQrLoading(false);
         return;
       }
+
+      // If we already have an active listener for this user, do nothing
+      if (qrUnsubscribeRef.current && qrSubscribedUidRef.current === user.id) {
+        return;
+      }
+
+      // New user or first mount — clean up any old listener first
+      if (qrUnsubscribeRef.current) {
+        qrUnsubscribeRef.current();
+        qrUnsubscribeRef.current = null;
+        qrSubscribedUidRef.current = null;
+      }
+
       setMyQrLoading(!hasLoadedQrsRef.current && myQrCodesRef.current.length === 0);
-      if (qrUnsubscribeRef.current) { qrUnsubscribeRef.current(); qrUnsubscribeRef.current = null; }
       const unsub = subscribeToUserGeneratedQrs(user.id, (items) => {
         setMyQrCodes(items);
         hasLoadedQrsRef.current = true;
         setMyQrLoading(false);
       });
       qrUnsubscribeRef.current = unsub;
-      return () => {
-        if (qrUnsubscribeRef.current) {
-          qrUnsubscribeRef.current();
-          qrUnsubscribeRef.current = null;
-        }
-      };
+      qrSubscribedUidRef.current = user.id;
     }, [user?.id])
   );
+
+  // Tear down the Firestore listener when the component fully unmounts
+  useEffect(() => {
+    return () => {
+      if (qrUnsubscribeRef.current) {
+        qrUnsubscribeRef.current();
+        qrUnsubscribeRef.current = null;
+        qrSubscribedUidRef.current = null;
+      }
+    };
+  }, []);
 
   // ── Photo pick / upload (optimistic) ───────────────────────────────────────
   const handlePickPhoto = useCallback(async (source: "camera" | "gallery") => {

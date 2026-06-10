@@ -25,6 +25,7 @@ import Animated, {
   Easing,
 } from "react-native-reanimated";
 import { useTheme } from "@/shared/contexts/ThemeContext";
+import { useAuth } from "@/shared/contexts/AuthContext";
 import SkeletonBox from "@/shared/components/ui/SkeletonBox";
 import { formatCompactNumber } from "@/shared/utils/number-format";
 import { useProfile } from "@/features/profile/hooks/useProfile";
@@ -190,6 +191,13 @@ function ProfileScreen() {
     handleOpenNotifications, handleClearNotifications,
   } = useNotifications();
 
+  // Pull auth loading state so we never flash GuestView during the initial
+  // Firebase token resolve on cold start.  When isLoading is true we render
+  // a transparent placeholder — the same background colour as the screen —
+  // so the user sees a blank canvas rather than "Not signed in" briefly
+  // followed by their profile with all animations firing from opacity:0.
+  const { isLoading: authLoading } = useAuth();
+
   const topInset     = useTopInset();
   const tabBarHeight = 60 + insets.bottom;
   const { onTabScroll, resetTabBar } = useTabBarScroll();
@@ -199,6 +207,15 @@ function ProfileScreen() {
       resetTabBar();
     }, [resetTabBar])
   );
+
+  // ── Navigation callbacks MUST be declared before any useMemo that
+  // references them, otherwise the first render sees undefined and triggers
+  // an extra re-render when the useCallback result is finally assigned. ──────
+  const goToSettings    = useCallback(() => safePush({ pathname: "/(tabs)/settings" as any, params: { from: "profile" } }), []);
+  const goToEditProfile = useCallback(() => safePush({ pathname: "/(tabs)/settings" as any, params: { initialSection: "profile", fromProfile: "1" } }), []);
+  const goToLogin       = useCallback(() => safePush("/(auth)/login"),        []);
+  const goToRegister    = useCallback(() => safePush("/(auth)/register"),     []);
+  const goToMyQrCodes   = useCallback(() => safePush("/my-qr-codes"),         []);
 
   const previewQrs = useMemo(() => myQrCodes.slice(0, 9), [myQrCodes]);
   const formattedStats = useMemo(() => [
@@ -223,14 +240,6 @@ function ProfileScreen() {
   const openPhotoModal  = useCallback(() => setPhotoModalOpen(true),  [setPhotoModalOpen]);
   const closePhotoModal = useCallback(() => setPhotoModalOpen(false), [setPhotoModalOpen]);
   const closeNotifModal = useCallback(() => setNotifOpen(false),      [setNotifOpen]);
-  const onCamera        = useCallback(() => handlePickPhoto("camera"),  [handlePickPhoto]);
-  const onGallery       = useCallback(() => handlePickPhoto("gallery"), [handlePickPhoto]);
-
-  const goToSettings    = useCallback(() => safePush({ pathname: "/(tabs)/settings" as any, params: { from: "profile" } }), []);
-  const goToEditProfile = useCallback(() => safePush({ pathname: "/(tabs)/settings" as any, params: { initialSection: "profile", fromProfile: "1" } }), []);
-  const goToLogin       = useCallback(() => safePush("/(auth)/login"),        []);
-  const goToRegister    = useCallback(() => safePush("/(auth)/register"),     []);
-  const goToMyQrCodes   = useCallback(() => safePush("/my-qr-codes"),         []);
 
   const handleQrCardPress = useCallback(
     (qr: import("@/features/profile/components/QrPreviewCard").QrItem) => {
@@ -239,6 +248,14 @@ function ProfileScreen() {
     []
   );
   const goToGenerator   = useCallback(() => safePush("/(tabs)/qr-generator"), []);
+
+  // While Firebase is resolving the auth state on cold start, show a plain
+  // background instead of GuestView.  This prevents the mount/unmount cycle
+  // of GuestView → full profile that causes every Animated.View entering
+  // animation to fire from opacity:0, creating the "blank screen" flash.
+  if (authLoading) {
+    return <View style={[styles.container, { backgroundColor: colors.background }]} />;
+  }
 
   if (!user) {
     return (
