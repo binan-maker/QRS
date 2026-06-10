@@ -2,12 +2,13 @@ import React, { useState, useRef, useEffect, useCallback } from "react";
 import {
   View, Text, StyleSheet, ScrollView, Pressable,
   StatusBar, Animated, useWindowDimensions, Image, LayoutChangeEvent,
+  InteractionManager,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { router } from "expo-router";
-import Reanimated, { FadeInDown, ZoomIn } from "react-native-reanimated";
+import Reanimated from "react-native-reanimated";
 import { useTheme } from "@/shared/contexts/ThemeContext";
 import { useTopInset } from "@/shared/utils/platform";
 import * as Haptics from "@/shared/utils/haptics";
@@ -16,38 +17,31 @@ import { useTabBarScroll } from "@/shared/contexts/TabBarContext";
 import { useHeaderHide } from "@/shared/utils/use-header-hide";
 
 
-// ─── Mock QR dot pattern (decorative, not real QR) ───────────────────────────
-const DOT_GRID = [
-  [1,1,1,0,1,0,0,1,1,1],
-  [1,0,1,0,1,1,0,1,0,1],
-  [1,0,1,0,0,1,0,1,0,1],
-  [1,1,1,0,1,0,0,1,1,1],
-  [0,0,0,1,0,1,1,0,0,0],
-  [1,0,1,1,1,0,1,1,0,1],
-  [0,1,0,1,0,1,0,1,1,0],
-  [1,1,1,0,1,1,0,1,0,1],
-  [1,0,1,0,0,0,1,1,0,0],
-  [1,1,1,1,1,0,0,1,1,1],
-];
-
+// ─── Simple decorative QR placeholder (3 finder squares + icon) ──────────────
+// Replaces the 100-View dot grid — much cheaper to render on first mount.
 function MockQrDots({ size, dotColor }: { size: number; dotColor: string }) {
-  const dotSize = size / 12;
+  const sq = size * 0.28;
+  const r  = sq * 0.22;
+  const gap = size * 0.06;
+  const innerSq = sq * 0.52;
+  const innerR  = innerSq * 0.22;
+  // Simple finder-square helper
+  const Finder = ({ style }: { style: any }) => (
+    <View style={[{ width: sq, height: sq, borderRadius: r, borderWidth: 2, borderColor: dotColor, alignItems: "center", justifyContent: "center" }, style]}>
+      <View style={{ width: innerSq, height: innerSq, borderRadius: innerR, backgroundColor: dotColor }} />
+    </View>
+  );
   return (
-    <View style={{ width: size, height: size, gap: dotSize * 0.35 }}>
-      {DOT_GRID.map((row, r) => (
-        <View key={r} style={{ flexDirection: "row", gap: dotSize * 0.35, flex: 1 }}>
-          {row.map((cell, c) => (
-            <View
-              key={c}
-              style={{
-                flex: 1,
-                borderRadius: cell ? dotSize * 0.28 : 0,
-                backgroundColor: cell ? dotColor : "transparent",
-              }}
-            />
-          ))}
-        </View>
-      ))}
+    <View style={{ width: size, height: size }}>
+      <Finder style={{ position: "absolute", top: gap,            left: gap }} />
+      <Finder style={{ position: "absolute", top: gap,            right: gap }} />
+      <Finder style={{ position: "absolute", bottom: gap,         left: gap }} />
+      {/* Dot field suggestion */}
+      <View style={{ position: "absolute", bottom: gap, right: gap, width: sq, height: sq, gap: 3, flexDirection: "row", flexWrap: "wrap" }}>
+        {Array.from({ length: 9 }).map((_, i) => (
+          <View key={i} style={{ width: sq / 4, height: sq / 4, borderRadius: 1.5, backgroundColor: i % 3 !== 1 ? dotColor : "transparent" }} />
+        ))}
+      </View>
     </View>
   );
 }
@@ -88,12 +82,17 @@ export default function GeneratorLanding() {
   }, [onHeaderScroll, onTabScroll]);
 
   useEffect(() => {
-    Animated.loop(
-      Animated.sequence([
-        Animated.timing(pulseAnim, { toValue: 1.06, duration: 1600, useNativeDriver: true }),
-        Animated.timing(pulseAnim, { toValue: 1,    duration: 1600, useNativeDriver: true }),
-      ])
-    ).start();
+    // Defer the pulse loop until after the first frame is committed so it
+    // doesn't compete with the initial render and slow down page open.
+    const task = InteractionManager.runAfterInteractions(() => {
+      Animated.loop(
+        Animated.sequence([
+          Animated.timing(pulseAnim, { toValue: 1.06, duration: 1600, useNativeDriver: true }),
+          Animated.timing(pulseAnim, { toValue: 1,    duration: 1600, useNativeDriver: true }),
+        ])
+      ).start();
+    });
+    return () => task.cancel();
   }, []);
 
   function handleModeCardPress() {
@@ -119,7 +118,6 @@ export default function GeneratorLanding() {
 
 
       {/* ── Header (absolute, hides on scroll) ───────────────────── */}
-      {/* Outer: position + scroll-hide transform only — no entering prop */}
       <Reanimated.View
         style={[
           styles.header,
@@ -128,8 +126,7 @@ export default function GeneratorLanding() {
         ]}
         onLayout={(e: LayoutChangeEvent) => { const h = e.nativeEvent.layout.height; setHeaderH(h); setHeight(h); }}
       >
-        {/* Inner: mount animation only — no transform */}
-        <Reanimated.View entering={FadeInDown.delay(0).duration(240)} style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
+        <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
           <View>
             <Text style={[styles.headerTitle, { color: colors.text }]}>QR Generator</Text>
             <Text style={[styles.headerSub, { color: colors.textMuted }]}>Build and protect QR codes</Text>
@@ -138,7 +135,7 @@ export default function GeneratorLanding() {
             <View style={[styles.phaseDot, { backgroundColor: "#7C3AED" }]} />
             <Text style={styles.phasePillText}>PHASE 2</Text>
           </View>
-        </Reanimated.View>
+        </View>
       </Reanimated.View>
 
       <ScrollView
@@ -149,7 +146,7 @@ export default function GeneratorLanding() {
       >
 
         {/* ── Hero QR Preview Card ──────────────────────────────── */}
-        <Reanimated.View entering={FadeInDown.delay(60).duration(340)} style={{ marginHorizontal: 20 }}>
+        <View style={{ marginHorizontal: 20 }}>
           <LinearGradient
             colors={["#0F172A", "#1E1B4B", "#1A1035"]}
             start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
@@ -195,10 +192,10 @@ export default function GeneratorLanding() {
               </View>
             </Animated.View>
           </LinearGradient>
-        </Reanimated.View>
+        </View>
 
         {/* ── Mode Cards (interactive but Phase 2) ─────────────── */}
-        <Reanimated.View entering={FadeInDown.delay(180).duration(300)} style={styles.modeSection}>
+        <View style={styles.modeSection}>
           <View style={styles.sectionHeader}>
             <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>CHOOSE YOUR MODE</Text>
           </View>
@@ -277,16 +274,16 @@ export default function GeneratorLanding() {
               </LinearGradient>
             </Pressable>
           ))}
-        </Reanimated.View>
+        </View>
 
         {/* ── Feature Grid ─────────────────────────────────────── */}
-        <Reanimated.View entering={FadeInDown.delay(240).duration(300)} style={styles.featureSection}>
+        <View style={styles.featureSection}>
           <Text style={[styles.sectionTitle, { color: colors.textSecondary, marginBottom: 12 }]}>
             WHAT YOU GET IN PHASE 2
           </Text>
           <View style={styles.featureGrid}>
             {FEATURES.map((f) => (
-              <Reanimated.View key={f.label} entering={ZoomIn.delay(20).duration(240)}
+              <View key={f.label}
                 style={[styles.featureCard, { backgroundColor: colors.surface, borderColor: f.color + "25" }]}>
                 <View style={[styles.featureCardIcon, { backgroundColor: f.color + "18" }]}>
                   {f.isMC
@@ -296,13 +293,13 @@ export default function GeneratorLanding() {
                 </View>
                 <Text style={[styles.featureCardLabel, { color: colors.text }]}>{f.label}</Text>
                 <Text style={[styles.featureCardDesc, { color: colors.textMuted }]}>{f.desc}</Text>
-              </Reanimated.View>
+              </View>
             ))}
           </View>
-        </Reanimated.View>
+        </View>
 
         {/* ── Live Now CTA ─────────────────────────────────────── */}
-        <Reanimated.View entering={FadeInDown.delay(280).duration(300)} style={{ marginHorizontal: 20 }}>
+        <View style={{ marginHorizontal: 20 }}>
           <Pressable
             onPress={handleScanNow}
             style={({ pressed }) => ({ opacity: pressed ? 0.88 : 1, transform: [{ scale: pressed ? 0.975 : 1 }], borderRadius: 20, overflow: "hidden" as const })}
@@ -327,7 +324,7 @@ export default function GeneratorLanding() {
               </View>
             </LinearGradient>
           </Pressable>
-        </Reanimated.View>
+        </View>
 
       </ScrollView>
     </View>
