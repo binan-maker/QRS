@@ -14,6 +14,9 @@ import type { LocalScan } from "@/features/home/types";
 
 const HOME_STALE_MS   = 5 * 60 * 1000;
 const MAX_RECENT      = 5;
+// Fetch more from cloud than we display so that dedup (local vs cloud
+// minute-bucket collapse) never reduces the visible count below MAX_RECENT.
+const CLOUD_FETCH     = MAX_RECENT * 3; // fetch 15, show 5
 const homeQueryKey    = (uid: string) => ["home-recent-scans", uid] as const;
 const localStorageKey = (uid: string) => `local_scan_history_${uid}`;
 
@@ -52,7 +55,7 @@ export function useRecentScans() {
   } = useQuery<LocalScan[]>({
     queryKey: homeQueryKey(user?.id ?? ""),
     queryFn: async () => {
-      const { items } = await getUserScansPaginated(user!.id, MAX_RECENT);
+      const { items } = await getUserScansPaginated(user!.id, CLOUD_FETCH);
       const scans = items.map((s: any): LocalScan => ({
         id:          s.id,
         content:     s.content,
