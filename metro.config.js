@@ -59,44 +59,54 @@ config.transformer = {
   }),
 };
 
-// ── Server-only package stubs ────────────────────────────────────────────────
-// These packages are only used by server/. If they are ever accidentally
-// reachable from mobile code, Metro would try to bundle them — pulling in
-// Node.js built-ins (fs, net, child_process, …) that crash at runtime.
-// We stub them all to empty objects so any accidental import is a no-op.
+// ── Package stubs ────────────────────────────────────────────────────────────
+// Two categories of packages are stubbed to zero here:
 //
+// A) SERVER-ONLY: packages that live in server/ and must never be bundled
+//    into the mobile app (they pull in Node.js built-ins that crash Hermes).
+//
+// B) DEAD WEIGHT: packages installed but never imported in mobile code.
+//    Confirmed via full-codebase grep — zero mobile imports found.
+//    They sit in node_modules and Metro would include them if any transitive
+//    import ever reached them.  Stubbing them to {} is a safety net.
+//
+// All stubs resolve to the same empty-module file.
 // We use resolveRequest (not extraNodeModules) because these packages ARE
 // installed in node_modules, so extraNodeModules is never consulted.
-const SERVER_ONLY_STUB = path.resolve(__dirname, "lib/db/providers/firebase-admin-stub.js");
-const PG_STUB         = path.resolve(__dirname, "lib/db/providers/pg-stub.js");
 
-const SERVER_ONLY_PACKAGES = {
-  // Database / server infrastructure
-  "firebase-admin":        SERVER_ONLY_STUB,
-  pg:                      PG_STUB,
-  "drizzle-orm":           SERVER_ONLY_STUB,
-  "drizzle-zod":           SERVER_ONLY_STUB,
-  // HTTP server
-  express:                 SERVER_ONLY_STUB,
-  // Proxy
-  "http-proxy":            SERVER_ONLY_STUB,
-  "http-proxy-middleware": SERVER_ONLY_STUB,
-  // Payment / external APIs (server-side only)
-  razorpay:                SERVER_ONLY_STUB,
-  // Build tools
-  esbuild:                 SERVER_ONLY_STUB,
-  // Image processing (server-side only)
-  jimp:                    SERVER_ONLY_STUB,
-  // QR decoding (server-side only — mobile uses expo-camera native)
-  jsqr:                    SERVER_ONLY_STUB,
-  // WebSocket server
-  ws:                      SERVER_ONLY_STUB,
-  // Source maps (build tool)
-  "source-map":            SERVER_ONLY_STUB,
-  // BCrypt (server-side hashing — mobile uses expo-crypto)
-  bcryptjs:                SERVER_ONLY_STUB,
-  // OpenAI (called server-side only via Express route)
-  openai:                  SERVER_ONLY_STUB,
+const EMPTY_STUB = path.resolve(__dirname, "lib/db/providers/firebase-admin-stub.js");
+const PG_STUB    = path.resolve(__dirname, "lib/db/providers/pg-stub.js");
+
+const STUBBED_PACKAGES = {
+  // ── Server-only (Node.js internals / server infrastructure) ───────────────
+  "firebase-admin":         EMPTY_STUB,
+  pg:                       PG_STUB,
+  "drizzle-orm":            EMPTY_STUB,
+  "drizzle-zod":            EMPTY_STUB,
+  express:                  EMPTY_STUB,
+  "http-proxy":             EMPTY_STUB,
+  "http-proxy-middleware":  EMPTY_STUB,
+  razorpay:                 EMPTY_STUB,
+  jimp:                     EMPTY_STUB,   // server-side image processing
+  jsqr:                     EMPTY_STUB,   // server-side QR decoding
+  ws:                       EMPTY_STUB,   // WebSocket server
+  "source-map":             EMPTY_STUB,   // build tool
+  bcryptjs:                 EMPTY_STUB,   // server-side hashing
+  openai:                   EMPTY_STUB,   // called server-side via Express
+  esbuild:                  EMPTY_STUB,   // build tool
+  // ── Server utility packages (only imported in server/ batch utils) ─────────
+  semver:                   EMPTY_STUB,
+  "p-limit":                EMPTY_STUB,
+  "p-retry":                EMPTY_STUB,
+  "zod-validation-error":   EMPTY_STUB,
+  "@ungap/structured-clone":       EMPTY_STUB,
+  "@stardazed/streams-text-encoding": EMPTY_STUB,
+  "@urql/core":             EMPTY_STUB,
+  // ── Dead-weight JS packages (zero imports in mobile codebase) ─────────────
+  // lucide-react-native: 11 MB installed, not imported anywhere in app code.
+  "lucide-react-native":    EMPTY_STUB,
+  // react-dom: 6.4 MB, web-only renderer, never used in React Native.
+  "react-dom":              EMPTY_STUB,
 };
 
 config.resolver = {
@@ -105,8 +115,8 @@ config.resolver = {
     /\.local\/.*/,
   ],
   resolveRequest(context, moduleName, platform) {
-    if (SERVER_ONLY_PACKAGES[moduleName]) {
-      return { type: "sourceFile", filePath: SERVER_ONLY_PACKAGES[moduleName] };
+    if (STUBBED_PACKAGES[moduleName]) {
+      return { type: "sourceFile", filePath: STUBBED_PACKAGES[moduleName] };
     }
     return context.resolveRequest(context, moduleName, platform);
   },
