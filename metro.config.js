@@ -15,9 +15,6 @@ config.watchFolders = [__dirname];
 // Confirmed packages with # private class fields in their src/:
 //   • react-native-reanimated  (NativeEventsManager, NativeReanimated, etc.)
 //   • react-native-keyboard-controller  (useSmoothKeyboardHandler, etc.)
-//
-// The remaining entries below are standard RN-ecosystem packages that ship
-// source and are already expected by the React Native community transform list.
 const TRANSFORM_PACKAGES = [
   "react-native",
   "@react-native",
@@ -46,20 +43,15 @@ const TRANSFORM_PACKAGES = [
   "native-base",
 ];
 
-// Pattern: ignore everything in node_modules EXCEPT the listed packages.
-// Files NOT matched by this pattern are transformed by Babel.
 config.transformer = {
   ...config.transformer,
   transformIgnorePatterns: [
     `node_modules/(?!(${TRANSFORM_PACKAGES.join("|")})/)`
   ],
   // ── inlineRequires ───────────────────────────────────────────────────────
-  // Defers all require() calls to the moment each module is first accessed
-  // rather than evaluating every module at startup. Two effects:
-  //   1. The initial JS bundle parse/execute is faster (less work at boot).
-  //   2. Modules that are imported but never reached on a given screen are
-  //      never evaluated, reducing effective memory and startup cost.
-  // Safe for production — React Native has used this since RN 0.64.
+  // Defers all require() calls to the moment each module is first accessed.
+  // Modules imported but never reached on a given screen are never evaluated,
+  // reducing startup cost and effective bundle weight.
   getTransformOptions: async () => ({
     transform: {
       inlineRequires: true,
@@ -67,17 +59,44 @@ config.transformer = {
   }),
 };
 
-// ── Node.js-only package stubs ───────────────────────────────────────────────
-// These packages rely on Node.js built-ins (fs, net, tls, etc.) that don't
-// exist in the React Native / Hermes runtime. Metro bundles every reachable
-// import, so we redirect them to empty stubs at resolve-time.
+// ── Server-only package stubs ────────────────────────────────────────────────
+// These packages are only used by server/. If they are ever accidentally
+// reachable from mobile code, Metro would try to bundle them — pulling in
+// Node.js built-ins (fs, net, child_process, …) that crash at runtime.
+// We stub them all to empty objects so any accidental import is a no-op.
 //
-// We use resolveRequest (not extraNodeModules) because extraNodeModules is only
-// consulted when the module is NOT found in node_modules. Since these packages
-// ARE installed, we must intercept resolution explicitly.
-const NODE_ONLY_STUBS = {
-  "firebase-admin": path.resolve(__dirname, "lib/db/providers/firebase-admin-stub.js"),
-  pg: path.resolve(__dirname, "lib/db/providers/pg-stub.js"),
+// We use resolveRequest (not extraNodeModules) because these packages ARE
+// installed in node_modules, so extraNodeModules is never consulted.
+const SERVER_ONLY_STUB = path.resolve(__dirname, "lib/db/providers/firebase-admin-stub.js");
+const PG_STUB         = path.resolve(__dirname, "lib/db/providers/pg-stub.js");
+
+const SERVER_ONLY_PACKAGES = {
+  // Database / server infrastructure
+  "firebase-admin":        SERVER_ONLY_STUB,
+  pg:                      PG_STUB,
+  "drizzle-orm":           SERVER_ONLY_STUB,
+  "drizzle-zod":           SERVER_ONLY_STUB,
+  // HTTP server
+  express:                 SERVER_ONLY_STUB,
+  // Proxy
+  "http-proxy":            SERVER_ONLY_STUB,
+  "http-proxy-middleware": SERVER_ONLY_STUB,
+  // Payment / external APIs (server-side only)
+  razorpay:                SERVER_ONLY_STUB,
+  // Build tools
+  esbuild:                 SERVER_ONLY_STUB,
+  // Image processing (server-side only)
+  jimp:                    SERVER_ONLY_STUB,
+  // QR decoding (server-side only — mobile uses expo-camera native)
+  jsqr:                    SERVER_ONLY_STUB,
+  // WebSocket server
+  ws:                      SERVER_ONLY_STUB,
+  // Source maps (build tool)
+  "source-map":            SERVER_ONLY_STUB,
+  // BCrypt (server-side hashing — mobile uses expo-crypto)
+  bcryptjs:                SERVER_ONLY_STUB,
+  // OpenAI (called server-side only via Express route)
+  openai:                  SERVER_ONLY_STUB,
 };
 
 config.resolver = {
@@ -86,8 +105,8 @@ config.resolver = {
     /\.local\/.*/,
   ],
   resolveRequest(context, moduleName, platform) {
-    if (NODE_ONLY_STUBS[moduleName]) {
-      return { type: "sourceFile", filePath: NODE_ONLY_STUBS[moduleName] };
+    if (SERVER_ONLY_PACKAGES[moduleName]) {
+      return { type: "sourceFile", filePath: SERVER_ONLY_PACKAGES[moduleName] };
     }
     return context.resolveRequest(context, moduleName, platform);
   },

@@ -5,6 +5,23 @@
 # caused by reflection, JNI callbacks, and Hermes/JSI interop.
 # ─────────────────────────────────────────────────────────────────────────────
 
+# ── R8 optimisation ───────────────────────────────────────────────────────────
+# Run the optimiser 5 times instead of 1 — each pass finds new opportunities
+# opened by the previous pass (inlining, dead-code removal, constant folding).
+-optimizationpasses 5
+
+# Allow R8 to widen access modifiers to enable more inlining.
+-allowaccessmodification
+
+# Move all classes to the root package — reduces per-class name overhead.
+# Safe because classes are accessed by type, not by package reflection.
+# Exception: keep React Native / Expo packages in place to avoid JNI issues.
+-repackageclasses 'b'
+-keep,allowrepackaging class com.facebook.** { *; }
+-keep,allowrepackaging class expo.** { *; }
+-keep,allowrepackaging class com.google.** { *; }
+-keep,allowrepackaging class com.qrguard.** { *; }
+
 # ── React Native core ────────────────────────────────────────────────────────
 -keep class com.facebook.react.** { *; }
 -keep class com.facebook.hermes.** { *; }
@@ -41,7 +58,7 @@
 }
 -dontwarn expo.modules.**
 
-# ── App package (com.qrguard.app) ────────────────────────────────────────────
+# ── App package ───────────────────────────────────────────────────────────────
 -keep class com.qrguard.app.** { *; }
 
 # ── Firebase ─────────────────────────────────────────────────────────────────
@@ -91,7 +108,7 @@
 # ── Async Storage ────────────────────────────────────────────────────────────
 -keep class com.reactnativecommunity.asyncstorage.** { *; }
 
-# ── OkHttp / networking (used by Metro and various SDKs) ─────────────────────
+# ── OkHttp / networking ───────────────────────────────────────────────────────
 -dontwarn okhttp3.**
 -dontwarn okio.**
 -keep class okhttp3.** { *; }
@@ -103,23 +120,23 @@
 -dontwarn kotlin.**
 -dontwarn kotlinx.coroutines.**
 
-# ── Prevent stripping JNI entry points ───────────────────────────────────────
+# ── JNI entry points ─────────────────────────────────────────────────────────
 -keepclasseswithmembernames class * {
   native <methods>;
 }
 
-# ── Keep enums intact (used heavily via reflection in RN) ────────────────────
+# ── Enums (reflection in RN) ─────────────────────────────────────────────────
 -keepclassmembers enum * {
   public static **[] values();
   public static ** valueOf(java.lang.String);
 }
 
-# ── Keep Parcelable implementations ──────────────────────────────────────────
+# ── Parcelable ───────────────────────────────────────────────────────────────
 -keepclassmembers class * implements android.os.Parcelable {
   public static final ** CREATOR;
 }
 
-# ── Keep Serializable classes ────────────────────────────────────────────────
+# ── Serializable ─────────────────────────────────────────────────────────────
 -keepnames class * implements java.io.Serializable
 -keepclassmembers class * implements java.io.Serializable {
   private static final java.io.ObjectStreamField[] serialPersistentFields;
@@ -129,14 +146,17 @@
   java.lang.Object readResolve();
 }
 
-# ── Keep debugging attributes for crash reports ──────────────────────────────
+# ── Crash report attributes ───────────────────────────────────────────────────
+# Keep source file + line numbers so crash traces are readable.
 -keepattributes SourceFile,LineNumberTable
 -renamesourcefileattribute SourceFile
 
-# ── Suppress common library warnings ─────────────────────────────────────────
+# ── Common library warning suppression ───────────────────────────────────────
 -dontwarn javax.annotation.**
 -dontwarn org.conscrypt.**
 -dontwarn org.bouncycastle.**
 -dontwarn org.openjsse.**
 -dontwarn sun.misc.**
 -dontwarn java.lang.invoke.**
+-dontwarn com.google.errorprone.**
+-dontwarn com.google.auto.**

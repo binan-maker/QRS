@@ -139,8 +139,12 @@ function withAndroidDeviceCompat(config) {
     if (!manifest.$) manifest.$ = {};
     manifest.$["android:installLocation"] = "auto";
 
-    // Allow 32-bit native lib extraction on older Android versions
-    application.$["android:extractNativeLibs"] = "true";
+    // Keep native libs compressed inside the APK/AAB (do NOT extract to disk).
+    // minSdkVersion=24 (Android 7.0+) means every device we target supports
+    // reading libs directly from the compressed APK — no extraction needed.
+    // Effect: installed size drops by ~30-50% of native lib weight because the
+    // OS no longer copies a second decompressed copy of each .so to /data/app/.
+    application.$["android:extractNativeLibs"] = "false";
 
     // Ensure the app is not restricted to specific form factors
     application.$["android:resizeableActivity"] = "true";
