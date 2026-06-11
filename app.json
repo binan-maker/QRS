@@ -62,6 +62,7 @@
       ],
       "./plugins/android-network-security.js",
       "./plugins/android-device-compat.js",
+      "./plugins/android-r8.js",
       "expo-localization",
       "expo-secure-store"
     ],
