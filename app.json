@@ -63,6 +63,8 @@
       "./plugins/android-network-security.js",
       "./plugins/android-device-compat.js",
       "./plugins/android-r8.js",
+      "./plugins/android-font-filter.js",
+      "./plugins/android-size-optimize.js",
       "expo-localization",
       "expo-secure-store"
     ],

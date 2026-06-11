@@ -53,6 +53,18 @@ config.transformer = {
   transformIgnorePatterns: [
     `node_modules/(?!(${TRANSFORM_PACKAGES.join("|")})/)`
   ],
+  // ── inlineRequires ───────────────────────────────────────────────────────
+  // Defers all require() calls to the moment each module is first accessed
+  // rather than evaluating every module at startup. Two effects:
+  //   1. The initial JS bundle parse/execute is faster (less work at boot).
+  //   2. Modules that are imported but never reached on a given screen are
+  //      never evaluated, reducing effective memory and startup cost.
+  // Safe for production — React Native has used this since RN 0.64.
+  getTransformOptions: async () => ({
+    transform: {
+      inlineRequires: true,
+    },
+  }),
 };
 
 // ── Node.js-only package stubs ───────────────────────────────────────────────
