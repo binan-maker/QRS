@@ -11,6 +11,13 @@
  *   The fix is to declare every possible feature as required="false" — the app
  *   handles missing hardware gracefully at runtime.
  *
+ * IMPORTANT — android.hardware.type.* features:
+ *   Google Play REJECTS any AAB that declares a android.hardware.type.* feature
+ *   with required="false".  These features are form-factor identifiers (watch,
+ *   TV, Auto, PC) — you must either set required="true" (claiming the app IS
+ *   for that form factor) or omit the entry entirely.  BinRo is a phone/tablet
+ *   app, so ALL android.hardware.type.* entries are stripped from the manifest.
+ *
  * Coverage:
  *   ① All hardware features (camera, sensors, radios, telephony, I/O…)
  *   ② All software features (TV/leanback, Wear OS, Auto, ChromeOS…)
@@ -21,11 +28,15 @@
  *   ⑦ Strips any <compatible-screens> element (acts as an install whitelist)
  *   ⑧ Strips any gl-es-version restriction (blocks older GPUs)
  *   ⑨ Strips any maxSdkVersion cap
+ *   ⑩ Strips ALL android.hardware.type.* entries (Play Store policy)
  */
 
 const { withAndroidManifest } = require("@expo/config-plugins");
 
 // ── Hardware features ─────────────────────────────────────────────────────────
+// NOTE: android.hardware.type.* entries are intentionally NOT listed here.
+// Google Play rejects any AAB that sets required="false" on a type feature.
+// They are stripped in the manifest transform step below.
 const HARDWARE_FEATURES = [
   // Camera
   "android.hardware.camera",
@@ -103,17 +114,18 @@ const HARDWARE_FEATURES = [
   // Storage / USB
   "android.hardware.usb.host",
   "android.hardware.usb.accessory",
-  // Form factor type hardware
-  "android.hardware.type.television",
-  "android.hardware.type.watch",
-  "android.hardware.type.automotive",
-  "android.hardware.type.embedded",
-  "android.hardware.type.pc",
   // OpenGL
   "android.hardware.opengles.aep",
   // RAM (low-RAM devices)
   "android.hardware.ram.low",
   "android.hardware.ram.normal",
+  // VR hardware
+  "android.hardware.vr.high_performance",
+  "android.hardware.vr.headtracking",
+  // Vulkan
+  "android.hardware.vulkan.level",
+  "android.hardware.vulkan.version",
+  "android.hardware.vulkan.compute",
 ];
 
 // ── Software features ─────────────────────────────────────────────────────────
@@ -122,11 +134,8 @@ const HARDWARE_FEATURES = [
 const SOFTWARE_FEATURES = [
   // Android TV / Fire TV / Shield TV / Chromecast with Google TV
   "android.software.leanback",
-  "android.software.leanback_only",
   "android.software.live_tv",
   "android.software.live_wallpaper",
-  // Wear OS (smartwatches)
-  "android.hardware.type.watch",        // also in hardware but explicit here
   // Android Auto / Automotive OS
   "android.software.car.templates_host",
   // Chrome OS / Desktop
@@ -135,8 +144,6 @@ const SOFTWARE_FEATURES = [
   "android.software.home_screen",
   // VR
   "android.software.vr.mode",
-  "android.hardware.vr.high_performance",
-  "android.hardware.vr.headtracking",
   // App widgets
   "android.software.app_widgets",
   // Input methods
@@ -160,16 +167,10 @@ const SOFTWARE_FEATURES = [
   "android.software.picture_in_picture",
   // Activities on secondary displays
   "android.software.activities_on_secondary_displays",
-  // Vulkan
-  "android.hardware.vulkan.level",
-  "android.hardware.vulkan.version",
-  "android.hardware.vulkan.compute",
 ];
 
 // ── Amazon Fire OS features ───────────────────────────────────────────────────
 // Amazon devices (Fire tablets, Fire TV) use their own feature namespace.
-// Without these as optional, Amazon's version of Play Store (App Store)
-// and sideloaded APKs on Fire devices may not surface the app correctly.
 const AMAZON_FEATURES = [
   "amazon.hardware.fire_tv",
   "amazon.software.drm",
@@ -177,23 +178,44 @@ const AMAZON_FEATURES = [
 
 const ALL_FEATURES = [...HARDWARE_FEATURES, ...SOFTWARE_FEATURES, ...AMAZON_FEATURES];
 
+// ── Features that must NEVER appear in the manifest (Play Store policy) ───────
+// Google Play rejects any AAB where an android.hardware.type.* OR
+// android.software.leanback_only entry has required="false".
+// These must be stripped entirely — not set to required="false".
+const TYPE_FEATURE_PREFIXES = [
+  "android.hardware.type.",   // watch, television, automotive, embedded, pc
+];
+const BANNED_FEATURES = [
+  "android.software.leanback_only",  // implies TV-only; cannot be optional
+];
+
+function isStrippedFeature(name) {
+  if (!name) return false;
+  if (BANNED_FEATURES.includes(name)) return true;
+  return TYPE_FEATURE_PREFIXES.some((prefix) => name.startsWith(prefix));
+}
+
 function withAndroidDeviceCompat(config) {
   return withAndroidManifest(config, (cfg) => {
     const manifest = cfg.modResults.manifest;
 
-    // ── ① Collect and override existing uses-feature entries ───────────────
-    const existingFeatures = manifest["uses-feature"] || [];
+    // ── ① Strip all android.hardware.type.* and banned software features ────
+    // Must happen BEFORE we process the list so we never re-add them.
+    const existingFeatures = (manifest["uses-feature"] || []).filter(
+      (f) => !isStrippedFeature(f.$?.["android:name"])
+    );
+
     const existingNames = new Set(
       existingFeatures.map((f) => f.$?.["android:name"]).filter(Boolean)
     );
 
-    // Force every existing entry to required=false
+    // ── ② Force every remaining existing entry to required=false ────────────
     const updatedFeatures = existingFeatures.map((f) => ({
       ...f,
       $: { ...f.$, "android:required": "false" },
     }));
 
-    // Add every feature in our list that isn't already declared
+    // ── ③ Add every feature in our allow-list that isn't already declared ────
     for (const featureName of ALL_FEATURES) {
       if (!existingNames.has(featureName)) {
         updatedFeatures.push({
@@ -204,17 +226,15 @@ function withAndroidDeviceCompat(config) {
 
     manifest["uses-feature"] = updatedFeatures;
 
-    // ── ② Strip gl-es-version restriction (blocks older GPUs) ─────────────
+    // ── ④ Strip gl-es-version restriction (blocks older GPUs) ───────────────
     manifest["uses-feature"] = manifest["uses-feature"].filter(
       (f) => !f.$?.["android:glEsVersion"]
     );
 
-    // ── ③ Strip <compatible-screens> (acts as an install whitelist) ─────────
-    // This element tells Play Store to ONLY show the app on listed screen
-    // configs.  Removing it means ALL screen configs are compatible.
+    // ── ⑤ Strip <compatible-screens> (acts as an install whitelist) ─────────
     delete manifest["compatible-screens"];
 
-    // ── ④ supports-screens: every size ────────────────────────────────────
+    // ── ⑥ supports-screens: every size ─────────────────────────────────────
     manifest["supports-screens"] = [
       {
         $: {
@@ -228,29 +248,19 @@ function withAndroidDeviceCompat(config) {
       },
     ];
 
-    // ── ⑤ Manifest-level flags ────────────────────────────────────────────
+    // ── ⑦ Manifest-level flags ───────────────────────────────────────────────
     if (!manifest.$) manifest.$ = {};
 
-    // Allow install to SD card — critical for low-storage budget phones
     manifest.$["android:installLocation"] = "auto";
-
-    // Strip maxSdkVersion if somehow injected — it caps the upper Android
-    // version and prevents upgrades from seeing the app
     delete manifest.$["android:maxSdkVersion"];
 
-    // ── ⑥ Application-level flags ─────────────────────────────────────────
+    // ── ⑧ Application-level flags ────────────────────────────────────────────
     if (!manifest.application) manifest.application = [{}];
     const application = manifest.application[0];
     if (!application.$) application.$ = {};
 
-    // Libs stay compressed in APK — no second extracted copy on disk (~15 MB)
     application.$["android:extractNativeLibs"]  = "false";
-
-    // Every screen size and window mode is supported
     application.$["android:resizeableActivity"] = "true";
-
-    // Ensure app is NOT restricted to specific form factors
-    // (some Expo versions inject this incorrectly)
     delete application.$["android:banner"];
 
     return cfg;
