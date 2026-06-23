@@ -83,6 +83,7 @@ const STUBBED_PACKAGES = {
   pg:                       PG_STUB,
   "drizzle-orm":            EMPTY_STUB,
   "drizzle-zod":            EMPTY_STUB,
+  "drizzle-kit":            EMPTY_STUB,
   express:                  EMPTY_STUB,
   "http-proxy":             EMPTY_STUB,
   "http-proxy-middleware":  EMPTY_STUB,
@@ -94,14 +95,29 @@ const STUBBED_PACKAGES = {
   bcryptjs:                 EMPTY_STUB,   // server-side hashing
   openai:                   EMPTY_STUB,   // called server-side via Express
   esbuild:                  EMPTY_STUB,   // build tool
+  "firebase-tools":         EMPTY_STUB,   // CLI tool, never in mobile
   // ── Server utility packages (only imported in server/ batch utils) ─────────
   semver:                   EMPTY_STUB,
   "p-limit":                EMPTY_STUB,
   "p-retry":                EMPTY_STUB,
   "zod-validation-error":   EMPTY_STUB,
-  "@ungap/structured-clone":       EMPTY_STUB,
+  "@ungap/structured-clone":          EMPTY_STUB,
   "@stardazed/streams-text-encoding": EMPTY_STUB,
   "@urql/core":             EMPTY_STUB,
+  // ── Unused Firebase JS sub-modules (safety net against accidental inclusion)
+  // The app uses: firebase/app, auth, firestore, database, storage, app-check.
+  // Analytics, Performance, Messaging, Remote Config are NOT used.
+  "firebase/analytics":        EMPTY_STUB,
+  "firebase/performance":      EMPTY_STUB,
+  "firebase/messaging":        EMPTY_STUB,
+  "firebase/remote-config":    EMPTY_STUB,
+  "firebase/installations":    EMPTY_STUB,
+  "firebase/in-app-messaging": EMPTY_STUB,
+  "@firebase/analytics":        EMPTY_STUB,
+  "@firebase/performance":      EMPTY_STUB,
+  "@firebase/remote-config":    EMPTY_STUB,
+  "@firebase/installations":    EMPTY_STUB,
+  "@firebase/in-app-messaging": EMPTY_STUB,
   // ── Dead-weight JS packages (zero imports in mobile codebase) ─────────────
   // lucide-react-native: 11 MB installed, not imported anywhere in app code.
   "lucide-react-native":    EMPTY_STUB,

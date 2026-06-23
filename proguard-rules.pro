@@ -62,8 +62,20 @@
 -keep class com.qrguard.app.** { *; }
 
 # ── Firebase ─────────────────────────────────────────────────────────────────
--keep class com.google.firebase.** { *; }
--keep class com.google.android.gms.** { *; }
+# Keep only the Firebase services BinRo actually uses (Auth, Firestore, RTDB,
+# Storage, AppCheck). Removing the blanket com.google.** keep lets R8 strip
+# unused Firebase Analytics / Performance / Messaging native stubs.
+-keep class com.google.firebase.auth.** { *; }
+-keep class com.google.firebase.firestore.** { *; }
+-keep class com.google.firebase.database.** { *; }
+-keep class com.google.firebase.storage.** { *; }
+-keep class com.google.firebase.appcheck.** { *; }
+-keep class com.google.firebase.installations.** { *; }
+-keep class com.google.firebase.components.** { *; }
+-keep class com.google.firebase.provider.** { *; }
+-keep class com.google.android.gms.auth.** { *; }
+-keep class com.google.android.gms.tasks.** { *; }
+-keep class com.google.android.gms.common.** { *; }
 -dontwarn com.google.firebase.**
 -dontwarn com.google.android.gms.**
 
@@ -115,10 +127,26 @@
 -keep interface okhttp3.** { *; }
 
 # ── Kotlin / Coroutines ───────────────────────────────────────────────────────
--keep class kotlin.** { *; }
--keep class kotlinx.coroutines.** { *; }
+# Keep only the Kotlin parts that React Native / Firebase actually reflect on.
+# Broad "-keep class kotlin.**" prevents R8 from removing unused Kotlin stdlib
+# classes and inflates the DEX noticeably.
+-keep class kotlin.Metadata { *; }
+-keep class kotlin.reflect.** { *; }
+-keep class kotlinx.coroutines.android.** { *; }
+-keepclassmembers class kotlinx.coroutines.** {
+    volatile <fields>;
+}
 -dontwarn kotlin.**
 -dontwarn kotlinx.coroutines.**
+
+# ── Strip Android Log calls in release ───────────────────────────────────────
+# Removes Log.v / Log.d calls from the DEX; saves a small amount of bytecode
+# and prevents leaking verbose debug strings to production builds.
+-assumenosideeffects class android.util.Log {
+    public static int v(...);
+    public static int d(...);
+    public static int i(...);
+}
 
 # ── JNI entry points ─────────────────────────────────────────────────────────
 -keepclasseswithmembernames class * {

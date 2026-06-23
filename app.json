@@ -65,6 +65,7 @@
       "./plugins/android-r8.js",
       "./plugins/android-font-filter.js",
       "./plugins/android-size-optimize.js",
+      "./plugins/android-abi-filter.js",
       "expo-localization",
       "expo-secure-store"
     ],

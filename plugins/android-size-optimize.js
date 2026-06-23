@@ -20,10 +20,17 @@
  *
  * 5. aaptOptions cruncherEnabled — lossless PNG re-compression at build time.
  *
- * 6. Density splits — AAB already handles ABI splits; density splits ensure
- *    each device only gets its screen-density resources (~1–3 MB per device).
+ * 6. ABI + Density splits — generate separate APKs per CPU arch and screen
+ *    density.  Only arm64-v8a and armeabi-v7a are included (x86/x86_64 are
+ *    emulator-only).  universalApk false ensures no bloated catch-all APK.
+ *    Play Store AAB automatically applies these splits per device.
+ *    Savings: ~60–80 MB (ABI) + 1–3 MB (density) per device.
  *
  * 7. dexOptions heap — prevents OOM during R8 full-mode pass.
+ *
+ * 8. Expanded packaging exclusions — strips protos, *.proto, version files,
+ *    service loader configs and other dead bytes that creep in from Firebase
+ *    and Kotlin transitive deps.
  */
 
 const { withAppBuildGradle } = require("@expo/config-plugins");
@@ -64,9 +71,13 @@ function withAndroidSizeOptimize(config) {
         `                "META-INF/*.version",\n` +
         `                "META-INF/AL2.0",\n` +
         `                "META-INF/LGPL2.1",\n` +
+        `                "META-INF/proguard/**",\n` +
+        `                "META-INF/services/**",\n` +
         `                "androidsupportmultidexversion.txt",\n` +
+        `                "**/*.proto",\n` +
         `                "**/*.txt",\n` +
-        `                "**/*.md"\n` +
+        `                "**/*.md",\n` +
+        `                "DebugProbesKt.bin"\n` +
         `            ]\n` +
         `        }\n` +
         `    }\n\n    $1`
@@ -93,11 +104,22 @@ function withAndroidSizeOptimize(config) {
       );
     }
 
-    // ── 5. Density splits for per-device download reduction ───────────────
+    // ── 5. ABI + Density splits ───────────────────────────────────────────
+    // ABI splits: separate APKs per CPU arch — Play Store serves only the
+    // arch the device needs (universalApk false = no bloated catch-all APK).
+    // Density splits: separate APKs per screen density bucket.
+    // Combined with the ndk.abiFilters in android-abi-filter.js (which already
+    // strips x86/x86_64 at compile time), this maximises per-device savings.
     if (!gradle.includes("splits {")) {
       gradle = gradle.replace(
         /(buildTypes\s*\{)/,
         `splits {\n` +
+        `        abi {\n` +
+        `            enable true\n` +
+        `            reset()\n` +
+        `            include "arm64-v8a", "armeabi-v7a"\n` +
+        `            universalApk false\n` +
+        `        }\n` +
         `        density {\n` +
         `            enable true\n` +
         `            reset()\n` +
