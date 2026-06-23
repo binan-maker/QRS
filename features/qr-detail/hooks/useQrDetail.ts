@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState } from "react";
 import { Alert, Linking } from "react-native";
 import * as Clipboard from "expo-clipboard";
 import * as Haptics from "@/shared/utils/haptics";
@@ -6,14 +6,6 @@ import { smartOpenContent } from "@/shared/utils/smart-open";
 import { useAuth } from "@/shared/contexts/AuthContext";
 import { useTheme } from "@/shared/contexts/ThemeContext";
 import { useQrData, type QrDetail } from "./useQrData";
-function calculateTrustScore(reportCounts: Record<string, number>): { score: number; label: string } {
-  const total = Object.values(reportCounts).reduce((a, b) => a + b, 0);
-  if (total === 0) return { score: -1, label: "No Reports" };
-  const safe = (reportCounts["safe"] ?? 0) + (reportCounts["likely_safe"] ?? 0);
-  const score = Math.round((safe / total) * 100);
-  const label = score >= 75 ? "Trusted" : score >= 50 ? "Likely Safe" : score >= 30 ? "Caution" : "Dangerous";
-  return { score, label };
-}
 import { useQrSafety } from "./useQrSafety";
 import { useQrReports } from "./useQrReports";
 import { useQrFollow } from "./useQrFollow";
@@ -24,11 +16,47 @@ import { useCreatorFollow } from "./useCreatorFollow";
 
 export type { QrDetail, CommentItem };
 
+// ── VPA validation ────────────────────────────────────────────────────────────
+
+const SERVER_BASE_URL = process.env.EXPO_PUBLIC_DOMAIN
+  ? `https://${process.env.EXPO_PUBLIC_DOMAIN}`
+  : __DEV__ ? "http://localhost:5000" : "";
+
+async function validateVpa(
+  vpa: string
+): Promise<{ valid: boolean | null; customerName: string | null; reason?: string }> {
+  try {
+    const res = await fetch(`${SERVER_BASE_URL}/api/v1/qr/validate-vpa`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ vpa }),
+    });
+    if (!res.ok) return { valid: null, customerName: null };
+    return await res.json();
+  } catch {
+    return { valid: null, customerName: null };
+  }
+}
+
+// ── Trust helpers (local fallback — overridden by server score when available) ─
+
+function calculateTrustScore(reportCounts: Record<string, number>): { score: number; label: string } {
+  const total = Object.values(reportCounts).reduce((a, b) => a + b, 0);
+  if (total === 0) return { score: -1, label: "No Reports" };
+  const safe = (reportCounts["safe"] ?? 0) + (reportCounts["likely_safe"] ?? 0);
+  const score = Math.round((safe / total) * 100);
+  const label = score >= 75 ? "Trusted" : score >= 50 ? "Likely Safe" : score >= 30 ? "Caution" : "Dangerous";
+  return { score, label };
+}
+
+// ── Hook ──────────────────────────────────────────────────────────────────────
+
 export function useQrDetail(id: string, hint?: { content: string; contentType: string }) {
   const { user } = useAuth();
   const { colors } = useTheme();
   const userId = user?.id ?? null;
   const [copied, setCopied] = useState(false);
+  const [paymentValidating, setPaymentValidating] = useState(false);
 
   const data = useQrData(id, userId, hint);
   const rawContent = data.qrCode?.content || data.offlineContent;
@@ -45,6 +73,8 @@ export function useQrDetail(id: string, hint?: { content: string; contentType: s
   const favorite = useQrFavorite(id, userId);
   const comments = useQrComments(id, userId, data.offlineMode);
   const owner = useQrOwner(id, userId, user?.displayName ?? null, data.isQrOwner, data.ownerInfo);
+
+  // ── Trust / verdict ──────────────────────────────────────────────────────────
 
   function getTrustColor(label: string) {
     switch (label) {
@@ -73,8 +103,6 @@ export function useQrDetail(id: string, hint?: { content: string; contentType: s
   function getCombinedVerdict() {
     const { offlineBlacklistMatch, paymentSafety, urlSafety, instantVerdict } = safety;
     const trust = getTrustInfo();
-    // BinRo verified = current user owns it, OR owner has branded flag set
-    // (either from ownerInfo async fetch OR from the qrCode document itself).
     const isQrGuardVerified =
       data.isQrOwner === true ||
       data.ownerInfo?.isBranded === true ||
@@ -84,7 +112,6 @@ export function useQrDetail(id: string, hint?: { content: string; contentType: s
       return { level: "caution" as const, label: "CAUTION ADVISED", reason: offlineBlacklistMatch.reason ?? "Potential scam pattern detected", color: colors.warning };
     }
 
-    // Owner viewing their own QR — skip community/threat checks and confirm ownership.
     if (data.isQrOwner === true) {
       if (paymentSafety?.isSuspicious || urlSafety?.isSuspicious) {
         return { level: "caution" as const, label: "CAUTION", reason: "Local analysis detected a potential risk in this QR", color: colors.warning };
@@ -118,27 +145,45 @@ export function useQrDetail(id: string, hint?: { content: string; contentType: s
     if (instantVerdict.level === "caution") {
       return { level: "caution" as const, label: "CAUTION", reason: instantVerdict.reason ?? "Proceed carefully", color: colors.warning };
     }
-    // Default fallback: for external/unverified QRs we cannot guarantee safety.
     if (!isQrGuardVerified) {
       return { level: "caution" as const, label: "UNVERIFIED QR", reason: "Unverified source · Proceed with caution", color: colors.warning };
     }
     return { level: "safe" as const, label: "SAFE", reason: "No threats detected", color: colors.safe };
   }
 
+  // ── UPI payment helpers ──────────────────────────────────────────────────────
+
   function buildUpiUrl(parsedPayment: NonNullable<typeof safety.parsedPayment>): string | null {
     const { vpa, recipientName, amount, currency } = parsedPayment;
     if (!vpa) return null;
-    // Validate VPA format before building the link — prevents malformed deep links
     const vpaRegex = /^[a-zA-Z0-9._\-]+@[a-zA-Z0-9]+$/;
     if (!vpaRegex.test(vpa.trim())) return null;
-    // mode=02 forces payee name resolution from NPCI; mc=0000 is standard merchant code
     let url = `upi://pay?pa=${encodeURIComponent(vpa.trim())}&mc=0000&mode=02`;
     if (recipientName) url += `&pn=${encodeURIComponent(recipientName.trim())}`;
     const parsedAmount = amount ? parseFloat(amount) : 0;
     if (parsedAmount > 0) url += `&am=${parsedAmount.toFixed(2)}`;
-    // cu=INR always present — some UPI apps reject links without it
     url += `&cu=${currency || "INR"}`;
     return url;
+  }
+
+  /** Extracts the canonical VPA from either the parsed payment data or raw UPI URL. */
+  function extractVpa(rawContent: string): string | null {
+    const { parsedPayment } = safety;
+    if (parsedPayment?.vpa) return parsedPayment.vpa.trim().toLowerCase();
+    try {
+      const lower = rawContent.toLowerCase();
+      let uriStr = rawContent;
+      if (lower.startsWith("tez://upi/") || lower.startsWith("gpay://upi/")) {
+        uriStr = "upi://" + rawContent.split("upi/")[1];
+      }
+      if (uriStr.toLowerCase().startsWith("upi://") || uriStr.includes("?")) {
+        const queryStr = uriStr.includes("?") ? uriStr.split("?")[1] : "";
+        const params = new URLSearchParams(queryStr);
+        const pa = params.get("pa");
+        if (pa) return pa.trim().toLowerCase();
+      }
+    } catch {}
+    return null;
   }
 
   async function handleOpenPayment(rawContent: string) {
@@ -146,6 +191,58 @@ export function useQrDetail(id: string, hint?: { content: string; contentType: s
     const lower = rawContent.toLowerCase();
     const { parsedPayment } = safety;
 
+    // ── VPA validation before redirect ───────────────────────────────────────
+    const isUpi =
+      parsedPayment?.appCategory === "upi_india" ||
+      parsedPayment?.appCategory === "india_wallet" ||
+      parsedPayment?.isEmv;
+
+    if (isUpi) {
+      const vpa = extractVpa(rawContent);
+      if (vpa) {
+        setPaymentValidating(true);
+        try {
+          const check = await validateVpa(vpa);
+          if (check.valid === false) {
+            // Confirmed invalid — show clear error and stop
+            Alert.alert(
+              "UPI ID Not Accepting Payments",
+              `The UPI ID "${vpa}" is not registered or is not currently accepting payments.\n\nThis QR code may be outdated. Please ask the merchant for an updated payment QR or try a different payment method.`,
+              [{ text: "OK" }]
+            );
+            return;
+          }
+          // valid === true: show merchant name as a trust signal if it differs from QR data
+          if (check.valid === true && check.customerName) {
+            const qrName = parsedPayment?.recipientName?.trim() ?? "";
+            const resolvedName = check.customerName.trim();
+            // Names differ significantly — warn but still allow
+            if (
+              qrName &&
+              resolvedName &&
+              resolvedName.toLowerCase() !== qrName.toLowerCase() &&
+              !resolvedName.toLowerCase().includes(qrName.toLowerCase().slice(0, 4))
+            ) {
+              await new Promise<void>((resolve) => {
+                Alert.alert(
+                  "Merchant Name Mismatch",
+                  `QR shows: "${qrName}"\nUPI registered as: "${resolvedName}"\n\nVerify with the merchant before paying.`,
+                  [
+                    { text: "Cancel", style: "cancel", onPress: () => resolve() },
+                    { text: "Continue Anyway", onPress: () => resolve() },
+                  ]
+                );
+              });
+            }
+          }
+          // valid === null: validation unavailable — proceed silently
+        } finally {
+          setPaymentValidating(false);
+        }
+      }
+    }
+
+    // ── Build links and open payment app ─────────────────────────────────────
     if (parsedPayment?.isEmv) {
       const { vpa, recipientName, extraFields } = parsedPayment;
       if (vpa) {
@@ -201,10 +298,10 @@ export function useQrDetail(id: string, hint?: { content: string; contentType: s
     }
   }
 
+  // ── Other handlers ───────────────────────────────────────────────────────────
+
   async function handleOpenContent() {
     if (!content) return;
-    // Payment types have complex UPI/EMV routing that depends on parsedPayment
-    // state — keep that handler here; route everything else through smartOpenContent.
     if (contentType === "payment") {
       handleOpenPayment(content);
       return;
@@ -245,6 +342,7 @@ export function useQrDetail(id: string, hint?: { content: string; contentType: s
     ...comments,
     ...owner,
     copied,
+    paymentValidating,
     creatorId,
     creatorName,
     getTrustInfo,

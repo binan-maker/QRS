@@ -56,6 +56,53 @@ qrRouter.patch("/:qrId/active", async (req: Request, res: Response) => {
   }
 });
 
+// POST /api/v1/qr/validate-vpa  — validate a UPI VPA via Razorpay (free endpoint)
+// Returns { valid: boolean|null, customerName: string|null }
+// valid=null means the service is unavailable — callers must still allow the payment.
+qrRouter.post("/validate-vpa", async (req: Request, res: Response) => {
+  const { vpa } = req.body as { vpa?: string };
+  if (!vpa || typeof vpa !== "string" || !vpa.trim()) {
+    return res.status(400).json({ error: "Missing vpa" });
+  }
+
+  const keyId = process.env.RAZORPAY_KEY_ID;
+  const keySecret = process.env.RAZORPAY_KEY_SECRET;
+
+  if (!keyId || !keySecret) {
+    return res.json({ valid: null, customerName: null, reason: "Validation service not configured" });
+  }
+
+  try {
+    const auth = Buffer.from(`${keyId}:${keySecret}`).toString("base64");
+    const rzpRes = await fetch("https://api.razorpay.com/v1/payments/validate/vpa", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Basic ${auth}`,
+      },
+      body: JSON.stringify({ vpa: vpa.trim().toLowerCase() }),
+    });
+
+    if (rzpRes.ok) {
+      const data = await rzpRes.json() as { success?: boolean; customer_name?: string; vpa?: string };
+      return res.json({
+        valid: data.success === true,
+        customerName: data.customer_name || null,
+        vpa: data.vpa || vpa,
+      });
+    }
+
+    // Razorpay returned an error code — treat as invalid VPA
+    const errBody = await rzpRes.json().catch(() => ({})) as any;
+    const desc: string = errBody?.error?.description ?? "";
+    return res.json({ valid: false, customerName: null, reason: desc || "UPI ID not found or inactive" });
+  } catch (e: any) {
+    console.error("[v1/qr/validate-vpa] error:", e?.message ?? e);
+    // Network / unexpected error — don't block the payment
+    return res.json({ valid: null, customerName: null, reason: "Validation check failed" });
+  }
+});
+
 // POST /api/v1/qr/:qrId/report  — submit or toggle a report (safe/scam/spam/fake/…)
 // Uses Admin SDK server-side, so Firestore security rules are bypassed.
 // Auth token is verified here to establish the caller's identity.
