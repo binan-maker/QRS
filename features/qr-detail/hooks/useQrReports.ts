@@ -1,240 +1,251 @@
-import { useEffect, useState, useRef } from "react";
-import { Alert } from "react-native";
-import { router } from "expo-router";
+import { useState, useCallback } from "react";
+import { Alert, Linking } from "react-native";
+import * as Clipboard from "expo-clipboard";
 import * as Haptics from "@/shared/utils/haptics";
+import { smartOpenContent } from "@/shared/utils/smart-open";
 import { useAuth } from "@/shared/contexts/AuthContext";
-import { authAdapter } from "@/lib/auth";
-import { subscribeToQrReports, getUserQrReport } from "@/lib/firestore-service";
-import { calculateTrustScore } from "@/services/qr-detail-service";
-import { invalidateQrCache } from "@/services/cache/qr-cache";
-import { db } from "@/lib/db";
+import { useTheme } from "@/shared/contexts/ThemeContext";
+import { useQrData, type QrDetail } from "./useQrData";
+import { calculateTrustScore } from "@/services/trust-service";
+import { useQrSafety } from "./useQrSafety";
+import { useQrReports } from "./useQrReports";
+import { useQrFollow } from "./useQrFollow";
+import { useQrFavorite } from "./useQrFavorite";
+import { useQrComments, type CommentItem } from "./useQrComments";
+import { useQrOwner } from "./useQrOwner";
+import { useCreatorFollow } from "./useCreatorFollow";
 
-// Strip any port from EXPO_PUBLIC_DOMAIN — Replit proxies HTTPS on 443, not 5000
-const SERVER_BASE_URL = (() => {
-  const raw = process.env.EXPO_PUBLIC_DOMAIN;
-  if (raw) {
-    const host = raw.split(":")[0];
-    return host ? `https://${host}` : "";
-  }
-  return __DEV__ ? "http://localhost:5000" : "";
-})();
+export type { QrDetail, CommentItem };
 
-async function submitReportViaApi(
-  qrId: string,
-  reportType: string,
-  getToken: () => Promise<string>
-): Promise<{ action: "created" | "updated" | "removed" }> {
-  const token = await getToken();
-  const res = await fetch(`${SERVER_BASE_URL}/api/v1/qr/${qrId}/report`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
-    },
-    body: JSON.stringify({ reportType }),
-  });
-  if (!res.ok) {
-    const body = await res.json().catch(() => ({}));
-    throw new Error((body as any).error ?? `HTTP ${res.status}`);
-  }
-  return res.json();
-}
-
-const DEBOUNCE_MS = 600;
-
-export function useQrReports(id: string, userId: string | null, offlineMode: boolean, isQrOwner: boolean = false) {
+export function useQrDetail(id: string, hint?: { content: string; contentType: string }) {
   const { user } = useAuth();
+  const { colors } = useTheme();
+  const userId = user?.id ?? null;
+  const [copied, setCopied] = useState(false);
 
-  const [reportCounts, setReportCounts] = useState<Record<string, number>>({});
-  const [trustScore, setTrustScore] = useState<any>(null);
-  const [userReport, setUserReport] = useState<string | null>(null);
-  const [reportLoading, setReportLoading] = useState<string | null>(null);
+  const data = useQrData(id, userId, hint);
+  const rawContent = data.qrCode?.content || data.offlineContent;
+  const content = (data.qrCode as any)?.displayDestination || rawContent;
+  const contentType = data.qrCode?.contentType || data.offlineContentType;
 
-  const [collusionFlags, setCollusionFlags] = useState<{
-    suspicious: boolean;
-    safeWeightMultiplier?: number;
-    negativeWeightMultiplier?: number;
-  }>({ suspicious: false });
+  const creatorId = data.ownerInfo?.ownerId ?? null;
+  const creatorName = data.ownerInfo?.businessName || data.ownerInfo?.ownerName || null;
 
-  const latestCounts = useRef<Record<string, number>>({});
-  const latestWeighted = useRef<Record<string, number>>({});
-  const latestCollusion = useRef(collusionFlags);
+  const safety = useQrSafety(content, contentType);
+  const reports = useQrReports(id, userId, data.offlineMode, data.isQrOwner);
+  const follow = useQrFollow(id, userId, user?.displayName ?? null);
+  const creatorFollow = useCreatorFollow(creatorId, userId, user?.displayName ?? null, creatorName);
+  const favorite = useQrFavorite(id, userId);
+  const comments = useQrComments(id, userId, data.offlineMode);
+  const owner = useQrOwner(id, userId, user?.displayName ?? null, data.isQrOwner, data.ownerInfo);
 
-  // Authoritative server-confirmed report
-  const committedReportRef = useRef<string | null>(null);
-  // The last desired state from the user (pending debounce)
-  const pendingReportRef = useRef<string | null>(null);
-  // True once initial fetch has resolved
-  const userReportLoadedRef = useRef(false);
-
-  const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const isCommittingRef = useRef(false);
-
-  useEffect(() => {
-    latestCollusion.current = collusionFlags;
-  }, [collusionFlags]);
-
-  useEffect(() => {
-    committedReportRef.current = null;
-    pendingReportRef.current = null;
-    userReportLoadedRef.current = false;
-    setUserReport(null);
-
-    if (!userId || offlineMode) {
-      userReportLoadedRef.current = true;
-      return;
+  function getTrustColor(label: string) {
+    switch (label) {
+      case "Trusted": case "Likely Safe": return colors.safe;
+      case "Caution": case "Uncertain": return colors.warning;
+      case "Dangerous": case "Suspicious": return colors.danger;
+      default: return colors.textMuted;
     }
-    getUserQrReport(id, userId)
-      .then((report) => {
-        committedReportRef.current = report;
-        pendingReportRef.current = report;
-        userReportLoadedRef.current = true;
-        setUserReport(report);
-      })
-      .catch(() => {
-        userReportLoadedRef.current = true;
-      });
-  }, [id, userId, offlineMode]);
+  }
 
-  useEffect(() => {
-    if (offlineMode) return;
+  function getTrustInfo() {
+    const { trustScore, reportCounts } = reports;
+    if (trustScore && trustScore.score >= 0) {
+      return {
+        score: trustScore.score,
+        label: trustScore.label,
+        color: getTrustColor(trustScore.label),
+        manipulationWarning: trustScore.manipulationWarning ?? false,
+      };
+    }
+    const fallback = calculateTrustScore(reportCounts);
+    if (fallback.score < 0) return { score: -1, label: "No Reports", color: colors.textMuted, manipulationWarning: false };
+    return { score: fallback.score, label: fallback.label, color: getTrustColor(fallback.label ?? ""), manipulationWarning: false };
+  }
 
-    const unsubQr = db.onDoc(["qrCodes", id], (data) => {
-      if (data) {
-        const flags = {
-          suspicious: data.suspiciousVoteFlag || false,
-          safeWeightMultiplier: data.suspiciousSafeMultiplier,
-          negativeWeightMultiplier: data.suspiciousNegMultiplier,
-        };
-        latestCollusion.current = flags;
-        setCollusionFlags(flags);
-        if (Object.keys(latestCounts.current).length > 0) {
-          setTrustScore(calculateTrustScore(latestCounts.current, latestWeighted.current, flags));
+  function getCombinedVerdict() {
+    const { offlineBlacklistMatch, paymentSafety, urlSafety, instantVerdict } = safety;
+    const trust = getTrustInfo();
+    // BinRo verified = current user owns it, OR owner has branded flag set
+    // (either from ownerInfo async fetch OR from the qrCode document itself).
+    const isQrGuardVerified =
+      data.isQrOwner === true ||
+      data.ownerInfo?.isBranded === true ||
+      (data.qrCode as any)?.isBranded === true;
+
+    if (offlineBlacklistMatch.matched) {
+      return { level: "caution" as const, label: "CAUTION ADVISED", reason: offlineBlacklistMatch.reason ?? "Potential scam pattern detected", color: colors.warning };
+    }
+
+    // Owner viewing their own QR — skip community/threat checks and confirm ownership.
+    if (data.isQrOwner === true) {
+      if (paymentSafety?.isSuspicious || urlSafety?.isSuspicious) {
+        return { level: "caution" as const, label: "CAUTION", reason: "Local analysis detected a potential risk in this QR", color: colors.warning };
+      }
+      return { level: "safe" as const, label: "YOUR QR", reason: "You created this QR code", color: colors.safe };
+    }
+
+    const isCommunityAvailable = trust.score >= 0;
+
+    if (isCommunityAvailable) {
+      if (trust.label === "Trusted" || trust.label === "Likely Safe") {
+        if (paymentSafety?.isSuspicious || urlSafety?.isSuspicious) {
+          return { level: "caution" as const, label: "CAUTION", reason: "Community trusts it, but local analysis found risks", color: colors.warning };
         }
+        if (isQrGuardVerified) {
+          return { level: "safe" as const, label: "SAFE", reason: `${Math.round(trust.score)}% community trust · BinRo Verified`, color: colors.safe };
+        }
+        return { level: "caution" as const, label: "UNVERIFIED QR", reason: `${Math.round(trust.score)}% community trust · Owner not verified by BinRo`, color: colors.warning };
       }
-    });
-
-    const unsubReports = subscribeToQrReports(id, (counts, weightedCounts) => {
-      latestCounts.current = counts;
-      latestWeighted.current = weightedCounts;
-      // Only apply Firestore snapshot to UI if there's no pending local action.
-      // While the user has an optimistic update in-flight we must not overwrite
-      // the local state — doing so causes duplicate/disappearing votes.
-      const hasPendingAction =
-        pendingReportRef.current !== committedReportRef.current || isCommittingRef.current;
-      if (!hasPendingAction) {
-        setReportCounts(counts);
-        setTrustScore(calculateTrustScore(counts, weightedCounts, latestCollusion.current));
+      if (trust.label === "Caution" || trust.label === "Uncertain") {
+        return { level: "caution" as const, label: "CAUTION", reason: "Mixed community reports", color: colors.warning };
       }
-    });
+      if (trust.label === "Dangerous" || trust.label === "Suspicious") {
+        return { level: "caution" as const, label: "CAUTION ADVISED", reason: "Low community trust score", color: colors.warning };
+      }
+    }
 
-    return () => {
-      unsubQr();
-      unsubReports();
-    };
-  }, [id, offlineMode]);
+    if (instantVerdict.level === "dangerous") {
+      return { level: "caution" as const, label: "CAUTION ADVISED", reason: instantVerdict.reason ?? "Review recommended", color: colors.warning };
+    }
+    if (instantVerdict.level === "caution") {
+      return { level: "caution" as const, label: "CAUTION", reason: instantVerdict.reason ?? "Proceed carefully", color: colors.warning };
+    }
+    // Default fallback: for external/unverified QRs we cannot guarantee safety.
+    if (!isQrGuardVerified) {
+      return { level: "caution" as const, label: "UNVERIFIED QR", reason: "Unverified source · Proceed with caution", color: colors.warning };
+    }
+    return { level: "safe" as const, label: "SAFE", reason: "No threats detected", color: colors.safe };
+  }
 
-  async function commitReport() {
-    if (!userId) return;
-    if (isCommittingRef.current) return;
+  function buildUpiUrl(parsedPayment: NonNullable<typeof safety.parsedPayment>): string | null {
+    const { vpa, recipientName, amount, currency } = parsedPayment;
+    if (!vpa) return null;
+    // Validate VPA format before building the link — prevents malformed deep links
+    const vpaRegex = /^[a-zA-Z0-9._\-]+@[a-zA-Z0-9]+$/;
+    if (!vpaRegex.test(vpa.trim())) return null;
+    // mode=02 forces payee name resolution from NPCI; mc=0000 is standard merchant code
+    let url = `upi://pay?pa=${encodeURIComponent(vpa.trim())}&mc=0000&mode=02`;
+    if (recipientName) url += `&pn=${encodeURIComponent(recipientName.trim())}`;
+    const parsedAmount = amount ? parseFloat(amount) : 0;
+    if (parsedAmount > 0) url += `&am=${parsedAmount.toFixed(2)}`;
+    // cu=INR always present — some UPI apps reject links without it
+    url += `&cu=${currency || "INR"}`;
+    return url;
+  }
 
-    const desired = pendingReportRef.current;
-    if (desired === committedReportRef.current) return;
+  async function handleOpenPayment(rawContent: string) {
+    const linksToTry: string[] = [];
+    const lower = rawContent.toLowerCase();
+    const { parsedPayment } = safety;
 
-    isCommittingRef.current = true;
-    setReportLoading(desired);
-
-    const prevCommitted = committedReportRef.current;
-
-    // When desired is null (toggle-off), pass the previously committed type so
-    // the server can match existingReport === reportType and mark it removed.
-    const reportTypeToSend = desired ?? prevCommitted ?? "remove";
-
-    try {
-      if (!user) throw new Error("Not signed in");
-      const firebaseUser = authAdapter.getCurrentUser();
-      if (!firebaseUser) throw new Error("Not signed in");
-      await submitReportViaApi(id, reportTypeToSend, () => firebaseUser.getIdToken());
-      committedReportRef.current = desired;
-      if (pendingReportRef.current !== desired) {
-        // User tapped again while we were in flight — run again
-        isCommittingRef.current = false;
-        setReportLoading(null);
-        if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
-        debounceTimerRef.current = setTimeout(commitReport, DEBOUNCE_MS);
+    if (parsedPayment?.isEmv) {
+      const { vpa, recipientName, extraFields } = parsedPayment;
+      if (vpa) {
+        const upiUrl = buildUpiUrl(parsedPayment);
+        if (upiUrl) linksToTry.push(upiUrl);
+      } else {
+        const acct = extraFields?.accountNumber;
+        const ifsc = extraFields?.ifsc;
+        const bankName = extraFields?.bankName || parsedPayment.appDisplayName || "your bank";
+        const name = recipientName || "this merchant";
+        const msg = acct && ifsc
+          ? `Open your bank app and use these details:\n\nAccount: ${acct}\nIFSC: ${ifsc}\nBeneficiary: ${name}`
+          : `To pay ${name}, open your bank app (${bankName}) and use the scan/transfer feature.`;
+        Alert.alert("Open Your Bank App", msg, [{ text: "OK" }]);
         return;
       }
-      // Commit settled. Leave optimistic counts in place — the Firestore
-      // subscription will apply the authoritative snapshot on next tick
-      // (hasPendingAction is now false so it won't be blocked).
-      // Force-applying latestCounts.current here would briefly restore the
-      // pre-removal snapshot and cause a visible flicker loop.
-      invalidateQrCache(id);
-    } catch (e: any) {
-      console.error("[Report] Error submitting report:", e?.message, e);
-      // Rollback to last confirmed server state
-      committedReportRef.current = prevCommitted;
-      pendingReportRef.current = prevCommitted;
-      setUserReport(prevCommitted);
-      // Use the latest Firestore snapshot as the ground truth (avoids stale count math)
-      const fallbackCounts = Object.keys(latestCounts.current).length > 0
-        ? latestCounts.current
-        : (() => {
-            const next = { ...latestCounts.current };
-            if (desired && desired !== prevCommitted) {
-              next[desired] = Math.max(0, (next[desired] || 0) - 1);
-            }
-            if (prevCommitted && prevCommitted !== desired) {
-              next[prevCommitted] = (next[prevCommitted] || 0) + 1;
-            }
-            return next;
-          })();
-      setReportCounts(fallbackCounts);
-      setTrustScore(calculateTrustScore(fallbackCounts, latestWeighted.current, latestCollusion.current));
-    } finally {
-      isCommittingRef.current = false;
-      setReportLoading(null);
-    }
-  }
-
-  function handleReport(type: string): boolean {
-    if (!userId) { router.push("/(auth)/login"); return false; }
-    if (isQrOwner) {
-      Alert.alert("Not Allowed", "You cannot rate your own QR code.");
-      return false;
-    }
-    if (!userReportLoadedRef.current) return false;
-
-    // Determine next desired state
-    const isToggleOff = pendingReportRef.current === type;
-    const nextReport = isToggleOff ? null : type;
-    const prevPending = pendingReportRef.current;
-
-    pendingReportRef.current = nextReport;
-
-    // Update UI immediately — no waiting
-    setUserReport(nextReport);
-    setReportCounts((prev) => {
-      const next = { ...prev };
-      if (isToggleOff) {
-        next[type] = Math.max(0, (next[type] || 0) - 1);
-      } else {
-        if (prevPending) {
-          next[prevPending] = Math.max(0, (next[prevPending] || 0) - 1);
+    } else if (parsedPayment) {
+      const cat = parsedPayment.appCategory;
+      if (cat === "upi_india" || cat === "india_wallet") {
+        if (lower.startsWith("upi://")) {
+          linksToTry.push(rawContent);
+        } else if (lower.startsWith("tez://upi/") || lower.startsWith("gpay://upi/")) {
+          linksToTry.push("upi://" + rawContent.split("upi/")[1], rawContent);
+        } else {
+          linksToTry.push(rawContent);
+          if (rawContent.includes("?")) linksToTry.push("upi://pay?" + rawContent.split("?")[1]);
+          const upiUrl = buildUpiUrl(parsedPayment);
+          if (upiUrl) linksToTry.push(upiUrl);
         }
-        next[type] = (next[type] || 0) + 1;
+      } else if (cat === "crypto") {
+        linksToTry.push(rawContent);
+      } else {
+        linksToTry.push(rawContent);
+        if (!lower.startsWith("http") && !lower.startsWith("https")) {
+          try { new URL("https://" + rawContent); linksToTry.push("https://" + rawContent); } catch {}
+        }
       }
-      setTrustScore(calculateTrustScore(next, latestWeighted.current, latestCollusion.current));
-      return next;
-    });
+    } else {
+      linksToTry.push(rawContent);
+    }
 
-    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-
-    // Debounce the actual API call so rapid taps only fire once
-    if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
-    debounceTimerRef.current = setTimeout(commitReport, DEBOUNCE_MS);
-    return true;
+    for (const link of linksToTry) {
+      try {
+        const canOpen = await Linking.canOpenURL(link);
+        if (canOpen) { await Linking.openURL(link); return; }
+      } catch {}
+    }
+    if (linksToTry.length > 0) {
+      Linking.openURL(linksToTry[0]).catch(() => {
+        const appName = parsedPayment?.appDisplayName ?? "payment app";
+        Alert.alert("App Not Found", `Could not open ${appName}. Make sure the app is installed on your device.`);
+      });
+    }
   }
 
-  return { reportCounts, trustScore, userReport, setUserReport, setTrustScore, reportLoading, handleReport };
+  async function handleOpenContent() {
+    if (!content) return;
+    // Payment types have complex UPI/EMV routing that depends on parsedPayment
+    // state — keep that handler here; route everything else through smartOpenContent.
+    if (contentType === "payment") {
+      handleOpenPayment(content);
+      return;
+    }
+    await smartOpenContent(content, contentType, data.qrCode?.templateKey ?? undefined);
+  }
+
+  async function handleCopyContent() {
+    if (!content) return;
+    await Clipboard.setStringAsync(content);
+    setCopied(true);
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    setTimeout(() => setCopied(false), 2000);
+  }
+
+  function handleToggleFavorite() {
+    if (!content) return;
+    return favorite.handleToggleFavorite(content, contentType || "text");
+  }
+
+  function handleToggleFollow() {
+    if (!content) return;
+    return follow.handleToggleFollow(content, contentType || "text");
+  }
+
+  function handleSubmitComment() {
+    return comments.handleSubmitComment();
+  }
+
+  return {
+    user,
+    ...data,
+    ...safety,
+    ...reports,
+    ...follow,
+    ...creatorFollow,
+    ...favorite,
+    ...comments,
+    ...owner,
+    copied,
+    creatorId,
+    creatorName,
+    getTrustInfo,
+    getCombinedVerdict,
+    handleOpenContent,
+    handleCopyContent,
+    handleToggleFavorite,
+    handleToggleFollow,
+    handleSubmitComment,
+  };
 }
