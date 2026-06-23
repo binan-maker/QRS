@@ -7,9 +7,8 @@ const memCache = new Map<string, string>();
 async function fetchBankNameFromIfsc(ifsc: string): Promise<string> {
   if (memCache.has(ifsc)) return memCache.get(ifsc)!;
   try {
-    const baseUrl = process.env.EXPO_PUBLIC_DOMAIN
-      ? `https://${process.env.EXPO_PUBLIC_DOMAIN}`
-      : "";
+    const raw = process.env.EXPO_PUBLIC_DOMAIN;
+    const baseUrl = raw ? `https://${raw.split(":")[0]}` : "";
     const res = await fetch(`${baseUrl}/api/v1/ifsc/${ifsc}`, {
       headers: { Accept: "application/json" },
     });

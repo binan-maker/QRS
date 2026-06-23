@@ -23,12 +23,11 @@ Notifications.setNotificationHandler({
   }),
 });
 
-const SERVER_BASE =
-  process.env.EXPO_PUBLIC_DOMAIN
-    ? `https://${process.env.EXPO_PUBLIC_DOMAIN}`
-    : __DEV__
-    ? "http://localhost:5000"
-    : "";
+const SERVER_BASE = (() => {
+  const raw = process.env.EXPO_PUBLIC_DOMAIN;
+  if (raw) { const host = raw.split(":")[0]; if (host) return `https://${host}`; }
+  return __DEV__ ? "http://localhost:5000" : "";
+})();
 
 async function post(path: string, body: object): Promise<void> {
   try {

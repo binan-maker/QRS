@@ -1,6 +1,8 @@
-const BASE_URL = process.env.EXPO_PUBLIC_DOMAIN
-  ? `https://${process.env.EXPO_PUBLIC_DOMAIN}`
-  : "http://localhost:5000";
+const BASE_URL = (() => {
+  const raw = process.env.EXPO_PUBLIC_DOMAIN;
+  if (raw) { const host = raw.split(":")[0]; if (host) return `https://${host}`; }
+  return "http://localhost:5000";
+})();
 
 export const AI_EXAMPLES = [
   { label: "WiFi QR", prompt: "WiFi for MyShop, password: Secure@123" },

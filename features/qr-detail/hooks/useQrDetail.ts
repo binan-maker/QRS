@@ -18,9 +18,11 @@ export type { QrDetail, CommentItem };
 
 // ── VPA validation ────────────────────────────────────────────────────────────
 
-const SERVER_BASE_URL = process.env.EXPO_PUBLIC_DOMAIN
-  ? `https://${process.env.EXPO_PUBLIC_DOMAIN}`
-  : __DEV__ ? "http://localhost:5000" : "";
+const SERVER_BASE_URL = (() => {
+  const raw = process.env.EXPO_PUBLIC_DOMAIN;
+  if (raw) { const host = raw.split(":")[0]; if (host) return `https://${host}`; }
+  return __DEV__ ? "http://localhost:5000" : "";
+})();
 
 async function validateVpa(
   vpa: string

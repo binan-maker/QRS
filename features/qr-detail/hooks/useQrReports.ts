@@ -9,11 +9,15 @@ import { calculateTrustScore } from "@/services/qr-detail-service";
 import { invalidateQrCache } from "@/services/cache/qr-cache";
 import { db } from "@/lib/db";
 
-const SERVER_BASE_URL = process.env.EXPO_PUBLIC_DOMAIN
-  ? `https://${process.env.EXPO_PUBLIC_DOMAIN}`
-  : __DEV__
-    ? "http://localhost:5000"
-    : "";
+// Strip any port from EXPO_PUBLIC_DOMAIN — Replit proxies HTTPS on 443, not 5000
+const SERVER_BASE_URL = (() => {
+  const raw = process.env.EXPO_PUBLIC_DOMAIN;
+  if (raw) {
+    const host = raw.split(":")[0];
+    return host ? `https://${host}` : "";
+  }
+  return __DEV__ ? "http://localhost:5000" : "";
+})();
 
 async function submitReportViaApi(
   qrId: string,

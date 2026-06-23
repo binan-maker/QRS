@@ -94,9 +94,8 @@ export async function setQrActiveState(
     if (!currentUser) throw new Error("Not authenticated");
 
     const idToken = await getIdToken(currentUser, false);
-    const BASE_URL = process.env.EXPO_PUBLIC_DOMAIN
-      ? `https://${process.env.EXPO_PUBLIC_DOMAIN}`
-      : "";
+    const raw = process.env.EXPO_PUBLIC_DOMAIN;
+    const BASE_URL = raw ? `https://${raw.split(":")[0]}` : "";
 
     const res = await fetch(`${BASE_URL}/api/qr/${encodeURIComponent(qrId)}/active`, {
       method: "PATCH",

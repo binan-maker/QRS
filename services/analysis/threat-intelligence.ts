@@ -20,8 +20,9 @@ export interface ThreatIntelligenceResult {
 
 function getBaseUrl(): string {
   if (typeof process !== "undefined" && process.env?.EXPO_PUBLIC_DOMAIN) {
-    const domain = process.env.EXPO_PUBLIC_DOMAIN;
-    return domain.startsWith("http") ? domain : `https://${domain}`;
+    const raw = process.env.EXPO_PUBLIC_DOMAIN;
+    const host = raw.startsWith("http") ? raw : raw.split(":")[0];
+    return host ? (host.startsWith("http") ? host : `https://${host}`) : "";
   }
   return "";
 }

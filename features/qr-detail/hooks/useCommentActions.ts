@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from "react";
+import { Alert } from "react-native";
 import { router } from "expo-router";
 import * as Haptics from "@/shared/utils/haptics";
 import {
