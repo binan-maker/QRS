@@ -1,5 +1,6 @@
 import { Router, type Request, type Response } from "express";
 import { admin, getAdminDb, getAdminAuth } from "../lib/firebase-admin";
+import { reportQrCode } from "@/services/report-service";
 
 export const qrRouter = Router();
 
@@ -52,6 +53,47 @@ qrRouter.patch("/:qrId/active", async (req: Request, res: Response) => {
     }
     console.error("[v1/qr/active] error:", e);
     return res.status(500).json({ error: "Failed to update QR code" });
+  }
+});
+
+// POST /api/v1/qr/:qrId/report  — submit or toggle a report (safe/scam/spam/fake/…)
+// Uses Admin SDK server-side, so Firestore security rules are bypassed.
+// Auth token is verified here to establish the caller's identity.
+qrRouter.post("/:qrId/report", async (req: Request, res: Response) => {
+  const qrId = req.params.qrId as string;
+  const { reportType } = req.body as { reportType?: string };
+
+  if (!qrId) return res.status(400).json({ error: "Missing qrId" });
+  if (!reportType || typeof reportType !== "string") {
+    return res.status(400).json({ error: "Missing or invalid reportType" });
+  }
+
+  const authHeader = req.headers["authorization"];
+  if (!authHeader?.startsWith("Bearer ")) {
+    return res.status(401).json({ error: "Unauthorized" });
+  }
+
+  const adminAuth = getAdminAuth();
+  if (!adminAuth) {
+    return res.status(503).json({ error: "Server not configured. Set FIREBASE_SERVICE_ACCOUNT_JSON." });
+  }
+
+  let uid: string;
+  let emailVerified: boolean;
+  try {
+    const decoded = await adminAuth.verifyIdToken((authHeader as string).slice(7));
+    uid = decoded.uid;
+    emailVerified = decoded.email_verified ?? false;
+  } catch (e: any) {
+    return res.status(401).json({ error: "Invalid or expired token" });
+  }
+
+  try {
+    const result = await reportQrCode(qrId, uid, reportType, emailVerified);
+    return res.json({ success: true, action: result.action });
+  } catch (e: any) {
+    console.error("[v1/qr/report] error:", e?.message ?? e);
+    return res.status(500).json({ error: e?.message ?? "Failed to submit report" });
   }
 });
 

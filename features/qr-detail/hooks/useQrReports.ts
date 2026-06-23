@@ -5,18 +5,43 @@ import * as Haptics from "@/shared/utils/haptics";
 import { useAuth } from "@/shared/contexts/AuthContext";
 import {
   subscribeToQrReports,
-  reportQrCode,
   calculateTrustScore,
   getUserQrReport,
 } from "@/lib/firestore-service";
 import { invalidateQrCache } from "@/services/cache/qr-cache";
 import { db } from "@/lib/db";
 
+const SERVER_BASE_URL = process.env.EXPO_PUBLIC_DOMAIN
+  ? `https://${process.env.EXPO_PUBLIC_DOMAIN}`
+  : __DEV__
+    ? "http://localhost:5000"
+    : "";
+
+async function submitReportViaApi(
+  qrId: string,
+  reportType: string,
+  getToken: () => Promise<string>
+): Promise<{ action: "created" | "updated" | "removed" }> {
+  const token = await getToken();
+  const res = await fetch(`${SERVER_BASE_URL}/api/v1/qr/${qrId}/report`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({ reportType }),
+  });
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}));
+    throw new Error((body as any).error ?? `HTTP ${res.status}`);
+  }
+  return res.json();
+}
+
 const DEBOUNCE_MS = 600;
 
 export function useQrReports(id: string, userId: string | null, offlineMode: boolean, isQrOwner: boolean = false) {
   const { user } = useAuth();
-  const emailVerified = user?.emailVerified ?? false;
 
   const [reportCounts, setReportCounts] = useState<Record<string, number>>({});
   const [trustScore, setTrustScore] = useState<any>(null);
@@ -124,7 +149,8 @@ export function useQrReports(id: string, userId: string | null, offlineMode: boo
     const reportTypeToSend = desired ?? prevCommitted ?? "remove";
 
     try {
-      await reportQrCode(id, userId, reportTypeToSend, emailVerified);
+      if (!user) throw new Error("Not signed in");
+      await submitReportViaApi(id, reportTypeToSend, () => user.getIdToken());
       committedReportRef.current = desired;
       if (pendingReportRef.current !== desired) {
         // User tapped again while we were in flight — run again
