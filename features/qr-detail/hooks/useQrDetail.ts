@@ -6,7 +6,14 @@ import { smartOpenContent } from "@/shared/utils/smart-open";
 import { useAuth } from "@/shared/contexts/AuthContext";
 import { useTheme } from "@/shared/contexts/ThemeContext";
 import { useQrData, type QrDetail } from "./useQrData";
-import { calculateTrustScore } from "@/services/trust-service";
+function calculateTrustScore(reportCounts: Record<string, number>): { score: number; label: string } {
+  const total = Object.values(reportCounts).reduce((a, b) => a + b, 0);
+  if (total === 0) return { score: -1, label: "No Reports" };
+  const safe = (reportCounts["safe"] ?? 0) + (reportCounts["likely_safe"] ?? 0);
+  const score = Math.round((safe / total) * 100);
+  const label = score >= 75 ? "Trusted" : score >= 50 ? "Likely Safe" : score >= 30 ? "Caution" : "Dangerous";
+  return { score, label };
+}
 import { useQrSafety } from "./useQrSafety";
 import { useQrReports } from "./useQrReports";
 import { useQrFollow } from "./useQrFollow";

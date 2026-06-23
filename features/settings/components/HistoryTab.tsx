@@ -4,8 +4,15 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { useTheme } from "@/shared/contexts/ThemeContext";
-import type { DonationRecord } from "@/services/donation-service";
 import { formatDate } from "./charity-donation-utils";
+
+interface DonationRecord {
+  id: string;
+  amount?: number;
+  donorName?: string;
+  paidAt?: any;
+  paymentId?: string;
+}
 
 interface Props {
   donations: DonationRecord[];

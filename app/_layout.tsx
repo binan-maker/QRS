@@ -76,11 +76,8 @@ function RootLayoutNav() {
       <Stack.Screen name="qr-detail/[id]" options={{ headerShown: false }} />
       <Stack.Screen name="my-qr/[id]" options={{ headerShown: false }} />
       <Stack.Screen name="my-qr-codes" options={{ headerShown: false }} />
-      <Stack.Screen name="favorites" options={{ headerShown: false }} />
       <Stack.Screen name="privacy-policy" options={{ headerShown: false }} />
       <Stack.Screen name="terms" options={{ headerShown: false }} />
-      <Stack.Screen name="trust-scores" options={{ headerShown: false }} />
-      <Stack.Screen name="how-it-works" options={{ headerShown: false }} />
       <Stack.Screen name="account-management" options={{ headerShown: false }} />
       <Stack.Screen name="privacy-settings" options={{ headerShown: false }} />
       <Stack.Screen name="profile/[username]" options={{ headerShown: false }} />

@@ -82,7 +82,7 @@ export default function SettingsScreen() {
   const goToFeedback  = useCallback(() => setSection("feedback"),  [setSection]);
   const goToComments  = useCallback(() => setSection("comments"),  [setSection]);
   const goToHistory   = useCallback(() => setSection("history"),   [setSection]);
-  const goToTrustScores = useCallback(() => safePush("/trust-scores"), []);
+  const goToTrustScores = useCallback(() => {}, []);
   const goToTerms     = useCallback(() => safePush("/terms"),      []);
   const goToPrivacy   = useCallback(() => safePush("/privacy-policy"), []);
   const goToLogin     = useCallback(() => safePush("/(auth)/login"), []);
@@ -412,7 +412,7 @@ export default function SettingsScreen() {
               icon="heart-outline"
               label="Support BinRo"
               sublabel="Buy us a coffee"
-              onPress={() => safePush("/donation")}
+              onPress={() => {}}
             />
           </View>
         </View>

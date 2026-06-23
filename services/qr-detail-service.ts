@@ -8,8 +8,21 @@ import { db } from "@/lib/db/client";
 import { getQrCodeById } from "./qr-service";
 import { getQrReportData, getUserQrReport } from "./report-service";
 import { isUserFollowingQrCode } from "./follow-service";
+// follow-service is kept as it handles QR-following (not friend-following)
 import { isUserFavorite } from "./user-service";
-import { calculateTrustScore } from "./trust-service";
+
+function calculateTrustScore(
+  reportCounts: Record<string, number>,
+  weightedCounts: Record<string, number> = {},
+  _flags?: { suspicious: boolean; safeWeightMultiplier: number; negativeWeightMultiplier: number }
+): { score: number; label: string; manipulationWarning?: boolean } {
+  const total = Object.values(reportCounts).reduce((a, b) => a + b, 0);
+  if (total === 0) return { score: -1, label: "No Reports" };
+  const safe = (reportCounts["safe"] ?? 0) + (reportCounts["likely_safe"] ?? 0);
+  const score = Math.round((safe / total) * 100);
+  const label = score >= 75 ? "Trusted" : score >= 50 ? "Likely Safe" : score >= 30 ? "Caution" : "Dangerous";
+  return { score, label };
+}
 import type { QrCodeData, TrustScore } from "./types";
 
 export interface QrDetailPayload {

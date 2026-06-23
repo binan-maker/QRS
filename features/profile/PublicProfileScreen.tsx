@@ -12,15 +12,9 @@ import { useTheme } from "@/shared/contexts/ThemeContext";
 import { useAuth } from "@/shared/contexts/AuthContext";
 import { usePublicProfile } from "@/features/profile/hooks/usePublicProfile";
 import { formatCompactNumber } from "@/shared/utils/number-format";
-import {
-  getFriendStatus,
-  sendFriendRequest,
-  cancelFriendRequest,
-  acceptFriendRequest,
-  removeFriend,
-  FriendStatus,
-} from "@/services/friend-service";
 import { publicStyles as S } from "@/features/profile/styles";
+
+type FriendStatus = "none" | "sent" | "received" | "friends";
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -69,42 +63,12 @@ export default function PublicProfileScreen() {
   const [friendLoading, setFriendLoading] = useState(false);
 
   useEffect(() => {
-    if (!user || !profile || isOwnProfile) return;
-    getFriendStatus(user.id, profile.userId).then(setFriendStatus).catch(() => {});
+    // Friend status lookup removed; feature deprecated
   }, [user?.id, profile?.userId, isOwnProfile]);
 
   const handleFriendAction = useCallback(async () => {
     if (!user) { router.push("/(auth)/login"); return; }
-    if (!profile) return;
-    setFriendLoading(true);
-    try {
-      if (friendStatus === "none") {
-        await sendFriendRequest(
-          user.id, (user as any).username ?? "", user.displayName, null,
-          profile.userId, profile.username, profile.displayName, profile.photoURL,
-        );
-        setFriendStatus("sent");
-      } else if (friendStatus === "sent") {
-        await cancelFriendRequest(user.id, profile.userId);
-        setFriendStatus("none");
-      } else if (friendStatus === "received") {
-        await acceptFriendRequest(user.id, profile.userId);
-        setFriendStatus("friends");
-      } else if (friendStatus === "friends") {
-        Alert.alert("Remove Friend", `Remove @${profile.username} from your friends?`, [
-          { text: "Cancel", style: "cancel" },
-          {
-            text: "Remove", style: "destructive",
-            onPress: async () => {
-              await removeFriend(user.id, profile.userId);
-              setFriendStatus("none");
-            },
-          },
-        ]);
-      }
-    } catch {}
-    setFriendLoading(false);
-  }, [user, profile, friendStatus]);
+  }, [user]);
 
   // ── Loading state ─────────────────────────────────────────────────────────
 
