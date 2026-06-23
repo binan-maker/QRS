@@ -3,11 +3,9 @@ import { Alert } from "react-native";
 import { router } from "expo-router";
 import * as Haptics from "@/shared/utils/haptics";
 import { useAuth } from "@/shared/contexts/AuthContext";
-import {
-  subscribeToQrReports,
-  calculateTrustScore,
-  getUserQrReport,
-} from "@/lib/firestore-service";
+import { authAdapter } from "@/lib/auth";
+import { subscribeToQrReports, getUserQrReport } from "@/lib/firestore-service";
+import { calculateTrustScore } from "@/services/qr-detail-service";
 import { invalidateQrCache } from "@/services/cache/qr-cache";
 import { db } from "@/lib/db";
 
@@ -150,7 +148,9 @@ export function useQrReports(id: string, userId: string | null, offlineMode: boo
 
     try {
       if (!user) throw new Error("Not signed in");
-      await submitReportViaApi(id, reportTypeToSend, () => user.getIdToken());
+      const firebaseUser = authAdapter.getCurrentUser();
+      if (!firebaseUser) throw new Error("Not signed in");
+      await submitReportViaApi(id, reportTypeToSend, () => firebaseUser.getIdToken());
       committedReportRef.current = desired;
       if (pendingReportRef.current !== desired) {
         // User tapped again while we were in flight — run again

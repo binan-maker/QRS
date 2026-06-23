@@ -11,7 +11,7 @@ import { isUserFollowingQrCode } from "./follow-service";
 // follow-service is kept as it handles QR-following (not friend-following)
 import { isUserFavorite } from "./user-service";
 
-function calculateTrustScore(
+export function calculateTrustScore(
   reportCounts: Record<string, number>,
   weightedCounts: Record<string, number> = {},
   _flags?: { suspicious: boolean; safeWeightMultiplier: number; negativeWeightMultiplier: number }
