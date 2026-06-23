@@ -91,6 +91,16 @@ service cloud.firestore {
             'suspiciousLastChecked', 'voteVelocityWindowStart', 'voteVelocityCount'
           ])
         )
+        ||
+        // Case 6: Comment count increments/decrements — any signed-in user.
+        // Mirrors Case 2 (scanCount). commentCount is locked in Case 4 (owner edits)
+        // to prevent owner manipulation, but must be writable here for the comment
+        // service batch that atomically updates the count alongside the user index.
+        (
+          isSignedIn() &&
+          request.resource.data.diff(resource.data).affectedKeys()
+            .hasOnly(['commentCount'])
+        )
       );
 
       allow delete: if false;

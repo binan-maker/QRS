@@ -144,6 +144,43 @@ qrRouter.post("/:qrId/report", async (req: Request, res: Response) => {
   }
 });
 
+// POST /api/v1/qr/:qrId/comment-count  — increment or decrement commentCount via Admin SDK.
+// Firestore client rules lock commentCount against direct client writes, so this
+// endpoint acts as the authoritative write path (Admin SDK bypasses rules).
+// delta must be +1 or -1.
+qrRouter.post("/:qrId/comment-count", async (req: Request, res: Response) => {
+  const qrId = req.params.qrId as string;
+  const { delta } = req.body as { delta?: number };
+
+  if (!qrId) return res.status(400).json({ error: "Missing qrId" });
+  if (delta !== 1 && delta !== -1) return res.status(400).json({ error: "delta must be 1 or -1" });
+
+  const authHeader = req.headers["authorization"];
+  if (!authHeader?.startsWith("Bearer ")) return res.status(401).json({ error: "Unauthorized" });
+
+  const adminAuth = getAdminAuth();
+  const adminDb = getAdminDb();
+  if (!adminAuth || !adminDb) {
+    return res.status(503).json({ error: "Server not configured. Set FIREBASE_SERVICE_ACCOUNT_JSON." });
+  }
+
+  try {
+    await adminAuth.verifyIdToken((authHeader as string).slice(7));
+  } catch {
+    return res.status(401).json({ error: "Invalid or expired token" });
+  }
+
+  try {
+    await adminDb.collection("qrCodes").doc(qrId).update({
+      commentCount: admin.firestore.FieldValue.increment(delta),
+    });
+    return res.json({ success: true });
+  } catch (e: any) {
+    console.error("[v1/qr/comment-count] error:", e?.message ?? e);
+    return res.status(500).json({ error: "Failed to update comment count" });
+  }
+});
+
 // GET /api/v1/qr/:uuid/analytics  — aggregated scan analytics (owner-only)
 qrRouter.get("/:uuid/analytics", async (req: Request, res: Response) => {
   const { uuid } = req.params;

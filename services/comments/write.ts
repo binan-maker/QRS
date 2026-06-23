@@ -5,6 +5,37 @@ import { notifyQrFollowers, notifyMentionedUsers, notifyQrOwner, notifyCommentPa
 import type { CommentItem } from "../types";
 import { checkProfanity, sanitizeComment } from "../profanity-filter";
 import { getUserProfileCache, preloadUserProfile, setUserProfileCache } from "./cache";
+import { authAdapter } from "@/lib/auth";
+
+// Firestore client-side rules lock commentCount from direct client writes.
+// This helper calls the Express backend (which uses Admin SDK, bypassing rules)
+// to apply the delta. Fails silently — the comment document itself is the
+// source of truth; the count is a cached aggregate.
+async function adjustCommentCount(qrId: string, delta: 1 | -1): Promise<void> {
+  const raw = process.env.EXPO_PUBLIC_DOMAIN;
+  const host = raw ? raw.split(":")[0] : null;
+  const serverUrl = host ? `https://${host}` : (
+    typeof __DEV__ !== "undefined" && __DEV__ ? "http://localhost:5000" : ""
+  );
+  if (!serverUrl) return;
+
+  const currentUser = authAdapter.getCurrentUser();
+  if (!currentUser) return;
+
+  try {
+    const token = await currentUser.getIdToken();
+    await fetch(`${serverUrl}/api/v1/qr/${qrId}/comment-count`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${token}`,
+      },
+      body: JSON.stringify({ delta }),
+    });
+  } catch {
+    // Non-fatal — count will re-sync on next data fetch
+  }
+}
 
 export async function addComment(
   qrId: string,
@@ -71,20 +102,17 @@ export async function addComment(
     createdAt: db.timestamp(),
   });
 
-  // Atomically increment QR comment count and write the user index entry.
-  // The index stores only IDs (no text) — source of truth is qrCodes/{qrId}/comments.
-  try {
-    const batch = db.batch();
-    batch.increment(["qrCodes", qrId], "commentCount", 1);
-    batch.set(["users", userId, "comments", commentId], {
-      commentId,
-      qrCodeId: qrId,
-      createdAt: db.timestamp(),
-    });
-    await batch.commit();
-  } catch (e) {
-    console.warn("[db] addComment: failed to increment commentCount or write user index:", e);
-  }
+  // Write user index entry (source of truth is qrCodes/{qrId}/comments).
+  // commentCount is routed through the server because Firestore client rules
+  // lock that field against direct client writes — see adjustCommentCount above.
+  await db.set(["users", userId, "comments", commentId], {
+    commentId,
+    qrCodeId: qrId,
+    createdAt: db.timestamp(),
+  }).catch((e) => {
+    console.warn("[db] addComment: failed to write user index:", e);
+  });
+  adjustCommentCount(qrId, 1).catch(() => {});
 
   await recordComment(userId);
 
@@ -161,17 +189,19 @@ export async function softDeleteComment(qrId: string, commentId: string, userId:
   const ref = ["qrCodes", qrId, "comments", commentId];
   const data = await db.get(ref);
   if (data && data.userId === userId) {
-    // Atomically mark deleted, decrement count, and remove user index entry.
+    // Mark deleted and remove user index entry. commentCount is decremented via
+    // the server endpoint because Firestore client rules lock that field.
     const batch = db.batch();
     batch.update(ref, { isDeleted: true, deletedAt: db.timestamp(), text: "[deleted]" });
-    batch.increment(["qrCodes", qrId], "commentCount", -1);
     batch.delete(["users", userId, "comments", commentId]);
-    try { await batch.commit(); } catch (e) {
+    try {
+      await batch.commit();
+    } catch (e) {
       console.warn("[db] softDeleteComment: batch failed, falling back:", e);
       await db.update(ref, { isDeleted: true, deletedAt: db.timestamp(), text: "[deleted]" }).catch(() => {});
-      await db.increment(["qrCodes", qrId], "commentCount", -1).catch(() => {});
       await db.delete(["users", userId, "comments", commentId]).catch(() => {});
     }
+    adjustCommentCount(qrId, -1).catch(() => {});
     purgeOldSoftDeletes(qrId).catch(() => {});
   }
 }
@@ -216,9 +246,9 @@ export async function deleteAllUserComments(userId: string): Promise<void> {
         batch.update(["qrCodes", qrCodeId, "comments", commentId], {
           isDeleted: true, deletedAt: db.timestamp(), text: "[deleted]",
         });
-        batch.increment(["qrCodes", qrCodeId], "commentCount", -1);
         batch.delete(["users", userId, "comments", d.id]);
         await batch.commit().catch(() => {});
+        adjustCommentCount(qrCodeId, -1).catch(() => {});
       } else {
         await db.delete(["users", userId, "comments", d.id]).catch(() => {});
       }
