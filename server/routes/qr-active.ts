@@ -1,20 +1,6 @@
 import type { Request, Response, Express } from "express";
-import * as admin from "firebase-admin";
-
-function getAdminApp(): admin.app.App | null {
-  try {
-    if (admin.apps.length > 0) {
-      return admin.apps[0]!;
-    }
-    const serviceAccount = process.env.FIREBASE_SERVICE_ACCOUNT_JSON;
-    if (!serviceAccount) return null;
-    return admin.initializeApp({
-      credential: admin.credential.cert(JSON.parse(serviceAccount)),
-    });
-  } catch {
-    return null;
-  }
-}
+import { verifyFirebaseIdToken } from "../lib/verify-firebase-token";
+import { fsGet, fsUpdate } from "../lib/firestore-rest";
 
 export function registerQrActiveRoute(app: Express) {
   app.patch("/api/qr/:qrId/active", async (req: Request, res: Response) => {
@@ -34,27 +20,27 @@ export function registerQrActiveRoute(app: Express) {
     }
     const idToken = authHeader.slice(7);
 
-    const adminApp = getAdminApp();
-    if (!adminApp) {
-      return res.status(503).json({
-        error: "Server not configured for this operation. Set FIREBASE_SERVICE_ACCOUNT_JSON.",
-      });
+    let userId: string;
+    try {
+      const decoded = await verifyFirebaseIdToken(idToken);
+      userId = decoded.uid;
+    } catch (err: any) {
+      if (
+        err?.code === "auth/id-token-expired" ||
+        err?.code === "auth/id-token-revoked"
+      ) {
+        return res.status(401).json({ error: "Invalid or expired auth token" });
+      }
+      return res.status(401).json({ error: "Invalid auth token" });
     }
 
     try {
-      const decoded = await admin.auth(adminApp).verifyIdToken(idToken);
-      const userId = decoded.uid;
-
-      const db = admin.firestore(adminApp);
-      const docRef = db.collection("qrCodes").doc(qrId);
-      const docSnap = await docRef.get();
-
-      if (!docSnap.exists) {
+      const doc = await fsGet(`qrCodes/${qrId}`, idToken);
+      if (!doc.exists) {
         return res.status(404).json({ error: "QR code not found" });
       }
 
-      const data = docSnap.data()!;
-
+      const data = doc.data!;
       if (data.qrType === "government") {
         return res.status(403).json({ error: "Government QR codes cannot be modified" });
       }
@@ -68,21 +54,11 @@ export function registerQrActiveRoute(app: Express) {
           ? deactivationMessage.trim().slice(0, 100) || null
           : null;
 
-      await docRef.update({
-        isActive,
-        deactivationMessage: msg,
-      });
+      await fsUpdate(`qrCodes/${qrId}`, { isActive, deactivationMessage: msg }, idToken);
 
       return res.json({ success: true });
     } catch (err: any) {
-      console.error("[qr-active] error:", err?.code, err?.message);
-      if (
-        err?.code === "auth/id-token-expired" ||
-        err?.code === "auth/argument-error" ||
-        err?.code === "auth/id-token-revoked"
-      ) {
-        return res.status(401).json({ error: "Invalid or expired auth token" });
-      }
+      console.error("[qr-active] error:", err?.message);
       return res.status(500).json({ error: err?.message || "Update failed" });
     }
   });
