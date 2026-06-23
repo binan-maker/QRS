@@ -33,7 +33,8 @@ export default function WebsiteCard({ content, onOpenContent, isDeactivated, hid
   const site          = parseWebsite(content);
   const hasOpenAction = !isDeactivated && !hideOpenAction;
 
-  const domainOnly = site?.hostname ?? content.replace(/^https?:\/\/(www\.)?/, "").split("/")[0];
+  const rawHost = site?.hostname ?? content.replace(/^https?:\/\/(www\.)?/, "").split("/")[0];
+  const domainOnly = rawHost.replace(/^www\./, "");
   const initial    = domainInitial(domainOnly);
 
   React.useEffect(() => {
@@ -135,7 +136,7 @@ export default function WebsiteCard({ content, onOpenContent, isDeactivated, hid
             </View>
             <Text
               style={[styles.urlText, { color: isDark ? "#CBD5E1" : "#1E40AF" }]}
-              numberOfLines={2}
+              selectable
             >
               {site?.fullUrl ?? content}
             </Text>
@@ -173,15 +174,15 @@ export default function WebsiteCard({ content, onOpenContent, isDeactivated, hid
 
 const openBtnStyles = StyleSheet.create({
   btn: {
-    borderRadius:   14,
-    paddingVertical: 14,
+    borderRadius:   12,
+    paddingVertical: 12,
     alignItems:      "center",
     justifyContent:  "center",
   },
   label: {
-    fontSize:      15,
+    fontSize:      13,
     fontFamily:    "Inter_700Bold",
     color:         "#fff",
-    letterSpacing: 0.3,
+    letterSpacing: 0.2,
   },
 });
