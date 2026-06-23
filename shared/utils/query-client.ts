@@ -18,13 +18,17 @@ function isValidHost(host: string | undefined): host is string {
 
 export function getApiUrl(): string {
   const explicitDomain = process.env.EXPO_PUBLIC_DOMAIN;
-  if (explicitDomain && isValidHost(explicitDomain.split(":")[0])) {
-    return new URL(`https://${explicitDomain}`).href;
+  if (explicitDomain) {
+    // Strip any trailing port — Replit proxies HTTPS on 443, not 5000
+    const host = explicitDomain.split(":")[0];
+    if (isValidHost(host)) {
+      return `https://${host}/`;
+    }
   }
 
   const packagerHost = process.env.REACT_NATIVE_PACKAGER_HOSTNAME;
   if (isValidHost(packagerHost)) {
-    return `https://${packagerHost}:5000/`;
+    return `https://${packagerHost}/`;
   }
 
   if (Platform.OS !== "web") {
