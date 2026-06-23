@@ -148,41 +148,69 @@ export async function toggleCommentLike(
 ): Promise<{ likes: number; dislikes: number }> {
   const likePath = ["qrCodes", qrId, "comments", commentId, "likes", userId];
   const commentPath = ["qrCodes", qrId, "comments", commentId];
-  const existing = await db.get(likePath);
-  const commentData = await db.get(commentPath);
+
+  // Parallelise the two independent reads to reduce round-trip latency.
+  const [existing, commentData] = await Promise.all([
+    db.get(likePath),
+    db.get(commentPath),
+  ]);
+
   const authorId: string | null = commentData?.userId || null;
-  let likeDelta = 0;
+
+  // Baseline counts from the pre-read snapshot. We compute the final values
+  // arithmetically instead of doing a post-write Firestore read, which can
+  // return a stale cached value (likeCount: 0) before the server-side
+  // FieldValue.increment result propagates — causing the optimistic count to
+  // visually snap back to 0 ~2 s after the tap.
+  let finalLikes    = commentData?.likeCount    ?? 0;
+  let finalDislikes = commentData?.dislikeCount ?? 0;
+  let likeDelta     = 0;
 
   if (existing) {
     const wasLike = existing.isLike;
     if (wasLike === isLike) {
+      // Same button tapped again → toggle OFF
       const batch = db.batch();
       batch.delete(likePath);
       batch.increment(commentPath, isLike ? "likeCount" : "dislikeCount", -1);
       await batch.commit();
-      if (isLike) likeDelta = -1;
+      if (isLike) {
+        likeDelta = -1;
+        finalLikes = Math.max(0, finalLikes - 1);
+      } else {
+        finalDislikes = Math.max(0, finalDislikes - 1);
+      }
     } else {
+      // Switched from like→dislike or dislike→like
       const batch = db.batch();
       batch.set(likePath, { isLike, createdAt: db.timestamp() });
-      batch.increment(commentPath, "likeCount", isLike ? 1 : -1);
+      batch.increment(commentPath, "likeCount",    isLike ? 1 : -1);
       batch.increment(commentPath, "dislikeCount", isLike ? -1 : 1);
       await batch.commit();
-      likeDelta = isLike ? 1 : -1;
+      likeDelta     = isLike ? 1 : -1;
+      finalLikes    = Math.max(0, finalLikes    + (isLike ?  1 : -1));
+      finalDislikes = Math.max(0, finalDislikes + (isLike ? -1 :  1));
     }
   } else {
+    // First interaction on this comment
     const batch = db.batch();
     batch.set(likePath, { isLike, createdAt: db.timestamp() });
     batch.increment(commentPath, isLike ? "likeCount" : "dislikeCount", 1);
     await batch.commit();
-    if (isLike) likeDelta = 1;
+    if (isLike) {
+      likeDelta = 1;
+      finalLikes += 1;
+    } else {
+      finalDislikes += 1;
+    }
   }
 
   if (authorId && authorId !== userId && likeDelta !== 0) {
     try { await db.increment(["users", authorId], "totalLikesReceived", likeDelta); } catch {}
   }
 
-  const updated = await db.get(commentPath);
-  return updated ? { likes: updated.likeCount || 0, dislikes: updated.dislikeCount || 0 } : { likes: 0, dislikes: 0 };
+  // Return the arithmetically-computed counts — no post-write read needed.
+  return { likes: finalLikes, dislikes: finalDislikes };
 }
 
 export async function softDeleteComment(qrId: string, commentId: string, userId: string): Promise<void> {
