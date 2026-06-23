@@ -308,7 +308,7 @@ const QR_REGISTRY: Record<string, QrTypeDefinition> = {
     getSubtitle: () => null,
   },
   paypal: {
-    key: "paypal", label: "PayPal", icon: "wallet-outline",
+    key: "paypal", label: "PayPal", icon: "logo-paypal",
     color: "#003087", bg: "#EFF6FF", gradient: G.paypal, category: "payment",
     openLabel: "Pay via PayPal", appScheme: "paypal://", webFallback: true,
     getDisplayLabel: (c) => {
@@ -318,7 +318,7 @@ const QR_REGISTRY: Record<string, QrTypeDefinition> = {
     getSubtitle: () => null,
   },
   venmo: {
-    key: "venmo", label: "Venmo", icon: "people-outline",
+    key: "venmo", label: "Venmo", icon: "logo-venmo",
     color: "#008CFF", bg: "#EFF6FF", gradient: G.venmo, category: "payment",
     openLabel: "Pay via Venmo", appScheme: "venmo://", webFallback: true,
     getDisplayLabel: (c) => {
@@ -392,7 +392,7 @@ const QR_REGISTRY: Record<string, QrTypeDefinition> = {
     getSubtitle: () => null,
   },
   telegram: {
-    key: "telegram", label: "Telegram", icon: "send-outline",
+    key: "telegram", label: "Telegram", icon: "paper-plane-outline",
     color: "#0088CC", bg: "#EFF6FF", gradient: G.telegram, category: "social",
     openLabel: "Open Telegram", appScheme: "tg://", webFallback: true,
     getDisplayLabel: (c) => {
@@ -412,7 +412,7 @@ const QR_REGISTRY: Record<string, QrTypeDefinition> = {
     getSubtitle: () => null,
   },
   spotify: {
-    key: "spotify", label: "Spotify", icon: "musical-notes-outline",
+    key: "spotify", label: "Spotify", icon: "headset-outline",
     color: "#1DB954", bg: "#F0FDF4", gradient: G.spotify, category: "social",
     openLabel: "Play on Spotify", appScheme: "spotify://", webFallback: true,
     getDisplayLabel: (c) => {
@@ -432,7 +432,7 @@ const QR_REGISTRY: Record<string, QrTypeDefinition> = {
     getSubtitle: () => null,
   },
   tiktok: {
-    key: "tiktok", label: "TikTok", icon: "musical-note-outline",
+    key: "tiktok", label: "TikTok", icon: "logo-tiktok",
     color: "#374151", bg: "#F9FAFB", gradient: G.tiktok, category: "social",
     openLabel: "Open TikTok", appScheme: "tiktok://", webFallback: true,
     getDisplayLabel: (c) => {
@@ -443,7 +443,7 @@ const QR_REGISTRY: Record<string, QrTypeDefinition> = {
     getSubtitle: () => null,
   },
   snapchat: {
-    key: "snapchat", label: "Snapchat", icon: "camera-outline",
+    key: "snapchat", label: "Snapchat", icon: "logo-snapchat",
     color: "#D4A000", bg: "#FEFCE8", gradient: G.snapchat, category: "social",
     openLabel: "Open Snapchat", appScheme: "snapchat://", webFallback: true,
     getDisplayLabel: (c) => !c.includes("snapchat.com")
@@ -548,8 +548,8 @@ const QR_REGISTRY: Record<string, QrTypeDefinition> = {
 
   // ── Secure / Special ───────────────────────────────────────────────────────
   encrypted: {
-    key: "encrypted", label: "Encrypted", icon: "key-outline",
-    color: "#D97706", bg: "#FFFBEB", gradient: G.payment, category: "text",
+    key: "encrypted", label: "Encrypted", icon: "finger-print-outline",
+    color: "#6D28D9", bg: "#F5F3FF", gradient: G.purple, category: "text",
     openLabel: "Open",
     getDisplayLabel: () => "Encrypted Data",
     getSubtitle: () => null,
@@ -567,7 +567,7 @@ const QR_REGISTRY: Record<string, QrTypeDefinition> = {
 
   // ── Media / Docs / Other ───────────────────────────────────────────────────
   media: {
-    key: "media", label: "Media", icon: "play-circle-outline",
+    key: "media", label: "Media", icon: "film-outline",
     color: "#7C3AED", bg: "#F5F3FF", gradient: G.purple, category: "web",
     openLabel: "Play Media",
     getDisplayLabel: (c) => _host(c),
