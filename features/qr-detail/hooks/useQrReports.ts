@@ -20,6 +20,7 @@ export function useQrReports(
   const [weightedCounts, setWeightedCounts] = useState<Record<string, number>>({});
   const [userReport, setUserReport] = useState<string | null>(null);
   const [reportLoading, setReportLoading] = useState(false);
+  const [reportError, setReportError] = useState<string | null>(null);
   const [collusionFlags, setCollusionFlags] = useState<{
     suspicious: boolean;
     safeWeightMultiplier?: number;
@@ -80,6 +81,8 @@ export function useQrReports(
       if (isQrOwner) return false;
       if (reportLoading) return false;
 
+      setReportError(null);
+
       // Optimistic update
       const prev = userReport;
       const isRemoving = prev === type;
@@ -98,8 +101,8 @@ export function useQrReports(
           committedReportRef.current = isRemoving ? null : type;
           invalidateQrCache(id);
         })
-        .catch(() => {
-          // Roll back on failure
+        .catch((err: unknown) => {
+          // Roll back optimistic update
           setUserReport(committedReportRef.current);
           setReportCounts((counts) => {
             const next = { ...counts };
@@ -107,6 +110,12 @@ export function useQrReports(
             if (prev) next[prev] = (next[prev] ?? 0) + 1;
             return next;
           });
+          // Surface the error so the screen can show a toast
+          const msg =
+            err instanceof Error
+              ? err.message
+              : "Could not submit your vote. Please try again.";
+          setReportError(msg);
         })
         .finally(() => setReportLoading(false));
 
@@ -120,6 +129,7 @@ export function useQrReports(
     userReport,
     trustScore,
     reportLoading,
+    reportError,
     handleReport,
   };
 }

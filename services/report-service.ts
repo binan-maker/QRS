@@ -128,8 +128,10 @@ export async function reportQrCode(
     return { action: "removed" };
   }
 
-  // Check eligibility — throws with descriptive error if not allowed
-  const { weight: eligibilityWeight } = await checkReportEligibility(userId, qrId, emailVerified, qrOwnerId, false);
+  // Switching an existing vote should not count against rate limits.
+  // isChangingReport=true bypasses the per-QR and hourly counters in checkReportEligibility.
+  const isChangingReport = existingReport !== null;
+  const { weight: eligibilityWeight } = await checkReportEligibility(userId, qrId, emailVerified, qrOwnerId, isChangingReport);
 
   // SECURITY FIX: Get server-authoritative weight (prevents client manipulation)
   const { weight, tier, valid } = await getServerAuthoritativeWeight(userId, emailVerified, eligibilityWeight);
@@ -153,8 +155,8 @@ export async function reportQrCode(
     }
   } catch {}
 
-  if (existingReport !== null) {
-    // Different type → update the existing report doc (also clears userRemoved if set)
+  if (isChangingReport) {
+    // Different type → update the existing report doc (also clears userRemoved if set).
     await db.update(["qrCodes", qrId, "reports", userId], {
       reportType,
       weight,

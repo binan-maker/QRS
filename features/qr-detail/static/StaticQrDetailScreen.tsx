@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef } from "react";
+import { useState, useCallback, useRef, useEffect } from "react";
 import { useNavHide } from "@/shared/utils/use-nav-hide";
 import {
   View, Text, Pressable, ScrollView, RefreshControl,
@@ -103,6 +103,10 @@ export default function StaticQrDetailScreen({ id, ownerDocId, hint }: Props) {
   const q = useQrDetail(id, hint);
   const { isOnline } = useNetworkStatus();
   const [offlineToastKey, setOfflineToastKey] = useState(0);
+
+  useEffect(() => {
+    if (q.reportError) showToast(q.reportError, "alert-circle-outline");
+  }, [q.reportError]);
 
   const hasOwner  = !!q.ownerInfo?.ownerId;
   const trust     = q.getTrustInfo();

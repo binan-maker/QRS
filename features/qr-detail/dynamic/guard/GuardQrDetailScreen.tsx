@@ -89,6 +89,10 @@ export default function GuardQrDetailScreen({ id, guardUuid, ownerDocId, hint }:
   const { isOnline } = useNetworkStatus();
   const [offlineToastKey, setOfflineToastKey] = useState(0);
 
+  useEffect(() => {
+    if (q.reportError) showToast(q.reportError, "alert-circle-outline");
+  }, [q.reportError]);
+
   const recentlyChanged = guardLink?.destinationChangedAt
     ? Date.now() - new Date(guardLink.destinationChangedAt).getTime() < 24 * 60 * 60 * 1000
     : false;

@@ -92,6 +92,10 @@ export default function StandardQrDetailScreen({ id, standardUuid, ownerDocId, h
   const { isOnline } = useNetworkStatus();
   const [offlineToastKey, setOfflineToastKey] = useState(0);
 
+  useEffect(() => {
+    if (q.reportError) showToast(q.reportError, "alert-circle-outline");
+  }, [q.reportError]);
+
   // Derive content from the database record — NEVER from the scanned guard URL
   const effectiveContent = standardData?.rawContent ?? "";
   const effectiveContentType = standardData
