@@ -210,10 +210,10 @@ export function useRecentScans() {
 
   return {
     recentScans,
-    // Show skeleton until BOTH local scans have been read from AsyncStorage
-    // AND cloud data has arrived (from disk pre-warm or live fetch).
-    // This prevents the flash of 2 local-only cards before cloud data arrives.
-    isLoading: !localLoaded || (!!user?.id && cloudPending && (!cloudScansRaw || cloudScansRaw.length === 0)),
+    // Show skeleton only until local AsyncStorage is ready.
+    // Cloud data merges in silently once it arrives — no need to block the
+    // entire list on a Firestore round-trip.
+    isLoading: !localLoaded,
     refreshing,
     onRefresh,
     deleteScan,

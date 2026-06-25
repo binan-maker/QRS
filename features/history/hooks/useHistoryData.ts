@@ -303,11 +303,9 @@ export function useHistoryData(activeFilters: ActiveFilters) {
     displayItems,
     refreshing,
     setRefreshing,
-    // True until local scans AND pre-warm are done.
-    // Additionally, if pre-warm found NO cached cloud data we keep the
-    // skeleton showing until the live Firestore fetch completes — this
-    // prevents the flash of 2–3 local-only cards appearing before cloud data
-    // arrives, which looked like "all my history was deleted".
-    bootstrapping: !localLoaded || !preWarmDone || (!hadCachedCloud && cloudLoading),
+    // Show skeleton only until local data + pre-warm cache seed are done.
+    // Cloud data loads in the background and merges automatically — blocking
+    // on cloudLoading causes a multi-second blank screen on first install.
+    bootstrapping: !localLoaded || !preWarmDone,
   };
 }

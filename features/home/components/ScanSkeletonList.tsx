@@ -10,17 +10,17 @@ function SkeletonCard({ index }: { index: number }) {
   useEffect(() => {
     Animated.loop(
       Animated.sequence([
-        Animated.timing(shimmer, { toValue: 1, duration: 1000, useNativeDriver: true }),
-        Animated.timing(shimmer, { toValue: 0, duration: 1000, useNativeDriver: true }),
+        Animated.timing(shimmer, { toValue: 1, duration: 900, useNativeDriver: true }),
+        Animated.timing(shimmer, { toValue: 0, duration: 900, useNativeDriver: true }),
       ])
     ).start();
   }, []);
 
-  const opacity = shimmer.interpolate({ inputRange: [0, 1], outputRange: [0.4, 0.75] });
+  const opacity = shimmer.interpolate({ inputRange: [0, 1], outputRange: [0.55, 1] });
 
-  const cardBg    = isDark ? "rgba(255,255,255,0.04)" : "rgba(255,255,255,0.72)";
-  const cardBorder = isDark ? "rgba(255,255,255,0.09)" : "rgba(0,82,204,0.07)";
-  const boneColor = isDark ? "rgba(255,255,255,0.09)" : "rgba(0,0,0,0.07)";
+  const cardBg     = isDark ? "rgba(255,255,255,0.08)" : "#ffffff";
+  const cardBorder = isDark ? "rgba(255,255,255,0.13)" : "rgba(0,0,0,0.08)";
+  const boneColor  = isDark ? "rgba(255,255,255,0.16)" : "rgba(0,0,0,0.10)";
 
   const bone = (style: object) => (
     <Animated.View style={[{ backgroundColor: boneColor, borderRadius: 8, opacity }, style]} />
