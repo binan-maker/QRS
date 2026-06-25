@@ -11,6 +11,14 @@ import {
   deleteUserScan,
   deleteAllUserScans,
 } from "@/lib/firestore-service";
+import {
+  getCachedFollowing,
+  setCachedFollowing,
+  invalidateFollowingCache,
+  getCachedComments,
+  setCachedComments,
+  invalidateCommentsCache,
+} from "@/services/cache/qr-cache";
 
 interface UseDataSettingsOptions {
   userId: string | undefined;
@@ -39,22 +47,40 @@ export function useDataSettings({ userId }: UseDataSettingsOptions) {
     setMyHistory([]);
   }, []);
 
-  const loadFollowing = useCallback(async () => {
+  const loadFollowing = useCallback(async (forceRefresh = false) => {
     if (!userId) return;
     setFollowingLoading(true);
     try {
+      if (!forceRefresh) {
+        const cached = await getCachedFollowing<any[]>(userId);
+        if (cached) {
+          setFollowingList(cached);
+          setFollowingLoading(false);
+          return;
+        }
+      }
       const list = await getUserFollowing(userId);
       setFollowingList(list);
+      setCachedFollowing<any[]>(userId, list).catch(() => {});
     } catch {}
     setFollowingLoading(false);
   }, [userId]);
 
-  const loadMyComments = useCallback(async () => {
+  const loadMyComments = useCallback(async (forceRefresh = false) => {
     if (!userId) return;
     setCommentsLoading(true);
     try {
+      if (!forceRefresh) {
+        const cached = await getCachedComments<any[]>(userId);
+        if (cached) {
+          setMyComments(cached);
+          setCommentsLoading(false);
+          return;
+        }
+      }
       const list = await getUserComments(userId);
       setMyComments(list);
+      setCachedComments<any[]>(userId, list).catch(() => {});
     } catch {}
     setCommentsLoading(false);
   }, [userId]);
@@ -109,7 +135,11 @@ export function useDataSettings({ userId }: UseDataSettingsOptions) {
       {
         text: "Delete", style: "destructive",
         onPress: async () => {
-          setMyComments((prev) => prev.filter((c) => c.id !== commentId));
+          setMyComments((prev) => {
+            const next = prev.filter((c) => c.id !== commentId);
+            if (userId) setCachedComments<any[]>(userId, next).catch(() => {});
+            return next;
+          });
           try {
             if (userId) await softDeleteComment(qrCodeId, commentId, userId);
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
@@ -130,17 +160,15 @@ export function useDataSettings({ userId }: UseDataSettingsOptions) {
         {
           text: "Delete All", style: "destructive",
           onPress: async () => {
-            // FIX (rollback closure): read from ref so rollback always restores
-            // the list as it existed at the moment the user pressed Delete —
-            // not the potentially stale snapshot captured when the callback
-            // was last created by useCallback.
             const snapshot = myCommentsRef.current;
             setMyComments([]);
+            if (userId) setCachedComments<any[]>(userId, []).catch(() => {});
             try {
               if (userId) await deleteAllUserComments(userId);
               Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
             } catch {
               setMyComments(snapshot);
+              if (userId) setCachedComments<any[]>(userId, snapshot).catch(() => {});
               Alert.alert("Error", "Could not delete all comments.");
             }
           },

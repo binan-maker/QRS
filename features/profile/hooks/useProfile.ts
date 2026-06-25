@@ -23,6 +23,8 @@ import {
   invalidateUserCache,
   getCachedProfileExtras,
   setCachedProfileExtras,
+  getCachedGeneratedQrs,
+  setCachedGeneratedQrs,
 } from "@/services/cache/qr-cache";
 
 const STATS_STALE_MS  = 3 * 60 * 1000;
@@ -132,6 +134,8 @@ export function useProfile() {
         if (cached) {
           setBio(cached.bio || "");
           lastExtrasFetchRef.current = cached.fetchedAt;
+          inFlightExtrasRef.current = false;
+          return; // cache is valid — no Firestore round-trip needed
         }
       }
       const [bioRes, doc] = await Promise.all([
@@ -200,14 +204,26 @@ export function useProfile() {
         qrSubscribedUidRef.current = null;
       }
 
+      // Seed from cache first so the QR stack appears instantly
+      const uid = user.id;
+      if (!hasLoadedQrsRef.current && myQrCodesRef.current.length === 0) {
+        getCachedGeneratedQrs<GeneratedQrItem[]>(uid).then((cached) => {
+          if (cached && cached.length > 0 && !hasLoadedQrsRef.current) {
+            setMyQrCodes(cached);
+          }
+        }).catch(() => {});
+      }
+
       setMyQrLoading(!hasLoadedQrsRef.current && myQrCodesRef.current.length === 0);
-      const unsub = subscribeToUserGeneratedQrs(user.id, (items) => {
+      const unsub = subscribeToUserGeneratedQrs(uid, (items) => {
         setMyQrCodes(items);
         hasLoadedQrsRef.current = true;
         setMyQrLoading(false);
+        // Keep cache warm so next visit is instant
+        setCachedGeneratedQrs<GeneratedQrItem[]>(uid, items).catch(() => {});
       });
       qrUnsubscribeRef.current = unsub;
-      qrSubscribedUidRef.current = user.id;
+      qrSubscribedUidRef.current = uid;
     }, [user?.id])
   );
 

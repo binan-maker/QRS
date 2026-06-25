@@ -141,3 +141,34 @@ export function invalidateHistoryCache(userId: string): void {
   invalidateCache(`favorites_${userId}`);
   invalidateCache(`scan_stats_${userId}`);
 }
+
+const TTL_FOLLOWING   = 5  * 60 * 1000;
+const TTL_COMMENTS    = 5  * 60 * 1000;
+const TTL_GENERATED_QRS = 2 * 60 * 1000;
+
+export async function getCachedFollowing<T>(userId: string): Promise<T | null> {
+  return getCache<T>(`following_${userId}`);
+}
+export async function setCachedFollowing<T>(userId: string, value: T): Promise<void> {
+  return setCache<T>(`following_${userId}`, value, TTL_FOLLOWING);
+}
+export function invalidateFollowingCache(userId: string): void {
+  invalidateCache(`following_${userId}`);
+}
+
+export async function getCachedComments<T>(userId: string): Promise<T | null> {
+  return getCache<T>(`comments_${userId}`);
+}
+export async function setCachedComments<T>(userId: string, value: T): Promise<void> {
+  return setCache<T>(`comments_${userId}`, value, TTL_COMMENTS);
+}
+export function invalidateCommentsCache(userId: string): void {
+  invalidateCache(`comments_${userId}`);
+}
+
+export async function getCachedGeneratedQrs<T>(userId: string): Promise<T | null> {
+  return getCache<T>(`generated_qrs_${userId}`);
+}
+export async function setCachedGeneratedQrs<T>(userId: string, value: T): Promise<void> {
+  return setCache<T>(`generated_qrs_${userId}`, value, TTL_GENERATED_QRS);
+}

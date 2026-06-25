@@ -43,9 +43,9 @@ user, section, setSection,
 feedbackText, setFeedbackText,
 feedbackEmail, setFeedbackEmail,
 feedbackSubmitting, feedbackDone,
-followingList, followingLoading,
-myComments, commentsLoading,
-myHistory, historyLoading,
+followingList, followingLoading, loadFollowing,
+myComments, commentsLoading, loadMyComments,
+myHistory, historyLoading, loadMyHistory,
 deleteConfirmText, setDeleteConfirmText,
 startupScreen, setStartupScreen,
 handleSignOut, handleClearData,
@@ -184,7 +184,7 @@ paddingTop={subHeaderH}
 />
 )}
 {section === "following" && (
-<FollowingSection loading={followingLoading} list={followingList} onScroll={onSubScroll} paddingTop={subHeaderH} />
+<FollowingSection loading={followingLoading} list={followingList} onScroll={onSubScroll} paddingTop={subHeaderH} onRefresh={() => loadFollowing(true)} />
 )}
 {section === "comments" && (
 <CommentsSection
@@ -194,6 +194,7 @@ onDelete={handleDeleteComment}
 onDeleteAll={handleDeleteAllComments}
 onScroll={onSubScroll}
 paddingTop={subHeaderH}
+onRefresh={() => loadMyComments(true)}
 />
 )}
 {section === "history" && (

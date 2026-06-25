@@ -1,5 +1,5 @@
-import React, { useCallback, useMemo } from "react";
-import { View, Text, Pressable, Platform } from "react-native";
+import React, { useCallback, useMemo, useState } from "react";
+import { View, Text, Pressable, Platform, RefreshControl } from "react-native";
 import { FlashList as _FlashList } from "@shopify/flash-list";
 const FlashList = _FlashList as any;
 import { Ionicons } from "@expo/vector-icons";
@@ -15,13 +15,22 @@ interface Props {
   onDeleteAll?: () => void;
   onScroll?: (e: any) => void;
   paddingTop?: number;
+  onRefresh?: () => void;
 }
 
-export default function CommentsSection({ loading, comments, onDelete, onDeleteAll, onScroll, paddingTop = 0 }: Props) {
+export default function CommentsSection({ loading, comments, onDelete, onDeleteAll, onScroll, paddingTop = 0, onRefresh }: Props) {
   const insets = useSafeAreaInsets();
   const { colors } = useTheme();
   const styles = useMemo(() => makeSettingsStyles(colors), [colors]);
   const bottomPad = Platform.OS === "web" ? 34 + 84 : insets.bottom + 84;
+  const [refreshing, setRefreshing] = useState(false);
+
+  const handleRefresh = useCallback(async () => {
+    if (!onRefresh) return;
+    setRefreshing(true);
+    await onRefresh();
+    setRefreshing(false);
+  }, [onRefresh]);
 
   const renderItem = useCallback(({ item }: { item: any }) => (
     <View style={styles.myCommentItem}>
@@ -87,6 +96,11 @@ export default function CommentsSection({ loading, comments, onDelete, onDeleteA
       renderItem={renderItem}
       onScroll={onScroll}
       scrollEventThrottle={16}
+      refreshControl={
+        onRefresh ? (
+          <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} tintColor="#6366F1" />
+        ) : undefined
+      }
     />
   );
 }

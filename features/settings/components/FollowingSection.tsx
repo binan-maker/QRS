@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { View, Text, Pressable, StyleSheet } from "react-native";
+import { View, Text, Pressable, StyleSheet, RefreshControl } from "react-native";
 import { FlashList as _FlashList } from "@shopify/flash-list";
 const FlashList = _FlashList as any;
 import { Ionicons } from "@expo/vector-icons";
@@ -55,13 +55,22 @@ interface Props {
   list: any[];
   onScroll?: (e: any) => void;
   paddingTop?: number;
+  onRefresh?: () => void;
 }
 
-export default function FollowingSection({ loading, list, onScroll, paddingTop = 0 }: Props) {
+export default function FollowingSection({ loading, list, onScroll, paddingTop = 0, onRefresh }: Props) {
   const insets = useSafeAreaInsets();
   const { colors, isDark } = useTheme();
   const [enriched, setEnriched] = useState<EnrichedItem[]>([]);
   const [enriching, setEnriching] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
+
+  const handleRefresh = useCallback(async () => {
+    if (!onRefresh) return;
+    setRefreshing(true);
+    await onRefresh();
+    setRefreshing(false);
+  }, [onRefresh]);
 
   useEffect(() => {
     if (list.length === 0) { setEnriched([]); return; }
@@ -215,6 +224,11 @@ export default function FollowingSection({ loading, list, onScroll, paddingTop =
       showsVerticalScrollIndicator={false}
       onScroll={onScroll}
       scrollEventThrottle={16}
+      refreshControl={
+        onRefresh ? (
+          <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} tintColor="#6366F1" />
+        ) : undefined
+      }
       ListHeaderComponent={
         <Text style={{ fontSize: 12, fontFamily: "Inter_500Medium", color: colors.textMuted, marginBottom: 10 }}>
           {enriched.length} {enriched.length === 1 ? "QR code" : "QR codes"} followed
