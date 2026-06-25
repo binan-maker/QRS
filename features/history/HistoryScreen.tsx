@@ -49,6 +49,7 @@ function HistoryScreen() {
     loadingMore,
     cloudLoading,
     cloudError,
+    bootstrapping,
     onRefresh,
     handleEndReached,
     deleteItem,
@@ -188,35 +189,41 @@ function HistoryScreen() {
         </View>
       </Reanimated.View>
 
-      <FlashList
-        data={listRows}
-        renderItem={renderItem}
-        keyExtractor={keyExtractor}
-        getItemType={getItemType}
-        estimatedItemSize={88}
-        contentContainerStyle={[
-          styles.list,
-          { paddingTop: headerH, paddingBottom: Platform.OS === "web" ? 34 + 84 : insets.bottom + 84 },
-        ]}
-        showsVerticalScrollIndicator={false}
-        keyboardShouldPersistTaps="handled"
-        onScroll={handleScroll}
-        scrollEventThrottle={16}
-        refreshControl={
-          !searchVisible ? (
-            <RefreshControl
-              refreshing={refreshing}
-              onRefresh={onRefresh}
-              tintColor={colors.primary}
-              colors={[colors.primary]}
-            />
-          ) : undefined
-        }
-        onEndReached={handleEndReached}
-        onEndReachedThreshold={0.4}
-        ListFooterComponent={renderFooter}
-        ListEmptyComponent={renderEmpty}
-      />
+      {bootstrapping ? (
+        <View style={[styles.list, { paddingTop: headerH + 8, paddingBottom: insets.bottom + 84 }]}>
+          {Array.from({ length: 8 }).map((_, i) => <HistoryItemSkeleton key={i} index={i} />)}
+        </View>
+      ) : (
+        <FlashList
+          data={listRows}
+          renderItem={renderItem}
+          keyExtractor={keyExtractor}
+          getItemType={getItemType}
+          estimatedItemSize={88}
+          contentContainerStyle={[
+            styles.list,
+            { paddingTop: headerH, paddingBottom: Platform.OS === "web" ? 34 + 84 : insets.bottom + 84 },
+          ]}
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+          onScroll={handleScroll}
+          scrollEventThrottle={16}
+          refreshControl={
+            !searchVisible ? (
+              <RefreshControl
+                refreshing={refreshing}
+                onRefresh={onRefresh}
+                tintColor={colors.primary}
+                colors={[colors.primary]}
+              />
+            ) : undefined
+          }
+          onEndReached={handleEndReached}
+          onEndReachedThreshold={0.4}
+          ListFooterComponent={renderFooter}
+          ListEmptyComponent={renderEmpty}
+        />
+      )}
     </View>
   );
 }

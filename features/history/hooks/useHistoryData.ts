@@ -39,6 +39,7 @@ export function useHistoryData(activeFilters: ActiveFilters) {
   const { user }      = useAuth();
   const queryClient   = useQueryClient();
   const [localHistory, setLocalHistory] = useState<HistoryItem[]>([]);
+  const [localLoaded,  setLocalLoaded]  = useState(false);
   const [refreshing,   setRefreshing]   = useState(false);
 
   // ── Pre-warm gate ────────────────────────────────────────────────────────────
@@ -235,7 +236,7 @@ export function useHistoryData(activeFilters: ActiveFilters) {
   // ── Local history loading ────────────────────────────────────────────────────
   const loadLocalHistory = useCallback(async (userId?: string | null) => {
     try {
-      if (!userId) { setLocalHistory([]); return; }
+      if (!userId) { setLocalHistory([]); setLocalLoaded(true); return; }
       const stored = await AsyncStorage.getItem(`local_scan_history_${userId}`);
       if (stored) {
         const local: any[] = JSON.parse(stored);
@@ -244,6 +245,7 @@ export function useHistoryData(activeFilters: ActiveFilters) {
         setLocalHistory([]);
       }
     } catch { setLocalHistory([]); }
+    setLocalLoaded(true);
   }, []);
 
   useEffect(() => {
@@ -287,5 +289,9 @@ export function useHistoryData(activeFilters: ActiveFilters) {
     displayItems,
     refreshing,
     setRefreshing,
+    // True until BOTH local scans have been read AND pre-warm has seeded the
+    // cloud query cache. Prevents the flash of 2 local-only items before the
+    // full list arrives (same fix as useRecentScans on the home screen).
+    bootstrapping: !localLoaded || !preWarmDone,
   };
 }
