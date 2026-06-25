@@ -13,7 +13,7 @@ export default function AuthBrandBlock({ title, subtitle }: Props) {
   return (
     <View style={styles.brandBlock}>
       <Text style={[styles.brandName, { color: colors.text, fontSize: sp(30) }]}>
-        QR<Text style={{ color: colors.primary }}>Guard</Text>
+        Bin<Text style={{ color: colors.primary }}>Ro</Text>
       </Text>
       <View style={[styles.brandDivider, { backgroundColor: colors.primary }]} />
       <Text style={[styles.pageTitle, { color: colors.text, fontSize: sp(20) }]}>

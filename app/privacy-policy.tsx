@@ -19,8 +19,8 @@ import Reanimated from "react-native-reanimated";
 import { useHeaderHide } from "@/shared/utils/use-header-hide";
 
 const EFFECTIVE_DATE = "April 8, 2026";
-const CONTACT_EMAIL = "privacy@qrguard.app";
-const LEGAL_EMAIL = "legal@qrguard.app";
+const CONTACT_EMAIL = "ahmedsameerbinan2@gmail.com";
+const LEGAL_EMAIL = "ahmedsameerbinan2@gmail.com";
 
 function SectionCard({ title, num, icon, children, colors }: { title: string; num: string; icon?: string; children: React.ReactNode; colors: AppColors }) {
   return (
