@@ -37,7 +37,7 @@ export default function ReportGrid({ reportCounts: _reportCounts, userReport, is
           return (
             <Pressable
               key={rt.key}
-              onPress={() => onReport(rt.key)}
+              onPressIn={() => onReport(rt.key)}
               style={({ pressed }) => [
                 styles.rateBtn,
                 isSelected
