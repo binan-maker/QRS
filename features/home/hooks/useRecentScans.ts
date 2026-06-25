@@ -23,6 +23,7 @@ const localStorageKey = (uid: string) => `local_scan_history_${uid}`;
 export function useRecentScans() {
   const { user } = useAuth();
   const [localScans,  setLocalScans]  = useState<LocalScan[]>([]);
+  const [localLoaded, setLocalLoaded] = useState(false);
   const [refreshing,  setRefreshing]  = useState(false);
   const prevUserIdRef = useRef<string | null | undefined>(undefined);
 
@@ -49,9 +50,9 @@ export function useRecentScans() {
 
   // ── Cloud scans: last MAX_RECENT from Firestore ───────────────────────────
   const {
-    data:    cloudScansRaw,
-    refetch: refetchCloud,
-    isLoading: cloudLoading,
+    data:      cloudScansRaw,
+    refetch:   refetchCloud,
+    isPending: cloudPending,
   } = useQuery<LocalScan[]>({
     queryKey: homeQueryKey(user?.id ?? ""),
     queryFn: async () => {
@@ -71,18 +72,18 @@ export function useRecentScans() {
     refetchOnWindowFocus: false,
     refetchOnMount:      true,
     enabled:             !!user?.id,
-    placeholderData:     [],
   });
 
   // ── Local scans from device AsyncStorage ──────────────────────────────────
   const loadLocalScans = useCallback(async (userId?: string | null) => {
-    if (!userId) { setLocalScans([]); return; }
+    if (!userId) { setLocalScans([]); setLocalLoaded(true); return; }
     try {
       const stored = await AsyncStorage.getItem(localStorageKey(userId));
       setLocalScans(stored ? JSON.parse(stored) : []);
     } catch {
       setLocalScans([]);
     }
+    setLocalLoaded(true);
   }, []);
 
   useFocusEffect(
@@ -91,6 +92,7 @@ export function useRecentScans() {
       if (prevUserIdRef.current !== currentUserId) {
         prevUserIdRef.current = currentUserId;
         setLocalScans([]);
+        setLocalLoaded(false);
       }
       loadLocalScans(currentUserId);
 
@@ -208,7 +210,10 @@ export function useRecentScans() {
 
   return {
     recentScans,
-    isLoading: cloudLoading && (!cloudScansRaw || (cloudScansRaw as LocalScan[]).length === 0),
+    // Show skeleton until BOTH local scans have been read from AsyncStorage
+    // AND cloud data has arrived (from disk pre-warm or live fetch).
+    // This prevents the flash of 2 local-only cards before cloud data arrives.
+    isLoading: !localLoaded || (!!user?.id && cloudPending && (!cloudScansRaw || cloudScansRaw.length === 0)),
     refreshing,
     onRefresh,
     deleteScan,
