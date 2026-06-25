@@ -14,6 +14,7 @@ import { queryClient } from "@/shared/utils/query-client";
 import { clearAllMemCache, clearAllAsyncStorageCache } from "@/services/cache/qr-cache";
 import { clearAllAnonymousSessions } from "@/services/cache/anonymous-session";
 import { prewarmUserData, clearPrewarmState } from "@/services/prewarm";
+import { syncAvatarFromOutside } from "@/shared/contexts/AvatarContext";
 import { validateEmail } from "@/shared/utils/email-validator";
 import { trackLoginCompleted } from "@/lib/analytics";
 
@@ -187,11 +188,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           // and if the prefetchQuery cache is still fresh it skips its queryFn —
           // leaving user.username === undefined until the next cache expiry.
           const cachedProfile = queryClient.getQueryData<any>(["userProfile", resolvedUser.uid]);
+          // Prefer the cached Firestore photo (app-uploaded) over the Firebase
+          // Auth photo (always Google profile picture for Google sign-in users).
+          // This ensures the correct photo is shown immediately on token refresh
+          // without waiting for the async prefetchQuery to complete.
+          const initialPhotoURL =
+            (cachedProfile?.photoURL as string | undefined) ||
+            resolvedUser.photoURL ||
+            undefined;
           const authUser: AuthUser = {
             id: resolvedUser.uid,
             email: resolvedUser.email ?? "",
             displayName: resolvedUser.displayName ?? resolvedUser.email?.split("@")[0] ?? "User",
-            photoURL: resolvedUser.photoURL ?? (cachedProfile?.photoURL as string) ?? undefined,
+            photoURL: initialPhotoURL,
             emailVerified: resolvedUser.emailVerified,
             username: (cachedProfile?.username as string) || undefined,
           };
@@ -206,14 +215,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             queryFn: async () => {
               const userData = await db.get(["users", resolvedUser.uid]);
               if (userData) {
+                const firestorePhotoURL = userData.photoURL as string | undefined;
                 setUser((prev) => {
                   if (!prev || prev.id !== resolvedUser.uid) return prev;
                   return {
                     ...prev,
                     username: (userData.username as string) || prev.username,
-                    photoURL: (userData.photoURL as string) || prev.photoURL,
+                    // Prefer Firestore photo (app-uploaded) over Google Auth photo.
+                    // Fall back to prev.photoURL only when Firestore has nothing stored.
+                    photoURL: firestorePhotoURL || prev.photoURL,
                   };
                 });
+                // Push the Firestore photo into AvatarContext immediately so the
+                // home screen avatar updates without waiting for the profile tab.
+                if (firestorePhotoURL) {
+                  syncAvatarFromOutside(firestorePhotoURL);
+                }
               }
               return userData;
             },

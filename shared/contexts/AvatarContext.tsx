@@ -10,12 +10,29 @@
  *     for quiet background syncs (profile loads, login) that skip a version bump when
  *     the URL hasn't changed.
  *  4. `clearAvatar()` is called on sign-out so no stale data leaks across users.
+ *  5. `isHydrated` becomes true once AsyncStorage has finished loading so consumers
+ *     know whether an empty `url` means "not loaded yet" or "genuinely no photo".
+ *  6. `syncAvatarFromOutside(url)` allows non-hook contexts (e.g. AuthContext) to
+ *     push Firestore photo updates into this store without a React hook dependency.
  *
  * No new packages needed — Context + AsyncStorage + expo-image cachePolicy covers it.
  */
 
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+
+// Module-level ref populated by the provider so callers outside the hook tree
+// (e.g. AuthContext queryFn callbacks) can sync the avatar without hooks.
+let _syncFn: ((url: string | null) => void) | null = null;
+
+/**
+ * Call from non-hook contexts (AuthContext prefetchQuery, etc.) to push a
+ * Firestore/Storage photo URL into AvatarContext without a React hook.
+ * Safe to call before the provider mounts — it becomes a no-op in that case.
+ */
+export function syncAvatarFromOutside(url: string | null): void {
+  _syncFn?.(url);
+}
 
 const AVATAR_URL_KEY = "qrg:avatar:url";
 const AVATAR_VER_KEY = "qrg:avatar:version";
@@ -38,6 +55,8 @@ interface AvatarState {
   url: string | null;
   version: number;
   cachedUrl: string | null;
+  /** True once AsyncStorage has finished loading. Use to distinguish "no photo" from "not loaded yet". */
+  isHydrated: boolean;
   setAvatar: (url: string) => void;
   syncAvatar: (url: string | null) => void;
   clearAvatar: () => void;
@@ -47,6 +66,7 @@ const AvatarContext = createContext<AvatarState>({
   url: null,
   version: 0,
   cachedUrl: null,
+  isHydrated: false,
   setAvatar: () => {},
   syncAvatar: () => {},
   clearAvatar: () => {},
@@ -55,6 +75,7 @@ const AvatarContext = createContext<AvatarState>({
 export function AvatarProvider({ children }: { children: React.ReactNode }) {
   const [url, setUrl] = useState<string | null>(null);
   const [version, setVersion] = useState(0);
+  const [isHydrated, setIsHydrated] = useState(false);
 
   useEffect(() => {
     AsyncStorage.multiGet([AVATAR_URL_KEY, AVATAR_VER_KEY]).then((pairs) => {
@@ -62,7 +83,10 @@ export function AvatarProvider({ children }: { children: React.ReactNode }) {
       const storedVer = pairs[1][1];
       if (storedUrl) setUrl(storedUrl);
       if (storedVer) setVersion(Number(storedVer));
-    }).catch(() => {});
+      setIsHydrated(true);
+    }).catch(() => {
+      setIsHydrated(true);
+    });
   }, []);
 
   const setAvatar = useCallback((newUrl: string) => {
@@ -98,11 +122,18 @@ export function AvatarProvider({ children }: { children: React.ReactNode }) {
     AsyncStorage.multiRemove([AVATAR_URL_KEY, AVATAR_VER_KEY]).catch(() => {});
   }, []);
 
+  // Wire up the module-level ref so AuthContext (and other non-hook callers)
+  // can call syncAvatarFromOutside() at any time.
+  useEffect(() => {
+    _syncFn = syncAvatar;
+    return () => { _syncFn = null; };
+  }, [syncAvatar]);
+
   const cachedUrl = useMemo(() => (url ? `${url}?v=${version}` : null), [url, version]);
 
   const contextValue = useMemo(
-    () => ({ url, version, cachedUrl, setAvatar, syncAvatar, clearAvatar }),
-    [url, version, cachedUrl, setAvatar, syncAvatar, clearAvatar]
+    () => ({ url, version, cachedUrl, isHydrated, setAvatar, syncAvatar, clearAvatar }),
+    [url, version, cachedUrl, isHydrated, setAvatar, syncAvatar, clearAvatar]
   );
 
   return (
