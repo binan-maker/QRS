@@ -225,7 +225,7 @@ const QR_REGISTRY: Record<string, QrTypeDefinition> = {
   payment: {
     key: "payment", label: "Payment", icon: "card-outline",
     color: "#D97706", bg: "#FFFBEB", gradient: G.payment, category: "payment",
-    openLabel: "Pay Now",
+    openLabel: "Copy UPI ID",
     getDisplayLabel: (c) => {
       if (c.startsWith("upi://pay?")) {
         try {
@@ -249,7 +249,7 @@ const QR_REGISTRY: Record<string, QrTypeDefinition> = {
   upi: {
     key: "upi", label: "UPI Payment", icon: "card-outline",
     color: "#D97706", bg: "#FFFBEB", gradient: G.payment, category: "payment",
-    openLabel: "Pay Now",
+    openLabel: "Copy UPI ID",
     getDisplayLabel: (c) => {
       if (c.startsWith("upi://pay?")) {
         try {
@@ -271,7 +271,7 @@ const QR_REGISTRY: Record<string, QrTypeDefinition> = {
   paymentlink: {
     key: "paymentlink", label: "Payment Link", icon: "card-outline",
     color: "#D97706", bg: "#FFFBEB", gradient: G.payment, category: "payment",
-    openLabel: "Pay Now",
+    openLabel: "Copy Payment Link",
     getDisplayLabel: (c) => {
       if (c.startsWith("upi://pay?")) {
         try {
@@ -293,14 +293,14 @@ const QR_REGISTRY: Record<string, QrTypeDefinition> = {
   bharatqr: {
     key: "bharatqr", label: "BharatQR", icon: "shield-checkmark-outline",
     color: "#10B981", bg: "#ECFDF5", gradient: G.safe, category: "payment",
-    openLabel: "Pay Now",
+    openLabel: "Copy UPI ID",
     getDisplayLabel: () => "BharatQR Payment",
     getSubtitle: () => null,
   },
   razorpay: {
     key: "razorpay", label: "Razorpay", icon: "card-outline",
     color: "#3366FF", bg: "#EFF6FF", gradient: G.razorpay, category: "payment",
-    openLabel: "Pay Now", appScheme: "rzp://", webFallback: true,
+    openLabel: "Copy Payment Link", appScheme: "rzp://", webFallback: true,
     getDisplayLabel: (c) => {
       const m = c.match(/rzp\.io\/([\w]+)/);
       return m ? `rzp.io/${m[1]}` : _host(c);

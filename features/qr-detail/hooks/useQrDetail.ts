@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { Alert, Linking } from "react-native";
 import * as Clipboard from "expo-clipboard";
 import * as Haptics from "@/shared/utils/haptics";
 import { smartOpenContent } from "@/shared/utils/smart-open";
@@ -15,30 +14,6 @@ import { useQrOwner } from "./useQrOwner";
 import { useCreatorFollow } from "./useCreatorFollow";
 
 export type { QrDetail, CommentItem };
-
-// ── VPA validation ────────────────────────────────────────────────────────────
-
-const SERVER_BASE_URL = (() => {
-  const raw = process.env.EXPO_PUBLIC_DOMAIN;
-  if (raw) { const host = raw.split(":")[0]; if (host) return `https://${host}`; }
-  return __DEV__ ? "http://localhost:5000" : "";
-})();
-
-async function validateVpa(
-  vpa: string
-): Promise<{ valid: boolean | null; customerName: string | null; reason?: string }> {
-  try {
-    const res = await fetch(`${SERVER_BASE_URL}/api/v1/qr/validate-vpa`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ vpa }),
-    });
-    if (!res.ok) return { valid: null, customerName: null };
-    return await res.json();
-  } catch {
-    return { valid: null, customerName: null };
-  }
-}
 
 // ── Trust helpers (local fallback — overridden by server score when available) ─
 
@@ -58,7 +33,6 @@ export function useQrDetail(id: string, hint?: { content: string; contentType: s
   const { colors } = useTheme();
   const userId = user?.id ?? null;
   const [copied, setCopied] = useState(false);
-  const [paymentValidating, setPaymentValidating] = useState(false);
 
   const data = useQrData(id, userId, hint);
   const rawContent = data.qrCode?.content || data.offlineContent;
@@ -153,159 +127,28 @@ export function useQrDetail(id: string, hint?: { content: string; contentType: s
     return { level: "safe" as const, label: "SAFE", reason: "No threats detected", color: colors.safe };
   }
 
-  // ── UPI payment helpers ──────────────────────────────────────────────────────
-
-  function buildUpiUrl(parsedPayment: NonNullable<typeof safety.parsedPayment>): string | null {
-    const { vpa, recipientName, amount, currency } = parsedPayment;
-    if (!vpa) return null;
-    const vpaRegex = /^[a-zA-Z0-9._\-]+@[a-zA-Z0-9]+$/;
-    if (!vpaRegex.test(vpa.trim())) return null;
-    let url = `upi://pay?pa=${encodeURIComponent(vpa.trim())}&mc=0000&mode=02`;
-    if (recipientName) url += `&pn=${encodeURIComponent(recipientName.trim())}`;
-    const parsedAmount = amount ? parseFloat(amount) : 0;
-    if (parsedAmount > 0) url += `&am=${parsedAmount.toFixed(2)}`;
-    url += `&cu=${currency || "INR"}`;
-    return url;
-  }
-
-  /** Extracts the canonical VPA from either the parsed payment data or raw UPI URL. */
-  function extractVpa(rawContent: string): string | null {
-    const { parsedPayment } = safety;
-    if (parsedPayment?.vpa) return parsedPayment.vpa.trim().toLowerCase();
-    try {
-      const lower = rawContent.toLowerCase();
-      let uriStr = rawContent;
-      if (lower.startsWith("tez://upi/") || lower.startsWith("gpay://upi/")) {
-        uriStr = "upi://" + rawContent.split("upi/")[1];
-      }
-      if (uriStr.toLowerCase().startsWith("upi://") || uriStr.includes("?")) {
-        const queryStr = uriStr.includes("?") ? uriStr.split("?")[1] : "";
-        const params = new URLSearchParams(queryStr);
-        const pa = params.get("pa");
-        if (pa) return pa.trim().toLowerCase();
-      }
-    } catch {}
-    return null;
-  }
-
-  async function handleOpenPayment(rawContent: string) {
-    const linksToTry: string[] = [];
-    const lower = rawContent.toLowerCase();
-    const { parsedPayment } = safety;
-
-    // ── VPA validation before redirect ───────────────────────────────────────
-    const isUpi =
-      parsedPayment?.appCategory === "upi_india" ||
-      parsedPayment?.appCategory === "india_wallet" ||
-      parsedPayment?.isEmv;
-
-    if (isUpi) {
-      const vpa = extractVpa(rawContent);
-      if (vpa) {
-        setPaymentValidating(true);
-        try {
-          const check = await validateVpa(vpa);
-          if (check.valid === false) {
-            // Confirmed invalid — show clear error and stop
-            Alert.alert(
-              "UPI ID Not Accepting Payments",
-              `The UPI ID "${vpa}" is not registered or is not currently accepting payments.\n\nThis QR code may be outdated. Please ask the merchant for an updated payment QR or try a different payment method.`,
-              [{ text: "OK" }]
-            );
-            return;
-          }
-          // valid === true: show merchant name as a trust signal if it differs from QR data
-          if (check.valid === true && check.customerName) {
-            const qrName = parsedPayment?.recipientName?.trim() ?? "";
-            const resolvedName = check.customerName.trim();
-            // Names differ significantly — warn but still allow
-            if (
-              qrName &&
-              resolvedName &&
-              resolvedName.toLowerCase() !== qrName.toLowerCase() &&
-              !resolvedName.toLowerCase().includes(qrName.toLowerCase().slice(0, 4))
-            ) {
-              await new Promise<void>((resolve) => {
-                Alert.alert(
-                  "Merchant Name Mismatch",
-                  `QR shows: "${qrName}"\nUPI registered as: "${resolvedName}"\n\nVerify with the merchant before paying.`,
-                  [
-                    { text: "Cancel", style: "cancel", onPress: () => resolve() },
-                    { text: "Continue Anyway", onPress: () => resolve() },
-                  ]
-                );
-              });
-            }
-          }
-          // valid === null: validation unavailable — proceed silently
-        } finally {
-          setPaymentValidating(false);
-        }
-      }
-    }
-
-    // ── Build links and open payment app ─────────────────────────────────────
-    if (parsedPayment?.isEmv) {
-      const { vpa, recipientName, extraFields } = parsedPayment;
-      if (vpa) {
-        const upiUrl = buildUpiUrl(parsedPayment);
-        if (upiUrl) linksToTry.push(upiUrl);
-      } else {
-        const acct = extraFields?.accountNumber;
-        const ifsc = extraFields?.ifsc;
-        const bankName = extraFields?.bankName || parsedPayment.appDisplayName || "your bank";
-        const name = recipientName || "this merchant";
-        const msg = acct && ifsc
-          ? `Open your bank app and use these details:\n\nAccount: ${acct}\nIFSC: ${ifsc}\nBeneficiary: ${name}`
-          : `To pay ${name}, open your bank app (${bankName}) and use the scan/transfer feature.`;
-        Alert.alert("Open Your Bank App", msg, [{ text: "OK" }]);
-        return;
-      }
-    } else if (parsedPayment) {
-      const cat = parsedPayment.appCategory;
-      if (cat === "upi_india" || cat === "india_wallet") {
-        if (lower.startsWith("upi://")) {
-          linksToTry.push(rawContent);
-        } else if (lower.startsWith("tez://upi/") || lower.startsWith("gpay://upi/")) {
-          linksToTry.push("upi://" + rawContent.split("upi/")[1], rawContent);
-        } else {
-          linksToTry.push(rawContent);
-          if (rawContent.includes("?")) linksToTry.push("upi://pay?" + rawContent.split("?")[1]);
-          const upiUrl = buildUpiUrl(parsedPayment);
-          if (upiUrl) linksToTry.push(upiUrl);
-        }
-      } else if (cat === "crypto") {
-        linksToTry.push(rawContent);
-      } else {
-        linksToTry.push(rawContent);
-        if (!lower.startsWith("http") && !lower.startsWith("https")) {
-          try { new URL("https://" + rawContent); linksToTry.push("https://" + rawContent); } catch {}
-        }
-      }
-    } else {
-      linksToTry.push(rawContent);
-    }
-
-    for (const link of linksToTry) {
-      try {
-        const canOpen = await Linking.canOpenURL(link);
-        if (canOpen) { await Linking.openURL(link); return; }
-      } catch {}
-    }
-    if (linksToTry.length > 0) {
-      Linking.openURL(linksToTry[0]).catch(() => {
-        const appName = parsedPayment?.appDisplayName ?? "payment app";
-        Alert.alert("App Not Found", `Could not open ${appName}. Make sure the app is installed on your device.`);
-      });
-    }
-  }
-
   // ── Other handlers ───────────────────────────────────────────────────────────
 
   async function handleOpenContent() {
     if (!content) return;
-    if (contentType === "payment") {
-      handleOpenPayment(content);
+    if (
+      contentType === "payment" ||
+      contentType === "upi" ||
+      contentType === "paymentlink" ||
+      contentType === "scantopay" ||
+      contentType === "bharatqr"
+    ) {
+      // Copy UPI ID / payment link to clipboard instead of deep-linking into payment apps,
+      // which causes broken redirects across GPay, PhonePe, Paytm, BHIM etc.
+      const { parsedPayment } = safety;
+      const copyValue =
+        parsedPayment?.vpa ||
+        (parsedPayment?.recipientId?.includes("@") ? parsedPayment.recipientId : null) ||
+        content;
+      await Clipboard.setStringAsync(copyValue);
+      setCopied(true);
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      setTimeout(() => setCopied(false), 2000);
       return;
     }
     await smartOpenContent(content, contentType, data.qrCode?.templateKey ?? undefined);
@@ -344,7 +187,6 @@ export function useQrDetail(id: string, hint?: { content: string; contentType: s
     ...comments,
     ...owner,
     copied,
-    paymentValidating,
     creatorId,
     creatorName,
     getTrustInfo,
