@@ -3,6 +3,7 @@ import {
   View, Text, StyleSheet, Pressable, Modal,
   ScrollView, ActivityIndicator, Image, Animated,
 } from "react-native";
+import ReAnimated, { FadeInDown } from "react-native-reanimated";
 import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTheme } from "@/shared/contexts/ThemeContext";
@@ -89,23 +90,28 @@ const FollowersModal = React.memo(function FollowersModal({
               </View>
             ) : (
               <ScrollView style={{ maxHeight: 340 }} showsVerticalScrollIndicator={false}>
-                {followers.map((f) => (
-                  <View key={f.userId ?? f.followerId} style={styles.row}>
-                    {f.photoURL ? (
-                      <Image source={{ uri: f.photoURL }} style={styles.avatar} resizeMode="cover" />
-                    ) : (
-                      <View style={styles.avatar}>
-                        <Text style={styles.avatarText}>{(f.displayName ?? f.followerName).charAt(0).toUpperCase()}</Text>
+                {followers.map((f, idx) => (
+                  <ReAnimated.View
+                    key={f.userId ?? f.followerId}
+                    entering={FadeInDown.delay(Math.min(idx, 12) * 40).duration(320).springify().damping(18)}
+                  >
+                    <View style={styles.row}>
+                      {f.photoURL ? (
+                        <Image source={{ uri: f.photoURL }} style={styles.avatar} resizeMode="cover" />
+                      ) : (
+                        <View style={styles.avatar}>
+                          <Text style={styles.avatarText}>{(f.displayName ?? f.followerName).charAt(0).toUpperCase()}</Text>
+                        </View>
+                      )}
+                      <View style={{ flex: 1 }}>
+                        <Text style={styles.name}>{f.displayName ?? f.followerName}</Text>
+                        {f.username ? (
+                          <Text style={styles.username}>@{f.username}</Text>
+                        ) : null}
+                        <Text style={styles.since}>Followed {formatCompactRelativeTime(f.followedAt)}</Text>
                       </View>
-                    )}
-                    <View style={{ flex: 1 }}>
-                      <Text style={styles.name}>{f.displayName ?? f.followerName}</Text>
-                      {f.username ? (
-                        <Text style={styles.username}>@{f.username}</Text>
-                      ) : null}
-                      <Text style={styles.since}>Followed {formatCompactRelativeTime(f.followedAt)}</Text>
                     </View>
-                  </View>
+                  </ReAnimated.View>
                 ))}
               </ScrollView>
             )}
