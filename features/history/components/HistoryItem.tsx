@@ -104,7 +104,7 @@ const HistoryItem = React.memo(function HistoryItem({ item, risk, onDelete, inde
   ), [handleDelete]);
 
   return (
-    <Animated.View entering={FadeInDown.delay(Math.min(index, 5) * 22).duration(260)}>
+    <Animated.View entering={FadeInDown.delay(Math.min(index, 12) * 40).duration(320).springify().damping(18)}>
       <Swipeable
         renderRightActions={renderRightActions}
         overshootRight={false}

@@ -48,6 +48,12 @@ export function useHistoryData(activeFilters: ActiveFilters) {
   // All three caches are read in a single parallel Promise.all to keep the
   // gate window as short as possible (< 50 ms on device, < 1 ms on cache hit).
   const [preWarmDone, setPreWarmDone] = useState(false);
+  // True when pre-warm found cached cloud history on disk — used to decide
+  // whether to keep showing the skeleton until the live Firestore fetch
+  // arrives.  Without this flag, the first render after pre-warm may show
+  // only local items (2–3 cards) before the cloud items appear, making users
+  // think their history was deleted.
+  const [hadCachedCloud, setHadCachedCloud] = useState(false);
   const preWarmUid = useRef<string | null>(null);
 
   useEffect(() => {
@@ -69,11 +75,19 @@ export function useHistoryData(activeFilters: ActiveFilters) {
           pages:      [{ items: cachedHistory.items, cursor: null, hasMore: cachedHistory.hasMore }],
           pageParams: [null],
         });
+        setHadCachedCloud(true);
+        // Immediately mark stale so a background Firestore fetch always runs
+        // behind the cached render.  Without this, setQueryData stamps
+        // dataUpdatedAt=now and the staleTime window keeps data "fresh",
+        // causing the focus-based refetch to skip — users see old data until
+        // the full staleTime expires.
+        globalQueryClient.invalidateQueries({ queryKey: qkHistory, refetchType: "active" });
       }
       // Seed favorites
       const qkFavs = ["favorites", uid];
       if (cachedFavs?.length && !globalQueryClient.getQueryData(qkFavs)) {
         globalQueryClient.setQueryData(qkFavs, cachedFavs);
+        globalQueryClient.invalidateQueries({ queryKey: qkFavs, refetchType: "active" });
       }
       // Seed stats
       const qkStats = ["scan-stats", uid];
@@ -289,9 +303,11 @@ export function useHistoryData(activeFilters: ActiveFilters) {
     displayItems,
     refreshing,
     setRefreshing,
-    // True until BOTH local scans have been read AND pre-warm has seeded the
-    // cloud query cache. Prevents the flash of 2 local-only items before the
-    // full list arrives (same fix as useRecentScans on the home screen).
-    bootstrapping: !localLoaded || !preWarmDone,
+    // True until local scans AND pre-warm are done.
+    // Additionally, if pre-warm found NO cached cloud data we keep the
+    // skeleton showing until the live Firestore fetch completes — this
+    // prevents the flash of 2–3 local-only cards appearing before cloud data
+    // arrives, which looked like "all my history was deleted".
+    bootstrapping: !localLoaded || !preWarmDone || (!hadCachedCloud && cloudLoading),
   };
 }
