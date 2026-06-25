@@ -1,34 +1,64 @@
-import React from "react";
-import { View } from "react-native";
-import Animated, { FadeInRight } from "react-native-reanimated";
+import React, { useEffect, useRef } from "react";
+import { View, Animated, StyleSheet } from "react-native";
+import ReAnimated, { FadeInDown } from "react-native-reanimated";
 import { useTheme } from "@/shared/contexts/ThemeContext";
-import { cardStyles } from "@/features/home/components/scanCardStyles";
 
-export function ScanSkeletonList() {
-  const { colors } = useTheme();
+function SkeletonCard({ index }: { index: number }) {
+  const { isDark } = useTheme();
+  const shimmer = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(shimmer, { toValue: 1, duration: 1000, useNativeDriver: true }),
+        Animated.timing(shimmer, { toValue: 0, duration: 1000, useNativeDriver: true }),
+      ])
+    ).start();
+  }, []);
+
+  const opacity = shimmer.interpolate({ inputRange: [0, 1], outputRange: [0.4, 0.75] });
+
+  const cardBg    = isDark ? "rgba(255,255,255,0.04)" : "rgba(255,255,255,0.72)";
+  const cardBorder = isDark ? "rgba(255,255,255,0.09)" : "rgba(0,82,204,0.07)";
+  const boneColor = isDark ? "rgba(255,255,255,0.09)" : "rgba(0,0,0,0.07)";
+
+  const bone = (style: object) => (
+    <Animated.View style={[{ backgroundColor: boneColor, borderRadius: 8, opacity }, style]} />
+  );
 
   return (
+    <ReAnimated.View entering={FadeInDown.delay(Math.min(index, 4) * 22).duration(260)}>
+      <View style={[styles.card, { backgroundColor: cardBg, borderColor: cardBorder }]}>
+        {bone({ width: 46, height: 46, borderRadius: 14, flexShrink: 0 })}
+        <View style={{ flex: 1, gap: 8 }}>
+          {bone({ height: 14, width: "65%", borderRadius: 7 })}
+          {bone({ height: 11, width: "40%", borderRadius: 6 })}
+        </View>
+        <View style={{ gap: 8, alignItems: "flex-end" }}>
+          {bone({ height: 11, width: 36, borderRadius: 6 })}
+          {bone({ width: 28, height: 28, borderRadius: 9 })}
+        </View>
+      </View>
+    </ReAnimated.View>
+  );
+}
+
+export function ScanSkeletonList() {
+  return (
     <View style={{ gap: 10 }}>
-      {[0, 1, 2].map((i) => (
-        <Animated.View
-          key={i}
-          entering={FadeInRight.duration(260).delay(Math.min(i, 4) * 22)}
-          style={[
-            cardStyles.scanItem,
-            { backgroundColor: colors.surface, borderColor: colors.surfaceBorder, opacity: 0.7 },
-          ]}
-        >
-          <View style={{ width: 46, height: 46, borderRadius: 14, backgroundColor: colors.surfaceBorder }} />
-          <View style={{ flex: 1, gap: 8 }}>
-            <View style={{ height: 14, width: "65%", borderRadius: 7, backgroundColor: colors.surfaceBorder }} />
-            <View style={{ height: 11, width: "40%", borderRadius: 5.5, backgroundColor: colors.surfaceBorder }} />
-          </View>
-          <View style={{ gap: 8, alignItems: "flex-end" }}>
-            <View style={{ height: 11, width: 36, borderRadius: 5.5, backgroundColor: colors.surfaceBorder }} />
-            <View style={{ width: 28, height: 28, borderRadius: 9, backgroundColor: colors.surfaceBorder }} />
-          </View>
-        </Animated.View>
-      ))}
+      {[0, 1, 2].map((i) => <SkeletonCard key={i} index={i} />)}
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  card: {
+    flexDirection: "row",
+    alignItems: "center",
+    borderRadius: 20,
+    borderWidth: 1,
+    paddingHorizontal: 14,
+    paddingVertical: 13,
+    gap: 13,
+  },
+});
