@@ -414,7 +414,6 @@ icon="heart-outline"
 label="Support BinRo"
 sublabel="Buy us a coffee"
               onPress={() => safePush("/donation")}
-              onPress={() => {}}
 />
 </View>
 </View>
