@@ -357,6 +357,7 @@ export default function StandardQrDetailScreen({ id, standardUuid, ownerDocId, h
                   userReport={q.userReport}
                   isLoggedIn={true}
                   isPayment={false}
+                  disabled={q.reportLoading}
                   onReport={(type) => {
                     const isRemoving = q.userReport === type;
                     const reported = q.handleReport(type);

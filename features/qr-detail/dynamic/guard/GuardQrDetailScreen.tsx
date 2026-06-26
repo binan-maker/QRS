@@ -249,6 +249,7 @@ export default function GuardQrDetailScreen({ id, guardUuid, ownerDocId, hint }:
                   userReport={q.userReport}
                   isLoggedIn
                   isPayment={false}
+                  disabled={q.reportLoading}
                   onReport={(type) => {
                     const isRemoving = q.userReport === type;
                     const reported = q.handleReport(type);

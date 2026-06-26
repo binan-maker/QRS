@@ -8,10 +8,11 @@ interface ReportGridProps {
   userReport: string | null;
   isLoggedIn: boolean;
   isPayment?: boolean;
+  disabled?: boolean;
   onReport: (type: string) => void;
 }
 
-export default function ReportGrid({ reportCounts: _reportCounts, userReport, isLoggedIn, isPayment, onReport }: ReportGridProps) {
+export default function ReportGrid({ reportCounts: _reportCounts, userReport, isLoggedIn, isPayment, disabled, onReport }: ReportGridProps) {
   const { colors, isDark } = useTheme();
 
   return (
@@ -37,13 +38,14 @@ export default function ReportGrid({ reportCounts: _reportCounts, userReport, is
           return (
             <Pressable
               key={rt.key}
-              onPressIn={() => onReport(rt.key)}
+              onPress={() => { if (!disabled) onReport(rt.key); }}
+              disabled={disabled}
               style={({ pressed }) => [
                 styles.rateBtn,
                 isSelected
                   ? { backgroundColor: rtColor + (isDark ? "22" : "14"), borderColor: rtColor, borderWidth: 1.5 }
                   : { backgroundColor: isDark ? colors.surfaceLight : colors.background, borderColor: colors.surfaceBorder, borderWidth: 1 },
-                { opacity: pressed ? 0.75 : 1, transform: [{ scale: pressed ? 0.96 : 1 }] },
+                { opacity: disabled ? 0.5 : pressed ? 0.75 : 1, transform: [{ scale: pressed && !disabled ? 0.96 : 1 }] },
               ]}
             >
               <Ionicons

@@ -27,7 +27,10 @@ export function useQrReports(
     negativeWeightMultiplier?: number;
   } | null>(null);
 
-  const committedReportRef = useRef<string | null>(null);
+  const committedReportRef  = useRef<string | null>(null);
+  // Ref-based in-flight guard — updated synchronously so concurrent calls
+  // within the same JS tick are blocked even before React re-renders.
+  const reportInFlightRef   = useRef(false);
 
   // Load initial user report and collusion flags
   useEffect(() => {
@@ -79,8 +82,12 @@ export function useQrReports(
         return false;
       }
       if (isQrOwner) return false;
-      if (reportLoading) return false;
+      // Use ref guard (synchronous) so concurrent calls within the same JS
+      // tick — e.g. onPressIn re-firing during a re-render — are blocked even
+      // before React has committed the new reportLoading state.
+      if (reportInFlightRef.current) return false;
 
+      reportInFlightRef.current = true;
       setReportError(null);
 
       // Optimistic update
@@ -117,11 +124,14 @@ export function useQrReports(
               : "Could not submit your vote. Please try again.";
           setReportError(msg);
         })
-        .finally(() => setReportLoading(false));
+        .finally(() => {
+          reportInFlightRef.current = false;
+          setReportLoading(false);
+        });
 
       return true;
     },
-    [id, userId, isQrOwner, reportLoading, userReport]
+    [id, userId, isQrOwner, userReport]
   );
 
   return {

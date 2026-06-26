@@ -17,6 +17,7 @@ interface Props {
   reportCounts: any;
   userReport: any;
   isPayment: boolean;
+  reportLoading?: boolean;
   handleReport: (type: string) => boolean;
   showToast: (msg: string, icon: keyof typeof Ionicons.glyphMap) => void;
   onLayout?: (e: any) => void;
@@ -33,6 +34,7 @@ export function QrReportSection({
   reportCounts,
   userReport,
   isPayment,
+  reportLoading,
   handleReport,
   showToast,
   onLayout,
@@ -63,6 +65,7 @@ export function QrReportSection({
             userReport={userReport}
             isLoggedIn={true}
             isPayment={isPayment}
+            disabled={reportLoading}
             onReport={(type) => {
               const isRemoving = userReport === type;
               const reported = handleReport(type);
