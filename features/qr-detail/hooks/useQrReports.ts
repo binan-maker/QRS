@@ -171,7 +171,13 @@ export function useQrReports(
     const unsub = subscribeToQrReports(id, (counts, weighted) => {
       serverCountsRef.current = counts;
       setWeightedCounts(weighted);
-      setReportCounts(applyOptimisticDelta(counts));
+      // While a write is in-flight the Firestore snapshot arrives BEFORE
+      // .then() updates committedRef.  Rendering at that moment produces a
+      // wrong delta (+1 ghost count).  Suppress the repaint here — .then()
+      // will call setReportCounts once committedRef is correct.
+      if (!reportInFlightRef.current) {
+        setReportCounts(applyOptimisticDelta(counts));
+      }
     });
     return unsub;
   }, [id, offlineMode, applyOptimisticDelta]);
