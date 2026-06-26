@@ -91,6 +91,12 @@ export function useQrReports(
     reportQrCode(id, userId!, typeToSend)
       .then(() => {
         committedReportRef.current = sentTarget;
+        // The Firestore subscription almost always fires BEFORE this .then()
+        // callback runs, because snapshot listeners are delivered first in the
+        // microtask queue.  At that point committedRef was still the OLD value,
+        // so applyOptimisticDelta added an extra +1 (or left a stale –1).
+        // Now that committed is correct, recompute and correct the display.
+        setReportCounts(applyOptimisticDelta(serverCountsRef.current));
         invalidateQrCache(id);
       })
       .catch((err: unknown) => {
@@ -121,7 +127,7 @@ export function useQrReports(
           }, DEBOUNCE_MS);
         }
       });
-  }, [id, userId]);
+  }, [id, userId, applyOptimisticDelta]);
 
   // ── Initial user report + collusion flags ─────────────────────────────────
   useEffect(() => {
