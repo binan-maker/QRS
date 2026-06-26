@@ -4,8 +4,8 @@ import { tsToMs, formatTimeRemaining, timeUntilWindowReset, isWithin24h, isWithi
 import { getAccountTier } from "./tiers";
 
 const HOURLY_REPORT_WINDOW_MS = 3_600_000;
-const HOURLY_REPORT_LIMIT_PER_USER = 10;
-const HOURLY_REPORT_LIMIT_PER_QR = 3;
+const HOURLY_REPORT_LIMIT_PER_USER = 100; // raised so per-QR limit is hit first
+const HOURLY_REPORT_LIMIT_PER_QR   = 20;  // 20 interactions per QR per hour
 
 export async function checkReportEligibility(
   userId: string,

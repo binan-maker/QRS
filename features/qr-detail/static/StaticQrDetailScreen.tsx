@@ -448,7 +448,7 @@ export default function StaticQrDetailScreen({ id, ownerDocId, hint }: Props) {
                     userReport={q.userReport}
                     isLoggedIn={true}
                     isPayment={contentType === "payment"}
-                    disabled={q.reportLoading}
+                    loading={q.reportLoading}
                     onReport={(type) => {
                       const isRemoving = q.userReport === type;
                       const reported = q.handleReport(type);

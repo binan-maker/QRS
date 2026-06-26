@@ -17,7 +17,7 @@ interface Props {
   reportCounts: any;
   userReport: any;
   isPayment: boolean;
-  reportLoading?: boolean;
+  reportLoading?: boolean; // visual-only loading hint passed to ReportGrid
   handleReport: (type: string) => boolean;
   showToast: (msg: string, icon: keyof typeof Ionicons.glyphMap) => void;
   onLayout?: (e: any) => void;
@@ -65,7 +65,7 @@ export function QrReportSection({
             userReport={userReport}
             isLoggedIn={true}
             isPayment={isPayment}
-            disabled={reportLoading}
+            loading={reportLoading}
             onReport={(type) => {
               const isRemoving = userReport === type;
               const reported = handleReport(type);

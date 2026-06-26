@@ -8,11 +8,13 @@ interface ReportGridProps {
   userReport: string | null;
   isLoggedIn: boolean;
   isPayment?: boolean;
-  disabled?: boolean;
+  /** Visual-only hint that a server flush is in progress. Does NOT block taps —
+   *  the debounce in useQrReports handles sequencing. */
+  loading?: boolean;
   onReport: (type: string) => void;
 }
 
-export default function ReportGrid({ reportCounts: _reportCounts, userReport, isLoggedIn, isPayment, disabled, onReport }: ReportGridProps) {
+export default function ReportGrid({ reportCounts: _reportCounts, userReport, isLoggedIn, isPayment, loading, onReport }: ReportGridProps) {
   const { colors, isDark } = useTheme();
 
   return (
@@ -38,14 +40,14 @@ export default function ReportGrid({ reportCounts: _reportCounts, userReport, is
           return (
             <Pressable
               key={rt.key}
-              onPress={() => { if (!disabled) onReport(rt.key); }}
-              disabled={disabled}
+              onPress={() => onReport(rt.key)}
               style={({ pressed }) => [
                 styles.rateBtn,
                 isSelected
                   ? { backgroundColor: rtColor + (isDark ? "22" : "14"), borderColor: rtColor, borderWidth: 1.5 }
                   : { backgroundColor: isDark ? colors.surfaceLight : colors.background, borderColor: colors.surfaceBorder, borderWidth: 1 },
-                { opacity: disabled ? 0.5 : pressed ? 0.75 : 1, transform: [{ scale: pressed && !disabled ? 0.96 : 1 }] },
+                // loading = visual-only dim while flush is in-flight; taps still register
+                { opacity: loading ? 0.65 : pressed ? 0.75 : 1, transform: [{ scale: pressed ? 0.96 : 1 }] },
               ]}
             >
               <Ionicons
