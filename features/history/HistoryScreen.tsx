@@ -118,13 +118,27 @@ function HistoryScreen() {
   );
 
   const renderFooter = useCallback(() => {
-    if (!loadingMore) return null;
-    return (
-      <View style={{ paddingTop: 4 }}>
-        {Array.from({ length: 3 }).map((_, i) => <HistoryItemSkeleton key={i} index={i} />)}
-      </View>
-    );
-  }, [loadingMore]);
+    // Initial cloud fetch running while local items are already visible — show
+    // 8 skeleton rows so the user knows more history is loading, not lost.
+    // Guard: only when list has items; if list is empty, EmptyState already
+    // renders its own skeleton block and we must not double up.
+    if (cloudLoading && !loadingMore && listRows.length > 0) {
+      return (
+        <View style={{ paddingTop: 4 }}>
+          {Array.from({ length: 8 }).map((_, i) => <HistoryItemSkeleton key={i} index={i} />)}
+        </View>
+      );
+    }
+    // Scroll-triggered pagination loading — fewer skeletons at bottom.
+    if (loadingMore) {
+      return (
+        <View style={{ paddingTop: 4 }}>
+          {Array.from({ length: 3 }).map((_, i) => <HistoryItemSkeleton key={i} index={i} />)}
+        </View>
+      );
+    }
+    return null;
+  }, [cloudLoading, loadingMore, listRows.length]);
 
   const renderEmpty = useCallback(() => (
     <EmptyState
