@@ -34,6 +34,7 @@ import { useFocusEffect } from "expo-router";
 import { useTabBarScroll } from "@/shared/contexts/TabBarContext";
 import { useNotifications } from "@/shared/components/notifications/hooks/useNotifications";
 import PhotoModal from "@/features/profile/components/PhotoModal";
+import ImageCropModal from "@/features/profile/components/ImageCropModal";
 import GuestView from "@/features/profile/components/GuestView";
 import { QrStack } from "@/features/profile/components/QrStack";
 import NotificationsModal from "@/shared/components/notifications/NotificationsModal";
@@ -177,6 +178,7 @@ function ProfileScreen() {
     user,
     stats, statsLoading,
     photoModalOpen, setPhotoModalOpen, uploadingPhoto,
+    cropModalOpen, pendingImageUri, handleCropConfirm, handleCropCancel,
     myQrCodes, myQrLoading,
     currentUsername,
     initials,
@@ -484,6 +486,12 @@ function ProfileScreen() {
         hasPhoto={!!photoURL && photoURL.includes("firebasestorage")}
         onClose={closePhotoModal}
         extraBottomPadding={tabBarHeight}
+      />
+      <ImageCropModal
+        visible={cropModalOpen}
+        imageUri={pendingImageUri}
+        onConfirm={handleCropConfirm}
+        onCancel={handleCropCancel}
       />
       <NotificationsModal
         visible={notifOpen}

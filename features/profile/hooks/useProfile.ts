@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef, useMemo } from "react";
-import { Alert } from "react-native";
+import { Alert, Platform } from "react-native";
 import { useFocusEffect, router } from "expo-router";
 import * as ImagePicker from "expo-image-picker";
 import * as Haptics from "@/shared/utils/haptics";
@@ -43,9 +43,11 @@ export function useProfile() {
   const [stats,          setStats]          = useState<UserStats>({ followingCount: 0, scanCount: 0, commentCount: 0, totalLikesReceived: 0 });
   const [statsLoading,   setStatsLoading]   = useState(false);
   const hasLoadedStatsRef                   = useRef(false);
-  const [photoURL,       setPhotoURL]       = useState<string | null>(user?.photoURL || null);
-  const [photoModalOpen, setPhotoModalOpen] = useState(false);
-  const [uploadingPhoto, setUploadingPhoto] = useState(false);
+  const [photoURL,        setPhotoURL]        = useState<string | null>(user?.photoURL || null);
+  const [photoModalOpen,  setPhotoModalOpen]  = useState(false);
+  const [uploadingPhoto,  setUploadingPhoto]  = useState(false);
+  const [cropModalOpen,   setCropModalOpen]   = useState(false);
+  const [pendingImageUri, setPendingImageUri] = useState<string | null>(null);
   const [refreshing,     setRefreshing]     = useState(false);
   const [myQrCodes,      setMyQrCodes]      = useState<GeneratedQrItem[]>([]);
   const [myQrLoading,    setMyQrLoading]    = useState(true);
@@ -238,46 +240,92 @@ export function useProfile() {
     };
   }, []);
 
-  // ── Photo pick / upload (optimistic) ───────────────────────────────────────
-  const handlePickPhoto = useCallback(async (source: "camera" | "gallery") => {
-    setPhotoModalOpen(false);
+  // ── Internal helper: upload a (possibly cropped) URI ───────────────────────
+  // Declared BEFORE handlePickPhoto so it can be safely referenced in its deps.
+  const uploadCroppedPhoto = useCallback(async (uri: string) => {
+    if (!user?.id) return;
+    const prevPhotoUrl = photoURL;
+    setAvatar(uri);
+    setUploadingPhoto(true);
     try {
-      let result: ImagePicker.ImagePickerResult;
-      if (source === "camera") {
-        const perm = await ImagePicker.requestCameraPermissionsAsync();
-        if (!perm.granted) { Alert.alert("Permission needed", "Camera access is required."); return; }
-        result = await ImagePicker.launchCameraAsync({ mediaTypes: ["images"], allowsEditing: true, aspect: [1, 1], quality: 0.6 });
-      } else {
-        const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
-        if (!perm.granted) { Alert.alert("Permission needed", "Gallery access is required."); return; }
-        result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ["images"], allowsEditing: true, aspect: [1, 1], quality: 0.6 });
-      }
-      if (result.canceled || !result.assets?.[0]) return;
-      const asset = result.assets[0];
-
-      // Show local file immediately; swap to CDN URL silently in background
-      const prevPhotoUrl = photoURL;
-      setAvatar(asset.uri);
-      setUploadingPhoto(true);
-
-      const response = await fetch(asset.uri);
+      const response = await fetch(uri);
       const blob = await response.blob();
 
       const { uploadProfilePhoto } = await import("@/services/storage-service");
-      const newPhotoUrl = await uploadProfilePhoto(blob, user!.id, prevPhotoUrl ?? undefined);
+      const newPhotoUrl = await uploadProfilePhoto(blob, user.id, prevPhotoUrl ?? undefined);
 
-      await updateUserPhotoURL(user!.id, newPhotoUrl);
+      await updateUserPhotoURL(user.id, newPhotoUrl);
 
       setPhotoURL(newPhotoUrl);
       setAvatar(newPhotoUrl);
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     } catch (error: any) {
-      if (photoURL) setAvatar(photoURL); else clearAvatar();
+      if (prevPhotoUrl) setAvatar(prevPhotoUrl); else clearAvatar();
       Alert.alert("Error", `Could not update photo: ${error.message}`);
     } finally {
       setUploadingPhoto(false);
     }
   }, [user?.id, photoURL, setAvatar, clearAvatar]);
+
+  // ── Custom crop modal callbacks (Android only) ──────────────────────────────
+  const handleCropConfirm = useCallback(async (croppedUri: string) => {
+    setCropModalOpen(false);
+    setPendingImageUri(null);
+    await uploadCroppedPhoto(croppedUri);
+  }, [uploadCroppedPhoto]);
+
+  const handleCropCancel = useCallback(() => {
+    setCropModalOpen(false);
+    setPendingImageUri(null);
+  }, []);
+
+  // ── Photo pick / upload (optimistic) ───────────────────────────────────────
+  //
+  // On Android we skip the native UCrop editor (allowsEditing:true) because it
+  // renders invisible in light theme.  Instead we open a custom JS crop screen
+  // after picking.  On iOS the native editor works correctly for both themes.
+  const handlePickPhoto = useCallback(async (source: "camera" | "gallery") => {
+    setPhotoModalOpen(false);
+    try {
+      let result: ImagePicker.ImagePickerResult;
+      // Use native editor only on iOS; Android gets our custom crop modal.
+      const useNativeEditor = Platform.OS !== "android";
+      if (source === "camera") {
+        const perm = await ImagePicker.requestCameraPermissionsAsync();
+        if (!perm.granted) { Alert.alert("Permission needed", "Camera access is required."); return; }
+        result = await ImagePicker.launchCameraAsync({
+          mediaTypes: ["images"],
+          allowsEditing: useNativeEditor,
+          aspect: [1, 1],
+          quality: 0.8,
+        });
+      } else {
+        const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
+        if (!perm.granted) { Alert.alert("Permission needed", "Gallery access is required."); return; }
+        result = await ImagePicker.launchImageLibraryAsync({
+          mediaTypes: ["images"],
+          allowsEditing: useNativeEditor,
+          aspect: [1, 1],
+          quality: 0.8,
+        });
+      }
+      if (result.canceled || !result.assets?.[0]) return;
+      const rawUri = result.assets[0].uri;
+
+      // On Android: show the custom crop modal; upload happens in handleCropConfirm.
+      if (Platform.OS === "android") {
+        setPendingImageUri(rawUri);
+        setCropModalOpen(true);
+        return;
+      }
+
+      // iOS: proceed directly with the natively-cropped image.
+      await uploadCroppedPhoto(rawUri);
+    } catch (error: any) {
+      if (photoURL) setAvatar(photoURL); else clearAvatar();
+      Alert.alert("Error", `Could not update photo: ${error.message}`);
+    }
+  }, [photoURL, setAvatar, clearAvatar, uploadCroppedPhoto]);
 
   // ── Photo remove (optimistic) ──────────────────────────────────────────────
   const handleRemovePhoto = useCallback(async () => {
@@ -350,6 +398,11 @@ export function useProfile() {
     photoModalOpen,
     setPhotoModalOpen,
     uploadingPhoto,
+    // Android custom crop modal
+    cropModalOpen,
+    pendingImageUri,
+    handleCropConfirm,
+    handleCropCancel,
     myQrCodes,
     myQrLoading,
     currentUsername,
