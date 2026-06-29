@@ -25,63 +25,93 @@ export default function GuardHeroCard({
   historyExpanded, onToggleHistory, onOpenDestination,
   colors, isDark,
 }: Props) {
-  const accent = colors.primary;
+  const accent = "#6366f1";
+
+  const ownerDisplayName = guardLink?.businessName || guardLink?.ownerName || null;
+  const ownerInitial = ownerDisplayName ? ownerDisplayName.charAt(0).toUpperCase() : "?";
 
   return (
     <View style={[heroStyles.heroCard, {
       backgroundColor: colors.surface,
-      borderColor: colors.surfaceBorder,
+      borderColor: accent + "35",
     }]}>
       <LinearGradient
-        colors={[accent + (isDark ? "0d" : "0a"), "transparent"]}
+        colors={[accent + "14", accent + "04"]}
         style={StyleSheet.absoluteFill}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
       />
 
-      <View style={heroStyles.heroHeader}>
-        <View style={[heroStyles.heroIconWrap, { backgroundColor: colors.surfaceLight, borderColor: colors.surfaceBorder }]}>
-          <Ionicons name="git-branch-outline" size={24} color={accent} />
+      {/* ── Owner hero row at top ── */}
+      {!guardLoading && ownerDisplayName && (
+        <View style={heroStyles.ownerHeroRow}>
+          <View style={[heroStyles.ownerAvatar, { backgroundColor: accent + "22", borderColor: accent + "50" }]}>
+            <Text style={[heroStyles.ownerAvatarText, { color: accent }]}>{ownerInitial}</Text>
+          </View>
+          <View style={{ flex: 1 }}>
+            <Text style={[heroStyles.ownerFullName, { color: colors.text }]} numberOfLines={1}>
+              {ownerDisplayName}
+            </Text>
+            <Text style={[heroStyles.ownerSubLabel, { color: colors.textMuted }]}>QR Code Owner</Text>
+          </View>
+          {isDeactivated ? (
+            <View style={[heroStyles.statusPill, { backgroundColor: "#ef444422", borderColor: "#ef444440" }]}>
+              <Ionicons name="ban" size={12} color="#ef4444" />
+              <Text style={[heroStyles.statusPillText, { color: "#ef4444" }]}>Inactive</Text>
+            </View>
+          ) : (
+            <View style={[heroStyles.statusPill, { backgroundColor: "#22c55e22", borderColor: "#22c55e40" }]}>
+              <View style={[heroStyles.statusDot, { backgroundColor: "#22c55e" }]} />
+              <Text style={[heroStyles.statusPillText, { color: "#22c55e" }]}>Active</Text>
+            </View>
+          )}
         </View>
+      )}
+
+      {/* ── Brand badge row ── */}
+      <View style={[heroStyles.brandRow, {
+        borderTopWidth: (!guardLoading && ownerDisplayName) ? StyleSheet.hairlineWidth : 0,
+        borderTopColor: accent + "20",
+        paddingTop: (!guardLoading && ownerDisplayName) ? 12 : 0,
+      }]}>
+        <LinearGradient
+          colors={[accent, "#4f46e5"]}
+          style={heroStyles.brandIconWrap}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+        >
+          <Ionicons name="git-branch-outline" size={20} color="#fff" />
+        </LinearGradient>
         <View style={{ flex: 1 }}>
-          <Text style={[heroStyles.heroLabel, { color: colors.textMuted }]}>SMART REDIRECT QR</Text>
+          <Text style={[heroStyles.heroLabel, { color: accent }]}>LIVING SHIELD QR</Text>
           <Text style={[heroStyles.heroSub, { color: colors.textSecondary }]}>
-            Destination is owner-controlled &amp; verified by BinRo
+            Smart redirect — destination owner-controlled &amp; verified
           </Text>
         </View>
-        {isDeactivated && (
-          <View style={[heroStyles.statusPill, { backgroundColor: "#ef444422", borderColor: "#ef444440" }]}>
-            <Ionicons name="ban" size={12} color="#ef4444" />
-            <Text style={[heroStyles.statusPillText, { color: "#ef4444" }]}>Inactive</Text>
-          </View>
-        )}
-        {!isDeactivated && !guardLoading && guardLink && (
-          <View style={[heroStyles.statusPill, { backgroundColor: "#22c55e22", borderColor: "#22c55e40" }]}>
-            <View style={[heroStyles.statusDot, { backgroundColor: "#22c55e" }]} />
-            <Text style={[heroStyles.statusPillText, { color: "#22c55e" }]}>Active</Text>
-          </View>
+        {!ownerDisplayName && !guardLoading && guardLink && (
+          isDeactivated ? (
+            <View style={[heroStyles.statusPill, { backgroundColor: "#ef444422", borderColor: "#ef444440" }]}>
+              <Ionicons name="ban" size={12} color="#ef4444" />
+              <Text style={[heroStyles.statusPillText, { color: "#ef4444" }]}>Inactive</Text>
+            </View>
+          ) : (
+            <View style={[heroStyles.statusPill, { backgroundColor: "#22c55e22", borderColor: "#22c55e40" }]}>
+              <View style={[heroStyles.statusDot, { backgroundColor: "#22c55e" }]} />
+              <Text style={[heroStyles.statusPillText, { color: "#22c55e" }]}>Active</Text>
+            </View>
+          )
         )}
       </View>
 
       {guardLoading && (
         <View style={heroStyles.loadingRow}>
-          <ActivityIndicator size="small" color={colors.textMuted} />
+          <ActivityIndicator size="small" color={accent} />
           <Text style={[heroStyles.loadingText, { color: colors.textSecondary }]}>Loading destination…</Text>
         </View>
       )}
 
       {!guardLoading && guardLink && (
         <>
-          {(guardLink.businessName || guardLink.ownerName) && (
-            <View style={[heroStyles.infoRow, { borderColor: colors.surfaceBorder + "60" }]}>
-              <Ionicons name="business-outline" size={14} color={colors.textSecondary} />
-              <Text style={[heroStyles.infoLabel, { color: colors.textSecondary }]}>Owner</Text>
-              <Text style={[heroStyles.infoValue, { color: colors.text }]} numberOfLines={1}>
-                {guardLink.businessName || guardLink.ownerName}
-              </Text>
-            </View>
-          )}
-
           <View style={[heroStyles.infoRow, { borderColor: colors.surfaceBorder + "60" }]}>
             <Ionicons name="link-outline" size={14} color={colors.textSecondary} />
             <Text style={[heroStyles.infoLabel, { color: colors.textSecondary }]}>Points to</Text>
@@ -121,15 +151,13 @@ export default function GuardHeroCard({
           {!isDeactivated && (
             <Pressable
               style={({ pressed }) => [heroStyles.openBtn, {
-                backgroundColor: isDark ? colors.surfaceLight : colors.primary,
-                borderWidth: 1,
-                borderColor: colors.surfaceBorder,
+                backgroundColor: accent,
                 opacity: pressed ? 0.75 : 1,
               }]}
               onPress={onOpenDestination}
             >
-              <Ionicons name="open-outline" size={16} color={isDark ? colors.text : colors.primaryText} />
-              <Text style={[heroStyles.openBtnText, { color: isDark ? colors.text : colors.primaryText }]}>
+              <Ionicons name="open-outline" size={16} color="#fff" />
+              <Text style={[heroStyles.openBtnText, { color: "#fff" }]}>
                 Open Destination
               </Text>
             </Pressable>
@@ -184,8 +212,19 @@ export default function GuardHeroCard({
 
 const heroStyles = StyleSheet.create({
   heroCard: { borderRadius: 18, borderWidth: 1, padding: 18, gap: 12, overflow: "hidden", marginBottom: 12 },
-  heroHeader: { flexDirection: "row", alignItems: "center", gap: 12 },
-  heroIconWrap: { width: 48, height: 48, borderRadius: 14, borderWidth: 1, alignItems: "center", justifyContent: "center", flexShrink: 0 },
+  ownerHeroRow: { flexDirection: "row", alignItems: "center", gap: 12 },
+  ownerAvatar: {
+    width: 48, height: 48, borderRadius: 24, borderWidth: 1.5,
+    alignItems: "center", justifyContent: "center", flexShrink: 0,
+  },
+  ownerAvatarText: { fontSize: 20, fontFamily: "Inter_700Bold" },
+  ownerFullName: { fontSize: 15, fontFamily: "Inter_700Bold" },
+  ownerSubLabel: { fontSize: 11, fontFamily: "Inter_400Regular", marginTop: 1 },
+  brandRow: { flexDirection: "row", alignItems: "center", gap: 12 },
+  brandIconWrap: {
+    width: 40, height: 40, borderRadius: 12,
+    alignItems: "center", justifyContent: "center", flexShrink: 0,
+  },
   heroLabel: { fontSize: 11, fontFamily: "Inter_700Bold", letterSpacing: 1.3, marginBottom: 2 },
   heroSub: { fontSize: 12, fontFamily: "Inter_400Regular", lineHeight: 16 },
   statusPill: { flexDirection: "row", alignItems: "center", gap: 4, borderRadius: 20, borderWidth: 1, paddingHorizontal: 8, paddingVertical: 4 },

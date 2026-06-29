@@ -218,58 +218,69 @@ export default function StandardQrDetailScreen({ id, standardUuid, ownerDocId, h
             <Animated.View entering={FadeInDown.delay(30).duration(260)}>
               <View style={[stdStyles.brandCard, {
                 backgroundColor: colors.surface,
-                borderColor: colors.surfaceBorder,
+                borderColor: "#22c55e30",
               }]}>
                 <LinearGradient
-                  colors={[colors.surfaceLight + "80", "transparent"]}
+                  colors={["#22c55e14", "#22c55e04"]}
                   style={StyleSheet.absoluteFill}
                   start={{ x: 0, y: 0 }}
                   end={{ x: 1, y: 1 }}
                 />
-                <View style={stdStyles.brandHeader}>
-                  <View style={[stdStyles.brandIconWrap, {
-                    backgroundColor: colors.surfaceLight,
-                    borderColor: colors.surfaceBorder,
-                  }]}>
-                    <Ionicons name="qr-code-outline" size={22} color={colors.textSecondary} />
-                  </View>
-                  <View style={{ flex: 1 }}>
-                    <Text style={[stdStyles.brandLabel, { color: colors.textMuted }]}>QR GUARD STANDARD</Text>
-                    <Text style={[stdStyles.brandSub, { color: colors.textSecondary }]}>
-                      Verified QR code — content managed by owner
-                    </Text>
-                  </View>
-                  {isDeactivated ? (
-                    <View style={[stdStyles.statusChip, { backgroundColor: "#ef444420", borderColor: "#ef444440" }]}>
-                      <Ionicons name="ban" size={11} color="#ef4444" />
-                      <Text style={[stdStyles.statusChipText, { color: "#ef4444" }]}>Inactive</Text>
+
+                {/* Owner avatar + name at top */}
+                {!standardLoading && standardData && (
+                  <View style={stdStyles.ownerHeroRow}>
+                    <View style={[stdStyles.ownerAvatar, { backgroundColor: "#22c55e22", borderColor: "#22c55e40" }]}>
+                      <Text style={[stdStyles.ownerAvatarText, { color: "#22c55e" }]}>
+                        {(standardData.ownerName || "?").charAt(0).toUpperCase()}
+                      </Text>
                     </View>
-                  ) : (
-                    <View style={[stdStyles.statusChip, { backgroundColor: "#22c55e20", borderColor: "#22c55e40" }]}>
-                      <View style={[stdStyles.dot, { backgroundColor: "#22c55e" }]} />
-                      <Text style={[stdStyles.statusChipText, { color: "#22c55e" }]}>Active</Text>
+                    <View style={{ flex: 1 }}>
+                      <Text style={[stdStyles.ownerFullName, { color: colors.text }]} numberOfLines={1}>
+                        {standardData.ownerName}
+                      </Text>
+                      <Text style={[stdStyles.ownerSubLabel, { color: colors.textMuted }]}>QR Code Owner</Text>
                     </View>
-                  )}
-                </View>
+                    {isDeactivated ? (
+                      <View style={[stdStyles.statusChip, { backgroundColor: "#ef444420", borderColor: "#ef444440" }]}>
+                        <Ionicons name="ban" size={11} color="#ef4444" />
+                        <Text style={[stdStyles.statusChipText, { color: "#ef4444" }]}>Inactive</Text>
+                      </View>
+                    ) : (
+                      <View style={[stdStyles.statusChip, { backgroundColor: "#22c55e20", borderColor: "#22c55e40" }]}>
+                        <View style={[stdStyles.dot, { backgroundColor: "#22c55e" }]} />
+                        <Text style={[stdStyles.statusChipText, { color: "#22c55e" }]}>Active</Text>
+                      </View>
+                    )}
+                  </View>
+                )}
 
                 {standardLoading && (
                   <View style={stdStyles.loadingRow}>
-                    <ActivityIndicator size="small" color={colors.textMuted} />
+                    <ActivityIndicator size="small" color="#22c55e" />
                     <Text style={[stdStyles.loadingText, { color: colors.textSecondary }]}>
                       Loading content…
                     </Text>
                   </View>
                 )}
 
-                {!standardLoading && standardData && (
-                  <View style={[stdStyles.ownerRow, { borderColor: colors.surfaceBorder + "60" }]}>
-                    <Ionicons name="person-circle-outline" size={14} color={colors.textSecondary} />
-                    <Text style={[stdStyles.ownerLabel, { color: colors.textSecondary }]}>Owner</Text>
-                    <Text style={[stdStyles.ownerValue, { color: colors.text }]} numberOfLines={1}>
-                      {standardData.ownerName}
+                {/* QR Guard Standard badge row */}
+                <View style={[stdStyles.brandHeader, { borderTopWidth: (!standardLoading && standardData) ? StyleSheet.hairlineWidth : 0, borderTopColor: "#22c55e20", paddingTop: (!standardLoading && standardData) ? 10 : 0 }]}>
+                  <LinearGradient
+                    colors={["#22c55e", "#16a34a"]}
+                    style={stdStyles.brandIconWrap}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 1 }}
+                  >
+                    <Ionicons name="shield-checkmark" size={20} color="#fff" />
+                  </LinearGradient>
+                  <View style={{ flex: 1 }}>
+                    <Text style={[stdStyles.brandLabel, { color: "#22c55e" }]}>QR GUARD STANDARD</Text>
+                    <Text style={[stdStyles.brandSub, { color: colors.textSecondary }]}>
+                      Verified QR code — content managed by owner
                     </Text>
                   </View>
-                )}
+                </View>
 
                 {isDeactivated && (
                   <View style={[stdStyles.alertRow, { backgroundColor: "#ef444418", borderColor: "#ef444440" }]}>
@@ -510,12 +521,24 @@ const stdStyles = StyleSheet.create({
     overflow: "hidden",
     marginBottom: 12,
   },
+  ownerHeroRow: { flexDirection: "row", alignItems: "center", gap: 12 },
+  ownerAvatar: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    borderWidth: 1.5,
+    alignItems: "center",
+    justifyContent: "center",
+    flexShrink: 0,
+  },
+  ownerAvatarText: { fontSize: 20, fontFamily: "Inter_700Bold" },
+  ownerFullName: { fontSize: 15, fontFamily: "Inter_700Bold" },
+  ownerSubLabel: { fontSize: 11, fontFamily: "Inter_400Regular", marginTop: 1 },
   brandHeader: { flexDirection: "row", alignItems: "center", gap: 12 },
   brandIconWrap: {
-    width: 46,
-    height: 46,
-    borderRadius: 13,
-    borderWidth: 1,
+    width: 40,
+    height: 40,
+    borderRadius: 12,
     alignItems: "center",
     justifyContent: "center",
     flexShrink: 0,
@@ -540,15 +563,6 @@ const stdStyles = StyleSheet.create({
   statusChipText: { fontSize: 11, fontFamily: "Inter_600SemiBold" },
   loadingRow: { flexDirection: "row", alignItems: "center", gap: 8 },
   loadingText: { fontSize: 13, fontFamily: "Inter_400Regular" },
-  ownerRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-    paddingTop: 10,
-    borderTopWidth: StyleSheet.hairlineWidth,
-  },
-  ownerLabel: { fontSize: 12, fontFamily: "Inter_600SemiBold", width: 50 },
-  ownerValue: { fontSize: 13, fontFamily: "Inter_400Regular", flex: 1 },
   alertRow: {
     flexDirection: "row",
     alignItems: "flex-start",

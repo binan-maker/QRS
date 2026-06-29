@@ -22,25 +22,6 @@ interface Props {
 export function DrawerOptionsTab({ colors, settings, set }: Props) {
   return (
     <View style={{ gap: 16 }}>
-      <View style={{ gap: 6 }}>
-        <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
-          <Ionicons name="pricetag-outline" size={13} color={colors.textMuted} />
-          <Text style={{ fontSize: 12, fontFamily: "Inter_600SemiBold", color: colors.textSecondary }}>Label</Text>
-        </View>
-        <TextInput
-          style={{
-            borderRadius: 12, borderWidth: 1, paddingHorizontal: 12, paddingVertical: 9,
-            fontSize: 13, fontFamily: "Inter_400Regular",
-            color: colors.text, backgroundColor: colors.surfaceLight, borderColor: colors.surfaceBorder,
-          }}
-          placeholder="Name this QR code"
-          placeholderTextColor={colors.textMuted}
-          value={settings.label}
-          onChangeText={(v) => set({ label: v })}
-          maxLength={80}
-        />
-      </View>
-
       <View style={{ gap: 8 }}>
         <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
           <Ionicons name="scan-outline" size={13} color={colors.textMuted} />

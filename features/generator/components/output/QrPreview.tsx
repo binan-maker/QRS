@@ -67,7 +67,7 @@ function QrPreview({
 export default memo(QrPreview);
 
 const styles = StyleSheet.create({
-  wrapper: { alignItems: "center", paddingVertical: 24, paddingHorizontal: 16 },
+  wrapper: { alignItems: "center", paddingVertical: 14, paddingHorizontal: 16 },
   qrBg: {
     borderRadius: 16, padding: 12, position: "relative",
     ...shadow(10, "#000", 0.15, 0, 4, 6),
