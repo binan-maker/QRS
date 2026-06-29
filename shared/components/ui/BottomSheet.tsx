@@ -55,9 +55,12 @@ function SheetBody({
   // Base padding clears the system home indicator / gesture bar.
   // extraBottomPadding lets callers add the app tab-bar height so the
   // sheet content is never hidden behind it.
+  // Android: capacitive-button devices report insets.bottom = 0 because the
+  // buttons are below the display. Use 48 as the floor to always clear the
+  // hardware/software nav bar (standard Android nav bar height is 48 dp).
   const basePadding =
     Platform.OS === "android"
-      ? Math.max(insets.bottom, 8) + 8
+      ? Math.max(insets.bottom, 48) + 8
       : Math.max(insets.bottom, 8) + 10;
 
   const paddingBottom = basePadding + extraBottomPadding;
