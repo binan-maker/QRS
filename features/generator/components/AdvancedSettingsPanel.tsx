@@ -129,7 +129,7 @@ export default function AdvancedSettingsPanel({ settings, onChange }: Props) {
             </View>
             <TextInput
               style={[styles.input, { color: colors.text, backgroundColor: colors.surfaceLight, borderColor: colors.surfaceBorder }]}
-              placeholder="e.g. Office WiFi QR, Menu Standee Table 3..."
+              placeholder="Name this QR code"
               placeholderTextColor={colors.textMuted}
               value={settings.label}
               onChangeText={(v) => set({ label: v })}

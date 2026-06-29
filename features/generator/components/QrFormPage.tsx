@@ -183,7 +183,7 @@ export default function QrFormPage({ mode, initialTemplateId, openAiBuilder }: P
                 backgroundColor: colors.surfaceLight,
                 borderColor: showNameError ? colors.danger + "55" : colors.surfaceBorder,
               }]}
-              placeholder="e.g. Office WiFi, Menu Card, Portfolio…"
+              placeholder="Name this QR code"
               placeholderTextColor={colors.textMuted}
               value={advancedSettings.label}
               onChangeText={(v) => {

@@ -52,7 +52,7 @@ export function OptionsTab({
             fontSize: 13, fontFamily: "Inter_400Regular",
             color: colors.text, backgroundColor: colors.surfaceLight, borderColor: colors.surfaceBorder,
           }}
-          placeholder="e.g. Office WiFi, Menu Table 3…"
+          placeholder="Name this QR code"
           placeholderTextColor={colors.textMuted}
           value={label}
           onChangeText={onChangeLabel}

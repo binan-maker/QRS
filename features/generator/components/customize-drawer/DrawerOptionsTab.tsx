@@ -36,7 +36,7 @@ export function DrawerOptionsTab({ colors, settings, set }: Props) {
             fontSize: 13, fontFamily: "Inter_400Regular",
             color: colors.text, backgroundColor: colors.surfaceLight, borderColor: colors.surfaceBorder,
           }}
-          placeholder="e.g. Office WiFi, Menu Table 3…"
+          placeholder="Name this QR code"
           placeholderTextColor={colors.textMuted}
           value={settings.label}
           onChangeText={(v) => set({ label: v })}
