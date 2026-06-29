@@ -57,7 +57,7 @@ function SheetBody({
   // sheet content is never hidden behind it.
   const basePadding =
     Platform.OS === "android"
-      ? Math.max(insets.bottom, 16) + 20
+      ? Math.max(insets.bottom, 8) + 8
       : Math.max(insets.bottom, 8) + 10;
 
   const paddingBottom = basePadding + extraBottomPadding;
