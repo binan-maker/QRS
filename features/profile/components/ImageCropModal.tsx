@@ -42,8 +42,8 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 const SCREEN_W = Dimensions.get("window").width;
 // Crop box = 88% of the screen width, capped to a square
 const CROP_BOX = Math.round(SCREEN_W * 0.88);
-// Semi-transparent overlay colour outside the crop box
-const OVERLAY  = "rgba(0,0,0,0.55)";
+// Fully-opaque black outside the crop circle — no bleed inside
+const OVERLAY  = "#000000";
 
 // ── component ─────────────────────────────────────────────────────────────────
 interface Props {
