@@ -90,7 +90,7 @@ function TypePickerHome({ qrMode, onSetMode, onOpenCustom, hideActions = false, 
               </View>
               <View style={{ flex: 1 }}>
                 <Text style={[styles.customCardTitle, { color: colors.text }]}>Choose Template</Text>
-                <Text style={[styles.customCardSub, { color: colors.textMuted }]}>UPI, Contact, WiFi, Email, URL</Text>
+                <Text style={[styles.customCardSub, { color: colors.textMuted }]}>Contact, WiFi, Email, URL</Text>
               </View>
               <View style={[styles.arrowWrap, { backgroundColor: colors.primaryDim }]}>
                 <Ionicons name="chevron-forward" size={13} color={colors.primary} />

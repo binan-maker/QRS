@@ -1,6 +1,6 @@
 import type { QrTemplate, EncType } from "@/features/generator/types/template-types";
 import {
-  validateVpa, validateUrl,
+  validateUrl,
   validateEmail,
 } from "@/shared/utils/validators";
 
@@ -9,27 +9,7 @@ import {
  * This is the single source of truth for the template picker UI.
  */
 export const TEMPLATES: QrTemplate[] = [
-  // ── 1. Personal Payment (UPI)
-  {
-    id: "upi_payment", name: "UPI Payment", emoji: "💳", color: "#3B82F6",
-    icon: "card-outline", tagline: "Accept payments via any UPI app", category: "Payment",
-    securityNote: "VPA format auto-validated. Warns if recipient pattern looks unusual.",
-    securityIcon: "shield-checkmark-outline",
-    fields: [
-      { key: "vpa", label: "UPI ID (VPA)", placeholder: "name@upi", type: "text", hint: "e.g. john@paytm, 9876543210@upi", validate: validateVpa },
-      { key: "name", label: "Payee Name", placeholder: "Recipient's name", type: "text", maxLength: 50 },
-      { key: "amount", label: "Amount (₹)", placeholder: "Leave blank for any amount", type: "number", optional: true },
-      { key: "note", label: "Note", placeholder: "e.g. Bill payment, Table 5", type: "text", optional: true, maxLength: 80 },
-    ],
-    generate: (v) => {
-      const parts: string[] = [`upi://pay?pa=${encodeURIComponent(v.vpa.trim())}&pn=${encodeURIComponent(v.name.trim())}&cu=INR`];
-      if (v.amount?.trim()) parts.push(`&am=${v.amount.trim()}`);
-      if (v.note?.trim()) parts.push(`&tn=${encodeURIComponent(v.note.trim())}`);
-      return parts.join("");
-    },
-  },
-
-  // ── 2. Contact / vCard
+  // ── 1. Contact / vCard
   {
     id: "contact_card", name: "Contact / vCard", emoji: "👤", color: "#8B5CF6",
     icon: "person-circle-outline", tagline: "Share your contact in one scan", category: "Contact",

@@ -483,11 +483,8 @@ export default function MyQrCodesScreen() {
                   <View style={{ flex: 1 }}>
                     <Text style={{ fontSize: rf(16), fontFamily: "Inter_700Bold", color: "#fff" }}>Your QR Dashboard</Text>
                     <Text style={{ fontSize: rf(11), fontFamily: "Inter_400Regular", color: "rgba(255,255,255,0.55)", marginTop: 2 }}>
-                      See a preview of what's coming in Phase 2
+                      All your generated QR codes in one place
                     </Text>
-                  </View>
-                  <View style={{ paddingHorizontal: sp(8), paddingVertical: sp(4), borderRadius: sp(8), backgroundColor: "#7C3AED30", borderWidth: 1, borderColor: "#7C3AED60" }}>
-                    <Text style={{ fontSize: rf(8), fontFamily: "Inter_700Bold", color: "#A78BFA", letterSpacing: 1 }}>PHASE 2</Text>
                   </View>
                 </View>
 
@@ -518,10 +515,10 @@ export default function MyQrCodesScreen() {
 
               {/* Mock QR cards */}
               {[
-                { type: "UPI Payment",   icon: "cash-outline",      color: "#10B981", label: "My Shop Payment",  scans: 247, active: true  },
-                { type: "WiFi Network",  icon: "wifi-outline",       color: "#3B82F6", label: "Home WiFi",         scans: 89,  active: true  },
-                { type: "Website URL",   icon: "link-outline",       color: "#6366F1", label: "My Portfolio",      scans: 512, active: true  },
-                { type: "Contact Card",  icon: "person-circle-outline", color: "#F59E0B", label: "Business Card",  scans: 34,  active: false },
+                { type: "WiFi Network",  icon: "wifi-outline",          color: "#3B82F6", label: "Home WiFi",    scans: 89,  active: true  },
+                { type: "Website URL",   icon: "link-outline",          color: "#6366F1", label: "My Portfolio", scans: 512, active: true  },
+                { type: "Contact Card",  icon: "person-circle-outline", color: "#F59E0B", label: "Business Card",scans: 34,  active: true  },
+                { type: "Email",         icon: "mail-outline",          color: "#EC4899", label: "Support Email",scans: 18,  active: true  },
               ].map((mock, idx) => (
                 <ReAnimated.View
                   key={mock.label}
@@ -591,7 +588,7 @@ export default function MyQrCodesScreen() {
                     Your QR codes appear here
                   </Text>
                   <Text style={{ fontSize: rf(11), fontFamily: "Inter_400Regular", color: colors.textSecondary, lineHeight: rf(17) }}>
-                    QR generation launches in Phase 2. For now, scan any QR code to check if it is safe.
+                    Generate a QR code from the Generator tab and it will appear here.
                   </Text>
                 </View>
               </View>
