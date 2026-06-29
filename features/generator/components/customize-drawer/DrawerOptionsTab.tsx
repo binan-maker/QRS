@@ -26,9 +26,6 @@ export function DrawerOptionsTab({ colors, settings, set }: Props) {
         <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
           <Ionicons name="pricetag-outline" size={13} color={colors.textMuted} />
           <Text style={{ fontSize: 12, fontFamily: "Inter_600SemiBold", color: colors.textSecondary }}>Label</Text>
-          <View style={{ borderRadius: 5, paddingHorizontal: 5, paddingVertical: 1, backgroundColor: colors.surfaceLight }}>
-            <Text style={{ fontSize: 9, fontFamily: "Inter_500Medium", color: colors.textMuted }}>optional</Text>
-          </View>
         </View>
         <TextInput
           style={{
