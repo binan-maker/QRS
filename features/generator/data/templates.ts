@@ -5,13 +5,13 @@ import {
 } from "@/shared/utils/validators";
 
 /**
- * TEMPLATES — the five supported QR code types.
+ * TEMPLATES — the four supported QR code types.
  * This is the single source of truth for the template picker UI.
  */
 export const TEMPLATES: QrTemplate[] = [
   // ── 1. Contact / vCard
   {
-    id: "contact_card", name: "Contact / vCard", emoji: "👤", color: "#8B5CF6",
+    id: "contact_card", name: "Contact / vCard", emoji: "👤", color: "#3B82F6",
     icon: "person-circle-outline", tagline: "Share your contact in one scan", category: "Contact",
     securityNote: "Inputs are sanitized. No executable code is embedded.",
     securityIcon: "shield-outline",
@@ -33,9 +33,9 @@ export const TEMPLATES: QrTemplate[] = [
     },
   },
 
-  // ── 3. WiFi
+  // ── 2. WiFi
   {
-    id: "wifi", name: "WiFi Network", emoji: "📶", color: "#F59E0B",
+    id: "wifi", name: "WiFi Network", emoji: "📶", color: "#3B82F6",
     icon: "wifi-outline", tagline: "Share WiFi credentials instantly", category: "Utility",
     securityNote: "Password hidden in QR display. Works with WPA2 & WPA3 networks.",
     securityIcon: "lock-closed-outline",
@@ -51,9 +51,9 @@ export const TEMPLATES: QrTemplate[] = [
     },
   },
 
-  // ── 4. Website URL
+  // ── 3. Website URL
   {
-    id: "website_url", name: "Website URL", emoji: "🌐", color: "#EF4444",
+    id: "website_url", name: "Website URL", emoji: "🌐", color: "#3B82F6",
     icon: "globe-outline", tagline: "Link to any website or page", category: "Web",
     securityNote: "URL is scanned for threats before QR is generated.",
     securityIcon: "shield-checkmark-outline",
@@ -66,9 +66,9 @@ export const TEMPLATES: QrTemplate[] = [
     },
   },
 
-  // ── 5. Email
+  // ── 4. Email
   {
-    id: "email", name: "Email", emoji: "✉️", color: "#EC4899",
+    id: "email", name: "Email", emoji: "✉️", color: "#3B82F6",
     icon: "mail-outline", tagline: "Pre-fill email compose", category: "Contact",
     securityNote: "Subject & body scanned for phishing keywords before generation.",
     securityIcon: "mail-open-outline",
