@@ -90,12 +90,12 @@ export default function GeneratorLanding() {
 
   function handleStandardPress() {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    router.push("/(tabs)/qr-generator/standard" as any);
+    router.push("/qr-standard" as any);
   }
 
   function handlePrivatePress() {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    router.push("/(tabs)/qr-generator/private" as any);
+    router.push("/qr-private" as any);
   }
 
   function handleScanNow() {
