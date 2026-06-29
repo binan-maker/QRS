@@ -6,6 +6,7 @@ import {
   Pressable,
   StyleSheet,
   Platform,
+  Dimensions,
   ViewStyle,
   DimensionValue,
 } from "react-native";
@@ -52,15 +53,18 @@ function SheetBody({
 }: BodyProps) {
   const insets = useSafeAreaInsets();
 
-  // Base padding clears the system home indicator / gesture bar.
-  // extraBottomPadding lets callers add the app tab-bar height so the
-  // sheet content is never hidden behind it.
-  // Android: capacitive-button devices report insets.bottom = 0 because the
-  // buttons are below the display. Use 48 as the floor to always clear the
-  // hardware/software nav bar (standard Android nav bar height is 48 dp).
+  // On Android, screen.height - window.height = the exact nav-bar pixel
+  // height, regardless of device type (hardware buttons → 0, software/gesture
+  // bar → actual height). insets.bottom inside a transparent Modal is
+  // unreliable on many devices so we avoid relying on it.
+  const navBarH =
+    Platform.OS === "android"
+      ? Math.max(0, Dimensions.get("screen").height - Dimensions.get("window").height)
+      : 0;
+
   const basePadding =
     Platform.OS === "android"
-      ? Math.max(insets.bottom, 48) + 8
+      ? navBarH + 16          // clear the bar + comfortable breathing room
       : Math.max(insets.bottom, 8) + 10;
 
   const paddingBottom = basePadding + extraBottomPadding;
