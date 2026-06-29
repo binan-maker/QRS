@@ -10,7 +10,7 @@
  * • CROP button — runs expo-image-manipulator on the visible crop region
  */
 
-import React, { useCallback, useRef, useState } from "react";
+import React, { useCallback, useState } from "react";
 import {
   Modal,
   View,
@@ -42,8 +42,8 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 const SCREEN_W = Dimensions.get("window").width;
 // Crop box = 88% of the screen width, capped to a square
 const CROP_BOX = Math.round(SCREEN_W * 0.88);
-// Fully-opaque black outside the crop circle — no bleed inside
-const OVERLAY  = "#000000";
+// Semi-transparent overlay outside the crop box
+const OVERLAY  = "rgba(0,0,0,0.55)";
 
 // ── component ─────────────────────────────────────────────────────────────────
 interface Props {
@@ -347,40 +347,14 @@ export default function ImageCropModal({
                   }]}
                 />
 
-                {/*
-                  ── Circular crop overlay ──────────────────────────────────
-                  The 4 bars above leave a square hole. We fill each corner of
-                  that hole with a quarter-circle filler (same overlay colour +
-                  one rounded inner corner = CROP_BOX/2) to make the hole look
-                  circular. On top we draw the white circle ring.
-                */}
-
-                {/* TL corner filler */}
-                <View pointerEvents="none" style={[styles.cornerFill, styles.cornerFillTL, {
-                  left: cropLeft, top: cropTop,
-                }]} />
-                {/* TR corner filler */}
-                <View pointerEvents="none" style={[styles.cornerFill, styles.cornerFillTR, {
-                  left: cropLeft + CROP_BOX / 2, top: cropTop,
-                }]} />
-                {/* BL corner filler */}
-                <View pointerEvents="none" style={[styles.cornerFill, styles.cornerFillBL, {
-                  left: cropLeft, top: cropTop + CROP_BOX / 2,
-                }]} />
-                {/* BR corner filler */}
-                <View pointerEvents="none" style={[styles.cornerFill, styles.cornerFillBR, {
-                  left: cropLeft + CROP_BOX / 2, top: cropTop + CROP_BOX / 2,
-                }]} />
-
-                {/* White circle ring guide */}
+                {/* Square crop guide ring */}
                 <View
                   pointerEvents="none"
-                  style={[styles.circleRing, {
+                  style={[styles.squareRing, {
                     left:   cropLeft,
                     top:    cropTop,
                     width:  CROP_BOX,
                     height: CROP_BOX,
-                    borderRadius: CROP_BOX / 2,
                   }]}
                 />
               </>
@@ -398,10 +372,6 @@ export default function ImageCropModal({
 }
 
 // ── Styles ────────────────────────────────────────────────────────────────────
-// Each corner filler is CROP_BOX/2 × CROP_BOX/2 with ONE rounded inner corner
-// that matches the circle radius, "eating" the square corner of the overlay hole.
-const HALF = CROP_BOX / 2;
-
 const styles = StyleSheet.create({
   root:   { flex: 1, backgroundColor: "#000" },
   canvas: { flex: 1, backgroundColor: "#000" },
@@ -453,22 +423,8 @@ const styles = StyleSheet.create({
     backgroundColor: OVERLAY,
   },
 
-  // ── corner fillers (make the square hole circular) ────────────────────────
-  // Each filler is half the crop box, positioned at one corner of the hole.
-  // The single rounded inner corner + overlay colour hides the square corner.
-  cornerFill: {
-    position:        "absolute",
-    width:           HALF,
-    height:          HALF,
-    backgroundColor: OVERLAY,
-  },
-  cornerFillTL: { borderBottomRightRadius: HALF },
-  cornerFillTR: { borderBottomLeftRadius:  HALF },
-  cornerFillBL: { borderTopRightRadius:    HALF },
-  cornerFillBR: { borderTopLeftRadius:     HALF },
-
-  // ── circle ring guide ────────────────────────────────────────────────────
-  circleRing: {
+  // ── square ring guide ────────────────────────────────────────────────────
+  squareRing: {
     position:    "absolute",
     borderWidth: 2.5,
     borderColor: "rgba(255,255,255,0.9)",
