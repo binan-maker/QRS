@@ -14,7 +14,7 @@ interface Props {
 function HomeView({ templates, onPickTemplate }: Props) {
   const { colors, isDark } = useTheme();
   const { width: screenW } = useWindowDimensions();
-  const s = Math.min(Math.max(screenW / 390, 0.82), 1.0);
+  const s  = Math.min(Math.max(screenW / 390, 0.82), 1.0);
   const rf = (n: number) => Math.round(n * s);
   const sp = (n: number) => Math.round(n * s);
 
@@ -69,7 +69,7 @@ function HomeView({ templates, onPickTemplate }: Props) {
         <View style={{ flex: 1, height: 1, backgroundColor: colors.surfaceBorder }} />
       </View>
 
-      {/* Template grid */}
+      {/* Template list — full-width rows */}
       {filtered.length === 0 ? (
         <View style={{ alignItems: "center", paddingVertical: sp(32), gap: sp(8) }}>
           <Ionicons name="search-outline" size={rf(32)} color={colors.textMuted} />
@@ -77,27 +77,43 @@ function HomeView({ templates, onPickTemplate }: Props) {
           <Text style={{ fontSize: rf(12), fontFamily: "Inter_400Regular", color: colors.textMuted }}>Try a different search term</Text>
         </View>
       ) : (
-        <View style={{ flexDirection: "row", flexWrap: "wrap", gap: sp(8) }}>
+        <View style={{ gap: sp(8) }}>
           {filtered.map((t, idx) => (
-            <Animated.View key={t.id} entering={FadeInDown.duration(200).delay(idx * 15)} style={{ width: "47.5%" }}>
+            <Animated.View key={t.id} entering={FadeInDown.duration(220).delay(idx * 40)}>
               <Pressable
                 onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium); onPickTemplate(t); }}
                 style={({ pressed }) => ({
-                  borderRadius: sp(16), borderWidth: 1,
-                  borderColor: pressed ? t.color + "60" : colors.surfaceBorder,
+                  flexDirection: "row", alignItems: "center", gap: sp(14),
+                  borderRadius: sp(18), borderWidth: 1,
+                  borderColor: pressed ? t.color + "55" : colors.surfaceBorder,
                   backgroundColor: pressed ? t.color + "0D" : colors.surface,
-                  padding: sp(12), flexDirection: "row", alignItems: "center", gap: sp(10),
-                  opacity: pressed ? 0.86 : 1,
-                  transform: [{ scale: pressed ? 0.97 : 1 }],
+                  padding: sp(14),
+                  opacity: pressed ? 0.88 : 1,
+                  transform: [{ scale: pressed ? 0.985 : 1 }],
                 })}
               >
-                <View style={{ width: sp(36), height: sp(36), borderRadius: sp(11), backgroundColor: t.color + "18", alignItems: "center", justifyContent: "center" }}>
-                  <Ionicons name={t.icon as any} size={rf(18)} color={t.color} />
+                {/* Icon bubble */}
+                <View style={{
+                  width: sp(46), height: sp(46), borderRadius: sp(13),
+                  backgroundColor: t.color + "18",
+                  alignItems: "center", justifyContent: "center",
+                  flexShrink: 0,
+                }}>
+                  <Ionicons name={t.icon as any} size={rf(22)} color={t.color} />
                 </View>
-                <View style={{ flex: 1, minWidth: 0 }}>
-                  <Text style={{ fontSize: rf(12), fontFamily: "Inter_600SemiBold", color: colors.text }} numberOfLines={1}>{t.name}</Text>
-                  <Text style={{ fontSize: rf(10), fontFamily: "Inter_400Regular", color: colors.textMuted, marginTop: 1 }} numberOfLines={1}>{t.tagline}</Text>
+
+                {/* Text */}
+                <View style={{ flex: 1, minWidth: 0, gap: sp(2) }}>
+                  <Text style={{ fontSize: rf(14), fontFamily: "Inter_600SemiBold", color: colors.text }}>
+                    {t.name}
+                  </Text>
+                  <Text style={{ fontSize: rf(12), fontFamily: "Inter_400Regular", color: colors.textMuted }}>
+                    {t.tagline}
+                  </Text>
                 </View>
+
+                {/* Chevron */}
+                <Ionicons name="chevron-forward" size={rf(16)} color={colors.textMuted} style={{ flexShrink: 0 }} />
               </Pressable>
             </Animated.View>
           ))}
