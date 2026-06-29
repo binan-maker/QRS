@@ -1,9 +1,10 @@
 /**
  * ImageCropModal — Instagram-style crop screen for Android
  *
- * The image fills the entire available area. A semi-transparent dark overlay
- * covers everything outside the square crop box so the user can see the full
- * photo while still understanding the crop region.
+ * Supports both dark and light themes:
+ *   • Header, chrome, and tip adapt to the active theme
+ *   • StatusBar icons + Android navigation bar colour are set to match
+ *   • The overlay outside the crop box is always a dark scrim (photo editor)
  *
  * • Pan freely with one finger — image moves under the overlay
  * • Pinch to zoom — image scales around its centre
@@ -36,13 +37,14 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import * as ImageManipulator from "expo-image-manipulator";
 import { useTheme } from "@/shared/contexts/ThemeContext";
+import { useAndroidNavBar } from "@/shared/utils/use-android-nav-bar";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 // ── constants ─────────────────────────────────────────────────────────────────
 const SCREEN_W = Dimensions.get("window").width;
-// Crop box = 88% of the screen width, capped to a square
+// Crop box = 88% of the screen width
 const CROP_BOX = Math.round(SCREEN_W * 0.88);
-// Semi-transparent overlay outside the crop box
+// Overlay outside the crop box — always a dark scrim regardless of theme
 const OVERLAY  = "rgba(0,0,0,0.55)";
 
 // ── component ─────────────────────────────────────────────────────────────────
@@ -59,8 +61,22 @@ export default function ImageCropModal({
   onConfirm,
   onCancel,
 }: Props) {
-  const { colors } = useTheme();
-  const insets     = useSafeAreaInsets();
+  const { colors, isDark } = useTheme();
+  const insets              = useSafeAreaInsets();
+
+  // ── theme-derived chrome colours ──────────────────────────────────────────
+  const bg          = isDark ? "#0A0A0A"                : colors.background;
+  const iconColor   = isDark ? "#FFFFFF"                : colors.text;
+  const titleColor  = isDark ? "#FFFFFF"                : colors.text;
+  const tipColor    = isDark ? "rgba(255,255,255,0.50)" : "rgba(12,21,37,0.45)";
+  const ringColor   = isDark ? "rgba(255,255,255,0.90)" : "rgba(0,0,0,0.70)";
+  const statusStyle = (isDark ? "light-content" : "dark-content") as
+    "light-content" | "dark-content";
+
+  // ── sync Android nav bar button style while the modal is open ───────────
+  // Uses the shared hook — only calls setButtonStyleAsync (safe on API 35+
+  // edge-to-edge builds where setBackgroundColorAsync is a no-op).
+  useAndroidNavBar(visible, bg, colors.background, isDark);
 
   // ── area dimensions (measured via onLayout) ──────────────────────────────
   const [areaSize, setAreaSize] = useState({ w: SCREEN_W, h: SCREEN_W });
@@ -106,7 +122,6 @@ export default function ImageCropModal({
         setImgLoaded(true);
       },
       () => {
-        // Fallback: assume square
         imgW.value = CROP_BOX;
         imgH.value = CROP_BOX;
         setImgLoaded(true);
@@ -158,35 +173,6 @@ export default function ImageCropModal({
   }));
 
   // ── crop math ─────────────────────────────────────────────────────────────
-  //
-  // The image is displayed with resizeMode="contain" inside the full crop area
-  // (areaSize.w × areaSize.h).  The gesture adds a transform on top.
-  //
-  // Base layout (no gesture):
-  //   fitScale  = min(areaW / imgW, areaH / imgH)
-  //   dispW     = imgW * fitScale          (displayed px)
-  //   dispH     = imgH * fitScale
-  //   imgLeft   = (areaW - dispW) / 2      (centered)
-  //   imgTop    = (areaH - dispH) / 2
-  //
-  // After gesture (scale gs, translation tx/ty):
-  //   effectiveDispW = dispW * gs
-  //   effectiveDispH = dispH * gs
-  //   imgCentreX = areaW/2 + tx
-  //   imgCentreY = areaH/2 + ty
-  //   imgLeft_g  = imgCentreX - effectiveDispW/2
-  //   imgTop_g   = imgCentreY - effectiveDispH/2
-  //
-  // Crop box (centred in the area):
-  //   cropLeft = (areaW - CROP_BOX) / 2
-  //   cropTop  = (areaH - CROP_BOX) / 2
-  //
-  // Map crop box to image pixel coordinates:
-  //   pixelX = (cropLeft - imgLeft_g)  / (fitScale * gs)
-  //   pixelY = (cropTop  - imgTop_g)   / (fitScale * gs)
-  //   pixelW = CROP_BOX / (fitScale * gs)
-  //   pixelH = CROP_BOX / (fitScale * gs)
-  //
   const handleCrop = useCallback(async () => {
     if (!imageUri || !imgLoaded || cropping) return;
     setCropping(true);
@@ -221,7 +207,6 @@ export default function ImageCropModal({
       const rawPixelW = CROP_BOX  / (fitScale * gs);
       const rawPixelH = CROP_BOX  / (fitScale * gs);
 
-      // Clamp to image bounds
       const clampedX = Math.max(0, Math.round(rawPixelX));
       const clampedY = Math.max(0, Math.round(rawPixelY));
       const clampedW = Math.min(iw - clampedX, Math.round(rawPixelW));
@@ -252,9 +237,9 @@ export default function ImageCropModal({
   }, [imageUri, imgLoaded, cropping, scale, translateX, translateY,
       imgW, imgH, areaSize, onConfirm]);
 
-  // ── overlay dimensions (derived from areaSize, sync) ─────────────────────
-  const cropLeft  = (areaSize.w - CROP_BOX) / 2;
-  const cropTop   = (areaSize.h - CROP_BOX) / 2;
+  // ── overlay dimensions ────────────────────────────────────────────────────
+  const cropLeft = (areaSize.w - CROP_BOX) / 2;
+  const cropTop  = (areaSize.h - CROP_BOX) / 2;
 
   // ── render ────────────────────────────────────────────────────────────────
   return (
@@ -266,21 +251,21 @@ export default function ImageCropModal({
       onRequestClose={onCancel}
       onShow={resetGestures}
     >
-      <StatusBar barStyle="light-content" backgroundColor="#000000" />
-      <GestureHandlerRootView style={styles.root}>
-        <View style={styles.canvas}>
+      <StatusBar barStyle={statusStyle} backgroundColor={bg} />
+      <GestureHandlerRootView style={[styles.root, { backgroundColor: bg }]}>
+        <View style={[styles.canvas, { backgroundColor: bg }]}>
 
-          {/* ── Header — always dark ── */}
-          <View style={[styles.header, { paddingTop: insets.top + 8 }]}>
+          {/* ── Header ── */}
+          <View style={[styles.header, { paddingTop: insets.top + 8, backgroundColor: bg }]}>
             <Pressable
               onPress={onCancel}
               hitSlop={12}
               style={({ pressed }) => [styles.headerBtn, { opacity: pressed ? 0.6 : 1 }]}
             >
-              <Ionicons name="arrow-back" size={24} color="#FFFFFF" />
+              <Ionicons name="arrow-back" size={24} color={iconColor} />
             </Pressable>
 
-            <Text style={styles.headerTitle}>Move &amp; Crop</Text>
+            <Text style={[styles.headerTitle, { color: titleColor }]}>Move &amp; Crop</Text>
 
             <Pressable
               onPress={handleCrop}
@@ -304,10 +289,10 @@ export default function ImageCropModal({
           </View>
 
           {/* ── Crop area: image + overlays ── */}
-          <View style={styles.cropArea} onLayout={onAreaLayout}>
+          <View style={[styles.cropArea, { backgroundColor: bg }]} onLayout={onAreaLayout}>
             {imageUri && (
               <>
-                {/* ── Gestural image layer (full area, no clip) ── */}
+                {/* Gestural image layer */}
                 <GestureDetector gesture={composed}>
                   <Animated.View style={[StyleSheet.absoluteFillObject, imageAnimStyle]}>
                     <Animated.Image
@@ -319,42 +304,29 @@ export default function ImageCropModal({
                   </Animated.View>
                 </GestureDetector>
 
-                {/* ── Dark overlay: 4 bars around the crop box ── */}
-                {/* Top bar */}
-                <View
-                  pointerEvents="none"
-                  style={[styles.overlay, { top: 0, left: 0, right: 0, height: cropTop }]}
-                />
-                {/* Bottom bar */}
-                <View
-                  pointerEvents="none"
-                  style={[styles.overlay, { bottom: 0, left: 0, right: 0, height: cropTop }]}
-                />
-                {/* Left bar (between top & bottom bars) */}
-                <View
-                  pointerEvents="none"
-                  style={[styles.overlay, {
-                    top: cropTop, bottom: cropTop,
-                    left: 0, width: cropLeft,
-                  }]}
-                />
-                {/* Right bar */}
-                <View
-                  pointerEvents="none"
-                  style={[styles.overlay, {
-                    top: cropTop, bottom: cropTop,
-                    right: 0, width: cropLeft,
-                  }]}
-                />
+                {/* Dark scrim: 4 bars around the crop box */}
+                {/* Top */}
+                <View pointerEvents="none"
+                  style={[styles.overlay, { top: 0, left: 0, right: 0, height: cropTop }]} />
+                {/* Bottom */}
+                <View pointerEvents="none"
+                  style={[styles.overlay, { bottom: 0, left: 0, right: 0, height: cropTop }]} />
+                {/* Left */}
+                <View pointerEvents="none"
+                  style={[styles.overlay, { top: cropTop, bottom: cropTop, left: 0, width: cropLeft }]} />
+                {/* Right */}
+                <View pointerEvents="none"
+                  style={[styles.overlay, { top: cropTop, bottom: cropTop, right: 0, width: cropLeft }]} />
 
                 {/* Square crop guide ring */}
                 <View
                   pointerEvents="none"
                   style={[styles.squareRing, {
-                    left:   cropLeft,
-                    top:    cropTop,
-                    width:  CROP_BOX,
-                    height: CROP_BOX,
+                    left:        cropLeft,
+                    top:         cropTop,
+                    width:       CROP_BOX,
+                    height:      CROP_BOX,
+                    borderColor: ringColor,
                   }]}
                 />
               </>
@@ -362,19 +334,22 @@ export default function ImageCropModal({
           </View>
 
           {/* ── Tip ── */}
-          <View style={[styles.tip, { paddingBottom: insets.bottom + 12 }]}>
-            <Text style={styles.tipText}>Pinch to zoom · Drag to reposition</Text>
+          <View style={[styles.tip, { paddingBottom: insets.bottom + 12, backgroundColor: bg }]}>
+            <Text style={[styles.tipText, { color: tipColor }]}>
+              Pinch to zoom · Drag to reposition
+            </Text>
           </View>
+
         </View>
       </GestureHandlerRootView>
     </Modal>
   );
 }
 
-// ── Styles ────────────────────────────────────────────────────────────────────
+// ── Styles (non-themed only — colours injected inline above) ─────────────────
 const styles = StyleSheet.create({
-  root:   { flex: 1, backgroundColor: "#000" },
-  canvas: { flex: 1, backgroundColor: "#000" },
+  root:   { flex: 1 },
+  canvas: { flex: 1 },
 
   // ── header ──────────────────────────────────────────────────────────────
   header: {
@@ -383,7 +358,6 @@ const styles = StyleSheet.create({
     justifyContent:    "space-between",
     paddingHorizontal: 16,
     paddingBottom:     10,
-    backgroundColor:   "#000",
   },
   headerBtn: {
     padding:        6,
@@ -392,7 +366,6 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   headerTitle: {
-    color:         "#FFFFFF",
     fontSize:      16,
     fontFamily:    "Inter_600SemiBold",
     letterSpacing: 0.3,
@@ -412,12 +385,11 @@ const styles = StyleSheet.create({
 
   // ── crop area ────────────────────────────────────────────────────────────
   cropArea: {
-    flex:            1,
-    backgroundColor: "#000",
-    overflow:        "hidden",
+    flex:     1,
+    overflow: "hidden",
   },
 
-  // ── overlay bars ─────────────────────────────────────────────────────────
+  // ── overlay bars (always dark scrim — photo editor) ───────────────────────
   overlay: {
     position:        "absolute",
     backgroundColor: OVERLAY,
@@ -427,17 +399,14 @@ const styles = StyleSheet.create({
   squareRing: {
     position:    "absolute",
     borderWidth: 2.5,
-    borderColor: "rgba(255,255,255,0.9)",
   },
 
   // ── tip ──────────────────────────────────────────────────────────────────
   tip: {
-    alignItems:      "center",
-    paddingTop:      14,
-    backgroundColor: "#000",
+    alignItems: "center",
+    paddingTop: 14,
   },
   tipText: {
-    color:      "rgba(255,255,255,0.5)",
     fontSize:   12,
     fontFamily: "Inter_400Regular",
   },
