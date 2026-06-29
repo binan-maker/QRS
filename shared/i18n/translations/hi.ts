@@ -29,6 +29,7 @@ const hi = {
     scanner: "स्कैनर",
     generator: "जेनरेटर",
     history: "इतिहास",
+    myQrCodes: "मेरे QR",
     profile: "प्रोफ़ाइल",
   },
 

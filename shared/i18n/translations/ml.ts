@@ -29,6 +29,7 @@ const ml = {
     scanner: "സ്കാനർ",
     generator: "ജനറേറ്റർ",
     history: "ചരിത്രം",
+    myQrCodes: "എന്റെ QR",
     profile: "പ്രൊഫൈൽ",
   },
 

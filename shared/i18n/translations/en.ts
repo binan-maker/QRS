@@ -29,6 +29,7 @@ const en = {
     scanner: "Scanner",
     generator: "Generator",
     history: "History",
+    myQrCodes: "My QRs",
     profile: "Profile",
   },
 

@@ -29,6 +29,7 @@ const ta = {
     scanner: "ஸ்கேனர்",
     generator: "உருவாக்கி",
     history: "வரலாறு",
+    myQrCodes: "என் QR",
     profile: "சுயவிவரம்",
   },
 
