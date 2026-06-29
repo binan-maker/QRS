@@ -12,15 +12,16 @@ import Reanimated, {
 import { useTheme } from "@/shared/contexts/ThemeContext";
 
 interface Props {
-  btnLabel:    string;
-  btnIcon:     React.ComponentProps<typeof MaterialCommunityIcons>["name"];
-  btnColors:   [string, string];
-  onPress:     () => void;
-  showError?:  boolean;
-  onHideError: () => void;
+  btnLabel:     string;
+  btnIcon:      React.ComponentProps<typeof MaterialCommunityIcons>["name"];
+  btnColors:    [string, string];
+  onPress:      () => void;
+  showError?:   boolean;
+  errorMessage?: string;
+  onHideError:  () => void;
 }
 
-export default function GenerateButton({ btnLabel, btnIcon, btnColors, onPress, showError, onHideError }: Props) {
+export default function GenerateButton({ btnLabel, btnIcon, btnColors, onPress, showError, errorMessage, onHideError }: Props) {
   const { colors } = useTheme();
 
   const errorProgress = useSharedValue(0);
@@ -72,7 +73,7 @@ export default function GenerateButton({ btnLabel, btnIcon, btnColors, onPress, 
             ]}
           />
           <Text style={{ fontSize: 11, fontFamily: "Inter_500Medium", color: colors.danger, textAlign: "center", lineHeight: 28, zIndex: 1 }}>
-            Please type something first
+            {errorMessage ?? "Please type something first"}
           </Text>
         </Reanimated.View>
       )}

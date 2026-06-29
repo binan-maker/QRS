@@ -43,6 +43,7 @@ export default function QrFormPage({ mode, initialTemplateId, openAiBuilder }: P
   const [advancedBuilderOpen, setAdvancedBuilderOpen] = useState(false);
   const [showGenError,        setShowGenError]        = useState(false);
   const [showNameError,       setShowNameError]       = useState(false);
+  const [showTemplateError,   setShowTemplateError]   = useState(false);
 
   const [initTid] = useState(initialTemplateId);
   const [initAi]  = useState(openAiBuilder);
@@ -97,15 +98,34 @@ export default function QrFormPage({ mode, initialTemplateId, openAiBuilder }: P
     switchPreset(idx);
     setPresetActive(true);
     setTemplateGenerated(false);
+    setShowTemplateError(false);
   }, [switchPreset]);
 
   const handleGenerateWithValidation = useCallback(() => {
+    if (!presetActive && !templateGenerated) {
+      setShowTemplateError(true);
+      setShowNameError(false);
+      setShowGenError(false);
+      return;
+    }
     const nameVal = advancedSettings.label.trim();
-    if (!nameVal) { setShowNameError(true); return; }
-    if (!inputValue.trim()) { setShowGenError(true); return; }
+    if (!nameVal) {
+      setShowNameError(true);
+      setShowTemplateError(false);
+      setShowGenError(false);
+      return;
+    }
+    if (!inputValue.trim()) {
+      setShowGenError(true);
+      setShowTemplateError(false);
+      setShowNameError(false);
+      return;
+    }
+    setShowTemplateError(false);
     setShowNameError(false);
+    setShowGenError(false);
     handleGenerate();
-  }, [inputValue, advancedSettings.label, handleGenerate]);
+  }, [presetActive, templateGenerated, inputValue, advancedSettings.label, handleGenerate]);
 
   const handleClearAll = useCallback(() => {
     setTemplateGenerated(false);
@@ -242,8 +262,13 @@ export default function QrFormPage({ mode, initialTemplateId, openAiBuilder }: P
             btnIcon={buttonState.btnIcon}
             btnColors={buttonState.btnColors}
             onPress={handleGenerateWithValidation}
-            showError={showGenError}
-            onHideError={() => setShowGenError(false)}
+            showError={showTemplateError || showGenError}
+            errorMessage={
+              showTemplateError
+                ? "Please choose a template first"
+                : "Please type something first"
+            }
+            onHideError={() => { setShowTemplateError(false); setShowGenError(false); }}
           />
         )}
 
@@ -310,6 +335,7 @@ export default function QrFormPage({ mode, initialTemplateId, openAiBuilder }: P
             setTemplateGenerated(true);
             setTemplateName(tName);
             setPresetActive(true);
+            setShowTemplateError(false);
             setQrTemplateOpen(false);
           }}
         />
@@ -323,6 +349,7 @@ export default function QrFormPage({ mode, initialTemplateId, openAiBuilder }: P
             setTemplateGenerated(true);
             setTemplateName(label);
             setPresetActive(true);
+            setShowTemplateError(false);
             setAdvancedBuilderOpen(false);
           }}
         />
