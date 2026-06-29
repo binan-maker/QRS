@@ -1,15 +1,13 @@
 /**
- * ImageCropModal
+ * ImageCropModal — Instagram-style crop screen for Android
  *
- * A fully theme-aware custom crop screen that replaces the native Android
- * UCrop activity (which becomes invisible in light mode).
+ * The image fills the entire available area. A semi-transparent dark overlay
+ * covers everything outside the square crop box so the user can see the full
+ * photo while still understanding the crop region.
  *
- * Key design decisions:
- *  • resizeMode="cover"  — the image always fills the CROP_BOX with no black
- *    margins, so the crop result always matches what the user sees.
- *  • Pan is clamped so the image can never leave empty space inside the box.
- *  • Minimum gesture scale = 1 (already full-cover at default zoom).
- *  • Header is always dark (#000) so buttons are always legible on the image.
+ * • Pan freely with one finger — image moves under the overlay
+ * • Pinch to zoom — image scales around its centre
+ * • CROP button — runs expo-image-manipulator on the visible crop region
  */
 
 import React, { useCallback, useRef, useState } from "react";
@@ -22,6 +20,7 @@ import {
   Dimensions,
   ActivityIndicator,
   StatusBar,
+  LayoutChangeEvent,
   Image as RNImage,
 } from "react-native";
 import Animated, {
@@ -39,13 +38,14 @@ import * as ImageManipulator from "expo-image-manipulator";
 import { useTheme } from "@/shared/contexts/ThemeContext";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-// ── constants ────────────────────────────────────────────────────────────────
-const SCREEN   = Dimensions.get("window");
-const CROP_BOX = Math.round(Math.min(SCREEN.width, SCREEN.height) * 0.82);
-const MIN_SCALE = 1;
-const MAX_SCALE = 8;
+// ── constants ─────────────────────────────────────────────────────────────────
+const SCREEN_W = Dimensions.get("window").width;
+// Crop box = 88% of the screen width, capped to a square
+const CROP_BOX = Math.round(SCREEN_W * 0.88);
+// Semi-transparent overlay colour outside the crop box
+const OVERLAY  = "rgba(0,0,0,0.55)";
 
-// ── types ────────────────────────────────────────────────────────────────────
+// ── component ─────────────────────────────────────────────────────────────────
 interface Props {
   visible:   boolean;
   imageUri:  string | null;
@@ -53,7 +53,6 @@ interface Props {
   onCancel:  () => void;
 }
 
-// ── component ────────────────────────────────────────────────────────────────
 export default function ImageCropModal({
   visible,
   imageUri,
@@ -63,35 +62,40 @@ export default function ImageCropModal({
   const { colors } = useTheme();
   const insets     = useSafeAreaInsets();
 
-  // natural image size – needed for crop math
-  const imgW = useSharedValue(0);
-  const imgH = useSharedValue(0);
+  // ── area dimensions (measured via onLayout) ──────────────────────────────
+  const [areaSize, setAreaSize] = useState({ w: SCREEN_W, h: SCREEN_W });
+  const onAreaLayout = useCallback((e: LayoutChangeEvent) => {
+    const { width, height } = e.nativeEvent.layout;
+    setAreaSize({ w: width, h: height });
+  }, []);
 
-  // gesture shared values (live, updated on UI thread)
+  // ── natural image size ───────────────────────────────────────────────────
+  const imgW      = useSharedValue(1);
+  const imgH      = useSharedValue(1);
+  const [imgLoaded, setImgLoaded] = useState(false);
+
+  // ── gesture shared values ────────────────────────────────────────────────
   const translateX = useSharedValue(0);
   const translateY = useSharedValue(0);
-  const scale      = useSharedValue(MIN_SCALE);
-
-  // saved context between gesture events
+  const scale      = useSharedValue(1);
   const savedX     = useSharedValue(0);
   const savedY     = useSharedValue(0);
-  const savedScale = useSharedValue(MIN_SCALE);
+  const savedScale = useSharedValue(1);
 
-  const [imgLoaded, setImgLoaded] = useState(false);
-  const [cropping,  setCropping]  = useState(false);
+  const [cropping, setCropping] = useState(false);
 
-  // ── reset on each open ───────────────────────────────────────────────────
+  // ── reset state on open ──────────────────────────────────────────────────
   const resetGestures = useCallback(() => {
     translateX.value = 0;
     translateY.value = 0;
-    scale.value      = MIN_SCALE;
+    scale.value      = 1;
     savedX.value     = 0;
     savedY.value     = 0;
-    savedScale.value = MIN_SCALE;
+    savedScale.value = 1;
     setImgLoaded(false);
   }, [translateX, translateY, scale, savedX, savedY, savedScale]);
 
-  // Measure natural image size when the URI is loaded so crop math is correct.
+  // Resolve the natural image size so we can compute the crop correctly.
   const handleImageLoad = useCallback(() => {
     if (!imageUri) return;
     RNImage.getSize(
@@ -102,7 +106,7 @@ export default function ImageCropModal({
         setImgLoaded(true);
       },
       () => {
-        // fallback: assume square if getSize fails
+        // Fallback: assume square
         imgW.value = CROP_BOX;
         imgH.value = CROP_BOX;
         setImgLoaded(true);
@@ -110,56 +114,41 @@ export default function ImageCropModal({
     );
   }, [imageUri, imgW, imgH]);
 
-  // ── pan gesture (clamped so image always covers crop box) ────────────────
+  // ── pan (free, no clamping — just like Instagram) ────────────────────────
   const pan = Gesture.Pan()
     .onStart(() => {
       savedX.value = translateX.value;
       savedY.value = translateY.value;
     })
     .onUpdate((e) => {
-      // Max allowed pan = half the "overflow" beyond the crop box
-      // At gesture scale gs, the view is CROP_BOX*gs on each axis.
-      // Clamp: tx ∈ [-(CROP_BOX*(gs-1))/2, (CROP_BOX*(gs-1))/2]
-      const gs      = scale.value;
-      const maxPan  = (CROP_BOX * (gs - 1)) / 2;
-      const rawX    = savedX.value + e.translationX;
-      const rawY    = savedY.value + e.translationY;
-      translateX.value = Math.max(-maxPan, Math.min(maxPan, rawX));
-      translateY.value = Math.max(-maxPan, Math.min(maxPan, rawY));
+      translateX.value = savedX.value + e.translationX;
+      translateY.value = savedY.value + e.translationY;
     })
     .onEnd(() => {
       savedX.value = translateX.value;
       savedY.value = translateY.value;
     });
 
-  // ── pinch gesture ────────────────────────────────────────────────────────
+  // ── pinch (zoom around the image centre) ─────────────────────────────────
   const pinch = Gesture.Pinch()
     .onStart(() => {
       savedScale.value = scale.value;
     })
     .onUpdate((e) => {
       const next = savedScale.value * e.scale;
-      scale.value = Math.max(MIN_SCALE, Math.min(next, MAX_SCALE));
+      scale.value = Math.max(0.3, Math.min(next, 10));
     })
     .onEnd(() => {
       savedScale.value = scale.value;
-      // Snap back if somehow below minimum (shouldn't happen but safety net)
-      if (scale.value < MIN_SCALE) {
-        scale.value      = withSpring(MIN_SCALE);
-        savedScale.value = MIN_SCALE;
+      if (scale.value < 0.5) {
+        scale.value      = withSpring(0.5);
+        savedScale.value = 0.5;
       }
-      // Re-clamp pan after scale change
-      const gs     = scale.value;
-      const maxPan = (CROP_BOX * (gs - 1)) / 2;
-      translateX.value = Math.max(-maxPan, Math.min(maxPan, translateX.value));
-      translateY.value = Math.max(-maxPan, Math.min(maxPan, translateY.value));
-      savedX.value     = translateX.value;
-      savedY.value     = translateY.value;
     });
 
   const composed = Gesture.Simultaneous(pan, pinch);
 
-  // ── animated style for the image view ───────────────────────────────────
+  // ── animated style applied to the image wrapper ──────────────────────────
   const imageAnimStyle = useAnimatedStyle(() => ({
     transform: [
       { translateX: translateX.value },
@@ -168,56 +157,69 @@ export default function ImageCropModal({
     ],
   }));
 
-  // ── crop calculation & manipulation ─────────────────────────────────────
+  // ── crop math ─────────────────────────────────────────────────────────────
   //
-  // Geometry (resizeMode="cover", view = CROP_BOX × CROP_BOX):
-  //   coverScale = max(CROP_BOX/imgW, CROP_BOX/imgH)
-  //   imageLeftInView = (CROP_BOX - imgW*coverScale) / 2   (≤ 0 for wide images)
-  //   imageTopInView  = (CROP_BOX - imgH*coverScale) / 2   (≤ 0 for tall images)
+  // The image is displayed with resizeMode="contain" inside the full crop area
+  // (areaSize.w × areaSize.h).  The gesture adds a transform on top.
   //
-  // After gesture scale gs and translation (tx, ty):
-  //   In view-internal coords, the top-left of the crop box maps to:
-  //     viewX = CROP_BOX/2 - tx/gs - CROP_BOX/(2*gs)
-  //           = CROP_BOX*(1 - 1/gs)/2 - tx/gs
-  //     viewY = CROP_BOX*(1 - 1/gs)/2 - ty/gs
-  //   Crop region in view coords: viewX, viewY, CROP_BOX/gs × CROP_BOX/gs
+  // Base layout (no gesture):
+  //   fitScale  = min(areaW / imgW, areaH / imgH)
+  //   dispW     = imgW * fitScale          (displayed px)
+  //   dispH     = imgH * fitScale
+  //   imgLeft   = (areaW - dispW) / 2      (centered)
+  //   imgTop    = (areaH - dispH) / 2
   //
-  //   In image pixels:
-  //     pixelX = (viewX - imageLeftInView) / coverScale
-  //     pixelY = (viewY - imageTopInView)  / coverScale
-  //     pixelW = (CROP_BOX / gs) / coverScale
-  //     pixelH = (CROP_BOX / gs) / coverScale
+  // After gesture (scale gs, translation tx/ty):
+  //   effectiveDispW = dispW * gs
+  //   effectiveDispH = dispH * gs
+  //   imgCentreX = areaW/2 + tx
+  //   imgCentreY = areaH/2 + ty
+  //   imgLeft_g  = imgCentreX - effectiveDispW/2
+  //   imgTop_g   = imgCentreY - effectiveDispH/2
+  //
+  // Crop box (centred in the area):
+  //   cropLeft = (areaW - CROP_BOX) / 2
+  //   cropTop  = (areaH - CROP_BOX) / 2
+  //
+  // Map crop box to image pixel coordinates:
+  //   pixelX = (cropLeft - imgLeft_g)  / (fitScale * gs)
+  //   pixelY = (cropTop  - imgTop_g)   / (fitScale * gs)
+  //   pixelW = CROP_BOX / (fitScale * gs)
+  //   pixelH = CROP_BOX / (fitScale * gs)
   //
   const handleCrop = useCallback(async () => {
     if (!imageUri || !imgLoaded || cropping) return;
-
     setCropping(true);
     try {
-      // Read live values (called on button press, not mid-gesture)
       const gs = scale.value;
       const tx = translateX.value;
       const ty = translateY.value;
       const iw = imgW.value;
       const ih = imgH.value;
+      const aW = areaSize.w;
+      const aH = areaSize.h;
 
-      if (iw === 0 || ih === 0) {
-        onConfirm(imageUri);
-        return;
-      }
+      if (iw === 0 || ih === 0) { onConfirm(imageUri); return; }
 
-      const coverScale    = Math.max(CROP_BOX / iw, CROP_BOX / ih);
-      const imgLeftInView = (CROP_BOX - iw * coverScale) / 2;
-      const imgTopInView  = (CROP_BOX - ih * coverScale) / 2;
+      const fitScale = Math.min(aW / iw, aH / ih);
+      const dispW    = iw * fitScale;
+      const dispH    = ih * fitScale;
 
-      const viewX = CROP_BOX * (1 - 1 / gs) / 2 - tx / gs;
-      const viewY = CROP_BOX * (1 - 1 / gs) / 2 - ty / gs;
-      const viewW = CROP_BOX / gs;
-      const viewH = CROP_BOX / gs;
+      const effectiveW = dispW * gs;
+      const effectiveH = dispH * gs;
 
-      const rawPixelX = (viewX - imgLeftInView) / coverScale;
-      const rawPixelY = (viewY - imgTopInView)  / coverScale;
-      const rawPixelW = viewW / coverScale;
-      const rawPixelH = viewH / coverScale;
+      const imgCentreX = aW / 2 + tx;
+      const imgCentreY = aH / 2 + ty;
+      const imgLeft    = imgCentreX - effectiveW / 2;
+      const imgTop     = imgCentreY - effectiveH / 2;
+
+      const cropLeft = (aW - CROP_BOX) / 2;
+      const cropTop  = (aH - CROP_BOX) / 2;
+
+      const rawPixelX = (cropLeft - imgLeft) / (fitScale * gs);
+      const rawPixelY = (cropTop  - imgTop)  / (fitScale * gs);
+      const rawPixelW = CROP_BOX  / (fitScale * gs);
+      const rawPixelH = CROP_BOX  / (fitScale * gs);
 
       // Clamp to image bounds
       const clampedX = Math.max(0, Math.round(rawPixelX));
@@ -236,22 +238,25 @@ export default function ImageCropModal({
               height:  Math.max(1, clampedH),
             },
           },
-          // Resize to a standard square avatar size
           { resize: { width: 512, height: 512 } },
         ],
-        { compress: 0.85, format: ImageManipulator.SaveFormat.JPEG },
+        { compress: 0.87, format: ImageManipulator.SaveFormat.JPEG },
       );
 
       onConfirm(result.uri);
     } catch {
-      // On error fall back to uncropped image
       onConfirm(imageUri);
     } finally {
       setCropping(false);
     }
-  }, [imageUri, imgLoaded, cropping, scale, translateX, translateY, imgW, imgH, onConfirm]);
+  }, [imageUri, imgLoaded, cropping, scale, translateX, translateY,
+      imgW, imgH, areaSize, onConfirm]);
 
-  // ── render ───────────────────────────────────────────────────────────────
+  // ── overlay dimensions (derived from areaSize, sync) ─────────────────────
+  const cropLeft  = (areaSize.w - CROP_BOX) / 2;
+  const cropTop   = (areaSize.h - CROP_BOX) / 2;
+
+  // ── render ────────────────────────────────────────────────────────────────
   return (
     <Modal
       visible={visible}
@@ -265,7 +270,7 @@ export default function ImageCropModal({
       <GestureHandlerRootView style={styles.root}>
         <View style={styles.canvas}>
 
-          {/* ── header — always dark so buttons are always visible ── */}
+          {/* ── Header — always dark ── */}
           <View style={[styles.header, { paddingTop: insets.top + 8 }]}>
             <Pressable
               onPress={onCancel}
@@ -298,23 +303,60 @@ export default function ImageCropModal({
             </Pressable>
           </View>
 
-          {/* ── gestural image in a clipped crop area ── */}
-          <View style={styles.cropArea}>
+          {/* ── Crop area: image + overlays ── */}
+          <View style={styles.cropArea} onLayout={onAreaLayout}>
             {imageUri && (
-              <View style={styles.cropBoxClip}>
+              <>
+                {/* ── Gestural image layer (full area, no clip) ── */}
                 <GestureDetector gesture={composed}>
-                  <Animated.View style={[styles.imageContainer, imageAnimStyle]}>
+                  <Animated.View style={[StyleSheet.absoluteFillObject, imageAnimStyle]}>
                     <Animated.Image
                       source={{ uri: imageUri }}
-                      style={styles.image}
-                      resizeMode="cover"
+                      style={StyleSheet.absoluteFillObject}
+                      resizeMode="contain"
                       onLoad={handleImageLoad}
                     />
                   </Animated.View>
                 </GestureDetector>
 
-                {/* crop guide overlay (non-interactive) */}
-                <View style={styles.cropGuide} pointerEvents="none">
+                {/* ── Dark overlay: 4 bars around the crop box ── */}
+                {/* Top bar */}
+                <View
+                  pointerEvents="none"
+                  style={[styles.overlay, { top: 0, left: 0, right: 0, height: cropTop }]}
+                />
+                {/* Bottom bar */}
+                <View
+                  pointerEvents="none"
+                  style={[styles.overlay, { bottom: 0, left: 0, right: 0, height: cropTop }]}
+                />
+                {/* Left bar (between top & bottom bars) */}
+                <View
+                  pointerEvents="none"
+                  style={[styles.overlay, {
+                    top: cropTop, bottom: cropTop,
+                    left: 0, width: cropLeft,
+                  }]}
+                />
+                {/* Right bar */}
+                <View
+                  pointerEvents="none"
+                  style={[styles.overlay, {
+                    top: cropTop, bottom: cropTop,
+                    right: 0, width: cropLeft,
+                  }]}
+                />
+
+                {/* ── Crop box guide (border + grid + corners) ── */}
+                <View
+                  pointerEvents="none"
+                  style={[styles.cropGuide, {
+                    left:   cropLeft,
+                    top:    cropTop,
+                    width:  CROP_BOX,
+                    height: CROP_BOX,
+                  }]}
+                >
                   {/* edges */}
                   <View style={[styles.edge, styles.edgeTop]}    />
                   <View style={[styles.edge, styles.edgeBottom]} />
@@ -327,16 +369,16 @@ export default function ImageCropModal({
                   <View style={[styles.grid, styles.gridH1]} />
                   <View style={[styles.grid, styles.gridH2]} />
 
-                  {/* corner handles */}
+                  {/* L-shaped corner handles */}
                   {CORNERS.map(({ key, pos, border }) => (
                     <View key={key} style={[styles.corner, pos, border]} />
                   ))}
                 </View>
-              </View>
+              </>
             )}
           </View>
 
-          {/* ── tip ── */}
+          {/* ── Tip ── */}
           <View style={[styles.tip, { paddingBottom: insets.bottom + 12 }]}>
             <Text style={styles.tipText}>Pinch to zoom · Drag to reposition</Text>
           </View>
@@ -346,34 +388,34 @@ export default function ImageCropModal({
   );
 }
 
-// ── corner handle definitions (pre-computed, not per-render) ─────────────────
-const CORNER_SIZE  = 22;
-const CORNER_WIDTH = 4;
+// ── Corner handle definitions ──────────────────────────────────────────────────
+const CORNER_SZ  = 22;
+const CORNER_THK = 4;
 
 const CORNERS = [
   {
     key:    "tl",
     pos:    { position: "absolute" as const, top: -1, left: -1 },
-    border: { borderTopWidth: CORNER_WIDTH, borderLeftWidth:  CORNER_WIDTH, borderColor: "#FFFFFF" },
+    border: { borderTopWidth: CORNER_THK, borderLeftWidth:  CORNER_THK, borderColor: "#FFFFFF" },
   },
   {
     key:    "tr",
     pos:    { position: "absolute" as const, top: -1, right: -1 },
-    border: { borderTopWidth: CORNER_WIDTH, borderRightWidth: CORNER_WIDTH, borderColor: "#FFFFFF" },
+    border: { borderTopWidth: CORNER_THK, borderRightWidth: CORNER_THK, borderColor: "#FFFFFF" },
   },
   {
     key:    "bl",
     pos:    { position: "absolute" as const, bottom: -1, left: -1 },
-    border: { borderBottomWidth: CORNER_WIDTH, borderLeftWidth:  CORNER_WIDTH, borderColor: "#FFFFFF" },
+    border: { borderBottomWidth: CORNER_THK, borderLeftWidth:  CORNER_THK, borderColor: "#FFFFFF" },
   },
   {
     key:    "br",
     pos:    { position: "absolute" as const, bottom: -1, right: -1 },
-    border: { borderBottomWidth: CORNER_WIDTH, borderRightWidth: CORNER_WIDTH, borderColor: "#FFFFFF" },
+    border: { borderBottomWidth: CORNER_THK, borderRightWidth: CORNER_THK, borderColor: "#FFFFFF" },
   },
 ];
 
-// ── styles ────────────────────────────────────────────────────────────────────
+// ── Styles ────────────────────────────────────────────────────────────────────
 const BORDER_W = 2;
 const GRID_W   = StyleSheet.hairlineWidth;
 
@@ -418,29 +460,19 @@ const styles = StyleSheet.create({
   // ── crop area ────────────────────────────────────────────────────────────
   cropArea: {
     flex:            1,
-    alignItems:      "center",
-    justifyContent:  "center",
     backgroundColor: "#000",
-  },
-  cropBoxClip: {
-    width:    CROP_BOX,
-    height:   CROP_BOX,
-    overflow: "hidden",
-  },
-  imageContainer: {
-    width:          CROP_BOX,
-    height:         CROP_BOX,
-    alignItems:     "center",
-    justifyContent: "center",
-  },
-  image: {
-    width:  CROP_BOX,
-    height: CROP_BOX,
+    overflow:        "hidden",
   },
 
-  // ── crop guide overlay ───────────────────────────────────────────────────
+  // ── overlay bars ─────────────────────────────────────────────────────────
+  overlay: {
+    position:        "absolute",
+    backgroundColor: OVERLAY,
+  },
+
+  // ── crop guide box ───────────────────────────────────────────────────────
   cropGuide: {
-    ...StyleSheet.absoluteFillObject,
+    position: "absolute",
   },
   edge: {
     position:        "absolute",
@@ -449,7 +481,7 @@ const styles = StyleSheet.create({
   edgeTop:    { top: 0,    left: 0, right: 0,  height: BORDER_W },
   edgeBottom: { bottom: 0, left: 0, right: 0,  height: BORDER_W },
   edgeLeft:   { top: 0,    left: 0, bottom: 0, width:  BORDER_W },
-  edgeRight:  { top: 0,    right: 0, bottom: 0, width: BORDER_W },
+  edgeRight:  { top: 0,    right: 0, bottom: 0, width:  BORDER_W },
 
   grid: {
     position:        "absolute",
@@ -461,14 +493,15 @@ const styles = StyleSheet.create({
   gridH2: { left: 0, right: 0, top:   "66.66%", height: GRID_W },
 
   corner: {
-    width:  CORNER_SIZE,
-    height: CORNER_SIZE,
+    width:  CORNER_SZ,
+    height: CORNER_SZ,
   },
 
-  // ── tip text ─────────────────────────────────────────────────────────────
+  // ── tip ──────────────────────────────────────────────────────────────────
   tip: {
     alignItems: "center",
     paddingTop: 14,
+    backgroundColor: "#000",
   },
   tipText: {
     color:      "rgba(255,255,255,0.5)",
