@@ -347,33 +347,42 @@ export default function ImageCropModal({
                   }]}
                 />
 
-                {/* ── Crop box guide (border + grid + corners) ── */}
+                {/*
+                  ── Circular crop overlay ──────────────────────────────────
+                  The 4 bars above leave a square hole. We fill each corner of
+                  that hole with a quarter-circle filler (same overlay colour +
+                  one rounded inner corner = CROP_BOX/2) to make the hole look
+                  circular. On top we draw the white circle ring.
+                */}
+
+                {/* TL corner filler */}
+                <View pointerEvents="none" style={[styles.cornerFill, styles.cornerFillTL, {
+                  left: cropLeft, top: cropTop,
+                }]} />
+                {/* TR corner filler */}
+                <View pointerEvents="none" style={[styles.cornerFill, styles.cornerFillTR, {
+                  left: cropLeft + CROP_BOX / 2, top: cropTop,
+                }]} />
+                {/* BL corner filler */}
+                <View pointerEvents="none" style={[styles.cornerFill, styles.cornerFillBL, {
+                  left: cropLeft, top: cropTop + CROP_BOX / 2,
+                }]} />
+                {/* BR corner filler */}
+                <View pointerEvents="none" style={[styles.cornerFill, styles.cornerFillBR, {
+                  left: cropLeft + CROP_BOX / 2, top: cropTop + CROP_BOX / 2,
+                }]} />
+
+                {/* White circle ring guide */}
                 <View
                   pointerEvents="none"
-                  style={[styles.cropGuide, {
+                  style={[styles.circleRing, {
                     left:   cropLeft,
                     top:    cropTop,
                     width:  CROP_BOX,
                     height: CROP_BOX,
+                    borderRadius: CROP_BOX / 2,
                   }]}
-                >
-                  {/* edges */}
-                  <View style={[styles.edge, styles.edgeTop]}    />
-                  <View style={[styles.edge, styles.edgeBottom]} />
-                  <View style={[styles.edge, styles.edgeLeft]}   />
-                  <View style={[styles.edge, styles.edgeRight]}  />
-
-                  {/* rule-of-thirds grid */}
-                  <View style={[styles.grid, styles.gridV1]} />
-                  <View style={[styles.grid, styles.gridV2]} />
-                  <View style={[styles.grid, styles.gridH1]} />
-                  <View style={[styles.grid, styles.gridH2]} />
-
-                  {/* L-shaped corner handles */}
-                  {CORNERS.map(({ key, pos, border }) => (
-                    <View key={key} style={[styles.corner, pos, border]} />
-                  ))}
-                </View>
+                />
               </>
             )}
           </View>
@@ -388,36 +397,10 @@ export default function ImageCropModal({
   );
 }
 
-// ── Corner handle definitions ──────────────────────────────────────────────────
-const CORNER_SZ  = 22;
-const CORNER_THK = 4;
-
-const CORNERS = [
-  {
-    key:    "tl",
-    pos:    { position: "absolute" as const, top: -1, left: -1 },
-    border: { borderTopWidth: CORNER_THK, borderLeftWidth:  CORNER_THK, borderColor: "#FFFFFF" },
-  },
-  {
-    key:    "tr",
-    pos:    { position: "absolute" as const, top: -1, right: -1 },
-    border: { borderTopWidth: CORNER_THK, borderRightWidth: CORNER_THK, borderColor: "#FFFFFF" },
-  },
-  {
-    key:    "bl",
-    pos:    { position: "absolute" as const, bottom: -1, left: -1 },
-    border: { borderBottomWidth: CORNER_THK, borderLeftWidth:  CORNER_THK, borderColor: "#FFFFFF" },
-  },
-  {
-    key:    "br",
-    pos:    { position: "absolute" as const, bottom: -1, right: -1 },
-    border: { borderBottomWidth: CORNER_THK, borderRightWidth: CORNER_THK, borderColor: "#FFFFFF" },
-  },
-];
-
 // ── Styles ────────────────────────────────────────────────────────────────────
-const BORDER_W = 2;
-const GRID_W   = StyleSheet.hairlineWidth;
+// Each corner filler is CROP_BOX/2 × CROP_BOX/2 with ONE rounded inner corner
+// that matches the circle radius, "eating" the square corner of the overlay hole.
+const HALF = CROP_BOX / 2;
 
 const styles = StyleSheet.create({
   root:   { flex: 1, backgroundColor: "#000" },
@@ -470,37 +453,31 @@ const styles = StyleSheet.create({
     backgroundColor: OVERLAY,
   },
 
-  // ── crop guide box ───────────────────────────────────────────────────────
-  cropGuide: {
-    position: "absolute",
-  },
-  edge: {
+  // ── corner fillers (make the square hole circular) ────────────────────────
+  // Each filler is half the crop box, positioned at one corner of the hole.
+  // The single rounded inner corner + overlay colour hides the square corner.
+  cornerFill: {
     position:        "absolute",
-    backgroundColor: "rgba(255,255,255,0.9)",
+    width:           HALF,
+    height:          HALF,
+    backgroundColor: OVERLAY,
   },
-  edgeTop:    { top: 0,    left: 0, right: 0,  height: BORDER_W },
-  edgeBottom: { bottom: 0, left: 0, right: 0,  height: BORDER_W },
-  edgeLeft:   { top: 0,    left: 0, bottom: 0, width:  BORDER_W },
-  edgeRight:  { top: 0,    right: 0, bottom: 0, width:  BORDER_W },
+  cornerFillTL: { borderBottomRightRadius: HALF },
+  cornerFillTR: { borderBottomLeftRadius:  HALF },
+  cornerFillBL: { borderTopRightRadius:    HALF },
+  cornerFillBR: { borderTopLeftRadius:     HALF },
 
-  grid: {
-    position:        "absolute",
-    backgroundColor: "rgba(255,255,255,0.2)",
-  },
-  gridV1: { top: 0, bottom: 0, left:  "33.33%", width:  GRID_W },
-  gridV2: { top: 0, bottom: 0, left:  "66.66%", width:  GRID_W },
-  gridH1: { left: 0, right: 0, top:   "33.33%", height: GRID_W },
-  gridH2: { left: 0, right: 0, top:   "66.66%", height: GRID_W },
-
-  corner: {
-    width:  CORNER_SZ,
-    height: CORNER_SZ,
+  // ── circle ring guide ────────────────────────────────────────────────────
+  circleRing: {
+    position:    "absolute",
+    borderWidth: 2.5,
+    borderColor: "rgba(255,255,255,0.9)",
   },
 
   // ── tip ──────────────────────────────────────────────────────────────────
   tip: {
-    alignItems: "center",
-    paddingTop: 14,
+    alignItems:      "center",
+    paddingTop:      14,
     backgroundColor: "#000",
   },
   tipText: {
