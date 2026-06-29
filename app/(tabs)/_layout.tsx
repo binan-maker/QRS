@@ -158,22 +158,6 @@ const HistoryIcon = React.memo(function HistoryIcon({
   );
 });
 
-const MyQrIcon = React.memo(function MyQrIcon({
-  color,
-  focused,
-}: {
-  color: string;
-  focused: boolean;
-}) {
-  return (
-    <View
-      style={focused ? [styles.activeIconWrap, { backgroundColor: color + "18" }] : styles.iconWrap}
-    >
-      <Ionicons name={focused ? "bookmark" : "bookmark-outline"} size={24} color={color} />
-    </View>
-  );
-});
-
 const ProfileIcon = React.memo(function ProfileIcon({
   color,
   focused,
@@ -222,10 +206,6 @@ function NativeTabLayout() {
         <Icon sf={{ default: "clock", selected: "clock.fill" }} />
         <Label>{t("tabs.history")}</Label>
       </NativeTabs.Trigger>
-      <NativeTabs.Trigger name="my-qr-codes">
-        <Icon sf={{ default: "bookmark", selected: "bookmark.fill" }} />
-        <Label>{t("tabs.myQrCodes")}</Label>
-      </NativeTabs.Trigger>
       <NativeTabs.Trigger name="profile">
         <Icon sf={{ default: "person", selected: "person.fill" }} />
         <Label>{t("tabs.profile")}</Label>
@@ -238,7 +218,6 @@ function NativeTabLayout() {
 const renderHomeIcon   = ({ color, focused }: { color: string; focused: boolean }) => <HomeIcon color={color} focused={focused} />;
 const renderGenIcon    = ({ color, focused }: { color: string; focused: boolean }) => <GeneratorIcon color={color} focused={focused} />;
 const renderHistIcon   = ({ color, focused }: { color: string; focused: boolean }) => <HistoryIcon color={color} focused={focused} />;
-const renderMyQrIcon   = ({ color, focused }: { color: string; focused: boolean }) => <MyQrIcon color={color} focused={focused} />;
 const renderProfIcon   = ({ color, focused }: { color: string; focused: boolean }) => <ProfileIcon color={color} focused={focused} />;
 const renderScanButton = () => <ScanTabButton onPress={() => router.push("/(tabs)/scanner")} />;
 const renderNoLabel    = () => null;
@@ -354,7 +333,7 @@ function ClassicTabLayout() {
 
         <Tabs.Screen
           name="my-qr-codes"
-          options={{ title: t("tabs.myQrCodes"), tabBarIcon: renderMyQrIcon }}
+          options={{ href: null, tabBarStyle: hiddenTabBar }}
         />
 
         <Tabs.Screen
