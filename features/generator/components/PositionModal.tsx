@@ -15,7 +15,7 @@ export default function PositionModal({ visible, logoPosition, onSelect, onClose
   const { colors } = useTheme();
 
   return (
-    <BottomSheet visible={visible} onClose={onClose}>
+    <BottomSheet visible={visible} onClose={onClose} extraBottomPadding={12}>
       <Text style={[styles.title, { color: colors.text }]}>Logo Position</Text>
       <Text style={[styles.sub, { color: colors.textSecondary }]}>Choose where to place your logo on the QR code</Text>
       <View style={styles.grid}>
@@ -79,6 +79,6 @@ const styles = StyleSheet.create({
   },
   dot: { width: 10, height: 10, borderRadius: 5 },
   gridLabel: { fontSize: 12, fontFamily: "Inter_500Medium", textAlign: "center" },
-  doneBtn: { paddingVertical: 14, borderRadius: 14, alignItems: "center", marginBottom: 4 },
+  doneBtn: { paddingVertical: 14, borderRadius: 14, alignItems: "center", marginBottom: 12 },
   doneBtnText: { fontSize: 16, fontFamily: "Inter_700Bold" },
 });
