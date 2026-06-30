@@ -75,7 +75,7 @@ function SheetBody({
       <Animated.View
         style={[StyleSheet.absoluteFillObject, styles.backdrop, { opacity: overlayAnim }]}
       >
-        <Pressable style={StyleSheet.absoluteFill} onPress={onClose} />
+        <Pressable style={StyleSheet.absoluteFill} onPress={onClose} android_disableSound />
       </Animated.View>
 
       {/* Sheet */}
@@ -134,7 +134,7 @@ export default function BottomSheet({
       sheetAnim.setValue(900);
 
       Animated.parallel([
-        Animated.timing(overlayAnim, { toValue: 1, duration: 220, useNativeDriver: true }),
+        Animated.timing(overlayAnim, { toValue: 0.65, duration: 220, useNativeDriver: true }),
         Animated.spring(sheetAnim,   {
           toValue: 0, useNativeDriver: true,
           damping: 18, stiffness: 140, mass: 0.8,
@@ -193,7 +193,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   backdrop: {
-    backgroundColor: "rgba(0,0,0,0.55)",
+    backgroundColor: "#000",
   },
   container: {
     flex:           1,
