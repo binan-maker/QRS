@@ -47,7 +47,16 @@ export default function QrHeroCard({
   const { rf, sp } = useScaleFns();
 
   const rawDest = !isPrivateDest ? (guardDest || standardRawContent || null) : null;
-  const dest = rawDest && /^https?:\/\//i.test(rawDest) ? rawDest : null;
+  // Filter out internal redirect URLs — check pathname only to avoid false positives
+  // on legitimate external URLs that happen to contain /go/ or /q/ in deeper paths.
+  const dest = (() => {
+    if (!rawDest || !/^https?:\/\//i.test(rawDest)) return null;
+    try {
+      const { pathname } = new URL(rawDest);
+      if (/^\/(q|go|guard)\/[A-Za-z0-9_-]/.test(pathname)) return null;
+    } catch { return null; }
+    return rawDest;
+  })();
 
   const logoSource = customLogoUri
     ? { uri: customLogoUri }

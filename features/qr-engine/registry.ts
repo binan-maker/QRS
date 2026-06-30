@@ -86,7 +86,13 @@ const QR_REGISTRY: Record<string, QrTypeDefinition> = {
     getDisplayLabel: (c) => {
       try {
         const u = new URL(c.startsWith("http") ? c : `https://${c}`);
-        if (u.pathname.startsWith("/guard/") || /^(192\.168\.|10\.|172\.)/.test(u.hostname))
+        // Internal redirect paths (/guard/, /q/, /go/) are QR redirect links, not destinations
+        if (
+          u.pathname.startsWith("/guard/") ||
+          /^\/q\/[A-Za-z0-9_-]/.test(u.pathname) ||
+          /^\/go\/[A-Za-z0-9_-]/.test(u.pathname) ||
+          /^(192\.168\.|10\.|172\.)/.test(u.hostname)
+        )
           return "Smart Redirect";
         return u.hostname.replace(/^www\./, "");
       } catch { return _trunc(c, 36); }

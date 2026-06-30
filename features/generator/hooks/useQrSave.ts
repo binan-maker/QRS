@@ -29,7 +29,29 @@ function getFirestoreContentType(presetIdx: number): string {
 
 function getStableQrBase(): string {
   const domain = process.env.EXPO_PUBLIC_DOMAIN;
-  if (domain && domain.trim()) return `https://${domain.trim()}`.replace(/\/$/, "");
+  if (domain && domain.trim()) {
+    // Parse the hostname robustly — env may include scheme, port, or trailing slash
+    let hostname = domain.trim();
+    try {
+      // If it looks like a URL, parse it; otherwise prefix https:// to parse the host
+      const parsed = new URL(hostname.startsWith("http") ? hostname : `https://${hostname}`);
+      hostname = parsed.hostname; // pure hostname, no port or path
+    } catch {
+      // strip scheme/port/path manually as fallback
+      hostname = hostname.replace(/^https?:\/\//, "").split(/[/:?#]/)[0];
+    }
+    // Never use Replit/dev-proxy domains as the QR base — scanners can't reach them.
+    if (
+      hostname.endsWith(".replit.app") ||
+      hostname.endsWith(".replit.dev") ||
+      hostname.endsWith(".repl.co") ||
+      hostname === "localhost" ||
+      hostname.startsWith("localhost:")
+    ) {
+      return "https://qrguard.app";
+    }
+    return `https://${hostname}`;
+  }
   return "https://qrguard.app";
 }
 
