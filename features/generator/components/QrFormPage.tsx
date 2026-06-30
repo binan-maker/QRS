@@ -108,12 +108,15 @@ export default function QrFormPage({ mode, initialTemplateId, openAiBuilder }: P
       setShowGenError(false);
       return;
     }
-    const nameVal = advancedSettings.label.trim();
-    if (!nameVal) {
-      setShowNameError(true);
-      setShowTemplateError(false);
-      setShowGenError(false);
-      return;
+    // Name is not required for private QR codes — they are not saved
+    if (mode !== "private") {
+      const nameVal = advancedSettings.label.trim();
+      if (!nameVal) {
+        setShowNameError(true);
+        setShowTemplateError(false);
+        setShowGenError(false);
+        return;
+      }
     }
     if (!inputValue.trim()) {
       setShowGenError(true);
@@ -125,7 +128,7 @@ export default function QrFormPage({ mode, initialTemplateId, openAiBuilder }: P
     setShowNameError(false);
     setShowGenError(false);
     handleGenerate();
-  }, [presetActive, templateGenerated, inputValue, advancedSettings.label, handleGenerate]);
+  }, [mode, presetActive, templateGenerated, inputValue, advancedSettings.label, handleGenerate]);
 
   const handleClearAll = useCallback(() => {
     setTemplateGenerated(false);
@@ -170,54 +173,56 @@ export default function QrFormPage({ mode, initialTemplateId, openAiBuilder }: P
           <TemplateReadyCard templateName={templateName} onChange={handleChangeTemplate} />
         )}
 
-        {/* ── QR Name field ────────────────────────────────────── */}
-        <Reanimated.View entering={FadeInDown.delay(40).duration(260)} style={styles.nameWrap}>
-          <View style={[
-            styles.nameCard,
-            {
-              backgroundColor: colors.surface,
-              borderColor: showNameError
-                ? colors.danger + "80"
-                : advancedSettings.label.trim()
-                ? colors.primary + "50"
-                : colors.surfaceBorder,
-            },
-          ]}>
-            <View style={styles.nameRow}>
-              <Ionicons
-                name="pricetag-outline"
-                size={13}
-                color={showNameError ? colors.danger : advancedSettings.label.trim() ? colors.primary : colors.textMuted}
-              />
-              <Text style={[styles.nameLabel, { color: showNameError ? colors.danger : colors.textSecondary }]}>
-                QR Code Name
-              </Text>
-              <View style={[styles.requiredTag, { backgroundColor: showNameError ? colors.danger + "16" : colors.primaryDim }]}>
-                <Text style={[styles.requiredText, { color: showNameError ? colors.danger : colors.primary }]}>Required</Text>
+        {/* ── QR Name field — hidden for private QR (not saved) ── */}
+        {mode !== "private" && (
+          <Reanimated.View entering={FadeInDown.delay(40).duration(260)} style={styles.nameWrap}>
+            <View style={[
+              styles.nameCard,
+              {
+                backgroundColor: colors.surface,
+                borderColor: showNameError
+                  ? colors.danger + "80"
+                  : advancedSettings.label.trim()
+                  ? colors.primary + "50"
+                  : colors.surfaceBorder,
+              },
+            ]}>
+              <View style={styles.nameRow}>
+                <Ionicons
+                  name="pricetag-outline"
+                  size={13}
+                  color={showNameError ? colors.danger : advancedSettings.label.trim() ? colors.primary : colors.textMuted}
+                />
+                <Text style={[styles.nameLabel, { color: showNameError ? colors.danger : colors.textSecondary }]}>
+                  QR Code Name
+                </Text>
+                <View style={[styles.requiredTag, { backgroundColor: showNameError ? colors.danger + "16" : colors.primaryDim }]}>
+                  <Text style={[styles.requiredText, { color: showNameError ? colors.danger : colors.primary }]}>Required</Text>
+                </View>
               </View>
+
+              <TextInput
+                style={[styles.nameInput, {
+                  color: colors.text,
+                  backgroundColor: colors.surfaceLight,
+                  borderColor: showNameError ? colors.danger + "55" : colors.surfaceBorder,
+                }]}
+                placeholder="Name this QR code"
+                placeholderTextColor={colors.textMuted}
+                value={advancedSettings.label}
+                onChangeText={(v) => {
+                  setAdvancedSettings({ ...advancedSettings, label: v });
+                  if (v.trim()) setShowNameError(false);
+                }}
+                maxLength={80}
+              />
+
+              <Text style={[styles.nameHint, { color: showNameError ? colors.danger : colors.textMuted }]}>
+                {showNameError ? "Please give your QR code a name before generating" : "Shown on your QR codes list"}
+              </Text>
             </View>
-
-            <TextInput
-              style={[styles.nameInput, {
-                color: colors.text,
-                backgroundColor: colors.surfaceLight,
-                borderColor: showNameError ? colors.danger + "55" : colors.surfaceBorder,
-              }]}
-              placeholder="Name this QR code"
-              placeholderTextColor={colors.textMuted}
-              value={advancedSettings.label}
-              onChangeText={(v) => {
-                setAdvancedSettings({ ...advancedSettings, label: v });
-                if (v.trim()) setShowNameError(false);
-              }}
-              maxLength={80}
-            />
-
-            <Text style={[styles.nameHint, { color: showNameError ? colors.danger : colors.textMuted }]}>
-              {showNameError ? "Please give your QR code a name before generating" : "Shown on your QR codes list"}
-            </Text>
-          </View>
-        </Reanimated.View>
+          </Reanimated.View>
+        )}
 
         {/* ── Content input ────────────────────────────────────── */}
         {showInputSection && (
@@ -236,6 +241,7 @@ export default function QrFormPage({ mode, initialTemplateId, openAiBuilder }: P
         <Reanimated.View entering={FadeInDown.delay(40).duration(260)} style={styles.drawerWrap}>
           <CustomizeDrawer
             qrReady={!!qrValue}
+            hideOptions={mode === "private"}
             selectedThemeIdx={selectedThemeIdx}
             onSelectTheme={setSelectedThemeIdx}
             isCustomTheme={isCustomTheme}

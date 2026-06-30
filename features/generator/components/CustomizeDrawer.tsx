@@ -14,6 +14,7 @@ type Tab = "colors" | "logo" | "options";
 
 interface Props {
   qrReady: boolean;
+  hideOptions?: boolean;
   selectedThemeIdx: number;
   onSelectTheme: (idx: number) => void;
   isCustomTheme: boolean;
@@ -40,6 +41,7 @@ const TABS: { key: Tab; icon: keyof typeof Ionicons.glyphMap; label: string; ena
 
 function CustomizeDrawer({
   qrReady,
+  hideOptions = false,
   selectedThemeIdx, onSelectTheme,
   isCustomTheme, customFgColor, customBgColor, onSetCustomFg, onSetCustomBg,
   settings, onChangeSettings,
@@ -58,9 +60,11 @@ function CustomizeDrawer({
   const hasTheme   = selectedThemeIdx !== 0 || isCustomTheme;
   const hasLogo    = !!customLogoUri || showDefaultLogo;
   const hasOptions =
-    (settings.scanLimit !== null && settings.scanLimit > 0) ||
-    settings.expiryPreset !== "never" ||
-    settings.label.trim().length > 0;
+    !hideOptions && (
+      (settings.scanLimit !== null && settings.scanLimit > 0) ||
+      settings.expiryPreset !== "never" ||
+      settings.label.trim().length > 0
+    );
   const hasAny = hasTheme || hasLogo || hasOptions;
 
   const dots: Tab[] = [];
@@ -68,7 +72,8 @@ function CustomizeDrawer({
   if (hasLogo)    dots.push("logo");
   if (hasOptions) dots.push("options");
 
-  const tabsWithEnabled = TABS.map(t => ({
+  const visibleTabs = hideOptions ? TABS.filter(t => t.key !== "options") : TABS;
+  const tabsWithEnabled = visibleTabs.map(t => ({
     ...t,
     enabled: t.key === "logo" ? qrReady : true,
   }));
