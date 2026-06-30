@@ -48,6 +48,7 @@ export function useProfile() {
   const [uploadingPhoto,  setUploadingPhoto]  = useState(false);
   const [cropModalOpen,   setCropModalOpen]   = useState(false);
   const [pendingImageUri, setPendingImageUri] = useState<string | null>(null);
+  const mediaLibraryPermRef = useRef<boolean | null>(null); // cached permission status
   const [refreshing,     setRefreshing]     = useState(false);
   const [myQrCodes,      setMyQrCodes]      = useState<GeneratedQrItem[]>([]);
   const [myQrLoading,    setMyQrLoading]    = useState(true);
@@ -279,6 +280,17 @@ export function useProfile() {
     setPendingImageUri(null);
   }, []);
 
+  // Pre-fetch media-library permission whenever the photo modal opens so it is
+  // already cached in mediaLibraryPermRef by the time the user taps "Gallery".
+  // This eliminates the async permission round-trip that caused the perceived
+  // double-tap / long-wait before the gallery appeared.
+  useEffect(() => {
+    if (!photoModalOpen) return;
+    ImagePicker.getMediaLibraryPermissionsAsync().then((perm) => {
+      mediaLibraryPermRef.current = perm.granted;
+    }).catch(() => {});
+  }, [photoModalOpen]);
+
   // ── Photo pick / upload (optimistic) ───────────────────────────────────────
   //
   // On Android we skip the native UCrop editor (allowsEditing:true) because it
@@ -300,8 +312,16 @@ export function useProfile() {
           quality: 0.8,
         });
       } else {
-        const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
-        if (!perm.granted) { Alert.alert("Permission needed", "Gallery access is required."); return; }
+        // Use the pre-fetched permission if available to avoid the async delay.
+        // Only fall back to requestMediaLibraryPermissionsAsync when the status
+        // is not yet known (first ever open) or was previously denied.
+        let granted = mediaLibraryPermRef.current;
+        if (granted === null || granted === false) {
+          const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
+          granted = perm.granted;
+          mediaLibraryPermRef.current = granted;
+        }
+        if (!granted) { Alert.alert("Permission needed", "Gallery access is required."); return; }
         result = await ImagePicker.launchImageLibraryAsync({
           mediaTypes: ["images"],
           allowsEditing: useNativeEditor,

@@ -65,11 +65,10 @@ const PhotoModal = React.memo(function PhotoModal({
             style={({ pressed }) => [styles.option, { opacity: pressed ? 0.72 : 1 }]}
             onPress={() => {
               onClose();
-              // Wait for the bottom sheet close animation to complete before
-              // launching system UI (camera / gallery). Without this delay the
-              // OS picker is blocked behind the sheet animation, making it look
-              // like nothing happened and forcing the user to tap twice.
-              setTimeout(() => opt.onPress?.(), 350);
+              // Wait for the bottom sheet close animation to complete (220 ms)
+              // before launching system UI. A small extra buffer ensures the
+              // modal is fully dismissed on slower devices.
+              setTimeout(() => opt.onPress?.(), 250);
             }}
           >
             <View style={[styles.optionIcon, { backgroundColor: opt.iconBg }]}>
