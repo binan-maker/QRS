@@ -34,10 +34,6 @@ export function EmptyScans() {
 
       {/* Copy */}
       <Text style={[styles.title, { color: colors.text }]}>No scans yet</Text>
-      <Text style={[styles.sub, { color: colors.textMuted }]}>
-        Point your camera at any QR code{"\n"}to instantly check if it's safe.
-      </Text>
-
       {/* CTA */}
       <Pressable
         onPress={() => router.push("/(tabs)/scanner" as any)}
