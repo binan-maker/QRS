@@ -170,7 +170,10 @@ export default function MyQrDetailScreen() {
   const isBusiness = qrItem.qrType === "business";
   const isActive = qrItem.isActive !== false;
   const isGuardQr = !!(qrItem as any).guardUuid;
-  const isStandardQr = !isGuardQr && (qrItem.content || "").includes("/go/");
+  const isStandardQr = !isGuardQr && (
+    (qrItem.content || "").includes("/go/") ||
+    (qrItem.content || "").includes("/q/")
+  );
   const isDynamic = isGuardQr || isStandardQr;
   const hasGuardLink = !!guardLink;
   const hasStandardLink = !!standardLink;
@@ -199,11 +202,13 @@ export default function MyQrDetailScreen() {
   const isReadOnly = !isStructured && READONLY_TYPES.has(effectiveContentType);
 
   const publicShortUuid: string | null = (() => {
-    if (isBusiness) return (qrItem as any).guardUuid || (qrItem as any).shortUuid || null;
+    if (isBusiness) return (qrItem as any).guardUuid || (qrItem as any).uuid || null;
     const content = (qrItem as any).content || "";
-    const match = content.match(/\/go\/([A-Za-z0-9_-]+)/);
-    if (match) return match[1];
-    return (qrItem as any).shortUuid || null;
+    const goMatch = content.match(/\/go\/([A-Za-z0-9_-]+)/);
+    if (goMatch) return goMatch[1];
+    const qMatch = content.match(/\/q\/([A-Za-z0-9_-]+)/);
+    if (qMatch) return qMatch[1];
+    return (qrItem as any).uuid || null;
   })();
 
   function initStructuredFields(): Record<string, string> {

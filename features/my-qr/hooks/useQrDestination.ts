@@ -45,10 +45,11 @@ export function useQrDestination(
   }, [qrItem?.guardUuid]);
 
   useEffect(() => {
+    const content = qrItem?.content || "";
     const isStandardRedirect =
       qrItem?.qrType === "individual" &&
       !qrItem?.guardUuid &&
-      (qrItem?.content || "").includes("/go/");
+      (content.includes("/go/") || content.includes("/q/"));
     if (!isStandardRedirect || !qrItem?.uuid) { setStandardLink(null); return; }
     getStandardLink(qrItem.uuid).then((link) => {
       setStandardLink(link);

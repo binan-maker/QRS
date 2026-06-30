@@ -226,7 +226,10 @@ export default function MyQrAnalyticsScreen() {
 
   const displayTitle = getDetailDisplayTitle(qrItem as any);
   const isGuardQr  = !!(qrItem as any)?.guardUuid;
-  const isStandardQr = !isGuardQr && ((qrItem?.content || "").includes("/go/"));
+  const isStandardQr = !isGuardQr && (
+    (qrItem?.content || "").includes("/go/") ||
+    (qrItem?.content || "").includes("/q/")
+  );
   const isDynamic  = isGuardQr || isStandardQr;
   const isActive   = qrItem?.isActive !== false;
   const primaryColor = isGuardQr ? colors.primary : isStandardQr ? "#22c55e" : colors.textSecondary;
