@@ -10,7 +10,7 @@ import { parseAnyPaymentQr } from "@/services/analysis";
 import { truncate, formatRelativeTime, detectContentType } from "@/shared/utils/formatters";
 import { cardStyles } from "@/features/home/components/scanCardStyles";
 import type { LocalScan } from "@/features/home/types";
-import { QrTypeIcon, useQrMeta, getQrTypeMeta } from "@/features/qr-engine";
+import { useQrMeta, getQrTypeMeta } from "@/features/qr-engine";
 import { getDisplayLabel as getContentDisplayLabel, getSubtitle as getContentSubtitle } from "@/features/qr-engine";
 
 // ── Legacy helper kept for backward-compat (used by home screen hooks) ────────
@@ -103,8 +103,6 @@ export const RecentScanCard = React.memo(function RecentScanCard({ scan, index, 
             },
           ]}
         >
-          <QrTypeIcon contentType={contentType} size={44} />
-
           <View style={cardStyles.scanBody}>
             <View style={cardStyles.scanTopRow}>
               <Text

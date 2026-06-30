@@ -9,7 +9,7 @@ import { useTheme } from "@/shared/contexts/ThemeContext";
 import { formatRelativeTime } from "@/shared/utils/formatters";
 import type { HistoryItem as HistoryItemType } from "@/features/history/types";
 import { parseAnyPaymentQr } from "@/services/analysis";
-import { QrTypeIcon, useQrMeta } from "@/features/qr-engine";
+import { useQrMeta } from "@/features/qr-engine";
 
 function getRiskConfig(risk: string, colors: any) {
   if (risk === "dangerous" || risk === "caution") return {
@@ -122,12 +122,6 @@ const HistoryItem = React.memo(function HistoryItem({ item, risk, onDelete, inde
             },
           ]}
         >
-          <QrTypeIcon
-            contentType={isFavorite ? "donation" : item.contentType}
-            size={48}
-            overrideIcon={iconOverride}
-          />
-
           <View style={styles.body}>
             <View style={styles.titleRow}>
               <Text style={[styles.title, { color: colors.text }]} numberOfLines={1} maxFontSizeMultiplier={1}>
