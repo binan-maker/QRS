@@ -206,6 +206,30 @@ export async function getGeneratedQrById(userId: string, docId: string): Promise
   }
 }
 
+export async function checkQrNameExists(userId: string, name: string): Promise<boolean> {
+  const trimmed = name.trim();
+  if (!trimmed) return false;
+  try {
+    const { docs } = await db.query(["users", userId, "generatedQrs"], {
+      where: [{ field: "label", op: "==", value: trimmed }],
+      limit: 1,
+    });
+    return docs.length > 0;
+  } catch {
+    return false;
+  }
+}
+
+export function buildNameSuggestions(name: string): string[] {
+  const trimmed = name.trim();
+  const year = new Date().getFullYear();
+  return [
+    `${trimmed} (2)`,
+    `${trimmed} - Copy`,
+    `${trimmed} ${year}`,
+  ];
+}
+
 export async function getUserGeneratedQrs(userId: string): Promise<GeneratedQrItem[]> {
   try {
     // FIX: previously an unbounded query — a prolific user with thousands of

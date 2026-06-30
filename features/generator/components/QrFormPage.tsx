@@ -1,5 +1,5 @@
-import React, { useState, useMemo, useCallback } from "react";
-import { View, StyleSheet, Text, TextInput } from "react-native";
+import React, { useState, useMemo, useCallback, useEffect } from "react";
+import { View, StyleSheet, Text, TextInput, Pressable } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTopInset } from "@/shared/utils/platform";
 import Reanimated, { FadeInDown } from "react-native-reanimated";
@@ -35,15 +35,16 @@ export default function QrFormPage({ mode, initialTemplateId, openAiBuilder }: P
   const { colors } = useTheme();
   const topInset = useTopInset();
 
-  const [presetActive,       setPresetActive]       = useState(false);
-  const [templateGenerated,  setTemplateGenerated]  = useState(false);
-  const [templateName,       setTemplateName]       = useState("");
-  const [qrSize,             setQrSize]             = useState(220);
-  const [qrTemplateOpen,      setQrTemplateOpen]      = useState(false);
-  const [advancedBuilderOpen, setAdvancedBuilderOpen] = useState(false);
-  const [showGenError,        setShowGenError]        = useState(false);
-  const [showNameError,       setShowNameError]       = useState(false);
-  const [showTemplateError,   setShowTemplateError]   = useState(false);
+  const [presetActive,         setPresetActive]         = useState(false);
+  const [templateGenerated,    setTemplateGenerated]    = useState(false);
+  const [templateName,         setTemplateName]         = useState("");
+  const [qrSize,               setQrSize]               = useState(220);
+  const [qrTemplateOpen,       setQrTemplateOpen]       = useState(false);
+  const [advancedBuilderOpen,  setAdvancedBuilderOpen]  = useState(false);
+  const [showGenError,         setShowGenError]         = useState(false);
+  const [showNameError,        setShowNameError]        = useState(false);
+  const [showDuplicateError,   setShowDuplicateError]   = useState(false);
+  const [showTemplateError,    setShowTemplateError]    = useState(false);
 
   const [initTid] = useState(initialTemplateId);
   const [initAi]  = useState(openAiBuilder);
@@ -64,6 +65,7 @@ export default function QrFormPage({ mode, initialTemplateId, openAiBuilder }: P
     generatedUuid, generatedAt,
     infoModalOpen, setInfoModalOpen, positionModalOpen, setPositionModalOpen,
     saving, savedToProfile, savedDocId,
+    nameSuggestions, clearNameSuggestions,
     toastMsg, toastType, toastAnim,
     privateMode,
     switchPreset, handleGenerate,
@@ -74,6 +76,10 @@ export default function QrFormPage({ mode, initialTemplateId, openAiBuilder }: P
   } = useQrGenerator();
 
   React.useEffect(() => { setQrMode(mode); }, []);
+
+  useEffect(() => {
+    if (nameSuggestions.length > 0) setShowDuplicateError(true);
+  }, [nameSuggestions]);
 
   const logoPositionLabel = useMemo(
     () => LOGO_POSITIONS.find((p) => p.key === logoPosition)?.label ?? "Center",
@@ -134,8 +140,10 @@ export default function QrFormPage({ mode, initialTemplateId, openAiBuilder }: P
     setTemplateGenerated(false);
     setTemplateName("");
     setPresetActive(false);
+    setShowDuplicateError(false);
+    clearNameSuggestions();
     handleClear();
-  }, [handleClear]);
+  }, [handleClear, clearNameSuggestions]);
 
   const handleChangeTemplate = useCallback(() => {
     setTemplateGenerated(false);
@@ -180,7 +188,9 @@ export default function QrFormPage({ mode, initialTemplateId, openAiBuilder }: P
               styles.nameCard,
               {
                 backgroundColor: colors.surface,
-                borderColor: showNameError
+                borderColor: showDuplicateError
+                  ? colors.warning + "80"
+                  : showNameError
                   ? colors.danger + "80"
                   : advancedSettings.label.trim()
                   ? colors.primary + "50"
@@ -191,13 +201,13 @@ export default function QrFormPage({ mode, initialTemplateId, openAiBuilder }: P
                 <Ionicons
                   name="pricetag-outline"
                   size={13}
-                  color={showNameError ? colors.danger : advancedSettings.label.trim() ? colors.primary : colors.textMuted}
+                  color={showDuplicateError ? colors.warning : showNameError ? colors.danger : advancedSettings.label.trim() ? colors.primary : colors.textMuted}
                 />
-                <Text style={[styles.nameLabel, { color: showNameError ? colors.danger : colors.textSecondary }]}>
+                <Text style={[styles.nameLabel, { color: showDuplicateError ? colors.warning : showNameError ? colors.danger : colors.textSecondary }]}>
                   QR Code Name
                 </Text>
-                <View style={[styles.requiredTag, { backgroundColor: showNameError ? colors.danger + "16" : colors.primaryDim }]}>
-                  <Text style={[styles.requiredText, { color: showNameError ? colors.danger : colors.primary }]}>Required</Text>
+                <View style={[styles.requiredTag, { backgroundColor: showDuplicateError ? colors.warning + "16" : showNameError ? colors.danger + "16" : colors.primaryDim }]}>
+                  <Text style={[styles.requiredText, { color: showDuplicateError ? colors.warning : showNameError ? colors.danger : colors.primary }]}>Required</Text>
                 </View>
               </View>
 
@@ -205,7 +215,7 @@ export default function QrFormPage({ mode, initialTemplateId, openAiBuilder }: P
                 style={[styles.nameInput, {
                   color: colors.text,
                   backgroundColor: colors.surfaceLight,
-                  borderColor: showNameError ? colors.danger + "55" : colors.surfaceBorder,
+                  borderColor: showDuplicateError ? colors.warning + "55" : showNameError ? colors.danger + "55" : colors.surfaceBorder,
                 }]}
                 placeholder="Name this QR code"
                 placeholderTextColor={colors.textMuted}
@@ -213,13 +223,46 @@ export default function QrFormPage({ mode, initialTemplateId, openAiBuilder }: P
                 onChangeText={(v) => {
                   setAdvancedSettings({ ...advancedSettings, label: v });
                   if (v.trim()) setShowNameError(false);
+                  if (showDuplicateError) { setShowDuplicateError(false); clearNameSuggestions(); }
                 }}
                 maxLength={80}
               />
 
-              <Text style={[styles.nameHint, { color: showNameError ? colors.danger : colors.textMuted }]}>
-                {showNameError ? "Please give your QR code a name before generating" : "Shown on your QR codes list"}
-              </Text>
+              {showDuplicateError && nameSuggestions.length > 0 ? (
+                <View style={{ gap: 6 }}>
+                  <Text style={[styles.nameHint, { color: colors.warning }]}>
+                    That name is already taken. Try one of these:
+                  </Text>
+                  <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 6 }}>
+                    {nameSuggestions.map((s) => (
+                      <Pressable
+                        key={s}
+                        onPress={() => {
+                          setAdvancedSettings({ ...advancedSettings, label: s });
+                          setShowDuplicateError(false);
+                          clearNameSuggestions();
+                        }}
+                        style={({ pressed }) => [{
+                          borderRadius: 8,
+                          borderWidth: 1,
+                          borderColor: colors.primary + "50",
+                          backgroundColor: pressed ? colors.primaryDim : colors.surfaceLight,
+                          paddingHorizontal: 10,
+                          paddingVertical: 5,
+                        }]}
+                      >
+                        <Text style={{ fontSize: 11, fontFamily: "Inter_500Medium", color: colors.primary }}>
+                          {s}
+                        </Text>
+                      </Pressable>
+                    ))}
+                  </View>
+                </View>
+              ) : (
+                <Text style={[styles.nameHint, { color: showNameError ? colors.danger : colors.textMuted }]}>
+                  {showNameError ? "Please give your QR code a name before generating" : "Each name must be unique — helps organise your QR codes"}
+                </Text>
+              )}
             </View>
           </Reanimated.View>
         )}

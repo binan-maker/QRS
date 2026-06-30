@@ -6,6 +6,7 @@ import {
   type QrType,
 } from "@/lib/firestore-service";
 import { createUnifiedQr } from "@/services/qr-unified";
+import { checkQrNameExists, buildNameSuggestions } from "@/services/generator/crud";
 import { buildQrContent, validateQrInput } from "@/features/generator/data/qr-builder";
 import {
   buildBusinessContent,
@@ -71,9 +72,12 @@ export function useQrSave({
   setGeneratedAt,
   showToast,
 }: Params) {
-  const [saving,         setSaving]         = useState(false);
-  const [savedToProfile, setSavedToProfile] = useState(false);
-  const [savedDocId,     setSavedDocId]     = useState<string | null>(null);
+  const [saving,           setSaving]           = useState(false);
+  const [savedToProfile,   setSavedToProfile]   = useState(false);
+  const [savedDocId,       setSavedDocId]       = useState<string | null>(null);
+  const [nameSuggestions,  setNameSuggestions]  = useState<string[]>([]);
+
+  const clearNameSuggestions = useCallback(() => setNameSuggestions([]), []);
 
   const handleGenerate = useCallback(async () => {
     const isBusinessMode = qrMode === "business" && isBranded && !!user;
@@ -125,7 +129,21 @@ export function useQrSave({
       setSaving(true);
       setSavedToProfile(false);
       setSavedDocId(null);
+      setNameSuggestions([]);
       try {
+        // ── Duplicate name check ─────────────────────────────────────────
+        const nameLabel = advancedSettings.label.trim();
+        if (nameLabel) {
+          const nameExists = await checkQrNameExists(user.id, nameLabel);
+          if (nameExists) {
+            const suggestions = buildNameSuggestions(nameLabel);
+            setNameSuggestions(suggestions);
+            showToast(`"${nameLabel}" already exists. Choose a different name.`, "error");
+            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+            setSaving(false);
+            return;
+          }
+        }
         const qt: QrType = qrMode === "business" ? "business" : "individual";
         const logoToStore = qrMode === "business" ? (customLogoBase64 ?? null) : null;
         const bName       = qrMode === "business" ? (businessName.trim() || null) : null;
@@ -233,5 +251,5 @@ export function useQrSave({
     setQrValue, setGeneratedUuid, setGeneratedAt, showToast,
   ]);
 
-  return { saving, savedToProfile, savedDocId, handleGenerate };
+  return { saving, savedToProfile, savedDocId, handleGenerate, nameSuggestions, clearNameSuggestions };
 }

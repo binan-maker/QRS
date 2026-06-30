@@ -70,7 +70,7 @@ export function useQrGenerator() {
     qrValue, qrMode, isBranded, inputValue, selectedPreset, extraFields, svgRef, showToast,
   });
 
-  const { saving, savedToProfile, savedDocId, handleGenerate } = useQrSave({
+  const { saving, savedToProfile, savedDocId, handleGenerate, nameSuggestions, clearNameSuggestions } = useQrSave({
     qrMode, isBranded, privateMode, selectedPreset, inputValue, extraFields,
     businessCategory, businessName, user, customLogoBase64,
     qrFgColor, qrBgColor, advancedSettings,
@@ -162,6 +162,8 @@ export function useQrGenerator() {
     saving,
     savedToProfile,
     savedDocId,
+    nameSuggestions,
+    clearNameSuggestions,
     // Modals
     infoModalOpen,
     setInfoModalOpen,
