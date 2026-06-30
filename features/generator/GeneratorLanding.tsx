@@ -253,56 +253,6 @@ export default function GeneratorLanding() {
           ))}
         </View>
 
-        {/* ── Feature Grid ─────────────────────────────────────── */}
-        <View style={styles.featureSection}>
-          <Text style={[styles.sectionTitle, { color: colors.textSecondary, marginBottom: 12 }]}>
-            WHAT YOU GET
-          </Text>
-          <View style={styles.featureGrid}>
-            {FEATURES.map((f) => (
-              <View key={f.label}
-                style={[styles.featureCard, { backgroundColor: colors.surface, borderColor: f.color + "25" }]}>
-                <View style={[styles.featureCardIcon, { backgroundColor: f.color + "18" }]}>
-                  {f.isMC
-                    ? <MaterialCommunityIcons name={f.icon as any} size={20} color={f.color} />
-                    : <Ionicons name={f.icon as any} size={20} color={f.color} />
-                  }
-                </View>
-                <Text style={[styles.featureCardLabel, { color: colors.text }]}>{f.label}</Text>
-                <Text style={[styles.featureCardDesc, { color: colors.textMuted }]}>{f.desc}</Text>
-              </View>
-            ))}
-          </View>
-        </View>
-
-        {/* ── Scanner CTA ──────────────────────────────────────── */}
-        <View style={{ marginHorizontal: 20 }}>
-          <Pressable
-            onPress={handleScanNow}
-            style={({ pressed }) => ({ opacity: pressed ? 0.88 : 1, transform: [{ scale: pressed ? 0.975 : 1 }], borderRadius: 20, overflow: "hidden" as const })}
-          >
-            <LinearGradient
-              colors={["#059669", "#10B981"]}
-              start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
-              style={styles.ctaCard}
-            >
-              <View style={styles.ctaGlow} />
-              <View style={styles.ctaLeft}>
-                <View style={[styles.ctaLiveDot, { backgroundColor: "rgba(255,255,255,0.2)" }]}>
-                  <View style={[styles.ctaLiveDotInner, { backgroundColor: "#10B981" }]} />
-                </View>
-                <View>
-                  <Text style={styles.ctaTitle}>Scanner is Live Now</Text>
-                  <Text style={styles.ctaSub}>Scan any QR — UPI, WiFi, URL — and get an instant trust score</Text>
-                </View>
-              </View>
-              <View style={styles.ctaArrow}>
-                <Ionicons name="scan" size={22} color="#10B981" />
-              </View>
-            </LinearGradient>
-          </Pressable>
-        </View>
-
       </ScrollView>
     </View>
   );
