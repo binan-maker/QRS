@@ -115,10 +115,13 @@ export async function updateQrDesign(
     scanLimit?: number | null;
     expiryDate?: string | null;
     expiryPreset?: string | null;
+    standardLinkUuid?: string | null;
+    guardLinkUuid?: string | null;
   }
 ): Promise<void> {
   try {
-    await db.update(["users", userId, "generatedQrs", docId], {
+    const batch = db.batch();
+    batch.update(["users", userId, "generatedQrs", docId], {
       fgColor: design.fgColor,
       bgColor: design.bgColor,
       logoPosition: design.logoPosition,
@@ -128,6 +131,21 @@ export async function updateQrDesign(
       expiryDate: design.expiryDate || null,
       expiryPreset: design.expiryPreset || null,
     });
+
+    // Sync scanLimit + expiryDate into the public link doc so server-side
+    // enforcement (scan counting, auto-deactivation) uses the latest values.
+    const limitFields = {
+      scanLimit: design.scanLimit ?? null,
+      expiryDate: design.expiryDate || null,
+    };
+    if (design.standardLinkUuid) {
+      batch.update(["standardLinks", design.standardLinkUuid], limitFields);
+    }
+    if (design.guardLinkUuid) {
+      batch.update(["guardLinks", design.guardLinkUuid], limitFields);
+    }
+
+    await batch.commit();
   } catch (e) {
     logError("updateQrDesign", e, { userId, docId });
     throw e;

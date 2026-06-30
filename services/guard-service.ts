@@ -12,7 +12,9 @@ export async function saveGuardLink(
   ownerName: string,
   ownerId: string,
   contentType?: string,
-  templateKey?: string | null
+  templateKey?: string | null,
+  scanLimit?: number | null,
+  expiryDate?: string | null
 ): Promise<void> {
   await db.set(["guardLinks", uuid], {
     uuid,
@@ -23,6 +25,9 @@ export async function saveGuardLink(
     ownerId,
     isActive: true,
     destinationChangedAt: null,
+    scanCount: 0,
+    scanLimit: scanLimit ?? null,
+    expiryDate: expiryDate ?? null,
     createdAt: db.timestamp(),
     ...(contentType ? { contentType } : {}),
     ...(templateKey ? { templateKey } : {}),
@@ -105,7 +110,9 @@ export async function saveStandardLink(
   contentType: string,
   ownerId: string,
   ownerName: string,
-  templateKey?: string | null
+  templateKey?: string | null,
+  scanLimit?: number | null,
+  expiryDate?: string | null
 ): Promise<void> {
   await db.set(["standardLinks", uuid], {
     uuid,
@@ -114,6 +121,9 @@ export async function saveStandardLink(
     ownerId,
     ownerName,
     isActive: true,
+    scanCount: 0,
+    scanLimit: scanLimit ?? null,
+    expiryDate: expiryDate ?? null,
     createdAt: db.timestamp(),
     ...(templateKey ? { templateKey } : {}),
   });

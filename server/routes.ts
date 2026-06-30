@@ -17,7 +17,7 @@ import {
 } from "./templates/guard-html";
 import {
   fetchGuardLink, fetchStandardLink, isSafeRedirectDestination,
-  CAUTION_WINDOW_MS,
+  recordScanAndEnforce, CAUTION_WINDOW_MS,
 } from "./lib/firebase-client";
 import { cacheGet, cacheSet } from "./lib/route-cache";
 
@@ -81,10 +81,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.json({ version: "2025-04-01", patterns: DYNAMIC_THREAT_PATTERNS });
   });
 
+  // Shared helper: check expiry and scan limit before serving any QR link.
+  // Returns true if the QR should be blocked (expired or over limit).
+  function isLimitExceeded(expiryDate: string | null, scanLimit: number | null, scanCount: number): boolean {
+    if (expiryDate && new Date(expiryDate).getTime() < Date.now()) return true;
+    if (scanLimit !== null && scanCount >= scanLimit) return true;
+    return false;
+  }
+
   // ── /go/:slug — Standard QR content lookup ─────────────────────────────────
-  // Looks up rawContent from standardLinks collection and serves it.
-  // Other scanners see a branded web page; BinRo app recognises the URL and
-  // fetches content natively — making our database the key to decode the QR.
   app.get("/go/:slug", async (req: Request, res: Response) => {
     const slug = Array.isArray(req.params.slug) ? req.params.slug[0] : req.params.slug;
 
@@ -95,6 +100,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     // 1. Standard QRs (most common for /go/)
     const standardLink = await cachedStandardLink(slug);
     if (standardLink) {
+      if (!standardLink.isActive || isLimitExceeded(standardLink.expiryDate, standardLink.scanLimit, standardLink.scanCount)) {
+        return res.status(200).send(guardDeactivatedHtml(null));
+      }
+      // Record scan and enforce limit (non-blocking — serve immediately)
+      recordScanAndEnforce("standardLinks", slug, standardLink.scanLimit).catch(() => {});
       return serveStandardContent(res, standardLink, slug);
     }
 
@@ -104,7 +114,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       return res.status(404).send(guardNotFoundHtml());
     }
 
-    if (!guardLink.isActive) {
+    if (!guardLink.isActive || isLimitExceeded(guardLink.expiryDate, guardLink.scanLimit, guardLink.scanCount)) {
       return res.status(200).send(guardDeactivatedHtml(guardLink.businessName));
     }
 
@@ -121,6 +131,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       return res.status(200).send(guardCautionHtml(businessName, guardLink.ownerName, destination, slug));
     }
 
+    recordScanAndEnforce("guardLinks", slug, guardLink.scanLimit).catch(() => {});
     res.setHeader("Cache-Control", "no-store, no-cache");
     return res.redirect(302, destination);
   });
@@ -134,7 +145,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       return res.status(404).send(guardNotFoundHtml());
     }
 
-    if (!link.isActive) {
+    if (!link.isActive || isLimitExceeded(link.expiryDate, link.scanLimit, link.scanCount)) {
       return res.status(200).send(guardDeactivatedHtml(link.businessName));
     }
 
@@ -162,6 +173,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       return res.status(200).send(guardCautionHtml(businessName, ownerName, destination, uuid));
     }
 
+    recordScanAndEnforce("guardLinks", uuid, link.scanLimit).catch(() => {});
     return res.status(200).send(guardRedirectHtml(businessName, ownerName, destination));
   });
 

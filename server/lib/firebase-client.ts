@@ -12,6 +12,9 @@ export interface GuardLinkFields {
   ownerName: string;
   isActive: boolean;
   destinationChangedAt: string | null;
+  scanLimit: number | null;
+  scanCount: number;
+  expiryDate: string | null;
 }
 
 export interface StandardLinkFields {
@@ -19,6 +22,9 @@ export interface StandardLinkFields {
   contentType: string;
   ownerName: string;
   isActive: boolean;
+  scanLimit: number | null;
+  scanCount: number;
+  expiryDate: string | null;
 }
 
 interface CacheEntry<T> { data: T | null; expiresAt: number }
@@ -34,6 +40,13 @@ setInterval(() => {
 
 function firestoreUrl(collection: string, docId: string): string {
   return `https://firestore.googleapis.com/v1/projects/${FIREBASE_PROJECT_ID}/databases/(default)/documents/${collection}/${encodeURIComponent(docId)}?key=${FIREBASE_API_KEY}`;
+}
+
+function parseIntField(f: any): number | null {
+  if (!f) return null;
+  if (f.integerValue !== undefined) return parseInt(f.integerValue, 10);
+  if (f.doubleValue !== undefined) return Math.floor(f.doubleValue);
+  return null;
 }
 
 export async function fetchGuardLink(uuid: string): Promise<GuardLinkFields | null> {
@@ -54,6 +67,9 @@ export async function fetchGuardLink(uuid: string): Promise<GuardLinkFields | nu
       ownerName: f.ownerName?.stringValue || "Business",
       isActive: f.isActive?.booleanValue !== false,
       destinationChangedAt: f.destinationChangedAt?.timestampValue || null,
+      scanLimit: parseIntField(f.scanLimit),
+      scanCount: parseIntField(f.scanCount) ?? 0,
+      expiryDate: f.expiryDate?.stringValue || null,
     };
     guardCache.set(uuid, { data: link, expiresAt: now + CACHE_TTL_MS });
     return link;
@@ -78,11 +94,93 @@ export async function fetchStandardLink(uuid: string): Promise<StandardLinkField
       contentType: f.contentType?.stringValue || "text",
       ownerName: f.ownerName?.stringValue || "BinRo User",
       isActive: f.isActive?.booleanValue !== false,
+      scanLimit: parseIntField(f.scanLimit),
+      scanCount: parseIntField(f.scanCount) ?? 0,
+      expiryDate: f.expiryDate?.stringValue || null,
     };
     standardCache.set(uuid, { data: link, expiresAt: now + CACHE_TTL_MS });
     return link;
   } catch {
     return null;
+  }
+}
+
+// Atomically increment scanCount for a link and auto-deactivate if limit reached.
+// collection is either "standardLinks" or "guardLinks".
+export async function recordScanAndEnforce(
+  collection: "standardLinks" | "guardLinks",
+  uuid: string,
+  scanLimit: number | null
+): Promise<void> {
+  if (!FIREBASE_PROJECT_ID || !FIREBASE_API_KEY) return;
+  try {
+    // Firestore REST atomic increment via runQuery / commit
+    const commitUrl = `https://firestore.googleapis.com/v1/projects/${FIREBASE_PROJECT_ID}/databases/(default)/documents:commit?key=${FIREBASE_API_KEY}`;
+    const docPath = `projects/${FIREBASE_PROJECT_ID}/databases/(default)/documents/${collection}/${encodeURIComponent(uuid)}`;
+
+    const writes: any[] = [{
+      transform: {
+        document: docPath,
+        fieldTransforms: [{
+          fieldPath: "scanCount",
+          increment: { integerValue: "1" },
+        }],
+      },
+    }];
+
+    // If scan limit is set, also check and deactivate
+    if (scanLimit !== null && scanLimit > 0) {
+      // Fetch fresh scanCount after increment via a second request
+      // We'll do it optimistically: after the increment, if scanCount >= scanLimit, deactivate
+      // We use a conditional update (precondition) to avoid double-deactivation
+      // Simple approach: always add a deactivate write conditional on the new count
+      writes.push({
+        update: {
+          name: docPath,
+          fields: { isActive: { booleanValue: false } },
+        },
+        currentDocument: { exists: true },
+        updateMask: { fieldPaths: ["isActive"] },
+      });
+    }
+
+    const body = scanLimit !== null && scanLimit > 0
+      ? JSON.stringify({ writes: [writes[0]] }) // increment only; deactivation handled below
+      : JSON.stringify({ writes });
+
+    const commitRes = await fetch(commitUrl, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ writes: [writes[0]] }),
+    });
+
+    if (!commitRes.ok) return;
+
+    // If there's a limit, re-fetch the fresh doc to check if we've hit it
+    if (scanLimit !== null && scanLimit > 0) {
+      const freshRes = await fetch(firestoreUrl(collection, uuid));
+      if (!freshRes.ok) return;
+      const freshData = await freshRes.json() as any;
+      const freshCount = parseIntField(freshData?.fields?.scanCount) ?? 0;
+      if (freshCount >= scanLimit) {
+        // Deactivate
+        await fetch(commitUrl, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            writes: [{
+              update: { name: docPath, fields: { isActive: { booleanValue: false } } },
+              updateMask: { fieldPaths: ["isActive"] },
+            }],
+          }),
+        });
+        // Bust the cache so next scan sees isActive: false immediately
+        guardCache.delete(uuid);
+        standardCache.delete(uuid);
+      }
+    }
+  } catch {
+    // Non-fatal — scan counting is best-effort
   }
 }
 

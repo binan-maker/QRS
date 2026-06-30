@@ -137,10 +137,12 @@ export function useQrSave({
           : (QR_REGISTRY[selectedPreset]?.key ?? null);
 
         try {
+          const limitForLink = advancedSettings.scanLimit ?? null;
+          const expiryForLink = resolveExpiryDate(advancedSettings.expiryPreset, advancedSettings.expiryCustomDate);
           if (isBusinessMode) {
-            await saveGuardLink(shortUuid, builtContent, bName, user.displayName, user.id, savedContentType, templateKey);
+            await saveGuardLink(shortUuid, builtContent, bName, user.displayName, user.id, savedContentType, templateKey, limitForLink, expiryForLink);
           } else if (isStandardMode) {
-            await saveStandardLink(shortUuid, builtContent, savedContentType, user.id, user.displayName, templateKey);
+            await saveStandardLink(shortUuid, builtContent, savedContentType, user.id, user.displayName, templateKey, limitForLink, expiryForLink);
           }
         } catch (linkErr: any) {
           if (__DEV__) console.warn("[save] link registration failed (non-fatal):", linkErr?.message);

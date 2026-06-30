@@ -179,6 +179,8 @@ export function useQrDesign(qrItem: GeneratedQrItem | null) {
         scanLimit: scanLimit ?? null,
         expiryDate: resolvedExpiry,
         expiryPreset: expiryPreset === "never" ? null : expiryPreset,
+        standardLinkUuid: qrItem.qrType === "individual" ? (qrItem.uuid || null) : null,
+        guardLinkUuid: qrItem.qrType === "business" ? (qrItem.guardUuid || null) : null,
       });
       setDesignDirty(false);
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
