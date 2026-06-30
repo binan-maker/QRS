@@ -66,6 +66,7 @@ export function RecentScansList({ recentScans, isLoading, onDelete }: Props) {
               risk="safe"
               onDelete={handleDelete}
               index={idx}
+              showTime={false}
             />
           ))}
 

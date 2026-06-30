@@ -7,6 +7,7 @@ import Animated, { FadeInDown } from "react-native-reanimated";
 import * as Haptics from "@/shared/utils/haptics";
 import { useTheme } from "@/shared/contexts/ThemeContext";
 import { formatRelativeTime } from "@/shared/utils/formatters";
+
 import type { HistoryItem as HistoryItemType } from "@/features/history/types";
 import { parseAnyPaymentQr } from "@/services/analysis";
 import { useQrMeta } from "@/features/qr-engine";
@@ -43,9 +44,10 @@ interface HistoryItemProps {
   risk: "safe" | "caution" | "dangerous";
   onDelete: (item: HistoryItemType) => void;
   index?: number;
+  showTime?: boolean;
 }
 
-const HistoryItem = React.memo(function HistoryItem({ item, risk, onDelete, index = 0 }: HistoryItemProps) {
+const HistoryItem = React.memo(function HistoryItem({ item, risk, onDelete, index = 0, showTime = true }: HistoryItemProps) {
   const { colors, isDark } = useTheme();
   const { typeMeta, displayLabel, subtitle } = useQrMeta(item.content, item.contentType);
 
@@ -62,6 +64,7 @@ const HistoryItem = React.memo(function HistoryItem({ item, risk, onDelete, inde
     [paymentData]
   );
 
+  const timeAgo = useMemo(() => formatRelativeTime(item.scannedAt), [item.scannedAt]);
   const showRisk = (item.contentType === "url" || item.contentType === "payment") && risk !== "safe";
 
   const gradient: [string, string] = isFavorite
@@ -157,6 +160,11 @@ const HistoryItem = React.memo(function HistoryItem({ item, risk, onDelete, inde
           </View>
 
           <View style={styles.right}>
+            {showTime && (
+              <Text style={[styles.time, { color: colors.textMuted }]} maxFontSizeMultiplier={1}>
+                {timeAgo}
+              </Text>
+            )}
             <View style={[styles.chevronWrap, { backgroundColor: gradient[0] + "18" }]}>
               <Ionicons name="chevron-forward" size={13} color={gradient[0]} />
             </View>
@@ -239,6 +247,11 @@ const styles = StyleSheet.create({
     alignItems: "flex-end",
     gap: 8,
     flexShrink: 0,
+  },
+  time: {
+    fontSize: 11,
+    fontFamily: "Inter_500Medium",
+    letterSpacing: 0.1,
   },
   chevronWrap: {
     width: 28,
