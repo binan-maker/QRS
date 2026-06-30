@@ -61,7 +61,6 @@ const HistoryItem = React.memo(function HistoryItem({ item, risk, onDelete, inde
     () => paymentData?.amount ? formatAmount(paymentData.amount) : null,
     [paymentData]
   );
-  const timeAgo = useMemo(() => formatRelativeTime(item.scannedAt), [item.scannedAt]);
 
   const showRisk = (item.contentType === "url" || item.contentType === "payment") && risk !== "safe";
 
@@ -104,7 +103,7 @@ const HistoryItem = React.memo(function HistoryItem({ item, risk, onDelete, inde
   ), [handleDelete]);
 
   return (
-    <Animated.View entering={FadeInDown.delay(Math.min(index, 12) * 40).duration(320).springify().damping(18)}>
+    <Animated.View entering={FadeInDown.delay(Math.min(index, 8) * 30).duration(260)}>
       <Swipeable
         renderRightActions={renderRightActions}
         overshootRight={false}
@@ -158,9 +157,6 @@ const HistoryItem = React.memo(function HistoryItem({ item, risk, onDelete, inde
           </View>
 
           <View style={styles.right}>
-            <Text style={[styles.time, { color: colors.textMuted }]} maxFontSizeMultiplier={1}>
-              {timeAgo}
-            </Text>
             <View style={[styles.chevronWrap, { backgroundColor: gradient[0] + "18" }]}>
               <Ionicons name="chevron-forward" size={13} color={gradient[0]} />
             </View>
@@ -243,11 +239,6 @@ const styles = StyleSheet.create({
     alignItems: "flex-end",
     gap: 8,
     flexShrink: 0,
-  },
-  time: {
-    fontSize: 11,
-    fontFamily: "Inter_500Medium",
-    letterSpacing: 0.1,
   },
   chevronWrap: {
     width: 28,
