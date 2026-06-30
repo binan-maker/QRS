@@ -74,6 +74,11 @@ export function HeroScanCard() {
             </View>
           </View>
 
+          {/* ── tagline ── */}
+          <Text style={[styles.tagline, { color: colors.textSecondary }]}>
+            Truecaller for QR Codes
+          </Text>
+
         </LinearGradient>
       </Pressable>
     </Animated.View>
@@ -120,6 +125,7 @@ function makeStyles(c: any, isDark: boolean, s: number) {
     heading:   { fontSize: rf(22), fontFamily: "Inter_700Bold", letterSpacing: -0.5 },
     title:     { fontSize: rf(13), fontFamily: "Inter_600SemiBold", letterSpacing: -0.1 },
     subtitle:  { fontSize: rf(11), fontFamily: "Inter_400Regular", lineHeight: 16, marginTop: 2 },
+    tagline:   { fontSize: rf(11), fontFamily: "Inter_400Regular", marginTop: 14, textAlign: "left" },
 
     arrowBtn: {
       width: 42, height: 42, borderRadius: 21,
