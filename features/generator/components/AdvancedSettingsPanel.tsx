@@ -21,7 +21,6 @@ const EXPIRY_PRESETS: { key: ExpiryPreset; label: string }[] = [
   { key: "7d",     label: "7 Days"  },
   { key: "30d",    label: "30 Days" },
   { key: "90d",    label: "3 Months"},
-  { key: "custom", label: "Custom"  },
 ];
 
 export function resolveExpiryDate(preset: ExpiryPreset, customDate: string): string | null {
