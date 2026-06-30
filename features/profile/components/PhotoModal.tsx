@@ -63,7 +63,14 @@ const PhotoModal = React.memo(function PhotoModal({
         <React.Fragment key={opt.label}>
           <Pressable
             style={({ pressed }) => [styles.option, { opacity: pressed ? 0.72 : 1 }]}
-            onPress={() => { opt.onPress?.(); onClose(); }}
+            onPress={() => {
+              onClose();
+              // Wait for the bottom sheet close animation to complete before
+              // launching system UI (camera / gallery). Without this delay the
+              // OS picker is blocked behind the sheet animation, making it look
+              // like nothing happened and forcing the user to tap twice.
+              setTimeout(() => opt.onPress?.(), 350);
+            }}
           >
             <View style={[styles.optionIcon, { backgroundColor: opt.iconBg }]}>
               <Ionicons name={opt.icon} size={22} color={opt.iconColor} />
