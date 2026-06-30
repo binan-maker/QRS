@@ -379,15 +379,11 @@ function ProfileScreen() {
           ) : null}
 
           {/* Bio */}
-          <Animated.View entering={ENTER_BIO}>
-            {bio ? (
+          {bio ? (
+            <Animated.View entering={ENTER_BIO}>
               <Text style={[styles.bioText, { color: colors.textSecondary }]} numberOfLines={2}>{bio}</Text>
-            ) : (
-              <Pressable onPress={goToEditProfile} hitSlop={8}>
-                <Text style={[styles.bioHint, { color: colors.textMuted }]}>+ Add a bio</Text>
-              </Pressable>
-            )}
-          </Animated.View>
+            </Animated.View>
+          ) : null}
 
           {/* Edit profile button */}
           <Animated.View entering={ENTER_EDIT_BTN}>

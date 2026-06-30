@@ -203,7 +203,7 @@ function HistoryScreen() {
         </View>
       </Reanimated.View>
 
-      {bootstrapping ? (
+      {bootstrapping && user ? (
         <View style={[styles.list, { paddingTop: headerH + 8, paddingBottom: insets.bottom + 84 }]}>
           {Array.from({ length: 8 }).map((_, i) => <HistoryItemSkeleton key={i} index={i} />)}
         </View>
