@@ -2,12 +2,11 @@ import { useState, useCallback, useRef, useEffect } from "react";
 import { useNavHide } from "@/shared/utils/use-nav-hide";
 import {
   View, Text, Pressable, ScrollView, RefreshControl,
-  StyleSheet, KeyboardAvoidingView, ActivityIndicator,
+  StyleSheet, KeyboardAvoidingView,
 } from "react-native";
 import { StatusBar } from "expo-status-bar";
 import { router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
-import { LinearGradient } from "expo-linear-gradient";
 import Animated, { FadeInDown, FadeIn } from "react-native-reanimated";
 import * as Haptics from "expo-haptics";
 import { useTheme } from "@/shared/contexts/ThemeContext";
@@ -18,7 +17,7 @@ import { useQrSafety } from "@/features/qr-detail/hooks/useQrSafety";
 import { useNetworkStatus } from "@/shared/utils/use-network";
 import { getStandardLink } from "@/services/guard-service";
 import { detectContentType } from "@/features/qr-engine";
-import { makeStyles, offlineSectionStyles } from "@/features/qr-detail/styles";
+import { makeStyles } from "@/features/qr-detail/styles";
 import { formatCompactNumber } from "@/shared/utils/number-format";
 
 import { ContentCard } from "@/features/qr-engine/content-cards";
@@ -175,7 +174,7 @@ export default function StandardQrDetailScreen({ id, standardUuid, ownerDocId, h
                 </Animated.View>
                 <View style={stdStyles.navTitleRow}>
                   <Text style={[stdStyles.navTitle, { color: colors.text }]} numberOfLines={1}>
-                    BinRo
+                    QR Details
                   </Text>
                 </View>
                 <Animated.View entering={FadeIn.delay(35).duration(240)}>
@@ -214,84 +213,17 @@ export default function StandardQrDetailScreen({ id, standardUuid, ownerDocId, h
               />
             }
           >
-            {/* ── Brand header card ─────────────────────── */}
-            <Animated.View entering={FadeInDown.delay(30).duration(260)}>
-              <View style={[stdStyles.brandCard, {
-                backgroundColor: colors.surface,
-                borderColor: "#22c55e30",
-              }]}>
-                <LinearGradient
-                  colors={["#22c55e14", "#22c55e04"]}
-                  style={StyleSheet.absoluteFill}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 1 }}
-                />
-
-                {/* Owner avatar + name at top */}
-                {!standardLoading && standardData && (
-                  <View style={stdStyles.ownerHeroRow}>
-                    <View style={[stdStyles.ownerAvatar, { backgroundColor: "#22c55e22", borderColor: "#22c55e40" }]}>
-                      <Text style={[stdStyles.ownerAvatarText, { color: "#22c55e" }]}>
-                        {(standardData.ownerName || "?").charAt(0).toUpperCase()}
-                      </Text>
-                    </View>
-                    <View style={{ flex: 1 }}>
-                      <Text style={[stdStyles.ownerFullName, { color: colors.text }]} numberOfLines={1}>
-                        {standardData.ownerName}
-                      </Text>
-                      <Text style={[stdStyles.ownerSubLabel, { color: colors.textMuted }]}>QR Code Owner</Text>
-                    </View>
-                    {isDeactivated ? (
-                      <View style={[stdStyles.statusChip, { backgroundColor: "#ef444420", borderColor: "#ef444440" }]}>
-                        <Ionicons name="ban" size={11} color="#ef4444" />
-                        <Text style={[stdStyles.statusChipText, { color: "#ef4444" }]}>Inactive</Text>
-                      </View>
-                    ) : (
-                      <View style={[stdStyles.statusChip, { backgroundColor: "#22c55e20", borderColor: "#22c55e40" }]}>
-                        <View style={[stdStyles.dot, { backgroundColor: "#22c55e" }]} />
-                        <Text style={[stdStyles.statusChipText, { color: "#22c55e" }]}>Active</Text>
-                      </View>
-                    )}
-                  </View>
-                )}
-
-                {standardLoading && (
-                  <View style={stdStyles.loadingRow}>
-                    <ActivityIndicator size="small" color="#22c55e" />
-                    <Text style={[stdStyles.loadingText, { color: colors.textSecondary }]}>
-                      Loading content…
-                    </Text>
-                  </View>
-                )}
-
-                {/* QR Guard Standard badge row */}
-                <View style={[stdStyles.brandHeader, { borderTopWidth: (!standardLoading && standardData) ? StyleSheet.hairlineWidth : 0, borderTopColor: "#22c55e20", paddingTop: (!standardLoading && standardData) ? 10 : 0 }]}>
-                  <LinearGradient
-                    colors={["#22c55e", "#16a34a"]}
-                    style={stdStyles.brandIconWrap}
-                    start={{ x: 0, y: 0 }}
-                    end={{ x: 1, y: 1 }}
-                  >
-                    <Ionicons name="shield-checkmark" size={20} color="#fff" />
-                  </LinearGradient>
-                  <View style={{ flex: 1 }}>
-                    <Text style={[stdStyles.brandLabel, { color: "#22c55e" }]}>QR GUARD STANDARD</Text>
-                    <Text style={[stdStyles.brandSub, { color: colors.textSecondary }]}>
-                      Verified QR code — content managed by owner
-                    </Text>
-                  </View>
+            {/* ── Deactivated notice ────────────────────── */}
+            {isDeactivated && (
+              <Animated.View entering={FadeInDown.delay(30).duration(260)}>
+                <View style={{ flexDirection: "row", alignItems: "center", gap: 10, borderRadius: 14, borderWidth: 1, backgroundColor: "#ef444418", borderColor: "#ef444440", padding: 14, marginBottom: 12 }}>
+                  <Ionicons name="ban-outline" size={16} color="#ef4444" />
+                  <Text style={{ fontSize: 13, fontFamily: "Inter_500Medium", color: "#ef4444", flex: 1 }}>
+                    This QR code has been deactivated by its owner
+                  </Text>
                 </View>
-
-                {isDeactivated && (
-                  <View style={[stdStyles.alertRow, { backgroundColor: "#ef444418", borderColor: "#ef444440" }]}>
-                    <Ionicons name="ban-outline" size={14} color="#ef4444" />
-                    <Text style={[stdStyles.alertText, { color: "#ef4444" }]}>
-                      This QR code has been deactivated by its owner
-                    </Text>
-                  </View>
-                )}
-              </View>
-            </Animated.View>
+              </Animated.View>
+            )}
 
             {/* ── Content card — shows rawContent from database, never the scanned guard URL */}
             {!standardLoading && effectiveContent && (
@@ -513,63 +445,4 @@ const stdStyles = StyleSheet.create({
     fontFamily: "Inter_700Bold",
     flex: 1,
   },
-  brandCard: {
-    borderRadius: 18,
-    borderWidth: 1,
-    padding: 18,
-    gap: 12,
-    overflow: "hidden",
-    marginBottom: 12,
-  },
-  ownerHeroRow: { flexDirection: "row", alignItems: "center", gap: 12 },
-  ownerAvatar: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    borderWidth: 1.5,
-    alignItems: "center",
-    justifyContent: "center",
-    flexShrink: 0,
-  },
-  ownerAvatarText: { fontSize: 20, fontFamily: "Inter_700Bold" },
-  ownerFullName: { fontSize: 15, fontFamily: "Inter_700Bold" },
-  ownerSubLabel: { fontSize: 11, fontFamily: "Inter_400Regular", marginTop: 1 },
-  brandHeader: { flexDirection: "row", alignItems: "center", gap: 12 },
-  brandIconWrap: {
-    width: 40,
-    height: 40,
-    borderRadius: 12,
-    alignItems: "center",
-    justifyContent: "center",
-    flexShrink: 0,
-  },
-  brandLabel: {
-    fontSize: 11,
-    fontFamily: "Inter_700Bold",
-    letterSpacing: 1.3,
-    marginBottom: 2,
-  },
-  brandSub: { fontSize: 12, fontFamily: "Inter_400Regular", lineHeight: 16 },
-  statusChip: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 4,
-    borderRadius: 20,
-    borderWidth: 1,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-  },
-  dot: { width: 6, height: 6, borderRadius: 3 },
-  statusChipText: { fontSize: 11, fontFamily: "Inter_600SemiBold" },
-  loadingRow: { flexDirection: "row", alignItems: "center", gap: 8 },
-  loadingText: { fontSize: 13, fontFamily: "Inter_400Regular" },
-  alertRow: {
-    flexDirection: "row",
-    alignItems: "flex-start",
-    gap: 8,
-    padding: 10,
-    borderRadius: 10,
-    borderWidth: 1,
-  },
-  alertText: { fontSize: 12.5, fontFamily: "Inter_400Regular", flex: 1, lineHeight: 18 },
 });

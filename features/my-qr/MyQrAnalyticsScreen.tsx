@@ -1,8 +1,9 @@
 import { useState, useEffect, useCallback } from "react";
 import {
   View, Text, ScrollView, Pressable, ActivityIndicator,
-  StyleSheet, useWindowDimensions, RefreshControl,
+  StyleSheet, useWindowDimensions, RefreshControl, Alert,
 } from "react-native";
+import * as Clipboard from "expo-clipboard";
 import { StatusBar } from "expo-status-bar";
 import { useLocalSearchParams, router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
@@ -331,28 +332,6 @@ export default function MyQrAnalyticsScreen() {
           </View>
         </Animated.View>
 
-        {/* ── 7-DAY TREND ── */}
-        <Animated.View entering={FadeInDown.duration(165)} style={{ marginBottom: sp(18) }}>
-          <Text style={[sectionLabel, { color: colors.textMuted, marginBottom: sp(10) }]}>7-Day Scan Trend</Text>
-          <View style={{ borderRadius: sp(16), borderWidth: 1, borderColor: colors.surfaceBorder, backgroundColor: colors.surface, padding: sp(16) }}>
-            {analyticsLoading ? (
-              <View style={{ height: 112, alignItems: "center", justifyContent: "center" }}>
-                <ActivityIndicator size="small" color={colors.primary} />
-              </View>
-            ) : (
-              <>
-                <View style={{ flexDirection: "row", justifyContent: "space-between", marginBottom: sp(12) }}>
-                  <Text style={{ fontSize: rf(13), fontFamily: "Inter_700Bold", color: colors.text }}>
-                    {scans7d} scan{scans7d !== 1 ? "s" : ""}
-                  </Text>
-                  <Text style={{ fontSize: rf(11), fontFamily: "Inter_400Regular", color: colors.textMuted }}>Past 7 days</Text>
-                </View>
-                <ScanBarChart data={trend7d} color={colors.primary} chartWidth={chartWidth} />
-              </>
-            )}
-          </View>
-        </Animated.View>
-
         {/* ── PLATFORM BREAKDOWN ── */}
         {totalEvents > 0 && (
           <Animated.View entering={FadeInDown.duration(170)} style={{ marginBottom: sp(18) }}>
@@ -425,23 +404,33 @@ export default function MyQrAnalyticsScreen() {
           <Animated.View entering={FadeInDown.duration(185)} style={{ marginBottom: sp(18) }}>
             <Text style={[sectionLabel, { color: colors.textMuted, marginBottom: sp(10) }]}>Identifiers</Text>
             <View style={{ borderRadius: sp(16), borderWidth: 1, borderColor: colors.surfaceBorder, backgroundColor: colors.surface, overflow: "hidden" }}>
-              <InfoRow icon="key-outline" label="QR Code ID" value={qrItem.qrCodeId.slice(0, 20) + "…"} />
+              <View style={{ flexDirection: "row", alignItems: "center", gap: sp(12), paddingHorizontal: sp(16), paddingVertical: sp(13), borderBottomWidth: (qrItem as any).guardUuid ? StyleSheet.hairlineWidth : 0, borderBottomColor: colors.surfaceBorder }}>
+                <View style={{ width: sp(28), height: sp(28), borderRadius: sp(8), backgroundColor: colors.primary + "18", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                  <Ionicons name="key-outline" size={rf(14)} color={colors.textSecondary} />
+                </View>
+                <Text style={{ fontSize: rf(12), fontFamily: "Inter_500Medium", color: colors.textSecondary, width: sp(90), flexShrink: 0 }}>QR Code ID</Text>
+                <Text style={{ fontSize: rf(12), fontFamily: "Inter_600SemiBold", color: colors.text, flex: 1, textAlign: "right" }} numberOfLines={1}>{qrItem.qrCodeId.slice(0, 16) + "…"}</Text>
+                <Pressable
+                  onPress={() => {
+                    Clipboard.setStringAsync(qrItem.qrCodeId);
+                    Alert.alert("Copied", "QR Code ID copied to clipboard.");
+                  }}
+                  style={({ pressed }) => ({
+                    width: sp(28), height: sp(28), borderRadius: sp(8),
+                    backgroundColor: colors.primaryDim,
+                    alignItems: "center", justifyContent: "center",
+                    flexShrink: 0, opacity: pressed ? 0.6 : 1,
+                  })}
+                >
+                  <Ionicons name="copy-outline" size={rf(14)} color={colors.primary} />
+                </Pressable>
+              </View>
               {(qrItem as any).guardUuid && (
                 <InfoRow icon="shield-outline" label="Guard UUID" value={(qrItem as any).guardUuid} color={colors.primary} />
               )}
             </View>
           </Animated.View>
         )}
-
-        {/* ── INFO NOTE ── */}
-        <Animated.View entering={FadeInDown.duration(190)} style={{ marginBottom: sp(8) }}>
-          <View style={{ flexDirection: "row", alignItems: "flex-start", gap: sp(10), borderRadius: sp(14), borderWidth: 1, borderColor: colors.primary + "30", backgroundColor: colors.primaryDim, padding: sp(14) }}>
-            <Ionicons name="information-circle-outline" size={rf(16)} color={colors.primary} />
-            <Text style={{ fontSize: rf(11), fontFamily: "Inter_400Regular", color: colors.textSecondary, flex: 1, lineHeight: rf(17) }}>
-              Scan events are anonymous — no personal data is collected. Pull down to refresh. Data updates within a few seconds of each scan.
-            </Text>
-          </View>
-        </Animated.View>
       </ScrollView>
     </View>
   );
