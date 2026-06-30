@@ -1,4 +1,4 @@
-import React, { memo } from "react";
+import React, { useState, memo } from "react";
 import { View, Text, Pressable, ScrollView, TextInput, useWindowDimensions } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import Animated, { FadeInDown, FadeInUp } from "react-native-reanimated";
@@ -12,6 +12,8 @@ const ENC_OPTIONS: { value: EncType; label: string }[] = [
   { value: "WEP", label: "WEP" },
   { value: "nopass", label: "Open" },
 ];
+
+const HIDE_SECURITY_NOTE = new Set(["wifi", "contact_card"]);
 
 interface Props {
   template: QrTemplate;
@@ -38,6 +40,9 @@ function BuilderView({
   const s = Math.min(Math.max(screenW / 390, 0.82), 1.0);
   const rf = (n: number) => Math.round(n * s);
   const sp = (n: number) => Math.round(n * s);
+
+  const [securityOpen, setSecurityOpen] = useState(false);
+  const showSecurity = !HIDE_SECURITY_NOTE.has(template.id) && !!template.securityNote;
 
   return (
     <ScrollView
@@ -81,18 +86,6 @@ function BuilderView({
         )}
 
         <View style={{ paddingHorizontal: sp(20), gap: sp(14) }}>
-          {/* Security note */}
-          <View style={{
-            flexDirection: "row", alignItems: "flex-start", gap: sp(10),
-            backgroundColor: template.color + "12",
-            borderRadius: sp(14), borderWidth: 1, borderColor: template.color + "30",
-            padding: sp(12),
-          }}>
-            <Ionicons name={template.securityIcon} size={rf(15)} color={template.color} style={{ marginTop: 1 }} />
-            <Text style={{ flex: 1, fontSize: rf(11), fontFamily: "Inter_400Regular", color: template.color, lineHeight: rf(16) }}>
-              {template.securityNote}
-            </Text>
-          </View>
 
           {/* Fields */}
           {template.fields.map((field, idx) => (
@@ -141,6 +134,41 @@ function BuilderView({
               )}
             </Animated.View>
           ))}
+
+          {/* Collapsible security note — only for relevant templates */}
+          {showSecurity && (
+            <View style={{ borderRadius: sp(12), borderWidth: 1, borderColor: colors.surfaceBorder, overflow: "hidden" }}>
+              <Pressable
+                onPress={() => setSecurityOpen((v) => !v)}
+                style={({ pressed }) => ({
+                  flexDirection: "row", alignItems: "center", gap: sp(8),
+                  paddingHorizontal: sp(12), paddingVertical: sp(10),
+                  backgroundColor: pressed ? colors.surfaceLight : colors.surface,
+                  opacity: pressed ? 0.85 : 1,
+                })}
+              >
+                <Ionicons name="information-circle-outline" size={rf(14)} color={colors.textMuted} />
+                <Text style={{ flex: 1, fontSize: rf(12), fontFamily: "Inter_500Medium", color: colors.textMuted }}>
+                  Security info
+                </Text>
+                <Ionicons
+                  name={securityOpen ? "chevron-up" : "chevron-down"}
+                  size={rf(13)}
+                  color={colors.textMuted}
+                />
+              </Pressable>
+              {securityOpen && (
+                <View style={{
+                  paddingHorizontal: sp(12), paddingBottom: sp(11), paddingTop: sp(2),
+                  borderTopWidth: 1, borderTopColor: colors.surfaceBorder,
+                }}>
+                  <Text style={{ fontSize: rf(12), fontFamily: "Inter_400Regular", color: colors.textSecondary, lineHeight: rf(18) }}>
+                    {template.securityNote}
+                  </Text>
+                </View>
+              )}
+            </View>
+          )}
 
           {/* Generate button */}
           <Pressable
