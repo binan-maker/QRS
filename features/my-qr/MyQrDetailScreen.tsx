@@ -277,6 +277,9 @@ export default function MyQrDetailScreen() {
           onShare={handleShare}
           onDownloadPdf={handleDownloadPdf}
           onCopy={handleCopyContent}
+          customLogoUri={customLogoUri ?? null}
+          showDefaultLogo={showDefaultLogo}
+          logoPosition={logoPosition}
         />
 
         <QrStatsRow
