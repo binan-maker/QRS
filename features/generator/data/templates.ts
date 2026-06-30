@@ -12,7 +12,7 @@ export const TEMPLATES: QrTemplate[] = [
   // ── 1. Contact / vCard
   {
     id: "contact_card", name: "Contact / vCard", emoji: "👤", color: "#3B82F6",
-    icon: "person-circle-outline", tagline: "Share your contact in one scan", category: "Contact",
+    icon: "person-circle-outline", tagline: "", category: "Contact",
     securityNote: "Inputs are sanitized. No executable code is embedded.",
     securityIcon: "shield-outline",
     fields: [
@@ -36,7 +36,7 @@ export const TEMPLATES: QrTemplate[] = [
   // ── 2. WiFi
   {
     id: "wifi", name: "WiFi Network", emoji: "📶", color: "#3B82F6",
-    icon: "wifi-outline", tagline: "Share WiFi credentials instantly", category: "Utility",
+    icon: "wifi-outline", tagline: "", category: "Utility",
     securityNote: "Password hidden in QR display. Works with WPA2 & WPA3 networks.",
     securityIcon: "lock-closed-outline",
     fields: [
@@ -54,7 +54,7 @@ export const TEMPLATES: QrTemplate[] = [
   // ── 3. Website URL
   {
     id: "website_url", name: "Website URL", emoji: "🌐", color: "#3B82F6",
-    icon: "globe-outline", tagline: "Link to any website or page", category: "Web",
+    icon: "globe-outline", tagline: "", category: "Web",
     securityNote: "URL is scanned for threats before QR is generated.",
     securityIcon: "shield-checkmark-outline",
     fields: [
@@ -69,7 +69,7 @@ export const TEMPLATES: QrTemplate[] = [
   // ── 4. Email
   {
     id: "email", name: "Email", emoji: "✉️", color: "#3B82F6",
-    icon: "mail-outline", tagline: "Pre-fill email compose", category: "Contact",
+    icon: "mail-outline", tagline: "", category: "Contact",
     securityNote: "Subject & body scanned for phishing keywords before generation.",
     securityIcon: "mail-open-outline",
     fields: [

@@ -130,8 +130,7 @@ function QrTemplateModal({ visible, onClose, onGenerate, initialTemplateId }: Pr
     : "Choose a Template";
 
   const headerSub = view === "builder" ? "Pick a format and fill in your details"
-    : view === "template-form" && selected ? selected.tagline
-    : "Select a QR code type to get started";
+    : "";
 
   return (
     <BottomSheet
@@ -163,9 +162,11 @@ function QrTemplateModal({ visible, onClose, onGenerate, initialTemplateId }: Pr
           <Text style={{ fontSize: rf(17), fontFamily: "Inter_700Bold", color: colors.text }}>
             {headerTitle}
           </Text>
-          <Text style={{ fontSize: rf(11), fontFamily: "Inter_400Regular", color: colors.textMuted, marginTop: sp(2) }}>
-            {headerSub}
-          </Text>
+          {!!headerSub && (
+            <Text style={{ fontSize: rf(11), fontFamily: "Inter_400Regular", color: colors.textMuted, marginTop: sp(2) }}>
+              {headerSub}
+            </Text>
+          )}
         </View>
         <Pressable
           onPress={handleClose}

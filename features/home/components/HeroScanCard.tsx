@@ -76,7 +76,7 @@ export function HeroScanCard() {
 
           {/* ── tagline ── */}
           <Text style={[styles.tagline, { color: colors.textSecondary }]}>
-            Truecaller for QR Codes
+            BinRo — Know Before You Scan
           </Text>
 
         </LinearGradient>

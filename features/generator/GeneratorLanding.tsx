@@ -167,18 +167,6 @@ export default function GeneratorLanding() {
 
             <View style={styles.heroLeft}>
               <Text style={styles.heroTitle}>Your QR,{"\n"}Protected.</Text>
-              <Text style={styles.heroSub}>Trust score, live analytics & fraud guard — built in.</Text>
-              <View style={styles.heroStats}>
-                {[
-                  { val: "0–100", label: "Trust Score" },
-                  { val: "Live",  label: "Analytics" },
-                ].map((s) => (
-                  <View key={s.label} style={styles.heroStatItem}>
-                    <Text style={styles.heroStatVal}>{s.val}</Text>
-                    <Text style={styles.heroStatLabel}>{s.label}</Text>
-                  </View>
-                ))}
-              </View>
             </View>
 
             <Animated.View style={[styles.heroQrWrap, { transform: [{ scale: pulseAnim }] }]}>
