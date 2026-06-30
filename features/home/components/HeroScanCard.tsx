@@ -9,12 +9,6 @@ import { useTheme } from "@/shared/contexts/ThemeContext";
 import { useScaleFns } from "@/shared/utils/use-scale";
 import { usePulseAnimation } from "@/features/home/hooks/usePulseAnimation";
 
-const PILLS = [
-  { label: "Instant",  icon: "flash"          as const },
-  { label: "Secure",   icon: "shield-checkmark" as const },
-  { label: "Private",  icon: "lock-closed"    as const },
-];
-
 export function HeroScanCard() {
   const { colors, isDark } = useTheme();
   const { s } = useScaleFns();
@@ -72,7 +66,7 @@ export function HeroScanCard() {
             <View style={styles.textBlock}>
               <Text style={[styles.title, { color: colors.text }]}>Scan QR Code</Text>
               <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
-                Detect risks before you tap
+                Scammers often paste fake QR{"\n"}stickers over real ones.
               </Text>
             </View>
 
@@ -82,27 +76,6 @@ export function HeroScanCard() {
             </View>
           </View>
 
-          {/* ── divider ── */}
-          <View style={[styles.divider, { backgroundColor: colors.primary + "18" }]} />
-
-          {/* ── feature pills ── */}
-          <View style={styles.pillsRow}>
-            {PILLS.map((pill) => (
-              <View
-                key={pill.label}
-                style={[styles.pill, { backgroundColor: colors.primary + "15", borderColor: colors.primary + "28" }]}
-              >
-                <Ionicons name={pill.icon} size={11} color={colors.primary} />
-                <Text style={[styles.pillText, { color: colors.primary }]}>{pill.label}</Text>
-              </View>
-            ))}
-
-            {/* live badge */}
-            <View style={[styles.liveBadge, { backgroundColor: isDark ? "#0F2A0F" : "#ECFDF5", borderColor: "#16A34A28" }]}>
-              <View style={styles.liveDot} />
-              <Text style={styles.liveText}>LIVE</Text>
-            </View>
-          </View>
         </LinearGradient>
       </Pressable>
     </Animated.View>
@@ -137,7 +110,7 @@ function makeStyles(c: any, isDark: boolean, s: number) {
       right: -55, bottom: -55, borderWidth: 1.5,
     },
 
-    topRow:    { flexDirection: "row", alignItems: "center", gap: 14, marginBottom: 18 },
+    topRow:    { flexDirection: "row", alignItems: "center", gap: 14 },
 
     iconRing: {
       width: 72, height: 72, borderRadius: 22,
@@ -154,29 +127,5 @@ function makeStyles(c: any, isDark: boolean, s: number) {
       alignItems: "center", justifyContent: "center", flexShrink: 0,
     },
 
-    divider: { height: 1, marginBottom: 14 },
-
-    pillsRow: { flexDirection: "row", alignItems: "center", gap: 8, flexWrap: "nowrap" },
-
-    pill: {
-      flexDirection: "row", alignItems: "center", gap: 4,
-      paddingHorizontal: 10, paddingVertical: 5,
-      borderRadius: 100, borderWidth: 1,
-    },
-    pillText: { fontSize: rf(11), fontFamily: "Inter_600SemiBold" },
-
-    liveBadge: {
-      flexDirection: "row", alignItems: "center", gap: 5,
-      paddingHorizontal: 9, paddingVertical: 5,
-      borderRadius: 100, borderWidth: 1,
-      marginLeft: "auto" as any,
-    },
-    liveDot: {
-      width: 6, height: 6, borderRadius: 3, backgroundColor: "#16A34A",
-    },
-    liveText: {
-      fontSize: rf(10), fontFamily: "Inter_700Bold",
-      color: "#16A34A", letterSpacing: 0.6,
-    },
   });
 }
