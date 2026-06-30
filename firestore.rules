@@ -272,6 +272,17 @@ service cloud.firestore {
       allow read, update, delete: if false;
     }
 
+    // ─── Unified QR model (/qrs/:uuid) ───────────────────────────────────────
+    // New-model QR documents (replacing qrCodes for newly created QRs).
+    // Public read mirrors the qrCodes collection. Writes happen server-side
+    // via the Admin SDK (bypasses rules), so client writes are locked down.
+    match /qrs/{uuid} {
+      allow read: if true;
+      // Scan-count increments are performed server-side only; deny client writes
+      // to keep the integrity fields tamper-proof.
+      allow write: if false;
+    }
+
     // ─── Standard Links (Standard QR redirect registry) ──────────────────────
     match /standardLinks/{uuid} {
       allow read: if true;
