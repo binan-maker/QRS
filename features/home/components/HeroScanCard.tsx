@@ -64,9 +64,10 @@ export function HeroScanCard() {
 
             {/* text */}
             <View style={styles.textBlock}>
+              <Text style={[styles.heading, { color: colors.primary }]}>BinRo</Text>
               <Text style={[styles.title, { color: colors.text }]}>Scan QR Code</Text>
               <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
-                Scammers often paste fake QR{"\n"}stickers over real ones.
+                Scammers often paste fake QR stickers over real ones.
               </Text>
             </View>
 
@@ -118,9 +119,10 @@ function makeStyles(c: any, isDark: boolean, s: number) {
     },
     iconBg:   { width: 72, height: 72, borderRadius: 22, alignItems: "center", justifyContent: "center" },
 
-    textBlock: { flex: 1, gap: 5 },
-    title:     { fontSize: rf(17), fontFamily: "Inter_700Bold", letterSpacing: -0.3 },
-    subtitle:  { fontSize: rf(12), fontFamily: "Inter_400Regular", lineHeight: 17 },
+    textBlock: { flex: 1, gap: 2 },
+    heading:   { fontSize: rf(22), fontFamily: "Inter_700Bold", letterSpacing: -0.5 },
+    title:     { fontSize: rf(13), fontFamily: "Inter_600SemiBold", letterSpacing: -0.1 },
+    subtitle:  { fontSize: rf(11), fontFamily: "Inter_400Regular", lineHeight: 16, marginTop: 2 },
 
     arrowBtn: {
       width: 42, height: 42, borderRadius: 21,
