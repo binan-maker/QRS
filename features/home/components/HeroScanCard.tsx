@@ -66,9 +66,6 @@ export function HeroScanCard() {
             <View style={styles.textBlock}>
               <Text style={[styles.heading, { color: colors.primary }]}>BinRo</Text>
               <Text style={[styles.title, { color: colors.text }]}>Scan QR Code</Text>
-              <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
-                Scammers often paste fake QR stickers over real ones.
-              </Text>
             </View>
 
             {/* arrow */}
