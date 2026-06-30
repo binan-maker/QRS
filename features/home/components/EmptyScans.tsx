@@ -34,6 +34,7 @@ export function EmptyScans() {
 
       {/* Copy */}
       <Text style={[styles.title, { color: colors.text }]}>No scans yet</Text>
+      <Text style={[styles.sub, { color: colors.textMuted }]}>Scan smarter. Stay safe.</Text>
       {/* CTA */}
       <Pressable
         onPress={() => router.push("/(tabs)/scanner" as any)}
