@@ -259,11 +259,13 @@ export default function QrFormPage({ mode, initialTemplateId, openAiBuilder }: P
                   </View>
                 </View>
               ) : (
-                {showNameError && (
-                  <Text style={[styles.nameHint, { color: colors.danger }]}>
-                    Please give your QR code a name before generating
-                  </Text>
-                )}
+                <>
+                  {showNameError && (
+                    <Text style={[styles.nameHint, { color: colors.danger }]}>
+                      Please give your QR code a name before generating
+                    </Text>
+                  )}
+                </>
               )}
             </View>
           </Reanimated.View>
