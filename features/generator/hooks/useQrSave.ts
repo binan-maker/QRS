@@ -3,10 +3,9 @@ import * as Crypto from "expo-crypto";
 import * as Haptics from "@/shared/utils/haptics";
 import {
   saveGeneratedQr,
-  saveGuardLink,
-  saveStandardLink,
   type QrType,
 } from "@/lib/firestore-service";
+import { createUnifiedQr } from "@/services/qr-unified";
 import { buildQrContent, validateQrInput } from "@/features/generator/data/qr-builder";
 import {
   buildBusinessContent,
@@ -111,9 +110,10 @@ export function useQrSave({
 
     // ── Determine encoded QR value ────────────────────────────────────────
     const base = getStableQrBase();
+    // All new branded QRs use the unified /q/:id route — single source of truth.
+    // Private (unbranded) QRs embed raw content directly as before.
     let encodedValue = builtContent;
-    if (isBusinessMode)  encodedValue = `${base}/guard/${shortUuid}`;
-    else if (isStandardMode) encodedValue = `${base}/go/${shortUuid}`;
+    if (isBranded && !privateMode) encodedValue = `${base}/q/${shortUuid}`;
 
     setQrValue(encodedValue);
     setGeneratedUuid(isBranded ? shortUuid : null);
@@ -136,19 +136,39 @@ export function useQrSave({
           ? businessCategory
           : (QR_REGISTRY[selectedPreset]?.key ?? null);
 
+        const expiryDate = resolveExpiryDate(advancedSettings.expiryPreset, advancedSettings.expiryCustomDate);
+        const scanLimit = advancedSettings.scanLimit ?? null;
+
+        // ── Write unified qrs/{id} doc (new single source of truth) ──────
         try {
-          const limitForLink = advancedSettings.scanLimit ?? null;
-          const expiryForLink = resolveExpiryDate(advancedSettings.expiryPreset, advancedSettings.expiryCustomDate);
-          if (isBusinessMode) {
-            await saveGuardLink(shortUuid, builtContent, bName, user.displayName, user.id, savedContentType, templateKey, limitForLink, expiryForLink);
-          } else if (isStandardMode) {
-            await saveStandardLink(shortUuid, builtContent, savedContentType, user.id, user.displayName, templateKey, limitForLink, expiryForLink);
-          }
-        } catch (linkErr: any) {
-          if (__DEV__) console.warn("[save] link registration failed (non-fatal):", linkErr?.message);
+          await createUnifiedQr({
+            id: shortUuid,
+            ownerId: user.id,
+            ownerName: user.displayName,
+            qrType: qt,
+            template: templateKey,
+            title: advancedSettings.label.trim() || bName || null,
+            isDynamic: isBusinessMode,
+            destination: isBusinessMode ? builtContent : encodedValue,
+            rawDestination: builtContent,
+            contentType: savedContentType,
+            businessName: bName,
+            scanLimit,
+            expiryDate,
+            expiryPreset: advancedSettings.expiryPreset === "never" ? null : advancedSettings.expiryPreset,
+            design: {
+              fgColor: qrFgColor,
+              bgColor: qrBgColor,
+              logoPosition: "center",
+              logoUri: logoToStore,
+              label: advancedSettings.label.trim() || null,
+            },
+            formValues: isBusinessMode ? null : { value: inputValue, extra: extraFields },
+          });
+        } catch (unifiedErr: any) {
+          if (__DEV__) console.warn("[save] unified qr write failed (non-fatal):", unifiedErr?.message);
         }
 
-        const expiryDate = resolveExpiryDate(advancedSettings.expiryPreset, advancedSettings.expiryCustomDate);
         const docId = await saveGeneratedQr(
           user.id,
           user.displayName,
@@ -163,7 +183,7 @@ export function useQrSave({
           {
             fgColor:      qrFgColor,
             bgColor:      qrBgColor,
-            scanLimit:    advancedSettings.scanLimit,
+            scanLimit,
             expiryDate,
             expiryPreset: advancedSettings.expiryPreset === "never" ? null : advancedSettings.expiryPreset,
             label:        advancedSettings.label.trim() || null,

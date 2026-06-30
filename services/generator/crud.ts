@@ -161,6 +161,29 @@ export async function getGeneratedQrById(userId: string, docId: string): Promise
     let isActive = true;
     let deactivationMessage: string | null = null;
 
+    // New-model QRs: read the authoritative scanCount from qrs/{uuid}
+    if (data.uuid) {
+      try {
+        const unifiedData = await db.get(["qrs", data.uuid]);
+        if (unifiedData) {
+          scanCount = unifiedData.scanCount ?? scanCount;
+          isActive = unifiedData.status === "active";
+          deactivationMessage = unifiedData.status !== "active" ? unifiedData.status : null;
+          // Return early — unified doc is the single source of truth
+          return {
+            ...mapDocToItem(docId, data),
+            scanCount,
+            commentCount,
+            isActive,
+            deactivationMessage,
+          };
+        }
+      } catch (e) {
+        logError("getGeneratedQrById/unified-fetch", e, { docId });
+      }
+    }
+
+    // Legacy-model QRs: fall back to qrCodes collection
     if (data.qrCodeId) {
       try {
         const qrData = await db.get(["qrCodes", data.qrCodeId]);
@@ -195,7 +218,27 @@ export async function getUserGeneratedQrs(userId: string): Promise<GeneratedQrIt
     });
     const items: GeneratedQrItem[] = docs.map((d) => mapDocToItem(d.id, d.data));
 
-    const idsNeedingLookup = [...new Set(items.map(i => i.qrCodeId).filter(Boolean))] as string[];
+    // Split into new-model (has uuid → qrs/{id}) and legacy (qrCodes/{qrCodeId})
+    const newModelItems  = items.filter(i => i.uuid);
+    const legacyItems    = items.filter(i => !i.uuid && i.qrCodeId);
+
+    // New-model: read from qrs/{uuid} for authoritative scanCount + status
+    if (newModelItems.length > 0) {
+      const unifiedResults = await Promise.all(
+        newModelItems.map(i => db.get(["qrs", i.uuid!]).catch(() => null))
+      );
+      newModelItems.forEach((item, idx) => {
+        const u = unifiedResults[idx];
+        if (u) {
+          item.scanCount  = u.scanCount ?? item.scanCount;
+          item.isActive   = u.status === "active";
+          item.deactivationMessage = u.status !== "active" ? u.status : null;
+        }
+      });
+    }
+
+    // Legacy: read from qrCodes/{qrCodeId} as before
+    const idsNeedingLookup = [...new Set(legacyItems.map(i => i.qrCodeId).filter(Boolean))] as string[];
     if (idsNeedingLookup.length > 0) {
       const qrResults = await Promise.all(
         idsNeedingLookup.map(id => db.get(["qrCodes", id]).catch(() => null))
@@ -203,7 +246,7 @@ export async function getUserGeneratedQrs(userId: string): Promise<GeneratedQrIt
       const qrDataMap: Record<string, any> = {};
       idsNeedingLookup.forEach((id, i) => { if (qrResults[i]) qrDataMap[id] = qrResults[i]; });
 
-      items.forEach(item => {
+      legacyItems.forEach(item => {
         const qrData = item.qrCodeId ? qrDataMap[item.qrCodeId] : null;
         if (qrData) {
           if (item.scanCount === 0) item.scanCount = qrData.scanCount || 0;

@@ -18,6 +18,7 @@ import {
 import {
   fetchGuardLink, fetchStandardLink, isSafeRedirectDestination,
   recordScanAndEnforce, CAUTION_WINDOW_MS,
+  fetchUnifiedQr, recordUnifiedScan,
 } from "./lib/firebase-client";
 import { cacheGet, cacheSet } from "./lib/route-cache";
 
@@ -88,6 +89,60 @@ export async function registerRoutes(app: Express): Promise<Server> {
     if (scanLimit !== null && scanCount >= scanLimit) return true;
     return false;
   }
+
+  // ── /q/:id — Unified QR route (new architecture) ───────────────────────────
+  // All QRs generated after the architecture migration use this route.
+  // One doc in qrs/{id} is the single source of truth for scan count,
+  // destination, status, limits, and design.
+  app.get("/q/:id", async (req: Request, res: Response) => {
+    const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
+    if (!id || id.length < 4) return res.status(400).send(guardNotFoundHtml());
+
+    const qr = await fetchUnifiedQr(id);
+    if (!qr) return res.status(404).send(guardNotFoundHtml());
+
+    // Check status/expiry/limit
+    const isExpired = qr.expiryDate && new Date(qr.expiryDate).getTime() < Date.now();
+    const isLimitHit = qr.scanLimit !== null && qr.scanCount >= qr.scanLimit;
+    const isBlocked = qr.status === "inactive" || qr.status === "limit_reached" || isExpired || isLimitHit;
+
+    if (isBlocked) {
+      return res.status(200).send(guardDeactivatedHtml(qr.businessName));
+    }
+
+    // Record the scan (non-blocking — serve first)
+    recordUnifiedScan(id, qr.scanLimit).catch(() => {});
+
+    const dest = qr.destination;
+
+    // Dynamic (business/guard) QRs: use the branded redirect page
+    if (qr.isDynamic) {
+      if (!isSafeRedirectDestination(dest)) {
+        return res.status(400).send(guardShell("Blocked", `
+<div class="icon">🚫</div>
+<div class="badge badge-dead">Blocked</div>
+<h1>Unsafe Destination</h1>
+<p>This QR code's destination has been blocked for your safety.</p>
+<button onclick="history.back()" class="btn btn-back">← Go Back</button>
+`));
+      }
+      const businessName = qr.businessName || qr.title || "Business";
+      return res.status(200).send(guardRedirectHtml(businessName, qr.ownerName, dest));
+    }
+
+    // Standard QRs: reuse the existing content-serving logic by building a
+    // compatible StandardLinkFields object and passing it to serveStandardContent.
+    const asStandardLink = {
+      rawContent: qr.rawDestination || dest,
+      contentType: qr.contentType,
+      ownerName: qr.ownerName,
+      isActive: true,
+      scanLimit: qr.scanLimit,
+      scanCount: qr.scanCount,
+      expiryDate: qr.expiryDate,
+    };
+    return serveStandardContent(res, asStandardLink, id);
+  });
 
   // ── /go/:slug — Standard QR content lookup ─────────────────────────────────
   app.get("/go/:slug", async (req: Request, res: Response) => {

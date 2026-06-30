@@ -184,6 +184,147 @@ export async function recordScanAndEnforce(
   }
 }
 
+// ── Unified QR model (/q/:id) ─────────────────────────────────────────────────
+export interface UnifiedQrFields {
+  ownerId: string;
+  ownerName: string;
+  qrType: string;
+  template: string | null;
+  title: string | null;
+  isDynamic: boolean;
+  destination: string;
+  rawDestination: string;
+  contentType: string;
+  businessName: string | null;
+  status: string;
+  scanCount: number;
+  scanLimit: number | null;
+  expiryDate: string | null;
+  design: {
+    fgColor: string;
+    bgColor: string;
+    logoPosition: string;
+    logoUri: string | null;
+    label: string | null;
+  };
+}
+
+const unifiedCache = new Map<string, CacheEntry<UnifiedQrFields>>();
+
+setInterval(() => {
+  const now = Date.now();
+  for (const [k, e] of unifiedCache.entries()) { if (now >= e.expiresAt) unifiedCache.delete(k); }
+}, CACHE_TTL_MS);
+
+function parseStringField(f: any): string | null {
+  if (!f) return null;
+  return f.stringValue ?? null;
+}
+
+function parseBoolField(f: any, defaultVal = true): boolean {
+  if (!f) return defaultVal;
+  if (f.booleanValue !== undefined) return f.booleanValue;
+  return defaultVal;
+}
+
+function parseMapField(f: any): Record<string, any> | null {
+  if (!f?.mapValue?.fields) return null;
+  return f.mapValue.fields;
+}
+
+export async function fetchUnifiedQr(id: string): Promise<UnifiedQrFields | null> {
+  const now = Date.now();
+  const cached = unifiedCache.get(id);
+  if (cached && now < cached.expiresAt) return cached.data;
+
+  try {
+    const res = await fetch(firestoreUrl("qrs", id));
+    if (!res.ok) { unifiedCache.set(id, { data: null, expiresAt: now + CACHE_TTL_MS }); return null; }
+    const raw = await res.json() as any;
+    const f = raw?.fields;
+    if (!f) { unifiedCache.set(id, { data: null, expiresAt: now + CACHE_TTL_MS }); return null; }
+
+    const designFields = parseMapField(f.design);
+    const link: UnifiedQrFields = {
+      ownerId: parseStringField(f.ownerId) ?? "",
+      ownerName: parseStringField(f.ownerName) ?? "BinRo User",
+      qrType: parseStringField(f.qrType) ?? "individual",
+      template: parseStringField(f.template),
+      title: parseStringField(f.title),
+      isDynamic: parseBoolField(f.isDynamic, false),
+      destination: parseStringField(f.destination) ?? "",
+      rawDestination: parseStringField(f.rawDestination) ?? parseStringField(f.destination) ?? "",
+      contentType: parseStringField(f.contentType) ?? "text",
+      businessName: parseStringField(f.businessName),
+      status: parseStringField(f.status) ?? "active",
+      scanCount: parseIntField(f.scanCount) ?? 0,
+      scanLimit: parseIntField(f.scanLimit),
+      expiryDate: parseStringField(f.expiryDate),
+      design: {
+        fgColor: parseStringField(designFields?.fgColor) ?? "#0A0E17",
+        bgColor: parseStringField(designFields?.bgColor) ?? "#F8FAFC",
+        logoPosition: parseStringField(designFields?.logoPosition) ?? "center",
+        logoUri: parseStringField(designFields?.logoUri),
+        label: parseStringField(designFields?.label),
+      },
+    };
+    unifiedCache.set(id, { data: link, expiresAt: now + CACHE_TTL_MS });
+    return link;
+  } catch {
+    return null;
+  }
+}
+
+export function bustUnifiedCache(id: string): void {
+  unifiedCache.delete(id);
+}
+
+export async function recordUnifiedScan(id: string, scanLimit: number | null): Promise<void> {
+  if (!FIREBASE_PROJECT_ID || !FIREBASE_API_KEY) return;
+  try {
+    const commitUrl = `https://firestore.googleapis.com/v1/projects/${FIREBASE_PROJECT_ID}/databases/(default)/documents:commit?key=${FIREBASE_API_KEY}`;
+    const docPath = `projects/${FIREBASE_PROJECT_ID}/databases/(default)/documents/qrs/${encodeURIComponent(id)}`;
+
+    await fetch(commitUrl, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        writes: [{
+          transform: {
+            document: docPath,
+            fieldTransforms: [{ fieldPath: "scanCount", increment: { integerValue: "1" } }],
+          },
+        }],
+      }),
+    });
+
+    if (scanLimit !== null && scanLimit > 0) {
+      const freshRes = await fetch(firestoreUrl("qrs", id));
+      if (!freshRes.ok) return;
+      const freshData = await freshRes.json() as any;
+      const freshCount = parseIntField(freshData?.fields?.scanCount) ?? 0;
+      if (freshCount >= scanLimit) {
+        await fetch(commitUrl, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            writes: [{
+              update: {
+                name: docPath,
+                fields: { status: { stringValue: "limit_reached" } },
+              },
+              updateMask: { fieldPaths: ["status"] },
+            }],
+          }),
+        });
+        unifiedCache.delete(id);
+      }
+    }
+  } catch {
+    // best-effort
+  }
+}
+
 export function isSafeRedirectDestination(destination: string): boolean {
   try {
     const url = new URL(destination.startsWith("http") ? destination : `https://${destination}`);

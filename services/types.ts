@@ -171,6 +171,44 @@ export interface UsernameData {
   isVerified?: boolean;
 }
 
+// ── Unified QR model (new architecture) ──────────────────────────────────────
+// Every QR generated from here on is backed by one document in qrs/{id}.
+// Legacy QRs (guardLinks / standardLinks) remain on their old collections.
+export type UnifiedQrStatus = "active" | "inactive" | "expired" | "limit_reached";
+
+export interface UnifiedQrDesign {
+  fgColor: string;
+  bgColor: string;
+  logoPosition: string;
+  logoUri: string | null;
+  label: string | null;
+}
+
+export interface UnifiedQr {
+  id: string;
+  ownerId: string;
+  ownerName: string;
+  qrType: QrType;
+  template: string | null;
+  title: string | null;
+  isDynamic: boolean;
+  destination: string;
+  rawDestination: string;
+  contentType: string;
+  businessName: string | null;
+  status: UnifiedQrStatus;
+  scanCount: number;
+  downloads: number;
+  shares: number;
+  scanLimit: number | null;
+  expiryDate: string | null;
+  expiryPreset: string | null;
+  design: UnifiedQrDesign;
+  formValues: { value: string; extra: Record<string, string> } | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
 // Generator Service types
 export interface GeneratedQrItem {
   id: string;

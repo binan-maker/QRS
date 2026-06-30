@@ -1,6 +1,7 @@
 import { db } from "@/lib/db/client";
 import { detectContentType } from "../qr-service";
 import { logError } from "./crud";
+import { updateUnifiedQrDesign } from "../qr-unified";
 
 export async function updateSavedQrContent(
   userId: string,
@@ -120,6 +121,9 @@ export async function updateQrDesign(
   }
 ): Promise<void> {
   try {
+    const data = await db.get(["users", userId, "generatedQrs", docId]);
+    const uuid: string | null = data?.uuid || null;
+
     const batch = db.batch();
     batch.update(["users", userId, "generatedQrs", docId], {
       fgColor: design.fgColor,
@@ -132,8 +136,7 @@ export async function updateQrDesign(
       expiryPreset: design.expiryPreset || null,
     });
 
-    // Sync scanLimit + expiryDate into the public link doc so server-side
-    // enforcement (scan counting, auto-deactivation) uses the latest values.
+    // Sync into legacy link docs (for old /go/ and /guard/ QRs).
     const limitFields = {
       scanLimit: design.scanLimit ?? null,
       expiryDate: design.expiryDate || null,
@@ -146,6 +149,23 @@ export async function updateQrDesign(
     }
 
     await batch.commit();
+
+    // Sync into unified qrs/{id} doc for new-model QRs (best-effort).
+    if (uuid) {
+      updateUnifiedQrDesign(uuid, userId, {
+        title: design.label || null,
+        design: {
+          fgColor: design.fgColor,
+          bgColor: design.bgColor,
+          logoPosition: design.logoPosition,
+          logoUri: design.logoUri,
+          label: design.label || null,
+        },
+        scanLimit: design.scanLimit ?? null,
+        expiryDate: design.expiryDate || null,
+        expiryPreset: design.expiryPreset || null,
+      }).catch(() => {});
+    }
   } catch (e) {
     logError("updateQrDesign", e, { userId, docId });
     throw e;
