@@ -1,17 +1,7 @@
-import { View, Text, TextInput } from "react-native";
-import { Pressable } from "react-native";
-import { Ionicons } from "@expo/vector-icons";
-import { useTheme } from "@/shared/contexts/ThemeContext";
-import type { ExpiryPreset } from "@/features/my-qr/hooks/useQrDesign";
+import { OptionsTab as SharedOptionsTab } from "@/shared/components/customize/OptionsTab";
+import type { ExpiryPreset } from "@/shared/components/customize/OptionsTab";
 
-const EXPIRY_PRESETS: { key: ExpiryPreset; label: string }[] = [
-  { key: "never",  label: "Never"    },
-  { key: "1d",     label: "1 Day"    },
-  { key: "7d",     label: "7 Days"   },
-  { key: "30d",    label: "30 Days"  },
-  { key: "90d",    label: "3 Months" },
-  { key: "custom", label: "Custom"   },
-];
+export type { ExpiryPreset };
 
 interface Props {
   label: string;
@@ -30,161 +20,17 @@ export function OptionsTab({
   expiryPreset, expiryCustomDate,
   onChangeExpiryPreset, onChangeExpiryCustomDate,
 }: Props) {
-  const { colors } = useTheme();
-
   return (
-    <View style={{ gap: 16 }}>
-
-      {/* ── Private Label ── */}
-      <View style={{ gap: 6 }}>
-        <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
-          <Ionicons name="pricetag-outline" size={13} color={colors.textMuted} />
-          <Text style={{ fontSize: 12, fontFamily: "Inter_600SemiBold", color: colors.textSecondary }}>
-            Private Label
-          </Text>
-          <View style={{ borderRadius: 5, paddingHorizontal: 5, paddingVertical: 1, backgroundColor: colors.surfaceLight }}>
-            <Text style={{ fontSize: 9, fontFamily: "Inter_500Medium", color: colors.textMuted }}>optional</Text>
-          </View>
-        </View>
-        <TextInput
-          style={{
-            borderRadius: 12, borderWidth: 1, paddingHorizontal: 12, paddingVertical: 9,
-            fontSize: 13, fontFamily: "Inter_400Regular",
-            color: colors.text, backgroundColor: colors.surfaceLight, borderColor: colors.surfaceBorder,
-          }}
-          placeholder="Name this QR code"
-          placeholderTextColor={colors.textMuted}
-          value={label}
-          onChangeText={onChangeLabel}
-          maxLength={80}
-        />
-        <Text style={{ fontSize: 10, fontFamily: "Inter_400Regular", color: colors.textMuted }}>
-          Only visible to you — helps organize your QR codes
-        </Text>
-      </View>
-
-      {/* ── Max Scans ── */}
-      <View style={{ gap: 6 }}>
-        <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
-          <Ionicons name="scan-outline" size={13} color={colors.textMuted} />
-          <Text style={{ fontSize: 12, fontFamily: "Inter_600SemiBold", color: colors.textSecondary }}>
-            Max Scans
-          </Text>
-        </View>
-        <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
-          <Pressable
-            onPress={() => onChangeScanLimit(null)}
-            style={{
-              borderRadius: 10, borderWidth: 1,
-              paddingHorizontal: 12, paddingVertical: 8,
-              borderColor: scanLimit === null ? colors.textMuted + "40" : colors.surfaceBorder,
-              backgroundColor: scanLimit === null ? colors.surfaceLight : colors.surface,
-            }}
-          >
-            <Text style={{ fontSize: 12, fontFamily: "Inter_500Medium", color: scanLimit === null ? colors.textSecondary : colors.textMuted }}>
-              Unlimited
-            </Text>
-          </Pressable>
-          <View style={{ flex: 1, flexDirection: "row", alignItems: "center", gap: 6 }}>
-            <Pressable
-              onPress={() => onChangeScanLimit(Math.max(1, (scanLimit ?? 0) - 1))}
-              style={{
-                width: 32, height: 32, borderRadius: 10, borderWidth: 1,
-                alignItems: "center", justifyContent: "center",
-                borderColor: colors.surfaceBorder, backgroundColor: colors.surfaceLight,
-              }}
-            >
-              <Ionicons name="remove" size={14} color={colors.textSecondary} />
-            </Pressable>
-            <TextInput
-              style={{
-                flex: 1, borderRadius: 10, borderWidth: 1,
-                paddingHorizontal: 10, paddingVertical: 7,
-                fontSize: 13, fontFamily: "Inter_600SemiBold",
-                textAlign: "center",
-                color: colors.text, backgroundColor: colors.surfaceLight, borderColor: colors.surfaceBorder,
-              }}
-              value={scanLimit !== null ? String(scanLimit) : ""}
-              onChangeText={(v) => {
-                const n = parseInt(v, 10);
-                onChangeScanLimit(isNaN(n) || n <= 0 ? null : n);
-              }}
-              placeholder="e.g. 100"
-              placeholderTextColor={colors.textMuted}
-              keyboardType="number-pad"
-              maxLength={6}
-            />
-            <Pressable
-              onPress={() => onChangeScanLimit((scanLimit ?? 0) + 1)}
-              style={{
-                width: 32, height: 32, borderRadius: 10, borderWidth: 1,
-                alignItems: "center", justifyContent: "center",
-                borderColor: colors.surfaceBorder, backgroundColor: colors.surfaceLight,
-              }}
-            >
-              <Ionicons name="add" size={14} color={colors.textSecondary} />
-            </Pressable>
-          </View>
-        </View>
-        {scanLimit !== null && scanLimit > 0 && (
-          <Text style={{ fontSize: 10, fontFamily: "Inter_400Regular", color: colors.warning }}>
-            QR auto-deactivates after {scanLimit} scan{scanLimit === 1 ? "" : "s"}
-          </Text>
-        )}
-      </View>
-
-      {/* ── Expiry ── */}
-      <View style={{ gap: 6 }}>
-        <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
-          <Ionicons name="time-outline" size={13} color={colors.textMuted} />
-          <Text style={{ fontSize: 12, fontFamily: "Inter_600SemiBold", color: colors.textSecondary }}>
-            Expiry / Active Until
-          </Text>
-        </View>
-        <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 6 }}>
-          {EXPIRY_PRESETS.map((p) => {
-            const active = expiryPreset === p.key;
-            return (
-              <Pressable
-                key={p.key}
-                onPress={() => onChangeExpiryPreset(p.key)}
-                style={{
-                  borderRadius: 10, borderWidth: 1,
-                  paddingHorizontal: 10, paddingVertical: 6,
-                  backgroundColor: active ? colors.primaryDim : colors.surfaceLight,
-                  borderColor: active ? colors.primary + "60" : colors.surfaceBorder,
-                }}
-              >
-                <Text style={{ fontSize: 11, fontFamily: "Inter_600SemiBold", color: active ? colors.primary : colors.textMuted }}>
-                  {p.label}
-                </Text>
-              </Pressable>
-            );
-          })}
-        </View>
-        {expiryPreset === "custom" && (
-          <TextInput
-            style={{
-              borderRadius: 12, borderWidth: 1, paddingHorizontal: 12, paddingVertical: 9,
-              fontSize: 13, fontFamily: "Inter_400Regular",
-              color: colors.text, backgroundColor: colors.surfaceLight, borderColor: colors.surfaceBorder,
-              marginTop: 4,
-            }}
-            placeholder="YYYY-MM-DD (e.g. 2026-12-31)"
-            placeholderTextColor={colors.textMuted}
-            value={expiryCustomDate}
-            onChangeText={onChangeExpiryCustomDate}
-            keyboardType="numbers-and-punctuation"
-            maxLength={10}
-          />
-        )}
-        {expiryPreset !== "never" && (
-          <Text style={{ fontSize: 10, fontFamily: "Inter_400Regular", color: colors.safe }}>
-            QR deactivates automatically on the set date
-          </Text>
-        )}
-      </View>
-
-    </View>
+    <SharedOptionsTab
+      scanLimit={scanLimit}
+      onChangeScanLimit={onChangeScanLimit}
+      expiryPreset={expiryPreset}
+      expiryCustomDate={expiryCustomDate}
+      onChangeExpiryPreset={onChangeExpiryPreset}
+      onChangeExpiryCustomDate={onChangeExpiryCustomDate}
+      label={label}
+      onChangeLabel={onChangeLabel}
+      showLabel={true}
+    />
   );
 }

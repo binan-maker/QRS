@@ -173,7 +173,6 @@ function CustomizeDrawer({
           <Animated.View key={tab} entering={FadeInDown.duration(200)} style={{ padding: 14 }}>
             {tab === "colors" && (
               <DrawerColorsTab
-                colors={colors}
                 selectedThemeIdx={selectedThemeIdx}
                 isCustomTheme={isCustomTheme}
                 customFgColor={customFgColor}
@@ -185,7 +184,6 @@ function CustomizeDrawer({
             )}
             {tab === "logo" && qrReady && (
               <DrawerLogoTab
-                colors={colors}
                 customLogoUri={customLogoUri}
                 showDefaultLogo={showDefaultLogo}
                 logoPositionLabel={logoPositionLabel}
@@ -197,7 +195,6 @@ function CustomizeDrawer({
             )}
             {tab === "options" && (
               <DrawerOptionsTab
-                colors={colors}
                 settings={settings}
                 set={set}
               />
