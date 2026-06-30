@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { View, Text, ScrollView, Pressable, ActivityIndicator } from "react-native";
+import React, { useState, useRef, useEffect } from "react";
+import { View, Text, ScrollView, Pressable, Animated as RNAnimated } from "react-native";
 import { StatusBar } from "expo-status-bar";
 import { useLocalSearchParams, router } from "expo-router";
 import Animated from "react-native-reanimated";
@@ -29,6 +29,73 @@ import FollowersModal from "@/features/my-qr/components/modals/FollowersModal";
 import PositionModal from "@/features/generator/components/PositionModal";
 import type { LogoPosition } from "@/features/my-qr/hooks/useQrDesign";
 
+function MyQrDetailSkeleton({ colors, isDark, topInset }: { colors: any; isDark: boolean; topInset: number }) {
+  const shimmer = useRef(new RNAnimated.Value(0)).current;
+  useEffect(() => {
+    RNAnimated.loop(
+      RNAnimated.sequence([
+        RNAnimated.timing(shimmer, { toValue: 1, duration: 900, useNativeDriver: true }),
+        RNAnimated.timing(shimmer, { toValue: 0, duration: 900, useNativeDriver: true }),
+      ])
+    ).start();
+  }, []);
+  const opacity = shimmer.interpolate({ inputRange: [0, 1], outputRange: [0.3, 0.65] });
+  const bone = (style: object) => (
+    <RNAnimated.View style={[{ backgroundColor: colors.surfaceBorder, borderRadius: 8, opacity }, style]} />
+  );
+  const card = (children: React.ReactNode) => (
+    <View style={{
+      borderRadius: 20, borderWidth: 1, borderColor: colors.surfaceBorder,
+      backgroundColor: isDark ? colors.surface : "#ffffff",
+      padding: 16, marginBottom: 12,
+    }}>
+      {children}
+    </View>
+  );
+  return (
+    <View style={{ flex: 1, backgroundColor: colors.background }}>
+      <StatusBar style={isDark ? "light" : "dark"} backgroundColor={colors.background} />
+      {/* Nav bar skeleton */}
+      <View style={{ paddingTop: topInset, paddingHorizontal: 16, paddingBottom: 10, flexDirection: "row", alignItems: "center", gap: 12 }}>
+        {bone({ width: 38, height: 38, borderRadius: 19 })}
+        <View style={{ flex: 1, gap: 6 }}>
+          {bone({ height: 14, width: "55%", borderRadius: 7 })}
+        </View>
+        {bone({ width: 38, height: 38, borderRadius: 19 })}
+        {bone({ width: 38, height: 38, borderRadius: 19 })}
+      </View>
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 40 }}>
+        {/* QR Hero card skeleton */}
+        {card(
+          <View style={{ gap: 14, alignItems: "center" }}>
+            {bone({ width: 200, height: 200, borderRadius: 16, alignSelf: "center" })}
+            <View style={{ gap: 8, width: "100%", alignItems: "center" }}>
+              {bone({ height: 18, width: "60%", borderRadius: 9 })}
+              {bone({ height: 13, width: "40%", borderRadius: 7 })}
+            </View>
+            <View style={{ flexDirection: "row", gap: 10, width: "100%" }}>
+              {bone({ flex: 1, height: 44, borderRadius: 14 })}
+              {bone({ flex: 1, height: 44, borderRadius: 14 })}
+            </View>
+          </View>
+        )}
+        {/* Stats row skeleton */}
+        {card(
+          <View style={{ flexDirection: "row", gap: 10 }}>
+            {bone({ flex: 1, height: 52, borderRadius: 14 })}
+            {bone({ flex: 1, height: 52, borderRadius: 14 })}
+            {bone({ flex: 1, height: 52, borderRadius: 14 })}
+          </View>
+        )}
+        {/* Customize / settings card skeletons */}
+        {bone({ height: 52, borderRadius: 16, marginBottom: 12 })}
+        {bone({ height: 52, borderRadius: 16, marginBottom: 12 })}
+        {bone({ height: 52, borderRadius: 16, marginBottom: 12 })}
+      </ScrollView>
+    </View>
+  );
+}
+
 export default function MyQrDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { colors, isDark } = useTheme();
@@ -53,7 +120,6 @@ export default function MyQrDetailScreen() {
     logoPosition, setLogoPosition,
     logoPositionLabel,
     handlePickLogo, handleRemoveLogo, handleToggleDefaultLogo,
-    label, setLabel,
     scanLimit, handleChangeScanLimit,
     expiryPreset, expiryCustomDate, handleChangeExpiryPreset, handleChangeExpiryCustomDate,
     saving, designDirty, setDesignDirty, designOpen, setDesignOpen,
@@ -81,10 +147,7 @@ export default function MyQrDetailScreen() {
 
   if (loading) {
     return (
-      <View style={{ flex: 1, backgroundColor: colors.background, alignItems: "center", justifyContent: "center" }}>
-        <StatusBar style={isDark ? "light" : "dark"} backgroundColor={colors.background} />
-        <ActivityIndicator size="large" color={colors.primary} />
-      </View>
+      <MyQrDetailSkeleton colors={colors} isDark={isDark} topInset={topInset} />
     );
   }
 
@@ -333,8 +396,6 @@ export default function MyQrDetailScreen() {
           onPickLogo={handlePickLogo}
           onRemoveLogo={handleRemoveLogo}
           onOpenPosition={() => setPositionModalOpen(true)}
-          label={label}
-          onChangeLabel={(s) => { setLabel(s); setDesignDirty(true); }}
           scanLimit={scanLimit}
           onChangeScanLimit={handleChangeScanLimit}
           expiryPreset={expiryPreset}

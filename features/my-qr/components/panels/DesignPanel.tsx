@@ -4,7 +4,6 @@ import { Ionicons } from "@expo/vector-icons";
 import Animated, { FadeIn, FadeInDown } from "react-native-reanimated";
 import { LinearGradient } from "expo-linear-gradient";
 import { useTheme } from "@/shared/contexts/ThemeContext";
-import { QR_COLOR_THEMES } from "@/features/generator/components/QrThemeSection";
 import type { LogoPosition, ExpiryPreset } from "@/features/my-qr/hooks/useQrDesign";
 import { ColorsTab } from "./tabs/ColorsTab";
 import { LogoTab } from "./tabs/LogoTab";
@@ -29,8 +28,6 @@ interface Props {
   onPickLogo: () => void;
   onRemoveLogo: () => void;
   onOpenPosition: () => void;
-  label: string;
-  onChangeLabel: (s: string) => void;
   scanLimit: number | null;
   onChangeScanLimit: (n: number | null) => void;
   expiryPreset: ExpiryPreset;
@@ -50,7 +47,6 @@ export default function DesignPanel({
   onSelectTheme, onSetCustomFg, onSetCustomBg,
   showDefaultLogo, customLogoUri, logoPositionLabel,
   onToggleDefaultLogo, onPickLogo, onRemoveLogo, onOpenPosition,
-  label, onChangeLabel,
   scanLimit, onChangeScanLimit,
   expiryPreset, expiryCustomDate, onChangeExpiryPreset, onChangeExpiryCustomDate,
   designOpen, setDesignOpen, designDirty, saving, handleSaveDesign,
@@ -60,7 +56,7 @@ export default function DesignPanel({
 
   const hasTheme   = selectedThemeIdx !== 0 || isCustomTheme;
   const hasLogo    = !!customLogoUri || showDefaultLogo;
-  const hasOptions = label.trim().length > 0 || scanLimit !== null || expiryPreset !== "never";
+  const hasOptions = scanLimit !== null || expiryPreset !== "never";
   const hasAny     = hasTheme || hasLogo || hasOptions;
 
   const dots: Tab[] = [];
@@ -205,8 +201,6 @@ export default function DesignPanel({
 
             {tab === "options" && (
               <OptionsTab
-                label={label}
-                onChangeLabel={onChangeLabel}
                 scanLimit={scanLimit}
                 onChangeScanLimit={onChangeScanLimit}
                 expiryPreset={expiryPreset}
