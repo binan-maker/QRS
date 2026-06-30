@@ -91,13 +91,14 @@ export function useQrDesign(qrItem: GeneratedQrItem | null) {
     setLabel(item.label || "");
     setScanLimit(item.scanLimit ?? null);
 
-    if (item.expiryDate) {
-      setExpiryPreset("custom");
-      setExpiryCustomDate(item.expiryDate.slice(0, 10));
+    const validPresets: ExpiryPreset[] = ["never", "1d", "7d", "30d", "90d"];
+    const savedPreset = item.expiryPreset as ExpiryPreset | null | undefined;
+    if (savedPreset && validPresets.includes(savedPreset)) {
+      setExpiryPreset(savedPreset);
     } else {
       setExpiryPreset("never");
-      setExpiryCustomDate("");
     }
+    setExpiryCustomDate("");
 
     const matchIdx = QR_COLOR_THEMES.findIndex((t) => t.fg === fg && t.bg === bg);
     if (matchIdx >= 0) {
@@ -177,6 +178,7 @@ export function useQrDesign(qrItem: GeneratedQrItem | null) {
         label: label.trim() || null,
         scanLimit: scanLimit ?? null,
         expiryDate: resolvedExpiry,
+        expiryPreset: expiryPreset === "never" ? null : expiryPreset,
       });
       setDesignDirty(false);
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);

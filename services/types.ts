@@ -190,6 +190,7 @@ export interface GeneratedQrItem {
   label?: string | null;
   scanLimit?: number | null;
   expiryDate?: string | null;
+  expiryPreset?: string | null;
   guardUuid?: string;
   deactivationMessage?: string | null;
   fgColor?: string;

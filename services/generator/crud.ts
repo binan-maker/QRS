@@ -32,6 +32,7 @@ function mapDocToItem(id: string, data: any): GeneratedQrItem {
     label: data.label || null,
     scanLimit: data.scanLimit ?? null,
     expiryDate: data.expiryDate || null,
+    expiryPreset: data.expiryPreset || null,
     scanCount: data.scanCount || 0,
     commentCount: data.commentCount || 0,
     qrType: (data.qrType as QrType) || "individual",
@@ -61,6 +62,7 @@ export async function saveGeneratedQr(
     bgColor?: string;
     scanLimit?: number | null;
     expiryDate?: string | null;
+    expiryPreset?: string | null;
     label?: string | null;
   } | null,
   displayDestination?: string | null,
@@ -96,6 +98,7 @@ export async function saveGeneratedQr(
       bgColor: design?.bgColor || "#F8FAFC",
       ...(design?.scanLimit ? { scanLimit: design.scanLimit } : {}),
       ...(design?.expiryDate ? { expiryDate: design.expiryDate } : {}),
+      ...(design?.expiryPreset ? { expiryPreset: design.expiryPreset } : {}),
       ...(design?.label ? { label: design.label } : {}),
       scanCount: 0,
       commentCount: 0,

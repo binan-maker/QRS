@@ -159,11 +159,12 @@ export function useQrSave({
           logoToStore,
           isBusinessMode ? shortUuid : null,
           {
-            fgColor:   qrFgColor,
-            bgColor:   qrBgColor,
-            scanLimit: advancedSettings.scanLimit,
+            fgColor:      qrFgColor,
+            bgColor:      qrBgColor,
+            scanLimit:    advancedSettings.scanLimit,
             expiryDate,
-            label:     advancedSettings.label.trim() || null,
+            expiryPreset: advancedSettings.expiryPreset === "never" ? null : advancedSettings.expiryPreset,
+            label:        advancedSettings.label.trim() || null,
           },
           isBusinessMode
             ? inputValue.trim()

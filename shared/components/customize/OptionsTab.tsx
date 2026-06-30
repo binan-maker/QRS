@@ -154,22 +154,6 @@ export function OptionsTab({
             );
           })}
         </View>
-        {expiryPreset === "custom" && (
-          <TextInput
-            style={{
-              borderRadius: 12, borderWidth: 1, paddingHorizontal: 12, paddingVertical: 9,
-              fontSize: 13, fontFamily: "Inter_400Regular",
-              color: colors.text, backgroundColor: colors.surfaceLight, borderColor: colors.surfaceBorder,
-              marginTop: 4,
-            }}
-            placeholder="YYYY-MM-DD (e.g. 2026-12-31)"
-            placeholderTextColor={colors.textMuted}
-            value={expiryCustomDate}
-            onChangeText={onChangeExpiryCustomDate}
-            keyboardType="numbers-and-punctuation"
-            maxLength={10}
-          />
-        )}
         {expiryPreset !== "never" && (
           <Text style={{ fontSize: 10, fontFamily: "Inter_400Regular", color: colors.safe }}>
             QR deactivates automatically on the set date

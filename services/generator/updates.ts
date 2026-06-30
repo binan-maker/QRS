@@ -114,6 +114,7 @@ export async function updateQrDesign(
     label?: string | null;
     scanLimit?: number | null;
     expiryDate?: string | null;
+    expiryPreset?: string | null;
   }
 ): Promise<void> {
   try {
@@ -125,6 +126,7 @@ export async function updateQrDesign(
       label: design.label || null,
       scanLimit: design.scanLimit ?? null,
       expiryDate: design.expiryDate || null,
+      expiryPreset: design.expiryPreset || null,
     });
   } catch (e) {
     logError("updateQrDesign", e, { userId, docId });
