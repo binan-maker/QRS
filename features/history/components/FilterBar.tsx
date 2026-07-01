@@ -70,7 +70,11 @@ const FilterBar = React.memo(function FilterBar({
           ? (FILTER_ICONS_ACTIVE[f.key] ?? "apps")
           : (FILTER_ICONS[f.key]        ?? "apps-outline");
 
-        const showCount = typeof f.count === "number" && f.count > 0;
+        // Only show the count badge on "All" — per-filter counts recompute
+        // across multiple data-load waves (local → cloud → stats) which makes
+        // chips resize and the ScrollView bounce. "All" is stable because it
+        // comes from pre-warmed scanStats, not from iterating history.
+        const showCount = f.key === "all" && typeof f.count === "number" && f.count > 0;
 
         return (
           <Animated.View
