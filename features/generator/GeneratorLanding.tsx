@@ -164,14 +164,9 @@ export default function GeneratorLanding() {
               >
                 <View style={[styles.modeCard, { backgroundColor: cardBg, borderColor: colors.surfaceBorder }]}>
 
-                  {/* Top row: badge (private only) + arrow */}
-                  <View style={styles.modeTopRow}>
-                    {"badge" in m && (
-                      <View style={[styles.modeBadge, { backgroundColor: colors.surfaceLight, borderColor: colors.surfaceBorder }]}>
-                        <Text style={[styles.modeBadgeText, { color: colors.textSecondary }]}>{m.badge}</Text>
-                      </View>
-                    )}
-                    <View style={{ flex: 1 }} />
+                  {/* Title row — label + arrow on same line */}
+                  <View style={styles.modeTitleRow}>
+                    <Text style={[styles.modeTitle, { color: colors.text }]}>{m.label}</Text>
                     <View style={[styles.goBtn, {
                       backgroundColor: isPrivate ? colors.surfaceBorder : colors.primaryDim,
                       borderColor:     isPrivate ? colors.surfaceBorder : colors.primary + "30",
@@ -180,8 +175,6 @@ export default function GeneratorLanding() {
                     </View>
                   </View>
 
-                  {/* Title + tagline */}
-                  <Text style={[styles.modeTitle,   { color: colors.text }]}>{m.label}</Text>
                   <Text style={[styles.modeTagline, { color: colors.textSecondary }]}>{m.tagline}</Text>
 
                   {/* Divider */}
@@ -280,29 +273,25 @@ const styles = StyleSheet.create({
     borderWidth: 1,
   },
 
-  modeTopRow: {
+  modeTitleRow: {
     flexDirection: "row",
     alignItems: "center",
-    marginBottom: 14,
+    justifyContent: "space-between",
+    marginBottom: 4,
   },
-
-  modeBadge: {
-    paddingHorizontal: 8, paddingVertical: 3,
-    borderRadius: 7, borderWidth: 1,
-  },
-  modeBadgeText: { fontSize: 9, fontFamily: "Inter_700Bold", letterSpacing: 0.8 },
 
   goBtn: {
     width: 34, height: 34, borderRadius: 11,
     borderWidth: 1,
     alignItems: "center", justifyContent: "center",
+    flexShrink: 0,
   },
 
   modeTitle: {
     fontSize: 18,
     fontFamily: "Inter_700Bold",
     letterSpacing: -0.2,
-    marginBottom: 3,
+    flex: 1,
   },
   modeTagline: {
     fontSize: 13,
