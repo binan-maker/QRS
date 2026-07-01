@@ -5,11 +5,10 @@ import { useTheme } from "@/shared/contexts/ThemeContext";
 import { useScaleFns } from "@/shared/utils/use-scale";
 
 interface Props {
-  isBusiness: boolean;
   docId: string;
 }
 
-export default function MyQrNavBar({ isBusiness, docId }: Props) {
+export default function MyQrNavBar({ docId }: Props) {
   const { colors } = useTheme();
   const { rf, sp } = useScaleFns();
 

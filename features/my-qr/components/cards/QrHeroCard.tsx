@@ -18,7 +18,6 @@ interface Props {
   qrContent: string;
   displayTitle: string;
   ctMeta: ContentTypeMeta;
-  isBusiness: boolean;
   isActive: boolean;
   isDynamic: boolean;
   fgColor: string;
@@ -38,7 +37,7 @@ interface Props {
 }
 
 export default function QrHeroCard({
-  qrContent, displayTitle, ctMeta, isBusiness, isActive, isDynamic,
+  qrContent, displayTitle, ctMeta, isActive, isDynamic,
   fgColor, bgColor, svgRef, guardDest, isPrivateDest, standardRawContent,
   sharingQr, downloadingPdf, onShare, onDownloadPdf, onCopy,
   customLogoUri, showDefaultLogo, logoPosition = "center",

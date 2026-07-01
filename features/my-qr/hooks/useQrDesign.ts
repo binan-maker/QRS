@@ -180,7 +180,7 @@ export function useQrDesign(qrItem: GeneratedQrItem | null) {
         expiryDate: resolvedExpiry,
         expiryPreset: expiryPreset === "never" ? null : expiryPreset,
         standardLinkUuid: qrItem.qrType === "individual" ? (qrItem.uuid || null) : null,
-        guardLinkUuid: qrItem.qrType === "business" ? (qrItem.guardUuid || null) : null,
+        guardLinkUuid: null,
       });
       setDesignDirty(false);
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);

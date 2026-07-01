@@ -62,15 +62,13 @@ const ALL_QUICK_IDXS = new Set([
 
 interface Props {
   selectedPreset: number;
-  qrMode: "individual" | "business" | "private";
+  qrMode: "individual" | "private";
   onSelectPreset: (idx: number) => void;
   onOpenTemplates: () => void;
 }
 
 function SmartTemplateBar({ selectedPreset, qrMode, onSelectPreset, onOpenTemplates }: Props) {
   const { colors } = useTheme();
-
-  if (qrMode === "business") return null;
 
   const selectedFromFull = !ALL_QUICK_IDXS.has(selectedPreset);
 

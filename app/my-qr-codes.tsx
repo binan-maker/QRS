@@ -211,7 +211,6 @@ export default function MyQrCodesScreen() {
   function renderQrItem({ item, index }: { item: GeneratedQrItem; index: number }) {
     const displayText = getDisplayText(item, index);
     const ctMeta      = getContentTypeMeta(getEffectiveContentType(item));
-    const isBusiness  = (item as any).qrType === "business";
     const isInactive  = item.isActive === false;
     const scanCount   = item.scanCount || 0;
     const cardBg      = colors.surface;
@@ -252,7 +251,7 @@ export default function MyQrCodesScreen() {
               numberOfLines={1}
               maxFontSizeMultiplier={1}
             >
-              {ctMeta.label}{isBusiness ? " · Business" : ""}
+              {ctMeta.label}
             </Text>
 
             {/* Meta row — scan count + status badges */}
@@ -280,21 +279,6 @@ export default function MyQrCodesScreen() {
                   <Ionicons name="pause-circle" size={rf(9)} color={colors.danger} />
                   <Text style={{ fontSize: rf(10), fontFamily: "Inter_700Bold", color: colors.danger }}>
                     Inactive
-                  </Text>
-                </View>
-              )}
-
-              {/* Business badge */}
-              {isBusiness && !isInactive && (
-                <View style={{
-                  flexDirection: "row", alignItems: "center", gap: sp(3),
-                  backgroundColor: "#F59E0B18",
-                  borderRadius: 100, paddingHorizontal: sp(6), paddingVertical: sp(2),
-                  borderWidth: 1, borderColor: "#F59E0B45",
-                }}>
-                  <Ionicons name="briefcase" size={rf(9)} color="#F59E0B" />
-                  <Text style={{ fontSize: rf(10), fontFamily: "Inter_700Bold", color: "#F59E0B" }}>
-                    Business
                   </Text>
                 </View>
               )}

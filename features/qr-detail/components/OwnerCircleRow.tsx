@@ -29,15 +29,12 @@ export default function OwnerCircleRow({ ownerInfo, onPress }: Props) {
   }, [ownerInfo.ownerId]);
 
   const gradientColors: [string, string] =
-    ownerInfo.qrType === "business"
-      ? [colors.warning, colors.warningShade]
-      : ownerInfo.qrType === "standard"
+    ownerInfo.qrType === "standard"
       ? [colors.primary, colors.primaryShade]
       : [colors.safe, colors.safeShade];
 
   const iconName: any =
-    ownerInfo.qrType === "business" ? "storefront"
-    : ownerInfo.qrType === "standard" ? "qr-code"
+    ownerInfo.qrType === "standard" ? "qr-code"
     : "person";
 
   return (

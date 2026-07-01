@@ -5,7 +5,6 @@ import { QR_PRESETS } from "@/features/generator/data/presets";
 import { filterByKeyboardType } from "@/features/generator/data/qr-builder";
 import { QR_COLOR_THEMES } from "@/features/generator/components/QrThemeSection";
 import { type AdvancedSettings } from "@/features/generator/components/AdvancedSettingsPanel";
-import { type BusinessCategory } from "@/features/generator/components/BusinessTypeSelector";
 import { useQrToast }   from "@/features/generator/hooks/useQrToast";
 import { useQrLogo }    from "@/features/generator/hooks/useQrLogo";
 import { useQrContent } from "@/features/generator/hooks/useQrContent";
@@ -25,8 +24,6 @@ export function useQrGenerator() {
   const [inputValue,        setInputValue]        = useState("");
   const [extraFields,       setExtraFields]       = useState<Record<string, string>>({});
   const [qrMode,            setQrMode]            = useState<QrMode>("individual");
-  const [businessName,      setBusinessName]      = useState("");
-  const [businessCategory,  setBusinessCategory]  = useState<BusinessCategory>("website");
 
   // ── Theme state ───────────────────────────────────────────────────────────
   const [selectedThemeIdx, setSelectedThemeIdx] = useState(0);
@@ -38,7 +35,6 @@ export function useQrGenerator() {
     scanLimit: null, expiryPreset: "never", expiryCustomDate: "", label: "",
   });
 
-  // ── Modal visibility ──────────────────────────────────────────────────────
   // ── Derived values ────────────────────────────────────────────────────────
   const preset       = QR_PRESETS[selectedPreset];
   const privateMode  = qrMode === "private";
@@ -61,7 +57,7 @@ export function useQrGenerator() {
     qrValue, setQrValue, generatedUuid, setGeneratedUuid, generatedAt, setGeneratedAt,
     urlRiskScore, urlRiskReasons,
   } = useQrContent({
-    inputValue, extraFields, selectedPreset, qrMode, businessCategory, isBranded, showToast,
+    inputValue, extraFields, selectedPreset, qrMode, isBranded, showToast,
   });
 
   const { sharingQr, downloadingPdf, handleCopy, handleShare, handleDownloadPdf } = useQrActions({
@@ -70,7 +66,7 @@ export function useQrGenerator() {
 
   const { saving, savedToProfile, savedDocId, handleGenerate, nameSuggestions, clearNameSuggestions } = useQrSave({
     qrMode, isBranded, privateMode, selectedPreset, inputValue, extraFields,
-    businessCategory, businessName, user, customLogoBase64,
+    user, customLogoBase64,
     qrFgColor, qrBgColor, advancedSettings,
     setQrValue, setGeneratedUuid, setGeneratedAt, showToast,
   });
@@ -89,22 +85,12 @@ export function useQrGenerator() {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
   }, [setQrValue]);
 
-  const switchBusinessCategory = useCallback((cat: BusinessCategory) => {
-    setBusinessCategory(cat);
-    setInputValue("");
-    setExtraFields({});
-    setQrValue("");
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-  }, [setQrValue]);
-
   const handleClear = useCallback(() => {
     setInputValue("");
     setExtraFields({});
     setQrValue("");
     setGeneratedUuid(null);
     setGeneratedAt(null);
-    setBusinessName("");
-    setBusinessCategory("website");
     setSelectedThemeIdx(0);
     setCustomFgColor("#0A0E17");
     setCustomBgColor("#FFFFFF");
@@ -127,11 +113,6 @@ export function useQrGenerator() {
     qrValue,
     qrMode,
     setQrMode,
-    // Business
-    businessName,
-    setBusinessName,
-    businessCategory,
-    switchBusinessCategory,
     // Logo
     customLogoUri,
     customLogoBase64,

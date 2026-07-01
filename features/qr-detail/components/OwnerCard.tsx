@@ -17,7 +17,6 @@ interface Props {
 }
 
 const TYPE_ICONS: Record<string, keyof typeof Ionicons.glyphMap> = {
-  business:   "storefront",
   government: "flag",
   individual: "person",
 };
@@ -30,9 +29,7 @@ const OwnerCard = React.memo(function OwnerCard({
   const icon = TYPE_ICONS[qrType] ?? "person";
   const typeLabel = qrType.charAt(0).toUpperCase() + qrType.slice(1);
 
-  const gradient: [string, string] = qrType === "business"
-    ? [colors.warning, colors.warningShade]
-    : qrType === "government"
+  const gradient: [string, string] = qrType === "government"
     ? [colors.primary, colors.primaryShade]
     : [colors.safe, colors.safeShade];
 
@@ -57,18 +54,6 @@ const OwnerCard = React.memo(function OwnerCard({
           colors={[gradient[0] + (isDark ? "12" : "08"), "transparent"]}
           style={StyleSheet.absoluteFill}
         />
-
-        {ownerInfo.ownerLogoBase64 && qrType === "business" && (
-          <View style={styles.logoRow}>
-            <Image
-              source={{ uri: ownerInfo.ownerLogoBase64 }}
-              style={styles.logo}
-              contentFit="contain"
-              cachePolicy="memory-disk"
-              transition={150}
-            />
-          </View>
-        )}
 
         <View style={styles.mainRow}>
           <LinearGradient colors={gradient} style={styles.ownerIcon} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}>

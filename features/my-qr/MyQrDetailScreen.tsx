@@ -167,7 +167,6 @@ export default function MyQrDetailScreen() {
     );
   }
 
-  const isBusiness = qrItem.qrType === "business";
   const isActive = qrItem.isActive !== false;
   const isGuardQr = !!(qrItem as any).guardUuid;
   const isStandardQr = !isGuardQr && (
@@ -202,7 +201,6 @@ export default function MyQrDetailScreen() {
   const isReadOnly = !isStructured && READONLY_TYPES.has(effectiveContentType);
 
   const publicShortUuid: string | null = (() => {
-    if (isBusiness) return (qrItem as any).guardUuid || (qrItem as any).uuid || null;
     const content = (qrItem as any).content || "";
     const goMatch = content.match(/\/go\/([A-Za-z0-9_-]+)/);
     if (goMatch) return goMatch[1];
@@ -229,11 +227,7 @@ export default function MyQrDetailScreen() {
 
   const handleViewPublic = () => {
     if (!publicShortUuid) return;
-    if (isBusiness) {
-      router.push(`/qr-detail/guard-${publicShortUuid}?guardUuid=${publicShortUuid}&ownerDocId=${id}` as any);
-    } else {
-      router.push(`/qr-detail/std-${publicShortUuid}?standardUuid=${publicShortUuid}&ownerDocId=${id}` as any);
-    }
+    router.push(`/qr-detail/std-${publicShortUuid}?standardUuid=${publicShortUuid}&ownerDocId=${id}` as any);
   };
 
   return (
@@ -251,7 +245,6 @@ export default function MyQrDetailScreen() {
       >
         <View style={{ paddingTop: topInset }}>
           <MyQrNavBar
-            isBusiness={isBusiness}
             docId={id as string}
           />
         </View>
@@ -268,7 +261,6 @@ export default function MyQrDetailScreen() {
           qrContent={qrItem.content || "https://qrguard.app"}
           displayTitle={displayTitle}
           ctMeta={ctMeta}
-          isBusiness={isBusiness}
           isActive={isActive}
           isDynamic={isDynamic}
           fgColor={fgColor}
@@ -303,7 +295,6 @@ export default function MyQrDetailScreen() {
             ctMeta={ctMeta}
             effectiveContentType={effectiveContentType}
             isDynamic={isDynamic}
-            isBusiness={isBusiness}
             contentRows={contentRows}
             liveRaw={liveRaw}
             isGuardQr={isGuardQr}
@@ -329,7 +320,7 @@ export default function MyQrDetailScreen() {
           />
         )}
 
-        {!isBusiness && hasStandardLink && (
+        {hasStandardLink && (
           <StandardLinkCard
             effectiveContentType={effectiveContentType}
             isReadOnly={isReadOnly}
@@ -351,7 +342,7 @@ export default function MyQrDetailScreen() {
           />
         )}
 
-        {!isBusiness && !hasGuardLink && !hasStandardLink && (
+        {!hasGuardLink && !hasStandardLink && (
           hasStructuredEdit ? (
             <StructuredContentEditor
               templateKey={tmplKey!}

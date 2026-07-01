@@ -69,9 +69,7 @@ export function useQrActions({
 
   const handleCopy = useCallback(async () => {
     if (!qrValue) return;
-    const raw = qrMode === "business" && isBranded
-      ? inputValue.trim()
-      : getRawContent(selectedPreset, inputValue, extraFields);
+    const raw = getRawContent(selectedPreset, inputValue, extraFields);
     await Clipboard.setStringAsync(raw || qrValue);
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     showToast("Copied to clipboard!", "success");
@@ -117,9 +115,7 @@ export function useQrActions({
     try {
       const rawBase64 = await captureQrImage(svgRef);
       const imgSrc    = `data:image/png;base64,${rawBase64}`;
-      const raw       = qrMode === "business" && inputValue.trim()
-        ? inputValue.trim()
-        : qrValue;
+      const raw       = qrValue;
       const label = raw.length > 60 ? raw.slice(0, 57) + "…" : raw;
       const html  = buildPdfHtml(imgSrc, label);
       const result = await Print.printToFileAsync({ html, base64: false });

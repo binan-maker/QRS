@@ -18,7 +18,6 @@ interface Props {
   ctMeta: ContentTypeMeta;
   effectiveContentType: string;
   isDynamic: boolean;
-  isBusiness: boolean;
   contentRows: ContentDetailRow[];
   liveRaw: string | null;
   isGuardQr: boolean;
@@ -29,7 +28,6 @@ interface Props {
 export default function QrContentInfoCard({
   effectiveContentType,
   isDynamic,
-  isBusiness,
   liveRaw,
   isGuardQr,
   guardLink,
@@ -43,7 +41,7 @@ export default function QrContentInfoCard({
       content={liveRaw ?? ""}
       contentType={effectiveContentType}
       isDynamic={isDynamic}
-      isBusiness={isBusiness}
+      isBusiness={false}
       isLoading={isLoading}
     />
   );

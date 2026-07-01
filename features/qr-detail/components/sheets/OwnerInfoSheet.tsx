@@ -38,25 +38,20 @@ export default function OwnerInfoSheet({ visible, onClose, ownerInfo, guardLink 
   }, [visible, ownerInfo?.ownerId]);
 
   const gradientColors: [string, string] =
-    ownerInfo?.qrType === "business"
-      ? [colors.warning, colors.warningShade]
-      : ownerInfo?.qrType === "standard"
+    ownerInfo?.qrType === "standard"
       ? [colors.primary, colors.primaryShade]
       : [colors.safe, colors.safeShade];
 
   const accentColor =
-    ownerInfo?.qrType === "business" ? colors.warning
-    : ownerInfo?.qrType === "standard" ? colors.primary
+    ownerInfo?.qrType === "standard" ? colors.primary
     : colors.safe;
 
   const typeLabel =
-    ownerInfo?.qrType === "business" ? "Business"
-    : ownerInfo?.qrType === "standard" ? "Standard"
+    ownerInfo?.qrType === "standard" ? "Standard"
     : "Individual";
 
   const iconName: any =
-    ownerInfo?.qrType === "business" ? "storefront"
-    : ownerInfo?.qrType === "standard" ? "qr-code"
+    ownerInfo?.qrType === "standard" ? "qr-code"
     : "person";
 
   return (

@@ -1,25 +1,20 @@
 import React, { memo } from "react";
-import { View, Text, StyleSheet, Pressable, TextInput } from "react-native";
+import { View, Text, StyleSheet, Pressable } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import Animated, { FadeInDown, FadeInUp } from "react-native-reanimated";
 import * as Haptics from "@/shared/utils/haptics";
 import { router } from "expo-router";
 import { useTheme } from "@/shared/contexts/ThemeContext";
-import BusinessTypeSelector, { type BusinessCategory } from "./BusinessTypeSelector";
 
-type QrMode = "individual" | "business" | "private";
+type QrMode = "individual" | "private";
 
 interface Props {
   user: any;
   qrMode: QrMode;
-  businessName: string;
-  businessCategory: BusinessCategory;
   setQrMode: (mode: QrMode) => void;
-  setBusinessName: (name: string) => void;
-  switchBusinessCategory: (cat: BusinessCategory) => void;
 }
 
-function ModeSelector({ user, qrMode, businessName, businessCategory, setQrMode, setBusinessName, switchBusinessCategory }: Props) {
+function ModeSelector({ user, qrMode, setQrMode }: Props) {
   const { colors } = useTheme();
 
   function handleMode(mode: QrMode) {
@@ -34,10 +29,9 @@ function ModeSelector({ user, qrMode, businessName, businessCategory, setQrMode,
         {user ? (
           <>
             {[
-              { mode: "individual" as QrMode, icon: "bookmark-outline" as const, label: "Saved",    active: qrMode === "individual", activeStyle: { backgroundColor: colors.primaryDim, borderColor: colors.primary }, color: colors.primary },
-              { mode: "business"  as QrMode, icon: "storefront-outline" as const, label: "Business", active: qrMode === "business",   activeStyle: { backgroundColor: colors.warningDim, borderColor: colors.warning + "60" }, color: colors.warning },
-              { mode: "private"   as QrMode, icon: "eye-off-outline" as const,   label: "Private",  active: qrMode === "private",    activeStyle: { backgroundColor: colors.surfaceLight, borderColor: colors.surfaceBorder }, color: colors.textSecondary },
-            ].map(({ mode, icon, label, active, activeStyle, color }, idx) => (
+              { mode: "individual" as QrMode, icon: "bookmark-outline" as const, label: "Saved",   active: qrMode === "individual", activeStyle: { backgroundColor: colors.primaryDim, borderColor: colors.primary }, color: colors.primary },
+              { mode: "private"   as QrMode, icon: "eye-off-outline" as const,   label: "Private", active: qrMode === "private",    activeStyle: { backgroundColor: colors.surfaceLight, borderColor: colors.surfaceBorder }, color: colors.textSecondary },
+            ].map(({ mode, icon, label, active, activeStyle, color }) => (
               <Pressable
                 key={mode}
                 onPress={() => handleMode(mode)}
@@ -88,13 +82,6 @@ function ModeSelector({ user, qrMode, businessName, businessCategory, setQrMode,
               Saved to your profile with a unique ID — update or share anytime
             </Text>
           </View>
-        ) : qrMode === "business" && user ? (
-          <View style={[styles.banner, { borderColor: colors.warning + "40", backgroundColor: colors.warningDim }]}>
-            <Ionicons name="shield" size={13} color={colors.warning} />
-            <Text style={[styles.bannerText, { color: colors.warning }]} maxFontSizeMultiplier={1}>
-              Smart Redirect — change the destination anytime without reprinting
-            </Text>
-          </View>
         ) : qrMode === "private" ? (
           <View style={[styles.banner, { backgroundColor: colors.surfaceLight, borderColor: colors.surfaceBorder }]}>
             <Ionicons name="eye-off-outline" size={13} color={colors.textMuted} />
@@ -112,28 +99,6 @@ function ModeSelector({ user, qrMode, businessName, businessCategory, setQrMode,
           </Pressable>
         )}
       </Animated.View>
-
-      {qrMode === "business" && user && (
-        <Animated.View entering={FadeInDown.delay(0).duration(260)}>
-          <View style={[styles.businessNameRow, { backgroundColor: colors.surface, borderColor: colors.warning + "40" }]}>
-            <Ionicons name="business-outline" size={16} color={colors.warning} style={{ marginRight: 8 }} />
-            <TextInput
-              style={[styles.businessNameInput, { color: colors.text }]}
-              placeholder="Store or organisation name (optional)"
-              placeholderTextColor={colors.textMuted}
-              value={businessName}
-              onChangeText={setBusinessName}
-              maxLength={60}
-            />
-          </View>
-          <View style={{ marginTop: 14 }}>
-            <BusinessTypeSelector
-              businessCategory={businessCategory}
-              onSelect={switchBusinessCategory}
-            />
-          </View>
-        </Animated.View>
-      )}
     </>
   );
 }
@@ -159,10 +124,4 @@ const styles = StyleSheet.create({
     borderRadius: 10, paddingHorizontal: 10, paddingVertical: 9, borderWidth: 1, marginBottom: 16,
   },
   bannerText: { flex: 1, fontSize: 11, fontFamily: "Inter_400Regular" },
-  businessNameRow: {
-    flexDirection: "row", alignItems: "center",
-    borderRadius: 14, borderWidth: 1,
-    paddingHorizontal: 14, paddingVertical: 10, marginTop: 10, marginBottom: 10,
-  },
-  businessNameInput: { flex: 1, fontSize: 13, fontFamily: "Inter_400Regular" },
 });

@@ -1,8 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { buildQrContent, validateQrInput } from "@/features/generator/data/qr-builder";
 import { computeUrlRisk } from "@/shared/utils/url-risk";
-import { buildBusinessContent } from "@/features/generator/data/business-content";
-import type { BusinessCategory } from "@/features/generator/components/BusinessTypeSelector";
 import type { QrMode } from "@/features/generator/types/form-types";
 
 interface Params {
@@ -10,7 +8,6 @@ interface Params {
   extraFields:      Record<string, string>;
   selectedPreset:   number;
   qrMode:           QrMode;
-  businessCategory: BusinessCategory;
   isBranded:        boolean;
   showToast:        (msg: string, type?: "success" | "error") => void;
 }
@@ -20,7 +17,6 @@ export function useQrContent({
   extraFields,
   selectedPreset,
   qrMode,
-  businessCategory,
   isBranded,
   showToast,
 }: Params) {
@@ -41,13 +37,6 @@ export function useQrContent({
         return;
       }
 
-      if (qrMode === "business" && isBranded) {
-        const dest = buildBusinessContent(inputValue, businessCategory, extraFields);
-        if (dest) { setQrValue(dest); setGeneratedAt(new Date()); }
-        else       { setQrValue(""); }
-        return;
-      }
-
       const error = validateQrInput(selectedPreset, inputValue, extraFields);
       if (error) return;
 
@@ -60,11 +49,11 @@ export function useQrContent({
     }, 350);
 
     return () => clearTimeout(timer);
-  }, [inputValue, extraFields, selectedPreset, qrMode, businessCategory, isBranded]);
+  }, [inputValue, extraFields, selectedPreset, qrMode, isBranded]);
 
   // ── URL risk analysis ─────────────────────────────────────────────────────
   useEffect(() => {
-    if (!qrValue || qrMode === "business") {
+    if (!qrValue) {
       setUrlRiskScore(0);
       setUrlRiskReasons([]);
       riskShownFor.current = "";
@@ -81,7 +70,7 @@ export function useQrContent({
         300,
       );
     }
-  }, [qrValue, qrMode, showToast]);
+  }, [qrValue, showToast]);
 
   return {
     qrValue,
