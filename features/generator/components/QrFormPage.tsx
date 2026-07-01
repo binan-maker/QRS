@@ -1,27 +1,21 @@
-import React, { useState, useMemo, useCallback, useEffect } from "react";
-import { View, StyleSheet, Text, TextInput, Pressable } from "react-native";
+import React, { useState, useMemo, useCallback, useEffect, useRef } from "react";
+import { View, StyleSheet, Text, TextInput, Pressable, ScrollView } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTopInset } from "@/shared/utils/platform";
-import Reanimated, { FadeInDown } from "react-native-reanimated";
+import Reanimated, { FadeInDown, FadeIn } from "react-native-reanimated";
 import { useTheme } from "@/shared/contexts/ThemeContext";
 import { useQrGenerator } from "@/features/generator/hooks/useQrGenerator";
 import { LOGO_POSITIONS } from "@/features/generator/types/form-types";
 import type { QrMode } from "@/features/generator/types/form-types";
-import { ScrollView } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 
-import FormTopBar          from "@/features/generator/components/FormTopBar";
-import TemplateReadyCard   from "@/features/generator/components/TemplateReadyCard";
-import GenerateButton      from "@/features/generator/components/GenerateButton";
-import EmptyQrPlaceholder  from "@/features/generator/components/EmptyQrPlaceholder";
-import QrFormToast         from "@/features/generator/components/QrFormToast";
-import TypePickerHome      from "@/features/generator/components/TypePickerHome";
-import InputSection        from "@/features/generator/components/InputSection";
-import QrOutputCard        from "@/features/generator/components/QrOutputCard";
-import CustomizeDrawer     from "@/features/generator/components/CustomizeDrawer";
-import QrTemplateModal     from "@/features/generator/components/QrTemplateModal";
-import CustomQrBuilderModal from "@/features/generator/components/CustomQrBuilderModal";
-import PositionModal       from "@/features/generator/components/PositionModal";
+import FormTopBar       from "@/features/generator/components/FormTopBar";
+import GenerateButton   from "@/features/generator/components/GenerateButton";
+import QrFormToast      from "@/features/generator/components/QrFormToast";
+import QrOutputCard     from "@/features/generator/components/QrOutputCard";
+import CustomizeDrawer  from "@/features/generator/components/CustomizeDrawer";
+import PositionModal    from "@/features/generator/components/PositionModal";
+import EmptyQrPlaceholder from "@/features/generator/components/EmptyQrPlaceholder";
 
 interface Props {
   mode: QrMode;
@@ -29,28 +23,16 @@ interface Props {
   openAiBuilder?: boolean;
 }
 
-export default function QrFormPage({ mode, initialTemplateId, openAiBuilder }: Props) {
-  const insets   = useSafeAreaInsets();
+export default function QrFormPage({ mode }: Props) {
+  const insets     = useSafeAreaInsets();
   const { colors } = useTheme();
-  const topInset = useTopInset();
+  const topInset   = useTopInset();
+  const inputRef   = useRef<TextInput>(null);
 
-  const [presetActive,         setPresetActive]         = useState(false);
-  const [templateGenerated,    setTemplateGenerated]    = useState(false);
-  const [templateName,         setTemplateName]         = useState("");
-  const [qrSize,               setQrSize]               = useState(220);
-  const [qrTemplateOpen,       setQrTemplateOpen]       = useState(false);
-  const [advancedBuilderOpen,  setAdvancedBuilderOpen]  = useState(false);
-  const [showGenError,         setShowGenError]         = useState(false);
-  const [showNameError,        setShowNameError]        = useState(false);
-  const [showDuplicateError,   setShowDuplicateError]   = useState(false);
-  const [showTemplateError,    setShowTemplateError]    = useState(false);
-
-  const [initTid] = useState(initialTemplateId);
-  const [initAi]  = useState(openAiBuilder);
-
-  React.useEffect(() => {
-    if (initTid || initAi) setQrTemplateOpen(true);
-  }, []);
+  const [qrSize,             setQrSize]             = useState(220);
+  const [showGenError,       setShowGenError]        = useState(false);
+  const [showNameError,      setShowNameError]       = useState(false);
+  const [showDuplicateError, setShowDuplicateError]  = useState(false);
 
   const {
     user, svgRef,
@@ -74,7 +56,8 @@ export default function QrFormPage({ mode, initialTemplateId, openAiBuilder }: P
     urlRiskScore, urlRiskReasons,
   } = useQrGenerator();
 
-  React.useEffect(() => { setQrMode(mode); }, []);
+  useEffect(() => { setQrMode(mode); }, []);
+  useEffect(() => { switchPreset(0); }, []);
 
   useEffect(() => {
     if (nameSuggestions.length > 0) setShowDuplicateError(true);
@@ -99,61 +82,32 @@ export default function QrFormPage({ mode, initialTemplateId, openAiBuilder }: P
     return   { btnLabel: "Generate QR Code",        btnIcon: "qrcode-edit"          as const, btnColors: [colors.primary, colors.primaryShade]                     as [string, string] };
   }, [qrValue, generatedUuid, user, privateMode, colors]);
 
-  const handleSelectPreset = useCallback((idx: number) => {
-    switchPreset(idx);
-    setPresetActive(true);
-    setTemplateGenerated(false);
-    setShowTemplateError(false);
-  }, [switchPreset]);
-
   const handleGenerateWithValidation = useCallback(() => {
-    if (!presetActive && !templateGenerated) {
-      setShowTemplateError(true);
-      setShowNameError(false);
-      setShowGenError(false);
-      return;
-    }
-    // Name is not required for private QR codes — they are not saved
     if (mode !== "private") {
       const nameVal = advancedSettings.label.trim();
       if (!nameVal) {
         setShowNameError(true);
-        setShowTemplateError(false);
         setShowGenError(false);
         return;
       }
     }
     if (!inputValue.trim()) {
       setShowGenError(true);
-      setShowTemplateError(false);
       setShowNameError(false);
       return;
     }
-    setShowTemplateError(false);
     setShowNameError(false);
     setShowGenError(false);
     handleGenerate();
-  }, [mode, presetActive, templateGenerated, inputValue, advancedSettings.label, handleGenerate]);
+  }, [mode, inputValue, advancedSettings.label, handleGenerate]);
 
   const handleClearAll = useCallback(() => {
-    setTemplateGenerated(false);
-    setTemplateName("");
-    setPresetActive(false);
     setShowDuplicateError(false);
     clearNameSuggestions();
     handleClear();
   }, [handleClear, clearNameSuggestions]);
 
-  const handleChangeTemplate = useCallback(() => {
-    setTemplateGenerated(false);
-    setTemplateName("");
-    setPresetActive(false);
-    handleClear();
-    setQrTemplateOpen(true);
-  }, [handleClear]);
-
-  const showInputSection  = presetActive && !templateGenerated;
-  const showTemplateReady = templateGenerated;
+  const hasUrl = inputValue.trim().length > 0;
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background, paddingTop: topInset }]}>
@@ -165,24 +119,100 @@ export default function QrFormPage({ mode, initialTemplateId, openAiBuilder }: P
         contentContainerStyle={[styles.scroll, { paddingBottom: insets.bottom + 100 }]}
         keyboardShouldPersistTaps="handled"
       >
-        {/* ── Template picker / ready card ─────────────────────── */}
-        {!showTemplateReady && (
-          <TypePickerHome
-            qrMode={mode as any}
-            onSetMode={() => {}}
-            onOpenCustom={() => setQrTemplateOpen(true)}
-            hideActions={presetActive}
-            hideModeCards={true}
-          />
-        )}
 
-        {showTemplateReady && (
-          <TemplateReadyCard templateName={templateName} onChange={handleChangeTemplate} />
-        )}
+        {/* ── URL Input Card ─────────────────────────────────────── */}
+        <Reanimated.View entering={FadeInDown.delay(30).duration(280)} style={styles.section}>
+          {/* Section header */}
+          <View style={styles.sectionHeader}>
+            <View style={[styles.iconBadge, { backgroundColor: colors.primary + "18" }]}>
+              <Ionicons name="globe-outline" size={15} color={colors.primary} />
+            </View>
+            <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>
+              WEBSITE URL
+            </Text>
+          </View>
+
+          {/* Input card */}
+          <Pressable
+            onPress={() => inputRef.current?.focus()}
+            style={[
+              styles.urlCard,
+              {
+                backgroundColor: colors.surface,
+                borderColor: showGenError
+                  ? colors.danger + "80"
+                  : hasUrl
+                  ? colors.primary + "55"
+                  : colors.surfaceBorder,
+              },
+            ]}
+          >
+            <View style={styles.urlPrefixWrap}>
+              <Text style={[styles.urlPrefix, { color: colors.textMuted }]}>https://</Text>
+            </View>
+            <View style={[styles.urlDivider, { backgroundColor: colors.surfaceBorder }]} />
+            <TextInput
+              ref={inputRef}
+              style={[styles.urlInput, { color: colors.text }]}
+              value={inputValue}
+              onChangeText={(t) => {
+                setInputValue(t);
+                if (t.trim()) setShowGenError(false);
+              }}
+              placeholder="example.com"
+              placeholderTextColor={colors.textMuted}
+              keyboardType="url"
+              autoCapitalize="none"
+              autoCorrect={false}
+              returnKeyType="done"
+              onSubmitEditing={handleGenerateWithValidation}
+            />
+            {hasUrl && (
+              <Pressable
+                onPress={() => { setInputValue(""); setShowGenError(false); }}
+                hitSlop={8}
+                style={styles.clearBtn}
+              >
+                <Ionicons name="close-circle" size={18} color={colors.textMuted} />
+              </Pressable>
+            )}
+          </Pressable>
+
+          {/* Error / hint */}
+          {showGenError ? (
+            <Reanimated.View entering={FadeIn.duration(180)} style={styles.hintRow}>
+              <Ionicons name="alert-circle-outline" size={12} color={colors.danger} />
+              <Text style={[styles.hintText, { color: colors.danger }]}>
+                Please enter a website URL before generating
+              </Text>
+            </Reanimated.View>
+          ) : (
+            <View style={styles.hintRow}>
+              <Ionicons name="information-circle-outline" size={12} color={colors.textMuted} />
+              <Text style={[styles.hintText, { color: colors.textMuted }]}>
+                Include https:// or just type the domain — we'll add it automatically
+              </Text>
+            </View>
+          )}
+        </Reanimated.View>
 
         {/* ── QR Name field — hidden for private QR (not saved) ── */}
         {mode !== "private" && (
-          <Reanimated.View entering={FadeInDown.delay(40).duration(260)} style={styles.nameWrap}>
+          <Reanimated.View entering={FadeInDown.delay(60).duration(260)} style={styles.section}>
+            <View style={styles.sectionHeader}>
+              <View style={[styles.iconBadge, { backgroundColor: colors.primary + "18" }]}>
+                <Ionicons name="pricetag-outline" size={14} color={colors.primary} />
+              </View>
+              <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>
+                QR CODE NAME
+              </Text>
+              <View style={[styles.requiredTag, { backgroundColor: showNameError ? colors.danger + "16" : colors.primaryDim }]}>
+                <Text style={[styles.requiredText, { color: showNameError ? colors.danger : colors.primary }]}>
+                  Required
+                </Text>
+              </View>
+            </View>
+
             <View style={[
               styles.nameCard,
               {
@@ -196,26 +226,8 @@ export default function QrFormPage({ mode, initialTemplateId, openAiBuilder }: P
                   : colors.surfaceBorder,
               },
             ]}>
-              <View style={styles.nameRow}>
-                <Ionicons
-                  name="pricetag-outline"
-                  size={13}
-                  color={showDuplicateError ? colors.warning : showNameError ? colors.danger : advancedSettings.label.trim() ? colors.primary : colors.textMuted}
-                />
-                <Text style={[styles.nameLabel, { color: showDuplicateError ? colors.warning : showNameError ? colors.danger : colors.textSecondary }]}>
-                  QR Code Name
-                </Text>
-                <View style={[styles.requiredTag, { backgroundColor: showDuplicateError ? colors.warning + "16" : showNameError ? colors.danger + "16" : colors.primaryDim }]}>
-                  <Text style={[styles.requiredText, { color: showDuplicateError ? colors.warning : showNameError ? colors.danger : colors.primary }]}>Required</Text>
-                </View>
-              </View>
-
               <TextInput
-                style={[styles.nameInput, {
-                  color: colors.text,
-                  backgroundColor: colors.surfaceLight,
-                  borderColor: showDuplicateError ? colors.warning + "55" : showNameError ? colors.danger + "55" : colors.surfaceBorder,
-                }]}
+                style={[styles.nameInput, { color: colors.text }]}
                 placeholder="Name this QR code"
                 placeholderTextColor={colors.textMuted}
                 value={advancedSettings.label}
@@ -226,65 +238,49 @@ export default function QrFormPage({ mode, initialTemplateId, openAiBuilder }: P
                 }}
                 maxLength={80}
               />
-
-              {showDuplicateError && nameSuggestions.length > 0 ? (
-                <View style={{ gap: 6 }}>
-                  <Text style={[styles.nameHint, { color: colors.warning }]}>
-                    That name is already taken. Try one of these:
-                  </Text>
-                  <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 6 }}>
-                    {nameSuggestions.map((s) => (
-                      <Pressable
-                        key={s}
-                        onPress={() => {
-                          setAdvancedSettings({ ...advancedSettings, label: s });
-                          setShowDuplicateError(false);
-                          clearNameSuggestions();
-                        }}
-                        style={({ pressed }) => [{
-                          borderRadius: 8,
-                          borderWidth: 1,
-                          borderColor: colors.primary + "50",
-                          backgroundColor: pressed ? colors.primaryDim : colors.surfaceLight,
-                          paddingHorizontal: 10,
-                          paddingVertical: 5,
-                        }]}
-                      >
-                        <Text style={{ fontSize: 11, fontFamily: "Inter_500Medium", color: colors.primary }}>
-                          {s}
-                        </Text>
-                      </Pressable>
-                    ))}
-                  </View>
-                </View>
-              ) : (
-                <>
-                  {showNameError && (
-                    <Text style={[styles.nameHint, { color: colors.danger }]}>
-                      Please give your QR code a name before generating
-                    </Text>
-                  )}
-                </>
-              )}
             </View>
-          </Reanimated.View>
-        )}
 
-        {/* ── Content input ────────────────────────────────────── */}
-        {showInputSection && (
-          <Reanimated.View entering={FadeInDown.delay(0).duration(260)} style={styles.inputWrap}>
-            <InputSection
-              selectedPreset={selectedPreset}
-              inputValue={inputValue}
-              extraFields={extraFields}
-              setInputValue={setInputValue}
-              setExtraField={setExtraField}
-            />
+            {showDuplicateError && nameSuggestions.length > 0 ? (
+              <View style={{ gap: 6, marginTop: 6 }}>
+                <Text style={[styles.hintText, { color: colors.warning }]}>
+                  That name is taken. Try one of these:
+                </Text>
+                <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 6 }}>
+                  {nameSuggestions.map((s) => (
+                    <Pressable
+                      key={s}
+                      onPress={() => {
+                        setAdvancedSettings({ ...advancedSettings, label: s });
+                        setShowDuplicateError(false);
+                        clearNameSuggestions();
+                      }}
+                      style={({ pressed }) => ({
+                        borderRadius: 8, borderWidth: 1,
+                        borderColor: colors.primary + "50",
+                        backgroundColor: pressed ? colors.primaryDim : colors.surfaceLight,
+                        paddingHorizontal: 10, paddingVertical: 5,
+                      })}
+                    >
+                      <Text style={{ fontSize: 11, fontFamily: "Inter_500Medium", color: colors.primary }}>
+                        {s}
+                      </Text>
+                    </Pressable>
+                  ))}
+                </View>
+              </View>
+            ) : showNameError ? (
+              <View style={[styles.hintRow, { marginTop: 6 }]}>
+                <Ionicons name="alert-circle-outline" size={12} color={colors.danger} />
+                <Text style={[styles.hintText, { color: colors.danger }]}>
+                  Please give your QR code a name before generating
+                </Text>
+              </View>
+            ) : null}
           </Reanimated.View>
         )}
 
         {/* ── Customize drawer ─────────────────────────────────── */}
-        <Reanimated.View entering={FadeInDown.delay(40).duration(260)} style={styles.drawerWrap}>
+        <Reanimated.View entering={FadeInDown.delay(80).duration(260)} style={styles.section}>
           <CustomizeDrawer
             qrReady={!!qrValue}
             hideOptions={mode === "private"}
@@ -308,33 +304,15 @@ export default function QrFormPage({ mode, initialTemplateId, openAiBuilder }: P
         </Reanimated.View>
 
         {/* ── Generate button ───────────────────────────────────── */}
-        {!templateGenerated && (
-          <GenerateButton
-            btnLabel={buttonState.btnLabel}
-            btnIcon={buttonState.btnIcon}
-            btnColors={buttonState.btnColors}
-            onPress={handleGenerateWithValidation}
-            showError={showTemplateError || showGenError}
-            errorMessage={
-              showTemplateError
-                ? "Please choose a template first"
-                : "Please type something first"
-            }
-            onHideError={() => { setShowTemplateError(false); setShowGenError(false); }}
-          />
-        )}
-
-        {templateGenerated && qrValue && (
-          <Reanimated.View entering={FadeInDown.delay(30).duration(260)} style={styles.templateSaveBtnWrap}>
-            <GenerateButton
-              btnLabel={buttonState.btnLabel}
-              btnIcon={buttonState.btnIcon}
-              btnColors={buttonState.btnColors}
-              onPress={handleGenerateWithValidation}
-              onHideError={() => {}}
-            />
-          </Reanimated.View>
-        )}
+        <GenerateButton
+          btnLabel={buttonState.btnLabel}
+          btnIcon={buttonState.btnIcon}
+          btnColors={buttonState.btnColors}
+          onPress={handleGenerateWithValidation}
+          showError={false}
+          errorMessage=""
+          onHideError={() => {}}
+        />
 
         {/* ── QR Output or placeholder ──────────────────────────── */}
         {qrValue ? (
@@ -371,41 +349,11 @@ export default function QrFormPage({ mode, initialTemplateId, openAiBuilder }: P
         ) : (
           <EmptyQrPlaceholder mode={mode} />
         )}
+
       </ScrollView>
 
       <QrFormToast msg={toastMsg} type={toastType} animVal={toastAnim} />
 
-      {/* ── Modals — lazy mounted (only when open) ────────────── */}
-      {qrTemplateOpen && (
-        <QrTemplateModal
-          visible={qrTemplateOpen}
-          onClose={() => setQrTemplateOpen(false)}
-          initialTemplateId={initTid}
-          openAiBuilder={initAi}
-          onGenerate={(content, tName) => {
-            setInputValue(content);
-            setTemplateGenerated(true);
-            setTemplateName(tName);
-            setPresetActive(true);
-            setShowTemplateError(false);
-            setQrTemplateOpen(false);
-          }}
-        />
-      )}
-      {advancedBuilderOpen && (
-        <CustomQrBuilderModal
-          visible={advancedBuilderOpen}
-          onClose={() => setAdvancedBuilderOpen(false)}
-          onGenerate={(content, label) => {
-            setInputValue(content);
-            setTemplateGenerated(true);
-            setTemplateName(label);
-            setPresetActive(true);
-            setShowTemplateError(false);
-            setAdvancedBuilderOpen(false);
-          }}
-        />
-      )}
       {positionModalOpen && (
         <PositionModal
           visible={positionModalOpen}
@@ -420,22 +368,90 @@ export default function QrFormPage({ mode, initialTemplateId, openAiBuilder }: P
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  scroll: { paddingHorizontal: 0, paddingTop: 4, gap: 0 },
-
-  nameWrap: { marginHorizontal: 20, marginTop: 12, marginBottom: 12 },
-  nameCard: { borderRadius: 14, borderWidth: 1, padding: 12, gap: 7 },
-  nameRow:  { flexDirection: "row", alignItems: "center", gap: 5 },
-  nameLabel:{ fontSize: 12, fontFamily: "Inter_600SemiBold", flex: 1 },
-  requiredTag: { borderRadius: 5, paddingHorizontal: 5, paddingVertical: 1 },
-  requiredText:{ fontSize: 9, fontFamily: "Inter_600SemiBold" },
-  nameInput: {
-    borderRadius: 10, borderWidth: 1,
-    paddingHorizontal: 11, paddingVertical: 8,
-    fontSize: 13, fontFamily: "Inter_400Regular",
+  scroll: {
+    paddingHorizontal: 20,
+    paddingTop: 16,
+    gap: 16,
   },
-  nameHint: { fontSize: 10, fontFamily: "Inter_400Regular" },
 
-  inputWrap:           { marginHorizontal: 20, marginBottom: 0 },
-  drawerWrap:          { marginHorizontal: 20, marginTop: 12, marginBottom: 0 },
-  templateSaveBtnWrap: { marginHorizontal: 0 },
+  section: { gap: 10 },
+
+  sectionHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 7,
+  },
+  iconBadge: {
+    width: 26, height: 26, borderRadius: 8,
+    alignItems: "center", justifyContent: "center",
+  },
+  sectionTitle: {
+    fontSize: 11,
+    fontFamily: "Inter_700Bold",
+    letterSpacing: 0.9,
+    flex: 1,
+  },
+  requiredTag: {
+    borderRadius: 5, paddingHorizontal: 6, paddingVertical: 2,
+  },
+  requiredText: {
+    fontSize: 9, fontFamily: "Inter_600SemiBold",
+  },
+
+  urlCard: {
+    flexDirection: "row",
+    alignItems: "center",
+    borderRadius: 16,
+    borderWidth: 1.5,
+    overflow: "hidden",
+    minHeight: 54,
+  },
+  urlPrefixWrap: {
+    paddingHorizontal: 14,
+    paddingVertical: 16,
+  },
+  urlPrefix: {
+    fontSize: 14,
+    fontFamily: "Inter_500Medium",
+  },
+  urlDivider: {
+    width: 1,
+    height: 24,
+  },
+  urlInput: {
+    flex: 1,
+    fontSize: 14,
+    fontFamily: "Inter_400Regular",
+    paddingHorizontal: 12,
+    paddingVertical: 16,
+  },
+  clearBtn: {
+    paddingHorizontal: 14,
+    paddingVertical: 16,
+  },
+
+  nameCard: {
+    borderRadius: 14,
+    borderWidth: 1.5,
+    paddingHorizontal: 14,
+    paddingVertical: 4,
+  },
+  nameInput: {
+    fontSize: 14,
+    fontFamily: "Inter_400Regular",
+    paddingVertical: 12,
+  },
+
+  hintRow: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: 5,
+    paddingHorizontal: 2,
+  },
+  hintText: {
+    fontSize: 11,
+    fontFamily: "Inter_400Regular",
+    flex: 1,
+    lineHeight: 16,
+  },
 });

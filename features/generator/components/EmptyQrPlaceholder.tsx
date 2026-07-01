@@ -31,8 +31,8 @@ export default function EmptyQrPlaceholder({ mode }: Props) {
           <Text style={[styles.title, { color: colors.text }]}>Your QR appears here</Text>
           <Text style={[styles.sub, { color: colors.textMuted }]}>
             {mode === "individual"
-              ? "Choose a template to build your protected QR"
-              : "Choose a template to generate offline"}
+              ? "Enter a website URL above to build your protected QR"
+              : "Enter a website URL above to generate offline"}
           </Text>
         </View>
       </View>
