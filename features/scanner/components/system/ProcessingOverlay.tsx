@@ -1,15 +1,62 @@
-import { View, Text, StyleSheet, ActivityIndicator } from "react-native";
-import Reanimated, { FadeIn } from "react-native-reanimated";
+import { View, Text, StyleSheet } from "react-native";
+import Reanimated, { FadeIn, useSharedValue, useAnimatedStyle, withRepeat, withTiming, Easing } from "react-native-reanimated";
+import { useEffect } from "react";
+import { MaterialCommunityIcons } from "@expo/vector-icons";
+
+const GLOW = "#00D4FF";
 
 export default function ProcessingOverlay() {
+  const rotation = useSharedValue(0);
+  const pulseOpacity = useSharedValue(0.4);
+
+  useEffect(() => {
+    rotation.value = withRepeat(
+      withTiming(360, { duration: 1800, easing: Easing.linear }),
+      -1,
+      false
+    );
+    pulseOpacity.value = withRepeat(
+      withTiming(1, { duration: 900, easing: Easing.inOut(Easing.ease) }),
+      -1,
+      true
+    );
+  }, []);
+
+  const spinStyle = useAnimatedStyle(() => ({
+    transform: [{ rotate: `${rotation.value}deg` }],
+  }));
+
+  const pulseStyle = useAnimatedStyle(() => ({
+    opacity: pulseOpacity.value,
+  }));
+
   return (
     <View style={styles.overlay}>
-      <Reanimated.View entering={FadeIn.duration(220)} style={styles.box}>
-        <View style={styles.iconRing}>
-          <ActivityIndicator color="#00D4FF" size="large" />
+      <Reanimated.View entering={FadeIn.duration(200)} style={styles.box}>
+
+        {/* Spinning ring + icon */}
+        <View style={styles.iconContainer}>
+          {/* Outer ambient glow */}
+          <Reanimated.View style={[styles.ambientRing, pulseStyle]} />
+
+          {/* Rotating dashed ring */}
+          <Reanimated.View style={[styles.spinRing, spinStyle]} />
+
+          {/* Static inner ring */}
+          <View style={styles.innerRing}>
+            <MaterialCommunityIcons name="shield-search" size={30} color={GLOW} />
+          </View>
         </View>
+
         <View style={styles.textGroup}>
-          <Text style={styles.title}>Analyzing…</Text>
+          <Text style={styles.title}>Analyzing QR Code</Text>
+          <Text style={styles.subtitle}>Checking for threats…</Text>
+        </View>
+
+        {/* Bottom branding */}
+        <View style={styles.brandRow}>
+          <MaterialCommunityIcons name="shield-check" size={11} color="rgba(0,212,255,0.35)" />
+          <Text style={styles.brandText}>BinRo Shield</Text>
         </View>
       </Reanimated.View>
     </View>
@@ -24,33 +71,78 @@ const styles = StyleSheet.create({
     alignItems:      "center",
   },
   box: {
-    backgroundColor:   "rgba(16,25,41,0.98)",
+    backgroundColor:   "rgba(10,14,24,0.97)",
     borderRadius:      28,
-    paddingVertical:   32,
-    paddingHorizontal: 32,
+    paddingVertical:   36,
+    paddingHorizontal: 36,
     alignItems:        "center",
-    gap:               18,
+    gap:               20,
     borderWidth:       1,
-    borderColor:       "rgba(0,212,255,0.2)",
+    borderColor:       "rgba(0,212,255,0.18)",
     maxWidth:          300,
-    width:             "80%",
+    width:             "82%",
   },
-  iconRing: {
-    width:           72,
-    height:          72,
-    borderRadius:    36,
+
+  iconContainer: {
+    width:          90,
+    height:         90,
+    alignItems:     "center",
+    justifyContent: "center",
+  },
+  ambientRing: {
+    position:        "absolute",
+    width:           90,
+    height:          90,
+    borderRadius:    45,
+    backgroundColor: "rgba(0,212,255,0.07)",
+  },
+  spinRing: {
+    position:     "absolute",
+    width:        82,
+    height:       82,
+    borderRadius: 41,
+    borderWidth:  2,
+    borderColor:  GLOW,
+    borderStyle:  "dashed",
+    opacity:      0.55,
+  },
+  innerRing: {
+    width:           66,
+    height:          66,
+    borderRadius:    33,
     backgroundColor: "rgba(0,212,255,0.08)",
     borderWidth:     1,
-    borderColor:     "rgba(0,212,255,0.25)",
+    borderColor:     "rgba(0,212,255,0.22)",
     alignItems:      "center",
     justifyContent:  "center",
   },
-  textGroup: { alignItems: "center" },
+
+  textGroup: {
+    alignItems: "center",
+    gap:        6,
+  },
   title: {
-    fontSize:   16,
-    fontFamily: "Inter_600SemiBold",
-    color:      "rgba(255,255,255,0.8)",
+    fontSize:   17,
+    fontFamily: "Inter_700Bold",
+    color:      "#fff",
     textAlign:  "center",
-    marginTop:  4,
+  },
+  subtitle: {
+    fontSize:   13,
+    fontFamily: "Inter_400Regular",
+    color:      "rgba(255,255,255,0.45)",
+    textAlign:  "center",
+  },
+
+  brandRow: {
+    flexDirection: "row",
+    alignItems:    "center",
+    gap:           5,
+  },
+  brandText: {
+    fontSize:      11,
+    fontFamily:    "Inter_500Medium",
+    color:         "rgba(0,212,255,0.35)",
+    letterSpacing: 0.3,
   },
 });

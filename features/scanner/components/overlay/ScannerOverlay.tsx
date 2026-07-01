@@ -6,9 +6,10 @@ import { useOverlayAnimations } from "@/features/scanner/hooks/useOverlayAnimati
 import FinderFrame from "./FinderFrame";
 import OverlayTopBar from "./OverlayTopBar";
 import OverlayBottomBar from "./OverlayBottomBar";
-import { SCANNER_GLOW, VIGNETTE } from "./constants";
+import { SCANNER_GLOW } from "./constants";
 
-const DOT_SIZE = 5;
+const DOT_SIZE   = 6;
+const VIGNETTE   = "rgba(0, 0, 0, 0.55)";
 
 interface Props {
   topInset:          number;
@@ -52,8 +53,8 @@ export default function ScannerOverlay({
   const { width: screenWidth, height: screenHeight } = useWindowDimensions();
   const anims = useOverlayAnimations();
 
-  const TOP_BAR_H    = topInset + 8 + 56;
-  const BOTTOM_BAR_H = Math.max(bottomInset, 8) + 16 + 100;
+  const TOP_BAR_H    = topInset + 12 + 60;
+  const BOTTOM_BAR_H = Math.max(bottomInset, 12) + 20 + 110;
   const availH       = screenHeight - TOP_BAR_H - BOTTOM_BAR_H;
   const finderTop    = TOP_BAR_H + Math.max(0, (availH - FINDER_SIZE) / 2);
   const finderLeft   = (screenWidth - FINDER_SIZE) / 2;
@@ -61,21 +62,25 @@ export default function ScannerOverlay({
   return (
     <View style={[StyleSheet.absoluteFillObject, styles.outerContainer]}>
 
-      {/* Vignette masks (non-interactive, no animation needed — they're ambient) */}
+      {/* Dark vignette masks around the finder */}
       <View style={[StyleSheet.absoluteFillObject, styles.nonInteractive]}>
         <ReAnimated.View
-          entering={FadeIn.delay(30).duration(260)}
+          entering={FadeIn.delay(30).duration(280)}
           style={StyleSheet.absoluteFillObject}
         >
+          {/* Top mask */}
           <View style={[styles.mask, { top: 0, left: 0, right: 0, height: finderTop }]} />
+          {/* Left mask */}
           <View style={[styles.mask, { top: finderTop, left: 0, width: finderLeft, height: FINDER_SIZE }]} />
+          {/* Right mask */}
           <View style={[styles.mask, { top: finderTop, left: finderLeft + FINDER_SIZE, right: 0, height: FINDER_SIZE }]} />
+          {/* Bottom mask */}
           <View style={[styles.mask, { top: finderTop + FINDER_SIZE, left: 0, right: 0, bottom: 0 }]} />
         </ReAnimated.View>
 
-        {/* Finder frame — zooms in from centre */}
+        {/* Finder frame */}
         <View style={{ position: "absolute", top: finderTop, left: finderLeft }}>
-          <ReAnimated.View entering={FadeIn.delay(50).duration(240)}>
+          <ReAnimated.View entering={FadeIn.delay(60).duration(260)}>
             <FinderFrame
               scanned={scanned}
               scanSuccess={scanSuccess}
@@ -89,21 +94,22 @@ export default function ScannerOverlay({
           </ReAnimated.View>
         </View>
 
-        {/* Hint text below finder — fades in after frame */}
+        {/* Status text below finder */}
         <ReAnimated.View
-          entering={FadeInDown.delay(90).duration(260)}
-          style={[styles.hintArea, { top: finderTop + FINDER_SIZE + 18 }]}
+          entering={FadeInDown.delay(100).duration(280)}
+          style={[styles.hintArea, { top: finderTop + FINDER_SIZE + 22 }]}
         >
           <Text style={styles.hintMain}>
             {scanSuccess
               ? "Code captured"
               : scanned
-              ? "Processing…"
-              : "Position QR code inside the frame"}
+              ? "Analyzing…"
+              : "Align QR code within the frame"}
           </Text>
+
           {!scanned && (
             <ReAnimated.View
-              entering={FadeIn.delay(80).duration(260)}
+              entering={FadeIn.delay(100).duration(260)}
               style={styles.liveRow}
             >
               <Animated.View style={[styles.liveDot, { opacity: anims.dotBlink }]} />
@@ -141,26 +147,35 @@ export default function ScannerOverlay({
 const styles = StyleSheet.create({
   outerContainer: { pointerEvents: "box-none" },
   nonInteractive: { pointerEvents: "none" },
-  mask:           { position: "absolute", backgroundColor: VIGNETTE },
+  mask: {
+    position:        "absolute",
+    backgroundColor: VIGNETTE,
+  },
 
   hintArea: {
     position:   "absolute",
     left:       0,
     right:      0,
     alignItems: "center",
-    gap:        8,
+    gap:        10,
   },
   hintMain: {
-    fontSize:      14,
+    fontSize:      15,
     fontFamily:    "Inter_500Medium",
-    color:         "rgba(255,255,255,0.7)",
+    color:         "rgba(255,255,255,0.75)",
     textAlign:     "center",
     letterSpacing: 0.1,
   },
   liveRow: {
     flexDirection: "row",
     alignItems:    "center",
-    gap:           6,
+    gap:           7,
+    paddingHorizontal: 14,
+    paddingVertical:   5,
+    borderRadius:  20,
+    backgroundColor: "rgba(0,0,0,0.35)",
+    borderWidth:   1,
+    borderColor:   "rgba(0,212,255,0.18)",
   },
   liveDot: {
     width:           DOT_SIZE,
@@ -172,6 +187,7 @@ const styles = StyleSheet.create({
     fontSize:      11,
     fontFamily:    "Inter_600SemiBold",
     color:         SCANNER_GLOW,
-    letterSpacing: 0.5,
+    letterSpacing: 0.6,
+    textTransform: "uppercase",
   },
 });

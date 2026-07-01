@@ -74,11 +74,9 @@ export function useScanModals(resetScan: () => void) {
   }, [unverifiedModal, unverifiedQrId]);
 
   // ── Control functions exposed to useScanProcessor ──────────────────────────
-  function openSafetyModal(qrId: string, warnings: string[], riskLevel: "caution" | "dangerous") {
-    setPendingQrId(qrId);
-    setSafetyWarnings(warnings);
-    setSafetyRiskLevel(riskLevel);
-    setSafetyModal(true);
+  // Safety modal removed — navigate directly to QR detail instead of interrupting the user.
+  function openSafetyModal(qrId: string, _warnings: string[], _riskLevel: "caution" | "dangerous") {
+    router.push(`/qr-detail/${qrId}`);
   }
 
   function openVerifiedModal(qrId: string, ownerName: string) {

@@ -14,7 +14,6 @@ import { useScanner } from "@/features/scanner/hooks/useScanner";
 import {
   ScannerOverlay,
   ProcessingOverlay,
-  SafetyModal,
   VerifiedModal,
   PermissionScreen,
   CameraErrorBoundary,
@@ -197,9 +196,6 @@ export default function ScannerScreen() {
     zoomLabel,
     facing,
     flipCamera,
-    safetyModal,
-    safetyWarnings,
-    safetyRiskLevel,
     verifiedModal,
     verifiedOwnerName,
     unverifiedModal,
@@ -216,8 +212,6 @@ export default function ScannerScreen() {
     handlePickImage,
     cycleZoom,
     resetScan,
-    handleSafetyModalProceed,
-    handleSafetyModalBack,
     handleUnverifiedProceed,
     handleUnverifiedBack,
   } = useScanner({ isCameraAvailable: cameraAvailable });
@@ -349,16 +343,6 @@ export default function ScannerScreen() {
       {processing && <ProcessingOverlay />}
 
       {/* Modals — lazy-mounted (only rendered when open) */}
-      {safetyModal && (
-        <SafetyModal
-          visible={safetyModal}
-          warnings={safetyWarnings}
-          riskLevel={safetyRiskLevel}
-          onProceed={handleSafetyModalProceed}
-          onBack={handleSafetyModalBack}
-        />
-      )}
-
       {verifiedModal && (
         <VerifiedModal visible={verifiedModal} ownerName={verifiedOwnerName} />
       )}

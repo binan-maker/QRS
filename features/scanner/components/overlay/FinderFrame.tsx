@@ -5,9 +5,9 @@ import { shadow } from "@/shared/utils/platform";
 import { FINDER_SIZE } from "@/features/scanner/hooks/useCameraControls";
 import { SCANNER_GLOW } from "./constants";
 
-const CORNER_LEN    = 28;
-const CORNER_W      = 3;
-const CORNER_RADIUS = 8; // rounded tips on each corner arm
+const CORNER_LEN    = 36;
+const CORNER_W      = 3.5;
+const CORNER_RADIUS = 10;
 
 interface Props {
   scanned:       boolean;
@@ -37,13 +37,16 @@ export default function FinderFrame({
 
   return (
     <View style={styles.frame}>
-      {/* Pulse rings */}
+      {/* Outer ambient glow ring */}
       <Animated.View
         style={[styles.pulseRing, { transform: [{ scale: pulse1Scale }], opacity: pulse1Opacity }]}
       />
       <Animated.View
         style={[styles.pulseRing, styles.pulseRing2, { transform: [{ scale: pulse2Scale }], opacity: pulse2Opacity }]}
       />
+
+      {/* Inner frosted border */}
+      <View style={styles.innerBorder} />
 
       {/* ── Top-left corner ── */}
       <Animated.View style={[styles.corner, styles.ctlH, { opacity: cornerGlow }]} />
@@ -61,16 +64,21 @@ export default function FinderFrame({
       <Animated.View style={[styles.corner, styles.cbrH, { opacity: cornerGlow }]} />
       <Animated.View style={[styles.corner, styles.cbrV, { opacity: cornerGlow }]} />
 
-      {/* Scan beam */}
+      {/* Scan beam with gradient fade */}
       {!scanned && (
-        <Animated.View style={[styles.scanBeam, { transform: [{ translateY: scanLineY }] }]} />
+        <Animated.View style={[styles.scanBeam, { transform: [{ translateY: scanLineY }] }]}>
+          <View style={styles.beamLine} />
+          <View style={styles.beamGlow} />
+        </Animated.View>
       )}
 
       {/* Success overlay */}
       {scanSuccess && (
         <View style={styles.successOverlay}>
-          <View style={styles.successRing}>
-            <Ionicons name="checkmark" size={44} color="#000" />
+          <View style={styles.successOuterRing}>
+            <View style={styles.successRing}>
+              <Ionicons name="checkmark" size={46} color="#000" />
+            </View>
           </View>
         </View>
       )}
@@ -85,60 +93,68 @@ const styles = StyleSheet.create({
     overflow: "hidden",
   },
 
-  // Pulse rings — generously rounded to match the rounded-corner theme
+  innerBorder: {
+    position:     "absolute",
+    top:          0,
+    left:         0,
+    right:        0,
+    bottom:       0,
+    borderRadius: 18,
+    borderWidth:  1,
+    borderColor:  "rgba(255,255,255,0.06)",
+  },
+
   pulseRing: {
     position:     "absolute",
     width:        FINDER_SIZE,
     height:       FINDER_SIZE,
-    borderRadius: 22,
+    borderRadius: 20,
     borderWidth:  1.5,
     borderColor:  SCANNER_GLOW,
     top:          0,
     left:         0,
   },
-  pulseRing2: { borderColor: SCANNER_GLOW },
+  pulseRing2: { borderColor: `${SCANNER_GLOW}88` },
 
-  // Shared corner style
   corner: {
     position:        "absolute",
     backgroundColor: SCANNER_GLOW,
+    ...shadow(8, SCANNER_GLOW, 0.7, 0, 0, 4),
   },
 
   // ── Top-left ──
-  // horizontal arm: outer tip rounded top-left, inner tip rounded bottom-right
   ctlH: {
-    top:                  0,
-    left:                 0,
-    width:                CORNER_LEN,
-    height:               CORNER_W,
-    borderTopLeftRadius:  CORNER_RADIUS,
+    top:                     0,
+    left:                    0,
+    width:                   CORNER_LEN,
+    height:                  CORNER_W,
+    borderTopLeftRadius:     CORNER_RADIUS,
     borderBottomRightRadius: CORNER_RADIUS,
   },
-  // vertical arm: outer tip rounded top-left, inner tip rounded bottom-right
   ctlV: {
-    top:                  0,
-    left:                 0,
-    width:                CORNER_W,
-    height:               CORNER_LEN,
-    borderTopLeftRadius:  CORNER_RADIUS,
+    top:                     0,
+    left:                    0,
+    width:                   CORNER_W,
+    height:                  CORNER_LEN,
+    borderTopLeftRadius:     CORNER_RADIUS,
     borderBottomRightRadius: CORNER_RADIUS,
   },
 
   // ── Top-right ──
   ctrH: {
-    top:                   0,
-    right:                 0,
-    width:                 CORNER_LEN,
-    height:                CORNER_W,
-    borderTopRightRadius:  CORNER_RADIUS,
+    top:                    0,
+    right:                  0,
+    width:                  CORNER_LEN,
+    height:                 CORNER_W,
+    borderTopRightRadius:   CORNER_RADIUS,
     borderBottomLeftRadius: CORNER_RADIUS,
   },
   ctrV: {
-    top:                   0,
-    right:                 0,
-    width:                 CORNER_W,
-    height:                CORNER_LEN,
-    borderTopRightRadius:  CORNER_RADIUS,
+    top:                    0,
+    right:                  0,
+    width:                  CORNER_W,
+    height:                 CORNER_LEN,
+    borderTopRightRadius:   CORNER_RADIUS,
     borderBottomLeftRadius: CORNER_RADIUS,
   },
 
@@ -179,28 +195,53 @@ const styles = StyleSheet.create({
   },
 
   scanBeam: {
+    position: "absolute",
+    left:     0,
+    right:    0,
+    height:   3,
+  },
+  beamLine: {
     position:        "absolute",
     left:            0,
     right:           0,
     height:          2,
     borderRadius:    1,
     backgroundColor: SCANNER_GLOW,
-    ...shadow(14, SCANNER_GLOW, 0.9, 0, 0, 6),
+    ...shadow(16, SCANNER_GLOW, 1, 0, 0, 8),
+  },
+  beamGlow: {
+    position:        "absolute",
+    left:            "10%",
+    right:           "10%",
+    height:          12,
+    top:             -5,
+    borderRadius:    6,
+    backgroundColor: `${SCANNER_GLOW}22`,
   },
 
   successOverlay: {
     ...StyleSheet.absoluteFillObject,
+    backgroundColor: "rgba(0,212,255,0.06)",
+    alignItems:      "center",
+    justifyContent:  "center",
+  },
+  successOuterRing: {
+    width:           104,
+    height:          104,
+    borderRadius:    52,
     backgroundColor: "rgba(0,212,255,0.1)",
+    borderWidth:     1,
+    borderColor:     `${SCANNER_GLOW}44`,
     alignItems:      "center",
     justifyContent:  "center",
   },
   successRing: {
-    width:           86,
-    height:          86,
-    borderRadius:    43,
+    width:           82,
+    height:          82,
+    borderRadius:    41,
     backgroundColor: SCANNER_GLOW,
     alignItems:      "center",
     justifyContent:  "center",
-    ...shadow(20, SCANNER_GLOW, 0.6, 0, 0, 10),
+    ...shadow(24, SCANNER_GLOW, 0.7, 0, 0, 12),
   },
 });
