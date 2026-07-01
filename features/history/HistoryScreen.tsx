@@ -118,27 +118,16 @@ function HistoryScreen() {
   );
 
   const renderFooter = useCallback(() => {
-    // Initial cloud fetch running while local items are already visible — show
-    // 8 skeleton rows so the user knows more history is loading, not lost.
-    // Guard: only when list has items; if list is empty, EmptyState already
-    // renders its own skeleton block and we must not double up.
-    if (cloudLoading && !loadingMore && listRows.length > 0) {
-      return (
-        <View style={{ paddingTop: 4 }}>
-          {Array.from({ length: 8 }).map((_, i) => <HistoryItemSkeleton key={i} index={i} />)}
-        </View>
-      );
-    }
-    // Scroll-triggered pagination loading — fewer skeletons at bottom.
+    // Scroll-triggered pagination — show 2 skeletons at the bottom.
     if (loadingMore) {
       return (
         <View style={{ paddingTop: 4 }}>
-          {Array.from({ length: 3 }).map((_, i) => <HistoryItemSkeleton key={i} index={i} />)}
+          {Array.from({ length: 2 }).map((_, i) => <HistoryItemSkeleton key={i} index={i} />)}
         </View>
       );
     }
     return null;
-  }, [cloudLoading, loadingMore, listRows.length]);
+  }, [loadingMore]);
 
   const renderEmpty = useCallback(() => (
     <EmptyState
@@ -205,7 +194,7 @@ function HistoryScreen() {
 
       {bootstrapping && user ? (
         <View style={[styles.list, { paddingTop: headerH + 8, paddingBottom: insets.bottom + 84 }]}>
-          {Array.from({ length: 8 }).map((_, i) => <HistoryItemSkeleton key={i} index={i} />)}
+          {Array.from({ length: 5 }).map((_, i) => <HistoryItemSkeleton key={i} index={i} />)}
         </View>
       ) : (
         <FlashList

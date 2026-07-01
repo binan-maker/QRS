@@ -33,13 +33,11 @@ export default function HistoryItemSkeleton({ index = 0 }: Props) {
   return (
     <ReAnimated.View entering={FadeInDown.delay(Math.min(index, 4) * 22).duration(260)}>
       <View style={[styles.card, { backgroundColor: cardBg, borderColor: cardBorder }]}>
-        {bone({ width: 48, height: 48, borderRadius: 15, flexShrink: 0 })}
         <View style={styles.body}>
           {bone({ height: 14, width: "68%", marginBottom: 5, borderRadius: 7 })}
           {bone({ height: 11, width: "45%", marginBottom: 7, borderRadius: 6 })}
           <View style={styles.metaRow}>
             {bone({ height: 20, width: 52, borderRadius: 100 })}
-            {bone({ height: 20, width: 38, borderRadius: 100 })}
           </View>
         </View>
         <View style={styles.right}>

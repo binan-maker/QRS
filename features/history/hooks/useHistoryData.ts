@@ -228,7 +228,12 @@ export function useHistoryData(activeFilters: ActiveFilters) {
         }
       }
       if (idx >= allItems.length) {
-        if (safetyRunIdRef.current === runId) setSafetyRiskMap(new Map(map));
+        if (safetyRunIdRef.current !== runId) return;
+        // Only push a state update (and the re-render it triggers) when at
+        // least one item is actually non-safe. Safe-only histories — the
+        // majority — get zero extra renders from the analysis pass.
+        const hasRisk = [...map.values()].some((v) => v !== "safe");
+        if (hasRisk) setSafetyRiskMap(new Map(map));
       } else {
         // Yield to the renderer before the next batch
         setTimeout(processNextBatch, 0);
@@ -303,9 +308,9 @@ export function useHistoryData(activeFilters: ActiveFilters) {
     displayItems,
     refreshing,
     setRefreshing,
-    // Show skeleton only until local data + pre-warm cache seed are done.
-    // Cloud data loads in the background and merges automatically — blocking
-    // on cloudLoading causes a multi-second blank screen on first install.
-    bootstrapping: !localLoaded || !preWarmDone,
+    // Show skeleton only until local AsyncStorage is ready (~5 ms).
+    // Pre-warm seeding happens in the background — no need to block the list
+    // on those 3 extra disk reads; cloud data merges in silently once fetched.
+    bootstrapping: !localLoaded,
   };
 }
