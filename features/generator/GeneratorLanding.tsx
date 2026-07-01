@@ -48,10 +48,6 @@ const MODES = [
     label:    "Standard QR",
     tagline:  "Saved, tracked & protected",
     icon:     "shield-checkmark" as const,
-    // Deep navy → electric royal blue
-    grad:     ["#09195C", "#0F2F9E", "#1A52D0"] as [string, string, string],
-    glow:     "rgba(99,135,255,0.22)",
-    accent:   "#4F83FF",
     features: ["Saved to your account", "Trust score & analytics", "Community safety check"],
     onPress:  () => router.push("/qr-standard" as any),
   },
@@ -61,10 +57,6 @@ const MODES = [
     tagline:  "Zero data, fully offline",
     icon:     "eye-off" as const,
     badge:    "OFFLINE",
-    // Deep black-violet → rich purple (no more flat gray)
-    grad:     ["#0E0720", "#220D50", "#3A1880"] as [string, string, string],
-    glow:     "rgba(147,97,255,0.22)",
-    accent:   "#A578FF",
     features: ["No account needed", "Nothing stored anywhere", "Instant & anonymous"],
     onPress:  () => router.push("/qr-private" as any),
   },
@@ -91,8 +83,8 @@ export default function GeneratorLanding() {
     const task = InteractionManager.runAfterInteractions(() => {
       Animated.loop(
         Animated.sequence([
-          Animated.timing(pulseAnim, { toValue: 1.06, duration: 1800, useNativeDriver: true }),
-          Animated.timing(pulseAnim, { toValue: 1,    duration: 1800, useNativeDriver: true }),
+          Animated.timing(pulseAnim, { toValue: 1.05, duration: 2000, useNativeDriver: true }),
+          Animated.timing(pulseAnim, { toValue: 1,    duration: 2000, useNativeDriver: true }),
         ])
       ).start();
     });
@@ -101,9 +93,21 @@ export default function GeneratorLanding() {
 
   const cardWidth = width - 40;
 
+  // ── Hero gradient — adapts to theme ─────────────────────────────────
+  const heroGrad: [string, string, string] = isDark
+    ? ["#0D1428", "#111D3C", "#0A1020"]
+    : ["#DDE8FF", "#E8EFFE", "#D8E6FF"];
+
+  // QR dots color adapts to theme
+  const qrDotColor = isDark ? "#0B1227" : "#1C2A4A";
+
   return (
     <View style={[styles.root, { backgroundColor: colors.background }]}>
-      <StatusBar barStyle="light-content" backgroundColor="transparent" translucent />
+      <StatusBar
+        barStyle={isDark ? "light-content" : "dark-content"}
+        backgroundColor="transparent"
+        translucent
+      />
 
       {/* ── Header ───────────────────────────────────────────────────── */}
       <Reanimated.View
@@ -128,38 +132,47 @@ export default function GeneratorLanding() {
         {/* ── Hero Card ────────────────────────────────────────────── */}
         <View style={{ marginHorizontal: 20 }}>
           <LinearGradient
-            colors={["#060C1C", "#0D1840", "#08102A"]}
+            colors={heroGrad}
             start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
-            style={[styles.heroCard, { width: cardWidth }]}
+            style={[styles.heroCard, {
+              width: cardWidth,
+              borderColor: isDark ? "rgba(255,255,255,0.06)" : "rgba(0,60,180,0.10)",
+              borderWidth: 1,
+            }]}
           >
-            {/* Ambient glows */}
-            <View style={styles.heroGlowBlue} />
-            <View style={styles.heroGlowPurple} />
+            {/* Subtle ambient glow — dark only */}
+            {isDark && <View style={styles.heroGlowBlue} />}
+            {isDark && <View style={styles.heroGlowPurple} />}
 
             {/* Left — title + trust pill */}
             <View style={styles.heroLeft}>
-              <View style={styles.heroTrustPill}>
-                <View style={styles.heroTrustDot} />
-                <Text style={styles.heroTrustText}>BinRo Guard</Text>
+              <View style={[styles.heroTrustPill, { backgroundColor: colors.safeDim, borderColor: colors.safe + "44" }]}>
+                <View style={[styles.heroTrustDot, { backgroundColor: colors.safe }]} />
+                <Text style={[styles.heroTrustText, { color: colors.safe }]}>BinRo Guard</Text>
               </View>
-              <Text style={styles.heroTitle}>Your QR,{"\n"}Protected.</Text>
 
-              {/* Mini stat row */}
+              <Text style={[styles.heroTitle, { color: colors.text }]}>Your QR,{"\n"}Protected.</Text>
+
               <View style={styles.heroMeta}>
-                <Ionicons name="shield-checkmark" size={12} color="#4ADE80" />
-                <Text style={styles.heroMetaText}>Trust scored</Text>
-                <View style={styles.heroMetaDot} />
-                <Ionicons name="analytics" size={12} color="#60A5FA" />
-                <Text style={styles.heroMetaText}>Live analytics</Text>
+                <Ionicons name="shield-checkmark" size={11} color={colors.primary} />
+                <Text style={[styles.heroMetaText, { color: colors.textSecondary }]}>Trust scored</Text>
+                <View style={[styles.heroMetaDot, { backgroundColor: colors.surfaceBorder }]} />
+                <Ionicons name="analytics" size={11} color={colors.primary} />
+                <Text style={[styles.heroMetaText, { color: colors.textSecondary }]}>Live analytics</Text>
               </View>
             </View>
 
             {/* Right — animated QR preview */}
             <Animated.View style={[styles.heroQrWrap, { transform: [{ scale: pulseAnim }] }]}>
-              {/* Glow ring behind QR */}
-              <View style={styles.heroQrRing} />
-              <View style={[styles.heroQrCard, { backgroundColor: "#fff" }]}>
-                <MockQrDots size={96} dotColor="#0B1227" />
+              <View style={[styles.heroQrRing, {
+                borderColor: isDark ? "rgba(99,135,255,0.30)" : "rgba(0,60,180,0.14)",
+                backgroundColor: isDark ? "rgba(99,135,255,0.05)" : "rgba(0,60,180,0.04)",
+              }]} />
+              <View style={[styles.heroQrCard, {
+                backgroundColor: "#fff",
+                shadowColor: isDark ? "#000" : "#1C3A8A",
+              }]}>
+                <MockQrDots size={96} dotColor={qrDotColor} />
                 <View style={styles.heroQrLogoWrap} pointerEvents="none">
                   <Image
                     source={require("../../assets/images/icon.png")}
@@ -168,9 +181,12 @@ export default function GeneratorLanding() {
                   />
                 </View>
               </View>
-              <View style={styles.heroSafeBadge}>
-                <View style={styles.heroSafeDot} />
-                <Text style={styles.heroSafeText}>Safe</Text>
+              <View style={[styles.heroSafeBadge, {
+                backgroundColor: colors.safeDim,
+                borderColor: colors.safe + "44",
+              }]}>
+                <View style={[styles.heroSafeDot, { backgroundColor: colors.safe }]} />
+                <Text style={[styles.heroSafeText, { color: colors.safe }]}>Safe</Text>
               </View>
             </Animated.View>
           </LinearGradient>
@@ -179,67 +195,87 @@ export default function GeneratorLanding() {
         {/* ── Mode Cards ───────────────────────────────────────────── */}
         <View style={styles.modeSection}>
 
-          {MODES.map((m) => (
-            <Pressable
-              key={m.key}
-              onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium); m.onPress(); }}
-              style={({ pressed }) => ({
-                borderRadius: 24,
-                overflow: "hidden" as const,
-                opacity:   pressed ? 0.88 : 1,
-                transform: [{ scale: pressed ? 0.972 : 1 }],
-              })}
-            >
-              <LinearGradient
-                colors={m.grad}
-                start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
-                style={styles.modeCard}
+          {MODES.map((m) => {
+            const isPrivate = m.key === "private";
+            // Private card gets a slightly offset surface so it reads different from Standard
+            const cardBg = isPrivate ? colors.surfaceLight : colors.surface;
+
+            return (
+              <Pressable
+                key={m.key}
+                onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium); m.onPress(); }}
+                style={({ pressed }) => ({
+                  borderRadius: 24,
+                  overflow: "hidden" as const,
+                  opacity:   pressed ? 0.85 : 1,
+                  transform: [{ scale: pressed ? 0.972 : 1 }],
+                })}
               >
-                {/* Ambient top-right glow */}
-                <View style={[styles.modeGlow, { backgroundColor: m.glow }]} />
-                {/* Subtle bottom-left counter-glow */}
-                <View style={[styles.modeGlow2, { backgroundColor: m.glow }]} />
+                <View style={[styles.modeCard, {
+                  backgroundColor: cardBg,
+                  borderColor:     colors.surfaceBorder,
+                }]}>
 
-                {/* Top row: icon + badge + arrow */}
-                <View style={styles.modeTopRow}>
-                  <View style={[styles.modeIconRing, { borderColor: m.accent + "40", backgroundColor: m.accent + "18" }]}>
-                    <View style={[styles.modeIconBox, { backgroundColor: m.accent + "28" }]}>
-                      <Ionicons name={m.icon} size={26} color="#fff" />
+                  {/* Top row: icon ring + badge + arrow */}
+                  <View style={styles.modeTopRow}>
+                    <View style={[styles.modeIconRing, {
+                      borderColor:     isPrivate ? colors.surfaceBorder : colors.primary + "30",
+                      backgroundColor: isPrivate ? colors.surfaceBorder + "60" : colors.primaryDim,
+                    }]}>
+                      <Ionicons
+                        name={m.icon}
+                        size={24}
+                        color={isPrivate ? colors.textSecondary : colors.primary}
+                      />
                     </View>
-                  </View>
 
-                  <View style={{ flex: 1, gap: 3 }}>
                     {"badge" in m && (
-                      <View style={[styles.modeBadge, { backgroundColor: m.accent + "28", borderColor: m.accent + "50" }]}>
-                        <Text style={[styles.modeBadgeText, { color: m.accent }]}>{m.badge}</Text>
+                      <View style={[styles.modeBadge, {
+                        backgroundColor: colors.surfaceLight,
+                        borderColor:     colors.surfaceBorder,
+                      }]}>
+                        <Text style={[styles.modeBadgeText, { color: colors.textSecondary }]}>
+                          {m.badge}
+                        </Text>
                       </View>
                     )}
-                  </View>
 
-                  <View style={[styles.goBtn, { backgroundColor: "rgba(255,255,255,0.12)", borderColor: "rgba(255,255,255,0.2)" }]}>
-                    <Ionicons name="arrow-forward" size={15} color="#fff" />
-                  </View>
-                </View>
+                    <View style={{ flex: 1 }} />
 
-                {/* Title + tagline */}
-                <Text style={styles.modeTitle}>{m.label}</Text>
-                <Text style={styles.modeTagline}>{m.tagline}</Text>
-
-                {/* Divider */}
-                <View style={[styles.modeDivider, { backgroundColor: "rgba(255,255,255,0.12)" }]} />
-
-                {/* Features */}
-                <View style={styles.modeFeatures}>
-                  {m.features.map((f) => (
-                    <View key={f} style={styles.modeFeatureRow}>
-                      <View style={[styles.modeFeatureDot, { backgroundColor: m.accent }]} />
-                      <Text style={styles.modeFeatureText}>{f}</Text>
+                    <View style={[styles.goBtn, {
+                      backgroundColor: isPrivate ? colors.surfaceBorder : colors.primaryDim,
+                      borderColor:     isPrivate ? colors.surfaceBorder : colors.primary + "30",
+                    }]}>
+                      <Ionicons
+                        name="arrow-forward"
+                        size={14}
+                        color={isPrivate ? colors.textSecondary : colors.primary}
+                      />
                     </View>
-                  ))}
+                  </View>
+
+                  {/* Title + tagline */}
+                  <Text style={[styles.modeTitle, { color: colors.text }]}>{m.label}</Text>
+                  <Text style={[styles.modeTagline, { color: colors.textSecondary }]}>{m.tagline}</Text>
+
+                  {/* Divider */}
+                  <View style={[styles.modeDivider, { backgroundColor: colors.surfaceBorder }]} />
+
+                  {/* Feature list */}
+                  <View style={styles.modeFeatures}>
+                    {m.features.map((f) => (
+                      <View key={f} style={styles.modeFeatureRow}>
+                        <View style={[styles.modeFeatureDot, {
+                          backgroundColor: isPrivate ? colors.textMuted : colors.primary,
+                        }]} />
+                        <Text style={[styles.modeFeatureText, { color: colors.textSecondary }]}>{f}</Text>
+                      </View>
+                    ))}
+                  </View>
                 </View>
-              </LinearGradient>
-            </Pressable>
-          ))}
+              </Pressable>
+            );
+          })}
 
         </View>
       </ScrollView>
@@ -267,54 +303,51 @@ const styles = StyleSheet.create({
     gap: 12,
     overflow: "hidden",
     position: "relative",
-    minHeight: 160,
+    minHeight: 158,
   },
   heroGlowBlue: {
-    position: "absolute", top: -60, left: "20%",
-    width: 160, height: 160, borderRadius: 80,
-    backgroundColor: "rgba(59,100,255,0.18)",
+    position: "absolute", top: -60, left: "22%",
+    width: 140, height: 140, borderRadius: 70,
+    backgroundColor: "rgba(59,100,255,0.14)",
   },
   heroGlowPurple: {
-    position: "absolute", bottom: -40, right: 60,
-    width: 100, height: 100, borderRadius: 50,
-    backgroundColor: "rgba(120,60,220,0.15)",
+    position: "absolute", bottom: -40, right: 70,
+    width: 90, height: 90, borderRadius: 45,
+    backgroundColor: "rgba(100,60,200,0.12)",
   },
+
   heroLeft: { flex: 1, gap: 10 },
 
   heroTrustPill: {
     flexDirection: "row", alignItems: "center", gap: 5,
     alignSelf: "flex-start",
     paddingHorizontal: 9, paddingVertical: 4,
-    borderRadius: 100,
-    backgroundColor: "rgba(74,222,128,0.14)",
-    borderWidth: 1, borderColor: "rgba(74,222,128,0.28)",
+    borderRadius: 100, borderWidth: 1,
   },
-  heroTrustDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: "#4ADE80" },
-  heroTrustText: { fontSize: 10, fontFamily: "Inter_600SemiBold", color: "#4ADE80", letterSpacing: 0.3 },
+  heroTrustDot:  { width: 6, height: 6, borderRadius: 3 },
+  heroTrustText: { fontSize: 10, fontFamily: "Inter_600SemiBold", letterSpacing: 0.3 },
 
   heroTitle: {
     fontSize: 24,
     fontFamily: "Inter_700Bold",
-    color: "#fff",
     letterSpacing: -0.5,
     lineHeight: 30,
   },
 
   heroMeta: { flexDirection: "row", alignItems: "center", gap: 5 },
-  heroMetaText: { fontSize: 10, fontFamily: "Inter_500Medium", color: "rgba(255,255,255,0.55)" },
-  heroMetaDot: { width: 3, height: 3, borderRadius: 2, backgroundColor: "rgba(255,255,255,0.25)" },
+  heroMetaText: { fontSize: 10, fontFamily: "Inter_500Medium" },
+  heroMetaDot:  { width: 3, height: 3, borderRadius: 2 },
 
   heroQrWrap: { alignItems: "center", gap: 7 },
   heroQrRing: {
     position: "absolute",
-    width: 118, height: 118, borderRadius: 18,
-    borderWidth: 1.5, borderColor: "rgba(99,135,255,0.35)",
-    backgroundColor: "rgba(99,135,255,0.06)",
+    width: 120, height: 120, borderRadius: 18,
+    borderWidth: 1.5,
   },
   heroQrCard: {
     borderRadius: 14, padding: 9,
-    shadowColor: "#000", shadowOpacity: 0.4, shadowRadius: 12,
-    shadowOffset: { width: 0, height: 6 }, elevation: 8,
+    shadowOpacity: 0.18, shadowRadius: 10,
+    shadowOffset: { width: 0, height: 5 }, elevation: 6,
     position: "relative",
   },
   heroQrLogoWrap: { position: "absolute", top: 0, left: 0, right: 0, bottom: 0, alignItems: "center", justifyContent: "center" },
@@ -323,69 +356,51 @@ const styles = StyleSheet.create({
   heroSafeBadge: {
     flexDirection: "row", alignItems: "center", gap: 4,
     paddingHorizontal: 9, paddingVertical: 4,
-    borderRadius: 10,
-    backgroundColor: "rgba(34,197,94,0.15)",
-    borderWidth: 1, borderColor: "rgba(34,197,94,0.35)",
+    borderRadius: 10, borderWidth: 1,
   },
-  heroSafeDot: { width: 5, height: 5, borderRadius: 3, backgroundColor: "#22C55E" },
-  heroSafeText: { fontSize: 10, fontFamily: "Inter_700Bold", color: "#22C55E" },
+  heroSafeDot:  { width: 5, height: 5, borderRadius: 3 },
+  heroSafeText: { fontSize: 10, fontFamily: "Inter_700Bold" },
 
   // ── Mode cards ────────────────────────────────────────────────────────
   modeSection: { marginHorizontal: 20, gap: 14 },
 
   modeCard: {
     borderRadius: 24,
-    padding: 22,
-    overflow: "hidden",
-    position: "relative",
-  },
-  modeGlow: {
-    position: "absolute", top: -50, right: -40,
-    width: 140, height: 140, borderRadius: 70,
-  },
-  modeGlow2: {
-    position: "absolute", bottom: -40, left: -20,
-    width: 90, height: 90, borderRadius: 45,
-    opacity: 0.5,
+    padding: 20,
+    borderWidth: 1,
   },
 
-  modeTopRow: { flexDirection: "row", alignItems: "center", gap: 12, marginBottom: 18 },
+  modeTopRow: { flexDirection: "row", alignItems: "center", gap: 12, marginBottom: 16 },
 
   modeIconRing: {
-    width: 58, height: 58, borderRadius: 18,
+    width: 50, height: 50, borderRadius: 16,
     borderWidth: 1,
-    alignItems: "center", justifyContent: "center",
-  },
-  modeIconBox: {
-    width: 46, height: 46, borderRadius: 14,
     alignItems: "center", justifyContent: "center",
   },
 
   modeBadge: {
-    alignSelf: "flex-start",
     paddingHorizontal: 8, paddingVertical: 3,
     borderRadius: 7, borderWidth: 1,
   },
-  modeBadgeText: { fontSize: 9, fontFamily: "Inter_700Bold", letterSpacing: 1 },
+  modeBadgeText: { fontSize: 9, fontFamily: "Inter_700Bold", letterSpacing: 0.8 },
 
   goBtn: {
-    width: 36, height: 36, borderRadius: 12,
+    width: 34, height: 34, borderRadius: 11,
     borderWidth: 1,
     alignItems: "center", justifyContent: "center",
   },
 
   modeTitle: {
-    fontSize: 20,
+    fontSize: 18,
     fontFamily: "Inter_700Bold",
-    color: "#fff",
-    letterSpacing: -0.3,
+    letterSpacing: -0.2,
     marginBottom: 3,
   },
   modeTagline: {
     fontSize: 13,
     fontFamily: "Inter_400Regular",
-    color: "rgba(255,255,255,0.60)",
     marginBottom: 16,
+    lineHeight: 18,
   },
   modeDivider: { height: StyleSheet.hairlineWidth, marginBottom: 14 },
 
@@ -395,7 +410,6 @@ const styles = StyleSheet.create({
   modeFeatureText: {
     fontSize: 13,
     fontFamily: "Inter_400Regular",
-    color: "rgba(255,255,255,0.78)",
     lineHeight: 18,
   },
 });
