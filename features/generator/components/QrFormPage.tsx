@@ -49,7 +49,7 @@ export default function QrFormPage({ mode }: Props) {
     positionModalOpen, setPositionModalOpen,
     saving, savedToProfile, savedDocId,
     nameSuggestions, clearNameSuggestions,
-    toastMsg, toastType, toastAnim,
+    toastMsg, toastType, toastAnim, showToast,
     privateMode,
     switchPreset, handleGenerate,
     handlePickCustomLogo, handleRemoveLogo, handleToggleDefaultLogo,
