@@ -6,7 +6,6 @@ import {
   Pressable,
   StyleSheet,
   Platform,
-  Dimensions,
   ViewStyle,
   DimensionValue,
 } from "react-native";
@@ -53,27 +52,12 @@ function SheetBody({
 }: BodyProps) {
   const insets = useSafeAreaInsets();
 
-  // On Android, screen.height - window.height is usually the exact nav-bar
-  // pixel height. But on some devices/OS versions (esp. edge-to-edge /
-  // translucent gesture nav), that diff reports 0 even though the system nav
-  // bar still overlaps the bottom of the Modal's content — cutting off the
-  // last item in a sheet (e.g. a "Report" action hidden behind the nav bar).
-  // Fall back to the safe-area inset in that case and take whichever signal
-  // is larger so the sheet always clears the real system nav bar.
-  const navBarH =
-    Platform.OS === "android"
-      ? Math.max(
-          Dimensions.get("screen").height - Dimensions.get("window").height,
-          insets.bottom,
-        )
-      : 0;
-
-  const basePadding =
-    Platform.OS === "android"
-      ? navBarH + 20           // clear the bar + comfortable breathing room
-      : Math.max(insets.bottom, 8) + 10;
-
-  const paddingBottom = basePadding + extraBottomPadding;
+  // The SafeAreaProvider inside the Modal gives the correct bottom inset for
+  // the real navigation bar on Android edge-to-edge (API 35+). Using it
+  // directly avoids double-counting that occurred when also adding
+  // screen.height - window.height, which created a large dead gap at the
+  // bottom of every sheet and could fully hide the last action item.
+  const paddingBottom = Math.max(insets.bottom, 8) + 8 + extraBottomPadding;
 
   return (
     <View style={styles.root}>
