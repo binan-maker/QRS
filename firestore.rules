@@ -274,13 +274,24 @@ service cloud.firestore {
 
     // ─── Unified QR model (/qrs/:uuid) ───────────────────────────────────────
     // New-model QR documents (replacing qrCodes for newly created QRs).
-    // Public read mirrors the qrCodes collection. Writes happen server-side
-    // via the Admin SDK (bypasses rules), so client writes are locked down.
+    // Scan-count/shares/downloads increments are server-side only (Admin SDK).
+    // Verified owners may create their own doc and update non-integrity fields.
     match /qrs/{uuid} {
       allow read: if true;
-      // Scan-count increments are performed server-side only; deny client writes
-      // to keep the integrity fields tamper-proof.
-      allow write: if false;
+
+      // Owner creates their own QR doc (verified email required)
+      allow create: if isEmailVerified()
+        && request.resource.data.ownerId == request.auth.uid;
+
+      // Owner updates their own QR doc — integrity counters are locked
+      allow update: if isEmailVerified()
+        && resource.data.ownerId == request.auth.uid
+        && request.resource.data.ownerId == resource.data.ownerId
+        && request.resource.data.scanCount == resource.data.scanCount
+        && request.resource.data.downloads == resource.data.downloads
+        && request.resource.data.shares == resource.data.shares;
+
+      allow delete: if false;
     }
 
     // ─── Standard Links (Standard QR redirect registry) ──────────────────────

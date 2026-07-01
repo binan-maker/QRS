@@ -124,8 +124,8 @@ export async function updateQrDesign(
     const data = await db.get(["users", userId, "generatedQrs", docId]);
     const uuid: string | null = data?.uuid || null;
 
-    const batch = db.batch();
-    batch.update(["users", userId, "generatedQrs", docId], {
+    // ── Primary write: user's own generatedQrs doc (always required) ──────────
+    await db.update(["users", userId, "generatedQrs", docId], {
       fgColor: design.fgColor,
       bgColor: design.bgColor,
       logoPosition: design.logoPosition,
@@ -136,21 +136,22 @@ export async function updateQrDesign(
       expiryPreset: design.expiryPreset || null,
     });
 
-    // Sync into legacy link docs (for old /go/ and /guard/ QRs).
+    // ── Secondary writes: best-effort syncs, each isolated ───────────────────
+    // standardLinks / guardLinks only exist for legacy QRs. New-model QRs store
+    // everything in qrs/{uuid}. Wrap each separately so a missing or inaccessible
+    // doc never fails the primary write above.
     const limitFields = {
       scanLimit: design.scanLimit ?? null,
       expiryDate: design.expiryDate || null,
     };
     if (design.standardLinkUuid) {
-      batch.update(["standardLinks", design.standardLinkUuid], limitFields);
+      db.update(["standardLinks", design.standardLinkUuid], limitFields).catch(() => {});
     }
     if (design.guardLinkUuid) {
-      batch.update(["guardLinks", design.guardLinkUuid], limitFields);
+      db.update(["guardLinks", design.guardLinkUuid], limitFields).catch(() => {});
     }
 
-    await batch.commit();
-
-    // Sync into unified qrs/{id} doc for new-model QRs (best-effort).
+    // ── Unified qrs/{uuid} sync (new-model QRs) ───────────────────────────────
     if (uuid) {
       updateUnifiedQrDesign(uuid, userId, {
         title: design.label || null,
