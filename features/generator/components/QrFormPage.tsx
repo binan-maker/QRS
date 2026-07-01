@@ -34,7 +34,6 @@ export default function QrFormPage({ mode }: Props) {
   const [showGenError,       setShowGenError]        = useState(false);
   const [showNameError,      setShowNameError]       = useState(false);
   const [showDuplicateError, setShowDuplicateError]  = useState(false);
-  const lastComingSoonAt = useRef<Date | null>(null);
 
   const {
     user, svgRef,
@@ -65,20 +64,6 @@ export default function QrFormPage({ mode }: Props) {
     if (nameSuggestions.length > 0) setShowDuplicateError(true);
   }, [nameSuggestions]);
 
-  // Standard QR page only: after a QR is generated, let the user know that
-  // richer generator features are on the way. This is an in-app toast, not
-  // an OS-level push/system notification.
-  useEffect(() => {
-    if (mode !== "individual") return;
-    if (!generatedAt) return;
-    if (lastComingSoonAt.current?.getTime() === generatedAt.getTime()) return;
-    lastComingSoonAt.current = generatedAt;
-    const timer = setTimeout(() => {
-      showToast("More Standard QR features coming soon 🚧", "success");
-    }, 1600);
-    return () => clearTimeout(timer);
-  }, [mode, generatedAt, showToast]);
-
   const logoPositionLabel = useMemo(
     () => LOGO_POSITIONS.find((p) => p.key === logoPosition)?.label ?? "Center",
     [logoPosition],
@@ -99,6 +84,15 @@ export default function QrFormPage({ mode }: Props) {
   }, [qrValue, generatedUuid, user, privateMode, colors]);
 
   const handleGenerateWithValidation = useCallback(() => {
+    // Standard QR ("individual" mode) doesn't actually generate a QR yet —
+    // it's a coming-soon feature. Just surface the toast + voting card
+    // instead of touching handleGenerate. Real generation stays on the
+    // private QR page.
+    if (mode === "individual") {
+      showToast("This feature is coming soon 🚧 — vote below!", "success");
+      return;
+    }
+
     if (mode !== "private") {
       const nameVal = advancedSettings.label.trim();
       if (!nameVal) {
@@ -115,7 +109,7 @@ export default function QrFormPage({ mode }: Props) {
     setShowNameError(false);
     setShowGenError(false);
     handleGenerate();
-  }, [mode, inputValue, advancedSettings.label, handleGenerate]);
+  }, [mode, inputValue, advancedSettings.label, handleGenerate, showToast]);
 
   const handleClearAll = useCallback(() => {
     setShowDuplicateError(false);
