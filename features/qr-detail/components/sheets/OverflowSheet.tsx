@@ -30,7 +30,7 @@ export default function OverflowSheet({
   const { colors } = useTheme();
 
   return (
-    <BottomSheet visible={visible} onClose={onClose} sheetStyle={{ paddingHorizontal: 0 }}>
+    <BottomSheet visible={visible} onClose={onClose} sheetStyle={{ paddingHorizontal: 0 }} extraBottomPadding={8}>
       <ScrollView
         bounces={false}
         showsVerticalScrollIndicator={false}
