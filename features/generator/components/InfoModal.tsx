@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet, Pressable, ScrollView } from "react-native";
+import { View, Text, StyleSheet, ScrollView, useWindowDimensions } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useTheme } from "@/shared/contexts/ThemeContext";
 import BottomSheet from "@/shared/components/ui/BottomSheet";
@@ -54,6 +54,7 @@ const EXTRAS = [
 
 export default function InfoModal({ visible, onClose }: Props) {
   const { colors } = useTheme();
+  const { height: screenHeight } = useWindowDimensions();
 
   return (
     <BottomSheet visible={visible} onClose={onClose}>
@@ -79,7 +80,7 @@ export default function InfoModal({ visible, onClose }: Props) {
 
       <ScrollView
         showsVerticalScrollIndicator={false}
-        style={{ maxHeight: 380 }}
+        style={{ maxHeight: screenHeight * 0.52 }}
       >
         <Text style={[styles.sectionLabel, { color: colors.textMuted }]}>
           MODES
@@ -144,17 +145,6 @@ export default function InfoModal({ visible, onClose }: Props) {
         ))}
       </ScrollView>
 
-      <Pressable
-        style={({ pressed }) => [
-          styles.closeBtn,
-          { backgroundColor: colors.primary, opacity: pressed ? 0.82 : 1 },
-        ]}
-        onPress={onClose}
-      >
-        <Text style={[styles.closeBtnText, { color: colors.primaryText }]}>
-          Got it
-        </Text>
-      </Pressable>
     </BottomSheet>
   );
 }
@@ -212,16 +202,5 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontFamily: "Inter_400Regular",
     lineHeight: 18, // Augmented line-height prevents squishing in long descriptions
-  },
-  closeBtn: {
-    marginTop: 18,
-    marginBottom: 8,
-    paddingVertical: 14,
-    borderRadius: 14,
-    alignItems: "center",
-  },
-  closeBtnText: {
-    fontSize: 15,
-    fontFamily: "Inter_700Bold",
   },
 });

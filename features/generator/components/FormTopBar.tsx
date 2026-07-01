@@ -8,11 +8,10 @@ import { FORM_MODE_META } from "@/features/generator/types/form-types";
 import type { QrMode } from "@/features/generator/types/form-types";
 
 interface Props {
-  mode:        QrMode;
-  onOpenInfo:  () => void;
+  mode: QrMode;
 }
 
-export default function FormTopBar({ mode, onOpenInfo }: Props) {
+export default function FormTopBar({ mode }: Props) {
   const { colors } = useTheme();
   const meta = FORM_MODE_META[mode as "individual" | "private"] ?? FORM_MODE_META.individual;
 
@@ -42,14 +41,8 @@ export default function FormTopBar({ mode, onOpenInfo }: Props) {
         <Text style={[styles.title, { color: meta.color }]}>{meta.label} QR</Text>
       </Animated.View>
 
-      <Animated.View entering={FadeIn.delay(30).duration(240)}>
-        <Pressable
-          onPress={onOpenInfo}
-          style={[styles.infoBtn, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}
-        >
-          <Ionicons name="information-circle-outline" size={20} color={colors.textSecondary} />
-        </Pressable>
-      </Animated.View>
+      {/* spacer to balance the back button on the left */}
+      <View style={styles.infoPlaceholder} />
     </Animated.View>
   );
 }
@@ -73,8 +66,5 @@ const styles = StyleSheet.create({
   },
   modeDot: { width: 8, height: 8, borderRadius: 4 },
   title:   { fontSize: 15, fontFamily: "Inter_700Bold" },
-  infoBtn: {
-    width: 38, height: 38, borderRadius: 19, borderWidth: 1,
-    alignItems: "center", justifyContent: "center",
-  },
+  infoPlaceholder: { width: 38, height: 38 },
 });

@@ -4,6 +4,7 @@ import {
   StatusBar, Animated, useWindowDimensions, Image, LayoutChangeEvent,
   InteractionManager,
 } from "react-native";
+import InfoModal from "@/features/generator/components/InfoModal";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
 import { Ionicons } from "@expo/vector-icons";
@@ -41,6 +42,7 @@ export default function GeneratorLanding() {
   const { width } = useWindowDimensions();
 
   const [headerH, setHeaderH] = useState(0);
+  const [infoOpen, setInfoOpen] = useState(false);
   const pulseAnim = useRef(new Animated.Value(1)).current;
   const { onTabScroll, resetTabBar } = useTabBarScroll();
   const { headerStyle, setHeight, onScroll: onHeaderScroll, reset: resetHeader } = useHeaderHide();
@@ -87,6 +89,16 @@ export default function GeneratorLanding() {
         onLayout={(e: LayoutChangeEvent) => { const h = e.nativeEvent.layout.height; setHeaderH(h); setHeight(h); }}
       >
         <Text style={[styles.headerTitle, { color: colors.text }]}>QR Generator</Text>
+        <Pressable
+          onPress={() => setInfoOpen(true)}
+          style={({ pressed }) => [
+            styles.headerInfoBtn,
+            { backgroundColor: colors.surface, borderColor: colors.surfaceBorder, opacity: pressed ? 0.7 : 1 },
+          ]}
+          hitSlop={8}
+        >
+          <Ionicons name="information-circle-outline" size={20} color={colors.textSecondary} />
+        </Pressable>
       </Reanimated.View>
 
       <ScrollView
@@ -196,6 +208,8 @@ export default function GeneratorLanding() {
 
         </View>
       </ScrollView>
+
+      <InfoModal visible={infoOpen} onClose={() => setInfoOpen(false)} />
     </View>
   );
 }
@@ -207,9 +221,16 @@ const styles = StyleSheet.create({
   header: {
     paddingHorizontal: 20,
     paddingBottom: 12,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
   },
   // 22 matches HistoryHeader title size
-  headerTitle: { fontSize: 22, fontFamily: "Inter_700Bold", letterSpacing: -0.3 },
+  headerTitle: { fontSize: 22, fontFamily: "Inter_700Bold", letterSpacing: -0.3, flex: 1 },
+  headerInfoBtn: {
+    width: 36, height: 36, borderRadius: 18, borderWidth: 1,
+    alignItems: "center", justifyContent: "center",
+  },
 
   // ── Hero ──────────────────────────────────────────────────────────────
   heroCard: {

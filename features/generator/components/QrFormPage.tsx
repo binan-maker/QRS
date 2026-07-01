@@ -22,7 +22,6 @@ import CustomizeDrawer     from "@/features/generator/components/CustomizeDrawer
 import QrTemplateModal     from "@/features/generator/components/QrTemplateModal";
 import CustomQrBuilderModal from "@/features/generator/components/CustomQrBuilderModal";
 import PositionModal       from "@/features/generator/components/PositionModal";
-import InfoModal           from "@/features/generator/components/InfoModal";
 
 interface Props {
   mode: QrMode;
@@ -63,7 +62,7 @@ export default function QrFormPage({ mode, initialTemplateId, openAiBuilder }: P
     advancedSettings, setAdvancedSettings,
     qrFgColor, qrBgColor,
     generatedUuid, generatedAt,
-    infoModalOpen, setInfoModalOpen, positionModalOpen, setPositionModalOpen,
+    positionModalOpen, setPositionModalOpen,
     saving, savedToProfile, savedDocId,
     nameSuggestions, clearNameSuggestions,
     toastMsg, toastType, toastAnim,
@@ -159,7 +158,7 @@ export default function QrFormPage({ mode, initialTemplateId, openAiBuilder }: P
   return (
     <View style={[styles.container, { backgroundColor: colors.background, paddingTop: topInset }]}>
 
-      <FormTopBar mode={mode} onOpenInfo={() => setInfoModalOpen(true)} />
+      <FormTopBar mode={mode} />
 
       <ScrollView
         showsVerticalScrollIndicator={false}
@@ -414,9 +413,6 @@ export default function QrFormPage({ mode, initialTemplateId, openAiBuilder }: P
           onSelect={setLogoPosition}
           onClose={() => setPositionModalOpen(false)}
         />
-      )}
-      {infoModalOpen && (
-        <InfoModal visible={infoModalOpen} onClose={() => setInfoModalOpen(false)} />
       )}
     </View>
   );
