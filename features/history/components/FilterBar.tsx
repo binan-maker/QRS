@@ -28,30 +28,20 @@ type IoniconName = React.ComponentProps<typeof Ionicons>["name"];
 
 const FILTER_ICONS: Record<string, IoniconName> = {
   all:       "apps-outline",
-  url:       "globe-outline",
-  social:    "heart-outline",
   payment:   "card-outline",
+  url:       "globe-outline",
   contact:   "person-outline",
   wifi:      "wifi-outline",
-  location:  "location-outline",
-  utility:   "construct-outline",
-  business:  "trending-up-outline",
-  text:      "document-text-outline",
   others:    "ellipsis-horizontal-circle-outline",
   favorites: "bookmark-outline",
 };
 
 const FILTER_ICONS_ACTIVE: Record<string, IoniconName> = {
   all:       "apps",
-  url:       "globe",
-  social:    "heart",
   payment:   "card",
+  url:       "globe",
   contact:   "person",
   wifi:      "wifi",
-  location:  "location",
-  utility:   "construct",
-  business:  "trending-up",
-  text:      "document-text",
   others:    "ellipsis-horizontal-circle",
   favorites: "bookmark",
 };

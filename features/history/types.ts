@@ -10,15 +10,10 @@ export interface HistoryItem {
 
 export type FilterKey =
   | "all"
-  | "url"
-  | "text"
-  | "social"
   | "payment"
+  | "url"
   | "contact"
   | "wifi"
-  | "location"
-  | "utility"
-  | "business"
   | "others"
   | "favorites";
 

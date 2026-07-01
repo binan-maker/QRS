@@ -2,11 +2,8 @@ import type { FilterKey, ActiveFilters, HistoryItem } from "@/features/history/t
 import type { ScanStatsResult } from "@/lib/firestore-service";
 import {
   FILTERS,
-  SOCIAL_TYPES,
   PAYMENT_TYPES,
   CONTACT_TYPES,
-  UTILITY_TYPES,
-  BUSINESS_TYPES,
   ALL_KNOWN_TYPES,
 } from "@/features/history/utils/constants";
 
@@ -26,18 +23,13 @@ export function getActiveFilters(
   const base = FILTERS.map((f) => {
     let count = 0;
     switch (f.key) {
-      case "all":      count = scanStats?.total ?? history.length; break;
-      case "url":      count = history.filter((i) => i.contentType === "url").length; break;
-      case "social":   count = countBy(history, SOCIAL_TYPES); break;
-      case "payment":  count = countBy(history, PAYMENT_TYPES); break;
-      case "contact":  count = countBy(history, CONTACT_TYPES); break;
-      case "wifi":     count = history.filter((i) => i.contentType === "wifi").length; break;
-      case "location": count = history.filter((i) => i.contentType === "location").length; break;
-      case "utility":  count = countBy(history, UTILITY_TYPES); break;
-      case "business": count = countBy(history, BUSINESS_TYPES); break;
-      case "text":     count = history.filter((i) => i.contentType === "text").length; break;
-      case "others":   count = countOthers(history); break;
-      default:         count = 0;
+      case "all":     count = scanStats?.total ?? history.length; break;
+      case "payment": count = countBy(history, PAYMENT_TYPES); break;
+      case "url":     count = history.filter((i) => i.contentType === "url").length; break;
+      case "contact": count = countBy(history, CONTACT_TYPES); break;
+      case "wifi":    count = history.filter((i) => i.contentType === "wifi").length; break;
+      case "others":  count = countOthers(history); break;
+      default:        count = 0;
     }
     return { ...f, count };
   });
@@ -56,16 +48,11 @@ export function itemMatchesFilters(
 ): boolean {
   for (const key of activeFilters) {
     switch (key) {
-      case "url":      if (contentType === "url") return true; break;
-      case "text":     if (contentType === "text") return true; break;
-      case "wifi":     if (contentType === "wifi") return true; break;
-      case "location": if (contentType === "location") return true; break;
-      case "social":   if ((SOCIAL_TYPES as readonly string[]).includes(contentType)) return true; break;
-      case "payment":  if ((PAYMENT_TYPES as readonly string[]).includes(contentType)) return true; break;
-      case "contact":  if ((CONTACT_TYPES as readonly string[]).includes(contentType)) return true; break;
-      case "utility":  if ((UTILITY_TYPES as readonly string[]).includes(contentType)) return true; break;
-      case "business": if ((BUSINESS_TYPES as readonly string[]).includes(contentType)) return true; break;
-      case "others":   if (!ALL_KNOWN_TYPES.has(contentType)) return true; break;
+      case "url":     if (contentType === "url") return true; break;
+      case "wifi":    if (contentType === "wifi") return true; break;
+      case "payment": if ((PAYMENT_TYPES as readonly string[]).includes(contentType)) return true; break;
+      case "contact": if ((CONTACT_TYPES as readonly string[]).includes(contentType)) return true; break;
+      case "others":  if (!ALL_KNOWN_TYPES.has(contentType)) return true; break;
     }
   }
   return false;

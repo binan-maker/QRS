@@ -5,17 +5,12 @@ export const PAGE_SIZE      = 20;
 export const STALE_MS       = 2 * 60 * 1000;
 
 export const FILTERS: { key: FilterKey; label: string }[] = [
-  { key: "all",      label: "All"      },
-  { key: "url",      label: "URL"      },
-  { key: "social",   label: "Social"   },
-  { key: "payment",  label: "Payment"  },
-  { key: "contact",  label: "Contact"  },
-  { key: "wifi",     label: "WiFi"     },
-  { key: "location", label: "Location" },
-  { key: "utility",  label: "Utility"  },
-  { key: "business", label: "Business" },
-  { key: "text",     label: "Text"     },
-  { key: "others",   label: "Others"   },
+  { key: "all",     label: "All"     },
+  { key: "payment", label: "Payment" },
+  { key: "url",     label: "URL"     },
+  { key: "contact", label: "Contact" },
+  { key: "wifi",    label: "WiFi"    },
+  { key: "others",  label: "Others"  },
 ];
 
 export const SOCIAL_TYPES   = [
@@ -41,16 +36,13 @@ export const BUSINESS_TYPES = [
   "reviewpage", "menucatalogue",
 ] as const;
 
-/** Every contentType that belongs to a named category. Anything NOT in this
- *  set falls under the "others" filter. */
+/** Every contentType that belongs to a named filter category.
+ *  Anything NOT in this set falls under "others". Social, location,
+ *  utility, business, and text types are intentionally excluded so they
+ *  surface under "others" rather than a dedicated chip. */
 export const ALL_KNOWN_TYPES = new Set<string>([
   "url",
-  "text",
   "wifi",
-  "location",
-  ...SOCIAL_TYPES,
   ...PAYMENT_TYPES,
   ...CONTACT_TYPES,
-  ...UTILITY_TYPES,
-  ...BUSINESS_TYPES,
 ]);
