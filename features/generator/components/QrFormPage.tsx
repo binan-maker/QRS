@@ -16,6 +16,7 @@ import QrOutputCard     from "@/features/generator/components/QrOutputCard";
 import CustomizeDrawer  from "@/features/generator/components/CustomizeDrawer";
 import PositionModal    from "@/features/generator/components/PositionModal";
 import EmptyQrPlaceholder from "@/features/generator/components/EmptyQrPlaceholder";
+import FeatureVoteCard  from "@/features/generator/components/FeatureVoteCard";
 
 interface Props {
   mode: QrMode;
@@ -33,6 +34,7 @@ export default function QrFormPage({ mode }: Props) {
   const [showGenError,       setShowGenError]        = useState(false);
   const [showNameError,      setShowNameError]       = useState(false);
   const [showDuplicateError, setShowDuplicateError]  = useState(false);
+  const lastComingSoonAt = useRef<Date | null>(null);
 
   const {
     user, svgRef,
@@ -62,6 +64,20 @@ export default function QrFormPage({ mode }: Props) {
   useEffect(() => {
     if (nameSuggestions.length > 0) setShowDuplicateError(true);
   }, [nameSuggestions]);
+
+  // Standard QR page only: after a QR is generated, let the user know that
+  // richer generator features are on the way. This is an in-app toast, not
+  // an OS-level push/system notification.
+  useEffect(() => {
+    if (mode !== "individual") return;
+    if (!generatedAt) return;
+    if (lastComingSoonAt.current?.getTime() === generatedAt.getTime()) return;
+    lastComingSoonAt.current = generatedAt;
+    const timer = setTimeout(() => {
+      showToast("More Standard QR features coming soon 🚧", "success");
+    }, 1600);
+    return () => clearTimeout(timer);
+  }, [mode, generatedAt, showToast]);
 
   const logoPositionLabel = useMemo(
     () => LOGO_POSITIONS.find((p) => p.key === logoPosition)?.label ?? "Center",
@@ -348,6 +364,10 @@ export default function QrFormPage({ mode }: Props) {
           />
         ) : (
           <EmptyQrPlaceholder mode={mode} />
+        )}
+
+        {mode === "individual" && (
+          <FeatureVoteCard email={user?.email} showToast={showToast} />
         )}
 
       </ScrollView>
