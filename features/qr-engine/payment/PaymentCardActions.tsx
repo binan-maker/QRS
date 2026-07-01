@@ -8,6 +8,7 @@ import type { ParsedPaymentQr } from "@/services/analysis";
 import type { AppBrand } from "./brand-data";
 import { styles } from "./styles";
 import { formatAmount } from "./utils";
+import { useTheme } from "@/shared/contexts/ThemeContext";
 
 interface Props {
   parsedPayment: ParsedPaymentQr;
@@ -20,6 +21,7 @@ interface Props {
 const PaymentCardActions = React.memo(function PaymentCardActions({
   parsedPayment, brand, isIndia, isDeactivated,
 }: Props) {
+  const { colors } = useTheme();
   const [upiCopied, setUpiCopied] = React.useState(false);
   const [amtCopied, setAmtCopied] = React.useState(false);
   const [linkCopied, setLinkCopied] = React.useState(false);
@@ -68,9 +70,9 @@ const PaymentCardActions = React.memo(function PaymentCardActions({
 
   if (isDeactivated) {
     return (
-      <View style={styles.deactivatedBanner}>
-        <Ionicons name="close-circle-outline" size={16} color="#EF4444" />
-        <Text style={styles.deactivatedText}>This payment QR has been deactivated</Text>
+      <View style={[styles.deactivatedBanner, { backgroundColor: colors.dangerDim, borderColor: colors.danger + "35" }]}>
+        <Ionicons name="close-circle-outline" size={16} color={colors.danger} />
+        <Text style={[styles.deactivatedText, { color: colors.danger }]}>This payment QR has been deactivated</Text>
       </View>
     );
   }
@@ -80,16 +82,19 @@ const PaymentCardActions = React.memo(function PaymentCardActions({
       <View style={styles.actionArea}>
         <Pressable
           onPress={handleCopyCrypto}
-          style={({ pressed }) => [actionStyles.copyBtn, { opacity: pressed ? 0.82 : 1, borderColor: brand.gradientStart + "60" }]}
+          style={({ pressed }) => [
+            actionStyles.copyBtn,
+            { opacity: pressed ? 0.82 : 1, borderColor: colors.surfaceBorder, backgroundColor: colors.surfaceLight },
+          ]}
         >
-          <Ionicons name={upiCopied ? "checkmark-circle" : "copy-outline"} size={17} color={upiCopied ? "#4ADE80" : brand.gradientStart} />
-          <Text style={[actionStyles.copyBtnText, { color: upiCopied ? "#4ADE80" : brand.gradientStart }]}>
+          <Ionicons name={upiCopied ? "checkmark-circle" : "copy-outline"} size={17} color={upiCopied ? colors.safe : colors.primary} />
+          <Text style={[actionStyles.copyBtnText, { color: upiCopied ? colors.safe : colors.primary }]}>
             {upiCopied ? "Copied!" : "Copy Address"}
           </Text>
         </Pressable>
-        <View style={styles.warningBox}>
-          <Ionicons name="warning-outline" size={14} color="#F59E0B" style={{ flexShrink: 0 }} />
-          <Text style={styles.warningText} maxFontSizeMultiplier={1}>
+        <View style={[styles.warningBox, { backgroundColor: colors.warningDim, borderColor: colors.warning + "30" }]}>
+          <Ionicons name="warning-outline" size={14} color={colors.warning} style={{ flexShrink: 0 }} />
+          <Text style={[styles.warningText, { color: colors.textSecondary }]} maxFontSizeMultiplier={1}>
             Crypto is irreversible — verify the address character by character before sending
           </Text>
         </View>
@@ -100,15 +105,15 @@ const PaymentCardActions = React.memo(function PaymentCardActions({
   if (parsedPayment.isEmv && parsedPayment.extraFields?.accountNumber) {
     return (
       <View style={styles.actionArea}>
-        <View style={actionStyles.manualBox}>
-          <Ionicons name="information-circle-outline" size={16} color="#60A5FA" style={{ flexShrink: 0 }} />
-          <Text style={actionStyles.manualText}>
+        <View style={[actionStyles.manualBox, { backgroundColor: colors.primaryDim, borderColor: colors.primary + "30" }]}>
+          <Ionicons name="information-circle-outline" size={16} color={colors.primary} style={{ flexShrink: 0 }} />
+          <Text style={[actionStyles.manualText, { color: colors.primary }]}>
             Open your bank app and use the account number and IFSC shown above to transfer.
           </Text>
         </View>
-        <View style={styles.warningBox}>
-          <Ionicons name="information-circle-outline" size={14} color="#94A3B8" style={{ flexShrink: 0 }} />
-          <Text style={styles.warningText} maxFontSizeMultiplier={1}>
+        <View style={[styles.warningBox, { backgroundColor: colors.surfaceLight, borderColor: colors.surfaceBorder }]}>
+          <Ionicons name="information-circle-outline" size={14} color={colors.textMuted} style={{ flexShrink: 0 }} />
+          <Text style={[styles.warningText, { color: colors.textSecondary }]} maxFontSizeMultiplier={1}>
             Always verify the beneficiary name and account details before transferring
           </Text>
         </View>
@@ -122,10 +127,13 @@ const PaymentCardActions = React.memo(function PaymentCardActions({
         {displayVpa ? (
           <Pressable
             onPress={handleCopyUpi}
-            style={({ pressed }) => [actionStyles.copyBtn, actionStyles.copyBtnFlex, { opacity: pressed ? 0.82 : 1, borderColor: brand.gradientStart + "60" }]}
+            style={({ pressed }) => [
+              actionStyles.copyBtn, actionStyles.copyBtnFlex,
+              { opacity: pressed ? 0.82 : 1, borderColor: colors.surfaceBorder, backgroundColor: colors.surfaceLight },
+            ]}
           >
-            <Ionicons name={upiCopied ? "checkmark-circle" : "at-circle-outline"} size={17} color={upiCopied ? "#4ADE80" : brand.gradientStart} />
-            <Text style={[actionStyles.copyBtnText, { color: upiCopied ? "#4ADE80" : brand.gradientStart }]}>
+            <Ionicons name={upiCopied ? "checkmark-circle" : "at-circle-outline"} size={17} color={upiCopied ? colors.safe : colors.primary} />
+            <Text style={[actionStyles.copyBtnText, { color: upiCopied ? colors.safe : colors.primary }]}>
               {upiCopied ? "Copied!" : "Copy UPI ID"}
             </Text>
           </Pressable>
@@ -134,10 +142,13 @@ const PaymentCardActions = React.memo(function PaymentCardActions({
         {parsedPayment.isAmountPreFilled && parsedPayment.amount ? (
           <Pressable
             onPress={handleCopyAmount}
-            style={({ pressed }) => [actionStyles.copyBtn, actionStyles.copyBtnFlex, { opacity: pressed ? 0.82 : 1, borderColor: "#FCD34D60" }]}
+            style={({ pressed }) => [
+              actionStyles.copyBtn, actionStyles.copyBtnFlex,
+              { opacity: pressed ? 0.82 : 1, borderColor: colors.surfaceBorder, backgroundColor: colors.surfaceLight },
+            ]}
           >
-            <Ionicons name={amtCopied ? "checkmark-circle" : "cash-outline"} size={17} color={amtCopied ? "#4ADE80" : "#FCD34D"} />
-            <Text style={[actionStyles.copyBtnText, { color: amtCopied ? "#4ADE80" : "#FCD34D" }]}>
+            <Ionicons name={amtCopied ? "checkmark-circle" : "cash-outline"} size={17} color={amtCopied ? colors.safe : colors.warning} />
+            <Text style={[actionStyles.copyBtnText, { color: amtCopied ? colors.safe : colors.warning }]}>
               {amtCopied ? "Copied!" : `Copy ${formatAmount(parsedPayment.amount, parsedPayment.currency)}`}
             </Text>
           </Pressable>
@@ -146,24 +157,27 @@ const PaymentCardActions = React.memo(function PaymentCardActions({
 
       <Pressable
         onPress={handleCopyPaymentLink}
-        style={({ pressed }) => [actionStyles.copyBtn, { opacity: pressed ? 0.82 : 1, borderColor: "rgba(148,163,184,0.25)" }]}
+        style={({ pressed }) => [
+          actionStyles.copyBtn,
+          { opacity: pressed ? 0.82 : 1, borderColor: colors.surfaceBorder, backgroundColor: colors.surfaceLight },
+        ]}
       >
-        <Ionicons name={linkCopied ? "checkmark-circle" : "link-outline"} size={17} color={linkCopied ? "#4ADE80" : "#94A3B8"} />
-        <Text style={[actionStyles.copyBtnText, { color: linkCopied ? "#4ADE80" : "#94A3B8" }]}>
+        <Ionicons name={linkCopied ? "checkmark-circle" : "link-outline"} size={17} color={linkCopied ? colors.safe : colors.textMuted} />
+        <Text style={[actionStyles.copyBtnText, { color: linkCopied ? colors.safe : colors.textSecondary }]}>
           {linkCopied ? "Copied!" : "Copy Payment Link"}
         </Text>
       </Pressable>
 
-      <View style={actionStyles.manualBox}>
-        <Ionicons name="phone-portrait-outline" size={15} color="#60A5FA" style={{ flexShrink: 0 }} />
-        <Text style={actionStyles.manualText}>
+      <View style={[actionStyles.manualBox, { backgroundColor: colors.primaryDim, borderColor: colors.primary + "30" }]}>
+        <Ionicons name="phone-portrait-outline" size={15} color={colors.primary} style={{ flexShrink: 0 }} />
+        <Text style={[actionStyles.manualText, { color: colors.primary }]}>
           Open your preferred UPI app (GPay, PhonePe, Paytm, BHIM) and paste the UPI ID to pay manually.
         </Text>
       </View>
 
-      <View style={styles.warningBox}>
-        <Ionicons name="information-circle-outline" size={14} color="#94A3B8" style={{ flexShrink: 0 }} />
-        <Text style={styles.warningText} maxFontSizeMultiplier={1}>
+      <View style={[styles.warningBox, { backgroundColor: colors.surfaceLight, borderColor: colors.surfaceBorder }]}>
+        <Ionicons name="information-circle-outline" size={14} color={colors.textMuted} style={{ flexShrink: 0 }} />
+        <Text style={[styles.warningText, { color: colors.textSecondary }]} maxFontSizeMultiplier={1}>
           {isIndia
             ? "Always verify the Merchant Name and UPI ID before paying"
             : "Always verify the recipient before sending money"}
@@ -186,7 +200,6 @@ const actionStyles = StyleSheet.create({
     borderRadius: 12,
     paddingVertical: 12,
     paddingHorizontal: 16,
-    backgroundColor: "rgba(255,255,255,0.04)",
     borderWidth: 1,
   },
   copyBtnFlex: {
@@ -200,17 +213,14 @@ const actionStyles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "flex-start",
     gap: 8,
-    backgroundColor: "rgba(96,165,250,0.08)",
     borderRadius: 10,
     paddingHorizontal: 12,
     paddingVertical: 10,
     borderWidth: 1,
-    borderColor: "rgba(96,165,250,0.18)",
   },
   manualText: {
     fontSize: 12,
     fontFamily: "Inter_400Regular",
-    color: "#93C5FD",
     flex: 1,
     lineHeight: 17,
   },

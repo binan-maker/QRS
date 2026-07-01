@@ -3,12 +3,12 @@ import { View, Text, Pressable } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import * as Clipboard from "expo-clipboard";
 import * as Haptics from "@/shared/utils/haptics";
-import { LinearGradient } from "expo-linear-gradient";
 import { Platform } from "react-native";
 import type { ParsedPaymentQr } from "@/services/analysis";
 import type { AppBrand } from "./brand-data";
-import { getBankFullName, formatAmount, addSoftHyphens } from "./utils";
+import { formatAmount, addSoftHyphens } from "./utils";
 import { styles } from "./styles";
+import { useTheme } from "@/shared/contexts/ThemeContext";
 
 interface Props {
   parsedPayment: ParsedPaymentQr;
@@ -21,6 +21,7 @@ interface Props {
 const PaymentCardFace = React.memo(function PaymentCardFace({
   parsedPayment, brand, isIndia, displayVpa, effectiveBankName,
 }: Props) {
+  const { colors, isDark } = useTheme();
   const [upiCopied, setUpiCopied] = React.useState(false);
 
   async function handleCopyUpi() {
@@ -32,31 +33,30 @@ const PaymentCardFace = React.memo(function PaymentCardFace({
   }
 
   return (
-    <LinearGradient colors={[brand.gradientStart, brand.gradientEnd]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.card}>
-      <View style={[styles.decCircleLarge, { backgroundColor: brand.chipColor }]} />
-      <View style={[styles.decCircleSmall, { backgroundColor: brand.chipColor }]} />
-
+    <View style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
       <View style={styles.cardTopRow}>
         <View style={styles.appNameRow}>
-          <View style={[styles.appIconBubble, { backgroundColor: brand.chipColor }]}>
-            <Ionicons name={brand.iconName} size={15} color={brand.accentColor} />
+          <View style={[styles.appIconBubble, { backgroundColor: brand.gradientStart + (isDark ? "26" : "16") }]}>
+            <Ionicons name={brand.iconName} size={17} color={brand.gradientStart} />
           </View>
-          <Text style={[styles.appNameText, { color: brand.subtextOnCard }]} maxFontSizeMultiplier={1} numberOfLines={1}>
-            {parsedPayment.appDisplayName}
-          </Text>
-          {isIndia && (
-            <View style={styles.indiaBadge}>
-              <Text style={styles.indiaBadgeText} maxFontSizeMultiplier={1}>🇮🇳 UPI</Text>
-            </View>
-          )}
+          <View style={styles.appNameCol}>
+            <Text style={[styles.appNameText, { color: colors.text }]} maxFontSizeMultiplier={1} numberOfLines={1}>
+              {parsedPayment.appDisplayName}
+            </Text>
+            {isIndia && (
+              <View style={[styles.indiaBadge, { backgroundColor: colors.primaryDim }]}>
+                <Text style={[styles.indiaBadgeText, { color: colors.primary }]} maxFontSizeMultiplier={1}>🇮🇳 UPI</Text>
+              </View>
+            )}
+          </View>
         </View>
-        <View style={styles.shieldBadge}>
-          <Ionicons name="shield-checkmark" size={13} color="#4ADE80" />
-          <Text style={styles.shieldText} maxFontSizeMultiplier={1}>QRS</Text>
+        <View style={[styles.shieldBadge, { backgroundColor: colors.safeDim ?? colors.safe + "18", borderColor: colors.safe + "35" }]}>
+          <Ionicons name="shield-checkmark" size={12} color={colors.safe} />
+          <Text style={[styles.shieldText, { color: colors.safe }]} maxFontSizeMultiplier={1}>QRS</Text>
         </View>
       </View>
 
-      <Text style={[styles.merchantName, { color: brand.textOnCard }]} numberOfLines={2} adjustsFontSizeToFit minimumFontScale={0.78} maxFontSizeMultiplier={1}
+      <Text style={[styles.merchantName, { color: colors.text }]} numberOfLines={2} adjustsFontSizeToFit minimumFontScale={0.78} maxFontSizeMultiplier={1}
         // @ts-ignore
         android_hyphenationFrequency="full">
         {addSoftHyphens(parsedPayment.recipientName || "Unknown Merchant")}
@@ -64,141 +64,141 @@ const PaymentCardFace = React.memo(function PaymentCardFace({
 
       {displayVpa ? (
         <Pressable onPress={handleCopyUpi} style={styles.upiRow}>
-          <Ionicons name="at-circle-outline" size={14} color={brand.accentColor} style={{ flexShrink: 0 }} />
-          <Text style={[styles.upiId, { color: brand.subtextOnCard }]} selectable maxFontSizeMultiplier={1}
+          <Ionicons name="at-circle-outline" size={14} color={colors.textSecondary} style={{ flexShrink: 0 }} />
+          <Text style={[styles.upiId, { color: colors.textSecondary }]} selectable maxFontSizeMultiplier={1}
             // @ts-ignore
             android_hyphenationFrequency="full">
             {addSoftHyphens(displayVpa)}
           </Text>
-          <Ionicons name={upiCopied ? "checkmark-circle" : "copy-outline"} size={13} color={upiCopied ? "#4ADE80" : brand.accentColor} style={{ flexShrink: 0 }} />
+          <Ionicons name={upiCopied ? "checkmark-circle" : "copy-outline"} size={13} color={upiCopied ? colors.safe : colors.textMuted} style={{ flexShrink: 0 }} />
         </Pressable>
       ) : null}
 
       {effectiveBankName ? (
         <View style={styles.bankRow}>
-          <Ionicons name="business-outline" size={12} color={brand.accentColor} />
-          <Text style={[styles.bankName, { color: brand.subtextOnCard }]} maxFontSizeMultiplier={1} numberOfLines={1}>{effectiveBankName}</Text>
+          <Ionicons name="business-outline" size={12} color={colors.textMuted} />
+          <Text style={[styles.bankName, { color: colors.textMuted }]} maxFontSizeMultiplier={1} numberOfLines={1}>{effectiveBankName}</Text>
         </View>
       ) : parsedPayment.bankHandle ? (
         <View style={styles.bankRow}>
-          <Ionicons name="business-outline" size={12} color={brand.accentColor} />
-          <Text style={[styles.bankName, { color: brand.subtextOnCard }]} maxFontSizeMultiplier={1} numberOfLines={1}>@{parsedPayment.bankHandle}</Text>
+          <Ionicons name="business-outline" size={12} color={colors.textMuted} />
+          <Text style={[styles.bankName, { color: colors.textMuted }]} maxFontSizeMultiplier={1} numberOfLines={1}>@{parsedPayment.bankHandle}</Text>
         </View>
       ) : null}
 
       {parsedPayment.isAmountPreFilled && parsedPayment.amount ? (
-        <View style={[styles.amountChip, { backgroundColor: brand.chipColor, borderColor: brand.accentColor + "50" }]}>
-          <Ionicons name="cash-outline" size={14} color="#FCD34D" />
-          <Text style={styles.amountText} maxFontSizeMultiplier={1}>
+        <View style={[styles.amountChip, { backgroundColor: colors.warningDim ?? colors.warning + "18", borderColor: colors.warning + "40" }]}>
+          <Ionicons name="cash-outline" size={15} color={colors.warning} />
+          <Text style={[styles.amountText, { color: colors.warning }]} maxFontSizeMultiplier={1}>
             {formatAmount(parsedPayment.amount, parsedPayment.currency)}
           </Text>
-          <Text style={[styles.amountLabel, { color: brand.subtextOnCard }]} maxFontSizeMultiplier={1}>Pre-filled Amount</Text>
+          <Text style={[styles.amountLabel, { color: colors.textMuted }]} maxFontSizeMultiplier={1}>Pre-filled Amount</Text>
         </View>
       ) : null}
 
       {parsedPayment.note ? (
-        <View style={styles.noteRow}>
-          <Ionicons name="document-text-outline" size={12} color={brand.accentColor} />
-          <Text style={[styles.noteText, { color: brand.subtextOnCard }]} numberOfLines={2}>{parsedPayment.note}</Text>
+        <View style={[styles.noteRow, { backgroundColor: colors.surfaceLight }]}>
+          <Ionicons name="document-text-outline" size={12} color={colors.textMuted} />
+          <Text style={[styles.noteText, { color: colors.textSecondary }]} numberOfLines={2}>{parsedPayment.note}</Text>
         </View>
       ) : null}
 
       {parsedPayment.extraFields?.accountNumber ? (
-        <View style={styles.extraFieldsBlock}>
+        <View style={[styles.extraFieldsBlock, { backgroundColor: colors.surfaceLight, borderColor: colors.surfaceBorder }]}>
           <View style={styles.extraFieldRow}>
-            <Ionicons name="card-outline" size={12} color={brand.accentColor} />
-            <Text style={[styles.extraFieldLabel, { color: brand.subtextOnCard }]}>Account</Text>
-            <Text style={[styles.extraFieldValue, { color: brand.textOnCard }]} selectable>
+            <Ionicons name="card-outline" size={12} color={colors.textMuted} />
+            <Text style={[styles.extraFieldLabel, { color: colors.textMuted }]}>Account</Text>
+            <Text style={[styles.extraFieldValue, { color: colors.text }]} selectable>
               {`••••${parsedPayment.extraFields.accountNumber.slice(-4)}`}
             </Text>
           </View>
           {parsedPayment.extraFields.ifsc ? (
             <View style={styles.extraFieldRow}>
-              <Ionicons name="code-outline" size={12} color={brand.accentColor} />
-              <Text style={[styles.extraFieldLabel, { color: brand.subtextOnCard }]}>IFSC</Text>
-              <Text style={[styles.extraFieldValue, { color: brand.textOnCard }]} selectable>{parsedPayment.extraFields.ifsc}</Text>
+              <Ionicons name="code-outline" size={12} color={colors.textMuted} />
+              <Text style={[styles.extraFieldLabel, { color: colors.textMuted }]}>IFSC</Text>
+              <Text style={[styles.extraFieldValue, { color: colors.text }]} selectable>{parsedPayment.extraFields.ifsc}</Text>
             </View>
           ) : null}
           {parsedPayment.extraFields.bankName ? (
             <View style={styles.extraFieldRow}>
-              <Ionicons name="business-outline" size={12} color={brand.accentColor} />
-              <Text style={[styles.extraFieldLabel, { color: brand.subtextOnCard }]}>Bank</Text>
-              <Text style={[styles.extraFieldValue, { color: brand.textOnCard }]} numberOfLines={1}>{parsedPayment.extraFields.bankName}</Text>
+              <Ionicons name="business-outline" size={12} color={colors.textMuted} />
+              <Text style={[styles.extraFieldLabel, { color: colors.textMuted }]}>Bank</Text>
+              <Text style={[styles.extraFieldValue, { color: colors.text }]} numberOfLines={1}>{parsedPayment.extraFields.bankName}</Text>
             </View>
           ) : null}
           {parsedPayment.extraFields.accountType ? (
             <View style={styles.extraFieldRow}>
-              <Ionicons name="file-tray-outline" size={12} color={brand.accentColor} />
-              <Text style={[styles.extraFieldLabel, { color: brand.subtextOnCard }]}>Type</Text>
-              <Text style={[styles.extraFieldValue, { color: brand.textOnCard }]}>{parsedPayment.extraFields.accountType}</Text>
+              <Ionicons name="file-tray-outline" size={12} color={colors.textMuted} />
+              <Text style={[styles.extraFieldLabel, { color: colors.textMuted }]}>Type</Text>
+              <Text style={[styles.extraFieldValue, { color: colors.text }]}>{parsedPayment.extraFields.accountType}</Text>
             </View>
           ) : null}
         </View>
       ) : null}
 
       {parsedPayment.isEmv && parsedPayment.extraFields && !parsedPayment.extraFields.accountNumber ? (
-        <View style={styles.extraFieldsBlock}>
+        <View style={[styles.extraFieldsBlock, { backgroundColor: colors.surfaceLight, borderColor: colors.surfaceBorder }]}>
           {parsedPayment.extraFields.ifsc ? (
             <View style={styles.extraFieldRow}>
-              <Ionicons name="code-outline" size={12} color={brand.accentColor} />
-              <Text style={[styles.extraFieldLabel, { color: brand.subtextOnCard }]}>IFSC</Text>
-              <Text style={[styles.extraFieldValue, { color: brand.textOnCard }]} selectable>{parsedPayment.extraFields.ifsc}</Text>
+              <Ionicons name="code-outline" size={12} color={colors.textMuted} />
+              <Text style={[styles.extraFieldLabel, { color: colors.textMuted }]}>IFSC</Text>
+              <Text style={[styles.extraFieldValue, { color: colors.text }]} selectable>{parsedPayment.extraFields.ifsc}</Text>
             </View>
           ) : null}
           {parsedPayment.extraFields.billNumber ? (
             <View style={styles.extraFieldRow}>
-              <Ionicons name="receipt-outline" size={12} color={brand.accentColor} />
-              <Text style={[styles.extraFieldLabel, { color: brand.subtextOnCard }]}>Bill No.</Text>
-              <Text style={[styles.extraFieldValue, { color: brand.textOnCard }]} selectable>{parsedPayment.extraFields.billNumber}</Text>
+              <Ionicons name="receipt-outline" size={12} color={colors.textMuted} />
+              <Text style={[styles.extraFieldLabel, { color: colors.textMuted }]}>Bill No.</Text>
+              <Text style={[styles.extraFieldValue, { color: colors.text }]} selectable>{parsedPayment.extraFields.billNumber}</Text>
             </View>
           ) : null}
           {parsedPayment.extraFields.referenceLabel ? (
             <View style={styles.extraFieldRow}>
-              <Ionicons name="bookmark-outline" size={12} color={brand.accentColor} />
-              <Text style={[styles.extraFieldLabel, { color: brand.subtextOnCard }]}>Ref</Text>
-              <Text style={[styles.extraFieldValue, { color: brand.textOnCard }]} selectable>{parsedPayment.extraFields.referenceLabel}</Text>
+              <Ionicons name="bookmark-outline" size={12} color={colors.textMuted} />
+              <Text style={[styles.extraFieldLabel, { color: colors.textMuted }]}>Ref</Text>
+              <Text style={[styles.extraFieldValue, { color: colors.text }]} selectable>{parsedPayment.extraFields.referenceLabel}</Text>
             </View>
           ) : null}
           {parsedPayment.extraFields.mcc ? (
             <View style={styles.extraFieldRow}>
-              <Ionicons name="pricetag-outline" size={12} color={brand.accentColor} />
-              <Text style={[styles.extraFieldLabel, { color: brand.subtextOnCard }]}>MCC</Text>
-              <Text style={[styles.extraFieldValue, { color: brand.textOnCard }]}>{parsedPayment.extraFields.mcc}</Text>
+              <Ionicons name="pricetag-outline" size={12} color={colors.textMuted} />
+              <Text style={[styles.extraFieldLabel, { color: colors.textMuted }]}>MCC</Text>
+              <Text style={[styles.extraFieldValue, { color: colors.text }]}>{parsedPayment.extraFields.mcc}</Text>
             </View>
           ) : null}
         </View>
       ) : null}
 
       {parsedPayment.extraFields?.billerId && !parsedPayment.isEmv && !parsedPayment.extraFields?.accountNumber ? (
-        <View style={styles.extraFieldsBlock}>
+        <View style={[styles.extraFieldsBlock, { backgroundColor: colors.surfaceLight, borderColor: colors.surfaceBorder }]}>
           <View style={styles.extraFieldRow}>
-            <Ionicons name="business-outline" size={12} color={brand.accentColor} />
-            <Text style={[styles.extraFieldLabel, { color: brand.subtextOnCard }]}>Biller</Text>
-            <Text style={[styles.extraFieldValue, { color: brand.textOnCard }]} numberOfLines={1} selectable>{parsedPayment.extraFields.billerId}</Text>
+            <Ionicons name="business-outline" size={12} color={colors.textMuted} />
+            <Text style={[styles.extraFieldLabel, { color: colors.textMuted }]}>Biller</Text>
+            <Text style={[styles.extraFieldValue, { color: colors.text }]} numberOfLines={1} selectable>{parsedPayment.extraFields.billerId}</Text>
           </View>
           {parsedPayment.extraFields.category ? (
             <View style={styles.extraFieldRow}>
-              <Ionicons name="list-outline" size={12} color={brand.accentColor} />
-              <Text style={[styles.extraFieldLabel, { color: brand.subtextOnCard }]}>Category</Text>
-              <Text style={[styles.extraFieldValue, { color: brand.textOnCard }]}>{parsedPayment.extraFields.category}</Text>
+              <Ionicons name="list-outline" size={12} color={colors.textMuted} />
+              <Text style={[styles.extraFieldLabel, { color: colors.textMuted }]}>Category</Text>
+              <Text style={[styles.extraFieldValue, { color: colors.text }]}>{parsedPayment.extraFields.category}</Text>
             </View>
           ) : null}
         </View>
       ) : null}
 
-      <View style={[styles.cardChipLine, { backgroundColor: brand.accentColor + "30" }]} />
+      <View style={[styles.divider, { backgroundColor: colors.surfaceBorder }]} />
       <View style={styles.cardBottomRow}>
         <View style={styles.verifiedRow}>
-          <View style={styles.verifiedDot} />
-          <Text style={[styles.verifiedText, { color: brand.subtextOnCard }]} maxFontSizeMultiplier={1}>
+          <View style={[styles.verifiedDot, { backgroundColor: colors.safe }]} />
+          <Text style={[styles.verifiedText, { color: colors.textMuted }]} maxFontSizeMultiplier={1}>
             Scanned & Analysed by BinRo
           </Text>
         </View>
-        <Text style={[styles.regionText, { color: brand.accentColor }]} maxFontSizeMultiplier={1}>
+        <Text style={[styles.regionText, { color: colors.textMuted }]} maxFontSizeMultiplier={1}>
           {parsedPayment.region}
         </Text>
       </View>
-    </LinearGradient>
+    </View>
   );
 });
 
