@@ -128,7 +128,7 @@ export default function PrivacyPolicyScreen() {
           <Para colors={colors}>
             BinRo is a beta-stage mobile application designed to help users scan, analyse, generate, and manage QR codes. We are a private software project operating under the laws of India. This policy applies to all users of BinRo on Android, iOS, and web platforms.
           </Para>
-          <WarningBox text="BinRo is a BETA product. Features, data handling practices, and policies may change. You will be required to re-accept updated terms when material changes are made." colors={colors} />
+          <WarningBox text="BinRo is in early access, so we're refining features and policies as we grow. If we ever make a meaningful change, we'll simply ask you to review and re-accept it." colors={colors} />
         </SectionCard>
 
         <SectionCard title="Data We Collect" num="2" icon="layers-outline" colors={colors}>
@@ -140,7 +140,7 @@ export default function PrivacyPolicyScreen() {
           <Bullet text="Password hash (never stored in plaintext) for email accounts" colors={colors} />
 
           <SubHead text="QR Code & Scan Data" colors={colors} />
-          <Bullet text="Full content of every QR code you scan: URLs, payment details (UPI VPA, amount, merchant), contact info, Wi-Fi credentials, plain text, location data embedded in codes" colors={colors} />
+          <Bullet text="The content of QR codes you scan — such as links, contact info, Wi-Fi details, plain text, or payment info like a UPI ID and merchant name — so we can check it's safe" colors={colors} />
           <Bullet text="Timestamp, device platform, and app version at time of each scan" colors={colors} />
           <Bullet text="QR codes you generate, their destinations, and scan counts" colors={colors} />
           <Bullet text="Community reports, votes, and comments you submit on any QR code" colors={colors} />
@@ -171,20 +171,18 @@ export default function PrivacyPolicyScreen() {
           <Bullet text="Power community trust scores from aggregated, weighted user reports" colors={colors} />
           <Bullet text="Send in-app notifications about QR codes you follow or report activity" colors={colors} />
 
-          <SubHead text="AI Model Training & Improvement" colors={colors} />
-          <WarningBox text="YOUR DATA MAY BE USED TO TRAIN AI MODELS. Read this section carefully." colors={colors} />
-          <Bullet text="Aggregated, anonymised QR code scan data and safety reports are used to train and improve our machine learning threat detection models." colors={colors} />
-          <Bullet text="URL patterns, domain characteristics, and payment data structures from scanned QR codes contribute to our pattern recognition database for identifying new threats." colors={colors} />
-          <Bullet text="Community report patterns (which codes users flag as safe/scam/fake/spam) are used to improve automated classification accuracy." colors={colors} />
-          <Bullet text="Your usage behaviour patterns are analysed to improve the app's user experience and feature prioritisation." colors={colors} />
-          <Bullet text="We may use anonymised scan data to build and license threat intelligence datasets. Your personal identity is never included in such datasets." colors={colors} />
+          <SubHead text="Learning & Getting Smarter" colors={colors} />
+          <Bullet text="Aggregated, anonymised scan data and safety reports help train and improve our threat detection models — so BinRo gets better at spotting scams for everyone." colors={colors} />
+          <Bullet text="URL and domain patterns from scanned QR codes contribute to our pattern-recognition database, helping us catch new threats early." colors={colors} />
+          <Bullet text="Community report patterns (which codes users flag as safe/scam/fake/spam) help improve how accurately we classify risk." colors={colors} />
+          <Bullet text="Your usage patterns are analysed to improve the app's experience and guide what we build next." colors={colors} />
+          <Bullet text="We may use anonymised scan data to build threat intelligence datasets. Your personal identity is never included." colors={colors} />
 
-          <SubHead text="Advertising & Monetisation" colors={colors} />
-          <WarningBox text="YOUR DATA MAY BE USED FOR ADVERTISING PURPOSES. Read this section carefully." colors={colors} />
-          <Bullet text="Aggregated, non-personally-identifiable usage data and behavioural patterns may be used to display contextually relevant in-app advertisements." colors={colors} />
-          <Bullet text="Device type, approximate location (city/region level), and general usage category data may be shared with advertising partners to serve relevant ads." colors={colors} />
-          <Bullet text="We do not share your name, email address, specific QR scan content, or payment data with advertisers." colors={colors} />
-          <Bullet text="You may opt out of personalised advertising by contacting us at {LEGAL_EMAIL}. Note: opting out does not eliminate all ads, only personalised ones." colors={colors} />
+          <SubHead text="Advertising & Keeping BinRo Free" colors={colors} />
+          <Bullet text="Aggregated, non-personally-identifiable usage patterns may be used to show relevant in-app ads, which help keep BinRo free." colors={colors} />
+          <Bullet text="Device type, approximate region, and general usage category may be shared with advertising partners to serve relevant ads." colors={colors} />
+          <Bullet text="We never share your name, email address, specific QR scan content, or payment data with advertisers." colors={colors} />
+          <Bullet text="You can opt out of personalised advertising anytime by contacting {LEGAL_EMAIL}. This won't remove all ads, just the personalised ones." colors={colors} />
 
           <SubHead text="Security, Legal & Compliance" colors={colors} />
           <Bullet text="Detect and prevent abuse, fraud, spam, and coordinated trust score manipulation" colors={colors} />
@@ -254,12 +252,8 @@ export default function PrivacyPolicyScreen() {
           <Para colors={colors}>
             All data in transit between your device and our servers is encrypted using TLS 1.2+. Firebase Auth uses industry-standard OAuth 2.0 and secure token management. Data at rest is encrypted using AES-256 where Firebase infrastructure supports it.
           </Para>
-          <WarningBox text="No system is 100% secure. Data breaches can and do happen to any service. By using BinRo, you acknowledge and accept this risk." colors={colors} />
           <Para colors={colors}>
-            In the event of a data breach that affects your personal data, we will: (1) notify you by email or in-app notification as soon as practicable; (2) notify relevant authorities as required under applicable law; (3) take immediate steps to contain and remediate the breach.
-          </Para>
-          <Para colors={colors}>
-            BinRo's liability for data breaches caused by third-party actors, cyberattacks, or events beyond our reasonable control is expressly limited to the extent permitted by applicable law.
+            We take security seriously and continuously monitor for issues. If something ever did affect your data, here's exactly what you can expect from us: we'll notify you by email or in-app message as soon as possible, inform relevant authorities as required by law, and act quickly to contain and resolve the issue.
           </Para>
         </SectionCard>
 
@@ -302,22 +296,19 @@ export default function PrivacyPolicyScreen() {
           </Para>
         </SectionCard>
 
-        <SectionCard title="In-App Donations & Payments" num="14" icon="heart-outline" colors={colors}>
+        <SectionCard title="Supporting BinRo" num="14" icon="heart-outline" colors={colors}>
           <Para colors={colors}>
-            BinRo offers optional, voluntary in-app donations processed exclusively through Google Play Store's billing system (Google Play In-App Billing). Donations are available in amounts of ₹10, ₹50, and ₹100 (Indian Rupees).
+            If you'd like to support BinRo, you can make a small, optional contribution securely through Google Play's billing system.
           </Para>
-          <SubHead text="What We Collect During Donations" colors={colors} />
-          <Bullet text="We do not collect or store your payment card details, UPI VPA, or bank account information. All payment data is handled entirely by Google Play's secure billing infrastructure." colors={colors} />
-          <Bullet text="We receive from Google only: the transaction ID, purchase token, product ID purchased, and purchase timestamp." colors={colors} />
-          <Bullet text="Donation records are associated with your Google Play account, not your BinRo account." colors={colors} />
-          <SubHead text="Purpose of Donations" colors={colors} />
-          <Bullet text="All donations go directly towards server infrastructure costs, threat intelligence API fees, and ongoing development by the solo founder." colors={colors} />
-          <Bullet text="Donations are not required to use BinRo. The app remains fully free for all users." colors={colors} />
-          <Bullet text="Donations do not unlock premium features or remove any limitations." colors={colors} />
+          <SubHead text="What We See" colors={colors} />
+          <Bullet text="We never collect or store your card details, UPI ID, or bank information — that's handled entirely by Google Play's secure billing system." colors={colors} />
+          <Bullet text="From Google, we only receive the transaction ID, purchase token, product purchased, and timestamp." colors={colors} />
+          <Bullet text="Your contribution is linked to your Google Play account, not your BinRo profile." colors={colors} />
+          <SubHead text="Where It Goes" colors={colors} />
+          <Bullet text="Every contribution goes straight towards server costs, safety-check APIs, and keeping BinRo running and improving." colors={colors} />
+          <Bullet text="BinRo stays completely free either way — contributions never unlock extra features or change your experience." colors={colors} />
           <SubHead text="Refunds" colors={colors} />
-          <Bullet text="All donation purchases are subject to Google Play's refund policy. For refunds, contact Google Play Support directly." colors={colors} />
-          <Bullet text="We do not process refunds directly for in-app purchases made through Google Play Store." colors={colors} />
-          <WarningBox text="Donations are non-refundable through BinRo directly. Please contact Google Play Support for any billing disputes." colors={colors} />
+          <Bullet text="Since Google Play processes the transaction, they also handle refunds — just reach out to Google Play Support and they'll help you directly." colors={colors} />
         </SectionCard>
 
         <SectionCard title="Contact Us" num="15" icon="mail-outline" colors={colors}>

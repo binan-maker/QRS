@@ -50,33 +50,32 @@ export default function ConsentScrollBody({
           <Ionicons name="information-circle-outline" size={14} color={sectionBlue} style={{ marginTop: 1, flexShrink: 0 }} />
           <Text style={{ flex: 1, fontSize: 12, lineHeight: 18, color: bodyText }}>
             BinRo is in{" "}
-            <Text style={{ fontWeight: "700", color: boldText }}>beta</Text>
-            {" "}— features may change without notice. Use at your own discretion.
+            <Text style={{ fontWeight: "700", color: boldText }}>early access</Text>
+            {" "}— we're polishing things fast, so a few features may evolve as we go.
           </Text>
         </View>
 
-        <Section label="Nature of Service" color={sectionBlue}>
+        <Section label="What BinRo Does" color={sectionBlue}>
           <Body color={bodyText}>
-            Our security analysis is{" "}
-            <Bold color={boldText}>advisory only</Bold> — not a substitute for
-            professional cybersecurity advice. False positives and negatives may occur.
+            BinRo helps you scan and generate QR codes with confidence. Our safety
+            checks are a helpful guide — a smart second opinion — and work alongside
+            your own good judgement, not in place of it.
           </Body>
         </Section>
 
-        <Section label="No Warranty" color={sectionBlue}>
+        <Section label="Always Improving" color={sectionBlue}>
           <Body color={bodyText}>
-            This app is provided{" "}
-            <Bold color={boldText}>"as is"</Bold> without any warranty of
-            merchantability, fitness, accuracy, or uninterrupted operation.
+            We're a young app and actively improving every week. Occasionally
+            something may not work perfectly — if it does, we'd love to hear
+            about it so we can fix it fast.
           </Body>
         </Section>
 
-        <Section label="Limitation of Liability" color={sectionBlue}>
+        <Section label="Keeping Things Fair" color={sectionBlue}>
           <Body color={bodyText}>
-            BinRo is{" "}
-            <Bold color={boldText}>not liable</Bold> for any direct, indirect, or
-            financial damages. Maximum liability is{" "}
-            <Bold color={boldText}>₹0 or amount paid</Bold>, whichever is greater.
+            BinRo is free to use. Like any safety tool, our checks are there to
+            help you make informed choices, but the final call on any link or
+            payment is always yours — so stay thoughtful when something feels off.
           </Body>
         </Section>
 
@@ -85,10 +84,10 @@ export default function ConsentScrollBody({
             "Account info: email, name, profile picture.",
             "Device info: OS, app version, identifiers.",
             "Usage data: scan history, feature patterns.",
-            "QR content: URLs, payment data, scanned text.",
-            "Network: IP address, approximate location.",
-            "Camera: processed locally, never uploaded.",
-            "Community: reports and votes you submit.",
+            "QR content you scan or create, so we can check it's safe.",
+            "Approximate location, to tailor threat detection to your region.",
+            "Camera: processed locally on your device, never uploaded.",
+            "Community: reports and votes you choose to submit.",
           ]} />
         </Section>
 
@@ -102,43 +101,45 @@ export default function ConsentScrollBody({
           ]} />
         </Section>
 
-        <Section label="AI Training" color={sectionBlue}>
+        <Section label="Getting Smarter Together" color={sectionBlue}>
           <Body color={bodyText}>
-            <Bold color={boldText}>By using BinRo</Bold>, your anonymised scan
-            data may be used to{" "}
-            <Bold color={boldText}>train AI threat detection models</Bold>.
-            Opt-out is not available while using the scanning feature.
+            BinRo gets better at spotting scams by learning from anonymised,
+            community-wide scan patterns —{" "}
+            <Bold color={boldText}>never</Bold> from anything that identifies you
+            personally. This is what keeps our threat detection sharp for everyone.
           </Body>
         </Section>
 
         <Section label="Advertising" color={sectionBlue}>
           <Body color={bodyText}>
-            BinRo may display ads. Aggregated, non-personal usage data may be
-            shared with ad partners. We do{" "}
-            <Bold color={boldText}>not</Bold> sell personally identifiable information.
+            BinRo may show occasional ads to help keep the app free. Only
+            aggregated, non-personal usage data is ever shared with ad partners
+            — we{" "}
+            <Bold color={boldText}>never</Bold> sell your personal information.
           </Body>
         </Section>
 
-        <Section label="Third-Party Services" color={sectionBlue}>
+        <Section label="Trusted Partners" color={sectionBlue}>
           <Body color={bodyText}>
-            Integrates Firebase, Google Safe Browsing, and Razorpay. We are{" "}
-            <Bold color={boldText}>not responsible</Bold> for those parties' practices.
+            BinRo works with trusted infrastructure partners, including
+            Firebase and Google Safe Browsing, to keep the app fast, secure,
+            and up to date.
           </Body>
         </Section>
 
-        <Section label="Your Responsibility" color={sectionBlue}>
+        <Section label="Your Part" color={sectionBlue}>
           <Bullets color={bodyText} bullet={primaryColor} items={[
-            "You use BinRo voluntarily and at your own risk.",
-            "You are solely responsible for actions based on verdicts.",
-            "SAFE / CAUTION / DANGEROUS are indicators, not guarantees.",
+            "You're always in control of the QR codes you scan or share.",
+            "Our SAFE / CAUTION / DANGEROUS ratings are a guide, not a guarantee.",
+            "A little caution goes a long way — especially with payments.",
           ]} />
         </Section>
 
-        <Section label="Governing Law" color={sectionBlue}>
+        <Section label="Legal Basics" color={sectionBlue}>
           <Body color={bodyText}>
-            Governed by the laws of{" "}
-            <Bold color={boldText}>the Republic of India</Bold>. Disputes are
-            resolved by arbitration in Kerala, India. Class-action claims are waived.
+            BinRo operates under the laws of{" "}
+            <Bold color={boldText}>India</Bold>. Full details, including how
+            disputes are handled, are available in our Terms of Service below.
           </Body>
         </Section>
 

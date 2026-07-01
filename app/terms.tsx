@@ -122,11 +122,11 @@ export default function TermsScreen() {
           <Para colors={colors}>
             If you do not agree to any part of these Terms, you must immediately stop using the App. We reserve the right to modify these Terms at any time without prior notice. Changes become effective when the consent version is updated in-app. Continued use after accepting updated Terms constitutes full agreement.
           </Para>
-          <WarnBox text="THIS IS A BETA APPLICATION. All features are provided on a best-effort basis with no guarantee of continuous availability, accuracy, or reliability." colors={colors} />
+          <WarnBox text="BinRo is a growing, early-access app. Most things work great, but we're still refining features, so availability and results may occasionally vary as we improve." colors={colors} />
         </SectionCard>
 
         <SectionCard title="Description of Service" num="2" colors={colors}>
-          <Para colors={colors}>{APP_NAME} provides a beta-stage platform for:</Para>
+          <Para colors={colors}>{APP_NAME} is a platform for:</Para>
           <Bullet text="QR code scanning via device camera and gallery image upload" colors={colors} />
           <Bullet text="AI-assisted and community-powered QR code safety analysis and scoring" colors={colors} />
           <Bullet text="User-submitted safety reports, community commentary, and trust voting" colors={colors} />
@@ -134,40 +134,40 @@ export default function TermsScreen() {
           <Bullet text="Branded individual and business QR code generation" colors={colors} />
           <Bullet text="Threat intelligence database powered by aggregated community scan data" colors={colors} />
           <Para colors={colors}>
-            The Service is provided for informational and protective purposes only. Nothing in the App constitutes professional cybersecurity, financial, legal, or expert advice.
+            The Service is provided for informational and protective purposes. Nothing in the App constitutes professional cybersecurity, financial, legal, or expert advice.
           </Para>
         </SectionCard>
 
-        <SectionCard title="Beta Status & No Warranty" num="3" colors={colors}>
+        <SectionCard title="Service Quality & Warranty" num="3" colors={colors}>
           <View style={[styles.warningBox, { backgroundColor: colors.warningDim, borderColor: colors.warning + "35" }]}>
-            <Ionicons name="warning" size={16} color={colors.warning} />
+            <Ionicons name="information-circle" size={16} color={colors.warning} />
             <Text style={[styles.warningText, { color: colors.warning }]}>
-              THE APP IS PROVIDED "AS IS" AND "AS AVAILABLE" WITHOUT WARRANTIES OF ANY KIND, EXPRESS OR IMPLIED.
+              The App is provided on an "as is" and "as available" basis, without guarantees beyond what's described here.
             </Text>
           </View>
-          <Para colors={colors}>We expressly disclaim all warranties, including:</Para>
-          <Bullet text="Merchantability, fitness for a particular purpose, and non-infringement" colors={colors} />
-          <Bullet text="Accuracy, completeness, or reliability of any QR code analysis or safety verdict" colors={colors} />
-          <Bullet text="Uninterrupted, error-free, or secure operation of the App" colors={colors} />
-          <Bullet text="That the App will detect all malicious QR codes, phishing URLs, or fraudulent content" colors={colors} />
-          <Bullet text="That any QR code rated 'Safe' is actually safe, or any rated 'Dangerous' is actually malicious" colors={colors} />
+          <Para colors={colors}>To keep this clear and fair, we don't guarantee:</Para>
+          <Bullet text="Merchantability, fitness for a particular purpose, or non-infringement" colors={colors} />
+          <Bullet text="Complete accuracy of every QR code analysis or safety verdict" colors={colors} />
+          <Bullet text="Uninterrupted, error-free, or fully secure operation of the App at all times" colors={colors} />
+          <Bullet text="Detection of every possible malicious QR code, phishing URL, or fraudulent content" colors={colors} />
+          <Bullet text="That a 'Safe' rating means zero risk, or a 'Dangerous' rating is always accurate" colors={colors} />
           <Para colors={colors}>
-            QR GUARD IS AN INFORMATIONAL TOOL ONLY. ALL DECISIONS MADE IN RESPONSE TO APP OUTPUTS ARE MADE SOLELY BY YOU AT YOUR OWN RISK.
+            BinRo is an informational tool designed to support your decisions — the final call on any QR code is always yours.
           </Para>
         </SectionCard>
 
         <SectionCard title="Limitation of Liability" num="4" colors={colors}>
           <Para colors={colors}>
-            TO THE MAXIMUM EXTENT PERMITTED BY THE LAWS OF INDIA (INCLUDING THE INFORMATION TECHNOLOGY ACT, 2000 AND AMENDMENTS, AND THE DIGITAL PERSONAL DATA PROTECTION ACT, 2023), QR GUARD AND ITS DEVELOPERS, OFFICERS, EMPLOYEES, AND AFFILIATES SHALL NOT BE LIABLE FOR:
+            To the extent permitted by the laws of India (including the Information Technology Act, 2000 and the Digital Personal Data Protection Act, 2023), BinRo and its team are not responsible for:
           </Para>
-          <Bullet text="Financial loss, theft, or fraud resulting from scanning, following, or acting on any QR code, regardless of the App's stated safety verdict" colors={colors} />
-          <Bullet text="Identity theft, data compromise, or device infection from any QR code or linked destination" colors={colors} />
+          <Bullet text="Financial loss, theft, or fraud resulting from acting on any QR code, regardless of the App's stated safety verdict" colors={colors} />
+          <Bullet text="Identity theft, data compromise, or device issues arising from a QR code or linked destination" colors={colors} />
           <Bullet text="Loss of business, revenue, profits, data, goodwill, or opportunity" colors={colors} />
-          <Bullet text="Reliance on any trust score, safety rating, community report, or AI-generated analysis" colors={colors} />
-          <Bullet text="Any government fine, regulatory penalty, or civil claim brought against you arising from your use of the App" colors={colors} />
-          <Bullet text="Any indirect, consequential, special, incidental, punitive, or exemplary damages" colors={colors} />
+          <Bullet text="Decisions made based on a trust score, safety rating, community report, or AI-generated analysis" colors={colors} />
+          <Bullet text="Any government fine, regulatory penalty, or civil claim arising from your use of the App" colors={colors} />
+          <Bullet text="Indirect, consequential, or incidental damages of any kind" colors={colors} />
           <Para colors={colors}>
-            OUR MAXIMUM AGGREGATE LIABILITY TO YOU FOR ANY CLAIM ARISING FROM YOUR USE OF THE APP SHALL NOT EXCEED THE AMOUNT YOU PAID US IN THE PRECEDING 12 MONTHS, OR ₹100 (ONE HUNDRED INDIAN RUPEES), WHICHEVER IS GREATER.
+            Our total liability for any claim relating to your use of the App is limited to the amount you've paid us, if any, in the preceding 12 months.
           </Para>
         </SectionCard>
 
@@ -182,18 +182,17 @@ export default function TermsScreen() {
           <Bullet text="Any dispute between you and any third party in connection with the App" colors={colors} />
         </SectionCard>
 
-        <SectionCard title="Data Use for AI & Advertising" num="6" colors={colors}>
-          <WarnBox text="By using BinRo, you explicitly consent to your data being used for AI training and advertising as described below." colors={colors} />
+        <SectionCard title="Getting Smarter & Keeping the Lights On" num="6" colors={colors}>
           <Para colors={colors}>
-            Your usage data, QR scan patterns, and community contributions may be used to:
+            To keep BinRo accurate and free, anonymised usage patterns and community contributions may be used to:
           </Para>
-          <Bullet text="Train and improve BinRo's AI threat detection models and pattern recognition systems" colors={colors} />
-          <Bullet text="Build and maintain an anonymised threat intelligence database that may be shared with or licensed to security partners" colors={colors} />
-          <Bullet text="Analyse aggregate behavioural patterns for product improvement and feature development" colors={colors} />
-          <Bullet text="Serve contextually relevant in-app advertisements based on aggregated, non-personally-identifiable usage data" colors={colors} />
-          <Bullet text="Share anonymised, aggregated data patterns with advertising partners for ad relevance scoring" colors={colors} />
+          <Bullet text="Train and improve BinRo's threat detection models and pattern recognition systems" colors={colors} />
+          <Bullet text="Build and maintain an anonymised threat intelligence database that may be shared with security partners" colors={colors} />
+          <Bullet text="Analyse aggregate behavioural patterns to guide product improvements and new features" colors={colors} />
+          <Bullet text="Show relevant in-app ads based on aggregated, non-personally-identifiable usage data" colors={colors} />
+          <Bullet text="Share anonymised, aggregated data patterns with advertising partners for ad relevance" colors={colors} />
           <Para colors={colors}>
-            We will never share your name, email, specific QR code content, or payment data with advertisers. AI training uses only anonymised, aggregated data patterns. You may opt out of personalised advertising by contacting {CONTACT_EMAIL}.
+            We never share your name, email, specific QR code content, or payment data with advertisers. All of the above uses only anonymised, aggregated patterns — nothing tied to you personally. You can opt out of personalised advertising anytime by contacting {CONTACT_EMAIL}.
           </Para>
         </SectionCard>
 
@@ -268,10 +267,10 @@ export default function TermsScreen() {
             If good-faith negotiation fails, disputes shall be resolved by binding arbitration under the Arbitration and Conciliation Act, 1996 of India. The seat and venue of arbitration shall be Kerala, India. The arbitration shall be conducted in English by a sole arbitrator appointed by mutual agreement.
           </Para>
           <Para colors={colors}>
-            YOU WAIVE ANY RIGHT TO PARTICIPATE IN A CLASS ACTION LAWSUIT OR CLASS-WIDE ARBITRATION AGAINST QR GUARD. All claims must be brought on an individual basis only.
+            Claims are handled individually rather than as part of a class action or class-wide arbitration.
           </Para>
           <Para colors={colors}>
-            If arbitration is not permissible under applicable law, you agree that courts of competent jurisdiction in Kerala, India, shall have exclusive jurisdiction over any dispute.
+            If arbitration isn't permitted under applicable law, courts in Kerala, India will have exclusive jurisdiction over any dispute.
           </Para>
         </SectionCard>
 
@@ -293,18 +292,20 @@ export default function TermsScreen() {
           </Para>
         </SectionCard>
 
-        <SectionCard title="In-App Donations" num="15" colors={colors}>
+        <SectionCard title="Supporting BinRo" num="15" colors={colors}>
           <Para colors={colors}>
-            BinRo offers optional, voluntary donations processed via Google Play Store In-App Billing. By making a donation, you agree to the following terms in addition to Google Play's Terms of Service.
+            If you'd like to support BinRo's development, you can make a small optional contribution through Google Play's secure billing system. By contributing, you agree to the following, in addition to Google Play's Terms of Service.
           </Para>
-          <Bullet text="Donations are available in amounts of ₹10, ₹50, and ₹100 (Indian Rupees) and are entirely voluntary." colors={colors} />
-          <Bullet text="Donations are one-time purchases and do not create any subscription, obligation, or recurring charge." colors={colors} />
-          <Bullet text="Donations do not entitle you to any premium features, preferential treatment, or additional rights within the App." colors={colors} />
-          <Bullet text="All donation transactions are processed and billed by Google LLC via Google Play's secure billing infrastructure. BinRo does not access or store your payment details." colors={colors} />
-          <Bullet text="Proceeds from donations are used solely for server costs, API fees, and development expenses incurred in running BinRo." colors={colors} />
-          <WarnBox text="DONATIONS ARE NON-REFUNDABLE THROUGH QR GUARD. For refund requests, contact Google Play Support directly. BinRo has no ability to issue refunds for Play Store transactions." colors={colors} />
+          <Bullet text="Contributions are entirely voluntary and are offered in a few small amounts." colors={colors} />
+          <Bullet text="They're one-time and don't create any subscription or recurring charge." colors={colors} />
+          <Bullet text="They don't unlock premium features — BinRo stays free and fully usable for everyone either way." colors={colors} />
+          <Bullet text="All transactions are handled securely by Google Play. BinRo never sees or stores your payment details." colors={colors} />
+          <Bullet text="Every contribution goes straight back into keeping BinRo running — covering server costs, safety-check APIs, and ongoing development." colors={colors} />
           <Para colors={colors}>
-            BinRo reserves the right to modify, suspend, or discontinue the donation feature at any time without notice. No liability arises from any such change.
+            Refunds for these contributions are handled by Google Play Support, since that's who processes the transaction — just reach out to them directly and they'll take care of it.
+          </Para>
+          <Para colors={colors}>
+            We may adjust or pause this feature from time to time as we keep improving the app.
           </Para>
         </SectionCard>
 
