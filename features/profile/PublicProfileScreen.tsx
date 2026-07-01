@@ -237,9 +237,6 @@ export default function PublicProfileScreen() {
           )}
           <Text style={[S.displayName, { color: colors.text }]}>{profile.displayName}</Text>
           <Text style={[S.usernameText, { color: colors.primary }]}>@{profile.username}</Text>
-          {profile.bio ? (
-            <Text style={[S.bio, { color: colors.textSecondary }]}>{profile.bio}</Text>
-          ) : null}
           <Text style={[S.joinDate, { color: colors.textMuted }]}>{formatJoinDate(profile.joinedAt)}</Text>
         </Animated.View>
 

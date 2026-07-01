@@ -48,7 +48,6 @@ const ENTER_AVATAR_SEC   = FadeInDown.delay(30).duration(260);
 const ENTER_AVATAR_WRAP  = FadeIn.delay(40).duration(240);
 const ENTER_NAME         = FadeInDown.delay(50).duration(260);
 const ENTER_USERNAME     = FadeInDown.delay(60).duration(260);
-const ENTER_BIO          = FadeInDown.delay(70).duration(260);
 const ENTER_EDIT_BTN     = FadeInDown.delay(80).duration(260);
 const ENTER_STATS_GRID   = FadeInDown.delay(50).duration(260);
 const ENTER_QR_SECTION   = FadeInDown.delay(70).duration(260);
@@ -182,7 +181,6 @@ function ProfileScreen() {
     myQrCodes, myQrLoading,
     currentUsername,
     initials,
-    bio,
     refreshing, handleRefresh,
     handlePickPhoto, handleRemovePhoto, handleSignOut,
   } = useProfile();
@@ -376,13 +374,6 @@ function ProfileScreen() {
             >
               @{currentUsername}
             </Animated.Text>
-          ) : null}
-
-          {/* Bio */}
-          {bio ? (
-            <Animated.View entering={ENTER_BIO}>
-              <Text style={[styles.bioText, { color: colors.textSecondary }]} numberOfLines={2}>{bio}</Text>
-            </Animated.View>
           ) : null}
 
           {/* Edit profile button */}

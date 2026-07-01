@@ -16,7 +16,6 @@ import {
   type UserStats,
   type GeneratedQrItem,
 } from "@/lib/firestore-service";
-import { getUserBio } from "@/services/user-service";
 import {
   getCachedUserStats,
   setCachedUserStats,
@@ -31,7 +30,6 @@ const STATS_STALE_MS  = 3 * 60 * 1000;
 const EXTRAS_STALE_MS = 5 * 60 * 1000;
 
 interface ProfileExtras {
-  bio: string;
   friendsCount: number;
   fetchedAt: number;
 }
@@ -52,7 +50,6 @@ export function useProfile() {
   const [refreshing,     setRefreshing]     = useState(false);
   const [myQrCodes,      setMyQrCodes]      = useState<GeneratedQrItem[]>([]);
   const [myQrLoading,    setMyQrLoading]    = useState(true);
-  const [bio,            setBio]            = useState("");
   const [currentUsername, setCurrentUsername] = useState<string | null>(user?.username || null);
 
   const myQrCodesRef        = useRef<GeneratedQrItem[]>([]);
@@ -72,7 +69,6 @@ export function useProfile() {
     setCurrentUsername(user?.username || null);
     setStats({ followingCount: 0, scanCount: 0, commentCount: 0, totalLikesReceived: 0 });
     hasLoadedStatsRef.current    = false;
-    setBio("");
     lastStatsFetchRef.current    = 0;
     lastExtrasFetchRef.current   = 0;
   }, [user?.id]);
@@ -125,7 +121,7 @@ export function useProfile() {
     inFlightStatsRef.current = false;
   }, [user?.id]);
 
-  // ── Profile extras: bio + friends count (5-min stale, disk-cached) ─────────
+  // ── Profile extras: friends count (5-min stale, disk-cached) ───────────────
   const loadProfileExtras = useCallback(async (forceRefresh = false) => {
     if (!user) return;
     if (inFlightExtrasRef.current) return;
@@ -135,23 +131,17 @@ export function useProfile() {
       if (!forceRefresh) {
         const cached = await getCachedProfileExtras<ProfileExtras>(user.id);
         if (cached) {
-          setBio(cached.bio || "");
           lastExtrasFetchRef.current = cached.fetchedAt;
           inFlightExtrasRef.current = false;
           return; // cache is valid — no Firestore round-trip needed
         }
       }
-      const [bioRes, doc] = await Promise.all([
-        getUserBio(user.id).catch(() => ""),
-        db.get(["users", user.id]).catch(() => null),
-      ]);
-      const nextBio     = bioRes || "";
+      const doc = await db.get(["users", user.id]).catch(() => null);
       const nextFriends = (doc as any)?.friendsCount ?? 0;
-      setBio(nextBio);
       const fetchedAt = Date.now();
       lastExtrasFetchRef.current = fetchedAt;
       setCachedProfileExtras<ProfileExtras>(user.id, {
-        bio: nextBio, friendsCount: nextFriends, fetchedAt,
+        friendsCount: nextFriends, fetchedAt,
       }).catch(() => {});
     } catch {}
     inFlightExtrasRef.current = false;
@@ -164,15 +154,6 @@ export function useProfile() {
       loadProfileExtras();
     }, [loadStats, loadProfileExtras])
   );
-
-  // Hydrate from cache on first mount so the first paint is instant
-  useEffect(() => {
-    if (!user) return;
-    getCachedProfileExtras<ProfileExtras>(user.id).then((cached) => {
-      if (!cached) return;
-      setBio(cached.bio || "");
-    }).catch(() => {});
-  }, [user?.id]);
 
   // Generated-QR listener — started once per user and kept alive across tab
   // switches.  Previously the listener was torn down on every blur and rebuilt
@@ -427,7 +408,6 @@ export function useProfile() {
     myQrLoading,
     currentUsername,
     initials,
-    bio,
     refreshing,
     handleRefresh,
     handlePickPhoto,

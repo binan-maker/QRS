@@ -20,7 +20,6 @@ export interface PublicProfile {
   userId: string;
   displayName: string;
   username: string;
-  bio: string;
   photoURL: string | null;
   joinedAt: string | null;
   privacy: PrivacySettings;
@@ -155,7 +154,6 @@ export async function getPublicProfile(username: string): Promise<PublicProfile 
       userId,
       displayName: userDoc.displayName || username,
       username,
-      bio: userDoc.bio || "",
       photoURL: userDoc.photoURL || null,
       joinedAt,
       privacy,
@@ -185,23 +183,6 @@ export async function getPublicQrCodes(userId: string): Promise<any[]> {
       .map((d: any) => ({ id: d.id, ...d.data, createdAt: tsToString(d.data.createdAt) }));
   } catch {
     return [];
-  }
-}
-
-export async function updateBio(userId: string, bio: string): Promise<void> {
-  await db.update(["users", userId], { bio: bio.trim().slice(0, 150) });
-}
-
-export async function getUserBio(userId: string): Promise<string> {
-  try {
-    let doc = getCachedUserProfile(userId);
-    if (!doc) {
-      doc = await db.get(["users", userId]);
-      if (doc) setCachedUserProfile(userId, doc);
-    }
-    return doc?.bio || "";
-  } catch {
-    return "";
   }
 }
 

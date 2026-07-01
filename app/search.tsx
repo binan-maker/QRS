@@ -203,9 +203,6 @@ export default function SearchScreen() {
                     {item.displayName}
                   </Text>
                   <Text style={[styles.username, { color: colors.primary }]}>@{item.username}</Text>
-                  {item.bio ? (
-                    <Text style={[styles.bio, { color: colors.textMuted }]} numberOfLines={1}>{item.bio}</Text>
-                  ) : null}
                 </View>
 
                 {/* Action */}
@@ -271,7 +268,6 @@ const styles = StyleSheet.create({
   avatarInitials: { fontSize: 18, fontFamily: "Inter_700Bold", color: "#fff" },
   displayName: { fontSize: 15, fontFamily: "Inter_700Bold" },
   username: { fontSize: 13, fontFamily: "Inter_500Medium" },
-  bio: { fontSize: 12, fontFamily: "Inter_400Regular", marginTop: 2 },
   actionBtn: {
     borderRadius: 12, borderWidth: 1, paddingHorizontal: 12, paddingVertical: 7,
     alignItems: "center", justifyContent: "center", overflow: "hidden",

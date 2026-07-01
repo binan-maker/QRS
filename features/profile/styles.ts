@@ -68,8 +68,6 @@ export const styles = StyleSheet.create({
   },
   displayName: { fontSize: 20, fontFamily: "Inter_700Bold" },
   usernameText: { fontSize: 13, fontFamily: "Inter_500Medium" },
-  bioText: { fontSize: 13, fontFamily: "Inter_400Regular", textAlign: "center", lineHeight: 18, paddingHorizontal: 24 },
-  bioHint: { fontSize: 13, fontFamily: "Inter_500Medium", textDecorationLine: "underline" },
   editProfileBtn: {
     marginTop: 6, paddingHorizontal: 22, paddingVertical: 8,
     borderRadius: 10, borderWidth: 1,
@@ -172,7 +170,6 @@ export const publicStyles = StyleSheet.create({
 
   displayName: { fontSize: 20, fontFamily: "Inter_700Bold", textAlign: "center" },
   usernameText: { fontSize: 13, fontFamily: "Inter_500Medium" },
-  bio: { fontSize: 13, fontFamily: "Inter_400Regular", textAlign: "center", lineHeight: 19, maxWidth: 280, marginTop: 4 },
   joinDate: { fontSize: 11, fontFamily: "Inter_400Regular", marginTop: 2 },
 
   // ── Stats row ────────────────────────────────────────────────────────────

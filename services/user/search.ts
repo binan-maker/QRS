@@ -5,7 +5,6 @@ export interface UserSearchResult {
   displayName: string;
   username: string;
   photoURL: string | null;
-  bio: string;
 }
 
 export async function searchUsers(query: string): Promise<UserSearchResult[]> {
@@ -26,7 +25,6 @@ export async function searchUsers(query: string): Promise<UserSearchResult[]> {
         displayName: d.data.displayName || d.data.username || "",
         username: d.data.username || "",
         photoURL: d.data.photoURL || null,
-        bio: d.data.bio || "",
       }));
   } catch {
     return [];

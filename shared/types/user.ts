@@ -4,7 +4,6 @@ export interface AppUser {
   email: string;
   photoURL?: string | null;
   username?: string | null;
-  bio?: string;
   createdAt?: number;
 }
 
@@ -20,7 +19,6 @@ export interface PublicProfile {
   displayName: string;
   username?: string;
   photoURL?: string | null;
-  bio?: string;
   scanCount?: number;
   followersCount?: number;
   followingCount?: number;
