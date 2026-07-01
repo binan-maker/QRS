@@ -1,6 +1,5 @@
 import React from "react";
 import { View, StyleSheet } from "react-native";
-import { LinearGradient } from "expo-linear-gradient";
 import { useTheme } from "@/shared/contexts/ThemeContext";
 import { CardHeader, InfoGrid, InfoRow, Divider, OpenButton } from "../shared";
 import { parseWifi } from "../parsers";
@@ -22,8 +21,7 @@ export default function WifiCard({ content, onOpenContent, isDeactivated, hideOp
   if (!wifi) return null;
 
   return (
-    <View style={[styles.card, { backgroundColor: colors.surface, borderColor: accentColor + "45" }]}>
-      <LinearGradient colors={[accentColor + (isDark ? "18" : "0C"), "transparent"]} style={StyleSheet.absoluteFill} />
+    <View style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
       <CardHeader icon="wifi-outline" gradient={GRADIENT} title="Wi-Fi Network" subtitle={wifi.ssid} content={content} colors={colors} />
       <InfoGrid accentColor={accentColor} colors={colors} isDark={isDark}>
         <InfoRow label="Network" value={wifi.ssid} icon="wifi-outline" accentColor={accentColor} colors={colors} />

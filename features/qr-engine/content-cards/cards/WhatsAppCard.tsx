@@ -1,6 +1,5 @@
 import React from "react";
 import { View, StyleSheet } from "react-native";
-import { LinearGradient } from "expo-linear-gradient";
 import { useTheme } from "@/shared/contexts/ThemeContext";
 import { CardHeader, InfoGrid, InfoRow, Divider, OpenButton } from "../shared";
 import { parseWhatsApp } from "../parsers";
@@ -20,8 +19,7 @@ export default function WhatsAppCard({ content, onOpenContent, isDeactivated, hi
   const accentColor = GRADIENT[0];
 
   return (
-    <View style={[styles.card, { backgroundColor: colors.surface, borderColor: accentColor + "45" }]}>
-      <LinearGradient colors={[accentColor + (isDark ? "18" : "0C"), "transparent"]} style={StyleSheet.absoluteFill} />
+    <View style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
       <CardHeader icon="logo-whatsapp" gradient={GRADIENT} title="WhatsApp" subtitle={data.phone || undefined} content={content} colors={colors} />
       <InfoGrid accentColor={accentColor} colors={colors} isDark={isDark}>
         {data.phone ? <InfoRow label="Number"  value={data.phone} icon="logo-whatsapp"      accentColor={accentColor} colors={colors} selectable /> : null}

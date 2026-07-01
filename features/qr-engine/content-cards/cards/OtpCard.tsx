@@ -54,32 +54,31 @@ export default function OtpCard({ content, onOpenContent, isDeactivated, hideOpe
   }
 
   return (
-    <View style={[styles.card, { backgroundColor: colors.surface, borderColor: accentColor + "45" }]}>
-      <LinearGradient colors={[accentColor + (isDark ? "18" : "0C"), "transparent"]} style={StyleSheet.absoluteFill} />
+    <View style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
       <CardHeader icon="key-outline" gradient={GRADIENT} title="Authenticator Key" subtitle={otp.issuer || otp.account} content={content} colors={colors} />
 
-      <View style={[styles.infoGrid, { backgroundColor: isDark ? "#0F172A55" : "#F0F9FF", borderColor: accentColor + "30" }]}>
+      <View style={[styles.infoGrid, { backgroundColor: colors.surfaceLight, borderColor: colors.surfaceBorder }]}>
         {otp.issuer ? (
           <View style={styles.infoRow}>
-            <Ionicons name="business-outline" size={14} color={accentColor} />
+            <Ionicons name="business-outline" size={14} color={colors.textSecondary} />
             <Text style={[styles.infoLabel, { color: colors.textMuted }]}>Issuer</Text>
             <Text style={[styles.infoValue, { color: colors.text }]}>{otp.issuer}</Text>
           </View>
         ) : null}
         {otp.account ? (
           <View style={styles.infoRow}>
-            <Ionicons name="person-outline" size={14} color={accentColor} />
+            <Ionicons name="person-outline" size={14} color={colors.textSecondary} />
             <Text style={[styles.infoLabel, { color: colors.textMuted }]}>Account</Text>
             <Text style={[styles.infoValue, { color: colors.text }]} numberOfLines={1}>{otp.account}</Text>
           </View>
         ) : null}
         <View style={styles.infoRow}>
-          <Ionicons name="timer-outline" size={14} color={accentColor} />
+          <Ionicons name="timer-outline" size={14} color={colors.textSecondary} />
           <Text style={[styles.infoLabel, { color: colors.textMuted }]}>Type</Text>
           <Text style={[styles.infoValue, { color: colors.text }]}>{otp.type}</Text>
         </View>
         <View style={[styles.infoRow, { borderBottomWidth: 0 }]}>
-          <Ionicons name="refresh-outline" size={14} color={accentColor} />
+          <Ionicons name="refresh-outline" size={14} color={colors.textSecondary} />
           <Text style={[styles.infoLabel, { color: colors.textMuted }]}>Refresh</Text>
           <Text style={[styles.infoValue, { color: colors.text }]}>{otp.period}s</Text>
         </View>
@@ -91,12 +90,12 @@ export default function OtpCard({ content, onOpenContent, isDeactivated, hideOpe
       </View>
 
       <Pressable onPress={handleCopy} style={({ pressed }) => [styles.copyBtn, {
-        backgroundColor: copied ? "#0891B220" : isDark ? "#0891B215" : "#E0F7FA",
-        borderColor: copied ? "#0891B260" : accentColor + "40",
+        backgroundColor: copied ? colors.safe + "18" : colors.surfaceLight,
+        borderColor: copied ? colors.safe : colors.surfaceBorder,
         opacity: pressed ? 0.8 : 1,
       }]}>
-        <Ionicons name={copied ? "checkmark-circle" : "copy-outline"} size={14} color={accentColor} />
-        <Text style={[styles.copyBtnText, { color: accentColor }]}>{copied ? "Copied Key!" : "Copy Key URI"}</Text>
+        <Ionicons name={copied ? "checkmark-circle" : "copy-outline"} size={14} color={colors.textSecondary} />
+        <Text style={[styles.copyBtnText, { color: colors.textSecondary }]}>{copied ? "Copied Key!" : "Copy Key URI"}</Text>
       </Pressable>
 
       {!isDeactivated && !hideOpenAction && (
@@ -120,11 +119,11 @@ export default function OtpCard({ content, onOpenContent, isDeactivated, hideOpe
             onPress={handleInstall}
             style={({ pressed }) => [
               styles.installBtn,
-              { backgroundColor: isDark ? "rgba(8,145,178,0.08)" : "#F0FAFA", borderColor: accentColor + "35", opacity: pressed ? 0.8 : 1 },
+              { backgroundColor: isDark ? "rgba(8,145,178,0.08)" : "#F0FAFA", borderColor: colors.surfaceBorder, opacity: pressed ? 0.8 : 1 },
             ]}
           >
-            <Ionicons name="download-outline" size={14} color={accentColor} />
-            <Text style={[styles.installBtnText, { color: accentColor }]}>Don't have an authenticator? Install one</Text>
+            <Ionicons name="download-outline" size={14} color={colors.textSecondary} />
+            <Text style={[styles.installBtnText, { color: colors.textSecondary }]}>Don't have an authenticator? Install one</Text>
           </Pressable>
         </View>
       )}

@@ -1,7 +1,6 @@
 import React from "react";
 import { View, Text, StyleSheet, Pressable, Platform } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { LinearGradient } from "expo-linear-gradient";
 import * as Clipboard from "expo-clipboard";
 import * as Haptics from "@/shared/utils/haptics";
 import { useTheme } from "@/shared/contexts/ThemeContext";
@@ -27,12 +26,9 @@ export default function EncryptedCard({ content }: Props) {
   }
 
   return (
-    <View style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.warning + "50" }]}>
-      <LinearGradient colors={[colors.warning + (isDark ? "20" : "10"), "transparent"]} style={StyleSheet.absoluteFill} />
+    <View style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
       <View style={styles.header}>
-        <LinearGradient colors={[colors.warning, colors.warningShade ?? colors.warning]} style={styles.icon} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}>
-          <Ionicons name="key-outline" size={22} color="#fff" />
-        </LinearGradient>
+        
         <View style={{ flex: 1 }}>
           <Text style={[styles.title, { color: colors.text }]}>Encrypted Data</Text>
           <Text style={[styles.sub, { color: colors.textMuted }]}>{dataHint} · {content.length} chars</Text>

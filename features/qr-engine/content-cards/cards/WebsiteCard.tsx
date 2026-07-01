@@ -1,13 +1,11 @@
 import React from "react";
-import { View, Text, Pressable, Animated as RNAnimated, StyleSheet } from "react-native";
+import { View, Text, Pressable, StyleSheet } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { LinearGradient } from "expo-linear-gradient";
-import Animated, { FadeInDown, FadeIn } from "react-native-reanimated";
+import Animated, { FadeInDown } from "react-native-reanimated";
 import * as Clipboard from "expo-clipboard";
 import * as Haptics from "@/shared/utils/haptics";
 import { useTheme } from "@/shared/contexts/ThemeContext";
 import { parseWebsite } from "../parsers";
-import { styles } from "./WebsiteCardStyles";
 
 interface Props {
   content:         string;
@@ -16,37 +14,14 @@ interface Props {
   hideOpenAction?: boolean;
 }
 
-const BLUE_DARK  = "#1E3A8A";
-const BLUE_MID   = "#1D4ED8";
-const BLUE_LIGHT = "#3B82F6";
-const BLUE_GLOW  = "#60A5FA";
-
-function domainInitial(hostname: string) {
-  return (hostname?.replace(/^www\./, "")[0] ?? "W").toUpperCase();
-}
-
 export default function WebsiteCard({ content, onOpenContent, isDeactivated, hideOpenAction }: Props) {
-  const { colors, isDark } = useTheme();
+  const { colors } = useTheme();
   const [copied, setCopied] = React.useState(false);
-  const pulseAnim = React.useRef(new RNAnimated.Value(1)).current;
 
-  const site          = parseWebsite(content);
-  const hasOpenAction = !isDeactivated && !hideOpenAction;
-
-  const rawHost = site?.hostname ?? content.replace(/^https?:\/\/(www\.)?/, "").split("/")[0];
+  const site      = parseWebsite(content);
+  const rawHost   = site?.hostname ?? content.replace(/^https?:\/\/(www\.)?/, "").split("/")[0];
   const domainOnly = rawHost.replace(/^www\./, "");
-  const initial    = domainInitial(domainOnly);
-
-  React.useEffect(() => {
-    const pulse = RNAnimated.loop(
-      RNAnimated.sequence([
-        RNAnimated.timing(pulseAnim, { toValue: 1.06, duration: 2000, useNativeDriver: true }),
-        RNAnimated.timing(pulseAnim, { toValue: 1.00, duration: 2000, useNativeDriver: true }),
-      ])
-    );
-    pulse.start();
-    return () => pulse.stop();
-  }, []);
+  const hasOpenAction = !isDeactivated && !hideOpenAction;
 
   async function handleCopy() {
     await Clipboard.setStringAsync(site?.fullUrl ?? content);
@@ -57,132 +32,84 @@ export default function WebsiteCard({ content, onOpenContent, isDeactivated, hid
 
   return (
     <Animated.View entering={FadeInDown.duration(260)}>
-      <View style={[
-        styles.card,
-        {
-          backgroundColor: isDark ? "#0F172A" : "#EFF6FF",
-          borderColor:     isDark ? BLUE_MID + "55" : BLUE_LIGHT + "60",
-        },
-      ]}>
-        <LinearGradient
-          colors={isDark
-            ? [BLUE_DARK + "40", BLUE_MID + "18", "transparent"]
-            : [BLUE_LIGHT + "22", BLUE_GLOW + "0A", "transparent"]}
-          style={StyleSheet.absoluteFill}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-        />
+      <View style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
 
-        {/* ── Hero row: avatar · domain · copy ─────────────────────── */}
-        <Animated.View entering={FadeIn.delay(30).duration(260)} style={styles.heroRow}>
-          {/* Domain avatar */}
-          <View style={styles.avatarWrap}>
-            <RNAnimated.View style={[
-              styles.glowRing,
-              { borderColor: BLUE_GLOW + (isDark ? "55" : "35"), transform: [{ scale: pulseAnim }] },
-            ]} />
-            <LinearGradient
-              colors={[BLUE_MID, BLUE_DARK]}
-              style={styles.avatarGrad}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
-            >
-              <Text style={styles.avatarLetter}>{initial}</Text>
-            </LinearGradient>
-          </View>
-
-          {/* Domain name only — no badge, no "Website" label */}
-          <View style={styles.heroText}>
-            <Text
-              style={[styles.domainName, { color: isDark ? "#F0F9FF" : "#1E3A8A" }]}
-              numberOfLines={1}
-            >
-              {domainOnly}
-            </Text>
-          </View>
-
-          {/* Copy button */}
+        {/* ── Domain row ── */}
+        <View style={styles.row}>
+          <Text style={[styles.domain, { color: colors.text }]} numberOfLines={1}>
+            {domainOnly}
+          </Text>
           <Pressable
             onPress={handleCopy}
             style={({ pressed }) => [styles.copyBtn, {
-              backgroundColor: copied
-                ? "#22C55E" + (isDark ? "22" : "15")
-                : (isDark ? BLUE_MID + "20" : BLUE_LIGHT + "18"),
-              borderColor: copied
-                ? "#22C55E60"
-                : isDark ? BLUE_MID + "50" : BLUE_LIGHT + "60",
+              backgroundColor: copied ? colors.safe + "18" : colors.surfaceLight,
+              borderColor:     copied ? colors.safe : colors.surfaceBorder,
               opacity: pressed ? 0.7 : 1,
             }]}
           >
             <Ionicons
               name={copied ? "checkmark-circle" : "copy-outline"}
               size={14}
-              color={copied ? "#22C55E" : isDark ? BLUE_GLOW : BLUE_MID}
+              color={copied ? colors.safe : colors.textMuted}
             />
-            <Text style={[styles.copyText, { color: copied ? "#22C55E" : isDark ? BLUE_GLOW : BLUE_MID }]}>
+            <Text style={[styles.copyText, { color: copied ? colors.safe : colors.textMuted }]}>
               {copied ? "Copied!" : "Copy"}
             </Text>
           </Pressable>
-        </Animated.View>
+        </View>
 
-        {/* ── URL strip ────────────────────────────────────────────── */}
-        <Animated.View entering={FadeInDown.delay(40).duration(260)}>
-          <View style={[styles.urlStrip, {
-            backgroundColor: isDark ? "#1E293B" : "#DBEAFE",
-            borderColor:     isDark ? BLUE_MID + "35" : BLUE_LIGHT + "55",
-          }]}>
-            <View style={[styles.urlIcon, { backgroundColor: BLUE_MID + "22" }]}>
-              <Ionicons name="link" size={12} color={isDark ? BLUE_GLOW : BLUE_MID} />
-            </View>
-            <Text
-              style={[styles.urlText, { color: isDark ? "#CBD5E1" : "#1E40AF" }]}
-              selectable
-            >
-              {site?.fullUrl ?? content}
-            </Text>
-          </View>
-        </Animated.View>
+        {/* ── Full URL strip ── */}
+        <View style={[styles.urlStrip, { backgroundColor: colors.surfaceLight, borderColor: colors.surfaceBorder }]}>
+          <Text style={[styles.urlText, { color: colors.textSecondary }]} selectable numberOfLines={2}>
+            {site?.fullUrl ?? content}
+          </Text>
+        </View>
 
-        {/* ── Open button — just the word "Open", nothing else ─────── */}
+        {/* ── Open button ── */}
         {hasOpenAction && (
-          <Animated.View entering={FadeInDown.delay(80).duration(260)}>
-            <Pressable
-              onPress={() => {
-                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-                onOpenContent();
-              }}
-              style={({ pressed }) => ({
-                transform: [{ scale: pressed ? 0.975 : 1 }],
-                opacity:   pressed ? 0.88 : 1,
-              })}
-            >
-              <LinearGradient
-                colors={[BLUE_MID, BLUE_DARK]}
-                style={openBtnStyles.btn}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 0 }}
-              >
-                <Text style={openBtnStyles.label}>Open</Text>
-              </LinearGradient>
-            </Pressable>
-          </Animated.View>
+          <Pressable
+            onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium); onOpenContent(); }}
+            style={({ pressed }) => [styles.openBtn, {
+              backgroundColor: colors.primaryDim,
+              borderColor:     colors.primary + "30",
+              opacity:   pressed ? 0.82 : 1,
+              transform: [{ scale: pressed ? 0.975 : 1 }],
+            }]}
+          >
+            <Text style={[styles.openLabel, { color: colors.primary }]}>Open</Text>
+            <Ionicons name="open-outline" size={14} color={colors.primary} />
+          </Pressable>
         )}
       </View>
     </Animated.View>
   );
 }
 
-const openBtnStyles = StyleSheet.create({
-  btn: {
-    borderRadius:   12,
-    paddingVertical: 12,
-    alignItems:      "center",
-    justifyContent:  "center",
+const styles = StyleSheet.create({
+  card: {
+    borderRadius: 18, padding: 14, marginBottom: 12,
+    borderWidth: 1, gap: 10,
   },
-  label: {
-    fontSize:      13,
-    fontFamily:    "Inter_700Bold",
-    color:         "#fff",
-    letterSpacing: 0.2,
+  row: {
+    flexDirection: "row", alignItems: "center", gap: 10,
   },
+  domain: {
+    fontSize: 15, fontFamily: "Inter_700Bold", flex: 1, letterSpacing: -0.2,
+  },
+  copyBtn: {
+    flexDirection: "row", alignItems: "center", gap: 3,
+    height: 26, paddingHorizontal: 8, borderRadius: 8, borderWidth: 1, flexShrink: 0,
+  },
+  copyText: { fontSize: 10, fontFamily: "Inter_600SemiBold" },
+
+  urlStrip: {
+    borderRadius: 10, paddingVertical: 9, paddingHorizontal: 11, borderWidth: 1,
+  },
+  urlText: { fontSize: 12, fontFamily: "Inter_400Regular", lineHeight: 18, letterSpacing: 0.05 },
+
+  openBtn: {
+    flexDirection: "row", alignItems: "center", justifyContent: "center",
+    gap: 6, borderRadius: 12, paddingVertical: 11, borderWidth: 1,
+  },
+  openLabel: { fontSize: 13, fontFamily: "Inter_700Bold" },
 });

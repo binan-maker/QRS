@@ -1,6 +1,5 @@
 import React from "react";
 import { View, StyleSheet } from "react-native";
-import { LinearGradient } from "expo-linear-gradient";
 import { useTheme } from "@/shared/contexts/ThemeContext";
 import { CardHeader, InfoGrid, InfoRow, OpenButton } from "../shared";
 import { parsePhone } from "../parsers";
@@ -20,8 +19,7 @@ export default function PhoneCard({ content, onOpenContent, isDeactivated, hideO
   const accentColor = GRADIENT[0];
 
   return (
-    <View style={[styles.card, { backgroundColor: colors.surface, borderColor: accentColor + "45" }]}>
-      <LinearGradient colors={[accentColor + (isDark ? "18" : "0C"), "transparent"]} style={StyleSheet.absoluteFill} />
+    <View style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
       <CardHeader icon="call-outline" gradient={GRADIENT} title="Phone Number" subtitle={phone || undefined} content={content} colors={colors} />
       <InfoGrid accentColor={accentColor} colors={colors} isDark={isDark}>
         <InfoRow label="Number" value={phone} icon="call-outline" accentColor={accentColor} colors={colors} selectable />

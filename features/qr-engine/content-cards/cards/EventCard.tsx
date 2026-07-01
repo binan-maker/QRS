@@ -1,7 +1,6 @@
 import React from "react";
 import { View, Text, StyleSheet } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { LinearGradient } from "expo-linear-gradient";
 import { useTheme } from "@/shared/contexts/ThemeContext";
 import { CardHeader, OpenButton } from "../shared";
 import { parseEvent, formatEventDate, formatEventTime, isEventPast } from "../parsers";
@@ -22,8 +21,7 @@ export default function EventCard({ content, onOpenContent, isDeactivated, hideO
   const accentColor = GRADIENT[0];
 
   return (
-    <View style={[styles.card, { backgroundColor: colors.surface, borderColor: accentColor + "45" }]}>
-      <LinearGradient colors={[accentColor + (isDark ? "18" : "0C"), "transparent"]} style={StyleSheet.absoluteFill} />
+    <View style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
       <CardHeader icon="calendar-outline" gradient={GRADIENT} title="Calendar Event" subtitle={event.summary || undefined} content={content} colors={colors} />
 
       {eventOver && (
@@ -38,8 +36,8 @@ export default function EventCard({ content, onOpenContent, isDeactivated, hideO
 
         {event.dtstart ? (
           <View style={styles.detailRow}>
-            <View style={[styles.detailIcon, { backgroundColor: accentColor + "18" }]}>
-              <Ionicons name="calendar-outline" size={14} color={accentColor} />
+            <View style={[styles.detailIcon, { backgroundColor: colors.surfaceLight }]}>
+              <Ionicons name="calendar-outline" size={14} color={colors.textSecondary} />
             </View>
             <Text style={[styles.detailText, { color: colors.textSecondary }]}>{formatEventDate(event.dtstart)}</Text>
           </View>
@@ -47,8 +45,8 @@ export default function EventCard({ content, onOpenContent, isDeactivated, hideO
 
         {(event.dtstart || event.dtend) ? (
           <View style={styles.detailRow}>
-            <View style={[styles.detailIcon, { backgroundColor: accentColor + "18" }]}>
-              <Ionicons name="time-outline" size={14} color={accentColor} />
+            <View style={[styles.detailIcon, { backgroundColor: colors.surfaceLight }]}>
+              <Ionicons name="time-outline" size={14} color={colors.textSecondary} />
             </View>
             <Text style={[styles.detailText, { color: colors.textSecondary }]}>
               {event.dtstart ? formatEventTime(event.dtstart) : ""}
@@ -59,8 +57,8 @@ export default function EventCard({ content, onOpenContent, isDeactivated, hideO
 
         {event.location ? (
           <View style={styles.detailRow}>
-            <View style={[styles.detailIcon, { backgroundColor: accentColor + "18" }]}>
-              <Ionicons name="location-outline" size={14} color={accentColor} />
+            <View style={[styles.detailIcon, { backgroundColor: colors.surfaceLight }]}>
+              <Ionicons name="location-outline" size={14} color={colors.textSecondary} />
             </View>
             <Text style={[styles.detailText, { color: colors.textSecondary }]} numberOfLines={2}>{event.location}</Text>
           </View>
@@ -68,8 +66,8 @@ export default function EventCard({ content, onOpenContent, isDeactivated, hideO
 
         {event.description ? (
           <View style={styles.detailRow}>
-            <View style={[styles.detailIcon, { backgroundColor: accentColor + "18" }]}>
-              <Ionicons name="information-circle-outline" size={14} color={accentColor} />
+            <View style={[styles.detailIcon, { backgroundColor: colors.surfaceLight }]}>
+              <Ionicons name="information-circle-outline" size={14} color={colors.textSecondary} />
             </View>
             <Text style={[styles.detailText, { color: colors.textSecondary }]} numberOfLines={3}>{event.description}</Text>
           </View>

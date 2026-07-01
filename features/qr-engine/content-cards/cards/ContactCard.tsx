@@ -1,6 +1,5 @@
 import React from "react";
 import { View, StyleSheet } from "react-native";
-import { LinearGradient } from "expo-linear-gradient";
 import { useTheme } from "@/shared/contexts/ThemeContext";
 import { CardHeader, InfoGrid, InfoRow, Divider, OpenButton } from "../shared";
 import { parseContact } from "../parsers";
@@ -23,8 +22,7 @@ export default function ContactCard({ content, onOpenContent, isDeactivated, hid
   const actionIcon = contact.phone ? "call-outline" : contact.email ? "mail-outline" : "person-add-outline";
 
   return (
-    <View style={[styles.card, { backgroundColor: colors.surface, borderColor: accentColor + "45" }]}>
-      <LinearGradient colors={[accentColor + (isDark ? "18" : "0C"), "transparent"]} style={StyleSheet.absoluteFill} />
+    <View style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
       <CardHeader icon="person-circle-outline" gradient={GRADIENT} title="Contact Card" subtitle={contact.name || undefined} content={content} colors={colors} />
       {(contact.name || contact.phone || contact.email || contact.org) && (
         <InfoGrid accentColor={accentColor} colors={colors} isDark={isDark}>

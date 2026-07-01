@@ -6,18 +6,15 @@ interface InfoRowProps {
   label: string;
   value: string;
   icon: keyof typeof Ionicons.glyphMap;
-  accentColor: string;
+  accentColor?: string; // kept for call-site compat, no longer used for color
   colors: any;
   selectable?: boolean;
   numberOfLines?: number;
 }
 
-export function InfoRow({ label, value, icon, accentColor, colors, selectable, numberOfLines = 2 }: InfoRowProps) {
+export function InfoRow({ label, value, colors, selectable, numberOfLines = 2 }: InfoRowProps) {
   return (
     <View style={styles.row}>
-      <View style={[styles.iconWrap, { backgroundColor: accentColor + "20" }]}>
-        <Ionicons name={icon} size={13} color={accentColor} />
-      </View>
       <Text style={[styles.label, { color: colors.textSecondary }]}>{label}</Text>
       <Text
         style={[styles.value, { color: colors.text }]}
@@ -35,17 +32,17 @@ export function Divider({ colors }: { colors: any }) {
 }
 
 interface InfoGridProps {
-  accentColor: string;
+  accentColor?: string; // kept for call-site compat, no longer used
   colors: any;
-  isDark: boolean;
+  isDark?: boolean;
   children: React.ReactNode;
 }
 
-export function InfoGrid({ accentColor, colors, isDark, children }: InfoGridProps) {
+export function InfoGrid({ colors, children }: InfoGridProps) {
   return (
     <View style={[styles.grid, {
-      backgroundColor: accentColor + (isDark ? "22" : "12"),
-      borderColor: accentColor + "30",
+      backgroundColor: colors.surfaceLight,
+      borderColor:     colors.surfaceBorder,
     }]}>
       {children}
     </View>
@@ -53,10 +50,9 @@ export function InfoGrid({ accentColor, colors, isDark, children }: InfoGridProp
 }
 
 const styles = StyleSheet.create({
-  grid: { borderRadius: 14, padding: 12, gap: 0, borderWidth: 1 },
-  row: { flexDirection: "row", alignItems: "center", gap: 8, paddingVertical: 9 },
-  iconWrap: { width: 24, height: 24, borderRadius: 7, alignItems: "center", justifyContent: "center", flexShrink: 0 },
-  label: { fontSize: 12, fontFamily: "Inter_500Medium", width: 72 },
-  value: { fontSize: 13, fontFamily: "Inter_600SemiBold", flex: 1, textAlign: "right" },
+  grid:    { borderRadius: 14, padding: 12, gap: 0, borderWidth: 1 },
+  row:     { flexDirection: "row", alignItems: "center", gap: 8, paddingVertical: 9 },
+  label:   { fontSize: 12, fontFamily: "Inter_500Medium", width: 72 },
+  value:   { fontSize: 13, fontFamily: "Inter_600SemiBold", flex: 1, textAlign: "right" },
   divider: { height: 1, marginHorizontal: -2 },
 });

@@ -1,6 +1,5 @@
 import React from "react";
 import { View, StyleSheet } from "react-native";
-import { LinearGradient } from "expo-linear-gradient";
 import { useTheme } from "@/shared/contexts/ThemeContext";
 import { CardHeader, InfoGrid, InfoRow, Divider, OpenButton } from "../shared";
 import { parseCrypto } from "../parsers";
@@ -24,8 +23,7 @@ export default function CryptoCard({ content, onOpenContent, isDeactivated, hide
     : data.address;
 
   return (
-    <View style={[styles.card, { backgroundColor: colors.surface, borderColor: accentColor + "45" }]}>
-      <LinearGradient colors={[accentColor + (isDark ? "18" : "0C"), "transparent"]} style={StyleSheet.absoluteFill} />
+    <View style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
       <CardHeader icon="logo-bitcoin" gradient={GRADIENT} title={data.coin ? `${data.coin} Address` : "Crypto Address"} subtitle={shortAddress || undefined} content={content} colors={colors} />
       <InfoGrid accentColor={accentColor} colors={colors} isDark={isDark}>
         {data.coin ? <InfoRow label="Coin"    value={data.coin}    icon="logo-bitcoin" accentColor={accentColor} colors={colors} /> : null}

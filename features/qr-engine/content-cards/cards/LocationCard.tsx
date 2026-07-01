@@ -1,6 +1,5 @@
 import React from "react";
 import { View, StyleSheet } from "react-native";
-import { LinearGradient } from "expo-linear-gradient";
 import { useTheme } from "@/shared/contexts/ThemeContext";
 import { CardHeader, InfoGrid, InfoRow, Divider, OpenButton } from "../shared";
 import { parseLocation } from "../parsers";
@@ -20,8 +19,7 @@ export default function LocationCard({ content, onOpenContent, isDeactivated, hi
   const accentColor = GRADIENT[0];
 
   return (
-    <View style={[styles.card, { backgroundColor: colors.surface, borderColor: accentColor + "45" }]}>
-      <LinearGradient colors={[accentColor + (isDark ? "18" : "0C"), "transparent"]} style={StyleSheet.absoluteFill} />
+    <View style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
       <CardHeader icon="location-outline" gradient={GRADIENT} title="Location" subtitle={loc.label || undefined} content={content} colors={colors} />
       <InfoGrid accentColor={accentColor} colors={colors} isDark={isDark}>
         {loc.label ? <InfoRow label="Place"     value={loc.label} icon="location-outline" accentColor={accentColor} colors={colors} numberOfLines={2} /> : null}
