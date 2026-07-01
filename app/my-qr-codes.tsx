@@ -304,17 +304,9 @@ export default function MyQrCodesScreen() {
     return (
       <View style={{ flex: 1, backgroundColor: colors.background }}>
         <View style={{
-          flexDirection: "row", alignItems: "center", justifyContent: "space-between",
-          paddingHorizontal: sp(20), paddingTop: topInset + sp(6), paddingBottom: sp(14),
+          paddingHorizontal: sp(20), paddingTop: topInset + sp(10), paddingBottom: sp(14),
         }}>
-          <Pressable
-            onPress={() => router.back()}
-            style={{ width: sp(38), height: sp(38), borderRadius: sp(19), alignItems: "center", justifyContent: "center", backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.surfaceBorder }}
-          >
-            <Ionicons name="chevron-back" size={rf(20)} color={colors.text} />
-          </Pressable>
-          <Text style={{ fontSize: rf(17), fontFamily: "Inter_700Bold", color: colors.text }}>My QRs</Text>
-          <View style={{ width: sp(38) }} />
+          <Text style={{ fontSize: rf(22), fontFamily: "Inter_700Bold", color: colors.text, letterSpacing: -0.5 }}>My QRs</Text>
         </View>
         <View style={{ flex: 1, alignItems: "center", justifyContent: "center", paddingHorizontal: sp(40), gap: sp(14) }}>
           <View style={{ width: sp(72), height: sp(72), borderRadius: sp(22), backgroundColor: colors.primaryDim, alignItems: "center", justifyContent: "center" }}>
@@ -349,46 +341,39 @@ export default function MyQrCodesScreen() {
         }, headerStyle]}
         onLayout={(e: LayoutChangeEvent) => { const h = e.nativeEvent.layout.height; setHeaderH(h); setHeight(h); }}
       >
-        {/* Top row: back + title + add */}
+        {/* Top row: title + add */}
         <View style={{
           flexDirection: "row", alignItems: "center", justifyContent: "space-between",
-          paddingHorizontal: sp(20), paddingTop: topInset + sp(6), paddingBottom: sp(8),
+          paddingHorizontal: sp(20), paddingTop: topInset + sp(10), paddingBottom: sp(10),
         }}>
-          <Pressable
-            onPress={() => router.back()}
-            style={{ width: sp(38), height: sp(38), borderRadius: sp(19), alignItems: "center", justifyContent: "center", backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.surfaceBorder }}
-          >
-            <Ionicons name="chevron-back" size={rf(20)} color={colors.text} />
-          </Pressable>
-
-          <Text style={{ fontSize: rf(17), fontFamily: "Inter_700Bold", color: colors.text }}>My QRs</Text>
+          <Text style={{ fontSize: rf(22), fontFamily: "Inter_700Bold", color: colors.text, letterSpacing: -0.5 }}>My QRs</Text>
 
           <Pressable
             onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); router.push("/(tabs)/qr-generator"); }}
-            style={({ pressed }) => [{ opacity: pressed ? 0.82 : 1 }]}
+            style={({ pressed }) => [{
+              width: sp(38), height: sp(38), borderRadius: sp(12),
+              alignItems: "center", justifyContent: "center",
+              backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.surfaceBorder,
+              opacity: pressed ? 0.7 : 1,
+              transform: [{ scale: pressed ? 0.94 : 1 }],
+            }]}
           >
-            <LinearGradient
-              colors={[colors.primary, colors.primaryShade]}
-              style={{ width: sp(38), height: sp(38), borderRadius: sp(19), alignItems: "center", justifyContent: "center" }}
-              start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
-            >
-              <Ionicons name="add" size={rf(20)} color="#fff" />
-            </LinearGradient>
+            <Ionicons name="add" size={rf(20)} color={colors.text} />
           </Pressable>
         </View>
 
-        {/* Search bar — compact, matches History style */}
+        {/* Search bar */}
         <View style={{
-          marginHorizontal: sp(16), marginBottom: sp(5),
+          marginHorizontal: sp(16), marginBottom: sp(6),
           flexDirection: "row", alignItems: "center", gap: sp(10),
-          borderRadius: 14, borderWidth: 1,
-          borderColor: searchQuery.trim() ? colors.primary + "50" : colors.surfaceBorder,
+          borderRadius: sp(14), borderWidth: 1,
+          borderColor: colors.surfaceBorder,
           backgroundColor: colors.surface,
-          paddingHorizontal: 14, paddingVertical: 10,
+          paddingHorizontal: sp(14), paddingVertical: sp(10),
         }}>
-          <Ionicons name="search-outline" size={17} color={searchQuery.trim() ? colors.primary : colors.textMuted} />
+          <Ionicons name="search-outline" size={17} color={colors.textMuted} />
           <TextInput
-            style={{ flex: 1, fontSize: 14, fontFamily: "Inter_400Regular", color: colors.text, paddingVertical: 0 }}
+            style={{ flex: 1, fontSize: rf(14), fontFamily: "Inter_400Regular", color: colors.text, paddingVertical: 0 }}
             placeholder="Search by name…"
             placeholderTextColor={colors.textMuted}
             value={searchQuery}
@@ -404,32 +389,43 @@ export default function MyQrCodesScreen() {
           )}
         </View>
 
-        {/* Sort chips — compact */}
+        {/* Sort chips */}
         <ScrollView
           horizontal showsHorizontalScrollIndicator={false}
-          contentContainerStyle={{ paddingHorizontal: sp(16), gap: sp(6), paddingBottom: sp(8) }}
+          contentContainerStyle={{ paddingHorizontal: sp(16), gap: sp(7), paddingBottom: sp(10), paddingTop: sp(2) }}
           style={{ flexGrow: 0 }}
         >
-          {SORT_OPTIONS.map((opt) => {
+          {SORT_OPTIONS.map((opt, idx) => {
             const active = sortKey === opt.key;
             return (
-              <Pressable
-                key={opt.key}
-                onPress={() => { setSortKey(opt.key); Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); }}
-                style={[{
-                  flexDirection: "row", alignItems: "center", gap: 4,
-                  borderRadius: 20, paddingHorizontal: 10, paddingVertical: 5,
-                  borderWidth: 1,
-                }, active
-                  ? { backgroundColor: colors.primary, borderColor: colors.primary }
-                  : { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }
-                ]}
-              >
-                <Ionicons name={opt.icon as any} size={10} color={active ? "#fff" : colors.textMuted} />
-                <Text style={{ fontSize: 11, fontFamily: "Inter_600SemiBold", color: active ? "#fff" : colors.textMuted }}>
-                  {opt.label}
-                </Text>
-              </Pressable>
+              <ReAnimated.View key={opt.key} entering={FadeInDown.delay(25 + Math.min(idx, 4) * 16).duration(250)}>
+                <Pressable
+                  onPress={() => { setSortKey(opt.key); Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); }}
+                  style={({ pressed }) => [{
+                    flexDirection: "row", alignItems: "center", gap: sp(5),
+                    borderRadius: 100, paddingHorizontal: sp(13), paddingVertical: sp(8),
+                    borderWidth: 1,
+                    opacity: pressed ? 0.78 : 1,
+                    transform: [{ scale: pressed ? 0.95 : 1 }],
+                  }, active ? {
+                    backgroundColor: colors.primary,
+                    borderColor: "transparent",
+                    shadowColor: colors.primary,
+                    shadowOffset: { width: 0, height: 4 },
+                    shadowOpacity: 0.28,
+                    shadowRadius: 10,
+                    elevation: 5,
+                  } : {
+                    backgroundColor: colors.surface,
+                    borderColor: colors.surfaceBorder,
+                  }]}
+                >
+                  <Ionicons name={opt.icon as any} size={rf(13)} color={active ? "#fff" : colors.textSecondary} />
+                  <Text style={{ fontSize: rf(12), fontFamily: "Inter_600SemiBold", letterSpacing: 0.1, color: active ? "#fff" : colors.textSecondary }}>
+                    {opt.label}
+                  </Text>
+                </Pressable>
+              </ReAnimated.View>
             );
           })}
         </ScrollView>
