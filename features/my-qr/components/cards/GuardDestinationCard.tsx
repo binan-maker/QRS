@@ -32,48 +32,76 @@ export default function GuardDestinationCard({
   const { rf, sp } = useScaleFns();
 
   const inputStyle = {
-    backgroundColor: colors.background, borderRadius: sp(10), borderWidth: 1,
-    borderColor: colors.surfaceBorder, paddingHorizontal: sp(12), paddingVertical: sp(10),
+    backgroundColor: isDark ? colors.surfaceLight : colors.background,
+    borderRadius: sp(12), borderWidth: 1,
+    borderColor: colors.surfaceBorder,
+    paddingHorizontal: sp(14), paddingVertical: sp(12),
     fontSize: rf(13), color: colors.text, fontFamily: "Inter_400Regular" as const,
   };
 
   return (
     <Animated.View entering={FadeInDown.duration(160)}>
-      <View style={{ borderRadius: sp(18), borderWidth: 1, borderColor: "#6366F140", backgroundColor: isDark ? "#6366F10D" : "#F5F3FF", padding: sp(16), marginBottom: sp(14) }}>
+      <View style={{
+        borderRadius: sp(18), borderWidth: 1,
+        borderColor: colors.surfaceBorder,
+        backgroundColor: colors.surface,
+        padding: sp(16), marginBottom: sp(14),
+      }}>
         {/* Header */}
-        <View style={{ flexDirection: "row", alignItems: "center", gap: sp(8), marginBottom: sp(12) }}>
-          <View style={{ width: sp(34), height: sp(34), borderRadius: sp(10), backgroundColor: "#6366F118", alignItems: "center", justifyContent: "center" }}>
-            <Ionicons name="git-branch-outline" size={rf(16)} color="#6366F1" />
+        <View style={{ flexDirection: "row", alignItems: "center", gap: sp(10), marginBottom: sp(14) }}>
+          <View style={{
+            width: sp(36), height: sp(36), borderRadius: sp(11),
+            backgroundColor: isDark ? colors.surfaceLight : colors.background,
+            borderWidth: 1, borderColor: colors.surfaceBorder,
+            alignItems: "center", justifyContent: "center",
+          }}>
+            <Ionicons name="git-branch-outline" size={rf(16)} color={colors.text} />
           </View>
           <View style={{ flex: 1 }}>
-            <Text style={{ fontSize: rf(13), fontFamily: "Inter_700Bold", color: "#6366F1" }}>Smart Redirect</Text>
-            <Text style={{ fontSize: rf(10), fontFamily: "Inter_400Regular", color: colors.textMuted }}>Update destination without reprinting</Text>
+            <Text style={{ fontSize: rf(14), fontFamily: "Inter_600SemiBold", color: colors.text }}>Smart Redirect</Text>
+            <Text style={{ fontSize: rf(11), fontFamily: "Inter_400Regular", color: colors.textMuted, marginTop: 1 }}>Change destination without reprinting</Text>
           </View>
-          <View style={{ borderRadius: sp(6), paddingHorizontal: sp(7), paddingVertical: sp(2), backgroundColor: "#6366F120" }}>
-            <Text style={{ fontSize: rf(9), fontFamily: "Inter_700Bold", color: "#6366F1" }}>DYNAMIC</Text>
+          <View style={{
+            borderRadius: sp(6), paddingHorizontal: sp(8), paddingVertical: sp(3),
+            backgroundColor: isDark ? colors.surfaceLight : colors.background,
+            borderWidth: 1, borderColor: colors.surfaceBorder,
+          }}>
+            <Text style={{ fontSize: rf(9), fontFamily: "Inter_700Bold", color: colors.textMuted, letterSpacing: 0.5 }}>DYNAMIC</Text>
           </View>
         </View>
 
         {/* Current destination */}
         {!isPrivateDest && guardDest && !editingDestination && (
-          <View style={{ backgroundColor: colors.surface, borderRadius: sp(10), borderWidth: 1, borderColor: colors.surfaceBorder, padding: sp(10), marginBottom: sp(10), flexDirection: "row", alignItems: "flex-start", gap: sp(8) }}>
-            <Ionicons name="arrow-forward-circle-outline" size={rf(15)} color={colors.textSecondary} style={{ marginTop: sp(1) }} />
-            <Text style={{ fontSize: rf(12), fontFamily: "Inter_400Regular", color: colors.textSecondary, flex: 1 }} numberOfLines={2}>{guardDest}</Text>
+          <View style={{
+            flexDirection: "row", alignItems: "flex-start", gap: sp(10),
+            backgroundColor: isDark ? colors.surfaceLight : colors.background,
+            borderRadius: sp(12), borderWidth: 1, borderColor: colors.surfaceBorder,
+            padding: sp(12), marginBottom: sp(12),
+          }}>
+            <Ionicons name="link-outline" size={rf(14)} color={colors.textMuted} style={{ marginTop: sp(1) }} />
+            <Text style={{ fontSize: rf(12), fontFamily: "Inter_400Regular", color: colors.textSecondary, flex: 1, lineHeight: rf(18) }} numberOfLines={2}>
+              {guardDest}
+            </Text>
           </View>
         )}
 
         {/* Change log */}
         {guardLink?.changeLog && guardLink.changeLog.length > 0 && !editingDestination && (
-          <View style={{ marginBottom: sp(10), gap: sp(4) }}>
-            <Text style={{ fontSize: rf(9), fontFamily: "Inter_600SemiBold", color: colors.textMuted, letterSpacing: 0.5 }}>RECENT CHANGES</Text>
+          <View style={{ marginBottom: sp(12), gap: sp(6) }}>
+            <Text style={{ fontSize: rf(10), fontFamily: "Inter_600SemiBold", color: colors.textMuted, letterSpacing: 0.8, marginBottom: sp(2) }}>RECENT CHANGES</Text>
             {guardLink.changeLog.slice(-2).reverse().map((entry, idx) => (
-              <View key={idx} style={{ flexDirection: "row", alignItems: "flex-start", gap: sp(6), backgroundColor: colors.surface, borderRadius: sp(8), padding: sp(8) }}>
-                <Ionicons name="time-outline" size={rf(11)} color={colors.textMuted} style={{ marginTop: 1 }} />
+              <View key={idx} style={{
+                flexDirection: "row", alignItems: "flex-start", gap: sp(8),
+                backgroundColor: isDark ? colors.surfaceLight : colors.background,
+                borderRadius: sp(10), borderWidth: 1, borderColor: colors.surfaceBorder,
+                padding: sp(10),
+              }}>
+                <Ionicons name="time-outline" size={rf(12)} color={colors.textMuted} style={{ marginTop: 1 }} />
                 <View style={{ flex: 1 }}>
-                  <Text style={{ fontSize: rf(10), fontFamily: "Inter_400Regular", color: colors.textMuted }}>
-                    {new Date(entry.changedAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
+                  <Text style={{ fontSize: rf(10), fontFamily: "Inter_500Medium", color: colors.textMuted }}>
+                    {new Date(entry.changedAt).toLocaleDateString("en-IN", { month: "short", day: "numeric", year: "numeric" })}
                   </Text>
-                  <Text style={{ fontSize: rf(10), fontFamily: "Inter_400Regular", color: colors.textSecondary }} numberOfLines={1}>
+                  <Text style={{ fontSize: rf(11), fontFamily: "Inter_400Regular", color: colors.textSecondary, marginTop: 2 }} numberOfLines={1}>
                     → {entry.to.length > 40 ? entry.to.slice(0, 40) + "…" : entry.to}
                   </Text>
                 </View>
@@ -84,7 +112,7 @@ export default function GuardDestinationCard({
 
         {/* Edit form or button */}
         {editingDestination ? (
-          <View style={{ gap: sp(8) }}>
+          <View style={{ gap: sp(10) }}>
             <TextInput
               value={newDestination}
               onChangeText={(t) => { setNewDestination(t); setDestinationError(null); }}
@@ -95,26 +123,31 @@ export default function GuardDestinationCard({
               style={{ ...inputStyle, borderColor: destinationError ? colors.danger : colors.surfaceBorder }}
             />
             {destinationError && (
-              <View style={{ flexDirection: "row", alignItems: "center", gap: sp(4) }}>
-                <Ionicons name="warning-outline" size={rf(12)} color={colors.danger} />
+              <View style={{ flexDirection: "row", alignItems: "center", gap: sp(6) }}>
+                <Ionicons name="warning-outline" size={rf(13)} color={colors.danger} />
                 <Text style={{ fontSize: rf(11), color: colors.danger, flex: 1 }}>{destinationError}</Text>
               </View>
             )}
-            <View style={{ flexDirection: "row", alignItems: "center", gap: sp(6), backgroundColor: colors.surface, borderRadius: sp(8), padding: sp(8) }}>
-              <Ionicons name="shield-checkmark-outline" size={rf(12)} color={colors.textMuted} />
-              <Text style={{ fontSize: rf(10), fontFamily: "Inter_400Regular", color: colors.textMuted, flex: 1 }}>URL will be scanned for threats before saving</Text>
+            <View style={{
+              flexDirection: "row", alignItems: "center", gap: sp(8),
+              backgroundColor: isDark ? colors.surfaceLight : colors.background,
+              borderRadius: sp(10), borderWidth: 1, borderColor: colors.surfaceBorder,
+              padding: sp(10),
+            }}>
+              <Ionicons name="shield-checkmark-outline" size={rf(13)} color={colors.textMuted} />
+              <Text style={{ fontSize: rf(11), fontFamily: "Inter_400Regular", color: colors.textMuted, flex: 1 }}>URL will be scanned for threats before saving</Text>
             </View>
             <View style={{ flexDirection: "row", gap: sp(8) }}>
               <Pressable
                 onPress={() => { setEditingDestination(false); setDestinationError(null); }}
-                style={{ flex: 1, borderRadius: sp(10), borderWidth: 1, borderColor: colors.surfaceBorder, padding: sp(10), alignItems: "center" }}
+                style={({ pressed }) => [{ flex: 1, borderRadius: sp(12), borderWidth: 1, borderColor: colors.surfaceBorder, paddingVertical: sp(12), alignItems: "center", opacity: pressed ? 0.7 : 1, backgroundColor: colors.surface }]}
               >
                 <Text style={{ fontSize: rf(13), fontFamily: "Inter_600SemiBold", color: colors.textSecondary }}>Cancel</Text>
               </Pressable>
               <Pressable
                 onPress={handleUpdateDestination}
                 disabled={savingDestination || isValidating}
-                style={{ flex: 2, borderRadius: sp(10), backgroundColor: "#6366F1", padding: sp(10), alignItems: "center", flexDirection: "row", justifyContent: "center", gap: sp(6) }}
+                style={({ pressed }) => [{ flex: 2, borderRadius: sp(12), backgroundColor: colors.primary, paddingVertical: sp(12), alignItems: "center", flexDirection: "row", justifyContent: "center", gap: sp(6), opacity: pressed || savingDestination || isValidating ? 0.75 : 1 }]}
               >
                 {(isValidating || savingDestination) && <ActivityIndicator size="small" color="#fff" />}
                 <Text style={{ fontSize: rf(13), fontFamily: "Inter_700Bold", color: "#fff" }}>
@@ -126,10 +159,16 @@ export default function GuardDestinationCard({
         ) : (
           <Pressable
             onPress={() => setEditingDestination(true)}
-            style={({ pressed }) => [{ flexDirection: "row", alignItems: "center", gap: sp(6), borderRadius: sp(10), backgroundColor: "#6366F120", paddingHorizontal: sp(12), paddingVertical: sp(9), alignSelf: "flex-start", opacity: pressed ? 0.8 : 1 }]}
+            style={({ pressed }) => [{
+              flexDirection: "row", alignItems: "center", gap: sp(6),
+              borderRadius: sp(12), borderWidth: 1, borderColor: colors.surfaceBorder,
+              backgroundColor: isDark ? colors.surfaceLight : colors.background,
+              paddingHorizontal: sp(14), paddingVertical: sp(10),
+              alignSelf: "flex-start", opacity: pressed ? 0.7 : 1,
+            }]}
           >
-            <Ionicons name="pencil-outline" size={rf(13)} color="#6366F1" />
-            <Text style={{ fontSize: rf(12), fontFamily: "Inter_600SemiBold", color: "#6366F1" }}>Change Destination</Text>
+            <Ionicons name="pencil-outline" size={rf(13)} color={colors.text} />
+            <Text style={{ fontSize: rf(13), fontFamily: "Inter_600SemiBold", color: colors.text }}>Change Destination</Text>
           </Pressable>
         )}
       </View>

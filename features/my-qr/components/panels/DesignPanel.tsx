@@ -2,7 +2,6 @@ import { useState } from "react";
 import { View, Text, Pressable, ActivityIndicator } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import Animated, { FadeIn, FadeInDown } from "react-native-reanimated";
-import { LinearGradient } from "expo-linear-gradient";
 import { useTheme } from "@/shared/contexts/ThemeContext";
 import type { LogoPosition, ExpiryPreset } from "@/features/my-qr/hooks/useQrDesign";
 import { ColorsTab } from "./tabs/ColorsTab";
@@ -51,7 +50,7 @@ export default function DesignPanel({
   expiryPreset, expiryCustomDate, onChangeExpiryPreset, onChangeExpiryCustomDate,
   designOpen, setDesignOpen, designDirty, saving, handleSaveDesign,
 }: Props) {
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
   const [tab, setTab] = useState<Tab>("colors");
 
   const hasTheme   = selectedThemeIdx !== 0 || isCustomTheme;
@@ -76,27 +75,29 @@ export default function DesignPanel({
       <Pressable
         onPress={() => setDesignOpen((v) => !v)}
         style={({ pressed }) => [{
-          flexDirection: "row", alignItems: "center", gap: 10,
-          paddingHorizontal: 14, paddingVertical: 11,
+          flexDirection: "row", alignItems: "center", gap: 12,
+          paddingHorizontal: 16, paddingVertical: 13,
           borderRadius: 16,
           borderBottomLeftRadius: designOpen ? 0 : 16,
           borderBottomRightRadius: designOpen ? 0 : 16,
           borderWidth: 1,
           backgroundColor: colors.surface,
-          borderColor: hasAny ? colors.primary + "55" : colors.surfaceBorder,
-          opacity: pressed ? 0.88 : 1,
+          borderColor: colors.surfaceBorder,
+          opacity: pressed ? 0.85 : 1,
         }]}
       >
-        <LinearGradient
-          colors={hasAny ? [colors.primary, colors.primaryShade] : [colors.surfaceLight, colors.surfaceLight]}
-          style={{ width: 32, height: 32, borderRadius: 10, alignItems: "center", justifyContent: "center" }}
-          start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
-        >
-          <Ionicons name="color-wand-outline" size={16} color={hasAny ? "#fff" : colors.textMuted} />
-        </LinearGradient>
+        {/* Icon */}
+        <View style={{
+          width: 34, height: 34, borderRadius: 10,
+          alignItems: "center", justifyContent: "center",
+          backgroundColor: isDark ? colors.surfaceLight : colors.background,
+          borderWidth: 1, borderColor: colors.surfaceBorder,
+        }}>
+          <Ionicons name="color-wand-outline" size={16} color={colors.text} />
+        </View>
 
         <View style={{ flex: 1 }}>
-          <Text style={{ fontSize: 13, fontFamily: "Inter_600SemiBold", color: colors.text }}>
+          <Text style={{ fontSize: 14, fontFamily: "Inter_600SemiBold", color: colors.text }}>
             Customize
           </Text>
           <Text style={{ fontSize: 11, fontFamily: "Inter_400Regular", color: colors.textMuted, marginTop: 1 }}>
@@ -106,13 +107,15 @@ export default function DesignPanel({
           </Text>
         </View>
 
+        {/* Color swatches preview */}
         {!hasAny && (
           <View style={{ flexDirection: "row", gap: 4, marginRight: 4 }}>
-            <View style={{ width: 16, height: 16, borderRadius: 4, backgroundColor: fgColor, borderWidth: 1, borderColor: colors.surfaceBorder }} />
-            <View style={{ width: 16, height: 16, borderRadius: 4, backgroundColor: bgColor, borderWidth: 1, borderColor: colors.surfaceBorder }} />
+            <View style={{ width: 14, height: 14, borderRadius: 4, backgroundColor: fgColor, borderWidth: 1, borderColor: colors.surfaceBorder }} />
+            <View style={{ width: 14, height: 14, borderRadius: 4, backgroundColor: bgColor, borderWidth: 1, borderColor: colors.surfaceBorder }} />
           </View>
         )}
 
+        {/* Active dots */}
         {dots.length > 0 && (
           <View style={{ flexDirection: "row", gap: 4, marginRight: 4 }}>
             {dots.map((d) => (
@@ -120,7 +123,7 @@ export default function DesignPanel({
             ))}
           </View>
         )}
-        <Ionicons name={designOpen ? "chevron-up" : "chevron-down"} size={15} color={colors.textMuted} />
+        <Ionicons name={designOpen ? "chevron-up" : "chevron-down"} size={14} color={colors.textMuted} />
       </Pressable>
 
       {/* Drawer body */}
@@ -130,7 +133,7 @@ export default function DesignPanel({
           style={{
             borderWidth: 1, borderTopWidth: 0,
             borderBottomLeftRadius: 16, borderBottomRightRadius: 16,
-            borderColor: hasAny ? colors.primary + "55" : colors.surfaceBorder,
+            borderColor: colors.surfaceBorder,
             backgroundColor: colors.surface,
             overflow: "hidden",
           }}
@@ -146,13 +149,13 @@ export default function DesignPanel({
                   onPress={() => setTab(t.key)}
                   style={{
                     flex: 1, flexDirection: "row", alignItems: "center", justifyContent: "center",
-                    gap: 5, paddingVertical: 11,
+                    gap: 5, paddingVertical: 12,
                     borderBottomWidth: 2,
                     borderBottomColor: active ? colors.primary : "transparent",
                   }}
                 >
                   <View style={{ position: "relative" }}>
-                    <Ionicons name={t.icon} size={15} color={active ? colors.primary : colors.textMuted} />
+                    <Ionicons name={t.icon} size={14} color={active ? colors.primary : colors.textMuted} />
                     {hasDot && !active && (
                       <View style={{
                         position: "absolute", top: -2, right: -2,
@@ -186,7 +189,6 @@ export default function DesignPanel({
                 onSetCustomBg={onSetCustomBg}
               />
             )}
-
             {tab === "logo" && (
               <LogoTab
                 showDefaultLogo={showDefaultLogo}
@@ -198,7 +200,6 @@ export default function DesignPanel({
                 onOpenPosition={onOpenPosition}
               />
             )}
-
             {tab === "options" && (
               <OptionsTab
                 scanLimit={scanLimit}
@@ -218,13 +219,13 @@ export default function DesignPanel({
                 style={({ pressed }) => [{
                   marginTop: 14,
                   borderRadius: 12, backgroundColor: colors.primary,
-                  paddingVertical: 12, alignItems: "center",
+                  paddingVertical: 13, alignItems: "center",
                   flexDirection: "row", justifyContent: "center", gap: 8,
                   opacity: pressed || saving ? 0.75 : 1,
                 }]}
               >
                 {saving && <ActivityIndicator size="small" color="#fff" />}
-                <Text style={{ fontSize: 13, fontFamily: "Inter_700Bold", color: "#fff" }}>
+                <Text style={{ fontSize: 14, fontFamily: "Inter_700Bold", color: "#fff" }}>
                   {saving ? "Saving…" : "Save Changes"}
                 </Text>
               </Pressable>

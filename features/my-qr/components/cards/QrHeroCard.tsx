@@ -42,12 +42,10 @@ export default function QrHeroCard({
   sharingQr, downloadingPdf, onShare, onDownloadPdf, onCopy,
   customLogoUri, showDefaultLogo, logoPosition = "center",
 }: Props) {
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
   const { rf, sp } = useScaleFns();
 
   const rawDest = !isPrivateDest ? (guardDest || standardRawContent || null) : null;
-  // Filter out internal redirect URLs — check pathname only to avoid false positives
-  // on legitimate external URLs that happen to contain /go/ or /q/ in deeper paths.
   const dest = (() => {
     if (!rawDest || !/^https?:\/\//i.test(rawDest)) return null;
     try {
@@ -65,35 +63,56 @@ export default function QrHeroCard({
 
   const qrSize = sp(180);
 
+  const ACTIONS = [
+    { icon: "share-outline",    label: "Share",    onPress: onShare,       busy: sharingQr,      iconLib: "Ionicons" },
+    { icon: "download-outline", label: "Save PDF", onPress: onDownloadPdf, busy: downloadingPdf, iconLib: "Ionicons" },
+    { icon: "copy-outline",     label: "Copy",     onPress: onCopy,        busy: false,          iconLib: "Ionicons" },
+  ] as const;
+
   return (
     <Animated.View entering={FadeIn.duration(160)}>
       <View style={{
         borderRadius: sp(24), borderWidth: 1, borderColor: colors.surfaceBorder,
         backgroundColor: colors.surface, marginBottom: sp(14), overflow: "hidden",
       }}>
+        {/* Hero gradient area */}
         <LinearGradient
-          colors={[ctMeta.color + "18", ctMeta.color + "04"]}
-          style={{ paddingTop: sp(22), paddingHorizontal: sp(20), paddingBottom: sp(18), alignItems: "center" }}
+          colors={[ctMeta.color + "15", ctMeta.color + "04", "transparent"]}
+          style={{ paddingTop: sp(22), paddingHorizontal: sp(20), paddingBottom: sp(20), alignItems: "center" }}
           start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
         >
+          {/* Status badge */}
           {!isActive && (
             <View style={{
-              flexDirection: "row", alignItems: "center", gap: sp(4),
-              alignSelf: "flex-end", marginBottom: sp(16),
-              borderRadius: sp(10), paddingHorizontal: sp(9), paddingVertical: sp(4),
-              backgroundColor: "#ef444414",
+              flexDirection: "row", alignItems: "center", gap: sp(5),
+              alignSelf: "flex-end", marginBottom: sp(14),
+              borderRadius: sp(20), paddingHorizontal: sp(10), paddingVertical: sp(4),
+              backgroundColor: "#ef444418", borderWidth: 1, borderColor: "#ef444430",
             }}>
               <View style={{ width: sp(5), height: sp(5), borderRadius: sp(3), backgroundColor: "#ef4444" }} />
               <Text style={{ fontSize: rf(11), fontFamily: "Inter_600SemiBold", color: "#ef4444" }}>Paused</Text>
             </View>
           )}
 
-          {/* QR Code with logo */}
+          {/* Dynamic badge */}
+          {isDynamic && isActive && (
+            <View style={{
+              flexDirection: "row", alignItems: "center", gap: sp(4),
+              alignSelf: "flex-end", marginBottom: sp(14),
+              borderRadius: sp(20), paddingHorizontal: sp(9), paddingVertical: sp(3),
+              backgroundColor: ctMeta.color + "18", borderWidth: 1, borderColor: ctMeta.color + "30",
+            }}>
+              <View style={{ width: sp(5), height: sp(5), borderRadius: sp(3), backgroundColor: ctMeta.color }} />
+              <Text style={{ fontSize: rf(10), fontFamily: "Inter_600SemiBold", color: ctMeta.color }}>Dynamic</Text>
+            </View>
+          )}
+
+          {/* QR Code */}
           <View style={{
-            borderRadius: sp(18), overflow: "hidden",
+            borderRadius: sp(20), overflow: "hidden",
             padding: sp(14), backgroundColor: bgColor,
-            shadowColor: "#000", shadowOffset: { width: 0, height: 4 },
-            shadowOpacity: 0.10, shadowRadius: 12, elevation: 5,
+            shadowColor: "#000", shadowOffset: { width: 0, height: 6 },
+            shadowOpacity: isDark ? 0.35 : 0.12, shadowRadius: 16, elevation: 8,
             position: "relative",
           }}>
             <QRCode
@@ -132,44 +151,55 @@ export default function QrHeroCard({
             )}
           </View>
 
+          {/* Title */}
           <Text style={{
             fontSize: rf(16), fontFamily: "Inter_700Bold",
-            color: colors.text, marginTop: sp(16), textAlign: "center",
+            color: colors.text, marginTop: sp(18), textAlign: "center", letterSpacing: -0.2,
           }} numberOfLines={2}>
             {displayTitle.length > 50 ? displayTitle.slice(0, 50) + "…" : displayTitle}
           </Text>
 
+          {/* Type label */}
+          <View style={{
+            flexDirection: "row", alignItems: "center", gap: sp(5), marginTop: sp(6),
+            backgroundColor: ctMeta.color + "14", borderRadius: sp(20),
+            paddingHorizontal: sp(10), paddingVertical: sp(4),
+          }}>
+            <View style={{ width: sp(6), height: sp(6), borderRadius: sp(3), backgroundColor: ctMeta.color }} />
+            <Text style={{ fontSize: rf(11), fontFamily: "Inter_500Medium", color: ctMeta.color }}>
+              {ctMeta.label}
+            </Text>
+          </View>
+
           {dest && (
             <Text style={{
               fontSize: rf(11), fontFamily: "Inter_400Regular",
-              color: colors.textMuted, marginTop: sp(4), textAlign: "center",
+              color: colors.textMuted, marginTop: sp(8), textAlign: "center",
             }} numberOfLines={1}>
               {dest.length > 44 ? dest.slice(0, 44) + "…" : dest}
             </Text>
           )}
         </LinearGradient>
 
+        {/* Action row */}
         <View style={{ flexDirection: "row", borderTopWidth: 1, borderTopColor: colors.surfaceBorder }}>
-          {([
-            { icon: "share-outline",    label: "Share",    onPress: onShare,       busy: sharingQr },
-            { icon: "download-outline", label: "Save PDF", onPress: onDownloadPdf, busy: downloadingPdf },
-            { icon: "copy-outline",     label: "Copy",     onPress: onCopy,        busy: false },
-          ] as const).map((btn, i) => (
+          {ACTIONS.map((btn, i) => (
             <Pressable
               key={btn.label}
               onPress={btn.onPress}
               disabled={btn.busy}
               style={({ pressed }) => [{
-                flex: 1, alignItems: "center", gap: sp(4), paddingVertical: sp(14),
+                flex: 1, alignItems: "center", gap: sp(5), paddingVertical: sp(14),
                 borderRightWidth: i < 2 ? 1 : 0, borderRightColor: colors.surfaceBorder,
-                opacity: pressed || btn.busy ? 0.55 : 1,
+                opacity: pressed || btn.busy ? 0.5 : 1,
+                backgroundColor: pressed ? (isDark ? colors.surfaceLight : colors.background) : "transparent",
               }]}
             >
               {btn.busy
-                ? <ActivityIndicator size="small" color={colors.primary} />
-                : <Ionicons name={btn.icon as any} size={rf(19)} color={colors.primary} />
+                ? <ActivityIndicator size="small" color={colors.textMuted} />
+                : <Ionicons name={btn.icon as any} size={rf(18)} color={colors.text} />
               }
-              <Text style={{ fontSize: rf(10), fontFamily: "Inter_600SemiBold", color: colors.primary }}>
+              <Text style={{ fontSize: rf(10), fontFamily: "Inter_500Medium", color: colors.textSecondary }}>
                 {btn.label}
               </Text>
             </Pressable>

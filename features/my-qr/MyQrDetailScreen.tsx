@@ -414,13 +414,14 @@ export default function MyQrDetailScreen() {
             style={({ pressed }) => [{
               flexDirection: "row", alignItems: "center", justifyContent: "center",
               gap: sp(8), borderRadius: sp(16), paddingVertical: sp(14),
-              backgroundColor: colors.primary,
-              opacity: pressed ? 0.82 : 1,
+              borderWidth: 1, borderColor: colors.surfaceBorder,
+              backgroundColor: colors.surface,
+              opacity: pressed ? 0.75 : 1,
               marginBottom: sp(6),
             }]}
           >
-            <Ionicons name="globe-outline" size={rf(18)} color="#fff" />
-            <Text style={{ fontSize: rf(14), fontFamily: "Inter_700Bold", color: "#fff" }}>Public Live View</Text>
+            <Ionicons name="globe-outline" size={rf(17)} color={colors.text} />
+            <Text style={{ fontSize: rf(14), fontFamily: "Inter_600SemiBold", color: colors.text }}>Public Live View</Text>
           </Pressable>
         )}
       </ScrollView>
