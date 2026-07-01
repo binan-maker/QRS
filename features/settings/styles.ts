@@ -176,10 +176,10 @@ export function makeSettingsStyles(c: AppColors, width = 390) {
       width: sp(42), height: sp(42), borderRadius: sp(14), backgroundColor: c.primaryDim,
       alignItems: "center", justifyContent: "center",
     },
-    guideStepTitle: { fontSize: rf(15), fontFamily: "Inter_700Bold", color: c.text, marginBottom: 4 },
+    guideStepTitle: { fontSize: rf(13), fontFamily: "Inter_700Bold", color: c.text, marginBottom: 3 },
     guideStepDesc: {
-      fontSize: rf(13), fontFamily: "Inter_400Regular",
-      color: c.textSecondary, lineHeight: Math.round(20 * s),
+      fontSize: rf(11), fontFamily: "Inter_400Regular",
+      color: c.textSecondary, lineHeight: Math.round(17 * s),
     },
 
     // ── Feedback section ──────────────────────────────────────────────────────

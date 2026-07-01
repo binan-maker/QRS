@@ -24,10 +24,11 @@ export default function AccountSection({ user, deleteConfirmText, setDeleteConfi
   const styles = useMemo(() => makeSettingsStyles(colors), [colors]);
   return (
     <ScrollView
+      style={{ flex: 1 }}
       showsVerticalScrollIndicator={false}
       onScroll={onScroll}
       scrollEventThrottle={16}
-      contentContainerStyle={[styles.scrollContent, { paddingTop, paddingBottom: insets.bottom + 20 }]}
+      contentContainerStyle={[styles.scrollContent, { paddingTop, paddingBottom: insets.bottom + 40 }]}
     >
       <Animated.View entering={FadeInDown.duration(260)}>
         <View style={styles.section}>

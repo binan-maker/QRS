@@ -56,7 +56,7 @@ export default function AccountManagementScreen() {
           </View>
         </Reanimated.View>
 
-        <ScrollView showsVerticalScrollIndicator={false} onScroll={onScroll} scrollEventThrottle={16} contentContainerStyle={[styles.scrollContent, { paddingTop: headerH, paddingBottom: insets.bottom + 40 }]}>
+        <ScrollView style={{ flex: 1 }} showsVerticalScrollIndicator={false} onScroll={onScroll} scrollEventThrottle={16} contentContainerStyle={[styles.scrollContent, { paddingTop: headerH, paddingBottom: insets.bottom + 60 }]}>
           <View style={[styles.profileCard, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
             <View style={[styles.avatar, { backgroundColor: colors.primaryDim, borderColor: colors.primary + "60" }]}>
               <Text style={[styles.avatarText, { color: colors.primary }]}>

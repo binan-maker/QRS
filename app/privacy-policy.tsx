@@ -373,9 +373,9 @@ const styles = StyleSheet.create({
   sectionNum: { width: 24, height: 24, borderRadius: 7, alignItems: "center", justifyContent: "center" },
   sectionNumText: { fontSize: 11, fontFamily: "Inter_700Bold" },
   sectionIcon: { width: 22, height: 22, borderRadius: 6, alignItems: "center", justifyContent: "center" },
-  sectionTitle: { fontSize: 13, fontFamily: "Inter_700Bold", flex: 1 },
-  subhead: { fontSize: 12, fontFamily: "Inter_600SemiBold", marginTop: 8, marginBottom: 4 },
-  para: { fontSize: 13, fontFamily: "Inter_400Regular", lineHeight: 20, marginBottom: 6 },
+  sectionTitle: { fontSize: 12, fontFamily: "Inter_700Bold", flex: 1 },
+  subhead: { fontSize: 11, fontFamily: "Inter_600SemiBold", marginTop: 7, marginBottom: 3 },
+  para: { fontSize: 12, fontFamily: "Inter_400Regular", lineHeight: 18, marginBottom: 5 },
   warningBox: {
     flexDirection: "row", alignItems: "flex-start", gap: 8,
     padding: 10, borderRadius: 10, borderWidth: 1, marginBottom: 8,
@@ -383,7 +383,7 @@ const styles = StyleSheet.create({
   warningText: { fontSize: 12, fontFamily: "Inter_600SemiBold", flex: 1, lineHeight: 17 },
   bulletRow: { flexDirection: "row", alignItems: "flex-start", gap: 9, marginBottom: 5 },
   bulletDot: { width: 5, height: 5, borderRadius: 2.5, marginTop: 8, flexShrink: 0 },
-  bulletText: { flex: 1, fontSize: 13, fontFamily: "Inter_400Regular", lineHeight: 20 },
+  bulletText: { flex: 1, fontSize: 12, fontFamily: "Inter_400Regular", lineHeight: 18 },
   contactCard: {
     flexDirection: "row", alignItems: "center", gap: 10,
     borderRadius: 12, padding: 12, marginVertical: 8, borderWidth: 1,

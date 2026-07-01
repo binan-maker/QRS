@@ -278,13 +278,6 @@ label="Account Management"
 sublabel="History, comments, delete account"
 onPress={goToAccount}
 />
-<View style={styles.divider} />
-<SettingsMenuItem
-icon="heart-outline"
-label="Following"
-sublabel="QR codes you're tracking"
-onPress={goToFollowing}
-/>
 </View>
 ) : (
 <Pressable
