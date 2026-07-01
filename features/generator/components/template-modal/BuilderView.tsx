@@ -7,13 +7,7 @@ import { useTheme } from "@/shared/contexts/ThemeContext";
 import * as Haptics from "@/shared/utils/haptics";
 import type { EncType, QrTemplate, TemplateField } from "@/features/generator/types/template-types";
 
-const ENC_OPTIONS: { value: EncType; label: string }[] = [
-  { value: "WPA", label: "WPA/WPA2" },
-  { value: "WEP", label: "WEP" },
-  { value: "nopass", label: "Open" },
-];
-
-const HIDE_SECURITY_NOTE = new Set(["wifi", "contact_card"]);
+const HIDE_SECURITY_NOTE = new Set<string>();
 
 interface Props {
   template: QrTemplate;
@@ -102,36 +96,6 @@ function BuilderView({
                 onTogglePass={field.type === "password" ? onTogglePass : undefined}
               />
 
-              {template.id === "wifi" && field.key === "ssid" && (
-                <View style={{ marginTop: sp(12) }}>
-                  <Text style={{ fontSize: rf(11), fontFamily: "Inter_600SemiBold", color: colors.textMuted, marginBottom: sp(8) }}>
-                    ENCRYPTION TYPE
-                  </Text>
-                  <View style={{ flexDirection: "row", gap: sp(8) }}>
-                    {ENC_OPTIONS.map((opt) => {
-                      const active = encType === opt.value;
-                      return (
-                        <Pressable
-                          key={opt.value}
-                          onPress={() => onSetEncType(opt.value)}
-                          style={({ pressed }) => ({
-                            flex: 1, borderRadius: sp(12),
-                            borderWidth: active ? 1.5 : 1,
-                            borderColor: active ? template.color + "80" : colors.surfaceBorder,
-                            backgroundColor: active ? template.color + "12" : colors.surface,
-                            paddingVertical: sp(9), alignItems: "center",
-                            opacity: pressed ? 0.8 : 1,
-                          })}
-                        >
-                          <Text style={{ fontSize: rf(12), fontFamily: active ? "Inter_700Bold" : "Inter_500Medium", color: active ? template.color : colors.textMuted }}>
-                            {opt.label}
-                          </Text>
-                        </Pressable>
-                      );
-                    })}
-                  </View>
-                </View>
-              )}
             </Animated.View>
           ))}
 

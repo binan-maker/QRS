@@ -105,68 +105,6 @@ export const QR_REGISTRY: QrTypeEntry[] = [
     },
   },
 
-  // ── Wi-Fi ─────────────────────────────────────────────────────────────────────
-  {
-    key: "wifi",
-    label: "Wi-Fi Network", icon: "wifi-outline",
-    placeholder: "NetworkName",
-    keyboardType: "default", contentType: "wifi",
-    hint: "Scanning will auto-connect to this Wi-Fi network",
-    emptyMessage: "Please enter the Wi-Fi network name (SSID).",
-    category: "utility",
-    extraFields: [
-      { key: "password", label: "Password", placeholder: "Wi-Fi password", keyboardType: "default", secureText: true, maxLength: 63 },
-      { key: "encryption", label: "Security (WPA / WEP / nopass)", placeholder: "WPA", keyboardType: "default", optional: true },
-      { key: "hidden", label: "Hidden network? (true / false)", placeholder: "false", keyboardType: "default", optional: true },
-    ],
-    build: (v, extra) => {
-      const password = extra.password?.trim() ?? "";
-      const enc = extra.encryption?.trim().toUpperCase() ?? "WPA";
-      const hidden = extra.hidden?.trim().toLowerCase() === "true" ? "true" : "false";
-      return `WIFI:T:${enc};S:${v};P:${password};H:${hidden};;`;
-    },
-    validate: (v) => {
-      if (v.length < 1) return "Please enter the Wi-Fi network name (SSID).";
-      return null;
-    },
-  },
-
-  // ── Contact ───────────────────────────────────────────────────────────────────
-  {
-    key: "contact",
-    label: "Contact Card", icon: "person-circle-outline",
-    placeholder: "Full Name",
-    keyboardType: "default", contentType: "contact",
-    hint: "Creates a vCard — scanners can save directly to their address book",
-    emptyMessage: "Please enter the contact's full name.",
-    category: "utility",
-    extraFields: [
-      { key: "phone", label: "Phone", placeholder: "+91 98765 43210", keyboardType: "phone-pad" },
-      { key: "email", label: "Email (optional)", placeholder: "name@example.com", keyboardType: "email-address", optional: true },
-      { key: "org", label: "Organisation (optional)", placeholder: "Company Name", keyboardType: "default", optional: true },
-      { key: "title", label: "Job Title (optional)", placeholder: "Software Engineer", keyboardType: "default", optional: true },
-      { key: "url", label: "Website (optional)", placeholder: "https://example.com", keyboardType: "url", optional: true },
-    ],
-    build: (v, extra) => {
-      const phone = extra.phone?.trim() ?? "";
-      const email = extra.email?.trim() ?? "";
-      const org = extra.org?.trim() ?? "";
-      const title = extra.title?.trim() ?? "";
-      const url = extra.url?.trim() ?? "";
-      let vcard = `BEGIN:VCARD\nVERSION:3.0\nFN:${v}\nN:${v};;;;\n`;
-      if (phone) vcard += `TEL;TYPE=CELL:${phone}\n`;
-      if (email) vcard += `EMAIL;TYPE=INTERNET:${email}\n`;
-      if (org) vcard += `ORG:${org}\n`;
-      if (title) vcard += `TITLE:${title}\n`;
-      if (url) vcard += `URL:${url}\n`;
-      vcard += `END:VCARD`;
-      return vcard;
-    },
-    validate: (_v, extra) => {
-      if (!extra.phone?.trim()) return "Please enter at least a phone number for the contact.";
-      return null;
-    },
-  },
 
   // ── WhatsApp ─────────────────────────────────────────────────────────────────
   {
@@ -194,36 +132,6 @@ export const QR_REGISTRY: QrTypeEntry[] = [
     },
   },
 
-  // ── Email ─────────────────────────────────────────────────────────────────────
-  {
-    key: "email",
-    label: "Email", icon: "mail-outline",
-    placeholder: "email@example.com",
-    keyboardType: "email-address", contentType: "email",
-    hint: "Enter a valid email address (e.g. name@example.com)",
-    emptyMessage: "Please enter an email address (e.g. name@example.com).",
-    category: "communication",
-    extraFields: [
-      { key: "subject", label: "Subject (optional)", placeholder: "Hello!", keyboardType: "default", optional: true },
-      { key: "body", label: "Message Body (optional)", placeholder: "Write your message here…", keyboardType: "default", optional: true, isTextArea: true },
-    ],
-    build: (v, extra) => {
-      const subject = extra.subject?.trim() ?? "";
-      const body = extra.body?.trim() ?? "";
-      let uri = `mailto:${v}`;
-      const params: string[] = [];
-      if (subject) params.push(`subject=${encodeURIComponent(subject)}`);
-      if (body) params.push(`body=${encodeURIComponent(body)}`);
-      if (params.length) uri += `?${params.join("&")}`;
-      return uri;
-    },
-    getRaw: (v) => v,
-    validate: (v) => {
-      if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(v))
-        return "Invalid email address. Please enter a valid one (e.g. name@example.com).";
-      return null;
-    },
-  },
 
   // ── Phone ─────────────────────────────────────────────────────────────────────
   {
@@ -394,9 +302,9 @@ export const QR_REGISTRY: QrTypeEntry[] = [
 // ─── Category groupings ────────────────────────────────────────────────────────
 export const QR_CATEGORY_KEYS: { label: string; icon: string; keys: string[] }[] = [
   { label: "Payments",             icon: "card-outline",          keys: ["upi", "crypto"] },
-  { label: "Contact & Messaging",  icon: "person-outline",        keys: ["contact", "phone", "sms", "email", "whatsapp"] },
+  { label: "Contact & Messaging",  icon: "person-outline",        keys: ["phone", "sms", "whatsapp"] },
   { label: "Web & Social",         icon: "globe-outline",         keys: ["url", "social"] },
-  { label: "Utility",              icon: "apps-outline",          keys: ["wifi", "location", "event", "text"] },
+  { label: "Utility",              icon: "apps-outline",          keys: ["location", "event", "text"] },
 ];
 
 // ─── Lookup helpers ────────────────────────────────────────────────────────────
