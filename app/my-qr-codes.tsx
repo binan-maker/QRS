@@ -69,13 +69,12 @@ function SkeletonQrCard({ index = 0 }: { index?: number }) {
         borderColor: colors.surfaceBorder, backgroundColor: cardBg,
         paddingHorizontal: 14, paddingVertical: 13, gap: 13,
       }}>
-        {bone({ width: 48, height: 48, borderRadius: 15, flexShrink: 0 })}
-        <View style={{ flex: 1, minWidth: 0, gap: 5 }}>
-          {bone({ height: 14, width: "68%", borderRadius: 7 })}
-          {bone({ height: 11, width: "45%", borderRadius: 6 })}
+        <View style={{ flex: 1, minWidth: 0, gap: 6 }}>
+          {bone({ height: 14, width: "72%", borderRadius: 7 })}
+          {bone({ height: 11, width: "48%", borderRadius: 6 })}
+          {bone({ height: 10, width: "30%", borderRadius: 6, marginTop: 2 })}
         </View>
         <View style={{ alignItems: "flex-end", gap: 8, flexShrink: 0 }}>
-          {bone({ height: 10, width: 42, borderRadius: 6 })}
           {bone({ width: 28, height: 28, borderRadius: 9 })}
         </View>
       </View>
@@ -215,6 +214,8 @@ export default function MyQrCodesScreen() {
     const isBusiness  = (item as any).qrType === "business";
     const isInactive  = item.isActive === false;
     const scanCount   = item.scanCount || 0;
+    const cardBg      = colors.surface;
+    const accentColor = ctMeta.color;
 
     return (
       <ReAnimated.View entering={FadeInDown.duration(260).delay(Math.min(index, 5) * 30)}>
@@ -224,69 +225,90 @@ export default function MyQrCodesScreen() {
             router.push(`/my-qr/${item.docId}` as any);
           }}
           style={({ pressed }) => [{
-            flexDirection: "row", alignItems: "center", gap: sp(14),
+            flexDirection: "row", alignItems: "center", gap: sp(13),
             borderRadius: sp(20), borderWidth: 1,
-            borderColor: colors.surfaceBorder,
-            backgroundColor: colors.surface,
-            padding: sp(14), marginBottom: sp(10),
-            opacity: pressed ? 0.86 : isInactive ? 0.6 : 1,
-            transform: [{ scale: pressed ? 0.985 : 1 }],
+            borderColor: isInactive ? colors.danger + "35" : colors.surfaceBorder,
+            backgroundColor: cardBg,
+            paddingHorizontal: sp(14), paddingVertical: sp(13),
+            marginBottom: sp(10),
+            opacity: pressed ? 0.9 : isInactive ? 0.7 : 1,
+            transform: [{ scale: pressed ? 0.984 : 1 }],
           }]}
         >
-          {/* Icon */}
-          <View style={{
-            width: sp(52), height: sp(52), borderRadius: sp(14),
-            backgroundColor: ctMeta.bg,
-            alignItems: "center", justifyContent: "center",
-            flexShrink: 0, position: "relative",
-          }}>
-            <Ionicons name={ctMeta.icon as any} size={sp(24)} color={ctMeta.color} />
-            {isInactive && (
-              <View style={{
-                position: "absolute", top: -2, right: -2,
-                width: sp(10), height: sp(10), borderRadius: sp(5),
-                backgroundColor: colors.danger,
-                borderWidth: 1.5, borderColor: colors.surface,
-              }} />
-            )}
-            {isBusiness && !isInactive && (
-              <View style={{
-                position: "absolute", top: -2, right: -2,
-                width: sp(10), height: sp(10), borderRadius: sp(5),
-                backgroundColor: "#F59E0B",
-                borderWidth: 1.5, borderColor: colors.surface,
-                alignItems: "center", justifyContent: "center",
-              }} />
-            )}
-          </View>
+          {/* Body */}
+          <View style={{ flex: 1, minWidth: 0, gap: sp(4) }}>
+            {/* Title */}
+            <Text
+              style={{ fontSize: rf(14), fontFamily: "Inter_700Bold", color: isInactive ? colors.textMuted : colors.text, lineHeight: rf(20), letterSpacing: -0.1 }}
+              numberOfLines={1}
+              maxFontSizeMultiplier={1}
+            >
+              {displayText}
+            </Text>
 
-          {/* Text */}
-          <View style={{ flex: 1, minWidth: 0, gap: sp(3) }}>
-            <Text style={{
-              fontSize: rf(10), fontFamily: "Inter_500Medium",
-              color: ctMeta.color, textTransform: "uppercase", letterSpacing: 0.4,
-            }}>
+            {/* Subtitle — content type */}
+            <Text
+              style={{ fontSize: rf(12), fontFamily: "Inter_400Regular", color: colors.textSecondary, lineHeight: rf(16) }}
+              numberOfLines={1}
+              maxFontSizeMultiplier={1}
+            >
               {ctMeta.label}{isBusiness ? " · Business" : ""}
             </Text>
-            <Text
-              style={{ fontSize: rf(14), fontFamily: "Inter_700Bold", color: isInactive ? colors.textMuted : colors.text }}
-              numberOfLines={1}
-            >
-              {displayText.length > 38 ? displayText.slice(0, 38) + "…" : displayText}
-            </Text>
+
+            {/* Meta row — scan count + status badges */}
+            <View style={{ flexDirection: "row", alignItems: "center", gap: sp(5), marginTop: sp(1) }}>
+              {/* Scan count */}
+              <View style={{
+                flexDirection: "row", alignItems: "center", gap: sp(3),
+                backgroundColor: accentColor + "15",
+                borderRadius: 100, paddingHorizontal: sp(6), paddingVertical: sp(2),
+              }}>
+                <Ionicons name="scan-outline" size={rf(9)} color={accentColor} />
+                <Text style={{ fontSize: rf(10), fontFamily: "Inter_600SemiBold", color: accentColor }}>
+                  {formatScanCount(scanCount)}
+                </Text>
+              </View>
+
+              {/* Inactive badge */}
+              {isInactive && (
+                <View style={{
+                  flexDirection: "row", alignItems: "center", gap: sp(3),
+                  backgroundColor: colors.danger + "18",
+                  borderRadius: 100, paddingHorizontal: sp(6), paddingVertical: sp(2),
+                  borderWidth: 1, borderColor: colors.danger + "45",
+                }}>
+                  <Ionicons name="pause-circle" size={rf(9)} color={colors.danger} />
+                  <Text style={{ fontSize: rf(10), fontFamily: "Inter_700Bold", color: colors.danger }}>
+                    Inactive
+                  </Text>
+                </View>
+              )}
+
+              {/* Business badge */}
+              {isBusiness && !isInactive && (
+                <View style={{
+                  flexDirection: "row", alignItems: "center", gap: sp(3),
+                  backgroundColor: "#F59E0B18",
+                  borderRadius: 100, paddingHorizontal: sp(6), paddingVertical: sp(2),
+                  borderWidth: 1, borderColor: "#F59E0B45",
+                }}>
+                  <Ionicons name="briefcase" size={rf(9)} color="#F59E0B" />
+                  <Text style={{ fontSize: rf(10), fontFamily: "Inter_700Bold", color: "#F59E0B" }}>
+                    Business
+                  </Text>
+                </View>
+              )}
+            </View>
           </View>
 
-          {/* Scan count pill */}
+          {/* Right — chevron */}
           <View style={{
-            flexDirection: "row", alignItems: "center", gap: sp(3),
-            backgroundColor: colors.surfaceLight,
-            borderRadius: sp(10), paddingHorizontal: sp(8), paddingVertical: sp(4),
+            width: sp(28), height: sp(28), borderRadius: sp(9),
+            backgroundColor: accentColor + "18",
+            alignItems: "center", justifyContent: "center",
             flexShrink: 0,
           }}>
-            <Ionicons name="scan-outline" size={rf(9)} color={colors.textMuted} />
-            <Text style={{ fontSize: rf(10), fontFamily: "Inter_600SemiBold", color: colors.textMuted }}>
-              {formatScanCount(scanCount)}
-            </Text>
+            <Ionicons name="chevron-forward" size={rf(13)} color={accentColor} />
           </View>
         </Pressable>
       </ReAnimated.View>
