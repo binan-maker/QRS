@@ -29,10 +29,11 @@ export default function GuideSection({ onScroll, paddingTop = 0 }: Props) {
 
   return (
     <ScrollView
+      style={{ flex: 1 }}
       showsVerticalScrollIndicator={false}
       onScroll={onScroll}
       scrollEventThrottle={16}
-      contentContainerStyle={[styles.scrollContent, { paddingTop, paddingBottom: insets.bottom + 20 }]}
+      contentContainerStyle={[styles.scrollContent, { paddingTop, paddingBottom: insets.bottom + 40 }]}
     >
       {GUIDE_STEPS.map((step, i) => (
         <Animated.View key={i} entering={FadeInDown.duration(260).delay(Math.min(i, 4) * 22)}>

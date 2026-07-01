@@ -1,5 +1,5 @@
-import { View, Text, Pressable, ScrollView, Platform, useWindowDimensions, LayoutChangeEvent } from "react-native";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { View, Text, Pressable, ScrollView, Platform, StyleSheet, useWindowDimensions, LayoutChangeEvent } from "react-native";
+import { useCallback, useMemo, useState } from "react";
 import { useLocalSearchParams, useFocusEffect } from "expo-router";
 import Reanimated from "react-native-reanimated";
 import { useHeaderHide } from "@/shared/utils/use-header-hide";
@@ -123,27 +123,15 @@ onHeaderScroll(e);
 onTabScroll(e);
 }, [onHeaderScroll, onTabScroll]);
 
-// ── Animated header for sub-sections ────────────────────────────────────────
-const { headerStyle: subHeaderStyle, setHeight: setSubHeight, onScroll: onSubScroll, reset: resetSubHeader } = useHeaderHide();
-const [subHeaderH, setSubHeaderH] = useState(0);
-
-// Reset header visibility whenever the user navigates between sub-sections.
-useEffect(() => {
-if (section !== "main") resetSubHeader();
-}, [section, resetSubHeader]);
+// No-op scroll handler for sub-sections (header is not animated/absolute in sub-sections)
+const onSubScroll = useCallback((_e: any) => {}, []);
 
 // ── Sub-section view ────────────────────────────────────────────────────────
 
 if (section !== "main") {
 return (
 <View style={styles.container}>
-<Reanimated.View
-style={[{ position: "absolute", top: 0, left: 0, right: 0, zIndex: 10, backgroundColor: colors.background }, subHeaderStyle]}
-onLayout={(e: LayoutChangeEvent) => {
-const h = e.nativeEvent.layout.height;
-if (h > 0) { setSubHeaderH(h); setSubHeight(h); }
-}}
->
+<View style={{ backgroundColor: colors.background, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.surfaceBorder }}>
 <View style={{ paddingTop: topInset }}>
 <View style={styles.navBar}>
 <Pressable onPress={handleSubSectionBack} style={styles.navBackBtn}>
@@ -153,9 +141,9 @@ if (h > 0) { setSubHeaderH(h); setSubHeight(h); }
 <View style={{ width: 40 }} />
 </View>
 </View>
-</Reanimated.View>
+</View>
 
-{section === "profile" && <ProfileSettingsSection onScroll={onSubScroll} paddingTop={subHeaderH} />}
+{section === "profile" && <ProfileSettingsSection onScroll={onSubScroll} paddingTop={0} />}
 {section === "account" && (
 <AccountSection
 user={user}
@@ -165,10 +153,10 @@ handleDeleteAccount={handleDeleteAccount}
 goToComments={goToComments}
 goToHistory={goToHistory}
 onScroll={onSubScroll}
-paddingTop={subHeaderH}
+paddingTop={0}
 />
 )}
-{section === "guide" && <GuideSection onScroll={onSubScroll} paddingTop={subHeaderH} />}
+{section === "guide" && <GuideSection onScroll={onSubScroll} paddingTop={0} />}
 {section === "feedback" && (
 <FeedbackSection
 feedbackText={feedbackText}
@@ -180,11 +168,11 @@ feedbackDone={feedbackDone}
 handleSubmitFeedback={handleSubmitFeedback}
 handleSendAnother={handleSendAnother}
 onScroll={onSubScroll}
-paddingTop={subHeaderH}
+paddingTop={0}
 />
 )}
 {section === "following" && (
-<FollowingSection loading={followingLoading} list={followingList} onScroll={onSubScroll} paddingTop={subHeaderH} onRefresh={() => loadFollowing(true)} />
+<FollowingSection loading={followingLoading} list={followingList} onScroll={onSubScroll} paddingTop={0} onRefresh={() => loadFollowing(true)} />
 )}
 {section === "comments" && (
 <CommentsSection
@@ -193,7 +181,7 @@ comments={myComments}
 onDelete={handleDeleteComment}
 onDeleteAll={handleDeleteAllComments}
 onScroll={onSubScroll}
-paddingTop={subHeaderH}
+paddingTop={0}
 onRefresh={() => loadMyComments(true)}
 />
 )}
@@ -204,7 +192,7 @@ history={myHistory}
 onDelete={handleDeleteHistoryItem}
 onDeleteAll={handleDeleteAllHistory}
 onScroll={onSubScroll}
-paddingTop={subHeaderH}
+paddingTop={0}
 />
 )}
 </View>
