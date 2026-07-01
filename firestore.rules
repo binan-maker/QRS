@@ -316,6 +316,15 @@ service cloud.firestore {
       allow delete: if false;
     }
 
+    // ─── Feature Votes (email-keyed, one vote per email) ─────────────────────
+    match /featureVotes/{emailKey} {
+      allow read: if true;
+      allow create: if request.resource.data.email == emailKey
+        && request.resource.data.vote is string
+        && request.resource.data.vote in ['need', 'not_need'];
+      allow update, delete: if false;
+    }
+
     // ─── Verification Requests ────────────────────────────────────────────────
     match /verificationRequests/{docId} {
       allow create: if isEmailVerified()

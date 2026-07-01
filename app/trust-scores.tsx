@@ -249,7 +249,7 @@ export default function TrustScoresScreen() {
           <Para>Treat unrated codes with significant caution: verify the URL manually, look for spelling errors or lookalike domains, and never enter credentials on a site reached through an unrated QR code.</Para>
         </SectionCard>
 
-        <SectionCard title="Verified & Branded QR Codes" icon="checkmark-shield-outline">
+        <SectionCard title="Verified & Branded QR Codes" icon="shield-checkmark-outline">
           <Para>Businesses can create branded QR codes through BinRo's generator. These display a verified owner panel with the creator's name and a unique identifier.</Para>
           <Para>Verification means the code was created through BinRo by an accountable user. It does NOT mean BinRo endorses or vouches for the code owner's business, products, or services. Verified codes can be misused — always verify the business independently for important transactions.</Para>
         </SectionCard>
