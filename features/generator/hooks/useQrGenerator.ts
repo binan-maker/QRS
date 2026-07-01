@@ -39,8 +39,6 @@ export function useQrGenerator() {
   });
 
   // ── Modal visibility ──────────────────────────────────────────────────────
-  const [infoModalOpen, setInfoModalOpen] = useState(false);
-
   // ── Derived values ────────────────────────────────────────────────────────
   const preset       = QR_PRESETS[selectedPreset];
   const privateMode  = qrMode === "private";
@@ -164,9 +162,6 @@ export function useQrGenerator() {
     savedDocId,
     nameSuggestions,
     clearNameSuggestions,
-    // Modals
-    infoModalOpen,
-    setInfoModalOpen,
     // Toast
     toastMsg,
     toastType,
