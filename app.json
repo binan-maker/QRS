@@ -19,14 +19,21 @@
     },
     "ios": {
       "supportsTablet": false,
-      "bundleIdentifier": "com.qrguard.app"
+      "bundleIdentifier": "com.qrguard.app",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
     "android": {
       "package": "com.qrguard.app",
       "adaptiveIcon": {
         "backgroundColor": "#0A0E17",
         "backgroundImage": "./assets/images/icon.png"
-      }
+      },
+      "permissions": [
+        "android.permission.CAMERA",
+        "android.permission.RECORD_AUDIO"
+      ]
     },
     "plugins": [
       "expo-router",
@@ -72,6 +79,12 @@
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "244a74a6-7761-4118-924d-3b534103f8d5"
+      }
     }
   }
 }
