@@ -74,7 +74,8 @@
       "./plugins/android-size-optimize.js",
       "./plugins/android-abi-filter.js",
       "expo-localization",
-      "expo-secure-store"
+      "expo-secure-store",
+      "./plugins/ios-modular-headers.js"
     ],
     "experiments": {
       "typedRoutes": true,
