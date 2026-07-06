@@ -20,7 +20,7 @@
  *          bringing the download size down to ~15–20 MB.
  */
 
-const { withAppBuildGradle } = require("@expo/config-plugins");
+const { withAppBuildGradle } = require("expo/config-plugins");
 
 function withAndroidAbiFilter(config) {
   return withAppBuildGradle(config, (cfg) => {

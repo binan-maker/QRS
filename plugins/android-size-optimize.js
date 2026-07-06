@@ -33,7 +33,7 @@
  *    and Kotlin transitive deps.
  */
 
-const { withAppBuildGradle } = require("@expo/config-plugins");
+const { withAppBuildGradle } = require("expo/config-plugins");
 
 function withAndroidSizeOptimize(config) {
   return withAppBuildGradle(config, (cfg) => {

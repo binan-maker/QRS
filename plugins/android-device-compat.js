@@ -31,7 +31,7 @@
  *   ⑩ Strips ALL android.hardware.type.* entries (Play Store policy)
  */
 
-const { withAndroidManifest } = require("@expo/config-plugins");
+const { withAndroidManifest } = require("expo/config-plugins");
 
 // ── Hardware features ─────────────────────────────────────────────────────────
 // NOTE: android.hardware.type.* entries are intentionally NOT listed here.

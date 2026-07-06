@@ -18,7 +18,7 @@
  *   re-applies the changes on every prebuild automatically.
  */
 
-const { withAppBuildGradle, withDangerousMod } = require("@expo/config-plugins");
+const { withAppBuildGradle, withDangerousMod } = require("expo/config-plugins");
 const fs = require("fs");
 const path = require("path");
 
