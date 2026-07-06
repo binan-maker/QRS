@@ -1,65 +1,38 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-<!--
-  ╔══════════════════════════════════════════════════════════════════════════╗
-  ║  REPLACE THIS FILE WITH YOUR REAL GoogleService-Info.plist              ║
-  ║                                                                          ║
-  ║  1. Go to Firebase Console → Project Settings → Your iOS App            ║
-  ║  2. Download GoogleService-Info.plist                                    ║
-  ║  3. Replace this file with the downloaded one                           ║
-  ║  4. Make sure BUNDLE_ID = com.qrguard.app                               ║
-  ║                                                                          ║
-  ║  Without the real plist:                                                 ║
-  ║    • EAS BUILD succeeds (template is structurally valid)                 ║
-  ║    • Firebase / Google Sign-In will NOT work at runtime                  ║
-  ╚══════════════════════════════════════════════════════════════════════════╝
--->
 <plist version="1.0">
 <dict>
-  <!-- OAuth 2.0 client ID for iOS — from Firebase Console -->
-  <key>CLIENT_ID</key>
-  <string>REPLACE_WITH_CLIENT_ID.apps.googleusercontent.com</string>
-
-  <!-- Reversed CLIENT_ID — used as URL scheme for Google Sign-In callback -->
-  <key>REVERSED_CLIENT_ID</key>
-  <string>com.googleusercontent.apps.REPLACE_WITH_REVERSED_CLIENT_ID</string>
-
-  <!-- Firebase API key for iOS -->
-  <key>API_KEY</key>
-  <string>REPLACE_WITH_API_KEY</string>
-
-  <!-- Firebase Cloud Messaging sender ID -->
-  <key>GCM_SENDER_ID</key>
-  <string>REPLACE_WITH_GCM_SENDER_ID</string>
-
-  <!-- Must match ios.bundleIdentifier in app.json -->
-  <key>BUNDLE_ID</key>
-  <string>com.qrguard.app</string>
-
-  <!-- Firebase project ID -->
-  <key>PROJECT_ID</key>
-  <string>REPLACE_WITH_PROJECT_ID</string>
-
-  <!-- Firebase Storage bucket -->
-  <key>STORAGE_BUCKET</key>
-  <string>REPLACE_WITH_PROJECT_ID.firebasestorage.app</string>
-
-  <!-- Firebase App ID for this iOS app (1:SENDER_ID:ios:HEX) -->
-  <key>GOOGLE_APP_ID</key>
-  <string>1:REPLACE_WITH_GCM_SENDER_ID:ios:REPLACE_WITH_APP_ID_HEX</string>
-
-  <key>PLIST_VERSION</key>
-  <string>1</string>
-
-  <key>IS_ADS_SDK_ENABLED</key>
-  <false/>
-  <key>IS_ANALYTICS_ENABLED</key>
-  <false/>
-  <key>IS_APPINVITE_ENABLED</key>
-  <true/>
-  <key>IS_GCM_ENABLED</key>
-  <true/>
-  <key>IS_SIGNIN_ENABLED</key>
-  <true/>
+	<key>CLIENT_ID</key>
+	<string>971359442211-tasdmanoifoflav1fi8ek449emra35l2.apps.googleusercontent.com</string>
+	<key>REVERSED_CLIENT_ID</key>
+	<string>com.googleusercontent.apps.971359442211-tasdmanoifoflav1fi8ek449emra35l2</string>
+	<key>ANDROID_CLIENT_ID</key>
+	<string>971359442211-7di7vre2hg25v1cqtkqu8aco4rdq0oeb.apps.googleusercontent.com</string>
+	<key>API_KEY</key>
+	<string>AIzaSyCotoHd7BeZRbZ8jNIZvoo_MymJFR-6zkQ</string>
+	<key>GCM_SENDER_ID</key>
+	<string>971359442211</string>
+	<key>PLIST_VERSION</key>
+	<string>1</string>
+	<key>BUNDLE_ID</key>
+	<string>com.qrguard.app</string>
+	<key>PROJECT_ID</key>
+	<string>scan-guard-19a7f</string>
+	<key>STORAGE_BUCKET</key>
+	<string>scan-guard-19a7f.firebasestorage.app</string>
+	<key>IS_ADS_ENABLED</key>
+	<false></false>
+	<key>IS_ANALYTICS_ENABLED</key>
+	<false></false>
+	<key>IS_APPINVITE_ENABLED</key>
+	<true></true>
+	<key>IS_GCM_ENABLED</key>
+	<true></true>
+	<key>IS_SIGNIN_ENABLED</key>
+	<true></true>
+	<key>GOOGLE_APP_ID</key>
+	<string>1:971359442211:ios:7a8562cf0b5836ee2fa896</string>
+	<key>DATABASE_URL</key>
+	<string>https://scan-guard-19a7f-default-rtdb.asia-southeast1.firebasedatabase.app</string>
 </dict>
 </plist>
