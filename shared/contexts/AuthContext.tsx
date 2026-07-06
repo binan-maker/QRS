@@ -42,6 +42,7 @@ WebBrowser.maybeCompleteAuthSession();
 
 const GOOGLE_WEB_CLIENT_ID = process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID ?? "";
 const GOOGLE_ANDROID_CLIENT_ID = process.env.EXPO_PUBLIC_ANDROID_CLIENT_ID ?? "";
+const GOOGLE_IOS_CLIENT_ID = process.env.EXPO_PUBLIC_IOS_CLIENT_ID ?? "";
 
 let GoogleSignin: any = null;
 let statusCodes: any = null;
@@ -140,6 +141,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [googleRequest, googleResponse, promptGoogleAsync] = Google.useAuthRequest({
     webClientId: GOOGLE_WEB_CLIENT_ID,
     androidClientId: GOOGLE_ANDROID_CLIENT_ID,
+    iosClientId: GOOGLE_IOS_CLIENT_ID,
     scopes: ["profile", "email"],
   });
 
