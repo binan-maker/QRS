@@ -54,6 +54,7 @@ if (Platform.OS !== "web") {
     statusCodes = mod.statusCodes;
     GoogleSignin.configure({
       webClientId: GOOGLE_WEB_CLIENT_ID,
+      iosClientId: GOOGLE_IOS_CLIENT_ID,
       forceCodeForRefreshToken: true,
       offlineAccess: false,
     });
