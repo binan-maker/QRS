@@ -20,8 +20,16 @@
     "ios": {
       "supportsTablet": false,
       "bundleIdentifier": "com.qrguard.app",
+      "googleServicesFile": "./GoogleService-Info.plist",
       "infoPlist": {
-        "ITSAppUsesNonExemptEncryption": false
+        "ITSAppUsesNonExemptEncryption": false,
+
+        "NSCameraUsageDescription": "BinRo uses your camera to scan QR codes.",
+        "NSPhotoLibraryUsageDescription": "BinRo accesses your photo library to scan QR codes from saved images and to let you upload a profile photo.",
+        "NSPhotoLibraryAddUsageDescription": "BinRo saves generated QR codes to your photo library.",
+        "NSMicrophoneUsageDescription": "BinRo may access the microphone when scanning QR codes via video mode.",
+        "NSLocationWhenInUseUsageDescription": "BinRo uses your location to verify nearby merchant QR codes and improve fraud detection accuracy.",
+        "NSFaceIDUsageDescription": "BinRo uses Face ID to securely authenticate you without a password."
       }
     },
     "android": {
@@ -64,6 +72,11 @@
                 "lib/x86_64/libc++_shared.so"
               ]
             }
+          },
+          "ios": {
+            "deploymentTarget": "15.1",
+            "useFrameworks": "static",
+            "flipper": false
           }
         }
       ],
@@ -73,9 +86,10 @@
       "./plugins/android-font-filter.js",
       "./plugins/android-size-optimize.js",
       "./plugins/android-abi-filter.js",
+      "./plugins/ios-modular-headers.js",
+      "./plugins/ios-size-optimize.js",
       "expo-localization",
-      "expo-secure-store",
-      "./plugins/ios-modular-headers.js"
+      "expo-secure-store"
     ],
     "experiments": {
       "typedRoutes": true,

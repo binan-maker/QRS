@@ -123,6 +123,51 @@ A mobile-first QR code scanning and management app for Android, focused on secur
 
 - _Populate as you build_
 
+## iOS Build Pipeline (EAS)
+
+### One-time setup before your first iOS EAS build
+
+1. **Replace `GoogleService-Info.plist`**
+   - Firebase Console → Project Settings → Your iOS App → Download `GoogleService-Info.plist`
+   - Drop it in the repo root (replacing the template). `BUNDLE_ID` must be `com.qrguard.app`.
+   - The `@react-native-google-signin` Expo plugin reads `REVERSED_CLIENT_ID` from this file automatically.
+
+2. **Apple credentials (EAS manages these for you)**
+   - Run `eas build --platform ios --profile preview` for the first time.
+   - EAS will prompt for your Apple ID and Team ID, then create/manage provisioning profiles and signing certificates automatically (`credentialsSource: "remote"`).
+   - Fill in `submit.production.ios` in `eas.json` with your Apple ID, App Store Connect App ID, and Team ID when you're ready to submit.
+
+3. **Push notifications (APNs)**
+   - EAS automatically registers an APNs key when you use managed credentials — no manual certificate work needed.
+
+### How the iOS build pipeline works
+
+| Plugin | What it does |
+|---|---|
+| `expo-build-properties` → `ios.useFrameworks: "static"` | Links all pods as static frameworks — required for Firebase + Swift compatibility |
+| `plugins/ios-modular-headers.js` | Safety net: adds `use_modular_headers!` if `use_frameworks!` isn't present |
+| `plugins/ios-size-optimize.js` | Xcode Release build settings: `-Osize`, thin LTO, dead-code stripping, symbol stripping |
+
+### Size optimizations applied
+- **`SWIFT_OPTIMIZATION_LEVEL = -Osize`** — compile for binary size, not speed
+- **`SWIFT_COMPILATION_MODE = wholemodule`** — whole-module optimization enables cross-file dead code removal
+- **`LLVM_LTO = YES_THIN`** — linker eliminates dead code across translation units
+- **`DEAD_CODE_STRIPPING + STRIP_INSTALLED_PRODUCT`** — removes unreachable code and debug symbols from the final binary
+- **`ENABLE_BITCODE = NO`** — bitcode deprecated in Xcode 14+; disabling it removes ~10 MB from the archive
+- **`flipper: false`** — Flipper debug framework (~10 MB) excluded from all builds
+
+### EAS build commands
+```bash
+# iOS simulator (no Apple credentials needed)
+eas build --platform ios --profile development
+
+# Internal distribution (TestFlight-style, needs Apple credentials)
+eas build --platform ios --profile preview
+
+# App Store
+eas build --platform ios --profile production
+```
+
 ## Gotchas
 
 - **Android Cleartext Traffic**: `CLEARTEXT communication not permitted` errors usually mean the dev APK needs to be rebuilt with updated network security config: `npx expo prebuild --platform android --clean && npx expo run:android`.

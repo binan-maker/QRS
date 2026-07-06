@@ -11,11 +11,17 @@
  *   that don't generate module maps by default. Swift cannot import them
  *   without a module map, so `pod install` fails.
  *
- * Fix:
- *   Adding `use_modular_headers!` to the Podfile tells CocoaPods to generate
- *   module maps for ALL pods, making every Objective-C pod importable from
- *   Swift. This is the approach recommended by the CocoaPods error message
- *   itself and is the standard fix for Firebase + Swift static library setups.
+ * Fix strategy — ordered by preference:
+ *
+ *   1. If `use_frameworks! :linkage => :static` is already in the Podfile
+ *      (added by expo-build-properties `ios.useFrameworks: "static"`), it
+ *      implicitly enables module maps for all pods. In that case this plugin
+ *      does nothing — adding `use_modular_headers!` alongside `use_frameworks!`
+ *      causes CocoaPods to emit a conflicting-directives warning.
+ *
+ *   2. Otherwise, insert `use_modular_headers!` immediately after the
+ *      `platform :ios, …` declaration. This tells CocoaPods to generate
+ *      module maps for every pod so ObjC pods are importable from Swift.
  *
  * This plugin runs during `expo prebuild` (after the ios/ folder is generated)
  * and patches the Podfile before `pod install` runs.
@@ -41,9 +47,21 @@ function withIosModularHeaders(config) {
 
       let podfile = fs.readFileSync(podfilePath, "utf8");
 
+      // If use_frameworks! is already present (added by expo-build-properties
+      // useFrameworks: "static"), module maps are already handled. Adding
+      // use_modular_headers! on top would trigger a CocoaPods warning.
+      if (podfile.includes("use_frameworks!")) {
+        console.log(
+          "[ios-modular-headers] `use_frameworks!` already present — " +
+            "module maps are handled; skipping `use_modular_headers!`."
+        );
+        return config;
+      }
+
       if (podfile.includes("use_modular_headers!")) {
-        // Already patched — nothing to do.
-        console.log("[ios-modular-headers] `use_modular_headers!` already present — skipping.");
+        console.log(
+          "[ios-modular-headers] `use_modular_headers!` already present — skipping."
+        );
         return config;
       }
 
@@ -52,28 +70,28 @@ function withIosModularHeaders(config) {
       //   platform :ios, '15.1'
       //   platform :ios, "15.1"
       //   platform :ios, podfile_properties['ios.deploymentTarget'] || '15.1'
-      // The regex captures the whole line regardless of what follows the comma.
       const platformLineRegex = /^(platform\s+:ios\b.*)$/m;
+      let patched = false;
 
-      if (!platformLineRegex.test(podfile)) {
-        // Could not locate the platform line — insert at the very top as a
-        // safe fallback so use_modular_headers! is always declared.
+      if (platformLineRegex.test(podfile)) {
+        podfile = podfile.replace(platformLineRegex, "$1\nuse_modular_headers!");
+        patched = true;
+      } else {
+        // Fallback: prepend to the file so the directive is always declared.
         console.warn(
           "[ios-modular-headers] Could not find `platform :ios` line. " +
-            "Prepending `use_modular_headers!` to Podfile as fallback."
+            "Prepending `use_modular_headers!` as fallback."
         );
         podfile = "use_modular_headers!\n" + podfile;
-      } else {
-        podfile = podfile.replace(
-          platformLineRegex,
-          "$1\nuse_modular_headers!"
-        );
+        patched = true;
       }
 
-      fs.writeFileSync(podfilePath, podfile);
-      console.log(
-        "[ios-modular-headers] Successfully added `use_modular_headers!` to Podfile."
-      );
+      if (patched) {
+        fs.writeFileSync(podfilePath, podfile);
+        console.log(
+          "[ios-modular-headers] Successfully added `use_modular_headers!` to Podfile."
+        );
+      }
 
       return config;
     },

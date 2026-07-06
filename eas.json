@@ -19,6 +19,10 @@
       "distribution": "internal",
       "android": {
         "buildType": "apk"
+      },
+      "ios": {
+        "distribution": "internal",
+        "credentialsSource": "remote"
       }
     },
     "production": {
@@ -27,7 +31,8 @@
         "buildType": "app-bundle"
       },
       "ios": {
-        "distribution": "store"
+        "distribution": "store",
+        "credentialsSource": "remote"
       }
     }
   },
@@ -36,6 +41,11 @@
       "android": {
         "serviceAccountKeyPath": "./google-service-account.json",
         "track": "production"
+      },
+      "ios": {
+        "appleId": "REPLACE_WITH_YOUR_APPLE_ID",
+        "ascAppId": "REPLACE_WITH_YOUR_APP_STORE_CONNECT_APP_ID",
+        "appleTeamId": "REPLACE_WITH_YOUR_APPLE_TEAM_ID"
       }
     }
   }
