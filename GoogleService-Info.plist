@@ -3,9 +3,9 @@
 <plist version="1.0">
 <dict>
 	<key>CLIENT_ID</key>
-	<string>971359442211-tasdmanoifoflav1fi8ek449emra35l2.apps.googleusercontent.com</string>
+	<string>971359442211-jctgrhpb89o0c0j5tp0n1a7ejg39sop0.apps.googleusercontent.com</string>
 	<key>REVERSED_CLIENT_ID</key>
-	<string>com.googleusercontent.apps.971359442211-tasdmanoifoflav1fi8ek449emra35l2</string>
+	<string>com.googleusercontent.apps.971359442211-jctgrhpb89o0c0j5tp0n1a7ejg39sop0</string>
 	<key>ANDROID_CLIENT_ID</key>
 	<string>971359442211-7di7vre2hg25v1cqtkqu8aco4rdq0oeb.apps.googleusercontent.com</string>
 	<key>API_KEY</key>
@@ -15,7 +15,7 @@
 	<key>PLIST_VERSION</key>
 	<string>1</string>
 	<key>BUNDLE_ID</key>
-	<string>com.qrguard.app</string>
+	<string>com.binro.app</string>
 	<key>PROJECT_ID</key>
 	<string>scan-guard-19a7f</string>
 	<key>STORAGE_BUCKET</key>
@@ -31,7 +31,7 @@
 	<key>IS_SIGNIN_ENABLED</key>
 	<true></true>
 	<key>GOOGLE_APP_ID</key>
-	<string>1:971359442211:ios:7a8562cf0b5836ee2fa896</string>
+	<string>1:971359442211:ios:405472e1c1b2d1452fa896</string>
 	<key>DATABASE_URL</key>
 	<string>https://scan-guard-19a7f-default-rtdb.asia-southeast1.firebasedatabase.app</string>
 </dict>
