@@ -1,66 +1,69 @@
 import { Tabs, router } from "expo-router";
 import { BlurView } from "expo-blur";
-import { Platform, StyleSheet, View, Pressable } from "react-native";
+import { Platform, StyleSheet, View, Animated, PanResponder, useWindowDimensions } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { MaterialCommunityIcons, Ionicons } from "@expo/vector-icons";
-import React, { useState, useEffect, useCallback, useMemo } from "react";
+import React, { useEffect, useCallback, useMemo, useRef } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useTheme } from "@/shared/contexts/ThemeContext";
-import { LinearGradient } from "expo-linear-gradient";
 import { useAppTranslation } from "@/shared/i18n/useAppTranslation";
-import * as Haptics from "@/shared/utils/haptics";
 import { TabBarProvider, useTabBarScroll } from "@/shared/contexts/TabBarContext";
 
-// ── iOS glassmorphism pill background ──────────────────────────────────────────
-// Layered approach:
+// ── iOS glassmorphism dock background ───────────────────────────────────────
+// True frosted-glass "island" look (matches iOS 17/18 floating dock style):
 //   1. Shadow halo  — soft drop shadow beneath the pill (rendered in a wrapper
 //      View because React Native shadows require a non-transparent background;
 //      we use a near-invisible fill just to anchor the shadow).
-//   2. BlurView     — frosted glass. overflow:"hidden" clips the blur to the pill.
-//   3. Tint overlay — adds depth and prevents the blur from looking washed-out.
+//   2. BlurView     — heavy frosted glass, clipped to the pill's rounded shape.
+//   3. Tint overlay — a very light veil so icons stay legible against the blur.
 //   4. Top shimmer  — 1 px highlight at the very top edge (catches the light).
 //   5. Border ring  — crisp 1 px perimeter to define the glass edge.
+//   6. Drag handle attaches here via `panHandlers` so the whole dock (icons
+//      included, since this layer sits behind them but shares the same pan
+//      responder contract) can be grabbed and slid horizontally.
 const IosTabBarBackground = React.memo(function IosTabBarBackground({
   isDark,
+  panHandlers,
 }: {
   isDark: boolean;
+  panHandlers?: object;
 }) {
   return (
-    <>
+    <View style={StyleSheet.absoluteFill} {...panHandlers}>
       {/* 1. Shadow halo */}
       <View
         style={[
           StyleSheet.absoluteFill,
           {
-            borderRadius: 28,
+            borderRadius: 30,
             backgroundColor: isDark
-              ? "rgba(12,16,26,0.01)"   // near-transparent but non-zero for shadow
+              ? "rgba(12,16,26,0.01)" // near-transparent but non-zero for shadow
               : "rgba(255,255,255,0.01)",
             shadowColor: "#000",
-            shadowOffset: { width: 0, height: 10 },
-            shadowOpacity: isDark ? 0.5 : 0.18,
-            shadowRadius: 28,
+            shadowOffset: { width: 0, height: 12 },
+            shadowOpacity: isDark ? 0.55 : 0.2,
+            shadowRadius: 30,
           },
         ]}
       />
 
-      {/* 2. BlurView + 3 + 4 + 5 */}
+      {/* 2. BlurView + 3 + 4 + 5 — pushed to max intensity for a fully-glass look */}
       <BlurView
-        intensity={isDark ? 78 : 72}
+        intensity={isDark ? 92 : 88}
         tint={isDark ? "dark" : "light"}
         style={[
           StyleSheet.absoluteFill,
-          { borderRadius: 28, overflow: "hidden" },
+          { borderRadius: 30, overflow: "hidden" },
         ]}
       >
-        {/* 3. Tint overlay — deepens contrast so icons pop against the blur */}
+        {/* 3. Tint overlay — thin veil, just enough for icon contrast */}
         <View
           style={[
             StyleSheet.absoluteFill,
             {
               backgroundColor: isDark
-                ? "rgba(10,14,23,0.52)"
-                : "rgba(248,250,255,0.48)",
+                ? "rgba(10,14,23,0.34)"
+                : "rgba(248,250,255,0.28)",
             },
           ]}
         />
@@ -68,15 +71,15 @@ const IosTabBarBackground = React.memo(function IosTabBarBackground({
         {/* 4. Top shimmer — "light catching the top edge of the glass" */}
         <View
           style={{
-            position:        "absolute",
-            top:             0,
-            left:            20,
-            right:           20,
-            height:          1,
+            position: "absolute",
+            top: 0,
+            left: 22,
+            right: 22,
+            height: 1,
             backgroundColor: isDark
-              ? "rgba(255,255,255,0.18)"
+              ? "rgba(255,255,255,0.22)"
               : "rgba(255,255,255,0.95)",
-            borderRadius:    1,
+            borderRadius: 1,
           }}
         />
 
@@ -85,16 +88,16 @@ const IosTabBarBackground = React.memo(function IosTabBarBackground({
           style={[
             StyleSheet.absoluteFill,
             {
-              borderRadius:  28,
-              borderWidth:   1,
-              borderColor:   isDark
-                ? "rgba(255,255,255,0.11)"
-                : "rgba(255,255,255,0.72)",
+              borderRadius: 30,
+              borderWidth: 1,
+              borderColor: isDark
+                ? "rgba(255,255,255,0.14)"
+                : "rgba(255,255,255,0.75)",
             },
           ]}
         />
       </BlurView>
-    </>
+    </View>
   );
 });
 
@@ -123,70 +126,6 @@ const AndroidTabBarBackground = React.memo(function AndroidTabBarBackground({
         },
       ]}
     />
-  );
-});
-
-// ── Scan FAB (memoized — contains LinearGradient which is GPU-expensive) ───────
-// Design: floating glass ring → gradient button → QR icon
-//   • Glass ring: semi-transparent bordered halo that bridges the FAB to the
-//     pill bar and adds the "magnified glass" look.
-//   • Gradient inner: primary → primaryShade with a strong coloured shadow.
-//   • The ring shadow is black (for depth); the inner shadow is primary-tinted
-//     (for the glow effect seen in premium iOS apps).
-const ScanTabButton = React.memo(function ScanTabButton({
-  onPress,
-}: {
-  onPress?: () => void;
-}) {
-  const { colors } = useTheme();
-
-  const handlePress = useCallback(() => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    onPress?.();
-  }, [onPress]);
-
-  return (
-    <Pressable
-      onPress={handlePress}
-      style={styles.scanTabBtn}
-      accessibilityLabel="Scan QR code"
-      accessibilityRole="button"
-    >
-      {/* Glass halo ring */}
-      <View
-        style={[
-          styles.scanTabBtnRing,
-          {
-            backgroundColor: colors.isDark
-              ? "rgba(255,255,255,0.07)"
-              : "rgba(255,255,255,0.55)",
-            borderColor: colors.isDark
-              ? "rgba(255,255,255,0.16)"
-              : "rgba(255,255,255,0.85)",
-            shadowColor: "#000",
-          },
-        ]}
-      >
-        {/* Gradient core */}
-        <LinearGradient
-          colors={[colors.primary, colors.primaryShade]}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={[
-            styles.scanTabBtnInner,
-            {
-              shadowColor:   colors.primary,
-              shadowOffset:  { width: 0, height: 4 },
-              shadowOpacity: 0.55,
-              shadowRadius:  12,
-              elevation:     12,
-            },
-          ]}
-        >
-          <MaterialCommunityIcons name="qrcode-scan" size={27} color="#fff" />
-        </LinearGradient>
-      </View>
-    </Pressable>
   );
 });
 
@@ -260,12 +199,16 @@ const ProfileIcon = React.memo(function ProfileIcon({
 });
 
 // ── Stable icon render functions (referentially stable across renders) ──────────
-const renderHomeIcon   = ({ color, focused }: { color: string; focused: boolean }) => <HomeIcon color={color} focused={focused} />;
-const renderGenIcon    = ({ color, focused }: { color: string; focused: boolean }) => <GeneratorIcon color={color} focused={focused} />;
-const renderHistIcon   = ({ color, focused }: { color: string; focused: boolean }) => <HistoryIcon color={color} focused={focused} />;
-const renderProfIcon   = ({ color, focused }: { color: string; focused: boolean }) => <ProfileIcon color={color} focused={focused} />;
-const renderScanButton = () => <ScanTabButton onPress={() => router.push("/(tabs)/scanner")} />;
-const renderNoLabel    = () => null;
+const renderHomeIcon = ({ color, focused }: { color: string; focused: boolean }) => <HomeIcon color={color} focused={focused} />;
+const renderGenIcon  = ({ color, focused }: { color: string; focused: boolean }) => <GeneratorIcon color={color} focused={focused} />;
+const renderHistIcon = ({ color, focused }: { color: string; focused: boolean }) => <HistoryIcon color={color} focused={focused} />;
+const renderProfIcon = ({ color, focused }: { color: string; focused: boolean }) => <ProfileIcon color={color} focused={focused} />;
+
+// iOS dock sizing — a compact, icon-only 4-button island (no scanner/FAB).
+const IOS_TAB_COUNT   = 4;
+const IOS_SLOT_WIDTH  = 68;
+const IOS_DOCK_WIDTH  = IOS_TAB_COUNT * IOS_SLOT_WIDTH;
+const IOS_DRAG_MARGIN = 12; // keep the dock at least this far from either screen edge
 
 function ClassicTabLayout() {
   const isWeb  = Platform.OS === "web";
@@ -274,6 +217,7 @@ function ClassicTabLayout() {
   const { colors } = useTheme();
   const { t } = useAppTranslation();
   const { tabBarTranslateY, setTabBarHeight } = useTabBarScroll();
+  const { width: screenWidth } = useWindowDimensions();
 
   useEffect(() => {
     AsyncStorage.getItem("qrg:startup:screen").then((pref) => {
@@ -281,14 +225,15 @@ function ClassicTabLayout() {
     }).catch(() => {});
   }, []);
 
-  // ── iOS floating pill layout ─────────────────────────────────────────────────
-  // The bar is a glass pill that floats above the home indicator with horizontal
-  // margins. It does NOT include insets.bottom in its own height — instead it is
-  // positioned `insets.bottom + 10` above the screen bottom edge.
+  // ── iOS floating, draggable glass dock ──────────────────────────────────────
+  // The bar is a compact glass island (just wide enough for the 4 icon-only
+  // buttons) that floats above the home indicator. It starts centered
+  // horizontally and can be dragged left/right — its vertical position stays
+  // fixed (pinned above the home indicator); only translateX is draggable.
   //
-  // Android keeps the original full-width, full-height approach.
-  const IOS_BAR_HEIGHT     = 70;
-  const IOS_BOTTOM_GAP     = 10; // gap between pill and home indicator
+  // Android keeps the original full-width, full-height, non-draggable approach.
+  const IOS_BAR_HEIGHT     = 64;
+  const IOS_BOTTOM_GAP     = 10; // gap between dock and home indicator
   const ANDROID_BAR_HEIGHT = 70 + insets.bottom;
 
   const tabBarHeight = isWeb
@@ -297,14 +242,11 @@ function ClassicTabLayout() {
     ? IOS_BAR_HEIGHT
     : ANDROID_BAR_HEIGHT;
 
-  // Total visual footprint from screen bottom → top of FAB.
-  // Used by the scroll-hide animation to know how far to translate.
-  const FAB_OVERHANG = 34; // matches new scanTabBtn marginTop: -34
   const scrollHideHeight = isWeb
     ? 84
     : isIOS
-    ? IOS_BAR_HEIGHT + insets.bottom + IOS_BOTTOM_GAP + FAB_OVERHANG
-    : ANDROID_BAR_HEIGHT + FAB_OVERHANG;
+    ? IOS_BAR_HEIGHT + insets.bottom + IOS_BOTTOM_GAP
+    : ANDROID_BAR_HEIGHT;
 
   useEffect(() => {
     setTabBarHeight(scrollHideHeight);
@@ -314,17 +256,65 @@ function ClassicTabLayout() {
 
   const tabBarBorderColor = colors.surfaceBorder; // Android only — iOS draws its own border
 
+  // ── Horizontal drag handling (iOS only) ─────────────────────────────────────
+  // dragX is a plain Animated.Value driven by the native driver. It represents
+  // the offset from the dock's centered resting position. It is clamped on
+  // release so the dock never leaves the screen bounds.
+  const dragX       = useRef(new Animated.Value(0)).current;
+  const dragXOffset = useRef(0); // last committed (flattened) offset, for clamping math
+  const centeredLeft = (screenWidth - IOS_DOCK_WIDTH) / 2;
+  const minOffset = IOS_DRAG_MARGIN - centeredLeft;
+  const maxOffset = screenWidth - IOS_DRAG_MARGIN - IOS_DOCK_WIDTH - centeredLeft;
+
+  useEffect(() => {
+    const id = dragX.addListener(({ value }) => {
+      dragXOffset.current = value;
+    });
+    return () => dragX.removeListener(id);
+  }, [dragX]);
+
+  const panResponder = useMemo(
+    () =>
+      PanResponder.create({
+        onStartShouldSetResponderCapture: () => false,
+        onStartShouldSetPanResponderCapture: () => false,
+        // Only steal the gesture once the user is clearly dragging
+        // horizontally — this keeps taps on the icons working normally.
+        onMoveShouldSetPanResponderCapture: (_evt, gesture) =>
+          Math.abs(gesture.dx) > 6 && Math.abs(gesture.dx) > Math.abs(gesture.dy) * 1.5,
+        onPanResponderGrant: () => {
+          dragX.setOffset(dragXOffset.current);
+          dragX.setValue(0);
+        },
+        onPanResponderMove: Animated.event([null, { dx: dragX }], {
+          useNativeDriver: false,
+        }),
+        onPanResponderRelease: () => {
+          dragX.flattenOffset();
+          const clamped = Math.min(maxOffset, Math.max(minOffset, dragXOffset.current));
+          if (clamped !== dragXOffset.current) {
+            Animated.spring(dragX, {
+              toValue: clamped,
+              useNativeDriver: true,
+              bounciness: 6,
+            }).start();
+          }
+        },
+      }),
+    [dragX, minOffset, maxOffset],
+  );
+
   const tabBarBackground = useCallback(
     () =>
       isIOS ? (
-        <IosTabBarBackground isDark={colors.isDark} />
+        <IosTabBarBackground isDark={colors.isDark} panHandlers={panResponder.panHandlers} />
       ) : (
         <AndroidTabBarBackground
           backgroundColor={colors.isDark ? colors.background : colors.surface}
           borderColor={tabBarBorderColor}
         />
       ),
-    [isIOS, colors.isDark, colors.background, colors.surface, tabBarBorderColor],
+    [isIOS, colors.isDark, colors.background, colors.surface, tabBarBorderColor, panResponder],
   );
 
   const screenOptions = useMemo(
@@ -338,12 +328,12 @@ function ClassicTabLayout() {
         borderTopWidth:  0,
         elevation:       0,
         height:          tabBarHeight,
-        // iOS: float the pill above the home indicator with horizontal margins.
-        // Android/web: full-width flush to the bottom.
+        // iOS: compact, centered, draggable glass island above the home
+        // indicator. Android/web: full-width flush to the bottom.
         ...(isIOS ? {
           bottom:        insets.bottom + IOS_BOTTOM_GAP,
-          left:          12,
-          right:         12,
+          left:          (screenWidth - IOS_DOCK_WIDTH) / 2,
+          width:         IOS_DOCK_WIDTH,
           paddingBottom: 0,
         } : {
           bottom:        0,
@@ -351,10 +341,12 @@ function ClassicTabLayout() {
         }),
         paddingTop:  0,
         overflow:    "visible" as const,
-        transform:   [{ translateY: tabBarTranslateY }],
+        transform:   isIOS
+          ? [{ translateY: tabBarTranslateY }, { translateX: dragX }]
+          : [{ translateY: tabBarTranslateY }],
       } as any,
       tabBarBackground,
-      tabBarShowLabel: true,
+      tabBarShowLabel: !isIOS,
       tabBarLabelStyle: {
         fontFamily:      "Inter_500Medium",
         fontSize:        10.5,
@@ -370,7 +362,7 @@ function ClassicTabLayout() {
         justifyContent: "center" as const,
       },
     }),
-    [colors.primary, colors.tabIconDefault, tabBarHeight, insets.bottom, tabBarBackground, isIOS],
+    [colors.primary, colors.tabIconDefault, tabBarHeight, insets.bottom, tabBarBackground, isIOS, screenWidth, dragX, tabBarTranslateY],
   );
 
   return (
@@ -388,12 +380,7 @@ function ClassicTabLayout() {
 
         <Tabs.Screen
           name="scanner"
-          options={{
-            title:           "",
-            tabBarLabel:     renderNoLabel,
-            tabBarStyle:     hiddenTabBar,
-            tabBarButton:    renderScanButton,
-          }}
+          options={{ href: null, tabBarStyle: hiddenTabBar }}
         />
 
         <Tabs.Screen
@@ -441,19 +428,13 @@ function ClassicTabLayout() {
 export default function TabLayout() {
   // NOTE: NativeTabLayout (Liquid Glass / iOS 26) is intentionally bypassed.
   //
-  // expo-router/unstable-native-tabs wraps a native UITabBarController which
-  // only knows about the tabs listed as <NativeTabs.Trigger>. The scanner is
-  // a centre-FAB tab — it has no visible trigger and must be reached via
-  // router.push("/(tabs)/scanner"). That push silently fails on the native
-  // controller because the route is not registered as a trigger, so the
-  // scanner screen never opens when tapped from the home cards or anywhere else.
-  //
-  // ClassicTabLayout renders the scanner as a custom floating FAB (renderScanButton)
-  // and hides the tab bar on the scanner screen (tabBarStyle: hiddenTabBar).
-  // It works correctly on all iOS versions including iOS 26.
+  // expo-router/unstable-native-tabs wraps a native UITabBarController, which
+  // doesn't support a draggable, icon-only, custom-width dock. ClassicTabLayout
+  // renders a fully custom glass island (BlurView + PanResponder) that gives
+  // full control over size, position, and drag behavior on every iOS version.
   //
   // Re-enable NativeTabLayout only once expo-router/unstable-native-tabs
-  // supports hidden/FAB tabs or a stable workaround is available:
+  // supports custom draggable tab bars or a stable workaround is available:
   //   if (isLiquidGlassAvailable()) return <NativeTabLayout />;
   return (
     <TabBarProvider>
@@ -463,45 +444,13 @@ export default function TabLayout() {
 }
 
 const styles = StyleSheet.create({
-  // ── Scan FAB ─────────────────────────────────────────────────────────────────
-  scanTabBtn: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-    // Lift the FAB above the pill bar. 34 px matches FAB_OVERHANG in the
-    // layout so the scroll-hide animation fully clears the button.
-    marginTop: -34,
-  },
-  // Glass halo ring — a slightly larger semi-transparent disc that sits behind
-  // the gradient core. Gives depth and visually anchors the FAB to the pill.
-  scanTabBtnRing: {
-    width:          82,
-    height:         82,
-    borderRadius:   41,
-    alignItems:     "center",
-    justifyContent: "center",
-    borderWidth:    1.5,
-    // Drop shadow for the outer ring (depth beneath the pill)
-    shadowOffset:   { width: 0, height: 10 },
-    shadowOpacity:  0.28,
-    shadowRadius:   22,
-    elevation:      18,
-  },
-  // Gradient core — the coloured button inside the glass ring
-  scanTabBtnInner: {
-    width:          62,
-    height:         62,
-    borderRadius:   31,
-    alignItems:     "center",
-    justifyContent: "center",
-  },
   // ── Tab icons ─────────────────────────────────────────────────────────────────
   iconWrap: {
-    width: 40, height: 28,
-    alignItems: "center", justifyContent: "center", borderRadius: 10,
+    width: 44, height: 32,
+    alignItems: "center", justifyContent: "center", borderRadius: 12,
   },
   activeIconWrap: {
-    width: 52, height: 28,
-    alignItems: "center", justifyContent: "center", borderRadius: 14,
+    width: 44, height: 32,
+    alignItems: "center", justifyContent: "center", borderRadius: 12,
   },
 });
