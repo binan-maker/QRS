@@ -362,6 +362,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   async function signInWithGoogle() {
     if (Platform.OS !== "web" && GoogleSignin) {
+      // ── 1. Silent sign-in: succeeds instantly for returning users ────────────
       try {
         const silentResult = await GoogleSignin.signInSilently();
         if (silentResult?.type === "success" && silentResult?.data?.idToken) {
@@ -370,8 +371,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             return;
           } catch {}
         }
-      } catch {}
-      const result = await GoogleSignin.signIn();
+      } catch {
+        // No saved credential — fall through to interactive sign-in
+      }
+
+      // ── 2. Interactive sign-in ───────────────────────────────────────────────
+      // iOS only: ASWebAuthenticationSession cannot be presented while the login
+      // screen's entrance animation is still running (~460 ms). A short delay
+      // lets the transition settle so the system auth sheet can be shown cleanly.
+      // Android's Credential Manager has no such constraint — no delay needed.
+      if (Platform.OS === "ios") {
+        await new Promise<void>((resolve) => setTimeout(resolve, 500));
+      }
+
+      let result: any;
+      try {
+        result = await GoogleSignin.signIn();
+      } catch (e: any) {
+        // SDK threw — usually means iosClientId is missing or misconfigured.
+        // Map to a friendly error rather than exposing internal SDK messages.
+        throw mapFirebaseError(e);
+      }
+
       if (result.type === "success" && result.data?.idToken) {
         try {
           await handleGoogleIdToken(result.data.idToken);
@@ -379,7 +400,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           throw mapFirebaseError(e);
         }
       } else if (result.type === "cancelled") {
-        const err = new Error(getAuthErrorMessage("auth/popup-closed-by-user"));
+        // User tapped Cancel on the iOS system prompt or the Google picker.
+        // Using a specific code so the UI can dismiss quietly instead of showing
+        // a red error banner (the user already knows they cancelled).
+        const err = new Error("Sign-in was cancelled.") as any;
+        err.code = "auth/cancelled-by-user";
+        throw err;
+      } else if (result.type === "noSavedCredentialFound") {
+        // Android Credential Manager: no account saved on device.
+        // On iOS this is uncommon, but handle defensively — treat as cancellation.
+        const err = new Error("Sign-in was cancelled.") as any;
+        err.code = "auth/cancelled-by-user";
+        throw err;
+      } else {
+        // Any other result type (e.g. "signInRequired", unknown future types).
+        // Never fall through silently — always throw so googleLoading is reset.
+        const err = new Error("Google sign-in could not be completed. Please try again.") as any;
+        err.code = "auth/google-unknown";
         throw err;
       }
     } else {

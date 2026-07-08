@@ -106,10 +106,17 @@ export default function RegisterScreen() {
 
   async function handleGoogleSignIn() {
     setError(""); setGoogleLoading(true);
-    try { await signInWithGoogle(); }
-    catch (e: any) {
-      setError(e.message || "Google sign-in failed. Please try again.");
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+    try {
+      await signInWithGoogle();
+      // On success: user state updates → useEffect above resets googleLoading
+      // and navigates away. Do NOT call setGoogleLoading(false) here.
+    } catch (e: any) {
+      if (e.code === "auth/cancelled-by-user") {
+        // User tapped Cancel, or first-tap iOS animation race — reset quietly.
+      } else {
+        setError(e.message || "Google sign-in failed. Please try again.");
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+      }
       setGoogleLoading(false);
     }
   }

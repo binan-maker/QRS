@@ -16,6 +16,7 @@ A mobile-first QR code scanning and management app for Android, focused on secur
     - `EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID`
     - `EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID`
     - `EXPO_PUBLIC_ANDROID_CLIENT_ID`
+    - `EXPO_PUBLIC_IOS_CLIENT_ID` (**required for iOS Google Sign-In** — get this from Google Cloud Console → OAuth 2.0 Client IDs → iOS type → Client ID; without it, Google Sign-In silently fails with "cancelled" on every iOS tap)
     - `GOOGLE_SAFE_BROWSING_API_KEY` (optional, for real threat intel)
     - `PORT` (defaults to 5000)
     - `REPLIT_DEV_DOMAIN`

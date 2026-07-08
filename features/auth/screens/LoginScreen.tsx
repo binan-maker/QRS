@@ -97,11 +97,21 @@ export default function LoginScreen() {
 
   async function handleGoogleSignIn() {
     setError(""); setErrorCode(""); setGoogleLoading(true);
-    try { await signInWithGoogle(); }
-    catch (e: any) {
-      setError(e.message || "Google sign-in failed. Please try again.");
-      setErrorCode("");
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+    try {
+      await signInWithGoogle();
+      // On success: user state updates → useEffect above resets googleLoading
+      // and navigates away. Do NOT call setGoogleLoading(false) here — the
+      // GoogleAuthLoading overlay should stay visible until navigation completes.
+    } catch (e: any) {
+      if (e.code === "auth/cancelled-by-user") {
+        // User tapped Cancel, or the first-tap iOS animation race —
+        // reset loading quietly without a red banner. They can tap again.
+      } else {
+        setError(e.message || "Google sign-in failed. Please try again.");
+        setErrorCode("");
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+      }
+      // Always reset loading on any error (including silent cancellation)
       setGoogleLoading(false);
     }
   }
