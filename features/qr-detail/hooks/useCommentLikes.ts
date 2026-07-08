@@ -41,19 +41,14 @@ export function useCommentLikes({ id, userId, commentsList, setCommentsList }: U
     if (!userId || !commentsList.length) return;
     const ids = commentsList.map((c) => c.id);
     getCommentUserLikes(id, ids, userId).then((likes) => {
+      // ── Icon state ────────────────────────────────────────────────────────
       setUserLikes((prev) => {
         const next = { ...prev };
         Object.entries(likes).forEach(([cid, val]) => {
-          // Skip if a timer / server round-trip is still active.
+          // A timer being active means a server round-trip is in-flight for
+          // this comment; the Firestore result may be stale, so skip it and
+          // let the debounce handler own the final state.
           if (likeTimersRef.current.has(cid)) return;
-
-          const firestoreVal = val ?? null;
-          const optimisticVal = currentLikeRef.current[cid] ?? null;
-
-          // The user has already interacted and we have a more recent optimistic
-          // value — do NOT overwrite with the (potentially stale) Firestore result.
-          if (optimisticVal !== firestoreVal) return;
-
           if (val === null || val === undefined) {
             delete next[cid];
           } else {
@@ -63,14 +58,21 @@ export function useCommentLikes({ id, userId, commentsList, setCommentsList }: U
         return next;
       });
 
+      // ── Synchronous refs ──────────────────────────────────────────────────
+      // Always initialise both refs when there is no in-flight interaction.
+      // The original guard `(currentLikeRef ?? null) !== firestoreVal → skip`
+      // was broken: on the very first load currentLikeRef is always undefined,
+      // so the condition was always true and the refs were NEVER set. This
+      // caused:
+      //   • Icons not reflecting likes from a previous session.
+      //   • handleCommentLike reading prevLike = null for an already-liked
+      //     comment, computing newLike = "like" (a fresh add) instead of
+      //     null (toggle-off), which then made Firestore remove the like.
       Object.entries(likes).forEach(([cid, val]) => {
         if (likeTimersRef.current.has(cid)) return;
-        committedLikesRef.current[cid] = val;
-        // Only sync currentLikeRef when it already agrees with Firestore
-        // (i.e. no post-timer optimistic change is pending).
-        if ((currentLikeRef.current[cid] ?? null) === (val ?? null)) {
-          currentLikeRef.current[cid] = val;
-        }
+        const normalized = val ?? null;
+        committedLikesRef.current[cid] = normalized;
+        currentLikeRef.current[cid]    = normalized;
       });
     });
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -129,8 +131,12 @@ export function useCommentLikes({ id, userId, commentsList, setCommentsList }: U
       const committed = committedLikesRef.current[commentId] ?? null;
 
       // Nothing changed vs the last confirmed server state — skip the call.
+      // Also guard the map deletion: only clear the entry if no newer
+      // interaction has replaced this debounce cycle.
       if (desired === committed) {
-        likeTimersRef.current.delete(commentId);
+        if (likeGenerationRef.current[commentId] === generation) {
+          likeTimersRef.current.delete(commentId);
+        }
         return;
       }
 
@@ -174,8 +180,15 @@ export function useCommentLikes({ id, userId, commentsList, setCommentsList }: U
           );
         }
       } finally {
-        // Guard lifted only after the server call resolves (success or failure).
-        likeTimersRef.current.delete(commentId);
+        // ── Generation-aware guard cleanup ──────────────────────────────────
+        // Only clear the likeTimersRef entry when this debounce cycle is still
+        // the latest one for this comment. If a newer tap fired a new timer
+        // while this server call was in-flight (past clearTimeout's reach),
+        // the map entry now belongs to that newer timer — do NOT delete it or
+        // the Firestore hydration guard will be broken for the newer cycle.
+        if (likeGenerationRef.current[commentId] === generation) {
+          likeTimersRef.current.delete(commentId);
+        }
       }
     }, 600);
 
