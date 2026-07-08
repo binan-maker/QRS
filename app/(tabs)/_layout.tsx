@@ -1,6 +1,4 @@
-import { isLiquidGlassAvailable } from "expo-glass-effect";
 import { Tabs, router } from "expo-router";
-import { NativeTabs, Icon, Label } from "expo-router/unstable-native-tabs";
 import { BlurView } from "expo-blur";
 import { Platform, StyleSheet, View, Pressable } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -190,30 +188,6 @@ function useNotificationCount() {
   return count;
 }
 
-function NativeTabLayout() {
-  const { t } = useAppTranslation();
-  return (
-    <NativeTabs>
-      <NativeTabs.Trigger name="index">
-        <Icon sf={{ default: "house", selected: "house.fill" }} />
-        <Label>{t("tabs.home")}</Label>
-      </NativeTabs.Trigger>
-      <NativeTabs.Trigger name="qr-generator">
-        <Icon sf={{ default: "qrcode", selected: "qrcode" }} />
-        <Label>{t("tabs.generator")}</Label>
-      </NativeTabs.Trigger>
-      <NativeTabs.Trigger name="history">
-        <Icon sf={{ default: "clock", selected: "clock.fill" }} />
-        <Label>{t("tabs.history")}</Label>
-      </NativeTabs.Trigger>
-      <NativeTabs.Trigger name="profile">
-        <Icon sf={{ default: "person", selected: "person.fill" }} />
-        <Label>{t("tabs.profile")}</Label>
-      </NativeTabs.Trigger>
-    </NativeTabs>
-  );
-}
-
 // ── Stable icon render functions (referentially stable across renders) ──────────
 const renderHomeIcon   = ({ color, focused }: { color: string; focused: boolean }) => <HomeIcon color={color} focused={focused} />;
 const renderGenIcon    = ({ color, focused }: { color: string; focused: boolean }) => <GeneratorIcon color={color} focused={focused} />;
@@ -369,7 +343,22 @@ function ClassicTabLayout() {
 }
 
 export default function TabLayout() {
-  if (isLiquidGlassAvailable()) return <NativeTabLayout />;
+  // NOTE: NativeTabLayout (Liquid Glass / iOS 26) is intentionally bypassed.
+  //
+  // expo-router/unstable-native-tabs wraps a native UITabBarController which
+  // only knows about the tabs listed as <NativeTabs.Trigger>. The scanner is
+  // a centre-FAB tab — it has no visible trigger and must be reached via
+  // router.push("/(tabs)/scanner"). That push silently fails on the native
+  // controller because the route is not registered as a trigger, so the
+  // scanner screen never opens when tapped from the home cards or anywhere else.
+  //
+  // ClassicTabLayout renders the scanner as a custom floating FAB (renderScanButton)
+  // and hides the tab bar on the scanner screen (tabBarStyle: hiddenTabBar).
+  // It works correctly on all iOS versions including iOS 26.
+  //
+  // Re-enable NativeTabLayout only once expo-router/unstable-native-tabs
+  // supports hidden/FAB tabs or a stable workaround is available:
+  //   if (isLiquidGlassAvailable()) return <NativeTabLayout />;
   return (
     <TabBarProvider>
       <ClassicTabLayout />
