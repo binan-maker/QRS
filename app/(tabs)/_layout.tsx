@@ -1,35 +1,31 @@
 import { Tabs, router } from "expo-router";
 import { BlurView } from "expo-blur";
-import { Platform, StyleSheet, View, Animated, PanResponder, useWindowDimensions } from "react-native";
+import { Platform, StyleSheet, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { MaterialCommunityIcons, Ionicons } from "@expo/vector-icons";
-import React, { useEffect, useCallback, useMemo, useRef } from "react";
+import React, { useEffect, useCallback, useMemo } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useTheme } from "@/shared/contexts/ThemeContext";
 import { useAppTranslation } from "@/shared/i18n/useAppTranslation";
 import { TabBarProvider, useTabBarScroll } from "@/shared/contexts/TabBarContext";
 
-// ── iOS glassmorphism dock background ───────────────────────────────────────
-// True frosted-glass "island" look (matches iOS 17/18 floating dock style):
+// ── iOS glassmorphism pill background ──────────────────────────────────────────
+// Full-width frosted glass bar (matches reference: dark glass pill, icon +
+// label pairs, evenly spaced, floating just above the home indicator).
 //   1. Shadow halo  — soft drop shadow beneath the pill (rendered in a wrapper
 //      View because React Native shadows require a non-transparent background;
 //      we use a near-invisible fill just to anchor the shadow).
 //   2. BlurView     — heavy frosted glass, clipped to the pill's rounded shape.
-//   3. Tint overlay — a very light veil so icons stay legible against the blur.
+//   3. Tint overlay — a dark veil so the bar reads as true glass (not washed out).
 //   4. Top shimmer  — 1 px highlight at the very top edge (catches the light).
 //   5. Border ring  — crisp 1 px perimeter to define the glass edge.
-//   6. Drag handle attaches here via `panHandlers` so the whole dock (icons
-//      included, since this layer sits behind them but shares the same pan
-//      responder contract) can be grabbed and slid horizontally.
 const IosTabBarBackground = React.memo(function IosTabBarBackground({
   isDark,
-  panHandlers,
 }: {
   isDark: boolean;
-  panHandlers?: object;
 }) {
   return (
-    <View style={StyleSheet.absoluteFill} {...panHandlers}>
+    <>
       {/* 1. Shadow halo */}
       <View
         style={[
@@ -56,14 +52,14 @@ const IosTabBarBackground = React.memo(function IosTabBarBackground({
           { borderRadius: 30, overflow: "hidden" },
         ]}
       >
-        {/* 3. Tint overlay — thin veil, just enough for icon contrast */}
+        {/* 3. Tint overlay — deepens contrast so icons/labels pop against the blur */}
         <View
           style={[
             StyleSheet.absoluteFill,
             {
               backgroundColor: isDark
-                ? "rgba(10,14,23,0.34)"
-                : "rgba(248,250,255,0.28)",
+                ? "rgba(8,10,16,0.62)"
+                : "rgba(248,250,255,0.42)",
             },
           ]}
         />
@@ -77,7 +73,7 @@ const IosTabBarBackground = React.memo(function IosTabBarBackground({
             right: 22,
             height: 1,
             backgroundColor: isDark
-              ? "rgba(255,255,255,0.22)"
+              ? "rgba(255,255,255,0.2)"
               : "rgba(255,255,255,0.95)",
             borderRadius: 1,
           }}
@@ -91,13 +87,13 @@ const IosTabBarBackground = React.memo(function IosTabBarBackground({
               borderRadius: 30,
               borderWidth: 1,
               borderColor: isDark
-                ? "rgba(255,255,255,0.14)"
+                ? "rgba(255,255,255,0.12)"
                 : "rgba(255,255,255,0.75)",
             },
           ]}
         />
       </BlurView>
-    </View>
+    </>
   );
 });
 
@@ -139,9 +135,9 @@ const HomeIcon = React.memo(function HomeIcon({
 }) {
   return (
     <View
-      style={focused ? [styles.activeIconWrap, { backgroundColor: color + "18" }] : styles.iconWrap}
+      style={focused ? [styles.activeIconWrap, { backgroundColor: color + "20" }] : styles.iconWrap}
     >
-      <Ionicons name={focused ? "home" : "home-outline"} size={24} color={color} />
+      <Ionicons name={focused ? "home" : "home-outline"} size={22} color={color} />
     </View>
   );
 });
@@ -155,11 +151,11 @@ const GeneratorIcon = React.memo(function GeneratorIcon({
 }) {
   return (
     <View
-      style={focused ? [styles.activeIconWrap, { backgroundColor: color + "18" }] : styles.iconWrap}
+      style={focused ? [styles.activeIconWrap, { backgroundColor: color + "20" }] : styles.iconWrap}
     >
       <MaterialCommunityIcons
         name={focused ? "qrcode-edit" : "qrcode"}
-        size={24}
+        size={22}
         color={color}
       />
     </View>
@@ -175,9 +171,9 @@ const HistoryIcon = React.memo(function HistoryIcon({
 }) {
   return (
     <View
-      style={focused ? [styles.activeIconWrap, { backgroundColor: color + "18" }] : styles.iconWrap}
+      style={focused ? [styles.activeIconWrap, { backgroundColor: color + "20" }] : styles.iconWrap}
     >
-      <Ionicons name={focused ? "time" : "time-outline"} size={24} color={color} />
+      <Ionicons name={focused ? "time" : "time-outline"} size={22} color={color} />
     </View>
   );
 });
@@ -191,9 +187,9 @@ const ProfileIcon = React.memo(function ProfileIcon({
 }) {
   return (
     <View
-      style={focused ? [styles.activeIconWrap, { backgroundColor: color + "18" }] : styles.iconWrap}
+      style={focused ? [styles.activeIconWrap, { backgroundColor: color + "20" }] : styles.iconWrap}
     >
-      <Ionicons name={focused ? "person" : "person-outline"} size={24} color={color} />
+      <Ionicons name={focused ? "person" : "person-outline"} size={22} color={color} />
     </View>
   );
 });
@@ -204,12 +200,6 @@ const renderGenIcon  = ({ color, focused }: { color: string; focused: boolean })
 const renderHistIcon = ({ color, focused }: { color: string; focused: boolean }) => <HistoryIcon color={color} focused={focused} />;
 const renderProfIcon = ({ color, focused }: { color: string; focused: boolean }) => <ProfileIcon color={color} focused={focused} />;
 
-// iOS dock sizing — a compact, icon-only 4-button island (no scanner/FAB).
-const IOS_TAB_COUNT   = 4;
-const IOS_SLOT_WIDTH  = 68;
-const IOS_DOCK_WIDTH  = IOS_TAB_COUNT * IOS_SLOT_WIDTH;
-const IOS_DRAG_MARGIN = 12; // keep the dock at least this far from either screen edge
-
 function ClassicTabLayout() {
   const isWeb  = Platform.OS === "web";
   const isIOS  = Platform.OS === "ios";
@@ -217,7 +207,6 @@ function ClassicTabLayout() {
   const { colors } = useTheme();
   const { t } = useAppTranslation();
   const { tabBarTranslateY, setTabBarHeight } = useTabBarScroll();
-  const { width: screenWidth } = useWindowDimensions();
 
   useEffect(() => {
     AsyncStorage.getItem("qrg:startup:screen").then((pref) => {
@@ -225,15 +214,16 @@ function ClassicTabLayout() {
     }).catch(() => {});
   }, []);
 
-  // ── iOS floating, draggable glass dock ──────────────────────────────────────
-  // The bar is a compact glass island (just wide enough for the 4 icon-only
-  // buttons) that floats above the home indicator. It starts centered
-  // horizontally and can be dragged left/right — its vertical position stays
-  // fixed (pinned above the home indicator); only translateX is draggable.
+  // ── iOS floating glass pill layout ──────────────────────────────────────────
+  // The bar is a full-width glass pill (matches the reference: dark glass,
+  // icon + label pairs evenly spaced) that floats above the home indicator
+  // with horizontal margins. It does NOT include insets.bottom in its own
+  // height — instead it is positioned `insets.bottom + IOS_BOTTOM_GAP` above
+  // the screen bottom edge.
   //
-  // Android keeps the original full-width, full-height, non-draggable approach.
-  const IOS_BAR_HEIGHT     = 64;
-  const IOS_BOTTOM_GAP     = 10; // gap between dock and home indicator
+  // Android keeps the original full-width, full-height approach.
+  const IOS_BAR_HEIGHT     = 78;
+  const IOS_BOTTOM_GAP     = 10; // gap between pill and home indicator
   const ANDROID_BAR_HEIGHT = 70 + insets.bottom;
 
   const tabBarHeight = isWeb
@@ -256,65 +246,17 @@ function ClassicTabLayout() {
 
   const tabBarBorderColor = colors.surfaceBorder; // Android only — iOS draws its own border
 
-  // ── Horizontal drag handling (iOS only) ─────────────────────────────────────
-  // dragX is a plain Animated.Value driven by the native driver. It represents
-  // the offset from the dock's centered resting position. It is clamped on
-  // release so the dock never leaves the screen bounds.
-  const dragX       = useRef(new Animated.Value(0)).current;
-  const dragXOffset = useRef(0); // last committed (flattened) offset, for clamping math
-  const centeredLeft = (screenWidth - IOS_DOCK_WIDTH) / 2;
-  const minOffset = IOS_DRAG_MARGIN - centeredLeft;
-  const maxOffset = screenWidth - IOS_DRAG_MARGIN - IOS_DOCK_WIDTH - centeredLeft;
-
-  useEffect(() => {
-    const id = dragX.addListener(({ value }) => {
-      dragXOffset.current = value;
-    });
-    return () => dragX.removeListener(id);
-  }, [dragX]);
-
-  const panResponder = useMemo(
-    () =>
-      PanResponder.create({
-        onStartShouldSetResponderCapture: () => false,
-        onStartShouldSetPanResponderCapture: () => false,
-        // Only steal the gesture once the user is clearly dragging
-        // horizontally — this keeps taps on the icons working normally.
-        onMoveShouldSetPanResponderCapture: (_evt, gesture) =>
-          Math.abs(gesture.dx) > 6 && Math.abs(gesture.dx) > Math.abs(gesture.dy) * 1.5,
-        onPanResponderGrant: () => {
-          dragX.setOffset(dragXOffset.current);
-          dragX.setValue(0);
-        },
-        onPanResponderMove: Animated.event([null, { dx: dragX }], {
-          useNativeDriver: false,
-        }),
-        onPanResponderRelease: () => {
-          dragX.flattenOffset();
-          const clamped = Math.min(maxOffset, Math.max(minOffset, dragXOffset.current));
-          if (clamped !== dragXOffset.current) {
-            Animated.spring(dragX, {
-              toValue: clamped,
-              useNativeDriver: true,
-              bounciness: 6,
-            }).start();
-          }
-        },
-      }),
-    [dragX, minOffset, maxOffset],
-  );
-
   const tabBarBackground = useCallback(
     () =>
       isIOS ? (
-        <IosTabBarBackground isDark={colors.isDark} panHandlers={panResponder.panHandlers} />
+        <IosTabBarBackground isDark={colors.isDark} />
       ) : (
         <AndroidTabBarBackground
           backgroundColor={colors.isDark ? colors.background : colors.surface}
           borderColor={tabBarBorderColor}
         />
       ),
-    [isIOS, colors.isDark, colors.background, colors.surface, tabBarBorderColor, panResponder],
+    [isIOS, colors.isDark, colors.background, colors.surface, tabBarBorderColor],
   );
 
   const screenOptions = useMemo(
@@ -328,12 +270,12 @@ function ClassicTabLayout() {
         borderTopWidth:  0,
         elevation:       0,
         height:          tabBarHeight,
-        // iOS: compact, centered, draggable glass island above the home
-        // indicator. Android/web: full-width flush to the bottom.
+        // iOS: float the pill above the home indicator with horizontal margins.
+        // Android/web: full-width flush to the bottom.
         ...(isIOS ? {
           bottom:        insets.bottom + IOS_BOTTOM_GAP,
-          left:          (screenWidth - IOS_DOCK_WIDTH) / 2,
-          width:         IOS_DOCK_WIDTH,
+          left:          16,
+          right:         16,
           paddingBottom: 0,
         } : {
           bottom:        0,
@@ -341,28 +283,26 @@ function ClassicTabLayout() {
         }),
         paddingTop:  0,
         overflow:    "visible" as const,
-        transform:   isIOS
-          ? [{ translateY: tabBarTranslateY }, { translateX: dragX }]
-          : [{ translateY: tabBarTranslateY }],
+        transform:   [{ translateY: tabBarTranslateY }],
       } as any,
       tabBarBackground,
-      tabBarShowLabel: !isIOS,
+      tabBarShowLabel: true,
       tabBarLabelStyle: {
         fontFamily:      "Inter_500Medium",
-        fontSize:        10.5,
-        marginTop:       2,
+        fontSize:        11,
+        marginTop:       3,
         marginBottom:    0,
         letterSpacing:   0.1,
         includeFontPadding: false,
       },
       tabBarItemStyle: {
-        paddingTop:     6,
-        paddingBottom:  4,
+        paddingTop:     8,
+        paddingBottom:  6,
         alignItems:     "center" as const,
         justifyContent: "center" as const,
       },
     }),
-    [colors.primary, colors.tabIconDefault, tabBarHeight, insets.bottom, tabBarBackground, isIOS, screenWidth, dragX, tabBarTranslateY],
+    [colors.primary, colors.tabIconDefault, tabBarHeight, insets.bottom, tabBarBackground, isIOS, tabBarTranslateY],
   );
 
   return (
@@ -428,13 +368,12 @@ function ClassicTabLayout() {
 export default function TabLayout() {
   // NOTE: NativeTabLayout (Liquid Glass / iOS 26) is intentionally bypassed.
   //
-  // expo-router/unstable-native-tabs wraps a native UITabBarController, which
-  // doesn't support a draggable, icon-only, custom-width dock. ClassicTabLayout
-  // renders a fully custom glass island (BlurView + PanResponder) that gives
-  // full control over size, position, and drag behavior on every iOS version.
+  // ClassicTabLayout renders a fully custom glass bar (BlurView) that gives
+  // full control over size, spacing, and label/icon layout to match the
+  // requested design across all iOS versions including iOS 26.
   //
   // Re-enable NativeTabLayout only once expo-router/unstable-native-tabs
-  // supports custom draggable tab bars or a stable workaround is available:
+  // supports this custom bar layout or a stable workaround is available:
   //   if (isLiquidGlassAvailable()) return <NativeTabLayout />;
   return (
     <TabBarProvider>
@@ -446,11 +385,11 @@ export default function TabLayout() {
 const styles = StyleSheet.create({
   // ── Tab icons ─────────────────────────────────────────────────────────────────
   iconWrap: {
-    width: 44, height: 32,
-    alignItems: "center", justifyContent: "center", borderRadius: 12,
+    width: 40, height: 28,
+    alignItems: "center", justifyContent: "center", borderRadius: 10,
   },
   activeIconWrap: {
-    width: 44, height: 32,
-    alignItems: "center", justifyContent: "center", borderRadius: 12,
+    width: 40, height: 28,
+    alignItems: "center", justifyContent: "center", borderRadius: 10,
   },
 });
