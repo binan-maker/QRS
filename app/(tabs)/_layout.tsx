@@ -1,9 +1,9 @@
 import { Tabs, router } from "expo-router";
 import { BlurView } from "expo-blur";
-import { Platform, StyleSheet, View } from "react-native";
+import { Platform, StyleSheet, View, Animated } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { MaterialCommunityIcons, Ionicons } from "@expo/vector-icons";
-import React, { useEffect, useCallback, useMemo } from "react";
+import React, { useEffect, useCallback, useMemo, useRef } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useTheme } from "@/shared/contexts/ThemeContext";
 import { useAppTranslation } from "@/shared/i18n/useAppTranslation";
@@ -125,6 +125,86 @@ const AndroidTabBarBackground = React.memo(function AndroidTabBarBackground({
   );
 });
 
+// ── Glowing icon wrap (iOS only) ─────────────────────────────────────────────
+// Mirrors the reference bar's tap animation: when a tab becomes active, a
+// soft colored glow "pops" in behind the icon (scale + fade burst) and the
+// icon itself springs up to full size. Android is untouched — it keeps the
+// original flat highlight pill with no animation.
+const isIOSPlatform = Platform.OS === "ios";
+
+const GlowIconWrap = React.memo(function GlowIconWrap({
+  focused,
+  color,
+  children,
+}: {
+  focused: boolean;
+  color: string;
+  children: React.ReactNode;
+}) {
+  const scale       = useRef(new Animated.Value(focused ? 1 : 0.9)).current;
+  const glowOpacity = useRef(new Animated.Value(focused ? 1 : 0)).current;
+  const hasMounted  = useRef(false);
+
+  useEffect(() => {
+    if (!isIOSPlatform) return;
+    if (!hasMounted.current) {
+      hasMounted.current = true;
+      return;
+    }
+    if (focused) {
+      scale.setValue(0.45);
+      glowOpacity.setValue(0);
+      Animated.parallel([
+        Animated.spring(scale, {
+          toValue: 1,
+          useNativeDriver: true,
+          speed: 16,
+          bounciness: 10,
+        }),
+        Animated.timing(glowOpacity, {
+          toValue: 1,
+          duration: 260,
+          useNativeDriver: true,
+        }),
+      ]).start();
+    } else {
+      Animated.timing(glowOpacity, {
+        toValue: 0,
+        duration: 200,
+        useNativeDriver: true,
+      }).start();
+    }
+  }, [focused, scale, glowOpacity]);
+
+  if (!isIOSPlatform) {
+    return (
+      <View
+        style={focused ? [styles.activeIconWrap, { backgroundColor: color + "20" }] : styles.iconWrap}
+      >
+        {children}
+      </View>
+    );
+  }
+
+  return (
+    <View style={styles.iconWrap}>
+      <Animated.View
+        pointerEvents="none"
+        style={[
+          styles.glow,
+          {
+            backgroundColor: color + "33",
+            shadowColor: color,
+            opacity: glowOpacity,
+            transform: [{ scale }],
+          },
+        ]}
+      />
+      <Animated.View style={{ transform: [{ scale }] }}>{children}</Animated.View>
+    </View>
+  );
+});
+
 // ── Tab icon components (memoized to prevent recreation on every tab-bar paint) ─
 const HomeIcon = React.memo(function HomeIcon({
   color,
@@ -134,11 +214,9 @@ const HomeIcon = React.memo(function HomeIcon({
   focused: boolean;
 }) {
   return (
-    <View
-      style={focused ? [styles.activeIconWrap, { backgroundColor: color + "20" }] : styles.iconWrap}
-    >
+    <GlowIconWrap focused={focused} color={color}>
       <Ionicons name={focused ? "home" : "home-outline"} size={22} color={color} />
-    </View>
+    </GlowIconWrap>
   );
 });
 
@@ -150,15 +228,13 @@ const GeneratorIcon = React.memo(function GeneratorIcon({
   focused: boolean;
 }) {
   return (
-    <View
-      style={focused ? [styles.activeIconWrap, { backgroundColor: color + "20" }] : styles.iconWrap}
-    >
+    <GlowIconWrap focused={focused} color={color}>
       <MaterialCommunityIcons
         name={focused ? "qrcode-edit" : "qrcode"}
         size={22}
         color={color}
       />
-    </View>
+    </GlowIconWrap>
   );
 });
 
@@ -170,11 +246,9 @@ const HistoryIcon = React.memo(function HistoryIcon({
   focused: boolean;
 }) {
   return (
-    <View
-      style={focused ? [styles.activeIconWrap, { backgroundColor: color + "20" }] : styles.iconWrap}
-    >
+    <GlowIconWrap focused={focused} color={color}>
       <Ionicons name={focused ? "time" : "time-outline"} size={22} color={color} />
-    </View>
+    </GlowIconWrap>
   );
 });
 
@@ -186,11 +260,9 @@ const ProfileIcon = React.memo(function ProfileIcon({
   focused: boolean;
 }) {
   return (
-    <View
-      style={focused ? [styles.activeIconWrap, { backgroundColor: color + "20" }] : styles.iconWrap}
-    >
+    <GlowIconWrap focused={focused} color={color}>
       <Ionicons name={focused ? "person" : "person-outline"} size={22} color={color} />
-    </View>
+    </GlowIconWrap>
   );
 });
 
@@ -391,5 +463,13 @@ const styles = StyleSheet.create({
   activeIconWrap: {
     width: 40, height: 28,
     alignItems: "center", justifyContent: "center", borderRadius: 10,
+  },
+  glow: {
+    position: "absolute",
+    width: 40, height: 40,
+    borderRadius: 20,
+    shadowOffset: { width: 0, height: 0 },
+    shadowRadius: 16,
+    shadowOpacity: 1,
   },
 });
