@@ -6,37 +6,95 @@ import { MaterialCommunityIcons, Ionicons } from "@expo/vector-icons";
 import React, { useState, useEffect, useCallback, useMemo } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useTheme } from "@/shared/contexts/ThemeContext";
-import { useAuth } from "@/shared/contexts/AuthContext";
-import { subscribeToNotificationCount } from "@/lib/firestore-service";
 import { LinearGradient } from "expo-linear-gradient";
 import { useAppTranslation } from "@/shared/i18n/useAppTranslation";
 import * as Haptics from "@/shared/utils/haptics";
 import { TabBarProvider, useTabBarScroll } from "@/shared/contexts/TabBarContext";
 
-// ── Stable tab bar background components (memoized at module level) ────────────
+// ── iOS glassmorphism pill background ──────────────────────────────────────────
+// Layered approach:
+//   1. Shadow halo  — soft drop shadow beneath the pill (rendered in a wrapper
+//      View because React Native shadows require a non-transparent background;
+//      we use a near-invisible fill just to anchor the shadow).
+//   2. BlurView     — frosted glass. overflow:"hidden" clips the blur to the pill.
+//   3. Tint overlay — adds depth and prevents the blur from looking washed-out.
+//   4. Top shimmer  — 1 px highlight at the very top edge (catches the light).
+//   5. Border ring  — crisp 1 px perimeter to define the glass edge.
 const IosTabBarBackground = React.memo(function IosTabBarBackground({
   isDark,
-  borderColor,
 }: {
   isDark: boolean;
-  borderColor: string;
 }) {
   return (
-    <BlurView
-      intensity={95}
-      tint={isDark ? "dark" : "light"}
-      style={[
-        StyleSheet.absoluteFill,
-        {
-          borderTopLeftRadius: 22, borderTopRightRadius: 22,
-          borderBottomLeftRadius: 0, borderBottomRightRadius: 0,
-          overflow: "hidden",
-          borderTopWidth: 1, borderLeftWidth: 1,
-          borderRightWidth: 1, borderBottomWidth: 0,
-          borderColor,
-        },
-      ]}
-    />
+    <>
+      {/* 1. Shadow halo */}
+      <View
+        style={[
+          StyleSheet.absoluteFill,
+          {
+            borderRadius: 28,
+            backgroundColor: isDark
+              ? "rgba(12,16,26,0.01)"   // near-transparent but non-zero for shadow
+              : "rgba(255,255,255,0.01)",
+            shadowColor: "#000",
+            shadowOffset: { width: 0, height: 10 },
+            shadowOpacity: isDark ? 0.5 : 0.18,
+            shadowRadius: 28,
+          },
+        ]}
+      />
+
+      {/* 2. BlurView + 3 + 4 + 5 */}
+      <BlurView
+        intensity={isDark ? 78 : 72}
+        tint={isDark ? "dark" : "light"}
+        style={[
+          StyleSheet.absoluteFill,
+          { borderRadius: 28, overflow: "hidden" },
+        ]}
+      >
+        {/* 3. Tint overlay — deepens contrast so icons pop against the blur */}
+        <View
+          style={[
+            StyleSheet.absoluteFill,
+            {
+              backgroundColor: isDark
+                ? "rgba(10,14,23,0.52)"
+                : "rgba(248,250,255,0.48)",
+            },
+          ]}
+        />
+
+        {/* 4. Top shimmer — "light catching the top edge of the glass" */}
+        <View
+          style={{
+            position:        "absolute",
+            top:             0,
+            left:            20,
+            right:           20,
+            height:          1,
+            backgroundColor: isDark
+              ? "rgba(255,255,255,0.18)"
+              : "rgba(255,255,255,0.95)",
+            borderRadius:    1,
+          }}
+        />
+
+        {/* 5. Border ring */}
+        <View
+          style={[
+            StyleSheet.absoluteFill,
+            {
+              borderRadius:  28,
+              borderWidth:   1,
+              borderColor:   isDark
+                ? "rgba(255,255,255,0.11)"
+                : "rgba(255,255,255,0.72)",
+            },
+          ]}
+        />
+      </BlurView>
+    </>
   );
 });
 
@@ -69,6 +127,12 @@ const AndroidTabBarBackground = React.memo(function AndroidTabBarBackground({
 });
 
 // ── Scan FAB (memoized — contains LinearGradient which is GPU-expensive) ───────
+// Design: floating glass ring → gradient button → QR icon
+//   • Glass ring: semi-transparent bordered halo that bridges the FAB to the
+//     pill bar and adds the "magnified glass" look.
+//   • Gradient inner: primary → primaryShade with a strong coloured shadow.
+//   • The ring shadow is black (for depth); the inner shadow is primary-tinted
+//     (for the glow effect seen in premium iOS apps).
 const ScanTabButton = React.memo(function ScanTabButton({
   onPress,
 }: {
@@ -85,20 +149,43 @@ const ScanTabButton = React.memo(function ScanTabButton({
     <Pressable
       onPress={handlePress}
       style={styles.scanTabBtn}
-      accessibilityLabel="Scan"
+      accessibilityLabel="Scan QR code"
       accessibilityRole="button"
     >
-      <LinearGradient
-        colors={[colors.primary, colors.primaryShade]}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
+      {/* Glass halo ring */}
+      <View
         style={[
-          styles.scanTabBtnInner,
-          { borderColor: colors.background, shadowColor: colors.primary },
+          styles.scanTabBtnRing,
+          {
+            backgroundColor: colors.isDark
+              ? "rgba(255,255,255,0.07)"
+              : "rgba(255,255,255,0.55)",
+            borderColor: colors.isDark
+              ? "rgba(255,255,255,0.16)"
+              : "rgba(255,255,255,0.85)",
+            shadowColor: "#000",
+          },
         ]}
       >
-        <MaterialCommunityIcons name="qrcode-scan" size={28} color="#fff" />
-      </LinearGradient>
+        {/* Gradient core */}
+        <LinearGradient
+          colors={[colors.primary, colors.primaryShade]}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={[
+            styles.scanTabBtnInner,
+            {
+              shadowColor:   colors.primary,
+              shadowOffset:  { width: 0, height: 4 },
+              shadowOpacity: 0.55,
+              shadowRadius:  12,
+              elevation:     12,
+            },
+          ]}
+        >
+          <MaterialCommunityIcons name="qrcode-scan" size={27} color="#fff" />
+        </LinearGradient>
+      </View>
     </Pressable>
   );
 });
@@ -172,22 +259,6 @@ const ProfileIcon = React.memo(function ProfileIcon({
   );
 });
 
-function useNotificationCount() {
-  const { user } = useAuth();
-  const [count, setCount] = useState(0);
-
-  useEffect(() => {
-    if (!user) {
-      setCount(0);
-      return;
-    }
-    const unsub = subscribeToNotificationCount(user.id, setCount);
-    return unsub;
-  }, [user?.id]);
-
-  return count;
-}
-
 // ── Stable icon render functions (referentially stable across renders) ──────────
 const renderHomeIcon   = ({ color, focused }: { color: string; focused: boolean }) => <HomeIcon color={color} focused={focused} />;
 const renderGenIcon    = ({ color, focused }: { color: string; focused: boolean }) => <GeneratorIcon color={color} focused={focused} />;
@@ -210,26 +281,43 @@ function ClassicTabLayout() {
     }).catch(() => {});
   }, []);
 
-  const tabBarHeight = isWeb ? 84 : 70 + insets.bottom;
-  // The scanner FAB sits 28px above the tab bar (marginTop: -28).
-  // The hide offset must cover the full bar height + that overhang so
-  // nothing is left visible when the bar is scrolled away.
-  const FAB_OVERHANG = 28;
+  // ── iOS floating pill layout ─────────────────────────────────────────────────
+  // The bar is a glass pill that floats above the home indicator with horizontal
+  // margins. It does NOT include insets.bottom in its own height — instead it is
+  // positioned `insets.bottom + 10` above the screen bottom edge.
+  //
+  // Android keeps the original full-width, full-height approach.
+  const IOS_BAR_HEIGHT     = 70;
+  const IOS_BOTTOM_GAP     = 10; // gap between pill and home indicator
+  const ANDROID_BAR_HEIGHT = 70 + insets.bottom;
+
+  const tabBarHeight = isWeb
+    ? 84
+    : isIOS
+    ? IOS_BAR_HEIGHT
+    : ANDROID_BAR_HEIGHT;
+
+  // Total visual footprint from screen bottom → top of FAB.
+  // Used by the scroll-hide animation to know how far to translate.
+  const FAB_OVERHANG = 34; // matches new scanTabBtn marginTop: -34
+  const scrollHideHeight = isWeb
+    ? 84
+    : isIOS
+    ? IOS_BAR_HEIGHT + insets.bottom + IOS_BOTTOM_GAP + FAB_OVERHANG
+    : ANDROID_BAR_HEIGHT + FAB_OVERHANG;
 
   useEffect(() => {
-    setTabBarHeight(tabBarHeight + FAB_OVERHANG);
-  }, [tabBarHeight, setTabBarHeight]);
+    setTabBarHeight(scrollHideHeight);
+  }, [scrollHideHeight, setTabBarHeight]);
+
   const hiddenTabBar = useMemo(() => ({ display: "none" as const }), []);
 
-  // Memoize to prevent rebuilding screenOptions on every render
-  const tabBarBorderColor = isIOS
-    ? (colors.isDark ? "rgba(255,255,255,0.07)" : "rgba(0,0,0,0.06)")
-    : colors.surfaceBorder;
+  const tabBarBorderColor = colors.surfaceBorder; // Android only — iOS draws its own border
 
   const tabBarBackground = useCallback(
     () =>
       isIOS ? (
-        <IosTabBarBackground isDark={colors.isDark} borderColor={tabBarBorderColor} />
+        <IosTabBarBackground isDark={colors.isDark} />
       ) : (
         <AndroidTabBarBackground
           backgroundColor={colors.isDark ? colors.background : colors.surface}
@@ -250,12 +338,20 @@ function ClassicTabLayout() {
         borderTopWidth:  0,
         elevation:       0,
         height:          tabBarHeight,
-        paddingBottom:   insets.bottom,
-        paddingTop:      0,
-        overflow:        "visible" as const,
-        marginHorizontal: 0,
-        marginBottom:    0,
-        transform:       [{ translateY: tabBarTranslateY }],
+        // iOS: float the pill above the home indicator with horizontal margins.
+        // Android/web: full-width flush to the bottom.
+        ...(isIOS ? {
+          bottom:        insets.bottom + IOS_BOTTOM_GAP,
+          left:          12,
+          right:         12,
+          paddingBottom: 0,
+        } : {
+          bottom:        0,
+          paddingBottom: insets.bottom,
+        }),
+        paddingTop:  0,
+        overflow:    "visible" as const,
+        transform:   [{ translateY: tabBarTranslateY }],
       } as any,
       tabBarBackground,
       tabBarShowLabel: true,
@@ -274,7 +370,7 @@ function ClassicTabLayout() {
         justifyContent: "center" as const,
       },
     }),
-    [colors.primary, colors.tabIconDefault, tabBarHeight, insets.bottom, tabBarBackground],
+    [colors.primary, colors.tabIconDefault, tabBarHeight, insets.bottom, tabBarBackground, isIOS],
   );
 
   return (
@@ -367,22 +463,45 @@ export default function TabLayout() {
 }
 
 const styles = StyleSheet.create({
+  // ── Scan FAB ─────────────────────────────────────────────────────────────────
   scanTabBtn: {
-    flex: 1, alignItems: "center", justifyContent: "center", marginTop: -28,
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    // Lift the FAB above the pill bar. 34 px matches FAB_OVERHANG in the
+    // layout so the scroll-hide animation fully clears the button.
+    marginTop: -34,
   },
+  // Glass halo ring — a slightly larger semi-transparent disc that sits behind
+  // the gradient core. Gives depth and visually anchors the FAB to the pill.
+  scanTabBtnRing: {
+    width:          82,
+    height:         82,
+    borderRadius:   41,
+    alignItems:     "center",
+    justifyContent: "center",
+    borderWidth:    1.5,
+    // Drop shadow for the outer ring (depth beneath the pill)
+    shadowOffset:   { width: 0, height: 10 },
+    shadowOpacity:  0.28,
+    shadowRadius:   22,
+    elevation:      18,
+  },
+  // Gradient core — the coloured button inside the glass ring
   scanTabBtnInner: {
-    width: 64, height: 64, borderRadius: 32,
-    alignItems: "center", justifyContent: "center",
-    borderWidth: 3,
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.45, shadowRadius: 14, elevation: 14,
+    width:          62,
+    height:         62,
+    borderRadius:   31,
+    alignItems:     "center",
+    justifyContent: "center",
   },
+  // ── Tab icons ─────────────────────────────────────────────────────────────────
   iconWrap: {
     width: 40, height: 28,
     alignItems: "center", justifyContent: "center", borderRadius: 10,
   },
   activeIconWrap: {
-    width: 50, height: 28,
+    width: 52, height: 28,
     alignItems: "center", justifyContent: "center", borderRadius: 14,
   },
 });
