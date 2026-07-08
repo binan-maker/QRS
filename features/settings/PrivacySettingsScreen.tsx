@@ -252,7 +252,7 @@ export default function PrivacySettingsScreen() {
           <View style={[styles.divider, { backgroundColor: colors.surfaceBorder }]} />
 
           <Pressable
-            onPress={() => safePush("/settings")}
+            onPress={() => safePush("/(tabs)/settings" as any)}
             style={({ pressed }) => [styles.menuRow, { opacity: pressed ? 0.75 : 1 }]}
           >
             <View style={[styles.menuIcon, { backgroundColor: colors.surfaceLight }]}>

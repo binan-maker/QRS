@@ -78,7 +78,7 @@ const HistoryHeader = React.memo(function HistoryHeader({
           <Pressable
             onPress={() => {
               Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-              router.push({ pathname: "/settings" as any, params: { from: "history" } });
+              router.push({ pathname: "/(tabs)/settings" as any, params: { from: "history" } });
             }}
             style={[styles.btn, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}
             hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
