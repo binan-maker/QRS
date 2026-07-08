@@ -19,7 +19,7 @@ import ScreenHeader from "@/shared/components/ui/ScreenHeader";
 import { useTheme } from "@/shared/contexts/ThemeContext";
 import { useHeaderHide } from "@/shared/utils/use-header-hide";
 
-// react-native-iap v15 — loaded lazily so it never crashes on non-Android builds
+// react-native-iap v15 — loaded lazily so it never crashes on web
 let iap: typeof import("react-native-iap") | null = null;
 try { iap = require("react-native-iap"); } catch {}
 
@@ -50,7 +50,11 @@ const ALL_SKUS = TIERS.map((t) => t.sku);
 // ── Detailed failure reason mapper ────────────────────────────────────────────
 // Maps every react-native-iap v15 ErrorCode (kebab-case) to a specific,
 // human-readable title + message so users always know EXACTLY why payment failed.
-function getPaymentFailureDetails(error: any): { title: string; message: string } | null {
+// Pass `store` ("Google Play" | "App Store") for platform-appropriate wording.
+function getPaymentFailureDetails(
+  error: any,
+  store: "Google Play" | "App Store",
+): { title: string; message: string } | null {
   // Normalise the code — v15 uses kebab-case (e.g. "network-error"),
   // but legacy E_* codes (e.g. "E_NETWORK_ERROR") may still appear from native.
   const raw: string = error?.code ?? error?.message ?? "";
@@ -74,7 +78,7 @@ function getPaymentFailureDetails(error: any): { title: string; message: string 
     case "pending":
       return {
         title:   "Payment Pending",
-        message: "Your payment is being processed by Google Play. It may take a few minutes to complete.",
+        message: `Your payment is being processed by ${store}. It may take a few minutes to complete.`,
       };
 
     // ── Network & connectivity ───────────────────────────────────────────────
@@ -87,40 +91,42 @@ function getPaymentFailureDetails(error: any): { title: string; message: string 
 
     case "service-timeout":
       return {
-        title:   "Google Play Timed Out",
-        message: "The request to Google Play took too long. Please check your connection and try again.",
+        title:   `${store} Timed Out`,
+        message: `The request to ${store} took too long. Please check your connection and try again.`,
       };
 
-    // ── Google Play service issues ───────────────────────────────────────────
+    // ── Store service issues ─────────────────────────────────────────────────
     case "service-error":
       return {
-        title:   "Google Play Service Error",
-        message: "Google Play Store encountered an error. Please make sure the Play Store app is up-to-date and try again.",
+        title:   `${store} Service Error`,
+        message: `${store} encountered an error. Please make sure the store app is up-to-date and try again.`,
       };
 
     case "service-disconnected":
     case "connection-closed":
       return {
-        title:   "Google Play Disconnected",
-        message: "The connection to Google Play was lost mid-payment. Your card was NOT charged. Please try again.",
+        title:   `${store} Disconnected`,
+        message: `The connection to ${store} was lost mid-payment. Your card was NOT charged. Please try again.`,
       };
 
     case "billing-unavailable":
       return {
         title:   "Billing Not Available",
-        message: "In-app purchases are not enabled on this device or Google account. This can happen if your Play account doesn't support billing in your country, or if the device is managed/restricted.",
+        message: store === "App Store"
+          ? "In-app purchases are not enabled on this device or Apple ID. This can happen if purchases are restricted in Screen Time settings, or if your account doesn't support billing in your country."
+          : "In-app purchases are not enabled on this device or Google account. This can happen if your Play account doesn't support billing in your country, or if the device is managed/restricted.",
       };
 
     case "feature-not-supported":
       return {
         title:   "Not Supported on This Device",
-        message: "Your device or Android version does not support in-app purchases via Google Play.",
+        message: `Your device does not support in-app purchases via ${store}.`,
       };
 
     case "iap-not-available":
       return {
         title:   "In-App Purchases Unavailable",
-        message: "Google Play in-app purchases are not available right now. This may be a temporary Play Store outage — please try again later.",
+        message: `${store} in-app purchases are not available right now. This may be a temporary outage — please try again later.`,
       };
 
     // ── Product / SKU issues ─────────────────────────────────────────────────
@@ -141,20 +147,20 @@ function getPaymentFailureDetails(error: any): { title: string; message: string 
     case "query-product":
       return {
         title:   "Could Not Load Products",
-        message: "BinRo could not fetch donation options from Google Play. Please check your internet and try again.",
+        message: `BinRo could not fetch donation options from ${store}. Please check your internet and try again.`,
       };
 
     // ── Ownership / duplicate issues ─────────────────────────────────────────
     case "already-owned":
       return {
         title:   "Already Purchased",
-        message: "Google Play shows this donation as already purchased but not yet consumed. Please restart the app — it will be automatically resolved.",
+        message: `${store} shows this donation as already purchased but not yet consumed. Please restart the app — it will be automatically resolved.`,
       };
 
     case "item-not-owned":
       return {
         title:   "Purchase Not Found",
-        message: "Google Play could not find an active purchase to finish. If you were charged, please contact support@binro.app with your order ID.",
+        message: `${store} could not find an active purchase to finish. If you were charged, please contact support@binro.app with your order ID.`,
       };
 
     case "duplicate-purchase":
@@ -169,7 +175,7 @@ function getPaymentFailureDetails(error: any): { title: string; message: string 
     case "receipt-failed":
       return {
         title:   "Verification Failed",
-        message: "Your payment went through on Google Play but BinRo could not verify it. You have NOT been charged twice. Please contact support@binro.app with your order ID.",
+        message: `Your payment went through on ${store} but BinRo could not verify it. You have NOT been charged twice. Please contact support@binro.app with your order ID.`,
       };
 
     case "purchase-verification-finish-failed":
@@ -190,7 +196,9 @@ function getPaymentFailureDetails(error: any): { title: string; message: string 
     case "already-prepared":
       return {
         title:   "Store Not Ready",
-        message: "BinRo could not connect to Google Play Store. Please make sure the Play Store app is installed and you are signed in to a Google account, then try again.",
+        message: store === "App Store"
+          ? "BinRo could not connect to the App Store. Please make sure you are signed in to your Apple ID and have an active internet connection, then try again."
+          : "BinRo could not connect to Google Play Store. Please make sure the Play Store app is installed and you are signed in to a Google account, then try again.",
       };
 
     // ── Interrupted / general errors ─────────────────────────────────────────
@@ -211,7 +219,7 @@ function getPaymentFailureDetails(error: any): { title: string; message: string 
     case "user-error":
       return {
         title:   "Purchase Failed",
-        message: "Google Play rejected the purchase. Please make sure your payment method is valid and try again.",
+        message: `${store} rejected the purchase. Please make sure your payment method is valid and try again.`,
       };
 
     // ── Unknown / fallback ───────────────────────────────────────────────────
@@ -226,7 +234,7 @@ function getPaymentFailureDetails(error: any): { title: string; message: string 
       }
       return {
         title:   "Payment Failed",
-        message: "An unexpected error occurred with Google Play. Your card was not charged. Please try again or contact support@binro.app if the problem continues.",
+        message: `An unexpected error occurred with ${store}. Your card was not charged. Please try again or contact support@binro.app if the problem continues.`,
       };
     }
   }
@@ -257,11 +265,12 @@ export default function DonationScreen() {
 
   useEffect(() => {
     mountedRef.current = true;
-    if (!iap || Platform.OS !== "android") return;
+    if (!iap || Platform.OS === "web") return;
 
     // ── v15 purchase listeners ─────────────────────────────────────────────
     const onPurchase = iap.purchaseUpdatedListener(async (purchase) => {
-      const token = purchase.purchaseToken;
+      // Android: purchaseToken  |  iOS: transactionId
+      const token = purchase.purchaseToken ?? (purchase as any).transactionId;
       if (!token) return;
       try {
         await iap!.finishTransaction({ purchase, isConsumable: true });
@@ -280,7 +289,8 @@ export default function DonationScreen() {
           setPurchasing(null);
           purchasingRef.current = null;
           // finishTransaction failure — payment went through but confirmation failed
-          const details = getPaymentFailureDetails(err) ?? {
+          const store   = Platform.OS === "ios" ? "App Store" : "Google Play";
+          const details = getPaymentFailureDetails(err, store) ?? {
             title:   "Could Not Confirm Donation",
             message: "Payment was received but the confirmation step failed. Please contact support@binro.app with your order ID.",
           };
@@ -293,7 +303,8 @@ export default function DonationScreen() {
       if (!mountedRef.current) return;
       setPurchasing(null);
       purchasingRef.current = null;
-      const details = getPaymentFailureDetails(error);
+      const store   = Platform.OS === "ios" ? "App Store" : "Google Play";
+      const details = getPaymentFailureDetails(error, store);
       if (details) showError(details); // null = user-cancelled, no alert
     });
 
@@ -332,19 +343,11 @@ export default function DonationScreen() {
 
   // ── Purchase handler ───────────────────────────────────────────────────────
   const handleDonate = useCallback(async () => {
-    if (Platform.OS !== "android") {
-      Alert.alert(
-        "Android Only",
-        "Donations are processed via Google Play and are only available on Android.",
-        [{ text: "OK" }],
-      );
-      return;
-    }
-
     if (!iap || !connected) {
+      const store = Platform.OS === "ios" ? "App Store" : "Google Play Store";
       showError({
         title:   "Store Not Connected",
-        message: "BinRo could not connect to Google Play Store. Please make sure you are signed in to a Google account, the Play Store app is up-to-date, and you have an active internet connection.",
+        message: `BinRo could not connect to ${store}. Please make sure you are signed in and have an active internet connection, then try again.`,
       });
       return;
     }
@@ -357,15 +360,18 @@ export default function DonationScreen() {
     setLastError(null);
 
     try {
-      await (iap as any).requestPurchase({
-        request: { google: { skus: [sku] } },
-        type: "in-app",
-      });
+      // Platform-specific purchase request (react-native-iap v15)
+      await (iap as any).requestPurchase(
+        Platform.OS === "android"
+          ? { request: { google: { skus: [sku] } }, type: "in-app" }
+          : { request: { ios: { sku } },            type: "in-app" },
+      );
       // Success comes via purchaseUpdatedListener
     } catch (err: any) {
       setPurchasing(null);
       purchasingRef.current = null;
-      const details = getPaymentFailureDetails(err);
+      const store   = Platform.OS === "ios" ? "App Store" : "Google Play";
+      const details = getPaymentFailureDetails(err, store);
       if (details) showError(details);
     }
   }, [selected, connected, showError]);
@@ -374,7 +380,8 @@ export default function DonationScreen() {
   const selectedTier  = TIERS.find((t) => t.sku === selected) ?? TIERS[1];
   const selectedPrice = prices[selected] || selectedTier.amount;
   const isAndroid     = Platform.OS === "android";
-  const btnLabel      = isAndroid ? `Send ${selectedPrice}` : "Available on Android";
+  const storeLabel    = isAndroid ? "Google Play" : "App Store";
+  const btnLabel      = `Send ${selectedPrice}`;
 
   return (
     <View style={[s.container, { backgroundColor: colors.background }]}>
@@ -513,7 +520,7 @@ export default function DonationScreen() {
           </Pressable>
 
           <Text style={[s.ctaNote, { color: colors.textMuted }]}>
-            Processed via Google Play · Donations are non-refundable
+            Processed via {storeLabel} · Donations are non-refundable
           </Text>
         </View>
 
