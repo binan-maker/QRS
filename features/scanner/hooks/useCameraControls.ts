@@ -8,7 +8,7 @@
 // partial-detection event, so manual control is the correct UX.
 
 import { useState, useRef, useEffect, useCallback } from "react";
-import { Animated, Easing } from "react-native";
+import { Animated, Easing, Platform } from "react-native";
 import { useFocusEffect } from "expo-router";
 import * as Haptics from "@/shared/utils/haptics";
 
@@ -16,12 +16,28 @@ export const FINDER_SIZE  = 270;
 export const CORNER_SIZE  = 32;
 export const CORNER_WIDTH = 4;
 
-export const ZOOM_LEVELS = [
-  { zoom: 0,    label: "1×"   },
-  { zoom: 0.25, label: "1.5×" },
-  { zoom: 0.45, label: "2×"   },
-  { zoom: 0.65, label: "3×"   },
-];
+// iOS note: zoom is normalised against the device's minAvailableZoom–maxAvailableZoom
+// range. On iPhone Pro models (14 Pro / 15 Pro / 16 Pro) the hardware minimum is the
+// ultra-wide 0.5× lens. Starting at zoom: 0 on those devices gives a noticeably
+// softer, wider image — poor for reading small or dense QR codes.
+// Starting at zoom: 0.02 keeps us within the main 1× optical lens on every iPhone
+// while still allowing the full zoom range above it.
+// Android's zoom normalisation doesn't have this multi-lens threshold issue, so
+// 0 is correct there and maps to the main rear camera at 1×.
+export const ZOOM_LEVELS = Platform.select({
+  ios: [
+    { zoom: 0.02, label: "1×"   }, // main 1× lens (avoids ultra-wide threshold)
+    { zoom: 0.25, label: "1.5×" },
+    { zoom: 0.45, label: "2×"   },
+    { zoom: 0.65, label: "3×"   },
+  ],
+  default: [
+    { zoom: 0,    label: "1×"   },
+    { zoom: 0.25, label: "1.5×" },
+    { zoom: 0.45, label: "2×"   },
+    { zoom: 0.65, label: "3×"   },
+  ],
+}) as { zoom: number; label: string }[];
 
 export function useCameraControls() {
   const [scanned,     setScanned]     = useState(false);

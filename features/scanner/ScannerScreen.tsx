@@ -37,6 +37,13 @@ export default function ScannerScreen() {
   const cameraReadyTimerRef    = useRef<ReturnType<typeof setTimeout> | null>(null);
   const cameraActivateTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  // ── cameraPreviewReady: true only after onCameraReady fires ───────────────
+  // iOS's AVCaptureVideoPreviewLayer renders a solid blue frame while the
+  // capture session is starting. This flag gates rendering the camera feed
+  // (and the scanner overlay) behind a black cover until the feed is actually
+  // live, eliminating the blue-flash and the "frozen blue screen" symptom.
+  const [cameraPreviewReady, setCameraPreviewReady] = useState(false);
+
   // ── useIsFocused — the single source of truth for focus state ─────────────
   const isFocused = useIsFocused();
 
@@ -61,16 +68,21 @@ export default function ScannerScreen() {
     }
 
     if (isFocused) {
-      // 180 ms gives the stack-navigator slide animation time to finish
-      // before the native camera surface requests its first frame.
-      const delay = Platform.OS === "android" ? 250 : 180;
+      // iOS: AVCaptureSession needs 500–800 ms to start. The previous 180 ms
+      // was too short — the CameraView mounted before the session was ready,
+      // causing the native preview layer's default blue background to flash.
+      // 650 ms covers even slower/Pro devices with multi-lens switching.
+      // Android: 250 ms is still sufficient for its camera2 initialisation.
+      const delay = Platform.OS === "ios" ? 650 : 250;
       cameraActivateTimerRef.current = setTimeout(() => {
         focusCountRef.current += 1;
         setFocusKey(focusCountRef.current);
+        setCameraPreviewReady(false); // reset before each new mount cycle
         setCameraActive(true);
       }, delay);
     } else {
       setCameraActive(false);
+      setCameraPreviewReady(false); // camera is gone — reset for next visit
     }
 
     return () => {
@@ -168,6 +180,9 @@ export default function ScannerScreen() {
       clearTimeout(cameraReadyTimerRef.current);
       cameraReadyTimerRef.current = null;
     }
+    // AVCaptureSession is running and the first frame is live —
+    // lift the black cover so the real camera feed is visible.
+    setCameraPreviewReady(true);
   }
 
   function handleCameraRetry() {
@@ -175,9 +190,11 @@ export default function ScannerScreen() {
       clearTimeout(cameraReadyTimerRef.current);
       cameraReadyTimerRef.current = null;
     }
-    // Force a full remount with a fresh key
+    // Force a full remount with a fresh key; reset the preview-ready
+    // flag so the black cover is back for this new mount cycle.
     focusCountRef.current += 1;
     setFocusKey(focusCountRef.current);
+    setCameraPreviewReady(false);
     setCameraAvailable(true);
     setCameraErrorType("unavailable");
   }
@@ -256,10 +273,10 @@ export default function ScannerScreen() {
   }
 
   // ── Camera live: fully active, layout settled, and camera responding ────────
-  // hardwareAvailable === false no longer blocks mounting — isAvailableAsync()
-  // is unreliable on many Android ROMs. cameraAvailable (driven by onCameraReady /
-  // onMountError / the watchdog) is the authoritative signal.
-  const cameraLive = cameraActive && hardwareAvailable !== null && cameraAvailable;
+  // cameraPreviewReady (set by onCameraReady) is the authoritative signal that
+  // the AVCaptureSession feed is flowing. The scanner overlay must not render
+  // until it's true — otherwise the finder frame floats over a black screen.
+  const cameraLive = cameraActive && hardwareAvailable !== null && cameraAvailable && cameraPreviewReady;
 
   // ── Main render ───────────────────────────────────────────────────────────
   return (
@@ -293,26 +310,42 @@ export default function ScannerScreen() {
         // isAvailableAsync() returning false is treated as a hint only; onMountError
         // is the authoritative signal for devices that genuinely lack a camera.
         <CameraErrorBoundary onError={() => markCameraUnavailable("unavailable")}>
-          <CameraView
-            key={focusKey}
-            style={StyleSheet.absoluteFillObject}
-            facing={facing}
-            enableTorch={flashOn && facing === "back"}
-            zoom={zoom}
-            barcodeScannerSettings={{ barcodeTypes: ["qr"] }}
-            onBarcodeScanned={handleScanWithCount}
-            onCameraReady={markCameraReady}
-            onMountError={(error) => {
-              const msg     = (error?.message ?? "").toLowerCase();
-              const isInUse =
-                msg.includes("in use")      ||
-                msg.includes("busy")        ||
-                msg.includes("already")     ||
-                msg.includes("another app") ||
-                msg.includes("restricted");
-              markCameraUnavailable(isInUse ? "inuse" : "unavailable");
-            }}
-          />
+          <>
+            <CameraView
+              key={focusKey}
+              style={StyleSheet.absoluteFillObject}
+              facing={facing}
+              enableTorch={flashOn && facing === "back"}
+              zoom={zoom}
+              barcodeScannerSettings={{ barcodeTypes: ["qr"] }}
+              onBarcodeScanned={handleScanWithCount}
+              onCameraReady={markCameraReady}
+              onMountError={(error) => {
+                const msg     = (error?.message ?? "").toLowerCase();
+                const isInUse =
+                  msg.includes("in use")      ||
+                  msg.includes("busy")        ||
+                  msg.includes("already")     ||
+                  msg.includes("another app") ||
+                  msg.includes("restricted");
+                markCameraUnavailable(isInUse ? "inuse" : "unavailable");
+              }}
+            />
+
+            {/* Blue-frame shield ─────────────────────────────────────────────
+                iOS's AVCaptureVideoPreviewLayer initialises with a blue/teal
+                CALayer default. Android can also show a black blit gap before
+                the first frame arrives. This cover sits above the CameraView
+                and is only removed when onCameraReady fires, ensuring the user
+                never sees the raw initialisation artefact.
+                pointerEvents="none" keeps all touch events going to the camera. */}
+            {!cameraPreviewReady && (
+              <View
+                style={[StyleSheet.absoluteFillObject, { backgroundColor: "#000" }]}
+                pointerEvents="none"
+              />
+            )}
+          </>
         </CameraErrorBoundary>
       ) : null}
 
