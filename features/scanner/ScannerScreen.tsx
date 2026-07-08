@@ -1,7 +1,10 @@
 import { useRef, useEffect, useState, useCallback } from "react";
 import { Platform, View, StyleSheet, Pressable } from "react-native";
-import Animated, { FadeIn } from "react-native-reanimated";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+// NOTE: react-native-reanimated is intentionally NOT imported here.
+// A FadeIn entry animation on the root view makes it transparent at mount,
+// which lets the navigation stack's dark-blue background bleed through and
+// causes the "blue screen on scanner entry" bug on iOS.
 import { StatusBar } from "expo-status-bar";
 import { CameraView, useCameraPermissions } from "expo-camera";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -34,6 +37,8 @@ export default function ScannerScreen() {
   const [hardwareAvailable, setHardwareAvailable] = useState<boolean | null>(null);
   const [cameraAvailable,   setCameraAvailable]   = useState(true);
   const [cameraErrorType,   setCameraErrorType]   = useState<CameraErrorType>("unavailable");
+  // Mirror of cameraAvailable for timer callbacks — avoids stale-closure reads.
+  const cameraAvailableRef     = useRef(true);
   const cameraReadyTimerRef    = useRef<ReturnType<typeof setTimeout> | null>(null);
   const cameraActivateTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -68,12 +73,10 @@ export default function ScannerScreen() {
     }
 
     if (isFocused) {
-      // iOS: AVCaptureSession needs 500–800 ms to start. The previous 180 ms
-      // was too short — the CameraView mounted before the session was ready,
-      // causing the native preview layer's default blue background to flash.
-      // 650 ms covers even slower/Pro devices with multi-lens switching.
-      // Android: 250 ms is still sufficient for its camera2 initialisation.
-      const delay = Platform.OS === "ios" ? 650 : 250;
+      // iOS: AVCaptureSession needs 500–1000 ms to start. 900 ms gives extra
+      // headroom for Pro multi-lens switching and cold-start on iOS 17/18.
+      // Android: 300 ms is still sufficient for camera2 initialisation.
+      const delay = Platform.OS === "ios" ? 900 : 300;
       cameraActivateTimerRef.current = setTimeout(() => {
         focusCountRef.current += 1;
         setFocusKey(focusCountRef.current);
@@ -93,9 +96,13 @@ export default function ScannerScreen() {
     };
   }, [isFocused]);
 
+  // Keep ref in sync so timer callbacks always read fresh cameraAvailable value.
+  useEffect(() => { cameraAvailableRef.current = cameraAvailable; }, [cameraAvailable]);
+
   // Reset error state every time the screen comes back into view
   useFocusEffect(
     useCallback(() => {
+      cameraAvailableRef.current = true;
       setCameraAvailable(true);
     }, [])
   );
@@ -123,9 +130,15 @@ export default function ScannerScreen() {
   // as a *hint*, not a hard gate. When it returns false or errors we still
   // attempt to mount the camera and let onMountError / the watchdog be the
   // authoritative failure signal.
+  // We race it against a 3 s timeout so a hung API call can never block the
+  // watchdog from starting (hardwareAvailable would stay null indefinitely
+  // otherwise, and the user would see a permanent black screen with no error).
   useEffect(() => {
     let cancelled = false;
-    CameraView.isAvailableAsync()
+    const timeout = new Promise<boolean>((resolve) =>
+      setTimeout(() => resolve(true), 3000)
+    );
+    Promise.race([CameraView.isAvailableAsync(), timeout])
       .then((available) => { if (!cancelled) setHardwareAvailable(available); })
       .catch(() => {
         // API error means "unknown" — optimistically assume true so the camera
@@ -164,21 +177,67 @@ export default function ScannerScreen() {
         cameraReadyTimerRef.current = null;
       }
     };
-  }, [permission?.granted, hardwareAvailable, cameraActive]);
+  // focusKey is included so the watchdog restarts on every retry remount — not
+  // just when cameraActive toggles. Without this, handleCameraRetry increments
+  // focusKey but cameraActive stays true, so the watchdog effect never re-runs
+  // and the retry mount has no backstop timer.
+  }, [permission?.granted, hardwareAvailable, cameraActive, focusKey]);
 
   function markCameraUnavailable(type: CameraErrorType) {
     if (cameraReadyTimerRef.current) {
       clearTimeout(cameraReadyTimerRef.current);
       cameraReadyTimerRef.current = null;
     }
+    // Also kill the preview-ready safety timer — a failed camera must not
+    // flip cameraPreviewReady to true after the error state is set.
+    if (cameraPreviewSafetyRef.current) {
+      clearTimeout(cameraPreviewSafetyRef.current);
+      cameraPreviewSafetyRef.current = null;
+    }
+    cameraAvailableRef.current = false;
     setCameraErrorType(type);
     setCameraAvailable(false);
   }
+
+  // ── Safety net: lift the black cover even if onCameraReady never fires ───────
+  // On iOS with the new architecture, onCameraReady can silently not fire when
+  // the AVCaptureSession starts but the JS bridge callback is dropped (race
+  // between the session starting and the React tree committing). Without this,
+  // the black cover stays up permanently and the app appears stuck/frozen.
+  // 5 s is well inside the 12 s watchdog window so a genuinely broken camera
+  // still reaches the error banner; this only rescues the "silent success" case.
+  const cameraPreviewSafetyRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    if (cameraPreviewSafetyRef.current) {
+      clearTimeout(cameraPreviewSafetyRef.current);
+      cameraPreviewSafetyRef.current = null;
+    }
+    if (cameraActive && !cameraPreviewReady) {
+      cameraPreviewSafetyRef.current = setTimeout(() => {
+        // Only lift the cover if the camera is still in a healthy state.
+        // cameraAvailableRef.current == false means the watchdog or onMountError
+        // already fired a failure — do not flip preview-ready after that.
+        if (!cameraAvailableRef.current) return;
+        setCameraPreviewReady((prev) => (prev ? prev : true));
+      }, 5000);
+    }
+    return () => {
+      if (cameraPreviewSafetyRef.current) {
+        clearTimeout(cameraPreviewSafetyRef.current);
+        cameraPreviewSafetyRef.current = null;
+      }
+    };
+  }, [cameraActive, cameraPreviewReady]);
 
   function markCameraReady() {
     if (cameraReadyTimerRef.current) {
       clearTimeout(cameraReadyTimerRef.current);
       cameraReadyTimerRef.current = null;
+    }
+    if (cameraPreviewSafetyRef.current) {
+      clearTimeout(cameraPreviewSafetyRef.current);
+      cameraPreviewSafetyRef.current = null;
     }
     // AVCaptureSession is running and the first frame is live —
     // lift the black cover so the real camera feed is visible.
@@ -190,11 +249,18 @@ export default function ScannerScreen() {
       clearTimeout(cameraReadyTimerRef.current);
       cameraReadyTimerRef.current = null;
     }
+    // Also clear any in-flight safety timer from the previous attempt so it
+    // cannot fire against the new mount cycle.
+    if (cameraPreviewSafetyRef.current) {
+      clearTimeout(cameraPreviewSafetyRef.current);
+      cameraPreviewSafetyRef.current = null;
+    }
     // Force a full remount with a fresh key; reset the preview-ready
     // flag so the black cover is back for this new mount cycle.
     focusCountRef.current += 1;
     setFocusKey(focusCountRef.current);
     setCameraPreviewReady(false);
+    cameraAvailableRef.current = true;
     setCameraAvailable(true);
     setCameraErrorType("unavailable");
   }
@@ -279,8 +345,14 @@ export default function ScannerScreen() {
   const cameraLive = cameraActive && hardwareAvailable !== null && cameraAvailable && cameraPreviewReady;
 
   // ── Main render ───────────────────────────────────────────────────────────
+  // NOTE: Do NOT wrap this in a FadeIn/Animated.View entry animation.
+  // FadeIn sets the outer view's opacity to 0 at mount and animates to 1.
+  // During that transition the #000 background is also transparent, which
+  // lets the navigation stack's dark-blue (#0A0E17) background bleed through —
+  // exactly the "blue screen on entry" the user sees. A plain View is opaque
+  // from the first frame.
   return (
-    <Animated.View entering={FadeIn.duration(220)} style={{ flex: 1, backgroundColor: "#000" }}>
+    <View style={{ flex: 1, backgroundColor: "#000" }}>
       <StatusBar style="light" backgroundColor="transparent" translucent />
 
       {/* Camera layer — black placeholder holds space during all non-camera states */}
@@ -417,7 +489,7 @@ export default function ScannerScreen() {
           <ScannerToast message={scannerMsg} type={scannerMsgType} onDone={dismissScannerMsg} />
         </View>
       )}
-    </Animated.View>
+    </View>
   );
 }
 

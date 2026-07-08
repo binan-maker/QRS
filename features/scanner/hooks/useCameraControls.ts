@@ -44,8 +44,11 @@ export function useCameraControls() {
   const [processing,  setProcessing]  = useState(false);
   const [scanSuccess, setScanSuccess] = useState(false);
   const [flashOn,     setFlashOnRaw]  = useState(false);
-  const [zoom,        setZoom]        = useState(0);
-  const [zoomLabel,   setZoomLabel]   = useState("1×");
+  // iOS: start on the main 1× lens (ZOOM_LEVELS[0].zoom = 0.02).
+  // Initialising at 0 on Pro models picks the ultra-wide lens, giving
+  // a wider, softer image that hurts QR decode reliability.
+  const [zoom,      setZoom]      = useState(ZOOM_LEVELS[0].zoom);
+  const [zoomLabel, setZoomLabel] = useState(ZOOM_LEVELS[0].label);
 
   const scanLockRef   = useRef(false);
   const canScanRef    = useRef(false);
@@ -102,8 +105,9 @@ export function useCameraControls() {
       scanLockRef.current = false;
       canScanRef.current  = false;
       _setFlash(false);
-      setZoom(0);
-      setZoomLabel("1×");
+      // Reset to first zoom level (0.02 on iOS = main 1× lens, not ultra-wide)
+      setZoom(ZOOM_LEVELS[0].zoom);
+      setZoomLabel(ZOOM_LEVELS[0].label);
 
       startScanLine();
 
