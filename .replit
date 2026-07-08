@@ -33,6 +33,10 @@ args = "Start App"
 task = "workflow.run"
 args = "Start Backend"
 
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "Start Frontend"
+
 [[workflows.workflow]]
 name = "Start App"
 author = "agent"
@@ -51,13 +55,24 @@ name = "Start Backend"
 author = "agent"
 mode = "sequential"
 
+[workflows.workflow.metadata]
+outputType = "webview"
+
 [[workflows.workflow.tasks]]
 task = "shell.exec"
 args = "npm run server:dev"
 waitForPort = 5000
 
+[[workflows.workflow]]
+name = "Start Frontend"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "npm run expo:dev"
+
 [workflows.workflow.metadata]
-outputType = "webview"
+outputType = "console"
 
 [userenv]
 
@@ -76,3 +91,7 @@ EXPO_PUBLIC_DOMAIN = "eae16ca7-4eeb-4453-8627-1ba29ec6fd01-00-2ioihntuan3u.sisko
 [[ports]]
 localPort = 5000
 externalPort = 80
+
+[[ports]]
+localPort = 8082
+externalPort = 3000
