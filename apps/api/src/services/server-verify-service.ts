@@ -1,4 +1,5 @@
 // ─── SERVER VERIFICATION SERVICE ──────────────────────────────────────────────
+// SERVER-ONLY: Lives in apps/api/src/services/ — never import from Expo/mobile code.
 // CRITICAL SECURITY: All vote weights MUST be calculated server-side.
 // Client-side calculation allows weight manipulation and tier bypass.
 //
@@ -7,7 +8,7 @@
 // 2. Vote weight validation (prevents client manipulation)
 // 3. Collusion detection (server-side pattern analysis)
 //
-// Usage: Deploy as Firebase Cloud Function or run on trusted backend only
+// Usage: Import only from Express route handlers or other server-side services.
 // ──────────────────────────────────────────────────────────────────────────────
 
 import { Timestamp } from "firebase-admin/firestore";

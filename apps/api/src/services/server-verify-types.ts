@@ -1,3 +1,7 @@
+// ─── SERVER-ONLY: Account tier types & config ─────────────────────────────────
+// Lives in apps/api/src/services/ so it is never bundled into the Expo/React-Native app.
+// Import this only from server-side code (Express routes, Cloud Functions, etc.).
+
 export interface ServerAccountTier {
   tier: 0 | 1 | 2 | 3 | 4 | 5;
   voteWeight: number;

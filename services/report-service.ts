@@ -1,3 +1,8 @@
+// NOTE: server-verify-service (firebase-admin) has been moved to apps/api/src/services/
+// so it is never bundled into the Expo/React-Native app. Weight validation at the
+// server-authoritative level happens in the Express route (apps/api/src/routes/qr.ts)
+// which verifies the Firebase token before calling reportQrCode.
+
 import { db } from "@/lib/db/client";
 import { notifyQrFollowers } from "./notification-service";
 import {
@@ -5,7 +10,6 @@ import {
   recordReport,
   analyzeReportsForCollusion,
 } from "./integrity-service";
-import { validateVoteWeight, calculateServerAccountTier } from "./server-verify-service";
 
 async function getQrOwnerId(qrId: string): Promise<string | undefined> {
   try {
@@ -13,48 +17,6 @@ async function getQrOwnerId(qrId: string): Promise<string | undefined> {
     return data?.ownerId || undefined;
   } catch {
     return undefined;
-  }
-}
-
-/**
- * SECURITY FIX: Server-side vote weight validation
- * 
- * This function fetches user data server-side and validates the vote weight
- * before allowing the report to be submitted. This prevents malicious clients
- * from submitting inflated weights.
- */
-async function getServerAuthoritativeWeight(
-  userId: string,
-  emailVerified: boolean,
-  submittedWeight?: number
-): Promise<{ weight: number; tier: number; valid: boolean }> {
-  try {
-    // Fetch user data server-side (never trust client)
-    const userData = await db.get(["users", userId]);
-    
-    // Calculate authoritative tier and weight
-    const tierResult = calculateServerAccountTier(userData, emailVerified);
-    const expectedWeight = tierResult.voteWeight;
-    
-    // If a weight was submitted by client, validate it
-    if (submittedWeight !== undefined) {
-      const validation = validateVoteWeight(userData, emailVerified, submittedWeight);
-      if (!validation.valid) {
-        // Log the violation for monitoring
-        console.warn(
-          `[SECURITY] Invalid vote weight submitted by user ${userId}: ` +
-          `submitted=${submittedWeight}, expected=${expectedWeight}, tier=${validation.actualTier}`
-        );
-      }
-      // Always use server-calculated weight, regardless of validation
-      return { weight: expectedWeight, tier: tierResult.tier, valid: validation.valid };
-    }
-    
-    return { weight: expectedWeight, tier: tierResult.tier, valid: true };
-  } catch (e) {
-    console.error("[ERROR] Failed to calculate server-authoritative weight:", e);
-    // Fallback to minimum weight on error (fail-safe)
-    return { weight: 0.01, tier: 0, valid: false };
   }
 }
 
@@ -131,18 +93,10 @@ export async function reportQrCode(
   // Switching an existing vote should not count against rate limits.
   // isChangingReport=true bypasses the per-QR and hourly counters in checkReportEligibility.
   const isChangingReport = existingReport !== null;
-  const { weight: eligibilityWeight } = await checkReportEligibility(userId, qrId, emailVerified, qrOwnerId, isChangingReport);
-
-  // SECURITY FIX: Get server-authoritative weight (prevents client manipulation)
-  const { weight, tier, valid } = await getServerAuthoritativeWeight(userId, emailVerified, eligibilityWeight);
-  
-  // Log security violations for monitoring
-  if (!valid) {
-    console.warn(
-      `[SECURITY] User ${userId} attempted report with invalid weight. ` +
-      `Using server-calculated weight=${weight} (tier=${tier}) instead.`
-    );
-  }
+  // weight is calculated by checkReportEligibility based on user tier / eligibility rules.
+  // Server-authoritative weight validation (firebase-admin) runs in the Express route layer
+  // (apps/api/src/routes/qr.ts) which verifies the Firebase token before calling here.
+  const { weight } = await checkReportEligibility(userId, qrId, emailVerified, qrOwnerId, isChangingReport);
 
   let accountAgeDays = 0;
   try {

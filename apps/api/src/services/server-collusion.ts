@@ -1,4 +1,5 @@
 // ─── SERVER-SIDE COLLUSION DETECTION ─────────────────────────────────────────
+// SERVER-ONLY: Lives in apps/api/src/services/ — never import from Expo/mobile code.
 // Runs on trusted server where all reports are accessible for pattern analysis.
 // Additional signals not available to clients: IP clustering, device fingerprints,
 // temporal patterns across multiple QRs, cross-QR voting rings.
