@@ -1,187 +1,122 @@
 # BinRo
 
-A mobile-first QR code scanning and management app for Android, focused on security and user-generated content.
+India's QR code security and verification platform — real-time fraud detection, community trust scoring, and dynamic QR management targeting the UPI/BharatQR ecosystem.
+
+---
+
+## Monorepo Structure
+
+```
+binro/
+├── apps/
+│   ├── mobile/        # Future home of Expo app (Phase 2 migration)
+│   ├── api/           # Future home of Express backend (Phase 3 migration)
+│   └── web/           # Next.js website (Phase 4)
+├── packages/
+│   ├── core/          # @binro/core — shared domain types + business constants (zero deps)
+│   ├── db/            # @binro/db   — Drizzle schema, PostgreSQL client factory
+│   ├── config/        # @binro/config — Zod-validated environment schemas
+│   ├── tsconfig/      # @binro/tsconfig — shared TypeScript configs
+│   └── eslint-config/ # @binro/eslint-config — shared ESLint rules
+├── app/               # Expo Router screens (thin wrappers)
+├── features/          # Domain feature modules (UI + hooks)
+├── services/          # Firebase/Firestore data access layer
+├── shared/            # Mobile shared components, utils, contexts
+├── lib/               # Infrastructure adapters (Firebase, Auth, DB)
+├── server/            # Express.js API backend
+├── store/             # Zustand global stores
+├── MIGRATION_ROADMAP.md
+└── .github/workflows/ # CI/CD pipelines
+```
+
+> **Current phase: Phase 1 complete** — monorepo scaffold and packages/ extracted.
+> The Expo app (root) and Express server (`server/`) remain at the root during Phase 1.
+> Phase 2 moves the app to `apps/mobile/`; Phase 3 moves the server to `apps/api/`.
+
+---
 
 ## Run & Operate
 
-- **Build & Install Dev APK**: `npm install && npx expo run:android` (requires local Android SDK and `adb`)
-- **Run Backend**: `npm run server:dev` (Express API on port 5000)
-- **Run Frontend (Metro Bundler)**: `npm run expo:dev`
-- **Required Env Vars**:
-    - `EXPO_PUBLIC_FIREBASE_API_KEY`
-    - `EXPO_PUBLIC_FIREBASE_PROJECT_ID`
-    - `EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET`
-    - `EXPO_PUBLIC_FIREBASE_DATABASE_URL`
-    - `EXPO_PUBLIC_FIREBASE_APP_ID`
-    - `EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID`
-    - `EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID`
-    - `EXPO_PUBLIC_ANDROID_CLIENT_ID`
-    - `EXPO_PUBLIC_IOS_CLIENT_ID` (**required for iOS Google Sign-In** — get this from Google Cloud Console → OAuth 2.0 Client IDs → iOS type → Client ID; without it, Google Sign-In silently fails with "cancelled" on every iOS tap)
-    - `GOOGLE_SAFE_BROWSING_API_KEY` (optional, for real threat intel)
-    - `PORT` (defaults to 5000)
-    - `REPLIT_DEV_DOMAIN`
-    - `EXPO_PUBLIC_DOMAIN`
-
-## Stack
-
-- **Frontend**: Expo (React Native), Expo Router
-- **Backend**: Express.js 5.x
-- **Runtime**: Node 20+
-- **State**: Zustand (`store/`) + React Context (`shared/contexts/`) — both coexist
-- **ORM**: _Populate as you build_ (Drizzle ORM for PostgreSQL stub)
-- **Validation**: Joi (implied by usage, explicit in security hardening)
-- **Build Tool**: Metro Bundler, Expo CLI
-
-## Where things live
-
-- **Expo Router screens**: `app/` — thin wrappers; all screen logic lives in `features/`
-- **Zustand stores**: `store/` — global UI/auth/notification state
-  - `store/authStore.ts` — Zustand mirror of auth state (complements AuthContext)
-  - `store/uiStore.ts` — toasts, modal flags, loading states
-  - `store/notificationStore.ts` — notification badge count, read state
-- **Feature modules**: `features/` — domain-scoped, each with `components/`, `hooks/`, `styles.ts`, `index.ts`
-  - **QR Detail** (`features/qr-detail/`):
-    - `QrDetailScreen.tsx` — root router (dispatches to dynamic/guard, dynamic/standard, static)
-    - `dynamic/guard/` + `dynamic/standard/` — Living Shield and Standard QR detail screens
-    - `static/` — StaticQrDetailScreen
-    - `content-cards/` — canonical card system: `cards/` (per-type UI), `parsers/` (per-type parsing), `shared/` (CardHeader, InfoGrid, OpenButton)
-    - `components/` — shared detail components (TrustScoreCard, PaymentCard, CommentsSection, etc.)
-    - `hooks/` — useQrDetail, useQrData, useQrSafety, etc.
-    - `styles/` — split stylesheet directory: layout.ts, banners.ts, guest.ts, comments.ts, owner.ts, index.ts; `styles.ts` is a re-export barrel
-  - **My QR** (`features/my-qr/`):
-    - `components/cards/` — QrHeroCard, QrStatsRow, GuardDestinationCard, etc.
-    - `components/modals/` — DeactivateModal, ConfirmActionModal, FollowersModal, CustomColorModal
-    - `components/panels/` — DesignPanel (thin orchestrator), QrSettingsPanel
-    - `components/panels/tabs/` — ColorsTab, LogoTab, OptionsTab (tab content sub-components)
-    - `components/comments/` — OwnerCommentRow, OwnerCommentsSection
-    - `utils/qr-display.ts` — getEffectiveContentType, getDisplayText, extractSocialHandle
-  - **Generator** (`features/generator/`):
-    - `landing/` — GeneratorLanding, ModeCard, FeatureRow (entry point, imported by `app/(tabs)/qr-generator/index.tsx`)
-    - `components/` — all form, output, and modal components
-    - `data/` — registry.ts (QR type registry), presets, templates, ai-generator
-    - `hooks/` — useQrGenerator, useQrActions, useQrSave, etc.
-- **Shared layer**: `shared/` — pure shared layer, NO business logic
-  - `shared/components/` — global UI atoms (`ui/`), feedback boundaries, consent, notifications
-  - `shared/config/` — region constants, QR type styles
-  - `shared/constants/` — colors, typography, content-types
-  - `shared/contexts/` — AuthContext, ThemeContext, AvatarContext (import via `@/shared/contexts/`)
-  - `shared/i18n/` — multi-language support (EN, HI, ML, TA, TE) + translations/
-  - `shared/schemas/` — shared schema types (CategorySchema)
-  - `shared/styles/` — reusable StyleSheet token helpers (common.ts)
-  - `shared/types/` — shared type definitions (qr, trust, user)
-  - `shared/utils/` — formatters, navigation, platform, haptics, number-format, query-client, URL risk, hooks
-- **Services layer**: `services/`
-  - `services/generator-service.ts` — re-export barrel → `services/generator/` (crud, updates, branding, velocity, verification)
-  - `services/user-service.ts` — re-export barrel → `services/user/` (profile, favorites, privacy, username, search, leaderboard)
-  - `services/comment-service.ts` — re-export barrel → `services/comments/` (cache, read, write, report)
-  - `services/*.ts` — other domain services (qr, follow, report, notification, integrity, etc.)
-  - `services/cache/` — anonymous session and QR caching
-  - `services/analysis/` — QR/URL heuristic analysis, threat intelligence, scam detection
-  - `services/notifications/` — NOTIFICATIONS_ENABLED feature flag
-- **Infrastructure**: `lib/` — ONLY pure infrastructure; do not add business logic here
-  - `lib/db/` — database adapter pattern (Firebase locked; Supabase/Postgres stubs)
-  - `lib/auth/` — auth adapter and Firebase auth provider
-  - `lib/firebase.ts` / `lib/firebase/` — Firebase client config
-  - `lib/firestore-service.ts` — Firestore service layer
-  - `lib/security/` — ECDSA signature verification
-  - `lib/qr-analysis.ts` — re-export barrel for `services/analysis/` (backward compat)
-  - `lib/haptics.ts`, `lib/number-format.ts`, etc. — re-export barrels pointing to `shared/utils/` (backward compat; new code should import from `@/shared/utils/` directly)
-  - **DO NOT ADD** business logic, utilities, or UI helpers to `lib/` — use `shared/` or `services/`
-- **QR Type Registry**: `features/generator/data/registry.ts` — single source of truth for all QR types; **add new types here only**
-- **Express backend**: `server/`
-  - `server/routes.ts` — thin orchestrator (~190 lines); calls `register*Route(app)` helpers
-  - `server/routes/ai-qr.ts` — AI QR generation (smart parser + OpenAI fallback)
-  - `server/routes/standard-content.ts` — `/go/:slug` standard QR content page
-  - `server/routes/donation.ts`, `safe-browsing.ts`, `qr-active.ts`, `index.ts` — other domain routes
-- **DB schema (PostgreSQL stub)**: `shared/schema.ts`
-- **DB provider config**: `lib/db/config.ts`
-- **Firestore Security Rules**: `firestore.rules` (deploy separately via Firebase CLI)
-
-## Architecture decisions
-
-- **Android-only focus**: Web support was removed to streamline development and focus on the primary mobile use case.
-- **Pluggable Database**: Database adapter pattern (`lib/db/adapter.ts`) supports Firebase, Supabase, and PostgreSQL. Currently locked to Firebase Firestore for primary data and Firebase Realtime Database for notifications/velocity.
-- **Client-side Firebase Auth**: All authentication is handled directly by Firebase on the client, with session syncing and auto-login.
-- **Service Layer Design**: Business logic is in `services/` — each service owns a single responsibility. Large services are split into domain subdirectories (`services/generator/`, `services/user/`, `services/comments/`); the original `.ts` file becomes a re-export barrel so no imports break.
-- **State management**: Zustand (`store/`) for global UI/notification state; React Context (`shared/contexts/`) retained for auth, theme, and avatar. Both coexist — Zustand does not replace Context.
-- **Security by Default**: QR input validation, ECDSA response signing, report rate limits, Firestore circuit breaker, and encrypted threat storage via `expo-secure-store`.
-- **QR Type Registry pattern**: `features/generator/data/registry.ts` is the single source of truth. `presets.ts` and `qr-builder.ts` derive from it. Adding a new QR type = append one object to `QR_REGISTRY` + add key to `QR_CATEGORY_KEYS`. No other files need to change.
-- **Navigation links (owner flow)**: Generator success → `/my-qr/[docId]`. My QR management header has a globe button → `/qr-detail/[uuid]?ownerDocId=...`. QR detail shows "Manage" button when logged-in user is the QR owner.
-- **File size rule**: Files > ~300 lines are candidates for extraction. Pattern: move heavy logic into a sub-directory, keep the original file as a thin orchestrator or re-export barrel.
-
-## Product
-
-- QR code scanning (camera, gallery) and generation.
-- Real-time threat intelligence (Google Safe Browsing API v4) and local heuristic analysis.
-- User profiles with scan history, favorites, generated QRs, and privacy controls.
-- Social features: comments, following QRs, friend requests, notifications.
-- Multi-language support (English, Hindi, Malayalam, Tamil, Telugu).
-- Anti-fraud and integrity system (weighted reporting, collusion detection, rate limits).
-- Consent and legal disclaimer modal for user agreement management.
-- Dynamic UI scaling for responsive layouts on various screen sizes.
-
-## User preferences
-
-- _Populate as you build_
-
-## iOS Build Pipeline (EAS)
-
-### One-time setup before your first iOS EAS build
-
-1. **Replace `GoogleService-Info.plist`**
-   - Firebase Console → Project Settings → Your iOS App → Download `GoogleService-Info.plist`
-   - Drop it in the repo root (replacing the template). `BUNDLE_ID` must be `com.qrguard.app`.
-   - The `@react-native-google-signin` Expo plugin reads `REVERSED_CLIENT_ID` from this file automatically.
-
-2. **Apple credentials (EAS manages these for you)**
-   - Run `eas build --platform ios --profile preview` for the first time.
-   - EAS will prompt for your Apple ID and Team ID, then create/manage provisioning profiles and signing certificates automatically (`credentialsSource: "remote"`).
-   - Fill in `submit.production.ios` in `eas.json` with your Apple ID, App Store Connect App ID, and Team ID when you're ready to submit.
-
-3. **Push notifications (APNs)**
-   - EAS automatically registers an APNs key when you use managed credentials — no manual certificate work needed.
-
-### How the iOS build pipeline works
-
-| Plugin | What it does |
+| Command | Description |
 |---|---|
-| `expo-build-properties` → `ios.useFrameworks: "static"` | Links all pods as static frameworks — required for Firebase + Swift compatibility |
-| `plugins/ios-modular-headers.js` | Safety net: adds `use_modular_headers!` if `use_frameworks!` isn't present |
-| `plugins/ios-size-optimize.js` | Xcode Release build settings: `-Osize`, thin LTO, dead-code stripping, symbol stripping |
+| `npm run server:dev` | Express API on port 5000 (development) |
+| `npm run expo:dev` | Metro bundler — connect via Expo Go or dev build |
+| `npm run server:build` | Bundle server for production |
+| `npm run db:push` | Push Drizzle schema to PostgreSQL (requires `DATABASE_URL`) |
 
-### Size optimizations applied
-- **`SWIFT_OPTIMIZATION_LEVEL = -Osize`** — compile for binary size, not speed
-- **`SWIFT_COMPILATION_MODE = wholemodule`** — whole-module optimization enables cross-file dead code removal
-- **`LLVM_LTO = YES_THIN`** — linker eliminates dead code across translation units
-- **`DEAD_CODE_STRIPPING + STRIP_INSTALLED_PRODUCT`** — removes unreachable code and debug symbols from the final binary
-- **`ENABLE_BITCODE = NO`** — bitcode deprecated in Xcode 14+; disabling it removes ~10 MB from the archive
-- **`flipper: false`** — Flipper debug framework (~10 MB) excluded from all builds
+---
 
-### EAS build commands
-```bash
-# iOS simulator (no Apple credentials needed)
-eas build --platform ios --profile development
+## Required Environment Variables
 
-# Internal distribution (TestFlight-style, needs Apple credentials)
-eas build --platform ios --profile preview
+### Mobile (EXPO_PUBLIC_* — bundled at build time)
+| Variable | Description |
+|---|---|
+| `EXPO_PUBLIC_FIREBASE_API_KEY` | Firebase Web API key |
+| `EXPO_PUBLIC_FIREBASE_PROJECT_ID` | Firebase project ID |
+| `EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET` | Firebase Storage bucket |
+| `EXPO_PUBLIC_FIREBASE_DATABASE_URL` | Firebase Realtime Database URL |
+| `EXPO_PUBLIC_FIREBASE_APP_ID` | Firebase App ID |
+| `EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID` | Firebase sender ID |
+| `EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID` | Google OAuth web client ID |
+| `EXPO_PUBLIC_ANDROID_CLIENT_ID` | Google OAuth Android client ID |
+| `EXPO_PUBLIC_IOS_CLIENT_ID` | Google OAuth iOS client ID (required for iOS Sign-In) |
 
-# App Store
-eas build --platform ios --profile production
+### Server
+| Variable | Description |
+|---|---|
+| `PORT` | Server port (default: 5000) |
+| `SESSION_SECRET` | HMAC signing secret (min 32 chars) |
+| `GOOGLE_SAFE_BROWSING_API_KEY` | Optional — enables real threat intelligence |
+| `DATABASE_URL` | Optional until Phase 2 — PostgreSQL connection string |
+| `OPENAI_API_KEY` | Optional — enables AI QR generation |
+
+---
+
+## Tech Stack
+
+| Layer | Technology |
+|---|---|
+| Mobile | Expo SDK 54, React Native 0.81.5, Expo Router 6 |
+| Backend | Express.js 5.x, Node.js 20, TypeScript (tsx) |
+| Primary DB | Firebase Firestore (client + Admin SDK) |
+| Future DB | PostgreSQL via Drizzle ORM (`packages/db/`) |
+| Auth | Firebase Auth + Google Sign-In |
+| State | TanStack Query v5 + Zustand v5 + React Context |
+| i18n | i18next (EN, HI, ML, TA, TE) |
+| Payments | Razorpay + react-native-iap |
+| Push | Expo Notifications |
+| Build | Metro Bundler, EAS Build |
+
+---
+
+## Shared Packages (@binro/*)
+
+### `@binro/core` (`packages/core/`)
+Pure domain types and business constants. **Zero runtime dependencies.**
+- `src/types/` — `QrCode`, `AppUser`, `TrustScore`, `Report`, `QrContentType`, etc.
+- `src/constants/` — pagination sizes, username rules, trust thresholds, app constants
+- Safe to import in mobile, web, and API
+
+### `@binro/db` (`packages/db/`)
+Drizzle ORM schema and PostgreSQL client factory.
+- `src/schema.ts` — all table definitions (`users`, `qrCodes`, `scans`, `comments`, etc.)
+- `src/client.ts` — lazy `getDb()` factory (throws if `DATABASE_URL` missing)
+- `drizzle.config.ts` — standalone migration config for this package
+
+### `@binro/config` (`packages/config/`)
+Zod environment validation for each deployment target.
+```typescript
+import { validateEnv, apiEnvSchema } from "@binro/config";
+export const env = validateEnv(apiEnvSchema);
 ```
 
-## Gotchas
+### `@binro/tsconfig` (`packages/tsconfig/`)
+Shared TypeScript configs: `base.json`, `react-native.json`, `node.json`, `nextjs.json`.
 
-- **Android Cleartext Traffic**: `CLEARTEXT communication not permitted` errors usually mean the dev APK needs to be rebuilt with updated network security config: `npx expo prebuild --platform android --clean && npx expo run:android`.
-- **Firebase Rules Deployment**: Changes to `firestore.rules` require manual deployment via Firebase CLI (`firebase deploy --only firestore:rules`) to take effect.
-- **PostgreSQL/Drizzle**: The `server/storage.ts` and Drizzle schema are not actively used for database operations; they are a stub for future migration and should not be deleted.
-- **Local Dev Env**: Requires Android SDK, `adb`, Node 20+, npm, and a physical Android device or emulator. Replit cannot run `npx expo run:android`.
-- **lib/security/**: Only `signature-verifier.ts` is active (used by `services/analysis/threat-service.ts`). Do not add duplicate analysis files here.
-- **Re-export barrels**: `services/generator-service.ts`, `services/user-service.ts`, `services/comment-service.ts` are now 1-line barrels. Never add logic back to them — use the subdirectory files instead.
+---
 
-## Pointers
+## Architecture Notes
 
-- **Expo Router**: [https://docs.expo.dev/router/](https://docs.expo.dev/router/)
-- **Firebase Documentation**: [https://firebase.google.com/docs](https://firebase.google.com/docs)
-- **Google Safe Browsing API**: [https://developers.google.com/safe-browsing](https://developers.google.com/safe-browsing)
-- **React Native Google Sign-In**: [https://github.com/react-native-google-signin/google-signin](https://github.com/react-native-google-signin/google-signin)
-- **`expo-secure-store`**: [https://docs.expo.dev/versions/latest/sdk/securestore/](https://docs.expo.dev/versions/latest/sdk/securestore/)
+- `shared/types/`, `shared/models/`, `shared/constants/config.ts` are **re-export shims** pointing to `packages/core/` — all existing `@/shared/*` imports continue to work unchanged.
+- `shared/schema.ts` is a **re-export shim** pointing to `packages/db/src/schema.ts` — all existing `@shared/schema` imports continue to work unchanged.
+- See `MIGRATION_ROADMAP.md` for the full 6-phase plan to reach production-ready architecture.

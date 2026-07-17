@@ -1,19 +1,6 @@
-export type TrustTier = "trusted" | "neutral" | "suspicious" | "dangerous";
-
-export interface TrustScore {
-  score: number;
-  tier: TrustTier;
-  reportCount: number;
-  scanCount: number;
-  lastUpdated: number;
-}
-
-export interface Report {
-  id: string;
-  qrCodeId: string;
-  reportedBy: string;
-  type: string;
-  reason?: string;
-  createdAt: number;
-  weight: number;
-}
+// Re-exported from @binro/core. Source of truth: packages/core/src/types/trust.ts
+export type {
+  TrustTier,
+  TrustScore,
+  Report,
+} from "../../packages/core/src/types/trust";
