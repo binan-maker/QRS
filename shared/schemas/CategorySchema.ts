@@ -77,13 +77,3 @@ export interface CategorySearchResult {
   matchedOn: string[];
 }
 
-export function fieldTypeToKeyboard(type: FieldType): string {
-  switch (type) {
-    case "email":   return "email-address";
-    case "phone":   return "phone-pad";
-    case "url":     return "url";
-    case "number":  return "number-pad";
-    case "decimal": return "decimal-pad";
-    default:        return "default";
-  }
-}

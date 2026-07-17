@@ -21,6 +21,7 @@ import {
   fetchUnifiedQr, recordUnifiedScan,
 } from "./lib/firebase-client";
 import { cacheGet, cacheSet } from "./lib/route-cache";
+import { isLimitExceeded } from "./lib/qr-limits";
 
 // TTL constants for the in-memory route cache
 const STANDARD_LINK_TTL_MS = 60_000;   // standard QR content — stable, 60 s
@@ -81,14 +82,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/threats", (_req: Request, res: Response) => {
     res.json({ version: "2025-04-01", patterns: DYNAMIC_THREAT_PATTERNS });
   });
-
-  // Shared helper: check expiry and scan limit before serving any QR link.
-  // Returns true if the QR should be blocked (expired or over limit).
-  function isLimitExceeded(expiryDate: string | null, scanLimit: number | null, scanCount: number): boolean {
-    if (expiryDate && new Date(expiryDate).getTime() < Date.now()) return true;
-    if (scanLimit !== null && scanCount >= scanLimit) return true;
-    return false;
-  }
 
   // ── /q/:id — Unified QR route (new architecture) ───────────────────────────
   // All QRs generated after the architecture migration use this route.

@@ -10,6 +10,7 @@ import {
   setCachedHomeScans,
   invalidateHomeScansCache,
 } from "@/services/cache/qr-cache";
+import { mergeAndDeduplicateScans } from "@/services/scan-history/dedup";
 import type { LocalScan } from "@/features/home/types";
 
 const HOME_STALE_MS   = 5 * 60 * 1000;
@@ -107,49 +108,14 @@ export function useRecentScans() {
   );
 
   // ── Merge local + cloud; deduplicate; take MAX_RECENT ────────────────────
-  //
-  // Old bug: dedup keyed on qrCodeId alone meant ALL scans of the same QR
-  // code (e.g. a UPI payment code scanned 100 times) were treated as one
-  // event — the cloud's 4 remaining entries were thrown away, leaving only
-  // 1 card visible even with 100+ scans.
-  //
-  // Also, each scan fires appendToLocalScanHistory twice (offline:true +
-  // background-sync final write), so local storage fills with 2 entries per
-  // scan event that share the same qrCodeId and are ~1-2 s apart. These
-  // should be collapsed into one, but distinct scan events (same QR code on
-  // different occasions) must NOT be collapsed.
-  //
-  // Fix: two entries are the same event iff they share qrCodeId AND fall in
-  // the same 60-second window. Use a "qrCodeId|minuteBucket" set as the
-  // dedup key — fast O(n), correct for both use-cases.
-  const recentScans = useMemo<LocalScan[]>(() => {
-    const cloud    = cloudScansRaw ?? [];
-    const combined = [...localScans, ...cloud];
-
-    const seen    = new Set<string>();
-    const unique: LocalScan[] = [];
-
-    for (const scan of combined) {
-      if (!scan.qrCodeId) {
-        // No qrCodeId → cannot key on it, always include.
-        unique.push(scan);
-        continue;
-      }
-      // Round to nearest 60 s so the offline write and the background-sync
-      // write (same event, ~1–2 s apart) collapse to the same bucket, while
-      // scans of the same QR code on different minutes stay distinct.
-      const minuteBucket = Math.floor(new Date(scan.scannedAt).getTime() / 60_000);
-      const key          = `${scan.qrCodeId}|${minuteBucket}`;
-      if (!seen.has(key)) {
-        seen.add(key);
-        unique.push(scan);
-      }
-    }
-
-    return unique
-      .sort((a, b) => new Date(b.scannedAt).getTime() - new Date(a.scannedAt).getTime())
-      .slice(0, MAX_RECENT);
-  }, [localScans, cloudScansRaw]);
+  // Dedup algorithm: two entries are the same event iff they share qrCodeId
+  // AND fall in the same 60-second bucket. This collapses offline + sync
+  // double-writes without merging distinct scan events of the same QR code.
+  // Logic lives in services/scan-history/dedup.ts.
+  const recentScans = useMemo<LocalScan[]>(
+    () => mergeAndDeduplicateScans(localScans, cloudScansRaw ?? [], MAX_RECENT),
+    [localScans, cloudScansRaw],
+  );
 
   // ── Pull-to-refresh: bust disk cache then re-fetch ────────────────────────
   const onRefresh = useCallback(async () => {

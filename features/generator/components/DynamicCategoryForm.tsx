@@ -5,8 +5,20 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useTheme } from "@/shared/contexts/ThemeContext";
-import type { CategorySchema, FieldDefinition } from "@/shared/schemas/CategorySchema";
-import { fieldTypeToKeyboard } from "@/shared/schemas/CategorySchema";
+import type { CategorySchema, FieldDefinition, FieldType } from "@/shared/schemas/CategorySchema";
+
+// UI-only keyboard mapping — lives here because it's a React Native UI concern,
+// not a schema/domain concern.
+function fieldTypeToKeyboard(type: FieldType): string {
+  switch (type) {
+    case "email":   return "email-address";
+    case "phone":   return "phone-pad";
+    case "url":     return "url";
+    case "number":  return "number-pad";
+    case "decimal": return "decimal-pad";
+    default:        return "default";
+  }
+}
 
 interface Props {
   category: CategorySchema;

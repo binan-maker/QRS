@@ -6,7 +6,7 @@
  */
 import React from "react";
 import { CompactRenderer } from "@/features/qr-engine";
-import type { ContentDetailRow } from "@/services/qr-display-utils";
+import type { ContentDetailRow } from "@/services/qr-display";
 
 interface ContentTypeMeta {
   color: string;

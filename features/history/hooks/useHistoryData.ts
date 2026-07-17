@@ -9,8 +9,9 @@ import {
   getUserScanStats,
   type ScanStatsResult,
 } from "@/lib/firestore-service";
-import { parseAnyPaymentQr, analyzeAnyPaymentQr, analyzeUrlHeuristics } from "@/services/analysis";
+import { analyzeItemRisk } from "@/services/scan-history/safety-analysis";
 import { queryClient as globalQueryClient } from "@/shared/utils/query-client";
+import { mergeAndDeduplicateScans } from "@/services/scan-history/dedup";
 import {
   getCachedHistoryPage,
   setCachedHistoryPage,
@@ -179,20 +180,11 @@ export function useHistoryData(activeFilters: ActiveFilters) {
     [favoritesRaw]
   );
 
-  const history = useMemo<HistoryItem[]>(() => {
-    const combined = [...localHistory, ...cloudHistory];
-    const seen     = new Set<string>();
-    const unique: HistoryItem[] = [];
-
-    for (const item of combined) {
-      if (!item.qrCodeId) { unique.push(item); continue; }
-      const minuteBucket = Math.floor(new Date(item.scannedAt).getTime() / 60_000);
-      const key = `${item.qrCodeId}|${minuteBucket}`;
-      if (!seen.has(key)) { seen.add(key); unique.push(item); }
-    }
-
-    return unique.sort((a, b) => new Date(b.scannedAt).getTime() - new Date(a.scannedAt).getTime());
-  }, [localHistory, cloudHistory]);
+  // Same qrCodeId+minuteBucket dedup as home scans — algorithm in services/scan-history/dedup.ts.
+  const history = useMemo<HistoryItem[]>(
+    () => mergeAndDeduplicateScans(localHistory, cloudHistory),
+    [localHistory, cloudHistory],
+  );
 
   // ── Safety analysis — batched to avoid blocking the JS thread ───────────────
   // Items are processed in chunks of 25 with a yield between each batch so
@@ -214,18 +206,8 @@ export function useHistoryData(activeFilters: ActiveFilters) {
       if (safetyRunIdRef.current !== runId) return;
       const end = Math.min(idx + BATCH, allItems.length);
       for (; idx < end; idx++) {
-        const item = allItems[idx];
-        if (item.contentType === "url") {
-          try { map.set(item.id, analyzeUrlHeuristics(item.content).riskLevel as RiskLevel); }
-          catch { map.set(item.id, "safe"); }
-        } else if (item.contentType === "payment") {
-          try {
-            const parsed = parseAnyPaymentQr(item.content);
-            map.set(item.id, parsed ? analyzeAnyPaymentQr(parsed).riskLevel as RiskLevel : "safe");
-          } catch { map.set(item.id, "safe"); }
-        } else {
-          map.set(item.id, "safe");
-        }
+        // Per-item risk: URL heuristics or payment parsing — logic in services/scan-history/safety-analysis.ts
+        map.set(allItems[idx].id, analyzeItemRisk(allItems[idx]));
       }
       if (idx >= allItems.length) {
         if (safetyRunIdRef.current !== runId) return;

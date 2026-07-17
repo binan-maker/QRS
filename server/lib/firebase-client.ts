@@ -1,3 +1,6 @@
+import { cacheGet, cacheSet, cacheDelete } from "./route-cache";
+import { isLimitExceeded } from "./qr-limits";
+
 const FIREBASE_PROJECT_ID = process.env.EXPO_PUBLIC_FIREBASE_PROJECT_ID || process.env.FIREBASE_PROJECT_ID || "";
 const FIREBASE_API_KEY = process.env.EXPO_PUBLIC_FIREBASE_API_KEY || process.env.FIREBASE_API_KEY || "";
 const CACHE_TTL_MS = 30_000;
@@ -27,16 +30,20 @@ export interface StandardLinkFields {
   expiryDate: string | null;
 }
 
-interface CacheEntry<T> { data: T | null; expiresAt: number }
+// ── Cache helpers ──────────────────────────────────────────────────────────────
+// We wrap stored values in `{ data }` so null results (404, parse error) are
+// cached as `{ data: null }` and are distinguishable from a cache miss
+// (cacheGet returns null on miss).
 
-const guardCache = new Map<string, CacheEntry<GuardLinkFields>>();
-const standardCache = new Map<string, CacheEntry<StandardLinkFields>>();
+function fcGet<T>(key: string): { data: T | null } | null {
+  return cacheGet<{ data: T | null }>(key);
+}
 
-setInterval(() => {
-  const now = Date.now();
-  for (const [k, e] of guardCache.entries()) { if (now >= e.expiresAt) guardCache.delete(k); }
-  for (const [k, e] of standardCache.entries()) { if (now >= e.expiresAt) standardCache.delete(k); }
-}, CACHE_TTL_MS);
+function fcSet<T>(key: string, data: T | null): void {
+  cacheSet<{ data: T | null }>(key, { data }, CACHE_TTL_MS);
+}
+
+// ── Firestore helpers ─────────────────────────────────────────────────────────
 
 function firestoreUrl(collection: string, docId: string): string {
   return `https://firestore.googleapis.com/v1/projects/${FIREBASE_PROJECT_ID}/databases/(default)/documents/${collection}/${encodeURIComponent(docId)}?key=${FIREBASE_API_KEY}`;
@@ -49,17 +56,19 @@ function parseIntField(f: any): number | null {
   return null;
 }
 
+// ── fetchGuardLink ─────────────────────────────────────────────────────────────
+
 export async function fetchGuardLink(uuid: string): Promise<GuardLinkFields | null> {
-  const now = Date.now();
-  const cached = guardCache.get(uuid);
-  if (cached && now < cached.expiresAt) return cached.data;
+  const key = `fc-guard:${uuid}`;
+  const hit = fcGet<GuardLinkFields>(key);
+  if (hit !== null) return hit.data;
 
   try {
     const res = await fetch(firestoreUrl("guardLinks", uuid));
-    if (!res.ok) { guardCache.set(uuid, { data: null, expiresAt: now + CACHE_TTL_MS }); return null; }
+    if (!res.ok) { fcSet(key, null); return null; }
     const data = await res.json() as any;
     const f = data?.fields;
-    if (!f) { guardCache.set(uuid, { data: null, expiresAt: now + CACHE_TTL_MS }); return null; }
+    if (!f) { fcSet(key, null); return null; }
     const link: GuardLinkFields = {
       currentDestination: f.currentDestination?.stringValue || null,
       previousDestination: f.previousDestination?.stringValue || null,
@@ -71,24 +80,26 @@ export async function fetchGuardLink(uuid: string): Promise<GuardLinkFields | nu
       scanCount: parseIntField(f.scanCount) ?? 0,
       expiryDate: f.expiryDate?.stringValue || null,
     };
-    guardCache.set(uuid, { data: link, expiresAt: now + CACHE_TTL_MS });
+    fcSet(key, link);
     return link;
   } catch {
     return null;
   }
 }
 
+// ── fetchStandardLink ──────────────────────────────────────────────────────────
+
 export async function fetchStandardLink(uuid: string): Promise<StandardLinkFields | null> {
-  const now = Date.now();
-  const cached = standardCache.get(uuid);
-  if (cached && now < cached.expiresAt) return cached.data;
+  const key = `fc-std:${uuid}`;
+  const hit = fcGet<StandardLinkFields>(key);
+  if (hit !== null) return hit.data;
 
   try {
     const res = await fetch(firestoreUrl("standardLinks", uuid));
-    if (!res.ok) { standardCache.set(uuid, { data: null, expiresAt: now + CACHE_TTL_MS }); return null; }
+    if (!res.ok) { fcSet(key, null); return null; }
     const data = await res.json() as any;
     const f = data?.fields;
-    if (!f) { standardCache.set(uuid, { data: null, expiresAt: now + CACHE_TTL_MS }); return null; }
+    if (!f) { fcSet(key, null); return null; }
     const link: StandardLinkFields = {
       rawContent: f.rawContent?.stringValue || "",
       contentType: f.contentType?.stringValue || "text",
@@ -98,15 +109,17 @@ export async function fetchStandardLink(uuid: string): Promise<StandardLinkField
       scanCount: parseIntField(f.scanCount) ?? 0,
       expiryDate: f.expiryDate?.stringValue || null,
     };
-    standardCache.set(uuid, { data: link, expiresAt: now + CACHE_TTL_MS });
+    fcSet(key, link);
     return link;
   } catch {
     return null;
   }
 }
 
-// Atomically increment scanCount for a link and auto-deactivate if limit reached.
+// ── recordScanAndEnforce ───────────────────────────────────────────────────────
+// Atomically increment scanCount and auto-deactivate if scan limit is hit.
 // collection is either "standardLinks" or "guardLinks".
+
 export async function recordScanAndEnforce(
   collection: "standardLinks" | "guardLinks",
   uuid: string,
@@ -114,56 +127,33 @@ export async function recordScanAndEnforce(
 ): Promise<void> {
   if (!FIREBASE_PROJECT_ID || !FIREBASE_API_KEY) return;
   try {
-    // Firestore REST atomic increment via runQuery / commit
     const commitUrl = `https://firestore.googleapis.com/v1/projects/${FIREBASE_PROJECT_ID}/databases/(default)/documents:commit?key=${FIREBASE_API_KEY}`;
     const docPath = `projects/${FIREBASE_PROJECT_ID}/databases/(default)/documents/${collection}/${encodeURIComponent(uuid)}`;
 
-    const writes: any[] = [{
-      transform: {
-        document: docPath,
-        fieldTransforms: [{
-          fieldPath: "scanCount",
-          increment: { integerValue: "1" },
-        }],
-      },
-    }];
-
-    // If scan limit is set, also check and deactivate
-    if (scanLimit !== null && scanLimit > 0) {
-      // Fetch fresh scanCount after increment via a second request
-      // We'll do it optimistically: after the increment, if scanCount >= scanLimit, deactivate
-      // We use a conditional update (precondition) to avoid double-deactivation
-      // Simple approach: always add a deactivate write conditional on the new count
-      writes.push({
-        update: {
-          name: docPath,
-          fields: { isActive: { booleanValue: false } },
-        },
-        currentDocument: { exists: true },
-        updateMask: { fieldPaths: ["isActive"] },
-      });
-    }
-
-    const body = scanLimit !== null && scanLimit > 0
-      ? JSON.stringify({ writes: [writes[0]] }) // increment only; deactivation handled below
-      : JSON.stringify({ writes });
-
-    const commitRes = await fetch(commitUrl, {
+    // Increment scanCount atomically
+    await fetch(commitUrl, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ writes: [writes[0]] }),
+      body: JSON.stringify({
+        writes: [{
+          transform: {
+            document: docPath,
+            fieldTransforms: [{
+              fieldPath: "scanCount",
+              increment: { integerValue: "1" },
+            }],
+          },
+        }],
+      }),
     });
 
-    if (!commitRes.ok) return;
-
-    // If there's a limit, re-fetch the fresh doc to check if we've hit it
+    // If a limit is set, re-fetch to check if we've crossed it
     if (scanLimit !== null && scanLimit > 0) {
       const freshRes = await fetch(firestoreUrl(collection, uuid));
       if (!freshRes.ok) return;
       const freshData = await freshRes.json() as any;
       const freshCount = parseIntField(freshData?.fields?.scanCount) ?? 0;
-      if (freshCount >= scanLimit) {
-        // Deactivate
+      if (isLimitExceeded(null, scanLimit, freshCount)) {
         await fetch(commitUrl, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -174,9 +164,9 @@ export async function recordScanAndEnforce(
             }],
           }),
         });
-        // Bust the cache so next scan sees isActive: false immediately
-        guardCache.delete(uuid);
-        standardCache.delete(uuid);
+        // Bust cache so the next scan sees isActive: false immediately
+        cacheDelete(`fc-guard:${uuid}`);
+        cacheDelete(`fc-std:${uuid}`);
       }
     }
   } catch {
@@ -185,6 +175,7 @@ export async function recordScanAndEnforce(
 }
 
 // ── Unified QR model (/q/:id) ─────────────────────────────────────────────────
+
 export interface UnifiedQrFields {
   ownerId: string;
   ownerName: string;
@@ -209,13 +200,6 @@ export interface UnifiedQrFields {
   };
 }
 
-const unifiedCache = new Map<string, CacheEntry<UnifiedQrFields>>();
-
-setInterval(() => {
-  const now = Date.now();
-  for (const [k, e] of unifiedCache.entries()) { if (now >= e.expiresAt) unifiedCache.delete(k); }
-}, CACHE_TTL_MS);
-
 function parseStringField(f: any): string | null {
   if (!f) return null;
   return f.stringValue ?? null;
@@ -233,16 +217,16 @@ function parseMapField(f: any): Record<string, any> | null {
 }
 
 export async function fetchUnifiedQr(id: string): Promise<UnifiedQrFields | null> {
-  const now = Date.now();
-  const cached = unifiedCache.get(id);
-  if (cached && now < cached.expiresAt) return cached.data;
+  const key = `fc-unified:${id}`;
+  const hit = fcGet<UnifiedQrFields>(key);
+  if (hit !== null) return hit.data;
 
   try {
     const res = await fetch(firestoreUrl("qrs", id));
-    if (!res.ok) { unifiedCache.set(id, { data: null, expiresAt: now + CACHE_TTL_MS }); return null; }
+    if (!res.ok) { fcSet(key, null); return null; }
     const raw = await res.json() as any;
     const f = raw?.fields;
-    if (!f) { unifiedCache.set(id, { data: null, expiresAt: now + CACHE_TTL_MS }); return null; }
+    if (!f) { fcSet(key, null); return null; }
 
     const designFields = parseMapField(f.design);
     const link: UnifiedQrFields = {
@@ -268,7 +252,7 @@ export async function fetchUnifiedQr(id: string): Promise<UnifiedQrFields | null
         label: parseStringField(designFields?.label),
       },
     };
-    unifiedCache.set(id, { data: link, expiresAt: now + CACHE_TTL_MS });
+    fcSet(key, link);
     return link;
   } catch {
     return null;
@@ -276,7 +260,7 @@ export async function fetchUnifiedQr(id: string): Promise<UnifiedQrFields | null
 }
 
 export function bustUnifiedCache(id: string): void {
-  unifiedCache.delete(id);
+  cacheDelete(`fc-unified:${id}`);
 }
 
 export async function recordUnifiedScan(id: string, scanLimit: number | null): Promise<void> {
@@ -303,7 +287,7 @@ export async function recordUnifiedScan(id: string, scanLimit: number | null): P
       if (!freshRes.ok) return;
       const freshData = await freshRes.json() as any;
       const freshCount = parseIntField(freshData?.fields?.scanCount) ?? 0;
-      if (freshCount >= scanLimit) {
+      if (isLimitExceeded(null, scanLimit, freshCount)) {
         await fetch(commitUrl, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -317,7 +301,7 @@ export async function recordUnifiedScan(id: string, scanLimit: number | null): P
             }],
           }),
         });
-        unifiedCache.delete(id);
+        bustUnifiedCache(id);
       }
     }
   } catch {

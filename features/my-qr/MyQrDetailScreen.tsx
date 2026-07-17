@@ -10,7 +10,7 @@ import { useTopInset } from "@/shared/utils/platform";
 import { useTheme } from "@/shared/contexts/ThemeContext";
 import { useMyQrDetail } from "@/features/my-qr/hooks/useMyQrDetail";
 import { useScaleFns } from "@/shared/utils/use-scale";
-import { getDetailContentType, getDetailDisplayTitle, parseQrContentDetails } from "@/services/qr-display-utils";
+import { getDetailContentType, getDetailDisplayTitle, parseQrContentDetails } from "@/services/qr-display";
 import { getQrTypeMeta as getCtMeta } from "@/features/qr-engine";
 
 import MyQrNavBar from "@/features/my-qr/components/MyQrNavBar";
