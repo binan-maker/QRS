@@ -1,0 +1,12 @@
+{
+  "name": "@binro/api",
+  "version": "1.0.0",
+  "private": true,
+  "description": "BinRo Express API server — security, QR redirect, payments, push.",
+  "scripts": {
+    "dev": "NODE_ENV=development tsx src/index.ts",
+    "build": "esbuild src/index.ts --platform=node --packages=external --bundle --format=esm --outdir=dist",
+    "start": "NODE_ENV=production node dist/index.js",
+    "typecheck": "tsc --noEmit"
+  }
+}

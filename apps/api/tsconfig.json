@@ -1,0 +1,23 @@
+{
+  "extends": "../../packages/tsconfig/node.json",
+  "compilerOptions": {
+    "baseUrl": "../..",
+    "strict": true,
+    "skipLibCheck": true,
+    "rootDir": "src",
+    "outDir": "dist",
+    "paths": {
+      "@/*": ["*"],
+      "@shared/*": ["shared/*"],
+      "@services/*": ["services/*"],
+      "@binro/core": ["packages/core/src/index.ts"],
+      "@binro/core/*": ["packages/core/src/*"],
+      "@binro/db": ["packages/db/src/index.ts"],
+      "@binro/db/*": ["packages/db/src/*"],
+      "@binro/config": ["packages/config/src/index.ts"],
+      "@binro/config/*": ["packages/config/src/*"]
+    }
+  },
+  "include": ["src/**/*.ts"],
+  "exclude": ["node_modules", "dist"]
+}
