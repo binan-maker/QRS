@@ -105,6 +105,10 @@ THREATS_SIGNING_KEY = "MIGHAgEAMBMGByqGSM49AgEGCCqGSM49AwEHBG0wawIBAQQgm6oMoUIOf
 EXPO_PUBLIC_DOMAIN = "eae16ca7-4eeb-4453-8627-1ba29ec6fd01-00-2ioihntuan3u.sisko.replit.dev"
 
 [[ports]]
+localPort = 3000
+externalPort = 3001
+
+[[ports]]
 localPort = 5000
 externalPort = 80
 

@@ -3,19 +3,45 @@
   "compilerOptions": {
     "baseUrl": ".",
     "paths": {
-      "@/*": ["./src/*"],
-      "@binro/core": ["../../packages/core/src/index.ts"],
-      "@binro/core/*": ["../../packages/core/src/*"],
-      "@binro/config": ["../../packages/config/src/index.ts"],
-      "@binro/config/*": ["../../packages/config/src/*"],
-      "@binro/db": ["../../packages/db/src/index.ts"],
-      "@binro/db/*": ["../../packages/db/src/*"]
+      "@/*": [
+        "./src/*"
+      ],
+      "@binro/core": [
+        "../../packages/core/src/index.ts"
+      ],
+      "@binro/core/*": [
+        "../../packages/core/src/*"
+      ],
+      "@binro/config": [
+        "../../packages/config/src/index.ts"
+      ],
+      "@binro/config/*": [
+        "../../packages/config/src/*"
+      ],
+      "@binro/db": [
+        "../../packages/db/src/index.ts"
+      ],
+      "@binro/db/*": [
+        "../../packages/db/src/*"
+      ]
     },
-    "lib": ["dom", "dom.iterable", "esnext"],
+    "lib": [
+      "dom",
+      "dom.iterable",
+      "esnext"
+    ],
     "target": "ES2022",
     "strict": true,
-    "noEmit": true
+    "noEmit": true,
+    "isolatedModules": true
   },
-  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],
-  "exclude": ["node_modules"]
+  "include": [
+    "next-env.d.ts",
+    "**/*.ts",
+    "**/*.tsx",
+    ".next/types/**/*.ts"
+  ],
+  "exclude": [
+    "node_modules"
+  ]
 }
