@@ -22,7 +22,21 @@ import { publicEnv } from "@/lib/env";
 
 let _app: FirebaseApp | null = null;
 
-function getFirebaseApp(): FirebaseApp {
+/** Returns true only when all required Firebase config values are present. */
+export function isFirebaseConfigured(): boolean {
+  return !!(
+    publicEnv.firebase.apiKey &&
+    publicEnv.firebase.projectId &&
+    publicEnv.firebase.appId
+  );
+}
+
+/**
+ * Returns the Firebase app, or null when Firebase credentials are not set.
+ * Call isFirebaseConfigured() before using any Firebase feature on the marketing pages.
+ */
+function getFirebaseApp(): FirebaseApp | null {
+  if (!isFirebaseConfigured()) return null;
   if (_app) return _app;
   if (getApps().length > 0) {
     _app = getApps()[0]!;
@@ -36,9 +50,11 @@ function getFirebaseApp(): FirebaseApp {
 
 let _auth: Auth | null = null;
 
-export function getFirebaseAuth(): Auth {
+/** Returns Firebase Auth, or null when Firebase is not configured. */
+export function getFirebaseAuth(): Auth | null {
   if (_auth) return _auth;
   const app = getFirebaseApp();
+  if (!app) return null;
   _auth = getAuth(app);
 
   // Connect to emulator in development if configured
@@ -69,3 +85,4 @@ export function getGoogleProvider(): GoogleAuthProvider {
 }
 
 export { getFirebaseApp };
+

@@ -1,9 +1,10 @@
-/**
- * Marketing layout — wraps public-facing pages (landing, pricing, about, etc.)
- * No authentication required.
- * Renders shared header and footer when those components exist.
- */
+import { MarketingHeader } from "@/components/ui/marketing-header";
+import { MarketingFooter } from "@/components/ui/marketing-footer";
 
+/**
+ * Marketing layout — wraps all public-facing pages.
+ * No authentication required.
+ */
 export default function MarketingLayout({
   children,
 }: {
@@ -11,9 +12,9 @@ export default function MarketingLayout({
 }) {
   return (
     <div className="flex min-h-screen flex-col">
-      {/* TODO: <MarketingHeader /> */}
+      <MarketingHeader />
       <main className="flex-1">{children}</main>
-      {/* TODO: <MarketingFooter /> */}
+      <MarketingFooter />
     </div>
   );
 }

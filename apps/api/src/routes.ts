@@ -46,20 +46,10 @@ async function cachedGuardLink(id: string) {
 }
 
 // ─── Dynamic threat definitions (served to clients for live updates) ──────────
-const DYNAMIC_THREAT_PATTERNS: { pattern: string; reason: string }[] = [
-  { pattern: "support-paytm-helpline",     reason: "Paytm support impersonation"     },
-  { pattern: "sbi-reward-collect",          reason: "SBI reward scam"                 },
-  { pattern: "pm-awas-yojana-apply",        reason: "PM housing scheme fraud"         },
-  { pattern: "free-data-airtel",            reason: "Airtel free data scam"           },
-  { pattern: "hdfc-lucky-winner",           reason: "HDFC lucky draw fraud"           },
-  { pattern: "ncert-scholarship-apply",     reason: "Fake scholarship scam"           },
-  { pattern: "cbse-result-link",            reason: "CBSE phishing page"             },
-  { pattern: "army-recruitment-online",     reason: "Fake army recruitment"           },
-  { pattern: "whatsapp-gold-upgrade",       reason: "WhatsApp Gold scam"             },
-  { pattern: "trai-sim-block",              reason: "TRAI SIM block threat scam"      },
-  { pattern: "epfo-pf-withdrawal",          reason: "EPFO PF withdrawal scam"        },
-  { pattern: "driving-license-online-apply", reason: "Fake DL application portal"    },
-];
+// Patterns live in domain/security/client-threat-patterns.ts — edit there.
+// Phase 3.7: these will move to a threat_patterns PostgreSQL table with an
+//            admin endpoint so patterns update without redeploy.
+import { CLIENT_THREAT_PATTERNS } from "./domain/security/client-threat-patterns";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // ── Versioned API (all handlers mirrored under /api/v1/) ────────────────────
@@ -80,7 +70,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // ── Dynamic threat patterns (served to clients for live updates) ─────────
   app.get("/api/threats", (_req: Request, res: Response) => {
-    res.json({ version: "2025-04-01", patterns: DYNAMIC_THREAT_PATTERNS });
+    res.json({ version: "2025-04-01", patterns: CLIENT_THREAT_PATTERNS });
   });
 
   // ── /q/:id — Unified QR route (new architecture) ───────────────────────────

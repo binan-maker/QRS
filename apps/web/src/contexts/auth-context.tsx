@@ -84,6 +84,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // ── Auth state listener ──────────────────────────────────────────────────────
   useEffect(() => {
     const auth = getFirebaseAuth();
+    if (!auth) {
+      // Firebase not configured (dev without keys) — treat as signed out
+      setUser(null);
+      setLoading(false);
+      return;
+    }
     const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
       setUser(firebaseUser);
       setLoading(false);
@@ -96,6 +102,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const signInWithEmail = useCallback(
     async (email: string, password: string) => {
       const auth = getFirebaseAuth();
+      if (!auth) throw new Error("Firebase Auth is not configured");
       const cred = await signInWithEmailAndPassword(auth, email, password);
       return afterSignIn(cred);
     },
@@ -105,6 +112,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const signUpWithEmail = useCallback(
     async (email: string, password: string, displayName?: string) => {
       const auth = getFirebaseAuth();
+      if (!auth) throw new Error("Firebase Auth is not configured");
       const cred = await createUserWithEmailAndPassword(auth, email, password);
       if (displayName) {
         await updateProfile(cred.user, { displayName });
@@ -116,6 +124,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signInWithGoogle = useCallback(async () => {
     const auth = getFirebaseAuth();
+    if (!auth) throw new Error("Firebase Auth is not configured");
     const provider = getGoogleProvider();
     const cred = await signInWithPopup(auth, provider);
     return afterSignIn(cred);
@@ -123,13 +132,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const sendPasswordReset = useCallback(async (email: string) => {
     const auth = getFirebaseAuth();
+    if (!auth) throw new Error("Firebase Auth is not configured");
     await sendPasswordResetEmail(auth, email);
   }, []);
 
   const signOut = useCallback(async () => {
     await destroySession(); // clear server session cookie first
     const auth = getFirebaseAuth();
-    await fbSignOut(auth);
+    if (auth) await fbSignOut(auth);
   }, []);
 
   const value: AuthContextValue = {

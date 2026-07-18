@@ -7,8 +7,13 @@ import { signApiResponses } from "./security/sign-middleware";
 import { corsMiddleware } from "./middleware/cors";
 import { requestLogger } from "./middleware/request-logger";
 import { errorHandler } from "./middleware/error-handler";
+import { validateEnv, apiEnvSchema } from "@binro/config";
 import * as fs from "fs";
 import * as path from "path";
+
+// ── Fail fast if required env vars are missing ────────────────────────────────
+// All optional — just validates types and applies defaults (e.g. PORT=5000).
+const env = validateEnv(apiEnvSchema);
 
 const app = express();
 const log = console.log;
