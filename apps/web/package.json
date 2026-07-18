@@ -1,0 +1,40 @@
+{
+  "name": "@binro/web",
+  "version": "0.0.1",
+  "private": true,
+  "scripts": {
+    "dev": "next dev --port 3000",
+    "build": "next build",
+    "start": "next start --port 3000",
+    "lint": "next lint",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@binro/config": "*",
+    "@binro/core": "*",
+    "@tanstack/react-query": "*",
+    "@tanstack/react-query-devtools": "*",
+    "clsx": "*",
+    "firebase": "*",
+    "firebase-admin": "*",
+    "lucide-react": "*",
+    "next": "*",
+    "react": "*",
+    "react-dom": "*",
+    "tailwind-merge": "*",
+    "zod": "*"
+  },
+  "devDependencies": {
+    "@binro/eslint-config": "*",
+    "@binro/tsconfig": "*",
+    "@types/node": "*",
+    "@types/react": "*",
+    "@types/react-dom": "*",
+    "autoprefixer": "*",
+    "eslint": "*",
+    "eslint-config-next": "*",
+    "postcss": "*",
+    "tailwindcss": "*",
+    "typescript": "*"
+  }
+}

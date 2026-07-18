@@ -37,6 +37,10 @@ args = "Start Backend"
 task = "workflow.run"
 args = "Start Frontend"
 
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "Start Web"
+
 [[workflows.workflow]]
 name = "Start App"
 author = "agent"
@@ -70,6 +74,18 @@ author = "agent"
 [[workflows.workflow.tasks]]
 task = "shell.exec"
 args = "npm run expo:dev"
+
+[workflows.workflow.metadata]
+outputType = "console"
+
+[[workflows.workflow]]
+name = "Start Web"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "npm run web:dev"
+waitForPort = 3000
 
 [workflows.workflow.metadata]
 outputType = "console"
