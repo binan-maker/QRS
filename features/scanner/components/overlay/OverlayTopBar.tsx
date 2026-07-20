@@ -2,6 +2,7 @@ import { View, Text, StyleSheet, Pressable } from "react-native";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import ReAnimated, { FadeIn } from "react-native-reanimated";
+import { SCANNER_GLOW } from "./constants";
 
 interface Props {
   topInset: number;
@@ -10,26 +11,27 @@ interface Props {
 export default function OverlayTopBar({ topInset }: Props) {
   return (
     <ReAnimated.View
-      entering={FadeIn.delay(30).duration(300)}
+      entering={FadeIn.delay(30).duration(220)}
       style={[styles.container, { paddingTop: topInset + 12 }]}
     >
-      {/* Glass back button */}
+      {/* Glassmorphism back button */}
       <Pressable
         onPress={() => router.canGoBack() ? router.back() : router.replace("/(tabs)/index")}
-        style={({ pressed }) => [styles.backBtn, pressed && styles.backBtnPressed]}
+        style={({ pressed }) => [styles.glassBtn, pressed && styles.glassBtnPressed]}
+        hitSlop={8}
       >
-        <Ionicons name="chevron-back" size={21} color="rgba(255,255,255,0.92)" />
+        <Ionicons name="chevron-back" size={20} color="rgba(255,255,255,0.9)" />
       </Pressable>
 
       {/* Centered brand */}
       <View style={styles.brand}>
         <View style={styles.brandIconWrap}>
-          <MaterialCommunityIcons name="shield-check" size={17} color="#00D4FF" />
+          <MaterialCommunityIcons name="shield-check" size={16} color={SCANNER_GLOW} />
         </View>
         <Text style={styles.brandText}>BinRo</Text>
       </View>
 
-      {/* Spacer to balance layout */}
+      {/* Balance spacer */}
       <View style={styles.spacer} />
     </ReAnimated.View>
   );
@@ -42,43 +44,43 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingBottom:     14,
   },
-  backBtn: {
+
+  glassBtn: {
     width:           44,
     height:          44,
     borderRadius:    22,
-    backgroundColor: "rgba(255,255,255,0.08)",
+    backgroundColor: "rgba(0,0,0,0.28)",
     alignItems:      "center",
     justifyContent:  "center",
     borderWidth:     1,
     borderColor:     "rgba(255,255,255,0.14)",
   },
-  backBtnPressed: {
-    backgroundColor: "rgba(255,255,255,0.15)",
+  glassBtnPressed: {
+    backgroundColor: "rgba(255,255,255,0.12)",
   },
+
   brand: {
     flex:           1,
     flexDirection:  "row",
     alignItems:     "center",
     justifyContent: "center",
-    gap:            8,
+    gap:            7,
   },
   brandIconWrap: {
-    width:           30,
-    height:          30,
-    borderRadius:    15,
-    backgroundColor: "rgba(0,212,255,0.12)",
+    width:           28,
+    height:          28,
+    borderRadius:    14,
+    backgroundColor: "rgba(59,130,246,0.14)",
     borderWidth:     1,
-    borderColor:     "rgba(0,212,255,0.25)",
+    borderColor:     "rgba(59,130,246,0.28)",
     alignItems:      "center",
     justifyContent:  "center",
   },
   brandText: {
-    fontSize:      18,
+    fontSize:      17,
     fontFamily:    "Inter_700Bold",
-    color:         "#fff",
-    letterSpacing: 0.4,
+    color:         "rgba(255,255,255,0.95)",
+    letterSpacing: 0.3,
   },
-  spacer: {
-    width: 44,
-  },
+  spacer: { width: 44 },
 });

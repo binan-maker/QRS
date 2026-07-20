@@ -1,83 +1,54 @@
-import React, { useMemo } from "react";
+import React from "react";
 import { View, StyleSheet, Animated } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { shadow } from "@/shared/utils/platform";
 import { FINDER_SIZE } from "@/features/scanner/hooks/useCameraControls";
 import { SCANNER_GLOW } from "./constants";
 
-const CORNER_LEN    = 36;
-const CORNER_W      = 3.5;
-const CORNER_RADIUS = 10;
+// Corner geometry
+const CORNER_LEN    = 28;   // arm length — shorter = more minimal
+const CORNER_W      = 3;    // stroke width
+const CORNER_RADIUS = 6;    // rounded tip
+
+// Colors
+const CORNER_DEFAULT = "rgba(255,255,255,0.88)";
+const CORNER_SUCCESS = SCANNER_GLOW; // BinRo primary blue on detection
 
 interface Props {
-  scanned:       boolean;
-  scanSuccess:   boolean;
-  scanLineAnim:  Animated.Value;
-  cornerGlow:    Animated.Value;
-  pulse1Scale:   Animated.AnimatedInterpolation<number>;
-  pulse1Opacity: Animated.AnimatedInterpolation<number>;
-  pulse2Scale:   Animated.AnimatedInterpolation<number>;
-  pulse2Opacity: Animated.AnimatedInterpolation<number>;
+  scanned:      boolean;
+  scanSuccess:  boolean;
+  cornerBreath: Animated.Value;
 }
 
-export default function FinderFrame({
-  scanned,
-  scanSuccess,
-  scanLineAnim,
-  cornerGlow,
-  pulse1Scale,
-  pulse1Opacity,
-  pulse2Scale,
-  pulse2Opacity,
-}: Props) {
-  const scanLineY = useMemo(
-    () => scanLineAnim.interpolate({ inputRange: [0, 1], outputRange: [0, FINDER_SIZE - 2] }),
-    [scanLineAnim]
-  );
+export default function FinderFrame({ scanned, scanSuccess, cornerBreath }: Props) {
+  // On success, snap corners to accent color; otherwise breathe white
+  const cornerColor = scanSuccess ? CORNER_SUCCESS : CORNER_DEFAULT;
 
   return (
+    // overflow: visible so corners render at exact edges without clipping
     <View style={styles.frame}>
-      {/* Outer ambient glow ring */}
-      <Animated.View
-        style={[styles.pulseRing, { transform: [{ scale: pulse1Scale }], opacity: pulse1Opacity }]}
-      />
-      <Animated.View
-        style={[styles.pulseRing, styles.pulseRing2, { transform: [{ scale: pulse2Scale }], opacity: pulse2Opacity }]}
-      />
-
-      {/* Inner frosted border */}
-      <View style={styles.innerBorder} />
 
       {/* ── Top-left corner ── */}
-      <Animated.View style={[styles.corner, styles.ctlH, { opacity: cornerGlow }]} />
-      <Animated.View style={[styles.corner, styles.ctlV, { opacity: cornerGlow }]} />
+      <Animated.View style={[styles.corner, styles.ctlH, { backgroundColor: cornerColor, opacity: cornerBreath }]} />
+      <Animated.View style={[styles.corner, styles.ctlV, { backgroundColor: cornerColor, opacity: cornerBreath }]} />
 
       {/* ── Top-right corner ── */}
-      <Animated.View style={[styles.corner, styles.ctrH, { opacity: cornerGlow }]} />
-      <Animated.View style={[styles.corner, styles.ctrV, { opacity: cornerGlow }]} />
+      <Animated.View style={[styles.corner, styles.ctrH, { backgroundColor: cornerColor, opacity: cornerBreath }]} />
+      <Animated.View style={[styles.corner, styles.ctrV, { backgroundColor: cornerColor, opacity: cornerBreath }]} />
 
       {/* ── Bottom-left corner ── */}
-      <Animated.View style={[styles.corner, styles.cblH, { opacity: cornerGlow }]} />
-      <Animated.View style={[styles.corner, styles.cblV, { opacity: cornerGlow }]} />
+      <Animated.View style={[styles.corner, styles.cblH, { backgroundColor: cornerColor, opacity: cornerBreath }]} />
+      <Animated.View style={[styles.corner, styles.cblV, { backgroundColor: cornerColor, opacity: cornerBreath }]} />
 
       {/* ── Bottom-right corner ── */}
-      <Animated.View style={[styles.corner, styles.cbrH, { opacity: cornerGlow }]} />
-      <Animated.View style={[styles.corner, styles.cbrV, { opacity: cornerGlow }]} />
+      <Animated.View style={[styles.corner, styles.cbrH, { backgroundColor: cornerColor, opacity: cornerBreath }]} />
+      <Animated.View style={[styles.corner, styles.cbrV, { backgroundColor: cornerColor, opacity: cornerBreath }]} />
 
-      {/* Scan beam with gradient fade */}
-      {!scanned && (
-        <Animated.View style={[styles.scanBeam, { transform: [{ translateY: scanLineY }] }]}>
-          <View style={styles.beamLine} />
-          <View style={styles.beamGlow} />
-        </Animated.View>
-      )}
-
-      {/* Success overlay */}
+      {/* Success overlay — brief blue tint + checkmark */}
       {scanSuccess && (
         <View style={styles.successOverlay}>
           <View style={styles.successOuterRing}>
             <View style={styles.successRing}>
-              <Ionicons name="checkmark" size={46} color="#000" />
+              <Ionicons name="checkmark" size={42} color="#fff" />
             </View>
           </View>
         </View>
@@ -90,36 +61,11 @@ const styles = StyleSheet.create({
   frame: {
     width:    FINDER_SIZE,
     height:   FINDER_SIZE,
-    overflow: "hidden",
+    overflow: "visible",
   },
-
-  innerBorder: {
-    position:     "absolute",
-    top:          0,
-    left:         0,
-    right:        0,
-    bottom:       0,
-    borderRadius: 18,
-    borderWidth:  1,
-    borderColor:  "rgba(255,255,255,0.06)",
-  },
-
-  pulseRing: {
-    position:     "absolute",
-    width:        FINDER_SIZE,
-    height:       FINDER_SIZE,
-    borderRadius: 20,
-    borderWidth:  1.5,
-    borderColor:  SCANNER_GLOW,
-    top:          0,
-    left:         0,
-  },
-  pulseRing2: { borderColor: `${SCANNER_GLOW}88` },
 
   corner: {
-    position:        "absolute",
-    backgroundColor: SCANNER_GLOW,
-    ...shadow(8, SCANNER_GLOW, 0.7, 0, 0, 4),
+    position: "absolute",
   },
 
   // ── Top-left ──
@@ -129,7 +75,7 @@ const styles = StyleSheet.create({
     width:                   CORNER_LEN,
     height:                  CORNER_W,
     borderTopLeftRadius:     CORNER_RADIUS,
-    borderBottomRightRadius: CORNER_RADIUS,
+    borderBottomRightRadius: CORNER_RADIUS / 2,
   },
   ctlV: {
     top:                     0,
@@ -137,7 +83,7 @@ const styles = StyleSheet.create({
     width:                   CORNER_W,
     height:                  CORNER_LEN,
     borderTopLeftRadius:     CORNER_RADIUS,
-    borderBottomRightRadius: CORNER_RADIUS,
+    borderBottomRightRadius: CORNER_RADIUS / 2,
   },
 
   // ── Top-right ──
@@ -147,7 +93,7 @@ const styles = StyleSheet.create({
     width:                  CORNER_LEN,
     height:                 CORNER_W,
     borderTopRightRadius:   CORNER_RADIUS,
-    borderBottomLeftRadius: CORNER_RADIUS,
+    borderBottomLeftRadius: CORNER_RADIUS / 2,
   },
   ctrV: {
     top:                    0,
@@ -155,7 +101,7 @@ const styles = StyleSheet.create({
     width:                  CORNER_W,
     height:                 CORNER_LEN,
     borderTopRightRadius:   CORNER_RADIUS,
-    borderBottomLeftRadius: CORNER_RADIUS,
+    borderBottomLeftRadius: CORNER_RADIUS / 2,
   },
 
   // ── Bottom-left ──
@@ -165,7 +111,7 @@ const styles = StyleSheet.create({
     width:                  CORNER_LEN,
     height:                 CORNER_W,
     borderBottomLeftRadius: CORNER_RADIUS,
-    borderTopRightRadius:   CORNER_RADIUS,
+    borderTopRightRadius:   CORNER_RADIUS / 2,
   },
   cblV: {
     bottom:                 0,
@@ -173,7 +119,7 @@ const styles = StyleSheet.create({
     width:                  CORNER_W,
     height:                 CORNER_LEN,
     borderBottomLeftRadius: CORNER_RADIUS,
-    borderTopRightRadius:   CORNER_RADIUS,
+    borderTopRightRadius:   CORNER_RADIUS / 2,
   },
 
   // ── Bottom-right ──
@@ -183,7 +129,7 @@ const styles = StyleSheet.create({
     width:                   CORNER_LEN,
     height:                  CORNER_W,
     borderBottomRightRadius: CORNER_RADIUS,
-    borderTopLeftRadius:     CORNER_RADIUS,
+    borderTopLeftRadius:     CORNER_RADIUS / 2,
   },
   cbrV: {
     bottom:                  0,
@@ -191,57 +137,33 @@ const styles = StyleSheet.create({
     width:                   CORNER_W,
     height:                  CORNER_LEN,
     borderBottomRightRadius: CORNER_RADIUS,
-    borderTopLeftRadius:     CORNER_RADIUS,
+    borderTopLeftRadius:     CORNER_RADIUS / 2,
   },
 
-  scanBeam: {
-    position: "absolute",
-    left:     0,
-    right:    0,
-    height:   3,
-  },
-  beamLine: {
-    position:        "absolute",
-    left:            0,
-    right:           0,
-    height:          2,
-    borderRadius:    1,
-    backgroundColor: SCANNER_GLOW,
-    ...shadow(16, SCANNER_GLOW, 1, 0, 0, 8),
-  },
-  beamGlow: {
-    position:        "absolute",
-    left:            "10%",
-    right:           "10%",
-    height:          12,
-    top:             -5,
-    borderRadius:    6,
-    backgroundColor: `${SCANNER_GLOW}22`,
-  },
-
+  // ── Success state ──
   successOverlay: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: "rgba(0,212,255,0.06)",
+    backgroundColor: "rgba(59,130,246,0.06)",
     alignItems:      "center",
     justifyContent:  "center",
+    borderRadius:    14,
   },
   successOuterRing: {
-    width:           104,
-    height:          104,
-    borderRadius:    52,
-    backgroundColor: "rgba(0,212,255,0.1)",
+    width:           100,
+    height:          100,
+    borderRadius:    50,
+    backgroundColor: "rgba(59,130,246,0.12)",
     borderWidth:     1,
-    borderColor:     `${SCANNER_GLOW}44`,
+    borderColor:     `${SCANNER_GLOW}55`,
     alignItems:      "center",
     justifyContent:  "center",
   },
   successRing: {
-    width:           82,
-    height:          82,
-    borderRadius:    41,
+    width:           78,
+    height:          78,
+    borderRadius:    39,
     backgroundColor: SCANNER_GLOW,
     alignItems:      "center",
     justifyContent:  "center",
-    ...shadow(24, SCANNER_GLOW, 0.7, 0, 0, 12),
   },
 });

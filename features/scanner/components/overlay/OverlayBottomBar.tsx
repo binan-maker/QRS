@@ -1,5 +1,5 @@
 import { View, Text, StyleSheet, Pressable, Animated } from "react-native";
-import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
+import { Ionicons } from "@expo/vector-icons";
 import ReAnimated, { FadeInUp, FadeIn } from "react-native-reanimated";
 import { SCANNER_GLOW } from "./constants";
 
@@ -36,23 +36,24 @@ export default function OverlayBottomBar({
   user,
 }: Props) {
   const isFlashActive = flashOn && facing === "back";
+  const isFlashDisabled = facing === "front";
 
   return (
     <ReAnimated.View
-      entering={FadeInUp.delay(40).duration(300)}
+      entering={FadeInUp.delay(40).duration(220)}
       style={[styles.bottomBar, { paddingBottom: Math.max(bottomInset, 12) + 12 }]}
     >
-      {/* Status pills row */}
+      {/* Status pills — zoom / anon indicators */}
       {(zoom > 0 || anonymousMode) && (
-        <ReAnimated.View entering={FadeIn.duration(220)} style={styles.pillRow}>
+        <ReAnimated.View entering={FadeIn.duration(200)} style={styles.pillRow}>
           {zoom > 0 && (
-            <Pressable onPress={onCycleZoom} style={styles.zoomPill}>
-              <MaterialCommunityIcons name="magnify-plus-outline" size={13} color={SCANNER_GLOW} />
+            <Pressable onPress={onCycleZoom} style={styles.zoomPill} hitSlop={6}>
+              <Ionicons name="search-outline" size={12} color={SCANNER_GLOW} />
               <ReAnimated.Text style={styles.zoomText}>{zoomLabel}</ReAnimated.Text>
             </Pressable>
           )}
           {anonymousMode && (
-            <ReAnimated.View entering={FadeIn.duration(200)} style={styles.anonPill}>
+            <ReAnimated.View entering={FadeIn.duration(180)} style={styles.anonPill}>
               <Ionicons name="eye-off" size={12} color="#F5A623" />
               <Text style={styles.anonPillText}>Private</Text>
             </ReAnimated.View>
@@ -60,73 +61,75 @@ export default function OverlayBottomBar({
         </ReAnimated.View>
       )}
 
-      {/* Main control row */}
-      <ReAnimated.View entering={FadeIn.delay(40).duration(260)} style={styles.controlRow}>
+      {/* Main control row — three circular glassmorphism buttons */}
+      <ReAnimated.View entering={FadeIn.delay(40).duration(220)} style={styles.controlRow}>
 
-        {/* Camera flip */}
-        <View style={styles.iconGroup}>
+        {/* Flip camera */}
+        <View style={styles.btnGroup}>
           <Pressable
             onPress={onFlipCamera}
+            hitSlop={8}
             style={({ pressed }) => [
-              styles.iconBtn,
-              facing === "front" && styles.iconBtnActive,
-              pressed && styles.iconBtnPressed,
+              styles.glassBtn,
+              facing === "front" && styles.glassBtnActive,
+              pressed && styles.glassBtnPressed,
             ]}
           >
             <Ionicons
               name="camera-reverse-outline"
-              size={23}
-              color={facing === "front" ? SCANNER_GLOW : "rgba(255,255,255,0.85)"}
+              size={22}
+              color={facing === "front" ? SCANNER_GLOW : "rgba(255,255,255,0.88)"}
             />
           </Pressable>
-          <Text style={styles.iconLabel}>Flip</Text>
+          <Text style={styles.btnLabel}>Flip</Text>
         </View>
 
-        {/* Gallery — main CTA */}
-        <View style={styles.galleryGroup}>
+        {/* Gallery — primary CTA, slightly larger */}
+        <View style={styles.btnGroup}>
           <Pressable
             onPress={onPickImage}
-            style={({ pressed }) => [styles.galleryBtn, pressed && styles.galleryBtnPressed]}
+            hitSlop={4}
+            style={({ pressed }) => [styles.primaryBtn, pressed && styles.primaryBtnPressed]}
           >
-            <View style={styles.galleryInner}>
-              <Ionicons name="images-outline" size={28} color="#fff" />
-            </View>
+            <Ionicons name="images-outline" size={26} color="rgba(255,255,255,0.95)" />
           </Pressable>
-          <Text style={styles.galleryLabel}>Gallery</Text>
+          <Text style={styles.btnLabel}>Gallery</Text>
         </View>
 
         {/* Flash */}
-        <View style={styles.iconGroup}>
+        <View style={styles.btnGroup}>
           <Pressable
-            onPress={facing === "front" ? undefined : onToggleFlash}
+            onPress={isFlashDisabled ? undefined : onToggleFlash}
+            hitSlop={8}
             style={({ pressed }) => [
-              styles.iconBtn,
-              isFlashActive && styles.iconBtnFlashActive,
-              pressed && facing !== "front" && styles.iconBtnPressed,
-              facing === "front" && styles.iconBtnDisabled,
+              styles.glassBtn,
+              isFlashActive   && styles.glassBtnFlash,
+              isFlashDisabled && styles.glassBtnDisabled,
+              pressed && !isFlashDisabled && styles.glassBtnPressed,
             ]}
           >
             <Ionicons
               name={isFlashActive ? "flash" : "flash-off-outline"}
-              size={23}
+              size={22}
               color={
-                facing === "front"
+                isFlashDisabled
                   ? "rgba(255,255,255,0.22)"
                   : isFlashActive
                   ? "#FFD60A"
-                  : "rgba(255,255,255,0.85)"
+                  : "rgba(255,255,255,0.88)"
               }
             />
           </Pressable>
-          <Text style={[styles.iconLabel, facing === "front" && styles.iconLabelDim]}>Flash</Text>
+          <Text style={[styles.btnLabel, isFlashDisabled && styles.btnLabelDim]}>Flash</Text>
         </View>
       </ReAnimated.View>
 
-      {/* Private mode toggle — logged-in users only */}
+      {/* Private mode — logged-in users only */}
       {user && (
-        <ReAnimated.View entering={FadeIn.delay(80).duration(240)} style={styles.anonRow}>
+        <ReAnimated.View entering={FadeIn.delay(80).duration(200)} style={styles.anonRow}>
           <Pressable
             onPress={onToggleAnonymous}
+            hitSlop={6}
             style={({ pressed }) => [
               styles.anonToggle,
               anonymousMode && styles.anonToggleOn,
@@ -135,8 +138,8 @@ export default function OverlayBottomBar({
           >
             <Ionicons
               name={anonymousMode ? "eye-off" : "eye-off-outline"}
-              size={14}
-              color={anonymousMode ? "#F5A623" : "rgba(255,255,255,0.45)"}
+              size={13}
+              color={anonymousMode ? "#F5A623" : "rgba(255,255,255,0.4)"}
             />
             <Text style={[styles.anonLabel, anonymousMode && styles.anonLabelOn]}>
               {anonymousMode ? "Private mode on" : "Private mode"}
@@ -157,10 +160,10 @@ const styles = StyleSheet.create({
     right:             0,
     paddingHorizontal: 28,
     alignItems:        "center",
-    gap:               14,
+    gap:               16,
   },
 
-  // Pills
+  // Status pills
   pillRow: {
     flexDirection: "row",
     gap:           8,
@@ -170,18 +173,18 @@ const styles = StyleSheet.create({
     flexDirection:     "row",
     alignItems:        "center",
     gap:               5,
-    backgroundColor:   "rgba(0,0,0,0.6)",
+    backgroundColor:   "rgba(0,0,0,0.55)",
     borderRadius:      20,
     paddingHorizontal: 12,
     paddingVertical:   6,
     borderWidth:       1,
-    borderColor:       `rgba(0,212,255,0.28)`,
+    borderColor:       `${SCANNER_GLOW}44`,
   },
   zoomText: {
     fontSize:      12,
     fontFamily:    "Inter_700Bold",
     color:         SCANNER_GLOW,
-    letterSpacing: 0.5,
+    letterSpacing: 0.4,
   },
   anonPill: {
     flexDirection:     "row",
@@ -192,7 +195,7 @@ const styles = StyleSheet.create({
     borderRadius:      20,
     backgroundColor:   "rgba(245,158,11,0.1)",
     borderWidth:       1,
-    borderColor:       "rgba(245,166,35,0.3)",
+    borderColor:       "rgba(245,166,35,0.28)",
   },
   anonPillText: {
     fontSize:   11,
@@ -200,86 +203,73 @@ const styles = StyleSheet.create({
     color:      "#F5A623",
   },
 
-  // Main control row
+  // Control row
   controlRow: {
-    flexDirection:     "row",
-    alignItems:        "center",
-    justifyContent:    "space-between",
-    width:             "100%",
+    flexDirection:  "row",
+    alignItems:     "center",
+    justifyContent: "space-between",
+    width:          "100%",
   },
 
-  iconGroup: {
+  btnGroup: {
     alignItems: "center",
-    gap:        7,
-    width:      64,
+    gap:        8,
+    width:      72,
   },
-  iconBtn: {
+
+  // Secondary glassmorphism button (Flip, Flash)
+  glassBtn: {
     width:           58,
     height:          58,
     borderRadius:    29,
-    backgroundColor: "rgba(255,255,255,0.07)",
+    backgroundColor: "rgba(0,0,0,0.32)",
     alignItems:      "center",
     justifyContent:  "center",
     borderWidth:     1,
-    borderColor:     "rgba(255,255,255,0.13)",
+    borderColor:     "rgba(255,255,255,0.16)",
   },
-  iconBtnActive: {
-    backgroundColor: "rgba(0,212,255,0.12)",
-    borderColor:     "rgba(0,212,255,0.35)",
+  glassBtnActive: {
+    backgroundColor: `${SCANNER_GLOW}1A`,
+    borderColor:     `${SCANNER_GLOW}55`,
   },
-  iconBtnFlashActive: {
+  glassBtnFlash: {
     backgroundColor: "rgba(255,214,10,0.1)",
-    borderColor:     "rgba(255,214,10,0.35)",
+    borderColor:     "rgba(255,214,10,0.38)",
   },
-  iconBtnPressed: {
-    backgroundColor: "rgba(255,255,255,0.14)",
+  glassBtnPressed: {
+    backgroundColor: "rgba(255,255,255,0.12)",
   },
-  iconBtnDisabled: {
-    opacity: 0.4,
-  },
-  iconLabel: {
-    fontSize:      11,
-    fontFamily:    "Inter_500Medium",
-    color:         "rgba(255,255,255,0.5)",
-    letterSpacing: 0.2,
-  },
-  iconLabelDim: {
-    color: "rgba(255,255,255,0.22)",
+  glassBtnDisabled: {
+    opacity: 0.38,
   },
 
-  // Gallery CTA
-  galleryGroup: {
-    alignItems: "center",
-    gap:        8,
-  },
-  galleryBtn: {
-    width:           72,
-    height:          72,
-    borderRadius:    36,
-    backgroundColor: "rgba(255,255,255,0.1)",
-    borderWidth:     1.5,
-    borderColor:     "rgba(255,255,255,0.2)",
+  // Primary CTA button (Gallery) — slightly larger
+  primaryBtn: {
+    width:           68,
+    height:          68,
+    borderRadius:    34,
+    backgroundColor: "rgba(0,0,0,0.35)",
     alignItems:      "center",
     justifyContent:  "center",
+    borderWidth:     1.5,
+    borderColor:     "rgba(255,255,255,0.22)",
   },
-  galleryBtnPressed: {
-    backgroundColor: "rgba(255,255,255,0.18)",
-  },
-  galleryInner: {
-    alignItems:     "center",
-    justifyContent: "center",
-  },
-  galleryLabel: {
-    fontSize:      12,
-    fontFamily:    "Inter_600SemiBold",
-    color:         "rgba(255,255,255,0.7)",
-    letterSpacing: 0.3,
+  primaryBtnPressed: {
+    backgroundColor: "rgba(255,255,255,0.14)",
   },
 
-  // Private toggle
-  anonRow: {
-    alignItems: "center",
+  btnLabel: {
+    fontSize:      11,
+    fontFamily:    "Inter_500Medium",
+    color:         "rgba(255,255,255,0.48)",
+    letterSpacing: 0.2,
   },
+  btnLabelDim: {
+    color: "rgba(255,255,255,0.2)",
+  },
+
+  // Private mode toggle
+  anonRow: { alignItems: "center" },
   anonToggle: {
     flexDirection:     "row",
     alignItems:        "center",
@@ -287,7 +277,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical:   8,
     borderRadius:      20,
-    backgroundColor:   "rgba(255,255,255,0.05)",
+    backgroundColor:   "rgba(0,0,0,0.28)",
     borderWidth:       1,
     borderColor:       "rgba(255,255,255,0.1)",
   },
@@ -296,24 +286,20 @@ const styles = StyleSheet.create({
     borderColor:     "rgba(245,166,35,0.3)",
   },
   anonTogglePressed: {
-    backgroundColor: "rgba(255,255,255,0.1)",
+    backgroundColor: "rgba(255,255,255,0.09)",
   },
   anonLabel: {
     fontSize:   12,
     fontFamily: "Inter_500Medium",
-    color:      "rgba(255,255,255,0.45)",
+    color:      "rgba(255,255,255,0.42)",
   },
-  anonLabelOn: {
-    color: "#F5A623",
-  },
+  anonLabelOn: { color: "#F5A623" },
   anonDot: {
-    width:           6,
-    height:          6,
+    width:           5,
+    height:          5,
     borderRadius:    3,
-    backgroundColor: "rgba(255,255,255,0.25)",
+    backgroundColor: "rgba(255,255,255,0.22)",
     marginLeft:      2,
   },
-  anonDotOn: {
-    backgroundColor: "#F5A623",
-  },
+  anonDotOn: { backgroundColor: "#F5A623" },
 });

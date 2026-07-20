@@ -6,10 +6,6 @@ import { useOverlayAnimations } from "@/features/scanner/hooks/useOverlayAnimati
 import FinderFrame from "./FinderFrame";
 import OverlayTopBar from "./OverlayTopBar";
 import OverlayBottomBar from "./OverlayBottomBar";
-import { SCANNER_GLOW } from "./constants";
-
-const DOT_SIZE   = 6;
-const VIGNETTE   = "rgba(0, 0, 0, 0.55)";
 
 interface Props {
   topInset:          number;
@@ -21,7 +17,7 @@ interface Props {
   onCycleZoom:       () => void;
   scanned:           boolean;
   scanSuccess:       boolean;
-  scanLineAnim:      Animated.Value;
+  scanLineAnim:      Animated.Value; // kept in hook for compatibility; unused in UI
   anonymousMode:     boolean;
   onToggleAnonymous: () => void;
   onPickImage:       () => void;
@@ -41,7 +37,6 @@ export default function ScannerOverlay({
   onCycleZoom,
   scanned,
   scanSuccess,
-  scanLineAnim,
   anonymousMode,
   onToggleAnonymous,
   onPickImage,
@@ -59,63 +54,36 @@ export default function ScannerOverlay({
   const finderTop    = TOP_BAR_H + Math.max(0, (availH - FINDER_SIZE) / 2);
   const finderLeft   = (screenWidth - FINDER_SIZE) / 2;
 
+  // Status text — small, clean, contextual
+  const hintText = scanSuccess
+    ? "Code captured"
+    : scanned
+    ? "Analyzing…"
+    : "Scan a QR code";
+
   return (
     <View style={[StyleSheet.absoluteFillObject, styles.outerContainer]}>
 
-      {/* Dark vignette masks around the finder */}
+      {/* Non-interactive layer: finder frame + hint text */}
       <View style={[StyleSheet.absoluteFillObject, styles.nonInteractive]}>
-        <ReAnimated.View
-          entering={FadeIn.delay(30).duration(280)}
-          style={StyleSheet.absoluteFillObject}
-        >
-          {/* Top mask */}
-          <View style={[styles.mask, { top: 0, left: 0, right: 0, height: finderTop }]} />
-          {/* Left mask */}
-          <View style={[styles.mask, { top: finderTop, left: 0, width: finderLeft, height: FINDER_SIZE }]} />
-          {/* Right mask */}
-          <View style={[styles.mask, { top: finderTop, left: finderLeft + FINDER_SIZE, right: 0, height: FINDER_SIZE }]} />
-          {/* Bottom mask */}
-          <View style={[styles.mask, { top: finderTop + FINDER_SIZE, left: 0, right: 0, bottom: 0 }]} />
-        </ReAnimated.View>
 
-        {/* Finder frame */}
+        {/* Finder frame — four rounded corner indicators, no border, no laser */}
         <View style={{ position: "absolute", top: finderTop, left: finderLeft }}>
-          <ReAnimated.View entering={FadeIn.delay(60).duration(260)}>
+          <ReAnimated.View entering={FadeIn.delay(60).duration(220)}>
             <FinderFrame
               scanned={scanned}
               scanSuccess={scanSuccess}
-              scanLineAnim={scanLineAnim}
-              cornerGlow={anims.cornerGlow}
-              pulse1Scale={anims.pulse1Scale}
-              pulse1Opacity={anims.pulse1Opacity}
-              pulse2Scale={anims.pulse2Scale}
-              pulse2Opacity={anims.pulse2Opacity}
+              cornerBreath={anims.cornerBreath}
             />
           </ReAnimated.View>
         </View>
 
-        {/* Status text below finder */}
+        {/* Instruction text below finder */}
         <ReAnimated.View
-          entering={FadeInDown.delay(100).duration(280)}
-          style={[styles.hintArea, { top: finderTop + FINDER_SIZE + 22 }]}
+          entering={FadeInDown.delay(100).duration(220)}
+          style={[styles.hintArea, { top: finderTop + FINDER_SIZE + 20 }]}
         >
-          <Text style={styles.hintMain}>
-            {scanSuccess
-              ? "Code captured"
-              : scanned
-              ? "Analyzing…"
-              : "Align QR code within the frame"}
-          </Text>
-
-          {!scanned && (
-            <ReAnimated.View
-              entering={FadeIn.delay(100).duration(260)}
-              style={styles.liveRow}
-            >
-              <Animated.View style={[styles.liveDot, { opacity: anims.dotBlink }]} />
-              <Text style={styles.liveText}>Shield Active</Text>
-            </ReAnimated.View>
-          )}
+          <Text style={styles.hintText}>{hintText}</Text>
         </ReAnimated.View>
       </View>
 
@@ -145,49 +113,20 @@ export default function ScannerOverlay({
 }
 
 const styles = StyleSheet.create({
-  outerContainer: { pointerEvents: "box-none" },
-  nonInteractive: { pointerEvents: "none" },
-  mask: {
-    position:        "absolute",
-    backgroundColor: VIGNETTE,
-  },
+  outerContainer:  { pointerEvents: "box-none" },
+  nonInteractive:  { pointerEvents: "none" },
 
   hintArea: {
     position:   "absolute",
     left:       0,
     right:      0,
     alignItems: "center",
-    gap:        10,
   },
-  hintMain: {
-    fontSize:      15,
-    fontFamily:    "Inter_500Medium",
-    color:         "rgba(255,255,255,0.75)",
+  hintText: {
+    fontSize:      13,
+    fontFamily:    "Inter_400Regular",
+    color:         "rgba(255,255,255,0.65)",
     textAlign:     "center",
     letterSpacing: 0.1,
-  },
-  liveRow: {
-    flexDirection: "row",
-    alignItems:    "center",
-    gap:           7,
-    paddingHorizontal: 14,
-    paddingVertical:   5,
-    borderRadius:  20,
-    backgroundColor: "rgba(0,0,0,0.35)",
-    borderWidth:   1,
-    borderColor:   "rgba(0,212,255,0.18)",
-  },
-  liveDot: {
-    width:           DOT_SIZE,
-    height:          DOT_SIZE,
-    borderRadius:    DOT_SIZE / 2,
-    backgroundColor: SCANNER_GLOW,
-  },
-  liveText: {
-    fontSize:      11,
-    fontFamily:    "Inter_600SemiBold",
-    color:         SCANNER_GLOW,
-    letterSpacing: 0.6,
-    textTransform: "uppercase",
   },
 });
