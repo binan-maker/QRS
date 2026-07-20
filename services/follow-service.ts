@@ -2,17 +2,18 @@ import { db, rtdb } from "@/lib/db/client";
 import { NOTIFICATIONS_ENABLED } from "./notifications/config";
 import { tsToString } from "./utils";
 import type { FollowerInfo } from "./types";
+import { COLLECTIONS } from "@/shared/constants/collections";
 
 export type { FollowerInfo };
 
 export async function isUserFollowingQrCode(qrId: string, userId: string): Promise<boolean> {
-  const data = await db.get(["qrCodes", qrId, "followers", userId]);
+  const data = await db.get([COLLECTIONS.QR_CODES, qrId, COLLECTIONS.FOLLOWERS, userId]);
   return data !== null;
 }
 
 export async function getFollowCount(qrId: string): Promise<number> {
   try {
-    const qrData = await db.get(["qrCodes", qrId]);
+    const qrData = await db.get([COLLECTIONS.QR_CODES, qrId]);
     return typeof qrData?.followerCount === "number" ? qrData.followerCount : 0;
   } catch { return 0; }
 }
@@ -33,26 +34,26 @@ export async function toggleFollow(
   const batch = db.batch();
 
   if (following) {
-    batch.delete(["qrCodes", qrId, "followers", userId]);
-    batch.delete(["users", userId, "following", qrId]);
-    batch.increment(["users", userId], "followingCount", -1);
-    batch.increment(["qrCodes", qrId], "followerCount", -1);
+    batch.delete([COLLECTIONS.QR_CODES, qrId, COLLECTIONS.FOLLOWERS, userId]);
+    batch.delete([COLLECTIONS.USERS, userId, COLLECTIONS.FOLLOWING, qrId]);
+    batch.increment([COLLECTIONS.USERS, userId], "followingCount", -1);
+    batch.increment([COLLECTIONS.QR_CODES, qrId], "followerCount", -1);
   } else {
-    batch.set(["qrCodes", qrId, "followers", userId], {
+    batch.set([COLLECTIONS.QR_CODES, qrId, COLLECTIONS.FOLLOWERS, userId], {
       userId, createdAt: db.timestamp(),
     });
-    batch.set(["users", userId, "following", qrId], {
+    batch.set([COLLECTIONS.USERS, userId, COLLECTIONS.FOLLOWING, qrId], {
       qrCodeId: qrId, content, contentType, createdAt: db.timestamp(),
     });
-    batch.increment(["users", userId], "followingCount", 1);
-    batch.increment(["qrCodes", qrId], "followerCount", 1);
+    batch.increment([COLLECTIONS.USERS, userId], "followingCount", 1);
+    batch.increment([COLLECTIONS.QR_CODES, qrId], "followerCount", 1);
   }
 
   await batch.commit();
 
   if (!following && NOTIFICATIONS_ENABLED) {
     try {
-      const qrData = await db.get(["qrCodes", qrId]);
+      const qrData = await db.get([COLLECTIONS.QR_CODES, qrId]);
       if (qrData?.ownerId && qrData.ownerId !== userId) {
         const ownerId = qrData.ownerId as string;
         const name = followerDisplayName || "Someone";
@@ -72,13 +73,13 @@ export async function toggleFollow(
 }
 
 export async function isUserFollowingCreator(creatorId: string, userId: string): Promise<boolean> {
-  const data = await db.get(["users", creatorId, "creatorFollowers", userId]);
+  const data = await db.get([COLLECTIONS.USERS, creatorId, COLLECTIONS.CREATOR_FOLLOWERS, userId]);
   return data !== null;
 }
 
 export async function getCreatorFollowerCount(creatorId: string): Promise<number> {
   try {
-    const userData = await db.get(["users", creatorId]);
+    const userData = await db.get([COLLECTIONS.USERS, creatorId]);
     return typeof userData?.creatorFollowerCount === "number" ? userData.creatorFollowerCount : 0;
   } catch { return 0; }
 }
@@ -94,23 +95,23 @@ export async function toggleFollowCreator(
   const batch = db.batch();
 
   if (following) {
-    batch.delete(["users", creatorId, "creatorFollowers", userId]);
-    batch.delete(["users", userId, "creatorFollowing", creatorId]);
-    batch.increment(["users", creatorId], "creatorFollowerCount", -1);
+    batch.delete([COLLECTIONS.USERS, creatorId, COLLECTIONS.CREATOR_FOLLOWERS, userId]);
+    batch.delete([COLLECTIONS.USERS, userId, COLLECTIONS.CREATOR_FOLLOWING, creatorId]);
+    batch.increment([COLLECTIONS.USERS, creatorId], "creatorFollowerCount", -1);
     // FIX: also decrement the follower's own creatorFollowingCount so profile
     // stats stay accurate. Previously only the creator's side was updated.
-    batch.increment(["users", userId], "creatorFollowingCount", -1);
+    batch.increment([COLLECTIONS.USERS, userId], "creatorFollowingCount", -1);
   } else {
-    batch.set(["users", creatorId, "creatorFollowers", userId], {
+    batch.set([COLLECTIONS.USERS, creatorId, COLLECTIONS.CREATOR_FOLLOWERS, userId], {
       followerId: userId, createdAt: db.timestamp(),
     });
-    batch.set(["users", userId, "creatorFollowing", creatorId], {
+    batch.set([COLLECTIONS.USERS, userId, COLLECTIONS.CREATOR_FOLLOWING, creatorId], {
       creatorId, creatorName: creatorName || "", createdAt: db.timestamp(),
     });
-    batch.increment(["users", creatorId], "creatorFollowerCount", 1);
+    batch.increment([COLLECTIONS.USERS, creatorId], "creatorFollowerCount", 1);
     // FIX: increment the follower's own creatorFollowingCount to mirror
     // the QR follow pattern (which increments the follower's followingCount).
-    batch.increment(["users", userId], "creatorFollowingCount", 1);
+    batch.increment([COLLECTIONS.USERS, userId], "creatorFollowingCount", 1);
   }
 
   await batch.commit();
@@ -137,7 +138,7 @@ export async function toggleFollowCreator(
 export async function getCreatorFollowersList(creatorId: string): Promise<FollowerInfo[]> {
   try {
     // FIX: unbounded query — cap at 100 to prevent full collection scan
-    const { docs } = await db.query(["users", creatorId, "creatorFollowers"], { limit: 100 });
+    const { docs } = await db.query([COLLECTIONS.USERS, creatorId, COLLECTIONS.CREATOR_FOLLOWERS], { limit: 100 });
     const followers: FollowerInfo[] = [];
     await Promise.all(docs.map(async (d) => {
       const followerId = d.data.followerId || d.id;
@@ -145,7 +146,7 @@ export async function getCreatorFollowersList(creatorId: string): Promise<Follow
       let username: string | null = null;
       let photoURL: string | null = null;
       try {
-        const userData = await db.get(["users", followerId]);
+        const userData = await db.get([COLLECTIONS.USERS, followerId]);
         if (userData) {
           displayName = userData.displayName || "User";
           username = userData.username || null;
@@ -165,7 +166,7 @@ export async function getCreatorFollowersList(creatorId: string): Promise<Follow
 export async function getQrFollowersList(qrId: string): Promise<FollowerInfo[]> {
   try {
     // FIX: unbounded query — cap at 100 to prevent full collection scan
-    const { docs } = await db.query(["qrCodes", qrId, "followers"], { limit: 100 });
+    const { docs } = await db.query([COLLECTIONS.QR_CODES, qrId, COLLECTIONS.FOLLOWERS], { limit: 100 });
     const followers: FollowerInfo[] = [];
     await Promise.all(docs.map(async (d) => {
       const userId = d.data.userId || d.id;
@@ -173,7 +174,7 @@ export async function getQrFollowersList(qrId: string): Promise<FollowerInfo[]> 
       let username: string | null = null;
       let photoURL: string | null = null;
       try {
-        const userData = await db.get(["users", userId]);
+        const userData = await db.get([COLLECTIONS.USERS, userId]);
         if (userData) {
           displayName = userData.displayName || "User";
           username = userData.username || null;

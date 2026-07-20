@@ -1,3 +1,7 @@
+# Firebase credentials — do NOT commit (contains OAuth client IDs and API keys)
+GoogleService-Info.plist
+google-services.json
+
 ```
 # Dependencies
 node_modules/

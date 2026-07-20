@@ -1,6 +1,7 @@
 import { db } from "@/lib/db/client";
 import type { AuditEventType, AuditLogEntry } from "./types";
 import { hashUserId } from "./privacy";
+import { logger } from "@/shared/utils/logger";
 
 export async function getAuditLogs(filters: {
   userId?: string;
@@ -103,7 +104,7 @@ export async function cleanupExpiredAuditLogs(): Promise<{
         try {
           await db.delete(["auditLogs", monthId]);
           deletedCount++;
-          console.log(`[audit] Deleted expired collection: ${monthId}`);
+          logger.log(`[audit] Deleted expired collection: ${monthId}`);
         } catch (err) {
           console.error(`[audit] Failed to delete ${monthId}:`, err);
         }

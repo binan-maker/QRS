@@ -23,6 +23,7 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { db } from "@/lib/db/client";
 import { trackFraudDetected } from "@/lib/analytics";
+import { COLLECTIONS } from "@/shared/constants/collections";
 
 // ── Constants ──────────────────────────────────────────────────────────────────
 const VELOCITY_WINDOW_MS        = 60 * 1000;   // 1 minute window
@@ -70,7 +71,7 @@ async function markDeviceCounted(qrId: string): Promise<void> {
 
 async function isUserAlreadyCounted(userId: string, qrId: string): Promise<boolean> {
   try {
-    const doc = await db.get(["users", userId, "countedScans", qrId]);
+    const doc = await db.get([COLLECTIONS.USERS, userId, "countedScans", qrId]);
     return doc !== null;
   } catch {
     return false;
@@ -79,7 +80,7 @@ async function isUserAlreadyCounted(userId: string, qrId: string): Promise<boole
 
 async function markUserCounted(userId: string, qrId: string): Promise<void> {
   try {
-    await db.set(["users", userId, "countedScans", qrId], {
+    await db.set([COLLECTIONS.USERS, userId, "countedScans", qrId], {
       countedAt: db.timestamp(),
     });
   } catch {}
@@ -90,7 +91,7 @@ async function getRecentVelocity(qrId: string): Promise<number> {
   try {
     const now = Date.now();
     const cutoff = now - VELOCITY_WINDOW_MS;
-    const { docs } = await db.query(["qrCodes", qrId, "scanVelocity"], {
+    const { docs } = await db.query([COLLECTIONS.QR_CODES, qrId, COLLECTIONS.SCAN_VELOCITY], {
       where: [{ field: "ts", op: ">=", value: cutoff }],
       orderBy: { field: "ts", direction: "asc" },
     });
@@ -104,7 +105,7 @@ async function getRecentHourlyVolume(qrId: string): Promise<number> {
   try {
     const now = Date.now();
     const cutoff = now - ANOMALY_WINDOW_MS;
-    const { docs } = await db.query(["qrCodes", qrId, "scanVelocity"], {
+    const { docs } = await db.query([COLLECTIONS.QR_CODES, qrId, COLLECTIONS.SCAN_VELOCITY], {
       where: [{ field: "ts", op: ">=", value: cutoff }],
       orderBy: { field: "ts", direction: "asc" },
     });
@@ -118,7 +119,7 @@ async function getRecentHourlyVolume(qrId: string): Promise<number> {
 async function maybeFreezeScanCount(qrId: string, hourlyVolume: number): Promise<boolean> {
   if (hourlyVolume < ANOMALY_HOURLY_THRESHOLD) return false;
   try {
-    await db.update(["qrCodes", qrId], {
+    await db.update([COLLECTIONS.QR_CODES, qrId], {
       scanCountFrozen: true,
       scanCountFrozenAt: db.timestamp(),
       scanCountFreezeReason: `Anomaly: ${hourlyVolume} scans in 1 hour`,
@@ -192,8 +193,8 @@ export async function checkScanAllowed(
 export async function recordOwnerScan(qrId: string, userId: string): Promise<void> {
   try {
     await Promise.all([
-      db.increment(["qrCodes", qrId], "ownerScanCount", 1),
-      db.add(["users", userId, "ownerScans"], {
+      db.increment([COLLECTIONS.QR_CODES, qrId], "ownerScanCount", 1),
+      db.add([COLLECTIONS.USERS, userId, COLLECTIONS.OWNER_SCANS], {
         qrCodeId: qrId,
         scannedAt: db.timestamp(),
       }),
@@ -210,7 +211,7 @@ export async function recordBlockedScan(
   userId: string | null
 ): Promise<void> {
   try {
-    await db.add(["qrCodes", qrId, "blockedScans"], {
+    await db.add([COLLECTIONS.QR_CODES, qrId, COLLECTIONS.BLOCKED_SCANS], {
       ts: Date.now(),
       reason,
       uid: userId ?? "guest",

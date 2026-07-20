@@ -1,4 +1,5 @@
 import { db } from "@/lib/db/client";
+import { COLLECTIONS } from "@/shared/constants/collections";
 
 const USER_PROFILE_CACHE = new Map<string, { data: any; expiry: number }>();
 const PROFILE_CACHE_TTL_MS = 5 * 60 * 1000;
@@ -17,7 +18,7 @@ export function setCachedUserProfile(userId: string, data: any): void {
 export async function warmUserProfileCache(userId: string): Promise<void> {
   if (getCachedUserProfile(userId)) return;
   try {
-    const data = await db.get(["users", userId]);
+    const data = await db.get([COLLECTIONS.USERS, userId]);
     if (data) setCachedUserProfile(userId, data);
   } catch {}
 }

@@ -1,5 +1,6 @@
 import { db } from "@/lib/db/client";
 import type { CommentItem } from "../types";
+import { COLLECTIONS } from "@/shared/constants/collections";
 
 const userProfileCache = new Map<string, { username?: string; photoURL?: string; expiresAt: number }>();
 const CACHE_TTL_MS = 5 * 60 * 1000;
@@ -19,7 +20,7 @@ export function setUserProfileCache(userId: string, username?: string, photoURL?
 export async function preloadUserProfile(userId: string): Promise<void> {
   if (getUserProfileCache(userId)) return;
   try {
-    const userData = await db.get(["users", userId]);
+    const userData = await db.get([COLLECTIONS.USERS, userId]);
     if (userData) {
       setUserProfileCache(userId, userData.username as string | undefined, userData.photoURL as string | undefined);
     }
@@ -36,7 +37,7 @@ export async function enrichCommentsWithProfiles(comments: CommentItem[]): Promi
     uniqueUserIds.map(async (uid) => {
       if (getUserProfileCache(uid)) return;
       try {
-        const userData = await db.get(["users", uid]);
+        const userData = await db.get([COLLECTIONS.USERS, uid]);
         if (userData) {
           setUserProfileCache(
             uid,

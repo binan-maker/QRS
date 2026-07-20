@@ -11,6 +11,7 @@ import * as Crypto from "expo-crypto";
 import { detectContentType } from "./qr-content-type";
 import type { QrCodeData, TrustScore } from "./types";
 import { getDistributedCounter } from "@/lib/db/distributed-counter";
+import { COLLECTIONS } from "@/shared/constants/collections";
 
 export { detectContentType } from "./qr-content-type";
 export type { QrCodeData, TrustScore };
@@ -30,7 +31,7 @@ export async function getOrCreateQrCode(content: string): Promise<QrCodeData> {
     scanCount: 0, commentCount: 0,
   };
   try {
-    const data = await db.get(["qrCodes", qrId]);
+    const data = await db.get([COLLECTIONS.QR_CODES, qrId]);
     if (data) {
       return {
         id: qrId,
@@ -47,7 +48,7 @@ export async function getOrCreateQrCode(content: string): Promise<QrCodeData> {
         ownerVerified: (data as any).ownerVerified || false,
       };
     }
-    await db.set(["qrCodes", qrId], {
+    await db.set([COLLECTIONS.QR_CODES, qrId], {
       content, contentType,
       createdAt: db.timestamp(),
       scanCount: 0, commentCount: 0,
@@ -60,7 +61,7 @@ export async function getOrCreateQrCode(content: string): Promise<QrCodeData> {
 
 export async function getQrCodeById(qrId: string): Promise<QrCodeData | null> {
   try {
-    const data = await db.get(["qrCodes", qrId]);
+    const data = await db.get([COLLECTIONS.QR_CODES, qrId]);
     if (!data) return null;
     
     // FIX #1: For high-traffic QRs, get count from distributed counter shards
@@ -111,7 +112,7 @@ export function subscribeToQrStats(
   qrId: string,
   onUpdate: (data: { scanCount: number; commentCount: number }) => void
 ): () => void {
-  return db.onDoc(["qrCodes", qrId], (data) => {
+  return db.onDoc([COLLECTIONS.QR_CODES, qrId], (data) => {
     if (data) onUpdate({ scanCount: data.scanCount || 0, commentCount: data.commentCount || 0 });
   });
 }

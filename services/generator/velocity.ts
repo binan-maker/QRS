@@ -1,5 +1,6 @@
 import { db } from "@/lib/db/client";
 import type { ScanVelocityBucket } from "../types";
+import { COLLECTIONS } from "@/shared/constants/collections";
 
 export type { ScanVelocityBucket };
 
@@ -14,7 +15,7 @@ export async function getScanVelocity(qrId: string): Promise<ScanVelocityBucket[
   });
   try {
     // Read scan velocity events from Firestore (unified storage, no RTDB dependency).
-    const { docs } = await db.query(["qrCodes", qrId, "scanVelocity"], {
+    const { docs } = await db.query([COLLECTIONS.QR_CODES, qrId, COLLECTIONS.SCAN_VELOCITY], {
       where: [{ field: "ts", op: ">=", value: cutoff }],
       orderBy: { field: "ts", direction: "asc" },
     });

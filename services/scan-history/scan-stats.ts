@@ -1,4 +1,5 @@
 import { db } from "@/lib/db/client";
+import { COLLECTIONS } from "@/shared/constants/collections";
 
 export interface ScanStatsResult {
   total: number;
@@ -12,7 +13,7 @@ export interface ScanStatsResult {
 
 export async function getUserScanStats(userId: string): Promise<ScanStatsResult> {
   try {
-    const userDoc = await db.get(["users", userId]);
+    const userDoc = await db.get([COLLECTIONS.USERS, userId]);
     const userData = userDoc?.data || {};
 
     if (userData.personalScanCount !== undefined) {
@@ -37,7 +38,7 @@ export async function getUserScanStats(userId: string): Promise<ScanStatsResult>
   let cursor: any = undefined;
 
   do {
-    const { docs, cursor: nextCursor } = await db.query(["users", userId, "scans"], {
+    const { docs, cursor: nextCursor } = await db.query([COLLECTIONS.USERS, userId, COLLECTIONS.SCANS], {
       limit: 1000,
       cursor,
     });
@@ -68,7 +69,7 @@ export async function getUserAllScansForStats(
 
   do {
     const { docs, cursor: nextCursor } = await db.query(
-      ["users", userId, "scans"],
+      [COLLECTIONS.USERS, userId, COLLECTIONS.SCANS],
       {
         orderBy: { field: "scannedAt", direction: "desc" },
         limit: 500,

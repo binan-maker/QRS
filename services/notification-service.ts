@@ -1,6 +1,8 @@
 import { db, rtdb } from "@/lib/db/client";
 import { NOTIFICATIONS_ENABLED } from "./notifications/config";
 import type { Notification, NotificationType } from "./types";
+import { COLLECTIONS } from "@/shared/constants/collections";
+import { logger } from "@/shared/utils/logger";
 
 // FIX #2: Add TTL for notifications (30 days) to prevent unbounded storage growth
 const NOTIFICATION_TTL_MS = 30 * 24 * 60 * 60 * 1000; // 30 days
@@ -143,7 +145,7 @@ export async function notifyMentionedUsers(
     const writes: Promise<void>[] = [];
     for (const username of mentions) {
       try {
-        const { docs } = await db.query(["users"], {
+        const { docs } = await db.query([COLLECTIONS.USERS], {
           where: [{ field: "username", op: "==", value: username }],
           limit: 1,
         });
@@ -175,7 +177,7 @@ export async function notifyQrFollowers(
 ): Promise<void> {
   if (!NOTIFICATIONS_ENABLED) return;
   try {
-    const { docs } = await db.query(["qrCodes", qrId, "followers"]);
+    const { docs } = await db.query([COLLECTIONS.QR_CODES, qrId, COLLECTIONS.FOLLOWERS]);
 
     // FIX #2: Batch all notification writes into a single RTDB multi-path update
     // This reduces cost from N writes ($0.06 per 1000) to 1 write regardless of follower count
@@ -201,7 +203,7 @@ export async function notifyQrFollowers(
     // Single atomic write operation regardless of follower count
     if (Object.keys(updates).length > 0) {
       await rtdb.update(updates);
-      console.log(
+      logger.log(
         `[notify] Sent ${notificationCount} follower notifications in single batch for QR ${qrId}`,
       );
     }
@@ -220,7 +222,7 @@ export async function notifyQrOwner(
 ): Promise<void> {
   if (!NOTIFICATIONS_ENABLED) return;
   try {
-    const qrData = await db.get(["qrCodes", qrId]);
+    const qrData = await db.get([COLLECTIONS.QR_CODES, qrId]);
     if (!qrData?.ownerId) return;
     const ownerId = qrData.ownerId as string;
     if (ownerId === fromUserId) return;

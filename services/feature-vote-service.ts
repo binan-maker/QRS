@@ -1,4 +1,5 @@
 import { db } from "@/lib/db/client";
+import { COLLECTIONS } from "@/shared/constants/collections";
 
 export type FeatureVoteChoice = "need" | "not_need";
 
@@ -8,7 +9,7 @@ function voteKey(email: string): string {
 
 export async function getFeatureVote(email: string): Promise<FeatureVoteChoice | null> {
   if (!email) return null;
-  const data = await db.get(["featureVotes", voteKey(email)]);
+  const data = await db.get([COLLECTIONS.FEATURE_VOTES, voteKey(email)]);
   return (data?.vote as FeatureVoteChoice) ?? null;
 }
 
@@ -24,9 +25,9 @@ export async function castFeatureVote(
 ): Promise<boolean> {
   if (!email) return false;
   const key = voteKey(email);
-  const existing = await db.get(["featureVotes", key]);
+  const existing = await db.get([COLLECTIONS.FEATURE_VOTES, key]);
   if (existing) return false;
-  await db.set(["featureVotes", key], {
+  await db.set([COLLECTIONS.FEATURE_VOTES, key], {
     email: key,
     vote,
     votedAt: db.timestamp(),

@@ -16,6 +16,7 @@ import {
   type UserStats,
   type GeneratedQrItem,
 } from "@/lib/firestore-service";
+import { COLLECTIONS } from "@/shared/constants/collections";
 import {
   getCachedUserStats,
   setCachedUserStats,
@@ -136,7 +137,7 @@ export function useProfile() {
           return; // cache is valid — no Firestore round-trip needed
         }
       }
-      const doc = await db.get(["users", user.id]).catch(() => null);
+      const doc = await db.get([COLLECTIONS.USERS, user.id]).catch(() => null);
       const nextFriends = (doc as any)?.friendsCount ?? 0;
       const fetchedAt = Date.now();
       lastExtrasFetchRef.current = fetchedAt;

@@ -2,13 +2,14 @@ import { db } from "@/lib/db/client";
 import type { AccountTier } from "./types";
 import { TIER_CONFIG } from "./types";
 import { tsToMs } from "./time-utils";
+import { COLLECTIONS } from "@/shared/constants/collections";
 
 export async function getAccountTier(
   userId: string,
   emailVerified: boolean
 ): Promise<AccountTier & { accountCreatedAt?: number }> {
   try {
-    const data = await db.get(["users", userId]);
+    const data = await db.get([COLLECTIONS.USERS, userId]);
     if (!data?.createdAt) return { ...TIER_CONFIG[1], accountCreatedAt: Date.now() };
 
     const createdMs = tsToMs(data.createdAt);

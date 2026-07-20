@@ -5,6 +5,7 @@
 
 import { db } from "@/lib/db/client";
 import { notifyQrFollowers } from "./notification-service";
+import { COLLECTIONS } from "@/shared/constants/collections";
 import {
   checkReportEligibility,
   recordReport,
@@ -13,7 +14,7 @@ import {
 
 async function getQrOwnerId(qrId: string): Promise<string | undefined> {
   try {
-    const data = await db.get(["qrCodes", qrId]);
+    const data = await db.get([COLLECTIONS.QR_CODES, qrId]);
     return data?.ownerId || undefined;
   } catch {
     return undefined;
@@ -26,7 +27,7 @@ export async function getQrReportData(qrId: string): Promise<{
 }> {
   // FIX: unbounded query — cap at 500 (far above any realistic report count
   // per QR code; prevents a full collection scan on heavily reported QRs)
-  const { docs } = await db.query(["qrCodes", qrId, "reports"], { limit: 500 });
+  const { docs } = await db.query([COLLECTIONS.QR_CODES, qrId, COLLECTIONS.REPORTS], { limit: 500 });
   const counts: Record<string, number> = {};
   const weighted: Record<string, number> = {};
   for (const d of docs) {
@@ -47,7 +48,7 @@ export async function getQrWeightedReportCounts(qrId: string): Promise<Record<st
 }
 
 export async function getUserQrReport(qrId: string, userId: string): Promise<string | null> {
-  const data = await db.get(["qrCodes", qrId, "reports", userId]);
+  const data = await db.get([COLLECTIONS.QR_CODES, qrId, COLLECTIONS.REPORTS, userId]);
   if (!data || data.userRemoved) return null;
   return data.reportType ?? null;
 }
@@ -55,7 +56,7 @@ export async function getUserQrReport(qrId: string, userId: string): Promise<str
 function runCollusionCheck(qrId: string) {
   analyzeReportsForCollusion(qrId).then(async (result) => {
     try {
-      await db.update(["qrCodes", qrId], {
+      await db.update([COLLECTIONS.QR_CODES, qrId], {
         suspiciousVoteFlag: result.suspicious,
         suspiciousFlagReason: result.reason || null,
         suspiciousSafeMultiplier: result.safeWeightMultiplier,
@@ -82,7 +83,7 @@ export async function reportQrCode(
   // Firestore rules block deletion, so we mark the doc as userRemoved instead.
   // The existing reportType and weight fields stay intact to satisfy security rules.
   if (existingReport === reportType) {
-    await db.update(["qrCodes", qrId, "reports", userId], {
+    await db.update([COLLECTIONS.QR_CODES, qrId, COLLECTIONS.REPORTS, userId], {
       userRemoved: true,
       removedAt: db.timestamp(),
     });
@@ -100,7 +101,7 @@ export async function reportQrCode(
 
   let accountAgeDays = 0;
   try {
-    const userData = await db.get(["users", userId]);
+    const userData = await db.get([COLLECTIONS.USERS, userId]);
     if (userData?.createdAt) {
       const createdMs = userData.createdAt.toDate
         ? userData.createdAt.toDate().getTime()
@@ -111,7 +112,7 @@ export async function reportQrCode(
 
   if (isChangingReport) {
     // Different type → update the existing report doc (also clears userRemoved if set).
-    await db.update(["qrCodes", qrId, "reports", userId], {
+    await db.update([COLLECTIONS.QR_CODES, qrId, COLLECTIONS.REPORTS, userId], {
       reportType,
       weight,
       userRemoved: false,
@@ -120,7 +121,7 @@ export async function reportQrCode(
   } else {
     // No active report — create or overwrite (handles re-reporting after unreport).
     // db.set uses setDoc (no merge) so it fully replaces any stale userRemoved doc.
-    await db.set(["qrCodes", qrId, "reports", userId], {
+    await db.set([COLLECTIONS.QR_CODES, qrId, COLLECTIONS.REPORTS, userId], {
       reportType,
       weight,
       reporterId: userId,
@@ -131,7 +132,7 @@ export async function reportQrCode(
     });
     await recordReport(userId, qrId);
     if (reportType === "safe") {
-      try { await db.increment(["users", userId], "safeReportsGiven", 1); } catch {}
+      try { await db.increment([COLLECTIONS.USERS, userId], "safeReportsGiven", 1); } catch {}
     }
     notifyQrFollowers(qrId, "new_report", `New ${reportType} report on a QR you follow`, userId).catch(() => {});
   }
@@ -148,7 +149,7 @@ export function subscribeToQrReports(
   ) => void
 ): () => void {
   // FIX: unbounded live listener — cap at 500 to match getQrReportData
-  return db.onQuery(["qrCodes", qrId, "reports"], { limit: 500 }, (docs) => {
+  return db.onQuery([COLLECTIONS.QR_CODES, qrId, COLLECTIONS.REPORTS], { limit: 500 }, (docs) => {
     const counts: Record<string, number> = {};
     const weighted: Record<string, number> = {};
     for (const d of docs) {

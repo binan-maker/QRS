@@ -7,6 +7,8 @@ import {
   recordBlockedScan,
 } from "../scan-fraud-guard";
 import { trackQrScanned } from "@/lib/analytics";
+import { COLLECTIONS } from "@/shared/constants/collections";
+import { logger } from "@/shared/utils/logger";
 
 const SCAN_SOFT_DELETE_TTL_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
 
@@ -26,12 +28,12 @@ export async function recordScan(
 
   // Write velocity event to Firestore (unified — no RTDB dependency).
   try {
-    await db.add(["qrCodes", qrId, "scanVelocity"], { ts: Date.now() });
+    await db.add([COLLECTIONS.QR_CODES, qrId, COLLECTIONS.SCAN_VELOCITY], { ts: Date.now() });
   } catch {}
 
   let countThisScan = true;
   try {
-    const qrData = await db.get(["qrCodes", qrId]);
+    const qrData = await db.get([COLLECTIONS.QR_CODES, qrId]);
     const qrOwnerId = qrData?.ownerId ?? null;
 
     const guard = await checkScanAllowed(qrId, userId, qrOwnerId);
@@ -73,7 +75,7 @@ export async function recordScan(
       // so the counter never drifts from the actual number of stored scan documents.
       const scanId = generateDocId();
       const batch = db.batch();
-      batch.set(["users", userId, "scans", scanId], {
+      batch.set([COLLECTIONS.USERS, userId, COLLECTIONS.SCANS, scanId], {
         qrCodeId: qrId,
         content,
         contentType,
@@ -83,7 +85,7 @@ export async function recordScan(
         counted: countThisScan,
       });
       if (countThisScan) {
-        batch.increment(["users", userId], "personalScanCount", 1);
+        batch.increment([COLLECTIONS.USERS, userId], "personalScanCount", 1);
       }
       await batch.commit();
     } catch {}
@@ -95,13 +97,13 @@ export async function recordScan(
   // scans so cleanup is distributed across all scans without adding latency to most.
   if (Math.random() < 0.05) {
     const cutoff = Date.now() - 48 * 60 * 60 * 1000;
-    db.query(["qrCodes", qrId, "scanVelocity"], {
+    db.query([COLLECTIONS.QR_CODES, qrId, COLLECTIONS.SCAN_VELOCITY], {
       where: [{ field: "ts", op: "<", value: cutoff }],
       limit: 100,
     }).then(({ docs }) => {
       if (docs.length === 0) return;
       Promise.all(
-        docs.map((d) => db.delete(["qrCodes", qrId, "scanVelocity", d.id]).catch(() => {}))
+        docs.map((d) => db.delete([COLLECTIONS.QR_CODES, qrId, COLLECTIONS.SCAN_VELOCITY, d.id]).catch(() => {}))
       ).catch(() => {});
     }).catch(() => {});
   }
@@ -109,7 +111,7 @@ export async function recordScan(
 
 export async function getUserScans(userId: string): Promise<any[]> {
   const { docs } = await db.query(
-    ["users", userId, "scans"],
+    [COLLECTIONS.USERS, userId, COLLECTIONS.SCANS],
     { orderBy: { field: "scannedAt", direction: "desc" }, limit: 100 }
   );
   return docs
@@ -150,7 +152,7 @@ export async function getUserScansPaginated(
 
   for (let loops = 0; loops < MAX_LOOPS && visibleItems.length < pageSize && !exhausted; loops++) {
     const { docs, cursor: newCursor } = await db.query(
-      ["users", userId, "scans"],
+      [COLLECTIONS.USERS, userId, COLLECTIONS.SCANS],
       { orderBy: { field: "scannedAt", direction: "desc" }, limit: pageSize, cursor: currentCursor }
     );
 
@@ -179,26 +181,26 @@ export async function getUserScansPaginated(
 export async function deleteUserScan(userId: string, scanId: string): Promise<void> {
   try {
     const batch = db.batch();
-    batch.update(["users", userId, "scans", scanId], { isDeleted: true, deletedAt: db.timestamp() });
-    batch.increment(["users", userId], "personalScanCount", -1);
+    batch.update([COLLECTIONS.USERS, userId, COLLECTIONS.SCANS, scanId], { isDeleted: true, deletedAt: db.timestamp() });
+    batch.increment([COLLECTIONS.USERS, userId], "personalScanCount", -1);
     await batch.commit();
   } catch {}
 }
 
 export async function deleteAllUserScans(userId: string): Promise<void> {
   try {
-    const { docs } = await db.query(["users", userId, "scans"], {
+    const { docs } = await db.query([COLLECTIONS.USERS, userId, COLLECTIONS.SCANS], {
       orderBy: { field: "scannedAt", direction: "desc" },
       limit: 500,
     });
     const softDeleteCount = docs.length;
     await Promise.all(
       docs.map((d) =>
-        db.update(["users", userId, "scans", d.id], { isDeleted: true, deletedAt: db.timestamp() }).catch(() => {})
+        db.update([COLLECTIONS.USERS, userId, COLLECTIONS.SCANS, d.id], { isDeleted: true, deletedAt: db.timestamp() }).catch(() => {})
       )
     );
     if (softDeleteCount > 0) {
-      await db.increment(["users", userId], "personalScanCount", -softDeleteCount);
+      await db.increment([COLLECTIONS.USERS, userId], "personalScanCount", -softDeleteCount);
     }
     purgeOldSoftDeleteScans(userId).catch(() => {});
   } catch {}
@@ -206,7 +208,7 @@ export async function deleteAllUserScans(userId: string): Promise<void> {
 
 export async function purgeOldSoftDeleteScans(userId: string): Promise<void> {
   try {
-    const { docs } = await db.query(["users", userId, "scans"], {
+    const { docs } = await db.query([COLLECTIONS.USERS, userId, COLLECTIONS.SCANS], {
       orderBy: { field: "scannedAt", direction: "desc" },
       limit: 500,
     });
@@ -228,7 +230,7 @@ export async function purgeOldSoftDeleteScans(userId: string): Promise<void> {
     }
 
     if (toDelete.length > 0) {
-      await Promise.all(toDelete.map(id => db.delete(["users", userId, "scans", id]).catch(() => {})));
+      await Promise.all(toDelete.map(id => db.delete([COLLECTIONS.USERS, userId, COLLECTIONS.SCANS, id]).catch(() => {})));
     }
   } catch {}
 }
@@ -238,14 +240,14 @@ export async function hardDeleteOldSoftDeleteScans(): Promise<void> {
   let totalDeleted = 0;
 
   try {
-    const { docs: userDocs } = await db.query(["users"], {
+    const { docs: userDocs } = await db.query([COLLECTIONS.USERS], {
       orderBy: { field: "createdAt", direction: "desc" },
       limit: 500,
     });
 
     for (const userDoc of userDocs) {
       const userId = userDoc.id;
-      const { docs: scanDocs } = await db.query(["users", userId, "scans"], {
+      const { docs: scanDocs } = await db.query([COLLECTIONS.USERS, userId, COLLECTIONS.SCANS], {
         orderBy: { field: "scannedAt", direction: "desc" },
         limit: 200,
       });
@@ -266,12 +268,12 @@ export async function hardDeleteOldSoftDeleteScans(): Promise<void> {
       }
 
       if (toDelete.length > 0) {
-        await Promise.all(toDelete.map(id => db.delete(["users", userId, "scans", id]).catch(() => {})));
+        await Promise.all(toDelete.map(id => db.delete([COLLECTIONS.USERS, userId, COLLECTIONS.SCANS, id]).catch(() => {})));
         totalDeleted += toDelete.length;
       }
     }
 
-    console.log(`[cleanup] hardDeleteOldSoftDeleteScans: Deleted ${totalDeleted} old soft-deleted scans`);
+    logger.log(`[cleanup] hardDeleteOldSoftDeleteScans: Deleted ${totalDeleted} old soft-deleted scans`);
   } catch (e) {
     console.error("[cleanup] hardDeleteOldSoftDeleteScans failed:", e);
   }

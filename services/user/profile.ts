@@ -3,6 +3,7 @@ import { tsToString } from "../utils";
 import type { UserStats } from "../types";
 import { uploadBase64Image, deleteImage, deleteProfilePhoto } from "../storage-service";
 import { getCachedUserProfile, setCachedUserProfile } from "./cache";
+import { COLLECTIONS } from "@/shared/constants/collections";
 
 export type { UserStats };
 
@@ -38,7 +39,7 @@ export async function getUserStats(userId: string): Promise<UserStats> {
   try {
     let userDoc = getCachedUserProfile(userId);
     if (!userDoc) {
-      userDoc = await db.get(["users", userId]);
+      userDoc = await db.get([COLLECTIONS.USERS, userId]);
       if (userDoc) setCachedUserProfile(userId, userDoc);
     }
 
@@ -61,9 +62,9 @@ export async function getUserStats(userId: string): Promise<UserStats> {
     // collection — the count is capped at 1000 items for display purposes.
     const COUNT_LIMIT = 1000;
     const [followingResult, scansResult, commentsResult] = await Promise.all([
-      hasFollowingCount    ? Promise.resolve(null) : db.query(["users", userId, "following"], { limit: COUNT_LIMIT }),
-      hasPersonalScanCount ? Promise.resolve(null) : db.query(["users", userId, "scans"],     { limit: COUNT_LIMIT }),
-      hasCommentCount      ? Promise.resolve(null) : db.query(["users", userId, "comments"],  { limit: COUNT_LIMIT }),
+      hasFollowingCount    ? Promise.resolve(null) : db.query([COLLECTIONS.USERS, userId, COLLECTIONS.FOLLOWING], { limit: COUNT_LIMIT }),
+      hasPersonalScanCount ? Promise.resolve(null) : db.query([COLLECTIONS.USERS, userId, COLLECTIONS.SCANS],     { limit: COUNT_LIMIT }),
+      hasCommentCount      ? Promise.resolve(null) : db.query([COLLECTIONS.USERS, userId, COLLECTIONS.COMMENTS],  { limit: COUNT_LIMIT }),
     ]);
 
     return {
@@ -79,7 +80,7 @@ export async function getUserStats(userId: string): Promise<UserStats> {
 
 export async function updateUserPhotoURL(userId: string, photoURL: string | null): Promise<void> {
   try {
-    await db.update(["users", userId], { photoURL: photoURL ?? null });
+    await db.update([COLLECTIONS.USERS, userId], { photoURL: photoURL ?? null });
   } catch {}
 }
 
@@ -93,7 +94,7 @@ export async function updateUserProfilePhoto(
     if (oldPhotoUrl && oldPhotoUrl.includes("firebasestorage")) {
       await deleteImage(oldPhotoUrl).catch(() => {});
     }
-    await db.update(["users", userId], { photoURL: newPhotoUrl });
+    await db.update([COLLECTIONS.USERS, userId], { photoURL: newPhotoUrl });
     return newPhotoUrl;
   } catch (error: any) {
     console.error("[user-service] updateUserProfilePhoto failed:", error);
@@ -105,7 +106,7 @@ export async function getUserPhotoURL(userId: string): Promise<string | null> {
   try {
     let data = getCachedUserProfile(userId);
     if (!data) {
-      data = await db.get(["users", userId]);
+      data = await db.get([COLLECTIONS.USERS, userId]);
       if (data) setCachedUserProfile(userId, data);
     }
     return data?.photoURL || null;
@@ -115,18 +116,18 @@ export async function getUserPhotoURL(userId: string): Promise<string | null> {
 
 export async function getPublicProfile(username: string): Promise<PublicProfile | null> {
   try {
-    const unameDoc = await db.get(["usernames", username]);
+    const unameDoc = await db.get([COLLECTIONS.USERNAMES, username]);
     if (!unameDoc) return null;
     const userId = unameDoc.userId as string;
 
     let userDoc = getCachedUserProfile(userId);
-    const qrResult = await db.query(["qrCodes"], {
+    const qrResult = await db.query([COLLECTIONS.QR_CODES], {
       where: [{ field: "ownerId", op: "==", value: userId }],
       limit: 200,
     });
 
     if (!userDoc) {
-      userDoc = await db.get(["users", userId]);
+      userDoc = await db.get([COLLECTIONS.USERS, userId]);
       if (userDoc) setCachedUserProfile(userId, userDoc);
     }
     if (!userDoc) return null;
@@ -174,7 +175,7 @@ export async function getPublicProfile(username: string): Promise<PublicProfile 
 
 export async function getPublicQrCodes(userId: string): Promise<any[]> {
   try {
-    const { docs } = await db.query(["users", userId, "generatedQrs"], {
+    const { docs } = await db.query([COLLECTIONS.USERS, userId, COLLECTIONS.GENERATED_QRS], {
       orderBy: { field: "createdAt", direction: "desc" },
       limit: 20,
     });
@@ -190,20 +191,20 @@ export async function deleteUserAccount(userId: string): Promise<void> {
   let photoUrl: string | null = null;
   let username: string | null = null;
   try {
-    const userDoc = await db.get(["users", userId]);
+    const userDoc = await db.get([COLLECTIONS.USERS, userId]);
     photoUrl = userDoc?.photoURL || null;
     username = userDoc?.username || null;
   } catch {}
 
   // 1. Block access immediately — isDeleted gates all reads in the app
-  await db.update(["users", userId], { isDeleted: true, deletedAt: db.timestamp() });
+  await db.update([COLLECTIONS.USERS, userId], { isDeleted: true, deletedAt: db.timestamp() });
 
   // 2. Remove RTDB notifications (fast, synchronous)
   try { await rtdb.remove(`notifications/${userId}`); } catch {}
 
   // 3. Release username so another user can claim it
   if (username) {
-    db.delete(["usernames", username]).catch(() => {});
+    db.delete([COLLECTIONS.USERNAMES, username]).catch(() => {});
   }
 
   // 4. Delete profile photo from Storage
@@ -227,11 +228,11 @@ async function _paginatedDelete(
 ): Promise<void> {
   let hasMore = true;
   while (hasMore) {
-    const { docs } = await db.query(["users", userId, subcollection], { limit: batchSize });
+    const { docs } = await db.query([COLLECTIONS.USERS, userId, subcollection], { limit: batchSize });
     if (docs.length === 0) break;
     if (beforeDelete) await beforeDelete(docs).catch(() => {});
     await Promise.all(
-      docs.map((d) => db.delete(["users", userId, subcollection, d.id]).catch(() => {}))
+      docs.map((d) => db.delete([COLLECTIONS.USERS, userId, subcollection, d.id]).catch(() => {}))
     );
     hasMore = docs.length === batchSize;
   }
@@ -245,12 +246,12 @@ async function _cleanupUserSubcollections(userId: string): Promise<void> {
 
     // Generated QRs — remove user's private records and anonymize the global
     // qrCodes entry (strip owner identity, keep scanCount intact forever).
-    _paginatedDelete(userId, "generatedQrs", 200, async (docs) => {
+    _paginatedDelete(userId, COLLECTIONS.GENERATED_QRS, 200, async (docs) => {
       await Promise.all(
         docs.map((d) => {
           const qrCodeId = d.data.qrCodeId as string | undefined;
           if (!qrCodeId) return Promise.resolve();
-          return db.update(["qrCodes", qrCodeId], {
+          return db.update([COLLECTIONS.QR_CODES, qrCodeId], {
             ownerId: null,
             ownerName: "[deleted]",
             ownerLogoBase64: null,
@@ -278,20 +279,20 @@ async function _cleanupUserSubcollections(userId: string): Promise<void> {
   ]);
 
   // Hard-delete the user document itself last (after all sub-collections are gone)
-  db.delete(["users", userId]).catch(() => {});
+  db.delete([COLLECTIONS.USERS, userId]).catch(() => {});
 }
 
 async function _cleanupComments(userId: string): Promise<void> {
   let hasMore = true;
   while (hasMore) {
-    const { docs } = await db.query(["users", userId, "comments"], { limit: 200 });
+    const { docs } = await db.query([COLLECTIONS.USERS, userId, COLLECTIONS.COMMENTS], { limit: 200 });
     if (docs.length === 0) break;
     await Promise.all(
       docs.map(async (d) => {
         const { qrCodeId, commentId } = d.data;
         if (qrCodeId && commentId) {
           const batch = db.batch();
-          batch.update(["qrCodes", qrCodeId, "comments", commentId], {
+          batch.update([COLLECTIONS.QR_CODES, qrCodeId, COLLECTIONS.COMMENTS, commentId], {
             isDeleted: true,
             deletedAt: db.timestamp(),
             text: "[deleted]",
@@ -300,11 +301,11 @@ async function _cleanupComments(userId: string): Promise<void> {
             userUsername: null,
             userPhotoURL: null,
           });
-          batch.increment(["qrCodes", qrCodeId], "commentCount", -1);
-          batch.delete(["users", userId, "comments", d.id]);
+          batch.increment([COLLECTIONS.QR_CODES, qrCodeId], "commentCount", -1);
+          batch.delete([COLLECTIONS.USERS, userId, COLLECTIONS.COMMENTS, d.id]);
           await batch.commit().catch(() => {});
         } else {
-          await db.delete(["users", userId, "comments", d.id]).catch(() => {});
+          await db.delete([COLLECTIONS.USERS, userId, COLLECTIONS.COMMENTS, d.id]).catch(() => {});
         }
       })
     );
@@ -313,15 +314,15 @@ async function _cleanupComments(userId: string): Promise<void> {
 }
 
 async function _cleanupQrFollowing(userId: string): Promise<void> {
-  const { docs } = await db.query(["users", userId, "following"], { limit: 500 });
+  const { docs } = await db.query([COLLECTIONS.USERS, userId, COLLECTIONS.FOLLOWING], { limit: 500 });
   await Promise.all(
     docs.map(async (d) => {
       const qrCodeId = d.id;
       try {
         const batch = db.batch();
-        batch.delete(["qrCodes", qrCodeId, "followers", userId]);
-        batch.delete(["users", userId, "following", qrCodeId]);
-        batch.increment(["qrCodes", qrCodeId], "followerCount", -1);
+        batch.delete([COLLECTIONS.QR_CODES, qrCodeId, COLLECTIONS.FOLLOWERS, userId]);
+        batch.delete([COLLECTIONS.USERS, userId, COLLECTIONS.FOLLOWING, qrCodeId]);
+        batch.increment([COLLECTIONS.QR_CODES, qrCodeId], "followerCount", -1);
         await batch.commit();
       } catch {}
     })
@@ -329,15 +330,15 @@ async function _cleanupQrFollowing(userId: string): Promise<void> {
 }
 
 async function _cleanupCreatorFollowing(userId: string): Promise<void> {
-  const { docs } = await db.query(["users", userId, "creatorFollowing"], { limit: 200 });
+  const { docs } = await db.query([COLLECTIONS.USERS, userId, COLLECTIONS.CREATOR_FOLLOWING], { limit: 200 });
   await Promise.all(
     docs.map(async (d) => {
       const creatorId = d.id;
       try {
         const batch = db.batch();
-        batch.delete(["users", creatorId, "creatorFollowers", userId]);
-        batch.delete(["users", userId, "creatorFollowing", creatorId]);
-        batch.increment(["users", creatorId], "creatorFollowerCount", -1);
+        batch.delete([COLLECTIONS.USERS, creatorId, COLLECTIONS.CREATOR_FOLLOWERS, userId]);
+        batch.delete([COLLECTIONS.USERS, userId, COLLECTIONS.CREATOR_FOLLOWING, creatorId]);
+        batch.increment([COLLECTIONS.USERS, creatorId], "creatorFollowerCount", -1);
         await batch.commit();
       } catch {}
     })
@@ -349,5 +350,5 @@ export async function submitFeedback(
   email: string | null,
   message: string
 ): Promise<void> {
-  await db.add(["feedback"], { userId, email, message, createdAt: db.timestamp() });
+  await db.add([COLLECTIONS.FEEDBACK], { userId, email, message, createdAt: db.timestamp() });
 }

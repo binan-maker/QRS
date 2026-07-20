@@ -1,5 +1,6 @@
 import { db } from "@/lib/db/client";
 import { checkCommentReportEligibility, recordCommentReport } from "../integrity-service";
+import { COLLECTIONS } from "@/shared/constants/collections";
 
 const SOFT_DELETE_TTL_MS = 7 * 24 * 60 * 60 * 1000;
 
@@ -12,14 +13,14 @@ export async function reportComment(
 ): Promise<void> {
   await checkCommentReportEligibility(userId, emailVerified);
 
-  const reportPath  = ["qrCodes", qrId, "comments", commentId, "reports", userId];
-  const commentPath = ["qrCodes", qrId, "comments", commentId];
+  const reportPath  = [COLLECTIONS.QR_CODES, qrId, COLLECTIONS.COMMENTS, commentId, COLLECTIONS.REPORTS, userId];
+  const commentPath = [COLLECTIONS.QR_CODES, qrId, COLLECTIONS.COMMENTS, commentId];
 
   await db.set(reportPath, { reason, createdAt: db.timestamp(), userId });
 
   try {
     const commentData = await db.get(commentPath);
-    await db.add(["moderationQueue"], {
+    await db.add([COLLECTIONS.MODERATION_QUEUE], {
       type: "comment_report",
       qrCodeId: qrId, commentId,
       reportedByUserId: userId, reason,
@@ -32,7 +33,7 @@ export async function reportComment(
   } catch {}
 
   try {
-    const { docs } = await db.query(["qrCodes", qrId, "comments", commentId, "reports"]);
+    const { docs } = await db.query([COLLECTIONS.QR_CODES, qrId, COLLECTIONS.COMMENTS, commentId, COLLECTIONS.REPORTS]);
     const reportCount = docs.length;
     await db.update(commentPath, { reportCount });
     if (reportCount >= 3) await db.update(commentPath, { isHidden: true });
@@ -43,7 +44,7 @@ export async function reportComment(
 
 export async function ownerHideComment(qrId: string, commentId: string): Promise<void> {
   try {
-    await db.update(["qrCodes", qrId, "comments", commentId], { isHidden: true });
+    await db.update([COLLECTIONS.QR_CODES, qrId, COLLECTIONS.COMMENTS, commentId], { isHidden: true });
   } catch (e) {
     console.warn("[db] ownerHideComment failed:", e);
     throw e;
@@ -66,7 +67,7 @@ export async function hardDeleteOldSoftDeletes(
   let totalDeleted = 0;
 
   try {
-    const { docs } = await db.query(["qrCodes", options.qrId, "comments"], {
+    const { docs } = await db.query([COLLECTIONS.QR_CODES, options.qrId, COLLECTIONS.COMMENTS], {
       where: [{ field: "isDeleted", op: "==", value: true }],
       orderBy: { field: "deletedAt", direction: "asc" },
       limit: batchSize,
@@ -91,7 +92,7 @@ export async function hardDeleteOldSoftDeletes(
     hasMore = docs.length >= batchSize;
 
     await Promise.all(
-      toDelete.map(id => db.delete(["qrCodes", options.qrId!, "comments", id]).catch(() => {}))
+      toDelete.map(id => db.delete([COLLECTIONS.QR_CODES, options.qrId!, COLLECTIONS.COMMENTS, id]).catch(() => {}))
     );
     totalDeleted = toDelete.length;
 

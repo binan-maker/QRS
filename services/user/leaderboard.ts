@@ -1,4 +1,5 @@
 import { db } from "@/lib/db/client";
+import { COLLECTIONS } from "@/shared/constants/collections";
 
 export interface FriendLeaderboardEntry {
   userId: string;
@@ -13,14 +14,14 @@ export interface FriendLeaderboardEntry {
 export async function getFriendsLeaderboard(myUserId: string): Promise<FriendLeaderboardEntry[]> {
   try {
     const friendsRes = await db.query(
-      ["users", myUserId, "friends"],
+      [COLLECTIONS.USERS, myUserId, COLLECTIONS.FRIENDS],
       { where: [{ field: "status", op: "==", value: "friends" }], limit: 100 }
     );
     const friends = friendsRes.docs.map((d) => ({ userId: d.id, ...d.data } as any));
 
-    const myUserDoc = await db.get(["users", myUserId]);
+    const myUserDoc = await db.get([COLLECTIONS.USERS, myUserId]);
     const friendDocs = await Promise.all(
-      friends.map((f: any) => db.get(["users", f.userId]).catch(() => null))
+      friends.map((f: any) => db.get([COLLECTIONS.USERS, f.userId]).catch(() => null))
     );
 
     const entries: FriendLeaderboardEntry[] = [

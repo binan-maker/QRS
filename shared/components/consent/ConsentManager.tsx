@@ -10,6 +10,7 @@ import { useAuth } from "../../contexts/AuthContext";
 import { ConsentStatus, DEFAULT_CONSENT, db, logAuditEvent } from "./consent-manager-types";
 import { ConsentOption } from "./ConsentOption";
 import { styles } from "./consent-manager-styles";
+import { COLLECTIONS } from "@/shared/constants/collections";
 
 interface ConsentManagerProps {
   visible: boolean;
@@ -38,7 +39,7 @@ export const ConsentManager: React.FC<ConsentManagerProps> = ({
   async function loadExistingConsent() {
     try {
       if (!user) return;
-      const consentData = await db.get(["users", user.id, "consent"]);
+      const consentData = await db.get([COLLECTIONS.USERS, user.id, "consent"]);
       if (consentData) {
         setConsent({ ...DEFAULT_CONSENT, ...consentData });
       } else {
@@ -56,7 +57,7 @@ export const ConsentManager: React.FC<ConsentManagerProps> = ({
     setSaving(true);
     try {
       const updatedConsent = { ...consent, lastUpdated: new Date().toISOString() };
-      await db.set(["users", user.id, "consent"], updatedConsent);
+      await db.set([COLLECTIONS.USERS, user.id, "consent"], updatedConsent);
       await logAuditEvent(
         consent.scanHistory ? "consent_given" : "consent_withdrawn",
         user.id,

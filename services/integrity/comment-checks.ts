@@ -1,5 +1,6 @@
 import { db } from "@/lib/db/client";
 import { tsToMs, isWithin24h } from "./time-utils";
+import { COLLECTIONS } from "@/shared/constants/collections";
 
 export async function checkCommentEligibility(
   userId: string,
@@ -17,17 +18,17 @@ export async function checkCommentEligibility(
 
 export async function recordComment(userId: string): Promise<void> {
   try {
-    const userData = await db.get(["users", userId]);
+    const userData = await db.get([COLLECTIONS.USERS, userId]);
     const windowStart = tsToMs(userData?.commentRateWindowStart);
     const count = userData?.commentRateCount || 0;
 
     if (isWithin24h(windowStart)) {
-      await db.update(["users", userId], {
+      await db.update([COLLECTIONS.USERS, userId], {
         commentRateCount: count + 1,
         lastCommentAt: db.timestamp(),
       });
     } else {
-      await db.update(["users", userId], {
+      await db.update([COLLECTIONS.USERS, userId], {
         commentRateWindowStart: db.timestamp(),
         commentRateCount: 1,
         lastCommentAt: db.timestamp(),
@@ -43,14 +44,14 @@ export async function checkCommentReportEligibility(
 
 export async function recordCommentReport(userId: string): Promise<void> {
   try {
-    const userData = await db.get(["users", userId]);
+    const userData = await db.get([COLLECTIONS.USERS, userId]);
     const windowStart = tsToMs(userData?.commentReportRateWindowStart);
     const count = userData?.commentReportRateCount || 0;
 
     if (isWithin24h(windowStart)) {
-      await db.update(["users", userId], { commentReportRateCount: count + 1 });
+      await db.update([COLLECTIONS.USERS, userId], { commentReportRateCount: count + 1 });
     } else {
-      await db.update(["users", userId], {
+      await db.update([COLLECTIONS.USERS, userId], {
         commentReportRateWindowStart: db.timestamp(),
         commentReportRateCount: 1,
       });

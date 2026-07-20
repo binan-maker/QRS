@@ -9,6 +9,7 @@ import {
 import { calculateTrustScore } from "@/services/trust-service";
 import { invalidateQrCache } from "@/services/cache/qr-cache";
 import { db } from "@/lib/db/client";
+import { COLLECTIONS } from "@/shared/constants/collections";
 
 // How long after the last click before we flush to the server.
 // Every click updates the UI instantly; only the final intended state is sent.
@@ -149,7 +150,7 @@ export function useQrReports(
       })
       .catch(() => {});
 
-    db.get(["qrCodes", id])
+    db.get([COLLECTIONS.QR_CODES, id])
       .then((doc) => {
         if (cancelled || !doc?.suspiciousVoteFlag) return;
         setCollusionFlags({

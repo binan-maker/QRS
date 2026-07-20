@@ -24,6 +24,7 @@ export function calculateTrustScore(
   return { score, label };
 }
 import type { QrCodeData, TrustScore } from "./types";
+import { COLLECTIONS } from "@/shared/constants/collections";
 
 export interface QrDetailPayload {
   qrCode: QrCodeData;
@@ -52,7 +53,7 @@ export async function loadQrDetail(
   try {
     const [reportData, qrDoc] = await Promise.all([
       getQrReportData(qrId),
-      db.get(["qrCodes", qrId]),
+      db.get([COLLECTIONS.QR_CODES, qrId]),
     ]);
     reportCounts = reportData.counts;
     weightedCounts = reportData.weighted;
@@ -130,7 +131,7 @@ export async function getQrAnalyticsSummary(
   // This is accurate at any scale; event docs are capped at 2000 for trend analysis only.
   let authoritiveScanCount = 0;
   try {
-    const qrDoc = await db.get(["qrCodes", qrId]);
+    const qrDoc = await db.get([COLLECTIONS.QR_CODES, qrId]);
     if (qrDoc?.scanCount != null) {
       authoritiveScanCount = qrDoc.scanCount as number;
     }
@@ -138,7 +139,7 @@ export async function getQrAnalyticsSummary(
 
   let docs: Array<{ id: string; data: Record<string, any> }> = [];
   try {
-    const result = await db.query(["qrCodes", qrId, "events"], {
+    const result = await db.query([COLLECTIONS.QR_CODES, qrId, COLLECTIONS.EVENTS], {
       orderBy: { field: "timestamp", direction: "desc" },
       limit: 2000,
     });

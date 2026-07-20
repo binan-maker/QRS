@@ -5,10 +5,9 @@
   "scripts": {
     "postinstall": "patch-package",
     "expo:dev": "EXPO_PACKAGER_PROXY_URL=https://$REPLIT_DEV_DOMAIN REACT_NATIVE_PACKAGER_HOSTNAME=$REPLIT_DEV_DOMAIN EXPO_PUBLIC_DOMAIN=$REPLIT_DEV_DOMAIN node_modules/.bin/expo start --dev-client --localhost",
-    "server:dev": "NODE_ENV=development node_modules/.bin/tsx apps/api/src/index.ts",
-    "web:dev": "npm --workspace=apps/web run dev",
-    "server:build": "esbuild apps/api/src/index.ts --platform=node --packages=external --bundle --format=esm --outdir=apps/api/dist",
-    "server:prod": "NODE_ENV=production node apps/api/dist/index.js",
+    "server:dev": "NODE_ENV=development node_modules/.bin/tsx server/index.ts",
+    "server:build": "esbuild server/index.ts --platform=node --packages=external --bundle --format=esm --outdir=server/dist",
+    "server:prod": "NODE_ENV=production node server/dist/index.js",
     "db:push": "drizzle-kit push",
     "start": "npx expo run:android",
     "lint": "npx expo lint",
@@ -37,7 +36,6 @@
     "@react-native-google-signin/google-signin": "^16.1.2",
     "@shopify/flash-list": "2.0.2",
     "@tanstack/react-query": "^5.97.0",
-    "bullmq": "^5.80.7",
     "drizzle-orm": "^0.39.3",
     "drizzle-zod": "^0.7.1",
     "expo": "~54.0.27",
@@ -50,7 +48,6 @@
     "expo-constants": "~18.0.11",
     "expo-crypto": "~15.0.8",
     "expo-font": "~14.0.10",
-    "expo-glass-effect": "^0.1.9",
     "expo-haptics": "~15.0.8",
     "expo-image": "~3.0.11",
     "expo-image-manipulator": "~14.0.8",
@@ -74,16 +71,11 @@
     "express": "^5.2.1",
     "firebase": "^12.15.0",
     "firebase-admin": "^13.10.0",
-    "http-proxy": "^1.18.1",
-    "http-proxy-middleware": "^3.0.7",
     "i18next": "^23.16.8",
-    "ioredis": "^5.11.1",
     "jimp": "^1.6.1",
     "jsqr": "^1.4.0",
     "lucide-react-native": "^1.8.0",
     "openai": "^6.45.0",
-    "p-limit": "^7.3.0",
-    "p-retry": "^7.1.1",
     "pg": "^8.22.0",
     "razorpay": "^2.9.6",
     "react": "19.1.0",
@@ -99,8 +91,6 @@
     "react-native-screens": "~4.16.0",
     "react-native-svg": "15.12.1",
     "react-native-worklets": "0.5.1",
-    "semver": "^7.8.5",
-    "ws": "^8.21.0",
     "zod": "^3.25.76",
     "zod-validation-error": "^3.5.4",
     "zustand": "^5.0.13"
@@ -108,7 +98,6 @@
   "devDependencies": {
     "@babel/core": "^7.29.0",
     "@expo/cli": "^55.0.23",
-    "@expo/ngrok": "^4.1.3",
     "@stardazed/streams-text-encoding": "^1.0.2",
     "@types/bcryptjs": "^2.4.6",
     "@types/express": "^5.0.6",
@@ -133,7 +122,6 @@
   },
   "private": true,
   "workspaces": [
-    "packages/*",
-    "apps/*"
+    "packages/*"
   ]
 }

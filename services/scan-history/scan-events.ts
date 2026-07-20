@@ -1,4 +1,5 @@
 import { db } from "@/lib/db/client";
+import { COLLECTIONS } from "@/shared/constants/collections";
 
 export interface ScanEvent {
   platform: "android" | "ios" | "web" | "unknown";
@@ -23,7 +24,7 @@ function _getCountryCode(): string {
 
 export async function recordScanEvent(qrId: string, event: ScanEvent): Promise<void> {
   try {
-    await db.add(["qrCodes", qrId, "events"], {
+    await db.add([COLLECTIONS.QR_CODES, qrId, COLLECTIONS.EVENTS], {
       ...event,
       timestamp: db.timestamp(),
     });

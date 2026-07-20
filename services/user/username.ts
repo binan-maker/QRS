@@ -1,12 +1,13 @@
 import { db } from "@/lib/db/client";
 import { getCachedUserProfile, setCachedUserProfile } from "./cache";
 import type { UsernameData } from "../types";
+import { COLLECTIONS } from "@/shared/constants/collections";
 
 export type { UsernameData };
 
 export async function checkUsernameAvailable(username: string): Promise<boolean> {
   try {
-    const data = await db.get(["usernames", username]);
+    const data = await db.get([COLLECTIONS.USERNAMES, username]);
     return data === null;
   } catch (e: any) {
     if (e?.code === "permission-denied") return true;
@@ -36,7 +37,7 @@ export async function getUsernameData(userId: string): Promise<UsernameData> {
   try {
     let data = getCachedUserProfile(userId);
     if (!data) {
-      data = await db.get(["users", userId]);
+      data = await db.get([COLLECTIONS.USERS, userId]);
       if (data) setCachedUserProfile(userId, data);
     }
     if (data) {
@@ -60,7 +61,7 @@ export async function updateUsername(userId: string, newUsername: string): Promi
     );
   }
 
-  const userData = await db.get(["users", userId]);
+  const userData = await db.get([COLLECTIONS.USERS, userId]);
   if (!userData) throw new Error("User not found.");
 
   if (userData.usernameLastChangedAt) {
@@ -83,18 +84,18 @@ export async function updateUsername(userId: string, newUsername: string): Promi
   if (!available) throw new Error("This username is already taken. Please choose another.");
 
   try {
-    await db.set(["usernames", newUsername], { userId, reservedAt: db.timestamp() });
+    await db.set([COLLECTIONS.USERNAMES, newUsername], { userId, reservedAt: db.timestamp() });
   } catch {
     throw new Error("This username was just taken. Please choose another.");
   }
   if (oldUsername) {
-    try { await db.delete(["usernames", oldUsername]); } catch {}
+    try { await db.delete([COLLECTIONS.USERNAMES, oldUsername]); } catch {}
   }
-  await db.update(["users", userId], { username: newUsername, usernameLastChangedAt: db.timestamp() });
+  await db.update([COLLECTIONS.USERS, userId], { username: newUsername, usernameLastChangedAt: db.timestamp() });
 
   try {
     const { docs } = await db.query(
-      ["users", userId, "comments"],
+      [COLLECTIONS.USERS, userId, COLLECTIONS.COMMENTS],
       { orderBy: { field: "createdAt", direction: "desc" }, limit: 50 }
     );
     await Promise.all(
@@ -102,7 +103,7 @@ export async function updateUsername(userId: string, newUsername: string): Promi
         const cData = d.data;
         if (cData.qrCodeId && d.id) {
           try {
-            await db.update(["qrCodes", cData.qrCodeId, "comments", d.id], { userUsername: newUsername });
+            await db.update([COLLECTIONS.QR_CODES, cData.qrCodeId, COLLECTIONS.COMMENTS, d.id], { userUsername: newUsername });
           } catch {}
         }
       })

@@ -11,6 +11,7 @@ import { useTheme } from "@/shared/contexts/ThemeContext";
 import SkeletonBox from "@/shared/components/ui/SkeletonBox";
 import { db } from "@/lib/db/client";
 import { formatShortDate } from "@/shared/utils/formatters";
+import { COLLECTIONS } from "@/shared/constants/collections";
 import {
   getQrTypeMeta as getContentTypeMeta,
   getDisplayLabel as getContentDisplayLabel,
@@ -79,7 +80,7 @@ export default function FollowingSection({ loading, list, onScroll, paddingTop =
     // when a user follows many QR codes. 100 is the same cap used on getQrFollowersList.
     const uniqueIds = [...new Set(list.map((i: any) => i.qrCodeId).filter(Boolean))];
     const ids = uniqueIds.slice(0, 100);
-    Promise.all(ids.map((id) => db.get(["qrCodes", id]).catch(() => null))).then((results) => {
+    Promise.all(ids.map((id) => db.get([COLLECTIONS.QR_CODES, id]).catch(() => null))).then((results) => {
       const map: Record<string, any> = {};
       ids.forEach((id, i) => { if (results[i]) map[id] = results[i]; });
       const out: EnrichedItem[] = list.map((item: any) => {

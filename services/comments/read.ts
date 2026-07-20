@@ -2,6 +2,7 @@ import { db } from "@/lib/db/client";
 import { tsToString } from "../utils";
 import type { CommentItem } from "../types";
 import { enrichCommentsWithProfiles } from "./cache";
+import { COLLECTIONS } from "@/shared/constants/collections";
 
 export type { CommentItem };
 
@@ -31,7 +32,7 @@ export function subscribeToComments(
   onUpdate: (comments: CommentItem[]) => void
 ): () => void {
   return db.onQuery(
-    ["qrCodes", qrId, "comments"],
+    [COLLECTIONS.QR_CODES, qrId, COLLECTIONS.COMMENTS],
     { orderBy: { field: "createdAt", direction: "desc" }, limit: pageLimit },
     (docs) => {
       const comments: CommentItem[] = docs
@@ -59,7 +60,7 @@ export async function getCommentUserLikes(
   await Promise.all(
     commentIds.map(async (commentId) => {
       try {
-        const data = await db.get(["qrCodes", qrId, "comments", commentId, "likes", userId]);
+        const data = await db.get([COLLECTIONS.QR_CODES, qrId, COLLECTIONS.COMMENTS, commentId, COLLECTIONS.LIKES, userId]);
         if (data) result[commentId] = data.isLike ? "like" : "dislike";
       } catch {}
     })
@@ -73,7 +74,7 @@ export async function getComments(
   cursor?: any
 ): Promise<{ comments: CommentItem[]; hasMore: boolean; cursor?: any }> {
   const { docs, cursor: newCursor } = await db.query(
-    ["qrCodes", qrId, "comments"],
+    [COLLECTIONS.QR_CODES, qrId, COLLECTIONS.COMMENTS],
     { orderBy: { field: "createdAt", direction: "desc" }, limit: pageLimit + 1, cursor }
   );
   const hasMore = docs.length > pageLimit;
@@ -92,7 +93,7 @@ export async function getComments(
 // Promise.all fetch for comment bodies is already batched — not sequential.
 export async function getUserComments(userId: string, limit = 50): Promise<any[]> {
   const { docs: indexDocs } = await db.query(
-    ["users", userId, "comments"],
+    [COLLECTIONS.USERS, userId, COLLECTIONS.COMMENTS],
     { orderBy: { field: "createdAt", direction: "desc" }, limit }
   );
 
@@ -101,7 +102,7 @@ export async function getUserComments(userId: string, limit = 50): Promise<any[]
       const { qrCodeId, commentId } = d.data;
       if (!qrCodeId || !commentId) return null;
       try {
-        const commentData = await db.get(["qrCodes", qrCodeId, "comments", commentId]);
+        const commentData = await db.get([COLLECTIONS.QR_CODES, qrCodeId, COLLECTIONS.COMMENTS, commentId]);
         if (!commentData || commentData.isDeleted) return null;
         return {
           id: commentId,

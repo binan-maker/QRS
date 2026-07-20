@@ -6,6 +6,7 @@ import type { CommentItem } from "../types";
 import { checkProfanity, sanitizeComment } from "../profanity-filter";
 import { getUserProfileCache, preloadUserProfile, setUserProfileCache } from "./cache";
 import { authAdapter } from "@/lib/auth";
+import { COLLECTIONS } from "@/shared/constants/collections";
 
 // Firestore client-side rules lock commentCount from direct client writes.
 // This helper calls the Express backend (which uses Admin SDK, bypassing rules)
@@ -80,14 +81,14 @@ export async function addComment(
 
   if (!resolvedUsername) {
     try {
-      const userData = await db.get(["users", userId]);
+      const userData = await db.get([COLLECTIONS.USERS, userId]);
       if (userData?.username) resolvedUsername = userData.username as string;
       if (!resolvedPhotoURL && userData?.photoURL) resolvedPhotoURL = userData.photoURL as string;
       setUserProfileCache(userId, resolvedUsername, resolvedPhotoURL);
     } catch {}
   }
 
-  const { id: commentId } = await db.add(["qrCodes", qrId, "comments"], {
+  const { id: commentId } = await db.add([COLLECTIONS.QR_CODES, qrId, COLLECTIONS.COMMENTS], {
     userId,
     userDisplayName: displayName,
     ...(resolvedUsername ? { userUsername: resolvedUsername } : {}),
@@ -105,7 +106,7 @@ export async function addComment(
   // Write user index entry (source of truth is qrCodes/{qrId}/comments).
   // commentCount is routed through the server because Firestore client rules
   // lock that field against direct client writes — see adjustCommentCount above.
-  await db.set(["users", userId, "comments", commentId], {
+  await db.set([COLLECTIONS.USERS, userId, COLLECTIONS.COMMENTS, commentId], {
     commentId,
     qrCodeId: qrId,
     createdAt: db.timestamp(),
@@ -146,8 +147,8 @@ export async function toggleCommentLike(
   userId: string,
   isLike: boolean
 ): Promise<{ likes: number; dislikes: number }> {
-  const likePath = ["qrCodes", qrId, "comments", commentId, "likes", userId];
-  const commentPath = ["qrCodes", qrId, "comments", commentId];
+  const likePath = [COLLECTIONS.QR_CODES, qrId, COLLECTIONS.COMMENTS, commentId, COLLECTIONS.LIKES, userId];
+  const commentPath = [COLLECTIONS.QR_CODES, qrId, COLLECTIONS.COMMENTS, commentId];
 
   // Parallelise the two independent reads to reduce round-trip latency.
   const [existing, commentData] = await Promise.all([
@@ -206,7 +207,7 @@ export async function toggleCommentLike(
   }
 
   if (authorId && authorId !== userId && likeDelta !== 0) {
-    try { await db.increment(["users", authorId], "totalLikesReceived", likeDelta); } catch {}
+    try { await db.increment([COLLECTIONS.USERS, authorId], "totalLikesReceived", likeDelta); } catch {}
   }
 
   // Return the arithmetically-computed counts — no post-write read needed.
@@ -214,20 +215,20 @@ export async function toggleCommentLike(
 }
 
 export async function softDeleteComment(qrId: string, commentId: string, userId: string): Promise<void> {
-  const ref = ["qrCodes", qrId, "comments", commentId];
+  const ref = [COLLECTIONS.QR_CODES, qrId, COLLECTIONS.COMMENTS, commentId];
   const data = await db.get(ref);
   if (data && data.userId === userId) {
     // Mark deleted and remove user index entry. commentCount is decremented via
     // the server endpoint because Firestore client rules lock that field.
     const batch = db.batch();
     batch.update(ref, { isDeleted: true, deletedAt: db.timestamp(), text: "[deleted]" });
-    batch.delete(["users", userId, "comments", commentId]);
+    batch.delete([COLLECTIONS.USERS, userId, COLLECTIONS.COMMENTS, commentId]);
     try {
       await batch.commit();
     } catch (e) {
       console.warn("[db] softDeleteComment: batch failed, falling back:", e);
       await db.update(ref, { isDeleted: true, deletedAt: db.timestamp(), text: "[deleted]" }).catch(() => {});
-      await db.delete(["users", userId, "comments", commentId]).catch(() => {});
+      await db.delete([COLLECTIONS.USERS, userId, COLLECTIONS.COMMENTS, commentId]).catch(() => {});
     }
     adjustCommentCount(qrId, -1).catch(() => {});
     purgeOldSoftDeletes(qrId).catch(() => {});
@@ -238,7 +239,7 @@ const SOFT_DELETE_TTL_MS = 7 * 24 * 60 * 60 * 1000;
 
 async function purgeOldSoftDeletes(qrId: string): Promise<void> {
   try {
-    const { docs } = await db.query(["qrCodes", qrId, "comments"], {
+    const { docs } = await db.query([COLLECTIONS.QR_CODES, qrId, COLLECTIONS.COMMENTS], {
       orderBy: { field: "createdAt", direction: "desc" },
       limit: 100,
     });
@@ -256,14 +257,14 @@ async function purgeOldSoftDeletes(qrId: string): Promise<void> {
       if (deletedAtMs > 0 && now - deletedAtMs > SOFT_DELETE_TTL_MS) toDelete.push(d.id);
     }
     if (toDelete.length > 0) {
-      await Promise.all(toDelete.map(id => db.delete(["qrCodes", qrId, "comments", id]).catch(() => {})));
+      await Promise.all(toDelete.map(id => db.delete([COLLECTIONS.QR_CODES, qrId, COLLECTIONS.COMMENTS, id]).catch(() => {})));
     }
   } catch {}
 }
 
 export async function deleteAllUserComments(userId: string): Promise<void> {
   const { docs } = await db.query(
-    ["users", userId, "comments"],
+    [COLLECTIONS.USERS, userId, COLLECTIONS.COMMENTS],
     { orderBy: { field: "createdAt", direction: "desc" }, limit: 500 }
   );
   await Promise.all(
@@ -271,14 +272,14 @@ export async function deleteAllUserComments(userId: string): Promise<void> {
       const { qrCodeId, commentId } = d.data;
       if (qrCodeId && commentId) {
         const batch = db.batch();
-        batch.update(["qrCodes", qrCodeId, "comments", commentId], {
+        batch.update([COLLECTIONS.QR_CODES, qrCodeId, COLLECTIONS.COMMENTS, commentId], {
           isDeleted: true, deletedAt: db.timestamp(), text: "[deleted]",
         });
-        batch.delete(["users", userId, "comments", d.id]);
+        batch.delete([COLLECTIONS.USERS, userId, COLLECTIONS.COMMENTS, d.id]);
         await batch.commit().catch(() => {});
         adjustCommentCount(qrCodeId, -1).catch(() => {});
       } else {
-        await db.delete(["users", userId, "comments", d.id]).catch(() => {});
+        await db.delete([COLLECTIONS.USERS, userId, COLLECTIONS.COMMENTS, d.id]).catch(() => {});
       }
     })
   );

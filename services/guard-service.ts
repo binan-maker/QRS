@@ -2,6 +2,7 @@ import { db } from "@/lib/db/client";
 import { tsToString } from "./utils";
 import { detectContentType } from "./qr-service";
 import type { GuardLink } from "./types";
+import { COLLECTIONS } from "@/shared/constants/collections";
 
 export type { GuardLink };
 
@@ -16,7 +17,7 @@ export async function saveGuardLink(
   scanLimit?: number | null,
   expiryDate?: string | null
 ): Promise<void> {
-  await db.set(["guardLinks", uuid], {
+  await db.set([COLLECTIONS.GUARD_LINKS, uuid], {
     uuid,
     currentDestination: destination,
     previousDestination: null,
@@ -39,7 +40,7 @@ export async function updateGuardLinkDestination(
   newDestination: string,
   userId: string
 ): Promise<void> {
-  const data = await db.get(["guardLinks", uuid]);
+  const data = await db.get([COLLECTIONS.GUARD_LINKS, uuid]);
   if (!data) throw new Error("Guard link not found");
   if (data.ownerId !== userId) throw new Error("Not authorized");
 
@@ -53,7 +54,7 @@ export async function updateGuardLinkDestination(
   const existingLog: any[] = Array.isArray(data.changeLog) ? data.changeLog : [];
   const updatedLog = [...existingLog, changeEntry].slice(-10);
 
-  await db.update(["guardLinks", uuid], {
+  await db.update([COLLECTIONS.GUARD_LINKS, uuid], {
     previousDestination: data.currentDestination,
     currentDestination: newDestination,
     destinationChangedAt: db.timestamp(),
@@ -63,7 +64,7 @@ export async function updateGuardLinkDestination(
 
 export async function getGuardLink(uuid: string): Promise<GuardLink | null> {
   try {
-    const data = await db.get(["guardLinks", uuid]);
+    const data = await db.get([COLLECTIONS.GUARD_LINKS, uuid]);
     if (!data) return null;
     const rawLog: any[] = Array.isArray(data.changeLog) ? data.changeLog : [];
     const changeLog = rawLog.map((e: any) => ({
@@ -98,10 +99,10 @@ export async function setGuardLinkActive(
   userId: string,
   isActive: boolean
 ): Promise<void> {
-  const data = await db.get(["guardLinks", uuid]);
+  const data = await db.get([COLLECTIONS.GUARD_LINKS, uuid]);
   if (!data) throw new Error("Guard link not found");
   if (data.ownerId !== userId) throw new Error("Not authorized");
-  await db.update(["guardLinks", uuid], { isActive });
+  await db.update([COLLECTIONS.GUARD_LINKS, uuid], { isActive });
 }
 
 export async function saveStandardLink(
@@ -114,7 +115,7 @@ export async function saveStandardLink(
   scanLimit?: number | null,
   expiryDate?: string | null
 ): Promise<void> {
-  await db.set(["standardLinks", uuid], {
+  await db.set([COLLECTIONS.STANDARD_LINKS, uuid], {
     uuid,
     rawContent,
     contentType,
@@ -134,10 +135,10 @@ export async function updateStandardLinkRawContent(
   newRawContent: string,
   userId: string
 ): Promise<void> {
-  const data = await db.get(["standardLinks", uuid]);
+  const data = await db.get([COLLECTIONS.STANDARD_LINKS, uuid]);
   if (!data) throw new Error("Standard link not found");
   if (data.ownerId !== userId) throw new Error("Not authorized");
-  await db.update(["standardLinks", uuid], {
+  await db.update([COLLECTIONS.STANDARD_LINKS, uuid], {
     rawContent: newRawContent,
     contentType: detectContentType(newRawContent),
     updatedAt: db.timestamp(),
@@ -146,7 +147,7 @@ export async function updateStandardLinkRawContent(
 
 export async function getStandardLink(uuid: string): Promise<{ rawContent: string; contentType: string; ownerId: string; ownerName: string; isActive: boolean; templateKey?: string } | null> {
   try {
-    const data = await db.get(["standardLinks", uuid]);
+    const data = await db.get([COLLECTIONS.STANDARD_LINKS, uuid]);
     if (!data) return null;
     return {
       rawContent: data.rawContent || "",

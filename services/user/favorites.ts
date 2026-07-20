@@ -1,8 +1,9 @@
 import { db } from "@/lib/db/client";
 import { tsToString } from "../utils";
+import { COLLECTIONS } from "@/shared/constants/collections";
 
 export async function isUserFavorite(qrId: string, userId: string): Promise<boolean> {
-  const data = await db.get(["users", userId, "favorites", qrId]);
+  const data = await db.get([COLLECTIONS.USERS, userId, COLLECTIONS.FAVORITES, qrId]);
   return data !== null;
 }
 
@@ -14,9 +15,9 @@ export async function toggleFavorite(
 ): Promise<boolean> {
   const isFav = await isUserFavorite(qrId, userId);
   if (isFav) {
-    await db.delete(["users", userId, "favorites", qrId]);
+    await db.delete([COLLECTIONS.USERS, userId, COLLECTIONS.FAVORITES, qrId]);
   } else {
-    await db.set(["users", userId, "favorites", qrId], {
+    await db.set([COLLECTIONS.USERS, userId, COLLECTIONS.FAVORITES, qrId], {
       qrCodeId: qrId, content, contentType, createdAt: db.timestamp(),
     });
   }
@@ -25,7 +26,7 @@ export async function toggleFavorite(
 
 export async function getUserFavorites(userId: string): Promise<any[]> {
   const { docs } = await db.query(
-    ["users", userId, "favorites"],
+    [COLLECTIONS.USERS, userId, COLLECTIONS.FAVORITES],
     { orderBy: { field: "createdAt", direction: "desc" } }
   );
   return docs.map((d) => ({ id: d.id, ...d.data, createdAt: tsToString(d.data.createdAt) }));
@@ -36,7 +37,7 @@ export async function getUserFavorites(userId: string): Promise<any[]> {
 // in the Settings following list without risking a full collection scan.
 export async function getUserFollowing(userId: string, limit = 200): Promise<any[]> {
   const { docs } = await db.query(
-    ["users", userId, "following"],
+    [COLLECTIONS.USERS, userId, COLLECTIONS.FOLLOWING],
     { orderBy: { field: "createdAt", direction: "desc" }, limit }
   );
   return docs.map((d) => ({ id: d.id, ...d.data, createdAt: tsToString(d.data.createdAt) }));

@@ -9,6 +9,7 @@ import { useAuth } from "@/shared/contexts/AuthContext";
 import { authAdapter } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { invalidateUserCache } from "@/services/cache/qr-cache";
+import { COLLECTIONS } from "@/shared/constants/collections";
 import {
   getUsernameData,
   updateUsername,
@@ -71,7 +72,7 @@ export default function ProfileSettingsSection({ onScroll, paddingTop = 0 }: { o
     try {
       const currentUser = authAdapter.getCurrentUser();
       if (currentUser) await authAdapter.updateDisplayName(currentUser, trimmed);
-      db.update(["users", user.id], { displayName: trimmed }).catch(() => {});
+      db.update([COLLECTIONS.USERS, user.id], { displayName: trimmed }).catch(() => {});
       invalidateUserCache(user.id);
     } catch {
       Alert.alert("Error", "Could not update display name.");

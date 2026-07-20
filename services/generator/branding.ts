@@ -4,6 +4,7 @@ import { detectContentType, getQrCodeId } from "../qr-service";
 import { logError } from "./crud";
 import type { QrOwnerInfo, QrType } from "../types";
 import { SIGNATURE_SALT } from "../types";
+import { COLLECTIONS } from "@/shared/constants/collections";
 
 export type { QrOwnerInfo };
 
@@ -27,23 +28,23 @@ export async function generateBrandedQr(
   const uuid = uuidRaw.slice(0, 16).toUpperCase().match(/.{1,4}/g)?.join("-") || uuidRaw.slice(0, 16);
 
   try {
-    const existing = await db.get(["qrCodes", qrId]);
+    const existing = await db.get([COLLECTIONS.QR_CODES, qrId]);
     if (existing) {
       if (!existing.ownerId) {
-        await db.update(["qrCodes", qrId], {
+        await db.update([COLLECTIONS.QR_CODES, qrId], {
           ownerId: userId, ownerName: displayName,
           brandedUuid: uuid, isBranded: true, signature,
         });
       }
     } else {
-      await db.set(["qrCodes", qrId], {
+      await db.set([COLLECTIONS.QR_CODES, qrId], {
         content, contentType, ownerId: userId, ownerName: displayName,
         brandedUuid: uuid, isBranded: true, signature,
         ownerVerified: false, scanCount: 0, commentCount: 0,
         createdAt: db.timestamp(),
       });
     }
-    await db.add(["users", userId, "generatedQrs"], {
+    await db.add([COLLECTIONS.USERS, userId, COLLECTIONS.GENERATED_QRS], {
       content, contentType, uuid, branded: true, qrCodeId: qrId,
       signature, scanCount: 0, commentCount: 0, createdAt: db.timestamp(),
     });
@@ -57,7 +58,7 @@ export async function generateBrandedQr(
 
 export async function getQrOwnerInfo(qrId: string): Promise<QrOwnerInfo | null> {
   try {
-    const data = await db.get(["qrCodes", qrId]);
+    const data = await db.get([COLLECTIONS.QR_CODES, qrId]);
     if (!data) return null;
     if (!data.isBranded || !data.ownerId) return null;
     return {

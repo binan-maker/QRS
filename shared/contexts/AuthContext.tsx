@@ -17,6 +17,7 @@ import { prewarmUserData, clearPrewarmState } from "@/services/prewarm";
 import { syncAvatarFromOutside } from "@/shared/contexts/AvatarContext";
 import { validateEmail } from "@/shared/utils/email-validator";
 import { trackLoginCompleted } from "@/lib/analytics";
+import { COLLECTIONS } from "@/shared/constants/collections";
 
 const SERVER_BASE_URL = (() => {
   const raw = process.env.EXPO_PUBLIC_DOMAIN;
@@ -104,23 +105,23 @@ async function reserveUsername(uid: string, displayName: string): Promise<string
   for (let attempt = 0; attempt < 5; attempt++) {
     const candidate = await generateUniqueUsername(displayName);
     try {
-      await db.set(["usernames", candidate], { userId: uid, reservedAt: db.timestamp() });
+      await db.set([COLLECTIONS.USERNAMES, candidate], { userId: uid, reservedAt: db.timestamp() });
       return candidate;
     } catch {
     }
   }
   const fallback = "user" + uid.slice(-8).toLowerCase().replace(/[^a-z0-9]/g, "x");
-  try { await db.set(["usernames", fallback], { userId: uid, reservedAt: db.timestamp() }); } catch {}
+  try { await db.set([COLLECTIONS.USERNAMES, fallback], { userId: uid, reservedAt: db.timestamp() }); } catch {}
   return fallback;
 }
 
 async function syncUserToDb(uid: string, email: string | null, displayName: string | null, photoURL: string | null, overrideName?: string) {
   try {
-    const userData = await db.get(["users", uid]);
+    const userData = await db.get([COLLECTIONS.USERS, uid]);
     if (!userData) {
       const name = overrideName || displayName || email?.split("@")[0] || "User";
       const username = await reserveUsername(uid, name);
-      await db.set(["users", uid], {
+      await db.set([COLLECTIONS.USERS, uid], {
         uid,
         email,
         displayName: name,
@@ -134,7 +135,7 @@ async function syncUserToDb(uid: string, email: string | null, displayName: stri
     } else if (!userData.username) {
       const name = overrideName || displayName || userData.displayName || "User";
       const username = await reserveUsername(uid, name);
-      await db.update(["users", uid], { username });
+      await db.update([COLLECTIONS.USERS, uid], { username });
     }
   } catch (e: any) {
     if (e.message === "ACCOUNT_DELETED") throw new Error("This account has been deleted.");
@@ -223,7 +224,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           queryClient.prefetchQuery({
             queryKey: ["userProfile", resolvedUser.uid],
             queryFn: async () => {
-              const userData = await db.get(["users", resolvedUser.uid]);
+              const userData = await db.get([COLLECTIONS.USERS, resolvedUser.uid]);
               if (userData) {
                 const firestorePhotoURL = userData.photoURL as string | undefined;
                 setUser((prev) => {
@@ -523,13 +524,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         };
         if (reloaded.emailVerified) {
           try {
-            await db.update(["users", reloaded.uid], {
+            await db.update([COLLECTIONS.USERS, reloaded.uid], {
               displayName: reloaded.displayName || "",
               photoURL: reloaded.photoURL || null,
             });
           } catch {}
           try {
-            const userData = await db.get(["users", reloaded.uid]);
+            const userData = await db.get([COLLECTIONS.USERS, reloaded.uid]);
             if (userData?.username) authUser.username = userData.username as string;
           } catch {}
         }

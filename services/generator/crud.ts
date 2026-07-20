@@ -6,6 +6,7 @@ import type { QrType, ScanVelocityBucket, GeneratedQrItem } from "../types";
 import { SIGNATURE_SALT } from "../types";
 import { getQrCodeId } from "../qr-service";
 import { getEffectiveScanCount } from "@/lib/db/distributed-counter";
+import { COLLECTIONS } from "@/shared/constants/collections";
 
 export type { QrType, ScanVelocityBucket, GeneratedQrItem };
 
@@ -85,7 +86,7 @@ export async function saveGeneratedQr(
   }
 
   try {
-    const docRef = await db.add(["users", userId, "generatedQrs"], {
+    const docRef = await db.add([COLLECTIONS.USERS, userId, COLLECTIONS.GENERATED_QRS], {
       content, contentType, uuid, branded,
       qrCodeId: qrId, qrType,
       businessName: businessName || null,
@@ -107,10 +108,10 @@ export async function saveGeneratedQr(
 
     if (branded) {
       try {
-        const existingQr = await db.get(["qrCodes", qrId]);
+        const existingQr = await db.get([COLLECTIONS.QR_CODES, qrId]);
         if (existingQr) {
           if (!existingQr.ownerId) {
-            await db.update(["qrCodes", qrId], {
+            await db.update([COLLECTIONS.QR_CODES, qrId], {
               ownerId: userId, ownerName: displayName,
               brandedUuid: uuid, isBranded: true,
               qrType, isActive: true,
@@ -123,7 +124,7 @@ export async function saveGeneratedQr(
             });
           }
         } else {
-          await db.set(["qrCodes", qrId], {
+          await db.set([COLLECTIONS.QR_CODES, qrId], {
             content, contentType,
             createdAt: db.timestamp(),
             scanCount: 0, commentCount: 0,
@@ -153,7 +154,7 @@ export async function saveGeneratedQr(
 
 export async function getGeneratedQrById(userId: string, docId: string): Promise<GeneratedQrItem | null> {
   try {
-    const data = await db.get(["users", userId, "generatedQrs", docId]);
+    const data = await db.get([COLLECTIONS.USERS, userId, COLLECTIONS.GENERATED_QRS, docId]);
     if (!data) return null;
 
     let scanCount = data.scanCount || 0;
@@ -164,7 +165,7 @@ export async function getGeneratedQrById(userId: string, docId: string): Promise
     // New-model QRs: read the authoritative scanCount from qrs/{uuid}
     if (data.uuid) {
       try {
-        const unifiedData = await db.get(["qrs", data.uuid]);
+        const unifiedData = await db.get([COLLECTIONS.QRS, data.uuid]);
         if (unifiedData) {
           scanCount = unifiedData.scanCount ?? scanCount;
           isActive = unifiedData.status === "active";
@@ -186,7 +187,7 @@ export async function getGeneratedQrById(userId: string, docId: string): Promise
     // Legacy-model QRs: fall back to qrCodes collection
     if (data.qrCodeId) {
       try {
-        const qrData = await db.get(["qrCodes", data.qrCodeId]);
+        const qrData = await db.get([COLLECTIONS.QR_CODES, data.qrCodeId]);
         if (qrData) {
           const storedScanCount = qrData.scanCount || scanCount;
           scanCount = await getEffectiveScanCount(data.qrCodeId, storedScanCount);
@@ -210,7 +211,7 @@ export async function checkQrNameExists(userId: string, name: string): Promise<b
   const trimmed = name.trim();
   if (!trimmed) return false;
   try {
-    const { docs } = await db.query(["users", userId, "generatedQrs"], {
+    const { docs } = await db.query([COLLECTIONS.USERS, userId, COLLECTIONS.GENERATED_QRS], {
       where: [{ field: "label", op: "==", value: trimmed }],
       limit: 1,
     });
@@ -236,7 +237,7 @@ export async function getUserGeneratedQrs(userId: string): Promise<GeneratedQrIt
     // saved QRs would trigger a full collection scan on every list load. Cap at
     // 200 (sorted newest-first) so the initial render is fast; the My QR Codes
     // screen already does client-side pagination of the returned array.
-    const { docs } = await db.query(["users", userId, "generatedQrs"], {
+    const { docs } = await db.query([COLLECTIONS.USERS, userId, COLLECTIONS.GENERATED_QRS], {
       orderBy: { field: "createdAt", direction: "desc" },
       limit: 200,
     });
@@ -249,7 +250,7 @@ export async function getUserGeneratedQrs(userId: string): Promise<GeneratedQrIt
     // New-model: read from qrs/{uuid} for authoritative scanCount + status
     if (newModelItems.length > 0) {
       const unifiedResults = await Promise.all(
-        newModelItems.map(i => db.get(["qrs", i.uuid!]).catch(() => null))
+        newModelItems.map(i => db.get([COLLECTIONS.QRS, i.uuid!]).catch(() => null))
       );
       newModelItems.forEach((item, idx) => {
         const u = unifiedResults[idx];
@@ -265,7 +266,7 @@ export async function getUserGeneratedQrs(userId: string): Promise<GeneratedQrIt
     const idsNeedingLookup = [...new Set(legacyItems.map(i => i.qrCodeId).filter(Boolean))] as string[];
     if (idsNeedingLookup.length > 0) {
       const qrResults = await Promise.all(
-        idsNeedingLookup.map(id => db.get(["qrCodes", id]).catch(() => null))
+        idsNeedingLookup.map(id => db.get([COLLECTIONS.QR_CODES, id]).catch(() => null))
       );
       const qrDataMap: Record<string, any> = {};
       idsNeedingLookup.forEach((id, i) => { if (qrResults[i]) qrDataMap[id] = qrResults[i]; });
@@ -305,7 +306,7 @@ export function subscribeToUserGeneratedQrs(
   }
 
   const unsub = db.onQuery(
-    ["users", userId, "generatedQrs"],
+    [COLLECTIONS.USERS, userId, COLLECTIONS.GENERATED_QRS],
     { orderBy: { field: "createdAt", direction: "desc" }, limit: 100 },
     (docs) => {
       const base: GeneratedQrItem[] = docs.map((d) => mapDocToItem(d.id, d.data));
@@ -314,7 +315,7 @@ export function subscribeToUserGeneratedQrs(
       const ids = [...new Set(base.map(i => i.qrCodeId).filter(Boolean))] as string[];
       if (ids.length === 0) return;
 
-      Promise.all(ids.map(id => db.get(["qrCodes", id]).catch(() => null)))
+      Promise.all(ids.map(id => db.get([COLLECTIONS.QR_CODES, id]).catch(() => null)))
         .then((results) => {
           if (cancelled) return;
           const map: Record<string, any> = {};

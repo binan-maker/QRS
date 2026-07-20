@@ -16,6 +16,8 @@
 // ──────────────────────────────────────────────────────────────────────────────
 
 import { db } from "./client";
+import { COLLECTIONS } from "@/shared/constants/collections";
+import { logger } from "@/shared/utils/logger";
 
 
 const NUM_SHARDS = 10; // Adjust based on expected peak load (10 = ~10 writes/sec)
@@ -53,7 +55,7 @@ export async function incrementDistributedCounter(
   try {
     // Ensure shard exists before incrementing (prevents silent failures)
     await ensureShardExists(qrId, shardId);
-    await db.increment(["qrCodes", qrId, "counters", `shard-${shardId}`], "count", delta);
+    await db.increment([COLLECTIONS.QR_CODES, qrId, COLLECTIONS.COUNTERS, `shard-${shardId}`], "count", delta);
   } catch (e) {
     console.warn(`[db] incrementDistributedCounter failed (attempt ${retryCount + 1}/${MAX_RETRIES}):`, e);
     
@@ -81,7 +83,7 @@ export async function getDistributedCounter(qrId: string): Promise<number> {
     
     for (let i = 0; i < NUM_SHARDS; i++) {
       shardPromises.push(
-        db.get(["qrCodes", qrId, "counters", `shard-${i}`])
+        db.get([COLLECTIONS.QR_CODES, qrId, COLLECTIONS.COUNTERS, `shard-${i}`])
           .then(data => data?.count ?? 0)
           .catch(() => 0) // Individual shard failures don't break the whole read
       );
@@ -103,10 +105,10 @@ export async function getDistributedCounter(qrId: string): Promise<number> {
  */
 async function ensureShardExists(qrId: string, shardId: number): Promise<void> {
   try {
-    const existing = await db.get(["qrCodes", qrId, "counters", `shard-${shardId}`]);
+    const existing = await db.get([COLLECTIONS.QR_CODES, qrId, COLLECTIONS.COUNTERS, `shard-${shardId}`]);
     if (!existing) {
       // Shard doesn't exist - create it with count=0
-      await db.set(["qrCodes", qrId, "counters", `shard-${shardId}`], { count: 0 });
+      await db.set([COLLECTIONS.QR_CODES, qrId, COLLECTIONS.COUNTERS, `shard-${shardId}`], { count: 0 });
     }
   } catch (e) {
     console.warn(`[db] ensureShardExists failed for shard-${shardId}:`, e);
@@ -136,14 +138,14 @@ export async function migrateToDistributedCounter(
     const shardValue = perShard + (i < remainder ? 1 : 0);
     if (shardValue > 0) {
       updates.push(
-        db.set(["qrCodes", qrId, "counters", `shard-${i}`], { count: shardValue })
+        db.set([COLLECTIONS.QR_CODES, qrId, COLLECTIONS.COUNTERS, `shard-${i}`], { count: shardValue })
       );
     }
   }
   
   try {
     await Promise.all(updates);
-    console.log(`[migration] Migrated ${currentCount} scans to ${NUM_SHARDS} shards for QR ${qrId}`);
+    logger.log(`[migration] Migrated ${currentCount} scans to ${NUM_SHARDS} shards for QR ${qrId}`);
   } catch (e) {
     console.error("[migration] migrateToDistributedCounter failed:", e);
   }
@@ -182,7 +184,7 @@ export async function incrementSmartCounter(
   } else {
     // For low-traffic QRs, use simple direct increment
     try {
-      await db.increment(["qrCodes", qrId], "scanCount", delta);
+      await db.increment([COLLECTIONS.QR_CODES, qrId], "scanCount", delta);
     } catch (e) {
       console.warn("[db] incrementSmartCounter fallback failed:", e);
       // Fallback to distributed if direct fails

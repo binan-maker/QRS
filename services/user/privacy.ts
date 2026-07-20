@@ -1,6 +1,7 @@
 import { db } from "@/lib/db/client";
 import { getCachedUserProfile, setCachedUserProfile } from "./cache";
 import type { PrivacySettings } from "./profile";
+import { COLLECTIONS } from "@/shared/constants/collections";
 
 export type { PrivacySettings };
 
@@ -30,7 +31,7 @@ export async function getPrivacySettings(userId: string): Promise<PrivacySetting
   try {
     let doc = getCachedUserProfile(userId);
     if (!doc) {
-      doc = await db.get(["users", userId]);
+      doc = await db.get([COLLECTIONS.USERS, userId]);
       if (doc) setCachedUserProfile(userId, doc);
     }
     if (!doc) return DEFAULT_PRIVACY;
@@ -41,7 +42,7 @@ export async function getPrivacySettings(userId: string): Promise<PrivacySetting
 }
 
 export async function updatePrivacySettings(userId: string, settings: PrivacySettings): Promise<void> {
-  await db.update(["users", userId], {
+  await db.update([COLLECTIONS.USERS, userId], {
     privacyIsPrivate:        settings.isPrivate,
     privacyShowQrCodes:      settings.showQrCodes,
     privacyShowStats:        settings.showStats,

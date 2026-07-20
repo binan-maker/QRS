@@ -2,6 +2,7 @@ import { db } from "@/lib/db/client";
 import type { AccountTier } from "./types";
 import { tsToMs, formatTimeRemaining, timeUntilWindowReset, isWithin24h, isWithinMs } from "./time-utils";
 import { getAccountTier } from "./tiers";
+import { COLLECTIONS } from "@/shared/constants/collections";
 
 const HOURLY_REPORT_WINDOW_MS = 3_600_000;
 const HOURLY_REPORT_LIMIT_PER_USER = 100; // raised so per-QR limit is hit first
@@ -24,7 +25,7 @@ export async function checkReportEligibility(
 
   if (!isChangingReport) {
     try {
-      const userData = await db.get(["users", userId]);
+      const userData = await db.get([COLLECTIONS.USERS, userId]);
 
       if (tier.maxReportsPerDay !== Infinity) {
         const windowStart = tsToMs(userData?.reportRateWindowStart);
@@ -47,7 +48,7 @@ export async function checkReportEligibility(
       }
 
       try {
-        const perQr = await db.get(["users", userId, "reportLog", qrId]);
+        const perQr = await db.get([COLLECTIONS.USERS, userId, COLLECTIONS.REPORT_LOG, qrId]);
         const perQrWindowStart = tsToMs(perQr?.windowStart);
         const perQrCount = perQr?.count || 0;
         if (isWithinMs(perQrWindowStart, HOURLY_REPORT_WINDOW_MS) && perQrCount >= HOURLY_REPORT_LIMIT_PER_QR) {
@@ -71,7 +72,7 @@ export async function checkReportEligibility(
 
 export async function recordReport(userId: string, qrId: string): Promise<void> {
   try {
-    const userData = await db.get(["users", userId]);
+    const userData = await db.get([COLLECTIONS.USERS, userId]);
 
     const dailyWindowStart = tsToMs(userData?.reportRateWindowStart);
     const dailyCount = userData?.reportRateCount || 0;
@@ -94,33 +95,33 @@ export async function recordReport(userId: string, qrId: string): Promise<void> 
       updates.reportHourlyCount = 1;
     }
 
-    await db.update(["users", userId], updates);
+    await db.update([COLLECTIONS.USERS, userId], updates);
 
     try {
-      const perQr = await db.get(["users", userId, "reportLog", qrId]);
+      const perQr = await db.get([COLLECTIONS.USERS, userId, COLLECTIONS.REPORT_LOG, qrId]);
       const perQrWindowStart = tsToMs(perQr?.windowStart);
       const perQrCount = perQr?.count || 0;
       if (isWithinMs(perQrWindowStart, HOURLY_REPORT_WINDOW_MS)) {
-        await db.set(["users", userId, "reportLog", qrId], {
+        await db.set([COLLECTIONS.USERS, userId, COLLECTIONS.REPORT_LOG, qrId], {
           count: perQrCount + 1,
           windowStart: perQr?.windowStart ?? db.timestamp(),
           updatedAt: db.timestamp(),
         });
       } else {
-        await db.set(["users", userId, "reportLog", qrId], {
+        await db.set([COLLECTIONS.USERS, userId, COLLECTIONS.REPORT_LOG, qrId], {
           count: 1, windowStart: db.timestamp(), updatedAt: db.timestamp(),
         });
       }
     } catch {}
 
-    const qrData = await db.get(["qrCodes", qrId]);
+    const qrData = await db.get([COLLECTIONS.QR_CODES, qrId]);
     if (qrData) {
       const velWindowStart = tsToMs(qrData.voteVelocityWindowStart);
       const velCount = qrData.voteVelocityCount || 0;
       if (Date.now() - velWindowStart < 3600000) {
-        await db.update(["qrCodes", qrId], { voteVelocityCount: velCount + 1 });
+        await db.update([COLLECTIONS.QR_CODES, qrId], { voteVelocityCount: velCount + 1 });
       } else {
-        await db.update(["qrCodes", qrId], {
+        await db.update([COLLECTIONS.QR_CODES, qrId], {
           voteVelocityWindowStart: db.timestamp(), voteVelocityCount: 1,
         });
       }
@@ -135,7 +136,7 @@ export async function analyzeReportsForCollusion(qrId: string): Promise<{
   negativeWeightMultiplier: number;
 }> {
   try {
-    const { docs } = await db.query(["qrCodes", qrId, "reports"]);
+    const { docs } = await db.query([COLLECTIONS.QR_CODES, qrId, COLLECTIONS.REPORTS]);
     const activeDocs = docs.filter((d) => !d.data.userRemoved);
     if (activeDocs.length < 3) {
       return { suspicious: false, reason: null, safeWeightMultiplier: 1, negativeWeightMultiplier: 1 };
