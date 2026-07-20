@@ -31,9 +31,16 @@ async function serverValidateEmail(email: string): Promise<{ valid: boolean; rea
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ email }),
     });
-    if (!res.ok) return { valid: false, reason: "Email validation failed. Please try again." };
-    return await res.json();
+    // Only treat the server's verdict as authoritative on an explicit HTTP 200.
+    // Any non-200 response (4xx, 5xx, or a proxy 502 when the backend is offline)
+    // falls back to local validation so signup is never blocked by backend
+    // unavailability. Firebase remains the final gate for email legitimacy.
+    if (res.status === 200) {
+      return await res.json();
+    }
+    return validateEmail(email);
   } catch {
+    // Network error or connection refused — degrade gracefully to local check.
     return validateEmail(email);
   }
 }
