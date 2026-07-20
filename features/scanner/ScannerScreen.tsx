@@ -1,5 +1,5 @@
 import { useRef, useEffect, useState, useCallback } from "react";
-import { Platform, View, StyleSheet, Pressable } from "react-native";
+import { Platform, View, StyleSheet, Pressable, Animated } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 // NOTE: react-native-reanimated is intentionally NOT imported here.
 // A FadeIn entry animation on the root view makes it transparent at mount,
@@ -32,37 +32,28 @@ import type { CameraErrorType } from "@/features/scanner/components";
 const DONATION_DISMISS_KEY = "@qrg_donation_dismissed";
 const SCAN_COUNT_KEY       = "@qrg_total_scan_count";
 
+// iOS uses continuous autofocus natively ('on' = AVCaptureFocusModeContinuousAutoFocus).
+// Android's CameraX default is already continuous — setting 'on' there triggers
+// single-shot AF then locks, which is worse. So we only set it explicitly on iOS.
+const AUTOFOCUS_MODE = Platform.OS === "ios" ? "on" as const : undefined;
+
 export default function ScannerScreen() {
   const [permission, requestPermission] = useCameraPermissions();
   const [hardwareAvailable, setHardwareAvailable] = useState<boolean | null>(null);
   const [cameraAvailable,   setCameraAvailable]   = useState(true);
   const [cameraErrorType,   setCameraErrorType]   = useState<CameraErrorType>("unavailable");
-  // Mirror of cameraAvailable for timer callbacks — avoids stale-closure reads.
   const cameraAvailableRef     = useRef(true);
   const cameraReadyTimerRef    = useRef<ReturnType<typeof setTimeout> | null>(null);
   const cameraActivateTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // ── cameraPreviewReady: true only after onCameraReady fires ───────────────
-  // iOS's AVCaptureVideoPreviewLayer renders a solid blue frame while the
-  // capture session is starting. This flag gates rendering the camera feed
-  // (and the scanner overlay) behind a black cover until the feed is actually
-  // live, eliminating the blue-flash and the "frozen blue screen" symptom.
   const [cameraPreviewReady, setCameraPreviewReady] = useState(false);
 
-  // ── useIsFocused — the single source of truth for focus state ─────────────
   const isFocused = useIsFocused();
 
   // ── cameraActive: delayed mount gate ──────────────────────────────────────
-  // DO NOT mount CameraView the instant isFocused becomes true.
-  // The screen-transition animation is still running at that point and the
-  // camera renders before its container has settled dimensions, producing the
-  // "half-black / half-camera" split. A short delay lets the layout settle
-  // before the CameraView tries to fill it.
   const [cameraActive, setCameraActive] = useState(false);
 
-  // ── focusKey: increment each focus cycle to force a clean remount ─────────
-  // Without this, the CameraView reuses its previous native instance across
-  // focus cycles and can carry over a stale, partially-rendered preview.
   const focusCountRef = useRef(0);
   const [focusKey, setFocusKey] = useState(0);
 
@@ -73,19 +64,16 @@ export default function ScannerScreen() {
     }
 
     if (isFocused) {
-      // iOS: AVCaptureSession needs 500–1000 ms to start. 900 ms gives extra
-      // headroom for Pro multi-lens switching and cold-start on iOS 17/18.
-      // Android: 300 ms is still sufficient for camera2 initialisation.
       const delay = Platform.OS === "ios" ? 900 : 300;
       cameraActivateTimerRef.current = setTimeout(() => {
         focusCountRef.current += 1;
         setFocusKey(focusCountRef.current);
-        setCameraPreviewReady(false); // reset before each new mount cycle
+        setCameraPreviewReady(false);
         setCameraActive(true);
       }, delay);
     } else {
       setCameraActive(false);
-      setCameraPreviewReady(false); // camera is gone — reset for next visit
+      setCameraPreviewReady(false);
     }
 
     return () => {
@@ -96,10 +84,8 @@ export default function ScannerScreen() {
     };
   }, [isFocused]);
 
-  // Keep ref in sync so timer callbacks always read fresh cameraAvailable value.
   useEffect(() => { cameraAvailableRef.current = cameraAvailable; }, [cameraAvailable]);
 
-  // Reset error state every time the screen comes back into view
   useFocusEffect(
     useCallback(() => {
       cameraAvailableRef.current = true;
@@ -114,7 +100,6 @@ export default function ScannerScreen() {
 
   const [showDonationBanner, setShowDonationBanner] = useState(false);
 
-  // ── Donation banner: show after 5 total scans ──────────────────────────────
   useEffect(() => {
     AsyncStorage.getItem(DONATION_DISMISS_KEY).then((dismissed) => {
       if (dismissed) return;
@@ -125,14 +110,6 @@ export default function ScannerScreen() {
   }, []);
 
   // ── Hardware availability check ────────────────────────────────────────────
-  // isAvailableAsync() is NOT reliable on many Android ROMs — it can return
-  // false or throw on devices that have a perfectly working camera. We use it
-  // as a *hint*, not a hard gate. When it returns false or errors we still
-  // attempt to mount the camera and let onMountError / the watchdog be the
-  // authoritative failure signal.
-  // We race it against a 3 s timeout so a hung API call can never block the
-  // watchdog from starting (hardwareAvailable would stay null indefinitely
-  // otherwise, and the user would see a permanent black screen with no error).
   useEffect(() => {
     let cancelled = false;
     const timeout = new Promise<boolean>((resolve) =>
@@ -140,29 +117,18 @@ export default function ScannerScreen() {
     );
     Promise.race([CameraView.isAvailableAsync(), timeout])
       .then((available) => { if (!cancelled) setHardwareAvailable(available); })
-      .catch(() => {
-        // API error means "unknown" — optimistically assume true so the camera
-        // gets a chance to mount. onMountError will catch genuine failures.
-        if (!cancelled) setHardwareAvailable(true);
-      });
+      .catch(() => { if (!cancelled) setHardwareAvailable(true); });
     return () => { cancelled = true; };
   }, []);
 
   // ── Camera ready watchdog ──────────────────────────────────────────────────
-  // Restarts whenever cameraActive changes so each mount gets its own window.
-  // We start the watchdog even when hardwareAvailable is false — isAvailableAsync()
-  // returns incorrect results on many Android ROMs, so we let the mount attempt
-  // (and onMountError / onCameraReady) be the authoritative outcome.
-  // When hardwareAvailable is false we use a shorter window (5 s) because a device
-  // that truly has no camera triggers onMountError almost immediately, so a long
-  // wait would just delay the error message needlessly.
   useEffect(() => {
     if (!permission?.granted || hardwareAvailable === null || !cameraActive) return;
 
     const timeoutMs =
       hardwareAvailable === false
-        ? 5000                                     // likely no camera — fail fast
-        : Platform.OS === "android" ? 15000 : 12000; // real device — give plenty of time
+        ? 5000
+        : Platform.OS === "android" ? 15000 : 12000;
 
     cameraReadyTimerRef.current = setTimeout(() => {
       setCameraAvailable((prev) => {
@@ -177,10 +143,6 @@ export default function ScannerScreen() {
         cameraReadyTimerRef.current = null;
       }
     };
-  // focusKey is included so the watchdog restarts on every retry remount — not
-  // just when cameraActive toggles. Without this, handleCameraRetry increments
-  // focusKey but cameraActive stays true, so the watchdog effect never re-runs
-  // and the retry mount has no backstop timer.
   }, [permission?.granted, hardwareAvailable, cameraActive, focusKey]);
 
   function markCameraUnavailable(type: CameraErrorType) {
@@ -188,8 +150,6 @@ export default function ScannerScreen() {
       clearTimeout(cameraReadyTimerRef.current);
       cameraReadyTimerRef.current = null;
     }
-    // Also kill the preview-ready safety timer — a failed camera must not
-    // flip cameraPreviewReady to true after the error state is set.
     if (cameraPreviewSafetyRef.current) {
       clearTimeout(cameraPreviewSafetyRef.current);
       cameraPreviewSafetyRef.current = null;
@@ -199,13 +159,7 @@ export default function ScannerScreen() {
     setCameraAvailable(false);
   }
 
-  // ── Safety net: lift the black cover even if onCameraReady never fires ───────
-  // On iOS with the new architecture, onCameraReady can silently not fire when
-  // the AVCaptureSession starts but the JS bridge callback is dropped (race
-  // between the session starting and the React tree committing). Without this,
-  // the black cover stays up permanently and the app appears stuck/frozen.
-  // 5 s is well inside the 12 s watchdog window so a genuinely broken camera
-  // still reaches the error banner; this only rescues the "silent success" case.
+  // ── Safety net: lift the black cover if onCameraReady never fires ──────────
   const cameraPreviewSafetyRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
@@ -215,9 +169,6 @@ export default function ScannerScreen() {
     }
     if (cameraActive && !cameraPreviewReady) {
       cameraPreviewSafetyRef.current = setTimeout(() => {
-        // Only lift the cover if the camera is still in a healthy state.
-        // cameraAvailableRef.current == false means the watchdog or onMountError
-        // already fired a failure — do not flip preview-ready after that.
         if (!cameraAvailableRef.current) return;
         setCameraPreviewReady((prev) => (prev ? prev : true));
       }, 5000);
@@ -239,8 +190,6 @@ export default function ScannerScreen() {
       clearTimeout(cameraPreviewSafetyRef.current);
       cameraPreviewSafetyRef.current = null;
     }
-    // AVCaptureSession is running and the first frame is live —
-    // lift the black cover so the real camera feed is visible.
     setCameraPreviewReady(true);
   }
 
@@ -249,14 +198,10 @@ export default function ScannerScreen() {
       clearTimeout(cameraReadyTimerRef.current);
       cameraReadyTimerRef.current = null;
     }
-    // Also clear any in-flight safety timer from the previous attempt so it
-    // cannot fire against the new mount cycle.
     if (cameraPreviewSafetyRef.current) {
       clearTimeout(cameraPreviewSafetyRef.current);
       cameraPreviewSafetyRef.current = null;
     }
-    // Force a full remount with a fresh key; reset the preview-ready
-    // flag so the black cover is back for this new mount cycle.
     focusCountRef.current += 1;
     setFocusKey(focusCountRef.current);
     setCameraPreviewReady(false);
@@ -297,13 +242,15 @@ export default function ScannerScreen() {
     resetScan,
     handleUnverifiedProceed,
     handleUnverifiedBack,
+    onQRBoundsDetected,
   } = useScanner({ isCameraAvailable: cameraAvailable });
 
-  // ── Barcode handler — always stable, refs gate double-scans ───────────────
-  // IMPORTANT: never pass `undefined` to onBarcodeScanned. Switching between
-  // a function and undefined causes CameraView to re-render its native surface,
-  // which is the primary trigger of the half-black screen artifact.
+  // ── Barcode handler — wires smart zoom before processing ─────────────────
+  // onQRBoundsDetected inspects bounds.size.width to detect small QR codes
+  // and automatically boosts zoom for faster, more reliable detection.
   const handleScanWithCount = useCallback(async (data: any) => {
+    // Feed bounds into smart auto-zoom before the scan lock fires
+    onQRBoundsDetected(data?.bounds);
     handleBarCodeScanned(data);
     try {
       const dismissed = await AsyncStorage.getItem(DONATION_DISMISS_KEY);
@@ -313,14 +260,53 @@ export default function ScannerScreen() {
       await AsyncStorage.setItem(SCAN_COUNT_KEY, String(newCount));
       if (newCount >= 5) setShowDonationBanner(true);
     } catch {}
-  }, [handleBarCodeScanned]);
+  }, [handleBarCodeScanned, onQRBoundsDetected]);
+
+  // ── Tap-to-focus ──────────────────────────────────────────────────────────
+  // Shows a brief focus ring at the tap point. Continuous autofocus keeps
+  // running; the visual ring confirms to the user that they tapped.
+  // On iOS, toggling autofocus from 'on'→'off'→'on' restarts the AF cycle.
+  const [focusPoint, setFocusPoint] = useState<{ x: number; y: number } | null>(null);
+  const focusRingAnim    = useRef(new Animated.Value(0)).current;
+  const focusRingTimer   = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [autofocusMode, setAutofocusMode] = useState<"on" | "off" | undefined>(AUTOFOCUS_MODE);
+
+  const handleTapFocus = useCallback((x: number, y: number) => {
+    if (!cameraLive || scanned) return;
+
+    // Show the focus ring
+    if (focusRingTimer.current) clearTimeout(focusRingTimer.current);
+    setFocusPoint({ x, y });
+    focusRingAnim.stopAnimation();
+    focusRingAnim.setValue(0);
+
+    Animated.sequence([
+      Animated.timing(focusRingAnim, { toValue: 1, duration: 160, useNativeDriver: true }),
+      Animated.delay(700),
+      Animated.timing(focusRingAnim, { toValue: 0, duration: 280, useNativeDriver: true }),
+    ]).start(() => setFocusPoint(null));
+
+    // iOS: briefly toggle autofocus to trigger a new AF metering cycle
+    if (Platform.OS === "ios") {
+      setAutofocusMode("off");
+      focusRingTimer.current = setTimeout(() => {
+        setAutofocusMode("on");
+      }, 120);
+    }
+  }, [cameraLive, scanned, focusRingAnim]);
+
+  // Cleanup focus ring timer on unmount
+  useEffect(() => {
+    return () => {
+      if (focusRingTimer.current) clearTimeout(focusRingTimer.current);
+    };
+  }, []);
 
   // ── Permission not yet resolved ────────────────────────────────────────────
   if (!permission) {
     return <View style={{ flex: 1, backgroundColor: "#000" }} />;
   }
 
-  // ── Permission denied ─────────────────────────────────────────────────────
   if (!permission.granted) {
     return (
       <View style={{ flex: 1, backgroundColor: colors.background }}>
@@ -338,31 +324,18 @@ export default function ScannerScreen() {
     );
   }
 
-  // ── Camera live: fully active, layout settled, and camera responding ────────
-  // cameraPreviewReady (set by onCameraReady) is the authoritative signal that
-  // the AVCaptureSession feed is flowing. The scanner overlay must not render
-  // until it's true — otherwise the finder frame floats over a black screen.
   const cameraLive = cameraActive && hardwareAvailable !== null && cameraAvailable && cameraPreviewReady;
 
-  // ── Main render ───────────────────────────────────────────────────────────
-  // NOTE: Do NOT wrap this in a FadeIn/Animated.View entry animation.
-  // FadeIn sets the outer view's opacity to 0 at mount and animates to 1.
-  // During that transition the #000 background is also transparent, which
-  // lets the navigation stack's dark-blue (#0A0E17) background bleed through —
-  // exactly the "blue screen on entry" the user sees. A plain View is opaque
-  // from the first frame.
   return (
     <View style={{ flex: 1, backgroundColor: "#000" }}>
       <StatusBar style="light" backgroundColor="transparent" translucent />
 
-      {/* Camera layer — black placeholder holds space during all non-camera states */}
+      {/* Black placeholder holds space during all non-camera states */}
       <View style={[StyleSheet.absoluteFillObject, { backgroundColor: "#000" }]} />
 
       {hardwareAvailable === null ? (
-        // Still waiting for isAvailableAsync() — black placeholder holds space
         null
       ) : !cameraAvailable && isFocused ? (
-        // Camera failed (onMountError fired or watchdog expired) — show recovery UI
         <View style={[StyleSheet.absoluteFillObject, { backgroundColor: "#080c14" }]}>
           <View style={{ paddingTop: topInset + 8, paddingHorizontal: 16, paddingBottom: 10 }}>
             <Pressable onPress={() => router.back()} style={styles.backBtn}>
@@ -378,9 +351,6 @@ export default function ScannerScreen() {
           </View>
         </View>
       ) : cameraActive ? (
-        // Camera active — layout has settled, attempt mount.
-        // isAvailableAsync() returning false is treated as a hint only; onMountError
-        // is the authoritative signal for devices that genuinely lack a camera.
         <CameraErrorBoundary onError={() => markCameraUnavailable("unavailable")}>
           <>
             <CameraView
@@ -389,6 +359,9 @@ export default function ScannerScreen() {
               facing={facing}
               enableTorch={flashOn && facing === "back"}
               zoom={zoom}
+              // iOS: explicitly request continuous autofocus
+              // Android: omit — CameraX default is already continuous
+              autofocus={autofocusMode}
               barcodeScannerSettings={{ barcodeTypes: ["qr"] }}
               onBarcodeScanned={handleScanWithCount}
               onCameraReady={markCameraReady}
@@ -404,13 +377,7 @@ export default function ScannerScreen() {
               }}
             />
 
-            {/* Blue-frame shield ─────────────────────────────────────────────
-                iOS's AVCaptureVideoPreviewLayer initialises with a blue/teal
-                CALayer default. Android can also show a black blit gap before
-                the first frame arrives. This cover sits above the CameraView
-                and is only removed when onCameraReady fires, ensuring the user
-                never sees the raw initialisation artefact.
-                pointerEvents="none" keeps all touch events going to the camera. */}
+            {/* Blue-frame shield — removed once onCameraReady fires */}
             {!cameraPreviewReady && (
               <View
                 style={[StyleSheet.absoluteFillObject, { backgroundColor: "#000" }]}
@@ -420,6 +387,35 @@ export default function ScannerScreen() {
           </>
         </CameraErrorBoundary>
       ) : null}
+
+      {/* Tap-to-focus area — transparent, sits between camera and overlay */}
+      {cameraLive && !scanned && (
+        <Pressable
+          style={[StyleSheet.absoluteFillObject, styles.tapArea]}
+          onPress={(e) => handleTapFocus(e.nativeEvent.locationX, e.nativeEvent.locationY)}
+        />
+      )}
+
+      {/* Tap-to-focus ring indicator */}
+      {focusPoint && (
+        <Animated.View
+          pointerEvents="none"
+          style={[
+            styles.focusRing,
+            {
+              left:    focusPoint.x - 28,
+              top:     focusPoint.y - 28,
+              opacity: focusRingAnim,
+              transform: [{
+                scale: focusRingAnim.interpolate({
+                  inputRange:  [0, 1],
+                  outputRange: [1.4, 1],
+                }),
+              }],
+            },
+          ]}
+        />
+      )}
 
       {/* Scanner overlay (controls, finder, animations) */}
       {cameraLive && (
@@ -444,10 +440,9 @@ export default function ScannerScreen() {
         />
       )}
 
-      {/* Processing overlay — lazy-mounted */}
+      {/* Processing overlay */}
       {processing && <ProcessingOverlay />}
 
-      {/* Modals — lazy-mounted (only rendered when open) */}
       {verifiedModal && (
         <VerifiedModal visible={verifiedModal} ownerName={verifiedOwnerName} />
       )}
@@ -503,5 +498,21 @@ const styles = StyleSheet.create({
     justifyContent:  "center",
     borderWidth:     1,
     borderColor:     "rgba(255,255,255,0.1)",
+  },
+
+  // Transparent tap-to-focus area (below the scanner overlay so buttons still work)
+  tapArea: {
+    zIndex: 1,
+  },
+
+  // Small square focus ring that appears where the user taps
+  focusRing: {
+    position:     "absolute",
+    width:        56,
+    height:       56,
+    borderRadius: 8,
+    borderWidth:  1.5,
+    borderColor:  "rgba(255,255,255,0.80)",
+    zIndex:       5,
   },
 });

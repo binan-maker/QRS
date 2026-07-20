@@ -19,7 +19,6 @@ export function useScanner({ isCameraAvailable = true }: { isCameraAvailable?: b
   function flipCamera() {
     setFacing((prev) => {
       const next = prev === "back" ? "front" : "back";
-      // Disable torch when switching to front camera (no front torch)
       if (next === "front") camera.setFlashOn(false);
       return next;
     });
@@ -51,10 +50,10 @@ export function useScanner({ isCameraAvailable = true }: { isCameraAvailable?: b
     isCameraAvailable,
   });
 
-  // ── Wrap handleBarCodeScanned to kill auto-flash immediately on scan hit ──
+  // ── Wrap handleBarCodeScanned to fire onScanSuccess immediately ──────────
   const handleBarCodeScanned = useCallback(
     async (data: any) => {
-      camera.onScanSuccess(); // stop auto-torch + auto-zoom progression
+      camera.onScanSuccess();
       await _rawHandleBarCodeScanned(data);
     },
     [_rawHandleBarCodeScanned, camera.onScanSuccess]
@@ -72,8 +71,9 @@ export function useScanner({ isCameraAvailable = true }: { isCameraAvailable?: b
     zoomLabel:    camera.zoomLabel,
     scanLineAnim: camera.scanLineAnim,
     // Camera actions
-    cycleZoom:    camera.cycleZoom,
-    resetScan:    camera.resetScan,
+    cycleZoom:            camera.cycleZoom,
+    resetScan:            camera.resetScan,
+    onQRBoundsDetected:   camera.onQRBoundsDetected,
     // Facing
     facing,
     flipCamera,
