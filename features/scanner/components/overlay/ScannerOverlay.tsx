@@ -8,23 +8,24 @@ import OverlayTopBar from "./OverlayTopBar";
 import OverlayBottomBar from "./OverlayBottomBar";
 
 interface Props {
-  topInset:          number;
-  bottomInset:       number;
-  flashOn:           boolean;
-  onToggleFlash:     () => void;
-  zoom:              number;
-  zoomLabel:         string;
-  onCycleZoom:       () => void;
-  scanned:           boolean;
-  scanSuccess:       boolean;
-  scanLineAnim:      Animated.Value;
-  anonymousMode:     boolean;
-  onToggleAnonymous: () => void;
-  onPickImage:       () => void;
-  onReset:           () => void;
-  user:              any;
-  facing:            "back" | "front";
-  onFlipCamera:      () => void;
+  topInset:           number;
+  bottomInset:        number;
+  flashOn:            boolean;
+  onToggleFlash:      () => void;
+  zoom:               number;
+  zoomLabel:          string;
+  onCycleZoom:        () => void;
+  scanned:            boolean;
+  scanSuccess:        boolean;
+  scanLineAnim:       Animated.Value;
+  anonymousMode:      boolean;
+  onToggleAnonymous:  () => void;
+  onPickImage:        () => void;
+  onReset:            () => void;
+  user:               any;
+  facing:             "back" | "front";
+  onFlipCamera:       () => void;
+  lowLightSuggested?: boolean;
 }
 
 export default function ScannerOverlay({
@@ -44,6 +45,7 @@ export default function ScannerOverlay({
   user,
   facing,
   onFlipCamera,
+  lowLightSuggested = false,
 }: Props) {
   const { width: screenWidth, height: screenHeight } = useWindowDimensions();
   const anims = useOverlayAnimations();
@@ -117,6 +119,7 @@ export default function ScannerOverlay({
         facing={facing}
         onFlipCamera={onFlipCamera}
         onToggleAnonymous={onToggleAnonymous}
+        lowLightSuggested={lowLightSuggested}
       />
     </View>
   );

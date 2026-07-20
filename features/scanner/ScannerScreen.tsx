@@ -14,6 +14,7 @@ import { useTopInset } from "@/shared/utils/platform";
 import { Ionicons } from "@expo/vector-icons";
 import { useTheme } from "@/shared/contexts/ThemeContext";
 import { useScanner } from "@/features/scanner/hooks/useScanner";
+import { useLowLightDetection } from "@/features/scanner/hooks/useLowLightDetection";
 import {
   ScannerOverlay,
   ProcessingOverlay,
@@ -262,6 +263,18 @@ export default function ScannerScreen() {
     } catch {}
   }, [handleBarCodeScanned, onQRBoundsDetected]);
 
+  // ── Low-light detection ───────────────────────────────────────────────────
+  // cameraLive is declared later (after permission check), so we derive it
+  // inline here using the same constituent parts.
+  const _cameraLiveForLowLight =
+    cameraActive && hardwareAvailable !== null && cameraAvailable && cameraPreviewReady;
+  const { suggested: lowLightSuggested } = useLowLightDetection({
+    cameraLive: _cameraLiveForLowLight,
+    scanned,
+    flashOn,
+    facing,
+  });
+
   // ── Tap-to-focus ──────────────────────────────────────────────────────────
   // Shows a brief focus ring at the tap point. Continuous autofocus keeps
   // running; the visual ring confirms to the user that they tapped.
@@ -437,6 +450,7 @@ export default function ScannerScreen() {
           user={user}
           facing={facing}
           onFlipCamera={flipCamera}
+          lowLightSuggested={lowLightSuggested}
         />
       )}
 
