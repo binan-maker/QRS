@@ -38,7 +38,7 @@ export default function OverlayBottomBar({
   return (
     <ReAnimated.View
       entering={FadeInUp.delay(40).duration(220)}
-      style={[styles.bottomBar, { paddingBottom: Math.max(bottomInset, 12) + 16 }]}
+      style={[styles.bottomBar, { paddingBottom: Math.max(bottomInset, 12) + 48 }]}
     >
       {/* Zoom / anon status pills */}
       {(zoom > 0 || anonymousMode) && (
