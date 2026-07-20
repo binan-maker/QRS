@@ -5,13 +5,12 @@ import { FINDER_SIZE } from "@/features/scanner/hooks/useCameraControls";
 import { SCANNER_GLOW } from "./constants";
 
 // Corner geometry
-const CORNER_LEN    = 28;   // arm length — shorter = more minimal
-const CORNER_W      = 3;    // stroke width
-const CORNER_RADIUS = 6;    // rounded tip
+const CORNER_LEN    = 28;
+const CORNER_W      = 3;
+const CORNER_RADIUS = 12;   // visibly rounded tips
 
-// Colors
 const CORNER_DEFAULT = "rgba(255,255,255,0.88)";
-const CORNER_SUCCESS = SCANNER_GLOW; // BinRo primary blue on detection
+const CORNER_SUCCESS = SCANNER_GLOW;
 
 interface Props {
   scanned:      boolean;
@@ -20,11 +19,9 @@ interface Props {
 }
 
 export default function FinderFrame({ scanned, scanSuccess, cornerBreath }: Props) {
-  // On success, snap corners to accent color; otherwise breathe white
   const cornerColor = scanSuccess ? CORNER_SUCCESS : CORNER_DEFAULT;
 
   return (
-    // overflow: visible so corners render at exact edges without clipping
     <View style={styles.frame}>
 
       {/* ── Top-left corner ── */}
@@ -43,7 +40,7 @@ export default function FinderFrame({ scanned, scanSuccess, cornerBreath }: Prop
       <Animated.View style={[styles.corner, styles.cbrH, { backgroundColor: cornerColor, opacity: cornerBreath }]} />
       <Animated.View style={[styles.corner, styles.cbrV, { backgroundColor: cornerColor, opacity: cornerBreath }]} />
 
-      {/* Success overlay — brief blue tint + checkmark */}
+      {/* Success overlay */}
       {scanSuccess && (
         <View style={styles.successOverlay}>
           <View style={styles.successOuterRing}>
@@ -63,84 +60,91 @@ const styles = StyleSheet.create({
     height:   FINDER_SIZE,
     overflow: "visible",
   },
-
   corner: {
     position: "absolute",
   },
 
   // ── Top-left ──
   ctlH: {
-    top:                     0,
-    left:                    0,
-    width:                   CORNER_LEN,
-    height:                  CORNER_W,
+    top:              0,
+    left:             0,
+    width:            CORNER_LEN,
+    height:           CORNER_W,
     borderTopLeftRadius:     CORNER_RADIUS,
-    borderBottomRightRadius: CORNER_RADIUS / 2,
+    borderTopRightRadius:    CORNER_RADIUS / 3,
+    borderBottomRightRadius: CORNER_RADIUS / 3,
   },
   ctlV: {
-    top:                     0,
-    left:                    0,
-    width:                   CORNER_W,
-    height:                  CORNER_LEN,
-    borderTopLeftRadius:     CORNER_RADIUS,
-    borderBottomRightRadius: CORNER_RADIUS / 2,
+    top:              0,
+    left:             0,
+    width:            CORNER_W,
+    height:           CORNER_LEN,
+    borderTopLeftRadius:    CORNER_RADIUS,
+    borderBottomLeftRadius: CORNER_RADIUS / 3,
+    borderBottomRightRadius: CORNER_RADIUS / 3,
   },
 
   // ── Top-right ──
   ctrH: {
-    top:                    0,
-    right:                  0,
-    width:                  CORNER_LEN,
-    height:                 CORNER_W,
-    borderTopRightRadius:   CORNER_RADIUS,
-    borderBottomLeftRadius: CORNER_RADIUS / 2,
+    top:   0,
+    right: 0,
+    width:  CORNER_LEN,
+    height: CORNER_W,
+    borderTopRightRadius:    CORNER_RADIUS,
+    borderTopLeftRadius:     CORNER_RADIUS / 3,
+    borderBottomLeftRadius:  CORNER_RADIUS / 3,
   },
   ctrV: {
-    top:                    0,
-    right:                  0,
-    width:                  CORNER_W,
-    height:                 CORNER_LEN,
-    borderTopRightRadius:   CORNER_RADIUS,
-    borderBottomLeftRadius: CORNER_RADIUS / 2,
+    top:   0,
+    right: 0,
+    width:  CORNER_W,
+    height: CORNER_LEN,
+    borderTopRightRadius:    CORNER_RADIUS,
+    borderBottomRightRadius: CORNER_RADIUS / 3,
+    borderBottomLeftRadius:  CORNER_RADIUS / 3,
   },
 
   // ── Bottom-left ──
   cblH: {
-    bottom:                 0,
-    left:                   0,
-    width:                  CORNER_LEN,
-    height:                 CORNER_W,
-    borderBottomLeftRadius: CORNER_RADIUS,
-    borderTopRightRadius:   CORNER_RADIUS / 2,
+    bottom: 0,
+    left:   0,
+    width:  CORNER_LEN,
+    height: CORNER_W,
+    borderBottomLeftRadius:  CORNER_RADIUS,
+    borderBottomRightRadius: CORNER_RADIUS / 3,
+    borderTopRightRadius:    CORNER_RADIUS / 3,
   },
   cblV: {
-    bottom:                 0,
-    left:                   0,
-    width:                  CORNER_W,
-    height:                 CORNER_LEN,
+    bottom: 0,
+    left:   0,
+    width:  CORNER_W,
+    height: CORNER_LEN,
     borderBottomLeftRadius: CORNER_RADIUS,
-    borderTopRightRadius:   CORNER_RADIUS / 2,
+    borderTopLeftRadius:    CORNER_RADIUS / 3,
+    borderTopRightRadius:   CORNER_RADIUS / 3,
   },
 
   // ── Bottom-right ──
   cbrH: {
-    bottom:                  0,
-    right:                   0,
-    width:                   CORNER_LEN,
-    height:                  CORNER_W,
+    bottom: 0,
+    right:  0,
+    width:  CORNER_LEN,
+    height: CORNER_W,
     borderBottomRightRadius: CORNER_RADIUS,
-    borderTopLeftRadius:     CORNER_RADIUS / 2,
+    borderBottomLeftRadius:  CORNER_RADIUS / 3,
+    borderTopLeftRadius:     CORNER_RADIUS / 3,
   },
   cbrV: {
-    bottom:                  0,
-    right:                   0,
-    width:                   CORNER_W,
-    height:                  CORNER_LEN,
+    bottom: 0,
+    right:  0,
+    width:  CORNER_W,
+    height: CORNER_LEN,
     borderBottomRightRadius: CORNER_RADIUS,
-    borderTopLeftRadius:     CORNER_RADIUS / 2,
+    borderTopRightRadius:    CORNER_RADIUS / 3,
+    borderTopLeftRadius:     CORNER_RADIUS / 3,
   },
 
-  // ── Success state ──
+  // ── Success ──
   successOverlay: {
     ...StyleSheet.absoluteFillObject,
     backgroundColor: "rgba(59,130,246,0.06)",

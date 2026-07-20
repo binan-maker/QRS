@@ -17,7 +17,7 @@ interface Props {
   onCycleZoom:       () => void;
   scanned:           boolean;
   scanSuccess:       boolean;
-  scanLineAnim:      Animated.Value; // kept in hook for compatibility; unused in UI
+  scanLineAnim:      Animated.Value;
   anonymousMode:     boolean;
   onToggleAnonymous: () => void;
   onPickImage:       () => void;
@@ -54,7 +54,6 @@ export default function ScannerOverlay({
   const finderTop    = TOP_BAR_H + Math.max(0, (availH - FINDER_SIZE) / 2);
   const finderLeft   = (screenWidth - FINDER_SIZE) / 2;
 
-  // Status text — small, clean, contextual
   const hintText = scanSuccess
     ? "Code captured"
     : scanned
@@ -64,10 +63,8 @@ export default function ScannerOverlay({
   return (
     <View style={[StyleSheet.absoluteFillObject, styles.outerContainer]}>
 
-      {/* Non-interactive layer: finder frame + hint text */}
+      {/* Non-interactive layer: finder + hint */}
       <View style={[StyleSheet.absoluteFillObject, styles.nonInteractive]}>
-
-        {/* Finder frame — four rounded corner indicators, no border, no laser */}
         <View style={{ position: "absolute", top: finderTop, left: finderLeft }}>
           <ReAnimated.View entering={FadeIn.delay(60).duration(220)}>
             <FinderFrame
@@ -78,7 +75,6 @@ export default function ScannerOverlay({
           </ReAnimated.View>
         </View>
 
-        {/* Instruction text below finder */}
         <ReAnimated.View
           entering={FadeInDown.delay(100).duration(220)}
           style={[styles.hintArea, { top: finderTop + FINDER_SIZE + 20 }]}
@@ -87,10 +83,15 @@ export default function ScannerOverlay({
         </ReAnimated.View>
       </View>
 
-      {/* Top bar */}
-      <OverlayTopBar topInset={topInset} />
+      {/* Top bar — back btn | BinRo | eye icon */}
+      <OverlayTopBar
+        topInset={topInset}
+        anonymousMode={anonymousMode}
+        onToggleAnonymous={onToggleAnonymous}
+        user={user}
+      />
 
-      {/* Bottom controls */}
+      {/* Bottom controls — Gallery + Torch centered */}
       <OverlayBottomBar
         bottomInset={bottomInset}
         zoom={zoom}
@@ -115,7 +116,6 @@ export default function ScannerOverlay({
 const styles = StyleSheet.create({
   outerContainer:  { pointerEvents: "box-none" },
   nonInteractive:  { pointerEvents: "none" },
-
   hintArea: {
     position:   "absolute",
     left:       0,
