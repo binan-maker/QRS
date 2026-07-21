@@ -117,13 +117,11 @@ export function useCameraControls() {
     if (zoomRef.current !== base) setZoom(base);
   }
 
-  // ── Boot ──────────────────────────────────────────────────────────────────
-  useEffect(() => {
-    startScanLine();
-    return () => { stopScanLine(); };
-  }, []);
-
   // ── Focus lifecycle ───────────────────────────────────────────────────────
+  // NOTE: No separate boot useEffect for startScanLine — useFocusEffect below
+  // handles the first focus and every subsequent return. A separate boot effect
+  // would orphan the first animation loop (its reference is overwritten by the
+  // useFocusEffect call 200 ms later) and cause a memory leak.
   useFocusEffect(
     useCallback(() => {
       setScanned(false);

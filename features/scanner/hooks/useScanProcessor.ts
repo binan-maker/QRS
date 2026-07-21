@@ -260,7 +260,10 @@ export function useScanProcessor({
       router.push(`/qr-detail/${qrId}?${param}=${uuid}`);
       // Always emit an event for guard/standard QR scans (these are URLs, treat as safe)
       emitScanEvent(qrId, { platform: PLATFORM, contentType: "url", verdict: "safe", scanSource });
-      setTimeout(() => {
+      // Store timer in ref so it can be cancelled on unmount (previously leaked)
+      if (navResetTimerRef.current) clearTimeout(navResetTimerRef.current);
+      navResetTimerRef.current = setTimeout(() => {
+        navResetTimerRef.current = null;
         setScanSuccess(false);
         setScanned(false);
       }, 1200);
@@ -320,14 +323,17 @@ export function useScanProcessor({
   // ─── Public handlers ──────────────────────────────────────────────────────────
   const handleBarCodeScanned = useCallback(
     async ({ data }: { data: string }) => {
-      if (!canScanRef.current || scanLockRef.current || scanned) return;
+      // scanLockRef + canScanRef already gate re-entry atomically — the `scanned`
+      // state check is redundant and forcing it into deps caused the callback to
+      // be recreated on every successful scan (a stale-closure churn cycle).
+      if (!canScanRef.current || scanLockRef.current) return;
       scanLockRef.current = true;
       canScanRef.current  = false;
       setScanned(true);
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       await processScan(data, "camera");
     },
-    [scanned, anonymousMode, user, token]
+    [anonymousMode, user, token]
   );
 
   async function decodeImageViaServer(base64: string): Promise<string | null> {
@@ -357,6 +363,18 @@ export function useScanProcessor({
       return;
     }
 
+    // Acquire the scan lock so a camera decode cannot race a gallery decode.
+    // Every exit path (cancel, no content, error) must call releaseLock() to
+    // restore canScanRef so the camera is ready again.
+    if (scanLockRef.current) return;
+    scanLockRef.current = true;
+    canScanRef.current  = false;
+
+    function releaseLock() {
+      scanLockRef.current = false;
+      canScanRef.current  = true;
+    }
+
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
 
     const isAndroidNative = Platform.OS === "android";
@@ -372,10 +390,14 @@ export function useScanProcessor({
       });
     } catch {
       showGalleryError("Could not open your gallery. Please try again.");
+      releaseLock();
       return;
     }
 
-    if (result.canceled || !result.assets?.[0]) return;
+    if (result.canceled || !result.assets?.[0]) {
+      releaseLock();
+      return;
+    }
 
     setProcessing(true);
 
@@ -399,13 +421,17 @@ export function useScanProcessor({
       if (!content) {
         showGalleryError("No QR code found in this image — try a clearer or closer photo.");
         setProcessing(false);
+        releaseLock();
         return;
       }
 
+      // processScan manages its own setScanned/setProcessing state — do not
+      // call releaseLock() here; the modal dismiss / resetScan flow handles it.
       await processScan(content, "gallery");
     } catch (e: any) {
       setProcessing(false);
       showGalleryError(e.message || "Something went wrong. Please try again.");
+      releaseLock();
     }
   }
 

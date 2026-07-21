@@ -281,13 +281,16 @@ export default function ScannerScreen() {
     } catch {}
   }, [handleBarCodeScanned, onQRBoundsDetected]);
 
-  // ── Low-light detection ───────────────────────────────────────────────────
-  // cameraLive is declared later (after permission check), so we derive it
-  // inline here using the same constituent parts.
-  const _cameraLiveForLowLight =
+  // ── cameraLive — computed once here, used by both hooks below and the JSX ──
+  // Previously this was defined at the bottom of the render (after the early
+  // permission returns), causing a TDZ ReferenceError when handleTapFocus tried
+  // to reference it in its dependency array during the same render.
+  const cameraLive =
     cameraActive && hardwareAvailable !== null && cameraAvailable && cameraPreviewReady;
+
+  // ── Low-light detection ───────────────────────────────────────────────────
   const { suggested: lowLightSuggested } = useLowLightDetection({
-    cameraLive: _cameraLiveForLowLight,
+    cameraLive,
     scanned,
     flashOn,
     facing,
@@ -354,8 +357,6 @@ export default function ScannerScreen() {
       </View>
     );
   }
-
-  const cameraLive = cameraActive && hardwareAvailable !== null && cameraAvailable && cameraPreviewReady;
 
   return (
     <View style={{ flex: 1, backgroundColor: "#000" }}>
