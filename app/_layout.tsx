@@ -14,7 +14,7 @@ import { Stack } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import * as SystemUI from "expo-system-ui";
 import * as NavigationBar from "expo-navigation-bar";
-import React, { useEffect, useRef } from "react";
+import React, { useCallback, useEffect, useRef } from "react";
 import { Platform, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { setHapticsEnabled } from "@/shared/utils/haptics";
@@ -44,26 +44,54 @@ import {
 
 SplashScreen.preventAutoHideAsync();
 
+// How long (ms) to wait before force-hiding the splash if the normal path has
+// not completed. Kept here so it is easy to find and tune.
+//
+// Rationale for 1 200 ms:
+//   • Firebase AsyncStorage session restore:  50–400 ms (verified users)
+//   • useFonts (assets bundled):              50–200 ms
+//   • startup-prefs / consent:                <20 ms (module-load head-start)
+//   • Worst-case normal path:                ~600 ms
+//   • 1 200 ms = 2× worst-case, enough margin for slow devices without
+//     making every user wait 2 500 ms on a slow network launch.
+//
+// Note: unverified-email users incur an extra reload() network call (200–500 ms)
+// which can push them past 1 000 ms — the safety timeout handles this gracefully.
+const SPLASH_SAFETY_TIMEOUT_MS = 1200;
+
 function SplashGate({ fontsReady, consentReady }: { fontsReady: boolean; consentReady: boolean }) {
   const { isLoading: authLoading } = useAuth();
   const hiddenRef = useRef(false);
+  // Measures time from SplashGate mount to splash-hidden; logged in dev builds
+  // so real-device numbers can inform future timeout reductions.
+  const startRef = useRef(Date.now());
 
-  useEffect(() => {
-    const safety = setTimeout(() => {
-      if (!hiddenRef.current) {
-        hiddenRef.current = true;
-        SplashScreen.hideAsync().catch(() => {});
-      }
-    }, 2500);
-    return () => clearTimeout(safety);
+  const hide = useCallback((trigger: string) => {
+    if (hiddenRef.current) return;
+    hiddenRef.current = true;
+    if (__DEV__) {
+      console.log(
+        `[SplashGate] hidden via "${trigger}" — ${Date.now() - startRef.current} ms after mount`
+      );
+    }
+    SplashScreen.hideAsync().catch(() => {});
   }, []);
 
+  // Safety timeout: force-hide if auth or fonts take unexpectedly long.
   useEffect(() => {
-    if (fontsReady && !authLoading && consentReady && !hiddenRef.current) {
-      hiddenRef.current = true;
-      SplashScreen.hideAsync().catch(() => {});
+    const t = setTimeout(() => hide("safety-timeout"), SPLASH_SAFETY_TIMEOUT_MS);
+    return () => clearTimeout(t);
+  }, [hide]);
+
+  // Normal path: hide as soon as all three conditions are met.
+  useEffect(() => {
+    if (__DEV__ && !authLoading) {
+      console.log(`[SplashGate] authLoading=false at ${Date.now() - startRef.current} ms`);
     }
-  }, [fontsReady, authLoading, consentReady]);
+    if (fontsReady && !authLoading && consentReady) {
+      hide("all-ready");
+    }
+  }, [fontsReady, authLoading, consentReady, hide]);
 
   return null;
 }
