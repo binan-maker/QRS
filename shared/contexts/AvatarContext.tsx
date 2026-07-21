@@ -155,12 +155,13 @@ export function AvatarProvider({ children }: { children: React.ReactNode }) {
     AsyncStorage.multiRemove([AVATAR_URL_KEY, AVATAR_VER_KEY]).catch(() => {});
   }, []);
 
-  // Wire up the module-level ref so AuthContext (and other non-hook callers)
-  // can call syncAvatarFromOutside() at any time.
+  // Wire up the module-level refs so AuthContext (and other non-hook callers)
+  // can call syncAvatarFromOutside() and clearAvatarFromOutside() at any time.
   useEffect(() => {
     _syncFn = syncAvatar;
-    return () => { _syncFn = null; };
-  }, [syncAvatar]);
+    _clearFn = clearAvatar;
+    return () => { _syncFn = null; _clearFn = null; };
+  }, [syncAvatar, clearAvatar]);
 
   const cachedUrl = useMemo(() => (url ? `${url}?v=${version}` : null), [url, version]);
 

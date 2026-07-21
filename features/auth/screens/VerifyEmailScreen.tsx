@@ -52,8 +52,11 @@ export default function VerifyEmailScreen() {
   async function handleCheckVerified() {
     setCheckingVerification(true);
     try {
-      await refreshUser();
-      if (user?.emailVerified) {
+      // refreshUser() returns the fresh emailVerified value directly from Firebase
+      // after reload(). Do NOT use user?.emailVerified here — React state is stale
+      // until the next render, so it still reflects the pre-refresh value.
+      const verified = await refreshUser();
+      if (verified) {
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
         router.replace("/(tabs)");
       } else {

@@ -14,7 +14,7 @@ import { queryClient } from "@/shared/utils/query-client";
 import { clearAllMemCache, clearAllAsyncStorageCache } from "@/services/cache/qr-cache";
 import { clearAllAnonymousSessions } from "@/services/cache/anonymous-session";
 import { prewarmUserData, clearPrewarmState } from "@/services/prewarm";
-import { syncAvatarFromOutside } from "@/shared/contexts/AvatarContext";
+import { syncAvatarFromOutside, clearAvatarFromOutside } from "@/shared/contexts/AvatarContext";
 import { validateEmail } from "@/shared/utils/email-validator";
 import { trackLoginCompleted } from "@/lib/analytics";
 import { COLLECTIONS } from "@/shared/constants/collections";
@@ -92,7 +92,7 @@ interface AuthContextValue {
   switchGoogleAccount: () => Promise<void>;
   sendPasswordReset: (email: string) => Promise<void>;
   resendVerification: () => Promise<void>;
-  refreshUser: () => Promise<void>;
+  refreshUser: () => Promise<boolean>;
   updateLocalDisplayName: (name: string) => void;
   googleRequest: ReturnType<typeof Google.useAuthRequest>[0];
 }
@@ -152,6 +152,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // GoogleSignin.signInSilently() call on the ~80% of launches where Firebase
   // restores the session first (saves one Google SDK network round-trip).
   const firebaseSessionRestoredRef = React.useRef(false);
+
+  // Prevents duplicate concurrent sign-out calls. Without this guard a second
+  // call (e.g. from a navigation effect firing just after a manual sign-out)
+  // could race the first, causing Firebase to be signed out twice and any
+  // in-flight sign-in to be destroyed.
+  const isSigningOutRef = React.useRef(false);
 
   const [googleRequest, googleResponse, promptGoogleAsync] = Google.useAuthRequest({
     webClientId: GOOGLE_WEB_CLIENT_ID,
@@ -464,6 +470,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   async function signOut() {
+    // Prevent duplicate concurrent sign-outs. A second call (e.g. from a
+    // navigation effect) while the first is still awaiting authAdapter.signOut()
+    // could destroy a newly created session if the user signs back in quickly.
+    if (isSigningOutRef.current) return;
+    isSigningOutRef.current = true;
+
     // Clear auth state immediately — UI responds at once, no visible delay.
     const signedOutUserId = user?.id ?? null;
     setUser(null);
@@ -472,8 +484,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     clearAllMemCache();
     clearPrewarmState();
     clearAllAnonymousSessions();
+    // Clear avatar cache synchronously so the next user never sees a previous
+    // user's avatar, even for a single frame.
+    clearAvatarFromOutside();
 
-    // All remaining I/O runs in the background — don't await it.
+    // Await provider sign-out atomically. This MUST complete before the function
+    // returns so that a rapid re-sign-in cannot be torn down by this call
+    // completing after the new session is already established.
+    try {
+      if (Platform.OS !== "web" && GoogleSignin) {
+        await GoogleSignin.signOut().catch(() => {});
+      }
+      await authAdapter.signOut();
+    } catch {}
+
+    isSigningOutRef.current = false;
+
+    // Pure AsyncStorage cache cleanup — safe to fire-and-forget because it only
+    // removes stale scan/QR cache keys, not any session or credential data.
     (async () => {
       try {
         const AsyncStorage = (await import("@react-native-async-storage/async-storage")).default;
@@ -486,12 +514,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         await AsyncStorage.removeItem("qrguard_downloads_dir_uri");
       } catch {}
       await clearAllAsyncStorageCache().catch(() => {});
-      try {
-        if (Platform.OS !== "web" && GoogleSignin) {
-          await GoogleSignin.signOut().catch(() => {});
-        }
-        await authAdapter.signOut();
-      } catch {}
     })();
   }
 
@@ -516,11 +538,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser((prev) => prev ? { ...prev, displayName: name } : prev);
   }
 
-  async function refreshUser() {
+  async function refreshUser(): Promise<boolean> {
     const currentUser = authAdapter.getCurrentUser();
-    if (!currentUser) return;
+    if (!currentUser) return false;
     try {
       await currentUser.reload();
+      // Read the user object AFTER reload — this is the authoritative fresh value.
+      // Do NOT use the `user` state variable here; React state is stale until the
+      // next render and checking it immediately after setUser() reads the old value.
       const reloaded = authAdapter.getCurrentUser();
       if (reloaded) {
         if (reloaded.emailVerified) {
@@ -555,8 +580,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           } catch {}
         }
         setUser(authUser);
+        // Return the fresh emailVerified from Firebase, not from React state.
+        // Callers that need to act on the result (e.g. VerifyEmailScreen) must
+        // use this return value — checking user?.emailVerified immediately after
+        // awaiting refreshUser() reads the stale pre-render value.
+        return reloaded.emailVerified;
       }
     } catch {}
+    return false;
   }
 
   const value = useMemo(
