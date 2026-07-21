@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { InteractionManager } from "react-native";
 import { useInfiniteQuery, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useFocusEffect } from "expo-router";
 import { useAuth } from "@/shared/contexts/AuthContext";
@@ -36,6 +37,11 @@ function mapScanItem(s: any): HistoryItem {
   };
 }
 
+// Only these two content types can ever produce a non-safe risk level.
+// Skipping all other types in the safety analysis loop cuts analysis time
+// proportionally to how many non-URL/payment items the user has.
+const RISK_ANALYSIS_TYPES = new Set(["url", "payment"]);
+
 export function useHistoryData(activeFilters: ActiveFilters) {
   const { user }      = useAuth();
   const queryClient   = useQueryClient();
@@ -61,6 +67,12 @@ export function useHistoryData(activeFilters: ActiveFilters) {
     const uid = user?.id ?? null;
     if (preWarmUid.current === uid) return;   // already warmed for this user
     preWarmUid.current = uid;
+
+    // Reset the gate for the new user so Firestore queries wait for cache
+    // seeding.  Without this reset, preWarmDone stays true from a previous
+    // user (or the null/guest case) and queries start before cached data is
+    // seeded, causing a loading flash instead of instant cached render.
+    setPreWarmDone(false);
 
     if (!uid) { setPreWarmDone(true); return; }
 
@@ -163,10 +175,21 @@ export function useHistoryData(activeFilters: ActiveFilters) {
   });
 
   // ── Derived collections ──────────────────────────────────────────────────────
-  const cloudHistory = useMemo<HistoryItem[]>(
-    () => (cloudData?.pages ?? []).flatMap((page) => page.items.map(mapScanItem)),
-    [cloudData]
-  );
+  // Use an explicit double loop instead of flatMap → map to avoid creating
+  // one intermediate array per page.  For 50+ pages this eliminates 50
+  // short-lived array allocations and reduces GC pressure.
+  const cloudHistory = useMemo<HistoryItem[]>(() => {
+    const pages = cloudData?.pages;
+    if (!pages?.length) return [];
+    const result: HistoryItem[] = [];
+    for (let p = 0; p < pages.length; p++) {
+      const items = pages[p].items;
+      for (let i = 0; i < items.length; i++) {
+        result.push(mapScanItem(items[i]));
+      }
+    }
+    return result;
+  }, [cloudData]);
 
   const favorites = useMemo<HistoryItem[]>(
     () => (favoritesRaw ?? []).map((f: any) => ({
@@ -187,44 +210,81 @@ export function useHistoryData(activeFilters: ActiveFilters) {
   );
 
   // ── Safety analysis — batched to avoid blocking the JS thread ───────────────
-  // Items are processed in chunks of 25 with a yield between each batch so
-  // the list stays responsive. The runId guard discards stale batches when
-  // history/favorites change rapidly.
+  // Items are processed in chunks with a yield between each batch so the list
+  // stays responsive.  The runId guard discards stale batches when history or
+  // favorites change rapidly.
+  //
+  // Optimizations for large histories (500–10 000+ items):
+  //  • Only URL and payment items can ever be non-safe — all other types are
+  //    skipped so the loop is proportionally faster when most items are
+  //    contacts, wifi, text, etc.
+  //  • Batch size raised from 25 → 150: fewer event-loop ticks for the same
+  //    item count (400 ticks → 67 for 10 000 items).
+  //  • First batch deferred with InteractionManager so active scroll
+  //    animations complete before any JS-heavy analysis begins.
+  //  • hasRisk is tracked inline so we never spread the full map at the end.
   const [safetyRiskMap, setSafetyRiskMap] = useState<Map<string, RiskLevel>>(new Map());
   const safetyRunIdRef = useRef(0);
 
+  // Reset risk map immediately when user changes — prevents the brief window
+  // where a signed-out user's risk badges appear against the new user's items.
+  useEffect(() => {
+    setSafetyRiskMap(new Map());
+  }, [user?.id]);
+
   useEffect(() => {
     const runId = ++safetyRunIdRef.current;
-    const allItems = [...history, ...favorites];
-    if (allItems.length === 0) { setSafetyRiskMap(new Map()); return; }
 
-    const BATCH = 25;
+    // Collect only items that can be non-safe to minimise analysis work.
+    const analysisItems: HistoryItem[] = [];
+    for (let i = 0; i < history.length; i++) {
+      if (RISK_ANALYSIS_TYPES.has(history[i].contentType)) analysisItems.push(history[i]);
+    }
+    for (let i = 0; i < favorites.length; i++) {
+      if (RISK_ANALYSIS_TYPES.has(favorites[i].contentType)) analysisItems.push(favorites[i]);
+    }
+
+    if (analysisItems.length === 0) {
+      setSafetyRiskMap(new Map());
+      return;
+    }
+
+    const BATCH = 150; // raised from 25 — 67 ticks for 10 000 analysable items
     const map = new Map<string, RiskLevel>();
-    let idx = 0;
+    let idx     = 0;
+    let hasRisk = false; // tracked inline — avoids spreading full map at end
 
     function processNextBatch() {
       if (safetyRunIdRef.current !== runId) return;
-      const end = Math.min(idx + BATCH, allItems.length);
+      const end = Math.min(idx + BATCH, analysisItems.length);
       for (; idx < end; idx++) {
-        // Per-item risk: URL heuristics or payment parsing — logic in services/scan-history/safety-analysis.ts
-        map.set(allItems[idx].id, analyzeItemRisk(allItems[idx]));
+        const risk = analyzeItemRisk(analysisItems[idx]);
+        if (risk !== "safe") {
+          map.set(analysisItems[idx].id, risk);
+          hasRisk = true;
+        }
       }
-      if (idx >= allItems.length) {
+      if (idx >= analysisItems.length) {
         if (safetyRunIdRef.current !== runId) return;
-        // Only push a state update (and the re-render it triggers) when at
-        // least one item is actually non-safe. Safe-only histories — the
-        // majority — get zero extra renders from the analysis pass.
-        const hasRisk = [...map.values()].some((v) => v !== "safe");
+        // Only trigger a re-render if at least one item is non-safe.
+        // Safe-only histories (majority of users) get zero extra renders.
         if (hasRisk) setSafetyRiskMap(new Map(map));
       } else {
-        // Yield to the renderer before the next batch
+        // Yield to the renderer before the next batch.
         setTimeout(processNextBatch, 0);
       }
     }
 
-    // First yield lets the list paint before any analysis starts
-    const timer = setTimeout(processNextBatch, 0);
-    return () => { clearTimeout(timer); };
+    // Defer the first batch until after active scroll animations complete
+    // so safety analysis never competes with the list's initial paint.
+    const handle = InteractionManager.runAfterInteractions(processFirstBatch);
+    function processFirstBatch() {
+      if (safetyRunIdRef.current !== runId) return;
+      processNextBatch();
+    }
+    return () => {
+      handle.cancel();
+    };
   }, [history, favorites]);
 
   const displayItems = useMemo<HistoryItem[]>(() => {

@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { Alert } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as Haptics from "@/shared/utils/haptics";
@@ -32,6 +32,12 @@ export function useHistory() {
     refetchStats,
     setRefreshing,
   } = data;
+
+  // Reset filter state when the signed-in account changes so a new user never
+  // sees filter selections left over from the previous account's session.
+  useEffect(() => {
+    setActiveFilters(["all"]);
+  }, [user?.id]);
 
   // ── Delete a scan item ─────────────────────────────────────────────────────
   const deleteItem = useCallback(async (item: HistoryItem) => {

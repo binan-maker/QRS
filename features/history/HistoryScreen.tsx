@@ -238,6 +238,11 @@ function HistoryScreen() {
           onEndReachedThreshold={0.4}
           ListFooterComponent={renderFooter}
           ListEmptyComponent={renderEmpty}
+          // Keep rendered window tight — FlashList's recycler already pools
+          // views; a smaller drawDistance reduces retained native views for
+          // very large histories (500–10 000+ items) without affecting scroll
+          // smoothness (FlashList renders ahead of the viewport internally).
+          drawDistance={200}
         />
       )}
     </View>
