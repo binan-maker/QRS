@@ -3,11 +3,8 @@ import {
   Text,
   StyleSheet,
   ScrollView,
-  Pressable,
-  Platform,
 } from "react-native";
 import { useState, type ReactNode } from "react";
-import { router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTopInset } from "@/shared/utils/platform";
@@ -294,15 +291,6 @@ export default function TrustScoresScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1 },
   bgAccent: { position: "absolute", top: -100, right: -100, width: 300, height: 300, borderRadius: 150 },
-  navBar: {
-    flexDirection: "row", alignItems: "center", justifyContent: "space-between",
-    paddingHorizontal: 18, paddingVertical: 12, borderBottomWidth: StyleSheet.hairlineWidth,
-  },
-  navTitle: { fontSize: 16, fontFamily: "Inter_700Bold", flex: 1, textAlign: "center" },
-  backBtn: {
-    width: 38, height: 38, borderRadius: 19,
-    alignItems: "center", justifyContent: "center", borderWidth: 1,
-  },
   scrollContent: { padding: 16, gap: 10 },
   heroBanner: {
     alignItems: "center", borderRadius: 20, padding: 20,

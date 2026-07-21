@@ -3,11 +3,8 @@ import {
   Text,
   StyleSheet,
   ScrollView,
-  Pressable,
-  Platform,
 } from "react-native";
 import { useState, type ReactNode } from "react";
-import { router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTopInset } from "@/shared/utils/platform";
@@ -305,9 +302,6 @@ export default function HowItWorksScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  navBar: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingHorizontal: 16, paddingVertical: 12, borderBottomWidth: StyleSheet.hairlineWidth },
-  navTitle: { fontSize: 16, fontFamily: "Inter_700Bold", flex: 1, textAlign: "center" },
-  backBtn: { width: 38, height: 38, borderRadius: 19, alignItems: "center", justifyContent: "center", borderWidth: 1 },
   scrollContent: { padding: 16 },
   heroBanner: { alignItems: "center", borderRadius: 18, padding: 18, marginBottom: 12, borderWidth: 1 },
   heroIcon: { width: 56, height: 56, borderRadius: 28, alignItems: "center", justifyContent: "center", marginBottom: 12, borderWidth: 2 },

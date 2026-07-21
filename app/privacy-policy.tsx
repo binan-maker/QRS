@@ -3,11 +3,8 @@ import {
   Text,
   StyleSheet,
   ScrollView,
-  Pressable,
-  Platform,
 } from "react-native";
 import { useState, type ReactNode } from "react";
-import { router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTopInset } from "@/shared/utils/platform";
@@ -336,12 +333,6 @@ export default function PrivacyPolicyScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  navBar: {
-    flexDirection: "row", alignItems: "center", justifyContent: "space-between",
-    paddingHorizontal: 18, paddingVertical: 12, borderBottomWidth: StyleSheet.hairlineWidth,
-  },
-  navTitle: { fontSize: 16, fontFamily: "Inter_700Bold", flex: 1, textAlign: "center" },
-  backBtn: { width: 38, height: 38, borderRadius: 19, alignItems: "center", justifyContent: "center", borderWidth: 1 },
   scrollContent: { padding: 16, gap: 10 },
   heroBanner: {
     flexDirection: "row", alignItems: "flex-start", gap: 14,

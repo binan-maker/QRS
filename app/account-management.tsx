@@ -4,7 +4,6 @@ import {
   StyleSheet,
   ScrollView,
   Pressable,
-  Platform,
 } from "react-native";
 import { useState } from "react";
 import { router } from "expo-router";
@@ -143,12 +142,6 @@ export default function AccountManagementScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  navBar: {
-    flexDirection: "row", alignItems: "center", justifyContent: "space-between",
-    paddingHorizontal: 16, paddingVertical: 12, borderBottomWidth: 1,
-  },
-  navTitle: { fontSize: 18, fontFamily: "Inter_700Bold", flex: 1, textAlign: "center" },
-  backBtn: { width: 40, height: 40, borderRadius: 20, alignItems: "center", justifyContent: "center", borderWidth: 1 },
   scrollContent: { padding: 20 },
   center: { flex: 1, alignItems: "center", justifyContent: "center", padding: 40, gap: 12 },
   emptyTitle: { fontSize: 18, fontFamily: "Inter_700Bold" },
