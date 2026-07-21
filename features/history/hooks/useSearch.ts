@@ -3,7 +3,7 @@
 // query value (300ms), and focus ref.
 // Keeps all search concerns out of HistoryScreen and useHistory.
 
-import React, { useState, useRef, useCallback, useEffect, type RefObject } from "react";
+import { useState, useRef, useCallback, useEffect, type RefObject } from "react";
 import { Keyboard, TextInput } from "react-native";
 import * as Haptics from "@/shared/utils/haptics";
 

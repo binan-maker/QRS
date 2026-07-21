@@ -16,18 +16,6 @@ function getDateLabelFast(ts: number, todayMs: number, yesterdayMs: number): str
 }
 
 /**
- * Public helper kept for compatibility — still exported from index.ts.
- * Prefer calling groupByDate directly when processing lists.
- */
-export function getDateLabel(date: Date): string {
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  const todayMs     = today.getTime();
-  const yesterdayMs = todayMs - 86_400_000;
-  return getDateLabelFast(date.getTime(), todayMs, yesterdayMs);
-}
-
-/**
  * Group a sorted (newest-first) list of HistoryItems into ListRows with
  * section headers.
  *

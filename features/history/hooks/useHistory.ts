@@ -1,5 +1,4 @@
 import { useState, useCallback, useEffect } from "react";
-import { Alert } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as Haptics from "@/shared/utils/haptics";
 import { deleteUserScan } from "@/lib/firestore-service";
@@ -135,26 +134,6 @@ export function useHistory() {
     if (!isFav && cloudHasMore && !loadingMore) fetchNextPage();
   }, [user?.id, activeFilters, cloudHasMore, loadingMore, fetchNextPage]);
 
-  // ── Clear local history ────────────────────────────────────────────────────
-  async function clearLocalHistory() {
-    Alert.alert(
-      "Clear History",
-      "This will remove all locally stored scan history.",
-      [
-        { text: "Cancel", style: "cancel" },
-        {
-          text: "Clear",
-          style: "destructive",
-          onPress: async () => {
-            if (user?.id) await AsyncStorage.removeItem(`local_scan_history_${user.id}`);
-            setLocalHistory([]);
-            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-          },
-        },
-      ]
-    );
-  }
-
   return {
     ...data,
     activeFilters,
@@ -163,6 +142,5 @@ export function useHistory() {
     deleteItem,
     onRefresh,
     handleEndReached,
-    clearLocalHistory,
   };
 }

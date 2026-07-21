@@ -17,9 +17,6 @@ export type FilterKey =
   | "others"
   | "favorites";
 
-/** @deprecated use FilterKey */
-export type Filter = FilterKey;
-
 /** The active filter state is always an array of FilterKey values. */
 export type ActiveFilters = FilterKey[];
 

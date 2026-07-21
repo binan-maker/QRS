@@ -18,10 +18,10 @@ export { default as OfflineBanner }      from "./components/OfflineBanner";
 export { default as SearchResultsRow }   from "./components/SearchResultsRow";
 
 // Types
-export type { HistoryItem as HistoryItemType, Filter, RiskLevel, ListRow } from "./types";
+export type { HistoryItem as HistoryItemType, RiskLevel, ListRow } from "./types";
 
 // Utils
-export { groupByDate, getDateLabel }     from "./utils/date-utils";
-export { matchesSearch, buildSearchIndex, matchesSearchIndexed } from "./utils/search-utils";
+export { groupByDate }                                    from "./utils/date-utils";
+export { buildSearchIndex, matchesSearchIndexed }         from "./utils/search-utils";
 export { getActiveFilters }              from "./utils/filter-utils";
 export { SKELETON_COUNT, PAGE_SIZE, STALE_MS, FILTERS } from "./utils/constants";

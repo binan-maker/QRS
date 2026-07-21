@@ -13,12 +13,6 @@ export const FILTERS: { key: FilterKey; label: string }[] = [
   { key: "others",  label: "Others"  },
 ];
 
-export const SOCIAL_TYPES   = [
-  "instagram", "twitter", "youtube", "linkedin", "facebook",
-  "spotify", "discord", "tiktok", "snapchat", "reddit", "pinterest",
-  "threads", "mastodon",
-] as const;
-
 export const PAYMENT_TYPES  = [
   "payment", "paymentlink", "paypal", "venmo", "mobilepay",
   "scantopay", "razorpay", "upi", "crypto", "donation",
@@ -26,14 +20,6 @@ export const PAYMENT_TYPES  = [
 
 export const CONTACT_TYPES  = [
   "contact", "phone", "email", "sms", "whatsapp", "telegram",
-] as const;
-
-export const UTILITY_TYPES  = [
-  "calendar", "zoom", "appdownload",
-] as const;
-
-export const BUSINESS_TYPES = [
-  "reviewpage", "menucatalogue",
 ] as const;
 
 /** Every contentType that belongs to a named filter category.

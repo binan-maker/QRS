@@ -4,8 +4,11 @@ import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
 import HistoryItemSkeleton from "@/features/history/components/HistoryItemSkeleton";
-import { SKELETON_COUNT } from "@/features/history/utils/constants";
 import type { ActiveFilters } from "@/features/history/types";
+
+// Static indices array — avoids Array.from() allocation on every render.
+// Length matches SKELETON_COUNT (8) from constants.
+const SKELETON_INDICES = [0, 1, 2, 3, 4, 5, 6, 7] as const;
 
 interface Props {
   user:          any;
@@ -60,8 +63,8 @@ const EmptyState = memo(function EmptyState({
   if (cloudLoading) {
     return (
       <View style={{ paddingTop: 4 }}>
-        {Array.from({ length: SKELETON_COUNT }).map((_, i) => (
-          <HistoryItemSkeleton key={i} />
+        {SKELETON_INDICES.map((i) => (
+          <HistoryItemSkeleton key={i} index={i} />
         ))}
       </View>
     );
