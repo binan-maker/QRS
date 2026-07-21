@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback, useRef, useMemo } from "react";
+import { useEffect, useState, useCallback, useRef, useMemo, useLayoutEffect } from "react";
 import { useAuth } from "@/shared/contexts/AuthContext";
 import { getComments } from "@/lib/firestore-service";
 import * as Haptics from "@/shared/utils/haptics";
@@ -21,9 +21,15 @@ export function useQrComments(id: string, userId: string | null, offlineMode: bo
   const [visibleRepliesCount, setVisibleRepliesCount] = useState<Record<string, number>>({});
   const [revealedComments, setRevealedComments]     = useState<Set<string>>(new Set());
 
-  const lastCommentRef      = useRef<any>(undefined);
-  const pendingCommentsRef  = useRef<CommentItem[]>([]);
-  const deletingIdsRef      = useRef<Set<string>>(new Set());
+  const lastCommentRef       = useRef<any>(undefined);
+  const pendingCommentsRef   = useRef<CommentItem[]>([]);
+  const deletingIdsRef       = useRef<Set<string>>(new Set());
+  // Mirrors commentsList in a ref so stable callbacks can read the latest value
+  // without being recreated on every comment update.
+  const commentsListRef      = useRef<CommentItem[]>([]);
+
+  // Keep the ref in sync on every render (before any layout effects run).
+  useLayoutEffect(() => { commentsListRef.current = commentsList; });
 
   const topLevelComments = useMemo(
     () => commentsList.filter((c) => !c.parentId),
@@ -116,9 +122,21 @@ export function useQrComments(id: string, userId: string | null, offlineMode: bo
     }));
   }, []);
 
+  // Reads commentsList via ref so this callback stays stable even as comments
+  // are added, liked, or paginated — no unnecessary re-renders in consumers.
   const handleDeleteComment = useCallback(
-    (commentId: string) => actions.handleDeleteComment(commentId, commentsList),
-    [actions.handleDeleteComment, commentsList]
+    (commentId: string) => actions.handleDeleteComment(commentId, commentsListRef.current),
+    [actions.handleDeleteComment]
+  );
+
+  // Stable callbacks — read via ref so they don't change on every comment update.
+  const getAllDescendantsCb = useCallback(
+    (rootId: string) => getAllDescendants(commentsListRef.current, rootId),
+    []
+  );
+  const getRootCommentIdCb = useCallback(
+    (commentId: string) => getRootCommentId(commentsListRef.current, commentId),
+    []
   );
 
   return {
@@ -128,8 +146,8 @@ export function useQrComments(id: string, userId: string | null, offlineMode: bo
     commentsLoading, commentsRefreshing, refreshComments,
     expandedReplies, visibleRepliesCount,
     revealedComments, setRevealedComments,
-    getAllDescendants: (rootId: string) => getAllDescendants(commentsList, rootId),
-    getRootCommentId: (commentId: string) => getRootCommentId(commentsList, commentId),
+    getAllDescendants: getAllDescendantsCb,
+    getRootCommentId: getRootCommentIdCb,
     toggleReplies, showMoreReplies,
     loadMoreComments,
     handleCommentLike,

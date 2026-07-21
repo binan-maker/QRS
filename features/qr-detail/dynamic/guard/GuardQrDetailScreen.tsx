@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef, useEffect } from "react";
+import { useState, useCallback, useRef, useEffect, useMemo } from "react";
 import { useNavHide } from "@/shared/utils/use-nav-hide";
 import {
   View, Text, Pressable, ScrollView, RefreshControl,
@@ -60,7 +60,8 @@ interface Props {
 export default function GuardQrDetailScreen({ id, guardUuid, ownerDocId, hint }: Props) {
   const { user } = useAuth();
   const { colors, isDark } = useTheme();
-  const styles = makeStyles(colors);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const styles = useMemo(() => makeStyles(colors), [colors]);
   const topInset = useTopInset();
 
   const [guardLink, setGuardLink] = useState<GuardLink | null>(null);

@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { router } from "expo-router";
 import * as Haptics from "@/shared/utils/haptics";
 import {
@@ -184,11 +184,13 @@ export function useQrReports(
   }, [id, offlineMode, applyOptimisticDelta]);
 
   // ── Trust score ───────────────────────────────────────────────────────────
-  const trustScore = (() => {
+  // useMemo so the score object is reference-stable when counts haven't changed,
+  // preventing unnecessary re-renders in consumers that receive it as a prop.
+  const trustScore = useMemo(() => {
     const flags = collusionFlags ?? undefined;
     const ts = calculateTrustScore(reportCounts, weightedCounts, flags ?? undefined);
     return ts.score < 0 ? null : ts;
-  })();
+  }, [reportCounts, weightedCounts, collusionFlags]);
 
   // ── Handle vote button press ───────────────────────────────────────────────
   // Updates UI INSTANTLY on every tap with no in-flight blocking.

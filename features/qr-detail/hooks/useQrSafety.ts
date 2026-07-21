@@ -72,24 +72,29 @@ export function useQrSafety(content: string | null | undefined, contentType: str
 
   useEffect(() => {
     if (!content) return;
+    let cancelled = false;
     (async () => {
       const blacklist = await loadOfflineBlacklist();
+      if (cancelled) return;
       const blMatch = checkOfflineBlacklist(content, blacklist);
       setOfflineBlacklistMatch(blMatch);
       if (contentType === "payment") {
         const parsed = parseAnyPaymentQr(content);
         if (parsed) {
+          if (cancelled) return;
           setParsedPayment(parsed);
           setPaymentSafety(analyzeAnyPaymentQr(parsed));
         }
       }
       if (contentType === "url") {
         try {
+          if (cancelled) return;
           const result = analyzeUrlHeuristics(content);
           setUrlSafety(result);
         } catch {}
       }
     })();
+    return () => { cancelled = true; };
   }, [content, contentType]);
 
   return { parsedPayment, paymentSafety, urlSafety, offlineBlacklistMatch, instantVerdict };

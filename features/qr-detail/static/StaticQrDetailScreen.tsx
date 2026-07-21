@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef, useEffect } from "react";
+import { useState, useCallback, useRef, useEffect, useMemo } from "react";
 import { useNavHide } from "@/shared/utils/use-nav-hide";
 import {
   View, Text, Pressable, ScrollView, RefreshControl,
@@ -79,7 +79,6 @@ const safetyBadgeStyles = StyleSheet.create({
 export default function StaticQrDetailScreen({ id, ownerDocId, hint }: Props) {
   const { user } = useAuth();
   const { colors, isDark } = useTheme();
-  const styles = makeStyles(colors);
   const topInset = useTopInset();
 
   const [ownerSheetOpen, setOwnerSheetOpen] = useState(false);
@@ -100,17 +99,24 @@ export default function StaticQrDetailScreen({ id, ownerDocId, hint }: Props) {
     []
   );
 
+  // Memoize styles so makeStyles() isn't called on every render (colors is stable
+  // across renders unless the user switches themes).
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const styles = useMemo(() => makeStyles(colors), [colors]);
+
   const q = useQrDetail(id, hint);
   const { isOnline } = useNetworkStatus();
   const [offlineToastKey, setOfflineToastKey] = useState(0);
 
   useEffect(() => {
     if (q.reportError) showToast(q.reportError, "alert-circle-outline");
-  }, [q.reportError]);
+  }, [q.reportError, showToast]);
 
   const hasOwner  = !!q.ownerInfo?.ownerId;
-  const trust     = q.getTrustInfo();
-  const verdict   = q.getCombinedVerdict();
+  // trustInfo and combinedVerdict are pre-memoized in useQrDetail — calling the
+  // function wrappers is free (they just return the cached value).
+  const trust     = q.trustInfo;
+  const verdict   = q.combinedVerdict;
   const isQrOwner = !!(user?.id && q.ownerInfo?.ownerId && user.id === q.ownerInfo.ownerId);
 
   const content     = q.qrCode?.content || q.offlineContent || "";
