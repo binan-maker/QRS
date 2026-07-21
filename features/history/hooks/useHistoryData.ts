@@ -196,7 +196,10 @@ export function useHistoryData(activeFilters: ActiveFilters) {
       id:          f.id,
       content:     f.content || f.qrCodeId,
       contentType: f.contentType || "text",
-      scannedAt:   f.createdAt,
+      // createdAt may be missing on older favorite documents — fall back to
+      // scannedAt, then current time.  An undefined scannedAt would produce
+      // NaN timestamps in dedup/sort and an "Invalid Date" section header.
+      scannedAt:   f.createdAt ?? f.scannedAt ?? new Date().toISOString(),
       qrCodeId:    f.qrCodeId,
       source:      "favorite" as const,
     })),
@@ -224,7 +227,8 @@ export function useHistoryData(activeFilters: ActiveFilters) {
   //    animations complete before any JS-heavy analysis begins.
   //  • hasRisk is tracked inline so we never spread the full map at the end.
   const [safetyRiskMap, setSafetyRiskMap] = useState<Map<string, RiskLevel>>(new Map());
-  const safetyRunIdRef = useRef(0);
+  const safetyRunIdRef     = useRef(0);
+  const safetyTimeoutRef   = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Reset risk map immediately when user changes — prevents the brief window
   // where a signed-out user's risk badges appear against the new user's items.
@@ -271,19 +275,26 @@ export function useHistoryData(activeFilters: ActiveFilters) {
         if (hasRisk) setSafetyRiskMap(new Map(map));
       } else {
         // Yield to the renderer before the next batch.
-        setTimeout(processNextBatch, 0);
+        safetyTimeoutRef.current = setTimeout(processNextBatch, 0);
       }
     }
 
     // Defer the first batch until after active scroll animations complete
     // so safety analysis never competes with the list's initial paint.
-    const handle = InteractionManager.runAfterInteractions(processFirstBatch);
-    function processFirstBatch() {
+    const handle = InteractionManager.runAfterInteractions(() => {
       if (safetyRunIdRef.current !== runId) return;
       processNextBatch();
-    }
+    });
+
     return () => {
+      // Cancel both the InteractionManager handle (first-batch gate) and any
+      // in-progress setTimeout chain so no JS work runs after unmount or
+      // after history/favorites change invalidates this run.
       handle.cancel();
+      if (safetyTimeoutRef.current !== null) {
+        clearTimeout(safetyTimeoutRef.current);
+        safetyTimeoutRef.current = null;
+      }
     };
   }, [history, favorites]);
 

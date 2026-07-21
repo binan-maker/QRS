@@ -107,19 +107,33 @@ export function useHistory() {
   // ── Pull-to-refresh ────────────────────────────────────────────────────────
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
-    if (user?.id) invalidateHistoryCache(user.id);
-    await loadLocalHistory(user?.id ?? null);
-    if (user?.id) {
-      await Promise.all([refetchCloud(), refetchFavorites(), refetchStats()]);
+    try {
+      if (user?.id) invalidateHistoryCache(user.id);
+      await loadLocalHistory(user?.id ?? null);
+      if (user?.id) {
+        // Individual promise rejections (e.g. Firestore offline) are caught
+        // by React Query internally and surfaced via cloudError — we don't
+        // rethrow so the finally block always runs and the spinner stops.
+        await Promise.all([
+          refetchCloud().catch(() => {}),
+          refetchFavorites().catch(() => {}),
+          refetchStats().catch(() => {}),
+        ]);
+      }
+    } finally {
+      // Always stop the spinner — even if a network error occurs.
+      // Previously, an unhandled rejection left RefreshControl stuck spinning.
+      setRefreshing(false);
     }
-    setRefreshing(false);
   }, [user?.id, loadLocalHistory, refetchCloud, refetchFavorites, refetchStats, setRefreshing]);
 
   // ── Load next page ─────────────────────────────────────────────────────────
   const handleEndReached = useCallback(() => {
+    // Guard: user may have signed out mid-scroll; skip if no active session.
+    if (!user?.id) return;
     const isFav = activeFilters.length === 1 && activeFilters[0] === "favorites";
     if (!isFav && cloudHasMore && !loadingMore) fetchNextPage();
-  }, [activeFilters, cloudHasMore, loadingMore, fetchNextPage]);
+  }, [user?.id, activeFilters, cloudHasMore, loadingMore, fetchNextPage]);
 
   // ── Clear local history ────────────────────────────────────────────────────
   async function clearLocalHistory() {
