@@ -18,6 +18,9 @@ import { syncAvatarFromOutside, clearAvatarFromOutside } from "@/shared/contexts
 import { validateEmail } from "@/shared/utils/email-validator";
 import { trackLoginCompleted } from "@/lib/analytics";
 import { COLLECTIONS } from "@/shared/constants/collections";
+import { useNotificationStore } from "@/store/notificationStore";
+import { clearUserProfileCache } from "@/services/user/cache";
+import { clearCommentProfileCache } from "@/services/comments/cache";
 
 const SERVER_BASE_URL = (() => {
   const raw = process.env.EXPO_PUBLIC_DOMAIN;
@@ -482,6 +485,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setToken(null);
     queryClient.clear();
     clearAllMemCache();
+    clearUserProfileCache();
+    clearCommentProfileCache();
+    useNotificationStore.getState().reset();
     clearPrewarmState();
     clearAllAnonymousSessions();
     // Clear avatar cache synchronously so the next user never sees a previous

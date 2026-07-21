@@ -15,6 +15,10 @@ export function setCachedUserProfile(userId: string, data: any): void {
   USER_PROFILE_CACHE.set(userId, { data, expiry: Date.now() + PROFILE_CACHE_TTL_MS });
 }
 
+export function clearUserProfileCache(): void {
+  USER_PROFILE_CACHE.clear();
+}
+
 export async function warmUserProfileCache(userId: string): Promise<void> {
   if (getCachedUserProfile(userId)) return;
   try {

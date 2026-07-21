@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Alert } from "react-native";
 import * as Haptics from "@/shared/utils/haptics";
 import {
@@ -17,6 +17,8 @@ export function useQrDestination(
   setQrItem: SetQrItem
 ) {
   const { user } = useAuth();
+  const mountedRef = useRef(true);
+  useEffect(() => { mountedRef.current = true; return () => { mountedRef.current = false; }; }, []);
   const [guardLink, setGuardLink] = useState<GuardLink | null>(null);
   const [standardLink, setStandardLink] = useState<{ rawContent: string; contentType: string; ownerId: string; ownerName: string; isActive: boolean } | null>(null);
 
@@ -96,7 +98,7 @@ export function useQrDestination(
       } catch (err: any) {
         Alert.alert("Error", err?.message || "Could not update destination. Try again.");
       } finally {
-        setSavingDestination(false);
+        if (mountedRef.current) setSavingDestination(false);
       }
     });
     setConfirmModalOpen(true);
@@ -139,7 +141,7 @@ export function useQrDestination(
     } catch (err: any) {
       Alert.alert("Error", err?.message || "Could not save content. Try again.");
     } finally {
-      setSavingDestination(false);
+      if (mountedRef.current) setSavingDestination(false);
     }
   }
 
@@ -186,7 +188,7 @@ export function useQrDestination(
       } catch (err: any) {
         Alert.alert("Error", err?.message || "Could not update destination. Try again.");
       } finally {
-        setSavingDestination(false);
+        if (mountedRef.current) setSavingDestination(false);
       }
     });
     setConfirmModalOpen(true);
@@ -231,7 +233,7 @@ export function useQrDestination(
       } catch (err: any) {
         Alert.alert("Error", err?.message || "Could not update content. Try again.");
       } finally {
-        setSavingSavedContent(false);
+        if (mountedRef.current) setSavingSavedContent(false);
       }
     });
     setConfirmModalOpen(true);

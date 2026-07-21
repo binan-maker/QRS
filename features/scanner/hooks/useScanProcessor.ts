@@ -7,6 +7,7 @@ const PLATFORM: "android" | "ios" | "web" | "unknown" =
   Platform.OS === "ios"     ? "ios"     :
   Platform.OS === "web"     ? "web"     : "unknown";
 import { router } from "expo-router";
+import { safePush } from "@/shared/utils/navigation";
 import * as ImagePicker from "expo-image-picker";
 import * as Haptics from "@/shared/utils/haptics";
 import { scanFromURLAsync } from "expo-camera";
@@ -99,12 +100,12 @@ export function useScanProcessor({
   function navigateToQrDetail(qrId: string, content?: string, contentType?: string) {
     setScanSuccess(true);
     if (content) {
-      router.push({
+      safePush({
         pathname: `/qr-detail/${qrId}`,
         params: { hintContent: content, hintContentType: contentType || "text" },
       } as any);
     } else {
-      router.push(`/qr-detail/${qrId}`);
+      safePush(`/qr-detail/${qrId}`);
     }
     // Auto-clear tick after navigation — prevents it staying stuck if the
     // user returns to the scanner before useFocusEffect fires.
@@ -257,7 +258,7 @@ export function useScanProcessor({
         "info"
       );
       const qrId = await getQrCodeId(content);
-      router.push(`/qr-detail/${qrId}?${param}=${uuid}`);
+      safePush(`/qr-detail/${qrId}?${param}=${uuid}`);
       // Always emit an event for guard/standard QR scans (these are URLs, treat as safe)
       emitScanEvent(qrId, { platform: PLATFORM, contentType: "url", verdict: "safe", scanSource });
       // Store timer in ref so it can be cancelled on unmount (previously leaked)

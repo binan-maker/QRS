@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { router } from "expo-router";
+import { safePush } from "@/shared/utils/navigation";
 import NetInfo from "@react-native-community/netinfo";
 import * as Haptics from "@/shared/utils/haptics";
 import { toggleFavorite } from "@/lib/firestore-service";
@@ -13,6 +14,9 @@ export function useQrFavorite(id: string, userId: string | null) {
   const [favoriteLoading, setFavoriteLoading] = useState(false);
   // Exposed so the screen can show a toast on a failed favorite write.
   const [favoriteError, setFavoriteError] = useState<string | null>(null);
+
+  const mountedRef = useRef(true);
+  useEffect(() => { mountedRef.current = true; return () => { mountedRef.current = false; }; }, []);
 
   const committedFavoriteRef = useRef(false);
   const pendingFavoriteRef = useRef(false);
@@ -62,7 +66,7 @@ export function useQrFavorite(id: string, userId: string | null) {
     }
 
     inFlightRef.current = true;
-    setFavoriteLoading(true);
+    if (mountedRef.current) setFavoriteLoading(true);
     try {
       const confirmed = await toggleFavorite(
         id,
@@ -71,19 +75,23 @@ export function useQrFavorite(id: string, userId: string | null) {
         contentRef.current?.contentType ?? ""
       );
       committedFavoriteRef.current = confirmed;
-      setIsFavorite(confirmed);
-      invalidateQrCache(id);
+      if (mountedRef.current) {
+        setIsFavorite(confirmed);
+        invalidateQrCache(id);
+      }
       if (confirmed !== desiredState) {
         pendingFavoriteRef.current = confirmed;
       }
     } catch {
       // Roll back to the last confirmed server state and surface the error.
-      setIsFavorite(committedFavoriteRef.current);
       pendingFavoriteRef.current = committedFavoriteRef.current;
-      setFavoriteError("Couldn't update favorites. Please try again.");
+      if (mountedRef.current) {
+        setIsFavorite(committedFavoriteRef.current);
+        setFavoriteError("Couldn't update favorites. Please try again.");
+      }
     } finally {
       inFlightRef.current = false;
-      setFavoriteLoading(false);
+      if (mountedRef.current) setFavoriteLoading(false);
       // If the user tapped again while this write was in-flight, their intent is
       // still in pendingFavoriteRef but no timer remains to send it. Schedule one.
       if (pendingFavoriteRef.current !== committedFavoriteRef.current) {
@@ -94,7 +102,7 @@ export function useQrFavorite(id: string, userId: string | null) {
   }, [id, userId]);
 
   function handleToggleFavorite(content: string, contentType: string) {
-    if (!userId) { router.push("/(auth)/login"); return; }
+    if (!userId) { safePush("/(auth)/login"); return; }
 
     const newFav = !pendingFavoriteRef.current;
     pendingFavoriteRef.current = newFav;

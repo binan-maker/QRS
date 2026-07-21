@@ -37,9 +37,11 @@ export function useBankName(
     if (handleName || localIfscName) return;
     if (fetchedRef.current === ifsc) return;
     fetchedRef.current = ifsc;
+    let mounted = true;
     fetchBankNameFromIfsc(ifsc).then((name) => {
-      if (name) setApiBankName(name);
+      if (mounted && name) setApiBankName(name);
     });
+    return () => { mounted = false; };
   }, [ifsc, handleName, localIfscName]);
 
   return handleName || localIfscName || apiBankName || null;

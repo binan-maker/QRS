@@ -9,6 +9,7 @@ import {
 import { FlashList as _FlashList } from "@shopify/flash-list";
 const FlashList = _FlashList as any;
 import { router, useFocusEffect } from "expo-router";
+import { safePush } from "@/shared/utils/navigation";
 import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTopInset } from "@/shared/utils/platform";
@@ -63,7 +64,7 @@ function FavoriteCard({ item }: { item: FavoriteItem }) {
       <Pressable
         onPress={() => {
           Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-          router.push(`/qr-detail/${item.qrCodeId || item.id}` as any);
+          safePush(`/qr-detail/${item.qrCodeId || item.id}` as any);
         }}
         style={({ pressed }) => [
           styles.card,
@@ -166,7 +167,7 @@ export default function FavoritesScreen() {
             Sign in to view your favorited QR codes
           </Text>
           <Pressable
-            onPress={() => router.push("/(auth)/login")}
+            onPress={() => safePush("/(auth)/login")}
             style={({ pressed }) => [{ opacity: pressed ? 0.85 : 1 }]}
           >
             <View style={[styles.signInBtn, { backgroundColor: colors.primary }]}>

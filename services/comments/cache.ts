@@ -17,6 +17,10 @@ export function setUserProfileCache(userId: string, username?: string, photoURL?
   userProfileCache.set(userId, { username, photoURL, expiresAt: Date.now() + CACHE_TTL_MS });
 }
 
+export function clearCommentProfileCache(): void {
+  userProfileCache.clear();
+}
+
 export async function preloadUserProfile(userId: string): Promise<void> {
   if (getUserProfileCache(userId)) return;
   try {

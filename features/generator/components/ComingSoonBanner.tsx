@@ -19,7 +19,7 @@ export default function ComingSoonBanner({ compact = false }: Props) {
   const shimmerAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
-    Animated.loop(
+    const pulseLoop = Animated.loop(
       Animated.sequence([
         Animated.timing(pulseAnim, {
           toValue: 1.04,
@@ -32,9 +32,10 @@ export default function ComingSoonBanner({ compact = false }: Props) {
           useNativeDriver: true,
         }),
       ])
-    ).start();
+    );
+    pulseLoop.start();
 
-    Animated.loop(
+    const shimmerLoop = Animated.loop(
       Animated.sequence([
         Animated.timing(shimmerAnim, {
           toValue: 1,
@@ -47,7 +48,13 @@ export default function ComingSoonBanner({ compact = false }: Props) {
           useNativeDriver: true,
         }),
       ])
-    ).start();
+    );
+    shimmerLoop.start();
+
+    return () => {
+      pulseLoop.stop();
+      shimmerLoop.stop();
+    };
   }, []);
 
   const shimmerOpacity = shimmerAnim.interpolate({

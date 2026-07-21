@@ -142,7 +142,7 @@ export default function VerifyEmailScreen() {
           )}
         </Pressable>
 
-        <Pressable onPress={handleSignOut} hitSlop={8} style={[S.linkBtn, { marginTop: sp(8) }]}>
+        <Pressable onPress={handleSignOut} disabled={checkingVerification || resending} hitSlop={8} style={[S.linkBtn, { marginTop: sp(8), opacity: (checkingVerification || resending) ? 0.5 : 1 }]}>
           <Text style={[S.linkText, { color: colors.textMuted, fontSize: sp(13) }]}>
             Use a different account
           </Text>

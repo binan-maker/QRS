@@ -8,6 +8,7 @@ interface NotificationState {
   incrementUnread: () => void;
   markAllRead: () => void;
   setLastChecked: (ts: number) => void;
+  reset: () => void;
 }
 
 export const useNotificationStore = create<NotificationState>((set) => ({
@@ -19,6 +20,7 @@ export const useNotificationStore = create<NotificationState>((set) => ({
     set((s) => ({ unreadCount: s.unreadCount + 1, hasUnread: true })),
   markAllRead: () => set({ unreadCount: 0, hasUnread: false }),
   setLastChecked: (ts) => set({ lastCheckedAt: ts }),
+  reset: () => set({ unreadCount: 0, hasUnread: false, lastCheckedAt: null }),
 }));
 
 export const selectUnreadCount = (s: NotificationState) => s.unreadCount;

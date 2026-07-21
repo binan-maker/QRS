@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useState } from "react";
+import React, { useCallback, useMemo, useRef, useState } from "react";
 import { View, Text, Pressable, Platform, RefreshControl } from "react-native";
 import { FlashList as _FlashList } from "@shopify/flash-list";
 const FlashList = _FlashList as any;
@@ -24,6 +24,7 @@ export default function CommentsSection({ loading, comments, onDelete, onDeleteA
   const styles = useMemo(() => makeSettingsStyles(colors), [colors]);
   const bottomPad = Platform.OS === "web" ? 34 + 84 : insets.bottom + 84;
   const [refreshing, setRefreshing] = useState(false);
+  const deletingAllRef = useRef(false);
 
   const handleRefresh = useCallback(async () => {
     if (!onRefresh) return;
@@ -31,6 +32,13 @@ export default function CommentsSection({ loading, comments, onDelete, onDeleteA
     await onRefresh();
     setRefreshing(false);
   }, [onRefresh]);
+
+  const handleDeleteAll = useCallback(() => {
+    if (deletingAllRef.current || !onDeleteAll) return;
+    deletingAllRef.current = true;
+    onDeleteAll();
+    setTimeout(() => { deletingAllRef.current = false; }, 1000);
+  }, [onDeleteAll]);
 
   const renderItem = useCallback(({ item }: { item: any }) => (
     <View style={styles.myCommentItem}>
@@ -46,7 +54,7 @@ export default function CommentsSection({ loading, comments, onDelete, onDeleteA
 
   const listHeader = useMemo(() => (
     <Pressable
-      onPress={onDeleteAll}
+      onPress={handleDeleteAll}
       style={({ pressed }) => ({
         flexDirection: "row" as const,
         alignItems: "center" as const,
@@ -62,7 +70,7 @@ export default function CommentsSection({ loading, comments, onDelete, onDeleteA
         Delete All Comments
       </Text>
     </Pressable>
-  ), [onDeleteAll, colors.danger]);
+  ), [handleDeleteAll, colors.danger]);
 
   if (loading) {
     return (

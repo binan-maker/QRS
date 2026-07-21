@@ -1,6 +1,7 @@
 import React, { useMemo, useCallback, useEffect } from "react";
 import { View, Text, StyleSheet, Pressable } from "react-native";
 import { router } from "expo-router";
+import { safePush } from "@/shared/utils/navigation";
 import { Ionicons } from "@expo/vector-icons";
 import Animated, {
   useSharedValue,
@@ -77,7 +78,7 @@ export function RecentScansList({ recentScans, isLoading, onDelete }: Props) {
         {/* Only show See All once content is visible */}
         {!isLoading && recentScans.length > 0 && (
           <Pressable
-            onPress={() => router.push("/(tabs)/history")}
+            onPress={() => safePush("/(tabs)/history")}
             style={[styles.seeAllBtn, { backgroundColor: colors.primaryDim }]}
           >
             <Text style={[styles.seeAllText, { color: colors.primary }]}>See All</Text>
@@ -114,7 +115,7 @@ export function RecentScansList({ recentScans, isLoading, onDelete }: Props) {
               <Pressable
                 onPress={() => {
                   Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                  router.push("/(tabs)/history");
+                  safePush("/(tabs)/history");
                 }}
                 style={({ pressed }) => [
                   styles.fullHistoryBtn,

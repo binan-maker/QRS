@@ -54,15 +54,20 @@ export default function GeneratorLanding() {
   }, [onHeaderScroll, onTabScroll]);
 
   useEffect(() => {
+    let loop: Animated.CompositeAnimation | null = null;
     const task = InteractionManager.runAfterInteractions(() => {
-      Animated.loop(
+      loop = Animated.loop(
         Animated.sequence([
           Animated.timing(pulseAnim, { toValue: 1.05, duration: 2000, useNativeDriver: true }),
           Animated.timing(pulseAnim, { toValue: 1,    duration: 2000, useNativeDriver: true }),
         ])
-      ).start();
+      );
+      loop.start();
     });
-    return () => task.cancel();
+    return () => {
+      task.cancel();
+      loop?.stop();
+    };
   }, []);
 
   const cardWidth = width - 40;
