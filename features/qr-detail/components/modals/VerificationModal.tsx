@@ -1,4 +1,4 @@
-import React from "react";
+import React, { memo } from "react";
 import { View, Text, StyleSheet, Pressable, ScrollView, ActivityIndicator, TextInput } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useTheme } from "@/shared/contexts/ThemeContext";
@@ -15,7 +15,7 @@ interface Props {
   onClose: () => void;
 }
 
-const VerificationModal = React.memo(function VerificationModal({
+const VerificationModal = memo(function VerificationModal({
   visible, bizName, docName, submitting,
   onChangeBizName, onPickDoc, onSubmit, onClose,
 }: Props) {

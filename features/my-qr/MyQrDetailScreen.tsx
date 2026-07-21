@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, type ReactNode } from "react";
 import { View, Text, ScrollView, Pressable, Animated as RNAnimated } from "react-native";
 import { StatusBar } from "expo-status-bar";
 import { useLocalSearchParams, router } from "expo-router";
@@ -43,7 +43,7 @@ function MyQrDetailSkeleton({ colors, isDark, topInset }: { colors: any; isDark:
   const bone = (style: object) => (
     <RNAnimated.View style={[{ backgroundColor: colors.surfaceBorder, borderRadius: 8, opacity }, style]} />
   );
-  const card = (children: React.ReactNode) => (
+  const card = (children: ReactNode) => (
     <View style={{
       borderRadius: 20, borderWidth: 1, borderColor: colors.surfaceBorder,
       backgroundColor: isDark ? colors.surface : "#ffffff",

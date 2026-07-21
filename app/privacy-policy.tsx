@@ -22,7 +22,7 @@ const EFFECTIVE_DATE = "April 8, 2026";
 const CONTACT_EMAIL = "ahmedsameerbinan2@gmail.com";
 const LEGAL_EMAIL = "ahmedsameerbinan2@gmail.com";
 
-function SectionCard({ title, num, icon, children, colors }: { title: string; num: string; icon?: string; children: React.ReactNode; colors: AppColors }) {
+function SectionCard({ title, num, icon, children, colors }: { title: string; num: string; icon?: string; children: ReactNode; colors: AppColors }) {
   return (
     <View style={[styles.sectionCard, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
       <View style={styles.sectionHeader}>
@@ -50,7 +50,7 @@ function WarningBox({ text, colors }: { text: string; colors: AppColors }) {
   );
 }
 
-function Para({ children, colors }: { children: React.ReactNode; colors: AppColors }) {
+function Para({ children, colors }: { children: ReactNode; colors: AppColors }) {
   return <Text style={[styles.para, { color: colors.textSecondary }]}>{children}</Text>;
 }
 

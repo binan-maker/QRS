@@ -1,4 +1,4 @@
-import React, { memo } from "react";
+import React, { memo, type MutableRefObject } from "react";
 import { View, StyleSheet } from "react-native";
 import Animated, { FadeInDown } from "react-native-reanimated";
 import { useTheme } from "@/shared/contexts/ThemeContext";
@@ -23,7 +23,7 @@ interface Props {
   savedToProfile: boolean;
   savedDocId?: string | null;
   user: any;
-  svgRef: React.MutableRefObject<any>;
+  svgRef: MutableRefObject<any>;
   logoPositionLabel: string;
   qrFgColor?: string;
   qrBgColor?: string;

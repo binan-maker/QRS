@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useRef, useCallback } from "react";
+import React, { createContext, useContext, useRef, useCallback, type ReactNode } from "react";
 import { Animated, Easing } from "react-native";
 
 const THRESHOLD    = 8;
@@ -14,7 +14,7 @@ interface TabBarCtx {
 
 const TabBarContext = createContext<TabBarCtx | null>(null);
 
-export function TabBarProvider({ children }: { children: React.ReactNode }) {
+export function TabBarProvider({ children }: { children: ReactNode }) {
   const tabBarTranslateY = useRef(new Animated.Value(0)).current;
   const lastY             = useRef(0);
   const hidden            = useRef(false);

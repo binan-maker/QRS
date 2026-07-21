@@ -1,4 +1,4 @@
-import React, { memo, useMemo } from "react";
+import React, { memo, useMemo, type ComponentProps } from "react";
 import { View, Text, StyleSheet } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useTheme } from "@/shared/contexts/ThemeContext";
@@ -7,7 +7,7 @@ import type { LogoPosition } from "@/features/generator/types/form-types";
 function getSecurityMeta(qrValue: string): {
   level: "safe" | "warning" | "danger" | "info";
   label: string;
-  icon: React.ComponentProps<typeof Ionicons>["name"];
+  icon: ComponentProps<typeof Ionicons>["name"];
 } | null {
   const isUpi      = qrValue.startsWith("upi://");
   const isBharatQr = isUpi && qrValue.includes("mode=02");

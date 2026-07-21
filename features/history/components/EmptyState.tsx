@@ -1,4 +1,4 @@
-import React from "react";
+import React, { memo, type ComponentProps } from "react";
 import { View, Text, StyleSheet, Pressable } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
@@ -16,7 +16,7 @@ interface Props {
   fontSize:      (n: number) => number;
 }
 
-const EmptyState = React.memo(function EmptyState({
+const EmptyState = memo(function EmptyState({
   user,
   cloudLoading,
   searchQuery,
@@ -89,7 +89,7 @@ const EmptyState = React.memo(function EmptyState({
   const isFavorites = activeFilters.includes("favorites");
   const isFiltered  = !activeFilters.includes("all") && activeFilters.length > 0;
 
-  const emptyIcon: React.ComponentProps<typeof Ionicons>["name"] =
+  const emptyIcon: ComponentProps<typeof Ionicons>["name"] =
     isFavorites ? "bookmark-outline" : isFiltered ? "filter-outline" : "time-outline";
 
   const emptyTitle = isFavorites

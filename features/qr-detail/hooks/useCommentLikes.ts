@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useMemo } from "react";
+import { useState, useEffect, useRef, useMemo, type Dispatch, type SetStateAction } from "react";
 import * as Haptics from "@/shared/utils/haptics";
 import { toggleCommentLike, getCommentUserLikes } from "@/lib/firestore-service";
 import { router } from "expo-router";
@@ -8,7 +8,7 @@ interface UseCommentLikesParams {
   id: string;
   userId: string | null;
   commentsList: CommentItem[];
-  setCommentsList: React.Dispatch<React.SetStateAction<CommentItem[]>>;
+  setCommentsList: Dispatch<SetStateAction<CommentItem[]>>;
 }
 
 export function useCommentLikes({ id, userId, commentsList, setCommentsList }: UseCommentLikesParams) {

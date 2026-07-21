@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useState, useEffect } from "react";
+import React, { useCallback, useMemo, useState, useEffect, memo } from "react";
 import { View, StyleSheet, Platform, RefreshControl, useWindowDimensions, LayoutChangeEvent } from "react-native";
 import { FlashList as _FlashList } from "@shopify/flash-list";
 const FlashList = _FlashList as any;
@@ -255,4 +255,4 @@ const styles = StyleSheet.create({
   list:       { paddingHorizontal: 16 },
 });
 
-export default React.memo(HistoryScreen);
+export default memo(HistoryScreen);

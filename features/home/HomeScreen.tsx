@@ -1,4 +1,4 @@
-import React, { useCallback } from "react";
+import React, { useCallback, memo } from "react";
 import { View, StyleSheet, ScrollView, RefreshControl } from "react-native";
 import { useFocusEffect } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -67,4 +67,4 @@ const styles = StyleSheet.create({
   scrollContent: { paddingHorizontal: 18, paddingTop: 6 },
 });
 
-export default React.memo(HomeScreen);
+export default memo(HomeScreen);

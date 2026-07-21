@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import React, {
   createContext,
   useContext,
@@ -42,7 +43,7 @@ function resolveStoredMode(raw: string | null): ThemeMode {
   return "system";
 }
 
-export function ThemeProvider({ children }: { children: React.ReactNode }) {
+export function ThemeProvider({ children }: { children: ReactNode }) {
   const systemScheme = useColorScheme();
 
   // ── Synchronous initialisation from startup-prefs cache ──────────────────

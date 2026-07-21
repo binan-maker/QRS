@@ -1,4 +1,4 @@
-import React from "react";
+import React, { type ReactNode } from "react";
 import { Text } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 
@@ -143,9 +143,9 @@ export function buildOutput(template: string, fields: CustomField[], values: Rec
   return out;
 }
 
-export function parseTemplateTokens(template: string, fields: CustomField[], colors: any): React.ReactNode[] | null {
+export function parseTemplateTokens(template: string, fields: CustomField[], colors: any): ReactNode[] | null {
   if (!template) return null;
-  const parts: React.ReactNode[] = [];
+  const parts: ReactNode[] = [];
   const regex = /\{\{(\w+)\}\}/g;
   let last = 0;
   let match;

@@ -1,4 +1,4 @@
-import React from "react";
+import React, { memo } from "react";
 import { View, Text, Pressable } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import Animated, { FadeInDown } from "react-native-reanimated";
@@ -11,7 +11,7 @@ interface Props {
   onRegister: () => void;
 }
 
-const GuestView = React.memo(function GuestView({ colors, topInset, onSignIn, onRegister }: Props) {
+const GuestView = memo(function GuestView({ colors, topInset, onSignIn, onRegister }: Props) {
   return (
     <View style={[styles.container, { paddingTop: topInset, backgroundColor: colors.background }]}>
       <View style={styles.guestWrap}>

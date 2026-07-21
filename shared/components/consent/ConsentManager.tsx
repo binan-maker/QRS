@@ -2,7 +2,7 @@
 // CONSENT MANAGER - DPDP Act 2023 Compliance Component
 // ═══════════════════════════════════════════════════════════════════════════════
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, type FC } from "react";
 import {
   View, Text, ScrollView, TouchableOpacity, Modal, ActivityIndicator,
 } from "react-native";
@@ -18,7 +18,7 @@ interface ConsentManagerProps {
   isRequired?: boolean;
 }
 
-export const ConsentManager: React.FC<ConsentManagerProps> = ({
+export const ConsentManager: FC<ConsentManagerProps> = ({
   visible,
   onComplete,
   isRequired = false,

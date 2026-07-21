@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type FormEvent } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/auth-context";
@@ -14,7 +14,7 @@ export default function LoginPage() {
   const [error,    setError]    = useState<string | null>(null);
   const [loading,  setLoading]  = useState(false);
 
-  async function handleEmailLogin(e: React.FormEvent) {
+  async function handleEmailLogin(e: FormEvent) {
     e.preventDefault();
     setError(null);
     setLoading(true);

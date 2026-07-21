@@ -1,4 +1,4 @@
-import React from "react";
+import React, { type ReactNode } from "react";
 import { View, Text, Pressable, StyleSheet } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
@@ -7,7 +7,7 @@ import { useTheme } from "@/shared/contexts/ThemeContext";
 interface Props {
   title: string;
   onBack?: () => void;
-  right?: React.ReactNode;
+  right?: ReactNode;
   noBorder?: boolean;
 }
 

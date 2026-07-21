@@ -21,8 +21,10 @@ function waitFrames(n: number): Promise<void> {
   });
 }
 
+import type { MutableRefObject } from "react";
+
 export async function captureQrImage(
-  svgRef: React.MutableRefObject<any>
+  svgRef: MutableRefObject<any>
 ): Promise<string> {
   if (!svgRef.current) {
     throw new Error("QR code is not ready. Please wait for it to appear and try again.");

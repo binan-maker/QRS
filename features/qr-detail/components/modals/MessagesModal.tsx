@@ -1,4 +1,4 @@
-import React from "react";
+import React, { memo } from "react";
 import {
   View, Text, StyleSheet, Pressable, ScrollView,
   ActivityIndicator, TextInput,
@@ -24,7 +24,7 @@ interface Props {
   onClose: () => void;
 }
 
-const MessagesModal = React.memo(function MessagesModal({
+const MessagesModal = memo(function MessagesModal({
   visible, isQrOwner, ownerInfo, messages, messageText,
   sendingMessage, user, onChangeText, onSend, onMarkRead, onClose,
 }: Props) {

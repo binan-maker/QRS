@@ -2,7 +2,7 @@ import { Tabs, router } from "expo-router";
 import { Platform, StyleSheet, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { MaterialCommunityIcons, Ionicons } from "@expo/vector-icons";
-import React, { useEffect, useCallback, useMemo } from "react";
+import React, { useEffect, useCallback, useMemo, memo } from "react";
 import { useTheme } from "@/shared/contexts/ThemeContext";
 import { useAppTranslation } from "@/shared/i18n/useAppTranslation";
 import { TabBarProvider, useTabBarScroll } from "@/shared/contexts/TabBarContext";
@@ -13,7 +13,7 @@ import {
 } from "@/shared/utils/startup-prefs";
 
 // ── Android tab bar background ─────────────────────────────────────────────────
-const AndroidTabBarBackground = React.memo(function AndroidTabBarBackground({
+const AndroidTabBarBackground = memo(function AndroidTabBarBackground({
   backgroundColor,
   borderColor,
 }: {
@@ -42,7 +42,7 @@ const AndroidTabBarBackground = React.memo(function AndroidTabBarBackground({
 });
 
 // ── Tab icon components ────────────────────────────────────────────────────────
-const HomeIcon = React.memo(function HomeIcon({
+const HomeIcon = memo(function HomeIcon({
   color,
   focused,
 }: {
@@ -56,7 +56,7 @@ const HomeIcon = React.memo(function HomeIcon({
   );
 });
 
-const GeneratorIcon = React.memo(function GeneratorIcon({
+const GeneratorIcon = memo(function GeneratorIcon({
   color,
   focused,
 }: {
@@ -74,7 +74,7 @@ const GeneratorIcon = React.memo(function GeneratorIcon({
   );
 });
 
-const HistoryIcon = React.memo(function HistoryIcon({
+const HistoryIcon = memo(function HistoryIcon({
   color,
   focused,
 }: {
@@ -88,7 +88,7 @@ const HistoryIcon = React.memo(function HistoryIcon({
   );
 });
 
-const ProfileIcon = React.memo(function ProfileIcon({
+const ProfileIcon = memo(function ProfileIcon({
   color,
   focused,
 }: {

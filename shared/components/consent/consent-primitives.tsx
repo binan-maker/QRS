@@ -1,4 +1,4 @@
-import React from "react";
+import React, { type ReactNode } from "react";
 import { View, Text } from "react-native";
 
 export function Section({
@@ -8,7 +8,7 @@ export function Section({
 }: {
   label: string;
   color: string;
-  children: React.ReactNode;
+  children: ReactNode;
 }) {
   return (
     <View style={{ marginBottom: 13 }}>
@@ -29,7 +29,7 @@ export function Section({
   );
 }
 
-export function Body({ children, color }: { children: React.ReactNode; color: string }) {
+export function Body({ children, color }: { children: ReactNode; color: string }) {
   return (
     <Text style={{ fontSize: 12.5, color, lineHeight: 19, marginBottom: 2 }}>
       {children}
@@ -37,7 +37,7 @@ export function Body({ children, color }: { children: React.ReactNode; color: st
   );
 }
 
-export function Bold({ children, color }: { children: React.ReactNode; color: string }) {
+export function Bold({ children, color }: { children: ReactNode; color: string }) {
   return <Text style={{ fontWeight: "700", color }}>{children}</Text>;
 }
 

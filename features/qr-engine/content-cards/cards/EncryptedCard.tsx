@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { View, Text, StyleSheet, Pressable, Platform } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import * as Clipboard from "expo-clipboard";
@@ -9,7 +9,7 @@ interface Props { content: string; }
 
 export default function EncryptedCard({ content }: Props) {
   const { colors, isDark } = useTheme();
-  const [copied, setCopied] = React.useState(false);
+  const [copied, setCopied] = useState(false);
 
   const preview = content.length > 40 ? content.slice(0, 40) + "…" : content;
   const isBase64 = /^[A-Za-z0-9+/]{20,}={0,2}$/.test(content.trim());

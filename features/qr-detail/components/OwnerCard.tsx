@@ -1,4 +1,4 @@
-import React from "react";
+import React, { memo } from "react";
 import { View, Text, StyleSheet, Pressable } from "react-native";
 import { Image } from "expo-image";
 import { Ionicons } from "@expo/vector-icons";
@@ -21,7 +21,7 @@ const TYPE_ICONS: Record<string, keyof typeof Ionicons.glyphMap> = {
   individual: "person",
 };
 
-const OwnerCard = React.memo(function OwnerCard({
+const OwnerCard = memo(function OwnerCard({
   ownerInfo, isQrOwner, followCount, unreadMessages, onOpenFollowers, onOpenMessages,
 }: Props) {
   const { colors, isDark } = useTheme();

@@ -1,4 +1,4 @@
-import React from "react";
+import React, { memo, useState } from "react";
 import { View, Text, Pressable, StyleSheet } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import * as Clipboard from "expo-clipboard";
@@ -18,13 +18,13 @@ interface Props {
   onOpenContent: () => void;
 }
 
-const PaymentCardActions = React.memo(function PaymentCardActions({
+const PaymentCardActions = memo(function PaymentCardActions({
   parsedPayment, brand, isIndia, isDeactivated,
 }: Props) {
   const { colors } = useTheme();
-  const [upiCopied, setUpiCopied] = React.useState(false);
-  const [amtCopied, setAmtCopied] = React.useState(false);
-  const [linkCopied, setLinkCopied] = React.useState(false);
+  const [upiCopied, setUpiCopied] = useState(false);
+  const [amtCopied, setAmtCopied] = useState(false);
+  const [linkCopied, setLinkCopied] = useState(false);
 
   const displayVpa = parsedPayment.vpa ||
     (parsedPayment.recipientId?.includes("@") ? parsedPayment.recipientId : undefined);

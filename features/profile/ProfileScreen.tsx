@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useEffect } from "react";
+import React, { useCallback, useMemo, useEffect, memo } from "react";
 import {
   View,
   Text,
@@ -62,7 +62,7 @@ const STAT_CELL_ENTER = [0, 1, 2, 3, 4].map((i) =>
 const QR_SKELETON_ENTER = FadeIn.delay(0).duration(240);
 
 // ── Animated stat cell with number reveal ─────────────────────────────────────
-const StatCell = React.memo(function StatCell({
+const StatCell = memo(function StatCell({
   label, formatted, color, loading, index, onPress,
 }: {
   label: string;
@@ -138,7 +138,7 @@ function SkeletonCard({ color, borderColor, delay }: { color: string; borderColo
 }
 
 // ── QR skeleton stack (horizontal fan, matches MAX_STACK=13) ──────────────────
-const QrSkeletonStack = React.memo(function QrSkeletonStack() {
+const QrSkeletonStack = memo(function QrSkeletonStack() {
   const { colors } = useTheme();
   const CARD  = 88;
   const OFF_X = 30;
@@ -491,4 +491,4 @@ function ProfileScreen() {
   );
 }
 
-export default React.memo(ProfileScreen);
+export default memo(ProfileScreen);

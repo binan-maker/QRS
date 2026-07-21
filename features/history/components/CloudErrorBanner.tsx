@@ -1,4 +1,4 @@
-import React from "react";
+import React, { memo } from "react";
 import { View, Text, StyleSheet, Pressable } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 
@@ -8,7 +8,7 @@ interface Props {
   fontSize: (n: number) => number;
 }
 
-const CloudErrorBanner = React.memo(function CloudErrorBanner({ onRetry, colors, fontSize }: Props) {
+const CloudErrorBanner = memo(function CloudErrorBanner({ onRetry, colors, fontSize }: Props) {
   return (
     <Pressable
       onPress={onRetry}

@@ -1,4 +1,4 @@
-import React, { useMemo, useCallback } from "react";
+import React, { useMemo, useCallback, memo } from "react";
 import { View, Text, Pressable, StyleSheet } from "react-native";
 import { router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
@@ -56,7 +56,7 @@ interface HistoryItemProps {
   showTime?: boolean;
 }
 
-const HistoryItem = React.memo(function HistoryItem({ item, risk, onDelete, index = 0, showTime = true }: HistoryItemProps) {
+const HistoryItem = memo(function HistoryItem({ item, risk, onDelete, index = 0, showTime = true }: HistoryItemProps) {
   const { colors, isDark } = useTheme();
   const { typeMeta, displayLabel, subtitle } = useQrMeta(item.content, item.contentType);
 

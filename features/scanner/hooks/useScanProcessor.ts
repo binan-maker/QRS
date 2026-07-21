@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef } from "react";
+import { useCallback, useEffect, useRef, type MutableRefObject } from "react";
 import { Platform } from "react-native";
 
 // Evaluated once at module load — avoids a branch per scan call.
@@ -44,8 +44,8 @@ export interface ScanProcessorParams {
   setScanned:             (v: boolean) => void;
   setProcessing:          (v: boolean) => void;
   setScanSuccess:         (v: boolean) => void;
-  scanLockRef:            React.MutableRefObject<boolean>;
-  canScanRef:             React.MutableRefObject<boolean>;
+  scanLockRef:            MutableRefObject<boolean>;
+  canScanRef:             MutableRefObject<boolean>;
   modalControls:          ScanModalControls;
   showScannerMsg:         (msg: string, type?: "error" | "warning" | "info") => void;
   showGalleryError:       (msg: string) => void;

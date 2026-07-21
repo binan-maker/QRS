@@ -1,4 +1,4 @@
-import React from "react";
+import React, { memo } from "react";
 import { View, Text, StyleSheet, Pressable, ActivityIndicator } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useTheme } from "@/shared/contexts/ThemeContext";
@@ -12,7 +12,7 @@ interface Props {
   onRequestVerify?: () => void;
 }
 
-const MerchantDashboard = React.memo(function MerchantDashboard({
+const MerchantDashboard = memo(function MerchantDashboard({
   scanVelocity, velocityLoading, verificationStatus,
   onRefreshVelocity, onRequestVerify,
 }: Props) {

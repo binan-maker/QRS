@@ -82,7 +82,7 @@ function InputBox({ value, onChangeText, placeholder, keyboard = "default", secu
   );
 }
 
-function Section({ children }: { children: React.ReactNode }) {
+function Section({ children }: { children: ReactNode }) {
   return <View style={styles.section}>{children}</View>;
 }
 

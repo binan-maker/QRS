@@ -1,4 +1,4 @@
-import React from "react";
+import React, { memo } from "react";
 import { View, Text, StyleSheet, Pressable, TextInput, ActivityIndicator } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useTheme } from "@/shared/contexts/ThemeContext";
@@ -18,7 +18,7 @@ interface Props {
   onCancel: () => void;
 }
 
-const UsernameEditor = React.memo(function UsernameEditor({
+const UsernameEditor = memo(function UsernameEditor({
   currentUsername, daysUntilEdit, editing, input, checking, available, error, saving,
   onStartEdit, onChangeInput, onSave, onCancel,
 }: Props) {

@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useRef, memo } from "react";
 import { View, Text, StyleSheet, Pressable, Modal, ScrollView, Animated } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useTheme } from "@/shared/contexts/ThemeContext";
@@ -23,7 +23,7 @@ interface Props {
   onClose: () => void;
 }
 
-const CommentReportModal = React.memo(function CommentReportModal({ commentId, onReport, onClose }: Props) {
+const CommentReportModal = memo(function CommentReportModal({ commentId, onReport, onClose }: Props) {
   const { colors } = useTheme();
   useAndroidNavBar(!!commentId, colors.surface, colors.background, colors.isDark);
   const styles = makeStyles(colors);

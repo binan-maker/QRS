@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, type RefObject } from "react";
 import { Alert, Platform, ToastAndroid } from "react-native";
 import * as Clipboard from "expo-clipboard";
 import * as FileSystem from "expo-file-system/legacy";
@@ -17,7 +17,7 @@ interface Params {
   inputValue:     string;
   selectedPreset: number;
   extraFields:    Record<string, string>;
-  svgRef:         React.RefObject<any>;
+  svgRef:         RefObject<any>;
   showToast:      (msg: string, type?: "success" | "error") => void;
 }
 

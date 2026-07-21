@@ -1,4 +1,4 @@
-import React from "react";
+import React, { memo, type ReactNode } from "react";
 import { View, Text, StyleSheet } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useTheme } from "@/shared/contexts/ThemeContext";
@@ -7,10 +7,10 @@ interface ListEmptyStateProps {
   icon: keyof typeof Ionicons.glyphMap;
   title: string;
   subtitle?: string;
-  action?: React.ReactNode;
+  action?: ReactNode;
 }
 
-const ListEmptyState = React.memo(function ListEmptyState({
+const ListEmptyState = memo(function ListEmptyState({
   icon,
   title,
   subtitle,

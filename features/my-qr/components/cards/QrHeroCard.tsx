@@ -1,3 +1,4 @@
+import type { MutableRefObject } from "react";
 import { View, Text, Pressable, ActivityIndicator, Image } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
@@ -22,7 +23,7 @@ interface Props {
   isDynamic: boolean;
   fgColor: string;
   bgColor: string;
-  svgRef: React.MutableRefObject<any>;
+  svgRef: MutableRefObject<any>;
   guardDest?: string;
   isPrivateDest?: boolean;
   standardRawContent?: string;

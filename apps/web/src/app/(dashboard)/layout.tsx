@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { verifySessionCookie } from "@/lib/firebase-admin";
@@ -15,7 +16,7 @@ import { DashboardTopbar } from "@/components/ui/dashboard-topbar";
 export default async function DashboardLayout({
   children,
 }: {
-  children: React.ReactNode;
+  children: ReactNode;
 }) {
   const cookieStore = await cookies();
   const sessionCookie = cookieStore.get("__session")?.value;

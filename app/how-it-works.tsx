@@ -62,7 +62,7 @@ function FeatureCard({ icon, title, desc }: { icon: string; title: string; desc:
   );
 }
 
-function Section({ title, children }: { title: string; children: React.ReactNode }) {
+function Section({ title, children }: { title: string; children: ReactNode }) {
   const { colors } = useTheme();
   return (
     <View style={[styles.section, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
@@ -72,7 +72,7 @@ function Section({ title, children }: { title: string; children: React.ReactNode
   );
 }
 
-function Para({ children }: { children: React.ReactNode }) {
+function Para({ children }: { children: ReactNode }) {
   const { colors } = useTheme();
   return <Text style={[styles.para, { color: colors.textSecondary }]}>{children}</Text>;
 }

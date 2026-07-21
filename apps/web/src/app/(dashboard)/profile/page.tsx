@@ -1,7 +1,7 @@
 "use client";
 
 import type { Metadata } from "next";
-import { useState } from "react";
+import { useState, type FormEvent } from "react";
 import { useAuth } from "@/contexts/auth-context";
 
 // Note: metadata export does not work in "use client" — moved to a separate
@@ -11,7 +11,7 @@ export default function ProfilePage() {
   const { user } = useAuth();
   const [saved, setSaved] = useState(false);
 
-  async function handleSave(e: React.FormEvent<HTMLFormElement>) {
+  async function handleSave(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     // TODO: call PATCH /api/v1/users/me via the API client
     setSaved(true);

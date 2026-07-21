@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, useRef, type Dispatch, type SetStateAction, type MutableRefObject } from "react";
 import { Alert } from "react-native";
 import { router } from "expo-router";
 import * as Haptics from "@/shared/utils/haptics";
@@ -15,10 +15,10 @@ interface UseCommentActionsParams {
   userId: string | null;
   emailVerified: boolean;
   user: any;
-  setCommentsList: React.Dispatch<React.SetStateAction<CommentItem[]>>;
-  pendingCommentsRef: React.MutableRefObject<CommentItem[]>;
-  deletingIdsRef: React.MutableRefObject<Set<string>>;
-  setExpandedReplies: React.Dispatch<React.SetStateAction<Record<string, boolean>>>;
+  setCommentsList: Dispatch<SetStateAction<CommentItem[]>>;
+  pendingCommentsRef: MutableRefObject<CommentItem[]>;
+  deletingIdsRef: MutableRefObject<Set<string>>;
+  setExpandedReplies: Dispatch<SetStateAction<Record<string, boolean>>>;
 }
 
 export function useCommentActions({

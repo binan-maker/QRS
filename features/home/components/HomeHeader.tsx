@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useState, useRef } from "react";
 import { View, Text, StyleSheet, Pressable } from "react-native";
 import { Image } from "expo-image";
 import { router } from "expo-router";
@@ -21,7 +21,7 @@ export function HomeHeader({ user, photoURL }: Props) {
   // Track per-URL load errors so we can fall back to the initial letter
   // when expo-image silently fails (e.g. expired Firebase Storage token).
   const [imgError, setImgError] = useState(false);
-  const prevPhotoRef = React.useRef<string | null>(null);
+  const prevPhotoRef = useRef<string | null>(null);
   // Reset the error flag whenever the URL actually changes so a fresh URL
   // gets a clean attempt rather than staying stuck on the fallback.
   if (photoURL !== prevPhotoRef.current) {

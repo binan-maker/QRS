@@ -1,4 +1,4 @@
-import React, { memo } from "react";
+import React, { memo, type MutableRefObject } from "react";
 import { View, Image, StyleSheet } from "react-native";
 import QRCode from "react-native-qrcode-svg";
 import { shadow } from "@/shared/utils/platform";
@@ -12,7 +12,7 @@ interface Props {
   logoPosition: LogoPosition;
   customLogoUri: string | null;
   showDefaultLogo: boolean;
-  svgRef: React.MutableRefObject<any>;
+  svgRef: MutableRefObject<any>;
 }
 
 function QrPreview({

@@ -1,4 +1,4 @@
-import React from "react";
+import React, { memo, useState, type ReactNode } from "react";
 import { View, Text, StyleSheet, Pressable, ActivityIndicator } from "react-native";
 import { Image } from "expo-image";
 import { Ionicons } from "@expo/vector-icons";
@@ -111,7 +111,7 @@ function ActionPill({
   );
 }
 
-const CommentItem = React.memo(function CommentItem({
+const CommentItem = memo(function CommentItem({
   comment, isReply = false, currentUserLike, isMenuOpen, isDeleting, isRevealed,
   isCommentOwner, canDelete, descendants, expandedReplies, visibleRepliesCount,
   onLike, onReply, onMenuOpen, onMenuClose, onDelete, onReport, onReveal,
@@ -119,7 +119,7 @@ const CommentItem = React.memo(function CommentItem({
   allComments, userLikes, commentMenuId, deletingCommentId, revealedComments, userId,
 }: Props) {
   const { colors, isDark } = useTheme();
-  const [textExpanded, setTextExpanded] = React.useState(false);
+  const [textExpanded, setTextExpanded] = useState(false);
 
   const replyCount   = descendants.length;
   const isExpanded   = expandedReplies[comment.id] ?? false;
@@ -201,7 +201,7 @@ const CommentItem = React.memo(function CommentItem({
         {/* Comment text — leading @mention rendered in primary colour */}
         <View>
           <Text style={[styles.commentText, { color: colors.text }]}>
-            {((): React.ReactNode => {
+            {((): ReactNode => {
               // Detect a leading @mention (e.g. "@username rest of reply")
               if (displayText.startsWith("@")) {
                 const si = displayText.indexOf(" ");

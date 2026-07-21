@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo } from "react";
+import React, { useCallback, useMemo, memo } from "react";
 import { View, Text, Pressable, Platform, ActionSheetIOS, Alert, StyleSheet } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useTheme } from "@/shared/contexts/ThemeContext";
@@ -11,7 +11,7 @@ export interface HistoryRowProps {
   onDelete: (item: any) => void;
 }
 
-const HistoryRow = React.memo(function HistoryRow({ item, onDelete }: HistoryRowProps) {
+const HistoryRow = memo(function HistoryRow({ item, onDelete }: HistoryRowProps) {
   const { colors } = useTheme();
 
   const handleThreeDot = useCallback(() => {

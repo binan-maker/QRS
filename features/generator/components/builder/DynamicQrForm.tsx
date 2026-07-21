@@ -14,7 +14,7 @@
  *   />
  */
 
-import React, { useState, useCallback, useRef } from "react";
+import React, { useState, useCallback, useRef, type ReactNode } from "react";
 import {
   View,
   Text,
@@ -159,7 +159,7 @@ function FieldWrapper({
 }: {
   label: string;
   hint?: string;
-  children: React.ReactNode;
+  children: ReactNode;
   isDark: boolean;
   colors: any;
 }) {

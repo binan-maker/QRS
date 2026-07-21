@@ -1,4 +1,4 @@
-import React, { useCallback } from "react";
+import React, { useCallback, type RefObject } from "react";
 import { View, Text, Pressable, TextInput, ActivityIndicator, Keyboard } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
@@ -40,7 +40,7 @@ interface Props {
   setCommentMenuId: (id: string | null) => void;
   setCommentMenuOwner: (v: boolean) => void;
   submitting: boolean;
-  commentInputRef: React.RefObject<TextInput>;
+  commentInputRef: RefObject<TextInput>;
   userLikes: Record<string, string | null>;
   deletingCommentId: string | null;
   revealedComments: Set<string>;

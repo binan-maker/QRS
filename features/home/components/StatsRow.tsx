@@ -1,4 +1,4 @@
-import React, { useMemo } from "react";
+import React, { useMemo, type ComponentProps } from "react";
 import { View, Text, StyleSheet } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
@@ -7,7 +7,7 @@ import { useTheme } from "@/shared/contexts/ThemeContext";
 import { useScaleFns } from "@/shared/utils/use-scale";
 
 interface StatItem {
-  icon:  React.ComponentProps<typeof Ionicons>["name"];
+  icon:  ComponentProps<typeof Ionicons>["name"];
   label: string;
   desc:  string;
   color: string;

@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useCallback, type ComponentType, type FC, type PropsWithChildren } from "react";
 import { ErrorBoundary } from "@/shared/components/feedback/ErrorBoundary";
 import {
   ScreenErrorFallback,
@@ -6,7 +6,7 @@ import {
 } from "@/shared/components/feedback/ScreenErrorFallback";
 import { recordHandledError } from "@/shared/utils/setup-global-error-handlers";
 
-export type ScreenErrorBoundaryProps = React.PropsWithChildren<{
+export type ScreenErrorBoundaryProps = PropsWithChildren<{
   /** Human-readable label of the screen (e.g. "Profile"). */
   screenName?: string;
 }>;
@@ -23,7 +23,7 @@ export function ScreenErrorBoundary({
   children,
   screenName,
 }: ScreenErrorBoundaryProps) {
-  const Fallback = React.useCallback(
+  const Fallback = useCallback(
     (props: ScreenErrorFallbackProps) => (
       <ScreenErrorFallback {...props} screenName={screenName} />
     ),
@@ -51,10 +51,10 @@ export function ScreenErrorBoundary({
  * Preserves displayName for easier debugging.
  */
 export function withScreenErrorBoundary<P extends object>(
-  Component: React.ComponentType<P>,
+  Component: ComponentType<P>,
   screenName?: string,
-): React.ComponentType<P> {
-  const Wrapped: React.FC<P> = (props) => (
+): ComponentType<P> {
+  const Wrapped: FC<P> = (props) => (
     <ScreenErrorBoundary screenName={screenName}>
       <Component {...props} />
     </ScreenErrorBoundary>

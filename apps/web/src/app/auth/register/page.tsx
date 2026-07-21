@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type FormEvent } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/auth-context";
@@ -15,7 +15,7 @@ export default function RegisterPage() {
   const [error,    setError]    = useState<string | null>(null);
   const [loading,  setLoading]  = useState(false);
 
-  async function handleRegister(e: React.FormEvent) {
+  async function handleRegister(e: FormEvent) {
     e.preventDefault();
     setError(null);
     if (password.length < 8) { setError("Password must be at least 8 characters."); return; }

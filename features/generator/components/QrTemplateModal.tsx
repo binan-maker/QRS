@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useCallback, memo } from "react";
+import React, { useState, useMemo, useCallback, memo, useEffect } from "react";
 import { View, Text, Pressable, useWindowDimensions, KeyboardAvoidingView, Platform } from "react-native";
 import BottomSheet from "@/shared/components/ui/BottomSheet";
 import { Ionicons } from "@expo/vector-icons";
@@ -31,7 +31,7 @@ function QrTemplateModal({ visible, onClose, onGenerate, initialTemplateId }: Pr
   const [showPass, setShowPass] = useState(false);
   const [encType, setEncType] = useState<EncType>("WPA");
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (!visible) return;
     if (initialTemplateId) {
       const t = TEMPLATES.find((tmpl) => tmpl.id === initialTemplateId);

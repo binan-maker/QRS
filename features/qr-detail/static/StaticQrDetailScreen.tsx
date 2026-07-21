@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useRef, useEffect, useMemo } from "react";
+import React, { useState, useCallback, useRef, useEffect, useMemo, memo } from "react";
 import { useNavHide } from "@/shared/utils/use-nav-hide";
 import {
   View, Text, Pressable, ScrollView, RefreshControl,
@@ -45,7 +45,7 @@ function safeBack() {
 // ─── Memoized trust verdict banner (no-owner QRs) ─────────────────────────────
 // Extracted from the screen body to avoid re-running JSX construction logic on
 // every render caused by unrelated state changes (copied, toast, scroll position).
-const TrustVerdictBanner = React.memo(function TrustVerdictBanner({
+const TrustVerdictBanner = memo(function TrustVerdictBanner({
   trust,
   isDark,
 }: {

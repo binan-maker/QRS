@@ -10,7 +10,7 @@
  *  3. Add the type key to ACTIVE_TYPES below and wire it in the switch.
  */
 
-import React from "react";
+import React, { memo } from "react";
 import { View } from "react-native";
 import type { ParsedPaymentQr } from "@/services/analysis";
 import { PaymentCard } from "../payment";
@@ -78,7 +78,7 @@ interface Props {
 
 // ── Component ─────────────────────────────────────────────────────────────────
 
-const ContentCard = React.memo(function ContentCard({
+const ContentCard = memo(function ContentCard({
   content,
   contentType,
   parsedPayment,

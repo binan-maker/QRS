@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { View, Text, StyleSheet, Pressable } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import * as Clipboard from "expo-clipboard";
@@ -15,7 +15,7 @@ interface CardHeaderProps {
 }
 
 export function CardHeader({ title, subtitle, content, colors }: CardHeaderProps) {
-  const [copied, setCopied] = React.useState(false);
+  const [copied, setCopied] = useState(false);
 
   async function handleCopy() {
     await Clipboard.setStringAsync(content);

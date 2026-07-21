@@ -14,7 +14,7 @@ import { Stack } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import * as SystemUI from "expo-system-ui";
 import * as NavigationBar from "expo-navigation-bar";
-import React, { useCallback, useEffect, useRef } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { Platform, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { setHapticsEnabled } from "@/shared/utils/haptics";
@@ -175,8 +175,8 @@ function AuthGatedApp() {
 
   // ── Push notifications ──────────────────────────────────────────────────────
   // Register push token once per login and track every app open.
-  const pushRegisteredRef = React.useRef<string | null>(null);
-  React.useEffect(() => {
+  const pushRegisteredRef = useRef<string | null>(null);
+  useEffect(() => {
     if (!user?.id) return;
     if (pushRegisteredRef.current === user.id) return;
     pushRegisteredRef.current = user.id;
@@ -185,7 +185,7 @@ function AuthGatedApp() {
   }, [user?.id]);
 
   // Set up tap-handler once on mount; clean up on unmount.
-  React.useEffect(() => {
+  useEffect(() => {
     const cleanup = setupNotificationTapHandler();
     return cleanup;
   }, []);
@@ -204,16 +204,16 @@ function ConsentGatedApp({ onReady }: { onReady: () => void }) {
   // time ConsentGatedApp first renders (after the font gate), the cache is
   // almost always already resolved — so consentChecked is true on the first
   // render and the dark-background flash is eliminated entirely.
-  const [consentChecked, setConsentChecked] = React.useState(
+  const [consentChecked, setConsentChecked] = useState(
     () => isStartupPrefsLoaded()
   );
-  const [consentGiven, setConsentGiven] = React.useState(() =>
+  const [consentGiven, setConsentGiven] = useState(() =>
     isStartupPrefsLoaded()
       ? getStartupPref(STARTUP_PREF_KEYS.CONSENT_VERSION) === CONSENT_VERSION
       : false
   );
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (isStartupPrefsLoaded()) {
       // Already resolved synchronously above; just notify RootLayout.
       onReady();
@@ -260,7 +260,7 @@ export default function RootLayout() {
   // Since startup-prefs.ts fires its multiGet at module-load time, the cache is
   // typically warm by the time this component first renders — consentReady starts
   // true and the SplashGate can hide the splash as soon as auth resolves.
-  const [consentReady, setConsentReady] = React.useState(
+  const [consentReady, setConsentReady] = useState(
     () => isStartupPrefsLoaded()
   );
 

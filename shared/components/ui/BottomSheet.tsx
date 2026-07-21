@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, type ReactNode } from "react";
 import {
   Modal,
   View,
@@ -19,7 +19,7 @@ import { useTheme } from "@/shared/contexts/ThemeContext";
 interface Props {
   visible:             boolean;
   onClose:             () => void;
-  children:            React.ReactNode;
+  children:            ReactNode;
   maxHeight?:          DimensionValue;
   sheetStyle?:         ViewStyle;
   extraBottomPadding?: number;
@@ -31,7 +31,7 @@ interface Props {
 // which carries the real navigation-bar inset on Android edge-to-edge.
 interface BodyProps {
   colors:              any;
-  children:            React.ReactNode;
+  children:            ReactNode;
   heightStyle:         ViewStyle;
   sheetStyle?:         ViewStyle;
   sheetAnim:           Animated.Value;

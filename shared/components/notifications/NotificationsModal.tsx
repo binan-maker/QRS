@@ -1,4 +1,4 @@
-import React from "react";
+import React, { memo } from "react";
 import {
   View, Text, StyleSheet, Pressable, Modal, ScrollView, ActivityIndicator,
 } from "react-native";
@@ -57,7 +57,7 @@ interface ItemProps {
   onClose: () => void;
 }
 
-const NotificationItem = React.memo(function NotificationItem({ notif, colors, onClose }: ItemProps) {
+const NotificationItem = memo(function NotificationItem({ notif, colors, onClose }: ItemProps) {
   const color = getNotifColor(notif.type, colors);
 
   const handlePress = useCallback(() => {
@@ -101,7 +101,7 @@ const NotificationItem = React.memo(function NotificationItem({ notif, colors, o
 
 // ── Empty state ───────────────────────────────────────────────────────────────
 
-const EmptyNotifications = React.memo(function EmptyNotifications({ colors }: { colors: any }) {
+const EmptyNotifications = memo(function EmptyNotifications({ colors }: { colors: any }) {
   return (
     <View style={styles.empty}>
       <View style={[styles.emptyIcon, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
@@ -125,7 +125,7 @@ interface Props {
   onClearAll:     () => void;
 }
 
-const NotificationsModal = React.memo(function NotificationsModal({
+const NotificationsModal = memo(function NotificationsModal({
   visible, notifications, markingRead, onClose, onClearAll,
 }: Props) {
   const { colors } = useTheme();

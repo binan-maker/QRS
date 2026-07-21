@@ -1,4 +1,4 @@
-import React from "react";
+import { Fragment } from "react";
 import { View, Text, StyleSheet } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useTheme } from "@/shared/contexts/ThemeContext";
@@ -43,7 +43,7 @@ export default function SocialCard({ content, contentType, onOpenContent, isDeac
       {fields.length > 0 && (
         <InfoGrid accentColor={accentColor} colors={colors} isDark={isDark}>
           {fields.map((f, i) => (
-            <React.Fragment key={f.label}>
+            <Fragment key={f.label}>
               {i > 0 && <Divider colors={colors} />}
               <InfoRow
                 label={f.label}
@@ -53,7 +53,7 @@ export default function SocialCard({ content, contentType, onOpenContent, isDeac
                 colors={colors}
                 selectable
               />
-            </React.Fragment>
+            </Fragment>
           ))}
         </InfoGrid>
       )}

@@ -1,4 +1,4 @@
-import React from "react";
+import React, { type RefObject } from "react";
 import {
   View, ScrollView, Pressable, Text, Platform,
   NativeScrollEvent, NativeSyntheticEvent,
@@ -7,7 +7,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { Section, Body, Bold, Bullets } from "./consent-primitives";
 
 interface Props {
-  scrollRef: React.RefObject<ScrollView | null>;
+  scrollRef: RefObject<ScrollView | null>;
   onScroll: (e: NativeSyntheticEvent<NativeScrollEvent>) => void;
   scrolledToBottom: boolean;
   sectionBlue: string;

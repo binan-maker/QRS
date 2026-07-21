@@ -2,7 +2,7 @@ import { Component, type ReactNode } from "react";
 import { View, StyleSheet } from "react-native";
 
 export class CameraErrorBoundary extends Component<
-  { children: React.ReactNode; onError: () => void },
+  { children: ReactNode; onError: () => void },
   { hasError: boolean }
 > {
   constructor(props: any) {

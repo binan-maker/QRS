@@ -1,4 +1,4 @@
-import React, { useRef } from "react";
+import React, { useRef, memo, type ComponentProps } from "react";
 import {
   View,
   Text,
@@ -24,7 +24,7 @@ interface FilterBarProps {
   onFilterChange: (key: FilterKey) => void;
 }
 
-type IoniconName = React.ComponentProps<typeof Ionicons>["name"];
+type IoniconName = ComponentProps<typeof Ionicons>["name"];
 
 const FILTER_ICONS: Record<string, IoniconName> = {
   all:       "apps-outline",
@@ -46,7 +46,7 @@ const FILTER_ICONS_ACTIVE: Record<string, IoniconName> = {
   favorites: "bookmark",
 };
 
-const FilterBar = React.memo(function FilterBar({
+const FilterBar = memo(function FilterBar({
   filters,
   activeFilters,
   onFilterChange,

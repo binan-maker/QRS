@@ -10,7 +10,7 @@
  *   <QrCard content={qr.rawContent} contentType={qr.contentType} onPress={...} showTrust />
  */
 
-import React, { memo } from "react";
+import React, { memo, type ReactNode } from "react";
 import { View, Text, StyleSheet, Pressable } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import Animated, { FadeInDown } from "react-native-reanimated";
@@ -34,7 +34,7 @@ interface QrCardProps {
   isDynamic?: boolean;
   isActive?: boolean;
   scannedAt?: Date | number;
-  rightAction?: React.ReactNode;
+  rightAction?: ReactNode;
   animationDelay?: number;
   testID?: string;
 }

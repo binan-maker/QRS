@@ -1,4 +1,4 @@
-import React from "react";
+import React, { type ReactNode } from "react";
 import { View, Text, StyleSheet } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 
@@ -35,7 +35,7 @@ interface InfoGridProps {
   accentColor?: string; // kept for call-site compat, no longer used
   colors: any;
   isDark?: boolean;
-  children: React.ReactNode;
+  children: ReactNode;
 }
 
 export function InfoGrid({ colors, children }: InfoGridProps) {

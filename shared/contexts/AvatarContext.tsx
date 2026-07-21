@@ -18,7 +18,7 @@
  * No new packages needed — Context + AsyncStorage + expo-image cachePolicy covers it.
  */
 
-import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
+import React, { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import {
   prefetchStartupPrefs,
@@ -89,7 +89,7 @@ const AvatarContext = createContext<AvatarState>({
   clearAvatar: () => {},
 });
 
-export function AvatarProvider({ children }: { children: React.ReactNode }) {
+export function AvatarProvider({ children }: { children: ReactNode }) {
   // ── Synchronous initialisation from startup-prefs cache ──────────────────
   // startup-prefs kicks off AsyncStorage.multiGet at module-load time.
   // By the time this useState initialiser runs (after the font gate re-opens

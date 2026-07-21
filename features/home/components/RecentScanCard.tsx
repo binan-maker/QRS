@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo } from "react";
+import React, { useCallback, useMemo, memo } from "react";
 import { View, Text, Pressable } from "react-native";
 import { router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
@@ -41,7 +41,7 @@ interface Props {
   onDelete: (id: string) => void;
 }
 
-export const RecentScanCard = React.memo(function RecentScanCard({ scan, index, onDelete }: Props) {
+export const RecentScanCard = memo(function RecentScanCard({ scan, index, onDelete }: Props) {
   const { colors, isDark } = useTheme();
   const contentType = useMemo(() => detectContentType(scan.content), [scan.content]);
   const { typeMeta, displayLabel, subtitle } = useQrMeta(scan.content, contentType);

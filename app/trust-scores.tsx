@@ -64,7 +64,7 @@ function FactorRow({ icon, title, desc, index }: { icon: string; title: string; 
   );
 }
 
-function SectionCard({ title, icon, children }: { title: string; icon?: string; children: React.ReactNode }) {
+function SectionCard({ title, icon, children }: { title: string; icon?: string; children: ReactNode }) {
   const { colors } = useTheme();
   return (
     <View style={[styles.sectionCard, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
@@ -81,7 +81,7 @@ function SectionCard({ title, icon, children }: { title: string; icon?: string; 
   );
 }
 
-function Para({ children }: { children: React.ReactNode }) {
+function Para({ children }: { children: ReactNode }) {
   const { colors } = useTheme();
   return <Text style={[styles.para, { color: colors.textSecondary }]}>{children}</Text>;
 }

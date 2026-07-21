@@ -1,3 +1,4 @@
+import type { RefObject } from "react";
 import { View, Text, TextInput, Pressable, ActivityIndicator } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import Animated, { FadeInDown } from "react-native-reanimated";
@@ -20,7 +21,7 @@ interface Props {
   getAllDescendants: (parentId: string) => CommentItem[];
   handleSubmitComment: () => void;
   handleModerateComment: (commentId: string, commentUserId: string) => void;
-  commentInputRef: React.RefObject<TextInput>;
+  commentInputRef: RefObject<TextInput>;
   ownerInitials: string;
   commentCount: number;
 }

@@ -1,4 +1,4 @@
-import React from "react";
+import React, { memo } from "react";
 import { View, Text, StyleSheet } from "react-native";
 
 interface Props {
@@ -8,7 +8,7 @@ interface Props {
   fontSize: (n: number) => number;
 }
 
-const SearchResultsRow = React.memo(function SearchResultsRow({ count, query, colors, fontSize }: Props) {
+const SearchResultsRow = memo(function SearchResultsRow({ count, query, colors, fontSize }: Props) {
   return (
     <View style={[styles.row, { borderBottomColor: colors.surfaceBorder }]}>
       <Text

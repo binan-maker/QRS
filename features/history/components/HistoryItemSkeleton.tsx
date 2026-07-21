@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useRef, memo } from "react";
 import { View, Animated, StyleSheet } from "react-native";
 import { useTheme } from "@/shared/contexts/ThemeContext";
 
@@ -6,10 +6,10 @@ interface Props {
   index?: number;
 }
 
-// React.memo prevents re-renders when parent re-renders with unchanged props.
+// memo prevents re-renders when parent re-renders with unchanged props.
 // Skeletons are purely visual placeholders so there is never a reason to
 // re-render them once mounted.
-const HistoryItemSkeleton = React.memo(function HistoryItemSkeleton({ index = 0 }: Props) {
+const HistoryItemSkeleton = memo(function HistoryItemSkeleton({ index = 0 }: Props) {
   const { isDark } = useTheme();
   const shimmer = useRef(new Animated.Value(0)).current;
 

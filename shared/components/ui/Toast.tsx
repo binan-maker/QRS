@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useCallback, useRef } from "react";
+import React, { createContext, useContext, useState, useCallback, useRef, type ReactNode } from "react";
 import { View, Text, Animated, StyleSheet, Platform } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -21,7 +21,7 @@ export function useToast(): ToastContextValue {
   return useContext(ToastContext);
 }
 
-export function ToastProvider({ children }: { children: React.ReactNode }) {
+export function ToastProvider({ children }: { children: ReactNode }) {
   const insets = useSafeAreaInsets();
   const [toast, setToast] = useState<ToastState>({ message: "", type: "success", visible: false });
   const anim = useRef(new Animated.Value(0)).current;

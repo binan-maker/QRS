@@ -1,4 +1,4 @@
-import React from "react";
+import React, { memo } from "react";
 import { View, Text, TextInput, Pressable, StyleSheet, TextInputProps } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useTheme } from "@/shared/contexts/ThemeContext";
@@ -11,7 +11,7 @@ interface AuthFormInputProps extends TextInputProps {
   onToggleVisible?: () => void;
 }
 
-const AuthFormInput = React.memo(function AuthFormInput({
+const AuthFormInput = memo(function AuthFormInput({
   icon,
   error,
   showToggle,

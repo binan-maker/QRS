@@ -1,10 +1,10 @@
-import type React from "react";
+import type { MutableRefObject } from "react";
 import type { CommentItem } from "./comment-types";
 
 export function mergeWithOptimistic(
   liveComments: CommentItem[],
-  pendingRef: React.MutableRefObject<CommentItem[]>,
-  deletingRef: React.MutableRefObject<Set<string>>
+  pendingRef: MutableRefObject<CommentItem[]>,
+  deletingRef: MutableRefObject<Set<string>>
 ): CommentItem[] {
   const filteredLive = liveComments.filter((c) => !deletingRef.current.has(c.id));
   const confirmedPending = pendingRef.current.filter((pending) =>

@@ -7,7 +7,7 @@
  *
  * Import from "@/features/qr-engine" — never directly from this file.
  */
-import React from "react";
+import React, { memo } from "react";
 import { View } from "react-native";
 import type { ParsedPaymentQr } from "@/services/analysis";
 import { getAppBrand } from "./brand-data";
@@ -22,7 +22,7 @@ interface Props {
   onOpenContent: () => void;
 }
 
-const PaymentCard = React.memo(function PaymentCard({ parsedPayment, isDeactivated, onOpenContent }: Props) {
+const PaymentCard = memo(function PaymentCard({ parsedPayment, isDeactivated, onOpenContent }: Props) {
   const brand = getAppBrand(parsedPayment.app, parsedPayment.appCategory);
   const isIndia = parsedPayment.appCategory === "upi_india" || parsedPayment.appCategory === "india_wallet";
 

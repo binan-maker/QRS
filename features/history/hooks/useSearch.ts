@@ -3,7 +3,7 @@
 // query value (300ms), and focus ref.
 // Keeps all search concerns out of HistoryScreen and useHistory.
 
-import React, { useState, useRef, useCallback, useEffect } from "react";
+import React, { useState, useRef, useCallback, useEffect, type RefObject } from "react";
 import { Keyboard, TextInput } from "react-native";
 import * as Haptics from "@/shared/utils/haptics";
 
@@ -13,7 +13,7 @@ export function useSearch() {
   const [searchVisible, setSearchVisible] = useState(false);
   const [searchQuery,   setSearchQuery]   = useState("");
   const [debouncedQuery, setDebouncedQuery] = useState("");
-  const searchInputRef = useRef<TextInput>(null) as React.RefObject<TextInput>;
+  const searchInputRef = useRef<TextInput>(null) as RefObject<TextInput>;
   const debounceTimer  = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Debounce raw query → debouncedQuery

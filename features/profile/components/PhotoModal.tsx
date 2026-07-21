@@ -1,4 +1,4 @@
-import React from "react";
+import React, { memo, Fragment } from "react";
 import { View, Text, StyleSheet, Pressable } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useTheme } from "@/shared/contexts/ThemeContext";
@@ -14,7 +14,7 @@ interface Props {
   extraBottomPadding?: number;
 }
 
-const PhotoModal = React.memo(function PhotoModal({
+const PhotoModal = memo(function PhotoModal({
   visible,
   onCamera,
   onGallery,
@@ -60,7 +60,7 @@ const PhotoModal = React.memo(function PhotoModal({
   return (
     <BottomSheet visible={visible} onClose={onClose} extraBottomPadding={extraBottomPadding}>
       {options.map((opt, i) => (
-        <React.Fragment key={opt.label}>
+        <Fragment key={opt.label}>
           <Pressable
             style={({ pressed }) => [styles.option, { opacity: pressed ? 0.72 : 1 }]}
             onPress={() => {
@@ -85,7 +85,7 @@ const PhotoModal = React.memo(function PhotoModal({
           {i < options.length - 1 && (
             <View style={[styles.rowDivider, { backgroundColor: colors.surfaceBorder }]} />
           )}
-        </React.Fragment>
+        </Fragment>
       ))}
     </BottomSheet>
   );

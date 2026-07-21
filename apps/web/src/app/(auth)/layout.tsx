@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 /**
  * Auth layout — login, signup, forgot-password.
  * Centred single-column card layout; no nav chrome.
@@ -6,7 +7,7 @@
 export default function AuthLayout({
   children,
 }: {
-  children: React.ReactNode;
+  children: ReactNode;
 }) {
   return (
     <div className="flex min-h-screen items-center justify-center bg-gray-50 px-4 py-12">

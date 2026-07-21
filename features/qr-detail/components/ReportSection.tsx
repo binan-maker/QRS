@@ -1,4 +1,4 @@
-import React from "react";
+import React, { memo } from "react";
 import { View, Text, StyleSheet, Pressable, ActivityIndicator } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useTheme } from "@/shared/contexts/ThemeContext";
@@ -10,7 +10,7 @@ interface Props {
   onReport: (type: string) => void;
 }
 
-const ReportSection = React.memo(function ReportSection({ userReport, reportLoading, onReport }: Props) {
+const ReportSection = memo(function ReportSection({ userReport, reportLoading, onReport }: Props) {
   const { colors } = useTheme();
 
 

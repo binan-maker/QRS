@@ -1,4 +1,4 @@
-import React, { memo } from "react";
+import React, { memo, type Dispatch, type SetStateAction } from "react";
 import {
   View, Text, Pressable, ScrollView, TextInput,
   Platform, KeyboardAvoidingView,
@@ -29,7 +29,7 @@ interface Props {
   isBlank: boolean;
   selectedCat: CategorySchema | null;
   values: Record<string, string>;
-  setValues: React.Dispatch<React.SetStateAction<Record<string, string>>>;
+  setValues: Dispatch<SetStateAction<Record<string, string>>>;
   blankFields: BlankField[];
   requiredFields: FieldDefinition[];
   progressFilled: number;

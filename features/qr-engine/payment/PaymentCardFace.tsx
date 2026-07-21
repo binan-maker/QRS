@@ -1,4 +1,4 @@
-import React from "react";
+import React, { memo, useState } from "react";
 import { View, Text, Pressable } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import * as Clipboard from "expo-clipboard";
@@ -18,11 +18,11 @@ interface Props {
   effectiveBankName: string | null;
 }
 
-const PaymentCardFace = React.memo(function PaymentCardFace({
+const PaymentCardFace = memo(function PaymentCardFace({
   parsedPayment, brand, isIndia, displayVpa, effectiveBankName,
 }: Props) {
   const { colors, isDark } = useTheme();
-  const [upiCopied, setUpiCopied] = React.useState(false);
+  const [upiCopied, setUpiCopied] = useState(false);
 
   async function handleCopyUpi() {
     if (!displayVpa) return;

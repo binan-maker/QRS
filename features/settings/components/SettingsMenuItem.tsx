@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo } from "react";
+import React, { useCallback, useMemo, memo } from "react";
 import { Pressable, Text, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import * as Haptics from "@/shared/utils/haptics";
@@ -13,7 +13,7 @@ interface Props {
   danger?: boolean;
 }
 
-const SettingsMenuItem = React.memo(function SettingsMenuItem({ icon, label, sublabel, onPress, danger }: Props) {
+const SettingsMenuItem = memo(function SettingsMenuItem({ icon, label, sublabel, onPress, danger }: Props) {
   const { colors } = useTheme();
   const styles = useMemo(() => makeSettingsStyles(colors), [colors]);
 

@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, type ComponentProps } from "react";
 import { View, Text, StyleSheet, Pressable } from "react-native";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
@@ -13,7 +13,7 @@ import { useTheme } from "@/shared/contexts/ThemeContext";
 
 interface Props {
   btnLabel:     string;
-  btnIcon:      React.ComponentProps<typeof MaterialCommunityIcons>["name"];
+  btnIcon:      ComponentProps<typeof MaterialCommunityIcons>["name"];
   btnColors:    [string, string];
   onPress:      () => void;
   showError?:   boolean;
@@ -29,7 +29,7 @@ export default function GenerateButton({ btnLabel, btnIcon, btnColors, onPress, 
   const errorBarStyle = useAnimatedStyle(() => ({ width: `${errorProgress.value * 100}%` as any }));
   const errorContainerStyle = useAnimatedStyle(() => ({ opacity: errorOpacity.value }));
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (!showError) return;
     errorProgress.value = 0;
     errorOpacity.value  = 1;

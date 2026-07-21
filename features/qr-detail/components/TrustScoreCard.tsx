@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, memo } from "react";
 import { View, Text, StyleSheet, Pressable } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
@@ -41,7 +41,7 @@ function getScoreGradient(score: number, colors: any): [string, string] {
   return [colors.danger, colors.dangerShade];
 }
 
-const TrustScoreCard = React.memo(function TrustScoreCard({
+const TrustScoreCard = memo(function TrustScoreCard({
   trustInfo, reportCounts, totalScans,
   isQrOwner, followCount, onOpenFollowers,
   ownerScanCount, hasOwner = false,

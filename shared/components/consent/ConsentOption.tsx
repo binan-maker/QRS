@@ -1,4 +1,4 @@
-import React from "react";
+import React, { type FC } from "react";
 import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
 
 export interface ConsentOptionProps {
@@ -10,7 +10,7 @@ export interface ConsentOptionProps {
   icon?: string;
 }
 
-export const ConsentOption: React.FC<ConsentOptionProps> = ({
+export const ConsentOption: FC<ConsentOptionProps> = ({
   title,
   description,
   enabled,

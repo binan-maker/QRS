@@ -1,4 +1,4 @@
-import React, { useCallback } from "react";
+import React, { useCallback, memo } from "react";
 import { View, Pressable } from "react-native";
 import QRCode from "react-native-qrcode-svg";
 import Animated, { FadeIn } from "react-native-reanimated";
@@ -20,7 +20,7 @@ interface Props {
   tileSize: number;
 }
 
-const QrPreviewCard = React.memo(function QrPreviewCard({ qr, colors, tileSize }: Props) {
+const QrPreviewCard = memo(function QrPreviewCard({ qr, colors, tileSize }: Props) {
   const onPress = useCallback(() => safePush(`/my-qr/${qr.docId}`), [qr.docId]);
 
   const thumbBg = qr.bgColor || colors.surface;

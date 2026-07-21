@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { View, Text, Pressable, StyleSheet } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import Animated, { FadeInDown } from "react-native-reanimated";
@@ -16,7 +16,7 @@ interface Props {
 
 export default function WebsiteCard({ content, onOpenContent, isDeactivated, hideOpenAction }: Props) {
   const { colors } = useTheme();
-  const [copied, setCopied] = React.useState(false);
+  const [copied, setCopied] = useState(false);
 
   const site      = parseWebsite(content);
   const rawHost   = site?.hostname ?? content.replace(/^https?:\/\/(www\.)?/, "").split("/")[0];

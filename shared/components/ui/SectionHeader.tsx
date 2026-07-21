@@ -1,4 +1,4 @@
-import React from "react";
+import React, { memo } from "react";
 import { View, Text, StyleSheet } from "react-native";
 import { useTheme } from "@/shared/contexts/ThemeContext";
 
@@ -10,7 +10,7 @@ interface Props {
   gradient?: [string, string];
 }
 
-export const SectionHeader = React.memo(function SectionHeader({ label, count, inline }: Props) {
+export const SectionHeader = memo(function SectionHeader({ label, count, inline }: Props) {
   const { colors } = useTheme();
 
   if (inline) {

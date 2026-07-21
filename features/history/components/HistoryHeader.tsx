@@ -1,4 +1,4 @@
-import React from "react";
+import React, { memo, type RefObject } from "react";
 import { View, Text, StyleSheet, Pressable, TextInput } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
@@ -11,12 +11,12 @@ interface Props {
   onChangeQuery:    (q: string) => void;
   onOpenSearch:     () => void;
   onCloseSearch:    () => void;
-  searchInputRef:   React.RefObject<TextInput>;
+  searchInputRef:   RefObject<TextInput>;
   colors:           any;
   fontSize:         (n: number) => number;
 }
 
-const HistoryHeader = React.memo(function HistoryHeader({
+const HistoryHeader = memo(function HistoryHeader({
   searchVisible,
   searchQuery,
   onChangeQuery,

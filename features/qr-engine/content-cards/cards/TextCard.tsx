@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { View, Text, StyleSheet, Pressable } from "react-native";
 import { useTheme } from "@/shared/contexts/ThemeContext";
 import { CardHeader } from "../shared";
@@ -12,7 +12,7 @@ const EXPAND_THRESHOLD = 120;
 
 export default function TextCard({ content }: Props) {
   const { colors, isDark } = useTheme();
-  const [expanded, setExpanded] = React.useState(false);
+  const [expanded, setExpanded] = useState(false);
   const isLong = content.length > EXPAND_THRESHOLD || content.includes("\n");
   const accentColor = GRADIENT[0];
 

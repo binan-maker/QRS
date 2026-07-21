@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useRef, memo } from "react";
 import {
   View, Text, StyleSheet, Pressable, Modal,
   ScrollView, ActivityIndicator, Image, Animated,
@@ -24,7 +24,7 @@ interface Props {
   emptyText?: string;
 }
 
-const FollowersModal = React.memo(function FollowersModal({
+const FollowersModal = memo(function FollowersModal({
   visible, followCount, followers, loading, onClose,
   title = "Followers",
   subtitle,
