@@ -30,9 +30,6 @@ export function resolveExpiryDate(preset: ExpiryPreset, customDate: string): str
   if (preset === "7d")  { now.setDate(now.getDate() + 7); return now.toISOString(); }
   if (preset === "30d") { now.setDate(now.getDate() + 30); return now.toISOString(); }
   if (preset === "90d") { now.setDate(now.getDate() + 90); return now.toISOString(); }
-  if (preset === "custom" && customDate.match(/^\d{4}-\d{2}-\d{2}$/)) {
-    return new Date(customDate + "T23:59:59").toISOString();
-  }
   return null;
 }
 

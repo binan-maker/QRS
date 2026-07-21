@@ -38,7 +38,8 @@ export default function GenerateButton({ btnLabel, btnIcon, btnColors, onPress, 
         errorOpacity.value = withTiming(0, { duration: 280 }, () => { runOnJS(onHideError)(); });
       }
     });
-  }, [showError]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [showError, onHideError]);
 
   return (
     <Reanimated.View entering={FadeInDown.delay(50).duration(260)}>

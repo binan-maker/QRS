@@ -73,7 +73,7 @@ export function useQrActions({
     await Clipboard.setStringAsync(raw || qrValue);
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     showToast("Copied to clipboard!", "success");
-  }, [qrValue, qrMode, isBranded, inputValue, selectedPreset, extraFields, showToast]);
+  }, [qrValue, inputValue, selectedPreset, extraFields, showToast]);
 
   const handleShare = useCallback(async () => {
     if (!qrValue || sharingQr) return;
@@ -189,7 +189,7 @@ export function useQrActions({
       if (pdfUri) FileSystem.deleteAsync(pdfUri, { idempotent: true }).catch(() => {});
       setDownloadingPdf(false);
     }
-  }, [qrValue, downloadingPdf, qrMode, inputValue, svgRef, showToast]);
+  }, [qrValue, downloadingPdf, svgRef, showToast]);
 
   return { sharingQr, downloadingPdf, handleCopy, handleShare, handleDownloadPdf };
 }

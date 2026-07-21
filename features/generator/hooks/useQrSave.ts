@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import * as Crypto from "expo-crypto";
 import * as Haptics from "@/shared/utils/haptics";
 import {
@@ -84,6 +84,13 @@ export function useQrSave({
   const [savedToProfile,   setSavedToProfile]   = useState(false);
   const [savedDocId,       setSavedDocId]       = useState<string | null>(null);
   const [nameSuggestions,  setNameSuggestions]  = useState<string[]>([]);
+  const savedProfileTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Clear the savedToProfile auto-hide timer on unmount to avoid state
+  // updates on an unmounted component.
+  useEffect(() => () => {
+    if (savedProfileTimerRef.current) clearTimeout(savedProfileTimerRef.current);
+  }, []);
 
   const clearNameSuggestions = useCallback(() => setNameSuggestions([]), []);
 
@@ -200,7 +207,8 @@ export function useQrSave({
         );
         setSavedDocId(docId);
         setSavedToProfile(true);
-        setTimeout(() => setSavedToProfile(false), 4000);
+        if (savedProfileTimerRef.current) clearTimeout(savedProfileTimerRef.current);
+        savedProfileTimerRef.current = setTimeout(() => setSavedToProfile(false), 4000);
 
         const qrIdHash = await Crypto.digestStringAsync(
           Crypto.CryptoDigestAlgorithm.SHA256,
@@ -226,7 +234,7 @@ export function useQrSave({
     }
   }, [
     qrMode, isBranded, privateMode, selectedPreset, inputValue, extraFields,
-    user, customLogoBase64,
+    user,
     qrFgColor, qrBgColor, advancedSettings,
     setQrValue, setGeneratedUuid, setGeneratedAt, showToast,
   ]);

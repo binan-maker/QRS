@@ -20,8 +20,6 @@ import FeatureVoteCard  from "@/features/generator/components/FeatureVoteCard";
 
 interface Props {
   mode: QrMode;
-  initialTemplateId?: string;
-  openAiBuilder?: boolean;
 }
 
 export default function QrFormPage({ mode }: Props) {
@@ -57,8 +55,10 @@ export default function QrFormPage({ mode }: Props) {
     urlRiskScore, urlRiskReasons,
   } = useQrGenerator();
 
-  useEffect(() => { setQrMode(mode); }, []);
-  useEffect(() => { switchPreset(0); }, []);
+  // Initialise mode and reset preset on mount; deps are intentionally empty
+  // because mode is fixed from the route and these are one-time setup calls.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => { setQrMode(mode); switchPreset(0); }, []);
 
   useEffect(() => {
     if (nameSuggestions.length > 0) setShowDuplicateError(true);

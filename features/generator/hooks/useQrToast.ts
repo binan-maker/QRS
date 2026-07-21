@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
 import { Animated } from "react-native";
 
 export function useQrToast() {
@@ -21,6 +21,9 @@ export function useQrToast() {
     },
     [toastAnim],
   );
+
+  // Clear any pending timer when the component using this hook unmounts.
+  useEffect(() => () => { if (toastTimer.current) clearTimeout(toastTimer.current); }, []);
 
   return { toastMsg, toastType, toastAnim, showToast };
 }

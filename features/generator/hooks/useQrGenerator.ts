@@ -2,7 +2,6 @@ import { useState, useRef, useCallback, useMemo } from "react";
 import * as Haptics from "@/shared/utils/haptics";
 import { useAuth } from "@/shared/contexts/AuthContext";
 import { QR_PRESETS } from "@/features/generator/data/presets";
-import { filterByKeyboardType } from "@/features/generator/data/qr-builder";
 import { QR_COLOR_THEMES } from "@/features/generator/components/QrThemeSection";
 import { type AdvancedSettings } from "@/features/generator/components/AdvancedSettingsPanel";
 import { useQrToast }   from "@/features/generator/hooks/useQrToast";
@@ -168,6 +167,5 @@ export function useQrGenerator() {
     handleDownloadPdf,
     handleClear,
     showToast,
-    filterByKeyboardType,
   };
 }

@@ -51,6 +51,8 @@ export function useQrContent({
     return () => clearTimeout(timer);
   }, [inputValue, extraFields, selectedPreset, qrMode, isBranded]);
 
+  const riskTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
   // ── URL risk analysis ─────────────────────────────────────────────────────
   useEffect(() => {
     if (!qrValue) {
@@ -65,11 +67,15 @@ export function useQrContent({
     if (score >= 35 && riskShownFor.current !== qrValue) {
       riskShownFor.current = qrValue;
       const level = score >= 70 ? "High risk" : "Caution";
-      setTimeout(
+      if (riskTimerRef.current) clearTimeout(riskTimerRef.current);
+      riskTimerRef.current = setTimeout(
         () => showToast(`${level}: ${reasons[0] ?? "Suspicious content"}`, "error"),
         300,
       );
     }
+    return () => {
+      if (riskTimerRef.current) clearTimeout(riskTimerRef.current);
+    };
   }, [qrValue, showToast]);
 
   return {
