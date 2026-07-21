@@ -17,15 +17,19 @@ const HistoryItemSkeleton = memo(function HistoryItemSkeleton({ index = 0 }: Pro
     // Stagger shimmer phase per card so they pulse at slightly different times —
     // this creates a natural "breathing" look without staggering the mount itself.
     const delay = Math.min(index, 4) * 120;
+    const anim = Animated.loop(
+      Animated.sequence([
+        Animated.timing(shimmer, { toValue: 1, duration: 900, useNativeDriver: true }),
+        Animated.timing(shimmer, { toValue: 0, duration: 900, useNativeDriver: true }),
+      ])
+    );
     const timeout = setTimeout(() => {
-      Animated.loop(
-        Animated.sequence([
-          Animated.timing(shimmer, { toValue: 1, duration: 900, useNativeDriver: true }),
-          Animated.timing(shimmer, { toValue: 0, duration: 900, useNativeDriver: true }),
-        ])
-      ).start();
+      anim.start();
     }, delay);
-    return () => clearTimeout(timeout);
+    return () => {
+      clearTimeout(timeout);
+      anim.stop();
+    };
   // shimmer ref is stable; index drives the stagger only on mount.
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);

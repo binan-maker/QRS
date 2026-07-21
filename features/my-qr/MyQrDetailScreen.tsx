@@ -32,12 +32,14 @@ import type { LogoPosition } from "@/features/my-qr/hooks/useQrDesign";
 function MyQrDetailSkeleton({ colors, isDark, topInset }: { colors: any; isDark: boolean; topInset: number }) {
   const shimmer = useRef(new RNAnimated.Value(0)).current;
   useEffect(() => {
-    RNAnimated.loop(
+    const anim = RNAnimated.loop(
       RNAnimated.sequence([
         RNAnimated.timing(shimmer, { toValue: 1, duration: 900, useNativeDriver: true }),
         RNAnimated.timing(shimmer, { toValue: 0, duration: 900, useNativeDriver: true }),
       ])
-    ).start();
+    );
+    anim.start();
+    return () => anim.stop();
   }, []);
   const opacity = shimmer.interpolate({ inputRange: [0, 1], outputRange: [0.3, 0.65] });
   const bone = (style: object) => (

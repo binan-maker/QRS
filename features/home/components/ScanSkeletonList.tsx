@@ -8,12 +8,14 @@ function SkeletonCard({ index }: { index: number }) {
   const shimmer = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
-    Animated.loop(
+    const anim = Animated.loop(
       Animated.sequence([
         Animated.timing(shimmer, { toValue: 1, duration: 900, useNativeDriver: true }),
         Animated.timing(shimmer, { toValue: 0, duration: 900, useNativeDriver: true }),
       ])
-    ).start();
+    );
+    anim.start();
+    return () => anim.stop();
   }, []);
 
   const opacity = shimmer.interpolate({ inputRange: [0, 1], outputRange: [0.55, 1] });
