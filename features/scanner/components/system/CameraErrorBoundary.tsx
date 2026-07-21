@@ -1,4 +1,4 @@
-import { Component } from "react";
+import { Component, type ReactNode } from "react";
 import { View, StyleSheet } from "react-native";
 
 export class CameraErrorBoundary extends Component<

@@ -6,7 +6,7 @@ import {
   Pressable,
   Platform,
 } from "react-native";
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import { router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";

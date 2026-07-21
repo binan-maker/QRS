@@ -1,5 +1,5 @@
 import { View, Text, StyleSheet, TextInput, Pressable } from "react-native";
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import { Ionicons } from "@expo/vector-icons";
 import { useTheme } from "@/shared/contexts/ThemeContext";
 import CalendarPicker from "./CalendarPicker";
