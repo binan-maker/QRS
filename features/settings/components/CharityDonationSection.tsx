@@ -1,8 +1,7 @@
 import {
   View, Text, Pressable, ScrollView, Alert, StyleSheet, useWindowDimensions,
 } from "react-native";
-import { useState, useEffect, useCallback } from "react";
-import { View, Text, StyleSheet } from "react-native";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import * as WebBrowser from "expo-web-browser";
@@ -19,10 +18,16 @@ import DonateTab from "./DonateTab";
 import HistoryTab from "./HistoryTab";
 
 export default function CharityDonationSection() {
-const { colors } = useTheme();
+  const { colors } = useTheme();
   const { width } = useWindowDimensions();
   const insets = useSafeAreaInsets();
   const { user } = useAuth();
+  const mountedRef = useRef(true);
+
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => { mountedRef.current = false; };
+  }, []);
 
   const s = Math.min(Math.max(width / 390, 0.82), 1.0);
   const rf = (n: number) => Math.round(n * s);
@@ -40,13 +45,17 @@ const { colors } = useTheme();
     ? Math.max(1, parseInt(customAmount || "0", 10) || 0)
     : selectedAmount;
 
+  const userId = user?.id;
   const loadHistory = useCallback(async () => {
-    if (!user) return;
+    if (!userId) return;
     setLoadingHistory(true);
-    const data = await fetchMyDonations(user.id);
-    setDonations(data);
-    setLoadingHistory(false);
-  }, [user]);
+    try {
+      const data = await fetchMyDonations(userId);
+      if (!mountedRef.current) return;
+      setDonations(data);
+    } catch {}
+    if (mountedRef.current) setLoadingHistory(false);
+  }, [userId]);
 
   useEffect(() => {
     if (tab === "history") loadHistory();
@@ -161,14 +170,7 @@ return (
         <HistoryTab donations={donations} loadingHistory={loadingHistory} />
       )}
     </ScrollView>
-    <View style={styles.container}>
-      <Ionicons name="heart-outline" size={40} color={colors.textMuted} />
-      <Text style={[styles.title, { color: colors.text }]}>Support BinRo</Text>
-      <Text style={[styles.sub, { color: colors.textSecondary }]}>
-        Donation support is coming soon. Thank you for your support!
-      </Text>
-    </View>
-);
+  );
 }
 
 const styles = StyleSheet.create({
@@ -183,7 +185,4 @@ const styles = StyleSheet.create({
   tabRow: { flexDirection: "row", borderBottomWidth: StyleSheet.hairlineWidth },
   tab: { flex: 1, flexDirection: "row", alignItems: "center", justifyContent: "center" },
   tabText: { fontFamily: "Inter_600SemiBold" },
-  container: { flex: 1, alignItems: "center", justifyContent: "center", padding: 32, gap: 12 },
-  title: { fontSize: 20, fontFamily: "Inter_700Bold" },
-  sub: { fontSize: 14, fontFamily: "Inter_400Regular", textAlign: "center" },
 });

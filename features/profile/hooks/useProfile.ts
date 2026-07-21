@@ -383,7 +383,7 @@ export function useProfile() {
         },
       },
     ]);
-  }, [signOut]);
+  }, [signOut, clearAvatar]);
 
   const initials = useMemo(
     () => user?.displayName

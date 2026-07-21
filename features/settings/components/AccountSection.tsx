@@ -7,6 +7,9 @@ import { useTheme } from "@/shared/contexts/ThemeContext";
 import { makeSettingsStyles } from "@/features/settings/styles";
 import SettingsMenuItem from "./SettingsMenuItem";
 
+// Module-level: created once, not on every render
+const ENTER_ANIM = FadeInDown.duration(260);
+
 interface Props {
   user: any;
   deleteConfirmText: string;
@@ -30,7 +33,7 @@ export default function AccountSection({ user, deleteConfirmText, setDeleteConfi
       scrollEventThrottle={16}
       contentContainerStyle={[styles.scrollContent, { paddingTop, paddingBottom: insets.bottom + 40 }]}
     >
-      <Animated.View entering={FadeInDown.duration(260)}>
+      <Animated.View entering={ENTER_ANIM}>
         <View style={styles.section}>
           <Text style={styles.sectionLabel}>MY CONTENT</Text>
           <View style={styles.menuGroup}>

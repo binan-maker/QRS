@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import { View, Text, Pressable, ScrollView, Platform, ActivityIndicator, Alert } from "react-native";
 import { router } from "expo-router";
 import { safePush } from "@/shared/utils/navigation";
@@ -37,37 +37,51 @@ export default function PrivacySettingsScreen() {
   });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  // Always-current ref so the toggle callback never reads stale closure state.
+  // This eliminates the race condition where rapid taps captured an outdated
+  // snapshot for rollback or an outdated count for the visibility guard.
+  const privacyRef    = useRef(privacy);
+  privacyRef.current  = privacy;
+  // Gate: only one save in flight at a time to prevent concurrent Firestore
+  // writes from racing each other and rolling back valid state.
+  const saveInFlightRef = useRef(false);
 
   useEffect(() => {
     if (!user) return;
+    let active = true;
     getPrivacySettings(user.id)
-      .then(setPrivacy)
-      .finally(() => setLoading(false));
+      .then((s) => { if (active) setPrivacy(s); })
+      .finally(() => { if (active) setLoading(false); });
+    return () => { active = false; };
   }, [user?.id]);
 
   const handleToggle = useCallback(
     async (key: keyof PrivacySettings, val: boolean) => {
-      if (!user) return;
+      if (!user || saveInFlightRef.current) return;
+      const current  = privacyRef.current;
       if (!val && VISIBILITY_KEYS.includes(key)) {
-        const remainingEnabled = VISIBILITY_KEYS.filter((k) => k !== key && privacy[k]);
-        if (remainingEnabled.length === 0) {
+        const remaining = VISIBILITY_KEYS.filter((k) => k !== key && current[k]);
+        if (remaining.length === 0) {
           Alert.alert("At least one visible", "You must keep at least one profile section visible.");
           return;
         }
       }
-      const updated = { ...privacy, [key]: val };
+      const snapshot = current;
+      const updated  = { ...current, [key]: val };
       setPrivacy(updated);
+      saveInFlightRef.current = true;
       setSaving(true);
       try {
         await updatePrivacySettings(user.id, updated);
       } catch {
-        setPrivacy(privacy);
+        setPrivacy(snapshot);
         Alert.alert("Error", "Could not save privacy settings.");
       } finally {
+        saveInFlightRef.current = false;
         setSaving(false);
       }
     },
-    [user, privacy]
+    [user]
   );
 
   const handleBack = useCallback(() => {

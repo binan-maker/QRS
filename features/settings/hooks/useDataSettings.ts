@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef, useEffect } from "react";
+import { useState, useCallback, useRef, useEffect, useMemo } from "react";
 import { Alert } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as Haptics from "@/shared/utils/haptics";
@@ -32,6 +32,13 @@ export function useDataSettings({ userId }: UseDataSettingsOptions) {
   const [myHistory,       setMyHistory]        = useState<any[]>([]);
   const [historyLoading,  setHistoryLoading]   = useState(false);
 
+  // Guard: prevents state updates after the hook's owner unmounts.
+  const mountedRef = useRef(true);
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => { mountedRef.current = false; };
+  }, []);
+
   // FIX (rollback closure): keep live refs to current list values so that
   // the rollback inside handleDeleteAll* always restores the freshest snapshot,
   // even if the list changed between when the callback was created and when
@@ -54,16 +61,15 @@ export function useDataSettings({ userId }: UseDataSettingsOptions) {
       if (!forceRefresh) {
         const cached = await getCachedFollowing<any[]>(userId);
         if (cached) {
-          setFollowingList(cached);
-          setFollowingLoading(false);
+          if (mountedRef.current) { setFollowingList(cached); setFollowingLoading(false); }
           return;
         }
       }
       const list = await getUserFollowing(userId);
-      setFollowingList(list);
       setCachedFollowing<any[]>(userId, list).catch(() => {});
+      if (mountedRef.current) setFollowingList(list);
     } catch {}
-    setFollowingLoading(false);
+    if (mountedRef.current) setFollowingLoading(false);
   }, [userId]);
 
   const loadMyComments = useCallback(async (forceRefresh = false) => {
@@ -73,16 +79,15 @@ export function useDataSettings({ userId }: UseDataSettingsOptions) {
       if (!forceRefresh) {
         const cached = await getCachedComments<any[]>(userId);
         if (cached) {
-          setMyComments(cached);
-          setCommentsLoading(false);
+          if (mountedRef.current) { setMyComments(cached); setCommentsLoading(false); }
           return;
         }
       }
       const list = await getUserComments(userId);
-      setMyComments(list);
       setCachedComments<any[]>(userId, list).catch(() => {});
+      if (mountedRef.current) setMyComments(list);
     } catch {}
-    setCommentsLoading(false);
+    if (mountedRef.current) setCommentsLoading(false);
   }, [userId]);
 
   const loadMyHistory = useCallback(async () => {
@@ -124,9 +129,9 @@ export function useDataSettings({ userId }: UseDataSettingsOptions) {
         }
       }
       merged.sort((a, b) => new Date(b.scannedAt).getTime() - new Date(a.scannedAt).getTime());
-      setMyHistory(merged);
+      if (mountedRef.current) setMyHistory(merged);
     } catch {}
-    setHistoryLoading(false);
+    if (mountedRef.current) setHistoryLoading(false);
   }, [userId]);
 
   const handleDeleteComment = useCallback(async (commentId: string, qrCodeId: string) => {

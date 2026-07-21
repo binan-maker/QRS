@@ -34,9 +34,17 @@ export default function ProfileSettingsSection({ onScroll, paddingTop = 0 }: { o
   const [usernameError, setUsernameError] = useState("");
   const [daysUntilEdit, setDaysUntilEdit] = useState(0);
 
+  const mountedRef = useRef(true);
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => { mountedRef.current = false; };
+  }, []);
+
   useEffect(() => {
     if (!user) return;
+    let active = true;
     getUsernameData(user.id).then((d) => {
+      if (!active) return;
       if (d.username) setUsername(d.username);
       const lastChanged = (d.usernameLastChangedAt instanceof Date)
         ? d.usernameLastChangedAt as Date
@@ -46,6 +54,7 @@ export default function ProfileSettingsSection({ onScroll, paddingTop = 0 }: { o
         : 0;
       setDaysUntilEdit(days);
     }).catch(() => {});
+    return () => { active = false; };
   }, [user?.id]);
 
   useEffect(() => {
@@ -65,7 +74,9 @@ export default function ProfileSettingsSection({ onScroll, paddingTop = 0 }: { o
     if (!newName.trim() || !user) return;
     Keyboard.dismiss();
     setSavingName(true);
-    const trimmed = newName.trim();
+    const trimmed   = newName.trim();
+    const prevName  = displayName; // snapshot for rollback
+    // Optimistic update
     updateLocalDisplayName(trimmed);
     setDisplayName(trimmed);
     setEditingName(false);
@@ -75,11 +86,17 @@ export default function ProfileSettingsSection({ onScroll, paddingTop = 0 }: { o
       db.update([COLLECTIONS.USERS, user.id], { displayName: trimmed }).catch(() => {});
       invalidateUserCache(user.id);
     } catch {
+      // Rollback on failure so local state stays consistent with the server
+      if (mountedRef.current) {
+        updateLocalDisplayName(prevName);
+        setDisplayName(prevName);
+        setEditingName(true);
+      }
       Alert.alert("Error", "Could not update display name.");
     } finally {
-      setSavingName(false);
+      if (mountedRef.current) setSavingName(false);
     }
-  }, [newName, user?.id, updateLocalDisplayName]);
+  }, [newName, displayName, user?.id, updateLocalDisplayName]);
 
   const handleSaveUsername = useCallback(async () => {
     if (!user || !newUsername.trim()) return;
