@@ -102,11 +102,12 @@ export default function ScannerScreen() {
   const [showDonationBanner, setShowDonationBanner] = useState(false);
 
   useEffect(() => {
-    AsyncStorage.getItem(DONATION_DISMISS_KEY).then((dismissed) => {
-      if (dismissed) return;
-      AsyncStorage.getItem(SCAN_COUNT_KEY).then((c) => {
-        if (parseInt(c || "0", 10) >= 5) setShowDonationBanner(true);
-      }).catch(() => {});
+    // Parallel reads — previously sequential, wasted an extra AsyncStorage round-trip.
+    Promise.all([
+      AsyncStorage.getItem(DONATION_DISMISS_KEY),
+      AsyncStorage.getItem(SCAN_COUNT_KEY),
+    ]).then(([dismissed, c]) => {
+      if (!dismissed && parseInt(c || "0", 10) >= 5) setShowDonationBanner(true);
     }).catch(() => {});
   }, []);
 
@@ -249,14 +250,31 @@ export default function ScannerScreen() {
   // ── Barcode handler — wires smart zoom before processing ─────────────────
   // onQRBoundsDetected inspects bounds.size.width to detect small QR codes
   // and automatically boosts zoom for faster, more reliable detection.
+  //
+  // lastCountedDataRef gates the donation counter so it only increments ONCE
+  // per unique QR content. expo-camera's onBarcodeScanned fires on every
+  // decoded frame (potentially 30×/s); without this guard the counter would
+  // increment dozens of times for a single held scan before React state
+  // propagates back and the lock closes.
+  const lastCountedDataRef = useRef<string | null>(null);
+
   const handleScanWithCount = useCallback(async (data: any) => {
     // Feed bounds into smart auto-zoom before the scan lock fires
     onQRBoundsDetected(data?.bounds);
     handleBarCodeScanned(data);
+
+    // Only count once per unique QR — not once per camera frame
+    const qrData = data?.data;
+    if (!qrData || qrData === lastCountedDataRef.current) return;
+    lastCountedDataRef.current = qrData;
+
     try {
-      const dismissed = await AsyncStorage.getItem(DONATION_DISMISS_KEY);
+      // Parallel reads — no reason to wait for DISMISS before reading COUNT
+      const [dismissed, stored] = await Promise.all([
+        AsyncStorage.getItem(DONATION_DISMISS_KEY),
+        AsyncStorage.getItem(SCAN_COUNT_KEY),
+      ]);
       if (dismissed) return;
-      const stored   = await AsyncStorage.getItem(SCAN_COUNT_KEY);
       const newCount = parseInt(stored || "0", 10) + 1;
       await AsyncStorage.setItem(SCAN_COUNT_KEY, String(newCount));
       if (newCount >= 5) setShowDonationBanner(true);

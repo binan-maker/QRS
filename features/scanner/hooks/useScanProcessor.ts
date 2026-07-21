@@ -1,5 +1,11 @@
-import { useCallback } from "react";
+import { useCallback, useEffect, useRef } from "react";
 import { Platform } from "react-native";
+
+// Evaluated once at module load — avoids a branch per scan call.
+const PLATFORM: "android" | "ios" | "web" | "unknown" =
+  Platform.OS === "android" ? "android" :
+  Platform.OS === "ios"     ? "ios"     :
+  Platform.OS === "web"     ? "web"     : "unknown";
 import { router } from "expo-router";
 import * as ImagePicker from "expo-image-picker";
 import * as Haptics from "@/shared/utils/haptics";
@@ -62,10 +68,26 @@ export function useScanProcessor({
 }: ScanProcessorParams) {
   const { user, token } = useAuth();
 
+  // ── Timer refs — cleaned up on unmount ────────────────────────────────────
+  const autoResetTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const autoResetGenRef   = useRef(0);   // generation counter: detects superseded resets
+  const navResetTimerRef  = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => () => {
+    if (autoResetTimerRef.current) clearTimeout(autoResetTimerRef.current);
+    if (navResetTimerRef.current)  clearTimeout(navResetTimerRef.current);
+  }, []);
+
   // ─── Auto-reset after an error so the scanner is ready for the next scan ─────
-  // Without this, scanned/lock state stays true and the camera never re-enables.
+  // Uses a generation counter so a reset scheduled for Scan A cannot fire during
+  // Scan B if the user triggers a new scan within the cooldown window.
+  // Previously: raw setTimeout with no ref, no cleanup, and no race guard.
   function autoResetAfterError(delayMs = 2500) {
-    setTimeout(() => {
+    if (autoResetTimerRef.current) clearTimeout(autoResetTimerRef.current);
+    const gen = ++autoResetGenRef.current;
+    autoResetTimerRef.current = setTimeout(() => {
+      autoResetTimerRef.current = null;
+      if (autoResetGenRef.current !== gen) return; // superseded by a newer scan
       setScanned(false);
       setProcessing(false);
       setScanSuccess(false);
@@ -86,7 +108,10 @@ export function useScanProcessor({
     }
     // Auto-clear tick after navigation — prevents it staying stuck if the
     // user returns to the scanner before useFocusEffect fires.
-    setTimeout(() => {
+    // Timer stored in ref so it can be cancelled if the component unmounts.
+    if (navResetTimerRef.current) clearTimeout(navResetTimerRef.current);
+    navResetTimerRef.current = setTimeout(() => {
+      navResetTimerRef.current = null;
       setScanSuccess(false);
       setScanned(false);
     }, 1200);
@@ -125,12 +150,12 @@ export function useScanProcessor({
       if (check.hasThreat) {
         modalControls.openSafetyModal(qrId, check.warnings, check.riskLevel);
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
-        emitScanEvent(qrId, { platform: _getPlatform(), contentType, verdict: "flagged", scanSource });
+        emitScanEvent(qrId, { platform: PLATFORM, contentType, verdict: "flagged", scanSource });
         return;
       }
     }
 
-    emitScanEvent(qrId, { platform: _getPlatform(), contentType, verdict: "safe", scanSource });
+    emitScanEvent(qrId, { platform: PLATFORM, contentType, verdict: "safe", scanSource });
     await navigateToQrDetail(qrId, content, contentType);
   }
 
@@ -174,12 +199,12 @@ export function useScanProcessor({
           modalControls.openSafetyModal(qrId, check.warnings, check.riskLevel);
           Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
           // Record event even for anonymous flagged scans — no PII stored
-          emitScanEvent(qrId, { platform: _getPlatform(), contentType, verdict: "flagged", scanSource: "camera" });
+          emitScanEvent(qrId, { platform: PLATFORM, contentType, verdict: "flagged", scanSource: "camera" });
           return;
         }
       }
 
-      emitScanEvent(qrId, { platform: _getPlatform(), contentType, verdict: "safe", scanSource: "camera" });
+      emitScanEvent(qrId, { platform: PLATFORM, contentType, verdict: "safe", scanSource: "camera" });
       await navigateToQrDetail(qrId, content, contentType);
     } catch (e: any) {
       setProcessing(false);
@@ -188,12 +213,6 @@ export function useScanProcessor({
     }
   }
 
-  function _getPlatform(): "android" | "ios" | "web" | "unknown" {
-    if (Platform.OS === "android") return "android";
-    if (Platform.OS === "ios") return "ios";
-    if (Platform.OS === "web") return "web";
-    return "unknown";
-  }
 
   // ─── Background Firestore sync (fire-and-forget) ──────────────────────────────
   function _backgroundSync(
@@ -218,7 +237,7 @@ export function useScanProcessor({
           );
         }
         emitScanEvent(qr.id, {
-          platform: _getPlatform(),
+          platform: PLATFORM,
           contentType: qr.contentType,
           verdict,
           scanSource,
@@ -240,7 +259,7 @@ export function useScanProcessor({
       const qrId = await getQrCodeId(content);
       router.push(`/qr-detail/${qrId}?${param}=${uuid}`);
       // Always emit an event for guard/standard QR scans (these are URLs, treat as safe)
-      emitScanEvent(qrId, { platform: _getPlatform(), contentType: "url", verdict: "safe", scanSource });
+      emitScanEvent(qrId, { platform: PLATFORM, contentType: "url", verdict: "safe", scanSource });
       setTimeout(() => {
         setScanSuccess(false);
         setScanned(false);
