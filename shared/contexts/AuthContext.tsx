@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect, useMemo, ReactNode } from "react";
+import { createContext, useContext, useState, useEffect, useMemo, useRef, ReactNode } from "react";
 import { useAuthStore } from "@/store/authStore";
 import { Platform } from "react-native";
 import { db } from "@/lib/db";
@@ -34,6 +34,7 @@ async function serverValidateEmail(email: string): Promise<{ valid: boolean; rea
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ email }),
+      signal: AbortSignal.timeout(5000),
     });
     // Only treat the server's verdict as authoritative on an explicit HTTP 200.
     // Any non-200 response (4xx, 5xx, or a proxy 502 when the backend is offline)
@@ -154,13 +155,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // from its AsyncStorage persistence layer. Used to skip the redundant
   // GoogleSignin.signInSilently() call on the ~80% of launches where Firebase
   // restores the session first (saves one Google SDK network round-trip).
-  const firebaseSessionRestoredRef = React.useRef(false);
+  const firebaseSessionRestoredRef = useRef(false);
 
   // Prevents duplicate concurrent sign-out calls. Without this guard a second
   // call (e.g. from a navigation effect firing just after a manual sign-out)
   // could race the first, causing Firebase to be signed out twice and any
   // in-flight sign-in to be destroyed.
-  const isSigningOutRef = React.useRef(false);
+  const isSigningOutRef = useRef(false);
 
   const [googleRequest, googleResponse, promptGoogleAsync] = Google.useAuthRequest({
     webClientId: GOOGLE_WEB_CLIENT_ID,

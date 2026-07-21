@@ -35,6 +35,7 @@ async function post(path: string, body: object): Promise<void> {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(body),
+      signal: AbortSignal.timeout(8000),
     });
   } catch {}
 }

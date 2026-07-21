@@ -5,6 +5,7 @@ import {
   withRepeat,
   withTiming,
   withSequence,
+  cancelAnimation,
 } from "react-native-reanimated";
 
 export function usePulseAnimation() {
@@ -19,6 +20,10 @@ export function usePulseAnimation() {
       -1,
       true
     );
+    return () => {
+      cancelAnimation(scanPulse);
+      scanPulse.value = 1;
+    };
   }, []);
 
   return useAnimatedStyle(() => ({ transform: [{ scale: scanPulse.value }] }));

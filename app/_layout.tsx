@@ -177,12 +177,12 @@ function AuthGatedApp() {
   // Register push token once per login and track every app open.
   const pushRegisteredRef = React.useRef<string | null>(null);
   React.useEffect(() => {
-    if (!user?.uid) return;
-    if (pushRegisteredRef.current === user.uid) return;
-    pushRegisteredRef.current = user.uid;
-    registerForPushNotifications(user.uid);
-    trackAppOpen(user.uid);
-  }, [user?.uid]);
+    if (!user?.id) return;
+    if (pushRegisteredRef.current === user.id) return;
+    pushRegisteredRef.current = user.id;
+    registerForPushNotifications(user.id);
+    trackAppOpen(user.id);
+  }, [user?.id]);
 
   // Set up tap-handler once on mount; clean up on unmount.
   React.useEffect(() => {

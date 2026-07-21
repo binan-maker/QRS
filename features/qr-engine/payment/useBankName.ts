@@ -11,6 +11,7 @@ async function fetchBankNameFromIfsc(ifsc: string): Promise<string> {
     const baseUrl = raw ? `https://${raw.split(":")[0]}` : "";
     const res = await fetch(`${baseUrl}/api/v1/ifsc/${ifsc}`, {
       headers: { Accept: "application/json" },
+      signal: AbortSignal.timeout(5000),
     });
     if (res.ok) {
       const data = await res.json() as { bank?: string };

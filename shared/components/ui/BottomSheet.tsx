@@ -108,6 +108,9 @@ export default function BottomSheet({
   const [internalVisible, setInternalVisible] = useState(visible);
   const overlayAnim = useRef(new Animated.Value(visible ? 1 : 0)).current;
   const sheetAnim   = useRef(new Animated.Value(visible ? 0 : 900)).current;
+  // Holds the currently running animation so we can stop it before starting a new one,
+  // preventing interrupted-animation glitches when visible changes rapidly.
+  const runningAnim = useRef<{ stop: () => void } | null>(null);
 
   useEffect(() => {
     if (Platform.OS === "android") {
@@ -118,23 +121,31 @@ export default function BottomSheet({
   }, [(colors as any).isDark]);
 
   useEffect(() => {
+    // Stop any in-progress animation before starting a new direction.
+    runningAnim.current?.stop();
+
     if (visible) {
       setInternalVisible(true);
       overlayAnim.setValue(0);
       sheetAnim.setValue(900);
 
-      Animated.parallel([
+      const anim = Animated.parallel([
         Animated.timing(overlayAnim, { toValue: 0.65, duration: 220, useNativeDriver: true }),
         Animated.spring(sheetAnim,   {
           toValue: 0, useNativeDriver: true,
           damping: 18, stiffness: 140, mass: 0.8,
         }),
-      ]).start();
+      ]);
+      runningAnim.current = anim;
+      anim.start(() => { runningAnim.current = null; });
     } else {
-      Animated.parallel([
+      const anim = Animated.parallel([
         Animated.timing(overlayAnim, { toValue: 0, duration: 180, useNativeDriver: true }),
         Animated.timing(sheetAnim,   { toValue: 900, duration: 220, useNativeDriver: true }),
-      ]).start(({ finished }) => {
+      ]);
+      runningAnim.current = anim;
+      anim.start(({ finished }) => {
+        runningAnim.current = null;
         if (finished) setInternalVisible(false);
       });
     }

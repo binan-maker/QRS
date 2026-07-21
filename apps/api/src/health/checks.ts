@@ -42,7 +42,7 @@ export async function checkDatabaseConnectivity(): Promise<CheckResult> {
 export async function checkApiLatency(): Promise<CheckResult> {
   const startTime = Date.now();
   try {
-    const response = await fetch('http://localhost:5000/status', { method: 'GET', headers: { 'Accept': 'application/json' } });
+    const response = await fetch('http://localhost:5000/status', { method: 'GET', headers: { 'Accept': 'application/json' }, signal: AbortSignal.timeout(5000) });
     const latency = Date.now() - startTime;
     if (response.ok) {
       const data = await response.json();

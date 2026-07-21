@@ -104,6 +104,7 @@ qrRouter.post(
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Basic ${auth}` },
         body: JSON.stringify({ vpa: vpa.trim().toLowerCase() }),
+        signal: AbortSignal.timeout(8000),
       });
 
       if (rzpRes.ok) {

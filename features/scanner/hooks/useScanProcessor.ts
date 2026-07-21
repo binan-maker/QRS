@@ -349,6 +349,7 @@ export function useScanProcessor({
           "Authorization": `Bearer ${token}`,
         },
         body: JSON.stringify({ imageBase64: base64 }),
+        signal: AbortSignal.timeout(15000),
       });
       if (!res.ok) return null;
       const json = await res.json();

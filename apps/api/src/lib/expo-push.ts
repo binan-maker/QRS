@@ -28,6 +28,7 @@ export async function sendExpoPush(
         "Content-Type": "application/json",
       },
       body: JSON.stringify(valid),
+      signal: AbortSignal.timeout(10000),
     });
     if (!res.ok) {
       const text = await res.text().catch(() => "");

@@ -34,6 +34,7 @@ function deliverPushNotification(
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ toUserId: userId, title, body: message }),
+      signal: AbortSignal.timeout(8000),
     }).catch(() => {});
   } catch {}
 }

@@ -38,6 +38,7 @@ Return ONLY the QR content string.`,
               { role: "user", content: p },
             ],
           }),
+          signal: AbortSignal.timeout(30000),
         });
         if (openaiRes.ok) {
           const data: any = await openaiRes.json();

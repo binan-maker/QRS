@@ -64,7 +64,7 @@ export async function fetchGuardLink(uuid: string): Promise<GuardLinkFields | nu
   if (hit !== null) return hit.data;
 
   try {
-    const res = await fetch(firestoreUrl("guardLinks", uuid));
+    const res = await fetch(firestoreUrl("guardLinks", uuid), { signal: AbortSignal.timeout(8000) });
     if (!res.ok) { fcSet(key, null); return null; }
     const data = await res.json() as any;
     const f = data?.fields;
@@ -95,7 +95,7 @@ export async function fetchStandardLink(uuid: string): Promise<StandardLinkField
   if (hit !== null) return hit.data;
 
   try {
-    const res = await fetch(firestoreUrl("standardLinks", uuid));
+    const res = await fetch(firestoreUrl("standardLinks", uuid), { signal: AbortSignal.timeout(8000) });
     if (!res.ok) { fcSet(key, null); return null; }
     const data = await res.json() as any;
     const f = data?.fields;
@@ -145,11 +145,12 @@ export async function recordScanAndEnforce(
           },
         }],
       }),
+      signal: AbortSignal.timeout(8000),
     });
 
     // If a limit is set, re-fetch to check if we've crossed it
     if (scanLimit !== null && scanLimit > 0) {
-      const freshRes = await fetch(firestoreUrl(collection, uuid));
+      const freshRes = await fetch(firestoreUrl(collection, uuid), { signal: AbortSignal.timeout(8000) });
       if (!freshRes.ok) return;
       const freshData = await freshRes.json() as any;
       const freshCount = parseIntField(freshData?.fields?.scanCount) ?? 0;
@@ -163,6 +164,7 @@ export async function recordScanAndEnforce(
               updateMask: { fieldPaths: ["isActive"] },
             }],
           }),
+          signal: AbortSignal.timeout(8000),
         });
         // Bust cache so the next scan sees isActive: false immediately
         cacheDelete(`fc-guard:${uuid}`);
@@ -222,7 +224,7 @@ export async function fetchUnifiedQr(id: string): Promise<UnifiedQrFields | null
   if (hit !== null) return hit.data;
 
   try {
-    const res = await fetch(firestoreUrl("qrs", id));
+    const res = await fetch(firestoreUrl("qrs", id), { signal: AbortSignal.timeout(8000) });
     if (!res.ok) { fcSet(key, null); return null; }
     const raw = await res.json() as any;
     const f = raw?.fields;
@@ -280,10 +282,11 @@ export async function recordUnifiedScan(id: string, scanLimit: number | null): P
           },
         }],
       }),
+      signal: AbortSignal.timeout(8000),
     });
 
     if (scanLimit !== null && scanLimit > 0) {
-      const freshRes = await fetch(firestoreUrl("qrs", id));
+      const freshRes = await fetch(firestoreUrl("qrs", id), { signal: AbortSignal.timeout(8000) });
       if (!freshRes.ok) return;
       const freshData = await freshRes.json() as any;
       const freshCount = parseIntField(freshData?.fields?.scanCount) ?? 0;
@@ -300,6 +303,7 @@ export async function recordUnifiedScan(id: string, scanLimit: number | null): P
               updateMask: { fieldPaths: ["status"] },
             }],
           }),
+          signal: AbortSignal.timeout(8000),
         });
         bustUnifiedCache(id);
       }
