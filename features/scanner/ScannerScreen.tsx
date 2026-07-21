@@ -514,10 +514,9 @@ const styles = StyleSheet.create({
     borderColor:     "rgba(255,255,255,0.1)",
   },
 
-  // Transparent tap-to-focus area (below the scanner overlay so buttons still work)
-  tapArea: {
-    zIndex: 1,
-  },
+  // Transparent tap-to-focus area — no zIndex so ScannerOverlay (rendered after)
+  // stays on top by natural stacking order and its buttons receive touches first.
+  tapArea: {},
 
   // Small square focus ring that appears where the user taps
   focusRing: {
