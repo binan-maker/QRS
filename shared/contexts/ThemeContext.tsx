@@ -10,6 +10,12 @@ import { useColorScheme } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as SystemUI from "expo-system-ui";
 import Colors, { type AppColors } from "@/shared/constants/colors";
+import {
+  prefetchStartupPrefs,
+  getStartupPref,
+  isStartupPrefsLoaded,
+  STARTUP_PREF_KEYS,
+} from "@/shared/utils/startup-prefs";
 
 type ThemeMode = "system" | "dark" | "light";
 
@@ -31,21 +37,41 @@ const ThemeContext = createContext<ThemeContextValue>({
   toggleTheme: () => {},
 });
 
+function resolveStoredMode(raw: string | null): ThemeMode {
+  if (raw === "dark" || raw === "light" || raw === "system") return raw;
+  return "system";
+}
+
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const systemScheme = useColorScheme();
-  const [mode, setModeState] = useState<ThemeMode>("system");
-  const [ready, setReady] = useState(false);
+
+  // ── Synchronous initialisation from startup-prefs cache ──────────────────
+  // startup-prefs kicks off AsyncStorage.multiGet at module-load time (before
+  // React renders). By the time this useState initialiser runs, the cache is
+  // almost always already resolved — so the correct theme is applied on the
+  // very first render with zero async delay and no theme flash.
+  const [mode, setModeState] = useState<ThemeMode>(() =>
+    resolveStoredMode(
+      isStartupPrefsLoaded()
+        ? getStartupPref(STARTUP_PREF_KEYS.THEME_MODE)
+        : null
+    )
+  );
 
   useEffect(() => {
-    AsyncStorage.getItem(STORAGE_KEY)
-      .then((stored) => {
-        if (stored === "dark" || stored === "light" || stored === "system") {
-          setModeState(stored as ThemeMode);
-        }
-      })
-      .catch(() => {})
-      .finally(() => setReady(true));
+    // Fast path: cache already resolved — nothing to do.
+    if (isStartupPrefsLoaded()) return;
+    // Slow path (rare): await the in-flight prefetch and apply stored mode.
+    prefetchStartupPrefs().then(() => {
+      setModeState(resolveStoredMode(getStartupPref(STARTUP_PREF_KEYS.THEME_MODE)));
+    });
   }, []);
+
+  // NOTE: null-gate ("if (!ready) return null") has been removed.
+  // Previously this gate blocked the entire React tree — including font loading
+  // and the auth listener — while waiting for a single AsyncStorage read.
+  // With startup-prefs, the mode is initialised synchronously above so there
+  // is nothing to wait for.
 
   const setMode = useCallback((m: ThemeMode) => {
     setModeState(m);
@@ -70,8 +96,6 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     () => ({ colors, isDark: effectiveIsDark, mode, setMode, toggleTheme }),
     [colors, effectiveIsDark, mode, setMode, toggleTheme]
   );
-
-  if (!ready) return null;
 
   return (
     <ThemeContext.Provider value={contextValue}>

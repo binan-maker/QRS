@@ -94,6 +94,10 @@
       "typedRoutes": true,
       "reactCompiler": true
     },
+    "assetBundlePatterns": [
+      "assets/**",
+      "node_modules/@expo-google-fonts/inter/*.ttf"
+    ],
     "extra": {
       "router": {},
       "eas": {

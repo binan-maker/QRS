@@ -73,8 +73,24 @@ function buildFirestore() {
 
 export const firebaseAuth = buildAuth();
 export const firestore = buildFirestore();
-export const realtimeDB = getDatabase(firebaseApp);
-export const storage = getStorage(firebaseApp);
+
+// ─── Lazy services ──────────────────────────────────────────────────────────
+// RealtimeDB and Storage are NOT needed during startup. Deferring their
+// initialisation removes one persistent WebSocket connection (RTDB) and one
+// SDK object allocation from the cold-start critical path. They are created
+// on first actual use — which happens well after the Home screen is interactive.
+
+let _realtimeDB: ReturnType<typeof getDatabase> | null = null;
+export function getRealtimeDB(): ReturnType<typeof getDatabase> {
+  if (!_realtimeDB) _realtimeDB = getDatabase(firebaseApp);
+  return _realtimeDB;
+}
+
+let _storageInstance: ReturnType<typeof getStorage> | null = null;
+export function getStorageInstance(): ReturnType<typeof getStorage> {
+  if (!_storageInstance) _storageInstance = getStorage(firebaseApp);
+  return _storageInstance;
+}
 
 // ─── App Check (web only) ──────────────────────────────────────────────────
 // Activated when EXPO_PUBLIC_RECAPTCHA_SITE_KEY is set. On native we silently

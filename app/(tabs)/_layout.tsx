@@ -3,10 +3,14 @@ import { Platform, StyleSheet, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { MaterialCommunityIcons, Ionicons } from "@expo/vector-icons";
 import React, { useEffect, useCallback, useMemo } from "react";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useTheme } from "@/shared/contexts/ThemeContext";
 import { useAppTranslation } from "@/shared/i18n/useAppTranslation";
 import { TabBarProvider, useTabBarScroll } from "@/shared/contexts/TabBarContext";
+import {
+  prefetchStartupPrefs,
+  getStartupPref,
+  STARTUP_PREF_KEYS,
+} from "@/shared/utils/startup-prefs";
 
 // ── Android tab bar background ─────────────────────────────────────────────────
 const AndroidTabBarBackground = React.memo(function AndroidTabBarBackground({
@@ -113,7 +117,10 @@ function ClassicTabLayout() {
   const { tabBarTranslateY, setTabBarHeight } = useTabBarScroll();
 
   useEffect(() => {
-    AsyncStorage.getItem("qrg:startup:screen").then((pref) => {
+    // Read from the startup-prefs cache (shared single-multiGet, already resolved
+    // by the time ClassicTabLayout mounts — post-splash). No extra bridge call.
+    prefetchStartupPrefs().then(() => {
+      const pref = getStartupPref(STARTUP_PREF_KEYS.STARTUP_SCREEN);
       if (pref === "scanner") router.replace("/(tabs)/scanner");
     }).catch(() => {});
   }, []);

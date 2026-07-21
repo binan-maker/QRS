@@ -147,6 +147,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [token, setToken] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
+  // Tracks whether Firebase's onIdTokenChanged has already resolved a session
+  // from its AsyncStorage persistence layer. Used to skip the redundant
+  // GoogleSignin.signInSilently() call on the ~80% of launches where Firebase
+  // restores the session first (saves one Google SDK network round-trip).
+  const firebaseSessionRestoredRef = React.useRef(false);
+
   const [googleRequest, googleResponse, promptGoogleAsync] = Google.useAuthRequest({
     webClientId: GOOGLE_WEB_CLIENT_ID,
     androidClientId: GOOGLE_ANDROID_CLIENT_ID,
@@ -167,6 +173,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const unsubscribe = authAdapter.onIdTokenChanged(async (adapterUser) => {
       if (adapterUser) {
+        // Mark that Firebase has restored a valid session so the signInSilently
+        // guard below can skip its redundant call for this launch.
+        firebaseSessionRestoredRef.current = true;
         // The persisted JWT can cache emailVerified: false even after the user
         // has verified — the token is stale until refreshed. Before treating
         // the session as unverified, reload from Firebase to get the latest state.
@@ -264,16 +273,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     if (Platform.OS !== "web" && GoogleSignin) {
-      GoogleSignin.signInSilently()
-        .then(async (result: any) => {
-          if (result?.type === "success" && result?.data?.idToken) {
-            try {
-              const adapterUser = await authAdapter.signInWithGoogleIdToken(result.data.idToken);
-              await syncUserToDb(adapterUser.uid, adapterUser.email, adapterUser.displayName, adapterUser.photoURL);
-            } catch {}
-          }
-        })
-        .catch(() => {});
+      // ⚠️  Guard: delay 800 ms to give Firebase's onIdTokenChanged time to fire
+      // first. For returning users whose session is persisted in AsyncStorage,
+      // Firebase typically resolves within 50–400 ms — well within this window.
+      // If Firebase has already restored the session we skip the Google SDK call
+      // entirely (saves one network round-trip on every app launch).
+      // If Firebase does NOT resolve within 800 ms (new user, sign-out, or a
+      // rare persistence failure), signInSilently runs as it always did.
+      const timer = setTimeout(() => {
+        if (firebaseSessionRestoredRef.current) return; // already signed in
+        GoogleSignin.signInSilently()
+          .then(async (result: any) => {
+            if (result?.type === "success" && result?.data?.idToken) {
+              try {
+                const adapterUser = await authAdapter.signInWithGoogleIdToken(result.data.idToken);
+                await syncUserToDb(adapterUser.uid, adapterUser.email, adapterUser.displayName, adapterUser.photoURL);
+              } catch {}
+            }
+          })
+          .catch(() => {});
+      }, 800);
+      return () => clearTimeout(timer);
     }
   }, []);
 

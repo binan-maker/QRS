@@ -26,7 +26,7 @@ import {
   onValue as rtOnValue,
   off as rtOff,
 } from "firebase/database";
-import { firestore, realtimeDB } from "../../firebase";
+import { firestore, getRealtimeDB } from "../../firebase";
 import type { DbAdapter, RealtimeAdapter, QueryOptions, QueryResult, DbDocument } from "../adapter";
 import { CircuitBreaker, CircuitOpenError } from "../circuit-breaker";
 
@@ -196,25 +196,25 @@ const listenerMap = new Map<string, Map<(data: any) => void, (snap: any) => void
 
 export const firebaseRtdb: RealtimeAdapter = {
   async push(path, data) {
-    const ref = await rtPush(rtRef(realtimeDB, path), data);
+    const ref = await rtPush(rtRef(getRealtimeDB(), path), data);
     return ref?.key ?? "";
   },
 
   async remove(path) {
-    await rtRemove(rtRef(realtimeDB, path));
+    await rtRemove(rtRef(getRealtimeDB(), path));
   },
 
   async get(path) {
-    const snap = await rtGet(rtRef(realtimeDB, path));
+    const snap = await rtGet(rtRef(getRealtimeDB(), path));
     return snap.exists() ? snap.val() : null;
   },
 
   async update(updates) {
-    await rtUpdate(rtRef(realtimeDB), updates);
+    await rtUpdate(rtRef(getRealtimeDB()), updates);
   },
 
   onValue(path, cb) {
-    const ref = rtRef(realtimeDB, path);
+    const ref = rtRef(getRealtimeDB(), path);
     const wrapped = (snap: any) => cb(snap.exists() ? snap.val() : null);
 
     if (!listenerMap.has(path)) listenerMap.set(path, new Map());
@@ -236,7 +236,7 @@ export const firebaseRtdb: RealtimeAdapter = {
     const pathMap = listenerMap.get(path);
     const wrapped = pathMap?.get(cb);
     if (wrapped) {
-      rtOff(rtRef(realtimeDB, path), "value", wrapped);
+      rtOff(rtRef(getRealtimeDB(), path), "value", wrapped);
       pathMap!.delete(cb);
       if (pathMap!.size === 0) listenerMap.delete(path);
     }

@@ -11,7 +11,7 @@ import {
   getDownloadURL,
   deleteObject,
 } from "firebase/storage";
-import { storage } from "@/lib/firebase";
+import { getStorageInstance } from "@/lib/firebase";
 import type { StorageAdapter } from "../adapter";
 
 // Firebase Storage download URLs follow the pattern:
@@ -20,14 +20,14 @@ const FIREBASE_STORAGE_HOST = "firebasestorage.googleapis.com";
 
 export const firebaseStorageProvider: StorageAdapter = {
   async upload(path, file) {
-    const storageRef = ref(storage, path);
+    const storageRef = ref(getStorageInstance(), path);
     const snapshot = await uploadBytes(storageRef, file);
     return getDownloadURL(snapshot.ref);
   },
 
   async delete(path) {
     try {
-      await deleteObject(ref(storage, path));
+      await deleteObject(ref(getStorageInstance(), path));
     } catch (error: any) {
       // "object-not-found" is acceptable — treat deletions as idempotent.
       if (error?.code !== "storage/object-not-found") {

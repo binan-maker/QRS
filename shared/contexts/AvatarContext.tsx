@@ -20,6 +20,12 @@
 
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import {
+  prefetchStartupPrefs,
+  getStartupPref,
+  isStartupPrefsLoaded,
+  STARTUP_PREF_KEYS,
+} from "@/shared/utils/startup-prefs";
 
 // Module-level ref populated by the provider so callers outside the hook tree
 // (e.g. AuthContext queryFn callbacks) can sync the avatar without hooks.
@@ -73,14 +79,30 @@ const AvatarContext = createContext<AvatarState>({
 });
 
 export function AvatarProvider({ children }: { children: React.ReactNode }) {
-  const [url, setUrl] = useState<string | null>(null);
-  const [version, setVersion] = useState(0);
-  const [isHydrated, setIsHydrated] = useState(false);
+  // ── Synchronous initialisation from startup-prefs cache ──────────────────
+  // startup-prefs kicks off AsyncStorage.multiGet at module-load time.
+  // By the time this useState initialiser runs (after the font gate re-opens
+  // React), the cache is almost always already resolved — avatar URL and
+  // isHydrated are correct on the first render with no async delay.
+  const [url, setUrl] = useState<string | null>(() =>
+    isStartupPrefsLoaded() ? getStartupPref(STARTUP_PREF_KEYS.AVATAR_URL) : null
+  );
+  const [version, setVersion] = useState<number>(() => {
+    if (!isStartupPrefsLoaded()) return 0;
+    const v = getStartupPref(STARTUP_PREF_KEYS.AVATAR_VERSION);
+    return v ? Number(v) : 0;
+  });
+  const [isHydrated, setIsHydrated] = useState<boolean>(
+    () => isStartupPrefsLoaded()
+  );
 
   useEffect(() => {
-    AsyncStorage.multiGet([AVATAR_URL_KEY, AVATAR_VER_KEY]).then((pairs) => {
-      const storedUrl = pairs[0][1];
-      const storedVer = pairs[1][1];
+    // Fast path: cache already resolved — nothing to do.
+    if (isStartupPrefsLoaded()) return;
+    // Slow path (rare): await the in-flight prefetch.
+    prefetchStartupPrefs().then(() => {
+      const storedUrl = getStartupPref(STARTUP_PREF_KEYS.AVATAR_URL);
+      const storedVer = getStartupPref(STARTUP_PREF_KEYS.AVATAR_VERSION);
       if (storedUrl) setUrl(storedUrl);
       if (storedVer) setVersion(Number(storedVer));
       setIsHydrated(true);
