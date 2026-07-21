@@ -1,14 +1,14 @@
-import React, { useMemo, useEffect, useRef } from "react";
+import React, { memo, useMemo, useEffect, useRef } from "react";
 import { View, Text, StyleSheet, Pressable, Animated } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { useTheme } from "@/shared/contexts/ThemeContext";
 import { useScaleFns } from "@/shared/utils/use-scale";
 
-export function EmptyScans() {
-  const { colors, isDark } = useTheme();
+export const EmptyScans = memo(function EmptyScans() {
+  const { colors } = useTheme();
   const { s } = useScaleFns();
-  const styles = useMemo(() => makeStyles(s, isDark), [s, isDark]);
+  const styles = useMemo(() => makeStyles(s), [s]);
 
   // Subtle pulse on the icon ring
   const pulse = useRef(new Animated.Value(1)).current;
@@ -51,9 +51,9 @@ export function EmptyScans() {
 
     </View>
   );
-}
+});
 
-function makeStyles(s: number, isDark: boolean) {
+function makeStyles(s: number) {
   const rf = (n: number) => Math.round(n * s);
   return StyleSheet.create({
     wrap: {

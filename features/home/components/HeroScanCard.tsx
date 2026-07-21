@@ -1,4 +1,4 @@
-import React, { useMemo } from "react";
+import React, { memo, useMemo } from "react";
 import { View, Text, StyleSheet, Pressable } from "react-native";
 import { router } from "expo-router";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
@@ -9,18 +9,21 @@ import { useTheme } from "@/shared/contexts/ThemeContext";
 import { useScaleFns } from "@/shared/utils/use-scale";
 import { usePulseAnimation } from "@/features/home/hooks/usePulseAnimation";
 
-export function HeroScanCard() {
+export const HeroScanCard = memo(function HeroScanCard() {
   const { colors, isDark } = useTheme();
   const { s } = useScaleFns();
   const pulseStyle = usePulseAnimation();
   const styles = useMemo(() => makeStyles(colors, isDark, s), [colors, isDark, s]);
 
-  const gradColors = isDark
-    ? (["#091428", "#0C1A35", "#091020"] as const)
-    : (["#EAF0FF", "#D8E7FF", "#EEF4FF"] as const);
+  const gradColors = useMemo(
+    () => isDark
+      ? (["#091428", "#0C1A35", "#091020"] as const)
+      : (["#EAF0FF", "#D8E7FF", "#EEF4FF"] as const),
+    [isDark]
+  );
 
-  const blobColor  = isDark ? colors.primary + "18" : colors.primary + "22";
-  const blob2Color = isDark ? colors.primary + "0C" : colors.primary + "14";
+  const blobColor  = useMemo(() => isDark ? colors.primary + "18" : colors.primary + "22", [isDark, colors.primary]);
+  const blob2Color = useMemo(() => isDark ? colors.primary + "0C" : colors.primary + "14", [isDark, colors.primary]);
 
   return (
     // No per-section entering — the entire HomeScreen fades in as one unit.
@@ -84,7 +87,7 @@ export function HeroScanCard() {
       </Pressable>
     </View>
   );
-}
+});
 
 function makeStyles(c: any, isDark: boolean, s: number) {
   const rf = (n: number) => Math.round(n * s);
@@ -125,7 +128,6 @@ function makeStyles(c: any, isDark: boolean, s: number) {
     textBlock: { flex: 1, gap: 2 },
     heading:   { fontSize: rf(22), fontFamily: "Inter_700Bold", letterSpacing: -0.5 },
     title:     { fontSize: rf(13), fontFamily: "Inter_600SemiBold", letterSpacing: -0.1 },
-    subtitle:  { fontSize: rf(11), fontFamily: "Inter_400Regular", lineHeight: 16, marginTop: 2 },
     tagline:   { fontSize: rf(11), fontFamily: "Inter_400Regular", marginTop: 14, textAlign: "left" },
 
     arrowBtn: {

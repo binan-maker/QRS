@@ -24,7 +24,8 @@ interface Props {
   onDelete:    (id: string) => void;
 }
 
-const SKELETON_COUNT  = 3;
+// Static array — avoids Array.from() allocation on every render cycle.
+const SKELETON_INDICES = [0, 1, 2] as const;
 const CROSSFADE_MS    = 200;
 const CROSSFADE_EASING = Easing.out(Easing.quad);
 
@@ -141,7 +142,7 @@ export function RecentScansList({ recentScans, isLoading, onDelete }: Props) {
           style={[skeletonAnimStyle, StyleSheet.absoluteFill]}
           pointerEvents={isLoading ? "box-none" : "none"}
         >
-          {Array.from({ length: SKELETON_COUNT }, (_, i) => (
+          {SKELETON_INDICES.map((i) => (
             <HistoryItemSkeleton key={i} index={i} />
           ))}
         </Animated.View>

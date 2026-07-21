@@ -4,7 +4,6 @@ export { useRecentScans }         from "./hooks/useRecentScans";
 export { usePulseAnimation }      from "./hooks/usePulseAnimation";
 export { HomeHeader }             from "./components/HomeHeader";
 export { HeroScanCard }           from "./components/HeroScanCard";
-export { StatsRow }               from "./components/StatsRow";
 export { RecentScansList }        from "./components/RecentScansList";
 export { EmptyScans }             from "./components/EmptyScans";
 export { getFirstName }           from "./utils";

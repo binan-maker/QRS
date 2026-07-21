@@ -120,13 +120,18 @@ export function useRecentScans() {
   // ── Pull-to-refresh: bust disk cache then re-fetch ────────────────────────
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
-    if (user?.id) invalidateHomeScansCache(user.id);
-    await loadLocalScans(user?.id);
-    if (user?.id) {
-      await queryClient.invalidateQueries({ queryKey: homeQueryKey(user.id) });
-      await refetchCloud();
+    try {
+      if (user?.id) invalidateHomeScansCache(user.id);
+      await loadLocalScans(user?.id);
+      if (user?.id) {
+        await queryClient.invalidateQueries({ queryKey: homeQueryKey(user.id) });
+        await refetchCloud().catch(() => {});
+      }
+    } finally {
+      // Always stop the spinner — prevents it getting stuck when Firestore
+      // is offline or refetchCloud throws an unhandled rejection.
+      setRefreshing(false);
     }
-    setRefreshing(false);
   }, [loadLocalScans, user?.id, refetchCloud]);
 
   // ── Delete a scan (local or cloud) ────────────────────────────────────────
