@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { Alert } from "react-native";
 import * as ImagePicker from "expo-image-picker";
 import * as Haptics from "@/shared/utils/haptics";
@@ -53,7 +53,7 @@ export function useQrOwner(
     getVerificationStatus(userId, id).then(setVerificationStatus);
   }, [isQrOwner, userId, id]);
 
-  async function handleSendMessage() {
+  const handleSendMessage = useCallback(async () => {
     if (!userId || !ownerInfo || !messageText.trim()) return;
     if (userId === ownerInfo.ownerId) {
       Alert.alert("Notice", "You can't message yourself as the owner.");
@@ -73,9 +73,9 @@ export function useQrOwner(
     } finally {
       setSendingMessage(false);
     }
-  }
+  }, [userId, ownerInfo, messageText, userDisplayName, id]);
 
-  async function handlePickVerifyDoc() {
+  const handlePickVerifyDoc = useCallback(async () => {
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ["images"], quality: 0.7, base64: true,
     });
@@ -84,9 +84,9 @@ export function useQrOwner(
     setVerifyDocBase64(asset.base64 || null);
     const parts = asset.uri.split("/");
     setVerifyDocName(parts[parts.length - 1]);
-  }
+  }, []);
 
-  async function handleVerifySubmit() {
+  const handleVerifySubmit = useCallback(async () => {
     if (!userId || !verifyBizName.trim() || !verifyDocBase64) return;
     setVerifySubmitting(true);
     try {
@@ -103,7 +103,7 @@ export function useQrOwner(
     } finally {
       setVerifySubmitting(false);
     }
-  }
+  }, [userId, id, verifyBizName, verifyDocBase64]);
 
   return {
     messagesModalOpen, setMessagesModalOpen,

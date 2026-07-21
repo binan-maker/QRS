@@ -94,32 +94,42 @@ export default function StandardQrDetailScreen({ id, standardUuid, ownerDocId, h
 
   useEffect(() => {
     if (q.reportError) showToast(q.reportError, "alert-circle-outline");
-  }, [q.reportError]);
+  }, [q.reportError, showToast]);
 
   // Derive content from the database record — NEVER from the scanned guard URL
   const effectiveContent = standardData?.rawContent ?? "";
-  const effectiveContentType = standardData
-    ? (standardData.contentType || detectContentType(standardData.rawContent))
-    : "text";
+  const effectiveContentType = useMemo(
+    () => (standardData ? standardData.contentType || detectContentType(standardData.rawContent) : "text"),
+    [standardData]
+  );
 
   // Run safety analysis on rawContent directly, not on the scanned guard URL
   const contentSafety = useQrSafety(effectiveContent || null, effectiveContentType || null);
 
   const isDeactivated = standardData?.isActive === false;
   const isQrOwner = !!(user?.id && standardData?.ownerId && user.id === standardData.ownerId);
-  const trust = q.getTrustInfo();
+  const trust = q.trustInfo;
 
-  const ownerInfoForSheet = standardData
-    ? {
-        businessName: null,
-        ownerName: standardData.ownerName,
-        qrType: "individual",
-        isBranded: true,
-        ownerId: standardData.ownerId,
-        brandedUuid: standardUuid,
-        isActive: standardData.isActive,
-      }
-    : null;
+  const ownerInfoForSheet = useMemo(
+    () =>
+      standardData
+        ? {
+            businessName: null,
+            ownerName: standardData.ownerName,
+            qrType: "individual" as const,
+            isBranded: true,
+            ownerId: standardData.ownerId,
+            brandedUuid: standardUuid,
+            isActive: standardData.isActive,
+          }
+        : null,
+    [standardData, standardUuid]
+  );
+
+  const handleOpenContent = useCallback(
+    () => smartOpenContent(effectiveContent, effectiveContentType, standardData?.templateKey),
+    [effectiveContent, effectiveContentType, standardData?.templateKey]
+  );
 
   const handleWatchPress = useCallback(() => {
     if (!user) { router.push("/(auth)/login"); return; }
@@ -234,7 +244,7 @@ export default function StandardQrDetailScreen({ id, standardUuid, ownerDocId, h
                   contentType={effectiveContentType}
                   parsedPayment={contentSafety.parsedPayment}
                   isDeactivated={isDeactivated}
-                  onOpenContent={() => smartOpenContent(effectiveContent, effectiveContentType, standardData?.templateKey)}
+                  onOpenContent={handleOpenContent}
                   hideOpenAction={false}
                   templateKey={standardData?.templateKey}
                 />

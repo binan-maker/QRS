@@ -92,26 +92,36 @@ export default function GuardQrDetailScreen({ id, guardUuid, ownerDocId, hint }:
 
   useEffect(() => {
     if (q.reportError) showToast(q.reportError, "alert-circle-outline");
-  }, [q.reportError]);
+  }, [q.reportError, showToast]);
 
-  const recentlyChanged = guardLink?.destinationChangedAt
-    ? Date.now() - new Date(guardLink.destinationChangedAt).getTime() < 24 * 60 * 60 * 1000
-    : false;
+  const recentlyChanged = useMemo(
+    () =>
+      guardLink?.destinationChangedAt
+        ? Date.now() - new Date(guardLink.destinationChangedAt).getTime() < 24 * 60 * 60 * 1000
+        : false,
+    [guardLink?.destinationChangedAt]
+  );
 
-  const trust = q.getTrustInfo();
+  const trust = q.trustInfo;
   const hasOwner = !!(guardLink?.businessName || guardLink?.ownerName);
   const isDeactivated = guardLink?.isActive === false;
   const isQrOwner = !!(user?.id && guardLink?.ownerId && user.id === guardLink.ownerId);
 
-  const ownerInfoForSheet = guardLink ? {
-    businessName: guardLink.businessName,
-    ownerName: guardLink.ownerName,
-    qrType: "guard",
-    isBranded: true,
-    ownerId: guardLink.ownerId,
-    brandedUuid: guardUuid,
-    isActive: guardLink.isActive,
-  } : null;
+  const ownerInfoForSheet = useMemo(
+    () =>
+      guardLink
+        ? {
+            businessName: guardLink.businessName,
+            ownerName: guardLink.ownerName,
+            qrType: "guard" as const,
+            isBranded: true,
+            ownerId: guardLink.ownerId,
+            brandedUuid: guardUuid,
+            isActive: guardLink.isActive,
+          }
+        : null,
+    [guardLink, guardUuid]
+  );
 
   const handleWatchPress = useCallback(() => {
     if (!user) { router.push("/(auth)/login"); return; }
