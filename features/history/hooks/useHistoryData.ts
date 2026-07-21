@@ -235,7 +235,14 @@ export function useHistoryData(activeFilters: ActiveFilters) {
   }, [activeFilters, history, favorites]);
 
   // ── Local history loading ────────────────────────────────────────────────────
+  // localLoadTimestampRef prevents the double AsyncStorage read that happens
+  // when both the mount useEffect and useFocusEffect fire on first render.
+  // On subsequent tab-switches the timestamp will be stale (> 600 ms) so the
+  // focus effect still reloads, picking up any scans written on other tabs.
+  const localLoadTimestampRef = useRef<number>(0);
+
   const loadLocalHistory = useCallback(async (userId?: string | null) => {
+    localLoadTimestampRef.current = Date.now();
     try {
       if (!userId) { setLocalHistory([]); setLocalLoaded(true); return; }
       const stored = await AsyncStorage.getItem(`local_scan_history_${userId}`);
@@ -256,7 +263,12 @@ export function useHistoryData(activeFilters: ActiveFilters) {
   // ── Focus-based refetch: only when stale ─────────────────────────────────────
   useFocusEffect(
     useCallback(() => {
-      loadLocalHistory(user?.id ?? null);
+      // Skip local reload if it was triggered very recently (< 600 ms) — this
+      // prevents the double AsyncStorage read that occurs when the mount
+      // useEffect and the first useFocusEffect both fire on screen mount.
+      if (Date.now() - localLoadTimestampRef.current > 600) {
+        loadLocalHistory(user?.id ?? null);
+      }
       if (!user?.id || !preWarmDone) return;
       const now = Date.now();
       const cloudState = queryClient.getQueryState(["history", user.id]);

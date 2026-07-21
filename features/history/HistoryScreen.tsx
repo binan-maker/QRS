@@ -10,7 +10,7 @@ import { useNetworkStatus } from "@/shared/utils/use-network";
 import { useHistory }         from "@/features/history/hooks/useHistory";
 import { useSearch }          from "@/features/history/hooks/useSearch";
 import { groupByDate }        from "@/features/history/utils/date-utils";
-import { matchesSearch }      from "@/features/history/utils/search-utils";
+import { buildSearchIndex, matchesSearchIndexed } from "@/features/history/utils/search-utils";
 import { getActiveFilters }   from "@/features/history/utils/filter-utils";
 import type { ListRow }       from "@/features/history/types";
 
@@ -27,6 +27,11 @@ import { useFocusEffect } from "expo-router";
 import { useTabBarScroll } from "@/shared/contexts/TabBarContext";
 import { useHeaderHide }   from "@/shared/utils/use-header-hide";
 import Reanimated          from "react-native-reanimated";
+
+// Static arrays used for skeleton rendering — avoids Array.from() allocation
+// on every render cycle.
+const SKELETON_BOOT_INDICES  = [0, 1, 2, 3, 4] as const;
+const SKELETON_FOOTER_INDICES = [0, 1] as const;
 
 function HistoryScreen() {
   const insets   = useSafeAreaInsets();
@@ -91,12 +96,21 @@ function HistoryScreen() {
     [history, scanStats, user]
   );
 
+  // Precompute a searchable-text index per item (id → lowercased tokens).
+  // This ensures parseAnyPaymentQr is called once per displayItems change,
+  // NOT on every keystroke — search becomes a cheap string.includes() check.
+  const searchIndex = useMemo(
+    () => buildSearchIndex(displayItems),
+    [displayItems]
+  );
+
   const searchedItems = useMemo(
     () => debouncedQuery.trim()
-      ? displayItems.filter((item) => matchesSearch(item, debouncedQuery))
+      ? displayItems.filter((item) => matchesSearchIndexed(item, searchIndex, debouncedQuery))
       : displayItems,
-    [displayItems, debouncedQuery]
+    [displayItems, searchIndex, debouncedQuery]
   );
+
   const listRows = useMemo(() => groupByDate(searchedItems), [searchedItems]);
 
   const renderItem = useCallback(
@@ -118,11 +132,10 @@ function HistoryScreen() {
   );
 
   const renderFooter = useCallback(() => {
-    // Scroll-triggered pagination — show 2 skeletons at the bottom.
     if (loadingMore) {
       return (
         <View style={{ paddingTop: 4 }}>
-          {Array.from({ length: 2 }).map((_, i) => <HistoryItemSkeleton key={i} index={i} />)}
+          {SKELETON_FOOTER_INDICES.map((i) => <HistoryItemSkeleton key={i} index={i} />)}
         </View>
       );
     }
@@ -194,7 +207,7 @@ function HistoryScreen() {
 
       {bootstrapping && user ? (
         <View style={[styles.list, { paddingTop: headerH + 8, paddingBottom: insets.bottom + 84 }]}>
-          {Array.from({ length: 5 }).map((_, i) => <HistoryItemSkeleton key={i} index={i} />)}
+          {SKELETON_BOOT_INDICES.map((i) => <HistoryItemSkeleton key={i} index={i} />)}
         </View>
       ) : (
         <FlashList

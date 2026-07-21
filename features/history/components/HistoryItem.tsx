@@ -12,6 +12,7 @@ import type { HistoryItem as HistoryItemType } from "@/features/history/types";
 import { parseAnyPaymentQr } from "@/services/analysis";
 import { useQrMeta } from "@/features/qr-engine";
 
+// Pure helpers — defined outside component to avoid re-creation per render.
 function getRiskConfig(risk: string, colors: any) {
   if (risk === "dangerous" || risk === "caution") return {
     icon: "alert-circle" as const,
@@ -39,6 +40,14 @@ function formatAmount(amount?: number | string) {
   return `₹${Number(amount).toLocaleString("en-IN")}`;
 }
 
+// Pre-built animation specs — keyed by capped index (0–8) so the spec object
+// is stable across re-renders.  FadeInDown.delay().duration() creates a new
+// worklet config every call; hoisting to a module-level cache eliminates those
+// allocations for the common first-render path.
+const ENTERING_ANIMS = Array.from({ length: 9 }, (_, i) =>
+  FadeInDown.delay(i * 30).duration(260)
+);
+
 interface HistoryItemProps {
   item: HistoryItemType;
   risk: "safe" | "caution" | "dangerous";
@@ -54,34 +63,39 @@ const HistoryItem = React.memo(function HistoryItem({ item, risk, onDelete, inde
   const isFavorite = item.source === "favorite";
   const isSynced   = item.source === "cloud";
 
-  const riskCfg      = useMemo(() => getRiskConfig(risk, colors), [risk, colors]);
-  const paymentData  = useMemo(
+  const riskCfg = useMemo(() => getRiskConfig(risk, colors), [risk, colors]);
+
+  const paymentData = useMemo(
     () => item.contentType === "payment" ? getPaymentData(item.content) : null,
     [item.contentType, item.content]
   );
+
   const formattedAmount = useMemo(
     () => paymentData?.amount ? formatAmount(paymentData.amount) : null,
     [paymentData]
   );
 
-  const timeAgo = useMemo(() => formatRelativeTime(item.scannedAt), [item.scannedAt]);
+  const timeAgo  = useMemo(() => formatRelativeTime(item.scannedAt), [item.scannedAt]);
   const showRisk = (item.contentType === "url" || item.contentType === "payment") && risk !== "safe";
 
-  const gradient: [string, string] = isFavorite
-    ? [colors.danger, colors.dangerShade ?? colors.danger]
-    : (risk === "dangerous" || risk === "caution")
-        ? [colors.warning, colors.warningShade ?? colors.warning]
-        : typeMeta.gradient as [string, string];
+  // Memoize derived style values that involve tuple/string allocation.
+  const gradient = useMemo<[string, string]>(() => {
+    if (isFavorite) return [colors.danger, colors.dangerShade ?? colors.danger];
+    if (risk === "dangerous" || risk === "caution")
+      return [colors.warning, colors.warningShade ?? colors.warning];
+    return typeMeta.gradient as [string, string];
+  }, [isFavorite, risk, colors, typeMeta.gradient]);
 
-  const accentBorder = showRisk && riskCfg
-    ? riskCfg.borderColor
-    : isFavorite
-      ? colors.danger + "35"
-      : colors.surfaceBorder;
+  const accentBorder = useMemo(() => {
+    if (showRisk && riskCfg) return riskCfg.borderColor;
+    if (isFavorite)          return colors.danger + "35";
+    return colors.surfaceBorder;
+  }, [showRisk, riskCfg, isFavorite, colors]);
 
   const cardBg = isDark ? colors.surface : "#ffffff";
 
-  const iconOverride = isFavorite ? "heart" : undefined;
+  // Stable entering animation from the pre-built cache.
+  const enteringAnim = ENTERING_ANIMS[Math.min(index, 8)];
 
   const handlePress = useCallback(() => {
     if (item.qrCodeId) {
@@ -106,7 +120,7 @@ const HistoryItem = React.memo(function HistoryItem({ item, risk, onDelete, inde
   ), [handleDelete]);
 
   return (
-    <Animated.View entering={FadeInDown.delay(Math.min(index, 8) * 30).duration(260)}>
+    <Animated.View entering={enteringAnim}>
       <Swipeable
         renderRightActions={renderRightActions}
         overshootRight={false}

@@ -6,7 +6,10 @@ interface Props {
   index?: number;
 }
 
-export default function HistoryItemSkeleton({ index = 0 }: Props) {
+// React.memo prevents re-renders when parent re-renders with unchanged props.
+// Skeletons are purely visual placeholders so there is never a reason to
+// re-render them once mounted.
+const HistoryItemSkeleton = React.memo(function HistoryItemSkeleton({ index = 0 }: Props) {
   const { isDark } = useTheme();
   const shimmer = useRef(new Animated.Value(0)).current;
 
@@ -23,6 +26,8 @@ export default function HistoryItemSkeleton({ index = 0 }: Props) {
       ).start();
     }, delay);
     return () => clearTimeout(timeout);
+  // shimmer ref is stable; index drives the stagger only on mount.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const opacity = shimmer.interpolate({ inputRange: [0, 1], outputRange: [0.55, 1] });
@@ -53,7 +58,9 @@ export default function HistoryItemSkeleton({ index = 0 }: Props) {
       </View>
     </View>
   );
-}
+});
+
+export default HistoryItemSkeleton;
 
 const styles = StyleSheet.create({
   card: {

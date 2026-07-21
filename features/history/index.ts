@@ -22,6 +22,6 @@ export type { HistoryItem as HistoryItemType, Filter, RiskLevel, ListRow } from 
 
 // Utils
 export { groupByDate, getDateLabel }     from "./utils/date-utils";
-export { matchesSearch }                 from "./utils/search-utils";
+export { matchesSearch, buildSearchIndex, matchesSearchIndexed } from "./utils/search-utils";
 export { getActiveFilters }              from "./utils/filter-utils";
 export { SKELETON_COUNT, PAGE_SIZE, STALE_MS, FILTERS } from "./utils/constants";
