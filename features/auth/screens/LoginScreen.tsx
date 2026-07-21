@@ -3,10 +3,7 @@ import {
   View, Text, Pressable, StyleSheet, ActivityIndicator,
   KeyboardAvoidingView, Platform, ScrollView,
 } from "react-native";
-import Animated, {
-  useSharedValue, useAnimatedStyle, withTiming, withDelay,
-  Easing,
-} from "react-native-reanimated";
+import Animated from "react-native-reanimated";
 import { Link, router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -19,26 +16,7 @@ import AuthFormInput from "@/features/auth/components/AuthFormInput";
 import AuthBrandBlock from "@/features/auth/components/AuthBrandBlock";
 import { useAuthScale } from "@/features/auth/hooks/useAuthScale";
 import { makeAuthStyles } from "@/features/auth/styles";
-
-const EASE = Easing.bezier(0.25, 0.46, 0.45, 0.94);
-const DURATION = 380;
-
-function useFadeSlide(delay: number, offsetY = 22) {
-  const opacity = useSharedValue(0);
-  const translateY = useSharedValue(offsetY);
-
-  useEffect(() => {
-    opacity.value = withDelay(delay, withTiming(1, { duration: DURATION, easing: EASE }));
-    translateY.value = withDelay(delay, withTiming(0, { duration: DURATION, easing: EASE }));
-  }, []);
-
-  const style = useAnimatedStyle(() => ({
-    opacity: opacity.value,
-    transform: [{ translateY: translateY.value }],
-  }));
-
-  return style;
-}
+import { useFadeSlide } from "@/features/auth/hooks/useFadeSlide";
 
 export default function LoginScreen() {
   const { signIn, signInWithGoogle, googleRequest, user } = useAuth();

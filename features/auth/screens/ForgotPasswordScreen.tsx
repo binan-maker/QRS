@@ -13,6 +13,7 @@ import AuthFormInput from "@/features/auth/components/AuthFormInput";
 import AuthBrandBlock from "@/features/auth/components/AuthBrandBlock";
 import { useAuthScale } from "@/features/auth/hooks/useAuthScale";
 import { makeAuthStyles } from "@/features/auth/styles";
+import { validateEmail } from "@/shared/utils/email-validator";
 
 export default function ForgotPasswordScreen() {
   const { colors } = useTheme();
@@ -22,16 +23,15 @@ export default function ForgotPasswordScreen() {
   const S = makeAuthStyles(colors);
 
   const [email, setEmail] = useState("");
-  const [error, setError] = useState("");
   const [emailError, setEmailError] = useState("");
   const [loading, setLoading] = useState(false);
   const [sent, setSent] = useState(false);
 
   async function handleReset() {
-    setError(""); setEmailError("");
+    setEmailError("");
     if (!email.trim()) { setEmailError("Email address is required."); return; }
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email.trim())) { setEmailError("Please enter a valid email address."); return; }
+    const emailCheck = validateEmail(email.trim());
+    if (!emailCheck.valid) { setEmailError(emailCheck.reason || "Please enter a valid email address."); return; }
     setLoading(true);
     try {
       await sendPasswordReset(email.trim());
@@ -88,15 +88,6 @@ export default function ForgotPasswordScreen() {
             />
 
             <View style={[S.card, { backgroundColor: colors.isDark ? "rgba(16,25,41,0.94)" : "#fff", borderColor: colors.surfaceBorder, padding: sp(20) }]}>
-              {error ? (
-                <View style={[S.errorBanner, { backgroundColor: colors.dangerDim, borderColor: colors.danger + "40", marginBottom: sp(12) }]}>
-                  <View style={S.errorRow}>
-                    <Ionicons name="alert-circle" size={14} color={colors.danger} />
-                    <Text style={[S.errorText, { color: colors.danger, fontSize: sp(12) }]}>{error}</Text>
-                  </View>
-                </View>
-              ) : null}
-
               <AuthFormInput
                 icon="mail-outline"
                 placeholder="Email address"
