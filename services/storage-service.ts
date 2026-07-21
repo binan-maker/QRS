@@ -1,60 +1,33 @@
-// ─── Firebase Storage Service ────────────────────────────────────────────────
-// Handles image uploads and downloads using Firebase Storage.
-// This reduces Firestore costs by storing only URLs instead of base64 data.
+// ─── Storage Service ──────────────────────────────────────────────────────────
+// Handles image uploads and downloads through the provider-agnostic StorageAdapter.
+// No Firebase SDK is imported here — swap providers in lib/storage/index.ts only.
 
-import { storage } from "@/lib/firebase";
-import {
-  ref,
-  uploadBytes,
-  getDownloadURL,
-  deleteObject,
-  type StorageReference,
-} from "firebase/storage";
-
-function generateUniqueId(): string {
-  return `${Date.now()}_${Math.random().toString(36).substring(2, 11)}`;
-}
+import { storageAdapter } from "@/lib/storage";
 
 /**
- * Extract the Firebase Storage path from a download URL.
- * Firebase download URLs have the form:
- *   https://firebasestorage.googleapis.com/v0/b/{bucket}/o/{encoded-path}?alt=media&token=...
- * The path segment is in pathname (everything after /o/), URL-encoded.
+ * Extract the internal storage path from a provider-issued download URL.
+ * Returns an empty string when the URL cannot be parsed.
  */
 export function getStoragePathFromUrl(imageUrl: string): string {
-  try {
-    const url = new URL(imageUrl);
-    // pathname ends at the '?' so we just grab everything after /o/
-    const match = url.pathname.match(/\/o\/(.+)/);
-    if (match?.[1]) {
-      return decodeURIComponent(match[1]);
-    }
-    return "";
-  } catch {
-    return "";
-  }
+  return storageAdapter.getPathFromUrl(imageUrl);
 }
 
 /**
- * Delete an image from Firebase Storage given its download URL.
- * Silently ignores "object not found" errors.
+ * Delete an image given its download URL.
+ * Silently ignores missing files.
  */
 export async function deleteImage(imageUrl: string): Promise<void> {
   try {
-    // Must use the storage path, NOT the full download URL, to build a valid ref.
-    const path = getStoragePathFromUrl(imageUrl);
+    const path = storageAdapter.getPathFromUrl(imageUrl);
     if (!path) return;
-    const storageRef: any = ref(storage, path);
-    await deleteObject(storageRef);
+    await storageAdapter.delete(path);
   } catch (error: any) {
-    if (error?.code !== "storage/object-not-found") {
-      console.error("[storage] deleteImage failed:", error);
-    }
+    console.error("[storage] deleteImage failed:", error);
   }
 }
 
 /**
- * Upload an image blob to Firebase Storage.
+ * Upload an image blob to storage.
  * Stores files at: {folder}/{userId}/{timestamp_random}.ext
  */
 export async function uploadImage(
@@ -64,11 +37,9 @@ export async function uploadImage(
 ): Promise<string> {
   try {
     const extension = (file.type || "image/jpeg").split("/")[1] || "jpg";
-    const filename = `${generateUniqueId()}.${extension}`;
+    const filename = `${Date.now()}_${Math.random().toString(36).substring(2, 11)}.${extension}`;
     const storagePath = `${folder}/${userId || "anon"}/${filename}`;
-    const storageRef: any = ref(storage, storagePath);
-    const snapshot = await uploadBytes(storageRef, file);
-    return await getDownloadURL(snapshot.ref);
+    return await storageAdapter.upload(storagePath, file);
   } catch (error: any) {
     console.error("[storage] uploadImage failed:", error);
     throw new Error(`Failed to upload image: ${error.message}`);
@@ -76,7 +47,7 @@ export async function uploadImage(
 }
 
 /**
- * Upload a base64 image to Firebase Storage.
+ * Upload a base64 image to storage.
  */
 export async function uploadBase64Image(
   base64Data: string,
@@ -138,11 +109,10 @@ async function compressImage(blob: Blob, maxWidth: number, quality: number): Pro
 }
 
 /**
- * Upload a new profile photo and delete the old one (if it was a user-owned
- * Firebase Storage file).  The new upload happens first so a failure never
- * leaves the user with no photo.
+ * Upload a new profile photo and delete the old one atomically.
+ * New upload succeeds first — failure never leaves the user without a photo.
  *
- * Security: the old file is only deleted when its storage path contains
+ * Security: the old file is only deleted when its path contains
  * `profile-photos/{userId}/`, preventing accidental cross-user deletions.
  */
 export async function uploadProfilePhoto(
@@ -153,9 +123,9 @@ export async function uploadProfilePhoto(
   // 1. Upload new photo first
   const newUrl = await uploadImage(file, "profile-photos", userId);
 
-  // 2. Fire-and-forget cleanup of the old photo (don't block the return value)
-  if (oldPhotoUrl && oldPhotoUrl.includes("firebasestorage")) {
-    const oldPath = getStoragePathFromUrl(oldPhotoUrl);
+  // 2. Fire-and-forget cleanup of the old photo
+  if (oldPhotoUrl && storageAdapter.isOwnUrl(oldPhotoUrl)) {
+    const oldPath = storageAdapter.getPathFromUrl(oldPhotoUrl);
     if (oldPath && oldPath.includes(`profile-photos/${userId}/`)) {
       deleteImage(oldPhotoUrl).catch((err) =>
         console.warn("[storage] old photo cleanup failed (non-blocking):", err)
@@ -167,15 +137,15 @@ export async function uploadProfilePhoto(
 }
 
 /**
- * Delete a user's current profile photo from Storage.
+ * Delete a user's current profile photo from storage.
  * Security: validates the path belongs to the user before deleting.
  */
 export async function deleteProfilePhoto(
   userId: string,
   photoUrl: string
 ): Promise<void> {
-  if (!photoUrl.includes("firebasestorage")) return;
-  const path = getStoragePathFromUrl(photoUrl);
+  if (!storageAdapter.isOwnUrl(photoUrl)) return;
+  const path = storageAdapter.getPathFromUrl(photoUrl);
   if (!path || !path.includes(`profile-photos/${userId}/`)) {
     console.warn("[storage] deleteProfilePhoto: path mismatch, skipping", { userId, path });
     return;
@@ -184,7 +154,7 @@ export async function deleteProfilePhoto(
 }
 
 /**
- * Upload QR code logo with automatic cleanup of old logo.
+ * Upload a QR code logo with automatic cleanup of the old logo.
  */
 export async function uploadQrLogo(
   file: Blob | File,
@@ -192,7 +162,7 @@ export async function uploadQrLogo(
   oldLogoUrl?: string | null
 ): Promise<string> {
   try {
-    if (oldLogoUrl && oldLogoUrl.includes("firebasestorage")) {
+    if (oldLogoUrl && storageAdapter.isOwnUrl(oldLogoUrl)) {
       deleteImage(oldLogoUrl).catch(() => {});
     }
     return await uploadImage(file, "qr-logos", qrId);

@@ -1,5 +1,9 @@
-import { firestore, firebaseAuth } from "@/lib/firebase";
-import { collection, query, where, orderBy, limit, getDocs, Timestamp } from "firebase/firestore";
+// ─── Donation Service ─────────────────────────────────────────────────────────
+// Manages Razorpay donation orders and donation history queries.
+// No Firebase SDK is imported here — all persistence uses the db adapter.
+// To switch backends, edit lib/db/index.ts only.
+
+import { db } from "@/lib/db";
 
 const BASE_URL = process.env.EXPO_PUBLIC_DOMAIN
   ? `https://${process.env.EXPO_PUBLIC_DOMAIN}`
@@ -33,7 +37,12 @@ export async function createDonationOrder(params: {
     const data = await res.json().catch(() => ({}));
     throw new Error(data.error || "Failed to create order");
   }
-  return res.json() as Promise<{ orderId: string; amount: number; currency: string; keyId: string }>;
+  return res.json() as Promise<{
+    orderId: string;
+    amount: number;
+    currency: string;
+    keyId: string;
+  }>;
 }
 
 export function buildCheckoutUrl(params: {
@@ -59,14 +68,12 @@ export function buildCheckoutUrl(params: {
 
 export async function fetchMyDonations(userId: string): Promise<DonationRecord[]> {
   try {
-    const q = query(
-      collection(firestore, "donations"),
-      where("userId", "==", userId),
-      orderBy("paidAt", "desc"),
-      limit(20)
-    );
-    const snap = await getDocs(q);
-    return snap.docs.map((d: any) => ({ id: d.id, ...d.data() } as DonationRecord));
+    const result = await db.query(["donations"], {
+      where: [{ field: "userId", op: "==", value: userId }],
+      orderBy: { field: "paidAt", direction: "desc" },
+      limit: 20,
+    });
+    return result.docs.map((d) => ({ id: d.id, ...d.data } as DonationRecord));
   } catch {
     return [];
   }
