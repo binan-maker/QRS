@@ -30,6 +30,8 @@ import {
 // Module-level ref populated by the provider so callers outside the hook tree
 // (e.g. AuthContext queryFn callbacks) can sync the avatar without hooks.
 let _syncFn: ((url: string | null) => void) | null = null;
+// Separate ref for the clear operation — wired up alongside _syncFn.
+let _clearFn: (() => void) | null = null;
 
 /**
  * Call from non-hook contexts (AuthContext prefetchQuery, etc.) to push a
@@ -38,6 +40,15 @@ let _syncFn: ((url: string | null) => void) | null = null;
  */
 export function syncAvatarFromOutside(url: string | null): void {
   _syncFn?.(url);
+}
+
+/**
+ * Call from AuthContext.signOut() to clear the avatar from both React state
+ * and AsyncStorage so no stale photo leaks to the next signed-in user.
+ * Safe to call before the provider mounts — it becomes a no-op in that case.
+ */
+export function clearAvatarFromOutside(): void {
+  _clearFn?.();
 }
 
 const AVATAR_URL_KEY = "qrg:avatar:url";
