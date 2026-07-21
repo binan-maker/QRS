@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, Pressable } from "react-native";
 import { router } from "expo-router";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
-import Animated, { FadeInDown } from "react-native-reanimated";
+import Animated from "react-native-reanimated";
 import * as Haptics from "@/shared/utils/haptics";
 import { useTheme } from "@/shared/contexts/ThemeContext";
 import { useScaleFns } from "@/shared/utils/use-scale";
@@ -23,7 +23,8 @@ export function HeroScanCard() {
   const blob2Color = isDark ? colors.primary + "0C" : colors.primary + "14";
 
   return (
-    <Animated.View entering={FadeInDown.duration(220)} style={styles.wrapper}>
+    // No per-section entering — the entire HomeScreen fades in as one unit.
+    <View style={styles.wrapper}>
       <Pressable
         onPress={() => {
           Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
@@ -81,7 +82,7 @@ export function HeroScanCard() {
 
         </LinearGradient>
       </Pressable>
-    </Animated.View>
+    </View>
   );
 }
 

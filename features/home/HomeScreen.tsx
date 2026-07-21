@@ -2,6 +2,7 @@ import React, { useCallback } from "react";
 import { View, StyleSheet, ScrollView, RefreshControl } from "react-native";
 import { useFocusEffect } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import Animated, { FadeIn } from "react-native-reanimated";
 import { useTopInset } from "@/shared/utils/platform";
 import { useTheme } from "@/shared/contexts/ThemeContext";
 import { useAvatar } from "@/shared/contexts/AvatarContext";
@@ -36,17 +37,26 @@ function HomeScreen() {
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} />
         }
       >
-        <HomeHeader user={user} photoURL={photoURL} />
+        {/*
+         * Single unified entrance for the whole screen.
+         * All sections (Header, Hero, Scans) appear together as one cohesive
+         * frame instead of cascading in separately. This is the key to making
+         * the page feel instantaneous — the layout is already complete, it just
+         * fades in as a whole. FadeIn fires once on true first-mount only.
+         */}
+        <Animated.View entering={FadeIn.duration(280)}>
+          <HomeHeader user={user} photoURL={photoURL} />
 
-        <HeroScanCard />
+          <HeroScanCard />
 
-        <RecentScansList
-          recentScans={recentScans}
-          isLoading={isLoading}
-          onDelete={deleteScan}
-        />
+          <RecentScansList
+            recentScans={recentScans}
+            isLoading={isLoading}
+            onDelete={deleteScan}
+          />
 
-        <View style={{ height: Math.max(160, 110 + insets.bottom) }} />
+          <View style={{ height: Math.max(160, 110 + insets.bottom) }} />
+        </Animated.View>
       </ScrollView>
     </View>
   );

@@ -1,6 +1,5 @@
 import React, { useEffect, useRef } from "react";
 import { View, Animated, StyleSheet } from "react-native";
-import ReAnimated, { FadeInDown } from "react-native-reanimated";
 import { useTheme } from "@/shared/contexts/ThemeContext";
 
 interface Props {
@@ -12,12 +11,18 @@ export default function HistoryItemSkeleton({ index = 0 }: Props) {
   const shimmer = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
-    Animated.loop(
-      Animated.sequence([
-        Animated.timing(shimmer, { toValue: 1, duration: 900, useNativeDriver: true }),
-        Animated.timing(shimmer, { toValue: 0, duration: 900, useNativeDriver: true }),
-      ])
-    ).start();
+    // Stagger shimmer phase per card so they pulse at slightly different times —
+    // this creates a natural "breathing" look without staggering the mount itself.
+    const delay = Math.min(index, 4) * 120;
+    const timeout = setTimeout(() => {
+      Animated.loop(
+        Animated.sequence([
+          Animated.timing(shimmer, { toValue: 1, duration: 900, useNativeDriver: true }),
+          Animated.timing(shimmer, { toValue: 0, duration: 900, useNativeDriver: true }),
+        ])
+      ).start();
+    }, delay);
+    return () => clearTimeout(timeout);
   }, []);
 
   const opacity = shimmer.interpolate({ inputRange: [0, 1], outputRange: [0.55, 1] });
@@ -30,22 +35,23 @@ export default function HistoryItemSkeleton({ index = 0 }: Props) {
     <Animated.View style={[{ backgroundColor: boneColor, borderRadius: 8, opacity }, style]} />
   );
 
+  // No entering animation — skeletons are the initial layout state and must
+  // appear instantly. Staggering their entrance creates the card-by-card effect
+  // we're trying to eliminate.
   return (
-    <ReAnimated.View entering={FadeInDown.delay(Math.min(index, 4) * 22).duration(260)}>
-      <View style={[styles.card, { backgroundColor: cardBg, borderColor: cardBorder }]}>
-        <View style={styles.body}>
-          {bone({ height: 14, width: "68%", marginBottom: 5, borderRadius: 7 })}
-          {bone({ height: 11, width: "45%", marginBottom: 7, borderRadius: 6 })}
-          <View style={styles.metaRow}>
-            {bone({ height: 20, width: 52, borderRadius: 100 })}
-          </View>
-        </View>
-        <View style={styles.right}>
-          {bone({ height: 10, width: 42, borderRadius: 6 })}
-          {bone({ width: 28, height: 28, borderRadius: 9 })}
+    <View style={[styles.card, { backgroundColor: cardBg, borderColor: cardBorder }]}>
+      <View style={styles.body}>
+        {bone({ height: 14, width: "68%", marginBottom: 5, borderRadius: 7 })}
+        {bone({ height: 11, width: "45%", marginBottom: 7, borderRadius: 6 })}
+        <View style={styles.metaRow}>
+          {bone({ height: 20, width: 52, borderRadius: 100 })}
         </View>
       </View>
-    </ReAnimated.View>
+      <View style={styles.right}>
+        {bone({ height: 10, width: 42, borderRadius: 6 })}
+        {bone({ width: 28, height: 28, borderRadius: 9 })}
+      </View>
+    </View>
   );
 }
 

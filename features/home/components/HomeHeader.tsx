@@ -4,7 +4,6 @@ import { Image } from "expo-image";
 import { router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
-import Animated, { FadeInDown } from "react-native-reanimated";
 import * as Haptics from "@/shared/utils/haptics";
 import { useTheme } from "@/shared/contexts/ThemeContext";
 import { useScaleFns } from "@/shared/utils/use-scale";
@@ -34,9 +33,8 @@ export function HomeHeader({ user, photoURL }: Props) {
   const initial = user?.displayName?.charAt(0)?.toUpperCase() ?? "?";
 
   return (
-    // entering only fires on true first-mount; we keep it on the outer shell
-    // so only the overall header animates in, not the avatar on every re-render.
-    <Animated.View entering={FadeInDown.duration(260)} style={styles.header}>
+    // No per-section entering — the entire HomeScreen fades in as one unit.
+    <View style={styles.header}>
       <View style={styles.headerLeft}>
         {user ? (
           <Text style={styles.greeting} numberOfLines={1} ellipsizeMode="tail">
@@ -86,7 +84,7 @@ export function HomeHeader({ user, photoURL }: Props) {
           </Pressable>
         )}
       </View>
-    </Animated.View>
+    </View>
   );
 }
 
