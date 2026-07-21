@@ -94,6 +94,18 @@ export default function GuardQrDetailScreen({ id, guardUuid, ownerDocId, hint }:
     if (q.reportError) showToast(q.reportError, "alert-circle-outline");
   }, [q.reportError, showToast]);
 
+  useEffect(() => {
+    if (!q.followError) return;
+    showToast(q.followError, "alert-circle-outline");
+    q.clearFollowError();
+  }, [q.followError]);
+
+  useEffect(() => {
+    if (!q.favoriteError) return;
+    showToast(q.favoriteError, "alert-circle-outline");
+    q.clearFavoriteError();
+  }, [q.favoriteError]);
+
   const recentlyChanged = useMemo(
     () =>
       guardLink?.destinationChangedAt
@@ -211,7 +223,7 @@ export default function GuardQrDetailScreen({ id, guardUuid, ownerDocId, hint }:
             refreshControl={
               <RefreshControl
                 refreshing={q.commentsRefreshing ?? false}
-                onRefresh={q.refreshComments}
+                onRefresh={() => { q.refreshComments(); q.refreshQrData(); }}
                 tintColor={colors.primary}
                 colors={[colors.primary]}
               />

@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import * as Haptics from "@/shared/utils/haptics";
 import {
   isUserFollowingCreator,
@@ -22,6 +22,8 @@ export function useCreatorFollow(
   const [creatorFollowersList, setCreatorFollowersList] = useState<FollowerInfo[]>([]);
   const [creatorFollowersModalOpen, setCreatorFollowersModalOpen] = useState(false);
   const [creatorFollowersLoading, setCreatorFollowersLoading] = useState(false);
+  // Exposed so the screen can show a toast when the follow/unfollow write fails.
+  const [creatorFollowError, setCreatorFollowError] = useState<string | null>(null);
 
   const committedRef = useRef(false);
   const pendingRef = useRef(false);
@@ -44,7 +46,14 @@ export function useCreatorFollow(
     return () => { cancelled = true; };
   }, [creatorId, userId]);
 
-  async function commitFollow() {
+  // Clear pending debounce timer on unmount.
+  useEffect(() => {
+    return () => {
+      if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
+    };
+  }, []);
+
+  const commitFollow = useCallback(async () => {
     if (!creatorId || !userId) return;
     if (isCommittingRef.current) return;
     const desiredState = pendingRef.current;
@@ -68,15 +77,18 @@ export function useCreatorFollow(
         return;
       }
     } catch {
+      // Roll back to the last confirmed server state and surface the error.
       const confirmed = committedRef.current;
       setIsFollowingCreator(confirmed);
       setCreatorFollowerCount((prev) => confirmed ? prev + 1 : Math.max(0, prev - 1));
       pendingRef.current = confirmed;
+      setCreatorFollowError("Couldn't update. Please try again.");
     } finally {
       isCommittingRef.current = false;
       setCreatorFollowLoading(false);
     }
-  }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [creatorId, userId, userDisplayName, creatorName]);
 
   function handleToggleFollowCreator() {
     if (!userId || !creatorId) return;
@@ -104,6 +116,7 @@ export function useCreatorFollow(
     isFollowingCreator,
     creatorFollowerCount,
     creatorFollowLoading,
+    creatorFollowError, clearCreatorFollowError: () => setCreatorFollowError(null),
     creatorFollowersList,
     creatorFollowersModalOpen,
     setCreatorFollowersModalOpen,

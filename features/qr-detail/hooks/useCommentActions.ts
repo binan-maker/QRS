@@ -35,6 +35,10 @@ export function useCommentActions({
 
   const commentInputRef = useRef<any>(null);
   const scrollRef       = useRef<any>(null);
+  // Synchronous guard — prevents a second tap from firing a second submission
+  // while the first is still in-flight (the `submitting` state reads as false
+  // until the next render cycle, so it cannot guard the entry point reliably).
+  const submittingRef   = useRef(false);
 
   useEffect(() => {
     if (replyTo) {
@@ -47,6 +51,9 @@ export function useCommentActions({
     if (!userId) { router.push("/(auth)/login"); return; }
     const trimmed = newComment.trim();
     if (!trimmed) return;
+    // Synchronous guard: reject duplicate taps before the first render cycle
+    // has had a chance to set submitting=true in state.
+    if (submittingRef.current) return;
 
     // user.username can be undefined briefly after a Firebase token refresh
     // (AuthContext calls setUser without username, and the prefetchQuery may
@@ -80,6 +87,7 @@ export function useCommentActions({
     if (parentId) setExpandedReplies((prev) => ({ ...prev, [parentId]: true }));
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
 
+    submittingRef.current = true;
     setSubmitting(true);
     try {
       const saved = await addComment(id, userId, clientDisplayName, trimmed, parentId, emailVerified, clientUsername, clientPhotoURL);
@@ -94,8 +102,14 @@ export function useCommentActions({
     } catch (e: any) {
       pendingCommentsRef.current = pendingCommentsRef.current.filter((c) => c.id !== tempId);
       setCommentsList((prev) => prev.filter((c) => c.id !== tempId));
-      Alert.alert("Cannot Post Comment", e.message);
+      Alert.alert(
+        "Cannot Post Comment",
+        e?.code === "permission-denied"
+          ? "You don't have permission to comment here."
+          : e?.message || "Something went wrong. Please try again."
+      );
     } finally {
+      submittingRef.current = false;
       setSubmitting(false);
     }
   }, [id, userId, newComment, replyTo, emailVerified, user, pendingCommentsRef, deletingIdsRef, setCommentsList, setExpandedReplies]);
@@ -106,7 +120,13 @@ export function useCommentActions({
     try {
       await reportComment(id, commentId, userId, reason, emailVerified);
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-    } catch {
+    } catch (e: any) {
+      Alert.alert(
+        "Couldn't Submit Report",
+        e?.code === "permission-denied"
+          ? "You don't have permission to report this comment."
+          : "Failed to send your report. Please try again."
+      );
     }
   }, [id, userId, emailVerified]);
 
@@ -120,7 +140,8 @@ export function useCommentActions({
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     try {
       await softDeleteComment(id, commentId, userId);
-    } catch {
+    } catch (e: any) {
+      // Rollback optimistic removal
       deletingIdsRef.current.delete(commentId);
       if (removedComment) {
         setCommentsList((prev) => {
@@ -129,6 +150,12 @@ export function useCommentActions({
           return [removedComment, ...prev];
         });
       }
+      Alert.alert(
+        "Couldn't Delete",
+        e?.code === "permission-denied"
+          ? "You don't have permission to delete this comment."
+          : "Failed to delete the comment. Please try again."
+      );
     } finally {
       setDeletingCommentId(null);
     }

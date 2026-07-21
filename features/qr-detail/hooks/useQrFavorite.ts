@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { router } from "expo-router";
 import NetInfo from "@react-native-community/netinfo";
 import * as Haptics from "@/shared/utils/haptics";
@@ -11,9 +11,12 @@ const DEBOUNCE_MS = 700;
 export function useQrFavorite(id: string, userId: string | null) {
   const [isFavorite, setIsFavorite] = useState(false);
   const [favoriteLoading, setFavoriteLoading] = useState(false);
+  // Exposed so the screen can show a toast on a failed favorite write.
+  const [favoriteError, setFavoriteError] = useState<string | null>(null);
 
   const committedFavoriteRef = useRef(false);
   const pendingFavoriteRef = useRef(false);
+  const inFlightRef = useRef(false);           // prevents concurrent writes
   const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const contentRef = useRef<{ content: string; contentType: string } | null>(null);
 
@@ -26,8 +29,19 @@ export function useQrFavorite(id: string, userId: string | null) {
     return () => unsub();
   }, []);
 
-  async function commitFavorite() {
+  // Clear pending debounce timer on unmount.
+  useEffect(() => {
+    return () => {
+      if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
+    };
+  }, []);
+
+  const commitFavorite = useCallback(async () => {
     if (!userId) return;
+    // Prevent concurrent writes — if a write is already in-flight, the debounce
+    // timer will have been rescheduled in the finally block so intent is preserved.
+    if (inFlightRef.current) return;
+
     const desiredState = pendingFavoriteRef.current;
     if (desiredState === committedFavoriteRef.current) return;
 
@@ -47,6 +61,7 @@ export function useQrFavorite(id: string, userId: string | null) {
       return;
     }
 
+    inFlightRef.current = true;
     setFavoriteLoading(true);
     try {
       const confirmed = await toggleFavorite(
@@ -62,12 +77,21 @@ export function useQrFavorite(id: string, userId: string | null) {
         pendingFavoriteRef.current = confirmed;
       }
     } catch {
+      // Roll back to the last confirmed server state and surface the error.
       setIsFavorite(committedFavoriteRef.current);
       pendingFavoriteRef.current = committedFavoriteRef.current;
+      setFavoriteError("Couldn't update favorites. Please try again.");
     } finally {
+      inFlightRef.current = false;
       setFavoriteLoading(false);
+      // If the user tapped again while this write was in-flight, their intent is
+      // still in pendingFavoriteRef but no timer remains to send it. Schedule one.
+      if (pendingFavoriteRef.current !== committedFavoriteRef.current) {
+        if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
+        debounceTimerRef.current = setTimeout(commitFavorite, DEBOUNCE_MS);
+      }
     }
-  }
+  }, [id, userId]);
 
   function handleToggleFavorite(content: string, contentType: string) {
     if (!userId) { router.push("/(auth)/login"); return; }
@@ -91,6 +115,7 @@ export function useQrFavorite(id: string, userId: string | null) {
       setIsFavorite(v);
     },
     favoriteLoading,
+    favoriteError, clearFavoriteError: () => setFavoriteError(null),
     handleToggleFavorite,
   };
 }

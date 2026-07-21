@@ -161,6 +161,24 @@ export default function StaticQrDetailScreen({ id, ownerDocId, hint }: Props) {
     if (q.reportError) showToast(q.reportError, "alert-circle-outline");
   }, [q.reportError, showToast]);
 
+  useEffect(() => {
+    if (!q.followError) return;
+    showToast(q.followError, "alert-circle-outline");
+    q.clearFollowError();
+  }, [q.followError]);
+
+  useEffect(() => {
+    if (!q.creatorFollowError) return;
+    showToast(q.creatorFollowError, "alert-circle-outline");
+    q.clearCreatorFollowError();
+  }, [q.creatorFollowError]);
+
+  useEffect(() => {
+    if (!q.favoriteError) return;
+    showToast(q.favoriteError, "alert-circle-outline");
+    q.clearFavoriteError();
+  }, [q.favoriteError]);
+
   const hasOwner  = !!q.ownerInfo?.ownerId;
   // trustInfo and combinedVerdict are pre-memoized in useQrDetail — calling the
   // function wrappers is free (they just return the cached value).
@@ -319,7 +337,7 @@ export default function StaticQrDetailScreen({ id, ownerDocId, hint }: Props) {
             refreshControl={
               <RefreshControl
                 refreshing={q.commentsRefreshing ?? false}
-                onRefresh={q.refreshComments}
+                onRefresh={() => { q.refreshComments(); q.refreshQrData(); }}
                 tintColor={colors.primary}
                 colors={[colors.primary]}
               />

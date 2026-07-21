@@ -8,6 +8,7 @@ import {
 } from "@/services/report-service";
 import { calculateTrustScore } from "@/services/trust-service";
 import { invalidateQrCache } from "@/services/cache/qr-cache";
+import { queryClient } from "@/shared/utils/query-client";
 import { db } from "@/lib/db/client";
 import { COLLECTIONS } from "@/shared/constants/collections";
 
@@ -99,6 +100,9 @@ export function useQrReports(
         // Now that committed is correct, recompute and correct the display.
         setReportCounts(applyOptimisticDelta(serverCountsRef.current));
         invalidateQrCache(id);
+        // Mark the TanStack Query cache stale so active observers receive fresh
+        // QR data (owner info, scan counts, etc.) after the vote is committed.
+        queryClient.invalidateQueries({ queryKey: ["qr-detail", id] });
       })
       .catch((err: unknown) => {
         // Only rollback UI if the user has NOT clicked again since this flush

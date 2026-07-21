@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { router } from "expo-router";
 import * as Haptics from "@/shared/utils/haptics";
 import { toggleFollow, getQrFollowersList, isUserFollowingQrCode, getQrFollowCount, type FollowerInfo } from "@/lib/firestore-service";
@@ -14,6 +14,8 @@ export function useQrFollow(id: string, userId: string | null, userDisplayName: 
   const [followersList, setFollowersList] = useState<FollowerInfo[]>([]);
   const [followersModalOpen, setFollowersModalOpen] = useState(false);
   const [followersLoading, setFollowersLoading] = useState(false);
+  // Exposed so the screen can show a toast when a follow/unwatch write fails.
+  const [followError, setFollowError] = useState<string | null>(null);
 
   const committedFollowingRef = useRef(false);
   const pendingFollowingRef = useRef(false);
@@ -40,7 +42,16 @@ export function useQrFollow(id: string, userId: string | null, userDisplayName: 
     return () => { cancelled = true; };
   }, [id, userId]);
 
-  async function commitFollow() {
+  // Clear pending debounce timer on unmount so we don't submit a stale write
+  // after the component tree is gone (the write itself is idempotent but the
+  // subsequent setState calls on stale refs waste work).
+  useEffect(() => {
+    return () => {
+      if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
+    };
+  }, []);
+
+  const commitFollow = useCallback(async () => {
     if (!userId) return;
     if (isCommittingRef.current) return;
 
@@ -65,16 +76,18 @@ export function useQrFollow(id: string, userId: string | null, userDisplayName: 
         return;
       }
     } catch {
-      // Roll back to the last confirmed server state
+      // Roll back to the last confirmed server state and surface the error.
       const confirmed = committedFollowingRef.current;
       setIsFollowing(confirmed);
       setFollowCount((prev) => confirmed ? prev + 1 : Math.max(0, prev - 1));
       pendingFollowingRef.current = confirmed;
+      setFollowError("Couldn't update. Please try again.");
     } finally {
       isCommittingRef.current = false;
       setFollowLoading(false);
     }
-  }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [id, userId, userDisplayName]);
 
   function handleToggleFollow(content: string, contentType: string) {
     if (!userId) { router.push("/(auth)/login"); return; }
@@ -116,6 +129,7 @@ export function useQrFollow(id: string, userId: string | null, userDisplayName: 
     isFollowing, setIsFollowing: (v: boolean) => { committedFollowingRef.current = v; pendingFollowingRef.current = v; setIsFollowing(v); },
     followCount, setFollowCount,
     followLoading,
+    followError, clearFollowError: () => setFollowError(null),
     followPressedIn, setFollowPressedIn,
     followersList,
     followersModalOpen, setFollowersModalOpen,

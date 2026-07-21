@@ -37,6 +37,16 @@ export function useCommentLikes({ id, userId, commentsList, setCommentsList }: U
     [commentsList]
   );
 
+  // Clear all pending like timers when the hook unmounts so we don't attempt
+  // state updates on a dead component (and avoid unnecessary Firestore writes
+  // for interactions the user abandoned by navigating away).
+  useEffect(() => {
+    return () => {
+      likeTimersRef.current.forEach((t) => clearTimeout(t));
+      likeTimersRef.current.clear();
+    };
+  }, []);
+
   useEffect(() => {
     if (!userId || !commentsList.length) return;
     const ids = commentsList.map((c) => c.id);

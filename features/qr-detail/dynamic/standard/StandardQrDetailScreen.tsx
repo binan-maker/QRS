@@ -96,6 +96,18 @@ export default function StandardQrDetailScreen({ id, standardUuid, ownerDocId, h
     if (q.reportError) showToast(q.reportError, "alert-circle-outline");
   }, [q.reportError, showToast]);
 
+  useEffect(() => {
+    if (!q.followError) return;
+    showToast(q.followError, "alert-circle-outline");
+    q.clearFollowError();
+  }, [q.followError]);
+
+  useEffect(() => {
+    if (!q.favoriteError) return;
+    showToast(q.favoriteError, "alert-circle-outline");
+    q.clearFavoriteError();
+  }, [q.favoriteError]);
+
   // Derive content from the database record — NEVER from the scanned guard URL
   const effectiveContent = standardData?.rawContent ?? "";
   const effectiveContentType = useMemo(
@@ -218,7 +230,7 @@ export default function StandardQrDetailScreen({ id, standardUuid, ownerDocId, h
             refreshControl={
               <RefreshControl
                 refreshing={q.commentsRefreshing ?? false}
-                onRefresh={q.refreshComments}
+                onRefresh={() => { q.refreshComments(); q.refreshQrData(); }}
                 tintColor={colors.primary}
                 colors={[colors.primary]}
               />

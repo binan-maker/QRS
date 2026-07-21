@@ -1,5 +1,6 @@
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { queryClient } from "@/shared/utils/query-client";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { getAnonymousQrContent } from "@/services/cache/anonymous-session";
 import {
@@ -11,6 +12,7 @@ import {
 import {
   getCachedQrDetail,
   setCachedQrDetail,
+  invalidateQrCache,
 } from "@/services/cache/qr-cache";
 
 async function recordViewedLocally(
@@ -134,7 +136,7 @@ export function useQrData(
       }
     : undefined;
 
-  const { data: result, isPending, isError } = useQuery<QrFetchResult>({
+  const { data: result, isPending, isError, refetch } = useQuery<QrFetchResult>({
     queryKey: ["qr-detail", id, userId],
     queryFn: () => fetchQrData(id, userId),
     staleTime: 5 * 60 * 1000,
@@ -205,6 +207,15 @@ export function useQrData(
     return unsub;
   }, [id, offlineMode]);
 
+  // Clears the custom QR cache and forces TanStack Query to re-run fetchQrData.
+  // Called by pull-to-refresh so owner info, scan counts, and QR metadata are
+  // always up-to-date alongside comments.
+  const refreshQrData = useCallback(async () => {
+    invalidateQrCache(id);
+    ownerFetchedForId.current = null;
+    await refetch();
+  }, [id, refetch]);
+
   return {
     qrCode,
     totalScans,
@@ -216,5 +227,6 @@ export function useQrData(
     offlineContentType,
     ownerInfo,
     isQrOwner,
+    refreshQrData,
   };
 }
