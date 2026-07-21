@@ -65,7 +65,11 @@ export default function ScannerScreen() {
     }
 
     if (isFocused) {
-      const delay = Platform.OS === "ios" ? 900 : 300;
+      // iOS: 600 ms covers the navigation transition (~350 ms) with a safe
+      // buffer. The !cameraPreviewReady black cover in JSX hides any frame
+      // flicker until onCameraReady fires, so we no longer need the full 900 ms.
+      // Android: 300 ms unchanged — CameraX initialises faster.
+      const delay = Platform.OS === "ios" ? 600 : 300;
       cameraActivateTimerRef.current = setTimeout(() => {
         focusCountRef.current += 1;
         setFocusKey(focusCountRef.current);

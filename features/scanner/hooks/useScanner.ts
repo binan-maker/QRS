@@ -81,9 +81,6 @@ export function useScanner({ isCameraAvailable = true }: { isCameraAvailable?: b
     anonymousMode,
     setAnonymousMode,
     // Modal state
-    safetyModal:           modals.safetyModal,
-    safetyWarnings:        modals.safetyWarnings,
-    safetyRiskLevel:       modals.safetyRiskLevel,
     verifiedModal:         modals.verifiedModal,
     verifiedOwnerName:     modals.verifiedOwnerName,
     unverifiedModal:       modals.unverifiedModal,
@@ -92,8 +89,6 @@ export function useScanner({ isCameraAvailable = true }: { isCameraAvailable?: b
     livingShieldData:      modals.livingShieldData,
     livingShieldLoading:   modals.livingShieldLoading,
     // Modal handlers
-    handleSafetyModalProceed:    modals.handleSafetyModalProceed,
-    handleSafetyModalBack:       modals.handleSafetyModalBack,
     handleUnverifiedProceed:     modals.handleUnverifiedProceed,
     handleUnverifiedBack:        modals.handleUnverifiedBack,
     handleLivingShieldProceed:   modals.handleLivingShieldProceed,

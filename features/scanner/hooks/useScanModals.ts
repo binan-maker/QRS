@@ -1,11 +1,15 @@
 // ─── Scan Modals ──────────────────────────────────────────────────────────────
 // Single responsibility: all post-scan modal state and their handler logic.
-// Covers four independent modal groups:
-//   1. Safety warning modal (insecure HTTP, dangerous URLs)
-//   2. Verified branded QR modal
-//   3. Unverified branded QR modal (countdown timer)
-//   4. Living Shield modal (dynamic QR codes)
+// Covers three independent modal groups:
+//   1. Verified branded QR modal
+//   2. Unverified branded QR modal (countdown timer)
+//   3. Living Shield modal (dynamic QR codes)
 // Contains zero camera state and zero database calls.
+//
+// NOTE: The Safety Modal was removed. openSafetyModal() now navigates directly
+// to /qr-detail/:id so the user reaches the result immediately without an
+// extra confirmation step. The SafetyModal component still exists in the
+// component library for potential future use but is not rendered here.
 
 import { useState, useRef, useEffect } from "react";
 import { router } from "expo-router";
@@ -21,12 +25,6 @@ export interface ScanModalControls {
 }
 
 export function useScanModals(resetScan: () => void) {
-  // ── Safety modal ────────────────────────────────────────────────────────────
-  const [safetyModal,     setSafetyModal]     = useState(false);
-  const [pendingQrId,     setPendingQrId]     = useState<string | null>(null);
-  const [safetyWarnings,  setSafetyWarnings]  = useState<string[]>([]);
-  const [safetyRiskLevel, setSafetyRiskLevel] = useState<"caution" | "dangerous">("caution");
-
   // ── Verified modal ──────────────────────────────────────────────────────────
   const [verifiedModal,     setVerifiedModal]     = useState(false);
   const [verifiedOwnerName, setVerifiedOwnerName] = useState("");
@@ -90,19 +88,6 @@ export function useScanModals(resetScan: () => void) {
   }
 
   // ── User-facing handlers ────────────────────────────────────────────────────
-  function handleSafetyModalProceed() {
-    if (!pendingQrId) return;
-    setSafetyModal(false);
-    router.push(`/qr-detail/${pendingQrId}`);
-  }
-
-  function handleSafetyModalBack() {
-    setSafetyModal(false);
-    setPendingQrId(null);
-    setSafetyWarnings([]);
-    resetScan();
-  }
-
   function handleUnverifiedProceed() {
     if (countdownRef.current) clearInterval(countdownRef.current);
     setUnverifiedModal(false);
@@ -141,9 +126,6 @@ export function useScanModals(resetScan: () => void) {
 
   return {
     controls,
-    safetyModal,
-    safetyWarnings,
-    safetyRiskLevel,
     verifiedModal,
     verifiedOwnerName,
     unverifiedModal,
@@ -151,8 +133,6 @@ export function useScanModals(resetScan: () => void) {
     livingShieldModal,
     livingShieldData,
     livingShieldLoading,
-    handleSafetyModalProceed,
-    handleSafetyModalBack,
     handleUnverifiedProceed,
     handleUnverifiedBack,
     handleLivingShieldProceed,

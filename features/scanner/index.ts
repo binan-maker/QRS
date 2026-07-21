@@ -5,7 +5,7 @@ export { useScanner }               from "./hooks/useScanner";
 export {
   ScannerOverlay, FinderFrame, OverlayTopBar, OverlayBottomBar,
   ProcessingOverlay, PermissionScreen, CameraErrorBoundary, CameraUnavailableBanner,
-  SafetyModal, VerifiedModal, UnverifiedModal, LivingShieldModal,
+  VerifiedModal, UnverifiedModal, LivingShieldModal,
   ScannerToast, DonationBanner, ConversionBanner,
 } from "./components";
 
