@@ -172,3 +172,15 @@ export async function getCachedGeneratedQrs<T>(userId: string): Promise<T | null
 export async function setCachedGeneratedQrs<T>(userId: string, value: T): Promise<void> {
   return setCache<T>(`generated_qrs_${userId}`, value, TTL_GENERATED_QRS);
 }
+
+const TTL_PRIVACY = 5 * 60 * 1000; // 5 minutes
+
+export async function getCachedPrivacySettings<T>(userId: string): Promise<T | null> {
+  return getCache<T>(`privacy_settings_${userId}`);
+}
+export async function setCachedPrivacySettings<T>(userId: string, value: T): Promise<void> {
+  return setCache<T>(`privacy_settings_${userId}`, value, TTL_PRIVACY);
+}
+export function invalidatePrivacyCache(userId: string): void {
+  invalidateCache(`privacy_settings_${userId}`);
+}

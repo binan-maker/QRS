@@ -29,4 +29,6 @@ export interface AuthAdapter {
   reauthenticate(user: AuthAdapterUser, email: string, password: string): Promise<void>;
   deleteUser(user: AuthAdapterUser): Promise<void>;
   checkEmailExists(email: string): Promise<boolean>;
+  /** Returns the provider IDs for the current user (e.g. "password", "google.com"). */
+  getProviderIds(): string[];
 }

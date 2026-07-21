@@ -1,10 +1,11 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
-import { View, Text, Pressable, ScrollView, Platform, ActivityIndicator, Alert } from "react-native";
+import { View, Text, Pressable, ScrollView, Platform, ActivityIndicator, Alert, RefreshControl } from "react-native";
 import { router } from "expo-router";
 import { safePush } from "@/shared/utils/navigation";
 import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTopInset } from "@/shared/utils/platform";
+import { useFocusEffect } from "expo-router";
 import { LinearGradient } from "expo-linear-gradient";
 import { useTheme } from "@/shared/contexts/ThemeContext";
 import { useAuth } from "@/shared/contexts/AuthContext";
@@ -13,6 +14,11 @@ import {
   updatePrivacySettings,
   PrivacySettings,
 } from "@/services/user-service";
+import {
+  getCachedPrivacySettings,
+  setCachedPrivacySettings,
+  invalidatePrivacyCache,
+} from "@/services/cache/qr-cache";
 import PrivacyToggleRow from "@/features/settings/components/PrivacyToggleRow";
 import { privacySettingsStyles as styles } from "@/features/settings/privacySettingsStyles";
 
@@ -20,45 +26,115 @@ const VISIBILITY_KEYS: Array<keyof PrivacySettings> = [
   "showStats", "showFriendsCount", "showScanActivity", "showRanking", "showActivity",
 ];
 
+const DEFAULT_PRIVACY: PrivacySettings = {
+  isPrivate: false,
+  showQrCodes: true,
+  showStats: true,
+  showActivity: true,
+  showRanking: true,
+  showScanActivity: true,
+  showFriendsCount: true,
+};
+
 export default function PrivacySettingsScreen() {
   const insets = useSafeAreaInsets();
   const { colors, isDark } = useTheme();
   const { user } = useAuth();
   const topInset = useTopInset();
 
-  const [privacy, setPrivacy] = useState<PrivacySettings>({
-    isPrivate: false,
-    showQrCodes: true,
-    showStats: true,
-    showActivity: true,
-    showRanking: true,
-    showScanActivity: true,
-    showFriendsCount: true,
-  });
+  const [privacy, setPrivacy] = useState<PrivacySettings>(DEFAULT_PRIVACY);
+  // `loading` is only true on the very first load when there is no cached data.
+  // Subsequent background refreshes use `refreshing` so the UI never blanks.
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [saving, setSaving] = useState(false);
+
   // Always-current ref so the toggle callback never reads stale closure state.
-  // This eliminates the race condition where rapid taps captured an outdated
-  // snapshot for rollback or an outdated count for the visibility guard.
-  const privacyRef    = useRef(privacy);
-  privacyRef.current  = privacy;
-  // Gate: only one save in flight at a time to prevent concurrent Firestore
-  // writes from racing each other and rolling back valid state.
+  const privacyRef      = useRef(privacy);
+  privacyRef.current    = privacy;
+  // Gate: only one save in flight at a time.
   const saveInFlightRef = useRef(false);
+  // Track whether the screen is mounted to prevent async state after unmount.
+  const mountedRef      = useRef(true);
+  // Timestamp of the last Firestore fetch — used for staleness check on focus.
+  const lastFetchRef    = useRef<number>(0);
+  const STALE_MS        = 5 * 60 * 1000; // matches TTL_PRIVACY in qr-cache
 
   useEffect(() => {
+    mountedRef.current = true;
+    return () => { mountedRef.current = false; };
+  }, []);
+
+  // ── Cache-first load ────────────────────────────────────────────────────────
+  // On first mount for a user:
+  //   1. Read cache — if hit, show immediately (no spinner).
+  //   2. Always do a background Firestore fetch to keep the cache fresh.
+  //      If there was no cache the user sees the spinner only for that first fetch.
+  const fetchSettings = useCallback(async (force = false) => {
     if (!user) return;
-    let active = true;
-    getPrivacySettings(user.id)
-      .then((s) => { if (active) setPrivacy(s); })
-      .finally(() => { if (active) setLoading(false); });
-    return () => { active = false; };
+    const uid = user.id;
+
+    // Step 1: populate from cache if available
+    if (!force) {
+      const cached = await getCachedPrivacySettings<PrivacySettings>(uid);
+      if (cached && mountedRef.current) {
+        setPrivacy(cached);
+        setLoading(false);
+        // Still continue to a background Firestore refresh if stale
+        if (Date.now() - lastFetchRef.current < STALE_MS) return;
+      }
+    }
+
+    // Step 2: fetch from Firestore (background if we already have cache)
+    try {
+      const fresh = await getPrivacySettings(uid);
+      if (!mountedRef.current) return;
+      setPrivacy(fresh);
+      lastFetchRef.current = Date.now();
+      setCachedPrivacySettings<PrivacySettings>(uid, fresh).catch(() => {});
+    } catch {
+      // Network/offline: silently keep whatever we showed from cache
+    } finally {
+      if (mountedRef.current) {
+        setLoading(false);
+        setRefreshing(false);
+      }
+    }
   }, [user?.id]);
 
+  // Initial load
+  useEffect(() => {
+    setLoading(true);
+    lastFetchRef.current = 0;
+    fetchSettings();
+  }, [user?.id, fetchSettings]);
+
+  // Background refresh on re-focus (only when stale)
+  useFocusEffect(
+    useCallback(() => {
+      if (!user || Date.now() - lastFetchRef.current < STALE_MS) return;
+      fetchSettings();
+    }, [user?.id, fetchSettings])
+  );
+
+  // Clear local state when user changes so no previous account's settings flash
+  useEffect(() => {
+    setPrivacy(DEFAULT_PRIVACY);
+    setLoading(true);
+  }, [user?.id]);
+
+  // ── Pull-to-refresh ─────────────────────────────────────────────────────────
+  const handleRefresh = useCallback(() => {
+    if (!user || refreshing) return;
+    setRefreshing(true);
+    fetchSettings(true);
+  }, [user, refreshing, fetchSettings]);
+
+  // ── Toggle ──────────────────────────────────────────────────────────────────
   const handleToggle = useCallback(
     async (key: keyof PrivacySettings, val: boolean) => {
       if (!user || saveInFlightRef.current) return;
-      const current  = privacyRef.current;
+      const current = privacyRef.current;
       if (!val && VISIBILITY_KEYS.includes(key)) {
         const remaining = VISIBILITY_KEYS.filter((k) => k !== key && current[k]);
         if (remaining.length === 0) {
@@ -73,12 +149,18 @@ export default function PrivacySettingsScreen() {
       setSaving(true);
       try {
         await updatePrivacySettings(user.id, updated);
+        // Keep cache in sync after a successful save
+        setCachedPrivacySettings<PrivacySettings>(user.id, updated).catch(() => {});
       } catch {
-        setPrivacy(snapshot);
+        // Roll back both local state and cache
+        if (mountedRef.current) setPrivacy(snapshot);
+        invalidatePrivacyCache(user.id);
         Alert.alert("Error", "Could not save privacy settings.");
       } finally {
-        saveInFlightRef.current = false;
-        setSaving(false);
+        if (mountedRef.current) {
+          saveInFlightRef.current = false;
+          setSaving(false);
+        }
       }
     },
     [user]
@@ -139,6 +221,14 @@ export default function PrivacySettingsScreen() {
       <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={[styles.scrollContent, { paddingBottom: insets.bottom + 40 }]}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={handleRefresh}
+            tintColor={colors.primary}
+            colors={[colors.primary]}
+          />
+        }
       >
         {/* Profile Status Banner */}
         <LinearGradient

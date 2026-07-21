@@ -116,4 +116,8 @@ export const firebaseAuthProvider: AuthAdapter = {
       return false;
     }
   },
+
+  getProviderIds(): string[] {
+    return firebaseAuth.currentUser?.providerData.map((p) => p.providerId) ?? [];
+  },
 };
