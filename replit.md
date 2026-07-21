@@ -30,13 +30,12 @@ binro/
 │   │       ├── routes.ts        # Route registration
 │   │       ├── routes/          # API route handlers
 │   │       ├── services/        # SERVER-ONLY services (firebase-admin, vote weight)
-│   │       ├── lib/             # Firebase Admin/Client, push, caching
+│   │       ├── lib/             # Firebase Admin, push, Firestore REST client, caching
 │   │       ├── middleware/       # CORS, rate limiter, logger, error handler
 │   │       ├── security/        # ECDSA response signing
 │   │       ├── templates/       # Landing page HTML, guard redirect HTML
 │   │       └── health/          # Health check endpoints
-│   ├── mobile/        # Placeholder — Expo app will migrate here (Phase 2)
-│   └── web/           # Placeholder — Next.js website (Phase 4)
+│   └── web/           # Next.js web app
 ├── packages/
 │   ├── core/          # @binro/core — shared domain types, zero deps
 │   ├── db/            # @binro/db   — Drizzle ORM schema + PostgreSQL client
@@ -44,21 +43,34 @@ binro/
 │   ├── tsconfig/      # Shared TypeScript configs
 │   └── eslint-config/ # Shared ESLint rules
 ├── app/               # Expo Router screens (root — current mobile app entry)
+├── config/            # App-wide constants: env.ts, api.ts, app.ts, firebase.ts
 ├── features/          # Domain feature modules (UI + hooks, mobile)
-├── services/          # Shared data-access layer (Firebase Firestore client SDK)
-│                      #   ⚠️ SERVER-ONLY files have been moved to apps/api/src/services/
+├── lib/               # Infrastructure adapters — Auth, DB, Storage (Firebase isolated here)
+│   ├── auth/          #   AuthAdapter interface + Firebase provider
+│   ├── db/            #   DbAdapter + RealtimeAdapter interfaces + Firebase provider
+│   └── storage/       #   StorageAdapter interface + Firebase provider
+├── services/          # Shared data-access services (use lib/ adapters, zero Firebase SDK imports)
 ├── shared/            # Mobile shared components, utils, contexts, i18n
-├── lib/               # Infrastructure adapters (Firebase client, Auth, DB client)
 ├── store/             # Zustand global stores
-└── server/            # DEPRECATED — legacy copy; canonical backend is apps/api/src/
+└── validators/        # Centralized input validation (auth, user, qr, settings, scan)
 ```
+
+### Dependency rules (enforced)
+
+| Layer | Location | May import |
+|---|---|---|
+| Presentation | `features/`, `app/` | services, hooks, shared, validators |
+| Application | `services/` | `lib/auth`, `lib/db`, `lib/storage`, `validators`, `packages/core` |
+| Adapter interface | `lib/*/adapter.ts` | TypeScript types only |
+| Provider (Firebase) | `lib/*/providers/firebase.ts` | Firebase SDK — **only here** |
+| Domain models | `packages/core/` | Nothing (zero deps) |
 
 ### Backend / Mobile separation
 
 | Location | Who uses it |
 |---|---|
 | `apps/api/src/services/` | **Server only** — imports `firebase-admin`, never bundled in Expo |
-| `services/` (root) | **Shared** — Firebase client SDK, safe to import from mobile |
+| `services/` (root) | **Mobile** — Firebase client SDK via `lib/` adapters |
 | `shared/` (root) | **Mobile shared** — components, utils, i18n |
 | `packages/core/` | **Everywhere** — pure types, zero deps |
 

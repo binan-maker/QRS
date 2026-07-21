@@ -88,13 +88,12 @@ export async function setQrActiveState(
   deactivationMessage: string | null
 ): Promise<void> {
   try {
-    const { firebaseAuth } = await import("../../lib/firebase");
-    const { getIdToken } = await import("firebase/auth");
+    const { authAdapter } = await import("@/lib/auth");
 
-    const currentUser = firebaseAuth.currentUser;
+    const currentUser = authAdapter.getCurrentUser();
     if (!currentUser) throw new Error("Not authenticated");
 
-    const idToken = await getIdToken(currentUser, false);
+    const idToken = await currentUser.getIdToken(false);
     const raw = process.env.EXPO_PUBLIC_DOMAIN;
     const BASE_URL = raw ? `https://${raw.split(":")[0]}` : "";
 

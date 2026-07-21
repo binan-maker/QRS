@@ -1,32 +1,19 @@
 /**
- * Production-safe logger.
+ * Production-safe logger — thin re-export of the canonical logger in lib/logger.
  *
- * Rules:
- *  - `log`   → suppressed in production builds (debug/operational only)
- *  - `warn`  → always emitted (service degradation, retries, non-fatal issues)
- *  - `error` → always emitted (failures requiring attention)
- *  - `debug` → suppressed in production builds
+ * Prefer importing from `@/lib/logger` directly for new code.
+ * This file exists as a compatibility shim for older imports that use
+ * `@/shared/utils/logger`.
  *
- * Usage:
+ * Usage (existing callers — unchanged):
  *   import { logger } from '@/shared/utils/logger';
  *   logger.warn('[db] retry attempt 2/3:', err);
+ *
+ * Usage (new code — preferred):
+ *   import { createLogger } from '@/lib/logger';
+ *   const log = createLogger('my-service');
+ *   log.warn('retry attempt 2/3', err);
  */
 
-const isProd = typeof __DEV__ !== "undefined" ? !__DEV__ : process.env.NODE_ENV === "production";
-
-/* eslint-disable no-console */
-export const logger = {
-  /** Operational info — suppressed in production. */
-  log: (...args: unknown[]): void => {
-    if (!isProd) console.log(...args);
-  },
-  /** Non-fatal warning — always visible. */
-  warn: (...args: unknown[]): void => console.warn(...args),
-  /** Error — always visible. */
-  error: (...args: unknown[]): void => console.error(...args),
-  /** Debug trace — suppressed in production. */
-  debug: (...args: unknown[]): void => {
-    if (!isProd) console.debug(...args);
-  },
-};
-/* eslint-enable no-console */
+export { logger, createLogger } from "@/lib/logger";
+export type { Logger, LogLevel } from "@/lib/logger";
