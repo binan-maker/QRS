@@ -50,9 +50,8 @@ export default function OwnerInfoSheet({ visible, onClose, ownerInfo, guardLink 
     ownerInfo?.qrType === "standard" ? "Standard"
     : "Individual";
 
-  const iconName: any =
-    ownerInfo?.qrType === "standard" ? "qr-code"
-    : "person";
+  const iconName: keyof typeof Ionicons.glyphMap =
+    ownerInfo?.qrType === "standard" ? "qr-code" : "person";
 
   return (
     <BottomSheet visible={visible} onClose={onClose} sheetStyle={{ paddingHorizontal: 0 }}>

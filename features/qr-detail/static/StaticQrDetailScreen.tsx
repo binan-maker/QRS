@@ -2,7 +2,7 @@ import React, { useState, useCallback, useRef, useEffect, useMemo, memo } from "
 import { useNavHide } from "@/shared/utils/use-nav-hide";
 import {
   View, Text, Pressable, ScrollView, RefreshControl,
-  StyleSheet, KeyboardAvoidingView,
+  StyleSheet, KeyboardAvoidingView, type LayoutChangeEvent,
 } from "react-native";
 import { StatusBar } from "expo-status-bar";
 import { router } from "expo-router";
@@ -17,6 +17,7 @@ import { useQrDetail } from "@/features/qr-detail/hooks/useQrDetail";
 import { useNetworkStatus } from "@/shared/utils/use-network";
 import { makeStyles, offlineSectionStyles } from "@/features/qr-detail/styles";
 import { formatCompactNumber } from "@/shared/utils/number-format";
+import { REPORT_LABELS, REPORT_ICONS } from "@/features/qr-detail/utils/report-toast";
 
 import LoadingSkeleton from "@/features/qr-detail/components/LoadingSkeleton";
 import { ContentCard } from "@/features/qr-engine/content-cards";
@@ -54,7 +55,7 @@ const TrustVerdictBanner = memo(function TrustVerdictBanner({
 }) {
   const score     = trust?.score ?? -1;
   const accent    = score >= 70 ? "#22C55E" : score >= 40 ? "#F59E0B" : "#94A3B8";
-  const iconName: any =
+  const iconName: keyof typeof Ionicons.glyphMap =
     score >= 70 ? "shield-checkmark-outline"
     : score >= 40 ? "information-circle-outline"
     : "help-circle-outline";
@@ -64,7 +65,7 @@ const TrustVerdictBanner = memo(function TrustVerdictBanner({
     score >= 70
       ? (isDark ? "#0a1a0e" : "#f0fdf4")
       : score >= 40
-      ? (isDark ? "#16120400" : "#fffbeb")
+      ? (isDark ? "#161204" : "#fffbeb")
       : (isDark ? "#0f172a" : "#f8fafc");
 
   return (
@@ -102,9 +103,9 @@ function SafetyBadge({ verdict }: { verdict: { level: string; label: string } | 
   const { colors, isDark } = useTheme();
   if (!verdict || verdict.level !== "dangerous") return null;
 
+  // Only "dangerous" reaches here (guarded by the early return above).
   const cfg = {
-    dangerous: { icon: "alert-circle"    as const, color: "#EF4444", bg: isDark ? "#3B0A0A" : "#FEF2F2", border: "#EF444440" },
-    caution:   { icon: "warning-outline" as const, color: "#F59E0B", bg: isDark ? "#2D1A00" : "#FFFBEB", border: "#F59E0B40" },
+    dangerous: { icon: "alert-circle" as const, color: "#EF4444", bg: isDark ? "#3B0A0A" : "#FEF2F2", border: "#EF444440" },
   }[verdict.level] ?? { icon: "information-circle-outline" as const, color: colors.textMuted, bg: colors.surface, border: colors.surfaceBorder };
 
   return (
@@ -165,7 +166,7 @@ export default function StaticQrDetailScreen({ id, ownerDocId, hint }: Props) {
     if (!q.followError) return;
     showToast(q.followError, "alert-circle-outline");
     q.clearFollowError();
-  }, [q.followError]);
+  }, [q.followError, q.clearFollowError, showToast]);
 
   useEffect(() => {
     if (!q.creatorFollowError) return;
@@ -288,7 +289,7 @@ export default function StaticQrDetailScreen({ id, ownerDocId, hint }: Props) {
               { position: "absolute", top: 0, left: 0, right: 0, zIndex: 10, backgroundColor: colors.background },
               navAnimatedStyle,
             ]}
-            onLayout={(e: any) => { const h = e.nativeEvent.layout.height; setNavBarH(h); setNavHeight(h); }}
+            onLayout={(e: LayoutChangeEvent) => { const h = e.nativeEvent.layout.height; setNavBarH(h); setNavHeight(h); }}
           >
             <View style={{ paddingTop: topInset }}>
               <QrDetailNavBar
@@ -468,7 +469,7 @@ export default function StaticQrDetailScreen({ id, ownerDocId, hint }: Props) {
             {user && (
               <Animated.View
                 entering={FadeInDown.delay(90).duration(260)}
-                onLayout={(e: any) => {
+                onLayout={(e: LayoutChangeEvent) => {
                   reportSectionY.current = e.nativeEvent.layout.y;
                 }}
               >
@@ -490,17 +491,10 @@ export default function StaticQrDetailScreen({ id, ownerDocId, hint }: Props) {
                       const isRemoving = q.userReport === type;
                       const reported = q.handleReport(type);
                       if (!reported) return;
-                      const labels: Record<string, string> = {
-                        safe: "Safe", scam: "Scam", fake: "Fake", spam: "Spam",
-                      };
-                      const icons: Record<string, keyof typeof Ionicons.glyphMap> = {
-                        safe: "shield-checkmark", scam: "warning",
-                        fake: "close-circle", spam: "mail-unread",
-                      };
                       if (isRemoving) {
-                        showToast(`Removed ${labels[type] ?? type} vote`, "close-circle-outline");
+                        showToast(`Removed ${REPORT_LABELS[type] ?? type} vote`, "close-circle-outline");
                       } else {
-                        showToast(`Voted ${labels[type] ?? type}`, icons[type] ?? "flag");
+                        showToast(`Voted ${REPORT_LABELS[type] ?? type}`, REPORT_ICONS[type] ?? "flag");
                       }
                     }}
                   />
@@ -647,7 +641,6 @@ export default function StaticQrDetailScreen({ id, ownerDocId, hint }: Props) {
         user={user}
         onChangeText={q.setMessageText}
         onSend={q.handleSendMessage}
-        onMarkRead={() => {}}
         onClose={() => q.setMessagesModalOpen(false)}
       />
     </View>

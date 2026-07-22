@@ -155,6 +155,8 @@ export default function GuardHeroCard({
                 opacity: pressed ? 0.75 : 1,
               }]}
               onPress={onOpenDestination}
+              accessibilityLabel="Open destination URL"
+              accessibilityRole="button"
             >
               <Ionicons name="open-outline" size={16} color="#fff" />
               <Text style={[heroStyles.openBtnText, { color: "#fff" }]}>
@@ -168,6 +170,8 @@ export default function GuardHeroCard({
               <Pressable
                 style={[heroStyles.historyToggle, { borderColor: colors.surfaceBorder + "60" }]}
                 onPress={onToggleHistory}
+                accessibilityLabel={historyExpanded ? "Hide change history" : "Show change history"}
+                accessibilityRole="button"
               >
                 <Ionicons name="time-outline" size={14} color={colors.textSecondary} />
                 <Text style={[heroStyles.historyToggleText, { color: colors.textSecondary }]}>

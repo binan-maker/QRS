@@ -2,7 +2,7 @@ import { useState, useCallback, useRef, useEffect, useMemo } from "react";
 import { useNavHide } from "@/shared/utils/use-nav-hide";
 import {
   View, Text, Pressable, ScrollView, RefreshControl,
-  StyleSheet, KeyboardAvoidingView, Linking,
+  StyleSheet, KeyboardAvoidingView, Linking, type LayoutChangeEvent,
 } from "react-native";
 import { StatusBar } from "expo-status-bar";
 import { router } from "expo-router";
@@ -18,6 +18,7 @@ import { getGuardLink, type GuardLink } from "@/services/guard-service";
 import { detectContentType } from "@/features/qr-engine";
 import { makeStyles } from "@/features/qr-detail/styles";
 import { formatCompactNumber } from "@/shared/utils/number-format";
+import { REPORT_LABELS, REPORT_ICONS } from "@/features/qr-detail/utils/report-toast";
 
 import GuardHeroCard from "./GuardHeroCard";
 import TrustScoreCard from "@/features/qr-detail/components/TrustScoreCard";
@@ -98,13 +99,13 @@ export default function GuardQrDetailScreen({ id, guardUuid, ownerDocId, hint }:
     if (!q.followError) return;
     showToast(q.followError, "alert-circle-outline");
     q.clearFollowError();
-  }, [q.followError]);
+  }, [q.followError, q.clearFollowError, showToast]);
 
   useEffect(() => {
     if (!q.favoriteError) return;
     showToast(q.favoriteError, "alert-circle-outline");
     q.clearFavoriteError();
-  }, [q.favoriteError]);
+  }, [q.favoriteError, q.clearFavoriteError, showToast]);
 
   const recentlyChanged = useMemo(
     () =>
@@ -176,12 +177,12 @@ export default function GuardQrDetailScreen({ id, guardUuid, ownerDocId, hint }:
               { position: "absolute", top: 0, left: 0, right: 0, zIndex: 10, backgroundColor: colors.background },
               navAnimatedStyle,
             ]}
-            onLayout={(e: any) => { const h = e.nativeEvent.layout.height; setNavBarH(h); setNavHeight(h); }}
+            onLayout={(e: LayoutChangeEvent) => { const h = e.nativeEvent.layout.height; setNavBarH(h); setNavHeight(h); }}
           >
             <View style={{ paddingTop: topInset }}>
               <Animated.View entering={FadeInDown.delay(0).duration(260)} style={[styles.navBar, { gap: 10 }]}>
                 <Animated.View entering={FadeIn.delay(30).duration(240)}>
-                  <Pressable onPress={safeBack} style={styles.navBackBtn}>
+                  <Pressable onPress={safeBack} style={styles.navBackBtn} accessibilityLabel="Go back" accessibilityRole="button">
                     <Ionicons name="chevron-back" size={24} color={colors.text} />
                   </Pressable>
                 </Animated.View>
@@ -198,12 +199,14 @@ export default function GuardQrDetailScreen({ id, guardUuid, ownerDocId, hint }:
                     onPress={() => router.push("/donation")}
                     style={styles.navBackBtn}
                     hitSlop={6}
+                    accessibilityLabel="Donate"
+                    accessibilityRole="button"
                   >
                     <Ionicons name="heart-outline" size={20} color={colors.primary} />
                   </Pressable>
                 </Animated.View>
                 <Animated.View entering={FadeIn.delay(40).duration(240)}>
-                  <Pressable onPress={() => setOverflowOpen(true)} style={styles.navBackBtn}>
+                  <Pressable onPress={() => setOverflowOpen(true)} style={styles.navBackBtn} accessibilityLabel="More options" accessibilityRole="button">
                     <Ionicons name="ellipsis-horizontal" size={22} color={colors.text} />
                   </Pressable>
                 </Animated.View>
@@ -265,7 +268,7 @@ export default function GuardQrDetailScreen({ id, guardUuid, ownerDocId, hint }:
             {user && !q.offlineMode && (
               <Animated.View
                 entering={FadeInDown.delay(80).duration(260)}
-                onLayout={(e: any) => { reportSectionY.current = e.nativeEvent.layout.y; }}
+                onLayout={(e: LayoutChangeEvent) => { reportSectionY.current = e.nativeEvent.layout.y; }}
               >
                 <ReportGrid
                   reportCounts={q.reportCounts}
@@ -277,12 +280,10 @@ export default function GuardQrDetailScreen({ id, guardUuid, ownerDocId, hint }:
                     const isRemoving = q.userReport === type;
                     const reported = q.handleReport(type);
                     if (!reported) return;
-                    const labels: Record<string, string> = { safe: "Safe", scam: "Scam", fake: "Fake", spam: "Spam" };
-                    const icons: Record<string, keyof typeof Ionicons.glyphMap> = { safe: "shield-checkmark", scam: "warning", fake: "close-circle", spam: "mail-unread" };
                     if (isRemoving) {
-                      showToast(`Removed ${labels[type] ?? type} vote`, "close-circle-outline");
+                      showToast(`Removed ${REPORT_LABELS[type] ?? type} vote`, "close-circle-outline");
                     } else {
-                      showToast(`Voted ${labels[type] ?? type}`, icons[type] ?? "flag");
+                      showToast(`Voted ${REPORT_LABELS[type] ?? type}`, REPORT_ICONS[type] ?? "flag");
                     }
                   }}
                 />
@@ -384,7 +385,6 @@ export default function GuardQrDetailScreen({ id, guardUuid, ownerDocId, hint }:
         user={user}
         onChangeText={q.setMessageText}
         onSend={q.handleSendMessage}
-        onMarkRead={() => {}}
         onClose={() => q.setMessagesModalOpen(false)}
       />
     </View>

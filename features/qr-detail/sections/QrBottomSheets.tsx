@@ -137,7 +137,6 @@ export function QrBottomSheets({
         user={user}
         onChangeText={q.setMessageText}
         onSend={q.handleSendMessage}
-        onMarkRead={() => {}}
         onClose={() => q.setMessagesModalOpen(false)}
       />
     </View>

@@ -20,7 +20,8 @@ interface Props {
   user: { id: string } | null;
   onChangeText: (text: string) => void;
   onSend: () => void;
-  onMarkRead: (msgId: string) => void;
+  /** Optional — mark a message as read when tapped. No-op if not provided. */
+  onMarkRead?: (msgId: string) => void;
   onClose: () => void;
 }
 
@@ -56,7 +57,7 @@ const MessagesModal = memo(function MessagesModal({
             {messages.map((msg) => (
               <Pressable
                 key={msg.id}
-                onPress={() => onMarkRead(msg.id)}
+                onPress={() => onMarkRead?.(msg.id)}
                 style={[styles.msgRow, !msg.read && styles.msgRowUnread]}
               >
                 <View style={styles.msgAvatar}>

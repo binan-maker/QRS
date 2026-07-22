@@ -1,15 +1,11 @@
-import { View, Text } from "react-native";
+import { View, Text, type LayoutChangeEvent } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import Animated, { FadeInDown } from "react-native-reanimated";
 import ReportGrid from "@/features/qr-detail/components/ReportGrid";
 import SafetyWarningCard from "@/features/qr-detail/components/SafetyWarningCard";
 import EvidenceCard from "@/features/qr-detail/components/EvidenceCard";
 import { offlineSectionStyles } from "@/features/qr-detail/styles";
-
-const REPORT_LABELS: Record<string, string> = { safe: "Safe", scam: "Scam", fake: "Fake", spam: "Spam" };
-const REPORT_ICONS: Record<string, keyof typeof Ionicons.glyphMap> = {
-  safe: "shield-checkmark", scam: "warning", fake: "close-circle", spam: "mail-unread",
-};
+import { REPORT_LABELS, REPORT_ICONS } from "@/features/qr-detail/utils/report-toast";
 
 interface Props {
   user: any;
@@ -20,7 +16,7 @@ interface Props {
   reportLoading?: boolean; // visual-only loading hint passed to ReportGrid
   handleReport: (type: string) => boolean;
   showToast: (msg: string, icon: keyof typeof Ionicons.glyphMap) => void;
-  onLayout?: (e: any) => void;
+  onLayout?: (e: LayoutChangeEvent) => void;
   colors: any;
   urlSafety?: any;
   offlineBlacklistMatch?: { matched: boolean; reason?: string };

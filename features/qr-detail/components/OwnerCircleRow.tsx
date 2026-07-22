@@ -33,9 +33,8 @@ export default function OwnerCircleRow({ ownerInfo, onPress }: Props) {
       ? [colors.primary, colors.primaryShade]
       : [colors.safe, colors.safeShade];
 
-  const iconName: any =
-    ownerInfo.qrType === "standard" ? "qr-code"
-    : "person";
+  const iconName: keyof typeof Ionicons.glyphMap =
+    ownerInfo.qrType === "standard" ? "qr-code" : "person";
 
   return (
     <Pressable
