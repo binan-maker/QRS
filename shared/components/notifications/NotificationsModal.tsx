@@ -1,4 +1,4 @@
-import React, { memo } from "react";
+import React, { memo, useCallback } from "react";
 import {
   View, Text, StyleSheet, Pressable, Modal, ScrollView, ActivityIndicator,
 } from "react-native";
@@ -6,7 +6,9 @@ import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTheme } from "@/shared/contexts/ThemeContext";
+import { formatCompactRelativeTime } from "@/shared/utils/formatters";
 import type { Notification } from "@/lib/firestore-service";
+import type { AppColors } from "@/shared/constants/colors";
 
 // ── Module-level helpers (no re-creation on render) ───────────────────────────
 
@@ -21,8 +23,7 @@ function getNotifIcon(type: string): keyof typeof Ionicons.glyphMap {
   return "notifications-outline";
 }
 
-// Accepts colors as a parameter so it can live outside the component body.
-function getNotifColor(type: string, colors: any): string {
+function getNotifColor(type: string, colors: AppColors): string {
   if (type === "new_comment")        return colors.primary;
   if (type === "owner_comment")      return colors.primary;
   if (type === "comment_reply")      return colors.accent ?? colors.primary;
@@ -33,21 +34,11 @@ function getNotifColor(type: string, colors: any): string {
   return colors.textMuted ?? "#888";
 }
 
-function formatRelativeTime(ts: number): string {
-  const diff = Date.now() - ts;
-  const mins = Math.floor(diff / 60000);
-  if (mins < 1)  return "just now";
-  if (mins < 60) return `${mins}m ago`;
-  const hrs = Math.floor(mins / 60);
-  if (hrs < 24)  return `${hrs}h ago`;
-  return `${Math.floor(hrs / 24)}d ago`;
-}
-
 // ── Memoized notification row ─────────────────────────────────────────────────
 
 interface ItemProps {
   notif:   Notification;
-  colors:  any;
+  colors:  AppColors;
   onClose: () => void;
 }
 
@@ -81,7 +72,7 @@ const NotificationItem = memo(function NotificationItem({ notif, colors, onClose
       <View style={{ flex: 1 }}>
         <Text style={[styles.itemText, { color: colors.text }]}>{notif.message}</Text>
         <Text style={[styles.itemTime, { color: colors.textMuted }]}>
-          {formatRelativeTime(notif.createdAt)}
+          {formatCompactRelativeTime(notif.createdAt)}
         </Text>
       </View>
       {!notif.read && <View style={[styles.unreadDot, { backgroundColor: colors.primary }]} />}
@@ -91,7 +82,7 @@ const NotificationItem = memo(function NotificationItem({ notif, colors, onClose
 
 // ── Empty state ───────────────────────────────────────────────────────────────
 
-const EmptyNotifications = memo(function EmptyNotifications({ colors }: { colors: any }) {
+const EmptyNotifications = memo(function EmptyNotifications({ colors }: { colors: AppColors }) {
   return (
     <View style={styles.empty}>
       <View style={[styles.emptyIcon, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>

@@ -2,7 +2,7 @@ import React, { useEffect, useRef, memo } from "react";
 import { View, Text, StyleSheet, Pressable, Modal, ScrollView, Animated } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useTheme } from "@/shared/contexts/ThemeContext";
-import { useAndroidNavBar } from "@/shared/utils/use-android-nav-bar";
+import { useAndroidNavBar } from "@/shared/hooks/useAndroidNavBar";
 
 const REASONS = [
   { label: "Sexual content", value: "sexual_content", icon: "alert-circle-outline" },

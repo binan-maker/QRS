@@ -5,7 +5,7 @@ const FlashList = _FlashList as any;
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTopInset } from "@/shared/utils/platform";
 import { useTheme } from "@/shared/contexts/ThemeContext";
-import { useNetworkStatus } from "@/shared/utils/use-network";
+import { useNetworkStatus } from "@/shared/hooks/useNetworkStatus";
 
 import { useHistory }         from "@/features/history/hooks/useHistory";
 import { useSearch }          from "@/features/history/hooks/useSearch";
@@ -25,7 +25,7 @@ import HistoryItemComponent from "@/features/history/components/HistoryItem";
 import HistoryItemSkeleton  from "@/features/history/components/HistoryItemSkeleton";
 import { useFocusEffect } from "expo-router";
 import { useTabBarScroll } from "@/shared/contexts/TabBarContext";
-import { useHeaderHide }   from "@/shared/utils/use-header-hide";
+import { useHeaderHide }   from "@/shared/hooks/useHeaderHide";
 import Reanimated          from "react-native-reanimated";
 
 // Static arrays used for skeleton rendering — avoids Array.from() allocation

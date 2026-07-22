@@ -12,7 +12,7 @@ import ScreenHeader from "@/shared/components/ui/ScreenHeader";
 import { LinearGradient } from "expo-linear-gradient";
 import { useTheme } from "@/shared/contexts/ThemeContext";
 import Reanimated from "react-native-reanimated";
-import { useHeaderHide } from "@/shared/utils/use-header-hide";
+import { useHeaderHide } from "@/shared/hooks/useHeaderHide";
 
 function ScoreBand({
   color, bgStart, bgEnd, label, range, description, icon,

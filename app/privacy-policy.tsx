@@ -13,7 +13,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import { useTheme } from "@/shared/contexts/ThemeContext";
 import type { AppColors } from "@/shared/constants/colors";
 import Reanimated from "react-native-reanimated";
-import { useHeaderHide } from "@/shared/utils/use-header-hide";
+import { useHeaderHide } from "@/shared/hooks/useHeaderHide";
 
 const EFFECTIVE_DATE = "April 8, 2026";
 const CONTACT_EMAIL = "ahmedsameerbinan2@gmail.com";

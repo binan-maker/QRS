@@ -1,5 +1,5 @@
 import { useState, useCallback, useRef, useEffect, useMemo } from "react";
-import { useNavHide } from "@/shared/utils/use-nav-hide";
+import { useNavHide } from "@/shared/hooks/useNavHide";
 import {
   View, Text, Pressable, ScrollView, RefreshControl,
   StyleSheet, KeyboardAvoidingView, type LayoutChangeEvent,
@@ -14,7 +14,7 @@ import { useAuth } from "@/shared/contexts/AuthContext";
 import { useTopInset } from "@/shared/utils/platform";
 import { useQrDetail } from "@/features/qr-detail/hooks/useQrDetail";
 import { useQrSafety } from "@/features/qr-detail/hooks/useQrSafety";
-import { useNetworkStatus } from "@/shared/utils/use-network";
+import { useNetworkStatus } from "@/shared/hooks/useNetworkStatus";
 import { getStandardLink } from "@/services/guard-service";
 import { detectContentType } from "@/features/qr-engine";
 import { makeStyles } from "@/features/qr-detail/styles";

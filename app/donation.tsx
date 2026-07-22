@@ -17,7 +17,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTopInset } from "@/shared/utils/platform";
 import ScreenHeader from "@/shared/components/ui/ScreenHeader";
 import { useTheme } from "@/shared/contexts/ThemeContext";
-import { useHeaderHide } from "@/shared/utils/use-header-hide";
+import { useHeaderHide } from "@/shared/hooks/useHeaderHide";
 
 // react-native-iap v15 — loaded lazily so it never crashes on web
 let iap: typeof import("react-native-iap") | null = null;

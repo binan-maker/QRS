@@ -1,23 +1,11 @@
 import { View, Text, Pressable, ScrollView } from "react-native";
 import { useTheme } from "@/shared/contexts/ThemeContext";
+import { QR_COLOR_THEMES } from "@/shared/config/qr-color-themes";
 
-export interface QrColorTheme {
-  name: string;
-  fg: string;
-  bg: string;
-  accent?: string;
-}
-
-export const QR_COLOR_THEMES: QrColorTheme[] = [
-  { name: "Classic",    fg: "#0A0E17", bg: "#F8FAFC" },
-  { name: "Ocean",      fg: "#1D4ED8", bg: "#EFF6FF" },
-  { name: "Midnight",   fg: "#E0F2FE", bg: "#0A0E17" },
-  { name: "Forest",     fg: "#166534", bg: "#F0FDF4" },
-  { name: "Saffron 🇮🇳", fg: "#C2410C", bg: "#FFF7ED" },
-  { name: "Rose",       fg: "#BE123C", bg: "#FFF1F2" },
-  { name: "Teal",       fg: "#0D9488", bg: "#F0FDFA" },
-  { name: "Royal",      fg: "#7C3AED", bg: "#F5F3FF" },
-];
+// Re-export from the canonical shared location so existing feature imports
+// (e.g. `from "@/features/generator/components/QrThemeSection"`) keep working.
+export type { QrColorTheme } from "@/shared/config/qr-color-themes";
+export { QR_COLOR_THEMES } from "@/shared/config/qr-color-themes";
 
 interface Props {
   selectedThemeIdx: number;

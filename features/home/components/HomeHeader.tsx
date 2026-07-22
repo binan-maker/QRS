@@ -6,7 +6,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import * as Haptics from "@/shared/utils/haptics";
 import { useTheme } from "@/shared/contexts/ThemeContext";
-import { useScaleFns } from "@/shared/utils/use-scale";
+import { useScaleFns } from "@/shared/hooks/useScaleFns";
 import { getFirstName } from "@/features/home/utils";
 
 interface Props {

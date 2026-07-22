@@ -12,7 +12,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTopInset } from "@/shared/utils/platform";
 import ScreenHeader from "@/shared/components/ui/ScreenHeader";
 import Reanimated from "react-native-reanimated";
-import { useHeaderHide } from "@/shared/utils/use-header-hide";
+import { useHeaderHide } from "@/shared/hooks/useHeaderHide";
 import * as Haptics from "@/shared/utils/haptics";
 import { useTheme } from "@/shared/contexts/ThemeContext";
 import { useAuth } from "@/shared/contexts/AuthContext";

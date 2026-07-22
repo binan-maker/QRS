@@ -2,7 +2,7 @@ import { View, Text, Pressable, TextInput, ScrollView } from "react-native";
 import Animated, { FadeInDown } from "react-native-reanimated";
 import { Ionicons } from "@expo/vector-icons";
 import { useTheme } from "@/shared/contexts/ThemeContext";
-import { QR_COLOR_THEMES } from "@/features/generator/components/QrThemeSection";
+import { QR_COLOR_THEMES } from "@/shared/config/qr-color-themes";
 
 export const CUSTOM_THEME_IDX = QR_COLOR_THEMES.length;
 

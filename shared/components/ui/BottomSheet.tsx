@@ -5,7 +5,6 @@ import {
   Animated,
   Pressable,
   StyleSheet,
-  Platform,
   ViewStyle,
   DimensionValue,
 } from "react-native";
@@ -13,8 +12,8 @@ import {
   SafeAreaProvider,
   useSafeAreaInsets,
 } from "react-native-safe-area-context";
-import * as NavigationBar from "expo-navigation-bar";
 import { useTheme } from "@/shared/contexts/ThemeContext";
+import { useAndroidNavBar } from "@/shared/hooks/useAndroidNavBar";
 
 interface Props {
   visible:             boolean;
@@ -30,7 +29,7 @@ interface Props {
 // SafeAreaProvider re-initialises from the Modal's native window,
 // which carries the real navigation-bar inset on Android edge-to-edge.
 interface BodyProps {
-  colors:              any;
+  colors:              ReturnType<typeof useTheme>["colors"];
   children:            ReactNode;
   heightStyle:         ViewStyle;
   sheetStyle?:         ViewStyle;
@@ -103,7 +102,10 @@ export default function BottomSheet({
   sheetStyle,
   extraBottomPadding = 0,
 }: Props) {
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
+
+  // Sync Android nav-bar button style with the app theme whenever the sheet is shown.
+  useAndroidNavBar(visible, colors.surface, colors.background, isDark);
 
   const [internalVisible, setInternalVisible] = useState(visible);
   const overlayAnim = useRef(new Animated.Value(visible ? 1 : 0)).current;
@@ -111,14 +113,6 @@ export default function BottomSheet({
   // Holds the currently running animation so we can stop it before starting a new one,
   // preventing interrupted-animation glitches when visible changes rapidly.
   const runningAnim = useRef<{ stop: () => void } | null>(null);
-
-  useEffect(() => {
-    if (Platform.OS === "android") {
-      NavigationBar.setButtonStyleAsync(
-        (colors as any).isDark ? "light" : "dark"
-      ).catch(() => {});
-    }
-  }, [(colors as any).isDark]);
 
   useEffect(() => {
     // Stop any in-progress animation before starting a new direction.

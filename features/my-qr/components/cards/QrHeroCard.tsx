@@ -5,7 +5,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import QRCode from "react-native-qrcode-svg";
 import Animated, { FadeIn } from "react-native-reanimated";
 import { useTheme } from "@/shared/contexts/ThemeContext";
-import { useScaleFns } from "@/shared/utils/use-scale";
+import { useScaleFns } from "@/shared/hooks/useScaleFns";
 import type { LogoPosition } from "@/features/my-qr/hooks/useQrDesign";
 
 interface ContentTypeMeta {

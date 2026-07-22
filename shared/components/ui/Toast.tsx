@@ -2,6 +2,7 @@ import React, { createContext, useContext, useState, useCallback, useRef, type R
 import { View, Text, Animated, StyleSheet, Platform } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useTheme } from "@/shared/contexts/ThemeContext";
 
 export type ToastType = "success" | "error" | "info";
 
@@ -23,13 +24,13 @@ export function useToast(): ToastContextValue {
 
 export function ToastProvider({ children }: { children: ReactNode }) {
   const insets = useSafeAreaInsets();
+  const { colors } = useTheme();
   const [toast, setToast] = useState<ToastState>({ message: "", type: "success", visible: false });
-  const anim = useRef(new Animated.Value(0)).current;
-  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const animRef = useRef<Animated.CompositeAnimation | null>(null);
+  const anim     = useRef(new Animated.Value(0)).current;
+  const animRef  = useRef<Animated.CompositeAnimation | null>(null);
 
   const showToast = useCallback((message: string, type: ToastType = "success") => {
-    if (timerRef.current) clearTimeout(timerRef.current);
+    // Stop any in-progress animation before starting a new one.
     animRef.current?.stop();
     anim.setValue(0);
 
@@ -43,22 +44,18 @@ export function ToastProvider({ children }: { children: ReactNode }) {
     animRef.current.start(({ finished }) => {
       if (finished) setToast(prev => ({ ...prev, visible: false }));
     });
-
-    timerRef.current = setTimeout(() => {
-      setToast(prev => ({ ...prev, visible: false }));
-    }, 3200);
   }, [anim]);
 
   const iconName: Record<ToastType, keyof typeof Ionicons.glyphMap> = {
     success: "checkmark-circle",
-    error: "alert-circle",
-    info: "information-circle",
+    error:   "alert-circle",
+    info:    "information-circle",
   };
 
   const iconColor: Record<ToastType, string> = {
     success: "#22C55E",
-    error: "#F87171",
-    info: "#818CF8",
+    error:   "#F87171",
+    info:    "#818CF8",
   };
 
   const topPad = Platform.OS === "web" ? 20 : insets.top + 12;
@@ -71,22 +68,24 @@ export function ToastProvider({ children }: { children: ReactNode }) {
           style={[
             styles.toast,
             {
-              top: topPad,
-              opacity: anim,
-              transform: [
-                {
-                  translateY: anim.interpolate({
-                    inputRange: [0, 1],
-                    outputRange: [-14, 0],
-                  }),
-                },
-              ],
+              top:             topPad,
+              backgroundColor: colors.surface,
+              borderColor:     colors.surfaceBorder,
+              opacity:         anim,
+              transform: [{
+                translateY: anim.interpolate({
+                  inputRange:  [0, 1],
+                  outputRange: [-14, 0],
+                }),
+              }],
             },
           ]}
           pointerEvents="none"
         >
           <Ionicons name={iconName[toast.type]} size={18} color={iconColor[toast.type]} />
-          <Text style={styles.toastText} numberOfLines={2}>{toast.message}</Text>
+          <Text style={[styles.toastText, { color: colors.text }]} numberOfLines={2}>
+            {toast.message}
+          </Text>
         </Animated.View>
       )}
     </ToastContext.Provider>
@@ -95,28 +94,27 @@ export function ToastProvider({ children }: { children: ReactNode }) {
 
 const styles = StyleSheet.create({
   toast: {
-    position: "absolute",
-    left: 16,
-    right: 16,
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 10,
-    backgroundColor: "#1E293B",
-    borderRadius: 14,
+    position:        "absolute",
+    left:            16,
+    right:           16,
+    flexDirection:   "row",
+    alignItems:      "center",
+    gap:             10,
+    borderRadius:    14,
+    borderWidth:     1,
     paddingVertical: 13,
     paddingHorizontal: 16,
-    zIndex: 9999,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 12,
-    elevation: 12,
+    zIndex:          9999,
+    shadowColor:     "#000",
+    shadowOffset:    { width: 0, height: 4 },
+    shadowOpacity:   0.18,
+    shadowRadius:    12,
+    elevation:       12,
   },
   toastText: {
-    flex: 1,
-    fontSize: 14,
+    flex:       1,
+    fontSize:   14,
     fontFamily: "Inter_500Medium",
-    color: "#F1F5F9",
     lineHeight: 20,
   },
 });

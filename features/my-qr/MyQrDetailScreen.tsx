@@ -3,13 +3,13 @@ import { View, Text, ScrollView, Pressable, Animated as RNAnimated } from "react
 import { StatusBar } from "expo-status-bar";
 import { useLocalSearchParams, router } from "expo-router";
 import Animated from "react-native-reanimated";
-import { useNavHide } from "@/shared/utils/use-nav-hide";
+import { useNavHide } from "@/shared/hooks/useNavHide";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTopInset } from "@/shared/utils/platform";
 import { useTheme } from "@/shared/contexts/ThemeContext";
 import { useMyQrDetail } from "@/features/my-qr/hooks/useMyQrDetail";
-import { useScaleFns } from "@/shared/utils/use-scale";
+import { useScaleFns } from "@/shared/hooks/useScaleFns";
 import { getDetailContentType, getDetailDisplayTitle } from "@/services/qr-display";
 import { getQrTypeMeta as getCtMeta } from "@/features/qr-engine";
 

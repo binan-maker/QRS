@@ -1,9 +1,9 @@
 import { View, Text, TextInput, Pressable } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useTheme } from "@/shared/contexts/ThemeContext";
-import type { ExpiryPreset } from "@/features/generator/components/AdvancedSettingsPanel";
 
-export type { ExpiryPreset };
+/** Expiry preset options for a QR code's active period. */
+export type ExpiryPreset = "never" | "1d" | "7d" | "30d" | "90d";
 
 const EXPIRY_PRESETS: { key: ExpiryPreset; label: string }[] = [
   { key: "never",  label: "Never"    },

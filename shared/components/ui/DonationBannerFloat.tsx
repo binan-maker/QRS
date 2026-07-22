@@ -7,7 +7,7 @@ import Reanimated, { FadeInDown } from "react-native-reanimated";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { useTheme } from "@/shared/contexts/ThemeContext";
-import { useScaleFns } from "@/shared/utils/use-scale";
+import { useScaleFns } from "@/shared/hooks/useScaleFns";
 
 export function DonationBannerFloat({
   visible,
@@ -18,7 +18,7 @@ export function DonationBannerFloat({
   bottomOffset: number;
   onDismiss:    () => void;
 }) {
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
   const { rf, sp } = useScaleFns();
 
   if (!visible) return null;
@@ -61,7 +61,7 @@ export function DonationBannerFloat({
           width: sp(26),
           height: sp(26),
           borderRadius: sp(13),
-          backgroundColor: colors.isDark ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.05)",
+          backgroundColor: isDark ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.05)",
           alignItems: "center",
           justifyContent: "center",
         }}

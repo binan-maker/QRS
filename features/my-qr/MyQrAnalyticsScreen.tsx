@@ -13,7 +13,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Svg, { Rect, Text as SvgText, G } from "react-native-svg";
 import { useTheme } from "@/shared/contexts/ThemeContext";
 import { useTopInset } from "@/shared/utils/platform";
-import { useScaleFns } from "@/shared/utils/use-scale";
+import { useScaleFns } from "@/shared/hooks/useScaleFns";
 import { useAuth } from "@/shared/contexts/AuthContext";
 import { getGeneratedQrById, type GeneratedQrItem } from "@/services/generator-service";
 import { getQrFollowCount } from "@/lib/firestore-service";

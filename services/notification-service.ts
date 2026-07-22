@@ -2,7 +2,7 @@ import { db, rtdb } from "@/lib/db/client";
 import { NOTIFICATIONS_ENABLED } from "./notifications/config";
 import type { Notification, NotificationType } from "./types";
 import { COLLECTIONS } from "@/shared/constants/collections";
-import { logger } from "@/shared/utils/logger";
+import { logger } from "@/lib/logger";
 
 // FIX #2: Add TTL for notifications (30 days) to prevent unbounded storage growth
 const NOTIFICATION_TTL_MS = 30 * 24 * 60 * 60 * 1000; // 30 days

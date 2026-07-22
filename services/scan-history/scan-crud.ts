@@ -8,7 +8,7 @@ import {
 } from "../scan-fraud-guard";
 import { trackQrScanned } from "@/lib/analytics";
 import { COLLECTIONS } from "@/shared/constants/collections";
-import { logger } from "@/shared/utils/logger";
+import { logger } from "@/lib/logger";
 
 const SCAN_SOFT_DELETE_TTL_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
 

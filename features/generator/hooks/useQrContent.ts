@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { buildQrContent, validateQrInput } from "@/features/generator/data/qr-builder";
-import { computeUrlRisk } from "@/shared/utils/url-risk";
+import { computeUrlRisk } from "@/services/analysis/url-risk";
 import type { QrMode } from "@/features/generator/types/form-types";
 
 interface Params {

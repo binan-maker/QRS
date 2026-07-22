@@ -7,7 +7,7 @@ import ReAnimated, { FadeInDown } from "react-native-reanimated";
 import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTheme } from "@/shared/contexts/ThemeContext";
-import { useAndroidNavBar } from "@/shared/utils/use-android-nav-bar";
+import { useAndroidNavBar } from "@/shared/hooks/useAndroidNavBar";
 import { formatCompactNumber } from "@/shared/utils/number-format";
 import { formatCompactRelativeTime } from "@/shared/utils/formatters";
 import type { FollowerInfo } from "@/lib/firestore-service";

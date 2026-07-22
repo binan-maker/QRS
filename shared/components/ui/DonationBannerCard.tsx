@@ -7,10 +7,10 @@ import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
 import { useTheme } from "@/shared/contexts/ThemeContext";
-import { useScaleFns } from "@/shared/utils/use-scale";
+import { useScaleFns } from "@/shared/hooks/useScaleFns";
 
 export default function DonationBannerCard() {
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
   const { rf, sp } = useScaleFns();
 
   return (
@@ -23,7 +23,7 @@ export default function DonationBannerCard() {
         borderRadius: sp(16),
         borderWidth: 1,
         borderColor: "#22c55e30",
-        backgroundColor: colors.isDark ? "rgba(34,197,94,0.12)" : "rgba(34,197,94,0.07)",
+        backgroundColor: isDark ? "rgba(34,197,94,0.12)" : "rgba(34,197,94,0.07)",
         padding: sp(14),
         marginTop: sp(8),
         opacity: pressed ? 0.88 : 1,

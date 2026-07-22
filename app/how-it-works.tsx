@@ -11,7 +11,7 @@ import { useTopInset } from "@/shared/utils/platform";
 import ScreenHeader from "@/shared/components/ui/ScreenHeader";
 import { useTheme } from "@/shared/contexts/ThemeContext";
 import Reanimated from "react-native-reanimated";
-import { useHeaderHide } from "@/shared/utils/use-header-hide";
+import { useHeaderHide } from "@/shared/hooks/useHeaderHide";
 
 function StepCard({ number, icon, title, desc, tips, totalSteps = 6 }: { number: number; icon: string; title: string; desc: string; tips?: string[]; totalSteps?: number }) {
   const { colors } = useTheme();

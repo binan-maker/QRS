@@ -1,8 +1,8 @@
 import { View, Text, Pressable, Modal } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useTheme } from "@/shared/contexts/ThemeContext";
-import { useAndroidNavBar } from "@/shared/utils/use-android-nav-bar";
-import { useScaleFns } from "@/shared/utils/use-scale";
+import { useAndroidNavBar } from "@/shared/hooks/useAndroidNavBar";
+import { useScaleFns } from "@/shared/hooks/useScaleFns";
 
 interface Props {
   visible: boolean;

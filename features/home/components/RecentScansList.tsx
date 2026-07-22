@@ -11,7 +11,7 @@ import Animated, {
 } from "react-native-reanimated";
 import * as Haptics from "@/shared/utils/haptics";
 import { useTheme } from "@/shared/contexts/ThemeContext";
-import { useScaleFns } from "@/shared/utils/use-scale";
+import { useScaleFns } from "@/shared/hooks/useScaleFns";
 import HistoryItem from "@/features/history/components/HistoryItem";
 import HistoryItemSkeleton from "@/features/history/components/HistoryItemSkeleton";
 import { EmptyScans } from "@/features/home/components/EmptyScans";

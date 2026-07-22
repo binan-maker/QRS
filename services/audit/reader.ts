@@ -1,7 +1,7 @@
 import { db } from "@/lib/db/client";
 import type { AuditEventType, AuditLogEntry } from "./types";
 import { hashUserId } from "./privacy";
-import { logger } from "@/shared/utils/logger";
+import { logger } from "@/lib/logger";
 
 export async function getAuditLogs(filters: {
   userId?: string;

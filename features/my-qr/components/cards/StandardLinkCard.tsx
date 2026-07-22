@@ -2,7 +2,7 @@ import { View, Text, Pressable, TextInput, ActivityIndicator } from "react-nativ
 import { Ionicons } from "@expo/vector-icons";
 import Animated, { FadeInDown } from "react-native-reanimated";
 import { useTheme } from "@/shared/contexts/ThemeContext";
-import { useScaleFns } from "@/shared/utils/use-scale";
+import { useScaleFns } from "@/shared/hooks/useScaleFns";
 
 interface Props {
   effectiveContentType: string;

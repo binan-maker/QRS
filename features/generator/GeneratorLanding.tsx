@@ -15,7 +15,7 @@ import { useTopInset } from "@/shared/utils/platform";
 import * as Haptics from "@/shared/utils/haptics";
 import { useFocusEffect } from "expo-router";
 import { useTabBarScroll } from "@/shared/contexts/TabBarContext";
-import { useHeaderHide } from "@/shared/utils/use-header-hide";
+import { useHeaderHide } from "@/shared/hooks/useHeaderHide";
 
 const MODES = [
   {

@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, Pressable, Animated } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { useTheme } from "@/shared/contexts/ThemeContext";
-import { useScaleFns } from "@/shared/utils/use-scale";
+import { useScaleFns } from "@/shared/hooks/useScaleFns";
 
 export const EmptyScans = memo(function EmptyScans() {
   const { colors } = useTheme();

@@ -6,7 +6,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import Animated from "react-native-reanimated";
 import * as Haptics from "@/shared/utils/haptics";
 import { useTheme } from "@/shared/contexts/ThemeContext";
-import { useScaleFns } from "@/shared/utils/use-scale";
+import { useScaleFns } from "@/shared/hooks/useScaleFns";
 import { usePulseAnimation } from "@/features/home/hooks/usePulseAnimation";
 
 export const HeroScanCard = memo(function HeroScanCard() {
