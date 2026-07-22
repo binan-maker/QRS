@@ -28,7 +28,7 @@ function QrSavedBanner({
       {savedToProfile && (
         <Pressable
           onPress={() => {
-            if (savedDocId) router.push(`/my-qr/${savedDocId}` as any);
+            if (savedDocId) router.push(`/my-qr-detail/${savedDocId}` as any);
             else router.push("/(tabs)/profile");
           }}
           style={[styles.savedBanner, { backgroundColor: colors.safeDim, borderColor: colors.safe + "40" }]}

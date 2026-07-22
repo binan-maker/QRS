@@ -21,7 +21,7 @@ interface Props {
 }
 
 const QrPreviewCard = memo(function QrPreviewCard({ qr, colors, tileSize }: Props) {
-  const onPress = useCallback(() => safePush(`/my-qr/${qr.docId}`), [qr.docId]);
+  const onPress = useCallback(() => safePush(`/my-qr-detail/${qr.docId}`), [qr.docId]);
 
   const thumbBg = qr.bgColor || colors.surface;
   const qrSize  = Math.floor(tileSize * 0.7);

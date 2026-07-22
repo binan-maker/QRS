@@ -10,7 +10,7 @@ export const LANDING_MODES = [
     toC:        "#3B82F6",
     midC:       "#2563EB",
     features:   ["Saved to your account", "Trust score & analytics", "Community safety check"],
-    route:      "/qr-standard",
+    route:      "/qr-individual",
   },
   {
     key:        "private",

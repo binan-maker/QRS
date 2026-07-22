@@ -110,9 +110,9 @@ function RootLayoutNav() {
         headerShown: false,
       }} />
       <Stack.Screen name="qr-detail/[id]" options={{ headerShown: false }} />
-      <Stack.Screen name="my-qr/[id]" options={{ headerShown: false }} />
+      <Stack.Screen name="my-qr-detail/[id]" options={{ headerShown: false }} />
       <Stack.Screen name="my-qr-codes" options={{ headerShown: false }} />
-      <Stack.Screen name="qr-standard" options={{ headerShown: false }} />
+      <Stack.Screen name="qr-individual" options={{ headerShown: false }} />
       <Stack.Screen name="qr-private"   options={{ headerShown: false }} />
       <Stack.Screen name="favorites" options={{ headerShown: false }} />
       <Stack.Screen name="privacy-policy" options={{ headerShown: false }} />

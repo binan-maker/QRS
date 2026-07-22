@@ -23,7 +23,7 @@ const MODES = [
     label:    "Standard QR",
     tagline:  "Saved, tracked & protected",
     features: ["Saved to your account", "Trust score & analytics", "Community safety check"],
-    onPress:  () => router.push("/qr-standard" as any),
+    onPress:  () => router.push("/qr-individual" as any),
   },
   {
     key:      "private",

@@ -131,7 +131,7 @@ export default function MyQrCodesScreen() {
         <Pressable
           onPress={() => {
             Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-            router.push(`/my-qr/${item.docId}` as any);
+            router.push(`/my-qr-detail/${item.docId}` as any);
           }}
           style={({ pressed }) => [{
             flexDirection: "row", alignItems: "center", gap: sp(13),

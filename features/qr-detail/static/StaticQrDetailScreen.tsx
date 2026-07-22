@@ -314,7 +314,7 @@ export default function StaticQrDetailScreen({ id, ownerDocId, hint }: Props) {
                 onWatch={handleWatchPress}
                 onManage={() =>
                   ownerDocId
-                    ? router.push(`/my-qr/${ownerDocId}` as any)
+                    ? router.push(`/my-qr-detail/${ownerDocId}` as any)
                     : router.push("/(tabs)/profile")
                 }
                 onAnalytics={() =>
