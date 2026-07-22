@@ -1,1 +1,1 @@
-export { default } from "@/app/my-qr-codes";
+export { default } from "@/features/my-qr/MyQrCodesScreen";
