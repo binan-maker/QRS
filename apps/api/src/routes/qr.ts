@@ -82,8 +82,9 @@ qrRouter.patch(
   },
 );
 
-// ─── POST /api/v1/qr/validate-vpa — validate a UPI VPA via Razorpay ──────────
+// ─── POST /api/v1/qr/validate-vpa — validate a UPI VPA ───────────────────────
 // valid=null means the service is unavailable — callers must still allow the payment.
+// NOTE: VPA validation via an external gateway is not currently configured.
 
 qrRouter.post(
   "/validate-vpa",
@@ -91,33 +92,10 @@ qrRouter.post(
   standardLimit,
   async (req: Request, res: Response) => {
     const { vpa } = req.body;
-    const keyId = process.env.RAZORPAY_KEY_ID;
-    const keySecret = process.env.RAZORPAY_KEY_SECRET;
 
-    if (!keyId || !keySecret) {
-      return res.json({ valid: null, customerName: null, reason: "Validation service not configured" });
-    }
-
-    try {
-      const auth = Buffer.from(`${keyId}:${keySecret}`).toString("base64");
-      const rzpRes = await fetch("https://api.razorpay.com/v1/payments/validate/vpa", {
-        method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: `Basic ${auth}` },
-        body: JSON.stringify({ vpa: vpa.trim().toLowerCase() }),
-        signal: AbortSignal.timeout(8000),
-      });
-
-      if (rzpRes.ok) {
-        const d = await rzpRes.json() as any;
-        return res.json({ valid: d.success === true, customerName: d.customer_name ?? null, vpa: d.vpa ?? vpa });
-      }
-
-      const err = await rzpRes.json().catch(() => ({})) as any;
-      return res.json({ valid: false, customerName: null, reason: err?.error?.description ?? "UPI ID not found or inactive" });
-    } catch (e: any) {
-      console.error("[v1/qr/validate-vpa]", e.message);
-      return res.json({ valid: null, customerName: null, reason: "Validation check failed" });
-    }
+    // VPA validation via an external UPI gateway is not currently configured.
+    // Callers must treat valid=null as "unknown" and still allow the payment.
+    return res.json({ valid: null, customerName: null, reason: "Validation service not configured" });
   },
 );
 

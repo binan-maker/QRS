@@ -4,7 +4,6 @@ View, Text, StyleSheet, ActivityIndicator, useWindowDimensions,
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { useTheme } from "@/shared/contexts/ThemeContext";
-import type { DonationRecord } from "@/services/donation-service";
 import { formatDate } from "./charity-donation-utils";
 
 interface DonationRecord {

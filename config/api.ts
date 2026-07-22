@@ -2,15 +2,9 @@
 // API CONFIGURATION — centralized API URL computation.
 // ───────────────────────────────────────────────────────────────────────────────
 // PROBLEM BEING SOLVED:
-//   Before this file, `BASE_URL` was computed inline in 5+ service files,
-//   each with slightly different logic:
-//     • donation-service.ts  → `https://${raw}`
-//     • branding.ts          → `https://${raw.split(":")[0]}`
-//     • ai-generator.ts      → `"http://localhost:5000"` fallback
-//     • comment-service.ts   → separate `__DEV__` check for localhost
-//     • notification-service → same `__DEV__` check again
-//
-// FIX: One canonical computation here. All callers import `API_BASE_URL`.
+//   Before this file, `BASE_URL` was computed inline in multiple service files,
+//   each with slightly different logic. This file provides one canonical
+//   computation. All callers import `API_BASE_URL`.
 //
 // Usage:
 //   import { API_BASE_URL, apiUrl } from "@/config/api";
@@ -60,8 +54,8 @@ export const API_BASE_URL: string = computeBaseUrl();
  * Build a full API URL from a path.
  *
  * @example
- *   apiUrl("/api/donation/create-order")
- *   // → "https://myapp.replit.dev/api/donation/create-order"
+ *   apiUrl("/api/v1/unified-qr")
+ *   // → "https://myapp.replit.dev/api/v1/unified-qr"
  */
 export function apiUrl(path: string): string {
   return `${API_BASE_URL}${path}`;

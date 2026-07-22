@@ -1,4 +1,5 @@
 import express from "express";
+import compression from "compression";
 import { startScheduler } from "./scheduler";
 import type { Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
@@ -166,19 +167,32 @@ function configureExpoAndLanding(app: express.Application) {
   log("Expo routing: Checking expo-platform header on / and /manifest");
 }
 
-function setupCspHeaders(app: express.Application) {
+function setupSecurityHeaders(app: express.Application) {
   app.use((_req: Request, res: Response, next: NextFunction) => {
+    // Content Security Policy
     res.setHeader(
       "Content-Security-Policy",
       "default-src 'self' https: data: blob:; script-src 'self' 'unsafe-inline' 'unsafe-eval' https:; style-src 'self' 'unsafe-inline' https: data:; img-src 'self' data: blob: https:; font-src 'self' data: https:; connect-src 'self' https: wss: ws:; media-src 'self' blob: https:; object-src 'none'; frame-ancestors 'none'"
     );
+    // Prevent browsers from MIME-sniffing responses
+    res.setHeader("X-Content-Type-Options", "nosniff");
+    // Prevent click-jacking
+    res.setHeader("X-Frame-Options", "DENY");
+    // Remove fingerprinting header
+    res.removeHeader("X-Powered-By");
+    // Control referrer information
+    res.setHeader("Referrer-Policy", "strict-origin-when-cross-origin");
+    // Basic XSS protection for older browsers
+    res.setHeader("X-XSS-Protection", "1; mode=block");
     next();
   });
 }
 
 (async () => {
   app.use(corsMiddleware);
-  setupCspHeaders(app);
+  // Gzip/deflate all text responses — reduces payload size significantly
+  app.use(compression());
+  setupSecurityHeaders(app);
   setupBodyParsing(app);
   app.use(requestLogger);
 

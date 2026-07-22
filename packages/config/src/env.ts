@@ -40,8 +40,6 @@ export const apiEnvSchema = z.object({
   // External APIs
   GOOGLE_SAFE_BROWSING_API_KEY: z.string().optional(),
   OPENAI_API_KEY: z.string().optional(),
-  RAZORPAY_KEY_ID: z.string().optional(),
-  RAZORPAY_KEY_SECRET: z.string().optional(),
 
   // Firebase (server-side — Admin SDK uses service account, not these keys)
   EXPO_PUBLIC_FIREBASE_PROJECT_ID: z.string().optional(),

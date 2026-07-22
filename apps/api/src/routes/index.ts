@@ -50,10 +50,6 @@
  *   DELETE /api/v1/follows/users/:userId               Unfollow creator
  *   GET    /api/v1/follows/users/:userId               Check creator follow status
  *
- * Payments / Donations
- *   POST   /api/v1/donation/create-order               Razorpay order
- *   POST   /api/v1/donation/verify                     Razorpay HMAC verification
- *
  * Business
  *   POST   /api/v1/business/register                   Register business account
  *
@@ -69,7 +65,6 @@
 import type { Express } from "express";
 import { securityRouter } from "./security";
 import { qrRouter } from "./qr";
-import { paymentsRouter } from "./payments";
 import { businessRouter } from "./business";
 import { usersRouter } from "./users";
 import { unifiedQrRouter } from "./unified-qr";
@@ -80,8 +75,7 @@ export function registerV1Routes(app: Express): void {
   // ── Utilities & security (existing) ────────────────────────────────────────
   app.use("/api/v1", securityRouter);
 
-  // ── Payments & business (existing) ─────────────────────────────────────────
-  app.use("/api/v1/donation", paymentsRouter);
+  // ── Business ────────────────────────────────────────────────────────────────
   app.use("/api/v1/business", businessRouter);
 
   // ── User profile, notifications, favorites, scan history ───────────────────

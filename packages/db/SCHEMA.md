@@ -316,13 +316,13 @@ Firebase RTDB per-user notification list. 30-day TTL enforced by app cleanup.
 ---
 
 ### `donations`
-Firestore `donations/{id}` — Razorpay payment records.
+Firestore `donations/{id}` — In-app purchase donation records.
 
 | Column | Type | Notes |
 |---|---|---|
 | `id` | text PK | |
-| `order_id` | text UNIQUE | Razorpay order ID |
-| `payment_id` | text UNIQUE | Razorpay payment ID (after success) |
+| `order_id` | text UNIQUE | Store transaction ID |
+| `payment_id` | text UNIQUE | Store payment ID (after success) |
 | `user_id` | text FK→users | Nullable for anonymous donors |
 | `amount_paise` | integer | Amount in paise (INR × 100) |
 | `currency` | text | Default `INR` |

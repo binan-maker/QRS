@@ -259,7 +259,7 @@ Aggregated scan analytics for a legacy QR. **Auth required.** Owner only.
 ---
 
 ### `POST /api/v1/qr/validate-vpa`
-Validate a UPI VPA (Virtual Payment Address) via Razorpay. No auth required.
+Validate a UPI VPA (Virtual Payment Address). No auth required. Returns `valid: null` when external validation is unavailable — callers must still allow the payment in that case.
 
 **Body:** `{ "vpa": "merchant@upi" }`
 
@@ -497,34 +497,6 @@ Removes the pending entries from both sides.
 Unfriend. **Auth required.** Rate: `strict`.
 
 Decrements `friendsCount` for both users.
-
----
-
-## Payments & Donations
-
-### `POST /api/v1/donation/create-order`
-Create a Razorpay donation order.
-
-**Body:**
-```json
-{ "amount": 10000, "donorName": "Ravi Kumar", "donorEmail": "ravi@example.com", "userId": "uid123" }
-```
-
-`amount` in paise (INR × 100). `userId` optional.
-
----
-
-### `POST /api/v1/donation/verify`
-Verify Razorpay payment HMAC signature after checkout.
-
-**Body:**
-```json
-{
-  "razorpay_order_id": "order_xxx",
-  "razorpay_payment_id": "pay_xxx",
-  "razorpay_signature": "hex_signature"
-}
-```
 
 ---
 

@@ -159,7 +159,7 @@ export default function DonateTab({
         <View style={[styles.secureRow, { gap: sp(6), marginTop: sp(12) }]}>
           <Ionicons name="lock-closed-outline" size={rf(13)} color={colors.textMuted} />
           <Text style={[{ fontSize: rf(12), fontFamily: "Inter_400Regular", color: colors.textMuted }]}>
-            100% secure · Powered by Razorpay
+            100% secure · In-App Purchase
           </Text>
         </View>
       </View>

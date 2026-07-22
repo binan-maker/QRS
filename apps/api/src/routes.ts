@@ -1,7 +1,6 @@
 import type { Express, Request, Response } from "express";
 import { createServer, type Server } from "node:http";
 import { decodeQrFromImage } from "./image-decode";
-import { registerDonationRoutes } from "./routes/donation";
 import { registerSafeBrowsingRoute } from "./routes/safe-browsing";
 import { registerQrActiveRoute } from "./routes/qr-active";
 import { registerV1Routes } from "./routes/index";
@@ -56,7 +55,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
   registerV1Routes(app);
 
   // ── Domain route modules ────────────────────────────────────────────────────
-  registerDonationRoutes(app);
   registerSafeBrowsingRoute(app);
   registerQrActiveRoute(app);
   registerAiQrRoute(app);

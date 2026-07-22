@@ -86,8 +86,6 @@ binro/
 | `FIREBASE_DATABASE_URL` | Optional | Firebase Realtime Database URL |
 | `GOOGLE_SAFE_BROWSING_API_KEY` | Optional | Enables real-time URL threat checks |
 | `OPENAI_API_KEY` | Optional | Enables AI QR generation |
-| `RAZORPAY_KEY_ID` | Optional | Razorpay payments |
-| `RAZORPAY_KEY_SECRET` | Optional | Razorpay payments |
 | `DATABASE_URL` | Optional | PostgreSQL (Phase 2) |
 
 ### Mobile (bundled into JS bundle — not secrets)
@@ -115,7 +113,7 @@ binro/
 | Auth | Firebase Auth + Google Sign-In |
 | State | TanStack Query v5 + Zustand v5 |
 | i18n | i18next (EN, HI, ML, TA, TE) |
-| Payments | Razorpay + react-native-iap |
+| Payments | Google Play Billing / Apple In-App Purchases (react-native-iap) |
 | Push | Expo Notifications |
 
 ---
@@ -136,8 +134,6 @@ binro/
 | PATCH | `/api/v1/qr/:qrId/active` | Toggle QR active state |
 | GET | `/api/v1/qr/:uuid/analytics` | QR scan analytics (owner only) |
 | POST | `/api/v1/qr/:qrId/report` | Submit/toggle a trust report |
-| POST | `/api/v1/donation/create-order` | Razorpay donation order |
-| POST | `/api/v1/donation/verify` | Razorpay payment verification |
 | POST | `/api/v1/business/register` | Business account registration |
 
 ---
