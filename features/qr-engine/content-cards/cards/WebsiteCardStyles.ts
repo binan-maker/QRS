@@ -109,9 +109,4 @@ export const styles = StyleSheet.create({
   infoValue: { fontSize: 11, fontFamily: "Inter_600SemiBold", flex: 1, textAlign: "right" },
   sep: { height: 1, marginHorizontal: -2 },
 
-  // legacy — kept so old imports don't break
-  openBtn:      { flexDirection: "row", alignItems: "center", justifyContent: "space-between", borderRadius: 12, paddingVertical: 11, paddingLeft: 14, paddingRight: 8, overflow: "hidden" },
-  openBtnInner: { flexDirection: "row", alignItems: "center", gap: 7 },
-  openBtnText:  { fontSize: 13, fontFamily: "Inter_700Bold", color: "#fff", letterSpacing: 0.1 },
-  openBtnArrow: { width: 30, height: 30, borderRadius: 9, alignItems: "center", justifyContent: "center" },
 });

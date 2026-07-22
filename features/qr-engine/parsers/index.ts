@@ -6,7 +6,6 @@
  */
 export * from "../content-cards/parsers";
 export { isPaymentQr, parseAnyPaymentQr } from "@/services/analysis/payment-parser";
-export type { ParsedPaymentQr } from "@/services/analysis";
-export * from "@/features/qr-detail/content-cards/parsers";
 export * from "./payment";
+// ParsedPaymentQr is re-exported from ./payment (which re-exports from @/services/analysis)
 export type { ParsedPaymentQr } from "./payment";

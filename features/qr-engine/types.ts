@@ -176,7 +176,8 @@ export interface QrRenderProps {
   isDeactivated?: boolean;
   onOpen?: () => void;
   hideOpenAction?: boolean;
-  parsedPayment?: any;
+  /** Parsed payment data — typed at the usage site; kept loose here to avoid a circular dep with services */
+  parsedPayment?: Record<string, unknown> | null;
   risk?: TrustLevel;
   scannedAt?: Date | number;
   isDynamic?: boolean;

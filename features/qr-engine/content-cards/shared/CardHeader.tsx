@@ -3,15 +3,17 @@ import { View, Text, StyleSheet, Pressable } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import * as Clipboard from "expo-clipboard";
 import * as Haptics from "@/shared/utils/haptics";
+import type { AppColors } from "@/shared/constants/colors";
 
 interface CardHeaderProps {
-  // icon / gradient kept in interface so existing call-sites don't need touching
+  /** @deprecated icon is accepted for call-site compat but not rendered */
   icon?: keyof typeof Ionicons.glyphMap;
+  /** @deprecated gradient is accepted for call-site compat but not rendered */
   gradient?: readonly [string, string];
   title: string;
   subtitle?: string;
   content: string;
-  colors: any;
+  colors: AppColors;
 }
 
 export function CardHeader({ title, subtitle, content, colors }: CardHeaderProps) {

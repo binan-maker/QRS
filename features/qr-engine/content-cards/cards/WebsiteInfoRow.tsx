@@ -7,7 +7,6 @@ interface InfoRowProps {
   label: string;
   value: string;
   accent: string;
-  colors: any;
   isDark: boolean;
 }
 

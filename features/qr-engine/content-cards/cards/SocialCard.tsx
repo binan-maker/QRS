@@ -1,4 +1,4 @@
-import { Fragment } from "react";
+import { Fragment, useMemo } from "react";
 import { View, Text, StyleSheet } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useTheme } from "@/shared/contexts/ThemeContext";
@@ -19,15 +19,16 @@ export default function SocialCard({ content, contentType, onOpenContent, isDeac
   const cfg = getQrTypeDef(contentType);
   const accentColor = cfg.gradient[0];
 
-  const fields = extractSocialFields(contentType, content);
+  // Memoised — both inputs are stable strings; no need to recompute on unrelated re-renders
+  const fields = useMemo(() => extractSocialFields(contentType, content), [contentType, content]);
 
-  const displaySubtitle = (() => {
+  const displaySubtitle = useMemo(() => {
     try { return cfg.getDisplayLabel(content); } catch {}
     try {
       return new URL(content.startsWith("http") ? content : `https://${content}`)
         .hostname.replace(/^www\./, "");
     } catch { return undefined; }
-  })();
+  }, [cfg, content]);
 
   return (
     <View style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>

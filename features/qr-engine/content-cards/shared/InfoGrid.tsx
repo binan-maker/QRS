@@ -1,13 +1,15 @@
 import React, { type ReactNode } from "react";
 import { View, Text, StyleSheet } from "react-native";
-import { Ionicons } from "@expo/vector-icons";
+import type { AppColors } from "@/shared/constants/colors";
 
 interface InfoRowProps {
   label: string;
   value: string;
-  icon: keyof typeof Ionicons.glyphMap;
-  accentColor?: string; // kept for call-site compat, no longer used for color
-  colors: any;
+  /** @deprecated icon is accepted for call-site compat but not rendered */
+  icon?: string;
+  /** @deprecated accentColor is accepted for call-site compat but not used */
+  accentColor?: string;
+  colors: AppColors;
   selectable?: boolean;
   numberOfLines?: number;
 }
@@ -27,13 +29,14 @@ export function InfoRow({ label, value, colors, selectable, numberOfLines = 2 }:
   );
 }
 
-export function Divider({ colors }: { colors: any }) {
+export function Divider({ colors }: { colors: AppColors }) {
   return <View style={[styles.divider, { backgroundColor: colors.surfaceBorder }]} />;
 }
 
 interface InfoGridProps {
-  accentColor?: string; // kept for call-site compat, no longer used
-  colors: any;
+  /** @deprecated accentColor is accepted for call-site compat but not used */
+  accentColor?: string;
+  colors: AppColors;
   isDark?: boolean;
   children: ReactNode;
 }

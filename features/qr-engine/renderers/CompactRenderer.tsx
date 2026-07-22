@@ -181,7 +181,7 @@ export default function CompactRenderer({
       ]}>
         <View style={styles.header}>
           <View style={[styles.iconWrap, { backgroundColor: meta.color + "18", borderColor: meta.color + "30" }]}>
-            <Ionicons name={meta.icon as any} size={20} color={meta.color} />
+            <Ionicons name={meta.icon as keyof typeof Ionicons.glyphMap} size={20} color={meta.color} />
           </View>
           <View style={styles.headerText}>
             <Text style={[styles.typeLabel, { color: meta.color }]}>
@@ -214,7 +214,7 @@ export default function CompactRenderer({
               style={[styles.row, { borderTopColor: meta.color + "22" }]}
             >
               <View style={[styles.rowIcon, { backgroundColor: meta.color + "15" }]}>
-                <Ionicons name={row.icon as any} size={14} color={meta.color} />
+                <Ionicons name={row.icon as keyof typeof Ionicons.glyphMap} size={14} color={meta.color} />
               </View>
               <View style={styles.rowBody}>
                 <Text style={[styles.rowLabel, { color: meta.color }]}>
