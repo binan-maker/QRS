@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, memo } from "react";
+import { useCallback, useMemo, memo } from "react";
 import { Pressable, Text, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import * as Haptics from "@/shared/utils/haptics";
@@ -6,7 +6,7 @@ import { useTheme } from "@/shared/contexts/ThemeContext";
 import { makeSettingsStyles } from "@/features/settings/styles";
 
 interface Props {
-  icon: string;
+  icon: keyof typeof Ionicons.glyphMap;
   label: string;
   sublabel?: string;
   onPress: () => void;
@@ -25,12 +25,14 @@ const SettingsMenuItem = memo(function SettingsMenuItem({ icon, label, sublabel,
   return (
     <Pressable
       onPress={handlePress}
+      accessibilityRole="button"
+      accessibilityLabel={label}
       style={({ pressed }) => [styles.menuItem, { opacity: pressed ? 0.75 : 1 }]}
     >
       <View style={[styles.menuIconWrap, {
         backgroundColor: danger ? colors.dangerDim : colors.surfaceLight,
       }]}>
-        <Ionicons name={icon as any} size={18} color={danger ? colors.danger : colors.textSecondary} />
+        <Ionicons name={icon} size={18} color={danger ? colors.danger : colors.textSecondary} />
       </View>
       <View style={{ flex: 1 }}>
         <Text style={[styles.menuLabel, { color: danger ? colors.danger : colors.text }]} maxFontSizeMultiplier={1}>{label}</Text>

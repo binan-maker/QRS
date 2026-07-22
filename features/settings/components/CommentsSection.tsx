@@ -55,6 +55,8 @@ export default function CommentsSection({ loading, comments, onDelete, onDeleteA
   const listHeader = useMemo(() => (
     <Pressable
       onPress={handleDeleteAll}
+      accessibilityRole="button"
+      accessibilityLabel="Delete all comments"
       style={({ pressed }) => ({
         flexDirection: "row" as const,
         alignItems: "center" as const,

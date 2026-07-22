@@ -31,6 +31,8 @@ export default function HistorySection({ loading, history, onDelete, onDeleteAll
   const listHeader = useMemo(() => (
     <Pressable
       onPress={onDeleteAll}
+      accessibilityRole="button"
+      accessibilityLabel="Delete all history"
       style={({ pressed }) => ({
         flexDirection: "row" as const,
         alignItems: "center" as const,

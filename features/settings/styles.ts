@@ -69,29 +69,6 @@ export function makeSettingsStyles(c: AppColors, width = 390) {
     },
     verifiedPillText: { fontSize: rf(10), fontFamily: "Inter_600SemiBold" },
 
-    // ── Profile card ─────────────────────────────────────────────────────────
-    profileCard: {
-      flexDirection: "row", alignItems: "center", gap: sp(14),
-      borderRadius: sp(20), borderWidth: 1, borderColor: c.surfaceBorder,
-      backgroundColor: c.surface, padding: sp(18), marginBottom: sp(28),
-    },
-    profileAvatarRing: {
-      width: sp(60), height: sp(60), borderRadius: sp(30),
-      padding: 2.5, alignItems: "center", justifyContent: "center",
-    },
-    profileAvatarInner: {
-      width: "100%", height: "100%", borderRadius: sp(27),
-      alignItems: "center", justifyContent: "center",
-    },
-    profileAvatarText: { fontSize: rf(18), fontFamily: "Inter_700Bold", color: c.primary },
-    profileName: { fontSize: rf(14), fontFamily: "Inter_700Bold", color: c.text },
-    profileEmail: { fontSize: rf(11), fontFamily: "Inter_400Regular", color: c.textSecondary, marginTop: 2 },
-    verifiedBadge: {
-      flexDirection: "row", alignItems: "center", gap: 4,
-      borderRadius: sp(10), paddingHorizontal: sp(8), paddingVertical: sp(4), borderWidth: 1,
-    },
-    verifiedText: { fontSize: rf(10), fontFamily: "Inter_600SemiBold" },
-
     // ── Sign-in card ──────────────────────────────────────────────────────────
     signInCard: {
       flexDirection: "row", alignItems: "center", gap: sp(14),
@@ -102,10 +79,8 @@ export function makeSettingsStyles(c: AppColors, width = 390) {
       width: sp(48), height: sp(48), borderRadius: sp(16),
       backgroundColor: c.primaryDim, alignItems: "center", justifyContent: "center",
     },
-    signInIconWrap: { width: sp(48), height: sp(48), borderRadius: sp(16), alignItems: "center", justifyContent: "center" },
     signInTitle: { fontSize: rf(14), fontFamily: "Inter_700Bold", color: c.text },
     signInSub: { fontSize: rf(11), fontFamily: "Inter_400Regular", color: c.textSecondary, marginTop: 2 },
-    signInChevron: { width: sp(30), height: sp(30), borderRadius: sp(15), alignItems: "center", justifyContent: "center" },
 
     // ── Appearance — theme selector ───────────────────────────────────────────
     appearanceLabel: { fontSize: rf(12), fontFamily: "Inter_600SemiBold", marginBottom: sp(12) },

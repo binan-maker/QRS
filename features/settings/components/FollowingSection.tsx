@@ -9,7 +9,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import Animated, { FadeInDown } from "react-native-reanimated";
 import { useTheme } from "@/shared/contexts/ThemeContext";
 import SkeletonBox from "@/shared/components/ui/SkeletonBox";
-import { db } from "@/lib/db/client";
+import { db } from "@/lib/db";
 import { formatShortDate } from "@/shared/utils/formatters";
 import { COLLECTIONS } from "@/shared/constants/collections";
 import {
@@ -101,34 +101,8 @@ export default function FollowingSection({ loading, list, onScroll, paddingTop =
     });
   }, [list]);
 
-  if (loading || enriching) {
-    return (
-      <View style={{ flex: 1, paddingHorizontal: 16, paddingTop: 10 }}>
-        <SkeletonCard /><SkeletonCard /><SkeletonCard /><SkeletonCard />
-      </View>
-    );
-  }
-
-  if (enriched.length === 0) {
-    return (
-      <View style={{ flex: 1, alignItems: "center", justifyContent: "center", gap: 14, paddingHorizontal: 36, paddingVertical: 40 }}>
-        <LinearGradient
-          colors={["#006FFF", "#6366F1"]}
-          style={s.emptyIcon}
-          start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
-        >
-          <Ionicons name="heart-outline" size={28} color="#fff" />
-        </LinearGradient>
-        <Text style={{ fontSize: 16, fontFamily: "Inter_700Bold", color: colors.text, textAlign: "center" }}>
-          Not following anything yet
-        </Text>
-        <Text style={{ fontSize: 13, fontFamily: "Inter_400Regular", color: colors.textSecondary, textAlign: "center", lineHeight: 20 }}>
-          Follow QR codes on the detail screen to track them here and get notified of updates
-        </Text>
-      </View>
-    );
-  }
-
+  // NOTE: renderItem must be defined before any conditional early returns to
+  // satisfy React's rules of hooks — useCallback must be called unconditionally.
   const renderItem = useCallback(({ item, index }: { item: EnrichedItem; index: number }) => {
     const rawMeta = getContentTypeMeta(item.contentType);
     const meta = {
@@ -215,6 +189,34 @@ export default function FollowingSection({ loading, list, onScroll, paddingTop =
       </Animated.View>
     );
   }, [colors, isDark]);
+
+  if (loading || enriching) {
+    return (
+      <View style={{ flex: 1, paddingHorizontal: 16, paddingTop: 10 }}>
+        <SkeletonCard /><SkeletonCard /><SkeletonCard /><SkeletonCard />
+      </View>
+    );
+  }
+
+  if (enriched.length === 0) {
+    return (
+      <View style={{ flex: 1, alignItems: "center", justifyContent: "center", gap: 14, paddingHorizontal: 36, paddingVertical: 40 }}>
+        <LinearGradient
+          colors={["#006FFF", "#6366F1"]}
+          style={s.emptyIcon}
+          start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
+        >
+          <Ionicons name="heart-outline" size={28} color="#fff" />
+        </LinearGradient>
+        <Text style={{ fontSize: 16, fontFamily: "Inter_700Bold", color: colors.text, textAlign: "center" }}>
+          Not following anything yet
+        </Text>
+        <Text style={{ fontSize: 13, fontFamily: "Inter_400Regular", color: colors.textSecondary, textAlign: "center", lineHeight: 20 }}>
+          Follow QR codes on the detail screen to track them here and get notified of updates
+        </Text>
+      </View>
+    );
+  }
 
   return (
     <FlashList

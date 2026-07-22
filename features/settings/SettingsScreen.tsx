@@ -67,8 +67,10 @@ NavigationBar.setButtonStyleAsync(colors.isDark ? "light" : "dark").catch(() => 
 
 useFocusEffect(
 useCallback(() => {
-if (params.initialSection && params.initialSection !== "main") {
-setSection(params.initialSection as any);
+const VALID_SECTIONS: Section[] = ["main", "profile", "account", "guide", "feedback", "following", "comments", "history"];
+const requested = params.initialSection as Section;
+if (requested && requested !== "main" && VALID_SECTIONS.includes(requested)) {
+setSection(requested);
 } else {
 setSection("main");
 }
@@ -83,9 +85,10 @@ const goToFeedback  = useCallback(() => setSection("feedback"),  [setSection]);
 const goToComments  = useCallback(() => setSection("comments"),  [setSection]);
 const goToHistory   = useCallback(() => setSection("history"),   [setSection]);
   const goToTrustScores = useCallback(() => safePush("/trust-scores"), []);
-const goToTerms     = useCallback(() => safePush("/terms"),      []);
-const goToPrivacy   = useCallback(() => safePush("/privacy-policy"), []);
-const goToLogin     = useCallback(() => safePush("/(auth)/login"), []);
+const goToTerms     = useCallback(() => safePush("/terms"),            []);
+const goToPrivacy   = useCallback(() => safePush("/privacy-policy"),   []);
+const goToLogin     = useCallback(() => safePush("/(auth)/login"),     []);
+const goToDonation  = useCallback(() => safePush("/donation"),         []);
 
 // Sub-sections are state changes only (same URL, nothing on the native stack).
 // Always reset to "main" — never router.push here.
@@ -134,7 +137,12 @@ return (
 <View style={{ backgroundColor: colors.background, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.surfaceBorder }}>
 <View style={{ paddingTop: topInset }}>
 <View style={styles.navBar}>
-<Pressable onPress={handleSubSectionBack} style={styles.navBackBtn}>
+<Pressable
+onPress={handleSubSectionBack}
+style={styles.navBackBtn}
+accessibilityRole="button"
+accessibilityLabel="Back"
+>
 <Ionicons name="chevron-back" size={24} color={colors.text} />
 </Pressable>
 <Text style={styles.navTitle}>{SECTION_TITLES[section] ?? "Settings"}</Text>
@@ -311,6 +319,9 @@ return (
 <Pressable
 key={opt.key}
 onPress={themeModeHandlers[opt.key]}
+accessibilityRole="button"
+accessibilityLabel={`${opt.label} theme`}
+accessibilityState={{ selected: isActive }}
 style={({ pressed }) => [
 styles.themeBtn,
 {
@@ -344,6 +355,9 @@ return (
 <Pressable
 key={opt.key}
 onPress={startupScreenHandlers[opt.key]}
+accessibilityRole="button"
+accessibilityLabel={`Open on ${opt.label}`}
+accessibilityState={{ selected: isActive }}
 style={({ pressed }) => [
 styles.themeBtn,
 {
@@ -394,7 +408,7 @@ onPress={goToFeedback}
 icon="heart-outline"
 label="Support BinRo"
 sublabel="Buy us a coffee"
-              onPress={() => safePush("/donation")}
+              onPress={goToDonation}
 />
 </View>
 </View>

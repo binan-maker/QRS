@@ -14,7 +14,6 @@ const STARTUP_SCREEN_KEY = "qrg:startup:screen";
 export function useSettings() {
   const { user, signOut } = useAuth();
   const [section, setSection] = useState<Section>("main");
-  const [hapticsEnabled, setHapticsEnabledState] = useState(false);
   const [startupScreen, setStartupScreenState] = useState<"home" | "scanner">("home");
 
   const feedback = useFeedbackSettings({ userId: user?.id ?? null, userEmail: user?.email || "" });
@@ -39,22 +38,15 @@ export function useSettings() {
   }, [user?.id]);
 
   useEffect(() => {
+    // Apply stored haptic preference at startup even though there is no UI
+    // toggle yet — keeps the saved preference active across sessions.
     AsyncStorage.getItem(HAPTIC_KEY).then((v) => {
-      const enabled = v === "true";
-      setHapticsEnabledState(enabled);
-      setHapticsEnabled(enabled);
+      setHapticsEnabled(v === "true");
     });
     AsyncStorage.getItem(STARTUP_SCREEN_KEY).then((v) => {
       if (v === "scanner") setStartupScreenState("scanner");
     });
   }, []);
-
-  const toggleHaptics = useCallback(async () => {
-    const next = !hapticsEnabled;
-    setHapticsEnabledState(next);
-    setHapticsEnabled(next);
-    await AsyncStorage.setItem(HAPTIC_KEY, String(next));
-  }, [hapticsEnabled]);
 
   const setStartupScreen = useCallback(async (screen: "home" | "scanner") => {
     setStartupScreenState(screen);
@@ -81,8 +73,6 @@ export function useSettings() {
     user,
     section,
     setSection: handleSectionChange,
-    hapticsEnabled,
-    toggleHaptics,
     startupScreen,
     setStartupScreen,
     ...feedback,
