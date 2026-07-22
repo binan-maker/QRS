@@ -19,12 +19,12 @@ import {
   reauthenticateWithCredential,
   deleteUser as fbDeleteUser,
   fetchSignInMethodsForEmail,
-  type User as FirebaseUser,
 } from "firebase/auth";
+import type { User as FirebaseUser } from "firebase/auth";
 import { firebaseAuth } from "@/lib/firebase";
 import type { AuthAdapter, AuthAdapterUser } from "../adapter";
 
-function wrapUser(fbUser: any): AuthAdapterUser {
+function wrapUser(fbUser: FirebaseUser): AuthAdapterUser {
   return {
     uid: fbUser.uid,
     email: fbUser.email,
@@ -38,14 +38,14 @@ function wrapUser(fbUser: any): AuthAdapterUser {
 
 export const firebaseAuthProvider: AuthAdapter = {
   onIdTokenChanged(cb) {
-    const unsub = fbOnIdTokenChanged(firebaseAuth, (fbUser: any) => {
+    const unsub = fbOnIdTokenChanged(firebaseAuth, (fbUser: FirebaseUser | null) => {
       cb(fbUser ? wrapUser(fbUser) : null);
     });
     return unsub;
   },
 
   getCurrentUser() {
-    const fbUser = firebaseAuth.currentUser;
+    const fbUser: FirebaseUser | null = firebaseAuth.currentUser;
     return fbUser ? wrapUser(fbUser) : null;
   },
 

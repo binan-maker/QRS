@@ -1,4 +1,7 @@
 import { db } from "@/lib/db/client";
+import { createLogger } from "@/lib/logger";
+
+const log = createLogger("analytics");
 
 type EventPayload = Record<string, string | number | boolean | null>;
 
@@ -8,7 +11,7 @@ function logEvent(eventName: string, params: EventPayload = {}): void {
     ...params,
     day: new Date().toISOString().slice(0, 10),
     ts: Date.now(),
-  }).catch(() => {});
+  }).catch((e) => log.warn(`Failed to record event "${eventName}"`, e));
 }
 
 export function trackQrScanned(params: {

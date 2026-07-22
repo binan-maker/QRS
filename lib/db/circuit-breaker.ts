@@ -24,6 +24,13 @@ export interface CircuitBreakerOptions {
   cooldownMs: number;
   /** Optional name used in error messages and logs. */
   name?: string;
+  /**
+   * Optional predicate. When provided, an error is only counted as a circuit
+   * failure when this returns true.  Return false for "user errors" (e.g.
+   * permission-denied, invalid-argument) that signal a bad request rather than
+   * backend degradation.
+   */
+  shouldCountFailure?: (err: unknown) => boolean;
 }
 
 export class CircuitBreaker {
@@ -49,7 +56,7 @@ export class CircuitBreaker {
       this.onSuccess();
       return result;
     } catch (err) {
-      this.onFailure();
+      this.onFailure(err);
       throw err;
     }
   }
@@ -62,7 +69,12 @@ export class CircuitBreaker {
     }
   }
 
-  private onFailure(): void {
+  private onFailure(err: unknown): void {
+    // If a filter is configured and this error does not count as a real failure
+    // (e.g. a user/input error rather than a backend degradation), skip counting.
+    if (this.opts.shouldCountFailure && !this.opts.shouldCountFailure(err)) {
+      return;
+    }
     const now = Date.now();
     if (this.state === "HALF_OPEN") {
       // Trial failed — reopen immediately

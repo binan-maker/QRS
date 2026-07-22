@@ -1,13 +1,19 @@
 import * as admin from "firebase-admin";
 import type { DbAdapter, RealtimeAdapter, QueryOptions, QueryResult, DbDocument } from "../adapter";
 
+// ── Singleton caches ─────────────────────────────────────────────────────────
+// The Admin SDK app, Firestore instance, and Database instance are created once
+// and reused for every operation.  Previously each helper called getOrInitApp()
+// on every read/write, causing redundant lookups on every request.
+let _app: admin.app.App | null = null;
+let _firestore: admin.firestore.Firestore | null = null;
+let _database: admin.database.Database | null = null;
+
 function getOrInitApp(): admin.app.App {
+  if (_app) return _app;
   if (admin.apps.length > 0) {
-    const existing = admin.apps[0]!;
-    // Ensure databaseURL is configured on the existing app (it might not be
-    // if the app was first created without it from server/lib/firebase-admin.ts).
-    // We can't mutate an existing app, but we can check and re-init if needed.
-    return existing;
+    _app = admin.apps[0]!;
+    return _app;
   }
 
   const databaseURL =
@@ -17,21 +23,23 @@ function getOrInitApp(): admin.app.App {
   const serviceAccountJson = process.env.FIREBASE_SERVICE_ACCOUNT_JSON;
   if (serviceAccountJson) {
     try {
-      return admin.initializeApp({
+      _app = admin.initializeApp({
         credential: admin.credential.cert(JSON.parse(serviceAccountJson)),
         databaseURL,
       });
+      return _app;
     } catch (e) {
       console.error("[firebase-admin-provider] Failed to init with service account:", e);
     }
   }
 
   try {
-    return admin.initializeApp({
+    _app = admin.initializeApp({
       credential: admin.credential.applicationDefault(),
       databaseURL,
     });
-  } catch (e) {
+    return _app;
+  } catch {
     throw new Error(
       "[firebase-admin-provider] Admin SDK could not be initialized. Set FIREBASE_SERVICE_ACCOUNT_JSON."
     );
@@ -39,15 +47,17 @@ function getOrInitApp(): admin.app.App {
 }
 
 function getAdminFirestore(): admin.firestore.Firestore {
-  return admin.firestore(getOrInitApp());
+  if (!_firestore) _firestore = admin.firestore(getOrInitApp());
+  return _firestore;
 }
 
 function getAdminDatabase(): admin.database.Database {
-  const app = getOrInitApp();
-  const databaseURL =
-    process.env.FIREBASE_DATABASE_URL ||
-    process.env.EXPO_PUBLIC_FIREBASE_DATABASE_URL;
-  return admin.database(app, databaseURL);
+  if (!_database) {
+    // databaseURL is already configured in getOrInitApp() via initializeApp options.
+    // Passing it again here as a second arg is not part of the Admin SDK's public API.
+    _database = admin.database(getOrInitApp());
+  }
+  return _database;
 }
 
 function buildDocRef(

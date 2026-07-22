@@ -28,26 +28,15 @@ import {
 } from "firebase/database";
 import { firestore, getRealtimeDB } from "../../firebase";
 import type { DbAdapter, RealtimeAdapter, QueryOptions, QueryResult, DbDocument } from "../adapter";
-import { CircuitBreaker, CircuitOpenError } from "../circuit-breaker";
+import { CircuitBreaker } from "../circuit-breaker";
 
-// SECURITY FIX P2: Circuit breaker for Firestore writes/reads.
-// If Firestore is degraded (e.g. quota exhausted, regional outage), trip the
-// breaker so we fail fast instead of queueing thousands of doomed requests.
-// 8 failures within 30s → OPEN for 60s → HALF_OPEN trial.
-const firestoreBreaker = new CircuitBreaker({
-  name: "firestore",
-  failureThreshold: 8,
-  windowMs: 30_000,
-  cooldownMs: 60_000,
-});
-
-// Errors we should NOT count as breaker failures (they are user errors, not
-// service degradation): permission-denied, not-found, already-exists,
+// Errors we should NOT count as breaker failures (they are user/input errors,
+// not service degradation): permission-denied, not-found, already-exists,
 // invalid-argument, failed-precondition, unauthenticated.
-function isUserError(err: any): boolean {
-  const code: string | undefined = err?.code;
-  if (!code) return false;
-  return (
+function isBackendFailure(err: unknown): boolean {
+  const code: string | undefined = (err as any)?.code;
+  if (!code) return true; // Unknown errors count as failures
+  return !(
     code === "permission-denied" ||
     code === "not-found" ||
     code === "already-exists" ||
@@ -57,17 +46,22 @@ function isUserError(err: any): boolean {
   );
 }
 
+// SECURITY FIX P2: Circuit breaker for Firestore writes/reads.
+// If Firestore is degraded (e.g. quota exhausted, regional outage), trip the
+// breaker so we fail fast instead of queueing thousands of doomed requests.
+// 8 backend failures within 30s → OPEN for 60s → HALF_OPEN trial.
+// User/input errors (permission-denied, invalid-argument, etc.) are excluded
+// from the failure count via shouldCountFailure.
+const firestoreBreaker = new CircuitBreaker({
+  name: "firestore",
+  failureThreshold: 8,
+  windowMs: 30_000,
+  cooldownMs: 60_000,
+  shouldCountFailure: isBackendFailure,
+});
+
 async function withBreaker<T>(fn: () => Promise<T>): Promise<T> {
-  try {
-    return await firestoreBreaker.exec(fn);
-  } catch (err) {
-    // Don't let user errors poison the breaker — re-run them outside it.
-    if (isUserError(err) && !(err instanceof CircuitOpenError)) {
-      // The breaker has already counted this as a failure; we accept that
-      // tradeoff for simplicity. In practice user errors are rare per-session.
-    }
-    throw err;
-  }
+  return firestoreBreaker.exec(fn);
 }
 
 function buildDocRef(path: string[]) {

@@ -11,6 +11,9 @@ import { Platform } from "react-native";
 import * as Notifications from "expo-notifications";
 import Constants from "expo-constants";
 import { router } from "expo-router";
+import { createLogger } from "@/lib/logger";
+
+const log = createLogger("push-notifications");
 
 // ── Foreground notification behaviour ────────────────────────────────────────
 Notifications.setNotificationHandler({
@@ -73,7 +76,7 @@ export async function registerForPushNotifications(
     await post("/api/push/register", { userId, token });
   } catch (e) {
     // Non-critical — app works without push
-    console.warn("[Push] Registration failed:", e);
+    log.warn("Registration failed", e);
   }
 }
 
