@@ -10,7 +10,7 @@ import { useTopInset } from "@/shared/utils/platform";
 import { useTheme } from "@/shared/contexts/ThemeContext";
 import { useMyQrDetail } from "@/features/my-qr/hooks/useMyQrDetail";
 import { useScaleFns } from "@/shared/utils/use-scale";
-import { getDetailContentType, getDetailDisplayTitle, parseQrContentDetails } from "@/services/qr-display";
+import { getDetailContentType, getDetailDisplayTitle } from "@/services/qr-display";
 import { getQrTypeMeta as getCtMeta } from "@/features/qr-engine";
 
 import MyQrNavBar from "@/features/my-qr/components/MyQrNavBar";
@@ -28,6 +28,11 @@ import DeactivateModal from "@/features/my-qr/components/modals/DeactivateModal"
 import FollowersModal from "@/features/my-qr/components/modals/FollowersModal";
 import PositionModal from "@/features/generator/components/PositionModal";
 import type { LogoPosition } from "@/features/my-qr/hooks/useQrDesign";
+
+// Hoisted to module level — these are constant sets that would otherwise
+// allocate a new Set() on every render.
+const STRUCTURED_TYPES = new Set(["text", "phone", "mobilepay", "grab", "email", "sms", "upi", "scantopay", "bharatqr", "calendly", "zoom", "whatsapp"]);
+const READONLY_TYPES   = new Set(["contact", "event", "calendar"]);
 
 function MyQrDetailSkeleton({ colors, isDark, topInset }: { colors: any; isDark: boolean; topInset: number }) {
   const shimmer = useRef(new RNAnimated.Value(0)).current;
@@ -191,14 +196,11 @@ export default function MyQrDetailScreen() {
   const effectiveContentType = getDetailContentType(liveItem);
   const ctMeta = getCtMeta(effectiveContentType);
   const displayTitle = getDetailDisplayTitle(liveItem);
-  const contentRows = parseQrContentDetails(liveItem);
 
   const tmplKey = (qrItem as any).templateKey as string | null;
   const qrFormValues = (qrItem as any).formValues as { value: string; extra: Record<string, string> } | null;
   const hasStructuredEdit = !!(tmplKey && qrFormValues);
 
-  const STRUCTURED_TYPES = new Set(["text", "phone", "mobilepay", "grab", "email", "sms", "upi", "scantopay", "bharatqr", "calendly", "zoom", "whatsapp"]);
-  const READONLY_TYPES = new Set(["contact", "event", "calendar"]);
   const isStructured = STRUCTURED_TYPES.has(effectiveContentType);
   const isReadOnly = !isStructured && READONLY_TYPES.has(effectiveContentType);
 
@@ -294,10 +296,8 @@ export default function MyQrDetailScreen() {
             Those QR codes identify themselves clearly via the label / title. */}
         {!["email", "sms", "phone", "mobilepay", "grab", "url", "wifi"].includes(effectiveContentType) && (
           <QrContentInfoCard
-            ctMeta={ctMeta}
             effectiveContentType={effectiveContentType}
             isDynamic={isDynamic}
-            contentRows={contentRows}
             liveRaw={liveRaw}
             isGuardQr={isGuardQr}
             guardLink={guardLink}

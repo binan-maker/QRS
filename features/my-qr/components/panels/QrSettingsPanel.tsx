@@ -7,7 +7,6 @@ import { useScaleFns } from "@/shared/utils/use-scale";
 interface Props {
   isActive: boolean;
   togglingActive: boolean;
-  deactivationMessage?: string | null;
   onToggleActive: (v: boolean) => void;
 }
 

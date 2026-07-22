@@ -41,6 +41,7 @@ export function useQrDestination(
   useEffect(() => {
     if (!qrItem?.guardUuid) { setGuardLink(null); return; }
     getGuardLink(qrItem.guardUuid).then((link) => {
+      if (!mountedRef.current) return;
       setGuardLink(link);
       if (link) setNewDestination(link.currentDestination);
     });
@@ -54,6 +55,7 @@ export function useQrDestination(
       (content.includes("/go/") || content.includes("/q/"));
     if (!isStandardRedirect || !qrItem?.uuid) { setStandardLink(null); return; }
     getStandardLink(qrItem.uuid).then((link) => {
+      if (!mountedRef.current) return;
       setStandardLink(link);
       if (link) setNewDestination(link.rawContent);
     });

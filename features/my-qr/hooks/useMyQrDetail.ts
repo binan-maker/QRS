@@ -40,6 +40,12 @@ export function useMyQrDetail(id: string) {
   const [downloadingPdf, setDownloadingPdf] = useState(false);
   const [savingStructured, setSavingStructured] = useState(false);
 
+  const mountedRef = useRef(true);
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => { mountedRef.current = false; };
+  }, []);
+
   const design = useQrDesign(qrItem);
   const destination = useQrDestination(qrItem, setQrItem as any);
   const ownerComments = useOwnerComments(qrItem?.qrCodeId);
@@ -61,7 +67,9 @@ export function useMyQrDetail(id: string) {
 
   useEffect(() => {
     if (!qrItem?.qrCodeId) return;
-    getQrFollowCount(qrItem.qrCodeId).then(setFollowCount).catch(() => {});
+    getQrFollowCount(qrItem.qrCodeId)
+      .then(c => { if (mountedRef.current) setFollowCount(c); })
+      .catch(() => {});
   }, [qrItem?.qrCodeId]);
 
   async function handleLoadFollowers() {
@@ -69,9 +77,9 @@ export function useMyQrDetail(id: string) {
     setFollowersLoading(true);
     try {
       const list = await getQrFollowersList(qrItem.qrCodeId);
-      setFollowersList(list);
+      if (mountedRef.current) setFollowersList(list);
     } catch {}
-    setFollowersLoading(false);
+    if (mountedRef.current) setFollowersLoading(false);
   }
 
   function openFollowers() {

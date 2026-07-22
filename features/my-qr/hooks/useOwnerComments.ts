@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, type RefObject } from "react";
+import { useState, useEffect, useRef, type RefObject } from "react";
 import { Alert, TextInput } from "react-native";
 import * as Haptics from "@/shared/utils/haptics";
 import {

@@ -1,24 +1,14 @@
 /**
  * QrContentInfoCard — owner-facing content preview card.
  *
- * Now delegates entirely to the centralised QR Engine CompactRenderer.
+ * Delegates entirely to the centralised QR Engine CompactRenderer.
  * All display logic lives in features/qr-engine, not here.
  */
-import React from "react";
 import { CompactRenderer } from "@/features/qr-engine";
-import type { ContentDetailRow } from "@/services/qr-display";
-
-interface ContentTypeMeta {
-  color: string;
-  icon: string;
-  label: string;
-}
 
 interface Props {
-  ctMeta: ContentTypeMeta;
   effectiveContentType: string;
   isDynamic: boolean;
-  contentRows: ContentDetailRow[];
   liveRaw: string | null;
   isGuardQr: boolean;
   guardLink: any | null;

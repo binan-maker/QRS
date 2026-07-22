@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import {
   View, Text, ScrollView, Pressable, ActivityIndicator,
   StyleSheet, useWindowDimensions, RefreshControl, Alert,
@@ -91,6 +91,48 @@ function ScanBarChart({ data, color, chartWidth }: { data: number[]; color: stri
   );
 }
 
+// Extracted to module level so React never sees a new component *type* on
+// parent re-renders, which would cause NavBar/InfoRow to unmount + remount.
+function AnalyticsNavBar() {
+  const { colors } = useTheme();
+  const { rf, sp } = useScaleFns();
+  return (
+    <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingHorizontal: sp(20), paddingTop: sp(6), paddingBottom: sp(10) }}>
+      <Pressable
+        onPress={() => router.back()}
+        style={({ pressed }) => ({
+          width: sp(38), height: sp(38), borderRadius: sp(19),
+          borderWidth: 1, borderColor: colors.surfaceBorder,
+          backgroundColor: colors.surface,
+          alignItems: "center", justifyContent: "center",
+          opacity: pressed ? 0.7 : 1,
+        })}
+      >
+        <Ionicons name="chevron-back" size={rf(20)} color={colors.text} />
+      </Pressable>
+      <View style={{ alignItems: "center" }}>
+        <Text style={{ fontSize: rf(16), fontFamily: "Inter_700Bold", color: colors.text }}>Analytics</Text>
+        <Text style={{ fontSize: rf(10), fontFamily: "Inter_500Medium", color: colors.textMuted, marginTop: sp(1) }}>QR Performance</Text>
+      </View>
+      <View style={{ width: sp(38) }} />
+    </View>
+  );
+}
+
+function InfoRow({ icon, label, value, color }: { icon: any; label: string; value: string; color?: string }) {
+  const { colors } = useTheme();
+  const { rf, sp } = useScaleFns();
+  return (
+    <View style={{ flexDirection: "row", alignItems: "center", gap: sp(12), paddingHorizontal: sp(16), paddingVertical: sp(13), borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.surfaceBorder }}>
+      <View style={{ width: sp(28), height: sp(28), borderRadius: sp(8), backgroundColor: (color || colors.primary) + "18", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+        <Ionicons name={icon} size={rf(14)} color={color || colors.textSecondary} />
+      </View>
+      <Text style={{ fontSize: rf(12), fontFamily: "Inter_500Medium", color: colors.textSecondary, width: sp(110), flexShrink: 0 }}>{label}</Text>
+      <Text style={{ fontSize: rf(12), fontFamily: "Inter_600SemiBold", color: colors.text, flex: 1, textAlign: "right" }} numberOfLines={1}>{value}</Text>
+    </View>
+  );
+}
+
 function HorizontalBar({ label, value, total, color }: { label: string; value: number; total: number; color: string }) {
   const p = pct(value, total);
   return (
@@ -156,52 +198,42 @@ export default function MyQrAnalyticsScreen() {
   const [analyticsLoading, setAnalyticsLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
 
+  const mountedRef = useRef(true);
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => { mountedRef.current = false; };
+  }, []);
+
   const loadData = useCallback(async (silent = false) => {
-    if (!id || !user?.id) { setLoading(false); return; }
-    if (!silent) setLoading(true);
+    if (!id || !user?.id) { if (mountedRef.current) setLoading(false); return; }
+    if (!silent && mountedRef.current) setLoading(true);
     try {
       const item = await getGeneratedQrById(user.id, id as string);
+      if (!mountedRef.current) return;
       setQrItem(item);
       if (item?.qrCodeId) {
-        setAnalyticsLoading(true);
-        getQrFollowCount(item.qrCodeId).then(setFollowCount).catch(() => {});
+        if (mountedRef.current) setAnalyticsLoading(true);
+        getQrFollowCount(item.qrCodeId)
+          .then(c => { if (mountedRef.current) setFollowCount(c); })
+          .catch(() => {});
         getQrAnalyticsSummary(item.qrCodeId, user.id)
-          .then(setAnalytics)
+          .then(a => { if (mountedRef.current) setAnalytics(a); })
           .catch(() => {})
-          .finally(() => setAnalyticsLoading(false));
+          .finally(() => { if (mountedRef.current) setAnalyticsLoading(false); });
       }
-    } catch {} finally { setLoading(false); }
+    } catch {} finally { if (mountedRef.current) setLoading(false); }
   }, [id, user?.id]);
 
   useEffect(() => { loadData(); }, [loadData]);
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
-    await loadData(true);
-    setRefreshing(false);
+    try {
+      await loadData(true);
+    } finally {
+      setRefreshing(false);
+    }
   }, [loadData]);
-
-  const NavBar = () => (
-    <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingHorizontal: sp(20), paddingTop: sp(6), paddingBottom: sp(10) }}>
-      <Pressable
-        onPress={() => router.back()}
-        style={({ pressed }) => ({
-          width: sp(38), height: sp(38), borderRadius: sp(19),
-          borderWidth: 1, borderColor: colors.surfaceBorder,
-          backgroundColor: colors.surface,
-          alignItems: "center", justifyContent: "center",
-          opacity: pressed ? 0.7 : 1,
-        })}
-      >
-        <Ionicons name="chevron-back" size={rf(20)} color={colors.text} />
-      </Pressable>
-      <View style={{ alignItems: "center" }}>
-        <Text style={{ fontSize: rf(16), fontFamily: "Inter_700Bold", color: colors.text }}>Analytics</Text>
-        <Text style={{ fontSize: rf(10), fontFamily: "Inter_500Medium", color: colors.textMuted, marginTop: sp(1) }}>QR Performance</Text>
-      </View>
-      <View style={{ width: sp(38) }} />
-    </View>
-  );
 
   if (loading) {
     return (
@@ -216,7 +248,7 @@ export default function MyQrAnalyticsScreen() {
     return (
       <View style={{ flex: 1, backgroundColor: colors.background }}>
         <StatusBar style={isDark ? "light" : "dark"} backgroundColor={colors.background} />
-        <View style={{ paddingTop: topInset }}><NavBar /></View>
+        <View style={{ paddingTop: topInset }}><AnalyticsNavBar /></View>
         <View style={{ flex: 1, alignItems: "center", justifyContent: "center", gap: sp(10) }}>
           <Ionicons name="bar-chart-outline" size={rf(44)} color={colors.textMuted} />
           <Text style={{ color: colors.textMuted, fontSize: rf(14), fontFamily: "Inter_500Medium" }}>QR code not found</Text>
@@ -259,21 +291,12 @@ export default function MyQrAnalyticsScreen() {
     { icon: "chatbubble-outline" as const,  label: "Comments",  value: formatNumber(commentCount),color: "#ef4444" },
   ];
 
-  const InfoRow = ({ icon, label, value, color }: { icon: any; label: string; value: string; color?: string }) => (
-    <View style={{ flexDirection: "row", alignItems: "center", gap: sp(12), paddingHorizontal: sp(16), paddingVertical: sp(13), borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.surfaceBorder }}>
-      <View style={{ width: sp(28), height: sp(28), borderRadius: sp(8), backgroundColor: (color || colors.primary) + "18", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-        <Ionicons name={icon} size={rf(14)} color={color || colors.textSecondary} />
-      </View>
-      <Text style={{ fontSize: rf(12), fontFamily: "Inter_500Medium", color: colors.textSecondary, width: sp(110), flexShrink: 0 }}>{label}</Text>
-      <Text style={{ fontSize: rf(12), fontFamily: "Inter_600SemiBold", color: colors.text, flex: 1, textAlign: "right" }} numberOfLines={1}>{value}</Text>
-    </View>
-  );
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.background }}>
       <StatusBar style={isDark ? "light" : "dark"} backgroundColor={colors.background} />
 
-      <View style={{ paddingTop: topInset }}><NavBar /></View>
+      <View style={{ paddingTop: topInset }}><AnalyticsNavBar /></View>
 
       <ScrollView
         showsVerticalScrollIndicator={false}

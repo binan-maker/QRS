@@ -9,7 +9,7 @@ interface Props {
 }
 
 export default function MyQrNavBar({ docId }: Props) {
-  const { colors, isDark } = useTheme();
+  const { colors } = useTheme();
   const { rf, sp } = useScaleFns();
 
   return (
