@@ -1,0 +1,342 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ── Helper functions ──────────────────────────────────────────────────────
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(uid) {
+      return isSignedIn() && request.auth.uid == uid;
+    }
+
+    // Email must be verified before any account data can be written.
+    // This is checked via the JWT claim so it cannot be spoofed client-side.
+    function isEmailVerified() {
+      return isSignedIn() && request.auth.token.email_verified == true;
+    }
+
+    function isVerifiedOwner(uid) {
+      return isEmailVerified() && request.auth.uid == uid;
+    }
+
+    function isValidReportType(data) {
+      return data.reportType is string
+        && data.reportType in ['safe', 'scam', 'fake', 'spam', 'expired', 'misleading', 'phishing', 'malware'];
+    }
+
+    function isValidWeight(data) {
+      return data.weight is number
+        && data.weight >= -1.0
+        && data.weight <= 1.0;
+    }
+
+    function isValidCommentReason(data) {
+      return data.reason is string
+        && data.reason in ['spam', 'harassment', 'fake', 'inappropriate', 'other'];
+    }
+
+    // ─── QR Codes ─────────────────────────────────────────────────────────────
+    match /qrCodes/{qrId} {
+      allow read: if true;
+      // Only verified users may create QR codes
+      allow create: if isEmailVerified();
+
+      allow update: if isSignedIn() && (
+        // Case 1: Owner toggling active / deactivation — must be verified
+        (
+          isEmailVerified() &&
+          resource.data.ownerId == request.auth.uid &&
+          request.resource.data.diff(resource.data).affectedKeys()
+            .hasOnly(['isActive', 'deactivationMessage'])
+        )
+        ||
+        // Case 2: Scan count increments — any signed-in user (anonymous scans
+        // go through the backend; only authenticated clients write these fields)
+        (
+          isSignedIn() &&
+          request.resource.data.diff(resource.data).affectedKeys()
+            .hasOnly(['scanCount', 'ownerScanCount', 'scanCountFrozen', 'lastScannedAt'])
+        )
+        ||
+        // Case 3: Owner claiming an unowned QR code — must be verified
+        (
+          isEmailVerified() &&
+          resource.data.ownerId == null &&
+          request.resource.data.ownerId == request.auth.uid &&
+          request.resource.data.diff(resource.data).affectedKeys()
+            .hasOnly(['ownerId', 'ownerName', 'brandedUuid', 'isBranded', 'qrType',
+                      'isActive', 'businessName', 'signature', 'ownerLogoBase64',
+                      'ownerVerified'])
+        )
+        ||
+        // Case 4: Owner-initiated updates — must be verified, integrity fields locked
+        (
+          isEmailVerified() &&
+          resource.data.ownerId == request.auth.uid &&
+          request.resource.data.ownerVerified == resource.data.ownerVerified &&
+          request.resource.data.scanCount == resource.data.scanCount &&
+          request.resource.data.commentCount == resource.data.commentCount &&
+          request.resource.data.isBranded == resource.data.isBranded &&
+          request.resource.data.brandedUuid == resource.data.brandedUuid
+        )
+        ||
+        // Case 5: Collusion/velocity flag updates — any signed-in user (system writes)
+        (
+          isSignedIn() &&
+          request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+            'suspiciousVoteFlag', 'suspiciousFlagReason',
+            'suspiciousSafeMultiplier', 'suspiciousNegMultiplier',
+            'suspiciousLastChecked', 'voteVelocityWindowStart', 'voteVelocityCount'
+          ])
+        )
+        ||
+        // Case 6: Comment count increments/decrements — any signed-in user.
+        // Mirrors Case 2 (scanCount). commentCount is locked in Case 4 (owner edits)
+        // to prevent owner manipulation, but must be writable here for the comment
+        // service batch that atomically updates the count alongside the user index.
+        (
+          isSignedIn() &&
+          request.resource.data.diff(resource.data).affectedKeys()
+            .hasOnly(['commentCount'])
+        )
+      );
+
+      allow delete: if false;
+
+      // ── Reports ──────────────────────────────────────────────────────────────
+      match /reports/{userId} {
+        allow read: if true;
+        allow create: if isVerifiedOwner(userId)
+          && isValidReportType(request.resource.data)
+          && isValidWeight(request.resource.data);
+        allow update: if isVerifiedOwner(userId) && (
+          // Normal vote or vote-change: full type + weight validation required
+          (isValidReportType(request.resource.data) && isValidWeight(request.resource.data))
+          ||
+          // Toggle-off (soft-remove): only the userRemoved/removedAt markers change.
+          // The underlying reportType and weight fields on the doc are untouched,
+          // so we allow this narrow update without re-validating those fields.
+          request.resource.data.diff(resource.data).affectedKeys()
+            .hasOnly(['userRemoved', 'removedAt'])
+        );
+        allow delete: if false;
+      }
+
+      // ── Comments ─────────────────────────────────────────────────────────────
+      match /comments/{commentId} {
+        allow read: if true;
+
+        allow create: if isEmailVerified()
+          && request.resource.data.userId == request.auth.uid
+          && request.resource.data.text is string
+          && request.resource.data.text.size() > 0
+          && request.resource.data.text.size() <= 500;
+
+        allow update: if isSignedIn() && (
+          // Author soft-deleting their own comment — must be verified
+          (
+            isEmailVerified() &&
+            resource.data.userId == request.auth.uid &&
+            request.resource.data.diff(resource.data).affectedKeys()
+              .hasOnly(['isDeleted', 'deletedAt', 'text', 'likeCount', 'dislikeCount',
+                        'reportCount', 'isHidden', 'userUsername'])
+          )
+          ||
+          // Any signed-in user can update aggregated counters
+          request.resource.data.diff(resource.data).affectedKeys()
+            .hasOnly(['likeCount', 'dislikeCount', 'reportCount', 'isHidden'])
+        );
+
+        allow delete: if false;
+
+        // Comment likes
+        match /likes/{userId} {
+          allow read: if true;
+          allow write: if isVerifiedOwner(userId);
+        }
+
+        // Comment reports
+        match /reports/{userId} {
+          allow read: if isSignedIn();
+          allow create, update: if isVerifiedOwner(userId) && isValidCommentReason(request.resource.data);
+          allow delete: if false;
+        }
+      }
+
+      // ── Followers ────────────────────────────────────────────────────────────
+      match /followers/{userId} {
+        allow read: if true;
+        allow create, update: if isVerifiedOwner(userId);
+        allow delete: if isVerifiedOwner(userId);
+      }
+    }
+
+    // ─── Usernames ────────────────────────────────────────────────────────────
+    match /usernames/{username} {
+      allow read: if true;
+      // Only verified users may reserve or release a username
+      allow create: if isEmailVerified() && request.resource.data.userId == request.auth.uid;
+      allow delete: if isEmailVerified() && resource.data.userId == request.auth.uid;
+      allow update: if false;
+    }
+
+    // ─── Users ───────────────────────────────────────────────────────────────
+    match /users/{userId} {
+      allow read: if true;
+      // Only the verified owner may write their own profile
+      allow write: if isVerifiedOwner(userId);
+
+      match /scans/{scanId} {
+        allow read, write: if isVerifiedOwner(userId);
+      }
+      match /favorites/{favId} {
+        allow read, write: if isVerifiedOwner(userId);
+      }
+      match /following/{qrId} {
+        allow read, write: if isVerifiedOwner(userId);
+      }
+      match /comments/{commentId} {
+        allow read, write: if isVerifiedOwner(userId);
+      }
+      match /generatedQrs/{docId} {
+        allow read, write: if isVerifiedOwner(userId);
+      }
+
+      match /reportLog/{qrId} {
+        allow read, write: if isVerifiedOwner(userId);
+      }
+
+      match /qrGroups/{groupId} {
+        allow read, write: if isVerifiedOwner(userId);
+      }
+
+      match /countedScans/{qrId} {
+        allow read: if isVerifiedOwner(userId);
+        allow create: if isVerifiedOwner(userId);
+        allow update, delete: if false;
+      }
+
+      match /ownerScans/{docId} {
+        allow read, write: if isVerifiedOwner(userId);
+      }
+
+      match /friends/{friendId} {
+        allow read, write: if isVerifiedOwner(userId);
+        allow read: if isEmailVerified() && friendId == request.auth.uid;
+        allow create: if isEmailVerified() && friendId == request.auth.uid;
+        allow update: if isEmailVerified() && friendId == request.auth.uid;
+        allow delete: if isEmailVerified() && friendId == request.auth.uid;
+      }
+    }
+
+    // ─── Private Messages to QR Owners ───────────────────────────────────────
+    match /qrMessages/{messageId} {
+      allow create: if isEmailVerified()
+        && request.resource.data.fromUserId == request.auth.uid
+        && request.resource.data.message is string
+        && request.resource.data.message.size() > 0
+        && request.resource.data.message.size() <= 1000;
+
+      allow read: if isSignedIn() && (
+        request.auth.uid == resource.data.toUserId ||
+        request.auth.uid == resource.data.fromUserId
+      );
+
+      allow update: if isEmailVerified()
+        && request.auth.uid == resource.data.toUserId
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['read']);
+
+      allow delete: if isEmailVerified() && request.auth.uid == resource.data.toUserId;
+    }
+
+    // ─── Feedback ─────────────────────────────────────────────────────────────
+    match /feedback/{docId} {
+      allow create: if request.resource.data.message is string
+        && request.resource.data.message.size() > 0
+        && request.resource.data.message.size() <= 2000;
+      allow read, update, delete: if false;
+    }
+
+    // ─── Bug Reports ──────────────────────────────────────────────────────────
+    match /bugReports/{docId} {
+      allow create: if request.resource.data.errorMessage is string
+        && request.resource.data.errorMessage.size() <= 500;
+      allow read, update, delete: if false;
+    }
+
+    // ─── Moderation Queue ─────────────────────────────────────────────────────
+    match /moderationQueue/{docId} {
+      allow create: if isEmailVerified();
+      allow read, update, delete: if false;
+    }
+
+    // ─── Unified QR model (/qrs/:uuid) ───────────────────────────────────────
+    // New-model QR documents (replacing qrCodes for newly created QRs).
+    // Scan-count/shares/downloads increments are server-side only (Admin SDK).
+    // Verified owners may create their own doc and update non-integrity fields.
+    match /qrs/{uuid} {
+      allow read: if true;
+
+      // Owner creates their own QR doc (verified email required)
+      allow create: if isEmailVerified()
+        && request.resource.data.ownerId == request.auth.uid;
+
+      // Owner updates their own QR doc — integrity counters are locked
+      allow update: if isEmailVerified()
+        && resource.data.ownerId == request.auth.uid
+        && request.resource.data.ownerId == resource.data.ownerId
+        && request.resource.data.scanCount == resource.data.scanCount
+        && request.resource.data.downloads == resource.data.downloads
+        && request.resource.data.shares == resource.data.shares;
+
+      allow delete: if false;
+    }
+
+    // ─── Standard Links (Standard QR redirect registry) ──────────────────────
+    match /standardLinks/{uuid} {
+      allow read: if true;
+      allow create: if isEmailVerified()
+        && request.resource.data.ownerId == request.auth.uid;
+      allow update: if isEmailVerified()
+        && resource.data.ownerId == request.auth.uid
+        && request.resource.data.ownerId == resource.data.ownerId;
+      allow delete: if false;
+    }
+
+    // ─── Living Shield / Guard Links ──────────────────────────────────────────
+    match /guardLinks/{uuid} {
+      allow read: if true;
+      allow create: if isEmailVerified()
+        && request.resource.data.ownerId == request.auth.uid;
+      allow update: if isEmailVerified()
+        && resource.data.ownerId == request.auth.uid
+        && request.resource.data.ownerId == resource.data.ownerId;
+      allow delete: if false;
+    }
+
+    // ─── Feature Votes (email-keyed, one vote per email) ─────────────────────
+    match /featureVotes/{emailKey} {
+      allow read: if true;
+      allow create: if request.resource.data.email == emailKey
+        && request.resource.data.vote is string
+        && request.resource.data.vote in ['need', 'not_need'];
+      allow update, delete: if false;
+    }
+
+    // ─── Verification Requests ────────────────────────────────────────────────
+    match /verificationRequests/{docId} {
+      allow create: if isEmailVerified()
+        && request.resource.data.userId == request.auth.uid
+        && request.resource.data.businessName is string
+        && request.resource.data.businessName.size() > 0
+        && request.resource.data.businessName.size() <= 200;
+      allow read: if isEmailVerified() && resource.data.userId == request.auth.uid;
+      allow update: if isEmailVerified()
+        && resource.data.userId == request.auth.uid
+        && request.resource.data.userId == request.auth.uid;
+      allow delete: if false;
+    }
+  }
+}
