@@ -10,7 +10,6 @@ const SETTINGS_SECTIONS = [
     items: [
       { id: "re_engagement", label: "Re-engagement reminders",     default: true  },
       { id: "scan_alerts",   label: "Scan alerts for my QR codes", default: true  },
-      { id: "friend_reqs",   label: "Friend requests",             default: true  },
       { id: "reports",       label: "QR report notifications",     default: false },
     ],
   },

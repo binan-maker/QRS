@@ -29,7 +29,6 @@ import type {
   QrComment,
   Notification,
   ScanRecord,
-  FriendRecord,
   PaginatedResponse,
   PaginationParams,
 } from "@/types/api";
@@ -229,25 +228,6 @@ class BinroApiClient {
 
     checkUserFollow: (userId: string) =>
       this.get<{ following: boolean; userId: string }>(`/follows/users/${userId}`),
-  };
-
-  // ── Friends ────────────────────────────────────────────────────────────────
-
-  friends = {
-    list: (params?: PaginationParams & { status?: "pending" | "friends" | "all" }) =>
-      this.get<PaginatedResponse<FriendRecord>>("/friends", params as any),
-
-    sendRequest: (userId: string) =>
-      this.post<{ sent: boolean; toUserId: string }>(`/friends/request/${userId}`),
-
-    accept: (userId: string) =>
-      this.patch<{ accepted: boolean; friendId: string }>(`/friends/request/${userId}/accept`),
-
-    decline: (userId: string) =>
-      this.patch<{ declined: boolean; fromUserId: string }>(`/friends/request/${userId}/decline`),
-
-    unfriend: (userId: string) =>
-      this.del<{ unfriended: boolean; userId: string }>(`/friends/${userId}`),
   };
 
   // ── Security / Utilities ───────────────────────────────────────────────────

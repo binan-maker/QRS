@@ -17,9 +17,6 @@ function getNotifIcon(type: string): keyof typeof Ionicons.glyphMap {
   if (type === "mention")            return "at";
   if (type === "new_follow")         return "person-add";
   if (type === "new_creator_follow") return "person-add-outline";
-  if (type === "friend_request")     return "person-add";
-  if (type === "friend_accepted")    return "people";
-  if (type === "friend_declined")    return "person-remove";
   if (type === "new_report")         return "flag-outline";
   return "notifications-outline";
 }
@@ -32,9 +29,6 @@ function getNotifColor(type: string, colors: any): string {
   if (type === "mention")            return colors.accent ?? colors.primary;
   if (type === "new_follow")         return colors.safe ?? "#22c55e";
   if (type === "new_creator_follow") return colors.safe ?? "#22c55e";
-  if (type === "friend_request")     return colors.safe ?? "#22c55e";
-  if (type === "friend_accepted")    return colors.primary;
-  if (type === "friend_declined")    return colors.danger;
   if (type === "new_report")         return colors.warning ?? "#f59e0b";
   return colors.textMuted ?? "#888";
 }
@@ -62,12 +56,8 @@ const NotificationItem = memo(function NotificationItem({ notif, colors, onClose
 
   const handlePress = useCallback(() => {
     onClose();
-    const isFriendNotif =
-      notif.type === "friend_request"  ||
-      notif.type === "friend_accepted" ||
-      notif.type === "friend_declined" ||
-      notif.type === "new_creator_follow";
-    if (isFriendNotif && notif.fromUsername) {
+    const isCreatorFollowNotif = notif.type === "new_creator_follow";
+    if (isCreatorFollowNotif && notif.fromUsername) {
       router.push(`/profile/${notif.fromUsername}` as any);
     } else if (notif.qrCodeId) {
       router.push({ pathname: "/qr-detail/[id]", params: { id: notif.qrCodeId } });

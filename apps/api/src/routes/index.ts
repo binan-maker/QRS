@@ -50,13 +50,6 @@
  *   DELETE /api/v1/follows/users/:userId               Unfollow creator
  *   GET    /api/v1/follows/users/:userId               Check creator follow status
  *
- * Friends
- *   GET    /api/v1/friends                             List friends / pending
- *   POST   /api/v1/friends/request/:userId             Send friend request
- *   PATCH  /api/v1/friends/request/:userId/accept      Accept request
- *   PATCH  /api/v1/friends/request/:userId/decline     Decline request
- *   DELETE /api/v1/friends/:userId                     Unfriend
- *
  * Payments / Donations
  *   POST   /api/v1/donation/create-order               Razorpay order
  *   POST   /api/v1/donation/verify                     Razorpay HMAC verification
@@ -82,7 +75,6 @@ import { usersRouter } from "./users";
 import { unifiedQrRouter } from "./unified-qr";
 import { commentsRouter } from "./comments";
 import { followsRouter } from "./follows";
-import { friendsRouter } from "./friends";
 
 export function registerV1Routes(app: Express): void {
   // ── Utilities & security (existing) ────────────────────────────────────────
@@ -109,6 +101,4 @@ export function registerV1Routes(app: Express): void {
   // ── Social: follows ────────────────────────────────────────────────────────
   app.use("/api/v1/follows", followsRouter);
 
-  // ── Social: friends ────────────────────────────────────────────────────────
-  app.use("/api/v1/friends", friendsRouter);
 }

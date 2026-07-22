@@ -14,7 +14,6 @@ export interface PrivacySettings {
   showActivity: boolean;
   showRanking: boolean;
   showScanActivity: boolean;
-  showFriendsCount: boolean;
 }
 
 export interface PublicProfile {
@@ -31,7 +30,6 @@ export interface PublicProfile {
     totalLikesReceived: number;
     safeReportsGiven: number;
     personalScanCount: number;
-    friendsCount: number;
   };
 }
 
@@ -139,7 +137,6 @@ export async function getPublicProfile(username: string): Promise<PublicProfile 
       showActivity:    userDoc.privacyShowActivity  !== false,
       showRanking:     userDoc.privacyShowRanking   !== false,
       showScanActivity: userDoc.privacyShowScanActivity !== false,
-      showFriendsCount: userDoc.privacyShowFriendsCount !== false,
     };
     const totalScans = qrResult.docs.reduce((sum: number, d: any) => sum + (d.data.scanCount || 0), 0);
     let joinedAt: string | null = null;
@@ -165,7 +162,6 @@ export async function getPublicProfile(username: string): Promise<PublicProfile 
         totalLikesReceived: userDoc.totalLikesReceived || 0,
         safeReportsGiven: userDoc.safeReportsGiven || 0,
         personalScanCount: (userDoc.personalScanCount as number | undefined) ?? 0,
-        friendsCount: (userDoc.friendsCount as number | undefined) ?? 0,
       },
     };
   } catch {

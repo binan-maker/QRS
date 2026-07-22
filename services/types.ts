@@ -90,9 +90,6 @@ export type NotificationType =
   | "comment_reply"
   | "mention"
   | "new_follow"
-  | "friend_request"
-  | "friend_accepted"
-  | "friend_declined"
   | string;
 
 export interface Notification {
@@ -159,7 +156,6 @@ export interface UserStats {
   scanCount?: number;
   commentCount?: number;
   totalLikesReceived?: number;
-  friendsCount?: number;
 }
 
 export interface UsernameData {

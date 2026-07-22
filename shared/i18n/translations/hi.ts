@@ -120,7 +120,6 @@ const hi = {
   profile: {
     title: "प्रोफ़ाइल",
     editProfile: "प्रोफ़ाइल संपादित करें",
-    friends: "मित्र",
     scans: "स्कैन",
     following: "अनुसरण कर रहे हैं",
     myQrCodes: "मेरे QR कोड",

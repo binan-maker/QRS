@@ -43,7 +43,6 @@ export class RegisterUserUseCase {
       commentCount: 0,
       followingCount: 0,
       totalLikesReceived: 0,
-      friendsCount: 0,
       isOnline: false,
       lastSeen: null,
       pushToken: null,

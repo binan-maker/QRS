@@ -18,7 +18,7 @@ import {
 import { qrScans } from "./scans";
 import { qrComments, commentLikes, commentReports } from "./comments";
 import { qrReports, auditLogs } from "./reports";
-import { userFriends, creatorFollows, notifications } from "./social";
+import { creatorFollows, notifications } from "./social";
 import {
   donations,
   moderationQueue,
@@ -38,8 +38,6 @@ export const usersRelations = relations(users, ({ many, one }) => ({
   qrFollowers: many(qrFollowers),
   userFavorites: many(userFavorites),
   userGeneratedQrs: many(userGeneratedQrs),
-  friendsInitiated: many(userFriends, { relationName: "friendsInitiated" }),
-  friendsReceived: many(userFriends, { relationName: "friendsReceived" }),
   creatorFollowsInitiated: many(creatorFollows, { relationName: "following" }),
   creatorFollowsReceived: many(creatorFollows, { relationName: "followers" }),
   notifications: many(notifications),

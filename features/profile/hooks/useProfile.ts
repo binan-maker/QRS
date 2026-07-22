@@ -21,19 +21,12 @@ import {
   getCachedUserStats,
   setCachedUserStats,
   invalidateUserCache,
-  getCachedProfileExtras,
-  setCachedProfileExtras,
   getCachedGeneratedQrs,
   setCachedGeneratedQrs,
 } from "@/services/cache/qr-cache";
 
 const STATS_STALE_MS  = 3 * 60 * 1000;
-const EXTRAS_STALE_MS = 5 * 60 * 1000;
 
-interface ProfileExtras {
-  friendsCount: number;
-  fetchedAt: number;
-}
 
 export function useProfile() {
   const { user, signOut } = useAuth();
@@ -58,9 +51,7 @@ export function useProfile() {
   const qrUnsubscribeRef    = useRef<(() => void) | null>(null);
   const qrSubscribedUidRef  = useRef<string | null>(null); // tracks which user the listener is for
   const lastStatsFetchRef   = useRef<number>(0);
-  const lastExtrasFetchRef  = useRef<number>(0);
   const inFlightStatsRef    = useRef(false);
-  const inFlightExtrasRef   = useRef(false);
 
   useEffect(() => { myQrCodesRef.current = myQrCodes; }, [myQrCodes]);
 
@@ -71,7 +62,6 @@ export function useProfile() {
     setStats({ followingCount: 0, scanCount: 0, commentCount: 0, totalLikesReceived: 0 });
     hasLoadedStatsRef.current    = false;
     lastStatsFetchRef.current    = 0;
-    lastExtrasFetchRef.current   = 0;
   }, [user?.id]);
 
   // ── Stats + username (3-min stale, disk-cached) ────────────────────────────
@@ -122,38 +112,11 @@ export function useProfile() {
     inFlightStatsRef.current = false;
   }, [user?.id]);
 
-  // ── Profile extras: friends count (5-min stale, disk-cached) ───────────────
-  const loadProfileExtras = useCallback(async (forceRefresh = false) => {
-    if (!user) return;
-    if (inFlightExtrasRef.current) return;
-    if (!forceRefresh && Date.now() - lastExtrasFetchRef.current < EXTRAS_STALE_MS) return;
-    inFlightExtrasRef.current = true;
-    try {
-      if (!forceRefresh) {
-        const cached = await getCachedProfileExtras<ProfileExtras>(user.id);
-        if (cached) {
-          lastExtrasFetchRef.current = cached.fetchedAt;
-          inFlightExtrasRef.current = false;
-          return; // cache is valid — no Firestore round-trip needed
-        }
-      }
-      const doc = await db.get([COLLECTIONS.USERS, user.id]).catch(() => null);
-      const nextFriends = (doc as any)?.friendsCount ?? 0;
-      const fetchedAt = Date.now();
-      lastExtrasFetchRef.current = fetchedAt;
-      setCachedProfileExtras<ProfileExtras>(user.id, {
-        friendsCount: nextFriends, fetchedAt,
-      }).catch(() => {});
-    } catch {}
-    inFlightExtrasRef.current = false;
-  }, [user?.id]);
-
   // Load only when the profile tab is focused
   useFocusEffect(
     useCallback(() => {
       loadStats();
-      loadProfileExtras();
-    }, [loadStats, loadProfileExtras])
+    }, [loadStats])
   );
 
   // Generated-QR listener — started once per user and kept alive across tab

@@ -120,7 +120,6 @@ const ta = {
   profile: {
     title: "சுயவிவரம்",
     editProfile: "சுயவிவரத்தை திருத்து",
-    friends: "நண்பர்கள்",
     scans: "ஸ்கேன்கள்",
     following: "பின்தொடர்கிறது",
     myQrCodes: "என் QR குறியீடுகள்",

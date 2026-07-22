@@ -15,16 +15,6 @@ import { LinearGradient } from "expo-linear-gradient";
 import { useTheme } from "@/shared/contexts/ThemeContext";
 import { useAuth } from "@/shared/contexts/AuthContext";
 import { searchUsers, UserSearchResult } from "@/services/user-service";
-import {
-  getFriendStatus,
-  sendFriendRequest,
-  cancelFriendRequest,
-  FriendStatus,
-} from "@/services/friend-service";
-
-interface ResultItem extends UserSearchResult {
-  friendStatus: FriendStatus;
-}
 
 export default function SearchScreen() {
   const insets = useSafeAreaInsets();
@@ -33,7 +23,7 @@ export default function SearchScreen() {
   const topInset = useTopInset();
 
   const [query, setQuery] = useState("");
-  const [results, setResults] = useState<ResultItem[]>([]);
+  const [results, setResults] = useState<UserSearchResult[]>([]);
   const [loading, setLoading] = useState(false);
   const [searched, setSearched] = useState(false);
   const debounce = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -49,13 +39,7 @@ export default function SearchScreen() {
     try {
       const raw = await searchUsers(q);
       const filtered = user ? raw.filter((r) => r.userId !== user.id) : raw;
-      const withStatus = await Promise.all(
-        filtered.map(async (r) => ({
-          ...r,
-          friendStatus: user ? await getFriendStatus(user.id, r.userId) : ("none" as FriendStatus),
-        }))
-      );
-      setResults(withStatus);
+      setResults(filtered);
     } catch {
       setResults([]);
     } finally {
@@ -67,39 +51,6 @@ export default function SearchScreen() {
     setQuery(text);
     if (debounce.current) clearTimeout(debounce.current);
     debounce.current = setTimeout(() => runSearch(text), 400);
-  }
-
-  async function handleAddFriend(item: ResultItem) {
-    if (!user) { router.push("/(auth)/login"); return; }
-    if (item.friendStatus === "sent") {
-      await cancelFriendRequest(user.id, item.userId);
-    } else if (item.friendStatus === "none") {
-      await sendFriendRequest(
-        user.id, user.username ?? "", user.displayName, null,
-        item.userId, item.username, item.displayName, item.photoURL,
-      );
-    }
-    setResults((prev) =>
-      prev.map((r) =>
-        r.userId === item.userId
-          ? { ...r, friendStatus: item.friendStatus === "sent" ? "none" : "sent" }
-          : r
-      )
-    );
-  }
-
-  function getActionLabel(status: FriendStatus) {
-    if (status === "friends") return "Friends";
-    if (status === "sent") return "Requested";
-    if (status === "received") return "Accept";
-    return "Add Friend";
-  }
-
-  function getActionColors(status: FriendStatus): [string, string] {
-    if (status === "friends") return [colors.safe, colors.safe + "BB"];
-    if (status === "sent") return [colors.surfaceBorder, colors.surfaceBorder];
-    if (status === "received") return [colors.accent, colors.accent + "BB"];
-    return [colors.primary, colors.primary + "BB"];
   }
 
   return (
@@ -146,7 +97,7 @@ export default function SearchScreen() {
           </LinearGradient>
           <Text style={[styles.hintTitle, { color: colors.text }]}>Search for people</Text>
           <Text style={[styles.hintSub, { color: colors.textMuted }]}>
-            Type a username to find and add friends on BinRo
+            Type a username to find users on BinRo
           </Text>
         </View>
       )}
@@ -173,14 +124,12 @@ export default function SearchScreen() {
       {!loading && results.length > 0 && (
         <FlashList
           data={results}
-          keyExtractor={(r: ResultItem) => r.userId}
+          keyExtractor={(r: UserSearchResult) => r.userId}
           estimatedItemSize={72}
           contentContainerStyle={{ paddingHorizontal: 18, paddingTop: 10, paddingBottom: insets.bottom + 24 }}
           ItemSeparatorComponent={() => <View style={{ height: 10 }} />}
-          renderItem={({ item }: { item: ResultItem }) => {
+          renderItem={({ item }: { item: UserSearchResult }) => {
             const initials = item.displayName.split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2);
-            const actionColors = getActionColors(item.friendStatus);
-            const isDisabled = item.friendStatus === "friends";
             return (
               <Pressable
                 onPress={() => safePush(`/profile/${item.username}`)}
@@ -204,29 +153,6 @@ export default function SearchScreen() {
                   </Text>
                   <Text style={[styles.username, { color: colors.primary }]}>@{item.username}</Text>
                 </View>
-
-                {/* Action */}
-                {user && (
-                  <Pressable
-                    onPress={() => !isDisabled && handleAddFriend(item)}
-                    style={({ pressed }) => [
-                      styles.actionBtn,
-                      {
-                        borderColor: isDisabled ? colors.safe + "60" : actionColors[0] + "60",
-                        backgroundColor: isDisabled
-                          ? colors.safe + "18"
-                          : item.friendStatus === "sent"
-                          ? colors.surfaceBorder + "30"
-                          : actionColors[0] + "18",
-                        opacity: pressed ? 0.8 : 1,
-                      },
-                    ]}
-                  >
-                    <Text style={[styles.actionLabel, { color: isDisabled ? colors.safe : actionColors[0] }]}>
-                      {getActionLabel(item.friendStatus)}
-                    </Text>
-                  </Pressable>
-                )}
               </Pressable>
             );
           }}
@@ -259,9 +185,4 @@ const styles = StyleSheet.create({
   avatarInitials: { fontSize: 18, fontFamily: "Inter_700Bold", color: "#fff" },
   displayName: { fontSize: 15, fontFamily: "Inter_700Bold" },
   username: { fontSize: 13, fontFamily: "Inter_500Medium" },
-  actionBtn: {
-    borderRadius: 12, borderWidth: 1, paddingHorizontal: 12, paddingVertical: 7,
-    alignItems: "center", justifyContent: "center", overflow: "hidden",
-  },
-  actionLabel: { fontSize: 12, fontFamily: "Inter_700Bold" },
 });

@@ -57,7 +57,6 @@ usersRouter.get(
           commentCount: data.commentCount ?? 0,
           followingCount: data.followingCount ?? 0,
           totalLikesReceived: data.totalLikesReceived ?? 0,
-          friendsCount: data.friendsCount ?? 0,
           isOnline: data.isOnline ?? false,
           lastSeen: data.lastSeen?.toDate?.()?.toISOString() ?? null,
           createdAt: data.createdAt?.toDate?.()?.toISOString() ?? null,

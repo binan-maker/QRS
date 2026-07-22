@@ -1,7 +1,7 @@
 /**
  * @binro/db — Social domain schema
- * Tables: user_friends, creator_follows, notifications
- * Source: users/{uid}/friends, users/{uid}/creatorFollowing, RTDB notifications
+ * Tables: creator_follows, notifications
+ * Source: users/{uid}/creatorFollowing, RTDB notifications
  */
 
 import { sql } from "drizzle-orm";
@@ -13,30 +13,7 @@ import {
   index,
   primaryKey,
 } from "drizzle-orm/pg-core";
-import { friendStatusEnum } from "./enums";
 import { users } from "./users";
-
-// ─── User Friends ─────────────────────────────────────────────────────────────
-// One-directional rows; the inverse is written separately.
-
-export const userFriends = pgTable(
-  "user_friends",
-  {
-    userId: text("user_id")
-      .notNull()
-      .references(() => users.id, { onDelete: "cascade" }),
-    friendId: text("friend_id")
-      .notNull()
-      .references(() => users.id, { onDelete: "cascade" }),
-    status: friendStatusEnum("status").notNull().default("pending"),
-    addedAt: timestamp("added_at", { withTimezone: true }).notNull().defaultNow(),
-  },
-  (t) => ({
-    pk: primaryKey({ columns: [t.userId, t.friendId] }),
-    friendIdx: index("user_friends_friend_id_idx").on(t.friendId),
-    statusIdx: index("user_friends_status_idx").on(t.status),
-  }),
-);
 
 // ─── Creator Follows ──────────────────────────────────────────────────────────
 
@@ -85,7 +62,6 @@ export const notifications = pgTable(
 
 // ─── Inferred Types ───────────────────────────────────────────────────────────
 
-export type UserFriend = typeof userFriends.$inferSelect;
 export type CreatorFollow = typeof creatorFollows.$inferSelect;
 export type Notification = typeof notifications.$inferSelect;
 export type NewNotification = typeof notifications.$inferInsert;

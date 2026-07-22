@@ -120,7 +120,6 @@ const ml = {
   profile: {
     title: "പ്രൊഫൈൽ",
     editProfile: "പ്രൊഫൈൽ എഡിറ്റ് ചെയ്യുക",
-    friends: "സുഹൃത്തുക്കൾ",
     scans: "സ്കാനുകൾ",
     following: "പിന്തുടരുന്നു",
     myQrCodes: "എന്റെ QR കോഡുകൾ",

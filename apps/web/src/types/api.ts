@@ -45,7 +45,6 @@ export interface UserProfile {
   commentCount: number;
   followingCount: number;
   totalLikesReceived: number;
-  friendsCount: number;
   isOnline: boolean;
   lastSeen: string | null;
   createdAt: string | null;
@@ -157,9 +156,6 @@ export type NotificationType =
   | "comment_reply"
   | "mention"
   | "new_follow"
-  | "friend_request"
-  | "friend_accepted"
-  | "friend_declined"
   | "qr_scan"
   | "qr_report"
   | "system"
@@ -198,16 +194,6 @@ export interface QrAnalytics {
   verdictBreakdown?: { safe: number; flagged: number; unknown: number };
   topHours: number[];
   cachedAt: number;
-}
-
-// ─── Friends ──────────────────────────────────────────────────────────────────
-
-export type FriendStatus = "pending" | "friends" | "declined" | "blocked";
-
-export interface FriendRecord {
-  userId: string;
-  status: FriendStatus;
-  addedAt: string | null;
 }
 
 // ─── Donations ────────────────────────────────────────────────────────────────

@@ -119,7 +119,6 @@ const te = {
   profile: {
     title: "ప్రొఫైల్",
     editProfile: "ప్రొఫైల్ సవరించు",
-    friends: "స్నేహితులు",
     scans: "స్కాన్‌లు",
     following: "అనుసరిస్తోంది",
     myQrCodes: "నా QR కోడ్‌లు",

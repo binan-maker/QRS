@@ -18,12 +18,6 @@ export const unifiedQrStatusEnum = pgEnum("unified_qr_status", [
   "limit_reached",
 ]);
 
-export const friendStatusEnum = pgEnum("friend_status", [
-  "pending",
-  "friends",
-  "declined",
-  "blocked",
-]);
 
 export const verificationStatusEnum = pgEnum("verification_status", [
   "none",

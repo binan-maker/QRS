@@ -36,7 +36,6 @@ export const users = pgTable(
     commentCount: integer("comment_count").notNull().default(0),
     followingCount: integer("following_count").notNull().default(0),
     totalLikesReceived: integer("total_likes_received").notNull().default(0),
-    friendsCount: integer("friends_count").notNull().default(0),
     // Presence
     isOnline: boolean("is_online").notNull().default(false),
     lastSeen: timestamp("last_seen", { withTimezone: true }),

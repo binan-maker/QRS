@@ -120,7 +120,6 @@ const en = {
   profile: {
     title: "Profile",
     editProfile: "Edit Profile",
-    friends: "Friends",
     scans: "Scans",
     following: "Following",
     myQrCodes: "My QR Codes",

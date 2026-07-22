@@ -34,8 +34,6 @@ const DOMAIN_ERROR_STATUS: Record<string, number> = {
   GOVERNMENT_QR_IMMUTABLE: 422,
   USERNAME_TAKEN:          409,
   SELF_FOLLOW:             422,
-  ALREADY_FRIENDS:         409,
-  REQUEST_PENDING:         409,
   SERVICE_UNAVAILABLE:     503,
   RATE_LIMITED:            429,
 };

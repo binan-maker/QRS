@@ -232,15 +232,15 @@ export default function TermsScreen() {
           </Para>
         </SectionCard>
 
-        <SectionCard title="Profile Visibility & Friends" num="10" colors={colors}>
+        <SectionCard title="Profile Visibility" num="10" colors={colors}>
           <Para colors={colors}>
             By default, your profile is public and visible to all users worldwide. You may switch to a private account in Privacy Settings at any time.
           </Para>
-          <Bullet text="Private accounts: only approved friends see your full profile, QR codes, stats, and activity" colors={colors} />
+          <Bullet text="Private accounts: your full profile, QR codes, stats, and activity are restricted" colors={colors} />
           <Bullet text="Public data (name, username, profile photo) remains visible regardless of privacy setting" colors={colors} />
           <Bullet text="Anonymous QR report data (trust scores, scan counts) is always public and cannot be made private" colors={colors} />
           <Para colors={colors}>
-            You are responsible for managing your own friend list and privacy settings. BinRo is not liable for data exposure resulting from your privacy settings choices.
+            You are responsible for managing your own privacy settings. BinRo is not liable for data exposure resulting from your privacy settings choices.
           </Para>
         </SectionCard>
 

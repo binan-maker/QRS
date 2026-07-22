@@ -120,20 +120,6 @@ export class SelfFollowError extends DomainError {
   }
 }
 
-export class AlreadyFriendsError extends DomainError {
-  readonly code = "ALREADY_FRIENDS";
-  constructor() {
-    super("You are already friends with this user");
-  }
-}
-
-export class RequestPendingError extends DomainError {
-  readonly code = "REQUEST_PENDING";
-  constructor() {
-    super("A friend request is already pending");
-  }
-}
-
 // ─── Infrastructure ───────────────────────────────────────────────────────────
 
 export class ServiceUnavailableError extends DomainError {

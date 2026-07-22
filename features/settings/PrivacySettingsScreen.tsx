@@ -23,7 +23,7 @@ import PrivacyToggleRow from "@/features/settings/components/PrivacyToggleRow";
 import { privacySettingsStyles as styles } from "@/features/settings/privacySettingsStyles";
 
 const VISIBILITY_KEYS: Array<keyof PrivacySettings> = [
-  "showStats", "showFriendsCount", "showScanActivity", "showRanking", "showActivity",
+  "showStats", "showScanActivity", "showRanking", "showActivity",
 ];
 
 const DEFAULT_PRIVACY: PrivacySettings = {
@@ -33,7 +33,6 @@ const DEFAULT_PRIVACY: PrivacySettings = {
   showActivity: true,
   showRanking: true,
   showScanActivity: true,
-  showFriendsCount: true,
 };
 
 export default function PrivacySettingsScreen() {
@@ -253,7 +252,7 @@ export default function PrivacySettingsScreen() {
             </Text>
             <Text style={[styles.statusSub, { color: colors.textSecondary }]}>
               {privacy.isPrivate
-                ? "Only friends can see your full profile"
+                ? "Your full profile is private"
                 : "Anyone can view your public profile and stats"}
             </Text>
           </View>
@@ -272,7 +271,7 @@ export default function PrivacySettingsScreen() {
                 iconBg={privacy.isPrivate ? colors.accentDim : colors.primaryDim}
                 label={privacy.isPrivate ? "Private Account" : "Public Account"}
                 sublabel={privacy.isPrivate
-                  ? "Only friends can see your full profile — everyone else sees your name and avatar only"
+                  ? "Your full profile is private — everyone else sees your name and avatar only"
                   : "Your profile is visible to everyone worldwide (default)"}
                 value={privacy.isPrivate}
                 onValueChange={(v) => handleToggle("isPrivate", v)}
@@ -292,16 +291,6 @@ export default function PrivacySettingsScreen() {
                   />
                   <View style={[styles.divider, { backgroundColor: colors.surfaceBorder }]} />
                   <PrivacyToggleRow
-                    icon="people-outline"
-                    iconColor={colors.safe}
-                    iconBg={colors.safeDim}
-                    label="Show Friends Count"
-                    sublabel="Display how many friends you have"
-                    value={privacy.showFriendsCount}
-                    onValueChange={(v) => handleToggle("showFriendsCount", v)}
-                  />
-                  <View style={[styles.divider, { backgroundColor: colors.surfaceBorder }]} />
-                  <PrivacyToggleRow
                     icon="scan-outline"
                     iconColor={colors.accent}
                     iconBg={colors.accentDim}
@@ -316,7 +305,7 @@ export default function PrivacySettingsScreen() {
                     iconColor={colors.warning}
                     iconBg={colors.warningDim ?? colors.accentDim}
                     label="Show Ranking"
-                    sublabel="Display your rank among friends publicly"
+                    sublabel="Display your rank on the leaderboard publicly"
                     value={privacy.showRanking}
                     onValueChange={(v) => handleToggle("showRanking", v)}
                   />

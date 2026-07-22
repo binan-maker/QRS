@@ -40,8 +40,6 @@ export const COLLECTIONS = {
   CREATOR_FOLLOWERS: "creatorFollowers",
   /** Creator-specific following list */
   CREATOR_FOLLOWING: "creatorFollowing",
-  /** Mutual friends */
-  FRIENDS: "friends",
   /** Aggregated counters (scans, follows, etc.) */
   COUNTERS: "counters",
   /** Per-user follow counts */
@@ -52,8 +50,6 @@ export const COLLECTIONS = {
   CREATOR_FOLLOWER_COUNT: "creatorFollowerCount",
   /** Creator following counts */
   CREATOR_FOLLOWING_COUNT: "creatorFollowingCount",
-  /** Per-user friend count */
-  FRIENDS_COUNT: "friendsCount",
   /** Per-user personal scan count */
   PERSONAL_SCAN_COUNT: "personalScanCount",
   /** Per-QR scan velocity (Realtime DB path) */

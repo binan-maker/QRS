@@ -8,7 +8,7 @@ import { db } from "@/lib/db/client";
 import { getQrCodeById } from "./qr-service";
 import { getQrReportData, getUserQrReport } from "./report-service";
 import { isUserFollowingQrCode } from "./follow-service";
-// follow-service is kept as it handles QR-following (not friend-following)
+
 import { isUserFavorite } from "./user-service";
 
 export function calculateTrustScore(

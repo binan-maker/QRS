@@ -12,7 +12,6 @@ export const DEFAULT_PRIVACY: PrivacySettings = {
   showActivity: true,
   showRanking: true,
   showScanActivity: true,
-  showFriendsCount: true,
 };
 
 function docToPrivacy(doc: any): PrivacySettings {
@@ -23,7 +22,6 @@ function docToPrivacy(doc: any): PrivacySettings {
     showActivity:     doc.privacyShowActivity      !== false,
     showRanking:      doc.privacyShowRanking       !== false,
     showScanActivity: doc.privacyShowScanActivity  !== false,
-    showFriendsCount: doc.privacyShowFriendsCount  !== false,
   };
 }
 
@@ -49,6 +47,5 @@ export async function updatePrivacySettings(userId: string, settings: PrivacySet
     privacyShowActivity:     settings.showActivity,
     privacyShowRanking:      settings.showRanking,
     privacyShowScanActivity: settings.showScanActivity,
-    privacyShowFriendsCount: settings.showFriendsCount,
   });
 }

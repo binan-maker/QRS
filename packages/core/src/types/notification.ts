@@ -3,7 +3,6 @@
 export type NotificationType =
   | "mention"
   | "follow"
-  | "friend_request"
   | "report"
   | "system"
   | "trust_update";

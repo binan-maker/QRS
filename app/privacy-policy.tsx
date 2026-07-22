@@ -146,7 +146,7 @@ export default function PrivacyPolicyScreen() {
           <Bullet text="In-app navigation patterns, feature usage frequency, and session duration" colors={colors} />
           <Bullet text="Scan velocity data (how often a particular QR code is scanned across all users)" colors={colors} />
           <Bullet text="Search queries entered within the app" colors={colors} />
-          <Bullet text="Friend connections, follows, and social interactions" colors={colors} />
+          <Bullet text="Follows and social interactions" colors={colors} />
 
           <SubHead text="Device & Network Data" colors={colors} />
           <Bullet text="Device type, OS version, screen resolution, and app version" colors={colors} />
@@ -258,11 +258,9 @@ export default function PrivacyPolicyScreen() {
           <SubHead text="Public Account (Default)" colors={colors} />
           <Bullet text="Your profile, QR codes, stats, and activity are visible to all BinRo users worldwide." colors={colors} />
           <SubHead text="Private Account" colors={colors} />
-          <Bullet text="Only approved friends can see your full profile, QR codes, and activity." colors={colors} />
+          <Bullet text="Private accounts limit your full profile, QR codes, and activity to approved viewers." colors={colors} />
           <Bullet text="Other users see only your name, username, and profile photo." colors={colors} />
-          <SubHead text="Friends System" colors={colors} />
-          <Bullet text="Friends are added via mutual consent. Both parties must agree." colors={colors} />
-          <Bullet text="You can remove a friend at any time. Removal immediately revokes profile access." colors={colors} />
+          <Bullet text="You can change your privacy settings at any time from the Settings screen." colors={colors} />
         </SectionCard>
 
         <SectionCard title="Your Rights" num="11" icon="person-outline" colors={colors}>

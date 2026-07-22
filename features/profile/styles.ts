@@ -167,27 +167,6 @@ export const publicStyles = StyleSheet.create({
   statValue: { fontSize: 18, fontFamily: "Inter_700Bold" },
   statLabel: { fontSize: 11, fontFamily: "Inter_400Regular" },
 
-  // ── Friend action buttons ─────────────────────────────────────────────────
-  friendBtn: {
-    flexDirection: "row", alignItems: "center", gap: 9,
-    borderRadius: 14, paddingVertical: 13, paddingHorizontal: 20,
-    justifyContent: "center", borderWidth: 1,
-  },
-  friendBtnText: { fontSize: 14, fontFamily: "Inter_700Bold" },
-
-  friendedRow: { flexDirection: "row", gap: 10 },
-  friendedBadge: {
-    flex: 1, flexDirection: "row", alignItems: "center", justifyContent: "center",
-    gap: 7, borderRadius: 14, paddingVertical: 13, borderWidth: 1,
-  },
-  friendedText: { fontSize: 14, fontFamily: "Inter_700Bold" },
-  unfriendBtn: {
-    flexDirection: "row", alignItems: "center", gap: 6,
-    borderRadius: 14, paddingVertical: 13, paddingHorizontal: 16, borderWidth: 1,
-  },
-  unfriendText: { fontSize: 13, fontFamily: "Inter_600SemiBold" },
-  sentHint: { fontSize: 12, fontFamily: "Inter_400Regular", textAlign: "center", marginTop: 8 },
-
   // ── Private account card ──────────────────────────────────────────────────
   privateCard: {
     borderRadius: 18, padding: 22, borderWidth: 1,

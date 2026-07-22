@@ -12,8 +12,6 @@ const MAX_NOTIFICATIONS_PER_USER = 100; // Limit max notifications stored
 const PUSH_TITLES: Partial<Record<NotificationType, string>> = {
   mention: "You were mentioned",
   comment: "New Comment",
-  friend_request: "Friend Request",
-  friend_accepted: "Request Accepted",
   follow: "New Follower",
   qr_scan: "Your QR was scanned",
   qr_report: "QR Report",
@@ -262,39 +260,6 @@ export async function notifyCommentParentAuthor(
       "comment_reply",
       `${fromDisplayName} replied to your comment`,
       { qrCodeId: qrId },
-    );
-  } catch {}
-}
-
-// ─── Friend request notifications ────────────────────────────────────────────
-export async function notifyFriendRequest(
-  toUserId: string,
-  fromDisplayName: string,
-  fromUsername: string,
-): Promise<void> {
-  if (!NOTIFICATIONS_ENABLED) return;
-  try {
-    await pushNotification(
-      toUserId,
-      "friend_request",
-      `${fromDisplayName} sent you a friend request`,
-      { fromUsername },
-    );
-  } catch {}
-}
-
-export async function notifyFriendAccepted(
-  toUserId: string,
-  fromDisplayName: string,
-  fromUsername: string,
-): Promise<void> {
-  if (!NOTIFICATIONS_ENABLED) return;
-  try {
-    await pushNotification(
-      toUserId,
-      "friend_accepted",
-      `${fromDisplayName} accepted your friend request`,
-      { fromUsername },
     );
   } catch {}
 }

@@ -13,7 +13,6 @@ const NAV: NavItem[] = [
   { href: "/dashboard",       label: "Overview",       icon: "🏠" },
   { href: "/qr",              label: "My QR Codes",    icon: "⬛" },
   { href: "/analytics",       label: "Analytics",      icon: "📊" },
-  { href: "/friends",         label: "Friends",        icon: "👥" },
   { href: "/notifications",   label: "Notifications",  icon: "🔔" },
   { href: "/profile",         label: "Profile",        icon: "👤" },
   { href: "/settings",        label: "Settings",       icon: "⚙️" },
