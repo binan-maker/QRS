@@ -46,6 +46,11 @@ export const apiEnvSchema = z.object({
   // Firebase (server-side — Admin SDK uses service account, not these keys)
   EXPO_PUBLIC_FIREBASE_PROJECT_ID: z.string().optional(),
   EXPO_PUBLIC_FIREBASE_API_KEY: z.string().optional(),
+
+  // Firebase Admin SDK — optional; enables QR analytics, report toggling, push.
+  // Set FIREBASE_SERVICE_ACCOUNT_JSON to a stringified service-account JSON object.
+  FIREBASE_SERVICE_ACCOUNT_JSON: z.string().optional(),
+  FIREBASE_DATABASE_URL: z.string().url().optional(),
 });
 
 // ─── Web (Next.js) environment ────────────────────────────────────────────────

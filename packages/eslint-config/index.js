@@ -6,8 +6,27 @@ module.exports = [
       "no-restricted-imports": [
         "error",
         {
-          // Prevent deep imports from packages that have a barrel index
-          patterns: [],
+          // Prevent deep imports from packages that expose a barrel index.
+          // Consumers must import from the package root, e.g. "@binro/core",
+          // not from internal paths like "@binro/core/src/types/qr".
+          patterns: [
+            {
+              group: ["@binro/core/src/*"],
+              message: "Import from \"@binro/core\" instead of deep-linking into src/.",
+            },
+            {
+              group: ["@binro/db/src/*"],
+              message: "Import from \"@binro/db\" instead of deep-linking into src/.",
+            },
+            {
+              group: ["@binro/config/src/*"],
+              message: "Import from \"@binro/config\" instead of deep-linking into src/.",
+            },
+            {
+              group: ["@binro/ui/src/*"],
+              message: "Import from \"@binro/ui\" or \"@binro/ui/tokens\" instead of deep-linking into src/.",
+            },
+          ],
         },
       ],
 

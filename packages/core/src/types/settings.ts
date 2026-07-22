@@ -14,11 +14,4 @@ export interface UserSettings {
   hapticsEnabled: boolean;
 }
 
-export const DEFAULT_SETTINGS: UserSettings = {
-  theme: "system",
-  language: "en",
-  notificationsEnabled: true,
-  analyticsOptIn: true,
-  privacyMode: false,
-  hapticsEnabled: true,
-};
+// DEFAULT_SETTINGS lives in constants/business.ts — imported from "@binro/core".

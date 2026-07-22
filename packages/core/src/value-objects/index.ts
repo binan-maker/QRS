@@ -7,6 +7,8 @@
  * Phase 3 target: all domain entities use these value objects instead of raw strings.
  */
 
+import { ValidationError } from "../errors";
+
 // ─── QR Slug ─────────────────────────────────────────────────────────────────
 
 export class QrSlug {
@@ -19,7 +21,7 @@ export class QrSlug {
   static create(raw: string): QrSlug {
     const slug = raw.trim().toLowerCase().replace(/[^a-z0-9-]/g, "-");
     if (slug.length < 3 || slug.length > 64) {
-      throw new Error(`QrSlug must be 3–64 characters, got: "${slug}"`);
+      throw new ValidationError(`QrSlug must be 3–64 characters, got: "${slug}"`, "slug");
     }
     return new QrSlug(slug);
   }
@@ -42,7 +44,7 @@ export class UpiId {
   static create(raw: string): UpiId {
     const vpa = raw.toLowerCase().trim();
     if (!UpiId.PATTERN.test(vpa)) {
-      throw new Error(`Invalid UPI VPA format: "${raw}"`);
+      throw new ValidationError(`Invalid UPI VPA format: "${raw}"`, "upiId");
     }
     return new UpiId(vpa);
   }
@@ -97,7 +99,7 @@ export class ContentType {
 
   static create(raw: string): ContentType {
     const found = CONTENT_TYPES.find((t) => t === raw.toLowerCase().trim());
-    if (!found) throw new Error(`Unknown content type: "${raw}"`);
+    if (!found) throw new ValidationError(`Unknown content type: "${raw}"`, "contentType");
     return new ContentType(found);
   }
 

@@ -145,9 +145,12 @@ export const businessAccounts = pgTable(
 );
 
 // ─── Inferred Types ───────────────────────────────────────────────────────────
+// NOTE: Named with "Db" prefix to avoid collision with the @binro/core domain
+// type "Donation" (a plain interface) when both packages are imported together.
 
 export type Category = typeof categories.$inferSelect;
-export type Donation = typeof donations.$inferSelect;
+export type DbDonation = typeof donations.$inferSelect;
+export type NewDbDonation = typeof donations.$inferInsert;
 export type ModerationQueueItem = typeof moderationQueue.$inferSelect;
 export type VerificationRequest = typeof verificationRequests.$inferSelect;
 export type FeatureVote = typeof featureVotes.$inferSelect;

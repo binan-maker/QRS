@@ -1,3 +1,5 @@
+import type { UserSettings } from "../types/settings";
+
 // ─── Pagination ───────────────────────────────────────────────────────────────
 export const PAGE_SIZE = 20;
 export const COMMENTS_PAGE_SIZE = 20;
@@ -16,6 +18,18 @@ export const MAX_COMMENT_DEPTH = 2;
 
 // ─── App ──────────────────────────────────────────────────────────────────────
 export const APP_VERSION = "1.0.0";
+
+// ─── User Settings defaults ───────────────────────────────────────────────────
+// Moved here from types/settings.ts — runtime constants belong in constants/,
+// type definitions belong in types/.
+export const DEFAULT_SETTINGS: UserSettings = {
+  theme: "system",
+  language: "en",
+  notificationsEnabled: true,
+  analyticsOptIn: true,
+  privacyMode: false,
+  hapticsEnabled: true,
+};
 
 // ─── Trust scoring ────────────────────────────────────────────────────────────
 export const REPORTER_WEIGHT_EMAIL_BONUS = 0.3;

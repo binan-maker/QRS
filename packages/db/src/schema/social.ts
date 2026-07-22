@@ -61,7 +61,9 @@ export const notifications = pgTable(
 );
 
 // ─── Inferred Types ───────────────────────────────────────────────────────────
+// NOTE: Named with "Db" prefix to avoid collision with the @binro/core domain
+// type "Notification" (a plain interface) when both packages are imported together.
 
 export type CreatorFollow = typeof creatorFollows.$inferSelect;
-export type Notification = typeof notifications.$inferSelect;
-export type NewNotification = typeof notifications.$inferInsert;
+export type DbNotification = typeof notifications.$inferSelect;
+export type NewDbNotification = typeof notifications.$inferInsert;
