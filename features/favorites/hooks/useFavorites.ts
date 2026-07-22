@@ -2,6 +2,7 @@ import { useState, useCallback } from "react";
 import { useFocusEffect } from "expo-router";
 import { useAuth } from "@/shared/contexts/AuthContext";
 import { getUserFavorites } from "@/lib/firestore-service";
+import { useListScreen } from "@/shared/hooks/useListScreen";
 
 export interface FavoriteItem {
   id: string;
@@ -13,9 +14,7 @@ export interface FavoriteItem {
 
 export function useFavorites() {
   const { user } = useAuth();
-  const [favorites,  setFavorites]  = useState<FavoriteItem[]>([]);
-  const [loading,    setLoading]    = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
+  const [favorites, setFavorites] = useState<FavoriteItem[]>([]);
 
   const loadFavorites = useCallback(async () => {
     if (!user) return;
@@ -23,19 +22,14 @@ export function useFavorites() {
       const data = await getUserFavorites(user.id);
       setFavorites(data as FavoriteItem[]);
     } catch {}
-    setLoading(false);
-    setRefreshing(false);
   }, [user?.id]);
+
+  const { loading, setLoading, refreshing, handleRefresh } = useListScreen(loadFavorites);
 
   useFocusEffect(useCallback(() => {
     setLoading(true);
-    loadFavorites();
-  }, [loadFavorites]));
-
-  const handleRefresh = useCallback(() => {
-    setRefreshing(true);
-    loadFavorites();
-  }, [loadFavorites]);
+    loadFavorites().finally(() => setLoading(false));
+  }, [loadFavorites, setLoading]));
 
   return { user, favorites, loading, refreshing, handleRefresh };
 }
