@@ -396,7 +396,6 @@ export function useProfile() {
     user,
     stats,
     statsLoading,
-    photoURL,
     photoModalOpen,
     setPhotoModalOpen,
     uploadingPhoto,

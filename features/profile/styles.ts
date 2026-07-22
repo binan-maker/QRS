@@ -93,20 +93,6 @@ export const styles = StyleSheet.create({
   seeAllBtn: { flexDirection: "row", alignItems: "center", gap: 2 },
   seeAllText: { fontSize: 13, fontFamily: "Inter_500Medium" },
 
-  // Grid layout — 3 square image-only tiles per row
-  qrRow: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
-  qrCard: { borderRadius: 16, borderWidth: 1, overflow: "hidden" },
-  qrCardMore: { justifyContent: "center", alignItems: "center", gap: 4 },
-  qrCodeWrap: {
-    flex: 1, alignItems: "center", justifyContent: "center",
-    paddingTop: 14, paddingHorizontal: 10,
-  },
-  qrCardFooter: { paddingHorizontal: 10, paddingTop: 8, paddingBottom: 10, gap: 2 },
-  qrCardLabel: { fontSize: 11, fontFamily: "Inter_500Medium", textAlign: "center" },
-  qrCardName: { fontSize: 12, fontFamily: "Inter_600SemiBold" },
-  qrCardScans: { fontSize: 11, fontFamily: "Inter_400Regular" },
-  qrMoreCount: { fontSize: 20, fontFamily: "Inter_700Bold" },
-  qrMoreLabel: { fontSize: 11, fontFamily: "Inter_500Medium", textAlign: "center" },
   emptyQrCard: {
     flexDirection: "row", alignItems: "center", gap: 10,
     borderRadius: 14, padding: 16, borderWidth: 1,
