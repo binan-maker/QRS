@@ -321,11 +321,11 @@ export function useProfile() {
     setRefreshing(true);
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     try {
-      await Promise.all([loadStats(true), loadProfileExtras(true)]);
+      await loadStats(true);
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     } catch {}
     setRefreshing(false);
-  }, [refreshing, loadStats, loadProfileExtras]);
+  }, [refreshing, loadStats]);
 
   // ── Sign out ───────────────────────────────────────────────────────────────
   const handleSignOut = useCallback(async () => {
