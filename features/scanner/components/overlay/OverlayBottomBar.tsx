@@ -15,16 +15,10 @@ interface Props {
   zoomLabel:          string;
   onCycleZoom:        () => void;
   anonymousMode:      boolean;
-  scanned:            boolean;
   onPickImage:        () => void;
-  onReset:            () => void;
-  user:               any;
-  scanReady:          Animated.Value;
   flashOn:            boolean;
   onToggleFlash:      () => void;
   facing:             "back" | "front";
-  onFlipCamera:       () => void;
-  onToggleAnonymous:  () => void;
   /** True when the low-light heuristic has fired and the suggestion is visible */
   lowLightSuggested?: boolean;
 }
@@ -81,7 +75,13 @@ export default function OverlayBottomBar({
       {(zoom > 0 || anonymousMode) && (
         <ReAnimated.View entering={FadeIn.duration(200)} style={styles.pillRow}>
           {zoom > 0 && (
-            <Pressable onPress={onCycleZoom} style={styles.zoomPill} hitSlop={6}>
+            <Pressable
+              onPress={onCycleZoom}
+              style={styles.zoomPill}
+              hitSlop={6}
+              accessibilityRole="button"
+              accessibilityLabel={`Zoom level ${zoomLabel}, tap to cycle`}
+            >
               <Ionicons name="search-outline" size={12} color={SCANNER_GLOW} />
               <ReAnimated.Text style={styles.zoomText}>{zoomLabel}</ReAnimated.Text>
             </Pressable>
@@ -115,6 +115,8 @@ export default function OverlayBottomBar({
           <Pressable
             onPress={onPickImage}
             hitSlop={6}
+            accessibilityRole="button"
+            accessibilityLabel="Scan QR from gallery"
             style={({ pressed }) => [styles.glassBtn, pressed && styles.glassBtnPressed]}
           >
             <Ionicons name="images-outline" size={24} color="rgba(255,255,255,0.92)" />
@@ -128,6 +130,9 @@ export default function OverlayBottomBar({
             <Pressable
               onPress={isFlashDisabled ? undefined : onToggleFlash}
               hitSlop={6}
+              accessibilityRole="button"
+              accessibilityLabel={isFlashDisabled ? "Torch unavailable on front camera" : isFlashActive ? "Turn off torch" : "Turn on torch"}
+              accessibilityState={{ disabled: isFlashDisabled }}
               style={({ pressed }) => [
                 styles.glassBtn,
                 isFlashActive   && styles.glassBtnFlash,

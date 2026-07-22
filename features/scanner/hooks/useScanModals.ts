@@ -8,8 +8,7 @@
 //
 // NOTE: The Safety Modal was removed. openSafetyModal() now navigates directly
 // to /qr-detail/:id so the user reaches the result immediately without an
-// extra confirmation step. The SafetyModal component still exists in the
-// component library for potential future use but is not rendered here.
+// extra confirmation step.
 
 import { useState, useRef, useEffect } from "react";
 import { router } from "expo-router";
@@ -17,7 +16,7 @@ import { Linking } from "react-native";
 import type { GuardLink } from "@/lib/firestore-service";
 
 export interface ScanModalControls {
-  openSafetyModal:       (qrId: string, warnings: string[], riskLevel: "caution" | "dangerous") => void;
+  openSafetyModal:       (qrId: string) => void;
   openVerifiedModal:     (qrId: string, ownerName: string) => void;
   openLivingShieldModal: () => void;
   setLivingShieldData:   (data: GuardLink | null) => void;
@@ -73,7 +72,7 @@ export function useScanModals(resetScan: () => void) {
 
   // ── Control functions exposed to useScanProcessor ──────────────────────────
   // Safety modal removed — navigate directly to QR detail instead of interrupting the user.
-  function openSafetyModal(qrId: string, _warnings: string[], _riskLevel: "caution" | "dangerous") {
+  function openSafetyModal(qrId: string) {
     router.push(`/qr-detail/${qrId}`);
   }
 

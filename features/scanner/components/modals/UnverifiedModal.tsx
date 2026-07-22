@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet } from "react-native";
+import { View, Text, StyleSheet, Pressable } from "react-native";
 import Reanimated, { FadeInDown } from "react-native-reanimated";
 import { Ionicons } from "@expo/vector-icons";
 import { useTheme } from "@/shared/contexts/ThemeContext";
@@ -49,17 +49,32 @@ export function UnverifiedModal({ visible, countdown, onProceed, onBack }: Props
         </View>
 
         <View style={styles.actions}>
-          <View
-            onTouchEnd={onProceed}
-            style={[styles.proceedBtn, { backgroundColor: "rgba(255,255,255,0.06)", borderColor: "rgba(255,255,255,0.1)" }]}
+          <Pressable
+            onPress={onProceed}
+            accessibilityRole="button"
+            accessibilityLabel="View QR details now"
+            style={({ pressed }) => [
+              styles.proceedBtn,
+              {
+                backgroundColor: "rgba(255,255,255,0.06)",
+                borderColor:     "rgba(255,255,255,0.1)",
+                opacity:         pressed ? 0.7 : 1,
+              },
+            ]}
           >
             <Text style={[styles.proceedBtnText, { color: "rgba(255,255,255,0.6)" }]}>View Details Now</Text>
             <Ionicons name="arrow-forward" size={16} color="rgba(255,255,255,0.4)" />
-          </View>
-          <View onTouchEnd={onBack} style={styles.cancelBtn}>
+          </Pressable>
+
+          <Pressable
+            onPress={onBack}
+            accessibilityRole="button"
+            accessibilityLabel="Stay safe and go back"
+            style={({ pressed }) => [styles.cancelBtn, { opacity: pressed ? 0.8 : 1 }]}
+          >
             <Ionicons name="arrow-back" size={18} color="#000" />
             <Text style={styles.cancelBtnText}>Stay Safe</Text>
-          </View>
+          </Pressable>
         </View>
       </Reanimated.View>
     </View>

@@ -1,5 +1,5 @@
 import React from "react";
-import { View, Text, StyleSheet, Animated, useWindowDimensions } from "react-native";
+import { View, Text, StyleSheet, useWindowDimensions } from "react-native";
 import ReAnimated, { FadeIn } from "react-native-reanimated";
 import { FINDER_SIZE } from "@/features/scanner/hooks/useCameraControls";
 import { useOverlayAnimations } from "@/features/scanner/hooks/useOverlayAnimations";
@@ -17,14 +17,11 @@ interface Props {
   onCycleZoom:        () => void;
   scanned:            boolean;
   scanSuccess:        boolean;
-  scanLineAnim:       Animated.Value;
   anonymousMode:      boolean;
   onToggleAnonymous:  () => void;
   onPickImage:        () => void;
-  onReset:            () => void;
   user:               any;
   facing:             "back" | "front";
-  onFlipCamera:       () => void;
   lowLightSuggested?: boolean;
 }
 
@@ -41,10 +38,8 @@ export default function ScannerOverlay({
   anonymousMode,
   onToggleAnonymous,
   onPickImage,
-  onReset,
   user,
   facing,
-  onFlipCamera,
   lowLightSuggested = false,
 }: Props) {
   const { width: screenWidth, height: screenHeight } = useWindowDimensions();
@@ -102,23 +97,17 @@ export default function ScannerOverlay({
         user={user}
       />
 
-      {/* Bottom controls — Gallery + Torch centered */}
+      {/* Bottom controls — Gallery + Torch */}
       <OverlayBottomBar
         bottomInset={bottomInset}
         zoom={zoom}
         zoomLabel={zoomLabel}
         onCycleZoom={onCycleZoom}
         anonymousMode={anonymousMode}
-        scanned={scanned}
         onPickImage={onPickImage}
-        onReset={onReset}
-        user={user}
-        scanReady={anims.scanReady}
         flashOn={flashOn}
         onToggleFlash={onToggleFlash}
         facing={facing}
-        onFlipCamera={onFlipCamera}
-        onToggleAnonymous={onToggleAnonymous}
         lowLightSuggested={lowLightSuggested}
       />
     </View>

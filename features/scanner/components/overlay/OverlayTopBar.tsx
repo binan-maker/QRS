@@ -21,6 +21,8 @@ export default function OverlayTopBar({ topInset, anonymousMode, onToggleAnonymo
         onPress={() => router.canGoBack() ? router.back() : router.replace("/(tabs)/index")}
         style={({ pressed }) => [styles.glassBtn, pressed && styles.glassBtnPressed]}
         hitSlop={8}
+        accessibilityRole="button"
+        accessibilityLabel="Go back"
       >
         <Ionicons name="chevron-back" size={20} color="rgba(255,255,255,0.9)" />
       </Pressable>
@@ -35,6 +37,9 @@ export default function OverlayTopBar({ topInset, anonymousMode, onToggleAnonymo
         <Pressable
           onPress={onToggleAnonymous}
           hitSlop={8}
+          accessibilityRole="button"
+          accessibilityLabel={anonymousMode ? "Disable private mode" : "Enable private mode"}
+          accessibilityState={{ selected: anonymousMode }}
           style={({ pressed }) => [
             styles.glassBtn,
             anonymousMode && styles.glassBtnActive,

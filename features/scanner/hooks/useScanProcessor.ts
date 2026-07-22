@@ -149,7 +149,7 @@ export function useScanProcessor({
     if (contentType === "url") {
       const check = runSecurityCheck(content);
       if (check.hasThreat) {
-        modalControls.openSafetyModal(qrId, check.warnings, check.riskLevel);
+        modalControls.openSafetyModal(qrId);
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
         emitScanEvent(qrId, { platform: PLATFORM, contentType, verdict: "flagged", scanSource });
         return;
@@ -197,7 +197,7 @@ export function useScanProcessor({
       if (contentType === "url") {
         const check = runSecurityCheck(content);
         if (check.hasThreat) {
-          modalControls.openSafetyModal(qrId, check.warnings, check.riskLevel);
+          modalControls.openSafetyModal(qrId);
           Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
           // Record event even for anonymous flagged scans — no PII stored
           emitScanEvent(qrId, { platform: PLATFORM, contentType, verdict: "flagged", scanSource: "camera" });
@@ -307,7 +307,7 @@ export function useScanProcessor({
       if (contentType === "url") {
         const check = runSecurityCheck(content);
         if (check.hasThreat) {
-          modalControls.openSafetyModal(qrId, check.warnings, check.riskLevel);
+          modalControls.openSafetyModal(qrId);
           Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
           _backgroundSync(content, qrId, contentType, scanSource, "flagged");
           return;

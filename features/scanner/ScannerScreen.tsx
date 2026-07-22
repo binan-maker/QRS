@@ -234,7 +234,6 @@ export default function ScannerScreen() {
     verifiedOwnerName,
     unverifiedModal,
     unverifiedCountdown,
-    scanLineAnim,
     galleryErrorMsg,
     dismissGalleryError,
     scannerMsg,
@@ -427,7 +426,7 @@ export default function ScannerScreen() {
       {/* Tap-to-focus area — transparent, sits between camera and overlay */}
       {cameraLive && !scanned && (
         <Pressable
-          style={[StyleSheet.absoluteFillObject, styles.tapArea]}
+          style={StyleSheet.absoluteFillObject}
           onPress={(e) => handleTapFocus(e.nativeEvent.locationX, e.nativeEvent.locationY)}
         />
       )}
@@ -465,14 +464,11 @@ export default function ScannerScreen() {
           onCycleZoom={cycleZoom}
           scanned={scanned}
           scanSuccess={scanSuccess}
-          scanLineAnim={scanLineAnim}
           anonymousMode={anonymousMode}
           onToggleAnonymous={() => setAnonymousMode(!anonymousMode)}
           onPickImage={handlePickImage}
-          onReset={resetScan}
           user={user}
           facing={facing}
-          onFlipCamera={flipCamera}
           lowLightSuggested={lowLightSuggested}
         />
       )}
@@ -536,10 +532,6 @@ const styles = StyleSheet.create({
     borderWidth:     1,
     borderColor:     "rgba(255,255,255,0.1)",
   },
-
-  // Transparent tap-to-focus area — no zIndex so ScannerOverlay (rendered after)
-  // stays on top by natural stacking order and its buttons receive touches first.
-  tapArea: {},
 
   // Small square focus ring that appears where the user taps
   focusRing: {
