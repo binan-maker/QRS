@@ -15,7 +15,7 @@ import { useTheme } from "@/shared/contexts/ThemeContext";
 import { useTopInset } from "@/shared/utils/platform";
 import { useScaleFns } from "@/shared/hooks/useScaleFns";
 import { useAuth } from "@/shared/contexts/AuthContext";
-import { getGeneratedQrById, type GeneratedQrItem } from "@/services/generator-service";
+import { getGeneratedQrById, type GeneratedQrItem } from "@/services/generator";
 import { getQrFollowCount } from "@/lib/firestore-service";
 import { getDetailDisplayTitle } from "@/services/qr-display";
 import { getQrAnalyticsSummary, type QrAnalyticsSummary } from "@/services/qr-detail-service";

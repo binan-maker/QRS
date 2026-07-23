@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { getPublicProfile, type PublicProfile } from "@/services/user-service";
+import { getPublicProfile, type PublicProfile } from "@/services/user";
 
 export type { PublicProfile };
 

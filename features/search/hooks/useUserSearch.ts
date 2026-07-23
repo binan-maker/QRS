@@ -1,6 +1,6 @@
 import { useState, useCallback, useRef } from "react";
 import { useAuth } from "@/shared/contexts/AuthContext";
-import { searchUsers, type UserSearchResult } from "@/services/user-service";
+import { searchUsers, type UserSearchResult } from "@/services/user";
 
 export type { UserSearchResult };
 

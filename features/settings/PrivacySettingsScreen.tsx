@@ -13,7 +13,7 @@ import {
   getPrivacySettings,
   updatePrivacySettings,
   PrivacySettings,
-} from "@/services/user-service";
+} from "@/services/user";
 import {
   getCachedPrivacySettings,
   setCachedPrivacySettings,

@@ -29,7 +29,7 @@ import {
 import { runSecurityCheck } from "@/features/scanner/utils/security-analysis";
 import { decodeQrFromImageUri } from "@/features/scanner/utils/qr-decode";
 import { appendToLocalScanHistory, makeScanEntry } from "@/features/scanner/utils/scan-history";
-import { emitScanEvent } from "@/services/scan-history-service";
+import { emitScanEvent } from "@/services/scan-history";
 import type { ScanModalControls } from "@/features/scanner/hooks/useScanModals";
 
 const GUARD_PATTERN =
