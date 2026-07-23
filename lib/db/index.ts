@@ -3,7 +3,7 @@
 // ───────────────────────────────────────────────────────────────────────────────
 // Uses lazy require() instead of static imports to avoid creating a hard
 // circular-dependency at module-evaluation time.
-// (lib/db/firebase.ts re-exports service functions that import lib/db/index.ts —
+// (lib/db/services.ts re-exports service functions that import lib/db/index.ts —
 // CommonJS lazy-require handles that cycle gracefully; static ESM imports cannot.)
 // ═══════════════════════════════════════════════════════════════════════════════
 
@@ -22,4 +22,4 @@ export const rtdb: RealtimeAdapter = loadFirebaseRtdb();
 
 export type { DbAdapter, RealtimeAdapter, DbDocument, QueryOptions, QueryResult, WhereClause } from "./adapter";
 
-export * from "./firebase";
+export * from "./services";

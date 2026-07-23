@@ -1,3 +1,10 @@
+// ═══════════════════════════════════════════════════════════════════════════════
+// SECURITY — ECDSA response-signature verification.
+// ───────────────────────────────────────────────────────────────────────────────
+// Used to verify that threat-pattern payloads returned by the API were signed
+// with the server's private key. Prevents man-in-the-middle tampering.
+// ═══════════════════════════════════════════════════════════════════════════════
+
 const PUBLIC_KEY_B64 =
   "MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEH06cFBC8yBhAdlw3KBExytCQLbKGKURAdcr+8fyOBCBOIhSlT803TeD//JAImGn59Jr3ENFIZlC+3V6VL4g1qA==";
 
