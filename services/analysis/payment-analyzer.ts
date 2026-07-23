@@ -94,36 +94,3 @@ export function analyzeAnyPaymentQr(parsed: ParsedPaymentQr): PaymentSafetyResul
   };
 }
 
-export function parseUpiQr(content: string): ParsedUpiQr | null {
-  const parsed = parseAnyPaymentQr(content);
-  if (!parsed || parsed.appCategory !== "upi_india") return null;
-  return {
-    vpa: parsed.vpa || parsed.recipientId,
-    payeeName: parsed.recipientName || "",
-    amount: parsed.amount || null,
-    currency: parsed.currency || "INR",
-    transactionNote: parsed.note || null,
-    merchantCategory: null,
-    bankHandle: parsed.bankHandle || "",
-    isAmountPreFilled: parsed.isAmountPreFilled,
-  };
-}
-
-export function analyzePaymentQr(parsed: ParsedUpiQr): PaymentSafetyResult {
-  const universal: ParsedPaymentQr = {
-    app: "upi",
-    appDisplayName: "UPI",
-    appCategory: "upi_india",
-    region: "India",
-    recipientId: parsed.vpa,
-    recipientName: parsed.payeeName,
-    amount: parsed.amount || undefined,
-    currency: parsed.currency,
-    note: parsed.transactionNote || undefined,
-    rawContent: "",
-    isAmountPreFilled: parsed.isAmountPreFilled,
-    bankHandle: parsed.bankHandle,
-    vpa: parsed.vpa,
-  };
-  return analyzeAnyPaymentQr(universal);
-}

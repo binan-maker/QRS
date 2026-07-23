@@ -26,10 +26,6 @@ export function isWithin24h(tsMs: number): boolean {
   return Date.now() - tsMs < 86400000;
 }
 
-export function isWithinSeconds(tsMs: number, seconds: number): boolean {
-  return Date.now() - tsMs < seconds * 1000;
-}
-
 export function isWithinMs(tsMs: number, ms: number): boolean {
   return Date.now() - tsMs < ms;
 }

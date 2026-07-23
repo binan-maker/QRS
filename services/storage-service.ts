@@ -5,14 +5,6 @@
 import { storageAdapter } from "@/lib/storage";
 
 /**
- * Extract the internal storage path from a provider-issued download URL.
- * Returns an empty string when the URL cannot be parsed.
- */
-export function getStoragePathFromUrl(imageUrl: string): string {
-  return storageAdapter.getPathFromUrl(imageUrl);
-}
-
-/**
  * Delete an image given its download URL.
  * Silently ignores missing files.
  */

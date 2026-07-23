@@ -103,7 +103,7 @@ const HINDI_PROFANITY: {
   },
 ];
 
-export interface ProfanityCheckResult {
+interface ProfanityCheckResult {
   isBlocked: boolean;
   matchedWords: string[];
   categories: string[];
