@@ -8,6 +8,7 @@
 import { Linking, Platform } from "react-native";
 import * as Clipboard from "expo-clipboard";
 import * as Haptics from "@/shared/utils/haptics";
+import { EXTERNAL } from "@/config/app";
 
 export interface QrAction {
   key: string;
@@ -125,7 +126,7 @@ function resolveOpenUrl(content: string, contentType: string): string | null {
 function getFallbackUrl(content: string, contentType: string): string | null {
   if (contentType === "location" || contentType === "google_maps") {
     const geo = content.match(/geo:(-?[\d.]+),(-?[\d.]+)/);
-    if (geo) return `https://maps.google.com/?q=${geo[1]},${geo[2]}`;
+    if (geo) return `${EXTERNAL.GOOGLE_MAPS}${geo[1]},${geo[2]}`;
   }
   return null;
 }

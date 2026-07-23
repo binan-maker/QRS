@@ -1,5 +1,6 @@
 import { db } from "@/lib/db/client";
 import * as Crypto from "expo-crypto";
+import { API_BASE_URL } from "@/config/api";
 import { detectContentType, getQrCodeId } from "../qr-service";
 import { logError } from "./crud";
 import type { QrOwnerInfo, QrType } from "../types";
@@ -94,10 +95,7 @@ export async function setQrActiveState(
     if (!currentUser) throw new Error("Not authenticated");
 
     const idToken = await currentUser.getIdToken(false);
-    const raw = process.env.EXPO_PUBLIC_DOMAIN;
-    const BASE_URL = raw ? `https://${raw.split(":")[0]}` : "";
-
-    const res = await fetch(`${BASE_URL}/api/qr/${encodeURIComponent(qrId)}/active`, {
+    const res = await fetch(`${API_BASE_URL}/api/qr/${encodeURIComponent(qrId)}/active`, {
       method: "PATCH",
       headers: {
         "Content-Type": "application/json",

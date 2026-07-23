@@ -1,4 +1,5 @@
 import type { QrSchema } from "../types";
+import { EXTERNAL } from "@/config/app";
 
 export const socialSchema: QrSchema = {
   key: "social",
@@ -47,7 +48,7 @@ export const whatsappSchema: QrSchema = {
   build: (v, extra) => {
     const cleaned = v.replace(/[\s\-().]/g, "").replace(/^\+/, "");
     const msg = extra.message?.trim() ?? "";
-    let url = `https://wa.me/${cleaned}`;
+    let url = `${EXTERNAL.WHATSAPP}${cleaned}`;
     if (msg) url += `?text=${encodeURIComponent(msg)}`;
     return url;
   },

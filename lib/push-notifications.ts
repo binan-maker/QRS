@@ -26,19 +26,16 @@ Notifications.setNotificationHandler({
   }),
 });
 
-const SERVER_BASE = (() => {
-  const raw = process.env.EXPO_PUBLIC_DOMAIN;
-  if (raw) { const host = raw.split(":")[0]; if (host) return `https://${host}`; }
-  return __DEV__ ? "http://localhost:5000" : "";
-})();
+import { API_BASE_URL } from "@/config/api";
+import { REQUEST_TIMEOUT_MS } from "@/config/app";
 
 async function post(path: string, body: object): Promise<void> {
   try {
-    await fetch(`${SERVER_BASE}${path}`, {
+    await fetch(`${API_BASE_URL}${path}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(body),
-      signal: AbortSignal.timeout(8000),
+      signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
     });
   } catch {}
 }

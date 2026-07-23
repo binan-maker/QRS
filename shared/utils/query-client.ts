@@ -2,6 +2,7 @@ import { fetch } from "expo/fetch";
 import { QueryClient, QueryFunction } from "@tanstack/react-query";
 import Constants from "expo-constants";
 import { Platform } from "react-native";
+import { ENV } from "@/config/env";
 
 /**
  * Gets the base URL for the Express API server (e.g., "http://localhost:3000")
@@ -17,7 +18,7 @@ function isValidHost(host: string | undefined): host is string {
 }
 
 export function getApiUrl(): string {
-  const explicitDomain = process.env.EXPO_PUBLIC_DOMAIN;
+  const explicitDomain = ENV.DOMAIN;
   if (explicitDomain) {
     // Strip any trailing port — Replit proxies HTTPS on 443, not 5000
     const host = explicitDomain.split(":")[0];

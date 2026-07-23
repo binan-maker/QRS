@@ -7,6 +7,7 @@ import Animated, { FadeIn } from "react-native-reanimated";
 import { useTheme } from "@/shared/contexts/ThemeContext";
 import { useScaleFns } from "@/shared/hooks/useScaleFns";
 import type { LogoPosition } from "@/features/my-qr/hooks/useQrDesign";
+import { DEFAULT_QR_URL } from "@/config/app";
 
 interface ContentTypeMeta {
   color: string;
@@ -118,7 +119,7 @@ export default function QrHeroCard({
           }}>
             <QRCode
               getRef={(ref: any) => { svgRef.current = ref; }}
-              value={qrContent || "https://qrguard.app"}
+              value={qrContent || DEFAULT_QR_URL}
               size={qrSize}
               color={fgColor}
               backgroundColor={bgColor}

@@ -12,6 +12,7 @@ import { useMyQrDetail } from "@/features/my-qr/hooks/useMyQrDetail";
 import { useScaleFns } from "@/shared/hooks/useScaleFns";
 import { getDetailContentType, getDetailDisplayTitle } from "@/services/qr-display";
 import { getQrTypeMeta as getCtMeta } from "@/features/qr-engine";
+import { DEFAULT_QR_URL } from "@/config/app";
 
 import MyQrNavBar from "@/features/my-qr/components/MyQrNavBar";
 import QrHeroCard from "@/features/my-qr/components/cards/QrHeroCard";
@@ -262,7 +263,7 @@ export default function MyQrDetailScreen() {
         scrollEventThrottle={16}
       >
         <QrHeroCard
-          qrContent={qrItem.content || "https://qrguard.app"}
+          qrContent={qrItem.content || DEFAULT_QR_URL}
           displayTitle={displayTitle}
           ctMeta={ctMeta}
           isActive={isActive}

@@ -7,17 +7,14 @@ import { checkProfanity, sanitizeComment } from "../profanity-filter";
 import { getUserProfileCache, preloadUserProfile, setUserProfileCache } from "./cache";
 import { authAdapter } from "@/lib/auth";
 import { COLLECTIONS } from "@/shared/constants/collections";
+import { API_BASE_URL } from "@/config/api";
 
 // Firestore client-side rules lock commentCount from direct client writes.
 // This helper calls the Express backend (which uses Admin SDK, bypassing rules)
 // to apply the delta. Fails silently — the comment document itself is the
 // source of truth; the count is a cached aggregate.
 async function adjustCommentCount(qrId: string, delta: 1 | -1): Promise<void> {
-  const raw = process.env.EXPO_PUBLIC_DOMAIN;
-  const host = raw ? raw.split(":")[0] : null;
-  const serverUrl = host ? `https://${host}` : (
-    typeof __DEV__ !== "undefined" && __DEV__ ? "http://localhost:5000" : ""
-  );
+  const serverUrl = API_BASE_URL;
   if (!serverUrl) return;
 
   const currentUser = authAdapter.getCurrentUser();

@@ -3,6 +3,7 @@ import { View, Pressable } from "react-native";
 import QRCode from "react-native-qrcode-svg";
 import Animated, { FadeIn } from "react-native-reanimated";
 import { safePush } from "@/shared/utils/navigation";
+import { DEFAULT_QR_URL } from "@/config/app";
 
 export interface QrItem {
   docId?: string;
@@ -45,7 +46,7 @@ const QrPreviewCard = memo(function QrPreviewCard({ qr, colors, tileSize }: Prop
         })}
       >
         <QRCode
-          value={qr.content || "https://qrguard.app"}
+          value={qr.content || DEFAULT_QR_URL}
           size={qrSize}
           color={qr.fgColor || "#0A0E17"}
           backgroundColor={thumbBg}

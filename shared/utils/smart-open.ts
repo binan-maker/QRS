@@ -16,6 +16,7 @@
 
 import { Alert, Linking, Platform } from "react-native";
 import { getQrTypeDef as getQrTypeStyle } from "@/features/qr-engine";
+import { EXTERNAL } from "@/config/app";
 
 const AUTHENTICATOR_STORE_URL =
   Platform.OS === "ios"
@@ -104,12 +105,12 @@ export async function smartOpenContent(
         ? afterGeo.split("q=")[1]?.split("&")[0]
         : "";
       mapsUrl = qParam
-        ? `https://maps.google.com/?q=${encodeURIComponent(qParam)}`
-        : `https://maps.google.com/?q=${coords}`;
+        ? `${EXTERNAL.GOOGLE_MAPS}${encodeURIComponent(qParam)}`
+        : `${EXTERNAL.GOOGLE_MAPS}${coords}`;
     } else if (lower.startsWith("comgooglemaps://")) {
       mapsUrl = content.replace("comgooglemaps://", "https://maps.google.com/");
     } else if (!lower.startsWith("http")) {
-      mapsUrl = `https://maps.google.com/?q=${encodeURIComponent(content)}`;
+      mapsUrl = `${EXTERNAL.GOOGLE_MAPS}${encodeURIComponent(content)}`;
     }
     Linking.openURL(mapsUrl).catch(() =>
       Alert.alert("Error", "Could not open Maps.")
@@ -119,8 +120,7 @@ export async function smartOpenContent(
 
   // ── Calendar / Event ──────────────────────────────────────────────────────
   if (contentType === "calendar" || contentType === "event") {
-    const gcalBase = "https://calendar.google.com/calendar/r/eventedit";
-    Linking.openURL(gcalBase).catch(() =>
+    Linking.openURL(EXTERNAL.GOOGLE_CALENDAR).catch(() =>
       Alert.alert("Error", "Could not open the calendar app.")
     );
     return;

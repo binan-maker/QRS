@@ -14,6 +14,8 @@ import { resolveExpiryDate, type AdvancedSettings } from "@/features/generator/c
 import type { QrMode } from "@/features/generator/types/form-types";
 import { appendToLocalScanHistory } from "@/features/scanner/utils/scan-history";
 import { clearCache } from "@/services/cache/local-cache";
+import { ENV } from "@/config/env";
+import { DEFAULT_QR_URL } from "@/config/app";
 
 function myQrsCacheKey(userId: string) { return `myqrs_v1_${userId}`; }
 
@@ -22,7 +24,7 @@ function getFirestoreContentType(presetIdx: number): string {
 }
 
 function getStableQrBase(): string {
-  const domain = process.env.EXPO_PUBLIC_DOMAIN;
+  const domain = ENV.DOMAIN;
   if (domain && domain.trim()) {
     let hostname = domain.trim();
     try {
@@ -38,11 +40,11 @@ function getStableQrBase(): string {
       hostname === "localhost" ||
       hostname.startsWith("localhost:")
     ) {
-      return "https://qrguard.app";
+      return DEFAULT_QR_URL;
     }
     return `https://${hostname}`;
   }
-  return "https://qrguard.app";
+  return DEFAULT_QR_URL;
 }
 
 interface Params {

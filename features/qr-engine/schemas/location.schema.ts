@@ -1,4 +1,5 @@
 import type { QrSchema } from "../types";
+import { EXTERNAL } from "@/config/app";
 
 export const locationSchema: QrSchema = {
   key: "location",
@@ -34,7 +35,7 @@ export const locationSchema: QrSchema = {
     const lat = extra.lat?.trim() ?? "";
     const lng = extra.lng?.trim() ?? "";
     if (lat && lng) return `geo:${lat},${lng}?q=${encodeURIComponent(v)}`;
-    return `https://maps.google.com/?q=${encodeURIComponent(v)}`;
+    return `${EXTERNAL.GOOGLE_MAPS}${encodeURIComponent(v)}`;
   },
   validate: (v) => {
     if (!v.trim()) return "Please enter a location name or address.";

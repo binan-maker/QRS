@@ -1,17 +1,17 @@
 import { useState, useEffect, useRef } from "react";
 import { getBankFullName } from "./utils";
 import { resolveIFSCBankName } from "@/features/qr-engine/parsers/payment/bank-account";
+import { API_BASE_URL } from "@/config/api";
+import { RTDB_TIMEOUT_MS } from "@/config/app";
 
 const memCache = new Map<string, string>();
 
 async function fetchBankNameFromIfsc(ifsc: string): Promise<string> {
   if (memCache.has(ifsc)) return memCache.get(ifsc)!;
   try {
-    const raw = process.env.EXPO_PUBLIC_DOMAIN;
-    const baseUrl = raw ? `https://${raw.split(":")[0]}` : "";
-    const res = await fetch(`${baseUrl}/api/v1/ifsc/${ifsc}`, {
+    const res = await fetch(`${API_BASE_URL}/api/v1/ifsc/${ifsc}`, {
       headers: { Accept: "application/json" },
-      signal: AbortSignal.timeout(5000),
+      signal: AbortSignal.timeout(RTDB_TIMEOUT_MS),
     });
     if (res.ok) {
       const data = await res.json() as { bank?: string };

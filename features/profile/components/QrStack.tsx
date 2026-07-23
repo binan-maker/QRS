@@ -3,6 +3,7 @@ import { View, Text, Pressable, StyleSheet } from "react-native";
 import QRCode from "react-native-qrcode-svg";
 import Animated, { FadeIn } from "react-native-reanimated";
 import type { QrItem } from "./QrPreviewCard";
+import { DEFAULT_QR_URL } from "@/config/app";
 
 const CARD_W    = 88;
 const CARD_H    = 88;
@@ -78,7 +79,7 @@ export function QrStack({ qrs, totalCount, colors, onViewAll, onPressCard }: Pro
               ]}
             >
               <QRCode
-                value={qr.content || "https://qrguard.app"}
+                value={qr.content || DEFAULT_QR_URL}
                 size={qrSize}
                 color={fgColor}
                 backgroundColor={thumbBg}

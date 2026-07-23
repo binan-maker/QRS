@@ -4,10 +4,9 @@
 // To switch backends, edit lib/db/index.ts only.
 
 import { db } from "@/lib/db";
+import { API_BASE_URL } from "@/config/api";
 
-const BASE_URL = process.env.EXPO_PUBLIC_DOMAIN
-  ? `https://${process.env.EXPO_PUBLIC_DOMAIN}`
-  : "";
+const BASE_URL = API_BASE_URL;
 
 export interface DonationRecord {
   id: string;

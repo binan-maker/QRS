@@ -1,3 +1,5 @@
+import { EXTERNAL } from "@/config/app";
+
 /**
  * Generator QR Type Registry
  * ─────────────────────────────────────────────────────────────────────────────
@@ -121,7 +123,7 @@ export const QR_REGISTRY: QrTypeEntry[] = [
     build: (v, extra) => {
       const cleaned = v.replace(/[\s\-().]/g, "").replace(/^\+/, "");
       const msg = extra.message?.trim() ?? "";
-      let url = `https://wa.me/${cleaned}`;
+      let url = `${EXTERNAL.WHATSAPP}${cleaned}`;
       if (msg) url += `?text=${encodeURIComponent(msg)}`;
       return url;
     },
@@ -190,7 +192,7 @@ export const QR_REGISTRY: QrTypeEntry[] = [
       const lat = extra.lat?.trim() ?? "";
       const lng = extra.lng?.trim() ?? "";
       if (lat && lng) return `geo:${lat},${lng}?q=${encodeURIComponent(v)}`;
-      return `https://maps.google.com/?q=${encodeURIComponent(v)}`;
+      return `${EXTERNAL.GOOGLE_MAPS}${encodeURIComponent(v)}`;
     },
     validate: (v) => {
       if (!v.trim()) return "Please enter a location name or address.";

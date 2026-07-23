@@ -3,6 +3,7 @@ import { Ionicons } from "@expo/vector-icons";
 import Animated, { FadeInDown } from "react-native-reanimated";
 import { useTheme } from "@/shared/contexts/ThemeContext";
 import { useScaleFns } from "@/shared/hooks/useScaleFns";
+import { EXTERNAL } from "@/config/app";
 
 interface Props {
   effectiveContentType: string;
@@ -133,9 +134,9 @@ export default function StandardLinkCard({
       case "sms": return "SMSTO:" + (f.phone || "") + ":" + (f.message || "");
       case "upi": case "scantopay": case "bharatqr": { const p = new URLSearchParams(); if (f.pa) p.set("pa", f.pa); if (f.pn) p.set("pn", f.pn); if (f.am) p.set("am", f.am); p.set("cu", "INR"); return "upi://pay?" + p.toString(); }
       case "wifi": return `WIFI:T:${f.security || "WPA"};S:${f.ssid || ""};P:${f.password || ""};;`;
-      case "calendly": return `https://calendly.com/${f.username || ""}${f.eventType ? "/" + f.eventType : ""}`;
-      case "zoom": { const base = `https://zoom.us/j/${(f.meetingId || "").replace(/\s/g, "")}`; return f.passcode ? base + `?pwd=${f.passcode}` : base; }
-      case "whatsapp": { const phone = (f.phone || "").replace(/\D/g, ""); const msg = (f.message || "").trim(); return `https://wa.me/${phone}${msg ? "?text=" + encodeURIComponent(msg) : ""}`; }
+      case "calendly": return `${EXTERNAL.CALENDLY}${f.username || ""}${f.eventType ? "/" + f.eventType : ""}`;
+      case "zoom": { const base = `${EXTERNAL.ZOOM}${(f.meetingId || "").replace(/\s/g, "")}`; return f.passcode ? base + `?pwd=${f.passcode}` : base; }
+      case "whatsapp": { const phone = (f.phone || "").replace(/\D/g, ""); const msg = (f.message || "").trim(); return `${EXTERNAL.WHATSAPP}${phone}${msg ? "?text=" + encodeURIComponent(msg) : ""}`; }
       default: return "";
     }
   }

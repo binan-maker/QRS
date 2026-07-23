@@ -1,8 +1,5 @@
-const BASE_URL = (() => {
-  const raw = process.env.EXPO_PUBLIC_DOMAIN;
-  if (raw) { const host = raw.split(":")[0]; if (host) return `https://${host}`; }
-  return "http://localhost:5000";
-})();
+import { API_BASE_URL } from "@/config/api";
+import { EXTERNAL, REQUEST_TIMEOUT_MS } from "@/config/app";
 
 export const AI_EXAMPLES = [
   { label: "WiFi QR", prompt: "WiFi for MyShop, password: Secure@123" },
@@ -21,7 +18,7 @@ export function clientSmartParse(p: string): string {
 
   if (/whatsapp/i.test(lower)) {
     const phone = p.match(/[\+\d][\d\s\-()]{7,}/)?.[0]?.replace(/[^\d+]/g, "") ?? "";
-    if (phone) return `https://wa.me/${phone.replace(/^\+/, "")}`;
+    if (phone) return `${EXTERNAL.WHATSAPP}${phone.replace(/^\+/, "")}`;
   }
 
   if (/wi-?fi|ssid|network.*pass|pass.*network/i.test(lower)) {
@@ -63,7 +60,7 @@ export async function callAiQrGenerate(prompt: string): Promise<string> {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ prompt }),
-      signal: AbortSignal.timeout(8000),
+      signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
     });
     if (!res.ok) throw new Error(`Server error ${res.status}`);
     const data = await res.json();

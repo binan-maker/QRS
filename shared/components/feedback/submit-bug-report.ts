@@ -1,15 +1,11 @@
 import { Platform } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { ENV } from "@/config/env";
 
 export async function submitBugReport(message: string, error: Error): Promise<void> {
-  const FIREBASE_PROJECT_ID =
-    (typeof process !== "undefined" && (process.env?.EXPO_PUBLIC_FIREBASE_PROJECT_ID || process.env?.FIREBASE_PROJECT_ID)) ||
-    "";
-  const FIREBASE_API_KEY =
-    (typeof process !== "undefined" && (process.env?.EXPO_PUBLIC_FIREBASE_API_KEY || process.env?.FIREBASE_API_KEY)) ||
-    "";
-
-  const url = `https://firestore.googleapis.com/v1/projects/${FIREBASE_PROJECT_ID}/databases/(default)/documents/bugReports?key=${FIREBASE_API_KEY}`;
+  const url =
+    `https://firestore.googleapis.com/v1/projects/${ENV.FIREBASE_PROJECT_ID}` +
+    `/databases/(default)/documents/bugReports?key=${ENV.FIREBASE_API_KEY}`;
 
   let deviceInfo = `Platform: ${Platform.OS}`;
   try {

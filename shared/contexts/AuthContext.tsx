@@ -21,12 +21,11 @@ import { COLLECTIONS } from "@/shared/constants/collections";
 import { useNotificationStore } from "@/store/notificationStore";
 import { clearUserProfileCache } from "@/services/user/cache";
 import { clearCommentProfileCache } from "@/services/comments/cache";
+import { API_BASE_URL } from "@/config/api";
+import { ENV } from "@/config/env";
+import { RTDB_TIMEOUT_MS } from "@/config/app";
 
-const SERVER_BASE_URL = (() => {
-  const raw = process.env.EXPO_PUBLIC_DOMAIN;
-  if (raw) { const host = raw.split(":")[0]; if (host) return `https://${host}`; }
-  return __DEV__ ? "http://localhost:5000" : "";
-})();
+const SERVER_BASE_URL = API_BASE_URL;
 
 async function serverValidateEmail(email: string): Promise<{ valid: boolean; reason?: string }> {
   try {
@@ -34,7 +33,7 @@ async function serverValidateEmail(email: string): Promise<{ valid: boolean; rea
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ email }),
-      signal: AbortSignal.timeout(5000),
+      signal: AbortSignal.timeout(RTDB_TIMEOUT_MS),
     });
     // Only treat the server's verdict as authoritative on an explicit HTTP 200.
     // Any non-200 response (4xx, 5xx, or a proxy 502 when the backend is offline)
@@ -52,7 +51,7 @@ async function serverValidateEmail(email: string): Promise<{ valid: boolean; rea
 
 WebBrowser.maybeCompleteAuthSession();
 
-const GOOGLE_WEB_CLIENT_ID = process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID ?? "";
+const GOOGLE_WEB_CLIENT_ID = ENV.GOOGLE_WEB_CLIENT_ID;
 const GOOGLE_ANDROID_CLIENT_ID = process.env.EXPO_PUBLIC_ANDROID_CLIENT_ID ?? "";
 const GOOGLE_IOS_CLIENT_ID = process.env.EXPO_PUBLIC_IOS_CLIENT_ID ?? "";
 

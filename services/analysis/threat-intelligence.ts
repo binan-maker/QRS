@@ -18,14 +18,7 @@ export interface ThreatIntelligenceResult {
   label: string;
 }
 
-function getBaseUrl(): string {
-  if (typeof process !== "undefined" && process.env?.EXPO_PUBLIC_DOMAIN) {
-    const raw = process.env.EXPO_PUBLIC_DOMAIN;
-    const host = raw.startsWith("http") ? raw : raw.split(":")[0];
-    return host ? (host.startsWith("http") ? host : `https://${host}`) : "";
-  }
-  return "";
-}
+import { API_BASE_URL } from "@/config/api";
 
 const THREAT_TYPE_LABELS: Record<string, string> = {
   MALWARE: "Malware Distribution Site",
@@ -41,7 +34,7 @@ const THREAT_TYPE_LABELS: Record<string, string> = {
 async function checkGoogleSafeBrowsing(
   url: string
 ): Promise<ThreatIntelligenceResult | null> {
-  const base = getBaseUrl();
+  const base = API_BASE_URL;
   if (!base) return null;
 
   try {

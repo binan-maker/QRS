@@ -1,5 +1,7 @@
 import { BUILT_IN_BLACKLIST, saveOfflineBlacklist } from "./blacklist";
 import { verifyThreatSignature } from "@/lib/security/signature-verifier";
+import { API_BASE_URL } from "@/config/api";
+import { REQUEST_TIMEOUT_MS } from "@/config/app";
 
 export interface ThreatDefinitions {
   patterns: { pattern: string; reason: string }[];
@@ -13,26 +15,17 @@ let _cache: ThreatDefinitions | null = null;
 // SECURITY FIX P1: Require signature verification in production
 const REQUIRE_SIGNATURE_VERIFICATION = process.env.NODE_ENV === 'production';
 
-function getBaseUrl(): string {
-  if (typeof process !== "undefined" && process.env?.EXPO_PUBLIC_DOMAIN) {
-    const raw = process.env.EXPO_PUBLIC_DOMAIN;
-    const host = raw.startsWith("http") ? raw : raw.split(":")[0];
-    return host ? (host.startsWith("http") ? host : `https://${host}`) : "";
-  }
-  return "";
-}
-
 export async function fetchThreatDefinitions(): Promise<ThreatDefinitions | null> {
   const now = Date.now();
   if (_cache && now - _cache.fetchedAt < THREAT_CACHE_TTL_MS) return _cache;
 
-  const base = getBaseUrl();
+  const base = API_BASE_URL;
   if (!base) return null;
 
   try {
     const res = await fetch(`${base}/api/threats`, {
       headers: { Accept: "application/json" },
-      signal: AbortSignal.timeout(8000),
+      signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
     });
     if (!res.ok) return null;
 

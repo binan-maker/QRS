@@ -14,20 +14,15 @@ import { Platform } from "react-native";
 // a custom dev client; not enabled here to keep the Expo managed workflow
 // portable. Web is the larger attack surface anyway.
 import { initializeAppCheck, ReCaptchaV3Provider } from "firebase/app-check";
+import { FIREBASE_CONFIG } from "@/config/firebase";
+import { ENV } from "@/config/env";
 
 // ─── Firebase Configuration ────────────────────────────────────────────────
-// All values are read from environment variables (EXPO_PUBLIC_FIREBASE_*).
-// For local development, copy .env.example to .env and fill in your values.
-// For Replit / CI, set the variables in the Secrets panel.
-const projectId = process.env.EXPO_PUBLIC_FIREBASE_PROJECT_ID;
+// All values come from config/firebase.ts (sourced from EXPO_PUBLIC_FIREBASE_*).
 const firebaseConfig = {
-  apiKey: process.env.EXPO_PUBLIC_FIREBASE_API_KEY,
-  authDomain: `${projectId}.firebaseapp.com`,
-  projectId,
-  storageBucket: process.env.EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET,
-  databaseURL: process.env.EXPO_PUBLIC_FIREBASE_DATABASE_URL,
-  appId: process.env.EXPO_PUBLIC_FIREBASE_APP_ID,
-  messagingSenderId: process.env.EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
+  ...FIREBASE_CONFIG,
+  authDomain: `${FIREBASE_CONFIG.projectId}.firebaseapp.com`,
+  databaseURL: FIREBASE_CONFIG.databaseUrl,
 };
 
 // ─── App (singleton — hot-reload safe) ─────────────────────────────────────
@@ -97,7 +92,7 @@ export function getStorageInstance(): ReturnType<typeof getStorage> {
 // skip — there is no first-party path in the firebase-js-sdk.
 // Set EXPO_PUBLIC_APPCHECK_DEBUG_TOKEN=1 in dev to use a debug token.
 if (Platform.OS === "web" && typeof window !== "undefined") {
-  const siteKey = process.env.EXPO_PUBLIC_RECAPTCHA_SITE_KEY;
+  const siteKey = ENV.RECAPTCHA_SITE_KEY;
   if (siteKey) {
     try {
       if (process.env.EXPO_PUBLIC_APPCHECK_DEBUG_TOKEN) {

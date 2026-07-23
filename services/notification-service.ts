@@ -1,5 +1,7 @@
 import { db, rtdb } from "@/lib/db/client";
 import { NOTIFICATIONS_ENABLED } from "./notifications/config";
+import { API_BASE_URL } from "@/config/api";
+import { REQUEST_TIMEOUT_MS } from "@/config/app";
 import type { Notification, NotificationType } from "./types";
 import { COLLECTIONS } from "@/shared/constants/collections";
 import { logger } from "@/lib/logger";
@@ -26,13 +28,11 @@ function deliverPushNotification(
 ): void {
   try {
     const title = PUSH_TITLES[type] ?? "📢 BinRo";
-    const base =
-      typeof __DEV__ !== "undefined" && __DEV__ ? "http://localhost:5000" : "";
-    fetch(`${base}/api/push/notify`, {
+    fetch(`${API_BASE_URL}/api/push/notify`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ toUserId: userId, title, body: message }),
-      signal: AbortSignal.timeout(8000),
+      signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
     }).catch(() => {});
   } catch {}
 }
