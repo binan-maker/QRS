@@ -8,7 +8,7 @@ import {
 } from "@/services/report-service";
 import { calculateTrustScore } from "@/services/trust-service";
 import { invalidateQrCache } from "@/services/cache/qr-cache";
-import { queryClient } from "@/shared/utils/query-client";
+import { queryClient } from "@/shared/services/query-client";
 import { db } from "@/lib/db/client";
 import { COLLECTIONS } from "@/shared/constants/collections";
 

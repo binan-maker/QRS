@@ -1,4 +1,4 @@
-import type { CategorySchema } from "@/shared/validators/CategorySchema";
+import type { CategorySchema } from "@/shared/types/category";
 
 export const BUILT_IN_CATEGORIES: CategorySchema[] = [
   {

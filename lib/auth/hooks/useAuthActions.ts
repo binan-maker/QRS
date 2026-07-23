@@ -13,7 +13,7 @@ import { mapFirebaseError, getAuthErrorMessage } from "@/lib/auth/utils";
 import { trackLoginCompleted } from "@/lib/analytics";
 import { db } from "@/lib/db";
 import { COLLECTIONS } from "@/shared/constants/collections";
-import { queryClient } from "@/shared/utils/query-client";
+import { queryClient } from "@/shared/services/query-client";
 import { clearAllMemCache, clearAllAsyncStorageCache } from "@/services/cache/qr-cache";
 import { clearAllAnonymousSessions } from "@/services/cache/anonymous-session";
 import { clearPrewarmState } from "@/services/prewarm";

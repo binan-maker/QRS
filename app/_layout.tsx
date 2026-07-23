@@ -8,7 +8,7 @@ import {
   getStartupPref,
   isStartupPrefsLoaded,
   STARTUP_PREF_KEYS,
-} from "@/shared/utils/startup-prefs";
+} from "@/shared/services/startup-prefs";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Stack } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
@@ -21,7 +21,7 @@ import { setHapticsEnabled } from "@/shared/utils/haptics";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { KeyboardProvider } from "react-native-keyboard-controller";
 import { ErrorBoundary } from "@/shared/components/feedback/ErrorBoundary";
-import { queryClient } from "@/shared/utils/query-client";
+import { queryClient } from "@/shared/services/query-client";
 import { AuthProvider, useAuth } from "@/shared/contexts/AuthContext";
 import { ThemeProvider, useTheme } from "@/shared/contexts/ThemeContext";
 import { AvatarProvider } from "@/shared/contexts/AvatarContext";

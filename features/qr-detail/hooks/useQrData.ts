@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef, useCallback } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { queryClient } from "@/shared/utils/query-client";
+import { queryClient } from "@/shared/services/query-client";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { getAnonymousQrContent } from "@/services/cache/anonymous-session";
 import {

@@ -1,6 +1,6 @@
 import { StyleSheet } from "react-native";
 import { type AppColors } from "@/shared/constants/colors";
-import { makeCommonStyleDefs } from "@/shared/styles/common";
+import { makeCommonStyleDefs } from "@/shared/constants/styles";
 
 export function makeStyles(c: AppColors) {
   return StyleSheet.create({

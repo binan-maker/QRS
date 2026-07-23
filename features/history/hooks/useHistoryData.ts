@@ -11,7 +11,7 @@ import {
   type ScanStatsResult,
 } from "@/lib/firestore-service";
 import { analyzeItemRisk } from "@/services/scan-history/safety-analysis";
-import { queryClient as globalQueryClient } from "@/shared/utils/query-client";
+import { queryClient as globalQueryClient } from "@/shared/services/query-client";
 import { mergeAndDeduplicateScans } from "@/services/scan-history/dedup";
 import {
   getCachedHistoryPage,

@@ -3,7 +3,7 @@ import {
   getCachedFavorites,
   getCachedScanStats,
 } from "@/services/cache/qr-cache";
-import { queryClient } from "@/shared/utils/query-client";
+import { queryClient } from "@/shared/services/query-client";
 import type { ScanStatsResult } from "@/services/scan-history/scan-stats";
 import { COLLECTIONS } from "@/shared/constants/collections";
 

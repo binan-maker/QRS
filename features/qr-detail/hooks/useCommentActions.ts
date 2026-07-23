@@ -7,7 +7,7 @@ import {
   reportComment,
   softDeleteComment,
 } from "@/lib/firestore-service";
-import { queryClient } from "@/shared/utils/query-client";
+import { queryClient } from "@/shared/services/query-client";
 import type { CommentItem } from "./comment-types";
 
 interface UseCommentActionsParams {

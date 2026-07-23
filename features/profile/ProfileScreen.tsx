@@ -32,7 +32,7 @@ import { useProfile } from "@/features/profile/hooks/useProfile";
 import { useAvatar } from "@/shared/contexts/AvatarContext";
 import { useFocusEffect } from "expo-router";
 import { useTabBarScroll } from "@/shared/contexts/TabBarContext";
-import { useNotifications } from "@/shared/components/notifications/hooks/useNotifications";
+import { useNotifications } from "@/shared/hooks/useNotifications";
 import PhotoModal from "@/features/profile/components/PhotoModal";
 import ImageCropModal from "@/features/profile/components/ImageCropModal";
 import GuestView from "@/features/profile/components/GuestView";
