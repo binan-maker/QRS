@@ -5,6 +5,7 @@
 // trust-service.ts only; this file stays untouched.
 
 import { db } from "@/lib/db/client";
+import { tsToMs } from "../integrity/time-utils";
 import { getQrCodeById } from "./qr-service";
 import { getQrReportData, getUserQrReport } from "../moderation/report-service";
 import { isUserFollowingQrCode } from "../social/follow-service";
@@ -148,13 +149,7 @@ export async function getQrAnalyticsSummary(
   for (const doc of docs) {
     const d = doc.data;
     let ts: number;
-    if (d.timestamp && typeof d.timestamp.toDate === "function") {
-      ts = d.timestamp.toDate().getTime();
-    } else if (typeof d.timestamp === "string") {
-      ts = new Date(d.timestamp).getTime();
-    } else {
-      ts = now;
-    }
+    ts = d.timestamp ? tsToMs(d.timestamp) : now;
     const age = now - ts;
 
     if (age < MS_7D) {

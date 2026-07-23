@@ -1,5 +1,6 @@
 import { db } from "@/lib/db/client";
 import { tsToString } from "../utils";
+import { tsToMs } from "../integrity/time-utils";
 import { incrementSmartCounter } from "@/lib/db/distributed-counter";
 import {
   checkScanAllowed,
@@ -219,11 +220,7 @@ export async function purgeOldSoftDeleteScans(userId: string): Promise<void> {
       if (!d.data.isDeleted) continue;
       const deletedAt = d.data.deletedAt;
       let deletedAtMs = 0;
-      if (deletedAt && typeof deletedAt === "object" && "toDate" in deletedAt) {
-        deletedAtMs = (deletedAt as any).toDate().getTime();
-      } else if (deletedAt && typeof deletedAt === "string") {
-        deletedAtMs = new Date(deletedAt).getTime();
-      }
+      deletedAtMs = tsToMs(deletedAt);
       if (deletedAtMs > 0 && now - deletedAtMs > SCAN_SOFT_DELETE_TTL_MS) {
         toDelete.push(d.id);
       }
@@ -257,11 +254,7 @@ export async function hardDeleteOldSoftDeleteScans(): Promise<void> {
         if (!d.data.isDeleted) continue;
         const deletedAt = d.data.deletedAt;
         let deletedAtMs = 0;
-        if (deletedAt && typeof deletedAt === "object" && "toDate" in deletedAt) {
-          deletedAtMs = (deletedAt as any).toDate().getTime();
-        } else if (deletedAt && typeof deletedAt === "string") {
-          deletedAtMs = new Date(deletedAt).getTime();
-        }
+        deletedAtMs = tsToMs(deletedAt);
         if (deletedAtMs > 0 && now - deletedAtMs > SCAN_SOFT_DELETE_TTL_MS) {
           toDelete.push(d.id);
         }

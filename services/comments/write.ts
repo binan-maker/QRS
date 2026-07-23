@@ -1,4 +1,5 @@
 import { db } from "@/lib/db/client";
+import { tsToMs } from "../integrity/time-utils";
 import { checkCommentKeywords } from "@/services/analysis";
 import { checkCommentEligibility, recordComment } from "../integrity";
 import { notifyQrFollowers, notifyMentionedUsers, notifyQrOwner, notifyCommentParentAuthor } from "../notifications/notification-service";
@@ -246,11 +247,7 @@ async function purgeOldSoftDeletes(qrId: string): Promise<void> {
       if (!d.data.isDeleted) continue;
       const deletedAt = d.data.deletedAt;
       let deletedAtMs = 0;
-      if (deletedAt && typeof deletedAt === "object" && "toDate" in deletedAt) {
-        deletedAtMs = (deletedAt as any).toDate().getTime();
-      } else if (deletedAt && typeof deletedAt === "string") {
-        deletedAtMs = new Date(deletedAt).getTime();
-      }
+      deletedAtMs = tsToMs(deletedAt);
       if (deletedAtMs > 0 && now - deletedAtMs > SOFT_DELETE_TTL_MS) toDelete.push(d.id);
     }
     if (toDelete.length > 0) {

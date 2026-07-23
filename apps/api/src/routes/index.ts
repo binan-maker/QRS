@@ -70,6 +70,7 @@ import { usersRouter } from "./users";
 import { unifiedQrRouter } from "./unified-qr";
 import { commentsRouter } from "./comments";
 import { followsRouter } from "./follows";
+import { feedbackRouter } from "./feedback";
 
 export function registerV1Routes(app: Express): void {
   // ── Utilities & security (existing) ────────────────────────────────────────
@@ -94,5 +95,8 @@ export function registerV1Routes(app: Express): void {
 
   // ── Social: follows ────────────────────────────────────────────────────────
   app.use("/api/v1/follows", followsRouter);
+
+  // ── Feedback & bug reports ─────────────────────────────────────────────────
+  app.use("/api/v1/feedback", feedbackRouter);
 
 }

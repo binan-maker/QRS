@@ -12,13 +12,20 @@
  * will refuse to initialize in production to prevent legal violation.
  */
 
-export const REQUIRED_FIREBASE_REGION = 'asia-south1'; // Mumbai
+// Read from env so the value is configurable without a code change.
+// Defaults to 'asia-south1' (Mumbai) — the only RBI/DPDP-compliant region
+// available at initial deployment; override with NEXT_PUBLIC_FIREBASE_REGION
+// when the project is migrated to 'asia-south2' (Delhi).
+const _configuredRegion =
+  process.env.NEXT_PUBLIC_FIREBASE_REGION ?? "asia-south1";
+
+export const REQUIRED_FIREBASE_REGION = _configuredRegion;
 export const ALLOWED_REGIONS = ['asia-south1', 'asia-south2'];
 
 export const INDIA_LOCATION_INFO = {
   country: 'India',
-  region: 'asia-south1',
-  city: 'Mumbai',
+  region: _configuredRegion,
+  city: _configuredRegion === 'asia-south2' ? 'Delhi' : 'Mumbai',
   provider: 'Google Cloud Platform',
   compliance: ['RBI Payment Data Localization', 'DPDP Act 2023 Section 16']
 };

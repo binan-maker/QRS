@@ -64,6 +64,34 @@ async function withBreaker<T>(fn: () => Promise<T>): Promise<T> {
   return firestoreBreaker.exec(fn);
 }
 
+/**
+ * Recursively converts Firestore Timestamp objects (those with a `toDate`
+ * method) to plain JS `Date` values so callers never need to know the
+ * underlying data shape.  Arrays and nested objects are walked; primitive
+ * values are returned as-is.
+ */
+function normalizeTimestamps(data: Record<string, any>): Record<string, any> {
+  const out: Record<string, any> = {};
+  for (const [k, v] of Object.entries(data)) {
+    if (v !== null && typeof v === "object" && typeof v.toDate === "function") {
+      out[k] = v.toDate() as Date;
+    } else if (Array.isArray(v)) {
+      out[k] = v.map((item) =>
+        item !== null && typeof item === "object" && typeof item.toDate === "function"
+          ? item.toDate()
+          : item !== null && typeof item === "object" && !Array.isArray(item)
+          ? normalizeTimestamps(item)
+          : item
+      );
+    } else if (v !== null && typeof v === "object") {
+      out[k] = normalizeTimestamps(v);
+    } else {
+      out[k] = v;
+    }
+  }
+  return out;
+}
+
 function buildDocRef(path: string[]) {
   if (path.length < 2 || path.length % 2 !== 0) {
     throw new Error(`[db] Invalid document path: [${path.join(", ")}]. Must have even length >= 2.`);
@@ -104,7 +132,7 @@ export const firebaseDb: DbAdapter = {
   async get(path) {
     return withBreaker(async () => {
       const snap = await getDoc(buildDocRef(path));
-      return snap.exists() ? snap.data() as Record<string, any> : null;
+      return snap.exists() ? normalizeTimestamps(snap.data() as Record<string, any>) : null;
     });
   },
 
@@ -132,7 +160,7 @@ export const firebaseDb: DbAdapter = {
       const colRef = buildColRef(collectionPath);
       const q = buildQuery(colRef, opts);
       const snap = await getDocs(q);
-      const docs: DbDocument[] = snap.docs.map((d: any) => ({ id: d.id, data: d.data() as Record<string, any> }));
+      const docs: DbDocument[] = snap.docs.map((d: any) => ({ id: d.id, data: normalizeTimestamps(d.data() as Record<string, any>) }));
       const cursor = snap.docs.length > 0 ? snap.docs[snap.docs.length - 1] : null;
       return { docs, cursor };
     });
@@ -165,7 +193,7 @@ export const firebaseDb: DbAdapter = {
 
   onDoc(path, cb) {
     return onSnapshot(buildDocRef(path), (snap: any) => {
-      cb(snap.exists() ? (snap.data() as Record<string, any>) : null);
+      cb(snap.exists() ? normalizeTimestamps(snap.data() as Record<string, any>) : null);
     }, () => cb(null));
   },
 
@@ -173,7 +201,7 @@ export const firebaseDb: DbAdapter = {
     const colRef = buildColRef(collectionPath);
     const q = buildQuery(colRef, opts);
     return onSnapshot(q, (snap: any) => {
-      cb(snap.docs.map((d: any) => ({ id: d.id, data: d.data() as Record<string, any> })));
+      cb(snap.docs.map((d: any) => ({ id: d.id, data: normalizeTimestamps(d.data() as Record<string, any>) })));
     }, () => cb([]));
   },
 

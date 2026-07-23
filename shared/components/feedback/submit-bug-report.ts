@@ -1,12 +1,8 @@
 import { Platform } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { ENV } from "@/config/env";
+import { apiUrl } from "@/config/api";
 
 export async function submitBugReport(message: string, error: Error): Promise<void> {
-  const url =
-    `https://firestore.googleapis.com/v1/projects/${ENV.FIREBASE_PROJECT_ID}` +
-    `/databases/(default)/documents/bugReports?key=${ENV.FIREBASE_API_KEY}`;
-
   let deviceInfo = `Platform: ${Platform.OS}`;
   try {
     const stored = await AsyncStorage.getItem("qrguard_last_crash");
@@ -17,20 +13,17 @@ export async function submitBugReport(message: string, error: Error): Promise<vo
   } catch {}
 
   const body = {
-    fields: {
-      errorMessage: { stringValue: error.message || "Unknown error" },
-      errorStack: { stringValue: (error.stack || "").slice(0, 2000) },
-      userMessage: { stringValue: message || "" },
-      deviceInfo: { stringValue: deviceInfo },
-      reportedAt: { timestampValue: new Date().toISOString() },
-      appVersion: { stringValue: "1.0.0" },
-    },
+    errorMessage: error.message || "Unknown error",
+    errorStack:   (error.stack || "").slice(0, 2000),
+    userMessage:  message || "",
+    deviceInfo,
+    appVersion:   "1.0.0",
   };
 
-  const res = await fetch(url, {
-    method: "POST",
+  const res = await fetch(apiUrl("/api/v1/feedback/bug-report"), {
+    method:  "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(body),
+    body:    JSON.stringify(body),
   });
 
   if (!res.ok) {
