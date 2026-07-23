@@ -1,7 +1,7 @@
 import { db } from "@/lib/db/client";
-import { detectContentType } from "../qr-service";
+import { detectContentType } from "../qr/qr-service";
 import { logError } from "./crud";
-import { updateUnifiedQrDesign } from "../qr-unified";
+import { updateUnifiedQrDesign } from "../qr/qr-unified";
 import { COLLECTIONS } from "@/shared/constants/collections";
 
 export async function updateSavedQrContent(

@@ -4,7 +4,7 @@ import * as Crypto from "expo-crypto";
 import { tsToString } from "../utils";
 import type { QrType, ScanVelocityBucket, GeneratedQrItem } from "../types";
 import { SIGNATURE_SALT } from "../types";
-import { getQrCodeId } from "../qr-service";
+import { getQrCodeId } from "../qr/qr-service";
 import { getEffectiveScanCount } from "@/lib/db/distributed-counter";
 import { COLLECTIONS } from "@/shared/constants/collections";
 

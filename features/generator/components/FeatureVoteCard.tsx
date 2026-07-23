@@ -4,7 +4,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { useTheme } from "@/shared/contexts/ThemeContext";
 import * as Haptics from "@/shared/utils/haptics";
 import { useFeatureVote } from "@/features/generator/hooks/useFeatureVote";
-import type { FeatureVoteChoice } from "@/services/feature-vote-service";
+import type { FeatureVoteChoice } from "@/services/votes/feature-vote-service";
 
 interface Props {
   email: string | null | undefined;

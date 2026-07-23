@@ -14,7 +14,7 @@ import { useAuth } from "@/shared/contexts/AuthContext";
 import { useTopInset } from "@/shared/utils/platform";
 import { useQrDetail } from "@/features/qr-detail/hooks/useQrDetail";
 import { useNetworkStatus } from "@/shared/hooks/useNetworkStatus";
-import { getGuardLink, type GuardLink } from "@/services/guard-service";
+import { getGuardLink, type GuardLink } from "@/services/guard/guard-service";
 import { detectContentType } from "@/features/qr-engine";
 import { makeStyles } from "@/features/qr-detail/styles";
 import { formatCompactNumber } from "@/shared/utils/formatters";

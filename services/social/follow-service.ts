@@ -1,7 +1,7 @@
 import { db, rtdb } from "@/lib/db/client";
-import { NOTIFICATIONS_ENABLED } from "./notifications/config";
-import { tsToString } from "./utils";
-import type { FollowerInfo } from "./types";
+import { NOTIFICATIONS_ENABLED } from "../notifications/config";
+import { tsToString } from "../utils";
+import type { FollowerInfo } from "../types";
 import { COLLECTIONS } from "@/shared/constants/collections";
 
 export type { FollowerInfo };

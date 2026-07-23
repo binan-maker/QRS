@@ -1,6 +1,6 @@
 import { db } from "@/lib/db/client";
-import { tsToString } from "./utils";
-import type { UnifiedQr, UnifiedQrStatus, QrType } from "./types";
+import { tsToString } from "../utils";
+import type { UnifiedQr, UnifiedQrStatus, QrType } from "../types";
 
 export type { UnifiedQr, UnifiedQrStatus };
 

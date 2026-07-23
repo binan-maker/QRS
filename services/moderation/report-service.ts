@@ -4,13 +4,13 @@
 // which verifies the Firebase token before calling reportQrCode.
 
 import { db } from "@/lib/db/client";
-import { notifyQrFollowers } from "./notification-service";
+import { notifyQrFollowers } from "../notifications/notification-service";
 import { COLLECTIONS } from "@/shared/constants/collections";
 import {
   checkReportEligibility,
   recordReport,
   analyzeReportsForCollusion,
-} from "./integrity-service";
+} from "../integrity";
 
 async function getQrOwnerId(qrId: string): Promise<string | undefined> {
   try {

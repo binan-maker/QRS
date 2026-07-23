@@ -5,8 +5,8 @@ import {
   subscribeToQrReports,
   getUserQrReport,
   reportQrCode,
-} from "@/services/report-service";
-import { calculateTrustScore } from "@/services/trust-service";
+} from "@/services/moderation/report-service";
+import { calculateTrustScore } from "@/services/trust/trust-service";
 import { invalidateQrCache } from "@/services/cache/qr-cache";
 import { queryClient } from "@/shared/services/query-client";
 import { db } from "@/lib/db/client";

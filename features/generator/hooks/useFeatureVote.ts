@@ -3,7 +3,7 @@ import {
   getFeatureVote,
   castFeatureVote,
   type FeatureVoteChoice,
-} from "@/services/feature-vote-service";
+} from "@/services/votes/feature-vote-service";
 
 export function useFeatureVote(email: string | null | undefined) {
   const [vote,       setVote]       = useState<FeatureVoteChoice | null>(null);

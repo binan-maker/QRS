@@ -1,9 +1,9 @@
 import { db } from "@/lib/db/client";
 import { checkCommentKeywords } from "@/services/analysis";
-import { checkCommentEligibility, recordComment } from "../integrity-service";
-import { notifyQrFollowers, notifyMentionedUsers, notifyQrOwner, notifyCommentParentAuthor } from "../notification-service";
+import { checkCommentEligibility, recordComment } from "../integrity";
+import { notifyQrFollowers, notifyMentionedUsers, notifyQrOwner, notifyCommentParentAuthor } from "../notifications/notification-service";
 import type { CommentItem } from "../types";
-import { checkProfanity, sanitizeComment } from "../profanity-filter";
+import { checkProfanity, sanitizeComment } from "../moderation/profanity-filter";
 import { getUserProfileCache, preloadUserProfile, setUserProfileCache } from "./cache";
 import { authAdapter } from "@/lib/auth";
 import { COLLECTIONS } from "@/shared/constants/collections";

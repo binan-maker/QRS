@@ -1,6 +1,6 @@
 import { db } from "@/lib/db/client";
-import { tsToString } from "./utils";
-import type { QrMessage } from "./types";
+import { tsToString } from "../utils";
+import type { QrMessage } from "../types";
 
 export type { QrMessage };
 

@@ -6,16 +6,16 @@
 //   loadQrDetail         → lib/services/qr-detail-service.ts
 
 import { db } from "@/lib/db/client";
-import { tsToString } from "./utils";
+import { tsToString } from "../utils";
 import * as Crypto from "expo-crypto";
-import { detectContentType } from "./qr-content-type";
-import type { QrCodeData, TrustScore } from "./types";
+import { detectContentType } from "../qr-content-type";
+import type { QrCodeData, TrustScore } from "../types";
 import { getDistributedCounter } from "@/lib/db/distributed-counter";
 import { COLLECTIONS } from "@/shared/constants/collections";
 
-export { detectContentType } from "./qr-content-type";
+export { detectContentType } from "../qr-content-type";
 export type { QrCodeData, TrustScore };
-export { SIGNATURE_SALT } from "./types";
+export { SIGNATURE_SALT } from "../types";
 
 export async function getQrCodeId(content: string): Promise<string> {
   const hash = await Crypto.digestStringAsync(Crypto.CryptoDigestAlgorithm.SHA256, content);

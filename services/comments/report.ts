@@ -1,5 +1,5 @@
 import { db } from "@/lib/db/client";
-import { checkCommentReportEligibility, recordCommentReport } from "../integrity-service";
+import { checkCommentReportEligibility, recordCommentReport } from "../integrity";
 import { COLLECTIONS } from "@/shared/constants/collections";
 
 const SOFT_DELETE_TTL_MS = 7 * 24 * 60 * 60 * 1000;

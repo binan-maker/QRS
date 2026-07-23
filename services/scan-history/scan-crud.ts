@@ -5,7 +5,7 @@ import {
   checkScanAllowed,
   recordOwnerScan,
   recordBlockedScan,
-} from "../scan-fraud-guard";
+} from "../guard/fraud-guard";
 import { trackQrScanned } from "@/lib/analytics";
 import { COLLECTIONS } from "@/shared/constants/collections";
 import { logger } from "@/lib/logger";

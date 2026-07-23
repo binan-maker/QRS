@@ -18,7 +18,7 @@ import { useAuth } from "@/shared/contexts/AuthContext";
 import { getGeneratedQrById, type GeneratedQrItem } from "@/services/generator";
 import { getQrFollowCount } from "@/lib/firestore-service";
 import { getDetailDisplayTitle } from "@/services/qr-display";
-import { getQrAnalyticsSummary, type QrAnalyticsSummary } from "@/services/qr-detail-service";
+import { getQrAnalyticsSummary, type QrAnalyticsSummary } from "@/services/qr/qr-detail-service";
 
 const DAY_LABELS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 

@@ -1,7 +1,7 @@
 import { db } from "@/lib/db/client";
-import { tsToString } from "./utils";
-import { detectContentType } from "./qr-service";
-import type { GuardLink } from "./types";
+import { tsToString } from "../utils";
+import { detectContentType } from "../qr/qr-service";
+import type { GuardLink } from "../types";
 import { COLLECTIONS } from "@/shared/constants/collections";
 
 export type { GuardLink };

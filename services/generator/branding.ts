@@ -1,7 +1,7 @@
 import { db } from "@/lib/db/client";
 import * as Crypto from "expo-crypto";
 import { API_BASE_URL } from "@/config/api";
-import { detectContentType, getQrCodeId } from "../qr-service";
+import { detectContentType, getQrCodeId } from "../qr/qr-service";
 import { logError } from "./crud";
 import type { QrOwnerInfo, QrType } from "../types";
 import { SIGNATURE_SALT } from "../types";

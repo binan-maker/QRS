@@ -4,7 +4,7 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
-import type { GuardLink } from "@/services/guard-service";
+import type { GuardLink } from "@/services/guard/guard-service";
 import { formatRelativeTime } from "@/shared/utils/formatters";
 import type { AppColors } from "@/shared/constants/colors";
 

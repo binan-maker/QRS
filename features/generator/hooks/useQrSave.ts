@@ -5,7 +5,7 @@ import {
   saveGeneratedQr,
   type QrType,
 } from "@/lib/firestore-service";
-import { createUnifiedQr } from "@/services/qr-unified";
+import { createUnifiedQr } from "@/services/qr/qr-unified";
 import { checkQrNameExists, buildNameSuggestions } from "@/services/generator/crud";
 import { buildQrContent, validateQrInput } from "@/features/generator/data/qr-builder";
 import { QR_PRESETS } from "@/features/generator/data/presets";

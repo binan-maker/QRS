@@ -1,4 +1,4 @@
-import type { TrustScore } from "./types";
+import type { TrustScore } from "../types";
 
 export type { TrustScore };
 

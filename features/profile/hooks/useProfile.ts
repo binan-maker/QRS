@@ -197,7 +197,7 @@ export function useProfile() {
       const response = await fetch(uri);
       const blob = await response.blob();
 
-      const { uploadProfilePhoto } = await import("@/services/storage-service");
+      const { uploadProfilePhoto } = await import("@/services/storage/storage-service");
       const newPhotoUrl = await uploadProfilePhoto(blob, user.id, prevPhotoUrl ?? undefined);
 
       await updateUserPhotoURL(user.id, newPhotoUrl);
@@ -303,7 +303,7 @@ export function useProfile() {
 
     try {
       if (prevUrl && prevUrl.includes("firebasestorage")) {
-        const { deleteProfilePhoto } = await import("@/services/storage-service");
+        const { deleteProfilePhoto } = await import("@/services/storage/storage-service");
         deleteProfilePhoto(user.id, prevUrl).catch(() => {});
       }
       await updateUserPhotoURL(user.id, null);

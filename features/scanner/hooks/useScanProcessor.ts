@@ -20,7 +20,7 @@ import {
   detectContentType,
   getQrCodeId,
 } from "@/lib/firestore-service";
-import { validateQrInput } from "@/services/profanity-filter";
+import { validateQrInput } from "@/services/moderation/profanity-filter";
 import {
   consumeAnonScanSlot,
   ANON_CONVERSION_MILESTONES,

@@ -9,7 +9,7 @@ import { authAdapter } from "@/lib/auth";
 import { queryClient } from "@/shared/services/query-client";
 import { db } from "@/lib/db";
 import { COLLECTIONS } from "@/shared/constants/collections";
-import { prewarmUserData } from "@/services/prewarm";
+import { prewarmUserData } from "@/services/cache/prewarm";
 import { syncAvatarFromOutside } from "@/shared/contexts/AvatarContext";
 import type { AuthUser } from "@/lib/auth/types";
 

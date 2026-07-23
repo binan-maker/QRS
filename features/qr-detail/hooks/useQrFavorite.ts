@@ -5,7 +5,7 @@ import NetInfo from "@react-native-community/netinfo";
 import * as Haptics from "@/shared/utils/haptics";
 import { toggleFavorite } from "@/lib/firestore-service";
 import { invalidateQrCache } from "@/services/cache/qr-cache";
-import { queueOfflineFavorite, syncOfflineFavorites } from "@/services/offline-sync";
+import { queueOfflineFavorite, syncOfflineFavorites } from "@/services/offline/offline-sync";
 
 const DEBOUNCE_MS = 700;
 

@@ -16,7 +16,7 @@ import { COLLECTIONS } from "@/shared/constants/collections";
 import { queryClient } from "@/shared/services/query-client";
 import { clearAllMemCache, clearAllAsyncStorageCache } from "@/services/cache/qr-cache";
 import { clearAllAnonymousSessions } from "@/services/cache/anonymous-session";
-import { clearPrewarmState } from "@/services/prewarm";
+import { clearPrewarmState } from "@/services/cache/prewarm";
 import { clearAvatarFromOutside } from "@/shared/contexts/AvatarContext";
 import { clearUserProfileCache } from "@/services/user/cache";
 import { clearCommentProfileCache } from "@/services/comments/cache";

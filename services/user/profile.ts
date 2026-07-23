@@ -1,7 +1,7 @@
 import { db, rtdb } from "@/lib/db/client";
 import { tsToString } from "../utils";
 import type { UserStats } from "../types";
-import { uploadBase64Image, deleteImage, deleteProfilePhoto } from "../storage-service";
+import { uploadBase64Image, deleteImage, deleteProfilePhoto } from "../storage/storage-service";
 import { getCachedUserProfile, setCachedUserProfile } from "./cache";
 import { COLLECTIONS } from "@/shared/constants/collections";
 
@@ -205,7 +205,7 @@ export async function deleteUserAccount(userId: string): Promise<void> {
 
   // 4. Delete profile photo from Storage
   if (photoUrl && photoUrl.includes("firebasestorage")) {
-    import("../storage-service").then(({ deleteProfilePhoto }) => {
+    import("../storage/storage-service").then(({ deleteProfilePhoto }) => {
       deleteProfilePhoto(userId, photoUrl!).catch(() => {});
     }).catch(() => {});
   }

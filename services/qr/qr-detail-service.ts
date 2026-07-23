@@ -6,12 +6,12 @@
 
 import { db } from "@/lib/db/client";
 import { getQrCodeById } from "./qr-service";
-import { getQrReportData, getUserQrReport } from "./report-service";
-import { isUserFollowingQrCode } from "./follow-service";
+import { getQrReportData, getUserQrReport } from "../moderation/report-service";
+import { isUserFollowingQrCode } from "../social/follow-service";
 
-import { isUserFavorite } from "./user/favorites";
-import { calculateTrustScore } from "./trust-service";
-import type { QrCodeData, TrustScore } from "./types";
+import { isUserFavorite } from "../user/favorites";
+import { calculateTrustScore } from "../trust/trust-service";
+import type { QrCodeData, TrustScore } from "../types";
 import { COLLECTIONS } from "@/shared/constants/collections";
 
 export interface QrDetailPayload {
