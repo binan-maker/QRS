@@ -16,7 +16,7 @@ import { useTopInset } from "@/shared/utils/platform";
 import { useQrDetail } from "@/features/qr-detail/hooks/useQrDetail";
 import { useNetworkStatus } from "@/shared/hooks/useNetworkStatus";
 import { makeStyles, offlineSectionStyles } from "@/features/qr-detail/styles";
-import { formatCompactNumber } from "@/shared/utils/number-format";
+import { formatCompactNumber } from "@/shared/utils/formatters";
 import { REPORT_LABELS, REPORT_ICONS } from "@/features/qr-detail/utils/report-toast";
 
 import LoadingSkeleton from "@/features/qr-detail/components/LoadingSkeleton";

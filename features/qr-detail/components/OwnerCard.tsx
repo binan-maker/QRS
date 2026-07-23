@@ -4,7 +4,7 @@ import { Image } from "expo-image";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { useTheme } from "@/shared/contexts/ThemeContext";
-import { formatCompactNumber } from "@/shared/utils/number-format";
+import { formatCompactNumber } from "@/shared/utils/formatters";
 import type { QrOwnerInfo } from "@/lib/firestore-service";
 
 interface Props {

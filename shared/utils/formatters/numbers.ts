@@ -1,6 +1,5 @@
 /**
  * Number formatting utilities — compact notation and Indian-style separators.
- * Moved from shared/utils/number-format.ts into the shared formatter system.
  */
 
 /**

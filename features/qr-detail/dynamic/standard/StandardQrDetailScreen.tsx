@@ -18,7 +18,7 @@ import { useNetworkStatus } from "@/shared/hooks/useNetworkStatus";
 import { getStandardLink } from "@/services/guard-service";
 import { detectContentType } from "@/features/qr-engine";
 import { makeStyles } from "@/features/qr-detail/styles";
-import { formatCompactNumber } from "@/shared/utils/number-format";
+import { formatCompactNumber } from "@/shared/utils/formatters";
 import { REPORT_LABELS, REPORT_ICONS } from "@/features/qr-detail/utils/report-toast";
 
 import { ContentCard } from "@/features/qr-engine/content-cards";

@@ -4,8 +4,7 @@ import { Image } from "expo-image";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import Animated, { FadeIn } from "react-native-reanimated";
-import { formatCompactNumber } from "@/shared/utils/number-format";
-import { formatRelativeTime } from "@/shared/utils/formatters";
+import { formatCompactNumber, formatRelativeTime } from "@/shared/utils/formatters";
 import { useTheme } from "@/shared/contexts/ThemeContext";
 import type { CommentItem as CommentItemType } from "@/features/qr-detail/hooks/comment-types";
 

@@ -6,8 +6,7 @@ import { useTheme } from "@/shared/contexts/ThemeContext";
 import { makeStyles } from "@/features/qr-detail/styles";
 import { SectionHeader } from "@/shared/components/ui/SectionHeader";
 import CommentItem from "@/features/qr-detail/components/CommentItem";
-import { formatCompactNumber } from "@/shared/utils/number-format";
-import { smartName } from "@/shared/utils/formatters";
+import { formatCompactNumber, smartName } from "@/shared/utils/formatters";
 
 interface ReplyTo {
   id: string;

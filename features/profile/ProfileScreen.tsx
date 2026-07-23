@@ -27,7 +27,7 @@ import Animated, {
 import { useTheme } from "@/shared/contexts/ThemeContext";
 import { useAuth } from "@/shared/contexts/AuthContext";
 import SkeletonBox from "@/shared/components/ui/SkeletonBox";
-import { formatCompactNumber } from "@/shared/utils/number-format";
+import { formatCompactNumber } from "@/shared/utils/formatters";
 import { useProfile } from "@/features/profile/hooks/useProfile";
 import { useAvatar } from "@/shared/contexts/AvatarContext";
 import { useFocusEffect } from "expo-router";

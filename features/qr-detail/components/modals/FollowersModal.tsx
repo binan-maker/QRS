@@ -8,8 +8,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTheme } from "@/shared/contexts/ThemeContext";
 import { useAndroidNavBar } from "@/shared/hooks/useAndroidNavBar";
-import { formatCompactNumber } from "@/shared/utils/number-format";
-import { formatCompactRelativeTime } from "@/shared/utils/formatters";
+import { formatCompactNumber, formatCompactRelativeTime } from "@/shared/utils/formatters";
 import type { FollowerInfo } from "@/lib/firestore-service";
 
 interface Props {
