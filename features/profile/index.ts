@@ -1,5 +1,4 @@
 export { default as ProfileScreen } from "./ProfileScreen";
-export { default as PublicProfileScreen } from "./PublicProfileScreen";
 export { useProfile } from "./hooks/useProfile";
 export { usePublicProfile } from "./hooks/usePublicProfile";
 export { default as PhotoModal } from "./components/PhotoModal";
