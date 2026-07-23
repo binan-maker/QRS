@@ -4,7 +4,6 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { MaterialCommunityIcons, Ionicons } from "@expo/vector-icons";
 import React, { useEffect, useCallback, useMemo, memo } from "react";
 import { useTheme } from "@/shared/contexts/ThemeContext";
-import { useAppTranslation } from "@/shared/i18n/useAppTranslation";
 import { TabBarProvider, useTabBarScroll } from "@/shared/contexts/TabBarContext";
 import {
   prefetchStartupPrefs,
@@ -113,7 +112,6 @@ function ClassicTabLayout() {
   const isIOS  = Platform.OS === "ios";
   const insets = useSafeAreaInsets();
   const { colors } = useTheme();
-  const { t } = useAppTranslation();
   const { tabBarTranslateY, setTabBarHeight } = useTabBarScroll();
 
   useEffect(() => {
@@ -194,12 +192,12 @@ function ClassicTabLayout() {
       <Tabs initialRouteName="index" screenOptions={screenOptions}>
         <Tabs.Screen
           name="index"
-          options={{ title: t("tabs.home"), tabBarIcon: renderHomeIcon }}
+          options={{ title: "Home", tabBarIcon: renderHomeIcon }}
         />
 
         <Tabs.Screen
           name="qr-generator"
-          options={{ title: t("tabs.generator"), tabBarIcon: renderGenIcon }}
+          options={{ title: "Generator", tabBarIcon: renderGenIcon }}
         />
 
         <Tabs.Screen
@@ -209,7 +207,7 @@ function ClassicTabLayout() {
 
         <Tabs.Screen
           name="history"
-          options={{ title: t("tabs.history"), tabBarIcon: renderHistIcon }}
+          options={{ title: "History", tabBarIcon: renderHistIcon }}
         />
 
         <Tabs.Screen
@@ -219,7 +217,7 @@ function ClassicTabLayout() {
 
         <Tabs.Screen
           name="profile"
-          options={{ title: t("tabs.profile"), tabBarIcon: renderProfIcon }}
+          options={{ title: "Profile", tabBarIcon: renderProfIcon }}
         />
 
         <Tabs.Screen

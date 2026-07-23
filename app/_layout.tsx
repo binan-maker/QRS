@@ -1,5 +1,4 @@
 import '../polyfills';
-import "@/shared/i18n";
 // Importing startup-prefs triggers its module-level prefetchStartupPrefs() call
 // at bundle-evaluation time — well before any React component mounts — so all
 // providers can initialise synchronously from the cache on first render.

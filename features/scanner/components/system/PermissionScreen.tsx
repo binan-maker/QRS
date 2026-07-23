@@ -3,7 +3,6 @@ import { Ionicons } from "@expo/vector-icons";
 import Reanimated, { FadeInDown, FadeIn } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTheme } from "@/shared/contexts/ThemeContext";
-import { useAppTranslation } from "@/shared/i18n/useAppTranslation";
 import GradientButton from "@/shared/components/ui/GradientButton";
 
 interface Props {
@@ -13,7 +12,6 @@ interface Props {
 
 export default function PermissionScreen({ canAskAgain, onRequestPermission }: Props) {
   const { colors } = useTheme();
-  const { t }      = useAppTranslation();
   const insets     = useSafeAreaInsets();
 
   const accentDim    = colors.primary + "22";
@@ -40,10 +38,10 @@ export default function PermissionScreen({ canAskAgain, onRequestPermission }: P
 
         <Reanimated.View entering={FadeInDown.duration(160)} style={styles.textGroup}>
           <Text style={[styles.title, { color: colors.text }]}>
-            {t("scanner.cameraPermissionTitle")}
+            Camera Permission
           </Text>
           <Text style={[styles.subtitle, { color: colors.textMuted }]}>
-            {t("scanner.cameraPermissionMessage")}
+            We need access to your camera to scan QR codes.
           </Text>
         </Reanimated.View>
 
