@@ -37,6 +37,10 @@ export const ENV = {
 
   /** Google Sign-In web client ID (used for ID token auth). */
   GOOGLE_WEB_CLIENT_ID: process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID ?? "",
+  /** Google Sign-In Android client ID. */
+  GOOGLE_ANDROID_CLIENT_ID: process.env.EXPO_PUBLIC_ANDROID_CLIENT_ID ?? "",
+  /** Google Sign-In iOS client ID. */
+  GOOGLE_IOS_CLIENT_ID: process.env.EXPO_PUBLIC_IOS_CLIENT_ID ?? "",
 
   /**
    * The deployed API domain (e.g. "myapp.replit.dev").
@@ -47,4 +51,9 @@ export const ENV = {
 
   /** reCAPTCHA v3 site key for Firebase App Check (web only). */
   RECAPTCHA_SITE_KEY: process.env.EXPO_PUBLIC_RECAPTCHA_SITE_KEY,
+  /**
+   * Set to any truthy value in dev to enable Firebase App Check debug token.
+   * Must be set BEFORE initializeAppCheck — see Firebase docs.
+   */
+  APPCHECK_DEBUG_TOKEN: process.env.EXPO_PUBLIC_APPCHECK_DEBUG_TOKEN,
 } as const;

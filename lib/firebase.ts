@@ -95,7 +95,7 @@ if (Platform.OS === "web" && typeof window !== "undefined") {
   const siteKey = ENV.RECAPTCHA_SITE_KEY;
   if (siteKey) {
     try {
-      if (process.env.EXPO_PUBLIC_APPCHECK_DEBUG_TOKEN) {
+      if (ENV.APPCHECK_DEBUG_TOKEN) {
         // Allow Firebase to print a debug token to the console for local dev.
         // (Must be set BEFORE initializeAppCheck — see Firebase docs.)
         (globalThis as any).FIREBASE_APPCHECK_DEBUG_TOKEN = true;
