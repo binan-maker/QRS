@@ -15,7 +15,7 @@ import { clearAllMemCache, clearAllAsyncStorageCache } from "@/services/cache/qr
 import { clearAllAnonymousSessions } from "@/services/cache/anonymous-session";
 import { prewarmUserData, clearPrewarmState } from "@/services/prewarm";
 import { syncAvatarFromOutside, clearAvatarFromOutside } from "@/shared/contexts/AvatarContext";
-import { validateEmail } from "@/shared/utils/email-validator";
+import { validateEmail } from "@/validators";
 import { trackLoginCompleted } from "@/lib/analytics";
 import { COLLECTIONS } from "@/shared/constants/collections";
 import { useNotificationStore } from "@/store/notificationStore";
@@ -27,7 +27,7 @@ import { RTDB_TIMEOUT_MS } from "@/config/app";
 
 const SERVER_BASE_URL = API_BASE_URL;
 
-async function serverValidateEmail(email: string): Promise<{ valid: boolean; reason?: string }> {
+async function serverValidateEmail(email: string): Promise<{ valid: boolean; error?: string }> {
   try {
     const res = await fetch(`${SERVER_BASE_URL}/api/validate-email`, {
       method: "POST",
@@ -40,7 +40,9 @@ async function serverValidateEmail(email: string): Promise<{ valid: boolean; rea
     // falls back to local validation so signup is never blocked by backend
     // unavailability. Firebase remains the final gate for email legitimacy.
     if (res.status === 200) {
-      return await res.json();
+      // Server returns { valid, reason? } — map to local { valid, error? } shape.
+      const json = await res.json() as { valid: boolean; reason?: string };
+      return { valid: json.valid, error: json.reason };
     }
     return validateEmail(email);
   } catch {
@@ -344,7 +346,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       const emailValidation = await serverValidateEmail(email);
       if (!emailValidation.valid) {
-        const err = new Error(emailValidation.reason || "Please use a real email address.") as any;
+        const err = new Error(emailValidation.error || "Please use a real email address.") as any;
         err.code = "auth/invalid-email-domain";
         throw err;
       }

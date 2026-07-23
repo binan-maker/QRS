@@ -13,7 +13,7 @@ import AuthFormInput from "@/features/auth/components/AuthFormInput";
 import AuthBrandBlock from "@/features/auth/components/AuthBrandBlock";
 import { useAuthScale } from "@/features/auth/hooks/useAuthScale";
 import { makeAuthStyles } from "@/features/auth/styles";
-import { validateEmail } from "@/shared/utils/email-validator";
+import { validateEmail } from "@/validators";
 
 export default function ForgotPasswordScreen() {
   const { colors } = useTheme();
@@ -31,7 +31,7 @@ export default function ForgotPasswordScreen() {
     setEmailError("");
     if (!email.trim()) { setEmailError("Email address is required."); return; }
     const emailCheck = validateEmail(email.trim());
-    if (!emailCheck.valid) { setEmailError(emailCheck.reason || "Please enter a valid email address."); return; }
+    if (!emailCheck.valid) { setEmailError(emailCheck.error || "Please enter a valid email address."); return; }
     setLoading(true);
     try {
       await sendPasswordReset(email.trim());

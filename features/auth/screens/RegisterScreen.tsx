@@ -16,7 +16,7 @@ import AuthFormInput from "@/features/auth/components/AuthFormInput";
 import AuthBrandBlock from "@/features/auth/components/AuthBrandBlock";
 import { useAuthScale } from "@/features/auth/hooks/useAuthScale";
 import { makeAuthStyles } from "@/features/auth/styles";
-import { validateEmail } from "@/shared/utils/email-validator";
+import { validateEmail } from "@/validators";
 import { useFadeSlide } from "@/features/auth/hooks/useFadeSlide";
 
 export default function RegisterScreen() {
@@ -63,7 +63,7 @@ export default function RegisterScreen() {
     } else {
       const emailCheck = validateEmail(email.trim());
       if (!emailCheck.valid) {
-        newFieldErrors.email = emailCheck.reason || "Please use a real email address.";
+        newFieldErrors.email = emailCheck.error || "Please use a real email address.";
         hasFieldError = true;
       }
     }

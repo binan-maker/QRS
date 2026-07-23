@@ -1,5 +1,5 @@
 import type { QrTemplate } from "@/features/generator/types/template-types";
-import { validateUrl } from "@/shared/utils/validators";
+import { validateUrlField } from "@/validators";
 
 /**
  * TEMPLATES — supported QR code types for the private (guard) generator.
@@ -13,7 +13,7 @@ export const TEMPLATES: QrTemplate[] = [
     securityNote: "URL is scanned for threats before QR is generated.",
     securityIcon: "shield-checkmark-outline",
     fields: [
-      { key: "url", label: "URL", placeholder: "https://example.com", type: "url", validate: validateUrl },
+      { key: "url", label: "URL", placeholder: "https://example.com", type: "url", validate: validateUrlField },
     ],
     generate: (v) => {
       const raw = v.url.trim();

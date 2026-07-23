@@ -1,6 +1,10 @@
 // ─── QR Validators ────────────────────────────────────────────────────────────
 // Centralized validation for QR code content and configuration.
 // Previously duplicated in: registry.ts, templates.ts, qr-validator.ts.
+//
+// NOTE: Deep security validation of QR payloads (injection patterns, blocked
+// schemes, EMV/UPI parsing) lives in services/analysis/qr-validator.ts — that
+// is a backend security service, not a field validator.
 
 import { ValidationError } from "@/lib/errors";
 
@@ -33,6 +37,16 @@ export function validateUrl(value: string): FieldValidation {
 export function assertUrl(url: string): void {
   const r = validateUrl(url);
   if (!r.valid) throw new ValidationError(r.error!, "url");
+}
+
+/**
+ * URL validator shaped as `(v: string) => string | null` for use in
+ * `TemplateField.validate` and other form-field validate callbacks.
+ * Returns the error message string on failure, or null on success.
+ */
+export function validateUrlField(value: string): string | null {
+  const r = validateUrl(value);
+  return r.valid ? null : (r.error ?? "Enter a valid URL");
 }
 
 // ── WhatsApp number ───────────────────────────────────────────────────────────
@@ -71,23 +85,3 @@ export function validateQrEmail(email: string): FieldValidation {
   return { valid: true };
 }
 
-// ── QR content general ────────────────────────────────────────────────────────
-
-const MAX_QR_CONTENT_BYTES = 2953; // QR v40 binary max
-
-export function validateQrContent(content: string): FieldValidation {
-  if (!content.trim()) return { valid: false, error: "QR content cannot be empty" };
-  const bytes = new TextEncoder().encode(content).length;
-  if (bytes > MAX_QR_CONTENT_BYTES) {
-    return {
-      valid: false,
-      error: `Content too long — maximum is ${MAX_QR_CONTENT_BYTES} bytes`,
-    };
-  }
-  return { valid: true };
-}
-
-export function assertQrContent(content: string): void {
-  const r = validateQrContent(content);
-  if (!r.valid) throw new ValidationError(r.error!, "content");
-}

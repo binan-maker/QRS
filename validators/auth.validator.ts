@@ -3,20 +3,25 @@
 // Previously duplicated inline in ForgotPasswordScreen, RegisterScreen, etc.
 
 import { ValidationError } from "@/lib/errors";
+import { validateEmail as _validateEmailFull } from "@/shared/utils/email-validator";
 
 // ── Email ─────────────────────────────────────────────────────────────────────
-
-const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export interface EmailValidation {
   valid: boolean;
   error?: string;
 }
 
+/**
+ * Validates an email address.
+ * Delegates to the full email validator in shared/utils/email-validator.ts,
+ * which includes disposable-domain blocking and heuristic pattern detection.
+ * Returns { valid, error? } consistent with all other validators in this barrel.
+ */
 export function validateEmail(email: string): EmailValidation {
-  const trimmed = email.trim();
-  if (!trimmed) return { valid: false, error: "Email is required" };
-  if (!EMAIL_REGEX.test(trimmed)) return { valid: false, error: "Enter a valid email address" };
+  if (!email.trim()) return { valid: false, error: "Email is required" };
+  const result = _validateEmailFull(email);
+  if (!result.valid) return { valid: false, error: result.reason };
   return { valid: true };
 }
 
