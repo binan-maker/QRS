@@ -4,7 +4,7 @@ import {
   ScreenErrorFallback,
   type ScreenErrorFallbackProps,
 } from "@/shared/components/feedback/ScreenErrorFallback";
-import { recordHandledError } from "@/shared/services/setup-global-error-handlers";
+import { recordHandledError } from "@/lib/error-handlers";
 
 export type ScreenErrorBoundaryProps = PropsWithChildren<{
   /** Human-readable label of the screen (e.g. "Profile"). */

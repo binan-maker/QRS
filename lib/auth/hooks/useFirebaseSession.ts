@@ -6,7 +6,7 @@
 import { useEffect } from "react";
 import type { Dispatch, MutableRefObject, SetStateAction } from "react";
 import { authAdapter } from "@/lib/auth";
-import { queryClient } from "@/shared/services/query-client";
+import { queryClient } from "@/lib/query-client";
 import { db } from "@/lib/db";
 import { COLLECTIONS } from "@/shared/constants/collections";
 import { prewarmUserData } from "@/services/cache/prewarm";

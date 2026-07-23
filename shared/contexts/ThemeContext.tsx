@@ -16,7 +16,7 @@ import {
   getStartupPref,
   isStartupPrefsLoaded,
   STARTUP_PREF_KEYS,
-} from "@/shared/services/startup-prefs";
+} from "@/lib/startup-prefs";
 
 type ThemeMode = "system" | "dark" | "light";
 

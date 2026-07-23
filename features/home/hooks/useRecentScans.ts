@@ -4,7 +4,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/shared/contexts/AuthContext";
 import { getUserScansPaginated, deleteUserScan } from "@/lib/firestore-service";
-import { queryClient } from "@/shared/services/query-client";
+import { queryClient } from "@/lib/query-client";
 import {
   getCachedHomeScans,
   setCachedHomeScans,

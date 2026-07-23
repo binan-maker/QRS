@@ -9,7 +9,7 @@ import {
   prefetchStartupPrefs,
   getStartupPref,
   STARTUP_PREF_KEYS,
-} from "@/shared/services/startup-prefs";
+} from "@/lib/startup-prefs";
 
 // ── Android tab bar background ─────────────────────────────────────────────────
 const AndroidTabBarBackground = memo(function AndroidTabBarBackground({

@@ -25,7 +25,7 @@ import {
   getStartupPref,
   isStartupPrefsLoaded,
   STARTUP_PREF_KEYS,
-} from "@/shared/services/startup-prefs";
+} from "@/lib/startup-prefs";
 
 // Module-level ref populated by the provider so callers outside the hook tree
 // (e.g. AuthContext queryFn callbacks) can sync the avatar without hooks.
