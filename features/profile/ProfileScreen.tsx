@@ -470,7 +470,7 @@ function ProfileScreen() {
         onCamera={onCamera}
         onGallery={onGallery}
         onRemove={handleRemovePhoto}
-        hasPhoto={!!photoURL && photoURL.includes("firebasestorage")}
+        hasPhoto={!!photoURL}
         onClose={closePhotoModal}
         extraBottomPadding={0}
       />

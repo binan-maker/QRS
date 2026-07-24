@@ -99,7 +99,13 @@ async function runReengagementScan() {
   for (const doc of usersSnap.docs) {
     const data = doc.data();
     const pushToken: string = data.pushToken;
-    const lastActive: number = data.lastActiveAt?.toMillis?.() ?? 0;
+    // Supabase returns timestamps as ISO strings; Firestore used .toMillis()
+    const lastActiveRaw = data.lastActiveAt ?? data.last_active_at;
+    const lastActive: number = lastActiveRaw
+      ? (typeof lastActiveRaw === "object" && typeof lastActiveRaw.toMillis === "function"
+          ? lastActiveRaw.toMillis()
+          : new Date(lastActiveRaw as string).getTime())
+      : 0;
     if (!pushToken || !isValidExpoPushToken(pushToken)) continue;
 
     const inactiveMs = now - lastActive;

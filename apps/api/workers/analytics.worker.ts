@@ -1,5 +1,5 @@
 /**
- * BullMQ Analytics Worker (Phase 3.5)
+ * BullMQ Analytics Worker
  *
  * Processes scan analytics asynchronously — scan recording stays fast
  * (fire-and-forget) and this worker handles the aggregations.
@@ -11,7 +11,7 @@
 import { Worker } from "bullmq";
 import type { AnalyticsJobData } from "../src/infrastructure/queue";
 import { QUEUE_NAMES } from "../src/infrastructure/queue";
-import { getAdminDb } from "../src/lib/firebase-admin";
+import { getAdminSupabase } from "../src/lib/supabase-admin";
 import { getCacheService } from "../src/infrastructure/cache";
 
 // ─── Redis connection ─────────────────────────────────────────────────────────
@@ -37,33 +37,60 @@ function shouldRefreshTrust(scanCount: number): boolean {
 
 async function processAnalyticsJob(job: { data: AnalyticsJobData }) {
   const { qrId, scanId, event, timestamp } = job.data;
-  const db = getAdminDb();
+  const supabase = getAdminSupabase();
 
-  if (!db) {
-    console.warn("[analytics.worker] Firebase Admin not configured — skipping analytics");
+  if (!supabase) {
+    console.warn("[analytics.worker] Supabase Admin not configured — skipping analytics");
     return;
   }
 
   if (event === "scan") {
-    // Increment the qr's scan counter in Firestore (atomic)
-    const qrRef = db.collection("qrs").doc(qrId);
-    await db.runTransaction(async (tx) => {
-      const doc = await tx.get(qrRef);
-      if (!doc.exists) return;
-      const current = (doc.data()?.scanCount ?? 0) as number;
-      tx.update(qrRef, {
-        scanCount:  current + 1,
-        lastScannedAt: new Date(timestamp),
-      });
+    // Fetch the current scan count
+    const { data: qr, error: fetchErr } = await supabase
+      .from("unified_qrs")
+      .select("id, scan_count")
+      .eq("id", qrId)
+      .maybeSingle();
 
-      // Invalidate cached trust score at scan count thresholds
-      if (shouldRefreshTrust(current + 1)) {
-        await cache.invalidate(`trust:${qrId}`);
-        console.log(`[analytics.worker] Trust cache invalidated for QR ${qrId} at ${current + 1} scans`);
-      }
+    if (fetchErr) {
+      console.error(`[analytics.worker] Failed to fetch QR ${qrId}:`, fetchErr.message);
+      return;
+    }
+    if (!qr) {
+      console.warn(`[analytics.worker] QR ${qrId} not found — skipping`);
+      return;
+    }
+
+    const newCount = ((qr.scan_count as number) ?? 0) + 1;
+
+    // Atomic increment via RPC (falls back to read-then-write if RPC not available)
+    const { error: rpcErr } = await supabase.rpc("increment_field", {
+      p_table: "unified_qrs",
+      p_id: qrId,
+      p_field: "scan_count",
+      p_delta: 1,
     });
 
-    // Log scan record ID for audit trail
+    if (rpcErr) {
+      // Fallback: direct update
+      await supabase
+        .from("unified_qrs")
+        .update({ scan_count: newCount, last_scanned_at: new Date(timestamp).toISOString() })
+        .eq("id", qrId);
+    } else {
+      // Update last_scanned_at separately
+      await supabase
+        .from("unified_qrs")
+        .update({ last_scanned_at: new Date(timestamp).toISOString() })
+        .eq("id", qrId);
+    }
+
+    // Invalidate cached trust score at scan count thresholds
+    if (shouldRefreshTrust(newCount)) {
+      await cache.invalidate(`trust:${qrId}`);
+      console.log(`[analytics.worker] Trust cache invalidated for QR ${qrId} at ${newCount} scans`);
+    }
+
     console.log(`[analytics.worker] Scan ${scanId} processed for QR ${qrId}`);
   }
 }

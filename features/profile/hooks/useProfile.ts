@@ -302,7 +302,9 @@ export function useProfile() {
     setPhotoURL(null);
 
     try {
-      if (prevUrl && prevUrl.includes("firebasestorage")) {
+      if (prevUrl) {
+        // Delete from storage if it's a Supabase-hosted photo
+        // (Firebase Storage URLs are ignored — they cannot be deleted via Supabase)
         const { deleteProfilePhoto } = await import("@/services/storage/storage-service");
         deleteProfilePhoto(user.id, prevUrl).catch(() => {});
       }

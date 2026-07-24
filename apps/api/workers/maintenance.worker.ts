@@ -1,5 +1,5 @@
 /**
- * BullMQ Maintenance Worker (Phase 3.5)
+ * BullMQ Maintenance Worker
  *
  * Handles DB housekeeping on a daily cron — runs tasks that must not block
  * the request path:
@@ -14,7 +14,7 @@
 import { Worker, Queue } from "bullmq";
 import type { MaintenanceJobData } from "../src/infrastructure/queue";
 import { QUEUE_NAMES } from "../src/infrastructure/queue";
-import { getAdminDb } from "../src/lib/firebase-admin";
+import { getAdminSupabase } from "../src/lib/supabase-admin";
 
 // ─── Redis connection ─────────────────────────────────────────────────────────
 
@@ -32,50 +32,73 @@ const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000;
 const NINETY_DAYS_MS = 90 * 24 * 60 * 60 * 1000;
 
 async function expireNotifications(): Promise<void> {
-  const db = getAdminDb();
-  if (!db) return;
+  const supabase = getAdminSupabase();
+  if (!supabase) return;
 
-  const cutoff = new Date(Date.now() - THIRTY_DAYS_MS);
-  const snap = await db
-    .collectionGroup("notifications")
-    .where("createdAt", "<", cutoff)
-    .limit(500)
-    .get();
+  const cutoff = new Date(Date.now() - THIRTY_DAYS_MS).toISOString();
 
-  if (snap.empty) { console.log("[maintenance] No stale notifications"); return; }
+  // Fetch IDs of stale notifications (cap at 500 to avoid full table scans)
+  const { data, error } = await supabase
+    .from("notifications")
+    .select("id")
+    .lt("created_at", cutoff)
+    .limit(500);
 
-  const batch = db.batch();
-  snap.docs.forEach((d) => batch.delete(d.ref));
-  await batch.commit();
-  console.log(`[maintenance] Deleted ${snap.size} notifications older than 30 days`);
+  if (error) {
+    console.error("[maintenance] expireNotifications error:", error.message);
+    return;
+  }
+  if (!data || data.length === 0) {
+    console.log("[maintenance] No stale notifications");
+    return;
+  }
+
+  const ids = data.map((row: any) => row.id as string);
+  const { error: delErr } = await supabase.from("notifications").delete().in("id", ids);
+  if (delErr) {
+    console.error("[maintenance] Failed to delete notifications:", delErr.message);
+    return;
+  }
+  console.log(`[maintenance] Deleted ${ids.length} notifications older than 30 days`);
 }
 
 async function archiveOldScans(): Promise<void> {
   // Phase 2 target: move scans to a cold-storage/archive table in PostgreSQL.
-  // For now, log intent only — Firestore scans are append-only and not deleted.
+  // For now, log intent only — scans are append-only and not deleted.
   const cutoff = new Date(Date.now() - NINETY_DAYS_MS);
   console.log(`[maintenance] archive_old_scans placeholder — cutoff: ${cutoff.toISOString()}`);
   // TODO(Phase 2): SELECT INTO qr_scans_archive FROM qr_scans WHERE scanned_at < cutoff
 }
 
 async function cleanupSoftDeletedUsers(): Promise<void> {
-  const db = getAdminDb();
-  if (!db) return;
+  const supabase = getAdminSupabase();
+  if (!supabase) return;
 
-  const cutoff = new Date(Date.now() - THIRTY_DAYS_MS);
-  const snap = await db
-    .collection("users")
-    .where("isDeleted", "==", true)
-    .where("deletedAt", "<", cutoff)
-    .limit(100)
-    .get();
+  const cutoff = new Date(Date.now() - THIRTY_DAYS_MS).toISOString();
 
-  if (snap.empty) { console.log("[maintenance] No users to purge"); return; }
+  const { data, error } = await supabase
+    .from("users")
+    .select("id")
+    .eq("is_deleted", true)
+    .lt("deleted_at", cutoff)
+    .limit(100);
 
-  const batch = db.batch();
-  snap.docs.forEach((d) => batch.delete(d.ref));
-  await batch.commit();
-  console.log(`[maintenance] Hard-deleted ${snap.size} soft-deleted user records`);
+  if (error) {
+    console.error("[maintenance] cleanupSoftDeletedUsers error:", error.message);
+    return;
+  }
+  if (!data || data.length === 0) {
+    console.log("[maintenance] No users to purge");
+    return;
+  }
+
+  const ids = data.map((row: any) => row.id as string);
+  const { error: delErr } = await supabase.from("users").delete().in("id", ids);
+  if (delErr) {
+    console.error("[maintenance] Failed to delete users:", delErr.message);
+    return;
+  }
+  console.log(`[maintenance] Hard-deleted ${ids.length} soft-deleted user records`);
 }
 
 // ─── Job handler ──────────────────────────────────────────────────────────────

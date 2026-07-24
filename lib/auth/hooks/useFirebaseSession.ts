@@ -30,7 +30,7 @@ export function useFirebaseSession({
   useEffect(() => {
     const unsubscribe = authAdapter.onIdTokenChanged(async (adapterUser) => {
       if (adapterUser) {
-        // Mark that Firebase restored a session — suppresses the Google
+        // Mark that auth session was restored — suppresses the Google
         // signInSilently call in useGoogleAuth for this launch.
         firebaseSessionRestoredRef.current = true;
 
@@ -68,8 +68,8 @@ export function useFirebaseSession({
             resolvedUser.uid,
           ]);
 
-          // Prefer the Firestore photo (app-uploaded) over the Firebase Auth
-          // photo (always the Google profile picture for Google sign-in users).
+          // Prefer the DB photo (app-uploaded) over the provider photo
+          // (always the Google profile picture for Google sign-in users).
           const initialPhotoURL =
             (cachedProfile?.photoURL as string | undefined) ||
             resolvedUser.photoURL ||
@@ -94,7 +94,7 @@ export function useFirebaseSession({
           // Pre-warm history / favorites / stats so tabs render with data.
           prewarmUserData(resolvedUser.uid).catch(() => {});
 
-          // Enrich user state with Firestore username and app-uploaded photo.
+          // Enrich user state with DB username and app-uploaded photo.
           queryClient.prefetchQuery({
             queryKey: ["userProfile", resolvedUser.uid],
             queryFn: async () => {
