@@ -1,6 +1,6 @@
-// ── Firebase session hook ─────────────────────────────────────────────────────
-// Subscribes to Firebase's onIdTokenChanged and keeps local auth state in sync.
-// Handles: email-verification checks, Firestore profile enrichment (username /
+// ── Auth session hook ─────────────────────────────────────────────────────────
+// Subscribes to Supabase's onAuthStateChange and keeps local auth state in sync.
+// Handles: email-verification checks, DB profile enrichment (username /
 // photo), TanStack Query prefetch, and avatar sync.
 
 import { useEffect } from "react";

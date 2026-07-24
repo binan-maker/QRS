@@ -1,14 +1,14 @@
 // ═══════════════════════════════════════════════════════════════════════════════
-// STORAGE ENTRY POINT — single import for all file-storage operations.
+// SUPABASE CONFIGURATION — single source of truth for Supabase project metadata.
 // ───────────────────────────────────────────────────────────────────────────────
-// To switch your entire storage backend, edit ONE line here:
-//   import { firebaseStorageProvider } from "./providers/firebase";
-//   change to: import { s3StorageProvider } from "./providers/s3";
-//
-// No other files need changing.
+// Replaces config/firebase.ts.
+// All client-side values are sourced from EXPO_PUBLIC_* environment variables
+// and are safe to include in the JS bundle.
 // ═══════════════════════════════════════════════════════════════════════════════
 
-import { supabaseStorageProvider } from "./providers/supabase";
-
-export const storageAdapter = supabaseStorageProvider;
-export type { StorageAdapter } from "./adapter";
+export const SUPABASE_CONFIG = {
+  /** Supabase project URL — e.g. https://xxxx.supabase.co */
+  url: process.env.EXPO_PUBLIC_SUPABASE_URL ?? "",
+  /** Supabase anon/public key — safe to expose in the bundle. */
+  anonKey: process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY ?? "",
+} as const;

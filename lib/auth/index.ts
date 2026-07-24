@@ -8,8 +8,8 @@
 // No other files need changing.
 // ═══════════════════════════════════════════════════════════════════════════════
 
-import { firebaseAuthProvider } from "./providers/firebase";
+import { supabaseAuthProvider } from "./providers/supabase";
 
-export const authAdapter = firebaseAuthProvider;
+export const authAdapter = supabaseAuthProvider;
 export type { AuthAdapter, AuthAdapterUser } from "./adapter";
 export type { AuthUser } from "./types";

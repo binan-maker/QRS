@@ -1,15 +1,12 @@
 /**
- * Firebase Authentication middleware.
+ * Supabase Authentication middleware.
  *
  * authenticate     — required; attaches req.user or returns 401
  * optionalAuth     — optional; attaches req.user if valid token present, otherwise continues
- *
- * Keeping Firebase Auth as the identity layer while centralising token
- * verification in one place instead of copy-pasted in every route handler.
  */
 
 import type { Request, Response, NextFunction } from "express";
-import { getAdminAuth } from "../lib/firebase-admin";
+import { verifySupabaseToken } from "../lib/supabase-admin";
 
 // ─── Augment Express Request ─────────────────────────────────────────────────
 
@@ -35,15 +32,6 @@ function extractToken(req: Request): string | null {
   return header.slice(7);
 }
 
-function isAuthError(code: string): boolean {
-  return (
-    code === "auth/argument-error" ||
-    code === "auth/id-token-expired" ||
-    code === "auth/id-token-revoked" ||
-    code === "auth/invalid-id-token"
-  );
-}
-
 // ─── Required authentication ─────────────────────────────────────────────────
 
 export async function authenticate(
@@ -61,26 +49,9 @@ export async function authenticate(
     return;
   }
 
-  const adminAuth = getAdminAuth();
-  if (!adminAuth) {
-    res.status(503).json({
-      error: "Authentication service unavailable — FIREBASE_SERVICE_ACCOUNT_JSON not set",
-      code: "SERVICE_UNAVAILABLE",
-      status: 503,
-    });
-    return;
-  }
-
   try {
-    const decoded = await adminAuth.verifyIdToken(token);
-    req.user = {
-      uid: decoded.uid,
-      email: decoded.email,
-      emailVerified: decoded.email_verified ?? false,
-    };
-    next();
-  } catch (e: any) {
-    if (isAuthError(e.code)) {
+    const user = await verifySupabaseToken(token);
+    if (!user) {
       res.status(401).json({
         error: "Invalid or expired token",
         code: "TOKEN_INVALID",
@@ -88,7 +59,22 @@ export async function authenticate(
       });
       return;
     }
-    console.error("[auth] verifyIdToken error:", e.message ?? e);
+    req.user = user;
+    next();
+  } catch (e: any) {
+    const isAuthErr =
+      e?.message?.includes("expired") ||
+      e?.message?.includes("invalid") ||
+      e?.code?.startsWith("auth/");
+    if (isAuthErr) {
+      res.status(401).json({
+        error: "Invalid or expired token",
+        code: "TOKEN_INVALID",
+        status: 401,
+      });
+      return;
+    }
+    console.error("[auth] verifySupabaseToken error:", e.message ?? e);
     res.status(401).json({
       error: "Authentication failed",
       code: "AUTH_FAILED",
@@ -107,16 +93,9 @@ export async function optionalAuth(
   const token = extractToken(req);
   if (!token) return next();
 
-  const adminAuth = getAdminAuth();
-  if (!adminAuth) return next();
-
   try {
-    const decoded = await adminAuth.verifyIdToken(token);
-    req.user = {
-      uid: decoded.uid,
-      email: decoded.email,
-      emailVerified: decoded.email_verified ?? false,
-    };
+    const user = await verifySupabaseToken(token);
+    if (user) req.user = user;
   } catch {
     // silently ignore — request continues as unauthenticated
   }

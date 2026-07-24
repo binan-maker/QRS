@@ -11,7 +11,7 @@
 // Usage: Import only from Express route handlers or other server-side services.
 // ──────────────────────────────────────────────────────────────────────────────
 
-import { Timestamp } from "firebase-admin/firestore";
+// Timestamp import removed — using plain Date/ISO string handling instead
 export type { ServerAccountTier, ServerCollusionAnalysis, AuditLogEntry } from "./server-verify-types";
 export { analyzeReportsForCollusionServer } from "./server-collusion";
 import { TIER_CONFIG } from "./server-verify-types";

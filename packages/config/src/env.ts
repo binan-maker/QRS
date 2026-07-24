@@ -5,13 +5,9 @@ import { z } from "zod";
 // Never put secrets here — they are visible to end users.
 
 export const mobileEnvSchema = z.object({
-  // Firebase
-  EXPO_PUBLIC_FIREBASE_API_KEY: z.string().min(1),
-  EXPO_PUBLIC_FIREBASE_PROJECT_ID: z.string().min(1),
-  EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET: z.string().min(1),
-  EXPO_PUBLIC_FIREBASE_DATABASE_URL: z.string().url(),
-  EXPO_PUBLIC_FIREBASE_APP_ID: z.string().min(1),
-  EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID: z.string().min(1),
+  // Supabase (public — safe to bundle)
+  EXPO_PUBLIC_SUPABASE_URL: z.string().url(),
+  EXPO_PUBLIC_SUPABASE_ANON_KEY: z.string().min(1),
 
   // Google Sign-In
   EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID: z.string().optional(),
@@ -30,34 +26,28 @@ export const apiEnvSchema = z.object({
     .enum(["development", "production", "test"])
     .default("development"),
 
-  // Database — optional until Phase 2 PostgreSQL migration
+  // Database (Supabase PostgreSQL)
   DATABASE_URL: z.string().url().optional(),
 
   // Auth / security
   SESSION_SECRET: z.string().min(32).optional(),
   THREATS_SIGNING_KEY: z.string().optional(),
 
+  // Supabase (server-side — service role key is a secret, never expose it)
+  SUPABASE_URL: z.string().url().optional(),
+  SUPABASE_SERVICE_ROLE_KEY: z.string().optional(),
+
   // External APIs
   GOOGLE_SAFE_BROWSING_API_KEY: z.string().optional(),
   OPENAI_API_KEY: z.string().optional(),
-
-  // Firebase (server-side — Admin SDK uses service account, not these keys)
-  EXPO_PUBLIC_FIREBASE_PROJECT_ID: z.string().optional(),
-  EXPO_PUBLIC_FIREBASE_API_KEY: z.string().optional(),
-
-  // Firebase Admin SDK — optional; enables QR analytics, report toggling, push.
-  // Set FIREBASE_SERVICE_ACCOUNT_JSON to a stringified service-account JSON object.
-  FIREBASE_SERVICE_ACCOUNT_JSON: z.string().optional(),
-  FIREBASE_DATABASE_URL: z.string().url().optional(),
 });
 
 // ─── Web (Next.js) environment ────────────────────────────────────────────────
-// Populated in Phase 4 when apps/web is bootstrapped.
 
 export const webEnvSchema = z.object({
   NEXT_PUBLIC_API_URL: z.string().url().optional(),
-  NEXT_PUBLIC_FIREBASE_API_KEY: z.string().optional(),
-  NEXT_PUBLIC_FIREBASE_PROJECT_ID: z.string().optional(),
+  NEXT_PUBLIC_SUPABASE_URL: z.string().url().optional(),
+  NEXT_PUBLIC_SUPABASE_ANON_KEY: z.string().optional(),
   DATABASE_URL: z.string().url().optional(),
   SESSION_SECRET: z.string().min(32).optional(),
 });
