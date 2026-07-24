@@ -17,6 +17,8 @@ Install dependencies first if workflows fail:
 npm install
 ```
 
+> **Note:** The Expo mobile app requires a physical device or emulator (via Expo Go or a dev build) — it cannot run directly in the Replit browser preview. The Express backend runs fully in the preview on port 5000.
+
 ---
 
 ## Architecture
@@ -24,81 +26,88 @@ npm install
 ```
 binro/
 ├── apps/
-│   ├── api/           # ✅ Express.js backend (the running server)
+│   ├── api/           # ✅ Express.js backend (runs on Replit — port 5000)
 │   │   └── src/
-│   │       ├── index.ts         # Entry point — port 5000
+│   │       ├── index.ts         # Entry point
 │   │       ├── routes.ts        # Route registration
 │   │       ├── routes/          # API route handlers
-│   │       ├── services/        # SERVER-ONLY services (firebase-admin, vote weight)
-│   │       ├── lib/             # Firebase Admin, push, Firestore REST client, caching
+│   │       ├── services/        # SERVER-ONLY services (report-service, etc.)
+│   │       ├── lib/             # Supabase admin, push, caching
+│   │       │   ├── firebase-admin.ts   # Supabase compatibility shim (Firestore-style API → Supabase)
+│   │       │   └── supabase-admin.ts   # Real Supabase admin client
 │   │       ├── middleware/       # CORS, rate limiter, logger, error handler
 │   │       ├── security/        # ECDSA response signing
 │   │       ├── templates/       # Landing page HTML, guard redirect HTML
 │   │       └── health/          # Health check endpoints
-│   └── web/           # Next.js web app
+│   └── web/           # Next.js web app (apps/web/)
 ├── packages/
-│   ├── core/          # @binro/core — shared domain types, zero deps
 │   ├── db/            # @binro/db   — Drizzle ORM schema + PostgreSQL client
 │   ├── config/        # @binro/config — Zod env validation (mobile / api / web)
 │   ├── tsconfig/      # Shared TypeScript configs
 │   └── eslint-config/ # Shared ESLint rules
-├── app/               # Expo Router screens (root — current mobile app entry)
-├── config/            # App-wide constants: env.ts, api.ts, app.ts, firebase.ts
+├── app/               # Expo Router screens (mobile app entry)
+├── config/            # App-wide typed config: env.ts, api.ts, app.ts, supabase.ts
 ├── features/          # Domain feature modules (UI + hooks, mobile)
-├── lib/               # Infrastructure adapters — Auth, DB, Storage (Firebase isolated here)
-│   ├── auth/          #   AuthAdapter interface + Firebase provider
-│   ├── db/            #   DbAdapter + RealtimeAdapter interfaces + Firebase provider
-│   └── storage/       #   StorageAdapter interface + Firebase provider
-├── services/          # Shared data-access services (use lib/ adapters, zero Firebase SDK imports)
+├── lib/               # Infrastructure adapters — Auth, DB, Storage (Supabase-backed)
+│   ├── auth/          #   AuthAdapter interface + Supabase provider
+│   ├── db/            #   DbAdapter + RealtimeAdapter interfaces + Supabase provider
+│   └── storage/       #   StorageAdapter interface
+├── services/          # Shared data-access services (mobile — use lib/ adapters)
 ├── shared/            # Mobile shared components, utils, contexts, i18n
 ├── store/             # Zustand global stores
 └── validators/        # Centralized input validation (auth, user, qr, settings, scan)
 ```
 
-### Dependency rules (enforced)
+### Dependency rules
 
 | Layer | Location | May import |
 |---|---|---|
 | Presentation | `features/`, `app/` | services, hooks, shared, validators |
-| Application | `services/` | `lib/auth`, `lib/db`, `lib/storage`, `validators`, `packages/core` |
+| Application | `services/` | `lib/auth`, `lib/db`, `lib/storage`, `validators`, `packages/*` |
 | Adapter interface | `lib/*/adapter.ts` | TypeScript types only |
-| Provider (Firebase) | `lib/*/providers/firebase.ts` | Firebase SDK — **only here** |
+| Provider (Supabase) | `lib/*/providers/supabase.ts` | Supabase SDK — only here |
 | Domain models | `packages/core/` | Nothing (zero deps) |
 
 ### Backend / Mobile separation
 
 | Location | Who uses it |
 |---|---|
-| `apps/api/src/services/` | **Server only** — imports `firebase-admin`, never bundled in Expo |
-| `services/` (root) | **Mobile** — Firebase client SDK via `lib/` adapters |
+| `apps/api/src/services/` | **Server only** — uses `supabase-admin`, never bundled in Expo |
+| `apps/api/src/lib/firebase-admin.ts` | Supabase compat shim (Firestore-style API → Supabase queries) |
+| `services/` (root) | **Mobile** — Supabase client SDK via `lib/` adapters |
 | `shared/` (root) | **Mobile shared** — components, utils, i18n |
-| `packages/core/` | **Everywhere** — pure types, zero deps |
+| `packages/*` | **Everywhere** — pure types / schemas, zero platform deps |
+
+> **Important:** Never import from `@/services/`, `@/lib/`, or `@/shared/` inside `apps/api/src/`.
+> Those paths pull in `react-native` / Expo modules that crash the Node server.
+> Server-only logic lives in `apps/api/src/services/` and uses `getAdminSupabase()`.
 
 ---
 
 ## Required Environment Variables
 
 ### Server (`apps/api/src/`)
+
 | Variable | Required | Description |
 |---|---|---|
+| `SUPABASE_URL` | **Yes** (for DB/auth features) | Supabase project URL (`https://xxxx.supabase.co`) |
+| `SUPABASE_SERVICE_ROLE_KEY` | **Yes** (for DB/auth features) | Service role key — bypasses RLS; keep secret |
+| `DATABASE_URL` | Optional | PostgreSQL connection string (for Drizzle migrations) |
 | `SESSION_SECRET` | Optional | HMAC signing secret (≥32 chars) — already set |
-| `FIREBASE_SERVICE_ACCOUNT_JSON` | Optional | Firebase Admin SDK service account JSON — enables `/api/v1/qr/:id/report`, QR analytics, active toggle |
-| `FIREBASE_DATABASE_URL` | Optional | Firebase Realtime Database URL |
-| `GOOGLE_SAFE_BROWSING_API_KEY` | Optional | Enables real-time URL threat checks |
 | `OPENAI_API_KEY` | Optional | Enables AI QR generation |
-| `DATABASE_URL` | Optional | PostgreSQL (Phase 2) |
+| `GOOGLE_SAFE_BROWSING_API_KEY` | Optional | Enables real-time URL threat checks |
+| `RAZORPAY_KEY_ID` / `RAZORPAY_KEY_SECRET` | Optional | Payment processing |
+| `UPSTASH_REDIS_URL` | Optional | Redis caching |
 
-### Mobile (bundled into JS bundle — not secrets)
+### Mobile (bundled into JS bundle — public, not secrets)
+
 | Variable | Description |
 |---|---|
-| `EXPO_PUBLIC_FIREBASE_API_KEY` | Firebase Web API key |
-| `EXPO_PUBLIC_FIREBASE_PROJECT_ID` | Firebase project ID |
-| `EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET` | Firebase Storage bucket |
-| `EXPO_PUBLIC_FIREBASE_DATABASE_URL` | Firebase Realtime Database URL |
-| `EXPO_PUBLIC_FIREBASE_APP_ID` | Firebase App ID |
-| `EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID` | Firebase Messaging sender ID |
+| `EXPO_PUBLIC_SUPABASE_URL` | Supabase project URL |
+| `EXPO_PUBLIC_SUPABASE_ANON_KEY` | Supabase anon/public key |
 | `EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID` | Google OAuth web client ID |
 | `EXPO_PUBLIC_ANDROID_CLIENT_ID` | Google OAuth Android client ID |
+| `EXPO_PUBLIC_IOS_CLIENT_ID` | Google OAuth iOS client ID |
 
 ---
 
@@ -108,12 +117,11 @@ binro/
 |---|---|
 | Mobile | Expo SDK 54, React Native 0.81.5, Expo Router 6 |
 | Backend | Express.js 5.x, Node.js, TypeScript (tsx) |
-| Primary DB | Firebase Firestore (client SDK + Admin SDK) |
-| Future DB | PostgreSQL via Drizzle ORM (`packages/db/`) |
-| Auth | Firebase Auth + Google Sign-In |
+| Database | Supabase (PostgreSQL) — Drizzle ORM schema in `packages/db/` |
+| Auth | Supabase Auth + Google Sign-In |
 | State | TanStack Query v5 + Zustand v5 |
 | i18n | i18next (EN, HI, ML, TA, TE) |
-| Payments | Google Play Billing / Apple In-App Purchases (react-native-iap) |
+| Payments | Razorpay + In-App Purchases (react-native-iap) |
 | Push | Expo Notifications |
 
 ---
@@ -122,7 +130,7 @@ binro/
 
 | Method | Path | Description |
 |---|---|---|
-| GET | `/status` | Health check |
+| GET | `/health` | Health check (`{"status":"ok"}`) |
 | GET | `/api/threats` | Dynamic threat patterns |
 | GET | `/q/:id` | Unified QR redirect / content |
 | GET | `/go/:slug` | Standard QR content lookup |
@@ -145,3 +153,4 @@ binro/
 - Never delete working code without explaining why
 - Always verify the project builds after every change
 - Separate backend logic from the mobile app — server-only code lives in `apps/api/src/`
+- Database is fully migrated to Supabase (PostgreSQL) — do not re-introduce Firebase

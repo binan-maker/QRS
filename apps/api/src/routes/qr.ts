@@ -8,7 +8,7 @@
 import { Router, type Request, type Response } from "express";
 import { z } from "zod";
 import { admin, getAdminDb } from "../lib/firebase-admin";
-import { reportQrCode } from "@/services/moderation/report-service";
+import { reportQrCode } from "../services/report-service";
 import { authenticate } from "../middleware/auth";
 import { validateBody } from "../middleware/validate";
 import {
