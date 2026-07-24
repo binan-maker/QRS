@@ -16,11 +16,25 @@ India's QR code security and verification platform — real-time fraud detection
 ## Supabase setup status
 
 - ✅ All environment variables and secrets set on Replit
-- ✅ All 24 Drizzle ORM tables applied to Supabase (via Management API — Replit blocks direct PostgreSQL ports)
+- ✅ All 24 Drizzle ORM tables created in Supabase (`npm run db:push`)
 - ✅ Backend starts and `/health` responds `{"status":"ok"}`
-- ⏳ Firebase Auth users not yet migrated to Supabase Auth (Task #3)
-- ⏳ Firestore data not yet migrated to Supabase PostgreSQL (Task #3)
-- ⏳ Firebase Storage files not yet migrated to Supabase Storage (Task #4)
+- ✅ **Firebase → Supabase data migration complete** (`scripts/migrate-firebase-to-supabase.ts`)
+  - 39 Auth users migrated (matched by email)
+  - 232 QR codes (`qr_codes`)
+  - 1 unified QR (`unified_qrs`)
+  - 10 guard links (`guard_links`)
+  - 25 standard links (`standard_links`)
+  - 76 comments (`qr_comments`)
+  - 1 bug report (`moderation_queue`)
+- ⏳ Firebase Storage files not yet migrated to Supabase Storage
+
+### Re-running the migration (idempotent)
+
+```bash
+npx tsx scripts/migrate-firebase-to-supabase.ts
+```
+
+Requires: `FIREBASE_SERVICE_ACCOUNT`, `SUPABASE_SERVICE_ROLE_KEY`, `SUPABASE_URL`, `DATABASE_URL`
 
 ### Re-applying schema changes in future
 
