@@ -2,10 +2,9 @@
 // Re-exports every service function so that `import { getUserProfile } from
 // "@/lib/db"` works as a single convenience import.
 //
-// NOTE: This file does NOT export Firebase primitives. Firebase SDK usage is
-// isolated to:
-//   lib/db/providers/firebase.ts          (client SDK)
-//   lib/db/providers/firebase-admin-provider.ts  (Admin SDK)
+// NOTE: This file does NOT export database primitives. All data access uses the
+// Supabase provider via the DbAdapter / RealtimeAdapter interfaces in:
+//   lib/db/providers/supabase.ts
 //
 // Circular-import note: services/ import from lib/db/client, and lib/db/index
 // lazy-requires this file. The lazy require() in lib/db/index.ts is what

@@ -1,6 +1,6 @@
 import type { Request, Response, Express } from "express";
 import crypto from "crypto";
-import * as admin from "firebase-admin";
+import { admin, getAdminDb } from "../lib/firebase-admin";
 
 let razorpay: any = null;
 
@@ -12,21 +12,6 @@ async function getRazorpay() {
   const Razorpay = (await import("razorpay")).default;
   razorpay = new Razorpay({ key_id: keyId, key_secret: keySecret });
   return razorpay;
-}
-
-function getFirestoreAdmin(): admin.firestore.Firestore | null {
-  try {
-    if (!admin.apps.length) {
-      const serviceAccount = process.env.FIREBASE_SERVICE_ACCOUNT_JSON;
-      if (!serviceAccount) return null;
-      admin.initializeApp({
-        credential: admin.credential.cert(JSON.parse(serviceAccount)),
-      });
-    }
-    return admin.firestore();
-  } catch {
-    return null;
-  }
 }
 
 export function registerDonationRoutes(app: Express) {
@@ -91,9 +76,10 @@ export function registerDonationRoutes(app: Express) {
         return res.status(400).json({ error: "Payment verification failed" });
       }
 
-      const db = getFirestoreAdmin();
+      const db = getAdminDb();
       if (db) {
-        await db.collection("donations").add({
+        const col = db.collection("donations");
+        await col.add({
           orderId: razorpay_order_id,
           paymentId: razorpay_payment_id,
           amount: amount / 100,

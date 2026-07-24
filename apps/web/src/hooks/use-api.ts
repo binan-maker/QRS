@@ -4,7 +4,7 @@
  * useApi — client-side API client hook.
  *
  * Returns a BinroApiClient instance pre-configured with the current user's
- * Firebase ID token. Re-uses a stable instance per auth state.
+ * Supabase access token. Re-uses a stable instance per auth state.
  *
  * Usage:
  *   const api = useApi();
@@ -13,7 +13,7 @@
 
 import { useMemo } from "react";
 import { createClientApiClient, type BinroApiClient } from "@/lib/api-client";
-import { getFirebaseAuth } from "@/lib/firebase";
+import { getSupabaseClient } from "@/lib/supabase";
 import { useAuth } from "@/hooks/use-auth";
 
 export function useApi(): BinroApiClient {
@@ -21,17 +21,15 @@ export function useApi(): BinroApiClient {
 
   return useMemo(() => {
     const getToken = async (): Promise<string | null> => {
-      // Use the stable user ref from auth context if available
-      const auth = getFirebaseAuth();
-      const currentUser = auth.currentUser ?? user ?? null;
-      if (!currentUser) return null;
-      return currentUser.getIdToken();
+      const supabase = getSupabaseClient();
+      const { data } = await supabase.auth.getSession();
+      return data.session?.access_token ?? null;
     };
 
     return createClientApiClient(getToken);
     // Re-create client when user UID changes (sign in / sign out)
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user?.uid]);
+  }, [user?.id]);
 }
 
 /**

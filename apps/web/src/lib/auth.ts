@@ -1,13 +1,10 @@
 /**
  * Auth helpers — shared between client components and server API routes.
  *
- * Client side: thin wrappers around Firebase Auth.
- * Server side: session-cookie management via firebase-admin.
- *
  * Session flow:
- *   1. User signs in with Firebase Auth (browser)
- *   2. Client POSTs the short-lived ID token to /api/auth/session
- *   3. Server creates a long-lived Firebase session cookie (httpOnly, Secure)
+ *   1. User signs in with Supabase Auth (browser)
+ *   2. Client POSTs the short-lived access token to /api/auth/session
+ *   3. Server verifies the token and stores it in a long-lived httpOnly cookie
  *   4. Next.js middleware / Server Components read the cookie to auth SSR
  *   5. On sign-out, client DELETEs /api/auth/session to clear the cookie
  */
@@ -18,15 +15,15 @@ export const SESSION_COOKIE_MAX_AGE = 5 * 24 * 60 * 60; // 5 days in seconds
 // ─── Client helpers ───────────────────────────────────────────────────────────
 
 /**
- * Exchange a short-lived Firebase ID token for a server session cookie.
+ * Exchange a Supabase access token for a server session cookie.
  * Called client-side immediately after signIn().
  */
-export async function createSession(idToken: string): Promise<boolean> {
+export async function createSession(accessToken: string): Promise<boolean> {
   try {
     const res = await fetch("/api/auth/session", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ idToken }),
+      body: JSON.stringify({ idToken: accessToken }),
       credentials: "same-origin",
     });
     return res.ok;

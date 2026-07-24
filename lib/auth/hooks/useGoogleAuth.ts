@@ -13,7 +13,7 @@ import * as Google from "expo-auth-session/providers/google";
 import * as WebBrowser from "expo-web-browser";
 import { authAdapter } from "@/lib/auth";
 import { syncUserToDb } from "@/lib/auth/user-sync";
-import { mapFirebaseError } from "@/lib/auth/utils";
+import { mapAuthError } from "@/lib/auth/utils";
 import { trackLoginCompleted } from "@/lib/analytics";
 import { ENV } from "@/config/env";
 import type { AuthUser } from "@/lib/auth/types";
@@ -44,13 +44,13 @@ if (Platform.OS !== "web") {
 interface Params {
   setUser: Dispatch<SetStateAction<AuthUser | null>>;
   setToken: Dispatch<SetStateAction<string | null>>;
-  /** Set by useFirebaseSession when Firebase restores a session. Prevents a
-   *  redundant signInSilently call on the ~80% of launches where Firebase
-   *  restores the session first. */
-  firebaseSessionRestoredRef: MutableRefObject<boolean>;
+  /** Set by useAuthSession when Supabase restores a session. Prevents a
+   *  redundant signInSilently call on the ~80% of launches where the session
+   *  is restored first. */
+  sessionRestoredRef: MutableRefObject<boolean>;
 }
 
-export function useGoogleAuth({ setUser, setToken, firebaseSessionRestoredRef }: Params) {
+export function useGoogleAuth({ setUser, setToken, sessionRestoredRef }: Params) {
   const [googleRequest, googleResponse, promptGoogleAsync] = Google.useAuthRequest({
     webClientId: ENV.GOOGLE_WEB_CLIENT_ID,
     androidClientId: ENV.GOOGLE_ANDROID_CLIENT_ID,
@@ -62,7 +62,7 @@ export function useGoogleAuth({ setUser, setToken, firebaseSessionRestoredRef }:
 
   async function handleGoogleIdToken(idToken: string) {
     const adapterUser = await authAdapter.signInWithGoogleIdToken(idToken);
-    const firebaseToken = await adapterUser.getIdToken();
+    const token = await adapterUser.getIdToken();
     setUser({
       id: adapterUser.uid,
       email: adapterUser.email ?? "",
@@ -70,7 +70,7 @@ export function useGoogleAuth({ setUser, setToken, firebaseSessionRestoredRef }:
       photoURL: adapterUser.photoURL,
       emailVerified: adapterUser.emailVerified,
     });
-    setToken(firebaseToken);
+    setToken(token);
     trackLoginCompleted("google");
     syncUserToDb(
       adapterUser.uid,
@@ -100,19 +100,19 @@ export function useGoogleAuth({ setUser, setToken, firebaseSessionRestoredRef }:
         adapterUser.photoURL,
       ).catch(() => {});
     } catch (e: any) {
-      throw mapFirebaseError(e);
+      throw mapAuthError(e);
     }
   }
 
   // ── Effects ─────────────────────────────────────────────────────────────────
 
   // Native: delayed silent sign-in on launch.
-  // 800 ms lets Firebase's onIdTokenChanged fire first for returning users
-  // (typically 50–400 ms). If Firebase restores the session, we skip this call.
+  // 800 ms lets Supabase's onAuthStateChange fire first for returning users
+  // (typically 50–400 ms). If Supabase restores the session, we skip this call.
   useEffect(() => {
     if (Platform.OS !== "web" && GoogleSignin) {
       const timer = setTimeout(() => {
-        if (firebaseSessionRestoredRef.current) return;
+        if (sessionRestoredRef.current) return;
         GoogleSignin.signInSilently()
           .then(async (result: any) => {
             if (result?.type === "success" && result?.data?.idToken) {
@@ -173,14 +173,14 @@ export function useGoogleAuth({ setUser, setToken, firebaseSessionRestoredRef }:
       try {
         result = await GoogleSignin.signIn();
       } catch (e: any) {
-        throw mapFirebaseError(e);
+        throw mapAuthError(e);
       }
 
       if (result.type === "success" && result.data?.idToken) {
         try {
           await handleGoogleIdToken(result.data.idToken);
         } catch (e: any) {
-          throw mapFirebaseError(e);
+          throw mapAuthError(e);
         }
       } else if (
         result.type === "cancelled" ||

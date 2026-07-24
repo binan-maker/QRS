@@ -1,20 +1,5 @@
 import type { Request, Response, Express } from "express";
-import * as admin from "firebase-admin";
-
-function getAdminApp(): admin.app.App | null {
-  try {
-    if (admin.apps.length > 0) {
-      return admin.apps[0]!;
-    }
-    const serviceAccount = process.env.FIREBASE_SERVICE_ACCOUNT_JSON;
-    if (!serviceAccount) return null;
-    return admin.initializeApp({
-      credential: admin.credential.cert(JSON.parse(serviceAccount)),
-    });
-  } catch {
-    return null;
-  }
-}
+import { getAdminDb, getAdminAuth } from "../lib/firebase-admin";
 
 export function registerQrActiveRoute(app: Express) {
   app.patch("/api/qr/:qrId/active", async (req: Request, res: Response) => {
@@ -34,18 +19,22 @@ export function registerQrActiveRoute(app: Express) {
     }
     const idToken = authHeader.slice(7);
 
-    const adminApp = getAdminApp();
-    if (!adminApp) {
+    const adminAuth = getAdminAuth();
+    if (!adminAuth) {
       return res.status(503).json({
-        error: "Server not configured for this operation. Set FIREBASE_SERVICE_ACCOUNT_JSON.",
+        error: "Server not configured for this operation. Set SUPABASE_SERVICE_ROLE_KEY.",
       });
     }
 
     try {
-      const decoded = await admin.auth(adminApp).verifyIdToken(idToken);
+      const decoded = await adminAuth.verifyIdToken(idToken);
       const userId = decoded.uid;
 
-      const db = admin.firestore(adminApp);
+      const db = getAdminDb();
+      if (!db) {
+        return res.status(503).json({ error: "Database not configured." });
+      }
+
       const docRef = db.collection("qrCodes").doc(qrId);
       const docSnap = await docRef.get();
 
@@ -79,7 +68,8 @@ export function registerQrActiveRoute(app: Express) {
       if (
         err?.code === "auth/id-token-expired" ||
         err?.code === "auth/argument-error" ||
-        err?.code === "auth/id-token-revoked"
+        err?.code === "auth/id-token-revoked" ||
+        err?.code === "auth/invalid-id-token"
       ) {
         return res.status(401).json({ error: "Invalid or expired auth token" });
       }

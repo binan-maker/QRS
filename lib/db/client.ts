@@ -1,33 +1,13 @@
-import type { DbAdapter, RealtimeAdapter } from "./adapter";
+// ═══════════════════════════════════════════════════════════════════════════════
+// DATABASE CLIENT — re-exports the active Supabase DB + Realtime adapters.
+// ───────────────────────────────────────────────────────────────────────────────
+// Previously this file conditionally loaded Firebase or firebase-admin based on
+// the runtime environment. Now that the app is fully on Supabase, this is a
+// simple re-export of the Supabase provider.
+//
+// All reads/writes go through the adapter interface (DbAdapter / RealtimeAdapter)
+// so switching providers in the future only requires changing this file.
+// ═══════════════════════════════════════════════════════════════════════════════
 
-/**
- * Detect whether we're running in a plain Node.js server process.
- * On React Native / browser, `document` is defined (or `navigator.product`
- * is "ReactNative"). On a Node.js server neither exists.
- */
-function isServerEnvironment(): boolean {
-  return (
-    typeof process !== "undefined" &&
-    typeof (process as any).versions?.node === "string" &&
-    typeof document === "undefined" &&
-    typeof navigator === "undefined"
-  );
-}
-
-function loadFirebaseDb(): DbAdapter {
-  if (isServerEnvironment()) {
-    // Server: use Firebase Admin SDK — bypasses security rules entirely.
-    return require("./providers/firebase-admin-provider").adminDb;
-  }
-  return require("./providers/firebase").firebaseDb;
-}
-
-function loadFirebaseRtdb(): RealtimeAdapter {
-  if (isServerEnvironment()) {
-    return require("./providers/firebase-admin-provider").adminRtdb;
-  }
-  return require("./providers/firebase").firebaseRtdb;
-}
-
-export const db: DbAdapter = loadFirebaseDb();
-export const rtdb: RealtimeAdapter = loadFirebaseRtdb();
+export { supabaseDb as db, supabaseRtdb as rtdb } from "./providers/supabase";
+export type { DbAdapter, RealtimeAdapter } from "./adapter";

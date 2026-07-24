@@ -1,17 +1,15 @@
 // ─── Distributed Counter Utility ──────────────────────────────────────────────
 // Solves the "Hot Document" problem: When a QR code goes viral (1000+ scans/sec),
-// writing to a single Firestore document will fail (1 write/sec limit per doc).
+// writing to a single row can cause contention.
 //
 // Solution: Use distributed counters (sharding) across N shards.
 // - Each increment writes to a random shard
 // - Total count = sum of all shards
 // - Increases write capacity by N x (e.g., 10 shards = 10 writes/sec)
 //
-// Reference: https://firebase.google.com/docs/firestore/solutions/counters
-//
 // SECURITY FIX v2.0:
 // - Added retry logic with exponential backoff for failed increments
-// - Transaction-based shard initialization prevents race conditions
+// - Shard initialization prevents race conditions
 // - Silent failure detection with fallback mechanisms
 // ──────────────────────────────────────────────────────────────────────────────
 
@@ -100,7 +98,7 @@ export async function getDistributedCounter(qrId: string): Promise<number> {
 }
 
 /**
- * Initialize a shard document if it doesn't exist (transaction-safe)
+ * Initialize a shard document if it doesn't exist
  * Prevents race condition where concurrent increments fail on non-existent shard
  * @param qrId - The QR code ID
  * @param shardId - The shard number to initialize

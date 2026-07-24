@@ -3,11 +3,11 @@
 // stable context value to the component tree.
 //
 // Business logic lives in:
-//   lib/auth/hooks/useFirebaseSession.ts  — Firebase token listener
-//   lib/auth/hooks/useGoogleAuth.ts       — Google sign-in (native + web)
-//   lib/auth/hooks/useAuthActions.ts      — signIn / signUp / signOut / etc.
-//   lib/auth/user-sync.ts                 — Firestore user document sync
-//   lib/auth/email-validation.ts          — server-side email validation
+//   lib/auth/hooks/useAuthSession.ts    — Supabase token listener
+//   lib/auth/hooks/useGoogleAuth.ts     — Google sign-in (native + web)
+//   lib/auth/hooks/useAuthActions.ts    — signIn / signUp / signOut / etc.
+//   lib/auth/user-sync.ts               — Supabase user document sync
+//   lib/auth/email-validation.ts        — server-side email validation
 //
 // For auth state outside React (API utils, background services) use:
 //   import { useAuthStore } from "@/store/authStore";
@@ -23,7 +23,7 @@ import {
 } from "react";
 import type * as GoogleTypes from "expo-auth-session/providers/google";
 import { useAuthStore } from "@/store/authStore";
-import { useFirebaseSession } from "@/lib/auth/hooks/useFirebaseSession";
+import { useAuthSession } from "@/lib/auth/hooks/useAuthSession";
 import { useGoogleAuth } from "@/lib/auth/hooks/useGoogleAuth";
 import { useAuthActions } from "@/lib/auth/hooks/useAuthActions";
 import { getAuthErrorMessage } from "@/lib/auth/utils";
@@ -59,9 +59,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [token, setToken] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Shared flag: useFirebaseSession sets this true when Firebase restores a
+  // Shared flag: useAuthSession sets this true when Supabase restores a
   // session; useGoogleAuth reads it to skip a redundant signInSilently call.
-  const firebaseSessionRestoredRef = useRef(false);
+  const sessionRestoredRef = useRef(false);
 
   // ── Sync local state → Zustand store ──────────────────────────────────────
   // Components that need auth state outside React read from useAuthStore.
@@ -74,14 +74,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     store.setInitialized(!isLoading);
   }, [user, token, isLoading]);
 
-  // ── Firebase session listener ──────────────────────────────────────────────
-  useFirebaseSession({ setUser, setToken, setIsLoading, firebaseSessionRestoredRef });
+  // ── Supabase session listener ──────────────────────────────────────────────
+  useAuthSession({ setUser, setToken, setIsLoading, sessionRestoredRef });
 
   // ── Google sign-in ─────────────────────────────────────────────────────────
   const { googleRequest, signInWithGoogle, switchGoogleAccount } = useGoogleAuth({
     setUser,
     setToken,
-    firebaseSessionRestoredRef,
+    sessionRestoredRef,
   });
 
   // ── Auth actions ───────────────────────────────────────────────────────────

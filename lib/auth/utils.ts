@@ -49,12 +49,16 @@ export function getAuthErrorMessage(code: string): string {
   }
 }
 
-export function mapFirebaseError(e: any): Error & { code?: string } {
+/** Map an auth error (Supabase, Google Sign-In, etc.) to a user-friendly error. */
+export function mapAuthError(e: any): Error & { code?: string } {
   const code = e?.code ?? e?.message ?? "";
   const err = new Error(getAuthErrorMessage(code)) as Error & { code?: string };
   err.code = code;
   return err;
 }
+
+/** @deprecated Use mapAuthError instead. */
+export const mapFirebaseError = mapAuthError;
 
 export async function generateUniqueUsername(displayName: string): Promise<string> {
   const base = displayName

@@ -1,7 +1,9 @@
 "use client";
 
 /**
- * Firebase Auth context for the BinRo web app.
+ * Supabase Auth context for the BinRo web app.
+ *
+ * Replaces the Firebase Auth context.
  *
  * Provides:
  *   - useAuth() hook for current user state
@@ -9,8 +11,8 @@
  *   - Loading state to avoid flash of unauthenticated content
  *
  * Session cookie flow:
- *   signIn → Firebase Auth → getIdToken() → POST /api/auth/session → cookie set
- *   signOut → DELETE /api/auth/session → Firebase signOut()
+ *   signIn → Supabase Auth → session.access_token → POST /api/auth/session → cookie set
+ *   signOut → DELETE /api/auth/session → Supabase signOut()
  */
 
 import {
@@ -22,36 +24,26 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import {
-  type User,
-  onAuthStateChanged,
-  signInWithEmailAndPassword,
-  createUserWithEmailAndPassword,
-  signInWithPopup,
-  signOut as fbSignOut,
-  sendPasswordResetEmail,
-  updateProfile,
-  type UserCredential,
-} from "firebase/auth";
-import { getFirebaseAuth, getGoogleProvider } from "@/lib/firebase";
+import type { User, Session } from "@supabase/supabase-js";
+import { getSupabaseClient } from "@/lib/supabase";
 import { createSession, destroySession } from "@/lib/auth";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 interface AuthContextValue {
-  /** Current Firebase user. null = signed out. undefined = loading. */
+  /** Current Supabase user. null = signed out. undefined = loading. */
   user: User | null | undefined;
   /** True while auth state is being resolved on mount. */
   loading: boolean;
   /** Sign in with email + password and create a server session. */
-  signInWithEmail: (email: string, password: string) => Promise<UserCredential>;
+  signInWithEmail: (email: string, password: string) => Promise<void>;
   /** Register with email + password and create a server session. */
-  signUpWithEmail: (email: string, password: string, displayName?: string) => Promise<UserCredential>;
+  signUpWithEmail: (email: string, password: string, displayName?: string) => Promise<void>;
   /** Sign in with Google popup and create a server session. */
-  signInWithGoogle: () => Promise<UserCredential>;
+  signInWithGoogle: () => Promise<void>;
   /** Send a password-reset email. */
   sendPasswordReset: (email: string) => Promise<void>;
-  /** Sign out from both Firebase and the server session. */
+  /** Sign out from both Supabase and the server session. */
   signOut: () => Promise<void>;
 }
 
@@ -67,79 +59,89 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // Track in-flight session creation to avoid duplicate POSTs
   const sessionPending = useRef(false);
 
-  /** After any successful sign-in, exchange ID token for a server session cookie. */
-  const afterSignIn = useCallback(async (credential: UserCredential): Promise<UserCredential> => {
+  /** After any successful sign-in, exchange access token for a server session cookie. */
+  const afterSignIn = useCallback(async (session: Session): Promise<void> => {
     if (!sessionPending.current) {
       sessionPending.current = true;
       try {
-        const token = await credential.user.getIdToken();
-        await createSession(token);
+        await createSession(session.access_token);
       } finally {
         sessionPending.current = false;
       }
     }
-    return credential;
   }, []);
 
   // ── Auth state listener ──────────────────────────────────────────────────────
   useEffect(() => {
-    const auth = getFirebaseAuth();
-    if (!auth) {
-      // Firebase not configured (dev without keys) — treat as signed out
-      setUser(null);
-      setLoading(false);
-      return;
-    }
-    const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
-      setUser(firebaseUser);
+    const supabase = getSupabaseClient();
+
+    // Check existing session on mount
+    supabase.auth.getSession().then(({ data }) => {
+      setUser(data.session?.user ?? null);
       setLoading(false);
     });
-    return unsubscribe;
+
+    // Subscribe to auth state changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (_event, session) => {
+        setUser(session?.user ?? null);
+        setLoading(false);
+      },
+    );
+
+    return () => subscription.unsubscribe();
   }, []);
 
   // ── Auth methods ─────────────────────────────────────────────────────────────
 
   const signInWithEmail = useCallback(
     async (email: string, password: string) => {
-      const auth = getFirebaseAuth();
-      if (!auth) throw new Error("Firebase Auth is not configured");
-      const cred = await signInWithEmailAndPassword(auth, email, password);
-      return afterSignIn(cred);
+      const supabase = getSupabaseClient();
+      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+      if (error) throw error;
+      if (data.session) await afterSignIn(data.session);
     },
     [afterSignIn],
   );
 
   const signUpWithEmail = useCallback(
     async (email: string, password: string, displayName?: string) => {
-      const auth = getFirebaseAuth();
-      if (!auth) throw new Error("Firebase Auth is not configured");
-      const cred = await createUserWithEmailAndPassword(auth, email, password);
-      if (displayName) {
-        await updateProfile(cred.user, { displayName });
-      }
-      return afterSignIn(cred);
+      const supabase = getSupabaseClient();
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: displayName
+          ? { data: { full_name: displayName, display_name: displayName } }
+          : undefined,
+      });
+      if (error) throw error;
+      if (data.session) await afterSignIn(data.session);
     },
     [afterSignIn],
   );
 
   const signInWithGoogle = useCallback(async () => {
-    const auth = getFirebaseAuth();
-    if (!auth) throw new Error("Firebase Auth is not configured");
-    const provider = getGoogleProvider();
-    const cred = await signInWithPopup(auth, provider);
-    return afterSignIn(cred);
-  }, [afterSignIn]);
+    const supabase = getSupabaseClient();
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: "google",
+      options: { redirectTo: `${window.location.origin}/auth/callback` },
+    });
+    if (error) throw error;
+    // OAuth redirects — session is picked up by onAuthStateChange on return.
+  }, []);
 
   const sendPasswordReset = useCallback(async (email: string) => {
-    const auth = getFirebaseAuth();
-    if (!auth) throw new Error("Firebase Auth is not configured");
-    await sendPasswordResetEmail(auth, email);
+    const supabase = getSupabaseClient();
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/auth/reset-password`,
+    });
+    if (error) throw error;
   }, []);
 
   const signOut = useCallback(async () => {
     await destroySession(); // clear server session cookie first
-    const auth = getFirebaseAuth();
-    if (auth) await fbSignOut(auth);
+    const supabase = getSupabaseClient();
+    await supabase.auth.signOut();
   }, []);
 
   const value: AuthContextValue = {

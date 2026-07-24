@@ -1,6 +1,6 @@
 import type { Response } from "express";
 import { guardShell, escHtml, escAttr } from "../templates/guard-html";
-import type { StandardLinkFields } from "../lib/firebase-client";
+import type { StandardLinkFields } from "../lib/supabase-client";
 
 export function serveStandardContent(res: Response, link: StandardLinkFields, _uuid: string): void {
   const { rawContent, contentType, ownerName } = link;

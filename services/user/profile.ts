@@ -1,4 +1,5 @@
 import { db, rtdb } from "@/lib/db/client";
+import { storageAdapter } from "@/lib/storage";
 import { tsToString } from "../utils";
 import type { UserStats } from "../types";
 import { uploadBase64Image, deleteImage, deleteProfilePhoto } from "../storage/storage-service";
@@ -89,7 +90,9 @@ export async function updateUserProfilePhoto(
 ): Promise<string> {
   try {
     const newPhotoUrl = await uploadBase64Image(base64Data, "profile-photos", userId, true, 400, 0.8);
-    if (oldPhotoUrl && oldPhotoUrl.includes("firebasestorage")) {
+    // Only attempt deletion if the old URL belongs to our Supabase storage bucket.
+    // Legacy Firebase Storage URLs (from before migration) are silently skipped.
+    if (oldPhotoUrl && storageAdapter.isOwnUrl(oldPhotoUrl)) {
       await deleteImage(oldPhotoUrl).catch(() => {});
     }
     await db.update([COLLECTIONS.USERS, userId], { photoURL: newPhotoUrl });
@@ -203,8 +206,10 @@ export async function deleteUserAccount(userId: string): Promise<void> {
     db.delete([COLLECTIONS.USERNAMES, username]).catch(() => {});
   }
 
-  // 4. Delete profile photo from Storage
-  if (photoUrl && photoUrl.includes("firebasestorage")) {
+  // 4. Delete profile photo from Storage.
+  // Only delete if the URL belongs to our Supabase storage bucket.
+  // Legacy Firebase Storage URLs (from before migration) are silently skipped.
+  if (photoUrl && storageAdapter.isOwnUrl(photoUrl)) {
     import("../storage/storage-service").then(({ deleteProfilePhoto }) => {
       deleteProfilePhoto(userId, photoUrl!).catch(() => {});
     }).catch(() => {});

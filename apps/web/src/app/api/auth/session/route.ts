@@ -1,8 +1,8 @@
 /**
  * /api/auth/session
  *
- * POST — Exchange a Firebase ID token for a long-lived httpOnly session cookie.
- *         Called client-side immediately after Firebase signIn().
+ * POST — Store a Supabase access token as an httpOnly session cookie.
+ *         Called client-side immediately after Supabase signIn().
  *
  * DELETE — Clear the session cookie (sign out server-side).
  */
@@ -10,7 +10,7 @@
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { createSessionCookie } from "@/lib/firebase-admin";
+import { verifySessionCookie } from "@/lib/supabase-admin";
 import { SESSION_COOKIE_NAME, SESSION_COOKIE_MAX_AGE } from "@/lib/auth";
 
 const postSchema = z.object({
@@ -35,20 +35,17 @@ export async function POST(request: Request) {
     );
   }
 
-  const sessionCookie = await createSessionCookie(
-    parsed.data.idToken,
-    SESSION_COOKIE_MAX_AGE * 1000, // convert seconds → ms
-  );
-
-  if (!sessionCookie) {
+  // Verify the token is valid before storing it
+  const user = await verifySessionCookie(parsed.data.idToken);
+  if (!user) {
     return NextResponse.json(
-      { error: "Failed to create session — Firebase Admin SDK may not be configured", code: "SESSION_ERROR" },
-      { status: 500 },
+      { error: "Invalid or expired token", code: "SESSION_ERROR" },
+      { status: 401 },
     );
   }
 
   const cookieStore = await cookies();
-  cookieStore.set(SESSION_COOKIE_NAME, sessionCookie, {
+  cookieStore.set(SESSION_COOKIE_NAME, parsed.data.idToken, {
     maxAge: SESSION_COOKIE_MAX_AGE,
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
