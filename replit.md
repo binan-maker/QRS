@@ -26,7 +26,9 @@ India's QR code security and verification platform — real-time fraud detection
   - 25 standard links (`standard_links`)
   - 76 comments (`qr_comments`)
   - 1 bug report (`moderation_queue`)
-- ⏳ Firebase Storage files not yet migrated to Supabase Storage
+- ✅ **Firebase Storage → Supabase Storage migration complete** (`scripts/migrate-firebase-storage.ts`)
+  - 5 profile photo files moved to `binro-assets` bucket under `profile-photos/`
+  - 0 DB rows still reference Firebase Storage URLs (all clear)
 
 ### Re-running the migration (idempotent)
 
