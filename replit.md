@@ -8,16 +8,33 @@ India's QR code security and verification platform — real-time fraud detection
 
 | Workflow | Command | Description |
 |---|---|---|
-| **Start Backend** | `npm run server:dev` | Express API on port 5000 |
+| **Start Backend** | `npm run server:dev` | Express API on port 5000 ✅ |
 | **Start Frontend** | `npm run expo:dev` | Metro bundler for Expo mobile app |
 
-Install dependencies first if workflows fail:
+> **Note:** The Expo mobile app requires a physical device or emulator (via Expo Go or a dev build) — it cannot run directly in the Replit browser preview. The Express backend runs fully in the preview on port 5000.
+
+## Supabase setup status
+
+- ✅ All environment variables and secrets set on Replit
+- ✅ All 24 Drizzle ORM tables applied to Supabase (via Management API — Replit blocks direct PostgreSQL ports)
+- ✅ Backend starts and `/health` responds `{"status":"ok"}`
+- ⏳ Firebase Auth users not yet migrated to Supabase Auth (Task #3)
+- ⏳ Firestore data not yet migrated to Supabase PostgreSQL (Task #3)
+- ⏳ Firebase Storage files not yet migrated to Supabase Storage (Task #4)
+
+### Re-applying schema changes in future
+
+Because Replit blocks direct PostgreSQL connections (ports 5432/6543), use the Management API to run migrations:
 
 ```bash
-npm install
+node -e "
+const fs = require('fs'), https = require('https');
+const sql = fs.readFileSync('packages/db/migrations/<file>.sql', 'utf8');
+const body = JSON.stringify({ query: sql });
+const req = https.request({ hostname: 'api.supabase.com', path: '/v1/projects/sgkbsgtktaylrqfziemw/database/query', method: 'POST', headers: { 'Authorization': 'Bearer ' + process.env.SUPABASE_ACCESS_TOKEN, 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(body) } }, res => { let d=''; res.on('data',c=>d+=c); res.on('end',()=>console.log(res.statusCode, d.substring(0,200))); });
+req.write(body); req.end();
+"
 ```
-
-> **Note:** The Expo mobile app requires a physical device or emulator (via Expo Go or a dev build) — it cannot run directly in the Replit browser preview. The Express backend runs fully in the preview on port 5000.
 
 ---
 
