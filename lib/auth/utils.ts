@@ -51,9 +51,17 @@ export function getAuthErrorMessage(code: string): string {
 
 /** Map an auth error (Supabase, Google Sign-In, etc.) to a user-friendly error. */
 export function mapAuthError(e: any): Error & { code?: string } {
-  const code = e?.code ?? e?.message ?? "";
-  const err = new Error(getAuthErrorMessage(code)) as Error & { code?: string };
-  err.code = code;
+  const code = e?.code ?? "";
+  const knownMessage = getAuthErrorMessage(code);
+  // If we got a known mapped message, use it. Otherwise fall back to the
+  // original error message so Supabase/SDK errors aren't silently swallowed
+  // as a generic "Something went wrong."
+  const isMapped = knownMessage !== "Something went wrong. Please try again.";
+  const message = isMapped
+    ? knownMessage
+    : (e?.message || "Something went wrong. Please try again.");
+  const err = new Error(message) as Error & { code?: string };
+  err.code = code || e?.message;
   return err;
 }
 

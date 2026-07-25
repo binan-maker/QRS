@@ -125,8 +125,6 @@ function RootLayoutNav() {
       <Stack.Screen name="(legal)/terms" options={{ headerShown: false }} />
       <Stack.Screen name="(legal)/trust-scores" options={{ headerShown: false }} />
       <Stack.Screen name="(legal)/how-it-works" options={{ headerShown: false }} />
-      {/* My QR codes list (lives inside (tabs) but accessible as a root stack screen) */}
-      <Stack.Screen name="(tabs)/my-qr-codes" options={{ headerShown: false }} />
       <Stack.Screen name="profile/[username]" options={{ headerShown: false }} />
     </Stack>
   );
