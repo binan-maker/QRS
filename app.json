@@ -46,7 +46,6 @@
       "expo-router",
       "expo-font",
       "expo-notifications",
-      "react-native-iap",
       "expo-web-browser",
       "@react-native-google-signin/google-signin",
       [
