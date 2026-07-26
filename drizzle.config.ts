@@ -6,17 +6,19 @@ import { defineConfig } from "drizzle-kit";
 
 // DATABASE_URL is reserved by Replit's managed Postgres.
 // For Supabase, use SUPABASE_DATABASE_URL (Settings → Database → Connection string → URI mode).
-const dbUrl = process.env.SUPABASE_DATABASE_URL ?? process.env.DATABASE_URL;
+let dbUrl = process.env.SUPABASE_DATABASE_URL ?? process.env.DATABASE_URL ?? "";
 
 if (!dbUrl) {
-  // Soft warning — this file is loaded by drizzle-kit CLI only,
-  // never at server startup. The throw has been removed so that
-  // TypeScript compilation and server boot are not affected.
   console.warn(
     "⚠️  SUPABASE_DATABASE_URL is not set. Add it to Replit Secrets before running drizzle-kit commands.\n" +
     "    Find it in your Supabase dashboard → Settings → Database → Connection string (URI mode).\n" +
-    "    Use the 'Transaction' mode connection string (port 6543) or 'Session' mode (port 5432).",
+    "    Use the 'Session' mode connection string (port 5432).",
   );
+} else {
+  // Supabase requires SSL. Append sslmode=require if not already present.
+  if (!dbUrl.includes("sslmode") && !dbUrl.includes("ssl=")) {
+    dbUrl += (dbUrl.includes("?") ? "&" : "?") + "sslmode=require";
+  }
 }
 
 export default defineConfig({
@@ -24,6 +26,6 @@ export default defineConfig({
   schema: "./packages/db/src/schema.ts",
   dialect: "postgresql",
   dbCredentials: {
-    url: dbUrl ?? "",
+    url: dbUrl,
   },
 });
