@@ -1,21 +1,68 @@
-CREATE TYPE "public"."donation_status" AS ENUM('pending', 'captured', 'failed', 'refunded');
-CREATE TYPE "public"."moderation_content_type" AS ENUM('qr', 'comment', 'user');
-CREATE TYPE "public"."moderation_status" AS ENUM('pending', 'reviewed', 'dismissed', 'actioned');
-CREATE TYPE "public"."platform" AS ENUM('android', 'ios', 'web', 'unknown');
-CREATE TYPE "public"."qr_type" AS ENUM('individual', 'business', 'government');
-CREATE TYPE "public"."scan_source" AS ENUM('camera', 'gallery', 'viewed');
-CREATE TYPE "public"."scan_verdict" AS ENUM('safe', 'flagged', 'unknown');
-CREATE TYPE "public"."unified_qr_status" AS ENUM('active', 'inactive', 'expired', 'limit_reached');
-CREATE TYPE "public"."verification_method" AS ENUM('email', 'phone', 'document', 'manual', 'none');
-CREATE TYPE "public"."verification_status" AS ENUM('none', 'pending', 'approved', 'rejected');
-CREATE TABLE "usernames" (
+-- ═══════════════════════════════════════════════════════════════════════
+-- BinRo — Supabase Database Setup (fully idempotent, safe to re-run)
+-- Generated: 2026-07-26
+-- Paste the entire contents of this file into the Supabase SQL Editor
+-- and click Run. "already exists" cases are handled gracefully.
+-- ═══════════════════════════════════════════════════════════════════════
+
+DO $idempotent$ BEGIN
+  CREATE TYPE "public"."donation_status" AS ENUM('pending', 'captured', 'failed', 'refunded');
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $idempotent$;
+
+DO $idempotent$ BEGIN
+  CREATE TYPE "public"."moderation_content_type" AS ENUM('qr', 'comment', 'user');
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $idempotent$;
+
+DO $idempotent$ BEGIN
+  CREATE TYPE "public"."moderation_status" AS ENUM('pending', 'reviewed', 'dismissed', 'actioned');
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $idempotent$;
+
+DO $idempotent$ BEGIN
+  CREATE TYPE "public"."platform" AS ENUM('android', 'ios', 'web', 'unknown');
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $idempotent$;
+
+DO $idempotent$ BEGIN
+  CREATE TYPE "public"."qr_type" AS ENUM('individual', 'business', 'government');
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $idempotent$;
+
+DO $idempotent$ BEGIN
+  CREATE TYPE "public"."scan_source" AS ENUM('camera', 'gallery', 'viewed');
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $idempotent$;
+
+DO $idempotent$ BEGIN
+  CREATE TYPE "public"."scan_verdict" AS ENUM('safe', 'flagged', 'unknown');
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $idempotent$;
+
+DO $idempotent$ BEGIN
+  CREATE TYPE "public"."unified_qr_status" AS ENUM('active', 'inactive', 'expired', 'limit_reached');
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $idempotent$;
+
+DO $idempotent$ BEGIN
+  CREATE TYPE "public"."verification_method" AS ENUM('email', 'phone', 'document', 'manual', 'none');
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $idempotent$;
+
+DO $idempotent$ BEGIN
+  CREATE TYPE "public"."verification_status" AS ENUM('none', 'pending', 'approved', 'rejected');
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $idempotent$;
+
+CREATE TABLE IF NOT EXISTS "usernames" (
 	"username" text PRIMARY KEY NOT NULL,
 	"user_id" text NOT NULL,
 	"claimed_at" timestamp with time zone DEFAULT now() NOT NULL,
 	"is_verified" boolean DEFAULT false NOT NULL
 );
 
-CREATE TABLE "users" (
+CREATE TABLE IF NOT EXISTS "users" (
 	"id" text PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
 	"firebase_uid" text,
 	"email" text NOT NULL,
@@ -41,7 +88,7 @@ CREATE TABLE "users" (
 	CONSTRAINT "users_username_unique" UNIQUE("username")
 );
 
-CREATE TABLE "guard_link_changes" (
+CREATE TABLE IF NOT EXISTS "guard_link_changes" (
 	"id" serial PRIMARY KEY NOT NULL,
 	"guard_link_id" text NOT NULL,
 	"changed_at" timestamp with time zone NOT NULL,
@@ -50,7 +97,7 @@ CREATE TABLE "guard_link_changes" (
 	"changed_by" text
 );
 
-CREATE TABLE "guard_links" (
+CREATE TABLE IF NOT EXISTS "guard_links" (
 	"id" text PRIMARY KEY NOT NULL,
 	"current_destination" text NOT NULL,
 	"previous_destination" text,
@@ -67,7 +114,7 @@ CREATE TABLE "guard_links" (
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL
 );
 
-CREATE TABLE "qr_codes" (
+CREATE TABLE IF NOT EXISTS "qr_codes" (
 	"id" text PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
 	"firebase_id" text,
 	"content" text NOT NULL,
@@ -103,14 +150,14 @@ CREATE TABLE "qr_codes" (
 	CONSTRAINT "qr_codes_uuid_unique" UNIQUE("uuid")
 );
 
-CREATE TABLE "qr_followers" (
+CREATE TABLE IF NOT EXISTS "qr_followers" (
 	"qr_code_id" text,
 	"unified_qr_id" text,
 	"user_id" text NOT NULL,
 	"followed_at" timestamp with time zone DEFAULT now() NOT NULL
 );
 
-CREATE TABLE "standard_links" (
+CREATE TABLE IF NOT EXISTS "standard_links" (
 	"id" text PRIMARY KEY NOT NULL,
 	"raw_content" text NOT NULL,
 	"content_type" text DEFAULT 'text' NOT NULL,
@@ -123,7 +170,7 @@ CREATE TABLE "standard_links" (
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL
 );
 
-CREATE TABLE "unified_qrs" (
+CREATE TABLE IF NOT EXISTS "unified_qrs" (
 	"id" text PRIMARY KEY NOT NULL,
 	"owner_id" text NOT NULL,
 	"owner_name" text NOT NULL,
@@ -148,14 +195,14 @@ CREATE TABLE "unified_qrs" (
 	"updated_at" timestamp with time zone DEFAULT now() NOT NULL
 );
 
-CREATE TABLE "user_favorites" (
+CREATE TABLE IF NOT EXISTS "user_favorites" (
 	"user_id" text NOT NULL,
 	"qr_code_id" text,
 	"unified_qr_id" text,
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL
 );
 
-CREATE TABLE "user_generated_qrs" (
+CREATE TABLE IF NOT EXISTS "user_generated_qrs" (
 	"id" text PRIMARY KEY NOT NULL,
 	"user_id" text NOT NULL,
 	"qr_code_id" text,
@@ -164,7 +211,7 @@ CREATE TABLE "user_generated_qrs" (
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL
 );
 
-CREATE TABLE "qr_scans" (
+CREATE TABLE IF NOT EXISTS "qr_scans" (
 	"id" text PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
 	"qr_code_id" text,
 	"unified_qr_id" text,
@@ -180,14 +227,14 @@ CREATE TABLE "qr_scans" (
 	"scanned_at" timestamp with time zone DEFAULT now() NOT NULL
 );
 
-CREATE TABLE "comment_likes" (
+CREATE TABLE IF NOT EXISTS "comment_likes" (
 	"comment_id" text NOT NULL,
 	"user_id" text NOT NULL,
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
 	CONSTRAINT "comment_likes_comment_id_user_id_pk" PRIMARY KEY("comment_id","user_id")
 );
 
-CREATE TABLE "comment_reports" (
+CREATE TABLE IF NOT EXISTS "comment_reports" (
 	"id" text PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
 	"comment_id" text NOT NULL,
 	"user_id" text NOT NULL,
@@ -195,7 +242,7 @@ CREATE TABLE "comment_reports" (
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL
 );
 
-CREATE TABLE "qr_comments" (
+CREATE TABLE IF NOT EXISTS "qr_comments" (
 	"id" text PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
 	"firebase_id" text,
 	"qr_code_id" text,
@@ -216,7 +263,7 @@ CREATE TABLE "qr_comments" (
 	CONSTRAINT "qr_comments_firebase_id_unique" UNIQUE("firebase_id")
 );
 
-CREATE TABLE "audit_logs" (
+CREATE TABLE IF NOT EXISTS "audit_logs" (
 	"id" text PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
 	"qr_id" text,
 	"user_id" text,
@@ -229,7 +276,7 @@ CREATE TABLE "audit_logs" (
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL
 );
 
-CREATE TABLE "qr_reports" (
+CREATE TABLE IF NOT EXISTS "qr_reports" (
 	"id" text PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
 	"qr_code_id" text,
 	"unified_qr_id" text,
@@ -244,14 +291,14 @@ CREATE TABLE "qr_reports" (
 	"updated_at" timestamp with time zone DEFAULT now() NOT NULL
 );
 
-CREATE TABLE "creator_follows" (
+CREATE TABLE IF NOT EXISTS "creator_follows" (
 	"user_id" text NOT NULL,
 	"creator_id" text NOT NULL,
 	"followed_at" timestamp with time zone DEFAULT now() NOT NULL,
 	CONSTRAINT "creator_follows_user_id_creator_id_pk" PRIMARY KEY("user_id","creator_id")
 );
 
-CREATE TABLE "notifications" (
+CREATE TABLE IF NOT EXISTS "notifications" (
 	"id" text PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
 	"user_id" text NOT NULL,
 	"type" text NOT NULL,
@@ -264,7 +311,7 @@ CREATE TABLE "notifications" (
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL
 );
 
-CREATE TABLE "business_accounts" (
+CREATE TABLE IF NOT EXISTS "business_accounts" (
 	"id" text PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
 	"user_id" text NOT NULL,
 	"display_name" text NOT NULL,
@@ -274,7 +321,7 @@ CREATE TABLE "business_accounts" (
 	CONSTRAINT "business_accounts_user_id_unique" UNIQUE("user_id")
 );
 
-CREATE TABLE "categories" (
+CREATE TABLE IF NOT EXISTS "categories" (
 	"id" text PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
 	"name" text NOT NULL,
 	"slug" text NOT NULL,
@@ -283,7 +330,7 @@ CREATE TABLE "categories" (
 	CONSTRAINT "categories_slug_unique" UNIQUE("slug")
 );
 
-CREATE TABLE "donations" (
+CREATE TABLE IF NOT EXISTS "donations" (
 	"id" text PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
 	"order_id" text NOT NULL,
 	"payment_id" text,
@@ -299,7 +346,7 @@ CREATE TABLE "donations" (
 	CONSTRAINT "donations_payment_id_unique" UNIQUE("payment_id")
 );
 
-CREATE TABLE "feature_votes" (
+CREATE TABLE IF NOT EXISTS "feature_votes" (
 	"id" text PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
 	"feature_key" text NOT NULL,
 	"user_id" text,
@@ -307,7 +354,7 @@ CREATE TABLE "feature_votes" (
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL
 );
 
-CREATE TABLE "moderation_queue" (
+CREATE TABLE IF NOT EXISTS "moderation_queue" (
 	"id" text PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
 	"content_type" "moderation_content_type" NOT NULL,
 	"content_id" text NOT NULL,
@@ -320,7 +367,7 @@ CREATE TABLE "moderation_queue" (
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL
 );
 
-CREATE TABLE "verification_requests" (
+CREATE TABLE IF NOT EXISTS "verification_requests" (
 	"id" text PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
 	"user_id" text NOT NULL,
 	"status" "verification_status" DEFAULT 'none' NOT NULL,
@@ -334,121 +381,349 @@ CREATE TABLE "verification_requests" (
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL
 );
 
-ALTER TABLE "usernames" ADD CONSTRAINT "usernames_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE cascade ON UPDATE no action;
-ALTER TABLE "guard_link_changes" ADD CONSTRAINT "guard_link_changes_guard_link_id_guard_links_id_fk" FOREIGN KEY ("guard_link_id") REFERENCES "public"."guard_links"("id") ON DELETE cascade ON UPDATE no action;
-ALTER TABLE "guard_link_changes" ADD CONSTRAINT "guard_link_changes_changed_by_users_id_fk" FOREIGN KEY ("changed_by") REFERENCES "public"."users"("id") ON DELETE set null ON UPDATE no action;
-ALTER TABLE "guard_links" ADD CONSTRAINT "guard_links_owner_id_users_id_fk" FOREIGN KEY ("owner_id") REFERENCES "public"."users"("id") ON DELETE set null ON UPDATE no action;
-ALTER TABLE "qr_codes" ADD CONSTRAINT "qr_codes_owner_id_users_id_fk" FOREIGN KEY ("owner_id") REFERENCES "public"."users"("id") ON DELETE set null ON UPDATE no action;
-ALTER TABLE "qr_followers" ADD CONSTRAINT "qr_followers_qr_code_id_qr_codes_id_fk" FOREIGN KEY ("qr_code_id") REFERENCES "public"."qr_codes"("id") ON DELETE cascade ON UPDATE no action;
-ALTER TABLE "qr_followers" ADD CONSTRAINT "qr_followers_unified_qr_id_unified_qrs_id_fk" FOREIGN KEY ("unified_qr_id") REFERENCES "public"."unified_qrs"("id") ON DELETE cascade ON UPDATE no action;
-ALTER TABLE "qr_followers" ADD CONSTRAINT "qr_followers_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE cascade ON UPDATE no action;
-ALTER TABLE "standard_links" ADD CONSTRAINT "standard_links_owner_id_users_id_fk" FOREIGN KEY ("owner_id") REFERENCES "public"."users"("id") ON DELETE set null ON UPDATE no action;
-ALTER TABLE "unified_qrs" ADD CONSTRAINT "unified_qrs_owner_id_users_id_fk" FOREIGN KEY ("owner_id") REFERENCES "public"."users"("id") ON DELETE cascade ON UPDATE no action;
-ALTER TABLE "user_favorites" ADD CONSTRAINT "user_favorites_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE cascade ON UPDATE no action;
-ALTER TABLE "user_favorites" ADD CONSTRAINT "user_favorites_qr_code_id_qr_codes_id_fk" FOREIGN KEY ("qr_code_id") REFERENCES "public"."qr_codes"("id") ON DELETE cascade ON UPDATE no action;
-ALTER TABLE "user_favorites" ADD CONSTRAINT "user_favorites_unified_qr_id_unified_qrs_id_fk" FOREIGN KEY ("unified_qr_id") REFERENCES "public"."unified_qrs"("id") ON DELETE cascade ON UPDATE no action;
-ALTER TABLE "user_generated_qrs" ADD CONSTRAINT "user_generated_qrs_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE cascade ON UPDATE no action;
-ALTER TABLE "user_generated_qrs" ADD CONSTRAINT "user_generated_qrs_qr_code_id_qr_codes_id_fk" FOREIGN KEY ("qr_code_id") REFERENCES "public"."qr_codes"("id") ON DELETE set null ON UPDATE no action;
-ALTER TABLE "user_generated_qrs" ADD CONSTRAINT "user_generated_qrs_unified_qr_id_unified_qrs_id_fk" FOREIGN KEY ("unified_qr_id") REFERENCES "public"."unified_qrs"("id") ON DELETE set null ON UPDATE no action;
-ALTER TABLE "qr_scans" ADD CONSTRAINT "qr_scans_qr_code_id_qr_codes_id_fk" FOREIGN KEY ("qr_code_id") REFERENCES "public"."qr_codes"("id") ON DELETE set null ON UPDATE no action;
-ALTER TABLE "qr_scans" ADD CONSTRAINT "qr_scans_unified_qr_id_unified_qrs_id_fk" FOREIGN KEY ("unified_qr_id") REFERENCES "public"."unified_qrs"("id") ON DELETE set null ON UPDATE no action;
-ALTER TABLE "qr_scans" ADD CONSTRAINT "qr_scans_guard_link_id_guard_links_id_fk" FOREIGN KEY ("guard_link_id") REFERENCES "public"."guard_links"("id") ON DELETE set null ON UPDATE no action;
-ALTER TABLE "qr_scans" ADD CONSTRAINT "qr_scans_standard_link_id_standard_links_id_fk" FOREIGN KEY ("standard_link_id") REFERENCES "public"."standard_links"("id") ON DELETE set null ON UPDATE no action;
-ALTER TABLE "qr_scans" ADD CONSTRAINT "qr_scans_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE set null ON UPDATE no action;
-ALTER TABLE "comment_likes" ADD CONSTRAINT "comment_likes_comment_id_qr_comments_id_fk" FOREIGN KEY ("comment_id") REFERENCES "public"."qr_comments"("id") ON DELETE cascade ON UPDATE no action;
-ALTER TABLE "comment_likes" ADD CONSTRAINT "comment_likes_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE cascade ON UPDATE no action;
-ALTER TABLE "comment_reports" ADD CONSTRAINT "comment_reports_comment_id_qr_comments_id_fk" FOREIGN KEY ("comment_id") REFERENCES "public"."qr_comments"("id") ON DELETE cascade ON UPDATE no action;
-ALTER TABLE "comment_reports" ADD CONSTRAINT "comment_reports_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE cascade ON UPDATE no action;
-ALTER TABLE "qr_comments" ADD CONSTRAINT "qr_comments_qr_code_id_qr_codes_id_fk" FOREIGN KEY ("qr_code_id") REFERENCES "public"."qr_codes"("id") ON DELETE cascade ON UPDATE no action;
-ALTER TABLE "qr_comments" ADD CONSTRAINT "qr_comments_unified_qr_id_unified_qrs_id_fk" FOREIGN KEY ("unified_qr_id") REFERENCES "public"."unified_qrs"("id") ON DELETE cascade ON UPDATE no action;
-ALTER TABLE "qr_comments" ADD CONSTRAINT "qr_comments_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE cascade ON UPDATE no action;
-ALTER TABLE "audit_logs" ADD CONSTRAINT "audit_logs_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE set null ON UPDATE no action;
-ALTER TABLE "qr_reports" ADD CONSTRAINT "qr_reports_qr_code_id_qr_codes_id_fk" FOREIGN KEY ("qr_code_id") REFERENCES "public"."qr_codes"("id") ON DELETE cascade ON UPDATE no action;
-ALTER TABLE "qr_reports" ADD CONSTRAINT "qr_reports_unified_qr_id_unified_qrs_id_fk" FOREIGN KEY ("unified_qr_id") REFERENCES "public"."unified_qrs"("id") ON DELETE cascade ON UPDATE no action;
-ALTER TABLE "qr_reports" ADD CONSTRAINT "qr_reports_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE cascade ON UPDATE no action;
-ALTER TABLE "creator_follows" ADD CONSTRAINT "creator_follows_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE cascade ON UPDATE no action;
-ALTER TABLE "creator_follows" ADD CONSTRAINT "creator_follows_creator_id_users_id_fk" FOREIGN KEY ("creator_id") REFERENCES "public"."users"("id") ON DELETE cascade ON UPDATE no action;
-ALTER TABLE "notifications" ADD CONSTRAINT "notifications_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE cascade ON UPDATE no action;
-ALTER TABLE "notifications" ADD CONSTRAINT "notifications_from_user_id_users_id_fk" FOREIGN KEY ("from_user_id") REFERENCES "public"."users"("id") ON DELETE set null ON UPDATE no action;
-ALTER TABLE "business_accounts" ADD CONSTRAINT "business_accounts_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE cascade ON UPDATE no action;
-ALTER TABLE "donations" ADD CONSTRAINT "donations_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE set null ON UPDATE no action;
-ALTER TABLE "feature_votes" ADD CONSTRAINT "feature_votes_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE set null ON UPDATE no action;
-ALTER TABLE "moderation_queue" ADD CONSTRAINT "moderation_queue_reporter_id_users_id_fk" FOREIGN KEY ("reporter_id") REFERENCES "public"."users"("id") ON DELETE set null ON UPDATE no action;
-ALTER TABLE "moderation_queue" ADD CONSTRAINT "moderation_queue_reviewed_by_users_id_fk" FOREIGN KEY ("reviewed_by") REFERENCES "public"."users"("id") ON DELETE set null ON UPDATE no action;
-ALTER TABLE "verification_requests" ADD CONSTRAINT "verification_requests_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE cascade ON UPDATE no action;
-CREATE INDEX "usernames_user_id_idx" ON "usernames" USING btree ("user_id");
-CREATE INDEX "users_email_idx" ON "users" USING btree ("email");
-CREATE INDEX "users_username_idx" ON "users" USING btree ("username");
-CREATE INDEX "users_firebase_uid_idx" ON "users" USING btree ("firebase_uid");
-CREATE INDEX "guard_link_changes_guard_link_id_idx" ON "guard_link_changes" USING btree ("guard_link_id");
-CREATE INDEX "guard_links_owner_id_idx" ON "guard_links" USING btree ("owner_id");
-CREATE INDEX "qr_codes_owner_id_idx" ON "qr_codes" USING btree ("owner_id");
-CREATE INDEX "qr_codes_content_type_idx" ON "qr_codes" USING btree ("content_type");
-CREATE INDEX "qr_codes_uuid_idx" ON "qr_codes" USING btree ("uuid");
-CREATE INDEX "qr_codes_firebase_id_idx" ON "qr_codes" USING btree ("firebase_id");
-CREATE UNIQUE INDEX "qr_followers_legacy_uniq" ON "qr_followers" USING btree ("qr_code_id","user_id");
-CREATE UNIQUE INDEX "qr_followers_unified_uniq" ON "qr_followers" USING btree ("unified_qr_id","user_id");
-CREATE INDEX "qr_followers_user_id_idx" ON "qr_followers" USING btree ("user_id");
-CREATE INDEX "standard_links_owner_id_idx" ON "standard_links" USING btree ("owner_id");
-CREATE INDEX "unified_qrs_owner_id_idx" ON "unified_qrs" USING btree ("owner_id");
-CREATE INDEX "unified_qrs_status_idx" ON "unified_qrs" USING btree ("status");
-CREATE INDEX "unified_qrs_content_type_idx" ON "unified_qrs" USING btree ("content_type");
-CREATE INDEX "unified_qrs_created_at_idx" ON "unified_qrs" USING btree ("created_at");
-CREATE UNIQUE INDEX "user_favorites_legacy_uniq" ON "user_favorites" USING btree ("user_id","qr_code_id");
-CREATE UNIQUE INDEX "user_favorites_unified_uniq" ON "user_favorites" USING btree ("user_id","unified_qr_id");
-CREATE INDEX "user_favorites_user_id_idx" ON "user_favorites" USING btree ("user_id");
-CREATE INDEX "user_generated_qrs_user_id_idx" ON "user_generated_qrs" USING btree ("user_id");
-CREATE INDEX "qr_scans_qr_code_id_idx" ON "qr_scans" USING btree ("qr_code_id");
-CREATE INDEX "qr_scans_unified_qr_id_idx" ON "qr_scans" USING btree ("unified_qr_id");
-CREATE INDEX "qr_scans_user_id_idx" ON "qr_scans" USING btree ("user_id");
-CREATE INDEX "qr_scans_scanned_at_idx" ON "qr_scans" USING btree ("scanned_at");
-CREATE INDEX "comment_likes_user_id_idx" ON "comment_likes" USING btree ("user_id");
-CREATE INDEX "comment_reports_comment_id_idx" ON "comment_reports" USING btree ("comment_id");
-CREATE UNIQUE INDEX "comment_reports_comment_user_uniq" ON "comment_reports" USING btree ("comment_id","user_id");
-CREATE INDEX "qr_comments_qr_code_id_idx" ON "qr_comments" USING btree ("qr_code_id");
-CREATE INDEX "qr_comments_unified_qr_id_idx" ON "qr_comments" USING btree ("unified_qr_id");
-CREATE INDEX "qr_comments_user_id_idx" ON "qr_comments" USING btree ("user_id");
-CREATE INDEX "qr_comments_parent_id_idx" ON "qr_comments" USING btree ("parent_id");
-CREATE INDEX "qr_comments_created_at_idx" ON "qr_comments" USING btree ("created_at");
-CREATE INDEX "audit_logs_user_id_idx" ON "audit_logs" USING btree ("user_id");
-CREATE INDEX "audit_logs_qr_id_idx" ON "audit_logs" USING btree ("qr_id");
-CREATE INDEX "audit_logs_created_at_idx" ON "audit_logs" USING btree ("created_at");
-CREATE UNIQUE INDEX "qr_reports_qr_code_user_uniq" ON "qr_reports" USING btree ("qr_code_id","user_id");
-CREATE UNIQUE INDEX "qr_reports_unified_qr_user_uniq" ON "qr_reports" USING btree ("unified_qr_id","user_id");
-CREATE INDEX "qr_reports_qr_code_id_idx" ON "qr_reports" USING btree ("qr_code_id");
-CREATE INDEX "qr_reports_unified_qr_id_idx" ON "qr_reports" USING btree ("unified_qr_id");
-CREATE INDEX "qr_reports_user_id_idx" ON "qr_reports" USING btree ("user_id");
-CREATE INDEX "creator_follows_creator_id_idx" ON "creator_follows" USING btree ("creator_id");
-CREATE INDEX "notifications_user_id_idx" ON "notifications" USING btree ("user_id");
-CREATE INDEX "notifications_user_read_idx" ON "notifications" USING btree ("user_id","is_read");
-CREATE INDEX "notifications_created_at_idx" ON "notifications" USING btree ("created_at");
-CREATE INDEX "business_accounts_user_id_idx" ON "business_accounts" USING btree ("user_id");
-CREATE INDEX "donations_user_id_idx" ON "donations" USING btree ("user_id");
-CREATE INDEX "donations_status_idx" ON "donations" USING btree ("status");
-CREATE INDEX "feature_votes_feature_key_idx" ON "feature_votes" USING btree ("feature_key");
-CREATE INDEX "feature_votes_user_id_idx" ON "feature_votes" USING btree ("user_id");
-CREATE UNIQUE INDEX "feature_votes_feature_user_uniq" ON "feature_votes" USING btree ("feature_key","user_id");
-CREATE INDEX "moderation_queue_status_idx" ON "moderation_queue" USING btree ("status");
-CREATE INDEX "moderation_queue_content_id_idx" ON "moderation_queue" USING btree ("content_id");
-CREATE INDEX "moderation_queue_created_at_idx" ON "moderation_queue" USING btree ("created_at");
-CREATE INDEX "verification_requests_user_id_idx" ON "verification_requests" USING btree ("user_id");
-CREATE INDEX "verification_requests_status_idx" ON "verification_requests" USING btree ("status");
--- ─── Realtime key-value store (replaces Firebase RTDB) ───────────────────────
+DO $idempotent$ BEGIN
+  ALTER TABLE "usernames" ADD CONSTRAINT "usernames_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE cascade ON UPDATE no action;
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $idempotent$;
+
+DO $idempotent$ BEGIN
+  ALTER TABLE "guard_link_changes" ADD CONSTRAINT "guard_link_changes_guard_link_id_guard_links_id_fk" FOREIGN KEY ("guard_link_id") REFERENCES "public"."guard_links"("id") ON DELETE cascade ON UPDATE no action;
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $idempotent$;
+
+DO $idempotent$ BEGIN
+  ALTER TABLE "guard_link_changes" ADD CONSTRAINT "guard_link_changes_changed_by_users_id_fk" FOREIGN KEY ("changed_by") REFERENCES "public"."users"("id") ON DELETE set null ON UPDATE no action;
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $idempotent$;
+
+DO $idempotent$ BEGIN
+  ALTER TABLE "guard_links" ADD CONSTRAINT "guard_links_owner_id_users_id_fk" FOREIGN KEY ("owner_id") REFERENCES "public"."users"("id") ON DELETE set null ON UPDATE no action;
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $idempotent$;
+
+DO $idempotent$ BEGIN
+  ALTER TABLE "qr_codes" ADD CONSTRAINT "qr_codes_owner_id_users_id_fk" FOREIGN KEY ("owner_id") REFERENCES "public"."users"("id") ON DELETE set null ON UPDATE no action;
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $idempotent$;
+
+DO $idempotent$ BEGIN
+  ALTER TABLE "qr_followers" ADD CONSTRAINT "qr_followers_qr_code_id_qr_codes_id_fk" FOREIGN KEY ("qr_code_id") REFERENCES "public"."qr_codes"("id") ON DELETE cascade ON UPDATE no action;
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $idempotent$;
+
+DO $idempotent$ BEGIN
+  ALTER TABLE "qr_followers" ADD CONSTRAINT "qr_followers_unified_qr_id_unified_qrs_id_fk" FOREIGN KEY ("unified_qr_id") REFERENCES "public"."unified_qrs"("id") ON DELETE cascade ON UPDATE no action;
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $idempotent$;
+
+DO $idempotent$ BEGIN
+  ALTER TABLE "qr_followers" ADD CONSTRAINT "qr_followers_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE cascade ON UPDATE no action;
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $idempotent$;
+
+DO $idempotent$ BEGIN
+  ALTER TABLE "standard_links" ADD CONSTRAINT "standard_links_owner_id_users_id_fk" FOREIGN KEY ("owner_id") REFERENCES "public"."users"("id") ON DELETE set null ON UPDATE no action;
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $idempotent$;
+
+DO $idempotent$ BEGIN
+  ALTER TABLE "unified_qrs" ADD CONSTRAINT "unified_qrs_owner_id_users_id_fk" FOREIGN KEY ("owner_id") REFERENCES "public"."users"("id") ON DELETE cascade ON UPDATE no action;
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $idempotent$;
+
+DO $idempotent$ BEGIN
+  ALTER TABLE "user_favorites" ADD CONSTRAINT "user_favorites_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE cascade ON UPDATE no action;
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $idempotent$;
+
+DO $idempotent$ BEGIN
+  ALTER TABLE "user_favorites" ADD CONSTRAINT "user_favorites_qr_code_id_qr_codes_id_fk" FOREIGN KEY ("qr_code_id") REFERENCES "public"."qr_codes"("id") ON DELETE cascade ON UPDATE no action;
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $idempotent$;
+
+DO $idempotent$ BEGIN
+  ALTER TABLE "user_favorites" ADD CONSTRAINT "user_favorites_unified_qr_id_unified_qrs_id_fk" FOREIGN KEY ("unified_qr_id") REFERENCES "public"."unified_qrs"("id") ON DELETE cascade ON UPDATE no action;
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $idempotent$;
+
+DO $idempotent$ BEGIN
+  ALTER TABLE "user_generated_qrs" ADD CONSTRAINT "user_generated_qrs_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE cascade ON UPDATE no action;
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $idempotent$;
+
+DO $idempotent$ BEGIN
+  ALTER TABLE "user_generated_qrs" ADD CONSTRAINT "user_generated_qrs_qr_code_id_qr_codes_id_fk" FOREIGN KEY ("qr_code_id") REFERENCES "public"."qr_codes"("id") ON DELETE set null ON UPDATE no action;
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $idempotent$;
+
+DO $idempotent$ BEGIN
+  ALTER TABLE "user_generated_qrs" ADD CONSTRAINT "user_generated_qrs_unified_qr_id_unified_qrs_id_fk" FOREIGN KEY ("unified_qr_id") REFERENCES "public"."unified_qrs"("id") ON DELETE set null ON UPDATE no action;
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $idempotent$;
+
+DO $idempotent$ BEGIN
+  ALTER TABLE "qr_scans" ADD CONSTRAINT "qr_scans_qr_code_id_qr_codes_id_fk" FOREIGN KEY ("qr_code_id") REFERENCES "public"."qr_codes"("id") ON DELETE set null ON UPDATE no action;
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $idempotent$;
+
+DO $idempotent$ BEGIN
+  ALTER TABLE "qr_scans" ADD CONSTRAINT "qr_scans_unified_qr_id_unified_qrs_id_fk" FOREIGN KEY ("unified_qr_id") REFERENCES "public"."unified_qrs"("id") ON DELETE set null ON UPDATE no action;
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $idempotent$;
+
+DO $idempotent$ BEGIN
+  ALTER TABLE "qr_scans" ADD CONSTRAINT "qr_scans_guard_link_id_guard_links_id_fk" FOREIGN KEY ("guard_link_id") REFERENCES "public"."guard_links"("id") ON DELETE set null ON UPDATE no action;
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $idempotent$;
+
+DO $idempotent$ BEGIN
+  ALTER TABLE "qr_scans" ADD CONSTRAINT "qr_scans_standard_link_id_standard_links_id_fk" FOREIGN KEY ("standard_link_id") REFERENCES "public"."standard_links"("id") ON DELETE set null ON UPDATE no action;
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $idempotent$;
+
+DO $idempotent$ BEGIN
+  ALTER TABLE "qr_scans" ADD CONSTRAINT "qr_scans_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE set null ON UPDATE no action;
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $idempotent$;
+
+DO $idempotent$ BEGIN
+  ALTER TABLE "comment_likes" ADD CONSTRAINT "comment_likes_comment_id_qr_comments_id_fk" FOREIGN KEY ("comment_id") REFERENCES "public"."qr_comments"("id") ON DELETE cascade ON UPDATE no action;
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $idempotent$;
+
+DO $idempotent$ BEGIN
+  ALTER TABLE "comment_likes" ADD CONSTRAINT "comment_likes_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE cascade ON UPDATE no action;
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $idempotent$;
+
+DO $idempotent$ BEGIN
+  ALTER TABLE "comment_reports" ADD CONSTRAINT "comment_reports_comment_id_qr_comments_id_fk" FOREIGN KEY ("comment_id") REFERENCES "public"."qr_comments"("id") ON DELETE cascade ON UPDATE no action;
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $idempotent$;
+
+DO $idempotent$ BEGIN
+  ALTER TABLE "comment_reports" ADD CONSTRAINT "comment_reports_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE cascade ON UPDATE no action;
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $idempotent$;
+
+DO $idempotent$ BEGIN
+  ALTER TABLE "qr_comments" ADD CONSTRAINT "qr_comments_qr_code_id_qr_codes_id_fk" FOREIGN KEY ("qr_code_id") REFERENCES "public"."qr_codes"("id") ON DELETE cascade ON UPDATE no action;
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $idempotent$;
+
+DO $idempotent$ BEGIN
+  ALTER TABLE "qr_comments" ADD CONSTRAINT "qr_comments_unified_qr_id_unified_qrs_id_fk" FOREIGN KEY ("unified_qr_id") REFERENCES "public"."unified_qrs"("id") ON DELETE cascade ON UPDATE no action;
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $idempotent$;
+
+DO $idempotent$ BEGIN
+  ALTER TABLE "qr_comments" ADD CONSTRAINT "qr_comments_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE cascade ON UPDATE no action;
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $idempotent$;
+
+DO $idempotent$ BEGIN
+  ALTER TABLE "audit_logs" ADD CONSTRAINT "audit_logs_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE set null ON UPDATE no action;
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $idempotent$;
+
+DO $idempotent$ BEGIN
+  ALTER TABLE "qr_reports" ADD CONSTRAINT "qr_reports_qr_code_id_qr_codes_id_fk" FOREIGN KEY ("qr_code_id") REFERENCES "public"."qr_codes"("id") ON DELETE cascade ON UPDATE no action;
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $idempotent$;
+
+DO $idempotent$ BEGIN
+  ALTER TABLE "qr_reports" ADD CONSTRAINT "qr_reports_unified_qr_id_unified_qrs_id_fk" FOREIGN KEY ("unified_qr_id") REFERENCES "public"."unified_qrs"("id") ON DELETE cascade ON UPDATE no action;
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $idempotent$;
+
+DO $idempotent$ BEGIN
+  ALTER TABLE "qr_reports" ADD CONSTRAINT "qr_reports_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE cascade ON UPDATE no action;
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $idempotent$;
+
+DO $idempotent$ BEGIN
+  ALTER TABLE "creator_follows" ADD CONSTRAINT "creator_follows_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE cascade ON UPDATE no action;
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $idempotent$;
+
+DO $idempotent$ BEGIN
+  ALTER TABLE "creator_follows" ADD CONSTRAINT "creator_follows_creator_id_users_id_fk" FOREIGN KEY ("creator_id") REFERENCES "public"."users"("id") ON DELETE cascade ON UPDATE no action;
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $idempotent$;
+
+DO $idempotent$ BEGIN
+  ALTER TABLE "notifications" ADD CONSTRAINT "notifications_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE cascade ON UPDATE no action;
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $idempotent$;
+
+DO $idempotent$ BEGIN
+  ALTER TABLE "notifications" ADD CONSTRAINT "notifications_from_user_id_users_id_fk" FOREIGN KEY ("from_user_id") REFERENCES "public"."users"("id") ON DELETE set null ON UPDATE no action;
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $idempotent$;
+
+DO $idempotent$ BEGIN
+  ALTER TABLE "business_accounts" ADD CONSTRAINT "business_accounts_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE cascade ON UPDATE no action;
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $idempotent$;
+
+DO $idempotent$ BEGIN
+  ALTER TABLE "donations" ADD CONSTRAINT "donations_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE set null ON UPDATE no action;
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $idempotent$;
+
+DO $idempotent$ BEGIN
+  ALTER TABLE "feature_votes" ADD CONSTRAINT "feature_votes_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE set null ON UPDATE no action;
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $idempotent$;
+
+DO $idempotent$ BEGIN
+  ALTER TABLE "moderation_queue" ADD CONSTRAINT "moderation_queue_reporter_id_users_id_fk" FOREIGN KEY ("reporter_id") REFERENCES "public"."users"("id") ON DELETE set null ON UPDATE no action;
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $idempotent$;
+
+DO $idempotent$ BEGIN
+  ALTER TABLE "moderation_queue" ADD CONSTRAINT "moderation_queue_reviewed_by_users_id_fk" FOREIGN KEY ("reviewed_by") REFERENCES "public"."users"("id") ON DELETE set null ON UPDATE no action;
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $idempotent$;
+
+DO $idempotent$ BEGIN
+  ALTER TABLE "verification_requests" ADD CONSTRAINT "verification_requests_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE cascade ON UPDATE no action;
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $idempotent$;
+
+CREATE INDEX IF NOT EXISTS "usernames_user_id_idx" ON "usernames" USING btree ("user_id");
+
+CREATE INDEX IF NOT EXISTS "users_email_idx" ON "users" USING btree ("email");
+
+CREATE INDEX IF NOT EXISTS "users_username_idx" ON "users" USING btree ("username");
+
+CREATE INDEX IF NOT EXISTS "users_firebase_uid_idx" ON "users" USING btree ("firebase_uid");
+
+CREATE INDEX IF NOT EXISTS "guard_link_changes_guard_link_id_idx" ON "guard_link_changes" USING btree ("guard_link_id");
+
+CREATE INDEX IF NOT EXISTS "guard_links_owner_id_idx" ON "guard_links" USING btree ("owner_id");
+
+CREATE INDEX IF NOT EXISTS "qr_codes_owner_id_idx" ON "qr_codes" USING btree ("owner_id");
+
+CREATE INDEX IF NOT EXISTS "qr_codes_content_type_idx" ON "qr_codes" USING btree ("content_type");
+
+CREATE INDEX IF NOT EXISTS "qr_codes_uuid_idx" ON "qr_codes" USING btree ("uuid");
+
+CREATE INDEX IF NOT EXISTS "qr_codes_firebase_id_idx" ON "qr_codes" USING btree ("firebase_id");
+
+CREATE UNIQUE INDEX IF NOT EXISTS "qr_followers_legacy_uniq" ON "qr_followers" USING btree ("qr_code_id","user_id");
+
+CREATE UNIQUE INDEX IF NOT EXISTS "qr_followers_unified_uniq" ON "qr_followers" USING btree ("unified_qr_id","user_id");
+
+CREATE INDEX IF NOT EXISTS "qr_followers_user_id_idx" ON "qr_followers" USING btree ("user_id");
+
+CREATE INDEX IF NOT EXISTS "standard_links_owner_id_idx" ON "standard_links" USING btree ("owner_id");
+
+CREATE INDEX IF NOT EXISTS "unified_qrs_owner_id_idx" ON "unified_qrs" USING btree ("owner_id");
+
+CREATE INDEX IF NOT EXISTS "unified_qrs_status_idx" ON "unified_qrs" USING btree ("status");
+
+CREATE INDEX IF NOT EXISTS "unified_qrs_content_type_idx" ON "unified_qrs" USING btree ("content_type");
+
+CREATE INDEX IF NOT EXISTS "unified_qrs_created_at_idx" ON "unified_qrs" USING btree ("created_at");
+
+CREATE UNIQUE INDEX IF NOT EXISTS "user_favorites_legacy_uniq" ON "user_favorites" USING btree ("user_id","qr_code_id");
+
+CREATE UNIQUE INDEX IF NOT EXISTS "user_favorites_unified_uniq" ON "user_favorites" USING btree ("user_id","unified_qr_id");
+
+CREATE INDEX IF NOT EXISTS "user_favorites_user_id_idx" ON "user_favorites" USING btree ("user_id");
+
+CREATE INDEX IF NOT EXISTS "user_generated_qrs_user_id_idx" ON "user_generated_qrs" USING btree ("user_id");
+
+CREATE INDEX IF NOT EXISTS "qr_scans_qr_code_id_idx" ON "qr_scans" USING btree ("qr_code_id");
+
+CREATE INDEX IF NOT EXISTS "qr_scans_unified_qr_id_idx" ON "qr_scans" USING btree ("unified_qr_id");
+
+CREATE INDEX IF NOT EXISTS "qr_scans_user_id_idx" ON "qr_scans" USING btree ("user_id");
+
+CREATE INDEX IF NOT EXISTS "qr_scans_scanned_at_idx" ON "qr_scans" USING btree ("scanned_at");
+
+CREATE INDEX IF NOT EXISTS "comment_likes_user_id_idx" ON "comment_likes" USING btree ("user_id");
+
+CREATE INDEX IF NOT EXISTS "comment_reports_comment_id_idx" ON "comment_reports" USING btree ("comment_id");
+
+CREATE UNIQUE INDEX IF NOT EXISTS "comment_reports_comment_user_uniq" ON "comment_reports" USING btree ("comment_id","user_id");
+
+CREATE INDEX IF NOT EXISTS "qr_comments_qr_code_id_idx" ON "qr_comments" USING btree ("qr_code_id");
+
+CREATE INDEX IF NOT EXISTS "qr_comments_unified_qr_id_idx" ON "qr_comments" USING btree ("unified_qr_id");
+
+CREATE INDEX IF NOT EXISTS "qr_comments_user_id_idx" ON "qr_comments" USING btree ("user_id");
+
+CREATE INDEX IF NOT EXISTS "qr_comments_parent_id_idx" ON "qr_comments" USING btree ("parent_id");
+
+CREATE INDEX IF NOT EXISTS "qr_comments_created_at_idx" ON "qr_comments" USING btree ("created_at");
+
+CREATE INDEX IF NOT EXISTS "audit_logs_user_id_idx" ON "audit_logs" USING btree ("user_id");
+
+CREATE INDEX IF NOT EXISTS "audit_logs_qr_id_idx" ON "audit_logs" USING btree ("qr_id");
+
+CREATE INDEX IF NOT EXISTS "audit_logs_created_at_idx" ON "audit_logs" USING btree ("created_at");
+
+CREATE UNIQUE INDEX IF NOT EXISTS "qr_reports_qr_code_user_uniq" ON "qr_reports" USING btree ("qr_code_id","user_id");
+
+CREATE UNIQUE INDEX IF NOT EXISTS "qr_reports_unified_qr_user_uniq" ON "qr_reports" USING btree ("unified_qr_id","user_id");
+
+CREATE INDEX IF NOT EXISTS "qr_reports_qr_code_id_idx" ON "qr_reports" USING btree ("qr_code_id");
+
+CREATE INDEX IF NOT EXISTS "qr_reports_unified_qr_id_idx" ON "qr_reports" USING btree ("unified_qr_id");
+
+CREATE INDEX IF NOT EXISTS "qr_reports_user_id_idx" ON "qr_reports" USING btree ("user_id");
+
+CREATE INDEX IF NOT EXISTS "creator_follows_creator_id_idx" ON "creator_follows" USING btree ("creator_id");
+
+CREATE INDEX IF NOT EXISTS "notifications_user_id_idx" ON "notifications" USING btree ("user_id");
+
+CREATE INDEX IF NOT EXISTS "notifications_user_read_idx" ON "notifications" USING btree ("user_id","is_read");
+
+CREATE INDEX IF NOT EXISTS "notifications_created_at_idx" ON "notifications" USING btree ("created_at");
+
+CREATE INDEX IF NOT EXISTS "business_accounts_user_id_idx" ON "business_accounts" USING btree ("user_id");
+
+CREATE INDEX IF NOT EXISTS "donations_user_id_idx" ON "donations" USING btree ("user_id");
+
+CREATE INDEX IF NOT EXISTS "donations_status_idx" ON "donations" USING btree ("status");
+
+CREATE INDEX IF NOT EXISTS "feature_votes_feature_key_idx" ON "feature_votes" USING btree ("feature_key");
+
+CREATE INDEX IF NOT EXISTS "feature_votes_user_id_idx" ON "feature_votes" USING btree ("user_id");
+
+CREATE UNIQUE INDEX IF NOT EXISTS "feature_votes_feature_user_uniq" ON "feature_votes" USING btree ("feature_key","user_id");
+
+CREATE INDEX IF NOT EXISTS "moderation_queue_status_idx" ON "moderation_queue" USING btree ("status");
+
+CREATE INDEX IF NOT EXISTS "moderation_queue_content_id_idx" ON "moderation_queue" USING btree ("content_id");
+
+CREATE INDEX IF NOT EXISTS "moderation_queue_created_at_idx" ON "moderation_queue" USING btree ("created_at");
+
+CREATE INDEX IF NOT EXISTS "verification_requests_user_id_idx" ON "verification_requests" USING btree ("user_id");
+
+CREATE INDEX IF NOT EXISTS "verification_requests_status_idx" ON "verification_requests" USING btree ("status");
+
+-- ═══════════════════════════════════════════════════════════════════════
+-- HELPER: Realtime key-value store (replaces Firebase RTDB)
+-- ═══════════════════════════════════════════════════════════════════════
 CREATE TABLE IF NOT EXISTS rtdb_store (
   path       TEXT        PRIMARY KEY,
   value      JSONB,
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
-ALTER TABLE rtdb_store ENABLE ROW LEVEL SECURITY;
-DO $$ BEGIN
-  IF NOT EXISTS (
-    SELECT 1 FROM pg_policies WHERE tablename = 'rtdb_store' AND policyname = 'rtdb_auth'
-  ) THEN
-    CREATE POLICY "rtdb_auth" ON rtdb_store USING (auth.role() = 'authenticated');
-  END IF;
-END $$;
 
--- ─── Atomic field increment (scan/follower/like counters) ─────────────────────
+ALTER TABLE rtdb_store ENABLE ROW LEVEL SECURITY;
+
+DO $idempotent$ BEGIN
+  CREATE POLICY "rtdb_auth" ON rtdb_store USING (auth.role() = 'authenticated');
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $idempotent$;
+
+-- ═══════════════════════════════════════════════════════════════════════
+-- HELPER: Atomic field increment (scan / follower / like counters)
+-- ═══════════════════════════════════════════════════════════════════════
 CREATE OR REPLACE FUNCTION increment_field(
   p_table TEXT, p_id TEXT, p_field TEXT, p_delta NUMERIC DEFAULT 1
 ) RETURNS VOID LANGUAGE plpgsql SECURITY DEFINER AS $$
