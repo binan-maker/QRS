@@ -45,6 +45,7 @@ After the migration from Firebase, the following must be done **once** in the Su
 
 ### 2. Database tables
 - Run `packages/db/migrations/0000_graceful_cobalt_man.sql` in the SQL Editor
+- Run `packages/db/migrations/rls_policies.sql` in the SQL Editor (grants `authenticated` role access to all tables — required to avoid "permission denied for table users" warnings)
 - Run the helper SQL for `rtdb_store` and `increment_field` (see below)
 
 ### 3. Enable Realtime

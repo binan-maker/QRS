@@ -24,7 +24,7 @@ export function clearCommentProfileCache(): void {
 export async function preloadUserProfile(userId: string): Promise<void> {
   if (getUserProfileCache(userId)) return;
   try {
-    const userData = await db.get([COLLECTIONS.USERS, userId]);
+    const userData = await db.get([COLLECTIONS.PUBLIC_PROFILES, userId]);
     if (userData) {
       setUserProfileCache(userId, userData.username as string | undefined, userData.photoURL as string | undefined);
     }
@@ -41,7 +41,7 @@ export async function enrichCommentsWithProfiles(comments: CommentItem[]): Promi
     uniqueUserIds.map(async (uid) => {
       if (getUserProfileCache(uid)) return;
       try {
-        const userData = await db.get([COLLECTIONS.USERS, uid]);
+        const userData = await db.get([COLLECTIONS.PUBLIC_PROFILES, uid]);
         if (userData) {
           setUserProfileCache(
             uid,

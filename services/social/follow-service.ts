@@ -79,7 +79,7 @@ export async function isUserFollowingCreator(creatorId: string, userId: string):
 
 export async function getCreatorFollowerCount(creatorId: string): Promise<number> {
   try {
-    const userData = await db.get([COLLECTIONS.USERS, creatorId]);
+    const userData = await db.get([COLLECTIONS.PUBLIC_PROFILES, creatorId]);
     return typeof userData?.creatorFollowerCount === "number" ? userData.creatorFollowerCount : 0;
   } catch { return 0; }
 }
@@ -146,7 +146,7 @@ export async function getCreatorFollowersList(creatorId: string): Promise<Follow
       let username: string | null = null;
       let photoURL: string | null = null;
       try {
-        const userData = await db.get([COLLECTIONS.USERS, followerId]);
+        const userData = await db.get([COLLECTIONS.PUBLIC_PROFILES, followerId]);
         if (userData) {
           displayName = userData.displayName || "User";
           username = userData.username || null;
@@ -174,7 +174,7 @@ export async function getQrFollowersList(qrId: string): Promise<FollowerInfo[]> 
       let username: string | null = null;
       let photoURL: string | null = null;
       try {
-        const userData = await db.get([COLLECTIONS.USERS, userId]);
+        const userData = await db.get([COLLECTIONS.PUBLIC_PROFILES, userId]);
         if (userData) {
           displayName = userData.displayName || "User";
           username = userData.username || null;
