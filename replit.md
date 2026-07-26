@@ -12,7 +12,7 @@ India-focused QR code security app with real-time fraud detection, community tru
 | Database | Supabase (PostgreSQL + Drizzle ORM) |
 | Auth | Supabase Auth |
 | Storage | Supabase Storage (bucket: `binro-assets`) |
-| Realtime | Supabase Postgres changes + `rtdb_store` table |
+| Realtime | Graceful fallback — fetches on mount; live push not required |
 
 ## Running the project
 
@@ -45,11 +45,13 @@ After the migration from Firebase, the following must be done **once** in the Su
 
 ### 2. Database tables
 - Run `packages/db/migrations/0000_graceful_cobalt_man.sql` in the SQL Editor
-- Run `packages/db/migrations/rls_policies.sql` in the SQL Editor (grants `authenticated` role access to all tables — required to avoid "permission denied for table users" warnings)
+- Run `packages/db/migrations/rls_policies.sql` in the SQL Editor
+- Run `packages/db/migrations/grants_fix.sql` in the SQL Editor (**required** — adds missing GRANT statements that allow the `authenticated` role to access each table; without this you get "permission denied for table users")
 - Run the helper SQL for `rtdb_store` and `increment_field` (see below)
 
-### 3. Enable Realtime
-- Database → Replication → toggle ON for: `qr_codes`, `qr_scans`, `qr_comments`, `user_favorites`, `creator_follows`
+### 3. Realtime (optional — free plan works fine without it)
+- Realtime is **not required**. The app does an immediate fetch on every screen mount and works fully offline from Realtime.
+- If you upgrade to Supabase Pro and want live push updates: Database → Replication → toggle ON for `qr_codes`, `qr_scans`, `qr_comments`, `user_favorites`, `creator_follows`, `rtdb_store`
 
 ## Schema management
 

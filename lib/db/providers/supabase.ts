@@ -7,9 +7,12 @@
 //
 // Supabase setup required:
 //   1. Run `npm run db:push` to create tables via Drizzle.
-//   2. Enable Realtime replication on tables you subscribe to (Supabase dashboard
-//      → Database → Replication → toggle the tables).
-//   3. Create the increment_field function (see SQL below).
+//   2. Create the increment_field function (see SQL below).
+//
+// NOTE: Realtime replication is NOT required. onDoc / onQuery / rtdb.onValue
+//       all do an immediate fetch on mount and fall back gracefully when
+//       Realtime is unavailable (free plan). Live push updates are skipped;
+//       data refreshes on next navigation/mount.
 //
 // SQL for atomic increment (run once in Supabase SQL editor):
 //   CREATE OR REPLACE FUNCTION increment_field(
@@ -373,7 +376,20 @@ export const supabaseDb: DbAdapter = {
   },
 
   onDoc(path, cb) {
-    const { table, id } = parsePath(path);
+    const { table, id, extraFilters } = parsePath(path);
+
+    // Always do an immediate fetch so the UI gets data even without Realtime.
+    let cancelled = false;
+    (async () => {
+      try {
+        let q = supabase.from(table).select("*").eq("id", id);
+        q = applyExtraFilters(q, extraFilters);
+        const { data } = await q.maybeSingle();
+        if (!cancelled) cb(data ? keysToCamel(data as Record<string, any>) : null);
+      } catch { /* silently ignored */ }
+    })();
+
+    // Attempt Realtime subscription — silently no-op on free plan (CHANNEL_ERROR).
     const channelName = `doc:${table}:${id}`;
     const channel = supabase
       .channel(channelName)
@@ -388,9 +404,17 @@ export const supabaseDb: DbAdapter = {
           }
         },
       )
-      .subscribe();
+      .subscribe((status: string) => {
+        if (status === "CHANNEL_ERROR" || status === "TIMED_OUT") {
+          // Realtime not available on this plan — channel already cleaned up by Supabase.
+          // Initial fetch above already provided data, so nothing else to do.
+        }
+      });
 
-    return () => { supabase.removeChannel(channel); };
+    return () => {
+      cancelled = true;
+      supabase.removeChannel(channel);
+    };
   },
 
   onQuery(collectionPath, opts, cb) {
@@ -399,6 +423,27 @@ export const supabaseDb: DbAdapter = {
       .map(([k, v]) => `${k}=eq.${v}`)
       .join(",");
 
+    // Helper to run the query and call cb.
+    const runQuery = async () => {
+      let q = supabase.from(table).select("*");
+      q = applyExtraFilters(q, extraFilters);
+      if (opts?.where) for (const w of opts.where) q = applyWhere(q, w);
+      if (opts?.orderBy) {
+        q = q.order(camelToSnake(opts.orderBy.field), {
+          ascending: (opts.orderBy.direction ?? "asc") === "asc",
+        });
+      }
+      if (opts?.limit) q = q.limit(opts.limit);
+      const { data } = await q;
+      const rows = (data ?? []) as Record<string, any>[];
+      cb(rows.map((row) => ({ id: row.id as string, data: keysToCamel(row) })));
+    };
+
+    // Always do an immediate fetch so the UI gets data even without Realtime.
+    let cancelled = false;
+    runQuery().catch(() => { /* silently ignored */ });
+
+    // Attempt Realtime subscription — silently no-op on free plan (CHANNEL_ERROR).
     const channelName = `query:${table}:${filterStr || "all"}`;
     const channel = supabase
       .channel(channelName)
@@ -411,24 +456,19 @@ export const supabaseDb: DbAdapter = {
           ...(filterStr ? { filter: filterStr } : {}),
         },
         async (_payload: any) => {
-          // Re-query to get fresh data when any change occurs.
-          let q = supabase.from(table).select("*");
-          q = applyExtraFilters(q, extraFilters);
-          if (opts?.where) for (const w of opts.where) q = applyWhere(q, w);
-          if (opts?.orderBy) {
-            q = q.order(camelToSnake(opts.orderBy.field), {
-              ascending: (opts.orderBy.direction ?? "asc") === "asc",
-            });
-          }
-          if (opts?.limit) q = q.limit(opts.limit);
-          const { data } = await q;
-          const rows = (data ?? []) as Record<string, any>[];
-          cb(rows.map((row) => ({ id: row.id as string, data: keysToCamel(row) })));
+          if (!cancelled) await runQuery().catch(() => {});
         },
       )
-      .subscribe();
+      .subscribe((status: string) => {
+        if (status === "CHANNEL_ERROR" || status === "TIMED_OUT") {
+          // Realtime not available on this plan — initial fetch already provided data.
+        }
+      });
 
-    return () => { supabase.removeChannel(channel); };
+    return () => {
+      cancelled = true;
+      supabase.removeChannel(channel);
+    };
   },
 
   timestamp() {
@@ -491,6 +531,16 @@ export const supabaseRtdb: RealtimeAdapter = {
   },
 
   onValue(path, cb) {
+    // Always do an immediate read so callers get data even without Realtime.
+    supabase
+      .from("rtdb_store")
+      .select("value")
+      .eq("path", path)
+      .maybeSingle()
+      .then(({ data }) => { cb((data as any)?.value ?? null); })
+      .catch(() => { cb(null); });
+
+    // Attempt Realtime subscription — silently no-op on free plan.
     const channel = supabase
       .channel(`rtdb:${path}`)
       .on(
@@ -500,7 +550,11 @@ export const supabaseRtdb: RealtimeAdapter = {
           cb(payload.eventType === "DELETE" ? null : (payload.new as any)?.value ?? null);
         },
       )
-      .subscribe();
+      .subscribe((status: string) => {
+        if (status === "CHANNEL_ERROR" || status === "TIMED_OUT") {
+          // Realtime not available — initial read already provided data.
+        }
+      });
 
     const entry = { channel, cb };
     if (!rtChannels.has(path)) rtChannels.set(path, []);
