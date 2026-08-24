@@ -1,10 +1,21 @@
 import { FieldValue } from "firebase-admin/firestore";
+
 import { getAdminDb } from "./firebase-admin";
-import { cacheGet, cacheSet, cacheDelete } from "./route-cache";
+import {
+  cacheGet,
+  cacheSet,
+  cacheDelete,
+} from "./route-cache";
 import { isLimitExceeded } from "./qr-limits";
 
 const CACHE_TTL_MS = 30_000;
-export const CAUTION_WINDOW_MS = 24 * 60 * 60 * 1000;
+
+export const CAUTION_WINDOW_MS =
+  24 * 60 * 60 * 1000;
+
+// ─────────────────────────────────────────────────────────────
+// Types
+// ─────────────────────────────────────────────────────────────
 
 export interface GuardLinkFields {
   currentDestination: string | null;
@@ -43,113 +54,569 @@ export interface UnifiedQrFields {
   scanCount: number;
   scanLimit: number | null;
   expiryDate: string | null;
-  design: Record<string, any>;
+
+  design: {
+    fgColor: string;
+    bgColor: string;
+    logoPosition: string;
+    logoUri: string | null;
+    label: string | null;
+  };
 }
 
-async function fetchDocument<T>(collection: string, id: string): Promise<T | null> {
+// ─────────────────────────────────────────────────────────────
+// Cache helpers
+// ─────────────────────────────────────────────────────────────
+
+function fcGet<T>(
+  key: string,
+): { data: T | null } | null {
+  return cacheGet<{
+    data: T | null;
+  }>(key);
+}
+
+function fcSet<T>(
+  key: string,
+  data: T | null,
+): void {
+  cacheSet(
+    key,
+    { data },
+    CACHE_TTL_MS,
+  );
+}
+
+// ─────────────────────────────────────────────────────────────
+// Firestore helper
+// ─────────────────────────────────────────────────────────────
+
+async function fetchDocument<T>(
+  collection: string,
+  id: string,
+): Promise<T | null> {
   const db = getAdminDb();
+
   if (!db) return null;
-  const snapshot = await db.collection(collection).doc(id).get();
-  return snapshot.exists ? snapshot.data() as T : null;
-}
 
-export async function fetchGuardLink(id: string): Promise<GuardLinkFields | null> {
-  const key = `sc-guard:${id}`;
-  const hit = cacheGet<{ data: GuardLinkFields | null }>(key);
-  if (hit !== null) return hit.data;
-  const data = await fetchDocument<any>("guardLinks", id);
-  const link = data ? {
-    currentDestination: data.currentDestination ?? data.current_destination ?? null,
-    previousDestination: data.previousDestination ?? data.previous_destination ?? null,
-    businessName: data.businessName ?? data.business_name ?? null,
-    ownerName: data.ownerName ?? data.owner_name ?? "Business",
-    isActive: data.isActive !== false && data.is_active !== false,
-    destinationChangedAt: data.destinationChangedAt ?? data.destination_changed_at ?? null,
-    scanLimit: data.scanLimit ?? data.scan_limit ?? null,
-    scanCount: data.scanCount ?? data.scan_count ?? 0,
-    expiryDate: data.expiryDate ?? data.expiry_date ?? null,
-  } : null;
-  cacheSet(key, { data: link }, CACHE_TTL_MS);
-  return link;
-}
+  try {
+    const snapshot = await db
+      .collection(collection)
+      .doc(id)
+      .get();
 
-export async function fetchStandardLink(id: string): Promise<StandardLinkFields | null> {
-  const key = `sc-std:${id}`;
-  const hit = cacheGet<{ data: StandardLinkFields | null }>(key);
-  if (hit !== null) return hit.data;
-  const data = await fetchDocument<any>("standardLinks", id);
-  const link = data ? {
-    rawContent: data.rawContent ?? data.raw_content ?? "",
-    contentType: data.contentType ?? data.content_type ?? "text",
-    ownerName: data.ownerName ?? data.owner_name ?? "BinRo User",
-    isActive: data.isActive !== false && data.is_active !== false,
-    scanLimit: data.scanLimit ?? data.scan_limit ?? null,
-    scanCount: data.scanCount ?? data.scan_count ?? 0,
-    expiryDate: data.expiryDate ?? data.expiry_date ?? null,
-  } : null;
-  cacheSet(key, { data: link }, CACHE_TTL_MS);
-  return link;
-}
-
-export async function fetchUnifiedQr(id: string): Promise<UnifiedQrFields | null> {
-  const key = `sc-unified:${id}`;
-  const hit = cacheGet<{ data: UnifiedQrFields | null }>(key);
-  if (hit !== null) return hit.data;
-  const data = await fetchDocument<any>("qrs", id);
-  const design = data?.design ?? {};
-  const link = data ? {
-    ownerId: data.ownerId ?? data.owner_id ?? "",
-    ownerName: data.ownerName ?? data.owner_name ?? "BinRo User",
-    qrType: data.qrType ?? data.qr_type ?? "individual",
-    template: data.template ?? null,
-    title: data.title ?? null,
-    isDynamic: data.isDynamic ?? data.is_dynamic ?? false,
-    destination: data.destination ?? "",
-    rawDestination: data.rawDestination ?? data.raw_destination ?? data.destination ?? "",
-    contentType: data.contentType ?? data.content_type ?? "text",
-    businessName: data.businessName ?? data.business_name ?? null,
-    status: data.status ?? "active",
-    scanCount: data.scanCount ?? data.scan_count ?? 0,
-    scanLimit: data.scanLimit ?? data.scan_limit ?? null,
-    expiryDate: data.expiryDate ?? data.expiry_date ?? null,
-    design,
-  } : null;
-  cacheSet(key, { data: link }, CACHE_TTL_MS);
-  return link;
-}
-
-export function bustUnifiedCache(id: string) {
-  cacheDelete(`sc-unified:${id}`);
-}
-
-async function incrementAndCheck(collection: string, id: string, scanLimit: number | null, statusField?: string) {
-  const db = getAdminDb();
-  if (!db) return;
-  const ref = db.collection(collection).doc(id);
-  await ref.update({ scanCount: FieldValue.increment(1), scan_count: FieldValue.increment(1) });
-  if (scanLimit !== null && scanLimit > 0) {
-    const snapshot = await ref.get();
-    const count = (snapshot.data()?.scanCount ?? snapshot.data()?.scan_count ?? 0) as number;
-    if (isLimitExceeded(null, scanLimit, count)) {
-      await ref.update(statusField ? { [statusField]: "limit_reached" } : { isActive: false, is_active: false });
-      cacheDelete(`sc-${collection === "qrs" ? "unified" : collection === "guardLinks" ? "guard" : "std"}:${id}`);
+    if (!snapshot.exists) {
+      return null;
     }
+
+    return snapshot.data() as T;
+  } catch (error) {
+    console.error(
+      `[firebase-client] Failed to fetch ${collection}/${id}:`,
+      error,
+    );
+
+    return null;
   }
 }
 
-export function recordScanAndEnforce(table: "standard_links" | "guard_links" | "standardLinks" | "guardLinks", id: string, limit: number | null) {
-  return incrementAndCheck(table === "guard_links" || table === "guardLinks" ? "guardLinks" : "standardLinks", id, limit);
+// ─────────────────────────────────────────────────────────────
+// Guard Links
+// Collection: guardLinks
+// ─────────────────────────────────────────────────────────────
+
+export async function fetchGuardLink(
+  id: string,
+): Promise<GuardLinkFields | null> {
+  const key = `sc-guard:${id}`;
+
+  const hit = fcGet<GuardLinkFields>(key);
+
+  if (hit !== null) {
+    return hit.data;
+  }
+
+  const data = await fetchDocument<any>(
+    "guardLinks",
+    id,
+  );
+
+  if (!data) {
+    fcSet(key, null);
+
+    return null;
+  }
+
+  const link: GuardLinkFields = {
+    currentDestination:
+      data.currentDestination ??
+      data.current_destination ??
+      null,
+
+    previousDestination:
+      data.previousDestination ??
+      data.previous_destination ??
+      null,
+
+    businessName:
+      data.businessName ??
+      data.business_name ??
+      null,
+
+    ownerName:
+      data.ownerName ??
+      data.owner_name ??
+      "Business",
+
+    isActive:
+      data.isActive !== false &&
+      data.is_active !== false,
+
+    destinationChangedAt:
+      data.destinationChangedAt ??
+      data.destination_changed_at ??
+      null,
+
+    scanLimit:
+      data.scanLimit ??
+      data.scan_limit ??
+      null,
+
+    scanCount:
+      data.scanCount ??
+      data.scan_count ??
+      0,
+
+    expiryDate:
+      data.expiryDate ??
+      data.expiry_date ??
+      null,
+  };
+
+  fcSet(key, link);
+
+  return link;
 }
 
-export function recordUnifiedScan(id: string, limit: number | null) {
-  return incrementAndCheck("qrs", id, limit, "status");
+// ─────────────────────────────────────────────────────────────
+// Standard Links
+// Collection: standardLinks
+// ─────────────────────────────────────────────────────────────
+
+export async function fetchStandardLink(
+  id: string,
+): Promise<StandardLinkFields | null> {
+  const key = `sc-std:${id}`;
+
+  const hit = fcGet<StandardLinkFields>(key);
+
+  if (hit !== null) {
+    return hit.data;
+  }
+
+  const data = await fetchDocument<any>(
+    "standardLinks",
+    id,
+  );
+
+  if (!data) {
+    fcSet(key, null);
+
+    return null;
+  }
+
+  const link: StandardLinkFields = {
+    rawContent:
+      data.rawContent ??
+      data.raw_content ??
+      "",
+
+    contentType:
+      data.contentType ??
+      data.content_type ??
+      "text",
+
+    ownerName:
+      data.ownerName ??
+      data.owner_name ??
+      "BinRo User",
+
+    isActive:
+      data.isActive !== false &&
+      data.is_active !== false,
+
+    scanLimit:
+      data.scanLimit ??
+      data.scan_limit ??
+      null,
+
+    scanCount:
+      data.scanCount ??
+      data.scan_count ??
+      0,
+
+    expiryDate:
+      data.expiryDate ??
+      data.expiry_date ??
+      null,
+  };
+
+  fcSet(key, link);
+
+  return link;
 }
 
-export function isSafeRedirectDestination(destination: string) {
+// ─────────────────────────────────────────────────────────────
+// Unified QR
+// Collection: qrs
+// ─────────────────────────────────────────────────────────────
+
+export async function fetchUnifiedQr(
+  id: string,
+): Promise<UnifiedQrFields | null> {
+  const key = `sc-unified:${id}`;
+
+  const hit = fcGet<UnifiedQrFields>(key);
+
+  if (hit !== null) {
+    return hit.data;
+  }
+
+  const data = await fetchDocument<any>(
+    "qrs",
+    id,
+  );
+
+  if (!data) {
+    fcSet(key, null);
+
+    return null;
+  }
+
+  const rawDesign =
+    data.design ?? {};
+
+  const design = {
+    fgColor:
+      rawDesign.fgColor ??
+      rawDesign.fg_color ??
+      "#0A0E17",
+
+    bgColor:
+      rawDesign.bgColor ??
+      rawDesign.bg_color ??
+      "#F8FAFC",
+
+    logoPosition:
+      rawDesign.logoPosition ??
+      rawDesign.logo_position ??
+      "center",
+
+    logoUri:
+      rawDesign.logoUri ??
+      rawDesign.logo_uri ??
+      null,
+
+    label:
+      rawDesign.label ??
+      null,
+  };
+
+  const link: UnifiedQrFields = {
+    ownerId:
+      data.ownerId ??
+      data.owner_id ??
+      "",
+
+    ownerName:
+      data.ownerName ??
+      data.owner_name ??
+      "BinRo User",
+
+    qrType:
+      data.qrType ??
+      data.qr_type ??
+      "individual",
+
+    template:
+      data.template ??
+      null,
+
+    title:
+      data.title ??
+      null,
+
+    isDynamic:
+      data.isDynamic ??
+      data.is_dynamic ??
+      false,
+
+    destination:
+      data.destination ??
+      "",
+
+    rawDestination:
+      data.rawDestination ??
+      data.raw_destination ??
+      data.destination ??
+      "",
+
+    contentType:
+      data.contentType ??
+      data.content_type ??
+      "text",
+
+    businessName:
+      data.businessName ??
+      data.business_name ??
+      null,
+
+    status:
+      data.status ??
+      "active",
+
+    scanCount:
+      data.scanCount ??
+      data.scan_count ??
+      0,
+
+    scanLimit:
+      data.scanLimit ??
+      data.scan_limit ??
+      null,
+
+    expiryDate:
+      data.expiryDate ??
+      data.expiry_date ??
+      null,
+
+    design,
+  };
+
+  fcSet(key, link);
+
+  return link;
+}
+
+// ─────────────────────────────────────────────────────────────
+// Cache
+// ─────────────────────────────────────────────────────────────
+
+export function bustUnifiedCache(
+  id: string,
+): void {
+  cacheDelete(
+    `sc-unified:${id}`,
+  );
+}
+
+// ─────────────────────────────────────────────────────────────
+// Scan handling
+// ─────────────────────────────────────────────────────────────
+
+async function incrementAndCheck(
+  collection: string,
+  id: string,
+  scanLimit: number | null,
+  statusField?: string,
+): Promise<void> {
+  const db = getAdminDb();
+
+  if (!db) return;
+
   try {
-    const url = new URL(destination.startsWith("http") ? destination : `https://${destination}`);
-    return url.protocol === "https:" || url.protocol === "http:";
+    const ref = db
+      .collection(collection)
+      .doc(id);
+
+    const snapshot =
+      await ref.get();
+
+    if (!snapshot.exists) {
+      return;
+    }
+
+    const data =
+      snapshot.data() ?? {};
+
+    const currentCount =
+      typeof data.scanCount === "number"
+        ? data.scanCount
+        : typeof data.scan_count === "number"
+          ? data.scan_count
+          : 0;
+
+    const newCount =
+      currentCount + 1;
+
+    const updateData: Record<
+      string,
+      any
+    > = {
+      scanCount: newCount,
+    };
+
+    if (
+      "scan_count" in data
+    ) {
+      updateData.scan_count =
+        newCount;
+    }
+
+    if (
+      scanLimit !== null &&
+      scanLimit > 0 &&
+      isLimitExceeded(
+        null,
+        scanLimit,
+        newCount,
+      )
+    ) {
+      if (statusField) {
+        updateData[statusField] =
+          "limit_reached";
+      } else {
+        updateData.isActive =
+          false;
+
+        if ("is_active" in data) {
+          updateData.is_active =
+            false;
+        }
+      }
+    }
+
+    await ref.update(
+      updateData,
+    );
+
+    if (
+      scanLimit !== null &&
+      scanLimit > 0 &&
+      isLimitExceeded(
+        null,
+        scanLimit,
+        newCount,
+      )
+    ) {
+      if (
+        collection === "qrs"
+      ) {
+        cacheDelete(
+          `sc-unified:${id}`,
+        );
+      }
+
+      if (
+        collection === "guardLinks"
+      ) {
+        cacheDelete(
+          `sc-guard:${id}`,
+        );
+      }
+
+      if (
+        collection ===
+        "standardLinks"
+      ) {
+        cacheDelete(
+          `sc-std:${id}`,
+        );
+      }
+    }
+  } catch (error) {
+    console.error(
+      `[firebase-client] Scan update failed for ${collection}/${id}:`,
+      error,
+    );
+  }
+}
+
+export async function recordScanAndEnforce(
+  table:
+    | "standard_links"
+    | "guard_links"
+    | "standardLinks"
+    | "guardLinks",
+
+  id: string,
+
+  scanLimit: number | null,
+): Promise<void> {
+  const collection =
+    table === "guard_links" ||
+    table === "guardLinks"
+      ? "guardLinks"
+      : "standardLinks";
+
+  await incrementAndCheck(
+    collection,
+    id,
+    scanLimit,
+  );
+}
+
+export async function recordUnifiedScan(
+  id: string,
+  scanLimit: number | null,
+): Promise<void> {
+  await incrementAndCheck(
+    "qrs",
+    id,
+    scanLimit,
+    "status",
+  );
+}
+
+// ─────────────────────────────────────────────────────────────
+// Utilities
+// ─────────────────────────────────────────────────────────────
+
+export function isSafeRedirectDestination(
+  destination: string,
+): boolean {
+  try {
+    const url = new URL(
+      destination.startsWith(
+        "http",
+      )
+        ? destination
+        : `https://${destination}`,
+    );
+
+    return (
+      url.protocol === "https:" ||
+      url.protocol === "http:"
+    );
   } catch {
     return false;
   }
+}
+
+export function wasChangedRecently(
+  destinationChangedAt:
+    | string
+    | null,
+): boolean {
+  if (!destinationChangedAt) {
+    return false;
+  }
+
+  const changedAt = new Date(
+    destinationChangedAt,
+  ).getTime();
+
+  if (
+    Number.isNaN(
+      changedAt,
+    )
+  ) {
+    return false;
+  }
+
+  return (
+    Date.now() -
+      changedAt <
+    CAUTION_WINDOW_MS
+  );
 }
