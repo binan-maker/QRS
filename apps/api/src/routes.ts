@@ -18,7 +18,7 @@ import {
   fetchGuardLink, fetchStandardLink, isSafeRedirectDestination,
   recordScanAndEnforce, CAUTION_WINDOW_MS,
   fetchUnifiedQr, recordUnifiedScan,
-} from "./lib/supabase-client";
+} from "./lib/firebase-client";
 import { cacheGet, cacheSet } from "./lib/route-cache";
 import { isLimitExceeded } from "./lib/qr-limits";
 

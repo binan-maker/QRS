@@ -2,7 +2,7 @@
 // SERVER-SIDE REPORT SERVICE
 // ───────────────────────────────────────────────────────────────────────────────
 // Node-safe replacement for @/services/moderation/report-service.
-// Uses getAdminDb() (Supabase shim) directly — never imports react-native.
+// Uses getAdminDb() directly — never imports react-native.
 // ═══════════════════════════════════════════════════════════════════════════════
 
 import { getAdminDb, admin } from "../lib/firebase-admin";

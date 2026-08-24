@@ -3,63 +3,27 @@ import type { CheckResult, MemoryCheckResult } from "./types";
 export async function checkDatabaseConnectivity(): Promise<CheckResult> {
   const startTime = Date.now();
   try {
-    const supabaseUrl = process.env.SUPABASE_URL ?? process.env.EXPO_PUBLIC_SUPABASE_URL ?? "";
-    const supabaseKey =
-      process.env.SUPABASE_SERVICE_ROLE_KEY ??
-      process.env.SUPABASE_ANON_KEY ??
-      process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY ??
-      "";
-
-    if (!supabaseUrl || !supabaseKey) {
+    if (!process.env.FIREBASE_SERVICE_ACCOUNT) {
       return {
         status: "warning",
         latencyMs: Date.now() - startTime,
-        message: "Supabase credentials not configured",
-        details: { hasUrl: !!supabaseUrl, hasKey: !!supabaseKey },
+        message: "Firebase Admin credentials not configured",
+        details: { hasServiceAccount: false },
       };
     }
 
-    // Ping the Supabase REST API health endpoint
-    const url = `${supabaseUrl}/rest/v1/`;
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 5000);
-
     try {
-      const response = await fetch(url, {
-        signal: controller.signal,
-        headers: { apikey: supabaseKey, Authorization: `Bearer ${supabaseKey}` },
-      });
-      clearTimeout(timeoutId);
+      const { getAdminDb } = await import("../lib/firebase-admin");
+      const db = getAdminDb();
+      if (!db) throw new Error("Firebase Admin unavailable");
+      await db.listCollections();
       const latency = Date.now() - startTime;
-
-      if (response.ok || response.status === 200) {
-        return {
-          status: "ok",
-          latencyMs: latency,
-          message: "Supabase connected",
-          details: { provider: "supabase" },
-        };
-      } else if (response.status === 401) {
-        return {
-          status: "warning",
-          latencyMs: latency,
-          message: "Supabase reachable but auth key invalid",
-          details: { provider: "supabase", status: response.status },
-        };
-      } else {
-        return {
-          status: "error",
-          latencyMs: latency,
-          message: `Supabase returned status ${response.status}`,
-          details: { provider: "supabase", status: response.status },
-        };
-      }
+      return { status: "ok", latencyMs: latency, message: "Firebase connected", details: { provider: "firebase" } };
     } catch (error: any) {
-      clearTimeout(timeoutId);
       return {
         status: "error",
         latencyMs: Date.now() - startTime,
-        message: error.message || "Supabase connection failed",
+        message: error.message || "Firebase connection failed",
         details: { error: error.code || "unknown" },
       };
     }

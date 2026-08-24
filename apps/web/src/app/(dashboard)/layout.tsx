@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
-import { verifySessionCookie } from "@/lib/supabase-admin";
+import { verifySessionCookie } from "@/lib/firebase-admin";
 import { LOGIN_REDIRECT } from "@/lib/auth";
 import { DashboardSidebar } from "@/components/ui/dashboard-sidebar";
 import { DashboardTopbar } from "@/components/ui/dashboard-topbar";
@@ -9,7 +9,7 @@ import { DashboardTopbar } from "@/components/ui/dashboard-topbar";
 /**
  * Dashboard layout — authenticated area.
  *
- * Server Component: validates the session cookie with supabase-admin.
+ * Server Component: validates the Firebase session cookie.
  * If invalid/missing the middleware has already redirected to /auth/login,
  * so by the time this renders we can trust the session.
  */

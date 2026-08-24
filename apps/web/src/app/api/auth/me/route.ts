@@ -3,7 +3,7 @@
  *
  * Validate the session cookie and return the authenticated user's basic info.
  * Used by client components that need to know who is logged in without
- * waiting for Supabase Auth to initialise.
+ * waiting for Firebase Auth to initialise.
  *
  * Response:
  *   200 { data: { uid, email, emailVerified, name, picture } }
@@ -12,7 +12,7 @@
 
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
-import { verifySessionCookie } from "@/lib/supabase-admin";
+import { verifySessionCookie } from "@/lib/firebase-admin";
 import { SESSION_COOKIE_NAME } from "@/lib/auth";
 
 export async function GET() {

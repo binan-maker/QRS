@@ -1,8 +1,8 @@
 /**
  * /api/auth/session
  *
- * POST — Store a Supabase access token as an httpOnly session cookie.
- *         Called client-side immediately after Supabase signIn().
+ * POST — Store a Firebase ID token as an httpOnly session cookie.
+ *         Called client-side immediately after Firebase sign-in.
  *
  * DELETE — Clear the session cookie (sign out server-side).
  */
@@ -10,7 +10,7 @@
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { verifySessionCookie } from "@/lib/supabase-admin";
+import { verifySessionCookie } from "@/lib/firebase-admin";
 import { SESSION_COOKIE_NAME, SESSION_COOKIE_MAX_AGE } from "@/lib/auth";
 
 const postSchema = z.object({

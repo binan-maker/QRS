@@ -99,7 +99,7 @@ async function runReengagementScan() {
   for (const doc of usersSnap.docs) {
     const data = doc.data();
     const pushToken: string = data.pushToken;
-    // Supabase returns timestamps as ISO strings; Firestore used .toMillis()
+    // Firestore timestamps expose toMillis(); plain values are also supported.
     const lastActiveRaw = data.lastActiveAt ?? data.last_active_at;
     const lastActive: number = lastActiveRaw
       ? (typeof lastActiveRaw === "object" && typeof lastActiveRaw.toMillis === "function"

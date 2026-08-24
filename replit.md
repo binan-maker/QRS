@@ -9,10 +9,10 @@ India-focused QR code security app with real-time fraud detection, community tru
 | Mobile app | Expo / React Native (expo-router) |
 | Backend API | Express 5 + TypeScript (tsx) |
 | Web dashboard | Next.js (apps/web) |
-| Database | Supabase (PostgreSQL + Drizzle ORM) |
-| Auth | Supabase Auth |
-| Storage | Supabase Storage (bucket: `binro-assets`) |
-| Realtime | Graceful fallback — fetches on mount; live push not required |
+| Database | Cloud Firestore |
+| Auth | Firebase Authentication |
+| Storage | Firebase Cloud Storage |
+| Realtime | Firebase Realtime Database |
 
 ## Running the project
 
@@ -21,47 +21,27 @@ India-focused QR code security app with real-time fraud detection, community tru
 | Start Backend | `npm run server:dev` → port 5000 |
 | Start Frontend | `npm run expo:dev` → Metro bundler port 8081 |
 
-## Environment variables (Replit Secrets)
+## Environment variables
 
-| Key | Where to find it |
-|---|---|
-| `SUPABASE_SERVICE_ROLE_KEY` | Supabase → Project Settings → API → Service role key |
-| `SUPABASE_DATABASE_URL` | Supabase → Project Settings → Database → Connection string (URI, Session mode port 5432) |
+Public client configuration:
 
-Already set in `.replit` userenv (non-secret):
-- `EXPO_PUBLIC_SUPABASE_URL`
-- `EXPO_PUBLIC_SUPABASE_ANON_KEY`
-- `SUPABASE_URL`
-- `EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID`
-- `EXPO_PUBLIC_ANDROID_CLIENT_ID`
+- `EXPO_PUBLIC_FIREBASE_API_KEY`
+- `EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN`
+- `EXPO_PUBLIC_FIREBASE_PROJECT_ID`
+- `EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET`
+- `EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID`
+- `EXPO_PUBLIC_FIREBASE_APP_ID`
+- `NEXT_PUBLIC_FIREBASE_*` equivalents for the web dashboard
 
-## Supabase setup checklist
+Server-only configuration:
 
-After the migration from Firebase, the following must be done **once** in the Supabase dashboard:
+- `FIREBASE_SERVICE_ACCOUNT` — Firebase service-account JSON for Admin SDK access
+- `SESSION_SECRET` — optional session/application secret
 
-### 1. Storage bucket
-- Storage → New bucket → Name: `binro-assets`, Public: ON
-- Run the RLS policy SQL (see below)
+Firebase client configuration is public by design. Keep the Admin service account in Replit Secrets.
 
-### 2. Database tables
-- Run `packages/db/migrations/0000_graceful_cobalt_man.sql` in the SQL Editor
-- Run `packages/db/migrations/rls_policies.sql` in the SQL Editor
-- Run `packages/db/migrations/grants_fix.sql` in the SQL Editor (**required** — adds missing GRANT statements that allow the `authenticated` role to access each table; without this you get "permission denied for table users")
-- Run the helper SQL for `rtdb_store` and `increment_field` (see below)
+## Schema and security
 
-### 3. Realtime (optional — free plan works fine without it)
-- Realtime is **not required**. The app does an immediate fetch on every screen mount and works fully offline from Realtime.
-- If you upgrade to Supabase Pro and want live push updates: Database → Replication → toggle ON for `qr_codes`, `qr_scans`, `qr_comments`, `user_favorites`, `creator_follows`, `rtdb_store`
+Create the Firestore database, enable Email/Password and Google providers in Firebase Authentication, configure Firestore and Storage security rules, and create the Realtime Database before using production data.
 
-## Schema management
-
-```bash
-npm run db:push        # push Drizzle schema to Supabase (requires SUPABASE_DATABASE_URL, Session mode port 5432)
-npx drizzle-kit generate  # generate migration files without a DB connection
-```
-
-`DATABASE_URL` is reserved by Replit. Use `SUPABASE_DATABASE_URL` for Drizzle commands.
-
-## User preferences
-
-- Keep existing project structure and stack — do not restructure or migrate
+Keep the existing project structure and stack; all application data access goes through the Firebase adapters.

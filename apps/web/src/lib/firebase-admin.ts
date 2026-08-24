@@ -1,21 +1,24 @@
-/**
- * DEPRECATED — Firebase Admin has been replaced by Supabase Admin.
- *
- * This file re-exports from supabase-admin.ts for backwards compatibility.
- * Update any imports to use "@/lib/supabase-admin" directly.
- */
+import { cert, getApps, initializeApp, applicationDefault } from "firebase-admin/app";
+import { getAuth } from "firebase-admin/auth";
 
-export {
-  verifySessionCookie,
-  deleteSupabaseUser,
-} from "./supabase-admin";
+let adminApp: ReturnType<typeof initializeApp> | undefined;
 
-// Stub: getAdminApp / getAdminAuth are Firebase-specific concepts.
-// Use the Supabase admin client from supabase-admin.ts instead.
-export function getAdminApp() {
-  return null;
+function getAdminApp() {
+  if (adminApp) return adminApp;
+  const raw = process.env.FIREBASE_SERVICE_ACCOUNT;
+  const credential = raw ? cert(JSON.parse(raw)) : applicationDefault();
+  adminApp = getApps().length ? getApps()[0] : initializeApp({ credential });
+  return adminApp;
 }
 
-export function getAdminAuth() {
-  return null;
+export async function verifySessionCookie(token: string) {
+  try {
+    return await getAuth(getAdminApp()).verifyIdToken(token);
+  } catch {
+    return null;
+  }
+}
+
+export async function deleteFirebaseUser(uid: string) {
+  await getAuth(getAdminApp()).deleteUser(uid);
 }

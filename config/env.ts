@@ -1,7 +1,6 @@
 // ═══════════════════════════════════════════════════════════════════════════════
 // ENVIRONMENT — typed, validated env access for the mobile app.
 // ───────────────────────────────────────────────────────────────────────────────
-// Replaces Firebase-specific env references.
 // All values come from EXPO_PUBLIC_* vars bundled at build time.
 // ═══════════════════════════════════════════════════════════════════════════════
 
@@ -17,10 +16,12 @@ export {
 // ── Typed environment access (mobile) ─────────────────────────────────────────
 
 export const ENV = {
-  /** Supabase project URL. */
-  SUPABASE_URL: process.env.EXPO_PUBLIC_SUPABASE_URL ?? "",
-  /** Supabase anonymous/public key — safe to expose in the JS bundle. */
-  SUPABASE_ANON_KEY: process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY ?? "",
+  FIREBASE_API_KEY: process.env.EXPO_PUBLIC_FIREBASE_API_KEY ?? "",
+  FIREBASE_AUTH_DOMAIN: process.env.EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN ?? "",
+  FIREBASE_PROJECT_ID: process.env.EXPO_PUBLIC_FIREBASE_PROJECT_ID ?? "",
+  FIREBASE_STORAGE_BUCKET: process.env.EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET ?? "",
+  FIREBASE_MESSAGING_SENDER_ID: process.env.EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID ?? "",
+  FIREBASE_APP_ID: process.env.EXPO_PUBLIC_FIREBASE_APP_ID ?? "",
 
   /** Google Sign-In web client ID (used for ID token auth). */
   GOOGLE_WEB_CLIENT_ID: process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID ?? "",

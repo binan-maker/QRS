@@ -22,7 +22,7 @@ export function registerQrActiveRoute(app: Express) {
     const adminAuth = getAdminAuth();
     if (!adminAuth) {
       return res.status(503).json({
-        error: "Server not configured for this operation. Set SUPABASE_SERVICE_ROLE_KEY.",
+        error: "Server not configured for this operation. Set FIREBASE_SERVICE_ACCOUNT.",
       });
     }
 

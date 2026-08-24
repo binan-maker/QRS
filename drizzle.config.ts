@@ -12,7 +12,7 @@ if (!dbUrl) {
   console.warn(
     "⚠️  SUPABASE_DATABASE_URL is not set. Add it to Replit Secrets before running drizzle-kit commands.\n" +
     "    Find it in your Supabase dashboard → Settings → Database → Connection string (URI mode).\n" +
-    "    Use the 'Session' mode connection string (port 5432).",
+    "    Use the 'Session' mode connection string (port 5432).", 
   );
 } else {
   // Supabase requires SSL. Append sslmode=require if not already present.

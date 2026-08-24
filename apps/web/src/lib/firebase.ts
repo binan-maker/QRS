@@ -1,16 +1,31 @@
 "use client";
 
-/**
- * DEPRECATED — Firebase client SDK has been replaced by Supabase.
- *
- * This file re-exports from supabase.ts for backwards compatibility.
- * Update any imports to use "@/lib/supabase" directly.
- */
+import { getApp, getApps, initializeApp } from "firebase/app";
+import { getAuth } from "firebase/auth";
+import { getFirestore } from "firebase/firestore";
+import { publicEnv } from "@/lib/env";
 
-export { getSupabaseClient, isSupabaseConfigured } from "./supabase";
+const config = {
+  apiKey: publicEnv.firebase.apiKey,
+  authDomain: publicEnv.firebase.authDomain,
+  projectId: publicEnv.firebase.projectId,
+  storageBucket: publicEnv.firebase.storageBucket,
+  messagingSenderId: publicEnv.firebase.messagingSenderId,
+  appId: publicEnv.firebase.appId,
+};
 
-// Stubs kept for compatibility
-export function getFirebaseApp() { return null; }
-export function getFirebaseAuth() { return null; }
-export function getGoogleProvider() { return null; }
-export function isFirebaseConfigured() { return false; }
+export function getFirebaseApp() {
+  return getApps().length ? getApp() : initializeApp(config);
+}
+
+export function getFirebaseAuth() {
+  return getAuth(getFirebaseApp());
+}
+
+export function getFirebaseDb() {
+  return getFirestore(getFirebaseApp());
+}
+
+export function isFirebaseConfigured() {
+  return Boolean(config.apiKey && config.projectId && config.appId);
+}

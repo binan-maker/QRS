@@ -68,7 +68,7 @@ export function getAuthErrorMessage(code: string): string {
     case "refresh_token_not_found":
     case "refresh_token_already_used":
       return "Your session has expired. Please sign in again.";
-    // ── Supabase OAuth / Google sign-in ──────────────────────────────────────
+    // ── Firebase OAuth / Google sign-in ───────────────────────────────────────
     case "bad_oauth_state":
     case "bad_oauth_callback":
       return "Google sign-in could not be completed. Please try again.";
@@ -89,12 +89,12 @@ export function getAuthErrorMessage(code: string): string {
   }
 }
 
-/** Map an auth error (Supabase, Google Sign-In, etc.) to a user-friendly error. */
+/** Map an auth error (Firebase, Google Sign-In, etc.) to a user-friendly error. */
 export function mapAuthError(e: any): Error & { code?: string } {
   const code = e?.code ?? "";
   const knownMessage = getAuthErrorMessage(code);
   // If we got a known mapped message, use it. Otherwise fall back to the
-  // original error message so Supabase/SDK errors aren't silently swallowed
+  // original error message so Firebase SDK errors aren't silently swallowed
   // as a generic "Something went wrong."
   const isMapped = knownMessage !== "Something went wrong. Please try again.";
   const message = isMapped

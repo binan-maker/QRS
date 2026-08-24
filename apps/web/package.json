@@ -12,7 +12,7 @@
   "dependencies": {
     "@binro/config": "*",
     "@binro/core": "*",
-    "@supabase/supabase-js": "*",
+    "firebase": "*",
     "@tanstack/react-query": "*",
     "@tanstack/react-query-devtools": "*",
     "clsx": "*",
