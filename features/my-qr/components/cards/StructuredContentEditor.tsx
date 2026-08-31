@@ -4,7 +4,7 @@ import { Ionicons } from "@expo/vector-icons";
 import Animated, { FadeInDown } from "react-native-reanimated";
 import { useTheme } from "@/shared/contexts/ThemeContext";
 import { useScaleFns } from "@/shared/hooks/useScaleFns";
-import { getRegistryEntryByKey } from "@/features/generator/data/registry";
+import { getRegistryEntryByKey } from "@/features/my-qr/utils/qr-template-registry";
 
 interface Props {
   templateKey: string;

@@ -423,7 +423,9 @@ export default function MyQrAnalyticsScreen() {
         </Animated.View>
 
         {/* ── IDENTIFIERS ── */}
-        {qrItem.qrCodeId && (
+        {qrItem.qrCodeId && (() => {
+          const qrCodeId = qrItem.qrCodeId;
+          return (
           <Animated.View entering={FadeInDown.duration(185)} style={{ marginBottom: sp(18) }}>
             <Text style={[sectionLabel, { color: colors.textMuted, marginBottom: sp(10) }]}>Identifiers</Text>
             <View style={{ borderRadius: sp(16), borderWidth: 1, borderColor: colors.surfaceBorder, backgroundColor: colors.surface, overflow: "hidden" }}>
@@ -435,7 +437,7 @@ export default function MyQrAnalyticsScreen() {
                 <Text style={{ fontSize: rf(12), fontFamily: "Inter_600SemiBold", color: colors.text, flex: 1, textAlign: "right" }} numberOfLines={1}>{qrItem.qrCodeId.slice(0, 16) + "…"}</Text>
                 <Pressable
                   onPress={() => {
-                    Clipboard.setStringAsync(qrItem.qrCodeId);
+                    Clipboard.setStringAsync(qrCodeId);
                     Alert.alert("Copied", "QR Code ID copied to clipboard.");
                   }}
                   style={({ pressed }) => ({
@@ -453,7 +455,8 @@ export default function MyQrAnalyticsScreen() {
               )}
             </View>
           </Animated.View>
-        )}
+          );
+        })()}
       </ScrollView>
     </View>
   );

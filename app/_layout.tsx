@@ -15,7 +15,6 @@ import * as SystemUI from "expo-system-ui";
 import * as NavigationBar from "expo-navigation-bar";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { Platform, View } from "react-native";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { setHapticsEnabled } from "@/shared/utils/haptics";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { KeyboardProvider } from "react-native-keyboard-controller";
@@ -108,12 +107,10 @@ function RootLayoutNav() {
         animation: "fade",
         headerShown: false,
       }} />
-      {/* (qr) group — QR viewing, detail and creation screens */}
+      {/* (qr) group — QR viewing and detail screens */}
       <Stack.Screen name="(qr)/qr-detail/[id]" options={{ headerShown: false }} />
       <Stack.Screen name="(qr)/my-qr-detail/[id]" options={{ headerShown: false }} />
       <Stack.Screen name="(qr)/my-qr-analytics/[id]" options={{ headerShown: false }} />
-      <Stack.Screen name="(qr)/qr-individual" options={{ headerShown: false }} />
-      <Stack.Screen name="(qr)/qr-private" options={{ headerShown: false }} />
       {/* (account) group — user account, preferences and discovery */}
       <Stack.Screen name="(account)/favorites" options={{ headerShown: false }} />
       <Stack.Screen name="(account)/account-management" options={{ headerShown: false }} />
@@ -133,8 +130,6 @@ function RootLayoutNav() {
 function ThemedApp() {
   const { colors } = useTheme();
   const isWeb = Platform.OS === "web";
-  const insets = useSafeAreaInsets();
-
   // Keep the Android system navigation bar background in sync with the app theme.
   // Without this, the gesture/button bar at the bottom appears transparent or
   // white-on-white in light mode on edge-to-edge Android builds.

@@ -2,7 +2,7 @@ import { View, Text, StyleSheet, Pressable } from "react-native";
 import * as Haptics from "@/shared/utils/haptics";
 import { useTheme } from "@/shared/contexts/ThemeContext";
 import BottomSheet from "@/shared/components/ui/BottomSheet";
-import { LOGO_POSITIONS, type LogoPosition } from "@/features/generator/types/form-types";
+import { LOGO_POSITIONS, type LogoPosition } from "@/features/my-qr/hooks/useQrDesign";
 
 interface Props {
   visible: boolean;

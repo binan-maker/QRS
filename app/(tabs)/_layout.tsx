@@ -1,7 +1,7 @@
 import { Tabs, router } from "expo-router";
 import { Platform, StyleSheet, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { MaterialCommunityIcons, Ionicons } from "@expo/vector-icons";
+import { Ionicons } from "@expo/vector-icons";
 import React, { useEffect, useCallback, useMemo, memo } from "react";
 import { useTheme } from "@/shared/contexts/ThemeContext";
 import { TabBarProvider, useTabBarScroll } from "@/shared/contexts/TabBarContext";
@@ -55,24 +55,6 @@ const HomeIcon = memo(function HomeIcon({
   );
 });
 
-const GeneratorIcon = memo(function GeneratorIcon({
-  color,
-  focused,
-}: {
-  color: string;
-  focused: boolean;
-}) {
-  return (
-    <View style={focused ? [styles.activeIconWrap, { backgroundColor: color + "20" }] : styles.iconWrap}>
-      <MaterialCommunityIcons
-        name={focused ? "qrcode-edit" : "qrcode"}
-        size={22}
-        color={color}
-      />
-    </View>
-  );
-});
-
 const HistoryIcon = memo(function HistoryIcon({
   color,
   focused,
@@ -103,7 +85,6 @@ const ProfileIcon = memo(function ProfileIcon({
 
 // ── Stable icon render functions ───────────────────────────────────────────────
 const renderHomeIcon = ({ color, focused }: { color: string; focused: boolean }) => <HomeIcon color={color} focused={focused} />;
-const renderGenIcon  = ({ color, focused }: { color: string; focused: boolean }) => <GeneratorIcon color={color} focused={focused} />;
 const renderHistIcon = ({ color, focused }: { color: string; focused: boolean }) => <HistoryIcon color={color} focused={focused} />;
 const renderProfIcon = ({ color, focused }: { color: string; focused: boolean }) => <ProfileIcon color={color} focused={focused} />;
 
@@ -193,11 +174,6 @@ function ClassicTabLayout() {
         <Tabs.Screen
           name="index"
           options={{ title: "Home", tabBarIcon: renderHomeIcon }}
-        />
-
-        <Tabs.Screen
-          name="qr-generator"
-          options={{ title: "Generator", tabBarIcon: renderGenIcon }}
         />
 
         <Tabs.Screen

@@ -12,7 +12,7 @@
  * This is the single source of truth used by:
  *   - Client scan flow (features/scanner/hooks/useScanner.ts)
  *   - Server image-decode endpoint (server/routes.ts)
- *   - Generator validation (features/generator)
+ *   - QR content validation
  */
 
 export interface QrValidationResult {

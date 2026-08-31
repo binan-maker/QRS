@@ -27,7 +27,7 @@ import DesignPanel from "@/features/my-qr/components/panels/DesignPanel";
 import ConfirmActionModal from "@/features/my-qr/components/modals/ConfirmActionModal";
 import DeactivateModal from "@/features/my-qr/components/modals/DeactivateModal";
 import FollowersModal from "@/features/my-qr/components/modals/FollowersModal";
-import PositionModal from "@/features/generator/components/PositionModal";
+import PositionModal from "@/features/my-qr/components/modals/PositionModal";
 import type { LogoPosition } from "@/features/my-qr/hooks/useQrDesign";
 
 // Hoisted to module level — these are constant sets that would otherwise

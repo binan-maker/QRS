@@ -6,7 +6,7 @@
  *
  * This is the single source of truth for that mapping — do not duplicate
  * it in individual screens. When a new template is added to
- * features/generator/data/templates.ts, add its ID here too.
+ * the template definitions, add its ID here too.
  */
 
 // ── Template ID registry ───────────────────────────────────────────────────────

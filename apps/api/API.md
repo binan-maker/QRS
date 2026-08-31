@@ -521,13 +521,6 @@ Local heuristic QR/URL analysis. Public.
 
 ---
 
-### `POST /api/v1/ai/qr-generate`
-AI-assisted QR content generation. Public.
-
-**Body:** `{ "prompt": "Create a UPI QR for a flower shop in Mumbai" }`
-
----
-
 ### `GET /api/v1/ifsc/:ifsc`
 IFSC bank code lookup. Public.
 

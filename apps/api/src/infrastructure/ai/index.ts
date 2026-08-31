@@ -10,27 +10,11 @@
 // ─── Interface ────────────────────────────────────────────────────────────────
 
 export interface IAiProvider {
-  /** Generate QR content string from a natural-language prompt. */
-  generateQrContent(prompt: string): Promise<string>;
   /** Analyse content for safety — returns safe flag + short summary. */
   analyseContent(content: string): Promise<{ safe: boolean; summary: string }>;
 }
 
 // ─── OpenAiProvider ───────────────────────────────────────────────────────────
-
-const QR_CONTENT_SYSTEM_PROMPT = `You are a QR code content generator. Given a description, return ONLY the exact QR content string — no explanation, no markdown, no prose.
-
-Supported formats:
-- Website URL:    https://example.com
-- UPI Payment:    upi://pay?pa=vpa@bank&pn=Name&cu=INR
-- WiFi:           WIFI:S:NetworkName;T:WPA;P:Password;;
-- Phone call:     tel:+919876543210
-- Email:          mailto:email@example.com?subject=Subject&body=Body
-- Contact (vCard): BEGIN:VCARD\\nVERSION:3.0\\nFN:Full Name\\nTEL;TYPE=CELL:+91number\\nEMAIL;TYPE=INTERNET:email\\nEND:VCARD
-- SMS:            SMSTO:+919876543210:Your message here
-- Plain text:     the text itself
-
-Return ONLY the QR content string.`;
 
 const SAFETY_SYSTEM_PROMPT = `You are a content safety classifier. Given a string (URL or text), respond with a JSON object:
 { "safe": boolean, "summary": "one sentence" }
@@ -81,10 +65,6 @@ export class OpenAiProvider implements IAiProvider {
 
     const json: any = await res.json();
     return (json.choices?.[0]?.message?.content ?? "").trim();
-  }
-
-  async generateQrContent(prompt: string): Promise<string> {
-    return this.chat(QR_CONTENT_SYSTEM_PROMPT, prompt, 256);
   }
 
   async analyseContent(content: string): Promise<{ safe: boolean; summary: string }> {

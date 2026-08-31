@@ -236,17 +236,6 @@ export default function MyQrCodesScreen() {
           paddingHorizontal: sp(20), paddingTop: topInset + sp(10), paddingBottom: sp(10),
         }}>
           <Text style={{ fontSize: rf(22), fontFamily: "Inter_700Bold", color: colors.text, letterSpacing: -0.5 }}>My QRs</Text>
-          <Pressable
-            onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); router.push("/(tabs)/qr-generator"); }}
-            style={({ pressed }) => [{
-              width: sp(38), height: sp(38), borderRadius: sp(12),
-              alignItems: "center", justifyContent: "center",
-              backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.surfaceBorder,
-              opacity: pressed ? 0.7 : 1, transform: [{ scale: pressed ? 0.94 : 1 }],
-            }]}
-          >
-            <Ionicons name="add" size={rf(20)} color={colors.text} />
-          </Pressable>
         </View>
 
         {/* Search bar */}
@@ -342,27 +331,14 @@ export default function MyQrCodesScreen() {
           ) : (
             <ReAnimated.View entering={FadeIn.duration(400)} style={{ flex: 1, alignItems: "center", justifyContent: "center", paddingHorizontal: sp(40), gap: sp(16), paddingTop: headerH }}>
               <View style={{ width: sp(80), height: sp(80), borderRadius: sp(24), backgroundColor: colors.primaryDim, alignItems: "center", justifyContent: "center" }}>
-                <MaterialCommunityIcons name="qrcode-plus" size={rf(38)} color={colors.primary} />
+                <Ionicons name="qr-code-outline" size={rf(38)} color={colors.primary} />
               </View>
               <View style={{ gap: sp(6), alignItems: "center" }}>
                 <Text style={{ fontSize: rf(18), fontFamily: "Inter_700Bold", color: colors.text }}>No QR codes yet</Text>
                 <Text style={{ fontSize: rf(13), fontFamily: "Inter_400Regular", color: colors.textSecondary, textAlign: "center", lineHeight: rf(20) }}>
-                  Your generated QR codes will appear here. Create your first one now.
+                  QR codes saved to your account will appear here.
                 </Text>
               </View>
-              <Pressable
-                onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium); router.push("/(tabs)/qr-generator" as any); }}
-                style={({ pressed }) => ({ opacity: pressed ? 0.85 : 1, transform: [{ scale: pressed ? 0.975 : 1 }], marginTop: sp(4) })}
-              >
-                <LinearGradient
-                  colors={[colors.primary, colors.primaryShade]}
-                  start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
-                  style={{ flexDirection: "row", alignItems: "center", gap: sp(8), paddingHorizontal: sp(28), paddingVertical: sp(14), borderRadius: sp(16) }}
-                >
-                  <MaterialCommunityIcons name="qrcode-edit" size={rf(18)} color="#fff" />
-                  <Text style={{ fontSize: rf(14), fontFamily: "Inter_700Bold", color: "#fff" }}>Generate a QR Code</Text>
-                </LinearGradient>
-              </Pressable>
             </ReAnimated.View>
           )
         ) : (

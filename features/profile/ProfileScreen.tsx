@@ -9,7 +9,7 @@ import {
 } from "react-native";
 import { Image } from "expo-image";
 import { safePush } from "@/shared/utils/navigation";
-import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
+import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTopInset } from "@/shared/utils/platform";
 import Animated, {
@@ -249,7 +249,6 @@ function ProfileScreen() {
     },
     []
   );
-  const goToGenerator   = useCallback(() => safePush("/(tabs)/qr-generator"), []);
 
   // While Firebase is resolving the auth state on cold start, show a plain
   // background instead of GuestView.  This prevents the mount/unmount cycle
@@ -426,16 +425,15 @@ function ProfileScreen() {
             <QrSkeletonStack />
           ) : previewQrs.length === 0 ? (
             <Animated.View entering={ENTER_QR_EMPTY}>
-              <Pressable
-                onPress={goToGenerator}
-                style={({ pressed }) => [
+              <View
+                style={[
                   styles.emptyQrCard,
-                  { backgroundColor: colors.surface, borderColor: colors.surfaceBorder, opacity: pressed ? 0.8 : 1 },
+                  { backgroundColor: colors.surface, borderColor: colors.surfaceBorder },
                 ]}
               >
-                <MaterialCommunityIcons name="qrcode-plus" size={22} color={colors.textMuted} />
-                <Text style={[styles.emptyQrText, { color: colors.textMuted }]}>No QR codes yet — create one</Text>
-              </Pressable>
+                <Ionicons name="qr-code-outline" size={22} color={colors.textMuted} />
+                <Text style={[styles.emptyQrText, { color: colors.textMuted }]}>No QR codes yet</Text>
+              </View>
             </Animated.View>
           ) : (
             <QrStack

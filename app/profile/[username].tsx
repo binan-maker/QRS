@@ -43,7 +43,7 @@ export default function PublicProfileScreen() {
         <Ionicons name="person-outline" size={48} color={colors.textMuted} />
         <Text style={[styles.notFoundTitle, { color: colors.text }]}>User not found</Text>
         <Text style={[styles.notFoundSub, { color: colors.textMuted }]}>
-          @{username} doesn't exist or may have been removed.
+          @{username} doesn&apos;t exist or may have been removed.
         </Text>
       </View>
     );
