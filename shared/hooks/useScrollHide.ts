@@ -1,11 +1,11 @@
-import { useRef, useCallback } from "react";
+import { useCallback } from "react";
 import {
   useSharedValue,
   withTiming,
   Easing,
   useAnimatedStyle,
+  useAnimatedScrollHandler,
 } from "react-native-reanimated";
-import type { NativeSyntheticEvent, NativeScrollEvent } from "react-native";
 
 export interface ScrollHideOptions {
   /** Minimum scroll delta before triggering a hide/show. Default: 8 */
@@ -15,6 +15,8 @@ export interface ScrollHideOptions {
   /** Animation duration (ms) when showing. Default: 340 */
   showDuration?: number;
 }
+
+type ScrollEvent = { contentOffset: { y: number } };
 
 /**
  * Shared scroll-linked hide/show hook — LinkedIn-style slow ease, no spring bounce.
@@ -34,46 +36,45 @@ export function useScrollHide(opts: ScrollHideOptions = {}) {
   } = opts;
 
   const offset    = useSharedValue(0);
-  const lastY     = useRef(0);
-  const hidden    = useRef(false);
-  const heightRef = useRef(0);
+  const lastY     = useSharedValue(0);
+  const hidden    = useSharedValue(false);
+  const height    = useSharedValue(0);
 
   const setHeight = useCallback((h: number) => {
-    heightRef.current = h;
-  }, []);
+    height.value = h;
+  }, [height]);
 
   const reset = useCallback(() => {
-    hidden.current = false;
-    lastY.current  = 0;
+    hidden.value = false;
+    lastY.value  = 0;
     offset.value   = withTiming(0, {
       duration: showDuration,
       easing: Easing.out(Easing.cubic),
     });
-  }, [offset, showDuration]);
+  }, [hidden, lastY, offset, showDuration]);
 
-  const onScroll = useCallback(
-    (e: NativeSyntheticEvent<NativeScrollEvent>) => {
-      const y    = e.nativeEvent.contentOffset.y;
-      const diff = y - lastY.current;
-      lastY.current = y;
-      if (Math.abs(diff) < threshold) return;
+  // Keep scroll-linked navigation work on the UI thread so it does not
+  // compete with content/comment rendering on the JavaScript thread.
+  const onScroll = useAnimatedScrollHandler((event: ScrollEvent) => {
+    const y    = event.contentOffset.y;
+    const diff = y - lastY.value;
+    lastY.value = y;
+    if (Math.abs(diff) < threshold) return;
 
-      if (diff > 0 && y > 50 && !hidden.current) {
-        hidden.current = true;
-        offset.value   = withTiming(-heightRef.current, {
-          duration: hideDuration,
-          easing: Easing.in(Easing.cubic),
-        });
-      } else if (diff < 0 && hidden.current) {
-        hidden.current = false;
-        offset.value   = withTiming(0, {
-          duration: showDuration,
-          easing: Easing.out(Easing.cubic),
-        });
-      }
-    },
-    [offset, threshold, hideDuration, showDuration],
-  );
+    if (diff > 0 && y > 50 && !hidden.value) {
+      hidden.value = true;
+      offset.value = withTiming(-height.value, {
+        duration: hideDuration,
+        easing: Easing.in(Easing.cubic),
+      });
+    } else if (diff < 0 && hidden.value) {
+      hidden.value = false;
+      offset.value = withTiming(0, {
+        duration: showDuration,
+        easing: Easing.out(Easing.cubic),
+      });
+    }
+  });
 
   const animatedStyle = useAnimatedStyle(() => ({
     transform: [{ translateY: offset.value }],

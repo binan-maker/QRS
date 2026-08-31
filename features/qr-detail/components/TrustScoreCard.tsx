@@ -8,7 +8,6 @@ import Animated, {
   withTiming,
   withDelay,
   Easing,
-  FadeInDown,
 } from "react-native-reanimated";
 import { formatCompactNumber } from "@/shared/utils/formatters";
 import { useTheme } from "@/shared/contexts/ThemeContext";
@@ -17,7 +16,7 @@ import { styles } from "./trust-score-card-styles";
 
 interface TrustInfo {
   score: number;
-  label: string;
+  label?: string;
   color: string;
 }
 
@@ -71,28 +70,23 @@ const TrustScoreCard = memo(function TrustScoreCard({
     width: `${barProgress.value * 100}%` as any,
   }));
 
-  const breakdownProgress = useSharedValue(0);
-  useEffect(() => {
-    breakdownProgress.value = 0;
-    breakdownProgress.value = withDelay(
-      350,
-      withTiming(1, { duration: 700, easing: Easing.out(Easing.cubic) })
-    );
-  }, [total]);
-
-  const STATS = [
+  const STATS: {
+    icon: "scan-outline" | "flag-outline";
+    label: string;
+    value: number;
+    onPress?: () => void;
+  }[] = [
     { icon: "scan-outline" as const, label: "Scans", value: totalScans },
     { icon: "flag-outline" as const, label: "Votes", value: total },
   ];
 
   return (
-    <Animated.View
-      entering={FadeInDown.duration(260)}
+    <View
       style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}
     >
       {/* Score hero */}
       <View style={styles.scoreHero}>
-        <Animated.View entering={FadeInDown.delay(40).duration(260)} style={styles.scoreRingWrap}>
+        <View style={styles.scoreRingWrap}>
           <LinearGradient colors={scoreGradient} style={styles.scoreRing} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}>
             <View style={[styles.scoreInner, { backgroundColor: isDark ? colors.surface : "#fff" }]}>
               {hasScore ? (
@@ -105,9 +99,9 @@ const TrustScoreCard = memo(function TrustScoreCard({
               )}
             </View>
           </LinearGradient>
-        </Animated.View>
+        </View>
 
-        <Animated.View entering={FadeInDown.delay(50).duration(260)} style={styles.scoreMeta}>
+        <View style={styles.scoreMeta}>
           <Text style={[styles.scoreTitle, { color: colors.text }]} maxFontSizeMultiplier={1}>Trust Score</Text>
 
           {hasScore ? (
@@ -139,10 +133,10 @@ const TrustScoreCard = memo(function TrustScoreCard({
               <Text style={[styles.firstVoteText, { color: colors.primary }]} maxFontSizeMultiplier={1}>Be the first to vote</Text>
             </View>
           )}
-        </Animated.View>
+        </View>
       </View>
 
-      <Animated.View entering={FadeInDown.delay(70).duration(260)} style={[styles.statsGrid, { borderColor: colors.surfaceBorder }]}>
+      <View style={[styles.statsGrid, { borderColor: colors.surfaceBorder }]}>
         {STATS.map((s, i) => (
           <Pressable
             key={i}
@@ -167,10 +161,10 @@ const TrustScoreCard = memo(function TrustScoreCard({
             </Text>
           </Pressable>
         ))}
-      </Animated.View>
+      </View>
 
       {votedTypes.length > 0 && (
-        <Animated.View entering={FadeInDown.delay(80).duration(260)} style={[styles.voteBreakdown, { borderTopColor: colors.surfaceBorder }]}>
+        <View style={[styles.voteBreakdown, { borderTopColor: colors.surfaceBorder }]}>
           <Text style={[styles.breakdownTitle, { color: colors.textMuted }]} maxFontSizeMultiplier={1}>
             COMMUNITY VOTES
           </Text>
@@ -179,7 +173,7 @@ const TrustScoreCard = memo(function TrustScoreCard({
               const count = reportCounts[rt.key] || 0;
               const pct = Math.round((count / total) * 100);
               return (
-                <Animated.View key={rt.key} entering={FadeInDown.delay(40 + Math.min(idx, 3) * 20).duration(260)} style={styles.breakdownRow}>
+                <View key={rt.key} style={styles.breakdownRow}>
                   <View style={styles.breakdownLabelRow}>
                     <Ionicons name={rt.outlineIcon as any} size={12} color={rt.color(colors)} />
                     <Text style={[styles.breakdownLabel, { color: colors.textSecondary }]} maxFontSizeMultiplier={1}>
@@ -192,13 +186,13 @@ const TrustScoreCard = memo(function TrustScoreCard({
                   <View style={[styles.barTrack, { backgroundColor: isDark ? colors.surfaceLight : colors.background }]}>
                     <BreakdownBar pct={pct} color={rt.color(colors)} />
                   </View>
-                </Animated.View>
+                </View>
               );
             })}
           </View>
-        </Animated.View>
+        </View>
       )}
-    </Animated.View>
+    </View>
   );
 });
 

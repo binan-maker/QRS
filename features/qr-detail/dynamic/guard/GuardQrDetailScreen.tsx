@@ -1,7 +1,7 @@
 import { useState, useCallback, useRef, useEffect, useMemo } from "react";
 import { useNavHide } from "@/shared/hooks/useNavHide";
 import {
-  View, Text, Pressable, ScrollView, RefreshControl,
+  View, Text, Pressable, RefreshControl,
   StyleSheet, KeyboardAvoidingView, Linking, type LayoutChangeEvent,
 } from "react-native";
 import { StatusBar } from "expo-status-bar";
@@ -214,9 +214,10 @@ export default function GuardQrDetailScreen({ id, guardUuid, ownerDocId, hint }:
             </View>
           </Animated.View>
 
-          <ScrollView
+          <Animated.ScrollView
             ref={q.scrollRef}
             style={{ flex: 1 }}
+            removeClippedSubviews
             showsVerticalScrollIndicator={false}
             contentContainerStyle={[styles.scrollContent, { paddingTop: navBarH }]}
             keyboardShouldPersistTaps="handled"
@@ -233,7 +234,7 @@ export default function GuardQrDetailScreen({ id, guardUuid, ownerDocId, hint }:
             }
           >
             {/* ── Hero Card ── */}
-            <Animated.View entering={FadeInDown.delay(30).duration(260)}>
+            <View>
               <GuardHeroCard
                 guardLink={guardLink}
                 guardLoading={guardLoading}
@@ -245,11 +246,11 @@ export default function GuardQrDetailScreen({ id, guardUuid, ownerDocId, hint }:
                 colors={colors}
                 isDark={isDark}
               />
-            </Animated.View>
+            </View>
 
             {/* ── Trust Score ── */}
             {!q.offlineMode && (
-              <Animated.View entering={FadeInDown.delay(70).duration(260)}>
+              <View>
                 <TrustScoreCard
                   trustInfo={trust}
                   reportCounts={q.reportCounts}
@@ -261,13 +262,12 @@ export default function GuardQrDetailScreen({ id, guardUuid, ownerDocId, hint }:
                   ownerScanCount={user && isQrOwner ? q.qrCode?.ownerScanCount : undefined}
                   hasOwner={true}
                 />
-              </Animated.View>
+              </View>
             )}
 
             {/* ── Reports ── */}
             {user && !q.offlineMode && (
-              <Animated.View
-                entering={FadeInDown.delay(80).duration(260)}
+              <View
                 onLayout={(e: LayoutChangeEvent) => { reportSectionY.current = e.nativeEvent.layout.y; }}
               >
                 <ReportGrid
@@ -287,12 +287,12 @@ export default function GuardQrDetailScreen({ id, guardUuid, ownerDocId, hint }:
                     }
                   }}
                 />
-              </Animated.View>
+              </View>
             )}
 
             {/* ── Comments ── */}
             {!q.offlineMode && (
-              <Animated.View entering={FadeInDown.delay(100).duration(260)}>
+              <View>
                 <CommentsSection
                   user={user}
                   totalComments={q.totalComments}
@@ -325,10 +325,10 @@ export default function GuardQrDetailScreen({ id, guardUuid, ownerDocId, hint }:
                   showMoreReplies={q.showMoreReplies}
                   loadMoreComments={q.loadMoreComments}
                 />
-              </Animated.View>
+              </View>
             )}
 
-          </ScrollView>
+          </Animated.ScrollView>
         </View>
       </KeyboardAvoidingView>
 

@@ -3,7 +3,6 @@ import { View, Text, StyleSheet, Pressable, ActivityIndicator } from "react-nati
 import { Image } from "expo-image";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
-import Animated, { FadeIn } from "react-native-reanimated";
 import { formatCompactNumber, formatRelativeTime } from "@/shared/utils/formatters";
 import { useTheme } from "@/shared/contexts/ThemeContext";
 import type { CommentItem as CommentItemType } from "@/features/qr-detail/hooks/comment-types";
@@ -142,7 +141,7 @@ const CommentItem = memo(function CommentItem({
   // ── Sensitive placeholder ─────────────────────────────────────────────────
   if (comment.isHidden && !isRevealed) {
     return (
-      <Animated.View entering={FadeIn.duration(260)}>
+      <View>
         <Pressable onPress={() => onReveal(comment.id)} style={styles.sensitiveRow}>
           <Ionicons name="eye-off-outline" size={14} color={colors.textMuted} />
           <Text style={{ flex: 1, fontSize: 12, fontFamily: "Inter_400Regular", color: colors.textMuted, fontStyle: "italic" }}>
@@ -150,7 +149,7 @@ const CommentItem = memo(function CommentItem({
           </Text>
           <Ionicons name="chevron-forward" size={12} color={colors.textMuted} />
         </Pressable>
-      </Animated.View>
+      </View>
     );
   }
 
@@ -267,7 +266,7 @@ const CommentItem = memo(function CommentItem({
   if (!isReply) {
     return (
       <View>
-        <Animated.View entering={FadeIn.duration(260)}>
+        <View>
           <View style={styles.commentRow}>
             {/* Left column: avatar + optional vertical thread stem */}
             <View style={styles.avatarColumn}>
@@ -286,7 +285,7 @@ const CommentItem = memo(function CommentItem({
             </View>
             {renderBody()}
           </View>
-        </Animated.View>
+        </View>
 
         {/* Replies toggle ─────────────────────────────────────────────────── */}
         {replyCount > 0 && (
@@ -385,7 +384,7 @@ const CommentItem = memo(function CommentItem({
 
   // ── Reply comment (rendered inside a thread row by the parent) ────────────
   return (
-    <Animated.View entering={FadeIn.duration(220)}>
+    <View>
       <View style={styles.replyCommentRow}>
         <View style={{ flexShrink: 0, marginTop: 2 }}>
           <CommentAvatar
@@ -397,7 +396,7 @@ const CommentItem = memo(function CommentItem({
         </View>
         {renderBody()}
       </View>
-    </Animated.View>
+    </View>
   );
 });
 

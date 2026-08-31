@@ -1,14 +1,14 @@
 import React, { useState, useCallback, useRef, useEffect, useMemo, memo } from "react";
 import { useNavHide } from "@/shared/hooks/useNavHide";
 import {
-  View, Text, Pressable, ScrollView, RefreshControl,
+  View, Text, Pressable, RefreshControl,
   StyleSheet, KeyboardAvoidingView, type LayoutChangeEvent,
 } from "react-native";
 import { StatusBar } from "expo-status-bar";
 import { router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
-import Animated, { FadeInDown, FadeIn } from "react-native-reanimated";
+import Animated from "react-native-reanimated";
 import * as Haptics from "expo-haptics";
 import { useTheme } from "@/shared/contexts/ThemeContext";
 import { useAuth } from "@/shared/contexts/AuthContext";
@@ -50,7 +50,7 @@ const TrustVerdictBanner = memo(function TrustVerdictBanner({
   trust,
   isDark,
 }: {
-  trust: { score: number; label: string } | null;
+  trust: { score: number; label?: string } | null;
   isDark: boolean;
 }) {
   const score     = trust?.score ?? -1;
@@ -69,7 +69,7 @@ const TrustVerdictBanner = memo(function TrustVerdictBanner({
       : (isDark ? "#0f172a" : "#f8fafc");
 
   return (
-    <Animated.View entering={FadeIn.delay(20).duration(220)} style={{ marginBottom: 12 }}>
+    <View style={{ marginBottom: 12 }}>
       <View style={[verdictBannerStyles.banner, { backgroundColor: bg, borderColor: accent + "28" }]}>
         <View style={[verdictBannerStyles.accentBar, { backgroundColor: accent }]} />
         <View style={[verdictBannerStyles.iconBox, { borderColor: accent + "45", backgroundColor: accent + "12" }]}>
@@ -81,14 +81,14 @@ const TrustVerdictBanner = memo(function TrustVerdictBanner({
             <Text style={[verdictBannerStyles.eyebrow, { color: accent }]}>{statusLabel}</Text>
           </View>
           <Text style={[verdictBannerStyles.scoreText, { color: isDark ? "#e2e8f0" : "#1e293b" }]}>
-            {score >= 0 ? trust!.label : "Unverified QR Code"}
+            {score >= 0 ? (trust!.label ?? "Rated") : "Unverified QR Code"}
           </Text>
           <Text style={[verdictBannerStyles.sub, { color: isDark ? "#94a3b8" : "#64748b" }]}>
             Community Trust Score{score >= 0 ? `: ${score}` : " — not yet rated"}
           </Text>
         </View>
       </View>
-    </Animated.View>
+    </View>
   );
 });
 
@@ -316,9 +316,10 @@ export default function StaticQrDetailScreen({ id, hint }: Props) {
             </View>
           </Animated.View>
 
-          <ScrollView
+          <Animated.ScrollView
             ref={q.scrollRef}
             style={{ flex: 1 }}
+            removeClippedSubviews
             showsVerticalScrollIndicator={false}
             contentContainerStyle={[styles.scrollContent, { paddingTop: navBarH }]}
             keyboardShouldPersistTaps="handled"
@@ -341,7 +342,7 @@ export default function StaticQrDetailScreen({ id, hint }: Props) {
 
             {/* ── Deactivated banner ───────────────────────────── */}
             {isDeactivated && (
-              <Animated.View entering={FadeInDown.delay(20).duration(240)}>
+              <View>
                 <View style={[styles.deactivatedBanner, { borderColor: "#ef444440" }]}>
                   <LinearGradient
                     colors={["rgba(239,68,68,0.14)", "rgba(239,68,68,0.06)"]}
@@ -359,21 +360,21 @@ export default function StaticQrDetailScreen({ id, hint }: Props) {
                     </Text>
                   </View>
                 </View>
-              </Animated.View>
+              </View>
             )}
 
             {/* ── Owner branding ───────────────────────────────── */}
             {q.ownerInfo?.isBranded && (
-              <Animated.View entering={FadeInDown.delay(30).duration(240)}>
+              <View>
                 <OwnerCircleRow
                   ownerInfo={q.ownerInfo as any}
                   onPress={() => setOwnerSheetOpen(true)}
                 />
-              </Animated.View>
+              </View>
             )}
 
             {/* ── CONTENT CARD — HERO ──────────────────────────── */}
-            <Animated.View entering={FadeInDown.delay(40).duration(280)}>
+            <View>
               <ContentCard
                 content={content}
                 contentType={contentType}
@@ -383,35 +384,35 @@ export default function StaticQrDetailScreen({ id, hint }: Props) {
                 hideOpenAction={false}
                 templateKey={(q.qrCode as any)?.templateKey}
               />
-            </Animated.View>
+            </View>
 
             {/* ── Safety badge (compact — only for genuine threats, not generic "unverified" noise) ─── */}
             {verdict && verdict.level !== "safe" && verdict.label !== "UNVERIFIED QR" && (
-              <Animated.View entering={FadeIn.delay(60).duration(220)}>
+              <View>
                 <SafetyBadge verdict={verdict} />
-              </Animated.View>
+              </View>
             )}
 
             {/* ── Dangerous URL warning (only for dangerous, not caution) ── */}
             {user && showUrlDangerWarning && (
-              <Animated.View entering={FadeInDown.delay(70).duration(240)}>
+              <View>
                 <SafetyWarningCard
                   riskLevel="dangerous"
                   warnings={q.urlSafety!.warnings}
                   title="Dangerous URL Detected"
                 />
-              </Animated.View>
+              </View>
             )}
 
             {/* ── Known blacklisted content ─────────────────────── */}
             {showBlacklistWarning && (
-              <Animated.View entering={FadeInDown.delay(70).duration(240)}>
+              <View>
                 <SafetyWarningCard
                   riskLevel="dangerous"
                   warnings={[`Known scam pattern: ${q.offlineBlacklistMatch.reason}`]}
                   title="Known Scam Pattern"
                 />
-              </Animated.View>
+              </View>
             )}
 
             {/* ── Dangerous payment warning ────────────────────── */}
@@ -421,19 +422,19 @@ export default function StaticQrDetailScreen({ id, hint }: Props) {
               );
               if (!warnings.length) return null;
               return (
-                <Animated.View entering={FadeInDown.delay(70).duration(240)}>
+                <View>
                   <SafetyWarningCard
                     riskLevel="dangerous"
                     warnings={warnings}
                     title="Payment Security Warning"
                   />
-                </Animated.View>
+                </View>
               );
             })()}
 
             {/* ── Trust score ──────────────────────────────────── */}
             {!q.offlineMode && (
-              <Animated.View entering={FadeInDown.delay(80).duration(260)}>
+              <View>
                 <TrustScoreCard
                   trustInfo={trust}
                   reportCounts={q.reportCounts}
@@ -452,13 +453,12 @@ export default function StaticQrDetailScreen({ id, hint }: Props) {
                   ownerScanCount={user && q.isQrOwner ? q.qrCode?.ownerScanCount : undefined}
                   hasOwner={false}
                 />
-              </Animated.View>
+              </View>
             )}
 
             {/* ── Community report ─────────────────────────────── */}
             {user && (
-              <Animated.View
-                entering={FadeInDown.delay(90).duration(260)}
+              <View
                 onLayout={(e: LayoutChangeEvent) => {
                   reportSectionY.current = e.nativeEvent.layout.y;
                 }}
@@ -489,12 +489,12 @@ export default function StaticQrDetailScreen({ id, hint }: Props) {
                     }}
                   />
                 )}
-              </Animated.View>
+              </View>
             )}
 
             {/* ── Comments ─────────────────────────────────────── */}
             {!q.offlineMode && (
-              <Animated.View entering={FadeInDown.delay(100).duration(260)}>
+              <View>
                 <CommentsSection
                   user={user}
                   totalComments={q.totalComments}
@@ -527,12 +527,12 @@ export default function StaticQrDetailScreen({ id, hint }: Props) {
                   showMoreReplies={q.showMoreReplies}
                   loadMoreComments={q.loadMoreComments}
                 />
-              </Animated.View>
+              </View>
             )}
 
             {/* ── Creator card ──────────────────────────────────── */}
             {user && q.ownerInfo && (
-              <Animated.View entering={FadeInDown.delay(110).duration(260)}>
+              <View>
                 <SectionHeader label="Creator" />
                 <OwnerCard
                   ownerInfo={q.ownerInfo}
@@ -545,10 +545,10 @@ export default function StaticQrDetailScreen({ id, hint }: Props) {
                   }}
                   onOpenMessages={() => q.setMessagesModalOpen(true)}
                 />
-              </Animated.View>
+              </View>
             )}
 
-          </ScrollView>
+          </Animated.ScrollView>
         </View>
       </KeyboardAvoidingView>
 

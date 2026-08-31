@@ -1,7 +1,7 @@
 import { useState, useCallback, useRef, useEffect, useMemo } from "react";
 import { useNavHide } from "@/shared/hooks/useNavHide";
 import {
-  View, Text, Pressable, ScrollView, RefreshControl,
+  View, Text, Pressable, RefreshControl,
   StyleSheet, KeyboardAvoidingView, type LayoutChangeEvent,
 } from "react-native";
 import { StatusBar } from "expo-status-bar";
@@ -221,9 +221,10 @@ export default function StandardQrDetailScreen({ id, standardUuid, ownerDocId, h
             </View>
           </Animated.View>
 
-          <ScrollView
+          <Animated.ScrollView
             ref={q.scrollRef}
             style={{ flex: 1 }}
+            removeClippedSubviews
             showsVerticalScrollIndicator={false}
             contentContainerStyle={[styles.scrollContent, { paddingTop: navBarH }]}
             keyboardShouldPersistTaps="handled"
@@ -241,19 +242,19 @@ export default function StandardQrDetailScreen({ id, standardUuid, ownerDocId, h
           >
             {/* ── Deactivated notice ────────────────────── */}
             {isDeactivated && (
-              <Animated.View entering={FadeInDown.delay(30).duration(260)}>
+              <View>
                 <View style={{ flexDirection: "row", alignItems: "center", gap: 10, borderRadius: 14, borderWidth: 1, backgroundColor: "#ef444418", borderColor: "#ef444440", padding: 14, marginBottom: 12 }}>
                   <Ionicons name="ban-outline" size={16} color="#ef4444" />
                   <Text style={{ fontSize: 13, fontFamily: "Inter_500Medium", color: "#ef4444", flex: 1 }}>
                     This QR code has been deactivated by its owner
                   </Text>
                 </View>
-              </Animated.View>
+              </View>
             )}
 
             {/* ── Content card — shows rawContent from database, never the scanned guard URL */}
             {!standardLoading && effectiveContent && (
-              <Animated.View entering={FadeInDown.delay(70).duration(260)}>
+              <View>
                 <ContentCard
                   content={effectiveContent}
                   contentType={effectiveContentType}
@@ -263,7 +264,7 @@ export default function StandardQrDetailScreen({ id, standardUuid, ownerDocId, h
                   hideOpenAction={false}
                   templateKey={standardData?.templateKey}
                 />
-              </Animated.View>
+              </View>
             )}
 
             {/* ── Payment safety — dangerous only ─── */}
@@ -273,30 +274,30 @@ export default function StandardQrDetailScreen({ id, standardUuid, ownerDocId, h
               );
               if (!warnings.length) return null;
               return (
-                <Animated.View entering={FadeInDown.delay(80).duration(260)}>
+                <View>
                   <SafetyWarningCard
                     riskLevel="dangerous"
                     warnings={warnings}
                     title="Payment Security Warning"
                   />
-                </Animated.View>
+                </View>
               );
             })()}
 
             {/* ── URL safety — dangerous only ────── */}
             {effectiveContentType === "url" && contentSafety.urlSafety?.riskLevel === "dangerous" && (
-              <Animated.View entering={FadeInDown.delay(80).duration(260)}>
+              <View>
                 <SafetyWarningCard
                   riskLevel="dangerous"
                   warnings={contentSafety.urlSafety.warnings}
                   title="Destination Warning"
                 />
-              </Animated.View>
+              </View>
             )}
 
             {/* ── Community: Trust score ───────────────────── */}
             {!q.offlineMode && (
-              <Animated.View entering={FadeInDown.delay(90).duration(260)}>
+              <View>
                 <TrustScoreCard
                   trustInfo={trust}
                   reportCounts={q.reportCounts}
@@ -312,13 +313,12 @@ export default function StandardQrDetailScreen({ id, standardUuid, ownerDocId, h
                   ownerScanCount={user && isQrOwner ? q.qrCode?.ownerScanCount : undefined}
                   hasOwner={true}
                 />
-              </Animated.View>
+              </View>
             )}
 
             {/* ── Reports (logged-in only) ─────────────────── */}
             {user && !q.offlineMode && (
-              <Animated.View
-                entering={FadeInDown.delay(100).duration(260)}
+              <View
                 onLayout={(e: LayoutChangeEvent) => { reportSectionY.current = e.nativeEvent.layout.y; }}
               >
                 <ReportGrid
@@ -338,12 +338,12 @@ export default function StandardQrDetailScreen({ id, standardUuid, ownerDocId, h
                     }
                   }}
                 />
-              </Animated.View>
+              </View>
             )}
 
             {/* ── Comments ─────────────────────────────────── */}
             {!q.offlineMode && (
-              <Animated.View entering={FadeInDown.delay(110).duration(260)}>
+              <View>
                 <CommentsSection
                   user={user}
                   totalComments={q.totalComments}
@@ -376,10 +376,10 @@ export default function StandardQrDetailScreen({ id, standardUuid, ownerDocId, h
                   showMoreReplies={q.showMoreReplies}
                   loadMoreComments={q.loadMoreComments}
                 />
-              </Animated.View>
+              </View>
             )}
 
-          </ScrollView>
+          </Animated.ScrollView>
         </View>
       </KeyboardAvoidingView>
 
