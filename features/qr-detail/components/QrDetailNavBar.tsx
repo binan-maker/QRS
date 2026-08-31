@@ -17,14 +17,11 @@ interface Props {
   followLoading: boolean;
   followCount: number;
   isQrOwner: boolean;
-  ownerDocId?: string;
   onBack: () => void;
   onFollowCreator: () => void;
   onOpenCreatorFollowers: () => void;
   onWatch: () => void;
-  onManage: () => void;
   onOverflowOpen: () => void;
-  onAnalytics?: () => void;
   onDonate?: () => void;
 }
 
@@ -40,14 +37,11 @@ export default function QrDetailNavBar({
   followLoading,
   followCount,
   isQrOwner,
-  ownerDocId,
   onBack,
   onFollowCreator,
   onOpenCreatorFollowers,
   onWatch,
-  onManage,
   onOverflowOpen,
-  onAnalytics,
   onDonate,
 }: Props) {
   const { colors } = useTheme();
@@ -72,23 +66,7 @@ export default function QrDetailNavBar({
       </View>
 
       <View style={styles.navActions}>
-        {isQrOwner && isGuardCreatedQr ? (
-          /* BinRo QR — owner sees Analytics button only (Manage is in overflow) */
-          <>
-            {onAnalytics && (
-              <Pressable
-                onPress={onAnalytics}
-                style={({ pressed }) => [
-                  styles.followBtn,
-                  { backgroundColor: colors.accentDim, borderColor: colors.accent + "40", opacity: pressed ? 0.8 : 1 },
-                ]}
-              >
-                <Ionicons name="bar-chart-outline" size={14} color={colors.accent} />
-                <Text style={[styles.followBtnText, { color: colors.accent }]}>Analytics</Text>
-              </Pressable>
-            )}
-          </>
-        ) : isGuardCreatedQr && hasOwner ? (
+        {!isQrOwner && isGuardCreatedQr && hasOwner ? (
           /* BinRo QR — visitor sees Follow / Unfollow creator button */
           <Pressable
             onPress={creatorFollowLoading ? undefined : onFollowCreator}
@@ -120,7 +98,6 @@ export default function QrDetailNavBar({
             )}
           </Pressable>
         ) : null
-        /* External / non-Guard QR → no action button shown */
         }
 
         {onDonate && (

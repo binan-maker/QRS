@@ -28,5 +28,5 @@ export default function QrDetailScreen() {
     return <StandardQrDetailScreen id={id} standardUuid={standardUuid} ownerDocId={ownerDocId} hint={hint} />;
   }
 
-  return <StaticQrDetailScreen id={id} ownerDocId={ownerDocId} hint={hint} />;
+  return <StaticQrDetailScreen id={id} hint={hint} />;
 }

@@ -94,7 +94,6 @@ const TrustVerdictBanner = memo(function TrustVerdictBanner({
 
 interface Props {
   id: string;
-  ownerDocId?: string;
   hint?: { content: string; contentType: string };
 }
 
@@ -126,7 +125,7 @@ const safetyBadgeStyles = StyleSheet.create({
   text: { fontSize: 12, fontFamily: "Inter_600SemiBold", flex: 1 },
 });
 
-export default function StaticQrDetailScreen({ id, ownerDocId, hint }: Props) {
+export default function StaticQrDetailScreen({ id, hint }: Props) {
   const { user } = useAuth();
   const { colors, isDark } = useTheme();
   const topInset = useTopInset();
@@ -265,7 +264,7 @@ export default function StaticQrDetailScreen({ id, ownerDocId, hint }: Props) {
         <View style={styles.errorCard}>
           <Ionicons name="alert-circle-outline" size={48} color={colors.danger} />
           <Text style={styles.errorTitle}>QR Code Not Found</Text>
-          <Text style={styles.errorSub}>This QR code doesn't exist or couldn't be loaded.</Text>
+          <Text style={styles.errorSub}>This QR code doesn&apos;t exist or couldn&apos;t be loaded.</Text>
           <Pressable onPress={safeBack} style={styles.retryBtn}>
             <Text style={styles.retryBtnText}>Go Back</Text>
           </Pressable>
@@ -304,7 +303,6 @@ export default function StaticQrDetailScreen({ id, ownerDocId, hint }: Props) {
                 followLoading={q.followLoading}
                 followCount={q.followCount}
                 isQrOwner={isQrOwner}
-                ownerDocId={ownerDocId}
                 onBack={safeBack}
                 onFollowCreator={handleCreatorFollowPress}
                 onOpenCreatorFollowers={() => {
@@ -312,14 +310,6 @@ export default function StaticQrDetailScreen({ id, ownerDocId, hint }: Props) {
                   q.setCreatorFollowersModalOpen(true);
                 }}
                 onWatch={handleWatchPress}
-                onManage={() =>
-                  ownerDocId
-                    ? router.push(`/my-qr-detail/${ownerDocId}` as any)
-                    : router.push("/(tabs)/profile")
-                }
-                onAnalytics={() =>
-                  ownerDocId ? router.push(`/my-qr-analytics/${ownerDocId}` as any) : undefined
-                }
                 onOverflowOpen={() => setOverflowOpen(true)}
                 onDonate={() => router.push("/donation")}
               />

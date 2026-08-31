@@ -109,8 +109,6 @@ function RootLayoutNav() {
       }} />
       {/* (qr) group — QR viewing and detail screens */}
       <Stack.Screen name="(qr)/qr-detail/[id]" options={{ headerShown: false }} />
-      <Stack.Screen name="(qr)/my-qr-detail/[id]" options={{ headerShown: false }} />
-      <Stack.Screen name="(qr)/my-qr-analytics/[id]" options={{ headerShown: false }} />
       {/* (account) group — user account, preferences and discovery */}
       <Stack.Screen name="(account)/favorites" options={{ headerShown: false }} />
       <Stack.Screen name="(account)/account-management" options={{ headerShown: false }} />
