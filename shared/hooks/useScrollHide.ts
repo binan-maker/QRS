@@ -17,6 +17,10 @@ export interface ScrollHideOptions {
 }
 
 type ScrollEvent = { contentOffset: { y: number } };
+type NativeScrollEvent = {
+  nativeEvent?: ScrollEvent;
+  contentOffset?: { y?: number };
+};
 
 /**
  * Shared scroll-linked hide/show hook — LinkedIn-style slow ease, no spring bounce.
@@ -54,8 +58,12 @@ export function useScrollHide(opts: ScrollHideOptions = {}) {
     });
   }, [hidden, lastY, offset, showDuration]);
 
-  const updateScrollState = (event: ScrollEvent) => {
-    const y    = event.contentOffset.y;
+  const updateScrollState = (event: NativeScrollEvent) => {
+    // Regular React Native lists provide nativeEvent, while a few list
+    // implementations pass the content offset directly.
+    const y = event.nativeEvent?.contentOffset?.y ?? event.contentOffset?.y;
+    if (typeof y !== "number") return;
+
     const diff = y - lastY.value;
     lastY.value = y;
     if (Math.abs(diff) < threshold) return;
