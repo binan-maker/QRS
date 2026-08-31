@@ -162,7 +162,7 @@ export default function StandardQrDetailScreen({ id, standardUuid, ownerDocId, h
   }, [user, q.isFavorite, q.handleToggleFavorite, showToast]);
 
   const reportSectionY = useRef(0);
-  const { navAnimatedStyle, onNavScroll, setNavHeight } = useNavHide();
+  const { navAnimatedStyle, onNavAnimatedScroll, setNavHeight } = useNavHide();
   const [navBarH, setNavBarH] = useState(0);
   const handleReportPress = useCallback(() => {
     setOverflowOpen(false);
@@ -228,7 +228,7 @@ export default function StandardQrDetailScreen({ id, standardUuid, ownerDocId, h
             showsVerticalScrollIndicator={false}
             contentContainerStyle={[styles.scrollContent, { paddingTop: navBarH }]}
             keyboardShouldPersistTaps="handled"
-            onScroll={onNavScroll}
+            onScroll={onNavAnimatedScroll}
             scrollEventThrottle={16}
             onScrollBeginDrag={() => q.setCommentMenuId(null)}
             refreshControl={

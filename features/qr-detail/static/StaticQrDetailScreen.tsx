@@ -138,7 +138,7 @@ export default function StaticQrDetailScreen({ id, hint }: Props) {
     key: number;
   }>({ message: "", icon: "checkmark-circle", key: 0 });
   const reportSectionY = useRef(0);
-  const { navAnimatedStyle, onNavScroll, setNavHeight } = useNavHide();
+  const { navAnimatedStyle, onNavAnimatedScroll, setNavHeight } = useNavHide();
   const [navBarH, setNavBarH] = useState(0);
 
   const showToast = useCallback(
@@ -323,7 +323,7 @@ export default function StaticQrDetailScreen({ id, hint }: Props) {
             showsVerticalScrollIndicator={false}
             contentContainerStyle={[styles.scrollContent, { paddingTop: navBarH }]}
             keyboardShouldPersistTaps="handled"
-            onScroll={onNavScroll}
+            onScroll={onNavAnimatedScroll}
             scrollEventThrottle={16}
             onScrollBeginDrag={() => q.setCommentMenuId(null)}
             refreshControl={

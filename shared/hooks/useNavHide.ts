@@ -7,7 +7,7 @@ import { useScrollHide } from "./useScrollHide";
  * slides fully off screen on scroll-down.
  */
 export function useNavHide() {
-  const { animatedStyle, setHeight, onScroll, reset } = useScrollHide({
+  const { animatedStyle, setHeight, onScroll, animatedOnScroll, reset } = useScrollHide({
     hideDuration: 280,
     showDuration: 340,
   });
@@ -15,6 +15,7 @@ export function useNavHide() {
     navAnimatedStyle: animatedStyle,
     setNavHeight: setHeight,
     onNavScroll: onScroll,
+    onNavAnimatedScroll: animatedOnScroll,
     reset,
   };
 }

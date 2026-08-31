@@ -22,10 +22,11 @@ type ScrollEvent = { contentOffset: { y: number } };
  * Shared scroll-linked hide/show hook — LinkedIn-style slow ease, no spring bounce.
  *
  * Usage:
- *   const { animatedStyle, setHeight, onScroll, reset } = useScrollHide();
+ *   const { animatedStyle, setHeight, onScroll, animatedOnScroll, reset } = useScrollHide();
  *   // Apply animatedStyle to a Reanimated.Animated.View wrapping your header/nav.
  *   // Call setHeight(measuredHeight) in onLayout.
- *   // Pass onScroll to the list's onScroll prop.
+ *   // Pass onScroll to a regular React Native list's onScroll prop.
+ *   // Pass animatedOnScroll to a Reanimated list's onScroll prop.
  *   // Call reset() on screen focus to slide the bar back in.
  */
 export function useScrollHide(opts: ScrollHideOptions = {}) {
@@ -53,9 +54,43 @@ export function useScrollHide(opts: ScrollHideOptions = {}) {
     });
   }, [hidden, lastY, offset, showDuration]);
 
-  // Keep scroll-linked navigation work on the UI thread so it does not
-  // compete with content/comment rendering on the JavaScript thread.
-  const onScroll = useAnimatedScrollHandler((event: ScrollEvent) => {
+  const updateScrollState = (event: ScrollEvent) => {
+    const y    = event.contentOffset.y;
+    const diff = y - lastY.value;
+    lastY.value = y;
+    if (Math.abs(diff) < threshold) return;
+
+    if (diff > 0 && y > 50 && !hidden.value) {
+      hidden.value = true;
+      offset.value = withTiming(-height.value, {
+        duration: hideDuration,
+        easing: Easing.in(Easing.cubic),
+      });
+    } else if (diff < 0 && hidden.value) {
+      hidden.value = false;
+      offset.value = withTiming(0, {
+        duration: showDuration,
+        easing: Easing.out(Easing.cubic),
+      });
+    }
+  };
+
+  // Keep the existing callback API for regular React Native ScrollViews and
+  // FlashLists. Reanimated's handler is an object, not a callable function.
+  const onScroll = useCallback(updateScrollState, [
+    hidden,
+    lastY,
+    offset,
+    height,
+    threshold,
+    hideDuration,
+    showDuration,
+  ]);
+
+  // QR detail screens use Reanimated scroll views, so their scroll-linked
+  // navigation work stays on the UI thread.
+  const animatedOnScroll = useAnimatedScrollHandler((event: ScrollEvent) => {
+    "worklet";
     const y    = event.contentOffset.y;
     const diff = y - lastY.value;
     lastY.value = y;
@@ -80,5 +115,5 @@ export function useScrollHide(opts: ScrollHideOptions = {}) {
     transform: [{ translateY: offset.value }],
   }));
 
-  return { animatedStyle, setHeight, onScroll, reset, offset };
+  return { animatedStyle, setHeight, onScroll, animatedOnScroll, reset, offset };
 }

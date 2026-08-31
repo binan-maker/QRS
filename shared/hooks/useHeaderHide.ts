@@ -5,9 +5,9 @@ import { useScrollHide } from "./useScrollHide";
  * Wraps useScrollHide with header-specific timing constants.
  */
 export function useHeaderHide() {
-  const { animatedStyle, setHeight, onScroll, reset } = useScrollHide({
+  const { animatedStyle, setHeight, onScroll, animatedOnScroll, reset } = useScrollHide({
     hideDuration: 260,
     showDuration: 320,
   });
-  return { headerStyle: animatedStyle, setHeight, onScroll, reset };
+  return { headerStyle: animatedStyle, setHeight, onScroll, animatedOnScroll, reset };
 }
