@@ -5,24 +5,17 @@ import * as ImagePicker from "expo-image-picker";
 import * as Haptics from "@/shared/utils/haptics";
 import { useAuth } from "@/shared/contexts/AuthContext";
 import { useAvatar } from "@/shared/contexts/AvatarContext";
-import { authAdapter } from "@/lib/auth";
-import { db } from "@/lib/db";
 import {
   getUserStats,
   updateUserPhotoURL,
   getUserPhotoURL,
-  subscribeToUserGeneratedQrs,
   getUsernameData,
   type UserStats,
-  type GeneratedQrItem,
 } from "@/lib/firestore-service";
-import { COLLECTIONS } from "@/shared/constants/collections";
 import {
   getCachedUserStats,
   setCachedUserStats,
   invalidateUserCache,
-  getCachedGeneratedQrs,
-  setCachedGeneratedQrs,
 } from "@/services/cache/qr-cache";
 
 const STATS_STALE_MS  = 3 * 60 * 1000;
@@ -42,18 +35,10 @@ export function useProfile() {
   const [pendingImageUri, setPendingImageUri] = useState<string | null>(null);
   const mediaLibraryPermRef = useRef<boolean | null>(null); // cached permission status
   const [refreshing,     setRefreshing]     = useState(false);
-  const [myQrCodes,      setMyQrCodes]      = useState<GeneratedQrItem[]>([]);
-  const [myQrLoading,    setMyQrLoading]    = useState(true);
   const [currentUsername, setCurrentUsername] = useState<string | null>(user?.username || null);
 
-  const myQrCodesRef        = useRef<GeneratedQrItem[]>([]);
-  const hasLoadedQrsRef     = useRef(false);
-  const qrUnsubscribeRef    = useRef<(() => void) | null>(null);
-  const qrSubscribedUidRef  = useRef<string | null>(null); // tracks which user the listener is for
   const lastStatsFetchRef   = useRef<number>(0);
   const inFlightStatsRef    = useRef(false);
-
-  useEffect(() => { myQrCodesRef.current = myQrCodes; }, [myQrCodes]);
 
   // Reset all derived state when the signed-in user changes
   useEffect(() => {
@@ -118,73 +103,6 @@ export function useProfile() {
       loadStats();
     }, [loadStats])
   );
-
-  // Generated-QR listener — started once per user and kept alive across tab
-  // switches.  Previously the listener was torn down on every blur and rebuilt
-  // on every focus, causing a brief data gap each time the user returned to
-  // the profile tab (visible as a blank/flickering QR stack).  Now we only
-  // create a new listener when the signed-in user changes; we never kill it
-  // just because the tab lost focus.  Cleanup on unmount is handled by the
-  // separate useEffect below.
-  useFocusEffect(
-    useCallback(() => {
-      if (!user) {
-        // User signed out — tear down the listener and clear data
-        if (qrUnsubscribeRef.current) {
-          qrUnsubscribeRef.current();
-          qrUnsubscribeRef.current = null;
-          qrSubscribedUidRef.current = null;
-        }
-        setMyQrCodes([]);
-        setMyQrLoading(false);
-        return;
-      }
-
-      // If we already have an active listener for this user, do nothing
-      if (qrUnsubscribeRef.current && qrSubscribedUidRef.current === user.id) {
-        return;
-      }
-
-      // New user or first mount — clean up any old listener first
-      if (qrUnsubscribeRef.current) {
-        qrUnsubscribeRef.current();
-        qrUnsubscribeRef.current = null;
-        qrSubscribedUidRef.current = null;
-      }
-
-      // Seed from cache first so the QR stack appears instantly
-      const uid = user.id;
-      if (!hasLoadedQrsRef.current && myQrCodesRef.current.length === 0) {
-        getCachedGeneratedQrs<GeneratedQrItem[]>(uid).then((cached) => {
-          if (cached && cached.length > 0 && !hasLoadedQrsRef.current) {
-            setMyQrCodes(cached);
-          }
-        }).catch(() => {});
-      }
-
-      setMyQrLoading(!hasLoadedQrsRef.current && myQrCodesRef.current.length === 0);
-      const unsub = subscribeToUserGeneratedQrs(uid, (items) => {
-        setMyQrCodes(items);
-        hasLoadedQrsRef.current = true;
-        setMyQrLoading(false);
-        // Keep cache warm so next visit is instant
-        setCachedGeneratedQrs<GeneratedQrItem[]>(uid, items).catch(() => {});
-      });
-      qrUnsubscribeRef.current = unsub;
-      qrSubscribedUidRef.current = uid;
-    }, [user?.id])
-  );
-
-  // Tear down the Firestore listener when the component fully unmounts
-  useEffect(() => {
-    return () => {
-      if (qrUnsubscribeRef.current) {
-        qrUnsubscribeRef.current();
-        qrUnsubscribeRef.current = null;
-        qrSubscribedUidRef.current = null;
-      }
-    };
-  }, []);
 
   // ── Internal helper: upload a (possibly cropped) URI ───────────────────────
   // Declared BEFORE handlePickPhoto so it can be safely referenced in its deps.
@@ -368,8 +286,6 @@ export function useProfile() {
     pendingImageUri,
     handleCropConfirm,
     handleCropCancel,
-    myQrCodes,
-    myQrLoading,
     currentUsername,
     initials,
     refreshing,

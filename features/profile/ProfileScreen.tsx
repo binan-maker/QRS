@@ -15,12 +15,9 @@ import { useTopInset } from "@/shared/utils/platform";
 import Animated, {
   FadeInDown,
   FadeIn,
-  ZoomIn,
   useSharedValue,
   useAnimatedStyle,
   withTiming,
-  withRepeat,
-  withSequence,
   withSpring,
   Easing,
 } from "react-native-reanimated";
@@ -36,7 +33,6 @@ import { useNotifications } from "@/shared/hooks/useNotifications";
 import PhotoModal from "@/features/profile/components/PhotoModal";
 import ImageCropModal from "@/features/profile/components/ImageCropModal";
 import GuestView from "@/features/profile/components/GuestView";
-import { QrStack } from "@/features/profile/components/QrStack";
 import NotificationsModal from "@/shared/components/notifications/NotificationsModal";
 import { styles } from "@/features/profile/styles";
 
@@ -50,8 +46,6 @@ const ENTER_NAME         = FadeInDown.delay(50).duration(260);
 const ENTER_USERNAME     = FadeInDown.delay(60).duration(260);
 const ENTER_EDIT_BTN     = FadeInDown.delay(80).duration(260);
 const ENTER_STATS_GRID   = FadeInDown.delay(50).duration(260);
-const ENTER_QR_SECTION   = FadeInDown.delay(70).duration(260);
-const ENTER_QR_EMPTY     = FadeInDown.delay(80).duration(260);
 const ENTER_NOTIF_DOT    = FadeIn.duration(240);
 const ENTER_SIGNOUT      = FadeInDown.delay(100).duration(260);
 
@@ -59,7 +53,6 @@ const ENTER_SIGNOUT      = FadeInDown.delay(100).duration(260);
 const STAT_CELL_ENTER = [0, 1, 2, 3, 4].map((i) =>
   FadeInDown.delay(Math.min(i, 4) * 25).duration(260),
 );
-const QR_SKELETON_ENTER = FadeIn.delay(0).duration(240);
 
 // ── Animated stat cell with number reveal ─────────────────────────────────────
 const StatCell = memo(function StatCell({
@@ -120,55 +113,6 @@ const StatCell = memo(function StatCell({
   );
 });
 
-// ── Single shimmering skeleton card ───────────────────────────────────────────
-function SkeletonCard({ color, borderColor, delay }: { color: string; borderColor: string; delay: number }) {
-  const shimmer = useSharedValue(0.4);
-  useEffect(() => {
-    shimmer.value = withRepeat(
-      withSequence(
-        withTiming(1,   { duration: 700 + delay * 30 }),
-        withTiming(0.4, { duration: 700 + delay * 30 }),
-      ),
-      -1,
-      true,
-    );
-  }, []);
-  const anim = useAnimatedStyle(() => ({ opacity: shimmer.value }));
-  return <Animated.View style={[{ backgroundColor: color, borderColor, borderWidth: 1.5, borderRadius: 18 }, anim]} />;
-}
-
-// ── QR skeleton stack (horizontal fan, matches MAX_STACK=13) ──────────────────
-const QrSkeletonStack = memo(function QrSkeletonStack() {
-  const { colors } = useTheme();
-  const CARD  = 88;
-  const OFF_X = 30;
-  const n     = 5; // show 5 skeleton cards — enough to suggest a stack without overflow
-  return (
-    <Animated.View
-      entering={QR_SKELETON_ENTER}
-      style={{ width: CARD + (n - 1) * OFF_X, height: CARD, position: "relative" }}
-    >
-      {Array.from({ length: n }).map((_, i) => (
-        <View
-          key={i}
-          style={{
-            position: "absolute",
-            left: i * OFF_X, top: 0,
-            width: CARD, height: CARD,
-            zIndex: i,
-          }}
-        >
-          <SkeletonCard
-            color={colors.surfaceLight}
-            borderColor={colors.surfaceBorder}
-            delay={i}
-          />
-        </View>
-      ))}
-    </Animated.View>
-  );
-});
-
 // ── Main screen ───────────────────────────────────────────────────────────────
 function ProfileScreen() {
   const insets = useSafeAreaInsets();
@@ -178,7 +122,6 @@ function ProfileScreen() {
     stats, statsLoading,
     photoModalOpen, setPhotoModalOpen, uploadingPhoto,
     cropModalOpen, pendingImageUri, handleCropConfirm, handleCropCancel,
-    myQrCodes, myQrLoading,
     currentUsername,
     initials,
     refreshing, handleRefresh,
@@ -215,18 +158,8 @@ function ProfileScreen() {
   const goToEditProfile = useCallback(() => safePush({ pathname: "/(tabs)/settings" as any, params: { initialSection: "profile", fromProfile: "1" } }), []);
   const goToLogin       = useCallback(() => safePush("/(auth)/login"),        []);
   const goToRegister    = useCallback(() => safePush("/(auth)/register"),     []);
-  const goToMyQrCodes   = useCallback(() => safePush("/my-qr-codes"),         []);
 
-  const previewQrs = useMemo(() => myQrCodes.slice(0, 9), [myQrCodes]);
   const formattedStats = useMemo(() => [
-    {
-      label:     "My QRs",
-      value:     myQrCodes.length,
-      color:     colors.accent,
-      loading:   myQrLoading,
-      formatted: formatCompactNumber(myQrCodes.length),
-      onPress:   goToMyQrCodes,
-    },
     {
       label:     "Following",
       value:     stats.followingCount ?? 0,
@@ -235,20 +168,13 @@ function ProfileScreen() {
       formatted: formatCompactNumber(stats.followingCount ?? 0),
       onPress:   undefined,
     },
-  ], [myQrCodes.length, myQrLoading, stats.followingCount, statsLoading, colors.accent, colors.primary, goToMyQrCodes]);
+  ], [stats.followingCount, statsLoading, colors.primary]);
 
   const openPhotoModal  = useCallback(() => setPhotoModalOpen(true),  [setPhotoModalOpen]);
   const closePhotoModal = useCallback(() => setPhotoModalOpen(false), [setPhotoModalOpen]);
   const closeNotifModal = useCallback(() => setNotifOpen(false),      [setNotifOpen]);
   const onCamera        = useCallback(() => handlePickPhoto("camera"),  [handlePickPhoto]);
   const onGallery       = useCallback(() => handlePickPhoto("gallery"), [handlePickPhoto]);
-
-  const handleQrCardPress = useCallback(
-    (qr: import("@/features/profile/components/QrPreviewCard").QrItem) => {
-      safePush({ pathname: "/my-qr-codes" as any, params: { scrollToId: qr.docId ?? "" } });
-    },
-    []
-  );
 
   // While Firebase is resolving the auth state on cold start, show a plain
   // background instead of GuestView.  This prevents the mount/unmount cycle
@@ -405,45 +331,6 @@ function ProfileScreen() {
               onPress={s.onPress}
             />
           ))}
-        </Animated.View>
-
-        {/* ── MY QR CODES ───────────────────────────────────────── */}
-        <Animated.View entering={ENTER_QR_SECTION} style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <Text style={[styles.sectionTitle, { color: colors.text }]}>My QRs</Text>
-            <Pressable
-              onPress={goToMyQrCodes}
-              style={({ pressed }) => [styles.seeAllBtn, { opacity: pressed ? 0.7 : 1 }]}
-              hitSlop={8}
-            >
-              <Text style={[styles.seeAllText, { color: colors.primary }]}>See all</Text>
-              <Ionicons name="chevron-forward" size={13} color={colors.primary} />
-            </Pressable>
-          </View>
-
-          {myQrLoading ? (
-            <QrSkeletonStack />
-          ) : previewQrs.length === 0 ? (
-            <Animated.View entering={ENTER_QR_EMPTY}>
-              <View
-                style={[
-                  styles.emptyQrCard,
-                  { backgroundColor: colors.surface, borderColor: colors.surfaceBorder },
-                ]}
-              >
-                <Ionicons name="qr-code-outline" size={22} color={colors.textMuted} />
-                <Text style={[styles.emptyQrText, { color: colors.textMuted }]}>No QR codes yet</Text>
-              </View>
-            </Animated.View>
-          ) : (
-            <QrStack
-              qrs={previewQrs}
-              totalCount={myQrCodes.length}
-              colors={colors}
-              onViewAll={goToMyQrCodes}
-              onPressCard={handleQrCardPress}
-            />
-          )}
         </Animated.View>
 
         {/* ── SIGN OUT ──────────────────────────────────────────── */}

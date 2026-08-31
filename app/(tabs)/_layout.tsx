@@ -187,11 +187,6 @@ function ClassicTabLayout() {
         />
 
         <Tabs.Screen
-          name="my-qr-codes"
-          options={{ href: null, tabBarStyle: hiddenTabBar }}
-        />
-
-        <Tabs.Screen
           name="profile"
           options={{ title: "Profile", tabBarIcon: renderProfIcon }}
         />
