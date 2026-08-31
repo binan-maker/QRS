@@ -1,0 +1,43 @@
+import type { CategorySchema } from "@/shared/types/category";
+
+export const BUILT_IN_CATEGORIES: CategorySchema[] = [
+  {
+    id: "url",
+    presetIdx: 0,
+    name: "Website URL",
+    description: "Link to any webpage — auto-adds https:// if missing",
+    icon: "globe-outline",
+    region: "global",
+    tags: ["url", "link", "website", "webpage", "http"],
+    popularity: 95,
+    fields: [{ key: "value", label: "URL", type: "url", required: true, placeholder: "https://example.com", isPrimary: true }],
+    output: { builder: "url" },
+    security: { threatScan: true },
+    tier: "free",
+    isBuiltIn: true,
+    status: "active",
+  },
+  {
+    id: "upi",
+    presetIdx: 1,
+    name: "UPI Payment",
+    description: "Accept payments via GPay, PhonePe, Paytm, BHIM — NPCI standard",
+    icon: "card-outline",
+    region: "india",
+    tags: ["upi", "payment", "india", "gpay", "phonepe", "paytm", "bhim", "merchant", "money"],
+    popularity: 99,
+    isIndiaFirst: true,
+    badge: "NPCI",
+    badgeColor: "#8B5CF6",
+    fields: [
+      { key: "value", label: "UPI ID (VPA)", type: "email", required: true, placeholder: "merchant@upi", isPrimary: true, hint: "e.g. name@paytm or 9876543210@okicici" },
+      { key: "name", label: "Payee Name", type: "text", required: true, placeholder: "Store Name" },
+      { key: "amount", label: "Amount ₹ (optional)", type: "decimal", optional: true, placeholder: "100.00" },
+    ],
+    output: { builder: "upi" },
+    security: { threatScan: false },
+    tier: "free",
+    isBuiltIn: true,
+    status: "active",
+  },
+];
