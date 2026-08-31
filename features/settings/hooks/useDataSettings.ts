@@ -5,6 +5,7 @@ import * as Haptics from "@/shared/utils/haptics";
 import {
   getUserFollowing,
   getUserComments,
+  updateComment,
   softDeleteComment,
   deleteAllUserComments,
   getUserScansPaginated,
@@ -156,6 +157,31 @@ export function useDataSettings({ userId }: UseDataSettingsOptions) {
     ]);
   }, [userId]);
 
+  const handleEditComment = useCallback(async (commentId: string, qrCodeId: string, text: string) => {
+    if (!userId) return;
+    const trimmed = text.trim();
+    if (!trimmed) throw new Error("Comment cannot be empty.");
+
+    const previous = myCommentsRef.current;
+    setMyComments((current) => {
+      const next = current.map((comment) =>
+        comment.id === commentId ? { ...comment, text: trimmed, isEdited: true } : comment
+      );
+      setCachedComments<any[]>(userId, next).catch(() => {});
+      return next;
+    });
+
+    try {
+      await updateComment(qrCodeId, commentId, userId, trimmed);
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    } catch (error) {
+      setMyComments(previous);
+      setCachedComments<any[]>(userId, previous).catch(() => {});
+      Alert.alert("Error", "Could not update comment.");
+      throw error;
+    }
+  }, [userId]);
+
   const handleDeleteAllComments = useCallback(async () => {
     Alert.alert(
       "Delete All Comments",
@@ -240,6 +266,7 @@ export function useDataSettings({ userId }: UseDataSettingsOptions) {
     myHistory, historyLoading, loadMyHistory,
     resetData,
     handleDeleteComment,
+    handleEditComment,
     handleDeleteAllComments,
     handleDeleteHistoryItem,
     handleDeleteAllHistory,

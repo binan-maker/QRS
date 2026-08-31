@@ -156,6 +156,8 @@ function ProfileScreen() {
   // an extra re-render when the useCallback result is finally assigned. ──────
   const goToSettings    = useCallback(() => safePush({ pathname: "/(tabs)/settings" as any, params: { from: "profile" } }), []);
   const goToEditProfile = useCallback(() => safePush({ pathname: "/(tabs)/settings" as any, params: { initialSection: "profile", fromProfile: "1" } }), []);
+  const goToComments    = useCallback(() => safePush({ pathname: "/(tabs)/settings" as any, params: { initialSection: "comments", from: "profile" } }), []);
+  const goToHistory     = useCallback(() => safePush("/(tabs)/history"), []);
   const goToLogin       = useCallback(() => safePush("/(auth)/login"),        []);
   const goToRegister    = useCallback(() => safePush("/(auth)/register"),     []);
 
@@ -332,6 +334,47 @@ function ProfileScreen() {
             />
           ))}
         </Animated.View>
+
+        {/* ── PERSONAL ACTIVITY ─────────────────────────────────── */}
+        <View style={styles.profileActions}>
+          <Pressable
+            onPress={goToComments}
+            accessibilityRole="button"
+            accessibilityLabel="My Comments"
+            style={({ pressed }) => [
+              styles.profileActionBtn,
+              { backgroundColor: colors.surface, borderColor: colors.surfaceBorder, opacity: pressed ? 0.78 : 1 },
+            ]}
+          >
+            <View style={[styles.profileActionIcon, { backgroundColor: colors.primaryDim }]}>
+              <Ionicons name="chatbubble-ellipses-outline" size={18} color={colors.primary} />
+            </View>
+            <View style={{ flex: 1, minWidth: 0 }}>
+              <Text style={[styles.profileActionLabel, { color: colors.text }]} numberOfLines={1}>My Comments</Text>
+              <Text style={[styles.profileActionSubtext, { color: colors.textMuted }]} numberOfLines={1}>Edit or remove</Text>
+            </View>
+            <Ionicons name="chevron-forward" size={16} color={colors.textMuted} />
+          </Pressable>
+
+          <Pressable
+            onPress={goToHistory}
+            accessibilityRole="button"
+            accessibilityLabel="History"
+            style={({ pressed }) => [
+              styles.profileActionBtn,
+              { backgroundColor: colors.surface, borderColor: colors.surfaceBorder, opacity: pressed ? 0.78 : 1 },
+            ]}
+          >
+            <View style={[styles.profileActionIcon, { backgroundColor: colors.accentDim }]}>
+              <Ionicons name="time-outline" size={18} color={colors.accent} />
+            </View>
+            <View style={{ flex: 1, minWidth: 0 }}>
+              <Text style={[styles.profileActionLabel, { color: colors.text }]} numberOfLines={1}>History</Text>
+              <Text style={[styles.profileActionSubtext, { color: colors.textMuted }]} numberOfLines={1}>Review or remove</Text>
+            </View>
+            <Ionicons name="chevron-forward" size={16} color={colors.textMuted} />
+          </Pressable>
+        </View>
 
         {/* ── SIGN OUT ──────────────────────────────────────────── */}
         <Animated.View entering={ENTER_SIGNOUT}>

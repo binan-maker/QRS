@@ -80,11 +80,25 @@ export const styles = StyleSheet.create({
     borderRadius: 18, borderWidth: 1,
     marginBottom: 22, overflow: "hidden",
   },
-  statCell: { width: "50%", alignItems: "center", paddingVertical: 16, gap: 4 },
+  statCell: { width: "100%", alignItems: "center", paddingVertical: 16, gap: 4 },
   statValue: { fontSize: 17, fontFamily: "Inter_700Bold" },
   statLabel: { fontSize: 11, fontFamily: "Inter_400Regular" },
 
-  // ── QR codes section ─────────────────────────────────────────────────────
+  // ── Personal activity ─────────────────────────────────────────────────────
+  profileActions: { flexDirection: "row", gap: 10, marginBottom: 22 },
+  profileActionBtn: {
+    flex: 1, flexDirection: "row", alignItems: "center", gap: 9,
+    minHeight: 72, paddingHorizontal: 11, paddingVertical: 12,
+    borderRadius: 16, borderWidth: 1,
+  },
+  profileActionIcon: {
+    width: 34, height: 34, borderRadius: 11,
+    alignItems: "center", justifyContent: "center",
+  },
+  profileActionLabel: { fontSize: 12, fontFamily: "Inter_700Bold" },
+  profileActionSubtext: { fontSize: 10, fontFamily: "Inter_400Regular", marginTop: 2 },
+
+  // ── Legacy section styles ────────────────────────────────────────────────
   section: { marginBottom: 22 },
   sectionHeader: {
     flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 12,

@@ -233,6 +233,42 @@ export async function softDeleteComment(qrId: string, commentId: string, userId:
   }
 }
 
+export async function updateComment(
+  qrId: string,
+  commentId: string,
+  userId: string,
+  text: string,
+): Promise<void> {
+  const sanitizedText = sanitizeComment(text.trim());
+  if (!sanitizedText) throw new Error("Comment cannot be empty.");
+
+  const profanityCheck = checkProfanity(sanitizedText);
+  if (profanityCheck.isBlocked) {
+    throw new Error(
+      `Your comment contains inappropriate language (${profanityCheck.categories.join(", ")}). Please revise it.`
+    );
+  }
+
+  const kwCheck = checkCommentKeywords(sanitizedText);
+  if (kwCheck.blocked) {
+    throw new Error(
+      `Your comment was blocked because it resembles spam or a scam ("${kwCheck.matchedKeyword}").`
+    );
+  }
+
+  const ref = [COLLECTIONS.QR_CODES, qrId, COLLECTIONS.COMMENTS, commentId];
+  const data = await db.get(ref);
+  if (!data || data.userId !== userId || data.isDeleted) {
+    throw new Error("You can only edit your own active comments.");
+  }
+
+  await db.update(ref, {
+    text: sanitizedText,
+    updatedAt: db.timestamp(),
+    isEdited: true,
+  });
+}
+
 const SOFT_DELETE_TTL_MS = 7 * 24 * 60 * 60 * 1000;
 
 async function purgeOldSoftDeletes(qrId: string): Promise<void> {
