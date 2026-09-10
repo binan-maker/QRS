@@ -49,7 +49,6 @@ interface Props {
   handleSubmitComment: () => void;
   handleCommentLike: (id: string, currentLike: string | null) => void;
   handleDeleteComment: (id: string) => void;
-  setCommentReportModal: (id: string) => void;
   getAllDescendants: (id: string) => CommentData[];
   getRootCommentId: (id: string) => string;
   toggleReplies: (id: string) => void;
@@ -82,7 +81,6 @@ export default function CommentsSection({
   handleSubmitComment,
   handleCommentLike,
   handleDeleteComment,
-  setCommentReportModal,
   getAllDescendants,
   getRootCommentId,
   toggleReplies,
@@ -136,10 +134,6 @@ export default function CommentsSection({
   );
 
   const onDelete = useCallback(handleDeleteComment, [handleDeleteComment]);
-  const onReport = useCallback(
-    (cid: string) => setCommentReportModal(cid),
-    [setCommentReportModal],
-  );
   const onToggleReplies = useCallback(toggleReplies, [toggleReplies]);
   const onShowMoreReplies = useCallback(showMoreReplies, [showMoreReplies]);
 

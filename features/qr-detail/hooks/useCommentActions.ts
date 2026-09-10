@@ -4,7 +4,6 @@ import { router } from "expo-router";
 import * as Haptics from "@/shared/utils/haptics";
 import {
   addComment,
-  reportComment,
   softDeleteComment,
 } from "@/lib/firestore-service";
 import { queryClient } from "@/lib/query-client";
@@ -30,7 +29,6 @@ export function useCommentActions({
   const [submitting, setSubmitting] = useState(false);
   const [commentMenuId, setCommentMenuId] = useState<string | null>(null);
   const [commentMenuOwner, setCommentMenuOwner] = useState(false);
-  const [commentReportModal, setCommentReportModal] = useState<string | null>(null);
   const [deletingCommentId, setDeletingCommentId] = useState<string | null>(null);
 
   const commentInputRef = useRef<any>(null);
@@ -114,22 +112,6 @@ export function useCommentActions({
     }
   }, [id, userId, newComment, replyTo, emailVerified, user, pendingCommentsRef, deletingIdsRef, setCommentsList, setExpandedReplies]);
 
-  const handleCommentReport = useCallback(async (commentId: string, reason: string) => {
-    setCommentReportModal(null);
-    if (!userId) return;
-    try {
-      await reportComment(id, commentId, userId, reason, emailVerified);
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-    } catch (e: any) {
-      Alert.alert(
-        "Couldn't Submit Report",
-        e?.code === "permission-denied"
-          ? "You don't have permission to report this comment."
-          : "Failed to send your report. Please try again."
-      );
-    }
-  }, [id, userId, emailVerified]);
-
   const handleDeleteComment = useCallback(async (commentId: string, commentsList: CommentItem[]) => {
     if (!userId) return;
     setCommentMenuId(null);
@@ -167,11 +149,9 @@ export function useCommentActions({
     submitting,
     commentMenuId, setCommentMenuId,
     commentMenuOwner, setCommentMenuOwner,
-    commentReportModal, setCommentReportModal,
     deletingCommentId,
     commentInputRef, scrollRef,
     handleSubmitComment,
-    handleCommentReport,
     handleDeleteComment,
   };
 }

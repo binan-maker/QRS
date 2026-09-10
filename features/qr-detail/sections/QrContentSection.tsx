@@ -1,6 +1,5 @@
 import Animated, { FadeInDown } from "react-native-reanimated";
 import { ContentCard } from "@/features/qr-engine/content-cards";
-import ExternalQrBanner from "@/features/qr-detail/components/ExternalQrBanner";
 
 interface Props {
   content: string;
@@ -9,10 +8,6 @@ interface Props {
   isDeactivated: boolean;
   onOpenContent: () => void;
   templateKey?: string;
-  isBranded?: boolean;
-  offlineMode?: boolean;
-  hasOwner?: boolean;
-  user?: any;
 }
 
 export function QrContentSection({
@@ -22,10 +17,6 @@ export function QrContentSection({
   isDeactivated,
   onOpenContent,
   templateKey,
-  isBranded,
-  offlineMode,
-  hasOwner,
-  user,
 }: Props) {
   return (
     <>
@@ -41,11 +32,6 @@ export function QrContentSection({
         />
       </Animated.View>
 
-      {!isBranded && !offlineMode && !hasOwner && (
-        <Animated.View entering={FadeInDown.delay(80).duration(260)}>
-          <ExternalQrBanner />
-        </Animated.View>
-      )}
     </>
   );
 }

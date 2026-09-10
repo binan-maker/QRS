@@ -9,10 +9,9 @@ interface Props {
   isOwner: boolean;
   onClose: () => void;
   onDelete: () => void;
-  onReport: () => void;
 }
 
-export default function CommentMenuSheet({ visible, isOwner, onClose, onDelete, onReport }: Props) {
+export default function CommentMenuSheet({ visible, isOwner, onClose, onDelete }: Props) {
   const { colors } = useTheme();
 
   return (
@@ -24,14 +23,7 @@ export default function CommentMenuSheet({ visible, isOwner, onClose, onDelete, 
           </View>
           <Text style={[commentMenuStyles.menuLabel, { color: colors.danger }]}>Delete comment</Text>
         </Pressable>
-      ) : (
-        <Pressable onPress={onReport} style={commentMenuStyles.menuItem}>
-          <View style={[commentMenuStyles.menuIconWrap, { backgroundColor: (colors as any).warningDim ?? (colors.warning + "15") }]}>
-            <Ionicons name="flag-outline" size={20} color={colors.warning} />
-          </View>
-          <Text style={[commentMenuStyles.menuLabel, { color: colors.text }]}>Report comment</Text>
-        </Pressable>
-      )}
+      ) : null}
       <Pressable onPress={onClose} style={commentMenuStyles.cancelBtn}>
         <Text style={[commentMenuStyles.cancelText, { color: colors.textSecondary }]}>Cancel</Text>
       </Pressable>

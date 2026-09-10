@@ -24,7 +24,6 @@ import { ContentCard } from "@/features/qr-engine/content-cards";
 import TrustScoreCard from "@/features/qr-detail/components/TrustScoreCard";
 import EarlyCommunityCard from "@/features/qr-detail/components/EarlyCommunityCard";
 import ReportGrid from "@/features/qr-detail/components/ReportGrid";
-import CommentReportModal from "@/features/qr-detail/components/modals/CommentReportModal";
 import { OfflineToast } from "@/features/qr-detail/components/OfflineToast";
 import { QrToast } from "@/features/qr-detail/components/QrToast";
 import CommentsSection from "@/features/qr-detail/components/CommentsSection";
@@ -308,7 +307,6 @@ export default function StandardQrDetailScreen({ id, standardUuid, hint }: Props
                   handleSubmitComment={q.handleSubmitComment}
                   handleCommentLike={q.handleCommentLike as any}
                   handleDeleteComment={q.handleDeleteComment}
-                  setCommentReportModal={q.setCommentReportModal}
                   getAllDescendants={q.getAllDescendants as any}
                   getRootCommentId={q.getRootCommentId}
                   toggleReplies={q.toggleReplies}
@@ -331,11 +329,6 @@ export default function StandardQrDetailScreen({ id, standardUuid, hint }: Props
           q.setCommentMenuId(null);
           q.handleDeleteComment(cid);
         }}
-        onReport={() => {
-          const cid = q.commentMenuId!;
-          q.setCommentMenuId(null);
-          q.setCommentReportModal(cid);
-        }}
       />
 
       <OverflowSheet
@@ -346,14 +339,6 @@ export default function StandardQrDetailScreen({ id, standardUuid, hint }: Props
          onReport={() => showToast("Feature Coming Soon!", "time-outline")}
       />
 
-      <CommentReportModal
-        commentId={q.commentReportModal}
-        onReport={(commentId, reason) => {
-          q.handleCommentReport(commentId, reason);
-          showToast("Thanks for reporting", "flag-outline");
-        }}
-        onClose={() => q.setCommentReportModal(null)}
-      />
     </View>
   );
 }
