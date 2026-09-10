@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import { InteractionManager } from "react-native";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useInfiniteQuery, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useFocusEffect } from "expo-router";
 import { useAuth } from "@/shared/contexts/AuthContext";
@@ -10,7 +10,6 @@ import {
   getUserScanStats,
   type ScanStatsResult,
 } from "@/lib/firestore-service";
-import { analyzeItemRisk } from "@/services/scan-history/safety-analysis";
 import { queryClient as globalQueryClient } from "@/lib/query-client";
 import { mergeAndDeduplicateScans } from "@/services/scan-history/dedup";
 import {
@@ -24,6 +23,8 @@ import {
 import type { HistoryItem, RiskLevel, ActiveFilters } from "@/features/history/types";
 import { itemMatchesFilters } from "@/features/history/utils/filter-utils";
 import { PAGE_SIZE, STALE_MS } from "@/features/history/utils/constants";
+
+const analyzeItemRisk = (_item: HistoryItem): RiskLevel => "safe";
 
 function mapScanItem(s: any): HistoryItem {
   return {

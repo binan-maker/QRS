@@ -230,12 +230,8 @@ class BinroApiClient {
       this.get<{ following: boolean; userId: string }>(`/follows/users/${userId}`),
   };
 
-  // ── Security / Utilities ───────────────────────────────────────────────────
-
-  security = {
-    checkUrl: (url: string) =>
-      this.post<{ safe: boolean; threats?: string[] }>("/check-url", { url }),
-
+  // ── Utilities ───────────────────────────────────────────────────────────────
+  utilities = {
     validateVpa: (vpa: string) =>
       this.qr.validateVpa(vpa),
   };

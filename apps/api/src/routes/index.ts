@@ -54,8 +54,7 @@
  *   POST   /api/v1/business/register                   Register business account
  *
  * Security / Utilities
- *   POST   /api/v1/check-url                           Google Safe Browsing proxy
- *   GET    /api/v1/analyze                             Local heuristic analysis
+ *   POST   /api/v1/qr/decode-image                    Decode a QR image
  *   GET    /api/v1/ifsc/:ifsc                          IFSC bank lookup
  *   POST   /api/v1/validate-email                      Email validator
  *   POST   /api/v1/push/notify                         Send push notification

@@ -1,12 +1,10 @@
 export { default as CommentItem } from "./CommentItem";
 export { default as ContentCard } from "../content-cards";
-export { default as EvidenceCard } from "./EvidenceCard";
 export { default as LoadingSkeleton } from "./LoadingSkeleton";
 export { default as OwnerCard } from "./OwnerCard";
 export { default as PaymentCard } from "./PaymentCard";
 export { default as ReportGrid } from "./ReportGrid";
 export { default as ReportSection } from "./ReportSection";
-export { default as SafetyWarningCard } from "./SafetyWarningCard";
 export { default as TrustScoreCard } from "./TrustScoreCard";
 export { SectionHeader } from "@/shared/components/ui/SectionHeader";
 export { OfflineToast } from "./OfflineToast";

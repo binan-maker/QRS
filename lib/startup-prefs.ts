@@ -2,15 +2,15 @@
  * startup-prefs.ts — single AsyncStorage.multiGet for all startup preferences.
  *
  * Problem solved:
- *   ThemeProvider, AvatarProvider, ConsentGatedApp, haptics, and the tab
- *   startup-screen pref each issued separate AsyncStorage.getItem() calls.
+ *   ThemeProvider, AvatarProvider, ConsentGatedApp, and haptics each issued
+ *   separate AsyncStorage.getItem() calls.
  *   Every call crosses the JS → native bridge (~5–15 ms each). Because
  *   ThemeProvider blocked the React tree with a null-gate, these calls ran
  *   serially, adding 25–75 ms of sequential bridge overhead to startup.
  *
  * Solution:
  *   1. This module is imported at the top of app/_layout.tsx, which causes
- *      AsyncStorage.multiGet([all six keys]) to fire at JS-bundle-evaluation
+ *      AsyncStorage.multiGet([all startup keys]) to fire at JS-bundle-evaluation
  *      time — well before any React component mounts (~100–300 ms head-start).
  *   2. All providers call prefetchStartupPrefs(), which returns the same
  *      in-flight Promise — zero duplicate bridge calls.
@@ -30,7 +30,6 @@ export const STARTUP_PREF_KEYS = {
   AVATAR_VERSION:  "qrg:avatar:version",
   HAPTICS_ENABLED: "haptic_enabled",
   CONSENT_VERSION: "qrguard_consent_version",
-  STARTUP_SCREEN:  "qrg:startup:screen",
 } as const;
 
 type PrefKey = (typeof STARTUP_PREF_KEYS)[keyof typeof STARTUP_PREF_KEYS];

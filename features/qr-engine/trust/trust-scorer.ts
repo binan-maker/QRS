@@ -12,8 +12,6 @@
  */
 
 import type { TrustFlag, TrustLevel, QrTrustSummary } from "../types";
-import { detectPhishingPattern } from "./phishing-detector";
-import { analyzeUrl } from "./url-analyzer";
 
 interface TrustInput {
   content: string;
@@ -51,44 +49,12 @@ export function computeTrustScore(input: TrustInput): QrTrustSummary {
     flags.push("community_reported");
   }
 
-  // ── 4. URL-based analysis ─────────────────────────────────────────────────
-  const isUrl =
-    contentType === "url" ||
-    contentType === "web" ||
-    content.startsWith("http://") ||
-    content.startsWith("https://");
-
-  if (isUrl) {
-    const urlAnalysis = analyzeUrl(content);
-    score += urlAnalysis.scoreDelta;
-    flags.push(...urlAnalysis.flags);
-  }
-
-  // ── 5. Phishing / malware pattern detection ───────────────────────────────
-  const phishingResult = detectPhishingPattern(content);
-  if (phishingResult.detected) {
-    score -= phishingResult.penalty;
-    flags.push(...phishingResult.flags);
-  }
-
-  // ── 6. Payment QR specifics ───────────────────────────────────────────────
+  // ── 4. Payment QR metadata ────────────────────────────────────────────────
   if (contentType === "upi" || contentType === "payment" || contentType === "paymentlink") {
     if (!verifiedMerchant) {
       // Payment QRs without merchant verification get slight caution bump
       score = Math.min(score, 72);
     }
-  }
-
-  // ── 7. Safe Browsing cleared signal ──────────────────────────────────────
-  // This flag is set externally when Google Safe Browsing returns clean
-  // Here we just ensure score reflects absence of known threats
-  if (
-    !flags.includes("malicious_url") &&
-    !flags.includes("phishing_pattern") &&
-    !flags.includes("suspicious_domain") &&
-    isUrl
-  ) {
-    flags.push("safe_browsing_clear");
   }
 
   // ── Clamp ─────────────────────────────────────────────────────────────────

@@ -5,11 +5,6 @@ import { Ionicons } from "@expo/vector-icons";
 import React, { useEffect, useCallback, useMemo, memo, useState } from "react";
 import { useTheme } from "@/shared/contexts/ThemeContext";
 import { TabBarProvider, useTabBarScroll } from "@/shared/contexts/TabBarContext";
-import {
-  prefetchStartupPrefs,
-  getStartupPref,
-  STARTUP_PREF_KEYS,
-} from "@/lib/startup-prefs";
 
 // ── Android tab bar background ─────────────────────────────────────────────────
 const AndroidTabBarBackground = memo(function AndroidTabBarBackground({
@@ -94,21 +89,6 @@ function ClassicTabLayout() {
   const insets = useSafeAreaInsets();
   const { colors } = useTheme();
   const { tabBarTranslateY, setTabBarHeight } = useTabBarScroll();
-  const [startupTab, setStartupTab] = useState<"index" | "scanner">("index");
-  const [startupPreferenceReady, setStartupPreferenceReady] = useState(false);
-
-  useEffect(() => {
-    // Resolve the startup tab before mounting the navigator. Rendering the
-    // default tab and then replacing it during initial linking can make React
-    // Navigation think that more than one root linking handler is active.
-    prefetchStartupPrefs().then(() => {
-      const pref = getStartupPref(STARTUP_PREF_KEYS.STARTUP_SCREEN);
-      setStartupTab(pref === "scanner" ? "scanner" : "index");
-      setStartupPreferenceReady(true);
-    }).catch(() => {
-      setStartupPreferenceReady(true);
-    });
-  }, []);
 
   const ANDROID_BAR_HEIGHT = 70 + insets.bottom;
   const tabBarHeight = isWeb ? 84 : isIOS ? undefined : ANDROID_BAR_HEIGHT;
@@ -174,13 +154,9 @@ function ClassicTabLayout() {
     [colors.primary, colors.tabIconDefault, tabBarHeight, insets.bottom, tabBarBackground, isIOS, tabBarTranslateY],
   );
 
-  if (!startupPreferenceReady) {
-    return <View style={{ flex: 1, backgroundColor: colors.background }} />;
-  }
-
   return (
     <View style={{ flex: 1 }}>
-      <Tabs initialRouteName={startupTab} screenOptions={screenOptions}>
+      <Tabs initialRouteName="index" screenOptions={screenOptions}>
         <Tabs.Screen
           name="index"
           options={{ title: "Home", tabBarIcon: renderHomeIcon }}

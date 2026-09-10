@@ -1,7 +1,6 @@
 import type { Express, Request, Response } from "express";
 import { createServer, type Server } from "node:http";
 import { decodeQrFromImage } from "./image-decode";
-import { registerSafeBrowsingRoute } from "./routes/safe-browsing";
 import { registerQrActiveRoute } from "./routes/qr-active";
 import { registerV1Routes } from "./routes/index";
 import { registerIfscRoute } from "./routes/ifsc";
@@ -43,18 +42,11 @@ async function cachedGuardLink(id: string) {
   return data;
 }
 
-// ─── Dynamic threat definitions (served to clients for live updates) ──────────
-// Patterns live in domain/security/client-threat-patterns.ts — edit there.
-// Phase 3.7: these will move to a threat_patterns PostgreSQL table with an
-//            admin endpoint so patterns update without redeploy.
-import { CLIENT_THREAT_PATTERNS } from "./domain/security/client-threat-patterns";
-
 export async function registerRoutes(app: Express): Promise<Server> {
   // ── Versioned API (all handlers mirrored under /api/v1/) ────────────────────
   registerV1Routes(app);
 
   // ── Domain route modules ────────────────────────────────────────────────────
-  registerSafeBrowsingRoute(app);
   registerQrActiveRoute(app);
   registerIfscRoute(app);
   app.use("/api/push", pushRouter);
@@ -62,11 +54,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // ── Health check ────────────────────────────────────────────────────────────
   app.get("/status", (_req, res) => {
     res.json({ status: "ok" });
-  });
-
-  // ── Dynamic threat patterns (served to clients for live updates) ─────────
-  app.get("/api/threats", (_req: Request, res: Response) => {
-    res.json({ version: "2025-04-01", patterns: CLIENT_THREAT_PATTERNS });
   });
 
   // ── /q/:id — Unified QR route (new architecture) ───────────────────────────

@@ -13,10 +13,10 @@ import { useTheme } from "@/shared/contexts/ThemeContext";
 import { useAuth } from "@/shared/contexts/AuthContext";
 import { useTopInset } from "@/shared/utils/platform";
 import { useQrDetail } from "@/features/qr-detail/hooks/useQrDetail";
-import { useQrSafety } from "@/features/qr-detail/hooks/useQrSafety";
 import { useNetworkStatus } from "@/shared/hooks/useNetworkStatus";
 import { getStandardLink } from "@/services/guard/guard-service";
 import { detectContentType } from "@/features/qr-engine";
+import { parseAnyPaymentQr } from "@/services/analysis";
 import { makeStyles } from "@/features/qr-detail/styles";
 import { formatCompactNumber } from "@/shared/utils/formatters";
 import { REPORT_LABELS, REPORT_ICONS } from "@/features/qr-detail/utils/report-toast";
@@ -24,7 +24,6 @@ import { REPORT_LABELS, REPORT_ICONS } from "@/features/qr-detail/utils/report-t
 import { ContentCard } from "@/features/qr-engine/content-cards";
 import TrustScoreCard from "@/features/qr-detail/components/TrustScoreCard";
 import EarlyCommunityCard from "@/features/qr-detail/components/EarlyCommunityCard";
-import SafetyWarningCard from "@/features/qr-detail/components/SafetyWarningCard";
 import ReportGrid from "@/features/qr-detail/components/ReportGrid";
 import FollowersModal from "@/features/qr-detail/components/modals/FollowersModal";
 import MessagesModal from "@/features/qr-detail/components/modals/MessagesModal";
@@ -117,8 +116,18 @@ export default function StandardQrDetailScreen({ id, standardUuid, ownerDocId, h
     [standardData]
   );
 
-  // Run safety analysis on rawContent directly, not on the scanned guard URL
-  const contentSafety = useQrSafety(effectiveContent || null, effectiveContentType || null);
+  const parsedPayment = useMemo(
+    () =>
+      effectiveContent &&
+      (effectiveContentType === "payment" ||
+        effectiveContentType === "upi" ||
+        effectiveContentType === "paymentlink" ||
+        effectiveContentType === "scantopay" ||
+        effectiveContentType === "bharatqr")
+        ? parseAnyPaymentQr(effectiveContent)
+        : null,
+    [effectiveContent, effectiveContentType],
+  );
 
   const isDeactivated = standardData?.isActive === false;
   const isQrOwner = !!(user?.id && standardData?.ownerId && user.id === standardData.ownerId);
@@ -266,39 +275,11 @@ export default function StandardQrDetailScreen({ id, standardUuid, ownerDocId, h
                 <ContentCard
                   content={effectiveContent}
                   contentType={effectiveContentType}
-                  parsedPayment={contentSafety.parsedPayment}
+                  parsedPayment={parsedPayment}
                   isDeactivated={isDeactivated}
                   onOpenContent={handleOpenContent}
                   hideOpenAction={false}
                   templateKey={standardData?.templateKey}
-                />
-              </View>
-            )}
-
-            {/* ── Payment safety — dangerous only ─── */}
-            {q.initialDataReady && effectiveContentType === "payment" && contentSafety.paymentSafety?.riskLevel === "dangerous" && (() => {
-              const warnings = (contentSafety.paymentSafety?.warnings ?? []).filter(
-                (w) => !w.toLowerCase().startsWith("pre-filled amount")
-              );
-              if (!warnings.length) return null;
-              return (
-                <View>
-                  <SafetyWarningCard
-                    riskLevel="dangerous"
-                    warnings={warnings}
-                    title="Payment Security Warning"
-                  />
-                </View>
-              );
-            })()}
-
-            {/* ── URL safety — dangerous only ────── */}
-            {q.initialDataReady && effectiveContentType === "url" && contentSafety.urlSafety?.riskLevel === "dangerous" && (
-              <View>
-                <SafetyWarningCard
-                  riskLevel="dangerous"
-                  warnings={contentSafety.urlSafety.warnings}
-                  title="Destination Warning"
                 />
               </View>
             )}

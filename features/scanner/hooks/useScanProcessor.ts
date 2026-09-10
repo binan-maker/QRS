@@ -26,7 +26,6 @@ import {
   ANON_CONVERSION_MILESTONES,
   ANON_CONVERSION_MESSAGES,
 } from "@/features/scanner/utils/anon-scan-limit";
-import { runSecurityCheck } from "@/features/scanner/utils/security-analysis";
 import { decodeQrFromImageUri } from "@/features/scanner/utils/qr-decode";
 import { appendToLocalScanHistory, makeScanEntry } from "@/features/scanner/utils/scan-history";
 import { emitScanEvent } from "@/services/scan-history";
@@ -146,17 +145,7 @@ export function useScanProcessor({
 
     setProcessing(false);
 
-    if (contentType === "url") {
-      const check = runSecurityCheck(content);
-      if (check.hasThreat) {
-        modalControls.openSafetyModal(qrId);
-        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
-        emitScanEvent(qrId, { platform: PLATFORM, contentType, verdict: "flagged", scanSource });
-        return;
-      }
-    }
-
-    emitScanEvent(qrId, { platform: PLATFORM, contentType, verdict: "safe", scanSource });
+    emitScanEvent(qrId, { platform: PLATFORM, contentType, verdict: "unknown", scanSource });
     await navigateToQrDetail(qrId, content, contentType);
   }
 
@@ -194,18 +183,7 @@ export function useScanProcessor({
         setConversionBannerMsg(ANON_CONVERSION_MESSAGES[slot.totalCount] ?? null);
       }
 
-      if (contentType === "url") {
-        const check = runSecurityCheck(content);
-        if (check.hasThreat) {
-          modalControls.openSafetyModal(qrId);
-          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
-          // Record event even for anonymous flagged scans — no PII stored
-          emitScanEvent(qrId, { platform: PLATFORM, contentType, verdict: "flagged", scanSource: "camera" });
-          return;
-        }
-      }
-
-      emitScanEvent(qrId, { platform: PLATFORM, contentType, verdict: "safe", scanSource: "camera" });
+      emitScanEvent(qrId, { platform: PLATFORM, contentType, verdict: "unknown", scanSource: "camera" });
       await navigateToQrDetail(qrId, content, contentType);
     } catch (e: any) {
       setProcessing(false);
@@ -304,18 +282,8 @@ export function useScanProcessor({
 
       setProcessing(false);
 
-      if (contentType === "url") {
-        const check = runSecurityCheck(content);
-        if (check.hasThreat) {
-          modalControls.openSafetyModal(qrId);
-          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
-          _backgroundSync(content, qrId, contentType, scanSource, "flagged");
-          return;
-        }
-      }
-
       navigateToQrDetail(qrId, content, contentType);
-      _backgroundSync(content, qrId, contentType, scanSource, "safe");
+      _backgroundSync(content, qrId, contentType, scanSource, "unknown");
     } catch {
       await processOfflineScan(content, scanSource);
     }

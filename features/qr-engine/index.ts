@@ -70,8 +70,6 @@ export {
   trustLevelColor,
   trustLevelLabel,
   trustLevelIcon,
-  detectPhishingPattern,
-  analyzeUrl,
 } from "./trust";
 
 // ── Analytics ─────────────────────────────────────────────────────────────────

@@ -8,8 +8,3 @@ export { useQrFavorite } from "./useQrFavorite";
 export { useQrFollow } from "./useQrFollow";
 export { useQrOwner } from "./useQrOwner";
 export { useQrReports } from "./useQrReports";
-export {
-  useQrSafety,
-  computeInstantVerdict,
-} from "./useQrSafety";
-export type { VerdictLevel, InstantVerdict } from "./useQrSafety";

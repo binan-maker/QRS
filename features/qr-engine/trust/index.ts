@@ -9,5 +9,3 @@
  */
 
 export { computeTrustScore, scoreToLevel, trustLevelColor, trustLevelLabel, trustLevelIcon } from "./trust-scorer";
-export { detectPhishingPattern } from "./phishing-detector";
-export { analyzeUrl } from "./url-analyzer";

@@ -28,12 +28,6 @@ import ImageCropModal from "@/features/profile/components/ImageCropModal";
 import GuestView from "@/features/profile/components/GuestView";
 import NotificationsModal from "@/shared/components/notifications/NotificationsModal";
 import { styles } from "@/features/profile/styles";
-import { useStartupScreenPreference } from "@/features/settings/hooks/useStartupScreenPreference";
-
-const STARTUP_SCREEN_OPTIONS = [
-  { key: "home" as const, label: "Home", icon: "home-outline" as const },
-  { key: "scanner" as const, label: "Scanner", icon: "scan-outline" as const },
-];
 
 // ── Module-level animation presets (created once, not per render) ──────────────
 const ENTER_TOP_BAR      = FadeInDown.delay(0).duration(260);
@@ -61,7 +55,6 @@ function ProfileScreen() {
     handlePickPhoto, handleRemovePhoto, handleSignOut,
   } = useProfile();
   const { cachedUrl: photoURL } = useAvatar();
-  const { startupScreen, setStartupScreen } = useStartupScreenPreference();
   const {
     notifCount, notifOpen, setNotifOpen,
     notifications, markingRead,
@@ -259,41 +252,6 @@ function ProfileScreen() {
             </View>
             <Ionicons name="chevron-forward" size={16} color={colors.textMuted} />
           </Pressable>
-        </View>
-
-        {/* ── PREFERENCES ────────────────────────────────────────── */}
-        <View style={styles.profileSection}>
-          <View style={[styles.preferenceCard, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
-            <Text style={[styles.preferenceLabel, { color: colors.textSecondary }]}>App opens on</Text>
-            <View style={styles.preferenceRow}>
-              {STARTUP_SCREEN_OPTIONS.map((option) => {
-                const isActive = startupScreen === option.key;
-                return (
-                  <Pressable
-                    key={option.key}
-                    onPress={() => setStartupScreen(option.key)}
-                    accessibilityRole="button"
-                    accessibilityLabel={`Open on ${option.label}`}
-                    accessibilityState={{ selected: isActive }}
-                    style={({ pressed }) => [
-                      styles.preferenceOption,
-                      {
-                        backgroundColor: isActive ? colors.primaryDim : colors.surfaceLight,
-                        borderColor: isActive ? colors.primary : colors.surfaceBorder,
-                        opacity: pressed ? 0.8 : 1,
-                      },
-                    ]}
-                  >
-                    <Ionicons name={option.icon} size={18} color={isActive ? colors.primary : colors.textMuted} />
-                    <Text style={[styles.preferenceOptionText, { color: isActive ? colors.primary : colors.textMuted }]}>
-                      {option.label}
-                    </Text>
-                    {isActive && <View style={[styles.preferenceActiveIndicator, { backgroundColor: colors.primary }]} />}
-                  </Pressable>
-                );
-              })}
-            </View>
-          </View>
         </View>
 
         {/* ── SIGN OUT ──────────────────────────────────────────── */}

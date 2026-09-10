@@ -5,7 +5,6 @@ import { smartOpenContent } from "@/shared/utils/smart-open";
 import { useAuth } from "@/shared/contexts/AuthContext";
 import { useTheme } from "@/shared/contexts/ThemeContext";
 import { useQrData, type QrDetail } from "./useQrData";
-import { useQrSafety } from "./useQrSafety";
 import { useQrReports } from "./useQrReports";
 import { useQrFollow } from "./useQrFollow";
 import { useQrFavorite } from "./useQrFavorite";
@@ -13,6 +12,7 @@ import { useQrComments, type CommentItem } from "./useQrComments";
 import { useQrOwner } from "./useQrOwner";
 import { useCreatorFollow } from "./useCreatorFollow";
 import type { AppColors } from "@/shared/constants/colors";
+import { parseAnyPaymentQr } from "@/services/analysis";
 
 export type { QrDetail, CommentItem };
 
@@ -54,7 +54,18 @@ export function useQrDetail(id: string, hint?: { content: string; contentType: s
   const creatorId = data.ownerInfo?.ownerId ?? null;
   const creatorName = data.ownerInfo?.businessName || data.ownerInfo?.ownerName || null;
 
-  const safety = useQrSafety(content, contentType);
+  const parsedPayment = useMemo(
+    () =>
+      content &&
+      (contentType === "payment" ||
+        contentType === "upi" ||
+        contentType === "paymentlink" ||
+        contentType === "scantopay" ||
+        contentType === "bharatqr")
+        ? parseAnyPaymentQr(content)
+        : null,
+    [content, contentType],
+  );
   const reports = useQrReports(id, userId, data.offlineMode, data.isQrOwner);
   const follow = useQrFollow(id, userId, user?.displayName ?? null);
   const creatorFollow = useCreatorFollow(creatorId, userId, user?.displayName ?? null, creatorName);
@@ -64,8 +75,7 @@ export function useQrDetail(id: string, hint?: { content: string; contentType: s
   const initialDataReady =
     !data.loading &&
     (data.offlineMode || data.ownerDataReady) &&
-    reports.reportsReady &&
-    safety.analysisReady;
+    reports.reportsReady;
 
   // ── Trust / verdict ──────────────────────────────────────────────────────────
   // Memoized so child components receiving these as props don't re-render
@@ -95,21 +105,9 @@ export function useQrDetail(id: string, hint?: { content: string; contentType: s
   }, [reports.trustScore, reports.reportCounts, colors]);
 
   const combinedVerdict = useMemo(() => {
-    const { offlineBlacklistMatch, paymentSafety, urlSafety, instantVerdict } = safety;
     const trust = trustInfo;
-    const isQrGuardVerified =
-      data.isQrOwner === true ||
-      data.ownerInfo?.isBranded === true ||
-      (data.qrCode as any)?.isBranded === true;
-
-    if (offlineBlacklistMatch.matched) {
-      return { level: "caution" as const, label: "CAUTION ADVISED", reason: offlineBlacklistMatch.reason ?? "Potential scam pattern detected", color: colors.warning };
-    }
 
     if (data.isQrOwner === true) {
-      if (paymentSafety?.isSuspicious || urlSafety?.isSuspicious) {
-        return { level: "caution" as const, label: "CAUTION", reason: "Local analysis detected a potential risk in this QR", color: colors.warning };
-      }
       return { level: "safe" as const, label: "YOUR QR", reason: "You created this QR code", color: colors.safe };
     }
 
@@ -117,13 +115,7 @@ export function useQrDetail(id: string, hint?: { content: string; contentType: s
 
     if (isCommunityAvailable) {
       if (trust.label === "Trusted" || trust.label === "Likely Safe") {
-        if (paymentSafety?.isSuspicious || urlSafety?.isSuspicious) {
-          return { level: "caution" as const, label: "CAUTION", reason: "Community trusts it, but local analysis found risks", color: colors.warning };
-        }
-        if (isQrGuardVerified) {
-          return { level: "safe" as const, label: "SAFE", reason: `${Math.round(trust.score)}% community trust · BinRo Verified`, color: colors.safe };
-        }
-        return { level: "caution" as const, label: "UNVERIFIED QR", reason: `${Math.round(trust.score)}% community trust · Owner not verified by BinRo`, color: colors.warning };
+        return { level: "safe" as const, label: "COMMUNITY TRUSTED", reason: `${Math.round(trust.score)}% community trust`, color: colors.safe };
       }
       if (trust.label === "Caution" || trust.label === "Uncertain") {
         return { level: "caution" as const, label: "CAUTION", reason: "Mixed community reports", color: colors.warning };
@@ -133,25 +125,10 @@ export function useQrDetail(id: string, hint?: { content: string; contentType: s
       }
     }
 
-    if (instantVerdict.level === "dangerous") {
-      return { level: "caution" as const, label: "CAUTION ADVISED", reason: instantVerdict.reason ?? "Review recommended", color: colors.warning };
-    }
-    if (instantVerdict.level === "caution") {
-      return { level: "caution" as const, label: "CAUTION", reason: instantVerdict.reason ?? "Proceed carefully", color: colors.warning };
-    }
-    if (!isQrGuardVerified) {
-      return { level: "caution" as const, label: "UNVERIFIED QR", reason: "Unverified source · Proceed with caution", color: colors.warning };
-    }
-    return { level: "safe" as const, label: "SAFE", reason: "No threats detected", color: colors.safe };
+    return { level: "caution" as const, label: "UNRATED", reason: "No community ratings yet", color: colors.textMuted };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
-    safety.offlineBlacklistMatch,
-    safety.paymentSafety,
-    safety.urlSafety,
-    safety.instantVerdict,
     data.isQrOwner,
-    data.ownerInfo,
-    data.qrCode,
     trustInfo,
     colors,
   ]);
@@ -174,7 +151,6 @@ export function useQrDetail(id: string, hint?: { content: string; contentType: s
     ) {
       // Copy UPI ID / payment link to clipboard instead of deep-linking into payment apps,
       // which causes broken redirects across GPay, PhonePe, Paytm, BHIM etc.
-      const { parsedPayment } = safety;
       const copyValue =
         parsedPayment?.vpa ||
         (parsedPayment?.recipientId?.includes("@") ? parsedPayment.recipientId : null) ||
@@ -187,7 +163,7 @@ export function useQrDetail(id: string, hint?: { content: string; contentType: s
       return;
     }
     await smartOpenContent(content, contentType, data.qrCode?.templateKey ?? undefined);
-  }, [content, contentType, safety.parsedPayment, data.qrCode?.templateKey]);
+  }, [content, contentType, parsedPayment, data.qrCode?.templateKey]);
 
   const handleCopyContent = useCallback(async () => {
     if (!content) return;
@@ -215,7 +191,7 @@ export function useQrDetail(id: string, hint?: { content: string; contentType: s
   return {
     user,
     ...data,
-    ...safety,
+    parsedPayment,
     ...reports,
     ...follow,
     ...creatorFollow,

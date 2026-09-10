@@ -24,7 +24,6 @@ import { ContentCard } from "@/features/qr-engine/content-cards";
 import TrustScoreCard from "@/features/qr-detail/components/TrustScoreCard";
 import EarlyCommunityCard from "@/features/qr-detail/components/EarlyCommunityCard";
 import OwnerCard from "@/features/qr-detail/components/OwnerCard";
-import SafetyWarningCard from "@/features/qr-detail/components/SafetyWarningCard";
 import ReportGrid from "@/features/qr-detail/components/ReportGrid";
 import FollowersModal from "@/features/qr-detail/components/modals/FollowersModal";
 import MessagesModal from "@/features/qr-detail/components/modals/MessagesModal";
@@ -94,33 +93,6 @@ interface Props {
   hint?: { content: string; contentType: string };
 }
 
-// ─── Compact safety badge shown below content card ────────────────────────────
-function SafetyBadge({ verdict }: { verdict: { level: string; label: string } | null }) {
-  const { colors, isDark } = useTheme();
-  if (!verdict || verdict.level !== "dangerous") return null;
-
-  // Only "dangerous" reaches here (guarded by the early return above).
-  const cfg = {
-    dangerous: { icon: "alert-circle" as const, color: "#EF4444", bg: isDark ? "#3B0A0A" : "#FEF2F2", border: "#EF444440" },
-  }[verdict.level] ?? { icon: "information-circle-outline" as const, color: colors.textMuted, bg: colors.surface, border: colors.surfaceBorder };
-
-  return (
-    <View style={[safetyBadgeStyles.row, { backgroundColor: cfg.bg, borderColor: cfg.border }]}>
-      <Ionicons name={cfg.icon} size={13} color={cfg.color} />
-      <Text style={[safetyBadgeStyles.text, { color: cfg.color }]}>{verdict.label}</Text>
-    </View>
-  );
-}
-const safetyBadgeStyles = StyleSheet.create({
-  row: {
-    flexDirection: "row", alignItems: "center", gap: 6,
-    marginBottom: 8,
-    paddingHorizontal: 12, paddingVertical: 7,
-    borderRadius: 10, borderWidth: 1,
-  },
-  text: { fontSize: 12, fontFamily: "Inter_600SemiBold", flex: 1 },
-});
-
 export default function StaticQrDetailScreen({ id, hint }: Props) {
   const { user } = useAuth();
   const { colors, isDark } = useTheme();
@@ -179,7 +151,6 @@ export default function StaticQrDetailScreen({ id, hint }: Props) {
   // trustInfo and combinedVerdict are pre-memoized in useQrDetail — calling the
   // function wrappers is free (they just return the cached value).
   const trust     = q.trustInfo;
-  const verdict   = q.combinedVerdict;
   const isQrOwner = !!(user?.id && q.ownerInfo?.ownerId && user.id === q.ownerInfo.ownerId);
 
   const content     = q.qrCode?.content || q.offlineContent || "";
@@ -187,19 +158,6 @@ export default function StaticQrDetailScreen({ id, hint }: Props) {
 
   const isDeactivated   = q.ownerInfo?.isActive === false || q.qrCode?.isActive === false;
   const deactivationMsg = q.ownerInfo?.deactivationMessage || q.qrCode?.deactivationMessage || null;
-
-  // Only show safety warnings for genuinely dangerous content
-  const showUrlDangerWarning =
-    contentType === "url" &&
-    q.urlSafety?.isSuspicious &&
-    q.urlSafety.riskLevel === "dangerous";
-
-  const showPaymentDangerWarning =
-    contentType === "payment" &&
-    q.paymentSafety?.isSuspicious &&
-    q.paymentSafety.riskLevel === "dangerous";
-
-  const showBlacklistWarning = q.offlineBlacklistMatch.matched;
 
   const handleCreatorFollowPress = useCallback(() => {
     if (!user) { router.push("/(auth)/login"); return; }
@@ -388,52 +346,6 @@ export default function StaticQrDetailScreen({ id, hint }: Props) {
                 templateKey={(q.qrCode as any)?.templateKey}
               />
             </View>
-
-            {/* ── Safety badge (compact — only for genuine threats, not generic "unverified" noise) ─── */}
-            {q.initialDataReady && verdict && verdict.level !== "safe" && verdict.label !== "UNVERIFIED QR" && (
-              <View>
-                <SafetyBadge verdict={verdict} />
-              </View>
-            )}
-
-            {/* ── Dangerous URL warning (only for dangerous, not caution) ── */}
-            {q.initialDataReady && user && showUrlDangerWarning && (
-              <View>
-                <SafetyWarningCard
-                  riskLevel="dangerous"
-                  warnings={q.urlSafety!.warnings}
-                  title="Dangerous URL Detected"
-                />
-              </View>
-            )}
-
-            {/* ── Known blacklisted content ─────────────────────── */}
-            {q.initialDataReady && showBlacklistWarning && (
-              <View>
-                <SafetyWarningCard
-                  riskLevel="dangerous"
-                  warnings={[`Known scam pattern: ${q.offlineBlacklistMatch.reason}`]}
-                  title="Known Scam Pattern"
-                />
-              </View>
-            )}
-
-            {/* ── Dangerous payment warning ────────────────────── */}
-            {q.initialDataReady && showPaymentDangerWarning && (() => {
-              const warnings = (q.paymentSafety?.warnings ?? []).filter(
-                (w) => !w.toLowerCase().startsWith("pre-filled amount")
-              );
-              if (!warnings.length) return null;
-              return (
-                <View>
-                  <SafetyWarningCard
-                    riskLevel="dangerous"
-                    warnings={warnings}
-                    title="Payment Security Warning"
-                  />
-                </View>
-              );
-            })()}
 
             {/* ── Trust score ──────────────────────────────────── */}
             {q.initialDataReady && !q.offlineMode && (

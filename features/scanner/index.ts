@@ -17,4 +17,3 @@ export { useOverlayAnimations } from "./hooks/useOverlayAnimations";
 
 // Utils
 export { consumeAnonScanSlot, ANON_DAILY_SCAN_LIMIT, ANON_CONVERSION_MILESTONES } from "./utils/anon-scan-limit";
-export { runSecurityCheck }     from "./utils/security-analysis";
