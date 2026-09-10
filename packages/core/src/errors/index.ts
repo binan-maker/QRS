@@ -113,13 +113,6 @@ export class UsernameTakenError extends DomainError {
   }
 }
 
-export class SelfFollowError extends DomainError {
-  readonly code = "SELF_FOLLOW";
-  constructor() {
-    super("You cannot follow yourself");
-  }
-}
-
 // ─── Infrastructure ───────────────────────────────────────────────────────────
 
 export class ServiceUnavailableError extends DomainError {

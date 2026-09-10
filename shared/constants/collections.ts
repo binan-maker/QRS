@@ -14,7 +14,7 @@ export const COLLECTIONS = {
   USERS: "users",
   /**
    * Public-safe subset of user profiles for community reads (comment authors,
-   * follower lists, creator cards). Excludes email, push_token, consent, etc.
+    * creator cards). Excludes email, push_token, consent, etc.
    * Use this whenever reading another user's data; use USERS only for the
    * currently-authenticated user's own row.
    */

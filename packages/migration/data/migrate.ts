@@ -192,9 +192,9 @@ async function migrateUsers() {
       await q(
         `INSERT INTO users (
            id, firebase_uid, email, email_verified, display_name, photo_url,
-           username, scan_count, comment_count, following_count,
+           username, scan_count, comment_count,
            total_likes_received, push_token, consent, created_at, updated_at
-         ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15)
+         ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14)
          ON CONFLICT (id) DO UPDATE SET
            firebase_uid = EXCLUDED.firebase_uid,
            email_verified = EXCLUDED.email_verified,
@@ -213,7 +213,6 @@ async function migrateUsers() {
           strN(u.username),
           num(u.scanCount),
           num(u.commentCount),
-          num(u.followingCount ?? u.creatorFollowingCount),
           num(u.totalLikesReceived),
           strN(u.pushToken ?? u.fcmToken),
           jsonN(u.consent),
@@ -493,69 +492,7 @@ async function migrateStandardLinks() {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// STEP 6 — creator follows
-// ═══════════════════════════════════════════════════════════════════════════════
-
-async function migrateCreatorFollows() {
-  console.log("\n📋  Step 6: creatorFollows → creator_follows");
-  const docs = await fetchCollection("creatorFollows").catch(() => {
-    // Alternatively stored as sub-collections: users/{uid}/creatorFollowing
-    return [] as { id: string; data: admin.firestore.DocumentData }[];
-  });
-
-  // Also fetch from sub-collections on users
-  const userSnap = await firestore.collection("users").get();
-  const subDocs: { userId: string; creatorId: string; followedAt: string }[] = [];
-  for (const userDoc of userSnap.docs) {
-    const sub = await firestore.collection("users").doc(userDoc.id).collection("creatorFollowing").get().catch(() => null);
-    if (sub) {
-      sub.docs.forEach((f) => {
-        const supaUserId   = uidMap.get(userDoc.id);
-        const supaCreatorId = uidMap.get(f.id) ?? uidMap.get(str(f.data().creatorId));
-        if (supaUserId && supaCreatorId) {
-          subDocs.push({
-            userId: supaUserId,
-            creatorId: supaCreatorId,
-            followedAt: ts(f.data().followedAt ?? f.data().createdAt) ?? new Date().toISOString(),
-          });
-        }
-      });
-    }
-  }
-
-  console.log(`   Found ${docs.length} top-level + ${subDocs.length} sub-collection entries`);
-  const s = stat("creator_follows");
-
-  for (const { id, data: d } of docs) {
-    try {
-      const userId    = d.userId    ? (uidMap.get(d.userId) ?? null) : null;
-      const creatorId = d.creatorId ? (uidMap.get(d.creatorId) ?? null) : null;
-      if (!userId || !creatorId) { s.skipped++; continue; }
-      await q(
-        `INSERT INTO creator_follows (user_id, creator_id, followed_at)
-         VALUES ($1,$2,$3) ON CONFLICT DO NOTHING`,
-        [userId, creatorId, ts(d.followedAt ?? d.createdAt) ?? new Date().toISOString()]
-      );
-      s.inserted++;
-    } catch (err) { s.errors++; console.error(`   ✗ creatorFollow ${id}: ${(err as Error).message}`); }
-  }
-
-  for (const row of subDocs) {
-    try {
-      await q(
-        `INSERT INTO creator_follows (user_id, creator_id, followed_at)
-         VALUES ($1,$2,$3) ON CONFLICT DO NOTHING`,
-        [row.userId, row.creatorId, row.followedAt]
-      );
-      s.inserted++;
-    } catch (err) { s.errors++; console.error(`   ✗ subCreatorFollow: ${(err as Error).message}`); }
-  }
-
-  console.log(`   ✓ creator_follows: +${s.inserted} inserted, ${s.skipped} skipped, ${s.errors} errors`);
-}
-
-// ═══════════════════════════════════════════════════════════════════════════════
-// STEP 7 — user favorites
+// STEP 6 — user favorites
 // ═══════════════════════════════════════════════════════════════════════════════
 
 async function migrateUserFavorites() {
@@ -1058,18 +995,17 @@ const STEPS: Array<[number, string, () => Promise<void>]> = [
   [ 3,  "qrs → unified_qrs",                  migrateUnifiedQrs        ],
   [ 4,  "guardLinks → guard_links",            migrateGuardLinks        ],
   [ 5,  "standardLinks → standard_links",      migrateStandardLinks     ],
-  [ 6,  "creatorFollows → creator_follows",    migrateCreatorFollows    ],
-  [ 7,  "userFavorites → user_favorites",      migrateUserFavorites     ],
-  [ 8,  "friends → user_friends",              migrateUserFriends       ],
-  [ 9,  "businessAccounts → business_accounts",migrateBusinessAccounts  ],
-  [10,  "donations → donations",               migrateDonations         ],
-  [11,  "comments → qr_comments",              migrateComments          ],
-  [12,  "reports → qr_reports",                migrateQrReports         ],
-  [13,  "auditLogs → audit_logs",              migrateAuditLogs         ],
-  [14,  "moderationQueue → moderation_queue",  migrateModerationQueue   ],
-  [15,  "verificationRequests → verif…",       migrateVerificationRequests],
-  [16,  "featureVotes → feature_votes",        migrateFeatureVotes      ],
-  [17,  "RTDB notifications → notifications",  migrateNotifications     ],
+  [ 6,  "userFavorites → user_favorites",      migrateUserFavorites     ],
+  [ 7,  "friends → user_friends",              migrateUserFriends       ],
+  [ 8,  "businessAccounts → business_accounts",migrateBusinessAccounts  ],
+  [ 9,  "donations → donations",               migrateDonations          ],
+  [10,  "comments → qr_comments",              migrateComments           ],
+  [11,  "reports → qr_reports",                migrateQrReports           ],
+  [12,  "auditLogs → audit_logs",              migrateAuditLogs           ],
+  [13,  "moderationQueue → moderation_queue",  migrateModerationQueue     ],
+  [14,  "verificationRequests → verif…",       migrateVerificationRequests],
+  [15,  "featureVotes → feature_votes",        migrateFeatureVotes        ],
+  [16,  "RTDB notifications → notifications",  migrateNotifications        ],
 ];
 
 async function main() {

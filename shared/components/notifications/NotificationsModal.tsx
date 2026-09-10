@@ -83,7 +83,7 @@ const EmptyNotifications = memo(function EmptyNotifications({ colors }: { colors
       </View>
       <Text style={[styles.emptyTitle, { color: colors.textSecondary }]}>All caught up!</Text>
       <Text style={[styles.emptySub, { color: colors.textMuted }]}>
-        Follow QR codes to get notified when there's new activity
+        Check back for updates from your community activity
       </Text>
     </View>
   );

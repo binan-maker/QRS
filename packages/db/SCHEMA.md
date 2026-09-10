@@ -52,7 +52,6 @@ Primary user table. `firebase_uid` stores the original Firestore doc ID for migr
 | `deleted_at` | timestamptz | |
 | `scan_count` | integer | Denormalized counter |
 | `comment_count` | integer | Denormalized counter |
-| `following_count` | integer | Denormalized counter |
 | `total_likes_received` | integer | Denormalized counter |
 | `friends_count` | integer | Denormalized counter |
 | `is_online` | boolean | Presence |
@@ -279,9 +278,6 @@ UNIQUE constraints: `(qr_code_id, user_id)` and `(unified_qr_id, user_id)`.
 
 ---
 
-### `qr_followers`
-`qrCodes/{id}/followers` + `users/{uid}/following`. UNIQUE per (qr, user) pair.
-
 ### `user_favorites`
 `users/{uid}/favorites`. UNIQUE per (user, qr) pair.
 
@@ -291,9 +287,6 @@ UNIQUE constraints: `(qr_code_id, user_id)` and `(unified_qr_id, user_id)`.
 ### `user_friends`
 `users/{uid}/friends`. Stored directionally; app writes the inverse row too.  
 Composite PK `(user_id, friend_id)`.
-
-### `creator_follows`
-`users/{uid}/creatorFollowing`. Composite PK `(user_id, creator_id)`.
 
 ---
 
@@ -363,8 +356,6 @@ Firestore `businessAccounts/{uid}`. One row per business user, UNIQUE on `user_i
 | `usernames/{username}` | `usernames` |
 | `users/{uid}/scans/{id}` | `qr_scans` |
 | `users/{uid}/generatedQrs/{id}` | `user_generated_qrs` |
-| `users/{uid}/following/{qrId}` | `qr_followers` |
-| `users/{uid}/creatorFollowing/{id}` | `creator_follows` |
 | `users/{uid}/friends/{friendId}` | `user_friends` |
 | `users/{uid}/favorites/{qrId}` | `user_favorites` |
 | `qrCodes/{id}` | `qr_codes` |
@@ -373,7 +364,6 @@ Firestore `businessAccounts/{uid}`. One row per business user, UNIQUE on `user_i
 | `qrCodes/{id}/comments/{id}/likes/{uid}` | `comment_likes` |
 | `qrCodes/{id}/comments/{id}/reports/{uid}` | `comment_reports` |
 | `qrCodes/{id}/reports/{userId}` | `qr_reports` |
-| `qrCodes/{id}/followers/{userId}` | `qr_followers` |
 | `qrs/{uuid}` | `unified_qrs` |
 | `guardLinks/{uuid}` | `guard_links` |
 | `guardLinks/{uuid}.changeLog[]` | `guard_link_changes` |
@@ -396,7 +386,7 @@ Two QR models exist and must both be handled during data migration:
 - **Legacy**: `qr_codes`, `guard_links`, `standard_links` (Firestore `qrCodes/`, `guardLinks/`, `standardLinks/`)
 - **New (unified)**: `unified_qrs` (Firestore `qrs/`)
 
-Tables that can reference either model (`qr_scans`, `qr_comments`, `qr_reports`, `qr_followers`, `user_favorites`, `user_generated_qrs`) have two nullable FK columns — exactly one is set per row.
+Tables that can reference either model (`qr_scans`, `qr_comments`, `qr_reports`, `user_favorites`, `user_generated_qrs`) have two nullable FK columns — exactly one is set per row.
 
 ### Firebase UID preservation
 `users.firebase_uid` and `qr_codes.firebase_id` store original Firestore document IDs. This allows the data migration script to JOIN on these columns to resolve FK references during bulk import.

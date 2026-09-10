@@ -4,7 +4,7 @@
 --
 -- Design:
 --   • `users` table: authenticated users can SELECT their own row only.
---     Community profile reads (comments, follower lists, etc.) go through
+ --     Community profile reads go through
 --     the `public_profiles` view which exposes only non-sensitive columns.
 --   • All other tables follow least-privilege: own-row or authenticated-read
 --     depending on whether the data is inherently social.
@@ -27,8 +27,6 @@ ALTER TABLE public.qr_comments          ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.comment_likes        ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.comment_reports      ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.qr_reports           ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.qr_followers         ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.creator_follows      ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.user_favorites       ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.user_generated_qrs   ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.notifications        ENABLE ROW LEVEL SECURITY;
@@ -53,7 +51,6 @@ SELECT
   photo_url,
   scan_count,
   comment_count,
-  following_count,
   total_likes_received,
   friends_count,
   is_online,
@@ -253,32 +250,6 @@ CREATE POLICY "qr_reports: read own"
 CREATE POLICY "qr_reports: insert own"
   ON public.qr_reports FOR INSERT TO authenticated
   WITH CHECK (auth.uid()::text = user_id);
-
--- ─── qr_followers ─────────────────────────────────────────────────────────────
-
-CREATE POLICY "qr_followers: authenticated can read all"
-  ON public.qr_followers FOR SELECT TO authenticated USING (true);
-
-CREATE POLICY "qr_followers: insert own"
-  ON public.qr_followers FOR INSERT TO authenticated
-  WITH CHECK (auth.uid()::text = user_id);
-
-CREATE POLICY "qr_followers: delete own"
-  ON public.qr_followers FOR DELETE TO authenticated
-  USING (auth.uid()::text = user_id);
-
--- ─── creator_follows ─────────────────────────────────────────────────────────
-
-CREATE POLICY "creator_follows: authenticated can read all"
-  ON public.creator_follows FOR SELECT TO authenticated USING (true);
-
-CREATE POLICY "creator_follows: insert own"
-  ON public.creator_follows FOR INSERT TO authenticated
-  WITH CHECK (auth.uid()::text = user_id);
-
-CREATE POLICY "creator_follows: delete own"
-  ON public.creator_follows FOR DELETE TO authenticated
-  USING (auth.uid()::text = user_id);
 
 -- ─── user_favorites ───────────────────────────────────────────────────────────
 

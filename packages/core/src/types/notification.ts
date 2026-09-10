@@ -2,7 +2,6 @@
 
 export type NotificationType =
   | "mention"
-  | "follow"
   | "report"
   | "system"
   | "trust_update";

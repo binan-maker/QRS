@@ -34,7 +34,6 @@ export const users = pgTable(
     // Denormalized counters
     scanCount: integer("scan_count").notNull().default(0),
     commentCount: integer("comment_count").notNull().default(0),
-    followingCount: integer("following_count").notNull().default(0),
     totalLikesReceived: integer("total_likes_received").notNull().default(0),
     // Presence
     isOnline: boolean("is_online").notNull().default(false),

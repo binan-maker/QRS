@@ -309,40 +309,7 @@ CREATE TRIGGER trg_comment_likes_decrement
   AFTER DELETE ON public.comment_likes
   FOR EACH ROW EXECUTE FUNCTION public.decrement_like_count();
 
--- ─── 8. creator_follows counter on users ─────────────────────────────────────
-
-CREATE OR REPLACE FUNCTION public.increment_following_count()
-RETURNS TRIGGER LANGUAGE plpgsql SECURITY DEFINER AS $$
-BEGIN
-  UPDATE public.users
-  SET following_count = following_count + 1, updated_at = NOW()
-  WHERE id = NEW.user_id;
-  RETURN NEW;
-END;
-$$;
-
-CREATE OR REPLACE FUNCTION public.decrement_following_count()
-RETURNS TRIGGER LANGUAGE plpgsql SECURITY DEFINER AS $$
-BEGIN
-  UPDATE public.users
-  SET following_count = GREATEST(0, following_count - 1), updated_at = NOW()
-  WHERE id = OLD.user_id;
-  RETURN OLD;
-END;
-$$;
-
-DROP TRIGGER IF EXISTS trg_creator_follows_increment ON public.creator_follows;
-DROP TRIGGER IF EXISTS trg_creator_follows_decrement ON public.creator_follows;
-
-CREATE TRIGGER trg_creator_follows_increment
-  AFTER INSERT ON public.creator_follows
-  FOR EACH ROW EXECUTE FUNCTION public.increment_following_count();
-
-CREATE TRIGGER trg_creator_follows_decrement
-  AFTER DELETE ON public.creator_follows
-  FOR EACH ROW EXECUTE FUNCTION public.decrement_following_count();
-
--- ─── 9. friends_count counter on users ───────────────────────────────────────
+-- ─── 8. friends_count counter on users ───────────────────────────────────────
 
 CREATE OR REPLACE FUNCTION public.update_friends_count()
 RETURNS TRIGGER LANGUAGE plpgsql SECURITY DEFINER AS $$
@@ -416,7 +383,7 @@ BEGIN
     SELECT COUNT(*) FROM public.comment_likes WHERE comment_id = c.id
   );
 
-  -- scan_count, comment_count, following_count, friends_count on users
+  -- scan_count, comment_count, friends_count on users
   UPDATE public.users u
   SET
     scan_count = (
@@ -424,9 +391,6 @@ BEGIN
     ),
     comment_count = (
       SELECT COUNT(*) FROM public.qr_comments WHERE user_id = u.id AND is_deleted = FALSE
-    ),
-    following_count = (
-      SELECT COUNT(*) FROM public.creator_follows WHERE user_id = u.id
     ),
     friends_count = (
       SELECT COUNT(*) FROM public.user_friends WHERE user_id = u.id AND status = 'friends'

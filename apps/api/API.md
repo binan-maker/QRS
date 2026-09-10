@@ -105,7 +105,6 @@ Own full profile. **Auth required.**
     "username": "ravikumar",
     "scanCount": 42,
     "commentCount": 7,
-    "followingCount": 3,
     "totalLikesReceived": 15,
     "friendsCount": 5,
     "isOnline": true,
@@ -432,32 +431,6 @@ Toggle like on a comment. **Auth required.**
 
 ---
 
-## Follows
-
-### `POST /api/v1/follows/qr/:qrId`
-Follow a QR. **Auth required.**
-
-### `DELETE /api/v1/follows/qr/:qrId`
-Unfollow a QR. **Auth required.**
-
-### `GET /api/v1/follows/qr/:qrId`
-Check if the authenticated user follows a QR. **Auth required.**
-
-**Response:** `{ "data": { "following": true, "qrId": "abc" } }`
-
----
-
-### `POST /api/v1/follows/users/:userId`
-Follow a creator. **Auth required.** Returns `400 SELF_FOLLOW` if userId === own uid.
-
-### `DELETE /api/v1/follows/users/:userId`
-Unfollow a creator. **Auth required.**
-
-### `GET /api/v1/follows/users/:userId`
-Check if the authenticated user follows a creator. **Auth required.**
-
----
-
 ## Friends
 
 ### `GET /api/v1/friends`
@@ -541,7 +514,6 @@ Send an Expo push notification. Internal (no rate limit enforcement — call onl
 | `COMMENT_NOT_FOUND` | 404 | Comment does not exist |
 | `REQUEST_NOT_FOUND` | 404 | Friend request not found |
 | `NOT_DYNAMIC` | 400 | Attempted destination change on a static QR |
-| `SELF_FOLLOW` | 400 | Attempted to follow yourself |
 | `SELF_FRIEND` | 400 | Attempted to friend yourself |
 | `ALREADY_FRIENDS` | 409 | Already friends |
 | `REQUEST_PENDING` | 409 | Friend request already sent |

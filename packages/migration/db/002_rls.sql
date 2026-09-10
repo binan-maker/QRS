@@ -32,11 +32,9 @@ ALTER TABLE public.qr_comments           ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.comment_likes         ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.comment_reports       ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.qr_reports            ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.qr_followers          ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.user_favorites        ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.user_generated_qrs    ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.user_friends          ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.creator_follows       ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.notifications         ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.business_accounts     ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.categories            ENABLE ROW LEVEL SECURITY;
@@ -321,21 +319,6 @@ CREATE POLICY "qr_reports: owner can update own (withdraw report)"
   WITH CHECK (auth.uid()::text = user_id);
 
 -- ═══════════════════════════════════════════════════════════════════════════════
--- qr_followers
--- ─────────────────────────────────────────────────────────────────────────────
-
-CREATE POLICY "qr_followers: authenticated can read all"
-  ON public.qr_followers FOR SELECT TO authenticated
-  USING (true);
-
-CREATE POLICY "qr_followers: owner can insert"
-  ON public.qr_followers FOR INSERT TO authenticated
-  WITH CHECK (auth.uid()::text = user_id);
-
-CREATE POLICY "qr_followers: owner can delete"
-  ON public.qr_followers FOR DELETE TO authenticated
-  USING (auth.uid()::text = user_id);
-
 -- ═══════════════════════════════════════════════════════════════════════════════
 -- user_favorites
 -- ─────────────────────────────────────────────────────────────────────────────
@@ -397,21 +380,6 @@ CREATE POLICY "user_friends: owner can delete"
   USING (auth.uid()::text = user_id);
 
 -- ═══════════════════════════════════════════════════════════════════════════════
--- creator_follows
--- ─────────────────────────────────────────────────────────────────────────────
-
-CREATE POLICY "creator_follows: authenticated can read all"
-  ON public.creator_follows FOR SELECT TO authenticated
-  USING (true);
-
-CREATE POLICY "creator_follows: owner can insert"
-  ON public.creator_follows FOR INSERT TO authenticated
-  WITH CHECK (auth.uid()::text = user_id);
-
-CREATE POLICY "creator_follows: owner can delete"
-  ON public.creator_follows FOR DELETE TO authenticated
-  USING (auth.uid()::text = user_id);
-
 -- ═══════════════════════════════════════════════════════════════════════════════
 -- notifications
 -- ─────────────────────────────────────────────────────────────────────────────

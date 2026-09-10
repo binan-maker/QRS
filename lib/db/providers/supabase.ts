@@ -92,8 +92,6 @@ const COLLECTION_TABLE: Record<string, string> = {
   moderationQueue: "moderation_queue",
   featureVotes: "feature_votes",
   reportLog: "report_log",
-  followerCount: "users",
-  followingCount: "users",
   personalScanCount: "users",
   auditLogs: "audit_logs",
   comments: "qr_comments",

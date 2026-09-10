@@ -151,7 +151,6 @@ export type NotificationType =
   | "owner_comment"
   | "comment_reply"
   | "mention"
-  | "new_follow"
   | "qr_scan"
   | "qr_report"
   | "system"

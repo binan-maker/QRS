@@ -57,17 +57,16 @@ The script is also idempotent — existing rows are skipped on conflict.
 4. `qrs` → `unified_qrs`
 5. `guardLinks` → `guard_links` + `guard_link_changes`
 6. `standardLinks` → `standard_links`
-7. `creatorFollows` → `creator_follows`
-8. `userFavorites` → `user_favorites`
-9. `businessAccounts` → `business_accounts`
-10. `donations` → `donations`
-11. `qrCodes/*/comments` → `qr_comments`
-12. `qrCodes/*/reports` → `qr_reports`
-13. `auditLogs` → `audit_logs`
-14. `moderationQueue` → `moderation_queue`
-15. `verificationRequests` → `verification_requests`
-16. `featureVotes` → `feature_votes`
-17. RTDB `notifications` → `notifications`
+7. `userFavorites` → `user_favorites`
+8. `businessAccounts` → `business_accounts`
+9. `donations` → `donations`
+10. `qrCodes/*/comments` → `qr_comments`
+11. `qrCodes/*/reports` → `qr_reports`
+12. `auditLogs` → `audit_logs`
+13. `moderationQueue` → `moderation_queue`
+14. `verificationRequests` → `verification_requests`
+15. `featureVotes` → `feature_votes`
+16. RTDB `notifications` → `notifications`
 
 ## Step 3 — Migrate Storage Files
 
@@ -86,7 +85,6 @@ Moves Firebase Storage avatar and QR logo files into Supabase Storage buckets.
 | `qrCodes/{id}` | `qr_codes` |
 | `qrCodes/{id}/comments/{id}` | `qr_comments` |
 | `qrCodes/{id}/reports/{uid}` | `qr_reports` |
-| `qrCodes/{id}/followers/{uid}` | `qr_followers` |
 | `qrs/{uuid}` | `unified_qrs` |
 | `guardLinks/{uuid}` | `guard_links` |
 | `guardLinks/{uuid}.changeLog[]` | `guard_link_changes` |
@@ -98,7 +96,6 @@ Moves Firebase Storage avatar and QR logo files into Supabase Storage buckets.
 | `featureVotes/{key}` | `feature_votes` |
 | `businessAccounts/{uid}` | `business_accounts` |
 | `users/{uid}/generatedQrs/{id}` | `user_generated_qrs` |
-| `users/{uid}/creatorFollowing/{id}` | `creator_follows` |
 | `users/{uid}/favorites/{qrId}` | `user_favorites` |
 | `users/{uid}/friends/{friendId}` | `user_friends` |
 | RTDB `notifications/{uid}` | `notifications` |

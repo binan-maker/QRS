@@ -1,7 +1,7 @@
 /**
  * @binro/db — QR Codes domain schema
  * Tables: qr_codes (legacy), unified_qrs (new), guard_links, guard_link_changes,
- *         standard_links, user_generated_qrs, qr_followers, user_favorites
+ *         standard_links, user_generated_qrs, user_favorites
  */
 
 import { sql } from "drizzle-orm";
@@ -180,25 +180,6 @@ export const userGeneratedQrs = pgTable(
   },
   (t) => ({
     userIdx: index("user_generated_qrs_user_id_idx").on(t.userId),
-  }),
-);
-
-// ─── QR Followers ─────────────────────────────────────────────────────────────
-
-export const qrFollowers = pgTable(
-  "qr_followers",
-  {
-    qrCodeId: text("qr_code_id").references(() => qrCodes.id, { onDelete: "cascade" }),
-    unifiedQrId: text("unified_qr_id").references(() => unifiedQrs.id, { onDelete: "cascade" }),
-    userId: text("user_id")
-      .notNull()
-      .references(() => users.id, { onDelete: "cascade" }),
-    followedAt: timestamp("followed_at", { withTimezone: true }).notNull().defaultNow(),
-  },
-  (t) => ({
-    legacyPk: uniqueIndex("qr_followers_legacy_uniq").on(t.qrCodeId, t.userId),
-    unifiedPk: uniqueIndex("qr_followers_unified_uniq").on(t.unifiedQrId, t.userId),
-    userIdx: index("qr_followers_user_id_idx").on(t.userId),
   }),
 );
 

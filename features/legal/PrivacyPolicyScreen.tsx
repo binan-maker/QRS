@@ -166,7 +166,7 @@ export default function PrivacyPolicyScreen() {
           <Bullet text="Display QR content and community-driven trust information" colors={colors} />
           <Bullet text="Sync scan history, favourites, and generated QR codes across your devices" colors={colors} />
           <Bullet text="Power community trust scores from aggregated, weighted user reports" colors={colors} />
-          <Bullet text="Send in-app notifications about QR codes you follow or report activity" colors={colors} />
+          <Bullet text="Send in-app notifications about report activity" colors={colors} />
 
           <SubHead text="Community Trust" colors={colors} />
           <Bullet text="Aggregated, anonymised reports and comments help improve community trust scores." colors={colors} />

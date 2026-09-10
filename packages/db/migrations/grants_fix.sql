@@ -45,12 +45,6 @@ GRANT SELECT, INSERT ON public.comment_reports TO authenticated;
 -- ─── qr_reports ──────────────────────────────────────────────────────────────
 GRANT SELECT, INSERT ON public.qr_reports TO authenticated;
 
--- ─── qr_followers ────────────────────────────────────────────────────────────
-GRANT SELECT, INSERT, DELETE ON public.qr_followers TO authenticated;
-
--- ─── creator_follows ─────────────────────────────────────────────────────────
-GRANT SELECT, INSERT, DELETE ON public.creator_follows TO authenticated;
-
 -- ─── user_favorites ──────────────────────────────────────────────────────────
 GRANT SELECT, INSERT, DELETE ON public.user_favorites TO authenticated;
 

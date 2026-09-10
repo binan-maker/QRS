@@ -3,7 +3,7 @@
  * ─────────────────────────────────────────────────────────────────────────────
  * The canonical card component for displaying a QR code in any list or feed.
  * Replaces all ad-hoc card implementations across History, Home, Favorites,
- * Search, and Following screens.
+ * and Search screens.
  *
  * Usage:
  *   <QrCard content={qr.rawContent} contentType={qr.contentType} />

@@ -205,7 +205,6 @@ export default function HowItWorksScreen() {
             <FeatureCard icon="flag-outline" title="Report QR Codes" desc="Help protect the community by submitting trusted reports." />
             <FeatureCard icon="chatbubble-outline" title="Comment" desc="Share your experience and warn others about suspicious codes." />
             <FeatureCard icon="star-outline" title="Favourites" desc="Save QR codes you want to revisit or monitor over time." />
-            <FeatureCard icon="notifications-outline" title="Follow QR Codes" desc="Get notified when a code you follow receives new activity." />
             <FeatureCard icon="qr-code-outline" title="Generate QR Codes" desc="Create branded QR codes with trust built in from the start." />
           </View>
           <Para>By creating an account, you agree that your account data, usage patterns, and community contributions may be used for AI model improvement and advertising purposes as described in our Privacy Policy and Terms of Service.</Para>

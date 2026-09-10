@@ -78,7 +78,6 @@ CREATE TABLE IF NOT EXISTS public.users (
   -- Denormalized counters (maintained by app logic / triggers)
   scan_count               INTEGER     NOT NULL DEFAULT 0,
   comment_count            INTEGER     NOT NULL DEFAULT 0,
-  following_count          INTEGER     NOT NULL DEFAULT 0,
   total_likes_received     INTEGER     NOT NULL DEFAULT 0,
   friends_count            INTEGER     NOT NULL DEFAULT 0,
   -- Presence
@@ -361,20 +360,6 @@ CREATE INDEX IF NOT EXISTS qr_reports_qr_code_id_idx    ON public.qr_reports (qr
 CREATE INDEX IF NOT EXISTS qr_reports_unified_qr_id_idx ON public.qr_reports (unified_qr_id);
 CREATE INDEX IF NOT EXISTS qr_reports_user_id_idx       ON public.qr_reports (user_id);
 
--- ─── qr_followers ────────────────────────────────────────────────────────────
--- Source: qrCodes/{id}/followers/{userId}
-
-CREATE TABLE IF NOT EXISTS public.qr_followers (
-  qr_code_id    TEXT        REFERENCES public.qr_codes (id)    ON DELETE CASCADE,
-  unified_qr_id TEXT        REFERENCES public.unified_qrs (id) ON DELETE CASCADE,
-  user_id       TEXT        NOT NULL REFERENCES public.users (id) ON DELETE CASCADE,
-  followed_at   TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  CONSTRAINT qr_followers_legacy_uniq  UNIQUE (qr_code_id, user_id),
-  CONSTRAINT qr_followers_unified_uniq UNIQUE (unified_qr_id, user_id)
-);
-
-CREATE INDEX IF NOT EXISTS qr_followers_user_id_idx ON public.qr_followers (user_id);
-
 -- ─── user_favorites ───────────────────────────────────────────────────────────
 -- Source: users/{uid}/favorites/{qrId}
 
@@ -417,18 +402,6 @@ CREATE TABLE IF NOT EXISTS public.user_friends (
 
 CREATE INDEX IF NOT EXISTS user_friends_friend_id_idx ON public.user_friends (friend_id);
 CREATE INDEX IF NOT EXISTS user_friends_status_idx    ON public.user_friends (status);
-
--- ─── creator_follows ─────────────────────────────────────────────────────────
--- Source: users/{uid}/creatorFollowing/{creatorId}
-
-CREATE TABLE IF NOT EXISTS public.creator_follows (
-  user_id     TEXT        NOT NULL REFERENCES public.users (id) ON DELETE CASCADE,
-  creator_id  TEXT        NOT NULL REFERENCES public.users (id) ON DELETE CASCADE,
-  followed_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  PRIMARY KEY (user_id, creator_id)
-);
-
-CREATE INDEX IF NOT EXISTS creator_follows_creator_id_idx ON public.creator_follows (creator_id);
 
 -- ─── notifications ────────────────────────────────────────────────────────────
 -- Source: Firebase Realtime Database per-user notification list
@@ -583,8 +556,8 @@ CREATE INDEX IF NOT EXISTS business_accounts_user_id_idx ON public.business_acco
 
 -- ─── public_profiles view ─────────────────────────────────────────────────────
 -- Community-safe subset of `users`. Excludes: email, push_token, consent,
--- firebase_uid, and email_verified. Used by comment threads, follower lists,
--- and creator pages instead of querying users directly.
+-- firebase_uid, and email_verified. Used by comment threads and creator pages
+-- instead of querying users directly.
 
 CREATE OR REPLACE VIEW public.public_profiles AS
 SELECT
@@ -594,7 +567,6 @@ SELECT
   photo_url,
   scan_count,
   comment_count,
-  following_count,
   total_likes_received,
   friends_count,
   is_online,
@@ -618,7 +590,6 @@ GRANT SELECT ON public.public_profiles TO anon;
 --   qrCodes/{id}/comments/{id}/likes   → comment_likes
 --   qrCodes/{id}/comments/{id}/reports → comment_reports
 --   qrCodes/{id}/reports/{userId}      → qr_reports
---   qrCodes/{id}/followers/{userId}    → qr_followers
 --   qrs/{uuid}                         → unified_qrs
 --   guardLinks/{uuid}                  → guard_links
 --   guardLinks/{uuid}.changeLog[]      → guard_link_changes
@@ -632,7 +603,6 @@ GRANT SELECT ON public.public_profiles TO anon;
 --   businessAccounts/{uid}             → business_accounts
 --   users/{uid}/generatedQrs/{id}      → user_generated_qrs
 --   users/{uid}/friends/{friendId}     → user_friends
---   users/{uid}/creatorFollowing/{id}  → creator_follows
 --   users/{uid}/favorites/{qrId}       → user_favorites
 --   RTDB notifications/{uid}           → notifications
 --   RTDB qrScanVelocity                → (not migrated — ephemeral rate-limit)
