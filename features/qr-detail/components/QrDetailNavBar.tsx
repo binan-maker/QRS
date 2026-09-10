@@ -1,26 +1,16 @@
-import { View, Text, Pressable, ActivityIndicator } from "react-native";
+import { View, Text, Pressable } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import Animated, { FadeIn, FadeInDown } from "react-native-reanimated";
 import { useTheme } from "@/shared/contexts/ThemeContext";
 import { makeStyles } from "@/features/qr-detail/styles";
 import { navOfflineStyles } from "@/features/qr-detail/styles";
-import { formatCompactNumber } from "@/shared/utils/formatters";
 interface Props {
   offlineMode: boolean;
   ownerName: string | null;
   hasOwner: boolean;
   isGuardCreatedQr: boolean;
-  isFollowingCreator: boolean;
-  creatorFollowLoading: boolean;
-  creatorFollowerCount: number;
-  isFollowing: boolean;
-  followLoading: boolean;
-  followCount: number;
   isQrOwner: boolean;
   onBack: () => void;
-  onFollowCreator: () => void;
-  onOpenCreatorFollowers: () => void;
-  onWatch: () => void;
   onOverflowOpen: () => void;
   onDonate?: () => void;
 }
@@ -30,17 +20,8 @@ export default function QrDetailNavBar({
   ownerName,
   hasOwner,
   isGuardCreatedQr,
-  isFollowingCreator,
-  creatorFollowLoading,
-  creatorFollowerCount,
-  isFollowing,
-  followLoading,
-  followCount,
   isQrOwner,
   onBack,
-  onFollowCreator,
-  onOpenCreatorFollowers,
-  onWatch,
   onOverflowOpen,
   onDonate,
 }: Props) {
@@ -66,40 +47,6 @@ export default function QrDetailNavBar({
       </View>
 
       <View style={styles.navActions}>
-        {!isQrOwner && isGuardCreatedQr && hasOwner ? (
-          /* BinRo QR — visitor sees Follow / Unfollow creator button */
-          <Pressable
-            onPress={creatorFollowLoading ? undefined : onFollowCreator}
-            style={({ pressed }) => [
-              styles.followBtn,
-              isFollowingCreator && styles.followBtnActive,
-              creatorFollowLoading && { opacity: 0.55 },
-              !creatorFollowLoading && { opacity: pressed ? 0.8 : 1, transform: [{ scale: pressed ? 0.97 : 1 }] },
-            ]}
-          >
-            {creatorFollowLoading ? (
-              <ActivityIndicator size={13} color={isFollowingCreator ? colors.primary : colors.textSecondary} />
-            ) : (
-              <Ionicons
-                name={isFollowingCreator ? "person-add" : "person-add-outline"}
-                size={14}
-                color={isFollowingCreator ? colors.primary : colors.textSecondary}
-              />
-            )}
-            <Text style={[styles.followBtnText, isFollowingCreator && styles.followBtnTextActive]}>
-              {isFollowingCreator ? "Following" : "Follow"}
-            </Text>
-            {creatorFollowerCount > 0 && !creatorFollowLoading && (
-              <Pressable onPress={onOpenCreatorFollowers} hitSlop={6}>
-                <View style={styles.followCountPill}>
-                  <Text style={styles.followCountPillText}>{formatCompactNumber(creatorFollowerCount)}</Text>
-                </View>
-              </Pressable>
-            )}
-          </Pressable>
-        ) : null
-        }
-
         {onDonate && (
           <Animated.View entering={FadeIn.delay(35).duration(240)}>
             <Pressable

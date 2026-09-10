@@ -16,7 +16,6 @@ import {
   reports,
   scans,
   favorites,
-  qrFollows,
   feedback,
   type User,
   type QrCode,
@@ -453,53 +452,6 @@ export async function isUserFavorite(qrCodeId: string, userId: string): Promise<
     .from(favorites)
     .where(and(eq(favorites.qrCodeId, qrCodeId), eq(favorites.userId, userId)));
   return !!result;
-}
-
-export async function addQrFollow(qrCodeId: string, userId: string) {
-  const [follow] = await db
-    .insert(qrFollows)
-    .values({ qrCodeId, userId })
-    .returning();
-  return follow;
-}
-
-export async function removeQrFollow(qrCodeId: string, userId: string) {
-  await db
-    .delete(qrFollows)
-    .where(and(eq(qrFollows.qrCodeId, qrCodeId), eq(qrFollows.userId, userId)));
-}
-
-export async function getQrFollowCount(qrCodeId: string): Promise<number> {
-  const [result] = await db
-    .select({ cnt: count() })
-    .from(qrFollows)
-    .where(eq(qrFollows.qrCodeId, qrCodeId));
-  return Number(result.cnt);
-}
-
-export async function isUserFollowing(qrCodeId: string, userId: string): Promise<boolean> {
-  const [result] = await db
-    .select()
-    .from(qrFollows)
-    .where(and(eq(qrFollows.qrCodeId, qrCodeId), eq(qrFollows.userId, userId)));
-  return !!result;
-}
-
-export async function getUserFollowing(userId: string) {
-  const results = await db
-    .select({
-      id: qrFollows.id,
-      qrCodeId: qrFollows.qrCodeId,
-      createdAt: qrFollows.createdAt,
-      content: qrCodes.content,
-      contentType: qrCodes.contentType,
-      qrCreatedAt: qrCodes.createdAt,
-    })
-    .from(qrFollows)
-    .innerJoin(qrCodes, eq(qrFollows.qrCodeId, qrCodes.id))
-    .where(eq(qrFollows.userId, userId))
-    .orderBy(desc(qrFollows.createdAt));
-  return results;
 }
 
 export async function addFeedback(

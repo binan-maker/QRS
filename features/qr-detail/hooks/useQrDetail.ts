@@ -6,11 +6,9 @@ import { useAuth } from "@/shared/contexts/AuthContext";
 import { useTheme } from "@/shared/contexts/ThemeContext";
 import { useQrData, type QrDetail } from "./useQrData";
 import { useQrReports } from "./useQrReports";
-import { useQrFollow } from "./useQrFollow";
 import { useQrFavorite } from "./useQrFavorite";
 import { useQrComments, type CommentItem } from "./useQrComments";
 import { useQrOwner } from "./useQrOwner";
-import { useCreatorFollow } from "./useCreatorFollow";
 import type { AppColors } from "@/shared/constants/colors";
 import { parseAnyPaymentQr } from "@/services/analysis";
 
@@ -51,9 +49,6 @@ export function useQrDetail(id: string, hint?: { content: string; contentType: s
   const content = (data.qrCode as any)?.displayDestination || rawContent;
   const contentType = data.qrCode?.contentType || data.offlineContentType;
 
-  const creatorId = data.ownerInfo?.ownerId ?? null;
-  const creatorName = data.ownerInfo?.businessName || data.ownerInfo?.ownerName || null;
-
   const parsedPayment = useMemo(
     () =>
       content &&
@@ -67,8 +62,6 @@ export function useQrDetail(id: string, hint?: { content: string; contentType: s
     [content, contentType],
   );
   const reports = useQrReports(id, userId, data.offlineMode, data.isQrOwner);
-  const follow = useQrFollow(id, userId, user?.displayName ?? null);
-  const creatorFollow = useCreatorFollow(creatorId, userId, user?.displayName ?? null, creatorName);
   const favorite = useQrFavorite(id, userId);
   const comments = useQrComments(id, userId, data.offlineMode);
   const owner = useQrOwner(id, userId, user?.displayName ?? null, data.isQrOwner, data.ownerInfo);
@@ -178,11 +171,6 @@ export function useQrDetail(id: string, hint?: { content: string; contentType: s
     return favorite.handleToggleFavorite(content, contentType || "text");
   }, [content, contentType, favorite.handleToggleFavorite]);
 
-  const handleToggleFollow = useCallback(() => {
-    if (!content) return;
-    return follow.handleToggleFollow(content, contentType || "text");
-  }, [content, contentType, follow.handleToggleFollow]);
-
   const handleSubmitComment = useCallback(() => {
     return comments.handleSubmitComment();
   }, [comments.handleSubmitComment]);
@@ -192,15 +180,11 @@ export function useQrDetail(id: string, hint?: { content: string; contentType: s
     ...data,
     parsedPayment,
     ...reports,
-    ...follow,
-    ...creatorFollow,
     ...favorite,
     ...comments,
     ...owner,
     initialDataReady,
     copied,
-    creatorId,
-    creatorName,
     trustInfo,
     combinedVerdict,
     getTrustInfo,
@@ -208,7 +192,6 @@ export function useQrDetail(id: string, hint?: { content: string; contentType: s
     handleOpenContent,
     handleCopyContent,
     handleToggleFavorite,
-    handleToggleFollow,
     handleSubmitComment,
   };
 }

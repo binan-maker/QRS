@@ -1,4 +1,4 @@
-import { View, Text, Pressable, ActivityIndicator } from "react-native";
+import { View, Text, Pressable } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import BottomSheet from "@/shared/components/ui/BottomSheet";
 import { useTheme } from "@/shared/contexts/ThemeContext";
@@ -8,11 +8,8 @@ interface Props {
   visible: boolean;
   onClose: () => void;
   isFavorite: boolean;
-  isFollowing: boolean;
-  followLoading: boolean;
   hasOwner: boolean;
   onFavorite: () => void;
-  onWatch: () => void;
   onReport: () => void;
 }
 
@@ -20,11 +17,8 @@ export default function OverflowSheet({
   visible,
   onClose,
   isFavorite,
-  isFollowing,
-  followLoading,
   hasOwner,
   onFavorite,
-  onWatch,
   onReport,
 }: Props) {
   const { colors } = useTheme();
@@ -52,40 +46,6 @@ export default function OverflowSheet({
         </Pressable>
 
         <View style={[overflowStyles.separator, { backgroundColor: colors.surfaceBorder }]} />
-
-        {/* Watch (only for owned QR — secondary action) */}
-        {hasOwner && (
-          <>
-            <Pressable
-              style={[overflowStyles.item, { paddingVertical: 18 }, followLoading && { opacity: 0.5 }]}
-              onPress={followLoading ? undefined : () => { onClose(); onWatch(); }}
-            >
-              <View style={[overflowStyles.iconWrap, { backgroundColor: isFollowing ? colors.primaryDim : colors.surfaceLight }]}>
-                {followLoading ? (
-                  <ActivityIndicator size={18} color={isFollowing ? colors.primary : colors.textSecondary} />
-                ) : (
-                  <Ionicons
-                    name={isFollowing ? "notifications" : "notifications-outline"}
-                    size={20}
-                    color={isFollowing ? colors.primary : colors.textSecondary}
-                  />
-                )}
-              </View>
-              <View style={{ flex: 1 }}>
-                <Text style={[overflowStyles.itemLabel, { color: colors.text }]}>
-                  {isFollowing ? "Unwatch this QR" : "Watch this QR"}
-                </Text>
-                <Text style={[overflowStyles.itemSub, { color: colors.textMuted }]}>
-                  {isFollowing ? "Stop alerts for this specific QR" : "Get alerts when this QR changes"}
-                </Text>
-              </View>
-              {isFollowing && !followLoading && (
-                <Ionicons name="checkmark-circle" size={16} color={colors.primary} />
-              )}
-            </Pressable>
-            <View style={[overflowStyles.separator, { backgroundColor: colors.surfaceBorder }]} />
-          </>
-        )}
 
         {/* Report */}
       <Pressable

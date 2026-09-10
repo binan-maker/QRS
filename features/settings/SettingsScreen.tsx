@@ -18,7 +18,6 @@ import SettingsMenuItem from "@/features/settings/components/SettingsMenuItem";
 import AccountSection from "@/features/settings/components/AccountSection";
 import GuideSection from "@/features/settings/components/GuideSection";
 import FeedbackSection from "@/features/settings/components/FeedbackSection";
-import FollowingSection from "@/features/settings/components/FollowingSection";
 import CommentsSection from "@/features/settings/components/CommentsSection";
 import HistorySection from "@/features/settings/components/HistorySection";
 import ProfileSettingsSection from "@/features/settings/components/ProfileSettingsSection";
@@ -38,7 +37,6 @@ user, section, setSection,
 feedbackText, setFeedbackText,
 feedbackEmail, setFeedbackEmail,
 feedbackSubmitting, feedbackDone,
-followingList, followingLoading, loadFollowing,
 myComments, commentsLoading, loadMyComments,
 myHistory, historyLoading, loadMyHistory,
 deleteConfirmText, setDeleteConfirmText,
@@ -61,7 +59,7 @@ NavigationBar.setButtonStyleAsync(colors.isDark ? "light" : "dark").catch(() => 
 
 useFocusEffect(
 useCallback(() => {
-const VALID_SECTIONS: Section[] = ["main", "profile", "account", "guide", "feedback", "following", "comments", "history"];
+const VALID_SECTIONS: Section[] = ["main", "profile", "account", "guide", "feedback", "comments", "history"];
 const requested = params.initialSection as Section;
 if (requested && requested !== "main" && VALID_SECTIONS.includes(requested)) {
 setSection(requested);
@@ -72,7 +70,6 @@ setSection("main");
 );
 
 const goToAccount   = useCallback(() => setSection("account"),   [setSection]);
-const goToFollowing = useCallback(() => setSection("following"), [setSection]);
 const goToProfile   = useCallback(() => setSection("profile"),   [setSection]);
 const goToGuide     = useCallback(() => setSection("guide"),     [setSection]);
 const goToFeedback  = useCallback(() => setSection("feedback"),  [setSection]);
@@ -165,9 +162,6 @@ handleSendAnother={handleSendAnother}
 onScroll={onSubScroll}
 paddingTop={0}
 />
-)}
-{section === "following" && (
-<FollowingSection loading={followingLoading} list={followingList} onScroll={onSubScroll} paddingTop={0} onRefresh={() => loadFollowing(true)} />
 )}
 {section === "comments" && (
 <CommentsSection

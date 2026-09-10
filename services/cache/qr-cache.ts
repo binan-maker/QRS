@@ -142,19 +142,8 @@ export function invalidateHistoryCache(userId: string): void {
   invalidateCache(`scan_stats_${userId}`);
 }
 
-const TTL_FOLLOWING   = 5  * 60 * 1000;
 const TTL_COMMENTS    = 5  * 60 * 1000;
 const TTL_GENERATED_QRS = 2 * 60 * 1000;
-
-export async function getCachedFollowing<T>(userId: string): Promise<T | null> {
-  return getCache<T>(`following_${userId}`);
-}
-export async function setCachedFollowing<T>(userId: string, value: T): Promise<void> {
-  return setCache<T>(`following_${userId}`, value, TTL_FOLLOWING);
-}
-export function invalidateFollowingCache(userId: string): void {
-  invalidateCache(`following_${userId}`);
-}
 
 export async function getCachedComments<T>(userId: string): Promise<T | null> {
   return getCache<T>(`comments_${userId}`);

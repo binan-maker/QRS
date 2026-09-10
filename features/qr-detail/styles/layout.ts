@@ -14,29 +14,6 @@ export function makeStyles(c: AppColors) {
       paddingVertical: 12,
     },
 
-    followBtn: {
-      flexDirection: "row",
-      alignItems: "center",
-      gap: 5,
-      paddingHorizontal: 12,
-      paddingVertical: 8,
-      borderRadius: 22,
-      backgroundColor: c.surface,
-      borderWidth: 1,
-      borderColor: c.surfaceBorder,
-    },
-    followBtnActive: { backgroundColor: c.primaryDim, borderColor: c.primary },
-    followBtnUnfollowHint: { backgroundColor: c.dangerDim, borderColor: c.danger },
-    followBtnText: { fontSize: 13, fontFamily: "Inter_600SemiBold", color: c.textSecondary },
-    followBtnTextActive: { color: c.primary },
-    followCountPill: {
-      backgroundColor: c.primary,
-      borderRadius: 10,
-      paddingHorizontal: 5,
-      paddingVertical: 1,
-    },
-    followCountPillText: { fontSize: 10, fontFamily: "Inter_700Bold", color: c.primaryText },
-
     scrollContent: { paddingHorizontal: 18, paddingBottom: 60 },
 
     deactivatedBanner: {

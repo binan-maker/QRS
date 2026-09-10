@@ -39,24 +39,8 @@ export const COLLECTIONS = {
   REPORT_LOG: "reportLog",
   /** Comments on QR codes */
   COMMENTS: "comments",
-  /** User follow graph (who a user follows) */
-  FOLLOWING: "following",
-  /** Followers of a user */
-  FOLLOWERS: "followers",
-  /** Creator-specific follower list */
-  CREATOR_FOLLOWERS: "creatorFollowers",
-  /** Creator-specific following list */
-  CREATOR_FOLLOWING: "creatorFollowing",
   /** Aggregated counters (scans, follows, etc.) */
   COUNTERS: "counters",
-  /** Per-user follow counts */
-  FOLLOWER_COUNT: "followerCount",
-  /** Per-user following counts */
-  FOLLOWING_COUNT: "followingCount",
-  /** Creator follower counts */
-  CREATOR_FOLLOWER_COUNT: "creatorFollowerCount",
-  /** Creator following counts */
-  CREATOR_FOLLOWING_COUNT: "creatorFollowingCount",
   /** Per-user personal scan count */
   PERSONAL_SCAN_COUNT: "personalScanCount",
   /** Per-QR scan velocity (Realtime DB path) */

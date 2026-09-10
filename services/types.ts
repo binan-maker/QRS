@@ -46,7 +46,6 @@ export interface UserData {
   createdAt: string;
   scanCount: number;
   commentCount: number;
-  followingCount: number;
   totalLikesReceived: number;
   username?: string;
   usernameLastChangedAt?: string;
@@ -89,7 +88,6 @@ export type NotificationType =
   | "owner_comment"
   | "comment_reply"
   | "mention"
-  | "new_follow"
   | string;
 
 export interface Notification {
@@ -111,15 +109,6 @@ export interface NotificationData {
   fromUsername?: string;
   read: boolean;
   createdAt: string;
-}
-
-export interface FollowData {
-  id: string;
-  userId: string;
-  qrCodeId: string;
-  content: string;
-  contentType: string;
-  followedAt: string;
 }
 
 // Trust Score types
@@ -147,12 +136,9 @@ export interface UserStats {
   totalScans?: number;
   totalComments?: number;
   totalLikes?: number;
-  totalFollowers?: number;
-  totalFollowing?: number;
   totalQrsCreated?: number;
   accountAge?: number;
   reputationScore?: number;
-  followingCount?: number;
   scanCount?: number;
   commentCount?: number;
   totalLikesReceived?: number;
@@ -269,17 +255,6 @@ export interface ScanVelocityBucket {
   hour?: number;
 }
 
-export interface VerificationStatus {
-  isVerified?: boolean;
-  method?: 'email' | 'phone' | 'document' | 'manual' | 'none';
-  verifiedAt?: string;
-  documents?: string[];
-  pendingReview?: boolean;
-  status?: 'none' | 'pending' | 'approved' | 'rejected';
-  businessName?: string;
-  submittedAt?: string;
-}
-
 // Comment Service types
 export interface CommentItem {
   id: string;
@@ -343,20 +318,6 @@ export interface QrMessage {
   qrBrandedUuid?: string;
   message?: string;
   [key: string]: any;
-}
-
-// Follow Service types
-export interface FollowerInfo {
-  followerId: string;
-  followerName: string;
-  followerAvatar?: string;
-  followedAt: string;
-  isMutual?: boolean;
-  isVerified?: boolean;
-  userId?: string;
-  photoURL?: string | null;
-  displayName?: string;
-  username?: string | null;
 }
 
 // Additional utility types

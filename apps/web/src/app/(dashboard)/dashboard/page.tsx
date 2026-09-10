@@ -9,7 +9,6 @@ const STAT_CARDS = [
   { label: "Total QR Codes",  key: "qrCount",   icon: "⬛", colour: "text-blue-600"   },
   { label: "Total Scans",     key: "scanCount",  icon: "📊", colour: "text-emerald-600"},
   { label: "Active Reports",  key: "reports",    icon: "🚨", colour: "text-red-500"    },
-  { label: "Followers",       key: "followers",  icon: "👥", colour: "text-violet-600" },
 ];
 
 export default async function DashboardPage() {
@@ -29,7 +28,6 @@ export default async function DashboardPage() {
     qrCount:   profile?.scanCount ?? 0,   // placeholder — real count from QR list
     scanCount:  profile?.scanCount ?? 0,
     reports:    0,
-    followers:  profile?.followingCount ?? 0,
   };
 
   return (

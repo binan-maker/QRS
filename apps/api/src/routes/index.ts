@@ -42,17 +42,6 @@
  *   DELETE /api/v1/qr/:qrId/comments/:commentId        Delete comment
  *   POST   /api/v1/qr/:qrId/comments/:commentId/like   Toggle like
  *
- * Follows
- *   POST   /api/v1/follows/qr/:qrId                    Follow QR
- *   DELETE /api/v1/follows/qr/:qrId                    Unfollow QR
- *   GET    /api/v1/follows/qr/:qrId                    Check QR follow status
- *   POST   /api/v1/follows/users/:userId               Follow creator
- *   DELETE /api/v1/follows/users/:userId               Unfollow creator
- *   GET    /api/v1/follows/users/:userId               Check creator follow status
- *
- * Business
- *   POST   /api/v1/business/register                   Register business account
- *
  * Security / Utilities
  *   POST   /api/v1/qr/decode-image                    Decode a QR image
  *   GET    /api/v1/ifsc/:ifsc                          IFSC bank lookup
@@ -63,19 +52,14 @@
 import type { Express } from "express";
 import { securityRouter } from "./security";
 import { qrRouter } from "./qr";
-import { businessRouter } from "./business";
 import { usersRouter } from "./users";
 import { unifiedQrRouter } from "./unified-qr";
 import { commentsRouter } from "./comments";
-import { followsRouter } from "./follows";
 import { feedbackRouter } from "./feedback";
 
 export function registerV1Routes(app: Express): void {
   // ── Utilities & security (existing) ────────────────────────────────────────
   app.use("/api/v1", securityRouter);
-
-  // ── Business ────────────────────────────────────────────────────────────────
-  app.use("/api/v1/business", businessRouter);
 
   // ── User profile, notifications, favorites, scan history ───────────────────
   // NOTE: /me routes must be registered before /:userId so Express doesn't
@@ -90,9 +74,6 @@ export function registerV1Routes(app: Express): void {
 
   // ── Unified QR (new model) ─────────────────────────────────────────────────
   app.use("/api/v1/unified-qr", unifiedQrRouter);
-
-  // ── Social: follows ────────────────────────────────────────────────────────
-  app.use("/api/v1/follows", followsRouter);
 
   // ── Feedback & bug reports ─────────────────────────────────────────────────
   app.use("/api/v1/feedback", feedbackRouter);

@@ -7,9 +7,6 @@ interface Props {
   reportCounts: any;
   totalScans: number;
   isQrOwner: boolean;
-  followCount: number;
-  followersModalOpen: boolean;
-  onOpenFollowers: () => void;
   ownerScanCount?: number;
   user: any;
   hasOwner?: boolean;
@@ -22,9 +19,6 @@ export function QrTrustSection({
   reportCounts,
   totalScans,
   isQrOwner,
-  followCount,
-  followersModalOpen,
-  onOpenFollowers,
   ownerScanCount,
   user,
   hasOwner = false,
@@ -39,9 +33,6 @@ export function QrTrustSection({
         reportCounts={reportCounts}
         totalScans={totalScans}
         isQrOwner={user ? isQrOwner : false}
-        followCount={followCount}
-        followersModalOpen={user ? followersModalOpen : false}
-        onOpenFollowers={user ? onOpenFollowers : () => {}}
         ownerScanCount={user && isQrOwner ? ownerScanCount : undefined}
         hasOwner={hasOwner}
       />

@@ -32,9 +32,3 @@ export function formatIndianNumber(num: number): string {
  * Returns both a compact badge value and a full readable label.
  * e.g. { compact: "1.2K", full: "1,200" }
  */
-export function formatFollowCount(num: number): { compact: string; full: string } {
-  return {
-    compact: formatCompactNumber(num),
-    full: formatIndianNumber(num),
-  };
-}

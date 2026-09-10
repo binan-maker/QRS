@@ -7,7 +7,6 @@ export const SECTION_TITLES: Record<string, string> = {
   account:   "Account Management",
   guide:     "Manual Guide",
   feedback:  "Send Feedback",
-  following: "Following",
   comments:  "My Comments",
   history:   "My History",
 };

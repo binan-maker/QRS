@@ -25,9 +25,6 @@ interface Props {
   reportCounts: Record<string, number>;
   totalScans: number;
   isQrOwner: boolean;
-  followCount: number;
-  followersModalOpen: boolean;
-  onOpenFollowers: () => void;
   manipulationWarning?: boolean;
   scanCountFrozen?: boolean;
   ownerScanCount?: number;
@@ -42,7 +39,7 @@ function getScoreGradient(score: number, colors: any): [string, string] {
 
 const TrustScoreCard = memo(function TrustScoreCard({
   trustInfo, reportCounts, totalScans,
-  isQrOwner, followCount, onOpenFollowers,
+  isQrOwner,
   ownerScanCount, hasOwner = false,
 }: Props) {
   const { colors, isDark } = useTheme();

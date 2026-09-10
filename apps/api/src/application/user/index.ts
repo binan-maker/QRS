@@ -41,7 +41,6 @@ export class RegisterUserUseCase {
       deletedAt: null,
       scanCount: 0,
       commentCount: 0,
-      followingCount: 0,
       totalLikesReceived: 0,
       isOnline: false,
       lastSeen: null,

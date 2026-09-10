@@ -17,8 +17,6 @@ function getNotifIcon(type: string): keyof typeof Ionicons.glyphMap {
   if (type === "owner_comment")      return "chatbubble-ellipses";
   if (type === "comment_reply")      return "return-down-forward";
   if (type === "mention")            return "at";
-  if (type === "new_follow")         return "person-add";
-  if (type === "new_creator_follow") return "person-add-outline";
   if (type === "new_report")         return "flag-outline";
   return "notifications-outline";
 }
@@ -28,8 +26,6 @@ function getNotifColor(type: string, colors: AppColors): string {
   if (type === "owner_comment")      return colors.primary;
   if (type === "comment_reply")      return colors.accent ?? colors.primary;
   if (type === "mention")            return colors.accent ?? colors.primary;
-  if (type === "new_follow")         return colors.safe ?? "#22c55e";
-  if (type === "new_creator_follow") return colors.safe ?? "#22c55e";
   if (type === "new_report")         return colors.warning ?? "#f59e0b";
   return colors.textMuted ?? "#888";
 }
@@ -47,7 +43,6 @@ const NotificationItem = memo(function NotificationItem({ notif, colors, onClose
 
   const handlePress = useCallback(() => {
     onClose();
-    const isCreatorFollowNotif = notif.type === "new_creator_follow";
     if (isCreatorFollowNotif && notif.fromUsername) {
       router.push(`/profile/${notif.fromUsername}` as any);
     } else if (notif.qrCodeId) {

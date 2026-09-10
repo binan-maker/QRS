@@ -55,7 +55,6 @@ usersRouter.get(
           username: data.username ?? null,
           scanCount: data.scanCount ?? 0,
           commentCount: data.commentCount ?? 0,
-          followingCount: data.followingCount ?? 0,
           totalLikesReceived: data.totalLikesReceived ?? 0,
           isOnline: data.isOnline ?? false,
           lastSeen: data.lastSeen?.toDate?.()?.toISOString() ?? null,
@@ -154,7 +153,6 @@ usersRouter.get(
           username: data.username ?? null,
           scanCount: data.scanCount ?? 0,
           commentCount: data.commentCount ?? 0,
-          followingCount: data.followingCount ?? 0,
           createdAt: data.createdAt?.toDate?.()?.toISOString() ?? null,
         },
       });

@@ -16,7 +16,6 @@ import { useTopInset } from "@/shared/utils/platform";
 import { useQrDetail } from "@/features/qr-detail/hooks/useQrDetail";
 import { useNetworkStatus } from "@/shared/hooks/useNetworkStatus";
 import { makeStyles, offlineSectionStyles } from "@/features/qr-detail/styles";
-import { formatCompactNumber } from "@/shared/utils/formatters";
 import { REPORT_LABELS, REPORT_ICONS } from "@/features/qr-detail/utils/report-toast";
 
 import LoadingSkeleton from "@/features/qr-detail/components/LoadingSkeleton";
@@ -25,7 +24,6 @@ import TrustScoreCard from "@/features/qr-detail/components/TrustScoreCard";
 import EarlyCommunityCard from "@/features/qr-detail/components/EarlyCommunityCard";
 import OwnerCard from "@/features/qr-detail/components/OwnerCard";
 import ReportGrid from "@/features/qr-detail/components/ReportGrid";
-import FollowersModal from "@/features/qr-detail/components/modals/FollowersModal";
 import MessagesModal from "@/features/qr-detail/components/modals/MessagesModal";
 import CommentReportModal from "@/features/qr-detail/components/modals/CommentReportModal";
 import { SectionHeader } from "@/shared/components/ui/SectionHeader";
@@ -130,18 +128,6 @@ export default function StaticQrDetailScreen({ id, hint }: Props) {
   }, [q.reportError, showToast]);
 
   useEffect(() => {
-    if (!q.followError) return;
-    showToast(q.followError, "alert-circle-outline");
-    q.clearFollowError();
-  }, [q.followError, q.clearFollowError, showToast]);
-
-  useEffect(() => {
-    if (!q.creatorFollowError) return;
-    showToast(q.creatorFollowError, "alert-circle-outline");
-    q.clearCreatorFollowError();
-  }, [q.creatorFollowError]);
-
-  useEffect(() => {
     if (!q.favoriteError) return;
     showToast(q.favoriteError, "alert-circle-outline");
     q.clearFavoriteError();
@@ -158,31 +144,6 @@ export default function StaticQrDetailScreen({ id, hint }: Props) {
 
   const isDeactivated   = q.ownerInfo?.isActive === false || q.qrCode?.isActive === false;
   const deactivationMsg = q.ownerInfo?.deactivationMessage || q.qrCode?.deactivationMessage || null;
-
-  const handleCreatorFollowPress = useCallback(() => {
-    if (!user) { router.push("/(auth)/login"); return; }
-    if (!isOnline) { setOfflineToastKey((k) => k + 1); return; }
-    const willFollow = !q.isFollowingCreator;
-    q.handleToggleFollowCreator();
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    const label = q.ownerInfo?.businessName || q.ownerInfo?.ownerName || "Creator";
-    showToast(
-      willFollow ? `Following ${label}` : `Unfollowed ${label}`,
-      willFollow ? "person-add" : "person-remove-outline"
-    );
-  }, [user, isOnline, q.isFollowingCreator, q.handleToggleFollowCreator, q.ownerInfo, showToast]);
-
-  const handleWatchPress = useCallback(() => {
-    if (!user) { router.push("/(auth)/login"); return; }
-    if (!isOnline) { setOfflineToastKey((k) => k + 1); return; }
-    const willWatch = !q.isFollowing;
-    q.handleToggleFollow();
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    showToast(
-      willWatch ? "Watching this QR" : "Unwatched",
-      willWatch ? "notifications" : "notifications-off-outline"
-    );
-  }, [user, isOnline, q.isFollowing, q.handleToggleFollow, showToast]);
 
   const handleFavoritePress = useCallback(() => {
     if (!user) { router.push("/(auth)/login"); return; }
@@ -250,20 +211,8 @@ export default function StaticQrDetailScreen({ id, hint }: Props) {
                 ownerName={q.ownerInfo?.businessName || q.ownerInfo?.ownerName || null}
                 hasOwner={hasOwner}
                 isGuardCreatedQr={false}
-                isFollowingCreator={q.isFollowingCreator}
-                creatorFollowLoading={q.creatorFollowLoading}
-                creatorFollowerCount={q.creatorFollowerCount}
-                isFollowing={q.isFollowing}
-                followLoading={q.followLoading}
-                followCount={q.followCount}
                 isQrOwner={isQrOwner}
                 onBack={safeBack}
-                onFollowCreator={handleCreatorFollowPress}
-                onOpenCreatorFollowers={() => {
-                  q.handleLoadCreatorFollowers();
-                  q.setCreatorFollowersModalOpen(true);
-                }}
-                onWatch={handleWatchPress}
                 onOverflowOpen={() => setOverflowOpen(true)}
                 onDonate={() => router.push("/donation")}
               />
@@ -355,16 +304,6 @@ export default function StaticQrDetailScreen({ id, hint }: Props) {
                   reportCounts={q.reportCounts}
                   totalScans={q.totalScans}
                   isQrOwner={user ? q.isQrOwner : false}
-                  followCount={q.followCount}
-                  followersModalOpen={user ? q.followersModalOpen : false}
-                  onOpenFollowers={
-                    user
-                      ? () => {
-                          q.handleLoadFollowers();
-                          q.setFollowersModalOpen(true);
-                        }
-                      : () => {}
-                  }
                   ownerScanCount={user && q.isQrOwner ? q.qrCode?.ownerScanCount : undefined}
                   hasOwner={false}
                 />
@@ -452,12 +391,7 @@ export default function StaticQrDetailScreen({ id, hint }: Props) {
                 <OwnerCard
                   ownerInfo={q.ownerInfo}
                   isQrOwner={q.isQrOwner}
-                  followCount={q.followCount}
                   unreadMessages={q.unreadMessages}
-                  onOpenFollowers={() => {
-                    q.handleLoadFollowers();
-                    q.setFollowersModalOpen(true);
-                  }}
                   onOpenMessages={() => q.setMessagesModalOpen(true)}
                 />
               </View>
@@ -494,11 +428,8 @@ export default function StaticQrDetailScreen({ id, hint }: Props) {
         visible={overflowOpen}
         onClose={() => setOverflowOpen(false)}
         isFavorite={q.isFavorite}
-        isFollowing={q.isFollowing}
-        followLoading={q.followLoading}
         hasOwner={hasOwner}
         onFavorite={handleFavoritePress}
-        onWatch={handleWatchPress}
          onReport={() => showToast("Feature Coming Soon!", "time-outline")}
       />
 
@@ -509,32 +440,6 @@ export default function StaticQrDetailScreen({ id, hint }: Props) {
           showToast("Thanks for reporting", "flag-outline");
         }}
         onClose={() => q.setCommentReportModal(null)}
-      />
-      <FollowersModal
-        visible={q.followersModalOpen}
-        followCount={q.followCount}
-        followers={q.followersList}
-        loading={q.followersLoading}
-        onClose={() => q.setFollowersModalOpen(false)}
-        title="QR Watchers"
-        subtitle={`${formatCompactNumber(q.followCount)} ${
-          q.followCount === 1 ? "person is" : "people are"
-        } watching this QR`}
-        emptyIcon="notifications-outline"
-        emptyText="No watchers yet"
-      />
-      <FollowersModal
-        visible={q.creatorFollowersModalOpen}
-        followCount={q.creatorFollowerCount}
-        followers={q.creatorFollowersList}
-        loading={q.creatorFollowersLoading}
-        onClose={() => q.setCreatorFollowersModalOpen(false)}
-        title="Creator Followers"
-        subtitle={`${formatCompactNumber(q.creatorFollowerCount)} ${
-          q.creatorFollowerCount === 1 ? "follower" : "followers"
-        }`}
-        emptyIcon="people-outline"
-        emptyText="No followers yet"
       />
       <MessagesModal
         visible={q.messagesModalOpen}

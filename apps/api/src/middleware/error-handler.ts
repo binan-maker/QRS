@@ -33,7 +33,6 @@ const DOMAIN_ERROR_STATUS: Record<string, number> = {
   DUPLICATE_SCAN:          409,
   GOVERNMENT_QR_IMMUTABLE: 422,
   USERNAME_TAKEN:          409,
-  SELF_FOLLOW:             422,
   SERVICE_UNAVAILABLE:     503,
   RATE_LIMITED:            429,
 };

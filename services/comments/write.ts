@@ -2,7 +2,7 @@ import { db } from "@/lib/db/client";
 import { tsToMs } from "../integrity/time-utils";
 import { checkCommentKeywords } from "@/services/analysis";
 import { checkCommentEligibility, recordComment } from "../integrity";
-import { notifyQrFollowers, notifyMentionedUsers, notifyQrOwner, notifyCommentParentAuthor } from "../notifications/notification-service";
+import { notifyMentionedUsers, notifyQrOwner, notifyCommentParentAuthor } from "../notifications/notification-service";
 import type { CommentItem } from "../types";
 import { checkProfanity, sanitizeComment } from "../moderation/profanity-filter";
 import { getUserProfileCache, preloadUserProfile, setUserProfileCache } from "./cache";
@@ -115,7 +115,6 @@ export async function addComment(
 
   await recordComment(userId);
 
-  notifyQrFollowers(qrId, "new_comment", `${displayName} commented on a QR you follow`, userId).catch(() => {});
   notifyMentionedUsers(qrId, text, userId, displayName).catch(() => {});
   notifyQrOwner(qrId, userId, displayName).catch(() => {});
   if (parentId) {

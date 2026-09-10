@@ -6,7 +6,7 @@ import { useFeedbackSettings } from "./useFeedbackSettings";
 import { useDataSettings } from "./useDataSettings";
 import { useAccountSettings } from "./useAccountSettings";
 
-export type Section = "main" | "profile" | "account" | "guide" | "feedback" | "following" | "comments" | "history";
+export type Section = "main" | "profile" | "account" | "guide" | "feedback" | "comments" | "history";
 
 const HAPTIC_KEY = "haptic_enabled";
 
@@ -45,16 +45,13 @@ export function useSettings() {
 
   // Keep stable refs to the data-load functions so the section handler never
   // goes stale even if sub-hook identity changes across renders.
-  const loadFollowingRef  = useRef(data.loadFollowing);
   const loadCommentsRef   = useRef(data.loadMyComments);
   const loadHistoryRef    = useRef(data.loadMyHistory);
-  loadFollowingRef.current = data.loadFollowing;
   loadCommentsRef.current  = data.loadMyComments;
   loadHistoryRef.current   = data.loadMyHistory;
 
   const handleSectionChange = useCallback((s: Section) => {
     setSection(s);
-    if (s === "following") loadFollowingRef.current();
     if (s === "comments")  loadCommentsRef.current();
     if (s === "history")   loadHistoryRef.current();
   }, []);

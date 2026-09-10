@@ -32,13 +32,3 @@ export async function getUserFavorites(userId: string): Promise<any[]> {
   return docs.map((d) => ({ id: d.id, ...d.data, createdAt: tsToString(d.data.createdAt) }));
 }
 
-// FIX: Added `limit` param (default 200) to prevent unbounded Firestore reads
-// for users who follow large numbers of QR codes. 200 covers all practical cases
-// in the Settings following list without risking a full collection scan.
-export async function getUserFollowing(userId: string, limit = 200): Promise<any[]> {
-  const { docs } = await db.query(
-    [COLLECTIONS.USERS, userId, COLLECTIONS.FOLLOWING],
-    { orderBy: { field: "createdAt", direction: "desc" }, limit }
-  );
-  return docs.map((d) => ({ id: d.id, ...d.data, createdAt: tsToString(d.data.createdAt) }));
-}

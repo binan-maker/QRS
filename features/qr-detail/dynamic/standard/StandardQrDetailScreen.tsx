@@ -18,14 +18,12 @@ import { getStandardLink } from "@/services/guard/guard-service";
 import { detectContentType } from "@/features/qr-engine";
 import { parseAnyPaymentQr } from "@/services/analysis";
 import { makeStyles } from "@/features/qr-detail/styles";
-import { formatCompactNumber } from "@/shared/utils/formatters";
 import { REPORT_LABELS, REPORT_ICONS } from "@/features/qr-detail/utils/report-toast";
 
 import { ContentCard } from "@/features/qr-engine/content-cards";
 import TrustScoreCard from "@/features/qr-detail/components/TrustScoreCard";
 import EarlyCommunityCard from "@/features/qr-detail/components/EarlyCommunityCard";
 import ReportGrid from "@/features/qr-detail/components/ReportGrid";
-import FollowersModal from "@/features/qr-detail/components/modals/FollowersModal";
 import MessagesModal from "@/features/qr-detail/components/modals/MessagesModal";
 import CommentReportModal from "@/features/qr-detail/components/modals/CommentReportModal";
 import { OfflineToast } from "@/features/qr-detail/components/OfflineToast";
@@ -98,12 +96,6 @@ export default function StandardQrDetailScreen({ id, standardUuid, ownerDocId, h
   }, [q.reportError, showToast]);
 
   useEffect(() => {
-    if (!q.followError) return;
-    showToast(q.followError, "alert-circle-outline");
-    q.clearFollowError();
-  }, [q.followError, q.clearFollowError, showToast]);
-
-  useEffect(() => {
     if (!q.favoriteError) return;
     showToast(q.favoriteError, "alert-circle-outline");
     q.clearFavoriteError();
@@ -153,15 +145,6 @@ export default function StandardQrDetailScreen({ id, standardUuid, ownerDocId, h
     () => smartOpenContent(effectiveContent, effectiveContentType, standardData?.templateKey),
     [effectiveContent, effectiveContentType, standardData?.templateKey]
   );
-
-  const handleWatchPress = useCallback(() => {
-    if (!user) { router.push("/(auth)/login"); return; }
-    if (!isOnline) { setOfflineToastKey((k) => k + 1); return; }
-    const willWatch = !q.isFollowing;
-    q.handleToggleFollow();
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    showToast(willWatch ? "Watching this QR" : "Unwatched", willWatch ? "notifications" : "notifications-off-outline");
-  }, [user, isOnline, q.isFollowing, q.handleToggleFollow, showToast]);
 
   const handleFavoritePress = useCallback(() => {
     if (!user) { router.push("/(auth)/login"); return; }
@@ -292,13 +275,6 @@ export default function StandardQrDetailScreen({ id, standardUuid, ownerDocId, h
                   reportCounts={q.reportCounts}
                   totalScans={q.totalScans}
                   isQrOwner={isQrOwner}
-                  followCount={q.followCount}
-                  followersModalOpen={user ? q.followersModalOpen : false}
-                  onOpenFollowers={
-                    user
-                      ? () => { q.handleLoadFollowers(); q.setFollowersModalOpen(true); }
-                      : () => {}
-                  }
                   ownerScanCount={user && isQrOwner ? q.qrCode?.ownerScanCount : undefined}
                   hasOwner={true}
                 />
@@ -399,11 +375,8 @@ export default function StandardQrDetailScreen({ id, standardUuid, ownerDocId, h
         visible={overflowOpen}
         onClose={() => setOverflowOpen(false)}
         isFavorite={q.isFavorite}
-        isFollowing={q.isFollowing}
-        followLoading={q.followLoading}
         hasOwner={!!ownerInfoForSheet}
         onFavorite={handleFavoritePress}
-        onWatch={handleWatchPress}
          onReport={() => showToast("Feature Coming Soon!", "time-outline")}
       />
 
@@ -414,19 +387,6 @@ export default function StandardQrDetailScreen({ id, standardUuid, ownerDocId, h
           showToast("Thanks for reporting", "flag-outline");
         }}
         onClose={() => q.setCommentReportModal(null)}
-      />
-      <FollowersModal
-        visible={q.followersModalOpen}
-        followCount={q.followCount}
-        followers={q.followersList}
-        loading={q.followersLoading}
-        onClose={() => q.setFollowersModalOpen(false)}
-        title="QR Watchers"
-        subtitle={`${formatCompactNumber(q.followCount)} ${
-          q.followCount === 1 ? "person is" : "people are"
-        } watching this QR`}
-        emptyIcon="notifications-outline"
-        emptyText="No watchers yet"
       />
       <MessagesModal
         visible={q.messagesModalOpen}

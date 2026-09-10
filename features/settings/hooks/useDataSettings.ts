@@ -3,7 +3,6 @@ import { Alert } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as Haptics from "@/shared/utils/haptics";
 import {
-  getUserFollowing,
   getUserComments,
   updateComment,
   softDeleteComment,
@@ -13,9 +12,6 @@ import {
   deleteAllUserScans,
 } from "@/lib/firestore-service";
 import {
-  getCachedFollowing,
-  setCachedFollowing,
-  invalidateFollowingCache,
   getCachedComments,
   setCachedComments,
   invalidateCommentsCache,
@@ -26,8 +22,6 @@ interface UseDataSettingsOptions {
 }
 
 export function useDataSettings({ userId }: UseDataSettingsOptions) {
-  const [followingList,   setFollowingList]   = useState<any[]>([]);
-  const [followingLoading, setFollowingLoading] = useState(false);
   const [myComments,      setMyComments]       = useState<any[]>([]);
   const [commentsLoading, setCommentsLoading]  = useState(false);
   const [myHistory,       setMyHistory]        = useState<any[]>([]);
@@ -50,28 +44,9 @@ export function useDataSettings({ userId }: UseDataSettingsOptions) {
   useEffect(() => { myHistoryRef.current  = myHistory;  }, [myHistory]);
 
   const resetData = useCallback(() => {
-    setFollowingList([]);
     setMyComments([]);
     setMyHistory([]);
   }, []);
-
-  const loadFollowing = useCallback(async (forceRefresh = false) => {
-    if (!userId) return;
-    setFollowingLoading(true);
-    try {
-      if (!forceRefresh) {
-        const cached = await getCachedFollowing<any[]>(userId);
-        if (cached) {
-          if (mountedRef.current) { setFollowingList(cached); setFollowingLoading(false); }
-          return;
-        }
-      }
-      const list = await getUserFollowing(userId);
-      setCachedFollowing<any[]>(userId, list).catch(() => {});
-      if (mountedRef.current) setFollowingList(list);
-    } catch {}
-    if (mountedRef.current) setFollowingLoading(false);
-  }, [userId]);
 
   const loadMyComments = useCallback(async (forceRefresh = false) => {
     if (!userId) return;
@@ -261,7 +236,6 @@ export function useDataSettings({ userId }: UseDataSettingsOptions) {
   }, [userId]);
 
   return {
-    followingList, followingLoading, loadFollowing,
     myComments, commentsLoading, loadMyComments,
     myHistory, historyLoading, loadMyHistory,
     resetData,

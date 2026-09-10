@@ -14,7 +14,6 @@ const MAX_NOTIFICATIONS_PER_USER = 100; // Limit max notifications stored
 const PUSH_TITLES: Partial<Record<NotificationType, string>> = {
   mention: "You were mentioned",
   comment: "New Comment",
-  follow: "New Follower",
   qr_scan: "Your QR was scanned",
   qr_report: "QR Report",
   system: "BinRo",
@@ -163,52 +162,6 @@ export async function notifyMentionedUsers(
     }
     await Promise.all(writes);
   } catch {}
-}
-
-// ─── Notify all followers of a QR code ───────────────────────────────────────
-// FIX #2: Batch notification writes to reduce Firebase costs and avoid rate limits
-// Instead of N separate writes for N followers, we use a single multi-path update
-export async function notifyQrFollowers(
-  qrId: string,
-  type: NotificationType,
-  message: string,
-  excludeUserId?: string,
-): Promise<void> {
-  if (!NOTIFICATIONS_ENABLED) return;
-  try {
-    const { docs } = await db.query([COLLECTIONS.QR_CODES, qrId, COLLECTIONS.FOLLOWERS]);
-
-    // FIX #2: Batch all notification writes into a single RTDB multi-path update
-    // This reduces cost from N writes ($0.06 per 1000) to 1 write regardless of follower count
-    const updates: Record<string, any> = {};
-    let notificationCount = 0;
-
-    for (const d of docs) {
-      const followerId = d.data.userId as string;
-      if (!followerId || followerId === excludeUserId) continue;
-
-      // Use RTDB push-like key generation for unique IDs
-      const notificationKey = `notifications/${followerId}/items/${Date.now()}_${Math.random().toString(36).slice(2)}`;
-      updates[notificationKey] = {
-        type,
-        message,
-        qrCodeId: qrId,
-        read: false,
-        createdAt: Date.now(),
-      };
-      notificationCount++;
-    }
-
-    // Single atomic write operation regardless of follower count
-    if (Object.keys(updates).length > 0) {
-      await rtdb.update(updates);
-      logger.log(
-        `[notify] Sent ${notificationCount} follower notifications in single batch for QR ${qrId}`,
-      );
-    }
-  } catch (e) {
-    console.warn("[notify] notifyQrFollowers failed:", e);
-  }
 }
 
 // ─── Notify QR code owner ─────────────────────────────────────────────────────

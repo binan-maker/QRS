@@ -5,7 +5,6 @@ export * from "./qr/qr-service";
 export * from "./qr/qr-detail-service";
 export * from "./scan-history";
 export * from "./moderation/report-service";
-export * from "./social/follow-service";
 export * from "./generator";
 export * from "./comments";
 export * from "./user";

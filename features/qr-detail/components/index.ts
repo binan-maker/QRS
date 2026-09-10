@@ -14,6 +14,4 @@ export { LivingShieldBanner } from "./banners/LivingShieldBanner";
 export { StandardQrBanner } from "./banners/StandardQrBanner";
 
 export { default as CommentReportModal } from "./modals/CommentReportModal";
-export { default as FollowersModal } from "./modals/FollowersModal";
 export { default as MessagesModal } from "./modals/MessagesModal";
-export { default as VerificationModal } from "./modals/VerificationModal";

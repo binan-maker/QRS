@@ -4,15 +4,12 @@ import { Image } from "expo-image";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { useTheme } from "@/shared/contexts/ThemeContext";
-import { formatCompactNumber } from "@/shared/utils/formatters";
 import type { QrOwnerInfo } from "@/lib/firestore-service";
 
 interface Props {
   ownerInfo: QrOwnerInfo;
   isQrOwner: boolean;
-  followCount: number;
   unreadMessages?: number;
-  onOpenFollowers: () => void;
   onOpenMessages?: () => void;
 }
 
@@ -22,7 +19,7 @@ const TYPE_ICONS: Record<string, keyof typeof Ionicons.glyphMap> = {
 };
 
 const OwnerCard = memo(function OwnerCard({
-  ownerInfo, isQrOwner, followCount, unreadMessages, onOpenFollowers, onOpenMessages,
+  ownerInfo, isQrOwner, unreadMessages, onOpenMessages,
 }: Props) {
   const { colors, isDark } = useTheme();
   const qrType = ownerInfo.qrType || "individual";
@@ -85,27 +82,6 @@ const OwnerCard = memo(function OwnerCard({
             ) : null}
           </View>
 
-          <View style={styles.ownerActions}>
-            {isQrOwner ? (
-              <Pressable
-                onPress={onOpenFollowers}
-                style={({ pressed }) => [
-                  styles.actionBtn,
-                  { backgroundColor: colors.surfaceLight, borderColor: colors.surfaceBorder, opacity: pressed ? 0.75 : 1 },
-                ]}
-              >
-                <Ionicons name="people-outline" size={14} color={colors.primary} />
-                <Text style={[styles.actionBtnText, { color: colors.primary }]}>{formatCompactNumber(followCount)}</Text>
-                <Text style={[styles.actionBtnLabel, { color: colors.textMuted }]}>followers</Text>
-              </Pressable>
-            ) : (
-              <View style={[styles.actionBtn, { backgroundColor: colors.surfaceLight, borderColor: colors.surfaceBorder }]}>
-                <Ionicons name="people-outline" size={14} color={colors.textSecondary} />
-                <Text style={[styles.actionBtnText, { color: colors.text }]}>{formatCompactNumber(followCount)}</Text>
-                <Text style={[styles.actionBtnLabel, { color: colors.textMuted }]}>followers</Text>
-              </View>
-            )}
-          </View>
         </View>
       </View>
     </>
@@ -175,19 +151,6 @@ const styles = StyleSheet.create({
   createdBy: { fontSize: 13, fontFamily: "Inter_400Regular" },
   createdByName: { fontFamily: "Inter_600SemiBold" },
   uuid: { fontSize: 11, fontFamily: "Inter_400Regular", marginTop: 1 },
-  ownerActions: { alignItems: "flex-end", gap: 6, flexShrink: 0 },
-  actionBtn: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 5,
-    borderRadius: 10,
-    paddingHorizontal: 10,
-    paddingVertical: 7,
-    borderWidth: 1,
-    position: "relative",
-  },
-  actionBtnText: { fontSize: 12, fontFamily: "Inter_700Bold" },
-  actionBtnLabel: { fontSize: 10, fontFamily: "Inter_400Regular" },
   unreadBadge: {
     position: "absolute",
     top: -5,
