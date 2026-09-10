@@ -2,7 +2,7 @@ import { db } from "@/lib/db";
 
 export function getAuthErrorMessage(code: string): string {
   switch (code) {
-    // ── Legacy Firebase-style codes ──────────────────────────────────────────
+    // ── Provider error codes ─────────────────────────────────────────────────
     case "auth/wrong-password":
     case "auth/invalid-credential":
     case "invalid_credentials":
@@ -104,9 +104,6 @@ export function mapAuthError(e: any): Error & { code?: string } {
   err.code = code || e?.message;
   return err;
 }
-
-/** @deprecated Use mapAuthError instead. */
-export const mapFirebaseError = mapAuthError;
 
 export async function generateUniqueUsername(displayName: string): Promise<string> {
   const base = displayName

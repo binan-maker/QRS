@@ -5,7 +5,7 @@
 // Uses getAdminDb() directly — never imports react-native.
 // ═══════════════════════════════════════════════════════════════════════════════
 
-import { getAdminDb, admin } from "../lib/firebase-admin";
+import { getAdminDb, admin } from "../lib/supabase-admin";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 

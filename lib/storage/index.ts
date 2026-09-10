@@ -1,14 +1,10 @@
 // ═══════════════════════════════════════════════════════════════════════════════
 // STORAGE ENTRY POINT — single import for all file-storage operations.
 // ───────────────────────────────────────────────────────────────────────────────
-// To switch your entire storage backend, edit ONE line here:
-//   import { firebaseStorageProvider } from "./providers/firebase";
-//   change to: import { s3StorageProvider } from "./providers/s3";
-//
-// No other files need changing.
+// All storage consumers use this adapter so the provider is isolated here.
 // ═══════════════════════════════════════════════════════════════════════════════
 
-import { firebaseStorageProvider } from "./providers/firebase";
+import { supabaseStorageProvider } from "./providers/supabase";
 
-export const storageAdapter = firebaseStorageProvider;
+export const storageAdapter = supabaseStorageProvider;
 export type { StorageAdapter } from "./adapter";

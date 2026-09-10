@@ -2,11 +2,11 @@
 // Thin provider that wires together the extracted auth hooks and exposes a
 // stable context value to the component tree.
 //
-// Business logic lives in:
-//   lib/auth/hooks/useFirebaseSession.ts — Firebase token listener
+// Session and auth behavior lives in:
+//   lib/auth/hooks/useAuthSession.ts  — Supabase token listener
 //   lib/auth/hooks/useGoogleAuth.ts     — Google sign-in (native + web)
 //   lib/auth/hooks/useAuthActions.ts    — signIn / signUp / signOut / etc.
-//   lib/auth/user-sync.ts               — Firebase user document sync
+//   lib/auth/user-sync.ts               — user document sync
 //   lib/auth/email-validation.ts        — server-side email validation
 //
 // For auth state outside React (API utils, background services) use:
@@ -23,7 +23,7 @@ import {
 } from "react";
 import type * as GoogleTypes from "expo-auth-session/providers/google";
 import { useAuthStore } from "@/store/authStore";
-import { useFirebaseSession } from "@/lib/auth/hooks/useFirebaseSession";
+import { useAuthSession } from "@/lib/auth/hooks/useAuthSession";
 import { useGoogleAuth } from "@/lib/auth/hooks/useGoogleAuth";
 import { useAuthActions } from "@/lib/auth/hooks/useAuthActions";
 import { getAuthErrorMessage } from "@/lib/auth/utils";
@@ -59,7 +59,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [token, setToken] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Shared flag: the Firebase session hook sets this when Firebase restores a
+  // Shared flag: the session hook sets this when the provider restores a
   // session; useGoogleAuth reads it to skip a redundant signInSilently call.
   const sessionRestoredRef = useRef(false);
 
@@ -74,8 +74,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     store.setInitialized(!isLoading);
   }, [user, token, isLoading]);
 
-  // ── Firebase session listener ──────────────────────────────────────────────
-  useFirebaseSession({ setUser, setToken, setIsLoading, firebaseSessionRestoredRef: sessionRestoredRef });
+  // ── Session listener ────────────────────────────────────────────────────────
+  useAuthSession({ setUser, setToken, setIsLoading, sessionRestoredRef });
 
   // ── Google sign-in ─────────────────────────────────────────────────────────
   const { googleRequest, signInWithGoogle, switchGoogleAccount } = useGoogleAuth({

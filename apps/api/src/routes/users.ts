@@ -8,7 +8,7 @@
 
 import { Router, type Request, type Response } from "express";
 import { z } from "zod";
-import { admin, getAdminDb, getAdminAuth } from "../lib/firebase-admin";
+import { admin, getAdminDb, getAdminAuth } from "../lib/supabase-admin";
 import { authenticate } from "../middleware/auth";
 import { validateBody } from "../middleware/validate";
 import { relaxedLimit, standardLimit } from "../middleware/rate-limit-presets";

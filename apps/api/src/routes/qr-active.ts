@@ -1,5 +1,5 @@
 import type { Request, Response, Express } from "express";
-import { getAdminDb, getAdminAuth } from "../lib/firebase-admin";
+import { getAdminDb, getAdminAuth } from "../lib/supabase-admin";
 
 export function registerQrActiveRoute(app: Express) {
   app.patch("/api/qr/:qrId/active", async (req: Request, res: Response) => {
@@ -22,7 +22,7 @@ export function registerQrActiveRoute(app: Express) {
     const adminAuth = getAdminAuth();
     if (!adminAuth) {
       return res.status(503).json({
-        error: "Server not configured for this operation. Set FIREBASE_SERVICE_ACCOUNT.",
+        error: "Server data access is not configured for this operation.",
       });
     }
 

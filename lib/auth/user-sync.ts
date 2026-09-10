@@ -1,5 +1,5 @@
 // ── User sync ─────────────────────────────────────────────────────────────────
-// Handles creating / updating the Firestore user document after any sign-in.
+// Handles creating / updating the user profile after any sign-in.
 // Extracted from AuthContext so it can be used by any auth flow without
 // pulling in React.
 

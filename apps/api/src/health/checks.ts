@@ -3,27 +3,28 @@ import type { CheckResult, MemoryCheckResult } from "./types";
 export async function checkDatabaseConnectivity(): Promise<CheckResult> {
   const startTime = Date.now();
   try {
-    if (!process.env.FIREBASE_SERVICE_ACCOUNT) {
+    if (!process.env.SUPABASE_URL) {
       return {
         status: "warning",
         latencyMs: Date.now() - startTime,
-        message: "Firebase Admin credentials not configured",
-        details: { hasServiceAccount: false },
+        message: "Supabase credentials not configured",
+        details: { configured: false },
       };
     }
 
     try {
-      const { getAdminDb } = await import("../lib/firebase-admin");
-      const db = getAdminDb();
-      if (!db) throw new Error("Firebase Admin unavailable");
-      await db.listCollections();
+      const { getAdminSupabase } = await import("../lib/supabase-admin");
+      const db = getAdminSupabase();
+      if (!db) throw new Error("Supabase client unavailable");
+      const { error } = await db.from("users").select("id").limit(1);
+      if (error) throw error;
       const latency = Date.now() - startTime;
-      return { status: "ok", latencyMs: latency, message: "Firebase connected", details: { provider: "firebase" } };
+      return { status: "ok", latencyMs: latency, message: "Supabase connected", details: { provider: "supabase" } };
     } catch (error: any) {
       return {
         status: "error",
         latencyMs: Date.now() - startTime,
-        message: error.message || "Firebase connection failed",
+         message: error.message || "Supabase connection failed",
         details: { error: error.code || "unknown" },
       };
     }

@@ -9,7 +9,7 @@ import { Platform } from "react-native";
 import { authAdapter } from "@/lib/auth";
 import { syncUserToDb } from "@/lib/auth/user-sync";
 import { serverValidateEmail } from "@/lib/auth/email-validation";
-import { mapFirebaseError, getAuthErrorMessage } from "@/lib/auth/utils";
+import { mapAuthError, getAuthErrorMessage } from "@/lib/auth/utils";
 import { trackLoginCompleted } from "@/lib/analytics";
 import { db } from "@/lib/db";
 import { COLLECTIONS } from "@/shared/constants/collections";
@@ -72,7 +72,7 @@ export function useAuthActions({ user, setUser, setToken }: Params) {
       trackLoginCompleted("email");
     } catch (e: any) {
       if (e.code === "auth/email-not-verified") throw e;
-      throw mapFirebaseError(e);
+      throw mapAuthError(e);
     }
   }
 
@@ -98,7 +98,7 @@ export function useAuthActions({ user, setUser, setToken }: Params) {
     } catch (e: any) {
       if (e.code === "auth/verification-sent") throw e;
       if (e.code === "auth/invalid-email-domain") throw e;
-      throw mapFirebaseError(e);
+      throw mapAuthError(e);
     }
   }
 
@@ -158,7 +158,7 @@ export function useAuthActions({ user, setUser, setToken }: Params) {
     try {
       await authAdapter.sendPasswordReset(email);
     } catch (e: any) {
-      throw mapFirebaseError(e);
+      throw mapAuthError(e);
     }
   }
 
@@ -169,7 +169,7 @@ export function useAuthActions({ user, setUser, setToken }: Params) {
       const currentUser = authAdapter.getCurrentUser();
       if (currentUser) await authAdapter.sendVerificationEmail(currentUser);
     } catch (e: any) {
-      throw mapFirebaseError(e);
+      throw mapAuthError(e);
     }
   }
 
@@ -222,7 +222,7 @@ export function useAuthActions({ user, setUser, setToken }: Params) {
           } catch {}
         }
         setUser(authUser);
-        // Return the fresh emailVerified from Firebase, not from React state.
+      // Return the fresh verification state from the provider, not from React state.
         return reloaded.emailVerified;
       }
     } catch {}

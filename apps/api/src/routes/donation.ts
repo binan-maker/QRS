@@ -1,6 +1,6 @@
 import type { Request, Response, Express } from "express";
 import crypto from "crypto";
-import { admin, getAdminDb } from "../lib/firebase-admin";
+import { admin, getAdminDb } from "../lib/supabase-admin";
 
 let razorpay: any = null;
 

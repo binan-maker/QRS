@@ -1,5 +1,5 @@
 /**
- * Firestore collection name constants.
+ * Data collection name constants.
  *
  * ALWAYS use these constants — never write collection name strings inline.
  * A typo in a collection name creates a silent new empty collection instead
@@ -21,14 +21,12 @@ export const COLLECTIONS = {
   PUBLIC_PROFILES: "publicProfiles",
   /** Username → userId reservation index */
   USERNAMES: "usernames",
-  /** QR code records (guard + standard links) */
+   /** QR code records */
   QR_CODES: "qrCodes",
   /** Shorthand collection used in some legacy paths */
   QRS: "qrs",
-  /** Standard (non-guard) redirect links */
-  STANDARD_LINKS: "standardLinks",
-  /** Guard (fraud-protection) redirect links */
-  GUARD_LINKS: "guardLinks",
+   /** Standard redirect links */
+   STANDARD_LINKS: "standardLinks",
   /** Per-QR scan history records */
   SCANS: "scans",
   /** AI-generated QR codes */
@@ -43,8 +41,6 @@ export const COLLECTIONS = {
   COUNTERS: "counters",
   /** Per-user personal scan count */
   PERSONAL_SCAN_COUNT: "personalScanCount",
-  /** Per-QR scan velocity (Realtime DB path) */
-  SCAN_VELOCITY: "scanVelocity",
   /** Push notification records */
   NOTIFICATIONS: "notifications",
   /** Favorited QR codes per user */
@@ -57,8 +53,6 @@ export const COLLECTIONS = {
   EVENTS: "events",
   /** Owner's own scan tracking (excluded from public counts) */
   OWNER_SCANS: "ownerScans",
-  /** Blocked scan records (excluded from public counts) */
-  BLOCKED_SCANS: "blockedScans",
   /** Content moderation queue */
   MODERATION_QUEUE: "moderationQueue",
   /** User feedback submissions */

@@ -74,12 +74,11 @@ config.transformer = {
 // We use resolveRequest (not extraNodeModules) because these packages ARE
 // installed in node_modules, so extraNodeModules is never consulted.
 
-const EMPTY_STUB = path.resolve(__dirname, "lib/db/providers/firebase-admin-stub.js");
+const EMPTY_STUB = path.resolve(__dirname, "lib/db/providers/pg-stub.js");
 const PG_STUB    = path.resolve(__dirname, "lib/db/providers/pg-stub.js");
 
 const STUBBED_PACKAGES = {
   // ── Server-only (Node.js internals / server infrastructure) ───────────────
-  "firebase-admin":         EMPTY_STUB,
   pg:                       PG_STUB,
   "drizzle-orm":            EMPTY_STUB,
   "drizzle-zod":            EMPTY_STUB,
@@ -95,7 +94,6 @@ const STUBBED_PACKAGES = {
   bcryptjs:                 EMPTY_STUB,   // server-side hashing
   openai:                   EMPTY_STUB,   // called server-side via Express
   esbuild:                  EMPTY_STUB,   // build tool
-  "firebase-tools":         EMPTY_STUB,   // CLI tool, never in mobile
   // ── Server utility packages (only imported in server/ batch utils) ─────────
   semver:                   EMPTY_STUB,
   "p-limit":                EMPTY_STUB,
@@ -104,7 +102,6 @@ const STUBBED_PACKAGES = {
   "@ungap/structured-clone":          EMPTY_STUB,
   "@stardazed/streams-text-encoding": EMPTY_STUB,
   "@urql/core":             EMPTY_STUB,
-  // ── Unused Firebase JS sub-modules (safety net against accidental inclusion)
   // The app uses: firebase/app, auth, firestore, database, storage, app-check.
   // Analytics, Performance, Messaging, Remote Config are NOT used.
   "firebase/analytics":        EMPTY_STUB,

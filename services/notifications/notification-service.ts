@@ -65,7 +65,7 @@ async function pushNotification(
   const itemKey = `${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
   await rtdb.update({
     [`notifications/${userId}/items/${itemKey}`]: notificationData,
-    // Firebase RTDB ServerValue.increment equivalent via set — we read+write
+    // Realtime increment equivalent via set — we read+write
     // in markAllRead so this is safe to overwrite for the push case.
     // Actual atomic increment is handled by the RTDB security rules or by
     // writing a value relative to existing. Since we cannot use transactions

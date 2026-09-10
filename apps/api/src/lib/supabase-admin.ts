@@ -1,7 +1,7 @@
 // ═══════════════════════════════════════════════════════════════════════════════
 // SUPABASE ADMIN CLIENT — server-side Supabase client with service role key.
 // ───────────────────────────────────────────────────────────────────────────────
-// Replaces apps/api/src/lib/firebase-admin.ts.
+// Provides the server-side Supabase client used by API routes.
 // The service role key bypasses Row Level Security — keep it server-only.
 //
 // Token verification falls back to a direct REST call with the anon key when
@@ -136,3 +136,24 @@ export async function deleteSupabaseUser(uid: string): Promise<void> {
   const { error } = await client.auth.admin.deleteUser(uid);
   if (error) throw error;
 }
+
+// Legacy document-route compatibility. These routes now fail closed when their
+// data path has not yet been migrated to relational queries.
+export function getAdminDb(): any {
+  return null;
+}
+
+export function getAdminAuth(): any {
+  return null;
+}
+
+export const admin = {
+  firestore: {
+    FieldValue: {
+      increment: (value: number) => value,
+      serverTimestamp: () => new Date(),
+      arrayUnion: (...values: unknown[]) => values,
+      arrayRemove: (...values: unknown[]) => values,
+    },
+  },
+};

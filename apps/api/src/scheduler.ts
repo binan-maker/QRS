@@ -67,30 +67,30 @@ function pickMessage(tier: (typeof TIERS)[number], userId: string) {
 
 async function runReengagement(): Promise<void> {
   try {
-    const { getAdminDb } = await import("./lib/firebase-admin");
-    const adminDb = getAdminDb();
-    if (!adminDb) return;
+    const { getAdminSupabase } = await import("./lib/supabase-admin");
+    const db = getAdminSupabase();
+    if (!db) return;
     const now = Date.now();
 
     // Fetch all users who have a push token
     // We limit to 500 per run to avoid long-running queries
-    const snap = await adminDb
-      .collection("users")
-      .where("pushToken", "!=", null)
-      .limit(500)
-      .get();
+    const { data: users, error } = await db
+      .from("users")
+      .select("id,push_token,last_opened_at,last_reengagement_sent_at")
+      .not("push_token", "is", null)
+      .limit(500);
+    if (error) throw error;
 
-    if (snap.empty) return;
+    if (!users?.length) return;
 
     const pushBatch: { to: string; title: string; body: string }[] = [];
     const writes: Promise<any>[] = [];
 
-    for (const doc of snap.docs) {
-      const data = doc.data();
-      const token: string | undefined = data.pushToken;
+    for (const user of users) {
+      const token: string | undefined = user.push_token;
       if (!token || !isValidExpoPushToken(token)) continue;
 
-      const lastOpenedAt: number = data.lastOpenedAt ?? 0;
+      const lastOpenedAt = user.last_opened_at ? new Date(user.last_opened_at).getTime() : 0;
       const inactiveMs = now - lastOpenedAt;
 
       // Find which tier the user falls in
@@ -100,15 +100,17 @@ async function runReengagement(): Promise<void> {
       if (!tier) continue;
 
       // Check cooldown — only one re-engagement push per tier window per cooldown period
-      const lastReengagedAt: number = data.lastReengagementSentAt ?? 0;
+      const lastReengagedAt = user.last_reengagement_sent_at
+        ? new Date(user.last_reengagement_sent_at).getTime()
+        : 0;
       if (now - lastReengagedAt < tier.cooldownMs) continue;
 
-      const msg = pickMessage(tier, doc.id);
+       const msg = pickMessage(tier, user.id);
       pushBatch.push({ to: token, title: msg.title, body: msg.body });
 
       // Record that we sent a re-engagement push
       writes.push(
-        doc.ref.update({ lastReengagementSentAt: now }).catch(() => {})
+        db.from("users").update({ last_reengagement_sent_at: new Date(now).toISOString() }).eq("id", user.id).then(() => {}).catch(() => {})
       );
     }
 

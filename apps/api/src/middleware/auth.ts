@@ -1,12 +1,12 @@
 /**
- * Firebase Authentication middleware.
+ * Supabase Authentication middleware.
  *
  * authenticate     — required; attaches req.user or returns 401
  * optionalAuth     — optional; attaches req.user if valid token present, otherwise continues
  */
 
 import type { Request, Response, NextFunction } from "express";
-import { verifyFirebaseToken } from "../lib/firebase-admin";
+import { verifySupabaseToken } from "../lib/supabase-admin";
 
 // ─── Augment Express Request ─────────────────────────────────────────────────
 
@@ -50,7 +50,7 @@ export async function authenticate(
   }
 
   try {
-    const user = await verifyFirebaseToken(token);
+    const user = await verifySupabaseToken(token);
     if (!user) {
       res.status(401).json({
         error: "Invalid or expired token",
@@ -78,7 +78,7 @@ export async function authenticate(
       });
       return;
     }
-    console.error("[auth] verifyFirebaseToken error:", e.message ?? e);
+    console.error("[auth] token verification error:", e.message ?? e);
     res.status(401).json({
       error: "Authentication failed",
       code: "AUTH_FAILED",
@@ -98,7 +98,7 @@ export async function optionalAuth(
   if (!token) return next();
 
   try {
-    const user = await verifyFirebaseToken(token);
+    const user = await verifySupabaseToken(token);
     if (user) req.user = {
       uid: user.uid,
       email: user.email,
