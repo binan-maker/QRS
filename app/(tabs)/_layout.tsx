@@ -1,8 +1,8 @@
-import { Tabs, router } from "expo-router";
+import { Tabs } from "expo-router";
 import { Platform, StyleSheet, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
-import React, { useEffect, useCallback, useMemo, memo } from "react";
+import React, { useEffect, useCallback, useMemo, memo, useState } from "react";
 import { useTheme } from "@/shared/contexts/ThemeContext";
 import { TabBarProvider, useTabBarScroll } from "@/shared/contexts/TabBarContext";
 import {
@@ -94,14 +94,20 @@ function ClassicTabLayout() {
   const insets = useSafeAreaInsets();
   const { colors } = useTheme();
   const { tabBarTranslateY, setTabBarHeight } = useTabBarScroll();
+  const [startupTab, setStartupTab] = useState<"index" | "scanner">("index");
+  const [startupPreferenceReady, setStartupPreferenceReady] = useState(false);
 
   useEffect(() => {
-    // Read from the startup-prefs cache (shared single-multiGet, already resolved
-    // by the time ClassicTabLayout mounts — post-splash). No extra bridge call.
+    // Resolve the startup tab before mounting the navigator. Rendering the
+    // default tab and then replacing it during initial linking can make React
+    // Navigation think that more than one root linking handler is active.
     prefetchStartupPrefs().then(() => {
       const pref = getStartupPref(STARTUP_PREF_KEYS.STARTUP_SCREEN);
-      if (pref === "scanner") router.replace("/(tabs)/scanner");
-    }).catch(() => {});
+      setStartupTab(pref === "scanner" ? "scanner" : "index");
+      setStartupPreferenceReady(true);
+    }).catch(() => {
+      setStartupPreferenceReady(true);
+    });
   }, []);
 
   const ANDROID_BAR_HEIGHT = 70 + insets.bottom;
@@ -168,9 +174,13 @@ function ClassicTabLayout() {
     [colors.primary, colors.tabIconDefault, tabBarHeight, insets.bottom, tabBarBackground, isIOS, tabBarTranslateY],
   );
 
+  if (!startupPreferenceReady) {
+    return <View style={{ flex: 1, backgroundColor: colors.background }} />;
+  }
+
   return (
     <View style={{ flex: 1 }}>
-      <Tabs initialRouteName="index" screenOptions={screenOptions}>
+      <Tabs initialRouteName={startupTab} screenOptions={screenOptions}>
         <Tabs.Screen
           name="index"
           options={{ title: "Home", tabBarIcon: renderHomeIcon }}

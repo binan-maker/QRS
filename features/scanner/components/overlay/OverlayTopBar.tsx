@@ -18,7 +18,7 @@ export default function OverlayTopBar({ topInset, anonymousMode, onToggleAnonymo
     >
       {/* Back button */}
       <Pressable
-        onPress={() => router.replace("/(tabs)/index")}
+        onPress={() => router.replace("/(tabs)")}
         style={({ pressed }) => [styles.glassBtn, pressed && styles.glassBtnPressed]}
         hitSlop={8}
         accessibilityRole="button"

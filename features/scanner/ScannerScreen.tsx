@@ -373,7 +373,7 @@ export default function ScannerScreen() {
       ) : !cameraAvailable && isFocused ? (
         <View style={[StyleSheet.absoluteFillObject, { backgroundColor: "#080c14" }]}>
           <View style={{ paddingTop: topInset + 8, paddingHorizontal: 16, paddingBottom: 10 }}>
-            <Pressable onPress={() => router.replace("/(tabs)/index")} style={styles.backBtn}>
+            <Pressable onPress={() => router.replace("/(tabs)")} style={styles.backBtn}>
               <Ionicons name="chevron-back" size={22} color="#fff" />
             </Pressable>
           </View>
