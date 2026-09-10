@@ -400,7 +400,7 @@ function ProfileScreen() {
         onRemove={handleRemovePhoto}
         hasPhoto={!!photoURL}
         onClose={closePhotoModal}
-        extraBottomPadding={0}
+        extraBottomPadding={39}
       />
       <ImageCropModal
         visible={cropModalOpen}

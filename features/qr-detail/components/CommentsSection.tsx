@@ -159,10 +159,15 @@ export default function CommentsSection({
 
       {/* Comment input / auth prompt */}
       {!user ? (
-        <Pressable onPress={() => router.push("/(auth)/login")} style={[styles.commentInput, { marginBottom: 10 }]}>
-          <Text style={[styles.commentTextInput, { color: colors.textMuted, paddingTop: 4 }]}>
-            Add a comment…
-          </Text>
+          <Pressable onPress={() => router.push("/(auth)/login")} style={styles.inlineCommentBar}>
+          <View style={styles.commentInput}>
+            <Text style={[styles.commentTextInput, { color: colors.textMuted, paddingTop: 9 }]}>
+              Add a comment…
+            </Text>
+            <View style={styles.sendBtn}>
+              <Ionicons name="send" size={15} color="#000" />
+            </View>
+          </View>
         </Pressable>
       ) : (
         <View style={styles.inlineCommentBar}>
