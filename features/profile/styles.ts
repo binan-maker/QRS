@@ -84,10 +84,10 @@ export const styles = StyleSheet.create({
   statValue: { fontSize: 17, fontFamily: "Inter_700Bold" },
   statLabel: { fontSize: 11, fontFamily: "Inter_400Regular" },
 
-  // ── Personal activity ─────────────────────────────────────────────────────
-  profileActions: { flexDirection: "row", gap: 10, marginBottom: 22 },
+  // ── Profile actions ────────────────────────────────────────────────────────
+  profileActions: { marginBottom: 22 },
   profileActionBtn: {
-    flex: 1, flexDirection: "row", alignItems: "center", gap: 9,
+    flexDirection: "row", alignItems: "center", gap: 9,
     minHeight: 72, paddingHorizontal: 11, paddingVertical: 12,
     borderRadius: 16, borderWidth: 1,
   },
@@ -97,6 +97,24 @@ export const styles = StyleSheet.create({
   },
   profileActionLabel: { fontSize: 12, fontFamily: "Inter_700Bold" },
   profileActionSubtext: { fontSize: 10, fontFamily: "Inter_400Regular", marginTop: 2 },
+
+  // ── Profile preferences ────────────────────────────────────────────────────
+  profileSection: { marginBottom: 22 },
+  profileSectionLabel: {
+    fontSize: 11, fontFamily: "Inter_700Bold", letterSpacing: 0.7, marginBottom: 9,
+  },
+  preferenceCard: { borderRadius: 16, borderWidth: 1, padding: 16 },
+  preferenceLabel: { fontSize: 13, fontFamily: "Inter_500Medium", marginBottom: 11 },
+  preferenceRow: { flexDirection: "row", gap: 10 },
+  preferenceOption: {
+    flex: 1, minHeight: 48, borderRadius: 12, borderWidth: 1,
+    flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 7,
+    position: "relative",
+  },
+  preferenceOptionText: { fontSize: 13, fontFamily: "Inter_600SemiBold" },
+  preferenceActiveIndicator: {
+    position: "absolute", top: 5, right: 5, width: 5, height: 5, borderRadius: 3,
+  },
 
   // ── Legacy section styles ────────────────────────────────────────────────
   section: { marginBottom: 22 },

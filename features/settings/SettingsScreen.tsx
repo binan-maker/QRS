@@ -23,11 +23,6 @@ import CommentsSection from "@/features/settings/components/CommentsSection";
 import HistorySection from "@/features/settings/components/HistorySection";
 import ProfileSettingsSection from "@/features/settings/components/ProfileSettingsSection";
 
-const STARTUP_SCREEN_OPTIONS = [
-{ key: "home"    as const, label: "Home",    icon: "home-outline"  as const },
-{ key: "scanner" as const, label: "Scanner", icon: "scan-outline"  as const },
-];
-
 export default function SettingsScreen() {
 const insets = useSafeAreaInsets();
 const topInset = useTopInset();
@@ -47,7 +42,6 @@ followingList, followingLoading, loadFollowing,
 myComments, commentsLoading, loadMyComments,
 myHistory, historyLoading, loadMyHistory,
 deleteConfirmText, setDeleteConfirmText,
-startupScreen, setStartupScreen,
 handleSignOut, handleClearData,
 handleSubmitFeedback, handleSendAnother,
   handleDeleteComment, handleEditComment, handleDeleteAllComments,
@@ -110,13 +104,6 @@ system: handleSetSystemMode,
 light:  handleSetLightMode,
 dark:   handleSetDarkMode,
 }), [handleSetSystemMode, handleSetLightMode, handleSetDarkMode]);
-
-const handleSetHomeScreen    = useCallback(() => setStartupScreen("home"),    [setStartupScreen]);
-const handleSetScannerScreen = useCallback(() => setStartupScreen("scanner"), [setStartupScreen]);
-const startupScreenHandlers: Record<"home" | "scanner", () => void> = useMemo(() => ({
-home:    handleSetHomeScreen,
-scanner: handleSetScannerScreen,
-}), [handleSetHomeScreen, handleSetScannerScreen]);
 
 const { headerStyle, setHeight, onScroll: onHeaderScroll } = useHeaderHide();
 const { onTabScroll } = useTabBarScroll();
@@ -322,42 +309,6 @@ key={opt.key}
 onPress={themeModeHandlers[opt.key]}
 accessibilityRole="button"
 accessibilityLabel={`${opt.label} theme`}
-accessibilityState={{ selected: isActive }}
-style={({ pressed }) => [
-styles.themeBtn,
-{
-backgroundColor: isActive ? colors.primaryDim : colors.surfaceLight,
-borderColor: isActive ? colors.primary : colors.surfaceBorder,
-opacity: pressed ? 0.8 : 1,
-},
-]}
->
-<Ionicons name={opt.icon} size={18} color={isActive ? colors.primary : colors.textMuted} />
-<Text style={[styles.themeBtnText, { color: isActive ? colors.primary : colors.textMuted }]}>
-{opt.label}
-</Text>
-{isActive && <View style={[styles.activeIndicator, { backgroundColor: colors.primary }]} />}
-</Pressable>
-);
-})}
-</View>
-</View>
-</View>
-
-{/* ── PREFERENCES ── */}
-<View style={styles.section}>
-<Text style={styles.sectionLabel}>PREFERENCES</Text>
-<View style={[styles.menuGroup, { padding: 16 }]}>
-<Text style={[styles.appearanceLabel, { color: colors.textSecondary }]}>App opens on</Text>
-<View style={styles.themeRow}>
-{STARTUP_SCREEN_OPTIONS.map((opt) => {
-const isActive = startupScreen === opt.key;
-return (
-<Pressable
-key={opt.key}
-onPress={startupScreenHandlers[opt.key]}
-accessibilityRole="button"
-accessibilityLabel={`Open on ${opt.label}`}
 accessibilityState={{ selected: isActive }}
 style={({ pressed }) => [
 styles.themeBtn,

@@ -35,6 +35,12 @@ import ImageCropModal from "@/features/profile/components/ImageCropModal";
 import GuestView from "@/features/profile/components/GuestView";
 import NotificationsModal from "@/shared/components/notifications/NotificationsModal";
 import { styles } from "@/features/profile/styles";
+import { useStartupScreenPreference } from "@/features/settings/hooks/useStartupScreenPreference";
+
+const STARTUP_SCREEN_OPTIONS = [
+  { key: "home" as const, label: "Home", icon: "home-outline" as const },
+  { key: "scanner" as const, label: "Scanner", icon: "scan-outline" as const },
+];
 
 // ── Module-level animation presets (created once, not per render) ──────────────
 const ENTER_TOP_BAR      = FadeInDown.delay(0).duration(260);
@@ -128,6 +134,7 @@ function ProfileScreen() {
     handlePickPhoto, handleRemovePhoto, handleSignOut,
   } = useProfile();
   const { cachedUrl: photoURL } = useAvatar();
+  const { startupScreen, setStartupScreen } = useStartupScreenPreference();
   const {
     notifCount, notifOpen, setNotifOpen,
     notifications, markingRead,
@@ -156,7 +163,6 @@ function ProfileScreen() {
   // an extra re-render when the useCallback result is finally assigned. ──────
   const goToSettings    = useCallback(() => safePush({ pathname: "/(tabs)/settings" as any, params: { from: "profile" } }), []);
   const goToEditProfile = useCallback(() => safePush({ pathname: "/(tabs)/settings" as any, params: { initialSection: "profile", fromProfile: "1" } }), []);
-  const goToComments    = useCallback(() => safePush({ pathname: "/(tabs)/settings" as any, params: { initialSection: "comments", from: "profile" } }), []);
   const goToHistory     = useCallback(() => safePush("/(tabs)/history"), []);
   const goToLogin       = useCallback(() => safePush("/(auth)/login"),        []);
   const goToRegister    = useCallback(() => safePush("/(auth)/register"),     []);
@@ -335,27 +341,8 @@ function ProfileScreen() {
           ))}
         </Animated.View>
 
-        {/* ── PERSONAL ACTIVITY ─────────────────────────────────── */}
+        {/* ── HISTORY ────────────────────────────────────────────── */}
         <View style={styles.profileActions}>
-          <Pressable
-            onPress={goToComments}
-            accessibilityRole="button"
-            accessibilityLabel="My Comments"
-            style={({ pressed }) => [
-              styles.profileActionBtn,
-              { backgroundColor: colors.surface, borderColor: colors.surfaceBorder, opacity: pressed ? 0.78 : 1 },
-            ]}
-          >
-            <View style={[styles.profileActionIcon, { backgroundColor: colors.primaryDim }]}>
-              <Ionicons name="chatbubble-ellipses-outline" size={18} color={colors.primary} />
-            </View>
-            <View style={{ flex: 1, minWidth: 0 }}>
-              <Text style={[styles.profileActionLabel, { color: colors.text }]} numberOfLines={1}>My Comments</Text>
-              <Text style={[styles.profileActionSubtext, { color: colors.textMuted }]} numberOfLines={1}>Edit or remove</Text>
-            </View>
-            <Ionicons name="chevron-forward" size={16} color={colors.textMuted} />
-          </Pressable>
-
           <Pressable
             onPress={goToHistory}
             accessibilityRole="button"
@@ -370,10 +357,46 @@ function ProfileScreen() {
             </View>
             <View style={{ flex: 1, minWidth: 0 }}>
               <Text style={[styles.profileActionLabel, { color: colors.text }]} numberOfLines={1}>History</Text>
-              <Text style={[styles.profileActionSubtext, { color: colors.textMuted }]} numberOfLines={1}>Review or remove</Text>
+              <Text style={[styles.profileActionSubtext, { color: colors.textMuted }]} numberOfLines={1}>Review or remove scans</Text>
             </View>
             <Ionicons name="chevron-forward" size={16} color={colors.textMuted} />
           </Pressable>
+        </View>
+
+        {/* ── PREFERENCES ────────────────────────────────────────── */}
+        <View style={styles.profileSection}>
+          <Text style={[styles.profileSectionLabel, { color: colors.textMuted }]}>PREFERENCES</Text>
+          <View style={[styles.preferenceCard, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
+            <Text style={[styles.preferenceLabel, { color: colors.textSecondary }]}>App opens on</Text>
+            <View style={styles.preferenceRow}>
+              {STARTUP_SCREEN_OPTIONS.map((option) => {
+                const isActive = startupScreen === option.key;
+                return (
+                  <Pressable
+                    key={option.key}
+                    onPress={() => setStartupScreen(option.key)}
+                    accessibilityRole="button"
+                    accessibilityLabel={`Open on ${option.label}`}
+                    accessibilityState={{ selected: isActive }}
+                    style={({ pressed }) => [
+                      styles.preferenceOption,
+                      {
+                        backgroundColor: isActive ? colors.primaryDim : colors.surfaceLight,
+                        borderColor: isActive ? colors.primary : colors.surfaceBorder,
+                        opacity: pressed ? 0.8 : 1,
+                      },
+                    ]}
+                  >
+                    <Ionicons name={option.icon} size={18} color={isActive ? colors.primary : colors.textMuted} />
+                    <Text style={[styles.preferenceOptionText, { color: isActive ? colors.primary : colors.textMuted }]}>
+                      {option.label}
+                    </Text>
+                    {isActive && <View style={[styles.preferenceActiveIndicator, { backgroundColor: colors.primary }]} />}
+                  </Pressable>
+                );
+              })}
+            </View>
+          </View>
         </View>
 
         {/* ── SIGN OUT ──────────────────────────────────────────── */}

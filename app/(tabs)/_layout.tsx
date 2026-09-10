@@ -55,7 +55,7 @@ const HomeIcon = memo(function HomeIcon({
   );
 });
 
-const HistoryIcon = memo(function HistoryIcon({
+const ScannerIcon = memo(function ScannerIcon({
   color,
   focused,
 }: {
@@ -64,7 +64,7 @@ const HistoryIcon = memo(function HistoryIcon({
 }) {
   return (
     <View style={focused ? [styles.activeIconWrap, { backgroundColor: color + "20" }] : styles.iconWrap}>
-      <Ionicons name={focused ? "time" : "time-outline"} size={22} color={color} />
+      <Ionicons name={focused ? "scan" : "scan-outline"} size={22} color={color} />
     </View>
   );
 });
@@ -85,7 +85,7 @@ const ProfileIcon = memo(function ProfileIcon({
 
 // ── Stable icon render functions ───────────────────────────────────────────────
 const renderHomeIcon = ({ color, focused }: { color: string; focused: boolean }) => <HomeIcon color={color} focused={focused} />;
-const renderHistIcon = ({ color, focused }: { color: string; focused: boolean }) => <HistoryIcon color={color} focused={focused} />;
+const renderScannerIcon = ({ color, focused }: { color: string; focused: boolean }) => <ScannerIcon color={color} focused={focused} />;
 const renderProfIcon = ({ color, focused }: { color: string; focused: boolean }) => <ProfileIcon color={color} focused={focused} />;
 
 function ClassicTabLayout() {
@@ -178,12 +178,12 @@ function ClassicTabLayout() {
 
         <Tabs.Screen
           name="scanner"
-          options={{ href: null, tabBarStyle: hiddenTabBar }}
+          options={{ title: "Scan", tabBarIcon: renderScannerIcon }}
         />
 
         <Tabs.Screen
           name="history"
-          options={{ title: "History", tabBarIcon: renderHistIcon }}
+          options={{ href: null, tabBarStyle: hiddenTabBar }}
         />
 
         <Tabs.Screen

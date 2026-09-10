@@ -9,12 +9,10 @@ import { useAccountSettings } from "./useAccountSettings";
 export type Section = "main" | "profile" | "account" | "guide" | "feedback" | "following" | "comments" | "history";
 
 const HAPTIC_KEY = "haptic_enabled";
-const STARTUP_SCREEN_KEY = "qrg:startup:screen";
 
 export function useSettings() {
   const { user, signOut } = useAuth();
   const [section, setSection] = useState<Section>("main");
-  const [startupScreen, setStartupScreenState] = useState<"home" | "scanner">("home");
 
   const feedback = useFeedbackSettings({ userId: user?.id ?? null, userEmail: user?.email || "" });
   const data = useDataSettings({ userId: user?.id });
@@ -43,14 +41,6 @@ export function useSettings() {
     AsyncStorage.getItem(HAPTIC_KEY).then((v) => {
       setHapticsEnabled(v === "true");
     });
-    AsyncStorage.getItem(STARTUP_SCREEN_KEY).then((v) => {
-      if (v === "scanner") setStartupScreenState("scanner");
-    });
-  }, []);
-
-  const setStartupScreen = useCallback(async (screen: "home" | "scanner") => {
-    setStartupScreenState(screen);
-    await AsyncStorage.setItem(STARTUP_SCREEN_KEY, screen);
   }, []);
 
   // Keep stable refs to the data-load functions so the section handler never
@@ -73,8 +63,6 @@ export function useSettings() {
     user,
     section,
     setSection: handleSectionChange,
-    startupScreen,
-    setStartupScreen,
     ...feedback,
     ...data,
     ...account,
