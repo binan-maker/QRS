@@ -75,14 +75,9 @@ config.transformer = {
 // installed in node_modules, so extraNodeModules is never consulted.
 
 const EMPTY_STUB = path.resolve(__dirname, "lib/db/providers/pg-stub.js");
-const PG_STUB    = path.resolve(__dirname, "lib/db/providers/pg-stub.js");
 
 const STUBBED_PACKAGES = {
   // ── Server-only (Node.js internals / server infrastructure) ───────────────
-  pg:                       PG_STUB,
-  "drizzle-orm":            EMPTY_STUB,
-  "drizzle-zod":            EMPTY_STUB,
-  "drizzle-kit":            EMPTY_STUB,
   express:                  EMPTY_STUB,
   "http-proxy":             EMPTY_STUB,
   "http-proxy-middleware":  EMPTY_STUB,

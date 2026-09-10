@@ -1,6 +1,7 @@
 import { Router } from "express";
 import type { Request, Response } from "express";
 import { sendExpoPush, isValidExpoPushToken } from "../lib/expo-push";
+import { admin, getAdminDb } from "../lib/firebase-admin";
 
 export const pushRouter = Router();
 
@@ -41,14 +42,12 @@ pushRouter.post("/register", async (req: Request, res: Response) => {
   }
 
   try {
-    const { getAdminSupabase } = await import("../lib/supabase-admin");
-    const client = getAdminSupabase();
-    if (!client) return res.status(503).json({ error: "DB not available" });
-    const { error } = await client.from("users").update({
-      push_token: token,
-      push_token_updated_at: new Date().toISOString(),
-    }).eq("id", userId);
-    if (error) throw error;
+    const db = getAdminDb();
+    if (!db) return res.status(503).json({ error: "DB not available" });
+    await db.collection("users").doc(userId).set({
+      pushToken: token,
+      pushTokenUpdatedAt: admin.firestore.FieldValue.serverTimestamp(),
+    }, { merge: true });
     return res.json({ ok: true });
   } catch (e) {
     console.error("[Push/register] Failed to save token:", e);
@@ -66,10 +65,11 @@ pushRouter.post("/track-open", async (req: Request, res: Response) => {
   if (!userId) return res.status(400).json({ error: "Missing userId" });
 
   try {
-    const { getAdminSupabase } = await import("../lib/supabase-admin");
-    const client = getAdminSupabase();
-    if (!client) return res.json({ ok: false });
-    await client.from("users").update({ last_opened_at: new Date().toISOString() }).eq("id", userId);
+    const db = getAdminDb();
+    if (!db) return res.json({ ok: false });
+    await db.collection("users").doc(userId).set({
+      lastOpenedAt: admin.firestore.FieldValue.serverTimestamp(),
+    }, { merge: true });
     return res.json({ ok: true });
   } catch {
     return res.json({ ok: false }); // non-critical, silent
@@ -84,11 +84,10 @@ export async function sendPushToUser(
   data?: Record<string, any>
 ): Promise<void> {
   try {
-    const { getAdminSupabase } = await import("../lib/supabase-admin");
-    const client = getAdminSupabase();
-    if (!client) return;
-    const { data: user } = await client.from("users").select("push_token").eq("id", userId).maybeSingle();
-    const token: string | undefined = user?.push_token;
+    const db = getAdminDb();
+    if (!db) return;
+    const user = await db.collection("users").doc(userId).get();
+    const token: string | undefined = user.data()?.pushToken;
     if (!token || !isValidExpoPushToken(token)) return;
     await sendExpoPush({ to: token, title, body, data, sound: "default" });
   } catch (e) {

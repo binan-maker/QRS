@@ -15,8 +15,8 @@ module.exports = [
               message: "Import from \"@binro/core\" instead of deep-linking into src/.",
             },
             {
-              group: ["@binro/db/src/*"],
-              message: "Import from \"@binro/db\" instead of deep-linking into src/.",
+              group: [],
+              message: "Import from \"@binro/db\".",
             },
             {
               group: ["@binro/config/src/*"],

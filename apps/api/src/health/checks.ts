@@ -3,28 +3,26 @@ import type { CheckResult, MemoryCheckResult } from "./types";
 export async function checkDatabaseConnectivity(): Promise<CheckResult> {
   const startTime = Date.now();
   try {
-    if (!process.env.SUPABASE_URL) {
+    const { getAdminDb } = await import("../lib/firebase-admin");
+    const db = getAdminDb();
+    if (!db) {
       return {
         status: "warning",
         latencyMs: Date.now() - startTime,
-        message: "Supabase credentials not configured",
+        message: "Firebase Admin credentials not configured",
         details: { configured: false },
       };
     }
 
     try {
-      const { getAdminSupabase } = await import("../lib/supabase-admin");
-      const db = getAdminSupabase();
-      if (!db) throw new Error("Supabase client unavailable");
-      const { error } = await db.from("users").select("id").limit(1);
-      if (error) throw error;
+      await db.collection("users").limit(1).get();
       const latency = Date.now() - startTime;
-      return { status: "ok", latencyMs: latency, message: "Supabase connected", details: { provider: "supabase" } };
+      return { status: "ok", latencyMs: latency, message: "Firebase connected", details: { provider: "firebase" } };
     } catch (error: any) {
       return {
         status: "error",
         latencyMs: Date.now() - startTime,
-         message: error.message || "Supabase connection failed",
+         message: error.message || "Firebase connection failed",
         details: { error: error.code || "unknown" },
       };
     }

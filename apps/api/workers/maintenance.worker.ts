@@ -8,13 +8,13 @@
  *   - Purge soft-deleted users after 30-day grace period
  *
  * To run:
- *   UPSTASH_REDIS_URL=rediss://... DATABASE_URL=postgres://... npx tsx apps/api/workers/maintenance.worker.ts
+ *   UPSTASH_REDIS_URL=rediss://... npx tsx apps/api/workers/maintenance.worker.ts
  */
 
 import { Worker, Queue } from "bullmq";
 import type { MaintenanceJobData } from "../src/infrastructure/queue";
 import { QUEUE_NAMES } from "../src/infrastructure/queue";
-import { getAdminSupabase } from "../src/lib/supabase-admin";
+import { getAdminDb } from "../src/lib/firebase-admin";
 
 // ─── Redis connection ─────────────────────────────────────────────────────────
 
@@ -32,34 +32,25 @@ const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000;
 const NINETY_DAYS_MS = 90 * 24 * 60 * 60 * 1000;
 
 async function expireNotifications(): Promise<void> {
-  const supabase = getAdminSupabase();
-  if (!supabase) return;
+  const db = getAdminDb();
+  if (!db) return;
 
-  const cutoff = new Date(Date.now() - THIRTY_DAYS_MS).toISOString();
+  const cutoff = new Date(Date.now() - THIRTY_DAYS_MS);
 
   // Fetch IDs of stale notifications (cap at 500 to avoid full table scans)
-  const { data, error } = await supabase
-    .from("notifications")
-    .select("id")
-    .lt("created_at", cutoff)
-    .limit(500);
-
-  if (error) {
-    console.error("[maintenance] expireNotifications error:", error.message);
-    return;
-  }
-  if (!data || data.length === 0) {
+  const snapshot = await db.collectionGroup("notifications")
+    .where("createdAt", "<", cutoff)
+    .limit(500)
+    .get();
+  if (snapshot.empty) {
     console.log("[maintenance] No stale notifications");
     return;
   }
 
-  const ids = data.map((row: any) => row.id as string);
-  const { error: delErr } = await supabase.from("notifications").delete().in("id", ids);
-  if (delErr) {
-    console.error("[maintenance] Failed to delete notifications:", delErr.message);
-    return;
-  }
-  console.log(`[maintenance] Deleted ${ids.length} notifications older than 30 days`);
+  const batch = db.batch();
+  snapshot.docs.forEach((notification) => batch.delete(notification.ref));
+  await batch.commit();
+  console.log(`[maintenance] Deleted ${snapshot.size} notifications older than 30 days`);
 }
 
 async function archiveOldScans(): Promise<void> {
@@ -71,34 +62,25 @@ async function archiveOldScans(): Promise<void> {
 }
 
 async function cleanupSoftDeletedUsers(): Promise<void> {
-  const supabase = getAdminSupabase();
-  if (!supabase) return;
+  const db = getAdminDb();
+  if (!db) return;
 
-  const cutoff = new Date(Date.now() - THIRTY_DAYS_MS).toISOString();
+  const cutoff = new Date(Date.now() - THIRTY_DAYS_MS);
 
-  const { data, error } = await supabase
-    .from("users")
-    .select("id")
-    .eq("is_deleted", true)
-    .lt("deleted_at", cutoff)
-    .limit(100);
-
-  if (error) {
-    console.error("[maintenance] cleanupSoftDeletedUsers error:", error.message);
-    return;
-  }
-  if (!data || data.length === 0) {
+  const snapshot = await db.collection("users")
+    .where("isDeleted", "==", true)
+    .where("deletedAt", "<", cutoff)
+    .limit(100)
+    .get();
+  if (snapshot.empty) {
     console.log("[maintenance] No users to purge");
     return;
   }
 
-  const ids = data.map((row: any) => row.id as string);
-  const { error: delErr } = await supabase.from("users").delete().in("id", ids);
-  if (delErr) {
-    console.error("[maintenance] Failed to delete users:", delErr.message);
-    return;
-  }
-  console.log(`[maintenance] Hard-deleted ${ids.length} soft-deleted user records`);
+  const batch = db.batch();
+  snapshot.docs.forEach((user) => batch.delete(user.ref));
+  await batch.commit();
+  console.log(`[maintenance] Hard-deleted ${snapshot.size} soft-deleted user records`);
 }
 
 // ─── Job handler ──────────────────────────────────────────────────────────────

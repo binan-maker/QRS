@@ -13,7 +13,6 @@
       "@binro/core": ["packages/core/src/index.ts"],
       "@binro/core/*": ["packages/core/src/*"],
       "@binro/db": ["packages/db/src/index.ts"],
-      "@binro/db/*": ["packages/db/src/*"],
       "@binro/config": ["packages/config/src/index.ts"],
       "@binro/config/*": ["packages/config/src/*"]
     }

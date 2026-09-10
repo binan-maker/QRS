@@ -5,9 +5,14 @@ import { z } from "zod";
 // Never put secrets here — they are visible to end users.
 
 export const mobileEnvSchema = z.object({
-  // Supabase client configuration (public — safe to bundle)
-  EXPO_PUBLIC_SUPABASE_URL: z.string().url().optional(),
-  EXPO_PUBLIC_SUPABASE_ANON_KEY: z.string().optional(),
+  // Firebase client configuration (public — safe to bundle)
+  EXPO_PUBLIC_FIREBASE_API_KEY: z.string().optional(),
+  EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN: z.string().optional(),
+  EXPO_PUBLIC_FIREBASE_PROJECT_ID: z.string().optional(),
+  EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET: z.string().optional(),
+  EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID: z.string().optional(),
+  EXPO_PUBLIC_FIREBASE_APP_ID: z.string().optional(),
+  EXPO_PUBLIC_FIREBASE_DATABASE_URL: z.string().url().optional(),
 
   // Google Sign-In
   EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID: z.string().optional(),
@@ -26,9 +31,7 @@ export const apiEnvSchema = z.object({
     .enum(["development", "production", "test"])
     .default("development"),
 
-  SUPABASE_URL: z.string().url().optional(),
-  SUPABASE_ANON_KEY: z.string().optional(),
-  SUPABASE_SERVICE_ROLE_KEY: z.string().optional(),
+  FIREBASE_SERVICE_ACCOUNT: z.string().optional(),
 
   // Auth / security
   SESSION_SECRET: z.string().min(32).optional(),
@@ -40,9 +43,12 @@ export const apiEnvSchema = z.object({
 
 export const webEnvSchema = z.object({
   NEXT_PUBLIC_API_URL: z.string().url().optional(),
-  NEXT_PUBLIC_SUPABASE_URL: z.string().url().optional(),
-  NEXT_PUBLIC_SUPABASE_ANON_KEY: z.string().optional(),
-  DATABASE_URL: z.string().url().optional(),
+  NEXT_PUBLIC_FIREBASE_API_KEY: z.string().optional(),
+  NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN: z.string().optional(),
+  NEXT_PUBLIC_FIREBASE_PROJECT_ID: z.string().optional(),
+  NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET: z.string().optional(),
+  NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID: z.string().optional(),
+  NEXT_PUBLIC_FIREBASE_APP_ID: z.string().optional(),
   SESSION_SECRET: z.string().min(32).optional(),
 });
 

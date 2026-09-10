@@ -1,13 +1,13 @@
 // ═══════════════════════════════════════════════════════════════════════════════
-// DATABASE ENTRY POINT — Supabase database and realtime adapters.
+// DATABASE ENTRY POINT — Firebase database and realtime adapters.
 // ═══════════════════════════════════════════════════════════════════════════════
 
 import type { DbAdapter, RealtimeAdapter } from "./adapter";
 
-import { supabaseDb, supabaseRtdb } from "./providers/supabase";
+import { firebaseDb, firebaseRtdb } from "./providers/firebase";
 
-export const db: DbAdapter = supabaseDb;
-export const rtdb: RealtimeAdapter = supabaseRtdb;
+export const db: DbAdapter = firebaseDb;
+export const rtdb: RealtimeAdapter = firebaseRtdb;
 
 export type { DbAdapter, RealtimeAdapter, DbDocument, QueryOptions, QueryResult, WhereClause } from "./adapter";
 

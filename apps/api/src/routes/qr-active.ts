@@ -1,5 +1,5 @@
 import type { Request, Response, Express } from "express";
-import { getAdminDb, getAdminAuth } from "../lib/supabase-admin";
+import { getAdminDb, getAdminAuth } from "../lib/firebase-admin";
 
 export function registerQrActiveRoute(app: Express) {
   app.patch("/api/qr/:qrId/active", async (req: Request, res: Response) => {

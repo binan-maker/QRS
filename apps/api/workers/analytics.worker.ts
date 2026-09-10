@@ -11,7 +11,7 @@
 import { Worker } from "bullmq";
 import type { AnalyticsJobData } from "../src/infrastructure/queue";
 import { QUEUE_NAMES } from "../src/infrastructure/queue";
-import { getAdminSupabase } from "../src/lib/supabase-admin";
+import { admin, getAdminDb } from "../src/lib/firebase-admin";
 import { getCacheService } from "../src/infrastructure/cache";
 
 // ─── Redis connection ─────────────────────────────────────────────────────────
@@ -37,53 +37,27 @@ function shouldRefreshTrust(scanCount: number): boolean {
 
 async function processAnalyticsJob(job: { data: AnalyticsJobData }) {
   const { qrId, scanId, event, timestamp } = job.data;
-  const supabase = getAdminSupabase();
+  const db = getAdminDb();
 
-  if (!supabase) {
-    console.warn("[analytics.worker] Supabase Admin not configured — skipping analytics");
+  if (!db) {
+    console.warn("[analytics.worker] Firebase Admin not configured — skipping analytics");
     return;
   }
 
   if (event === "scan") {
     // Fetch the current scan count
-    const { data: qr, error: fetchErr } = await supabase
-      .from("unified_qrs")
-      .select("id, scan_count")
-      .eq("id", qrId)
-      .maybeSingle();
-
-    if (fetchErr) {
-      console.error(`[analytics.worker] Failed to fetch QR ${qrId}:`, fetchErr.message);
-      return;
-    }
-    if (!qr) {
+    const qrRef = db.collection("qrs").doc(qrId);
+    const qrSnapshot = await qrRef.get();
+    if (!qrSnapshot.exists) {
       console.warn(`[analytics.worker] QR ${qrId} not found — skipping`);
       return;
     }
 
-    const newCount = ((qr.scan_count as number) ?? 0) + 1;
-
-    // Atomic increment via RPC (falls back to read-then-write if RPC not available)
-    const { error: rpcErr } = await supabase.rpc("increment_field", {
-      p_table: "unified_qrs",
-      p_id: qrId,
-      p_field: "scan_count",
-      p_delta: 1,
+    const newCount = ((qrSnapshot.data()?.scanCount as number) ?? 0) + 1;
+    await qrRef.update({
+      scanCount: admin.firestore.FieldValue.increment(1),
+      lastScannedAt: new Date(timestamp),
     });
-
-    if (rpcErr) {
-      // Fallback: direct update
-      await supabase
-        .from("unified_qrs")
-        .update({ scan_count: newCount, last_scanned_at: new Date(timestamp).toISOString() })
-        .eq("id", qrId);
-    } else {
-      // Update last_scanned_at separately
-      await supabase
-        .from("unified_qrs")
-        .update({ last_scanned_at: new Date(timestamp).toISOString() })
-        .eq("id", qrId);
-    }
 
     // Invalidate cached trust score at scan count thresholds
     if (shouldRefreshTrust(newCount)) {

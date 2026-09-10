@@ -1,42 +1,70 @@
-import { db } from "../../db";
-import { conversations, messages } from "@shared/schema";
-import { eq, desc } from "drizzle-orm";
+import { getAdminDb } from "../../lib/firebase-admin";
 
 export interface IChatStorage {
-  getConversation(id: number): Promise<typeof conversations.$inferSelect | undefined>;
-  getAllConversations(): Promise<(typeof conversations.$inferSelect)[]>;
-  createConversation(title: string): Promise<typeof conversations.$inferSelect>;
+  getConversation(id: number): Promise<Conversation | undefined>;
+  getAllConversations(): Promise<Conversation[]>;
+  createConversation(title: string): Promise<Conversation>;
   deleteConversation(id: number): Promise<void>;
-  getMessagesByConversation(conversationId: number): Promise<(typeof messages.$inferSelect)[]>;
-  createMessage(conversationId: number, role: string, content: string): Promise<typeof messages.$inferSelect>;
+  getMessagesByConversation(conversationId: number): Promise<ChatMessage[]>;
+  createMessage(conversationId: number, role: string, content: string): Promise<ChatMessage>;
 }
+
+export interface Conversation {
+  id: number;
+  title: string;
+  createdAt: string;
+}
+
+export interface ChatMessage {
+  id: number;
+  conversationId: number;
+  role: string;
+  content: string;
+  createdAt: string;
+}
+
+const conversationRef = (db: FirebaseFirestore.Firestore, id: number) =>
+  db.collection("conversations").doc(String(id));
 
 export const chatStorage: IChatStorage = {
   async getConversation(id: number) {
-    const [conversation] = await db.select().from(conversations).where(eq(conversations.id, id));
-    return conversation;
+    const snapshot = await conversationRef(getAdminDb()!, id).get();
+    return snapshot.exists ? ({ id, ...snapshot.data() } as Conversation) : undefined;
   },
 
   async getAllConversations() {
-    return db.select().from(conversations).orderBy(desc(conversations.createdAt));
+    const snapshot = await getAdminDb()!.collection("conversations").orderBy("createdAt", "desc").get();
+    return snapshot.docs.map((doc) => ({ id: Number(doc.id), ...doc.data() } as Conversation));
   },
 
   async createConversation(title: string) {
-    const [conversation] = await db.insert(conversations).values({ title }).returning();
+    const db = getAdminDb()!;
+    const id = Date.now();
+    const conversation = { id, title, createdAt: new Date().toISOString() };
+    await conversationRef(db, id).set(conversation);
     return conversation;
   },
 
   async deleteConversation(id: number) {
-    await db.delete(messages).where(eq(messages.conversationId, id));
-    await db.delete(conversations).where(eq(conversations.id, id));
+    const db = getAdminDb()!;
+    const messages = await db.collection("conversations").doc(String(id)).collection("messages").get();
+    const batch = db.batch();
+    messages.docs.forEach((message) => batch.delete(message.ref));
+    batch.delete(conversationRef(db, id));
+    await batch.commit();
   },
 
   async getMessagesByConversation(conversationId: number) {
-    return db.select().from(messages).where(eq(messages.conversationId, conversationId)).orderBy(messages.createdAt);
+    const snapshot = await conversationRef(getAdminDb()!, conversationId)
+      .collection("messages").orderBy("createdAt").get();
+    return snapshot.docs.map((doc) => ({ id: Number(doc.id), ...doc.data() } as ChatMessage));
   },
 
   async createMessage(conversationId: number, role: string, content: string) {
-    const [message] = await db.insert(messages).values({ conversationId, role, content }).returning();
+    const db = getAdminDb()!;
+    const id = Date.now();
+    const message = { id, conversationId, role, content, createdAt: new Date().toISOString() };
+    await conversationRef(db, conversationId).collection("messages").doc(String(id)).set(message);
     return message;
   },
 };

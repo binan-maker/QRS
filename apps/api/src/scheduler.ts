@@ -9,6 +9,7 @@
  */
 
 import { sendExpoPush, isValidExpoPushToken } from "./lib/expo-push";
+import { admin, getAdminDb } from "./lib/firebase-admin";
 
 const THIRTY_MIN_MS = 30 * 60 * 1000;
 
@@ -67,30 +68,30 @@ function pickMessage(tier: (typeof TIERS)[number], userId: string) {
 
 async function runReengagement(): Promise<void> {
   try {
-    const { getAdminSupabase } = await import("./lib/supabase-admin");
-    const db = getAdminSupabase();
+    const db = getAdminDb();
     if (!db) return;
     const now = Date.now();
 
     // Fetch all users who have a push token
     // We limit to 500 per run to avoid long-running queries
-    const { data: users, error } = await db
-      .from("users")
-      .select("id,push_token,last_opened_at,last_reengagement_sent_at")
-      .not("push_token", "is", null)
-      .limit(500);
-    if (error) throw error;
+    const usersSnapshot = await db
+      .collection("users")
+      .where("pushToken", "!=", null)
+      .limit(500)
+      .get();
 
-    if (!users?.length) return;
+    if (usersSnapshot.empty) return;
 
     const pushBatch: { to: string; title: string; body: string }[] = [];
     const writes: Promise<any>[] = [];
 
-    for (const user of users) {
-      const token: string | undefined = user.push_token;
+    for (const userDoc of usersSnapshot.docs) {
+      const user = userDoc.data();
+      const token: string | undefined = user.pushToken;
       if (!token || !isValidExpoPushToken(token)) continue;
 
-      const lastOpenedAt = user.last_opened_at ? new Date(user.last_opened_at).getTime() : 0;
+      const lastOpenedAt = user.lastOpenedAt?.toDate?.()?.getTime?.() ??
+        (user.lastOpenedAt ? new Date(user.lastOpenedAt).getTime() : 0);
       const inactiveMs = now - lastOpenedAt;
 
       // Find which tier the user falls in
@@ -100,8 +101,9 @@ async function runReengagement(): Promise<void> {
       if (!tier) continue;
 
       // Check cooldown — only one re-engagement push per tier window per cooldown period
-      const lastReengagedAt = user.last_reengagement_sent_at
-        ? new Date(user.last_reengagement_sent_at).getTime()
+      const lastReengagedAt = user.lastReengagementSentAt
+        ? (user.lastReengagementSentAt.toDate?.()?.getTime?.() ??
+          new Date(user.lastReengagementSentAt).getTime())
         : 0;
       if (now - lastReengagedAt < tier.cooldownMs) continue;
 
@@ -110,7 +112,9 @@ async function runReengagement(): Promise<void> {
 
       // Record that we sent a re-engagement push
       writes.push(
-        db.from("users").update({ last_reengagement_sent_at: new Date(now).toISOString() }).eq("id", user.id).then(() => {}).catch(() => {})
+        db.collection("users").doc(userDoc.id).set({
+          lastReengagementSentAt: admin.firestore.FieldValue.serverTimestamp(),
+        }, { merge: true }).then(() => {}).catch(() => {})
       );
     }
 

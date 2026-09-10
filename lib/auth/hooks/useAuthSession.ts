@@ -30,14 +30,14 @@ export function useAuthSession({
   useEffect(() => {
     const unsubscribe = authAdapter.onIdTokenChanged(async (adapterUser) => {
       if (adapterUser) {
-        // Mark that Supabase restored a session — suppresses the Google
+        // Mark that Firebase restored a session — suppresses the Google
         // signInSilently call in useGoogleAuth for this launch.
         sessionRestoredRef.current = true;
 
         let resolvedUser = adapterUser;
 
         // The persisted session can cache emailVerified:false even after the user
-        // has verified. Reload from Supabase before treating it as unverified.
+        // has verified. Reload from Firebase before treating it as unverified.
         if (!adapterUser.emailVerified) {
           try {
             await adapterUser.reload();
