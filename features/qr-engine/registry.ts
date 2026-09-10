@@ -627,7 +627,7 @@ export function getQrTypeMeta(contentType: string, templateKey?: string): QrType
   return getQrTypeDef(contentType, templateKey);
 }
 
-/** Backward-compat alias used by smart-open.ts and SocialCard. */
+/** Backward-compat alias used by smart-open.ts. */
 export function getQrTypeStyle(contentType: string, templateKey?: string): QrTypeDefinition {
   return getQrTypeDef(contentType, templateKey);
 }

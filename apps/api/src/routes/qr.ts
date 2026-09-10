@@ -12,7 +12,6 @@ import { reportQrCode } from "../services/report-service";
 import { authenticate } from "../middleware/auth";
 import { validateBody } from "../middleware/validate";
 import {
-  relaxedLimit,
   standardLimit,
   strictLimit,
 } from "../middleware/rate-limit-presets";
@@ -20,11 +19,6 @@ import {
 export const qrRouter = Router();
 
 // ─── Schemas ─────────────────────────────────────────────────────────────────
-
-const toggleActiveSchema = z.object({
-  isActive: z.boolean(),
-  deactivationMessage: z.string().max(100).nullable().optional(),
-});
 
 const reportSchema = z.object({
   reportType: z.string().min(1).max(60),
@@ -37,49 +31,6 @@ const commentCountSchema = z.object({
 const validateVpaSchema = z.object({
   vpa: z.string().min(3).max(100),
 });
-
-// ─── PATCH /api/v1/qr/:qrId/active — toggle active/paused state ──────────────
-
-qrRouter.patch(
-  "/:qrId/active",
-  authenticate,
-  standardLimit,
-  validateBody(toggleActiveSchema),
-  async (req: Request, res: Response) => {
-    const { qrId } = req.params;
-    const { isActive, deactivationMessage } = req.body;
-    const uid = req.user!.uid;
-
-    const db = getAdminDb();
-    if (!db) return res.status(503).json({ error: "Database unavailable", code: "SERVICE_UNAVAILABLE", status: 503 });
-
-    try {
-      const docRef = db.collection("qrCodes").doc(qrId);
-      const docSnap = await docRef.get();
-
-      if (!docSnap.exists) return res.status(404).json({ error: "QR code not found", code: "QR_NOT_FOUND", status: 404 });
-      const data = docSnap.data()!;
-      if (data.qrType === "government") return res.status(403).json({ error: "Government QR codes cannot be modified", code: "FORBIDDEN", status: 403 });
-
-      const msg = isActive
-        ? null
-        : typeof deactivationMessage === "string"
-          ? deactivationMessage.trim().slice(0, 100) || null
-          : null;
-
-      await docRef.update({
-        isActive,
-        deactivationMessage: msg,
-        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
-      });
-
-      return res.json({ data: { success: true, isActive } });
-    } catch (e: any) {
-      console.error("[v1/qr/active]", e.message);
-      return res.status(500).json({ error: "Failed to update QR code", code: "INTERNAL_ERROR", status: 500 });
-    }
-  },
-);
 
 // ─── POST /api/v1/qr/validate-vpa — validate a UPI VPA ───────────────────────
 // valid=null means the service is unavailable — callers must still allow the payment.
@@ -145,73 +96,3 @@ qrRouter.post(
   },
 );
 
-// ─── GET /api/v1/qr/:uuid/analytics — aggregated scan analytics ───────────────
-
-qrRouter.get(
-  "/:uuid/analytics",
-  authenticate,
-  relaxedLimit,
-  async (req: Request, res: Response) => {
-    const { uuid } = req.params;
-    const uid = req.user!.uid;
-    const db = getAdminDb();
-    if (!db) return res.status(503).json({ error: "Database unavailable", code: "SERVICE_UNAVAILABLE", status: 503 });
-
-    try {
-      // Resolve qrDocId: try direct ID, then query by uuid field
-      let qrDocId: string | null = null;
-      const direct = await db.collection("qrCodes").doc(uuid).get();
-      if (direct.exists) {
-        qrDocId = uuid;
-      } else {
-        const q = await db.collection("qrCodes").where("uuid", "==", uuid).limit(1).get();
-        if (!q.empty) qrDocId = q.docs[0].id;
-      }
-
-      if (!qrDocId) return res.status(404).json({ error: "QR code not found", code: "QR_NOT_FOUND", status: 404 });
-
-      const qrDoc = await db.collection("qrCodes").doc(qrDocId).get();
-      const authoritativeScanCount: number = qrDoc.data()?.scanCount ?? 0;
-
-      const eventsSnap = await db
-        .collection("qrCodes").doc(qrDocId)
-        .collection("events")
-        .orderBy("timestamp", "desc")
-        .limit(2000)
-        .get();
-
-      const now = Date.now();
-      const MS_7D  = 7  * 24 * 60 * 60 * 1000;
-      const MS_30D = 30 * 24 * 60 * 60 * 1000;
-
-      let scans7d = 0;
-      let scans30d = 0;
-      const trend7d    = new Array(7).fill(0);
-      const platformBreakdown = { android: 0, ios: 0, web: 0, unknown: 0 };
-      const verdictBreakdown  = { safe: 0, flagged: 0, unknown: 0 };
-      const topHours   = new Array(24).fill(0);
-
-      for (const doc of eventsSnap.docs) {
-        const d = doc.data();
-        const ts: number = d.timestamp?.toDate?.()?.getTime?.() ?? now;
-        const age = now - ts;
-        if (age < MS_7D)  { scans7d++; trend7d[Math.min(6, Math.floor(age / 86_400_000))]++; }
-        if (age < MS_30D) scans30d++;
-        const plat = d.platform || "unknown";
-        if (plat in platformBreakdown) (platformBreakdown as any)[plat]++; else platformBreakdown.unknown++;
-        const ver = d.verdict || "unknown";
-        if (ver in verdictBreakdown)   (verdictBreakdown as any)[ver]++;  else verdictBreakdown.unknown++;
-        topHours[new Date(ts).getHours()]++;
-      }
-
-      const totalScans = authoritativeScanCount > 0 ? authoritativeScanCount : eventsSnap.size;
-
-      return res.json({
-        data: { totalScans, scans7d, scans30d, trend7d, platformBreakdown, verdictBreakdown, topHours, cachedAt: now },
-      });
-    } catch (e: any) {
-      console.error("[v1/qr/analytics]", e.message);
-      return res.status(500).json({ error: "Analytics query failed", code: "INTERNAL_ERROR", status: 500 });
-    }
-  },
-);

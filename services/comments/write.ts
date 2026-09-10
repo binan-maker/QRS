@@ -1,6 +1,5 @@
 import { db } from "@/lib/db/client";
 import { tsToMs } from "../integrity/time-utils";
-import { checkCommentKeywords } from "@/services/analysis";
 import { checkCommentEligibility, recordComment } from "../integrity";
 import type { CommentItem } from "../types";
 import { checkProfanity, sanitizeComment } from "../moderation/profanity-filter";
@@ -51,13 +50,6 @@ export async function addComment(
   if (profanityCheck.isBlocked) {
     throw new Error(
       `Your comment contains inappropriate language (${profanityCheck.categories.join(', ')}). Please revise your comment.`
-    );
-  }
-
-  const kwCheck = checkCommentKeywords(text);
-  if (kwCheck.blocked) {
-    throw new Error(
-      `Your comment was blocked because it contains content that resembles spam or a scam ("${kwCheck.matchedKeyword}"). Please revise your comment.`
     );
   }
 
@@ -238,13 +230,6 @@ export async function updateComment(
   if (profanityCheck.isBlocked) {
     throw new Error(
       `Your comment contains inappropriate language (${profanityCheck.categories.join(", ")}). Please revise it.`
-    );
-  }
-
-  const kwCheck = checkCommentKeywords(sanitizedText);
-  if (kwCheck.blocked) {
-    throw new Error(
-      `Your comment was blocked because it resembles spam or a scam ("${kwCheck.matchedKeyword}").`
     );
   }
 

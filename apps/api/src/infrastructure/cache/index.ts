@@ -5,7 +5,7 @@
  * (same pattern as middleware/rate-limiter.ts — single source of Redis client).
  *
  * Replaces the three duplicate caching implementations:
- *   - Map-based cache in lib/firebase-client.ts  (30-second TTL)
+ *   - Legacy route-level cache implementations
  *   - Ad-hoc TTL maps in routes/qr.ts
  *   - setInterval cleanup in lib/route-cache.ts
  */

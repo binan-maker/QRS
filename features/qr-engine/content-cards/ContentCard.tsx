@@ -27,7 +27,6 @@ import {
   EventCard,
   EncryptedCard,
   TextCard,
-  SocialCard,
   OtpCard,
 } from "./cards";
 import { extractBasicPaymentInfo } from "./parsers";
@@ -47,21 +46,7 @@ const ACTIVE_TYPES = new Set([
   "otp", "boarding", "product",
   // Media / document links (URL-based, falls through to WebsiteCard)
   "media", "document",
-  // Social & URL-based (now fully supported)
-  "url", "instagram", "twitter", "youtube", "linkedin",
-  "telegram", "facebook", "spotify", "discord", "tiktok",
-  "snapchat", "zoom", "calendly", "paypal", "venmo",
-  "reviewpage", "menucatalogue", "donation", "razorpay",
-  "appdownload", "app", "google_maps",
-]);
-
-/** Types that render via SocialCard (URL-based with platform branding) */
-const SOCIAL_TYPES = new Set([
-  "instagram", "twitter", "youtube", "linkedin", "telegram",
-  "facebook", "spotify", "discord", "tiktok", "snapchat",
-  "zoom", "calendly", "paypal", "venmo",
-  "reviewpage", "menucatalogue", "donation", "razorpay",
-  "appdownload", "app", "google_maps",
+  "url",
 ]);
 
 // ── Props ─────────────────────────────────────────────────────────────────────
@@ -155,19 +140,6 @@ const ContentCard = memo(function ContentCard({
     case "media":
     case "document":
       break;
-  }
-
-  // ── Social / platform URL types ────────────────────────────────────────────
-  if (SOCIAL_TYPES.has(effectiveType)) {
-    return (
-      <SocialCard
-        content={content}
-        contentType={effectiveType}
-        onOpenContent={onOpenContent}
-        isDeactivated={isDeactivated}
-        hideOpenAction={hideOpenAction}
-      />
-    );
   }
 
   // ── Generic website URL (default) ──────────────────────────────────────────

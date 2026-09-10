@@ -1,201 +1,24 @@
 import type { Express, Request, Response } from "express";
 import { createServer, type Server } from "node:http";
 import { decodeQrFromImage } from "./image-decode";
-import { registerQrActiveRoute } from "./routes/qr-active";
 import { registerV1Routes } from "./routes/index";
 import { registerIfscRoute } from "./routes/ifsc";
-import { serveStandardContent } from "./routes/standard-content";
 import { pushRouter } from "./routes/push";
 import { validateEmail } from "@shared/utils/email-validator";
 import { validateQrContent } from "@services/analysis/qr-validator";
 import { checkRateLimit, getClientIp } from "./middleware/rate-limiter";
-import {
-  guardShell, guardRedirectHtml, guardCautionHtml, guardDeactivatedHtml, guardNotFoundHtml,
-} from "./templates/guard-html";
-import {
-  fetchGuardLink, fetchStandardLink, isSafeRedirectDestination,
-  recordScanAndEnforce, CAUTION_WINDOW_MS,
-  fetchUnifiedQr, recordUnifiedScan,
-} from "./lib/firebase-client";
-import { cacheGet, cacheSet } from "./lib/route-cache";
-import { isLimitExceeded } from "./lib/qr-limits";
-
-// TTL constants for the in-memory route cache
-const STANDARD_LINK_TTL_MS = 60_000;   // standard QR content — stable, 60 s
-const GUARD_LINK_TTL_MS    = 30_000;   // guard links change destination — 30 s
-
-async function cachedStandardLink(slug: string) {
-  const key = `std:${slug}`;
-  const hit = cacheGet<Awaited<ReturnType<typeof fetchStandardLink>>>(key);
-  if (hit !== null) return hit;
-  const data = await fetchStandardLink(slug);
-  if (data) cacheSet(key, data, STANDARD_LINK_TTL_MS);
-  return data;
-}
-
-async function cachedGuardLink(id: string) {
-  const key = `guard:${id}`;
-  const hit = cacheGet<Awaited<ReturnType<typeof fetchGuardLink>>>(key);
-  if (hit !== null) return hit;
-  const data = await fetchGuardLink(id);
-  if (data) cacheSet(key, data, GUARD_LINK_TTL_MS);
-  return data;
-}
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // ── Versioned API (all handlers mirrored under /api/v1/) ────────────────────
   registerV1Routes(app);
 
   // ── Domain route modules ────────────────────────────────────────────────────
-  registerQrActiveRoute(app);
   registerIfscRoute(app);
   app.use("/api/push", pushRouter);
 
   // ── Health check ────────────────────────────────────────────────────────────
   app.get("/status", (_req, res) => {
     res.json({ status: "ok" });
-  });
-
-  // ── /q/:id — Unified QR route (new architecture) ───────────────────────────
-  // All QRs generated after the architecture migration use this route.
-  // One doc in qrs/{id} is the single source of truth for scan count,
-  // destination, status, limits, and design.
-  app.get("/q/:id", async (req: Request, res: Response) => {
-    const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
-    if (!id || id.length < 4) return res.status(400).send(guardNotFoundHtml());
-
-    const qr = await fetchUnifiedQr(id);
-    if (!qr) return res.status(404).send(guardNotFoundHtml());
-
-    // Check status/expiry/limit
-    const isExpired = qr.expiryDate && new Date(qr.expiryDate).getTime() < Date.now();
-    const isLimitHit = qr.scanLimit !== null && qr.scanCount >= qr.scanLimit;
-    const isBlocked = qr.status === "inactive" || qr.status === "limit_reached" || isExpired || isLimitHit;
-
-    if (isBlocked) {
-      return res.status(200).send(guardDeactivatedHtml(qr.businessName));
-    }
-
-    // Record the scan (non-blocking — serve first)
-    recordUnifiedScan(id, qr.scanLimit).catch(() => {});
-
-    const dest = qr.destination;
-
-    // Dynamic (business/guard) QRs: use the branded redirect page
-    if (qr.isDynamic) {
-      if (!isSafeRedirectDestination(dest)) {
-        return res.status(400).send(guardShell("Blocked", `
-<div class="icon">🚫</div>
-<div class="badge badge-dead">Blocked</div>
-<h1>Unsafe Destination</h1>
-<p>This QR code's destination has been blocked for your safety.</p>
-<button onclick="history.back()" class="btn btn-back">← Go Back</button>
-`));
-      }
-      const businessName = qr.businessName || qr.title || "Business";
-      return res.status(200).send(guardRedirectHtml(businessName, qr.ownerName, dest));
-    }
-
-    // Standard QRs: reuse the existing content-serving logic by building a
-    // compatible StandardLinkFields object and passing it to serveStandardContent.
-    const asStandardLink = {
-      rawContent: qr.rawDestination || dest,
-      contentType: qr.contentType,
-      ownerName: qr.ownerName,
-      isActive: true,
-      scanLimit: qr.scanLimit,
-      scanCount: qr.scanCount,
-      expiryDate: qr.expiryDate,
-    };
-    return serveStandardContent(res, asStandardLink, id);
-  });
-
-  // ── /go/:slug — Standard QR content lookup ─────────────────────────────────
-  app.get("/go/:slug", async (req: Request, res: Response) => {
-    const slug = Array.isArray(req.params.slug) ? req.params.slug[0] : req.params.slug;
-
-    if (!slug || slug.length < 4) {
-      return res.status(400).send(guardNotFoundHtml());
-    }
-
-    // 1. Standard QRs (most common for /go/)
-    const standardLink = await cachedStandardLink(slug);
-    if (standardLink) {
-      if (!standardLink.isActive || isLimitExceeded(standardLink.expiryDate, standardLink.scanLimit, standardLink.scanCount)) {
-        return res.status(200).send(guardDeactivatedHtml(null));
-      }
-      // Record scan and enforce limit (non-blocking — serve immediately)
-      recordScanAndEnforce("standardLinks", slug, standardLink.scanLimit).catch(() => {});
-      return serveStandardContent(res, standardLink, slug);
-    }
-
-    // 2. Legacy Business QRs that used /go/ path
-    const guardLink = await cachedGuardLink(slug);
-    if (!guardLink) {
-      return res.status(404).send(guardNotFoundHtml());
-    }
-
-    if (!guardLink.isActive || isLimitExceeded(guardLink.expiryDate, guardLink.scanLimit, guardLink.scanCount)) {
-      return res.status(200).send(guardDeactivatedHtml(guardLink.businessName));
-    }
-
-    const destination = guardLink.currentDestination;
-    if (!destination || !isSafeRedirectDestination(destination)) {
-      return res.status(404).send(guardNotFoundHtml());
-    }
-
-    const changedAt = guardLink.destinationChangedAt ? new Date(guardLink.destinationChangedAt).getTime() : null;
-    const changedRecently = changedAt && (Date.now() - changedAt) < CAUTION_WINDOW_MS;
-
-    if (changedRecently) {
-      const businessName = guardLink.businessName || "QR Code";
-      return res.status(200).send(guardCautionHtml(businessName, guardLink.ownerName, destination, slug));
-    }
-
-    recordScanAndEnforce("guardLinks", slug, guardLink.scanLimit).catch(() => {});
-    res.setHeader("Cache-Control", "no-store, no-cache");
-    return res.redirect(302, destination);
-  });
-
-  // ── /guard/:uuid — Living Shield redirect ───────────────────────────────────
-  app.get("/guard/:uuid", async (req: Request, res: Response) => {
-    const uuid = Array.isArray(req.params.uuid) ? req.params.uuid[0] : req.params.uuid;
-
-    const link = await cachedGuardLink(uuid);
-    if (!link) {
-      return res.status(404).send(guardNotFoundHtml());
-    }
-
-    if (!link.isActive || isLimitExceeded(link.expiryDate, link.scanLimit, link.scanCount)) {
-      return res.status(200).send(guardDeactivatedHtml(link.businessName));
-    }
-
-    const destination = link.currentDestination;
-    if (!destination) {
-      return res.status(404).send(guardNotFoundHtml());
-    }
-
-    if (!isSafeRedirectDestination(destination)) {
-      return res.status(400).send(guardShell("Invalid Destination", `
-<div class="icon">🚫</div>
-<div class="badge badge-dead">Blocked</div>
-<h1>Unsafe Destination</h1>
-<p>This Guard Link's destination uses an unsupported protocol and has been blocked to protect you.</p>
-<button onclick="history.back()" class="btn btn-back">← Go Back</button>
-`));
-    }
-
-    const businessName = link.businessName || "Business";
-    const ownerName    = link.ownerName;
-    const changedAt    = link.destinationChangedAt ? new Date(link.destinationChangedAt).getTime() : null;
-    const changedRecently = changedAt && (Date.now() - changedAt) < CAUTION_WINDOW_MS;
-
-    if (changedRecently) {
-      return res.status(200).send(guardCautionHtml(businessName, ownerName, destination, uuid));
-    }
-
-    recordScanAndEnforce("guardLinks", uuid, link.scanLimit).catch(() => {});
-    return res.status(200).send(guardRedirectHtml(businessName, ownerName, destination));
   });
 
   // ── QR image decode ──────────────────────────────────────────────────────────

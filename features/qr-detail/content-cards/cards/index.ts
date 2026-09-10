@@ -2,5 +2,5 @@
 export {
   WebsiteCard, WifiCard, ContactCard, EmailCard, SmsCard, WhatsAppCard,
   PhoneCard, LocationCard, CryptoCard, EventCard, EncryptedCard, TextCard,
-  SocialCard, OtpCard,
+  OtpCard,
 } from "@/features/qr-engine/content-cards/cards";

@@ -27,7 +27,6 @@ apps/api/
         └── dto/
 workers/
     ├── push.worker.ts   # Re-engagement push (replaces server/scheduler.ts)
-    └── analytics.worker.ts
 ```
 
 ## Why not moved yet

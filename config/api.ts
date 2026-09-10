@@ -54,8 +54,8 @@ export const API_BASE_URL: string = computeBaseUrl();
  * Build a full API URL from a path.
  *
  * @example
- *   apiUrl("/api/v1/unified-qr")
- *   // → "https://myapp.replit.dev/api/v1/unified-qr"
+ *   apiUrl("/api/v1/users/me")
+ *   // → "https://myapp.replit.dev/api/v1/users/me"
  */
 export function apiUrl(path: string): string {
   return `${API_BASE_URL}${path}`;

@@ -271,103 +271,6 @@ Validate a UPI VPA (Virtual Payment Address). No auth required. Returns `valid: 
 
 ---
 
-## Unified QRs (New Model)
-
-All QRs created after the new model was introduced live here. Legacy QRs remain in the `/api/v1/qr` group.
-
-### `GET /api/v1/unified-qr`
-List own QRs. **Auth required.** Paginated.
-
-**Query:** `?limit=20&cursor=<id>`
-
----
-
-### `POST /api/v1/unified-qr`
-Create a new QR. **Auth required.**
-
-**Body:**
-```json
-{
-  "destination": "https://example.com",
-  "rawDestination": "https://example.com",
-  "contentType": "url",
-  "isDynamic": true,
-  "qrType": "individual",
-  "title": "My Shop QR",
-  "businessName": "Acme Corp",
-  "template": "business-card",
-  "scanLimit": 1000,
-  "expiryDate": "2027-01-01T00:00:00Z",
-  "expiryPreset": "1y",
-  "design": {
-    "fgColor": "#1A1A2E",
-    "bgColor": "#FFFFFF",
-    "logoPosition": "center",
-    "logoUri": "https://...",
-    "label": "Scan me"
-  },
-  "formValues": { "value": "https://example.com", "extra": { "phone": "9876543210" } }
-}
-```
-
-**Required fields:** `destination`  
-**qrType values:** `individual`, `business`, `government`  
-**expiryPreset values:** `24h`, `7d`, `30d`, `90d`, `1y`
-
----
-
-### `GET /api/v1/unified-qr/:id`
-Get a single QR. Auth optional (private QRs require owner auth).
-
----
-
-### `PATCH /api/v1/unified-qr/:id`
-Update title, design, or limits. **Auth required.** Owner only.
-
-**Body (all optional):**
-```json
-{
-  "title": "New title",
-  "scanLimit": 500,
-  "expiryDate": "2027-06-01T00:00:00Z",
-  "expiryPreset": "90d",
-  "design": { "fgColor": "#000000", "label": "Updated" }
-}
-```
-
----
-
-### `PATCH /api/v1/unified-qr/:id/destination`
-Update redirect URL (dynamic QRs only). **Auth required.** Owner only.
-
-**Body:** `{ "destination": "https://new-url.com" }`
-
-Returns `400 NOT_DYNAMIC` if the QR is static.
-
----
-
-### `PATCH /api/v1/unified-qr/:id/status`
-Activate or deactivate. **Auth required.** Owner only.
-
-**Body:**
-```json
-{ "status": "inactive", "deactivationMessage": "This offer has ended" }
-```
-
-Returns `403 FORBIDDEN` for government QRs.
-
----
-
-### `DELETE /api/v1/unified-qr/:id`
-Permanently delete. **Auth required.** Owner only. Rate: `strict`.
-
----
-
-### `GET /api/v1/unified-qr/:id/analytics`
-Scan analytics. **Auth required.** Owner only. Same response shape as legacy QR analytics.
-
----
-
 ## Comments
 
 ### `GET /api/v1/qr/:qrId/comments`
@@ -470,13 +373,6 @@ Removes the pending entries from both sides.
 Unfriend. **Auth required.** Rate: `strict`.
 
 Decrements `friendsCount` for both users.
-
----
-
-## Business
-
-### `POST /api/v1/business/register`
-Register a business account. **Auth required.**
 
 ---
 

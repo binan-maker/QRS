@@ -66,7 +66,7 @@ export { ContentCard } from "./content-cards";
 export {
   WebsiteCard, WifiCard, ContactCard, EmailCard, SmsCard, WhatsAppCard,
   PhoneCard, LocationCard, CryptoCard, EventCard, EncryptedCard, TextCard,
-  SocialCard, OtpCard,
+  OtpCard,
 } from "./content-cards";
 export { CardHeader, InfoGrid, InfoRow, Divider, OpenButton } from "./content-cards";
 

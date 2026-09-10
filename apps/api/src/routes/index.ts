@@ -20,15 +20,6 @@
  *   POST   /api/v1/qr/:qrId/comment-count              Increment/decrement counter
  *   POST   /api/v1/qr/validate-vpa                     Validate UPI VPA
  *
- * Unified QRs (new model)
- *   GET    /api/v1/unified-qr                          List own QRs (paginated)
- *   POST   /api/v1/unified-qr                          Create QR
- *   GET    /api/v1/unified-qr/:id                      Get QR (public/private check)
- *   PATCH  /api/v1/unified-qr/:id                      Update design / limits / title
- *   PATCH  /api/v1/unified-qr/:id/destination          Update redirect destination
- *   PATCH  /api/v1/unified-qr/:id/status               Activate / deactivate
- *   DELETE /api/v1/unified-qr/:id                      Delete QR
- *
  * Comments
  *   GET    /api/v1/qr/:qrId/comments                   List comments (paginated)
  *   POST   /api/v1/qr/:qrId/comments                   Create comment
@@ -46,7 +37,6 @@ import type { Express } from "express";
 import { securityRouter } from "./security";
 import { qrRouter } from "./qr";
 import { usersRouter } from "./users";
-import { unifiedQrRouter } from "./unified-qr";
 import { commentsRouter } from "./comments";
 import { feedbackRouter } from "./feedback";
 
@@ -64,9 +54,6 @@ export function registerV1Routes(app: Express): void {
 
   // ── Legacy QR comments (nested under /qr/:qrId/comments) ──────────────────
   app.use("/api/v1/qr/:qrId/comments", commentsRouter);
-
-  // ── Unified QR (new model) ─────────────────────────────────────────────────
-  app.use("/api/v1/unified-qr", unifiedQrRouter);
 
   // ── Feedback & bug reports ─────────────────────────────────────────────────
   app.use("/api/v1/feedback", feedbackRouter);

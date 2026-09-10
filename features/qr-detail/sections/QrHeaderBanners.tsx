@@ -19,24 +19,23 @@ interface Props {
 }
 
 export function QrHeaderBanners({ offlineMode, isDeactivated, deactivationMsg, isDark, colors, trust }: Props) {
+  const score = trust?.score ?? -1;
+  const accent = score >= 70 ? "#22C55E" : score >= 40 ? "#F59E0B" : "#94A3B8";
+  const iconName: keyof typeof Ionicons.glyphMap =
+    score >= 70 ? "shield-checkmark-outline"
+    : score >= 40 ? "information-circle-outline"
+    : "help-circle-outline";
+  const statusLabel = score >= 70 ? "SAFE" : score >= 40 ? "CAUTION" : "UNKNOWN";
+  const bg = score >= 70
+    ? (isDark ? "#0a1a0e" : "#f0fdf4")
+    : score >= 40
+    ? (isDark ? "#16120400" : "#fffbeb")
+    : (isDark ? "#0f172a" : "#f8fafc");
+
   return (
     <>
       {/* ── Trust verdict banner for non-owner QRs ──────────────── */}
-        const score  = trust?.score ?? -1;
-        const accent = score >= 70 ? "#22C55E" : score >= 40 ? "#F59E0B" : "#94A3B8";
-        const iconName: keyof typeof Ionicons.glyphMap =
-          score >= 70 ? "shield-checkmark-outline"
-          : score >= 40 ? "information-circle-outline"
-          : "help-circle-outline";
-        const statusLabel =
-          score >= 70 ? "SAFE" : score >= 40 ? "CAUTION" : "UNKNOWN";
-        const bg = score >= 70
-          ? (isDark ? "#0a1a0e" : "#f0fdf4")
-          : score >= 40
-          ? (isDark ? "#16120400" : "#fffbeb")
-          : (isDark ? "#0f172a" : "#f8fafc");
-
-        return (
+      {trust && (
           <Animated.View entering={FadeInDown.delay(30).duration(260)} style={{ marginBottom: 12 }}>
             <View style={[styles.verdictBanner, { backgroundColor: bg, borderColor: accent + "28" }]}>
               <View style={[styles.accentBar, { backgroundColor: accent }]} />
@@ -57,8 +56,7 @@ export function QrHeaderBanners({ offlineMode, isDeactivated, deactivationMsg, i
               </View>
             </View>
           </Animated.View>
-        );
-      })()}
+      )}
 
       {/* ── Deactivated banner ───────────────────────────────────── */}
       {isDeactivated && (
