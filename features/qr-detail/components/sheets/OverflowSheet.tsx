@@ -1,4 +1,4 @@
-import { View, Text, Pressable, ActivityIndicator, ScrollView } from "react-native";
+import { View, Text, Pressable, ActivityIndicator } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import BottomSheet from "@/shared/components/ui/BottomSheet";
 import { useTheme } from "@/shared/contexts/ThemeContext";
@@ -31,15 +31,10 @@ export default function OverflowSheet({
 
   return (
     <BottomSheet visible={visible} onClose={onClose} sheetStyle={{ paddingHorizontal: 0 }} extraBottomPadding={8}>
-      <ScrollView
-        bounces={false}
-        showsVerticalScrollIndicator={false}
-        keyboardShouldPersistTaps="handled"
-        contentContainerStyle={{ paddingBottom: 8 }}
-      >
+        <View style={{ paddingBottom: 8 }}>
         {/* Favorites */}
         <Pressable
-          style={overflowStyles.item}
+           style={[overflowStyles.item, { paddingVertical: 18 }]}
           onPress={() => { onClose(); onFavorite(); }}
         >
           <View style={[overflowStyles.iconWrap, { backgroundColor: isFavorite ? colors.danger + "18" : colors.surfaceLight }]}>
@@ -62,7 +57,7 @@ export default function OverflowSheet({
         {hasOwner && (
           <>
             <Pressable
-              style={[overflowStyles.item, followLoading && { opacity: 0.5 }]}
+              style={[overflowStyles.item, { paddingVertical: 18 }, followLoading && { opacity: 0.5 }]}
               onPress={followLoading ? undefined : () => { onClose(); onWatch(); }}
             >
               <View style={[overflowStyles.iconWrap, { backgroundColor: isFollowing ? colors.primaryDim : colors.surfaceLight }]}>
@@ -93,7 +88,10 @@ export default function OverflowSheet({
         )}
 
         {/* Report */}
-        <Pressable style={overflowStyles.item} onPress={() => { onClose(); onReport(); }}>
+      <Pressable
+          style={[overflowStyles.item, { paddingVertical: 18 }]}
+          onPress={() => { onClose(); onReport(); }}
+        >
           <View style={[overflowStyles.iconWrap, { backgroundColor: colors.danger + "18" }]}>
             <Ionicons name="flag-outline" size={20} color={colors.danger} />
           </View>
@@ -102,7 +100,7 @@ export default function OverflowSheet({
             <Text style={[overflowStyles.itemSub, { color: colors.textMuted }]}>Flag this QR as suspicious or harmful</Text>
           </View>
         </Pressable>
-      </ScrollView>
+       </View>
     </BottomSheet>
   );
 }
