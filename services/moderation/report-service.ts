@@ -4,7 +4,6 @@
 // which verifies the Firebase token before calling reportQrCode.
 
 import { db } from "@/lib/db/client";
-import { notifyQrFollowers } from "../notifications/notification-service";
 import { COLLECTIONS } from "@/shared/constants/collections";
 import {
   checkReportEligibility,
@@ -134,7 +133,6 @@ export async function reportQrCode(
     if (reportType === "safe") {
       try { await db.increment([COLLECTIONS.USERS, userId], "safeReportsGiven", 1); } catch {}
     }
-    notifyQrFollowers(qrId, "new_report", `New ${reportType} report on a QR you follow`, userId).catch(() => {});
   }
 
   runCollusionCheck(qrId);

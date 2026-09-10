@@ -20,7 +20,6 @@ import { clearPrewarmState } from "@/services/cache/prewarm";
 import { clearAvatarFromOutside } from "@/shared/contexts/AvatarContext";
 import { clearUserProfileCache } from "@/services/user/cache";
 import { clearCommentProfileCache } from "@/services/comments/cache";
-import { useNotificationStore } from "@/store/notificationStore";
 import type { AuthUser } from "@/lib/auth/types";
 
 // GoogleSignin is loaded lazily — configure() is handled by useGoogleAuth;
@@ -118,7 +117,6 @@ export function useAuthActions({ user, setUser, setToken }: Params) {
     clearAllMemCache();
     clearUserProfileCache();
     clearCommentProfileCache();
-    useNotificationStore.getState().reset();
     clearPrewarmState();
     clearAllAnonymousSessions();
     // Clear avatar cache synchronously so the next user never sees a previous

@@ -5,8 +5,7 @@
  * Never build ad-hoc card components for QR content.
  *
  * Usage:
- *   import { QrCard, QrAnalyticsCard } from "@/features/qr-engine";
+ *   import { QrCard } from "@/features/qr-engine";
  */
 
 export { QrCard } from "./QrCard";
-export { QrAnalyticsCard } from "./QrAnalyticsCard";

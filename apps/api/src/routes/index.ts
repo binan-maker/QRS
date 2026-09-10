@@ -13,16 +13,11 @@
  *   GET    /api/v1/users/me/favorites                   Favorited QRs (paginated)
  *   POST   /api/v1/users/me/favorites/:qrId             Add favorite
  *   DELETE /api/v1/users/me/favorites/:qrId             Remove favorite
- *   GET    /api/v1/users/me/notifications               List notifications (paginated)
- *   PATCH  /api/v1/users/me/notifications/:id/read      Mark one read
- *   POST   /api/v1/users/me/notifications/read-all      Mark all read
- *   DELETE /api/v1/users/me/notifications/:id           Delete notification
  *
  * Legacy QR codes
  *   PATCH  /api/v1/qr/:qrId/active                     Toggle active/paused
  *   POST   /api/v1/qr/:qrId/report                     Submit/toggle fraud report
  *   POST   /api/v1/qr/:qrId/comment-count              Increment/decrement counter
- *   GET    /api/v1/qr/:uuid/analytics                  Scan analytics (owner-only)
  *   POST   /api/v1/qr/validate-vpa                     Validate UPI VPA
  *
  * Unified QRs (new model)
@@ -33,7 +28,6 @@
  *   PATCH  /api/v1/unified-qr/:id/destination          Update redirect destination
  *   PATCH  /api/v1/unified-qr/:id/status               Activate / deactivate
  *   DELETE /api/v1/unified-qr/:id                      Delete QR
- *   GET    /api/v1/unified-qr/:id/analytics            Scan analytics (owner-only)
  *
  * Comments
  *   GET    /api/v1/qr/:qrId/comments                   List comments (paginated)
@@ -46,7 +40,6 @@
  *   POST   /api/v1/qr/decode-image                    Decode a QR image
  *   GET    /api/v1/ifsc/:ifsc                          IFSC bank lookup
  *   POST   /api/v1/validate-email                      Email validator
- *   POST   /api/v1/push/notify                         Send push notification
  */
 
 import type { Express } from "express";
@@ -61,7 +54,7 @@ export function registerV1Routes(app: Express): void {
   // ── Utilities & security (existing) ────────────────────────────────────────
   app.use("/api/v1", securityRouter);
 
-  // ── User profile, notifications, favorites, scan history ───────────────────
+  // ── User profile, favorites, scan history ──────────────────────────────────
   // NOTE: /me routes must be registered before /:userId so Express doesn't
   // match "me" as a userId parameter.
   app.use("/api/v1/users", usersRouter);

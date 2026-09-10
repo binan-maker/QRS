@@ -22,23 +22,19 @@ import { useProfile } from "@/features/profile/hooks/useProfile";
 import { useAvatar } from "@/shared/contexts/AvatarContext";
 import { useFocusEffect } from "expo-router";
 import { useTabBarScroll } from "@/shared/contexts/TabBarContext";
-import { useNotifications } from "@/shared/hooks/useNotifications";
 import PhotoModal from "@/features/profile/components/PhotoModal";
 import ImageCropModal from "@/features/profile/components/ImageCropModal";
 import GuestView from "@/features/profile/components/GuestView";
-import NotificationsModal from "@/shared/components/notifications/NotificationsModal";
 import { styles } from "@/features/profile/styles";
 
 // ── Module-level animation presets (created once, not per render) ──────────────
 const ENTER_TOP_BAR      = FadeInDown.delay(0).duration(260);
-const ENTER_NOTIF_BTN    = FadeIn.delay(40).duration(250);
-const ENTER_SETTINGS_BTN = FadeIn.delay(50).duration(250);
+const ENTER_SETTINGS_BTN = FadeIn.delay(40).duration(250);
 const ENTER_AVATAR_SEC   = FadeInDown.delay(30).duration(260);
 const ENTER_AVATAR_WRAP  = FadeIn.delay(40).duration(240);
 const ENTER_NAME         = FadeInDown.delay(50).duration(260);
 const ENTER_USERNAME     = FadeInDown.delay(60).duration(260);
 const ENTER_EDIT_BTN     = FadeInDown.delay(80).duration(260);
-const ENTER_NOTIF_DOT    = FadeIn.duration(240);
 const ENTER_SIGNOUT      = FadeInDown.delay(100).duration(260);
 
 // ── Main screen ───────────────────────────────────────────────────────────────
@@ -55,12 +51,6 @@ function ProfileScreen() {
     handlePickPhoto, handleRemovePhoto, handleSignOut,
   } = useProfile();
   const { cachedUrl: photoURL } = useAvatar();
-  const {
-    notifCount, notifOpen, setNotifOpen,
-    notifications, markingRead,
-    handleOpenNotifications, handleClearNotifications,
-  } = useNotifications();
-
   // Pull auth loading state so we never flash GuestView during the initial
   // Firebase token resolve on cold start.  When isLoading is true we render
   // a transparent placeholder — the same background colour as the screen —
@@ -132,30 +122,6 @@ function ProfileScreen() {
         <Animated.View entering={ENTER_TOP_BAR} style={styles.topBar}>
           <Text style={[styles.pageTitle, { color: colors.text }]}>Profile</Text>
           <View style={styles.topBarActions}>
-            <Animated.View entering={ENTER_NOTIF_BTN}>
-              <Pressable
-                onPress={handleOpenNotifications}
-                style={[styles.iconBtn, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}
-                accessibilityLabel="Notifications"
-                hitSlop={8}
-              >
-                <Ionicons
-                  name={notifCount > 0 ? "notifications" : "notifications-outline"}
-                  size={17}
-                  color={notifCount > 0 ? colors.primary : colors.textSecondary}
-                />
-                {notifCount > 0 && (
-                  <Animated.View
-                    entering={ENTER_NOTIF_DOT}
-                    style={[styles.notifDot, { backgroundColor: colors.primary, borderColor: colors.background }]}
-                  >
-                    <Text style={[styles.notifDotText, { color: "#fff" }]}>
-                      {notifCount > 9 ? "9+" : notifCount}
-                    </Text>
-                  </Animated.View>
-                )}
-              </Pressable>
-            </Animated.View>
             <Animated.View entering={ENTER_SETTINGS_BTN}>
               <Pressable
                 onPress={goToSettings}
@@ -285,13 +251,6 @@ function ProfileScreen() {
         imageUri={pendingImageUri}
         onConfirm={handleCropConfirm}
         onCancel={handleCropCancel}
-      />
-      <NotificationsModal
-        visible={notifOpen}
-        notifications={notifications}
-        markingRead={markingRead}
-        onClose={closeNotifModal}
-        onClearAll={handleClearNotifications}
       />
     </View>
   );

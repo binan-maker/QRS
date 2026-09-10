@@ -2,7 +2,6 @@ import { db } from "@/lib/db/client";
 import { tsToMs } from "../integrity/time-utils";
 import { checkCommentKeywords } from "@/services/analysis";
 import { checkCommentEligibility, recordComment } from "../integrity";
-import { notifyMentionedUsers, notifyQrOwner, notifyCommentParentAuthor } from "../notifications/notification-service";
 import type { CommentItem } from "../types";
 import { checkProfanity, sanitizeComment } from "../moderation/profanity-filter";
 import { getUserProfileCache, preloadUserProfile, setUserProfileCache } from "./cache";
@@ -114,12 +113,6 @@ export async function addComment(
   adjustCommentCount(qrId, 1).catch(() => {});
 
   await recordComment(userId);
-
-  notifyMentionedUsers(qrId, text, userId, displayName).catch(() => {});
-  notifyQrOwner(qrId, userId, displayName).catch(() => {});
-  if (parentId) {
-    notifyCommentParentAuthor(qrId, parentId, userId, displayName).catch(() => {});
-  }
 
   return {
     id: commentId,

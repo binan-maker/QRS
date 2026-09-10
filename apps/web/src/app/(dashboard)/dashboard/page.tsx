@@ -94,7 +94,6 @@ export default async function DashboardPage() {
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
         {[
           { href: "/qr/create",    label: "New QR",      icon: "+" },
-          { href: "/analytics",    label: "Analytics",   icon: "📊" },
           { href: "/profile",      label: "Edit Profile",icon: "👤" },
           { href: "/settings",     label: "Settings",    icon: "⚙️" },
         ].map((a) => (

@@ -6,7 +6,7 @@
  *
  * Example:
  *   import {
- *     QrRenderer, QrCard, QrAnalyticsCard,
+ *     QrRenderer, QrCard,
  *     QrTypeIcon, useQrMeta,
  *     getQrTypeDef, getDisplayLabel, detectContentType,
  *     smartOpen, computeTrustScore, buildQrIdentity,
@@ -18,7 +18,7 @@
 export { default as QrRenderer } from "./renderers/QrRenderer";
 
 // ── Universal card system ─────────────────────────────────────────────────────
-export { QrCard, QrAnalyticsCard } from "./cards";
+export { QrCard } from "./cards";
 
 // ── Visual atoms ──────────────────────────────────────────────────────────────
 export { QrTypeIcon, QrTypeBadge } from "./renderers/HistoryRenderer";
@@ -26,7 +26,6 @@ export { default as MinimalRenderer } from "./renderers/MinimalRenderer";
 export { default as CompactRenderer } from "./renderers/CompactRenderer";
 export { default as FeedRenderer } from "./renderers/FeedRenderer";
 export { default as HeroRenderer } from "./renderers/HeroRenderer";
-export { default as AnalyticsRenderer } from "./renderers/AnalyticsRenderer";
 
 // ── Registry (type metadata + display logic) ──────────────────────────────────
 export {
@@ -71,17 +70,6 @@ export {
   trustLevelLabel,
   trustLevelIcon,
 } from "./trust";
-
-// ── Analytics ─────────────────────────────────────────────────────────────────
-export {
-  buildScanEvent,
-  formatScanCount,
-  formatLastScanned,
-  emptyAnalytics,
-  scanGrowthTrend,
-  trendIcon,
-  trendColor,
-} from "./analytics";
 
 // ── Identity builder ──────────────────────────────────────────────────────────
 export { buildQrIdentity, refreshQrIdentity } from "./identity";

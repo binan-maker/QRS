@@ -25,7 +25,6 @@ import type {
   UnifiedQr,
   CreateQrInput,
   UpdateQrInput,
-  QrAnalytics,
   QrComment,
   Notification,
   ScanRecord,
@@ -132,17 +131,6 @@ class BinroApiClient {
     removeFavorite: (qrId: string) =>
       this.del<{ removed: boolean; qrCodeId: string }>(`/users/me/favorites/${qrId}`),
 
-    notifications: (params?: PaginationParams) =>
-      this.get<PaginatedResponse<Notification>>("/users/me/notifications", params as any),
-
-    markNotificationRead: (notifId: string) =>
-      this.patch<{ updated: boolean }>(`/users/me/notifications/${notifId}/read`),
-
-    markAllNotificationsRead: () =>
-      this.post<{ updated: number }>("/users/me/notifications/read-all"),
-
-    deleteNotification: (notifId: string) =>
-      this.del<{ deleted: boolean }>(`/users/me/notifications/${notifId}`),
   };
 
   // ── Unified QRs ────────────────────────────────────────────────────────────
@@ -169,8 +157,6 @@ class BinroApiClient {
     delete: (id: string) =>
       this.del<{ deleted: boolean }>(`/unified-qr/${id}`),
 
-    analytics: (id: string) =>
-      this.get<QrAnalytics>(`/unified-qr/${id}/analytics`),
   };
 
   // ── Legacy QR codes ────────────────────────────────────────────────────────
@@ -182,8 +168,6 @@ class BinroApiClient {
     report: (qrId: string, reportType: string) =>
       this.post<{ success: boolean; action: "added" | "removed" }>(`/qr/${qrId}/report`, { reportType }),
 
-    analytics: (uuid: string) =>
-      this.get<QrAnalytics>(`/qr/${uuid}/analytics`),
 
     validateVpa: (vpa: string) =>
       this.post<{ valid: boolean | null; customerName: string | null; vpa?: string }>("/qr/validate-vpa", { vpa }),
@@ -206,28 +190,6 @@ class BinroApiClient {
 
     toggleLike: (qrId: string, commentId: string) =>
       this.post<{ liked: boolean }>(`/qr/${qrId}/comments/${commentId}/like`),
-  };
-
-  // ── Follows ────────────────────────────────────────────────────────────────
-
-  follows = {
-    followQr: (qrId: string) =>
-      this.post<{ followed: boolean; qrId: string }>(`/follows/qr/${qrId}`),
-
-    unfollowQr: (qrId: string) =>
-      this.del<{ unfollowed: boolean; qrId: string }>(`/follows/qr/${qrId}`),
-
-    checkQrFollow: (qrId: string) =>
-      this.get<{ following: boolean; qrId: string }>(`/follows/qr/${qrId}`),
-
-    followUser: (userId: string) =>
-      this.post<{ followed: boolean; userId: string }>(`/follows/users/${userId}`),
-
-    unfollowUser: (userId: string) =>
-      this.del<{ unfollowed: boolean; userId: string }>(`/follows/users/${userId}`),
-
-    checkUserFollow: (userId: string) =>
-      this.get<{ following: boolean; userId: string }>(`/follows/users/${userId}`),
   };
 
   // ── Utilities ───────────────────────────────────────────────────────────────

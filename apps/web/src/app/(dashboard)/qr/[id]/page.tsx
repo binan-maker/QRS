@@ -26,14 +26,10 @@ export default async function QrDetailPage({ params }: Props) {
   const session = cookieStore.get("__session")?.value ?? "";
   const api = createServerApiClient(session);
 
-  const [qrResult, analyticsResult] = await Promise.all([
-    api.unifiedQr.getById(id),
-    api.unifiedQr.getAnalytics(id),
-  ]);
+  const qrResult = await api.unifiedQr.getById(id);
 
   if (!qrResult.ok) notFound();
   const qr = qrResult.data as any;
-  const analytics = analyticsResult.ok ? (analyticsResult.data as any) : null;
 
   const isExpired = qr.expiryDate && new Date(qr.expiryDate).getTime() < Date.now();
   const isLimitHit = qr.scanLimit !== null && qr.scanCount >= qr.scanLimit;
@@ -123,27 +119,6 @@ export default async function QrDetailPage({ params }: Props) {
           </a>
         </div>
       </div>
-
-      {/* Analytics */}
-      {analytics && (
-        <div className="rounded-xl bg-white shadow-sm ring-1 ring-gray-100 p-6">
-          <h3 className="font-semibold text-gray-900 mb-4">Scan analytics</h3>
-          <div className="grid grid-cols-3 gap-4">
-            {[
-              { label: "Total scans",   value: analytics.totalScans   ?? 0, colour: "text-blue-600"    },
-              { label: "Unique IPs",    value: analytics.uniqueIps    ?? 0, colour: "text-violet-600"  },
-              { label: "Avg / day",     value: analytics.avgPerDay    ?? 0, colour: "text-emerald-600" },
-            ].map((s) => (
-              <div key={s.label} className="text-center">
-                <p className={`text-2xl font-bold ${s.colour}`}>
-                  {Number(s.value).toLocaleString("en-IN")}
-                </p>
-                <p className="text-xs text-gray-500 mt-0.5">{s.label}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
 
       {/* Danger zone */}
       <div className="rounded-xl border border-red-100 bg-red-50 p-6">

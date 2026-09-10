@@ -34,11 +34,6 @@ import {
 import { WEB_MAX_WIDTH } from "@/shared/utils/platform";
 import ConsentModal, { CONSENT_VERSION } from "@/shared/components/consent/ConsentModal";
 import { ToastProvider } from "@/shared/components/ui/Toast";
-import {
-  registerForPushNotifications,
-  trackAppOpen,
-  setupNotificationTapHandler,
-} from "@/lib/push-notifications";
 
 SplashScreen.preventAutoHideAsync();
 
@@ -168,25 +163,6 @@ function ThemedApp() {
 }
 
 function AuthGatedApp() {
-  const { user } = useAuth();
-
-  // ── Push notifications ──────────────────────────────────────────────────────
-  // Register push token once per login and track every app open.
-  const pushRegisteredRef = useRef<string | null>(null);
-  useEffect(() => {
-    if (!user?.id) return;
-    if (pushRegisteredRef.current === user.id) return;
-    pushRegisteredRef.current = user.id;
-    registerForPushNotifications(user.id);
-    trackAppOpen(user.id);
-  }, [user?.id]);
-
-  // Set up tap-handler once on mount; clean up on unmount.
-  useEffect(() => {
-    const cleanup = setupNotificationTapHandler();
-    return cleanup;
-  }, []);
-
   // The SplashGate (2 500 ms safety timeout) keeps the splash visible while
   // auth loads, so the user never sees this state. Removing the old 2 000 ms
   // timedOut guard eliminates the blank-screen race between that timer and the
