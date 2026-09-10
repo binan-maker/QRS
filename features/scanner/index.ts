@@ -5,13 +5,11 @@ export { useScanner }               from "./hooks/useScanner";
 export {
   ScannerOverlay, FinderFrame, OverlayTopBar, OverlayBottomBar,
   ProcessingOverlay, PermissionScreen, CameraErrorBoundary, CameraUnavailableBanner,
-  VerifiedModal, UnverifiedModal,
   ScannerToast, DonationBanner, ConversionBanner,
 } from "./components";
 
 // Hooks
 export { useCameraControls, FINDER_SIZE, CORNER_SIZE, CORNER_WIDTH, ZOOM_LEVELS } from "./hooks/useCameraControls";
-export { useScanModals }        from "./hooks/useScanModals";
 export { useScanProcessor }     from "./hooks/useScanProcessor";
 export { useOverlayAnimations } from "./hooks/useOverlayAnimations";
 

@@ -1,9 +1,7 @@
 import { db } from "@/lib/db/client";
 import { trackQrGenerated } from "@/lib/analytics";
-import * as Crypto from "expo-crypto";
 import { tsToString } from "../utils";
 import type { QrType, ScanVelocityBucket, GeneratedQrItem } from "../types";
-import { SIGNATURE_SALT } from "../types";
 import { getQrCodeId } from "../qr/qr-service";
 import { getEffectiveScanCount } from "@/lib/db/distributed-counter";
 import { COLLECTIONS } from "@/shared/constants/collections";
@@ -23,7 +21,6 @@ function mapDocToItem(id: string, data: any): GeneratedQrItem {
     content: data.content || "",
     contentType: data.contentType || "text",
     uuid: data.uuid || "",
-    branded: data.branded !== false,
     qrCodeId: data.qrCodeId || "",
     createdAt: tsToString(data.createdAt),
     fgColor: data.fgColor || "#0A0E17",
@@ -53,10 +50,8 @@ export async function saveGeneratedQr(
   content: string,
   contentType: string,
   uuid: string,
-  branded: boolean,
   qrType: QrType = "individual",
   businessName?: string | null,
-  ownerLogoBase64?: string | null,
   guardUuid?: string | null,
   design?: {
     fgColor?: string;
@@ -70,31 +65,17 @@ export async function saveGeneratedQr(
   templateKey?: string | null,
   formValues?: { value: string; extra: Record<string, string> } | null
 ): Promise<string> {
-  const SALT = SIGNATURE_SALT;
   const qrId = await getQrCodeId(content);
-  let signature: string | undefined;
-  if (branded) {
-    try {
-      const rawSig = await Crypto.digestStringAsync(
-        Crypto.CryptoDigestAlgorithm.SHA256,
-        content + "|" + userId + "|" + SALT
-      );
-      signature = rawSig.slice(0, 32);
-    } catch (e) {
-      logError("saveGeneratedQr/signature", e, { userId });
-    }
-  }
 
   try {
     const docRef = await db.add([COLLECTIONS.USERS, userId, COLLECTIONS.GENERATED_QRS], {
-      content, contentType, uuid, branded,
+      content, contentType, uuid,
       qrCodeId: qrId, qrType,
       businessName: businessName || null,
       guardUuid: guardUuid || null,
       ...(templateKey ? { templateKey } : {}),
       ...(displayDestination ? { displayDestination } : {}),
       ...(formValues ? { formValues } : {}),
-      ...(signature ? { signature } : {}),
       fgColor: design?.fgColor || "#0A0E17",
       bgColor: design?.bgColor || "#F8FAFC",
       ...(design?.scanLimit ? { scanLimit: design.scanLimit } : {}),
@@ -106,45 +87,29 @@ export async function saveGeneratedQr(
       createdAt: db.timestamp(),
     });
 
-    if (branded) {
-      try {
-        const existingQr = await db.get([COLLECTIONS.QR_CODES, qrId]);
-        if (existingQr) {
-          if (!existingQr.ownerId) {
-            await db.update([COLLECTIONS.QR_CODES, qrId], {
-              ownerId: userId, ownerName: displayName,
-              brandedUuid: uuid, isBranded: true,
-              qrType, isActive: true,
-              businessName: businessName || null,
-              ...(signature ? { signature } : {}),
-              ...(ownerLogoBase64 ? { ownerLogoBase64 } : {}),
-              ...(templateKey ? { templateKey } : {}),
-              ...(displayDestination ? { displayDestination } : {}),
-              ...(formValues ? { formValues } : {}),
-            });
-          }
-        } else {
-          await db.set([COLLECTIONS.QR_CODES, qrId], {
-            content, contentType,
-            createdAt: db.timestamp(),
-            scanCount: 0, commentCount: 0,
-            ownerId: userId, ownerName: displayName,
-            brandedUuid: uuid, isBranded: true,
-            qrType, isActive: true,
-            businessName: businessName || null,
-            ...(signature ? { signature } : {}),
-            ...(ownerLogoBase64 ? { ownerLogoBase64 } : {}),
-            ...(templateKey ? { templateKey } : {}),
-            ...(displayDestination ? { displayDestination } : {}),
-            ...(formValues ? { formValues } : {}),
-          });
-        }
-      } catch (e) {
-        logError("saveGeneratedQr/qrCodes-write", e, { qrId, userId });
+    try {
+      const existingQr = await db.get([COLLECTIONS.QR_CODES, qrId]);
+      const qrData = {
+        content, contentType,
+        createdAt: db.timestamp(),
+        scanCount: 0, commentCount: 0,
+        ownerId: userId, ownerName: displayName,
+        qrType, isActive: true,
+        businessName: businessName || null,
+        ...(templateKey ? { templateKey } : {}),
+        ...(displayDestination ? { displayDestination } : {}),
+        ...(formValues ? { formValues } : {}),
+      };
+      if (existingQr) {
+        if (!existingQr.ownerId) await db.update([COLLECTIONS.QR_CODES, qrId], qrData);
+      } else {
+        await db.set([COLLECTIONS.QR_CODES, qrId], qrData);
       }
+    } catch (e) {
+      logError("saveGeneratedQr/qrCodes-write", e, { qrId, userId });
     }
 
-    trackQrGenerated({ qrType, contentType, branded });
+    trackQrGenerated({ qrType, contentType });
     return docRef.id;
   } catch (e) {
     logError("saveGeneratedQr/generatedQrs-write", e, { userId, contentType });

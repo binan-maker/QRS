@@ -238,15 +238,15 @@ async function migrateQrCodes() {
       await query(
         `INSERT INTO qr_codes (
           firebase_id, content, content_type, owner_id, owner_name, qr_type,
-          uuid, branded_uuid, is_branded, business_name, template_key, signature,
+           uuid, business_name, template_key,
           is_active, deactivation_message, private_mode, custom_logo_uri,
           logo_position, display_destination, form_values, scan_count,
           comment_count, owner_scan_count, scan_count_frozen,
           scan_count_freeze_reason, owner_verified, scan_limit,
           expiry_date, expiry_preset, created_at, updated_at
         ) VALUES (
-          $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,
-          $17,$18,$19,$20,$21,$22,$23,$24,$25,$26,$27,$28,$29,$30
+           $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,
+           $16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26,$27
         ) ON CONFLICT (firebase_id) DO NOTHING`,
         [
           fbId,
@@ -256,11 +256,8 @@ async function migrateQrCodes() {
           str(d.ownerName ?? d.displayName ?? ""),
           qrType,
           strN(d.uuid),
-          strN(d.brandedUuid),
-          bool(d.isBranded),
           strN(d.businessName),
           strN(d.templateKey),
-          strN(d.signature),
           d.isActive !== false,
           strN(d.deactivationMessage),
           bool(d.privateMode),
@@ -441,35 +438,6 @@ async function migrateStandardLinks() {
     }
   }
   console.log(`   standard_links: +${s.inserted} inserted, ${s.skipped} skipped, ${s.errors} errors`);
-}
-
-// ─── STEP 6: creatorFollows → creator_follows ────────────────────────────────
-
-async function migrateCreatorFollows() {
-  console.log("\n📋  Step 6: Migrating creatorFollows → creator_follows …");
-  const docs = await fetchCollection("creatorFollows");
-  console.log(`   Found ${docs.length} documents`);
-  const s = stat("creator_follows");
-
-  for (const { id, data: d } of docs) {
-    try {
-      const userId = d.userId ? (uidMap.get(d.userId) ?? null) : null;
-      const creatorId = d.creatorId ? (uidMap.get(d.creatorId) ?? null) : null;
-      if (!userId || !creatorId) { s.skipped++; continue; }
-
-      await query(
-        `INSERT INTO creator_follows (user_id, creator_id, followed_at)
-         VALUES ($1, $2, $3)
-         ON CONFLICT (user_id, creator_id) DO NOTHING`,
-        [userId, creatorId, ts(d.followedAt ?? d.createdAt) ?? new Date().toISOString()]
-      );
-      s.inserted++;
-    } catch (err) {
-      s.errors++;
-      console.error(`   ✗ creatorFollow ${id}: ${(err as Error).message}`);
-    }
-  }
-  console.log(`   creator_follows: +${s.inserted} inserted, ${s.skipped} skipped, ${s.errors} errors`);
 }
 
 // ─── STEP 7: userFavorites → user_favorites ───────────────────────────────────
@@ -826,8 +794,6 @@ async function main() {
   await migrateUnifiedQrs();
   await migrateGuardLinks();
   await migrateStandardLinks();
-  await migrateCreatorFollows();
-
   // Build qr_code firebase_id → postgres id map after qr_codes are inserted
   const qrIdMap = await buildQrIdMap();
   console.log(`\n   Built QR ID map: ${qrIdMap.size} entries`);

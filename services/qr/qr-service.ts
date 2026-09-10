@@ -15,7 +15,6 @@ import { COLLECTIONS } from "@/shared/constants/collections";
 
 export { detectContentType } from "../qr-content-type";
 export type { QrCodeData, TrustScore };
-export { SIGNATURE_SALT } from "../types";
 
 export async function getQrCodeId(content: string): Promise<string> {
   const hash = await Crypto.digestStringAsync(Crypto.CryptoDigestAlgorithm.SHA256, content);
@@ -42,9 +41,6 @@ export async function getOrCreateQrCode(content: string): Promise<QrCodeData> {
         commentCount: data.commentCount || 0,
         ownerId: data.ownerId,
         ownerName: data.ownerName,
-        brandedUuid: data.brandedUuid,
-        isBranded: data.isBranded || false,
-        signature: data.signature,
         ownerVerified: (data as any).ownerVerified || false,
       };
     }
@@ -81,8 +77,6 @@ export async function getQrCodeById(qrId: string): Promise<QrCodeData | null> {
       createdAt: tsToString(data.createdAt),
       scanCount,
       commentCount: data.commentCount || 0,
-      isBranded: data.isBranded,
-      signature: data.signature,
       ownerId: data.ownerId,
       ownerName: data.ownerName,
       qrType: data.qrType,

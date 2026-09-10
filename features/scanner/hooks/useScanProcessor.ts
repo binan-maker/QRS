@@ -29,7 +29,6 @@ import {
 import { decodeQrFromImageUri } from "@/features/scanner/utils/qr-decode";
 import { appendToLocalScanHistory, makeScanEntry } from "@/features/scanner/utils/scan-history";
 import { emitScanEvent } from "@/services/scan-history";
-import type { ScanModalControls } from "@/features/scanner/hooks/useScanModals";
 
 export interface ScanProcessorParams {
   anonymousMode:          boolean;
@@ -39,7 +38,6 @@ export interface ScanProcessorParams {
   setScanSuccess:         (v: boolean) => void;
   scanLockRef:            MutableRefObject<boolean>;
   canScanRef:             MutableRefObject<boolean>;
-  modalControls:          ScanModalControls;
   showScannerMsg:         (msg: string, type?: "error" | "warning" | "info") => void;
   showGalleryError:       (msg: string) => void;
   setConversionBannerMsg: (msg: string | null) => void;
@@ -54,7 +52,6 @@ export function useScanProcessor({
   setScanSuccess,
   scanLockRef,
   canScanRef,
-  modalControls,
   showScannerMsg,
   showGalleryError,
   setConversionBannerMsg,

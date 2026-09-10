@@ -31,12 +31,10 @@ export function trackQrScanned(params: {
 export function trackQrGenerated(params: {
   qrType: string;
   contentType: string;
-  branded: boolean;
 }): void {
   logEvent("qr_generated", {
     qr_type: params.qrType,
     content_type: params.contentType,
-    branded: params.branded,
   });
 }
 

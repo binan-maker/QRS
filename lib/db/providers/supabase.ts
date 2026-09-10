@@ -92,12 +92,6 @@ const COLLECTION_TABLE: Record<string, string> = {
   moderationQueue: "moderation_queue",
   featureVotes: "feature_votes",
   reportLog: "report_log",
-  creatorFollowers: "creator_follows",
-  creatorFollowing: "creator_follows",
-  following: "creator_follows",
-  followers: "creator_follows",
-  creatorFollowerCount: "users",
-  creatorFollowingCount: "users",
   followerCount: "users",
   followingCount: "users",
   personalScanCount: "users",
@@ -123,8 +117,6 @@ const SUB_FK: Record<string, { table: string; fk: string }> = {
   "qrCodes.likes": { table: "comment_likes", fk: "qr_code_id" },
   "users.favorites": { table: "user_favorites", fk: "user_id" },
   "users.notifications": { table: "notifications", fk: "user_id" },
-  "users.following": { table: "creator_follows", fk: "follower_id" },
-  "users.followers": { table: "creator_follows", fk: "followee_id" },
 };
 
 interface ParsedPath {

@@ -1,9 +1,7 @@
 /**
- * /api/v1/follows — QR follow / unfollow and creator follow / unfollow
+ * /api/v1/follows — QR follow / unfollow
  *
  * QR follows:     POST/DELETE /api/v1/follows/qr/:qrId
- * Creator follows: POST/DELETE /api/v1/follows/users/:userId
- * Listing:         GET /api/v1/follows/users/:userId/followers
  *
  * All write endpoints require Firebase Auth.
  * TODO markers show where PostgreSQL queries replace Firestore calls.
@@ -112,95 +110,3 @@ followsRouter.get(
   },
 );
 
-// ─── POST /api/v1/follows/users/:userId — follow a creator ───────────────────
-
-followsRouter.post(
-  "/users/:userId",
-  authenticate,
-  standardLimit,
-  async (req: Request, res: Response) => {
-    const { userId } = req.params;
-    const uid = req.user!.uid;
-
-    if (userId === uid) {
-      return res.status(400).json({ error: "Cannot follow yourself", code: "SELF_FOLLOW", status: 400 });
-    }
-
-    const db = getAdminDb();
-    if (!db) return res.status(503).json({ error: "Database unavailable", code: "SERVICE_UNAVAILABLE", status: 503 });
-
-    try {
-      // TODO:
-      // INSERT INTO creator_follows (user_id, creator_id, followed_at) VALUES ($uid, $userId, NOW())
-      // ON CONFLICT (user_id, creator_id) DO NOTHING
-      const followRef = db
-        .collection("users").doc(uid)
-        .collection("creatorFollowing").doc(userId);
-
-      const existing = await followRef.get();
-      if (existing.exists) {
-        return res.json({ data: { followed: true, alreadyFollowing: true } });
-      }
-
-      await followRef.set({ followedAt: admin.firestore.FieldValue.serverTimestamp() });
-
-      return res.status(201).json({ data: { followed: true, userId } });
-    } catch (e: any) {
-      console.error("[follows POST /users/:userId]", e.message);
-      return res.status(500).json({ error: "Failed to follow user", code: "INTERNAL_ERROR", status: 500 });
-    }
-  },
-);
-
-// ─── DELETE /api/v1/follows/users/:userId — unfollow a creator ───────────────
-
-followsRouter.delete(
-  "/users/:userId",
-  authenticate,
-  standardLimit,
-  async (req: Request, res: Response) => {
-    const { userId } = req.params;
-    const uid = req.user!.uid;
-    const db = getAdminDb();
-    if (!db) return res.status(503).json({ error: "Database unavailable", code: "SERVICE_UNAVAILABLE", status: 503 });
-
-    try {
-      // TODO: DELETE FROM creator_follows WHERE user_id = $uid AND creator_id = $userId
-      await db
-        .collection("users").doc(uid)
-        .collection("creatorFollowing").doc(userId)
-        .delete();
-
-      return res.json({ data: { unfollowed: true, userId } });
-    } catch (e: any) {
-      console.error("[follows DELETE /users/:userId]", e.message);
-      return res.status(500).json({ error: "Failed to unfollow user", code: "INTERNAL_ERROR", status: 500 });
-    }
-  },
-);
-
-// ─── GET /api/v1/follows/users/:userId — check if current user follows a creator
-
-followsRouter.get(
-  "/users/:userId",
-  authenticate,
-  relaxedLimit,
-  async (req: Request, res: Response) => {
-    const { userId } = req.params;
-    const uid = req.user!.uid;
-    const db = getAdminDb();
-    if (!db) return res.status(503).json({ error: "Database unavailable", code: "SERVICE_UNAVAILABLE", status: 503 });
-
-    try {
-      // TODO: SELECT EXISTS(SELECT 1 FROM creator_follows WHERE user_id = $uid AND creator_id = $userId)
-      const snap = await db
-        .collection("users").doc(uid)
-        .collection("creatorFollowing").doc(userId)
-        .get();
-      return res.json({ data: { following: snap.exists, userId } });
-    } catch (e: any) {
-      console.error("[follows GET /users/:userId]", e.message);
-      return res.status(500).json({ error: "Failed to check follow status", code: "INTERNAL_ERROR", status: 500 });
-    }
-  },
-);

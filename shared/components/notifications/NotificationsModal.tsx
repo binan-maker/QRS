@@ -43,13 +43,11 @@ const NotificationItem = memo(function NotificationItem({ notif, colors, onClose
 
   const handlePress = useCallback(() => {
     onClose();
-    if (isCreatorFollowNotif && notif.fromUsername) {
-      router.push(`/profile/${notif.fromUsername}` as any);
-    } else if (notif.qrCodeId) {
+    if (notif.qrCodeId) {
       router.push({ pathname: "/qr-detail/[id]", params: { id: notif.qrCodeId } });
     }
     // If neither fromUsername nor qrCodeId is present, close is enough — no crash.
-  }, [notif.type, notif.fromUsername, notif.qrCodeId, onClose]);
+  }, [notif.qrCodeId, onClose]);
 
   return (
     <Pressable

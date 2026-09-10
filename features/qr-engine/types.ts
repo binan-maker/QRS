@@ -99,7 +99,6 @@ export interface QrVerification {
   is_verified: boolean;
   verified_by?: string;
   verified_at?: number;
-  signature?: string;
 }
 
 // ─── Scan Event (analytics) ───────────────────────────────────────────────────

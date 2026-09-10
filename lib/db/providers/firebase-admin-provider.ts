@@ -68,7 +68,6 @@ const COLLECTION_TABLE: Record<string, string> = {
   qrCodes: "qr_codes",
   qrs: "unified_qrs",
   generatedQrs: "user_generated_qrs",
-  creatorFollows: "creator_follows",
   userFavorites: "user_favorites",
   comments: "qr_comments",
   reports: "qr_reports",

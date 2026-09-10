@@ -2,7 +2,6 @@ import { useState, useCallback } from "react";
 import * as Haptics from "@/shared/utils/haptics";
 import { useAuth } from "@/shared/contexts/AuthContext";
 import { useCameraControls } from "@/features/scanner/hooks/useCameraControls";
-import { useScanModals } from "@/features/scanner/hooks/useScanModals";
 import { useScanProcessor } from "@/features/scanner/hooks/useScanProcessor";
 import { useScanMessages } from "@/features/scanner/hooks/useScanMessages";
 
@@ -31,9 +30,6 @@ export function useScanner({ isCameraAvailable = true }: { isCameraAvailable?: b
   // ── Toast / banner messages ───────────────────────────────────────────────
   const messages = useScanMessages();
 
-  // ── Post-scan modals ──────────────────────────────────────────────────────
-  const modals = useScanModals(camera.resetScan);
-
   // ── Scan processing (all business logic) ──────────────────────────────────
   const { handleBarCodeScanned: _rawHandleBarCodeScanned, handlePickImage } = useScanProcessor({
     anonymousMode,
@@ -43,7 +39,6 @@ export function useScanner({ isCameraAvailable = true }: { isCameraAvailable?: b
     setScanSuccess:         camera.setScanSuccess,
     scanLockRef:            camera.scanLockRef,
     canScanRef:             camera.canScanRef,
-    modalControls:          modals.controls,
     showScannerMsg:         messages.showScannerMsg,
     showGalleryError:       messages.showGalleryError,
     setConversionBannerMsg: messages.setConversionBannerMsg,
@@ -80,14 +75,6 @@ export function useScanner({ isCameraAvailable = true }: { isCameraAvailable?: b
     // Anonymous mode
     anonymousMode,
     setAnonymousMode,
-    // Modal state
-    verifiedModal:         modals.verifiedModal,
-    verifiedOwnerName:     modals.verifiedOwnerName,
-    unverifiedModal:       modals.unverifiedModal,
-    unverifiedCountdown:   modals.unverifiedCountdown,
-    // Modal handlers
-    handleUnverifiedProceed:     modals.handleUnverifiedProceed,
-    handleUnverifiedBack:        modals.handleUnverifiedBack,
     // Messages
     galleryErrorMsg:          messages.galleryErrorMsg,
     dismissGalleryError:      messages.dismissGalleryError,

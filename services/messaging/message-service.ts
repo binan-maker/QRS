@@ -9,7 +9,6 @@ export async function sendMessageToQrOwner(
   fromDisplayName: string,
   toUserId: string,
   qrCodeId: string,
-  qrBrandedUuid: string,
   message: string
 ): Promise<void> {
   await db.add(["qrMessages"], {
@@ -17,7 +16,6 @@ export async function sendMessageToQrOwner(
     fromDisplayName,
     toUserId,
     qrCodeId,
-    qrBrandedUuid,
     message,
     read: false,
     createdAt: new Date().toISOString(),
@@ -48,7 +46,6 @@ export function subscribeToQrMessages(
         fromDisplayName: d.data.fromDisplayName || "User",
         toUserId: d.data.toUserId,
         qrCodeId: d.data.qrCodeId,
-        qrBrandedUuid: d.data.qrBrandedUuid || "",
         message: d.data.message,
         read: d.data.read || false,
         createdAt: tsToString(d.data.createdAt),

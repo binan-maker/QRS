@@ -5,12 +5,6 @@ export { default as OverlayTopBar }   from "./overlay/OverlayTopBar";
 export { default as OverlayBottomBar }from "./overlay/OverlayBottomBar";
 export { SCANNER_GLOW, SCANNER_AMBER, VIGNETTE } from "./overlay/constants";
 
-// Modals
-// SafetyModal intentionally not re-exported — openSafetyModal() navigates
-// directly to /qr-detail, so the modal is never rendered by the scanner.
-export { default as VerifiedModal }   from "./modals/VerifiedModal";
-export { UnverifiedModal }            from "./modals/UnverifiedModal";
-
 // Feedback
 export { ScannerToast, toastContainerStyle } from "./feedback/ScannerToast";
 export type { ToastType }             from "./feedback/ScannerToast";

@@ -93,7 +93,6 @@ export interface QrDetail {
   content: string;
   contentType: string;
   createdAt: string;
-  signature?: string;
   templateKey?: string | null;
   formValues?: { value: string; extra: Record<string, string> } | null;
 }

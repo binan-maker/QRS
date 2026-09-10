@@ -1,10 +1,3 @@
-export function getSignatureSalt(year?: number): string {
-  const y = year ?? new Date().getFullYear();
-  return `QRG_MINT_VERIFIED_${y}_PROPRIETARY`;
-}
-
-export const SIGNATURE_SALT = getSignatureSalt();
-
 export type QrType = "individual" | "business" | "government";
 
 export interface QrCodeData {
@@ -14,13 +7,10 @@ export interface QrCodeData {
   createdAt: string;
   scanCount: number;
   commentCount: number;
-  isBranded?: boolean;
-  signature?: string;
   ownerId?: string;
   ownerName?: string;
   qrType?: QrType;
   uuid?: string;
-  brandedUuid?: string;
   businessName?: string;
   privateMode?: boolean;
   customLogoUri?: string;
@@ -219,31 +209,12 @@ export interface GeneratedQrItem {
   logoUri?: string | null;
   businessName?: string;
   privateMode?: boolean;
-  isBranded?: boolean;
   ownerName?: string;
   ownerId?: string;
   username?: string;
   templateKey?: string;
   formValues?: { value: string; extra: Record<string, string> };
   displayDestination?: string | null;
-}
-
-export interface QrOwnerInfo {
-  ownerId: string;
-  ownerName: string;
-  isVerified: boolean;
-  badgeType?: 'business' | 'government' | 'creator';
-  joinDate?: string;
-  totalQrs?: number;
-  qrType?: QrType | string;
-  isActive?: boolean;
-  isBranded?: boolean;
-  businessName?: string;
-  ownerLogoBase64?: string;
-  brandedUuid?: string;
-  deactivationMessage?: string | null;
-  signature?: string;
-  ownerVerified?: boolean;
 }
 
 export interface ScanVelocityBucket {
@@ -315,7 +286,6 @@ export interface QrMessage {
   fromDisplayName?: string;
   fromUserId?: string;
   toUserId?: string;
-  qrBrandedUuid?: string;
   message?: string;
   [key: string]: any;
 }

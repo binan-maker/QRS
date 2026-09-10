@@ -18,13 +18,11 @@ import { useLowLightDetection } from "@/features/scanner/hooks/useLowLightDetect
 import {
   ScannerOverlay,
   ProcessingOverlay,
-  VerifiedModal,
   PermissionScreen,
   CameraErrorBoundary,
   ScannerToast,
   toastContainerStyle,
   CameraUnavailableBanner,
-  UnverifiedModal,
   DonationBanner,
   ConversionBanner,
 } from "@/features/scanner/components";
@@ -230,10 +228,6 @@ export default function ScannerScreen() {
     zoomLabel,
     facing,
     flipCamera,
-    verifiedModal,
-    verifiedOwnerName,
-    unverifiedModal,
-    unverifiedCountdown,
     galleryErrorMsg,
     dismissGalleryError,
     scannerMsg,
@@ -245,8 +239,6 @@ export default function ScannerScreen() {
     handlePickImage,
     cycleZoom,
     resetScan,
-    handleUnverifiedProceed,
-    handleUnverifiedBack,
     onQRBoundsDetected,
   } = useScanner({ isCameraAvailable: cameraAvailable });
 
@@ -475,19 +467,6 @@ export default function ScannerScreen() {
 
       {/* Processing overlay */}
       {processing && <ProcessingOverlay />}
-
-      {verifiedModal && (
-        <VerifiedModal visible={verifiedModal} ownerName={verifiedOwnerName} />
-      )}
-
-      {unverifiedModal && (
-        <UnverifiedModal
-          visible={unverifiedModal}
-          countdown={unverifiedCountdown}
-          onProceed={handleUnverifiedProceed}
-          onBack={handleUnverifiedBack}
-        />
-      )}
 
       <DonationBanner
         visible={showDonationBanner}

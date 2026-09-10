@@ -1,6 +1,5 @@
 export interface QrSignatureResult {
   isVerified: boolean;
-  isBranded: boolean;
   ownerName?: string;
   ownerVerified?: boolean;
 }

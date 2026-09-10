@@ -31,8 +31,6 @@ const REPLACEMENTS = [
   ["friends",          "COLLECTIONS.FRIENDS"],
   ["following",        "COLLECTIONS.FOLLOWING"],
   ["followers",        "COLLECTIONS.FOLLOWERS"],
-  ["creatorFollowers", "COLLECTIONS.CREATOR_FOLLOWERS"],
-  ["creatorFollowing", "COLLECTIONS.CREATOR_FOLLOWING"],
   ["featureVotes",     "COLLECTIONS.FEATURE_VOTES"],
   ["likes",            "COLLECTIONS.LIKES"],
   ["events",           "COLLECTIONS.EVENTS"],

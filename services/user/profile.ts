@@ -273,8 +273,6 @@ async function _cleanupUserSubcollections(userId: string): Promise<void> {
     // QR follows — remove from qrCodes/{qrId}/followers and decrement counts
     _cleanupQrFollowing(userId),
 
-    // Creator follows — remove from the creator's creatorFollowers sub-collection
-    _cleanupCreatorFollowing(userId),
   ]);
 
   // Hard-delete the user document itself last (after all sub-collections are gone)
@@ -322,22 +320,6 @@ async function _cleanupQrFollowing(userId: string): Promise<void> {
         batch.delete([COLLECTIONS.QR_CODES, qrCodeId, COLLECTIONS.FOLLOWERS, userId]);
         batch.delete([COLLECTIONS.USERS, userId, COLLECTIONS.FOLLOWING, qrCodeId]);
         batch.increment([COLLECTIONS.QR_CODES, qrCodeId], "followerCount", -1);
-        await batch.commit();
-      } catch {}
-    })
-  );
-}
-
-async function _cleanupCreatorFollowing(userId: string): Promise<void> {
-  const { docs } = await db.query([COLLECTIONS.USERS, userId, COLLECTIONS.CREATOR_FOLLOWING], { limit: 200 });
-  await Promise.all(
-    docs.map(async (d) => {
-      const creatorId = d.id;
-      try {
-        const batch = db.batch();
-        batch.delete([COLLECTIONS.USERS, creatorId, COLLECTIONS.CREATOR_FOLLOWERS, userId]);
-        batch.delete([COLLECTIONS.USERS, userId, COLLECTIONS.CREATOR_FOLLOWING, creatorId]);
-        batch.increment([COLLECTIONS.USERS, creatorId], "creatorFollowerCount", -1);
         await batch.commit();
       } catch {}
     })
