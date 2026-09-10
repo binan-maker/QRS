@@ -61,6 +61,11 @@ export function useQrDetail(id: string, hint?: { content: string; contentType: s
   const favorite = useQrFavorite(id, userId);
   const comments = useQrComments(id, userId, data.offlineMode);
   const owner = useQrOwner(id, userId, user?.displayName ?? null, data.isQrOwner, data.ownerInfo);
+  const initialDataReady =
+    !data.loading &&
+    (data.offlineMode || data.ownerDataReady) &&
+    reports.reportsReady &&
+    safety.analysisReady;
 
   // ── Trust / verdict ──────────────────────────────────────────────────────────
   // Memoized so child components receiving these as props don't re-render
@@ -217,6 +222,7 @@ export function useQrDetail(id: string, hint?: { content: string; contentType: s
     ...favorite,
     ...comments,
     ...owner,
+    initialDataReady,
     copied,
     creatorId,
     creatorName,

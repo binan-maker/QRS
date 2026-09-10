@@ -245,7 +245,7 @@ export default function StaticQrDetailScreen({ id, hint }: Props) {
     }, 280);
   }, [user, q.scrollRef]);
 
-  if (q.loading) return <LoadingSkeleton topInset={topInset} />;
+  if (q.loading || (!q.initialDataReady && !q.loadError)) return <LoadingSkeleton topInset={topInset} />;
 
   if (q.loadError) {
     return (
@@ -332,7 +332,7 @@ export default function StaticQrDetailScreen({ id, hint }: Props) {
             }
           >
             {/* ── Trust verdict banner (non-owner QRs) ─────────── */}
-            {!q.offlineMode && !hasOwner && !isQrOwner && (
+            {q.initialDataReady && !q.offlineMode && !hasOwner && !isQrOwner && (
               trust.score < 0 ? (
                 <EarlyCommunityCard
                   isLoggedIn={!!user}
@@ -390,14 +390,14 @@ export default function StaticQrDetailScreen({ id, hint }: Props) {
             </View>
 
             {/* ── Safety badge (compact — only for genuine threats, not generic "unverified" noise) ─── */}
-            {verdict && verdict.level !== "safe" && verdict.label !== "UNVERIFIED QR" && (
+            {q.initialDataReady && verdict && verdict.level !== "safe" && verdict.label !== "UNVERIFIED QR" && (
               <View>
                 <SafetyBadge verdict={verdict} />
               </View>
             )}
 
             {/* ── Dangerous URL warning (only for dangerous, not caution) ── */}
-            {user && showUrlDangerWarning && (
+            {q.initialDataReady && user && showUrlDangerWarning && (
               <View>
                 <SafetyWarningCard
                   riskLevel="dangerous"
@@ -408,7 +408,7 @@ export default function StaticQrDetailScreen({ id, hint }: Props) {
             )}
 
             {/* ── Known blacklisted content ─────────────────────── */}
-            {showBlacklistWarning && (
+            {q.initialDataReady && showBlacklistWarning && (
               <View>
                 <SafetyWarningCard
                   riskLevel="dangerous"
@@ -419,7 +419,7 @@ export default function StaticQrDetailScreen({ id, hint }: Props) {
             )}
 
             {/* ── Dangerous payment warning ────────────────────── */}
-            {showPaymentDangerWarning && (() => {
+            {q.initialDataReady && showPaymentDangerWarning && (() => {
               const warnings = (q.paymentSafety?.warnings ?? []).filter(
                 (w) => !w.toLowerCase().startsWith("pre-filled amount")
               );
@@ -436,7 +436,7 @@ export default function StaticQrDetailScreen({ id, hint }: Props) {
             })()}
 
             {/* ── Trust score ──────────────────────────────────── */}
-            {!q.offlineMode && (
+            {q.initialDataReady && !q.offlineMode && (
               <View>
                 <TrustScoreCard
                   trustInfo={trust}
@@ -587,7 +587,7 @@ export default function StaticQrDetailScreen({ id, hint }: Props) {
         hasOwner={hasOwner}
         onFavorite={handleFavoritePress}
         onWatch={handleWatchPress}
-        onReport={handleReportPress}
+         onReport={() => showToast("Feature Coming Soon!", "time-outline")}
       />
 
       <CommentReportModal

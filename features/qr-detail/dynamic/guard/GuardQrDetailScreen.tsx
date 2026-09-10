@@ -234,7 +234,7 @@ export default function GuardQrDetailScreen({ id, guardUuid, ownerDocId, hint }:
               />
             }
           >
-            {!q.offlineMode && !isQrOwner && trust.score < 0 && (
+            {q.initialDataReady && !guardLoading && !q.offlineMode && !isQrOwner && trust.score < 0 && (
               <EarlyCommunityCard
                 isLoggedIn={!!user}
                 onRatePress={handleReportPress}
@@ -257,7 +257,7 @@ export default function GuardQrDetailScreen({ id, guardUuid, ownerDocId, hint }:
             </View>
 
             {/* ── Trust Score ── */}
-            {!q.offlineMode && (
+            {q.initialDataReady && !guardLoading && !q.offlineMode && (
               <View>
                 <TrustScoreCard
                   trustInfo={trust}
@@ -362,7 +362,7 @@ export default function GuardQrDetailScreen({ id, guardUuid, ownerDocId, hint }:
         hasOwner={hasOwner}
         onFavorite={handleFavoritePress}
         onWatch={handleWatchPress}
-        onReport={handleReportPress}
+         onReport={() => showToast("Feature Coming Soon!", "time-outline")}
       />
       <CommentReportModal
         commentId={q.commentReportModal}

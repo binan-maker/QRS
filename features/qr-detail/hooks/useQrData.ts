@@ -120,6 +120,7 @@ export function useQrData(
   const [totalComments, setTotalComments] = useState(0);
   const [ownerInfo, setOwnerInfo] = useState<QrOwnerInfo | null>(null);
   const [isQrOwner, setIsQrOwner] = useState(false);
+  const [ownerDataReadyForId, setOwnerDataReadyForId] = useState<string | null>(null);
 
   const ownerFetchedForId = useRef<string | null>(null);
 
@@ -155,7 +156,10 @@ export function useQrData(
   const offlineContentType = result?.status === "offline" ? result.contentType : "text";
 
   useEffect(() => {
-    if (result?.status !== "data") return;
+    if (result?.status !== "data") {
+      setOwnerDataReadyForId(null);
+      return;
+    }
     const detail = result.detail;
     setTotalScans(detail.totalScans || 0);
     setTotalComments(detail.totalComments || 0);
@@ -165,7 +169,10 @@ export function useQrData(
       setIsQrOwner(userId === detail.ownerInfo.ownerId);
     }
 
-    if (!result.isFreshFetch) return;
+    if (!result.isFreshFetch) {
+      setOwnerDataReadyForId(id);
+      return;
+    }
 
     if (userId && qrCode) {
       recordViewedLocally(id, qrCode.content, qrCode.contentType, userId).catch(() => {});
@@ -187,6 +194,7 @@ export function useQrData(
       } catch {}
       if (!cancelled) {
         setCachedQrDetail(id, userId, { ...detail, ownerInfo: ownerData }).catch(() => {});
+        setOwnerDataReadyForId(id);
       }
     })();
     return () => { cancelled = true; };
@@ -226,6 +234,7 @@ export function useQrData(
     offlineContent,
     offlineContentType,
     ownerInfo,
+    ownerDataReady: ownerDataReadyForId === id,
     isQrOwner,
     refreshQrData,
   };

@@ -241,7 +241,7 @@ export default function StandardQrDetailScreen({ id, standardUuid, ownerDocId, h
               />
             }
           >
-            {!q.offlineMode && !isQrOwner && trust.score < 0 && (
+            {q.initialDataReady && !q.offlineMode && !isQrOwner && trust.score < 0 && (
               <EarlyCommunityCard
                 isLoggedIn={!!user}
                 onRatePress={handleReportPress}
@@ -276,7 +276,7 @@ export default function StandardQrDetailScreen({ id, standardUuid, ownerDocId, h
             )}
 
             {/* ── Payment safety — dangerous only ─── */}
-            {effectiveContentType === "payment" && contentSafety.paymentSafety?.riskLevel === "dangerous" && (() => {
+            {q.initialDataReady && effectiveContentType === "payment" && contentSafety.paymentSafety?.riskLevel === "dangerous" && (() => {
               const warnings = (contentSafety.paymentSafety?.warnings ?? []).filter(
                 (w) => !w.toLowerCase().startsWith("pre-filled amount")
               );
@@ -293,7 +293,7 @@ export default function StandardQrDetailScreen({ id, standardUuid, ownerDocId, h
             })()}
 
             {/* ── URL safety — dangerous only ────── */}
-            {effectiveContentType === "url" && contentSafety.urlSafety?.riskLevel === "dangerous" && (
+            {q.initialDataReady && effectiveContentType === "url" && contentSafety.urlSafety?.riskLevel === "dangerous" && (
               <View>
                 <SafetyWarningCard
                   riskLevel="dangerous"
@@ -304,7 +304,7 @@ export default function StandardQrDetailScreen({ id, standardUuid, ownerDocId, h
             )}
 
             {/* ── Community: Trust score ───────────────────── */}
-            {!q.offlineMode && (
+            {q.initialDataReady && !q.offlineMode && (
               <View>
                 <TrustScoreCard
                   trustInfo={trust}
@@ -423,7 +423,7 @@ export default function StandardQrDetailScreen({ id, standardUuid, ownerDocId, h
         hasOwner={!!ownerInfoForSheet}
         onFavorite={handleFavoritePress}
         onWatch={handleWatchPress}
-        onReport={handleReportPress}
+         onReport={() => showToast("Feature Coming Soon!", "time-outline")}
       />
 
       <CommentReportModal

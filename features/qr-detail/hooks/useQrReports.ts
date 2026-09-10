@@ -26,6 +26,7 @@ export function useQrReports(
   const [weightedCounts, setWeightedCounts] = useState<Record<string, number>>({});
   const [userReport, setUserReport]         = useState<string | null>(null);
   const [reportLoading, setReportLoading]   = useState(false);
+  const [reportsReadyForId, setReportsReadyForId] = useState<string | null>(null);
   const [reportError, setReportError]       = useState<string | null>(null);
   const [collusionFlags, setCollusionFlags] = useState<{
     suspicious: boolean;
@@ -134,6 +135,32 @@ export function useQrReports(
       });
   }, [id, userId, applyOptimisticDelta]);
 
+  // ── Live subscription to report counts ────────────────────────────────────
+  useEffect(() => {
+    setReportsReadyForId(offlineMode ? id : null);
+    if (offlineMode) return;
+
+    let cancelled = false;
+    const unsub = subscribeToQrReports(id, (counts, weighted) => {
+      if (cancelled) return;
+      serverCountsRef.current = counts;
+      setWeightedCounts(weighted);
+      setReportsReadyForId(id);
+      // While a write is in-flight the Firestore snapshot arrives BEFORE
+      // .then() updates committedRef. Rendering at that moment produces a
+      // wrong delta (+1 ghost count). Suppress the repaint here — .then()
+      // will call setReportCounts once committedRef is correct.
+      if (!reportInFlightRef.current) {
+        setReportCounts(applyOptimisticDelta(counts));
+      }
+    });
+
+    return () => {
+      cancelled = true;
+      unsub();
+    };
+  }, [id, offlineMode, applyOptimisticDelta]);
+
   // ── Initial user report + collusion flags ─────────────────────────────────
   useEffect(() => {
     if (!id || !userId || offlineMode) return;
@@ -167,25 +194,6 @@ export function useQrReports(
 
     return () => { cancelled = true; };
   }, [id, userId, offlineMode, applyOptimisticDelta]);
-
-  // ── Live subscription to report counts ────────────────────────────────────
-  // After each server update, re-apply the optimistic delta so the count the
-  // user sees always reflects their pending intent, not just the server truth.
-  useEffect(() => {
-    if (!id || offlineMode) return;
-    const unsub = subscribeToQrReports(id, (counts, weighted) => {
-      serverCountsRef.current = counts;
-      setWeightedCounts(weighted);
-      // While a write is in-flight the Firestore snapshot arrives BEFORE
-      // .then() updates committedRef.  Rendering at that moment produces a
-      // wrong delta (+1 ghost count).  Suppress the repaint here — .then()
-      // will call setReportCounts once committedRef is correct.
-      if (!reportInFlightRef.current) {
-        setReportCounts(applyOptimisticDelta(counts));
-      }
-    });
-    return unsub;
-  }, [id, offlineMode, applyOptimisticDelta]);
 
   // ── Trust score ───────────────────────────────────────────────────────────
   // useMemo so the score object is reference-stable when counts haven't changed,
@@ -236,6 +244,7 @@ export function useQrReports(
   return {
     reportCounts,
     userReport,
+    reportsReady: offlineMode || reportsReadyForId === id,
     trustScore,
     reportLoading,
     reportError,

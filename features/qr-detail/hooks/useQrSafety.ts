@@ -63,6 +63,8 @@ export function useQrSafety(content: string | null | undefined, contentType: str
   const [paymentSafety, setPaymentSafety] = useState<PaymentSafetyResult | null>(null);
   const [urlSafety, setUrlSafety] = useState<UrlSafetyResult | null>(null);
   const [offlineBlacklistMatch, setOfflineBlacklistMatch] = useState<{ matched: boolean; reason: string | null }>({ matched: false, reason: null });
+  const [analysisReadyForKey, setAnalysisReadyForKey] = useState<string | null>(content ? null : "");
+  const analysisKey = content ? `${contentType ?? ""}\u0000${content}` : "";
 
   const instantVerdict = useMemo(() => computeInstantVerdict(content, contentType), [content, contentType]);
 
@@ -71,31 +73,48 @@ export function useQrSafety(content: string | null | undefined, contentType: str
   }, []);
 
   useEffect(() => {
+    setAnalysisReadyForKey(content ? null : "");
+    setParsedPayment(null);
+    setPaymentSafety(null);
+    setUrlSafety(null);
+    setOfflineBlacklistMatch({ matched: false, reason: null });
     if (!content) return;
+
     let cancelled = false;
     (async () => {
-      const blacklist = await loadOfflineBlacklist();
-      if (cancelled) return;
-      const blMatch = checkOfflineBlacklist(content, blacklist);
-      setOfflineBlacklistMatch(blMatch);
-      if (contentType === "payment") {
-        const parsed = parseAnyPaymentQr(content);
-        if (parsed) {
-          if (cancelled) return;
-          setParsedPayment(parsed);
-          setPaymentSafety(analyzeAnyPaymentQr(parsed));
+      try {
+        const blacklist = await loadOfflineBlacklist();
+        if (cancelled) return;
+        const blMatch = checkOfflineBlacklist(content, blacklist);
+        setOfflineBlacklistMatch(blMatch);
+        if (contentType === "payment") {
+          const parsed = parseAnyPaymentQr(content);
+          if (parsed) {
+            if (cancelled) return;
+            setParsedPayment(parsed);
+            setPaymentSafety(analyzeAnyPaymentQr(parsed));
+          }
         }
-      }
-      if (contentType === "url") {
-        try {
-          if (cancelled) return;
-          const result = analyzeUrlHeuristics(content);
-          setUrlSafety(result);
-        } catch {}
+        if (contentType === "url") {
+          try {
+            if (cancelled) return;
+            const result = analyzeUrlHeuristics(content);
+            setUrlSafety(result);
+          } catch {}
+        }
+      } finally {
+        if (!cancelled) setAnalysisReadyForKey(analysisKey);
       }
     })();
     return () => { cancelled = true; };
   }, [content, contentType]);
 
-  return { parsedPayment, paymentSafety, urlSafety, offlineBlacklistMatch, instantVerdict };
+  return {
+    parsedPayment,
+    paymentSafety,
+    urlSafety,
+    offlineBlacklistMatch,
+    instantVerdict,
+    analysisReady: analysisReadyForKey === analysisKey,
+  };
 }

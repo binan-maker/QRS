@@ -30,8 +30,8 @@ export default function OverflowSheet({
   const { colors } = useTheme();
 
   return (
-    <BottomSheet visible={visible} onClose={onClose} sheetStyle={{ paddingHorizontal: 0 }} extraBottomPadding={8}>
-        <View style={{ paddingBottom: 8 }}>
+    <BottomSheet visible={visible} onClose={onClose} sheetStyle={{ paddingHorizontal: 0 }} extraBottomPadding={20}>
+        <View style={{ paddingBottom: 12 }}>
         {/* Favorites */}
         <Pressable
            style={[overflowStyles.item, { paddingVertical: 18 }]}
