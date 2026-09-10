@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useEffect, memo } from "react";
+import React, { useCallback, memo } from "react";
 import {
   View,
   Text,
@@ -15,16 +15,9 @@ import { useTopInset } from "@/shared/utils/platform";
 import Animated, {
   FadeInDown,
   FadeIn,
-  useSharedValue,
-  useAnimatedStyle,
-  withTiming,
-  withSpring,
-  Easing,
 } from "react-native-reanimated";
 import { useTheme } from "@/shared/contexts/ThemeContext";
 import { useAuth } from "@/shared/contexts/AuthContext";
-import SkeletonBox from "@/shared/components/ui/SkeletonBox";
-import { formatCompactNumber } from "@/shared/utils/formatters";
 import { useProfile } from "@/features/profile/hooks/useProfile";
 import { useAvatar } from "@/shared/contexts/AvatarContext";
 import { useFocusEffect } from "expo-router";
@@ -51,73 +44,8 @@ const ENTER_AVATAR_WRAP  = FadeIn.delay(40).duration(240);
 const ENTER_NAME         = FadeInDown.delay(50).duration(260);
 const ENTER_USERNAME     = FadeInDown.delay(60).duration(260);
 const ENTER_EDIT_BTN     = FadeInDown.delay(80).duration(260);
-const ENTER_STATS_GRID   = FadeInDown.delay(50).duration(260);
 const ENTER_NOTIF_DOT    = FadeIn.duration(240);
 const ENTER_SIGNOUT      = FadeInDown.delay(100).duration(260);
-
-// Per-index stat cell entering (max 5 items, pre-built)
-const STAT_CELL_ENTER = [0, 1, 2, 3, 4].map((i) =>
-  FadeInDown.delay(Math.min(i, 4) * 25).duration(260),
-);
-
-// ── Animated stat cell with number reveal ─────────────────────────────────────
-const StatCell = memo(function StatCell({
-  label, formatted, color, loading, index, onPress,
-}: {
-  label: string;
-  formatted: string;
-  color: string;
-  loading: boolean;
-  index: number;
-  onPress?: () => void;
-}) {
-  const { colors } = useTheme();
-  const opacity    = useSharedValue(0);
-  const translateY = useSharedValue(10);
-
-  useEffect(() => {
-    if (!loading) {
-      opacity.value    = withTiming(1, { duration: 350, easing: Easing.out(Easing.cubic) });
-      translateY.value = withSpring(0, { damping: 18, stiffness: 200 });
-    } else {
-      opacity.value    = 0;
-      translateY.value = 10;
-    }
-  }, [loading]);
-
-  const anim = useAnimatedStyle(() => ({
-    opacity:   opacity.value,
-    transform: [{ translateY: translateY.value }],
-  }));
-
-  return (
-    <Pressable
-      onPress={onPress}
-      disabled={!onPress}
-      style={({ pressed }) => ({ opacity: onPress && pressed ? 0.7 : 1, flex: 1 })}
-    >
-      <Animated.View
-        entering={STAT_CELL_ENTER[Math.min(index, 4)]}
-        style={[
-          styles.statCell,
-          index % 2 === 0 && { borderRightWidth: 1, borderRightColor: colors.surfaceBorder },
-        ]}
-      >
-        {loading ? (
-          <SkeletonBox width={36} height={18} borderRadius={6} />
-        ) : (
-          <Animated.Text style={[styles.statValue, { color }, anim]}>
-            {formatted}
-          </Animated.Text>
-        )}
-        <View style={{ flexDirection: "row", alignItems: "center", gap: 3 }}>
-          <Text style={[styles.statLabel, { color: colors.textMuted }]}>{label}</Text>
-          {onPress && <Ionicons name="chevron-forward" size={10} color={colors.textMuted} />}
-        </View>
-      </Animated.View>
-    </Pressable>
-  );
-});
 
 // ── Main screen ───────────────────────────────────────────────────────────────
 function ProfileScreen() {
@@ -125,7 +53,6 @@ function ProfileScreen() {
   const { colors } = useTheme();
   const {
     user,
-    stats, statsLoading,
     photoModalOpen, setPhotoModalOpen, uploadingPhoto,
     cropModalOpen, pendingImageUri, handleCropConfirm, handleCropCancel,
     currentUsername,
@@ -166,17 +93,6 @@ function ProfileScreen() {
   const goToHistory     = useCallback(() => safePush("/(tabs)/history"), []);
   const goToLogin       = useCallback(() => safePush("/(auth)/login"),        []);
   const goToRegister    = useCallback(() => safePush("/(auth)/register"),     []);
-
-  const formattedStats = useMemo(() => [
-    {
-      label:     "Following",
-      value:     stats.followingCount ?? 0,
-      color:     colors.primary,
-      loading:   statsLoading,
-      formatted: formatCompactNumber(stats.followingCount ?? 0),
-      onPress:   undefined,
-    },
-  ], [stats.followingCount, statsLoading, colors.primary]);
 
   const openPhotoModal  = useCallback(() => setPhotoModalOpen(true),  [setPhotoModalOpen]);
   const closePhotoModal = useCallback(() => setPhotoModalOpen(false), [setPhotoModalOpen]);
@@ -323,24 +239,6 @@ function ProfileScreen() {
           </Animated.View>
         </Animated.View>
 
-        {/* ── STATS GRID ────────────────────────────────────────── */}
-        <Animated.View
-          entering={ENTER_STATS_GRID}
-          style={[styles.statsGrid, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}
-        >
-          {formattedStats.map((s, i) => (
-            <StatCell
-              key={s.label}
-              label={s.label}
-              formatted={s.formatted}
-              color={s.color}
-              loading={s.loading}
-              index={i}
-              onPress={s.onPress}
-            />
-          ))}
-        </Animated.View>
-
         {/* ── HISTORY ────────────────────────────────────────────── */}
         <View style={styles.profileActions}>
           <Pressable
@@ -365,7 +263,6 @@ function ProfileScreen() {
 
         {/* ── PREFERENCES ────────────────────────────────────────── */}
         <View style={styles.profileSection}>
-          <Text style={[styles.profileSectionLabel, { color: colors.textMuted }]}>PREFERENCES</Text>
           <View style={[styles.preferenceCard, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
             <Text style={[styles.preferenceLabel, { color: colors.textSecondary }]}>App opens on</Text>
             <View style={styles.preferenceRow}>

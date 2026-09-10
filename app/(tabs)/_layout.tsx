@@ -178,7 +178,7 @@ function ClassicTabLayout() {
 
         <Tabs.Screen
           name="scanner"
-          options={{ title: "Scan", tabBarIcon: renderScannerIcon }}
+          options={{ title: "Scan", tabBarIcon: renderScannerIcon, tabBarStyle: hiddenTabBar }}
         />
 
         <Tabs.Screen

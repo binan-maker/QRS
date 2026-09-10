@@ -74,16 +74,6 @@ export const styles = StyleSheet.create({
   },
   editProfileText: { fontSize: 13, fontFamily: "Inter_600SemiBold" },
 
-  // ── Stats grid ───────────────────────────────────────────────────────────
-  statsGrid: {
-    flexDirection: "row", flexWrap: "wrap",
-    borderRadius: 18, borderWidth: 1,
-    marginBottom: 22, overflow: "hidden",
-  },
-  statCell: { width: "100%", alignItems: "center", paddingVertical: 16, gap: 4 },
-  statValue: { fontSize: 17, fontFamily: "Inter_700Bold" },
-  statLabel: { fontSize: 11, fontFamily: "Inter_400Regular" },
-
   // ── Profile actions ────────────────────────────────────────────────────────
   profileActions: { marginBottom: 22 },
   profileActionBtn: {
@@ -100,9 +90,6 @@ export const styles = StyleSheet.create({
 
   // ── Profile preferences ────────────────────────────────────────────────────
   profileSection: { marginBottom: 22 },
-  profileSectionLabel: {
-    fontSize: 11, fontFamily: "Inter_700Bold", letterSpacing: 0.7, marginBottom: 9,
-  },
   preferenceCard: { borderRadius: 16, borderWidth: 1, padding: 16 },
   preferenceLabel: { fontSize: 13, fontFamily: "Inter_500Medium", marginBottom: 11 },
   preferenceRow: { flexDirection: "row", gap: 10 },
