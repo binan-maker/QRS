@@ -2,11 +2,6 @@ import { db } from "@/lib/db/client";
 import { tsToString } from "../utils";
 import { tsToMs } from "../integrity/time-utils";
 import { incrementSmartCounter } from "@/lib/db/distributed-counter";
-import {
-  checkScanAllowed,
-  recordBlockedScan,
-} from "../guard/fraud-guard";
-import { trackQrScanned } from "@/lib/analytics";
 import { COLLECTIONS } from "@/shared/constants/collections";
 import { logger } from "@/lib/logger";
 
@@ -31,37 +26,13 @@ export async function recordScan(
     await db.add([COLLECTIONS.QR_CODES, qrId, COLLECTIONS.SCAN_VELOCITY], { ts: Date.now() });
   } catch {}
 
-  let countThisScan = true;
   try {
     const qrData = await db.get([COLLECTIONS.QR_CODES, qrId]);
-    const guard = await checkScanAllowed(qrId, userId);
-
-    if (!guard.allowed) {
-      countThisScan = false;
-
-      await recordBlockedScan(qrId, guard.reason, userId);
-    }
-
-    if (qrData?.scanCountFrozen) {
-      countThisScan = false;
-    }
-
-    if (countThisScan) {
-      const currentScanCount = qrData?.scanCount ?? 0;
-      await incrementSmartCounter(qrId, currentScanCount, 1);
-    }
+    const currentScanCount = qrData?.scanCount ?? 0;
+    await incrementSmartCounter(qrId, currentScanCount, 1);
   } catch (e) {
     console.warn("[db] recordScan: failed to check/increment scanCount:", e);
   }
-
-  // Track every scan regardless of auth state — QR type, verdict, and source
-  // are the signals we care about (no PII involved).
-  trackQrScanned({
-    contentType,
-    verdict: countThisScan ? "safe" : "flagged",
-    scanSource,
-    isAuthenticated: !!(userId && !isAnonymous),
-  });
 
   if (userId && !isAnonymous) {
     try {
@@ -76,11 +47,9 @@ export async function recordScan(
         isAnonymous: false,
         scannedAt: db.timestamp(),
         scanSource,
-        counted: countThisScan,
+        counted: true,
       });
-      if (countThisScan) {
-        batch.increment([COLLECTIONS.USERS, userId], "personalScanCount", 1);
-      }
+      batch.increment([COLLECTIONS.USERS, userId], "personalScanCount", 1);
       await batch.commit();
     } catch {}
   }

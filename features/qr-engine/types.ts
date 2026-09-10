@@ -4,11 +4,9 @@
 // ─── Render modes ─────────────────────────────────────────────────────────────
 export type QrRenderMode =
   | "full"       // Rich detail card (qr-detail page)
-  | "compact"    // Owner-facing info card (my-qr)
   | "history"    // Icon/badge atoms (history, recent scans)
   | "minimal"    // Tiny type pill/badge (filters, chips)
   | "feed"       // Social-style card (home feed, search results)
-  | "analytics"  // Scan count + trust stats card
   | "hero";      // Full-width hero card (scan result highlight)
 
 export type QrTypeCategory =
@@ -20,65 +18,6 @@ export type QrTypeCategory =
   | "location"
   | "crypto"
   | "text";
-
-// ─── Schema field types ───────────────────────────────────────────────────────
-export type SchemaFieldType =
-  | "text"
-  | "url"
-  | "email"
-  | "phone"
-  | "number"
-  | "password"
-  | "textarea"
-  | "select"
-  | "toggle"
-  | "currency";
-
-export interface SchemaField {
-  key: string;
-  label: string;
-  placeholder: string;
-  type: SchemaFieldType;
-  required?: boolean;
-  optional?: boolean;
-  maxLength?: number;
-  options?: Array<{ label: string; value: string }>;
-  hint?: string;
-}
-
-// ─── QR Identity Object ───────────────────────────────────────────────────────
-// The canonical infrastructure-grade representation of any QR code.
-// Pages and services should operate on QrIdentity, never raw strings.
-export interface QrIdentity {
-  qr_id: string;
-  qr_type: string;               // contentType key
-  payload: string;               // raw encoded string
-  metadata: QrMetadata;
-  analytics: QrAnalyticsSummary;
-  trust: QrTrustSummary;
-  created_at?: number;
-  updated_at?: number;
-  is_dynamic?: boolean;
-  is_active?: boolean;
-  verification?: QrVerification;
-}
-
-export interface QrMetadata {
-  displayLabel: string;
-  subtitle: string | null;
-  icon: string;
-  color: string;
-  bg: string;
-  gradient: readonly [string, string];
-  category: QrTypeCategory;
-}
-
-export interface QrAnalyticsSummary {
-  scan_count: number;
-  unique_scanners?: number;
-  last_scanned_at?: number;
-  trust_interactions?: number;
-}
 
 export interface QrTrustSummary {
   score: number;              // 0–100
@@ -94,22 +33,6 @@ export type TrustFlag =
   | "community_reported"
   | "community_trusted";
 
-export interface QrVerification {
-  is_verified: boolean;
-  verified_by?: string;
-  verified_at?: number;
-}
-
-// ─── Scan Event (analytics) ───────────────────────────────────────────────────
-export interface QrScanEvent {
-  qr_id: string;
-  scanner_id?: string;
-  scanned_at: number;
-  platform?: "android" | "ios" | "web";
-  location_hint?: string;
-  risk_at_scan?: TrustLevel;
-}
-
 // ─── Type definition (registry entry) ────────────────────────────────────────
 export interface QrTypeDefinition {
   key: string;
@@ -124,20 +47,6 @@ export interface QrTypeDefinition {
   webFallback?: boolean;                 // offer "open in browser?" when app absent
   getDisplayLabel: (content: string) => string;
   getSubtitle: (content: string) => string | null;
-}
-
-// ─── Schema definition (generator entry) ─────────────────────────────────────
-export interface QrSchema {
-  key: string;
-  label: string;
-  icon: string;
-  category: QrTypeCategory;
-  description: string;
-  primaryField: SchemaField;
-  extraFields?: SchemaField[];
-  build: (primary: string, extra: Record<string, string>) => string;
-  validate?: (primary: string, extra: Record<string, string>) => string | null;
-  trustRules?: TrustFlag[];
 }
 
 /** Subset used by list-row consumers */
@@ -171,7 +80,6 @@ export interface QrRenderProps {
   scannedAt?: Date | number;
   isDynamic?: boolean;
   isBusiness?: boolean;
-  analytics?: QrAnalyticsSummary;
   trustSummary?: QrTrustSummary;
   isLoading?: boolean;
 }

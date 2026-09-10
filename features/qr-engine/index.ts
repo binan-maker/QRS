@@ -9,8 +9,7 @@
  *     QrRenderer, QrCard,
  *     QrTypeIcon, useQrMeta,
  *     getQrTypeDef, getDisplayLabel, detectContentType,
- *     smartOpen, computeTrustScore, buildQrIdentity,
- *     SCHEMA_REGISTRY, getSchemaByKey,
+ *     smartOpen, computeTrustScore,
  *   } from "@/features/qr-engine";
  */
 
@@ -23,7 +22,6 @@ export { QrCard } from "./cards";
 // ── Visual atoms ──────────────────────────────────────────────────────────────
 export { QrTypeIcon, QrTypeBadge } from "./renderers/HistoryRenderer";
 export { default as MinimalRenderer } from "./renderers/MinimalRenderer";
-export { default as CompactRenderer } from "./renderers/CompactRenderer";
 export { default as FeedRenderer } from "./renderers/FeedRenderer";
 export { default as HeroRenderer } from "./renderers/HeroRenderer";
 
@@ -42,26 +40,6 @@ export {
 // ── Content-type detector ─────────────────────────────────────────────────────
 export { detectContentType } from "./detector";
 
-// ── Schema system (generator) ─────────────────────────────────────────────────
-export {
-  SCHEMA_REGISTRY,
-  getSchemaByKey,
-  SCHEMA_CATEGORIES,
-  urlSchema,
-  wifiSchema,
-  upiSchema,
-  contactSchema,
-  emailSchema,
-  phoneSchema,
-  smsSchema,
-  textSchema,
-  cryptoSchema,
-  eventSchema,
-  locationSchema,
-  socialSchema,
-  whatsappSchema,
-} from "./schemas";
-
 // ── Trust engine ──────────────────────────────────────────────────────────────
 export {
   computeTrustScore,
@@ -70,12 +48,6 @@ export {
   trustLevelLabel,
   trustLevelIcon,
 } from "./trust";
-
-// ── Identity builder ──────────────────────────────────────────────────────────
-export { buildQrIdentity, refreshQrIdentity } from "./identity";
-
-// ── Identity service (Firestore ↔ QrIdentity) ─────────────────────────────────
-export { fromFirestoreDoc, fromScanHistoryItem, toScanUpdatePayload } from "./services";
 
 // ── Hook ──────────────────────────────────────────────────────────────────────
 export { useQrMeta } from "./hooks/useQrMeta";
@@ -105,19 +77,11 @@ export * from "./parsers";
 export type {
   QrRenderMode,
   QrTypeDefinition,
-  QrSchema,
-  SchemaField,
-  SchemaFieldType,
   QrTypeMeta,
   QrMeta,
   QrRenderProps,
   QrTypeCategory,
-  QrIdentity,
-  QrMetadata,
-  QrAnalyticsSummary,
   QrTrustSummary,
-  QrScanEvent,
-  QrVerification,
   TrustLevel,
   TrustFlag,
 } from "./types";

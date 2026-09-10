@@ -15,7 +15,6 @@ import Animated, { FadeInDown } from "react-native-reanimated";
 import { useTheme } from "@/shared/contexts/ThemeContext";
 import { getQrTypeMeta, getDisplayLabel, getSubtitle } from "../registry";
 import { trustLevelColor, trustLevelIcon } from "../trust/trust-scorer";
-import { formatScanCount } from "../analytics";
 import type { QrRenderProps } from "../types";
 
 function FeedRendererComponent({
@@ -25,7 +24,6 @@ function FeedRendererComponent({
   onOpen,
   risk,
   isDynamic,
-  analytics,
   trustSummary,
   isDeactivated,
 }: QrRenderProps) {
@@ -106,15 +104,6 @@ function FeedRendererComponent({
           )}
         </View>
 
-        {/* Footer */}
-        {analytics && analytics.scan_count > 0 && (
-          <View style={[styles.footer, { borderTopColor: colors.surfaceBorder }]}>
-            <Ionicons name="scan-outline" size={12} color={colors.textMuted} />
-            <Text style={[styles.scanCount, { color: colors.textMuted }]}>
-              {formatScanCount(analytics.scan_count)} scans
-            </Text>
-          </View>
-        )}
       </Pressable>
     </Animated.View>
   );
@@ -196,17 +185,5 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontFamily: "Inter_400Regular",
     lineHeight: 17,
-  },
-  footer: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 5,
-    paddingHorizontal: 14,
-    paddingVertical: 9,
-    borderTopWidth: StyleSheet.hairlineWidth,
-  },
-  scanCount: {
-    fontSize: 11,
-    fontFamily: "Inter_400Regular",
   },
 });

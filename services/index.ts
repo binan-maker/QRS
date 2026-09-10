@@ -7,4 +7,3 @@ export * from "./scan-history";
 export * from "./moderation/report-service";
 export * from "./comments";
 export * from "./user";
-export * from "./guard/guard-service";

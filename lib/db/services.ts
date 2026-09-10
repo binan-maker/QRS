@@ -20,4 +20,3 @@ export * from "@/services/scan-history";
 export * from "@/services/user";
 export * from "@/services/moderation/report-service";
 export * from "@/services/comments";
-export * from "@/services/guard/guard-service";

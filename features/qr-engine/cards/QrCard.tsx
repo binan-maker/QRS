@@ -17,8 +17,7 @@ import Animated, { FadeInDown } from "react-native-reanimated";
 import { useTheme } from "@/shared/contexts/ThemeContext";
 import { getQrTypeMeta, getDisplayLabel, getSubtitle } from "../registry";
 import { trustLevelColor, trustLevelIcon } from "../trust/trust-scorer";
-import { formatScanCount, formatLastScanned } from "../analytics";
-import type { QrAnalyticsSummary, QrTrustSummary } from "../types";
+import type { QrTrustSummary } from "../types";
 
 interface QrCardProps {
   content: string;
@@ -28,12 +27,9 @@ interface QrCardProps {
   onPress?: () => void;
   onLongPress?: () => void;
   showTrust?: boolean;
-  showAnalytics?: boolean;
-  analytics?: QrAnalyticsSummary;
   trustSummary?: QrTrustSummary;
   isDynamic?: boolean;
   isActive?: boolean;
-  scannedAt?: Date | number;
   rightAction?: ReactNode;
   animationDelay?: number;
   testID?: string;
@@ -47,12 +43,9 @@ function QrCardComponent({
   onPress,
   onLongPress,
   showTrust = false,
-  showAnalytics = false,
-  analytics,
   trustSummary,
   isDynamic = false,
   isActive = true,
-  scannedAt,
   rightAction,
   animationDelay = 0,
   testID,
@@ -124,32 +117,6 @@ function QrCardComponent({
             </Text>
           )}
 
-          {/* Analytics row */}
-          {showAnalytics && analytics && (
-            <View style={styles.analyticsRow}>
-              <Ionicons name="scan-outline" size={11} color={colors.textMuted} />
-              <Text style={[styles.analyticsText, { color: colors.textMuted }]}>
-                {formatScanCount(analytics.scan_count)} scans
-              </Text>
-              {analytics.last_scanned_at && (
-                <>
-                  <Text style={[styles.dot, { color: colors.textMuted }]}>·</Text>
-                  <Text style={[styles.analyticsText, { color: colors.textMuted }]}>
-                    {formatLastScanned(analytics.last_scanned_at)}
-                  </Text>
-                </>
-              )}
-            </View>
-          )}
-
-          {/* Scan time (history mode) */}
-          {scannedAt && !showAnalytics && (
-            <Text style={[styles.scannedAt, { color: colors.textMuted }]}>
-              {formatLastScanned(
-                scannedAt instanceof Date ? scannedAt.getTime() : scannedAt
-              )}
-            </Text>
-          )}
         </View>
 
         {/* Right: trust badge or custom action */}
@@ -235,24 +202,6 @@ const styles = StyleSheet.create({
     fontSize: 10,
     fontFamily: "Inter_500Medium",
     color: "#9CA3AF",
-  },
-  analyticsRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 4,
-    marginTop: 2,
-  },
-  analyticsText: {
-    fontSize: 11,
-    fontFamily: "Inter_400Regular",
-  },
-  dot: {
-    fontSize: 11,
-  },
-  scannedAt: {
-    fontSize: 11,
-    fontFamily: "Inter_400Regular",
-    marginTop: 1,
   },
   trustBadge: {
     width: 32,
