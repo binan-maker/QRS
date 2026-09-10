@@ -19,8 +19,7 @@ const DEBOUNCE_MS = 400;
 export function useQrReports(
   id: string,
   userId: string | null,
-  offlineMode: boolean,
-  isQrOwner: boolean | null
+  offlineMode: boolean
 ) {
   const [reportCounts, setReportCounts]     = useState<Record<string, number>>({});
   const [weightedCounts, setWeightedCounts] = useState<Record<string, number>>({});
@@ -214,8 +213,6 @@ export function useQrReports(
         router.push("/(auth)/login");
         return false;
       }
-      if (isQrOwner) return false;
-
       // Mark that the user has interacted so initial-load won't override them
       hasInteractedRef.current = true;
 
@@ -238,7 +235,7 @@ export function useQrReports(
 
       return true;
     },
-    [userId, isQrOwner, applyOptimisticDelta, flushToServer]
+    [userId, applyOptimisticDelta, flushToServer]
   );
 
   return {

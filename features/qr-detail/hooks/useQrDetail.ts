@@ -8,7 +8,6 @@ import { useQrData, type QrDetail } from "./useQrData";
 import { useQrReports } from "./useQrReports";
 import { useQrFavorite } from "./useQrFavorite";
 import { useQrComments, type CommentItem } from "./useQrComments";
-import { useQrOwner } from "./useQrOwner";
 import type { AppColors } from "@/shared/constants/colors";
 import { parseAnyPaymentQr } from "@/services/analysis";
 
@@ -45,8 +44,7 @@ export function useQrDetail(id: string, hint?: { content: string; contentType: s
   const copiedTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const data = useQrData(id, userId, hint);
-  const rawContent = data.qrCode?.content || data.offlineContent;
-  const content = (data.qrCode as any)?.displayDestination || rawContent;
+  const content = data.qrCode?.content || data.offlineContent;
   const contentType = data.qrCode?.contentType || data.offlineContentType;
 
   const parsedPayment = useMemo(
@@ -61,13 +59,11 @@ export function useQrDetail(id: string, hint?: { content: string; contentType: s
         : null,
     [content, contentType],
   );
-  const reports = useQrReports(id, userId, data.offlineMode, data.isQrOwner);
+  const reports = useQrReports(id, userId, data.offlineMode);
   const favorite = useQrFavorite(id, userId);
   const comments = useQrComments(id, userId, data.offlineMode);
-  const owner = useQrOwner(id, userId, user?.displayName ?? null, data.isQrOwner, data.ownerInfo);
   const initialDataReady =
     !data.loading &&
-    (data.offlineMode || data.ownerDataReady) &&
     reports.reportsReady;
 
   // ── Trust / verdict ──────────────────────────────────────────────────────────
@@ -100,10 +96,6 @@ export function useQrDetail(id: string, hint?: { content: string; contentType: s
   const combinedVerdict = useMemo(() => {
     const trust = trustInfo;
 
-    if (data.isQrOwner === true) {
-      return { level: "safe" as const, label: "YOUR QR", reason: "You created this QR code", color: colors.safe };
-    }
-
     const isCommunityAvailable = trust.score >= 0;
 
     if (isCommunityAvailable) {
@@ -121,7 +113,6 @@ export function useQrDetail(id: string, hint?: { content: string; contentType: s
     return { level: "caution" as const, label: "UNRATED", reason: "No community ratings yet", color: colors.textMuted };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
-    data.isQrOwner,
     trustInfo,
     colors,
   ]);
@@ -182,7 +173,6 @@ export function useQrDetail(id: string, hint?: { content: string; contentType: s
     ...reports,
     ...favorite,
     ...comments,
-    ...owner,
     initialDataReady,
     copied,
     trustInfo,

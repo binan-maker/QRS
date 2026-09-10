@@ -22,17 +22,12 @@ import LoadingSkeleton from "@/features/qr-detail/components/LoadingSkeleton";
 import { ContentCard } from "@/features/qr-engine/content-cards";
 import TrustScoreCard from "@/features/qr-detail/components/TrustScoreCard";
 import EarlyCommunityCard from "@/features/qr-detail/components/EarlyCommunityCard";
-import OwnerCard from "@/features/qr-detail/components/OwnerCard";
 import ReportGrid from "@/features/qr-detail/components/ReportGrid";
-import MessagesModal from "@/features/qr-detail/components/modals/MessagesModal";
 import CommentReportModal from "@/features/qr-detail/components/modals/CommentReportModal";
-import { SectionHeader } from "@/shared/components/ui/SectionHeader";
 import { OfflineToast } from "@/features/qr-detail/components/OfflineToast";
 import { QrToast } from "@/features/qr-detail/components/QrToast";
 import QrDetailNavBar from "@/features/qr-detail/components/QrDetailNavBar";
-import OwnerCircleRow from "@/features/qr-detail/components/OwnerCircleRow";
 import CommentsSection from "@/features/qr-detail/components/CommentsSection";
-import OwnerInfoSheet from "@/features/qr-detail/components/sheets/OwnerInfoSheet";
 import CommentMenuSheet from "@/features/qr-detail/components/sheets/CommentMenuSheet";
 import OverflowSheet from "@/features/qr-detail/components/sheets/OverflowSheet";
 
@@ -96,7 +91,6 @@ export default function StaticQrDetailScreen({ id, hint }: Props) {
   const { colors, isDark } = useTheme();
   const topInset = useTopInset();
 
-  const [ownerSheetOpen, setOwnerSheetOpen] = useState(false);
   const [overflowOpen, setOverflowOpen] = useState(false);
   const [toastState, setToastState] = useState<{
     message: string;
@@ -133,17 +127,12 @@ export default function StaticQrDetailScreen({ id, hint }: Props) {
     q.clearFavoriteError();
   }, [q.favoriteError]);
 
-  const hasOwner  = !!q.ownerInfo?.ownerId;
   // trustInfo and combinedVerdict are pre-memoized in useQrDetail — calling the
   // function wrappers is free (they just return the cached value).
   const trust     = q.trustInfo;
-  const isQrOwner = !!(user?.id && q.ownerInfo?.ownerId && user.id === q.ownerInfo.ownerId);
 
   const content     = q.qrCode?.content || q.offlineContent || "";
   const contentType = q.qrCode?.contentType || q.offlineContentType || "text";
-
-  const isDeactivated   = q.ownerInfo?.isActive === false || q.qrCode?.isActive === false;
-  const deactivationMsg = q.ownerInfo?.deactivationMessage || q.qrCode?.deactivationMessage || null;
 
   const handleFavoritePress = useCallback(() => {
     if (!user) { router.push("/(auth)/login"); return; }
@@ -208,10 +197,6 @@ export default function StaticQrDetailScreen({ id, hint }: Props) {
             <View style={{ paddingTop: topInset }}>
               <QrDetailNavBar
                 offlineMode={q.offlineMode}
-                ownerName={q.ownerInfo?.businessName || q.ownerInfo?.ownerName || null}
-                hasOwner={hasOwner}
-                isGuardCreatedQr={false}
-                isQrOwner={isQrOwner}
                 onBack={safeBack}
                 onOverflowOpen={() => setOverflowOpen(true)}
                 onDonate={() => router.push("/donation")}
@@ -238,8 +223,8 @@ export default function StaticQrDetailScreen({ id, hint }: Props) {
               />
             }
           >
-            {/* ── Trust verdict banner (non-owner QRs) ─────────── */}
-            {q.initialDataReady && !q.offlineMode && !hasOwner && !isQrOwner && (
+            {/* ── Community trust verdict ──────────────────────── */}
+            {q.initialDataReady && !q.offlineMode && (
               trust.score < 0 ? (
                 <EarlyCommunityCard
                   isLoggedIn={!!user}
@@ -250,46 +235,13 @@ export default function StaticQrDetailScreen({ id, hint }: Props) {
               )
             )}
 
-            {/* ── Deactivated banner ───────────────────────────── */}
-            {isDeactivated && (
-              <View>
-                <View style={[styles.deactivatedBanner, { borderColor: "#ef444440" }]}>
-                  <LinearGradient
-                    colors={["rgba(239,68,68,0.14)", "rgba(239,68,68,0.06)"]}
-                    style={StyleSheet.absoluteFill}
-                    start={{ x: 0, y: 0 }}
-                    end={{ x: 1, y: 1 }}
-                  />
-                  <View style={styles.deactivatedIconWrap}>
-                    <Ionicons name="ban" size={20} color="#EF4444" />
-                  </View>
-                  <View style={{ flex: 1 }}>
-                    <Text style={styles.deactivatedTitle}>QR Code Deactivated</Text>
-                    <Text style={styles.deactivatedSub}>
-                      {deactivationMsg || "The owner has turned off this QR code."}
-                    </Text>
-                  </View>
-                </View>
-              </View>
-            )}
-
-            {/* ── Owner branding ───────────────────────────────── */}
-            {q.ownerInfo?.isBranded && (
-              <View>
-                <OwnerCircleRow
-                  ownerInfo={q.ownerInfo as any}
-                  onPress={() => setOwnerSheetOpen(true)}
-                />
-              </View>
-            )}
-
             {/* ── CONTENT CARD — HERO ──────────────────────────── */}
             <View>
               <ContentCard
                 content={content}
                 contentType={contentType}
                 parsedPayment={q.parsedPayment}
-                isDeactivated={isDeactivated}
+                isDeactivated={false}
                 onOpenContent={q.handleOpenContent}
                 hideOpenAction={false}
                 templateKey={(q.qrCode as any)?.templateKey}
@@ -303,9 +255,6 @@ export default function StaticQrDetailScreen({ id, hint }: Props) {
                   trustInfo={trust}
                   reportCounts={q.reportCounts}
                   totalScans={q.totalScans}
-                  isQrOwner={user ? q.isQrOwner : false}
-                  ownerScanCount={user && q.isQrOwner ? q.qrCode?.ownerScanCount : undefined}
-                  hasOwner={false}
                 />
               </View>
             )}
@@ -384,28 +333,9 @@ export default function StaticQrDetailScreen({ id, hint }: Props) {
               </View>
             )}
 
-            {/* ── Creator card ──────────────────────────────────── */}
-            {user && q.ownerInfo && (
-              <View>
-                <SectionHeader label="Creator" />
-                <OwnerCard
-                  ownerInfo={q.ownerInfo}
-                  isQrOwner={q.isQrOwner}
-                  unreadMessages={q.unreadMessages}
-                  onOpenMessages={() => q.setMessagesModalOpen(true)}
-                />
-              </View>
-            )}
-
           </Animated.ScrollView>
         </View>
       </KeyboardAvoidingView>
-
-      <OwnerInfoSheet
-        visible={ownerSheetOpen}
-        onClose={() => setOwnerSheetOpen(false)}
-        ownerInfo={q.ownerInfo as any}
-      />
 
       <CommentMenuSheet
         visible={q.commentMenuId !== null}
@@ -427,7 +357,7 @@ export default function StaticQrDetailScreen({ id, hint }: Props) {
         visible={overflowOpen}
         onClose={() => setOverflowOpen(false)}
         isFavorite={q.isFavorite}
-        hasOwner={hasOwner}
+        hasOwner={false}
         onFavorite={handleFavoritePress}
          onReport={() => showToast("Feature Coming Soon!", "time-outline")}
       />
@@ -439,18 +369,6 @@ export default function StaticQrDetailScreen({ id, hint }: Props) {
           showToast("Thanks for reporting", "flag-outline");
         }}
         onClose={() => q.setCommentReportModal(null)}
-      />
-      <MessagesModal
-        visible={q.messagesModalOpen}
-        isQrOwner={isQrOwner}
-        ownerInfo={q.ownerInfo}
-        messages={q.messages}
-        messageText={q.messageText}
-        sendingMessage={q.sendingMessage}
-        user={user}
-        onChangeText={q.setMessageText}
-        onSend={q.handleSendMessage}
-        onClose={() => q.setMessagesModalOpen(false)}
       />
     </View>
   );

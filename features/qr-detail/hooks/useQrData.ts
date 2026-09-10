@@ -1,17 +1,13 @@
-import { useEffect, useState, useRef, useCallback } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { queryClient } from "@/lib/query-client";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { getAnonymousQrContent } from "@/services/cache/anonymous-session";
 import {
   loadQrDetail,
   subscribeToQrStats,
-  getQrOwnerInfo,
-  type QrOwnerInfo,
 } from "@/lib/firestore-service";
 import {
   getCachedQrDetail,
-  setCachedQrDetail,
   invalidateQrCache,
 } from "@/services/cache/qr-cache";
 
@@ -97,18 +93,9 @@ export interface QrDetail {
   content: string;
   contentType: string;
   createdAt: string;
-  isBranded?: boolean;
   signature?: string;
-  ownerId?: string;
-  ownerName?: string;
-  ownerScanCount?: number;
-  scanCountFrozen?: boolean;
-  scanCountFreezeReason?: string;
   templateKey?: string | null;
   formValues?: { value: string; extra: Record<string, string> } | null;
-  displayDestination?: string | null;
-  isActive?: boolean;
-  deactivationMessage?: string | null;
 }
 
 export function useQrData(
@@ -118,11 +105,6 @@ export function useQrData(
 ) {
   const [totalScans, setTotalScans] = useState(0);
   const [totalComments, setTotalComments] = useState(0);
-  const [ownerInfo, setOwnerInfo] = useState<QrOwnerInfo | null>(null);
-  const [isQrOwner, setIsQrOwner] = useState(false);
-  const [ownerDataReadyForId, setOwnerDataReadyForId] = useState<string | null>(null);
-
-  const ownerFetchedForId = useRef<string | null>(null);
 
   const hintInitialData: QrFetchResult | undefined = hint?.content
     ? {
@@ -131,7 +113,6 @@ export function useQrData(
           qrCode: { id, content: hint.content, contentType: hint.contentType, createdAt: "" },
           totalScans: 0,
           totalComments: 0,
-          ownerInfo: null,
         },
         isFreshFetch: false,
       }
@@ -156,55 +137,15 @@ export function useQrData(
   const offlineContentType = result?.status === "offline" ? result.contentType : "text";
 
   useEffect(() => {
-    if (result?.status !== "data") {
-      setOwnerDataReadyForId(null);
-      return;
-    }
+    if (result?.status !== "data") return;
     const detail = result.detail;
     setTotalScans(detail.totalScans || 0);
     setTotalComments(detail.totalComments || 0);
 
-    if (detail.ownerInfo) {
-      setOwnerInfo(detail.ownerInfo);
-      setIsQrOwner(userId === detail.ownerInfo.ownerId);
+    if (result.isFreshFetch && userId) {
+      recordViewedLocally(id, detail.qrCode.content, detail.qrCode.contentType, userId).catch(() => {});
     }
-
-    if (!result.isFreshFetch) {
-      setOwnerDataReadyForId(id);
-      return;
-    }
-
-    if (userId && qrCode) {
-      recordViewedLocally(id, qrCode.content, qrCode.contentType, userId).catch(() => {});
-    }
-
-    if (ownerFetchedForId.current === id) return;
-    ownerFetchedForId.current = id;
-
-    let cancelled = false;
-    (async () => {
-      let ownerData: any = null;
-      try {
-        const owner = await getQrOwnerInfo(id);
-        if (!cancelled && owner) {
-          setOwnerInfo(owner);
-          setIsQrOwner(userId === owner.ownerId);
-          ownerData = owner;
-        }
-      } catch {}
-      if (!cancelled) {
-        setCachedQrDetail(id, userId, { ...detail, ownerInfo: ownerData }).catch(() => {});
-        setOwnerDataReadyForId(id);
-      }
-    })();
-    return () => { cancelled = true; };
   }, [result, id, userId]);
-
-  useEffect(() => {
-    if (!result || result.status !== "data") {
-      ownerFetchedForId.current = null;
-    }
-  }, [id]);
 
   useEffect(() => {
     if (offlineMode) return;
@@ -220,7 +161,6 @@ export function useQrData(
   // always up-to-date alongside comments.
   const refreshQrData = useCallback(async () => {
     invalidateQrCache(id);
-    ownerFetchedForId.current = null;
     await refetch();
   }, [id, refetch]);
 
@@ -233,9 +173,6 @@ export function useQrData(
     offlineMode,
     offlineContent,
     offlineContentType,
-    ownerInfo,
-    ownerDataReady: ownerDataReadyForId === id,
-    isQrOwner,
     refreshQrData,
   };
 }

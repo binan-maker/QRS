@@ -6,10 +6,6 @@ import { makeStyles } from "@/features/qr-detail/styles";
 import { navOfflineStyles } from "@/features/qr-detail/styles";
 interface Props {
   offlineMode: boolean;
-  ownerName: string | null;
-  hasOwner: boolean;
-  isGuardCreatedQr: boolean;
-  isQrOwner: boolean;
   onBack: () => void;
   onOverflowOpen: () => void;
   onDonate?: () => void;
@@ -17,10 +13,6 @@ interface Props {
 
 export default function QrDetailNavBar({
   offlineMode,
-  ownerName,
-  hasOwner,
-  isGuardCreatedQr,
-  isQrOwner,
   onBack,
   onOverflowOpen,
   onDonate,

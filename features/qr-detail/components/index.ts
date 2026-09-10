@@ -1,7 +1,6 @@
 export { default as CommentItem } from "./CommentItem";
 export { default as ContentCard } from "../content-cards";
 export { default as LoadingSkeleton } from "./LoadingSkeleton";
-export { default as OwnerCard } from "./OwnerCard";
 export { default as PaymentCard } from "./PaymentCard";
 export { default as ReportGrid } from "./ReportGrid";
 export { default as ReportSection } from "./ReportSection";
@@ -12,4 +11,3 @@ export { QrToast } from "./QrToast";
 export { VerdictBanner } from "./VerdictBanner";
 
 export { default as CommentReportModal } from "./modals/CommentReportModal";
-export { default as MessagesModal } from "./modals/MessagesModal";

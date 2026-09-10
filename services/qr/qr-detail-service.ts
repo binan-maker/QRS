@@ -1,6 +1,6 @@
 // ─── QR Detail Orchestrator ───────────────────────────────────────────────────
 // Single responsibility: assembling the full QR detail view payload.
-// Coordinates across report, follow, trust and user services — but owns
+// Coordinates across report, trust and user services — but owns
 // none of that logic itself. Changing the Trust Score algorithm means editing
 // trust-service.ts only; this file stays untouched.
 
@@ -8,7 +8,6 @@ import { db } from "@/lib/db/client";
 import { tsToMs } from "../integrity/time-utils";
 import { getQrCodeById } from "./qr-service";
 import { getQrReportData, getUserQrReport } from "../moderation/report-service";
-import { isUserFollowingQrCode } from "../social/follow-service";
 
 import { isUserFavorite } from "../user/favorites";
 import { calculateTrustScore } from "../trust/trust-service";
@@ -21,10 +20,8 @@ export interface QrDetailPayload {
   totalScans: number;
   totalComments: number;
   trustScore: TrustScore;
-  followCount: number;
   userReport: string | null;
   isFavorite: boolean;
-  isFollowing: boolean;
 }
 
 export async function loadQrDetail(
@@ -36,7 +33,6 @@ export async function loadQrDetail(
 
   let reportCounts: Record<string, number> = {};
   let weightedCounts: Record<string, number> = {};
-  let followCount = 0;
   let collusionFlags = { suspicious: false, safeWeightMultiplier: 1, negativeWeightMultiplier: 1 };
 
   try {
@@ -46,7 +42,6 @@ export async function loadQrDetail(
     ]);
     reportCounts = reportData.counts;
     weightedCounts = reportData.weighted;
-    followCount = typeof qrDoc?.followerCount === "number" ? qrDoc.followerCount : 0;
     if (qrDoc?.suspiciousVoteFlag) {
       collusionFlags = {
         suspicious: true,
@@ -60,14 +55,12 @@ export async function loadQrDetail(
 
   let userReport: string | null = null;
   let isFavorite = false;
-  let isFollowing = false;
 
   if (userId) {
     try {
-      [userReport, isFavorite, isFollowing] = await Promise.all([
+      [userReport, isFavorite] = await Promise.all([
         getUserQrReport(qrId, userId),
         isUserFavorite(qrId, userId),
-        isUserFollowingQrCode(qrId, userId),
       ]);
     } catch {}
   }
@@ -78,10 +71,8 @@ export async function loadQrDetail(
     totalScans: qrCode.scanCount,
     totalComments: qrCode.commentCount,
     trustScore,
-    followCount,
     userReport,
     isFavorite,
-    isFollowing,
   };
 }
 
