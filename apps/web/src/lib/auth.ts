@@ -66,13 +66,13 @@ export async function getSessionUser(): Promise<{
 // ─── Route constants ──────────────────────────────────────────────────────────
 
 /** Routes that require authentication — redirects to LOGIN_REDIRECT if no session. */
-export const PROTECTED_PREFIXES = ["/dashboard", "/qr", "/analytics", "/profile", "/settings", "/notifications"];
+export const PROTECTED_PREFIXES: string[] = [];
 
 /** Routes where an authenticated user should be redirected away (e.g. /login). */
 export const AUTH_PREFIXES = ["/login", "/signup", "/forgot-password"];
 
 /** Where to redirect after successful login. */
-export const POST_LOGIN_REDIRECT = "/dashboard";
+export const POST_LOGIN_REDIRECT = "/";
 
 /** Where to redirect when auth is required but missing. */
 export const LOGIN_REDIRECT = "/login";

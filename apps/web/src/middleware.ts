@@ -8,8 +8,8 @@
  *   - API routes: GET /api/auth/me
  *
  * Auth flow:
- *   Unauthenticated request to /dashboard → redirect /login?next=/dashboard
- *   Authenticated request to /login        → redirect /dashboard
+ *   Unauthenticated protected request → redirect to /login
+ *   Authenticated request to /login    → redirect to the public site
  *   All other routes                       → pass through
  */
 

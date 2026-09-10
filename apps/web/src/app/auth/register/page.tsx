@@ -22,7 +22,7 @@ export default function RegisterPage() {
     setLoading(true);
     try {
       await signUpWithEmail(email, password, name);
-      router.push("/dashboard");
+      router.push("/");
     } catch (e: any) {
       setError(e.message ?? "Registration failed. Please try again.");
     } finally {
@@ -35,7 +35,7 @@ export default function RegisterPage() {
     setLoading(true);
     try {
       await signInWithGoogle();
-      router.push("/dashboard");
+      router.push("/");
     } catch (e: any) {
       setError(e.message ?? "Google sign-up failed.");
     } finally {

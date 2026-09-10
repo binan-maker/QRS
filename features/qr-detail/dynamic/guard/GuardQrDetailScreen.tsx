@@ -23,12 +23,10 @@ import GuardHeroCard from "./GuardHeroCard";
 import TrustScoreCard from "@/features/qr-detail/components/TrustScoreCard";
 import EarlyCommunityCard from "@/features/qr-detail/components/EarlyCommunityCard";
 import ReportGrid from "@/features/qr-detail/components/ReportGrid";
-import MessagesModal from "@/features/qr-detail/components/modals/MessagesModal";
 import CommentReportModal from "@/features/qr-detail/components/modals/CommentReportModal";
 import { OfflineToast } from "@/features/qr-detail/components/OfflineToast";
 import { QrToast } from "@/features/qr-detail/components/QrToast";
 import CommentsSection from "@/features/qr-detail/components/CommentsSection";
-import OwnerInfoSheet from "@/features/qr-detail/components/sheets/OwnerInfoSheet";
 import CommentMenuSheet from "@/features/qr-detail/components/sheets/CommentMenuSheet";
 import OverflowSheet from "@/features/qr-detail/components/sheets/OverflowSheet";
 
@@ -53,11 +51,10 @@ function sanitizeAndOpen(dest: string) {
 interface Props {
   id: string;
   guardUuid: string;
-  ownerDocId?: string;
   hint?: { content: string; contentType: string };
 }
 
-export default function GuardQrDetailScreen({ id, guardUuid, ownerDocId, hint }: Props) {
+export default function GuardQrDetailScreen({ id, guardUuid, hint }: Props) {
   const { user } = useAuth();
   const { colors, isDark } = useTheme();
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -67,7 +64,6 @@ export default function GuardQrDetailScreen({ id, guardUuid, ownerDocId, hint }:
   const [guardLink, setGuardLink] = useState<GuardLink | null>(null);
   const [guardLoading, setGuardLoading] = useState(true);
   const [historyExpanded, setHistoryExpanded] = useState(false);
-  const [ownerSheetOpen, setOwnerSheetOpen] = useState(false);
   const [overflowOpen, setOverflowOpen] = useState(false);
   const [toastState, setToastState] = useState<{
     message: string; icon: keyof typeof Ionicons.glyphMap; key: number;
@@ -109,25 +105,7 @@ export default function GuardQrDetailScreen({ id, guardUuid, ownerDocId, hint }:
   );
 
   const trust = q.trustInfo;
-  const hasOwner = !!(guardLink?.businessName || guardLink?.ownerName);
   const isDeactivated = guardLink?.isActive === false;
-  const isQrOwner = !!(user?.id && guardLink?.ownerId && user.id === guardLink.ownerId);
-
-  const ownerInfoForSheet = useMemo(
-    () =>
-      guardLink
-        ? {
-            businessName: guardLink.businessName,
-            ownerName: guardLink.ownerName,
-            qrType: "guard" as const,
-            isBranded: true,
-            ownerId: guardLink.ownerId,
-            brandedUuid: guardUuid,
-            isActive: guardLink.isActive,
-          }
-        : null,
-    [guardLink, guardUuid]
-  );
 
   const handleFavoritePress = useCallback(() => {
     if (!user) { router.push("/(auth)/login"); return; }
@@ -217,7 +195,7 @@ export default function GuardQrDetailScreen({ id, guardUuid, ownerDocId, hint }:
               />
             }
           >
-            {q.initialDataReady && !guardLoading && !q.offlineMode && !isQrOwner && trust.score < 0 && (
+            {q.initialDataReady && !guardLoading && !q.offlineMode && trust.score < 0 && (
               <EarlyCommunityCard
                 isLoggedIn={!!user}
                 onRatePress={handleReportPress}
@@ -246,9 +224,6 @@ export default function GuardQrDetailScreen({ id, guardUuid, ownerDocId, hint }:
                   trustInfo={trust}
                   reportCounts={q.reportCounts}
                   totalScans={q.totalScans}
-                  isQrOwner={isQrOwner}
-                  ownerScanCount={user && isQrOwner ? q.qrCode?.ownerScanCount : undefined}
-                  hasOwner={true}
                 />
               </View>
             )}
@@ -320,12 +295,6 @@ export default function GuardQrDetailScreen({ id, guardUuid, ownerDocId, hint }:
         </View>
       </KeyboardAvoidingView>
 
-      <OwnerInfoSheet
-        visible={ownerSheetOpen}
-        onClose={() => setOwnerSheetOpen(false)}
-        ownerInfo={ownerInfoForSheet as any}
-        guardLink={guardLink}
-      />
       <CommentMenuSheet
         visible={q.commentMenuId !== null}
         isOwner={q.commentMenuOwner}
@@ -337,7 +306,6 @@ export default function GuardQrDetailScreen({ id, guardUuid, ownerDocId, hint }:
         visible={overflowOpen}
         onClose={() => setOverflowOpen(false)}
         isFavorite={q.isFavorite}
-        hasOwner={hasOwner}
         onFavorite={handleFavoritePress}
          onReport={() => showToast("Feature Coming Soon!", "time-outline")}
       />
@@ -348,18 +316,6 @@ export default function GuardQrDetailScreen({ id, guardUuid, ownerDocId, hint }:
           showToast("Thanks for reporting", "flag-outline");
         }}
         onClose={() => q.setCommentReportModal(null)}
-      />
-      <MessagesModal
-        visible={q.messagesModalOpen}
-        isQrOwner={isQrOwner}
-        ownerInfo={q.ownerInfo}
-        messages={q.messages}
-        messageText={q.messageText}
-        sendingMessage={q.sendingMessage}
-        user={user}
-        onChangeText={q.setMessageText}
-        onSend={q.handleSendMessage}
-        onClose={() => q.setMessagesModalOpen(false)}
       />
     </View>
   );

@@ -24,12 +24,10 @@ import { ContentCard } from "@/features/qr-engine/content-cards";
 import TrustScoreCard from "@/features/qr-detail/components/TrustScoreCard";
 import EarlyCommunityCard from "@/features/qr-detail/components/EarlyCommunityCard";
 import ReportGrid from "@/features/qr-detail/components/ReportGrid";
-import MessagesModal from "@/features/qr-detail/components/modals/MessagesModal";
 import CommentReportModal from "@/features/qr-detail/components/modals/CommentReportModal";
 import { OfflineToast } from "@/features/qr-detail/components/OfflineToast";
 import { QrToast } from "@/features/qr-detail/components/QrToast";
 import CommentsSection from "@/features/qr-detail/components/CommentsSection";
-import OwnerInfoSheet from "@/features/qr-detail/components/sheets/OwnerInfoSheet";
 import CommentMenuSheet from "@/features/qr-detail/components/sheets/CommentMenuSheet";
 import OverflowSheet from "@/features/qr-detail/components/sheets/OverflowSheet";
 import { smartOpenContent } from "@/shared/utils/smart-open";
@@ -43,8 +41,6 @@ function safeBack() {
 interface StandardData {
   rawContent: string;
   contentType: string;
-  ownerId: string;
-  ownerName: string;
   isActive: boolean;
   templateKey?: string;
 }
@@ -52,11 +48,10 @@ interface StandardData {
 interface Props {
   id: string;
   standardUuid: string;
-  ownerDocId?: string;
   hint?: { content: string; contentType: string };
 }
 
-export default function StandardQrDetailScreen({ id, standardUuid, ownerDocId, hint }: Props) {
+export default function StandardQrDetailScreen({ id, standardUuid, hint }: Props) {
   const { user } = useAuth();
   const { colors, isDark } = useTheme();
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -65,7 +60,6 @@ export default function StandardQrDetailScreen({ id, standardUuid, ownerDocId, h
 
   const [standardData, setStandardData] = useState<StandardData | null>(null);
   const [standardLoading, setStandardLoading] = useState(true);
-  const [ownerSheetOpen, setOwnerSheetOpen] = useState(false);
   const [overflowOpen, setOverflowOpen] = useState(false);
   const [toastState, setToastState] = useState<{
     message: string;
@@ -122,24 +116,7 @@ export default function StandardQrDetailScreen({ id, standardUuid, ownerDocId, h
   );
 
   const isDeactivated = standardData?.isActive === false;
-  const isQrOwner = !!(user?.id && standardData?.ownerId && user.id === standardData.ownerId);
   const trust = q.trustInfo;
-
-  const ownerInfoForSheet = useMemo(
-    () =>
-      standardData
-        ? {
-            businessName: null,
-            ownerName: standardData.ownerName,
-            qrType: "individual" as const,
-            isBranded: true,
-            ownerId: standardData.ownerId,
-            brandedUuid: standardUuid,
-            isActive: standardData.isActive,
-          }
-        : null,
-    [standardData, standardUuid]
-  );
 
   const handleOpenContent = useCallback(
     () => smartOpenContent(effectiveContent, effectiveContentType, standardData?.templateKey),
@@ -233,7 +210,7 @@ export default function StandardQrDetailScreen({ id, standardUuid, ownerDocId, h
               />
             }
           >
-            {q.initialDataReady && !q.offlineMode && !isQrOwner && trust.score < 0 && (
+            {q.initialDataReady && !q.offlineMode && trust.score < 0 && (
               <EarlyCommunityCard
                 isLoggedIn={!!user}
                 onRatePress={handleReportPress}
@@ -246,7 +223,7 @@ export default function StandardQrDetailScreen({ id, standardUuid, ownerDocId, h
                 <View style={{ flexDirection: "row", alignItems: "center", gap: 10, borderRadius: 14, borderWidth: 1, backgroundColor: "#ef444418", borderColor: "#ef444440", padding: 14, marginBottom: 12 }}>
                   <Ionicons name="ban-outline" size={16} color="#ef4444" />
                   <Text style={{ fontSize: 13, fontFamily: "Inter_500Medium", color: "#ef4444", flex: 1 }}>
-                    This QR code has been deactivated by its owner
+                     This QR code has been deactivated
                   </Text>
                 </View>
               </View>
@@ -274,9 +251,6 @@ export default function StandardQrDetailScreen({ id, standardUuid, ownerDocId, h
                   trustInfo={trust}
                   reportCounts={q.reportCounts}
                   totalScans={q.totalScans}
-                  isQrOwner={isQrOwner}
-                  ownerScanCount={user && isQrOwner ? q.qrCode?.ownerScanCount : undefined}
-                  hasOwner={true}
                 />
               </View>
             )}
@@ -348,13 +322,6 @@ export default function StandardQrDetailScreen({ id, standardUuid, ownerDocId, h
         </View>
       </KeyboardAvoidingView>
 
-      <OwnerInfoSheet
-        visible={ownerSheetOpen}
-        onClose={() => setOwnerSheetOpen(false)}
-        ownerInfo={ownerInfoForSheet as any}
-        guardLink={null}
-      />
-
       <CommentMenuSheet
         visible={q.commentMenuId !== null}
         isOwner={q.commentMenuOwner}
@@ -375,7 +342,6 @@ export default function StandardQrDetailScreen({ id, standardUuid, ownerDocId, h
         visible={overflowOpen}
         onClose={() => setOverflowOpen(false)}
         isFavorite={q.isFavorite}
-        hasOwner={!!ownerInfoForSheet}
         onFavorite={handleFavoritePress}
          onReport={() => showToast("Feature Coming Soon!", "time-outline")}
       />
@@ -387,18 +353,6 @@ export default function StandardQrDetailScreen({ id, standardUuid, ownerDocId, h
           showToast("Thanks for reporting", "flag-outline");
         }}
         onClose={() => q.setCommentReportModal(null)}
-      />
-      <MessagesModal
-        visible={q.messagesModalOpen}
-        isQrOwner={isQrOwner}
-        ownerInfo={q.ownerInfo}
-        messages={q.messages}
-        messageText={q.messageText}
-        sendingMessage={q.sendingMessage}
-        user={user}
-        onChangeText={q.setMessageText}
-        onSend={q.handleSendMessage}
-        onClose={() => q.setMessagesModalOpen(false)}
       />
     </View>
   );

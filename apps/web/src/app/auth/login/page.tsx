@@ -20,7 +20,7 @@ export default function LoginPage() {
     setLoading(true);
     try {
       await signInWithEmail(email, password);
-      router.push("/dashboard");
+      router.push("/");
     } catch (e: any) {
       setError(e.message ?? "Sign-in failed. Please try again.");
     } finally {
@@ -33,7 +33,7 @@ export default function LoginPage() {
     setLoading(true);
     try {
       await signInWithGoogle();
-      router.push("/dashboard");
+      router.push("/");
     } catch (e: any) {
       setError(e.message ?? "Google sign-in failed.");
     } finally {

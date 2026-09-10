@@ -24,8 +24,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   }
 
   const qr = result.data;
-  const ownerName = qr.businessName ?? qr.ownerName ?? "Unknown";
-  const title = qr.title ? `${qr.title} — ${ownerName}` : `QR Code by ${ownerName}`;
+  const title = qr.title ?? "QR Code";
 
   return {
     title: `${title} — BinRo`,
@@ -64,7 +63,7 @@ function statusToVerdict(status: UnifiedQrStatus): {
         colour: "text-gray-600",
         bg: "bg-gray-50",
         border: "border-gray-200",
-        description: "The owner has deactivated this QR code. Do not proceed.",
+        description: "This QR code has been deactivated. Do not proceed.",
       };
     case "expired":
       return {
@@ -102,14 +101,6 @@ const CONTENT_TYPE_LABEL: Record<string, string> = {
   bbps:             "BBPS Bill",
 };
 
-// ─── QR Type badge ────────────────────────────────────────────────────────────
-
-const QR_TYPE_LABEL: Record<string, { label: string; colour: string }> = {
-  individual:  { label: "Individual",  colour: "text-blue-600 bg-blue-50 border-blue-200" },
-  business:    { label: "Business",    colour: "text-violet-600 bg-violet-50 border-violet-200" },
-  government:  { label: "Government",  colour: "text-emerald-700 bg-emerald-50 border-emerald-200" },
-};
-
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default async function QrPublicPage({ params }: Props) {
@@ -138,7 +129,6 @@ export default async function QrPublicPage({ params }: Props) {
 
   const qr: UnifiedQr = result.data;
   const verdict = statusToVerdict(qr.status);
-  const qrTypeMeta = QR_TYPE_LABEL[qr.qrType] ?? QR_TYPE_LABEL.individual!;
   const contentTypeLabel = CONTENT_TYPE_LABEL[qr.contentType] ?? qr.contentType;
 
   const isExpired =
@@ -167,29 +157,10 @@ export default async function QrPublicPage({ params }: Props) {
           )}
         </div>
 
-        {/* ── Owner info card ───────────────────────────────────────────── */}
+        {/* ── Content type ───────────────────────────────────────────────── */}
         <div className="rounded-xl bg-white p-5 shadow-sm ring-1 ring-gray-100">
-          <div className="flex items-start justify-between gap-3">
-            <div className="flex-1 min-w-0">
-              <p className="text-xs text-gray-400 uppercase tracking-wider mb-1">Created by</p>
-              <p className="font-semibold text-gray-900 truncate">
-                {qr.businessName ?? qr.ownerName ?? "Anonymous"}
-              </p>
-              {qr.title && (
-                <p className="text-sm text-gray-500 mt-0.5 truncate">{qr.title}</p>
-              )}
-            </div>
-            <div className="flex flex-col items-end gap-1.5 flex-shrink-0">
-              <span
-                className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-medium ${qrTypeMeta.colour}`}
-              >
-                {qrTypeMeta.label}
-              </span>
-              <span className="rounded-full bg-gray-100 px-2.5 py-0.5 text-xs text-gray-500">
-                {contentTypeLabel}
-              </span>
-            </div>
-          </div>
+          <p className="text-xs text-gray-400 uppercase tracking-wider mb-1">Content type</p>
+          <p className="font-semibold text-gray-900">{contentTypeLabel}</p>
         </div>
 
         {/* ── Scan stats ────────────────────────────────────────────────── */}

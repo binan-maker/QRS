@@ -223,11 +223,8 @@ commentsRouter.delete(
       const snap = await db.collection("qrCodes").doc(qrId).collection("comments").doc(commentId).get();
       if (!snap.exists) return res.status(404).json({ error: "Comment not found", code: "COMMENT_NOT_FOUND", status: 404 });
 
-      // Allow: comment owner OR QR owner can delete
-      const qrSnap = await db.collection("qrCodes").doc(qrId).get();
-      const isQrOwner = qrSnap.data()?.ownerId === req.user!.uid;
       const isCommentOwner = snap.data()!.userId === req.user!.uid;
-      if (!isCommentOwner && !isQrOwner) return res.status(403).json({ error: "Forbidden", code: "FORBIDDEN", status: 403 });
+      if (!isCommentOwner) return res.status(403).json({ error: "Forbidden", code: "FORBIDDEN", status: 403 });
 
       // Soft delete — mark hidden and anonymise text
       // TODO: UPDATE qr_comments SET is_deleted = TRUE, text = '[deleted]', updated_at = NOW() WHERE id = $commentId

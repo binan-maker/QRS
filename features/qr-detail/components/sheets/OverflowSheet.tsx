@@ -8,7 +8,6 @@ interface Props {
   visible: boolean;
   onClose: () => void;
   isFavorite: boolean;
-  hasOwner: boolean;
   onFavorite: () => void;
   onReport: () => void;
 }
@@ -17,7 +16,6 @@ export default function OverflowSheet({
   visible,
   onClose,
   isFavorite,
-  hasOwner,
   onFavorite,
   onReport,
 }: Props) {

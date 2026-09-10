@@ -357,7 +357,6 @@ export default function StaticQrDetailScreen({ id, hint }: Props) {
         visible={overflowOpen}
         onClose={() => setOverflowOpen(false)}
         isFavorite={q.isFavorite}
-        hasOwner={false}
         onFavorite={handleFavoritePress}
          onReport={() => showToast("Feature Coming Soon!", "time-outline")}
       />
