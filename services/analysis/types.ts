@@ -1,7 +1,5 @@
 export interface QrSignatureResult {
   isVerified: boolean;
-  ownerName?: string;
-  ownerVerified?: boolean;
 }
 
 export type PaymentAppId =

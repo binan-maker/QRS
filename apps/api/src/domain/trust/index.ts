@@ -13,7 +13,6 @@ export interface TrustSignals {
   reportCount: number;
   reportWeight: number;        // sum of weighted reports
   scanCount: number;
-  ownerVerified: boolean;
   ownerAccountAgeDays: number;
   collusionSuspected: boolean;
   collusionMultiplier: number; // 0.1–1.0
@@ -43,11 +42,6 @@ export function computeTrustScore(signals: TrustSignals): TrustScore {
   if (signals.collusionSuspected) {
     score *= signals.collusionMultiplier;
     flags.push("collusion_suspected");
-  }
-
-  // Verified owner bonus
-  if (signals.ownerVerified) {
-    score = Math.min(score + 0.1, 1.0);
   }
 
   // Account age factor

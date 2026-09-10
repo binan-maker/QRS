@@ -14,8 +14,6 @@ function computeStatus(data: any): UnifiedQrStatus {
 function mapDocToUnifiedQr(id: string, data: any): UnifiedQr {
   return {
     id,
-    ownerId: data.ownerId || "",
-    ownerName: data.ownerName || "",
     qrType: (data.qrType as QrType) || "individual",
     template: data.template || null,
     title: data.title || null,
@@ -46,8 +44,6 @@ function mapDocToUnifiedQr(id: string, data: any): UnifiedQr {
 
 export async function createUnifiedQr(params: {
   id: string;
-  ownerId: string;
-  ownerName: string;
   qrType: QrType;
   template: string | null;
   title: string | null;
@@ -69,8 +65,6 @@ export async function createUnifiedQr(params: {
   formValues?: { value: string; extra: Record<string, string> } | null;
 }): Promise<void> {
   await db.set(["qrs", params.id], {
-    ownerId: params.ownerId,
-    ownerName: params.ownerName,
     qrType: params.qrType,
     template: params.template,
     title: params.title,
@@ -111,7 +105,6 @@ export async function getUnifiedQr(id: string): Promise<UnifiedQr | null> {
 
 export async function updateUnifiedQrDesign(
   id: string,
-  ownerId: string,
   fields: {
     title?: string | null;
     design?: Partial<UnifiedQr["design"]>;
@@ -122,7 +115,6 @@ export async function updateUnifiedQrDesign(
 ): Promise<void> {
   const data = await db.get(["qrs", id]);
   if (!data) throw new Error("QR not found");
-  if (data.ownerId !== ownerId) throw new Error("Not authorized");
 
   const updates: Record<string, any> = { updatedAt: db.timestamp() };
   if (fields.title !== undefined) updates.title = fields.title;
@@ -139,12 +131,10 @@ export async function updateUnifiedQrDesign(
 
 export async function updateUnifiedQrDestination(
   id: string,
-  ownerId: string,
   newDestination: string
 ): Promise<void> {
   const data = await db.get(["qrs", id]);
   if (!data) throw new Error("QR not found");
-  if (data.ownerId !== ownerId) throw new Error("Not authorized");
   if (!data.isDynamic) throw new Error("This QR is not dynamic and cannot be redirected");
 
   await db.update(["qrs", id], {
@@ -156,12 +146,10 @@ export async function updateUnifiedQrDestination(
 
 export async function setUnifiedQrStatus(
   id: string,
-  ownerId: string,
   status: "active" | "inactive"
 ): Promise<void> {
   const data = await db.get(["qrs", id]);
   if (!data) throw new Error("QR not found");
-  if (data.ownerId !== ownerId) throw new Error("Not authorized");
   await db.update(["qrs", id], { status, updatedAt: db.timestamp() });
 }
 
@@ -176,10 +164,9 @@ export async function incrementUnifiedQrStat(
   }
 }
 
-export async function getUserUnifiedQrs(ownerId: string, limitCount = 200): Promise<UnifiedQr[]> {
+export async function getUserUnifiedQrs(_userId: string, limitCount = 200): Promise<UnifiedQr[]> {
   try {
     const { docs } = await db.query(["qrs"], {
-      where: [{ field: "ownerId", op: "==", value: ownerId }],
       orderBy: { field: "createdAt", direction: "desc" },
       limit: limitCount,
     });

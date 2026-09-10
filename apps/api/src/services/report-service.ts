@@ -91,13 +91,8 @@ async function checkReportEligibility(
   userId: string,
   qrId: string,
   emailVerified: boolean,
-  qrOwnerId?: string,
   isChangingReport?: boolean,
 ): Promise<{ allowed: true; weight: number; tier: AccountTier }> {
-  if (qrOwnerId && qrOwnerId === userId) {
-    throw new Error("You cannot report your own QR code.");
-  }
-
   const tier = await getAccountTier(userId, emailVerified);
 
   if (!isChangingReport) {
@@ -251,13 +246,9 @@ export async function reportQrCode(
   const db = getAdminDb();
   if (!db) throw new Error("Database not available");
 
-  // Fetch QR owner and existing report in parallel
-  const [qrSnap, existingReportSnap] = await Promise.all([
-    db.collection("qrCodes").doc(qrId).get(),
+  const existingReportSnap = await Promise.all([
     db.collection("qrCodes").doc(qrId).collection("reports").doc(userId).get(),
-  ]);
-
-  const qrOwnerId: string | undefined = (qrSnap.data() as any)?.ownerId;
+  ]).then(([report]) => report);
   const existingData = existingReportSnap.data() as any;
   const existingReport: string | null =
     existingData && !existingData.userRemoved ? (existingData.reportType ?? null) : null;
@@ -276,7 +267,7 @@ export async function reportQrCode(
   }
 
   const isChangingReport = existingReport !== null;
-  const { weight } = await checkReportEligibility(userId, qrId, emailVerified, qrOwnerId, isChangingReport);
+  const { weight } = await checkReportEligibility(userId, qrId, emailVerified, isChangingReport);
 
   // Get account age for new reports
   let accountAgeDays = 0;

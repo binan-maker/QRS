@@ -16,7 +16,6 @@ import {
 } from "../../domain/qr";
 import {
   QrNotFoundError,
-  ForbiddenError,
   ValidationError,
   GovernmentQrImmutableError,
 } from "@binro/core";
@@ -24,8 +23,6 @@ import {
 // ─── CreateQrUseCase ──────────────────────────────────────────────────────────
 
 export interface CreateQrInput {
-  ownerId: string;
-  ownerName: string;
   destination: string;
   rawDestination: string;
   contentType: string;
@@ -48,8 +45,6 @@ export class CreateQrUseCase {
     const id = crypto.randomUUID();
     const qr = await this.repo.create({
       id,
-      ownerId: input.ownerId,
-      ownerName: input.ownerName,
       destination: input.destination.trim(),
       rawDestination: input.rawDestination,
       contentType: input.contentType,
@@ -72,7 +67,6 @@ export class CreateQrUseCase {
     const event: QrCreatedEvent = {
       type: "QR_CREATED",
       qrId: qr.id,
-      ownerId: qr.ownerId,
       contentType: qr.contentType,
       timestamp: new Date(),
     };
@@ -93,7 +87,6 @@ export class UpdateQrDestinationUseCase {
   ): Promise<{ qr: UnifiedQr; event: QrDestinationChangedEvent }> {
     const qr = await this.repo.findById(qrId);
     if (!qr) throw new QrNotFoundError(qrId);
-    if (qr.ownerId !== requestingUserId) throw new ForbiddenError();
     if (qr.qrType === "government") throw new GovernmentQrImmutableError();
     if (!qr.isDynamic) throw new ValidationError("Only dynamic QRs can have their destination changed");
 
@@ -124,7 +117,6 @@ export class DeactivateQrUseCase {
   async execute(qrId: string, requestingUserId: string): Promise<UnifiedQr> {
     const qr = await this.repo.findById(qrId);
     if (!qr) throw new QrNotFoundError(qrId);
-    if (qr.ownerId !== requestingUserId) throw new ForbiddenError();
     return this.repo.update(qrId, { status: "inactive" });
   }
 }

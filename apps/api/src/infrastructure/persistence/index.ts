@@ -97,16 +97,6 @@ export class DrizzleQrCodeRepository implements IQrCodeRepository {
     return rows[0] ?? null;
   }
 
-  async findByOwnerId(ownerId: string, limit = 20, offset = 0): Promise<QrCode[]> {
-    return this.db
-      .select()
-      .from(qrCodes)
-      .where(eq(qrCodes.ownerId, ownerId))
-      .orderBy(desc(qrCodes.createdAt))
-      .limit(limit)
-      .offset(offset);
-  }
-
   async create(data: Omit<QrCode, "id" | "createdAt" | "updatedAt">): Promise<QrCode> {
     const rows = await this.db.insert(qrCodes).values(data as any).returning();
     return rows[0]!;
@@ -145,16 +135,6 @@ export class DrizzleUnifiedQrRepository implements IUnifiedQrRepository {
   async findById(id: string): Promise<UnifiedQr | null> {
     const rows = await this.db.select().from(unifiedQrs).where(eq(unifiedQrs.id, id)).limit(1);
     return rows[0] ?? null;
-  }
-
-  async findByOwnerId(ownerId: string, limit = 20, offset = 0): Promise<UnifiedQr[]> {
-    return this.db
-      .select()
-      .from(unifiedQrs)
-      .where(eq(unifiedQrs.ownerId, ownerId))
-      .orderBy(desc(unifiedQrs.createdAt))
-      .limit(limit)
-      .offset(offset);
   }
 
   async create(data: Omit<UnifiedQr, "createdAt" | "updatedAt">): Promise<UnifiedQr> {

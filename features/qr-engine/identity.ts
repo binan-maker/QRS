@@ -8,7 +8,6 @@
  * Usage:
  *   const identity = buildQrIdentity(docId, rawContent, contentType);
  *   const identity = buildQrIdentity(docId, rawContent, contentType, {
- *     owner_id: user.uid,
  *     is_dynamic: true,
  *     analytics: { scan_count: 42 },
  *   });
@@ -25,7 +24,6 @@ import type {
 } from "./types";
 
 interface BuildOptions {
-  owner_id?: string;
   is_dynamic?: boolean;
   is_active?: boolean;
   analytics?: Partial<QrAnalyticsSummary>;
@@ -76,7 +74,6 @@ export function buildQrIdentity(
     },
     analytics,
     trust,
-    owner_id: options.owner_id,
     created_at: options.created_at ?? Date.now(),
     updated_at: options.updated_at ?? Date.now(),
     is_dynamic: options.is_dynamic ?? false,

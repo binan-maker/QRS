@@ -4,7 +4,6 @@ import { tsToMs } from "../integrity/time-utils";
 import { incrementSmartCounter } from "@/lib/db/distributed-counter";
 import {
   checkScanAllowed,
-  recordOwnerScan,
   recordBlockedScan,
 } from "../guard/fraud-guard";
 import { trackQrScanned } from "@/lib/analytics";
@@ -35,18 +34,12 @@ export async function recordScan(
   let countThisScan = true;
   try {
     const qrData = await db.get([COLLECTIONS.QR_CODES, qrId]);
-    const qrOwnerId = qrData?.ownerId ?? null;
-
-    const guard = await checkScanAllowed(qrId, userId, qrOwnerId);
+    const guard = await checkScanAllowed(qrId, userId);
 
     if (!guard.allowed) {
       countThisScan = false;
 
-      if (guard.ownerScan && userId) {
-        await recordOwnerScan(qrId, userId);
-      } else {
-        await recordBlockedScan(qrId, guard.reason, userId);
-      }
+      await recordBlockedScan(qrId, guard.reason, userId);
     }
 
     if (qrData?.scanCountFrozen) {

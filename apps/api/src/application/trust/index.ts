@@ -6,7 +6,7 @@ import type { QrReport } from "@binro/db";
 import type { ITrustRepository } from "../../domain/trust";
 import type { IQrCodeRepository } from "../../domain/qr";
 import { computeTrustScore, type TrustScore } from "../../domain/trust";
-import { QrNotFoundError, ForbiddenError } from "@binro/core";
+import { QrNotFoundError } from "@binro/core";
 
 // ─── ComputeTrustScoreUseCase ─────────────────────────────────────────────────
 
@@ -51,10 +51,6 @@ export class SubmitReportUseCase {
   async execute(input: SubmitReportInput): Promise<TrustScore> {
     const qr = await this.qrRepo.findById(input.qrId);
     if (!qr) throw new QrNotFoundError(input.qrId);
-    if (qr.ownerId === input.reporterId) {
-      throw new ForbiddenError("You cannot report your own QR");
-    }
-
     // Recompute trust after the new report is persisted
     const signals = await this.trustRepo.getTrustSignals(input.qrId);
     const score = computeTrustScore({

@@ -59,7 +59,6 @@ qrRouter.patch(
 
       if (!docSnap.exists) return res.status(404).json({ error: "QR code not found", code: "QR_NOT_FOUND", status: 404 });
       const data = docSnap.data()!;
-      if (data.ownerId !== uid) return res.status(403).json({ error: "Forbidden", code: "FORBIDDEN", status: 403 });
       if (data.qrType === "government") return res.status(403).json({ error: "Government QR codes cannot be modified", code: "FORBIDDEN", status: 403 });
 
       const msg = isActive
@@ -146,7 +145,7 @@ qrRouter.post(
   },
 );
 
-// ─── GET /api/v1/qr/:uuid/analytics — aggregated scan analytics (owner-only) ──
+// ─── GET /api/v1/qr/:uuid/analytics — aggregated scan analytics ───────────────
 
 qrRouter.get(
   "/:uuid/analytics",
@@ -162,14 +161,14 @@ qrRouter.get(
       // Resolve qrDocId: try direct ID, then query by uuid field
       let qrDocId: string | null = null;
       const direct = await db.collection("qrCodes").doc(uuid).get();
-      if (direct.exists && direct.data()?.ownerId === uid) {
+      if (direct.exists) {
         qrDocId = uuid;
       } else {
         const q = await db.collection("qrCodes").where("uuid", "==", uuid).limit(1).get();
-        if (!q.empty && q.docs[0].data().ownerId === uid) qrDocId = q.docs[0].id;
+        if (!q.empty) qrDocId = q.docs[0].id;
       }
 
-      if (!qrDocId) return res.status(403).json({ error: "QR code not found or you do not own it", code: "FORBIDDEN", status: 403 });
+      if (!qrDocId) return res.status(404).json({ error: "QR code not found", code: "QR_NOT_FOUND", status: 404 });
 
       const qrDoc = await db.collection("qrCodes").doc(qrDocId).get();
       const authoritativeScanCount: number = qrDoc.data()?.scanCount ?? 0;

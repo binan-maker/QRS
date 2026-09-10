@@ -43,12 +43,10 @@ export async function getUserStats(userId: string): Promise<UserStats> {
     }
 
     const hasPersonalScanCount = typeof userDoc?.personalScanCount === "number";
-    const hasFollowingCount    = typeof userDoc?.followingCount    === "number";
     const hasCommentCount      = typeof userDoc?.commentCount      === "number";
 
-    if (hasPersonalScanCount && hasFollowingCount && hasCommentCount) {
+    if (hasPersonalScanCount && hasCommentCount) {
       return {
-        followingCount: userDoc.followingCount,
         scanCount: userDoc.personalScanCount,
         commentCount: userDoc.commentCount,
         totalLikesReceived: userDoc?.totalLikesReceived || 0,
@@ -60,20 +58,18 @@ export async function getUserStats(userId: string): Promise<UserStats> {
     // (e.g. old accounts). Add a generous limit so we don't scan the entire
     // collection — the count is capped at 1000 items for display purposes.
     const COUNT_LIMIT = 1000;
-    const [followingResult, scansResult, commentsResult] = await Promise.all([
-      hasFollowingCount    ? Promise.resolve(null) : db.query([COLLECTIONS.USERS, userId, COLLECTIONS.FOLLOWING], { limit: COUNT_LIMIT }),
+    const [scansResult, commentsResult] = await Promise.all([
       hasPersonalScanCount ? Promise.resolve(null) : db.query([COLLECTIONS.USERS, userId, COLLECTIONS.SCANS],     { limit: COUNT_LIMIT }),
       hasCommentCount      ? Promise.resolve(null) : db.query([COLLECTIONS.USERS, userId, COLLECTIONS.COMMENTS],  { limit: COUNT_LIMIT }),
     ]);
 
     return {
-      followingCount:       hasFollowingCount    ? userDoc.followingCount    : (followingResult?.docs.length ?? 0),
       scanCount:            hasPersonalScanCount ? userDoc.personalScanCount : (scansResult?.docs.length ?? 0),
       commentCount:         hasCommentCount      ? userDoc.commentCount      : (commentsResult?.docs.length ?? 0),
       totalLikesReceived:   userDoc?.totalLikesReceived || 0,
     };
   } catch {
-    return { followingCount: 0, scanCount: 0, commentCount: 0, totalLikesReceived: 0 };
+    return { scanCount: 0, commentCount: 0, totalLikesReceived: 0 };
   }
 }
 
@@ -270,9 +266,6 @@ async function _cleanupUserSubcollections(userId: string): Promise<void> {
     // Comments — soft-delete comment text in qrCodes, delete user index entry
     _cleanupComments(userId),
 
-    // QR follows — remove from qrCodes/{qrId}/followers and decrement counts
-    _cleanupQrFollowing(userId),
-
   ]);
 
   // Hard-delete the user document itself last (after all sub-collections are gone)
@@ -308,22 +301,6 @@ async function _cleanupComments(userId: string): Promise<void> {
     );
     hasMore = docs.length === 200;
   }
-}
-
-async function _cleanupQrFollowing(userId: string): Promise<void> {
-  const { docs } = await db.query([COLLECTIONS.USERS, userId, COLLECTIONS.FOLLOWING], { limit: 500 });
-  await Promise.all(
-    docs.map(async (d) => {
-      const qrCodeId = d.id;
-      try {
-        const batch = db.batch();
-        batch.delete([COLLECTIONS.QR_CODES, qrCodeId, COLLECTIONS.FOLLOWERS, userId]);
-        batch.delete([COLLECTIONS.USERS, userId, COLLECTIONS.FOLLOWING, qrCodeId]);
-        batch.increment([COLLECTIONS.QR_CODES, qrCodeId], "followerCount", -1);
-        await batch.commit();
-      } catch {}
-    })
-  );
 }
 
 export async function submitFeedback(

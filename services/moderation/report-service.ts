@@ -11,15 +11,6 @@ import {
   analyzeReportsForCollusion,
 } from "../integrity";
 
-async function getQrOwnerId(qrId: string): Promise<string | undefined> {
-  try {
-    const data = await db.get([COLLECTIONS.QR_CODES, qrId]);
-    return data?.ownerId || undefined;
-  } catch {
-    return undefined;
-  }
-}
-
 export async function getQrReportData(qrId: string): Promise<{
   counts: Record<string, number>;
   weighted: Record<string, number>;
@@ -73,10 +64,7 @@ export async function reportQrCode(
   emailVerified: boolean = false
 ): Promise<{ action: "created" | "updated" | "removed" }> {
 
-  const [qrOwnerId, existingReport] = await Promise.all([
-    getQrOwnerId(qrId),
-    getUserQrReport(qrId, userId),
-  ]);
+  const existingReport = await getUserQrReport(qrId, userId);
 
   // Same type tapped again → unreport (toggle off).
   // Firestore rules block deletion, so we mark the doc as userRemoved instead.
@@ -96,7 +84,7 @@ export async function reportQrCode(
   // weight is calculated by checkReportEligibility based on user tier / eligibility rules.
   // Server-authoritative weight validation (firebase-admin) runs in the Express route layer
   // (apps/api/src/routes/qr.ts) which verifies the Firebase token before calling here.
-  const { weight } = await checkReportEligibility(userId, qrId, emailVerified, qrOwnerId, isChangingReport);
+  const { weight } = await checkReportEligibility(userId, qrId, emailVerified, isChangingReport);
 
   let accountAgeDays = 0;
   try {

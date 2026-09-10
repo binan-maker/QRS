@@ -98,7 +98,6 @@ const ANALYTICS_CACHE_TTL_MS = 10 * 60 * 1000;
 
 export async function getQrAnalyticsSummary(
   qrId: string,
-  _ownerId: string
 ): Promise<QrAnalyticsSummary> {
   const now = Date.now();
   const cached = _analyticsCache.get(qrId);

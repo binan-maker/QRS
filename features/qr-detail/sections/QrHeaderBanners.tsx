@@ -11,7 +11,6 @@ interface TrustInfo {
 
 interface Props {
   offlineMode:     boolean;
-  hasOwner:        boolean;
   isDeactivated:   boolean;
   deactivationMsg: string | null;
   isDark:          boolean;
@@ -19,11 +18,10 @@ interface Props {
   trust?:          TrustInfo;
 }
 
-export function QrHeaderBanners({ offlineMode, hasOwner, isDeactivated, deactivationMsg, isDark, colors, trust }: Props) {
+export function QrHeaderBanners({ offlineMode, isDeactivated, deactivationMsg, isDark, colors, trust }: Props) {
   return (
     <>
       {/* ── Trust verdict banner for non-owner QRs ──────────────── */}
-      {!offlineMode && !hasOwner && (() => {
         const score  = trust?.score ?? -1;
         const accent = score >= 70 ? "#22C55E" : score >= 40 ? "#F59E0B" : "#94A3B8";
         const iconName: keyof typeof Ionicons.glyphMap =

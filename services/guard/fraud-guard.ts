@@ -6,7 +6,6 @@
 //                             (permanent, cross-device, 1 count per user ever).
 //                             Guest users: AsyncStorage permanent flag per QR per device.
 //
-//  2. Owner scan separation — Owner scans stored in ownerScanCount, never inflating
 //                             the public scanCount.
 //
 //  3. Velocity detection    — If global scans/min exceeds threshold the scan is still
@@ -33,14 +32,13 @@ const ANOMALY_WINDOW_MS         = 60 * 60 * 1000; // 1 hour
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 export type ScanDenyReason =
-  | "owner_scan"        // QR owner scanning their own code
   | "too_frequent"      // User/device already counted for this QR (lifetime dedup)
   | "velocity_exceeded" // Global >30 scans/min — bot suspected
   | "anomaly_detected"; // Unnatural growth curve — score frozen
 
 export type ScanGuardResult =
-  | { allowed: true;  reason: null;           ownerScan: false }
-  | { allowed: false; reason: ScanDenyReason; ownerScan: boolean };
+  | { allowed: true;  reason: null }
+  | { allowed: false; reason: ScanDenyReason };
 
 // ── Device-level deduplication (for guest/anonymous users) ────────────────────
 // Stores a permanent flag — no time window. Once a device has been counted
@@ -135,25 +133,19 @@ async function maybeFreezeScanCount(qrId: string, hourlyVolume: number): Promise
 export async function checkScanAllowed(
   qrId: string,
   userId: string | null,
-  qrOwnerId: string | null | undefined
 ): Promise<ScanGuardResult> {
-  // 1. Owner scan — always separate, never inflate public count
-  if (userId && qrOwnerId && userId === qrOwnerId) {
-    return { allowed: false, reason: "owner_scan", ownerScan: true };
-  }
-
-  // 2. Per-user or per-device lifetime deduplication
+  // Per-user or per-device lifetime deduplication
   //    Logged-in users: check Firestore (cross-device, permanent)
   //    Guest users: check AsyncStorage (device-only, permanent)
   if (userId) {
     const alreadyCounted = await isUserAlreadyCounted(userId, qrId);
     if (alreadyCounted) {
-      return { allowed: false, reason: "too_frequent", ownerScan: false };
+      return { allowed: false, reason: "too_frequent" };
     }
   } else {
     const alreadyCounted = await isDeviceAlreadyCounted(qrId);
     if (alreadyCounted) {
-      return { allowed: false, reason: "too_frequent", ownerScan: false };
+      return { allowed: false, reason: "too_frequent" };
     }
   }
 
@@ -167,13 +159,13 @@ export async function checkScanAllowed(
   if (hourlyVolume >= ANOMALY_HOURLY_THRESHOLD) {
     await maybeFreezeScanCount(qrId, hourlyVolume);
     trackFraudDetected({ reason: "anomaly_detected", isAuthenticated: userId !== null });
-    return { allowed: false, reason: "anomaly_detected", ownerScan: false };
+    return { allowed: false, reason: "anomaly_detected" };
   }
 
   // 5. Velocity gate — global burst protection
   if (velocityCount >= VELOCITY_THRESHOLD_PER_MIN) {
     trackFraudDetected({ reason: "velocity_exceeded", isAuthenticated: userId !== null });
-    return { allowed: false, reason: "velocity_exceeded", ownerScan: false };
+    return { allowed: false, reason: "velocity_exceeded" };
   }
 
   // ✅ Allowed — permanently mark this user/device as counted so future
@@ -184,22 +176,7 @@ export async function checkScanAllowed(
     await markDeviceCounted(qrId);
   }
 
-  return { allowed: true, reason: null, ownerScan: false };
-}
-
-// ── Owner scan recorder ───────────────────────────────────────────────────────
-// Tracks owner's own scans in a separate counter — visible in their analytics
-// but invisible to the public scanCount.
-export async function recordOwnerScan(qrId: string, userId: string): Promise<void> {
-  try {
-    await Promise.all([
-      db.increment([COLLECTIONS.QR_CODES, qrId], "ownerScanCount", 1),
-      db.add([COLLECTIONS.USERS, userId, COLLECTIONS.OWNER_SCANS], {
-        qrCodeId: qrId,
-        scannedAt: db.timestamp(),
-      }),
-    ]);
-  } catch {}
+  return { allowed: true, reason: null };
 }
 
 // ── Blocked scan logger ────────────────────────────────────────────────────────

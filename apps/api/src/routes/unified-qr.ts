@@ -85,8 +85,6 @@ function computeStatus(data: any): string {
 function mapQrDoc(id: string, data: any) {
   return {
     id,
-    ownerId: data.ownerId ?? null,
-    ownerName: data.ownerName ?? null,
     qrType: data.qrType ?? "individual",
     template: data.template ?? null,
     title: data.title ?? null,
@@ -130,10 +128,8 @@ unifiedQrRouter.get(
     if (!db) return res.status(503).json({ error: "Database unavailable", code: "SERVICE_UNAVAILABLE", status: 503 });
 
     try {
-      // TODO: SELECT * FROM unified_qrs WHERE owner_id = $uid ORDER BY created_at DESC LIMIT $limit
       let query = db
         .collection("qrs")
-        .where("ownerId", "==", req.user!.uid)
         .orderBy("createdAt", "desc")
         .limit(limit + 1);
 
@@ -176,18 +172,11 @@ unifiedQrRouter.post(
     const body = req.body;
 
     try {
-      // Resolve ownerName from user profile
-      // TODO: SELECT display_name FROM users WHERE firebase_uid = $uid
-      const userSnap = await db.collection("users").doc(uid).get();
-      const ownerName: string = userSnap.data()?.displayName ?? userSnap.data()?.username ?? "Unknown";
-
       // Generate a nano-id style document ID
       const { nanoid } = await import("nanoid").catch(() => ({ nanoid: () => crypto.randomUUID() }));
       const id = (nanoid as any)(21);
 
       const docData: Record<string, any> = {
-        ownerId: uid,
-        ownerName,
         qrType: body.qrType ?? "individual",
         template: body.template ?? null,
         title: body.title ?? null,
@@ -245,11 +234,6 @@ unifiedQrRouter.get(
       }
       const data = snap.data()!;
 
-      // Private-mode QRs only visible to owner
-      if (data.privateMode && data.ownerId !== req.user?.uid) {
-        return res.status(403).json({ error: "This QR is private", code: "FORBIDDEN", status: 403 });
-      }
-
       return res.json({ data: mapQrDoc(id, data) });
     } catch (e: any) {
       console.error("[unified-qr GET /:id]", e.message);
@@ -271,10 +255,8 @@ unifiedQrRouter.patch(
     if (!db) return res.status(503).json({ error: "Database unavailable", code: "SERVICE_UNAVAILABLE", status: 503 });
 
     try {
-      // TODO: SELECT owner_id FROM unified_qrs WHERE id = $id
       const snap = await db.collection("qrs").doc(id).get();
       if (!snap.exists) return res.status(404).json({ error: "QR not found", code: "QR_NOT_FOUND", status: 404 });
-      if (snap.data()!.ownerId !== req.user!.uid) return res.status(403).json({ error: "Forbidden", code: "FORBIDDEN", status: 403 });
 
       const body = req.body;
       const updates: Record<string, any> = {
@@ -289,7 +271,7 @@ unifiedQrRouter.patch(
         updates.design = { ...current, ...body.design };
       }
 
-      // TODO: UPDATE unified_qrs SET ... WHERE id = $id AND owner_id = $uid
+      // TODO: UPDATE unified_qrs SET ... WHERE id = $id
       await db.collection("qrs").doc(id).update(updates);
       return res.json({ data: { updated: true } });
     } catch (e: any) {
@@ -313,14 +295,12 @@ unifiedQrRouter.patch(
     if (!db) return res.status(503).json({ error: "Database unavailable", code: "SERVICE_UNAVAILABLE", status: 503 });
 
     try {
-      // TODO: SELECT owner_id, is_dynamic FROM unified_qrs WHERE id = $id
       const snap = await db.collection("qrs").doc(id).get();
       if (!snap.exists) return res.status(404).json({ error: "QR not found", code: "QR_NOT_FOUND", status: 404 });
       const data = snap.data()!;
-      if (data.ownerId !== req.user!.uid) return res.status(403).json({ error: "Forbidden", code: "FORBIDDEN", status: 403 });
       if (!data.isDynamic) return res.status(400).json({ error: "Only dynamic QRs can have their destination changed", code: "NOT_DYNAMIC", status: 400 });
 
-      // TODO: UPDATE unified_qrs SET destination = $dest, raw_destination = $dest, updated_at = NOW() WHERE id = $id AND owner_id = $uid
+      // TODO: UPDATE unified_qrs SET destination = $dest, raw_destination = $dest, updated_at = NOW() WHERE id = $id
       await db.collection("qrs").doc(id).update({
         destination,
         rawDestination: destination,
@@ -348,11 +328,9 @@ unifiedQrRouter.patch(
     if (!db) return res.status(503).json({ error: "Database unavailable", code: "SERVICE_UNAVAILABLE", status: 503 });
 
     try {
-      // TODO: SELECT owner_id, qr_type FROM unified_qrs WHERE id = $id
       const snap = await db.collection("qrs").doc(id).get();
       if (!snap.exists) return res.status(404).json({ error: "QR not found", code: "QR_NOT_FOUND", status: 404 });
       const data = snap.data()!;
-      if (data.ownerId !== req.user!.uid) return res.status(403).json({ error: "Forbidden", code: "FORBIDDEN", status: 403 });
       if (data.qrType === "government") return res.status(403).json({ error: "Government QRs cannot be deactivated", code: "FORBIDDEN", status: 403 });
 
       const updates: Record<string, any> = {
@@ -365,7 +343,7 @@ unifiedQrRouter.patch(
         updates.deactivationMessage = null;
       }
 
-      // TODO: UPDATE unified_qrs SET status = $status, deactivation_message = $msg, updated_at = NOW() WHERE id = $id AND owner_id = $uid
+      // TODO: UPDATE unified_qrs SET status = $status, deactivation_message = $msg, updated_at = NOW() WHERE id = $id
       await db.collection("qrs").doc(id).update(updates);
       return res.json({ data: { updated: true, status } });
     } catch (e: any) {
@@ -387,10 +365,8 @@ unifiedQrRouter.delete(
     if (!db) return res.status(503).json({ error: "Database unavailable", code: "SERVICE_UNAVAILABLE", status: 503 });
 
     try {
-      // TODO: DELETE FROM unified_qrs WHERE id = $id AND owner_id = $uid
       const snap = await db.collection("qrs").doc(id).get();
       if (!snap.exists) return res.status(404).json({ error: "QR not found", code: "QR_NOT_FOUND", status: 404 });
-      if (snap.data()!.ownerId !== req.user!.uid) return res.status(403).json({ error: "Forbidden", code: "FORBIDDEN", status: 403 });
 
       await db.collection("qrs").doc(id).delete();
       return res.json({ data: { deleted: true } });
@@ -401,7 +377,7 @@ unifiedQrRouter.delete(
   },
 );
 
-// ─── GET /api/v1/unified-qr/:id/analytics — scan analytics (owner-only) ──────
+// ─── GET /api/v1/unified-qr/:id/analytics — scan analytics ───────────────────
 
 unifiedQrRouter.get(
   "/:id/analytics",
@@ -413,10 +389,8 @@ unifiedQrRouter.get(
     if (!db) return res.status(503).json({ error: "Database unavailable", code: "SERVICE_UNAVAILABLE", status: 503 });
 
     try {
-      // TODO: SELECT * FROM unified_qrs WHERE id = $id AND owner_id = $uid
       const snap = await db.collection("qrs").doc(id).get();
       if (!snap.exists) return res.status(404).json({ error: "QR not found", code: "QR_NOT_FOUND", status: 404 });
-      if (snap.data()!.ownerId !== req.user!.uid) return res.status(403).json({ error: "Forbidden", code: "FORBIDDEN", status: 403 });
 
       const qrData = snap.data()!;
       const totalScans: number = qrData.scanCount ?? 0;

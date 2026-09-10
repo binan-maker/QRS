@@ -56,7 +56,6 @@ export interface QrIdentity {
   metadata: QrMetadata;
   analytics: QrAnalyticsSummary;
   trust: QrTrustSummary;
-  owner_id?: string;
   created_at?: number;
   updated_at?: number;
   is_dynamic?: boolean;

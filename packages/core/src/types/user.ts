@@ -8,7 +8,6 @@ export interface AppUser {
 }
 
 export interface UserStats {
-  followingCount: number;
   scanCount: number;
   commentCount: number;
   totalLikesReceived: number;
@@ -21,5 +20,4 @@ export interface PublicProfile {
   photoURL?: string | null;
   scanCount?: number;
   followersCount?: number;
-  followingCount?: number;
 }

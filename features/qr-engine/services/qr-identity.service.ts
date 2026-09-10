@@ -24,7 +24,6 @@ interface FirestoreQrDoc {
   createdAt?: any;
   updatedAt?: any;
   userId?: string;
-  ownerId?: string;
   isActive?: boolean;
   isDynamic?: boolean;
   scanCount?: number;
@@ -55,7 +54,6 @@ export function fromFirestoreDoc(
     (typeof doc.lastScannedAt === "number" ? doc.lastScannedAt : undefined);
 
   return buildQrIdentity(docId, payload, contentType, {
-    owner_id: doc.userId ?? doc.ownerId,
     is_dynamic: doc.isDynamic ?? false,
     is_active: doc.isActive ?? true,
     created_at: createdAt,

@@ -6,10 +6,6 @@ interface Props {
   trust: any;
   reportCounts: any;
   totalScans: number;
-  isQrOwner: boolean;
-  ownerScanCount?: number;
-  user: any;
-  hasOwner?: boolean;
   delay?: number;
 }
 
@@ -18,10 +14,6 @@ export function QrTrustSection({
   trust,
   reportCounts,
   totalScans,
-  isQrOwner,
-  ownerScanCount,
-  user,
-  hasOwner = false,
   delay = 90,
 }: Props) {
   if (offlineMode) return null;
@@ -32,9 +24,6 @@ export function QrTrustSection({
         trustInfo={trust}
         reportCounts={reportCounts}
         totalScans={totalScans}
-        isQrOwner={user ? isQrOwner : false}
-        ownerScanCount={user && isQrOwner ? ownerScanCount : undefined}
-        hasOwner={hasOwner}
       />
     </Animated.View>
   );

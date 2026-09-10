@@ -10,8 +10,6 @@ export async function saveGuardLink(
   uuid: string,
   destination: string,
   businessName: string | null,
-  ownerName: string,
-  ownerId: string,
   contentType?: string,
   templateKey?: string | null,
   scanLimit?: number | null,
@@ -22,8 +20,6 @@ export async function saveGuardLink(
     currentDestination: destination,
     previousDestination: null,
     businessName: businessName || null,
-    ownerName,
-    ownerId,
     isActive: true,
     destinationChangedAt: null,
     scanCount: 0,
@@ -42,7 +38,6 @@ export async function updateGuardLinkDestination(
 ): Promise<void> {
   const data = await db.get([COLLECTIONS.GUARD_LINKS, uuid]);
   if (!data) throw new Error("Guard link not found");
-  if (data.ownerId !== userId) throw new Error("Not authorized");
 
   const changeEntry = {
     changedAt: new Date().toISOString(),
@@ -79,8 +74,6 @@ export async function getGuardLink(uuid: string): Promise<GuardLink | null> {
       currentDestination: data.currentDestination || "",
       previousDestination: data.previousDestination || null,
       businessName: data.businessName || null,
-      ownerName: data.ownerName || "",
-      ownerId: data.ownerId || "",
       isActive: data.isActive !== false,
       destinationChangedAt: data.destinationChangedAt ? tsToString(data.destinationChangedAt) : null,
       createdAt: tsToString(data.createdAt),
@@ -101,7 +94,6 @@ export async function setGuardLinkActive(
 ): Promise<void> {
   const data = await db.get([COLLECTIONS.GUARD_LINKS, uuid]);
   if (!data) throw new Error("Guard link not found");
-  if (data.ownerId !== userId) throw new Error("Not authorized");
   await db.update([COLLECTIONS.GUARD_LINKS, uuid], { isActive });
 }
 
@@ -109,8 +101,6 @@ export async function saveStandardLink(
   uuid: string,
   rawContent: string,
   contentType: string,
-  ownerId: string,
-  ownerName: string,
   templateKey?: string | null,
   scanLimit?: number | null,
   expiryDate?: string | null
@@ -119,8 +109,6 @@ export async function saveStandardLink(
     uuid,
     rawContent,
     contentType,
-    ownerId,
-    ownerName,
     isActive: true,
     scanCount: 0,
     scanLimit: scanLimit ?? null,
@@ -137,7 +125,6 @@ export async function updateStandardLinkRawContent(
 ): Promise<void> {
   const data = await db.get([COLLECTIONS.STANDARD_LINKS, uuid]);
   if (!data) throw new Error("Standard link not found");
-  if (data.ownerId !== userId) throw new Error("Not authorized");
   await db.update([COLLECTIONS.STANDARD_LINKS, uuid], {
     rawContent: newRawContent,
     contentType: detectContentType(newRawContent),
@@ -145,15 +132,13 @@ export async function updateStandardLinkRawContent(
   });
 }
 
-export async function getStandardLink(uuid: string): Promise<{ rawContent: string; contentType: string; ownerId: string; ownerName: string; isActive: boolean; templateKey?: string } | null> {
+export async function getStandardLink(uuid: string): Promise<{ rawContent: string; contentType: string; isActive: boolean; templateKey?: string } | null> {
   try {
     const data = await db.get([COLLECTIONS.STANDARD_LINKS, uuid]);
     if (!data) return null;
     return {
       rawContent: data.rawContent || "",
       contentType: data.contentType || "text",
-      ownerId: data.ownerId || "",
-      ownerName: data.ownerName || "",
       isActive: data.isActive !== false,
       templateKey: data.templateKey || undefined,
     };

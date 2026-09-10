@@ -184,19 +184,6 @@ export function makeSettingsStyles(c: AppColors, width = 390) {
     },
     submitBtnText: { fontSize: rf(14), fontFamily: "Inter_700Bold", color: "#fff" },
 
-    // ── Following section ─────────────────────────────────────────────────────
-    followItem: {
-      flexDirection: "row", alignItems: "center", gap: sp(14),
-      backgroundColor: c.surface, padding: sp(16), borderRadius: sp(18),
-      marginBottom: sp(8), borderWidth: 1, borderColor: c.surfaceBorder,
-    },
-    followIcon: {
-      width: sp(42), height: sp(42), borderRadius: sp(14), backgroundColor: c.primaryDim,
-      alignItems: "center", justifyContent: "center",
-    },
-    followContent: { fontSize: rf(13), fontFamily: "Inter_500Medium", color: c.text },
-    followType: { fontSize: rf(11), fontFamily: "Inter_700Bold", color: c.textMuted, marginTop: 2, letterSpacing: 0.3 },
-
     // ── Comments section ──────────────────────────────────────────────────────
     myCommentItem: {
       backgroundColor: c.surface, padding: sp(16), borderRadius: sp(18),

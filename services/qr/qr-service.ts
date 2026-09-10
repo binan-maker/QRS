@@ -39,9 +39,6 @@ export async function getOrCreateQrCode(content: string): Promise<QrCodeData> {
         createdAt: tsToString(data.createdAt),
         scanCount: data.scanCount || 0,
         commentCount: data.commentCount || 0,
-        ownerId: data.ownerId,
-        ownerName: data.ownerName,
-        ownerVerified: (data as any).ownerVerified || false,
       };
     }
     await db.set([COLLECTIONS.QR_CODES, qrId], {
@@ -77,19 +74,15 @@ export async function getQrCodeById(qrId: string): Promise<QrCodeData | null> {
       createdAt: tsToString(data.createdAt),
       scanCount,
       commentCount: data.commentCount || 0,
-      ownerId: data.ownerId,
-      ownerName: data.ownerName,
       qrType: data.qrType,
       uuid: data.uuid,
       businessName: data.businessName,
-      privateMode: data.privateMode,
       customLogoUri: data.customLogoUri,
       logoPosition: data.logoPosition,
       templateKey: data.templateKey ?? null,
       formValues: data.formValues ?? null,
       displayDestination: data.displayDestination ?? null,
       // Fraud-guard fields
-      ownerScanCount: data.ownerScanCount,
       scanCountFrozen: data.scanCountFrozen,
       scanCountFreezeReason: data.scanCountFreezeReason,
       // Deactivation state

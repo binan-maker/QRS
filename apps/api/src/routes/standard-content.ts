@@ -3,7 +3,7 @@ import { guardShell, escHtml, escAttr } from "../templates/guard-html";
 import type { StandardLinkFields } from "../lib/firebase-client";
 
 export function serveStandardContent(res: Response, link: StandardLinkFields, _uuid: string): void {
-  const { rawContent, contentType, ownerName } = link;
+  const { rawContent, contentType } = link;
 
   if (!link.isActive) {
     (res as any).status(200).send(guardShell("QR Code Deactivated", `
@@ -27,7 +27,6 @@ export function serveStandardContent(res: Response, link: StandardLinkFields, _u
 <div class="icon">💳</div>
 <div class="badge badge-shield">✦ BinRo Protected</div>
 <h1>UPI Payment</h1>
-<p style="margin-bottom:8px">by ${escHtml(ownerName)}</p>
 <hr class="divider">
 <div class="label">UPI Deep Link</div>
 <div class="url-box">${escHtml(rawContent)}</div>
@@ -48,7 +47,6 @@ export function serveStandardContent(res: Response, link: StandardLinkFields, _u
 <div class="icon">📶</div>
 <div class="badge badge-shield">✦ BinRo Protected</div>
 <h1>WiFi Network</h1>
-<p style="margin-bottom:8px">Shared by ${escHtml(ownerName)}</p>
 <hr class="divider">
 <div class="label">Network Name (SSID)</div>
 <div class="val">${escHtml(ssid)}</div>
@@ -70,7 +68,6 @@ ${pass ? `<div class="label">Password</div><div class="val">${escHtml(pass)}</di
 <div class="icon">👤</div>
 <div class="badge badge-shield">✦ BinRo Protected</div>
 <h1>${escHtml(displayName)}</h1>
-<p style="margin-bottom:8px">Shared by ${escHtml(ownerName)}</p>
 <hr class="divider">
 ${telMatch   ? `<div class="label">Phone</div><div class="val">${escHtml(telMatch[1])}</div>` : ""}
 ${emailMatch ? `<div class="label">Email</div><div class="val">${escHtml(emailMatch[1])}</div>` : ""}
@@ -93,7 +90,6 @@ ${emailMatch ? `<div class="label">Email</div><div class="val">${escHtml(emailMa
 <div class="icon">📅</div>
 <div class="badge badge-shield">✦ BinRo Protected</div>
 <h1>${escHtml(title)}</h1>
-<p style="margin-bottom:8px">Shared by ${escHtml(ownerName)}</p>
 <hr class="divider">
 ${dateStr       ? `<div class="label">When</div><div class="val">${escHtml(dateStr)}</div>` : ""}
 ${locationMatch ? `<div class="label">Where</div><div class="val">${escHtml(locationMatch[1])}</div>` : ""}
@@ -108,7 +104,6 @@ ${locationMatch ? `<div class="label">Where</div><div class="val">${escHtml(loca
 <div class="icon">📞</div>
 <div class="badge badge-shield">✦ BinRo Protected</div>
 <h1>Phone Number</h1>
-<p style="margin-bottom:8px">Shared by ${escHtml(ownerName)}</p>
 <hr class="divider">
 <div class="label">Number</div>
 <div class="val">${escHtml(number)}</div>
@@ -127,7 +122,6 @@ ${locationMatch ? `<div class="label">Where</div><div class="val">${escHtml(loca
 <div class="icon">📄</div>
 <div class="badge badge-shield">✦ BinRo Protected</div>
 <h1>QR Content</h1>
-<p style="margin-bottom:8px">Shared by ${escHtml(ownerName)}</p>
 <hr class="divider">
 <div class="url-box" style="text-align:center;font-size:14px;padding:16px">${escHtml(rawContent)}</div>
 <button onclick="navigator.clipboard&&navigator.clipboard.writeText(${JSON.stringify(escAttr(rawContent))})" class="btn btn-go" style="margin-top:4px">Copy Content</button>

@@ -28,7 +28,6 @@ export function registerQrActiveRoute(app: Express) {
 
     try {
       const decoded = await adminAuth.verifyIdToken(idToken);
-      const userId = decoded.uid;
 
       const db = getAdminDb();
       if (!db) {
@@ -47,10 +46,6 @@ export function registerQrActiveRoute(app: Express) {
       if (data.qrType === "government") {
         return res.status(403).json({ error: "Government QR codes cannot be modified" });
       }
-      if (data.ownerId !== userId) {
-        return res.status(403).json({ error: "Only the owner can modify this QR code" });
-      }
-
       const msg = isActive
         ? null
         : typeof deactivationMessage === "string"

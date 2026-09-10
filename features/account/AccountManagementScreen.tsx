@@ -114,7 +114,6 @@ export default function AccountManagementScreen() {
                   "All QR codes you generated",
                   "Your scan history and favourites",
                   "All your comments and reports",
-                  "Your followers and following relationships",
                   "All notifications and messages",
                 ].map((item, i) => (
                   <View key={i} style={styles.conRow}>

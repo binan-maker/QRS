@@ -12,13 +12,8 @@ export async function checkReportEligibility(
   userId: string,
   qrId: string,
   emailVerified: boolean,
-  qrOwnerId?: string,
   isChangingReport?: boolean
 ): Promise<{ allowed: true; weight: number; tier: AccountTier } | never> {
-
-  if (qrOwnerId && qrOwnerId === userId) {
-    throw new Error("You cannot report your own QR code.");
-  }
 
   const tierResult = await getAccountTier(userId, emailVerified);
   const tier = tierResult as AccountTier;

@@ -36,7 +36,6 @@ export function computeUnifiedQrStatus(qr: Pick<UnifiedQr, "status" | "scanLimit
 export interface IQrCodeRepository {
   findById(id: string): Promise<QrCode | null>;
   findByUuid(uuid: string): Promise<QrCode | null>;
-  findByOwnerId(ownerId: string, limit?: number, offset?: number): Promise<QrCode[]>;
   create(data: Omit<QrCode, "id" | "createdAt" | "updatedAt">): Promise<QrCode>;
   update(id: string, data: Partial<QrCode>): Promise<QrCode>;
   delete(id: string): Promise<void>;
@@ -45,7 +44,6 @@ export interface IQrCodeRepository {
 
 export interface IUnifiedQrRepository {
   findById(id: string): Promise<UnifiedQr | null>;
-  findByOwnerId(ownerId: string, limit?: number, offset?: number): Promise<UnifiedQr[]>;
   create(data: Omit<UnifiedQr, "createdAt" | "updatedAt">): Promise<UnifiedQr>;
   update(id: string, data: Partial<UnifiedQr>): Promise<UnifiedQr>;
   delete(id: string): Promise<void>;
@@ -57,7 +55,6 @@ export interface IUnifiedQrRepository {
 export type QrCreatedEvent = {
   type: "QR_CREATED";
   qrId: string;
-  ownerId: string;
   contentType: string;
   timestamp: Date;
 };

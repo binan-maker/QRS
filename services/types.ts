@@ -7,12 +7,9 @@ export interface QrCodeData {
   createdAt: string;
   scanCount: number;
   commentCount: number;
-  ownerId?: string;
-  ownerName?: string;
   qrType?: QrType;
   uuid?: string;
   businessName?: string;
-  privateMode?: boolean;
   customLogoUri?: string;
   logoPosition?: string;
   templateKey?: string;
@@ -21,10 +18,8 @@ export interface QrCodeData {
   isActive?: boolean;
   deactivationMessage?: string | null;
   // Fraud-guard fields
-  ownerScanCount?: number;
   scanCountFrozen?: boolean;
   scanCountFreezeReason?: string;
-  ownerVerified?: boolean;
 }
 
 export interface UserData {
@@ -158,8 +153,6 @@ export interface UnifiedQrDesign {
 
 export interface UnifiedQr {
   id: string;
-  ownerId: string;
-  ownerName: string;
   qrType: QrType;
   template: string | null;
   title: string | null;
@@ -208,9 +201,6 @@ export interface GeneratedQrItem {
   logoPosition?: string;
   logoUri?: string | null;
   businessName?: string;
-  privateMode?: boolean;
-  ownerName?: string;
-  ownerId?: string;
   username?: string;
   templateKey?: string;
   formValues?: { value: string; extra: Record<string, string> };
@@ -262,8 +252,6 @@ export interface GuardLink {
   currentDestination: string;
   previousDestination: string | null;
   businessName: string | null;
-  ownerName: string;
-  ownerId: string;
   isActive: boolean;
   destinationChangedAt: string | null;
   createdAt: string;

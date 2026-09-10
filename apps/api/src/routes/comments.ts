@@ -119,15 +119,13 @@ commentsRouter.post(
     const uid = req.user!.uid;
 
     try {
-      // Resolve user display name and whether they own this QR
+      // Resolve user display name
       // TODO: SELECT display_name FROM users WHERE firebase_uid = $uid
       const userSnap = await db.collection("users").doc(uid).get();
       const userName: string = userSnap.data()?.displayName ?? userSnap.data()?.username ?? "Anonymous";
 
-      // TODO: SELECT owner_id FROM qr_codes WHERE id = $qrId
       const qrSnap = await db.collection("qrCodes").doc(qrId).get();
       if (!qrSnap.exists) return res.status(404).json({ error: "QR code not found", code: "QR_NOT_FOUND", status: 404 });
-      const isVerifiedOwner = qrSnap.data()?.ownerId === uid;
 
       // Validate parent comment exists if provided
       if (parentId) {
@@ -141,7 +139,6 @@ commentsRouter.post(
         text,
         parentId: parentId ?? null,
         likes: 0,
-        isVerifiedOwner,
         isPinned: false,
         isHidden: false,
         isEdited: false,

@@ -3,16 +3,13 @@ import * as Crypto from "expo-crypto";
 import { API_BASE_URL } from "@/config/api";
 import { detectContentType, getQrCodeId } from "../qr/qr-service";
 import { logError } from "./crud";
-import type { QrOwnerInfo, QrType } from "../types";
 import { SIGNATURE_SALT } from "../types";
 import { COLLECTIONS } from "@/shared/constants/collections";
-
-export type { QrOwnerInfo };
 
 export async function generateBrandedQr(
   content: string,
   userId: string,
-  displayName: string
+  _displayName: string
 ): Promise<{ qrId: string; signature: string; uuid: string }> {
   const SALT = SIGNATURE_SALT;
   const qrId = await getQrCodeId(content);
@@ -31,17 +28,14 @@ export async function generateBrandedQr(
   try {
     const existing = await db.get([COLLECTIONS.QR_CODES, qrId]);
     if (existing) {
-      if (!existing.ownerId) {
-        await db.update([COLLECTIONS.QR_CODES, qrId], {
-          ownerId: userId, ownerName: displayName,
-          brandedUuid: uuid, isBranded: true, signature,
-        });
-      }
+      await db.update([COLLECTIONS.QR_CODES, qrId], {
+        brandedUuid: uuid, isBranded: true, signature,
+      });
     } else {
       await db.set([COLLECTIONS.QR_CODES, qrId], {
-        content, contentType, ownerId: userId, ownerName: displayName,
+        content, contentType,
         brandedUuid: uuid, isBranded: true, signature,
-        ownerVerified: false, scanCount: 0, commentCount: 0,
+        scanCount: 0, commentCount: 0,
         createdAt: db.timestamp(),
       });
     }
@@ -55,31 +49,6 @@ export async function generateBrandedQr(
   }
 
   return { qrId, signature, uuid };
-}
-
-export async function getQrOwnerInfo(qrId: string): Promise<QrOwnerInfo | null> {
-  try {
-    const data = await db.get([COLLECTIONS.QR_CODES, qrId]);
-    if (!data) return null;
-    if (!data.isBranded || !data.ownerId) return null;
-    return {
-      ownerId: data.ownerId,
-      ownerName: data.ownerName || "Unknown",
-      brandedUuid: data.brandedUuid || "",
-      isBranded: true,
-      isVerified: data.ownerVerified || false,
-      signature: data.signature,
-      ownerVerified: data.ownerVerified || false,
-      qrType: (data.qrType as QrType) || "individual",
-      isActive: data.isActive !== false,
-      deactivationMessage: data.deactivationMessage || null,
-      businessName: data.businessName || null,
-      ownerLogoBase64: data.ownerLogoBase64 || null,
-    };
-  } catch (e) {
-    logError("getQrOwnerInfo", e, { qrId });
-    return null;
-  }
 }
 
 export async function setQrActiveState(

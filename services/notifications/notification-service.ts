@@ -164,29 +164,6 @@ export async function notifyMentionedUsers(
   } catch {}
 }
 
-// ─── Notify QR code owner ─────────────────────────────────────────────────────
-// Sends a notification to the owner of the QR code when someone posts a comment.
-// Silently skips if the commenter IS the owner.
-export async function notifyQrOwner(
-  qrId: string,
-  fromUserId: string,
-  fromDisplayName: string,
-): Promise<void> {
-  if (!NOTIFICATIONS_ENABLED) return;
-  try {
-    const qrData = await db.get([COLLECTIONS.QR_CODES, qrId]);
-    if (!qrData?.ownerId) return;
-    const ownerId = qrData.ownerId as string;
-    if (ownerId === fromUserId) return;
-    await pushNotification(
-      ownerId,
-      "owner_comment",
-      `${fromDisplayName} commented on your QR code`,
-      { qrCodeId: qrId },
-    );
-  } catch {}
-}
-
 // ─── Notify parent comment author on reply ────────────────────────────────────
 // When user B replies to user A's comment, A gets notified.
 // Also notifies the QR owner if they are different from both A and B.

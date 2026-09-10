@@ -25,7 +25,7 @@ export function useProfile() {
   const { user, signOut } = useAuth();
   const { setAvatar, syncAvatar, clearAvatar } = useAvatar();
 
-  const [stats,          setStats]          = useState<UserStats>({ followingCount: 0, scanCount: 0, commentCount: 0, totalLikesReceived: 0 });
+  const [stats,          setStats]          = useState<UserStats>({ scanCount: 0, commentCount: 0, totalLikesReceived: 0 });
   const [statsLoading,   setStatsLoading]   = useState(false);
   const hasLoadedStatsRef                   = useRef(false);
   const [photoURL,        setPhotoURL]        = useState<string | null>(user?.photoURL || null);
@@ -44,7 +44,7 @@ export function useProfile() {
   useEffect(() => {
     setPhotoURL(user?.photoURL || null);
     setCurrentUsername(user?.username || null);
-    setStats({ followingCount: 0, scanCount: 0, commentCount: 0, totalLikesReceived: 0 });
+    setStats({ scanCount: 0, commentCount: 0, totalLikesReceived: 0 });
     hasLoadedStatsRef.current    = false;
     lastStatsFetchRef.current    = 0;
   }, [user?.id]);

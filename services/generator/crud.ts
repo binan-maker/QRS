@@ -46,7 +46,7 @@ function mapDocToItem(id: string, data: any): GeneratedQrItem {
 
 export async function saveGeneratedQr(
   userId: string,
-  displayName: string,
+  _displayName: string,
   content: string,
   contentType: string,
   uuid: string,
@@ -93,7 +93,6 @@ export async function saveGeneratedQr(
         content, contentType,
         createdAt: db.timestamp(),
         scanCount: 0, commentCount: 0,
-        ownerId: userId, ownerName: displayName,
         qrType, isActive: true,
         businessName: businessName || null,
         ...(templateKey ? { templateKey } : {}),
@@ -101,7 +100,7 @@ export async function saveGeneratedQr(
         ...(formValues ? { formValues } : {}),
       };
       if (existingQr) {
-        if (!existingQr.ownerId) await db.update([COLLECTIONS.QR_CODES, qrId], qrData);
+        await db.update([COLLECTIONS.QR_CODES, qrId], qrData);
       } else {
         await db.set([COLLECTIONS.QR_CODES, qrId], qrData);
       }
