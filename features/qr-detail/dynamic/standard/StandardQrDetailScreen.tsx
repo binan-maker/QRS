@@ -23,6 +23,7 @@ import { REPORT_LABELS, REPORT_ICONS } from "@/features/qr-detail/utils/report-t
 
 import { ContentCard } from "@/features/qr-engine/content-cards";
 import TrustScoreCard from "@/features/qr-detail/components/TrustScoreCard";
+import EarlyCommunityCard from "@/features/qr-detail/components/EarlyCommunityCard";
 import SafetyWarningCard from "@/features/qr-detail/components/SafetyWarningCard";
 import ReportGrid from "@/features/qr-detail/components/ReportGrid";
 import FollowersModal from "@/features/qr-detail/components/modals/FollowersModal";
@@ -240,6 +241,13 @@ export default function StandardQrDetailScreen({ id, standardUuid, ownerDocId, h
               />
             }
           >
+            {!q.offlineMode && !isQrOwner && trust.score < 0 && (
+              <EarlyCommunityCard
+                isLoggedIn={!!user}
+                onRatePress={handleReportPress}
+              />
+            )}
+
             {/* ── Deactivated notice ────────────────────── */}
             {isDeactivated && (
               <View>

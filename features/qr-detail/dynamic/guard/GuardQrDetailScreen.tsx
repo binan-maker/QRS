@@ -22,6 +22,7 @@ import { REPORT_LABELS, REPORT_ICONS } from "@/features/qr-detail/utils/report-t
 
 import GuardHeroCard from "./GuardHeroCard";
 import TrustScoreCard from "@/features/qr-detail/components/TrustScoreCard";
+import EarlyCommunityCard from "@/features/qr-detail/components/EarlyCommunityCard";
 import ReportGrid from "@/features/qr-detail/components/ReportGrid";
 import FollowersModal from "@/features/qr-detail/components/modals/FollowersModal";
 import MessagesModal from "@/features/qr-detail/components/modals/MessagesModal";
@@ -233,6 +234,13 @@ export default function GuardQrDetailScreen({ id, guardUuid, ownerDocId, hint }:
               />
             }
           >
+            {!q.offlineMode && !isQrOwner && trust.score < 0 && (
+              <EarlyCommunityCard
+                isLoggedIn={!!user}
+                onRatePress={handleReportPress}
+              />
+            )}
+
             {/* ── Hero Card ── */}
             <View>
               <GuardHeroCard
