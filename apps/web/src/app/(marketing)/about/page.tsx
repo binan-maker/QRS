@@ -76,8 +76,8 @@ export default function AboutPage() {
               real-world complexity of BharatQR, BBPS, and EMV formats.
             </p>
             <p className="text-gray-600 mt-3 leading-relaxed">
-              We then layer crowd-sourced community reports, AI phishing detection, and
-              collusion-resistant trust scoring to give you a verdict you can act on
+              We then layer crowd-sourced community reports and collusion-resistant
+              trust scoring to give you context you can act on
               in under a second.
             </p>
           </div>

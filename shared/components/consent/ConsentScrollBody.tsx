@@ -84,8 +84,8 @@ export default function ConsentScrollBody({
             "Account info: email, name, profile picture.",
             "Device info: OS, app version, identifiers.",
             "Usage data: scan history, feature patterns.",
-            "QR content you scan or create, so we can check it's safe.",
-            "Approximate location, to tailor threat detection to your region.",
+            "QR content you scan or create, so we can show its details.",
+            "Approximate location, to tailor community features to your region.",
             "Camera: processed locally on your device, never uploaded.",
             "Community: reports and votes you choose to submit.",
           ]} />
@@ -94,7 +94,7 @@ export default function ConsentScrollBody({
         <Section label="How We Use Your Data" color={sectionBlue}>
           <Bullets color={bodyText} bullet={primaryColor} items={[
             "To provide and improve BinRo.",
-            "To perform security analysis on QR codes.",
+            "To display QR content and community trust information.",
             "To maintain your account and scan history.",
             "To detect and prevent abuse.",
             "To comply with applicable laws.",
@@ -103,10 +103,10 @@ export default function ConsentScrollBody({
 
         <Section label="Getting Smarter Together" color={sectionBlue}>
           <Body color={bodyText}>
-            BinRo gets better at spotting scams by learning from anonymised,
-            community-wide scan patterns —{" "}
+            BinRo gets better at showing useful community context by learning from
+            anonymised, community-wide reports —{" "}
             <Bold color={boldText}>never</Bold> from anything that identifies you
-            personally. This is what keeps our threat detection sharp for everyone.
+            personally. This helps everyone make more informed decisions.
           </Body>
         </Section>
 
@@ -121,9 +121,8 @@ export default function ConsentScrollBody({
 
         <Section label="Trusted Partners" color={sectionBlue}>
           <Body color={bodyText}>
-            BinRo works with trusted infrastructure partners, including
-            Firebase and Google Safe Browsing, to keep the app fast, secure,
-            and up to date.
+            BinRo works with trusted infrastructure partners, including Firebase,
+            to keep the app fast and up to date.
           </Body>
         </Section>
 

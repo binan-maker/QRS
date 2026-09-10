@@ -118,31 +118,13 @@ function StatBox({
 }
 
 const FLAG_LABELS: Record<string, string> = {
-  safe_browsing_clear: "✓ Safe Browsing",
-  verified_merchant: "✓ Verified",
   community_trusted: "✓ Community",
   community_reported: "⚠ Reported",
-  phishing_pattern: "⚠ Phishing",
-  malicious_url: "✗ Malicious",
-  suspicious_domain: "⚠ Suspicious",
-  url_shortener: "~ Shortened",
-  redirect_chain: "~ Redirect",
-  typosquatting: "⚠ Squatting",
-  ip_address_url: "⚠ IP URL",
 };
 
 const FLAG_COLORS: Record<string, string> = {
-  safe_browsing_clear: "#10B981",
-  verified_merchant: "#10B981",
   community_trusted: "#10B981",
   community_reported: "#F59E0B",
-  phishing_pattern: "#EF4444",
-  malicious_url: "#DC2626",
-  suspicious_domain: "#EF4444",
-  url_shortener: "#6B7280",
-  redirect_chain: "#6B7280",
-  typosquatting: "#EF4444",
-  ip_address_url: "#EF4444",
 };
 
 function FlagPill({ flag, colors }: { flag: string; colors: any }) {

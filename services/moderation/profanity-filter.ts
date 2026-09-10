@@ -167,17 +167,14 @@ export function checkProfanity(text: string): ProfanityCheckResult {
 }
 
 /**
- * Validate QR code input content for safety.
- * This prevents XSS attacks via malicious QR codes, blocks dangerous schemes,
- * enforces UPI / EMV format compliance, and screens for profanity.
- *
- * Delegates structural / scheme validation to the dedicated qr-validator.
+ * Validate QR code input content for basic format and moderation.
+ * QR payloads are not compared with threat lists or URL security heuristics.
  */
 export function validateQrInput(content: string): {
   valid: boolean;
   error?: string;
 } {
-  // Lazy-require to avoid import cycles with security/* modules during native bundle.
+  // Lazy-require to avoid import cycles during native bundle.
 
   const { validateQrContent } = require("../analysis/qr-validator") as {
 

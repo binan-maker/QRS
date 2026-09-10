@@ -4,7 +4,7 @@ import Link from "next/link";
 export const metadata: Metadata = {
   title: "How It Works — BinRo",
   description:
-    "Learn how BinRo protects you from QR code fraud using crowd-sourced reports, AI analysis, and India-specific threat intelligence.",
+    "Learn how BinRo helps you review QR codes using decoded content and community reports.",
 };
 
 const STEPS = [
@@ -18,17 +18,17 @@ const STEPS = [
   },
   {
     number: "02",
-    title: "Content is decoded and analysed",
+    title: "Content is decoded and displayed",
     description:
-      "BinRo uses 60KB+ of India-specific parsing logic to extract the full intent of the QR — the UPI VPA, bank, IFSC, amount, redirect chain, and more.",
+      "BinRo extracts the QR content so you can review the UPI VPA, bank, IFSC, amount, destination, and more before acting.",
     detail:
-      "Supports 80+ Indian payment apps including Paytm, PhonePe, Google Pay, BHIM, and all BharatQR-compliant apps. Works offline for basic analysis.",
+      "Supports common Indian payment formats including UPI and BharatQR. Works offline for basic QR parsing.",
   },
   {
     number: "03",
     title: "Trust score computed in real-time",
     description:
-      "Every QR receives a trust score based on community reports, scan history, owner verification status, and AI-powered phishing detection.",
+      "Every QR receives community trust context based on user reports, comments, and report history.",
     detail:
       "Our collusion-detection algorithm prevents coordinated fake reports from inflating or deflating scores unfairly.",
   },
@@ -44,11 +44,9 @@ const STEPS = [
 
 const TRUST_SIGNALS = [
   { label: "Community reports",         icon: "👥", desc: "Weighted by reporter trust level" },
-  { label: "Scan volume",               icon: "📈", desc: "High-volume QRs get more scrutiny" },
-  { label: "Owner verification",        icon: "✅", desc: "Verified business badge adds trust" },
-  { label: "AI phishing detection",     icon: "🤖", desc: "India-specific pattern matching"   },
-  { label: "Domain age & reputation",   icon: "🌐", desc: "Via Google Safe Browsing API"      },
-  { label: "Collusion detection",       icon: "🔬", desc: "Catches coordinated fake reports"  },
+  { label: "Report history",            icon: "🧾", desc: "See how the community has responded" },
+  { label: "Community comments",        icon: "💬", desc: "Read context from other users" },
+  { label: "Report integrity",          icon: "🔬", desc: "Coordinated abuse is weighted carefully" },
 ];
 
 export default function HowItWorksPage() {

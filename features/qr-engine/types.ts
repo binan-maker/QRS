@@ -92,16 +92,7 @@ export interface QrTrustSummary {
 export type TrustLevel = "safe" | "caution" | "suspicious" | "dangerous" | "unknown";
 
 export type TrustFlag =
-  | "phishing_pattern"
-  | "malicious_url"
-  | "redirect_chain"
-  | "suspicious_domain"
   | "community_reported"
-  | "url_shortener"
-  | "ip_address_url"
-  | "typosquatting"
-  | "safe_browsing_clear"
-  | "verified_merchant"
   | "community_trusted";
 
 export interface QrVerification {

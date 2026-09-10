@@ -31,7 +31,6 @@ interface FirestoreQrDoc {
   lastScannedAt?: any;
   trustScore?: number;
   reportCount?: number;
-  isVerifiedMerchant?: boolean;
 }
 
 /**
@@ -62,7 +61,6 @@ export function fromFirestoreDoc(
     created_at: createdAt,
     updated_at: updatedAt,
     reportCount: doc.reportCount,
-    verifiedMerchant: doc.isVerifiedMerchant,
     analytics: {
       scan_count: doc.scanCount ?? 0,
       last_scanned_at: lastScannedAt,

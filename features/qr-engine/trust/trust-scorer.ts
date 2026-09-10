@@ -1,8 +1,9 @@
 /**
  * QR Engine — Trust Scorer
  * ─────────────────────────────────────────────────────────────────────────────
- * Produces a deterministic trust score (0–100) and trust level for any QR
- * payload. Runs entirely client-side with no network calls.
+ * Produces a community trust score (0–100) from supplied community data.
+ * This module intentionally does not inspect QR payloads, URLs, domains, or
+ * keywords.
  *
  * Score bands:
  *   80–100  safe
@@ -14,59 +15,31 @@
 import type { TrustFlag, TrustLevel, QrTrustSummary } from "../types";
 
 interface TrustInput {
-  content: string;
-  contentType: string;
   communityScore?: number;   // 0–100 from Firestore, if available
   reportCount?: number;
-  verifiedMerchant?: boolean;
 }
 
 export function computeTrustScore(input: TrustInput): QrTrustSummary {
   const flags: TrustFlag[] = [];
-  let score = 75; // neutral baseline
+  const { communityScore, reportCount } = input;
+  const hasCommunityScore = typeof communityScore === "number" && Number.isFinite(communityScore);
+  const score = hasCommunityScore ? Math.max(0, Math.min(100, Math.round(communityScore))) : 0;
 
-  const { content, contentType, communityScore, reportCount, verifiedMerchant } = input;
-
-  // ── 1. Verified merchant bonus ─────────────────────────────────────────────
-  if (verifiedMerchant) {
-    score += 15;
-    flags.push("verified_merchant");
-  }
-
-  // ── 2. Community trust signals ────────────────────────────────────────────
-  if (communityScore !== undefined) {
-    // Blend community score (weight 30%) with heuristic baseline (weight 70%)
-    score = Math.round(score * 0.7 + communityScore * 0.3);
-  }
   if (communityScore !== undefined && communityScore > 70) {
     flags.push("community_trusted");
   }
 
-  // ── 3. Report penalty ─────────────────────────────────────────────────────
   if (reportCount && reportCount > 0) {
-    const penalty = Math.min(reportCount * 8, 40);
-    score -= penalty;
     flags.push("community_reported");
   }
 
-  // ── 4. Payment QR metadata ────────────────────────────────────────────────
-  if (contentType === "upi" || contentType === "payment" || contentType === "paymentlink") {
-    if (!verifiedMerchant) {
-      // Payment QRs without merchant verification get slight caution bump
-      score = Math.min(score, 72);
-    }
-  }
-
-  // ── Clamp ─────────────────────────────────────────────────────────────────
-  score = Math.max(0, Math.min(100, score));
-
-  const level = scoreToLevel(score);
+  const level = hasCommunityScore ? scoreToLevel(score) : "unknown";
 
   return {
     score,
     level,
     flags: [...new Set(flags)],
-    verified: verifiedMerchant ?? false,
+    verified: false,
     last_analyzed_at: Date.now(),
   };
 }

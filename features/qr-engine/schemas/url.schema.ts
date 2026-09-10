@@ -26,5 +26,4 @@ export const urlSchema: QrSchema = {
     }
     return null;
   },
-  trustRules: ["url_shortener", "redirect_chain", "suspicious_domain"],
 };

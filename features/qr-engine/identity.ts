@@ -33,10 +33,8 @@ interface BuildOptions {
   verification?: QrVerification;
   created_at?: number;
   updated_at?: number;
-  /** Community report count — used by trust scorer */
+  /** Community report count */
   reportCount?: number;
-  /** Whether this is a verified merchant */
-  verifiedMerchant?: boolean;
 }
 
 export function buildQrIdentity(
@@ -55,10 +53,7 @@ export function buildQrIdentity(
   };
 
   const computedTrust = computeTrustScore({
-    content: payload,
-    contentType: qr_type,
     reportCount: options.reportCount,
-    verifiedMerchant: options.verifiedMerchant,
   });
 
   const trust: QrTrustSummary = {
@@ -96,13 +91,10 @@ export function buildQrIdentity(
  */
 export function refreshQrIdentity(
   existing: QrIdentity,
-  updates: Partial<Pick<BuildOptions, "analytics" | "trust" | "reportCount" | "verifiedMerchant">>
+  updates: Partial<Pick<BuildOptions, "analytics" | "trust" | "reportCount">>
 ): QrIdentity {
   const recomputed = computeTrustScore({
-    content: existing.payload,
-    contentType: existing.qr_type,
     reportCount: updates.reportCount,
-    verifiedMerchant: updates.verifiedMerchant,
   });
 
   return {

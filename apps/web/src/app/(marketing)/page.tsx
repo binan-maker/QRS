@@ -20,7 +20,7 @@ const FEATURES = [
   {
     icon: "🛡️",
     title: "Instant Trust Score",
-    desc: "Every QR gets a safety verdict in under a second — safe, caution, or flagged — using crowd-sourced reports and AI analysis.",
+    desc: "Every QR gets community trust context in under a second, based on reports and shared user experience.",
   },
   {
     icon: "🔍",
@@ -30,7 +30,7 @@ const FEATURES = [
   {
     icon: "👥",
     title: "Community Reports",
-    desc: "Millions of scans power a living threat database. When one user spots a scam, everyone is protected — instantly.",
+    desc: "Community reports give everyone more context when the same QR code is scanned again.",
   },
   {
     icon: "📊",

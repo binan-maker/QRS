@@ -54,5 +54,4 @@ export const upiSchema: QrSchema = {
       return "Invalid UPI ID. Format: name@bank (e.g. user@paytm)";
     return null;
   },
-  trustRules: ["verified_merchant"],
 };

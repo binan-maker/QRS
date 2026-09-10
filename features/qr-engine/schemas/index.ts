@@ -5,7 +5,7 @@
  *   • primaryField + extraFields   — form inputs
  *   • build()                      — encodes inputs into QR payload string
  *   • validate()                   — validates inputs before encoding
- *   • trustRules                   — which trust flags to check on scan
+ *   • trustRules                   — reserved for community-derived metadata
  *
  * To add a new generator type: create a schema file and add it here.
  */

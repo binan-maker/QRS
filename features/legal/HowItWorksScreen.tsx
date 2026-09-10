@@ -135,7 +135,7 @@ export default function HowItWorksScreen() {
           <Para>BinRo cannot:</Para>
           {[
             "Guarantee that any QR code is 100% safe or dangerous",
-            "Prevent you from visiting a malicious website if you choose to",
+            "Guarantee the outcome of a link, payment, or other QR action",
             "Recover money or data lost from fraudulent QR code transactions",
             "Replace manual verification, security software, or professional cybersecurity advice",
             "Prevent false positives — legitimate codes from banks, government, or businesses may be flagged",
@@ -160,10 +160,9 @@ export default function HowItWorksScreen() {
           <WarnBox text="Every QR code scan through BinRo contributes to our community database. Understand what happens to your data." />
           <Para>When you scan any QR code through BinRo, the following happens automatically:</Para>
           {[
-            "The QR code content is decoded on your device and analysed against our threat database.",
-            "An anonymised record of the scan (QR content type, URL structure, timestamp) is logged to our community threat intelligence database.",
-            "Scan frequency data across all users is aggregated to calculate real-time scan velocity signals.",
-            "Anonymised scan patterns are used to train and improve our AI threat detection models.",
+            "The QR code content is decoded on your device and shown in the details view.",
+            "An anonymised record of the scan and any community reports is used to show trust context.",
+            "Community reports and comments are aggregated to calculate and update trust scores.",
             "If you are signed in, the scan is saved to your personal scan history (visible only to you).",
             "If the QR code already has community reports, those reports are fetched and displayed to you.",
           ].map((t, i) => (
@@ -270,7 +269,7 @@ export default function HowItWorksScreen() {
             "BinRo accepts no liability for any government action, official decision, enforcement outcome, regulatory penalty, or institutional harm resulting from reliance on any BinRo output.",
             "You are solely responsible for validating any QR code through official, certified channels before using such information for official purposes.",
             "BinRo makes no representations about compliance with government data handling, classified information, security clearance, or official procurement requirements.",
-            "Government data processed through BinRo is subject to the same data handling practices as all other user data, including potential use for AI training and threat intelligence, as described in the Privacy Policy.",
+            "Government data processed through BinRo is subject to the same data handling practices as all other user data, as described in the Privacy Policy.",
           ].map((t, i) => (
             <View key={i} style={styles.ruleRow}>
               <View style={[styles.ruleNum, { backgroundColor: colors.dangerDim, borderColor: colors.danger + "40" }]}>

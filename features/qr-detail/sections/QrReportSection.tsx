@@ -2,8 +2,6 @@ import { View, Text, type LayoutChangeEvent } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import Animated, { FadeInDown } from "react-native-reanimated";
 import ReportGrid from "@/features/qr-detail/components/ReportGrid";
-import SafetyWarningCard from "@/features/qr-detail/components/SafetyWarningCard";
-import EvidenceCard from "@/features/qr-detail/components/EvidenceCard";
 import { offlineSectionStyles } from "@/features/qr-detail/styles";
 import { REPORT_LABELS, REPORT_ICONS } from "@/features/qr-detail/utils/report-toast";
 
@@ -18,9 +16,6 @@ interface Props {
   showToast: (msg: string, icon: keyof typeof Ionicons.glyphMap) => void;
   onLayout?: (e: LayoutChangeEvent) => void;
   colors: any;
-  urlSafety?: any;
-  offlineBlacklistMatch?: { matched: boolean; reason?: string };
-  showUrlSafety?: boolean;
   delay?: number;
 }
 
@@ -35,9 +30,6 @@ export function QrReportSection({
   showToast,
   onLayout,
   colors,
-  urlSafety,
-  offlineBlacklistMatch,
-  showUrlSafety = false,
   delay = 100,
 }: Props) {
   if (!user) return null;
@@ -75,35 +67,6 @@ export function QrReportSection({
           />
         )}
       </Animated.View>
-
-      {showUrlSafety && (
-        <>
-          {((urlSafety?.isSuspicious) || offlineBlacklistMatch?.matched) && (
-            <Animated.View entering={FadeInDown.delay(delay).duration(260)}>
-              {urlSafety?.isSuspicious && (
-                <SafetyWarningCard
-                  riskLevel={urlSafety.riskLevel as "caution" | "dangerous"}
-                  warnings={urlSafety.warnings}
-                  title={urlSafety.riskLevel === "dangerous" ? "Dangerous URL Detected" : "Proceed with Caution"}
-                />
-              )}
-              {offlineBlacklistMatch?.matched && (
-                <SafetyWarningCard
-                  riskLevel="dangerous"
-                  warnings={[`Known scam pattern: ${offlineBlacklistMatch.reason}`]}
-                  title="Known Scam Pattern"
-                />
-              )}
-            </Animated.View>
-          )}
-
-          {urlSafety?.evidence && urlSafety.evidence.length > 0 && (
-            <Animated.View entering={FadeInDown.delay(delay + 10).duration(260)}>
-              <EvidenceCard title="URL Analysis" evidence={urlSafety.evidence} />
-            </Animated.View>
-          )}
-        </>
-      )}
     </>
   );
 }

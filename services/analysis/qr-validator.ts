@@ -1,13 +1,8 @@
 /**
- * QR CONTENT VALIDATOR — P1 SECURITY FIX
+ * QR CONTENT VALIDATOR
  *
- * Hardened validation for QR code payloads decoded by the scanner.
- * Mitigates:
- *   - XSS via javascript:, data:text/html, vbscript:, inline event handlers
- *   - DoS via oversized payloads (jsQR can decode up to ~3KB; cap conservatively)
- *   - Null-byte / control-character smuggling
- *   - Disallowed URL schemes (file://, blob:, intent://, content://, jar:, etc.)
- *   - Malformed UPI / BharatQR EMV payloads (NPCI / EMVCo spec violations)
+ * Performs only payload-size and format parsing. QR details do not classify URLs
+ * or compare them with local, remote, or third-party threat lists.
  *
  * This is the single source of truth used by:
  *   - Client scan flow (features/scanner/hooks/useScanner.ts)
@@ -25,56 +20,6 @@ export interface QrValidationResult {
 // Hard cap on QR payload size. Real QR codes max out at ~2,953 bytes (Version 40, low EC).
 // We add a small buffer for binary-encoded payloads.
 const MAX_QR_BYTES = 4096;
-
-// Allowlist of URL schemes we'll surface to the user. Anything else with a scheme is rejected
-// (plain text without a scheme is still allowed and treated as text).
-const ALLOWED_URL_SCHEMES = new Set([
-  "http:",
-  "https:",
-  "tel:",
-  "mailto:",
-  "sms:",
-  "smsto:",
-  "geo:",
-  "upi:",
-  "bitcoin:",
-  "ethereum:",
-  "matmsg:", // legacy email
-  "wifi:",   // WIFI:T:...;S:...;P:...;;
-  "mecard:", // legacy contact
-  "begin:vcard", // vCard 2.1/3.0/4.0 (case-insensitive)
-]);
-
-// Schemes that are explicitly dangerous and must be rejected on sight.
-const BLOCKED_URL_SCHEMES = [
-  "javascript:",
-  "vbscript:",
-  "data:text/html",
-  "data:application/xhtml",
-  "data:application/javascript",
-  "data:text/javascript",
-  "file:",
-  "jar:",
-  "blob:",
-  "intent:",
-  "content:",
-  "android-app:",
-  "ms-appx:",
-  "ms-appx-web:",
-];
-
-// XSS / injection patterns to reject regardless of scheme (defense in depth).
-const INJECTION_PATTERNS: RegExp[] = [
-  /<\s*script\b/i,
-  /<\s*iframe\b/i,
-  /<\s*object\b/i,
-  /<\s*embed\b/i,
-  /\son\w+\s*=/i,            // inline event handlers (onclick=, onerror=, ...)
-  /javascript\s*:/i,
-  /vbscript\s*:/i,
-  /data\s*:\s*text\s*\/\s*html/i,
-  /expression\s*\(/i,         // CSS expression()
-];
 
 // Control characters except tab (\t), newline (\n), carriage return (\r).
 // Null bytes and other C0/C1 controls can be used to smuggle hidden segments past parsers.
@@ -95,14 +40,6 @@ function utf8ByteLength(s: string): number {
     } else len += 3;
   }
   return len;
-}
-
-function startsWithAny(haystack: string, needles: string[]): string | null {
-  const lower = haystack.toLowerCase();
-  for (const n of needles) {
-    if (lower.startsWith(n)) return n;
-  }
-  return null;
 }
 
 /**
@@ -194,7 +131,7 @@ function validateEmv(content: string): QrValidationResult {
 }
 
 /**
- * Validate that a URL scheme is in the allowlist and the URL parses cleanly.
+ * Identify the payload kind without classifying the destination.
  */
 function validateUrlScheme(content: string): QrValidationResult {
   // Try to extract a scheme.
@@ -211,36 +148,9 @@ function validateUrlScheme(content: string): QrValidationResult {
     return { valid: true, kind: "text" };
   }
 
-  if (!ALLOWED_URL_SCHEMES.has(scheme) && !ALLOWED_URL_SCHEMES.has(scheme.replace(/:$/, "") + ":")) {
-    // Give friendly, specific messages for common-but-unsupported schemes
-    if (scheme === "otpauth:") {
-      return { valid: false, error: "This is a 2FA setup code for an authenticator app (like Google Authenticator). It can't be opened here — use your authenticator app to scan it instead." };
-    }
-    if (scheme === "market:" || scheme === "itms-apps:" || scheme === "itms:") {
-      return { valid: false, error: "This QR code links to an app store listing and can't be opened in BinRo." };
-    }
-    if (scheme === "intent:") {
-      return { valid: false, error: "This QR code contains an Android deep link that can't be opened here." };
-    }
-    return { valid: false, error: "This QR code contains a link type that isn't supported. It may be for a specific app — try scanning it with that app directly." };
-  }
-
-  // For http/https, run through URL parser to catch malformed inputs.
+  // Identify common URL payloads without making a security decision.
   if (scheme === "http:" || scheme === "https:") {
-    try {
-      // URL is available in both Node 20 and React Native (Hermes 0.74+).
-      const u = new URL(content);
-      if (!u.hostname) {
-        return { valid: false, error: "URL is missing a hostname" };
-      }
-      // Reject userinfo to thwart phishing like https://paytm.com@evil.com
-      if (u.username || u.password) {
-        return { valid: false, error: "URLs with embedded credentials are not allowed" };
-      }
-      return { valid: true, kind: "url" };
-    } catch {
-      return { valid: false, error: "Malformed URL" };
-    }
+    return { valid: true, kind: "url" };
   }
 
   // tel:, mailto:, sms:, geo:, bitcoin:, etc.
@@ -287,19 +197,6 @@ export function validateQrContent(content: unknown): QrValidationResult {
   // Reject control characters / null bytes (allow tab/newline/CR for vCard / WiFi payloads).
   if (CONTROL_CHAR_PATTERN.test(content)) {
     return { valid: false, error: "QR content contains disallowed control characters" };
-  }
-
-  // Block known-dangerous schemes outright.
-  const blocked = startsWithAny(content.trim(), BLOCKED_URL_SCHEMES);
-  if (blocked) {
-    return { valid: false, error: `Blocked URL scheme: ${blocked}` };
-  }
-
-  // Defense in depth: reject anything that looks like inline script / event-handler injection.
-  for (const pattern of INJECTION_PATTERNS) {
-    if (pattern.test(content)) {
-      return { valid: false, error: "Potentially malicious content detected" };
-    }
   }
 
   const trimmed = content.trim();

@@ -213,22 +213,17 @@ export default function TrustScoresScreen() {
         </SectionCard>
 
         <SectionCard title="How Scores Are Calculated" icon="calculator-outline">
-          <Para>Trust scores are computed from several weighted inputs that update in real time as new reports arrive:</Para>
+          <Para>Trust scores are computed from community activity and update as new reports and comments arrive:</Para>
           <FactorRow index={0} icon="people-outline" title="Community Reports" desc="Reports are weighted by account standing. Established accounts with clean histories carry more weight. However, no weighting system is fraud-proof." />
-          <FactorRow index={1} icon="repeat-outline" title="Scan Velocity" desc="A sudden spike in scans combined with negative reports is a potential fraud signal. Velocity data is collected across all users and contributes to our AI threat model." />
-          <FactorRow index={2} icon="business-outline" title="Owner Verification" desc="QR codes from verified business accounts receive a baseline trust boost. Verification means accountability — not safety." />
-          <FactorRow index={3} icon="chatbubbles-outline" title="Comment Sentiment" desc="Codes attracting detailed negative comments from multiple users are scored more conservatively. Comment analysis uses heuristics, not manual review." />
-          <FactorRow index={4} icon="time-outline" title="Age & History" desc="Codes with long, clean histories receive greater baseline trust. Sudden behaviour changes or destination updates trigger a score review." />
-          <FactorRow index={5} icon="sparkles-outline" title="AI Pattern Analysis" desc="Heuristic AI models analyse URL structure, domain age, payment data, and known threat patterns. AI analysis has known limitations and may produce incorrect results." />
+          <FactorRow index={1} icon="chatbubbles-outline" title="Community Comments" desc="Comments provide additional user context about a QR code. They are user-submitted and are not expert verification." />
+          <FactorRow index={2} icon="time-outline" title="Report History" desc="The report history and current community score are shown together so you can make your own decision." />
         </SectionCard>
 
         <SectionCard title="How Your Scan Data Is Used" icon="analytics-outline">
-          <WarnBox text="When you scan a QR code through BinRo, anonymised data from that scan contributes to our community database and AI training systems." />
-          <Bullet text="The QR code content (URL, payment data, text) is analysed and logged in anonymised form to our threat intelligence database." />
-          <Bullet text="Scan frequency data (how often a code is scanned app-wide) is used to calculate scan velocity signals." />
-          <Bullet text="Aggregated, anonymised scan patterns are used to train and improve our AI threat detection models." />
+          <WarnBox text="When you scan a QR code through BinRo, the decoded content and community activity contribute to the information shown in the details view." />
+          <Bullet text="The QR code content (URL, payment data, text) is decoded so it can be displayed in the details view." />
+          <Bullet text="Community reports and comments are used to provide trust context for the QR code." />
           <Bullet text="Your individual scan history is stored in your account but is not publicly visible unless you choose to share it." />
-          <Bullet text="Anonymous scan pattern data may be shared with or licensed to security research partners in aggregate form." />
           <Para>This data collection is a core part of how BinRo works and cannot be opted out of while using the scanning feature. By scanning a QR code through BinRo, you consent to this use of your scan data.</Para>
         </SectionCard>
 

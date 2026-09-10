@@ -44,7 +44,7 @@ A stranger contacts you claiming you owe them money from a previous transaction 
 
 QR codes sent via message claiming to be "TRAI KYC verification," "SBI reward collection," or "Aadhaar link update." These lead to phishing pages that harvest your banking credentials.
 
-**BinRo catches**: Our INDIA_PHISHING_PATTERNS registry flags 98% of these domains within 24 hours of first report.
+**BinRo helps**: Community reports can give other users context when the same QR code is encountered.
 
 ### 4. Screen-sharing "customer support" attacks
 
@@ -66,7 +66,7 @@ UPI IDs that look like legitimate merchants but differ by one character — e.g.
 
 ---
 
-BinRo catches all seven of these patterns. Download the app and scan before you pay.`,
+BinRo helps you review the QR content and community reports before you pay.`,
   },
   "how-trust-score-works": {
     slug:     "how-trust-score-works",

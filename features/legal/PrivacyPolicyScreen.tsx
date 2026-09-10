@@ -163,17 +163,15 @@ export default function PrivacyPolicyScreen() {
 
           <SubHead text="Core Service Delivery" colors={colors} />
           <Bullet text="Authenticate your account, maintain sessions, and secure your profile" colors={colors} />
-          <Bullet text="Perform QR code safety analysis using heuristics, blacklists, and community data" colors={colors} />
+          <Bullet text="Display QR content and community-driven trust information" colors={colors} />
           <Bullet text="Sync scan history, favourites, and generated QR codes across your devices" colors={colors} />
           <Bullet text="Power community trust scores from aggregated, weighted user reports" colors={colors} />
           <Bullet text="Send in-app notifications about QR codes you follow or report activity" colors={colors} />
 
-          <SubHead text="Learning & Getting Smarter" colors={colors} />
-          <Bullet text="Aggregated, anonymised scan data and safety reports help train and improve our threat detection models — so BinRo gets better at spotting scams for everyone." colors={colors} />
-          <Bullet text="URL and domain patterns from scanned QR codes contribute to our pattern-recognition database, helping us catch new threats early." colors={colors} />
+          <SubHead text="Community Trust" colors={colors} />
+          <Bullet text="Aggregated, anonymised reports and comments help improve community trust scores." colors={colors} />
           <Bullet text="Community report patterns (which codes users flag as safe/scam/fake/spam) help improve how accurately we classify risk." colors={colors} />
           <Bullet text="Your usage patterns are analysed to improve the app's experience and guide what we build next." colors={colors} />
-          <Bullet text="We may use anonymised scan data to build threat intelligence datasets. Your personal identity is never included." colors={colors} />
 
           <SubHead text="Advertising & Keeping BinRo Free" colors={colors} />
           <Bullet text="Aggregated, non-personally-identifiable usage patterns may be used to show relevant in-app ads, which help keep BinRo free." colors={colors} />
@@ -189,12 +187,10 @@ export default function PrivacyPolicyScreen() {
 
         <SectionCard title="Data Pattern Analysis & Database Use" num="4" icon="analytics-outline" colors={colors}>
           <Para colors={colors}>
-            BinRo maintains a continuously updated threat intelligence database derived from community scan data and reports. This database powers our real-time QR code safety analysis.
+            BinRo maintains community trust information derived from user reports and comments. This information powers the trust details shown for QR codes.
           </Para>
-          <Bullet text="Scan patterns across our entire user base are analysed to detect emerging fraud campaigns, phishing waves, and new malicious QR code formats." colors={colors} />
-          <Bullet text="Payment QR codes (UPI, BharatQR, etc.) are analysed in aggregate for unusual merchant patterns that may indicate fraud." colors={colors} />
-          <Bullet text="URL and domain patterns from scanned QR codes are added to our threat pattern database and may be shared with our threat intelligence partners in anonymised form." colors={colors} />
-          <Bullet text="Community report data is used to build statistical models that weight reporter credibility and detect coordinated abuse." colors={colors} />
+          <Bullet text="Community reports and comments are aggregated to provide context about QR codes." colors={colors} />
+          <Bullet text="Community report data may be weighted to reduce coordinated abuse." colors={colors} />
           <Para colors={colors}>
             All pattern analysis databases use anonymised and aggregated data. We do not build databases that link specific QR code content to individual users.
           </Para>
@@ -205,7 +201,7 @@ export default function PrivacyPolicyScreen() {
             BinRo uses Google Firebase for backend infrastructure. Your data is stored in Firebase Firestore, Firebase Realtime Database, and Firebase Auth. Firebase is compliant with GDPR, SOC 2, and ISO 27001.
           </Para>
           <Para colors={colors}>
-            We also use: Google Safe Browsing API (URL threat checking), Razorpay (donation processing), and third-party analytics and crash reporting tools. These services have their own privacy policies which govern their use of data they receive.
+            We also use Razorpay for donation processing and third-party analytics and crash reporting tools. These services have their own privacy policies which govern their use of data they receive.
           </Para>
           <Para colors={colors}>
             We are not responsible for the data practices of these third-party providers. Links to their privacy policies are available on request.
@@ -215,7 +211,7 @@ export default function PrivacyPolicyScreen() {
         <SectionCard title="Data Retention" num="6" icon="time-outline" colors={colors}>
           <Bullet text="Account data is retained while your account is active." colors={colors} />
           <Bullet text="Upon account deletion, personally identifiable data is removed from active databases within 30 days." colors={colors} />
-          <Bullet text="Anonymised, aggregated data (scan counts, threat patterns, trust scores) may be retained indefinitely as part of our threat intelligence database." colors={colors} />
+          <Bullet text="Anonymised, aggregated community reports and trust scores may be retained to preserve the history of QR code reports." colors={colors} />
           <Bullet text="Backup copies may be retained for up to 90 days post-deletion for disaster recovery purposes." colors={colors} />
           <Bullet text="Data submitted as community reports may persist in anonymised form even after account deletion." colors={colors} />
         </SectionCard>
@@ -224,8 +220,6 @@ export default function PrivacyPolicyScreen() {
           <Para colors={colors}>We may share data in the following circumstances:</Para>
           <Bullet text="With Google Firebase as our primary infrastructure and authentication provider." colors={colors} />
           <Bullet text="With advertising partners: aggregated, non-personally-identifiable usage data only." colors={colors} />
-          <Bullet text="With AI/ML partners: anonymised scan patterns and threat data for model improvement." colors={colors} />
-          <Bullet text="With threat intelligence sharing networks: anonymised URL/domain/QR threat patterns." colors={colors} />
           <Bullet text="When required by law, court order, government directive, or to protect public safety." colors={colors} />
           <Bullet text="In the event of acquisition or merger, under equivalent privacy protections." colors={colors} />
           <Para colors={colors}>

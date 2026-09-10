@@ -507,17 +507,7 @@ Register a business account. **Auth required.**
 
 ---
 
-## Security & Utilities
-
-### `POST /api/v1/check-url`
-Proxy Google Safe Browsing API. Public.
-
-**Body:** `{ "url": "https://suspicious-site.com" }`
-
----
-
-### `GET /api/v1/analyze`
-Local heuristic QR/URL analysis. Public.
+## Utilities
 
 ---
 

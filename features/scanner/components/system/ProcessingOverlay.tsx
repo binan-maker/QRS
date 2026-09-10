@@ -44,19 +44,19 @@ export default function ProcessingOverlay() {
 
           {/* Static inner ring */}
           <View style={styles.innerRing}>
-            <MaterialCommunityIcons name="shield-search" size={30} color={GLOW} />
+            <MaterialCommunityIcons name="qrcode-scan" size={30} color={GLOW} />
           </View>
         </View>
 
         <View style={styles.textGroup}>
-          <Text style={styles.title}>Analyzing QR Code</Text>
-          <Text style={styles.subtitle}>Checking for threats…</Text>
+           <Text style={styles.title}>Reading QR Code</Text>
+           <Text style={styles.subtitle}>Preparing the QR details…</Text>
         </View>
 
         {/* Bottom branding */}
         <View style={styles.brandRow}>
-          <MaterialCommunityIcons name="shield-check" size={11} color="rgba(0,212,255,0.35)" />
-          <Text style={styles.brandText}>BinRo Shield</Text>
+          <MaterialCommunityIcons name="qrcode" size={11} color="rgba(0,212,255,0.35)" />
+          <Text style={styles.brandText}>BinRo Scanner</Text>
         </View>
       </Reanimated.View>
     </View>
