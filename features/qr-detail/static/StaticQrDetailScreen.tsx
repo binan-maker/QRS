@@ -57,7 +57,7 @@ const TrustVerdictBanner = memo(function TrustVerdictBanner({
     score >= 70 ? "shield-checkmark-outline"
     : score >= 40 ? "information-circle-outline"
     : "help-circle-outline";
-  const statusLabel = score >= 70 ? "SAFE" : score >= 40 ? "CAUTION" : "UNKNOWN";
+  const statusLabel = score >= 70 ? "COMMUNITY TRUSTED" : score >= 40 ? "COMMUNITY CAUTION" : "NO COMMUNITY SIGNAL";
   const bg = score >= 70
     ? (isDark ? "#0a1a0e" : "#f0fdf4")
     : score >= 40
@@ -80,7 +80,7 @@ const TrustVerdictBanner = memo(function TrustVerdictBanner({
             {trust?.label ?? "Rated"}
           </Text>
           <Text style={[verdictBannerStyles.sub, { color: isDark ? "#94a3b8" : "#64748b" }]}>
-            Community Trust Score: {score}
+            Based on {score} community trust points
           </Text>
         </View>
       </View>

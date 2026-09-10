@@ -61,21 +61,6 @@ export interface Evidence {
   value: string;
 }
 
-export interface PaymentSafetyResult {
-  isSuspicious: boolean;
-  warnings: string[];
-  riskLevel: "safe" | "caution" | "dangerous";
-  appInfo?: string;
-  evidence: Evidence[];
-}
-
-export interface UrlSafetyResult {
-  isSuspicious: boolean;
-  warnings: string[];
-  riskLevel: "safe" | "caution" | "dangerous";
-  evidence: Evidence[];
-}
-
 export interface ParsedUpiQr {
   vpa: string;
   payeeName: string;

@@ -133,8 +133,7 @@ export function useQrDetail(id: string, hint?: { content: string; contentType: s
     colors,
   ]);
 
-  // Stable function wrappers so callers using the function API continue to work
-  // (e.g. VerdictBanner type-checks against the function signature).
+  // Stable function wrappers keep the verdict API compatible with detail sections.
   const getTrustInfo = useCallback(() => trustInfo, [trustInfo]);
   const getCombinedVerdict = useCallback(() => combinedVerdict, [combinedVerdict]);
 

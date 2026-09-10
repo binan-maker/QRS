@@ -35,11 +35,7 @@ export const apiEnvSchema = z.object({
 
   // Auth / security
   SESSION_SECRET: z.string().min(32).optional(),
-  THREATS_SIGNING_KEY: z.string().optional(),
-
-
-  // External APIs
-  GOOGLE_SAFE_BROWSING_API_KEY: z.string().optional(),
+  
   OPENAI_API_KEY: z.string().optional(),
 });
 

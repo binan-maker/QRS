@@ -92,14 +92,8 @@ A QR code that has been scanned 10,000 times without significant reports is stat
 **3. Owner verification** (weight: 15%)
 QR codes created by users with a Verified Business badge get a trust boost. Verification requires a registered business, GST number, and manual review by the BinRo team.
 
-**4. AI phishing detection** (weight: 15%)
-We run every URL through a GPT-4o-mini safety check that's tuned specifically for India's threat landscape — UPI scam patterns, phishing domain characteristics, and brand impersonation.
-
-**5. Domain reputation** (weight: 5%)
-URLs are cross-referenced with Google Safe Browsing. New domains (under 30 days old) receive a caution flag.
-
-**6. Content analysis** (weight: 5%)
-Non-URL QR content (contacts, WiFi credentials, text) is analysed for suspicious patterns: unusual character sets, embedded URLs in otherwise plain-text QRs, etc.
+**4. Community feedback**
+Community reports are the only safety signal shown on the QR details page. QR content is displayed as provided; BinRo does not run website reputation checks or keyword-based threat detection there.
 
 ### The verdict tiers
 
