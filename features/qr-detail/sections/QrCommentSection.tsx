@@ -38,7 +38,6 @@ export function QrCommentSection({ user, offlineMode, q, delay = 110 }: Props) {
         handleSubmitComment={q.handleSubmitComment}
         handleCommentLike={q.handleCommentLike as any}
         handleDeleteComment={q.handleDeleteComment}
-        setCommentReportModal={q.setCommentReportModal}
         getAllDescendants={q.getAllDescendants as any}
         getRootCommentId={q.getRootCommentId}
         toggleReplies={q.toggleReplies}
