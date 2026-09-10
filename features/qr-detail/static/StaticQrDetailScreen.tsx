@@ -405,7 +405,6 @@ export default function StaticQrDetailScreen({ id, hint }: Props) {
         visible={ownerSheetOpen}
         onClose={() => setOwnerSheetOpen(false)}
         ownerInfo={q.ownerInfo as any}
-        guardLink={null}
       />
 
       <CommentMenuSheet

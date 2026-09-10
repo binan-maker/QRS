@@ -9,7 +9,6 @@ interface Props {
   ownerSheetOpen: boolean;
   onCloseOwnerSheet: () => void;
   ownerInfo: any;
-  guardLink?: any;
 
   q: any;
 
@@ -29,7 +28,6 @@ export function QrBottomSheets({
   ownerSheetOpen,
   onCloseOwnerSheet,
   ownerInfo,
-  guardLink,
   q,
   overflowOpen,
   onCloseOverflow,
@@ -46,7 +44,6 @@ export function QrBottomSheets({
         visible={ownerSheetOpen}
         onClose={onCloseOwnerSheet}
         ownerInfo={ownerInfo as any}
-        guardLink={guardLink ?? null}
       />
 
       <CommentMenuSheet

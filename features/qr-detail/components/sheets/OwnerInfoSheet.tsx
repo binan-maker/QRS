@@ -7,10 +7,6 @@ import BottomSheet from "@/shared/components/ui/BottomSheet";
 import { useTheme } from "@/shared/contexts/ThemeContext";
 import { getUserPhotoURL } from "@/services/user";
 
-interface GuardLink {
-  currentDestination?: string;
-}
-
 interface OwnerInfo {
   businessName?: string | null;
   ownerName: string;
@@ -25,10 +21,9 @@ interface Props {
   visible: boolean;
   onClose: () => void;
   ownerInfo: OwnerInfo | null;
-  guardLink: GuardLink | null;
 }
 
-export default function OwnerInfoSheet({ visible, onClose, ownerInfo, guardLink }: Props) {
+export default function OwnerInfoSheet({ visible, onClose, ownerInfo }: Props) {
   const { colors } = useTheme();
   const [photoURL, setPhotoURL] = useState<string | null>(null);
 
@@ -108,15 +103,6 @@ export default function OwnerInfoSheet({ visible, onClose, ownerInfo, guardLink 
             </View>
           ) : null}
 
-          {guardLink?.currentDestination ? (
-            <View style={[s.infoRow, { borderColor: colors.surfaceBorder }]}>
-              <Ionicons name="link-outline" size={13} color={colors.textMuted} />
-              <Text style={[s.infoLabel, { color: colors.textMuted }]}>Destination</Text>
-              <Text style={[s.infoValue, { color: colors.textSecondary }]} numberOfLines={2} selectable>
-                {guardLink.currentDestination}
-              </Text>
-            </View>
-          ) : null}
         </View>
       )}
     </BottomSheet>

@@ -85,14 +85,9 @@ export function useScanner({ isCameraAvailable = true }: { isCameraAvailable?: b
     verifiedOwnerName:     modals.verifiedOwnerName,
     unverifiedModal:       modals.unverifiedModal,
     unverifiedCountdown:   modals.unverifiedCountdown,
-    livingShieldModal:     modals.livingShieldModal,
-    livingShieldData:      modals.livingShieldData,
-    livingShieldLoading:   modals.livingShieldLoading,
     // Modal handlers
     handleUnverifiedProceed:     modals.handleUnverifiedProceed,
     handleUnverifiedBack:        modals.handleUnverifiedBack,
-    handleLivingShieldProceed:   modals.handleLivingShieldProceed,
-    handleLivingShieldCancel:    modals.handleLivingShieldCancel,
     // Messages
     galleryErrorMsg:          messages.galleryErrorMsg,
     dismissGalleryError:      messages.dismissGalleryError,

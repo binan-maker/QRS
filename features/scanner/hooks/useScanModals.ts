@@ -1,9 +1,8 @@
 // ─── Scan Modals ──────────────────────────────────────────────────────────────
 // Single responsibility: all post-scan modal state and their handler logic.
-// Covers three independent modal groups:
+// Covers two independent modal groups:
 //   1. Verified branded QR modal
 //   2. Unverified branded QR modal (countdown timer)
-//   3. Living Shield modal (dynamic QR codes)
 // Contains zero camera state and zero database calls.
 //
 // NOTE: The Safety Modal was removed. openSafetyModal() now navigates directly
@@ -12,15 +11,10 @@
 
 import { useState, useRef, useEffect } from "react";
 import { router } from "expo-router";
-import { Linking } from "react-native";
-import type { GuardLink } from "@/lib/firestore-service";
 
 export interface ScanModalControls {
   openSafetyModal:       (qrId: string) => void;
   openVerifiedModal:     (qrId: string, ownerName: string) => void;
-  openLivingShieldModal: () => void;
-  setLivingShieldData:   (data: GuardLink | null) => void;
-  setLivingShieldLoading:(loading: boolean) => void;
 }
 
 export function useScanModals(resetScan: () => void) {
@@ -34,11 +28,6 @@ export function useScanModals(resetScan: () => void) {
   const [unverifiedQrId,      setUnverifiedQrId]      = useState<string | null>(null);
   const [unverifiedCountdown, setUnverifiedCountdown] = useState(3);
   const countdownRef = useRef<ReturnType<typeof setInterval> | null>(null);
-
-  // ── Living Shield modal ─────────────────────────────────────────────────────
-  const [livingShieldModal,   setLivingShieldModal]   = useState(false);
-  const [livingShieldData,    setLivingShieldData]    = useState<GuardLink | null>(null);
-  const [livingShieldLoading, setLivingShieldLoading] = useState(false);
 
   // ── Verified modal: auto-navigate after 2.2 s ───────────────────────────────
   useEffect(() => {
@@ -82,10 +71,6 @@ export function useScanModals(resetScan: () => void) {
     setVerifiedModal(true);
   }
 
-  function openLivingShieldModal() {
-    setLivingShieldModal(true);
-  }
-
   // ── User-facing handlers ────────────────────────────────────────────────────
   function handleUnverifiedProceed() {
     if (countdownRef.current) clearInterval(countdownRef.current);
@@ -100,27 +85,9 @@ export function useScanModals(resetScan: () => void) {
     resetScan();
   }
 
-  async function handleLivingShieldProceed() {
-    if (!livingShieldData?.currentDestination) return;
-    const dest = livingShieldData.currentDestination;
-    setLivingShieldModal(false);
-    setLivingShieldData(null);
-    resetScan();
-    await Linking.openURL(dest.startsWith("http") ? dest : `https://${dest}`);
-  }
-
-  function handleLivingShieldCancel() {
-    setLivingShieldModal(false);
-    setLivingShieldData(null);
-    resetScan();
-  }
-
   const controls: ScanModalControls = {
     openSafetyModal,
     openVerifiedModal,
-    openLivingShieldModal,
-    setLivingShieldData,
-    setLivingShieldLoading,
   };
 
   return {
@@ -129,12 +96,7 @@ export function useScanModals(resetScan: () => void) {
     verifiedOwnerName,
     unverifiedModal,
     unverifiedCountdown,
-    livingShieldModal,
-    livingShieldData,
-    livingShieldLoading,
     handleUnverifiedProceed,
     handleUnverifiedBack,
-    handleLivingShieldProceed,
-    handleLivingShieldCancel,
   };
 }

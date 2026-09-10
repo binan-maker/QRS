@@ -10,8 +10,6 @@ export { SectionHeader } from "@/shared/components/ui/SectionHeader";
 export { OfflineToast } from "./OfflineToast";
 export { QrToast } from "./QrToast";
 export { VerdictBanner } from "./VerdictBanner";
-export { LivingShieldBanner } from "./banners/LivingShieldBanner";
-export { StandardQrBanner } from "./banners/StandardQrBanner";
 
 export { default as CommentReportModal } from "./modals/CommentReportModal";
 export { default as MessagesModal } from "./modals/MessagesModal";

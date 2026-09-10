@@ -31,12 +31,6 @@ import { appendToLocalScanHistory, makeScanEntry } from "@/features/scanner/util
 import { emitScanEvent } from "@/services/scan-history";
 import type { ScanModalControls } from "@/features/scanner/hooks/useScanModals";
 
-const GUARD_PATTERN =
-  /\/guard\/([A-Za-z0-9]{4}-[A-Za-z0-9]{4}-[A-Za-z0-9]{4}-[A-Za-z0-9]{4})(?:[/?#]|$)/;
-
-const STANDARD_PATTERN =
-  /\/go\/([A-Za-z0-9]{4}-[A-Za-z0-9]{4}-[A-Za-z0-9]{4}-[A-Za-z0-9]{4})(?:[/?#]|$)/i;
-
 export interface ScanProcessorParams {
   anonymousMode:          boolean;
   scanned:                boolean;
@@ -227,39 +221,10 @@ export function useScanProcessor({
 
   // ─── Main scan path ───────────────────────────────────────────────────────────
   async function processScan(content: string, scanSource: "camera" | "gallery" = "camera") {
-    const routeGuard = async (uuid: string, param: string) => {
-      setProcessing(false);
-      setScanSuccess(true);
-      const isGuard = param === "guardUuid";
-      showScannerMsg(
-        isGuard ? "Living Shield QR detected" : "BinRo standard code detected",
-        "info"
-      );
-      const qrId = await getQrCodeId(content);
-      safePush(`/qr-detail/${qrId}?${param}=${uuid}`);
-      // Always emit an event for guard/standard QR scans (these are URLs, treat as safe)
-      emitScanEvent(qrId, { platform: PLATFORM, contentType: "url", verdict: "safe", scanSource });
-      // Store timer in ref so it can be cancelled on unmount (previously leaked)
-      if (navResetTimerRef.current) clearTimeout(navResetTimerRef.current);
-      navResetTimerRef.current = setTimeout(() => {
-        navResetTimerRef.current = null;
-        setScanSuccess(false);
-        setScanned(false);
-      }, 1200);
-    };
-
-    const guardMatch    = content.match(GUARD_PATTERN);
-    const standardMatch = content.match(STANDARD_PATTERN);
-
     if (user && anonymousMode) {
-      if (guardMatch)    { await routeGuard(guardMatch[1].toUpperCase(),    "guardUuid");    return; }
-      if (standardMatch) { await routeGuard(standardMatch[1].toUpperCase(), "standardUuid"); return; }
       await processScanAnonymous(content);
       return;
     }
-
-    if (guardMatch)    { await routeGuard(guardMatch[1].toUpperCase(),    "guardUuid");    return; }
-    if (standardMatch) { await routeGuard(standardMatch[1].toUpperCase(), "standardUuid"); return; }
 
     setProcessing(true);
     try {
