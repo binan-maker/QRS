@@ -7,12 +7,14 @@ import { navOfflineStyles } from "@/features/qr-detail/styles";
 interface Props {
   offlineMode: boolean;
   onBack: () => void;
+  onShare: () => void;
   onOverflowOpen: () => void;
 }
 
 export default function QrDetailNavBar({
   offlineMode,
   onBack,
+  onShare,
   onOverflowOpen,
 }: Props) {
   const { colors } = useTheme();
@@ -37,8 +39,20 @@ export default function QrDetailNavBar({
       </View>
 
       <View style={styles.navActions}>
+        <Animated.View entering={FadeIn.delay(35).duration(240)}>
+          <Pressable
+            accessibilityLabel="Share QR details"
+            accessibilityRole="button"
+            onPress={onShare}
+            style={({ pressed }) => [styles.navActionBtn, { opacity: pressed ? 0.7 : 1 }]}
+          >
+            <Ionicons name="share-social-outline" size={20} color={colors.text} />
+          </Pressable>
+        </Animated.View>
         <Animated.View entering={FadeIn.delay(40).duration(240)}>
           <Pressable
+            accessibilityLabel="More QR detail actions"
+            accessibilityRole="button"
             onPress={onOverflowOpen}
             style={({ pressed }) => [styles.navActionBtn, { opacity: pressed ? 0.7 : 1 }]}
           >

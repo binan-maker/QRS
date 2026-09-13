@@ -207,6 +207,7 @@ export default function StaticQrDetailScreen({ id, hint }: Props) {
               <QrDetailNavBar
                 offlineMode={q.offlineMode}
                 onBack={safeBack}
+                onShare={handleShare}
                 onOverflowOpen={() => setOverflowOpen(true)}
               />
             </View>
