@@ -2,7 +2,7 @@ import { useLocalSearchParams } from "expo-router";
 import { useTheme } from "@/shared/contexts/ThemeContext";
 import { useAndroidNavBarScreen } from "@/shared/hooks/useAndroidNavBar";
 import { normalizeQrDetailContentType } from "./content-types";
-import StaticQrDetailScreen from "./StaticQrDetailScreen";
+import StaticQrDetailScreen from "./static/StaticQrDetailScreen";
 
 export default function QrDetailScreen() {
   const { colors, isDark } = useTheme();
