@@ -6,7 +6,7 @@
  *
  * Example:
  *   import {
- *     QrRenderer, QrCard,
+ *     QrRenderer, ContentCard,
  *     QrTypeIcon, useQrMeta,
  *     getQrTypeDef, getDisplayLabel, detectContentType,
  *     smartOpen, computeTrustScore,
@@ -15,9 +15,6 @@
 
 // ── Universal renderer ────────────────────────────────────────────────────────
 export { default as QrRenderer } from "./renderers/QrRenderer";
-
-// ── Universal card system ─────────────────────────────────────────────────────
-export { QrCard } from "./cards";
 
 // ── Visual atoms ──────────────────────────────────────────────────────────────
 export { QrTypeIcon, QrTypeBadge } from "./renderers/HistoryRenderer";
