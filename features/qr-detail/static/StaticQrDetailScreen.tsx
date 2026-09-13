@@ -2,7 +2,7 @@ import React, { useState, useCallback, useRef, useEffect, useMemo, memo } from "
 import { useNavHide } from "@/shared/hooks/useNavHide";
 import {
   View, Text, Pressable, RefreshControl,
-  StyleSheet, KeyboardAvoidingView, type LayoutChangeEvent,
+  StyleSheet, KeyboardAvoidingView, Share, type LayoutChangeEvent,
 } from "react-native";
 import { StatusBar } from "expo-status-bar";
 import { router } from "expo-router";
@@ -18,6 +18,7 @@ import { useNetworkStatus } from "@/shared/hooks/useNetworkStatus";
 import { makeStyles, offlineSectionStyles } from "@/features/qr-detail/styles";
 import { REPORT_LABELS, REPORT_ICONS } from "@/features/qr-detail/utils/report-toast";
 import { normalizeQrDetailContentType } from "@/features/qr-detail/content-types";
+import { getQrShareUrl } from "@/shared/utils/qr-share";
 
 import LoadingSkeleton from "@/features/qr-detail/components/LoadingSkeleton";
 import { QrContentCard } from "@/features/qr-detail/components/QrContentCard";
@@ -137,6 +138,24 @@ export default function StaticQrDetailScreen({ id, hint }: Props) {
       q.scrollRef.current?.scrollTo({ y: reportSectionY.current, animated: true });
     }, 280);
   }, [user, q.scrollRef]);
+
+  const handleShare = useCallback(async () => {
+    const shareUrl = getQrShareUrl(id);
+    if (!shareUrl) {
+      showToast("This QR cannot be shared yet", "alert-circle-outline");
+      return;
+    }
+
+    try {
+      await Share.share({
+        title: "Share BinRo QR Details",
+        message: `View this QR code's safety details on BinRo: ${shareUrl}`,
+        url: shareUrl,
+      });
+    } catch {
+      showToast("Unable to open sharing", "alert-circle-outline");
+    }
+  }, [id, showToast]);
 
   // A scanned QR includes its content in the route hint. Render that content
   // immediately instead of waiting for community reports to finish loading;
@@ -336,6 +355,7 @@ export default function StaticQrDetailScreen({ id, hint }: Props) {
       <OverflowSheet
         visible={overflowOpen}
         onClose={() => setOverflowOpen(false)}
+        onShare={handleShare}
         onReport={() => showToast("Feature Coming Soon!", "time-outline")}
       />
 

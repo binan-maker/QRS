@@ -20,6 +20,9 @@
     "ios": {
       "supportsTablet": false,
       "bundleIdentifier": "com.binro.app",
+      "associatedDomains": [
+        "applinks:binro.xyz"
+      ],
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false,
         "NSCameraUsageDescription": "BinRo uses your camera to scan QR codes.",
@@ -32,6 +35,23 @@
     },
     "android": {
       "package": "com.qrguard.app",
+      "intentFilters": [
+        {
+          "action": "VIEW",
+          "autoVerify": true,
+          "category": [
+            "BROWSABLE",
+            "DEFAULT"
+          ],
+          "data": [
+            {
+              "scheme": "https",
+              "host": "binro.xyz",
+              "pathPrefix": "/qr"
+            }
+          ]
+        }
+      ],
       "adaptiveIcon": {
         "backgroundColor": "#0A0E17",
         "backgroundImage": "./assets/images/icon.png"

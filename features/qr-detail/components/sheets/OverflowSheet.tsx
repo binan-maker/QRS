@@ -8,18 +8,34 @@ interface Props {
   visible: boolean;
   onClose: () => void;
   onReport: () => void;
+  onShare: () => void;
 }
 
 export default function OverflowSheet({
   visible,
   onClose,
   onReport,
+  onShare,
 }: Props) {
   const { colors } = useTheme();
 
   return (
     <BottomSheet visible={visible} onClose={onClose} sheetStyle={{ paddingHorizontal: 0 }} extraBottomPadding={20}>
         <View style={{ paddingBottom: 12 }}>
+        {/* Share */}
+        <Pressable
+          style={[overflowStyles.item, { paddingVertical: 18 }]}
+          onPress={() => { onClose(); onShare(); }}
+        >
+          <View style={[overflowStyles.iconWrap, { backgroundColor: colors.primary + "18" }]}>
+            <Ionicons name="share-outline" size={20} color={colors.primary} />
+          </View>
+          <View style={{ flex: 1 }}>
+            <Text style={[overflowStyles.itemLabel, { color: colors.text }]}>Share QR Details</Text>
+            <Text style={[overflowStyles.itemSub, { color: colors.textMuted }]}>Send a link to this QR page</Text>
+          </View>
+        </Pressable>
+
         {/* Report */}
       <Pressable
           style={[overflowStyles.item, { paddingVertical: 18 }]}
