@@ -1,0 +1,237 @@
+.page {
+  width: min(1120px, calc(100% - 48px));
+  min-height: 100dvh;
+  margin: 0 auto;
+  padding: 0 0 28px;
+}
+
+.header {
+  display: flex;
+  min-height: 78px;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid hsl(var(--line) / 0.75);
+}
+
+.brand {
+  display: inline-flex;
+  gap: 10px;
+  align-items: center;
+  color: hsl(var(--ink));
+  font-family: "Space Grotesk", sans-serif;
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: -0.04em;
+  text-decoration: none;
+}
+
+.brandGlyph {
+  display: inline-grid;
+  width: 28px;
+  height: 28px;
+  place-items: center;
+  color: hsl(var(--paper));
+  border-radius: 9px 9px 9px 3px;
+  background: hsl(var(--sage));
+  font-size: 15px;
+}
+
+.status {
+  display: inline-flex;
+  gap: 8px;
+  align-items: center;
+  color: hsl(var(--muted));
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+}
+
+.statusDot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: hsl(var(--sage));
+  box-shadow: 0 0 0 4px hsl(var(--sage) / 0.12);
+}
+
+.hero {
+  max-width: 760px;
+  padding: 105px 0 92px;
+}
+
+.eyebrow {
+  margin: 0 0 22px;
+  color: hsl(var(--sage-deep));
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+}
+
+.hero h1 {
+  max-width: 720px;
+  margin: 0;
+  color: hsl(var(--ink));
+  font-family: "Space Grotesk", sans-serif;
+  font-size: clamp(48px, 8vw, 84px);
+  font-weight: 600;
+  line-height: 0.98;
+  letter-spacing: -0.07em;
+}
+
+.hero h1 em {
+  color: hsl(var(--sage));
+  font-style: normal;
+}
+
+.intro {
+  max-width: 520px;
+  margin: 27px 0 0;
+  color: hsl(var(--ink-soft));
+  font-size: 16px;
+  line-height: 1.65;
+}
+
+.actions {
+  display: flex;
+  gap: 18px;
+  align-items: center;
+  margin-top: 34px;
+}
+
+.primaryButton {
+  display: inline-flex;
+  min-height: 48px;
+  gap: 14px;
+  align-items: center;
+  justify-content: center;
+  padding: 0 18px;
+  color: hsl(var(--paper));
+  border-radius: 10px;
+  background: hsl(var(--sage-deep));
+  font-size: 12px;
+  font-weight: 700;
+  text-decoration: none;
+  transition: transform 180ms ease, background-color 180ms ease;
+}
+
+.primaryButton:hover {
+  background: hsl(var(--sage));
+  transform: translateY(-2px);
+}
+
+.hint {
+  color: hsl(var(--muted));
+  font-size: 11px;
+  line-height: 1.5;
+}
+
+.hint code {
+  color: hsl(var(--ink-soft));
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+
+.infoGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1px;
+  overflow: hidden;
+  border: 1px solid hsl(var(--line));
+  border-radius: 18px;
+  background: hsl(var(--line));
+}
+
+.infoCard {
+  min-height: 220px;
+  padding: 25px 24px;
+  background: hsl(var(--card));
+}
+
+.number {
+  color: hsl(var(--sage));
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 11px;
+}
+
+.infoCard h2 {
+  margin: 45px 0 10px;
+  color: hsl(var(--ink));
+  font-family: "Space Grotesk", sans-serif;
+  font-size: 19px;
+  letter-spacing: -0.04em;
+}
+
+.infoCard p {
+  max-width: 260px;
+  margin: 0;
+  color: hsl(var(--muted));
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.footer {
+  display: flex;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 23px 0 0;
+  color: hsl(var(--muted));
+  font-size: 10px;
+}
+
+@media (max-width: 720px) {
+  .hero {
+    padding: 75px 0 62px;
+  }
+
+  .actions {
+    display: grid;
+    align-items: start;
+  }
+
+  .primaryButton {
+    width: fit-content;
+  }
+
+  .infoGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .infoCard {
+    min-height: 0;
+  }
+
+  .infoCard h2 {
+    margin-top: 28px;
+  }
+}
+
+@media (max-width: 560px) {
+  .page {
+    width: min(100% - 32px, 460px);
+  }
+
+  .header {
+    min-height: 68px;
+  }
+
+  .status {
+    max-width: 145px;
+    text-align: right;
+  }
+
+  .hero {
+    padding: 58px 0 48px;
+  }
+
+  .hero h1 {
+    font-size: clamp(46px, 13vw, 64px);
+  }
+
+  .intro {
+    font-size: 14px;
+  }
+
+  .footer {
+    display: grid;
+    gap: 7px;
+  }
+}

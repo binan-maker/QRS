@@ -5,6 +5,9 @@ google-services.json
 ```
 # Dependencies
 node_modules/
+apps/web/.next/
+apps/web/AGENTS.md
+apps/web/CLAUDE.md
 
 
 .agents/

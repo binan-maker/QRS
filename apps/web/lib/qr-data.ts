@@ -45,7 +45,11 @@ type FirestoreQrDocument = {
 };
 
 function env(name: string): string {
-  return process.env[name] ?? "";
+  const value = process.env[name];
+  if (value) return value;
+
+  const expoEquivalent = name.replace(/^NEXT_PUBLIC_/, "EXPO_PUBLIC_");
+  return process.env[expoEquivalent] ?? "";
 }
 
 function getFirebaseDb() {

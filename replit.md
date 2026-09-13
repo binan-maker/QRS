@@ -18,8 +18,8 @@ India-focused QR code security app with real-time fraud detection, community tru
 
 | Workflow | Command |
 |---|---|
-| Start Backend | `npm run server:dev` → port 5000 |
-| Start Frontend | `npm run expo:dev` → Metro bundler port 8081 |
+| Start Backend | `npm run server:dev` → backend service |
+| Start Frontend | `npm run web:dev` → Next.js website on port 5000 |
 
 ## Environment variables
 
