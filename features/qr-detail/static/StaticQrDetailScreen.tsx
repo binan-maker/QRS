@@ -17,6 +17,7 @@ import { useQrDetail } from "@/features/qr-detail/hooks/useQrDetail";
 import { useNetworkStatus } from "@/shared/hooks/useNetworkStatus";
 import { makeStyles, offlineSectionStyles } from "@/features/qr-detail/styles";
 import { REPORT_LABELS, REPORT_ICONS } from "@/features/qr-detail/utils/report-toast";
+import { normalizeQrDetailContentType } from "@/features/qr-detail/content-types";
 
 import LoadingSkeleton from "@/features/qr-detail/components/LoadingSkeleton";
 import { ContentCard } from "@/features/qr-engine/content-cards";
@@ -131,7 +132,7 @@ export default function StaticQrDetailScreen({ id, hint }: Props) {
   const trust     = q.trustInfo;
 
   const content     = q.qrCode?.content || q.offlineContent || "";
-  const contentType = q.qrCode?.contentType || q.offlineContentType || "text";
+  const contentType = normalizeQrDetailContentType(q.qrCode?.contentType || q.offlineContentType);
 
   const handleFavoritePress = useCallback(() => {
     if (!user) { router.push("/(auth)/login"); return; }

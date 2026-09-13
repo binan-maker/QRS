@@ -1,6 +1,7 @@
 import { useLocalSearchParams } from "expo-router";
 import { useTheme } from "@/shared/contexts/ThemeContext";
 import { useAndroidNavBarScreen } from "@/shared/hooks/useAndroidNavBar";
+import { normalizeQrDetailContentType } from "./content-types";
 import StaticQrDetailScreen from "./static/StaticQrDetailScreen";
 
 export default function QrDetailScreen() {
@@ -13,7 +14,9 @@ export default function QrDetailScreen() {
     hintContentType?: string;
   }>();
 
-  const hint = hintContent ? { content: hintContent, contentType: hintContentType || "text" } : undefined;
+  const hint = hintContent
+    ? { content: hintContent, contentType: normalizeQrDetailContentType(hintContentType) }
+    : undefined;
 
   return <StaticQrDetailScreen id={id} hint={hint} />;
 }

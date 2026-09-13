@@ -1,1 +1,0 @@
-export { QrCommentSection } from "./QrCommentSection";

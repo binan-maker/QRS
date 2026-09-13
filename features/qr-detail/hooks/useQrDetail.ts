@@ -10,6 +10,7 @@ import { useQrFavorite } from "./useQrFavorite";
 import { useQrComments, type CommentItem } from "./useQrComments";
 import type { AppColors } from "@/shared/constants/colors";
 import { parseAnyPaymentQr } from "@/services/analysis";
+import { normalizeQrDetailContentType } from "../content-types";
 
 export type { QrDetail, CommentItem };
 
@@ -45,16 +46,12 @@ export function useQrDetail(id: string, hint?: { content: string; contentType: s
 
   const data = useQrData(id, userId, hint);
   const content = data.qrCode?.content || data.offlineContent;
-  const contentType = data.qrCode?.contentType || data.offlineContentType;
+  const contentType = normalizeQrDetailContentType(data.qrCode?.contentType || data.offlineContentType);
 
   const parsedPayment = useMemo(
     () =>
       content &&
-      (contentType === "payment" ||
-        contentType === "upi" ||
-        contentType === "paymentlink" ||
-        contentType === "scantopay" ||
-        contentType === "bharatqr")
+      contentType === "payment"
         ? parseAnyPaymentQr(content)
         : null,
     [content, contentType],
@@ -76,7 +73,7 @@ export function useQrDetail(id: string, hint?: { content: string; contentType: s
       return {
         score: trustScore.score,
         label: trustScore.label,
-        color: getTrustColor(trustScore.label, colors),
+        color: getTrustColor(trustScore.label ?? "", colors),
         manipulationWarning: trustScore.manipulationWarning ?? false,
       };
     }
@@ -125,13 +122,7 @@ export function useQrDetail(id: string, hint?: { content: string; contentType: s
 
   const handleOpenContent = useCallback(async () => {
     if (!content) return;
-    if (
-      contentType === "payment" ||
-      contentType === "upi" ||
-      contentType === "paymentlink" ||
-      contentType === "scantopay" ||
-      contentType === "bharatqr"
-    ) {
+    if (contentType === "payment") {
       // Copy UPI ID / payment link to clipboard instead of deep-linking into payment apps,
       // which causes broken redirects across GPay, PhonePe, Paytm, BHIM etc.
       const copyValue =
