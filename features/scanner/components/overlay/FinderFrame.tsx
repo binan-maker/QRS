@@ -1,7 +1,6 @@
 import React from "react";
 import { View, StyleSheet, Animated } from "react-native";
 import { FINDER_SIZE } from "@/features/scanner/hooks/useCameraControls";
-import { SCANNER_SUCCESS } from "./constants";
 
 // Corner geometry
 const CORNER_LEN    = 28;
@@ -9,54 +8,30 @@ const CORNER_W      = 3;
 const CORNER_RADIUS = 12;   // visibly rounded tips
 
 const CORNER_DEFAULT = "rgba(255,255,255,0.88)";
-const CORNER_SUCCESS = SCANNER_SUCCESS;
 
 interface Props {
-  scanned:      boolean;
-  scanSuccess:  boolean;
   cornerBreath: Animated.Value;
 }
 
-export default function FinderFrame({ scanned, scanSuccess, cornerBreath }: Props) {
-  const cornerColor = scanSuccess ? CORNER_SUCCESS : CORNER_DEFAULT;
-
+export default function FinderFrame({ cornerBreath }: Props) {
   return (
     <View style={styles.frame}>
 
       {/* ── Top-left corner ── */}
-      <Animated.View style={[styles.corner, styles.ctlH, { backgroundColor: cornerColor, opacity: cornerBreath }]} />
-      <Animated.View style={[styles.corner, styles.ctlV, { backgroundColor: cornerColor, opacity: cornerBreath }]} />
+      <Animated.View style={[styles.corner, styles.ctlH, { backgroundColor: CORNER_DEFAULT, opacity: cornerBreath }]} />
+      <Animated.View style={[styles.corner, styles.ctlV, { backgroundColor: CORNER_DEFAULT, opacity: cornerBreath }]} />
 
       {/* ── Top-right corner ── */}
-      <Animated.View style={[styles.corner, styles.ctrH, { backgroundColor: cornerColor, opacity: cornerBreath }]} />
-      <Animated.View style={[styles.corner, styles.ctrV, { backgroundColor: cornerColor, opacity: cornerBreath }]} />
+      <Animated.View style={[styles.corner, styles.ctrH, { backgroundColor: CORNER_DEFAULT, opacity: cornerBreath }]} />
+      <Animated.View style={[styles.corner, styles.ctrV, { backgroundColor: CORNER_DEFAULT, opacity: cornerBreath }]} />
 
       {/* ── Bottom-left corner ── */}
-      <Animated.View style={[styles.corner, styles.cblH, { backgroundColor: cornerColor, opacity: cornerBreath }]} />
-      <Animated.View style={[styles.corner, styles.cblV, { backgroundColor: cornerColor, opacity: cornerBreath }]} />
+      <Animated.View style={[styles.corner, styles.cblH, { backgroundColor: CORNER_DEFAULT, opacity: cornerBreath }]} />
+      <Animated.View style={[styles.corner, styles.cblV, { backgroundColor: CORNER_DEFAULT, opacity: cornerBreath }]} />
 
       {/* ── Bottom-right corner ── */}
-      <Animated.View style={[styles.corner, styles.cbrH, { backgroundColor: cornerColor, opacity: cornerBreath }]} />
-      <Animated.View style={[styles.corner, styles.cbrV, { backgroundColor: cornerColor, opacity: cornerBreath }]} />
-
-      {/* Quiet verification state — a progress cue replaces the oversized success icon. */}
-      {scanned && (
-        <View
-          style={styles.progressTrack}
-          accessibilityRole="progressbar"
-          accessibilityLabel={scanSuccess ? "QR code verified" : "Verifying QR code"}
-        >
-          <Animated.View
-            style={[
-              styles.progressFill,
-              {
-                width: scanSuccess ? "100%" : "62%",
-                opacity: scanSuccess ? 1 : cornerBreath,
-              },
-            ]}
-          />
-        </View>
-      )}
+      <Animated.View style={[styles.corner, styles.cbrH, { backgroundColor: CORNER_DEFAULT, opacity: cornerBreath }]} />
+      <Animated.View style={[styles.corner, styles.cbrV, { backgroundColor: CORNER_DEFAULT, opacity: cornerBreath }]} />
     </View>
   );
 }
@@ -151,19 +126,4 @@ const styles = StyleSheet.create({
     borderTopLeftRadius:     CORNER_RADIUS / 3,
   },
 
-  progressTrack: {
-    position:        "absolute",
-    left:            24,
-    right:           24,
-    bottom:          -18,
-    height:          3,
-    borderRadius:    2,
-    overflow:        "hidden",
-    backgroundColor: "rgba(34,197,94,0.22)",
-  },
-  progressFill: {
-    height:          "100%",
-    borderRadius:    2,
-    backgroundColor: SCANNER_SUCCESS,
-  },
 });

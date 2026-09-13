@@ -3,7 +3,7 @@ export { default as ScannerOverlay }  from "./overlay/ScannerOverlay";
 export { default as FinderFrame }     from "./overlay/FinderFrame";
 export { default as OverlayTopBar }   from "./overlay/OverlayTopBar";
 export { default as OverlayBottomBar }from "./overlay/OverlayBottomBar";
-export { SCANNER_GLOW, SCANNER_SUCCESS, SCANNER_AMBER, VIGNETTE } from "./overlay/constants";
+export { SCANNER_GLOW, SCANNER_AMBER, VIGNETTE } from "./overlay/constants";
 
 // Feedback
 export { ScannerToast, toastContainerStyle } from "./feedback/ScannerToast";

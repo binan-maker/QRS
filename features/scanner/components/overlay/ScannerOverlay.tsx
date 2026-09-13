@@ -69,8 +69,6 @@ export default function ScannerOverlay({
         <View style={{ position: "absolute", top: finderTop, left: finderLeft }}>
           <ReAnimated.View entering={FadeIn.delay(60).duration(220)}>
             <FinderFrame
-              scanned={scanned}
-              scanSuccess={scanSuccess}
               cornerBreath={anims.cornerBreath}
             />
           </ReAnimated.View>
@@ -83,7 +81,7 @@ export default function ScannerOverlay({
             style={[styles.hintArea, { top: finderTop + FINDER_SIZE + 20 }]}
           >
             <Text style={styles.hintText}>
-              {scanSuccess ? "Verified" : "Verifying QR code…"}
+              {scanSuccess ? "Code captured" : "Analyzing…"}
             </Text>
           </ReAnimated.View>
         )}
