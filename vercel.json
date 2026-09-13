@@ -1,0 +1,7 @@
+{
+  "framework": "nextjs",
+  "installCommand": "npm ci --prefix apps/web --ignore-scripts --registry=https://registry.npmjs.org/",
+  "buildCommand": "npm --prefix apps/web run build",
+  "outputDirectory": "apps/web/.next",
+  "devCommand": "npm --prefix apps/web run dev"
+}
