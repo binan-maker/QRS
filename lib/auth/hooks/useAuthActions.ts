@@ -18,6 +18,7 @@ import { clearAllMemCache, clearAllAsyncStorageCache } from "@/services/cache/qr
 import { clearAllAnonymousSessions } from "@/services/cache/anonymous-session";
 import { clearPrewarmState } from "@/services/cache/prewarm";
 import { clearAvatarFromOutside } from "@/shared/contexts/AvatarContext";
+import { cacheAuthUser, clearCachedAuthUser } from "@/lib/auth/session-cache";
 import { clearUserProfileCache } from "@/services/user/cache";
 import { clearCommentProfileCache } from "@/services/comments/cache";
 import type { AuthUser } from "@/lib/auth/types";
@@ -61,14 +62,16 @@ export function useAuthActions({ user, setUser, setToken }: Params) {
         adapterUser.photoURL,
       );
       const idToken = await adapterUser.getIdToken();
-      setUser({
+      const authUser: AuthUser = {
         id: adapterUser.uid,
         email: adapterUser.email ?? "",
         displayName: adapterUser.displayName ?? adapterUser.email?.split("@")[0] ?? "User",
         photoURL: adapterUser.photoURL,
         emailVerified: adapterUser.emailVerified,
-      });
+      };
+      setUser(authUser);
       setToken(idToken);
+      cacheAuthUser(authUser);
       trackLoginCompleted("email");
     } catch (e: any) {
       if (e.code === "auth/email-not-verified") throw e;
@@ -113,6 +116,7 @@ export function useAuthActions({ user, setUser, setToken }: Params) {
     // Clear auth state immediately — UI responds at once, no visible delay.
     setUser(null);
     setToken(null);
+    clearCachedAuthUser();
     queryClient.clear();
     clearAllMemCache();
     clearUserProfileCache();
@@ -222,6 +226,7 @@ export function useAuthActions({ user, setUser, setToken }: Params) {
           } catch {}
         }
         setUser(authUser);
+        cacheAuthUser(authUser);
       // Return the fresh verification state from the provider, not from React state.
         return reloaded.emailVerified;
       }

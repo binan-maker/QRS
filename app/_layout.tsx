@@ -53,7 +53,7 @@ SplashScreen.preventAutoHideAsync();
 const SPLASH_SAFETY_TIMEOUT_MS = 1200;
 
 function SplashGate({ fontsReady, consentReady }: { fontsReady: boolean; consentReady: boolean }) {
-  const { isLoading: authLoading } = useAuth();
+  const { isLoading: authLoading, user: authUser } = useAuth();
   const hiddenRef = useRef(false);
   // Measures time from SplashGate mount to splash-hidden; logged in dev builds
   // so real-device numbers can inform future timeout reductions.
@@ -81,10 +81,13 @@ function SplashGate({ fontsReady, consentReady }: { fontsReady: boolean; consent
     if (__DEV__ && !authLoading) {
       console.log(`[SplashGate] authLoading=false at ${Date.now() - startRef.current} ms`);
     }
-    if (fontsReady && !authLoading && consentReady) {
+    // A cached authenticated identity is already rendered by AuthContext while
+    // Firebase restores the live token. Hide the native splash at once in that
+    // case; otherwise wait for the first auth result to avoid a guest flash.
+    if (fontsReady && consentReady && (!authLoading || !!authUser)) {
       hide("all-ready");
     }
-  }, [fontsReady, authLoading, consentReady, hide]);
+  }, [fontsReady, authLoading, authUser, consentReady, hide]);
 
   return null;
 }

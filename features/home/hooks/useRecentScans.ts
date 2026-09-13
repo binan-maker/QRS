@@ -22,7 +22,7 @@ const homeQueryKey    = (uid: string) => ["home-recent-scans", uid] as const;
 const localStorageKey = (uid: string) => `local_scan_history_${uid}`;
 
 export function useRecentScans() {
-  const { user } = useAuth();
+  const { user, isLoading: authLoading } = useAuth();
   const [localScans,  setLocalScans]  = useState<LocalScan[]>([]);
   const [localLoaded, setLocalLoaded] = useState(false);
   const [refreshing,  setRefreshing]  = useState(false);
@@ -72,7 +72,10 @@ export function useRecentScans() {
     gcTime:              30 * 60 * 1000,
     refetchOnWindowFocus: false,
     refetchOnMount:      true,
-    enabled:             !!user?.id,
+    // A cached user can render before Firebase has restored the live token.
+    // Keep the local/cache path instant, but wait for auth readiness before
+    // making the authenticated Firestore request.
+    enabled:             !!user?.id && !authLoading,
   });
 
   // ── Local scans from device AsyncStorage ──────────────────────────────────
@@ -97,14 +100,14 @@ export function useRecentScans() {
       }
       loadLocalScans(currentUserId);
 
-      if (currentUserId) {
+      if (currentUserId && !authLoading) {
         const state = queryClient.getQueryState(homeQueryKey(currentUserId));
         const now = Date.now();
         if (!state?.dataUpdatedAt || now - state.dataUpdatedAt > HOME_STALE_MS) {
           refetchCloud();
         }
       }
-    }, [user?.id, loadLocalScans, refetchCloud])
+    }, [user?.id, authLoading, loadLocalScans, refetchCloud])
   );
 
   // ── Merge local + cloud; deduplicate; take MAX_RECENT ────────────────────

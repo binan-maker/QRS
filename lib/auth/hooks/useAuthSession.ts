@@ -12,6 +12,7 @@ import { COLLECTIONS } from "@/shared/constants/collections";
 import { prewarmUserData } from "@/services/cache/prewarm";
 import { syncAvatarFromOutside } from "@/shared/contexts/AvatarContext";
 import type { AuthUser } from "@/lib/auth/types";
+import { cacheAuthUser, clearCachedAuthUser } from "@/lib/auth/session-cache";
 
 interface Params {
   setUser: Dispatch<SetStateAction<AuthUser | null>>;
@@ -90,6 +91,7 @@ export function useAuthSession({
           setUser(authUser);
           setToken(idToken);
           setIsLoading(false);
+           cacheAuthUser(authUser);
 
           // Pre-warm history and stats so tabs render with data.
           prewarmUserData(resolvedUser.uid).catch(() => {});
@@ -128,6 +130,7 @@ export function useAuthSession({
         setUser(null);
         setToken(null);
         setIsLoading(false);
+        clearCachedAuthUser();
         queryClient.removeQueries({ queryKey: ["userProfile"] });
       }
     });

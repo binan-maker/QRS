@@ -30,6 +30,7 @@ export const STARTUP_PREF_KEYS = {
   AVATAR_VERSION:  "qrg:avatar:version",
   HAPTICS_ENABLED: "haptic_enabled",
   CONSENT_VERSION: "qrguard_consent_version",
+  AUTH_SNAPSHOT:  "qrg:auth:snapshot",
 } as const;
 
 type PrefKey = (typeof STARTUP_PREF_KEYS)[keyof typeof STARTUP_PREF_KEYS];

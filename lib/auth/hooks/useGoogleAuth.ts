@@ -17,6 +17,7 @@ import { mapAuthError } from "@/lib/auth/utils";
 import { trackLoginCompleted } from "@/lib/analytics";
 import { ENV } from "@/config";
 import type { AuthUser } from "@/lib/auth/types";
+import { cacheAuthUser } from "@/lib/auth/session-cache";
 
 WebBrowser.maybeCompleteAuthSession();
 
@@ -63,14 +64,16 @@ export function useGoogleAuth({ setUser, setToken, sessionRestoredRef }: Params)
   async function handleGoogleIdToken(idToken: string) {
     const adapterUser = await authAdapter.signInWithGoogleIdToken(idToken);
     const token = await adapterUser.getIdToken();
-    setUser({
+    const authUser: AuthUser = {
       id: adapterUser.uid,
       email: adapterUser.email ?? "",
       displayName: adapterUser.displayName ?? adapterUser.email?.split("@")[0] ?? "User",
       photoURL: adapterUser.photoURL,
       emailVerified: adapterUser.emailVerified,
-    });
+    };
+    setUser(authUser);
     setToken(token);
+    cacheAuthUser(authUser);
     trackLoginCompleted("google");
     syncUserToDb(
       adapterUser.uid,
@@ -84,14 +87,16 @@ export function useGoogleAuth({ setUser, setToken, sessionRestoredRef }: Params)
     try {
       const adapterUser = await authAdapter.signInWithGoogleToken(accessToken);
       const idToken = await adapterUser.getIdToken();
-      setUser({
+      const authUser: AuthUser = {
         id: adapterUser.uid,
         email: adapterUser.email ?? "",
         displayName: adapterUser.displayName ?? adapterUser.email?.split("@")[0] ?? "User",
         photoURL: adapterUser.photoURL,
         emailVerified: adapterUser.emailVerified,
-      });
+      };
+      setUser(authUser);
       setToken(idToken);
+      cacheAuthUser(authUser);
       trackLoginCompleted("google");
       syncUserToDb(
         adapterUser.uid,

@@ -2,7 +2,6 @@ import React, { useCallback, memo } from "react";
 import { View, StyleSheet, ScrollView, RefreshControl } from "react-native";
 import { useFocusEffect } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import Animated, { FadeIn } from "react-native-reanimated";
 import { useTopInset } from "@/shared/utils/platform";
 import { useTheme } from "@/shared/contexts/ThemeContext";
 import { useAvatar } from "@/shared/contexts/AvatarContext";
@@ -38,13 +37,11 @@ function HomeScreen() {
         }
       >
         {/*
-         * Single unified entrance for the whole screen.
-         * All sections (Header, Hero, Scans) appear together as one cohesive
-         * frame instead of cascading in separately. This is the key to making
-         * the page feel instantaneous — the layout is already complete, it just
-         * fades in as a whole. FadeIn fires once on true first-mount only.
+         * Keep the first home render static. The data cache and local history
+         * already provide the fast path; an entrance animation only delays
+         * useful content and adds work when returning from the background.
          */}
-        <Animated.View entering={FadeIn.duration(280)}>
+        <View>
           <HomeHeader user={user} photoURL={photoURL} />
 
           <HeroScanCard />
@@ -56,7 +53,7 @@ function HomeScreen() {
           />
 
           <View style={{ height: Math.max(160, 110 + insets.bottom) }} />
-        </Animated.View>
+        </View>
       </ScrollView>
     </View>
   );

@@ -28,6 +28,8 @@ import { useGoogleAuth } from "@/lib/auth/hooks/useGoogleAuth";
 import { useAuthActions } from "@/lib/auth/hooks/useAuthActions";
 import { getAuthErrorMessage } from "@/lib/auth/utils";
 import type { AuthUser } from "@/lib/auth/types";
+import { getCachedAuthUser } from "@/lib/auth/session-cache";
+import { prefetchStartupPrefs } from "@/lib/startup-prefs";
 
 export { getAuthErrorMessage };
 export type { AuthUser };
@@ -55,9 +57,23 @@ const AuthContext = createContext<AuthContextValue | null>(null);
 // ─────────────────────────────────────────────────────────────────────────────
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<AuthUser | null>(null);
+  // Firebase restores its persisted session asynchronously. Reuse the last
+  // display-safe identity for the first render so a returning user never sees
+  // the guest header while the live token is being restored.
+  const [user, setUser] = useState<AuthUser | null>(() => getCachedAuthUser());
   const [token, setToken] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+
+  // Covers the narrow startup race where the single startup multiGet has not
+  // resolved by the first React render. This never overwrites a live auth
+  // result and keeps the cached identity out of the guest UI path.
+  useEffect(() => {
+    if (user) return;
+    prefetchStartupPrefs().then(() => {
+      const cachedUser = getCachedAuthUser();
+      if (cachedUser) setUser((current) => current ?? cachedUser);
+    }).catch(() => {});
+  }, [user]);
 
   // Shared flag: the session hook sets this when the provider restores a
   // session; useGoogleAuth reads it to skip a redundant signInSilently call.
