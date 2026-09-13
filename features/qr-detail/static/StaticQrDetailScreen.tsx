@@ -127,6 +127,8 @@ export default function StaticQrDetailScreen({ id, hint }: Props) {
 
   const content     = q.qrCode?.content || q.offlineContent || "";
   const contentType = normalizeQrDetailContentType(q.qrCode?.contentType || q.offlineContentType);
+  const isPayment = (q.qrCode?.contentType || q.offlineContentType)?.toLowerCase() === "payment";
+  const hasContent = content.length > 0;
 
   const handleReportPress = useCallback(() => {
     setOverflowOpen(false);
@@ -136,7 +138,12 @@ export default function StaticQrDetailScreen({ id, hint }: Props) {
     }, 280);
   }, [user, q.scrollRef]);
 
-  if (q.loading || (!q.initialDataReady && !q.loadError)) return <LoadingSkeleton topInset={topInset} />;
+  // A scanned QR includes its content in the route hint. Render that content
+  // immediately instead of waiting for community reports to finish loading;
+  // reports, stats, and comments can hydrate progressively below it.
+  if (q.loading || (!hasContent && !q.loadError)) {
+    return <LoadingSkeleton topInset={topInset} />;
+  }
 
   if (q.loadError) {
     return (
@@ -257,7 +264,7 @@ export default function StaticQrDetailScreen({ id, hint }: Props) {
                     reportCounts={q.reportCounts}
                     userReport={q.userReport}
                     isLoggedIn={true}
-                    isPayment={contentType === "payment"}
+                    isPayment={isPayment}
                     loading={q.reportLoading}
                     onReport={(type) => {
                       const isRemoving = q.userReport === type;

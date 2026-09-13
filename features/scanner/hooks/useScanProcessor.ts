@@ -97,9 +97,9 @@ export function useScanProcessor({
     } else {
       safePush(`/qr-detail/${qrId}`);
     }
-    // Auto-clear tick after navigation — prevents it staying stuck if the
-    // user returns to the scanner before useFocusEffect fires.
-    // Timer stored in ref so it can be cancelled if the component unmounts.
+    // Auto-clear after navigation so the scanner is ready if the user returns
+    // before useFocusEffect runs. The timer is stored so it is cleaned up on
+    // unmount.
     if (navResetTimerRef.current) clearTimeout(navResetTimerRef.current);
     navResetTimerRef.current = setTimeout(() => {
       navResetTimerRef.current = null;
@@ -122,22 +122,25 @@ export function useScanProcessor({
     const contentType = detectContentType(content);
     const qrId        = await getQrCodeId(content);
 
-    await AsyncStorage.setItem(
+    // The details route receives the content through its hint, so local
+    // persistence must not delay navigation. Keep this as a best-effort
+    // background write instead of putting storage latency in the scan path.
+    AsyncStorage.setItem(
       `qr_content_${qrId}`,
       JSON.stringify({ content, contentType })
     ).catch(() => {});
 
     if (user?.id) {
-      await appendToLocalScanHistory(
+      appendToLocalScanHistory(
         user.id,
         makeScanEntry(content, contentType, qrId, scanSource, true)
-      );
+      ).catch(() => {});
     }
 
     setProcessing(false);
 
     emitScanEvent(qrId, { platform: PLATFORM, contentType, verdict: "unknown", scanSource });
-    await navigateToQrDetail(qrId, content, contentType);
+    navigateToQrDetail(qrId, content, contentType);
   }
 
   // ─── Anonymous scan path ──────────────────────────────────────────────────────
@@ -175,7 +178,7 @@ export function useScanProcessor({
       }
 
       emitScanEvent(qrId, { platform: PLATFORM, contentType, verdict: "unknown", scanSource: "camera" });
-      await navigateToQrDetail(qrId, content, contentType);
+      navigateToQrDetail(qrId, content, contentType);
     } catch (e: any) {
       setProcessing(false);
       showScannerMsg(e.message || "Could not process QR code. Please try again.", "error");
@@ -237,7 +240,9 @@ export function useScanProcessor({
       const qrId        = await getQrCodeId(content);
       const contentType = detectContentType(content);
 
-      await AsyncStorage.setItem(
+      // The detail screen can render from the route hint immediately. Do not
+      // make the customer wait for the storage bridge before navigation.
+      AsyncStorage.setItem(
         `qr_content_${qrId}`,
         JSON.stringify({ content, contentType })
       ).catch(() => {});
@@ -269,7 +274,7 @@ export function useScanProcessor({
 
   async function decodeImageViaServer(base64: string): Promise<string | null> {
     try {
-      const { getApiUrl } = await import("@/shared/utils/query-client");
+      const { getApiUrl } = await import("@/lib/query-client");
       const baseUrl = getApiUrl();
       const url = new URL("/api/qr/decode-image", baseUrl).toString();
       const res = await fetch(url, {
