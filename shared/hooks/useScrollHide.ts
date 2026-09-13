@@ -125,3 +125,16 @@ export function useScrollHide(opts: ScrollHideOptions = {}) {
 
   return { animatedStyle, setHeight, onScroll, animatedOnScroll, reset, offset };
 }
+
+/**
+ * Header-specific scroll behavior shared by list and legal screens.
+ * Kept beside useScrollHide so consumers do not depend on a second hook file.
+ */
+export function useHeaderHide() {
+  const { animatedStyle, setHeight, onScroll, animatedOnScroll, reset } = useScrollHide({
+    hideDuration: 260,
+    showDuration: 320,
+  });
+
+  return { headerStyle: animatedStyle, setHeight, onScroll, animatedOnScroll, reset };
+}

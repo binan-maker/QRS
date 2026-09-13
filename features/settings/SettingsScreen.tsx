@@ -2,7 +2,7 @@ import { View, Text, Pressable, ScrollView, Platform, StyleSheet, useWindowDimen
 import { useCallback, useMemo, useState } from "react";
 import { useLocalSearchParams, useFocusEffect } from "expo-router";
 import Reanimated from "react-native-reanimated";
-import { useHeaderHide } from "@/shared/hooks/useHeaderHide";
+import { useHeaderHide } from "@/shared/hooks/useScrollHide";
 import { useTabBarScroll } from "@/shared/contexts/TabBarContext";
 import { safePush, safeBack } from "@/shared/utils/navigation";
 import { Ionicons } from "@expo/vector-icons";

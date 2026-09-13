@@ -25,7 +25,7 @@ import HistoryItemComponent from "@/features/history/components/HistoryItem";
 import HistoryItemSkeleton  from "@/features/history/components/HistoryItemSkeleton";
 import { useFocusEffect } from "expo-router";
 import { useTabBarScroll } from "@/shared/contexts/TabBarContext";
-import { useHeaderHide }   from "@/shared/hooks/useHeaderHide";
+import { useHeaderHide }   from "@/shared/hooks/useScrollHide";
 import Reanimated          from "react-native-reanimated";
 
 // Static arrays used for skeleton rendering — avoids Array.from() allocation
