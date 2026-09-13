@@ -1,7 +1,6 @@
 import { db, rtdb } from "@/lib/db/client";
 import { NOTIFICATIONS_ENABLED } from "./config";
-import { API_BASE_URL } from "@/config/api";
-import { REQUEST_TIMEOUT_MS } from "@/config/app";
+import { API_BASE_URL, REQUEST_TIMEOUT_MS } from "@/config";
 import type { Notification, NotificationType } from "../types";
 import { COLLECTIONS } from "@/shared/constants/collections";
 import { logger } from "@/lib/logger";

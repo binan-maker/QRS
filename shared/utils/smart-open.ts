@@ -16,7 +16,7 @@
 
 import { Alert, Linking, Platform } from "react-native";
 import { getQrTypeDef as getQrTypeStyle } from "@/features/qr-engine";
-import { EXTERNAL } from "@/config/app";
+import { EXTERNAL } from "@/config";
 
 const AUTHENTICATOR_STORE_URL =
   Platform.OS === "ios"

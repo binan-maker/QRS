@@ -1,6 +1,6 @@
 import { Platform } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { apiUrl } from "@/config/api";
+import { apiUrl } from "@/config";
 
 export async function submitBugReport(message: string, error: Error): Promise<void> {
   let deviceInfo = `Platform: ${Platform.OS}`;

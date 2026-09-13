@@ -18,7 +18,7 @@ export interface ThreatIntelligenceResult {
   label: string;
 }
 
-import { API_BASE_URL } from "@/config/api";
+import { API_BASE_URL } from "@/config";
 
 const THREAT_TYPE_LABELS: Record<string, string> = {
   MALWARE: "Malware Distribution Site",

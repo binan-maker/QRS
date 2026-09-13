@@ -6,7 +6,7 @@ import { checkProfanity, sanitizeComment } from "../moderation/profanity-filter"
 import { getUserProfileCache, preloadUserProfile, setUserProfileCache } from "./cache";
 import { authAdapter } from "@/lib/auth";
 import { COLLECTIONS } from "@/shared/constants/collections";
-import { API_BASE_URL } from "@/config/api";
+import { API_BASE_URL } from "@/config";
 
 // Firestore client-side rules lock commentCount from direct client writes.
 // This helper calls the Express backend (which uses Admin SDK, bypassing rules)

@@ -2,7 +2,7 @@ import { fetch } from "expo/fetch";
 import { QueryClient, QueryFunction } from "@tanstack/react-query";
 import Constants from "expo-constants";
 import { Platform } from "react-native";
-import { ENV } from "@/config/env";
+import { ENV } from "@/config";
 
 /**
  * Gets the base URL for the Express API server (e.g., "http://localhost:3000")

@@ -15,7 +15,7 @@ import { authAdapter } from "@/lib/auth";
 import { syncUserToDb } from "@/lib/auth/user-sync";
 import { mapAuthError } from "@/lib/auth/utils";
 import { trackLoginCompleted } from "@/lib/analytics";
-import { ENV } from "@/config/env";
+import { ENV } from "@/config";
 import type { AuthUser } from "@/lib/auth/types";
 
 WebBrowser.maybeCompleteAuthSession();

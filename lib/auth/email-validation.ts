@@ -4,8 +4,7 @@
 // so signup is never blocked by backend unavailability.
 
 import { validateEmail } from "@/validators";
-import { API_BASE_URL } from "@/config/api";
-import { RTDB_TIMEOUT_MS } from "@/config/app";
+import { API_BASE_URL, RTDB_TIMEOUT_MS } from "@/config";
 
 export async function serverValidateEmail(
   email: string,

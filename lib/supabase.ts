@@ -7,7 +7,7 @@
 
 import { createClient } from "@supabase/supabase-js";
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { SUPABASE_CONFIG } from "@/config/supabase";
+import { SUPABASE_CONFIG } from "@/config";
 import { Platform } from "react-native";
 
 // ─── Persistence storage ─────────────────────────────────────────────────────

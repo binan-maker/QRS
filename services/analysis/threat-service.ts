@@ -1,7 +1,6 @@
 import { BUILT_IN_BLACKLIST, saveOfflineBlacklist } from "./blacklist";
 import { verifyThreatSignature } from "@/lib/security";
-import { API_BASE_URL } from "@/config/api";
-import { REQUEST_TIMEOUT_MS } from "@/config/app";
+import { API_BASE_URL, REQUEST_TIMEOUT_MS } from "@/config";
 
 export interface ThreatDefinitions {
   patterns: { pattern: string; reason: string }[];

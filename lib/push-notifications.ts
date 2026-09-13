@@ -26,8 +26,7 @@ Notifications.setNotificationHandler({
   }),
 });
 
-import { API_BASE_URL } from "@/config/api";
-import { REQUEST_TIMEOUT_MS } from "@/config/app";
+import { API_BASE_URL, REQUEST_TIMEOUT_MS } from "@/config";
 
 async function post(path: string, body: object): Promise<void> {
   try {
