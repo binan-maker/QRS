@@ -53,10 +53,18 @@ interface HistoryItemProps {
   risk: "safe" | "caution" | "dangerous";
   onDelete: (item: HistoryItemType) => void;
   index?: number;
+  animate?: boolean;
   showTime?: boolean;
 }
 
-const HistoryItem = memo(function HistoryItem({ item, risk, onDelete, index = 0, showTime = true }: HistoryItemProps) {
+const HistoryItem = memo(function HistoryItem({
+  item,
+  risk,
+  onDelete,
+  index = 0,
+  animate = true,
+  showTime = true,
+}: HistoryItemProps) {
   const { colors, isDark } = useTheme();
   const { typeMeta, displayLabel, subtitle } = useQrMeta(item.content, item.contentType);
 
@@ -92,7 +100,7 @@ const HistoryItem = memo(function HistoryItem({ item, risk, onDelete, index = 0,
   const cardBg = isDark ? colors.surface : "#ffffff";
 
   // Stable entering animation from the pre-built cache.
-  const enteringAnim = ENTERING_ANIMS[Math.min(index, 8)];
+  const enteringAnim = animate ? ENTERING_ANIMS[Math.min(index, 8)] : undefined;
 
   const handlePress = useCallback(() => {
     if (item.qrCodeId) {

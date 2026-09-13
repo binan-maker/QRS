@@ -106,7 +106,9 @@ function RootLayoutNav() {
         headerShown: false,
       }} />
       {/* (qr) group — QR viewing and detail screens */}
-      <Stack.Screen name="(qr)/qr-detail/[id]" options={{ headerShown: false }} />
+      {/* QR detail receives the scanned content from the list/card route hint,
+          so there is no reason to spend time on a second stack animation. */}
+      <Stack.Screen name="(qr)/qr-detail/[id]" options={{ headerShown: false, animation: "none" }} />
       {/* (account) group — user account, preferences and discovery */}
       <Stack.Screen name="(account)/account-management" options={{ headerShown: false }} />
       <Stack.Screen name="(account)/privacy-settings" options={{ headerShown: false }} />

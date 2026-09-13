@@ -92,6 +92,14 @@ export function invalidateUserCache(userId: string): void {
 export async function getCachedHomeScans<T>(userId: string): Promise<T | null> {
   return getCache<T>(`home_scans_${userId}`);
 }
+
+/** Fast path for screens that need to render an already-warmed cache now. */
+export function peekCachedHomeScans<T>(userId: string): T | null {
+  const entry = memCache.get(`home_scans_${userId}`);
+  if (!entry || entry.expiresAt <= Date.now()) return null;
+  return entry.value as T;
+}
+
 export async function setCachedHomeScans<T>(userId: string, value: T): Promise<void> {
   return setCache<T>(`home_scans_${userId}`, value, TTL.HOME_SCANS);
 }

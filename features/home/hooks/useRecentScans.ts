@@ -7,6 +7,7 @@ import { getUserScansPaginated, deleteUserScan } from "@/lib/firestore-service";
 import { queryClient } from "@/lib/query-client";
 import {
   getCachedHomeScans,
+  peekCachedHomeScans,
   setCachedHomeScans,
   invalidateHomeScansCache,
 } from "@/services/cache/qr-cache";
@@ -27,6 +28,9 @@ export function useRecentScans() {
   const [localLoaded, setLocalLoaded] = useState(false);
   const [refreshing,  setRefreshing]  = useState(false);
   const prevUserIdRef = useRef<string | null | undefined>(undefined);
+  const warmedHomeScans = user?.id
+    ? peekCachedHomeScans<LocalScan[]>(user.id)
+    : null;
 
   // ── Disk pre-warm: seed the React Query cache from disk before the
   //    network call fires so the list appears instantly on cold launch.
@@ -53,7 +57,6 @@ export function useRecentScans() {
   const {
     data:      cloudScansRaw,
     refetch:   refetchCloud,
-    isPending: cloudPending,
   } = useQuery<LocalScan[]>({
     queryKey: homeQueryKey(user?.id ?? ""),
     queryFn: async () => {
@@ -76,6 +79,10 @@ export function useRecentScans() {
     // Keep the local/cache path instant, but wait for auth readiness before
     // making the authenticated Firestore request.
     enabled:             !!user?.id && !authLoading,
+    initialData:         warmedHomeScans ?? undefined,
+    // Render warmed data immediately, but let the live request refresh it
+    // instead of treating the memory cache as fresh for the full stale window.
+    initialDataUpdatedAt: warmedHomeScans ? 0 : undefined,
   });
 
   // ── Local scans from device AsyncStorage ──────────────────────────────────

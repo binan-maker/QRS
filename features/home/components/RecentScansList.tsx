@@ -1,14 +1,7 @@
-import React, { useMemo, useCallback, useEffect } from "react";
+import React, { useMemo, useCallback } from "react";
 import { View, Text, StyleSheet, Pressable } from "react-native";
-import { router } from "expo-router";
 import { safePush } from "@/shared/utils/navigation";
 import { Ionicons } from "@expo/vector-icons";
-import Animated, {
-  useSharedValue,
-  useAnimatedStyle,
-  withTiming,
-  Easing,
-} from "react-native-reanimated";
 import * as Haptics from "@/shared/utils/haptics";
 import { useTheme } from "@/shared/contexts/ThemeContext";
 import { useScaleFns } from "@/shared/hooks/useScaleFns";
@@ -26,35 +19,10 @@ interface Props {
 
 // Static array — avoids Array.from() allocation on every render cycle.
 const SKELETON_INDICES = [0, 1, 2] as const;
-const CROSSFADE_MS    = 200;
-const CROSSFADE_EASING = Easing.out(Easing.quad);
-
 export function RecentScansList({ recentScans, isLoading, onDelete }: Props) {
   const { colors } = useTheme();
   const { s } = useScaleFns();
   const styles = useMemo(() => makeStyles(colors, s), [colors, s]);
-
-  // ── Crossfade skeleton → content ────────────────────────────────────────────
-  // Both layers are always mounted. Content renders immediately (opacity 0
-  // while loading) so HistoryItem entering animations fire in the background.
-  // By the time the crossfade completes, items are already in their final
-  // positions — no card-by-card pop-in on reveal.
-  const skeletonOpacity = useSharedValue(isLoading ? 1 : 0);
-  const contentOpacity  = useSharedValue(isLoading ? 0 : 1);
-
-  useEffect(() => {
-    if (isLoading) {
-      skeletonOpacity.value = withTiming(1, { duration: CROSSFADE_MS, easing: CROSSFADE_EASING });
-      contentOpacity.value  = withTiming(0, { duration: CROSSFADE_MS, easing: CROSSFADE_EASING });
-    } else {
-      // Fade content in; skeleton follows slightly behind to avoid a bare flash.
-      contentOpacity.value  = withTiming(1, { duration: CROSSFADE_MS, easing: CROSSFADE_EASING });
-      skeletonOpacity.value = withTiming(0, { duration: CROSSFADE_MS, easing: CROSSFADE_EASING });
-    }
-  }, [isLoading]);
-
-  const skeletonAnimStyle = useAnimatedStyle(() => ({ opacity: skeletonOpacity.value }));
-  const contentAnimStyle  = useAnimatedStyle(() => ({ opacity: contentOpacity.value  }));
 
   const historyItems = useMemo<HistoryItemType[]>(
     () => recentScans.map((scan) => ({ ...scan, source: "local" as const })),
@@ -67,8 +35,8 @@ export function RecentScansList({ recentScans, isLoading, onDelete }: Props) {
   );
 
   return (
-    // No outer entering animation — the HomeScreen wrapper provides a single
-    // unified entrance for all sections together.
+    // Keep the home list static so the cards are visible as soon as data is
+    // ready; the cached/local data path already provides the fast experience.
     <View>
       {/* ── Section header ────────────────────────────────────────────────── */}
       <View style={styles.sectionHeader}>
@@ -88,64 +56,50 @@ export function RecentScansList({ recentScans, isLoading, onDelete }: Props) {
         )}
       </View>
 
-      {/* ── Crossfade container ───────────────────────────────────────────── */}
+      {/* Render the ready state directly. The home list is a small fixed set;
+          keeping an invisible content tree and an animated skeleton mounted at
+          the same time delays visible cards and does extra native work. */}
       <View>
-        {/* Content layer — always rendered so HistoryItems pre-animate
-            while invisible. Becomes visible when isLoading → false. */}
-        <Animated.View
-          style={contentAnimStyle}
-          pointerEvents={isLoading ? "none" : "box-none"}
-        >
-          {recentScans.length === 0 ? (
-            // Only show EmptyScans when we're sure there's nothing to display.
-            // During loading this is hidden behind the skeleton overlay.
-            <EmptyScans />
-          ) : (
-            <View>
-              {historyItems.map((item, idx) => (
-                <HistoryItem
-                  key={item.id}
-                  item={item}
-                  risk="safe"
-                  onDelete={handleDelete}
-                  index={idx}
-                  showTime={false}
-                />
-              ))}
+        {isLoading ? (
+          <View>
+            {SKELETON_INDICES.map((i) => <HistoryItemSkeleton key={i} index={i} />)}
+          </View>
+        ) : recentScans.length === 0 ? (
+          <EmptyScans />
+        ) : (
+          <View>
+            {historyItems.map((item) => (
+              <HistoryItem
+                key={item.id}
+                item={item}
+                risk="safe"
+                onDelete={handleDelete}
+                animate={false}
+                showTime={false}
+              />
+            ))}
 
-              <Pressable
-                onPress={() => {
-                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                  safePush("/(tabs)/history");
-                }}
-                style={({ pressed }) => [
-                  styles.fullHistoryBtn,
-                  {
-                    backgroundColor: colors.surface,
-                    borderColor:     colors.surfaceBorder,
-                    opacity:         pressed ? 0.82 : 1,
-                    transform:       [{ scale: pressed ? 0.985 : 1 }],
-                  },
-                ]}
-              >
-                <Ionicons name="time-outline" size={16} color={colors.primary} />
-                <Text style={[styles.fullHistoryText, { color: colors.primary }]}>See Full History</Text>
-                <Ionicons name="arrow-forward" size={14} color={colors.primary} />
-              </Pressable>
-            </View>
-          )}
-        </Animated.View>
-
-        {/* Skeleton overlay — absolute so it sits on top of (pre-rendered)
-            content without affecting layout height. Fades out on load. */}
-        <Animated.View
-          style={[skeletonAnimStyle, StyleSheet.absoluteFill]}
-          pointerEvents={isLoading ? "box-none" : "none"}
-        >
-          {SKELETON_INDICES.map((i) => (
-            <HistoryItemSkeleton key={i} index={i} />
-          ))}
-        </Animated.View>
+            <Pressable
+              onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                safePush("/(tabs)/history");
+              }}
+              style={({ pressed }) => [
+                styles.fullHistoryBtn,
+                {
+                  backgroundColor: colors.surface,
+                  borderColor:     colors.surfaceBorder,
+                  opacity:         pressed ? 0.82 : 1,
+                  transform:       [{ scale: pressed ? 0.985 : 1 }],
+                },
+              ]}
+            >
+              <Ionicons name="time-outline" size={16} color={colors.primary} />
+              <Text style={[styles.fullHistoryText, { color: colors.primary }]}>See Full History</Text>
+              <Ionicons name="arrow-forward" size={14} color={colors.primary} />
+            </Pressable>
+          </View>
+        )}
       </View>
     </View>
   );
