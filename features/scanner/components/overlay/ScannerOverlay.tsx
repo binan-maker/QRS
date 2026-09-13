@@ -83,7 +83,7 @@ export default function ScannerOverlay({
             style={[styles.hintArea, { top: finderTop + FINDER_SIZE + 20 }]}
           >
             <Text style={styles.hintText}>
-              {scanSuccess ? "Code captured" : "Analyzing…"}
+              {scanSuccess ? "Verified" : "Verifying QR code…"}
             </Text>
           </ReAnimated.View>
         )}

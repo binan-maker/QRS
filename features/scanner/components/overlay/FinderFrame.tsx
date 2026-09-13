@@ -1,8 +1,7 @@
 import React from "react";
 import { View, StyleSheet, Animated } from "react-native";
-import { Ionicons } from "@expo/vector-icons";
 import { FINDER_SIZE } from "@/features/scanner/hooks/useCameraControls";
-import { SCANNER_GLOW } from "./constants";
+import { SCANNER_SUCCESS } from "./constants";
 
 // Corner geometry
 const CORNER_LEN    = 28;
@@ -10,7 +9,7 @@ const CORNER_W      = 3;
 const CORNER_RADIUS = 12;   // visibly rounded tips
 
 const CORNER_DEFAULT = "rgba(255,255,255,0.88)";
-const CORNER_SUCCESS = SCANNER_GLOW;
+const CORNER_SUCCESS = SCANNER_SUCCESS;
 
 interface Props {
   scanned:      boolean;
@@ -40,14 +39,22 @@ export default function FinderFrame({ scanned, scanSuccess, cornerBreath }: Prop
       <Animated.View style={[styles.corner, styles.cbrH, { backgroundColor: cornerColor, opacity: cornerBreath }]} />
       <Animated.View style={[styles.corner, styles.cbrV, { backgroundColor: cornerColor, opacity: cornerBreath }]} />
 
-      {/* Success overlay */}
-      {scanSuccess && (
-        <View style={styles.successOverlay}>
-          <View style={styles.successOuterRing}>
-            <View style={styles.successRing}>
-              <Ionicons name="checkmark" size={42} color="#fff" />
-            </View>
-          </View>
+      {/* Quiet verification state — a progress cue replaces the oversized success icon. */}
+      {scanned && (
+        <View
+          style={styles.progressTrack}
+          accessibilityRole="progressbar"
+          accessibilityLabel={scanSuccess ? "QR code verified" : "Verifying QR code"}
+        >
+          <Animated.View
+            style={[
+              styles.progressFill,
+              {
+                width: scanSuccess ? "100%" : "62%",
+                opacity: scanSuccess ? 1 : cornerBreath,
+              },
+            ]}
+          />
         </View>
       )}
     </View>
@@ -144,30 +151,19 @@ const styles = StyleSheet.create({
     borderTopLeftRadius:     CORNER_RADIUS / 3,
   },
 
-  // ── Success ──
-  successOverlay: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: "rgba(59,130,246,0.06)",
-    alignItems:      "center",
-    justifyContent:  "center",
-    borderRadius:    14,
+  progressTrack: {
+    position:        "absolute",
+    left:            24,
+    right:           24,
+    bottom:          -18,
+    height:          3,
+    borderRadius:    2,
+    overflow:        "hidden",
+    backgroundColor: "rgba(34,197,94,0.22)",
   },
-  successOuterRing: {
-    width:           100,
-    height:          100,
-    borderRadius:    50,
-    backgroundColor: "rgba(59,130,246,0.12)",
-    borderWidth:     1,
-    borderColor:     `${SCANNER_GLOW}55`,
-    alignItems:      "center",
-    justifyContent:  "center",
-  },
-  successRing: {
-    width:           78,
-    height:          78,
-    borderRadius:    39,
-    backgroundColor: SCANNER_GLOW,
-    alignItems:      "center",
-    justifyContent:  "center",
+  progressFill: {
+    height:          "100%",
+    borderRadius:    2,
+    backgroundColor: SCANNER_SUCCESS,
   },
 });
