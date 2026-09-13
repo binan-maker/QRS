@@ -6,7 +6,6 @@ import { useAuth } from "@/shared/contexts/AuthContext";
 import { useTheme } from "@/shared/contexts/ThemeContext";
 import { useQrData, type QrDetail } from "./useQrData";
 import { useQrReports } from "./useQrReports";
-import { useQrFavorite } from "./useQrFavorite";
 import { useQrComments, type CommentItem } from "./useQrComments";
 import type { AppColors } from "@/shared/constants/colors";
 import { parseAnyPaymentQr } from "@/services/analysis";
@@ -57,7 +56,6 @@ export function useQrDetail(id: string, hint?: { content: string; contentType: s
     [content, contentType],
   );
   const reports = useQrReports(id, userId, data.offlineMode);
-  const favorite = useQrFavorite(id, userId);
   const comments = useQrComments(id, userId, data.offlineMode);
   const initialDataReady =
     !data.loading &&
@@ -148,11 +146,6 @@ export function useQrDetail(id: string, hint?: { content: string; contentType: s
     copiedTimerRef.current = setTimeout(() => setCopied(false), 2000);
   }, [content]);
 
-  const handleToggleFavorite = useCallback(() => {
-    if (!content) return;
-    return favorite.handleToggleFavorite(content, contentType || "text");
-  }, [content, contentType, favorite.handleToggleFavorite]);
-
   const handleSubmitComment = useCallback(() => {
     return comments.handleSubmitComment();
   }, [comments.handleSubmitComment]);
@@ -162,7 +155,6 @@ export function useQrDetail(id: string, hint?: { content: string; contentType: s
     ...data,
     parsedPayment,
     ...reports,
-    ...favorite,
     ...comments,
     initialDataReady,
     copied,
@@ -172,7 +164,6 @@ export function useQrDetail(id: string, hint?: { content: string; contentType: s
     getCombinedVerdict,
     handleOpenContent,
     handleCopyContent,
-    handleToggleFavorite,
     handleSubmitComment,
   };
 }

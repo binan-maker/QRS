@@ -33,7 +33,6 @@ const FILTER_ICONS: Record<string, IoniconName> = {
   contact:   "person-outline",
   wifi:      "wifi-outline",
   others:    "ellipsis-horizontal-circle-outline",
-  favorites: "bookmark-outline",
 };
 
 const FILTER_ICONS_ACTIVE: Record<string, IoniconName> = {
@@ -43,7 +42,6 @@ const FILTER_ICONS_ACTIVE: Record<string, IoniconName> = {
   contact:   "person",
   wifi:      "wifi",
   others:    "ellipsis-horizontal-circle",
-  favorites: "bookmark",
 };
 
 const FilterBar = memo(function FilterBar({
@@ -62,10 +60,9 @@ const FilterBar = memo(function FilterBar({
       style={styles.scroll}
     >
       {filters.map((f, idx) => {
-        const isFavorite = f.key === "favorites";
         const isActive   = activeFilters.includes(f.key);
 
-        const activeColor = isFavorite ? colors.danger : colors.primary;
+        const activeColor = colors.primary;
         const iconName    = isActive
           ? (FILTER_ICONS_ACTIVE[f.key] ?? "apps")
           : (FILTER_ICONS[f.key]        ?? "apps-outline");

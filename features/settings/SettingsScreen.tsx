@@ -79,7 +79,6 @@ const goToHistory   = useCallback(() => setSection("history"),   [setSection]);
 const goToTerms     = useCallback(() => safePush("/terms"),            []);
 const goToPrivacy   = useCallback(() => safePush("/privacy-policy"),   []);
 const goToLogin     = useCallback(() => safePush("/(auth)/login"),     []);
-const goToDonation  = useCallback(() => safePush("/donation"),         []);
 
 // Sub-sections are state changes only (same URL, nothing on the native stack).
 // Always reset to "main" — never router.push here.
@@ -348,13 +347,6 @@ icon="chatbubble-outline"
 label="Send Feedback"
 sublabel="Report bugs or suggest features"
 onPress={goToFeedback}
-/>
-<View style={styles.divider} />
-<SettingsMenuItem
-icon="heart-outline"
-label="Support BinRo"
-sublabel="Buy us a coffee"
-              onPress={goToDonation}
 />
 </View>
 </View>

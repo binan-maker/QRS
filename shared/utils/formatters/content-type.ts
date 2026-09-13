@@ -1,18 +1,17 @@
 /**
- * COMPATIBILITY SHIM — all logic lives in @/features/qr-engine
+ * Shared QR content formatting helpers.
  * ─────────────────────────────────────────────────────────────────────────────
- * Do NOT add any logic here. Edit the central registry/detector instead.
  */
 import {
   detectContentType as _detect,
   getDisplayLabel as _label,
   getSubtitle as _subtitle,
   getQrTypeMeta,
-} from "@/features/qr-engine";
+} from "@/shared/utils/qr-content";
 
-export type { QrTypeDefinition as ContentTypeMeta } from "@/features/qr-engine";
+export type { QrTypeDefinition as ContentTypeMeta } from "@/shared/utils/qr-content";
 
-export { getQrTypeMeta as getContentTypeMeta } from "@/features/qr-engine";
+export { getQrTypeMeta as getContentTypeMeta } from "@/shared/utils/qr-content";
 
 export function detectContentType(content: string): string {
   return _detect(content);

@@ -1,1 +1,1 @@
-export { detectContentType } from "@/features/qr-engine";
+export { detectContentType } from "@/shared/utils/qr-content";

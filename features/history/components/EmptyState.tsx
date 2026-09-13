@@ -89,21 +89,16 @@ const EmptyState = memo(function EmptyState({
     );
   }
 
-  const isFavorites = activeFilters.includes("favorites");
   const isFiltered  = !activeFilters.includes("all") && activeFilters.length > 0;
 
   const emptyIcon: ComponentProps<typeof Ionicons>["name"] =
-    isFavorites ? "bookmark-outline" : isFiltered ? "filter-outline" : "time-outline";
+    isFiltered ? "filter-outline" : "time-outline";
 
-  const emptyTitle = isFavorites
-    ? "No favorites yet"
-    : isFiltered
+  const emptyTitle = isFiltered
     ? "No scans match these filters"
     : "No scans yet";
 
-  const emptySub = isFavorites
-    ? "Tap the heart on a QR detail to save it here"
-    : isFiltered
+  const emptySub = isFiltered
     ? "Try removing some filters to see more results"
     : "Scanned QR codes will appear here";
 

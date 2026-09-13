@@ -2,7 +2,7 @@
  * SHIM — display title for My QR detail screen.
  * Delegates to the centralized QR engine. Do NOT add label logic here.
  */
-import { getDisplayLabel } from "@/features/qr-engine";
+import { getDisplayLabel } from "@/shared/utils/qr-content";
 import { getDetailContentType } from "./type-detection";
 
 export function getDetailDisplayTitle(item: any): string {

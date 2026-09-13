@@ -10,7 +10,7 @@ import { formatRelativeTime } from "@/shared/utils/formatters";
 
 import type { HistoryItem as HistoryItemType } from "@/features/history/types";
 import { parseAnyPaymentQr } from "@/services/analysis";
-import { useQrMeta } from "@/features/qr-engine";
+import { useQrMeta } from "@/shared/utils/qr-content";
 
 // Pure helpers — defined outside component to avoid re-creation per render.
 function getRiskConfig(risk: string, colors: any) {
@@ -60,7 +60,6 @@ const HistoryItem = memo(function HistoryItem({ item, risk, onDelete, index = 0,
   const { colors, isDark } = useTheme();
   const { typeMeta, displayLabel, subtitle } = useQrMeta(item.content, item.contentType);
 
-  const isFavorite = item.source === "favorite";
   const isSynced   = item.source === "cloud";
 
   const riskCfg = useMemo(() => getRiskConfig(risk, colors), [risk, colors]);
@@ -80,17 +79,15 @@ const HistoryItem = memo(function HistoryItem({ item, risk, onDelete, index = 0,
 
   // Memoize derived style values that involve tuple/string allocation.
   const gradient = useMemo<[string, string]>(() => {
-    if (isFavorite) return [colors.danger, colors.dangerShade ?? colors.danger];
     if (risk === "dangerous" || risk === "caution")
       return [colors.warning, colors.warningShade ?? colors.warning];
     return typeMeta.gradient as [string, string];
-  }, [isFavorite, risk, colors, typeMeta.gradient]);
+  }, [risk, colors, typeMeta.gradient]);
 
   const accentBorder = useMemo(() => {
     if (showRisk && riskCfg) return riskCfg.borderColor;
-    if (isFavorite)          return colors.danger + "35";
     return colors.surfaceBorder;
-  }, [showRisk, riskCfg, isFavorite, colors]);
+  }, [showRisk, riskCfg, colors]);
 
   const cardBg = isDark ? colors.surface : "#ffffff";
 

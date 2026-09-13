@@ -1,8 +1,8 @@
 /**
  * SHIM — type resolution for stored QR items.
- * Delegates to the centralized QR engine. Do NOT add detection logic here.
+ * Resolves stored QR types for display.
  */
-import { detectContentType, resolveEffectiveType } from "@/features/qr-engine";
+import { detectContentType, resolveEffectiveType } from "@/shared/utils/qr-content";
 
 export function getDetailContentType(item: any): string {
   const stored     = (item.contentType  as string) || "text";

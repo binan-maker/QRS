@@ -105,10 +105,8 @@ function RootLayoutNav() {
       {/* (qr) group — QR viewing and detail screens */}
       <Stack.Screen name="(qr)/qr-detail/[id]" options={{ headerShown: false }} />
       {/* (account) group — user account, preferences and discovery */}
-      <Stack.Screen name="(account)/favorites" options={{ headerShown: false }} />
       <Stack.Screen name="(account)/account-management" options={{ headerShown: false }} />
       <Stack.Screen name="(account)/privacy-settings" options={{ headerShown: false }} />
-      <Stack.Screen name="(account)/donation" options={{ headerShown: false }} />
       <Stack.Screen name="(account)/search" options={{ headerShown: false }} />
       {/* (legal) group — legal, policy and informational screens */}
       <Stack.Screen name="(legal)/privacy-policy" options={{ headerShown: false }} />

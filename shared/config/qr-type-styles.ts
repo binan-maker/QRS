@@ -1,12 +1,12 @@
 /**
- * COMPATIBILITY SHIM — all style data lives in @/features/qr-engine/registry.ts
+ * Shared QR type styles.
  * ─────────────────────────────────────────────────────────────────────────────
- * Do NOT add any data here. Edit the central registry instead.
+ * Keep this file as a stable import surface for list screens.
  */
-export type { QrTypeDefinition as QrTypeStyle } from "@/features/qr-engine";
+export type { QrTypeDefinition as QrTypeStyle } from "@/shared/utils/qr-content";
 
 export {
-  getQrTypeDef as getQrTypeStyle,
-  QR_REGISTRY as QR_TYPE_STYLES,
-  getQrTypeDef,
-} from "@/features/qr-engine";
+  getQrTypeMeta as getQrTypeStyle,
+  QR_CONTENT_TYPES as QR_TYPE_STYLES,
+  getQrTypeMeta as getQrTypeDef,
+} from "@/shared/utils/qr-content";

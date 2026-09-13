@@ -29,16 +29,13 @@ const HistoryRow = memo(function HistoryRow({ item, onDelete }: HistoryRowProps)
   }, [onDelete, item]);
 
   const sourceBadgeColor =
-    item.source === "favorite" ? colors.dangerDim
-    : item.source === "cloud" ? colors.accentDim
+    item.source === "cloud" ? colors.accentDim
     : colors.surfaceLight;
   const sourceBadgeText =
-    item.source === "favorite" ? "Favorite"
-    : item.source === "cloud" ? "Synced"
+    item.source === "cloud" ? "Synced"
     : "Local";
   const sourceBadgeIconColor =
-    item.source === "favorite" ? colors.danger
-    : item.source === "cloud" ? colors.accent
+    item.source === "cloud" ? colors.accent
     : colors.textMuted;
 
   const formattedDate = useMemo(() => formatCompactRelativeTime(item.scannedAt), [item.scannedAt]);

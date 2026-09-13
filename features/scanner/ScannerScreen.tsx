@@ -1,6 +1,5 @@
 import { useRef, useEffect, useState, useCallback } from "react";
 import { Platform, View, StyleSheet, Pressable, Animated } from "react-native";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 // NOTE: react-native-reanimated is intentionally NOT imported here.
 // A FadeIn entry animation on the root view makes it transparent at mount,
 // which lets the navigation stack's dark-blue background bleed through and
@@ -23,13 +22,10 @@ import {
   ScannerToast,
   toastContainerStyle,
   CameraUnavailableBanner,
-  DonationBanner,
   ConversionBanner,
 } from "@/features/scanner/components";
 import type { CameraErrorType } from "@/features/scanner/components";
 
-const DONATION_DISMISS_KEY = "@qrg_donation_dismissed";
-const SCAN_COUNT_KEY       = "@qrg_total_scan_count";
 
 // iOS uses continuous autofocus natively ('on' = AVCaptureFocusModeContinuousAutoFocus).
 // Android's CameraX default is already continuous — setting 'on' there triggers
@@ -100,18 +96,6 @@ export default function ScannerScreen() {
   const { colors }  = useTheme();
   const topInset    = useTopInset();
   const bottomInset = Math.max(insets.bottom, 24);
-
-  const [showDonationBanner, setShowDonationBanner] = useState(false);
-
-  useEffect(() => {
-    // Parallel reads — previously sequential, wasted an extra AsyncStorage round-trip.
-    Promise.all([
-      AsyncStorage.getItem(DONATION_DISMISS_KEY),
-      AsyncStorage.getItem(SCAN_COUNT_KEY),
-    ]).then(([dismissed, c]) => {
-      if (!dismissed && parseInt(c || "0", 10) >= 5) setShowDonationBanner(true);
-    }).catch(() => {});
-  }, []);
 
   // ── Hardware availability check ────────────────────────────────────────────
   useEffect(() => {
@@ -243,37 +227,9 @@ export default function ScannerScreen() {
   } = useScanner({ isCameraAvailable: cameraAvailable });
 
   // ── Barcode handler — wires smart zoom before processing ─────────────────
-  // onQRBoundsDetected inspects bounds.size.width to detect small QR codes
-  // and automatically boosts zoom for faster, more reliable detection.
-  //
-  // lastCountedDataRef gates the donation counter so it only increments ONCE
-  // per unique QR content. expo-camera's onBarcodeScanned fires on every
-  // decoded frame (potentially 30×/s); without this guard the counter would
-  // increment dozens of times for a single held scan before React state
-  // propagates back and the lock closes.
-  const lastCountedDataRef = useRef<string | null>(null);
-
-  const handleScanWithCount = useCallback(async (data: any) => {
-    // Feed bounds into smart auto-zoom before the scan lock fires
+  const handleScanWithCount = useCallback((data: any) => {
     onQRBoundsDetected(data?.bounds);
     handleBarCodeScanned(data);
-
-    // Only count once per unique QR — not once per camera frame
-    const qrData = data?.data;
-    if (!qrData || qrData === lastCountedDataRef.current) return;
-    lastCountedDataRef.current = qrData;
-
-    try {
-      // Parallel reads — no reason to wait for DISMISS before reading COUNT
-      const [dismissed, stored] = await Promise.all([
-        AsyncStorage.getItem(DONATION_DISMISS_KEY),
-        AsyncStorage.getItem(SCAN_COUNT_KEY),
-      ]);
-      if (dismissed) return;
-      const newCount = parseInt(stored || "0", 10) + 1;
-      await AsyncStorage.setItem(SCAN_COUNT_KEY, String(newCount));
-      if (newCount >= 5) setShowDonationBanner(true);
-    } catch {}
   }, [handleBarCodeScanned, onQRBoundsDetected]);
 
   // ── cameraLive — computed once here, used by both hooks below and the JSX ──
@@ -467,15 +423,6 @@ export default function ScannerScreen() {
 
       {/* Processing overlay */}
       {processing && <ProcessingOverlay />}
-
-      <DonationBanner
-        visible={showDonationBanner}
-        bottomOffset={bottomInset + (conversionBannerMsg && !user ? 106 : 16)}
-        onDismiss={async () => {
-          setShowDonationBanner(false);
-          try { await AsyncStorage.setItem(DONATION_DISMISS_KEY, "1"); } catch {}
-        }}
-      />
 
       <ConversionBanner
         message={conversionBannerMsg}

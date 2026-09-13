@@ -27,7 +27,6 @@ export function useHistory() {
     loadingMore,
     fetchNextPage,
     refetchCloud,
-    refetchFavorites,
     refetchStats,
     setRefreshing,
   } = data;
@@ -60,9 +59,7 @@ export function useHistory() {
       }
     } else {
       const cloudKey = ["history", user?.id];
-      const favKey   = ["favorites", user?.id];
       const prevCloud = queryClient.getQueryData(cloudKey);
-      const prevFavs  = queryClient.getQueryData(favKey);
 
       queryClient.setQueryData(cloudKey, (old: any) =>
         old
@@ -75,10 +72,6 @@ export function useHistory() {
             }
           : old
       );
-      queryClient.setQueryData(favKey, (old: any[]) =>
-        old ? old.filter((f: any) => f.id !== item.id) : old
-      );
-
       try {
         if (user?.id) await deleteUserScan(user.id, item.id);
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
@@ -89,7 +82,6 @@ export function useHistory() {
         // refetch naturally). The optimistic removal above already gives instant
         // visual feedback; this ensures the next load is always authoritative.
         queryClient.invalidateQueries({ queryKey: cloudKey,          refetchType: "none" });
-        queryClient.invalidateQueries({ queryKey: favKey,            refetchType: "none" });
         queryClient.invalidateQueries({ queryKey: ["home-recent-scans", user?.id], refetchType: "none" });
         // Bust disk caches so the pre-warm on next launch doesn't re-seed stale data
         if (user?.id) {
@@ -98,7 +90,6 @@ export function useHistory() {
         }
       } catch {
         queryClient.setQueryData(cloudKey, prevCloud);
-        queryClient.setQueryData(favKey, prevFavs);
       }
     }
   }, [user?.id, queryClient, setLocalHistory]);
@@ -115,7 +106,6 @@ export function useHistory() {
         // rethrow so the finally block always runs and the spinner stops.
         await Promise.all([
           refetchCloud().catch(() => {}),
-          refetchFavorites().catch(() => {}),
           refetchStats().catch(() => {}),
         ]);
       }
@@ -124,14 +114,13 @@ export function useHistory() {
       // Previously, an unhandled rejection left RefreshControl stuck spinning.
       setRefreshing(false);
     }
-  }, [user?.id, loadLocalHistory, refetchCloud, refetchFavorites, refetchStats, setRefreshing]);
+  }, [user?.id, loadLocalHistory, refetchCloud, refetchStats, setRefreshing]);
 
   // ── Load next page ─────────────────────────────────────────────────────────
   const handleEndReached = useCallback(() => {
     // Guard: user may have signed out mid-scroll; skip if no active session.
     if (!user?.id) return;
-    const isFav = activeFilters.length === 1 && activeFilters[0] === "favorites";
-    if (!isFav && cloudHasMore && !loadingMore) fetchNextPage();
+    if (cloudHasMore && !loadingMore) fetchNextPage();
   }, [user?.id, activeFilters, cloudHasMore, loadingMore, fetchNextPage]);
 
   return {

@@ -15,7 +15,7 @@ export const FILTERS: { key: FilterKey; label: string }[] = [
 
 export const PAYMENT_TYPES  = [
   "payment", "paymentlink", "paypal", "venmo", "mobilepay",
-  "scantopay", "razorpay", "upi", "crypto", "donation",
+  "scantopay", "razorpay", "upi", "crypto",
 ] as const;
 
 export const CONTACT_TYPES  = [

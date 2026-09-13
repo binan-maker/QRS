@@ -16,7 +16,7 @@ import {
   getQrTypeMeta as getContentTypeMeta,
   getDisplayLabel as getContentDisplayLabel,
   getSubtitle as getContentSubtitle,
-} from "@/features/qr-engine";
+} from "@/shared/utils/qr-content";
 
 function SkeletonCard() {
   const { colors } = useTheme();

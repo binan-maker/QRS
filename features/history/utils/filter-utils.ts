@@ -19,7 +19,7 @@ const CONTACT_SET = new Set<string>(CONTACT_TYPES);
 export function getActiveFilters(
   history:   HistoryItem[],
   scanStats: ScanStatsResult | null,
-  user:      any
+  _user:      any
 ): { key: FilterKey; label: string; count: number }[] {
   let paymentCount = 0;
   let urlCount     = 0;
@@ -46,13 +46,12 @@ export function getActiveFilters(
   };
 
   const base = FILTERS.map((f) => ({ ...f, count: counts[f.key] ?? 0 }));
-  if (user) base.push({ key: "favorites" as FilterKey, label: "Favorites", count: 0 });
   return base;
 }
 
 /**
  * Returns true if the given contentType matches ANY of the active filter keys.
- * "all" and "favorites" are handled upstream (not here).
+ * "all" is handled upstream (not here).
  */
 export function itemMatchesFilters(
   contentType: string,
@@ -74,7 +73,6 @@ export function itemMatchesFilters(
  * Toggle a filter key in an ActiveFilters array following these rules:
  *
  *  • "all"       → always exclusive; clears everything else
- *  • "favorites" → exclusive; clears everything else
  *  • any other   → multi-select; deselects "all" automatically
  *                  if it was the only active key, revert to ["all"]
  */
@@ -84,12 +82,7 @@ export function toggleFilter(
 ): ActiveFilters {
   if (tapped === "all") return ["all"];
 
-  if (tapped === "favorites") {
-    if (current.includes("favorites")) return ["all"];
-    return ["favorites"];
-  }
-
-  const withoutAll = current.filter((k) => k !== "all" && k !== "favorites");
+  const withoutAll = current.filter((k) => k !== "all");
 
   if (withoutAll.includes(tapped)) {
     const next = withoutAll.filter((k) => k !== tapped);

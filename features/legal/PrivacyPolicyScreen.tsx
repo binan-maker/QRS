@@ -201,7 +201,7 @@ export default function PrivacyPolicyScreen() {
             BinRo uses Google Firebase for backend infrastructure. Your data is stored in Firebase Firestore, Firebase Realtime Database, and Firebase Auth. Firebase is compliant with GDPR, SOC 2, and ISO 27001.
           </Para>
           <Para colors={colors}>
-            We also use Razorpay for donation processing and third-party analytics and crash reporting tools. These services have their own privacy policies which govern their use of data they receive.
+            We also use third-party analytics and crash reporting tools. These services have their own privacy policies which govern their use of data they receive.
           </Para>
           <Para colors={colors}>
             We are not responsible for the data practices of these third-party providers. Links to their privacy policies are available on request.

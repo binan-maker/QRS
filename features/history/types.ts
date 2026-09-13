@@ -4,7 +4,7 @@ export interface HistoryItem {
   contentType: string;
   scannedAt:   string;
   qrCodeId?:   string;
-  source:      "local" | "cloud" | "favorite";
+  source:      "local" | "cloud";
   scanSource?: "camera" | "gallery" | "viewed";
 }
 
@@ -14,8 +14,7 @@ export type FilterKey =
   | "url"
   | "contact"
   | "wifi"
-  | "others"
-  | "favorites";
+  | "others";
 
 /** The active filter state is always an array of FilterKey values. */
 export type ActiveFilters = FilterKey[];

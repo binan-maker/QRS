@@ -9,8 +9,8 @@
  * extractSocialHandle: parses the last path segment of a social URL as a @-handle.
  */
 import type { GeneratedQrItem } from "@/services/generator";
-import { detectContentType, getDisplayLabel, resolveEffectiveType } from "@/features/qr-engine";
-export { getQrTypeMeta as getContentTypeMeta } from "@/features/qr-engine";
+import { detectContentType, getDisplayLabel, resolveEffectiveType, getQrTypeMeta } from "@/shared/utils/qr-content";
+export { getQrTypeMeta as getContentTypeMeta } from "@/shared/utils/qr-content";
 
 const GENERIC_CT = new Set(["text", "url", "link", "biolink", "social"]);
 

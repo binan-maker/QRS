@@ -20,7 +20,7 @@ import { REPORT_LABELS, REPORT_ICONS } from "@/features/qr-detail/utils/report-t
 import { normalizeQrDetailContentType } from "@/features/qr-detail/content-types";
 
 import LoadingSkeleton from "@/features/qr-detail/components/LoadingSkeleton";
-import { ContentCard } from "@/features/qr-engine/content-cards";
+import { QrContentCard } from "@/features/qr-detail/components/QrContentCard";
 import TrustScoreCard from "@/features/qr-detail/components/TrustScoreCard";
 import EarlyCommunityCard from "@/features/qr-detail/components/EarlyCommunityCard";
 import ReportGrid from "@/features/qr-detail/components/ReportGrid";
@@ -121,29 +121,12 @@ export default function StaticQrDetailScreen({ id, hint }: Props) {
     if (q.reportError) showToast(q.reportError, "alert-circle-outline");
   }, [q.reportError, showToast]);
 
-  useEffect(() => {
-    if (!q.favoriteError) return;
-    showToast(q.favoriteError, "alert-circle-outline");
-    q.clearFavoriteError();
-  }, [q.favoriteError]);
-
   // trustInfo and combinedVerdict are pre-memoized in useQrDetail — calling the
   // function wrappers is free (they just return the cached value).
   const trust     = q.trustInfo;
 
   const content     = q.qrCode?.content || q.offlineContent || "";
   const contentType = normalizeQrDetailContentType(q.qrCode?.contentType || q.offlineContentType);
-
-  const handleFavoritePress = useCallback(() => {
-    if (!user) { router.push("/(auth)/login"); return; }
-    const willFav = !q.isFavorite;
-    q.handleToggleFavorite();
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    showToast(
-      willFav ? "Added to favorites" : "Removed from favorites",
-      willFav ? "heart" : "heart-outline"
-    );
-  }, [user, q.isFavorite, q.handleToggleFavorite, showToast]);
 
   const handleReportPress = useCallback(() => {
     setOverflowOpen(false);
@@ -199,7 +182,6 @@ export default function StaticQrDetailScreen({ id, hint }: Props) {
                 offlineMode={q.offlineMode}
                 onBack={safeBack}
                 onOverflowOpen={() => setOverflowOpen(true)}
-                onDonate={() => router.push("/donation")}
               />
             </View>
           </Animated.View>
@@ -237,14 +219,11 @@ export default function StaticQrDetailScreen({ id, hint }: Props) {
 
             {/* ── CONTENT CARD — HERO ──────────────────────────── */}
             <View>
-              <ContentCard
+              <QrContentCard
                 content={content}
                 contentType={contentType}
-                parsedPayment={q.parsedPayment}
-                isDeactivated={false}
                 onOpenContent={q.handleOpenContent}
                 hideOpenAction={false}
-                templateKey={(q.qrCode as any)?.templateKey}
               />
             </View>
 
@@ -350,9 +329,7 @@ export default function StaticQrDetailScreen({ id, hint }: Props) {
       <OverflowSheet
         visible={overflowOpen}
         onClose={() => setOverflowOpen(false)}
-        isFavorite={q.isFavorite}
-        onFavorite={handleFavoritePress}
-         onReport={() => showToast("Feature Coming Soon!", "time-outline")}
+        onReport={() => showToast("Feature Coming Soon!", "time-outline")}
       />
 
     </View>

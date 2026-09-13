@@ -6,7 +6,6 @@ import { useFocusEffect } from "expo-router";
 import { useAuth } from "@/shared/contexts/AuthContext";
 import {
   getUserScansPaginated,
-  getUserFavorites,
   getUserScanStats,
   type ScanStatsResult,
 } from "@/lib/firestore-service";
@@ -15,8 +14,6 @@ import { mergeAndDeduplicateScans } from "@/services/scan-history/dedup";
 import {
   getCachedHistoryPage,
   setCachedHistoryPage,
-  getCachedFavorites,
-  setCachedFavorites,
   getCachedScanStats,
   setCachedScanStats,
 } from "@/services/cache/qr-cache";
@@ -79,9 +76,8 @@ export function useHistoryData(activeFilters: ActiveFilters) {
 
     Promise.all([
       getCachedHistoryPage<{ items: any[]; hasMore: boolean }>(uid),
-      getCachedFavorites<any[]>(uid),
       getCachedScanStats<ScanStatsResult>(uid),
-    ]).then(([cachedHistory, cachedFavs, cachedStats]) => {
+    ]).then(([cachedHistory, cachedStats]) => {
       // Seed history
       const qkHistory = ["history", uid];
       if (cachedHistory?.items?.length && !globalQueryClient.getQueryData(qkHistory)) {
@@ -96,12 +92,6 @@ export function useHistoryData(activeFilters: ActiveFilters) {
         // causing the focus-based refetch to skip — users see old data until
         // the full staleTime expires.
         globalQueryClient.invalidateQueries({ queryKey: qkHistory, refetchType: "active" });
-      }
-      // Seed favorites
-      const qkFavs = ["favorites", uid];
-      if (cachedFavs?.length && !globalQueryClient.getQueryData(qkFavs)) {
-        globalQueryClient.setQueryData(qkFavs, cachedFavs);
-        globalQueryClient.invalidateQueries({ queryKey: qkFavs, refetchType: "active" });
       }
       // Seed stats
       const qkStats = ["scan-stats", uid];
@@ -141,26 +131,10 @@ export function useHistoryData(activeFilters: ActiveFilters) {
     enabled:          !!user?.id && preWarmDone,
   });
 
-  // ── Favorites ────────────────────────────────────────────────────────────────
-  // Deferred: only starts after the history query is no longer in its initial
-  // loading state. This avoids saturating the network on first mount.
   const historyHasData = (cloudData?.pages?.length ?? 0) > 0 || !cloudLoading;
-  const { data: favoritesRaw, refetch: refetchFavorites } = useQuery({
-    queryKey: ["favorites", user?.id],
-    queryFn:  async () => {
-      const data = await getUserFavorites(user!.id);
-      setCachedFavorites(user!.id, data).catch(() => {});
-      return data;
-    },
-    staleTime:            STALE_MS,
-    gcTime:               60 * 60 * 1000,
-    refetchOnWindowFocus: false,
-    refetchOnMount:       true,
-    enabled:              !!user?.id && preWarmDone && historyHasData,
-  });
 
   // ── Scan stats ───────────────────────────────────────────────────────────────
-  // Also deferred until after history + favorites have started.
+  // Deferred until after history has started.
   const { data: scanStats, isLoading: statsLoading, refetch: refetchStats } = useQuery<ScanStatsResult>({
     queryKey: ["scan-stats", user?.id],
     queryFn:  async () => {
@@ -192,21 +166,6 @@ export function useHistoryData(activeFilters: ActiveFilters) {
     return result;
   }, [cloudData]);
 
-  const favorites = useMemo<HistoryItem[]>(
-    () => (favoritesRaw ?? []).map((f: any) => ({
-      id:          f.id,
-      content:     f.content || f.qrCodeId,
-      contentType: f.contentType || "text",
-      // createdAt may be missing on older favorite documents — fall back to
-      // scannedAt, then current time.  An undefined scannedAt would produce
-      // NaN timestamps in dedup/sort and an "Invalid Date" section header.
-      scannedAt:   f.createdAt ?? f.scannedAt ?? new Date().toISOString(),
-      qrCodeId:    f.qrCodeId,
-      source:      "favorite" as const,
-    })),
-    [favoritesRaw]
-  );
-
   // Same qrCodeId+minuteBucket dedup as home scans — algorithm in services/scan-history/dedup.ts.
   const history = useMemo<HistoryItem[]>(
     () => mergeAndDeduplicateScans(localHistory, cloudHistory),
@@ -215,8 +174,7 @@ export function useHistoryData(activeFilters: ActiveFilters) {
 
   // ── Safety analysis — batched to avoid blocking the JS thread ───────────────
   // Items are processed in chunks with a yield between each batch so the list
-  // stays responsive.  The runId guard discards stale batches when history or
-  // favorites change rapidly.
+  // stays responsive. The runId guard discards stale batches when history changes.
   //
   // Optimizations for large histories (500–10 000+ items):
   //  • Only URL and payment items can ever be non-safe — all other types are
@@ -245,10 +203,6 @@ export function useHistoryData(activeFilters: ActiveFilters) {
     for (let i = 0; i < history.length; i++) {
       if (RISK_ANALYSIS_TYPES.has(history[i].contentType)) analysisItems.push(history[i]);
     }
-    for (let i = 0; i < favorites.length; i++) {
-      if (RISK_ANALYSIS_TYPES.has(favorites[i].contentType)) analysisItems.push(favorites[i]);
-    }
-
     if (analysisItems.length === 0) {
       setSafetyRiskMap(new Map());
       return;
@@ -290,21 +244,20 @@ export function useHistoryData(activeFilters: ActiveFilters) {
     return () => {
       // Cancel both the InteractionManager handle (first-batch gate) and any
       // in-progress setTimeout chain so no JS work runs after unmount or
-      // after history/favorites change invalidates this run.
+      // after history changes invalidate this run.
       handle.cancel();
       if (safetyTimeoutRef.current !== null) {
         clearTimeout(safetyTimeoutRef.current);
         safetyTimeoutRef.current = null;
       }
     };
-  }, [history, favorites]);
+  }, [history]);
 
   const displayItems = useMemo<HistoryItem[]>(() => {
-    if (activeFilters.includes("favorites")) return favorites;
     const contentFilters = activeFilters.filter((k) => k !== "all");
     if (contentFilters.length === 0) return history;
     return history.filter((item) => itemMatchesFilters(item.contentType, contentFilters));
-  }, [activeFilters, history, favorites]);
+  }, [activeFilters, history]);
 
   // ── Local history loading ────────────────────────────────────────────────────
   // localLoadTimestampRef prevents the double AsyncStorage read that happens
@@ -345,11 +298,9 @@ export function useHistoryData(activeFilters: ActiveFilters) {
       const now = Date.now();
       const cloudState = queryClient.getQueryState(["history", user.id]);
       if (!cloudState?.dataUpdatedAt || now - cloudState.dataUpdatedAt > STALE_MS) refetchCloud();
-      const favState = queryClient.getQueryState(["favorites", user.id]);
-      if (!favState?.dataUpdatedAt || now - favState.dataUpdatedAt > STALE_MS) refetchFavorites();
       const statsState = queryClient.getQueryState(["scan-stats", user.id]);
       if (!statsState?.dataUpdatedAt || now - statsState.dataUpdatedAt > STALE_MS) refetchStats();
-    }, [user?.id, preWarmDone, loadLocalHistory, queryClient, refetchCloud, refetchFavorites, refetchStats])
+    }, [user?.id, preWarmDone, loadLocalHistory, queryClient, refetchCloud, refetchStats])
   );
 
   return {
@@ -364,8 +315,6 @@ export function useHistoryData(activeFilters: ActiveFilters) {
     cloudError:     cloudError as boolean,
     fetchNextPage,
     refetchCloud,
-    favorites,
-    refetchFavorites,
     scanStats:      scanStats ?? null,
     statsLoading,
     refetchStats,

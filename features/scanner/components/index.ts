@@ -8,7 +8,6 @@ export { SCANNER_GLOW, SCANNER_AMBER, VIGNETTE } from "./overlay/constants";
 // Feedback
 export { ScannerToast, toastContainerStyle } from "./feedback/ScannerToast";
 export type { ToastType }             from "./feedback/ScannerToast";
-export { DonationBanner }             from "./feedback/DonationBanner";
 export { ConversionBanner }           from "./feedback/ConversionBanner";
 
 // System

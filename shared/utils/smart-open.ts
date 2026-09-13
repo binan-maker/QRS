@@ -15,7 +15,7 @@
  */
 
 import { Alert, Linking, Platform } from "react-native";
-import { getQrTypeDef as getQrTypeStyle } from "@/features/qr-engine";
+import { getQrTypeMeta as getQrTypeStyle } from "@/shared/utils/qr-content";
 import { EXTERNAL } from "@/config";
 
 const AUTHENTICATOR_STORE_URL =

@@ -12,7 +12,6 @@ const GUIDE_STEPS = [
   { icon: "people-outline", title: "Read Community Reports", desc: "See how others have reported the QR code: Safe, Scam, Fake, or Spam. Read comments for detailed insights." },
   { icon: "flag-outline", title: "Report & Protect", desc: "Sign in to report suspicious QR codes and protect the community. Your reports contribute to the trust score algorithm." },
   { icon: "chatbubble-outline", title: "Comment & Discuss", desc: "Add comments to share your experience. Like helpful comments, report harmful ones. Full threading support." },
-  { icon: "heart-outline", title: "Favorites", desc: "Add frequently used QR codes to favorites for quick access." },
   { icon: "eye-off-outline", title: "Anonymous Mode", desc: "Scan in anonymous mode — nothing is written to your device or any server. Absolute zero tracking." },
   { icon: "phone-portrait-outline", title: "Payment QR Codes", desc: "For UPI, Google Pay, PhonePe, and other payment QR codes, tap 'Open in Payment App' to pay securely." },
 ];

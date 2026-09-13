@@ -8,7 +8,6 @@
 //
 // Usage:
 //   import { API_BASE_URL, apiUrl } from "@/config/api";
-//   const res = await fetch(apiUrl("/api/donation/create-order"), { ... });
 // ═══════════════════════════════════════════════════════════════════════════════
 
 import { ENV } from "./env";

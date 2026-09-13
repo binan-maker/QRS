@@ -16,4 +16,3 @@ export { default as CommentsSection } from "./components/CommentsSection";
 export { default as HistorySection } from "./components/HistorySection";
 export { default as HistoryRow } from "./components/HistoryRow";
 export { default as PrivacyToggleRow } from "./components/PrivacyToggleRow";
-export { default as CharityDonationSection } from "./components/CharityDonationSection";
