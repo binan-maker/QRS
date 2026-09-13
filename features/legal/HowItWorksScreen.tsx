@@ -222,15 +222,6 @@ export default function HowItWorksScreen() {
                 <Text style={[styles.genDesc, { color: colors.textSecondary }]}>A branded code tied to your personal BinRo profile. Perfect for sharing your portfolio, social links, or contact details.</Text>
               </View>
             </View>
-            <View style={[styles.genRow, { borderTopWidth: 1, borderTopColor: colors.surfaceBorder, paddingTop: 14, marginTop: 4 }]}>
-              <View style={[styles.genIcon, { backgroundColor: "#FBBF2415" }]}>
-                <Ionicons name="storefront-outline" size={18} color={colors.warning} />
-              </View>
-              <View style={{ flex: 1 }}>
-                <Text style={[styles.genLabel, { color: colors.warning }]}>Business QR Code</Text>
-                <Text style={[styles.genDesc, { color: colors.textSecondary }]}>Upload your business logo, enter your business name, and generate a verified business QR code. Includes live scan counter, comments, and destination update capability.</Text>
-              </View>
-            </View>
           </View>
           <WarnBox text="You are solely responsible for all content your QR codes direct to, including any destinations you set after creation. Misuse to redirect users to fraudulent or harmful content violates our Terms and may result in account termination and law enforcement referral." />
         </Section>

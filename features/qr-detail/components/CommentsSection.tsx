@@ -6,6 +6,7 @@ import { useTheme } from "@/shared/contexts/ThemeContext";
 import { makeStyles } from "@/features/qr-detail/styles";
 import { SectionHeader } from "@/shared/components/ui/SectionHeader";
 import CommentItem from "@/features/qr-detail/components/CommentItem";
+import type { CommentItem as CommentItemType } from "@/features/qr-detail/hooks/comment-types";
 import { formatCompactNumber, smartName } from "@/shared/utils/formatters";
 
 interface ReplyTo {
@@ -15,20 +16,11 @@ interface ReplyTo {
   isNested: boolean;
 }
 
-interface CommentData {
-  id: string;
-  userId: string;
-  parentId?: string | null;
-  user: { displayName: string };
-  userUsername?: string;
-  [key: string]: any;
-}
-
 interface Props {
   user: { id: string; displayName?: string } | null;
   totalComments: number;
-  commentsList: CommentData[];
-  topLevelComments: CommentData[];
+  commentsList: CommentItemType[];
+  topLevelComments: CommentItemType[];
   hasMoreComments: boolean;
   commentsLoading: boolean;
   newComment: string;
@@ -49,11 +41,12 @@ interface Props {
   handleSubmitComment: () => void;
   handleCommentLike: (id: string, currentLike: string | null) => void;
   handleDeleteComment: (id: string) => void;
-  getAllDescendants: (id: string) => CommentData[];
+  getAllDescendants: (id: string) => CommentItemType[];
   getRootCommentId: (id: string) => string;
   toggleReplies: (id: string) => void;
   showMoreReplies: (id: string) => void;
   loadMoreComments: () => void;
+  onReport?: (id: string) => void;
 }
 
 export default function CommentsSection({
@@ -86,6 +79,7 @@ export default function CommentsSection({
   toggleReplies,
   showMoreReplies,
   loadMoreComments,
+  onReport = () => {},
 }: Props) {
   const { colors } = useTheme();
   const styles = makeStyles(colors);
@@ -99,7 +93,7 @@ export default function CommentsSection({
   );
 
   const onReply = useCallback(
-    (c: CommentData) => {
+    (c: CommentItemType) => {
       if (!user) { router.push("/(auth)/login"); return; }
       const rootId = getRootCommentId(c.id);
       const author = c.userUsername ? `@${c.userUsername}` : smartName(c.user.displayName);

@@ -164,11 +164,7 @@ export default function CompactRenderer({
   const displayLabel = getDisplayLabel(content, effectiveType);
   const rows = extractRows(content, effectiveType);
 
-  const description = isDynamic
-    ? isBusiness
-      ? "Smart Redirect — destination is updatable"
-      : "Protected redirect — content is updatable"
-    : "Content is directly encoded in this QR";
+  const description = "Content is directly encoded in this static QR";
 
   return (
     <Animated.View entering={FadeInDown.duration(200)}>
@@ -191,11 +187,6 @@ export default function CompactRenderer({
               {description}
             </Text>
           </View>
-          {isDynamic && (
-            <View style={[styles.dynamicBadge, { backgroundColor: "#6366F115", borderColor: "#6366F130" }]}>
-              <Ionicons name="git-branch-outline" size={12} color="#6366F1" />
-            </View>
-          )}
         </View>
 
         {isLoading && (

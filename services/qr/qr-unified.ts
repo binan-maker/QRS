@@ -64,22 +64,28 @@ export async function createUnifiedQr(params: {
   };
   formValues?: { value: string; extra: Record<string, string> } | null;
 }): Promise<void> {
+  if (
+    params.qrType !== "individual" ||
+    params.isDynamic ||
+    params.businessName ||
+    params.scanLimit != null ||
+    params.expiryDate != null ||
+    params.expiryPreset != null
+  ) {
+    throw new Error("Only static individual QR codes are supported.");
+  }
+
   await db.set(["qrs", params.id], {
-    qrType: params.qrType,
+    qrType: "individual",
     template: params.template,
     title: params.title,
-    isDynamic: params.isDynamic,
     destination: params.destination,
     rawDestination: params.rawDestination,
     contentType: params.contentType,
-    businessName: params.businessName,
     status: "active",
     scanCount: 0,
     downloads: 0,
     shares: 0,
-    scanLimit: params.scanLimit,
-    expiryDate: params.expiryDate,
-    expiryPreset: params.expiryPreset,
     design: {
       fgColor: params.design.fgColor,
       bgColor: params.design.bgColor,
@@ -97,6 +103,7 @@ export async function getUnifiedQr(id: string): Promise<UnifiedQr | null> {
   try {
     const data = await db.get(["qrs", id]);
     if (!data) return null;
+    if (data.isDynamic === true || data.businessName) return null;
     return mapDocToUnifiedQr(id, data);
   } catch {
     return null;
@@ -133,15 +140,9 @@ export async function updateUnifiedQrDestination(
   id: string,
   newDestination: string
 ): Promise<void> {
-  const data = await db.get(["qrs", id]);
-  if (!data) throw new Error("QR not found");
-  if (!data.isDynamic) throw new Error("This QR is not dynamic and cannot be redirected");
-
-  await db.update(["qrs", id], {
-    destination: newDestination,
-    rawDestination: newDestination,
-    updatedAt: db.timestamp(),
-  });
+  void id;
+  void newDestination;
+  throw new Error("Static QR codes cannot change their destination.");
 }
 
 export async function setUnifiedQrStatus(
@@ -170,7 +171,9 @@ export async function getUserUnifiedQrs(_userId: string, limitCount = 200): Prom
       orderBy: { field: "createdAt", direction: "desc" },
       limit: limitCount,
     });
-    return docs.map(d => mapDocToUnifiedQr(d.id, d.data));
+    return docs
+      .filter((d) => d.data.isDynamic !== true && !d.data.businessName)
+      .map(d => mapDocToUnifiedQr(d.id, d.data));
   } catch {
     return [];
   }

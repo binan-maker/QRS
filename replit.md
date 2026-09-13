@@ -40,6 +40,22 @@ Server-only configuration:
 
 Firebase client configuration is public by design. Keep the Admin service account in Replit Secrets.
 
+## Firebase setup
+
+The app now uses static individual QR codes only. New client writes reject
+dynamic destinations, business QR metadata, redirect history, expiry, and scan
+limits. The checked-in `firestore.rules` and `storage.rules` files reflect that
+policy; deploy them to the `scan-guard-19a7f` Firebase project after signing in
+with the Firebase CLI:
+
+```bash
+npx firebase-tools deploy --only firestore:rules,storage --project scan-guard-19a7f
+```
+
+The Replit environment contains the public Firebase client configuration. The
+Firebase Admin service account is still required for server-side deployment and
+trusted data migrations.
+
 ## Schema and security
 
 Create the Firestore database, enable Email/Password and Google providers in Firebase Authentication, configure Firestore and Storage security rules, and create the Realtime Database before using production data.

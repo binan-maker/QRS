@@ -35,15 +35,15 @@ const designSchema = z.object({
 const createQrSchema = z.object({
   template: z.string().max(60).nullable().optional(),
   title: z.string().min(1).max(120).nullable().optional(),
-  isDynamic: z.boolean().default(false),
+  isDynamic: z.literal(false).default(false),
   destination: z.string().min(1).max(2000),
   rawDestination: z.string().min(1).max(2000).optional(),
   contentType: z.string().min(1).max(50).default("url"),
-  qrType: z.enum(["individual", "business", "government"]).default("individual"),
-  businessName: z.string().max(120).nullable().optional(),
-  scanLimit: z.number().int().min(1).max(1_000_000).nullable().optional(),
-  expiryDate: z.string().datetime({ offset: true }).nullable().optional(),
-  expiryPreset: z.enum(["24h", "7d", "30d", "90d", "1y"]).nullable().optional(),
+  qrType: z.literal("individual").default("individual"),
+  businessName: z.null().optional(),
+  scanLimit: z.null().optional(),
+  expiryDate: z.null().optional(),
+  expiryPreset: z.null().optional(),
   design: designSchema.optional(),
   formValues: z.object({
     value: z.string(),
@@ -53,9 +53,6 @@ const createQrSchema = z.object({
 
 const updateQrSchema = z.object({
   title: z.string().min(1).max(120).nullable().optional(),
-  scanLimit: z.number().int().min(1).max(1_000_000).nullable().optional(),
-  expiryDate: z.string().datetime({ offset: true }).nullable().optional(),
-  expiryPreset: z.enum(["24h", "7d", "30d", "90d", "1y"]).nullable().optional(),
   design: designSchema.optional(),
 });
 
@@ -289,28 +286,11 @@ unifiedQrRouter.patch(
   standardLimit,
   validateBody(updateDestinationSchema),
   async (req: Request, res: Response) => {
-    const { id } = req.params;
-    const { destination } = req.body;
-    const db = getAdminDb();
-    if (!db) return res.status(503).json({ error: "Database unavailable", code: "SERVICE_UNAVAILABLE", status: 503 });
-
-    try {
-      const snap = await db.collection("qrs").doc(id).get();
-      if (!snap.exists) return res.status(404).json({ error: "QR not found", code: "QR_NOT_FOUND", status: 404 });
-      const data = snap.data()!;
-      if (!data.isDynamic) return res.status(400).json({ error: "Only dynamic QRs can have their destination changed", code: "NOT_DYNAMIC", status: 400 });
-
-      // TODO: UPDATE unified_qrs SET destination = $dest, raw_destination = $dest, updated_at = NOW() WHERE id = $id
-      await db.collection("qrs").doc(id).update({
-        destination,
-        rawDestination: destination,
-        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
-      });
-      return res.json({ data: { updated: true, destination } });
-    } catch (e: any) {
-      console.error("[unified-qr PATCH /:id/destination]", e.message);
-      return res.status(500).json({ error: "Failed to update destination", code: "INTERNAL_ERROR", status: 500 });
-    }
+    return res.status(400).json({
+      error: "Static QR codes cannot change their destination",
+      code: "STATIC_QR_IMMUTABLE",
+      status: 400,
+    });
   },
 );
 

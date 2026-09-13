@@ -28,7 +28,6 @@ interface QrCardProps {
   onLongPress?: () => void;
   showTrust?: boolean;
   trustSummary?: QrTrustSummary;
-  isDynamic?: boolean;
   isActive?: boolean;
   rightAction?: ReactNode;
   animationDelay?: number;
@@ -44,7 +43,6 @@ function QrCardComponent({
   onLongPress,
   showTrust = false,
   trustSummary,
-  isDynamic = false,
   isActive = true,
   rightAction,
   animationDelay = 0,
@@ -91,11 +89,6 @@ function QrCardComponent({
             >
               {displayLabel}
             </Text>
-            {isDynamic && (
-              <View style={[styles.dynamicPill, { backgroundColor: "#6366F115", borderColor: "#6366F130" }]}>
-                <Ionicons name="git-branch-outline" size={10} color="#6366F1" />
-              </View>
-            )}
             {!isActive && (
               <View style={[styles.inactivePill, { backgroundColor: "#9CA3AF20" }]}>
                 <Text style={styles.inactivePillText}>Inactive</Text>
@@ -184,13 +177,6 @@ const styles = StyleSheet.create({
   typeBadge: {
     fontSize: 11,
     fontFamily: "Inter_500Medium",
-  },
-  dynamicPill: {
-    borderRadius: 6,
-    paddingHorizontal: 5,
-    paddingVertical: 3,
-    borderWidth: 1,
-    flexShrink: 0,
   },
   inactivePill: {
     borderRadius: 6,

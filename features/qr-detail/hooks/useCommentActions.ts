@@ -89,13 +89,29 @@ export function useCommentActions({
     setSubmitting(true);
     try {
       const saved = await addComment(id, userId, clientDisplayName, trimmed, parentId, emailVerified, clientUsername, clientPhotoURL);
+      const savedComment: CommentItem = {
+        id: saved.id,
+        text: saved.text ?? trimmed,
+        userId: saved.userId ?? userId,
+        user: { displayName: saved.user?.displayName ?? clientDisplayName },
+        userUsername: saved.userUsername ?? clientUsername,
+        userPhotoURL: saved.userPhotoURL ?? clientPhotoURL,
+        parentId: saved.parentId ?? parentId,
+        createdAt: saved.createdAt ?? new Date().toISOString(),
+        likeCount: (saved as any).likeCount ?? 0,
+        dislikeCount: (saved as any).dislikeCount ?? 0,
+        userLike: null,
+        isDeleted: false,
+        isHidden: false,
+        reportCount: 0,
+      };
       // Update the optimistic comment with server-resolved data but KEEP the tempId
       // as the React key. Swapping to saved.id changes the key → React unmounts
       // and remounts the Animated.View with FadeIn → visible flash. On the next
       // natural refresh the real Firestore comment (with saved.id) will take over.
       pendingCommentsRef.current = pendingCommentsRef.current.filter((c) => c.id !== tempId);
       setCommentsList((prev) =>
-        prev.map((c) => (c.id === tempId ? { ...saved, id: tempId } : c))
+        prev.map((c) => (c.id === tempId ? { ...savedComment, id: tempId } : c))
       );
     } catch (e: any) {
       pendingCommentsRef.current = pendingCommentsRef.current.filter((c) => c.id !== tempId);

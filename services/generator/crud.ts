@@ -65,16 +65,24 @@ export async function saveGeneratedQr(
   templateKey?: string | null,
   formValues?: { value: string; extra: Record<string, string> } | null
 ): Promise<string> {
+  if (
+    qrType !== "individual" ||
+    businessName ||
+    guardUuid ||
+    design?.scanLimit != null ||
+    design?.expiryDate != null ||
+    design?.expiryPreset != null
+  ) {
+    throw new Error("Only static individual QR codes are supported.");
+  }
+
   const qrId = await getQrCodeId(content);
 
   try {
     const docRef = await db.add([COLLECTIONS.USERS, userId, COLLECTIONS.GENERATED_QRS], {
       content, contentType, uuid,
-      qrCodeId: qrId, qrType,
-      businessName: businessName || null,
-      guardUuid: guardUuid || null,
+      qrCodeId: qrId, qrType: "individual",
       ...(templateKey ? { templateKey } : {}),
-      ...(displayDestination ? { displayDestination } : {}),
       ...(formValues ? { formValues } : {}),
       fgColor: design?.fgColor || "#0A0E17",
       bgColor: design?.bgColor || "#F8FAFC",
@@ -93,10 +101,8 @@ export async function saveGeneratedQr(
         content, contentType,
         createdAt: db.timestamp(),
         scanCount: 0, commentCount: 0,
-        qrType, isActive: true,
-        businessName: businessName || null,
+        qrType: "individual", isActive: true,
         ...(templateKey ? { templateKey } : {}),
-        ...(displayDestination ? { displayDestination } : {}),
         ...(formValues ? { formValues } : {}),
       };
       if (existingQr) {
@@ -108,7 +114,7 @@ export async function saveGeneratedQr(
       logError("saveGeneratedQr/qrCodes-write", e, { qrId, userId });
     }
 
-    trackQrGenerated({ qrType, contentType });
+    trackQrGenerated({ qrType: "individual", contentType });
     return docRef.id;
   } catch (e) {
     logError("saveGeneratedQr/generatedQrs-write", e, { userId, contentType });

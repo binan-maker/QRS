@@ -1,0 +1,149 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function isUser(uid) {
+      return signedIn() && request.auth.uid == uid;
+    }
+
+    function isStaticQr() {
+      return !request.resource.data.keys().hasAny([
+        'isDynamic',
+        'is_dynamic',
+        'businessName',
+        'business_name',
+        'destinationChangedAt',
+        'destination_changed_at',
+        'scanLimit',
+        'expiryDate',
+        'expiryPreset'
+      ]);
+    }
+
+    // Client analytics is intentionally write-only and scoped to the
+    // authenticated user. Aggregation belongs on the trusted backend.
+    match /_analytics/{eventId} {
+      allow create: if signedIn()
+        && request.resource.data.userId == request.auth.uid
+        && request.resource.data.event is string
+        && request.resource.data.ts is number;
+      allow read, update, delete: if false;
+    }
+
+    // Scanned QR records are public so anonymous scans can resolve and
+    // subscribe to their aggregate counters. Only static QR records may be
+    // created or changed from the client.
+    match /qrCodes/{qrId} {
+      allow read: if true;
+      allow create: if isStaticQr()
+        && request.resource.data.content is string
+        && request.resource.data.contentType is string;
+      allow update: if isStaticQr()
+        && request.resource.data.content == resource.data.content;
+      allow delete: if false;
+
+      match /comments/{commentId} {
+        allow read: if true;
+        allow create: if signedIn()
+          && request.resource.data.userId == request.auth.uid
+          && request.resource.data.text is string
+          && request.resource.data.createdAt != null;
+        allow update: if signedIn()
+          && (
+            resource.data.userId == request.auth.uid
+            || request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+              'likeCount',
+              'dislikeCount',
+              'reportCount',
+              'isHidden',
+              'isDeleted',
+              'deletedAt'
+            ])
+          );
+        allow delete: if signedIn() && resource.data.userId == request.auth.uid;
+
+        match /likes/{uid} {
+          allow read: if signedIn() && request.auth.uid == uid;
+          allow create, update, delete: if isUser(uid);
+        }
+
+        match /reports/{uid} {
+          allow read: if false;
+          allow create, update: if isUser(uid)
+            && request.resource.data.userId == request.auth.uid;
+          allow delete: if isUser(uid);
+        }
+      }
+
+      match /reports/{uid} {
+        allow read: if isUser(uid);
+        allow create, update, delete: if isUser(uid);
+      }
+
+      match /scans/{scanId} {
+        allow read: if signedIn();
+        allow create: if signedIn() && request.resource.data.userId == request.auth.uid;
+      }
+    }
+
+    // The legacy unified collection is retained for reads, but only static
+    // individual records can be created by the client going forward.
+    match /qrs/{qrId} {
+      allow read: if true;
+      allow create: if signedIn()
+        && isStaticQr()
+        && request.resource.data.qrType == 'individual';
+      allow update: if signedIn()
+        && isStaticQr()
+        && request.resource.data.qrType == 'individual';
+      allow delete: if false;
+    }
+
+    match /publicProfiles/{uid} {
+      allow read: if true;
+      allow create, update: if isUser(uid);
+      allow delete: if isUser(uid);
+    }
+
+    match /users/{uid} {
+      allow read, create, update, delete: if isUser(uid);
+
+      match /{subpath=**} {
+        allow read, write: if isUser(uid);
+      }
+    }
+
+    match /usernames/{username} {
+      allow read: if true;
+      allow create: if signedIn() && request.resource.data.userId == request.auth.uid;
+      allow update, delete: if signedIn() && resource.data.userId == request.auth.uid;
+    }
+
+    match /notifications/{uid} {
+      allow read, write: if isUser(uid);
+
+      match /{subpath=**} {
+        allow read, write: if isUser(uid);
+      }
+    }
+
+    match /featureVotes/{voteId} {
+      allow read: if false;
+      allow create, update: if signedIn();
+      allow delete: if false;
+    }
+
+    match /feedback/{feedbackId} {
+      allow create: if signedIn() && request.resource.data.userId == request.auth.uid;
+      allow read, update, delete: if false;
+    }
+
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

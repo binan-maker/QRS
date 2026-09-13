@@ -127,8 +127,7 @@ export default function TermsScreen() {
           <Bullet text="QR code scanning via device camera and gallery image upload" colors={colors} />
           <Bullet text="AI-assisted and community-powered QR code safety analysis and scoring" colors={colors} />
           <Bullet text="User-submitted safety reports, community commentary, and trust voting" colors={colors} />
-          <Bullet text="Living Shield QR code generation with dynamic, updatable destinations" colors={colors} />
-          <Bullet text="Branded individual and business QR code generation" colors={colors} />
+          <Bullet text="Static individual QR code generation with content encoded directly in each code" colors={colors} />
           <Bullet text="Threat intelligence database powered by aggregated community scan data" colors={colors} />
           <Para colors={colors}>
             The Service is provided for informational and protective purposes. Nothing in the App constitutes professional cybersecurity, financial, legal, or expert advice.
@@ -246,10 +245,10 @@ export default function TermsScreen() {
 
         <SectionCard title="Living Shield QR Codes" num="11" colors={colors}>
           <Para colors={colors}>
-            Owners of Living Shield (business) QR codes are solely and exclusively responsible for all content their QR codes redirect to, including any changes made after initial creation.
+            QR code creators are solely responsible for the content encoded in their static QR codes.
           </Para>
           <Para colors={colors}>
-            Misuse of Living Shield QR codes to redirect victims to malicious, fraudulent, or harmful destinations constitutes a material breach of these Terms and may be reported to law enforcement. BinRo reserves the right to deactivate any QR code at any time if it is found to be used maliciously.
+            Misuse of static QR codes to direct victims to malicious, fraudulent, or harmful destinations constitutes a material breach of these Terms and may be reported to law enforcement. BinRo reserves the right to deactivate any QR code at any time if it is found to be used maliciously.
           </Para>
         </SectionCard>
 

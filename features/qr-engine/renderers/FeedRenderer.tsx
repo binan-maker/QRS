@@ -63,12 +63,6 @@ function FeedRendererComponent({
           </View>
           <View style={styles.headerText}>
             <Text style={[styles.typeLabel, { color: accentColor }]}>{meta.label}</Text>
-            {isDynamic && (
-              <View style={[styles.dynamicBadge, { backgroundColor: "#6366F118", borderColor: "#6366F130" }]}>
-                <Ionicons name="git-branch-outline" size={10} color="#6366F1" />
-                <Text style={styles.dynamicText}>Dynamic</Text>
-              </View>
-            )}
           </View>
           {trustSummary && (
             <View style={[styles.trustBadge, { backgroundColor: trustLevelColor(trustSummary.level) + "15" }]}>

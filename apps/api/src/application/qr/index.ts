@@ -15,9 +15,7 @@ import {
   type QrDestinationChangedEvent,
 } from "../../domain/qr";
 import {
-  QrNotFoundError,
   ValidationError,
-  GovernmentQrImmutableError,
 } from "@binro/core";
 
 // ─── CreateQrUseCase ──────────────────────────────────────────────────────────
@@ -41,6 +39,14 @@ export class CreateQrUseCase {
     if (!input.destination.trim()) {
       throw new ValidationError("Destination is required", "destination");
     }
+    if (
+      input.qrType && input.qrType !== "individual" ||
+      input.isDynamic ||
+      input.scanLimit != null ||
+      input.expiryDate != null
+    ) {
+      throw new ValidationError("Only static individual QR codes are supported", "qrType");
+    }
 
     const id = crypto.randomUUID();
     const qr = await this.repo.create({
@@ -48,15 +54,15 @@ export class CreateQrUseCase {
       destination: input.destination.trim(),
       rawDestination: input.rawDestination,
       contentType: input.contentType,
-      qrType: input.qrType ?? "individual",
+      qrType: "individual",
       title: input.title ?? null,
-      isDynamic: input.isDynamic ?? false,
+      isDynamic: false,
       scanCount: 0,
       downloads: 0,
       shares: 0,
       status: "active",
-      scanLimit: input.scanLimit ?? null,
-      expiryDate: input.expiryDate ?? null,
+      scanLimit: null,
+      expiryDate: null,
       expiryPreset: null,
       businessName: null,
       template: null,
@@ -84,28 +90,11 @@ export class UpdateQrDestinationUseCase {
     qrId: string,
     requestingUserId: string,
     newDestination: string,
-  ): Promise<{ qr: UnifiedQr; event: QrDestinationChangedEvent }> {
-    const qr = await this.repo.findById(qrId);
-    if (!qr) throw new QrNotFoundError(qrId);
-    if (qr.qrType === "government") throw new GovernmentQrImmutableError();
-    if (!qr.isDynamic) throw new ValidationError("Only dynamic QRs can have their destination changed");
-
-    const fromDestination = qr.destination;
-    const updated = await this.repo.update(qrId, {
-      destination: newDestination.trim(),
-      rawDestination: newDestination.trim(),
-    });
-
-    const event: QrDestinationChangedEvent = {
-      type: "QR_DESTINATION_CHANGED",
-      qrId,
-      fromDestination,
-      toDestination: newDestination.trim(),
-      changedBy: requestingUserId,
-      timestamp: new Date(),
-    };
-
-    return { qr: updated, event };
+  ): Promise<never> {
+    void qrId;
+    void requestingUserId;
+    void newDestination;
+    throw new ValidationError("Static QR codes cannot change their destination", "destination");
   }
 }
 

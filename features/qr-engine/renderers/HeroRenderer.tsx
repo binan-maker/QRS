@@ -59,12 +59,6 @@ function HeroRendererComponent({
             <Text style={[styles.typeLabel, { color: accentColor }]}>
               {meta.label}
             </Text>
-            {isDynamic && (
-              <View style={[styles.dynamicTag, { backgroundColor: "#6366F115", borderColor: "#6366F130" }]}>
-                <Ionicons name="git-branch-outline" size={11} color="#6366F1" />
-                <Text style={styles.dynamicTagText}>Dynamic</Text>
-              </View>
-            )}
           </View>
         </Animated.View>
 
