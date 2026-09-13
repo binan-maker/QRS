@@ -9,7 +9,6 @@ import { tsToMs } from "../integrity/time-utils";
 import { getQrCodeById } from "./qr-service";
 import { getQrReportData, getUserQrReport } from "../moderation/report-service";
 
-import { isUserFavorite } from "../user/favorites";
 import { calculateTrustScore } from "../trust/trust-service";
 import type { QrCodeData, TrustScore } from "../types";
 import { COLLECTIONS } from "@/shared/constants/collections";
@@ -21,7 +20,6 @@ export interface QrDetailPayload {
   totalComments: number;
   trustScore: TrustScore;
   userReport: string | null;
-  isFavorite: boolean;
 }
 
 export async function loadQrDetail(
@@ -54,14 +52,10 @@ export async function loadQrDetail(
   const trustScore = calculateTrustScore(reportCounts, weightedCounts, collusionFlags);
 
   let userReport: string | null = null;
-  let isFavorite = false;
 
   if (userId) {
     try {
-      [userReport, isFavorite] = await Promise.all([
-        getUserQrReport(qrId, userId),
-        isUserFavorite(qrId, userId),
-      ]);
+      userReport = await getUserQrReport(qrId, userId);
     } catch {}
   }
 
@@ -72,7 +66,6 @@ export async function loadQrDetail(
     totalComments: qrCode.commentCount,
     trustScore,
     userReport,
-    isFavorite,
   };
 }
 

@@ -28,7 +28,6 @@ const COLLECTION_ALIASES: Record<string, string> = {
   generatedQrs: "generatedQrs",
   ownerScans: "ownerScans",
   blockedScans: "blockedScans",
-  userFavorites: "favorites",
   comments: "comments",
   reports: "reports",
   notifications: "notifications",

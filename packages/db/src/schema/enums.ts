@@ -34,16 +34,6 @@ export const verificationMethodEnum = pgEnum("verification_method", [
   "none",
 ]);
 
-// "captured" matches Razorpay's payment lifecycle terminology and aligns with
-// the DonationStatus type in @binro/core.  The previous value "success" was
-// inconsistent with the domain layer.
-export const donationStatusEnum = pgEnum("donation_status", [
-  "pending",
-  "captured",
-  "failed",
-  "refunded",
-]);
-
 export const scanSourceEnum = pgEnum("scan_source", [
   "camera",
   "gallery",

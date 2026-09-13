@@ -256,9 +256,6 @@ async function _cleanupUserSubcollections(userId: string): Promise<void> {
       );
     }),
 
-    // Favorites
-    _paginatedDelete(userId, "favorites"),
-
     // Owner scans log and counted-scan dedup markers
     _paginatedDelete(userId, "ownerScans"),
     _paginatedDelete(userId, "countedScans"),

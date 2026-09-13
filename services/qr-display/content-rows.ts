@@ -247,14 +247,6 @@ export function parseQrContentDetails(item: any): ContentDetailRow[] {
       } catch {}
       return [];
     }
-    case "donation": {
-      if (isGuardOrGo) return [];
-      try {
-        const u = new URL(src.startsWith("http") ? src : `https://${src}`);
-        return [{ label: "Donation Page", value: u.hostname.replace(/^www\./, ""), icon: "heart-outline" }];
-      } catch {}
-      return [];
-    }
     case "appdownload":
     case "app": {
       if (isGuardOrGo) return [];

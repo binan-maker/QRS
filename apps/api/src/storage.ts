@@ -15,7 +15,6 @@ import {
   commentReports,
   reports,
   scans,
-  favorites,
   feedback,
   type User,
   type QrCode,
@@ -413,45 +412,6 @@ export async function getTotalComments(qrCodeId: string): Promise<number> {
     .from(comments)
     .where(eq(comments.qrCodeId, qrCodeId));
   return Number(result.cnt);
-}
-
-export async function addFavorite(qrCodeId: string, userId: string) {
-  const [fav] = await db
-    .insert(favorites)
-    .values({ qrCodeId, userId })
-    .returning();
-  return fav;
-}
-
-export async function removeFavorite(qrCodeId: string, userId: string) {
-  await db
-    .delete(favorites)
-    .where(and(eq(favorites.qrCodeId, qrCodeId), eq(favorites.userId, userId)));
-}
-
-export async function getUserFavorites(userId: string) {
-  const results = await db
-    .select({
-      id: favorites.id,
-      qrCodeId: favorites.qrCodeId,
-      createdAt: favorites.createdAt,
-      content: qrCodes.content,
-      contentType: qrCodes.contentType,
-      qrCreatedAt: qrCodes.createdAt,
-    })
-    .from(favorites)
-    .innerJoin(qrCodes, eq(favorites.qrCodeId, qrCodes.id))
-    .where(eq(favorites.userId, userId))
-    .orderBy(desc(favorites.createdAt));
-  return results;
-}
-
-export async function isUserFavorite(qrCodeId: string, userId: string): Promise<boolean> {
-  const [result] = await db
-    .select()
-    .from(favorites)
-    .where(and(eq(favorites.qrCodeId, qrCodeId), eq(favorites.userId, userId)));
-  return !!result;
 }
 
 export async function addFeedback(

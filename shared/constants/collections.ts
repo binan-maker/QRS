@@ -43,8 +43,6 @@ export const COLLECTIONS = {
   PERSONAL_SCAN_COUNT: "personalScanCount",
   /** Push notification records */
   NOTIFICATIONS: "notifications",
-  /** Favorited QR codes per user */
-  FAVORITES: "favorites",
   /** Feature flag votes */
   FEATURE_VOTES: "featureVotes",
   /** Likes on content */

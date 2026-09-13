@@ -22,5 +22,4 @@ export interface QrScanResult {
   contentType: QrContentType;
   scannedAt: number;
   riskLevel?: QrRiskLevel;
-  isFavorite?: boolean;
 }

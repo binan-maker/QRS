@@ -11,7 +11,6 @@ import {
   unifiedQrs,
   guardLinks,
   guardLinkChanges,
-  userFavorites,
   userGeneratedQrs,
 } from "./qr-codes";
 import { qrScans } from "./scans";
@@ -19,7 +18,6 @@ import { qrComments, commentLikes, commentReports } from "./comments";
 import { qrReports, auditLogs } from "./reports";
 import { notifications } from "./social";
 import {
-  donations,
   moderationQueue,
   verificationRequests,
   featureVotes,
@@ -34,10 +32,8 @@ export const usersRelations = relations(users, ({ many, one }) => ({
   qrScans: many(qrScans),
   qrComments: many(qrComments),
   qrReports: many(qrReports),
-  userFavorites: many(userFavorites),
   userGeneratedQrs: many(userGeneratedQrs),
   notifications: many(notifications),
-  donations: many(donations),
   auditLogs: many(auditLogs),
   moderationReported: many(moderationQueue, { relationName: "reporter" }),
   moderationReviewed: many(moderationQueue, { relationName: "reviewer" }),
@@ -51,7 +47,6 @@ export const qrCodesRelations = relations(qrCodes, ({ one, many }) => ({
   scans: many(qrScans),
   comments: many(qrComments),
   reports: many(qrReports),
-  favorites: many(userFavorites),
   generatedQrs: many(userGeneratedQrs),
 }));
 
@@ -60,7 +55,6 @@ export const unifiedQrsRelations = relations(unifiedQrs, ({ one, many }) => ({
   scans: many(qrScans),
   comments: many(qrComments),
   reports: many(qrReports),
-  favorites: many(userFavorites),
   generatedQrs: many(userGeneratedQrs),
 }));
 

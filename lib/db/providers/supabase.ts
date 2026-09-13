@@ -97,7 +97,6 @@ const COLLECTION_TABLE: Record<string, string> = {
   comments: "qr_comments",
   likes: "comment_likes",
   reports: "qr_reports",
-  favorites: "user_favorites",
 };
 
 function collectionToTable(name: string): string {
@@ -113,7 +112,6 @@ const SUB_FK: Record<string, { table: string; fk: string }> = {
   "qrCodes.reports": { table: "qr_reports", fk: "qr_code_id" },
   "qrCodes.counters": { table: "scan_counters", fk: "qr_code_id" },
   "qrCodes.likes": { table: "comment_likes", fk: "qr_code_id" },
-  "users.favorites": { table: "user_favorites", fk: "user_id" },
   "users.notifications": { table: "notifications", fk: "user_id" },
 };
 

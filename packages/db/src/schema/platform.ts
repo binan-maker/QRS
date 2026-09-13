@@ -1,7 +1,7 @@
 /**
  * @binro/db — Platform / admin domain schema
- * Tables: categories, donations, moderation_queue, verification_requests,
- *         feature_votes, business_accounts
+ * Tables: categories, moderation_queue, verification_requests, feature_votes,
+ *         business_accounts
  */
 
 import { sql } from "drizzle-orm";
@@ -17,7 +17,6 @@ import {
   uniqueIndex,
 } from "drizzle-orm/pg-core";
 import {
-  donationStatusEnum,
   moderationStatusEnum,
   moderationContentTypeEnum,
   verificationStatusEnum,
@@ -34,29 +33,6 @@ export const categories = pgTable("categories", {
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
 });
-
-// ─── Donations ────────────────────────────────────────────────────────────────
-
-export const donations = pgTable(
-  "donations",
-  {
-    id: text("id").primaryKey().default(sql`gen_random_uuid()`),
-    orderId: text("order_id").notNull().unique(),
-    paymentId: text("payment_id").unique(),
-    userId: text("user_id").references(() => users.id, { onDelete: "set null" }),
-    amountPaise: integer("amount_paise").notNull(),
-    currency: text("currency").notNull().default("INR"),
-    donorName: text("donor_name"),
-    donorEmail: text("donor_email"),
-    status: donationStatusEnum("status").notNull().default("pending"),
-    paidAt: timestamp("paid_at", { withTimezone: true }),
-    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
-  },
-  (t) => ({
-    userIdx: index("donations_user_id_idx").on(t.userId),
-    statusIdx: index("donations_status_idx").on(t.status),
-  }),
-);
 
 // ─── Moderation Queue ─────────────────────────────────────────────────────────
 
@@ -145,12 +121,7 @@ export const businessAccounts = pgTable(
 );
 
 // ─── Inferred Types ───────────────────────────────────────────────────────────
-// NOTE: Named with "Db" prefix to avoid collision with the @binro/core domain
-// type "Donation" (a plain interface) when both packages are imported together.
-
 export type Category = typeof categories.$inferSelect;
-export type DbDonation = typeof donations.$inferSelect;
-export type NewDbDonation = typeof donations.$inferInsert;
 export type ModerationQueueItem = typeof moderationQueue.$inferSelect;
 export type VerificationRequest = typeof verificationRequests.$inferSelect;
 export type FeatureVote = typeof featureVotes.$inferSelect;

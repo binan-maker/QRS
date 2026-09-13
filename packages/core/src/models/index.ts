@@ -18,6 +18,5 @@ export * from "../types/trust";
 // ── Entity models (added during production-hardening) ─────────────────────────
 export * from "../types/scan";
 export * from "../types/notification";
-export * from "../types/donation";
 export * from "../types/consent";
 export * from "../types/settings";

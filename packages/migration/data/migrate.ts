@@ -492,40 +492,11 @@ async function migrateStandardLinks() {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// STEP 6 — user favorites
-// ═══════════════════════════════════════════════════════════════════════════════
-
-async function migrateUserFavorites() {
-  console.log("\n📋  Step 7: userFavorites → user_favorites");
-  const docs = await fetchCollection("userFavorites").catch(() => []);
-  console.log(`   Found ${docs.length} documents`);
-  const s = stat("user_favorites");
-
-  for (const { id, data: d } of docs) {
-    try {
-      const userId      = d.userId    ? (uidMap.get(d.userId) ?? null) : null;
-      if (!userId) { s.skipped++; continue; }
-      const qrCodeId    = d.qrCodeId    ? (qrIdMap.get(d.qrCodeId) ?? null) : null;
-      const unifiedQrId = strN(d.unifiedQrId);
-      if (!qrCodeId && !unifiedQrId) { s.skipped++; continue; }
-
-      await q(
-        `INSERT INTO user_favorites (user_id, qr_code_id, unified_qr_id, created_at)
-         VALUES ($1,$2,$3,$4) ON CONFLICT DO NOTHING`,
-        [userId, qrCodeId, unifiedQrId, ts(d.createdAt) ?? new Date().toISOString()]
-      );
-      s.inserted++;
-    } catch (err) { s.errors++; console.error(`   ✗ userFavorite ${id}: ${(err as Error).message}`); }
-  }
-  console.log(`   ✓ user_favorites: +${s.inserted} inserted, ${s.skipped} skipped, ${s.errors} errors`);
-}
-
-// ═══════════════════════════════════════════════════════════════════════════════
-// STEP 8 — user friends
+// STEP 6 — user friends
 // ═══════════════════════════════════════════════════════════════════════════════
 
 async function migrateUserFriends() {
-  console.log("\n📋  Step 8: users/{uid}/friends → user_friends");
+  console.log("\n📋  Step 6: users/{uid}/friends → user_friends");
   const userSnap = await firestore.collection("users").get();
   const s = stat("user_friends");
   let total = 0;
@@ -592,55 +563,11 @@ async function migrateBusinessAccounts() {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// STEP 10 — donations
-// ═══════════════════════════════════════════════════════════════════════════════
-
-async function migrateDonations() {
-  console.log("\n📋  Step 10: donations → donations");
-  const docs = await fetchCollection("donations");
-  console.log(`   Found ${docs.length} documents`);
-  const s = stat("donations");
-  const validStatuses = new Set(["pending", "captured", "failed", "refunded"]);
-
-  for (const { id, data: d } of docs) {
-    try {
-      const userId = d.userId ? (uidMap.get(d.userId) ?? null) : null;
-      // Map legacy "success" status to "captured"
-      let status = validStatuses.has(d.status) ? d.status : "pending";
-      if (d.status === "success") status = "captured";
-
-      await q(
-        `INSERT INTO donations (
-           id, order_id, payment_id, user_id, amount_paise, currency,
-           donor_name, donor_email, status, paid_at, created_at
-         ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)
-         ON CONFLICT (id) DO NOTHING`,
-        [
-          id,
-          str(d.orderId ?? id),
-          strN(d.paymentId),
-          userId,
-          num(d.amountPaise ?? (d.amount ? num(d.amount) * 100 : 0)),
-          str(d.currency ?? "INR"),
-          strN(d.donorName),
-          strN(d.donorEmail),
-          status,
-          ts(d.paidAt),
-          ts(d.createdAt) ?? new Date().toISOString(),
-        ]
-      );
-      s.inserted++;
-    } catch (err) { s.errors++; console.error(`   ✗ donation ${id}: ${(err as Error).message}`); }
-  }
-  console.log(`   ✓ donations: +${s.inserted} inserted, ${s.skipped} skipped, ${s.errors} errors`);
-}
-
-// ═══════════════════════════════════════════════════════════════════════════════
-// STEP 11 — comments
+// STEP 9 — comments
 // ═══════════════════════════════════════════════════════════════════════════════
 
 async function migrateComments() {
-  console.log("\n📋  Step 11: qrCodes/{id}/comments → qr_comments");
+  console.log("\n📋  Step 9: qrCodes/{id}/comments → qr_comments");
   const s = stat("qr_comments");
 
   // Top-level comments collection (if used)
@@ -995,17 +922,15 @@ const STEPS: Array<[number, string, () => Promise<void>]> = [
   [ 3,  "qrs → unified_qrs",                  migrateUnifiedQrs        ],
   [ 4,  "guardLinks → guard_links",            migrateGuardLinks        ],
   [ 5,  "standardLinks → standard_links",      migrateStandardLinks     ],
-  [ 6,  "userFavorites → user_favorites",      migrateUserFavorites     ],
-  [ 7,  "friends → user_friends",              migrateUserFriends       ],
-  [ 8,  "businessAccounts → business_accounts",migrateBusinessAccounts  ],
-  [ 9,  "donations → donations",               migrateDonations          ],
-  [10,  "comments → qr_comments",              migrateComments           ],
-  [11,  "reports → qr_reports",                migrateQrReports           ],
-  [12,  "auditLogs → audit_logs",              migrateAuditLogs           ],
-  [13,  "moderationQueue → moderation_queue",  migrateModerationQueue     ],
-  [14,  "verificationRequests → verif…",       migrateVerificationRequests],
-  [15,  "featureVotes → feature_votes",        migrateFeatureVotes        ],
-  [16,  "RTDB notifications → notifications",  migrateNotifications        ],
+  [ 6,  "friends → user_friends",              migrateUserFriends       ],
+  [ 7,  "businessAccounts → business_accounts",migrateBusinessAccounts  ],
+  [ 8,  "comments → qr_comments",              migrateComments           ],
+  [ 9,  "reports → qr_reports",                migrateQrReports           ],
+  [10,  "auditLogs → audit_logs",              migrateAuditLogs           ],
+  [11,  "moderationQueue → moderation_queue",  migrateModerationQueue     ],
+  [12,  "verificationRequests → verif…",       migrateVerificationRequests],
+  [13,  "featureVotes → feature_votes",        migrateFeatureVotes        ],
+  [14,  "RTDB notifications → notifications",  migrateNotifications        ],
 ];
 
 async function main() {

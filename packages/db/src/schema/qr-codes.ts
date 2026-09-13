@@ -1,7 +1,7 @@
 /**
  * @binro/db — QR Codes domain schema
  * Tables: qr_codes (legacy), unified_qrs (new), guard_links, guard_link_changes,
- *         standard_links, user_generated_qrs, user_favorites
+ *         standard_links, user_generated_qrs
  */
 
 import { sql } from "drizzle-orm";
@@ -183,25 +183,6 @@ export const userGeneratedQrs = pgTable(
   }),
 );
 
-// ─── User Favorites ───────────────────────────────────────────────────────────
-
-export const userFavorites = pgTable(
-  "user_favorites",
-  {
-    userId: text("user_id")
-      .notNull()
-      .references(() => users.id, { onDelete: "cascade" }),
-    qrCodeId: text("qr_code_id").references(() => qrCodes.id, { onDelete: "cascade" }),
-    unifiedQrId: text("unified_qr_id").references(() => unifiedQrs.id, { onDelete: "cascade" }),
-    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
-  },
-  (t) => ({
-    legacyPk: uniqueIndex("user_favorites_legacy_uniq").on(t.userId, t.qrCodeId),
-    unifiedPk: uniqueIndex("user_favorites_unified_uniq").on(t.userId, t.unifiedQrId),
-    userIdx: index("user_favorites_user_id_idx").on(t.userId),
-  }),
-);
-
 // ─── Inferred Types ───────────────────────────────────────────────────────────
 
 export type QrCode = typeof qrCodes.$inferSelect;
@@ -212,5 +193,3 @@ export type GuardLink = typeof guardLinks.$inferSelect;
 export type GuardLinkChange = typeof guardLinkChanges.$inferSelect;
 export type StandardLink = typeof standardLinks.$inferSelect;
 export type UserGeneratedQr = typeof userGeneratedQrs.$inferSelect;
-export type QrFollower = typeof qrFollowers.$inferSelect;
-export type UserFavorite = typeof userFavorites.$inferSelect;

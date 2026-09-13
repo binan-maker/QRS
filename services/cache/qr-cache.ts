@@ -53,7 +53,6 @@ const TTL = {
   USER_STATS: 3 * 60 * 1000,
   HISTORY_PAGE: 5 * 60 * 1000,
   HOME_SCANS: 30 * 60 * 1000,
-  FAVORITES: 5 * 60 * 1000,
   SCAN_STATS: 5 * 60 * 1000,
   PROFILE_EXTRAS: 10 * 60 * 1000,
   PHOTO_URL: 10 * 60 * 1000,
@@ -107,13 +106,6 @@ export async function setCachedHistoryPage<T>(userId: string, value: T): Promise
   return setCache<T>(`history_page_${userId}`, value, TTL.HISTORY_PAGE);
 }
 
-export async function getCachedFavorites<T>(userId: string): Promise<T | null> {
-  return getCache<T>(`favorites_${userId}`);
-}
-export async function setCachedFavorites<T>(userId: string, value: T): Promise<void> {
-  return setCache<T>(`favorites_${userId}`, value, TTL.FAVORITES);
-}
-
 export async function getCachedScanStats<T>(userId: string): Promise<T | null> {
   return getCache<T>(`scan_stats_${userId}`);
 }
@@ -138,7 +130,6 @@ export async function setCachedPhotoURL(userId: string, value: string | null): P
 
 export function invalidateHistoryCache(userId: string): void {
   invalidateCache(`history_page_${userId}`);
-  invalidateCache(`favorites_${userId}`);
   invalidateCache(`scan_stats_${userId}`);
 }
 

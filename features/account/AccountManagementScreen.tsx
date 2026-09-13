@@ -112,7 +112,7 @@ export default function AccountManagementScreen() {
                 {[
                   "Your profile and display name",
                   "All QR codes you generated",
-                  "Your scan history and favourites",
+                  "Your scan history",
                   "All your comments and reports",
                   "All notifications and messages",
                 ].map((item, i) => (

@@ -160,17 +160,6 @@ Own scan history. **Auth required.** Paginated.
 
 ---
 
-### `GET /api/v1/users/me/favorites`
-Favorited QRs. **Auth required.** Paginated.
-
-### `POST /api/v1/users/me/favorites/:qrId`
-Add a QR to favorites. **Auth required.**
-
-### `DELETE /api/v1/users/me/favorites/:qrId`
-Remove from favorites. **Auth required.**
-
----
-
 ### `GET /api/v1/users/me/notifications`
 List notifications. **Auth required.** Paginated.
 

@@ -15,8 +15,7 @@ export async function getFeatureVote(email: string): Promise<FeatureVoteChoice |
 
 /**
  * Casts a single vote for the given email. Enforces one-vote-per-email by
- * checking for an existing record before writing (mirrors the check-then-set
- * pattern already used by services/user/favorites.ts). Returns false if the
+ * checking for an existing record before writing. Returns false if the
  * email has already voted (no-op).
  */
 export async function castFeatureVote(

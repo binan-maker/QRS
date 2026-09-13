@@ -10,9 +10,6 @@
  *   PATCH  /api/v1/users/me                             Update profile
  *   GET    /api/v1/users/:userId                        Public profile
  *   GET    /api/v1/users/me/scans                       Scan history (paginated)
- *   GET    /api/v1/users/me/favorites                   Favorited QRs (paginated)
- *   POST   /api/v1/users/me/favorites/:qrId             Add favorite
- *   DELETE /api/v1/users/me/favorites/:qrId             Remove favorite
  *
  * Legacy QR codes
  *   PATCH  /api/v1/qr/:qrId/active                     Toggle active/paused
@@ -44,7 +41,7 @@ export function registerV1Routes(app: Express): void {
   // ── Utilities & security (existing) ────────────────────────────────────────
   app.use("/api/v1", securityRouter);
 
-  // ── User profile, favorites, scan history ──────────────────────────────────
+  // ── User profile and scan history ───────────────────────────────────────────
   // NOTE: /me routes must be registered before /:userId so Express doesn't
   // match "me" as a userId parameter.
   app.use("/api/v1/users", usersRouter);

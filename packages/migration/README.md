@@ -57,16 +57,14 @@ The script is also idempotent — existing rows are skipped on conflict.
 4. `qrs` → `unified_qrs`
 5. `guardLinks` → `guard_links` + `guard_link_changes`
 6. `standardLinks` → `standard_links`
-7. `userFavorites` → `user_favorites`
-8. `businessAccounts` → `business_accounts`
-9. `donations` → `donations`
-10. `qrCodes/*/comments` → `qr_comments`
-11. `qrCodes/*/reports` → `qr_reports`
-12. `auditLogs` → `audit_logs`
-13. `moderationQueue` → `moderation_queue`
-14. `verificationRequests` → `verification_requests`
-15. `featureVotes` → `feature_votes`
-16. RTDB `notifications` → `notifications`
+7. `businessAccounts` → `business_accounts`
+8. `qrCodes/*/comments` → `qr_comments`
+9. `qrCodes/*/reports` → `qr_reports`
+10. `auditLogs` → `audit_logs`
+11. `moderationQueue` → `moderation_queue`
+12. `verificationRequests` → `verification_requests`
+13. `featureVotes` → `feature_votes`
+14. RTDB `notifications` → `notifications`
 
 ## Step 3 — Migrate Storage Files
 
@@ -89,14 +87,12 @@ Moves Firebase Storage avatar and QR logo files into Supabase Storage buckets.
 | `guardLinks/{uuid}` | `guard_links` |
 | `guardLinks/{uuid}.changeLog[]` | `guard_link_changes` |
 | `standardLinks/{uuid}` | `standard_links` |
-| `donations/{id}` | `donations` |
 | `auditLogs/{month}/{id}` | `audit_logs` |
 | `moderationQueue/{id}` | `moderation_queue` |
 | `verificationRequests/{id}` | `verification_requests` |
 | `featureVotes/{key}` | `feature_votes` |
 | `businessAccounts/{uid}` | `business_accounts` |
 | `users/{uid}/generatedQrs/{id}` | `user_generated_qrs` |
-| `users/{uid}/favorites/{qrId}` | `user_favorites` |
 | `users/{uid}/friends/{friendId}` | `user_friends` |
 | RTDB `notifications/{uid}` | `notifications` |
 | RTDB `qrScanVelocity` | *(not migrated — ephemeral rate-limit data)* |

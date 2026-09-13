@@ -164,7 +164,7 @@ export default function PrivacyPolicyScreen() {
           <SubHead text="Core Service Delivery" colors={colors} />
           <Bullet text="Authenticate your account, maintain sessions, and secure your profile" colors={colors} />
           <Bullet text="Display QR content and community-driven trust information" colors={colors} />
-          <Bullet text="Sync scan history, favourites, and generated QR codes across your devices" colors={colors} />
+          <Bullet text="Sync scan history and generated QR codes across your devices" colors={colors} />
           <Bullet text="Power community trust scores from aggregated, weighted user reports" colors={colors} />
           <Bullet text="Send in-app notifications about report activity" colors={colors} />
 

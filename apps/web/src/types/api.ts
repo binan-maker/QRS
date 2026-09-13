@@ -191,23 +191,6 @@ export interface QrAnalytics {
   cachedAt: number;
 }
 
-// ─── Donations ────────────────────────────────────────────────────────────────
-
-export type DonationStatus = "pending" | "success" | "failed" | "refunded";
-
-export interface Donation {
-  id: string;
-  orderId: string;
-  paymentId: string | null;
-  amountPaise: number;
-  currency: string;
-  donorName: string | null;
-  donorEmail: string | null;
-  status: DonationStatus;
-  paidAt: string | null;
-  createdAt: string;
-}
-
 // ─── Pagination ───────────────────────────────────────────────────────────────
 
 export interface PaginationParams {

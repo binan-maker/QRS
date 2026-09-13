@@ -1,11 +1,9 @@
 import {
   getCachedHistoryPage,
-  getCachedFavorites,
   getCachedScanStats,
 } from "@/services/cache/qr-cache";
 import { queryClient } from "@/lib/query-client";
 import type { ScanStatsResult } from "@/services/scan-history/scan-stats";
-import { COLLECTIONS } from "@/shared/constants/collections";
 
 // Track which user IDs have already been pre-warmed this session so
 // repeated calls (e.g. token refresh) don't re-read from disk unnecessarily.
@@ -36,16 +34,6 @@ export async function prewarmUserData(userId: string): Promise<void> {
           pages:      [{ items: cached.items, cursor: null, hasMore: cached.hasMore }],
           pageParams: [null],
         });
-      })
-      .catch(() => {}),
-
-    // Favorites
-    getCachedFavorites<any[]>(userId)
-      .then((cached) => {
-        if (!cached?.length) return;
-        const qk = [COLLECTIONS.FAVORITES, userId];
-        if (queryClient.getQueryData(qk)) return;
-        queryClient.setQueryData(qk, cached);
       })
       .catch(() => {}),
 

@@ -91,7 +91,7 @@ export function useAuthSession({
           setToken(idToken);
           setIsLoading(false);
 
-          // Pre-warm history / favorites / stats so tabs render with data.
+          // Pre-warm history and stats so tabs render with data.
           prewarmUserData(resolvedUser.uid).catch(() => {});
 
           // Enrich user state with DB username and app-uploaded photo.
