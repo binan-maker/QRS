@@ -1,7 +1,7 @@
 import { View, Text, StyleSheet, Pressable } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useTheme } from "@/shared/contexts/ThemeContext";
-import { RATE_TYPES } from "@/features/qr-detail/data/reportTypes";
+import { RATE_TYPES } from "@/features/qr-detail/report-types";
 
 interface ReportGridProps {
   reportCounts: Record<string, number>;

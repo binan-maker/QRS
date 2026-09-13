@@ -4,7 +4,7 @@ import { Ionicons } from "@expo/vector-icons";
 import * as Haptics from "@/shared/utils/haptics";
 import { safePush } from "@/shared/utils/navigation";
 import { useTheme } from "@/shared/contexts/ThemeContext";
-import { QrTypeIcon, getDisplayLabel, getSubtitle } from "@/features/qr-engine";
+import { QrTypeIcon, getDisplayLabel, getSubtitle } from "@/features/qr-detail";
 import type { FavoriteItem } from "../hooks/useFavorites";
 
 function formatDate(iso: string) {
