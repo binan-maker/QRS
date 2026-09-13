@@ -22,8 +22,6 @@ function FeedRendererComponent({
   contentType,
   templateKey,
   onOpen,
-  risk,
-  isDynamic,
   trustSummary,
   isDeactivated,
 }: QrRenderProps) {
@@ -138,20 +136,6 @@ const styles = StyleSheet.create({
     fontFamily: "Inter_600SemiBold",
     letterSpacing: 0.3,
     textTransform: "uppercase",
-  },
-  dynamicBadge: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 3,
-    borderRadius: 6,
-    paddingHorizontal: 6,
-    paddingVertical: 3,
-    borderWidth: 1,
-  },
-  dynamicText: {
-    fontSize: 10,
-    fontFamily: "Inter_500Medium",
-    color: "#6366F1",
   },
   trustBadge: {
     flexDirection: "row",

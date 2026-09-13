@@ -53,17 +53,10 @@ export { useQrMeta } from "./hooks/useQrMeta";
 export { smartOpen, smartCopy, getQrActions } from "./actions";
 export type { QrAction } from "./actions";
 
-// ── Payment card (centralized) ────────────────────────────────────────────────
-export { PaymentCard, PaymentCardFace, PaymentCardActions, getAppBrand } from "./payment";
-export type { AppBrand } from "./payment";
-export { getBankFullName, formatAmount, addSoftHyphens } from "./payment";
-
 // ── Content cards (centralized) ───────────────────────────────────────────────
 export { ContentCard } from "./content-cards";
 export {
-  WebsiteCard, WifiCard, ContactCard, EmailCard, SmsCard, WhatsAppCard,
-  PhoneCard, LocationCard, CryptoCard, EventCard, EncryptedCard, TextCard,
-  OtpCard,
+  WebsiteCard, TextCard,
 } from "./content-cards";
 export { CardHeader, InfoGrid, InfoRow, Divider, OpenButton } from "./content-cards";
 

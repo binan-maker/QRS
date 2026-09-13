@@ -11,12 +11,6 @@ export type QrRenderMode =
 
 export type QrTypeCategory =
   | "web"
-  | "payment"
-  | "communication"
-  | "social"
-  | "utility"
-  | "location"
-  | "crypto"
   | "text";
 
 export interface QrTrustSummary {

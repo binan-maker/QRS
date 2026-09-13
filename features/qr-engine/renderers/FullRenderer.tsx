@@ -13,7 +13,6 @@ export default function FullRenderer({
   content,
   contentType,
   templateKey,
-  isDeactivated = false,
   onOpen,
   hideOpenAction,
   parsedPayment,
@@ -23,10 +22,8 @@ export default function FullRenderer({
       content={content}
       contentType={contentType}
       templateKey={templateKey}
-      isDeactivated={isDeactivated}
       onOpenContent={onOpen ?? (() => {})}
       hideOpenAction={hideOpenAction}
-      parsedPayment={parsedPayment ?? null}
     />
   );
 }
