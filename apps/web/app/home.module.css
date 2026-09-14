@@ -1,317 +1,37 @@
-.page {
-  min-height: 100dvh;
-  overflow: hidden;
-  color: var(--text);
-  background: var(--background);
-}
-
-.header,
-.hero,
-.statement,
-.methodGrid,
-.finalCta,
-.footer {
-  width: min(1180px, calc(100% - 64px));
-  margin-inline: auto;
-}
-
-.header {
-  display: flex;
-  min-height: 86px;
-  align-items: center;
-  justify-content: space-between;
-  border-bottom: 1px solid var(--surface-border);
-}
-
-.brand {
-  display: inline-flex;
-  gap: 10px;
-  align-items: center;
-  color: var(--text);
-  font-size: 17px;
-  font-weight: 700;
-  letter-spacing: -.05em;
-  text-decoration: none;
-}
-
-.brandGlyph {
-  display: grid;
-  width: 29px;
-  height: 29px;
-  place-items: center;
-  color: var(--primary-text);
-  border-radius: 9px 9px 9px 3px;
-  background: var(--primary);
-  font-family: "Instrument Serif", Georgia, serif;
-  font-size: 20px;
-  font-weight: 400;
-}
-
-.headerNav {
-  display: flex;
-  gap: 27px;
-  align-items: center;
-  color: var(--text-secondary);
-  font-size: 12px;
-}
-
-.headerNav a { text-decoration: none; }
-.headerNav a:hover { color: var(--text); }
-
-.headerLink {
-  display: inline-flex;
-  gap: 8px;
-  align-items: center;
-  color: var(--text);
-  font-weight: 700;
-}
-
-.hero {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(360px, .83fr);
-  gap: clamp(45px, 8vw, 118px);
-  align-items: center;
-  padding-top: clamp(70px, 10vw, 130px);
-  padding-bottom: clamp(88px, 13vw, 160px);
-}
-
-.kicker {
-  display: flex;
-  gap: 10px;
-  align-items: center;
-  margin: 0 0 23px;
-  color: var(--text-secondary);
-  font-family: "Space Mono", monospace;
-  font-size: 10px;
-  letter-spacing: .08em;
-}
-.kicker span { width: 25px; height: 1px; background: var(--text); }
-
-.hero h1,
-.statement h2,
-.finalCta h2 {
-  margin: 0;
-  font-size: clamp(70px, 10vw, 142px);
-  font-weight: 600;
-  line-height: .85;
-  letter-spacing: -.085em;
-}
-
-.hero h1 em,
-.statement h2 em,
-.finalCta h2 em {
-  color: var(--text-secondary);
-  font-family: "Instrument Serif", Georgia, serif;
-  font-weight: 400;
-  letter-spacing: -.07em;
-}
-
-.heroIntro {
-  max-width: 390px;
-  margin: 34px 0 29px;
-  color: var(--text-secondary);
-  font-size: 15px;
-  line-height: 1.6;
-}
-
+.page { min-height: 100dvh; overflow: hidden; color: #0a0a0a; background: #fff; }
+.header, .hero, .statement, .methodGrid, .finalCta, .footer { width: min(1180px, calc(100% - 64px)); margin-inline: auto; }
+.header { display: flex; min-height: 82px; align-items: center; justify-content: space-between; border-bottom: 1px solid #dedede; }
+.brand { display: inline-flex; gap: 10px; align-items: center; color: #0a0a0a; font-size: 17px; font-weight: 700; letter-spacing: -.05em; text-decoration: none; }
+.brandGlyph { display: grid; width: 30px; height: 30px; place-items: center; color: #fff; border-radius: 50% 50% 50% 8px; background: #0a0a0a; font-family: "Instrument Serif", Georgia, serif; font-size: 20px; font-weight: 400; }
+.headerStatus { display: inline-flex; gap: 9px; align-items: center; color: #777; font-family: "Space Mono", monospace; font-size: 9px; letter-spacing: .12em; }
+.headerStatus span { width: 6px; height: 6px; border-radius: 50%; background: #0a0a0a; }
+.hero { display: grid; grid-template-columns: minmax(0, 1fr) minmax(390px, .88fr); gap: clamp(45px, 8vw, 120px); align-items: center; padding: clamp(74px, 10vw, 135px) 0 clamp(94px, 13vw, 155px); }
+.kicker { display: flex; gap: 10px; align-items: center; margin: 0 0 23px; color: #777; font-family: "Space Mono", monospace; font-size: 10px; letter-spacing: .08em; }
+.kicker span { width: 25px; height: 1px; background: #0a0a0a; }
+.hero h1, .statement h2, .finalCta h2 { margin: 0; font-size: clamp(74px, 10vw, 145px); font-weight: 600; line-height: .83; letter-spacing: -.09em; }
+.hero h1 em, .statement h2 em, .finalCta h2 em { color: #777; font-family: "Instrument Serif", Georgia, serif; font-weight: 400; letter-spacing: -.07em; }
+.heroIntro { max-width: 400px; margin: 36px 0 30px; color: #555; font-size: 15px; line-height: 1.65; }
 .heroActions { display: flex; gap: 18px; align-items: center; }
-
-.primaryButton {
-  display: inline-flex;
-  min-height: 50px;
-  gap: 10px;
-  align-items: center;
-  padding: 0 18px;
-  color: var(--primary-text);
-  border-radius: 2px;
-  background: var(--primary);
-  font-size: 12px;
-  font-weight: 700;
-  text-decoration: none;
-  transition: transform 180ms ease, background-color 180ms ease;
-}
-.primaryButton:hover { transform: translateY(-2px); background: var(--primary-shade); }
-.actionNote { color: var(--text-muted); font-size: 11px; }
-
-.heroArtwork {
-  position: relative;
-  min-height: 520px;
-  padding: 23px;
-  color: var(--primary-text);
-  background: var(--primary);
-}
-
-.heroArtwork::before {
-  position: absolute;
-  inset: 12px;
-  border: 1px solid rgba(248, 247, 243, .22);
-  content: "";
-  pointer-events: none;
-}
-
-.artTopline,
-.artCaption {
-  position: relative;
-  z-index: 1;
-  display: flex;
-  justify-content: space-between;
-  color: rgba(248, 247, 243, .62);
-  font-family: "Space Mono", monospace;
-  font-size: 9px;
-  letter-spacing: .05em;
-}
-
-.qrPaper {
-  position: absolute;
-  top: 82px;
-  right: clamp(26px, 8vw, 82px);
-  width: min(72%, 315px);
-  aspect-ratio: 1;
-  padding: 28px;
-  color: var(--primary);
-  background: #eeece5;
-  box-shadow: 23px 25px 0 rgba(0, 0, 0, .18);
-  transform: rotate(5deg);
-}
-
-.qrGrid {
-  display: grid;
-  grid-template-columns: repeat(7, 1fr);
-  grid-template-rows: repeat(7, 1fr);
-  gap: 5px;
-  width: 100%;
-  height: 100%;
-}
-.qrGrid b { display: block; background: var(--primary); }
-.qrGrid b:nth-child(2n),
-.qrGrid b:nth-child(5n) { background: transparent; }
-.qrGrid b:nth-child(3n) { background: #6d6a63; }
-.finderOne,
-.finderTwo,
-.finderThree {
-  position: absolute;
-  width: 48px;
-  height: 48px;
-  border: 8px solid var(--primary);
-  background: #eeece5;
-}
-.finderOne { top: 27px; left: 27px; }
-.finderTwo { top: 27px; right: 27px; }
-.finderThree { bottom: 27px; left: 27px; }
-.scanLine {
-  position: absolute;
-  top: 52%;
-  right: 17px;
-  left: 17px;
-  height: 1px;
-  background: var(--primary);
-  box-shadow: 0 0 0 5px rgba(23, 23, 22, .08);
-}
-.artStamp {
-  position: absolute;
-  right: -32px;
-  bottom: -21px;
-  display: grid;
-  width: 77px;
-  height: 77px;
-  place-items: center;
-  color: var(--primary-text);
-  border: 1px solid var(--primary-text);
-  border-radius: 50%;
-  font-family: "Space Mono", monospace;
-  font-size: 9px;
-  line-height: 1.1;
-  text-align: center;
-  transform: rotate(-12deg);
-}
-.artCaption { position: absolute; right: 23px; bottom: 24px; left: 23px; align-items: end; }
-.artCaption span:last-child { max-width: 150px; line-height: 1.45; text-align: right; }
-
-.statement {
-  display: grid;
-  grid-template-columns: .32fr 1fr .65fr;
-  gap: 30px;
-  align-items: end;
-  padding: 35px 0 78px;
-  border-top: 1px solid var(--surface-border);
-}
-.statementIndex {
-  align-self: start;
-  color: var(--text-muted);
-  font-family: "Space Mono", monospace;
-  font-size: 10px;
-  letter-spacing: .06em;
-}
-.statement h2 { font-size: clamp(42px, 5vw, 70px); }
-.statement > p { max-width: 265px; margin: 0 0 6px; color: var(--text-secondary); font-size: 13px; line-height: 1.7; }
-
-.methodGrid {
-  display: grid;
-  grid-template-columns: 1.1fr .9fr 1fr;
-  gap: 1px;
-  padding-bottom: 135px;
-  background: var(--surface-border);
-}
-.methodCard {
-  min-height: 270px;
-  padding: 23px;
-  background: var(--surface);
-}
-.methodCardDark { color: var(--primary-text); background: var(--primary); }
-.cardNumber { display: block; margin-bottom: 68px; color: var(--text-muted); font-family: "Space Mono", monospace; font-size: 10px; }
-.methodCardDark .cardNumber { color: rgba(248,247,243,.56); }
-.cardRule { display: block; width: 24px; height: 24px; margin-bottom: 43px; border: 1px solid currentColor; transform: rotate(45deg); }
-.cardQuote { display: block; height: 48px; margin-bottom: 14px; color: var(--text-secondary); font-family: "Instrument Serif", Georgia, serif; font-size: 78px; line-height: .7; }
-.methodCard h3 { margin: 0 0 8px; font-size: 17px; letter-spacing: -.04em; }
-.methodCard p { max-width: 250px; margin: 0; color: var(--text-secondary); font-size: 12px; line-height: 1.6; }
-.methodCardDark p { color: rgba(248,247,243,.64); }
-
-.finalCta {
-  display: flex;
-  min-height: 355px;
-  align-items: center;
-  justify-content: space-between;
-  padding: 78px 0;
-  border-top: 1px solid var(--surface-border);
-}
-.finalCta h2 { font-size: clamp(70px, 10vw, 140px); }
-.circleButton { display: grid; width: 92px; height: 92px; place-items: center; color: var(--primary-text); border-radius: 50%; background: var(--primary); transition: transform 180ms ease; }
-.circleButton:hover { transform: rotate(-18deg) scale(1.05); }
-.footer { display: flex; justify-content: space-between; gap: 20px; padding: 24px 0 29px; color: var(--text-secondary); border-top: 1px solid var(--surface-border); font-size: 10px; }
-.footerBrand { color: var(--text); font-size: 14px; font-weight: 700; }
-.footer a { display: inline-flex; gap: 6px; align-items: center; color: var(--text); font-weight: 700; text-decoration: none; }
-
-@media (max-width: 800px) {
-  .header, .hero, .statement, .methodGrid, .finalCta, .footer { width: min(100% - 36px, 580px); }
-  .hero { grid-template-columns: 1fr; padding-top: 72px; }
-  .heroArtwork { min-height: 440px; }
-  .statement { grid-template-columns: 1fr 1.2fr; }
-  .statement > p { grid-column: 2; }
-  .methodGrid { grid-template-columns: 1fr; }
-  .methodCard { min-height: 210px; }
-  .cardNumber { margin-bottom: 40px; }
-  .finalCta { min-height: 290px; }
-}
-
-@media (max-width: 520px) {
-  .header, .hero, .statement, .methodGrid, .finalCta, .footer { width: calc(100% - 32px); }
-  .header { min-height: 68px; }
-  .headerNav a:first-child { display: none; }
-  .hero { padding-top: 64px; }
-  .hero h1 { font-size: clamp(67px, 21vw, 104px); }
-  .heroIntro { margin-top: 29px; }
-  .heroActions { align-items: flex-start; flex-direction: column; gap: 13px; }
-  .heroArtwork { min-height: 370px; padding: 17px; }
-  .qrPaper { top: 71px; right: 47px; width: 67%; padding: 20px; }
-  .finderOne, .finderTwo, .finderThree { width: 36px; height: 36px; border-width: 6px; }
-  .finderOne { top: 19px; left: 19px; }.finderTwo { top: 19px; right: 19px; }.finderThree { bottom: 19px; left: 19px; }
-  .statement { display: block; padding: 28px 0 63px; }
-  .statement h2 { margin: 29px 0 24px; font-size: 46px; }
-  .statement > p { max-width: 310px; }
-  .finalCta { min-height: 260px; padding: 55px 0; }
-  .finalCta h2 { font-size: 70px; }
-  .circleButton { width: 68px; height: 68px; }
-  .footer { display: grid; grid-template-columns: 1fr 1fr; }
-  .footer span:nth-child(2) { grid-column: 1 / -1; grid-row: 2; }
-  .footer a { justify-self: end; }
-}
+.primaryButton { display: inline-flex; min-height: 51px; gap: 10px; align-items: center; padding: 0 19px; color: #fff; background: #0a0a0a; font-size: 12px; font-weight: 700; text-decoration: none; transition: transform 180ms ease, background-color 180ms ease; }
+.primaryButton:hover { transform: translateY(-2px); background: #333; }
+.actionNote { color: #888; font-size: 11px; }
+.heroArtwork { position: relative; min-height: 520px; padding: 23px; color: #fff; background: #0a0a0a; }
+.heroArtwork::before { position: absolute; inset: 12px; border: 1px solid #444; content: ""; pointer-events: none; }
+.artTopline, .artCaption { position: relative; z-index: 1; display: flex; justify-content: space-between; color: #999; font-family: "Space Mono", monospace; font-size: 9px; letter-spacing: .05em; }
+.qrPaper { position: absolute; top: 82px; right: clamp(26px, 8vw, 82px); width: min(72%, 315px); aspect-ratio: 1; padding: 28px; color: #0a0a0a; background: #fff; box-shadow: 23px 25px 0 #333; transform: rotate(5deg); }
+.qrGrid { display: grid; grid-template-columns: repeat(7, 1fr); grid-template-rows: repeat(7, 1fr); gap: 5px; width: 100%; height: 100%; }
+.qrGrid b { display: block; background: #0a0a0a; }
+.qrGrid b:nth-child(2n), .qrGrid b:nth-child(5n) { background: transparent; }
+.qrGrid b:nth-child(3n) { background: #777; }
+.finderOne, .finderTwo, .finderThree { position: absolute; width: 48px; height: 48px; border: 8px solid #0a0a0a; background: #fff; }
+.finderOne { top: 27px; left: 27px; }.finderTwo { top: 27px; right: 27px; }.finderThree { bottom: 27px; left: 27px; }
+.scanLine { position: absolute; top: 52%; right: 17px; left: 17px; height: 2px; background: #0a0a0a; box-shadow: 0 0 0 5px rgba(10, 10, 10, .08); }
+.artStamp { position: absolute; right: -32px; bottom: -21px; display: grid; width: 77px; height: 77px; place-items: center; color: #fff; border: 1px solid #fff; border-radius: 50%; font-family: "Space Mono", monospace; font-size: 9px; line-height: 1.1; text-align: center; transform: rotate(-12deg); }
+.artCaption { position: absolute; right: 23px; bottom: 24px; left: 23px; align-items: end; }.artCaption span:last-child { max-width: 150px; line-height: 1.45; text-align: right; }
+.statement { display: grid; grid-template-columns: .32fr 1fr .65fr; gap: 30px; align-items: end; padding: 35px 0 78px; border-top: 1px solid #dedede; }
+.statementIndex { align-self: start; color: #888; font-family: "Space Mono", monospace; font-size: 10px; letter-spacing: .06em; }.statement h2 { font-size: clamp(42px, 5vw, 70px); }.statement > p { max-width: 280px; margin: 0 0 6px; color: #555; font-size: 13px; line-height: 1.7; }
+.methodGrid { display: grid; grid-template-columns: 1.1fr .9fr 1fr; gap: 1px; padding-bottom: 135px; background: #dedede; }.methodCard { min-height: 270px; padding: 23px; background: #fff; }.methodCardDark { color: #fff; background: #0a0a0a; }.cardNumber { display: block; margin-bottom: 68px; color: #888; font-family: "Space Mono", monospace; font-size: 10px; }.methodCardDark .cardNumber { color: #999; }.cardRule { display: block; width: 24px; height: 24px; margin-bottom: 43px; border: 1px solid currentColor; transform: rotate(45deg); }.cardQuote { display: block; height: 48px; margin-bottom: 14px; color: #777; font-family: "Instrument Serif", Georgia, serif; font-size: 78px; line-height: .7; }.methodCard h3 { margin: 0 0 8px; font-size: 17px; letter-spacing: -.04em; }.methodCard p { max-width: 250px; margin: 0; color: #555; font-size: 12px; line-height: 1.6; }.methodCardDark p { color: #aaa; }
+.finalCta { display: flex; min-height: 355px; align-items: center; justify-content: space-between; padding: 78px 0; border-top: 1px solid #dedede; }.finalCta h2 { font-size: clamp(70px, 10vw, 140px); }.circleButton { display: grid; width: 92px; height: 92px; place-items: center; color: #fff; border-radius: 50%; background: #0a0a0a; transition: transform 180ms ease, background-color 180ms ease; }.circleButton:hover { transform: rotate(-18deg) scale(1.05); background: #333; }
+.footer { display: flex; justify-content: space-between; gap: 20px; padding: 24px 0 29px; color: #777; border-top: 1px solid #dedede; font-size: 10px; }.footerBrand { color: #0a0a0a; font-size: 14px; font-weight: 700; }.footer a { display: inline-flex; gap: 6px; align-items: center; color: #0a0a0a; font-weight: 700; text-decoration: none; }
+@media (max-width: 800px) { .header, .hero, .statement, .methodGrid, .finalCta, .footer { width: min(100% - 36px, 580px); }.hero { grid-template-columns: 1fr; padding-top: 72px; }.heroArtwork { min-height: 440px; }.statement { grid-template-columns: 1fr 1.2fr; }.statement > p { grid-column: 2; }.methodGrid { grid-template-columns: 1fr; }.methodCard { min-height: 210px; }.cardNumber { margin-bottom: 40px; }.finalCta { min-height: 290px; } }
+@media (max-width: 520px) { .header, .hero, .statement, .methodGrid, .finalCta, .footer { width: calc(100% - 32px); }.header { min-height: 68px; }.headerStatus { font-size: 8px; }.hero { padding-top: 64px; }.hero h1 { font-size: clamp(67px, 21vw, 104px); }.heroIntro { margin-top: 29px; }.heroActions { align-items: flex-start; flex-direction: column; gap: 13px; }.heroArtwork { min-height: 370px; padding: 17px; }.qrPaper { top: 71px; right: 47px; width: 67%; padding: 20px; }.finderOne, .finderTwo, .finderThree { width: 36px; height: 36px; border-width: 6px; }.finderOne { top: 19px; left: 19px; }.finderTwo { top: 19px; right: 19px; }.finderThree { bottom: 19px; left: 19px; }.statement { display: block; padding: 28px 0 63px; }.statement h2 { margin: 29px 0 24px; font-size: 46px; }.statement > p { max-width: 310px; }.finalCta { min-height: 260px; padding: 55px 0; }.finalCta h2 { font-size: 70px; }.circleButton { width: 68px; height: 68px; }.footer { display: grid; grid-template-columns: 1fr 1fr; }.footer span:nth-child(2) { grid-column: 1 / -1; grid-row: 2; }.footer a { justify-self: end; } }

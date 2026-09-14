@@ -21,6 +21,13 @@ India-focused QR code security app with real-time fraud detection, community tru
 | Start Backend | `npm run server:dev` → backend service |
 | Start Frontend | `npm run web:dev` → Next.js website on port 5000 |
 
+## Website surface
+
+The Next.js website is intentionally read-only and contains only the home page,
+the full-screen scanner route, and public QR details pages. Website profile,
+sign-in, sign-up, report, vote, and comment flows are not available. Community
+actions from a QR details page open the mobile-app download sheet instead.
+
 ## Environment variables
 
 Public client configuration:

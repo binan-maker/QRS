@@ -1,37 +1,37 @@
 @import url("https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Instrument+Serif:ital@0;1&family=Space+Mono:wght@400;700&display=swap");
 
 :root {
-  --background: #f1efe9;
-  --surface: #f8f7f3;
-  --surface-light: #e8e5dd;
-  --surface-border: #d4d0c6;
-  --primary: #171716;
-  --primary-shade: #343330;
-  --primary-dim: rgba(23, 23, 22, .08);
-  --primary-text: #f8f7f3;
-  --text: #171716;
-  --text-secondary: #66635d;
-  --text-muted: #908c83;
-  --danger: #5e5750;
-  --warning: #716c63;
-  --safe: #252522;
-  --focus: #171716;
+  --background: #ffffff;
+  --surface: #ffffff;
+  --surface-light: #f0f0f0;
+  --surface-border: #dedede;
+  --primary: #0a0a0a;
+  --primary-shade: #333333;
+  --primary-dim: rgba(10, 10, 10, .08);
+  --primary-text: #ffffff;
+  --text: #0a0a0a;
+  --text-secondary: #555555;
+  --text-muted: #888888;
+  --danger: #333333;
+  --warning: #555555;
+  --safe: #0a0a0a;
+  --focus: #0a0a0a;
 
-  --ink: 40 8% 10%;
-  --ink-soft: 36 7% 39%;
-  --muted: 36 6% 51%;
-  --paper: 40 17% 94%;
-  --paper-deep: 36 10% 89%;
-  --card: 40 18% 97%;
-  --line: 38 10% 83%;
-  --sage: 40 7% 20%;
-  --sage-deep: 40 8% 12%;
-  --sage-pale: 38 9% 88%;
-  --amber: 36 7% 35%;
-  --amber-pale: 36 8% 89%;
-  --red: 25 9% 32%;
-  --red-pale: 30 10% 89%;
-  --shadow: 40 9% 8%;
+  --ink: 0 0% 4%;
+  --ink-soft: 0 0% 33%;
+  --muted: 0 0% 47%;
+  --paper: 0 0% 100%;
+  --paper-deep: 0 0% 94%;
+  --card: 0 0% 100%;
+  --line: 0 0% 87%;
+  --sage: 0 0% 4%;
+  --sage-deep: 0 0% 2%;
+  --sage-pale: 0 0% 92%;
+  --amber: 0 0% 33%;
+  --amber-pale: 0 0% 92%;
+  --red: 0 0% 33%;
+  --red-pale: 0 0% 92%;
+  --shadow: 0 0% 4%;
 }
 
 * {
