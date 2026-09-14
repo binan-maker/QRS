@@ -1,71 +1,57 @@
 import Link from "next/link";
 import styles from "./home.module.css";
 
-function Arrow({ size = 18 }: { size?: number }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <path d="M5 12h13M13 6l6 6-6 6" />
-    </svg>
-  );
+function Icon({ name, size = 22 }: { name: "arrow" | "scan" | "home" | "user" | "qr"; size?: number }) {
+  const common = { width: size, height: size, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 1.8, strokeLinecap: "round" as const, strokeLinejoin: "round" as const, "aria-hidden": true };
+  if (name === "arrow") return <svg {...common}><path d="M5 12h13M13 6l6 6-6 6" /></svg>;
+  if (name === "home") return <svg {...common}><path d="m3.5 10.5 8.5-7 8.5 7" /><path d="M5.5 9.5v10h13v-10M9.5 19.5v-5h5v5" /></svg>;
+  if (name === "user") return <svg {...common}><circle cx="12" cy="8" r="3.2" /><path d="M5.5 20c.6-3.2 2.9-5 6.5-5s5.9 1.8 6.5 5" /></svg>;
+  if (name === "qr") return <svg {...common}><path d="M4 9V5h4M15 5h4v4M19 15v4h-4M8 19H4v-4" /><path d="M9 9h6v6H9z" /></svg>;
+  return <svg {...common}><path d="M4 9V5h4M15 5h4v4M19 15v4h-4M8 19H4v-4" /><path d="M9 9h6v6H9z" /></svg>;
 }
 
-function ScanMark({ size = 24 }: { size?: number }) {
+function NavBar() {
   return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <path d="M5 8V5h3M16 5h3v3M19 16v3h-3M8 19H5v-3" />
-      <path d="M8.5 9.5h7v5h-7zM11 11h2v2h-2z" />
-    </svg>
+    <nav className={styles.bottomNav} aria-label="Primary navigation">
+      <Link href="/" className={`${styles.navItem} ${styles.navItemActive}`}><Icon name="home" /><span>Home</span></Link>
+      <Link href="/scanner" className={styles.navItem}><Icon name="scan" /><span>Scan</span></Link>
+      <Link href="/profile" className={styles.navItem}><Icon name="user" /><span>Profile</span></Link>
+    </nav>
   );
 }
 
 export default function HomePage() {
   return (
-    <main className={styles.page}>
-      <header className={`${styles.header} page-enter`}>
-        <Link href="/" className={styles.brand} aria-label="BinRo home">
-          <span className={styles.brandGlyph}>B</span>
-          <span>BinRo</span>
-        </Link>
-        <span className={styles.headerStatus}><span /> PUBLIC QR SAFETY</span>
-      </header>
+    <main className={styles.appFrame}>
+      <div className={styles.page}>
+        <header className={styles.header}>
+          <h1>Welcome</h1>
+          <Link href="/auth/login" className={styles.signIn}><span aria-hidden="true">↪</span> Sign In</Link>
+        </header>
 
-      <section className={`${styles.hero} page-enter delay-1`} aria-labelledby="home-title">
-        <div className={styles.heroCopy}>
-          <p className={styles.kicker}><span /> BEFORE YOU OPEN</p>
-          <h1 id="home-title">Scan<br /><em>with intent.</em></h1>
-          <p className={styles.heroIntro}>See where a QR code leads before you open it. A quiet, read-only check for the moment before a tap.</p>
-          <div className={styles.heroActions}>
-            <Link href="/scanner" className={styles.primaryButton}>
-              <ScanMark size={18} /> Open scanner <Arrow size={16} />
-            </Link>
-            <span className={styles.actionNote}>No account required</span>
+        <section className={`${styles.scanHero} page-enter`} aria-labelledby="scan-hero-title">
+          <div className={styles.heroIcon}><Icon name="qr" size={42} /></div>
+          <div className={styles.heroCopy}>
+            <strong id="scan-hero-title">BinRo</strong>
+            <span>Scan QR Code</span>
+            <small>BinRo — Know Before You Scan</small>
           </div>
-        </div>
+          <Link href="/scanner" className={styles.heroArrow} aria-label="Open scanner"><Icon name="arrow" size={24} /></Link>
+          <span className={styles.heroOrbOne} aria-hidden="true" />
+          <span className={styles.heroOrbTwo} aria-hidden="true" />
+        </section>
 
-        <div className={styles.heroArtwork} aria-label="Illustration of a QR code being inspected">
-          <div className={styles.artTopline}><span>BINRO / FIELD NOTE 001</span><span>PUBLIC VIEW</span></div>
-          <div className={styles.qrPaper}>
-            <div className={styles.qrGrid} aria-hidden="true">
-              <i className={styles.finderOne} /><i className={styles.finderTwo} /><i className={styles.finderThree} />
-              <b /><b /><b /><b /><b /><b /><b /><b /><b /><b /><b /><b /><b /><b /><b /><b /><b /><b />
-            </div>
-            <div className={styles.scanLine} />
-            <span className={styles.artStamp}>CHECK<br />FIRST</span>
+        <section className={`${styles.recentSection} page-enter delay-1`} aria-labelledby="recent-title">
+          <h2 id="recent-title"><span /> Recent Scans</h2>
+          <div className={styles.emptyCard}>
+            <div className={styles.emptyIcon}><Icon name="qr" size={42} /></div>
+            <h3>No scans yet</h3>
+            <p>Scan smarter. Stay safe.</p>
+            <Link href="/scanner" className={styles.scanButton}><Icon name="scan" size={18} /> Scan QR Code</Link>
           </div>
-          <div className={styles.artCaption}><span>01 / 01</span><span>Every link has a destination.<br />Know yours.</span></div>
-        </div>
-      </section>
-
-      <section className={`${styles.quietLine} page-enter delay-2`} aria-label="BinRo approach">
-        <p><strong>Read first. Decide second.</strong>BinRo shows the public details without sending you anywhere automatically.</p>
-        <span>CAMERA ACCESS STAYS IN YOUR BROWSER</span>
-      </section>
-
-      <footer className={styles.footer}>
-        <span className={styles.footerBrand}>BinRo</span>
-        <span>Check first. Open second.</span>
-        <Link href="/scanner">Open scanner <Arrow size={13} /></Link>
-      </footer>
+        </section>
+      </div>
+      <NavBar />
     </main>
   );
 }

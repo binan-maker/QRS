@@ -1,372 +1,50 @@
-.page {
-  position: relative;
-  min-height: 100dvh;
-  overflow: hidden;
-  color: #eff7ff;
-  background: #061d45;
+.page { min-height: 100dvh; color: #fff; background: #0e274d; }
+.header, .footer { display: none; }
+.scannerLayout { min-height: 100dvh; }
+.permission {
+  display: flex; min-height: 100dvh; flex-direction: column; align-items: center; justify-content: center;
+  padding: 32px; color: var(--text); background: var(--background); text-align: center;
 }
-
-.header {
-  position: fixed;
-  z-index: 10;
-  top: 0;
-  right: 0;
-  left: 0;
-  display: flex;
-  min-height: 84px;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0 clamp(18px, 5vw, 64px);
-  border-bottom: 1px solid rgba(218, 237, 255, .18);
-  background: linear-gradient(180deg, rgba(3, 22, 54, .84), rgba(3, 22, 54, 0));
+.permissionIcon {
+  display: grid; width: 136px; height: 136px; margin-bottom: 38px; place-items: center; color: var(--primary);
+  border: 1px solid #a9c4e9; border-radius: 38px; background: #d9e7fa;
+  box-shadow: inset 0 0 0 18px #c5daf5, 0 0 0 1px rgba(255,255,255,.3);
 }
-
-.brand {
-  display: inline-flex;
-  gap: 11px;
-  align-items: center;
-  color: #eff7ff;
-  font-size: 17px;
-  font-weight: 700;
-  letter-spacing: -.055em;
-  text-decoration: none;
+.permission h1 { margin: 0; font-size: 25px; letter-spacing: -.045em; }
+.permission > p { margin: 14px 0 34px; color: #8b9dae; font-size: 15px; line-height: 1.45; }
+.permissionError { max-width: 430px; margin: -18px 0 23px !important; color: var(--danger) !important; font-size: 12px !important; }
+.enableButton {
+  display: inline-flex; width: min(100%, 510px); min-height: 67px; gap: 11px; align-items: center; justify-content: center;
+  color: #fff; border: 0; border-radius: 20px; background: linear-gradient(90deg, #0761d5, #03449e);
+  cursor: pointer; font: inherit; font-size: 16px; font-weight: 700; box-shadow: 0 10px 19px rgba(0, 75, 180, .15);
 }
-
-.brand::before {
-  display: inline-grid;
-  width: 30px;
-  height: 30px;
-  place-items: center;
-  color: #0a3b91;
-  border-radius: 50% 50% 50% 9px;
-  background: #eff7ff;
-  font-family: "Instrument Serif", Georgia, serif;
-  font-size: 20px;
-  font-weight: 400;
-  content: "B";
-}
-
-.headerMeta,
-.footer {
-  color: rgba(221, 238, 255, .68);
-  font-family: "Space Mono", monospace;
-  font-size: 9px;
-  letter-spacing: .08em;
-}
-
-.headerMeta {
-  display: inline-flex;
-  gap: 10px;
-  align-items: center;
-}
-
-.headerMeta span {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: #63d2c1;
-  box-shadow: 0 0 0 4px rgba(99, 210, 193, .12);
-}
-
-.scannerLayout {
-  position: relative;
-  min-height: 100dvh;
-}
-
-.scannerCard {
-  position: relative;
-  display: flex;
-  min-height: 100dvh;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  overflow: hidden;
-  padding: 112px 24px 128px;
-  background: #061d45;
-}
-
-.scannerCard::before {
-  position: absolute;
-  inset: 0;
-  z-index: 1;
-  background:
-    linear-gradient(180deg, rgba(2, 18, 45, .72) 0%, transparent 27%, transparent 64%, rgba(2, 18, 45, .9) 100%),
-    radial-gradient(circle at 50% 47%, transparent 0 16rem, rgba(2, 18, 45, .16) 31rem);
-  content: "";
-  pointer-events: none;
-}
-
-.cameraStage {
-  position: absolute;
-  inset: 0;
-  overflow: hidden;
-  background: #092756;
-}
-
-.cameraVideo {
-  display: block;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  filter: saturate(.78) contrast(1.06) brightness(.78);
-}
-
-.decoderCanvas {
-  display: none;
-}
-
-.cameraOverlay {
-  position: absolute;
-  inset: 0;
-  z-index: 2;
-  display: grid;
-  place-items: center;
-  color: #eaf5ff;
-  background: rgba(3, 25, 60, .72);
-  font-family: "Space Mono", monospace;
-  font-size: 10px;
-  letter-spacing: .08em;
-  text-transform: uppercase;
-}
-
-.finder {
-  position: relative;
-  z-index: 3;
-  width: min(58vw, 330px);
-  aspect-ratio: 1;
-  border: 1px solid rgba(238, 248, 255, .6);
-  box-shadow: 0 0 0 999px rgba(2, 18, 46, .3);
-}
-
-.finder::before,
-.finder::after,
-.finder > span::before,
-.finder > span::after {
-  position: absolute;
-  width: 25px;
-  height: 25px;
-  border-color: #eaf6ff;
-  content: "";
-}
-
-.finder::before {
-  top: -1px;
-  left: -1px;
-  border-top: 3px solid;
-  border-left: 3px solid;
-}
-
-.finder::after {
-  right: -1px;
-  bottom: -1px;
-  border-right: 3px solid;
-  border-bottom: 3px solid;
-}
-
-.finder > span::before {
-  top: -1px;
-  right: -1px;
-  border-top: 3px solid;
-  border-right: 3px solid;
-}
-
-.finder > span::after {
-  bottom: -1px;
-  left: -1px;
-  border-bottom: 3px solid;
-  border-left: 3px solid;
-}
-
-.finder::marker {
-  display: none;
-}
-
-.scanBeam {
-  position: absolute;
-  z-index: 4;
-  top: 50%;
-  right: 2px;
-  left: 2px;
-  height: 1px;
-  background: #a5dcff;
-  box-shadow: 0 0 18px rgba(121, 203, 255, .95);
-  animation: scanner-line 2.8s ease-in-out infinite;
-}
-
-.scannerInfo {
-  position: absolute;
-  z-index: 5;
-  bottom: 43px;
-  left: clamp(18px, 5vw, 64px);
-  max-width: 350px;
-  text-align: left;
-}
-
-.scannerKicker {
-  display: flex;
-  gap: 9px;
-  align-items: center;
-  margin: 0 0 12px;
-  color: rgba(224, 241, 255, .68);
-  font-family: "Space Mono", monospace;
-  font-size: 9px;
-  letter-spacing: .1em;
-}
-
-.scannerKicker span {
-  width: 23px;
-  height: 1px;
-  background: #a9dcff;
-}
-
-.scannerCard h1 {
-  margin: 0;
-  color: #f0f8ff;
-  font-size: clamp(27px, 3vw, 40px);
-  font-weight: 500;
-  letter-spacing: -.06em;
-}
-
-.scannerHelp {
-  max-width: 320px;
-  margin: 11px 0 0;
-  color: rgba(225, 240, 255, .72);
-  font-size: 12px;
-  line-height: 1.55;
-}
-
-.scannerError {
-  max-width: 350px;
-  margin: 13px 0 0;
-  padding: 10px 13px;
-  color: #ffe9ef;
-  border: 1px solid rgba(255, 191, 206, .35);
-  border-radius: 2px;
-  background: rgba(133, 32, 63, .38);
-  font-size: 11px;
-  line-height: 1.45;
-}
-
-.detectedValue {
-  display: block;
-  max-width: 350px;
-  margin-top: 12px;
-  overflow: hidden;
-  color: rgba(225, 240, 255, .68);
-  font-family: "Space Mono", monospace;
-  font-size: 10px;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.scannerActions {
-  position: absolute;
-  z-index: 5;
-  right: clamp(18px, 5vw, 64px);
-  bottom: 43px;
-  display: flex;
-  gap: 12px;
-  align-items: center;
-}
-
-.backLink,
-.primaryButton {
-  display: inline-flex;
-  min-height: 45px;
-  align-items: center;
-  justify-content: center;
-  border-radius: 2px;
-  font-size: 11px;
-  font-weight: 700;
-  text-decoration: none;
-  transition: background-color 180ms ease, border-color 180ms ease, transform 180ms ease;
-}
-
-.backLink {
-  padding: 0 15px;
-  color: #e9f5ff;
-  border: 1px solid rgba(225, 241, 255, .3);
-  background: rgba(8, 40, 89, .35);
-  backdrop-filter: blur(12px);
-}
-
-.backLink:hover {
-  border-color: rgba(225, 241, 255, .7);
-  background: rgba(8, 40, 89, .62);
-  transform: translateY(-2px);
-}
-
-.primaryButton {
-  padding: 0 18px;
-  color: #07357e;
-  border: 1px solid #eff8ff;
-  background: #eff8ff;
-  cursor: pointer;
-}
-
-.primaryButton:hover {
-  background: #cce9ff;
-  transform: translateY(-2px);
-}
-
-.footer {
-  position: fixed;
-  z-index: 10;
-  right: clamp(18px, 5vw, 64px);
-  bottom: 17px;
-  left: clamp(18px, 5vw, 64px);
-  display: flex;
-  justify-content: space-between;
-  gap: 20px;
-  pointer-events: none;
-}
-
-@media (max-width: 640px) {
-  .header {
-    min-height: 68px;
-  }
-
-  .headerMeta {
-    max-width: 145px;
-    text-align: right;
-  }
-
-  .scannerCard {
-    padding-right: 18px;
-    padding-left: 18px;
-  }
-
-  .finder {
-    width: min(72vw, 300px);
-  }
-
-  .scannerInfo {
-    right: 18px;
-    bottom: 106px;
-    left: 18px;
-  }
-
-  .scannerCard h1 {
-    font-size: 29px;
-  }
-
-  .scannerHelp {
-    max-width: 290px;
-  }
-
-  .scannerActions {
-    right: 18px;
-    bottom: 49px;
-    left: 18px;
-    justify-content: space-between;
-  }
-
-  .backLink,
-  .primaryButton {
-    flex: 1;
-  }
-
-  .footer {
-    display: none;
-  }
+.scannerCard { position: relative; display: flex; min-height: 100dvh; flex-direction: column; align-items: center; overflow: hidden; background: #0e274d; }
+.cameraStage, .cameraVideo { position: absolute; inset: 0; width: 100%; height: 100%; }
+.cameraStage { background: linear-gradient(145deg, #8ba4b7, #315a78 53%, #1a3350); }
+.cameraVideo { object-fit: cover; filter: saturate(.8) brightness(.77); }
+.decoderCanvas { display: none; }
+.scannerShade { position: absolute; inset: 0; background: linear-gradient(180deg, rgba(8,25,47,.63), transparent 22%, transparent 68%, rgba(3,18,37,.87)); pointer-events: none; }
+.scannerTop { position: absolute; top: 38px; right: 30px; left: 30px; z-index: 2; display: grid; grid-template-columns: 46px 1fr 46px; align-items: center; text-align: center; }
+.scannerTop strong { font-size: 17px; }
+.backButton { display: grid; width: 46px; height: 46px; place-items: center; color: #fff; border-radius: 50%; background: rgba(19,35,54,.45); text-decoration: none; }
+.scannerTitle { position: absolute; top: 150px; z-index: 2; margin: 0; font-size: clamp(25px, 5vw, 34px); font-weight: 600; letter-spacing: -.05em; }
+.finder { position: absolute; top: 35%; z-index: 2; width: min(70vw, 330px); aspect-ratio: 1; border: 1px solid rgba(255,255,255,.65); }
+.finder::before, .finder::after, .finder > span::before, .finder > span::after { position: absolute; width: 28px; height: 28px; border-color: #fff; content: ""; }
+.finder::before { top: -1px; left: -1px; border-top: 3px solid; border-left: 3px solid; }
+.finder::after { right: -1px; bottom: -1px; border-right: 3px solid; border-bottom: 3px solid; }
+.finder > span::before { top: -1px; right: -1px; border-top: 3px solid; border-right: 3px solid; }
+.finder > span::after { bottom: -1px; left: -1px; border-bottom: 3px solid; border-left: 3px solid; }
+.scanBeam { position: absolute; top: 50%; right: 2px; left: 2px; height: 1px; background: #b5e2ff; box-shadow: 0 0 18px #a1dbff; animation: scanner-line 2.8s ease-in-out infinite; }
+.cameraOverlay { position: absolute; inset: 0; z-index: 3; display: grid; place-items: center; background: rgba(4,24,50,.68); font-size: 13px; }
+.scannerError { position: absolute; bottom: 160px; z-index: 3; max-width: calc(100% - 36px); padding: 10px 14px; color: #ffe9ed; border-radius: 11px; background: rgba(102, 23, 39, .7); font-size: 12px; text-align: center; }
+.scannerControls { position: absolute; right: 0; bottom: 68px; left: 0; z-index: 2; display: flex; justify-content: center; gap: 60px; }
+.controlButton { display: grid; gap: 7px; justify-items: center; color: #fff; border: 0; background: transparent; cursor: pointer; font: inherit; font-size: 11px; }
+.controlButton svg { display: grid; width: 64px; height: 64px; padding: 16px; border: 1px solid rgba(255,255,255,.27); border-radius: 50%; background: rgba(20, 40, 56, .6); }
+.controlActive { color: #ffcf28; }.controlActive svg { border: 2px solid #ffcf28; color: #ffcf28; }
+.restartButton { position: absolute; right: 18px; bottom: 18px; z-index: 3; padding: 7px 11px; color: #fff; border: 1px solid rgba(255,255,255,.35); border-radius: 15px; background: rgba(0,0,0,.18); cursor: pointer; font: inherit; font-size: 10px; }
+@media (min-width: 800px) {
+  .permissionIcon { width: 154px; height: 154px; }
+  .finder { top: 29%; width: min(40vw, 430px); }
+  .scannerTitle { top: 112px; }
+  .scannerControls { bottom: 54px; }
 }

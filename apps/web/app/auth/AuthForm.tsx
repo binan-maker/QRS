@@ -88,11 +88,12 @@ export default function AuthForm({ mode }: { mode: Mode }) {
     <main className={styles.page}>
       <div className={styles.content}>
         <div className={styles.brand} aria-label="BinRo">
-          <div className={styles.brandName}>Bin<span>Ro</span></div>
-          <div className={styles.brandRule} />
+          <div className={styles.brandMark}>B</div>
+          <div className={styles.brandName}>BinRo</div>
         </div>
 
         <section className={styles.card}>
+          <div className={styles.appNotice}><span>↗</span><p><strong>Get more with the BinRo app</strong><small>Download the app to unlock community features.</small></p></div>
           <h1>{isRegister ? "Create your account" : "Welcome back"}</h1>
           <p className={styles.subtitle}>
             {isRegister
@@ -139,7 +140,7 @@ export default function AuthForm({ mode }: { mode: Mode }) {
           </p>
         </section>
 
-        <Link className={styles.backHome} href="/">Back to guest home</Link>
+        <Link className={styles.backHome} href="/">Back to home</Link>
       </div>
     </main>
   );
