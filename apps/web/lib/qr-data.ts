@@ -1,5 +1,6 @@
 import { doc, getDoc, getFirestore, type Timestamp } from "firebase/firestore";
 import { getApp, getApps, initializeApp } from "firebase/app";
+import { createHash } from "node:crypto";
 
 export const ANDROID_APP_URL =
   "https://play.google.com/store/apps/details?id=com.qrguard.app";
@@ -23,6 +24,10 @@ export type PublicQrRecord = {
   deactivationMessage: string | null;
   trust: PublicTrust;
 };
+
+export function getQrIdForContent(content: string) {
+  return createHash("sha256").update(content).digest("hex").slice(0, 20);
+}
 
 type FirestoreQrDocument = {
   content?: unknown;

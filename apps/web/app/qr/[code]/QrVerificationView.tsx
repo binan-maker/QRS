@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, type CSSProperties } from "react";
+import { useEffect, useMemo, useState, type CSSProperties } from "react";
 import type { PublicQrRecord } from "../../../lib/qr-data";
 import styles from "./qr.module.css";
 
@@ -87,6 +87,8 @@ function getDestinationHref(content: string) {
   return /^https?:\/\//i.test(trimmed) ? trimmed : null;
 }
 
+const IOS_APP_URL = "https://apps.apple.com/";
+
 export default function QrVerificationView({
   record,
   code
@@ -95,6 +97,7 @@ export default function QrVerificationView({
   code: string;
 }) {
   const [copied, setCopied] = useState(false);
+  const [appSheetOpen, setAppSheetOpen] = useState(false);
   const destinationHref = getDestinationHref(record.content);
   const tone = scoreTone(record.trust.score);
   const hasSignal = record.trust.score >= 0;
@@ -107,6 +110,19 @@ export default function QrVerificationView({
     () => record.displayDestination?.trim() || record.content.trim(),
     [record.content, record.displayDestination]
   );
+
+  useEffect(() => {
+    if (!appSheetOpen) return;
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setAppSheetOpen(false);
+    };
+    document.addEventListener("keydown", onKeyDown);
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.removeEventListener("keydown", onKeyDown);
+      document.body.style.overflow = "";
+    };
+  }, [appSheetOpen]);
 
   async function copyDestination() {
     try {
@@ -121,7 +137,7 @@ export default function QrVerificationView({
   return (
     <main className={styles.page} data-testid="qr-verification-page">
       <header className={`${styles.headerShell} page-enter`}>
-        <a href="https://binro.xyz" className={styles.brand} aria-label="BinRo home">
+          <a href="/" className={styles.brand} aria-label="BinRo home">
           <span className={styles.brandGlyph} aria-hidden="true">B</span>
           <span className={styles.brandWord}>BinRo</span>
         </a>
@@ -208,22 +224,25 @@ export default function QrVerificationView({
               </div>
               <p className={styles.sectionIntro}>Use the BinRo Android app to report a concern, vote on this link, or leave context for someone scanning after you.</p>
               <div className={styles.actionList}>
-                <div className={styles.actionRow}>
+                <button type="button" className={styles.actionRow} onClick={() => setAppSheetOpen(true)} data-testid="button-report-concern">
                   <span className={`${styles.actionIcon} ${styles.actionIconRed}`}><Icon name="flag" size={19} /></span>
                   <div><strong>Report a concern</strong><span>Flag phishing, fraud, or a misleading destination.</span></div>
-                </div>
-                <div className={styles.actionRow}>
+                  <Icon name="arrow" size={16} />
+                </button>
+                <button type="button" className={styles.actionRow} onClick={() => setAppSheetOpen(true)} data-testid="button-share-signal">
                   <span className={`${styles.actionIcon} ${styles.actionIconAmber}`}><Icon name="vote" size={19} /></span>
                   <div><strong>Share your signal</strong><span>Vote so the trust score reflects what people see.</span></div>
-                </div>
-                <div className={styles.actionRow}>
+                  <Icon name="arrow" size={16} />
+                </button>
+                <button type="button" className={styles.actionRow} onClick={() => setAppSheetOpen(true)} data-testid="button-leave-note">
                   <span className={`${styles.actionIcon} ${styles.actionIconSage}`}><Icon name="comment" size={19} /></span>
                   <div><strong>Leave a note</strong><span>Add useful context without sharing private details.</span></div>
-                </div>
+                  <Icon name="arrow" size={16} />
+                </button>
               </div>
-              <a href="https://play.google.com/store/apps/details?id=com.qrguard.app" target="_blank" rel="noreferrer" className={styles.appButton} data-testid="get-binro-app">
-                Open BinRo on Android <Icon name="external" size={17} />
-              </a>
+              <button type="button" className={styles.appButton} onClick={() => setAppSheetOpen(true)} data-testid="button-open-app-sheet">
+                Open BinRo on mobile <Icon name="arrow" size={17} />
+              </button>
             </section>
           </div>
 
@@ -267,6 +286,32 @@ export default function QrVerificationView({
         <div><span className={styles.footerBrand}>BinRo</span><span>Public QR verification</span></div>
         <span>Check first. Open second.</span>
       </footer>
+
+      {appSheetOpen ? (
+        <div className={styles.sheetBackdrop} role="presentation" onMouseDown={(event) => {
+          if (event.target === event.currentTarget) setAppSheetOpen(false);
+        }}>
+          <section className={styles.appSheet} role="dialog" aria-modal="true" aria-labelledby="app-sheet-title">
+            <button type="button" className={styles.sheetClose} onClick={() => setAppSheetOpen(false)} aria-label="Close app download options" data-testid="button-close-app-sheet">×</button>
+            <p className={styles.cardKicker}>BINRO MOBILE</p>
+            <h2 id="app-sheet-title">Bring the full check with you.</h2>
+            <p>Community reports, votes, and notes live in the BinRo app. Download it to add your perspective to this QR check.</p>
+            <div className={styles.storeList}>
+              <a href="https://play.google.com/store/apps/details?id=com.qrguard.app" target="_blank" rel="noreferrer" className={styles.storeLink} data-testid="link-google-play">
+                <span className={styles.storeIcon}>G</span>
+                <span><strong>Google Play</strong><small>Download for Android</small></span>
+                <Icon name="external" size={16} />
+              </a>
+              <a href={IOS_APP_URL} target="_blank" rel="noreferrer" className={styles.storeLink} data-testid="link-app-store">
+                <span className={styles.storeIcon}>iOS</span>
+                <span><strong>App Store</strong><small>Find BinRo for iPhone</small></span>
+                <Icon name="external" size={16} />
+              </a>
+            </div>
+            <button type="button" className={styles.sheetBack} onClick={() => setAppSheetOpen(false)} data-testid="button-back-to-check">Back to the check</button>
+          </section>
+        </div>
+      ) : null}
     </main>
   );
 }

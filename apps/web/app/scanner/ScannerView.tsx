@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import jsQR from "jsqr";
 import styles from "./scanner.module.css";
 
 type DetectorResult = { rawValue?: string };
@@ -9,9 +10,12 @@ type Detector = {
   detect: (source: HTMLVideoElement) => Promise<DetectorResult[]>;
 };
 type DetectorConstructor = new (options?: { formats?: string[] }) => Detector;
+type BarcodeDetectorWindow = Window & { BarcodeDetector?: DetectorConstructor };
 
-function qrDetailsPath(value: string) {
+async function getQrDetailsPath(value: string) {
   const raw = value.trim();
+  if (!raw) return null;
+
   try {
     const url = new URL(raw, window.location.origin);
     const match = url.pathname.match(/\/qr\/([^/?#]+)/i);
@@ -20,15 +24,35 @@ function qrDetailsPath(value: string) {
     // Raw QR data can be a share code rather than a URL.
   }
 
-  if (/^[0-9a-zA-Z]{1,14}$/.test(raw)) {
+  if (/^[0-9a-zA-Z]{1,14}$/.test(raw) || /^[0-9a-f]{20}$/i.test(raw)) {
     return `/qr/${encodeURIComponent(raw)}`;
   }
-  return null;
+
+  if (!window.crypto?.subtle) return null;
+  const digest = await window.crypto.subtle.digest("SHA-256", new TextEncoder().encode(raw));
+  const qrId = Array.from(new Uint8Array(digest), (byte) => byte.toString(16).padStart(2, "0")).join("").slice(0, 20);
+  return `/qr/${qrId}?content=${encodeURIComponent(raw)}`;
+}
+
+function decodeVideoFrame(video: HTMLVideoElement, canvas: HTMLCanvasElement) {
+  if (video.readyState < HTMLMediaElement.HAVE_CURRENT_DATA || !video.videoWidth || !video.videoHeight) {
+    return null;
+  }
+
+  canvas.width = video.videoWidth;
+  canvas.height = video.videoHeight;
+  const context = canvas.getContext("2d", { willReadFrequently: true });
+  if (!context) return null;
+
+  context.drawImage(video, 0, 0, canvas.width, canvas.height);
+  const image = context.getImageData(0, 0, canvas.width, canvas.height);
+  return jsQR(image.data, image.width, image.height, { inversionAttempts: "attemptBoth" })?.data ?? null;
 }
 
 export default function ScannerView() {
   const router = useRouter();
   const videoRef = useRef<HTMLVideoElement | null>(null);
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const frameRef = useRef<number | null>(null);
   const detectingRef = useRef(false);
@@ -56,12 +80,7 @@ export default function ScannerView() {
       return;
     }
 
-    const DetectorApi = (window as Window & { BarcodeDetector?: DetectorConstructor }).BarcodeDetector;
-    if (!DetectorApi) {
-      setStatus("unsupported");
-      setError("Live QR decoding is not available in this browser yet. Try the latest Chrome or Edge.");
-      return;
-    }
+    const DetectorApi = (window as BarcodeDetectorWindow).BarcodeDetector;
 
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
@@ -74,16 +93,17 @@ export default function ScannerView() {
       await videoRef.current.play();
       setStatus("ready");
 
-      const detector = new DetectorApi({ formats: ["qr_code"] });
+      const detector = DetectorApi ? new DetectorApi({ formats: ["qr_code"] }) : null;
       const scanFrame = async () => {
         if (!videoRef.current || !streamRef.current) return;
         if (!detectingRef.current) {
           detectingRef.current = true;
           try {
-            const results = await detector.detect(videoRef.current);
-            const value = results.find((result) => result.rawValue)?.rawValue?.trim();
+            const value = detector
+              ? (await detector.detect(videoRef.current)).find((result) => result.rawValue)?.rawValue?.trim()
+              : decodeVideoFrame(videoRef.current, canvasRef.current ?? document.createElement("canvas"));
             if (value) {
-              const path = qrDetailsPath(value);
+              const path = await getQrDetailsPath(value);
               stopCamera();
               if (path) {
                 router.push(path);
@@ -126,6 +146,7 @@ export default function ScannerView() {
     <section className={styles.scannerCard} aria-labelledby="scanner-title">
       <div className={styles.cameraStage}>
         <video ref={videoRef} className={styles.cameraVideo} playsInline muted aria-label="QR camera preview" />
+        <canvas ref={canvasRef} className={styles.decoderCanvas} aria-hidden="true" />
         <div className={styles.finder} aria-hidden="true" />
         {status === "starting" ? <div className={styles.cameraOverlay}>Opening camera…</div> : null}
       </div>

@@ -1,6 +1,1 @@
-{
-  "/page": "app/page.js",
-  "/scanner/page": "app/scanner/page.js",
-  "/profile/page": "app/profile/page.js",
-  "/auth/login/page": "app/auth/login/page.js"
-}
+{}

@@ -9,6 +9,7 @@ const QR_ID_HEX_LENGTH = 20;
  */
 export function decodeQrShareCode(code: string): string | null {
   const normalized = code.trim();
+  if (/^[0-9a-f]{20}$/i.test(normalized)) return normalized.toLowerCase();
   if (!/^[0-9a-zA-Z]{1,14}$/.test(normalized)) return null;
 
   const nibbles = [0];
