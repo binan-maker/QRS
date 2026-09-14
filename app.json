@@ -8,10 +8,7 @@
     "scheme": "scanguard",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
-    "platforms": [
-      "android",
-      "ios"
-    ],
+    "platforms": ["android", "ios"],
     "splash": {
       "image": "./assets/images/Splash.png",
       "resizeMode": "contain",
@@ -20,9 +17,7 @@
     "ios": {
       "supportsTablet": false,
       "bundleIdentifier": "com.binro.app",
-      "associatedDomains": [
-        "applinks:binro.xyz"
-      ],
+      "associatedDomains": ["applinks:binro.xyz"],
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false,
         "NSCameraUsageDescription": "BinRo uses your camera to scan QR codes.",
@@ -39,10 +34,7 @@
         {
           "action": "VIEW",
           "autoVerify": true,
-          "category": [
-            "BROWSABLE",
-            "DEFAULT"
-          ],
+          "category": ["BROWSABLE", "DEFAULT"],
           "data": [
             {
               "scheme": "https",
@@ -77,8 +69,8 @@
         {
           "android": {
             "usesCleartextTraffic": true,
-            "compileSdkVersion": 35,
-            "targetSdkVersion": 35,
+            "compileSdkVersion": 36,
+            "targetSdkVersion": 36,
             "minSdkVersion": 24,
             "packagingOptions": {
               "pickFirst": [
