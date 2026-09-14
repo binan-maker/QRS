@@ -24,10 +24,11 @@ India-focused QR code security app with real-time fraud detection, community tru
 ## Website surface
 
 The Next.js website contains the BinRo home, full-screen scanner, public QR
-details, profile, and Firebase email auth pages. The web experience is
-responsive across mobile, tablet, and desktop. Community actions from the QR
-details page open the mobile-app download sheet instead of duplicating the
-mobile-only report, vote, and comment flows.
+details, profile, and app-download pages. The web experience is responsive
+across mobile, tablet, and desktop. Sign-in and account actions route to the
+app-download page rather than opening web auth forms. Community actions from
+the QR details page open the mobile-app download sheet instead of duplicating
+the mobile-only report, vote, and comment flows.
 
 ## Environment variables
 

@@ -61,8 +61,7 @@ export default function ProfilePage() {
             <div className={styles.guestIconRing}><Icon name="user" size={45} /></div>
             <h1 id="guest-title">Not signed in</h1>
             <p>Sign in to view your profile and activity</p>
-            <Link href="/auth/login" className={styles.signInButton}>Sign In</Link>
-            <Link href="/auth/register" className={styles.createLink}>Create Account</Link>
+            <Link href="/download" className={styles.signInButton}>Sign In</Link>
           </section>
         )}
         {error ? <p className={styles.error} role="alert">{error}</p> : null}

@@ -26,7 +26,7 @@ export default function HomePage() {
       <div className={styles.page}>
         <header className={styles.header}>
           <h1>Welcome</h1>
-          <Link href="/auth/login" className={styles.signIn}><span aria-hidden="true">↪</span> Sign In</Link>
+          <Link href="/download" className={styles.signIn}><span aria-hidden="true">↪</span> Sign In</Link>
         </header>
 
         <section className={`${styles.scanHero} page-enter`} aria-labelledby="scan-hero-title">

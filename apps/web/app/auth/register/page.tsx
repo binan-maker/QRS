@@ -1,5 +1,5 @@
-import AuthForm from "../AuthForm";
+import { redirect } from "next/navigation";
 
 export default function RegisterPage() {
-  return <AuthForm mode="register" />;
+  redirect("/download");
 }
