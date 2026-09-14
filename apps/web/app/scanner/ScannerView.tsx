@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import jsQR from "jsqr";
 import styles from "./scanner.module.css";
@@ -147,18 +148,29 @@ export default function ScannerView() {
       <div className={styles.cameraStage}>
         <video ref={videoRef} className={styles.cameraVideo} playsInline muted aria-label="QR camera preview" />
         <canvas ref={canvasRef} className={styles.decoderCanvas} aria-hidden="true" />
-        <div className={styles.finder} aria-hidden="true" />
-        {status === "starting" ? <div className={styles.cameraOverlay}>Opening camera…</div> : null}
       </div>
-      <h2 id="scanner-title">Scan a BinRo QR code</h2>
-      <p className={styles.scannerHelp}>
-        Point your camera at a BinRo QR code. The matching public details page will open automatically.
-      </p>
-      {error ? <p className={styles.scannerError} role="alert">{error}</p> : null}
-      {detected ? <code className={styles.detectedValue}>{detected}</code> : null}
-      <button type="button" className={styles.primaryButton} onClick={() => void startCamera()}>
-        {status === "ready" ? "Restart Camera" : "Enable Camera"}
-      </button>
+
+      <div className={styles.finder} aria-hidden="true">
+        <span />
+        <div className={styles.scanBeam} />
+      </div>
+
+      {status === "starting" ? <div className={styles.cameraOverlay} role="status" aria-live="polite">Opening camera</div> : null}
+
+      <div className={styles.scannerInfo}>
+        <p className={styles.scannerKicker}><span /> SCANNER / 02</p>
+        <h1 id="scanner-title">Point. Pause. Know.</h1>
+        <p className={styles.scannerHelp}>Hold a BinRo QR code inside the frame. Its public details page will open automatically.</p>
+        {error ? <p className={styles.scannerError} role="alert">{error}</p> : null}
+        {detected ? <code className={styles.detectedValue}>{detected}</code> : null}
+      </div>
+
+      <div className={styles.scannerActions}>
+        <Link href="/" className={styles.backLink}>Back to home</Link>
+        <button type="button" className={styles.primaryButton} onClick={() => void startCamera()}>
+          {status === "ready" ? "Restart camera" : "Enable camera"}
+        </button>
+      </div>
     </section>
   );
 }

@@ -1,37 +1,37 @@
 @import url("https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Instrument+Serif:ital@0;1&family=Space+Mono:wght@400;700&display=swap");
 
 :root {
-  --background: #ffffff;
-  --surface: #ffffff;
-  --surface-light: #f0f0f0;
-  --surface-border: #dedede;
-  --primary: #0a0a0a;
-  --primary-shade: #333333;
-  --primary-dim: rgba(10, 10, 10, .08);
-  --primary-text: #ffffff;
-  --text: #0a0a0a;
-  --text-secondary: #555555;
-  --text-muted: #888888;
-  --danger: #333333;
-  --warning: #555555;
-  --safe: #0a0a0a;
-  --focus: #0a0a0a;
+  --background: #eef5ff;
+  --surface: #f8fbff;
+  --surface-light: #dce9fb;
+  --surface-border: #c5d8f2;
+  --primary: #0b4fbd;
+  --primary-shade: #083a8e;
+  --primary-dim: rgba(11, 79, 189, .1);
+  --primary-text: #f8fbff;
+  --text: #071b3b;
+  --text-secondary: #466084;
+  --text-muted: #7188a7;
+  --danger: #a93d54;
+  --warning: #9a6d28;
+  --safe: #2b8d7f;
+  --focus: #2f76dc;
 
-  --ink: 0 0% 4%;
-  --ink-soft: 0 0% 33%;
-  --muted: 0 0% 47%;
-  --paper: 0 0% 100%;
-  --paper-deep: 0 0% 94%;
-  --card: 0 0% 100%;
-  --line: 0 0% 87%;
-  --sage: 0 0% 4%;
-  --sage-deep: 0 0% 2%;
-  --sage-pale: 0 0% 92%;
-  --amber: 0 0% 33%;
-  --amber-pale: 0 0% 92%;
-  --red: 0 0% 33%;
-  --red-pale: 0 0% 92%;
-  --shadow: 0 0% 4%;
+  --ink: 217 79% 13%;
+  --ink-soft: 214 32% 39%;
+  --muted: 215 27% 55%;
+  --paper: 214 100% 98%;
+  --paper-deep: 214 66% 93%;
+  --card: 213 100% 99%;
+  --line: 214 50% 84%;
+  --sage: 169 54% 37%;
+  --sage-deep: 173 54% 24%;
+  --sage-pale: 168 46% 91%;
+  --amber: 38 58% 39%;
+  --amber-pale: 40 65% 91%;
+  --red: 349 48% 45%;
+  --red-pale: 349 55% 92%;
+  --shadow: 217 79% 13%;
 }
 
 * {
@@ -41,6 +41,7 @@
 html {
   min-width: 320px;
   background: var(--background);
+  scroll-behavior: smooth;
 }
 
 body {
@@ -63,7 +64,7 @@ a {
 
 button:focus-visible,
 a:focus-visible {
-  outline: 3px solid rgba(23, 23, 22, .35);
+  outline: 3px solid rgba(47, 118, 220, .45);
   outline-offset: 3px;
 }
 
@@ -85,6 +86,16 @@ a:focus-visible {
 @keyframes pulse-ring {
   0%, 100% { opacity: 0.45; transform: scale(0.96); }
   50% { opacity: 1; transform: scale(1); }
+}
+
+@keyframes scanner-line {
+  0%, 100% { opacity: .35; transform: translateY(-42%); }
+  50% { opacity: 1; transform: translateY(42%); }
+}
+
+@keyframes soft-breathe {
+  0%, 100% { opacity: .45; transform: scale(.96); }
+  50% { opacity: .8; transform: scale(1); }
 }
 
 .page-enter {

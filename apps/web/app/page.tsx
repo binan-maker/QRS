@@ -31,15 +31,18 @@ export default function HomePage() {
 
       <section className={`${styles.hero} page-enter delay-1`} aria-labelledby="home-title">
         <div className={styles.heroCopy}>
-          <p className={styles.kicker}><span /> PUBLIC QR SAFETY CHECK / 01</p>
+          <p className={styles.kicker}><span /> BEFORE YOU OPEN</p>
           <h1 id="home-title">Scan<br /><em>with intent.</em></h1>
-          <p className={styles.heroIntro}>See where a QR code leads before you open it. BinRo gives you the destination, context, and public safety signals in one clear view.</p>
+          <p className={styles.heroIntro}>See where a QR code leads before you open it. A quiet, read-only check for the moment before a tap.</p>
           <div className={styles.heroActions}>
-            <Link href="/scanner" className={styles.primaryButton}><ScanMark size={19} /> Open scanner <Arrow size={17} /></Link>
+            <Link href="/scanner" className={styles.primaryButton}>
+              <ScanMark size={18} /> Open scanner <Arrow size={16} />
+            </Link>
             <span className={styles.actionNote}>No account required</span>
           </div>
         </div>
-        <div className={styles.heroArtwork} aria-label="A graphic representation of a QR code being inspected">
+
+        <div className={styles.heroArtwork} aria-label="Illustration of a QR code being inspected">
           <div className={styles.artTopline}><span>BINRO / FIELD NOTE 001</span><span>PUBLIC VIEW</span></div>
           <div className={styles.qrPaper}>
             <div className={styles.qrGrid} aria-hidden="true">
@@ -49,43 +52,13 @@ export default function HomePage() {
             <div className={styles.scanLine} />
             <span className={styles.artStamp}>CHECK<br />FIRST</span>
           </div>
-          <div className={styles.artCaption}><span>01 / 03</span><span>Every link has a destination.<br />Know yours.</span></div>
+          <div className={styles.artCaption}><span>01 / 01</span><span>Every link has a destination.<br />Know yours.</span></div>
         </div>
       </section>
 
-      <section className={styles.statement} id="method" aria-labelledby="statement-title">
-        <div className={styles.statementIndex}>02 — THE IDEA</div>
-        <h2 id="statement-title">A QR code is a doorway.<br /><em>Look before you enter.</em></h2>
-        <p>BinRo is a read-only public check. Nothing signs you up, asks for your email, or opens a link without you choosing it.</p>
-      </section>
-
-      <section className={styles.methodGrid} aria-label="How BinRo works">
-        <article className={styles.methodCard}>
-          <span className={styles.cardNumber}>01</span>
-          <ScanMark size={25} />
-          <h3>Scan the code</h3>
-          <p>Open the full-screen camera and hold the QR code inside the frame.</p>
-        </article>
-        <article className={`${styles.methodCard} ${styles.methodCardDark}`}>
-          <span className={styles.cardNumber}>02</span>
-          <span className={styles.cardRule} />
-          <h3>Read the details</h3>
-          <p>Inspect the destination, type, scan activity, and public trust signals.</p>
-        </article>
-        <article className={styles.methodCard}>
-          <span className={styles.cardNumber}>03</span>
-          <span className={styles.cardQuote}>“</span>
-          <h3>Choose what happens</h3>
-          <p>Continue only when it feels right. Community actions belong in the mobile app.</p>
-        </article>
-      </section>
-
-      <section className={styles.finalCta} aria-labelledby="final-title">
-        <div>
-          <p className={styles.kicker}><span /> START WITH THE CAMERA</p>
-          <h2 id="final-title">See what is<br /><em>behind it.</em></h2>
-        </div>
-        <Link href="/scanner" className={styles.circleButton} aria-label="Open QR scanner"><ScanMark size={29} /></Link>
+      <section className={`${styles.quietLine} page-enter delay-2`} aria-label="BinRo approach">
+        <p><strong>Read first. Decide second.</strong>BinRo shows the public details without sending you anywhere automatically.</p>
+        <span>CAMERA ACCESS STAYS IN YOUR BROWSER</span>
       </section>
 
       <footer className={styles.footer}>
