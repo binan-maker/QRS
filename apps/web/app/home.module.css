@@ -1,5 +1,5 @@
 .appFrame { min-height: 100dvh; background: var(--background); }
-.page { width: min(calc(100% - 48px), 1060px); min-height: 100dvh; margin: 0 auto; padding: 28px 0 118px; }
+.page { width: min(calc(100% - 48px), 1060px); min-height: 100dvh; margin: 0 auto; padding: 28px 0 48px; }
 .header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 28px; }
 .header h1 { margin: 0; font-size: clamp(28px, 4vw, 40px); letter-spacing: -.055em; }
 .signIn {
@@ -42,16 +42,6 @@
   border-radius: 17px; background: var(--primary); box-shadow: 0 8px 18px rgba(7, 93, 204, .18);
   font-size: 14px; font-weight: 700; text-decoration: none;
 }
-.bottomNav {
-  position: fixed; right: 50%; bottom: 0; z-index: 10; display: flex; width: min(100%, 1060px);
-  min-height: 86px; transform: translateX(50%); align-items: center; justify-content: space-around;
-  padding: 8px 20px; border: 1px solid var(--line); border-bottom: 0; border-radius: 25px 25px 0 0;
-  background: rgba(255,255,255,.95); box-shadow: 0 -7px 25px rgba(77, 106, 144, .07); backdrop-filter: blur(15px);
-}
-.navItem { display: grid; min-width: 75px; gap: 5px; justify-items: center; padding: 9px 17px; color: #708196; border-radius: 12px; font-size: 12px; text-decoration: none; }
-.navItemActive { color: var(--primary); background: var(--primary-soft); }
-.navItem svg { width: 23px; height: 23px; }
-
 @media (min-width: 900px) {
   .page { padding-top: 50px; }
   .scanHero { min-height: 235px; padding-inline: 58px; }
@@ -61,7 +51,6 @@
   .heroCopy small { font-size: 13px; }
   .heroArrow { width: 64px; height: 64px; margin-right: 16px; }
   .emptyCard { min-height: 420px; }
-  .bottomNav { bottom: 18px; width: min(calc(100% - 48px), 510px); border-bottom: 1px solid var(--line); border-radius: 25px; }
 }
 @media (max-width: 600px) {
   .page { width: calc(100% - 44px); padding-top: 54px; }
@@ -77,5 +66,4 @@
   .recentSection { margin-top: 28px; }
   .recentSection > h2 { font-size: 16px; }
   .emptyCard { min-height: 335px; margin-bottom: 10px; }
-  .bottomNav { min-height: 88px; }
 }
