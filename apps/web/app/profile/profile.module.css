@@ -78,6 +78,32 @@
   font-size: 14px;
 }
 
+.loading {
+  margin: 0 !important;
+}
+
+.memberBadge {
+  margin: -9px 0 22px;
+  padding: 6px 10px;
+  color: var(--safe);
+  border: 1px solid rgba(52, 211, 153, .2);
+  border-radius: 99px;
+  background: rgba(52, 211, 153, .08);
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.error {
+  margin: 16px 0 0;
+  padding: 11px 12px;
+  color: var(--danger);
+  border: 1px solid rgba(248, 113, 113, .2);
+  border-radius: 12px;
+  background: rgba(248, 113, 113, .08);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
 .signInButton,
 .createLink {
   display: inline-flex;
@@ -94,6 +120,9 @@
   width: min(100%, 260px);
   color: var(--primary-text);
   background: var(--primary);
+  cursor: pointer;
+  font: inherit;
+  font-weight: 700;
 }
 
 .createLink {

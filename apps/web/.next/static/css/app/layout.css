@@ -1,25 +1,43 @@
 /*!*************************************************************************************************************************************************************************************************************************************************************!*\
   !*** css ./node_modules/next/dist/build/webpack/loaders/css-loader/src/index.js??ruleSet[1].rules[14].oneOf[10].use[2]!./node_modules/next/dist/build/webpack/loaders/postcss-loader/src/index.js??ruleSet[1].rules[14].oneOf[10].use[3]!./app/globals.css ***!
   \*************************************************************************************************************************************************************************************************************************************************************/
-@import url("https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap");
 
 :root {
-  --ink: 218 31% 20%;
-  --ink-soft: 216 18% 38%;
+  --background: #0a0a0a;
+  --surface: #141414;
+  --surface-light: #1c1c1c;
+  --surface-border: #272727;
+  --primary: #3b82f6;
+  --primary-shade: #2563eb;
+  --primary-dim: rgba(59, 130, 246, .12);
+  --primary-text: #fff;
+  --text: #e8e8e8;
+  --text-secondary: #9ca3af;
+  --text-muted: #4b5563;
+  --danger: #f87171;
+  --warning: #fbbf24;
+  --safe: #34d399;
+  --focus: #3b82f6;
+
+  /* Legacy tokens used by the public QR verification route. They map to the
+     same BinRo palette so that route keeps rendering while the app shell is
+     migrated screen by screen. */
+  --ink: 0 0% 91%;
+  --ink-soft: 215 16% 63%;
   --muted: 215 16% 53%;
-  --paper: 42 38% 97%;
-  --paper-deep: 39 33% 93%;
-  --card: 0 0% 100%;
-  --line: 38 24% 87%;
-  --sage: 159 34% 35%;
-  --sage-deep: 160 34% 27%;
-  --sage-pale: 155 29% 91%;
-  --amber: 31 88% 53%;
-  --amber-pale: 37 100% 91%;
-  --red: 4 66% 47%;
-  --red-pale: 5 70% 94%;
-  --shadow: 220 27% 24%;
-  --focus: 159 53% 39%;
+  --paper: 0 0% 4%;
+  --paper-deep: 0 0% 11%;
+  --card: 0 0% 8%;
+  --line: 0 0% 15%;
+  --sage: 217 91% 60%;
+  --sage-deep: 217 83% 53%;
+  --sage-pale: 217 70% 18%;
+  --amber: 43 96% 56%;
+  --amber-pale: 42 55% 17%;
+  --red: 0 91% 71%;
+  --red-pale: 0 44% 16%;
+  --shadow: 0 0% 0%;
 }
 
 * {
@@ -28,16 +46,16 @@
 
 html {
   min-width: 320px;
-  background: hsl(var(--paper));
+  background: var(--background);
 }
 
 body {
   margin: 0;
-  color: hsl(var(--ink));
+  color: var(--text);
   background:
-    radial-gradient(circle at 9% 0%, hsl(155 35% 92% / 0.68), transparent 28rem),
-    hsl(var(--paper));
-  font-family: "DM Sans", ui-sans-serif, sans-serif;
+    radial-gradient(circle at 8% 0%, rgba(59, 130, 246, .08), transparent 28rem),
+    var(--background);
+  font-family: "Inter", ui-sans-serif, sans-serif;
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
 }
@@ -53,12 +71,12 @@ a {
 
 button:focus-visible,
 a:focus-visible {
-  outline: 3px solid hsl(var(--focus) / 0.42);
+  outline: 3px solid rgba(59, 130, 246, .42);
   outline-offset: 3px;
 }
 
 ::selection {
-  background: hsl(var(--sage) / 0.2);
+  background: rgba(59, 130, 246, .2);
 }
 
 @keyframes rise-in {
@@ -85,7 +103,7 @@ a:focus-visible {
 .delay-3 { animation-delay: 220ms; }
 
 .skeleton {
-  background: linear-gradient(100deg, hsl(var(--paper-deep)), hsl(var(--card)), hsl(var(--paper-deep)));
+  background: linear-gradient(100deg, var(--surface-light), var(--surface), var(--surface-light));
   background-size: 240% 100%;
   animation: shimmer 1.45s ease-in-out infinite;
 }

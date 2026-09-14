@@ -52,6 +52,47 @@
   text-align: center;
 }
 
+.cameraStage {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  max-height: 330px;
+  overflow: hidden;
+  margin-bottom: 24px;
+  border: 1px solid var(--surface-border);
+  border-radius: 20px;
+  background: #05070b;
+}
+
+.cameraVideo {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.cameraOverlay {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  color: var(--text-secondary);
+  background: rgba(5, 7, 11, .84);
+  font-size: 13px;
+}
+
+.finder {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: min(58%, 220px);
+  aspect-ratio: 1;
+  transform: translate(-50%, -50%);
+  border: 2px solid var(--primary);
+  border-radius: 22px;
+  box-shadow: 0 0 0 999px rgba(0, 0, 0, .22), 0 0 24px rgba(59, 130, 246, .35);
+}
+
 .scannerIcon {
   display: grid;
   width: 108px;
@@ -62,6 +103,37 @@
   border: 1px solid color-mix(in srgb, var(--primary) 22%, transparent);
   border-radius: 28px;
   background: var(--primary-dim);
+}
+
+.scannerHelp {
+  max-width: 390px;
+  margin: 10px 0 14px;
+  color: var(--text-secondary);
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.scannerError {
+  max-width: 390px;
+  margin: 0 0 14px;
+  padding: 10px 12px;
+  color: var(--danger);
+  border: 1px solid rgba(248, 113, 113, .2);
+  border-radius: 12px;
+  background: rgba(248, 113, 113, .08);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.detectedValue {
+  display: block;
+  max-width: 100%;
+  margin-bottom: 14px;
+  overflow: hidden;
+  color: var(--text-secondary);
+  font-size: 11px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .scannerCard h2 {

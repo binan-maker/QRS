@@ -1,4 +1,9 @@
+"use client";
+
 import Link from "next/link";
+import { useEffect, useState } from "react";
+import { onAuthStateChanged, signOut, type User } from "firebase/auth";
+import { getWebAuth } from "../../lib/firebase";
 import styles from "./profile.module.css";
 
 function PersonIcon({ size = 40 }: { size?: number }) {
@@ -39,6 +44,32 @@ function ScanIcon() {
 }
 
 export default function ProfilePage() {
+  const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    try {
+      const unsubscribe = onAuthStateChanged(getWebAuth(), (nextUser) => {
+        setUser(nextUser);
+        setLoading(false);
+      });
+      return unsubscribe;
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : "Web Firebase is not configured.");
+      setLoading(false);
+    }
+  }, []);
+
+  async function handleSignOut() {
+    try {
+      await signOut(getWebAuth());
+      setUser(null);
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : "Unable to sign out.");
+    }
+  }
+
   return (
     <main className={styles.appFrame}>
       <div className={styles.page}>
@@ -50,15 +81,26 @@ export default function ProfilePage() {
           <Link href="/" className={styles.backLink}>Home</Link>
         </header>
 
-        <section className={styles.guestCard} aria-labelledby="guest-title">
-          <div className={styles.guestIconRing}>
-            <PersonIcon />
-          </div>
-          <h2 id="guest-title">Not signed in</h2>
-          <p>Sign in to view your profile and activity</p>
-          <Link href="/auth/login" className={styles.signInButton}>Sign In</Link>
-          <Link href="/auth/register" className={styles.createLink}>Create Account</Link>
-        </section>
+        {loading ? (
+          <section className={styles.guestCard}><p className={styles.loading}>Checking your session…</p></section>
+        ) : user ? (
+          <section className={styles.guestCard} aria-labelledby="profile-title">
+            <div className={styles.guestIconRing}><PersonIcon /></div>
+            <h2 id="profile-title">{user.displayName || "BinRo member"}</h2>
+            <p>{user.email}</p>
+            <span className={styles.memberBadge}>{user.emailVerified ? "Email verified" : "Email verification pending"}</span>
+            <button type="button" className={styles.signInButton} onClick={handleSignOut}>Sign Out</button>
+          </section>
+        ) : (
+          <section className={styles.guestCard} aria-labelledby="guest-title">
+            <div className={styles.guestIconRing}><PersonIcon /></div>
+            <h2 id="guest-title">Not signed in</h2>
+            <p>Sign in to view your profile and activity</p>
+            <Link href="/auth/login" className={styles.signInButton}>Sign In</Link>
+            <Link href="/auth/register" className={styles.createLink}>Create Account</Link>
+          </section>
+        )}
+        {error ? <p className={styles.error} role="alert">{error}</p> : null}
 
         <nav className={styles.bottomNav} aria-label="Primary navigation">
           <Link href="/" className={styles.navItem}>

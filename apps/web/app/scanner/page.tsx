@@ -1,4 +1,5 @@
 import Link from "next/link";
+import ScannerView from "./ScannerView";
 import styles from "./scanner.module.css";
 
 function ScanIcon() {
@@ -40,14 +41,7 @@ export default function ScannerPage() {
           <Link href="/" className={styles.backLink}>Home</Link>
         </header>
 
-        <section className={styles.scannerCard} aria-labelledby="scanner-title">
-          <div className={styles.scannerIcon}>
-            <ScanIcon />
-          </div>
-          <h2 id="scanner-title">Camera scanner</h2>
-          <p>QR scanning will be connected here in the next step. You can already explore the guest home and profile screens.</p>
-          <Link href="/" className={styles.primaryButton}>Back to Home</Link>
-        </section>
+        <ScannerView />
 
         <nav className={styles.bottomNav} aria-label="Primary navigation">
           <Link href="/" className={styles.navItem}>
