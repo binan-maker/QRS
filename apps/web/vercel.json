@@ -2,5 +2,8 @@
   "framework": "nextjs",
   "installCommand": "npm ci --ignore-scripts --registry=https://registry.npmjs.org/",
   "buildCommand": "npm run build",
-  "devCommand": "npm run dev"
+  "devCommand": "npm run dev",
+  "git": {
+    "deploymentEnabled": false
+  }
 }
