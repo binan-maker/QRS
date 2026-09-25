@@ -9,10 +9,10 @@ India-focused QR code security app with real-time fraud detection, community tru
 | Mobile app | Expo / React Native (expo-router) |
 | Backend API | Express 5 + TypeScript (tsx) |
 | Web dashboard | Next.js (apps/web) |
-| Database | Cloud Firestore |
-| Auth | Firebase Authentication |
-| Storage | Firebase Cloud Storage |
-| Realtime | Firebase Realtime Database |
+| Database | Supabase PostgreSQL |
+| Auth | Supabase Auth |
+| Storage | Supabase Storage |
+| Realtime | Supabase Realtime + `rtdb_store` compatibility table |
 
 ## Running the project
 
@@ -34,39 +34,43 @@ the mobile-only report, vote, and comment flows.
 
 Public client configuration:
 
-- `EXPO_PUBLIC_FIREBASE_API_KEY`
-- `EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN`
-- `EXPO_PUBLIC_FIREBASE_PROJECT_ID`
-- `EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET`
-- `EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID`
-- `EXPO_PUBLIC_FIREBASE_APP_ID`
-- `NEXT_PUBLIC_FIREBASE_*` equivalents for the web dashboard
+- `EXPO_PUBLIC_SUPABASE_URL`
+- `EXPO_PUBLIC_SUPABASE_ANON_KEY`
+- `NEXT_PUBLIC_SUPABASE_URL`
+- `NEXT_PUBLIC_SUPABASE_ANON_KEY`
 
 Server-only configuration:
 
-- `FIREBASE_SERVICE_ACCOUNT` — Firebase service-account JSON for Admin SDK access
+- `SUPABASE_URL` — server-side Supabase project URL
+- `SUPABASE_SERVICE_ROLE_KEY` — server-only Supabase service role key
+- `DATABASE_URL` — Supabase Postgres session-mode URI for migrations
+- `FIREBASE_SERVICE_ACCOUNT` — only needed while importing legacy Firebase data
 - `SESSION_SECRET` — optional session/application secret
 
-Firebase client configuration is public by design. Keep the Admin service account in Replit Secrets.
+Supabase URL and anon key are public client configuration. Keep the Supabase
+service-role key, Postgres URI, and Firebase service-account JSON in Replit
+Secrets. Never put any of those server-only values in `EXPO_PUBLIC_*` or
+`NEXT_PUBLIC_*` variables.
 
-## Firebase setup
+## Supabase setup and migration
 
 The app now uses static individual QR codes only. New client writes reject
 dynamic destinations, business QR metadata, redirect history, expiry, and scan
-limits. The checked-in `firestore.rules` and `storage.rules` files reflect that
-policy; deploy them to the `scan-guard-19a7f` Firebase project after signing in
-with the Firebase CLI:
+limits. Legacy Firebase rules and adapters are retained only for the data
+migration/rollback window and are not part of the active Supabase runtime.
 
-```bash
-npx firebase-tools deploy --only firestore:rules,storage --project scan-guard-19a7f
-```
-
-The Replit environment contains the public Firebase client configuration. The
-Firebase Admin service account is still required for server-side deployment and
-trusted data migrations.
+Follow `SUPABASE_MIGRATION_RUNBOOK.md` from top to bottom. It covers project
+creation, SQL order, Auth providers and redirect URLs, Storage buckets and
+policies, Replit Secrets, Firebase data import, account recovery, cutover, and
+verification.
 
 ## Schema and security
 
-Create the Firestore database, enable Email/Password and Google providers in Firebase Authentication, configure Firestore and Storage security rules, and create the Realtime Database before using production data.
+Enable Email/Password and Google providers in Supabase Auth, configure the
+redirect URLs for the web and mobile app, run all five migration SQL files,
+and test anonymous QR reads, authenticated writes, storage uploads, and API
+token verification before disabling Firebase.
 
-Keep the existing project structure and stack; all application data access goes through the Firebase adapters.
+The application runtime uses Supabase adapters. Firebase remains only in the
+legacy migration scripts and must not be used by runtime web, mobile, or API
+code.

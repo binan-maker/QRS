@@ -11,6 +11,7 @@ packages/migration/
 │   ├── 002_rls.sql         — Row Level Security policies for every table
 │   ├── 003_triggers.sql    — updated_at triggers + notification TTL cleanup
 │   └── 004_storage.sql     — Supabase Storage buckets + storage RLS
+│   └── 005_runtime.sql     — rtdb_store table + service-role counter RPC
 ├── data/
 │   ├── migrate.ts          — Main Firebase → Supabase data migration script
 │   └── migrate-storage.ts  — Firebase Storage → Supabase Storage migration
@@ -36,6 +37,7 @@ psql "$DATABASE_URL" -f packages/migration/db/001_schema.sql
 psql "$DATABASE_URL" -f packages/migration/db/002_rls.sql
 psql "$DATABASE_URL" -f packages/migration/db/003_triggers.sql
 psql "$DATABASE_URL" -f packages/migration/db/004_storage.sql
+psql "$DATABASE_URL" -f packages/migration/db/005_runtime.sql
 ```
 
 All files are **idempotent** — safe to run multiple times.
@@ -48,6 +50,10 @@ npx tsx packages/migration/data/migrate.ts
 ```
 
 The script is also idempotent — existing rows are skipped on conflict.
+Firebase password hashes are not copied by this script. Migrated email/password
+users must use Supabase password reset, and Google users must complete a
+deliberate OAuth identity re-link. The script records the original provider IDs
+in Supabase user metadata; it does not label every account as Google.
 
 ### Migration order
 

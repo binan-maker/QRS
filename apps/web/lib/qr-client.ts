@@ -1,22 +1,6 @@
 "use client";
 
-import {
-  addDoc,
-  collection,
-  deleteDoc,
-  doc,
-  increment,
-  limit,
-  onSnapshot,
-  orderBy,
-  query,
-  runTransaction,
-  serverTimestamp,
-  updateDoc,
-  type DocumentData,
-  type Unsubscribe,
-} from "firebase/firestore";
-import { getWebAuth, getWebDb } from "./firebase";
+import { getWebSupabase } from "./supabase";
 
 export type WebQrComment = {
   id: string;
@@ -43,6 +27,8 @@ export type QrCommunitySummary = {
   userReport: string | null;
 };
 
+type QrForeignKey = { qr_code_id: string } | { unified_qr_id: string };
+
 function timestampToString(value: unknown): string | null {
   if (!value) return null;
   if (typeof value === "string") return value;
@@ -53,118 +39,198 @@ function timestampToString(value: unknown): string | null {
   return null;
 }
 
-function mapComment(id: string, data: DocumentData): WebQrComment {
+function mapComment(row: Record<string, any>): WebQrComment {
   return {
-    id,
-    userId: typeof data.userId === "string" ? data.userId : null,
-    userName: data.userDisplayName ?? data.userName ?? "BinRo user",
-    userPhotoURL: data.userPhotoURL ?? data.photoURL ?? data.avatar ?? null,
-    text: data.text ?? "",
-    parentId: data.parentId ?? null,
-    likes: data.likeCount ?? data.likes ?? 0,
-    dislikes: data.dislikeCount ?? data.dislikes ?? 0,
-    isEdited: data.isEdited === true,
-    createdAt: timestampToString(data.createdAt ?? data.updatedAt),
+    id: String(row.id),
+    userId: typeof row.user_id === "string" ? row.user_id : null,
+    userName: row.user_name ?? "BinRo user",
+    userPhotoURL: row.user_photo_url ?? null,
+    text: row.text ?? "",
+    parentId: row.parent_id ?? null,
+    likes: Number(row.likes ?? 0),
+    dislikes: Number(row.dislikes ?? 0),
+    isEdited: row.is_edited === true,
+    createdAt: timestampToString(row.created_at),
   };
 }
 
-function commentsQuery(qrId: string) {
-  return query(
-    collection(getWebDb(), "qrCodes", qrId, "comments"),
-    orderBy("createdAt", "desc"),
-    limit(100),
-  );
+async function currentSession() {
+  const { data, error } = await getWebSupabase().auth.getSession();
+  if (error) throw error;
+  if (!data.session?.user || !data.session.access_token) {
+    throw new Error("Sign in to use this community feature.");
+  }
+  return data.session;
+}
+
+async function resolveQrForeignKey(qrId: string): Promise<QrForeignKey> {
+  const supabase = getWebSupabase();
+  const [legacy, unified] = await Promise.all([
+    supabase.from("qr_codes").select("id").eq("id", qrId).maybeSingle(),
+    supabase.from("unified_qrs").select("id").eq("id", qrId).maybeSingle(),
+  ]);
+  if (legacy.error) throw legacy.error;
+  if (unified.error) throw unified.error;
+  if (legacy.data) return { qr_code_id: qrId };
+  if (unified.data) return { unified_qr_id: qrId };
+  throw new Error("QR code not found.");
+}
+
+async function fetchStats(qrId: string): Promise<{ scanCount: number; commentCount: number }> {
+  const supabase = getWebSupabase();
+  const [legacy, unified] = await Promise.all([
+    supabase.from("qr_codes").select("scan_count,comment_count").eq("id", qrId).maybeSingle(),
+    supabase.from("unified_qrs").select("scan_count").eq("id", qrId).maybeSingle(),
+  ]);
+  if (legacy.error) throw legacy.error;
+  if (unified.error) throw unified.error;
+  return {
+    scanCount: Number(legacy.data?.scan_count ?? unified.data?.scan_count ?? 0),
+    commentCount: Number(legacy.data?.comment_count ?? 0),
+  };
+}
+
+async function fetchComments(qrId: string): Promise<WebQrComment[]> {
+  const { data, error } = await getWebSupabase()
+    .from("qr_comments")
+    .select("id,user_id,user_name,text,parent_id,likes,is_edited,created_at,is_hidden,is_deleted")
+    .or(`qr_code_id.eq.${qrId},unified_qr_id.eq.${qrId}`)
+    .eq("is_hidden", false)
+    .eq("is_deleted", false)
+    .order("created_at", { ascending: false })
+    .limit(100);
+  if (error) throw error;
+  return ((data ?? []) as Record<string, any>[]).map(mapComment);
+}
+
+async function apiRequest<T>(
+  path: string,
+  init: RequestInit = {},
+): Promise<T> {
+  const session = await currentSession();
+  const headers = new Headers(init.headers);
+  headers.set("Authorization", `Bearer ${session.access_token}`);
+  headers.set("Accept", "application/json");
+  if (init.body && !headers.has("Content-Type")) headers.set("Content-Type", "application/json");
+
+  const response = await fetch(path, { ...init, headers });
+  const payload = (await response.json().catch(() => null)) as { data?: T; error?: string } | null;
+  if (!response.ok) throw new Error(payload?.error ?? "Request failed.");
+  return payload?.data as T;
 }
 
 export function subscribeToQrStats(
   qrId: string,
   onUpdate: (stats: { scanCount: number; commentCount: number }) => void,
-): Unsubscribe {
-  return onSnapshot(doc(getWebDb(), "qrCodes", qrId), (snapshot) => {
-    const data = snapshot.data();
-    if (!data) return;
-    onUpdate({
-      scanCount: typeof data.scanCount === "number" ? data.scanCount : 0,
-      commentCount: typeof data.commentCount === "number" ? data.commentCount : 0,
-    });
-  });
+): () => void {
+  let cancelled = false;
+  const supabase = getWebSupabase();
+  const refresh = () => {
+    void fetchStats(qrId)
+      .then((stats) => {
+        if (!cancelled) onUpdate(stats);
+      })
+      .catch(() => {});
+  };
+
+  refresh();
+  const interval = window.setInterval(refresh, 15_000);
+  const channel = supabase
+    .channel(`web-qr-stats:${qrId}`)
+    .on("postgres_changes", { event: "*", schema: "public", table: "qr_codes", filter: `id=eq.${qrId}` }, refresh)
+    .on("postgres_changes", { event: "*", schema: "public", table: "unified_qrs", filter: `id=eq.${qrId}` }, refresh)
+    .subscribe();
+
+  return () => {
+    cancelled = true;
+    window.clearInterval(interval);
+    void supabase.removeChannel(channel);
+  };
 }
 
 export function subscribeToQrComments(
   qrId: string,
   onUpdate: (comments: WebQrComment[]) => void,
   onError?: (error: Error) => void,
-): Unsubscribe {
-  return onSnapshot(
-    commentsQuery(qrId),
-    (snapshot) => {
-      onUpdate(
-        snapshot.docs
-          .filter((item) => item.data().isDeleted !== true && item.data().isHidden !== true)
-          .map((item) => mapComment(item.id, item.data())),
-      );
-    },
-    (error) => onError?.(error),
-  );
-}
+): () => void {
+  let cancelled = false;
+  const supabase = getWebSupabase();
+  const refresh = () => {
+    void fetchComments(qrId)
+      .then((comments) => {
+        if (!cancelled) onUpdate(comments);
+      })
+      .catch((error: unknown) => {
+        if (!cancelled) onError?.(error instanceof Error ? error : new Error("Unable to load comments."));
+      });
+  };
 
-export async function addQrComment(qrId: string, text: string): Promise<WebQrComment> {
-  const user = getWebAuth().currentUser;
-  if (!user) throw new Error("Sign in to comment on a QR code.");
-  const trimmed = text.trim();
-  if (!trimmed) throw new Error("Comment cannot be empty.");
-  if (trimmed.length > 500) throw new Error("Comments must be 500 characters or fewer.");
+  refresh();
+  const interval = window.setInterval(refresh, 15_000);
+  const channel = supabase
+    .channel(`web-qr-comments:${qrId}`)
+    .on("postgres_changes", { event: "*", schema: "public", table: "qr_comments" }, refresh)
+    .subscribe();
 
-  const ref = await addDoc(collection(getWebDb(), "qrCodes", qrId, "comments"), {
-    userId: user.uid,
-    userDisplayName: user.displayName ?? user.email?.split("@")[0] ?? "BinRo user",
-    userPhotoURL: user.photoURL ?? null,
-    text: trimmed,
-    parentId: null,
-    isDeleted: false,
-    isHidden: false,
-    reportCount: 0,
-    likeCount: 0,
-    dislikeCount: 0,
-    createdAt: serverTimestamp(),
-  });
-
-  return {
-    id: ref.id,
-    userId: user.uid,
-    userName: user.displayName ?? user.email?.split("@")[0] ?? "BinRo user",
-    userPhotoURL: user.photoURL ?? null,
-    text: trimmed,
-    parentId: null,
-    likes: 0,
-    dislikes: 0,
-    isEdited: false,
-    createdAt: new Date().toISOString(),
+  return () => {
+    cancelled = true;
+    window.clearInterval(interval);
+    void supabase.removeChannel(channel);
   };
 }
 
-export async function updateQrComment(qrId: string, commentId: string, text: string): Promise<void> {
-  const user = getWebAuth().currentUser;
-  if (!user) throw new Error("Sign in to edit comments.");
+export async function addQrComment(qrId: string, text: string): Promise<WebQrComment> {
+  const session = await currentSession();
   const trimmed = text.trim();
   if (!trimmed) throw new Error("Comment cannot be empty.");
   if (trimmed.length > 500) throw new Error("Comments must be 500 characters or fewer.");
 
-  await updateDoc(doc(getWebDb(), "qrCodes", qrId, "comments", commentId), {
-    text: trimmed,
-    isEdited: true,
-    updatedAt: serverTimestamp(),
-  });
+  const user = session.user;
+  const foreignKey = await resolveQrForeignKey(qrId);
+  const displayName =
+    user.user_metadata?.display_name ??
+    user.user_metadata?.full_name ??
+    user.email?.split("@")[0] ??
+    "BinRo user";
+
+  const { data, error } = await getWebSupabase()
+    .from("qr_comments")
+    .insert({
+      ...foreignKey,
+      user_id: user.id,
+      user_name: displayName,
+      text: trimmed,
+    })
+    .select("id,user_id,user_name,text,parent_id,likes,is_edited,created_at")
+    .single();
+  if (error) throw error;
+  return mapComment(data as Record<string, any>);
+}
+
+export async function updateQrComment(qrId: string, commentId: string, text: string): Promise<void> {
+  const session = await currentSession();
+  const trimmed = text.trim();
+  if (!trimmed) throw new Error("Comment cannot be empty.");
+  if (trimmed.length > 500) throw new Error("Comments must be 500 characters or fewer.");
+
+  const { error } = await getWebSupabase()
+    .from("qr_comments")
+    .update({ text: trimmed, is_edited: true, updated_at: new Date().toISOString() })
+    .eq("id", commentId)
+    .eq("user_id", session.user.id);
+  if (error) throw error;
+  void qrId;
 }
 
 export async function deleteQrComment(qrId: string, commentId: string): Promise<void> {
-  const user = getWebAuth().currentUser;
-  if (!user) throw new Error("Sign in to delete comments.");
-  await updateDoc(doc(getWebDb(), "qrCodes", qrId, "comments", commentId), {
-    text: "[deleted]",
-    isDeleted: true,
-    deletedAt: serverTimestamp(),
-  });
+  const session = await currentSession();
+  const { error } = await getWebSupabase()
+    .from("qr_comments")
+    .update({ text: "[deleted]", is_deleted: true, is_hidden: true, updated_at: new Date().toISOString() })
+    .eq("id", commentId)
+    .eq("user_id", session.user.id);
+  if (error) throw error;
+  void qrId;
 }
 
 export async function toggleQrCommentLike(
@@ -172,47 +238,9 @@ export async function toggleQrCommentLike(
   commentId: string,
   isLike: boolean,
 ): Promise<{ liked: boolean; likes: number; dislikes: number }> {
-  const user = getWebAuth().currentUser;
-  if (!user) throw new Error("Sign in to react to comments.");
-
-  const db = getWebDb();
-  const commentRef = doc(db, "qrCodes", qrId, "comments", commentId);
-  const likeRef = doc(commentRef, "likes", user.uid);
-
-  return runTransaction(db, async (transaction) => {
-    const [commentSnapshot, likeSnapshot] = await Promise.all([
-      transaction.get(commentRef),
-      transaction.get(likeRef),
-    ]);
-    if (!commentSnapshot.exists()) throw new Error("Comment no longer exists.");
-
-    const data = commentSnapshot.data();
-    const currentLikes = data.likeCount ?? data.likes ?? 0;
-    const currentDislikes = data.dislikeCount ?? data.dislikes ?? 0;
-    const previous = likeSnapshot.exists() ? likeSnapshot.data().isLike === true : null;
-
-    if (previous === isLike) {
-      transaction.delete(likeRef);
-      transaction.update(commentRef, {
-        [isLike ? "likeCount" : "dislikeCount"]: increment(-1),
-      });
-      return {
-        liked: false,
-        likes: Math.max(0, currentLikes - (isLike ? 1 : 0)),
-        dislikes: Math.max(0, currentDislikes - (isLike ? 0 : 1)),
-      };
-    }
-
-    transaction.set(likeRef, { userId: user.uid, isLike, createdAt: serverTimestamp() });
-    transaction.update(commentRef, {
-      likeCount: increment(isLike ? 1 : previous === false ? 1 : 0),
-      dislikeCount: increment(isLike ? previous === false ? -1 : 0 : 1),
-    });
-    return {
-      liked: isLike,
-      likes: Math.max(0, currentLikes + (isLike ? 1 : previous === false ? 1 : 0)),
-      dislikes: Math.max(0, currentDislikes + (isLike ? previous === false ? -1 : 0 : 1)),
-    };
+  void isLike;
+  return apiRequest(`/api/v1/qr/${encodeURIComponent(qrId)}/comments/${encodeURIComponent(commentId)}/like`, {
+    method: "POST",
   });
 }
 
@@ -231,18 +259,8 @@ export async function fetchQrCommunitySummary(qrId: string): Promise<QrCommunity
 }
 
 export async function submitQrReport(qrId: string, reportType: string): Promise<void> {
-  const user = getWebAuth().currentUser;
-  if (!user) throw new Error("Sign in to rate this QR code.");
-  const token = await user.getIdToken();
-  const response = await fetch(`/api/v1/qr/${encodeURIComponent(qrId)}/report`, {
+  await apiRequest(`/api/v1/qr/${encodeURIComponent(qrId)}/report`, {
     method: "POST",
-    headers: {
-      Accept: "application/json",
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
-    },
     body: JSON.stringify({ reportType }),
   });
-  const payload = (await response.json().catch(() => null)) as { error?: string } | null;
-  if (!response.ok) throw new Error(payload?.error ?? "Your rating could not be saved.");
 }

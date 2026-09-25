@@ -29,7 +29,10 @@ export default function OpenGraphImage() {
         </div>
         <div style={{ display: "flex", flexDirection: "column", gap: 18, maxWidth: 900 }}>
           <div style={{ color: "#075dcc", fontSize: 22, fontWeight: 700, letterSpacing: 3 }}>PUBLIC QR VERIFICATION</div>
-          <div style={{ fontSize: 54, lineHeight: 1.08, fontWeight: 700, letterSpacing: -2 }}>Check the destination.<br />Understand the trust signal.</div>
+          <div style={{ display: "flex", flexDirection: "column", fontSize: 54, lineHeight: 1.08, fontWeight: 700, letterSpacing: -2 }}>
+            <span>Check the destination.</span>
+            <span>Understand the trust signal.</span>
+          </div>
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: 12, color: "#8190a1", fontSize: 20 }}>Community signals • Destination preview • Safer decisions</div>
       </div>

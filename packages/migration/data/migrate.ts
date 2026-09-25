@@ -15,7 +15,7 @@
  *
  * Optional:
  *   MIGRATION_DRY_RUN=true     — log what would be inserted without writing
- *   MIGRATION_STEP=3           — run only a single step (1–17)
+ *   MIGRATION_STEP=3           — run only a single step (1–14)
  *
  * Idempotent: every INSERT uses ON CONFLICT DO NOTHING / DO UPDATE, so the
  * script is safe to re-run after partial failures.
@@ -84,6 +84,7 @@ async function q(sql: string, params: unknown[] = []) {
 // ─── Stat tracking ────────────────────────────────────────────────────────────
 
 const stats: Record<string, { inserted: number; skipped: number; errors: number }> = {};
+let passwordResetRequired = 0;
 function stat(key: string) {
   if (!stats[key]) stats[key] = { inserted: 0, skipped: 0, errors: 0 };
   return stats[key];
@@ -166,6 +167,7 @@ async function migrateUsers() {
 
     try {
       const email = fbUser.email ?? `${uid}@firebase-migrated.invalid`;
+      const providerIds = fbUser.providerData.map((provider) => provider.providerId);
       let supaUid = emailToSupaUid.get(email.toLowerCase());
 
       if (!supaUid) {
@@ -175,15 +177,26 @@ async function migrateUsers() {
           user_metadata: {
             display_name: fbUser.displayName ?? "",
             avatar_url:   fbUser.photoURL ?? null,
-            provider:     "google",
             firebase_uid: uid,
+            firebase_provider_ids: providerIds,
+            auth_migration: "password_reset_required",
           },
         });
         if (error) throw new Error(`Auth create: ${error.message}`);
         supaUid = data.user!.id;
+      } else {
+        const { error } = await supabase.auth.admin.updateUserById(supaUid, {
+          user_metadata: {
+            firebase_uid: uid,
+            firebase_provider_ids: providerIds,
+            auth_migration: "password_reset_required",
+          },
+        });
+        if (error) throw new Error(`Auth metadata update: ${error.message}`);
       }
 
       uidMap.set(uid, supaUid);
+      passwordResetRequired++;
 
       // Fetch Firestore user doc for profile data
       const docSnap = await firestore.collection("users").doc(uid).get();
@@ -245,6 +258,7 @@ async function migrateUsers() {
   }
 
   console.log(`   ✓ users: +${s.inserted} inserted, ${s.skipped} skipped, ${s.errors} errors`);
+  console.log(`   ⚠ ${passwordResetRequired} accounts require a Supabase password reset or a deliberate provider re-link.`);
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -970,6 +984,7 @@ async function main() {
   for (const [key, s] of Object.entries(stats)) {
     console.log(`    ${key.padEnd(30)} +${s.inserted} inserted, ${s.skipped} skipped, ${s.errors} errors`);
   }
+  console.log(`    auth password resets required       ${passwordResetRequired}`);
   console.log("════════════════════════════════════════════════════════════════\n");
 
   await pool.end();
