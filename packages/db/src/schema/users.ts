@@ -21,8 +21,6 @@ export const users = pgTable(
   "users",
   {
     id: text("id").primaryKey().default(sql`gen_random_uuid()`),
-    /** Original Firebase Auth / Firestore document ID. NULL after native PG registration. */
-    firebaseUid: text("firebase_uid").unique(),
     email: text("email").notNull().unique(),
     emailVerified: boolean("email_verified").notNull().default(false),
     displayName: text("display_name").notNull(),
@@ -34,14 +32,7 @@ export const users = pgTable(
     // Denormalized counters
     scanCount: integer("scan_count").notNull().default(0),
     commentCount: integer("comment_count").notNull().default(0),
-    followingCount: integer("following_count").notNull().default(0),
     totalLikesReceived: integer("total_likes_received").notNull().default(0),
-    friendsCount: integer("friends_count").notNull().default(0),
-    // Presence
-    isOnline: boolean("is_online").notNull().default(false),
-    lastSeen: timestamp("last_seen", { withTimezone: true }),
-    // Push notifications
-    pushToken: text("push_token"),
     // Consent (GDPR / privacy)
     consent: jsonb("consent"),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
@@ -50,7 +41,6 @@ export const users = pgTable(
   (t) => ({
     emailIdx: index("users_email_idx").on(t.email),
     usernameIdx: index("users_username_idx").on(t.username),
-    firebaseUidIdx: index("users_firebase_uid_idx").on(t.firebaseUid),
   }),
 );
 

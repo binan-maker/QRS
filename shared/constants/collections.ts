@@ -21,38 +21,18 @@ export const COLLECTIONS = {
   PUBLIC_PROFILES: "publicProfiles",
   /** Username → userId reservation index */
   USERNAMES: "usernames",
-   /** QR code records */
-  QR_CODES: "qrCodes",
-  /** Shorthand collection used in some legacy paths */
-  QRS: "qrs",
    /** Standard redirect links */
    STANDARD_LINKS: "standardLinks",
-  /** Per-QR scan history records */
-  SCANS: "scans",
-  /** AI-generated QR codes */
-  GENERATED_QRS: "generatedQrs",
   /** QR/user abuse reports */
   REPORTS: "reports",
   /** Moderation report log */
   REPORT_LOG: "reportLog",
-  /** Comments on QR codes */
-  COMMENTS: "comments",
-  /** Aggregated counters (scans, follows, etc.) */
-  COUNTERS: "counters",
   /** Per-user personal scan count */
   PERSONAL_SCAN_COUNT: "personalScanCount",
-  /** Push notification records */
-  NOTIFICATIONS: "notifications",
   /** Feature flag votes */
   FEATURE_VOTES: "featureVotes",
-  /** Likes on content */
-  LIKES: "likes",
   /** Analytics event log */
   EVENTS: "events",
-  /** Owner's own scan tracking (excluded from public counts) */
-  OWNER_SCANS: "ownerScans",
-  /** Content moderation queue */
-  MODERATION_QUEUE: "moderationQueue",
   /** User feedback submissions */
   FEEDBACK: "feedback",
   /** DPDP/RBI compliance audit log (keyed by year-month) */

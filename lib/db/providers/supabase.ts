@@ -85,21 +85,11 @@ const COLLECTION_TABLE: Record<string, string> = {
   // Community-safe subset of users (no email / push_token / consent).
   // Use for reads about OTHER users; use "users" only for own-row reads.
   publicProfiles: "public_profiles",
-  qrCodes: "qr_codes",
-  qrs: "unified_qrs",
   standardLinks: "standard_links",
-  guardLinks: "guard_links",
-  generatedQrs: "user_generated_qrs",
-  ownerScans: "qr_scans",
-  blockedScans: "qr_scans",
-  scans: "qr_scans",
-  moderationQueue: "moderation_queue",
   featureVotes: "feature_votes",
   reportLog: "report_log",
   personalScanCount: "users",
   auditLogs: "audit_logs",
-  comments: "qr_comments",
-  likes: "comment_likes",
   reports: "qr_reports",
 };
 
@@ -111,12 +101,7 @@ function collectionToTable(name: string): string {
 // Maps [parentCollection, subCollection] → { table, fk column }
 
 const SUB_FK: Record<string, { table: string; fk: string }> = {
-  "qrCodes.comments": { table: "qr_comments", fk: "qr_code_id" },
-  "qrCodes.scans": { table: "qr_scans", fk: "qr_code_id" },
   "qrCodes.reports": { table: "qr_reports", fk: "qr_code_id" },
-  "qrCodes.counters": { table: "scan_counters", fk: "qr_code_id" },
-  "qrCodes.likes": { table: "comment_likes", fk: "qr_code_id" },
-  "users.notifications": { table: "notifications", fk: "user_id" },
 };
 
 interface ParsedPath {

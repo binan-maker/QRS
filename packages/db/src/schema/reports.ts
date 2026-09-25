@@ -17,7 +17,6 @@ import {
   uniqueIndex,
 } from "drizzle-orm/pg-core";
 import { users } from "./users";
-import { qrCodes, unifiedQrs } from "./qr-codes";
 
 // ─── QR Trust Reports ─────────────────────────────────────────────────────────
 // One row per (qr, user) pair. user_removed=true means the user withdrew their report.
@@ -26,8 +25,8 @@ export const qrReports = pgTable(
   "qr_reports",
   {
     id: text("id").primaryKey().default(sql`gen_random_uuid()`),
-    qrCodeId: text("qr_code_id").references(() => qrCodes.id, { onDelete: "cascade" }),
-    unifiedQrId: text("unified_qr_id").references(() => unifiedQrs.id, { onDelete: "cascade" }),
+    qrCodeId: text("qr_code_id"),
+    unifiedQrId: text("unified_qr_id"),
     userId: text("user_id")
       .notNull()
       .references(() => users.id, { onDelete: "cascade" }),

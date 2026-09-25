@@ -1,73 +1,20 @@
 /**
- * @binro/db — Drizzle ORM relations
- * All relation definitions in one file to avoid circular imports.
- * Imports from every domain schema file.
+ * @binro/db — Drizzle ORM relations for retained tables.
  */
 
 import { relations } from "drizzle-orm";
 import { users, usernames } from "./users";
-import {
-  qrCodes,
-  unifiedQrs,
-  guardLinks,
-  guardLinkChanges,
-  userGeneratedQrs,
-} from "./qr-codes";
-import { qrScans } from "./scans";
-import { qrComments, commentLikes, commentReports } from "./comments";
-import { qrReports, auditLogs } from "./reports";
-import { notifications } from "./social";
-import {
-  moderationQueue,
-  verificationRequests,
-  featureVotes,
-  businessAccounts,
-} from "./platform";
+import { standardLinks } from "./qr-codes";
+import { auditLogs, qrReports } from "./reports";
+import { featureVotes } from "./platform";
 
-export const usersRelations = relations(users, ({ many, one }) => ({
+export const usersRelations = relations(users, ({ many }) => ({
   usernames: many(usernames),
-  qrCodes: many(qrCodes),
-  unifiedQrs: many(unifiedQrs),
-  guardLinks: many(guardLinks),
-  qrScans: many(qrScans),
-  qrComments: many(qrComments),
   qrReports: many(qrReports),
-  userGeneratedQrs: many(userGeneratedQrs),
-  notifications: many(notifications),
   auditLogs: many(auditLogs),
-  moderationReported: many(moderationQueue, { relationName: "reporter" }),
-  moderationReviewed: many(moderationQueue, { relationName: "reviewer" }),
-  verificationRequests: many(verificationRequests),
   featureVotes: many(featureVotes),
-  businessAccount: one(businessAccounts),
 }));
 
-export const qrCodesRelations = relations(qrCodes, ({ one, many }) => ({
-  owner: one(users, { fields: [qrCodes.ownerId], references: [users.id] }),
-  scans: many(qrScans),
-  comments: many(qrComments),
-  reports: many(qrReports),
-  generatedQrs: many(userGeneratedQrs),
-}));
-
-export const unifiedQrsRelations = relations(unifiedQrs, ({ one, many }) => ({
-  owner: one(users, { fields: [unifiedQrs.ownerId], references: [users.id] }),
-  scans: many(qrScans),
-  comments: many(qrComments),
-  reports: many(qrReports),
-  generatedQrs: many(userGeneratedQrs),
-}));
-
-export const guardLinksRelations = relations(guardLinks, ({ one, many }) => ({
-  owner: one(users, { fields: [guardLinks.ownerId], references: [users.id] }),
-  changes: many(guardLinkChanges),
-  scans: many(qrScans),
-}));
-
-export const qrCommentsRelations = relations(qrComments, ({ one, many }) => ({
-  qrCode: one(qrCodes, { fields: [qrComments.qrCodeId], references: [qrCodes.id] }),
-  unifiedQr: one(unifiedQrs, { fields: [qrComments.unifiedQrId], references: [unifiedQrs.id] }),
-  user: one(users, { fields: [qrComments.userId], references: [users.id] }),
-  likes: many(commentLikes),
-  reports: many(commentReports),
+export const standardLinksRelations = relations(standardLinks, ({ one }) => ({
+  owner: one(users, { fields: [standardLinks.ownerId], references: [users.id] }),
 }));

@@ -32,9 +32,7 @@
 
 import type { Express } from "express";
 import { securityRouter } from "./security";
-import { qrRouter } from "./qr";
 import { usersRouter } from "./users";
-import { commentsRouter } from "./comments";
 import { feedbackRouter } from "./feedback";
 
 export function registerV1Routes(app: Express): void {
@@ -45,12 +43,6 @@ export function registerV1Routes(app: Express): void {
   // NOTE: /me routes must be registered before /:userId so Express doesn't
   // match "me" as a userId parameter.
   app.use("/api/v1/users", usersRouter);
-
-  // ── Legacy QR operations ───────────────────────────────────────────────────
-  app.use("/api/v1/qr", qrRouter);
-
-  // ── Legacy QR comments (nested under /qr/:qrId/comments) ──────────────────
-  app.use("/api/v1/qr/:qrId/comments", commentsRouter);
 
   // ── Feedback & bug reports ─────────────────────────────────────────────────
   app.use("/api/v1/feedback", feedbackRouter);
