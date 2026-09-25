@@ -60,6 +60,8 @@ export function useAuthActions({ user, setUser, setToken }: Params) {
         adapterUser.email,
         adapterUser.displayName,
         adapterUser.photoURL,
+        undefined,
+        adapterUser.emailVerified,
       );
       const idToken = await adapterUser.getIdToken();
       const authUser: AuthUser = {
@@ -203,6 +205,8 @@ export function useAuthActions({ user, setUser, setToken }: Params) {
             reloaded.email,
             reloaded.displayName,
             reloaded.photoURL,
+            undefined,
+            reloaded.emailVerified,
           ).catch(() => {});
         }
         const authUser: AuthUser = {

@@ -17,7 +17,8 @@ async function reserveUsername(uid: string, displayName: string): Promise<string
     try {
       await db.set([COLLECTIONS.USERNAMES, candidate], {
         userId: uid,
-        reservedAt: db.timestamp(),
+          claimedAt: db.timestamp(),
+          isVerified: false,
       });
       return candidate;
     } catch {
@@ -28,7 +29,8 @@ async function reserveUsername(uid: string, displayName: string): Promise<string
   try {
     await db.set([COLLECTIONS.USERNAMES, fallback], {
       userId: uid,
-      reservedAt: db.timestamp(),
+      claimedAt: db.timestamp(),
+      isVerified: false,
     });
   } catch {}
   return fallback;
@@ -44,6 +46,7 @@ export async function syncUserToDb(
   displayName: string | null,
   photoURL: string | null,
   overrideName?: string,
+  emailVerified?: boolean,
 ): Promise<void> {
   try {
     const userData = await db.get([COLLECTIONS.USERS, uid]);
@@ -51,8 +54,8 @@ export async function syncUserToDb(
       const name = overrideName || displayName || email?.split("@")[0] || "User";
       const username = await reserveUsername(uid, name);
       await db.set([COLLECTIONS.USERS, uid], {
-        uid,
         email,
+        emailVerified: emailVerified ?? false,
         displayName: name,
         photoURL: photoURL || null,
         isDeleted: false,
@@ -61,12 +64,30 @@ export async function syncUserToDb(
       });
     } else if (userData.isDeleted) {
       throw new Error("ACCOUNT_DELETED");
-    } else if (!userData.username) {
-      const name = overrideName || displayName || userData.displayName || "User";
-      const username = await reserveUsername(uid, name);
-      await db.update([COLLECTIONS.USERS, uid], { username });
+    } else {
+      const updates: Record<string, unknown> = {};
+      if (displayName && displayName !== userData.displayName) {
+        updates.displayName = displayName;
+      }
+      if (photoURL && photoURL !== userData.photoURL) {
+        updates.photoURL = photoURL;
+      }
+      if (email && email !== userData.email) {
+        updates.email = email;
+      }
+      if (emailVerified !== undefined && emailVerified !== userData.emailVerified) {
+        updates.emailVerified = emailVerified;
+      }
+      if (!userData.username) {
+        const name = overrideName || displayName || userData.displayName || "User";
+        updates.username = await reserveUsername(uid, name);
+      }
+      if (Object.keys(updates).length > 0) {
+        await db.update([COLLECTIONS.USERS, uid], updates);
+      }
     }
   } catch (e: any) {
     if (e.message === "ACCOUNT_DELETED") throw new Error("This account has been deleted.");
+    throw e;
   }
 }

@@ -40,10 +40,14 @@ import type {
 // ─── String helpers ───────────────────────────────────────────────────────────
 
 function camelToSnake(str: string): string {
-  return str.replace(/[A-Z]/g, (c) => `_${c.toLowerCase()}`);
+  return str
+    .replace(/([a-z0-9])([A-Z])/g, "$1_$2")
+    .replace(/([A-Z]+)([A-Z][a-z])/g, "$1_$2")
+    .toLowerCase();
 }
 
 function snakeToCamel(str: string): string {
+  if (str === "photo_url") return "photoURL";
   return str.replace(/_([a-z])/g, (_, c) => c.toUpperCase());
 }
 
