@@ -5,7 +5,7 @@
 // No other files need changing — all consumers import from lib/storage.
 //
 // This interface deliberately uses generic concepts (paths, URLs) rather than
-// provider-specific ones (Firebase refs, S3 keys) so implementations are
+// provider-specific ones (storage paths, S3 keys) so implementations are
 // interchangeable.
 // ═══════════════════════════════════════════════════════════════════════════════
 

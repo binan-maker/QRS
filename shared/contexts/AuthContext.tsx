@@ -57,7 +57,7 @@ const AuthContext = createContext<AuthContextValue | null>(null);
 // ─────────────────────────────────────────────────────────────────────────────
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  // Firebase restores its persisted session asynchronously. Reuse the last
+  // Supabase restores its persisted session asynchronously. Reuse the last
   // display-safe identity for the first render so a returning user never sees
   // the guest header while the live token is being restored.
   const [user, setUser] = useState<AuthUser | null>(() => getCachedAuthUser());

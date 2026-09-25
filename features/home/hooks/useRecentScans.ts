@@ -75,7 +75,7 @@ export function useRecentScans() {
     gcTime:              30 * 60 * 1000,
     refetchOnWindowFocus: false,
     refetchOnMount:      true,
-    // A cached user can render before Firebase has restored the live token.
+    // A cached user can render before Supabase has restored the live token.
     // Keep the local/cache path instant, but wait for auth readiness before
     // making the authenticated Firestore request.
     enabled:             !!user?.id && !authLoading,

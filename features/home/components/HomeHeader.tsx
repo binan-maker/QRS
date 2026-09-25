@@ -19,7 +19,7 @@ export function HomeHeader({ user, photoURL }: Props) {
   const { s } = useScaleFns();
   const styles = useMemo(() => makeStyles(colors, s), [colors, s]);
   // Track per-URL load errors so we can fall back to the initial letter
-  // when expo-image silently fails (e.g. expired Firebase Storage token).
+  // when expo-image silently fails.
   const [imgError, setImgError] = useState(false);
   const prevPhotoRef = useRef<string | null>(null);
   // Reset the error flag whenever the URL actually changes so a fresh URL

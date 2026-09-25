@@ -1,17 +1,15 @@
 /**
  * /api/v1/unified-qr — new unified QR model CRUD
  *
- * Mirrors the Firestore `qrs/{id}` collection (createUnifiedQr / updateUnifiedQr etc.
- * in services/qr-unified.ts) but enforces server-side validation and ownership checks
- * via the Firebase Admin SDK.
+ * Mirrors the document contract used by the mobile client but stores data in
+ * the Supabase `unified_qrs` table and enforces server-side ownership checks.
  *
- * All write endpoints require Firebase Auth (authenticate middleware).
- * TODO markers show where Drizzle/PostgreSQL queries will replace Firestore calls.
+ * All write endpoints require Supabase Auth (authenticate middleware).
  */
 
 import { Router, type Request, type Response } from "express";
 import { z } from "zod";
-import { admin, getAdminDb } from "../lib/firebase-admin";
+import { admin, getAdminDb } from "../lib/supabase-admin";
 import { authenticate, optionalAuth } from "../middleware/auth";
 import { validateBody } from "../middleware/validate";
 import {

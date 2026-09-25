@@ -9,7 +9,7 @@
  */
 
 import { sendExpoPush, isValidExpoPushToken } from "./lib/expo-push";
-import { admin, getAdminDb } from "./lib/firebase-admin";
+import { admin, getAdminDb } from "./lib/supabase-admin";
 
 const THIRTY_MIN_MS = 30 * 60 * 1000;
 

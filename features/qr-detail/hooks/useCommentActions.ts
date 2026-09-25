@@ -53,7 +53,7 @@ export function useCommentActions({
     // has had a chance to set submitting=true in state.
     if (submittingRef.current) return;
 
-    // user.username can be undefined briefly after a Firebase token refresh
+    // user.username can be undefined briefly after a Supabase token refresh
     // (AuthContext calls setUser without username, and the prefetchQuery may
     // skip its queryFn while the cache is still fresh).  Fall back to the
     // TanStack Query profile cache so the optimistic comment always shows the

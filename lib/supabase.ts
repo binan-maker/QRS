@@ -1,7 +1,7 @@
 // ═══════════════════════════════════════════════════════════════════════════════
 // SUPABASE CLIENT — singleton Supabase client for the mobile app.
 // ───────────────────────────────────────────────────────────────────────────────
-// Replaces lib/firebase.ts.
+// Supabase client used by the mobile app.
 // Auth persistence is handled by AsyncStorage on native, localStorage on web.
 // ═══════════════════════════════════════════════════════════════════════════════
 

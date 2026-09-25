@@ -1,7 +1,7 @@
 import { Router } from "express";
 import type { Request, Response } from "express";
 import { sendExpoPush, isValidExpoPushToken } from "../lib/expo-push";
-import { admin, getAdminDb } from "../lib/firebase-admin";
+import { admin, getAdminDb } from "../lib/supabase-admin";
 
 export const pushRouter = Router();
 

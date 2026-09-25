@@ -3,13 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { FormEvent, useState } from "react";
-import {
-  createUserWithEmailAndPassword,
-  sendEmailVerification,
-  signInWithEmailAndPassword,
-  updateProfile,
-} from "firebase/auth";
-import { getWebAuth } from "../../lib/firebase";
+import { getWebSupabase } from "../../lib/supabase";
 import styles from "./auth.module.css";
 
 type Mode = "login" | "register";
@@ -20,15 +14,20 @@ function authMessage(error: unknown) {
     case "auth/invalid-credential":
     case "auth/user-not-found":
     case "auth/wrong-password":
+    case "invalid_credentials":
       return "Email or password is incorrect.";
     case "auth/email-already-in-use":
+    case "user_already_exists":
       return "An account already exists with this email.";
     case "auth/weak-password":
-      return "Use a password with at least 6 characters.";
+    case "weak_password":
+      return "Use a stronger password.";
     case "auth/invalid-email":
       return "Enter a valid email address.";
     case "auth/too-many-requests":
       return "Too many attempts. Please wait and try again.";
+    case "email_not_confirmed":
+      return "Please verify your email before signing in.";
     default:
       return error instanceof Error
         ? error.message
@@ -63,18 +62,30 @@ export default function AuthForm({ mode }: { mode: Mode }) {
 
     setBusy(true);
     try {
-      const auth = getWebAuth();
+      const supabase = getWebSupabase();
       if (isRegister) {
-        const credential = await createUserWithEmailAndPassword(auth, email.trim(), password);
-        await updateProfile(credential.user, { displayName: displayName.trim() });
-        try {
-          await sendEmailVerification(credential.user);
-        } catch {
-          // Account creation succeeded even if email delivery is unavailable.
+        const { data, error: signUpError } = await supabase.auth.signUp({
+          email: email.trim(),
+          password,
+          options: {
+            data: {
+              display_name: displayName.trim(),
+              full_name: displayName.trim(),
+            },
+          },
+        });
+        if (signUpError) throw signUpError;
+        if (data.session) {
+          router.push("/profile");
+        } else {
+          setMessage("Account created. Check your email to verify it, then sign in.");
         }
-        router.push("/profile");
       } else {
-        await signInWithEmailAndPassword(auth, email.trim(), password);
+        const { error: signInError } = await supabase.auth.signInWithPassword({
+          email: email.trim(),
+          password,
+        });
+        if (signInError) throw signInError;
         router.push("/profile");
       }
     } catch (caught) {

@@ -3,12 +3,11 @@
  *
  * QR follows:     POST/DELETE /api/v1/follows/qr/:qrId
  *
- * All write endpoints require Firebase Auth.
- * TODO markers show where PostgreSQL queries replace Firestore calls.
+ * All write endpoints require Supabase Auth.
  */
 
 import { Router, type Request, type Response } from "express";
-import { admin, getAdminDb } from "../lib/firebase-admin";
+import { admin, getAdminDb } from "../lib/supabase-admin";
 import { authenticate } from "../middleware/auth";
 import { standardLimit, relaxedLimit } from "../middleware/rate-limit-presets";
 
@@ -30,7 +29,7 @@ followsRouter.post(
       // TODO:
       // INSERT INTO qr_followers (qr_code_id, user_id, followed_at) VALUES ($qrId, $uid, NOW())
       // ON CONFLICT (qr_code_id, user_id) DO NOTHING
-      // Also UPDATE users SET following_count = following_count + 1 WHERE firebase_uid = $uid (if not already following)
+      // Also update users.following_count when the relationship is new.
       const followRef = db.collection("qrCodes").doc(qrId).collection("followers").doc(uid);
       const existing = await followRef.get();
       if (existing.exists) {
@@ -72,7 +71,7 @@ followsRouter.delete(
     try {
       // TODO:
       // DELETE FROM qr_followers WHERE qr_code_id = $qrId AND user_id = $uid
-      // UPDATE users SET following_count = GREATEST(0, following_count - 1) WHERE firebase_uid = $uid
+      // Decrement users.following_count for the relationship.
       await db.collection("qrCodes").doc(qrId).collection("followers").doc(uid).delete();
       await db.collection("users").doc(uid).collection("following").doc(qrId).delete().catch(() => {});
       await db.collection("users").doc(uid).update({

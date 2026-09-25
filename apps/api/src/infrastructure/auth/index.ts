@@ -1,4 +1,4 @@
-import { deleteFirebaseUser, verifyFirebaseToken, getAdminAuth } from "../../lib/firebase-admin";
+import { deleteSupabaseUser, verifySupabaseToken, getAdminAuth } from "../../lib/supabase-admin";
 
 export interface VerifiedUser {
   uid: string;
@@ -14,10 +14,10 @@ export interface IAuthProvider {
   revokeUserSessions(uid: string): Promise<void>;
 }
 
-export class FirebaseAuthProvider implements IAuthProvider {
+export class SupabaseAuthProvider implements IAuthProvider {
   async verifyToken(token: string): Promise<VerifiedUser> {
-    const user = await verifyFirebaseToken(token);
-    if (!user) throw new Error("Firebase is not configured or the token is invalid");
+    const user = await verifySupabaseToken(token);
+    if (!user) throw new Error("Supabase is not configured or the token is invalid");
     return {
       uid: user.uid,
       email: user.email ?? null,
@@ -28,7 +28,7 @@ export class FirebaseAuthProvider implements IAuthProvider {
   }
 
   async createSessionToken(idToken: string, expiresInMs: number) {
-    throw new Error("Session cookies are not supported; use the Firebase ID token.");
+    throw new Error("Session cookies are not supported; use the Supabase access token.");
   }
 
   async revokeUserSessions(uid: string) {
@@ -37,8 +37,8 @@ export class FirebaseAuthProvider implements IAuthProvider {
   }
 }
 
-let instance: FirebaseAuthProvider | null = null;
+let instance: SupabaseAuthProvider | null = null;
 export function getAuthProvider() {
-  if (!instance) instance = new FirebaseAuthProvider();
+  if (!instance) instance = new SupabaseAuthProvider();
   return instance;
 }

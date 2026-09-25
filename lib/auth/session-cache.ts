@@ -36,7 +36,7 @@ function parseAuthUser(raw: string | null): AuthUser | null {
 }
 
 /**
- * Returns the last authenticated user's display-safe identity while Firebase
+ * Returns the last authenticated user's display-safe identity while Supabase
  * restores its real persisted session. This is never used as an auth token.
  */
 export function getCachedAuthUser(): AuthUser | null {

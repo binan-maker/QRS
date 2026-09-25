@@ -14,7 +14,7 @@
 import { Worker, Queue } from "bullmq";
 import type { MaintenanceJobData } from "../src/infrastructure/queue";
 import { QUEUE_NAMES } from "../src/infrastructure/queue";
-import { getAdminDb } from "../src/lib/firebase-admin";
+import { getAdminDb } from "../src/lib/supabase-admin";
 
 // ─── Redis connection ─────────────────────────────────────────────────────────
 

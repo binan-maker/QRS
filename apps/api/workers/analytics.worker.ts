@@ -11,7 +11,7 @@
 import { Worker } from "bullmq";
 import type { AnalyticsJobData } from "../src/infrastructure/queue";
 import { QUEUE_NAMES } from "../src/infrastructure/queue";
-import { admin, getAdminDb } from "../src/lib/firebase-admin";
+import { admin, getAdminDb } from "../src/lib/supabase-admin";
 import { getCacheService } from "../src/infrastructure/cache";
 
 // ─── Redis connection ─────────────────────────────────────────────────────────
@@ -40,7 +40,7 @@ async function processAnalyticsJob(job: { data: AnalyticsJobData }) {
   const db = getAdminDb();
 
   if (!db) {
-    console.warn("[analytics.worker] Firebase Admin not configured — skipping analytics");
+    console.warn("[analytics.worker] Supabase server access not configured — skipping analytics");
     return;
   }
 

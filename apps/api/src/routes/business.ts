@@ -1,7 +1,7 @@
 import { Router, type Request, type Response } from "express";
 import { z } from "zod";
 import { validateBody } from "../middleware/validate";
-import { getAdminDb, getAdminAuth } from "../lib/firebase-admin";
+import { getAdminDb, getAdminAuth } from "../lib/supabase-admin";
 
 export const businessRouter = Router();
 
@@ -23,7 +23,7 @@ businessRouter.post(
 
     if (!adminAuth || !adminDb) {
       return res.status(503).json({
-        error: "Server not configured. Set FIREBASE_SERVICE_ACCOUNT_JSON.",
+        error: "Server not configured. Set SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY.",
         code: "SERVICE_UNAVAILABLE",
         status: 503,
       });

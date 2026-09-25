@@ -8,7 +8,7 @@ export function useHome() {
   const { url: appAvatarUrl, isHydrated, syncAvatar }   = useAvatar();
   const { recentScans, isLoading, refreshing, onRefresh, deleteScan } = useRecentScans();
 
-  // Only use the Firebase Auth photoURL (which is the Google profile picture for
+  // Only use the Supabase Auth photoURL (which is the Google profile picture for
   // Google sign-in users) as a fallback when AvatarContext has fully loaded from
   // AsyncStorage and still found nothing.  This prevents the Google photo from
   // overwriting an app-uploaded photo that was already stored in AsyncStorage or

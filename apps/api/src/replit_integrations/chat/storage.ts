@@ -1,4 +1,4 @@
-import { getAdminDb } from "../../lib/firebase-admin";
+import { getAdminDb } from "../../lib/supabase-admin";
 
 export interface IChatStorage {
   getConversation(id: number): Promise<Conversation | undefined>;
@@ -23,7 +23,7 @@ export interface ChatMessage {
   createdAt: string;
 }
 
-const conversationRef = (db: FirebaseFirestore.Firestore, id: number) =>
+const conversationRef = (db: ReturnType<typeof getAdminDb>, id: number) =>
   db.collection("conversations").doc(String(id));
 
 export const chatStorage: IChatStorage = {

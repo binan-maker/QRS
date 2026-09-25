@@ -1,14 +1,14 @@
 /**
  * /api/v1/users — user profile, scan history, notifications
  *
- * All mutating endpoints require Firebase Auth (authenticate middleware).
- * Firestore Admin SDK used throughout; PostgreSQL queries will replace these
- * once data migration is complete (each query site is marked with a TODO).
+ * All mutating endpoints require Supabase Auth (authenticate middleware).
+ * The Supabase-backed document facade keeps these handlers compatible with
+ * the existing API contract while rows are stored in PostgreSQL.
  */
 
 import { Router, type Request, type Response } from "express";
 import { z } from "zod";
-import { admin, getAdminDb, getAdminAuth } from "../lib/firebase-admin";
+import { admin, getAdminDb, getAdminAuth } from "../lib/supabase-admin";
 import { authenticate } from "../middleware/auth";
 import { validateBody } from "../middleware/validate";
 import { relaxedLimit, standardLimit } from "../middleware/rate-limit-presets";
@@ -40,7 +40,7 @@ usersRouter.get(
     if (!db) return res.status(503).json({ error: "Database unavailable", code: "SERVICE_UNAVAILABLE", status: 503 });
 
     try {
-      // TODO: replace with: SELECT * FROM users WHERE firebase_uid = $uid
+      // The Supabase facade reads the PostgreSQL users row.
       const snap = await db.collection("users").doc(req.user!.uid).get();
       if (!snap.exists) {
         return res.status(404).json({ error: "User not found", code: "USER_NOT_FOUND", status: 404 });
@@ -103,7 +103,7 @@ usersRouter.patch(
         updates.usernameLastChangedAt = admin.firestore.FieldValue.serverTimestamp();
       }
 
-      // TODO: UPDATE users SET ... WHERE firebase_uid = $uid
+      // Update the PostgreSQL users row through the Supabase facade.
       await db.collection("users").doc(uid).set(updates, { merge: true });
 
       // Keep username registry in sync
@@ -112,7 +112,7 @@ usersRouter.patch(
           userId: uid,
           claimedAt: admin.firestore.FieldValue.serverTimestamp(),
         });
-        // Mirror to Firebase Auth profile
+        // Mirror the display data to the Supabase Auth profile
         await adminAuth.updateUser(uid, {
           ...(displayName ? { displayName } : {}),
           ...(photoUrl ? { photoURL: photoUrl } : {}),

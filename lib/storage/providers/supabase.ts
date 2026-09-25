@@ -8,9 +8,9 @@
 import { supabase } from "@/lib/supabase";
 import type { StorageAdapter } from "../adapter";
 
-// Default bucket — create this in your Supabase project dashboard.
-// Go to Storage → New bucket → Name: "binro-assets" → Public: true
-const DEFAULT_BUCKET = "binro-assets";
+// Generic app uploads use the avatars bucket. Feature-specific callers use
+// paths such as qr-logos/{userId}/... and can be migrated independently.
+const DEFAULT_BUCKET = "avatars";
 
 // Supabase Storage CDN URLs follow the pattern:
 //   https://<project-ref>.supabase.co/storage/v1/object/public/<bucket>/<path>

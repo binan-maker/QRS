@@ -52,7 +52,7 @@ export default function VerifyEmailScreen() {
   async function handleCheckVerified() {
     setCheckingVerification(true);
     try {
-      // refreshUser() returns the fresh emailVerified value directly from Firebase
+      // refreshUser() returns the fresh emailVerified value directly from Supabase
       // after reload(). Do NOT use user?.emailVerified here — React state is stale
       // until the next render, so it still reflects the pre-refresh value.
       const verified = await refreshUser();

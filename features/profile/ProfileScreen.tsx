@@ -52,7 +52,7 @@ function ProfileScreen() {
   } = useProfile();
   const { cachedUrl: photoURL } = useAvatar();
   // Pull auth loading state so we never flash GuestView during the initial
-  // Firebase token resolve on cold start.  When isLoading is true we render
+  // Supabase token resolve on cold start.  When isLoading is true we render
   // a transparent placeholder — the same background colour as the screen —
   // so the user sees a blank canvas rather than "Not signed in" briefly
   // followed by their profile with all animations firing from opacity:0.
@@ -83,7 +83,7 @@ function ProfileScreen() {
   const onCamera        = useCallback(() => handlePickPhoto("camera"),  [handlePickPhoto]);
   const onGallery       = useCallback(() => handlePickPhoto("gallery"), [handlePickPhoto]);
 
-  // While Firebase is resolving the auth state on cold start, show a plain
+  // While Supabase is resolving the auth state on cold start, show a plain
   // background instead of GuestView.  This prevents the mount/unmount cycle
   // of GuestView → full profile that causes every Animated.View entering
   // animation to fire from opacity:0, creating the "blank screen" flash.

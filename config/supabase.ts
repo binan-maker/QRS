@@ -1,7 +1,7 @@
 // ═══════════════════════════════════════════════════════════════════════════════
 // SUPABASE CONFIGURATION — single source of truth for Supabase project metadata.
 // ───────────────────────────────────────────────────────────────────────────────
-// Replaces config/firebase.ts.
+// Supabase project configuration.
 // All client-side values are sourced from EXPO_PUBLIC_* environment variables
 // and are safe to include in the JS bundle.
 // ═══════════════════════════════════════════════════════════════════════════════

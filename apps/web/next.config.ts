@@ -8,7 +8,7 @@ const nextConfig: NextConfig = {
     "localhost",
     ...(process.env.REPLIT_DEV_DOMAIN ? [process.env.REPLIT_DEV_DOMAIN] : [])
   ],
-  transpilePackages: ["firebase"],
+  transpilePackages: ["@supabase/supabase-js"],
 };
 
 export default nextConfig;

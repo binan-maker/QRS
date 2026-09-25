@@ -4,13 +4,13 @@
  * Supports both legacy qrCodes/{id} and unified qrs/{id} QRs.
  * The qrId path param is the Firestore document ID.
  *
- * All write endpoints require Firebase Auth.
+ * All write endpoints require Supabase Auth.
  * TODO markers show where PostgreSQL queries replace Firestore calls.
  */
 
 import { Router, type Request, type Response } from "express";
 import { z } from "zod";
-import { admin, getAdminDb } from "../lib/firebase-admin";
+import { admin, getAdminDb } from "../lib/supabase-admin";
 import { authenticate, optionalAuth } from "../middleware/auth";
 import { validateBody } from "../middleware/validate";
 import { relaxedLimit, standardLimit, strictLimit } from "../middleware/rate-limit-presets";
@@ -120,7 +120,7 @@ commentsRouter.post(
 
     try {
       // Resolve user display name
-      // TODO: SELECT display_name FROM users WHERE firebase_uid = $uid
+      // Read the display name from the PostgreSQL users row.
       const userSnap = await db.collection("users").doc(uid).get();
       const userName: string = userSnap.data()?.displayName ?? userSnap.data()?.username ?? "Anonymous";
 

@@ -7,7 +7,7 @@
 //
 // Used in:
 //   • app/(auth)/register.tsx        (client-side, immediate feedback)
-//   • contexts/AuthContext.tsx       (called before Firebase account creation)
+//   • contexts/AuthContext.tsx       (called before Supabase account creation)
 //   • server/routes.ts               (server-side, bypass-proof gate)
 // ──────────────────────────────────────────────────────────────────────────────
 

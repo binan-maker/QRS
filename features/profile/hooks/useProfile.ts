@@ -221,7 +221,7 @@ export function useProfile() {
 
     try {
       if (prevUrl) {
-        // Delete from Firebase Storage when the photo belongs to this app.
+        // Delete from Supabase Storage when the photo belongs to this app.
         const { deleteProfilePhoto } = await import("@/services/storage/storage-service");
         deleteProfilePhoto(user.id, prevUrl).catch(() => {});
       }

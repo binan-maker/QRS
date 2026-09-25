@@ -86,7 +86,7 @@ export async function updateUserProfilePhoto(
 ): Promise<string> {
   try {
     const newPhotoUrl = await uploadBase64Image(base64Data, "profile-photos", userId, true, 400, 0.8);
-    // Only attempt deletion if the old URL belongs to Firebase Storage.
+    // Only attempt deletion if the old URL belongs to Supabase Storage.
     if (oldPhotoUrl && storageAdapter.isOwnUrl(oldPhotoUrl)) {
       await deleteImage(oldPhotoUrl).catch(() => {});
     }
@@ -202,7 +202,7 @@ export async function deleteUserAccount(userId: string): Promise<void> {
   }
 
   // 4. Delete profile photo from Storage.
-  // Only delete if the URL belongs to our Firebase Storage bucket.
+  // Only delete if the URL belongs to our Supabase Storage bucket.
   if (photoUrl && storageAdapter.isOwnUrl(photoUrl)) {
     import("../storage/storage-service").then(({ deleteProfilePhoto }) => {
       deleteProfilePhoto(userId, photoUrl!).catch(() => {});

@@ -1,5 +1,6 @@
 import { getApp, getApps, initializeApp } from "firebase/app";
 import { getAuth, type Auth } from "firebase/auth";
+import { getFirestore, type Firestore } from "firebase/firestore";
 
 function readEnv(name: string) {
   return process.env[name] ?? "";
@@ -26,4 +27,8 @@ function getFirebaseApp() {
 
 export function getWebAuth(): Auth {
   return getAuth(getFirebaseApp());
+}
+
+export function getWebDb(): Firestore {
+  return getFirestore(getFirebaseApp());
 }

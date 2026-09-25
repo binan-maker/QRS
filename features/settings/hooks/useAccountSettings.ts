@@ -98,7 +98,7 @@ export function useAccountSettings({ userId, signOut }: UseAccountSettingsOption
               const currentUser = authAdapter.getCurrentUser();
               if (!currentUser) throw new Error("No authenticated user found.");
 
-              // Step 1: delete Firebase Auth account (fail fast before touching data)
+              // Step 1: delete the Supabase Auth account (fail fast before touching data)
               try {
                 await authAdapter.deleteUser(currentUser);
               } catch (authErr: any) {
@@ -116,7 +116,7 @@ export function useAccountSettings({ userId, signOut }: UseAccountSettingsOption
                 return;
               }
 
-              // Step 2: Firestore cleanup (fire-and-forget sub-tasks inside)
+              // Step 2: PostgreSQL cleanup (fire-and-forget sub-tasks inside)
               try {
                 await deleteUserAccount(userId);
               } catch {

@@ -45,7 +45,7 @@ if (Platform.OS !== "web") {
 interface Params {
   setUser: Dispatch<SetStateAction<AuthUser | null>>;
   setToken: Dispatch<SetStateAction<string | null>>;
-  /** Set by the Firebase session hook when Firebase restores a session. Prevents a
+  /** Set by the Supabase session hook when Supabase restores a session. Prevents a
    *  redundant signInSilently call on the ~80% of launches where the session
    *  is restored first. */
   sessionRestoredRef: MutableRefObject<boolean>;
@@ -112,7 +112,7 @@ export function useGoogleAuth({ setUser, setToken, sessionRestoredRef }: Params)
   // ── Effects ─────────────────────────────────────────────────────────────────
 
   // Native: delayed silent sign-in on launch.
-  // 800 ms lets Firebase restore a returning user's session first.
+  // 800 ms lets Supabase restore a returning user's session first.
   useEffect(() => {
     if (Platform.OS !== "web" && GoogleSignin) {
       const timer = setTimeout(() => {

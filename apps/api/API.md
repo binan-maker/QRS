@@ -413,7 +413,7 @@ Send an Expo push notification. Internal (no rate limit enforcement — call onl
 ## Architecture Notes
 
 ### Firebase Authentication (retained)
-Firebase Auth remains the sole identity provider. The server verifies `Authorization: Bearer <ID_TOKEN>` on every protected endpoint using `firebase-admin.auth().verifyIdToken()`. No custom JWT issuance.
+Supabase Auth is the sole identity provider. The server verifies `Authorization: Bearer <ACCESS_TOKEN>` on every protected endpoint using Supabase Auth's `getUser()` endpoint. No custom JWT issuance.
 
 ### Shared auth middleware
 `apps/api/src/middleware/auth.ts` exports `authenticate` (required) and `optionalAuth` (attach if present). Eliminates the previous pattern of copy-pasted `verifyIdToken` in every route handler.

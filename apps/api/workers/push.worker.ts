@@ -13,7 +13,7 @@
 
 import { Worker, Queue } from "bullmq";
 import { createClient } from "ioredis";
-import { getAdminDb } from "../src/lib/firebase-admin";
+import { getAdminDb } from "../src/lib/supabase-admin";
 import { sendExpoPush, isValidExpoPushToken } from "../src/lib/expo-push";
 import type { PushNotificationJobData } from "../src/infrastructure/queue";
 import { QUEUE_NAMES } from "../src/infrastructure/queue";
@@ -85,7 +85,7 @@ async function processJob(job: { data: PushNotificationJobData }) {
 
 async function runReengagementScan() {
   const db = getAdminDb();
-  if (!db) { console.warn("[push.worker] Firebase Admin not configured"); return; }
+  if (!db) { console.warn("[push.worker] Supabase server access not configured"); return; }
 
   const now = Date.now();
   const usersSnap = await db

@@ -2,8 +2,8 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { onAuthStateChanged, signOut, type User } from "firebase/auth";
-import { getWebAuth } from "../../lib/firebase";
+import type { User } from "@supabase/supabase-js";
+import { getWebSupabase } from "../../lib/supabase";
 import styles from "./profile.module.css";
 
 function Icon({ name, size = 24 }: { name: "home" | "scan" | "user"; size?: number }) {
@@ -29,20 +29,35 @@ export default function ProfilePage() {
   useEffect(() => {
     let fallbackTimer: ReturnType<typeof setTimeout> | undefined;
     try {
-      const unsubscribe = onAuthStateChanged(getWebAuth(), (nextUser) => { setUser(nextUser); setLoading(false); });
+      const supabase = getWebSupabase();
+      supabase.auth.getSession().then(({ data }) => {
+        setUser(data.session?.user ?? null);
+        setLoading(false);
+      }).catch((caught) => {
+        setError(caught instanceof Error ? caught.message : "Unable to restore your session.");
+        setLoading(false);
+      });
+      const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
+        setUser(session?.user ?? null);
+        setLoading(false);
+      });
       fallbackTimer = setTimeout(() => setLoading(false), 1200);
       return () => {
         if (fallbackTimer) clearTimeout(fallbackTimer);
-        unsubscribe();
+        listener.subscription.unsubscribe();
       };
     } catch (caught) {
-      setError(caught instanceof Error ? caught.message : "Web Firebase is not configured.");
+      setError(caught instanceof Error ? caught.message : "Web Supabase is not configured.");
       setLoading(false);
     }
   }, []);
 
   async function handleSignOut() {
-    try { await signOut(getWebAuth()); setUser(null); }
+    try {
+      const { error: signOutError } = await getWebSupabase().auth.signOut();
+      if (signOutError) throw signOutError;
+      setUser(null);
+    }
     catch (caught) { setError(caught instanceof Error ? caught.message : "Unable to sign out."); }
   }
 
@@ -52,8 +67,8 @@ export default function ProfilePage() {
         {loading ? <section className={styles.guestCard}><p className={styles.loading}>Checking your session…</p></section> : user ? (
           <section className={styles.guestCard}>
             <div className={styles.guestIconRing}><Icon name="user" size={45} /></div>
-            <h1>{user.displayName || "BinRo member"}</h1><p>{user.email}</p>
-            <span className={styles.memberBadge}>{user.emailVerified ? "Email verified" : "Email verification pending"}</span>
+            <h1>{user.user_metadata?.display_name || user.user_metadata?.full_name || "BinRo member"}</h1><p>{user.email}</p>
+            <span className={styles.memberBadge}>{user.email_confirmed_at ? "Email verified" : "Email verification pending"}</span>
             <button type="button" className={styles.signInButton} onClick={handleSignOut}>Sign Out</button>
           </section>
         ) : (

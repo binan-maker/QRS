@@ -122,7 +122,7 @@ export default function DeleteAccountModal({ visible, onClose }: DeleteAccountMo
         }
       }
 
-      // ── Step 2: delete the Firebase Auth account ──────────────────────────
+      // ── Step 2: delete the Supabase Auth account ──────────────────────────
       // Must happen before any Firestore writes so that a requires-recent-login
       // error leaves all data intact.
       try {
@@ -158,7 +158,7 @@ export default function DeleteAccountModal({ visible, onClose }: DeleteAccountMo
       try {
         await signOut();
       } catch {
-        // signOut failure after auth account deletion is non-fatal; Firebase
+        // signOut failure after auth account deletion is non-fatal; Supabase
         // will eventually clear the stale token.
       }
 
