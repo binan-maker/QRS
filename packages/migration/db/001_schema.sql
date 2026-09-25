@@ -479,9 +479,12 @@ CREATE TABLE IF NOT EXISTS public.audit_logs (
 CREATE INDEX IF NOT EXISTS audit_logs_user_id_idx    ON public.audit_logs (user_id);
 CREATE INDEX IF NOT EXISTS audit_logs_qr_id_idx      ON public.audit_logs (qr_id);
 CREATE INDEX IF NOT EXISTS audit_logs_created_at_idx ON public.audit_logs (created_at DESC);
--- Monthly-bucket index — useful if you later partition by month
+-- Monthly-bucket index in UTC.
+-- Convert timestamptz to a timezone-independent timestamp before DATE_TRUNC.
 CREATE INDEX IF NOT EXISTS audit_logs_month_idx
-  ON public.audit_logs (DATE_TRUNC('month', created_at));
+  ON public.audit_logs (
+    DATE_TRUNC('month', created_at AT TIME ZONE 'UTC')
+  );
 
 -- ─── moderation_queue ────────────────────────────────────────────────────────
 -- Source: moderationQueue/{id}

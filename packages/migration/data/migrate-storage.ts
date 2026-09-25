@@ -23,13 +23,20 @@
  *   Firebase: qrCodes/{id}/logo.*         → Supabase: qr-logos/{supaOwnerId}/{pgId}/logo.<ext>
  *   Firebase: verification/{uid}/**       → Supabase: verification-docs/{supaUid}/<filename>
  */
+import dotenv from "dotenv";
+import path from "path";
 
+const rootEnvPath = path.resolve(process.cwd(), "../../.env");
+
+dotenv.config({ path: rootEnvPath, override: true });
+console.log("ENV FILE:", path.resolve(process.cwd(), ".env"));
+console.log("SUPABASE_URL loaded:", !!process.env.SUPABASE_URL);
 import * as admin from "firebase-admin";
 import { createClient, SupabaseClient } from "@supabase/supabase-js";
 import pg from "pg";
+import { File } from "@google-cloud/storage";
 import https from "https";
 import http from "http";
-import path from "path";
 
 // ─── Config ───────────────────────────────────────────────────────────────────
 
@@ -72,9 +79,10 @@ const supabase: SupabaseClient = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROL
 // ─── Postgres (read firebase_uid→id and qr firebase_id→id maps) ───────────────
 
 const pool = new pg.Pool({
-  connectionString: DATABASE_URL.includes("sslmode")
-    ? DATABASE_URL
-    : DATABASE_URL + (DATABASE_URL.includes("?") ? "&" : "?") + "sslmode=require",
+  connectionString: DATABASE_URL,
+  ssl: {
+    rejectUnauthorized: false,
+  },
 });
 
 // ─── Stats ────────────────────────────────────────────────────────────────────
@@ -84,7 +92,7 @@ const stats = { uploaded: 0, skipped: 0, errors: 0 };
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 /** Download a Firebase Storage file as a Buffer */
-async function downloadFile(file: admin.storage.File): Promise<Buffer> {
+async function downloadFile(file: File): Promise<Buffer> {
   return new Promise((resolve, reject) => {
     const chunks: Buffer[] = [];
     file.createReadStream()

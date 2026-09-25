@@ -100,29 +100,32 @@ CREATE TRIGGER trg_release_username
 
 -- ─── 3. notification TTL cleanup ──────────────────────────────────────────────
 -- Mirrors Firebase RTDB: notifications older than 30 days are auto-purged.
--- Call from a Supabase pg_cron job (or manually) at a convenient cadence.
---
---   SELECT cron.schedule('cleanup-notifications', '0 3 * * *',
---     'SELECT public.cleanup_expired_notifications()');
---
--- Note: pg_cron must be enabled in the Supabase dashboard first.
+-- Call from a Supabase pg_cron job (or manually).
 
 CREATE OR REPLACE FUNCTION public.cleanup_expired_notifications()
-RETURNS INTEGER LANGUAGE plpgsql SECURITY DEFINER AS $$
+RETURNS INTEGER
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
 DECLARE
-  deleted_count INTEGER;
+  deleted_count INTEGER := 0;
+  rows_deleted INTEGER := 0;
 BEGIN
   -- Delete explicitly expired notifications
   DELETE FROM public.notifications
-  WHERE expires_at IS NOT NULL AND expires_at < NOW();
+  WHERE expires_at IS NOT NULL
+    AND expires_at < NOW();
 
-  GET DIAGNOSTICS deleted_count = ROW_COUNT;
+  GET DIAGNOSTICS rows_deleted = ROW_COUNT;
+  deleted_count := deleted_count + rows_deleted;
 
-  -- Also delete any notification older than 30 days (TTL fallback)
+  -- Delete notifications older than 30 days when no explicit expiry exists
   DELETE FROM public.notifications
-  WHERE expires_at IS NULL AND created_at < NOW() - INTERVAL '30 days';
+  WHERE expires_at IS NULL
+    AND created_at < NOW() - INTERVAL '30 days';
 
-  GET DIAGNOSTICS deleted_count = deleted_count + ROW_COUNT;
+  GET DIAGNOSTICS rows_deleted = ROW_COUNT;
+  deleted_count := deleted_count + rows_deleted;
 
   RETURN deleted_count;
 END;

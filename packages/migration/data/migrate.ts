@@ -20,7 +20,19 @@
  * Idempotent: every INSERT uses ON CONFLICT DO NOTHING / DO UPDATE, so the
  * script is safe to re-run after partial failures.
  */
+import dotenv from "dotenv";
+import path from "path";
 
+const envPath = path.resolve(process.cwd(), "../../.env");
+
+const result = dotenv.config({
+  path: envPath,
+});
+
+console.log("ENV FILE:", envPath);
+console.log("ENV LOADED:", !result.error);
+console.log("ENV SUPABASE_URL loaded:", !!process.env.SUPABASE_URL);
+console.log("ENV DATABASE_URL loaded:", !!process.env.DATABASE_URL);
 import * as admin from "firebase-admin";
 import { createClient } from "@supabase/supabase-js";
 import pg from "pg";

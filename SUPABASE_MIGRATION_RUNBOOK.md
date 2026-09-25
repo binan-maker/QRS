@@ -26,7 +26,7 @@ database and authentication cutover cannot be completed from code alone.
 ## 1. Create the Supabase project
 
 1. Open `https://supabase.com` and create or sign in to your account.
-2. Select **New project**.
+2. Select **New project**.v
 3. Choose the organization.
 4. Use a project name such as `binro-production`.
 5. Set a strong database password and store it in a password manager. Do not
@@ -36,7 +36,7 @@ database and authentication cutover cannot be completed from code alone.
    Supabase region and keep the choice documented.
 7. Wait until the project finishes provisioning.
 8. Open **Project Settings → API** and copy:
-   - **Project URL**
+   - **Project URL** 
    - **Publishable/anon key**
    - **service_role key** (keep this server-only)
 9. Open **Project Settings → Database → Connection string**.

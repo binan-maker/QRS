@@ -5,9 +5,9 @@
   "description": "Firebase → Supabase migration scripts and SQL files for BinRo",
   "scripts": {
     "migrate": "tsx data/migrate.ts",
-    "migrate:dry": "MIGRATION_DRY_RUN=true tsx data/migrate.ts",
+    "migrate:dry": "tsx data/migrate.ts",
     "migrate:storage": "tsx data/migrate-storage.ts",
-    "migrate:storage:dry": "MIGRATION_DRY_RUN=true tsx data/migrate-storage.ts",
+    "migrate:storage:dry": "tsx data/migrate-storage.ts",
     "db:schema": "echo 'Paste db/001_schema.sql into Supabase SQL Editor'",
     "db:rls": "echo 'Paste db/002_rls.sql into Supabase SQL Editor'",
     "db:triggers": "echo 'Paste db/003_triggers.sql into Supabase SQL Editor'",
