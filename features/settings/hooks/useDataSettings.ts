@@ -10,7 +10,7 @@ import {
   getUserScansPaginated,
   deleteUserScan,
   deleteAllUserScans,
-} from "@/lib/firestore-service";
+} from "@/lib/data-service";
 import {
   getCachedComments,
   setCachedComments,

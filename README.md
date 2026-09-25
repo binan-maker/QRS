@@ -14,7 +14,7 @@ This software is part of a funded startup application. Unauthorized copying, dis
 ## 🙏 Acknowledgments
 
 - **Kerala Startup Mission**: For supporting innovation in cybersecurity
-- **Firebase**: For scalable infrastructure
+- **Supabase**: For authentication, database, storage, and realtime services
 - **Expo**: For cross-platform mobile development
 - **Indian Fintech Community**: For inspiration and feedback
 

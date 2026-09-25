@@ -1,400 +1,201 @@
-# BinRo: Firebase to Supabase migration runbook
+# BinRo authentication migration: Firebase Auth export to Supabase Auth
 
-This is the complete operational sequence for moving BinRo from Firebase to
-Supabase. The repository contains the code and migration scripts, but the
-database and authentication cutover cannot be completed from code alone.
+This project now uses Supabase only. The migration in
+`packages/migration/data/migrate-auth.ts` imports authentication users only.
+It does **not** read or write Firestore, Realtime Database, Storage, scans,
+QR codes, ownerships, usernames, profiles, comments, notifications, or any
+other application data.
 
-## 0. Important migration facts
+## What is migrated
 
-1. Do not delete Firebase until the verification section passes.
-2. Supabase client values are public:
-   - project URL
-   - anon/public key
-3. Supabase server values are secrets:
+For each legacy account, the importer copies only:
+
+- email address
+- email-confirmed state
+- display name and profile photo, when present in the Auth export
+- legacy provider IDs and Firebase UID in Supabase Auth user metadata, so the
+  import can be audited without migrating application data
+
+Firebase password hashes are not copied. Firebase and Supabase use different
+password-hash formats, and Supabase's Admin API does not accept a Firebase
+hash. Email/password users must set a new password through Supabase recovery.
+Google users must sign in through the Supabase Google provider after it is
+configured.
+
+## 1. Create or select the Supabase project
+
+1. Open the Supabase dashboard and create or select the BinRo project.
+2. Choose the region closest to your users.
+3. In **Project Settings → API**, copy:
+   - Project URL
+   - publishable/anon key
    - service-role key
-   - Postgres connection string
-4. `FIREBASE_SERVICE_ACCOUNT` is needed only while reading the old Firebase
-   project.
-5. Firebase password hashes are not copied by the current script. Email/password
-   users must reset their password in Supabase after migration.
-6. Firebase Google provider records are recorded in Supabase user metadata, but
-   OAuth identities are not automatically linked. Test Google login and decide
-   how existing Google users will re-link before cutover.
-7. Keep a backup/export of Firebase data and Storage files until the new system
-   has been verified in production.
+4. Keep the service-role key server-only. Never place it in
+   `EXPO_PUBLIC_*` or `NEXT_PUBLIC_*` variables.
 
-## 1. Create the Supabase project
-
-1. Open `https://supabase.com` and create or sign in to your account.
-2. Select **New project**.v
-3. Choose the organization.
-4. Use a project name such as `binro-production`.
-5. Set a strong database password and store it in a password manager. Do not
-   commit it to the repository.
-6. Choose a region close to the majority of users. The app currently defaults
-   its informational region to `ap-south-1`; choose the closest available
-   Supabase region and keep the choice documented.
-7. Wait until the project finishes provisioning.
-8. Open **Project Settings → API** and copy:
-   - **Project URL** 
-   - **Publishable/anon key**
-   - **service_role key** (keep this server-only)
-9. Open **Project Settings → Database → Connection string**.
-10. Select **URI** and **Session pooler / port 5432**. Copy the URI and replace
-    the password placeholder with the database password. This becomes
-    `DATABASE_URL`.
+No application-data SQL migration is needed for this Auth-only cutover. If the
+project already has its Supabase application schema, leave it as-is. The
+importer writes only to Supabase Auth through the Admin API.
 
 ## 2. Configure Supabase Auth
 
-Open **Authentication → Providers**:
+In **Authentication → Providers**:
 
 ### Email
 
 1. Enable Email provider.
-2. Decide whether email confirmation is required. Keep it enabled for
-   production.
-3. Configure the SMTP provider under **Authentication → SMTP Settings** before
-   production. The built-in email service is for low-volume development only.
-4. Set the password minimum to match the app's policy.
+2. Configure SMTP for production recovery and confirmation emails.
+3. Keep email confirmation enabled unless the product explicitly requires a
+   different policy.
+4. Set the password minimum to the policy used by the app.
 
 ### Google
 
-1. Enable the Google provider.
-2. In Google Cloud Console, create or select the OAuth web client.
-3. Add the Supabase callback URL shown in the provider form to Google Cloud's
-   authorized redirect URIs.
-4. Add the web and mobile client IDs/secrets as requested by Supabase.
-5. Add the final web URL and mobile deep-link URL under
-   **Authentication → URL Configuration**.
-6. For local development, add the Replit preview URL and local callback URL
-   only when needed. Remove temporary URLs before production.
+1. Enable Google provider.
+2. Copy the exact Supabase callback URL shown in the provider settings.
+3. Add that URL to the Google Cloud OAuth client's authorized redirect URIs.
+4. Configure the web and native client IDs used by this project.
+5. In **Authentication → URL Configuration**, add the production web URL and
+   the mobile deep-link URL. Add temporary Replit preview URLs only while
+   testing.
 
-The exact callback URL is displayed by Supabase in the Google provider screen;
-copy that value instead of constructing it manually.
+The exact callback and redirect values belong to the Supabase dashboard. Do not
+invent them from the project name.
 
-## 3. Apply the database schema and security
+## 3. Add Replit secrets and public variables
 
-Use **SQL Editor → New query**. Run the files in this exact order:
-
-```bash
-psql "$DATABASE_URL" -f packages/migration/db/001_schema.sql
-psql "$DATABASE_URL" -f packages/migration/db/002_rls.sql
-psql "$DATABASE_URL" -f packages/migration/db/003_triggers.sql
-psql "$DATABASE_URL" -f packages/migration/db/004_storage.sql
-psql "$DATABASE_URL" -f packages/migration/db/005_runtime.sql
-```
-
-If using the dashboard, open each file, paste its complete contents into a
-separate SQL Editor query, and run them in the same order.
-
-After each file:
-
-1. Confirm the query completed without an error.
-2. Open **Table Editor** and confirm the tables exist.
-3. Open **Database → Functions** and confirm `increment_field` exists after
-   `005_runtime.sql`.
-4. Confirm RLS is enabled on the application tables.
-
-The schema keeps `firebase_uid` and `firebase_id` columns as migration
-cross-reference fields. Do not remove those columns until reconciliation and
-rollback are no longer needed.
-
-## 4. Configure Storage
-
-The `004_storage.sql` file creates:
-
-| Bucket | Visibility | Purpose |
-|---|---|---|
-| `avatars` | Public | Profile photos |
-| `qr-logos` | Public | QR logo images shown on scan pages |
-| `verification-docs` | Private | Verification/KYC documents |
-
-In **Storage**, confirm all three buckets exist. Confirm:
-
-1. A signed-in user can upload only inside their own user-ID folder.
-2. Public avatar and QR logo URLs load.
-3. Verification documents are not publicly readable.
-4. The service role can read and write migration files.
-
-The migration maps:
-
-```text
-users/{firebaseUid}/avatar.ext
-  -> avatars/{supabaseUserId}/avatar.ext
-
-qrCodes/{firebaseQrId}/logo.ext
-  -> qr-logos/{supabaseOwnerId}/{postgresQrId}/logo.ext
-
-verification/{firebaseUid}/...
-  -> verification-docs/{supabaseUserId}/...
-```
-
-## 5. Add Replit environment variables
-
-Use the Replit Secrets/environment UI. Never paste server-only values into
-source files or public client variables.
+Set these in Replit Secrets/environment configuration:
 
 ### Mobile app
 
 ```text
 EXPO_PUBLIC_SUPABASE_URL=https://<project-ref>.supabase.co
-EXPO_PUBLIC_SUPABASE_ANON_KEY=<anon-or-publishable-key>
+EXPO_PUBLIC_SUPABASE_ANON_KEY=<publishable-or-anon-key>
 EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID=<google-web-client-id>
 EXPO_PUBLIC_ANDROID_CLIENT_ID=<google-android-client-id>
 EXPO_PUBLIC_IOS_CLIENT_ID=<google-ios-client-id>
-EXPO_PUBLIC_DOMAIN=<backend-or-public-domain>
+EXPO_PUBLIC_DOMAIN=<public-api-or-app-domain>
 ```
 
 ### Next.js web app
 
 ```text
 NEXT_PUBLIC_SUPABASE_URL=https://<project-ref>.supabase.co
-NEXT_PUBLIC_SUPABASE_ANON_KEY=<anon-or-publishable-key>
-NEXT_PUBLIC_API_URL=<public-api-url-if-web-and-api-are-separated>
+NEXT_PUBLIC_SUPABASE_ANON_KEY=<publishable-or-anon-key>
+NEXT_PUBLIC_API_URL=<public-api-url-if-api-is-separate>
 ```
 
-### Express API and migration commands
+### One-time migration command
 
 ```text
 SUPABASE_URL=https://<project-ref>.supabase.co
 SUPABASE_SERVICE_ROLE_KEY=<service-role-key>
-DATABASE_URL=<session-mode-postgres-uri>
-FIREBASE_SERVICE_ACCOUNT=<raw-firebase-service-account-json-during-migration>
-SESSION_SECRET=<existing-server-secret>
+FIREBASE_AUTH_EXPORT=./firebase-auth-users.json
 ```
 
-Do not set `SUPABASE_SERVICE_ROLE_KEY`, `DATABASE_URL`, or
-`FIREBASE_SERVICE_ACCOUNT` as `EXPO_PUBLIC_*` or `NEXT_PUBLIC_*`.
+`SUPABASE_SERVICE_ROLE_KEY` must never be bundled into the mobile app,
+Next.js browser code, or committed files.
 
-After changing variables, restart the backend and frontend workflows.
+## 4. Export only Firebase Authentication users
 
-## 6. Install dependencies and check the code
+Use the Firebase CLI on a trusted machine while the old Firebase project is
+still available:
+
+```bash
+firebase login
+firebase auth:export firebase-auth-users.json --project <firebase-project-id>
+```
+
+Copy the resulting `firebase-auth-users.json` into the repository root only
+temporarily, or set `FIREBASE_AUTH_EXPORT` to a secure path outside the
+repository. Do not commit the export. It contains personal account data.
+
+The importer accepts either the normal Firebase export object with a `users`
+array or a JSON array of user records. It requires each record to have
+`localId` and `email`.
+
+## 5. Dry run
 
 From the repository root:
 
 ```bash
+export SUPABASE_URL="https://<project-ref>.supabase.co"
+export SUPABASE_SERVICE_ROLE_KEY="<service-role-key>"
+export FIREBASE_AUTH_EXPORT="/secure/path/firebase-auth-users.json"
+
 npm install
-npm --prefix apps/web install
-npm run web:typecheck
-npm run web:build
-npm run server:build
-```
-
-The runtime web app must not import Firebase. Firebase imports are allowed only
-under `packages/migration/`, which reads the legacy project during the data
-transfer.
-
-## 7. Run a dry run against the real projects
-
-Before writing data, confirm the four migration secrets are present in the
-shell environment without printing their values:
-
-```bash
-test -n "$SUPABASE_URL"
-test -n "$SUPABASE_SERVICE_ROLE_KEY"
-test -n "$DATABASE_URL"
-test -n "$FIREBASE_SERVICE_ACCOUNT"
-```
-
-Run the dry runs:
-
-```bash
 npm --prefix packages/migration run migrate:dry
-npm --prefix packages/migration run migrate:storage:dry
 ```
 
-Review:
+Review the counts and confirm that the output is Auth-only. The dry run does
+not create or update users.
 
-- Firebase Auth user count
-- Firestore collection counts
-- RTDB notification count
-- Storage file counts
-- skipped records
-- errors
-- accounts marked `password_reset_required`
+## 6. Import users
 
-Stop and fix every unexpected error before the write phase.
-
-## 8. Migrate database data
-
-Run the main migration:
+After reviewing the dry run:
 
 ```bash
 npm --prefix packages/migration run migrate
 ```
 
-The order is:
+The script is safe to re-run. It matches existing Supabase users by
+case-insensitive email, updates their Auth metadata when matched, and creates
+missing users. It never inserts into a Postgres application table.
 
-1. Firebase Auth users and usernames → Supabase Auth, `users`, and `usernames`
-2. `qrCodes` → `qr_codes`
-3. `qrs` → `unified_qrs`
-4. `guardLinks` → `guard_links` and `guard_link_changes`
-5. `standardLinks` → `standard_links`
-6. friends → `user_friends`
-7. business accounts → `business_accounts`
-8. comments → `qr_comments`
-9. reports → `qr_reports`
-10. audit logs → `audit_logs`
-11. moderation queue → `moderation_queue`
-12. verification requests → `verification_requests`
-13. feature votes → `feature_votes`
-14. RTDB notifications → `notifications`
+Save the terminal output as the migration record. If the final `Errors` count
+is non-zero, fix those rows and rerun the command before cutover.
 
-The script is designed to be re-runnable. Save the terminal output as the
-migration record. A successful process with nonzero errors is not a successful
-migration; investigate and re-run the affected step.
+## 7. Let users recover their accounts
 
-To retry one step:
+### Email/password users
 
-```bash
-MIGRATION_STEP=3 npx tsx packages/migration/data/migrate.ts
-```
+1. Keep the `/auth/forgot-password` flow enabled.
+2. Send a recovery email to each migrated email/password user using the
+   product's normal recovery flow or an approved support campaign.
+3. The user opens the Supabase recovery link and chooses a new password.
+4. Confirm sign-in, sign-out, session restore, and a second sign-in.
 
-## 9. Migrate Storage files
+Do not send a shared temporary password. Do not print recovery links into
+logs or commit them to the repository.
 
-After the database migration creates the ID maps, run:
+### Google users
 
-```bash
-npm --prefix packages/migration run migrate:storage
-```
+1. Ensure the Google provider is enabled and its redirect URLs are correct.
+2. Ask a migrated Google user to sign in with the same Google account.
+3. Confirm that Supabase opens the existing account rather than creating a
+   duplicate.
+4. If Supabase reports an existing-email or identity-linking error, stop the
+   rollout and handle that account through a verified account-linking flow.
 
-Then verify:
+The importer stores legacy provider information as metadata for this check; it
+does not pretend that a Supabase OAuth identity was linked when it was not.
 
-```sql
-select count(*) from storage.objects where bucket_id = 'avatars';
-select count(*) from storage.objects where bucket_id = 'qr-logos';
-select count(*) from storage.objects where bucket_id = 'verification-docs';
-```
+## 8. Verification checklist
 
-Open a sample profile image and QR logo URL. Use a signed URL or the service
-role for a verification document; it must not open anonymously.
+Use one migrated password account and one migrated Google account:
 
-## 10. Protect migrated accounts from login loss
+- password recovery email is delivered
+- new password sign-in succeeds
+- email confirmation behavior matches policy
+- Google sign-in succeeds for the same Google account
+- sign-out and session restore work on web
+- sign-out and session restore work in the mobile app
+- API requests accept the Supabase access token
+- a newly registered user can sign up and verify email
+- no scan, QR, ownership, Storage, or other legacy application record was
+  imported
+- `rg -i "firebase|firestore" --glob '!package-lock.json'` finds no runtime
+  Firebase code
 
-### Email/password accounts
+## 9. Cutover and cleanup
 
-The migration creates the Supabase Auth user and preserves the old Firebase
-UID in metadata, but it does not copy the Firebase password hash. Send every
-migrated email/password user through Supabase's password reset flow.
+1. Keep a secure copy of the Firebase Auth export until the migration is
+   verified and the retention period expires.
+2. Remove the temporary JSON export from the repository and local machine.
+3. Remove old Firebase environment variables from Replit.
+4. Disable Firebase Auth only after recovery and Google sign-in have passed.
+5. Rotate the Supabase service-role key if it was ever exposed outside the
+   Replit secret store.
 
-1. Confirm SMTP is configured.
-2. Send reset links or provide a one-time migration screen.
-3. Ask the user to set a new password.
-4. Confirm email verification status and successful sign-in.
-5. Do not delete the Firebase account until the user can sign in to Supabase.
-
-### Google accounts
-
-1. Configure Google OAuth in Supabase.
-2. Test a migrated Google account.
-3. Confirm whether Supabase matches the existing email or creates a duplicate.
-4. If it creates a duplicate, stop the cutover and implement a provider-linking
-   flow before migrating more users.
-5. Do not rely on the `provider` metadata field as proof that an OAuth identity
-   is linked; the migration records the original Firebase provider IDs for
-   investigation.
-
-### Account recovery
-
-Test:
-
-- sign in
-- sign out
-- refresh and restore the session
-- password reset
-- email confirmation
-- Google sign-in
-- account deletion
-- API request with the Supabase access token
-
-## 11. Validate the application before cutover
-
-Use a test account and one migrated account:
-
-### Database and RLS
-
-- anonymous user can read active public QR data
-- anonymous user cannot read private user data
-- authenticated user can read/update only their own profile
-- authenticated user can create a comment as themselves
-- authenticated user cannot update another user's comment
-- authenticated user can only manage their own favorites
-- service role can perform server moderation and migration operations
-
-### Storage
-
-- avatar upload, replacement, and deletion
-- QR logo upload and public display
-- verification document upload and private read
-- another user cannot read or delete those files
-
-### Runtime
-
-- mobile app login and logout
-- web login and logout
-- API `Authorization: Bearer <supabase-access-token>`
-- public QR page and redirect
-- scan counter and comment counter
-- comments load, create, edit, delete
-- likes and reports
-- notifications and notification cleanup
-- profile image URLs
-
-### Data reconciliation
-
-Compare Firebase and Supabase counts for:
-
-```sql
-select count(*) from users;
-select count(*) from qr_codes;
-select count(*) from unified_qrs;
-select count(*) from qr_comments;
-select count(*) from qr_reports;
-select count(*) from notifications;
-```
-
-Also check orphan rows:
-
-```sql
-select count(*) from qr_comments c
-left join users u on u.id = c.user_id
-where u.id is null;
-
-select count(*) from qr_comments c
-where c.qr_code_id is null and c.unified_qr_id is null;
-```
-
-Expected orphan counts are zero unless a documented legacy record was
-intentionally skipped.
-
-## 12. Cut over gradually
-
-1. Put the old Firebase app in maintenance/read-only mode.
-2. Run one final export/delta migration for records created after the first
-   migration.
-3. Run the reconciliation queries again.
-4. Point all runtime environments at Supabase variables.
-5. Deploy web, API, and mobile builds.
-6. Watch auth failures, database errors, Storage errors, and missing QR
-   redirects.
-7. Keep Firebase available for rollback during the agreed observation period.
-8. Only after the observation period:
-   - disable Firebase runtime writes
-   - retain a secure export
-   - remove old Firebase runtime variables
-   - remove old Firebase SDK code
-   - keep migration scripts and cross-reference fields until retention policy
-     permits their removal
-
-## 13. Current repository status
-
-The repository now uses Supabase in the mobile adapters, API, web auth, web QR
-data, and web community client. Firebase remains intentionally in:
-
-- `packages/migration/data/migrate.ts`
-- `packages/migration/data/migrate-storage.ts`
-
-Those files are required to read the old Firebase project during migration.
-The live migration is not complete until you create the Supabase project,
-provision the secrets, run the SQL, run both migration scripts, and complete
-the verification checklist above.
+There is no Firebase runtime fallback in this repository. Supabase is the only
+authentication provider used by the mobile app, web app, and API.

@@ -1,7 +1,7 @@
 import { useState, useCallback } from "react";
 import { useFocusEffect } from "expo-router";
 import { useAuth } from "@/shared/contexts/AuthContext";
-import { getUserFavorites } from "@/lib/firestore-service";
+import { getUserFavorites } from "@/lib/data-service";
 import { useListScreen } from "@/shared/hooks/useListScreen";
 
 export interface FavoriteItem {

@@ -39,8 +39,8 @@ outputType = "console"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "npm run server:dev"
-waitForPort = 5000
+args = "PORT=5001 npm run server:dev"
+waitForPort = 5001
 
 [[workflows.workflow]]
 name = "Start Frontend"

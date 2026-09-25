@@ -43,18 +43,17 @@ export * from "./components/InternalRow";
 
 ### 2. Adapter-only data access
 
-Features **never** import Firebase SDK directly. All data flows through adapters.
+Features use the shared data, auth, and storage adapters. They do not import
+provider SDKs directly.
 
 ```ts
 // ✅ Allowed
 import { db }              from "@/lib/db";
 import { authAdapter }     from "@/lib/auth";
-import { getUserData }     from "@/lib/firestore-service";
+import { getUserData }     from "@/lib/data-service";
 import { getFromCache }    from "@/services/cache/qr-cache";
 
-// ❌ Never
-import { getFirestore, doc, getDoc } from "firebase/firestore";
-import { getAuth }                   from "firebase/auth";
+// ❌ Never import a provider SDK directly
 ```
 
 ### 3. Style factory pattern

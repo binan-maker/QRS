@@ -14,7 +14,7 @@ import {
   getUsernameData,
   updateUsername,
   checkUsernameAvailable,
-} from "@/lib/firestore-service";
+} from "@/lib/data-service";
 
 export default function ProfileSettingsSection({ onScroll, paddingTop = 0 }: { onScroll?: (e: any) => void; paddingTop?: number }) {
   const { colors } = useTheme();

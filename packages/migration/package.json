@@ -2,28 +2,17 @@
   "name": "@binro/migration",
   "version": "1.0.0",
   "private": true,
-  "description": "Firebase → Supabase migration scripts and SQL files for BinRo",
+  "description": "Auth-only user import into Supabase Auth",
   "scripts": {
-    "migrate": "tsx data/migrate.ts",
-    "migrate:dry": "tsx data/migrate.ts",
-    "migrate:storage": "tsx data/migrate-storage.ts",
-    "migrate:storage:dry": "tsx data/migrate-storage.ts",
-    "db:schema": "echo 'Paste db/001_schema.sql into Supabase SQL Editor'",
-    "db:rls": "echo 'Paste db/002_rls.sql into Supabase SQL Editor'",
-    "db:triggers": "echo 'Paste db/003_triggers.sql into Supabase SQL Editor'",
-    "db:storage": "echo 'Paste db/004_storage.sql into Supabase SQL Editor'",
-    "db:runtime": "echo 'Paste db/005_runtime.sql into Supabase SQL Editor'"
+    "migrate": "tsx data/migrate-auth.ts",
+    "migrate:dry": "MIGRATION_DRY_RUN=true tsx data/migrate-auth.ts"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.109.0",
-    "firebase-admin": "^13.10.0",
-    "pg": "^8.22.0",
-    "ws": "^8.18.0"
+    "dotenv": "^18.0.3"
   },
   "devDependencies": {
     "@types/node": "^22.0.0",
-    "@types/pg": "^8.11.0",
-    "@types/ws": "^8.5.0",
     "tsx": "^4.19.0",
     "typescript": "^5.7.0"
   }

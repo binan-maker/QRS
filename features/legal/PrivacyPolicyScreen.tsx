@@ -196,9 +196,9 @@ export default function PrivacyPolicyScreen() {
           </Para>
         </SectionCard>
 
-        <SectionCard title="Firebase & Third-Party Infrastructure" num="5" icon="server-outline" colors={colors}>
+        <SectionCard title="Supabase & Third-Party Infrastructure" num="5" icon="server-outline" colors={colors}>
           <Para colors={colors}>
-            BinRo uses Google Firebase for backend infrastructure. Your data is stored in Firebase Firestore, Firebase Realtime Database, and Firebase Auth. Firebase is compliant with GDPR, SOC 2, and ISO 27001.
+            BinRo uses Supabase for authentication, database, storage, and realtime services. Supabase uses industry-standard security controls and encryption.
           </Para>
           <Para colors={colors}>
             We also use third-party analytics and crash reporting tools. These services have their own privacy policies which govern their use of data they receive.
@@ -218,7 +218,7 @@ export default function PrivacyPolicyScreen() {
 
         <SectionCard title="Data Sharing & Disclosure" num="7" icon="share-outline" colors={colors}>
           <Para colors={colors}>We may share data in the following circumstances:</Para>
-          <Bullet text="With Google Firebase as our primary infrastructure and authentication provider." colors={colors} />
+          <Bullet text="With Supabase as our primary infrastructure and authentication provider." colors={colors} />
           <Bullet text="With advertising partners: aggregated, non-personally-identifiable usage data only." colors={colors} />
           <Bullet text="When required by law, court order, government directive, or to protect public safety." colors={colors} />
           <Bullet text="In the event of acquisition or merger, under equivalent privacy protections." colors={colors} />
@@ -241,7 +241,7 @@ export default function PrivacyPolicyScreen() {
 
         <SectionCard title="Data Security & Breach Policy" num="9" icon="lock-closed-outline" colors={colors}>
           <Para colors={colors}>
-            All data in transit between your device and our servers is encrypted using TLS 1.2+. Firebase Auth uses industry-standard OAuth 2.0 and secure token management. Data at rest is encrypted using AES-256 where Firebase infrastructure supports it.
+            All data in transit between your device and our servers is encrypted using TLS 1.2+. Supabase Auth uses industry-standard OAuth 2.0 and secure token management. Data at rest is encrypted according to Supabase infrastructure controls.
           </Para>
           <Para colors={colors}>
             We take security seriously and continuously monitor for issues. If something ever did affect your data, here's exactly what you can expect from us: we'll notify you by email or in-app message as soon as possible, inform relevant authorities as required by law, and act quickly to contain and resolve the issue.

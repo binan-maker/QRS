@@ -68,7 +68,7 @@ export async function registerForPushNotifications(
     const token = tokenResult.data;
     if (!token) return;
 
-    // Save to server → Firestore via Admin SDK
+    // Save to the Supabase-backed API
     await post("/api/push/register", { userId, token });
   } catch (e) {
     // Non-critical — app works without push

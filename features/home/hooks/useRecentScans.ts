@@ -3,7 +3,7 @@ import { useFocusEffect } from "expo-router";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/shared/contexts/AuthContext";
-import { getUserScansPaginated, deleteUserScan } from "@/lib/firestore-service";
+import { getUserScansPaginated, deleteUserScan } from "@/lib/data-service";
 import { queryClient } from "@/lib/query-client";
 import {
   getCachedHomeScans,

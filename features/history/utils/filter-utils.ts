@@ -1,5 +1,5 @@
 import type { FilterKey, ActiveFilters, HistoryItem } from "@/features/history/types";
-import type { ScanStatsResult } from "@/lib/firestore-service";
+import type { ScanStatsResult } from "@/lib/data-service";
 import {
   FILTERS,
   PAYMENT_TYPES,

@@ -1,7 +1,5 @@
-// NOTE: server-verify-service (firebase-admin) has been moved to apps/api/src/services/
-// so it is never bundled into the Expo/React-Native app. Weight validation at the
-// server-authoritative level happens in the Express route (apps/api/src/routes/qr.ts)
-// which verifies the Firebase token before calling reportQrCode.
+// Weight validation happens at the server-authoritative Express route layer
+// before this service is called.
 
 import { db } from "@/lib/db/client";
 import { COLLECTIONS } from "@/shared/constants/collections";
@@ -67,7 +65,7 @@ export async function reportQrCode(
   const existingReport = await getUserQrReport(qrId, userId);
 
   // Same type tapped again → unreport (toggle off).
-  // Firestore rules block deletion, so we mark the doc as userRemoved instead.
+  // Database policies preserve the record, so we mark it as userRemoved instead.
   // The existing reportType and weight fields stay intact to satisfy security rules.
   if (existingReport === reportType) {
     await db.update([COLLECTIONS.QR_CODES, qrId, COLLECTIONS.REPORTS, userId], {
@@ -82,8 +80,8 @@ export async function reportQrCode(
   // isChangingReport=true bypasses the per-QR and hourly counters in checkReportEligibility.
   const isChangingReport = existingReport !== null;
   // weight is calculated by checkReportEligibility based on user tier / eligibility rules.
-  // Server-authoritative weight validation (firebase-admin) runs in the Express route layer
-  // (apps/api/src/routes/qr.ts) which verifies the Firebase token before calling here.
+  // Server-authoritative weight validation runs in the Express route layer
+  // before calling here.
   const { weight } = await checkReportEligibility(userId, qrId, emailVerified, isChangingReport);
 
   let accountAgeDays = 0;

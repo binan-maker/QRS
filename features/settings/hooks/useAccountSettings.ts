@@ -4,7 +4,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as Haptics from "@/shared/utils/haptics";
 import { router } from "expo-router";
 import { authAdapter } from "@/lib/auth";
-import { deleteUserAccount } from "@/lib/firestore-service";
+import { deleteUserAccount } from "@/lib/data-service";
 
 interface UseAccountSettingsOptions {
   userId: string | undefined;

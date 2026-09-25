@@ -121,7 +121,7 @@ export default function ConsentScrollBody({
 
         <Section label="Trusted Partners" color={sectionBlue}>
           <Body color={bodyText}>
-            BinRo works with trusted infrastructure partners, including Firebase,
+            BinRo works with trusted infrastructure partners, including Supabase,
             to keep the app fast and up to date.
           </Body>
         </Section>

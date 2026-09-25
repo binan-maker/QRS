@@ -19,7 +19,7 @@ import {
   recordScan,
   detectContentType,
   getQrCodeId,
-} from "@/lib/firestore-service";
+} from "@/lib/data-service";
 import { validateQrInput } from "@/services/moderation/profanity-filter";
 import {
   consumeAnonScanSlot,

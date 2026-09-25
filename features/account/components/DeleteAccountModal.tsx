@@ -8,7 +8,7 @@ import { Ionicons } from "@expo/vector-icons";
 import * as Haptics from "@/shared/utils/haptics";
 import { useTheme } from "@/shared/contexts/ThemeContext";
 import { useAuth } from "@/shared/contexts/AuthContext";
-import { deleteUserAccount } from "@/lib/firestore-service";
+import { deleteUserAccount } from "@/lib/data-service";
 import { authAdapter } from "@/lib/auth";
 import BottomSheet from "@/shared/components/ui/BottomSheet";
 

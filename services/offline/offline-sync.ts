@@ -1,5 +1,5 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { toggleFavorite } from "@/lib/firestore-service";
+import { toggleFavorite } from "@/lib/data-service";
 
 const QUEUE_KEY = "offline_pending_favorites";
 

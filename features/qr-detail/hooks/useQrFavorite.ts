@@ -3,7 +3,7 @@ import { router } from "expo-router";
 import { safePush } from "@/shared/utils/navigation";
 import NetInfo from "@react-native-community/netinfo";
 import * as Haptics from "@/shared/utils/haptics";
-import { toggleFavorite } from "@/lib/firestore-service";
+import { toggleFavorite } from "@/lib/data-service";
 import { invalidateQrCache } from "@/services/cache/qr-cache";
 import { queueOfflineFavorite, syncOfflineFavorites } from "@/services/offline/offline-sync";
 

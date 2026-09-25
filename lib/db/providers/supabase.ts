@@ -1,7 +1,7 @@
 // ═══════════════════════════════════════════════════════════════════════════════
 // SUPABASE DB PROVIDER — implements DbAdapter + RealtimeAdapter using Supabase.
 // ───────────────────────────────────────────────────────────────────────────────
-// Replaces lib/db/providers/firebase.ts.
+// Supabase database and realtime adapter.
 // Uses @supabase/supabase-js v2. All field names are converted between
 // camelCase (app layer) and snake_case (Postgres) automatically.
 //
@@ -464,7 +464,7 @@ export const supabaseDb: DbAdapter = {
   },
 };
 
-// ─── RealtimeAdapter (replaces Firebase RTDB) ─────────────────────────────────
+// ─── RealtimeAdapter ──────────────────────────────────────────────────────────
 // RTDB was used for scan velocity and notifications.
 // We use a `rtdb_store` table in Supabase to mirror RTDB key-value behaviour.
 //

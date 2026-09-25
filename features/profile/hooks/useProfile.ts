@@ -11,7 +11,7 @@ import {
   getUserPhotoURL,
   getUsernameData,
   type UserStats,
-} from "@/lib/firestore-service";
+} from "@/lib/data-service";
 import {
   getCachedUserStats,
   setCachedUserStats,

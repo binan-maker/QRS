@@ -5,7 +5,7 @@ import * as Haptics from "@/shared/utils/haptics";
 import {
   addComment,
   softDeleteComment,
-} from "@/lib/firestore-service";
+} from "@/lib/data-service";
 import { queryClient } from "@/lib/query-client";
 import type { CommentItem } from "./comment-types";
 

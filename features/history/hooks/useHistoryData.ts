@@ -8,7 +8,7 @@ import {
   getUserScansPaginated,
   getUserScanStats,
   type ScanStatsResult,
-} from "@/lib/firestore-service";
+} from "@/lib/data-service";
 import { queryClient as globalQueryClient } from "@/lib/query-client";
 import { mergeAndDeduplicateScans } from "@/services/scan-history/dedup";
 import {

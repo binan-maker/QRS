@@ -97,19 +97,6 @@ const STUBBED_PACKAGES = {
   "@ungap/structured-clone":          EMPTY_STUB,
   "@stardazed/streams-text-encoding": EMPTY_STUB,
   "@urql/core":             EMPTY_STUB,
-  // The app uses: firebase/app, auth, firestore, database, storage, app-check.
-  // Analytics, Performance, Messaging, Remote Config are NOT used.
-  "firebase/analytics":        EMPTY_STUB,
-  "firebase/performance":      EMPTY_STUB,
-  "firebase/messaging":        EMPTY_STUB,
-  "firebase/remote-config":    EMPTY_STUB,
-  "firebase/installations":    EMPTY_STUB,
-  "firebase/in-app-messaging": EMPTY_STUB,
-  "@firebase/analytics":        EMPTY_STUB,
-  "@firebase/performance":      EMPTY_STUB,
-  "@firebase/remote-config":    EMPTY_STUB,
-  "@firebase/installations":    EMPTY_STUB,
-  "@firebase/in-app-messaging": EMPTY_STUB,
   // ── Dead-weight JS packages (zero imports in mobile codebase) ─────────────
   // lucide-react-native: 11 MB installed, not imported anywhere in app code.
   "lucide-react-native":    EMPTY_STUB,

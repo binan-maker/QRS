@@ -7,7 +7,7 @@ import { router } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTheme } from "@/shared/contexts/ThemeContext";
 import { formatCompactRelativeTime } from "@/shared/utils/formatters";
-import type { Notification } from "@/lib/firestore-service";
+import type { Notification } from "@/lib/data-service";
 import type { AppColors } from "@/shared/constants/colors";
 
 // ── Module-level helpers (no re-creation on render) ───────────────────────────

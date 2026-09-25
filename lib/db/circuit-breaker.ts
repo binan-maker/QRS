@@ -1,9 +1,9 @@
 // ═══════════════════════════════════════════════════════════════════════════════
 // CIRCUIT BREAKER (P2 SECURITY FIX)
 // ───────────────────────────────────────────────────────────────────────────────
-// Lightweight, dependency-free circuit breaker for Firestore (and any other
+// Lightweight, dependency-free circuit breaker for the data service (and any other
 // remote) calls. Prevents the app from hammering a degraded backend, which
-// would otherwise burn through Firebase quotas and degrade UX further.
+// would otherwise burn through provider quotas and degrade UX further.
 //
 // States:
 //   CLOSED    — normal operation, calls pass through.

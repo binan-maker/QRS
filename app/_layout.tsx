@@ -41,7 +41,7 @@ SplashScreen.preventAutoHideAsync();
 // not completed. Kept here so it is easy to find and tune.
 //
 // Rationale for 1 200 ms:
-//   • Firebase AsyncStorage session restore:  50–400 ms (verified users)
+//   • Supabase AsyncStorage session restore:  50–400 ms (verified users)
 //   • useFonts (assets bundled):              50–200 ms
 //   • startup-prefs / consent:                <20 ms (module-load head-start)
 //   • Worst-case normal path:                ~600 ms
@@ -82,7 +82,7 @@ function SplashGate({ fontsReady, consentReady }: { fontsReady: boolean; consent
       console.log(`[SplashGate] authLoading=false at ${Date.now() - startRef.current} ms`);
     }
     // A cached authenticated identity is already rendered by AuthContext while
-    // Firebase restores the live token. Hide the native splash at once in that
+    // Supabase restores the live token. Hide the native splash at once in that
     // case; otherwise wait for the first auth result to avoid a guest flash.
     if (fontsReady && consentReady && (!authLoading || !!authUser)) {
       hide("all-ready");

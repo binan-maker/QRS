@@ -68,7 +68,7 @@ async function pushNotification(
     // in markAllRead so this is safe to overwrite for the push case.
     // Actual atomic increment is handled by the RTDB security rules or by
     // writing a value relative to existing. Since we cannot use transactions
-    // here without the raw Firebase SDK, we bump the counter via a best-effort
+    // here without a raw provider SDK, we bump the counter via a best-effort
     // approach: client reads counter then sets counter+1.
     // NOTE: this is acknowledged as eventually-consistent for the badge count.
     // The exact unread count is always correct after markAllRead (which resets to 0).

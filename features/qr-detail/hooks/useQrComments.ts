@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback, useRef, useMemo, useLayoutEffect } from "react";
 import { useAuth } from "@/shared/contexts/AuthContext";
-import { getComments } from "@/lib/firestore-service";
+import { getComments } from "@/lib/data-service";
 import * as Haptics from "@/shared/utils/haptics";
 import { type CommentItem, COMMENTS_PER_PAGE, REPLIES_PER_PAGE } from "./comment-types";
 import { mergeWithOptimistic, getAllDescendants, getRootCommentId } from "./comment-list-utils";

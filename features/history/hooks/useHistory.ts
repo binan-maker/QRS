@@ -1,7 +1,7 @@
 import { useState, useCallback, useEffect } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as Haptics from "@/shared/utils/haptics";
-import { deleteUserScan } from "@/lib/firestore-service";
+import { deleteUserScan } from "@/lib/data-service";
 import { invalidateHistoryCache, invalidateHomeScansCache } from "@/services/cache/qr-cache";
 import { useHistoryData } from "@/features/history/hooks/useHistoryData";
 import { toggleFilter } from "@/features/history/utils/filter-utils";

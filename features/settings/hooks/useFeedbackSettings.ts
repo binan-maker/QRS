@@ -2,7 +2,7 @@ import { useState, useCallback } from "react";
 import { Alert } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as Haptics from "@/shared/utils/haptics";
-import { submitFeedback } from "@/lib/firestore-service";
+import { submitFeedback } from "@/lib/data-service";
 
 const STORAGE_KEY = "qrg:feedback:timestamps";
 

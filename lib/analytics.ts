@@ -8,7 +8,7 @@ type EventPayload = Record<string, string | number | boolean | null>;
 
 function logEvent(eventName: string, params: EventPayload = {}): void {
   // Client analytics must be tied to an authenticated Supabase user. Anonymous
-  // writes cannot satisfy Firestore rules and only create noisy permission
+  // writes cannot satisfy database policies and only create noisy permission
   // warnings, so anonymous events are intentionally not persisted here.
   const currentUser = authAdapter.getCurrentUser();
   if (!currentUser) return;

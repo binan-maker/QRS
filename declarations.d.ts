@@ -1,13 +1,6 @@
 declare module 'react-native-gesture-handler';
 declare module 'react-native-reanimated';
 declare module 'react-native-svg';
-declare module 'firebase/auth';
-declare module 'firebase/firestore';
-declare module 'firebase/database';
-declare module 'firebase/storage';
-declare module 'firebase/app';
-declare module 'firebase/analytics';
-declare module 'firebase/app-check';
 declare module 'pg';
 declare module 'expo-file-system';
 

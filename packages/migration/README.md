@@ -1,105 +1,40 @@
-# @binro/migration — Firebase → Supabase Migration
+# Auth-only migration
 
-Complete migration package for moving BinRo from Firebase/Firestore to Supabase/PostgreSQL.
+This package imports legacy authentication users into Supabase Auth. It does
+not migrate application data.
 
-## Structure
+## Required values
 
-```
-packages/migration/
-├── db/
-│   ├── 001_schema.sql      — Full schema (idempotent, safe to re-run)
-│   ├── 002_rls.sql         — Row Level Security policies for every table
-│   ├── 003_triggers.sql    — updated_at triggers + notification TTL cleanup
-│   └── 004_storage.sql     — Supabase Storage buckets + storage RLS
-│   └── 005_runtime.sql     — rtdb_store table + service-role counter RPC
-├── data/
-│   ├── migrate.ts          — Main Firebase → Supabase data migration script
-│   └── migrate-storage.ts  — Firebase Storage → Supabase Storage migration
-└── README.md
+```text
+SUPABASE_URL
+SUPABASE_SERVICE_ROLE_KEY
+FIREBASE_AUTH_EXPORT
 ```
 
-## Prerequisites
+`SUPABASE_SERVICE_ROLE_KEY` is server-only. `FIREBASE_AUTH_EXPORT` points to a
+trusted Firebase Auth export JSON file and should not be committed.
 
-| Secret | Where to get it |
-|---|---|
-| `SUPABASE_URL` | Supabase → Settings → API → Project URL |
-| `SUPABASE_SERVICE_ROLE_KEY` | Supabase → Settings → API → service_role secret |
-| `DATABASE_URL` | Supabase → Settings → Database → Connection string (URI, Session mode, port 5432) |
-| `FIREBASE_SERVICE_ACCOUNT` | Firebase Console → Project Settings → Service Accounts → Generate new private key (paste raw JSON) |
-
-## Step 1 — Apply the Schema
-
-Paste **all four SQL files** into the Supabase SQL Editor in order, or run them via `psql`:
+## Commands
 
 ```bash
-# Using psql (set DATABASE_URL first)
-psql "$DATABASE_URL" -f packages/migration/db/001_schema.sql
-psql "$DATABASE_URL" -f packages/migration/db/002_rls.sql
-psql "$DATABASE_URL" -f packages/migration/db/003_triggers.sql
-psql "$DATABASE_URL" -f packages/migration/db/004_storage.sql
-psql "$DATABASE_URL" -f packages/migration/db/005_runtime.sql
+npm --prefix packages/migration run migrate:dry
+npm --prefix packages/migration run migrate
 ```
 
-All files are **idempotent** — safe to run multiple times.
+The importer:
 
-## Step 2 — Migrate Data from Firebase
+1. reads the local Auth export file
+2. matches existing Supabase Auth users by email
+3. creates or updates only Supabase Auth users
+4. stores name, photo, legacy UID, and provider IDs in Auth metadata
+5. reports email/password accounts that need password recovery
 
-```bash
-# Set required env vars first, then:
-npx tsx packages/migration/data/migrate.ts
-```
+It never connects to Firebase and never touches Firestore, Realtime Database,
+Storage, PostgreSQL application tables, scans, QR records, ownerships,
+profiles, or notifications.
 
-The script is also idempotent — existing rows are skipped on conflict.
-Firebase password hashes are not copied by this script. Migrated email/password
-users must use Supabase password reset, and Google users must complete a
-deliberate OAuth identity re-link. The script records the original provider IDs
-in Supabase user metadata; it does not label every account as Google.
+Firebase password hashes cannot be copied through the Supabase Admin API. Users
+with email/password accounts must set a new password through the Supabase
+recovery flow. Google users must use the configured Supabase Google provider.
 
-### Migration order
-
-1. Firebase Auth users → Supabase Auth + `users` table
-2. `usernames` collection → `usernames` table
-3. `qrCodes` → `qr_codes`
-4. `qrs` → `unified_qrs`
-5. `guardLinks` → `guard_links` + `guard_link_changes`
-6. `standardLinks` → `standard_links`
-7. `businessAccounts` → `business_accounts`
-8. `qrCodes/*/comments` → `qr_comments`
-9. `qrCodes/*/reports` → `qr_reports`
-10. `auditLogs` → `audit_logs`
-11. `moderationQueue` → `moderation_queue`
-12. `verificationRequests` → `verification_requests`
-13. `featureVotes` → `feature_votes`
-14. RTDB `notifications` → `notifications`
-
-## Step 3 — Migrate Storage Files
-
-```bash
-npx tsx packages/migration/data/migrate-storage.ts
-```
-
-Moves Firebase Storage avatar and QR logo files into Supabase Storage buckets.
-
-## Firestore → PostgreSQL Collection Map
-
-| Firestore collection | PostgreSQL table |
-|---|---|
-| `users/{uid}` | `users` |
-| `usernames/{username}` | `usernames` |
-| `qrCodes/{id}` | `qr_codes` |
-| `qrCodes/{id}/comments/{id}` | `qr_comments` |
-| `qrCodes/{id}/reports/{uid}` | `qr_reports` |
-| `qrs/{uuid}` | `unified_qrs` |
-| `guardLinks/{uuid}` | `guard_links` |
-| `guardLinks/{uuid}.changeLog[]` | `guard_link_changes` |
-| `standardLinks/{uuid}` | `standard_links` |
-| `auditLogs/{month}/{id}` | `audit_logs` |
-| `moderationQueue/{id}` | `moderation_queue` |
-| `verificationRequests/{id}` | `verification_requests` |
-| `featureVotes/{key}` | `feature_votes` |
-| `businessAccounts/{uid}` | `business_accounts` |
-| `users/{uid}/generatedQrs/{id}` | `user_generated_qrs` |
-| `users/{uid}/friends/{friendId}` | `user_friends` |
-| RTDB `notifications/{uid}` | `notifications` |
-| RTDB `qrScanVelocity` | *(not migrated — ephemeral rate-limit data)* |
-| RTDB `blockedScans` | *(not migrated — ephemeral fraud-guard data)* |
+See `SUPABASE_MIGRATION_RUNBOOK.md` for the complete operational procedure.

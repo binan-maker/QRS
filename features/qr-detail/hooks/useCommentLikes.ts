@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useMemo, type Dispatch, type SetStateAction } from "react";
 import * as Haptics from "@/shared/utils/haptics";
-import { toggleCommentLike, getCommentUserLikes } from "@/lib/firestore-service";
+import { toggleCommentLike, getCommentUserLikes } from "@/lib/data-service";
 import { router } from "expo-router";
 import type { CommentItem } from "./comment-types";
 

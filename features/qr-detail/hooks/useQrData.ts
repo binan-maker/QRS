@@ -5,7 +5,7 @@ import { getAnonymousQrContent } from "@/services/cache/anonymous-session";
 import {
   loadQrDetail,
   subscribeToQrStats,
-} from "@/lib/firestore-service";
+} from "@/lib/data-service";
 import {
   getCachedQrDetail,
   invalidateQrCache,
