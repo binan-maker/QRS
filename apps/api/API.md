@@ -7,13 +7,15 @@
 
 ## Authentication
 
-All protected endpoints require a Firebase ID token in the `Authorization` header:
+All protected endpoints require a Supabase Auth access token in the `Authorization` header:
 
 ```
-Authorization: Bearer <Firebase_ID_Token>
+Authorization: Bearer <Supabase_Access_Token>
 ```
 
-Tokens are issued by Firebase Authentication and verified server-side via Firebase Admin SDK. Firebase Auth is **not** replaced — it remains the identity layer. The backend only validates the token, never issues its own.
+Tokens are issued by Supabase Auth and verified server-side with
+`supabase.auth.getUser(accessToken)`. Supabase Auth remains the identity layer.
+The backend only validates the token; it never issues its own.
 
 **Error responses for auth failures:**
 
@@ -22,7 +24,7 @@ Tokens are issued by Firebase Authentication and verified server-side via Fireba
 | 401 | `AUTH_REQUIRED` | No Bearer token provided |
 | 401 | `TOKEN_INVALID` | Token expired, revoked, or malformed |
 | 401 | `AUTH_FAILED` | General verification failure |
-| 503 | `SERVICE_UNAVAILABLE` | Firebase Admin SDK not configured |
+| 503 | `SERVICE_UNAVAILABLE` | Supabase server credentials not configured |
 
 ---
 
