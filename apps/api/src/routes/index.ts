@@ -11,11 +11,9 @@
  *   GET    /api/v1/users/:userId                        Public profile
  *   GET    /api/v1/users/me/scans                       Scan history (paginated)
  *
- * Legacy QR codes
- *   PATCH  /api/v1/qr/:qrId/active                     Toggle active/paused
- *   POST   /api/v1/qr/:qrId/report                     Submit/toggle fraud report
+ * QR codes
+ *   GET    /api/v1/qr/:qrId                            Get QR code details
  *   POST   /api/v1/qr/:qrId/comment-count              Increment/decrement counter
- *   POST   /api/v1/qr/validate-vpa                     Validate UPI VPA
  *
  * Comments
  *   GET    /api/v1/qr/:qrId/comments                   List comments (paginated)

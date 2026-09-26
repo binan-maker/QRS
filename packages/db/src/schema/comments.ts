@@ -1,7 +1,6 @@
 /**
  * @binro/db — Comments domain schema
  * Tables: qr_comments, comment_likes, comment_reports
- * Source: qrCodes/{id}/comments/{id} and sub-collections
  */
 
 import { sql } from "drizzle-orm";
@@ -16,23 +15,18 @@ import {
   primaryKey,
 } from "drizzle-orm/pg-core";
 import { users } from "./users";
-import { qrCodes, unifiedQrs } from "./qr-codes";
-
-// ─── QR Comments ─────────────────────────────────────────────────────────────
-// Self-referential parentId supports reply threads.
-// Supports both legacy (qr_code_id) and new (unified_qr_id) QRs.
+import { qrCodes } from "./qr-codes";
 
 export const qrComments = pgTable(
   "qr_comments",
   {
     id: text("id").primaryKey().default(sql`gen_random_uuid()`),
     qrCodeId: text("qr_code_id").references(() => qrCodes.id, { onDelete: "cascade" }),
-    unifiedQrId: text("unified_qr_id").references(() => unifiedQrs.id, { onDelete: "cascade" }),
     userId: text("user_id")
       .notNull()
       .references(() => users.id, { onDelete: "cascade" }),
     userName: text("user_name").notNull(),
-    parentId: text("parent_id"), // self-ref added via ALTER after table creation
+    parentId: text("parent_id"),
     text: text("text").notNull(),
     likes: integer("likes").notNull().default(0),
     reportCount: integer("report_count").notNull().default(0),
@@ -44,14 +38,11 @@ export const qrComments = pgTable(
   },
   (t) => ({
     qrCodeIdx: index("qr_comments_qr_code_id_idx").on(t.qrCodeId),
-    unifiedQrIdx: index("qr_comments_unified_qr_id_idx").on(t.unifiedQrId),
     userIdx: index("qr_comments_user_id_idx").on(t.userId),
     parentIdx: index("qr_comments_parent_id_idx").on(t.parentId),
     createdAtIdx: index("qr_comments_created_at_idx").on(t.createdAt),
   }),
 );
-
-// ─── Comment Likes ────────────────────────────────────────────────────────────
 
 export const commentLikes = pgTable(
   "comment_likes",
@@ -69,8 +60,6 @@ export const commentLikes = pgTable(
     userIdx: index("comment_likes_user_id_idx").on(t.userId),
   }),
 );
-
-// ─── Comment Reports ──────────────────────────────────────────────────────────
 
 export const commentReports = pgTable(
   "comment_reports",
@@ -90,8 +79,6 @@ export const commentReports = pgTable(
     uniq: uniqueIndex("comment_reports_comment_user_uniq").on(t.commentId, t.userId),
   }),
 );
-
-// ─── Inferred Types ───────────────────────────────────────────────────────────
 
 export type QrComment = typeof qrComments.$inferSelect;
 export type NewQrComment = typeof qrComments.$inferInsert;

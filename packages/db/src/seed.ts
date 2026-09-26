@@ -1,15 +1,5 @@
 /**
  * @binro/db — Development seed data
- *
- * Populates a fresh PostgreSQL database with:
- *   - 10 default categories (already in migration 0001)
- *   - Sample users (dev/test only)
- *   - Sample QR codes
- *
- * Usage:
- *   DATABASE_URL=postgres://... npx tsx packages/db/src/seed.ts
- *
- * WARNING: Never run against production.
  */
 
 import { drizzle } from "drizzle-orm/node-postgres";
@@ -33,14 +23,11 @@ async function seed() {
     .insert(schema.categories)
     .values([
       { name: "Payment",    slug: "payment"    },
-      { name: "Business",   slug: "business"   },
-      { name: "Social",     slug: "social"     },
       { name: "Website",    slug: "website"    },
       { name: "Contact",    slug: "contact"    },
       { name: "WiFi",       slug: "wifi"       },
       { name: "Location",   slug: "location"   },
       { name: "Event",      slug: "event"      },
-      { name: "Government", slug: "government" },
       { name: "Other",      slug: "other"      },
     ])
     .onConflictDoNothing();
@@ -62,16 +49,13 @@ async function seed() {
 
   if (devUser) {
     await db
-      .insert(schema.unifiedQrs)
+      .insert(schema.qrCodes)
       .values({
         id: "dev-qr-001",
-        ownerId: devUser.id,
-        ownerName: devUser.displayName,
-        destination: "https://binro.app",
-        rawDestination: "https://binro.app",
+        content: "https://binro.app",
+        displayDestination: "https://binro.app",
         contentType: "url",
-        title: "Sample QR",
-        isDynamic: true,
+        qrType: "qr",
       })
       .onConflictDoNothing();
     console.log("✅ Dev user + sample QR seeded");

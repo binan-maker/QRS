@@ -53,7 +53,7 @@ export default function QrVerificationView({ record }: { record: PublicQrRecord;
         </section>
 
         <section className={styles.destinationCard}>
-          <div className={styles.destinationHeader}><strong>{record.businessName || "manubes.de"}</strong><button type="button" onClick={() => void copyDestination()}><Icon name="copy" size={16} /> {copied ? "Copied" : "Copy"}</button></div>
+          <div className={styles.destinationHeader}><strong>QR Destination</strong><button type="button" onClick={() => void copyDestination()}><Icon name="copy" size={16} /> {copied ? "Copied" : "Copy"}</button></div>
           <div className={styles.urlBox}>{record.displayDestination || record.content}</div>
           {destinationHref ? <a href={destinationHref} target="_blank" rel="noreferrer" className={styles.openButton}>Open <Icon name="external" size={18} /></a> : null}
         </section>

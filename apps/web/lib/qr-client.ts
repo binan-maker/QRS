@@ -1,60 +1,58 @@
-"use client";
-
+import type { Session, User } from "@supabase/supabase-js";
 import { getWebSupabase } from "./supabase";
 
 export type WebQrComment = {
   id: string;
-  userId: string | null;
+  userId: string;
   userName: string;
-  userPhotoURL: string | null;
   text: string;
   parentId: string | null;
   likes: number;
-  dislikes: number;
   isEdited: boolean;
   createdAt: string | null;
+  replies: WebQrComment[];
 };
 
-export type QrCommunitySummary = {
-  reportCounts: Record<string, number>;
-  weightedCounts: Record<string, number>;
-  trustScore: {
-    score: number;
-    label: string;
-    totalReports: number;
-    manipulationWarning?: boolean;
-  };
-  userReport: string | null;
-};
+export type QrForeignKey = { qr_code_id: string };
 
-type QrForeignKey = { qr_code_id: string } | { unified_qr_id: string };
-
-function timestampToString(value: unknown): string | null {
-  if (!value) return null;
-  if (typeof value === "string") return value;
-  if (value instanceof Date) return value.toISOString();
-  const timestamp = value as { toDate?: () => Date; seconds?: number };
-  if (typeof timestamp.toDate === "function") return timestamp.toDate().toISOString();
-  if (typeof timestamp.seconds === "number") return new Date(timestamp.seconds * 1000).toISOString();
-  return null;
-}
-
-function mapComment(row: Record<string, any>): WebQrComment {
+function mapComment(record: Record<string, any>): WebQrComment {
   return {
-    id: String(row.id),
-    userId: typeof row.user_id === "string" ? row.user_id : null,
-    userName: row.user_name ?? "BinRo user",
-    userPhotoURL: row.user_photo_url ?? null,
-    text: row.text ?? "",
-    parentId: row.parent_id ?? null,
-    likes: Number(row.likes ?? 0),
-    dislikes: Number(row.dislikes ?? 0),
-    isEdited: row.is_edited === true,
-    createdAt: timestampToString(row.created_at),
+    id: String(record.id),
+    userId: String(record.user_id ?? record.userId ?? ""),
+    userName: String(record.user_name ?? record.userName ?? "Anonymous"),
+    text: String(record.text ?? ""),
+    parentId: record.parent_id ?? record.parentId ?? null,
+    likes: Number(record.likes ?? 0),
+    isEdited: Boolean(record.is_edited ?? record.isEdited),
+    createdAt: record.created_at ?? record.createdAt ?? null,
+    replies: [],
   };
 }
 
-async function currentSession() {
+export function nestComments(flat: WebQrComment[]): WebQrComment[] {
+  const byId = new Map<string, WebQrComment>();
+  const roots: WebQrComment[] = [];
+
+  for (const comment of flat) {
+    byId.set(comment.id, { ...comment, replies: [] });
+  }
+
+  for (const comment of byId.values()) {
+    if (comment.parentId && byId.has(comment.parentId)) {
+      byId.get(comment.parentId)!.replies.push(comment);
+    } else {
+      roots.push(comment);
+    }
+  }
+
+  roots.sort((a, b) => (b.createdAt ?? "").localeCompare(a.createdAt ?? ""));
+  for (const root of roots) {
+    root.replies.sort((a, b) => (a.createdAt ?? "").localeCompare(b.createdAt ?? ""));
+  }
+  return roots;
+}
+
+export async function currentSession(): Promise<Session> {
   const { data, error } = await getWebSupabase().auth.getSession();
   if (error) throw error;
   if (!data.session?.user || !data.session.access_token) {
@@ -65,28 +63,19 @@ async function currentSession() {
 
 async function resolveQrForeignKey(qrId: string): Promise<QrForeignKey> {
   const supabase = getWebSupabase();
-  const [legacy, unified] = await Promise.all([
-    supabase.from("qr_codes").select("id").eq("id", qrId).maybeSingle(),
-    supabase.from("unified_qrs").select("id").eq("id", qrId).maybeSingle(),
-  ]);
-  if (legacy.error) throw legacy.error;
-  if (unified.error) throw unified.error;
-  if (legacy.data) return { qr_code_id: qrId };
-  if (unified.data) return { unified_qr_id: qrId };
+  const { data, error } = await supabase.from("qr_codes").select("id").eq("id", qrId).maybeSingle();
+  if (error) throw error;
+  if (data) return { qr_code_id: qrId };
   throw new Error("QR code not found.");
 }
 
 async function fetchStats(qrId: string): Promise<{ scanCount: number; commentCount: number }> {
   const supabase = getWebSupabase();
-  const [legacy, unified] = await Promise.all([
-    supabase.from("qr_codes").select("scan_count,comment_count").eq("id", qrId).maybeSingle(),
-    supabase.from("unified_qrs").select("scan_count").eq("id", qrId).maybeSingle(),
-  ]);
-  if (legacy.error) throw legacy.error;
-  if (unified.error) throw unified.error;
+  const { data, error } = await supabase.from("qr_codes").select("scan_count,comment_count").eq("id", qrId).maybeSingle();
+  if (error) throw error;
   return {
-    scanCount: Number(legacy.data?.scan_count ?? unified.data?.scan_count ?? 0),
-    commentCount: Number(legacy.data?.comment_count ?? 0),
+    scanCount: Number(data?.scan_count ?? 0),
+    commentCount: Number(data?.comment_count ?? 0),
   };
 }
 
@@ -94,7 +83,7 @@ async function fetchComments(qrId: string): Promise<WebQrComment[]> {
   const { data, error } = await getWebSupabase()
     .from("qr_comments")
     .select("id,user_id,user_name,text,parent_id,likes,is_edited,created_at,is_deleted")
-    .or(`qr_code_id.eq.${qrId},unified_qr_id.eq.${qrId}`)
+    .eq("qr_code_id", qrId)
     .eq("is_deleted", false)
     .order("created_at", { ascending: false })
     .limit(100);
@@ -137,7 +126,6 @@ export function subscribeToQrStats(
   const channel = supabase
     .channel(`web-qr-stats:${qrId}`)
     .on("postgres_changes", { event: "*", schema: "public", table: "qr_codes", filter: `id=eq.${qrId}` }, refresh)
-    .on("postgres_changes", { event: "*", schema: "public", table: "unified_qrs", filter: `id=eq.${qrId}` }, refresh)
     .subscribe();
 
   return () => {
@@ -150,25 +138,22 @@ export function subscribeToQrStats(
 export function subscribeToQrComments(
   qrId: string,
   onUpdate: (comments: WebQrComment[]) => void,
-  onError?: (error: Error) => void,
 ): () => void {
   let cancelled = false;
   const supabase = getWebSupabase();
   const refresh = () => {
     void fetchComments(qrId)
       .then((comments) => {
-        if (!cancelled) onUpdate(comments);
+        if (!cancelled) onUpdate(nestComments(comments));
       })
-      .catch((error: unknown) => {
-        if (!cancelled) onError?.(error instanceof Error ? error : new Error("Unable to load comments."));
-      });
+      .catch(() => {});
   };
 
   refresh();
   const interval = window.setInterval(refresh, 15_000);
   const channel = supabase
     .channel(`web-qr-comments:${qrId}`)
-    .on("postgres_changes", { event: "*", schema: "public", table: "qr_comments" }, refresh)
+    .on("postgres_changes", { event: "*", schema: "public", table: "qr_comments", filter: `qr_code_id=eq.${qrId}` }, refresh)
     .subscribe();
 
   return () => {
@@ -178,88 +163,116 @@ export function subscribeToQrComments(
   };
 }
 
-export async function addQrComment(qrId: string, text: string): Promise<WebQrComment> {
+export async function addQrComment(
+  qrId: string,
+  text: string,
+  parentId?: string | null,
+): Promise<WebQrComment> {
   const session = await currentSession();
-  const trimmed = text.trim();
-  if (!trimmed) throw new Error("Comment cannot be empty.");
-  if (trimmed.length > 500) throw new Error("Comments must be 500 characters or fewer.");
-
-  const user = session.user;
+  const supabase = getWebSupabase();
   const foreignKey = await resolveQrForeignKey(qrId);
-  const displayName =
-    user.user_metadata?.display_name ??
-    user.user_metadata?.full_name ??
-    user.email?.split("@")[0] ??
-    "BinRo user";
 
-  const { data, error } = await getWebSupabase()
+  const { data: userProfile } = await supabase
+    .from("users")
+    .select("display_name,username")
+    .eq("id", session.user.id)
+    .maybeSingle();
+
+  const userName =
+    userProfile?.display_name ||
+    userProfile?.username ||
+    session.user.user_metadata?.display_name ||
+    session.user.user_metadata?.full_name ||
+    session.user.email?.split("@")[0] ||
+    "Community member";
+
+  const { data, error } = await supabase
     .from("qr_comments")
     .insert({
       ...foreignKey,
-      user_id: user.id,
-      user_name: displayName,
-      text: trimmed,
+      user_id: session.user.id,
+      user_name: userName,
+      text: text.trim(),
+      parent_id: parentId ?? null,
     })
     .select("id,user_id,user_name,text,parent_id,likes,is_edited,created_at")
     .single();
+
   if (error) throw error;
+
+  try {
+    await apiRequest(`/api/v1/qr/${encodeURIComponent(qrId)}/comment-count`, {
+      method: "POST",
+      body: JSON.stringify({ delta: 1 }),
+    });
+  } catch {
+    // Non-blocking
+  }
+
   return mapComment(data as Record<string, any>);
 }
 
-export async function updateQrComment(qrId: string, commentId: string, text: string): Promise<void> {
-  const session = await currentSession();
-  const trimmed = text.trim();
-  if (!trimmed) throw new Error("Comment cannot be empty.");
-  if (trimmed.length > 500) throw new Error("Comments must be 500 characters or fewer.");
-
-  const { error } = await getWebSupabase()
-    .from("qr_comments")
-    .update({ text: trimmed, is_edited: true, updated_at: new Date().toISOString() })
-    .eq("id", commentId)
-    .eq("user_id", session.user.id);
-  if (error) throw error;
-  void qrId;
-}
-
-export async function deleteQrComment(qrId: string, commentId: string): Promise<void> {
-  const session = await currentSession();
-  const { error } = await getWebSupabase()
-    .from("qr_comments")
-    .update({ text: "[deleted]", is_deleted: true, updated_at: new Date().toISOString() })
-    .eq("id", commentId)
-    .eq("user_id", session.user.id);
-  if (error) throw error;
-  void qrId;
-}
-
 export async function toggleQrCommentLike(
-  qrId: string,
   commentId: string,
-  isLike: boolean,
-): Promise<{ liked: boolean; likes: number; dislikes: number }> {
-  void isLike;
-  return apiRequest(`/api/v1/qr/${encodeURIComponent(qrId)}/comments/${encodeURIComponent(commentId)}/like`, {
-    method: "POST",
-  });
-}
+): Promise<{ liked: boolean; likes: number }> {
+  const session = await currentSession();
+  const supabase = getWebSupabase();
 
-export async function fetchQrCommunitySummary(qrId: string): Promise<QrCommunitySummary | null> {
-  try {
-    const response = await fetch(`/api/v1/qr/${encodeURIComponent(qrId)}`, {
-      cache: "no-store",
-      headers: { Accept: "application/json" },
-    });
-    if (!response.ok) return null;
-    const payload = (await response.json()) as { data?: QrCommunitySummary };
-    return payload.data ?? null;
-  } catch {
-    return null;
+  const { data: existing, error: existingError } = await supabase
+    .from("comment_likes")
+    .select("comment_id")
+    .eq("comment_id", commentId)
+    .eq("user_id", session.user.id)
+    .maybeSingle();
+
+  if (existingError) throw existingError;
+
+  if (existing) {
+    const { error: deleteError } = await supabase
+      .from("comment_likes")
+      .delete()
+      .eq("comment_id", commentId)
+      .eq("user_id", session.user.id);
+    if (deleteError) throw deleteError;
+
+    const { data: comment, error: fetchError } = await supabase
+      .from("qr_comments")
+      .select("likes")
+      .eq("id", commentId)
+      .single();
+    if (fetchError) throw fetchError;
+
+    const nextLikes = Math.max(0, Number(comment?.likes ?? 1) - 1);
+    await supabase.from("qr_comments").update({ likes: nextLikes }).eq("id", commentId);
+    return { liked: false, likes: nextLikes };
   }
+
+  const { error: insertError } = await supabase
+    .from("comment_likes")
+    .insert({ comment_id: commentId, user_id: session.user.id });
+  if (insertError) throw insertError;
+
+  const { data: comment, error: fetchError } = await supabase
+    .from("qr_comments")
+    .select("likes")
+    .eq("id", commentId)
+    .single();
+  if (fetchError) throw fetchError;
+
+  const nextLikes = Number(comment?.likes ?? 0) + 1;
+  await supabase.from("qr_comments").update({ likes: nextLikes }).eq("id", commentId);
+  return { liked: true, likes: nextLikes };
 }
 
-export async function submitQrReport(qrId: string, reportType: string): Promise<void> {
-  await apiRequest(`/api/v1/qr/${encodeURIComponent(qrId)}/report`, {
-    method: "POST",
-    body: JSON.stringify({ reportType }),
-  });
+export async function submitQrReport(
+  qrId: string,
+  reportType: string,
+): Promise<{ action: "created" | "updated" | "removed" }> {
+  return apiRequest<{ action: "created" | "updated" | "removed" }>(
+    `/api/v1/qr/${encodeURIComponent(qrId)}/report`,
+    {
+      method: "POST",
+      body: JSON.stringify({ reportType }),
+    },
+  );
 }

@@ -33,10 +33,7 @@ export default async function QrVerificationPage({
       createdAt: null,
       scanCount: 0,
       commentCount: 0,
-      businessName: null,
       displayDestination: null,
-      isActive: true,
-      deactivationMessage: null,
       trust: { score: -1, label: "Unrated", totalReports: 0 },
     };
     record = fallbackRecord;
@@ -50,10 +47,7 @@ export default async function QrVerificationPage({
       createdAt: null,
       scanCount: 1,
       commentCount: 0,
-      businessName: null,
       displayDestination: destination,
-      isActive: true,
-      deactivationMessage: null,
       trust: { score: 95, label: "Verified", totalReports: 0 },
     };
   }

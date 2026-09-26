@@ -17,10 +17,7 @@ export type PublicQrRecord = {
   createdAt: string | null;
   scanCount: number;
   commentCount: number;
-  businessName: string | null;
   displayDestination: string | null;
-  isActive: boolean;
-  deactivationMessage: string | null;
   trust: PublicTrust;
 };
 
@@ -32,8 +29,8 @@ let client: SupabaseClient | null = null;
 
 function getPublicSupabase(): SupabaseClient {
   if (client) return client;
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.EXPO_PUBLIC_SUPABASE_URL;
+  const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY;
   if (!url || !anonKey) {
     throw new Error(
       "Web Supabase is not configured. Add NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY.",
@@ -81,13 +78,8 @@ function toPublicQrRecord(id: string, data: Record<string, any>): PublicQrRecord
     createdAt: asString(data.created_at ?? data.createdAt),
     scanCount: asNumber(data.scan_count ?? data.scanCount),
     commentCount: asNumber(data.comment_count ?? data.commentCount),
-    businessName: asString(data.business_name ?? data.businessName),
     displayDestination: asString(
       data.display_destination ?? data.displayDestination ?? data.destination,
-    ),
-    isActive: data.is_active !== false && data.isActive !== false && data.status !== "inactive",
-    deactivationMessage: asString(
-      data.deactivation_message ?? data.deactivationMessage,
     ),
     trust: publicTrust(data),
   };
@@ -95,29 +87,19 @@ function toPublicQrRecord(id: string, data: Record<string, any>): PublicQrRecord
 
 export async function getPublicQrRecord(qrId: string): Promise<PublicQrRecord | null> {
   try {
-    const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-    const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+    const url = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.EXPO_PUBLIC_SUPABASE_URL;
+    const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY;
     if (!url || !anonKey) {
       return null;
     }
     const supabase = getPublicSupabase();
-    const unified = await supabase
-      .from("unified_qrs")
-      .select("*")
-      .eq("id", qrId)
-      .maybeSingle();
-    if (unified.error && unified.error.code !== "PGRST116") throw unified.error;
-    if (unified.data) return toPublicQrRecord(qrId, unified.data as Record<string, any>);
-
-    const legacy = await supabase
+    const { data, error } = await supabase
       .from("qr_codes")
       .select("*")
       .eq("id", qrId)
       .maybeSingle();
-    if (legacy.error && legacy.error.code !== "PGRST116") throw legacy.error;
-    return legacy.data
-      ? toPublicQrRecord(qrId, legacy.data as Record<string, any>)
-      : null;
+    if (error && error.code !== "PGRST116") throw error;
+    return data ? toPublicQrRecord(qrId, data as Record<string, any>) : null;
   } catch (error) {
     console.warn("[BinRo] Supabase query failed, falling back to local analysis:", error);
     return null;

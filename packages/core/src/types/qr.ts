@@ -10,10 +10,6 @@ export interface QrCode {
   createdBy?: string;
   scanCount?: number;
   isActive?: boolean;
-  bgColor?: string;
-  fgColor?: string;
-  businessName?: string;
-  slug?: string;
 }
 
 export interface QrScanResult {

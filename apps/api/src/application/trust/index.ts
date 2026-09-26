@@ -4,7 +4,7 @@
 
 import type { QrReport } from "@binro/db";
 import type { ITrustRepository } from "../../domain/trust";
-import type { IQrCodeRepository } from "../../domain/qr";
+import type { IQrCodeRepository } from "../../infrastructure/persistence";
 import { computeTrustScore, type TrustScore } from "../../domain/trust";
 import { QrNotFoundError } from "@binro/core";
 

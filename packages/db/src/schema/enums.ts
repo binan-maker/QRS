@@ -1,39 +1,11 @@
 /**
- * @binro/db — PostgreSQL enums
- * All pgEnum definitions, imported by every domain schema file.
+ * @binro/db — Schema types
+ * Plain string types instead of custom PostgreSQL enums.
  */
 
-import { pgEnum } from "drizzle-orm/pg-core";
-
-export const qrTypeEnum = pgEnum("qr_type", [
-  "individual",
-  "business",
-  "government",
-]);
-
-export const unifiedQrStatusEnum = pgEnum("unified_qr_status", [
-  "active",
-  "inactive",
-  "expired",
-  "limit_reached",
-]);
-
-export const scanSourceEnum = pgEnum("scan_source", [
-  "camera",
-  "gallery",
-  "viewed",
-]);
-
-export const platformEnum = pgEnum("platform", [
-  "android",
-  "ios",
-  "web",
-  "unknown",
-]);
-
-export const scanVerdictEnum = pgEnum("scan_verdict", [
-  "safe",
-  "flagged",
-  "unknown",
-]);
+export type QrType = "qr" | "standard" | string;
+export type UnifiedQrStatus = "active" | "inactive" | "expired" | "limit_reached" | string;
+export type ScanSource = "camera" | "gallery" | "viewed" | string;
+export type PlatformType = "android" | "ios" | "web" | "unknown" | string;
+export type ScanVerdict = "safe" | "flagged" | "unknown" | string;
 

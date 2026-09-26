@@ -85,16 +85,15 @@ const COLLECTION_TABLE: Record<string, string> = {
   // Community-safe subset of users (no email / consent).
   // Use for reads about OTHER users; use "users" only for own-row reads.
   publicProfiles: "public_profiles",
-  standardLinks: "standard_links",
+  standardLinks: "qr_codes",
   qrCodes: "qr_codes",
-  qrs: "unified_qrs",
+  qrs: "qr_codes",
   comments: "qr_comments",
   likes: "comment_likes",
   commentReports: "comment_reports",
   scans: "qr_scans",
   events: "qr_scans",
   scanVelocity: "rtdb_store",
-  generatedQrs: "user_generated_qrs",
   favorites: "user_favorites",
   notifications: "notifications",
   featureVotes: "feature_votes",
@@ -114,14 +113,13 @@ function collectionToTable(name: string): string {
 
 const SUB_FK: Record<string, { table: string; fk: string }> = {
   "qrCodes.reports": { table: "qr_reports", fk: "qr_code_id" },
-  "qrs.reports": { table: "qr_reports", fk: "unified_qr_id" },
+  "qrs.reports": { table: "qr_reports", fk: "qr_code_id" },
   "qrCodes.comments": { table: "qr_comments", fk: "qr_code_id" },
-  "qrs.comments": { table: "qr_comments", fk: "unified_qr_id" },
+  "qrs.comments": { table: "qr_comments", fk: "qr_code_id" },
   "qrCodes.events": { table: "qr_scans", fk: "qr_code_id" },
-  "qrs.events": { table: "qr_scans", fk: "unified_qr_id" },
+  "qrs.events": { table: "qr_scans", fk: "qr_code_id" },
   "users.scans": { table: "qr_scans", fk: "user_id" },
   "users.comments": { table: "qr_comments", fk: "user_id" },
-  "users.generatedQrs": { table: "user_generated_qrs", fk: "user_id" },
   "users.favorites": { table: "user_favorites", fk: "user_id" },
   "users.notifications": { table: "notifications", fk: "user_id" },
 };

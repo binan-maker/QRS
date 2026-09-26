@@ -1,7 +1,6 @@
 /**
  * @binro/db — Reports & Audit domain schema
  * Tables: qr_reports, audit_logs
- * Source: qrCodes/{id}/reports/{userId}, auditLogs/{month}/{id}
  */
 
 import { sql } from "drizzle-orm";
@@ -17,21 +16,19 @@ import {
   uniqueIndex,
 } from "drizzle-orm/pg-core";
 import { users } from "./users";
-
-// ─── QR Trust Reports ─────────────────────────────────────────────────────────
-// One row per (qr, user) pair. user_removed=true means the user withdrew their report.
+import { qrCodes } from "./qr-codes";
 
 export const qrReports = pgTable(
   "qr_reports",
   {
     id: text("id").primaryKey().default(sql`gen_random_uuid()`),
-    qrCodeId: text("qr_code_id"),
-    unifiedQrId: text("unified_qr_id"),
+    qrCodeId: text("qr_code_id")
+      .notNull()
+      .references(() => qrCodes.id, { onDelete: "cascade" }),
     userId: text("user_id")
       .notNull()
       .references(() => users.id, { onDelete: "cascade" }),
     reportType: text("report_type").notNull(),
-    /** Server-authoritative vote weight (0.01–2.0). */
     weight: real("weight").notNull().default(0.1),
     accountAgeDays: integer("account_age_days").notNull().default(0),
     emailVerified: boolean("email_verified").notNull().default(false),
@@ -42,14 +39,10 @@ export const qrReports = pgTable(
   },
   (t) => ({
     qrCodeUserUniq: uniqueIndex("qr_reports_qr_code_user_uniq").on(t.qrCodeId, t.userId),
-    unifiedQrUserUniq: uniqueIndex("qr_reports_unified_qr_user_uniq").on(t.unifiedQrId, t.userId),
     qrCodeIdx: index("qr_reports_qr_code_id_idx").on(t.qrCodeId),
-    unifiedQrIdx: index("qr_reports_unified_qr_id_idx").on(t.unifiedQrId),
     userIdx: index("qr_reports_user_id_idx").on(t.userId),
   }),
 );
-
-// ─── Audit Logs ───────────────────────────────────────────────────────────────
 
 export const auditLogs = pgTable(
   "audit_logs",
@@ -71,8 +64,6 @@ export const auditLogs = pgTable(
     createdAtIdx: index("audit_logs_created_at_idx").on(t.createdAt),
   }),
 );
-
-// ─── Inferred Types ───────────────────────────────────────────────────────────
 
 export type QrReport = typeof qrReports.$inferSelect;
 export type NewQrReport = typeof qrReports.$inferInsert;

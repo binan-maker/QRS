@@ -13,14 +13,13 @@ const TABLES: Record<string, string> = {
   usernames: "usernames",
   publicProfiles: "public_profiles",
   qrCodes: "qr_codes",
-  qrs: "unified_qrs",
+  qrs: "qr_codes",
   comments: "qr_comments",
   reports: "qr_reports",
   likes: "comment_likes",
   notifications: "notifications",
   scans: "qr_scans",
   events: "qr_scans",
-  generatedQrs: "user_generated_qrs",
   favorites: "user_favorites",
   feedback: "feedback",
   bugReports: "feedback",
@@ -61,7 +60,7 @@ function resolvePath(path: string[]): AdminPath {
   if (path.length === 1) return { table: TABLES[root] ?? toSnake(root), filters: {} };
   if (path.length === 2) return { table: TABLES[root] ?? toSnake(root), id: rootId, filters: {} };
 
-  const qrFk = root === "qrs" ? "unified_qr_id" : "qr_code_id";
+  const qrFk = "qr_code_id";
   if (root === "qrCodes" || root === "qrs") {
     if (sub === "comments") {
       if (nested === "likes") {
@@ -80,7 +79,6 @@ function resolvePath(path: string[]): AdminPath {
     if (sub === "scans") return { table: "qr_scans", id: subId, filters: { user_id: rootId! } };
     if (sub === "comments") return { table: "qr_comments", id: subId, filters: { user_id: rootId! } };
     if (sub === "notifications") return { table: "notifications", id: subId, filters: { user_id: rootId! } };
-    if (sub === "generatedQrs") return { table: "user_generated_qrs", id: subId, filters: { user_id: rootId! } };
     if (sub === "favorites") return { table: "user_favorites", id: subId, filters: { user_id: rootId! } };
   }
 
