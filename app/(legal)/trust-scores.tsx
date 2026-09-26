@@ -1,1 +1,1 @@
-export { default } from "@/features/legal/TrustScoresScreen";
+export { TrustScoresScreen as default } from "@/features/legal";

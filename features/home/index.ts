@@ -1,4 +1,5 @@
 export { default as HomeScreen }  from "./HomeScreen";
+export { default }                from "./HomeScreen";
 export { useHome }                from "./hooks/useHome";
 export { useRecentScans }         from "./hooks/useRecentScans";
 export { usePulseAnimation }      from "./hooks/usePulseAnimation";

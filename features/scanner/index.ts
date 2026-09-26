@@ -1,4 +1,5 @@
 export { default as ScannerScreen } from "./ScannerScreen";
+export { default }                  from "./ScannerScreen";
 export { useScanner }               from "./hooks/useScanner";
 
 // Components — re-export from the barrel for external consumers

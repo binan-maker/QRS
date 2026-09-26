@@ -1,1 +1,1 @@
-export { default } from "@/features/legal/HowItWorksScreen";
+export { HowItWorksScreen as default } from "@/features/legal";

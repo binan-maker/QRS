@@ -1,5 +1,5 @@
 import { Redirect, useLocalSearchParams } from "expo-router";
-import StaticQrDetailScreen from "@/features/qr-detail/static/StaticQrDetailScreen";
+import { QrDetailScreen } from "@/features/qr-detail";
 import { decodeQrShareCode } from "@/shared/utils/qr-share";
 
 export default function SharedQrDetailRoute() {
@@ -8,5 +8,5 @@ export default function SharedQrDetailRoute() {
   const qrId = shareCode ? decodeQrShareCode(shareCode) : null;
 
   if (!qrId) return <Redirect href="/" />;
-  return <StaticQrDetailScreen id={qrId} />;
+  return <QrDetailScreen id={qrId} />;
 }

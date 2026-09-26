@@ -2,15 +2,12 @@
 // Centralized validation for scan records and scan-related inputs.
 
 import { ValidationError } from "@/lib/errors";
+import type { FieldValidation } from "./types";
+export type { FieldValidation };
 
 // ── Content length ─────────────────────────────────────────────────────────────
 
 const MAX_SCAN_CONTENT_LENGTH = 4_096; // QR codes cap at ~4KB
-
-export interface FieldValidation {
-  valid: boolean;
-  error?: string;
-}
 
 /**
  * Validate raw QR content before recording a scan.

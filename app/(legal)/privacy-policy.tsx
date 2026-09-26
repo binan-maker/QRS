@@ -1,1 +1,1 @@
-export { default } from "@/features/legal/PrivacyPolicyScreen";
+export { PrivacyPolicyScreen as default } from "@/features/legal";

@@ -1,10 +1,10 @@
 export { useSettings } from "./hooks/useSettings";
-export { makeSettingsStyles } from "./styles";
+export { makeSettingsStyles, privacySettingsStyles } from "./styles";
 export { SECTION_TITLES, THEME_OPTIONS, type ThemeMode } from "./constants";
-export { privacySettingsStyles } from "./privacySettingsStyles";
 
 export { default as SettingsScreen } from "./SettingsScreen";
 export { default as PrivacySettingsScreen } from "./PrivacySettingsScreen";
+export { default } from "./SettingsScreen";
 
 export { default as AccountSection } from "./components/AccountSection";
 export { default as ProfileSettingsSection } from "./components/ProfileSettingsSection";

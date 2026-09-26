@@ -72,7 +72,7 @@ export async function createUnifiedQr(params: {
     params.expiryDate != null ||
     params.expiryPreset != null
   ) {
-    throw new Error("Only static individual QR codes are supported.");
+    throw new Error("Only individual QR codes are supported.");
   }
 
   await db.set(["qrs", params.id], {
@@ -142,7 +142,7 @@ export async function updateUnifiedQrDestination(
 ): Promise<void> {
   void id;
   void newDestination;
-  throw new Error("Static QR codes cannot change their destination.");
+  throw new Error("QR codes cannot change their destination.");
 }
 
 export async function setUnifiedQrStatus(

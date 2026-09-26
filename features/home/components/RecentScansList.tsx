@@ -5,11 +5,13 @@ import { Ionicons } from "@expo/vector-icons";
 import * as Haptics from "@/shared/utils/haptics";
 import { useTheme } from "@/shared/contexts/ThemeContext";
 import { useScaleFns } from "@/shared/hooks/useScaleFns";
-import HistoryItem from "@/features/history/components/HistoryItem";
-import HistoryItemSkeleton from "@/features/history/components/HistoryItemSkeleton";
+import {
+  HistoryItem,
+  HistoryItemSkeleton,
+  type HistoryItemType,
+} from "@/features/history";
 import { EmptyScans } from "@/features/home/components/EmptyScans";
 import type { LocalScan } from "@/features/home/types";
-import type { HistoryItem as HistoryItemType } from "@/features/history/types";
 
 interface Props {
   recentScans: LocalScan[];
@@ -35,7 +37,7 @@ export function RecentScansList({ recentScans, isLoading, onDelete }: Props) {
   );
 
   return (
-    // Keep the home list static so the cards are visible as soon as data is
+    // Keep the home list immediate so the cards are visible as soon as data is
     // ready; the cached/local data path already provides the fast experience.
     <View>
       {/* ── Section header ────────────────────────────────────────────────── */}

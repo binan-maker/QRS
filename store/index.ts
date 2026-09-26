@@ -1,14 +1,12 @@
 // ═══════════════════════════════════════════════════════════════════════════════
-// VALIDATORS (ROOT BARREL)
+// GLOBAL STORES (BARREL EXPORT)
 // ───────────────────────────────────────────────────────────────────────────────
-// Centralized input validation for authentication, profiles, scans, and settings.
-//
-// Usage:
-//   import { validateEmail, validateUsername, validateScanContent } from "@/validators";
+// Zustand stores for global state management:
+// - authStore: Mirrors active authentication state & provides fine-grained selectors
+// - notificationStore: Manages unread notification counter & badges
+// - uiStore: Controls global loading indicators, modals, and toasts
 // ═══════════════════════════════════════════════════════════════════════════════
 
-export * from "./types";
-export * from "./auth.validator";
-export * from "./user.validator";
-export * from "./settings.validator";
-export * from "./scan.validator";
+export * from "./authStore";
+export * from "./notificationStore";
+export * from "./uiStore";

@@ -19,46 +19,12 @@ const EFFECTIVE_DATE = "April 8, 2026";
 const CONTACT_EMAIL = "ahmedsameerbinan2@gmail.com";
 const APP_NAME = "BinRo";
 
-function SectionCard({ title, num, children, colors }: { title: string; num: string; children: ReactNode; colors: AppColors }) {
-  return (
-    <View style={[styles.sectionCard, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
-      <View style={styles.sectionHeader}>
-        <View style={[styles.sectionNum, { backgroundColor: colors.primaryDim }]}>
-          <Text style={[styles.sectionNumText, { color: colors.primary }]}>{num}</Text>
-        </View>
-        <Text style={[styles.sectionTitle, { color: colors.text }]}>{title}</Text>
-      </View>
-      {children}
-    </View>
-  );
-}
-
-function Para({ children, colors }: { children: ReactNode; colors: AppColors }) {
-  return <Text style={[styles.para, { color: colors.textSecondary }]}>{children}</Text>;
-}
-
-function Bullet({ text, colors }: { text: string; colors: AppColors }) {
-  return (
-    <View style={styles.bulletRow}>
-      <LinearGradient
-        colors={[colors.primary, colors.accent]}
-        style={styles.bulletDot}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-      />
-      <Text style={[styles.bulletText, { color: colors.textSecondary }]}>{text}</Text>
-    </View>
-  );
-}
-
-function WarnBox({ text, colors }: { text: string; colors: AppColors }) {
-  return (
-    <View style={[styles.warningBox, { backgroundColor: colors.warningDim, borderColor: colors.warning + "35" }]}>
-      <Ionicons name="warning" size={15} color={colors.warning} />
-      <Text style={[styles.warningText, { color: colors.warning }]}>{text}</Text>
-    </View>
-  );
-}
+import {
+  LegalSectionCard as SectionCard,
+  LegalPara as Para,
+  LegalBullet as Bullet,
+  LegalWarningBox as WarnBox,
+} from "./components/LegalComponents";
 
 export default function TermsScreen() {
   const { colors } = useTheme();
@@ -127,7 +93,7 @@ export default function TermsScreen() {
           <Bullet text="QR code scanning via device camera and gallery image upload" colors={colors} />
           <Bullet text="AI-assisted and community-powered QR code safety analysis and scoring" colors={colors} />
           <Bullet text="User-submitted safety reports, community commentary, and trust voting" colors={colors} />
-          <Bullet text="Static individual QR code generation with content encoded directly in each code" colors={colors} />
+          <Bullet text="Individual QR code generation with content encoded directly in each code" colors={colors} />
           <Bullet text="Threat intelligence database powered by aggregated community scan data" colors={colors} />
           <Para colors={colors}>
             The Service is provided for informational and protective purposes. Nothing in the App constitutes professional cybersecurity, financial, legal, or expert advice.
@@ -245,10 +211,10 @@ export default function TermsScreen() {
 
         <SectionCard title="Living Shield QR Codes" num="11" colors={colors}>
           <Para colors={colors}>
-            QR code creators are solely responsible for the content encoded in their static QR codes.
+            QR code creators are solely responsible for the content encoded in their QR codes.
           </Para>
           <Para colors={colors}>
-            Misuse of static QR codes to direct victims to malicious, fraudulent, or harmful destinations constitutes a material breach of these Terms and may be reported to law enforcement. BinRo reserves the right to deactivate any QR code at any time if it is found to be used maliciously.
+            Misuse of QR codes to direct victims to malicious, fraudulent, or harmful destinations constitutes a material breach of these Terms and may be reported to law enforcement. BinRo reserves the right to deactivate any QR code at any time if it is found to be used maliciously.
           </Para>
         </SectionCard>
 

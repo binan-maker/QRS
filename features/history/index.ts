@@ -1,5 +1,6 @@
 // ─── History Feature Public API ────────────────────────────────────────────────
 export { default as HistoryScreen }      from "./HistoryScreen";
+export { default }                       from "./HistoryScreen";
 
 // Hooks
 export { useHistory }                    from "./hooks/useHistory";

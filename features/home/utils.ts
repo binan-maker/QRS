@@ -1,3 +1,5 @@
+import { formatFirstName } from "@/shared/utils/formatters/names";
+
 export function getFirstName(name: string): string {
-  return name ? name.trim().split(/\s+/)[0] : "";
+  return formatFirstName(name);
 }

@@ -1,18 +1,8 @@
-export interface CommentItem {
-  id: string;
-  text: string;
-  createdAt: string;
-  likeCount: number;
-  dislikeCount: number;
-  userLike: "like" | "dislike" | null;
-  user: { displayName: string };
-  parentId?: string | null;
-  userId?: string;
-  isDeleted?: boolean;
-  reportCount?: number;
-  userUsername?: string;
-  userPhotoURL?: string;
-}
+export {
+  type CommentItem,
+} from "../types";
 
-export const COMMENTS_PER_PAGE = 20;
-export const REPLIES_PER_PAGE = 10;
+export {
+  COMMENTS_PER_PAGE,
+  REPLIES_PER_PAGE,
+} from "../constants";

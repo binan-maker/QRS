@@ -12,7 +12,7 @@ import { useLocalSearchParams, router } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { useTheme } from "@/shared/contexts/ThemeContext";
-import { usePublicProfile } from "@/features/profile/hooks/usePublicProfile";
+import { usePublicProfile } from "@/features/profile";
 import { formatCompactNumber } from "@/shared/utils/formatters";
 
 export default function PublicProfileScreen() {

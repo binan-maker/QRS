@@ -12,7 +12,7 @@ import Animated, {
 import { formatCompactNumber } from "@/shared/utils/formatters";
 import { useTheme } from "@/shared/contexts/ThemeContext";
 import { REPORT_TYPES } from "@/features/qr-detail/data/reportTypes";
-import { styles } from "./trust-score-card-styles";
+import { styles } from "@/features/qr-detail/styles/trust-score-card";
 
 interface TrustInfo {
   score: number;

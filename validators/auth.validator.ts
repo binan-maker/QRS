@@ -4,13 +4,10 @@
 
 import { ValidationError } from "@/lib/errors";
 import { validateEmail as _validateEmailFull } from "@/shared/utils/email-validator";
+import type { EmailValidation, PasswordValidation } from "./types";
+export type { EmailValidation, PasswordValidation };
 
 // ── Email ─────────────────────────────────────────────────────────────────────
-
-export interface EmailValidation {
-  valid: boolean;
-  error?: string;
-}
 
 /**
  * Validates an email address.
@@ -34,11 +31,6 @@ export function assertEmail(email: string): void {
 // ── Password ──────────────────────────────────────────────────────────────────
 
 const PASSWORD_MIN_LENGTH = 6;
-
-export interface PasswordValidation {
-  valid: boolean;
-  error?: string;
-}
 
 export function validatePassword(password: string): PasswordValidation {
   if (!password) return { valid: false, error: "Password is required" };

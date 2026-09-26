@@ -37,7 +37,7 @@ function HomeScreen() {
         }
       >
         {/*
-         * Keep the first home render static. The data cache and local history
+         * Keep the first home render immediate. The data cache and local history
          * already provide the fast path; an entrance animation only delays
          * useful content and adds work when returning from the background.
          */}

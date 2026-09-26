@@ -1,14 +1,15 @@
 // ═══════════════════════════════════════════════════════════════════════════════
-// VALIDATORS (ROOT BARREL)
+// VALIDATOR TYPES — Common validation result interfaces
 // ───────────────────────────────────────────────────────────────────────────────
-// Centralized input validation for authentication, profiles, scans, and settings.
-//
-// Usage:
-//   import { validateEmail, validateUsername, validateScanContent } from "@/validators";
+// Reusable validation result structure used across all validator modules.
 // ═══════════════════════════════════════════════════════════════════════════════
 
-export * from "./types";
-export * from "./auth.validator";
-export * from "./user.validator";
-export * from "./settings.validator";
-export * from "./scan.validator";
+export interface ValidationResult {
+  valid: boolean;
+  error?: string;
+}
+
+// Aliases for contextual clarity while sharing the same underlying shape
+export type FieldValidation = ValidationResult;
+export type EmailValidation = ValidationResult;
+export type PasswordValidation = ValidationResult;

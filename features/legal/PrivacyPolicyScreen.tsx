@@ -19,55 +19,13 @@ const EFFECTIVE_DATE = "April 8, 2026";
 const CONTACT_EMAIL = "ahmedsameerbinan2@gmail.com";
 const LEGAL_EMAIL = "ahmedsameerbinan2@gmail.com";
 
-function SectionCard({ title, num, icon, children, colors }: { title: string; num: string; icon?: string; children: ReactNode; colors: AppColors }) {
-  return (
-    <View style={[styles.sectionCard, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
-      <View style={styles.sectionHeader}>
-        <View style={[styles.sectionNum, { backgroundColor: colors.primaryDim }]}>
-          <Text style={[styles.sectionNumText, { color: colors.primary }]}>{num}</Text>
-        </View>
-        {icon && (
-          <View style={[styles.sectionIcon, { backgroundColor: colors.surfaceLight }]}>
-            <Ionicons name={icon as any} size={15} color={colors.textSecondary} />
-          </View>
-        )}
-        <Text style={[styles.sectionTitle, { color: colors.text }]}>{title}</Text>
-      </View>
-      {children}
-    </View>
-  );
-}
-
-function WarningBox({ text, colors }: { text: string; colors: AppColors }) {
-  return (
-    <View style={[styles.warningBox, { backgroundColor: colors.warningDim, borderColor: colors.warning + "35" }]}>
-      <Ionicons name="warning" size={15} color={colors.warning} />
-      <Text style={[styles.warningText, { color: colors.warning }]}>{text}</Text>
-    </View>
-  );
-}
-
-function Para({ children, colors }: { children: ReactNode; colors: AppColors }) {
-  return <Text style={[styles.para, { color: colors.textSecondary }]}>{children}</Text>;
-}
-
-function SubHead({ text, colors }: { text: string; colors: AppColors }) {
-  return <Text style={[styles.subhead, { color: colors.text }]}>{text}</Text>;
-}
-
-function Bullet({ text, colors }: { text: string; colors: AppColors }) {
-  return (
-    <View style={styles.bulletRow}>
-      <LinearGradient
-        colors={[colors.primary, colors.accent]}
-        style={styles.bulletDot}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-      />
-      <Text style={[styles.bulletText, { color: colors.textSecondary }]}>{text}</Text>
-    </View>
-  );
-}
+import {
+  LegalSectionCard as SectionCard,
+  LegalWarningBox as WarningBox,
+  LegalPara as Para,
+  LegalSubHead as SubHead,
+  LegalBullet as Bullet,
+} from "./components/LegalComponents";
 
 export default function PrivacyPolicyScreen() {
   const { colors } = useTheme();

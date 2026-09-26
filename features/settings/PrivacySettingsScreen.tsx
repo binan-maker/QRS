@@ -20,7 +20,7 @@ import {
   invalidatePrivacyCache,
 } from "@/services/cache/qr-cache";
 import PrivacyToggleRow from "@/features/settings/components/PrivacyToggleRow";
-import { privacySettingsStyles as styles } from "@/features/settings/privacySettingsStyles";
+import { privacySettingsStyles as styles } from "@/features/settings/styles";
 
 const VISIBILITY_KEYS: Array<keyof PrivacySettings> = [
   "showStats", "showScanActivity", "showRanking", "showActivity",

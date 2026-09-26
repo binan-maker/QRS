@@ -40,8 +40,6 @@ export function useQrDetail(id: string, hint?: { content: string; contentType: s
   const { user } = useAuth();
   const { colors } = useTheme();
   const userId = user?.id ?? null;
-  const [copied, setCopied] = useState(false);
-  const copiedTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const data = useQrData(id, userId, hint);
   const content = data.qrCode?.content || data.offlineContent;
@@ -61,10 +59,7 @@ export function useQrDetail(id: string, hint?: { content: string; contentType: s
     !data.loading &&
     reports.reportsReady;
 
-  // ── Trust / verdict ──────────────────────────────────────────────────────────
-  // Memoized so child components receiving these as props don't re-render
-  // when unrelated state changes (e.g. copied, toastState, scroll position).
-
+  // ── Trust score ─────────────────────────────────────────────────────────────
   const trustInfo = useMemo(() => {
     const { trustScore, reportCounts } = reports;
     if (trustScore && trustScore.score >= 0) {
@@ -88,34 +83,6 @@ export function useQrDetail(id: string, hint?: { content: string; contentType: s
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [reports.trustScore, reports.reportCounts, colors]);
 
-  const combinedVerdict = useMemo(() => {
-    const trust = trustInfo;
-
-    const isCommunityAvailable = trust.score >= 0;
-
-    if (isCommunityAvailable) {
-      if (trust.label === "Trusted" || trust.label === "Likely Safe") {
-        return { level: "safe" as const, label: "COMMUNITY TRUSTED", reason: `${Math.round(trust.score)}% community trust`, color: colors.safe };
-      }
-      if (trust.label === "Caution" || trust.label === "Uncertain") {
-        return { level: "caution" as const, label: "CAUTION", reason: "Mixed community reports", color: colors.warning };
-      }
-      if (trust.label === "Dangerous" || trust.label === "Suspicious") {
-        return { level: "caution" as const, label: "CAUTION ADVISED", reason: "Low community trust score", color: colors.warning };
-      }
-    }
-
-    return { level: "caution" as const, label: "UNRATED", reason: "No community ratings yet", color: colors.textMuted };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [
-    trustInfo,
-    colors,
-  ]);
-
-  // Stable function wrappers keep the verdict API compatible with detail sections.
-  const getTrustInfo = useCallback(() => trustInfo, [trustInfo]);
-  const getCombinedVerdict = useCallback(() => combinedVerdict, [combinedVerdict]);
-
   // ── Other handlers ───────────────────────────────────────────────────────────
 
   const handleOpenContent = useCallback(async () => {
@@ -128,23 +95,11 @@ export function useQrDetail(id: string, hint?: { content: string; contentType: s
         (parsedPayment?.recipientId?.includes("@") ? parsedPayment.recipientId : null) ||
         content;
       await Clipboard.setStringAsync(copyValue);
-      if (copiedTimerRef.current) clearTimeout(copiedTimerRef.current);
-      setCopied(true);
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      copiedTimerRef.current = setTimeout(() => setCopied(false), 2000);
       return;
     }
     await smartOpenContent(content, contentType, data.qrCode?.templateKey ?? undefined);
   }, [content, contentType, parsedPayment, data.qrCode?.templateKey]);
-
-  const handleCopyContent = useCallback(async () => {
-    if (!content) return;
-    await Clipboard.setStringAsync(content);
-    if (copiedTimerRef.current) clearTimeout(copiedTimerRef.current);
-    setCopied(true);
-    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-    copiedTimerRef.current = setTimeout(() => setCopied(false), 2000);
-  }, [content]);
 
   const handleSubmitComment = useCallback(() => {
     return comments.handleSubmitComment();
@@ -157,13 +112,8 @@ export function useQrDetail(id: string, hint?: { content: string; contentType: s
     ...reports,
     ...comments,
     initialDataReady,
-    copied,
     trustInfo,
-    combinedVerdict,
-    getTrustInfo,
-    getCombinedVerdict,
     handleOpenContent,
-    handleCopyContent,
     handleSubmitComment,
   };
 }

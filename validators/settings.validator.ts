@@ -2,11 +2,8 @@
 // Validation for user settings updates.
 
 import { ValidationError } from "@/lib/errors";
-
-export interface FieldValidation {
-  valid: boolean;
-  error?: string;
-}
+import type { FieldValidation } from "./types";
+export type { FieldValidation };
 
 export type AppTheme = "light" | "dark" | "system";
 export type AppLanguage = string; // ISO 639-1

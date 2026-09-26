@@ -10,13 +10,10 @@ import {
   USERNAME_REGEX,
   MAX_DISPLAY_NAME_LENGTH,
 } from "@/shared/constants/config";
+import type { FieldValidation } from "./types";
+export type { FieldValidation };
 
 // ── Username ──────────────────────────────────────────────────────────────────
-
-export interface FieldValidation {
-  valid: boolean;
-  error?: string;
-}
 
 export function validateUsername(username: string): FieldValidation {
   const trimmed = username.trim().toLowerCase();
