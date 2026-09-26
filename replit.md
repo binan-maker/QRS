@@ -21,6 +21,10 @@ India-focused QR code security app with real-time fraud detection, community tru
 | Start Backend | `npm run server:dev` → backend service |
 | Start Frontend | `npm run web:dev` → Next.js website on port 5000 |
 
+The complete consumer page map, Supabase data model, auth/scan/community
+flows, RLS rules, Storage and Realtime setup, and publish checklist are in
+`SUPABASE_PRODUCT_PLAN.md`.
+
 ## Website surface
 
 The Next.js website contains the BinRo home, full-screen scanner, public QR
@@ -66,3 +70,8 @@ Firebase data.
 Enable Email/Password and Google providers in Supabase Auth, configure the
 redirect URLs for the web and mobile app, and test password recovery, Google
 sign-in, session restore, and API token verification.
+
+The app runtime still requires the Supabase URL/keys listed above in Replit
+Secrets. Attaching the Replit Supabase connection allows secure project access
+for setup and inspection, but does not automatically populate client runtime
+environment variables.
